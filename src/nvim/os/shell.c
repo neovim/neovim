@@ -575,11 +575,12 @@ notfound:
 char **shell_build_argv(const char *cmd, const char *extra_args)
   FUNC_ATTR_NONNULL_RET
 {
-  size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
+  size_t argc = 1 + (cmd ? tokenize(p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
 
-  // Split 'shell'
-  size_t i = tokenize(p_sh, rv);
+  size_t i = 0;
+  rv[i++] = vim_strnsave_unquoted((const char *) p_sh,
+                                  strlen((const char *) p_sh));
 
   if (extra_args) {
     rv[i++] = xstrdup(extra_args);        // Push a copy of `extra_args`
