@@ -2,6 +2,9 @@ name: "labeler: PR"
 on:
   pull_request_target:
     types: [opened]
+
+permissions: {}
+
 jobs:
   changed-files:
     runs-on: ubuntu-latest

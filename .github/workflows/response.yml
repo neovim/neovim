@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
   issue_comment:
 
+permissions: {}
+
 jobs:
   close:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

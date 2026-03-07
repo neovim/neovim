@@ -4,6 +4,8 @@ on:
     - cron: '3 3 * * *'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   update-vim-patches:
     runs-on: ubuntu-latest

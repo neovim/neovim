@@ -2,6 +2,9 @@ name: docs
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
 jobs:
   docs:
     runs-on: ubuntu-latest

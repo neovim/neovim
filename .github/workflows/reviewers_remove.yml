@@ -2,6 +2,9 @@ name: "reviewers: remove"
 on:
   pull_request_target:
     types: [converted_to_draft, closed]
+
+permissions: {}
+
 jobs:
   remove-reviewers:
     runs-on: ubuntu-latest

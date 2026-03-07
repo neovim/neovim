@@ -2,6 +2,9 @@ name: "labeler: issue"
 on:
   issues:
     types: [opened]
+
+permissions: {}
+
 jobs:
   labeler:
     permissions:

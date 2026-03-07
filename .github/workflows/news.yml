@@ -4,6 +4,10 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
     branches:
     - 'master'
+
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest

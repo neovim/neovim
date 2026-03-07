@@ -12,6 +12,9 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
 
+permissions:
+  contents: read
+
 # Build on the oldest supported images, so we have broader compatibility
 jobs:
   setup:

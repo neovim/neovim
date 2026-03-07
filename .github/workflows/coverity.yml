@@ -4,6 +4,9 @@ on:
     - cron: '10 0 * * *'  # Run every day at 00:10
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   scan:
     runs-on: ubuntu-latest

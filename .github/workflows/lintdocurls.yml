@@ -4,6 +4,8 @@ on:
     - cron: '22 22 * * 5'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   check-unreachable-urls:
     runs-on: ubuntu-latest

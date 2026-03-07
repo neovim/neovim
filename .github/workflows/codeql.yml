@@ -12,6 +12,8 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   analyze:
     name: Analyze

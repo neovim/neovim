@@ -2,6 +2,9 @@ name: backport
 on:
   pull_request_target:
     types: [closed, labeled]
+
+permissions: {}
+
 jobs:
   backport:
     permissions:
