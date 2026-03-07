@@ -7521,7 +7521,7 @@ function vim.fn.screenchars(row, col) end
 ---   noremap GG <Cmd>echom screencol()<CR>
 --- <
 ---
---- @return integer[]
+--- @return integer
 function vim.fn.screencol() end
 
 --- The result is a Dict with the screen position of the text
