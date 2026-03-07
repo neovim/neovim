@@ -20,6 +20,7 @@ EXTERN const char *ui_ext_names[] INIT( = {
   "ext_hlstate",
   "ext_termcolors",
   "_debug_float",
+  "ext_windows",
 });
 
 #include "api/ui.h.generated.h"

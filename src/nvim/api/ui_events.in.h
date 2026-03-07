@@ -130,6 +130,20 @@ void win_viewport_margins(Integer grid, Window win, Integer top, Integer bottom,
 
 void win_extmark(Integer grid, Window win, Integer ns_id, Integer mark_id, Integer row, Integer col)
   FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
+void win_split(Integer win1, Integer grid1, Integer win2, Integer grid2, Integer flags)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY;
+void win_move_cursor(Integer direction, Integer count)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY;
+void win_exchange(Integer win, Integer grid, Integer count)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY;
+void win_resize_equal(void)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY;
+void win_rotate(Integer win, Integer grid, Integer direction, Integer count)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY;
+void win_move(Integer win, Integer grid, Integer flags)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY;
+void win_resize(Integer win, Integer grid, Integer width, Integer height)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY;
 
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col, Integer grid)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
