@@ -2516,6 +2516,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		|ChanOpen|,
 		|CmdUndefined|,
 		|CmdlineChanged|,
+		|CmdlineCharPre|,
 		|CmdlineEnter|,
 		|CmdlineLeave|,
 		|CmdlineLeavePre|,
