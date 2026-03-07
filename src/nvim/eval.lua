@@ -9176,7 +9176,7 @@ M.funcs = {
     ]=],
     name = 'screencol',
     params = {},
-    returns = 'integer[]',
+    returns = 'integer',
     signature = 'screencol()',
   },
   screenpos = {

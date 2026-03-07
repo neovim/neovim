@@ -8266,7 +8266,7 @@ screencol()                                                        *screencol()*
 <
 
                 Return: ~
-                  (`integer[]`)
+                  (`integer`)
 
 screenpos({winid}, {lnum}, {col})                                  *screenpos()*
 		The result is a Dict with the screen position of the text
