@@ -3097,9 +3097,9 @@ static char *u_save_line_buf(buf_T *buf, linenr_T lnum)
 bool bufIsChanged(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  // In a "prompt" buffer we do respect 'modified', so that we can control
-  // closing the window by setting or resetting that option.
-  return (!bt_dontwrite(buf) || bt_prompt(buf))
+  // A "prompt" buffer ignores the 'modified' flag, so it won't block closing
+  // when modified.
+  return !bt_dontwrite(buf)
          && (buf->b_changed || file_ff_differs(buf, true));
 }
 
