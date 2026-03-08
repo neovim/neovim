@@ -24,6 +24,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
@@ -345,6 +346,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
   if (fconfig.style == kWinStyleMinimal) {
     win_set_minimal_style(wp);
     didset_window_options(wp, true);
+    changed_window_setting(wp);
   }
   rv = wp->handle;
 
@@ -672,6 +674,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   if (HAS_KEY_X(config, style) && fconfig.style == kWinStyleMinimal) {
     win_set_minimal_style(win);
     didset_window_options(win, true);
+    changed_window_setting(win);
   }
   if (fconfig._cmdline_offset < INT_MAX) {
     cmdline_win = win;
