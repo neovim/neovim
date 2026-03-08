@@ -668,16 +668,15 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
   if (argvars[2].v_type != VAR_UNKNOWN) {
     int before = (int)tv_get_number_chk(&argvars[2], &error);
     if (error) {
-      return;  // Type error; errmsg already given.
+      goto cleanup;  // Type error; errmsg already given.
     }
-
     if (before == tv_list_len(l1)) {
       item = NULL;
     } else {
       item = tv_list_find(l1, before);
       if (item == NULL) {
         semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
-        return;
+        goto cleanup;
       }
     }
   } else {
@@ -693,6 +692,12 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
     };
   } else {
     tv_copy(&argvars[0], rettv);
+  }
+  return;
+
+cleanup:
+  if (is_new) {
+    tv_list_unref(l1);
   }
 }
 
