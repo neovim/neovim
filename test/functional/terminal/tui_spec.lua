@@ -269,8 +269,6 @@ describe('TUI :restart', function()
 
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
       t.neq(server_pid, new_pid)
-
-      tt.feed_data(string.format(':lua vim.fn.serverstop(%q)\n', server_pipe))
       server_pid = new_pid
     end
 
@@ -408,6 +406,7 @@ describe('TUI :restart', function()
     if server_session then
       server_session:close()
     end
+    tt.feed_data(string.format(':lua vim.fn.serverstop(%q)\n', server_pipe))
     os.remove(server_pipe)
   end)
 
