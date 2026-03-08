@@ -263,8 +263,6 @@ describe('TUI :restart', function()
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
     local function assert_new_pid()
       tt.feed_data(string.format(':lua vim.fn.serverstart(%q)\n', server_pipe))
-      -- The :lua command may sometimes overflow leaving the "Press ENTER" prompt.
-      -- tt.feed_data('\n')
       screen:expect({ unchanged = true })
 
       server_session = n.connect(server_pipe)
@@ -465,8 +463,6 @@ describe('TUI :restart', function()
     ]])
     -- Tell the new server to start listening on the pipe again.
     tt.feed_data(string.format(':lua vim.fn.serverstart(%q)\013', server_pipe))
-    -- The :lua command may sometimes overflow leaving a "Press ENTER" prompt.
-    -- tt.feed_data('\013')
     screen:expect({ unchanged = true })
 
     server_session = n.connect(server_pipe)
