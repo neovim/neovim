@@ -262,9 +262,9 @@ describe('TUI :restart', function()
     local server_session = n.connect(server_pipe)
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
     local function assert_new_pid()
-      tt.feed_data(':call serverstart("' .. server_pipe .. '")\n')
-      -- The :call command may sometimes overflow leaving the "Press ENTER" prompt.
-      tt.feed_data('\n')
+      tt.feed_data(':lua vim.fn.serverstart([[' .. server_pipe .. ']])\n')
+      -- The :lua command may sometimes overflow leaving the "Press ENTER" prompt.
+      -- tt.feed_data('\n')
       screen:expect({ unchanged = true })
 
       server_session = n.connect(server_pipe)
@@ -272,7 +272,7 @@ describe('TUI :restart', function()
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
       t.neq(server_pid, new_pid)
 
-      tt.feed_data(':call serverstop("' .. server_pipe .. '")\n')
+      tt.feed_data(':lua vim.fn.serverstop([[' .. server_pipe .. ']])\n')
       server_pid = new_pid
     end
 
@@ -464,9 +464,9 @@ describe('TUI :restart', function()
       {5:-- TERMINAL --}                                    |
     ]])
     -- Tell the new server to start listening on the pipe again.
-    tt.feed_data(':call serverstart("' .. server_pipe .. '")\013')
-    -- The :call command may sometimes overflow leaving a "Press ENTER" prompt.
-    tt.feed_data('\013')
+    tt.feed_data(':lua vim.fn.serverstart([[' .. server_pipe .. ']])\013')
+    -- The :lua command may sometimes overflow leaving a "Press ENTER" prompt.
+    -- tt.feed_data('\013')
     screen:expect({ unchanged = true })
 
     server_session = n.connect(server_pipe)
@@ -474,7 +474,7 @@ describe('TUI :restart', function()
     eq({ true, false }, { server_session:request('nvim_eval', expr) })
     eq({ true, false }, { server_session:request('nvim_eval', has_s) })
 
-    tt.feed_data(':call serverstop("' .. server_pipe .. '")\013')
+    tt.feed_data(':lua vim.fn.serverstop([[' .. server_pipe .. ']])\013')
     -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
     -- eq(13, #argv)
     -- eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
