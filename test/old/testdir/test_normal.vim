@@ -4402,6 +4402,9 @@ func Test_pos_percentage_in_turkish_locale()
   CheckRunVimInTerminal
   CheckNotMac
   defer execute(':lang C')
+  if !filereadable('../po/tr.mo')
+        throw 'Skipped: tr.mo not built, run make in src/po first'
+  endif
 
   try
     let dir = expand('$VIMRUNTIME/lang/tr/')
@@ -4411,7 +4414,7 @@ func Test_pos_percentage_in_turkish_locale()
     call mkdir(target, '')
     call filecopy(tr, target .. 'vim.mo')
     lang tr_TR.UTF-8
-    let buf = RunVimInTerminal('', {'rows': 5})
+    let buf = RunVimInTerminal('', {'rows': 5, 'cols': 40})
     call term_sendkeys(buf, ":lang tr_TR.UTF-8\<cr>")
     call term_sendkeys(buf, ":put =range(1,40)\<cr>")
     call term_sendkeys(buf, ":5\<cr>")
