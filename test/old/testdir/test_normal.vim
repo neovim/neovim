@@ -4400,6 +4400,7 @@ endfunc
 
 func Test_pos_percentage_in_turkish_locale()
   CheckRunVimInTerminal
+  CheckNotMac
   defer execute(':lang C')
 
   try
