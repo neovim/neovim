@@ -19,6 +19,7 @@
 " 2025 Sep 22 by Vim Project: support PowerShell Core
 " 2025 Dec 20 by Vim Project: use :lcd instead of :cd
 " 2026 Feb 08 by Vim Project: use system() instead of :!
+" 2026 Mar 08 by Vim Project: Make ZipUpdatePS() check for powershell
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -159,7 +160,7 @@ endfunction
 function! s:ZipUpdatePS(zipfile, fname)
   " Update a filename within a zipped file
   " Equivalent to `zip -u zipfile fname`
-  if a:fname =~ '/'
+  if &shell =~ 'pwsh' && a:fname =~ '/'
     call s:Mess('Error', "***error*** PowerShell cannot update files in archive subfolders")
     return ':'
   endif
