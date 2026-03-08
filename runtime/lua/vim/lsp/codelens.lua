@@ -64,6 +64,13 @@ function Provider:new(bufnr)
 end
 
 ---@package
+function Provider:destroy()
+  self:reset_timer()
+  api.nvim_del_augroup_by_id(self.augroup)
+  self.active[self.bufnr] = nil
+end
+
+---@package
 ---@param client_id integer
 function Provider:on_attach(client_id)
   local state = self.client_state[client_id]
