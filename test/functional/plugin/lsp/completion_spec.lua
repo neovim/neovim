@@ -1334,6 +1334,211 @@ describe('vim.lsp.completion: integration', function()
   end)
 end)
 
+describe('vim.lsp.completion: resolve documentation', function()
+  before_each(function()
+    clear()
+    exec_lua(create_server_definition)
+    exec_lua(function()
+      vim.fn.complete = vim.schedule_wrap(vim.fn.complete)
+    end)
+  end)
+
+  it('resolves documentation on CompleteChanged', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello' },
+        { label = 'hallo' },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect,popup'
+      _G.resolve_called = false
+      local server = _G._create_server({
+        capabilities = {
+          completionProvider = {
+            triggerCharacters = { '.' },
+            resolveProvider = true,
+          },
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, completion_list)
+          end,
+          ['completionItem/resolve'] = function(_, item, callback)
+            _G.resolve_called = true
+            item.documentation = { kind = 'markdown', value = 'hello docs' }
+            callback(nil, item)
+          end,
+        },
+      })
+
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        on_attach = function(client, bufnr0)
+          vim.lsp.completion.enable(true, client.id, bufnr0, { autotrigger = false })
+        end,
+      })
+    end)
+
+    feed('ih<C-x><C-o>')
+    wait_for_pum()
+    feed('<C-n>')
+
+    retry(nil, nil, function()
+      eq(true, exec_lua('return _G.resolve_called'))
+    end)
+  end)
+
+  it('skips resolve when item already has documentation', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello', documentation = 'already documented' },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,popup'
+      _G.resolve_called = false
+      local server = _G._create_server({
+        capabilities = {
+          completionProvider = {
+            triggerCharacters = { '.' },
+            resolveProvider = true,
+          },
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, completion_list)
+          end,
+          ['completionItem/resolve'] = function(_, item, callback)
+            _G.resolve_called = true
+            callback(nil, item)
+          end,
+        },
+      })
+
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        on_attach = function(client, bufnr0)
+          vim.lsp.completion.enable(true, client.id, bufnr0, { autotrigger = false })
+        end,
+      })
+    end)
+
+    feed('ih<C-x><C-o>')
+    wait_for_pum()
+    feed('<C-n>')
+
+    -- Give time for a resolve to fire (it shouldn't)
+    vim.uv.sleep(100)
+    eq(false, exec_lua('return _G.resolve_called'))
+  end)
+
+  it('skips resolve when server lacks resolveProvider', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello' },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,popup'
+      _G.resolve_called = false
+      local server = _G._create_server({
+        capabilities = {
+          completionProvider = {
+            triggerCharacters = { '.' },
+            resolveProvider = false,
+          },
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, completion_list)
+          end,
+          ['completionItem/resolve'] = function(_, item, callback)
+            _G.resolve_called = true
+            callback(nil, item)
+          end,
+        },
+      })
+
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        on_attach = function(client, bufnr0)
+          vim.lsp.completion.enable(true, client.id, bufnr0, { autotrigger = false })
+        end,
+      })
+    end)
+
+    feed('ih<C-x><C-o>')
+    wait_for_pum()
+    feed('<C-n>')
+
+    -- Give time for a resolve to fire (it shouldn't)
+    vim.uv.sleep(100)
+    eq(false, exec_lua('return _G.resolve_called'))
+  end)
+
+  it('skips resolve when completeopt lacks popup', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello' },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect'
+      _G.resolve_called = false
+      local server = _G._create_server({
+        capabilities = {
+          completionProvider = {
+            triggerCharacters = { '.' },
+            resolveProvider = true,
+          },
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, completion_list)
+          end,
+          ['completionItem/resolve'] = function(_, item, callback)
+            _G.resolve_called = true
+            item.documentation = 'hello docs'
+            callback(nil, item)
+          end,
+        },
+      })
+
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        on_attach = function(client, bufnr0)
+          vim.lsp.completion.enable(true, client.id, bufnr0, { autotrigger = false })
+        end,
+      })
+    end)
+
+    feed('ih<C-x><C-o>')
+    wait_for_pum()
+    feed('<C-n>')
+
+    -- Give time for a resolve to fire (it shouldn't)
+    vim.uv.sleep(100)
+    eq(false, exec_lua('return _G.resolve_called'))
+  end)
+end)
+
 describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
   before_each(function()
     clear()

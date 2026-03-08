@@ -135,6 +135,49 @@ local function next_debounce()
   return math.max((ms_since_request - rtt_ms) * -1, 0)
 end
 
+--- @type integer? Request ID of the in-flight resolve request.
+local resolve_request_id = nil
+
+--- @type integer? Client ID of the in-flight resolve request.
+local resolve_client_id = nil
+
+--- @type uv.uv_timer_t? Debounce timer for resolve requests.
+local resolve_timer = nil
+
+--- Adaptive RTT estimate (ms) for resolve requests.
+local resolve_rtt_ms = 50
+
+--- Exponential moving average for resolve response times.
+local resolve_compute_new_average = exp_avg(10, 5)
+
+--- @type integer? Timestamp (vim.uv.hrtime) of the last resolve request.
+local resolve_last_request_time = nil
+
+--- @return number
+local function next_resolve_debounce()
+  if not resolve_last_request_time then
+    return resolve_rtt_ms
+  end
+  local ms_since_request = (vim.uv.hrtime() - resolve_last_request_time) * ns_to_ms
+  return math.max((ms_since_request - resolve_rtt_ms) * -1, 0)
+end
+
+local function cancel_resolve()
+  if resolve_timer then
+    resolve_timer:stop()
+    resolve_timer:close()
+    resolve_timer = nil
+  end
+  if resolve_request_id and resolve_client_id then
+    local client = lsp.get_client_by_id(resolve_client_id)
+    if client then
+      client:cancel_request(resolve_request_id)
+    end
+  end
+  resolve_request_id = nil
+  resolve_client_id = nil
+end
+
 --- @param input string Unparsed snippet
 --- @return string # Parsed snippet if successful, else returns its input
 local function parse_snippet(input)
@@ -724,10 +767,98 @@ local function on_insert_char_pre(handle)
   end
 end
 
+local function on_complete_changed()
+  cancel_resolve()
+
+  local completed_item = api.nvim_get_vvar('event').completed_item --- @type table
+  local lsp_data = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp')
+  if not completed_item or not lsp_data then
+    return
+  end
+
+  local completion_item = lsp_data.completion_item --- @type lsp.CompletionItem?
+  local client_id = lsp_data.client_id --- @type integer?
+  if not completion_item or not client_id then
+    return
+  end
+
+  -- Nothing to do if the item already has documentation.
+  if completion_item.documentation then
+    return
+  end
+
+  -- Check resolve support.
+  local client = lsp.get_client_by_id(client_id)
+  if not client then
+    return
+  end
+  local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
+  if not resolve_provider then
+    return
+  end
+
+  local selected = vim.fn.complete_info({ 'selected' }).selected --- @type integer
+
+  -- Index is -1 if no item is selected.
+  if selected < 0 then
+    return
+  end
+
+  local debounce = next_resolve_debounce()
+  resolve_timer = assert(vim.uv.new_timer())
+  resolve_timer:start(
+    debounce,
+    0,
+    vim.schedule_wrap(function()
+      if vim.fn.pumvisible() ~= 1 then
+        return
+      end
+
+      local start_time = vim.uv.hrtime()
+      resolve_last_request_time = start_time
+
+      local ok, req_id = client:request(
+        'completionItem/resolve',
+        completion_item,
+        function(err, result)
+          resolve_request_id = nil
+          resolve_client_id = nil
+
+          local response_time = (vim.uv.hrtime() - start_time) * ns_to_ms
+          resolve_rtt_ms = resolve_compute_new_average(response_time)
+
+          if err or not result then
+            return
+          end
+
+          completion_item.documentation = result.documentation
+
+          if vim.fn.pumvisible() ~= 1 then
+            return
+          end
+
+          local doc = get_doc(result)
+          if doc == '' then
+            return
+          end
+
+          pcall(api.nvim__complete_set, selected, { info = doc })
+        end
+      )
+
+      if ok then
+        resolve_request_id = req_id
+        resolve_client_id = client_id
+      end
+    end)
+  )
+end
+
 local function on_insert_leave()
   reset_timer()
   Context.cursor = nil
   Context:reset()
+  cancel_resolve()
 end
 
 local function on_complete_done()
@@ -853,6 +984,19 @@ end
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
 --- @field cmp? fun(a: table, b: table): boolean Comparator for sorting merged completion items from all servers.
 
+---@param group integer
+---@param bufnr integer
+local function setup_complete_changed_autocmd(group, bufnr)
+  api.nvim_clear_autocmds({ group = group, buffer = bufnr, event = 'CompleteChanged' })
+  if vim.o.completeopt:find('popup') then
+    api.nvim_create_autocmd('CompleteChanged', {
+      group = group,
+      buffer = bufnr,
+      callback = on_complete_changed,
+    })
+  end
+end
+
 ---@param client_id integer
 ---@param bufnr integer
 ---@param opts vim.lsp.completion.BufferOpts
@@ -890,6 +1034,14 @@ local function enable_completions(client_id, bufnr, opts)
         if reason == 'accept' then
           on_complete_done()
         end
+      end,
+    })
+    setup_complete_changed_autocmd(group, bufnr)
+    api.nvim_create_autocmd('OptionSet', {
+      group = group,
+      pattern = 'completeopt',
+      callback = function()
+        setup_complete_changed_autocmd(group, bufnr)
       end,
     })
     if opts.autotrigger then
