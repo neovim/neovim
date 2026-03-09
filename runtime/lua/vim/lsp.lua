@@ -72,6 +72,22 @@ local format_line_ending = {
   ['mac'] = '\r',
 }
 
+---@param path string?
+---@return boolean
+local function is_home_dir(path)
+  if type(path) ~= 'string' or path == '' then
+    return false
+  end
+
+  ---@type string?
+  local home = vim.env.HOME
+  if home == nil or home == '' then
+    home = vim.uv.os_homedir()
+  end
+
+  return type(home) == 'string' and home ~= '' and vim.fs.normalize(path) == vim.fs.normalize(home)
+end
+
 ---@param bufnr integer
 ---@return string
 function lsp._buf_get_line_ending(bufnr)
@@ -665,6 +681,9 @@ function lsp.start(config, opts)
     config = vim.deepcopy(config)
 
     config.root_dir = vim.fs.root(bufnr, opts._root_markers)
+    if is_home_dir(config.root_dir) then
+      config.root_dir = nil
+    end
   end
 
   if

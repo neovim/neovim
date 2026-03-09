@@ -7095,6 +7095,56 @@ describe('LSP', function()
       markers_resolve_to({ 'foo', { 'bar', 'baz' }, 'marker_d' }, dir_b)
     end)
 
+    it('does not treat HOME as root_dir when inferred from root_markers', function()
+      exec_lua(create_server_definition)
+
+      local tmp_home = tmpname(false)
+      local project_dir = tmp_home .. '/nested/project'
+      local marker = tmp_home .. '/.foorc'
+      local target = project_dir .. '/main.foo'
+
+      mkdir(tmp_home)
+      mkdir(tmp_home .. '/nested')
+      mkdir(project_dir)
+      write_file(marker, '')
+      write_file(target, '')
+
+      exec_lua(function()
+        local server = _G._create_server({
+          handlers = {
+            initialize = function(_, _, callback)
+              callback(nil, { capabilities = {} })
+            end,
+          },
+        })
+
+        vim.env.HOME = tmp_home
+        vim.lsp.config['foo'] = {}
+        vim.lsp.config('foo', {
+          cmd = server.cmd,
+          filetypes = { 'foo' },
+          root_markers = { '.foorc' },
+          workspace_required = false,
+          reuse_client = function()
+            return false
+          end,
+        })
+        vim.lsp.enable('foo')
+        vim.cmd.edit(target)
+        vim.bo.filetype = 'foo'
+      end)
+
+      retry(nil, 1000, function()
+        eq(
+          nil,
+          exec_lua(function()
+            local clients = vim.lsp.get_clients({ bufnr = 0 })
+            return clients[#clients].root_dir
+          end)
+        )
+      end)
+    end)
+
     it('vim.lsp.is_enabled()', function()
       exec_lua(function()
         vim.lsp.config('foo', {
