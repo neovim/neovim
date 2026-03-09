@@ -589,13 +589,14 @@ static void catch_exception(except_T *excp)
   set_vim_var_string(VV_EXCEPTION, excp->value, -1);
   set_vim_var_list(VV_STACKTRACE, excp->stacktrace);
   if (*excp->throw_name != NUL) {
+    size_t IObufflen;
     if (excp->throw_lnum != 0) {
-      vim_snprintf(IObuff, IOSIZE, _("%s, line %" PRId64),
-                   excp->throw_name, (int64_t)excp->throw_lnum);
+      IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, _("%s, line %" PRId64),
+                                       excp->throw_name, (int64_t)excp->throw_lnum);
     } else {
-      vim_snprintf(IObuff, IOSIZE, "%s", excp->throw_name);
+      IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, "%s", excp->throw_name);
     }
-    set_vim_var_string(VV_THROWPOINT, IObuff, -1);
+    set_vim_var_string(VV_THROWPOINT, IObuff, (ptrdiff_t)IObufflen);
   } else {
     // throw_name not set on an exception from a command that was typed.
     set_vim_var_string(VV_THROWPOINT, NULL, -1);
@@ -639,15 +640,16 @@ static void finish_exception(except_T *excp)
     set_vim_var_string(VV_EXCEPTION, caught_stack->value, -1);
     set_vim_var_list(VV_STACKTRACE, caught_stack->stacktrace);
     if (*caught_stack->throw_name != NUL) {
+      size_t IObufflen;
       if (caught_stack->throw_lnum != 0) {
-        vim_snprintf(IObuff, IOSIZE,
-                     _("%s, line %" PRId64), caught_stack->throw_name,
-                     (int64_t)caught_stack->throw_lnum);
+        IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, _("%s, line %" PRId64),
+                                         caught_stack->throw_name,
+                                         (int64_t)caught_stack->throw_lnum);
       } else {
-        vim_snprintf(IObuff, IOSIZE, "%s",
-                     caught_stack->throw_name);
+        IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, "%s",
+                                         caught_stack->throw_name);
       }
-      set_vim_var_string(VV_THROWPOINT, IObuff, -1);
+      set_vim_var_string(VV_THROWPOINT, IObuff, (ptrdiff_t)IObufflen);
     } else {
       // throw_name not set on an exception from a command that was
       // typed.

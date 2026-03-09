@@ -5857,7 +5857,7 @@ static void set_op_var(int optype)
     opchars[1] = (char)opchar1;
 
     opchars[2] = NUL;
-    set_vim_var_string(VV_OP, opchars, -1);
+    set_vim_var_string(VV_OP, opchars, 2);
   }
 }
 

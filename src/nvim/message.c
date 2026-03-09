@@ -2678,21 +2678,21 @@ void msg_ui_flush(void)
 static void inc_msg_scrolled(void)
 {
   if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
-    char *p = SOURCING_NAME;
+    String p = { .data = SOURCING_NAME };
     char *tofree = NULL;
 
     // v:scrollstart is empty, set it to the script/function name and line
     // number
-    if (p == NULL) {
-      p = _("Unknown");
+    if (p.data == NULL) {
+      p = cstr_as_string(_("Unknown"));
     } else {
-      size_t len = strlen(p) + 40;
-      tofree = xmalloc(len);
-      vim_snprintf(tofree, len, _("%s line %" PRId64),
-                   p, (int64_t)SOURCING_LNUM);
-      p = tofree;
+      size_t tofreesize = strlen(p.data) + 40;
+      tofree = xmalloc(tofreesize);
+      p.size = vim_snprintf_safelen(tofree, tofreesize, _("%s line %" PRId64),
+                                    p.data, (int64_t)SOURCING_LNUM);
+      p.data = tofree;
     }
-    set_vim_var_string(VV_SCROLLSTART, p, -1);
+    set_vim_var_string(VV_SCROLLSTART, p.data, (ptrdiff_t)p.size);
     xfree(tofree);
   }
   msg_scrolled++;

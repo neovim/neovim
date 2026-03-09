@@ -2081,9 +2081,9 @@ void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
 void set_vim_var_char(int c)
 {
   char buf[MB_MAXCHAR + 1];
-
-  buf[utf_char2bytes(c, buf)] = NUL;
-  set_vim_var_string(VV_CHAR, buf, -1);
+  int buflen = utf_char2bytes(c, buf);
+  buf[buflen] = NUL;
+  set_vim_var_string(VV_CHAR, buf, buflen);
 }
 
 /// Set string v: variable to the given string
@@ -2155,17 +2155,18 @@ void set_vim_var_partial(const VimVarIndex idx, partial_T *val)
 /// Set v:register if needed.
 void set_reg_var(int c)
 {
-  char regname;
+  char regname[2];
 
   if (c == 0 || c == ' ') {
-    regname = '"';
+    regname[0] = '"';
   } else {
-    regname = (char)c;
+    regname[0] = (char)c;
   }
+  regname[1] = NUL;
   // Avoid free/alloc when the value is already right.
   typval_T *tv = get_vim_var_tv(VV_REG);
   if (tv->vval.v_string == NULL || tv->vval.v_string[0] != c) {
-    set_vim_var_string(VV_REG, &regname, 1);
+    set_vim_var_string(VV_REG, regname, 1);
   }
 }
 
