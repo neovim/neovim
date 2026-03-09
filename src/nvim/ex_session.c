@@ -58,10 +58,12 @@ static int did_lcd;
 #define PUTLINE_FAIL(s) \
   do { if (FAIL == put_line(fd, (s))) { return FAIL; } } while (0)
 
+// https://github.com/tayheau/neovim/blob/mksession/src/nvim/buffer_defs.h#L1097
 static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
 {
   int r;
 
+  // MAXCOL = 0x7fffffff so a 32bit uint 
   if (wp->w_curswant == MAXCOL) {
     r = fprintf(fd, "%snormal! $\n", spaces);
   } else {
