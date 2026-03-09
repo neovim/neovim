@@ -461,6 +461,7 @@ end
 --- @param filename string
 --- @param uncommitted nvim.luacats.parser.obj[]
 -- luacheck: no unused
+---@diagnostic disable-next-line: unused-function, unused-local
 local function dump_uncommitted(filename, uncommitted)
   local out_path = 'luacats-uncommited/' .. filename:gsub('/', '%%') .. '.txt'
   if #uncommitted > 0 then

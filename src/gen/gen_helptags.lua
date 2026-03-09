@@ -1,9 +1,10 @@
+---@diagnostic disable: no-unknown
 -- Does the same as `nvim -c "helptags ++t doc" -c quit`
 -- without needing to run a "nvim" binary, which is needed for cross-compiling.
 local out = arg[1]
 local dir = arg[2]
 
-local dirfd = vim.uv.fs_opendir(dir, nil, 1)
+local dirfd = assert(vim.uv.fs_opendir(dir, nil, 1))
 local files = {}
 while true do
   local file = dirfd:readdir()
@@ -59,8 +60,8 @@ table.sort(tags, function(a, b)
   return a[1] < b[1]
 end)
 
-local f = io.open(out, 'w')
-local lasttagname, lastfn = nil
+local f = assert(io.open(out, 'w'))
+local lasttagname, lastfn = nil, nil
 for _, tag in ipairs(tags) do
   local tagname, fn = unpack(tag)
   if tagname == lasttagname then

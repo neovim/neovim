@@ -66,7 +66,6 @@ local function process_decl(d)
   return d .. ';'
 end
 
---- @param fname string
 --- @param text string
 --- @return string[] static
 --- @return string[] non_static

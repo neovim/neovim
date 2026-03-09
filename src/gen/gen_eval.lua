@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 local mpack = vim.mpack
 
 local funcsfname = arg[1]
@@ -89,11 +90,14 @@ hashpipe:write('static const EvalFuncDef functions[] = {\n')
 
 for _, name in ipairs(neworder) do
   local def = funcs[name]
-  local args = def.args or 0
-  if type(args) == 'number' then
-    args = { args, args }
-  elseif #args == 1 then
-    args[2] = 'MAX_FUNC_ARGS'
+  local min_args = 0
+  local max_args = 0 --- @type integer|string
+  local def_args = def.args
+  if type(def_args) == 'number' then
+    min_args, max_args = def_args, def_args
+  elseif type(def_args) == 'table' then
+    min_args = def_args[1] or 0
+    max_args = def_args[2] or 'MAX_FUNC_ARGS'
   end
   local base = def.base or 'BASE_NONE'
   local func = def.func or ('f_' .. name)
@@ -102,8 +106,8 @@ for _, name in ipairs(neworder) do
   hashpipe:write(
     ('  { "%s", %s, %s, %s, %s, &%s, %s },\n'):format(
       name,
-      args[1],
-      args[2],
+      min_args,
+      max_args,
       base,
       fast,
       func,

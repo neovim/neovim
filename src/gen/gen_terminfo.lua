@@ -147,6 +147,7 @@ local function quote(str)
   return '"' .. str .. '"'
 end
 
+--- @type fun(...: any)
 local dbg = function() end
 -- dbg = print
 
@@ -199,7 +200,9 @@ for _, entry in ipairs(entries) do
   local boolpat = prepat .. ','
   local numpat = prepat .. '#([^,]+),'
   local strpat = prepat .. '=([^,]+),'
-  local bools, nums, strs = {}, {}, {}
+  local bools = {} --- @type table<string, true>
+  local nums = {} --- @type table<string, string>
+  local strs = {} --- @type table<string, string>
   for i, line in ipairs(lines) do
     local boolmatch = string.match(line, boolpat)
     local nummatch, numval = string.match(line, numpat)
