@@ -25,7 +25,7 @@ describe('CompleteDone', function()
     end)
 
     it('accept when candidate is inserted without noinsert #38160', function()
-      command('set completeopt=menu,menuone')
+      command('set completeopt=menu,menuone') -- Omit "noinsert".
       feed('<ESC>Stest<CR><C-N><ESC>')
       eq('accept', eval('g:donereason'))
       eq('test', n.api.nvim_get_current_line())
