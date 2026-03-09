@@ -1107,13 +1107,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   int n_extra_next = 0;                 // n_extra to use after current extra chars
   int extra_attr_next = -1;             // extra_attr to use after current extra chars
 
-  bool search_attr_from_match = false;  // if search_attr is from :match
+  int search_attr_from_match = 0;       // if search_attr is from :match (< 0 if low priority)
   bool has_decor = false;               // this buffer has decoration
 
   int saved_search_attr = 0;            // search_attr to be used when n_extra goes to zero
   int saved_area_attr = 0;              // idem for area_attr
   int saved_decor_attr = 0;             // idem for decor_attr
-  bool saved_search_attr_from_match = false;
+  int saved_search_attr_from_match = 0;
 
   int win_col_offset = 0;               // offset for window columns
   bool area_active = false;             // whether in Visual selection, for virtual text
@@ -1869,7 +1869,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             search_attr = 0;
             area_attr = 0;
             decor_attr = 0;
-            search_attr_from_match = false;
+            search_attr_from_match = 0;
           }
         }
       }
@@ -1957,7 +1957,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           // let search highlight show in Visual area if possible
           char_attr_pri = hl_combine_attr(search_attr, char_attr_pri);
         }
-      } else if (search_attr != 0) {
+      } else if (search_attr != 0 && search_attr_from_match >= 0) {
         char_attr_pri = hl_combine_attr(wlv.line_attr, search_attr);
       } else if (wlv.line_attr != 0
                  && ((wlv.fromcol == -10 && wlv.tocol == MAXCOL)
@@ -1970,7 +1970,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       } else {
         char_attr_pri = 0;
       }
-      char_attr_base = hl_combine_attr(folded_attr, decor_attr);
+      // When search_attr is from a low-priority place it under decor_attr.
+      if (search_attr_from_match < 0 && area_attr == 0) {
+        char_attr_base = hl_combine_attr(hl_combine_attr(folded_attr, search_attr), decor_attr);
+      } else {
+        char_attr_base = hl_combine_attr(folded_attr, decor_attr);
+      }
       wlv.char_attr = hl_combine_attr(char_attr_base, char_attr_pri);
     }
 
@@ -2234,7 +2239,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           can_spell = TRISTATE_TO_BOOL(decor_state.spell, can_spell);
         }
 
-        char_attr_base = hl_combine_attr(folded_attr, decor_attr);
+        if (search_attr_from_match < 0 && area_attr == 0) {
+          char_attr_base = hl_combine_attr(hl_combine_attr(folded_attr, search_attr), decor_attr);
+        } else {
+          char_attr_base = hl_combine_attr(folded_attr, decor_attr);
+        }
         wlv.char_attr = hl_combine_attr(char_attr_base, char_attr_pri);
 
         // Check spelling (unless at the end of the line).

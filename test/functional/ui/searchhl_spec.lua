@@ -722,4 +722,24 @@ describe('search highlighting', function()
       {6:t/(l)ast/scroll up(^E)/down(^Y)}^         |
     ]])
   end)
+
+  it('matchadd with low priority does not override inccommand preview #37848', function()
+    command('hi TestHL guibg=Red ctermbg=Red')
+    command("call matchadd('TestHL', 'foo', -1)")
+    insert('foo bar foo bar\nfoo barz fooz bar')
+    feed('/foo')
+    screen:expect([[
+      {2:foo} bar {10:foo} bar                         |
+      {10:foo} barz {10:foo}z bar                       |
+      {1:~                                       }|*4
+      /foo^                                    |
+    ]])
+    feed('<ESC>:%s/foo/foo test/gc')
+    screen:expect([[
+      {10:foo test} bar {10:foo test} bar               |
+      {10:foo test} barz {10:foo test}z bar             |
+      {1:~                                       }|*4
+      :%s/foo/foo test/gc^                     |
+    ]])
+  end)
 end)

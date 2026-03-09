@@ -563,7 +563,7 @@ static void check_cur_search_hl(win_T *wp, match_T *shl)
 /// @return  true if there is such highlighting and set "search_attr" to the
 ///          current highlight attribute.
 bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **line,
-                            match_T *search_hl, int *search_attr, bool *search_attr_from_match)
+                            match_T *search_hl, int *search_attr, int *search_attr_from_match)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
   match_T *shl;                     // points to search_hl or a match
@@ -624,7 +624,11 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **lin
       if (shl->startcol < mincol) {   // match at leftcol
         shl->attr_cur = shl->attr;
         *search_attr = shl->attr;
-        *search_attr_from_match = shl != search_hl;
+        if (shl == search_hl) {
+          *search_attr_from_match = 0;
+        } else {
+          *search_attr_from_match = cur->mit_priority < SEARCH_HL_PRIORITY ? -1 : 1;
+        }
       }
       area_highlighting = true;
     }
@@ -645,7 +649,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **lin
 /// Return the updated search_attr.
 int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T *search_hl,
                      int *has_match_conc, int *match_conc, bool lcs_eol_todo, bool *on_last_col,
-                     bool *search_attr_from_match)
+                     int *search_attr_from_match)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
   match_T *shl;                     // points to search_hl or a match
@@ -746,7 +750,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
 
   // Use attributes from match with highest priority among 'search_hl' and
   // the match list.
-  *search_attr_from_match = false;
+  *search_attr_from_match = 0;
   search_attr = search_hl->attr_cur;
   cur = wp->w_match_head;
   shl_flag = false;
@@ -761,7 +765,11 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
     if (shl->attr_cur != 0) {
       search_attr = shl->attr_cur;
       *on_last_col = col + 1 >= shl->endcol;
-      *search_attr_from_match = shl != search_hl;
+      if (shl == search_hl) {
+        *search_attr_from_match = 0;
+      } else {
+        *search_attr_from_match = cur->mit_priority < SEARCH_HL_PRIORITY ? -1 : 1;
+      }
     }
     if (shl != search_hl && cur != NULL) {
       cur = cur->mit_next;
