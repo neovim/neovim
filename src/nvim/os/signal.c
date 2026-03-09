@@ -193,7 +193,11 @@ static void deadly_signal(int signum)
   set_vim_var_nr(VV_DYING, 1);
   v_dying = 1;
 
-  ILOG("got signal %d (%s)", signum, signal_name(signum));
+  if (signum == SIGTERM) {
+    WLOG("got signal %d (%s)", signum, signal_name(signum));
+  } else {
+    ILOG("got signal %d (%s)", signum, signal_name(signum));
+  }
 
   snprintf(IObuff, IOSIZE, "Nvim: Caught deadly signal '%s'\n", signal_name(signum));
 

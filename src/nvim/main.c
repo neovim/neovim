@@ -717,19 +717,7 @@ void os_exit(int r)
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
   }
-  if (ui_client_channel_id) {
-#ifdef HAVE_TERMIOS_H
-    // Sometimes the final output to TTY can be lost (at least on FreeBSD).
-    // Call tcdrain() to ensure all output has been transmitted to host terminal.
-    // Do this after event_teardown() as libuv events may write to stderr.
-    if (stdout_isatty) {
-      tcdrain(STDOUT_FILENO);
-    }
-    if (stderr_isatty) {
-      tcdrain(STDERR_FILENO);
-    }
-#endif
-  } else {
+  if (!ui_client_channel_id) {
     ml_close_all(true);  // remove all memfiles
   }
   if (used_stdin) {

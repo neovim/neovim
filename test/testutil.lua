@@ -797,7 +797,7 @@ function M.read_nvim_log(logfile, ci_rename)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or 'nvim.log'
   assert(uv.fs_stat(logfile), ('logfile not found: %q'):format(logfile))
   local is_ci = M.is_ci()
-  local keep = is_ci and 100 or 10
+  local keep = is_ci and 1000 or 10
   local lines = M.read_file_list(logfile, -keep) or {}
   local log = (
     ('-'):rep(78)

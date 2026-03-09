@@ -2526,6 +2526,1095 @@ describe('TUI', function()
     ]])
   end)
 
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('exit status 1 and error message with deadly signal sent to server', function()
     local _, server_pid = child_session:request('nvim_call_function', 'getpid', {})
     exec_lua([[vim.uv.kill(..., 'sigterm')]], server_pid)
