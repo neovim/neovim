@@ -153,7 +153,7 @@ describe('API/extmarks', function()
     )
   end)
 
-  it('can end extranges past final newline using end_col = 0', function()
+  it('can end extranges past final newline using end_col=0', function()
     set_extmark(ns, marks[1], 0, 0, {
       end_col = 0,
       end_row = 1,
@@ -164,20 +164,39 @@ describe('API/extmarks', function()
     )
   end)
 
-  it('can end extranges past final newline when strict mode is false', function()
-    set_extmark(ns, marks[1], 0, 0, {
+  it('can end extranges past final newline when strict=false', function()
+    local id = set_extmark(ns, marks[1], 0, 0, {
       end_col = 1,
       end_row = 1,
       strict = false,
     })
+    ok(id > 0, 'id > 0', id)
   end)
 
-  it('can end extranges past final column when strict mode is false', function()
-    set_extmark(ns, marks[1], 0, 0, {
+  it('can end extranges past final column when strict=false', function()
+    local id = set_extmark(ns, marks[1], 0, 0, {
       end_col = 6,
       end_row = 0,
       strict = false,
     })
+    ok(id > 0, 'id > 0', id)
+  end)
+
+  it('end_col=-1 means "end of line" when strict=false', function()
+    local function _test(strict)
+      return set_extmark(ns, marks[1], 0, 0, {
+        end_col = -1,
+        end_row = 0,
+        strict = strict,
+      })
+    end
+
+    -- strict=false
+    local id = _test(false)
+    ok(id > 0, 'id > 0', id)
+
+    -- strict=true
+    eq("Invalid 'end_col': out of range", pcall_err(_test, true))
   end)
 
   it('adds, updates  and deletes marks', function()
