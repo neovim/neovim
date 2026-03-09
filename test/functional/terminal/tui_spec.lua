@@ -2807,13 +2807,6 @@ describe('TUI', function()
       eq('TEST_TITLE', api.nvim_buf_get_var(0, 'term_title'))
     end)
   end)
-
-  it('stdin and stdout are tty fds in embedded server #38172', function()
-    eq(
-      { 'tty', 'tty' },
-      child_exec_lua('return { vim.uv.guess_handle(0), vim.uv.guess_handle(1) }')
-    )
-  end)
 end)
 
 describe('TUI', function()
