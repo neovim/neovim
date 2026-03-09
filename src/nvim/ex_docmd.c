@@ -7977,6 +7977,20 @@ static void ex_digraphs(exarg_T *eap)
 void set_no_hlsearch(bool flag)
 {
   no_hlsearch = flag;
+
+  // Notify dictwatchers for v:hlsearch
+  dict_T *const vimvardict = get_vimvar_dict();
+  if (tv_dict_is_watched(vimvardict)) {
+    typval_T oldtv;
+    typval_T newtv;
+    tv_copy(get_vim_var_tv(VV_HLSEARCH), &oldtv);
+    newtv.v_type = VAR_NUMBER;
+    newtv.v_lock = VAR_UNLOCKED;
+    newtv.vval.v_number = !no_hlsearch && p_hls;
+    tv_dict_watcher_notify(vimvardict, get_vim_var_name(VV_HLSEARCH), &newtv, &oldtv);
+    tv_clear(&oldtv);
+  }
+
   set_vim_var_nr(VV_HLSEARCH, !no_hlsearch && p_hls);
 }
 
