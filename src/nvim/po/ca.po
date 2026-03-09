@@ -4667,12 +4667,8 @@ msgstr ""
 "No s'ha pogut executar la shell "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"la shell ha retornat "
+msgid "shell returned "
+msgstr "la shell ha retornat "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""

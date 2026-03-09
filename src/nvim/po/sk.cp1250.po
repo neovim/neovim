@@ -4631,12 +4631,8 @@ msgstr ""
 "Ned· sa spustiù shell "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-" n·vratov· hodnota shellu "
+msgid "shell returned "
+msgstr " n·vratov· hodnota shellu "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""

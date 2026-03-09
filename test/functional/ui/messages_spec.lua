@@ -439,12 +439,14 @@ describe('ui/ext_messages', function()
         {
           content = { { ('stdout%s\n'):format(t.is_os('win') and '\r' or ''), 'StdoutMsg' } },
           kind = 'shell_out',
+          append = true,
         },
         {
           content = { { ('stderr%s\n'):format(t.is_os('win') and '\r' or ''), 9, 'StderrMsg' } },
           kind = 'shell_err',
+          append = true,
         },
-        { content = { { '\nshell returned 3\n' } }, kind = 'shell_ret' },
+        { content = { { 'shell returned 3' } }, kind = 'shell_ret' },
       },
     })
 

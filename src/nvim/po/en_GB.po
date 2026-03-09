@@ -4445,9 +4445,7 @@ msgid ""
 msgstr ""
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
+msgid "shell returned "
 msgstr ""
 
 #: ../os_unix.c:465 ../os_unix.c:471

@@ -700,9 +700,11 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
     msg_ext_set_kind("shell_ret");
-    msg_puts(_("\nshell returned "));
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
+    msg_puts(_("shell returned "));
     msg_outnum(exitcode);
-    msg_putchar('\n');
   }
 
   State = current_state;
@@ -1120,6 +1122,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
   const char *p = output;
   const char *end = output + *count;
   msg_ext_set_kind(fd == STDERR_FILENO ? "shell_err" : "shell_out");
+  msg_ext_append = true;
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
       msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_SE : HLF_SO);

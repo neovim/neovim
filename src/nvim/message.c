@@ -3478,7 +3478,7 @@ void verbose_enter(void)
   if (*p_vfile != NUL) {
     msg_silent++;
   }
-  // last_set_msg unsets p_verbose to avoid setting the verbose kind.
+  // Don't set the verbose kind if message continuity is wanted like with last_set_msg().
   if (!msg_ext_skip_verbose) {
     if (msg_ext_kind != verbose_kind) {
       pre_verbose_kind = msg_ext_kind;

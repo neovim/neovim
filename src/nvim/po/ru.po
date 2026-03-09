@@ -4641,12 +4641,8 @@ msgstr ""
 "Невозможно запустить оболочку "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Оболочка завершила работу "
+msgid "shell returned "
+msgstr "Оболочка завершила работу "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""

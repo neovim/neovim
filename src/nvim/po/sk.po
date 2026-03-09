@@ -4635,12 +4635,8 @@ msgstr ""
 "Nedá sa spusti» shell "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-" návratová hodnota shellu "
+msgid "shell returned "
+msgstr " návratová hodnota shellu "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""

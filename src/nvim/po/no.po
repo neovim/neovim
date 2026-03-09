@@ -4626,12 +4626,8 @@ msgstr ""
 "Kan ikke kjøre skall "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"skallet returnerte "
+msgid "shell returned "
+msgstr "skallet returnerte "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""
