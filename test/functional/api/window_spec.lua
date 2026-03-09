@@ -3524,6 +3524,21 @@ describe('API/win', function()
         'Cannot split a floating window',
         pcall_err(api.nvim_win_set_config, win, { win = 0, split = 'right' })
       )
+
+      -- No errors when not actually splitting.
+      local cfg = api.nvim_win_get_config(win)
+      api.nvim_win_set_config(win, {})
+      eq(cfg, api.nvim_win_get_config(win))
+
+      eq(1, eval('&cmdheight'))
+      api.nvim_win_set_config(win, { height = 1 })
+      cfg.height = 1
+      eq(cfg, api.nvim_win_get_config(win))
+      eq(23, eval('&cmdheight'))
+
+      api.nvim_win_set_config(win, { style = 'minimal' })
+      cfg.style = 'minimal'
+      eq(cfg, api.nvim_win_get_config(win))
     end)
 
     it('cannot move autocmd window between tabpages', function()

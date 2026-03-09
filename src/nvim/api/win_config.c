@@ -392,6 +392,25 @@ static bool win_config_split(win_T *win, Dict(win_config) *config, WinConfig *fc
   FUNC_ATTR_NONNULL_ALL
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, win_config, key)
+  bool was_split = !win->w_floating;
+  bool has_split = HAS_KEY_X(config, split);
+  bool has_vertical = HAS_KEY_X(config, vertical);
+  WinSplit old_split = win_split_dir(win);
+  if (has_vertical && !has_split) {
+    if (config->vertical) {
+      fconfig->split = (old_split == kWinSplitRight || p_spr) ? kWinSplitRight : kWinSplitLeft;
+    } else {
+      fconfig->split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
+    }
+  }
+
+  // If there's no "vertical" or "split" set, or if "split" is unchanged, then we can just change
+  // the size of the window.
+  if ((!has_vertical && !has_split)
+      || (was_split && !HAS_KEY_X(config, win) && old_split == fconfig->split)) {
+    goto resize;
+  }
+
   win_T *parent = NULL;
   tabpage_T *parent_tp = NULL;
   if (config->win == 0) {
@@ -420,25 +439,6 @@ static bool win_config_split(win_T *win, Dict(win_config) *config, WinConfig *fc
       api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
       return false;
     }
-  }
-
-  bool was_split = !win->w_floating;
-  bool has_split = HAS_KEY_X(config, split);
-  bool has_vertical = HAS_KEY_X(config, vertical);
-  WinSplit old_split = win_split_dir(win);
-  if (has_vertical && !has_split) {
-    if (config->vertical) {
-      fconfig->split = (old_split == kWinSplitRight || p_spr) ? kWinSplitRight : kWinSplitLeft;
-    } else {
-      fconfig->split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
-    }
-  }
-
-  // If there's no "vertical" or "split" set, or if "split" is unchanged, then we can just change
-  // the size of the window.
-  if ((!has_vertical && !has_split)
-      || (was_split && !HAS_KEY_X(config, win) && old_split == fconfig->split)) {
-    goto resize;
   }
 
   if (!check_split_disallowed_err(win, err)) {
