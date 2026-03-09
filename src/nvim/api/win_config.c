@@ -24,6 +24,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
@@ -345,6 +346,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
   if (fconfig.style == kWinStyleMinimal) {
     win_set_minimal_style(wp);
     didset_window_options(wp, true);
+    changed_window_setting(wp);
   }
   rv = wp->handle;
 
@@ -390,6 +392,25 @@ static bool win_config_split(win_T *win, Dict(win_config) *config, WinConfig *fc
   FUNC_ATTR_NONNULL_ALL
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, win_config, key)
+  bool was_split = !win->w_floating;
+  bool has_split = HAS_KEY_X(config, split);
+  bool has_vertical = HAS_KEY_X(config, vertical);
+  WinSplit old_split = win_split_dir(win);
+  if (has_vertical && !has_split) {
+    if (config->vertical) {
+      fconfig->split = (old_split == kWinSplitRight || p_spr) ? kWinSplitRight : kWinSplitLeft;
+    } else {
+      fconfig->split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
+    }
+  }
+
+  // If there's no "vertical" or "split" set, or if "split" is unchanged, then we can just change
+  // the size of the window.
+  if ((!has_vertical && !has_split)
+      || (was_split && !HAS_KEY_X(config, win) && old_split == fconfig->split)) {
+    goto resize;
+  }
+
   win_T *parent = NULL;
   tabpage_T *parent_tp = NULL;
   if (config->win == 0) {
@@ -418,25 +439,6 @@ static bool win_config_split(win_T *win, Dict(win_config) *config, WinConfig *fc
       api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
       return false;
     }
-  }
-
-  bool was_split = !win->w_floating;
-  bool has_split = HAS_KEY_X(config, split);
-  bool has_vertical = HAS_KEY_X(config, vertical);
-  WinSplit old_split = win_split_dir(win);
-  if (has_vertical && !has_split) {
-    if (config->vertical) {
-      fconfig->split = (old_split == kWinSplitRight || p_spr) ? kWinSplitRight : kWinSplitLeft;
-    } else {
-      fconfig->split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
-    }
-  }
-
-  // If there's no "vertical" or "split" set, or if "split" is unchanged, then we can just change
-  // the size of the window.
-  if ((!has_vertical && !has_split)
-      || (was_split && !HAS_KEY_X(config, win) && old_split == fconfig->split)) {
-    goto resize;
   }
 
   if (!check_split_disallowed_err(win, err)) {
@@ -673,6 +675,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   if (fconfig.style == kWinStyleMinimal && old_style != fconfig.style) {
     win_set_minimal_style(win);
     didset_window_options(win, true);
+    changed_window_setting(win);
   }
   if (fconfig._cmdline_offset < INT_MAX) {
     cmdline_win = win;

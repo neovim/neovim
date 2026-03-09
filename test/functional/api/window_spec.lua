@@ -2316,6 +2316,41 @@ describe('API/win', function()
         )
       )
     end)
+
+    it('redraws after setting minimal style', function()
+      local screen = Screen.new(10, 10)
+      -- Autocommand processes pending redraws earlier than when minimal style is set, so it doesn't
+      -- implicitly rely on those.
+      exec([[
+        set cursorline cursorcolumn number
+        autocmd WinNew * ++once redraw | let g:triggered = 1
+      ]])
+      screen:expect([[
+        {15:  1 }{21:^        }|
+        {1:~           }|*8
+                    |
+      ]])
+      api.nvim_open_win(0, false, { style = 'minimal', split = 'below' })
+      eq(1, eval('g:triggered'))
+      screen:expect([[
+        {15:  1 }{21:^        }|
+        {1:~           }|*2
+        {2:[No Name]   }|
+                    |*4
+        {2:[No Name]   }|
+                    |
+      ]])
+      -- Also check nvim_win_set_config: only set style to avoid redraws from other config fields.
+      api.nvim_win_set_config(0, { style = 'minimal' })
+      screen:expect([[
+        ^            |
+                    |*2
+        {3:[No Name]   }|
+                    |*4
+        {2:[No Name]   }|
+                    |
+      ]])
+    end)
   end)
 
   describe('set_config', function()
@@ -3489,6 +3524,21 @@ describe('API/win', function()
         'Cannot split a floating window',
         pcall_err(api.nvim_win_set_config, win, { win = 0, split = 'right' })
       )
+
+      -- No errors when not actually splitting.
+      local cfg = api.nvim_win_get_config(win)
+      api.nvim_win_set_config(win, {})
+      eq(cfg, api.nvim_win_get_config(win))
+
+      eq(1, eval('&cmdheight'))
+      api.nvim_win_set_config(win, { height = 1 })
+      cfg.height = 1
+      eq(cfg, api.nvim_win_get_config(win))
+      eq(23, eval('&cmdheight'))
+
+      api.nvim_win_set_config(win, { style = 'minimal' })
+      cfg.style = 'minimal'
+      eq(cfg, api.nvim_win_get_config(win))
     end)
 
     it('cannot move autocmd window between tabpages', function()
