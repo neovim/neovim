@@ -13,7 +13,7 @@ describe('CompleteDone', function()
 
   describe('sets v:event.reason', function()
     before_each(function()
-      command('set cot+=noinsert')
+      command('set completeopt+=noinsert')
       command('autocmd CompleteDone * let g:donereason = v:event.reason')
       feed('i')
       call('complete', call('col', '.'), { 'foo', 'bar' })
