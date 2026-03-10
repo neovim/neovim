@@ -3783,8 +3783,8 @@ describe('float window', function()
       local buf = api.nvim_create_buf(false, false)
       eq("Invalid key: 'bork'", pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, bork = true }))
       eq(
-        "'win' key is only valid with relative='win' and relative=''",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, win = 0 })
+        "Must specify 'relative' or 'external' when creating a float",
+        pcall_err(api.nvim_open_win, buf, false, { win = 0 })
       )
       eq(
         "floating windows cannot have 'vertical'",
@@ -11191,7 +11191,17 @@ describe('float window', function()
       local winid = api.nvim_open_win(buf, false, config)
       api.nvim_set_current_win(winid)
       eq('floating window cannot be relative to itself', pcall_err(api.nvim_win_set_config, winid, config))
-      -- Also when configuring split into float.
+      eq('floating window cannot be relative to itself', pcall_err(api.nvim_win_set_config, winid, { win = winid }))
+      -- Don't assume win=0 if no win given for existing relative=win float; so no error.
+      api.nvim_win_set_config(winid, { width = 7 })
+      eq(7, api.nvim_win_get_config(winid).width)
+      -- Don't expect the error when configuring to something other than relative=win, as win=self
+      -- is fine in those cases. (though maybe pointless) Other errors might be expected, though.
+      eq('Cannot split a floating window', pcall_err(api.nvim_win_set_config, winid, { split = 'above', win = winid }))
+      eq('win', api.nvim_win_get_config(winid).relative)
+      api.nvim_win_set_config(winid, { relative = 'editor', win = winid, row = 3, col = 3 })
+      eq('editor', api.nvim_win_get_config(winid).relative)
+      -- An error when configuring split into relative=win float.
       command('split')
       eq('floating window cannot be relative to itself', pcall_err(api.nvim_win_set_config, 0, config))
     end)
@@ -11881,9 +11891,9 @@ describe('float window', function()
       -- Schedule an UPD_NOT_VALID redraw, but in one event move the float out of curtab before it's
       -- handled. Do not flush before then.
       local float = exec_lua(function()
-        local float = vim.api.nvim_open_win(0, true, { relative = 'editor', width = 10, height = 5, row = 0, col = 0 })
+        local float = vim.api.nvim_open_win(0, true, { relative = 'editor', width = 10, height = 5, row = 1, col = 1 })
         vim.api.nvim__redraw({ valid = false, flush = false })
-        vim.api.nvim_win_set_config(float, { relative = 'win', win = tab1_win, row = 1, col = 1 })
+        vim.api.nvim_win_set_config(float, { win = tab1_win })
         return float
       end)
 
@@ -11914,7 +11924,7 @@ describe('float window', function()
       end
 
       -- Importantly, want tabline redrawn and float's hl attribs to be correct here.
-      api.nvim_win_set_config(float, { relative = 'win', win = 0, row = 1, col = 1 })
+      api.nvim_win_set_config(float, { win = 0 })
       if multigrid then
         screen:expect({
           grid = [[
@@ -11935,7 +11945,7 @@ describe('float window', function()
             {2:~         }|*4
           ]],
           float_pos = {
-            [5] = { 1002, 'NW', 4, 1, 1, true, 50, 1, 1, 1 },
+            [5] = { 1002, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
           },
         })
       else
@@ -12053,7 +12063,7 @@ describe('float window', function()
         ]])
       end
 
-      api.nvim_win_set_config(float, { relative = 'win', win = tab2_win, row = 1, col = 1 })
+      api.nvim_win_set_config(float, { win = tab2_win })
       if multigrid then
         screen:expect({
           grid = [[

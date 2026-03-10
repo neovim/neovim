@@ -2585,19 +2585,26 @@ describe('API/win', function()
         },
       }, layout)
 
+      -- converting split into a float for a different tabpage is not yet supported
+      eq(
+        'Cannot configure split into float in another tabpage',
+        pcall_err(
+          api.nvim_win_set_config,
+          win,
+          { relative = 'editor', row = 0, col = 0, width = 1, height = 1, win = first_win }
+        )
+      )
+
       -- convert new win to float in new tabpage
       api.nvim_win_set_config(win, { relative = 'editor', row = 2, col = 2, height = 2, width = 2 })
       api.nvim_set_current_tabpage(first_tab)
       -- move to other tabpage
-      api.nvim_win_set_config(win, { relative = 'win', win = first_win, row = 2, col = 2 })
+      api.nvim_win_set_config(win, { win = first_win })
       eq(first_tab, api.nvim_win_get_tabpage(win))
       eq({ first_win, win }, api.nvim_tabpage_list_wins(first_tab))
       eq({ tab2_win }, api.nvim_tabpage_list_wins(new_tab))
       -- unlike splits, negative win is invalid
-      eq(
-        'Invalid window id: -1',
-        pcall_err(api.nvim_win_set_config, win, { relative = 'win', win = -1, row = 2, col = 2 })
-      )
+      eq('Invalid window id: -1', pcall_err(api.nvim_win_set_config, win, { win = -1 }))
     end)
 
     it('correctly moves curwin when moving curwin to a different tabpage', function()
@@ -2875,7 +2882,7 @@ describe('API/win', function()
       })
       api.nvim_set_current_tabpage(tab1)
       api.nvim_set_var('result', {})
-      api.nvim_win_set_config(fwin, { relative = 'win', win = tab1_win1, row = 4, col = 4 })
+      api.nvim_win_set_config(fwin, { win = tab1_win1 })
       eq({}, eval('g:result'))
     end)
 
@@ -3584,11 +3591,7 @@ describe('API/win', function()
           split_ok, split_err =
             pcall(vim.api.nvim_win_set_config, 0, { win = other_tp_win, split = 'right' })
 
-          float_ok, float_err = pcall(
-            vim.api.nvim_win_set_config,
-            0,
-            { relative = 'win', win = other_tp_win, row = 0, col = 0 }
-          )
+          float_ok, float_err = pcall(vim.api.nvim_win_set_config, 0, { win = other_tp_win })
         end)
         return win_type, split_ok, split_err, float_ok, float_err
       end)
@@ -3714,11 +3717,7 @@ describe('API/win', function()
       command('autocmd WinLeave * ++once call nvim_win_close(' .. tab2_win .. ', v:true)')
       eq(
         'Target windows were closed',
-        pcall_err(
-          api.nvim_win_set_config,
-          float_win,
-          { relative = 'win', win = tab2_win, row = 0, col = 0 }
-        )
+        pcall_err(api.nvim_win_set_config, float_win, { win = tab2_win })
       )
       eq(float_win, api.nvim_get_current_win())
 
@@ -3727,11 +3726,7 @@ describe('API/win', function()
       command('tabprev | autocmd WinEnter * ++once wincmd p')
       eq(
         ('Failed to switch away from window %d'):format(float_win),
-        pcall_err(
-          api.nvim_win_set_config,
-          float_win,
-          { relative = 'win', win = tab3_win, row = 0, col = 0 }
-        )
+        pcall_err(api.nvim_win_set_config, float_win, { win = tab3_win })
       )
       eq(float_win, api.nvim_get_current_win())
 
@@ -3743,11 +3738,7 @@ describe('API/win', function()
       )
       eq(
         ('Window %d was made non-floating'):format(float_win),
-        pcall_err(
-          api.nvim_win_set_config,
-          float_win,
-          { relative = 'win', win = tab3_win, row = 0, col = 0 }
-        )
+        pcall_err(api.nvim_win_set_config, float_win, { win = tab3_win })
       )
       eq(float_win, api.nvim_get_current_win())
 
@@ -3776,11 +3767,7 @@ describe('API/win', function()
       )
       eq(
         ('Cannot move external window to another tabpage'):format(float_win),
-        pcall_err(
-          api.nvim_win_set_config,
-          float_win,
-          { relative = 'win', win = tab3_win, row = 0, col = 0 }
-        )
+        pcall_err(api.nvim_win_set_config, float_win, { win = tab3_win })
       )
       eq(float_win, api.nvim_get_current_win())
     end)
