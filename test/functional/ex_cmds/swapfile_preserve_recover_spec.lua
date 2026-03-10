@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local tt = require('test.functional.testterm')
 local Screen = require('test.functional.ui.screen')
 
 local uv = vim.uv
@@ -24,6 +25,7 @@ local poke_eventloop = n.poke_eventloop
 local api = n.api
 local retry = t.retry
 local write_file = t.write_file
+local expect_exitcode = tt.expect_exitcode
 
 describe(':recover', function()
   before_each(clear)
@@ -552,12 +554,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'q')
-    retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
-    end)
+    expect_exitcode(1)
   end)
 
   it('(A)bort at second file argument with -p', function()
@@ -585,12 +582,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'a')
-    retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
-    end)
+    expect_exitcode(1)
   end)
 
   it('(Q)uit at file opened by -t', function()
@@ -626,13 +618,6 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'q')
-    retry(nil, nil, function()
-      eq(
-        { '[Process exited 1]' },
-        eval(
-          "[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})->filter({_, s -> !empty(trim(s))})"
-        )
-      )
-    end)
+    expect_exitcode(1)
   end)
 end)

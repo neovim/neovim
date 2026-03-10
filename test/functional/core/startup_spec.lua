@@ -60,7 +60,8 @@ describe('startup', function()
     )
     screen:expect([[
       ^Cannot attach UI of :terminal child to its parent. (Unset $NVIM to skip this check) |
-                                                                                          |*2
+      [Process exited 1]                                                                  |
+                                                                                          |
     ]])
   end)
 

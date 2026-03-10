@@ -185,9 +185,9 @@ local function test_autocmd_no_crash(event, extra_tests)
     ]])
     feed('i')
     env.screen:expect([[
+      48: TEST                                                    |
       49: TEST                                                    |
-                                                                  |
-      [Process exited 0]^                                          |
+      ^[Process exited 0]                                          |
       {5:-- TERMINAL --}                                              |
     ]])
     feed('<CR>')

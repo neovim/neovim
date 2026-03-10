@@ -986,7 +986,7 @@ describe(':terminal buffer', function()
       3: å̲│{1:~                                            }|
           │{1:~                                            }|
       [Pro│{1:~                                            }|
-      cess│{1:~                                            }|
+          │{1:~                                            }|
                                                         |
     ]])
   end)
@@ -1005,10 +1005,10 @@ describe(':terminal buffer', function()
       %d: TEST{MATCH: +}|
       %d: TEST{MATCH: +}|
       %d: TEST{MATCH: +}|
-                                                        |
-      [Process exited 0]^                                |
+      %d: TEST{MATCH: +}|
+      ^[Process exited 0]                                |
       {5:-- TERMINAL --}                                    |
-    ]]):format(count - 4, count - 3, count - 2, count - 1))
+    ]]):format(count - 5, count - 4, count - 3, count - 2, count - 1))
     local lines = api.nvim_buf_get_lines(0, 0, -1, true)
     for i = 1, count do
       eq(('%d: TEST'):format(i - 1), lines[i])
@@ -1313,6 +1313,11 @@ describe(':terminal buffer', function()
         [Process exited 0]                                |
                                                           |*5
       ]])
+      api.nvim_buf_clear_namespace(0, -1, 0, -1)
+      env.screen:expect([[
+        ^ready $                                           |
+                                                          |*6
+      ]])
       env.buf = api.nvim_get_current_buf()
       api.nvim_set_option_value('modified', false, { buf = env.buf })
     end)
@@ -1329,10 +1334,10 @@ describe(':terminal buffer', function()
       local chan = api.nvim_open_term(0, {})
       api.nvim_chan_send(chan, 'TEST')
       fn.chanclose(chan)
+      api.nvim_buf_clear_namespace(0, -1, 0, -1)
       env.screen:expect([[
         ^TEST                                              |
-        [Terminal closed]                                 |
-                                                          |*5
+                                                          |*6
       ]])
       env.buf = api.nvim_get_current_buf()
       api.nvim_set_option_value('modified', false, { buf = env.buf })

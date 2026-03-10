@@ -2519,8 +2519,8 @@ describe('TUI', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
       Nvim: Caught deadly signal 'SIGTERM'              |
-                                                        |
-      [Process exited 1]^                                |
+      ^                                                  |
+      [Process exited 1]                                |
                                                         |*3
       {5:-- TERMINAL --}                                    |
     ]])
@@ -2554,8 +2554,8 @@ describe('TUI', function()
     ]]
     child_session:notify('nvim_exec_lua', code, {})
     screen:expect([[
-                                                        |
-      [Process exited 0]^                                |
+      ^                                                  |
+      [Process exited 0]                                |
                                                         |*4
       {5:-- TERMINAL --}                                    |
     ]])
@@ -2970,8 +2970,8 @@ describe('TUI', function()
       :w testF                                          |
       :q                                                |
       abc                                               |
-                                                        |
-      [Process exited 0]^                                |
+      ^                                                  |
+      [Process exited 0]                                |
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -4237,8 +4237,8 @@ describe('TUI client', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen_client:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
       Nvim: Caught deadly signal 'SIGTERM'              |
-                                                        |
-      [Process exited 1]^                                |
+      ^                                                  |
+      [Process exited 1]                                |
                                                         |*3
       {5:-- TERMINAL --}                                    |
     ]])
@@ -4362,8 +4362,8 @@ describe('TUI client', function()
 
     screen:expect([[
       Remote ui failed to start: {MATCH:.*}|
-                                                                  |
-      [Process exited 1]^                                          |
+      ^                                                            |
+      [Process exited 1]                                          |
                                                                   |*3
       {5:-- TERMINAL --}                                              |
     ]])
