@@ -2301,15 +2301,14 @@ bool set_swapcommand(char *command, linenr_T newlnum)
   if ((command == NULL && newlnum <= 0) || *get_vim_var_str(VV_SWAPCOMMAND) != NUL) {
     return false;
   }
-  const size_t len = (command != NULL) ? strlen(command) + 3 : 30;
-  char *const p = xmalloc(len);
-  if (command != NULL) {
-    vim_snprintf(p, len, ":%s\r", command);
-  } else {
-    vim_snprintf(p, len, "%" PRId64 "G", (int64_t)newlnum);
-  }
-  set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-  xfree(p);
+  const size_t valsize = (command != NULL) ? strlen(command) + 3 : 30;
+  String val;
+  val.data = xmalloc(valsize);
+  val.size = (command != NULL)
+             ? vim_snprintf_safelen(val.data, valsize, ":%s\r", command)
+             : vim_snprintf_safelen(val.data, valsize, "%" PRId64 "G", (int64_t)newlnum);
+  set_vim_var_string(VV_SWAPCOMMAND, val.data, (ptrdiff_t)val.size);
+  xfree(val.data);
   return true;
 }
 

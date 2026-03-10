@@ -1720,7 +1720,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
     int level = MIN(foldinfo.fi_level, (int)sizeof(dashes) - 1);
     memset(dashes, '-', (size_t)level);
     dashes[level] = NUL;
-    set_vim_var_string(VV_FOLDDASHES, dashes, -1);
+    set_vim_var_string(VV_FOLDDASHES, dashes, level);
     set_vim_var_nr(VV_FOLDLEVEL, (varnumber_T)level);
 
     // skip evaluating 'foldtext' on errors

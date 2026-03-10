@@ -748,8 +748,8 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
       }
 
       // Let the SwapExists event know what tag we are jumping to.
-      vim_snprintf(IObuff, IOSIZE, ":ta %s\r", name);
-      set_vim_var_string(VV_SWAPCOMMAND, IObuff, -1);
+      size_t IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, ":ta %s\r", name);
+      set_vim_var_string(VV_SWAPCOMMAND, IObuff, (ptrdiff_t)IObufflen);
 
       // Jump to the desired match.
       int i = jumpto_tag(matches[cur_match], forceit, true);

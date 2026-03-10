@@ -1546,10 +1546,10 @@ scripterror:
 
   // If there is a "+123" or "-c" command, set v:swapcommand to the first one.
   if (parmp->n_commands > 0) {
-    const size_t swcmd_len = strlen(parmp->commands[0]) + 3;
-    char *const swcmd = xmalloc(swcmd_len);
-    snprintf(swcmd, swcmd_len, ":%s\r", parmp->commands[0]);
-    set_vim_var_string(VV_SWAPCOMMAND, swcmd, -1);
+    const size_t swcmd_len = strlen(parmp->commands[0]) + 2;
+    char *const swcmd = xmalloc(swcmd_len + 1);
+    snprintf(swcmd, swcmd_len + 1, ":%s\r", parmp->commands[0]);
+    set_vim_var_string(VV_SWAPCOMMAND, swcmd, (ptrdiff_t)swcmd_len);
     xfree(swcmd);
   }
 
