@@ -292,8 +292,8 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
   }
 }
 
-// Avoid starting a new message for each chunk and adding message to history in msg_keep().
-static bool is_multihl = false;
+// Ensure a single msg_show event, msg_list and history entry for entire multihl message.
+static int is_multihl = 0;
 
 /// Format a progress message, adding title and percent if given.
 ///
@@ -360,7 +360,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   if (kind != NULL) {
     msg_ext_set_kind(kind);
   }
-  is_multihl = true;
   msg_ext_skip_flush = true;
 
   // provide a new id if not given
@@ -384,6 +383,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
 
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
+    is_multihl++;
     if (err) {
       emsg_multiline(chunk.text.data, kind, chunk.hl_id, true);
     } else {
@@ -397,7 +397,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
 
   msg_ext_skip_flush = false;
-  is_multihl = false;
+  is_multihl = 0;
   no_wait_return--;
   msg_end();
 
@@ -776,7 +776,7 @@ bool emsg_multiline(const char *s, const char *kind, int hl_id, bool multiline)
     // be found, the message will be displayed later on.)  "ignore" is set
     // when the message should be ignored completely (used for the
     // interrupt message).
-    if (cause_errthrow(s, multiline, severe, &ignore)) {
+    if (cause_errthrow(s, multiline, is_multihl > 1, severe, &ignore)) {
       if (!ignore) {
         did_emsg++;
       }
