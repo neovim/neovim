@@ -1848,8 +1848,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---     Default is `"left"`.
 --- - vertical: Split vertically `:vertical`.
 --- - width: Window width (in character cells). Minimum of 1.
---- - win: `window-ID` window to split, or relative window when creating a float (relative="win").
----     When splitting, negative value works like `:topleft`, `:botright`.
+--- - win: `window-ID` target window. Can be in a different tab page. Determines the window to
+---     split (negative values act like `:topleft`, `:botright`), the relative window for a
+---     `relative="win"` float, or just the target tab page (inferred from the window) for others.
 --- - zindex: Stacking order. floats with higher `zindex` go on top on
 ---             floats with lower indices. Must be larger than zero. The
 ---             following screen elements have hard-coded z-indices:

@@ -180,8 +180,9 @@
 ///       Default is `"left"`.
 ///   - vertical: Split vertically |:vertical|.
 ///   - width: Window width (in character cells). Minimum of 1.
-///   - win: |window-ID| window to split, or relative window when creating a float (relative="win").
-///       When splitting, negative value works like |:topleft|, |:botright|.
+///   - win: |window-ID| target window. Can be in a different tab page. Determines the window to
+///       split (negative values act like |:topleft|, |:botright|), the relative window for a
+///       `relative="win"` float, or just the target tab page (inferred from the window) for others.
 ///   - zindex: Stacking order. floats with higher `zindex` go on top on
 ///               floats with lower indices. Must be larger than zero. The
 ///               following screen elements have hard-coded z-indices:
@@ -745,6 +746,16 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   }
 
   if (was_split && !to_split) {
+    win_T *parent = find_window_by_handle(fconfig.window, err);
+    if (!parent) {
+      return;
+    }
+    // TODO(seandewar): support this, preferably via win_config_float_tp.
+    if (!win_valid(parent)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Cannot configure split into float in another tabpage");
+      return;
+    }
     if (!win_new_float(win, false, fconfig, err)) {
       return;
     }
@@ -1351,33 +1362,31 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     goto fail;
   }
 
-  if (relative_is_win || is_split) {
-    if (wp && relative_is_win) {
-      win_T *target_win = find_window_by_handle(config->win, err);
-      if (!target_win) {
-        goto fail;
-      }
-
-      if (target_win == wp) {
-        api_set_error(err, kErrorTypeException, "floating window cannot be relative to itself");
-        goto fail;
-      }
+  if (relative_is_win || (HAS_KEY_X(config, win) && !is_split && wp && wp->w_floating
+                          && fconfig->relative == kFloatRelativeWindow)) {
+    // When relative=win is given, missing win field means win=0.
+    win_T *target_win = find_window_by_handle(config->win, err);
+    if (!target_win) {
+      goto fail;
     }
-    fconfig->window = curwin->handle;
+    if (target_win == wp) {
+      api_set_error(err, kErrorTypeException, "floating window cannot be relative to itself");
+      goto fail;
+    }
+    fconfig->window = target_win->handle;
+  } else {
+    // Handle is not validated here, as win_config_split can accept negative values.
     if (HAS_KEY_X(config, win)) {
-      if (config->win > 0) {
-        fconfig->window = config->win;
+      if (!is_split && !has_relative && (!wp || !wp->w_floating)) {
+        api_set_error(err, kErrorTypeValidation,
+                      "non-float with 'win' requires at least 'split' or 'vertical'");
+        goto fail;
       }
+      fconfig->window = config->win;
     }
-  } else if (HAS_KEY_X(config, win)) {
-    if (has_relative) {
-      api_set_error(err, kErrorTypeValidation,
-                    "'win' key is only valid with relative='win' and relative=''");
-      goto fail;
-    } else if (!is_split) {
-      api_set_error(err, kErrorTypeValidation,
-                    "non-float with 'win' requires at least 'split' or 'vertical'");
-      goto fail;
+    // Resolve, but skip validating. E.g: win_config_split accepts negative "win".
+    if (fconfig->window == 0) {
+      fconfig->window = curwin->handle;
     }
   }
 
