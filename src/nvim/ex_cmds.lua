@@ -1755,6 +1755,12 @@ M.cmds = {
     func = 'ex_mkspell',
   },
   {
+    command = 'mktab',
+    flags = bit.bor(BANG, FILE1, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_mkrc',
+  },
+  {
     command = 'mkvimrc',
     flags = bit.bor(BANG, FILE1, TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',

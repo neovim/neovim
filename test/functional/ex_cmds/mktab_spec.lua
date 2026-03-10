@@ -20,7 +20,7 @@ local function _create_and_feed_session(temp_file)
     buf_file = fn.tempname()
     temp_file = fn.tempname() .. ".vim"
     _scommand("w " .. buf_file)
-    command(":mksession " .. temp_file)
+    command(":mktab " .. temp_file)
     return temp_file
 end
 
