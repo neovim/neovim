@@ -3,7 +3,6 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
 
-local fmt = string.format
 local dedent = t.dedent
 local assert_alive = n.assert_alive
 local NIL = vim.NIL
@@ -2830,6 +2829,8 @@ describe('API', function()
     end)
 
     it('stream=job :terminal channel', function()
+      local screen = Screen.new(80, 24)
+
       command(':terminal')
       eq(1, api.nvim_get_current_buf())
       eq(3, api.nvim_get_option_value('channel', { buf = 1 }))
@@ -2854,9 +2855,10 @@ describe('API', function()
       eq(info, api.nvim_get_chan_info(3))
 
       -- :terminal with args + running process.
+      -- Don't use a shell here, so that SIGHUP handling doesn't depend on the shell.
       command('enew')
-      local progpath_esc = eval('shellescape(v:progpath)')
-      fn.jobstart(('%s -u NONE -i NONE'):format(progpath_esc), {
+      local argv = { n.nvim_prog, '-u', 'NONE', '-i', 'NONE' }
+      fn.jobstart(argv, {
         term = true,
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       })
@@ -2864,16 +2866,7 @@ describe('API', function()
       local expected2 = {
         stream = 'job',
         id = 4,
-        argv = (is_os('win') and {
-          eval('&shell'),
-          '/s',
-          '/c',
-          fmt('"%s -u NONE -i NONE"', progpath_esc),
-        } or {
-          eval('&shell'),
-          eval('&shellcmdflag'),
-          fmt('%s -u NONE -i NONE', progpath_esc),
-        }),
+        argv = argv,
         mode = 'terminal',
         buffer = 2,
         pty = '?',
@@ -2883,11 +2876,14 @@ describe('API', function()
       expected2.pty = actual2.pty
       eq(expected2, actual2)
 
+      -- Make sure Nvim TUI is started (which is after registering SIGHUP handler).
+      screen:expect({ any = 'Nvim is open source and freely distributable' })
+
       -- :terminal with args + stopped process.
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)') -- Wait.
       expected2.pty = (is_os('win') and '?' or '') -- pty stream was closed.
-      expected2.exitcode = (is_os('win') and 143 or 129)
+      expected2.exitcode = (is_os('win') and 143 or 1)
       eq(expected2, eval('nvim_get_chan_info(&channel)'))
     end)
   end)
