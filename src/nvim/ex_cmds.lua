@@ -2767,8 +2767,8 @@ M.cmds = {
   },
   {
     command = 'tab',
-    flags = bit.bor(NEEDARG, EXTRA, NOTRLCOM),
-    addr_type = 'ADDR_NONE',
+    flags = bit.bor(RANGE, ZEROR, NEEDARG, EXTRA, NOTRLCOM),
+    addr_type = 'ADDR_TABS',
     func = 'ex_wrongmodifier',
   },
   {
