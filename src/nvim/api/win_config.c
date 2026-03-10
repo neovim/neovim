@@ -677,17 +677,9 @@ static bool win_config_float_tp(win_T *win, const Dict(win_config) *config,
     // Check again, in case autocommands above moved windows to the same tabpage.
     if (win_tp != parent_tp) {
       win_remove(win, win_tp == curtab ? NULL : win_tp);
-      win_T *after;
-      if (parent_tp == curtab) {
-        after = lastwin_nofloating();
-      } else {
-        after = parent_tp->tp_lastwin;
-        while (after->w_floating) {
-          after = after->w_prev;
-        }
-      }
+      tabpage_T *append_tp = parent_tp == curtab ? NULL : parent_tp;
+      win_append(lastwin_nofloating(append_tp), win, append_tp);
 
-      win_append(after, win, parent_tp == curtab ? NULL : parent_tp);
       // If `win` was the curwin of its old tabpage, select a new curwin for it.
       if (win_tp != curtab && win_tp->tp_curwin == win) {
         win_tp->tp_curwin = win_float_find_altwin(win, win_tp);

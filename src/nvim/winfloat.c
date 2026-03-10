@@ -46,7 +46,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
 {
   if (wp == NULL) {
     tabpage_T *tp = NULL;
-    win_T *tp_last = last ? lastwin : lastwin_nofloating();
+    win_T *tp_last = last ? lastwin : lastwin_nofloating(NULL);
     if (fconfig.window != 0) {
       assert(!last);
       win_T *parent_wp = find_window_by_handle(fconfig.window, err);
@@ -57,10 +57,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       if (!tp) {
         return NULL;
       }
-      tp_last = tp == curtab ? lastwin : tp->tp_lastwin;
-      while (tp_last->w_floating && tp_last->w_prev) {
-        tp_last = tp_last->w_prev;
-      }
+      tp_last = lastwin_nofloating(tp == curtab ? NULL : tp);
     }
     wp = win_alloc(tp_last, false);
     win_init(wp, curwin, 0);
@@ -77,7 +74,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
   } else {
     assert(!last);
     assert(!wp->w_floating);
-    if (firstwin == wp && lastwin_nofloating() == wp) {
+    if (firstwin == wp && lastwin_nofloating(NULL) == wp) {
       // last non-float
       api_set_error(err, kErrorTypeException,
                     "Cannot change last window into float");
@@ -105,7 +102,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
     XFREE_CLEAR(wp->w_frame);
     win_comp_pos();  // recompute window positions
     win_remove(wp, NULL);
-    win_append(lastwin_nofloating(), wp, NULL);
+    win_append(lastwin_nofloating(NULL), wp, NULL);
   }
   wp->w_floating = true;
   wp->w_status_height = wp->w_p_stl && *wp->w_p_stl != NUL
