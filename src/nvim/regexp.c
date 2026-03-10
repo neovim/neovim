@@ -99,6 +99,9 @@ typedef struct {
   uint8_t reganch;
   uint8_t *regmust;
   int regmlen;
+#ifdef REGEXP_DEBUG
+  int regsz;
+#endif
   uint8_t reghasz;
   uint8_t program[];
 } bt_regprog_T;
@@ -5449,6 +5452,9 @@ static regprog_T *bt_regcomp(uint8_t *expr, int re_flags)
   // Allocate space.
   bt_regprog_T *r = xmalloc(offsetof(bt_regprog_T, program) + (size_t)regsize);
   r->re_in_use = false;
+#ifdef REGEXP_DEBUG
+  r->regsz = regsize;
+#endif
 
   // Second pass: emit code.
   regcomp_start(expr, re_flags);
@@ -7832,10 +7838,10 @@ static void regdump(uint8_t *pattern, bt_regprog_T *r)
   s = &r->program[1];
   // Loop until we find the END that isn't before a referred next (an END
   // can also appear in a NOMATCH operand).
-  while (op != END || s <= end) {
+  while ((op != END || s <= end) && s < r->program + r->regsz) {
     op = OP(s);
     fprintf(f, "%2d%s", (int)(s - r->program), regprop(s));     // Where, what.
-    next = regnext(s);
+    next = (s + 3 <= r->program + r->regsz) ? regnext(s) : NULL;
     if (next == NULL) {         // Next ptr.
       fprintf(f, "(0)");
     } else {
@@ -7859,13 +7865,18 @@ static void regdump(uint8_t *pattern, bt_regprog_T *r)
       s += 5;
     }
     s += 3;
+    if (op == MULTIBYTECODE) {
+      fprintf(f, " mbc=%d", utf_ptr2char(s));
+      s += utfc_ptr2len(s);
+    }
     if (op == ANYOF || op == ANYOF + ADD_NL
         || op == ANYBUT || op == ANYBUT + ADD_NL
         || op == EXACTLY) {
       // Literal string, where present.
       fprintf(f, "\nxxxxxxxxx\n");
-      while (*s != NUL) {
-        fprintf(f, "%c", *s++);
+      while (*s != NUL && s < r->program + r->regsz) {
+        fprintf(f, "%c", *s);
+        s += utfc_ptr2len(s);  // advance by full char including combining
       }
       fprintf(f, "\nxxxxxxxxx\n");
       s++;
