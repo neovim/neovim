@@ -1273,6 +1273,17 @@ static CursorShape tui_cursor_decode_shape(const char *shape_str)
   return shape;
 }
 
+/// Reset terminal cursor style. This may be different across terminals and
+/// terminal configs. Also, it depends on what escape sequence Unibilium or
+/// terminfo_builtin.h have set for kTerm_reset_cursor_style (which can also
+/// depend on other runtime logic). It doesn't necessarily send out a
+/// `\x1b[0 q` (terminal default) sequence.
+/// See https://ghostty.org/docs/vt/csi/decscusr for more details.
+static void tui_cursor_reset_style(TUIData *tui)
+{
+  terminfo_out(tui, kTerm_reset_cursor_style);
+}
+
 static cursorentry_T decode_cursor_entry(Dict args)
 {
   cursorentry_T r = shape_table[0];
@@ -1298,7 +1309,8 @@ void tui_mode_info_set(TUIData *tui, bool guicursor_enabled, Array args)
 {
   cursor_style_enabled = guicursor_enabled;
   if (!guicursor_enabled) {
-    return;  // Do not send cursor style control codes.
+    tui_cursor_reset_style(tui);
+    return;
   }
 
   assert(args.size);
@@ -1355,6 +1367,7 @@ void tui_mouse_off(TUIData *tui)
 static void tui_set_mode(TUIData *tui, ModeShape mode)
 {
   if (!cursor_style_enabled) {
+    tui_cursor_reset_style(tui);
     return;
   }
   cursorentry_T c = tui->cursor_shapes[mode];
