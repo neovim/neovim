@@ -1126,6 +1126,30 @@ describe('float window', function()
     neq(tp1, api.nvim_win_get_tabpage(w6))
   end)
 
+  it('compositor clears old position when configuring reallocates grid #38143', function()
+    local screen = Screen.new()
+    local w1 = api.nvim_open_win(0, true, { relative = 'editor', border = 'single', row = 0, col = 0, width = 5, height = 5 })
+    screen:expect([[
+      {2:┌─────┐}                                              |
+      {2:│}{4:^     }{2:│}{1:                                              }|
+      {2:│}{11:~    }{2:│}{1:                                              }|*4
+      {2:└─────┘}{1:                                              }|
+      {1:~                                                    }|*6
+                                                           |
+    ]])
+    api.nvim_win_set_config(w1, { relative = 'cursor', row = 1, col = 1, height = 4, width = 4 })
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|
+      {1:~ }{2:┌────┐}{1:                                             }|
+      {1:~ }{2:│}{4:^    }{2:│}{1:                                             }|
+      {1:~ }{2:│}{11:~   }{2:│}{1:                                             }|*3
+      {1:~ }{2:└────┘}{1:                                             }|
+      {1:~                                                    }|*5
+                                                           |
+    ]])
+  end)
+
   local function with_ext_multigrid(multigrid, send_mouse_grid)
     local screen, attrs
     before_each(function()
