@@ -2134,6 +2134,21 @@ describe('extmark decorations', function()
     }
   end)
 
+  it('pads virtual text after listchars eol char #26101', function()
+    screen:try_resize(50, 5)
+    insert('hello')
+    command('set list listchars=eol:$')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_text = { { 'test', 'ErrorMsg' } },
+      virt_text_pos = 'eol',
+    })
+    screen:expect([[
+      hell^o{1:$} {4:test}                                       |
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+  end)
+
   it('does not crash when deleting a cleared buffer #15212', function()
     exec_lua [[
       ns = vim.api.nvim_create_namespace("myplugin")

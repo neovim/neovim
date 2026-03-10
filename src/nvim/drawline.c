@@ -2805,7 +2805,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
       // Make sure alignment is the same regardless
       // if listchars=eol:X is used or not.
-      const int eol_skip = (lcs_eol_todo && eol_hl_off == 0 ? 1 : 0);
+      const int eol_skip = (eol_hl_off == 0 ? 1 : 0);
 
       if (has_decor) {
         decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
