@@ -392,8 +392,26 @@ describe('vim.lsp.codelens', function()
           }                                                |
       }                                                    |
                                                            |
+      {1:   ▶︎ Run }                                            |
       ^                                                     |
-      {1:~                                                    }|*6
+      {1:~                                                    }|*5
+      4 fewer lines                                        |
+    ]])
+    feed('dd')
+    screen:expect([[
+      {1:       1 implementation}                              |
+      struct S {                                           |
+          a: i32,                                          |
+          b: String,                                       |
+      }                                                    |
+                                                           |
+      impl S {                                             |
+          fn new(a: i32, b: String) -> Self {              |
+              S { a, b }                                   |
+          }                                                |
+      }                                                    |
+      ^                                                     |
+      {1:~                                                    }|*7
       4 fewer lines                                        |
     ]])
   end)
