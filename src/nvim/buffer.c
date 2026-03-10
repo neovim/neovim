@@ -3692,7 +3692,7 @@ void ex_buffer_all(exarg_T *eap)
   // Don't execute Win/Buf Enter/Leave autocommands here.
   autocmd_no_enter++;
   // lastwin may be aucmd_win
-  win_enter(lastwin_nofloating(), false);
+  win_enter(lastwin_nofloating(NULL), false);
   autocmd_no_leave++;
   for (buf_T *buf = firstbuf; buf != NULL && open_wins < count; buf = buf->b_next) {
     // Check if this buffer needs a window
