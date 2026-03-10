@@ -63,6 +63,22 @@ function M.read_chunk(file, size)
   return tostring(chunk)
 end
 
+--- @param path string?
+--- @return boolean
+function M.is_home_dir(path)
+  if type(path) ~= 'string' or path == '' then
+    return false
+  end
+
+  --- @type string?
+  local home = vim.env.HOME
+  if home == nil or home == '' then
+    home = vim.uv.os_homedir()
+  end
+
+  return type(home) == 'string' and home ~= '' and vim.fs.normalize(path) == vim.fs.normalize(home)
+end
+
 --- Check if a range in a buffer is inside a Lua codeblock via treesitter injection.
 --- Used by :source to detect Lua code in non-Lua files (e.g., vimdoc).
 --- @param bufnr integer Buffer number

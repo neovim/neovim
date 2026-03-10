@@ -30,6 +30,7 @@ local log = lsp.log
 local protocol = lsp.protocol
 local util = lsp.util
 local changetracking = lsp._changetracking
+local core_util = require('vim._core.util')
 
 -- Export these directly from rpc.
 ---@nodoc
@@ -71,22 +72,6 @@ local format_line_ending = {
   ['dos'] = '\r\n',
   ['mac'] = '\r',
 }
-
----@param path string?
----@return boolean
-local function is_home_dir(path)
-  if type(path) ~= 'string' or path == '' then
-    return false
-  end
-
-  ---@type string?
-  local home = vim.env.HOME
-  if home == nil or home == '' then
-    home = vim.uv.os_homedir()
-  end
-
-  return type(home) == 'string' and home ~= '' and vim.fs.normalize(path) == vim.fs.normalize(home)
-end
 
 ---@param bufnr integer
 ---@return string
@@ -681,7 +666,11 @@ function lsp.start(config, opts)
     config = vim.deepcopy(config)
 
     config.root_dir = vim.fs.root(bufnr, opts._root_markers)
-    if is_home_dir(config.root_dir) then
+    if core_util.is_home_dir(config.root_dir) then
+      vim.notify_once(
+        'Ignoring inferred LSP root_dir that resolves to $HOME; set root_dir explicitly to use $HOME as a workspace.',
+        vim.log.levels.WARN
+      )
       config.root_dir = nil
     end
   end

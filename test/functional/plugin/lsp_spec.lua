@@ -7109,6 +7109,16 @@ describe('LSP', function()
       write_file(marker, '')
       write_file(target, '')
 
+      exec_lua([[
+        _G.__notify_once_msgs = {}
+        vim.notify_once = (function(overridden)
+          return function(msg, level, opts)
+            table.insert(_G.__notify_once_msgs, msg)
+            return overridden(msg, level, opts)
+          end
+        end)(vim.notify_once)
+      ]])
+
       exec_lua(function()
         local server = _G._create_server({
           handlers = {
@@ -7143,6 +7153,13 @@ describe('LSP', function()
           end)
         )
       end)
+
+      eq(
+        'Ignoring inferred LSP root_dir that resolves to $HOME; set root_dir explicitly to use $HOME as a workspace.',
+        exec_lua(function()
+          return _G.__notify_once_msgs[#_G.__notify_once_msgs]
+        end)
+      )
     end)
 
     it('vim.lsp.is_enabled()', function()
