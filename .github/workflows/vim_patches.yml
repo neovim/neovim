@@ -4,6 +4,8 @@ on:
     - cron: '3 3 * * *'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   update-vim-patches:
     runs-on: ubuntu-latest
@@ -18,12 +20,14 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/checkout@v6
         with:
           repository: vim/vim
           path: ${{ env.VIM_SOURCE_DIR }}
           fetch-depth: 0
+          persist-credentials: false
 
       - run: sudo apt-get install libfuse2
 

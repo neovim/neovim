@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
   issue_comment:
 
+permissions: {}
+
 jobs:
   close:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -14,6 +16,9 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: actions/github-script@v8
         with:
           script: |
@@ -28,6 +33,9 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: actions/github-script@v8
         with:
           script: |

@@ -9,6 +9,9 @@ on:
         type: number
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   windows:
     runs-on: windows-2025
@@ -19,6 +22,9 @@ jobs:
         test: [functional, old]
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Build deps
@@ -27,8 +33,10 @@ jobs:
           cmake --build .deps
 
       - name: Build
+        env:
+          BUILD_FLAGS: ${{ inputs.build_flags }}
         run: |
-          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' ${{ inputs.build_flags }}
+          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' $env:BUILD_FLAGS
           cmake --build build
 
       - name: Install test deps
@@ -66,7 +74,7 @@ jobs:
           exit $exitCode
 
       - if: ${{ matrix.test == 'old' }}
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@4f806de0a5a7294ffabaff804b38a9b435a73bda # v2.30.0
         with:
           update: true
           install: unzip

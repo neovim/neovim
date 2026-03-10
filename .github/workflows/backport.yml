@@ -2,6 +2,9 @@ name: backport
 on:
   pull_request_target:
     types: [closed, labeled]
+
+permissions: {}
+
 jobs:
   backport:
     permissions:
@@ -12,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - uses: actions/create-github-app-token@v2
         id: app-token
@@ -21,7 +26,7 @@ jobs:
 
       - name: Create backport PR
         id: backport
-        uses: korthout/backport-action@v4
+        uses: korthout/backport-action@4aaf0e03a94ff0a619c9a511b61aeb42adea5b02 # v4.2.0
         with:
           pull_title: "${pull_title}"
           label_pattern: "^ci:backport ([^ ]+)$"
@@ -43,4 +48,6 @@ jobs:
         if: ${{ steps.backport.outputs.was_successful == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr merge --rebase --auto ${{ steps.backport.outputs.created_pull_numbers }}
+          CREATED_PULL_NUMBERS: ${{ steps.backport.outputs.created_pull_numbers }}
+        run: |
+          gh pr merge --rebase --auto "${CREATED_PULL_NUMBERS}"

@@ -12,6 +12,9 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
 
+permissions:
+  contents: read
+
 # Build on the oldest supported images, so we have broader compatibility
 jobs:
   setup:
@@ -59,12 +62,20 @@ jobs:
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
+          persist-credentials: false
       - run: ./.github/scripts/install_deps.sh
       - run: sudo apt-get install -y libfuse2
-      - run: echo "CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}" >> $GITHUB_ENV
+
+      - run: echo "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}" >> $GITHUB_ENV
+        env:
+          CMAKE_BUILD_TYPE: ${{ needs.setup.outputs.build_type }}
+
       - name: appimage
+        env:
+          APPIMAGE_TAG: ${{ needs.setup.outputs.appimage_tag }}
         run:  |
-          ./scripts/genappimage.sh ${{ needs.setup.outputs.appimage_tag }}
+          ./scripts/genappimage.sh "${APPIMAGE_TAG}"
+
       - name: tar.gz
         run: cpack --config build/CPackConfig.cmake -G TGZ
       - uses: actions/upload-artifact@v7
@@ -99,25 +110,27 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     env:
+      CMAKE_BUILD_TYPE: ${{ needs.setup.outputs.build_type }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
     steps:
       - uses: actions/checkout@v6
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
+          persist-credentials: false
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh
 
       - name: Build deps
         run: |
           cmake -S cmake.deps -B .deps -G Ninja \
-            -D CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} \
+            -D CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" \
             -D CMAKE_FIND_FRAMEWORK=NEVER
           cmake --build .deps
       - name: Build neovim
         run: |
           cmake -B build -G Ninja \
-            -D CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} \
+            -D CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" \
             -D ENABLE_LIBINTL=OFF \
             -D CMAKE_FIND_FRAMEWORK=NEVER
           cmake --build build
@@ -142,11 +155,14 @@ jobs:
             arch: arm64
             archive_name: nvim-win-arm64
     runs-on: ${{ matrix.runner }}
+    env:
+      CMAKE_BUILD_TYPE: ${{ needs.setup.outputs.build_type }}
     steps:
       - uses: actions/checkout@v6
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
+          persist-credentials: false
       - run: .github/scripts/env.ps1
         env:
           BUILD_ARCH: ${{ matrix.arch }}
@@ -156,12 +172,14 @@ jobs:
           Expand-Archive -Path "wix314-binaries.zip" -DestinationPath "C:/wix"
           echo "C:\wix" >> $env:GITHUB_PATH
       - name: Build deps
+        shell: pwsh
         run: |
-          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
+          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE="${env:CMAKE_BUILD_TYPE}"
           cmake --build .deps
       - name: Build package
+        shell: pwsh
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE="${env:CMAKE_BUILD_TYPE}"
           cmake --build build --target package
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -184,6 +202,8 @@ jobs:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - uses: actions/download-artifact@v8
 
@@ -191,25 +211,31 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gettext-base
 
       - if: github.event_name == 'workflow_dispatch'
-        run: echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+        env:
+          TAG_NAME: ${{ github.event.inputs.tag_name }}
+        run: echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+
       - if: github.event_name == 'schedule'
         run: echo 'TAG_NAME=nightly' >> $GITHUB_ENV
+
       - if: github.event_name == 'push'
         run: |
-          TAG_NAME=${{ github.ref }}
-          echo "TAG_NAME=${TAG_NAME#refs/tags/}" >> $GITHUB_ENV
+          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
       - if: env.TAG_NAME == 'nightly'
         run: |
           (echo 'SUBJECT=Nvim development (prerelease) build';
            echo 'PRERELEASE=--prerelease') >> $GITHUB_ENV
           gh release delete nightly --yes || true
           git push origin :nightly || true
+
       - if: env.TAG_NAME != 'nightly'
         run: |
           (echo 'SUBJECT=Nvim release build';
            echo 'PRERELEASE=') >> $GITHUB_ENV
           gh release delete stable --yes || true
           git push origin :stable || true
+
       - name: Publish release
         env:
           NVIM_VERSION: ${{ needs.linux.outputs.version }}

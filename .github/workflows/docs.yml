@@ -2,6 +2,9 @@ name: docs
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -11,6 +14,8 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
 
       - name: Generate docs

@@ -2,6 +2,9 @@ name: "labeler: PR"
 on:
   pull_request_target:
     types: [opened]
+
+permissions: {}
+
 jobs:
   changed-files:
     runs-on: ubuntu-latest
@@ -10,6 +13,9 @@ jobs:
       pull-requests: write
     steps:
     - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+
     - uses: actions/labeler@v6
       with:
         configuration-path: .github/scripts/labeler_configuration.yml

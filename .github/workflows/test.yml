@@ -10,6 +10,9 @@ on:
       - 'release-[0-9]+.[0-9]+'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -34,6 +37,9 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Install stylua
@@ -56,7 +62,9 @@ jobs:
       - if: "!cancelled()"
         name: Determine if run should be aborted
         id: abort_job
-        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: echo "status=${JOB_STATUS}" >> $GITHUB_OUTPUT
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: stylua
@@ -97,6 +105,9 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
       - name: Build third-party deps
         run: |
@@ -142,6 +153,9 @@ jobs:
       NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
         with:
           install_flags: "--test"
@@ -163,13 +177,17 @@ jobs:
         run: cmake -E rm -rf -- .git
 
       - name: Build third-party deps
+        env:
+          BUILD_DEPS_FLAGS: ${{ matrix.build.deps_flags }}
         run: |
-          cmake -S cmake.deps --preset ci -D CMAKE_BUILD_TYPE=Debug ${{ matrix.build.deps_flags }}
+          cmake -S cmake.deps --preset ci -D CMAKE_BUILD_TYPE=Debug $BUILD_DEPS_FLAGS
           cmake --build .deps
 
       - name: Build
+        env:
+          BUILD_FLAGS: ${{ matrix.build.flags }}
         run: |
-          cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
+          cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX $BUILD_FLAGS
           cmake --build build
 
       - if: ${{ matrix.test == 'unittest' }}
@@ -236,7 +254,10 @@ jobs:
       OPTS: -Doptimize=ReleaseSafe
     steps:
       - uses: actions/checkout@v6
-      - uses: mlugg/setup-zig@v2
+        with:
+          persist-credentials: false
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
           version: 0.15.2
       - run: sudo apt-get install -y inotify-tools
@@ -256,7 +277,10 @@ jobs:
     name: build using zig build (macos 15)
     steps:
       - uses: actions/checkout@v6
-      - uses: mlugg/setup-zig@v2
+        with:
+          persist-credentials: false
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
           version: 0.15.2
 
@@ -270,7 +294,10 @@ jobs:
     name: build using zig build (windows)
     steps:
       - uses: actions/checkout@v6
-      - uses: mlugg/setup-zig@v2
+        with:
+          persist-credentials: false
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
           version: 0.15.2
 
@@ -290,6 +317,9 @@ jobs:
       CC: gcc
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Install dependencies
