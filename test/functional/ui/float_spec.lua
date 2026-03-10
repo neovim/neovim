@@ -11869,6 +11869,220 @@ describe('float window', function()
         ]])
       end
     end)
+
+    it('redrawn after moving tabpages via nvim_win_set_config()', function()
+      local tab1_win = api.nvim_get_current_win()
+      fn.setline(1, 'hello')
+      command('tab split')
+      local tab2_win = api.nvim_get_current_win()
+      -- Schedule an UPD_NOT_VALID redraw, but in one event move the float out of curtab before it's
+      -- handled. Do not flush before then.
+      local float = exec_lua(function()
+        local float = vim.api.nvim_open_win(0, true, { relative = 'editor', width = 10, height = 5, row = 0, col = 0 })
+        vim.api.nvim__redraw({ valid = false, flush = false })
+        vim.api.nvim_win_set_config(float, { relative = 'win', win = tab1_win, row = 1, col = 1 })
+        return float
+      end)
+
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: }{10:2}{9:+ [No Name] }{3: + [No Name] }{5:            }{9:X}|
+            [4:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+            hello                                   |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            ^hello                                   |
+            {0:~                                       }|*4
+          ]],
+        })
+      else
+        screen:expect([[
+          {9: }{10:2}{9:+ [No Name] }{3: + [No Name] }{5:            }{9:X}|
+          ^hello                                   |
+          {0:~                                       }|*4
+                                                  |
+        ]])
+      end
+
+      -- Importantly, want tabline redrawn and float's hl attribs to be correct here.
+      api.nvim_win_set_config(float, { relative = 'win', win = 0, row = 1, col = 1 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: + [No Name] }{3: }{11:2}{3:+ [No Name] }{5:            }{9:X}|
+            [4:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+            hello                                   |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            ^hello                                   |
+            {0:~                                       }|*4
+          ## grid 5
+            {1:hello     }|
+            {2:~         }|*4
+          ]],
+          float_pos = {
+            [5] = { 1002, 'NW', 4, 1, 1, true, 50, 1, 1, 1 },
+          },
+        })
+      else
+        screen:expect([[
+          {9: + [No Name] }{3: }{11:2}{3:+ [No Name] }{5:            }{9:X}|
+          ^h{1:hello     }                             |
+          {0:~}{2:~         }{0:                             }|*4
+                                                  |
+        ]])
+      end
+
+      -- Autocommand runs within the first tabpage, but won't refresh grids when switching to it due
+      -- to switch_win_noblock having no_display set.
+      command(
+        ('autocmd OptionSet rightleft ++once call nvim_win_set_config(%d, #{relative: "win", win: %d, row: 0, col: 0})'):format(
+          float,
+          tab1_win
+        )
+      )
+      api.nvim_set_option_value('rightleft', true, { win = tab1_win })
+      -- Stale grids should not have caused issues with removing the float's grid.
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: }{10:2}{9:+ [No Name] }{3: + [No Name] }{5:            }{9:X}|
+            [4:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+            hello                                   |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            ^hello                                   |
+            {0:~                                       }|*4
+          ## grid 5 (hidden)
+            {1:hello     }|
+            {2:~         }|*4
+          ]],
+        })
+      else
+        screen:expect([[
+          {9: }{10:2}{9:+ [No Name] }{3: + [No Name] }{5:            }{9:X}|
+          ^hello                                   |
+          {0:~                                       }|*4
+                                                  |
+        ]])
+      end
+
+      command('tabfirst')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {3: }{11:2}{3:+ [No Name] }{9: + [No Name] }{5:            }{9:X}|
+            [2:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2
+                                               olle^h|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            hello                                   |
+            {0:~                                       }|*4
+          ## grid 5
+            {1:hello     }|
+            {2:~         }|*4
+          ]],
+          float_pos = {
+            [5] = { 1002, 'NW', 2, 0, 0, true, 50, 1, 1, 0 },
+          },
+        })
+      else
+        screen:expect([[
+          {3: }{11:2}{3:+ [No Name] }{9: + [No Name] }{5:            }{9:X}|
+          {1:hello     }                         olle^h|
+          {2:~         }{0:                             ~}|*4
+                                                  |
+        ]])
+      end
+
+      -- Check tablines are redrawn even when moving floats between two non-current tabpages.
+      command('tabnew')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: + [No Name] }{5:  }{9:X}|
+            [6:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+                                               olleh|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            hello                                   |
+            {0:~                                       }|*4
+          ## grid 5 (hidden)
+            {1:hello     }|
+            {2:~         }|*4
+          ## grid 6
+                                                   ^ |
+            {0:                                       ~}|*4
+          ]],
+        })
+      else
+        screen:expect([[
+          {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: + [No Name] }{5:  }{9:X}|
+                                                 ^ |
+          {0:                                       ~}|*4
+                                                  |
+        ]])
+      end
+
+      api.nvim_win_set_config(float, { relative = 'win', win = tab2_win, row = 1, col = 1 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: + [No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
+            [6:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+                                               olleh|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            hello                                   |
+            {0:~                                       }|*4
+          ## grid 5 (hidden)
+            {1:hello     }|
+            {2:~         }|*4
+          ## grid 6
+                                                   ^ |
+            {0:                                       ~}|*4
+          ]],
+        })
+      else
+        screen:expect([[
+          {9: + [No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
+                                                 ^ |
+          {0:                                       ~}|*4
+                                                  |
+        ]])
+      end
+    end)
   end
 
   describe('with ext_multigrid and actual mouse grid', function()

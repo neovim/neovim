@@ -693,14 +693,15 @@ static bool win_config_float_tp(win_T *win, const Dict(win_config) *config,
         win_tp->tp_curwin = win_float_find_altwin(win, win_tp);
       }
 
-      if (parent_tp != curtab) {
-        if (ui_has(kUIMultigrid)) {
-          ui_call_win_hide(win->w_grid_alloc.handle);
-        }
-        ui_comp_remove_grid(&win->w_grid_alloc);
-      } else {
-        win->w_hl_needs_update = true;
-      }
+      // Remove grid if present. More reliable than checking curtab, as tabpage_check_windows may
+      // not run when temporarily switching tabpages, meaning grids may be stale from another
+      // tabpage! (e.g: switch_win_noblock with no_display=true)
+      ui_comp_remove_grid(&win->w_grid_alloc);
+
+      // Redraw tabline, update window's hl attribs, etc. Set must_redraw here, as redraw_later
+      // might not if w_redr_type >= UPD_NOT_VALID was set in the old tabpage.
+      redraw_later(win, UPD_NOT_VALID);
+      set_must_redraw(UPD_NOT_VALID);
     }
   }
 
