@@ -141,7 +141,7 @@ describe('startup', function()
       end
     end
 
-    it('outputs the EOF as LF (not CRLF)', function()
+    it('outputs the EOF as LF (not CRLF) #36853', function()
       local args = { nvim_prog, '-l', '-' }
       local input = 'print("foo")'
       local out = fn.system(args, input)
