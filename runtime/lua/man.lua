@@ -219,6 +219,30 @@ end
 local function get_path(name, sect)
   name = name or ''
   sect = sect or ''
+  -- We can avoid relying on -S or -s here since they are very
+  -- inconsistently supported. Instead, call -w with a section and a name.
+  local cmd --- @type string[]
+  if sect == '' then
+    cmd = { 'man', '-w', name }
+  else
+    cmd = { 'man', '-w', sect, name }
+  end
+
+  local lines = system(cmd, true)
+  local results = vim.split(lines, '\n', { trimempty = true })
+
+  return M._match_manpage_path(results, name, sect)
+end
+
+--- Given an array of paths returned by man -w,
+--- find the correct path for the given name and section.
+--- @param paths? string[]
+--- @param name? string
+--- @param sect? string
+function M._match_manpage_path(paths, name, sect)
+  paths = paths or {}
+  name = name or ''
+  sect = sect or ''
   -- Some man implementations (OpenBSD) return all available paths from the
   -- search command. Previously, this function would simply select the first one.
   --
@@ -234,20 +258,7 @@ local function get_path(name, sect)
   -- clock_getres.2, which is the right page. Searching the results for
   -- clock_gettime will no longer work. In this case, we should just use the
   -- first one that was found in the correct section.
-  --
-  -- Finally, we can avoid relying on -S or -s here since they are very
-  -- inconsistently supported. Instead, call -w with a section and a name.
-  local cmd --- @type string[]
-  if sect == '' then
-    cmd = { 'man', '-w', name }
-  else
-    cmd = { 'man', '-w', sect, name }
-  end
-
-  local lines = system(cmd, true)
-  local results = vim.split(lines, '\n', { trimempty = true })
-
-  if #results == 0 then
+  if #paths == 0 then
     return
   end
 
@@ -255,7 +266,7 @@ local function get_path(name, sect)
   -- stops us from actually determining if a path has a corresponding man file.
   -- Since `:Man /some/path/to/man/file` isn't supported anyway, we should just
   -- error out here if we detect this is the case.
-  if sect == '' and #results == 1 and results[1] == name then
+  if sect == '' and #paths == 1 and paths[1] == name then
     return
   end
 
@@ -264,17 +275,30 @@ local function get_path(name, sect)
   local namematches = vim.tbl_filter(function(v)
     local tail = vim.fs.basename(v)
     return tail:find(name, 1, true) ~= nil
-  end, results) or {}
+  end, paths) or {}
   local sectmatches = {}
 
   if #namematches > 0 and sect ~= '' then
     --- @param v string
     sectmatches = vim.tbl_filter(function(v)
-      return fn.fnamemodify(v, ':e') == sect
+      -- On some systems, there are multiple extensions, e.g. strlen.3.gz
+      -- We must test all of the extensions to make sure we get the correct match.
+      -- Limit to 3 tests to avoid the risk of getting stuck.
+      local root = v
+      for _ = 1, 3 do
+        local extension = fn.fnamemodify(root, ':e')
+        if extension == sect then
+          return true
+        elseif extension == '' then
+          return false
+        end
+        root = fn.fnamemodify(root, ':r')
+      end
+      return false
     end, namematches)
   end
 
-  return (sectmatches[1] or namematches[1] or results[1]):gsub('\n+$', '')
+  return (sectmatches[1] or namematches[1] or paths[1]):gsub('\n+$', '')
 end
 
 --- Attempt to extract the name and sect out of 'name(sect)'

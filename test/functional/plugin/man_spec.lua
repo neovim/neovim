@@ -259,6 +259,53 @@ describe(':Man', function()
     os.remove(actual_file)
   end)
 
+  -- if man -w returns multiple results, :Man should select the correct one.
+  it('matches correct manpage section and name', function()
+    -- mock the system function to return the results we want to test.
+    local function _test(results, name, sect)
+      return exec_lua(function()
+        local man = require 'man'
+        return man._match_manpage_path(results, name, sect)
+      end)
+    end
+
+    eq(
+      '/usr/share/man/man3/strcpy.3',
+      _test({
+        '/usr/share/man/man3/strcpy.3',
+        '/usr/share/man/man3/string.3',
+      }, 'strcpy')
+    )
+
+    eq(
+      '/usr/share/man/man3/strcpy.3',
+      _test({
+        '/usr/share/man/man3/string.3',
+        '/usr/share/man/man3/strcpy.3',
+      }, 'strcpy')
+    )
+
+    eq(
+      '/usr/share/man/man3/strcpy.3',
+      _test({
+        '/usr/share/man/man3p/strcpy.3p',
+        '/usr/share/man/man3/strcpy.3',
+        '/usr/share/man/man3/string.3',
+        '/usr/share/man/man7/string_copying.7',
+      }, 'strcpy', '3')
+    )
+
+    eq(
+      '/usr/share/man/man3/strcpy.3.gz',
+      _test({
+        '/usr/share/man/man3p/strcpy.3p.gz',
+        '/usr/share/man/man3/strcpy.3.gz',
+        '/usr/share/man/man3/string.3.gz',
+        '/usr/share/man/man7/string_copying.7.gz',
+      }, 'strcpy', '3')
+    )
+  end)
+
   it('tries variants with spaces, underscores #22503', function()
     eq({
       { vim.NIL, 'NAME WITH SPACES' },
