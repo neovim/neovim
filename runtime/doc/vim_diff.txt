@@ -755,6 +755,8 @@ Eval:
 - *err_teapot()*
 - *js_encode()*
 - *js_decode()*
+- *listener_add()* , etc: use |api-buffer-updates-lua| instead.
+- *redraw_listener_add()* , etc:  use |nvim_set_decoration_provider()| instead.
 - *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
 - *v:sizeofint*
 - *v:sizeoflong*
