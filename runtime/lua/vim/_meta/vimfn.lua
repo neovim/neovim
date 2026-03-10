@@ -4234,6 +4234,7 @@ function vim.fn.globpath(path, expr, nosuf, list, allinks) end
 --- <          *feature-list*
 ---     List of supported pseudo-feature names:
 ---   acl    |ACL| support.
+---   *android*  Android system (not necessarily |termux|).
 ---   bsd    BSD system (not macOS, use "mac" for that).
 ---   clipboard  |clipboard| provider is available.
 ---   fname_case  Case in file names matters (for Darwin and MS-Windows
@@ -4247,6 +4248,7 @@ function vim.fn.globpath(path, expr, nosuf, list, allinks) end
 ---   python3    Legacy Vim |python3| interface. |has-python|
 ---   pythonx    Legacy Vim |python_x| interface. |has-pythonx|
 ---   sun    SunOS system.
+---   *termux*  Termux, an |android| terminal app and packaging environment.
 ---   ttyin    input is a terminal (tty).
 ---   ttyout    output is a terminal (tty).
 ---   unix    Unix system.
