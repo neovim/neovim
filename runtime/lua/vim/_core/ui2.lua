@@ -11,7 +11,7 @@
 ---    ---@type 'cmd'|'msg' Default message target, either in the
 ---    ---cmdline or in a separate ephemeral message window.
 ---    ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
----    or table mapping |ui-messages| kinds to a target.
+---    or table mapping |ui-messages| kinds and triggers to a target.
 ---    targets = 'cmd',
 ---    timeout = 4000, -- Time a message is visible in the message window.
 ---  },
