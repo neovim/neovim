@@ -2561,7 +2561,7 @@ describe('API/win', function()
       eq(win, layout[2][2][2])
     end)
 
-    it('moves splits or floats to other tabpages', function()
+    it('moves windows to other tabpages', function()
       local first_tab = api.nvim_get_current_tabpage()
       local first_win = api.nvim_get_current_win()
       local win = api.nvim_open_win(0, false, { split = 'left' })
@@ -2585,14 +2585,19 @@ describe('API/win', function()
         },
       }, layout)
 
-      -- convert new win to float window in new tabpage
+      -- convert new win to float in new tabpage
       api.nvim_win_set_config(win, { relative = 'editor', row = 2, col = 2, height = 2, width = 2 })
       api.nvim_set_current_tabpage(first_tab)
-      -- move to another tabpage
+      -- move to other tabpage
       api.nvim_win_set_config(win, { relative = 'win', win = first_win, row = 2, col = 2 })
       eq(first_tab, api.nvim_win_get_tabpage(win))
       eq({ first_win, win }, api.nvim_tabpage_list_wins(first_tab))
       eq({ tab2_win }, api.nvim_tabpage_list_wins(new_tab))
+      -- unlike splits, negative win is invalid
+      eq(
+        'Invalid window id: -1',
+        pcall_err(api.nvim_win_set_config, win, { relative = 'win', win = -1, row = 2, col = 2 })
+      )
     end)
 
     it('correctly moves curwin when moving curwin to a different tabpage', function()
@@ -2628,7 +2633,7 @@ describe('API/win', function()
       eq(tab1_win, api.nvim_tabpage_get_win(tab1))
 
       api.nvim_set_current_tabpage(tab2)
-      -- convert new win to float window
+      -- convert new win to float
       api.nvim_win_set_config(win, { relative = 'editor', row = 2, col = 2, height = 2, width = 2 })
       api.nvim_set_current_win(win)
       api.nvim_win_set_config(win, { relative = 'win', win = tab1_win, row = 3, col = 3 })
@@ -3568,20 +3573,29 @@ describe('API/win', function()
     end)
 
     it('cannot move autocmd window between tabpages', function()
-      local win_type, split_ok, err = exec_lua(function()
+      local win_type, split_ok, split_err, float_ok, float_err = exec_lua(function()
         local other_tp_win = vim.api.nvim_get_current_win()
         vim.cmd.tabnew()
 
-        local win_type, split_ok, err
+        local win_type, split_ok, split_err, float_ok, float_err
         vim.api.nvim_buf_call(vim.api.nvim_create_buf(true, true), function()
           win_type = vim.fn.win_gettype()
-          split_ok, err =
+
+          split_ok, split_err =
             pcall(vim.api.nvim_win_set_config, 0, { win = other_tp_win, split = 'right' })
+
+          float_ok, float_err = pcall(
+            vim.api.nvim_win_set_config,
+            0,
+            { relative = 'win', win = other_tp_win, row = 0, col = 0 }
+          )
         end)
-        return win_type, split_ok, err
+        return win_type, split_ok, split_err, float_ok, float_err
       end)
+
       eq('autocmd', win_type)
-      eq({ false, 'Cannot move autocmd window to another tabpage' }, { split_ok, err })
+      eq({ false, 'Cannot move autocmd window to another tabpage' }, { split_ok, split_err })
+      eq({ false, 'Cannot move autocmd window to another tabpage' }, { float_ok, float_err })
     end)
 
     it('cannot move cmdwin between tabpages', function()
@@ -3710,9 +3724,19 @@ describe('API/win', function()
 
       command('tabnew')
       local tab3_win = api.nvim_get_current_win()
-      command('tabprev')
+      command('tabprev | autocmd WinEnter * ++once wincmd p')
+      eq(
+        ('Failed to switch away from window %d'):format(float_win),
+        pcall_err(
+          api.nvim_win_set_config,
+          float_win,
+          { relative = 'win', win = tab3_win, row = 0, col = 0 }
+        )
+      )
+      eq(float_win, api.nvim_get_current_win())
+
       command(
-        ('autocmd WinLeave * ++once call nvim_win_set_config(%d, {"split": "left", "win": %d})'):format(
+        ('autocmd WinLeave * ++once call nvim_win_set_config(%d, #{split: "left", win: %d})'):format(
           float_win,
           tab1_win
         )
@@ -3725,6 +3749,40 @@ describe('API/win', function()
           { relative = 'win', win = tab3_win, row = 0, col = 0 }
         )
       )
+      eq(float_win, api.nvim_get_current_win())
+
+      -- Need multigrid for external windows.
+      Screen.new(20, 9, { ext_multigrid = true })
+      api.nvim_win_set_config(float_win, { external = true, width = 5, height = 5 })
+      eq(true, api.nvim_win_get_config(float_win).external)
+      eq(
+        ('Cannot move external window to another tabpage'):format(float_win),
+        pcall_err(
+          api.nvim_win_set_config,
+          float_win,
+          { relative = 'win', win = tab3_win, row = 0, col = 0 }
+        )
+      )
+      eq(float_win, api.nvim_get_current_win())
+
+      -- Error if made external by autocommand when attempting to move.
+      api.nvim_win_set_config(
+        float_win,
+        { relative = 'editor', row = 0, col = 0, width = 5, height = 5 }
+      )
+      eq(false, api.nvim_win_get_config(float_win).external)
+      command(
+        ('autocmd WinLeave * ++once call nvim_win_set_config(%d, #{external: 1})'):format(float_win)
+      )
+      eq(
+        ('Cannot move external window to another tabpage'):format(float_win),
+        pcall_err(
+          api.nvim_win_set_config,
+          float_win,
+          { relative = 'win', win = tab3_win, row = 0, col = 0 }
+        )
+      )
+      eq(float_win, api.nvim_get_current_win())
     end)
   end)
 end)
