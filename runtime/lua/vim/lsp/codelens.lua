@@ -278,9 +278,10 @@ function Provider:on_win(toprow, botrow)
     end
   end
 
+  -- Clear extmarks beyond the bottom of the buffer.
   if botrow == api.nvim_buf_line_count(self.bufnr) - 1 then
     for _, state in pairs(self.client_state) do
-      api.nvim_buf_clear_namespace(self.bufnr, state.namespace, botrow, -1)
+      api.nvim_buf_clear_namespace(self.bufnr, state.namespace, botrow + 1, -1)
     end
   end
 end
