@@ -35,29 +35,29 @@ characters.  You need to execute the following command: >
 
 	:set textwidth=30
 
-Now you start typing (ruler added):
+Now you start typing (ruler added): >
 
 		 1	   2	     3
 	12345678901234567890123456789012345
-	I taught programming for a whi ~
+	I taught programming for a whi
 
 If you type "l" next, this makes the line longer than the 30-character limit.
-When Vim sees this, it inserts a line break and you get the following:
+When Vim sees this, it inserts a line break and you get the following: >
 
 		 1	   2	     3
 	12345678901234567890123456789012345
-	I taught programming for a ~
-	whil ~
+	I taught programming for a
+	whil
 
-Continuing on, you can type in the rest of the paragraph:
+Continuing on, you can type in the rest of the paragraph: >
 
 		 1	   2	     3
 	12345678901234567890123456789012345
-	I taught programming for a ~
-	while. One time, I was stopped ~
-	by the Fort Worth police, ~
-	because my homework was too ~
-	hard. True story. ~
+	I taught programming for a
+	while. One time, I was stopped
+	by the Fort Worth police,
+	because my homework was too
+	hard. True story.
 
 You do not have to type newlines; Vim puts them in automatically.
 
@@ -71,15 +71,15 @@ REFORMATTING
 The Vim editor is not a word processor.  In a word processor, if you delete
 something at the beginning of the paragraph, the line breaks are reworked.  In
 Vim they are not; so if you delete the word "programming" from the first line,
-all you get is a short line:
+all you get is a short line: >
 
 		 1	   2	     3
 	12345678901234567890123456789012345
-	I taught for a ~
-	while. One time, I was stopped ~
-	by the Fort Worth police, ~
-	because my homework was too ~
-	hard. True story. ~
+	I taught for a
+	while. One time, I was stopped
+	by the Fort Worth police,
+	because my homework was too
+	hard. True story.
 
 This does not look good.  To get the paragraph into shape you use the "gq"
 operator.
@@ -89,15 +89,15 @@ line, type: >
 	v4jgq
 
 "v" to start Visual mode, "4j" to move to the end of the paragraph and then
-the "gq" operator.  The result is:
+the "gq" operator.  The result is: >
 
 		 1	   2	     3
 	12345678901234567890123456789012345
-	I taught for a while. One ~
-	time, I was stopped by the ~
-	Fort Worth police, because my ~
-	homework was too hard. True ~
-	story. ~
+	I taught for a while. One
+	time, I was stopped by the
+	Fort Worth police, because my
+	homework was too hard. True
+	story.
 
 Note: there is a way to do automatic formatting for specific types of text
 layouts, see |auto-format|.
@@ -145,13 +145,13 @@ use for centering.  If [width] is not specified, it defaults to the value of
 
 	:1,5center 40
 
-results in the following:
+results in the following: >
 
-       I taught for a while. One ~
-       time, I was stopped by the ~
-     Fort Worth police, because my ~
-      homework was too hard. True ~
-		 story. ~
+       I taught for a while. One
+       time, I was stopped by the
+     Fort Worth police, because my
+      homework was too hard. True
+		 story.
 
 
 RIGHT ALIGNMENT
@@ -160,13 +160,13 @@ Similarly, the ":right" command right-justifies the text: >
 
 	:1,5right 37
 
-gives this result:
+gives this result: >
 
-	    I taught for a while. One ~
-	   time, I was stopped by the ~
-	Fort Worth police, because my ~
-	  homework was too hard. True ~
-			       story. ~
+	    I taught for a while. One
+	   time, I was stopped by the
+	Fort Worth police, because my
+	  homework was too hard. True
+			       story.
 
 LEFT ALIGNMENT
 
@@ -183,13 +183,13 @@ example, use these commands: >
 	:1left 5
 	:2,5left
 
-This results in the following:
+This results in the following: >
 
-	     I taught for a while. One ~
-	time, I was stopped by the ~
-	Fort Worth police, because my ~
-	homework was too hard. True ~
-	story. ~
+	     I taught for a while. One
+	time, I was stopped by the
+	Fort Worth police, because my
+	homework was too hard. True
+	story.
 
 
 JUSTIFYING TEXT			*justify* *:Justify* *Justify()* *package-justify*
@@ -243,10 +243,10 @@ example, type this: >
 
 	:set shiftwidth=4
 
-When used on the second line of the example text, this is what you get:
+When used on the second line of the example text, this is what you get: >
 
-	the first line ~
-	    the second line ~
+	the first line
+	    the second line
 
 "4>>" will increase the indent of four lines.
 
@@ -307,18 +307,18 @@ into the visible text if necessary.
 Let's attempt to show this with one line of text.  The cursor is on the "w" of
 "which".  The "current window" above the line indicates the text that is
 currently visible.  The "window"s below the text indicate the text that is
-visible after the command left of it.
+visible after the command left of it. >
 
-			      `|<-- current window -->|`
-		some long text, part of which is visible in the window ~
-	ze	  `|<--	   window     -->|`
-	zH	   `|<--     window     -->|`
-	4zh		  `|<--	   window     -->|`
-	zh		     `|<--     window	 -->|`
-	zl		       `|<--	window	   -->|`
-	4zl			  `|<--	   window     -->|`
-	zL				`|<--	 window     -->|`
-	zs			       `|<--	window	   -->|`
+			      |<-- current window -->|
+		some long text, part of which is visible in the window
+	ze	  |<--	   window     -->|
+	zH	   |<--     window     -->|
+	4zh		  |<--	   window     -->|
+	zh		     |<--     window	 -->|
+	zl		       |<--	window	   -->|
+	4zl			  |<--	   window     -->|
+	zL				|<--	 window     -->|
+	zs			       |<--	window	   -->|
 
 
 MOVING WITH WRAP OFF
@@ -326,7 +326,7 @@ MOVING WITH WRAP OFF
 When 'wrap' is off and the text has scrolled horizontally, you can use the
 following commands to move the cursor to a character you can see.  Thus text
 left and right of the window is ignored.  These never cause the text to
-scroll:
+scroll: >
 
 	g0		to first visible character in this line
 	g^		to first non-blank visible character in this line
@@ -334,8 +334,8 @@ scroll:
 	gM		to middle of the text in this line
 	g$		to last visible character in this line
 
-		`|<--	  window     -->|`
-	some long    text, part of which is visible in one line ~
+		|<--	  window     -->|
+	some long    text, part of which is visible in one line
 		 g0  g^    gm	   gM g$
 
 
@@ -443,11 +443,11 @@ paragraph to be joined.
 ==============================================================================
 *25.5*	Editing tables
 
-Suppose you are editing a table with four columns:
+Suppose you are editing a table with four columns: >
 
-	nice table	  test 1	test 2	    test 3 ~
-	input A		  0.534 ~
-	input B		  0.913 ~
+	nice table	  test 1	test 2	    test 3
+	input A		  0.534
+	input B		  0.913
 
 You need to enter numbers in the third column.  You could move to the second
 line, use "A", enter a lot of spaces and type the text.
@@ -462,11 +462,11 @@ called "virtual space".  Editing a table is a lot easier this way.
 	/test 3
 
 Now press "j" and you are right where you can enter the value for "input A".
-Typing "0.693" results in:
+Typing "0.693" results in: >
 
-	nice table	  test 1     test 2	 test 3 ~
-	input A		  0.534			 0.693 ~
-	input B		  0.913 ~
+	nice table	  test 1     test 2	 test 3
+	input A		  0.534			 0.693
+	input B		  0.913
 
 Vim has automatically filled the gap in front of the new text for you.  Now,
 to enter the next field in this column use "Bj".  "B" moves back to the start
@@ -494,11 +494,11 @@ placed before the "test 1" column.  Do this in seven steps:
 6.  Move the cursor to "test 1", where the new column must be placed.
 7.  Press "P".
 
-The result should be:
+The result should be: >
 
-	nice table	  test 3    test 1     test 2	   test 3 ~
-	input A		  0.693     0.534		   0.693 ~
-	input B			    0.913 ~
+	nice table	  test 3    test 1     test 2	   test 3
+	input A		  0.693     0.534		   0.693
+	input B			    0.913
 
 Notice that the whole "test 1" column was shifted right, also the line where
 the "test 3" column didn't have text.
@@ -514,25 +514,25 @@ The disadvantage of using 'virtualedit' is that it "feels" different.  You
 can't recognize tabs or spaces beyond the end of line when moving the cursor
 around.  Another method can be used: Virtual Replace mode.
    Suppose you have a line in a table that contains both tabs and other
-characters.  Use "rx" on the first tab:
+characters.  Use "rx" on the first tab: >
 
-	inp	0.693   0.534	0.693 ~
+	inp	0.693   0.534	0.693
 
 	       |
 	   rx  |
 	       V
 
-	inpx0.693   0.534	0.693 ~
+	inpx0.693   0.534	0.693
 
-The layout is messed up.  To avoid that, use the "gr" command:
+The layout is messed up.  To avoid that, use the "gr" command: >
 
-	inp	0.693   0.534	0.693 ~
+	inp	0.693   0.534	0.693
 
 	       |
 	  grx  |
 	       V
 
-	inpx	0.693   0.534	0.693 ~
+	inpx	0.693   0.534	0.693
 
 What happens is that the "gr" command makes sure the new character takes the
 right amount of screen space.  Extra spaces or tabs are inserted to fill the
@@ -541,25 +541,25 @@ blanks added to make the text after it keep its place.  In this case a
 tab is inserted.
    When you need to replace more than one character, you use the "R" command
 to go to Replace mode (see |04.9|).  This messes up the layout and replaces
-the wrong characters:
+the wrong characters: >
 
-	inp	0	0.534	0.693 ~
+	inp	0	0.534	0.693
 
 		|
 	 R0.786 |
 		V
 
-	inp	0.78634	0.693 ~
+	inp	0.78634	0.693
 
-The "gR" command uses Virtual Replace mode.  This preserves the layout:
+The "gR" command uses Virtual Replace mode.  This preserves the layout: >
 
-	inp	0	0.534	0.693 ~
+	inp	0	0.534	0.693
 
 		|
 	gR0.786 |
 		V
 
-	inp	0.786	0.534	0.693 ~
+	inp	0.786	0.534	0.693
 
 
 REFORMATTING TABS IN TABLES
