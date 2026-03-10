@@ -939,7 +939,7 @@ void ex_loadview(exarg_T *eap)
   xfree(fname);
 }
 
-/// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".
+/// ":mkexrc", ":mkvimrc", ":mkview", ":mksession", ":mktab".
 ///
 /// Legacy 'sessionoptions'/'viewoptions' flags are always enabled:
 ///   - kOptSsopFlagUnix: line-endings are LF
@@ -949,6 +949,8 @@ void ex_mkrc(exarg_T *eap)
   bool view_session = false;  // :mkview, :mksession
   int using_vdir = false;  // using 'viewdir'?
   char *viewFile = NULL;
+  printf("%d", eap->cmdidx);
+  printf("%d", CMD_mktab);
 
   if (eap->cmdidx == CMD_mksession || eap->cmdidx == CMD_mkview) {
     view_session = true;
