@@ -611,22 +611,22 @@ empty `queries/c/injections.scm` file in your 'runtimepath'.
 DEFAULTS                                                 *treesitter-defaults*
 
 							*v_an*
-v_an			Selects [count]th parent node.
+an			Selects [count]th parent node.
 
 			If buffer has no treesitter parser,
 			falls back to |vim.lsp.buf.selection_range()|.
 
 							*v_in*
-v_in			Selects [count]th previous (or first) child node.
+in			Selects [count]th previous (or first) child node.
 
 			If buffer has no treesitter parser,
 			falls back to |vim.lsp.buf.selection_range()|.
 
 							*v_]n*
-v_]n			Selects [count]th next node.
+]n			Selects [count]th next node.
 
 							*v_[n*
-v_[n			Selects [count]th previous node.
+[n			Selects [count]th previous node.
 
 ==============================================================================
 VIM.TREESITTER                                                *lua-treesitter*
