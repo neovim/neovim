@@ -9236,6 +9236,69 @@ local options = {
       varname = 'p_tal',
     },
     {
+      abbreviation = 'tbop',
+      cb = 'did_set_taboptions',
+      defaults = 'blank,buffers,curdir,folds,help,terminal,winpos,winsize',
+      values = {
+        'blank',
+        'buffers',
+        'curdir',
+        'folds',
+        'globals',
+        'help',
+        'localoptions',
+        'options',
+        'skiprtp',
+        'resize',
+        'tabdir',
+        'terminal',
+        'winpos',
+        'winsize',
+      },
+      flags = true,
+      deny_duplicates = true,
+      desc = [=[
+        Changes the effect of the |:mktab| command.  It is a comma-
+        separated list of words.  Each word enables saving and restoring
+        something:
+           word		save and restore ~
+           blank	empty windows
+           buffers	hidden and unloaded buffers, not just those in windows
+           curdir	the current directory
+           folds	manually created folds, opened/closed folds and local
+        		fold options
+           globals	global variables that start with an uppercase letter
+        		and contain at least one lowercase letter.  Only
+        		String and Number types are stored.
+           help		the help window
+           localoptions	options and mappings local to a window or buffer (not
+        		global values for local options)
+           options	all options and mappings (also global values for local
+        		options)
+           skiprtp	exclude 'runtimepath' and 'packpath' from the options
+           resize	size of the Vim window: 'lines' and 'columns'
+	   tabdir	the directory in which the tabpage file is located
+			will become the current directory (useful with
+			projects accessed over a network from different
+			systems)
+           terminal	include terminal windows where the command can be
+        		restored
+           winpos	position of the whole Vim window
+           winsize	window sizes
+
+        When "curdir" isn't included filenames are stored as absolute paths.
+        If you leave out "options" many things won't work well after restoring
+        the tab.
+      ]=],
+      full_name = 'taboptions',
+      list = 'onecomma',
+      scope = { 'global' },
+      short_desc = N_('specifies which options to save for :mktab'),
+      type = 'string',
+      varname = 'p_tbop',
+      flags_varname = 'tbop_flags',
+    },
+    {
       abbreviation = 'tpm',
       defaults = 50,
       desc = [=[

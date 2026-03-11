@@ -439,6 +439,7 @@ local options_list = {
     { 'exrc', N_ 'enable reading .vimrc/.exrc/.gvimrc in the current directory' },
     { 'maxfuncdepth', N_ 'maximum depth of function calls' },
     { 'sessionoptions', N_ 'list of words that specifies what to put in a session file' },
+    { 'taboptions', N_ 'list of words that specifies what to save for :mktab' },
     { 'viewoptions', N_ 'list of words that specifies what to save for :mkview' },
     { 'viewdir', N_ 'directory where to store files with :mkview' },
     { 'shada', N_ 'list that specifies what to write in the ShaDa file' },
