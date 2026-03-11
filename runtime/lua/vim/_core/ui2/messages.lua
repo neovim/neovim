@@ -182,15 +182,11 @@ local function set_virttext(type, tgt)
       set_virttext('msg') -- Readjust to new M.cmd.last_col or clear for mode.
     end
 
-    M.virt.ids[type] = api.nvim_buf_set_extmark(ui.bufs[tgt], ui.ns, row, col, {
-      virt_text = chunks,
-      virt_text_pos = 'overlay',
-      right_gravity = false,
-      undo_restore = false,
-      invalidate = true,
-      id = M.virt.ids[type],
-      priority = type == 'msg' and 2 or 1,
-    })
+    local opts = { undo_restore = false, invalidate = true, id = M.virt.ids[type] }
+    opts.priority = type == 'msg' and 2 or 1
+    opts.virt_text_pos = 'overlay'
+    opts.virt_text = chunks
+    M.virt.ids[type] = api.nvim_buf_set_extmark(ui.bufs[tgt], ui.ns, row, col, opts)
   end
 end
 
@@ -198,15 +194,20 @@ local hlopts = { undo_restore = false, invalidate = true, priority = 1 }
 --- Move messages to expanded cmdline or pager to show in full.
 local function expand_msg(src)
   -- Copy and clear message from src to enlarged cmdline that is dismissed by any
-  -- key press, or append to pager in case that is already open (not hidden).
+  -- key press. Append to pager instead if it isn't hidden or we want to enter it
+  -- after cmdline was entered during expanded cmdline.
   local hidden = api.nvim_win_get_config(ui.wins.pager).hide
-  local tgt = hidden and 'cmd' or 'pager'
+  local tgt = (ui.cmd.expand > 0 or not hidden) and 'pager' or 'cmd'
   if tgt ~= src then
     local srow = hidden and 0 or api.nvim_buf_line_count(ui.bufs.pager)
     local opts = { details = true, type = 'highlight' }
     local marks = api.nvim_buf_get_extmarks(ui.bufs[src], -1, 0, -1, opts)
     local lines = api.nvim_buf_get_lines(ui.bufs[src], 0, -1, false)
-    M.msg_clear()
+    -- Clear unless we want to keep the entered command.
+    if ui.cmd.expand == 0 then
+      M.msg_clear()
+    end
+    M.virt.msg = { {}, {} } -- Clear msg virtual text regardless.
 
     api.nvim_buf_set_lines(ui.bufs[tgt], srow, -1, false, lines)
     for _, mark in ipairs(marks) do
@@ -328,9 +329,10 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     end
   elseif tgt == 'cmd' and dupe == 0 then
     fn.clearmatches(ui.wins.cmd) -- Clear matchparen highlights.
-    if ui.cmd.srow > 0 then
+    if ui.cmd.srow > 0 and ui.cmd.expand == 0 then
       -- In block mode the cmdheight is already dynamic, so just print the full message
-      -- regardless of height. Put cmdline below message.
+      -- regardless of height. Put cmdline below message. Don't do this if the block mode
+      -- was simulated for a cmdline entered while expanded, will open pager instead.
       ui.cmd.srow = row + 1
     else
       api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 }) -- ensure first line is visible
@@ -381,9 +383,13 @@ end
 ---@param id integer|string
 ---@param trigger string
 function M.msg_show(kind, content, replace_last, _, append, id, trigger)
-  -- Set the entered search command in the cmdline (if available). Otherwise route
-  -- to configured target: 'trigger' takes precedence over 'kind.'
+  -- Set the entered search command in the cmdline (if available).
   local tgt = kind == 'search_cmd' and 'cmd'
+    -- When the pager is open always route typed commands there. This better simulates
+    -- the UI1 behavior after opening the cmdline below a previous multiline message,
+    -- and seems useful enough even when the pager was entered manually.
+    or (trigger == 'typed_cmd' and api.nvim_get_current_win() == ui.wins.pager) and 'pager'
+    -- Otherwise route to configured target: trigger takes precedence over kind.
     or ui.cfg.msg.targets[trigger]
     or ui.cfg.msg.targets[kind]
     or ui.cfg.msg.target
@@ -419,6 +425,12 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
       -- Should clear the search count now, mark itself is cleared by invalidate.
       M.virt.last[M.virt.idx.search][1] = nil
     end
+    -- When message was emitted below an already expanded cmdline, move and route to pager.
+    tgt = ui.cmd.expand > 0 and 'pager' or tgt
+    if ui.cmd.expand == 1 then
+      expand_msg('cmd')
+    end
+    ui.cmd.expand = ui.cmd.expand + (ui.cmd.expand > 0 and 1 or 0)
 
     local enter_pager = tgt == 'pager' and api.nvim_get_current_win() ~= ui.wins.pager
     M.show_msg(tgt, kind, content, replace_last or enter_pager, append, id)
@@ -426,7 +438,7 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     if kind == 'search_cmd' then
       M.cmd.ids, M.prev_msg = {}, ''
     elseif api.nvim_get_current_win() == ui.wins.pager and not enter_pager then
-      api.nvim_command('norm! G')
+      api.nvim_win_set_cursor(ui.wins.pager, { api.nvim_buf_line_count(ui.bufs.pager), 0 })
     end
   end
 end
@@ -491,6 +503,73 @@ function M.msg_history_show(entries, prev_cmd)
   M.set_pos('pager')
 end
 
+local cmd_on_key = function(_, typed)
+  typed = typed and fn.keytrans(typed)
+  if not typed or typed == '<MouseMove>' or typed == ':' then
+    if typed == ':' then
+      vim.on_key(nil, ui.ns)
+    end
+    return
+  end
+  vim.on_key(nil, ui.ns)
+  M.cmd_on_key, M.cmd.ids = nil, {}
+
+  -- Check if window was entered and reopen with original config.
+  local entered = typed == '<CR>'
+    or typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd
+  pcall(api.nvim_win_close, ui.wins.cmd, true)
+  ui.check_targets()
+
+  -- Show or clear the message depending on if the pager was opened.
+  if entered then
+    api.nvim_command('norm! g<')
+  end
+  set_virttext('msg')
+end
+
+--- Add virtual [+x] text to indicate scrolling is possible.
+local function set_top_bot_spill()
+  local topspill = fn.line('w0', ui.wins.dialog) - 1
+  local botspill = api.nvim_buf_line_count(ui.bufs.dialog) - fn.line('w$', ui.wins.dialog)
+  M.virt.top[1][1] = topspill > 0 and { 0, (' [+%d]'):format(topspill) } or nil
+  set_virttext('top', 'dialog')
+  M.virt.bot[1][1] = botspill > 0 and { 0, (' [+%d]'):format(botspill) } or nil
+  set_virttext('bot', 'dialog')
+  api.nvim__redraw({ flush = true })
+end
+
+--- Allow paging in the dialog window, consume the key if the topline changes.
+local dialog_on_key = function(_, typed)
+  typed = typed and fn.keytrans(typed)
+  if not typed then
+    return
+  elseif typed == '<Esc>' then
+    -- Stop paging, redraw empty title to reflect paging is no longer active.
+    api.nvim_win_set_config(ui.wins.dialog, { title = '' })
+    api.nvim__redraw({ flush = true })
+    vim.on_key(nil, M.dialog_on_key)
+    M.dialog_on_key = nil
+    return ''
+  end
+
+  local page_keys = {
+    g = 'gg',
+    G = 'G',
+    j = 'Lj',
+    k = 'Hk',
+    d = [[\<C-D>]],
+    u = [[\<C-U>]],
+    f = [[\<C-F>]],
+    b = [[\<C-B>]],
+  }
+  local info = page_keys[typed] and fn.getwininfo(ui.wins.dialog)[1]
+  if info and (typed ~= 'f' or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
+    fn.win_execute(ui.wins.dialog, ('exe "norm! %s"'):format(page_keys[typed]))
+    set_top_bot_spill()
+    return fn.getwininfo(ui.wins.dialog)[1].topline ~= info.topline and '' or nil
+  end
+end
+
 --- Adjust visibility and dimensions of the message windows after certain events.
 ---
 ---@param tgt? 'cmd'|'dialog'|'msg'|'pager' Target window to be positioned (nil for all).
@@ -516,70 +595,10 @@ function M.set_pos(tgt)
       M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
       set_virttext('msg', 'cmd')
       M.virt.msg[M.virt.idx.spill][1] = save_spill
-      M.cmd_on_key = vim.on_key(function(_, typed)
-        typed = typed and fn.keytrans(typed)
-        if not typed or typed == '<MouseMove>' or typed == ':' then
-          return
-        end
-        vim.on_key(nil, ui.ns)
-        M.cmd_on_key, M.cmd.ids = nil, {}
-
-        -- Check if window was entered and reopen with original config.
-        local entered = typed == '<CR>'
-          or typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd
-        pcall(api.nvim_win_close, ui.wins.cmd, true)
-        ui.check_targets()
-
-        -- Show or clear the message depending on if the pager was opened.
-        if entered then
-          api.nvim_command('norm! g<')
-        end
-        set_virttext('msg')
-      end, ui.ns)
+      M.cmd_on_key = vim.on_key(cmd_on_key, ui.ns)
     elseif tgt == 'dialog' then
-      -- Add virtual [+x] text to indicate scrolling is possible.
-      local function set_top_bot_spill()
-        local topspill = fn.line('w0', ui.wins.dialog) - 1
-        local botspill = api.nvim_buf_line_count(ui.bufs.dialog) - fn.line('w$', ui.wins.dialog)
-        M.virt.top[1][1] = topspill > 0 and { 0, (' [+%d]'):format(topspill) } or nil
-        set_virttext('top', 'dialog')
-        M.virt.bot[1][1] = botspill > 0 and { 0, (' [+%d]'):format(botspill) } or nil
-        set_virttext('bot', 'dialog')
-        api.nvim__redraw({ flush = true })
-      end
+      M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)
       set_top_bot_spill()
-
-      -- Allow paging in the dialog window, consume the key if the topline changes.
-      M.dialog_on_key = vim.on_key(function(_, typed)
-        typed = typed and fn.keytrans(typed)
-        if not typed then
-          return
-        elseif typed == '<Esc>' then
-          -- Stop paging, redraw empty title to reflect paging is no longer active.
-          api.nvim_win_set_config(ui.wins.dialog, { title = '' })
-          api.nvim__redraw({ flush = true })
-          vim.on_key(nil, M.dialog_on_key)
-          M.dialog_on_key = nil
-          return ''
-        end
-
-        local page_keys = {
-          g = 'gg',
-          G = 'G',
-          j = 'Lj',
-          k = 'Hk',
-          d = [[\<C-D>]],
-          u = [[\<C-U>]],
-          f = [[\<C-F>]],
-          b = [[\<C-B>]],
-        }
-        local info = page_keys[typed] and fn.getwininfo(ui.wins.dialog)[1]
-        if info and (typed ~= 'f' or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
-          fn.win_execute(ui.wins.dialog, ('exe "norm! %s"'):format(page_keys[typed]))
-          set_top_bot_spill()
-          return fn.getwininfo(ui.wins.dialog)[1].topline ~= info.topline and '' or nil
-        end
-      end, M.dialog_on_key)
     elseif tgt == 'msg' then
       -- Ensure last line is visible and first line is at top of window.
       fn.win_execute(ui.wins.msg, 'norm! Gzb')

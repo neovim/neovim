@@ -85,6 +85,13 @@ describe('messages2', function()
       {1:~                                                    }|*12
       foo                                 0,0-1         All|
     ]])
+    command('echo "foo"')
+    -- Ruler still positioned correctly after dupe message.
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      foo(1)                              0,0-1         All|
+    ]])
     -- No error for ruler virt_text msg_row exceeding buffer length.
     command([[map Q <cmd>echo "foo\nbar" <bar> ls<CR>]])
     feed('Q')
@@ -334,31 +341,58 @@ describe('messages2', function()
     ]])
     command('echo "foo\nbar"')
     screen:expect_unchanged()
-    -- Place cmdline and subsequent message below expanded cmdline instead: #37653.
-    feed(':')
-    n.poke_eventloop()
-    feed('echo "baz"')
-    n.poke_eventloop()
-    feed('<CR>')
+    -- Place cmdline below expanded cmdline instead: #37653.
+    feed(':call setline(1, "foo")')
     screen:expect([[
-      ^                                                     |
-      {1:~                                                    }|*8
+                                                           |
+      {1:~                                                    }|*9
       {3:                                                     }|
       foo                                                  |
       bar                                                  |
-      {16::}{15:echo} {26:"baz"}                                          |
-      baz                                                  |
+      {16::}{15:call} {25:setline}{16:(}{26:1}{16:,} {26:"foo"}{16:)}^                              |
     ]])
-    -- No message closes expanded cmdline.
-    feed(':')
-    n.poke_eventloop()
-    feed('call setline(1, "foo")')
-    n.poke_eventloop()
+    -- No message closes expanded cmdline and keeps the entered command.
     feed('<CR>')
     screen:expect([[
       ^foo                                                  |
       {1:~                                                    }|*12
       {16::}{15:call} {25:setline}{16:(}{26:1}{16:,} {26:"foo"}{16:)}                              |
+    ]])
+    -- If command emits another message we enter the pager to closely mimic useful UI1 behavior.
+    command('echo "foo\nbar"')
+    feed(':echo "baz"<CR>')
+    screen:expect([[
+      foo                                                  |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      ^foo                                                  |
+      bar                                                  |
+      baz                                                  |
+      {16::}{15:echo} {26:"baz"}                                          |
+    ]])
+    -- Subsequent typed commands are appended to the pager.
+    feed(':echo "typed append"<CR>')
+    screen:expect([[
+      foo                                                  |
+      {1:~                                                    }|*7
+      {3:                                                     }|
+      foo                                                  |
+      bar                                                  |
+      baz                                                  |
+      ^typed append                                         |
+      {16::}{15:echo} {26:"typed append"}                                 |
+    ]])
+    -- Other messages that fit 'cmdheight' are not.
+    feed('n')
+    screen:expect([[
+      foo                                                  |
+      {1:~                                                    }|*7
+      {3:                                                     }|
+      foo                                                  |
+      bar                                                  |
+      baz                                                  |
+      ^typed append                                         |
+      {9:E35: No previous regular expression}                  |
     ]])
   end)
 

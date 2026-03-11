@@ -9,6 +9,8 @@ local M = {
   erow = 0, -- Buffer row at which the current cmdline ends; messages appended here in block mode.
   level = 0, -- Current cmdline level; 0 when inactive.
   wmnumode = 0, -- wildmenumode() when not using the pum, dialog position adjusted when toggled.
+  -- Non-zero for entered expanded cmdline, incremented for each message emitted as a result of entered command to move and open messages in the pager.
+  expand = 0,
 }
 
 --- Set the 'cmdheight' and cmdline window height. Reposition message windows.
@@ -93,8 +95,8 @@ function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   -- When entering the cmdline while it is expanded, place cmdline below messages.
   if M.level == 0 and ui.msg.cmd_on_key then
     M.srow = api.nvim_buf_line_count(ui.bufs.cmd)
-    vim.on_key(nil, ui.msg.cmd_on_key)
-  elseif ui.msg.cmd.msg_row ~= -1 and not ui.msg.cmd_on_key then
+    M.expand, ui.msg.cmd_on_key = 1, nil
+  elseif ui.msg.cmd.msg_row ~= -1 and M.expand == 0 then
     ui.msg.msg_clear()
   end
 
@@ -143,15 +145,13 @@ end
 ---@param level integer
 ---@param abort boolean
 function M.cmdline_hide(level, abort)
-  if ui.msg.cmd_on_key then
-    ui.msg.cmd_on_key, M.srow = nil, 0
-    -- Close expanded cmdline if command did not emit a message, keep last line.
+  if M.expand > 0 then
+    -- Close expanded cmdline, keep last line.
     vim.schedule(function()
-      if ui.msg.cmd_on_key == nil then
-        api.nvim_win_close(ui.wins.cmd, true)
-        api.nvim_buf_set_lines(ui.bufs.cmd, 0, M.erow, false, {})
-        ui.check_targets()
-      end
+      api.nvim_win_close(ui.wins.cmd, true)
+      api.nvim_buf_set_lines(ui.bufs.cmd, 0, M.erow, false, {})
+      ui.check_targets()
+      M.expand, M.srow = 0, 0
     end)
   elseif M.srow > 0 or level > (fn.getcmdwintype() == '' and 1 or 2) then
     return -- No need to hide when still in nested cmdline or cmdline_block.
