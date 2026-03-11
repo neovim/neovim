@@ -1313,11 +1313,6 @@ describe(':terminal buffer', function()
         [Process exited 0]                                |
                                                           |*5
       ]])
-      api.nvim_buf_clear_namespace(0, -1, 0, -1)
-      env.screen:expect([[
-        ^ready $                                           |
-                                                          |*6
-      ]])
       env.buf = api.nvim_get_current_buf()
       api.nvim_set_option_value('modified', false, { buf = env.buf })
     end)
@@ -1334,10 +1329,10 @@ describe(':terminal buffer', function()
       local chan = api.nvim_open_term(0, {})
       api.nvim_chan_send(chan, 'TEST')
       fn.chanclose(chan)
-      api.nvim_buf_clear_namespace(0, -1, 0, -1)
       env.screen:expect([[
         ^TEST                                              |
-                                                          |*6
+        [Terminal closed]                                 |
+                                                          |*5
       ]])
       env.buf = api.nvim_get_current_buf()
       api.nvim_set_option_value('modified', false, { buf = env.buf })

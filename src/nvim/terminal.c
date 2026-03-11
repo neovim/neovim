@@ -209,6 +209,7 @@ struct terminal {
   VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
 
   size_t refcount;                  // reference count
+  uint32_t exitmsg_id;
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
@@ -672,10 +673,14 @@ void terminal_close(Terminal **termpp, int status)
 
   bool only_destroy = false;
 
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+
   if (term->closed) {
     // If called from buf_close_terminal() after the process has already exited, we
     // only need to call the close callback to clean up the terminal object.
     only_destroy = true;
+    // Buffer may be reused so delete the "[Process exited]" msg
+    extmark_del_id(buf, (uint32_t)-1, term->exitmsg_id);
   } else {
     // flush any pending changes to the buffer
     if (!exiting) {
@@ -685,8 +690,6 @@ void terminal_close(Terminal **termpp, int status)
     }
     term->closed = true;
   }
-
-  buf_T *buf = handle_get_buffer(term->buf_handle);
 
   if (status == -1 || exiting) {
     // If this was called by buf_close_terminal() (status is -1), or if exiting, we
@@ -729,7 +732,7 @@ void terminal_close(Terminal **termpp, int status)
 
     int pos = MIN(row_to_linenr(term, term->cursor.row),
                   buf->b_ml.ml_line_count - 1);
-    extmark_set(buf, (uint32_t)-1, NULL, pos, 0, -1, 0,
+    extmark_set(buf, (uint32_t)-1, &term->exitmsg_id, pos, 0, -1, 0,
                 decor, 0, true, false, true, false, NULL);
 
     // Redraw statusline to show the exit code.
