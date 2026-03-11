@@ -143,8 +143,6 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
   bool moved;
   grid->pending_comp_index_update = true;
 
-  grid->comp_height = height;
-  grid->comp_width = width;
   if (grid->comp_index != 0) {
     moved = (row != grid->comp_row) || (col != grid->comp_col);
     if (ui_comp_should_draw()) {
@@ -153,19 +151,19 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
       // use it.
       grid->comp_disabled = true;
       compose_area(grid->comp_row, row,
-                   grid->comp_col, grid->comp_col + grid->cols);
+                   grid->comp_col, grid->comp_col + grid->comp_width);
       if (grid->comp_col < col) {
         compose_area(MAX(row, grid->comp_row),
-                     MIN(row + height, grid->comp_row + grid->rows),
+                     MIN(row + height, grid->comp_row + grid->comp_height),
                      grid->comp_col, col);
       }
-      if (col + width < grid->comp_col + grid->cols) {
+      if (col + width < grid->comp_col + grid->comp_width) {
         compose_area(MAX(row, grid->comp_row),
-                     MIN(row + height, grid->comp_row + grid->rows),
-                     col + width, grid->comp_col + grid->cols);
+                     MIN(row + height, grid->comp_row + grid->comp_height),
+                     col + width, grid->comp_col + grid->comp_width);
       }
-      compose_area(row + height, grid->comp_row + grid->rows,
-                   grid->comp_col, grid->comp_col + grid->cols);
+      compose_area(row + height, grid->comp_row + grid->comp_height,
+                   grid->comp_col, grid->comp_col + grid->comp_width);
       grid->comp_disabled = false;
     }
     grid->comp_row = row;
@@ -204,6 +202,9 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     grid->comp_index = insert_at;
     grid->pending_comp_index_update = true;
   }
+
+  grid->comp_height = height;
+  grid->comp_width = width;
   if (moved && valid && ui_comp_should_draw()) {
     compose_area(grid->comp_row, grid->comp_row + grid->rows,
                  grid->comp_col, grid->comp_col + grid->cols);
