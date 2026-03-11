@@ -513,6 +513,8 @@ EXTERN int p_swf;               ///< 'swapfile'
 EXTERN OptInt p_smc;            ///< 'synmaxcol'
 EXTERN OptInt p_tpm;            ///< 'tabpagemax'
 EXTERN char *p_tal;             ///< 'tabline'
+EXTERN char *p_tbop;            ///< 'taboptions'
+EXTERN unsigned tbop_flags;
 EXTERN char *p_tpf;             ///< 'termpastefilter'
 EXTERN unsigned tpf_flags;      ///< flags from 'termpastefilter'
 EXTERN char *p_tfu;             ///< 'tagfunc'
