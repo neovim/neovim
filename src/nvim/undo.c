@@ -3090,6 +3090,8 @@ static char *u_save_line_buf(buf_T *buf, linenr_T lnum)
 /// Check if the 'modified' flag is set, or 'ff' has changed (only need to
 /// check the first character, because it can only be "dos", "unix" or "mac").
 /// "nofile" and "scratch" type buffers are considered to always be unchanged.
+/// Prompt buffers ignore implicit modifications by default, but an explicit
+/// ":set modified" still makes them count as changed.
 ///
 /// @param buf The buffer to check
 ///
@@ -3097,10 +3099,9 @@ static char *u_save_line_buf(buf_T *buf, linenr_T lnum)
 bool bufIsChanged(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  // A "prompt" buffer ignores the 'modified' flag, so it won't block closing
-  // when modified.
-  return !bt_dontwrite(buf)
-         && (buf->b_changed || file_ff_differs(buf, true));
+  return bt_prompt(buf)
+         ? buf->b_modified_was_set
+         : (!bt_dontwrite(buf) && (buf->b_changed || file_ff_differs(buf, true)));
 }
 
 // Return true if any buffer has changes.  Also buffers that are not written.

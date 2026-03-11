@@ -85,11 +85,19 @@ describe('prompt buffer', function()
     ]])
 
     command('new')
-    command('set buftype=prompt modified')
+    command('set buftype=prompt')
     feed('iabc<BS><BS>')
     eq('a', fn('prompt_getinput', fn('bufnr')))
     command('quit')
     eq(1, #api.nvim_list_wins())
+
+    command('new')
+    command('set buftype=prompt modified')
+    eq(
+      'Vim(quit):E37: No write since last change (add ! to override)',
+      t.pcall_err(command, 'quit')
+    )
+    eq(2, #api.nvim_list_wins())
   end)
 
   -- oldtest: Test_prompt_editing()

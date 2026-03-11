@@ -186,9 +186,10 @@ normally only do that in a newly created buffer: >vim
 
     :set buftype=prompt
 
-Prompt buffers always ignore modified checks, so setting 'modified' does not
-block closing the prompt window. Plugins should NOT rely on 'modified' to keep
-a prompt buffer open.
+Prompt buffers ignore modified checks for changes made to the buffer, so
+interactive input does not make them hard to close. But if a plugin or user
+explicitly sets 'modified', a modified prompt buffer can't be closed without
+saving.
 
 The user can edit and input text at the end of the buffer. Pressing Enter in
 the input section invokes the |prompt_setcallback()| callback, which is
