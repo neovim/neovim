@@ -2828,6 +2828,18 @@ describe('API', function()
       eq(info, eval('rpcrequest(3, "nvim_get_chan_info", 0)'))
     end)
 
+    local function term_channel_info(id, buffer, argv)
+      return {
+        stream = 'job',
+        id = id,
+        argv = argv,
+        mode = 'terminal',
+        buffer = buffer,
+        pty = '?',
+        exitcode = -1,
+      }
+    end
+
     it('stream=job :terminal channel', function()
       local screen = Screen.new(80, 24)
 
@@ -2835,15 +2847,7 @@ describe('API', function()
       eq(1, api.nvim_get_current_buf())
       eq(3, api.nvim_get_option_value('channel', { buf = 1 }))
 
-      local info = {
-        stream = 'job',
-        id = 3,
-        argv = { eval('exepath(&shell)') },
-        mode = 'terminal',
-        buffer = 1,
-        pty = '?',
-        exitcode = -1,
-      }
+      local info = term_channel_info(3, 1, { eval('exepath(&shell)') })
       local event = api.nvim_get_var('opened_event')
       if not is_os('win') then
         info.pty = event.info.pty
@@ -2854,7 +2858,7 @@ describe('API', function()
       eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
       eq(info, api.nvim_get_chan_info(3))
 
-      -- :terminal with args + running process.
+      -- :terminal with args + running process (Nvim TUI).
       -- Don't use a shell here, so that SIGHUP handling doesn't depend on the shell.
       command('enew')
       local argv = { n.nvim_prog, '-u', 'NONE', '-i', 'NONE' }
@@ -2863,15 +2867,7 @@ describe('API', function()
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       })
       eq(-1, eval('jobwait([&channel], 0)[0]')) -- Running?
-      local expected2 = {
-        stream = 'job',
-        id = 4,
-        argv = argv,
-        mode = 'terminal',
-        buffer = 2,
-        pty = '?',
-        exitcode = -1,
-      }
+      local expected2 = term_channel_info(4, 2, argv)
       local actual2 = eval('nvim_get_chan_info(&channel)')
       expected2.pty = actual2.pty
       eq(expected2, actual2)
@@ -2879,12 +2875,28 @@ describe('API', function()
       -- Make sure Nvim TUI is started (which is after registering SIGHUP handler).
       screen:expect({ any = 'Nvim is open source and freely distributable' })
 
-      -- :terminal with args + stopped process.
+      -- :terminal with args + stopped process (Nvim TUI).
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)') -- Wait.
       expected2.pty = (is_os('win') and '?' or '') -- pty stream was closed.
-      expected2.exitcode = (is_os('win') and 143 or 1)
+      -- On Unix, SIGHUP is handled by Nvim TUI, so exit code is 1.
+      -- On Windows, even though Nvim TUI handles SIGHUP, it's not possible for the
+      -- parent process to know that, so exit code reflects SIGHUP.
+      expected2.exitcode = (is_os('win') and 129 or 1)
       eq(expected2, eval('nvim_get_chan_info(&channel)'))
+
+      -- :terminal with args + stopped process (shell-test).
+      command('enew')
+      argv = { n.testprg('shell-test'), 'INTERACT' }
+      fn.jobstart(argv, { term = true })
+      screen:expect({ any = { vim.pesc('interact $') } })
+      eq(1, eval('jobstop(&channel)'))
+      eval('jobwait([&channel], 1000)') -- Wait.
+      local expected3 = term_channel_info(5, 3, argv)
+      expected3.pty = (is_os('win') and '?' or '') -- pty stream was closed.
+      -- Exit code should reflect SIGHUP as shell-test doesn't handle it.
+      expected3.exitcode = 129
+      eq(expected3, eval('nvim_get_chan_info(&channel)'))
     end)
   end)
 

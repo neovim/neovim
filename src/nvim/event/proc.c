@@ -242,14 +242,15 @@ void proc_stop(Proc *proc) FUNC_ATTR_NONNULL_ALL
     return;
   }
   proc->stopped_time = os_hrtime();
-  proc->exit_signal = SIGTERM;
 
   switch (proc->type) {
   case kProcTypeUv:
+    proc->exit_signal = SIGTERM;
     os_proc_tree_kill(proc->pid, SIGTERM);
     break;
   case kProcTypePty:
     // close all streams for pty processes to send SIGHUP to the process
+    proc->exit_signal = SIGHUP;
     proc_close_streams(proc);
     pty_proc_close_master((PtyProc *)proc);
     break;
