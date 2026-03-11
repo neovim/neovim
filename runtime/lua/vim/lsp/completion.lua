@@ -6,7 +6,7 @@
 ---
 --- Example: activate LSP-driven auto-completion:
 --- ```lua
---- -- Works best with completeopt=noselect.
+--- -- Works best if 'completeopt' has "noselect".
 --- -- Use CTRL-Y to select an item. |complete_CTRL-Y|
 --- vim.cmd[[set completeopt+=menuone,noselect,popup]]
 --- vim.lsp.start({
@@ -1159,15 +1159,14 @@ end
 --- Enables or disables completions from the given language client in the given
 --- buffer. Effects of enabling completions are:
 ---
---- - Calling |vim.lsp.completion.get()| uses the enabled clients to retrieve
----   completion candidates
+--- - Calling |vim.lsp.completion.get()| uses the enabled clients to retrieve completion candidates.
+--- - Selecting a completion item shows a preview popup ("completionItem/resolve") if 'completeopt'
+---   has "popup".
+--- - Accepting a completion item using `<c-y>` applies side effects like expanding snippets,
+---   text edits (e.g. insert import statements) and executing associated commands. This works for
+---   completions triggered via autotrigger, 'omnifunc' or [vim.lsp.completion.get()].
 ---
---- - Accepting a completion candidate using `<c-y>` applies side effects like
----   expanding snippets, text edits (e.g. insert import statements) and
----   executing associated commands. This works for completions triggered via
----   autotrigger, omnifunc or completion.get()
----
---- Example: |lsp-attach| |lsp-completion|
+--- Examples: |lsp-attach| |lsp-completion|
 ---
 --- Note: the behavior of `autotrigger=true` is controlled by the LSP `triggerCharacters` field. You
 --- can override it on LspAttach, see |lsp-autocompletion|.

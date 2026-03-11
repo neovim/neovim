@@ -445,15 +445,15 @@ do
     end, { expr = true, desc = 'Add empty line below cursor' })
   end
 
-  --- incremental treesitter selection mappings (+ lsp fallback)
+  --- "Incremental selection" mappings (treesitter + LSP fallback).
   do
     vim.keymap.set({ 'x' }, '[n', function()
       require 'vim.treesitter._select'.select_prev(vim.v.count1)
-    end, { desc = 'Select previous treesitter node' })
+    end, { desc = 'Select previous node' })
 
     vim.keymap.set({ 'x' }, ']n', function()
       require 'vim.treesitter._select'.select_next(vim.v.count1)
-    end, { desc = 'Select next treesitter node' })
+    end, { desc = 'Select next node' })
 
     vim.keymap.set({ 'x', 'o' }, 'an', function()
       if vim.treesitter.get_parser(nil, nil, { error = false }) then
@@ -461,7 +461,7 @@ do
       else
         vim.lsp.buf.selection_range(vim.v.count1)
       end
-    end, { desc = 'Select parent treesitter node or outer incremental lsp selections' })
+    end, { desc = 'Select parent (outer) node' })
 
     vim.keymap.set({ 'x', 'o' }, 'in', function()
       if vim.treesitter.get_parser(nil, nil, { error = false }) then
@@ -469,7 +469,7 @@ do
       else
         vim.lsp.buf.selection_range(-vim.v.count1)
       end
-    end, { desc = 'Select child treesitter node or inner incremental lsp selections' })
+    end, { desc = 'Select child (inner) node' })
   end
 end
 

@@ -4065,7 +4065,7 @@ describe('vim.diagnostic', function()
     end)
   end)
 
-  describe('toqflist() and fromqflist()', function()
+  describe('toqflist(), fromqflist()', function()
     it('works', function()
       local result = exec_lua(function()
         vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
@@ -4091,95 +4091,71 @@ describe('vim.diagnostic', function()
     end)
 
     it('merge_lines=true merges continuation lines', function()
-      local result = exec_lua(function()
-        local qflist = {
-          {
-            bufnr = 1,
-            lnum = 10,
-            col = 5,
-            end_lnum = 10,
-            end_col = 10,
-            text = 'error: [GHC-83865]',
-            type = 'E',
-            nr = 0,
-            valid = 1,
-          },
-          {
-            bufnr = 1,
-            lnum = 0,
-            col = 0,
-            end_lnum = 0,
-            end_col = 0,
-            text = "    Couldn't match expected type",
-            type = '',
-            nr = 0,
-            valid = 0,
-          },
-          {
-            bufnr = 1,
-            lnum = 0,
-            col = 0,
-            end_lnum = 0,
-            end_col = 0,
-            text = '    with actual type',
-            type = '',
-            nr = 0,
-            valid = 0,
-          },
-          {
-            bufnr = 1,
-            lnum = 20,
-            col = 1,
-            end_lnum = 20,
-            end_col = 5,
-            text = 'warning: unused',
-            type = 'W',
-            nr = 0,
-            valid = 1,
-          },
-        }
-        return vim.diagnostic.fromqflist(qflist, { merge_lines = true })
-      end)
+      local function get_fromqflist(merge_lines)
+        return exec_lua(function(merge_lines_)
+          local qflist = {
+            {
+              bufnr = 1,
+              lnum = 10,
+              col = 5,
+              end_lnum = 10,
+              end_col = 10,
+              text = 'error: [GHC-83865]',
+              type = 'E',
+              nr = 0,
+              valid = 1,
+            },
+            {
+              bufnr = 1,
+              lnum = 0,
+              col = 0,
+              end_lnum = 0,
+              end_col = 0,
+              text = "    Couldn't match expected type",
+              type = '',
+              nr = 0,
+              valid = 0,
+            },
+            {
+              bufnr = 1,
+              lnum = 0,
+              col = 0,
+              end_lnum = 0,
+              end_col = 0,
+              text = '    with actual type',
+              type = '',
+              nr = 0,
+              valid = 0,
+            },
+            {
+              bufnr = 1,
+              lnum = 20,
+              col = 1,
+              end_lnum = 20,
+              end_col = 5,
+              text = 'warning: unused',
+              type = 'W',
+              nr = 0,
+              valid = 1,
+            },
+          }
+          return vim.diagnostic.fromqflist(qflist, { merge_lines = merge_lines_ })
+        end, merge_lines)
+      end
 
+      -- merge_lines=true
+      local result = get_fromqflist(true)
       eq(2, #result)
       eq(
         "error: [GHC-83865]\n    Couldn't match expected type\n    with actual type",
         result[1].message
       )
       eq('warning: unused', result[2].message)
-    end)
 
-    it('merge_lines=false ignores continuation lines', function()
-      local result = exec_lua(function()
-        local qflist = {
-          {
-            bufnr = 1,
-            lnum = 10,
-            col = 5,
-            end_lnum = 10,
-            end_col = 10,
-            text = 'error: main',
-            type = 'E',
-            nr = 0,
-            valid = 1,
-          },
-          {
-            bufnr = 1,
-            lnum = 0,
-            col = 0,
-            end_lnum = 0,
-            end_col = 0,
-            text = 'continuation',
-            type = '',
-            nr = 0,
-            valid = 0,
-          },
-        }
-        return vim.diagnostic.fromqflist(qflist)
-      end)
-
-      eq(1, #result)
-      eq('error: main', result[1].message)
+      -- merge_lines=false
+      result = get_fromqflist(false)
+      eq(2, #result)
+      eq('error: [GHC-83865]', result[1].message)
     end)
   end)
 

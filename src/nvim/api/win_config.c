@@ -39,26 +39,19 @@
 
 #include "api/win_config.c.generated.h"
 
-/// Opens a new split window, or a floating window if `relative` is specified,
-/// or an external window (managed by the UI) if `external` is specified.
+/// Opens a new split window, floating window, or external window.
 ///
-/// Floats are windows that are drawn above the split layout, at some anchor
-/// position in some other window. Floats can be drawn internally or by external
-/// GUI with the |ui-multigrid| extension. External windows are only supported
-/// with multigrid GUIs, and are displayed as separate top-level windows.
-///
-/// For a general overview of floats, see |api-floatwin|.
-///
-/// The `width` and `height` of the new window must be specified when opening
-/// a floating window, but are optional for normal windows.
-///
-/// If `relative` and `external` are omitted, a normal "split" window is created.
-/// The `win` property determines which window will be split. If no `win` is
-/// provided or `win == 0`, a window will be created adjacent to the current window.
-/// If -1 is provided, a top-level split will be created. `vertical` and `split` are
-/// only valid for normal windows, and are used to control split direction. For `vertical`,
-/// the exact direction is determined by 'splitright' and 'splitbelow'.
-/// Split windows cannot have `bufpos`, `row`, `col`, `border`, `title`, `footer` properties.
+/// - Specify `relative` to create a floating window. Floats are drawn over the split layout,
+///   relative to a position in some other window. See |api-floatwin|.
+///   - Floats must specify `width` and `height`.
+/// - Specify `external` to create an external window. External windows are displayed as separate
+///   top-level windows managed by the |ui-multigrid| UI (not Nvim).
+/// - If `relative` and `external` are omitted, a normal "split" window is created.
+///   - The `win` key decides which window to split. If nil or 0, the split will be adjacent to
+///     the current window. If -1, a top-level split will be created.
+///   - Use `vertical` and `split` to control split direction. For `vertical`, the exact direction
+///     is determined by 'splitright' and 'splitbelow'.
+///   - Split windows cannot have `bufpos`, `row`, `col`, `border`, `title`, `footer`.
 ///
 /// With relative=editor (row=0,col=0) refers to the top-left corner of the
 /// screen-grid and (row=Lines-1,col=Columns-1) refers to the bottom-right
@@ -618,11 +611,11 @@ resize:
 #undef HAS_KEY_X
 }
 
-/// Reconfigures the layout of a window.
+/// Reconfigures the layout and properties of a window.
 ///
-/// - Absent (`nil`) keys will not be changed.
-/// - `row` / `col` / `relative` must be reconfigured together.
-/// - Cannot be used to move the last window in a tabpage to a different one.
+/// - Updates only the given keys; unspecified (`nil`) keys will not be changed.
+/// - Keys `row` / `col` / `relative` must be specified together.
+/// - Cannot move the last window in a tabpage to a different one.
 ///
 /// Example: to convert a floating window to a "normal" split window, specify the `win` field:
 ///

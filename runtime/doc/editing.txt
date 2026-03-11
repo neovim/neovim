@@ -1715,17 +1715,22 @@ mark a file as trusted or untrusted using the |:trust| command or the
 :trust [++deny] [++remove] [file]
 
 			Manage trusted files. Without ++ options, :trust marks
-			[file] (or current buffer if no [file]) as trusted,
-			keyed on a hash of its contents. The trust list is
-			stored on disk, Nvim will re-use it after restarting.
+			the current buffer (or [file], but see WARNING below)
+			as trusted, keyed on a hash of its contents. The trust
+			list is stored on disk, Nvim will re-use it after
+			restarting.
 
-			[++deny] marks [file] (or current buffer if no [file])
-			as untrusted: it will never be executed, 'exrc' will
+			WARNING: `:trust [file]` has a TOCTOU risk, so for
+			security you should view the file, inspect its
+			contents, and run `:trust` (without [file] arg).
+
+			[++deny] marks the current buffer or [file] as
+			untrusted: it will never be executed, 'exrc' will
 			ignore it.
 
-			[++remove] removes [file] (or current buffer if no
-			[file]) from the trust list. When the file is
-			discovered by 'exrc' or |vim.secure.read()|, the user
-			will be asked whether to trust or deny the file.
+			[++remove] removes the current buffer or [file] from
+			the trust list. When the file is discovered by 'exrc'
+			or |vim.secure.read()|, the user will be prompted to
+			trust or deny it.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -157,7 +157,7 @@ indices, end-inclusive):
                                                         *api-fast*
 Most API functions are "deferred": they are queued on the main loop and
 processed sequentially with normal input.  So if the editor is waiting for
-user input in a "modal" fashion (e.g. the |hit-enter-prompt|), the request
+user input in a "modal" fashion (e.g. an |input()| prompt), the request
 will block.  Non-deferred (fast) functions such as |nvim_get_mode()| and
 |nvim_input()| are served immediately (i.e. without waiting in the input
 queue).  Lua code can use |vim.in_fast_event()| to detect a fast context.
@@ -1694,8 +1694,6 @@ nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
         • bufnr: (number) buffer id in floating window
 
 nvim__exec_lua_fast({code}, {args})                    *nvim__exec_lua_fast()*
-    WARNING: This feature is experimental/unstable.
-
     EXPERIMENTAL: this API may change or be removed in the future.
 
     Like |nvim_exec_lua()|, but can be called during |api-fast| contexts.
@@ -1709,6 +1707,7 @@ nvim__exec_lua_fast({code}, {args})                    *nvim__exec_lua_fast()*
     Attributes: ~
         |api-fast|
         |RPC| only
+        Since: 0.12.0
 
     Parameters: ~
       • {code}  (`string`) Lua code to execute
@@ -3704,8 +3703,6 @@ nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
       • {height}  (`integer`) Popupmenu height, must be greater than zero.
 
 nvim_ui_send({content})                                       *nvim_ui_send()*
-    WARNING: This feature is experimental/unstable.
-
     Sends arbitrary data to a UI. Use this instead of |nvim_chan_send()| or
     `io.stdout:write()`, if you really want to write to the |TUI| host
     terminal.
@@ -3713,6 +3710,9 @@ nvim_ui_send({content})                                       *nvim_ui_send()*
     Emits a "ui_send" event to all UIs with the "stdout_tty" |ui-option| set.
     UIs are expected to write the received data to a connected TTY if one
     exists.
+
+    Attributes: ~
+        Since: 0.12.0
 
     Parameters: ~
       • {content}  (`string`) Content to write to the TTY
@@ -3768,28 +3768,23 @@ nvim_ui_try_resize_grid({grid}, {width}, {height})
 Win_config Functions                                          *api-win_config*
 
 nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
-    Opens a new split window, or a floating window if `relative` is specified,
-    or an external window (managed by the UI) if `external` is specified.
-
-    Floats are windows that are drawn above the split layout, at some anchor
-    position in some other window. Floats can be drawn internally or by
-    external GUI with the |ui-multigrid| extension. External windows are only
-    supported with multigrid GUIs, and are displayed as separate top-level
-    windows.
-
-    For a general overview of floats, see |api-floatwin|.
-
-    The `width` and `height` of the new window must be specified when opening
-    a floating window, but are optional for normal windows.
-
-    If `relative` and `external` are omitted, a normal "split" window is
-    created. The `win` property determines which window will be split. If no
-    `win` is provided or `win == 0`, a window will be created adjacent to the
-    current window. If -1 is provided, a top-level split will be created.
-    `vertical` and `split` are only valid for normal windows, and are used to
-    control split direction. For `vertical`, the exact direction is determined
-    by 'splitright' and 'splitbelow'. Split windows cannot have `bufpos`,
-    `row`, `col`, `border`, `title`, `footer` properties.
+    Opens a new split window, floating window, or external window.
+    • Specify `relative` to create a floating window. Floats are drawn over
+      the split layout, relative to a position in some other window. See
+      |api-floatwin|.
+      • Floats must specify `width` and `height`.
+    • Specify `external` to create an external window. External windows are
+      displayed as separate top-level windows managed by the |ui-multigrid| UI
+      (not Nvim).
+    • If `relative` and `external` are omitted, a normal "split" window is
+      created.
+      • The `win` key decides which window to split. If nil or 0, the split
+        will be adjacent to the current window. If -1, a top-level split will
+        be created.
+      • Use `vertical` and `split` to control split direction. For `vertical`,
+        the exact direction is determined by 'splitright' and 'splitbelow'.
+      • Split windows cannot have `bufpos`, `row`, `col`, `border`, `title`,
+        `footer`.
 
     With relative=editor (row=0,col=0) refers to the top-left corner of the
     screen-grid and (row=Lines-1,col=Columns-1) refers to the bottom-right
@@ -3961,10 +3956,11 @@ nvim_win_get_config({window})                          *nvim_win_get_config()*
         see |nvim_open_win()|
 
 nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
-    Reconfigures the layout of a window.
-    • Absent (`nil`) keys will not be changed.
-    • `row` / `col` / `relative` must be reconfigured together.
-    • Cannot be used to move the last window in a tabpage to a different one.
+    Reconfigures the layout and properties of a window.
+    • Updates only the given keys; unspecified (`nil`) keys will not be
+      changed.
+    • Keys `row` / `col` / `relative` must be specified together.
+    • Cannot move the last window in a tabpage to a different one.
 
     Example: to convert a floating window to a "normal" split window, specify
     the `win` field: >lua

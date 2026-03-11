@@ -55,13 +55,26 @@ Developer guidelines
 Pull requests (PRs)
 ---------------------
 
-- Fork the repository first.
-- To avoid duplicate work, create a draft pull request.
+### Guidelines
+
+- Don't ask to be assigned to an issue, just send a (reasonably complete) PR and
+  mark it as Draft until it is ready for review.
 - Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
-- Use a _rebase workflow_ for all PRs.
-  - After addressing review comments, it's fine to force-push.
+- Use a _rebase workflow_. After addressing review comments, it's fine to force-push.
+
+### AI-assisted work
+
+Using AI for contributions is acceptable, given the following:
+
+- YOU review the output before sending a non-Draft PR. Do NOT request review
+  until YOU have checked the AI generated PR and verify the following:
+- REMOVE verbosity and blathering from documentation, comments, PR description,
+  commit message, etc. All resources, including names, should be CONCISE and
+  CLEAR. They should contain USEFUL information and nothing more.
+- REMOVE and DEDUPLICATE redundant code, tests, explanations, etc. Explicitness
+  and clarity are GOOD but verbosity, over-explanation, and redundancy is BAD.
 
 ### Merging to master
 
@@ -74,16 +87,22 @@ For maintainers: when a PR is ready to merge to master,
 
 Pull requests have two stages: Draft and Ready for review.
 
-1. [Create a Draft PR][pr-draft] while you are _not_ requesting feedback as
-  you are still working on the PR.
-    - You can skip this if your PR is ready for review.
-2. [Change your PR to ready][pr-ready] when the PR is ready for review.
+1. [Create a Draft PR][pr-draft] while you are _not_ requesting feedback and
+   still working on the PR.
+2. [Change your PR to Ready][pr-ready] when the PR is ready for review.
     - You can convert back to Draft at any time.
 
 Do __not__ add labels like `[RFC]` or `[WIP]` in the title to indicate the
-state of your PR: this just adds noise. Non-Draft PRs are assumed to be open
-for comments; if you want feedback from specific people, `@`-mention them in
-a comment.
+state of your PR: this just adds noise.
+
+### PR description
+
+For bugfixes, your PR title should be essentially the same as (1) the
+"Problem" statement and (2) the test-case name. For example [PR #38048](https://github.com/neovim/neovim/pull/38048):
+
+- Title: `fix(lua): extra CR (\r) in nvim -l output`
+- Problem: `nvim -l prints an extra \r to stdout: ...`
+- Test name: `it('outputs the EOF as LF (not CRLF) #36853' ...`
 
 ### Commit messages
 
@@ -291,24 +310,6 @@ If you need to modify or debug the documentation flow, these are the main files:
 Use [LuaLS] annotations in Lua docstrings to annotate parameter types, return
 types, etc. See [:help dev-lua-doc][dev-lua-doc].
 
-- The template for function documentation is:
-  ```lua
-  --- {Brief}
-  ---
-  --- {Long explanation}
-  ---
-  --- @param arg1 type {description}
-  --- @param arg2 type {description}
-  --- ...
-  ---
-  --- @return type {description}
-  ```
-- If possible, add type information (`table`, `string`, `number`, ...). Multiple valid types are separated by a bar (`string|table`). Indicate optional parameters via `type|nil`.
-- If a function in your Lua module should _not_ be documented, add `@nodoc`.
-- If the function is internal or otherwise non-public add `@private`.
-      - Private functions usually should be underscore-prefixed (named "_foo", not "foo"). Prefixing with an underscore implies `@nodoc`.
-- Mark deprecated functions with `@deprecated`.
-
 Third-party dependencies
 ------------------------
 
@@ -350,10 +351,8 @@ as context, use the `-W` argument as well.
 
 [549]: https://github.com/neovim/neovim/issues/549
 [1820]: https://github.com/neovim/neovim/pull/1820
-[3174]: https://github.com/neovim/neovim/issues/3174
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
 [Cirrus CI]: https://cirrus-ci.com/github/neovim/neovim
-[Clang report]: https://neovim.io/doc/reports/clang/
 [GitHub Actions]: https://github.com/neovim/neovim/actions
 [Vim]: https://github.com/vim/vim
 [clangd]: https://clangd.llvm.org

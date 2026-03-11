@@ -150,8 +150,8 @@ API
   `max_height` is reached, and returns the `end_row` and `end_vcol` for which
   `max_height` or the calculated height is reached.
 • |vim.secure.read()| now returns `true` for trusted directories. Previously
-  it would return `nil`, which made it impossible to tell if the directory was
-  actually trusted.
+  it would return `nil`, thus impossible to tell if the directory was actually
+  trusted.
 • Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
   by |vim.lsp.enable()|.
 • |nvim_ui_send()| writes arbitrary data to a UI's stdout. Use this to write
@@ -187,13 +187,13 @@ DEFAULTS
 • 'statusline' default is exposed as a statusline expression (previously it
   was implemented as an internal C routine).
 • 'statusline' includes |vim.diagnostic.status()|
+• 'statusline' shows exit code of finished terminal buffers
 • Project-local configuration ('exrc') is also loaded from parent directories.
   Unset 'exrc' to stop further search.
 • Mappings:
   • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
 • 'shada' default now excludes "/tmp/" and "/private/" paths to reduce clutter in |:oldfiles|.
 • Enabled treesitter highlighting for Markdown files
-• 'statusline' shows exit code of finished terminal buffers
 
 DIAGNOSTICS
 
@@ -220,8 +220,8 @@ EDITOR
   commands.
 • 'wildchar' now enables completion in search contexts using |/|, |?|, |:g|, |:v|
    and |:vimgrep| commands.
-• For security, 'exrc' no longer shows an "(a)llow" choice. Instead you must
-  "(v)iew" then run `:trust`.
+• For security, 'exrc' no longer shows "(a)llow". Instead you must "(v)iew",
+  then run `:trust` (or `:trust [file]`, but that has a TOCTOU risk).
 • |gx| in help buffers opens the online documentation for the tag under the
   cursor.
 • |:source| with a range in non-Lua files (e.g., vimdoc) now detects Lua
@@ -303,7 +303,10 @@ LSP
     to a top-level field. Defaults to `false`.
 • |Client:stop()| accepts `force` as an integer, which is treated as the time
   to wait before before stop escalates to force-stop.
-• Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
+• |lsp-completion|:
+  • |vim.lsp.completion.enable()| gained a `cmp` option for custom ordering.
+  • Supports colored symbol preview for color items.
+  • Shows a preview ("completionItem/resolve") if 'completeopt' has "popup".
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
 • Support for dynamic registration for `textDocument/diagnostic`
@@ -315,8 +318,7 @@ LSP
 • Code lenses now display as virtual lines
 • Support for `workspace/codeLens/refresh`:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
-• `gx` will use `textDocument/documentLink` if available.
-• |vim.lsp.completion.enable()| adds colored symbol preview for color items.
+• |gx| opens `textDocument/documentLink` items found at cursor.
 
 LUA
 
@@ -394,7 +396,7 @@ PLUGINS
 
 STARTUP
 
-• todo
+• |v:argf| provides file arguments given at startup.
 
 TERMINAL
 
@@ -403,6 +405,8 @@ TERMINAL
 • CSI 3 J (the sequence to clear terminal scrollback) is now supported.
 • A suspended PTY process is now indicated by "[Process suspended]" at the
   bottom-left of the buffer and can be resumed by pressing a key.
+• On terminal exit, "[Process exited]" is shown as virtual text (instead of
+  modifying buffer contents), and exit code is shown in statusline.
 
 TREESITTER
 
@@ -473,8 +477,6 @@ These existing features changed their behavior.
   for input and output. This matters mostly for Linux where some command lines
   using "/dev/stdin" and similiar would break as these special files can be
   reopened when backed by pipes but not when backed by socket pairs.
-• On terminal exit, "[Process exited]" is not added to the buffer contents,
-  instead it is shown as virtual text and exit code is shown in statusline.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

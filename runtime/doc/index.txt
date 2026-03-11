@@ -1057,7 +1057,8 @@ Tag		Command		Command-line editing-mode action	~
 				under the cursor literally
 		CTRL-S		not used, or used for terminal control flow
 |c_CTRL-T|	CTRL-T		previous match when 'incsearch' is active
-|c_CTRL-U|	CTRL-U		remove all characters
+|c_CTRL-U|	CTRL-U		remove all characters between the cursor
+				and beginning of command-line
 |c_CTRL-V|	CTRL-V		insert next non-digit literally, insert three
 				digit decimal number as a single byte.
 |c_CTRL-W|	CTRL-W		delete the word in front of the cursor

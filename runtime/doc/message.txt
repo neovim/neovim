@@ -11,7 +11,7 @@ means.  It is not complete though.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Old messages			*:messages* *:mes* *message-history*
+Messages history			*:messages* *:mes* *message-history*
 
 The ":messages" command can be used to view previously given messages.  This
 is especially useful when messages have been overwritten or truncated.  This
@@ -30,14 +30,9 @@ depends on the 'shortmess' option.
 The number of remembered messages is determined by the 'messagesopt' option.
 
 								*g<*
-The "g<" command can be used to see the last page of previous command output.
-This is especially useful if you accidentally typed <Space> at the hit-enter
-prompt.  You are then back at the hit-enter prompt and can then scroll further
-back.
-Note: If the output has been stopped with "q" at the more prompt, it will only
-be displayed up to this point.
-The previous command output is cleared when another command produces output.
-The "g<" output is not redirected.
+The "g<" command shows the last page of previous command output.
+This only works when 'more' is set.
+With |ui2|: "g<" shows recent messages in the |pager|.
 
 If you want to find help on a specific (error) message, use the ID at the
 start of the message.  For example, to get help on the message: >
@@ -57,7 +52,7 @@ If you are lazy, it also works without the shift key: >
 	:help e72
 
 ==============================================================================
-2. Error messages				*error-messages* *errors*
+Error messages					*error-messages* *errors*
 
 When an error message is displayed, but it is removed before you could read
 it, you can see it again with: >
@@ -767,138 +762,99 @@ startup.
 This can only happen when changing the source code, after adding a command in
 src/ex_cmds.lua.  Update the lookup table by re-running the build.
 
-								*E970*  >
+							*E970*  >
   Failed to initialize lua interpreter
   Failed to initialize builtin lua modules
 
 Nvim failed to initialize the Lua interpreter or its builtin modules during
 startup. This is a fatal error that prevents Nvim from running.
 
-								*E5107*  >
+							*E5107*  >
   Lua: {error}
 
 Lua code compilation (loadbuffer) failed when executing |:lua| commands or
 functions. {error} contains the Lua syntax or compilation error message.
 
-								*E5108*  >
+							*E5108*  >
   Lua function: {error}
   Lua: {error}
 
-Lua code execution (pcall) failed. This can occur when executing |:lua|
-commands, during Lua function completion, or in other Lua code execution
-contexts. {error} contains the Lua runtime error message and traceback.
+Lua code execution (pcall) failed, when executing Lua code or during Lua
+function completion. {error} contains the Lua runtime error message and
+traceback.
 
-								*E5109*  >
+							*E5109*  >
   Lua: {error}
 
-Lua code compilation (loadbuffer) failed when executing the |:luado| command.
-{error} contains the Lua syntax or compilation error message.
+Lua code compilation (loadbuffer) failed during |:luado|. {error} contains the
+Lua syntax or compilation error message.
 
-								*E5110*  >
+							*E5110*  >
   Lua: {error}
 
 Lua code execution (pcall) failed during |:luado| command initialization.
 {error} contains the Lua runtime error message and traceback.
 
-								*E5111*  >
+							*E5111*  >
   Lua: {error}
 
 Lua code execution failed in |:luado| callback or during Lua script loading.
 {error} contains the Lua runtime error message and traceback.
 
-								*E5112*  >
+							*E5112*  >
   Lua chunk: {error}
 
 Lua chunk compilation failed. The loadstring() function returned an error
 when trying to compile the Lua code. {error} contains the compilation error
 message.
 
-								*E5113*  >
+							*E5113*  >
   Lua chunk: {error}
 
 Lua chunk execution failed after successful compilation. {error} contains the
 Lua runtime error message and traceback.
 
-								*E5114*  >
+							*E5114*  >
   Converting print argument #{i}: {error}
 
-Failed to convert argument number {i} to a string in the Lua print()
-function. {error} contains the conversion error details.
+Lua `print()` failed to convert argument number {i} to a string. {error}
+contains the conversion error details.
 
-								*E5115*  >
+							*E5115*  >
   Loading Lua debug string: {error}
 
 Failed to load (compile) a Lua debug command string. {error} contains the
 compilation error message.
 
-								*E5116*  >
+							*E5116*  >
   Calling Lua debug string: {error}
 
 Failed to execute a Lua debug command string. {error} contains the runtime
 error message and traceback.
 
 ==============================================================================
-3. Messages						*messages*
+Messages						*messages*
 
-This is an (incomplete) overview of various messages that Vim gives:
+Messages are shown in the |ui2| messages area. If they exceed ("overflow") the
+area then they will be collapsed and a "spill" indicator will indicate how
+many lines were collapsed. Use |g<| to see the full messages.
 
-			*hit-enter* *press-enter* *hit-return*
-			*press-return* *hit-enter-prompt*  >
-
-  Press ENTER or type command to continue
-
-This message is given when there is something on the screen for you to read,
-and the screen is about to be redrawn:
-- After executing an external command (e.g., ":!ls" and "=").
-- Something is displayed on the status line that is longer than the width of
-  the window, or runs into the 'showcmd' or 'ruler' output.
-
--> Press <Enter> or <Space> to redraw the screen and continue, without that
-   key being used otherwise.
--> Press ':' or any other Normal mode command character to start that command.
-   Note that after an external command some special keys, such as the cursor
-   keys, may not work normally, because the terminal is still set to a state
-   for executing the external command.
--> Press 'k', <Up>, 'u', 'b' or 'g' to scroll back in the messages.  This
-   works the same way as at the |more-prompt|.  Only works when 'more' is on.
--> Pressing 'j', 'f', 'd' or <Down> is ignored when messages scrolled off the
-   top of the screen and 'more' is on, to avoid that typing one 'j' or 'f' too
-   many causes the messages to disappear.
--> Press <C-Y> to copy (yank) a modeless selection to the clipboard register.
--> Use a menu.  The characters defined for Cmdline-mode are used.
--> When 'mouse' contains the 'r' flag, clicking the left mouse button works
-   like pressing <Space>.  This makes it impossible to select text though.
--> For the GUI clicking the left mouse button in the last line works like
-   pressing <Space>.
--> |q| won't start recording into a register (rationale: it is often used as
-   "quit" prompt key by users)
-
-If you accidentally hit <Enter> or <Space> and you want to see the displayed
-text then use |g<|.  This only works when 'more' is set.
-
-To reduce the number of hit-enter prompts:
-- Set 'messagesopt'.
+To avoid overflow ("spill") of the |ui2| messages area:
 - Set 'cmdheight' to 2 or higher.
 - Add flags to 'shortmess'.
 - Reset 'showcmd' and/or 'ruler'.
 - Make sure `:echo` text is within |v:echospace| screen cells.
 
-If your script causes the hit-enter prompt and you don't know why, you may
-find the |v:scrollstart| variable useful.
-
-Also see 'mouse'.  The hit-enter message is highlighted with the |hl-Question|
-group.
-
-
 						*more-prompt* *pager*  >
-  -- More --
-  -- More -- SPACE/d/j: screen/page/line down, b/u/k: up, q: quit
+  f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging
 
-This message is given when the screen is filled with messages.  It is only
-given when the 'more' option is on.  It is highlighted with the |hl-MoreMsg|
-group.
+This message is given when the |ui2| modal dialog is active.
+Only when the 'more' option is on.
+Highlighted with the |hl-MoreMsg| group.
 
-Type						effect ~
+With |ui2|: use "g<" to show messages in the pager.
+
+     Type					Effect ~
      <CR> or <NL> or j or <Down>		one more line
      d						down a page (half a screen)
      <Space> or f or <PageDown> or CTRL-F	down a screen
@@ -920,22 +876,9 @@ Type						effect ~
 						in Cmdline-mode.
     <LeftMouse>					next page*
 
-Any other key causes the meaning of the keys to be displayed.
-
-* Clicking the left mouse button only works:
-    - For the GUI: in the last line of the screen.
-    - When 'r' is included in 'mouse' (but then selecting text won't work).
-
-
-Note: The typed key is directly obtained from the terminal, it is not mapped
-and typeahead is ignored.
-
-The |g<| command can be used to see the last page of previous command output.
-This is especially useful if you accidentally typed <Space> at the hit-enter
-prompt.
 
 ==============================================================================
-4. PROGRESS MESSAGE                                    *progress-message*
+Progress messages					*progress-message*
 
 Plugins and core Nvim features can emit "progress" |ui-messages| to report the
 state of long-running tasks.

@@ -115,6 +115,7 @@ describe('file search', function()
       eq(expected, eval('expand("<cfile>")'))
     end
 
+    -- test_cfile([[c:/d:/e:/foo/bar.txt]], 'c:/d:/e') -- TODO(justinmk): should return "d:/foo/bar.txt" ?
     test_cfile([[c:/d:/foo/bar.txt]]) -- TODO(justinmk): should return "d:/foo/bar.txt" ?
     test_cfile([[//share/c:/foo/bar/]])
     test_cfile([[file://c:/foo/bar]])

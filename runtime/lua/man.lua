@@ -221,12 +221,7 @@ local function get_path(name, sect)
   sect = sect or ''
   -- We can avoid relying on -S or -s here since they are very
   -- inconsistently supported. Instead, call -w with a section and a name.
-  local cmd --- @type string[]
-  if sect == '' then
-    cmd = { 'man', '-w', name }
-  else
-    cmd = { 'man', '-w', sect, name }
-  end
+  local cmd = sect == '' and { 'man', '-w', name } or { 'man', '-w', sect, name }
 
   local lines = system(cmd, true)
   local results = vim.split(lines, '\n', { trimempty = true })

@@ -56,10 +56,9 @@ Follow these steps to get LSP features:
    a |lsp-root_markers| file so the workspace can be recognized.
 5. Check that LSP is active ("attached") for the buffer: >vim
      :checkhealth vim.lsp
-6. Please note that certain LSP features are disabled by default,
-   you may choose to enable them manually. See:
+6. Note: some LSP features are disabled by default, you can enable them
+   manually:
      - |lsp-codelens|
-     - |lsp-document_color|
      - |lsp-linked_editing_range|
      - |lsp-inlay_hint|
      - |lsp-inline_completion|
@@ -85,8 +84,15 @@ These GLOBAL keymaps are created unconditionally when Nvim starts:
 - "grt" is mapped to |vim.lsp.buf.type_definition()|
 - "gO" is mapped to |vim.lsp.buf.document_symbol()|
 - CTRL-S (Insert mode) is mapped to |vim.lsp.buf.signature_help()|
-- |v_an| and |v_in| fall back to |vim.lsp.buf.selection_range()| when
-  buffer has no treesitter parser
+- |v_an| and |v_in| fall back to LSP |vim.lsp.buf.selection_range()| if
+  treesitter is not active.
+- |gx| handles `textDocument/documentLink`. Example: with gopls, invoking gx
+  on "os" in this Go code will open documentation externally: >
+    package nvim
+    import (
+       "os"
+    )
+<
 
 BUFFER-LOCAL DEFAULTS
 
@@ -1575,12 +1581,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 |vim.lsp.ClientConfig|.
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`) Capabilities
                                 provided at runtime (after startup).
-      • {exit_timeout}          (`integer|boolean`, default: `false`)
-                                Milliseconds to wait for server to exit
-                                cleanly after sending the "shutdown" request
-                                before sending kill -15. If set to false,
-                                waits indefinitely. If set to true, nvim will
-                                kill the server immediately.
+      • {exit_timeout}          (`integer|boolean`, default: `false`) See
+                                |vim.lsp.ClientConfig|.
       • {flags}                 (`table`) Experimental client flags:
                                 • {allow_incremental_sync}? (`boolean`,
                                   default: `true`) Allow using incremental
@@ -1701,12 +1703,17 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                process on exit, but if Nvim fails to exit
                                cleanly this could leave behind orphaned server
                                processes.
-      • {exit_timeout}?        (`integer|boolean`, default: `false`)
-                               Milliseconds to wait for server to exit cleanly
-                               after sending the "shutdown" request before
-                               sending kill -15. If set to false, waits
-                               indefinitely. If set to true, nvim will kill
-                               the server immediately.
+      • {exit_timeout}?        (`integer|boolean`, default: `false`) Decides
+                               if/when to force-stop the server after sending
+                               the "shutdown" request. See |Client:stop()|.
+                               Note: when Nvim itself is exiting,
+                               • `false`: Nvim will not force-stop LSP
+                                 server(s).
+                               • `true`: Nvim will force-stop LSP server(s)
+                                 that did not comply with the "shutdown"
+                                 request.
+                               • `number`: Nvim will wait up to `exit_timeout`
+                                 milliseconds before performing force-stop.
       • {flags}?               (`table`) Experimental client flags:
                                • {allow_incremental_sync}? (`boolean`,
                                  default: `true`) Allow using incremental sync
@@ -1877,20 +1884,24 @@ Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})
 Client:stop({force})                                           *Client:stop()*
     Stops a client, optionally with force after a timeout.
 
-    By default, it will request the server to shutdown, then force a shutdown
-    if the server has not exited after `self.exit_timeout` milliseconds. If
-    you request to stop a client which has previously been requested to
-    shutdown, it will automatically escalate and force shutdown immediately,
-    regardless of the value of `force` (or `self.exit_timeout` if `nil`).
+    By default this sends a "shutdown" request to the server, escalating to
+    force-stop if the server has not exited after `self.exit_timeout`
+    milliseconds (unless `exit_timeout=false`). Calling stop() on a client
+    that was previously requested to shutdown, will escalate to force-stop
+    immediately, regardless of `force` (or `self.exit_timeout` if
+    `force=nil`).
 
     Note: Forcing shutdown while a server is busy writing out project or index
     files can lead to file corruption.
 
     Parameters: ~
-      • {force}  (`integer|boolean?`, default: `self.exit_timeout`) Time in
-                 milliseconds to wait before forcing a shutdown. If false,
-                 only request the server to shutdown, but don't force it. If
-                 true, force a shutdown immediately.
+      • {force}  (`integer|boolean?`) (default: `self.exit_timeout`) Decides
+                 whether to force-stop the server.
+                 • `nil`: Defaults to `exit_timeout` from
+                   |vim.lsp.ClientConfig|.
+                 • `true`: Force-stop after "shutdown" request.
+                 • `false`: Do not force-stop after "shutdown" request.
+                 • number: Wait up to `force` milliseconds before force-stop.
 
 Client:supports_method({method}, {bufnr})           *Client:supports_method()*
     Checks if a client supports a given method. Always returns true for
@@ -1974,7 +1985,7 @@ activate "auto-completion" when you type any of the server-defined
 |complete_CTRL-Y|
 
 Example: activate LSP-driven auto-completion: >lua
-    -- Works best with completeopt=noselect.
+    -- Works best if 'completeopt' has "noselect".
     -- Use CTRL-Y to select an item. |complete_CTRL-Y|
     vim.cmd[[set completeopt+=menuone,noselect,popup]]
     vim.lsp.start({
@@ -2007,13 +2018,15 @@ enable({enable}, {client_id}, {bufnr}, {opts})
     Enables or disables completions from the given language client in the
     given buffer. Effects of enabling completions are:
     • Calling |vim.lsp.completion.get()| uses the enabled clients to retrieve
-      completion candidates
-    • Accepting a completion candidate using `<c-y>` applies side effects like
+      completion candidates.
+    • Selecting a completion item shows a preview popup
+      ("completionItem/resolve") if 'completeopt' has "popup".
+    • Accepting a completion item using `<c-y>` applies side effects like
       expanding snippets, text edits (e.g. insert import statements) and
       executing associated commands. This works for completions triggered via
-      autotrigger, omnifunc or completion.get()
+      autotrigger, 'omnifunc' or |vim.lsp.completion.get()|.
 
-    Example: |lsp-attach| |lsp-completion|
+    Examples: |lsp-attach| |lsp-completion|
 
     Note: the behavior of `autotrigger=true` is controlled by the LSP
     `triggerCharacters` field. You can override it on LspAttach, see

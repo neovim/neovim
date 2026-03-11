@@ -219,7 +219,7 @@ describe('server', function()
     client:close()
   end)
 
-  it('removes stale socket files automatically #26053', function()
+  it('removes stale socket files automatically #36581', function()
     -- Windows named pipes are ephemeral kernel objects that are automatically
     -- cleaned up when the process terminates. Unix domain sockets persist as
     -- files on the filesystem and can become stale after crashes.
@@ -243,7 +243,7 @@ describe('server', function()
     fn.serverstop(socket_path)
   end)
 
-  it('does not remove live sockets #26053', function()
+  it('does not remove live sockets #36581', function()
     t.skip(is_os('win'), 'N/A on Windows')
 
     clear()

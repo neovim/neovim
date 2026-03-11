@@ -124,7 +124,7 @@ CTRL-W		Delete the |word| before the cursor.  This depends on the
 		'iskeyword' option.
 							*c_CTRL-U*
 CTRL-U		Remove all characters between the cursor position and
-		the beginning of the line.  Previous versions of vim
+		the beginning of the line.  Previous versions of Vim
 		deleted all characters on the line.  If that is the
 		preferred behavior, add the following to your vimrc: >
 			:cnoremap <C-U> <C-E><C-U>
