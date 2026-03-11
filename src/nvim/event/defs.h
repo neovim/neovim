@@ -104,6 +104,7 @@ struct stream {
   size_t maxmem;
 };
 
+typedef void (*stream_before_close)(void *data);
 struct rstream {
   Stream s;
   bool did_eof;
@@ -116,6 +117,7 @@ struct rstream {
   uv_buf_t uvbuf;
   stream_read_cb read_cb;
   size_t num_bytes;
+  stream_before_close before_close;
 };
 
 #define ADDRESS_MAX_SIZE 256

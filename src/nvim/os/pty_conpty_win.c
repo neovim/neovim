@@ -174,8 +174,9 @@ void os_conpty_set_size(conpty_t *conpty_object, uint16_t width, uint16_t height
   }
 }
 
-void os_conpty_free(conpty_t *conpty_object)
+void os_conpty_free(void *data)
 {
+  conpty_t *conpty_object = data;
   if (conpty_object != NULL) {
     if (conpty_object->si_ex.lpAttributeList != NULL) {
       DeleteProcThreadAttributeList(conpty_object->si_ex.lpAttributeList);
