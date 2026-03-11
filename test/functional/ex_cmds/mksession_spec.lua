@@ -175,7 +175,7 @@ describe(':mksession', function()
     command('terminal')
     command('cd ' .. cwd_dir)
     command('mksession ' .. session_path)
-    command('%bwipeout!')
+    command('sleep 5m | %bwipeout!')
     if is_os('win') then
       sleep(100) -- Make sure all child processes have exited.
     end
@@ -186,7 +186,9 @@ describe(':mksession', function()
 
     local expected_cwd = cwd_dir .. '/' .. tab_dir
     matches('^term://' .. pesc(expected_cwd) .. '//%d+:', fn.expand('%'))
-    command('%bwipeout!')
+    -- Wait some time for the PTY process to call setsid() and chdir(), otherwise
+    -- SIGHUP may be sent to the parent, or after_each() may run before chdir().
+    command('sleep 5m | %bwipeout!')
     if is_os('win') then
       sleep(100) -- Make sure all child processes have exited.
     end
