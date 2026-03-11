@@ -1003,12 +1003,11 @@ static bool pum_adjust_info_position(win_T *wp, int width)
     wp->w_config.width = max_extra;
     wp->w_config.col = place_in_right ? col - 1 : pum_col - wp->w_config.width - 1;
   }
-  // when pum_above is SW otherwise is NW
-  wp->w_config.anchor = pum_above ? kFloatAnchorSouth : 0;
+  wp->w_config.anchor = 0;  // NW: align top of info window with top of pum
   linenr_T count = wp->w_buffer->b_ml.ml_line_count;
   wp->w_view_width = wp->w_config.width;
   wp->w_config.height = plines_m_win(wp, wp->w_topline, count, Rows);
-  wp->w_config.row = pum_above ? pum_row + wp->w_config.height : pum_row;
+  wp->w_config.row = pum_row;
   wp->w_config.hide = false;
   win_config_float(wp, wp->w_config);
   return true;
