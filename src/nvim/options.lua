@@ -5935,8 +5935,11 @@ local options = {
         result of a BufNewFile, BufRead/BufReadPost, BufWritePost,
         FileAppendPost or VimLeave autocommand event.  See |gzip-example| for
         an explanation.
-        When 'buftype' is "nowrite" or "nofile" this option may be set, but
-        will be ignored.
+        When 'buftype' is "nowrite" or "nofile", this option may be set, but
+        it is ignored and will not block closing the window. For "prompt"
+        buffers, changes made to the buffer do not make it count as modified,
+        but an explicit ":set modified" is respected and will block closing the
+        window.
         Note that the text may actually be the same, e.g. 'modified' is set
         when using "rA" on an "A".
       ]=],
