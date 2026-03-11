@@ -1,38 +1,35 @@
 --- @brief
 ---
----WARNING: This is an experimental interface intended to replace the message
----grid in the TUI.
+--- WARNING: This is an experimental feature intended to replace the builtin message + cmdline
+--- presentation layer.
 ---
----To enable the experimental UI (default opts shown):
----```lua
----require('vim._core.ui2').enable({
----  enable = true, -- Whether to enable or disable the UI.
----  msg = { -- Options related to the message module.
----    ---@type 'cmd'|'msg' Default message target, either in the
----    ---cmdline or in a separate ephemeral message window.
----    ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
----    ---or table mapping |ui-messages| kinds and triggers to a target.
----    targets = 'cmd',
----    timeout = 4000, -- Time a message is visible in the message window.
----  },
----})
----```
+--- To enable this feature (default opts shown):
+--- ```lua
+--- require('vim._core.ui2').enable({
+---   enable = true, -- Whether to enable or disable the UI.
+---   msg = { -- Options related to the message module.
+---     ---@type 'cmd'|'msg' Default message target, either in the
+---     ---cmdline or in a separate ephemeral message window.
+---     ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
+---     ---or table mapping |ui-messages| kinds and triggers to a target.
+---     targets = 'cmd',
+---     timeout = 4000, -- Time a message is visible in the message window.
+---   },
+--- })
+--- ```
 ---
----There are four separate window types used by this interface:
----- "cmd": The cmdline window; also used for 'showcmd', 'showmode', 'ruler', and
----  messages if 'cmdheight' > 0.
----- "msg": The message window; used for messages when 'cmdheight' == 0.
----- "pager": The pager window; used for |:messages| and certain messages
----   that should be shown in full.
----- "dialog": The dialog window; used for prompt messages that expect user input.
+--- There are four special windows/buffers for presenting messages and cmdline:
+--- - "cmd": Cmdline. Also used for 'showcmd', 'showmode', 'ruler', and messages if 'cmdheight' > 0.
+--- - "msg": Message window, shows messages when 'cmdheight' == 0.
+--- - "pager": Pager window, shows |:messages| and certain messages that are never "collapsed".
+--- - "dialog": Dialog window, shows modal prompts that expect user input.
 ---
----These four windows are assigned the "cmd", "msg", "pager" and "dialog"
----'filetype' respectively. Use a |FileType| autocommand to configure any local
----options for these windows and their respective buffers.
+--- The buffer 'filetype' is to the above-listed id ("cmd", "msg", …). Handle the |FileType| event
+--- to configure any local options for these windows and their respective buffers.
 ---
----Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
----not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
----spilled lines. To see the full message, use either:
+--- Unlike the legacy |hit-enter| prompt, messages that overflow the cmdline area are instead
+--- "collapsed", followed by a `[+x]` "spill" indicator, where `x` indicates the spilled lines. To
+--- see the full messages, do either:
 --- - ENTER immediately after a message from interactive |:| cmdline.
 --- - |g<| at any time.
 

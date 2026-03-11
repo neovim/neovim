@@ -1198,8 +1198,7 @@ running) you have additional options:
 			List file names as with |:oldfiles|, and then prompt
 			for a number.  When the number is valid that file from
 			the list is edited.
-			If you get the |press-enter| prompt you can press "q"
-			and still get the prompt to enter a file number.
+
 			Use [!] to abandon a modified buffer. |abandon|
 
 SHADA FILE FORMAT						*shada-format*

@@ -123,10 +123,11 @@ DEBUGGING TESTS
 
   See `nvim_argv` in `test/functional/testnvim.lua`.
 
-- Hanging tests can happen due to unexpected "press-enter" prompts. The
-  default screen width is 50 columns. Commands that try to print lines longer
-  than 50 columns in the command-line, e.g. `:edit very...long...path`, will
-  trigger the prompt. Try using a shorter path, or `:silent edit`.
+- Hanging tests can happen due to unexpected modal prompts (waiting for user
+  input). The default screen width is 50 columns.
+  - Commands that try to print lines longer than 50 columns in the cmdline,
+    e.g. `:edit very...long...path`, will trigger the hit-enter prompt. Try
+    using a shorter path, or `:silent edit`.
 - If you can't figure out what is going on, try to visualize the screen. Put
   this at the beginning of your test: >
     local Screen = require('test.functional.ui.screen')

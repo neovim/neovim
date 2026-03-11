@@ -52,6 +52,11 @@ LUA
 
 • *vim.diff()*				Renamed to |vim.text.diff()|
 
+UI
+
+• *hit-enter* *hit-enter-prompt*	With |ui2|, the legacy "Press ENTER"
+  *press-enter				prompt is never triggered.
+
 VIMSCRIPT
 
 • todo

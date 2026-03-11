@@ -167,7 +167,7 @@ local commands = {
   end,
 }
 
--- NOTE: Use `vim.schedule_wrap` to avoid press-enter after choosing code
+-- NOTE: Use `vim.schedule_wrap` to avoid hit-enter after choosing code
 -- action via built-in `vim.fn.inputlist()`
 --- @param params { command: string, arguments: table }
 --- @param callback function

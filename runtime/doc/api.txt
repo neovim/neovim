@@ -157,7 +157,7 @@ indices, end-inclusive):
                                                         *api-fast*
 Most API functions are "deferred": they are queued on the main loop and
 processed sequentially with normal input.  So if the editor is waiting for
-user input in a "modal" fashion (e.g. the |hit-enter-prompt|), the request
+user input in a "modal" fashion (e.g. an |input()| prompt), the request
 will block.  Non-deferred (fast) functions such as |nvim_get_mode()| and
 |nvim_input()| are served immediately (i.e. without waiting in the input
 queue).  Lua code can use |vim.in_fast_event()| to detect a fast context.
