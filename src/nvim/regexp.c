@@ -10430,6 +10430,7 @@ collection:
     p = (uint8_t *)regparse;
     endp = (uint8_t *)skip_anyof((char *)p);
     if (*endp == ']') {
+      bool range_endpoint;
       // Try to reverse engineer character classes. For example,
       // recognize that [0-9] stands for \d and [A-Za-z_] for \h,
       // and perform the necessary substitutions in the NFA.
@@ -10466,6 +10467,7 @@ collection:
       emit_range = false;
       while ((uint8_t *)regparse < endp) {
         int oldstartc = startc;
+        range_endpoint = false;
         startc = -1;
         got_coll_char = false;
         if (*regparse == '[') {
@@ -10609,6 +10611,7 @@ collection:
         // Previous char was '-', so this char is end of range.
         if (emit_range) {
           int endc = startc;
+          range_endpoint = true;
           startc = oldstartc;
           if (startc > endc) {
             EMSG_RET_FAIL(_(e_reverse_range));
@@ -10673,7 +10676,14 @@ collection:
         }
 
         int plen;
-        if (utf_ptr2len(regparse) != (plen = utfc_ptr2len(regparse))) {
+        //
+        // If this character was consumed as the end of a range, do not emit its
+        // composing characters separately.  Range handling only uses the base
+        // codepoint; emitting the composing part again would duplicate the
+        // character in the postfix stream and corrupt the NFA stack.
+        //
+        if (!range_endpoint
+            && utf_ptr2len(regparse) != (plen = utfc_ptr2len(regparse))) {
           int i = utf_ptr2len(regparse);
 
           c = utf_ptr2char(regparse + i);
@@ -11839,7 +11849,11 @@ static int nfa_max_width(nfa_state_T *startstate, int depth)
       // Matches some character, including composing chars.
       len += MB_MAXBYTES;
       if (state->c != NFA_ANY) {
-        // Skip over the characters.
+        // Skip over the compiled collection.
+        // malformed NFAs must not crash width estimation.
+        if (state->out1 == NULL || state->out1->out == NULL) {
+          return -1;
+        }
         state = state->out1->out;
         continue;
       }
