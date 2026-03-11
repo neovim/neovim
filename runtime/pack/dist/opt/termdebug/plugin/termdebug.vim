@@ -74,7 +74,6 @@ let s:asm_id = 13
 let s:break_id = 14  " breakpoint number is added to this
 let s:stopped = v:true
 let s:running = v:false
-let s:prompt_running = v:false
 
 let s:parsing_disasm_msg = 0
 let s:asm_lines = []
@@ -482,10 +481,6 @@ func s:StartDebug_prompt(dict)
     call s:CloseBuffers()
     return
   endif
-  let s:prompt_running = v:true
-  augroup TermDebug
-    exe $'au QuitPre <buffer={s:promptbuf}> call s:PromptQuitPre()'
-  augroup END
   exe $'au BufUnload <buffer={s:promptbuf}> ++once call jobstop(s:gdbjob)'
 
   let s:ptybufnr = 0
@@ -637,13 +632,6 @@ func s:PromptInterrupt()
   else
     call v:lua.vim.uv.kill(jobpid(s:gdbjob), 'sigint')
   endif
-endfunc
-
-func s:PromptQuitPre()
-  if !s:prompt_running || v:cmdbang
-    return
-  endif
-  call s:Echoerr('Termdebug is active. Exit gdb (type "quit") or use :q! to close.')
 endfunc
 
 " Wrapper around job callback that handles partial lines (:h channel-lines).
@@ -835,7 +823,6 @@ func s:EndDebugCommon()
 endfunc
 
 func s:EndPromptDebug(job_id, exit_code, event)
-  let s:prompt_running = v:false
   if exists('#User#TermdebugStopPre')
     doauto <nomodeline> User TermdebugStopPre
   endif
