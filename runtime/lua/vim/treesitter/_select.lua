@@ -39,41 +39,19 @@ local function node_id(node)
   return ('%s:%s'):format(table.concat({ unpack(node.top.region) }, ':'), node.node:id())
 end
 
---- @param r1 Range4
---- @param r2 Range4
---- @return Range4?
-local function range_intersection(r1, r2)
-  if not Range.intercepts(r1, r2) then
-    return
-  end
-
-  local rs = Range.cmp_pos.le(r1[1], r1[2], r2[1], r2[2]) and r2 or r1
-  local re = Range.cmp_pos.ge(r1[3], r1[4], r2[3], r2[4]) and r2 or r1
-  return { rs[1], rs[2], re[3], re[4] }
-end
-
---- @param r1 Range4
---- @param r2 Range4
---- @boolean
-local function range_is_same(r1, r2)
-  local srow_1, scol_1, erow_1, ecol_1 = Range.unpack4(r1)
-  local srow_2, scol_2, erow_2, ecol_2 = Range.unpack4(r2)
-  return srow_1 == srow_2 and scol_1 == scol_2 and erow_1 == erow_2 and ecol_1 == ecol_2
-end
-
 --- @param node vim.treesitter.select.node
 --- @return Range4
 local function node_range(node)
   local node_range_ = { node.node:range() }
 
-  return range_intersection(node.top.region, node_range_) or { 0, 0, 0, 0 }
+  return Range.intersection(node.top.region, node_range_) or { 0, 0, 0, 0 }
 end
 
 --- @param node1 vim.treesitter.select.node
 --- @param node2 vim.treesitter.select.node
 --- @return boolean
 local function node_is_same_range(node1, node2)
-  return range_is_same(node_range(node1), node_range(node2))
+  return Range.equal(node_range(node1), node_range(node2))
 end
 
 --- @param node vim.treesitter.select.node
@@ -188,7 +166,7 @@ local function get_node(range, top_node, parent_chain)
       for _, child_tree in ipairs(child:trees()) do
         for _, child_region in ipairs(tree_get_ranges(child_tree)) do
           local child_root_node_range = { child_tree:root():range() }
-          local child_range = range_intersection(child_region, child_root_node_range)
+          local child_range = Range.intersection(child_region, child_root_node_range)
 
           local child_top_node = create_top_node(child_tree, child_region, child)
           if
@@ -234,7 +212,7 @@ local function get_node(range, top_node, parent_chain)
   if node.ltree then
     local root_node_range = { node.node:range() }
     local tree_range = node.top.region
-    local actual_range = assert(range_intersection(tree_range, root_node_range))
+    local actual_range = assert(Range.intersection(tree_range, root_node_range))
     local parent_tsnode = assert(top_node.node:named_descendant_for_range(unpack(actual_range)))
     table.insert(parent_chain, create_node(parent_tsnode, top_node))
 
@@ -322,7 +300,7 @@ local function node_get_children_no_normalize(node)
     for _, child_tree in ipairs(child:trees()) do
       for _, child_region in ipairs(tree_get_ranges(child_tree)) do
         local child_root_node_range = { child_tree:root():range() }
-        local child_range = range_intersection(child_region, child_root_node_range)
+        local child_range = Range.intersection(child_region, child_root_node_range)
 
         if child_range and Range.contains(node_range(node), child_range) then
           local child_parent_tsnode =
@@ -424,7 +402,7 @@ local function get_parent_from_range(range)
     return
   end
 
-  if not range_is_same(range, node_range(node)) then
+  if not Range.equal(range, node_range(node)) then
     return node
   end
 
@@ -463,7 +441,7 @@ local function get_child_from_range(range)
 
   node = node_normalize_down(node)
 
-  if not range_is_same(range, node_range(node)) then
+  if not Range.equal(range, node_range(node)) then
     history = {}
 
     local smallest_node = get_node_contained_in_range(range, node)
