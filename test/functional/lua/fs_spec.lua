@@ -295,8 +295,8 @@ describe('vim.fs', function()
       if t.is_zig_build() then
         return pending('broken/slow with build.zig')
       end
-      local cwd = test_source_path ---@type string
-      local symlink = test_source_path .. '/loop_link' ---@type string
+      local cwd = vim.uv.fs_realpath(test_source_path) ---@type string
+      local symlink = cwd .. '/loop_link' ---@type string
       vim.uv.fs_symlink(cwd, symlink, { junction = true, dir = true })
 
       finally(function()
@@ -304,7 +304,7 @@ describe('vim.fs', function()
       end)
 
       eq(link_limit, #vim.fs.find(nvim_prog_basename, {
-        path = test_source_path,
+        path = cwd,
         type = 'file',
         limit = math.huge,
         follow = true,
@@ -360,44 +360,53 @@ describe('vim.fs', function()
     end)
 
     it('works with a single marker', function()
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      eq(
+        vim.uv.fs_realpath(test_source_path),
+        vim.uv.fs_realpath(exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      )
     end)
 
     it('works with multiple markers', function()
       local bufnr = api.nvim_get_current_buf()
       eq(
-        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
-        exec_lua([[return vim.fs.root(..., {'CMakeLists.txt', 'CMakePresets.json'})]], bufnr)
+        vim.uv.fs_realpath(vim.fs.joinpath(test_source_path, 'test/functional/fixtures')),
+        vim.uv.fs_realpath(
+          exec_lua([[return vim.fs.root(..., {'CMakeLists.txt', 'CMakePresets.json'})]], bufnr)
+        )
       )
     end)
 
     it('nested markers have equal priority', function()
       local bufnr = api.nvim_get_current_buf()
       eq(
-        vim.fs.joinpath(test_source_path, 'test/functional'),
-        exec_lua(
-          [[return vim.fs.root(..., { 'example_spec.lua', {'CMakeLists.txt', 'CMakePresets.json'}, '.luarc.json'})]],
-          bufnr
+        vim.uv.fs_realpath(vim.fs.joinpath(test_source_path, 'test/functional')),
+        vim.uv.fs_realpath(
+          exec_lua(
+            [[return vim.fs.root(..., { 'example_spec.lua', {'CMakeLists.txt', 'CMakePresets.json'}, '.luarc.json'})]],
+            bufnr
+          )
         )
       )
       eq(
-        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
-        exec_lua(
-          [[return vim.fs.root(..., { {'CMakeLists.txt', 'CMakePresets.json'}, 'example_spec.lua', '.luarc.json'})]],
-          bufnr
+        vim.uv.fs_realpath(vim.fs.joinpath(test_source_path, 'test/functional/fixtures')),
+        vim.uv.fs_realpath(
+          exec_lua(
+            [[return vim.fs.root(..., { {'CMakeLists.txt', 'CMakePresets.json'}, 'example_spec.lua', '.luarc.json'})]],
+            bufnr
+          )
         )
       )
       eq(
-        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
-        exec_lua(
+        vim.uv.fs_realpath(vim.fs.joinpath(test_source_path, 'test/functional/fixtures')),
+        vim.uv.fs_realpath(exec_lua(
           [[return vim.fs.root(..., {
-            function(name, _)
-              return name:match('%.txt$')
-            end,
-            'example_spec.lua',
-            '.luarc.json' })]],
+              function(name, _)
+                return name:match('%.txt$')
+              end,
+              'example_spec.lua',
+              '.luarc.json' })]],
           bufnr
-        )
+        ))
       )
     end)
 
@@ -408,7 +417,10 @@ describe('vim.fs', function()
           return name:match('%.txt$')
         end)
       end)
-      eq(vim.fs.joinpath(test_source_path, 'test/functional/fixtures'), result)
+      eq(
+        vim.uv.fs_realpath(vim.fs.joinpath(test_source_path, 'test/functional/fixtures')),
+        vim.uv.fs_realpath(result)
+      )
     end)
 
     it('works with a filename argument', function()
@@ -417,8 +429,10 @@ describe('vim.fs', function()
 
     it('works with a relative path', function()
       eq(
-        test_source_path,
-        exec_lua([[return vim.fs.root(..., 'CMakePresets.json')]], vim.fs.basename(nvim_prog))
+        vim.uv.fs_realpath(test_source_path),
+        vim.uv.fs_realpath(
+          exec_lua([[return vim.fs.root(..., 'CMakePresets.json')]], vim.fs.basename(nvim_prog))
+        )
       )
     end)
 
@@ -426,8 +440,8 @@ describe('vim.fs', function()
       assert(n.fn.isabsolutepath(test_source_path) == 1)
       command('new')
       eq(
-        t.fix_slashes(test_source_path),
-        t.fix_slashes(exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+        vim.uv.fs_realpath(test_source_path),
+        vim.uv.fs_realpath(exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
       )
     end)
 
@@ -437,16 +451,16 @@ describe('vim.fs', function()
       command('set buftype=nofile')
       command('file lua://')
       eq(
-        t.fix_slashes(test_source_path),
-        t.fix_slashes(exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+        vim.uv.fs_realpath(test_source_path),
+        vim.uv.fs_realpath(exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
       )
     end)
 
     it('returns CWD (absolute path) if no match is found', function()
       assert(n.fn.isabsolutepath(test_source_path) == 1)
       eq(
-        t.fix_slashes(test_source_path),
-        t.fix_slashes(exec_lua([[return vim.fs.root('file://bogus', 'CMakePresets.json')]]))
+        vim.uv.fs_realpath(test_source_path),
+        vim.uv.fs_realpath(exec_lua([[return vim.fs.root('file://bogus', 'CMakePresets.json')]]))
       )
     end)
   end)
