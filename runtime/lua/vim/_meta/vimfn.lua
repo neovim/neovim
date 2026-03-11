@@ -7132,7 +7132,7 @@ function vim.fn.readblob(fname, offset, size) end
 --- Returns an empty List on error.
 ---
 --- @param directory string
---- @param expr? integer
+--- @param expr? integer|string|fun(name: string): integer
 --- @return any
 function vim.fn.readdir(directory, expr) end
 
@@ -7521,7 +7521,7 @@ function vim.fn.screenchars(row, col) end
 ---   noremap GG <Cmd>echom screencol()<CR>
 --- <
 ---
---- @return integer[]
+--- @return integer
 function vim.fn.screencol() end
 
 --- The result is a Dict with the screen position of the text
@@ -7550,7 +7550,7 @@ function vim.fn.screencol() end
 --- @param winid integer
 --- @param lnum integer
 --- @param col integer
---- @return any
+--- @return { col: integer, curscol: integer, endcol: integer, row: integer }
 function vim.fn.screenpos(winid, lnum, col) end
 
 --- The result is a Number, which is the current screen row of the
@@ -7969,7 +7969,7 @@ function vim.fn.searchpairpos(start, middle, end_, flags, skip, stopline, timeou
 --- @param stopline? integer
 --- @param timeout? integer
 --- @param skip? string|function
---- @return any
+--- @return { [1]: integer, [2]: integer, [3]: integer? }
 function vim.fn.searchpos(pattern, flags, stopline, timeout, skip) end
 
 --- Returns a list of server addresses, or empty if all servers

@@ -7851,7 +7851,7 @@ readdir({directory} [, {expr}])                                      *readdir()*
 
                 Parameters: ~
                   • {directory} (`string`)
-                  • {expr} (`integer?`)
+                  • {expr} (`integer|string|fun(name: string): integer?`)
 
                 Return: ~
                   (`any`)
@@ -8266,7 +8266,7 @@ screencol()                                                        *screencol()*
 <
 
                 Return: ~
-                  (`integer[]`)
+                  (`integer`)
 
 screenpos({winid}, {lnum}, {col})                                  *screenpos()*
 		The result is a Dict with the screen position of the text
@@ -8298,7 +8298,7 @@ screenpos({winid}, {lnum}, {col})                                  *screenpos()*
                   • {col} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`{ col: integer, curscol: integer, endcol: integer, row: integer }`)
 
 screenrow()                                                        *screenrow()*
 		The result is a Number, which is the current screen row of the
@@ -8742,7 +8742,7 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
                   • {skip} (`string|function?`)
 
                 Return: ~
-                  (`any`)
+                  (`{ [1]: integer, [2]: integer, [3]: integer? }`)
 
 serverlist([{opts}])                                              *serverlist()*
 		Returns a list of server addresses, or empty if all servers
