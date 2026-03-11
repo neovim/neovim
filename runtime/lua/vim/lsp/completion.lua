@@ -798,15 +798,130 @@ local function on_completechanged(group, bufnr)
   })
 end
 
+local function on_complete_done()
+  local completed_item = api.nvim_get_vvar('completed_item')
+  if not completed_item or not completed_item.user_data or not completed_item.user_data.nvim then
+    Context:reset()
+    return
+  end
+
+  local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
+  cursor_row = cursor_row - 1
+  local completion_item = completed_item.user_data.nvim.lsp.completion_item --- @type lsp.CompletionItem
+  local client_id = completed_item.user_data.nvim.lsp.client_id --- @type integer
+  if not completion_item or not client_id then
+    Context:reset()
+    return
+  end
+
+  local bufnr = api.nvim_get_current_buf()
+  local expand_snippet = completion_item.insertTextFormat == protocol.InsertTextFormat.Snippet
+    and (completion_item.textEdit ~= nil or completion_item.insertText ~= nil)
+
+  Context:reset()
+
+  local client = lsp.get_client_by_id(client_id)
+  if not client then
+    return
+  end
+
+  local position_encoding = client.offset_encoding or 'utf-16'
+  local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
+
+  local function clear_word()
+    if not expand_snippet then
+      return nil
+    end
+
+    -- Remove the already inserted word.
+    api.nvim_buf_set_text(
+      bufnr,
+      Context.cursor[1] - 1,
+      Context.cursor[2] - 1,
+      cursor_row,
+      cursor_col,
+      { '' }
+    )
+  end
+
+  local function apply_snippet_and_command()
+    if expand_snippet then
+      apply_snippet(completion_item)
+    end
+
+    local command = completion_item.command
+    if command then
+      client:exec_cmd(command, { bufnr = bufnr })
+    end
+  end
+
+  if completion_item.additionalTextEdits and next(completion_item.additionalTextEdits) then
+    clear_word()
+    lsp.util.apply_text_edits(completion_item.additionalTextEdits, bufnr, position_encoding)
+    apply_snippet_and_command()
+  elseif resolve_provider and type(completion_item) == 'table' then
+    local changedtick = vim.b[bufnr].changedtick
+
+    --- @param result lsp.CompletionItem
+    client:request('completionItem/resolve', completion_item, function(err, result)
+      if changedtick ~= vim.b[bufnr].changedtick then
+        return
+      end
+
+      clear_word()
+      if err then
+        vim.notify_once(err.message, vim.log.levels.WARN)
+      elseif result then
+        if result.additionalTextEdits then
+          lsp.util.apply_text_edits(result.additionalTextEdits, bufnr, position_encoding)
+        end
+        if result.command then
+          completion_item.command = result.command
+        end
+      end
+      apply_snippet_and_command()
+    end, bufnr)
+  else
+    clear_word()
+    apply_snippet_and_command()
+  end
+end
+
+---@param bufnr integer
+---@return integer
+local function register_completedone(bufnr)
+  local group = api.nvim_create_augroup(get_augroup(bufnr), { clear = false })
+  if #api.nvim_get_autocmds({ buffer = bufnr, event = 'CompleteDone', group = group }) > 0 then
+    return group
+  end
+
+  api.nvim_create_autocmd('CompleteDone', {
+    group = group,
+    buffer = bufnr,
+    callback = function()
+      local reason = api.nvim_get_vvar('event').reason ---@type string
+      if reason == 'accept' then
+        on_complete_done()
+      end
+    end,
+  })
+
+  return group
+end
+
 --- @param bufnr integer
 --- @param clients vim.lsp.Client[]
---- @param ctx? lsp.CompletionContext
+--- @param ctx lsp.CompletionContext
 local function trigger(bufnr, clients, ctx)
   reset_timer()
   Context:cancel_pending()
 
   if tonumber(vim.fn.pumvisible()) == 1 and not Context.isIncomplete then
     return
+  end
+
+  if ctx and ctx.triggerKind == protocol.CompletionTriggerKind.Invoked then
+    register_completedone(bufnr)
   end
 
   local win = api.nvim_get_current_win()
@@ -953,95 +1068,6 @@ local function on_insert_leave()
   Context:reset()
 end
 
-local function on_complete_done()
-  local completed_item = api.nvim_get_vvar('completed_item')
-  if not completed_item or not completed_item.user_data or not completed_item.user_data.nvim then
-    Context:reset()
-    return
-  end
-
-  local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
-  cursor_row = cursor_row - 1
-  local completion_item = completed_item.user_data.nvim.lsp.completion_item --- @type lsp.CompletionItem
-  local client_id = completed_item.user_data.nvim.lsp.client_id --- @type integer
-  if not completion_item or not client_id then
-    Context:reset()
-    return
-  end
-
-  local bufnr = api.nvim_get_current_buf()
-  local expand_snippet = completion_item.insertTextFormat == protocol.InsertTextFormat.Snippet
-    and (completion_item.textEdit ~= nil or completion_item.insertText ~= nil)
-
-  Context:reset()
-
-  local client = lsp.get_client_by_id(client_id)
-  if not client then
-    return
-  end
-
-  local position_encoding = client.offset_encoding or 'utf-16'
-  local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
-
-  local function clear_word()
-    if not expand_snippet then
-      return nil
-    end
-
-    -- Remove the already inserted word.
-    api.nvim_buf_set_text(
-      bufnr,
-      Context.cursor[1] - 1,
-      Context.cursor[2] - 1,
-      cursor_row,
-      cursor_col,
-      { '' }
-    )
-  end
-
-  local function apply_snippet_and_command()
-    if expand_snippet then
-      apply_snippet(completion_item)
-    end
-
-    local command = completion_item.command
-    if command then
-      client:exec_cmd(command, { bufnr = bufnr })
-    end
-  end
-
-  if completion_item.additionalTextEdits and next(completion_item.additionalTextEdits) then
-    clear_word()
-    lsp.util.apply_text_edits(completion_item.additionalTextEdits, bufnr, position_encoding)
-    apply_snippet_and_command()
-  elseif resolve_provider and type(completion_item) == 'table' then
-    local changedtick = vim.b[bufnr].changedtick
-
-    --- @param result lsp.CompletionItem
-    client:request('completionItem/resolve', completion_item, function(err, result)
-      if changedtick ~= vim.b[bufnr].changedtick then
-        return
-      end
-
-      clear_word()
-      if err then
-        vim.notify_once(err.message, vim.log.levels.WARN)
-      elseif result then
-        if result.additionalTextEdits then
-          lsp.util.apply_text_edits(result.additionalTextEdits, bufnr, position_encoding)
-        end
-        if result.command then
-          completion_item.command = result.command
-        end
-      end
-      apply_snippet_and_command()
-    end, bufnr)
-  else
-    clear_word()
-    apply_snippet_and_command()
-  end
-end
-
 --- @param client_id integer
 --- @param bufnr integer
 local function disable_completions(client_id, bufnr)
@@ -1090,23 +1116,13 @@ local function enable_completions(client_id, bufnr, opts)
     })
 
     -- Set up autocommands.
-    local group = api.nvim_create_augroup(get_augroup(bufnr), { clear = true })
+    local group = register_completedone(bufnr)
     api.nvim_create_autocmd('LspDetach', {
       group = group,
       buffer = bufnr,
       desc = 'vim.lsp.completion: clean up client on detach',
       callback = function(args)
         disable_completions(args.data.client_id, args.buf)
-      end,
-    })
-    api.nvim_create_autocmd('CompleteDone', {
-      group = group,
-      buffer = bufnr,
-      callback = function()
-        local reason = api.nvim_get_vvar('event').reason --- @type string
-        if reason == 'accept' then
-          on_complete_done()
-        end
       end,
     })
 
