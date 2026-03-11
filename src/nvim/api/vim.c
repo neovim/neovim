@@ -1709,15 +1709,15 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 ///         - "stderr"     stderr of this Nvim instance
 ///         - "socket"     TCP/IP socket or named pipe
 ///         - "job"        Job with communication over its stdio.
-///    -  "mode"    How data received on the channel is interpreted.
+///    - "mode"     How data received on the channel is interpreted.
 ///         - "bytes"      Send and receive raw bytes.
 ///         - "terminal"   |terminal| instance interprets ASCII sequences.
 ///         - "rpc"        |RPC| communication on the channel is active.
-///    -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this is a device path like
+///    - "pty"      (optional) Name of pseudoterminal. On a POSIX system this is a device path like
 ///                 "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ///                 for conpty on Windows).
-///    -  "buffer"  (optional) Buffer connected to |terminal| instance.
-///    -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
+///    - "buffer"   (optional) Buffer connected to |terminal| instance.
+///    - "client"   (optional) Info about the peer (client on the other end of the channel), as set
 ///                 by |nvim_set_client_info()|.
 ///    - "exitcode" (optional) Exit code of the |terminal| process.
 ///
