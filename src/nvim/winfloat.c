@@ -35,10 +35,9 @@
 
 #include "winfloat.c.generated.h"
 
-/// Create a new float.
+/// Creates a new float, or transforms an existing window to a float.
 ///
 /// @param wp      if NULL, allocate a new window, otherwise turn existing window into a float.
-///                It must then already belong to the current tabpage!
 /// @param last    make the window the last one in the window list.
 ///                Only used when allocating the autocommand window.
 /// @param config  must already have been validated!
@@ -74,19 +73,19 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
   } else {
     assert(!last);
     assert(!wp->w_floating);
-    if (firstwin == wp && lastwin_nofloating(NULL) == wp) {
-      // last non-float
-      api_set_error(err, kErrorTypeException,
-                    "Cannot change last window into float");
-      return NULL;
-    } else if (!win_valid(wp)) {
-      api_set_error(err, kErrorTypeException,
-                    "Cannot change window from different tabpage into float");
+    tabpage_T *win_tp = win_find_tabpage(wp);
+    assert(win_tp);
+    if ((win_tp == curtab && firstwin == wp && lastwin_nofloating(NULL) == wp)
+        || (win_tp != curtab && win_tp->tp_firstwin == wp && lastwin_nofloating(win_tp) == wp)) {
+      api_set_error(err, kErrorTypeException, "Cannot change last window into float");
       return NULL;
     } else if (cmdwin_win != NULL && !cmdwin_win->w_floating) {
       // cmdwin can't become the only non-float. Check for others.
       bool other_nonfloat = false;
-      for (win_T *wp2 = firstwin; wp2 != NULL && !wp2->w_floating; wp2 = wp2->w_next) {
+      FOR_ALL_WINDOWS_IN_TAB(wp2, win_tp) {
+        if (wp2->w_floating) {
+          break;
+        }
         if (wp2 != wp && wp2 != cmdwin_win) {
           other_nonfloat = true;
           break;
@@ -97,13 +96,16 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
         return NULL;
       }
     }
+    tabpage_T *tp = win_tp == curtab ? NULL : win_tp;
     int dir;
-    winframe_remove(wp, &dir, NULL, NULL);
+    winframe_remove(wp, &dir, tp, NULL);
     XFREE_CLEAR(wp->w_frame);
-    win_remove(wp, NULL);
-    last_status(false);  // may need to remove last status line
-    win_comp_pos();  // recompute window positions
-    win_append(lastwin_nofloating(NULL), wp, NULL);
+    win_remove(wp, tp);
+    if (win_tp == curtab) {
+      last_status(false);  // may need to remove last status line
+      win_comp_pos();  // recompute window positions
+    }
+    win_append(lastwin_nofloating(tp), wp, tp);
   }
   wp->w_floating = true;
   wp->w_status_height = wp->w_p_stl && *wp->w_p_stl != NUL

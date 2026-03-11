@@ -167,7 +167,7 @@ API
   they were so specified in `nvim_create_user_command()`.
 • |nvim_open_win()| floating windows can show a 'statusline'. Plugins can use
   `style='minimal'` or `:setlocal statusline=` to hide the statusline.
-• |nvim_win_set_config()| can move floating windows to other tab pages.
+• |nvim_win_set_config()| can move windows to other tab pages as floats.
 • Added experimental |nvim__exec_lua_fast()| to allow remote API clients to
   execute code while nvim is blocking for input.
 • |vim.secure.trust()| accepts `path` for the `allow` action.
