@@ -19,9 +19,8 @@ setlocal comments=:# commentstring=#\ %s formatoptions-=t formatoptions+=croql
 if has('unix') && executable('less') && exists(':terminal') == 2
   command -buffer -nargs=1 SudoersKeywordPrg
         \ silent exe ':hor term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('\b' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'sudoers'
-  setlocal iskeyword+=-
   setlocal keywordprg=:SudoersKeywordPrg
-  let b:undo_ftplugin .= '| setlocal keywordprg< iskeyword< | sil! delc -buffer SudoersKeywordPrg'
+  let b:undo_ftplugin .= '| setlocal keywordprg< | sil! delc -buffer SudoersKeywordPrg'
 endif
 
 let &cpo = s:cpo_save
