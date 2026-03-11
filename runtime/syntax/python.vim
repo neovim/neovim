@@ -5,6 +5,7 @@
 " 2025 Sep 25 by Vim Project: fix wrong type highlighting #18394
 " 2025 Dec 03 by Vim Project: highlight t-strings #18679
 " 2026 Jan 26 by Vim Project: highlight constants #18922
+" 2026 Mar 11 by Vim Project: fix number performance #19630
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -270,16 +271,21 @@ syn match   pythonEscape	"\\$"
 " https://docs.python.org/reference/lexical_analysis.html#numeric-literals
 if !exists("python_no_number_highlight")
   " numbers (including complex)
-  syn match   pythonNumber	"\<0[oO]\%(_\=\o\)\+\>"
-  syn match   pythonNumber	"\<0[xX]\%(_\=\x\)\+\>"
-  syn match   pythonNumber	"\<0[bB]\%(_\=[01]\)\+\>"
-  syn match   pythonNumber	"\<\%([1-9]\%(_\=\d\)*\|0\+\%(_\=0\)*\)\>"
-  syn match   pythonNumber	"\<\d\%(_\=\d\)*[jJ]\>"
-  syn match   pythonNumber	"\<\d\%(_\=\d\)*[eE][+-]\=\d\%(_\=\d\)*[jJ]\=\>"
+  syn match   pythonNumber	"\<0[oO]_\=\o\+\%(_\o\+\)*\>"
+  syn match   pythonNumber	"\<0[xX]_\=\x\+\%(_\x\+\)*\>"
+  syn match   pythonNumber	"\<0[bB]_\=[01]\+\%(_[01]\+\)*\>"
+  syn match   pythonNumber	"\<\%([1-9]\d*\%(_\d\+\)*\|0\+\%(_0\+\)*\)\>"
+  syn match   pythonNumber	"\<\d\+\%(_\d\+\)*[jJ]\>"
+  syn match   pythonNumber	"\<\d\+\%(_\d\+\)*[eE][+-]\=\d\+\%(_\d\+\)*[jJ]\=\>"
+  " \d\.
   syn match   pythonNumber
-        \ "\<\d\%(_\=\d\)*\.\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\%(\W\|$\)\@="
+        \ "\<\d\+\%(_\d\+\)*\.\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\%(\W\|$\)\@="
+  " \d\.\d
   syn match   pythonNumber
-        \ "\%(^\|\W\)\@1<=\%(\d\%(_\=\d\)*\)\=\.\d\%(_\=\d\)*\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\>"
+        \ "\<\d\+\%(_\d\+\)*\.\d\+\%(_\d\+\)*\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\>"
+  " \.\d
+  syn match   pythonNumber
+        \ "\%(^\|\W\)\@1<=\.\d\+\%(_\d\+\)*\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\>"
 endif
 
 " Group the built-ins in the order in the 'Python Library Reference' for
