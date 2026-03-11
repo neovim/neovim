@@ -1357,7 +1357,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (relative_is_win || is_split) {
-    if (reconf && relative_is_win) {
+    if (wp && relative_is_win) {
       win_T *target_win = find_window_by_handle(config->win, err);
       if (!target_win) {
         goto fail;
