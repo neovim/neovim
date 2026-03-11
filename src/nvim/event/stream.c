@@ -140,6 +140,11 @@ void stream_close_handle(Stream *stream)
 
   assert(handle != NULL);
 
+  if (stream->before_close_cb) {
+    stream->pending_reqs++;
+    stream->before_close_cb(stream, stream->close_cb_data);
+    stream->pending_reqs--;
+  }
   if (!uv_is_closing(handle)) {
     uv_close(handle, close_cb);
   }
