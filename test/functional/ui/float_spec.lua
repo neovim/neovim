@@ -3782,10 +3782,7 @@ describe('float window', function()
     it('API has proper error messages', function()
       local buf = api.nvim_create_buf(false, false)
       eq("Invalid key: 'bork'", pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, bork = true }))
-      eq(
-        "Must specify 'relative' or 'external' when creating a float",
-        pcall_err(api.nvim_open_win, buf, false, { win = 0 })
-      )
+      eq("Must specify 'relative' or 'external' when creating a float", pcall_err(api.nvim_open_win, buf, false, { win = 0 }))
       eq(
         "floating windows cannot have 'vertical'",
         pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, vertical = true })
@@ -12030,6 +12027,7 @@ describe('float window', function()
 
       -- Check tablines are redrawn even when moving floats between two non-current tabpages.
       command('tabnew')
+      local tab3_win = api.nvim_get_current_win()
       if multigrid then
         screen:expect({
           grid = [[
@@ -12091,6 +12089,270 @@ describe('float window', function()
           {9: + [No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
                                                  ^ |
           {0:                                       ~}|*4
+                                                  |
+        ]])
+      end
+
+      -- Try converting a split to a float, then moving it to another tabpage in one call.
+      command('set norightleft | new')
+      fn.setline(1, 'floaty mcfloatface')
+      api.nvim_win_set_config(0, { relative = 'editor', win = tab1_win, row = 3, col = 3, width = 15, height = 5 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
+            [6:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+                                               olleh|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            hello                                   |
+            {0:~                                       }|*4
+          ## grid 5 (hidden)
+            {1:hello     }|
+            {2:~         }|*4
+          ## grid 6
+            ^                                        |
+            {0:~                                       }|*4
+          ## grid 7 (hidden)
+            floaty mcfloatface                      |
+            {0:~                                       }|
+          ]],
+        })
+      else
+        screen:expect([[
+          {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
+          ^                                        |
+          {0:~                                       }|*4
+                                                  |
+        ]])
+      end
+
+      command('tabfirst')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {3: }{11:2}{3:+ No Name] }{9: [No Name]  }{10:2}{9:+ No Name] }{5:  }{9:X}|
+            [2:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2
+                                               olle^h|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            hello                                   |
+            {0:~                                       }|*4
+          ## grid 5 (hidden)
+            {1:hello     }|
+            {2:~         }|*4
+          ## grid 6 (hidden)
+                                                    |
+            {0:~                                       }|*4
+          ## grid 7
+            {1:floaty mcfloatf}|
+            {1:ace            }|
+            {2:~              }|*3
+          ]],
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 3, 3, true, 50, 1, 1, 3 },
+          },
+        })
+      else
+        screen:expect([[
+          {3: }{11:2}{3:+ No Name] }{9: [No Name]  }{10:2}{9:+ No Name] }{5:  }{9:X}|
+             {1:floaty mcfloatf}                 olle^h|
+          {0:   }{1:ace            }{0:                     ~}|
+          {0:   }{2:~              }{0:                     ~}|*3
+                                                  |
+        ]])
+      end
+
+      -- Works when doing the same between two non-current tabpages.
+      local float2 = api.nvim_open_win(0, false, { split = 'below', win = tab3_win })
+      api.nvim_win_set_config(float2, { relative = 'win', win = tab2_win, row = 2, col = 7, width = 4, height = 4, border = 'single' })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {3: }{11:2}{3:+ No Name] }{9: [No Name]  }{10:3}{9:+ No Name] }{5:  }{9:X}|
+            [2:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2
+                                               olle^h|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            hello                                   |
+            {0:~                                       }|*4
+          ## grid 5 (hidden)
+            {1:hello     }|
+            {2:~         }|*4
+          ## grid 6 (hidden)
+                                                    |
+            {0:~                                       }|*4
+          ## grid 7
+            {1:floaty mcfloatf}|
+            {1:ace            }|
+            {2:~              }|*3
+          ]],
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 3, 3, true, 50, 1, 1, 3 },
+          },
+        })
+      else
+        screen:expect([[
+          {3: }{11:2}{3:+ No Name] }{9: [No Name]  }{10:3}{9:+ No Name] }{5:  }{9:X}|
+             {1:floaty mcfloatf}                 olle^h|
+          {0:   }{1:ace            }{0:                     ~}|
+          {0:   }{2:~              }{0:                     ~}|*3
+                                                  |
+        ]])
+      end
+
+      command('tabnext')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: }{10:3}{9:+ No Name] }{5:  }{9:X}|
+            [6:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+                                               olleh|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            hello                                   |
+            {0:~                                       }|*4
+          ## grid 5 (hidden)
+            {1:hello     }|
+            {2:~         }|*4
+          ## grid 6
+            ^                                        |
+            {0:~                                       }|*4
+          ## grid 7 (hidden)
+            {1:floaty mcfloatf}|
+            {1:ace            }|
+            {2:~              }|*3
+          ]],
+        })
+      else
+        screen:expect([[
+          {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: }{10:3}{9:+ No Name] }{5:  }{9:X}|
+          ^                                        |
+          {0:~                                       }|*4
+                                                  |
+        ]])
+      end
+
+      command('tabnext')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: }{10:2}{9:+ No Name]  [No Name] }{3: }{11:3}{3:+ No Name] }{5:  }{9:X}|
+            [4:----------------------------------------]|*5
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+                                               olleh|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4
+            ^hello                                   |
+            {0:~                                       }|*4
+          ## grid 5
+            {1:hello     }|
+            {2:~         }|*4
+          ## grid 6 (hidden)
+                                                    |
+            {0:~                                       }|*4
+          ## grid 7 (hidden)
+            {1:floaty mcfloatf}|
+            {1:ace            }|
+            {2:~              }|*3
+          ## grid 8
+            {5:┌────┐}|
+            {5:│}{1:lleh}{5:│}|
+            {5:│}{1:   o}{5:│}|
+            {5:│}{2:   ~}{5:│}|*2
+            {5:└────┘}|
+          ]],
+          float_pos = {
+            [5] = { 1002, 'NW', 4, 0, 0, true, 50, 1, 1, 0 },
+            [8] = { 1005, 'NW', 4, 2, 7, true, 50, 2, 0, 7 },
+          },
+        })
+      else
+        screen:expect([[
+          {9: }{10:2}{9:+ No }{5:┌────┐}{9: [No Name] }{3: }{11:3}{3:+ No Name] }{5:  }{9:X}|
+          {1:^hello  }{5:│}{1:lleh}{5:│}                           |
+          {2:~      }{5:│}{1:   o}{5:│}{0:                           }|
+          {2:~      }{5:│}{2:   ~}{5:│}{0:                           }|*2
+          {2:~      }{5:└────┘}{0:                           }|
+                                                  |
+        ]])
+      end
+
+      -- Used relative=win on two floats relative to this window.
+      -- Split it to the right to ensure both follow.
+      command('topleft vsplit')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            {9: }{10:2}{9:+ No Name]  [No Name] }{3: }{11:4}{3:+ No Name] }{5:  }{9:X}|
+            [9:--------------------]{5:│}[4:-------------------]|*4
+            {4:[No Name] [+]        }{5:[No Name] [+]      }|
+            [3:----------------------------------------]|
+          ## grid 2 (hidden)
+                                               olleh|
+            {0:                                       ~}|*4
+          ## grid 3
+                                                    |
+          ## grid 4
+            hello              |
+            {0:~                  }|*3
+          ## grid 5
+            {1:hello     }|
+            {2:~         }|*4
+          ## grid 6 (hidden)
+                                                    |
+            {0:~                                       }|*4
+          ## grid 7 (hidden)
+            {1:floaty mcfloatf}|
+            {1:ace            }|
+            {2:~              }|*3
+          ## grid 8
+            {5:┌────┐}|
+            {5:│}{1:lleh}{5:│}|
+            {5:│}{1:   o}{5:│}|
+            {5:│}{2:   ~}{5:│}|*2
+            {5:└────┘}|
+          ## grid 9
+            ^hello               |
+            {0:~                   }|*3
+          ]],
+          float_pos = {
+            [5] = { 1002, 'NW', 4, 0, 0, true, 50, 1, 1, 21 },
+            [8] = { 1005, 'NW', 4, 2, 7, true, 50, 2, 0, 28 },
+          },
+        })
+      else
+        screen:expect([[
+          {9: }{10:2}{9:+ No Name]  [No Name] }{3: }{11:4}{3:+ }{5:┌────┐}{3:e] }{5:  }{9:X}|
+          ^hello               {5:│}{1:hello  }{5:│}{1:lleh}{5:│}      |
+          {0:~                   }{5:│}{2:~      }{5:│}{1:   o}{5:│}{0:      }|
+          {0:~                   }{5:│}{2:~      }{5:│}{2:   ~}{5:│}{0:      }|*2
+          {4:[No Name] [+]        }{2:~      }{5:└────┘      }|
                                                   |
         ]])
       end

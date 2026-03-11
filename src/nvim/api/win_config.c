@@ -383,9 +383,13 @@ static int win_split_flags(WinSplit split, bool toplevel)
   return flags;
 }
 
-static bool win_can_move_tp(win_T *wp, Error *err)
+static bool win_can_move_tp(win_T *wp, tabpage_T *tp, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (one_window(wp, tp == curtab ? NULL : tp)) {
+    api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
+    return false;
+  }
   if (is_aucmd_win(wp)) {
     api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
     return false;
@@ -400,6 +404,17 @@ static bool win_can_move_tp(win_T *wp, Error *err)
     return false;
   }
   return true;
+}
+
+static win_T *win_find_altwin(win_T *win, tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (win->w_floating) {
+    return win_float_find_altwin(win, tp == curtab ? NULL : tp);
+  } else {
+    int dir;
+    return winframe_find_altwin(win, &dir, tp == curtab ? NULL : tp, NULL);
+  }
 }
 
 static bool win_config_split(win_T *win, const Dict(win_config) *config, WinConfig *fconfig,
@@ -444,7 +459,7 @@ static bool win_config_split(win_T *win, const Dict(win_config) *config, WinConf
       api_set_error(err, kErrorTypeException, "Cannot split a floating window");
       return false;
     }
-    if (win_tp != parent_tp && !win_can_move_tp(win, err)) {
+    if (win_tp != parent_tp && !win_can_move_tp(win, win_tp, err)) {
       return false;  // error already set
     }
   }
@@ -458,19 +473,9 @@ static bool win_config_split(win_T *win, const Dict(win_config) *config, WinConf
   // window list or remove its frame (if non-floating), so it's valid for autocommands.
   const bool curwin_moving_tp = win == curwin && parent && win_tp != parent_tp;
   if (curwin_moving_tp) {
-    if (was_split) {
-      int dir;
-      win_T *altwin = winframe_find_altwin(win, &dir, NULL, NULL);
-      // Autocommands may still make this the last non-float after this check.
-      // That case will be caught later when trying to move the window.
-      if (!altwin) {
-        api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
-        return false;
-      }
-      win_goto(altwin);
-    } else {
-      win_goto(win_float_find_altwin(win, NULL));
-    }
+    win_T *altwin = win_find_altwin(win, win_tp);
+    assert(altwin);  // win_can_move_tp ensures `win` is not the only window
+    win_goto(altwin);
 
     // Autocommands may have been a real nuisance and messed things up...
     if (curwin == win) {
@@ -639,12 +644,21 @@ static bool win_config_float_tp(win_T *win, const Dict(win_config) *config,
     parent_tp = win_find_tabpage(parent);
   }
 
+  bool curwin_moving_tp = false;
+  win_T *altwin = NULL;
+
   if (win_tp != parent_tp) {
-    if (!win_can_move_tp(win, err)) {
+    if (!win_can_move_tp(win, win_tp, err)) {
       return false;  // error already set
     }
+    altwin = win_find_altwin(win, win_tp);
+    assert(altwin);  // win_can_move_tp ensures `win` is not the only window
+
+    // If we are moving curwin to another tabpage, switch windows *before* we remove it from the
+    // window list or remove its frame (if non-floating), so it's valid for autocommands.
     if (curwin == win) {
-      win_goto(win_float_find_altwin(win, NULL));
+      curwin_moving_tp = true;
+      win_goto(altwin);
 
       // Autocommands may have been a real nuisance and messed things up...
       if (curwin == win) {
@@ -655,47 +669,51 @@ static bool win_config_float_tp(win_T *win, const Dict(win_config) *config,
       win_tp = win_find_tabpage(win);
       parent_tp = win_find_tabpage(parent);
 
-      bool restore_curwin = false;
       if (!win_tp || !parent_tp) {
         api_set_error(err, kErrorTypeException, "Target windows were closed");
-        restore_curwin = true;
-      } else if (!win->w_floating) {
-        api_set_error(err, kErrorTypeException, "Window %d was made non-floating", win->handle);
-        restore_curwin = true;
-      } else if (win_tp != parent_tp && !win_can_move_tp(win, err)) {
-        restore_curwin = true;  // error already set
+        goto restore_curwin;
       }
-      if (restore_curwin) {
-        // As `win` was the original curwin, and autocommands didn't move it outside of curtab, be
-        // a good citizen and try to return to it.
-        if (win_valid(win)) {
-          win_goto(win);
-        }
-        return false;
+      if (win_tp != parent_tp && !win_can_move_tp(win, win_tp, err)) {
+        goto restore_curwin;  // error already set
       }
+      altwin = win_find_altwin(win, win_tp);
+      assert(altwin);  // win_can_move_tp ensures `win` is not the only window
+    }
+  }
+
+  // Convert the window to a float if needed.
+  if (!win->w_floating) {
+    if (!win_new_float(win, false, *fconfig, err)) {
+restore_curwin:
+      // If `win` was the original curwin, and autocommands didn't move it outside of curtab, be a
+      // good citizen and try to return to it.
+      if (curwin_moving_tp && win_valid(win)) {
+        win_goto(win);
+      }
+      return false;
+    }
+    redraw_later(win, UPD_NOT_VALID);
+  }
+
+  if (win_tp != parent_tp) {
+    win_remove(win, win_tp == curtab ? NULL : win_tp);
+    tabpage_T *append_tp = parent_tp == curtab ? NULL : parent_tp;
+    win_append(lastwin_nofloating(append_tp), win, append_tp);
+
+    // If `win` was the curwin of its old tabpage, select a new curwin for it.
+    if (win_tp != curtab && win_tp->tp_curwin == win) {
+      win_tp->tp_curwin = altwin;
     }
 
-    // Check again, in case autocommands above moved windows to the same tabpage.
-    if (win_tp != parent_tp) {
-      win_remove(win, win_tp == curtab ? NULL : win_tp);
-      tabpage_T *append_tp = parent_tp == curtab ? NULL : parent_tp;
-      win_append(lastwin_nofloating(append_tp), win, append_tp);
+    // Remove grid if present. More reliable than checking curtab, as tabpage_check_windows may not
+    // run when temporarily switching tabpages, meaning grids may be stale from another tabpage!
+    // (e.g: switch_win_noblock with no_display=true)
+    ui_comp_remove_grid(&win->w_grid_alloc);
 
-      // If `win` was the curwin of its old tabpage, select a new curwin for it.
-      if (win_tp != curtab && win_tp->tp_curwin == win) {
-        win_tp->tp_curwin = win_float_find_altwin(win, win_tp);
-      }
-
-      // Remove grid if present. More reliable than checking curtab, as tabpage_check_windows may
-      // not run when temporarily switching tabpages, meaning grids may be stale from another
-      // tabpage! (e.g: switch_win_noblock with no_display=true)
-      ui_comp_remove_grid(&win->w_grid_alloc);
-
-      // Redraw tabline, update window's hl attribs, etc. Set must_redraw here, as redraw_later
-      // might not if w_redr_type >= UPD_NOT_VALID was set in the old tabpage.
-      redraw_later(win, UPD_NOT_VALID);
-      set_must_redraw(UPD_NOT_VALID);
-    }
+    // Redraw tabline, update window's hl attribs, etc. Set must_redraw here, as redraw_later might
+    // not if w_redr_type >= UPD_NOT_VALID was set in the old tabpage.
+    redraw_later(win, UPD_NOT_VALID);
+    set_must_redraw(UPD_NOT_VALID);
   }
 
   win_config_float(win, *fconfig);
@@ -742,27 +760,11 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     return;
   }
 
-  if (was_split && !to_split) {
-    win_T *parent = find_window_by_handle(fconfig.window, err);
-    if (!parent) {
-      return;
-    }
-    // TODO(seandewar): support this, preferably via win_config_float_tp.
-    if (!win_valid(parent)) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Cannot configure split into float in another tabpage");
-      return;
-    }
-    if (!win_new_float(win, false, fconfig, err)) {
-      return;
-    }
-    redraw_later(win, UPD_NOT_VALID);
-  } else if (to_split) {
+  if (to_split) {
     if (!win_config_split(win, config, &fconfig, err)) {
       return;
     }
   } else {
-    assert(!was_split);
     if (!win_config_float_tp(win, config, &fconfig, err)) {
       return;
     }
