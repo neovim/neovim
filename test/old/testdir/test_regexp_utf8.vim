@@ -642,4 +642,22 @@ func Test_replace_multibyte_match_in_multi_lines()
   set ignorecase&vim re&vim
 endfun
 
+func Test_regex_collection_range_with_composing_crash()
+  " Regression test: composing char in collection range caused NFA crash/E874
+  new
+  call setline(1, ['00', '0ֻ', '01'])
+  let patterns = [ '0[0-0ֻ]\@<!','0[0ֻ]\@<!']
+
+  for pat in patterns
+    " Should compile and execute without crash or error
+    for re in range(3)
+      let regex = '\%#=' .. re .. pat
+      call search(regex)
+      call assert_fails($"/{regex}\<cr>", 'E486:')
+    endfor
+  endfor
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
