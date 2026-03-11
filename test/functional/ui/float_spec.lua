@@ -11191,6 +11191,9 @@ describe('float window', function()
       local winid = api.nvim_open_win(buf, false, config)
       api.nvim_set_current_win(winid)
       eq('floating window cannot be relative to itself', pcall_err(api.nvim_win_set_config, winid, config))
+      -- Also when configuring split into float.
+      command('split')
+      eq('floating window cannot be relative to itself', pcall_err(api.nvim_win_set_config, 0, config))
     end)
 
     it('bufpos out of range', function()
