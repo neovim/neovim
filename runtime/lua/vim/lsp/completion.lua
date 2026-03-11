@@ -768,7 +768,7 @@ local function on_completechanged(group, bufnr)
   api.nvim_create_autocmd('CompleteChanged', {
     group = group,
     buffer = bufnr,
-    callback = function(args)
+    callback = function(ev)
       local completed_item = vim.v.event.completed_item or {}
       if (completed_item.info or '') ~= '' then
         local data = vim.fn.complete_info({ 'selected' })
@@ -780,7 +780,7 @@ local function on_completechanged(group, bufnr)
         #lsp.get_clients({
           id = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'client_id'),
           method = 'completionItem/resolve',
-          bufnr = args.buf,
+          bufnr = ev.buf,
         }) == 0
       then
         return
@@ -791,7 +791,7 @@ local function on_completechanged(group, bufnr)
       local param = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'completion_item')
       if param then
         Context.resolve_handler = Context.resolve_handler or CompletionResolver.new()
-        Context.resolve_handler:request(args.buf, param, completed_item.word)
+        Context.resolve_handler:request(ev.buf, param, completed_item.word)
       end
     end,
     desc = 'Request and display LSP completion item documentation via completionItem/resolve',
@@ -1121,8 +1121,8 @@ local function enable_completions(client_id, bufnr, opts)
       group = group,
       buffer = bufnr,
       desc = 'vim.lsp.completion: clean up client on detach',
-      callback = function(args)
-        disable_completions(args.data.client_id, args.buf)
+      callback = function(ev)
+        disable_completions(ev.data.client_id, ev.buf)
       end,
     })
 

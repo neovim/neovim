@@ -226,10 +226,10 @@ from a |TermRequest| handler: >lua
     })
     local ns = vim.api.nvim_create_namespace('my.terminal.prompt')
     vim.api.nvim_create_autocmd('TermRequest', {
-      callback = function(args)
-        if string.match(args.data.sequence, '^\027]133;A') then
-          local lnum = args.data.cursor[1]
-          vim.api.nvim_buf_set_extmark(args.buf, ns, lnum - 1, 0, {
+      callback = function(ev)
+        if string.match(ev.data.sequence, '^\027]133;A') then
+          local lnum = ev.data.cursor[1]
+          vim.api.nvim_buf_set_extmark(ev.buf, ns, lnum - 1, 0, {
             sign_text = '▶',
             sign_hl_group = 'SpecialChar',
           })

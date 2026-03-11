@@ -7,24 +7,24 @@ vim.api.nvim_create_augroup('filetypedetect', { clear = false })
 
 vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
   group = 'filetypedetect',
-  callback = function(args)
-    if not vim.api.nvim_buf_is_valid(args.buf) then
+  callback = function(ev)
+    if not vim.api.nvim_buf_is_valid(ev.buf) then
       return
     end
     local ft, on_detect, is_fallback = vim.filetype.match({
       -- The unexpanded file name is needed here. #27914
       -- However, bufname() can't be used, as it doesn't work with :doautocmd. #31306
-      filename = args.file,
-      buf = args.buf,
+      filename = ev.file,
+      buf = ev.buf,
     })
     if ft then
       -- on_detect is called before setting the filetype so that it can set any buffer local
       -- variables that may be used the filetype's ftplugin
       if on_detect then
-        on_detect(args.buf)
+        on_detect(ev.buf)
       end
 
-      vim._with({ buf = args.buf }, function()
+      vim._with({ buf = ev.buf }, function()
         vim.api.nvim_cmd({
           cmd = 'setf',
           args = (is_fallback and { 'FALLBACK', ft } or { ft }),

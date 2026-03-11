@@ -1010,9 +1010,9 @@ end
 --- mark will be deleted by the semantic token engine when appropriate; for
 --- example, when the LSP sends updated tokens. This function is intended for
 --- use inside |LspTokenUpdate| callbacks.
----@param token (table) A semantic token, found as `args.data.token` in |LspTokenUpdate|
----@param bufnr (integer) The buffer to highlight, or `0` for current buffer
----@param client_id (integer) The ID of the |vim.lsp.Client|
+---@param token (table) Semantic token, provided as `ev.data.token` in |LspTokenUpdate|
+---@param bufnr (integer) Buffer to highlight, or `0` for current buffer.
+---@param client_id (integer) ID of the |vim.lsp.Client|
 ---@param hl_group (string) Highlight group name
 ---@param opts? vim.lsp.semantic_tokens.highlight_token.Opts  Optional parameters:
 function M.highlight_token(token, bufnr, client_id, hl_group, opts)

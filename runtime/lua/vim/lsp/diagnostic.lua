@@ -460,12 +460,12 @@ function M._enable(bufnr)
 
   api.nvim_create_autocmd('LspDetach', {
     buffer = bufnr,
-    callback = function(args)
+    callback = function(ev)
       local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/diagnostic' })
 
       if
         not vim.iter(clients):any(function(c)
-          return c.id ~= args.data.client_id
+          return c.id ~= ev.data.client_id
         end)
       then
         disable(bufnr)

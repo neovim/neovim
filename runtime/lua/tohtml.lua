@@ -203,10 +203,10 @@ local function try_query_terminal_color(color)
   local hex = nil
   local au = vim.api.nvim_create_autocmd('TermResponse', {
     once = true,
-    callback = function(args)
+    callback = function(ev)
       hex = '#'
         .. table.concat({
-          args.data.sequence:match('\027%]%d+;%d*;?rgb:(%w%w)%w%w/(%w%w)%w%w/(%w%w)%w%w'),
+          ev.data.sequence:match('\027%]%d+;%d*;?rgb:(%w%w)%w%w/(%w%w)%w%w/(%w%w)%w%w'),
         })
     end,
   })

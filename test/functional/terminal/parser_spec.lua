@@ -67,8 +67,8 @@ describe(':terminal', function()
     local chan = api.nvim_open_term(0, {})
     exec_lua([[
       vim.api.nvim_create_autocmd("TermRequest", {
-        callback = function(args)
-          _G.osc10_response = {sequence = args.data.sequence, terminator = args.data.terminator }
+        callback = function(ev)
+          _G.osc10_response = {sequence = ev.data.sequence, terminator = ev.data.terminator }
         end
       })
     ]])

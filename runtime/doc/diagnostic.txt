@@ -425,8 +425,8 @@ DiagnosticChanged       After diagnostics have changed. When used from Lua,
 Example: >lua
 
     vim.api.nvim_create_autocmd('DiagnosticChanged', {
-      callback = function(args)
-        local diagnostics = args.data.diagnostics
+      callback = function(ev)
+        local diagnostics = ev.data.diagnostics
         vim.print(diagnostics)
       end,
     })

@@ -2672,8 +2672,8 @@ describe('TUI', function()
       _G.urls = {}
       vim.api.nvim_create_autocmd('TermRequest', {
         buffer = buf,
-        callback = function(args)
-          local req = args.data.sequence
+        callback = function(ev)
+          local req = ev.data.sequence
           if not req then
             return
           end
@@ -3733,14 +3733,14 @@ describe('TUI', function()
     clear()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data.sequence
+        callback = function(ev)
+          local req = ev.data.sequence
           local sequence = req:match('^\027P%+q([%x;]+)$')
           if sequence then
             local t = {}
             for cap in vim.gsplit(sequence, ';') do
               local resp = string.format('\027P1+r%s\027\\', sequence)
-              vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
+              vim.api.nvim_chan_send(vim.bo[ev.buf].channel, resp)
               t[vim.text.hexdecode(cap)] = true
             end
             vim.g.xtgettcap = t
@@ -3784,15 +3784,15 @@ describe('TUI', function()
     clear()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data.sequence
+        callback = function(ev)
+          local req = ev.data.sequence
           vim.g.termrequest = req
           local xtgettcap = req:match('^\027P%+q([%x;]+)$')
           if xtgettcap then
             local t = {}
             for cap in vim.gsplit(xtgettcap, ';') do
               local resp = string.format('\027P1+r%s\027\\', xtgettcap)
-              vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
+              vim.api.nvim_chan_send(vim.bo[ev.buf].channel, resp)
               t[vim.text.hexdecode(cap)] = true
             end
             vim.g.xtgettcap = t
@@ -3852,12 +3852,12 @@ describe('TUI', function()
     exec_lua([[
       _G.query = false
       vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data.sequence
+        callback = function(ev)
+          local req = ev.data.sequence
           local sequence = req:match('^\027P%+q([%x;]+)$')
           if sequence and vim.text.hexdecode(sequence) == 'Ms' then
             local resp = string.format('\027P1+r%s=%s\027\\', sequence, vim.text.hexencode('\027]52;;\027\\'))
-            vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
+            vim.api.nvim_chan_send(vim.bo[ev.buf].channel, resp)
             _G.query = true
             return true
           end
@@ -3908,8 +3908,8 @@ describe('TUI', function()
       -- Check that we do not emit an XTGETTCAP request when DA1 indicates support
       _G.query = false
       vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data.sequence
+        callback = function(ev)
+          local req = ev.data.sequence
           local sequence = req:match('^\027P%+q([%x;]+)$')
           if sequence and vim.text.hexdecode(sequence) == 'Ms' then
             _G.query = true
@@ -3944,8 +3944,8 @@ describe('TUI', function()
     exec_lua([[
       _G.query = false
       vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data.sequence
+        callback = function(ev)
+          local req = ev.data.sequence
           local sequence = req:match('^\027P%+q([%x;]+)$')
           if sequence and vim.text.hexdecode(sequence) == 'Ms' then
             _G.query = true
@@ -4026,8 +4026,8 @@ describe('TUI bg color', function()
   it('queries the terminal for background color', function()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data.sequence
+        callback = function(ev)
+          local req = ev.data.sequence
           if req == '\027]11;?' then
             vim.g.oscrequest = true
             return true

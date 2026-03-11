@@ -218,14 +218,14 @@ local function buf_enable(bufnr)
     buffer = bufnr,
     group = document_color_augroup,
     desc = 'Refresh document_color on document changes',
-    callback = function(args)
-      local method = args.data.method --- @type string
+    callback = function(ev)
+      local method = ev.data.method --- @type string
 
       if
         (method == 'textDocument/didChange' or method == 'textDocument/didOpen')
-        and assert(bufstates[args.buf]).enabled
+        and assert(bufstates[ev.buf]).enabled
       then
-        M._buf_refresh(args.buf, args.data.client_id)
+        M._buf_refresh(ev.buf, ev.data.client_id)
       end
     end,
   })
@@ -234,16 +234,16 @@ local function buf_enable(bufnr)
     buffer = bufnr,
     group = document_color_augroup,
     desc = 'Disable document_color if all supporting clients detach',
-    callback = function(args)
-      local clients = lsp.get_clients({ bufnr = args.buf, method = 'textDocument/documentColor' })
+    callback = function(ev)
+      local clients = lsp.get_clients({ bufnr = ev.buf, method = 'textDocument/documentColor' })
 
       if
         not vim.iter(clients):any(function(c)
-          return c.id ~= args.data.client_id
+          return c.id ~= ev.data.client_id
         end)
       then
         -- There are no clients left in the buffer that support document color, so turn it off.
-        buf_disable(args.buf)
+        buf_disable(ev.buf)
       end
     end,
   })

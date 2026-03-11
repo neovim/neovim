@@ -447,20 +447,20 @@ function M.open(left, right, opt)
   vim.api.nvim_create_autocmd('BufWinEnter', {
     group = layout.group,
     pattern = 'quickfix',
-    callback = function(args)
+    callback = function(ev)
       if not get_diff_entry() then
         return
       end
 
-      vim.api.nvim_buf_clear_namespace(args.buf, hl_id, 0, -1)
-      local lines = vim.api.nvim_buf_get_lines(args.buf, 0, -1, false)
+      vim.api.nvim_buf_clear_namespace(ev.buf, hl_id, 0, -1)
+      local lines = vim.api.nvim_buf_get_lines(ev.buf, 0, -1, false)
 
       -- Map status codes to highlight groups
       for i, line in ipairs(lines) do
         local status = line:match('^(%a) ')
         local hl_group = highlight_groups[status]
         if hl_group then
-          vim.hl.range(args.buf, hl_id, hl_group, { i - 1, 0 }, { i - 1, 1 })
+          vim.hl.range(ev.buf, hl_id, hl_group, { i - 1, 0 }, { i - 1, 1 })
         end
       end
     end,
@@ -469,8 +469,8 @@ function M.open(left, right, opt)
   vim.api.nvim_create_autocmd('BufWinEnter', {
     group = layout.group,
     pattern = '*',
-    callback = function(args)
-      local entry = get_diff_entry(args.buf)
+    callback = function(ev)
+      local entry = get_diff_entry(ev.buf)
       if not entry then
         return
       end

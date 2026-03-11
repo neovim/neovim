@@ -536,8 +536,8 @@ For example, this allows you to set buffer-local mappings for some filetypes:
 >lua
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "lua",
-      callback = function(args)
-        vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = args.buf })
+      callback = function(ev)
+        vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = ev.buf })
       end
     })
 <

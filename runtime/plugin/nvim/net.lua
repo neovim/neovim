@@ -1,8 +1,8 @@
 vim.g.loaded_remote_file_loader = true
 
 --- Callback for BufReadCmd on remote URLs.
---- @param args { buf: integer }
-local function on_remote_read(args)
+--- @param ev { buf: integer }
+local function on_remote_read(ev)
   if vim.fn.executable('curl') ~= 1 then
     vim.api.nvim_echo({
       { 'Warning: `curl` not found; remote URL loading disabled.', 'WarningMsg' },
@@ -10,7 +10,7 @@ local function on_remote_read(args)
     return true
   end
 
-  local bufnr = args.buf
+  local bufnr = ev.buf
   local url = vim.api.nvim_buf_get_name(bufnr)
   local view = vim.fn.winsaveview()
 
