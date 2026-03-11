@@ -3099,6 +3099,7 @@ static char *u_save_line_buf(buf_T *buf, linenr_T lnum)
 bool bufIsChanged(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  // In a "prompt" buffer we respect 'modified' if the user or a plugin explicitly set it.
   return bt_prompt(buf)
          ? buf->b_modified_was_set
          : (!bt_dontwrite(buf) && (buf->b_changed || file_ff_differs(buf, true)));
