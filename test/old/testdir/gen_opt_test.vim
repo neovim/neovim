@@ -346,6 +346,8 @@ let test_values = {
       \		['xxx']],
       \ 'tabclose': [['', 'left', 'uselast', 'left,uselast'], ['xxx']],
       \ 'tabline': [['', 'xxx'], ['%^', '%{', '%{%', '%{%}', '%(', '%)']],
+      \ 'taboptions' : [['', 'blank', 'curdir', 'help,options', 'localoptions'],
+      \		  ['xxx', 'curdir,tabdir']],
       \ 'tagcase': [['followic', 'followscs', 'ignore', 'match', 'smart'],
       \		['', 'xxx', 'smart,match']],
       \ 'termencoding': [has('gui_gtk') ? [] : ['', 'utf-8'], ['xxx']],
