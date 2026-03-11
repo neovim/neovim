@@ -1421,6 +1421,43 @@ describe('vim.lsp.completion: integration', function()
       {5:-- INSERT --}                                      |
     ]])
   end)
+
+  it('omnifunc works without enable() #38252', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello' },
+        { label = 'hallo' },
+      },
+    }
+    exec_lua(function()
+      local server = _G._create_server({
+        capabilities = {
+          completionProvider = {
+            triggerCharacters = { '.' },
+          },
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, completion_list)
+          end,
+        },
+      })
+      local bufnr = vim.api.nvim_get_current_buf()
+      local id = vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+      })
+      if id then
+        vim.lsp.buf_attach_client(bufnr, id)
+        vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
+      end
+    end)
+    feed('ih<C-x><C-o>')
+    wait_for_pum()
+    feed('<C-y>')
+    eq('hallo', n.api.nvim_get_current_line())
+  end)
 end)
 
 describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
