@@ -227,14 +227,14 @@ jobs:
           (echo 'SUBJECT=Nvim development (prerelease) build';
            echo 'PRERELEASE=--prerelease') >> $GITHUB_ENV
           gh release delete nightly --yes || true
-          git push origin :nightly || true
+          git push https://${GITHUB_ACTOR}:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY} :nightly || true
 
       - if: env.TAG_NAME != 'nightly'
         run: |
           (echo 'SUBJECT=Nvim release build';
            echo 'PRERELEASE=') >> $GITHUB_ENV
           gh release delete stable --yes || true
-          git push origin :stable || true
+          git push https://${GITHUB_ACTOR}:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY} :stable || true
 
       - name: Publish release
         env:
