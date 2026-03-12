@@ -1432,10 +1432,6 @@ gq{motion}		Format the lines that {motion} moves over.
 			formatting |fo-table|.
 			The cursor is left on the first non-blank of the last
 			formatted line.
-			NOTE: The "Q" command formerly performed this
-			function.  If you still want to use "Q" for
-			formatting, use this mapping: >
-				:nnoremap Q gq
 
 gqgq							*gqgq* *gqq*
 gqq			Format the current line.  With a count format that

@@ -1776,14 +1776,10 @@ describe('nvim_buf_attach on_detach', function()
   it('called before buf_freeall autocommands', function()
     exec_lua(function()
       vim.api.nvim_create_autocmd({ 'BufUnload', 'BufDelete', 'BufWipeout' }, {
-        callback = function(args)
+        callback = function(ev)
           table.insert(
             _G.events,
-            ('%s: %d %s'):format(
-              args.event,
-              args.buf,
-              tostring(vim.api.nvim_buf_is_loaded(args.buf))
-            )
+            ('%s: %d %s'):format(ev.event, ev.buf, tostring(vim.api.nvim_buf_is_loaded(ev.buf)))
           )
         end,
       })

@@ -1330,7 +1330,7 @@ static void normal_check_text_changed(NormalState *s)
 
 static void normal_check_buffer_modified(NormalState *s)
 {
-  // Trigger BufModified if b_modified changed
+  // Trigger BufModified if 'modified' changed.
   if (!finish_op && has_event(EVENT_BUFMODIFIEDSET)
       && curbuf->b_changed_invalid == true) {
     apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);

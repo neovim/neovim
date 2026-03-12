@@ -563,8 +563,8 @@ function lsp.enable(name, enable)
     lsp_enable_autocmd_id = lsp_enable_autocmd_id
       or api.nvim_create_autocmd('FileType', {
         group = api.nvim_create_augroup('nvim.lsp.enable', {}),
-        callback = function(args)
-          lsp_enable_callback(args.buf)
+        callback = function(ev)
+          lsp_enable_callback(ev.buf)
         end,
       })
   end
@@ -1431,8 +1431,8 @@ end
 --- vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 --- -- Prefer LSP folding if client supports it
 --- vim.api.nvim_create_autocmd('LspAttach', {
----   callback = function(args)
----     local client = vim.lsp.get_client_by_id(args.data.client_id)
+---   callback = function(ev)
+---     local client = vim.lsp.get_client_by_id(ev.data.client_id)
 ---     if client:supports_method('textDocument/foldingRange') then
 ---       local win = vim.api.nvim_get_current_win()
 ---       vim.wo[win][0].foldexpr = 'v:lua.vim.lsp.foldexpr()'
@@ -1452,9 +1452,9 @@ end
 ---
 --- ```lua
 --- vim.api.nvim_create_autocmd('LspNotify', {
----   callback = function(args)
----     if args.data.method == 'textDocument/didOpen' then
----       vim.lsp.foldclose('imports', vim.fn.bufwinid(args.buf))
+---   callback = function(ev)
+---     if ev.data.method == 'textDocument/didOpen' then
+---       vim.lsp.foldclose('imports', vim.fn.bufwinid(ev.buf))
 ---     end
 ---   end,
 --- })

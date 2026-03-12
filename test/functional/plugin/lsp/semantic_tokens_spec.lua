@@ -501,10 +501,10 @@ describe('semantic token highlighting', function()
       insert(text)
       exec_lua(function()
         vim.api.nvim_create_autocmd('LspTokenUpdate', {
-          callback = function(args)
-            local token = args.data.token --- @type STTokenRange
+          callback = function(ev)
+            local token = ev.data.token --- @type STTokenRange
             if token.type == 'function' and token.modifiers.declaration then
-              vim.lsp.semantic_tokens.highlight_token(token, args.buf, args.data.client_id, 'Macro')
+              vim.lsp.semantic_tokens.highlight_token(token, ev.buf, ev.data.client_id, 'Macro')
             end
           end,
         })

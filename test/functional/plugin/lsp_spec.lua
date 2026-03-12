@@ -408,14 +408,14 @@ describe('LSP', function()
           exec_lua(function()
             _G.BUFFER = vim.api.nvim_create_buf(false, true)
             vim.api.nvim_create_autocmd('LspAttach', {
-              callback = function(args)
-                local client0 = assert(vim.lsp.get_client_by_id(args.data.client_id))
+              callback = function(ev)
+                local client0 = assert(vim.lsp.get_client_by_id(ev.data.client_id))
                 vim.g.lsp_attached = client0.name
               end,
             })
             vim.api.nvim_create_autocmd('LspDetach', {
-              callback = function(args)
-                local client0 = assert(vim.lsp.get_client_by_id(args.data.client_id))
+              callback = function(ev)
+                local client0 = assert(vim.lsp.get_client_by_id(ev.data.client_id))
                 vim.g.lsp_detached = client0.name
               end,
             })

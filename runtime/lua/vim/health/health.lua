@@ -670,8 +670,8 @@ local function check_sysinfo()
   vim.api.nvim_create_autocmd('FileType', {
     pattern = 'checkhealth',
     once = true,
-    callback = function(args)
-      local buf = args.buf
+    callback = function(ev)
+      local buf = ev.buf
       local win = vim.fn.bufwinid(buf)
       if win == -1 then
         return

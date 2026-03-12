@@ -23,8 +23,8 @@ function M.paste(reg)
   return function()
     local contents = nil --- @type string?
     local id = vim.api.nvim_create_autocmd('TermResponse', {
-      callback = function(args)
-        local resp = args.data.sequence ---@type string
+      callback = function(ev)
+        local resp = ev.data.sequence ---@type string
         local encoded = resp:match('\027%]52;%w?;([A-Za-z0-9+/=]*)')
         if encoded then
           contents = vim.base64.decode(encoded)

@@ -566,14 +566,14 @@ do
     group = nvim_terminal_augroup,
     nested = true,
     desc = 'Automatically close terminal buffers when started with no arguments and exiting without an error',
-    callback = function(args)
+    callback = function(ev)
       if vim.v.event.status ~= 0 then
         return
       end
-      local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
+      local info = vim.api.nvim_get_chan_info(vim.bo[ev.buf].channel)
       local argv = info.argv or {}
       if table.concat(argv, ' ') == vim.o.shell then
-        vim.api.nvim_buf_delete(args.buf, { force = true })
+        vim.api.nvim_buf_delete(ev.buf, { force = true })
       end
     end,
   })
@@ -581,14 +581,14 @@ do
   vim.api.nvim_create_autocmd('TermRequest', {
     group = nvim_terminal_augroup,
     desc = 'Handles OSC foreground/background color requests',
-    callback = function(args)
+    callback = function(ev)
       --- @type integer
-      local channel = vim.bo[args.buf].channel
+      local channel = vim.bo[ev.buf].channel
       if channel == 0 then
         return
       end
-      local fg_request = args.data.sequence == '\027]10;?'
-      local bg_request = args.data.sequence == '\027]11;?'
+      local fg_request = ev.data.sequence == '\027]10;?'
+      local bg_request = ev.data.sequence == '\027]11;?'
       if fg_request or bg_request then
         -- WARN: This does not return the actual foreground/background color,
         -- but rather returns:
@@ -606,7 +606,7 @@ do
           red,
           green,
           blue,
-          args.data.terminator
+          ev.data.terminator
         )
         vim.api.nvim_chan_send(channel, data)
       end
@@ -617,12 +617,12 @@ do
   vim.api.nvim_create_autocmd('TermRequest', {
     group = nvim_terminal_augroup,
     desc = 'Mark shell prompts indicated by OSC 133 sequences for navigation',
-    callback = function(args)
-      if string.match(args.data.sequence, '^\027]133;A') then
-        local lnum = args.data.cursor[1] ---@type integer
+    callback = function(ev)
+      if string.match(ev.data.sequence, '^\027]133;A') then
+        local lnum = ev.data.cursor[1] ---@type integer
         if lnum >= 1 then
           vim.api.nvim_buf_set_extmark(
-            args.buf,
+            ev.buf,
             nvim_terminal_prompt_ns,
             lnum - 1,
             0,
@@ -669,11 +669,11 @@ do
   vim.api.nvim_create_autocmd('TermOpen', {
     group = nvim_terminal_augroup,
     desc = 'Default settings for :terminal buffers',
-    callback = function(args)
-      vim.bo[args.buf].modifiable = false
-      vim.bo[args.buf].undolevels = -1
-      vim.bo[args.buf].scrollback = vim.o.scrollback < 0 and 10000 or math.max(1, vim.o.scrollback)
-      vim.bo[args.buf].textwidth = 0
+    callback = function(ev)
+      vim.bo[ev.buf].modifiable = false
+      vim.bo[ev.buf].undolevels = -1
+      vim.bo[ev.buf].scrollback = vim.o.scrollback < 0 and 10000 or math.max(1, vim.o.scrollback)
+      vim.bo[ev.buf].textwidth = 0
       vim.wo[0][0].wrap = false
       vim.wo[0][0].list = false
       vim.wo[0][0].number = false
@@ -689,11 +689,11 @@ do
       vim.wo[0][0].winhighlight = winhl .. 'StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC'
 
       vim.keymap.set({ 'n', 'x', 'o' }, '[[', function()
-        jump_to_prompt(nvim_terminal_prompt_ns, 0, args.buf, -vim.v.count1)
-      end, { buffer = args.buf, desc = 'Jump [count] shell prompts backward' })
+        jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, -vim.v.count1)
+      end, { buffer = ev.buf, desc = 'Jump [count] shell prompts backward' })
       vim.keymap.set({ 'n', 'x', 'o' }, ']]', function()
-        jump_to_prompt(nvim_terminal_prompt_ns, 0, args.buf, vim.v.count1)
-      end, { buffer = args.buf, desc = 'Jump [count] shell prompts forward' })
+        jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, vim.v.count1)
+      end, { buffer = ev.buf, desc = 'Jump [count] shell prompts forward' })
     end,
   })
 
@@ -850,8 +850,8 @@ do
         group = group,
         nested = true,
         desc = "Update the value of 'background' automatically based on the terminal emulator's background color",
-        callback = function(args)
-          local resp = args.data.sequence ---@type string
+        callback = function(ev)
+          local resp = ev.data.sequence ---@type string
 
           -- DSR response that should come after the OSC 11 response if the
           -- terminal supports it.
@@ -971,8 +971,8 @@ do
         local id = vim.api.nvim_create_autocmd('TermResponse', {
           group = group,
           nested = true,
-          callback = function(args)
-            local resp = args.data.sequence ---@type string
+          callback = function(ev)
+            local resp = ev.data.sequence ---@type string
             local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
 
             if decrqss then

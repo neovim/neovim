@@ -107,7 +107,7 @@ BUFFER-LOCAL DEFAULTS
 - |K| is mapped to |vim.lsp.buf.hover()| unless 'keywordprg' is customized or
   a custom keymap for `K` exists.
 - Document colors are enabled for highlighting color references in a document.
-  - To opt out call `vim.lsp.document_color.enable(false, args.buf)` on |LspAttach|.
+  - To opt out call `vim.lsp.document_color.enable(false, ev.buf)` on |LspAttach|.
 
 DISABLING DEFAULTS                                      *lsp-defaults-disable*
 
@@ -117,15 +117,15 @@ You can remove GLOBAL keymaps at any time using |vim.keymap.del()| or
 To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
-      callback = function(args)
+      callback = function(ev)
         -- Unset 'formatexpr'
-        vim.bo[args.buf].formatexpr = nil
+        vim.bo[ev.buf].formatexpr = nil
         -- Unset 'omnifunc'
-        vim.bo[args.buf].omnifunc = nil
+        vim.bo[ev.buf].omnifunc = nil
         -- Unmap K
-        vim.keymap.del('n', 'K', { buffer = args.buf })
+        vim.keymap.del('n', 'K', { buffer = ev.buf })
         -- Disable document colors
-        vim.lsp.document_color.enable(false, args.buf)
+        vim.lsp.document_color.enable(false, ev.buf)
       end,
     })
 <
@@ -257,8 +257,8 @@ Example: Enable auto-completion and auto-formatting ("linting"): >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
       group = vim.api.nvim_create_augroup('my.lsp', {}),
-      callback = function(args)
-        local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
+      callback = function(ev)
+        local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
         if client:supports_method('textDocument/implementation') then
           -- Create a keymap for vim.lsp.buf.implementation ...
         end
@@ -269,7 +269,7 @@ Example: Enable auto-completion and auto-formatting ("linting"): >lua
           -- local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
           -- client.server_capabilities.completionProvider.triggerCharacters = chars
 
-          vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
+          vim.lsp.completion.enable(true, client.id, ev.buf, {autotrigger = true})
         end
 
         -- Auto-format ("lint") on save.
@@ -278,9 +278,9 @@ Example: Enable auto-completion and auto-formatting ("linting"): >lua
             and client:supports_method('textDocument/formatting') then
           vim.api.nvim_create_autocmd('BufWritePre', {
             group = vim.api.nvim_create_augroup('my.lsp', {clear=false}),
-            buffer = args.buf,
+            buffer = ev.buf,
             callback = function()
-              vim.lsp.buf.format({ bufnr = args.buf, id = client.id, timeout_ms = 1000 })
+              vim.lsp.buf.format({ bufnr = ev.buf, id = client.id, timeout_ms = 1000 })
             end,
           })
         end
@@ -615,15 +615,15 @@ LspDetach                                                          *LspDetach*
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspDetach', {
-      callback = function(args)
+      callback = function(ev)
         -- Get the detaching client
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        local client = vim.lsp.get_client_by_id(ev.data.client_id)
 
         -- Remove the autocommand to format the buffer on save, if it exists
         if client:supports_method('textDocument/formatting') then
           vim.api.nvim_clear_autocmds({
             event = 'BufWritePre',
-            buffer = args.buf,
+            buffer = ev.buf,
           })
         end
       end,
@@ -639,11 +639,11 @@ LspNotify                                                          *LspNotify*
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspNotify', {
-      callback = function(args)
-        local bufnr = args.buf
-        local client_id = args.data.client_id
-        local method = args.data.method
-        local params = args.data.params
+      callback = function(ev)
+        local bufnr = ev.buf
+        local client_id = ev.data.client_id
+        local method = ev.data.method
+        local params = ev.data.params
 
         -- do something with the notification
         if method == 'textDocument/...' then
@@ -704,11 +704,11 @@ LspRequest                                                        *LspRequest*
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspRequest', {
-      callback = function(args)
-        local bufnr = args.buf
-        local client_id = args.data.client_id
-        local request_id = args.data.request_id
-        local request = args.data.request
+      callback = function(ev)
+        local bufnr = ev.buf
+        local client_id = ev.data.client_id
+        local request_id = ev.data.request_id
+        local request = ev.data.request
         if request.type == 'pending' then
           -- do something with pending requests
           track_pending(client_id, bufnr, request_id, request)
@@ -733,11 +733,11 @@ LspTokenUpdate                                                *LspTokenUpdate*
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspTokenUpdate', {
-      callback = function(args)
-        local token = args.data.token
+      callback = function(ev)
+        local token = ev.data.token
         if token.type == 'variable' and not token.modifiers.readonly then
           vim.lsp.semantic_tokens.highlight_token(
-            token, args.buf, args.data.client_id, 'MyMutableVariableHighlight'
+            token, ev.buf, ev.data.client_id, 'MyMutableVariableHighlight'
           )
         end
       end,
@@ -1045,9 +1045,9 @@ foldclose({kind}, {winid})                               *vim.lsp.foldclose()*
 
     To automatically fold imports when opening a file, you can use an autocmd: >lua
         vim.api.nvim_create_autocmd('LspNotify', {
-          callback = function(args)
-            if args.data.method == 'textDocument/didOpen' then
-              vim.lsp.foldclose('imports', vim.fn.bufwinid(args.buf))
+          callback = function(ev)
+            if ev.data.method == 'textDocument/didOpen' then
+              vim.lsp.foldclose('imports', vim.fn.bufwinid(ev.buf))
             end
           end,
         })
@@ -1078,8 +1078,8 @@ foldexpr({lnum})                                          *vim.lsp.foldexpr()*
         vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
         -- Prefer LSP folding if client supports it
         vim.api.nvim_create_autocmd('LspAttach', {
-          callback = function(args)
-            local client = vim.lsp.get_client_by_id(args.data.client_id)
+          callback = function(ev)
+            local client = vim.lsp.get_client_by_id(ev.data.client_id)
             if client:supports_method('textDocument/foldingRange') then
               local win = vim.api.nvim_get_current_win()
               vim.wo[win][0].foldexpr = 'v:lua.vim.lsp.foldexpr()'
@@ -2437,8 +2437,8 @@ enable({enable}, {filter})               *vim.lsp.on_type_formatting.enable()*
 
         -- Enable for a specific client
         vim.api.nvim_create_autocmd('LspAttach', {
-          callback = function(args)
-            local client_id = args.data.client_id
+          callback = function(ev)
+            local client_id = ev.data.client_id
             local client = assert(vim.lsp.get_client_by_id(client_id))
             if client.name == 'rust-analyzer' then
               vim.lsp.on_type_formatting.enable(true, { client_id = client_id })
@@ -2629,11 +2629,11 @@ highlight_token({token}, {bufnr}, {client_id}, {hl_group}, {opts})
     use inside |LspTokenUpdate| callbacks.
 
     Parameters: ~
-      • {token}      (`table`) A semantic token, found as `args.data.token` in
+      • {token}      (`table`) Semantic token, provided as `ev.data.token` in
                      |LspTokenUpdate|
-      • {bufnr}      (`integer`) The buffer to highlight, or `0` for current
-                     buffer
-      • {client_id}  (`integer`) The ID of the |vim.lsp.Client|
+      • {bufnr}      (`integer`) Buffer to highlight, or `0` for current
+                     buffer.
+      • {client_id}  (`integer`) ID of the |vim.lsp.Client|
       • {hl_group}   (`string`) Highlight group name
       • {opts}       (`table?`) Optional parameters:
                      • {priority}? (`integer`, default:

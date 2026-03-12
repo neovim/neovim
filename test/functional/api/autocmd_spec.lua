@@ -351,8 +351,8 @@ describe('autocmd api', function()
           local output
           vim.api.nvim_create_autocmd("User", {
             pattern = "Test",
-            callback = function(args)
-              output = args.data
+            callback = function(ev)
+              output = ev.data
             end,
           })
 

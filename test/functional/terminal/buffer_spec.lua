@@ -422,12 +422,12 @@ describe(':terminal buffer', function()
     exec_lua(function()
       _G.last_event = nil
       vim.api.nvim_create_autocmd({ 'TermEnter', 'TermLeave' }, {
-        callback = function(args)
-          _G.last_event = args.event
+        callback = function(ev)
+          _G.last_event = ev.event
             .. ' '
-            .. vim.fs.basename(args.file)
+            .. vim.fs.basename(ev.file)
             .. ' '
-            .. tostring(vim.b[args.buf].term_focused)
+            .. tostring(vim.b[ev.buf].term_focused)
         end,
       })
     end)
@@ -706,8 +706,8 @@ describe(':terminal buffer', function()
           force_crlf = false,
         })
         vim.api.nvim_create_autocmd('TermRequest', {
-          callback = function(args)
-            if args.data.sequence == '\027]11;?' then
+          callback = function(ev)
+            if ev.data.sequence == '\027]11;?' then
               table.insert(_G.input, '\027]11;rgb:0000/0000/0000\027\\')
             end
           end
@@ -758,8 +758,8 @@ describe(':terminal buffer', function()
         _G.cursor = {}
         local term = vim.api.nvim_open_term(0, {})
         vim.api.nvim_create_autocmd('TermRequest', {
-          callback = function(args)
-            _G.cursor = args.data.cursor
+          callback = function(ev)
+            _G.cursor = ev.data.cursor
           end
         })
         return term

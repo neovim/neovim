@@ -2877,9 +2877,9 @@ describe('vim.diagnostic', function()
         local changed_diags --- @type vim.Diagnostic[]?
         vim.api.nvim_create_autocmd('DiagnosticChanged', {
           buffer = _G.diagnostic_bufnr,
-          callback = function(args)
+          callback = function(ev)
             --- @type vim.Diagnostic[]
-            changed_diags = args.data.diagnostics
+            changed_diags = ev.data.diagnostics
           end,
         })
         vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {})
@@ -4322,8 +4322,8 @@ describe('vim.diagnostic', function()
 
           local triggered = {}
           vim.api.nvim_create_autocmd('DiagnosticChanged', {
-            callback = function(args)
-              triggered = { args.buf, #args.data.diagnostics }
+            callback = function(ev)
+              triggered = { ev.buf, #ev.data.diagnostics }
             end,
           })
           vim.api.nvim_buf_set_name(_G.diagnostic_bufnr, 'test | test')

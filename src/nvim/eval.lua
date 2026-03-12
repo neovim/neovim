@@ -679,8 +679,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is |TRUE| if a buffer called
-      {buf} exists.
+      Checks whether a buffer with the name or number {buf} exists.
+      Returns |TRUE| if the buffer exists, |FALSE| otherwise.
       If the {buf} argument is a number, buffer numbers are used.
       Number zero is the alternate buffer for the current window.
 
@@ -749,8 +749,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is |TRUE| if a buffer called
-      {buf} exists and is listed (has the 'buflisted' option set).
+      Checks whether a buffer called {buf} exists and is listed
+      (has the 'buflisted' option set).  Returns |TRUE| if so,
+      |FALSE| otherwise.
       The {buf} argument is used like with |bufexists()|.
 
     ]=],
@@ -782,8 +783,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is |TRUE| if a buffer called
-      {buf} exists and is loaded (shown in a window or hidden).
+      Checks whether a buffer called {buf} exists and is loaded
+      (shown in a window or hidden).  Returns |TRUE| if so,
+      |FALSE| otherwise.
       The {buf} argument is used like with |bufexists()|.
 
     ]=],
@@ -862,10 +864,10 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the |window-ID| of the first
-      window associated with buffer {buf}.  For the use of {buf},
-      see |bufname()| above.  If buffer {buf} doesn't exist or
-      there is no such window, -1 is returned.  Example: >vim
+      Returns the |window-ID| of the first window associated with
+      buffer {buf}.  For the use of {buf}, see |bufname()| above.
+      If buffer {buf} doesn't exist or there is no such window, -1
+      is returned.  Example: >vim
 
       	echo "A window containing buffer 1 is " .. (bufwinid(1))
       <
@@ -1296,8 +1298,8 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      The result is a Number, which is the byte index of the column
-      position given with {expr}.
+      Returns the byte index of the column position given with
+      {expr}.
       For accepted positions see |getpos()|.
       When {expr} is "$", it means the end of the cursor line, so
       the result is the number of bytes in the cursor line plus one.
@@ -2244,8 +2246,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is |TRUE| if {expr} is
-      defined, zero otherwise.
+      Checks whether the expression {expr} is defined.
+      Returns |TRUE| if {expr} is defined, zero otherwise.
 
       For checking for a supported feature use |has()|.
       For checking if a file exists use |filereadable()|.
@@ -2648,12 +2650,12 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is |TRUE| when a file with the
-      name {file} exists, and can be read.  If {file} doesn't exist,
-      or is a directory, the result is |FALSE|.  {file} is any
-      expression, which is used as a String.
-      If you don't care about the file being readable you can use
-      |glob()|.
+      Returns |TRUE| if {file} exists, can be read, and is not
+      a directory, else |FALSE|.
+
+      {file} is any expression, which is used as a String. If you
+      don't care about the file being readable you can use |glob()|.
+
       {file} is used as-is, you may want to expand wildcards first: >vim
       	echo filereadable('~/.vimrc')
       < >
@@ -2675,9 +2677,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is 1 when a file with the
-      name {file} exists, and can be written.  If {file} doesn't
-      exist, or is not writable, the result is 0.  If {file} is a
+      Checks whether a file with the name {file} exists and can
+      be written.  Returns 1 if so.  If {file} doesn't exist, or
+      is not writable, the result is 0.  If {file} is a
       directory, and we can write to it, the result is 2.
 
     ]=],
@@ -2965,9 +2967,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number.  If the line {lnum} is in a closed
-      fold, the result is the number of the first line in that fold.
-      If the line {lnum} is not in a closed fold, -1 is returned.
+      Returns the first line number of the closed fold containing
+      line {lnum}.  If the line {lnum} is not in a closed fold,
+      -1 is returned.
       {lnum} is used like with |getline()|.  Thus "." is the current
       line, "'m" mark m, etc.
 
@@ -2981,9 +2983,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number.  If the line {lnum} is in a closed
-      fold, the result is the number of the last line in that fold.
-      If the line {lnum} is not in a closed fold, -1 is returned.
+      Returns the last line number of the closed fold containing
+      line {lnum}.  If the line {lnum} is not in a closed fold,
+      -1 is returned.
       {lnum} is used like with |getline()|.  Thus "." is the current
       line, "'m" mark m, etc.
 
@@ -2997,17 +2999,17 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the foldlevel of line {lnum}
-      in the current buffer.  For nested folds the deepest level is
-      returned.  If there is no fold at line {lnum}, zero is
-      returned.  It doesn't matter if the folds are open or closed.
-      When used while updating folds (from 'foldexpr') -1 is
-      returned for lines where folds are still to be updated and the
-      foldlevel is unknown.  As a special case the level of the
-      previous line is usually available.
-      {lnum} is used like with |getline()|.  Thus "." is the current
-      line, "'m" mark m, etc.
+      Returns the fold nesting level of line {lnum} in the current
+      buffer.  {lnum} is used like with |getline()| ("." is the
+      current line, "'m" mark m, etc).
 
+      For nested folds the deepest level is returned.  If there is
+      no fold at line {lnum}, zero is returned.  It doesn't matter
+      if the folds are open or closed. When used while updating
+      folds (from 'foldexpr') -1 is returned for lines where folds
+      are still to be updated and the foldlevel is unknown.  As
+      a special case the level of the previous line is usually
+      available.
     ]=],
     name = 'foldlevel',
     params = { { 'lnum', 'integer|string' } },
@@ -3632,8 +3634,8 @@ M.funcs = {
   },
   getcharmod = {
     desc = [=[
-      The result is a Number which is the state of the modifiers for
-      the last obtained character with |getchar()| or in another way.
+      Returns the state of the keyboard modifiers for the last
+      character obtained with |getchar()| or in another way.
       These values are added together:
       	2	shift
       	4	control
@@ -4054,10 +4056,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a String, which is the read, write, and execute
-      permissions of the given file {fname}.
-      If {fname} does not exist or its directory cannot be read, an
-      empty string is returned.
+      Returns the file permissions of the given file {fname} as a
+      String.  If {fname} does not exist or its directory cannot be
+      read, an empty string is returned.
       The result is of the form "rwxrwxrwx", where each group of
       "rwx" flags represent, in turn, the permissions of the owner
       of the file, the group the file belongs to, and other users.
@@ -4080,8 +4081,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the size in bytes of the
-      given file {fname}.
+      Returns the size in bytes of the given file {fname}.
       If {fname} is a directory, 0 is returned.
       If the file {fname} can't be found, -1 is returned.
       If the size of {fname} is too big to fit in a Number then -2
@@ -4098,9 +4098,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the last modification time of
-      the given file {fname}.  The value is measured as seconds
-      since 1st Jan 1970, and may be passed to |strftime()|.  See also
+      Returns the last modification time of the given file {fname}.
+      The value is measured as seconds since 1st Jan 1970, and may
+      be passed to |strftime()|.  See also
       |localtime()| and |strftime()|.
       If the file {fname} can't be found -1 is returned.
 
@@ -4115,9 +4115,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a String, which is a description of the kind of
-      file of the given file {fname}.
-      If {fname} does not exist an empty string is returned.
+      Returns a description of the type of file {fname} as a
+      String.  If {fname} does not exist an empty string is
+      returned.
       Here is a table over different kinds of files and their
       results:
       	Normal file		"file"
@@ -4548,8 +4548,8 @@ M.funcs = {
     args = { 0, 3 },
     base = 1,
     desc = [=[
-      The result is a String, which is the contents of register
-      {regname}.  Example: >vim
+      Returns the contents of register {regname} as a String.
+      Example: >vim
       	let cliptext = getreg('*')
       <When register {regname} was not set the result is an empty
       string.
@@ -4737,7 +4737,7 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      The result is a String, which is type of register {regname}.
+      Returns the type of register {regname} as a String.
       The value will be one of:
           "v"			for |charwise| text
           "V"			for |linewise| text
@@ -4898,7 +4898,7 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      The result is a Dict, which is the tag stack of window {winnr}.
+      Returns the tag stack of window {winnr} as a Dict.
       {winnr} can be the window number or the |window-ID|.
       When {winnr} is not specified, the current window is used.
       When window {winnr} doesn't exist, an empty Dict is returned.
@@ -4999,11 +4999,12 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      The result is a |List| with two numbers, the result of
-      |getwinposx()| and |getwinposy()| combined:
-      	[x-pos, y-pos]
+      Returns the [x, y] screen position of the Nvim GUI window as
+      a |List| with two numbers (result of |getwinposx()| and
+      |getwinposy()| combined).
+
       {timeout} can be used to specify how long to wait in msec for
-      a response from the terminal.  When omitted 100 msec is used.
+      a response.  When omitted 100 msec is used.
 
       Use a longer time for a remote terminal.
       When using a value less than 10 and no response is received
@@ -5025,10 +5026,9 @@ M.funcs = {
   },
   getwinposx = {
     desc = [=[
-      The result is a Number, which is the X coordinate in pixels of
-      the left hand side of the GUI Vim window.  The result will be
-      -1 if the information is not available.
-      The value can be used with `:winpos`.
+      Returns the X coordinate in pixels of the left hand side of
+      the Nvim GUI window, or -1 if not available. The value can be
+      used with `:winpos`.
     ]=],
     name = 'getwinposx',
     params = {},
@@ -5037,10 +5037,9 @@ M.funcs = {
   },
   getwinposy = {
     desc = [=[
-      The result is a Number, which is the Y coordinate in pixels of
-      the top of the GUI Vim window.  The result will be -1 if the
-      information is not available.
-      The value can be used with `:winpos`.
+      Returns the Y coordinate in pixels of the top of the Nvim GUI
+      window, or -1 if not available. The value can be used with
+      `:winpos`.
     ]=],
     name = 'getwinposy',
     params = {},
@@ -5265,8 +5264,8 @@ M.funcs = {
     args = 2,
     base = 1,
     desc = [=[
-      The result is a Number, which is TRUE if |Dictionary| {dict}
-      has an entry with key {key}.  FALSE otherwise. The {key}
+      Checks whether |Dictionary| {dict} has an entry with key
+      {key}.  Returns TRUE if so, FALSE otherwise.  The {key}
       argument is a string.
 
     ]=],
@@ -5279,9 +5278,10 @@ M.funcs = {
     args = { 0, 2 },
     base = 1,
     desc = [=[
-      The result is a Number, which is 1 when the window has set a
-      local path via |:lcd| or when {winnr} is -1 and the tabpage
-      has set a local path via |:tcd|, otherwise 0.
+      Checks whether the window or tabpage has set a local working
+      directory.  Returns 1 when the window has set a local path
+      via |:lcd| or when {winnr} is -1 and the tabpage has set a
+      local path via |:tcd|, otherwise 0.
 
       Tabs and windows are identified by their respective numbers,
       0 means current tab or window. Missing argument implies 0.
@@ -5305,9 +5305,8 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     desc = [=[
-      The result is a Number, which is TRUE if there is a mapping
-      that contains {what} in somewhere in the rhs (what it is
-      mapped to) and this mapping exists in one of the modes
+      Checks whether a mapping exists whose rhs contains {what}.
+      Returns TRUE if there is such a mapping in one of the modes
       indicated by {mode}.
       The arguments {what} and {mode} are strings.
       When {abbr} is there and it is |TRUE| use abbreviations
@@ -5438,9 +5437,9 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      The result is a String, the entry with Number {index} from
-      {history}.  See |hist-names| for the possible values of
-      {history}, and |:history-indexing| for {index}.  If there is
+      Returns an entry from the specified command-line {history}.
+      See |hist-names| for the possible values of {history}, and
+      |:history-indexing| for {index}.  If there is
       no such entry, an empty String is returned.  When {index} is
       omitted, the most recent item from the history is used.
 
@@ -5480,9 +5479,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the ID of the highlight group
-      with name {name}.  When the highlight group doesn't exist,
-      zero is returned.
+      Returns the numeric ID of the highlight group with name
+      {name}.  When the highlight group doesn't exist, zero is
+      returned.
       This can be used to retrieve information about the highlight
       group.  For example, to get the background color of the
       "Comment" group: >vim
@@ -5498,11 +5497,10 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is TRUE if a highlight group
-      called {name} exists.  This is when the group has been
-      defined in some way.  Not necessarily when highlighting has
-      been defined for it, it may also have been used for a syntax
-      item.
+      Checks whether a highlight group called {name} exists.
+      Returns TRUE if the group has been defined in some way.  Not
+      necessarily when highlighting has been defined for it, it may
+      also have been used for a syntax item.
 
     ]=],
     name = 'hlexists',
@@ -5512,8 +5510,8 @@ M.funcs = {
   },
   hostname = {
     desc = [=[
-      The result is a String, which is the name of the machine on
-      which Vim is currently running.  Machine names greater than
+      Returns the hostname of the machine on which the Nvim server
+      (not the UI client) is currently running.  Names greater than
       256 characters long are truncated.
     ]=],
     fast = true,
@@ -5526,8 +5524,8 @@ M.funcs = {
     args = 3,
     base = 1,
     desc = [=[
-      The result is a String, which is the text {string} converted
-      from encoding {from} to encoding {to}.
+      Converts the encoding of {string} from {from} to {to}.
+      Returns the converted String.
       When the conversion completely fails an empty string is
       returned.  When some characters could not be converted they
       are replaced with "?".
@@ -5572,9 +5570,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is indent of line {lnum} in the
-      current buffer.  The indent is counted in spaces, the value
-      of 'tabstop' is relevant.  {lnum} is used just like in
+      Returns the indent of line {lnum} in the current buffer.
+      The indent is counted in spaces, the value of 'tabstop' is
+      relevant.  {lnum} is used just like in
       |getline()|.
       When {lnum} is invalid -1 is returned.
 
@@ -5684,10 +5682,10 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     desc = [=[
-      The result is a String, which is whatever the user typed on
-      the command-line.  The {prompt} argument is either a prompt
-      string, or a blank string (for no prompt).  A '\n' can be used
-      in the prompt to start a new line.
+      Prompts the user to enter text on the command-line, and
+      returns the text as a String.  The {prompt} argument is either
+      a prompt string, or a blank string (for no prompt).  A '\n'
+      can be used in the prompt to start a new line.
 
       In the second form it accepts a single dictionary with the
       following keys, any of which may be omitted:
@@ -5814,9 +5812,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      {textlist} must be a |List| of strings.  This |List| is
-      displayed, one string per line.  The user will be prompted to
-      enter a number, which is returned.
+      Displays a list of strings and prompts the user to select
+      one by entering a number.  {textlist} must be a |List| of
+      strings.  Returns the number the user entered.
       The user can also select an item by clicking on it with the
       mouse, if the mouse is enabled in the command line ('mouse' is
       "a" or includes "c").  For the first string 0 is returned.
@@ -5945,8 +5943,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is |TRUE| when {path} is an
-      absolute path.
+      Checks whether {path} is an absolute path.  Returns |TRUE|
+      if so, |FALSE| otherwise.
       On Unix, a path is considered absolute when it starts with
       '/'.
       On MS-Windows, it is considered absolute when it starts with
@@ -5970,10 +5968,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is |TRUE| when a directory
-      with the name {directory} exists.  If {directory} doesn't
-      exist, or isn't a directory, the result is |FALSE|.  {directory}
-      is any expression, which is used as a String.
+      Returns |TRUE| if {directory} exists, or |FALSE| if it doesn't
+      exist or isn't a directory.  {directory} is any expression,
+      which is used as a String.
 
     ]=],
     fast = true,
@@ -6003,8 +6000,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is |TRUE| when {expr} is the
-      name of a locked variable.
+      Returns |TRUE| if {expr} is the name of a locked variable,
+      else |FALSE|.
       The string argument {expr} must be the name of a variable,
       |List| item or |Dictionary| entry, not the variable itself!
       Example: >vim
@@ -6355,7 +6352,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the length of the argument.
+      Returns the length of the argument.
       When {expr} is a String or a Number the length in bytes is
       used, as with |strlen()|.
       When {expr} is a |List| the number of items in the |List| is
@@ -9127,11 +9124,11 @@ M.funcs = {
     args = 2,
     base = 1,
     desc = [=[
-      The result is a Number, which is the character at position
-      [row, col] on the screen.  This works for every possible
-      screen position, also status lines, window separators and the
-      command line.  The top left position is row one, column one
-      The character excludes composing characters.  For double-byte
+      Returns the character at screen position [row, col] as a
+      Number.  This works for every possible screen position, also
+      status lines, window separators and the command line.  The
+      top left position is row one, column one.  The character
+      excludes composing characters.  For double-byte
       encodings it may only be the first byte.
       This is mainly to be used for testing.
       Returns -1 when row or col is out of range.
@@ -9146,9 +9143,10 @@ M.funcs = {
     args = 2,
     base = 1,
     desc = [=[
-      The result is a |List| of Numbers.  The first number is the same
-      as what |screenchar()| returns.  Further numbers are
-      composing characters on top of the base character.
+      Returns the character and any composing characters at screen
+      position [row, col] as a |List| of Numbers.  The first number
+      is the same as what |screenchar()| returns; further numbers
+      are composing characters on top of the base character.
       This is mainly to be used for testing.
       Returns an empty List when row or col is out of range.
 
@@ -9160,8 +9158,8 @@ M.funcs = {
   },
   screencol = {
     desc = [=[
-      The result is a Number, which is the current screen column of
-      the cursor.  The leftmost column has number 1.
+      Returns the current screen column of the cursor.  The
+      leftmost column has number 1.
       This function is mainly used for testing.
 
       Note: Always returns the current screen column, thus if used
@@ -9183,9 +9181,9 @@ M.funcs = {
     args = 3,
     base = 1,
     desc = [=[
-      The result is a Dict with the screen position of the text
-      character in window {winid} at buffer line {lnum} and column
-      {col}.  {col} is a one-based byte index.
+      Returns the screen position of the text character in window
+      {winid} at buffer line {lnum} and column {col} as a Dict.
+      {col} is a one-based byte index.
       The Dict has these members:
       	row	screen row
       	col	first screen column
@@ -9214,8 +9212,8 @@ M.funcs = {
   },
   screenrow = {
     desc = [=[
-      The result is a Number, which is the current screen row of the
-      cursor.  The top line has number one.
+      Returns the current screen row of the cursor.  The top line
+      has number one.
       This function is mainly used for testing.
       Alternatively you can use |winline()|.
 
@@ -9230,10 +9228,9 @@ M.funcs = {
     args = 2,
     base = 1,
     desc = [=[
-      The result is a String that contains the base character and
-      any composing characters at position [row, col] on the screen.
-      This is like |screenchars()| but returning a String with the
-      characters.
+      Returns the base character and any composing characters at
+      screen position [row, col] as a String.  This is like
+      |screenchars()| but returning a String with the characters.
       This is mainly to be used for testing.
       Returns an empty String when row or col is out of range.
 
@@ -11525,12 +11522,11 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the number of characters
-      in String {string}.  Composing characters are ignored.
+      Returns the number of characters in String {string}, ignoring
+      composing characters. Returns 0 on error or empty {string}.
+
       |strchars()| can count the number of characters, counting
       composing characters separately.
-
-      Returns 0 if {string} is empty or on error.
 
       Also see |strlen()|, |strdisplaywidth()| and |strwidth()|.
 
@@ -11574,8 +11570,7 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      The result is a Number, which is the number of characters
-      in String {string}.
+      Returns the number of characters in String {string}.
       When {skipcc} is omitted or zero, composing characters are
       counted separately.
       When {skipcc} set to 1, composing characters are ignored.
@@ -11611,18 +11606,20 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      The result is a Number, which is the number of display cells
-      String {string} occupies on the screen when it starts at {col}
-      (first column is zero).  When {col} is omitted zero is used.
-      Otherwise it is the screen column where to start.  This
-      matters for Tab characters.
+      Returns the number of display cells String {string} occupies
+      on the screen when it starts at {col} (first column is zero).
+      Returns zero on error.
+
+      When {col} is omitted zero is used. Otherwise it is the screen
+      column where to start.  This matters for Tab characters.
       The option settings of the current window are used.  This
       matters for anything that's displayed differently, such as
       'tabstop' and 'display'.
+
       When {string} contains characters with East Asian Width Class
       Ambiguous, this function's return value depends on
       'ambiwidth'.
-      Returns zero on error.
+
       Also see |strlen()|, |strwidth()| and |strchars()|.
 
     ]=],
@@ -11635,10 +11632,9 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      The result is a String, which is a formatted date and time, as
-      specified by the {format} string.  The given {time} is used,
-      or the current time if no time is given.  The accepted
-      {format} depends on your system, thus this is not portable!
+      Formats a date and time String specified by {format}.  The
+      given {time} is used, or the current time if no time is given.
+      The {format} depends on your system, this is not portable!
       See the manual page of the C function strftime() for the
       format.  The maximum length of the result is 80 characters.
       See also |localtime()|, |getftime()| and |strptime()|.
@@ -11679,8 +11675,8 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      The result is a Number, which gives the byte index in
-      {haystack} of the first occurrence of the String {needle}.
+      Returns the byte index of the first occurrence of {needle}
+      in {haystack}.
       If {start} is specified, the search starts at index {start}.
       This can be used to find a second match: >vim
       	let colon1 = stridx(line, ":")
@@ -11708,9 +11704,10 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Return {expr} converted to a String.  If {expr} is a Number,
-      Float, String, Blob or a composition of them, then the result
-      can be parsed back with |eval()|.
+      Converts {expr} to a String.  If {expr} is a Number, Float,
+      String, Blob or a composition of them, the result can be
+      parsed back with |eval()|.
+
       	{expr} type	result ~
       	String		'string'
       	Number		123
@@ -11720,14 +11717,16 @@ M.funcs = {
       	Blob		0z00112233.44556677.8899
       	List		[item, item]
       	Dictionary	`{key: value, key: value}`
-      Note that in String values the ' character is doubled.
+
+      Note: in String values the ' character is doubled.
       Also see |strtrans()|.
-      Note 2: Output format is mostly compatible with YAML, except
-      for infinite and NaN floating-point values representations
-      which use |str2float()|.  Strings are also dumped literally,
-      only single quote is escaped, which does not allow using YAML
-      for parsing back binary strings.  |eval()| should always work
-      for strings and floats though, and this is the only official
+
+      Note: Output format is mostly compatible with YAML, except for
+      infinite and NaN floating-point values representations which
+      use |str2float()|.  Strings are also dumped literally, only
+      single quote is escaped, which does not allow using YAML for
+      parsing back binary strings.  |eval()| should always work for
+      strings and floats though, and this is the only official
       method.  Use |msgpackdump()| or |json_encode()| if you need to
       share data with other applications.
 
@@ -11741,8 +11740,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the length of the String
-      {string} in bytes.
+      Returns the length of String {string} in bytes.
       If the argument is a Number it is first converted to a String.
       For other types an error is given and zero is returned.
       If you want to count the number of multibyte characters use
@@ -11759,12 +11757,14 @@ M.funcs = {
     args = { 2, 4 },
     base = 1,
     desc = [=[
-      The result is a String, which is part of {src}, starting from
-      byte {start}, with the byte length {len}.
+      Gets a substring from {src}, starting from byte {start}, with
+      byte length {len}. Returns empty string on error.
+
       When {chars} is present and TRUE then {len} is the number of
       characters positions (composing characters are not counted
       separately, thus "1" means one base character and any
       following composing characters).
+
       To count {start} as characters instead of bytes use
       |strcharpart()|.
 
@@ -11781,7 +11781,6 @@ M.funcs = {
       example, to get the character under the cursor: >vim
       	strpart(getline("."), col(".") - 1, 1, v:true)
       <
-      Returns an empty string on error.
 
     ]=],
     fast = true,
@@ -11799,14 +11798,12 @@ M.funcs = {
     args = 2,
     base = 1,
     desc = [=[
-      The result is a Number, which is a unix timestamp representing
-      the date and time in {timestring}, which is expected to match
-      the format specified in {format}.
+      Parses a date/time string and returns a unix timestamp.
+      {timestring} must match the format specified in {format}.
 
-      The accepted {format} depends on your system, thus this is not
-      portable!  See the manual page of the C function strptime()
-      for the format.  Especially avoid "%c".  The value of $TZ also
-      matters.
+      The {format} depends on your system, this is not portable!
+      See the strptime() manpage for the format.  Especially avoid
+      "%c".  The value of $TZ also matters.
 
       If the {timestring} cannot be parsed with {format} zero is
       returned.  If you do not know the format of {timestring} you
@@ -11832,8 +11829,8 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      The result is a Number, which gives the byte index in
-      {haystack} of the last occurrence of the String {needle}.
+      Returns the byte index of the last occurrence of {needle}
+      in {haystack}.
       When {start} is specified, matches beyond this index are
       ignored.  This can be used to find a match before a previous
       match: >vim
@@ -11863,9 +11860,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a String, which is {string} with all unprintable
-      characters translated into printable characters 'isprint'.
-      Like they are shown in a window.  Example: >vim
+      Translates all unprintable characters in {string} into
+      printable characters 'isprint', like they are shown in a
+      window.  Example: >vim
       	echo strtrans(@a)
       <This displays a newline in register a as "^@" instead of
       starting a new line.
@@ -11883,8 +11880,8 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      The result is a Number, which is the number of UTF-16 code
-      units in String {string} (after converting it to UTF-16).
+      Returns the number of UTF-16 code units in String {string}
+      (after converting it to UTF-16).
 
       When {countcc} is TRUE, composing characters are counted
       separately.
@@ -11911,9 +11908,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the number of display cells
-      String {string} occupies.  A Tab character is counted as one
-      cell, alternatively use |strdisplaywidth()|.
+      Returns the number of display cells String {string} occupies.
+      A Tab character is counted as one cell, alternatively use
+      |strdisplaywidth()|.
       When {string} contains characters with East Asian Width Class
       Ambiguous, this function's return value depends on
       'ambiwidth'.
@@ -11976,8 +11973,8 @@ M.funcs = {
     args = 4,
     base = 1,
     desc = [=[
-      The result is a String, which is a copy of {string}, in which
-      the first match of {pat} is replaced with {sub}.
+      Performs string substitution.  Returns a copy of {string}
+      in which the first match of {pat} is replaced with {sub}.
       When {flags} is "g", all matches of {pat} in {string} are
       replaced.  Otherwise {flags} should be "".
 
@@ -12051,8 +12048,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a dictionary, which holds information about the
-      swapfile {fname}.  The available fields are:
+      Returns information about the swapfile {fname} as a
+      dictionary.  The available fields are:
       	version Vim version
       	user	user name
       	host	host name
@@ -12092,10 +12089,9 @@ M.funcs = {
   synID = {
     args = 3,
     desc = [=[
-      The result is a Number, which is the syntax ID at the position
-      {lnum} and {col} in the current window.
-      The syntax ID can be used with |synIDattr()| and
-      |synIDtrans()| to obtain syntax information about text.
+      Returns the syntax ID at position {lnum} and {col} in the
+      current window.  The syntax ID can be used with |synIDattr()|
+      and |synIDtrans()| to obtain syntax information about text.
 
       {col} is 1 for the leftmost column, {lnum} is 1 for the first
       line.  'synmaxcol' applies, in a longer line zero is returned.
@@ -12126,9 +12122,9 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      The result is a String, which is the {what} attribute of
-      syntax ID {synID}.  This can be used to obtain information
-      about a syntax item.
+      Returns the {what} attribute of syntax ID {synID} as a
+      String.  This can be used to obtain information about a
+      syntax item.
       {mode} can be "gui" or "cterm", to get the attributes
       for that mode.  When {mode} is omitted, or an invalid value is
       used, the attributes for the currently active highlighting are
@@ -12184,9 +12180,9 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the translated syntax ID of
-      {synID}.  This is the syntax group ID of what is being used to
-      highlight the character.  Highlight links given with
+      Returns the translated syntax ID of {synID}, following
+      highlight links.  This is the syntax group ID of what is
+      being used to highlight the character.  Highlight links given with
       ":highlight link" are followed.
 
       Returns zero on error.
@@ -12200,10 +12196,11 @@ M.funcs = {
   synconcealed = {
     args = 2,
     desc = [=[
-      The result is a |List| with three items:
-      1. The first item in the list is 0 if the character at the
-         position {lnum} and {col} is not part of a concealable
-         region, 1 if it is.  {lnum} is used like with |getline()|.
+      Returns conceal information for the character at position
+      {lnum} and {col} as a |List| with three items:
+      1. The first item in the list is 0 if the character is not
+         part of a concealable region, 1 if it is.  {lnum} is used
+         like with |getline()|.
       2. The second item in the list is a string.  If the first item
          is 1, the second item contains the text which will be
          displayed in place of the concealed text, depending on the
@@ -12354,8 +12351,8 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      The result is a |List|, where each item is the number of the
-      buffer associated with each window in the current tab page.
+      Returns a |List| of buffer numbers, one for each window in
+      the specified tab page.
       {arg} specifies the number of the tab page to be used.  When
       omitted the current tab page is used.
       When {arg} is invalid the number zero is returned.
@@ -12374,8 +12371,8 @@ M.funcs = {
   tabpagenr = {
     args = { 0, 1 },
     desc = [=[
-      The result is a Number, which is the number of the current
-      tab page.  The first tab page has number 1.
+      Returns the number of the current tab page.  The first tab
+      page has number 1.
 
       The optional argument {arg} supports the following values:
       	$	the number of the last tab page (the tab page
@@ -12670,9 +12667,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a copy of the String given, with all uppercase
-      characters turned into lowercase (just like applying |gu| to
-      the string).  Returns an empty string on error.
+      Converts a String to lowercase (like applying |gu|).
+      Returns empty string on error.
 
     ]=],
     fast = true,
@@ -12685,9 +12681,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a copy of the String given, with all lowercase
-      characters turned into uppercase (just like applying |gU| to
-      the string).  Returns an empty string on error.
+      Converts a String to uppercase (like applying |gU|).
+      Returns empty string on error.
 
     ]=],
     fast = true,
@@ -12700,11 +12695,9 @@ M.funcs = {
     args = 3,
     base = 1,
     desc = [=[
-      The result is a copy of the {src} string with all characters
-      which appear in {fromstr} replaced by the character in that
-      position in the {tostr} string.  Thus the first character in
-      {fromstr} is translated into the first character in {tostr}
-      and so on.  Exactly like the unix "tr" command.
+      Translates characters in {src}, replacing each character that
+      appears in {fromstr} with the corresponding character in
+      {tostr}.  Exactly like the unix "tr" command.
       This code also deals with multibyte characters properly.
 
       Returns an empty string on error.
@@ -12785,7 +12778,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number representing the type of {expr}.
+      Returns the type of {expr} as a Number.
       Instead of using the number directly, it is better to use the
       v:t_ variable that has the value:
       	Number:	    0  |v:t_number|
@@ -12973,10 +12966,10 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     desc = [=[
-      The result is a Number, which is the screen column of the file
-      position given with {expr}.  That is, the total number of
-      screen cells occupied by the part of the line until the end of
-      the character at that position.  When there is a <Tab> at the
+      Returns the virtual (screen) column of the file position
+      given with {expr}.  That is, the total number of screen cells
+      occupied by the part of the line until the end of the
+      character at that position.  When there is a <Tab> at the
       position, the returned Number will be the column at the end of
       the <Tab>.  For example, for a <Tab> in column 1, with 'ts'
       set to 8, it returns 8.  |conceal| is ignored.
@@ -13030,9 +13023,9 @@ M.funcs = {
     args = 3,
     base = 1,
     desc = [=[
-      The result is a Number, which is the byte index of the
-      character in window {winid} at buffer line {lnum} and virtual
-      column {col}.
+      Converts a virtual column to a byte index.  Returns the byte
+      index of the character in window {winid} at buffer line
+      {lnum} and virtual column {col}.
 
       If buffer line {lnum} is an empty line, 0 is returned.
 
@@ -13060,9 +13053,9 @@ M.funcs = {
   visualmode = {
     args = { 0, 1 },
     desc = [=[
-      The result is a String, which describes the last Visual mode
-      used in the current buffer.  Initially it returns an empty
-      string, but once Visual mode has been used, it returns "v",
+      Returns a String describing the last Visual mode used in the
+      current buffer.  Initially it returns an empty string, but
+      once Visual mode has been used, it returns "v",
       "V", or "<CTRL-V>" (a single CTRL-V character) for
       character-wise, line-wise, or block-wise Visual mode
       respectively.
@@ -13358,9 +13351,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the number of the buffer
-      associated with window {nr}.  {nr} can be the window number or
-      the |window-ID|.
+      Returns the buffer number associated with window {nr}.
+      {nr} can be the window number or the |window-ID|.
       When {nr} is zero, the number of the buffer in the current
       window is returned.
       When window {nr} doesn't exist, -1 is returned.
@@ -13375,9 +13367,9 @@ M.funcs = {
   },
   wincol = {
     desc = [=[
-      The result is a Number, which is the virtual column of the
-      cursor in the window.  This is counting screen cells from the
-      left side of the window.  The leftmost column is one.
+      Returns the virtual column of the cursor in the window.
+      This is counting screen cells from the left side of the
+      window.  The leftmost column is one.
     ]=],
     name = 'wincol',
     params = {},
@@ -13386,10 +13378,11 @@ M.funcs = {
   },
   windowsversion = {
     desc = [=[
-      The result is a String.  For MS-Windows it indicates the OS
-      version.  E.g, Windows 10 is "10.0", Windows 8 is "6.2",
-      Windows XP is "5.1".  For non-MS-Windows systems the result is
-      an empty string.
+      Returns the Windows OS version as a String.  E.g, Windows 10
+      is "10.0", Windows 8 is "6.2", Windows XP is "5.1".  For
+      non-MS-Windows systems the result is an empty string.
+
+      See also Lua |uv.os_uname()|.
     ]=],
     fast = true,
     name = 'windowsversion',
@@ -13419,8 +13412,7 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      The result is a nested List containing the layout of windows
-      in a tabpage.
+      Returns the layout of windows in a tabpage as a nested List.
 
       Without {tabnr} use the current tabpage, otherwise the tabpage
       with number {tabnr}.  If the tabpage {tabnr} is not found,
@@ -13462,9 +13454,9 @@ M.funcs = {
   },
   winline = {
     desc = [=[
-      The result is a Number, which is the screen line of the cursor
-      in the window.  This is counting screen lines from the top of
-      the window.  The first line is one.
+      Returns the screen line of the cursor in the window.  This is
+      counting screen lines from the top of the window.  The first
+      line is one.
       If the cursor was moved the view on the file will be updated
       first, this may cause a scroll.
     ]=],
@@ -13477,10 +13469,9 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      The result is a Number, which is the number of the current
-      window.  The top window has number 1.
-      Returns zero for a hidden or non |focusable| window, unless
-      it is the current window.
+      Returns the number of the current window.  The top window has
+      number 1.  Returns zero for a hidden or non |focusable|
+      window, unless it is the current window.
 
       The optional argument {arg} supports the following values:
       	$	the number of the last window (the window
@@ -13616,9 +13607,8 @@ M.funcs = {
   },
   wordcount = {
     desc = [=[
-      The result is a dictionary of byte/chars/word statistics for
-      the current buffer.  This is the same info as provided by
-      |g_CTRL-G|
+      Returns a dictionary of byte/chars/word statistics for the
+      current buffer.  This is the same info provided by |g_CTRL-G|.
       The return value includes:
       	bytes		Number of bytes in the buffer
       	chars		Number of chars in the buffer
