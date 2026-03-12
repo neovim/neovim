@@ -201,9 +201,9 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
     or (major and minor and patch and major ~= '' and minor ~= '' and patch ~= '')
   then
     return setmetatable({
-      major = vim._ensure_integer(major),
-      minor = minor == '' and 0 or vim._ensure_integer(minor),
-      patch = patch == '' and 0 or vim._ensure_integer(patch),
+      major = vim._assert_integer(major),
+      minor = minor == '' and 0 or vim._assert_integer(minor),
+      patch = patch == '' and 0 or vim._assert_integer(patch),
       prerelease = prerel ~= '' and prerel or nil,
       build = build ~= '' and build or nil,
     }, Version)

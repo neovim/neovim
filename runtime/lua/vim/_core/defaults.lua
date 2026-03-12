@@ -799,7 +799,7 @@ do
           return nil
         end
 
-        local max = vim._ensure_integer(string.rep('f', #c), 16)
+        local max = vim._assert_integer(string.rep('f', #c), 16)
         return val / max
       end
 

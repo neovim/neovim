@@ -86,8 +86,8 @@ local function get_error_entry(err, node)
   local start_line, start_col = node:range()
   local line_offset, col_offset, msg = err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')() ---@type string, string, string
   start_line, start_col =
-    start_line + vim._ensure_integer(line_offset) - 1,
-    start_col + vim._ensure_integer(col_offset) - 1
+    start_line + vim._assert_integer(line_offset) - 1,
+    start_col + vim._assert_integer(col_offset) - 1
   local end_line, end_col = start_line, start_col
   if msg:match('^Invalid syntax') or msg:match('^Impossible') then
     -- Use the length of the underlined node

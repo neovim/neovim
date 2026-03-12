@@ -327,9 +327,9 @@ local function generate_kind(item)
   local hex = r
       and string.format(
         '%02x%02x%02x',
-        vim._ensure_integer(r),
-        vim._ensure_integer(g),
-        vim._ensure_integer(b)
+        vim._assert_integer(r),
+        vim._assert_integer(g),
+        vim._assert_integer(b)
       )
     or doc:match('#?([%da-fA-F]+)')
 
