@@ -28,7 +28,6 @@
 #include "nvim/eval/window.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
-#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
@@ -144,11 +143,25 @@ bool frames_locked(void)
 /// passing CMD_SIZE will also work.
 bool window_layout_locked(cmdidx_T cmd)
 {
+  Error err = ERROR_INIT;
+  const bool locked = window_layout_locked_err(cmd, &err);
+  if (ERROR_SET(&err)) {
+    emsg(_(err.msg));
+    api_clear_error(&err);
+  }
+  return locked;
+}
+
+/// Like `window_layout_locked`, but set `err` to the (untranslated) error message when locked.
+/// @see window_layout_locked
+bool window_layout_locked_err(cmdidx_T cmd, Error *err)
+{
   if (split_disallowed > 0 || close_disallowed > 0) {
     if (close_disallowed == 0 && cmd == CMD_tabnew) {
-      emsg(_(e_cannot_split_window_when_closing_buffer));
+      api_set_error(err, kErrorTypeException, "%s", e_cannot_split_window_when_closing_buffer);
     } else {
-      emsg(_(e_not_allowed_to_change_window_layout_in_this_autocmd));
+      api_set_error(err, kErrorTypeException, "%s",
+                    e_not_allowed_to_change_window_layout_in_this_autocmd);
     }
     return true;
   }

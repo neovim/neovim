@@ -18,6 +18,8 @@
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval/window.h"
+#include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
@@ -388,6 +390,20 @@ static bool win_can_move_tp(win_T *wp, tabpage_T *tp, Error *err)
 {
   if (one_window(wp, tp == curtab ? NULL : tp)) {
     api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
+    return false;
+  }
+  // Like closing, moving windows between tabpages makes win_valid return false. Helpful when e.g:
+  // walking the window list, as w_next/w_prev can unexpectedly refer to windows in another tabpage!
+  // Check related locks, in case they were set to avoid checking win_valid.
+  if (win_locked(wp)) {
+    api_set_error(err, kErrorTypeException, "Cannot move window to another tabpage whilst in use");
+    return false;
+  }
+  if (window_layout_locked_err(CMD_SIZE, err)) {
+    return false;  // error already set
+  }
+  if (textlock || expr_map_locked()) {
+    api_set_error(err, kErrorTypeException, "%s", e_textlock);
     return false;
   }
   if (is_aucmd_win(wp)) {
