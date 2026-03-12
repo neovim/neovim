@@ -39,8 +39,11 @@ static int tv_op_blob(typval_T *tv1, const typval_T *tv2, const char *op)
   blob_T *const b2 = tv2->vval.v_blob;
   const int len = tv_blob_len(b2);
 
-  for (int i = 0; i < len; i++) {
-    ga_append(&b1->bv_ga, tv_blob_get(b2, i));
+  if (len > 0) {
+    ga_grow(&b1->bv_ga, len);
+    memmove((uint8_t *)b1->bv_ga.ga_data + b1->bv_ga.ga_len,
+            (uint8_t *)b2->bv_ga.ga_data, (size_t)len);
+    b1->bv_ga.ga_len += len;
   }
 
   return OK;
