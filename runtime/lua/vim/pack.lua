@@ -1157,7 +1157,7 @@ local function show_confirm_buf(lines, on_finish)
   --- @type integer
   local cancel_au_id
   local function on_cancel(data)
-    if tonumber(data.match) ~= win_id then
+    if vim._tointeger(data.match) ~= win_id then
       return
     end
     pcall(api.nvim_del_autocmd, cancel_au_id)

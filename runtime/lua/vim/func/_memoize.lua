@@ -24,11 +24,15 @@ local function resolve_hash(hash)
   if type(hash) == 'number' then
     hash = idx_hash(hash)
   elseif type(hash) == 'string' then
-    local c = hash == 'concat' or hash:match('^concat%-(%d+)')
-    if c then
-      hash = concat_hash(tonumber(c))
+    if hash == 'concat' then
+      hash = concat_hash()
     else
-      error('invalid value for hash: ' .. hash)
+      local c = hash:match('^concat%-(%d+)')
+      if c then
+        hash = concat_hash(vim._ensure_integer(c))
+      else
+        error('invalid value for hash: ' .. hash)
+      end
     end
   end
   --- @cast hash -integer

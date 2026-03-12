@@ -324,7 +324,13 @@ local function generate_kind(item)
 
   -- extract hex from RGB format
   local r, g, b = doc:match('rgb%((%d+)%s*,?%s*(%d+)%s*,?%s*(%d+)%)')
-  local hex = r and string.format('%02x%02x%02x', tonumber(r), tonumber(g), tonumber(b))
+  local hex = r
+      and string.format(
+        '%02x%02x%02x',
+        vim._ensure_integer(r),
+        vim._ensure_integer(g),
+        vim._ensure_integer(b)
+      )
     or doc:match('#?([%da-fA-F]+)')
 
   if not hex then
@@ -696,7 +702,7 @@ function CompletionResolver:is_valid()
   return vim.api.nvim_buf_is_valid(self.bufnr)
     and vim.api.nvim_get_current_buf() == self.bufnr
     and vim.startswith(vim.api.nvim_get_mode().mode, 'i')
-    and tonumber(vim.fn.pumvisible()) == 1
+    and vim.fn.pumvisible() ~= 0
     and (vim.tbl_get(cmp_info, 'completed', 'word') or '') == self.word,
     cmp_info
 end
@@ -916,7 +922,7 @@ local function trigger(bufnr, clients, ctx)
   reset_timer()
   Context:cancel_pending()
 
-  if tonumber(vim.fn.pumvisible()) == 1 and not Context.isIncomplete then
+  if vim.fn.pumvisible() ~= 0 and not Context.isIncomplete then
     return
   end
 
@@ -1018,7 +1024,7 @@ end
 
 --- @param handle vim.lsp.completion.BufHandle
 local function on_insert_char_pre(handle)
-  if tonumber(vim.fn.pumvisible()) == 1 then
+  if vim.fn.pumvisible() ~= 0 then
     if Context.isIncomplete then
       reset_timer()
 
@@ -1143,8 +1149,7 @@ local function enable_completions(client_id, bufnr, opts)
   end
 
   if not buf_handle.clients[client_id] then
-    local client = lsp.get_client_by_id(client_id)
-    assert(client, 'invalid client ID')
+    local client = assert(lsp.get_client_by_id(client_id), 'invalid client ID')
 
     -- Add the new client to the buffer's clients.
     buf_handle.clients[client_id] = client
@@ -1245,7 +1250,6 @@ end
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function M._omnifunc(findstart, base)
   lsp.log.debug('omnifunc.findstart', { findstart = findstart, base = base })
-  assert(base) -- silence luals
   local bufnr = api.nvim_get_current_buf()
   local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/completion' })
   local remaining = #clients

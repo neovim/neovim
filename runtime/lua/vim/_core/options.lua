@@ -692,7 +692,7 @@ local function create_option_accessor(scope)
   local option_mt
 
   local function make_option(name, value)
-    local info = assert(get_options_info(name), 'Not a valid option name: ' .. name)
+    local info = get_options_info(name) or error('Not a valid option name: ' .. name)
 
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")

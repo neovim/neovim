@@ -57,7 +57,7 @@ function M.apply_marks()
     vim.b.tutor_extmarks = {}
     for expct, _ in pairs(vim.b.tutor_metadata.expect) do
       ---@diagnostic disable-next-line: assign-type-mismatch
-      local lnum = tonumber(expct) ---@type integer
+      local lnum = vim._ensure_integer(expct)
       vim.api.nvim_buf_set_extmark(0, tutor_hl_ns, lnum - 1, 0, {
         line_hl_group = 'tutorExpect',
         invalidate = true,

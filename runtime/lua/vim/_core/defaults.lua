@@ -794,12 +794,12 @@ do
           return nil
         end
 
-        local val = tonumber(c, 16)
+        local val = vim._tointeger(c, 16)
         if not val then
           return nil
         end
 
-        local max = assert(tonumber(string.rep('f', #c), 16))
+        local max = vim._ensure_integer(string.rep('f', #c), 16)
         return val / max
       end
 
@@ -1001,9 +1001,9 @@ do
               end
 
               if
-                tonumber(params[#params - 2]) == r
-                and tonumber(params[#params - 1]) == g
-                and tonumber(params[#params]) == b
+                vim._tointeger(params[#params - 2]) == r
+                and vim._tointeger(params[#params - 1]) == g
+                and vim._tointeger(params[#params]) == b
               then
                 setoption('termguicolors', true)
               end

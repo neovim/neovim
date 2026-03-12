@@ -228,9 +228,8 @@ local function cterm_to_hex(colorstr)
   if colorstr:sub(1, 1) == '#' then
     return colorstr
   end
-  assert(colorstr ~= '')
-  local color = tonumber(colorstr) --[[@as integer]]
-  assert(color and 0 <= color and color <= 255)
+  local color = vim._ensure_integer(colorstr)
+  assert(0 <= color and color <= 255)
   if cterm_color_cache[color] then
     return cterm_color_cache[color]
   end
@@ -239,7 +238,7 @@ local function cterm_to_hex(colorstr)
     cterm_color_cache[color] = hex
   else
     notify("Couldn't get terminal colors, using fallback")
-    local t_Co = tonumber(vim.api.nvim_eval('&t_Co'))
+    local t_Co = vim._ensure_integer(vim.api.nvim_eval('&t_Co'))
     if t_Co <= 8 then
       cterm_color_cache = cterm_8_to_hex
     elseif t_Co == 88 then
@@ -744,7 +743,7 @@ local function styletable_statuscolumn(state)
     signcolumn = 'auto'
   end
   if signcolumn ~= 'no' then
-    local max = tonumber(signcolumn:match('^%w-:(%d)')) --[[@as integer?]] or 1
+    local max = vim._tointeger(signcolumn:match('^%w-:(%d)')) or 1
     if signcolumn:match('^auto') then
       --- @type table<integer,integer>
       local signcount = {}
@@ -771,7 +770,7 @@ local function styletable_statuscolumn(state)
   local foldcolumn = state.opt.foldcolumn
   if foldcolumn ~= '0' then
     if foldcolumn:match('^auto') then
-      local max = tonumber(foldcolumn:match('^%w-:(%d)')) --[[@as integer?]] or 1
+      local max = vim._tointeger(foldcolumn:match('^%w-:(%d)')) or 1
       local maxfold = 0
       vim._with({ buf = state.bufnr }, function()
         for row = state.start, state.end_ do
@@ -783,7 +782,7 @@ local function styletable_statuscolumn(state)
       end)
       minwidth = minwidth + math.min(maxfold, max)
     else
-      minwidth = minwidth + tonumber(foldcolumn) --[[@as integer]]
+      minwidth = minwidth + vim._ensure_integer(foldcolumn)
     end
   end
 

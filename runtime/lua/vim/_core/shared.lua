@@ -1620,6 +1620,35 @@ function vim._ensure_list(x)
   return { x }
 end
 
+--- Coerces {x} to an integer, like `tonumber()`, but rejects fractional values.
+---
+--- Returns `nil` if {x} cannot be converted with `tonumber()`, or if the
+--- resulting number is not integral.
+---
+--- @param x any Value to convert.
+--- @param base? integer Numeric base passed to `tonumber()`.
+--- @return integer? integer Converted integer value, or `nil`.
+function vim._tointeger(x, base)
+  --- @diagnostic disable-next-line:param-type-mismatch optional `base` is equivalent to `tonumber(x)`
+  local nx = tonumber(x, base)
+  if nx and nx == math.floor(nx) then
+    --- @cast nx integer
+    return nx
+  end
+end
+
+--- Coerces {x} to an integer and errors if conversion fails.
+---
+--- This is the throwing counterpart to |vim._tointeger()| and should be used
+--- when non-integer input is a programming error.
+---
+--- @param x any Value to convert.
+--- @param base? integer Numeric base passed to `tonumber()`.
+--- @return integer integer Converted integer value.
+function vim._ensure_integer(x, base)
+  return vim._tointeger(x, base) or error(('Cannot convert %s to integer'):format(x))
+end
+
 -- Use max 32-bit signed int value to avoid overflow on 32-bit systems. #31633
 vim._maxint = 2 ^ 32 - 1
 

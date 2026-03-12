@@ -1136,7 +1136,7 @@ api.nvim_create_autocmd('VimLeavePre', {
 
     local max_timeout = 0
     for _, client in pairs(active_clients) do
-      max_timeout = math.max(max_timeout, tonumber(client.exit_timeout) or 0)
+      max_timeout = math.max(max_timeout, vim._tointeger(client.exit_timeout) or 0)
       client:stop(client.exit_timeout)
     end
 
