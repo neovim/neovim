@@ -106,6 +106,11 @@ function M.neq(expected, actual, context)
   return luaassert.are_not.same(expected, actual, context)
 end
 
+--- Compare paths after resolving symlinks with realpath.
+function M.eq_paths(expected, actual, context)
+  return M.eq(uv.fs_realpath(expected), uv.fs_realpath(actual), context)
+end
+
 --- Asserts that `cond` is true, or prints a message.
 ---
 --- @param cond (boolean) expression to assert
