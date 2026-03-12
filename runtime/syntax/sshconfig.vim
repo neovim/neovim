@@ -6,13 +6,8 @@
 " Contributor:	Leonard Ehrenfried <leonard.ehrenfried@web.de>
 "		Karsten Hopp <karsten@redhat.com>
 "		Dean, Adam Kenneth <adam.ken.dean@hpe.com>
-" Last Change:	2022 Nov 10
-" Last Update:	2026 Feb 24
-"		Added RemoteCommand from pull request #4809
-"		Included additional keywords from Martin.
-"		Included PR #5753
-"		Update missing keywords #19488
-" SSH Version:	8.5p1
+" Last Change:	2026 Mar 11
+" SSH Version:	10.1p1
 "
 
 " Setup
@@ -110,7 +105,8 @@ syn keyword sshconfigAddressFamily  inet inet6
 
 syn match   sshconfigIPQoS	"\<af[1-4][1-3]\>"
 syn match   sshconfigIPQoS	"\<cs[0-7]\>"
-syn keyword sshconfigIPQoS	ef le lowdelay throughput reliability
+syn keyword sshconfigIPQoS	ef le
+syn keyword sshconfigIPQoSDeprecated	lowdelay throughput reliability
 syn keyword sshconfigKbdInteractive bsdauth pam skey
 
 syn keyword sshconfigKexAlgo diffie-hellman-group1-sha1
@@ -288,6 +284,7 @@ hi def link sshconfigLogLevel       sshconfigEnum
 hi def link sshconfigSysLogFacility sshconfigEnum
 hi def link sshconfigAddressFamily  sshconfigEnum
 hi def link sshconfigIPQoS          sshconfigEnum
+hi def link sshconfigIPQoSDeprecated sshconfigDeprecated
 hi def link sshconfigKbdInteractive sshconfigEnum
 hi def link sshconfigKexAlgo        sshconfigEnum
 hi def link sshconfigTunnel         sshconfigEnum
