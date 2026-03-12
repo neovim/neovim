@@ -8,8 +8,8 @@
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Contributor:  Fionn Fitzmaurice (github.com/fionn)
 " Originally:	2009-07-09
-" Last Change:	2026-02-11
-" SSH Version:	10.2p1
+" Last Change:	2026-03-11
+" SSH Version:	10.1p1
 "
 
 " Setup
@@ -112,7 +112,8 @@ syn keyword sshdconfigCompression    delayed
 
 syn match   sshdconfigIPQoS	"\<af[1-4][1-3]\>"
 syn match   sshdconfigIPQoS	"\<cs[0-7]\>"
-syn keyword sshdconfigIPQoS	ef le lowdelay throughput reliability
+syn keyword sshdconfigIPQoS	ef le
+syn keyword sshdconfigIPQoSDeprecated	lowdelay throughput reliability
 
 syn keyword sshdconfigKexAlgo diffie-hellman-group1-sha1
 syn keyword sshdconfigKexAlgo diffie-hellman-group14-sha1
@@ -293,6 +294,7 @@ hi def link sshdconfigSysLogFacility       sshdconfigEnum
 hi def link sshdconfigVar                  sshdconfigEnum
 hi def link sshdconfigCompression          sshdconfigEnum
 hi def link sshdconfigIPQoS                sshdconfigEnum
+hi def link sshdconfigIPQoSDeprecated      sshdconfigDeprecated
 hi def link sshdconfigKexAlgo              sshdconfigEnum
 hi def link sshdconfigTunnel               sshdconfigEnum
 hi def link sshdconfigSubsystem            sshdconfigEnum
@@ -301,6 +303,7 @@ hi def link sshdconfigEnum                 Function
 hi def link sshdconfigSpecial              Special
 hi def link sshdconfigKeyword              Keyword
 hi def link sshdconfigMatch                Type
+hi def link sshdconfigDeprecated           Error
 
 let b:current_syntax = "sshdconfig"
 
