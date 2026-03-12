@@ -13,7 +13,7 @@ function M.check_log_file()
 
   local actual = vim.fn.getenv('NVIM_LOG_FILE')
 
-  local msg = nil --luacheck: ignore
+  local msg --[[@type string]]
   if not actual or actual == vim.NIL or actual == '' then
     msg = ('log: %q not accessible, logging disabled (stderr)'):format(wanted)
   elseif actual ~= wanted then
