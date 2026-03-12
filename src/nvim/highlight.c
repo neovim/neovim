@@ -1089,10 +1089,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   }
 
   // Handle cterm attrs
-  if (dict->cterm.type == kObjectTypeDict) {
+  if (HAS_KEY_X(dict, cterm)) {
     Dict(highlight_cterm) cterm[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(cterm, KeyDict_highlight_cterm_get_field,
-                             dict->cterm.data.dict, err)) {
+                             dict->cterm, err)) {
       return hlattrs;
     }
 
@@ -1109,14 +1109,6 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     CHECK_FLAG(cterm, cterm_mask, strikethrough, , HL_STRIKETHROUGH);
     CHECK_FLAG(cterm, cterm_mask, altfont, , HL_ALTFONT);
     CHECK_FLAG(cterm, cterm_mask, nocombine, , HL_NOCOMBINE);
-  } else if (dict->cterm.type == kObjectTypeArray && dict->cterm.data.array.size == 0) {
-    // empty list from Lua API should clear all cterm attributes
-    // TODO(clason): handle via gen_api_dispatch
-    cterm_mask_provided = true;
-  } else if (HAS_KEY_X(dict, cterm)) {
-    VALIDATE_EXP(false, "cterm", "Dict", api_typename(dict->cterm.type), {
-      return hlattrs;
-    });
   }
 #undef CHECK_FLAG
 

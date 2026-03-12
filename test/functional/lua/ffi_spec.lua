@@ -10,7 +10,7 @@ before_each(clear)
 describe('ffi.cdef', function()
   it('can use Neovim core functions', function()
     if not exec_lua("return pcall(require, 'ffi')") then
-      pending('missing LuaJIT FFI')
+      pending('N/A: missing LuaJIT FFI')
     end
 
     eq(

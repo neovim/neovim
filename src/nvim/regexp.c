@@ -10085,7 +10085,7 @@ static int nfa_regatom(void)
         rc_did_emsg = true;
         return FAIL;
       }
-      siemsg("INTERNAL: Unknown character class char: %" PRId64, (int64_t)c);
+      siemsg("INTERNAL: Unknown character class char: %d", c);
       return FAIL;
     }
     // When '.' is followed by a composing char ignore the dot, so that
@@ -11593,9 +11593,9 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
   // grow indent for state->out
   indent->ga_len -= 1;
   if (state->out1) {
-    ga_concat(indent, (uint8_t *)"| ");
+    ga_concat(indent, S_LEN("| "));
   } else {
-    ga_concat(indent, (uint8_t *)"  ");
+    ga_concat(indent, S_LEN("  "));
   }
   ga_append(indent, NUL);
 
@@ -11603,7 +11603,7 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
 
   // replace last part of indent for state->out1
   indent->ga_len -= 3;
-  ga_concat(indent, (uint8_t *)"  ");
+  ga_concat(indent, S_LEN("  "));
   ga_append(indent, NUL);
 
   nfa_print_state2(debugf, state->out1, indent);
@@ -14810,7 +14810,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
               result = FAIL;
             }
 
-            if (t->state->out->out1->c == NFA_END_COMPOSING) {
+            if (t->state->out->out1 != NULL
+                && t->state->out->out1->c == NFA_END_COMPOSING) {
               end = t->state->out->out1;
               ADD_STATE_IF_MATCH(end);
             }

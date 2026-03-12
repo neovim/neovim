@@ -33,10 +33,8 @@ layers:
    as well as |user-function|s in Vimscript. These are accessed through
    |vim.cmd()| and |vim.fn| respectively, which are discussed under
    |lua-guide-vimscript| below.
-
 2. The "Nvim API" written in C for use in remote plugins and GUIs; see |api|.
    These functions are accessed through |vim.api|.
-
 3. The "Lua API" written in and specifically for Lua. These are any other
    functions accessible through `vim.*` not mentioned already; see
    |lua-stdlib|.

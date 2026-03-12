@@ -109,7 +109,7 @@ body {
 
   it('clears document colors when sole client detaches', function()
     exec_lua(function()
-      vim.lsp.stop_client(client_id)
+      vim.lsp.get_client_by_id(client_id):stop()
     end)
 
     screen:expect({ grid = grid_without_colors })
@@ -176,7 +176,7 @@ body {
     end)
 
     exec_lua(function()
-      vim.lsp.stop_client(client_id2)
+      vim.lsp.get_client_by_id(client_id2):stop()
     end)
 
     screen:expect({ grid = grid_with_colors, unchanged = true })
@@ -192,7 +192,7 @@ body {
       )
 
       exec_lua(function()
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
       end)
 
       eq(

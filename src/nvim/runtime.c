@@ -195,39 +195,44 @@ char *estack_sfile(estack_arg_T which)
   for (int idx = 0; idx < exestack.ga_len; idx++) {
     entry = ((estack_T *)exestack.ga_data) + idx;
     if (entry->es_name != NULL) {
-      size_t len = strlen(entry->es_name) + 15;
-      char *type_name = "";
+      String type_name = STATIC_CSTR_AS_STRING("");
+      String es_name = cstr_as_string(entry->es_name);
       if (entry->es_type != last_type) {
         switch (entry->es_type) {
         case ETYPE_SCRIPT:
-          type_name = "script "; break;
+          type_name = STATIC_CSTR_AS_STRING("script "); break;
         case ETYPE_UFUNC:
-          type_name = "function "; break;
+          type_name = STATIC_CSTR_AS_STRING("function "); break;
         default:
-          type_name = ""; break;
+          break;
         }
         last_type = entry->es_type;
       }
-      len += strlen(type_name);
-      ga_grow(&ga, (int)len);
       linenr_T lnum = idx == exestack.ga_len - 1
                       ? which == ESTACK_STACK ? SOURCING_LNUM : 0
                       : entry->es_lnum;
-      char *dots = idx == exestack.ga_len - 1 ? "" : "..";
-      if (lnum == 0) {
-        // For the bottom entry of <sfile>: do not add the line number,
-        // it is used in <slnum>.  Also leave it out when the number is
-        // not set.
-        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s%s",
-                     type_name, entry->es_name, dots);
-      } else {
-        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]%s",
-                     type_name, entry->es_name, lnum, dots);
+
+      size_t len = es_name.size + type_name.size + 26;
+      ga_grow(&ga, (int)len);
+      ga_concat_len(&ga, type_name.data, type_name.size);
+      ga_concat_len(&ga, es_name.data, es_name.size);
+      // For the bottom entry of <sfile>: do not add the line number, it is used in
+      // <slnum>.  Also leave it out when the number is not set.
+      if (lnum != 0) {
+        ga.ga_len += (int)vim_snprintf_safelen((char *)ga.ga_data + ga.ga_len,
+                                               len - (size_t)ga.ga_len,
+                                               "[%" PRIdLINENR "]", lnum);
       }
-      ga.ga_len += (int)strlen((char *)ga.ga_data + ga.ga_len);
+      if (idx != exestack.ga_len - 1) {
+        ga_concat_len(&ga, S_LEN(".."));
+      }
     }
   }
 
+  // Only NUL-terminate when not returning NULL.
+  if (ga.ga_data != NULL) {
+    ga_append(&ga, NUL);
+  }
   return (char *)ga.ga_data;
 }
 
@@ -2087,6 +2092,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   scriptitem_T *si = NULL;
   proftime_T wait_start;
   bool trigger_source_post = false;
+  ESTACK_CHECK_DECLARATION;
 
   CLEAR_FIELD(cookie);
   char *fname_exp = NULL;
@@ -2250,6 +2256,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
 
   // Keep the sourcing name/lnum, for recursive calls.
   estack_push(ETYPE_SCRIPT, si != NULL ? si->sn_name : fname_exp, 0);
+  ESTACK_CHECK_SETUP;
 
   if (l_do_profiling == PROF_YES && si != NULL) {
     bool forceit = false;
@@ -2268,8 +2275,26 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
 
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
+  // Check if treesitter detects this range as Lua (for injections like vimdoc codeblocks)
+  bool ts_lua = false;
+  if (fname == NULL && eap != NULL && !ex_lua
+      && !strequal(curbuf->b_p_ft, "lua")
+      && !(curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
+    MAXSIZE_TEMP_ARRAY(args, 3);
+    ADD_C(args, INTEGER_OBJ(curbuf->handle));
+    ADD_C(args, INTEGER_OBJ(eap->line1));
+    ADD_C(args, INTEGER_OBJ(eap->line2));
+    Error err = ERROR_INIT;
+    Object result = NLUA_EXEC_STATIC("return require('vim._core.util').source_is_lua(...)",
+                                     args, kRetNilBool, NULL, &err);
+    if (!ERROR_SET(&err) && LUARET_TRUTHY(result)) {
+      ts_lua = true;
+    }
+    api_clear_error(&err);
+  }
+
   if (fname == NULL
-      && (ex_lua || strequal(curbuf->b_p_ft, "lua")
+      && (ex_lua || ts_lua || strequal(curbuf->b_p_ft, "lua")
           || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua")))) {
     // Source lines from the current buffer as lua
     nlua_exec_ga(&cookie.buflines, fname_exp);
@@ -2318,6 +2343,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   if (got_int) {
     emsg(_(e_interr));
   }
+  ESTACK_CHECK_NOW;
   estack_pop();
   if (p_verbose > 1) {
     verbose_enter();
@@ -2426,12 +2452,15 @@ void ex_scriptnames(exarg_T *eap)
     return;
   }
 
+  msg_ext_set_kind("list_cmd");
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i)->sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i)->sn_name, NameBuff, MAXPATHL, true);
       vim_snprintf(IObuff, IOSIZE, "%3d: %s", i, NameBuff);
       if (!message_filtered(IObuff)) {
-        msg_putchar('\n');
+        if (msg_col > 0) {
+          msg_putchar('\n');
+        }
         msg_outtrans(IObuff, 0, false);
         line_breakcheck();
       }

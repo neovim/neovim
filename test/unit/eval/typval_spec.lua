@@ -2895,12 +2895,9 @@ describe('typval.c', function()
         eq(false, tv_check_lock(lib.VAR_UNLOCKED, 'test', 3))
         eq(true, tv_check_lock(lib.VAR_LOCKED, 'test', 3, 'E741: Value is locked: tes'))
         eq(true, tv_check_lock(lib.VAR_FIXED, 'test', 3, 'E742: Cannot change value of tes'))
-        eq(true, tv_check_lock(lib.VAR_LOCKED, nil, 0, 'E741: Value is locked: Unknown'))
-        eq(true, tv_check_lock(lib.VAR_FIXED, nil, 0, 'E742: Cannot change value of Unknown'))
-        eq(
-          true,
-          tv_check_lock(lib.VAR_LOCKED, nil, lib.kTVCstring, 'E741: Value is locked: Unknown')
-        )
+        eq(true, tv_check_lock(lib.VAR_LOCKED, nil, 0, 'E741: Value is locked'))
+        eq(true, tv_check_lock(lib.VAR_FIXED, nil, 0, 'E742: Cannot change value'))
+        eq(true, tv_check_lock(lib.VAR_LOCKED, nil, lib.kTVCstring, 'E741: Value is locked'))
         eq(
           true,
           tv_check_lock(lib.VAR_FIXED, 'test', lib.kTVCstring, 'E742: Cannot change value of test')

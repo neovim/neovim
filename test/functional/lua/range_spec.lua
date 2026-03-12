@@ -82,4 +82,13 @@ describe('vim.range', function()
       end_ = { row = 0, col = 36, buf = buf },
     }, range)
   end)
+
+  it('checks whether a range contains a position', function()
+    eq(
+      true,
+      exec_lua(function()
+        return vim.range(0, 0, 1, 5):has(vim.pos(0, 1))
+      end)
+    )
+  end)
 end)

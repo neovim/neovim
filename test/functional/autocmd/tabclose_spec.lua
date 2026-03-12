@@ -59,13 +59,14 @@ describe('TabClosed', function()
           setlocal bufhidden=wipe
           tabnew
           au TabClosed * ++once let g:tp_valid = nvim_tabpage_is_valid(s:tp)
+                             \| let g:curbuf = bufnr()
                              \| let g:abuf = expand('<abuf>')
 
           call nvim_buf_delete(g:buf, #{force: 1})
         ]])
         eq(false, eval('g:tp_valid'))
         eq(false, eval('nvim_buf_is_valid(g:buf)'))
-        eq('', eval('g:abuf'))
+        eq(eval('g:curbuf'), tonumber(eval('g:abuf'))) -- Falls back to curbuf.
 
         exec([[
           tabnew
@@ -78,6 +79,20 @@ describe('TabClosed', function()
           call nvim_win_close(s:win, 1)
         ]])
         eq(true, eval('nvim_buf_is_valid(g:buf)'))
+        eq(eval('g:buf'), tonumber(eval('g:abuf')))
+
+        exec([[
+          tabnew
+          let s:win = win_getid()
+
+          tabfirst
+          let g:buf = nvim_create_buf(1, 1)
+          au BufHidden * ++once call nvim_win_set_buf(s:win, g:buf)
+          au TabClosed * ++once let g:abuf = expand('<abuf>')
+
+          call nvim_win_close(s:win, 1)
+        ]])
+        -- BufHidden switched buffers at the last moment; TabClosed's <abuf> should show that.
         eq(eval('g:buf'), tonumber(eval('g:abuf')))
       end)
     end)

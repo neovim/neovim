@@ -4755,6 +4755,38 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('InvalidList', ']'),
     })
 
+    check_parsing(']a', {
+      --           01
+      ast = {
+        {
+          'OpMissing:0:1:',
+          children = {
+            'ListLiteral:0:0:',
+            'PlainIdentifier(scope=0,ident=a):0:1:a',
+          },
+        },
+      },
+      err = {
+        arg = ']a',
+        msg = 'E15: Unexpected closing figure brace: %.*s',
+      },
+    }, {
+      hl('InvalidList', ']'),
+      hl('InvalidIdentifierName', 'a'),
+    }, {
+      [1] = {
+        ast = {
+          len = 1,
+          ast = {
+            'ListLiteral:0:0:',
+          },
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+        },
+      },
+    })
+
     check_parsing('[] []', {
       --           01234
       ast = {

@@ -447,6 +447,7 @@ end
 --- @field mouse_enabled? boolean
 ---
 --- @field win_viewport? table<integer,table<string,integer>>
+--- @field win_viewport_margins? table<integer,table<string,integer>>
 --- @field win_pos? table<integer,table<string,integer>>
 --- @field float_pos? [integer,integer]
 --- @field hl_groups? table<string,integer>

@@ -146,6 +146,38 @@ describe('vim.json.decode()', function()
     local str = ('%s{%s"key"%s:%s[%s"val"%s,%s"val2"%s]%s,%s"key2"%s:%s1%s}%s'):gsub('%%s', s)
     eq({ key = { 'val', 'val2' }, key2 = 1 }, exec_lua([[return vim.json.decode(...)]], str))
   end)
+
+  it('skip_comments', function()
+    eq({}, exec_lua([[return vim.json.decode('{//comment\n}', { skip_comments = true })]]))
+    eq({}, exec_lua([[return vim.json.decode('{//comment\r\n}', { skip_comments = true })]]))
+    eq(
+      'test // /* */ string',
+      exec_lua(
+        [[return vim.json.decode('"test // /* */ string"//comment', { skip_comments = true })]]
+      )
+    )
+    eq(
+      {},
+      exec_lua([[return vim.json.decode('{/* A multi-line\ncomment*/}', { skip_comments = true })]])
+    )
+    eq(
+      { a = 1 },
+      exec_lua([[return vim.json.decode('{"a" /* Comment */: 1}', { skip_comments = true })]])
+    )
+    eq(
+      { a = 1 },
+      exec_lua([[return vim.json.decode('{"a": /* Comment */ 1}', { skip_comments = true })]])
+    )
+    eq({}, exec_lua([[return vim.json.decode('/*first*//*second*/{}', { skip_comments = true })]]))
+    eq(
+      'Expected the end but found unclosed multi-line comment at character 13',
+      pcall_err(exec_lua, [[return vim.json.decode('{}/*Unclosed', { skip_comments = true })]])
+    )
+    eq(
+      'Expected comma or object end but found T_INTEGER at character 12',
+      pcall_err(exec_lua, [[return vim.json.decode('{"a":1/*x*/0}', { skip_comments = true })]])
+    )
+  end)
 end)
 
 describe('vim.json.encode()', function()

@@ -4,11 +4,12 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = n.assert_alive
 local clear, poke_eventloop = n.clear, n.poke_eventloop
-local testprg, source, eq = n.testprg, n.source, t.eq
+local testprg, source, eq, neq = n.testprg, n.source, t.eq, t.neq
 local feed = n.feed
 local feed_command, eval = n.feed_command, n.eval
 local fn = n.fn
 local api = n.api
+local exec_lua = n.exec_lua
 local retry = t.retry
 local ok = t.ok
 local command = n.command
@@ -155,6 +156,33 @@ describe(':terminal', function()
     command('stopinsert | wincmd p')
     feed('<Ignore>') -- Add input to separate two RPC requests
     eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
+  end)
+
+  it('switching to another terminal buffer in Terminal mode', function()
+    command('terminal')
+    local buf0 = api.nvim_get_current_buf()
+    command('terminal')
+    local buf1 = api.nvim_get_current_buf()
+    command('terminal')
+    local buf2 = api.nvim_get_current_buf()
+    neq(buf0, buf1)
+    neq(buf0, buf2)
+    neq(buf1, buf2)
+    feed('i')
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    api.nvim_set_current_buf(buf1)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    api.nvim_set_current_buf(buf0)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    exec_lua(function()
+      vim.api.nvim_set_current_buf(buf1)
+      vim.api.nvim_buf_delete(buf0, { force = true })
+    end)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    api.nvim_set_current_buf(buf2)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    api.nvim_set_current_buf(buf1)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
   end)
 end)
 

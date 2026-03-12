@@ -1,6 +1,8 @@
 *usr_44.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			 Your own syntax highlighted
 
@@ -627,10 +629,10 @@ be included in the next Vim version!
 
 ADDING TO AN EXISTING SYNTAX FILE
 
-We were assuming you were adding a completely new syntax file.  When an existing
-syntax file works, but is missing some items, you can add items in a separate
-file.  That avoids changing the distributed syntax file, which will be lost
-when installing a new version of Vim.
+We were assuming you were adding a completely new syntax file.  When an
+existing syntax file works, but is missing some items, you can add items in a
+separate file.  That avoids changing the distributed syntax file, which will
+be lost when installing a new version of Vim.
    Write syntax commands in your file, possibly using group names from the
 existing syntax.  For example, to add new variable types to the C syntax file:
 >

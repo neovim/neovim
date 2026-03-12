@@ -1,7 +1,7 @@
 *visual.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Visual mode				*Visual* *Visual-mode* *visual-mode*

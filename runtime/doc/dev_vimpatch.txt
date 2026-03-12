@@ -22,19 +22,13 @@ See |dev-vimpatch-quickstart| to get started immediately.
 ==============================================================================
 QUICKSTART                                        *dev-vimpatch-quickstart*
 
-1. Pull the Nvim source:
->bash
-    git clone https://github.com/neovim/neovim.git
-<
+1. Pull the Nvim source: >bash
+     git clone https://github.com/neovim/neovim.git
 2. Run `./scripts/vim-patch.sh -l` to see the list of missing Vim patches.
-
 3. Choose a patch from the list (usually the oldest one), e.g. `8.0.0123`.
-
    - Check for open vim-patch PRs
      https://github.com/neovim/neovim/pulls?q=is%3Apr+is%3Aopen+label%3Avim-patch.
-
 4. Run `./scripts/vim-patch.sh -p 8.0.0123`
-
 5. Follow the instructions given by the script.
 
 NOTES ~
@@ -125,8 +119,8 @@ TYPES OF "NOT APPLICABLE" VIM PATCHES ~
   supported by Nvim.
     - NA files: `src/Make_*`, `src/testdir/Make__*`
 - `if_*.c` changes: `if_python.c` et. al. were removed.
-- `term.c` changes: the Nvim TUI uses `libtermkey` to read terminal sequences;
-  Vim's `term.c` was removed.
+- Most `term.c` changes: the Nvim TUI uses `libtermkey` to read terminal sequences;
+  Note: `replace_termcodes()` is applicable and moved to `src/nvim/keycodes.c`.
 - `job` patches: incompatible API and implementation
     - NA files: `src/channel_*`, `src/job_*`, `src/testdir/test_channel_*`,
       `src/testdir/test_job_*`
@@ -147,7 +141,7 @@ TYPES OF "NOT APPLICABLE" VIM PATCHES ~
   https://github.com/neovim/neovim/pull/11996
 - Many tests in `test_prompt_buffer.vim` require incompatible Vim features
   such as `channel`; they should still be included, but skipped
-- non-runtime documentation: Moved to https://neovim.io/doc/,
+- Non-runtime documentation: Moved to `BUILD.md`, `INSTALL.md`.
     - NA files: `Filelist`, `README`, `INSTALL`,
 - Anything else might be relevant; err on the side of caution, and post an
   issue if you aren't sure.

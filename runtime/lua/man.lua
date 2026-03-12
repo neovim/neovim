@@ -262,7 +262,7 @@ local function get_path(name, sect)
   -- find any that match the specified name
   --- @param v string
   local namematches = vim.tbl_filter(function(v)
-    local tail = fn.fnamemodify(v, ':t')
+    local tail = vim.fs.basename(v)
     return tail:find(name, 1, true) ~= nil
   end, results) or {}
   local sectmatches = {}
@@ -364,7 +364,7 @@ end
 --- @return string name
 --- @return string sect
 local function parse_path(path)
-  local tail = fn.fnamemodify(path, ':t')
+  local tail = vim.fs.basename(path)
   if
     path:match('%.[glx]z$')
     or path:match('%.bz2$')
@@ -428,7 +428,8 @@ local function get_page(path, silent)
   if localfile_arg == nil then
     local mpath = get_path('man')
     -- Check for -l support.
-    localfile_arg = (mpath and system({ 'man', '-l', mpath }, true) or '') ~= ''
+    localfile_arg = (mpath and system({ 'man', '-l', mpath }, true, { MANPAGER = 'cat' }) or '')
+      ~= ''
   end
 
   local cmd = localfile_arg and { 'man', '-l', path } or { 'man', path }
@@ -808,7 +809,7 @@ function M.show_toc()
 
   local lnum = 2
   local last_line = fn.line('$') - 1
-  while lnum and lnum < last_line do
+  while lnum > 0 and lnum < last_line do
     local text = fn.getline(lnum)
     if text:match('^%s+[-+]%S') or text:match('^   %S') or text:match('^%S') then
       toc[#toc + 1] = {

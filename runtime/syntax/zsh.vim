@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2024 Jan 04
+" Latest Revision:      2025 Feb 18
 " License:              Vim (see :h license)
 " Repository:           https://github.com/chrisbra/vim-zsh
 
@@ -37,9 +37,6 @@ endfunction
 let s:contained=s:ContainedGroup()
 
 syn iskeyword @,48-57,_,192-255,#,-
-if get(g:, 'zsh_fold_enable', 0)
-    setlocal foldmethod=syntax
-endif
 
 syn match   zshQuoted           '\\.'
 syn match   zshPOSIXQuoted      '\\[xX][0-9a-fA-F]\{1,2}'
@@ -157,6 +154,8 @@ syn case ignore
 syn match   zshOptStart
             \ /\v^\s*%(%(un)?setopt|set\s+[-+]o)/
             \ nextgroup=zshOption skipwhite
+
+" this list is generated using the make-options.zsh script and the zsh source repository
 syn keyword zshOption nextgroup=zshOption,zshComment skipwhite contained
            \ auto_cd no_auto_cd autocd noautocd auto_pushd no_auto_pushd autopushd noautopushd cdable_vars
            \ no_cdable_vars cdablevars nocdablevars cd_silent no_cd_silent cdsilent nocdsilent chase_dots
@@ -193,16 +192,16 @@ syn keyword zshOption nextgroup=zshOption,zshComment skipwhite contained
            \ nonumericglobsort rc_expand_param no_rc_expand_param rcexpandparam norcexpandparam rematch_pcre
            \ no_rematch_pcre rematchpcre norematchpcre sh_glob no_sh_glob shglob noshglob unset no_unset nounset
            \ warn_create_global no_warn_create_global warncreateglobal nowarncreateglobal warn_nested_var
-           \ no_warn_nested_var warnnestedvar no_warnnestedvar append_history no_append_history appendhistory
-           \ noappendhistory bang_hist no_bang_hist banghist nobanghist extended_history no_extended_history
-           \ extendedhistory noextendedhistory hist_allow_clobber no_hist_allow_clobber histallowclobber
-           \ nohistallowclobber hist_beep no_hist_beep histbeep nohistbeep hist_expire_dups_first
-           \ no_hist_expire_dups_first histexpiredupsfirst nohistexpiredupsfirst hist_fcntl_lock
-           \ no_hist_fcntl_lock histfcntllock nohistfcntllock hist_find_no_dups no_hist_find_no_dups
-           \ histfindnodups nohistfindnodups hist_ignore_all_dups no_hist_ignore_all_dups histignorealldups
-           \ nohistignorealldups hist_ignore_dups no_hist_ignore_dups histignoredups nohistignoredups
-           \ hist_ignore_space no_hist_ignore_space histignorespace nohistignorespace hist_lex_words
-           \ no_hist_lex_words histlexwords nohistlexwords hist_no_functions no_hist_no_functions
+           \ no_warn_nested_var warnnestedvar no_warnnestedvar nowarnnestedvar append_history no_append_history
+           \ appendhistory noappendhistory bang_hist no_bang_hist banghist nobanghist extended_history
+           \ no_extended_history extendedhistory noextendedhistory hist_allow_clobber no_hist_allow_clobber
+           \ histallowclobber nohistallowclobber hist_beep no_hist_beep histbeep nohistbeep
+           \ hist_expire_dups_first no_hist_expire_dups_first histexpiredupsfirst nohistexpiredupsfirst
+           \ hist_fcntl_lock no_hist_fcntl_lock histfcntllock nohistfcntllock hist_find_no_dups
+           \ no_hist_find_no_dups histfindnodups nohistfindnodups hist_ignore_all_dups no_hist_ignore_all_dups
+           \ histignorealldups nohistignorealldups hist_ignore_dups no_hist_ignore_dups histignoredups
+           \ nohistignoredups hist_ignore_space no_hist_ignore_space histignorespace nohistignorespace
+           \ hist_lex_words no_hist_lex_words histlexwords nohistlexwords hist_no_functions no_hist_no_functions
            \ histnofunctions nohistnofunctions hist_no_store no_hist_no_store histnostore nohistnostore
            \ hist_reduce_blanks no_hist_reduce_blanks histreduceblanks nohistreduceblanks hist_save_by_copy
            \ no_hist_save_by_copy histsavebycopy nohistsavebycopy hist_save_no_dups no_hist_save_no_dups
@@ -334,7 +333,7 @@ hi def link zshKeyword          Keyword
 hi def link zshFunction         None
 hi def link zshKSHFunction      zshFunction
 hi def link zshHereDoc          String
-hi def link zshOperator         None
+hi def link zshOperator         Operator
 hi def link zshRedir            Operator
 hi def link zshVariable         None
 hi def link zshVariableDef      zshVariable

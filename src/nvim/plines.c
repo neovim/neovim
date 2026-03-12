@@ -551,9 +551,10 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   } else {
     while (true) {
       char_size = charsize_regular(&csarg, ci.ptr, vcol, ci.chr.value);
+      // make sure we don't go past the end of the line
       if (*ci.ptr == NUL) {
-        // if cursor is at NUL, it is treated like 1 cell char unless there is virtual text
-        char_size.width = MAX(1, csarg.cur_text_width_left + csarg.cur_text_width_right);
+        // NUL at end of line only takes one column unless there is virtual text
+        char_size.width = 1 + csarg.cur_text_width_left + csarg.cur_text_width_right;
         on_NUL = true;
         break;
       }

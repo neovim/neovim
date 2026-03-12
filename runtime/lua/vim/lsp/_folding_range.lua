@@ -56,8 +56,8 @@ function State:evaluate()
     for _, range in ipairs(ranges) do
       local start_row = range.startLine
       local end_row = range.endLine
-      -- Adding folds within a single line is not supported by Nvim.
-      if start_row ~= end_row then
+      -- Ignore zero-length or invalid folds
+      if start_row < end_row then
         row_text[start_row] = range.collapsedText
 
         local kind = range.kind

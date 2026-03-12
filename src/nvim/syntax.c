@@ -3213,6 +3213,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
     return;
   }
 
+  msg_ext_set_kind("list_cmd");
   if (!syntax_present(curwin)) {
     msg(_(msg_no_items), 0);
     return;

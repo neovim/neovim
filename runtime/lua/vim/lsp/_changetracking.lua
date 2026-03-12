@@ -199,6 +199,9 @@ function M.reset_buf(client, bufnr)
   end
   assert(state.buffers, 'CTGroupState must have buffers')
   local buf_state = state.buffers[bufnr]
+  if not buf_state then
+    return
+  end
   buf_state.refs = buf_state.refs - 1
   assert(buf_state.refs >= 0, 'refcount on buffer state must not get negative')
   if buf_state.refs == 0 then

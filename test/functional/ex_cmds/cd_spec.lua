@@ -294,7 +294,7 @@ describe('getcwd()', function()
   end)
 
   it('returns empty string if working directory does not exist', function()
-    skip(is_os('win'))
+    skip(is_os('win'), 'N/A for Windows')
     command('cd ' .. directories.global)
     command("call delete('../" .. directories.global .. "', 'd')")
     eq('', n.eval('getcwd()'))

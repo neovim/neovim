@@ -237,7 +237,10 @@ function Session:_run(request_cb, notification_cb, timeout)
 
     self.eof_err = { 1, 'EOF was received from Nvim. Likely the Nvim process crashed.' .. stderr }
   end)
-  uv.run()
+  local ret, err, _ = uv.run()
+  if ret == nil then
+    error(err)
+  end
   self._prepare:stop()
   self._timer:stop()
   self._rpc_stream:read_stop()

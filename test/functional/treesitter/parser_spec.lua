@@ -1264,12 +1264,6 @@ print()
       parser:for_each_tree(function(tstree, tree)
         ranges[tree:lang()] = { tstree:root():range(true) }
       end)
-
-      -- Scratch buffer should get cleaned up
-      assert(vim.api.nvim_buf_is_loaded(parser:source()))
-      parser:destroy()
-      assert(not vim.api.nvim_buf_is_loaded(parser:source()))
-
       return ranges
     end)
 

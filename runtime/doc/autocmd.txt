@@ -1,7 +1,7 @@
 *autocmd.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Automatic commands					*autocmd* *autocommand*
@@ -382,9 +382,10 @@ CmdUndefined			When a user command is used but it isn't
 				always define the user command and have it
 				invoke an autoloaded function.  See |autoload|.
 							*CmdlineChanged*
-CmdlineChanged			After a change was made to the text inside
-				command line.  Be careful not to mess up the
-				command line, it may cause Vim to lock up.
+CmdlineChanged			After EVERY change inside command line. Also
+				triggered during mappings! Use |<Cmd>| instead
+				of ":" in mappings, to avoid that.
+
 				<afile> expands to the |cmdline-char|.
 							*CmdlineEnter*
 CmdlineEnter			After entering the command-line (including
@@ -758,6 +759,19 @@ LspNotify			See |LspNotify|
 LspProgress			See |LspProgress|
 LspRequest			See |LspRequest|
 LspTokenUpdate			See |LspTokenUpdate|
+							*MarkSet*
+MarkSet				After a |mark| is set by |m|, |:mark|, and
+				|nvim_buf_set_mark()|. Supports `[a-zA-Z]`
+				marks (may support more in the future).
+				The |autocmd-pattern| is matched against the
+				mark name (e.g. `[ab]` matches `a` or `b`, `*`
+				matches all).
+
+				The |event-data| has these keys:
+				- name: Mark name (e.g. "a")
+				- line: Mark line.
+				- col: Mark column.
+
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the
@@ -1027,6 +1041,13 @@ Syntax				When the 'syntax' option has been set.  The
 				this option was set. <amatch> expands to the
 				new value of 'syntax'.
 				See |:syn-on|.
+							*TabClosed*
+TabClosed			After closing a tab page. <afile> expands to
+				the tab page number.
+							*TabClosedPre*
+TabClosedPre			Before closing a tab page.  The window layout
+				is locked, thus opening and closing of windows
+				is prohibited.
 							*TabEnter*
 TabEnter			Just after entering a tab page. |tab-page|
 				After WinEnter.
@@ -1041,12 +1062,12 @@ TabNew				When creating a new tab page. |tab-page|
 							*TabNewEntered*
 TabNewEntered			After entering a new tab page. |tab-page|
 				After BufEnter.
-							*TabClosed*
-TabClosed			After closing a tab page. <afile> expands to
-				the tab page number.
 							*TermOpen*
 TermOpen			When a |terminal| job is starting.  Can be
-				used to configure the terminal buffer.
+				used to configure the terminal buffer. To get
+				the terminal process details: >lua
+				    vim.print(vim.api.nvim_get_chan_info(vim.bo.channel))
+<
 							*TermEnter*
 TermEnter			After entering |Terminal-mode|.
 				After TermOpen.
@@ -1056,7 +1077,8 @@ TermLeave			After leaving |Terminal-mode|.
 							*TermClose*
 TermClose			When a |terminal| job ends.
 				Sets these |v:event| keys:
-				    status
+				    status	job exit status, or -1 if the
+						terminal buffer is deleted
 							*TermRequest*
 TermRequest			When a |:terminal| child process emits an OSC,
 				DCS, or APC sequence. Sets |v:termrequest|. The
@@ -1064,6 +1086,7 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				fields:
 
 				- sequence: the received sequence
+				- terminator: the received sequence terminator (i.e. BEL or ST)
 				- cursor: (1,0)-indexed, buffer-relative
 				  position of the cursor when the sequence was
 				  received (line number may be <= 0 if the
@@ -1159,11 +1182,11 @@ VimEnter			After doing all the startup stuff, including
 				Just before this event is triggered the
 				|v:vim_did_enter| variable is set, so that you
 				can do: >
-				   if v:vim_did_enter
-				     call s:init()
-				   else
-				     au VimEnter * call s:init()
-				   endif
+				    if v:vim_did_enter
+				      call s:init()
+				    else
+				      au VimEnter * call s:init()
+				    endif
 <							*VimLeave*
 VimLeave			Before exiting Vim, just after writing the
 				.shada file.  Executed only once, like
@@ -1214,6 +1237,20 @@ WinLeave			Before leaving a window.  If the window to be
 				WinLeave autocommands (but not for ":new").
 				Not used for ":qa" or ":q" when exiting Vim.
 				Before WinClosed.
+							*WinNewPre*
+WinNewPre			Before creating a new window.  Triggered
+				before commands that modify window layout by
+				creating a split.
+				Not done when creating tab pages and for the
+				first window, as the window structure is not
+				initialized yet and so is generally not safe.
+				It is not allowed to modify window layout
+				while executing commands for the WinNewPre
+				event.
+				Most useful to store current window layout
+				and compare it with the new layout after the
+				Window has been created.
+
 							*WinNew*
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.

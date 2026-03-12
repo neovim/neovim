@@ -1416,7 +1416,8 @@ uv.spawn({path}, {options}, {on_exit})                              *uv.spawn()*
                     available to the child process only if the child processes
                     uses the MSVCRT runtime.)
                   - `options.env` - Set environment variables for the new
-                    process.
+                    process. Each entry should be a string in the form of
+                    `NAME=VALUE`.
                   - `options.cwd` - Set the current working directory for the
                     sub-process.
                   - `options.uid` - Set the child process' user id.
@@ -1450,7 +1451,8 @@ uv.spawn({path}, {options}, {on_exit})                              *uv.spawn()*
                 When the child process exits, `on_exit` is called with an exit
                 code and signal.
 
-                Returns: `uv_process_t userdata`, `integer`
+                Returns: `uv_process_t userdata` or `nil`, `integer` or
+                `string`, `uv.error_name` or `nil`
 
 uv.process_kill({process}, {signame})                         *uv.process_kill()*
 
@@ -4206,7 +4208,7 @@ uv.hrtime()                                                        *uv.hrtime()*
                 clock drift. The primary use is for measuring time between
                 intervals.
 
-                Returns: `number`
+                Returns: `integer`
 
 uv.clock_gettime({clock_id})                                *uv.clock_gettime()*
 
@@ -4403,11 +4405,11 @@ uv.os_get_passwd()                                          *uv.os_get_passwd()*
 
                 Returns password file information.
 
-                Returns: `table`
+                Returns: `table` or `fail`
                 - `username` : `string`
-                - `uid` : `integer`
-                - `gid` : `integer`
-                - `shell` : `string`
+                - `uid` : `integer?` (`nil` on Windows)
+                - `gid` : `integer?` (`nil` on Windows)
+                - `shell` : `string?`` (`nil` on Windows)
                 - `homedir` : `string`
 
 uv.os_getpid()                                                  *uv.os_getpid()*

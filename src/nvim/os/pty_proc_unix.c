@@ -47,12 +47,17 @@ int forkpty(int *, char *, const struct termios *, const struct winsize *);
 
 #include "os/pty_proc_unix.c.generated.h"
 
-#if defined(__sun) && !defined(HAVE_FORKPTY)
+#if !defined(HAVE_FORKPTY) && !defined(__APPLE__)
 
 // this header defines STR, just as nvim.h, but it is defined as ('S'<<8),
 // to avoid #undef STR, #undef STR, #define STR ('S'<<8) just delay the
 // inclusion of the header even though it gets include out of order.
-# include <sys/stropts.h>
+
+# if !defined(__HAIKU__)
+#  include <sys/stropts.h>
+# else
+#  define I_PUSH 0  // XXX: find the actual value
+# endif
 
 static int vim_openpty(int *amaster, int *aslave, char *name, struct termios *termp,
                        struct winsize *winp)
@@ -209,10 +214,7 @@ int pty_proc_spawn(PtyProc *ptyproc)
       && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
     goto error;
   }
-  if (!proc->out.s.closed
-      && (status = set_duplicating_descriptor(master, &proc->out.s.uv.pipe))) {
-    goto error;
-  }
+  // The stream_init() call in proc_spawn() will initialize proc->out.s.uv.poll.
 
   ptyproc->tty_fd = master;
   proc->pid = pid;
@@ -235,6 +237,13 @@ void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
 {
   ptyproc->winsize = (struct winsize){ height, width, 0, 0 };
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
+}
+
+void pty_proc_resume(PtyProc *ptyproc)
+{
+  // Send SIGCONT to the entire process group, as some shells (e.g. fish) don't
+  // propagate SIGCONT to suspended child processes.
+  killpg(((Proc *)ptyproc)->pid, SIGCONT);
 }
 
 void pty_proc_close(PtyProc *ptyproc)
@@ -261,7 +270,7 @@ void pty_proc_teardown(Loop *loop)
 }
 
 static void init_child(PtyProc *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NORETURN
 {
 #if defined(HAVE__NSGETENVIRON)
 # define environ (*_NSGetEnviron())
@@ -279,9 +288,11 @@ static void init_child(PtyProc *ptyproc)
   signal(SIGALRM, SIG_DFL);
 
   Proc *proc = (Proc *)ptyproc;
-  if (proc->cwd && os_chdir(proc->cwd) != 0) {
-    ELOG("chdir(%s) failed: %s", proc->cwd, strerror(errno));
-    return;
+  int err = 0;
+  // Don't use os_chdir() as that may buffer UI events unnecessarily.
+  if (proc->cwd && (err = uv_chdir(proc->cwd)) != 0) {
+    ELOG("chdir(%s) failed: %s", proc->cwd, uv_strerror(err));
+    _exit(122);
   }
 
   const char *prog = proc_get_exepath(proc);
@@ -344,9 +355,11 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_cc[VSTART] = 0x1f & 'Q';
   termios->c_cc[VSTOP] = 0x1f & 'S';
   termios->c_cc[VSUSP] = 0x1f & 'Z';
+#if !defined(__HAIKU__)
   termios->c_cc[VREPRINT] = 0x1f & 'R';
   termios->c_cc[VWERASE] = 0x1f & 'W';
   termios->c_cc[VLNEXT] = 0x1f & 'V';
+#endif
   termios->c_cc[VMIN] = 1;
   termios->c_cc[VTIME] = 0;
 }
@@ -391,10 +404,19 @@ static void chld_handler(uv_signal_t *handle, int signum)
   for (size_t i = 0; i < kv_size(loop->children); i++) {
     Proc *proc = kv_A(loop->children, i);
     do {
-      pid = waitpid(proc->pid, &stat, WNOHANG);
+      pid = waitpid(proc->pid, &stat, WNOHANG|WUNTRACED|WCONTINUED);
     } while (pid < 0 && errno == EINTR);
 
     if (pid <= 0) {
+      continue;
+    }
+
+    if (WIFSTOPPED(stat)) {
+      proc->state_cb(proc, true, proc->data);
+      continue;
+    }
+    if (WIFCONTINUED(stat)) {
+      proc->state_cb(proc, false, proc->data);
       continue;
     }
 

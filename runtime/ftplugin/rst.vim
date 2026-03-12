@@ -5,6 +5,7 @@
 " Website: https://github.com/marshallward/vim-restructuredtext
 " Latest Revision: 2020-03-31
 " 2025 Oct 13 by Vim project: update b:undo_ftplugin #18566
+" 2026 Jan 11 by Vim project: set suffixesadd #19149
 
 if exists("b:did_ftplugin")
     finish
@@ -19,10 +20,11 @@ if !exists('g:rst_fold_enabled')
   let g:rst_fold_enabled = 0
 endif
 
-let b:undo_ftplugin = "setlocal comments< commentstring< expandtab< formatoptions<"
+let b:undo_ftplugin = "setlocal comments< commentstring< expandtab< formatoptions< suffixesadd<"
 
 setlocal comments=fb:.. commentstring=..\ %s expandtab
 setlocal formatoptions+=tcroql
+setlocal suffixesadd=.rst
 
 " reStructuredText standard recommends that tabs be expanded to 8 spaces
 " The choice of 3-space indentation is to provide slightly better support for

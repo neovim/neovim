@@ -1,7 +1,7 @@
 *various.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Various commands					*various*

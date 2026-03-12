@@ -1,7 +1,7 @@
 *quickref.txt*  Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 ==============================================================================
 Quick reference guide
@@ -732,7 +732,6 @@ Short explanation of each option:		*option-list*
 'formatoptions'   'fo'	    how automatic formatting is to be done
 'formatprg'	  'fp'	    name of external program used with "gq" command
 'fsync'		  'fs'	    whether to invoke fsync() after file write
-'gdefault'	  'gd'	    the ":substitute" flag 'g' is default on
 'grepformat'	  'gfm'     format of 'grepprg' output
 'grepprg'	  'gp'	    program to use for ":grep"
 'guicursor'	  'gcr'     GUI: settings for cursor shape and blinking
@@ -784,7 +783,6 @@ Short explanation of each option:		*option-list*
 'list'			    show <Tab> and <EOL>
 'listchars'	  'lcs'     characters for displaying in list mode
 'loadplugins'	  'lpl'     load plugin scripts when starting up
-'magic'			    changes special characters in search patterns
 'makeef'	  'mef'     name of the errorfile for ":make"
 'makeencoding'	  'menc'    encoding of external make/grep commands
 'makeprg'	  'mp'	    program to use for the ":make" command

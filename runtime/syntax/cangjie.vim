@@ -2,7 +2,7 @@
 " Language: Cangjie
 " Maintainer: Wu Junkai <wu.junkai@qq.com>
 " URL: https://github.com/WuJunkai2004/cangjie.vim
-" Last Change: 2025 Oct 12
+" Last Change: 2026 Jan 5
 "
 " The Cangjie programming language is a new-generation programming
 " language oriented to full-scenario intelligence. It features
@@ -33,9 +33,13 @@ endfunction
 syn case match
 
 " 1. comments
-syn keyword cangjieTodo	TODO FIXME XXX NOTE BUG contained
-syn match   cangjieComment /\v\/\/.*/			contains=cangjieTodo
-syn region  cangjieComment start=/\/\*/ end=/\*\//	contains=cangjieTodo,@Spell
+syn keyword	cangjieTodo	TODO FIXME XXX NOTE BUG contained
+syn match	cangjieDocKeyword /\v\c\@(brief|param|return|note|warning|deprecated)/ contained
+syn match	cangjieDocKeyword /\v\c\@(author|version|date|since|file|copyright)/ contained
+syn match	cangjieDocKeyword /\v\c\@(details|link|see|throws|exception|example)/ contained
+syn match	cangjieDocKeyword /\v\c\@(private|protected|public|internal)/ contained
+syn match	cangjieComment /\v\/\/.*/		contains=cangjieTodo,cangjieDocKeyword
+syn region	cangjieComment start=/\/\*/ end=/\*\//	contains=cangjieTodo,cangjieDocKeyword,@spell
 
 " 2. keywords
 syn keyword cangjieDeclaration	abstract extend macro foreign
@@ -65,27 +69,48 @@ syn match cangjieTypeName /\h\w*/ contained
 syn region cangjieSpIdentifier start=/`/ end=/`/ oneline
 
 " 6. types
-syn keyword cangjieSpType	Any Nothing Range Unit Iterable
-syn keyword cangjieArrayType	Array ArrayList VArray
-syn keyword cangjieHashType	HashMap HashSet
+syn keyword cangjieSpType	Nothing Range Unit LibC Duration DefaultHasher
+syn keyword cangjieArrayType	Array VArray
 syn keyword cangjieCommonType	Bool Byte Rune String
 syn keyword cangjieFloatType	Float16 Float32 Float64
-syn keyword cangjieIntType	Int8 Int16 Int32 Int64 IntNative
-syn keyword cangjieUIntType	UInt8 UInt16 UInt32 UInt64 UIntNative
+syn keyword cangjieIntType	Int Int8 Int16 Int32 Int64 IntNative
+syn keyword cangjieUIntType	UInt UInt8 UInt16 UInt32 UInt64 UIntNative
+syn keyword cangjieFFIType	CPointer CPointerHandle CPointerResource CString CStringResource
 syn cluster cangjieTypeCluster contains=
 	\ cangjieSpType,
 	\ cangjieArrayType,
-	\ cangjieHashType,
 	\ cangjieCommonType,
 	\ cangjieFloatType,
 	\ cangjieIntType,
-	\ cangjieUIntType
+	\ cangjieUIntType,
+	\ cangjieFFIType
+
+" 6.1. builtin function/interface/class
+syn keyword cangjieCoreFunc	acquireArrayRawData alignOf eprint eprintln ifNone ifSome max min
+syn keyword cangjieCoreFunc	print println readln refEq releaseArrayRawData sizeOf sleep zeroValue
+syn keyword cangjieCoreItf	Any Hasher ThreadContext Countable Collection Less Greater
+syn keyword cangjieCoreItf	LessOrEqual GreaterOrEqual Comparable Equal NotEqual Equatable
+syn keyword cangjieCoreItf	Hashable Iterable Resource ToString CType
+syn keyword cangjieCoreClass	ArrayIterator Box Future Iterator Object RangeIterator
+syn keyword cangjieCoreClass	StackTraceElement StringBuilder Thread ThreadLocal
+syn keyword cangjieCoreError	ArithmeticException Error Exception IllegalArgumentException
+syn keyword cangjieCoreError	IllegalFormatException IllegalMemoryException IllegalStateException
+syn keyword cangjieCoreError	IncompatiblePackageException IndexOutOfBoundsException InternalError
+syn keyword cangjieCoreError	NegativeArraySizeException NoneValueException OutOfMemoryError
+syn keyword cangjieCoreError	OverflowException SpawnException StackOverflowError
+syn keyword cangjieCoreError	TimeoutException UnsupportedException
+syn cluster cangjieBuiltinCluster contains=
+	\ cangjieCoreFunc,
+	\ cangjieCoreItf,
+	\ cangjieCoreClass,
+	\ cangjieCoreError
 
 " 7. character and strings
 syn cluster cangjieInterpolatedPart contains=
 	\ @cangjieKeywordCluster,
 	\ cangjieSpIdentifier,
 	\ @cangjieTypeCluster,
+	\ @cangjieBuiltinCluster,
 	\ @cangjieNumberCluster,
 	\ cangjieOperator
 syn region  cangjieInterpolation contained keepend start=/\${/ end=/}/ contains=@cangjieInterpolatedPart
@@ -139,6 +164,7 @@ syn region cangjieFoldBrackets transparent fold start='\[' end='\]' contains=ALL
 " finally, link the syntax groups to the highlight groups
 if s:enabled('comment')
 	hi def link cangjieTodo			Todo
+	hi def link cangjieDocKeyword		SpecialComment
 	hi def link cangjieComment		Comment
 endif
 if s:enabled('identifier')
@@ -150,6 +176,12 @@ if s:enabled('keyword')
 	hi def link cangjieIdentlike		Keyword
 	hi def link cangjieVariable		Keyword
 	hi def link cangjieOption		Keyword
+endif
+if s:enabled('builtin')
+	hi def link cangjieCoreFunc		Function
+	hi def link cangjieCoreItf		Type
+	hi def link cangjieCoreClass		Type
+	hi def link cangjieCoreError		Structure
 endif
 if s:enabled('macro')
 	hi def link cangjieMacro		PreProc
@@ -178,11 +210,11 @@ if s:enabled('type')
 	hi def link cangjieTypeName		Type
 	hi def link cangjieSpType		Type
 	hi def link cangjieArrayType		Type
-	hi def link cangjieHashType		Type
 	hi def link cangjieCommonType		Type
 	hi def link cangjieFloatType		Type
 	hi def link cangjieIntType		Type
 	hi def link cangjieUIntType		Type
+	hi def link cangjieFFIType		Type
 endif
 
 let b:current_syntax = "cangjie"

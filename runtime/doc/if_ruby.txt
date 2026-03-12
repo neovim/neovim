@@ -1,9 +1,11 @@
 *if_ruby.txt*          Nvim
 
 
-		  VIM REFERENCE MANUAL    by Shugo Maeda
+		  VIM REFERENCE MANUAL	  by Shugo Maeda
 
 The Ruby Interface to Vim				*if_ruby* *ruby* *Ruby*
+
+See |provider-ruby| for more information.
 
 			*E266* *E267* *E268* *E269* *E270* *E271* *E272* *E273*
 

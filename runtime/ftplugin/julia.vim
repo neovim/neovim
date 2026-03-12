@@ -2,8 +2,8 @@
 " Language:	Julia
 " Maintainer:	Carlo Baldassi <carlobaldassi@gmail.com>
 " Homepage:	https://github.com/JuliaEditorSupport/julia-vim
-" Last Change:	2014 may 29
-" adapted from upstream 2021 Aug 4
+" Last Change:	2021 Aug 04
+" 2025 Dec 9 sync with upstream repo #18894
 
 if exists("b:did_ftplugin")
   finish
@@ -11,12 +11,12 @@ endif
 let b:did_ftplugin = 1
 
 let s:save_cpo = &cpo
-set cpo-=C
+set cpo&vim
 
 setlocal include=^\\s*\\%(reload\\\|include\\)\\>
 setlocal suffixesadd=.jl
 setlocal comments=:#
-setlocal commentstring=#\ %s
+setlocal commentstring=#=%s=#
 setlocal cinoptions+=#1
 setlocal define=^\\s*macro\\>
 setlocal fo-=t fo+=croql
@@ -24,7 +24,7 @@ setlocal fo-=t fo+=croql
 let b:julia_vim_loaded = 1
 
 let b:undo_ftplugin = "setlocal include< suffixesadd< comments< commentstring<"
-      \ . " define< fo< shiftwidth< expandtab< indentexpr< indentkeys< cinoptions< completefunc<"
+      \ . " define< fo< cinoptions< completefunc<"
       \ . " | unlet! b:julia_vim_loaded"
 
 " MatchIt plugin support
@@ -68,7 +68,7 @@ if exists("loaded_matchit")
     elseif attr == 'juliaBlKeyword'
       return b:julia_begin_keywordsm . ':' . b:julia_end_keywords
     elseif attr == 'juliaException'
-      return b:julia_begin_keywordsm . ':\<\%(catch\|finally\)\>:' . b:julia_end_keywords
+      return b:julia_begin_keywordsm . ':\<\%(catch\|else\|finally\)\>:' . b:julia_end_keywords
     endif
     return '\<\>:\<\>'
   endfunction

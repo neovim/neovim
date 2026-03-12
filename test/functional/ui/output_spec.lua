@@ -41,10 +41,6 @@ describe('shell command :!', function()
     ]])
   end)
 
-  after_each(function()
-    tt.feed_data('\3') -- Ctrl-C
-  end)
-
   it('displays output without LF/EOF. #4646 #4569 #3772', function()
     skip(is_os('win'))
     -- NOTE: We use a child nvim (within a :term buffer)
@@ -56,6 +52,13 @@ describe('shell command :!', function()
       {3:                                                  }|
       :!printf foo; sleep 200                           |
       foo                                               |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    tt.feed_data('\3') -- Ctrl-C
+    screen:expect([[
+      ^                                                  |
+      {100:~                                                 }|*4
+                                                        |
       {5:-- TERMINAL --}                                    |
     ]])
   end)

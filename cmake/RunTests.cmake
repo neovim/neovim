@@ -1,3 +1,4 @@
+set(ENV{NVIM_TEST} "1")
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
 set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
@@ -68,7 +69,7 @@ endif()
 
 execute_process(
   # Note: because of "-ll" (low-level interpreter mode), some modules like
-  # _editor.lua are not loaded.
+  # _core/editor.lua are not loaded.
   COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/lua_runner.lua ${DEPS_INSTALL_DIR}/share/lua/5.1/ busted -v -o test.busted.outputHandlers.nvim
     --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
@@ -97,4 +98,13 @@ if(res)
   endif()
 
   message(FATAL_ERROR "${TEST_TYPE} tests failed with error: ${res}")
+endif()
+
+if(CI_BUILD)
+  file(SIZE $ENV{NVIM_LOG_FILE} FILE_SIZE)
+  if(NOT ${FILE_SIZE} MATCHES "^0$")
+    file(READ $ENV{NVIM_LOG_FILE} out)
+    message(STATUS "$NVIM_LOG_FILE: $ENV{NVIM_LOG_FILE}\n${out}")
+    message(FATAL_ERROR "$NVIM_LOG_FILE is not empty")
+  endif()
 endif()

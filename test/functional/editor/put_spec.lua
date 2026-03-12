@@ -9,7 +9,6 @@ local expect = n.expect
 local eq = t.eq
 local map = vim.tbl_map
 local filter = vim.tbl_filter
-local feed_command = n.feed_command
 local command = n.command
 local curbuf_contents = n.curbuf_contents
 local fn = n.fn
@@ -172,7 +171,7 @@ describe('put command', function()
   local function create_put_action(command_base, substitution)
     local temp_val = command_base:gsub('put', substitution)
     return function()
-      feed_command(temp_val)
+      feed(':' .. temp_val .. '<CR>')
       return true
     end
   end

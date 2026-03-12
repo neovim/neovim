@@ -10,6 +10,9 @@
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/types_defs.h"
 
+// True if when running in a test environment ($NVIM_TEST).
+// TODO(justinmk): Can we use v:testing instead?
+EXTERN bool nvim_testing INIT( = false);
 extern char *default_vim_dir;
 extern char *default_vimruntime_dir;
 extern char *default_lib_dir;

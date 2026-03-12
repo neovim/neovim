@@ -44,6 +44,9 @@ func Test_has()
   " Will we ever have patch 9999?
   let ver = 'patch-' .. v:version / 100 .. '.' .. v:version % 100 .. '.9999'
   call assert_equal(0, has(ver))
+
+  " There actually isn't a patch 9.0.0, but this is more consistent.
+  call assert_equal(1, has('patch-9.0.0'))
 endfunc
 
 func Test_empty()
@@ -844,18 +847,6 @@ func Test_mode()
   execute "normal! gR\<C-o>g@l\<Esc>"
   call assert_equal('n-niV', g:current_modes)
 
-  " Test statusline updates for overstrike mode
-  if CanRunVimInTerminal()
-    let buf = RunVimInTerminal('', {'rows': 12})
-    call term_sendkeys(buf, ":set laststatus=2 statusline=%!mode(1)\<CR>")
-    call term_sendkeys(buf, ":")
-    call TermWait(buf)
-    call VerifyScreenDump(buf, 'Test_mode_1', {})
-    call term_sendkeys(buf, "\<Insert>")
-    call TermWait(buf)
-    call VerifyScreenDump(buf, 'Test_mode_2', {})
-    call StopVimInTerminal(buf)
-  endif
 
   if has('terminal')
     term
@@ -871,6 +862,22 @@ func Test_mode()
   set complete&
   set operatorfunc&
   delfunction OperatorFunc
+endfunc
+
+" Test for the mode() function using Screendump feature
+func Test_mode_screendump()
+  CheckScreendump
+
+  " Test statusline updates for overstrike mode
+  let buf = RunVimInTerminal('', {'rows': 12})
+  call term_sendkeys(buf, ":set laststatus=2 statusline=%!mode(1)\<CR>")
+  call term_sendkeys(buf, ":")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_1', {})
+  call term_sendkeys(buf, "\<Insert>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_2', {})
+  call StopVimInTerminal(buf)
 endfunc
 
 " Test for append()
@@ -911,7 +918,7 @@ func Test_setline()
   call setline(3, v:_null_list)
   call setline(2, ["baz"])
   call assert_equal(['bar', 'baz'], getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 func Test_getbufvar()
@@ -3716,6 +3723,11 @@ func Test_builtin_check()
   unlet bar
 endfunc
 
+func Test_funcref_to_string()
+  let Fn = funcref('g:Test_funcref_to_string')
+  call assert_equal("function('g:Test_funcref_to_string')", string(Fn))
+endfunc
+
 " Test for isabsolutepath()
 func Test_isabsolutepath()
   call assert_false(isabsolutepath(''))
@@ -3727,7 +3739,8 @@ func Test_isabsolutepath()
     call assert_true(isabsolutepath('A:\Foo'))
     call assert_true(isabsolutepath('A:/Foo'))
     call assert_false(isabsolutepath('A:Foo'))
-    call assert_false(isabsolutepath('\Windows'))
+    call assert_true(isabsolutepath('\Windows'))
+    call assert_true(isabsolutepath('/Windows'))
     call assert_true(isabsolutepath('\\Server2\Share\Test\Foo.txt'))
   else
     call assert_true(isabsolutepath('/'))

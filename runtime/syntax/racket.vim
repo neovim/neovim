@@ -4,7 +4,7 @@
 " Previous Maintainer:  Will Langstroth <will@langstroth.com>
 " URL:                  https://github.com/benknoble/vim-racket
 " Description:          Contains all of the keywords in #lang racket
-" Last Change:          2025 Aug 09
+" Last Change:          2026 Jan 07
 
 " Initializing:
 if exists("b:current_syntax")
@@ -605,13 +605,21 @@ syntax match racketUnquote ",@"
 " Comments
 syntax match racketSharpBang "\%^#![ /].*" display
 syntax match racketComment /;.*$/ contains=racketTodo,racketNote,@Spell
-syntax region racketMultilineComment start=/#|/ end=/|#/ contains=racketMultilineComment,racketTodo,racketNote,@Spell
 syntax match racketFormComment "#;" nextgroup=@racketTop
+syntax cluster racketTop add=racketFormComment
+
+if exists("racket_no_comment_fold")
+  syntax region racketBlockComment start=/#|/ end=/|#/ contains=racketBlockComment,racketTodo,racketNote,@Spell
+else
+  syntax region racketBlockComment start=/#|/ end=/|#/ contains=racketBlockComment,racketTodo,racketNote,@Spell fold
+  syntax region racketMultilineComment start="^\s*;" end="^\%(\s*;\)\@!" contains=racketComment transparent keepend fold
+endif
 
 syntax match racketTodo /\C\<\(FIXME\|TODO\|XXX\)\ze:\?\>/ contained
 syntax match racketNote /\CNOTE\ze:\?/ contained
 
-syntax cluster racketTop  add=racketQuote,racketUnquote,racketComment,racketMultilineComment,racketFormComment
+syntax cluster racketComments contains=racketComment,racketBlockComment,racketMultilineComment
+syntax cluster racketTop  add=racketQuote,racketUnquote,@racketComments
 
 " Synchronization and the wrapping up...
 syntax sync match matchPlace grouphere NONE "^[^ \t]"
@@ -644,7 +652,7 @@ highlight default link racketLit Type
 highlight default link racketRe Type
 
 highlight default link racketComment Comment
-highlight default link racketMultilineComment Comment
+highlight default link racketBlockComment Comment
 highlight default link racketFormComment SpecialChar
 highlight default link racketSharpBang Comment
 highlight default link racketTodo Todo

@@ -172,9 +172,9 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 		    * g:zip_shq provided to allow for quoting control for the
 		      command being passed via :r! ... commands.
    v8 Apr 10, 2006 * Bram Moolenaar reported that he received an error message
-                     due to "Pattern not found: ^.*\%0c"; this was caused by
+                     due to `Pattern not found: ^.*\%0c`; this was caused by
 		     stridx finding a Name... at the beginning of the line;
-		     zip.vim tried 4,$s/^.*\%0c//, but that doesn't work.
+		     zip.vim tried `4,$s/^.*\%0c//`, but that doesn't work.
 		     Fixed.
    v7 Mar 22, 2006 * escaped some characters that can cause filename handling
                      problems.

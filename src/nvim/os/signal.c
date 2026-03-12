@@ -27,7 +27,7 @@
 # include "nvim/os/os_win_console.h"
 #endif
 
-static SignalWatcher spipe, shup, squit, sterm, susr1, swinch, ststp;
+static SignalWatcher spipe, shup, sint, squit, sterm, susr1, swinch, ststp;
 #ifdef SIGPWR
 static SignalWatcher spwr;
 #endif
@@ -50,6 +50,7 @@ void signal_init(void)
 
   signal_watcher_init(&main_loop, &spipe, NULL);
   signal_watcher_init(&main_loop, &shup, NULL);
+  signal_watcher_init(&main_loop, &sint, NULL);
   signal_watcher_init(&main_loop, &squit, NULL);
   signal_watcher_init(&main_loop, &sterm, NULL);
   signal_watcher_init(&main_loop, &ststp, NULL);
@@ -70,6 +71,7 @@ void signal_teardown(void)
   signal_stop();
   signal_watcher_close(&spipe, NULL);
   signal_watcher_close(&shup, NULL);
+  signal_watcher_close(&sint, NULL);
   signal_watcher_close(&squit, NULL);
   signal_watcher_close(&sterm, NULL);
   signal_watcher_close(&ststp, NULL);
@@ -90,6 +92,7 @@ void signal_start(void)
   signal_watcher_start(&spipe, on_signal, SIGPIPE);
 #endif
   signal_watcher_start(&shup, on_signal, SIGHUP);
+  signal_watcher_start(&sint, on_signal, SIGINT);
 #ifdef SIGQUIT
   signal_watcher_start(&squit, on_signal, SIGQUIT);
 #endif
@@ -114,6 +117,7 @@ void signal_stop(void)
   signal_watcher_stop(&spipe);
 #endif
   signal_watcher_stop(&shup);
+  signal_watcher_stop(&sint);
 #ifdef SIGQUIT
   signal_watcher_stop(&squit);
 #endif
@@ -163,6 +167,8 @@ static char *signal_name(int signum)
 #endif
   case SIGHUP:
     return "SIGHUP";
+  case SIGINT:
+    return "SIGINT";
 #ifdef SIGUSR1
   case SIGUSR1:
     return "SIGUSR1";
@@ -191,7 +197,7 @@ static void deadly_signal(int signum)
 
   snprintf(IObuff, IOSIZE, "Nvim: Caught deadly signal '%s'\n", signal_name(signum));
 
-  if (p_awa && signum != SIGTERM) {
+  if (p_awa && signum != SIGTERM && signum != SIGINT) {
     autowrite_all();
   }
 
@@ -225,6 +231,7 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
 #ifdef MSWIN
     os_clear_hwnd();
 #endif
+  case SIGINT:
   case SIGTERM:
 #ifdef SIGQUIT
   case SIGQUIT:

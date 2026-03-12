@@ -840,6 +840,8 @@ local function process_function(fn)
   else
     cparams = cparams:gsub(', $', '')
   end
+
+  write_shifted_output('    ENTER_LUA_ACTIVE_STATE(lstate);\n')
   local free_at_exit_code = ''
   for i = 1, #free_code do
     local rev_i = #free_code - i + 1
@@ -903,6 +905,7 @@ exit_0:
     -- NOTE: we currently assume err_throw needs nothing from arena
     write_shifted_output(
       [[
+    LEAVE_LUA_ACTIVE_STATE();
   %s
   %s
   %s
@@ -916,6 +919,7 @@ exit_0:
     write_shifted_output(
       [[
     %s(%s);
+    LEAVE_LUA_ACTIVE_STATE();
   %s
   %s
     return 0;

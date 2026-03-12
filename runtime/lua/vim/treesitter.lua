@@ -153,9 +153,9 @@ end
 ---@param node_or_range TSNode|Range4 Node or table of positions
 ---
 ---@return integer start_row
----@return integer start_col
+---@return integer start_col # (byte offset)
 ---@return integer end_row
----@return integer end_col
+---@return integer end_col # (byte offset)
 function M.get_node_range(node_or_range)
   if type(node_or_range) == 'table' then
     --- @cast node_or_range -TSNode LuaLS bug

@@ -276,8 +276,13 @@ func Test_unicode()
 endfunc
 
 " Test vim.eval() with various types.
-func Test_python3_vim_val()
-  call assert_equal("\n8",             execute('py3 print(vim.eval("3+5"))'))
+func Test_python3_vim_eval()
+  call assert_equal("\n2061300532912", execute('py3 print(vim.eval("2061300532912"))'))
+  call assert_equal("\n9223372036854775807", execute('py3 print(vim.eval("9223372036854775807"))'))
+  call assert_equal("\n-9223372036854775807",execute('py3 print(vim.eval("-9223372036854775807"))'))
+  call assert_equal("\n2147483648",  execute('py3 print(vim.eval("2147483648"))'))
+  call assert_equal("\n-2147483649", execute('py3 print(vim.eval("-2147483649"))'))
+  call assert_equal("\n8",           execute('py3 print(vim.eval("3+5"))'))
   if has('float')
     call assert_equal("\n3.1399999999999997",    execute('py3 print(vim.eval("1.01+2.13"))'))
     call assert_equal("\n0.0",    execute('py3 print(vim.eval("0.0/(1.0/0.0)"))'))

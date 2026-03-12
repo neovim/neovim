@@ -1,4 +1,4 @@
-*dev_test*          Nvim
+*dev_test.txt*          Nvim
 
 
                             NVIM REFERENCE MANUAL
@@ -33,7 +33,7 @@ Tests are broadly divided into unit tests (`test/unit/`), functional tests
   opposed to Lua). They are essentially "integration" tests, they test the
   full system. But they are fast.
 
-You can learn the [Lua concepts 15 minutes](https://learnxinyminutes.com/docs/lua/),
+You can learn [Lua concepts 15 minutes](https://learnxinyminutes.com/docs/lua/),
 see also |lua-guide|. Use any existing test as a template to start writing new
 tests, or see |dev-quickstart|.
 
@@ -270,8 +270,8 @@ Limitations:
       require("lldebugger").start()
     end
 <  This is a [local-lua-debugger limitation](https://github.com/tomblind/local-lua-debugger-vscode?tab=readme-ov-file#busted)
-- You cannot step into code of files which get baked into the nvim binary like
-  the `shared.lua`.
+- You cannot step into code of files which get baked into the nvim binary
+  (such as `_core/*.lua` and `inspect.lua`).
 
 
 ------------------------------------------------------------------------------
@@ -349,17 +349,26 @@ GUIDELINES
   files.
   - `#define` constants must be rewritten `const` or `enum` so they can be
     "visible" to the tests.
-- Use `pending()` to skip tests
-  ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
-  Do not silently skip the test with `if-else`. If a functional test depends on
-  some external factor (e.g. the existence of `md5sum` on `$PATH`), _and_ you
-  can't mock or fake the dependency, then skip the test via `pending()` if the
-  external factor is missing. This ensures that the _total_ test-count
-  (success + fail + error + pending) is the same in all environments.
+- Use `pending()` or `t.skip()` to skip tests.
+  - Example: https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18
+  - Note: If a test is skipped because of a non-actionable reason, we don't
+    want it to appear in the "pending" list. Include "N/A" in the skip
+    description, then it won't be added to the "pending" list. For example, if
+    a test is skipped because it's running on a non-LuaJit system, including
+    it in the "pending" list is just noise. Thus, its pending reason should
+    say "N/A": >
+    pending('N/A: missing LuaJIT FFI')
+<
+  - Do not silently skip the test with `if-else`. If a functional test depends
+    on some external factor (e.g. the existence of `md5sum` on `$PATH`), _and_
+    you can't mock or fake the dependency, then skip the test via `pending()`
+    if the external factor is missing. This ensures that the _total_
+    test-count (success + fail + error + pending) is the same in all
+    environments.
     - Note: `pending()` is ignored if it is missing an argument, unless it is
       [contained in an `it()` block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
       Provide empty function argument if the `pending()` call is outside `it()`
-      ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
+      Example: https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18
 
 WHERE TESTS GO
 
@@ -418,8 +427,7 @@ Number; !must be defined to function properly):
   Currently only compilers with gcc-compatible arguments are supported.
 
 - `GDB` (F) (D): makes nvim instances to be run under `gdbserver`. It will be
-  accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote
-  :7777` inside.
+  accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote :7777` inside.
 
 - `GDBSERVER_PORT` (F) (I): overrides port used for `GDB`.
 
@@ -438,6 +446,8 @@ Number; !must be defined to function properly):
 
 - `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
   suite run is killed
+
+- `NVIM_TEST` (FU) (D): lets Nvim process detect that it is running in a test.
 
 - `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
 
@@ -501,7 +511,7 @@ Number; !must be defined to function properly):
 
 - `NVIM_TEST_TRACE_LEVEL` (U) (N): specifies unit tests tracing level:
   - `0` disables tracing (the fastest, but you get no data if tests crash and
-    there no core dump was generated),
+    no core dump was generated),
   - `1` leaves only C function calls and returns in the trace (faster than
     recording everything),
   - `2` records all function calls, returns and executed Lua source lines.

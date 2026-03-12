@@ -45,4 +45,19 @@ enum {
   DIP_DIRFILE = 0x200,  ///< find both files and directories
 };
 
+#ifdef ABORT_ON_INTERNAL_ERROR
+# define ESTACK_CHECK_DECLARATION int estack_len_before
+# define ESTACK_CHECK_SETUP do { estack_len_before = exestack.ga_len; } while (0)
+# define ESTACK_CHECK_NOW \
+  do { \
+    if (estack_len_before != exestack.ga_len) { \
+      siemsg("Exestack length expected: %d, actual: %d", estack_len_before, exestack.ga_len); \
+    } \
+  } while (0)
+#else
+# define ESTACK_CHECK_DECLARATION do {} while (0)
+# define ESTACK_CHECK_SETUP do {} while (0)
+# define ESTACK_CHECK_NOW do {} while (0)
+#endif
+
 #include "runtime.h.generated.h"

@@ -57,6 +57,11 @@
 
 #include "os/env.c.generated.h"
 
+void env_init(void)
+{
+  nvim_testing = os_env_exists("NVIM_TEST", false);
+}
+
 /// Like getenv(), but returns NULL if the variable is empty.
 /// Result must be freed by the caller.
 /// @see os_env_exists
@@ -1291,3 +1296,19 @@ void vim_setenv_ext(const char *name, const char *val)
     didset_vimruntime = false;
   }
 }
+
+#ifdef MSWIN
+/// Restore a previous environment variable value, or unset it if NULL.
+/// "must_free" indicates whether "old_value" was allocated.
+void restore_env_var(const char *name, char *old_value, bool must_free)
+{
+  if (old_value != NULL) {
+    os_setenv(name, old_value, true);
+    if (must_free) {
+      xfree(old_value);
+    }
+    return;
+  }
+  os_unsetenv(name);
+}
+#endif

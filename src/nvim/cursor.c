@@ -308,7 +308,7 @@ void check_pos(buf_T *buf, pos_T *pos)
   }
 }
 
-/// Make sure curwin->w_cursor.lnum is valid.
+/// Make sure win->w_cursor.lnum is valid.
 void check_cursor_lnum(win_T *win)
 {
   buf_T *buf = win->w_buffer;

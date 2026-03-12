@@ -248,6 +248,7 @@ func Test_put_visual_block_mode()
 endfunc
 
 func Test_put_other_window()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
@@ -267,6 +268,7 @@ func Test_put_other_window()
 endfunc
 
 func Test_put_in_last_displayed_line()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END

@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Aug 10
+" Last Change:	2026 Jan 19
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
@@ -84,7 +84,7 @@ an <silent> 9999.40 &Help.&Find\.\.\.	:call <SID>Helpfind()<CR>
 an 9999.45 &Help.-sep1-			<Nop>
 an 9999.50 &Help.&Credits		:help credits<CR>
 an 9999.60 &Help.Co&pying		:help copying<CR>
-an 9999.70 &Help.&Sponsor/Register	:help sponsor<CR>
+an 9999.70 &Help.&Sponsor		:help sponsor<CR>
 an 9999.70 &Help.O&rphans		:help kcc<CR>
 an 9999.75 &Help.-sep2-			<Nop>
 an 9999.80 &Help.&Version		:version<CR>
@@ -98,7 +98,7 @@ if exists(':tlmenu')
   tlnoremenu 9999.45 &Help.-sep1-			<Nop>
   tlnoremenu 9999.50 &Help.&Credits			<C-W>:help credits<CR>
   tlnoremenu 9999.60 &Help.Co&pying			<C-W>:help copying<CR>
-  tlnoremenu 9999.70 &Help.&Sponsor/Register		<C-W>:help sponsor<CR>
+  tlnoremenu 9999.70 &Help.&Sponsor			<C-W>:help sponsor<CR>
   tlnoremenu 9999.70 &Help.O&rphans			<C-W>:help kcc<CR>
   tlnoremenu 9999.75 &Help.-sep2-			<Nop>
   tlnoremenu 9999.80 &Help.&Version			<C-W>:version<CR>
@@ -171,7 +171,7 @@ vnoremenu 20.340 &Edit.Cu&t<Tab>"+x		"+x
 vnoremenu 20.350 &Edit.&Copy<Tab>"+y		"+y
 cnoremenu 20.350 &Edit.&Copy<Tab>"+y		<C-Y>
 if exists(':tlmenu')
-  tlnoremenu 20.350 &Edit.&Copy<Tab>"+y 	<C-W>:<C-Y><CR>
+  tlnoremenu 20.350 &Edit.&Copy<Tab>"+y		<C-W>:<C-Y><CR>
 endif
 nnoremenu 20.360 &Edit.&Paste<Tab>"+gP		"+gP
 cnoremenu	 &Edit.&Paste<Tab>"+gP		<C-R>+
@@ -744,19 +744,25 @@ func s:BMShow(...)
 
   " Remove old menu, if it exists; keep one entry to avoid a torn off menu to
   " disappear.  Use try/catch to avoid setting v:errmsg
-  try | unmenu &Buffers | catch | endtry
-  exe 'noremenu ' . g:bmenu_priority . ".1 &Buffers.Dummy l"
-  try | unmenu! &Buffers | catch | endtry
+  try
+    unmenu &Buffers
+  catch
+  endtry
+  exe 'noremenu ' .. g:bmenu_priority .. ".1 &Buffers.Dummy l"
+  try
+    unmenu! &Buffers
+  catch
+  endtry
 
   " create new menu; set 'cpo' to include the <CR>
   let cpo_save = &cpo
   set cpo&vim
-  exe 'an <silent> ' . g:bmenu_priority . ".2 &Buffers.&Refresh\\ menu :call <SID>BMShow()<CR>"
-  exe 'an ' . g:bmenu_priority . ".4 &Buffers.&Delete :confirm bd<CR>"
-  exe 'an ' . g:bmenu_priority . ".6 &Buffers.&Alternate :confirm b #<CR>"
-  exe 'an ' . g:bmenu_priority . ".7 &Buffers.&Next :confirm bnext<CR>"
-  exe 'an ' . g:bmenu_priority . ".8 &Buffers.&Previous :confirm bprev<CR>"
-  exe 'an ' . g:bmenu_priority . ".9 &Buffers.-SEP- :"
+  exe 'an <silent> ' .. g:bmenu_priority .. ".2 &Buffers.&Refresh\\ menu :call <SID>BMShow()<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".4 &Buffers.&Delete :confirm bd<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".6 &Buffers.&Alternate :confirm b #<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".7 &Buffers.&Next :confirm bnext<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".8 &Buffers.&Previous :confirm bprev<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".9 &Buffers.-SEP- :"
   let &cpo = cpo_save
   unmenu &Buffers.Dummy
 

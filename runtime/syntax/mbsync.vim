@@ -3,6 +3,7 @@
 " Maintainer:	Pierrick Guillaume  <pguillaume@fymyte.com>
 " Last Change:	2025 Apr 13
 " 2025 Jun 04 by Vim project: match TLSType configuration variable
+" 2026 Jan 15 by Vim project: support TLSVersions keyword
 "
 " Syntax support for mbsync config file
 
@@ -85,7 +86,9 @@ syn keyword mbsIAConfTLSTypeOpt None STARTTLS IMAPS contained
 syn match mbsIAConfStSSLType      '^SSLType\s\+\ze.*$'        contains=mbsIAConfItemK contained nextgroup=mbsIAConfTLSTypeOpt transparent
 syn match mbsIAConfStTLSType      '^TLSType\s\+\ze.*$'        contains=mbsIAConfItemK contained nextgroup=mbsIAConfTLSTypeOpt transparent
 syn match mbsIAConfSSLVersionsOpt '\%(SSLv3\|TLSv1\%(.[123]\)\?\)\%(\s\+\%(SSLv3\|TLSv1\%(.[123]\)\?\)\)*' contained
+syn match mbsIAConfTLSVersionsOpt '[+-]\d\.\d\(\s\+[+-]\d\.\d\)*' contained
 syn match mbsIAConfStSSLVersions  '^SSLVersions\s\+\ze.*$'    contains=mbsIAConfItemK contained nextgroup=mbsIAConfSSLVersionsOpt transparent
+syn match mbsIAConfStTLSVersions  '^TLSVersions\s\ze.*$'    contains=mbsIAConfItemK contained nextgroup=mbsIAConfTLSVersionsOpt transparent
 syn match mbsIAConfStSystemCertificates  '^SystemCertificates\s\+\ze.*$'    contains=mbsIAConfItemK contained nextgroup=mbsBool transparent
 syn match mbsIAConfStCertificateFile  '^CertificateFile\s\+\ze.*$'    contains=mbsIAConfItemK contained nextgroup=mbsPath transparent
 syn match mbsIAConfStClientCertificate  '^ClientCertificate\s\+\ze.*$'    contains=mbsIAConfItemK contained nextgroup=mbsPath transparent
@@ -95,9 +98,8 @@ syn match mbsIAConfStPipelineDepth '^PipelineDepth\s\+\ze.*$'  contains=mbsIACon
 syn match mbsIAConfStDisableExtensions '^DisableExtensions\?\s\+\ze.*$'  contains=mbsIAConfItemK contained nextgroup=mbsPath transparent
 
 syn cluster mbsIAConfItem contains=mbsIAConfSt.*
-
 syn keyword mbsIAConfItemK
-  \ IMAPAccount Host Port Timeout User UserCmd Pass PassCmd UseKeychain Tunnel
+  \ IMAPAccount Host Port Timeout User UserCmd Pass PassCmd UseKeychain Tunnel TLSVersions
   \ AuthMechs SSLType TLSType SSLVersions SystemCertificates CertificateFile ClientCertificate
   \ ClientKey CipherString PipelineDepth DisableExtension[s] contained
 
@@ -112,7 +114,6 @@ syn match mbsISConfStPathDelimiter '^PathDelimiter\s\+\ze.*$'   contains=mbsISCo
 syn match mbsISConfStSubscribedOnly '^SubscribedOnly\s\+\ze.*$'   contains=mbsISConfItemK contained nextgroup=mbsBool transparent
 
 syn cluster mbsISConfItem contains=mbsISConfSt.*
-
 syn keyword mbsISConfItemK  IMAPStore Account UseNamespace PathDelimiter SubscribedOnly contained
 
 syn region mbsIMAPStore start="^IMAPStore" end="^$" end="\%$" contains=@mbsGlobConfItem,mbsCommentL,@mbsISConfItem,mbsError transparent
@@ -199,6 +200,7 @@ hi def link mbsMdSConfSubFoldersOpt Keyword
 hi def link mbsIAConfItemK    Statement
 hi def link mbsIAConfTLSTypeOpt Keyword
 hi def link mbsIAConfSSLVersionsOpt Keyword
+hi def link mbsIAConfTLSVersionsOpt Keyword
 
 hi def link mbsISConfItemK    Statement
 

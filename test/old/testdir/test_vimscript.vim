@@ -6569,6 +6569,9 @@ func Test_type()
     call assert_false(v:true is 1)
     call assert_false(v:true is v:false)
     " call assert_false(v:none is 0)
+    " call assert_false(v:none is [])
+    " call assert_false(v:none is {})
+    " call assert_false(v:none is 'text')
     call assert_false(v:null is 0)
     " call assert_false(v:null is v:none)
 
@@ -7014,10 +7017,14 @@ func Test_compound_assignment_operators()
       call assert_equal(10.5, x)
       let x /= 2.5
       call assert_equal(4.2, x)
-      call assert_fails('let x %= 0.5', 'E734')
-      call assert_fails('let x .= "f"', 'E734')
+      call assert_fails('let x %= 0.5', 'E734:')
+      call assert_fails('let x .= "f"', 'E734:')
       let x = !3.14
-      call assert_equal(0.0, x)
+      call assert_equal(0, x)
+      call assert_equal(1, !!1.0)
+      let x = !0.0
+      call assert_equal(1, x)
+      call assert_equal(0, !!0.0)
 
       " integer and float operations
       let x = 1

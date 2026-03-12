@@ -18,7 +18,7 @@ local function _clear()
       '-i',
       shada_file, -- Need shada for these tests.
       '--cmd',
-      'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler',
+      "set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler shada=!,'100,<50,s10,h",
     },
     args_rm = { '-i', '--cmd' },
   }

@@ -6,6 +6,7 @@
 " Last Change: 2020 May 25
 "  2024 Sep 10 by Vim Project: add file triggers support, #15569
 "  2025 May 05 by Vim Project: update for rpm 4.2 #17258
+"  2025 Nov 09 by Vim Project: support for more distributions and tags #18703
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -22,7 +23,7 @@ syn match specVariables   contained '\$\h\w*' contains=specSpecialVariablesNames
 syn match specVariables   contained '\${\w*}' contains=specSpecialVariablesNames,specSpecialChar
 
 syn match specMacroIdentifier contained '%\h\w*' contains=specMacroNameLocal,specMacroNameOther,specPercent
-syn match specMacroIdentifier contained '%{\w*}' contains=specMacroNameLocal,specMacroNameOther,specPercent,specSpecialChar
+syn match specMacroIdentifier contained '%{?\?\w*}' contains=specMacroNameLocal,specMacroNameOther,specPercent,specSpecialChar
 
 syn match specSpecialVariables contained '\$[0-9]\|\${[0-9]}'
 syn match specCommandOpts      contained '\s\(-\w\+\|--\w[a-zA-Z_-]\+\)'ms=s+1
@@ -60,17 +61,17 @@ syn cluster specListedFiles contains=specListedFilesBin,specListedFilesLib,specL
 
 "specCommands
 syn match   specConfigure  contained '\./configure'
-syn match   specTarCommand contained '\<tar\s\+[cxvpzIf]\{,5}\s*'
+syn match   specTarCommand contained '\<tar\s\+[cxvpzIjf]\{,5}\s*'
 syn keyword specCommandSpecial contained root
-syn keyword specCommand		contained make xmkmf mkdir chmod ln find sed rm strip moc echo grep ls rm mv mkdir install cp pwd cat tail then else elif cd gzip rmdir ln eval export touch
+syn keyword specCommand		contained make xmkmf mkdir chmod ln find sed rm strip moc echo grep ls rm mv mkdir install cp pwd cat tail then else elif cd gzip rmdir ln eval export touch bzip2 bunzip2 gunzip
 syn cluster specCommands contains=specCommand,specTarCommand,specConfigure,specCommandSpecial
 
 "frequently used rpm env vars
 syn keyword specSpecialVariablesNames contained RPM_BUILD_ROOT RPM_BUILD_DIR RPM_SOURCE_DIR RPM_OPT_FLAGS LDFLAGS CC CC_FLAGS CPPNAME CFLAGS CXX CXXFLAGS CPPFLAGS
 
 "valid macro names from /usr/lib/rpm/macros
-syn keyword specMacroNameOther contained buildroot buildsubdir distribution disturl ix86 name nil optflags perl_sitearch release requires_eq vendor version
-syn match   specMacroNameOther contained '\<\(PATCH\|SOURCE\)\d*\>'
+syn keyword specMacroNameOther contained buildroot buildsubdir distribution disturl ix86 name nil optflags perl_sitearch release requires_eq vendor version dist fedora rhel rocky rhl centos
+syn match   specMacroNameOther contained '\<\(PATCH\|SOURCE\|el\|fc\)\d*\>'
 
 "valid _macro names from /usr/lib/rpm/macros
 syn keyword specMacroNameLocal contained _arch _binary_payload _bindir _build _build_alias _build_cpu _build_os _build_vendor _builddir _buildshell _buildsubdir _bzip2bin _datadir _dbpath _dbpath_rebuild _defaultdocdir _defaultlicensedir _docdir _excludedocs _exec_prefix _fixgroup _fixowner _fixperms _ftpport _ftpproxy _gpg_path _group_path _gzipbin _host _host_alias _host_cpu _host_os _host_vendor _httpport _httpproxy _iconsdir _includedir _infodir _install_langs _install_script_path _instchangelog _keyring _keyringpath _langpatt _lib _libdir _libexecdir _localstatedir _mandir _netsharedpath _oldincludedir _os _passwd_path _pgp_path _pgpbin _preScriptEnvironment _prefix _provides _rpmconfigdir _rpmdir _rpmfilename _rpmformat _rpmluadir _rpmmacrodir _sbindir _sharedstatedir _signature _source_payload _sourcedir _specdir _srcrpmdir _sysconfdir _sysusersdir _target _target_alias _target_cpu _target_os _target_platform _target_vendor _timecheck _tmppath _topdir _unitdir _usr _usrsrc _var _vendor
@@ -104,7 +105,7 @@ syn case ignore
 "%% PreAmble Section %%
 "Copyright and Serial were deprecated by License and Epoch
 syn region specPreAmbleDeprecated oneline matchgroup=specError start='^\(Copyright\|Serial\)' end='$' contains=specEmail,specURL,specURLMacro,specLicense,specColon,specVariables,specSpecialChar,specMacroIdentifier
-syn region specPreAmble oneline matchgroup=specCommand start='^\(Prereq\|Summary\|Name\|Version\|Packager\|Requires\|Recommends\|Suggests\|Supplements\|Enhances\|Icon\|URL\|SourceLicense\|Source\d*\|Patch\d*\|Prefix\|Packager\|Group\|License\|Release\|BuildRoot\|Distribution\|Vendor\|Provides\|ExclusiveArch\|ExcludeArch\|ExclusiveOS\|Obsoletes\|BuildArch\|BuildArchitectures\|BuildRequires\|BuildConflicts\|BuildPreReq\|Conflicts\|AutoRequires\|AutoReq\|AutoReqProv\|AutoProv\|Epoch\)' end='$' contains=specEmail,specURL,specURLMacro,specLicense,specColon,specVariables,specSpecialChar,specMacroIdentifier
+syn region specPreAmble oneline matchgroup=specCommand start='^\(Prereq\|Summary\|Name\|Version\|Packager\|Requires\|Recommends\|Suggests\|Supplements\|Enhances\|Icon\|URL\|SourceLicense\|Source\d*\|Patch\d*\|Prefix\|Packager\|Group\|License\|Release\|BuildRoot\|Distribution\|DistTag\|Vendor\|Provides\|ExclusiveArch\|ExcludeArch\|ExclusiveOS\|Obsoletes\|BuildArch\|BuildArchitectures\|BuildRequires\|BuildConflicts\|BuildPreReq\|Conflicts\|AutoRequires\|AutoReq\|AutoReqProv\|AutoProv\|Epoch\|ModularityLabel\)' end='$' contains=specEmail,specURL,specURLMacro,specLicense,specColon,specVariables,specSpecialChar,specMacroIdentifier
 
 "%% Description Section %%
 syn region specDescriptionArea matchgroup=specSection start='^%description' end='^%'me=e-1 contains=specDescriptionOpts,specEmail,specURL,specNumber,specMacroIdentifier,specComment

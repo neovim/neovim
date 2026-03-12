@@ -1,7 +1,7 @@
 *helphelp.txt*	Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Help on help files					*helphelp*
@@ -9,7 +9,143 @@ Help on help files					*helphelp*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Help commands					*online-help*
+Help tag conventions					*help-context*
+
+Get specific help:  It is possible to go directly to whatever you want help
+on, by giving an argument to the |:help| command. Prepend something to specify
+the context: >
+
+	  WHAT			PREPEND    EXAMPLE
+      Normal mode command		   :help x
+      Visual mode command	  v_	   :help v_u
+      Insert mode command	  i_	   :help i_<Esc>
+      Command-line command	  :	   :help :quit
+      Command-line editing	  c_	   :help c_<Del>
+      Vim command argument	  -	   :help -r
+      Option			  '	   :help 'textwidth'
+      Regular expression	  /	   :help /[
+
+See |help-summary| for more contexts and an explanation.
+See |notation| for an explanation of the help syntax.
+
+SEARCH FOR HELP
+
+Type ":help word", then hit CTRL-D to see matching help entries for "word". Or
+use ":helpgrep word". |:helpgrep|
+
+==============================================================================
+Notation						*notation*
+
+When syntax highlighting is used to read this, text that is not typed
+literally is often highlighted with the Special group.  These are items in [],
+{} and <>, and CTRL-X.
+
+Note that Vim uses all possible characters in commands.  Sometimes the [], {}
+and <> are part of what you type, the context should make this clear.
+
+
+- []            Characters in square brackets are optional.
+
+                                                    *count* *[count]*
+- [count]       An optional number that may precede the command to multiply
+                or iterate the command.  If no number is given, a count of one
+                is used, unless otherwise noted.  Note that in this manual the
+                [count] is not mentioned in the description of the command,
+                but only in the explanation.  This was done to make the
+                commands easier to look up.  If the 'showcmd' option is on,
+                the (partially) entered count is shown at the bottom of the
+                window.  You can use <Del> to erase the last digit (|N<Del>|).
+
+                                                        *[quotex]*
+- ["x]          An optional register designation where text can be stored.
+                See |registers|.  The x is a single character between 'a' and
+                'z' or 'A' and 'Z' or '"', and in some cases (with the put
+                command) between '0' and '9', '%', '#', or others.  The
+                uppercase and lowercase letter designate the same register,
+                but the lowercase letter is used to overwrite the previous
+                register contents, while the uppercase letter is used to
+                append to the previous register contents.  Without the ""x" or
+                with """" the stored text is put into the unnamed register.
+
+                                                        *{}*
+- {}            Curly braces denote parts of the command which must appear,
+                but which can take a number of different values.  The
+                differences between Vim and Vi are also given in curly braces
+                (this will be clear from the context).
+
+                                                        *{char1-char2}*
+- {char1-char2} A single character from the range char1 to char2.  For
+                example: {a-z} is a lowercase letter.  Multiple ranges may be
+                concatenated.  For example, {a-zA-Z0-9} is any alphanumeric
+                character.
+
+                                                *{motion}* *movement*
+- {motion}      A command that moves the cursor.  These are explained in
+                |motion.txt|.
+                - Examples:
+                  - `w`           to start of next word
+                  - `b`           to begin of current word
+                  - `4j`          four lines down
+                  - `/The<CR>`    to next occurrence of "The"
+                - This is used after an |operator| command to move over the
+                  text that is to be operated upon.
+                  - If the motion includes a count and the operator also has
+                    a count, the two counts are multiplied.  For example:
+                    "2d3w" deletes six words.
+                  - The motion can be backwards, e.g. "db" to delete to the
+                    start of the word.
+                  - The motion can also be a mouse click.  The mouse is not
+                    supported in every terminal though.
+                  - The ":omap" command can be used to map characters while an
+                    operator is pending.
+                  - Ex commands can be used to move the cursor.  This can be
+                    used to call a function that does some complicated motion.
+                    The motion is always charwise exclusive, no matter what
+                    ":" command is used.  This means it's impossible to
+                    include the last character of a line without the line
+                    break (unless 'virtualedit' is set). If the Ex command
+                    changes the text before where the operator starts or jumps
+                    to another buffer the result is unpredictable.  It is
+                    possible to change the text further down.  Jumping to
+                    another buffer is possible if the current buffer is not
+                    unloaded.
+
+                                                        *{Visual}*
+- {Visual}      A selected text area.  It is started with the "v", "V", or
+                CTRL-V command, then any cursor movement command can be used
+                to change the end of the selected text.
+                This is used before an |operator| command to highlight the
+                text that is to be operated upon.
+                See |Visual-mode|.
+
+                                                        *<character>*
+- <character>   A special character from the table below, optionally with
+                modifiers, or a single ASCII character with modifiers.
+
+                                                        *'character'*
+- 'c'           A single ASCII character.
+
+                                                        *CTRL-{char}*
+- CTRL-{char}   {char} typed as a control character; that is, typing {char}
+                while holding the CTRL key down.  The case of {char} is
+                ignored; thus CTRL-A and CTRL-a are equivalent.  But in
+                some terminals and environments, using the SHIFT key will
+                produce a distinct code (e.g. CTRL-SHIFT-a); in these
+                environments using the SHIFT key will not trigger commands
+                such as CTRL-A.
+
+                                                        *'option'*
+- 'option'      An option, or parameter, that can be set to a value, is
+                enclosed in single quotes.  See |options|.
+
+                                                        *quotecommandquote*
+- "command"     A reference to a command that you can type is enclosed in
+                double quotes.
+- `command`     New style command, this distinguishes it from other quoted
+                text and strings.
+
+==============================================================================
+Help commands						*online-help*
 
 			*help* *<Help>* *:h* *:help* *<F1>* *i_<F1>* *i_<Help>*
 <Help>		or
@@ -240,7 +376,7 @@ file.  The files in $VIMRUNTIME/doc are skipped.
 
 
 ==============================================================================
-2. Translated help files				*help-translated*
+Translated help files					*help-translated*
 
 It is possible to add translated help files, next to the original English help
 files.  Vim will search for all help in "doc" directories in 'runtimepath'.
@@ -311,7 +447,7 @@ Hints for translators:
   languages in the specified directory.
 
 ==============================================================================
-3. Writing help files					*help-writing*
+Writing help files					*help-writing*
 
 For ease of use, a Vim help file for a plugin should follow the format of the
 standard Vim help files, except for the first line.  If you are writing a new
@@ -345,15 +481,12 @@ aligned on a line.
 When referring to an existing help tag and to create a hot-link, place the
 name between two bars ("|") eg. |help-writing|.
 
-When referring to a Vim command and to create a hot-link, place the
-name between two backticks, eg. inside `:filetype`.  You will see this is
-highlighted as a command, like a code block (see below).
-
 When referring to a Vim option in the help file, place the option name between
 two single quotes, eg. 'statusline'
 
-When referring to any other technical term, such as a filename or function
-parameter, surround it in backticks, eg. `~/.path/to/init.vim`.
+When referring to any other technical term or symbol, such as a filename or
+function parameter, surround it in backticks, eg. `~/.path/to/init.vim`. This
+renders it as "inline" code (as opposed to a "codeblock" |help-codeblock|).
 
 
 HIGHLIGHTING

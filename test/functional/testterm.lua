@@ -33,6 +33,8 @@ function M.feed_csi(data)
   M.feed_termcode('[' .. data)
 end
 
+--- @param session test.Session
+--- @return fun(code: string, ...):any
 function M.make_lua_executor(session)
   return function(code, ...)
     local status, rv = session:request('nvim_exec_lua', code, { ... })
@@ -44,7 +46,7 @@ function M.make_lua_executor(session)
   end
 end
 
--- some t for controlling the terminal. the codes were taken from
+-- some helpers for controlling the terminal. the codes were taken from
 -- infocmp xterm-256color which is less what libvterm understands
 -- civis/cnorm
 function M.hide_cursor()
@@ -114,7 +116,6 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
   cmd = cmd and cmd or default_command
   cols = cols and cols or 50
 
-  api.nvim_command('highlight TermCursor cterm=reverse')
   api.nvim_command('highlight StatusLineTerm ctermbg=2 ctermfg=0')
   api.nvim_command('highlight StatusLineTermNC ctermbg=2 ctermfg=8')
 
@@ -200,9 +201,8 @@ function M.setup_child_nvim(args, opts)
   local argv = { nvim_prog, unpack(args or {}) }
 
   local env = opts.env or {}
-  if not env.VIMRUNTIME then
-    env.VIMRUNTIME = os.getenv('VIMRUNTIME')
-  end
+  env.VIMRUNTIME = env.VIMRUNTIME or os.getenv('VIMRUNTIME')
+  env.NVIM_TEST = env.NVIM_TEST or os.getenv('NVIM_TEST')
 
   return M.setup_screen(opts.extra_rows, argv, opts.cols, env)
 end

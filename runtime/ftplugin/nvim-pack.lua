@@ -18,21 +18,23 @@ local cur_header_hl_group = nil
 local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 for i, l in ipairs(lines) do
   local cur_group = l:match('^# (%S+)')
-  local cur_info = l:match('^Path: +') or l:match('^Source: +') or l:match('^State[^:]*: +')
+  local cur_info = l:match('^Path: +') or l:match('^Source: +') or l:match('^Revision[^:]*: +')
   if cur_group ~= nil then
     --- @cast cur_group string
     -- Header 1
     cur_header_hl_group = header_hl_groups[cur_group]
     hi_range(i, 0, l:len(), cur_header_hl_group)
   elseif l:find('^## (.+)$') ~= nil then
-    -- Header 2
+    -- Header 2 with possibly "(not active)" suffix
     hi_range(i, 0, l:len(), cur_header_hl_group)
+    local col = l:match('() %(not active%)$') or l:len()
+    hi_range(i, col, l:len(), 'DiagnosticError', priority + 1)
   elseif cur_info ~= nil then
     -- Plugin info
     local end_col = l:match('(). +%b()$') or l:len()
     hi_range(i, cur_info:len(), end_col, 'DiagnosticInfo')
 
-    -- Plugin state after update
+    -- Plugin version after update
     local col = l:match('() %b()$')
     if col then
       hi_range(i, col, l:len(), 'DiagnosticHint')

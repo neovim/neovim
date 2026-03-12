@@ -45,6 +45,7 @@ describe('UI receives option updates', function()
     table.insert(clear_opts.args_rm or {}, '--cmd')
     clear(clear_opts)
     screen = Screen.new(20, 5, screen_opts)
+    defaults.guifont = eval('&guifont')
     -- NB: UI test suite can be run in both "linegrid" and legacy grid mode.
     -- In both cases check that the received value is the one requested.
     defaults.ext_linegrid = screen._options.ext_linegrid or false

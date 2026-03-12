@@ -121,7 +121,7 @@ function Completor:handler(err, result, ctx)
     log.error('inlinecompletion', err)
     return
   end
-  if not result then
+  if not result or not vim.startswith(api.nvim_get_mode().mode, 'i') then
     return
   end
 
@@ -248,7 +248,7 @@ function Completor:show(hint)
   api.nvim_buf_set_extmark(self.bufnr, namespace, row, col, {
     virt_text = virt_text,
     virt_lines = virt_lines,
-    virt_text_pos = current.range and 'overlay' or 'inline',
+    virt_text_pos = (current.range and not current.range:is_empty() and 'overlay') or 'inline',
     hl_mode = 'combine',
   })
 end
@@ -344,7 +344,9 @@ function Completor:accept(item)
         lines
       )
       local pos = item.range.start:to_cursor()
-      api.nvim_win_set_cursor(vim.fn.bufwinid(self.bufnr), {
+      local win = api.nvim_get_current_win()
+      win = api.nvim_win_get_buf(win) == self.bufnr and win or vim.fn.bufwinid(self.bufnr)
+      api.nvim_win_set_cursor(win, {
         pos[1] + #lines - 1,
         (#lines == 1 and pos[2] or 0) + #lines[#lines],
       })
@@ -436,10 +438,12 @@ end
 --- (default: 0)
 ---@field bufnr? integer
 ---
---- Accept handler, called with the accepted item.
---- If not provided, the default handler is used,
---- which applies changes to the buffer based on the completion item.
----@field on_accept? fun(item: vim.lsp.inline_completion.Item)
+--- A callback triggered when a completion item is accepted.
+--- You can use it to modify the completion item that is about to be accepted
+--- and return it to apply the changes,
+--- or return `nil` to prevent the changes from being applied to the buffer
+--- so you can implement custom behavior.
+---@field on_accept? fun(item: vim.lsp.inline_completion.Item): vim.lsp.inline_completion.Item?
 
 --- Accept the currently displayed completion candidate to the buffer.
 ---
@@ -472,8 +476,13 @@ function M.get(opts)
         return
       end
 
+      -- Note that we do not intend for `on_accept`
+      -- to take effect when there is no current item.
       if on_accept then
-        on_accept(item)
+        item = on_accept(item)
+        if item then
+          completor:accept(item)
+        end
       else
         completor:accept(item)
       end

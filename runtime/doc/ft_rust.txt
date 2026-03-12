@@ -60,8 +60,8 @@ g:rust_conceal_pub ~
                                                      *g:rust_recommended_style*
 g:rust_recommended_style ~
         Set this option to enable vim indentation and textwidth settings to
-        conform to style conventions of the rust standard library (i.e. use 4
-        spaces for indents and sets 'textwidth' to 99). This option is enabled
+        conform to style conventions of the Rust style guide (i.e. use 4
+        spaces for indents and set 'textwidth' to 100). This option is enabled
 	by default. To disable it: >vim
 	    let g:rust_recommended_style = 0
 <
@@ -165,6 +165,12 @@ g:rustfmt_detect_version ~
 	When set to 1, will try to parse the version output from "rustfmt".
 	Disabled by default for performance reasons >vim
 	    let g:rustfmt_detect_version = 1
+<
+                                                       *g:rustfmt_find_toml*
+g:rustfmt_find_toml ~
+	When set to 1, will try to find `rustfmt.toml` file by searching from
+	current path upwards.  Disabled by default for performance reasons >vim
+	    let g:rustfmt_find_toml = 1
 <
 							  *g:rust_playpen_url*
 g:rust_playpen_url ~

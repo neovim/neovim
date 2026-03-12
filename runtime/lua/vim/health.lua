@@ -371,6 +371,22 @@ local function get_summary()
   return s
 end
 
+---Emit progress messages
+---@param len integer
+---@return fun(status: 'success'|'running', idx: integer, fmt: string, ...: any): nil
+local function progress_report(len)
+  local progress = { kind = 'progress', title = 'checkhealth' }
+
+  return function(status, idx, fmt, ...)
+    progress.status = status
+    progress.percent = status == 'success' and nil or math.floor(idx / len * 100)
+    -- percent=0 omits the reporting of percentage, so use 1% instead
+    -- progress.percent = progress.percent == 0 and 1 or progress.percent
+    progress.id = vim.api.nvim_echo({ { fmt:format(...) } }, false, progress)
+    vim.cmd.redraw()
+  end
+end
+
 --- Runs the specified healthchecks.
 --- Runs all discovered healthchecks if plugin_names is empty.
 ---
@@ -384,11 +400,7 @@ function M._check(mods, plugin_names)
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
 
   local bufnr ---@type integer
-  if
-    vim.g.health
-    and type(vim.g.health) == 'table'
-    and vim.tbl_get(vim.g.health, 'style') == 'float'
-  then
+  if vim.tbl_get(vim.g, 'health', 'style') == 'float' then
     local available_lines = vim.o.lines - 12
     local max_height = math.min(math.floor(vim.o.lines * 0.8), available_lines)
     local max_width = 80
@@ -423,10 +435,13 @@ function M._check(mods, plugin_names)
     vim.fn.setline(1, 'ERROR: No healthchecks found.')
     return
   end
-  vim.cmd.redraw()
-  vim.print('Running healthchecks...')
 
+  local total_checks = #vim.tbl_keys(healthchecks)
+  local progress_msg = progress_report(total_checks)
+  local check_idx = 1
   for name, value in vim.spairs(healthchecks) do
+    progress_msg('running', check_idx, 'checking %s', name)
+    check_idx = check_idx + 1
     local func = value[1]
     local type = value[2]
     s_output = {}
@@ -476,16 +491,16 @@ function M._check(mods, plugin_names)
     s_output[#s_output + 1] = ''
     s_output = vim.list_extend(header, s_output)
     vim.fn.append(vim.fn.line('$'), s_output)
-    vim.cmd.redraw()
   end
 
-  -- Clear the 'Running healthchecks...' message.
-  vim.cmd.redraw()
-  vim.print('')
+  progress_msg('success', 0, 'checks done')
 
   -- Quit with 'q' inside healthcheck buffers.
   vim._with({ buf = bufnr }, function()
-    if vim.fn.maparg('q', 'n', false, false) == '' then
+    if
+      vim.tbl_get(vim.g, 'health', 'style') == 'float'
+      or vim.fn.maparg('q', 'n', false, false) == ''
+    then
       vim.keymap.set('n', 'q', function()
         if not pcall(vim.cmd.close) then
           vim.cmd.bdelete()

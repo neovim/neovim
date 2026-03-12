@@ -24,6 +24,14 @@ describe('insert-mode', function()
     eq(' x', curbuf_contents())
   end)
 
+  it('indent works properly with autocompletion enabled #35381', function()
+    command('set autoindent cindent autocomplete')
+    feed('ivoid func(void) {<CR>')
+    expect('void func(void) {\n\t')
+    feed('}')
+    expect('void func(void) {\n}')
+  end)
+
   it('CTRL-@', function()
     -- Inserts last-inserted text, leaves insert-mode.
     insert('hello')

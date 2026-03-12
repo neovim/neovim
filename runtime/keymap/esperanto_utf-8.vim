@@ -7,7 +7,7 @@
 "
 " All keys same as usual, except:
 " ^ followed by any of CcGgHhJjSs adds a circumflex on top of the letter
-" ù and Ù replaces the grave accent by a breve
+" Ã¹ and Ã™ replaces the grave accent by a breve
 " any of CcGgHhJjSsUu followed by X or x maps to consonant with ^ or Uu with
 " breve.
 
@@ -21,7 +21,7 @@ let b:keymap_name = "Eo"
 " digraph C> 0x0108 c> 0x0109	G> 0x011C g> 0x011D	H> 0x0124 h> 0x0125
 " digraph J> 0x0134 j> 0x0135	S> 0x015C s> 0x015D	U( 0x016C u( 0x016D
 
-scriptencoding latin1
+scriptencoding utf-8
 
 loadkeymap
 
@@ -35,8 +35,8 @@ loadkeymap
 ^j	<Char-0x0135>	" (309) LOWERCASE j WITH CIRCUMFLEX
 ^S	<Char-0x015C>	" (348) UPPERCASE S WITH CIRCUMFLEX
 ^s	<Char-0x015D>	" (349) LOWERCASE s WITH CIRCUMFLEX
-Ù	<Char-0x016C>	" (364) UPPERCASE U WITH BREVE
-ù	<Char-0x016D>	" (365) LOWERCASE u WITH BREVE
+Ã™	<Char-0x016C>	" (364) UPPERCASE U WITH BREVE
+Ã¹	<Char-0x016D>	" (365) LOWERCASE u WITH BREVE
 
 CX	<Char-0x0108>	" (264)	UPPERCASE C WITH CIRCUMFLEX
 Cx	<Char-0x0108>	" (264)	UPPERCASE C WITH CIRCUMFLEX

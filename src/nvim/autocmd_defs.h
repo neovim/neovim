@@ -20,7 +20,6 @@ typedef struct {
   char *tp_localdir;              ///< saved value of tp_localdir
   char *globaldir;                ///< saved value of globaldir
   bool save_VIsual_active;        ///< saved VIsual_active
-  int save_State;                 ///< saved State
   int save_prompt_insert;         ///< saved b_prompt_insert
 } aco_save_T;
 
@@ -64,3 +63,13 @@ struct AutoPatCmd_S {
 };
 
 typedef kvec_t(AutoCmd) AutoCmdVec;
+
+typedef struct {
+  event_T event;
+  char *fname;
+  char *fname_io;
+  Buffer buf;
+  int group;
+  exarg_T *eap;
+  Object *data;
+} AutoCmdEvent;  // Used for "deferred" events, but can represent any event.

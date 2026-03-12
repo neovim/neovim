@@ -989,6 +989,11 @@ static char *format_typename(const char *type)
 static int adjust_types(const char ***ap_types, int arg, int *num_posarg, const char *type)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (arg <= 0) {
+    semsg(_(e_invalid_format_specifier_str), type);
+    return FAIL;
+  }
+
   if (*ap_types == NULL || *num_posarg < arg) {
     const char **new_types = *ap_types == NULL
                              ? xcalloc((size_t)arg, sizeof(const char *))
@@ -1095,9 +1100,7 @@ static int parse_fmt_types(const char ***ap_types, int *num_posarg, const char *
 
   while (*p != NUL) {
     if (*p != '%') {
-      char *q = strchr(p + 1, '%');
-      size_t n = (q == NULL) ? strlen(p) : (size_t)(q - p);
-
+      size_t n = (size_t)(xstrchrnul(p + 1, '%') - p);
       p += n;
     } else {
       // allowed values: \0, h, l, L

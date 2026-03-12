@@ -563,6 +563,8 @@ endfunc
 " Test that cursor is drawn at the correct column when it is after end of the
 " line with 'virtualedit' and concealing.
 func Run_test_conceal_virtualedit_after_eol(wrap)
+  CheckScreendump
+
   let code =<< trim eval [CODE]
     let &wrap = {a:wrap}
     call setline(1, 'abcdefgh|hidden|ijklmnpop')
@@ -595,6 +597,8 @@ endfunc
 
 " Same as Run_test_conceal_virtualedit_after_eol(), but with 'rightleft'.
 func Run_test_conceal_virtualedit_after_eol_rightleft(wrap)
+  CheckScreendump
+
   let code =<< trim eval [CODE]
     let &wrap = {a:wrap}
     call setline(1, 'abcdefgh|hidden|ijklmnpop')
@@ -628,6 +632,8 @@ endfunc
 
 " Test that cursor position is correct when double-width chars are concealed.
 func Run_test_conceal_double_width(wrap)
+  CheckScreendump
+
   let code =<< trim eval [CODE]
     let &wrap = {a:wrap}
     call setline(1, ['aaaaa口=口bbbbb口=口ccccc', 'foobar'])

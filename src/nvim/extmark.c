@@ -141,7 +141,7 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
   }
 
   if (invalid) {
-    buf_put_decor(buf, mt_decor(key), MIN(row, key.pos.row), MAX(row, key.pos.row));
+    buf_put_decor(buf, mt_decor(key), MIN(row, alt.pos.row), MAX(row, alt.pos.row));
   } else if (!mt_invalid(key) && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
     buf_signcols_count_range(buf, row1, MIN(curbuf->b_ml.ml_line_count - 1, row2), 0, kNone);
   }
@@ -270,8 +270,11 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
       return array;
     }
 
-    MTPair pair;
-    while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
+    while ((int64_t)kv_size(array) < amount) {
+      MTPair pair;
+      if (!marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
+        break;
+      }
       push_mark(&array, ns_id, type_filter, pair);
     }
   } else {
@@ -395,9 +398,8 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
       // range has been deleted.
       if ((!mt_paired(mark) && mark.pos.row < u_row)
           || (mt_paired(mark)
-              && (endpos.col <= u_col || (!u_col && endpos.row == mark.pos.row))
-              && mark.pos.col >= l_col
-              && mark.pos.row >= l_row && endpos.row <= u_row - (u_col ? 0 : 1))) {
+              && (mark.pos.row > l_row || (mark.pos.row == l_row && mark.pos.col >= l_col))
+              && (endpos.row < u_row || (endpos.row == u_row && endpos.col <= u_col)))) {
         if (mt_no_undo(mark)) {
           extmark_del(buf, itr, mark, true);
           continue;
@@ -509,7 +511,7 @@ void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
                       new_row, 0, new_byte, undo);
 }
 
-// Adjust extmarks following a text edit.
+// Adjusts extmarks after a text edit, and emits the `on_bytes` event (`:h api-buffer-updates`).
 //
 // @param buf
 // @param start_row   Start row of the region to be changed

@@ -392,8 +392,6 @@ describe(':terminal mouse', function()
       end)
 
       it('mouse forwarding works with resized grid', function()
-        skip(is_os('win'))
-
         screen:detach()
         local Screen = require('test.functional.ui.screen')
         screen = Screen.new(50, 7, { ext_multigrid = true })

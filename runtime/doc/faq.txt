@@ -120,7 +120,6 @@ manage the cursor style:
 
 Alternatively, consider setting the desired cursor shape in your shell (e.g.
 with PROMPT_COMMAND in bash).
-<
 
 ------------------------------------------------------------------------------
 CURSOR SHAPE DOESN'T CHANGE IN TMUX
@@ -463,7 +462,7 @@ WHY EMBED LUA INSTEAD OF X?
 See also:
 
 - Why Lua https://web.archive.org/web/20150219224654/https://blog.datamules.com/blog/2012/01/30/why-lua/
-- The Design of Lua https://cacm.acm.org/magazines/2018/11/232214-a-look-at-the-design-of-lua/fulltext
+- The Design of Lua https://cacm.acm.org/research/a-look-at-the-design-of-lua/
 - Scripting architecture considerations http://oldblog.antirez.com/post/redis-and-scripting.html
 - LuaJIT performance https://julialang.org/benchmarks/
 - Discussion of JavaScript vs Lua https://github.com/vim/vim/pull/5198#issuecomment-554693754

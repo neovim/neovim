@@ -175,6 +175,17 @@ int main(int argc, char **argv)
   uv_tty_get_winsize(&tty_out, &width, &height);
 #endif
   uv_tty_set_mode(&tty, UV_TTY_MODE_RAW);
+#ifdef MSWIN
+  DWORD dwMode;
+  if (GetConsoleMode(tty.handle, &dwMode)) {
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+    SetConsoleMode(tty.handle, dwMode);
+  }
+  if (GetConsoleMode(tty_out.handle, &dwMode)) {
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(tty_out.handle, dwMode);
+  }
+#endif
   tty.data = &interrupted;
   uv_read_start((uv_stream_t *)&tty, alloc_cb, read_cb);
 #ifndef MSWIN

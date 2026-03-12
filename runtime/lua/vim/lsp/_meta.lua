@@ -7,6 +7,7 @@ error('Cannot require a meta file')
 ---@class lsp.HandlerContext
 ---@field method vim.lsp.protocol.Method
 ---@field client_id integer
+---@field request_id? integer
 ---@field bufnr? integer
 ---@field params? any
 ---@field version? integer

@@ -7,6 +7,7 @@
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
+"          20250906  - indent function closing properly on multiline commands
 "          20250318  - Detect local arrays in functions
 "          20241411  - Detect dash character in function keyword for
 "                      bash mode (issue #16049)
@@ -183,6 +184,15 @@ function! GetShIndent()
     else
       " use indent of current line
       return indent(v:lnum)
+    endif
+  endif
+
+  " Special case: if the current line is a closing '}', align with matching '{'
+  if curline =~ '^\s*}\s*$'
+    let match_lnum = searchpair('{', '', '}', 'bnW',
+      \ 'synIDattr(synID(line("."),col("."), 1),"name") =~? "comment\\|quote"')
+    if match_lnum > 0
+      return indent(match_lnum)
     endif
   endif
 

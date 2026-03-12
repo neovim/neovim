@@ -20,13 +20,15 @@ describe('autocmd TermClose', function()
     clear()
     api.nvim_set_option_value('shell', testprg('shell-test'), {})
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
+    command('autocmd! nvim.terminal TermClose')
   end)
 
   local function test_termclose_delete_own_buf()
     -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
     api.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
-    command('autocmd TermClose * bdelete!')
     command('terminal')
+    local termbuf = api.nvim_get_current_buf()
+    command(('autocmd TermClose * bdelete! %d'):format(termbuf))
     matches(
       '^TermClose Autocommands for "%*": Vim%(bdelete%):E937: Attempt to delete a buffer that is in use: term://',
       pcall_err(command, 'bdelete!')
@@ -34,14 +36,36 @@ describe('autocmd TermClose', function()
     assert_alive()
   end
 
-  -- TODO: fixed after merging patches for `can_unload_buffer`?
-  pending('TermClose deleting its own buffer, altbuf = buffer 1 #10386', function()
+  it('TermClose deleting its own buffer, altbuf = buffer 1 #10386', function()
     test_termclose_delete_own_buf()
   end)
 
   it('TermClose deleting its own buffer, altbuf NOT buffer 1 #10386', function()
     command('edit foo1')
     test_termclose_delete_own_buf()
+  end)
+
+  it('TermClose deleting all other buffers', function()
+    local oldbuf = api.nvim_get_current_buf()
+    -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
+    api.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
+    command(('autocmd TermClose * bdelete! %d'):format(oldbuf))
+    command('horizontal terminal')
+    neq(oldbuf, api.nvim_get_current_buf())
+    command('bdelete!')
+    feed('<C-G>') -- This shouldn't crash due to having a 0-line buffer.
+    assert_alive()
+  end)
+
+  it('TermClose switching back to terminal buffer', function()
+    local buf = api.nvim_get_current_buf()
+    api.nvim_open_term(buf, {})
+    command(('autocmd TermClose * buffer %d | new'):format(buf))
+    eq(
+      'TermClose Autocommands for "*": Vim(buffer):E1546: Cannot switch to a closing buffer',
+      pcall_err(command, 'bwipe!')
+    )
+    assert_alive()
   end)
 
   it('triggers when fast-exiting terminal job stops', function()
@@ -57,7 +81,6 @@ describe('autocmd TermClose', function()
   end)
 
   it('triggers when long-running terminal job gets stopped', function()
-    skip(is_os('win'))
     api.nvim_set_option_value('shell', is_os('win') and 'cmd.exe' or 'sh', {})
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
@@ -68,7 +91,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('kills job trapping SIGTERM', function()
-    skip(is_os('win'))
+    skip(is_os('win'), 'N/A for Windows')
     api.nvim_set_option_value('shell', 'sh', {})
     api.nvim_set_option_value('shellcmdflag', '-c', {})
     command(
@@ -94,7 +117,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('kills PTY job trapping SIGHUP and SIGTERM', function()
-    skip(is_os('win'))
+    skip(is_os('win'), 'N/A for Windows')
     api.nvim_set_option_value('shell', 'sh', {})
     api.nvim_set_option_value('shellcmdflag', '-c', {})
     command(
@@ -142,7 +165,9 @@ describe('autocmd TermClose', function()
     retry(nil, nil, function()
       eq('3', eval('g:abuf'))
     end)
-    feed('<c-c>:qa!<cr>')
+    feed('<c-c>')
+    n.poke_eventloop() -- Wait for input to be flushed
+    n.expect_exit(1000, feed, ':qa!<cr>')
   end)
 
   it('exposes v:event.status', function()
@@ -158,6 +183,13 @@ describe('autocmd TermClose', function()
     retry(nil, nil, function()
       eq(42, eval('g:status'))
     end)
+
+    command('set shellcmdflag= | terminal INTERACT')
+    retry(nil, nil, function()
+      matches('^interact %$ ?$', api.nvim_buf_get_lines(0, 0, 1, true)[1])
+    end)
+    command('bwipe!')
+    eq(-1, eval('g:status'))
   end)
 end)
 
@@ -325,5 +357,66 @@ describe('autocmd TextChangedT,WinResized', function()
     end)
     eq('n', eval('mode()'))
     eq({}, api.nvim_get_chan_info(term2)) -- Channel should've been cleaned up.
+  end)
+end)
+
+describe('no crash if :bwipe from TermClose is processed by', function()
+  local oldwin --- @type integer
+  local chan --- @type integer
+
+  before_each(function()
+    clear()
+    command('autocmd! nvim.terminal')
+    oldwin = api.nvim_get_current_win()
+    command('new')
+    local buf = api.nvim_get_current_buf()
+    chan = api.nvim_open_term(buf, {})
+    api.nvim_set_var('chan', chan)
+    command(('autocmd TermClose <buffer> bwipe! %d'):format(buf))
+    command('let g:done = 0')
+    feed('i')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+  end)
+
+  --- @param event string Event name.
+  --- @param trigger_cmd string The Ex command to trigger the event.
+  local function test_case(event, trigger_cmd)
+    api.nvim_create_autocmd(
+      event,
+      { nested = true, once = true, command = 'sleep 40m | let g:done = 1' }
+    )
+    exec_lua(function()
+      vim.cmd(trigger_cmd)
+      vim.defer_fn(function()
+        vim.fn.chanclose(chan)
+      end, 25)
+    end)
+    retry(nil, 1000, function()
+      eq(1, api.nvim_get_var('done'))
+    end)
+    assert_alive()
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    eq({ oldwin }, api.nvim_list_wins())
+    feed('<Ignore>') -- Add input to separate two RPC requests.
+    -- Channel should have been released.
+    eq({}, api.nvim_get_chan_info(chan))
+  end
+
+  it('WinResized autocommand in Terminal mode', function()
+    test_case('WinResized', 'vsplit')
+  end)
+
+  it('TextChangedT autocommand in Terminal mode', function()
+    test_case('TextChangedT', [[call chansend(g:chan, "foo\r\nbar")]])
+  end)
+
+  it('TermRequest autocommand in Terminal mode', function()
+    test_case('TermRequest', [[call chansend(g:chan, "\x1b]11;?\x1b\\")]])
+  end)
+
+  it('TermRequest autocommand in Normal mode', function()
+    feed([[<C-\><C-N>]])
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+    test_case('TermRequest', [[call chansend(g:chan, "\x1b]11;?\x1b\\")]])
   end)
 end)

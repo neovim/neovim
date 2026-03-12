@@ -690,7 +690,7 @@ doesn't always work.  See the system specific remarks below, and 'langmenu'.
 USING UTF-8 IN X-WINDOWS				*utf-8-in-xwindows*
 
 You need to specify a font to be used.  For double-wide characters another
-font is required, which is exactly twice as wide.  There are three ways to do
+font is required, which is exactly twice as wide.  There are two ways to do
 this:
 
 1. Set 'guifont' and let Nvim find a matching 'guifontwide'

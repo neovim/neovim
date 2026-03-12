@@ -2,6 +2,8 @@
 " Compiler:         Rust Compiler
 " Maintainer:       Chris Morgan <me@chrismorgan.info>
 " Latest Revision:  2023-09-11
+" 2025 Nov 15 by Vim project: remove test for Vim patch 7.4.191
+" 2025 Dec 18 by Vim project: detect more errors #18957
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 if exists("current_compiler")
@@ -17,11 +19,7 @@ set cpo&vim
 if get(g:, 'rustc_makeprg_no_percent', 0)
     CompilerSet makeprg=rustc
 else
-    if has('patch-7.4.191')
-      CompilerSet makeprg=rustc\ \%:S
-    else
-      CompilerSet makeprg=rustc\ \"%\"
-    endif
+    CompilerSet makeprg=rustc\ \%:S
 endif
 
 " New errorformat (after nightly 2016/08/10)
@@ -32,8 +30,10 @@ CompilerSet errorformat=
             \%Eerror:\ %m,
             \%Eerror[E%n]:\ %m,
             \%Wwarning:\ %m,
+            \%Wwarning[E%n]:\ %m,
             \%Inote:\ %m,
             \%C\ %#-->\ %f:%l:%c,
+            \%C\ %#╭▸\ %f:%l:%c,
             \%E\ \ left:%m,%C\ right:%m\ %f:%l:%c,%Z
 
 " Old errorformat (before nightly 2016/08/10)

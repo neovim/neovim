@@ -2,8 +2,8 @@
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
 " URL: https://raw.github.com/rid9/vim-fstab/master/syntax/fstab.vim
-" Last Change: 2025 Aug 21
-" Version: 1.7.0
+" Last Change: 2026 Feb 14
+" Version: 1.7.1
 "
 " Credits:
 "   David Necas (Yeti) <yeti@physics.muni.cz>
@@ -21,6 +21,7 @@
 "
 " Changelog:
 " - 2025 Aug 21 added support for mtab
+" - 2026 Feb 14 added cgroup2 to device types
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -38,7 +39,7 @@ syn match fsOperator /[,=:#]/
 " Device
 syn cluster fsDeviceCluster contains=fsOperator,fsDeviceKeyword,fsDeviceError
 syn match fsDeviceError /\%([^a-zA-Z0-9_\/#@:\.-]\|^\w\{-}\ze\W\)/ contained
-syn keyword fsDeviceKeyword contained none proc linproc tmpfs devpts devtmpfs sysfs usbfs tracefs overlay
+syn keyword fsDeviceKeyword contained none proc linproc tmpfs devpts devtmpfs sysfs usbfs tracefs overlay cgroup2
 syn keyword fsDeviceKeyword contained LABEL nextgroup=fsDeviceLabel
 syn keyword fsDeviceKeyword contained UUID nextgroup=fsDeviceUUID
 syn keyword fsDeviceKeyword contained PARTLABEL nextgroup=fsDevicePARTLABEL

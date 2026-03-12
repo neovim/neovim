@@ -239,6 +239,7 @@ void screenclear(void)
   mode_displayed = false;
 
   redraw_all_later(UPD_NOT_VALID);
+  cmdline_was_last_drawn = false;
   redraw_cmdline = true;
   redraw_tabline = true;
   redraw_popupmenu = true;
@@ -362,7 +363,7 @@ void screen_resize(int width, int height)
     maketitle();
 
     changed_line_abv_curs();
-    invalidate_botline(curwin);
+    invalidate_botline_win(curwin);
 
     // We only redraw when it's needed:
     // - While at the more prompt or executing an external command, don't
@@ -677,12 +678,22 @@ int update_screen(void)
     }
   }
 
+  // Draw separator connectors for all windows after all window updates, so that
+  // connectors overwrite vsep/hsep characters regardless of which windows were redrawn.
+  if (did_one) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      draw_sep_connectors_win(wp);
+    }
+  }
+
   end_search_hl();
 
   // May need to redraw the popup menu.
   if (pum_drawn() && must_redraw_pum) {
     win_check_ns_hl(curwin);
     pum_redraw();
+  } else if (State & MODE_CMDLINE) {
+    pum_check_clear();
   }
 
   win_check_ns_hl(NULL);
@@ -1364,6 +1375,12 @@ static void draw_sep_connectors_win(win_T *wp)
 /// bot: from bot_start to last row (when scrolled up)
 static void win_update(win_T *wp)
 {
+  // Return early when the windows would overflow the shrunk terminal window
+  // avoiding invalid drawing an assert failure
+  if (wp->w_grid.target == &default_grid && wp->w_wincol >= Columns) {
+    return;
+  }
+
   int top_end = 0;              // Below last row of the top area that needs
                                 // updating.  0 when no top area updating.
   int mid_start = 999;          // first row of the mid area that needs
@@ -1373,6 +1390,7 @@ static void win_update(win_T *wp)
   int bot_start = 999;          // first row of the bot area that needs
                                 // updating.  999 when no bot area updating
   bool scrolled_down = false;   // true when scrolled down when w_topline got smaller a bit
+  bool scrolled_for_mod = false;  // true after scrolling for changed lines
   bool top_to_mod = false;      // redraw above mod_top
 
   int bot_scroll_start = 999;   // first line that needs to be redrawn due to
@@ -1402,7 +1420,6 @@ static void win_update(win_T *wp)
   if (wp->w_view_height == 0) {
     // draw the horizontal separator below this window
     draw_hsep_win(wp);
-    draw_sep_connectors_win(wp);
     wp->w_redr_type = 0;
     return;
   }
@@ -1411,7 +1428,6 @@ static void win_update(win_T *wp)
   if (wp->w_view_width == 0) {
     // draw the vertical separator right of this window
     draw_vsep_win(wp);
-    draw_sep_connectors_win(wp);
     wp->w_redr_type = 0;
     return;
   }
@@ -1430,6 +1446,17 @@ static void win_update(win_T *wp)
   decor_redraw_reset(wp, &decor_state);
 
   decor_providers_invoke_win(wp);
+
+  if (buf->terminal && terminal_suspended(buf->terminal)) {
+    static VirtTextChunk chunk = { .text = "[Process suspended]", .hl_id = -1 };
+    static DecorVirtText virt_text = {
+      .priority = DECOR_PRIORITY_BASE,
+      .pos = kVPosWinCol,
+      .data.virt_text = { .items = &chunk, .size = 1 },
+    };
+    decor_range_add_virt(&decor_state, buf->b_ml.ml_line_count - 1, 0,
+                         buf->b_ml.ml_line_count - 1, 0, &virt_text, false);
+  }
 
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_buffer == wp->w_buffer && win_redraw_signcols(win)) {
@@ -2035,10 +2062,13 @@ static void win_update(win_T *wp)
       // When at start of changed lines: May scroll following lines
       // up or down to minimize redrawing.
       // Don't do this when the change continues until the end.
-      // Don't scroll when redrawing the top, scrolled already above.
-      if (lnum == mod_top
-          && mod_bot != MAXLNUM
-          && row >= top_end) {
+      // Don't scroll for changed lines in the top area if that's already
+      // done above, but do scroll for changed lines below the top area.
+      if (!scrolled_for_mod && mod_bot != MAXLNUM
+          && lnum >= mod_top && lnum < MAX(mod_bot, mod_top + 1)
+          && (!scrolled_down || row >= top_end)) {
+        scrolled_for_mod = true;
+
         int old_cline_height = 0;
         int old_rows = 0;
         linenr_T l;
@@ -2381,7 +2411,6 @@ redr_statuscol:
   if (wp->w_redr_type >= UPD_REDRAW_TOP) {
     draw_vsep_win(wp);
     draw_hsep_win(wp);
-    draw_sep_connectors_win(wp);
   }
   syn_set_timeout(NULL);
 
@@ -2807,7 +2836,7 @@ bool conceal_cursor_line(const win_T *wp)
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+  return wp->w_p_cul || (wp == curwin && wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
 
 /// Update w_cursorline, taking care to set it to the to the start of a closed fold.

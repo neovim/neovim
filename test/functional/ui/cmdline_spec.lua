@@ -797,6 +797,38 @@ local function test_cmdline(linegrid)
                                |
     ]])
   end)
+
+  it('works with exmode', function()
+    feed('gQ')
+    screen:expect({
+      grid = [[
+                                 |
+        {3:                         }|
+        Entering Ex mode.  Type "|
+        visual" to go to Normal m|
+        ode.^                     |
+      ]],
+      cmdline = { { content = { { '' } }, firstc = ':', pos = 0 } },
+    })
+    feed('echo "foo"<CR>')
+    screen:expect({
+      grid = [[
+        {3:                         }|
+        Entering Ex mode.  Type "|
+        visual" to go to Normal m|
+        ode.                     |
+        foo^                      |
+      ]],
+      cmdline = { { content = { { '' } }, firstc = ':', pos = 0 } },
+      cmdline_block = { { { 'echo "foo"' } } },
+    })
+    feed('vis<CR>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*3
+                               |
+    ]])
+  end)
 end
 
 -- the representation of cmdline and cmdline_block contents changed with ext_linegrid

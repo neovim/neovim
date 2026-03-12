@@ -382,7 +382,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///        - "error": Dict with error, present only if parser saw some
 ///                 error. Contains the following keys:
 ///          - "message": String, error message in printf format, translated.
-///                       Must contain exactly one "%.*s".
+///                       Must contain exactly one `%.*s`.
 ///          - "arg": String, error message argument.
 ///        - "len": Amount of bytes successfully parsed. With flags equal to ""
 ///                 that should be equal to the length of expr string.

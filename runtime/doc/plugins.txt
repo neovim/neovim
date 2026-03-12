@@ -15,8 +15,8 @@ available from the global `vim` module namespace. Some of the plugins are
 loaded by default while others are not loaded until requested by |:packadd|.
 
 ==============================================================================
-Standard plugins ~
-						*standard-plugin-list*
+Standard plugins                                        *standard-plugin-list*
+
 Help-link		Loaded	Short description ~
 |difftool|		No	Compares two directories or files side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
@@ -37,9 +37,9 @@ Help-link		Loaded	Short description ~
 |pi_tar.txt|		Yes	Tar file explorer
 |pi_tutor.txt|		Yes	Interactive tutorial
 |pi_zip.txt|		Yes	Zip archive explorer
-|spellfile.vim|		Yes	Install spellfile if missing
+|spellfile.lua|		Yes	Install spellfile if missing
 |tohtml|		Yes	Convert buffer to html, syntax included
-|undotree|		No	Interactive textual undotree
+|undotree-plugin|	No	Interactive textual undotree
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
@@ -84,11 +84,26 @@ open({left}, {right}, {opt})                                 *difftool.open()*
 ==============================================================================
 Builtin plugin: editorconfig                                    *editorconfig*
 
-Nvim supports EditorConfig. When a file is opened, after running |ftplugin|s
-and |FileType| autocommands, Nvim searches all parent directories of that file
-for ".editorconfig" files, parses them, and applies any properties that match
-the opened file. Think of it like 'modeline' for an entire (recursive)
-directory. For more information see https://editorconfig.org/.
+EditorConfig is like 'modeline' for an entire (recursive) directory. When a
+file is opened, after running |ftplugin|s and |FileType| autocommands, the
+EditorConfig feature searches all parent directories of that file for
+`.editorconfig` files, parses them, and applies their properties. For more
+information see https://editorconfig.org/.
+
+Example `.editorconfig` file: >ini
+    root = true
+
+    [*]
+    charset = utf-8
+    end_of_line = lf
+    indent_size = 4
+    indent_style = space
+    max_line_length = 42
+    trim_trailing_whitespace = true
+
+    [*.{diff,md}]
+    trim_trailing_whitespace = false
+<
 
                                                *g:editorconfig* *b:editorconfig*
 
@@ -167,6 +182,56 @@ trim_trailing_whitespace               *editorconfig.trim_trailing_whitespace*
 
 
 ==============================================================================
+Builtin plugin: spellfile                                      *spellfile.lua*
+
+Asks the user to download missing spellfiles. The spellfile is written to
+`stdpath('data') .. 'site/spell'` or the first writable directory in the
+'runtimepath'.
+
+The plugin can be disabled by setting `g:loaded_spellfile_plugin = 1`.
+
+
+*nvim.spellfile.Opts*
+    A table with the following fields:
+
+    Fields: ~
+      • {url}         (`string`) The base URL from where the spellfiles are
+                      downloaded. Uses `g:spellfile_URL` if it's set,
+                      otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
+      • {timeout_ms}  (`integer`, default: 15000) Number of milliseconds after
+                      which the |vim.net.request()| times out.
+      • {confirm}     (`boolean`, default: `true`) Whether to ask user to
+                      confirm download.
+
+
+config({opts})                                            *spellfile.config()*
+    Configure spellfile download options. For example: >lua
+        require('nvim.spellfile').config({ url = '...' })
+<
+
+    Parameters: ~
+      • {opts}  (`nvim.spellfile.Opts?`) When omitted or `nil`, retrieve the
+                current configuration. Otherwise, a configuration table.
+
+    Return: ~
+        (`nvim.spellfile.Opts?`) Current config if {opts} is omitted.
+
+get({lang})                                                  *spellfile.get()*
+    Download spellfiles for language {lang} if available.
+
+    Parameters: ~
+      • {lang}  (`string`) Language code.
+
+    Return: ~
+        (`table?`) A table with the following fields:
+        • {files} (`string[]`)
+        • {key} (`string`)
+        • {lang} (`string`)
+        • {encoding} (`string`)
+        • {dir} (`string`)
+
+
+==============================================================================
 Builtin plugin: tohtml                                                *tohtml*
 
 
@@ -200,12 +265,14 @@ tohtml({winid}, {opt})                                       *tohtml.tohtml()*
 
 
 ==============================================================================
-Builtin plugin: undotree                                            *undotree*
+Builtin plugin: undotree                                     *undotree-plugin*
 
 open({opts})                                                 *undotree.open()*
-    Open a window that displays a textual representation of the undotree.
+    Open a window that displays a textual representation of the |undo-tree|.
 
     While in the window, moving the cursor changes the undo.
+
+    Closes the window if it is already open
 
     Load the plugin with this command: >
                 packadd nvim.undotree
@@ -226,6 +293,10 @@ open({opts})                                                 *undotree.open()*
                   the window. If a function, it accepts the buffer number of
                   the source buffer as its only argument and should return a
                   string.
+
+    Return: ~
+        (`boolean?`) Returns true if the window was already open, nil
+        otherwise
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

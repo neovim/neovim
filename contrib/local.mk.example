@@ -34,7 +34,7 @@
 # Log levels: DEBUG, INFO, WARNING, ERROR
 # For Debug builds all log levels are used
 # For Release and RelWithDebInfo builds only WARNING and ERROR are used, unless:
-# CMAKE_EXTRA_FLAGS += -DLOG_DEBUG
+# CMAKE_EXTRA_FLAGS += "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -DNVIM_LOG_DEBUG"
 
 # By default, nvim uses bundled versions of its required third-party
 # dependencies.

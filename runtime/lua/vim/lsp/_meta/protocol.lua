@@ -1605,13 +1605,7 @@ error('Cannot require a meta file')
 ---@class lsp.DocumentOnTypeFormattingRegistrationOptions: lsp.TextDocumentRegistrationOptions, lsp.DocumentOnTypeFormattingOptions
 
 ---The parameters of a {@link RenameRequest}.
----@class lsp.RenameParams: lsp.WorkDoneProgressParams
----
----The document to rename.
----@field textDocument lsp.TextDocumentIdentifier
----
----The position at which this request was sent.
----@field position lsp.Position
+---@class lsp.RenameParams: lsp.TextDocumentPositionParams, lsp.WorkDoneProgressParams
 ---
 ---The new name of the symbol. If the given name is not valid the
 ---request must return a {@link ResponseError} with an
@@ -3297,7 +3291,7 @@ error('Cannot require a meta file')
 ---@class lsp.FileOperationPattern
 ---
 ---The glob pattern to match. Glob patterns can have the following syntax:
----- `*` to match zero or more characters in a path segment
+---- `*` to match one or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group sub patterns into an OR expression. (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)
@@ -5699,7 +5693,7 @@ error('Cannot require a meta file')
 ---its resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.
 ---
 ---Glob patterns can have the following syntax:
----- `*` to match zero or more characters in a path segment
+---- `*` to match one or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group sub patterns into an OR expression. (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)
@@ -5720,7 +5714,7 @@ error('Cannot require a meta file')
 ---@alias lsp.NotebookDocumentFilter lsp.NotebookDocumentFilterNotebookType|lsp.NotebookDocumentFilterScheme|lsp.NotebookDocumentFilterPattern
 
 ---The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:
----- `*` to match zero or more characters in a path segment
+---- `*` to match one or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group conditions (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)

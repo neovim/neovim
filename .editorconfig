@@ -7,6 +7,9 @@ tab_width = 8
 end_of_line = lf
 insert_final_newline = true
 
+[*.zig]
+indent_size = 4
+
 [*.{c,h,in,lua}]
 max_line_length = 100
 

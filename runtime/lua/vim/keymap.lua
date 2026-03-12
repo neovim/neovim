@@ -3,6 +3,7 @@ local keymap = {}
 --- Table of |:map-arguments|.
 --- Same as |nvim_set_keymap()| {opts}, except:
 --- - {replace_keycodes} defaults to `true` if "expr" is `true`.
+--- - {noremap} is not supported; use {remap} instead (see below).
 ---
 --- Also accepts:
 --- @class vim.keymap.set.Opts : vim.api.keyset.keymap
@@ -30,9 +31,21 @@ local keymap = {}
 --- end, { expr = true })
 --- -- Map "[%%" to a <Plug> mapping:
 --- vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
+---
+--- -- Use `getregionpos(getpos('v'))` to get the "current visual selection":
+--- vim.keymap.set('x', 'M', function()
+---   local region = vim.fn.getregionpos(vim.fn.getpos('v'), vim.fn.getpos('.'), {
+---     type = 'v',
+---     exclusive = false,
+---     eol = false,
+---   })
+---   local line1 = region[1][1][2]
+---   local line2 = region[#region][1][2]
+---   vim.print({ line1, line2 })
+--- end)
 --- ```
 ---
----@param mode string|string[] Mode "short-name" (see |nvim_set_keymap()|), or a list thereof.
+---@param modes string|string[] Mode "short-name" (see |nvim_set_keymap()|), or a list thereof.
 ---@param lhs string           Left-hand side |{lhs}| of the mapping.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping, can be a Lua function.
 ---@param opts? vim.keymap.set.Opts
@@ -41,16 +54,16 @@ local keymap = {}
 ---@see |maparg()|
 ---@see |mapcheck()|
 ---@see |mapset()|
-function keymap.set(mode, lhs, rhs, opts)
-  vim.validate('mode', mode, { 'string', 'table' })
+function keymap.set(modes, lhs, rhs, opts)
+  vim.validate('modes', modes, { 'string', 'table' })
   vim.validate('lhs', lhs, 'string')
   vim.validate('rhs', rhs, { 'string', 'function' })
   vim.validate('opts', opts, 'table', true)
 
   opts = vim.deepcopy(opts or {}, true)
 
-  ---@cast mode string[]
-  mode = type(mode) == 'string' and { mode } or mode
+  ---@cast modes string[]
+  modes = type(modes) == 'string' and { modes } or modes
 
   if opts.expr and opts.replace_keycodes ~= false then
     opts.replace_keycodes = true
@@ -73,12 +86,12 @@ function keymap.set(mode, lhs, rhs, opts)
   if opts.buffer then
     local bufnr = opts.buffer == true and 0 or opts.buffer --[[@as integer]]
     opts.buffer = nil ---@type integer?
-    for _, m in ipairs(mode) do
+    for _, m in ipairs(modes) do
       vim.api.nvim_buf_set_keymap(bufnr, m, lhs, rhs, opts)
     end
   else
     opts.buffer = nil
-    for _, m in ipairs(mode) do
+    for _, m in ipairs(modes) do
       vim.api.nvim_set_keymap(m, lhs, rhs, opts)
     end
   end

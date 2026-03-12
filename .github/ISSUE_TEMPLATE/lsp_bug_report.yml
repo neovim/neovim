@@ -18,7 +18,7 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: 'Steps to reproduce using "nvim -u minimal_init.lua"'
+      label: 'Steps to reproduce using "nvim --clean -u minimal_init.lua"'
       description: |
         - Create a minimal_init.lua using vim.lsp.start:
 

@@ -166,29 +166,42 @@ function M.open(path, opt)
 
   if opt.cmd then
     cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { path })
-  elseif vim.fn.has('mac') == 1 then
-    cmd = { 'open', path }
-  elseif vim.fn.has('win32') == 1 then
-    if vim.fn.executable('rundll32') == 1 then
-      cmd = { 'rundll32', 'url.dll,FileProtocolHandler', path }
-    else
-      return nil, 'vim.ui.open: rundll32 not found'
-    end
-  elseif vim.fn.executable('xdg-open') == 1 then
-    cmd = { 'xdg-open', path }
-    job_opt.stdout = false
-    job_opt.stderr = false
-  elseif vim.fn.executable('wslview') == 1 then
-    cmd = { 'wslview', path }
-  elseif vim.fn.executable('explorer.exe') == 1 then
-    cmd = { 'explorer.exe', path }
-  elseif vim.fn.executable('lemonade') == 1 then
-    cmd = { 'lemonade', 'open', path }
   else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+    local open_cmd, err = M._get_open_cmd()
+    if err then
+      return nil, err
+    end
+    ---@cast open_cmd string[]
+    if open_cmd[1] == 'xdg-open' then
+      job_opt.stdout = false
+      job_opt.stderr = false
+    end
+    cmd = vim.list_extend(open_cmd, { path })
   end
 
   return vim.system(cmd, job_opt), nil
+end
+
+--- Get an available command used to open the path or URL.
+---
+--- @return string[]|nil # Command, or nil if not found.
+--- @return nil|string # Error message on failure, or nil on success.
+function M._get_open_cmd()
+  if vim.fn.has('mac') == 1 then
+    return { 'open' }, nil
+  elseif vim.fn.has('win32') == 1 then
+    return { 'cmd.exe', '/c', 'start', '' }, nil
+  elseif vim.fn.executable('xdg-open') == 1 then
+    return { 'xdg-open' }, nil
+  elseif vim.fn.executable('wslview') == 1 then
+    return { 'wslview' }, nil
+  elseif vim.fn.executable('explorer.exe') == 1 then
+    return { 'explorer.exe' }, nil
+  elseif vim.fn.executable('lemonade') == 1 then
+    return { 'lemonade', 'open' }, nil
+  else
+    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+  end
 end
 
 --- Returns all URLs at cursor, if any.
@@ -200,6 +213,33 @@ function M._get_urls()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
   local col = cursor[2]
+
+  -- Find LSP document links under the cursor.
+  local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
+  local results = vim.lsp.buf_request_sync(bufnr, 'textDocument/documentLink', params)
+
+  for client_id, result in pairs(results or {}) do
+    if result.error then
+      vim.lsp.log.error(result.error)
+    else
+      local client = assert(vim.lsp.get_client_by_id(client_id))
+      local lsp_position = vim.lsp.util.make_position_params(0, client.offset_encoding).position
+      local position = vim.pos.lsp(bufnr, lsp_position, client.offset_encoding)
+
+      local document_links = result.result or {} ---@type lsp.DocumentLink[]
+      for _, document_link in ipairs(document_links) do
+        local range = vim.range.lsp(bufnr, document_link.range, client.offset_encoding)
+        if document_link.target and range:has(position) then
+          local target = document_link.target ---@type string
+          if vim.startswith(target, 'file://') then
+            target = vim.uri_to_fname(target)
+          end
+          table.insert(urls, target)
+        end
+      end
+    end
+  end
+
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, { row, col }, { row, col }, {
     details = true,
     type = 'highlight',

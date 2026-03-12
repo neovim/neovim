@@ -2,7 +2,8 @@
 " Compiler:     Pandoc
 " Maintainer:   Konfekt
 " Last Change:	2024 Nov 19
-" 2025 May 15 Update the title regex for CompilerSet #17321
+" 2025 May 15 by Vim Project: Update the title regex for CompilerSet #17321
+" 2026 Jan 10 by Vim Project: Do not set the title #19048
 "
 " Expects output file extension, say `:make html` or `:make pdf`.
 " Passes additional arguments to pandoc, say `:make html --self-contained`.
@@ -52,8 +53,6 @@ endfunction
 
 execute 'CompilerSet makeprg=pandoc'..escape(
     \ ' --standalone'..
-    \ (s:PandocFiletype(&filetype) ==# 'markdown' && (getline(1) =~# '^%\s\+\S\+' || (search('^title:\s\+\S\+', 'cnw') > 0)) ?
-    \ '' : ' --metadata title=%:t:r:S')..
     \ ' '..s:PandocLang()..
     \ ' --from='..s:PandocFiletype(&filetype)..
     \ ' '..get(b:, 'pandoc_compiler_args', get(g:, 'pandoc_compiler_args', ''))..

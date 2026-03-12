@@ -72,20 +72,46 @@ pub fn nvim_gen_sources(
         const names = [_][]const u8{
             "_init_packages",
             "inspect",
-            "_editor",
-            "_system",
             "filetype",
             "fs",
             "F",
             "keymap",
             "loader",
-            "_defaults",
-            "_options",
-            "shared",
+            "text",
         };
         for (names) |n| {
             gen_step.addFileArg(b.path(b.fmt("runtime/lua/vim/{s}.lua", .{n})));
             gen_step.addArg(b.fmt("vim.{s}", .{n}));
+        }
+
+        // Dynamically add all Lua _core/ modules (like CMakeLists.txt does)
+        if (b.build_root.handle.openDir("runtime/lua/vim/_core", .{ .iterate = true })) |core_dir_handle| {
+            var core_dir = core_dir_handle;
+            defer core_dir.close();
+
+            var iter = core_dir.iterate();
+            var core_files = try std.ArrayList([]const u8).initCapacity(b.allocator, 0);
+            defer core_files.deinit(b.allocator);
+
+            while (try iter.next()) |entry| {
+                if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".lua")) {
+                    const module_name = try b.allocator.dupe(u8, entry.name[0 .. entry.name.len - 4]);
+                    try core_files.append(b.allocator, module_name);
+                }
+            }
+
+            std.mem.sort([]const u8, core_files.items, {}, struct {
+                fn lessThan(_: void, a: []const u8, c: []const u8) bool {
+                    return std.mem.lessThan(u8, a, c);
+                }
+            }.lessThan);
+
+            for (core_files.items) |n| {
+                gen_step.addFileArg(b.path(b.fmt("runtime/lua/vim/_core/{s}.lua", .{n})));
+                gen_step.addArg(b.fmt("vim._core.{s}", .{n}));
+            }
+        } else |err| {
+            std.debug.print("Warning: Could not open _core directory: {}\n", .{err});
         }
     }
 

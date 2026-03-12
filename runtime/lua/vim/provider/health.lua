@@ -535,18 +535,12 @@ local function version_info(python)
     return { python_version, 'unable to load neovim Python module', pypi_version, nvim_path }
   end
 
-  -- Assuming that multiple versions of a package are installed, sort them
-  -- numerically in descending order.
+  -- Assuming that multiple versions of a package are installed as
+  -- `<semver>/<metapath>`, sort them on semantic version in descending order.
   local function compare(metapath1, metapath2)
-    local a = vim.fn.matchstr(vim.fn.fnamemodify(metapath1, ':p:h:t'), [[[0-9.]\+]])
-    local b = vim.fn.matchstr(vim.fn.fnamemodify(metapath2, ':p:h:t'), [[[0-9.]\+]])
-    if a == b then
-      return 0
-    elseif a > b then
-      return 1
-    else
-      return -1
-    end
+    local dir1 = vim.fs.basename(vim.fs.dirname(vim.fs.abspath(metapath1)))
+    local dir2 = vim.fs.basename(vim.fs.dirname(vim.fs.abspath(metapath2)))
+    return vim.version.cmp(dir1, dir2)
   end
 
   -- Try to get neovim.VERSION (added in 0.1.11dev).
@@ -576,6 +570,7 @@ local function version_info(python)
     end
   end
 
+  -- vim.fs.relpath does not prepend '~/' while fnamemodify does
   local nvim_path_base = vim.fn.fnamemodify(nvim_path, [[:~:h]])
   local version_status = 'unknown; ' .. nvim_path_base
   if not is_bad_response(nvim_version) and not is_bad_response(pypi_version) then

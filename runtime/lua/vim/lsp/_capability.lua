@@ -1,6 +1,7 @@
 local api = vim.api
 
 ---@alias vim.lsp.capability.Name
+---| 'codelens'
 ---| 'semantic_tokens'
 ---| 'folding_range'
 ---| 'linked_editing_range'
@@ -21,7 +22,7 @@ local all_capabilities = {}
 ---@field name vim.lsp.capability.Name
 ---
 --- Static field records the method this capability requires.
----@field method vim.lsp.protocol.Method.ClientToServer
+---@field method vim.lsp.protocol.Method.ClientToServer | vim.lsp.protocol.Method.Registration
 ---
 --- Static field for retrieving the instance associated with a specific `bufnr`.
 ---
@@ -133,7 +134,8 @@ function M.enable(name, enable, filter)
     for _, it_bufnr in
       ipairs(
         bufnr and { it_client.attached_buffers[bufnr] and bufnr }
-          or vim.lsp.get_buffers_by_client_id(it_client.id)
+          or vim.tbl_keys(it_client.attached_buffers)
+          or {}
       )
     do
       if enable ~= M.is_enabled(name, { bufnr = it_bufnr, client_id = it_client.id }) then

@@ -105,7 +105,7 @@ describe('screenchar() and family respect floating windows', function()
     end)
 
     it('from ui2', function()
-      n.exec_lua('require("vim._extui").enable({ enable = true })')
+      n.exec_lua('require("vim._core.ui2").enable({ enable = true })')
       command('echo "foo"')
 
       assert_screen_funcs()

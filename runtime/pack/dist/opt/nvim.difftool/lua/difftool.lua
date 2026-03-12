@@ -369,6 +369,12 @@ local function diff_dirs(left_dir, right_dir, opt)
     return
   end
 
+  -- Early exit if no differences found
+  if #qf_entries == 0 then
+    vim.notify('No differences found', vim.log.levels.INFO)
+    return
+  end
+
   -- Sort entries by filename for consistency
   table.sort(qf_entries, function(a, b)
     return a.user_data.rel < b.user_data.rel

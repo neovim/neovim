@@ -111,7 +111,11 @@ repeat:
     }
 
     // FullName_save() is slow, don't use it when not needed.
-    if (*p != NUL || !vim_isAbsName(*fnamep)) {
+    if (*p != NUL || !vim_isAbsName(*fnamep)
+#ifdef MSWIN  // enforce drive letter on Windows paths
+        || **fnamep == '/' || **fnamep == '\\'
+#endif
+        ) {
       *fnamep = FullName_save(*fnamep, *p != NUL);
       xfree(*bufp);          // free any allocated file name
       *bufp = *fnamep;

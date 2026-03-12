@@ -118,3 +118,31 @@ describe(':cquit', function()
     )
   end)
 end)
+
+describe('no crash after :quit non-last window during exit', function()
+  before_each(function()
+    n.clear()
+  end)
+
+  it('in vim.schedule() callback and when piping to stdin #14379', function()
+    n.fn.system({
+      n.nvim_prog,
+      '-es',
+      '--cmd',
+      "lua vim.schedule(function() vim.cmd('vsplit | quit') end)",
+      '+quit',
+    }, '')
+    eq(0, n.api.nvim_get_vvar('shell_error'))
+  end)
+
+  it('in vim.defer_fn() callback and when piping to stdin #14379', function()
+    n.fn.system({
+      n.nvim_prog,
+      '-es',
+      '--cmd',
+      "lua vim.defer_fn(function() vim.cmd('vsplit | quit') end, 0)",
+      '+quit',
+    }, '')
+    eq(0, n.api.nvim_get_vvar('shell_error'))
+  end)
+end)

@@ -55,3 +55,13 @@ enum { CB_MAX_ERROR = 3, };
 
 EXTERN nlua_ref_state_t *nlua_global_refs INIT( = NULL);
 EXTERN bool nlua_disable_preload INIT( = false);
+
+/// Tracks the active Lua thread
+extern lua_State *active_lstate;
+
+#define ENTER_LUA_ACTIVE_STATE(new_state) \
+  lua_State *const save_active_lstate = active_lstate; \
+  active_lstate = (new_state);
+
+#define LEAVE_LUA_ACTIVE_STATE() \
+  active_lstate = save_active_lstate;

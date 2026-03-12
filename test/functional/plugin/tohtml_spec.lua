@@ -119,10 +119,10 @@ end
 ---@param screen test.functional.ui.screen
 ---@param func function?
 local function run_tohtml_and_assert(screen, func)
-  exec('norm! ggO-;')
-  screen:expect({ any = vim.pesc('-^;') })
+  exec('norm! ggO--;')
+  screen:expect({ any = vim.pesc('--^;') })
   exec('norm! :\rh')
-  screen:expect({ any = vim.pesc('^-;') })
+  screen:expect({ any = vim.pesc('-^-;') })
   local expected = screen:get_snapshot()
   do
     (func or exec)('TOhtml')
@@ -131,7 +131,7 @@ local function run_tohtml_and_assert(screen, func)
   html_syntax_match()
   html_to_extmarks()
   exec('norm! gg0f;')
-  screen:expect({ any = vim.pesc('-^;') })
+  screen:expect({ any = vim.pesc('--^;') })
   exec('norm! :\rh')
   screen:expect({ grid = expected.grid, attr_ids = expected.attr_ids })
 end
@@ -210,6 +210,7 @@ describe(':TOhtml', function()
     exec('set termguicolors')
     local bg = fn.synIDattr(fn.hlID('Normal'), 'bg#', 'gui')
     local fg = fn.synIDattr(fn.hlID('Normal'), 'fg#', 'gui')
+    exec_lua [[vim.o.guifont='Courier New' ]]
     n.command('2,2TOhtml')
     local out_file = api.nvim_buf_get_name(api.nvim_get_current_buf())
     eq({
@@ -221,7 +222,7 @@ describe(':TOhtml', function()
       '<title></title>',
       ('<meta name="colorscheme" content="%s"></meta>'):format(api.nvim_get_var('colors_name')),
       '<style>',
-      '* {font-family: monospace}',
+      ('* {font-family: "%s",monospace}'):format(n.eval('&guifont')),
       ('body {background-color: %s; color: %s}'):format(bg, fg),
       '.Visual {background-color: #9b9ea4}',
       '</style>',
@@ -260,6 +261,7 @@ describe(':TOhtml', function()
     exec('set termguicolors')
     exec('syntax enable')
     exec('setf lua')
+    exec_lua('vim.treesitter.stop()') -- Ensure that legacy syntax (not just TS) is tested.
     run_tohtml_and_assert(screen)
   end)
 

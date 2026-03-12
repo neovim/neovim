@@ -135,18 +135,14 @@ procedure:
 
 1. Invoke |nvim_get_api_info()|, if needed to setup the client library and/or
    to get the list of supported UI extensions.
-
 2. Do any configuration that should be happen before user config is loaded.
    Buffers and windows are not available at this point, but this could be used
    to set |g:| variables visible to init.vim
-
 3. If the UI wants to do additional setup after user config is loaded,
    register a VimEnter autocmd: >lua
       nvim_command("autocmd VimEnter * call rpcrequest(1, 'vimenter')")
-
 4. Now invoke |nvim_ui_attach()|. The UI must handle user input by now:
    sourcing init.vim and loading buffers might lead to blocking prompts.
-
 5. If step 3 was used, Nvim will send a blocking "vimenter" request to the UI.
    Inside this request handler, the UI can safely do any initialization before
    entering normal mode, for example reading variables set by init.vim.

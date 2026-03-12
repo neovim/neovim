@@ -1,7 +1,7 @@
 *filetype.txt*  Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Filetypes						*filetype* *file-type*
@@ -136,6 +136,7 @@ what kind of file it is.  This doesn't always work.  A number of global
 variables can be used to overrule the filetype used for certain extensions:
 
 	file name	variable ~
+	`*.app`		g:filetype_app
 	`*.asa`		g:filetype_asa		|ft-aspperl-syntax|
 						|ft-aspvbs-syntax|
 	`*.asm`		g:asmsyntax		|ft-asm-syntax|

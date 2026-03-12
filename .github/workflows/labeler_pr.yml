@@ -9,7 +9,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/labeler@v6
       with:
         configuration-path: .github/scripts/labeler_configuration.yml

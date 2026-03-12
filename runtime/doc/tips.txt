@@ -1,7 +1,7 @@
 *tips.txt*      Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Tips and ideas for using Vim				*tips*

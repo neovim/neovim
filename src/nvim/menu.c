@@ -48,6 +48,10 @@
 
 #include "menu.c.generated.h"
 
+/// When non-zero no menu must be added or cleared.  Prevents the list of menus
+/// changing while listing them.
+static int menus_locked = 0;
+
 /// The character for each menu mode
 static char *menu_mode_chars[] = { "n", "v", "s", "o", "i", "c", "tl", "t" };
 
@@ -65,6 +69,17 @@ static vimmenu_T **get_root_menu(const char *const name)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return &root_menu;
+}
+
+/// If "menus_locked" is set then give an error and return true.
+/// Otherwise return false.
+static int is_menus_locked(void)
+{
+  if (menus_locked > 0) {
+    emsg(_(e_cannot_change_menus_while_listing));
+    return true;
+  }
+  return false;
 }
 
 /// Do the :menu command and relatives.
@@ -202,6 +217,10 @@ void ex_menu(exarg_T *eap)
     }
     menu_enable_recurse(*root_menu_ptr, menu_path, modes, enable);
   } else if (unmenu) {
+    if (is_menus_locked()) {
+      goto theend;
+    }
+
     // Delete menu(s).
     if (strcmp(menu_path, "*") == 0) {          // meaning: remove all menus
       menu_path = "";
@@ -221,6 +240,10 @@ void ex_menu(exarg_T *eap)
     // Careful: remove_menu() changes menu_path
     remove_menu(root_menu_ptr, menu_path, modes, false);
   } else {
+    if (is_menus_locked()) {
+      goto theend;
+    }
+
     // Add menu(s).
     // Replace special key codes.
     if (STRICMP(map_to, "<nop>") == 0) {        // "<Nop>" means nothing
@@ -729,12 +752,14 @@ bool menu_get(char *const path_name, int modes, list_T *list)
 
 /// Find menu matching `name` and `modes`. Does not handle empty `name`.
 ///
-/// @param menu top menu to start looking from
-/// @param name path towards the menu
+/// @param menu       top menu to start looking from
+/// @param path_name  path towards the menu
 /// @return found menu or NULL
-static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
+static vimmenu_T *find_menu(vimmenu_T *menu, const char *path_name, int modes)
 {
-  assert(*name);
+  assert(*path_name);
+  char *const saved_name = xstrdup(path_name);
+  char *name = saved_name;
 
   while (*name) {
     // find the end of one dot-separated name and put a NUL at the dot
@@ -744,12 +769,14 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
         // Found menu
         if (*p != NUL && menu->children == NULL) {
           emsg(_(e_notsubmenu));
-          return NULL;
+          menu = NULL;
+          goto theend;
         } else if ((menu->modes & modes) == 0x0) {
           emsg(_(e_menu_only_exists_in_another_mode));
-          return NULL;
+          menu = NULL;
+          goto theend;
         } else if (*p == NUL) {  // found a full match
-          return menu;
+          goto theend;
         }
         break;
       }
@@ -758,7 +785,7 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
 
     if (menu == NULL) {
       semsg(_(e_nomenu), name);
-      return NULL;
+      break;
     }
     // Found a match, search the sub-menu.
     name = p;
@@ -766,7 +793,9 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
     menu = menu->children;
   }
 
-  abort();
+theend:
+  xfree(saved_name);
+  return menu;
 }
 
 /// Show the mapping associated with a menu item or hierarchy in a sub-menu.
@@ -781,10 +810,14 @@ static int show_menus(char *const path_name, int modes)
     }
   }
 
-  // Now we have found the matching menu, and we list the mappings.
+  // make sure the list of menus doesn't change while listing them
+  menus_locked++;
+
+  // list the matching menu mappings
   msg_puts_title(_("\n--- Menus ---"));
   show_menus_recursive(menu, modes, 0);
 
+  menus_locked--;
   return OK;
 }
 

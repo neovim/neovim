@@ -218,6 +218,54 @@ describe('server', function()
     eq(true, old_servs_num < #new_servs)
     client:close()
   end)
+
+  it('removes stale socket files automatically #26053', function()
+    -- Windows named pipes are ephemeral kernel objects that are automatically
+    -- cleaned up when the process terminates. Unix domain sockets persist as
+    -- files on the filesystem and can become stale after crashes.
+    t.skip(is_os('win'), 'N/A on Windows')
+
+    clear()
+    clear_serverlist()
+    local socket_path = './Xtest-stale-socket'
+
+    -- Create stale socket file (simulate crash)
+    vim.uv.fs_close(vim.uv.fs_open(socket_path, 'w', 438))
+
+    -- serverstart() should detect and remove stale socket
+    eq(socket_path, fn.serverstart(socket_path))
+    fn.serverstop(socket_path)
+
+    -- Same test with --listen flag
+    vim.uv.fs_close(vim.uv.fs_open(socket_path, 'w', 438))
+    clear({ args = { '--listen', socket_path } })
+    eq(socket_path, api.nvim_get_vvar('servername'))
+    fn.serverstop(socket_path)
+  end)
+
+  it('does not remove live sockets #26053', function()
+    t.skip(is_os('win'), 'N/A on Windows')
+
+    clear()
+    local socket_path = './Xtest-live-socket'
+    eq(socket_path, fn.serverstart(socket_path))
+
+    -- Second instance should fail without removing live socket
+    local result = n.exec_lua(function(sock)
+      return vim
+        .system(
+          { vim.v.progpath, '--headless', '--listen', sock },
+          { text = true, env = { NVIM_LOG_FILE = testlog } }
+        )
+        :wait()
+    end, socket_path)
+    t.assert_log('Socket already in use by another Nvim instance: ', testlog, 100)
+    t.assert_log('Failed to start server: address already in use: ', testlog, 100)
+
+    neq(0, result.code)
+    matches('Failed.*listen', result.stderr)
+    fn.serverstop(socket_path)
+  end)
 end)
 
 describe('startup --listen', function()

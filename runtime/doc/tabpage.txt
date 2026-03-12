@@ -1,7 +1,7 @@
 *tabpage.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Editing with windows in multiple tab pages.		*tab-page* *tabpage*

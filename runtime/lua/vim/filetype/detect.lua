@@ -18,6 +18,7 @@
 --     `if line =~ '^\s*unwind_protect\>'` => `if matchregex(line, [[\c^\s*unwind_protect\>]])`
 
 local fn = vim.fn
+local fs = vim.fs
 
 local M = {}
 
@@ -29,6 +30,38 @@ local matchregex = vim.filetype._matchregex
 
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
+
+-- Erlang Application Resource Files (*.app.src is matched by extension)
+-- See: https://erlang.org/doc/system/applications
+--- @type vim.filetype.mapfn
+function M.app(path, bufnr)
+  if vim.g.filetype_app then
+    return vim.g.filetype_app
+  end
+  for lnum, line in ipairs(getlines(bufnr, 1, 100)) do
+    -- skip Erlang comments, might be something else
+    if not findany(line, { '^%s*%%', '^%s*$' }) then
+      if line:find('^%s*{') then
+        local name = fn.fnamemodify(path, ':t:r:r')
+        local lines = vim
+          .iter(getlines(bufnr, lnum, lnum + 9))
+          :filter(function(v)
+            return not v:find('^%s*%%')
+          end)
+          :join(' ')
+        if
+          findany(lines, {
+            [[^%s*{%s*application%s*,%s*']] .. name .. [['%s*,]],
+            [[^%s*{%s*application%s*,%s*]] .. name .. [[%s*,]],
+          })
+        then
+          return 'erlang'
+        end
+      end
+      return
+    end
+  end
+end
 
 -- This function checks for the kind of assembly that is wanted by the user, or
 -- can be detected from the beginning of the file.
@@ -76,7 +109,7 @@ function M.asm_syntax(_, bufnr)
       return 'masm'
     elseif
       line:find('Texas Instruments Incorporated')
-      -- tiasm uses `* commment`, but detection is unreliable if '/*' is seen
+      -- tiasm uses `* comment`, but detection is unreliable if '/*' is seen
       or (line:find('^%*') and not is_slash_star_encountered)
     then
       return 'tiasm'
@@ -363,7 +396,7 @@ end
 
 --- @type vim.filetype.mapfn
 function M.dat(path, bufnr)
-  local file_name = fn.fnamemodify(path, ':t'):lower()
+  local file_name = fs.basename(path):lower()
   -- Innovation data processing
   if findany(file_name, { '^upstream%.dat$', '^upstream%..*%.dat$', '^.*%.upstream%.dat$' }) then
     return 'upstreamdat'
@@ -391,7 +424,7 @@ end
 -- to non-dep3patch files, such as README and other text files.
 --- @type vim.filetype.mapfn
 function M.dep3patch(path, bufnr)
-  local file_name = fn.fnamemodify(path, ':t')
+  local file_name = fs.basename(path)
   if file_name == 'series' then
     return
   end
@@ -530,7 +563,7 @@ function M.dsp(path, bufnr)
   end
 
   -- Test the filename
-  local file_name = fn.fnamemodify(path, ':t')
+  local file_name = fs.basename(path)
   if file_name:find('^[mM]akefile.*$') then
     return 'make'
   end
@@ -741,7 +774,7 @@ end
 --- @return boolean
 local function is_hare_module(dir, depth)
   depth = math.max(depth, 0)
-  for name, _ in vim.fs.dir(dir, { depth = depth + 1 }) do
+  for name, _ in fs.dir(dir, { depth = depth + 1 }) do
     if name:find('%.ha$') then
       return true
     end
@@ -752,7 +785,7 @@ end
 --- @type vim.filetype.mapfn
 function M.haredoc(path, _)
   if vim.g.filetype_haredoc then
-    if is_hare_module(vim.fs.dirname(path), vim.g.haredoc_search_depth or 1) then
+    if is_hare_module(fs.dirname(path), vim.g.haredoc_search_depth or 1) then
       return 'haredoc'
     end
   end
@@ -1032,8 +1065,8 @@ end
 ---  – files in POSIX M4
 --- @type vim.filetype.mapfn
 function M.m4(path, bufnr)
-  local fname = fn.fnamemodify(path, ':t')
-  path = fn.fnamemodify(path, ':p:h')
+  local fname = fs.basename(path)
+  path = fs.dirname(fs.abspath(path))
 
   if fname:find('html%.m4$') then
     return 'htmlm4'
@@ -1089,7 +1122,7 @@ function M.make(path, bufnr)
   vim.b.make_flavor = nil
 
   -- 1. filename
-  local file_name = fn.fnamemodify(path, ':t')
+  local file_name = fs.basename(path)
   if file_name == 'BSDmakefile' then
     vim.b.make_flavor = 'bsd'
     return 'make'
@@ -1155,7 +1188,7 @@ end
 --- @param path string
 --- @return string?
 function M.me(path)
-  local filename = fn.fnamemodify(path, ':t'):lower()
+  local filename = fs.basename(path):lower()
   if filename ~= 'read.me' and filename ~= 'click.me' then
     return 'nroff'
   end
@@ -1265,7 +1298,7 @@ end
 --- (Slow test) If a file contains a 'use' statement then it is almost certainly a Perl file.
 --- @type vim.filetype.mapfn
 function M.perl(path, bufnr)
-  local dir_name = vim.fs.dirname(path)
+  local dir_name = fs.dirname(path)
   if fn.fnamemodify(path, '%:e') == 't' and (dir_name == 't' or dir_name == 'xt') then
     return 'perl'
   end
@@ -1497,7 +1530,7 @@ function M.rules(path)
       return 'hog'
     end
     --- @cast config_lines -string
-    local dir = fn.fnamemodify(path, ':h')
+    local dir = fs.dirname(path)
     for _, line in ipairs(config_lines) do
       local match = line:match(udev_rules_pattern)
       if match then
@@ -2008,6 +2041,7 @@ local patterns_hashbang = {
   ['^janet\\>'] = { 'janet', { vim_regex = true } },
   ['^dart\\>'] = { 'dart', { vim_regex = true } },
   ['^execlineb\\>'] = { 'execline', { vim_regex = true } },
+  ['^bpftrace\\>'] = { 'bpftrace', { vim_regex = true } },
   ['^vim\\>'] = { 'vim', { vim_regex = true } },
 }
 

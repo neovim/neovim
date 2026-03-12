@@ -260,13 +260,12 @@ static void sign_list_placed(buf_T *rbuf, char *group)
   int64_t ns = group_get_ns(group);
 
   msg_puts_title(_("\n--- Signs ---"));
-  msg_putchar('\n');
 
   while (buf != NULL && !got_int) {
     if (buf_has_signs(buf)) {
+      msg_putchar('\n');
       vim_snprintf(lbuf, MSG_BUF_LEN, _("Signs for %s:"), buf->b_fname);
       msg_puts_hl(lbuf, HLF_D, false);
-      msg_putchar('\n');
     }
 
     if (ns >= 0) {
@@ -285,6 +284,7 @@ static void sign_list_placed(buf_T *rbuf, char *group)
 
       if (kv_size(signs)) {
         qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_row_cmp);
+        msg_putchar('\n');
 
         for (size_t i = 0; i < kv_size(signs); i++) {
           namebuf[0] = NUL;
@@ -301,7 +301,9 @@ static void sign_list_placed(buf_T *rbuf, char *group)
           vim_snprintf(lbuf, MSG_BUF_LEN, _("    line=%" PRIdLINENR "  id=%u%s%s  priority=%d"),
                        mark.pos.row + 1, mark.id, groupbuf, namebuf, sh->priority);
           msg_puts(lbuf);
-          msg_putchar('\n');
+          if (i < kv_size(signs) - 1) {
+            msg_putchar('\n');
+          }
         }
         kv_destroy(signs);
       }
@@ -590,7 +592,7 @@ static linenr_T sign_jump(int id, char *group, buf_T *buf)
   linenr_T lnum = buf_findsign(buf, id, group);
 
   if (lnum <= 0) {
-    semsg(_("E157: Invalid sign ID: %" PRId32), id);
+    semsg(_("E157: Invalid sign ID: %d"), id);
     return -1;
   }
 

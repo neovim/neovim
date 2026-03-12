@@ -82,6 +82,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/terminal.h"
 #include "nvim/textformat.h"
 #include "nvim/textobject.h"
 #include "nvim/types_defs.h"
@@ -701,10 +702,11 @@ static void normal_redraw_mode_message(NormalState *s)
   setcursor();
   ui_cursor_shape();                  // show different cursor shape
   ui_flush();
-  if (!ui_has(kUIMessages) && (msg_scroll || emsg_on_display)) {
-    os_delay(1003, true);            // wait at least one second
+  if (msg_scroll || emsg_on_display) {
+    msg_delay(1003, true);            // wait at least one second
   }
   if (ui_has(kUIMessages)) {
+    // TODO(justinmk): wtf is this delay for? From before 2014.
     os_delay(3003, false);           // wait up to three seconds
   }
   State = save_State;
@@ -1444,6 +1446,8 @@ static int normal_check(VimState *state)
     skip_redraw = false;
     setcursor();
   } else if (do_redraw || stuff_empty()) {
+    terminal_check_refresh();
+
     // Ensure curwin->w_topline and curwin->w_leftcol are up to date
     // before triggering a WinScrolled autocommand.
     update_topline(curwin);
@@ -2563,7 +2567,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
           linelen = linetabsize(curwin, curwin->w_cursor.lnum);
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
-            assert(curwin->w_curswant <= INT_MAX - w);
+            assert(w <= 0 || curwin->w_curswant <= INT_MAX - w);
             curwin->w_curswant += w;
           }
         }
@@ -2799,7 +2803,7 @@ static void nv_zet(cmdarg_T *cap)
   case '+':
     if (cap->count0 == 0) {
       // No count given: put cursor at the line below screen
-      validate_botline(curwin);               // make sure w_botline is valid
+      validate_botline_win(curwin);  // make sure w_botline is valid
       curwin->w_cursor.lnum = MIN(curwin->w_botline, curbuf->b_ml.ml_line_count);
     }
     FALLTHROUGH;
@@ -3191,7 +3195,7 @@ static void nv_colon(cmdarg_T *cap)
   }
 
   if (is_lua) {
-    cmd_result = map_execute_lua(true);
+    cmd_result = map_execute_lua(true, false);
   } else {
     // get a command line and execute it
     exarg_T ea = {
@@ -3628,7 +3632,7 @@ static void nv_scroll(cmdarg_T *cap)
   setpcmark();
 
   if (cap->cmdchar == 'L') {
-    validate_botline(curwin);          // make sure curwin->w_botline is valid
+    validate_botline_win(curwin);  // make sure curwin->w_botline is valid
     curwin->w_cursor.lnum = curwin->w_botline - 1;
     if (cap->count1 - 1 >= curwin->w_cursor.lnum) {
       curwin->w_cursor.lnum = 1;
@@ -3651,7 +3655,7 @@ static void nv_scroll(cmdarg_T *cap)
       int used = 0;
       // Don't count filler lines above the window.
       used -= win_get_fill(curwin, curwin->w_topline) - curwin->w_topfill;
-      validate_botline(curwin);  // make sure w_empty_rows is valid
+      validate_botline_win(curwin);  // make sure w_empty_rows is valid
       int half = (curwin->w_view_height - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
         // Count half the number of filler lines to be "below this
@@ -6491,7 +6495,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
 
   if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
     if (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
-      curwin->w_cursor.col = (int)strlen(prompt_text());
+      curwin->w_cursor.col = curbuf->b_prompt_start.mark.col;
       // Since we've shifted the cursor to the first editable char. We want to
       // paste before that.
       cap->cmdchar = 'P';

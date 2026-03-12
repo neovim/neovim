@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2025 Jul 05
+" Last Change: 2026 Jan 20
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/debcontrol.vim
 
 " Standard syntax initialization
@@ -34,7 +34,7 @@ exe 'syn keyword debcontrolArchitecture contained '. join(g:debArchitectureKerne
 exe 'syn keyword debcontrolArchitecture contained '. join(g:debArchitectureAnyKernelArch)
 exe 'syn keyword debcontrolArchitecture contained '. join(g:debArchitectureArchs)
 
-" Keep in sync with https://metadata.ftp-master.org/sections.822
+" Keep in sync with https://metadata.ftp-master.debian.org/sections.822
 " curl -q https://metadata.ftp-master.debian.org/sections.822 2>/dev/null| grep-dctrl -n --not -FSection -sSection  / -
 let s:sections = [
       \ 'admin', 'cli-mono', 'comm', 'database', 'debian-installer', 'debug'
@@ -74,14 +74,32 @@ syn match	debcontrolEmail	"<.\{-}>"
 " #-Comments
 syn match debcontrolComment "^#.*$" contains=@Spell
 
+" Build profiles
+" Since there's no official spec for the field, use dpkg's parsing
+" (from BuildProfiles.pm) as the de facto spec
+syn match debcontrolBuildProfile "<\@<!<\s*!\=[-?/;:=@%*~A-Za-z0-9+.]\+\%(\s\+!\=[-?/;:=@%*~A-Za-z0-9+.]\+\)*\s*>" contained
+
+" Architecture specification for a package relationship
+let s:all_archs = join(g:debArchitectureKernelAnyArch, '\|')
+      \. '\|'
+      \. join(g:debArchitectureAnyKernelArch, '\|')
+      \. '\|'
+      \. join(g:debArchitectureArchs, '\|')
+exe 'syn match debcontrolArchSpec "\[\s*!\=\%('. s:all_archs .'\)\%(\s\+!\=\%('. s:all_archs. '\)\)*\s*\]" contained'
+unlet s:all_archs
+
 syn case ignore
 
 " Handle all fields from deb-src-control(5)
 
 " Catch-all for the legal fields
-syn region debcontrolField matchgroup=debcontrolKey start="^\%(\%(XSBC-Original-\)\=Maintainer\|Standards-Version\|Bugs\|Origin\|X[SB]-Python-Version\|\%(XS-\)\=Vcs-Mtn\|\%(XS-\)\=Testsuite\%(-Triggers\)\=\|Build-Profiles\|Tag\|Subarchitecture\|Kernel-Version\|Installer-Menu-Item\): " end="$" contains=debcontrolVariable,debcontrolEmail oneline
-syn region debcontrolMultiField matchgroup=debcontrolKey start="^\%(Build-\%(Conflicts\|Depends\)\%(-Arch\|-Indep\)\=\|\%(Pre-\)\=Depends\|Recommends\|Suggests\|Breaks\|Enhances\|Replaces\|Conflicts\|Provides\|Built-Using\|Static-Built-Using\|Uploaders\|X[SBC]\{0,3\}\%(Private-\)\=-[-a-zA-Z0-9]\+\): *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment
-syn region debcontrolMultiFieldSpell matchgroup=debcontrolKey start="^Description: *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment,@Spell
+syn region debcontrolField matchgroup=debcontrolKey start="^\%(XSBC-Original-\)\=Maintainer: " end="$" contains=debcontrolVariable,debcontrolEmail oneline
+syn region debcontrolField matchgroup=debcontrolKey start="^Build-Profiles: " end="$" contains=debcontrolVariable,debcontrolBuildProfile oneline
+syn region debcontrolField matchgroup=debcontrolKey start="^\%(Standards-Version\|Bugs\|Origin\|X[SB]-Python-Version\|\%(XS-\)\=Vcs-Mtn\|\%(XS-\)\=Testsuite\%(-Triggers\)\=\|Build-Driver\|Tag\|Subarchitecture\|Kernel-Version\|Installer-Menu-Item\): " end="$" contains=debcontrolVariable oneline
+syn region debcontrolMultiField matchgroup=debcontrolKey start="^\%(Build-\%(Conflicts\|Depends\)\%(-Arch\|-Indep\)\=\|\%(Pre-\)\=Depends\|Recommends\|Suggests\|Breaks\|Enhances\|Replaces\|Conflicts\|Provides\|Built-Using\|Static-Built-Using\): *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolVariable,debcontrolComment,debcontrolBuildProfile,debcontrolArchSpec
+syn region debcontrolMultiField matchgroup=debcontrolKey start="^X[SBC]\{0,3\}\%(Private-\)\=-[-a-zA-Z0-9]\+: *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolVariable,debcontrolComment
+syn region debcontrolMultiField matchgroup=debcontrolKey start="^Uploaders: *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment
+syn region debcontrolMultiFieldSpell matchgroup=debcontrolKey start="^Description: *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolVariable,debcontrolComment,@Spell
 
 " Fields for which we do strict syntax checking
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^Architecture: *" end="$" contains=debcontrolArchitecture,debcontrolSpace oneline
@@ -96,7 +114,7 @@ syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-[-a-zA-Z
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-[-a-zA-Z0-9]\+-\)\=Vcs-Cvs: *" end="$" contains=debcontrolVcsCvs oneline keepend
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-[-a-zA-Z0-9]\+-\)\=Vcs-Git: *" end="$" contains=debcontrolVcsGit oneline keepend
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^Rules-Requires-Root: *" end="$" contains=debcontrolR3 oneline
-syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(Build-\)\=Essential: *" end="$" contains=debcontrolYesNo oneline
+syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(\%(Build-\)\=Essential\|Protected\): *" end="$" contains=debcontrolYesNo oneline
 
 syn region debcontrolStrictField matchgroup=debcontrolDeprecatedKey start="^\%(XS-\)\=DM-Upload-Allowed: *" end="$" contains=debcontrolDmUpload oneline
 
@@ -113,6 +131,8 @@ hi def link debcontrolPriority      Normal
 hi def link debcontrolSection       Normal
 hi def link debcontrolPackageType   Normal
 hi def link debcontrolVariable      Identifier
+hi def link debcontrolArchSpec      Identifier
+hi def link debcontrolBuildProfile  Identifier
 hi def link debcontrolEmail         Identifier
 hi def link debcontrolVcsSvn        Identifier
 hi def link debcontrolVcsCvs        Identifier

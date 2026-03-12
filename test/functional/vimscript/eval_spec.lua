@@ -24,6 +24,7 @@ local eval = n.eval
 local command = n.command
 local write_file = t.write_file
 local api = n.api
+local fn = n.fn
 local sleep = vim.uv.sleep
 local assert_alive = n.assert_alive
 local poke_eventloop = n.poke_eventloop
@@ -88,10 +89,8 @@ describe('backtick expansion', function()
   end)
 
   it('with shell=fish', function()
-    if eval("executable('fish')") == 0 then
-      pending('missing "fish" command')
-      return
-    end
+    t.skip(fn.executable('fish') == 0, 'missing "fish" command')
+
     command('set shell=fish')
     command(':silent args `echo ***2`')
     eq({ 'file2' }, eval('argv()'))

@@ -567,6 +567,8 @@ func Test_dict_literal_keys()
   " why *{} cannot be used for a literal dictionary
   let blue = 'blue'
   call assert_equal('6', trim(execute('echo 2 *{blue: 3}.blue')))
+
+  call assert_fails('eval 1 || #{a:', 'E15:') " used to leak
 endfunc
 
 " Nasty: deepcopy() dict that refers to itself (fails when noref used)
@@ -791,10 +793,7 @@ func Test_dict_item_lock_unlet()
       unlet d.a
       call assert_equal({'b': 100}, d)
   END
-  " TODO: make this work in a :def function
-  "call CheckLegacyAndVim9Success(lines)
-  call CheckTransLegacySuccess(lines)
-  call CheckTransVim9Success(lines)
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " filter() after lock on dict item
@@ -805,10 +804,7 @@ func Test_dict_lock_filter()
       call filter(d, 'v:key != "a"')
       call assert_equal({'b': 100}, d)
   END
-  " TODO: make this work in a :def function
-  "call CheckLegacyAndVim9Success(lines)
-  call CheckTransLegacySuccess(lines)
-  call CheckTransVim9Success(lines)
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " map() after lock on dict
@@ -822,6 +818,17 @@ func Test_dict_lock_map()
   " This won't work in a :def function
   call CheckTransLegacySuccess(lines)
   call CheckTransVim9Success(lines)
+
+  " For a :def function use a global dict.
+  let lines =<< trim END
+      let g:thedict = {'a': 77, 'b': 88}
+      lockvar 1 g:thedict
+      def Delkey()
+        unlet g:thedict.a
+      enddef
+      call Delkey()
+  END
+  " call CheckScriptFailure(lines, 'E741:')
 endfunc
 
 " No extend() after lock on dict item
@@ -1364,7 +1371,7 @@ func Test_listdict_index()
   call CheckLegacyAndVim9Failure(['VAR d = {"k": 10}', 'echo d[1 : 2]'], 'E719:')
 
   call assert_fails("let v = [4, 6][{-> 1}]", 'E729:')
-  call CheckDefAndScriptFailure(['var v = [4, 6][() => 1]'], ['E1012', 'E703:'])
+  call CheckDefAndScriptFailure(['var v = [4, 6][() => 1]'], ['E1012:', 'E703:'])
 
   call CheckLegacyAndVim9Failure(['VAR v = range(5)[2 : []]'], ['E730:', 'E1012:', 'E730:'])
 

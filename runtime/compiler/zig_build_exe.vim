@@ -1,7 +1,7 @@
 " Vim compiler file
 " Compiler: Zig Compiler (zig build-exe)
 " Upstream: https://github.com/ziglang/zig.vim
-" Last Change: 2024 Apr 05 by The Vim Project (removed :CompilerSet definition)
+" Last Change: 2025 Nov 16 by The Vim Project (set errorformat)
 
 if exists('current_compiler')
   finish
@@ -12,11 +12,9 @@ let current_compiler = 'zig_build_exe'
 let s:save_cpo = &cpo
 set cpo&vim
 
-if has('patch-7.4.191')
-  CompilerSet makeprg=zig\ build-exe\ \%:S\ \$* 
-else
-  CompilerSet makeprg=zig\ build-exe\ \"%\"\ \$* 
-endif
+CompilerSet makeprg=zig\ build-exe\ \%:S\ \$*
+" CompilerSet errorformat=%f:%l:%c: %t%*[^:]: %m, %f:%l:%c: %m, %f:%l: %m
+CompilerSet errorformat&
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

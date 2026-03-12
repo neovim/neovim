@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:      Verbose TAP Output
-" Maintainer:    vim-perl <vim-perl@googlegroups.com>
+" Maintainer:    vim-perl <vim-perl@googlegroups.com> (need to be subscribed to post)
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " License:       Vim License (see :help license)

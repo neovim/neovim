@@ -1,7 +1,7 @@
 *editing.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Editing files						*edit-files*
@@ -1620,7 +1620,7 @@ There are three different types of searching:
    special wildcard when it is at the start of a name.
 
    The usage of "*" is quite simple: It matches 0 or more characters.  In a
-   search pattern this would be ".*".  Note that the "." is not used for file
+   search pattern this would be `.*`.  Note that the "." is not used for file
    searching.
 
    "**" is more sophisticated:

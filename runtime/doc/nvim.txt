@@ -77,19 +77,19 @@ because mouse support is always enabled if possible. If you use the same
 like so:
 >vim
     if !has('nvim')
-        set ttymouse=xterm2
+      set ttymouse=xterm2
     endif
 
 And for Nvim-specific configuration, you can do this:
 >vim
     if has('nvim')
-        tnoremap <Esc> <C-\><C-n>
+      tnoremap <Esc> <C-\><C-n>
     endif
 
 For a more granular approach use |exists()|:
 >vim
     if exists(':tnoremap')
-        tnoremap <Esc> <C-\><C-n>
+      tnoremap <Esc> <C-\><C-n>
     endif
 
 Now you should be able to explore Nvim more comfortably. Check |nvim-features|
@@ -101,6 +101,7 @@ Windows is stored in ~/AppData instead of ~/.config. But you can still share
 the same Nvim configuration on all of your machines, by creating
 ~/AppData/Local/nvim/init.vim containing just this line: >vim
     source ~/.config/nvim/init.vim
+<
 
 ==============================================================================
  vim:tw=78:ts=8:et:ft=help:norl:

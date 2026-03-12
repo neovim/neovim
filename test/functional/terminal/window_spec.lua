@@ -14,6 +14,7 @@ local eq = t.eq
 local eval = n.eval
 local skip = t.skip
 local is_os = t.is_os
+local testprg = n.testprg
 
 describe(':terminal window', function()
   before_each(clear)
@@ -32,6 +33,47 @@ describe(':terminal window', function()
     command('new')
     eq({ 1, 1, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
     eq({ 1, 1, 1 }, eval('[&l:list, &list, &g:list]'))
+  end)
+
+  it('resets horizontal scroll on resize #35331', function()
+    skip(is_os('win'), 'Too flaky on Windows')
+    local screen = tt.setup_screen(0, { testprg('shell-test'), 'INTERACT' })
+    command('set statusline=%{win_getid()} splitright')
+    screen:expect([[
+      interact $ ^                                       |
+                                                        |*5
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed_data(('A'):rep(30))
+    screen:expect([[
+      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA^         |
+                                                        |*5
+      {5:-- TERMINAL --}                                    |
+    ]])
+    command('vnew | wincmd p')
+    screen:expect([[
+      interact $ AAAAAAAAAAAAA│                         |
+      AAAAAAAAAAAAAAAAA^       │{100:~                        }|
+                              │{100:~                        }|*3
+      {120:1000                     }{2:1001                     }|
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    feed([[<C-\><C-N><C-W>o]])
+    screen:expect([[
+      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         |
+      ^                                                  |
+                                                        |*5
+    ]])
+    -- Window with less room scrolls anyway to keep its cursor in-view.
+    feed('gg$20<C-W>v')
+    screen:expect([[
+      interact $ AAAAAAAAAAAAAAAAAA│$ AAAAAAAAAAAAAAAAA^A|
+      AAAAAAAAAAAA                 │AAA                 |
+                                   │                    |*3
+      {119:1000                          }{120:1002                }|
+                                                        |
+    ]])
   end)
 end)
 
@@ -283,7 +325,6 @@ describe(':terminal window', function()
   end)
 
   it('redraws cursor info in terminal mode', function()
-    skip(is_os('win'), '#31587')
     command('file AMOGUS | set laststatus=2 ruler')
     screen:expect([[
       tty ready                                         |
@@ -337,7 +378,6 @@ describe(':terminal window', function()
   end)
 
   it('has correct topline if scrolled by events', function()
-    skip(is_os('win'), '#31587')
     local lines = {}
     for i = 1, 10 do
       table.insert(lines, 'cool line ' .. i)
@@ -384,10 +424,14 @@ describe(':terminal window', function()
     ]])
   end)
 
-  it('in new tabpage has correct terminal size', function()
+  it('updates terminal size', function()
+    skip(is_os('win'), "Windows doesn't show all lines?")
     screen:set_default_attr_ids({
       [1] = { reverse = true },
+      [2] = { background = 225, foreground = Screen.colors.Gray0 },
       [3] = { bold = true },
+      [4] = { foreground = 12 },
+      [5] = { reverse = true, bold = true },
       [17] = { background = 2, foreground = Screen.colors.Grey0 },
       [18] = { background = 2, foreground = 8 },
       [19] = { underline = true, foreground = Screen.colors.Grey0, background = 7 },
@@ -413,6 +457,129 @@ describe(':terminal window', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
+
+    command('quit | botright split')
+    -- NOTE: right window's cursor not on the last line, so it's not tailing.
+    screen:expect([[
+      rows: 5, cols: 50        │rows: 5, cols: 25       |
+      rows: 2, cols: 50        │rows: 5, cols: 50       |
+      {18:foo [-]                   foo [-]                 }|
+      rows: 2, cols: 50                                 |
+      ^                                                  |
+      {17:foo [-]                                           }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('quit')
+    screen:expect([[
+      rows: 5, cols: 25        │tty ready               |
+      rows: 5, cols: 50        │rows: 5, cols: 25       |
+      rows: 2, cols: 50        │rows: 5, cols: 50       |
+      rows: 5, cols: 25        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('call nvim_open_win(0, 0, #{relative: "editor", row: 0, col: 0, width: 40, height: 3})')
+    screen:expect([[
+      {2:rows: 5, cols: 25                       }          |
+      {2:rows: 5, cols: 40                       } 25       |
+      {2:                                        } 50       |
+      rows: 5, cols: 40        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('fclose!')
+    screen:expect([[
+      rows: 2, cols: 50        │tty ready               |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 5, cols: 40        │rows: 5, cols: 50       |
+      rows: 5, cols: 25        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('tab split')
+    screen:expect([[
+      {19: }{20:2}{19: foo }{3: foo }{1:                                     }{19:X}|
+      rows: 5, cols: 25                                 |
+      rows: 5, cols: 40                                 |
+      rows: 5, cols: 25                                 |
+      rows: 5, cols: 50                                 |
+      ^                                                  |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('tabfirst | tabonly')
+    screen:expect([[
+      rows: 5, cols: 40        │tty ready               |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 5, cols: 50        │rows: 5, cols: 50       |
+      rows: 5, cols: 25        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    -- Sizing logic should only consider the final buffer shown in a window, even if autocommands
+    -- changed it at the last moment.
+    exec_lua(function()
+      vim.g.fired = 0
+      vim.api.nvim_create_autocmd('BufHidden', {
+        callback = function(ev)
+          vim.api.nvim_win_set_buf(vim.fn.win_findbuf(ev.buf)[1], vim.fn.bufnr('foo'))
+          vim.g.fired = vim.g.fired + 1
+          return vim.g.fired == 2
+        end,
+      })
+    end)
+    command('botright new')
+    screen:expect([[
+      rows: 2, cols: 25        │rows: 5, cols: 25       |
+                               │rows: 5, cols: 50       |
+      {18:foo [-]                   foo [-]                 }|
+      ^                                                  |
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+    ]])
+    command('quit')
+    eq(1, eval('g:fired'))
+    screen:expect([[
+      rows: 5, cols: 50        │tty ready               |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 2, cols: 25        │rows: 5, cols: 50       |
+      rows: 5, cols: 25        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+                                                        |
+    ]])
+    -- Check it doesn't use the size of the closed window in the other tab page; size should only
+    -- change via the :wincmd below. Hide tabline so it doesn't affect sizes.
+    command('set showtabline=0 | tabnew | tabprevious | wincmd > | tabonly')
+    eq(2, eval('g:fired'))
+    screen:expect([[
+      rows: 5, cols: 25         │tty ready              |
+      rows: 2, cols: 25         │rows: 5, cols: 25      |
+      rows: 5, cols: 25         │rows: 5, cols: 50      |
+      rows: 5, cols: 26         │rows: 2, cols: 50      |
+      ^                          │rows: 5, cols: 25      |
+      {17:foo [-]                    }{18:foo [-]                }|
+                                                        |
+    ]])
+    n.expect([[
+      tty ready
+      rows: 5, cols: 25
+      rows: 5, cols: 50
+      rows: 2, cols: 50
+      rows: 5, cols: 25
+      rows: 5, cols: 40
+      rows: 5, cols: 25
+      rows: 5, cols: 50
+      rows: 5, cols: 25
+      rows: 2, cols: 25
+      rows: 5, cols: 25
+      rows: 5, cols: 26
+      ]])
   end)
 
   it('restores window options when switching terminals', function()
@@ -436,7 +603,7 @@ describe(':terminal window', function()
       file foo
       setlocal cursorline
       vsplit
-      setlocal nocursorline cursorcolumn
+      setlocal nocursorline cursorcolumn cursorlineopt=number
     ]])
     screen:expect([[
       {19:t}ty ready                │tty ready               |
@@ -580,6 +747,49 @@ describe(':terminal window', function()
       {7:[No Name]                 }{18:foo [-]                 }|
                                                         |
     ]])
+
+    command('wincmd l | enew | setlocal cursorline nocursorcolumn')
+    screen:expect([[
+      {1: }{5:2}{1: [No Name] }{2: foo }{4:                               }{2:X}|
+                               │{12:^                        }|
+      {6:~                        }│{6:~                       }|*3
+      {4:[No Name]                 }{7:[No Name]               }|
+                                                        |
+    ]])
+    command('buffer # | startinsert')
+    screen:expect([[
+      {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
+                               │rows: 5, cols: 25       |
+      {6:~                        }│rows: 5, cols: 50       |
+      {6:~                        }│^                        |
+      {6:~                        }│                        |
+      {4:[No Name]                 }{17:foo [-]                 }|
+      {1:-- TERMINAL --}                                    |
+    ]])
+    -- Switching to another buffer shouldn't change window options there. #37484
+    command('buffer # | call setline(1, ["aaa", "bbb", "ccc"]) | normal! jl')
+    screen:expect([[
+      {1: }{5:2}{1:+ [No Name] }{2: foo }{4:                              }{2:X}|
+                               │aaa                     |
+      {6:~                        }│{12:b^bb                     }|
+      {6:~                        }│ccc                     |
+      {6:~                        }│{6:~                       }|
+      {4:[No Name]                 }{7:[No Name] [+]           }|
+                                                        |
+    ]])
+    -- Window options are restored when switching back to the terminal buffer.
+    command('buffer #')
+    screen:expect([[
+      {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
+                               │{19:r}ows: 5, cols: 25       |
+      {6:~                        }│{19:r}ows: 5, cols: 50       |
+      {6:~                        }│^                        |
+      {6:~                        }│{19: }                       |
+      {4:[No Name]                 }{17:foo [-]                 }|
+                                                        |
+    ]])
+    -- 'cursorlineopt' should still be "number".
+    eq('number', eval('&l:cursorlineopt'))
   end)
 
   it('not unnecessarily redrawn by events', function()

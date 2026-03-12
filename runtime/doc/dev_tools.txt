@@ -21,7 +21,7 @@ You can start hacking on Nvim in less than 5 minutes:
         cd neovim
         # (Optional) Build and run Nvim:
         make
-        ./build/bin/nvim
+        VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
 3. Run a single test. We will start with "example_spec.lua", which is a real
    test that shows how tests are written: >
         make functionaltest TEST_FILE=test/functional/example_spec.lua
@@ -62,14 +62,14 @@ Low-level log messages sink to `$NVIM_LOG_FILE`.
 UI events are logged at DEBUG level. >
 
     rm -rf build/
-    make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG"
+    make CMAKE_BUILD_TYPE=Debug
 
 Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
 alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`. Requires
 `-no-pie` ([ref](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=860394#15)): >
 
     rm -rf build/
-    make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG -DCMAKE_C_FLAGS=-no-pie"
+    make CMAKE_BUILD_TYPE=Debug CMAKE_EXTRA_FLAGS="-DCMAKE_C_FLAGS=-no-pie"
 
 Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
 filter the log, e.g. at DEBUG level you might want to exclude UI messages: >
@@ -92,6 +92,8 @@ TUI INSPECT
 
 Use the Ghostty https://ghostty.org/ inspector tool to observe and query the
 output and events from any terminal application such as Nvim.
+
+From the Ghostty inspector you can click the "Terminal IO" tab to get a trace.
 
 TERMINFO LOGGING
 
@@ -139,9 +141,10 @@ region is repainted internally. To also highlight excess internal redraws, use >
 
 TUI TRACE
 
-In the rare case that you want to collect a trace of terminal output, the
-ancient `script` command is still the "state of the art". The libvterm
-`vterm-dump` utility formats the result for human-readability.
+From the Ghostty inspector you can click the "Terminal IO" tab to get a trace.
+
+Alternatively, the ancient `script` command is the "state of the art". The
+libvterm `vterm-dump` utility formats the result for human-readability.
 
 Record a Nvim terminal session and format it with `vterm-dump`: >sh
 

@@ -688,6 +688,7 @@ func Test_tabs()
 endfunc
 
 func Test_tabpage_cmdheight()
+  CheckScreendump
   CheckRunVimInTerminal
   call writefile([
         \ 'set laststatus=2',

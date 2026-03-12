@@ -7,7 +7,7 @@ package.path = (srcdir .. '/src/?.lua;')
   .. (gendir .. '/?.lua;')
   .. package.path
 
-_G.vim = require 'vim.shared'
+_G.vim = require 'vim._core.shared'
 _G.vim.inspect = require 'vim.inspect'
 _G.vim.iter = require 'vim.iter'
 package.cpath = package.cpath .. ';' .. nlualib

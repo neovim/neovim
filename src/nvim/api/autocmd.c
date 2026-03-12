@@ -823,12 +823,10 @@ static Array get_patterns_from_pattern_or_buf(Object pattern, bool has_buffer, B
   if (pattern.type != kObjectTypeNil) {
     if (pattern.type == kObjectTypeString) {
       const char *pat = pattern.data.string.data;
-      size_t patlen = aucmd_pattern_length(pat);
+      size_t patlen = aucmd_span_pattern(pat, &pat);
       while (patlen) {
         kvi_push(patterns, CBUF_TO_ARENA_OBJ(arena, pat, patlen));
-
-        pat = aucmd_next_pattern(pat, patlen);
-        patlen = aucmd_pattern_length(pat);
+        patlen = aucmd_span_pattern(pat + patlen, &pat);
       }
     } else if (pattern.type == kObjectTypeArray) {
       if (!check_string_array(pattern.data.array, "pattern", true, err)) {
@@ -838,12 +836,10 @@ static Array get_patterns_from_pattern_or_buf(Object pattern, bool has_buffer, B
       Array array = pattern.data.array;
       FOREACH_ITEM(array, entry, {
         const char *pat = entry.data.string.data;
-        size_t patlen = aucmd_pattern_length(pat);
+        size_t patlen = aucmd_span_pattern(pat, &pat);
         while (patlen) {
           kvi_push(patterns, CBUF_TO_ARENA_OBJ(arena, pat, patlen));
-
-          pat = aucmd_next_pattern(pat, patlen);
-          patlen = aucmd_pattern_length(pat);
+          patlen = aucmd_span_pattern(pat + patlen, &pat);
         }
       })
     } else {

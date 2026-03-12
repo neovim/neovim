@@ -59,4 +59,11 @@ describe('Normal mode', function()
                                     |
     ]])
   end)
+
+  it('"gk" does not crash with signcolumn=yes in narrow window #31274', function()
+    feed('o<Esc>')
+    command('1vsplit | setlocal signcolumn=yes')
+    feed('gk')
+    n.assert_alive()
+  end)
 end)

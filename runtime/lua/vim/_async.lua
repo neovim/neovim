@@ -1,6 +1,6 @@
 local M = {}
 
-local max_timeout = 30000
+local max_timeout = 120000
 local copcall = package.loaded.jit and pcall or require('coxpcall').pcall
 
 --- @param thread thread

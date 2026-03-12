@@ -641,6 +641,7 @@ new-generation language oriented to full-scenario intelligence.
 All highlighting is enabled by default.  To disable highlighting for a
 specific group, set the corresponding variable to 0 in your |vimrc|.
 All options to disable highlighting are: >
+	:let g:cangjie_builtin_color = 0
 	:let g:cangjie_comment_color = 0
 	:let g:cangjie_identifier_color = 0
 	:let g:cangjie_keyword_color = 0
@@ -1394,6 +1395,14 @@ to the contains clause.
 
 The backticks for inline java are highlighted according to the htmlError
 group to make them easier to see.
+
+
+GDB							*ft-gdb-syntax*
+
+The GDB syntax file provides syntax |folding| (see |:syn-fold|) for comments
+and block statements. This can be enabled with: >
+
+	:set foldmethod=syntax
 
 
 GROFF							*ft-groff-syntax*
@@ -2211,50 +2220,50 @@ If you don't want to highlight these errors, leave it unset.
 
 NROFF							*ft-nroff-syntax*
 
-The nroff syntax file works with AT&T n/troff out of the box.  You need to
-activate the GNU groff extra features included in the syntax file before you
-can use them.
-
-For example, Linux and BSD distributions use groff as their default text
-processing package.  In order to activate the extra syntax highlighting
-features for groff, arrange for files to be recognized as groff (see
+The nroff syntax file works with AT&T n/troff as-is.  To support GNU troff
+(groff), which Linux and BSD distributions use as their default typesetting
+package, arrange for files to be recognized as groff input (see
 |ft-groff-syntax|) or add the following option to your start-up files: >
 
   :let nroff_is_groff = 1
 
-Groff is different from the old AT&T n/troff that you may still find in
-Solaris.  Groff macro and request names can be longer than 2 characters and
-there are extensions to the language primitives.  For example, in AT&T troff
-you access the year as a 2-digit number with the request \(yr.  In groff you
-can use the same request, recognized for compatibility, or you can use groff's
-native syntax, \[yr].  Furthermore, you can use a 4-digit year directly:
-\[year].  Macro requests can be longer than 2 characters, for example, GNU mm
-accepts the requests ".VERBON" and ".VERBOFF" for creating verbatim
-environments.
+GNU troff differs from older AT&T n/troff programs (that you may still find in
+Solaris or Plan 9) by extending the "*roff" language syntax.  For example, in
+AT&T troff, you access the count of years since 1900 with the escape sequence
+\n(yr.  In groff you can do the same, which it recognizes for compatibility,
+or use groff's extended syntax, \n[yr].  AT&T troff documented the yr register
+as storing the "last two digits of current year", but had a Y2K problem; in
+groff, you can access the Gregorian year correctly: \n[year].  In groff, font,
+register, macro, string, and request names can exceed two characters; for
+example, with groff's mm package, the control lines ".VERBON" and ".VERBOFF"
+call macros of those names to bracket displays of "verbatim" content.
 
 In order to obtain the best formatted output g/troff can give you, you should
 follow a few simple rules about spacing and punctuation.
 
-1. Do not leave empty spaces at the end of lines.
+1. Break the line (put a carriage return) at the end of every sentence.  Don't
+   permit trailing spaces before the newline.
 
-2. Leave one space and one space only after an end-of-sentence period,
-   exclamation mark, etc.
+2. If a line ends with a period, question mark, or exclamation point that does
+   not end a sentence, follow it with the dummy character escape sequence \&.
 
-3. For reasons stated below, it is best to follow all period marks with a
-   carriage return.
+3. If you're using a macro package, employ its paragraphing macros to achieve
+   indentation of paragraphs and spacing between them.
 
-The reason behind these unusual tips is that g/n/troff have a line breaking
-algorithm that can be easily upset if you don't follow the rules given above.
+4. Use the empty request, a '.' on a line by itself, freely to visually
+   separate material for ease of document maintenance.
 
-Unlike TeX, troff fills text line-by-line, not paragraph-by-paragraph and,
-furthermore, it does not have a concept of glue or stretch, all horizontal and
-vertical space input will be output as is.
+The reason for these tips is that g/n/troff attempts to detect the ends of
+sentences, and can use that information to apply inter-sentence space.  Using
+them also minimizes the size of diffs where lines change due only to refilling
+in the text editor.  Macro packages typically employ inter-paragraph spacing
+amounts other than one vee (which is the result of a blank input line), and
+typically store that spacing amount, and that of paragraph indentation, in
+user-configurable registers so that pages lay out consistently.
 
-Therefore, you should be careful about not using more space between sentences
-than you intend to have in your final document.  For this reason, the common
-practice is to insert a carriage return immediately after all punctuation
-marks.  If you want to have "even" text in your final processed output, you
-need to maintain regular spacing in the input text.  To mark both trailing
+Unlike TeX, troff fills text line-by-line, not paragraph-by-paragraph.  If you
+desire consistent spacing between words and sentences in formatted output, you
+must maintain consistent spacing in the input text.  To mark both trailing
 spaces and two or more spaces after a punctuation as an error, use: >
 
   :let nroff_space_errors = 1
@@ -2273,12 +2282,11 @@ file: >
 
 	let b:preprocs_as_sections = 1
 
-As well, the syntax file adds an extra paragraph marker for the extended
-paragraph macro (.XP) in the ms package.
+Further, the syntax file adds an extra paragraph marker for the XP
+paragraphing macro in the ms package, a Berkeley and GNU extension.
 
-Finally, there is a |ft-groff-syntax| syntax file that can be used for
-enabling groff syntax highlighting either on a file basis or globally by
-default.
+Finally, there is a |ft-groff-syntax| file that can be used to enable groff
+syntax highlighting either on a per-file basis or globally by default.
 
 
 OCAML							*ft-ocaml-syntax*
@@ -2732,7 +2740,7 @@ Pascal.  Use this if you don't use assembly and Pascal: >
 
 PYTHON							*ft-python-syntax*
 
-There are six options to control Python syntax highlighting.
+There are seven options to control Python syntax highlighting.
 
 For highlighted numbers: >
 	:let python_no_number_highlight = 1
@@ -2752,14 +2760,17 @@ The first option implies the second one.
 For highlighted trailing whitespace and mix of spaces and tabs: >
 	:let python_space_error_highlight = 1
 
+For highlighted built-in constants distinguished from other keywords: >
+	:let python_constant_highlight = 1
+
 If you want all possible Python highlighting: >
 	:let python_highlight_all = 1
-This has the same effect as setting python_space_error_highlight and
-unsetting all the other ones.
+This has the same effect as setting python_space_error_highlight,
+python_constant_highlight and unsetting all the other ones.
 
 If you use Python 2 or straddling code (Python 2 and 3 compatible),
 you can enforce the use of an older syntax file with support for
-Python 2 and up to Python 3.5.  >
+Python 2 and up to Python 3.5. >
 	:let python_use_python2_syntax = 1
 This option will exclude all modern Python 3.6 or higher features.
 
@@ -4168,7 +4179,7 @@ the region, but not the contents of the region, are marked as concealable.
 Whether or not they are actually concealed depends on the setting on the
 'conceallevel' option.  The ends of a region can only be concealed separately
 in this way when they have their own highlighting via "matchgroup".  The
-|synconcealed()| function can be used to retrieve information about conealed
+|synconcealed()| function can be used to retrieve information about concealed
 items.
 
 cchar							*:syn-cchar*
@@ -4406,7 +4417,7 @@ highlighting, and "bbb" where ccBar is used. >
    fff	       bbb	fff	 bbb
 
 Note the use of ".\{-}" to skip as little as possible until the next Bar.
-when ".*" would be used, the "asdf" in between "Bar" and "Foo" would be
+when `.*` would be used, the "asdf" in between "Bar" and "Foo" would be
 highlighted according to the "ccFoobar" group, because the ccFooBar match
 would include the first "Foo" and the last "Bar" in the line (see |pattern|).
 
@@ -4438,7 +4449,7 @@ Example: >
   :syn match ifstart "\<if.*"	  nextgroup=ifline skipwhite skipempty
   :syn match ifline  "[^ \t].*" nextgroup=ifline skipwhite skipempty contained
   :syn match ifline  "endif"	contained
-Note that the "[^ \t].*" match matches all non-white text.  Thus it would also
+Note that the `[^ \t].*` match matches all non-white text.  Thus it would also
 match "endif".	Therefore the "endif" match is put last, so that it takes
 precedence.
 Note that this example doesn't work for nested "if"s.  You need to add

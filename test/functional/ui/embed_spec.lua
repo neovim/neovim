@@ -30,8 +30,8 @@ local function test_embed(ext_linegrid)
       [100] = { foreground = Screen.colors.NvimDarkCyan },
       [101] = { foreground = Screen.colors.NvimDarkRed },
       [102] = {
-        background = Screen.colors.NvimDarkGrey3,
-        foreground = Screen.colors.NvimLightGrey3,
+        background = Screen.colors.NvimLightGrey4,
+        foreground = Screen.colors.NvimDarkGrey2,
       },
     }
   end
@@ -284,7 +284,6 @@ describe('--embed UI', function()
   end)
 
   it('closing stdio with another remote UI does not leak memory #36392', function()
-    t.skip(t.is_os('win')) -- n.connect() hangs on Windows
     clear({ args_rm = { '--headless' } })
     Screen.new()
     eq(1, #api.nvim_list_uis())
@@ -299,7 +298,6 @@ end)
 
 describe('--embed --listen UI', function()
   it('waits for connection on listening address', function()
-    t.skip(t.is_os('win'))
     clear()
     local child_server = assert(n.new_pipename())
     fn.jobstart({
