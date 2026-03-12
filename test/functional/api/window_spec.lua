@@ -3168,7 +3168,6 @@ describe('API/win', function()
       )
       command('quit!')
 
-      -- Can't switch away from window before moving it to a different tabpage during textlock.
       exec(([[
         new
         call setline(1, 'foo')
@@ -3180,6 +3179,41 @@ describe('API/win', function()
         pcall_err(command, 'normal! ==')
       )
       eq(cur_win, api.nvim_get_current_win())
+      exec(([[
+        wincmd p
+        call setline(1, 'bar')
+        setlocal indentexpr=nvim_win_set_config(win_getid(winnr('#')),#{split:'left',win:%d})
+      ]]):format(t2_win))
+      neq(cur_win, api.nvim_get_current_win())
+      matches(
+        'E565: Not allowed to change text or change window$',
+        pcall_err(command, 'normal! ==')
+      )
+      -- expr_map_lock
+      exec(([[
+        nnoremap <expr> @ nvim_win_set_config(win_getid(winnr('#')),#{split:'left',win:%d})
+      ]]):format(t2_win))
+      neq(cur_win, api.nvim_get_current_win())
+      matches(
+        'E565: Not allowed to change text or change window$',
+        pcall_err(fn.feedkeys, '@', 'x')
+      )
+
+      exec(([[
+        wincmd p
+        autocmd WinNewPre * ++once call nvim_win_set_config(0, #{relative:'editor', win:%d, row:0, col:0, width:1, height:1})
+      ]]):format(t2_win))
+      matches(
+        'E1312: Not allowed to change the window layout in this autocmd$',
+        pcall_err(command, 'split')
+      )
+      eq(cur_win, api.nvim_get_current_win()) -- :split didn't enter new window due to error
+
+      exec(([[
+        autocmd WinLeave * ++once call nvim_win_set_config(0, #{relative:'editor', win:%d, row:0, col:0, width:1, height:1})
+      ]]):format(t2_win))
+      matches('Cannot move window to another tabpage whilst in use$', pcall_err(command, 'quit'))
+      eq(cur_win, api.nvim_get_current_win()) -- :quit didn't close window due to error
     end)
 
     it('updates statusline when moving bottom split', function()
