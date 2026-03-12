@@ -30,10 +30,6 @@ end
 -- for legacy reasons (uri) or for performance (_inspector).
 -- most new things should go into a submodule namespace ( vim.foobar.do_thing() )
 vim._extra = {
-  uri_from_fname = true,
-  uri_from_bufnr = true,
-  uri_to_fname = true,
-  uri_to_bufnr = true,
   show_pos = true,
   inspect_pos = true,
 }
@@ -1310,5 +1306,15 @@ vim.loop = vim.uv
 
 -- Deprecated. Remove at Nvim 2.0
 vim.highlight = vim._defer_deprecated_module('vim.highlight', 'vim.hl')
+
+local uri = require('vim.uri')
+--- @deprecated
+vim.uri_from_fname = uri.from_fname
+--- @deprecated
+vim.uri_from_bufnr = uri.from_bufnr
+--- @deprecated
+vim.uri_to_fname = uri.to_fname
+--- @deprecated
+vim.uri_to_bufnr = uri.to_bufnr
 
 return vim
