@@ -97,6 +97,10 @@
 
 static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buffer name");
 
+// Bitmask with 0x80 set in each byte of a uint64_t word, used to detect
+// non-ASCII bytes (high bit set) in multiple bytes at once.
+#define NONASCII_MASK (((uint64_t)(-1) / 0xFF) * 0x80)
+
 void filemess(buf_T *buf, char *name, char *s)
 {
   int prev_msg_col = msg_col;
@@ -1333,9 +1337,24 @@ retry:
         bool incomplete_tail = false;
 
         // Reading UTF-8: Check if the bytes are valid UTF-8.
-        for (p = (uint8_t *)ptr;; p++) {
-          int todo = (int)(((uint8_t *)ptr + size) - p);
+        for (p = (uint8_t *)ptr;;) {
+          // Skip ASCII bytes quickly using word-at-a-time check.
+          {
+            uint8_t *ascii_end = (uint8_t *)ptr + size;
+            while (ascii_end - p >= (ptrdiff_t)sizeof(uint64_t)) {
+              uint64_t word;
+              memcpy(&word, p, sizeof(uint64_t));
+              if (word & NONASCII_MASK) {
+                break;
+              }
+              p += sizeof(uint64_t);
+            }
+            while (p < ascii_end && *p < 0x80) {
+              p++;
+            }
+          }
 
+          int todo = (int)(((uint8_t *)ptr + size) - p);
           if (todo <= 0) {
             break;
           }
@@ -1384,13 +1403,15 @@ retry:
               // Drop, keep or replace the bad byte.
               if (bad_char_behavior == BAD_DROP) {
                 memmove(p, p + 1, (size_t)(todo - 1));
-                p--;
                 size--;
-              } else if (bad_char_behavior != BAD_KEEP) {
-                *p = (uint8_t)bad_char_behavior;
+              } else {
+                if (bad_char_behavior != BAD_KEEP) {
+                  *p = (uint8_t)bad_char_behavior;
+                }
+                p++;
               }
             } else {
-              p += l - 1;
+              p += l;
             }
           }
         }
@@ -1515,60 +1536,83 @@ rewind_retry:
         }
       }
     } else {
-      ptr--;
-      while (++ptr, --size >= 0) {
-        if ((c = *ptr) != NUL && c != NL) {        // catch most common case
-          continue;
-        }
-        if (c == NUL) {
-          *ptr = NL;            // NULs are replaced by newlines!
-        } else {
-          if (skip_count == 0) {
-            *ptr = NUL;                         // end of line
-            len = (colnr_T)(ptr - line_start + 1);
-            if (fileformat == EOL_DOS) {
-              if (ptr > line_start && ptr[-1] == CAR) {
-                // remove CR before NL
-                ptr[-1] = NUL;
-                len--;
-              } else if (ff_error != EOL_DOS) {
-                // Reading in Dos format, but no CR-LF found!
-                // When 'fileformats' includes "unix", delete all
-                // the lines read so far and start all over again.
-                // Otherwise give an error message later.
-                if (try_unix
-                    && !read_stdin
-                    && (read_buffer || vim_lseek(fd, 0, SEEK_SET) == 0)) {
-                  fileformat = EOL_UNIX;
-                  if (set_options) {
-                    set_fileformat(EOL_UNIX, OPT_LOCAL);
-                  }
-                  file_rewind = true;
-                  keep_fileformat = true;
-                  goto retry;
-                }
-                ff_error = EOL_DOS;
-              }
-            }
-            if (ml_append(lnum, line_start, len, newfile) == FAIL) {
-              error = true;
-              break;
-            }
-            if (read_undo_file) {
-              sha256_update(&sha_ctx, (uint8_t *)line_start, (size_t)len);
-            }
-            lnum++;
-            if (--read_count == 0) {
-              error = true;                         // break loop
-              line_start = ptr;                 // nothing left to write
-              break;
-            }
-          } else {
-            skip_count--;
+      // Use memchr() for SIMD-optimized newline scanning instead
+      // of scanning each byte individually.
+      char *end = ptr + size;
+
+      while (ptr < end) {
+        char *nl = memchr(ptr, NL, (size_t)(end - ptr));
+        char *nul_scan;
+
+        if (nl == NULL) {
+          // No more newlines in buffer.
+          // Replace any NUL bytes with NL in remaining data.
+          while ((nul_scan = memchr(ptr, NUL, (size_t)(end - ptr))) != NULL) {
+            *nul_scan = NL;
+            ptr = nul_scan + 1;
           }
-          line_start = ptr + 1;
+          ptr = end;
+          break;
         }
+
+        // Replace NUL bytes with NL before the newline.
+        {
+          char *scan = ptr;
+          while ((nul_scan = memchr(scan, NUL, (size_t)(nl - scan))) != NULL) {
+            *nul_scan = NL;
+            scan = nul_scan + 1;
+          }
+        }
+
+        // Process the newline.
+        ptr = nl;
+        if (skip_count == 0) {
+          *ptr = NUL;                         // end of line
+          len = (colnr_T)(ptr - line_start + 1);
+          if (fileformat == EOL_DOS) {
+            if (ptr > line_start && ptr[-1] == CAR) {
+              // remove CR before NL
+              ptr[-1] = NUL;
+              len--;
+            } else if (ff_error != EOL_DOS) {
+              // Reading in Dos format, but no CR-LF found!
+              // When 'fileformats' includes "unix", delete all
+              // the lines read so far and start all over again.
+              // Otherwise give an error message later.
+              if (try_unix
+                  && !read_stdin
+                  && (read_buffer || vim_lseek(fd, 0, SEEK_SET) == 0)) {
+                fileformat = EOL_UNIX;
+                if (set_options) {
+                  set_fileformat(EOL_UNIX, OPT_LOCAL);
+                }
+                file_rewind = true;
+                keep_fileformat = true;
+                goto retry;
+              }
+              ff_error = EOL_DOS;
+            }
+          }
+          if (ml_append(lnum, line_start, len, newfile) == FAIL) {
+            error = true;
+            break;
+          }
+          if (read_undo_file) {
+            sha256_update(&sha_ctx, (uint8_t *)line_start, (size_t)len);
+          }
+          lnum++;
+          if (--read_count == 0) {
+            error = true;                         // break loop
+            line_start = ptr;                 // nothing left to write
+            break;
+          }
+        } else {
+          skip_count--;
+        }
+        line_start = ptr + 1;
+        ptr++;
       }
+      size = -1;
     }
     linerest = (ptr - line_start);
     os_breakcheck();
