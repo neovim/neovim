@@ -15,8 +15,8 @@
             .lazy = true,
         },
         .luv = .{
-            .url = "git+https://github.com/luvit/luv#49442b635771f18972f9de9dac0ab0344f9424a3",
-            .hash = "N-V-__8AAL-gDwDWbpvymCMBg2HKNalrjUKWc7DN5NAjJsVm",
+            .url = "git+https://github.com/luvit/luv#f65fe9d7616f9fbcd20227fc7a73b38d1c5c180d",
+            .hash = "N-V-__8AANegDwD93oh3SzPCFx_LVS4ash9TDITp7Oq0HlDJ",
             .lazy = true,
         },
         .lua_compat53 = .{

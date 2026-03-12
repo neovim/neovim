@@ -32,7 +32,7 @@ Here is a small example showing a TCP echo server:
     local uv = vim.uv
 
     local server = uv.new_tcp()
-    server:bind("127.0.0.1", 1337)
+    assert(server:bind("127.0.0.1", 1337))
     server:listen(128, function (err)
       assert(not err, err)
       local client = uv.new_tcp()
