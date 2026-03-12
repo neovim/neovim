@@ -541,6 +541,18 @@ end
 
 --- Default autocommands. See |default-autocmds|
 do
+  -- Warn if $NVIM_LOG_FILE or $XDG_STATE_HOME are inaccessible. #38039
+  if vim.v.vim_did_enter then
+    require('vim._core.log').check_log_file()
+  else
+    vim.api.nvim_create_autocmd('VimEnter', {
+      once = true,
+      callback = function()
+        require('vim._core.log').check_log_file()
+      end,
+    })
+  end
+
   local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim.terminal', {})
   vim.api.nvim_create_autocmd('BufReadCmd', {
     pattern = 'term://*',

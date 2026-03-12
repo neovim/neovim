@@ -397,6 +397,7 @@ PLUGINS
 STARTUP
 
 • |v:argf| provides file arguments given at startup.
+• Nvim shows a warning if the log file path is inaccessible.
 
 TERMINAL
 
