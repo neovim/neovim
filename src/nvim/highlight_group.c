@@ -1004,6 +1004,25 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   need_highlight_changed = true;
 }
 
+static bool set_gui_color(int idx, bool init, const char *arg, RgbValue *color, int *color_idx)
+{
+  if (init && (hl_table[idx].sg_set & SG_GUI)) {
+    return false;
+  }
+  if (!init) {
+    hl_table[idx].sg_set |= SG_GUI;
+  }
+  RgbValue old_color = *color;
+  int old_idx = *color_idx;
+  if (strcmp(arg, "NONE") != 0) {
+    *color = name_to_color(arg, color_idx);
+  } else {
+    *color = -1;
+    *color_idx = kColorIdxNone;
+  }
+  return *color != old_color || *color_idx != old_idx;
+}
+
 /// Handle ":highlight" command
 ///
 /// When using ":highlight clear" this is called recursively for each group with
@@ -1401,77 +1420,20 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           }
         }
       } else if (strcmp(key, "GUIFG") == 0) {
-        int *indexp = &hl_table[idx].sg_rgb_fg_idx;
-
-        if (!init || !(hl_table[idx].sg_set & SG_GUI)) {
-          if (!init) {
-            hl_table[idx].sg_set |= SG_GUI;
-          }
-
-          RgbValue old_color = hl_table[idx].sg_rgb_fg;
-          int old_idx = hl_table[idx].sg_rgb_fg_idx;
-
-          if (strcmp(arg, "NONE") != 0) {
-            hl_table[idx].sg_rgb_fg = name_to_color(arg, indexp);
-          } else {
-            hl_table[idx].sg_rgb_fg = -1;
-            hl_table[idx].sg_rgb_fg_idx = kColorIdxNone;
-          }
-
-          did_change = hl_table[idx].sg_rgb_fg != old_color
-                       || hl_table[idx].sg_rgb_fg_idx != old_idx;
-        }
-
+        did_change = set_gui_color(idx, init, arg, &hl_table[idx].sg_rgb_fg,
+                                   &hl_table[idx].sg_rgb_fg_idx);
         if (is_normal_group) {
           normal_fg = hl_table[idx].sg_rgb_fg;
         }
       } else if (strcmp(key, "GUIBG") == 0) {
-        int *indexp = &hl_table[idx].sg_rgb_bg_idx;
-
-        if (!init || !(hl_table[idx].sg_set & SG_GUI)) {
-          if (!init) {
-            hl_table[idx].sg_set |= SG_GUI;
-          }
-
-          RgbValue old_color = hl_table[idx].sg_rgb_bg;
-          int old_idx = hl_table[idx].sg_rgb_bg_idx;
-
-          if (strcmp(arg, "NONE") != 0) {
-            hl_table[idx].sg_rgb_bg = name_to_color(arg, indexp);
-          } else {
-            hl_table[idx].sg_rgb_bg = -1;
-            hl_table[idx].sg_rgb_bg_idx = kColorIdxNone;
-          }
-
-          did_change = hl_table[idx].sg_rgb_bg != old_color
-                       || hl_table[idx].sg_rgb_bg_idx != old_idx;
-        }
-
+        did_change = set_gui_color(idx, init, arg, &hl_table[idx].sg_rgb_bg,
+                                   &hl_table[idx].sg_rgb_bg_idx);
         if (is_normal_group) {
           normal_bg = hl_table[idx].sg_rgb_bg;
         }
       } else if (strcmp(key, "GUISP") == 0) {
-        int *indexp = &hl_table[idx].sg_rgb_sp_idx;
-
-        if (!init || !(hl_table[idx].sg_set & SG_GUI)) {
-          if (!init) {
-            hl_table[idx].sg_set |= SG_GUI;
-          }
-
-          RgbValue old_color = hl_table[idx].sg_rgb_sp;
-          int old_idx = hl_table[idx].sg_rgb_sp_idx;
-
-          if (strcmp(arg, "NONE") != 0) {
-            hl_table[idx].sg_rgb_sp = name_to_color(arg, indexp);
-          } else {
-            hl_table[idx].sg_rgb_sp = -1;
-            hl_table[idx].sg_rgb_sp_idx = kColorIdxNone;
-          }
-
-          did_change = hl_table[idx].sg_rgb_sp != old_color
-                       || hl_table[idx].sg_rgb_sp_idx != old_idx;
-        }
-
+        did_change = set_gui_color(idx, init, arg, &hl_table[idx].sg_rgb_sp,
+                                   &hl_table[idx].sg_rgb_sp_idx);
         if (is_normal_group) {
           normal_sp = hl_table[idx].sg_rgb_sp;
         }
