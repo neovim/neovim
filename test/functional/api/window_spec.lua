@@ -3241,6 +3241,46 @@ describe('API/win', function()
         pcall_err(api.nvim_win_set_config, win, cfg)
       )
     end)
+
+    it('removes last statusline if needed', function()
+      local screen = Screen.new(30, 9)
+      command('set laststatus=1 | botright split')
+      screen:expect([[
+                                      |
+        {1:~                             }|*2
+        {2:[No Name]                     }|
+        ^                              |
+        {1:~                             }|*2
+        {3:[No Name]                     }|
+                                      |
+      ]])
+      api.nvim_win_set_config(0, { relative = 'editor', row = 0, col = 0, width = 4, height = 4 })
+      screen:expect([[
+        {4:^    }                          |
+        {11:~   }{1:                          }|*3
+        {1:~                             }|*4
+                                      |
+      ]])
+      command('quit | set laststatus=2 | botright split')
+      screen:expect([[
+                                      |
+        {1:~                             }|*2
+        {2:[No Name]                     }|
+        ^                              |
+        {1:~                             }|*2
+        {3:[No Name]                     }|
+                                      |
+      ]])
+      api.nvim_win_set_config(0, { relative = 'editor', row = 1, col = 5, width = 4, height = 4 })
+      screen:expect([[
+                                      |
+        {1:~    }{4:^    }{1:                     }|
+        {1:~    }{11:~   }{1:                     }|*3
+        {1:~                             }|*2
+        {2:[No Name]                     }|
+                                      |
+      ]])
+    end)
   end)
 
   describe('get_config', function()

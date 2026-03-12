@@ -100,8 +100,9 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
     int dir;
     winframe_remove(wp, &dir, NULL, NULL);
     XFREE_CLEAR(wp->w_frame);
-    win_comp_pos();  // recompute window positions
     win_remove(wp, NULL);
+    last_status(false);  // may need to remove last status line
+    win_comp_pos();  // recompute window positions
     win_append(lastwin_nofloating(NULL), wp, NULL);
   }
   wp->w_floating = true;
