@@ -181,10 +181,11 @@ EXTERN bool did_endif INIT( = false);        // just had ":endif"
 EXTERN int did_emsg;                        // incremented by emsg() when a
                                             // message is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
-EXTERN bool did_emsg_syntax;                // did_emsg set because of a
-                                            // syntax error
+EXTERN bool did_emsg_syntax;                // did_emsg set by a syntax error
 EXTERN int called_emsg;                     // always incremented by emsg()
-EXTERN int ex_exitval INIT( = 0);            // exit value for ex mode
+EXTERN int ex_exitval INIT( = 0);            // Exitcode for script mode (`exmode_active`).
+                                             //   1: Vimscript error
+                                             //   2: Lua error
 EXTERN bool emsg_on_display INIT( = false);  // there is an error message
 EXTERN bool rc_did_emsg INIT( = false);      // vim_regcomp() called emsg()
 
@@ -568,8 +569,7 @@ EXTERN bool finish_op INIT( = false);    // true while an operator is pending
 EXTERN int opcount INIT( = 0);           // count for pending operator
 EXTERN int motion_force INIT( = 0);      // motion force for pending operator
 
-// Ex Mode (Q) state
-EXTERN bool exmode_active INIT( = false);  // true if Ex mode is active
+EXTERN bool exmode_active INIT( = false);  // Script mode (-es) or Ex mode (gQ).
 
 /// Flag set when normal_check() should return 0 when entering Ex mode.
 EXTERN bool pending_exmode_active INIT( = false);
