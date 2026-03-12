@@ -336,6 +336,9 @@ local VIM_CMD_ARG_MAX = 20
 ---
 --- -- Ex command :vertical resize +2
 --- vim.cmd.resize({ '+2', mods = { vertical = true } })
+---
+--- -- Pass arg literally, without needing to escape special chars:
+--- vim.cmd.edit({ '%foo"|bar#baz"', magic = { file = false, bar = false } })
 --- ```
 ---
 ---@diagnostic disable-next-line: undefined-doc-param

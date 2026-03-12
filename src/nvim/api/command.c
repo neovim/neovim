@@ -319,25 +319,32 @@ end:
   return result;
 }
 
-/// Executes an Ex command.
+/// Executes an Ex command `cmd`, specified as a Dict with the same structure as returned by
+/// |nvim_parse_cmd()|.
 ///
-/// Unlike |nvim_command()| this command takes a structured Dict instead of a String. This
-/// allows for easier construction and manipulation of an Ex command. This also allows for things
-/// such as having spaces inside a command argument, expanding filenames in a command that otherwise
-/// doesn't expand filenames, etc. Command arguments may also be Number, Boolean or String.
+/// Use `magic={…=false}` to disable special chars:
+/// ```lua
+/// vim.api.nvim_cmd({
+///     cmd = 'edit',
+///     args = { '%foo"|bar#baz"' },
+///     magic = { file = false, bar = false }
+///   },
+///   {}
+/// )
+/// ```
 ///
-/// The first argument may also be used instead of count for commands that support it in order to
-/// make their usage simpler with |vim.cmd()|. For example, instead of
-/// `vim.cmd.bdelete{ count = 2 }`, you may do `vim.cmd.bdelete(2)`.
+/// - See |nvim_parse_cmd()| to parse a cmdline string (which can then be passed to `nvim_cmd`).
+/// - See |nvim_command()| to execute a cmdline string.
 ///
 /// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
-/// @see |nvim_exec2()|
 /// @see |nvim_command()|
+/// @see |nvim_exec2()|
+/// @see |nvim_parse_cmd()|
 ///
-/// @param cmd       Command to execute. Must be a Dict that can contain the same values as
-///                  the return value of |nvim_parse_cmd()| except "addr", "nargs" and "nextcmd"
-///                  which are ignored if provided. All values except for "cmd" are optional.
+/// @param cmd       Command to execute, a Dict with the same structure as the return value of
+///                  |nvim_parse_cmd()| (except "addr", "nargs" and "nextcmd" are ignored).
+///                  All keys except "cmd" are optional.
 /// @param opts      Optional parameters.
 ///                  - output: (boolean, default false) Whether to return command output.
 /// @param[out] err  Error details, if any.

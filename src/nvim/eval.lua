@@ -1806,6 +1806,8 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
+      Lua: see |vim.fs.rm()|.
+
       Without {flags} or with {flags} empty: Deletes the file by the
       name {fname}.
 
@@ -2396,7 +2398,7 @@ M.funcs = {
       			current script ID  |<SID>|
       	<script>	Sourced script file, or script file
       			where the current function was defined.
-      			For Lua see |lua-script-location|.
+      			Lua: see |lua-script-location|.
       	<stack>		Call stack
       	<cword>		Word under the cursor
       	<cWORD>		WORD under the cursor
@@ -6105,7 +6107,7 @@ M.funcs = {
   jobstart = {
     args = { 1, 2 },
     desc = [=[
-      Note: Prefer |vim.system()| in Lua (unless using `rpc`, `pty`, or `term`).
+      Lua: Prefer |vim.system()| (unless using `rpc`, `pty`, or `term`).
 
       Spawns {cmd} as a job.
       If {cmd} is a List it runs directly (no 'shell').
@@ -12261,7 +12263,7 @@ M.funcs = {
     base = 1,
     tags = { 'E677' },
     desc = [=[
-      Note: Prefer |vim.system()| in Lua.
+      Lua: Prefer |vim.system()|.
 
       Gets the output of {cmd} as a |string| (|systemlist()| returns
       a |List|) and sets |v:shell_error| to the error code.
@@ -12889,7 +12891,7 @@ M.funcs = {
     base = 1,
     tags = { 'E882' },
     desc = [=[
-      Note: Prefer |vim.list.unique()| in Lua.
+      Lua: Prefer |vim.list.unique()|.
 
       Remove second and succeeding copies of repeated adjacent
       {list} items in-place.  Returns {list}.  If you want a list
@@ -13382,7 +13384,7 @@ M.funcs = {
       is "10.0", Windows 8 is "6.2", Windows XP is "5.1".  For
       non-MS-Windows systems the result is an empty string.
 
-      See also Lua |uv.os_uname()|.
+      Lua: see |uv.os_uname()|.
     ]=],
     fast = true,
     name = 'windowsversion',
