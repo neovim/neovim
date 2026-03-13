@@ -26,6 +26,7 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
     }
 
     const env = test_step.getEnvMap();
+    try env.put("NVIM_TEST", "1");
     try env.put("VIMRUNTIME", "runtime");
     try env.put("NVIM_RPLUGIN_MANIFEST", "Xtest_xdg/Xtest_rplugin_manifest");
     try env.put("XDG_CONFIG_HOME", "Xtest_xdg/config");
