@@ -114,6 +114,15 @@ describe('nlua_expand_pat', function()
     )
   end)
 
+  it('ignore deprecated filed', function()
+    -- deprecated api function
+    eq({}, get_completions('vim.api.nvim_buf_add')[1])
+    -- deprecated lsp function
+    eq({}, get_completions('vim.lsp.client_is')[1])
+    -- deprecated lua function
+    eq({}, get_completions('vim.regi')[1])
+  end)
+
   it('with lazy submodules of "vim" global', function()
     eq({ { 'inspect', 'inspect_pos' }, 4 }, get_completions('vim.inspec'))
     eq({ { 'treesitter' }, 4 }, get_completions('vim.treesi'))
