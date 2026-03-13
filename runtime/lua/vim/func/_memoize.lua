@@ -29,7 +29,7 @@ local function resolve_hash(hash)
     else
       local c = hash:match('^concat%-(%d+)')
       if c then
-        hash = concat_hash(vim._ensure_integer(c))
+        hash = concat_hash(vim._assert_integer(c))
       else
         error('invalid value for hash: ' .. hash)
       end

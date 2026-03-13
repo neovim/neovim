@@ -25,7 +25,7 @@ local PATTERNS = {
 ---@param hex string
 ---@return string
 local function hex_to_char(hex)
-  return schar(vim._ensure_integer(hex, 16))
+  return schar(vim._assert_integer(hex, 16))
 end
 
 ---@param char string

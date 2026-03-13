@@ -1645,7 +1645,7 @@ end
 --- @param x any Value to convert.
 --- @param base? integer Numeric base passed to `tonumber()`.
 --- @return integer integer Converted integer value.
-function vim._ensure_integer(x, base)
+function vim._assert_integer(x, base)
   return vim._tointeger(x, base) or error(('Cannot convert %s to integer'):format(x))
 end
 

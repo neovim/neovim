@@ -228,7 +228,7 @@ local function cterm_to_hex(colorstr)
   if colorstr:sub(1, 1) == '#' then
     return colorstr
   end
-  local color = vim._ensure_integer(colorstr)
+  local color = vim._assert_integer(colorstr)
   assert(0 <= color and color <= 255)
   if cterm_color_cache[color] then
     return cterm_color_cache[color]
@@ -238,7 +238,7 @@ local function cterm_to_hex(colorstr)
     cterm_color_cache[color] = hex
   else
     notify("Couldn't get terminal colors, using fallback")
-    local t_Co = vim._ensure_integer(vim.api.nvim_eval('&t_Co'))
+    local t_Co = vim._assert_integer(vim.api.nvim_eval('&t_Co'))
     if t_Co <= 8 then
       cterm_color_cache = cterm_8_to_hex
     elseif t_Co == 88 then
@@ -782,7 +782,7 @@ local function styletable_statuscolumn(state)
       end)
       minwidth = minwidth + math.min(maxfold, max)
     else
-      minwidth = minwidth + vim._ensure_integer(foldcolumn)
+      minwidth = minwidth + vim._assert_integer(foldcolumn)
     end
   end
 

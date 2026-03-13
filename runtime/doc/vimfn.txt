@@ -1551,6 +1551,8 @@ deepcopy({expr} [, {noref}])                                   *deepcopy()* *E69
                   (`T`)
 
 delete({fname} [, {flags}])                                           *delete()*
+		Lua: see |vim.fs.rm()|.
+
 		Without {flags} or with {flags} empty: Deletes the file by the
 		name {fname}.
 
@@ -2093,7 +2095,7 @@ expand({string} [, {nosuf} [, {list}]])                               *expand()*
 					current script ID  |<SID>|
 			<script>	Sourced script file, or script file
 					where the current function was defined.
-					For Lua see |lua-script-location|.
+					Lua: see |lua-script-location|.
 			<stack>		Call stack
 			<cword>		Word under the cursor
 			<cWORD>		WORD under the cursor
@@ -5458,7 +5460,7 @@ jobresize({job}, {width}, {height})                                *jobresize()*
                   (`any`)
 
 jobstart({cmd} [, {opts}])                                          *jobstart()*
-		Note: Prefer |vim.system()| in Lua (unless using `rpc`, `pty`, or `term`).
+		Lua: Prefer |vim.system()| (unless using `rpc`, `pty`, or `term`).
 
 		Spawns {cmd} as a job.
 		If {cmd} is a List it runs directly (no 'shell').
@@ -11144,7 +11146,7 @@ synstack({lnum}, {col})                                             *synstack()*
                   (`integer[]`)
 
 system({cmd} [, {input}])                                        *system()* *E677*
-		Note: Prefer |vim.system()| in Lua.
+		Lua: Prefer |vim.system()|.
 
 		Gets the output of {cmd} as a |string| (|systemlist()| returns
 		a |List|) and sets |v:shell_error| to the error code.
@@ -11688,7 +11690,7 @@ undotree([{buf}])                                                   *undotree()*
                   (`vim.fn.undotree.ret`)
 
 uniq({list} [, {func} [, {dict}]])                                 *uniq()* *E882*
-		Note: Prefer |vim.list.unique()| in Lua.
+		Lua: Prefer |vim.list.unique()|.
 
 		Remove second and succeeding copies of repeated adjacent
 		{list} items in-place.  Returns {list}.  If you want a list
@@ -12146,7 +12148,7 @@ windowsversion()                                              *windowsversion()*
 		is "10.0", Windows 8 is "6.2", Windows XP is "5.1".  For
 		non-MS-Windows systems the result is an empty string.
 
-		See also Lua |uv.os_uname()|.
+		Lua: see |uv.os_uname()|.
 
                 Return: ~
                   (`string`)
