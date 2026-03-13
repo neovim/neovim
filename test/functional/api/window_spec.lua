@@ -3354,6 +3354,24 @@ describe('API/win', function()
                                       |
       ]])
     end)
+
+    it('can convert external window to non-external', function()
+      Screen.new(20, 7, { ext_multigrid = true }) -- multigrid needed for external windows
+      api.nvim_open_win(0, true, { external = true, width = 5, height = 5 })
+      eq(true, api.nvim_win_get_config(0).external)
+      api.nvim_win_set_config(0, { split = 'below', win = fn.win_getid(1) })
+      eq(false, api.nvim_win_get_config(0).external)
+
+      api.nvim_win_set_config(0, { external = true, width = 5, height = 5 })
+      eq(true, api.nvim_win_get_config(0).external)
+      api.nvim_win_set_config(0, { relative = 'editor', row = 3, col = 3 })
+      eq(false, api.nvim_win_get_config(0).external)
+
+      api.nvim_win_set_config(0, { external = true, width = 5, height = 5 })
+      eq(true, api.nvim_win_get_config(0).external)
+      api.nvim_win_set_config(0, { external = false })
+      eq(false, api.nvim_win_get_config(0).external)
+    end)
   end)
 
   describe('get_config', function()
@@ -3838,35 +3856,6 @@ describe('API/win', function()
       command('tabprev | autocmd WinEnter * ++once wincmd p')
       eq(
         ('Failed to switch away from window %d'):format(float_win),
-        pcall_err(api.nvim_win_set_config, float_win, { win = tab3_win })
-      )
-      eq(float_win, api.nvim_get_current_win())
-
-      -- Need multigrid for external windows.
-      Screen.new(20, 9, { ext_multigrid = true })
-      api.nvim_win_set_config(float_win, { external = true, width = 5, height = 5 })
-      eq(true, api.nvim_win_get_config(float_win).external)
-      eq(
-        ('Cannot move external window to another tabpage'):format(float_win),
-        pcall_err(
-          api.nvim_win_set_config,
-          float_win,
-          { relative = 'win', win = tab3_win, row = 0, col = 0 }
-        )
-      )
-      eq(float_win, api.nvim_get_current_win())
-
-      -- Error if made external by autocommand when attempting to move.
-      api.nvim_win_set_config(
-        float_win,
-        { relative = 'editor', row = 0, col = 0, width = 5, height = 5 }
-      )
-      eq(false, api.nvim_win_get_config(float_win).external)
-      command(
-        ('autocmd WinLeave * ++once call nvim_win_set_config(%d, #{external: 1})'):format(float_win)
-      )
-      eq(
-        ('Cannot move external window to another tabpage'):format(float_win),
         pcall_err(api.nvim_win_set_config, float_win, { win = tab3_win })
       )
       eq(float_win, api.nvim_get_current_win())

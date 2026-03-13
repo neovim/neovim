@@ -415,10 +415,6 @@ static bool win_can_move_tp(win_T *wp, tabpage_T *tp, Error *err)
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return false;
   }
-  if (wp->w_config.external) {
-    api_set_error(err, kErrorTypeException, "Cannot move external window to another tabpage");
-    return false;
-  }
   return true;
 }
 
@@ -769,7 +765,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   WinConfig fconfig = win->w_config;
 
   bool to_split = config->relative.size == 0
-                  && !(HAS_KEY_X(config, external) ? config->external : fconfig.external)
+                  && !(HAS_KEY_X(config, external) && config->external)
                   && (has_split || has_vertical || was_split);
 
   if (!parse_win_config(win, config, &fconfig, !was_split || to_split, err)) {
@@ -1286,6 +1282,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   } else if (!config->external) {
     if (HAS_KEY_X(config, vertical) || HAS_KEY_X(config, split)) {
       is_split = true;
+      fconfig->external = false;
     } else if (wp == NULL) {  // new win
       api_set_error(err, kErrorTypeValidation,
                     "Must specify 'relative' or 'external' when creating a float");
@@ -1377,6 +1374,23 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     goto fail;
   }
 
+  if (HAS_KEY_X(config, external)) {
+    fconfig->external = config->external;
+    if (has_relative && fconfig->external) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Only one of 'relative' and 'external' must be used");
+      goto fail;
+    }
+    if (fconfig->external && !ui_has(kUIMultigrid)) {
+      api_set_error(err, kErrorTypeValidation, "UI doesn't support external windows");
+      goto fail;
+    }
+  }
+
+  if (HAS_KEY_X(config, win) && fconfig->external) {
+    api_set_error(err, kErrorTypeValidation, "external window cannot have 'win'");
+    goto fail;
+  }
   if (relative_is_win || (HAS_KEY_X(config, win) && !is_split && wp && wp->w_floating
                           && fconfig->relative == kFloatRelativeWindow)) {
     // When relative=win is given, missing win field means win=0.
@@ -1402,19 +1416,6 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     // Resolve, but skip validating. E.g: win_config_split accepts negative "win".
     if (fconfig->window == 0) {
       fconfig->window = curwin->handle;
-    }
-  }
-
-  if (HAS_KEY_X(config, external)) {
-    fconfig->external = config->external;
-    if (has_relative && fconfig->external) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Only one of 'relative' and 'external' must be used");
-      goto fail;
-    }
-    if (fconfig->external && !ui_has(kUIMultigrid)) {
-      api_set_error(err, kErrorTypeValidation, "UI doesn't support external windows");
-      goto fail;
     }
   }
 

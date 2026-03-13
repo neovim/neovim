@@ -3821,6 +3821,18 @@ describe('float window', function()
       )
       eq("Must specify 'width'", pcall_err(api.nvim_open_win, buf, false, { relative = 'editor', row = 0, col = 0 }))
       eq("Must specify 'height'", pcall_err(api.nvim_open_win, buf, false, { relative = 'editor', row = 0, col = 0, width = 2 }))
+
+      if multigrid then
+        eq(
+          "external window cannot have 'win'",
+          pcall_err(api.nvim_open_win, buf, false, { external = true, win = 0, width = 10, height = 10 })
+        )
+        api.nvim_open_win(buf, true, { external = true, width = 10, height = 10 })
+        eq("external window cannot have 'win'", pcall_err(api.nvim_win_set_config, 0, { win = 0 }))
+        -- OK to include "win" if external window is also reconfigured to a normal float.
+        api.nvim_win_set_config(0, { relative = 'editor', win = 0, row = 0, col = 0, width = 5, height = 5 })
+        eq('editor', api.nvim_win_get_config(0).relative)
+      end
     end)
 
     it('can be placed relative window or cursor', function()
