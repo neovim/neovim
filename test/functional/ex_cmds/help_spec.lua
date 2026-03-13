@@ -136,6 +136,136 @@ describe(':help', function()
     check_tag([[help \|]], [[*/\bar*]])
   end)
 
+  it('":help!" (bang + no args) guesses the best tag near cursor', function()
+    local function set_lines(text)
+      n.exec_lua(
+        [[
+        vim.cmd'%delete _'
+        vim.api.nvim_paste(vim.text.indent(-1, ...), false, -1)
+      ]],
+        text
+      )
+    end
+    local cursor = n.api.nvim_win_set_cursor
+    local function open_helptag()
+      -- n.exec [[:normal! K]]
+      n.exec [[:help!]]
+      local word = n.fn.expand('<cWORD>')
+      local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
+      if n.fn.winnr('$') > 1 then
+        n.command('close')
+      end
+      return { word, bufname }
+    end
+
+    -- n.command('enew')
+    -- n.command('set filetype=help')
+    -- n.command [[set keywordprg=:help]]
+
+    -- Failure modes:
+    set_lines 'xxxxxxxxx'
+    cursor(0, { 1, 4 }) -- on backtick '`'
+    t.matches('E149: Sorry, no help for xxxxxxxxx', t.pcall_err(n.exec, [[:help!]]))
+
+    -- Success:
+
+    set_lines 'some plain text'
+    cursor(0, { 1, 5 }) -- on 'plain'
+    eq({ '*ft-plaintex-syntax*', 'syntax.txt' }, open_helptag())
+
+    set_lines ':help command'
+    cursor(0, { 1, 4 })
+    eq({ '*:help*', 'helphelp.txt' }, open_helptag())
+
+    set_lines ' :help command'
+    cursor(0, { 1, 5 })
+    eq({ '*:command*', 'map.txt' }, open_helptag())
+
+    set_lines 'v:version name'
+    cursor(0, { 1, 5 })
+    eq({ '*v:version*', 'vvars.txt' }, open_helptag())
+    cursor(0, { 1, 2 })
+    eq({ '*v:version*', 'vvars.txt' }, open_helptag())
+
+    set_lines "See 'option' for more."
+    cursor(0, { 1, 6 }) -- on 'option'
+    eq({ "*'option'*", 'helphelp.txt' }, open_helptag())
+
+    set_lines ':command-nargs'
+    cursor(0, { 1, 7 }) -- on 'nargs'
+    eq({ '*:command-nargs*', 'map.txt' }, open_helptag())
+
+    set_lines '|("vim.lsp.foldtext()")|'
+    cursor(0, { 1, 10 })
+    eq({ '*vim.lsp.foldtext()*', 'lsp.txt' }, open_helptag())
+
+    set_lines 'nvim_buf_detach_event[{buf}]'
+    cursor(0, { 1, 10 })
+    eq({ '*nvim_buf_detach_event*', 'api.txt' }, open_helptag())
+
+    set_lines '{buf}'
+    cursor(0, { 1, 1 })
+    eq({ '*:buf*', 'windows.txt' }, open_helptag())
+
+    set_lines '(`vim.lsp.ClientConfig`)'
+    cursor(0, { 1, 1 })
+    eq({ '*vim.lsp.ClientConfig*', 'lsp.txt' }, open_helptag())
+
+    set_lines "vim.lsp.enable('clangd')"
+    cursor(0, { 1, 3 })
+    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
+
+    set_lines "vim.lsp.enable('clangd')"
+    cursor(0, { 1, 6 })
+    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
+
+    set_lines "vim.lsp.enable('clangd')"
+    cursor(0, { 1, 9 })
+    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
+
+    set_lines 'assert(vim.lsp.get_client_by_id(client_id))'
+    cursor(0, { 1, 12 })
+    eq({ '*vim.lsp.get_client_by_id()*', 'lsp.txt' }, open_helptag())
+
+    set_lines "vim.api.nvim_create_autocmd('LspAttach', {"
+    cursor(0, { 1, 7 })
+    eq({ '*nvim_create_autocmd()*', 'api.txt' }, open_helptag())
+
+    -- Falls back to <cword> when all trimming fails.
+    set_lines "'@lsp.type.function'"
+    cursor(0, { 1, 2 }) -- on 'lsp'
+    eq({ '*lsp*', 'lsp.txt' }, open_helptag())
+    set_lines "'@lsp.type.function'"
+    cursor(0, { 1, 14 }) -- on 'function'
+    eq({ '*:function*', 'userfunc.txt' }, open_helptag())
+
+    set_lines '  • `@lsp.type.<type>.<ft>` for the type'
+    cursor(0, { 1, 4 }) -- on backtick '`'
+    eq({ '*lsp*', 'lsp.txt' }, open_helptag())
+
+    set_lines [[
+    - `root_dir` usages akin to >lua
+       root_dir  = require'lspconfig.util'.root_pattern(...)
+    <
+    require'lspconfig.util'.root_pattern(...)
+    ]]
+    cursor(0, { 2, 17 }) -- on "require"
+    eq({ '*require()*', 'luaref.txt' }, open_helptag())
+
+    set_lines '`:lsp restart`. You'
+    cursor(0, { 1, 6 }) -- on "restart"
+    eq({ '*:restart*', 'gui.txt' }, open_helptag())
+
+    -- set_lines {' |vim.lsp.start()|. '}
+    -- cursor(0, {1, 4})
+    -- eq({'*vim.lsp.start()*', 'lsp.txt'}, open_helptag())
+    --
+    -- Examples:
+    --    (`table<integer, {error: lsp.ResponseError?, result: any}>?`) result
+    --    |vim.lsp.Config|.
+    --    "Enabled Configurations". 🌈
+  end)
+
   it('window closed makes cursor return to a valid win/buf #9773', function()
     n.add_builddir_to_rtp()
     command('help help')
@@ -165,106 +295,5 @@ describe(':help', function()
     command('set rtp+=Xhelptags')
     command('help …')
     eq('*…*', api.nvim_get_current_line())
-  end)
-
-  it('":help!" guesses the best tag near cursor', function()
-    local function set_lines(text)
-      n.exec_lua([[vim.api.nvim_buf_set_lines(0, 0, -1, false, ...)]], text)
-    end
-    local cursor = n.api.nvim_win_set_cursor
-    local function open_helptag()
-      -- n.exec [[:normal! K]]
-      n.exec [[:help!]]
-      local word = n.fn.expand('<cWORD>')
-      local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
-      if n.fn.winnr('$') > 1 then
-        n.command('close')
-      end
-      return { word, bufname }
-    end
-
-    n.command('enew')
-    n.command('set filetype=help')
-    n.command [[set keywordprg=:help]]
-
-    set_lines { 'some plain text' }
-    cursor(0, { 1, 5 }) -- on 'plain'
-    eq({ '*ft-plaintex-syntax*', 'syntax.txt' }, open_helptag())
-
-    set_lines { ':help command' }
-    cursor(0, { 1, 4 })
-    eq({ '*:help*', 'helphelp.txt' }, open_helptag())
-
-    set_lines { ' :help command' }
-    cursor(0, { 1, 5 })
-    eq({ '*:help*', 'helphelp.txt' }, open_helptag())
-
-    set_lines { 'v:version name' }
-    cursor(0, { 1, 5 })
-    eq({ '*v:version*', 'vvars.txt' }, open_helptag())
-    cursor(0, { 1, 2 })
-    eq({ '*v:version*', 'vvars.txt' }, open_helptag())
-
-    set_lines { "See 'option' for more." }
-    cursor(0, { 1, 6 }) -- on 'option'
-    eq({ "*'option'*", 'helphelp.txt' }, open_helptag())
-
-    set_lines { ':command-nargs' }
-    cursor(0, { 1, 7 }) -- on 'nargs'
-    eq({ '*:command-nargs*', 'map.txt' }, open_helptag())
-
-    set_lines { '|("vim.lsp.foldtext()")|' }
-    cursor(0, { 1, 10 })
-    eq({ '*vim.lsp.foldtext()*', 'lsp.txt' }, open_helptag())
-
-    set_lines { 'nvim_buf_detach_event[{buf}]' }
-    cursor(0, { 1, 10 })
-    eq({ '*nvim_buf_detach_event*', 'api.txt' }, open_helptag())
-
-    set_lines { '{buf}' }
-    cursor(0, { 1, 1 })
-    eq({ '*:buf*', 'windows.txt' }, open_helptag())
-
-    set_lines { '(`vim.lsp.ClientConfig`)' }
-    cursor(0, { 1, 1 })
-    eq({ '*vim.lsp.ClientConfig*', 'lsp.txt' }, open_helptag())
-
-    set_lines { "vim.lsp.enable('clangd')" }
-    cursor(0, { 1, 3 })
-    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
-
-    set_lines { "vim.lsp.enable('clangd')" }
-    cursor(0, { 1, 6 })
-    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
-
-    set_lines { "vim.lsp.enable('clangd')" }
-    cursor(0, { 1, 9 })
-    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
-
-    set_lines { 'assert(vim.lsp.get_client_by_id(client_id))' }
-    cursor(0, { 1, 12 })
-    eq({ '*vim.lsp.get_client_by_id()*', 'lsp.txt' }, open_helptag())
-
-    set_lines { "vim.api.nvim_create_autocmd('LspAttach', {" }
-    cursor(0, { 1, 7 })
-    eq({ '*nvim_create_autocmd()*', 'api.txt' }, open_helptag())
-
-    -- Falls back to <cword> when all trimming fails.
-    set_lines { "'@lsp.type.function'" }
-    cursor(0, { 1, 2 }) -- on 'lsp'
-    eq({ '*lsp*', 'lsp.txt' }, open_helptag())
-
-    set_lines { "'@lsp.type.function'" }
-    cursor(0, { 1, 14 }) -- on 'function'
-    eq({ '*:function*', 'userfunc.txt' }, open_helptag())
-
-    -- set_lines {' |vim.lsp.start()|. '}
-    -- cursor(0, {1, 4})
-    -- eq({'*vim.lsp.start()*', 'lsp.txt'}, open_helptag())
-    --
-    -- Examples:
-    --    (`table<integer, {error: lsp.ResponseError?, result: any}>?`) result
-    --    |vim.lsp.Config|.
-    --    "Enabled Configurations". 🌈
   end)
 end)

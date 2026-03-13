@@ -146,14 +146,14 @@ local trimmable_punct = {
   ['\t'] = true,
 }
 
----Trim one layer of punctuation from a help tag string.
----Uses cursor offset to intelligently trim: if cursor is on trimmable punctuation,
----removes everything before cursor and skips past punctuation after cursor.
+--- Trim one layer of punctuation from a help tag string.
+--- Uses cursor offset to intelligently trim: if cursor is on trimmable punctuation,
+--- removes everything before cursor and skips past punctuation after cursor.
 ---
 ---@param tag string The tag to trim
 ---@param offset integer Cursor position within the tag (-1 if not applicable)
 ---@return string? trimmed Trimmed string, or nil if unchanged
-function M.trim_tag(tag, offset)
+local function trim_tag(tag, offset)
   if not tag or tag == '' then
     return nil
   end
@@ -218,13 +218,13 @@ function M.trim_tag(tag, offset)
   return tag:sub(s, e)
 end
 
----Trim namespace prefix (dots) from a help tag.
----Only call this if regular trimming didn't find a match.
----Returns the tag with the leftmost dot-separated segment removed.
+--- Trim namespace prefix (dots) from a help tag.
+--- Only call this if regular trimming didn't find a match.
+--- Returns the tag with the leftmost dot-separated segment removed.
 ---
 ---@param tag string The tag to trim
 ---@return string? trimmed Trimmed string, or nil if no dots found
-function M.trim_tag_dots(tag)
+local function trim_tag_dots(tag)
   if not tag or tag == '' then
     return nil
   end
@@ -232,16 +232,26 @@ function M.trim_tag_dots(tag)
   return after_dot
 end
 
----DWIM resolve a help tag from a `<cWORD>` by iteratively trimming punctuation.
----Tries the original tag first, then trims punctuation and dots until a valid help tag is found.
+--- For ":help!" (bang, no args): DWIM resolve a help tag from the cursor context.
+--- Gets `<cWORD>` at cursor, tries it first, then trims punctuation and dots until a valid help
+--- tag is found. Falls back to `<cword>` (keyword at cursor) before dot-trimming.
 ---
----@param tag string The raw `<cWORD>` text
----@param offset integer Cursor position within the tag (-1 if not applicable)
 ---@return string? resolved The resolved help tag, or nil if no match found
-function M.resolve_tag(tag, offset)
+function M.resolve_tag()
+  local tag = vim.fn.expand('<cWORD>')
   if not tag or tag == '' then
     return nil
   end
+
+  -- Compute cursor offset within <cWORD>.
+  local line = vim.api.nvim_get_current_line()
+  local col = vim.fn.col('.') -- 1-indexed
+  local s = col
+  -- Scan backward from col('.') to find the whitespace boundary.
+  while s > 1 and not line:sub(s - 1, s - 1):match('%s') do
+    s = s - 1
+  end
+  local offset = col - s -- 0-indexed offset within <cWORD>
 
   -- Try the original tag first.
   if #vim.fn.getcompletion(tag, 'help') > 0 then
@@ -251,7 +261,7 @@ function M.resolve_tag(tag, offset)
   -- Iteratively trim punctuation and try again, up to 10 times.
   local candidate = tag
   for _ = 1, 10 do
-    local trimmed = M.trim_tag(candidate, offset)
+    local trimmed = trim_tag(candidate, offset)
     if not trimmed then
       break
     end
@@ -274,7 +284,7 @@ function M.resolve_tag(tag, offset)
 
   -- Try trimming namespace dots (left-to-right).
   for _ = 1, 10 do
-    local trimmed = M.trim_tag_dots(candidate)
+    local trimmed = trim_tag_dots(candidate)
     if not trimmed then
       break
     end
@@ -285,7 +295,8 @@ function M.resolve_tag(tag, offset)
     end
   end
 
-  return nil
+  -- No match found: return raw <cWORD> so the caller can show it in an error message.
+  return tag
 end
 
 ---Populates the |local-additions| section of a help buffer with references to locally-installed

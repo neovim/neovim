@@ -5058,7 +5058,7 @@ local options = {
       abbreviation = 'kp',
       defaults = {
         condition = 'MSWIN',
-        if_true = ':help',
+        if_true = ':help!',
         if_false = ':Man',
         doc = '":Man", Windows: ":help"',
       },

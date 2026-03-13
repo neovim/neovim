@@ -94,38 +94,21 @@ void ex_help(exarg_T *eap)
   // Check for a specified language
   char *lang = check_help_lang(arg);
 
-  // ":help!" (bang, no args): DWIM help guessed from <cWORD> at cursor.
+  // ":help!" (bang, no args).
   bool helpbang = (eap != NULL && eap->forceit && *arg == NUL);
-  char *allocated_arg = NULL;  // tracks allocated arg for freeing
-  int cursor_offset = -1;
-  if (helpbang) {
-    // Get <cWORD> at cursor
-    char *word;
-    size_t len = find_ident_under_cursor(&word, FIND_STRING, &cursor_offset);
-    if (len > 0) {
-      allocated_arg = xmemdupz(word, len);
-      arg = allocated_arg;
-    } else {
-      arg = NULL;
-    }
-  }
 
   // When no argument given go to the index.
-  if (arg == NULL || *arg == NUL) {
+  if (*arg == NUL && !helpbang) {
     arg = "help.txt";
   }
 
-  // "help!": resolve the best help tag via Lua (tries the original, then trims punctuation).
-  if (helpbang && arg != NULL && *arg != NUL) {
+  // ":help!" (bang, no args): DWIM help, resolve best tag at cursor via Lua.
+  char *allocated_arg = NULL;
+  if (helpbang) {
     Error err = ERROR_INIT;
-    MAXSIZE_TEMP_ARRAY(resolve_args, 2);
-    ADD_C(resolve_args, CSTR_AS_OBJ(arg));
-    ADD_C(resolve_args, INTEGER_OBJ(cursor_offset));
-
-    Object res = NLUA_EXEC_STATIC("return require'vim._core.help'.resolve_tag(...)", resolve_args,
-                                  kRetObject, NULL, &err);
+    Object res = NLUA_EXEC_STATIC("return require'vim._core.help'.resolve_tag()",
+                                  (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
     if (!ERROR_SET(&err) && res.type == kObjectTypeString && res.data.string.size > 0) {
-      xfree(allocated_arg);
       allocated_arg = xstrdup(res.data.string.data);
       arg = allocated_arg;
     }
