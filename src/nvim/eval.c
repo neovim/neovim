@@ -2267,6 +2267,23 @@ static int eval_addlist(typval_T *tv1, typval_T *tv2)
   return OK;
 }
 
+/// Append string "s2" to the string in "tv1".
+/// Returns OK if "tv1" was grown in place, FAIL otherwise.
+int grow_string_tv(typval_T *tv1, const char *s2)
+{
+  if (tv1->v_type != VAR_STRING || tv1->vval.v_string == NULL) {
+    return FAIL;
+  }
+
+  size_t len1 = strlen(tv1->vval.v_string);
+  size_t len2 = strlen(s2);
+  char *p = xrealloc(tv1->vval.v_string, len1 + len2 + 1);
+
+  memmove(p + len1, s2, len2 + 1);
+  tv1->vval.v_string = p;
+  return OK;
+}
+
 /// Concatenate strings "tv1" and "tv2" and store the result in "tv1".
 static int eval_concat_str(typval_T *tv1, typval_T *tv2)
 {
@@ -2279,6 +2296,11 @@ static int eval_concat_str(typval_T *tv1, typval_T *tv2)
     tv_clear(tv1);
     tv_clear(tv2);
     return FAIL;
+  }
+
+  // When possible, grow the existing string in place to avoid alloc/free.
+  if (grow_string_tv(tv1, s2) == OK) {
+    return OK;
   }
 
   char *p = concat_str(s1, s2);

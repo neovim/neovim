@@ -129,10 +129,15 @@ static int tv_op_string(typval_T *tv1, const typval_T *tv2, const char *op)
     return FAIL;
   }
 
+  char numbuf[NUMBUFLEN];
+  const char *s2 = tv_get_string_buf(tv2, numbuf);
+  if (grow_string_tv(tv1, s2) == OK) {
+    return OK;
+  }
+
   // str .= str
   const char *tvs = tv_get_string(tv1);
-  char numbuf[NUMBUFLEN];
-  char *const s = concat_str(tvs, tv_get_string_buf(tv2, numbuf));
+  char *const s = concat_str(tvs, s2);
   tv_clear(tv1);
   tv1->v_type = VAR_STRING;
   tv1->vval.v_string = s;
