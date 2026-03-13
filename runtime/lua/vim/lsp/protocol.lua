@@ -578,7 +578,7 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false,
       },
       onTypeFormatting = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
       },
     },
     workspace = {
