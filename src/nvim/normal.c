@@ -1973,7 +1973,7 @@ bool add_to_showcmd(int c)
     0
   };
 
-  if (!p_sc || msg_silent != 0) {
+  if (!p_sc || msg_silent != 0 || ex_normal_busy) {
     return false;
   }
 

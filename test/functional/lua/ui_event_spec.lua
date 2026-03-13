@@ -404,6 +404,18 @@ describe('vim.ui_attach', function()
     feed('<Esc>:<Tab>')
     n.assert_alive()
   end)
+
+  it("does not crash with :norm 'showcmd' from shell message callback #38233", function()
+    exec_lua(function()
+      vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(event)
+        if event == 'msg_show' then
+          vim.api.nvim_command('norm! G')
+        end
+      end)
+    end)
+    n.command('set showcmd | !echo "foo"')
+    n.assert_alive()
+  end)
 end)
 
 describe('vim.ui_attach', function()
