@@ -249,6 +249,15 @@ describe(':help', function()
     cursor(0, { 1, 7 })
     eq({ '*nvim_create_autocmd()*', 'api.txt' }, open_helptag())
 
+    -- Falls back to <cword> when all trimming fails.
+    set_lines { "'@lsp.type.function'" }
+    cursor(0, { 1, 2 }) -- on 'lsp'
+    eq({ '*lsp*', 'lsp.txt' }, open_helptag())
+
+    set_lines { "'@lsp.type.function'" }
+    cursor(0, { 1, 14 }) -- on 'function'
+    eq({ '*:function*', 'userfunc.txt' }, open_helptag())
+
     -- set_lines {' |vim.lsp.start()|. '}
     -- cursor(0, {1, 4})
     -- eq({'*vim.lsp.start()*', 'lsp.txt'}, open_helptag())

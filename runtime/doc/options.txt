@@ -3904,14 +3904,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 'keywordprg' 'kp'	string	(default ":Man", Windows: ":help")
 			global or local to buffer |global-local|
 	Program to use for the |K| command.  Environment variables are
-	expanded |:set_env|.  ":help" may be used to access the Vim internal
-	help.  (Note that previously setting the global option to the empty
-	value did this, which is now deprecated.)
-	When the first character is ":", the command is invoked as a Vim
-	Ex command prefixed with [count].
-	When "man" or "man -s" is used, Vim will automatically translate
-	a [count] for the "K" command to a section number.
+	expanded |:set_env|.
+
+	Special cases:
+	- ":help" opens the |word| at cursor using |:help|.  (Note that
+	  previously setting the global option to the empty value did this,
+	  which is now deprecated.)
+	- ":help!" performs |:help!| (DWIM) on the |WORD| at cursor.
+	- If the value starts with ":", it is invoked as an Ex command
+	  prefixed with [count].
+	- If "man" or "man -s", [count]K invokes |:Man| with [count] as the
+	  section number.
+
 	See |option-backslash| about including spaces and backslashes.
+
 	Example: >vim
 		set keywordprg=man\ -s
 		set keywordprg=:Man

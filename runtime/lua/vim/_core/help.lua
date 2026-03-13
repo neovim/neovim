@@ -253,15 +253,32 @@ function M.resolve_tag(tag, offset)
   for _ = 1, 10 do
     local trimmed = M.trim_tag(candidate, offset)
     if not trimmed then
-      -- Try trimming namespace dots as last resort.
-      trimmed = M.trim_tag_dots(candidate)
-      if not trimmed then
-        break
-      end
+      break
     end
     candidate = trimmed
     -- After first trim, offset is no longer valid.
     offset = -1
+
+    if #vim.fn.getcompletion(candidate, 'help') > 0 then
+      return candidate
+    end
+  end
+
+  -- Try <cword> (keyword at cursor) before dot-trimming, since dot-trimming strips from the left
+  -- and may move away from the cursor position.
+  -- E.g. for '@lsp.type.function' with cursor on "lsp", <cword> is "lsp".
+  local cword = vim.fn.expand('<cword>')
+  if cword ~= '' and cword ~= tag and #vim.fn.getcompletion(cword, 'help') > 0 then
+    return cword
+  end
+
+  -- Try trimming namespace dots (left-to-right).
+  for _ = 1, 10 do
+    local trimmed = M.trim_tag_dots(candidate)
+    if not trimmed then
+      break
+    end
+    candidate = trimmed
 
     if #vim.fn.getcompletion(candidate, 'help') > 0 then
       return candidate
