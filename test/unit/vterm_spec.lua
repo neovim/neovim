@@ -2621,6 +2621,22 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     vterm.vterm_state_focus_out(state)
     expect_output('\x1b[O')
 
+    -- Synchronized output mode 2026
+    push('\x1b[?2026h', vt)
+    expect('settermprop 11 true')
+    push('\x1b[?2026l', vt)
+    expect('settermprop 11 false')
+
+    -- DECRQM on synchronized output
+    push('\x1b[?2026h', vt)
+    expect('settermprop 11 true')
+    push('\x1b[?2026$p', vt)
+    expect_output('\x1b[?2026;1$y')
+    push('\x1b[?2026l', vt)
+    expect('settermprop 11 false')
+    push('\x1b[?2026$p', vt)
+    expect_output('\x1b[?2026;2$y')
+
     -- Disambiguate escape codes disabled
     push('\x1b[<u', vt)
 
