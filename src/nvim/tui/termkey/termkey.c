@@ -769,6 +769,8 @@ static void emit_codepoint(TermKey *tk, int codepoint, TermKeyKey *key)
     key->modifiers = 0;
   }
 
+  key->alt_codepoint = 0;
+
   termkey_canonicalise(tk, key);
 
   if (key->type == TERMKEY_TYPE_UNICODE) {
