@@ -200,6 +200,7 @@ struct terminal {
 
   bool theme_updates;  ///< Send a theme update notification when 'bg' changes
   bool synchronized_output;  ///< Mode 2026: suppress redraws until end of synchronized update
+  bool sync_flush_pending;   ///< Set when mode 2026 ends; triggers immediate buffer refresh
 
   bool color_set[16];
 
@@ -1376,6 +1377,26 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     vterm_input_write(term->vt, data, len);
   }
   vterm_screen_flush_damage(term->vts);
+
+  // When a synchronized update just ended, refresh the buffer immediately
+  // instead of waiting for the 10ms timer.  This eliminates the window where
+  // neovim's UI could repaint showing stale buffer content.
+  if (term->sync_flush_pending) {
+    term->sync_flush_pending = false;
+    // Schedule a full-screen refresh via the normal timer path.
+    // Force full-screen damage so every row is updated, not just
+    // the rows with accumulated damage from individual callbacks.
+    int height;
+    vterm_get_size(term->vt, &height, NULL);
+    term->invalid_start = 0;
+    term->invalid_end = height;
+    set_put(ptr_t, &invalidated_terminals, term);
+    // Use delay=0 to trigger refresh on the next event loop iteration,
+    // which is the safe context for buffer modifications.  Restart the
+    // timer even if one is pending, to ensure zero-delay.
+    time_watcher_start(&refresh_timer, refresh_timer_cb, 0, 0);
+    refresh_pending = true;
+  }
 }
 
 static int get_rgb(VTermState *state, VTermColor color)
@@ -1623,8 +1644,9 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
   case VTERM_PROP_SYNCOUTPUT:
     term->synchronized_output = val->boolean;
     if (!val->boolean) {
-      // End of synchronized update: flush accumulated damage.
-      invalidate_terminal(term, -1, -1);
+      // Mark that sync just ended; terminal_receive() will flush
+      // the buffer immediately rather than waiting for the 10ms timer.
+      term->sync_flush_pending = true;
     }
     break;
 
@@ -1700,7 +1722,9 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
   }
 
   memcpy(sbrow->cells, cells, sizeof(cells[0]) * c);
-  set_put(ptr_t, &invalidated_terminals, term);
+  if (!term->synchronized_output) {
+    set_put(ptr_t, &invalidated_terminals, term);
+  }
 
   return 1;
 }
@@ -1740,7 +1764,9 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   }
 
   xfree(sbrow);
-  set_put(ptr_t, &invalidated_terminals, term);
+  if (!term->synchronized_output) {
+    set_put(ptr_t, &invalidated_terminals, term);
+  }
 
   return 1;
 }
@@ -2434,7 +2460,11 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   // don't process autocommands while updating terminal buffers
   block_autocmds();
   set_foreach(&invalidated_terminals, term, {
-    refresh_terminal(term);
+    // Skip terminals in synchronized output — they will be refreshed
+    // when the synchronized update ends (mode 2026 reset).
+    if (!term->synchronized_output) {
+      refresh_terminal(term);
+    }
   });
   set_clear(ptr_t, &invalidated_terminals);
   unblock_autocmds();
