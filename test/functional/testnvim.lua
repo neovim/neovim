@@ -807,8 +807,10 @@ function M.rmdir(path)
   if not ret and is_os('win') then
     -- Maybe "Permission denied"; try again after changing the nvim
     -- process to the top-level directory.
-    M.command([[exe 'cd '.fnameescape(']] .. start_dir .. "')")
-    ret, _ = pcall(vim.fs.rm, path, { recursive = true, force = true })
+    ret, _ = pcall(function()
+      M.command([[exe 'cd '.fnameescape(']] .. start_dir .. "')")
+      vim.fs.rm(path, { recursive = true, force = true })
+    end)
   end
   -- During teardown, the nvim process may not exit quickly enough, then rmdir()
   -- will fail (on Windows).
