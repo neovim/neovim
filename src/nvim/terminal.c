@@ -199,6 +199,7 @@ struct terminal {
   } pending;
 
   bool theme_updates;  ///< Send a theme update notification when 'bg' changes
+  bool synchronized_output;  ///< Mode 2026: suppress redraws until end of synchronized update
 
   bool color_set[16];
 
@@ -1619,6 +1620,14 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     term->theme_updates = val->boolean;
     break;
 
+  case VTERM_PROP_SYNCOUTPUT:
+    term->synchronized_output = val->boolean;
+    if (!val->boolean) {
+      // End of synchronized update: flush accumulated damage.
+      invalidate_terminal(term, -1, -1);
+    }
+    break;
+
   default:
     return 0;
   }
@@ -2311,6 +2320,12 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
   if (start_row != -1 && end_row != -1) {
     term->invalid_start = MIN(term->invalid_start, start_row);
     term->invalid_end = MAX(term->invalid_end, end_row);
+  }
+
+  // During synchronized output (mode 2026), accumulate damage but defer
+  // the actual refresh until the synchronized update ends.
+  if (term->synchronized_output) {
+    return;
   }
 
   set_put(ptr_t, &invalidated_terminals, term);

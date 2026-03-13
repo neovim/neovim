@@ -837,6 +837,10 @@ static void set_dec_mode(VTermState *state, int num, int val)
     state->mode.bracketpaste = (unsigned)val;
     break;
 
+  case 2026:  // Synchronized output
+    settermprop_bool(state, VTERM_PROP_SYNCOUTPUT, val);
+    break;
+
   case 2031:
     settermprop_bool(state, VTERM_PROP_THEMEUPDATES, val);
     break;
@@ -914,6 +918,10 @@ static void request_dec_mode(VTermState *state, int num)
 
   case 2004:
     reply = state->mode.bracketpaste;
+    break;
+
+  case 2026:
+    reply = state->mode.synchronized_output;
     break;
 
   case 2031:
@@ -2430,6 +2438,9 @@ int vterm_state_set_termprop(VTermState *state, VTermProp prop, VTermValue *val)
     return 1;
   case VTERM_PROP_THEMEUPDATES:
     state->mode.theme_updates = (unsigned)val->boolean;
+    return 1;
+  case VTERM_PROP_SYNCOUTPUT:
+    state->mode.synchronized_output = (unsigned)val->boolean;
     return 1;
 
   case VTERM_N_PROPS:
