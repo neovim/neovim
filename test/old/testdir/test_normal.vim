@@ -1845,15 +1845,15 @@ func Test_normal23_K()
   let k = &keywordprg
   set keywordprg=:help
   1
-  norm! viwK
+  norm! VK
   call assert_equal('helphelp.txt', fnamemodify(bufname('%'), ':t'))
   call assert_equal('help', &ft)
-  call assert_match('Help on help files', getline('.'))
+  call assert_match('\*helphelp.txt\*', getline('.'))
   helpclose
   norm! 0K
   call assert_equal('helphelp.txt', fnamemodify(bufname('%'), ':t'))
   call assert_equal('help', &ft)
-  call assert_match('\*helphelp.txt\*', getline('.'))
+  call assert_match('Help on help files', getline('.'))
   helpclose
 
   set keywordprg=:new

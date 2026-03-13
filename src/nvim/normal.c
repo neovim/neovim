@@ -3318,22 +3318,14 @@ void do_nv_ident(int c1, int c2)
   nv_ident(&ca);
 }
 
-/// 'K' normal-mode command. Get the command to lookup the keyword under the
-/// cursor.
-static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, bool visual_sel,
-                          char **ptr_arg, size_t n, char *buf, size_t bufsize, size_t *buflen)
+/// Sets `buf` to the Ex command which will perform the "K" normal-mode command.
+static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, char **ptr_arg,
+                          size_t n, char *buf, size_t bufsize, size_t *buflen)
 {
-  if (kp_help && !visual_sel) {
-    // in the help buffer
-    STRCPY(buf, "help!");
-    *buflen = STRLEN_LITERAL("help!");
-    return n;
-  }
-
-  if (kp_help && visual_sel) {
-    // Visual selection: use the selected text as-is.
-    STRCPY(buf, "he! ");
-    *buflen = STRLEN_LITERAL("he! ");
+  if (kp_help) {
+    // :help or :help!
+    STRCPY(buf, "help! ");
+    *buflen = STRLEN_LITERAL("help! ");
     return n;
   }
 
@@ -3415,12 +3407,12 @@ static void nv_ident(cmdarg_T *cap)
   }
 
   // The "]", "CTRL-]" and "K" commands accept an argument in Visual mode.
-  bool visual_selection = false;
+  bool visual_sel = false;
   if (cmdchar == ']' || cmdchar == Ctrl_RSB || cmdchar == 'K') {
     if (VIsual_active && get_visual_text(cap, &ptr, &n) == false) {
       return;
     }
-    visual_selection = (ptr != NULL);
+    visual_sel = (ptr != NULL);
     if (checkclearopq(cap->oap)) {
       return;
     }
@@ -3440,7 +3432,8 @@ static void nv_ident(cmdarg_T *cap)
   // double the length of the word.  p_kp / curbuf->b_p_kp could be added
   // and some numbers.
   char *kp = *curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp;  // 'keywordprg'
-  bool kp_help = (*kp == NUL || strcmp(kp, ":he") == 0 || strcmp(kp, ":help") == 0);
+  bool kp_help = (*kp == NUL || strequal(kp, ":he") || strequal(kp, ":help"));
+  bool kp_helpbang = strequal(kp, ":help!");
   if (kp_help && *skipwhite(ptr) == NUL) {
     emsg(_(e_noident));   // found white space only
     return;
@@ -3469,7 +3462,7 @@ static void nv_ident(cmdarg_T *cap)
     break;
 
   case 'K':
-    n = nv_K_getcmd(cap, kp, kp_help, kp_ex, visual_selection, &ptr, n, buf, bufsize, &buflen);
+    n = nv_K_getcmd(cap, kp, kp_help, kp_ex, &ptr, n, buf, bufsize, &buflen);
     if (n == 0) {
       return;
     }
@@ -3477,31 +3470,32 @@ static void nv_ident(cmdarg_T *cap)
 
   case ']':
     tag_cmd = true;
-    STRCPY(buf, "ts ");
-    buflen = STRLEN_LITERAL("ts ");
+    STRCPY(buf, "tselect ");
+    buflen = STRLEN_LITERAL("tselect ");
     break;
 
   default:
     tag_cmd = true;
     if (curbuf->b_help) {
-      STRCPY(buf, "he! ");
-      buflen = STRLEN_LITERAL("he! ");
+      STRCPY(buf, "help! ");
+      buflen = STRLEN_LITERAL("help! ");
     } else {
       if (g_cmd) {
-        STRCPY(buf, "tj ");
-        buflen = STRLEN_LITERAL("tj ");
+        STRCPY(buf, "tjump ");
+        buflen = STRLEN_LITERAL("tjump ");
       } else if (cap->count0 == 0) {
-        STRCPY(buf, "ta ");
-        buflen = STRLEN_LITERAL("ta ");
+        STRCPY(buf, "tag ");
+        buflen = STRLEN_LITERAL("tag ");
       } else {
-        buflen = (size_t)snprintf(buf, bufsize, ":%" PRId64 "ta ", (int64_t)cap->count0);
+        buflen = (size_t)snprintf(buf, bufsize, ":%" PRId64 "tag ", (int64_t)cap->count0);
       }
     }
   }
 
-  // Now grab the chars in the identifier
-  if (cmdchar == 'K' && kp_help && !visual_selection) {
-    // Do nothing. `nv_K_getcmd` sets buf=":help!" for this case.
+  // Get the identifier at cursor/selection and append to `buf` (to get ":foo <identifier").
+  if (cmdchar == 'K' && kp_helpbang && !visual_sel) {
+    // Special case: ":help!": Don't get the identifier, ex_help will get cWORD at cursor.
+    // nv_K_getcmd already set `buf="help!"` so we don't need to do anything here.
     STRCPY(buf, "help!");
     buflen = STRLEN_LITERAL("help!");
   } else if (cmdchar == 'K' && !kp_help) {
