@@ -3325,8 +3325,8 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, boo
 {
   if (kp_help && !visual_sel) {
     // in the help buffer
-    STRCPY(buf, "help! FOO");
-    *buflen = STRLEN_LITERAL("help! FOO");
+    STRCPY(buf, "help!");
+    *buflen = STRLEN_LITERAL("help!");
     return n;
   }
 
@@ -3501,9 +3501,9 @@ static void nv_ident(cmdarg_T *cap)
 
   // Now grab the chars in the identifier
   if (cmdchar == 'K' && kp_help && !visual_selection) {
-    // Do nothing. `nv_K_getcmd` sets buf=":help! FOO" for this case.
-    STRCPY(buf, "help! FOO");
-    buflen = STRLEN_LITERAL("help! FOO");
+    // Do nothing. `nv_K_getcmd` sets buf=":help!" for this case.
+    STRCPY(buf, "help!");
+    buflen = STRLEN_LITERAL("help!");
   } else if (cmdchar == 'K' && !kp_help) {
     ptr = xstrnsave(ptr, n);
     if (kp_ex) {

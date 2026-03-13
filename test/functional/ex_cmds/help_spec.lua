@@ -167,14 +167,14 @@ describe(':help', function()
     eq('*…*', api.nvim_get_current_line())
   end)
 
-  it('":help FOO" guesses the best tag near cursor', function()
+  it('":help!" guesses the best tag near cursor', function()
     local function set_lines(text)
       n.exec_lua([[vim.api.nvim_buf_set_lines(0, 0, -1, false, ...)]], text)
     end
     local cursor = n.api.nvim_win_set_cursor
     local function open_helptag()
-      -- TODO: also test ":help FOO" explicitly.
-      n.exec [[:normal! K]]
+      -- n.exec [[:normal! K]]
+      n.exec [[:help!]]
       local word = n.fn.expand('<cWORD>')
       local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
       if n.fn.winnr('$') > 1 then

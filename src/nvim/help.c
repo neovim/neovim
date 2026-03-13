@@ -78,11 +78,6 @@ void ex_help(exarg_T *eap)
     }
     arg = eap->arg;
 
-    if (eap->forceit && *arg == NUL && !curbuf->b_help) {
-      emsg(_("E478: Don't panic!"));
-      return;
-    }
-
     if (eap->skip) {        // not executing commands
       return;
     }
@@ -99,12 +94,11 @@ void ex_help(exarg_T *eap)
   // Check for a specified language
   char *lang = check_help_lang(arg);
 
-  // "superhelp": Get word at cursor if arg is "FOO" (sentinel set by nv_K_getcmd).
-  bool superhelp = false;
+  // ":help!" (bang, no args): DWIM help guessed from <cWORD> at cursor.
+  bool helpbang = (eap != NULL && eap->forceit && *arg == NUL);
   char *allocated_arg = NULL;  // tracks allocated arg for freeing
   int cursor_offset = -1;
-  if (strequal(arg, "FOO")) {
-    superhelp = true;
+  if (helpbang) {
     // Get <cWORD> at cursor
     char *word;
     size_t len = find_ident_under_cursor(&word, FIND_STRING, &cursor_offset);
@@ -121,8 +115,8 @@ void ex_help(exarg_T *eap)
     arg = "help.txt";
   }
 
-  // "superhelp": resolve the best help tag via Lua (tries the original, then trims punctuation).
-  if (superhelp && arg != NULL && *arg != NUL) {
+  // "help!": resolve the best help tag via Lua (tries the original, then trims punctuation).
+  if (helpbang && arg != NULL && *arg != NUL) {
     Error err = ERROR_INIT;
     MAXSIZE_TEMP_ARRAY(resolve_args, 2);
     ADD_C(resolve_args, CSTR_AS_OBJ(arg));
