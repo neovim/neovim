@@ -1635,7 +1635,7 @@ static bool find_is_eval_item(const char *const ptr, int *const colp, int *const
 ///        - FIND_STRING:  find any non-white text
 ///        - FIND_IDENT + FIND_STRING: find any non-white text, identifier preferred.
 ///        - FIND_EVAL:  find text useful for C program debugging
-/// @param offset  If not NULL, set to cursor position relative to start of text
+/// @param offset  If not NULL, gets cursor position relative to start of `text`.
 /// @return  Text length, or zero if no text is found.
 size_t find_ident_under_cursor(char **text, int find_type, int *offset)
   FUNC_ATTR_NONNULL_ARG(1)
@@ -3320,13 +3320,20 @@ void do_nv_ident(int c1, int c2)
 
 /// 'K' normal-mode command. Get the command to lookup the keyword under the
 /// cursor.
-static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, char **ptr_arg,
-                          size_t n, char *buf, size_t bufsize, size_t *buflen)
+static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, bool visual_sel,
+                          char **ptr_arg, size_t n, char *buf, size_t bufsize, size_t *buflen)
 {
-  if (kp_help) {
+  if (kp_help && !visual_sel) {
     // in the help buffer
     STRCPY(buf, "help! FOO");
     *buflen = STRLEN_LITERAL("help! FOO");
+    return n;
+  }
+
+  if (kp_help && visual_sel) {
+    // Visual selection: use the selected text as-is.
+    STRCPY(buf, "he! ");
+    *buflen = STRLEN_LITERAL("he! ");
     return n;
   }
 
@@ -3408,10 +3415,12 @@ static void nv_ident(cmdarg_T *cap)
   }
 
   // The "]", "CTRL-]" and "K" commands accept an argument in Visual mode.
+  bool visual_selection = false;
   if (cmdchar == ']' || cmdchar == Ctrl_RSB || cmdchar == 'K') {
     if (VIsual_active && get_visual_text(cap, &ptr, &n) == false) {
       return;
     }
+    visual_selection = (ptr != NULL);
     if (checkclearopq(cap->oap)) {
       return;
     }
@@ -3460,7 +3469,7 @@ static void nv_ident(cmdarg_T *cap)
     break;
 
   case 'K':
-    n = nv_K_getcmd(cap, kp, kp_help, kp_ex, &ptr, n, buf, bufsize, &buflen);
+    n = nv_K_getcmd(cap, kp, kp_help, kp_ex, visual_selection, &ptr, n, buf, bufsize, &buflen);
     if (n == 0) {
       return;
     }
@@ -3491,8 +3500,8 @@ static void nv_ident(cmdarg_T *cap)
   }
 
   // Now grab the chars in the identifier
-  if (cmdchar == 'K' && kp_help) {
-    // Do nothing. `nv_K_getcmd` set buf=":help! FOO" for this case.
+  if (cmdchar == 'K' && kp_help && !visual_selection) {
+    // Do nothing. `nv_K_getcmd` sets buf=":help! FOO" for this case.
     STRCPY(buf, "help! FOO");
     buflen = STRLEN_LITERAL("help! FOO");
   } else if (cmdchar == 'K' && !kp_help) {

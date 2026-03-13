@@ -20,6 +20,14 @@ describe(':help', function()
     }
   end)
 
+  setup(function()
+    n.clear {
+      args = {
+        '+helptags $VIMRUNTIME/doc',
+      },
+    }
+  end)
+
   it('{subject}', function()
     n.command('helptags ++t $VIMRUNTIME/doc')
     local function check_tag(cmd, tag)
@@ -158,27 +166,6 @@ describe(':help', function()
     command('help …')
     eq('*…*', api.nvim_get_current_line())
   end)
-end)
-
-describe(':help', function()
-  setup(function()
-    n.clear {
-      args = {
-        '+helptags $VIMRUNTIME/doc',
-      },
-    }
-    command('enew')
-    command('set filetype=help')
-    -- XXX: hacky way to load the `help.lua` module.
-    n.exec_lua([[
-      _G.test_help = dofile(vim.fs.joinpath(vim.env.VIMRUNTIME, 'ftplugin/help.lua'))
-    ]])
-  end)
-
-  before_each(function()
-    command('enew')
-    command('set filetype=help')
-  end)
 
   it('":help FOO" guesses the best tag near cursor', function()
     local function set_lines(text)
@@ -196,6 +183,8 @@ describe(':help', function()
       return { word, bufname }
     end
 
+    n.command('enew')
+    n.command('set filetype=help')
     n.command [[set keywordprg=:help]]
 
     set_lines { 'some plain text' }
