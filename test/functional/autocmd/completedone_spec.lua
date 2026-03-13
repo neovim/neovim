@@ -13,7 +13,6 @@ describe('CompleteDone', function()
 
   describe('sets v:event.reason', function()
     before_each(function()
-      command('set completeopt+=noinsert')
       command('autocmd CompleteDone * let g:donereason = v:event.reason')
       feed('i')
       call('complete', call('col', '.'), { 'foo', 'bar' })
@@ -25,16 +24,20 @@ describe('CompleteDone', function()
     end)
 
     it('accept when candidate is inserted without noinsert #38160', function()
-      command('set completeopt=menu,menuone') -- Omit "noinsert".
+      command('set completeopt=menu') -- Omit "noinsert".
       feed('<ESC>Stest<CR><C-N><ESC>')
       eq('accept', eval('g:donereason'))
+      eq('test', eval('v:completed_item').word)
       eq('test', n.api.nvim_get_current_line())
-      feed('Stip<CR>t<C-N><C-N><ESC>')
-      eq('accept', eval('g:donereason'))
-      eq('tip', n.api.nvim_get_current_line())
-      feed('Stry<CR>t<C-N><C-N><C-N><Space>')
-      eq('accept', eval('g:donereason'))
-      eq('try ', n.api.nvim_get_current_line())
+
+      -- discard when pum was shown and dismissed without accepting
+      command('set completeopt=menuone')
+      feed('<ESC>Stest<CR>tes<C-N><ESC>')
+      eq('discard', eval('g:donereason'))
+
+      feed('<ESC>Stest<CR>tes<C-N><Space>')
+      eq('discard', eval('g:donereason'))
+      eq('test ', n.api.nvim_get_current_line())
     end)
 
     it('cancel', function()

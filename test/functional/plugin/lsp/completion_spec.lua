@@ -1001,9 +1001,6 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     }
-    exec_lua(function()
-      vim.o.completeopt = 'menuone,noselect'
-    end)
     local client_id = create_server('dummy', completion_list)
 
     exec_lua(function()
@@ -1042,9 +1039,6 @@ describe('vim.lsp.completion: protocol', function()
       isIncomplete = false,
       items = { { label = 'hello' } },
     }
-    exec_lua(function()
-      vim.o.completeopt = 'menuone,noselect'
-    end)
     local client_id = create_server('dummy', completion_list, {
       resolve_result = {
         label = 'hello',

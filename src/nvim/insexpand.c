@@ -650,7 +650,7 @@ static void do_autocmd_completedone(int c, int mode, char *word)
   tv_dict_add_str(v_event, S_LEN("complete_type"), mode_str != NULL ? mode_str : "");
 
   tv_dict_add_str(v_event, S_LEN("reason"),
-                  (compl_used_match ? "accept" : (c == Ctrl_E ? "cancel" : "discard")));
+                  (c == Ctrl_Y || word != NULL ? "accept" : (c == Ctrl_E ? "cancel" : "discard")));
   tv_dict_set_keys_readonly(v_event);
 
   ins_apply_autocmds(EVENT_COMPLETEDONE);
@@ -2644,6 +2644,16 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     retval = true;
     // May need to remove ComplMatchIns highlight.
     redrawWinline(curwin, curwin->w_cursor.lnum);
+  }
+
+  // When a match was inserted but the pum was never displayed
+  // (eg: only one match with 'completeopt' "menu" without "menuone"),
+  // the user had no opportunity to explicitly accept or dismiss it,
+  // so treat this as an implicit accept (#38160).
+  if (word == NULL && c != Ctrl_E && compl_used_match && compl_match_array == NULL
+      && compl_curr_match != NULL
+      && compl_curr_match->cp_str.data != NULL) {
+    word = xstrdup(compl_curr_match->cp_str.data);
   }
 
   // CTRL-E means completion is Ended, go back to the typed text.
