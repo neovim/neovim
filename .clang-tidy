@@ -42,6 +42,7 @@ Checks: >
   -readability-else-after-return,
   -readability-enum-initial-value,
   -readability-function-size,
+  -readability-implicit-bool-conversion,
   -readability-isolate-declaration,
 
   Warnings that are rarely useful,
