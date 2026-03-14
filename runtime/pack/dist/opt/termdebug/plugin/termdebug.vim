@@ -227,7 +227,7 @@ endfunc
 
 " Use when debugger didn't start or ended.
 func s:CloseBuffers()
-  for bufnr in [get(s:, 'ptybufnr', 0), get(s:, 'asmbufnr', 0), get(s:, 'varbufnr', 0)]
+  for bufnr in [get(s:, 'promptbufnr', 0), get(s:, 'ptybufnr', 0), get(s:, 'asmbufnr', 0), get(s:, 'varbufnr', 0)]
     if bufnr > 0 && bufexists(bufnr)
       execute $'bwipe! {bufnr}'
     endif
@@ -430,8 +430,8 @@ func s:StartDebug_prompt(dict)
     new
   endif
   let s:gdbwin = win_getid()
-  let s:promptbuf = bufnr('')
-  call prompt_setprompt(s:promptbuf, 'gdb> ')
+  let s:promptbufnr = bufnr('')
+  call prompt_setprompt(s:promptbufnr, 'gdb> ')
   set buftype=prompt
 
   if empty(glob('gdb'))
@@ -444,8 +444,8 @@ func s:StartDebug_prompt(dict)
           \ Please exit and rename them because Termdebug may not work as expected.")
   endif
 
-  call prompt_setcallback(s:promptbuf, function('s:PromptCallback'))
-  call prompt_setinterrupt(s:promptbuf, function('s:PromptInterrupt'))
+  call prompt_setcallback(s:promptbufnr, function('s:PromptCallback'))
+  call prompt_setinterrupt(s:promptbufnr, function('s:PromptInterrupt'))
 
   if s:vertical
     " Assuming the source code window will get a signcolumn, use two more
@@ -478,14 +478,16 @@ func s:StartDebug_prompt(dict)
         \ })
   if s:gdbjob == 0
     call s:Echoerr('Invalid argument (or job table is full) while starting gdb job')
-    exe $'bwipe! {s:ptybufnr}'
+    if s:promptbufnr > 0 && bufexists(s:promptbufnr)
+      exe $'bwipe! {s:promptbufnr}'
+    endif
     return
   elseif s:gdbjob == -1
     call s:Echoerr('Failed to start the gdb job')
     call s:CloseBuffers()
     return
   endif
-  exe $'au BufUnload <buffer={s:promptbuf}> ++once call jobstop(s:gdbjob)'
+  exe $'au BufUnload <buffer={s:promptbufnr}> ++once call jobstop(s:gdbjob)'
 
   let s:ptybufnr = 0
   if has('win32')
@@ -783,17 +785,7 @@ endfunc
 
 func s:EndDebugCommon()
   let curwinid = win_getid()
-
-  if exists('s:ptybufnr') && s:ptybufnr
-    exe $'bwipe! {s:ptybufnr}'
-  endif
-  if s:asmbufnr > 0 && bufexists(s:asmbufnr)
-    exe $'bwipe! {s:asmbufnr}'
-  endif
-  if s:varbufnr > 0 && bufexists(s:varbufnr)
-    exe $'bwipe! {s:varbufnr}'
-  endif
-  let s:running = v:false
+  call s:CloseBuffers()
 
   " Restore 'signcolumn' in all buffers for which it was set.
   call win_gotoid(s:sourcewin)
@@ -831,12 +823,8 @@ func s:EndPromptDebug(job_id, exit_code, event)
     doauto <nomodeline> User TermdebugStopPre
   endif
 
-  if bufexists(s:promptbuf)
-    exe $'bwipe! {s:promptbuf}'
-  endif
-
   call s:EndDebugCommon()
-  unlet s:gdbwin
+  unlet! s:gdbwin
   "call ch_log("Returning from EndPromptDebug()")
 endfunc
 
