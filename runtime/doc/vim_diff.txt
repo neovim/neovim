@@ -329,6 +329,7 @@ Editor:
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
 - |BufModifiedSet|
+- |CmdlineCharPre|
 - |Progress|
 - |RecordingEnter|
 - |RecordingLeave|

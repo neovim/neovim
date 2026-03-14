@@ -2009,6 +2009,44 @@ static int command_line_browse_history(CommandLineState *s)
   return CMDLINE_NOT_CHANGED;
 }
 
+/// Handles the CmdlineCharPre event.
+///
+/// @return pointer to allocated memory with the replacement string
+///   or NULL to continue inserting "c".
+static char *do_cmdline_char_pre(CommandLineState *s)
+{
+  if (s->c == Ctrl_RSB) {
+    return NULL;
+  }
+
+  if (!has_event(EVENT_CMDLINECHARPRE)) {
+    return NULL;
+  }
+
+  char buf[MB_MAXBYTES + 1];
+  size_t buflen = (size_t)utf_char2bytes(s->c, buf);
+  buf[buflen] = NUL;
+
+  textlock++;
+  set_vim_var_string(VV_CHAR, buf, (ptrdiff_t)buflen);
+
+  char firstcbuf[2];
+  firstcbuf[0] = (char)(s->firstc > 0 ? s->firstc : '-');
+  firstcbuf[1] = 0;
+
+  char *res = NULL;
+  if (apply_autocmds(EVENT_CMDLINECHARPRE, firstcbuf, firstcbuf, false, curbuf)) {
+    if (strcmp(buf, get_vim_var_str(VV_CHAR)) != 0) {
+      res = xstrdup(get_vim_var_str(VV_CHAR));
+    }
+  }
+
+  set_vim_var_string(VV_CHAR, NULL, -1);
+  textlock--;
+
+  return res;
+}
+
 static int command_line_handle_key(CommandLineState *s)
 {
   // For one key prompt, avoid putting ESC and Ctrl_C onto cmdline.
@@ -2346,6 +2384,21 @@ static int command_line_handle_key(CommandLineState *s)
     if (!IS_SPECIAL(s->c)) {
       mod_mask = 0x0;
     }
+
+    char *str = do_cmdline_char_pre(s);
+
+    if (str != NULL) {
+      bool str_is_empty = str[0] == 0;
+      put_on_cmdline(str, -1, true);
+
+      xfree(str);
+      if (str_is_empty) {
+        return command_line_not_changed(s);
+      } else {
+        return command_line_changed(s);
+      }
+    }
+
     break;
   }
 
