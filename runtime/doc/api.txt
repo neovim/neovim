@@ -4193,8 +4193,8 @@ nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
       • {buffer}  (`integer`) Buffer id
 
 nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
-    Sets the (1,0)-indexed cursor position in the window. |api-indexing| This
-    scrolls the window even if it is not the current one.
+    Sets the (1,0)-indexed cursor position (byte offset) in the window.
+    |api-indexing| This scrolls the window even if it is not the current one.
 
     Attributes: ~
         Since: 0.1.0

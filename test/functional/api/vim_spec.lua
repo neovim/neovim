@@ -729,7 +729,7 @@ describe('API', function()
         pcall_err(request, 'nvim_call_dict_function', "{ 'f': '' }", 'f', { 1, 2 })
       )
       eq(
-        'dict argument type must be String or Dict',
+        'Invalid dict argument: expected String or Dict',
         pcall_err(request, 'nvim_call_dict_function', 42, 'f', { 1, 2 })
       )
       eq(
@@ -738,7 +738,7 @@ describe('API', function()
       )
       eq('dict not found', pcall_err(request, 'nvim_call_dict_function', '42', 'f', { 1, 2 }))
       eq(
-        'Invalid (empty) function name',
+        'Invalid function name: (empty)',
         pcall_err(request, 'nvim_call_dict_function', "{ 'f': '' }", '', { 1, 2 })
       )
     end)
@@ -3791,7 +3791,7 @@ describe('API', function()
         'Invalid chunk: expected Array with 1 or 2 Strings',
         pcall_err(api.nvim_echo, { { '', '', '' } }, 1, {})
       )
-      eq('Invalid hl_group: text highlight', pcall_err(api.nvim_echo, { { '', false } }, 1, {}))
+      eq("Invalid 'hl_group': 'text highlight'", pcall_err(api.nvim_echo, { { '', false } }, 1, {}))
     end)
 
     it('should clear cmdline message before echo', function()

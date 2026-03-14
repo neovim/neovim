@@ -10,6 +10,7 @@
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
@@ -303,8 +304,9 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
     object_to_vim(dict, &rettv, err);
     break;
   default:
-    api_set_error(err, kErrorTypeValidation, "dict argument type must be String or Dict");
-    return rv;
+    VALIDATE_EXP(false, "dict argument", "String or Dict", NULL, {
+      return rv;
+    });
   }
   dict_T *self_dict = rettv.vval.v_dict;
   if (rettv.v_type != VAR_DICT || !self_dict) {
@@ -314,29 +316,26 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
 
   if (fn.data && fn.size > 0 && dict.type != kObjectTypeDict) {
     dictitem_T *const di = tv_dict_find(self_dict, fn.data, (ptrdiff_t)fn.size);
-    if (di == NULL) {
-      api_set_error(err, kErrorTypeValidation, "Not found: %s", fn.data);
+    VALIDATE(di != NULL, "Not found: %s", fn.data, {
       goto end;
-    }
+    });
     if (di->di_tv.v_type == VAR_PARTIAL) {
       api_set_error(err, kErrorTypeValidation,
                     "partial function not supported");
       goto end;
     }
-    if (di->di_tv.v_type != VAR_FUNC) {
-      api_set_error(err, kErrorTypeValidation, "Not a function: %s", fn.data);
+    VALIDATE((di->di_tv.v_type == VAR_FUNC), "Not a function: %s", fn.data, {
       goto end;
-    }
+    });
     fn = (String) {
       .data = di->di_tv.vval.v_string,
       .size = strlen(di->di_tv.vval.v_string),
     };
   }
 
-  if (!fn.data || fn.size < 1) {
-    api_set_error(err, kErrorTypeValidation, "Invalid (empty) function name");
+  VALIDATE((fn.data && fn.size >= 1), "Invalid function name: %s", "(empty)", {
     goto end;
-  }
+  });
 
   rv = _call_function(fn, args, self_dict, arena, err);
 end:

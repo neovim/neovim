@@ -447,7 +447,9 @@ static void ui_set_option(RemoteUI *ui, bool init, String name, Object value, Er
     }
   }
 
-  api_set_error(err, kErrorTypeValidation, "No such UI option: %s", name.data);
+  VALIDATE_S(false, "UI option", name.data, {
+    return;
+  });
 }
 
 /// Tell Nvim to resize a grid. Triggers a grid_resize event with the requested
@@ -495,8 +497,7 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
   }
 
   if (!ui->ui_ext[kUIPopupmenu]) {
-    api_set_error(err, kErrorTypeValidation,
-                  "It must support the ext_popupmenu option");
+    api_set_error(err, kErrorTypeValidation, "UI must support the ext_popupmenu option");
     return;
   }
 

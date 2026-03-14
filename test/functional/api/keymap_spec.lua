@@ -649,7 +649,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('Invalid mode shortname: "xnoremap"', pcall_err(api.nvim_del_keymap, 'xnoremap', 'lhs'))
   end)
 
-  it('error on invalid optnames', function()
+  it('validation', function()
     eq(
       "Invalid key: 'silentt'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { silentt = true })
@@ -659,16 +659,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       "Invalid key: 'nowaiT'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { nowaiT = false })
     )
-  end)
 
-  it('error on <buffer> option key', function()
+    -- <buffer> option key
     eq(
       "Invalid key: 'buffer'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { buffer = true })
     )
-  end)
 
-  it('error when "replace_keycodes" is used without "expr"', function()
     eq(
       '"replace_keycodes" requires "expr"',
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { replace_keycodes = true })
@@ -681,7 +678,10 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     it('throws an error when given non-boolean value for ' .. opt, function()
       local opts = {}
       opts[opt] = 'fooo'
-      eq(opt .. ' is not a boolean', pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', opts))
+      eq(
+        ("Invalid '%s': expected boolean"):format(opt),
+        pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', opts)
+      )
     end)
   end
 

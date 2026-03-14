@@ -143,7 +143,7 @@ describe('API/extmarks', function()
     )
     -- No memory leak with virt_text, virt_lines, sign_text
     eq(
-      'right_gravity is not a boolean',
+      "Invalid 'right_gravity': expected boolean",
       pcall_err(set_extmark, ns, marks[2], 0, 0, {
         virt_text = { { 'foo', 'Normal' } },
         virt_lines = { { { 'bar', 'Normal' } } },

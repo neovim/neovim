@@ -57,6 +57,31 @@ void api_err_exp(Error *err, const char *name, const char *expected, const char 
                 name, expected, actual);
 }
 
+/// Creates "Required: …" message and sets it on `err`.
+void api_err_required(Error *err, const char *name)
+{
+  ErrorType errtype = kErrorTypeValidation;
+  // Treat `name` without whitespace as a parameter (surround in quotes).
+  // Treat `name` with whitespace as a description (no quotes).
+  const char *has_space = strchr(name, ' ');
+
+  api_set_error(err, errtype, has_space ? "Required: %s" : "Required: '%s'", name);
+}
+
+/// Creates "Conflict: … not allowed with …" message and sets it on `err`.
+void api_err_conflict(Error *err, const char *name, const char *name2)
+{
+  ErrorType errtype = kErrorTypeValidation;
+  // Treat `name` without whitespace as a parameter (surround in quotes).
+  // Treat `name` with whitespace as a description (no quotes).
+  const char *has_space2 = strchr(name2, ' ');
+
+  api_set_error(err, errtype, has_space2
+                ? "Conflict: '%s' not allowed with %s"
+                : "Conflict: '%s' not allowed with '%s'",
+                name, name2);
+}
+
 bool check_string_array(Array arr, char *name, bool disallow_nl, Error *err)
 {
   snprintf(IObuff, sizeof(IObuff), "'%s' item", name);

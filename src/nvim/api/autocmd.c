@@ -193,11 +193,10 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
     buffers = arena_array(arena, 1);
     ADD_C(buffers, STRING_OBJ(pat));
   } else if (opts->buffer.type == kObjectTypeArray) {
-    if (opts->buffer.data.array.size > AUCMD_MAX_PATTERNS) {
-      api_set_error(err, kErrorTypeValidation, "Too many buffers (maximum of %d)",
-                    AUCMD_MAX_PATTERNS);
+    VALIDATE((opts->buffer.data.array.size <= AUCMD_MAX_PATTERNS),
+             "Too many buffers (maximum of %d)", AUCMD_MAX_PATTERNS, {
       goto cleanup;
-    }
+    });
 
     buffers = arena_array(arena, kv_size(opts->buffer.data.array));
     FOREACH_ITEM(opts->buffer.data.array, bufnr, {

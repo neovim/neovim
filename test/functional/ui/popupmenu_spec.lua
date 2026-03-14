@@ -535,7 +535,7 @@ describe('ui/ext_popupmenu', function()
     it('an error occurs when ext_popupmenu is false', function()
       api.nvim_ui_pum_set_height(1)
       screen:set_option('ext_popupmenu', false)
-      eq('It must support the ext_popupmenu option', pcall_err(api.nvim_ui_pum_set_height, 1))
+      eq('UI must support the ext_popupmenu option', pcall_err(api.nvim_ui_pum_set_height, 1))
     end)
   end)
 
