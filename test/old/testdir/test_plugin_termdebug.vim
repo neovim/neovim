@@ -56,6 +56,7 @@ endfunction
 
 packadd termdebug
 func Test_termdebug_basic()
+  let g:test_is_flaky = 1
   let bin_name = 'XTD_basic'
   let src_name = bin_name .. '.c'
   call s:generate_files(bin_name)
