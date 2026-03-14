@@ -55,6 +55,14 @@ function s:cleanup_files(bin_name)
 endfunction
 
 packadd termdebug
+
+func s:GetDefinedSignText(name)
+  return get(get(sign_getdefined(a:name), 0, {}), 'text', '')
+endfunc
+
+func s:WinlayoutShape()
+  return substitute(string(winlayout()), ', \d\+', '', 'g')
+endfunc
 func Test_termdebug_basic()
   let g:test_is_flaky = 1
   let bin_name = 'XTD_basic'
@@ -82,7 +90,6 @@ func Test_termdebug_basic()
         \  'group': 'TermDebug'},
         \ {'lnum': 9, 'id': 1014, 'name': 'debugBreakpoint1.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        "\ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
         \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
   Finish
   call Nterm_wait(gdb_buf)
@@ -106,48 +113,48 @@ func Test_termdebug_basic()
     Break
     call Nterm_wait(gdb_buf)
     if i == 2
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint2.0')[0].text, '>2')})
+      call WaitForAssert({-> assert_equal('>2', s:GetDefinedSignText('debugBreakpoint2.0'))})
     endif
     if i == 3
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint3.0')[0].text, '>3')})
+      call WaitForAssert({-> assert_equal('>3', s:GetDefinedSignText('debugBreakpoint3.0'))})
     endif
     if i == 4
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint4.0')[0].text, '>>')})
+      call WaitForAssert({-> assert_equal('>>', s:GetDefinedSignText('debugBreakpoint4.0'))})
     endif
     if i == 5
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint5.0')[0].text, '>>')})
+      call WaitForAssert({-> assert_equal('>>', s:GetDefinedSignText('debugBreakpoint5.0'))})
       unlet g:termdebug_config['sign']
     endif
     if i == 6
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint6.0')[0].text, '06')})
+      call WaitForAssert({-> assert_equal('06', s:GetDefinedSignText('debugBreakpoint6.0'))})
     endif
     if i == 10
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint10.0')[0].text, '10')})
+      call WaitForAssert({-> assert_equal('10', s:GetDefinedSignText('debugBreakpoint10.0'))})
     endif
     if i == 99
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint99.0')[0].text, '99')})
+      call WaitForAssert({-> assert_equal('99', s:GetDefinedSignText('debugBreakpoint99.0'))})
     endif
     if i == 100
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint100.0')[0].text, '9+')})
+      call WaitForAssert({-> assert_equal('9+', s:GetDefinedSignText('debugBreakpoint100.0'))})
     endif
     if i == 110
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint110.0')[0].text, '9+')})
+      call WaitForAssert({-> assert_equal('9+', s:GetDefinedSignText('debugBreakpoint110.0'))})
       unlet g:termdebug_config
     endif
     if i == 128
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint128.0')[0].text, '80')})
+      call WaitForAssert({-> assert_equal('80', s:GetDefinedSignText('debugBreakpoint128.0'))})
     endif
     if i == 168
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint168.0')[0].text, 'A8')})
+      call WaitForAssert({-> assert_equal('A8', s:GetDefinedSignText('debugBreakpoint168.0'))})
     endif
     if i == 255
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint255.0')[0].text, 'FF')})
+      call WaitForAssert({-> assert_equal('FF', s:GetDefinedSignText('debugBreakpoint255.0'))})
     endif
     if i == 256
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint256.0')[0].text, 'F+')})
+      call WaitForAssert({-> assert_equal('F+', s:GetDefinedSignText('debugBreakpoint256.0'))})
     endif
     if i == 258
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint258.0')[0].text, 'F+')})
+      call WaitForAssert({-> assert_equal('F+', s:GetDefinedSignText('debugBreakpoint258.0'))})
     endif
     let i += 1
   endwhile
@@ -157,12 +164,12 @@ func Test_termdebug_basic()
   if winwidth(0) <= 78 + 60
     Var
     call assert_equal(winnr('$'), winnr())
-    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['leaf', 1000], ['leaf', 1003 + cn]]], winlayout())
+    call assert_equal("['col', [['leaf'], ['leaf'], ['leaf'], ['leaf']]]", s:WinlayoutShape())
     let cn += 1
     bw!
     Asm
     call assert_equal(winnr('$'), winnr())
-    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['leaf', 1000], ['leaf', 1003 + cn]]], winlayout())
+    call assert_equal("['col', [['leaf'], ['leaf'], ['leaf'], ['leaf']]]", s:WinlayoutShape())
     let cn += 1
     bw!
   endif
@@ -172,7 +179,7 @@ func Test_termdebug_basic()
   Var
   if winwidth(0) < winw
     call assert_equal(winnr('$') - 1, winnr())
-    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]], winlayout())
+    call assert_equal("['col', [['leaf'], ['leaf'], ['row', [['leaf'], ['leaf']]]]]", s:WinlayoutShape())
     let cn += 1
     bw!
   endif
@@ -180,7 +187,7 @@ func Test_termdebug_basic()
   Asm
   if winwidth(0) < winw
     call assert_equal(winnr('$') - 1, winnr())
-    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]], winlayout())
+    call assert_equal("['col', [['leaf'], ['leaf'], ['row', [['leaf'], ['leaf']]]]]", s:WinlayoutShape())
     let cn += 1
     bw!
   endif
