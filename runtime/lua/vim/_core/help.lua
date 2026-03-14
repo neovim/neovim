@@ -133,6 +133,8 @@ end
 local trimmable_punct = {
   ['('] = true,
   [')'] = true,
+  ['<'] = true,
+  ['>'] = true,
   ['['] = true,
   [']'] = true,
   ['{'] = true,
@@ -196,10 +198,10 @@ local function trim_tag(tag, offset)
     e = e - 1
   end
 
-  -- Trim argument lists: "[{buf}]", "({opts})", "('arg')"
+  -- Truncate at "(" with args, e.g. "foo('bar')" => "foo".
+  -- But keep "()" since it's part of valid tags like "vim.fn.expand()".
   for i = s, e do
-    local c = tag:sub(i, i)
-    if c == '[' or c == '{' or (c == '(' and i + 1 <= e and tag:sub(i + 1, i + 1) ~= ')') then
+    if tag:sub(i, i) == '(' and not (i + 1 <= e and tag:sub(i + 1, i + 1) == ')') then
       e = i - 1
       break
     end
@@ -258,6 +260,12 @@ function M.resolve_tag()
     return tag
   end
 
+  -- Extract |tag| reference if the cursor is inside one (help's link syntax).
+  local pipe_tag = tag:match('|(.+)|')
+  if pipe_tag and #vim.fn.getcompletion(pipe_tag, 'help') > 0 then
+    return pipe_tag
+  end
+
   -- Iteratively trim punctuation and try again, up to 10 times.
   local candidate = tag
   for _ = 1, 10 do
@@ -274,11 +282,27 @@ function M.resolve_tag()
     end
   end
 
-  -- Try <cword> (keyword at cursor) before dot-trimming, since dot-trimming strips from the left
-  -- and may move away from the cursor position.
-  -- E.g. for '@lsp.type.function' with cursor on "lsp", <cword> is "lsp".
-  local cword = vim.fn.expand('<cword>')
-  if cword ~= '' and cword ~= tag and #vim.fn.getcompletion(cword, 'help') > 0 then
+  -- Try the word (alphanumeric/underscore run) at the cursor before dot-trimming, since
+  -- dot-trimming strips from the left and may move away from the cursor position.
+  -- E.g. for '@lsp.type.function' with cursor on "lsp", the word is "lsp".
+  -- Note: we don't use <cword> because it depends on 'iskeyword'.
+  local word_s, word_e = col, col
+  -- If cursor is not on a word char, find the nearest word char to the right.
+  if not line:sub(col, col):match('[%w_]') then
+    while word_s <= #line and not line:sub(word_s, word_s):match('[%w_]') do
+      word_s = word_s + 1
+    end
+    word_e = word_s
+  end
+  while word_s > 1 and line:sub(word_s - 1, word_s - 1):match('[%w_]') do
+    word_s = word_s - 1
+  end
+  while word_e <= #line and line:sub(word_e, word_e):match('[%w_]') do
+    word_e = word_e + 1
+  end
+  word_e = word_e - 1
+  local cword = line:sub(word_s, word_e)
+  if #cword > 1 and cword ~= tag and #vim.fn.getcompletion(cword, 'help') > 0 then
     return cword
   end
 

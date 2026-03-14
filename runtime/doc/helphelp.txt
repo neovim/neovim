@@ -162,10 +162,16 @@ Help commands						*online-help*
 			Type |gO| to see the table of contents.
 
 							*:help!*
-:h[elp]!		DWIM. Tries :help for the |WORD| at cursor. If that
-			fails, then trims punctuation using various heuristics
-			and tries again. Falls back to the |word| at cursor if
-			all else fails.
+:h[elp]!		Guesses a help tag from the |WORD| at cursor, in DWIM ("Do
+			What I Mean") fashion: trims punctuation using various
+			heuristics until a valid help tag is found.
+
+			For example, move the cursor anywhere in this code,
+			then run `:help!`: >
+
+				local v = vim.version.parse(vim.system({'foo'}):wait().stdout)
+<
+			Then compare to `:exe 'help' expand('<cword>')`.
 
 						*{subject}* *E149* *E661*
 :h[elp] {subject}	Like ":help", additionally jump to the tag {subject}.
@@ -240,9 +246,10 @@ Help commands						*online-help*
 				:help so<C-V><CR>only
 <
 
-:h[elp]! [subject]	Like ":help", but in non-English help files prefer to
-			find a tag in a file with the same language as the
-			current file.  See |help-translated|.
+:h[elp]! {subject}	Like ":help", but prefers tags with the same
+			|help-translated| language as the current file.
+
+			Unrelated to |:help!| (no {subject}).
 
 							*:helpc* *:helpclose*
 :helpc[lose]		Close one help window, if there is one.

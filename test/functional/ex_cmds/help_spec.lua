@@ -10,23 +10,36 @@ local mkdir = t.mkdir
 local rmdir = n.rmdir
 local write_file = t.write_file
 
-describe(':help', function()
-  before_each(function()
-    os.remove('test.log')
-    clear {
-      env = {
-        -- NVIM_LOG_FILE = 'test.log',
-      },
-    }
-  end)
+local cursor = n.api.nvim_win_set_cursor
 
-  setup(function()
-    n.clear {
-      args = {
-        '+helptags $VIMRUNTIME/doc',
-      },
-    }
-  end)
+local function buf_word()
+  local word = n.fn.expand('<cWORD>')
+  local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
+  return { word, bufname }
+end
+
+local function open_helptag()
+  -- n.exec [[:normal! K]]
+  n.exec [[:help!]]
+  local rv = buf_word()
+  if n.fn.winnr('$') > 1 then
+    n.command('close')
+  end
+  return rv
+end
+
+local function set_lines(text)
+  n.exec_lua(
+    [[
+    vim.cmd'%delete _'
+    vim.api.nvim_paste(vim.text.indent(-1, ...), false, -1)
+  ]],
+    text
+  )
+end
+
+describe(':help', function()
+  before_each(clear)
 
   it('{subject}', function()
     n.command('helptags ++t $VIMRUNTIME/doc')
@@ -137,38 +150,14 @@ describe(':help', function()
   end)
 
   it('":help!" (bang + no args) guesses the best tag near cursor', function()
-    local function set_lines(text)
-      n.exec_lua(
-        [[
-        vim.cmd'%delete _'
-        vim.api.nvim_paste(vim.text.indent(-1, ...), false, -1)
-      ]],
-        text
-      )
-    end
-    local cursor = n.api.nvim_win_set_cursor
-    local function buf_word()
-      local word = n.fn.expand('<cWORD>')
-      local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
-      return { word, bufname }
-    end
-    local function open_helptag()
-      -- n.exec [[:normal! K]]
-      n.exec [[:help!]]
-      local rv = buf_word()
-      if n.fn.winnr('$') > 1 then
-        n.command('close')
-      end
-      return rv
-    end
-
+    n.command('helptags ++t $VIMRUNTIME/doc')
     -- n.command('enew')
     -- n.command('set filetype=help')
     -- n.command [[set keywordprg=:help]]
 
     -- Failure modes:
     set_lines 'xxxxxxxxx'
-    cursor(0, { 1, 4 }) -- on backtick '`'
+    cursor(0, { 1, 4 })
     t.matches('E149: Sorry, no help for xxxxxxxxx', t.pcall_err(n.exec, [[:help!]]))
 
     -- Success:
@@ -244,7 +233,7 @@ describe(':help', function()
     eq({ '*:function*', 'userfunc.txt' }, open_helptag())
 
     set_lines '  • `@lsp.type.<type>.<ft>` for the type'
-    cursor(0, { 1, 4 }) -- on backtick '`'
+    cursor(0, { 1, 6 }) -- on backtick '`' (byte 6, after 2 spaces + 3-byte '•' + space)
     eq({ '*lsp*', 'lsp.txt' }, open_helptag())
 
     set_lines [[
@@ -260,7 +249,10 @@ describe(':help', function()
     cursor(0, { 1, 6 }) -- on "restart"
     eq({ '*:restart*', 'gui.txt' }, open_helptag())
 
-    -- Open an actual helpfile. This affects getcompletion(…,'help') ...
+    --
+    -- Test with actual helpfiles. This affects getcompletion(…,'help') ...
+    --
+
     n.command(':help lua')
     n.feed('gg/package.searchpath<cr>')
     eq({ "vim.cmd.edit(package.searchpath('jit.p',", 'lua.txt' }, buf_word())
@@ -268,14 +260,23 @@ describe(':help', function()
     n.command(':help!')
     eq({ '*packages*', 'pack.txt' }, buf_word())
 
-    -- set_lines {' |vim.lsp.start()|. '}
-    -- cursor(0, {1, 4})
-    -- eq({'*vim.lsp.start()*', 'lsp.txt'}, open_helptag())
-    --
-    -- Examples:
-    --    (`table<integer, {error: lsp.ResponseError?, result: any}>?`) result
-    --    |vim.lsp.Config|.
-    --    "Enabled Configurations". 🌈
+    n.command(':help lsp')
+    n.feed('gg/type.<lt>type><cr>')
+    eq({ '`@lsp.type.<type>.<ft>`', 'lsp.txt' }, buf_word())
+    --          ^ cursor on "type"
+    n.command(':help!')
+    eq({ '*type()*', 'vimfn.txt' }, buf_word())
+    n.feed('<c-o>f<lt>')
+    eq({ '`@lsp.type.<type>.<ft>`', 'lsp.txt' }, buf_word())
+    --               ^ cursor on "<"
+    n.command(':help!')
+
+    n.command(':help lsp')
+    n.feed('gg/codelens.run()|<cr>')
+    eq({ '|vim.lsp.codelens.run()|.', 'lsp.txt' }, buf_word())
+    --             ^ cursor on "codelens"
+    n.command(':help!')
+    eq({ '*vim.lsp.codelens.run()*', 'lsp.txt' }, buf_word())
   end)
 
   it('window closed makes cursor return to a valid win/buf #9773', function()
