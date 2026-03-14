@@ -32,6 +32,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -52,6 +53,7 @@
 #include "help.c.generated.h"
 
 /// ":help": open a read-only window on a help file
+/// ":help!": DWIM parse the best match at cursor
 void ex_help(exarg_T *eap)
 {
   char *arg;
@@ -76,11 +78,6 @@ void ex_help(exarg_T *eap)
     }
     arg = eap->arg;
 
-    if (eap->forceit && *arg == NUL && !curbuf->b_help) {
-      emsg(_("E478: Don't panic!"));
-      return;
-    }
-
     if (eap->skip) {        // not executing commands
       return;
     }
@@ -97,9 +94,26 @@ void ex_help(exarg_T *eap)
   // Check for a specified language
   char *lang = check_help_lang(arg);
 
+  // ":help!" (bang, no args).
+  bool helpbang = (eap != NULL && eap->forceit && *arg == NUL);
+
   // When no argument given go to the index.
-  if (*arg == NUL) {
+  if (*arg == NUL && !helpbang) {
     arg = "help.txt";
+  }
+
+  // ":help!" (bang, no args): DWIM help, resolve best tag at cursor via Lua.
+  char *allocated_arg = NULL;
+  if (helpbang) {
+    Error err = ERROR_INIT;
+    Object res = NLUA_EXEC_STATIC("return require'vim._core.help'.resolve_tag()",
+                                  (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
+    if (!ERROR_SET(&err) && res.type == kObjectTypeString && res.data.string.size > 0) {
+      allocated_arg = xstrdup(res.data.string.data);
+      arg = allocated_arg;
+    }
+    api_free_object(res);
+    api_clear_error(&err);
   }
 
   // Check if there is a match for the argument.
@@ -125,6 +139,7 @@ void ex_help(exarg_T *eap)
     if (n != FAIL) {
       FreeWild(num_matches, matches);
     }
+    xfree(allocated_arg);
     return;
   }
 
@@ -214,6 +229,7 @@ void ex_help(exarg_T *eap)
 
 erret:
   xfree(tag);
+  xfree(allocated_arg);
 }
 
 /// ":helpclose": Close one help window
