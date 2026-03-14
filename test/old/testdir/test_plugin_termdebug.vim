@@ -55,7 +55,6 @@ function s:cleanup_files(bin_name)
 endfunction
 
 packadd termdebug
-
 func Test_termdebug_basic()
   let bin_name = 'XTD_basic'
   let src_name = bin_name .. '.c'
@@ -63,6 +62,7 @@ func Test_termdebug_basic()
 
   edit XTD_basic.c
   Termdebug ./XTD_basic
+  call WaitForAssert({-> assert_true(get(g:, 'termdebug_is_running', v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   let gdb_buf = winbufnr(1)
   wincmd b
@@ -218,6 +218,7 @@ func Test_termdebug_tbreak()
   execute 'edit ' .. src_name
   execute 'Termdebug ./' .. bin_name
 
+  call WaitForAssert({-> assert_true(get(g:, 'termdebug_is_running', v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   let gdb_buf = winbufnr(1)
   wincmd b
