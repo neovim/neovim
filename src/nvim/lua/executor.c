@@ -1778,7 +1778,28 @@ void ex_lua(exarg_T *const eap)
   xfree(code);
   code = code_buf;
 
-  nlua_typval_exec(code, len, ":lua", NULL, 0, false, NULL);
+  // Create dict to hold the table for ev
+  dict_T* ev_dict = tv_dict_alloc();
+  ev_dict->dv_refcount = 1;
+
+  linenr_T start = -1, end = -1;
+  if (eap->addr_count == 1) {
+    start = end = eap->line1;
+  } else if (eap->addr_count == 2) {
+    start = eap->line1;
+    end = eap->line2;
+  }
+
+  tv_dict_add_nr(ev_dict, "startline", sizeof("startline"), start);
+  tv_dict_add_nr(ev_dict, "endline", sizeof("endline"), end);
+
+  typval_T ev = {
+    .v_lock = VAR_UNLOCKED,
+    .v_type = VAR_DICT,
+    .vval.v_dict = ev_dict
+  };
+
+  nlua_typval_exec(code, len, ":lua", &ev, 1, false, NULL);
 
   xfree(code);
 }
