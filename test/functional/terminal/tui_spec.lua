@@ -2282,6 +2282,7 @@ describe('TUI', function()
         ext_tabline = false,
         ext_termcolors = true,
         ext_wildmenu = false,
+        ext_windows = false,
         height = 6,
         override = false,
         rgb = false,

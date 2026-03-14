@@ -3298,6 +3298,7 @@ describe('API', function()
           ext_tabline = false,
           ext_termcolors = false,
           ext_wildmenu = false,
+          ext_windows = false,
           height = 4,
           override = true,
           rgb = true,

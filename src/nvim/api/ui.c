@@ -48,6 +48,8 @@
 // TODO(bfredl): just make UI:s owned by their channels instead
 static PMap(uint64_t) connected_uis = MAP_INIT;
 
+static RemoteUI *ext_win_ui = NULL;
+
 /// Gets the UI attached to the given channel, or sets an error message on `err`.
 static RemoteUI *get_ui_or_err(uint64_t chan_id, Error *err)
 {
@@ -186,6 +188,14 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
       xfree(ui);
       return;
     }
+  }
+
+  if (ui->ui_ext[kUIWindows]) {
+    if (ext_win_ui == NULL) {
+      ui_set_ext_win_channel(channel_id);
+      ext_win_ui = ui;
+    }
+    ui->ui_ext[kUIMultigrid] = true;
   }
 
   if (ui->ui_ext[kUIHlState] || ui->ui_ext[kUIMultigrid]) {
