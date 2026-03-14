@@ -32,7 +32,7 @@ endfunction
 "          netrw#msg#Notify('ERROR'|'WARNING'|'NOTE', ["message1","message2",...])
 "          (this function can optionally take a list of messages)
 function! netrw#msg#Notify(level, msg)
-    if has('nvim')
+    if has('nvim') && !v:testing
         " Convert string to corresponding vim.log.level value
         if a:level ==# 'ERROR'
             let level = 4
