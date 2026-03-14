@@ -9480,6 +9480,7 @@ local options = {
         'options',
         'skiprtp',
         'resize',
+        'tabdir',
         'terminal',
         'winpos',
         'winsize',
@@ -9506,6 +9507,10 @@ local options = {
         		options)
            skiprtp	exclude 'runtimepath' and 'packpath' from the options
            resize	size of the Vim window: 'lines' and 'columns'
+	   tabdir	the directory in which the tabpage file is located
+			will become the current directory (useful with
+			projects accessed over a network from different
+			systems)
            terminal	include terminal windows where the command can be
         		restored
            winpos	position of the whole Vim window
