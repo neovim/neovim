@@ -78,7 +78,8 @@ else()
   # build bundled dependencies automatically.
   if(NOT EXISTS ${DEPS_PREFIX}
      AND (DEFINED ENV{CLION_IDE}
-          OR DEFINED ENV{VisualStudioEdition}))
+          OR DEFINED ENV{VisualStudioEdition}
+          OR EMSCRIPTEN))
     message(STATUS "Building dependencies...")
     set(DEPS_BUILD_DIR ${PROJECT_BINARY_DIR}/.deps)
     file(MAKE_DIRECTORY ${DEPS_BUILD_DIR})
@@ -100,6 +101,12 @@ else()
         --config ${CMAKE_BUILD_TYPE})
     set(DEPS_PREFIX ${DEPS_BUILD_DIR}/usr)
   endif()
+endif()
+
+# Emscripten restricts CMake library search to the sysroot.
+# add DEPS_PREFIX to CMAKE_FIND_ROOT_PATH to locate .deps/usr bundled libs.
+if(EMSCRIPTEN)
+  list(APPEND CMAKE_FIND_ROOT_PATH "${DEPS_PREFIX}")
 endif()
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
