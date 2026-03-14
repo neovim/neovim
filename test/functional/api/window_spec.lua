@@ -2561,60 +2561,88 @@ describe('API/win', function()
       eq(win, layout[2][2][2])
     end)
 
-    it('moves splits to other tabpages', function()
-      local curtab = api.nvim_get_current_tabpage()
+    it('moves windows to other tabpages', function()
+      local first_tab = api.nvim_get_current_tabpage()
+      local first_win = api.nvim_get_current_win()
       local win = api.nvim_open_win(0, false, { split = 'left' })
       command('tabnew')
-      local tabnr = api.nvim_get_current_tabpage()
-      command('tabprev') -- return to the initial tab
-
-      api.nvim_win_set_config(win, {
-        split = 'right',
-        win = api.nvim_tabpage_get_win(tabnr),
-      })
-
-      eq(tabnr, api.nvim_win_get_tabpage(win))
+      local new_tab = api.nvim_get_current_tabpage()
+      local tab2_win = api.nvim_get_current_win()
+      api.nvim_set_current_tabpage(first_tab)
+      -- move new win to new tabpage
+      api.nvim_win_set_config(win, { split = 'right', win = api.nvim_tabpage_get_win(new_tab) })
+      eq(new_tab, api.nvim_win_get_tabpage(win))
       -- we are changing the config, the current tabpage should not change
-      eq(curtab, api.nvim_get_current_tabpage())
+      eq(first_tab, api.nvim_get_current_tabpage())
 
-      command('tabnext') -- switch to the new tabpage so we can get the layout
+      api.nvim_set_current_tabpage(new_tab)
       local layout = fn.winlayout()
-
       eq({
         'row',
         {
-          { 'leaf', api.nvim_tabpage_get_win(tabnr) },
+          { 'leaf', api.nvim_tabpage_get_win(new_tab) },
           { 'leaf', win },
         },
       }, layout)
+
+      -- directly convert split into a float for a different tabpage
+      local win2 = api.nvim_open_win(0, true, { split = 'below' })
+      eq('', api.nvim_win_get_config(win2).relative)
+      api.nvim_win_set_config(
+        win2,
+        { relative = 'editor', row = 0, col = 0, width = 1, height = 1, win = first_win }
+      )
+      eq(first_tab, api.nvim_win_get_tabpage(win2))
+      eq('editor', api.nvim_win_get_config(win2).relative)
+      eq({ first_win, win2 }, api.nvim_tabpage_list_wins(first_tab))
+      eq({ tab2_win, win }, api.nvim_tabpage_list_wins(new_tab))
+
+      -- convert new win to float in new tabpage
+      api.nvim_win_set_config(win, { relative = 'editor', row = 2, col = 2, height = 2, width = 2 })
+      api.nvim_set_current_tabpage(first_tab)
+      -- move to other tabpage
+      api.nvim_win_set_config(win, { win = first_win })
+      eq(first_tab, api.nvim_win_get_tabpage(win))
+      eq({ first_win, win, win2 }, api.nvim_tabpage_list_wins(first_tab))
+      eq({ tab2_win }, api.nvim_tabpage_list_wins(new_tab))
+      -- unlike splits, negative win is invalid
+      eq('Invalid window id: -1', pcall_err(api.nvim_win_set_config, win, { win = -1 }))
+
+      -- can't convert only window in other tabpage to float
+      command('tabnew')
+      local only_win = api.nvim_get_current_win()
+      command('tabprevious')
+      eq(
+        'Cannot change last window into float',
+        pcall_err(
+          api.nvim_win_set_config,
+          only_win,
+          { relative = 'editor', width = 5, height = 5, row = 0, col = 0 }
+        )
+      )
     end)
 
     it('correctly moves curwin when moving curwin to a different tabpage', function()
-      local curtab = api.nvim_get_current_tabpage()
+      local tab1 = api.nvim_get_current_tabpage()
+      local tab1_win = api.nvim_get_current_win()
       command('tabnew')
       local tab2 = api.nvim_get_current_tabpage()
       local tab2_win = api.nvim_get_current_win()
-
-      command('tabprev') -- return to the initial tab
-
-      local neighbor = api.nvim_get_current_win()
-
+      api.nvim_set_current_tabpage(tab1) -- return to the initial tab
       -- create and enter a new split
       local win = api.nvim_open_win(0, true, {
         vertical = false,
       })
 
-      eq(curtab, api.nvim_win_get_tabpage(win))
-
-      eq({ win, neighbor }, api.nvim_tabpage_list_wins(curtab))
+      eq(tab1, api.nvim_win_get_tabpage(win))
+      eq({ win, tab1_win }, api.nvim_tabpage_list_wins(tab1))
 
       -- move the current win to a different tabpage
       api.nvim_win_set_config(win, {
         split = 'right',
         win = api.nvim_tabpage_get_win(tab2),
       })
-
-      eq(curtab, api.nvim_get_current_tabpage())
+      eq(tab1, api.nvim_get_current_tabpage())
 
       -- win should have moved to tab2
       eq(tab2, api.nvim_win_get_tabpage(win))
@@ -2622,10 +2650,18 @@ describe('API/win', function()
       eq(tab2_win, api.nvim_tabpage_get_win(tab2))
       -- win lists should be correct
       eq({ tab2_win, win }, api.nvim_tabpage_list_wins(tab2))
-      eq({ neighbor }, api.nvim_tabpage_list_wins(curtab))
-
+      eq({ tab1_win }, api.nvim_tabpage_list_wins(tab1))
       -- current win should have moved to neighboring win
-      eq(neighbor, api.nvim_tabpage_get_win(curtab))
+      eq(tab1_win, api.nvim_tabpage_get_win(tab1))
+
+      api.nvim_set_current_tabpage(tab2)
+      -- convert new win to float
+      api.nvim_win_set_config(win, { relative = 'editor', row = 2, col = 2, height = 2, width = 2 })
+      api.nvim_set_current_win(win)
+      api.nvim_win_set_config(win, { relative = 'win', win = tab1_win, row = 3, col = 3 })
+      eq(tab1, api.nvim_win_get_tabpage(win))
+      eq(tab2, api.nvim_get_current_tabpage())
+      eq({ tab1_win, win }, api.nvim_tabpage_list_wins(tab1))
     end)
 
     it('splits windows in non-current tabpage', function()
@@ -2752,7 +2788,6 @@ describe('API/win', function()
 
     it('messing with "win" or "parent" when moving "win" to other tabpage', function()
       command('split | tabnew')
-      local t2 = api.nvim_get_current_tabpage()
       local t2_win1 = api.nvim_get_current_win()
       command('split')
       local t2_win2 = api.nvim_get_current_win()
@@ -2797,23 +2832,19 @@ describe('API/win', function()
       eq('', api.nvim_win_get_config(0).relative)
       eq(cur_win, api.nvim_get_current_win())
 
-      -- Try to make "parent" floating. This should give the same error as before, but because
-      -- changing a split from another tabpage into a float isn't supported yet, check for that
-      -- error instead for now.
-      -- Use ":silent!" to avoid the one second delay from printing the error message.
+      -- Try to make "parent" floating. This should give the same error as before.
       exec(([[
-        autocmd WinLeave * ++once silent!
+        autocmd WinLeave * ++once
               \ call nvim_win_set_config(%d, #{relative:'editor', row:0, col:0, width:5, height:5})
       ]]):format(t2_win3))
       cur_win = api.nvim_get_current_win()
-      api.nvim_win_set_config(0, { win = t2_win3, split = 'left' })
-      matches(
-        'Cannot change window from different tabpage into float$',
-        api.nvim_get_vvar('errmsg')
+      eq(
+        'Floating state of windows to split changed',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_win3, split = 'left' })
       )
-      -- The error doesn't abort moving the window (or maybe it should, if that's wanted?)
-      neq(cur_win, api.nvim_get_current_win())
-      eq(t2, api.nvim_win_get_tabpage(cur_win))
+      eq('editor', api.nvim_win_get_config(t2_win3).relative)
+      eq('', api.nvim_win_get_config(0).relative)
+      eq(cur_win, api.nvim_get_current_win())
     end)
 
     it('expected autocmds when moving window to other tabpage', function()
@@ -2834,18 +2865,35 @@ describe('API/win', function()
       eq({ 'Leave', win, 'Enter', new_curwin }, eval('result'))
     end)
 
-    it('no autocmds when moving window within same tabpage', function()
+    it('no autocmds when moving window in same or other tabpage', function()
       local parent = api.nvim_get_current_win()
       exec([[
         split
-        let result = []
-        autocmd WinEnter * let result += ["Enter", win_getid()]
-        autocmd WinLeave * let result += ["Leave", win_getid()]
-        autocmd WinNew * let result += ["New", win_getid()]
+        let g:result = []
+        autocmd WinEnter * let g:result += ["Enter", win_getid()]
+        autocmd WinLeave * let g:result += ["Leave", win_getid()]
+        autocmd WinNew * let g:result += ["New", win_getid()]
       ]])
       api.nvim_win_set_config(0, { win = parent, split = 'left' })
       -- Shouldn't see any of those events, as we remain in the same window.
-      eq({}, eval('result'))
+      eq({}, eval('g:result'))
+
+      -- move float window from tab2 to tab1
+      command('tabdo only')
+      local tab1 = api.nvim_get_current_tabpage()
+      local tab1_win1 = api.nvim_get_current_win()
+      command('tabnew')
+      local fwin = api.nvim_open_win(0, false, {
+        relative = 'editor',
+        row = 2,
+        col = 2,
+        height = 2,
+        width = 2,
+      })
+      api.nvim_set_current_tabpage(tab1)
+      api.nvim_set_var('result', {})
+      api.nvim_win_set_config(fwin, { win = tab1_win1 })
+      eq({}, eval('g:result'))
     end)
 
     it('checks if splitting disallowed', function()
@@ -3120,7 +3168,6 @@ describe('API/win', function()
       )
       command('quit!')
 
-      -- Can't switch away from window before moving it to a different tabpage during textlock.
       exec(([[
         new
         call setline(1, 'foo')
@@ -3132,6 +3179,41 @@ describe('API/win', function()
         pcall_err(command, 'normal! ==')
       )
       eq(cur_win, api.nvim_get_current_win())
+      exec(([[
+        wincmd p
+        call setline(1, 'bar')
+        setlocal indentexpr=nvim_win_set_config(win_getid(winnr('#')),#{split:'left',win:%d})
+      ]]):format(t2_win))
+      neq(cur_win, api.nvim_get_current_win())
+      matches(
+        'E565: Not allowed to change text or change window$',
+        pcall_err(command, 'normal! ==')
+      )
+      -- expr_map_lock
+      exec(([[
+        nnoremap <expr> @ nvim_win_set_config(win_getid(winnr('#')),#{split:'left',win:%d})
+      ]]):format(t2_win))
+      neq(cur_win, api.nvim_get_current_win())
+      matches(
+        'E565: Not allowed to change text or change window$',
+        pcall_err(fn.feedkeys, '@', 'x')
+      )
+
+      exec(([[
+        wincmd p
+        autocmd WinNewPre * ++once call nvim_win_set_config(0, #{relative:'editor', win:%d, row:0, col:0, width:1, height:1})
+      ]]):format(t2_win))
+      matches(
+        'E1312: Not allowed to change the window layout in this autocmd$',
+        pcall_err(command, 'split')
+      )
+      eq(cur_win, api.nvim_get_current_win()) -- :split didn't enter new window due to error
+
+      exec(([[
+        autocmd WinLeave * ++once call nvim_win_set_config(0, #{relative:'editor', win:%d, row:0, col:0, width:1, height:1})
+      ]]):format(t2_win))
+      matches('Cannot move window to another tabpage whilst in use$', pcall_err(command, 'quit'))
+      eq(cur_win, api.nvim_get_current_win()) -- :quit didn't close window due to error
     end)
 
     it('updates statusline when moving bottom split', function()
@@ -3190,6 +3272,35 @@ describe('API/win', function()
       api.nvim_win_set_config(t2_cur_win, { split = 'left', win = 0 })
       eq(t2_alt_win, api.nvim_tabpage_get_win(t2))
       eq(t1, api.nvim_win_get_tabpage(t2_cur_win))
+
+      -- Very fun: move curwin between tabpages, converting from split to float, but with an autocmd
+      -- that deletes altwin after we're bumped to it, re-enters curwin, then switches to a 3rd
+      -- tabpage. tp_curwin of the window's old tabpage shouldn't be set to the freed altwin!
+      command('tablast | tab split | tabprevious | split')
+      command('autocmd WinEnter * ++once quit | let expect_alt = win_getid() | wincmd p | tabnext')
+      api.nvim_win_set_config(0, {
+        relative = 'editor',
+        win = api.nvim_tabpage_get_win(t1),
+        row = 0,
+        col = 0,
+        width = 5,
+        height = 5,
+      })
+      eq(eval('g:expect_alt'), api.nvim_tabpage_get_win(t2))
+
+      -- Same, but for float -> float.
+      command('tabprevious | split')
+      api.nvim_open_win(0, true, { relative = 'editor', row = 0, col = 0, width = 1, height = 1 })
+      command('autocmd WinEnter * ++once quit | let expect_alt = win_getid() | wincmd p | tabnext')
+      api.nvim_win_set_config(0, {
+        relative = 'editor',
+        win = api.nvim_tabpage_get_win(t1),
+        row = 0,
+        col = 0,
+        width = 5,
+        height = 5,
+      })
+      eq(eval('g:expect_alt'), api.nvim_tabpage_get_win(t2))
     end)
 
     it('set_config cannot change "noautocmd" #36409', function()
@@ -3202,6 +3313,64 @@ describe('API/win', function()
         "'noautocmd' cannot be changed with existing windows",
         pcall_err(api.nvim_win_set_config, win, cfg)
       )
+    end)
+
+    it('removes last statusline if needed', function()
+      local screen = Screen.new(30, 9)
+      command('set laststatus=1 | botright split')
+      screen:expect([[
+                                      |
+        {1:~                             }|*2
+        {2:[No Name]                     }|
+        ^                              |
+        {1:~                             }|*2
+        {3:[No Name]                     }|
+                                      |
+      ]])
+      api.nvim_win_set_config(0, { relative = 'editor', row = 0, col = 0, width = 4, height = 4 })
+      screen:expect([[
+        {4:^    }                          |
+        {11:~   }{1:                          }|*3
+        {1:~                             }|*4
+                                      |
+      ]])
+      command('quit | set laststatus=2 | botright split')
+      screen:expect([[
+                                      |
+        {1:~                             }|*2
+        {2:[No Name]                     }|
+        ^                              |
+        {1:~                             }|*2
+        {3:[No Name]                     }|
+                                      |
+      ]])
+      api.nvim_win_set_config(0, { relative = 'editor', row = 1, col = 5, width = 4, height = 4 })
+      screen:expect([[
+                                      |
+        {1:~    }{4:^    }{1:                     }|
+        {1:~    }{11:~   }{1:                     }|*3
+        {1:~                             }|*2
+        {2:[No Name]                     }|
+                                      |
+      ]])
+    end)
+
+    it('can convert external window to non-external', function()
+      Screen.new(20, 7, { ext_multigrid = true }) -- multigrid needed for external windows
+      api.nvim_open_win(0, true, { external = true, width = 5, height = 5 })
+      eq(true, api.nvim_win_get_config(0).external)
+      api.nvim_win_set_config(0, { split = 'below', win = fn.win_getid(1) })
+      eq(false, api.nvim_win_get_config(0).external)
+
+      api.nvim_win_set_config(0, { external = true, width = 5, height = 5 })
+      eq(true, api.nvim_win_get_config(0).external)
+      api.nvim_win_set_config(0, { relative = 'editor', row = 3, col = 3 })
+      eq(false, api.nvim_win_get_config(0).external)
+
+      api.nvim_win_set_config(0, { external = true, width = 5, height = 5 })
+      eq(true, api.nvim_win_get_config(0).external)
+      api.nvim_win_set_config(0, { external = false })
+      eq(false, api.nvim_win_get_config(0).external)
     end)
   end)
 
@@ -3542,20 +3711,25 @@ describe('API/win', function()
     end)
 
     it('cannot move autocmd window between tabpages', function()
-      local win_type, split_ok, err = exec_lua(function()
+      local win_type, split_ok, split_err, float_ok, float_err = exec_lua(function()
         local other_tp_win = vim.api.nvim_get_current_win()
         vim.cmd.tabnew()
 
-        local win_type, split_ok, err
+        local win_type, split_ok, split_err, float_ok, float_err
         vim.api.nvim_buf_call(vim.api.nvim_create_buf(true, true), function()
           win_type = vim.fn.win_gettype()
-          split_ok, err =
+
+          split_ok, split_err =
             pcall(vim.api.nvim_win_set_config, 0, { win = other_tp_win, split = 'right' })
+
+          float_ok, float_err = pcall(vim.api.nvim_win_set_config, 0, { win = other_tp_win })
         end)
-        return win_type, split_ok, err
+        return win_type, split_ok, split_err, float_ok, float_err
       end)
+
       eq('autocmd', win_type)
-      eq({ false, 'Cannot move autocmd window to another tabpage' }, { split_ok, err })
+      eq({ false, 'Cannot move autocmd window to another tabpage' }, { split_ok, split_err })
+      eq({ false, 'Cannot move autocmd window to another tabpage' }, { float_ok, float_err })
     end)
 
     it('cannot move cmdwin between tabpages', function()
@@ -3655,6 +3829,36 @@ describe('API/win', function()
       feed('zfG')
       api.nvim_open_win(0, true, { split = 'below', style = 'minimal' })
       command('quit')
+    end)
+
+    it('preserve current floating window when moving fails', function()
+      local buf = api.nvim_create_buf(false, true)
+      local float_win = api.nvim_open_win(buf, true, {
+        relative = 'editor',
+        row = 1,
+        col = 1,
+        width = 10,
+        height = 5,
+      })
+      command('tabnew')
+      local tab2_win = api.nvim_get_current_win()
+      command('tabprev')
+      api.nvim_set_current_win(float_win)
+      command('autocmd WinLeave * ++once call nvim_win_close(' .. tab2_win .. ', v:true)')
+      eq(
+        'Target windows were closed',
+        pcall_err(api.nvim_win_set_config, float_win, { win = tab2_win })
+      )
+      eq(float_win, api.nvim_get_current_win())
+
+      command('tabnew')
+      local tab3_win = api.nvim_get_current_win()
+      command('tabprev | autocmd WinEnter * ++once wincmd p')
+      eq(
+        ('Failed to switch away from window %d'):format(float_win),
+        pcall_err(api.nvim_win_set_config, float_win, { win = tab3_win })
+      )
+      eq(float_win, api.nvim_get_current_win())
     end)
   end)
 end)

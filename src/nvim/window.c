@@ -28,7 +28,6 @@
 #include "nvim/eval/window.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
-#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
@@ -144,11 +143,25 @@ bool frames_locked(void)
 /// passing CMD_SIZE will also work.
 bool window_layout_locked(cmdidx_T cmd)
 {
+  Error err = ERROR_INIT;
+  const bool locked = window_layout_locked_err(cmd, &err);
+  if (ERROR_SET(&err)) {
+    emsg(_(err.msg));
+    api_clear_error(&err);
+  }
+  return locked;
+}
+
+/// Like `window_layout_locked`, but set `err` to the (untranslated) error message when locked.
+/// @see window_layout_locked
+bool window_layout_locked_err(cmdidx_T cmd, Error *err)
+{
   if (split_disallowed > 0 || close_disallowed > 0) {
     if (close_disallowed == 0 && cmd == CMD_tabnew) {
-      emsg(_(e_cannot_split_window_when_closing_buffer));
+      api_set_error(err, kErrorTypeException, "%s", e_cannot_split_window_when_closing_buffer);
     } else {
-      emsg(_(e_not_allowed_to_change_window_layout_in_this_autocmd));
+      api_set_error(err, kErrorTypeException, "%s",
+                    e_not_allowed_to_change_window_layout_in_this_autocmd);
     }
     return true;
   }
@@ -505,7 +518,7 @@ newwindow:
   // cursor to bottom-right window
   case 'b':
   case Ctrl_B:
-    win_goto(lastwin_nofloating());
+    win_goto(lastwin_nofloating(NULL));
     break;
 
   // cursor to last accessed (previous) window
@@ -1158,7 +1171,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     oldwin = firstwin;
   } else if (flags & WSP_BOT || curwin->w_floating) {
     // can't split float, use last nonfloating window instead
-    oldwin = lastwin_nofloating();
+    oldwin = lastwin_nofloating(NULL);
   } else {
     oldwin = curwin;
   }
@@ -4800,7 +4813,7 @@ static void tabpage_check_windows(tabpage_T *old_curtab)
     if (wp->w_floating) {
       if (wp->w_config.external) {
         win_remove(wp, old_curtab);
-        win_append(lastwin_nofloating(), wp, NULL);
+        win_append(lastwin_nofloating(NULL), wp, NULL);
       } else {
         ui_comp_remove_grid(&wp->w_grid_alloc);
       }
@@ -6237,7 +6250,7 @@ static void frame_setheight(frame_T *curfrp, int height)
       if (curfrp->fr_width != Columns) {
         room_cmdline = 0;
       } else {
-        win_T *wp = lastwin_nofloating();
+        win_T *wp = lastwin_nofloating(NULL);
         room_cmdline = Rows - (int)p_ch - global_stl_height()
                        - (wp->w_winrow + wp->w_height + wp->w_hsep_height + wp->w_status_height);
         room_cmdline = MAX(room_cmdline, 0);
@@ -7051,7 +7064,7 @@ void command_height(void)
   int old_p_ch = (int)curtab->tp_ch_used;
 
   // Find bottom frame with width of screen.
-  frame_T *frp = lastwin_nofloating()->w_frame;
+  frame_T *frp = lastwin_nofloating(NULL)->w_frame;
   while (frp->fr_width != Columns && frp->fr_parent != NULL) {
     frp = frp->fr_parent;
   }
@@ -7804,9 +7817,11 @@ void win_ui_flush(bool validate)
   msg_ui_flush();
 }
 
-win_T *lastwin_nofloating(void)
+/// @return last non-floating window in `tp`, or NULL for current tabpage.
+win_T *lastwin_nofloating(tabpage_T *tp)
 {
-  win_T *res = lastwin;
+  assert(tp != curtab || !tp);
+  win_T *res = tp ? tp->tp_lastwin : lastwin;
   while (res->w_floating) {
     res = res->w_prev;
   }

@@ -1116,7 +1116,7 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   last_curwin = curwin;
   last_curtab = curtab;
   // lastwin may be aucmd_win
-  win_enter(lastwin_nofloating(), false);
+  win_enter(lastwin_nofloating(NULL), false);
 
   // Open up to "count" windows.
   arg_all_open_windows(&aall, count);

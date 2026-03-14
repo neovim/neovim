@@ -4062,7 +4062,7 @@ void compute_cmdrow(void)
   if (exmode_active || msg_scrolled != 0) {
     cmdline_row = Rows - 1;
   } else {
-    win_T *wp = lastwin_nofloating();
+    win_T *wp = lastwin_nofloating(NULL);
     cmdline_row = wp->w_winrow + wp->w_height
                   + wp->w_hsep_height + wp->w_status_height + global_stl_height();
   }

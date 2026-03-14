@@ -1795,9 +1795,14 @@ local function fmt_ext_state(name, state)
   elseif name == 'float_pos' then
     local str = '{\n'
     for k, v in pairs(state) do
-      str = str .. '  [' .. k .. '] = {' .. v[1]
-      for i = 2, #v do
-        str = str .. ', ' .. inspect(v[i])
+      str = str .. '  [' .. k .. '] = {'
+      if v.external then
+        str = str .. ' external = true '
+      else
+        str = str .. v[1]
+        for i = 2, #v do
+          str = str .. ', ' .. inspect(v[i])
+        end
       end
       str = str .. '};\n'
     end
