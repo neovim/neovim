@@ -261,7 +261,7 @@ local function get_doc(item)
   if
     has_completeopt('popup')
     and item.insertTextFormat == protocol.InsertTextFormat.Snippet
-    and #(item.documentation or '') == 0
+    and (type(item.documentation) ~= 'string' or #item.documentation == 0)
     and vim.bo.filetype ~= ''
     and (item.textEdit or (item.insertText and item.insertText ~= ''))
   then
