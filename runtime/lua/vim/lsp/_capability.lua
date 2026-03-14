@@ -123,7 +123,6 @@ function M.enable(name, enable, filter)
   filter = filter or {}
   local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
   local client_id = filter.client_id
-  assert(not (bufnr and client_id), '`bufnr` and `client_id` are mutually exclusive.')
 
   local var = make_enable_var(name)
   local client = client_id and vim.lsp.get_client_by_id(client_id)
