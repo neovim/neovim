@@ -5092,3 +5092,35 @@ void ex_oldfiles(exarg_T *eap)
     }
   }
 }
+
+void ex_termsave(exarg_T *eap)
+{
+  buf_T *buf = curbuf;
+
+  // ensure the current buffer is terminal only
+  if (buf->terminal == NULL) {
+    emsg("E: Current buffer is not a terminal");
+    return;
+  }
+
+  if (*eap->arg == NUL) {
+    emsg("E: Filename required");
+    return;
+  }
+
+  StringBuilder sb = KV_INITIAL_VALUE;
+
+  read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &sb);
+
+  FILE *fp = fopen(eap->arg, "w");
+  if (!fp) {
+    emsg("E: Failed to open file");
+    kv_destroy(sb);
+    return;
+  }
+
+  fwrite(sb.items, 1, kv_size(sb), fp);
+  fclose(fp);
+
+  kv_destroy(sb);
+}
