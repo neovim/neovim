@@ -699,6 +699,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
       break;
 
     case SN_MIDWORD:
+      XFREE_CLEAR(lp->sl_midword);
       lp->sl_midword = read_string(fd, (size_t)len);  // <midword>
       if (lp->sl_midword == NULL) {
         goto endFAIL;
@@ -759,6 +760,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
       break;
 
     case SN_SYLLABLE:
+      XFREE_CLEAR(lp->sl_syllable);
       lp->sl_syllable = read_string(fd, (size_t)len);  // <syllable>
       if (lp->sl_syllable == NULL) {
         goto endFAIL;
