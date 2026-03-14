@@ -58,10 +58,12 @@ static int did_lcd;
 #define PUTLINE_FAIL(s) \
   do { if (FAIL == put_line(fd, (s))) { return FAIL; } } while (0)
 
+// https://github.com/tayheau/neovim/blob/mksession/src/nvim/buffer_defs.h#L1097
 static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
 {
   int r;
 
+  // MAXCOL = 0x7fffffff so a 32bit uint
   if (wp->w_curswant == MAXCOL) {
     r = fprintf(fd, "%snormal! $\n", spaces);
   } else {
@@ -937,19 +939,19 @@ void ex_loadview(exarg_T *eap)
   xfree(fname);
 }
 
-/// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".
+/// ":mkexrc", ":mkvimrc", ":mkview", ":mksession", ":mktab".
 ///
 /// Legacy 'sessionoptions'/'viewoptions' flags are always enabled:
 ///   - kOptSsopFlagUnix: line-endings are LF
 ///   - kOptSsopFlagSlash: filenames are written with "/" slash
 void ex_mkrc(exarg_T *eap)
 {
-  bool view_session = false;  // :mkview, :mksession
+  bool view_session_tab = false;  // :mkview, :mksession
   int using_vdir = false;  // using 'viewdir'?
   char *viewFile = NULL;
 
-  if (eap->cmdidx == CMD_mksession || eap->cmdidx == CMD_mkview) {
-    view_session = true;
+  if (eap->cmdidx == CMD_mksession || eap->cmdidx == CMD_mkview || eap->cmdidx == CMD_mktab) {
+    view_session_tab = true;
   }
 
   // Use the short file name until ":lcd" is used.  We also don't use the
@@ -972,6 +974,8 @@ void ex_mkrc(exarg_T *eap)
     fname = eap->arg;
   } else if (eap->cmdidx == CMD_mkvimrc) {
     fname = VIMRC_FILE;
+  } else if (eap->cmdidx == CMD_mktab) {
+    fname = TABPAGE_FILE;
   } else if (eap->cmdidx == CMD_mksession) {
     fname = SESSION_FILE;
   } else {
@@ -989,6 +993,8 @@ void ex_mkrc(exarg_T *eap)
     unsigned *flagp;
     if (eap->cmdidx == CMD_mkview) {
       flagp = &vop_flags;
+    } else if (eap->cmdidx == CMD_mktab) {
+      flagp = &tbop_flags;
     } else {
       flagp = &ssop_flags;
     }
@@ -1004,24 +1010,33 @@ void ex_mkrc(exarg_T *eap)
       }
     }
 
-    if (!view_session || (eap->cmdidx == CMD_mksession
-                          && (*flagp & kOptSsopFlagOptions))) {
+    if (eap->cmdidx == CMD_mktab) {
+      if (put_line(fd, "let TabPageLoad = 1") == FAIL) {
+        failed = true;
+      }
+    }
+
+    if (!view_session_tab || (eap->cmdidx == CMD_mksession
+                          && (*flagp & kOptSsopFlagOptions))
+                          || (eap->cmdidx == CMD_mktab
+                          && (*flagp & kOptTbopFlagOptions))) {
       int flags = OPT_GLOBAL;
 
-      if (eap->cmdidx == CMD_mksession && (*flagp & kOptSsopFlagSkiprtp)) {
+      if ((eap->cmdidx == CMD_mksession && (*flagp & kOptSsopFlagSkiprtp)
+          || (eap->cmdidx == CMD_mktab && (*flagp & kOptTbopFlagSkiprtp)))) {
         flags |= OPT_SKIPRTP;
       }
       failed |= (makemap(fd, NULL) == FAIL
                  || makeset(fd, flags, false) == FAIL);
     }
 
-    if (!failed && view_session) {
+    if (!failed && view_session_tab) {
       if (put_line(fd,
                    "let s:so_save = &g:so | let s:siso_save = &g:siso"
                    " | setg so=0 siso=0 | setl so=-1 siso=-1") == FAIL) {
         failed = true;
       }
-      if (eap->cmdidx == CMD_mksession) {
+      if (eap->cmdidx == CMD_mksession || eap->cmdidx == CMD_mktab) {
         char *dirnow;  // current directory
 
         dirnow = xmalloc(MAXPATHL);
@@ -1031,23 +1046,28 @@ void ex_mkrc(exarg_T *eap)
             || os_chdir(dirnow) != 0) {
           *dirnow = NUL;
         }
-        if (*dirnow != NUL && (ssop_flags & kOptSsopFlagSesdir)) {
+        if (*dirnow != NUL 
+            && ((eap->cmdidx == CMD_mksession && (*flagp & kOptSsopFlagSesdir))
+           || (eap->cmdidx == CMD_mktab && (*flagp & kOptTbopFlagTabdir)))) {
           if (vim_chdirfile(fname, kCdCauseOther) == OK) {
             shorten_fnames(true);
           }
         } else if (*dirnow != NUL
-                   && (ssop_flags & kOptSsopFlagCurdir) && globaldir != NULL) {
+                   && ((eap->cmdidx == CMD_mksession && (*flagp & kOptSsopFlagCurdir))
+                   || (eap->cmdidx == CMD_mktab && (*flagp & kOptTbopFlagCurdir))) 
+                   && globaldir != NULL) {
           if (os_chdir(globaldir) == 0) {
             shorten_fnames(true);
           }
         }
 
-        failed |= (makeopens(fd, dirnow) == FAIL);
+        failed |= (makeopens(fd, dirnow, eap->cmdidx == CMD_mktab) == FAIL);
 
         // restore original dir
-        if (*dirnow != NUL && ((ssop_flags & kOptSsopFlagSesdir)
-                               || ((ssop_flags & kOptSsopFlagCurdir) && globaldir !=
-                                   NULL))) {
+        if (*dirnow != NUL && ((eap->cmdidx == CMD_mksession && ((*flagp & kOptSsopFlagSesdir)
+                              || ((*flagp & kOptSsopFlagCurdir) && globaldir != NULL)))
+                           || (eap->cmdidx == CMD_mktab && ((*flagp & kOptTbopFlagTabdir)
+                              || ((*flagp & kOptTbopFlagCurdir) && globaldir != NULL))))) {
           if (os_chdir(dirnow) != 0) {
             emsg(_(e_prev_dir));
           }
@@ -1074,6 +1094,11 @@ void ex_mkrc(exarg_T *eap)
       }
       if (eap->cmdidx == CMD_mksession) {
         if (fprintf(fd, "unlet SessionLoad\n") < 0) {
+          failed = true;
+        }
+      }
+      if (eap->cmdidx == CMD_mktab) {
+        if (fprintf(fd, "unlet TabPageLoad\n") < 0) {
           failed = true;
         }
       }
