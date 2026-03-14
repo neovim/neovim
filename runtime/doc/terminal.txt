@@ -398,11 +398,25 @@ gdb:
  `:Arguments` {args}  set arguments for the next `:Run`
 
  *:Break*	set a breakpoint at the cursor position
- :Break {position}
+ :Break [{position}] [thread {nr}] [if {expr}]
 		set a breakpoint at the specified position
+		if {position} is omitted, use the current file and line
+		thread {nr} limits the breakpoint to one thread
+		if {expr} sets a conditional breakpoint
+		Examples: >
+			:Break if argc == 1
+			:Break 42 thread 3 if x > 10
+			:Break main
+<
  *:Tbreak*	set a temporary breakpoint at the cursor position
- :Tbreak {position}
-		set a temporary breakpoint at the specified position
+ :Tbreak [{position}] [thread {nr}] [if {expr}]
+		like `:Break`, but the breakpoint is deleted after
+		it is hit once
+		Examples: >
+			:Tbreak if argc == 1
+			:Tbreak 42 thread 3 if x > 10
+			:Tbreak main
+<
  *:Clear*	delete the breakpoint at the cursor position
 
  *:Step*	execute the gdb "step" command

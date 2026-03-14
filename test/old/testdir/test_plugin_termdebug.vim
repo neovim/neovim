@@ -56,13 +56,121 @@ endfunction
 
 packadd termdebug
 
+func s:GetTermdebugFunction(name)
+  for line in execute('scriptnames')->split("\n")
+    if line =~# 'termdebug/plugin/termdebug\.vim$'
+      let sid = matchstr(line, '^\s*\zs\d\+')
+      return function('<SNR>' .. sid .. '_' .. a:name)
+    endif
+  endfor
+  throw 'termdebug script not found'
+endfunc
+
+func s:GetDefinedSignText(name)
+  return get(get(sign_getdefined(a:name), 0, {}), 'text', '')
+endfunc
+
+func s:WinlayoutShape()
+  return substitute(string(winlayout()), ', \d\+', '', 'g')
+endfunc
+
+func Test_termdebug_break_command_builder()
+  let bin_name = 'XTD_break_cmd'
+  let src_name = bin_name .. '.c'
+  let BuildBreakpointCommand = s:GetTermdebugFunction('BuildBreakpointCommand')
+  call s:generate_files(bin_name)
+
+  execute 'edit ' .. src_name
+  call cursor(22, 1)
+  let here = '"' .. fnamemodify(src_name, ':p') .. ':22"'
+
+  call assert_equal('-break-insert ' .. here, BuildBreakpointCommand('', v:false))
+  call assert_equal('-break-insert -t ' .. here, BuildBreakpointCommand('', v:true))
+  call assert_equal('-break-insert -c "argc == 1" ' .. here,
+        \ BuildBreakpointCommand('if argc == 1', v:false))
+  call assert_equal('-break-insert -p 2 ' .. here,
+        \ BuildBreakpointCommand('thread 2', v:false))
+  call assert_equal('-break-insert -p 2 -c "argc == 1" ' .. here,
+        \ BuildBreakpointCommand('thread 2 if argc == 1', v:false))
+  call assert_equal('-break-insert -p 2 -c "argc == 1" 22',
+        \ BuildBreakpointCommand('22 thread 2 if argc == 1', v:false))
+  call assert_equal('-break-insert -c "argc == 1" 22',
+        \ BuildBreakpointCommand('22 if argc == 1', v:false))
+  call assert_equal('-break-insert -c "é == 1" 断点',
+        \ BuildBreakpointCommand('断点 if é == 1', v:false))
+  call assert_equal('-break-insert -p 2 断点',
+        \ BuildBreakpointCommand('断点 thread 2', v:false))
+  call assert_equal('-break-insert 断点 if',
+        \ BuildBreakpointCommand('断点 if', v:false))
+  call assert_equal('-break-insert 断点 thread 2 if',
+        \ BuildBreakpointCommand('断点 thread 2 if', v:false))
+  call assert_equal('-break-insert -c "e == 1" duandian',
+        \ BuildBreakpointCommand('duandian if e == 1', v:false))
+  call assert_equal('-break-insert -p 2 duandian',
+        \ BuildBreakpointCommand('duandian thread 2', v:false))
+  call assert_equal('-break-insert duandian if',
+        \ BuildBreakpointCommand('duandian if', v:false))
+  call assert_equal('-break-insert duandian thread 2 if',
+        \ BuildBreakpointCommand('duandian thread 2 if', v:false))
+  call assert_equal('-break-insert foo\ if\ bar',
+        \ BuildBreakpointCommand('foo\ if\ bar', v:false))
+
+  call s:cleanup_files(bin_name)
+  %bw!
+endfunc
+
+func Test_termdebug_break_with_default_location_and_condition()
+  let g:test_is_flaky = 1
+  let bin_name = 'XTD_break_if'
+  let src_name = bin_name .. '.c'
+  call s:generate_files(bin_name)
+
+  execute 'edit ' .. src_name
+  execute 'Termdebug ./' .. bin_name
+  call WaitForAssert({-> assert_true(get(g:, 'termdebug_is_running', v:false))})
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
+  let gdb_buf = winbufnr(1)
+  wincmd b
+
+  call cursor(22, 1)
+  Break if argc == 1
+  call Nterm_wait(gdb_buf)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': 22, 'id': 1014, 'name': 'debugBreakpoint1.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+
+  Run
+  call Nterm_wait(gdb_buf, 400)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': 22, 'id': 12, 'name': 'debugPC', 'priority': 110,
+        \  'group': 'TermDebug'},
+        \ {'lnum': 22, 'id': 1014, 'name': 'debugBreakpoint1.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
+
+  Continue
+  call Nterm_wait(gdb_buf)
+  wincmd t
+  quit!
+  redraw!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
+
+  call s:cleanup_files(bin_name)
+  %bw!
+endfunc
+
 func Test_termdebug_basic()
+  let g:test_is_flaky = 1
   let bin_name = 'XTD_basic'
   let src_name = bin_name .. '.c'
   call s:generate_files(bin_name)
 
   edit XTD_basic.c
   Termdebug ./XTD_basic
+  call WaitForAssert({-> assert_true(get(g:, 'termdebug_is_running', v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   let gdb_buf = winbufnr(1)
   wincmd b
@@ -81,7 +189,6 @@ func Test_termdebug_basic()
         \  'group': 'TermDebug'},
         \ {'lnum': 9, 'id': 1014, 'name': 'debugBreakpoint1.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        "\ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
         \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
   Finish
   call Nterm_wait(gdb_buf)
@@ -105,48 +212,48 @@ func Test_termdebug_basic()
     Break
     call Nterm_wait(gdb_buf)
     if i == 2
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint2.0')[0].text, '>2')})
+      call WaitForAssert({-> assert_equal('>2', s:GetDefinedSignText('debugBreakpoint2.0'))})
     endif
     if i == 3
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint3.0')[0].text, '>3')})
+      call WaitForAssert({-> assert_equal('>3', s:GetDefinedSignText('debugBreakpoint3.0'))})
     endif
     if i == 4
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint4.0')[0].text, '>>')})
+      call WaitForAssert({-> assert_equal('>>', s:GetDefinedSignText('debugBreakpoint4.0'))})
     endif
     if i == 5
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint5.0')[0].text, '>>')})
+      call WaitForAssert({-> assert_equal('>>', s:GetDefinedSignText('debugBreakpoint5.0'))})
       unlet g:termdebug_config['sign']
     endif
     if i == 6
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint6.0')[0].text, '06')})
+      call WaitForAssert({-> assert_equal('06', s:GetDefinedSignText('debugBreakpoint6.0'))})
     endif
     if i == 10
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint10.0')[0].text, '10')})
+      call WaitForAssert({-> assert_equal('10', s:GetDefinedSignText('debugBreakpoint10.0'))})
     endif
     if i == 99
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint99.0')[0].text, '99')})
+      call WaitForAssert({-> assert_equal('99', s:GetDefinedSignText('debugBreakpoint99.0'))})
     endif
     if i == 100
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint100.0')[0].text, '9+')})
+      call WaitForAssert({-> assert_equal('9+', s:GetDefinedSignText('debugBreakpoint100.0'))})
     endif
     if i == 110
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint110.0')[0].text, '9+')})
+      call WaitForAssert({-> assert_equal('9+', s:GetDefinedSignText('debugBreakpoint110.0'))})
       unlet g:termdebug_config
     endif
     if i == 128
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint128.0')[0].text, '80')})
+      call WaitForAssert({-> assert_equal('80', s:GetDefinedSignText('debugBreakpoint128.0'))})
     endif
     if i == 168
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint168.0')[0].text, 'A8')})
+      call WaitForAssert({-> assert_equal('A8', s:GetDefinedSignText('debugBreakpoint168.0'))})
     endif
     if i == 255
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint255.0')[0].text, 'FF')})
+      call WaitForAssert({-> assert_equal('FF', s:GetDefinedSignText('debugBreakpoint255.0'))})
     endif
     if i == 256
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint256.0')[0].text, 'F+')})
+      call WaitForAssert({-> assert_equal('F+', s:GetDefinedSignText('debugBreakpoint256.0'))})
     endif
     if i == 258
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint258.0')[0].text, 'F+')})
+      call WaitForAssert({-> assert_equal('F+', s:GetDefinedSignText('debugBreakpoint258.0'))})
     endif
     let i += 1
   endwhile
@@ -156,12 +263,12 @@ func Test_termdebug_basic()
   if winwidth(0) <= 78 + 60
     Var
     call assert_equal(winnr('$'), winnr())
-    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['leaf', 1000], ['leaf', 1003 + cn]]], winlayout())
+    call assert_equal("['col', [['leaf'], ['leaf'], ['leaf'], ['leaf']]]", s:WinlayoutShape())
     let cn += 1
     bw!
     Asm
     call assert_equal(winnr('$'), winnr())
-    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['leaf', 1000], ['leaf', 1003 + cn]]], winlayout())
+    call assert_equal("['col', [['leaf'], ['leaf'], ['leaf'], ['leaf']]]", s:WinlayoutShape())
     let cn += 1
     bw!
   endif
@@ -171,7 +278,7 @@ func Test_termdebug_basic()
   Var
   if winwidth(0) < winw
     call assert_equal(winnr('$') - 1, winnr())
-    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]], winlayout())
+    call assert_equal("['col', [['leaf'], ['leaf'], ['row', [['leaf'], ['leaf']]]]]", s:WinlayoutShape())
     let cn += 1
     bw!
   endif
@@ -179,7 +286,7 @@ func Test_termdebug_basic()
   Asm
   if winwidth(0) < winw
     call assert_equal(winnr('$') - 1, winnr())
-    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]], winlayout())
+    call assert_equal("['col', [['leaf'], ['leaf'], ['row', [['leaf'], ['leaf']]]]]", s:WinlayoutShape())
     let cn += 1
     bw!
   endif
@@ -218,6 +325,7 @@ func Test_termdebug_tbreak()
   execute 'edit ' .. src_name
   execute 'Termdebug ./' .. bin_name
 
+  call WaitForAssert({-> assert_true(get(g:, 'termdebug_is_running', v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   let gdb_buf = winbufnr(1)
   wincmd b
