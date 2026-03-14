@@ -227,12 +227,16 @@ endfunc
 
 " Use when debugger didn't start or ended.
 func s:CloseBuffers()
-  exe $'bwipe! {s:ptybufnr}'
-  if s:asmbufnr > 0 && bufexists(s:asmbufnr)
-    exe $'bwipe! {s:asmbufnr}'
-  endif
-  if s:varbufnr > 0 && bufexists(s:varbufnr)
-    exe $'bwipe! {s:varbufnr}'
+  for bufnr in [get(s:, 'ptybufnr', 0), get(s:, 'asmbufnr', 0), get(s:, 'varbufnr', 0)]
+    if bufnr > 0 && bufexists(bufnr)
+      execute $'bwipe! {bufnr}'
+    endif
+  endfor
+  if exists('s:comm_job_id')
+    let commbufnr = get(nvim_get_chan_info(s:comm_job_id), 'buffer', 0)
+    if commbufnr > 0 && bufexists(commbufnr)
+      execute $'bwipe! {commbufnr}'
+    endif
   endif
   let s:running = v:false
   unlet! s:gdbwin
