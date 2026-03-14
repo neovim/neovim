@@ -1757,7 +1757,7 @@ void ex_lua(exarg_T *const eap)
   //
   // When "=expr" is used transform it to "vim._print(true, expr)".
   bool transform_to_print = (eap->cmdidx == CMD_equal || code[0] == '=');
-  const char* code_format = transform_to_print ? EX_LUA_PRINT_CODE : EX_LUA_CODE;
+  const char *code_format = transform_to_print ? EX_LUA_PRINT_CODE : EX_LUA_CODE;
 
   size_t off = 0;
   len += sizeof(EX_LUA_HEADER) - 1;
@@ -1773,13 +1773,14 @@ void ex_lua(exarg_T *const eap)
 
   // write header first. this will declare a magic local variable
   vim_snprintf(code_buf, len + 1, EX_LUA_HEADER);
-  vim_snprintf(code_buf + sizeof(EX_LUA_HEADER) - 1, len - (sizeof(EX_LUA_HEADER) - 1) + 1, code_format, code + off);
+  vim_snprintf(code_buf + sizeof(EX_LUA_HEADER) - 1, len - (sizeof(EX_LUA_HEADER) - 1) + 1,
+               code_format, code + off);
 
   xfree(code);
   code = code_buf;
 
   // Create dict to hold the table for ev
-  dict_T* ev_dict = tv_dict_alloc();
+  dict_T *ev_dict = tv_dict_alloc();
   ev_dict->dv_refcount = 1;
 
   linenr_T start = -1, end = -1;
