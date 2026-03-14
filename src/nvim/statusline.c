@@ -440,7 +440,7 @@ void win_redr_winbar(win_T *wp)
 void redraw_ruler(void)
 {
   static int did_ruler_col = -1;
-  win_T *wp = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
+  win_T *wp = curwin->w_status_height == 0 ? curwin : lastwin_nofloating(NULL);
   bool is_stl_global = global_stl_height() > 0;
 
   // Check if ruler should be drawn, clear if it was drawn before.

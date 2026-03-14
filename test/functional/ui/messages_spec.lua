@@ -2346,8 +2346,7 @@ describe('ui/ext_messages', function()
     screen:expect([[
                                                                                       |
       {1:~    }{4:^     }{1:                                                                      }|
-      {1:~                                                                               }|*21
-      {2:[No Name]                                                                       }|
+      {1:~                                                                               }|*22
     ]])
   end)
 
