@@ -7014,4 +7014,19 @@ func Test_quickfixtextfunc_wipes_buffer()
   bw
 endfunc
 
+func Test_quickfix_longline_noeol()
+  CheckRunVimInTerminal
+  let qf = 'Xquickfix'
+  let args = $"-q {qf}"
+  let after =<< trim [CODE]
+    call writefile(['okay'], "XDONE")
+    qall!
+  [CODE]
+  defer delete("XDONE")
+  call writefile([repeat('A', 1024)], qf, 'bD')
+  call RunVim([], after, args)
+  call WaitForAssert({-> assert_true(filereadable("XDONE"))})
+  call assert_equal(['okay'], readfile("XDONE"))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

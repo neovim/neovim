@@ -815,6 +815,7 @@ retry:
     // Copy the read part of the line, excluding null-terminator
     memcpy(state->growbuf, IObuff, IOSIZE - 1);
     size_t growbuflen = state->linelen;
+    state->growbuf[growbuflen] = NUL;
 
     while (true) {
       errno = 0;
