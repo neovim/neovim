@@ -65,7 +65,7 @@ static int adjust_plines_for_skipcol(win_T *wp)
     return 0;
   }
 
-  int width = wp->w_view_width - win_col_off(wp);
+  int width = win_wrap_width(wp) - win_col_off(wp);
   int w2 = width + win_col_off2(wp);
   if (wp->w_skipcol >= width && w2 > 0) {
     return (wp->w_skipcol - width) / w2 + 1;
@@ -217,7 +217,7 @@ int sms_marker_overlap(win_T *wp, int extra2)
 /// physical lines we want to scroll down.
 static int skipcol_from_plines(win_T *wp, int plines_off)
 {
-  int width1 = wp->w_view_width - win_col_off(wp);
+  int width1 = win_wrap_width(wp) - win_col_off(wp);
 
   int skipcol = 0;
   if (plines_off > 0) {
@@ -762,12 +762,13 @@ void validate_cursor_col(win_T *wp)
   colnr_T col = wp->w_virtcol;
   colnr_T off = win_col_off(wp);
   col += off;
-  int width = wp->w_view_width - off + win_col_off2(wp);
+  int wrap_width = win_wrap_width(wp);
+  int width = wrap_width - off + win_col_off2(wp);
 
   // long line wrapping, adjust wp->w_wrow
-  if (wp->w_p_wrap && col >= (colnr_T)wp->w_view_width && width > 0) {
+  if (wp->w_p_wrap && col >= (colnr_T)wrap_width && width > 0) {
     // use same formula as what is used in curs_columns()
-    col -= ((col - wp->w_view_width) / width + 1) * width;
+    col -= ((col - wrap_width) / width + 1) * width;
   }
   if (col > (int)wp->w_leftcol) {
     col -= wp->w_leftcol;
@@ -839,8 +840,9 @@ void curs_columns(win_T *wp, int may_scroll)
   wp->w_wrow = wp->w_cline_row;
 
   int n;
-  int width1 = wp->w_view_width - extra;  // text width for first screen line
-  int width2 = 0;                          // text width for second and later screen line
+  int wrap_width = win_wrap_width(wp);
+  int width1 = wrap_width - extra;  // text width for first screen line
+  int width2 = 0;                   // text width for second and later screen line
   bool did_sub_skipcol = false;
   if (width1 <= 0) {
     // No room for text, put cursor in last char of window.
@@ -851,7 +853,7 @@ void curs_columns(win_T *wp, int may_scroll)
     } else {
       wp->w_wrow = wp->w_view_height - 1 - wp->w_empty_rows;
     }
-  } else if (wp->w_p_wrap && wp->w_view_width != 0) {
+  } else if (wp->w_p_wrap && wrap_width != 0) {
     width2 = width1 + win_col_off2(wp);
 
     // skip columns that are not visible
@@ -870,9 +872,9 @@ void curs_columns(win_T *wp, int may_scroll)
     }
 
     // long line wrapping, adjust wp->w_wrow
-    if (wp->w_wcol >= wp->w_view_width) {
+    if (wp->w_wcol >= wrap_width) {
       // this same formula is used in validate_cursor_col()
-      n = (wp->w_wcol - wp->w_view_width) / width2 + 1;
+      n = (wp->w_wcol - wrap_width) / width2 + 1;
       wp->w_wcol -= n * width2;
       wp->w_wrow += n;
     }
@@ -942,7 +944,7 @@ void curs_columns(win_T *wp, int may_scroll)
       && wp->w_view_height != 0
       && wp->w_cursor.lnum == wp->w_topline
       && width2 > 0
-      && wp->w_view_width != 0) {
+      && wrap_width != 0) {
     // Cursor past end of screen.  Happens with a single line that does
     // not fit on screen.  Find a skipcol to show the text around the
     // cursor.  Avoid scrolling all the time. compute value of "extra":
@@ -1088,12 +1090,13 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       // similar to what is done in validate_cursor_col()
       colnr_T col = scol;
       col += off;
-      int width = wp->w_view_width - off + win_col_off2(wp);
+      int ww = win_wrap_width(wp);
+      int width = ww - off + win_col_off2(wp);
 
       // long line wrapping, adjust row
-      if (wp->w_p_wrap && col >= (colnr_T)wp->w_view_width && width > 0) {
+      if (wp->w_p_wrap && col >= (colnr_T)ww && width > 0) {
         // use same formula as what is used in curs_columns()
-        int rowoff = visible_row ? ((col - wp->w_view_width) / width + 1) : 0;
+        int rowoff = visible_row ? ((col - ww) / width + 1) : 0;
         col -= rowoff * width;
         row += rowoff;
       }
@@ -1211,7 +1214,8 @@ static void cursor_correct_sms(win_T *wp)
   }
 
   int so = get_scrolloff_value(wp);
-  int width1 = wp->w_view_width - win_col_off(wp);
+  int ww = win_wrap_width(wp);
+  int width1 = ww - win_col_off(wp);
   int width2 = width1 + win_col_off2(wp);
   int so_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
   int space_cols = (wp->w_view_height - 1) * width2;
@@ -1232,7 +1236,7 @@ static void cursor_correct_sms(win_T *wp)
   }
 
   int overlap = wp->w_skipcol == 0
-                ? 0 : sms_marker_overlap(wp, wp->w_view_width - width2);
+                ? 0 : sms_marker_overlap(wp, ww - width2);
   // If we have non-zero scrolloff, ignore marker overlap.
   int top = wp->w_skipcol + (so_cols != 0 ? so_cols : overlap);
   int bot = wp->w_skipcol + width1 + (wp->w_view_height - 1) * width2 - so_cols;
@@ -1341,7 +1345,7 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
   bool do_sms = wp->w_p_wrap && wp->w_p_sms;
 
   if (do_sms) {
-    width1 = wp->w_view_width - win_col_off(wp);
+    width1 = win_wrap_width(wp) - win_col_off(wp);
     width2 = width1 + win_col_off2(wp);
   }
 
@@ -1422,11 +1426,11 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
   // Compute the row number of the last row of the cursor line
   // and move the cursor onto the displayed part of the window.
   int wrow = wp->w_wrow;
-  if (wp->w_p_wrap && wp->w_view_width != 0) {
+  if (wp->w_p_wrap && win_wrap_width(wp) != 0) {
     validate_virtcol(wp);
     validate_cheight(wp);
     wrow += wp->w_cline_height - 1 -
-            wp->w_virtcol / wp->w_view_width;
+            wp->w_virtcol / win_wrap_width(wp);
   }
   bool moved = false;
   while (wrow >= wp->w_view_height && wp->w_cursor.lnum > 1) {
@@ -1462,7 +1466,7 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
   bool do_sms = wp->w_p_wrap && wp->w_p_sms;
 
   if (do_sms || (byfold && win_lines_concealed(wp)) || win_may_fill(wp)) {
-    int width1 = wp->w_view_width - win_col_off(wp);
+    int width1 = win_wrap_width(wp) - win_col_off(wp);
     int width2 = width1 + win_col_off2(wp);
     int size = 0;
     const colnr_T prev_skipcol = wp->w_skipcol;
@@ -1557,7 +1561,8 @@ void adjust_skipcol(void)
     return;
   }
 
-  int width1 = curwin->w_view_width - win_col_off(curwin);
+  int ww = win_wrap_width(curwin);
+  int width1 = ww - win_col_off(curwin);
   if (width1 <= 0) {
     return;  // no text will be displayed
   }
@@ -1577,7 +1582,7 @@ void adjust_skipcol(void)
   }
 
   validate_virtcol(curwin);
-  int overlap = sms_marker_overlap(curwin, curwin->w_view_width - width2);
+  int overlap = sms_marker_overlap(curwin, ww - width2);
   while (curwin->w_skipcol > 0
          && curwin->w_virtcol < curwin->w_skipcol + overlap + scrolloff_cols) {
     // scroll a screen line down
@@ -1667,11 +1672,11 @@ void scrolldown_clamp(void)
   } else {
     end_row += plines_win_nofill(curwin, curwin->w_topline - 1, true);
   }
-  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
+  if (curwin->w_p_wrap && win_wrap_width(curwin) != 0) {
     validate_cheight(curwin);
     validate_virtcol(curwin);
     end_row += curwin->w_cline_height - 1 -
-               curwin->w_virtcol / curwin->w_view_width;
+               curwin->w_virtcol / win_wrap_width(curwin);
   }
   if (end_row < curwin->w_view_height - get_scrolloff_value(curwin)) {
     if (can_fill) {
@@ -1704,9 +1709,9 @@ void scrollup_clamp(void)
   int start_row = (curwin->w_wrow
                    - plines_win_nofill(curwin, curwin->w_topline, true)
                    - curwin->w_topfill);
-  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
+  if (curwin->w_p_wrap && win_wrap_width(curwin) != 0) {
     validate_virtcol(curwin);
-    start_row -= curwin->w_virtcol / curwin->w_view_width;
+    start_row -= curwin->w_virtcol / win_wrap_width(curwin);
   }
   if (start_row >= get_scrolloff_value(curwin)) {
     if (curwin->w_topfill > 0) {
@@ -1987,7 +1992,7 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
       // need to scroll the additional clipped lines to scroll past the
       // top line before we can move on to the other lines.
       int top_plines = plines_win_nofill(wp, wp->w_topline, false);
-      int width1 = wp->w_view_width - win_col_off(wp);
+      int width1 = win_wrap_width(wp) - win_col_off(wp);
 
       if (width1 > 0) {
         int width2 = width1 + win_col_off2(wp);
@@ -2442,7 +2447,7 @@ static bool scroll_with_sms(Direction dir, int count, int *curscount)
       fixdir = dir * -1;
     }
 
-    int width1 = curwin->w_view_width - win_col_off(curwin);
+    int width1 = win_wrap_width(curwin) - win_col_off(curwin);
     int width2 = width1 + win_col_off2(curwin);
     count = 1 + (curwin->w_skipcol - width1 - 1) / width2;
     if (fixdir == FORWARD) {
