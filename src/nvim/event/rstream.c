@@ -298,5 +298,8 @@ static void rstream_close_cb(Stream *s, void *data)
 
 void rstream_may_close(RStream *stream)
 {
+  if (stream->before_close) {
+    stream->before_close(stream->s.internal_data);
+  }
   stream_may_close(&stream->s);
 }
