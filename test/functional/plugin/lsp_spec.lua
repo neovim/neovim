@@ -1404,6 +1404,63 @@ describe('LSP', function()
       }
     end)
 
+    it('does not send duplicate didOpen when attaching the same buffer twice', function()
+      local expected_handlers = {
+        { NIL, {}, { method = 'shutdown', client_id = 1 } },
+        { NIL, {}, { method = 'finish', client_id = 1 } },
+        { NIL, {}, { method = 'start', client_id = 1 } },
+      }
+      local client --- @type vim.lsp.Client
+      test_rpc_server {
+        test_name = 'check_no_duplicate_did_open',
+        on_setup = function()
+          exec_lua(function()
+            _G.BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(_G.BUFFER, 0, -1, false, {
+              'testing',
+              '123',
+            })
+          end)
+          exec_lua(function()
+            -- First attach - should send didOpen
+            assert(vim.lsp.buf_attach_client(_G.BUFFER, _G.TEST_RPC_CLIENT_ID))
+            -- Second attach - should NOT send duplicate didOpen
+            assert(
+              vim.lsp.buf_attach_client(_G.BUFFER, _G.TEST_RPC_CLIENT_ID),
+              'Already attached, returns true'
+            )
+          end)
+        end,
+        on_init = function(_client)
+          client = _client
+          local full_kind = exec_lua(function()
+            return require 'vim.lsp.protocol'.TextDocumentSyncKind.Full
+          end)
+          eq(full_kind, client.server_capabilities().textDocumentSync.change)
+          eq(true, client.server_capabilities().textDocumentSync.openClose)
+          exec_lua(function()
+            assert(
+              vim.lsp.buf_attach_client(_G.BUFFER, _G.TEST_RPC_CLIENT_ID),
+              'Already attached, returns true'
+            )
+          end)
+        end,
+        on_exit = function(code, signal)
+          eq(0, code, 'exit code')
+          eq(0, signal, 'exit signal')
+        end,
+        on_handler = function(err, result, ctx)
+          if ctx.method == 'start' then
+            client:notify('finish')
+          end
+          eq(table.remove(expected_handlers), { err, result, ctx }, 'expected handler')
+          if ctx.method == 'finish' then
+            client:stop()
+          end
+        end,
+      }
+    end)
+
     it('should check the body sent attaching before init', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },

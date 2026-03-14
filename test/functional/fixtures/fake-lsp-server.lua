@@ -534,6 +534,36 @@ function tests.basic_check_buffer_open()
   }
 end
 
+function tests.check_no_duplicate_did_open()
+  skeleton {
+    on_init = function(params)
+      local expected_capabilities = protocol.make_client_capabilities()
+      assert_eq(params.capabilities, expected_capabilities)
+      return {
+        capabilities = {
+          textDocumentSync = protocol.TextDocumentSyncKind.Full,
+        },
+      }
+    end,
+    body = function()
+      notify('start')
+      -- Expect exactly ONE didOpen notification
+      expect_notification('textDocument/didOpen', {
+        textDocument = {
+          languageId = '',
+          text = table.concat({ 'testing', '123' }, '\n') .. '\n',
+          uri = 'file://',
+          version = 0,
+        },
+      })
+      -- If duplicate didOpen is sent, this expect_notification will fail
+      -- because it will receive the second didOpen instead of 'finish'
+      expect_notification('finish')
+      notify('finish')
+    end,
+  }
+end
+
 function tests.basic_check_buffer_open_and_change()
   skeleton {
     on_init = function(params)

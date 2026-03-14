@@ -146,6 +146,11 @@ local all_clients = {}
 ---
 --- @field attached_buffers table<integer,true>
 ---
+--- Track which buffers have had textDocument/didOpen sent.
+--- This is used to prevent duplicate didOpen notifications (LSP spec violation).
+--- TODO: Consider exposing this as a public API if there's demand.
+--- @field _did_open_sent table<integer,true>
+---
 --- Capabilities provided by the client (editor or tool), at startup.
 --- @field capabilities lsp.ClientCapabilities
 ---
@@ -392,6 +397,7 @@ function Client.create(config)
     _log_prefix = string.format('LSP[%s]', name),
     requests = {},
     attached_buffers = {},
+    _did_open_sent = {},
     server_capabilities = {},
     registrations = {},
     commands = config.commands or {},
@@ -1102,6 +1108,12 @@ end
 ---
 --- @param bufnr integer Number of the buffer, or 0 for current
 function Client:_text_document_did_open_handler(bufnr)
+  -- Prevent duplicate didOpen notifications (LSP spec violation).
+  -- An open notification must not be sent more than once without a corresponding close.
+  if self._did_open_sent[bufnr] then
+    return
+  end
+
   changetracking.init(self, bufnr)
   if not self:supports_method('textDocument/didOpen') then
     return
@@ -1109,6 +1121,8 @@ function Client:_text_document_did_open_handler(bufnr)
   if not api.nvim_buf_is_loaded(bufnr) then
     return
   end
+
+  self._did_open_sent[bufnr] = true
 
   self:notify('textDocument/didOpen', {
     textDocument = {
@@ -1350,6 +1364,9 @@ function Client:_on_detach(bufnr)
   end
 
   self.attached_buffers[bufnr] = nil
+
+  -- Clear the didOpen tracking state so the buffer can be re-opened later.
+  self._did_open_sent[bufnr] = nil
 
   local namespace = lsp.diagnostic.get_namespace(self.id)
   vim.diagnostic.reset(namespace, bufnr)
