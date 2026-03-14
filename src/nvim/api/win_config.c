@@ -190,6 +190,9 @@
 ///     elements.
 ///   - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the |cmdline-completion|
 ///     popupmenu to this window, with an offset in screen cell width.
+///   - pinned: Prevent the window from being closed by commands like |:fclose| or
+///     |:only|. The window can only be closed when explicitly targeted. Immutable
+///     after creation. Default: false.
 ///
 /// @param[out] err Error details, if any
 ///
@@ -757,6 +760,7 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   PUT_KEY_X(rv, hide, config->hide);
   PUT_KEY_X(rv, mouse, config->mouse);
   PUT_KEY_X(rv, style, cstr_as_string(win_style_str[config->style]));
+  PUT_KEY_X(rv, pinned, config->pinned);
 
   if (wp->w_floating) {
     PUT_KEY_X(rv, width, config->width);
@@ -1415,6 +1419,15 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   if (HAS_KEY_X(config, _cmdline_offset)) {
     fconfig->_cmdline_offset = (int)config->_cmdline_offset;
+  }
+
+  if (HAS_KEY_X(config, pinned)) {
+    if (reconf && config->pinned != wp->w_config.pinned) {
+      api_set_error(err, kErrorTypeValidation, "'pinned' cannot be changed after window creation");
+      goto fail;
+    } else {
+      fconfig->pinned = config->pinned;
+    }
   }
 
   return true;
