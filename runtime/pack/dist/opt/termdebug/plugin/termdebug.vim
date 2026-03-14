@@ -69,6 +69,9 @@ set cpo&vim
 command -nargs=* -complete=file -bang Termdebug call s:StartDebug(<bang>0, <f-args>)
 command -nargs=+ -complete=file -bang TermdebugCommand call s:StartDebugCommand(<bang>0, <f-args>)
 
+" Keep track of whether Termdebug is running for tests and users.
+let g:termdebug_is_running = v:false
+
 let s:pc_id = 12
 let s:asm_id = 13
 let s:break_id = 14  " breakpoint number is added to this
@@ -137,7 +140,7 @@ func s:StartDebugCommand(bang, ...)
 endfunc
 
 func s:StartDebug_internal(dict)
-  if exists('s:gdbwin')
+  if get(g:, 'termdebug_is_running', v:false) || exists('s:gdbwin')
     call s:Echoerr('Terminal debugger already running, cannot run two')
     return
   endif
@@ -223,6 +226,7 @@ func s:StartDebug_internal(dict)
   if exists('#User#TermdebugStartPost')
     doauto <nomodeline> User TermdebugStartPost
   endif
+  let g:termdebug_is_running = v:true
 endfunc
 
 " Use when debugger didn't start or ended.
@@ -816,6 +820,7 @@ func s:EndDebugCommon()
   endif
 
   au! TermDebug
+  let g:termdebug_is_running = v:false
 endfunc
 
 func s:EndPromptDebug(job_id, exit_code, event)
