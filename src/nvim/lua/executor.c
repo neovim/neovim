@@ -1724,6 +1724,10 @@ bool nlua_is_deferred_safe(void)
   return in_fast_callback == 0;
 }
 
+#define EX_LUA_HEADER "local ev = ...;"
+#define EX_LUA_PRINT_CODE "vim._print(true, %s)"
+#define EX_LUA_CODE "%s"
+
 /// Executes Lua code.
 ///
 /// Implements `:lua` and `:lua ={expr}`.
@@ -1752,17 +1756,51 @@ void ex_lua(exarg_T *const eap)
   // ":lua {code}", ":={expr}" or ":lua ={expr}"
   //
   // When "=expr" is used transform it to "vim._print(true, expr)".
-  if (eap->cmdidx == CMD_equal || code[0] == '=') {
-    size_t off = (eap->cmdidx == CMD_equal) ? 0 : 1;
-    len += sizeof("vim._print(true, )") - 1 - off;
-    // `nlua_typval_exec` doesn't expect NUL-terminated string so `len` must end before NUL byte.
-    char *code_buf = xmallocz(len);
-    vim_snprintf(code_buf, len + 1, "vim._print(true, %s)", code + off);
-    xfree(code);
-    code = code_buf;
+  bool transform_to_print = (eap->cmdidx == CMD_equal || code[0] == '=');
+  const char *code_format = transform_to_print ? EX_LUA_PRINT_CODE : EX_LUA_CODE;
+
+  size_t off = 0;
+  len += sizeof(EX_LUA_HEADER) - 1;
+
+  if (transform_to_print) {
+    // sizeof the print statement minus the %s format specifier and null byte
+    off = (eap->cmdidx == CMD_equal) ? 0 : 1;
+    len += sizeof(EX_LUA_PRINT_CODE) - sizeof(EX_LUA_CODE) - off;
   }
 
-  nlua_typval_exec(code, len, ":lua", NULL, 0, false, NULL);
+  // `nlua_typval_exec` doesn't expect NUL-terminated string so `len` must end before NUL byte.
+  char *code_buf = xmallocz(len);
+
+  // write header first. this will declare a magic local variable
+  vim_snprintf(code_buf, len + 1, EX_LUA_HEADER);
+  vim_snprintf(code_buf + sizeof(EX_LUA_HEADER) - 1, len - (sizeof(EX_LUA_HEADER) - 1) + 1,
+               code_format, code + off);
+
+  xfree(code);
+  code = code_buf;
+
+  // Create dict to hold the table for ev
+  dict_T *ev_dict = tv_dict_alloc();
+  ev_dict->dv_refcount = 1;
+
+  linenr_T start = -1, end = -1;
+  if (eap->addr_count == 1) {
+    start = end = eap->line1;
+  } else if (eap->addr_count == 2) {
+    start = eap->line1;
+    end = eap->line2;
+  }
+
+  tv_dict_add_nr(ev_dict, "startline", sizeof("startline"), start);
+  tv_dict_add_nr(ev_dict, "endline", sizeof("endline"), end);
+
+  typval_T ev = {
+    .v_lock = VAR_UNLOCKED,
+    .v_type = VAR_DICT,
+    .vval.v_dict = ev_dict
+  };
+
+  nlua_typval_exec(code, len, ":lua", &ev, 1, false, NULL);
 
   xfree(code);
 }
