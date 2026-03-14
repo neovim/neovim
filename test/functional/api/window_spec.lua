@@ -3650,5 +3650,11 @@ describe('API/win', function()
       eq(1, eval('&number'))
       eq(1, eval('&rightleft')) -- unrelated option unaffected
     end)
+
+    it('minimal style does not leak WinInfo fold memory', function()
+      feed('zfG')
+      api.nvim_open_win(0, true, { split = 'below', style = 'minimal' })
+      command('quit')
+    end)
   end)
 end)
