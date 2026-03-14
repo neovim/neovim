@@ -308,7 +308,7 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
     .line1 = 1,
     .line2 = 1,
     .cmd = ccline.cmdbuff,
-    .addr_type = ADDR_LINES,
+    .addr_type = ADDR_POSITIONS,
   };
 
   cmdmod_T dummy_cmdmod;
@@ -1302,7 +1302,14 @@ static int command_line_execute(VimState *state, int key)
     if (s->c == K_EVENT) {
       state_handle_k_event();
     } else if (s->c == K_COMMAND) {
-      do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
+      exarg_T ea = {
+        .cmd = NULL,
+        .line1 = 1,
+        .line2 = 1,
+        .ea_getline = getcmdkeycmd,
+        .cookie = NULL
+      };
+      do_cmdline(&ea, DOCMD_NOWAIT);
     } else {
       map_execute_lua(false, false);
     }
