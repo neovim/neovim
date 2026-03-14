@@ -92,14 +92,15 @@ end
 ---
 ---@param bufnr integer The buffer to get the line from
 ---@param start_lnum integer The line number of the first line to start from (inclusive, 1-based)
----@return string|nil The first non-blank line if found or `nil` otherwise
+---@return string|nil line The first non-blank line if found or `nil` otherwise
+---@return integer|nil lnum The line number of the first non-blank line or `nil`
 function M._nextnonblank(bufnr, start_lnum)
-  for _, line in ipairs(M._getlines(bufnr, start_lnum, -1)) do
+  for off, line in ipairs(M._getlines(bufnr, start_lnum, -1)) do
     if not line:find('^%s*$') then
-      return line
+      return line, start_lnum + off - 1
     end
   end
-  return nil
+  return nil, nil
 end
 
 do

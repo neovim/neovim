@@ -252,6 +252,7 @@ function M.class(_, bufnr)
   end
 end
 
+--- Determines whether a *.cls file is ObjectScript, TeX, Rexx, Visual Basic, or Smalltalk.
 --- @type vim.filetype.mapfn
 function M.cls(_, bufnr)
   if vim.g.filetype_cls then
@@ -264,8 +265,26 @@ function M.cls(_, bufnr)
     return 'vb'
   end
 
-  local nonblank1 = nextnonblank(bufnr, 1)
-  if nonblank1 and nonblank1:find('^[%%\\]') then
+  local nonblank1, lnum = nextnonblank(bufnr, 1)
+  local line = nonblank1
+  while line do
+    if matchregex(line, [[\c^\s*\%(import\|include\|includegenerator\)\>]]) then
+      line, lnum = nextnonblank(bufnr, lnum + 1)
+    else
+      nonblank1 = line
+      break
+    end
+  end
+
+  if
+    nonblank1
+    and matchregex(
+      nonblank1,
+      [[\c^\s*class\>\s\+[%A-Za-z][%A-Za-z0-9_.]*\%(\s\+extends\>\|\s*\[\|\s*{\|$\)]]
+    )
+  then
+    return 'objectscript'
+  elseif nonblank1 and nonblank1:find('^[%%\\]') then
     return 'tex'
   elseif nonblank1 and findany(nonblank1, { '^%s*/%*', '^%s*::%w' }) then
     return 'rexx'

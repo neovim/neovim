@@ -2548,6 +2548,39 @@ func Test_cls_file()
   bwipe!
   unlet g:filetype_cls
 
+  let g:filetype_cls = 'objectscript'
+  split Xfile.cls
+  call assert_equal('objectscript', &filetype)
+  bwipe!
+  unlet g:filetype_cls
+
+  " ObjectScript
+
+  call writefile(['Class User.Person Extends (%Persistent, %Populate)'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('objectscript', &filetype)
+  bwipe!
+
+  call writefile(['Import MyApp.Utils', 'Class User.Person Extends %Persistent'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('objectscript', &filetype)
+  bwipe!
+
+  call writefile(['Include MyMacros', 'Class User.Person Extends %Persistent'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('objectscript', &filetype)
+  bwipe!
+
+  call writefile(['IncludeGenerator MyGen', 'Class User.Person Extends %Persistent'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('objectscript', &filetype)
+  bwipe!
+
+  call writefile(['Import MyApp.Utils', 'Include MyMacros', 'IncludeGenerator MyGen', 'Class User.Person Extends %Persistent'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('objectscript', &filetype)
+  bwipe!
+
   " TeX
 
   call writefile(['%'], 'Xfile.cls')
