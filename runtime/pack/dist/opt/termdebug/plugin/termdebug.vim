@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2025 Jul 08
+" Last Change: 2026 Mar 11
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -1186,6 +1186,86 @@ func s:QuoteArg(x)
   return printf('"%s"', a:x->substitute('[\\"]', '\\&', 'g'))
 endfunc
 
+func s:DefaultBreakpointLocation()
+  " Use the fname:lnum format, older gdb can't handle --source.
+  return s:QuoteArg($"{expand('%:p')}:{line('.')}")
+endfunc
+
+func s:TokenizeBreakpointArguments(args)
+  let tokens = []
+  let start = -1
+  let escaped = v:false
+  let in_quotes = v:false
+
+  let i = 0
+  for ch in a:args
+    if start < 0 && ch !~# '\s'
+      let start = i
+    endif
+    if start >= 0
+      if escaped
+        let escaped = v:false
+      elseif ch ==# '\'
+        let escaped = v:true
+      elseif ch ==# '"'
+        let in_quotes = !in_quotes
+      elseif !in_quotes && ch =~# '\s'
+        eval tokens->add(#{text: a:args->slice(start, i), start: start, end: i - 1})
+        let start = -1
+      endif
+    endif
+    let i += 1
+  endfor
+
+  if start >= 0
+    eval tokens->add(#{text: a:args->slice(start), start: start, end: i - 1})
+  endif
+  return tokens
+endfunc
+
+func s:BuildBreakpointCommand(at, tbreak)
+  let args = trim(a:at)
+  let cmd = '-break-insert'
+  if a:tbreak
+    let cmd ..= ' -t'
+  endif
+
+  if empty(args)
+    return $'{cmd} {s:DefaultBreakpointLocation()}'
+  endif
+
+  let condition = ''
+  let prefix = args
+  for token in s:TokenizeBreakpointArguments(args)
+    if token.text ==# 'if' && token.end < strchars(args) - 1
+      let condition = trim(args->slice(token.end + 1))
+      let prefix = token.start > 0 ? trim(args->slice(0, token.start)) : ''
+      break
+    endif
+  endfor
+
+  let prefix_tokens = s:TokenizeBreakpointArguments(prefix)
+  let location = prefix
+  let thread = ''
+  if len(prefix_tokens) >= 2
+        \ && prefix_tokens[-2].text ==# 'thread'
+        \ && prefix_tokens[-1].text =~# '^\d\+$'
+    let thread = prefix_tokens[-1].text
+    let location = join(prefix_tokens[: -3]->mapnew('v:val.text'), ' ')
+  endif
+
+  if empty(trim(location))
+    let location = s:DefaultBreakpointLocation()
+  endif
+  if !empty(thread)
+    let cmd ..= $' -p {thread}'
+  endif
+  if !empty(condition)
+    let cmd ..= $' -c {s:QuoteArg(condition)}'
+  endif
+  return $'{cmd} {trim(location)}'
+endfunc
+
 " :Until - Execute until past a specified position or current line
 func s:Until(at)
   if s:stopped
@@ -1211,13 +1291,7 @@ func s:SetBreakpoint(at, tbreak=v:false)
     sleep 10m
   endif
 
-  " Use the fname:lnum format, older gdb can't handle --source.
-  let at = empty(a:at) ? s:QuoteArg($"{expand('%:p')}:{line('.')}") : a:at
-  if a:tbreak
-    let cmd = $'-break-insert -t {at}'
-  else
-    let cmd = $'-break-insert {at}'
-  endif
+  let cmd = s:BuildBreakpointCommand(a:at, a:tbreak)
   call s:SendCommand(cmd)
   if do_continue
     Continue
