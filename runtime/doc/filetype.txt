@@ -301,15 +301,15 @@ all loaded.  For example, if this command: >
 
 	set runtimepath
 
-produces this output:
+produces this output: >
 
-	runtimepath=/etc/vim,~/.config/nvim,/usr/local/share/vim/vim82 ~
+	runtimepath=/etc/vim,~/.config/nvim,/usr/local/share/vim/vim82
 
-then Vim will load all plugins in these directories and below:
+then Vim will load all plugins in these directories and below: >
 
-	/etc/vim/plugin/  ~
-	~/.config/nvim/plugin/  ~
-	/usr/local/share/vim/vim82/plugin/  ~
+	/etc/vim/plugin/
+	~/.config/nvim/plugin/
+	/usr/local/share/vim/vim82/plugin/
 
 Note that the last one is the value of $VIMRUNTIME which has been expanded.
 
@@ -323,9 +323,9 @@ happens when Vim starts up by using the |-V| argument: >
 	vim -V2
 
 You will see a lot of messages, in between them is a remark about loading the
-plugins.  It starts with:
+plugins.  It starts with: >
 
-	Searching for "plugin/**/*.vim" in ~
+	Searching for "plugin/**/*.vim" in
 
 There you can see where Vim looks for your plugin scripts.
 

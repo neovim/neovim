@@ -738,6 +738,8 @@ restore_curwin:
 /// Reconfigures the layout and properties of a window.
 ///
 /// - Updates only the given keys; unspecified (`nil`) keys will not be changed.
+/// - Can move a window to another tabpage.
+/// - Can transform a window to/from a float.
 /// - Keys `row` / `col` / `relative` must be specified together.
 /// - Cannot move the last window in a tabpage to a different one.
 ///
