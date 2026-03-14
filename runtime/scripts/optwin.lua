@@ -130,6 +130,7 @@ local options_list = {
     { 'winminwidth', N_ 'minimal number of columns used for any window' },
     { 'helpheight', N_ 'initial height of the help window' },
     { 'previewheight', N_ 'default height for the preview window' },
+    { 'previewpopup', N_ 'use floating window for preview' },
     { 'previewwindow', N_ 'identifies the preview window' },
     { 'winbar', N_ 'custom format for the window bar' },
     { 'winborder', N_ 'border of floating window' },
