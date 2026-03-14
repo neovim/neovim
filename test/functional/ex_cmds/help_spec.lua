@@ -147,15 +147,19 @@ describe(':help', function()
       )
     end
     local cursor = n.api.nvim_win_set_cursor
+    local function buf_word()
+      local word = n.fn.expand('<cWORD>')
+      local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
+      return { word, bufname }
+    end
     local function open_helptag()
       -- n.exec [[:normal! K]]
       n.exec [[:help!]]
-      local word = n.fn.expand('<cWORD>')
-      local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
+      local rv = buf_word()
       if n.fn.winnr('$') > 1 then
         n.command('close')
       end
-      return { word, bufname }
+      return rv
     end
 
     -- n.command('enew')
@@ -255,6 +259,14 @@ describe(':help', function()
     set_lines '`:lsp restart`. You'
     cursor(0, { 1, 6 }) -- on "restart"
     eq({ '*:restart*', 'gui.txt' }, open_helptag())
+
+    -- Open an actual helpfile. This affects getcompletion(…,'help') ...
+    n.command(':help lua')
+    n.feed('gg/package.searchpath<cr>')
+    eq({ "vim.cmd.edit(package.searchpath('jit.p',", 'lua.txt' }, buf_word())
+    --               ^ cursor on "package"
+    n.command(':help!')
+    eq({ '*packages*', 'pack.txt' }, buf_word())
 
     -- set_lines {' |vim.lsp.start()|. '}
     -- cursor(0, {1, 4})

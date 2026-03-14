@@ -219,6 +219,10 @@ EDITOR
   whitespace in indented lines.
 • |:uniq| deduplicates text in the current buffer.
 • |omnicompletion| in `help` buffer. |ft-help-omni|
+• |:help!| has DWIM ("Do What I Mean") behavior: it tries to guess the help
+  tag at cursor. In help buffers, 'keywordprg' defaults to ":help!". For
+  example, try "K" anywhere in this code: >
+    local v = vim.version.parse(vim.system({'foo'}):wait().stdout)
 • Setting "'0" in 'shada' prevents storing the jumplist in the shada file.
 • 'shada' now correctly respects "/0" and "f0".
 • |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
