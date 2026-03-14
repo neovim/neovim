@@ -767,11 +767,21 @@ describe('vim.lsp.completion: item conversion', function()
           label = 'for .. ipairs',
           sortText = '0001',
         },
+        {
+          insertText = 'for ${1:i}, ${2:v} in ipairs(${3:t}) do\n\t$0\nend',
+          insertTextFormat = 2,
+          kind = 15,
+          label = 'for .. ipairs 2',
+          sortText = '0002',
+          documentation = vim.NIL,
+        },
       },
     }
     local result = complete('|', completion_list)
     eq('for .. ipairs', result.items[1].word)
     eq('```lua\nfor index, value in ipairs(t) do\n\t\nend\n```', result.items[1].info)
+    eq('for .. ipairs 2', result.items[2].word)
+    eq('```lua\nfor i, v in ipairs(t) do\n\t\nend\n```', result.items[2].info)
   end)
 end)
 
