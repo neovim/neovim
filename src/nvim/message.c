@@ -1153,7 +1153,7 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp, MessageData *msg_data
   MessageHistoryEntry *entry = xmalloc(sizeof(MessageHistoryEntry));
   entry->msg = msg;
   entry->temp = temp;
-  entry->kind = msg_ext_kind;
+  entry->kind = msg_ext_kind ? xstrdup(msg_ext_kind) : NULL;
   entry->prev = msg_hist_last;
   entry->next = NULL;
   // NOTE: this does not encode if the message was actually appended to the
@@ -1195,6 +1195,7 @@ static void msg_hist_free_msg(MessageHistoryEntry *entry)
     msg_hist_temp = entry->next;
   }
   hl_msg_free(entry->msg);
+  xfree(entry->kind);
   xfree(entry);
 }
 

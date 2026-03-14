@@ -3887,6 +3887,15 @@ describe('API', function()
       eq(4, api.nvim_echo({ { 'foo' } }, false, { id = 4 }))
       eq(5, api.nvim_echo({ { 'foo' } }, false, {}))
     end)
+
+    it('no use-after-free for custom kind with :messages #38289', function()
+      exec_lua(function()
+        vim.api.nvim_echo({ { 'a' } }, true, { kind = 'foo' })
+        vim.o.guicursor = '' -- pending mode update go brrr
+        vim.api.nvim__redraw({ flush = true }) -- ui_flush -> arena_mem_free go brrr
+        vim.cmd.messages()
+      end)
+    end)
   end)
 
   describe('nvim_open_term', function()
