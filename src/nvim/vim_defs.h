@@ -5,6 +5,8 @@
 #define SYS_OPTWIN_FILE "$VIMRUNTIME/scripts/optwin.lua"
 #define RUNTIME_DIRNAME "runtime"
 
+#define TABPAGE_FILE "Tabpage.vim"
+
 enum {
   /// length of a buffer to store a number in ASCII (64 bits binary + NUL)
   NUMBUFLEN = 65,
