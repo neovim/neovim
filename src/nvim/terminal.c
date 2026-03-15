@@ -680,7 +680,9 @@ void terminal_close(Terminal **termpp, int status)
     // only need to call the close callback to clean up the terminal object.
     only_destroy = true;
     // Buffer may be reused so delete the "[Process exited]" msg
-    extmark_del_id(buf, (uint32_t)-1, term->exitmsg_id);
+    if (buf) {
+      extmark_del_id(buf, (uint32_t)-1, term->exitmsg_id);
+    }
   } else {
     // flush any pending changes to the buffer
     if (!exiting) {
