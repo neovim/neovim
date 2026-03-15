@@ -132,9 +132,9 @@ void ex_help(exarg_T *eap)
   }
   if (i >= num_matches || n == FAIL) {
     if (lang != NULL) {
-      semsg(_("E661: Sorry, no '%s' help for %s"), lang, arg);
+      semsg(_("E661: No '%s' help for %s"), lang, arg);
     } else {
-      semsg(_("E149: Sorry, no help for %s"), arg);
+      semsg(_("E149: No help for %s"), arg);
     }
     if (n != FAIL) {
       FreeWild(num_matches, matches);
@@ -167,7 +167,7 @@ void ex_help(exarg_T *eap)
       // There is no help window yet.
       // Try to open the file specified by the "helpfile" option.
       if ((helpfd = os_fopen(p_hf, READBIN)) == NULL) {
-        smsg(0, _("Sorry, help file \"%s\" not found"), p_hf);
+        smsg(0, _("Help file \"%s\" not found"), p_hf);
         goto erret;
       }
       fclose(helpfd);

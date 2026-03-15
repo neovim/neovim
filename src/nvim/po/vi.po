@@ -822,16 +822,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: Hãy bình tĩnh, đừng hoảng hốt!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Rất tiếc, không có trợ giúp '%s' cho %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Không có trợ giúp '%s' cho %s"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Rất tiếc không có trợ giúp cho %s"
+msgid "E149: No help for %s"
+msgstr "E149: Không có trợ giúp cho %s"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Xin lỗi, không tìm thấy tập tin trợ giúp \"%s\""
+msgid "Help file \"%s\" not found"
+msgstr "Không tìm thấy tập tin trợ giúp \"%s\""
 
 #, c-format
 msgid "E150: Not a directory: %s"

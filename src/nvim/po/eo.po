@@ -1009,16 +1009,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: Ne paniku!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Bedaŭrinde estas neniu helpo '%s' por %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Neniu helpo '%s' por %s"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Bedaŭrinde estas neniu helpo por %s"
+msgid "E149: No help for %s"
+msgstr "E149: Neniu helpo por %s"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Bedaŭrinde, la helpdosiero \"%s\" ne troveblas"
+msgid "Help file \"%s\" not found"
+msgstr "La helpdosiero \"%s\" ne troveblas"
 
 #, c-format
 msgid "E151: No match: %s"
@@ -5024,12 +5024,12 @@ msgstr "E763: Signoj de vorto malsamas tra literumaj dosieroj"
 msgid "E783: duplicate char in MAP entry"
 msgstr "E783: ripetita signo en rikordo MAP"
 
-msgid "Sorry, no suggestions"
-msgstr "Bedaŭrinde ne estas sugestoj"
+msgid "No suggestions"
+msgstr "Ne estas sugestoj"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Bedaŭrinde estas nur %ld sugestoj"
+msgid "Only %ld suggestions"
+msgstr "Nur %ld sugestoj"
 
 #, c-format
 msgid "Change \"%.*s\" to:"

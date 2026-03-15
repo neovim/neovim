@@ -2959,16 +2959,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: Без паніки!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Вибачте, немає допомоги '%s' для %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Немає допомоги '%s' для %s"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Вибачте, немає допомоги для %s"
+msgid "E149: No help for %s"
+msgstr "E149: Немає допомоги для %s"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Вибачте, файл допомоги «%s» не знайдено"
+msgid "Help file \"%s\" not found"
+msgstr "Файл допомоги «%s» не знайдено"
 
 #, c-format
 msgid "E151: No match: %s"
@@ -5462,12 +5462,12 @@ msgstr "Слово '%.*s' додано до %s"
 msgid "E763: Word characters differ between spell files"
 msgstr "E763: Символи у слові відрізняються у файлах орфографії"
 
-msgid "Sorry, no suggestions"
-msgstr "Пробачте, немає пропозицій"
+msgid "No suggestions"
+msgstr "Немає пропозицій"
 
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Пробачте, тільки %<PRId64> пропозицій"
+msgid "Only %<PRId64> suggestions"
+msgstr "Тільки %<PRId64> пропозицій"
 
 #, c-format
 msgid "Change \"%.*s\" to:"

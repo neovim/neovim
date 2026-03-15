@@ -158,7 +158,7 @@ describe(':help', function()
     -- Failure modes:
     set_lines 'xxxxxxxxx'
     cursor(0, { 1, 4 })
-    t.matches('E149: Sorry, no help for xxxxxxxxx', t.pcall_err(n.exec, [[:help!]]))
+    t.matches('E149: No help for xxxxxxxxx', t.pcall_err(n.exec, [[:help!]]))
 
     -- Success:
 

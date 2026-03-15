@@ -1325,18 +1325,18 @@ msgstr "Nepanikaøte!"
 
 #: ../ex_cmds.c:4717
 #, fuzzy, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E149: Lituji, pro %s není žádná nápovìda"
+msgid "E661: No '%s' help for %s"
+msgstr "E149: Pro %s není žádná nápovìda"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Lituji, pro %s není žádná nápovìda"
+msgid "E149: No help for %s"
+msgstr "E149: Pro %s není žádná nápovìda"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Lituji, soubor \"%s\" s nápovìdou nebyl nalezen"
+msgid "Help file \"%s\" not found"
+msgstr "Soubor \"%s\" s nápovìdou nebyl nalezen"
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -5620,12 +5620,12 @@ msgid "E763: Word characters differ between spell files"
 msgstr ""
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
+msgid "No suggestions"
 msgstr ""
 
 #: ../spell.c:8687
 #, fuzzy, c-format
-msgid "Sorry, only %<PRId64> suggestions"
+msgid "Only %<PRId64> suggestions"
 msgstr " na %<PRId64> øádcích"
 
 #. for when 'cmdheight' > 1

@@ -233,7 +233,7 @@ This means |$VIMRUNTIME| or 'runtimepath' is broken.
 ------------------------------------------------------------------------------
 NEOVIM CAN'T FIND ITS RUNTIME
 
-This is the case if `:help nvim` shows `E149: Sorry, no help for nvim`.
+This is the case if `:help nvim` shows `E149: No help for nvim`.
 
 Make sure that |$VIM| and |$VIMRUNTIME| point to Nvim's (as opposed to
 Vim's) runtime by checking `:echo $VIM` and `:echo $VIMRUNTIME`. This should

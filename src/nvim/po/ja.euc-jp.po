@@ -912,16 +912,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: 慌てないでください"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: 残念ですが '%s' のヘルプが %s にはありません"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: '%s' のヘルプが %s にはありません"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: 残念ですが %s にはヘルプがありません"
+msgid "E149: No help for %s"
+msgstr "E149: %s にはヘルプがありません"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "残念ですがヘルプファイル \"%s\" が見つかりません"
+msgid "Help file \"%s\" not found"
+msgstr "ヘルプファイル \"%s\" が見つかりません"
 
 #, c-format
 msgid "E151: No match: %s"

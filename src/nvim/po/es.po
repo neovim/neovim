@@ -1311,18 +1311,18 @@ msgstr "E478: ¡No entre en pánico!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Lo siento, no hay ayuda '%s' para \"%s\""
+msgid "E661: No '%s' help for %s"
+msgstr "E661: No hay ayuda '%s' para \"%s\""
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Lo siento, no hay ayuda para \"%s\""
+msgid "E149: No help for %s"
+msgstr "E149: No hay ayuda para \"%s\""
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Lo siento, no encuentro el archivo de ayuda \"%s\""
+msgid "Help file \"%s\" not found"
+msgstr "No encuentro el archivo de ayuda \"%s\""
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -5603,13 +5603,13 @@ msgstr ""
 "E763: Los caracteres de la palabra difieren entre archivos de ortografía"
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
-msgstr "Lo siento, no hay sugerencias"
+msgid "No suggestions"
+msgstr "No hay sugerencias"
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Lo siento, solo hay %<PRId64> sugerencias"
+msgid "Only %<PRId64> suggestions"
+msgstr "Solo hay %<PRId64> sugerencias"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
