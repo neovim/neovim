@@ -3545,9 +3545,10 @@ nvim_set_option_value({name}, {value}, {opts})
 Tabpage Functions                                                *api-tabpage*
 
 nvim_open_tabpage({buffer}, {config})                    *nvim_open_tabpage()*
-    Opens a new tabpage
+    Opens a new tabpage.
 
     Attributes: ~
+        not allowed when |textlock| is active
         Since: 0.12.0
 
     Parameters: ~

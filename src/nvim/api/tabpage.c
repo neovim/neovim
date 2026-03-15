@@ -5,8 +5,10 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/tabpage.h"
 #include "nvim/api/vim.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/errors.h"
@@ -188,7 +190,7 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
   return ret;
 }
 
-/// Opens a new tabpage
+/// Opens a new tabpage.
 ///
 /// @param buffer Buffer to open in the first window of the new tabpage.
 ///               Use 0 for current buffer.
@@ -199,80 +201,70 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 /// @param[out] err Error details, if any
 /// @return Tabpage handle of the created tabpage
 Tabpage nvim_open_tabpage(Buffer buffer, Dict(tabpage_config) *config, Error *err)
-  FUNC_API_SINCE(14)
+  FUNC_API_SINCE(14) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, tabpage_config, key)
-
-  // Validate and get the buffer
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (buf == NULL) {
     return 0;
   }
 
-  if (buf == cmdwin_buf) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-    return 0;
-  }
-
-  bool enter = true;  // Default to entering the new tabpage
+  bool enter = true;
   if (HAS_KEY_X(config, enter)) {
     enter = config->enter;
+  }
+  if ((cmdwin_type != 0 && enter) || buf == cmdwin_buf) {
+    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+    return 0;
   }
 
   int after = 0;  // Default to after current tabpage
   if (HAS_KEY_X(config, after)) {
     after = (int)config->after;
-
-    // Validate the after position
-    if (after < 0) {
-      api_set_error(err, kErrorTypeValidation, "Invalid 'after' position: %d", after);
+    VALIDATE_INT(after >= 0, "after", config->after, {
       return 0;
-    }
-
-    // Note: No validation for after > number of tabs since the underlying
-    // function handles this by appending at the end
-  }
-
-  tabpage_T *newtp;
-
-  if (enter) {
-    // Use the existing function if we want to enter the tabpage
-    if (win_new_tabpage(after, NULL) == OK) {
-      newtp = curtab;
-    } else {
-      api_set_error(err, kErrorTypeException, "Failed to create new tabpage");
-      return 0;
-    }
-  } else {
-    // Create tabpage without entering it
-    newtp = win_new_tabpage_noenter(after, err);
-    if (newtp == NULL) {
-      api_set_error(err, kErrorTypeException, "Failed to create new tabpage");
-      return 0;
-    }
-  }
-
-  // Set the buffer in the new window if different from current
-  if (newtp->tp_curwin->w_buffer != buf) {
-    TRY_WRAP(err, {
-      win_set_buf(newtp->tp_curwin, buf, err);
     });
-    if (ERROR_SET(err)) {
-      return 0;
-    }
+    // NOTE: win_new_tabpage will handle after > count by appending to the end.
   }
 
-  // Ensure tabpage wasn't immediately freed
-  if (find_tab_by_handle(newtp->handle, err) == NULL) {
-    api_clear_error(err);
+  tabpage_T *tp;
+  win_T *wp;
+  TRY_WRAP(err, {
+    tp = win_new_tabpage(after, NULL, enter, &wp);
+  });
+  if (!tp) {
+    if (!ERROR_SET(err)) {  // set error maybe more specific
+      api_set_error(err, kErrorTypeException, "Failed to create new tabpage");
+    }
+    return 0;
+  }
+  if (!valid_tabpage(tp)) {
+    api_clear_error(err);  // maybe set by win_new_tabpage, but wasn't fatal
     api_set_error(err, kErrorTypeException, "Tabpage was closed immediately");
     return 0;
   }
-  if (!buf_valid(buf)) {
-    api_set_error(err, kErrorTypeException, "Buffer was deleted by autocmd");
-    return 0;
+
+  // Set the buffer in the new window if different from current
+  if (tabpage_win_valid(tp, wp) && wp->w_buffer != buf) {
+    // win_set_buf temporarily makes `wp` the curwin to set the buffer.
+    // If not entering `wp`, block Enter and Leave events. (cringe)
+    const bool au_no_enter_leave = curwin != wp;
+    if (au_no_enter_leave) {
+      autocmd_no_enter++;
+      autocmd_no_leave++;
+    }
+    win_set_buf(wp, buf, err);
+    if (au_no_enter_leave) {
+      autocmd_no_enter--;
+      autocmd_no_leave--;
+    }
+    if (!valid_tabpage(tp)) {
+      api_clear_error(err);  // maybe set by win_new_tabpage/win_set_buf, but wasn't fatal
+      api_set_error(err, kErrorTypeException, "Tabpage was closed immediately");
+      return 0;
+    }
   }
 
-  return newtp->handle;
+  return tp->handle;
 #undef HAS_KEY_X
 }

@@ -1673,7 +1673,7 @@ function vim.api.nvim_load_context(dict) end
 --- @return any
 function vim.api.nvim_notify(msg, log_level, opts) end
 
---- Opens a new tabpage
+--- Opens a new tabpage.
 ---
 --- @param buffer integer Buffer to open in the first window of the new tabpage.
 --- Use 0 for current buffer.

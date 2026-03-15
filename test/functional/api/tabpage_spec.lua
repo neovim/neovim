@@ -1,7 +1,9 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local clear, eq, ok = n.clear, t.eq, t.ok
+local matches = t.matches
 local exec = n.exec
 local feed = n.feed
 local api = n.api
@@ -89,6 +91,23 @@ describe('api/tabpage', function()
         string.format('Window does not belong to tabpage %d', tab1),
         pcall_err(api.nvim_tabpage_set_win, tab1, win3)
       )
+    end)
+
+    it('checks textlock, cmdwin restrictions', function()
+      command('autocmd TextYankPost * ++once call nvim_open_tabpage(0, #{enter: 0})')
+      matches('E565:', pcall_err(command, 'yank'))
+      eq(1, fn.tabpagenr('$'))
+
+      local other_buf = api.nvim_get_current_buf()
+      feed('q:')
+      -- OK when not entering and not opening a tabpage with the cmdwin's buffer.
+      matches('E11:', pcall_err(api.nvim_open_tabpage, 0, { enter = false }))
+      eq(1, fn.tabpagenr('$'))
+      matches('E11:', pcall_err(api.nvim_open_tabpage, other_buf, { enter = true }))
+      eq(1, fn.tabpagenr('$'))
+      local tp = api.nvim_open_tabpage(other_buf, { enter = false })
+      eq(other_buf, api.nvim_win_get_buf(api.nvim_tabpage_get_win(tp)))
+      eq('command', fn.win_gettype())
     end)
 
     it('does not switch window when textlocked or in the cmdwin', function()
@@ -179,17 +198,13 @@ describe('api/tabpage', function()
       local tabs = api.nvim_list_tabpages()
       eq(1, #tabs)
       local curtab = api.nvim_get_current_tabpage()
-      local tab = api.nvim_open_tabpage(0, {
-        enter = false,
-      })
+      local tab = api.nvim_open_tabpage(0, { enter = false })
       local newtabs = api.nvim_list_tabpages()
       eq(2, #newtabs)
       eq(tab, newtabs[2])
       eq(curtab, api.nvim_get_current_tabpage())
 
-      local tab2 = api.nvim_open_tabpage(0, {
-        enter = true,
-      })
+      local tab2 = api.nvim_open_tabpage(0, { enter = true })
       local newtabs2 = api.nvim_list_tabpages()
       eq(3, #newtabs2)
       eq({
@@ -235,47 +250,117 @@ describe('api/tabpage', function()
     end)
 
     it('respects the `enter` argument', function()
+      local screen = Screen.new(50, 8)
       eq(1, #api.nvim_list_tabpages())
       local tab1 = api.nvim_get_current_tabpage()
 
-      local new_tab = api.nvim_open_tabpage(0, {
-        enter = false,
-      })
-
+      local new_tab = api.nvim_open_tabpage(0, { enter = false })
       local newtabs = api.nvim_list_tabpages()
       eq(2, #newtabs)
-      eq(newtabs, {
-        tab1,
-        new_tab,
-      })
+      eq(newtabs, { tab1, new_tab })
       eq(api.nvim_get_current_tabpage(), tab1)
+      -- Tabline redrawn when not entering.
+      screen:expect([[
+        {5: [No Name] }{24: [No Name] }{2:                           }{24:X}|
+        ^                                                  |
+        {1:~                                                 }|*5
+                                                          |
+      ]])
 
-      local new_tab2 = api.nvim_open_tabpage(0, {
-        enter = true,
-      })
+      local new_tab2 = api.nvim_open_tabpage(0, { enter = true })
       local newtabs2 = api.nvim_list_tabpages()
       eq(3, #newtabs2)
-      eq(newtabs2, {
-        tab1,
-        new_tab2,
-        new_tab,
-      })
-
+      eq(newtabs2, { tab1, new_tab2, new_tab })
       eq(api.nvim_get_current_tabpage(), new_tab2)
+      -- Tabline redrawn. (when entering)
+      screen:expect([[
+        {24: [No Name] }{5: [No Name] }{24: [No Name] }{2:                }{24:X}|
+        ^                                                  |
+        {1:~                                                 }|*5
+                                                          |
+      ]])
+
+      api.nvim_open_tabpage(0, { enter = false })
+      -- Tabline redrawn when not entering, and when there's already one.
+      screen:expect([[
+        {24: [No Name] }{5: [No Name] }{24: [No Name]  [No Name] }{2:     }{24:X}|
+        ^                                                  |
+        {1:~                                                 }|*5
+                                                          |
+      ]])
     end)
 
-    it('applies `enter` autocmds in the context of the new tabpage', function()
-      api.nvim_create_autocmd('TabEnter', {
-        command = 'let g:entered_tab = nvim_get_current_tabpage()',
-      })
+    it('applies autocmds in the context of the new tabpage', function()
+      exec([=[
+        let g:events = []
+        autocmd WinNew * let g:events += [['WinNew', nvim_get_current_tabpage(), win_getid()]]
+        autocmd WinEnter * let g:events += [['WinEnter', nvim_get_current_tabpage(), win_getid()]]
+        autocmd TabNew * let g:events += [['TabNew', nvim_get_current_tabpage(), win_getid()]]
+        autocmd TabEnter * let g:events += [['TabEnter', nvim_get_current_tabpage(), win_getid()]]
+        autocmd BufEnter * let g:events += [['BufEnter', nvim_get_current_tabpage(), win_getid()]]
+        autocmd BufLeave * let g:events += [['BufLeave', nvim_get_current_tabpage(), win_getid()]]
+        autocmd BufWinEnter * let g:events += [['BufWinEnter', nvim_get_current_tabpage(), win_getid()]]
+      ]=])
 
-      local new_tab = api.nvim_open_tabpage(0, {
-        enter = true,
-      })
+      local new_tab = api.nvim_open_tabpage(0, { enter = true })
+      local new_win = api.nvim_tabpage_get_win(new_tab)
+      eq({
+        { 'WinNew', new_tab, new_win },
+        { 'WinEnter', new_tab, new_win },
+        { 'TabNew', new_tab, new_win },
+        { 'TabEnter', new_tab, new_win },
+      }, api.nvim_get_var('events'))
+      eq(new_win, api.nvim_get_current_win())
 
-      local entered_tab = assert(tonumber(api.nvim_get_var('entered_tab')))
+      api.nvim_set_var('events', {})
+      new_tab = api.nvim_open_tabpage(api.nvim_create_buf(true, true), { enter = true })
+      new_win = api.nvim_tabpage_get_win(new_tab)
+      eq({
+        { 'WinNew', new_tab, new_win },
+        { 'WinEnter', new_tab, new_win },
+        { 'TabNew', new_tab, new_win },
+        { 'TabEnter', new_tab, new_win },
+        { 'BufLeave', new_tab, new_win },
+        { 'BufEnter', new_tab, new_win },
+        { 'BufWinEnter', new_tab, new_win },
+      }, api.nvim_get_var('events'))
 
-      eq(new_tab, entered_tab)
+      local curwin = new_win
+      api.nvim_set_var('events', {})
+      new_tab = api.nvim_open_tabpage(0, { enter = false })
+      new_win = api.nvim_tabpage_get_win(new_tab)
+      eq(
+        { { 'WinNew', new_tab, new_win }, { 'TabNew', new_tab, new_win } },
+        api.nvim_get_var('events')
+      )
+      eq(curwin, api.nvim_get_current_win())
+
+      api.nvim_set_var('events', {})
+      new_tab = api.nvim_open_tabpage(api.nvim_create_buf(true, true), { enter = false })
+      new_win = api.nvim_tabpage_get_win(new_tab)
+      eq({
+        { 'WinNew', new_tab, new_win },
+        { 'TabNew', new_tab, new_win },
+        { 'BufWinEnter', new_tab, new_win },
+      }, api.nvim_get_var('events'))
+      eq(curwin, api.nvim_get_current_win())
+    end)
+
+    it('handles nasty autocmds', function()
+      command('autocmd WinNewPre * ++once call nvim_open_tabpage(0, #{enter: 0})')
+      matches('E1312:', pcall_err(command, 'split'))
+
+      command('autocmd TabNew * ++once quit')
+      eq('Tabpage was closed immediately', pcall_err(api.nvim_open_tabpage, 0, { enter = false }))
+      command('autocmd BufEnter * ++once quit')
+      local buf = api.nvim_create_buf(true, true)
+      eq('Tabpage was closed immediately', pcall_err(api.nvim_open_tabpage, buf, { enter = true }))
+
+      -- No error if autocmds delete target buffer, if new tabpage is still valid to return.
+      command('autocmd BufEnter * ++once buffer # | bwipeout! #')
+      local new_tp = api.nvim_open_tabpage(buf, { enter = true })
+      eq(false, api.nvim_buf_is_valid(buf))
+      eq(new_tp, api.nvim_get_current_tabpage())
     end)
 
     it('handles edge cases for positioning', function()
@@ -291,28 +376,19 @@ describe('api/tabpage', function()
       eq({ tab1, tab2, tab3 }, initial_tabs)
 
       -- Test after=1: should become first tab
-      local first_tab = api.nvim_open_tabpage(0, {
-        enter = false,
-        after = 1,
-      })
+      local first_tab = api.nvim_open_tabpage(0, { enter = false, after = 1 })
       local tabs_after_first = api.nvim_list_tabpages()
       eq(4, #tabs_after_first)
       eq({ first_tab, tab1, tab2, tab3 }, tabs_after_first)
 
       -- Test after=0: should insert after current tab (tab3)
-      local explicit_after_current = api.nvim_open_tabpage(0, {
-        enter = false,
-        after = 0,
-      })
+      local explicit_after_current = api.nvim_open_tabpage(0, { enter = false, after = 0 })
       local tabs_after_current = api.nvim_list_tabpages()
       eq(5, #tabs_after_current)
       eq({ first_tab, tab1, tab2, tab3, explicit_after_current }, tabs_after_current)
 
       -- Test inserting before a middle tab (before tab2, which is now position 3)
-      local before_middle = api.nvim_open_tabpage(0, {
-        enter = false,
-        after = 3,
-      })
+      local before_middle = api.nvim_open_tabpage(0, { enter = false, after = 3 })
       local tabs_after_middle = api.nvim_list_tabpages()
       eq(6, #tabs_after_middle)
       eq({ first_tab, tab1, before_middle, tab2, tab3, explicit_after_current }, tabs_after_middle)
@@ -320,9 +396,7 @@ describe('api/tabpage', function()
       eq(api.nvim_get_current_tabpage(), tab3)
 
       -- Test default behavior (after current)
-      local default_after_current = api.nvim_open_tabpage(0, {
-        enter = false,
-      })
+      local default_after_current = api.nvim_open_tabpage(0, { enter = false })
       local final_tabs = api.nvim_list_tabpages()
       eq(7, #final_tabs)
       eq({
@@ -334,6 +408,8 @@ describe('api/tabpage', function()
         default_after_current,
         explicit_after_current,
       }, final_tabs)
+
+      eq("Invalid 'after': -1", pcall_err(api.nvim_open_tabpage, 0, { after = -1 }))
     end)
 
     it('handles position beyond last tab', function()
@@ -361,13 +437,17 @@ describe('api/tabpage', function()
     end)
 
     it('works with specific buffer', function()
+      local curbuf = api.nvim_get_current_buf()
+      local new_tab = api.nvim_open_tabpage(0, { enter = false })
+      api.nvim_set_current_tabpage(new_tab)
+      eq(curbuf, api.nvim_get_current_buf())
+
       local buf = api.nvim_create_buf(false, false)
       api.nvim_buf_set_lines(buf, 0, -1, false, { 'test content' })
 
       local original_tab = api.nvim_get_current_tabpage()
       local original_buf = api.nvim_get_current_buf()
-
-      local new_tab = api.nvim_open_tabpage(buf, {
+      new_tab = api.nvim_open_tabpage(buf, {
         enter = true, -- Enter the tab to make testing easier
       })
 
@@ -379,22 +459,9 @@ describe('api/tabpage', function()
       -- Switch back and check original tab still has original buffer
       api.nvim_set_current_tabpage(original_tab)
       eq(original_buf, api.nvim_get_current_buf())
-    end)
 
-    it('validates buffer parameter', function()
       -- Test invalid buffer
       eq('Invalid buffer id: 999', pcall_err(api.nvim_open_tabpage, 999, {}))
-    end)
-
-    it('works with current buffer (0)', function()
-      local current_buf = api.nvim_get_current_buf()
-
-      local new_tab = api.nvim_open_tabpage(0, {
-        enter = false,
-      })
-
-      api.nvim_set_current_tabpage(new_tab)
-      eq(current_buf, api.nvim_get_current_buf())
     end)
 
     it('handles complex positioning scenarios', function()
@@ -404,18 +471,13 @@ describe('api/tabpage', function()
         command('tabnew')
         tabs[i] = api.nvim_get_current_tabpage()
       end
-
       eq(5, #api.nvim_list_tabpages())
 
       -- Go to middle tab (tab 3)
       api.nvim_set_current_tabpage(tabs[3])
 
       -- Insert after=0 (after current, which is tab 3)
-      local new_after_current = api.nvim_open_tabpage(0, {
-        enter = false,
-        after = 0,
-      })
-
+      local new_after_current = api.nvim_open_tabpage(0, { enter = false, after = 0 })
       local result_tabs = api.nvim_list_tabpages()
       eq(6, #result_tabs)
       eq({
@@ -428,11 +490,7 @@ describe('api/tabpage', function()
       }, result_tabs)
 
       -- Insert at position 2 (before tab2, which becomes new position 2)
-      local new_at_pos2 = api.nvim_open_tabpage(0, {
-        enter = false,
-        after = 2,
-      })
-
+      local new_at_pos2 = api.nvim_open_tabpage(0, { enter = false, after = 2 })
       local final_result = api.nvim_list_tabpages()
       eq(7, #final_result)
       eq({
