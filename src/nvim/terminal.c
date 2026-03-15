@@ -943,12 +943,18 @@ bool terminal_enter(void)
   // Don't fire TextChangedT from changes in Normal mode.
   curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
 
+  // Don't let autocommands free the terminal now!
+  s->term->refcount++;
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
   may_trigger_modechanged();
-
-  s->state.execute = terminal_execute;
-  s->state.check = terminal_check;
-  state_enter(&s->state);
+  s->term->refcount--;
+  if (s->term->buf_handle == 0) {
+    s->close = true;  // skip entering and close
+  } else {
+    s->state.execute = terminal_execute;
+    s->state.check = terminal_check;
+    state_enter(&s->state);
+  }
 
   if (!s->got_bsl_o) {
     restart_edit = 0;
