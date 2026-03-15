@@ -242,8 +242,8 @@ describe('api/tabpage', function()
       eq(4, #newtabs2)
       eq({
         tab1,
-        new_tab,
         tab2,
+        new_tab,
         tab3,
       }, newtabs2)
       eq(api.nvim_get_current_tabpage(), tab3)
@@ -375,20 +375,20 @@ describe('api/tabpage', function()
       eq(3, #initial_tabs)
       eq({ tab1, tab2, tab3 }, initial_tabs)
 
-      -- Test after=1: should become first tab
-      local first_tab = api.nvim_open_tabpage(0, { enter = false, after = 1 })
+      -- Test after=0: should become first tab
+      local first_tab = api.nvim_open_tabpage(0, { enter = false, after = 0 })
       local tabs_after_first = api.nvim_list_tabpages()
       eq(4, #tabs_after_first)
       eq({ first_tab, tab1, tab2, tab3 }, tabs_after_first)
 
-      -- Test after=0: should insert after current tab (tab3)
-      local explicit_after_current = api.nvim_open_tabpage(0, { enter = false, after = 0 })
+      -- Test after=-1: should insert after current tab (tab3)
+      local explicit_after_current = api.nvim_open_tabpage(0, { enter = false, after = -1 })
       local tabs_after_current = api.nvim_list_tabpages()
       eq(5, #tabs_after_current)
       eq({ first_tab, tab1, tab2, tab3, explicit_after_current }, tabs_after_current)
 
-      -- Test inserting before a middle tab (before tab2, which is now position 3)
-      local before_middle = api.nvim_open_tabpage(0, { enter = false, after = 3 })
+      -- Test inserting before a middle tab (before tab2, which is now number 3)
+      local before_middle = api.nvim_open_tabpage(0, { enter = false, after = 2 })
       local tabs_after_middle = api.nvim_list_tabpages()
       eq(6, #tabs_after_middle)
       eq({ first_tab, tab1, before_middle, tab2, tab3, explicit_after_current }, tabs_after_middle)
@@ -408,8 +408,6 @@ describe('api/tabpage', function()
         default_after_current,
         explicit_after_current,
       }, final_tabs)
-
-      eq("Invalid 'after': -1", pcall_err(api.nvim_open_tabpage, 0, { after = -1 }))
     end)
 
     it('handles position beyond last tab', function()
@@ -477,7 +475,7 @@ describe('api/tabpage', function()
       api.nvim_set_current_tabpage(tabs[3])
 
       -- Insert after=0 (after current, which is tab 3)
-      local new_after_current = api.nvim_open_tabpage(0, { enter = false, after = 0 })
+      local new_after_current = api.nvim_open_tabpage(0, { enter = false })
       local result_tabs = api.nvim_list_tabpages()
       eq(6, #result_tabs)
       eq({
@@ -489,8 +487,8 @@ describe('api/tabpage', function()
         tabs[5],
       }, result_tabs)
 
-      -- Insert at position 2 (before tab2, which becomes new position 2)
-      local new_at_pos2 = api.nvim_open_tabpage(0, { enter = false, after = 2 })
+      -- Insert as number 2 (before tab2, which will become number 3)
+      local new_at_pos2 = api.nvim_open_tabpage(0, { enter = false, after = 1 })
       local final_result = api.nvim_list_tabpages()
       eq(7, #final_result)
       eq({
@@ -512,7 +510,7 @@ describe('api/tabpage', function()
       -- Create new tab with enter=true, should insert after current (tab2)
       local tab3 = api.nvim_open_tabpage(0, {
         enter = true,
-        after = 0,
+        after = -1,
       })
 
       local tabs = api.nvim_list_tabpages()
@@ -524,7 +522,7 @@ describe('api/tabpage', function()
       api.nvim_set_current_tabpage(tab1)
       local tab4 = api.nvim_open_tabpage(0, {
         enter = true,
-        after = 1, -- Should become first tab
+        after = 0, -- Should become first tab
       })
 
       local final_tabs = api.nvim_list_tabpages()

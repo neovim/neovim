@@ -3557,8 +3557,8 @@ nvim_open_tabpage({buffer}, {config})                    *nvim_open_tabpage()*
       • {config}  (`vim.api.keyset.tabpage_config`) Configuration for the new
                   tabpage. Keys:
                   • enter: Whether to enter the new tabpage (default: true)
-                  • after: Position to insert tabpage (default: 0). 0 = after
-                    current, 1 = first, N = before Nth.
+                  • after: Position to insert tabpage (default: -1; after
+                    current). 0 = first, N = after Nth.
 
     Return: ~
         (`integer`) Tabpage handle of the created tabpage

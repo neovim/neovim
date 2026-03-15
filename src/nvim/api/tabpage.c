@@ -5,7 +5,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/private/validate.h"
 #include "nvim/api/tabpage.h"
 #include "nvim/api/vim.h"
 #include "nvim/autocmd.h"
@@ -196,8 +195,8 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 ///               Use 0 for current buffer.
 /// @param config Configuration for the new tabpage. Keys:
 ///   - enter: Whether to enter the new tabpage (default: true)
-///   - after: Position to insert tabpage (default: 0).
-///            0 = after current, 1 = first, N = before Nth.
+///   - after: Position to insert tabpage (default: -1; after current).
+///            0 = first, N = after Nth.
 /// @param[out] err Error details, if any
 /// @return Tabpage handle of the created tabpage
 Tabpage nvim_open_tabpage(Buffer buffer, Dict(tabpage_config) *config, Error *err)
@@ -218,19 +217,15 @@ Tabpage nvim_open_tabpage(Buffer buffer, Dict(tabpage_config) *config, Error *er
     return 0;
   }
 
-  int after = 0;  // Default to after current tabpage
+  int after = -1;  // Default to after current tabpage
   if (HAS_KEY_X(config, after)) {
     after = (int)config->after;
-    VALIDATE_INT(after >= 0, "after", config->after, {
-      return 0;
-    });
-    // NOTE: win_new_tabpage will handle after > count by appending to the end.
   }
 
   tabpage_T *tp;
   win_T *wp;
   TRY_WRAP(err, {
-    tp = win_new_tabpage(after, NULL, enter, &wp);
+    tp = win_new_tabpage(after + 1, NULL, enter, &wp);
   });
   if (!tp) {
     if (!ERROR_SET(err)) {  // set error maybe more specific
