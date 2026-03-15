@@ -381,12 +381,16 @@ function M._refresh(bufnr, client_id, only_visible)
     type = 'pending',
   })
   for _, client in ipairs(clients) do
-    ---@type lsp.DocumentDiagnosticParams
-    local params = {
-      textDocument = util.make_text_document_params(bufnr),
-      previousResultId = bufstate.client_result_id[client.id],
-    }
-    client:request(method, params, nil, bufnr)
+    ---@param cap lsp.DiagnosticRegistrationOptions
+    client:_provider_foreach(method, function(cap)
+      ---@type lsp.DocumentDiagnosticParams
+      local params = {
+        identifier = cap.identifier,
+        textDocument = util.make_text_document_params(bufnr),
+        previousResultId = bufstate.client_result_id[client.id],
+      }
+      client:request(method, params, nil, bufnr)
+    end)
   end
 end
 
