@@ -1146,6 +1146,16 @@ describe(':terminal buffer', function()
     eq(false, api.nvim_buf_is_valid(term_buf))
   end)
 
+  it('no heap-use-after-free from autocmds when entering terminal mode', function()
+    local chans = api.nvim_list_chans()
+    local buf = api.nvim_get_current_buf()
+    api.nvim_open_term(0, {})
+    command('autocmd TermEnter,ModeChanged * ++once bwipeout!')
+    feed('i')
+    eq(false, api.nvim_buf_is_valid(buf))
+    eq(chans, api.nvim_list_chans())
+  end)
+
   local enew_screen = [[
     ^                                                  |
     {1:~                                                 }|*5
