@@ -1247,23 +1247,21 @@ function Client:_provider_foreach(method, fn)
   local provider = self:_registration_provider(method)
   local required_capability = lsp.protocol._request_name_to_server_capability[method]
   local dynamic_regs = self:_get_registrations(provider)
+  local has_subcap = required_capability and #required_capability > 1
   if not provider then
     return
   elseif not dynamic_regs then
     -- First check static capabilities
     local static_reg = vim.tbl_get(self.server_capabilities, provider)
     if static_reg then
-      if vim.tbl_get(static_reg, unpack(required_capability, 2)) then
+      if not has_subcap or vim.tbl_get(static_reg, unpack(required_capability, 2)) then
         fn(static_reg)
       end
     end
   else
     for _, reg in ipairs(dynamic_regs) do
-      if vim.tbl_get(reg, 'registerOptions', unpack(required_capability, 2)) then
-        local cap = vim.tbl_get(reg, 'registerOptions')
-        if cap then
-          fn(cap)
-        end
+      if not has_subcap or vim.tbl_get(reg, 'registerOptions', unpack(required_capability, 2)) then
+        fn(vim.tbl_get(reg, 'registerOptions') or {})
       end
     end
   end
