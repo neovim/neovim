@@ -5058,24 +5058,31 @@ local options = {
       abbreviation = 'kp',
       defaults = {
         condition = 'MSWIN',
-        if_true = ':help',
+        if_true = ':help!',
         if_false = ':Man',
         doc = '":Man", Windows: ":help"',
       },
       desc = [=[
         Program to use for the |K| command.  Environment variables are
-        expanded |:set_env|.  ":help" may be used to access the Vim internal
-        help.  (Note that previously setting the global option to the empty
-        value did this, which is now deprecated.)
-        When the first character is ":", the command is invoked as a Vim
-        Ex command prefixed with [count].
-        When "man" or "man -s" is used, Vim will automatically translate
-        a [count] for the "K" command to a section number.
+        expanded |:set_env|.
+
+        Special cases:
+        - ":help" opens the |word| at cursor using |:help|.  (Note that
+          previously setting the global option to the empty value did this,
+          which is now deprecated.)
+        - ":help!" performs |:help!| (DWIM) on the |WORD| at cursor.
+        - If the value starts with ":", it is invoked as an Ex command
+          prefixed with [count].
+        - If "man" or "man -s", [count] is the manpage section number.
+
         See |option-backslash| about including spaces and backslashes.
+
         Example: >vim
+        	set keywordprg=:help!
         	set keywordprg=man\ -s
         	set keywordprg=:Man
-        <	This option cannot be set from a |modeline| or in the |sandbox|, for
+        <
+        This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
       expand = true,

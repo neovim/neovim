@@ -17,7 +17,7 @@ let b:undo_ftplugin = "setl isk< fo< tw< cole< cocu< keywordprg< omnifunc< comme
 
 setl comments= cms=
 
-setlocal formatoptions+=tcroql textwidth=78 keywordprg=:help omnifunc=s:HelpComplete
+setlocal formatoptions+=tcroql textwidth=78 keywordprg=:help! omnifunc=s:HelpComplete
 let &l:iskeyword='!-~,^*,^|,^",192-255'
 if has("conceal")
   setlocal cole=2 cocu=nc
