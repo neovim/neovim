@@ -2377,7 +2377,11 @@ function M.show(namespace, bufnr, diagnostics, opts)
     return
   end
 
-  M.hide(namespace, bufnr)
+  local opts_res = get_resolved_options(opts, namespace, bufnr)
+  local mode = api.nvim_get_mode()
+  if opts_res.update_in_insert or mode.mode:sub(1, 1) == 'n' then
+    M.hide(namespace, bufnr)
+  end
 
   diagnostics = diagnostics or get_diagnostics(bufnr, { namespace = namespace }, true)
 
@@ -2385,12 +2389,9 @@ function M.show(namespace, bufnr, diagnostics, opts)
     return
   end
 
-  local opts_res = get_resolved_options(opts, namespace, bufnr)
-
   if opts_res.update_in_insert then
     clear_scheduled_display(namespace, bufnr)
   else
-    local mode = api.nvim_get_mode()
     if mode.mode:sub(1, 1) == 'i' then
       schedule_display(namespace, bufnr, opts_res)
       return
