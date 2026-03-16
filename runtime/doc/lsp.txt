@@ -68,15 +68,16 @@ Follow these steps to get LSP features:
 ==============================================================================
 DEFAULTS                                                *lsp-defaults*
 
-When the Nvim LSP client starts it enables diagnostics |vim.diagnostic| (see
-|vim.diagnostic.config()| to customize). It also sets various default options,
-listed below, if (1) the language server supports the functionality and (2)
-the options are empty or were set by the builtin runtime (ftplugin) files. The
-options are not restored when the LSP client is stopped or detached.
+When LSP activates, by default it enables various LSP features and sets
+options and keymaps, listed below, if (1) the language server supports the
+functionality and (2) the options are empty or were set by the builtin runtime
+(ftplugin) files. The options are not restored when the LSP client is stopped
+or detached.
 
 GLOBAL DEFAULTS                       *gra* *gri* *grn* *grr* *grt* *i_CTRL-S*
 
 These GLOBAL keymaps are created unconditionally when Nvim starts:
+
 - "gra" (Normal and Visual mode) is mapped to |vim.lsp.buf.code_action()|
 - "gri" is mapped to |vim.lsp.buf.implementation()|
 - "grn" is mapped to |vim.lsp.buf.rename()|
@@ -92,6 +93,20 @@ These GLOBAL keymaps are created unconditionally when Nvim starts:
     import (
        "os"
     )
+<
+These LSP features are enabled by default:
+
+- Diagnostics |lsp-diagnostic|. See |vim.diagnostic.config()| to customize.
+- `workspace/didChangeWatchedFiles` (except on Linux). If you see poor
+  performance in big workspaces, run `:checkhealth vim.lsp` and look for "file
+  watching". Try disabling file-watching: >lua
+    local capabilities = vim.lsp.protocol.make_client_capabilities()
+    if capabilities.workspace then
+      capabilities.workspace.didChangeWatchedFiles = nil
+    end
+    vim.lsp.config('*', {
+      capabilities = capabilities,
+    })
 <
 
 BUFFER-LOCAL DEFAULTS

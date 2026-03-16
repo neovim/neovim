@@ -3850,7 +3850,7 @@ local options = {
         This is a scanf-like string that uses the same format as the
         'errorformat' option: see |errorformat|.
 
-        If ripgrep ('grepprg') is available, this option defaults to `%f:%l:%c:%m`.
+        Defaults to "%f:%l:%c:%m" if ripgrep ('grepprg') is available.
       ]=],
       full_name = 'grepformat',
       list = 'onecomma',
@@ -3868,28 +3868,34 @@ local options = {
         doc = [[see below]],
       },
       desc = [=[
-        Program to use for the |:grep| command.  This option may contain '%'
-        and '#' characters, which are expanded like when used in a command-
-        line.  The placeholder "$*" is allowed to specify where the arguments
-        will be included.  Environment variables are expanded |:set_env|.  See
-        |option-backslash| about including spaces and backslashes.
+        Program to use for the |:grep| command.
+        Note: if you change this then you must also update 'grepformat'.
+
+        May contain "%" and "#" characters, are expanded per |cmdline-special|.
+        The placeholder "$*" specifies where the arguments will be included.
+        Environment variables are expanded |:set_env|.  See |option-backslash|
+        about including spaces and backslashes.
+
         Special value: When 'grepprg' is set to "internal" the |:grep| command
         works like |:vimgrep|, |:lgrep| like |:lvimgrep|, |:grepadd| like
         |:vimgrepadd| and |:lgrepadd| like |:lvimgrepadd|.
-        See also the section |:make_makeprg|, since most of the comments there
-        apply equally to 'grepprg'.
+
+        See also |:make_makeprg|, most of the comments there apply to 'grepprg'.
+
+        Defaults to:
+        - "rg --vimgrep -uu " if ripgrep is available (|:checkhealth|),
+        - "grep -HIn $* /dev/null" on Unix,
+        - "findstr /n $* nul" on Windows.
+
+        Ripgrep may perform additional filtering such as using .gitignore rules
+        and skipping hidden files. This is disabled by default (via "-u") to
+        more closely match the behaviour of standard grep.
+        You can make ripgrep match Vim's case handling using the
+        -i/--ignore-case and -S/--smart-case options. Handle |OptionSet| to
+        dynamically update 'grepprg' when e.g. 'ignorecase' is changed.
+
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
-        This option defaults to:
-        - `rg --vimgrep -uu ` if ripgrep is available (|:checkhealth|),
-        - `grep -HIn $* /dev/null` on Unix,
-        - `findstr /n $* nul` on Windows.
-        Ripgrep can perform additional filtering such as using .gitignore rules
-        and skipping hidden files. This is disabled by default (see the -u option)
-        to more closely match the behaviour of standard grep.
-        You can make ripgrep match Vim's case handling using the
-        -i/--ignore-case and -S/--smart-case options.
-        An |OptionSet| autocmd can be used to set it up to match automatically.
       ]=],
       expand = true,
       full_name = 'grepprg',
@@ -5785,26 +5791,26 @@ local options = {
         Option settings for outputting messages.  It can consist of the
         following items.  Items must be separated by a comma.
 
-        hit-enter	Use a |hit-enter| prompt when the message is longer than
-        		'cmdheight' size.
-
-        wait:{n}	Instead of using a |hit-enter| prompt, simply wait for
-        		{n} milliseconds so that the user has a chance to read
-        		the message.  The maximum value of {n} is 10000.  Use
-        		0 to disable the wait (but then the user may miss an
-        		important message).
-        		This item is ignored when "hit-enter" is present, but
-        		required when "hit-enter" is not present.
-
         history:{n}	Determines how many entries are remembered in the
         		|:messages| history.  The maximum value is 10000.
         		Setting it to zero clears the message history.
         		This item must always be present.
-        progress:{s}
-        		Determines where to show progress messages.
+
+        hit-enter	Use a |hit-enter| prompt when the message is longer than
+        		'cmdheight' size.
+
+        progress:{s}	Determines where to show progress messages.
         		Valid values are:
-        		    empty: progress messages are hidden in cmdline.
-        		    "c": progress messages are shown in cmdline.
+        		  - empty: Progress messages not shown in cmdline.
+        		  - "c": Progress messages are shown in cmdline.
+
+        wait:{n}	Deprecated with |ui2|.
+        		Instead of a |hit-enter| prompt, simply wait for {n}
+        		milliseconds so the user has a chance to read the
+        		message.  Maximum {n} is 10000.  Use 0 to disable the
+        		wait (user won't see any "hit-enter" messages).
+        		Ignored when "hit-enter" is present, but required when
+        		"hit-enter" is not present.
       ]=],
       full_name = 'messagesopt',
       list = 'onecommacolon',

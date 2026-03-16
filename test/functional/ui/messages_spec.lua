@@ -2545,13 +2545,14 @@ describe('pager', function()
 
     exec_lua(
       '_G.x = ...',
-      [[
-Lorem ipsum dolor sit amet, consectetur
-adipisicing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua.
-Ut enim ad minim veniam, quis nostrud xercitation
-ullamco laboris nisi ut
-aliquip ex ea commodo consequat.]]
+      t.dedent [[
+        Lorem ipsum dolor sit amet, consectetur
+        adipisicing elit, sed do eiusmod tempor
+        incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud xercitation
+        ullamco laboris nisi ut
+        aliquip ex ea commodo consequat.
+      ]]
     )
   end)
 
@@ -3504,7 +3505,7 @@ describe('progress-message', function()
     }, 'Progress autocmd receives progress update')
   end)
 
-  it('user-defined data in `data` field', function()
+  it('user-defined data', function()
     api.nvim_echo({ { 'test-message' } }, true, {
       kind = 'progress',
       title = 'TestSuit',
@@ -3542,25 +3543,25 @@ describe('progress-message', function()
     }, 'Progress autocmd receives progress messages')
   end)
 
-  it('validates', function()
+  it('validation', function()
     -- throws error if title, status, percent, data is used in non progress message
     eq(
-      'title, status, percent and data fields can only be used with progress messages',
+      "Conflict: title/status/percent/data not allowed with kind='echo'",
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { title = 'TestSuit' })
     )
 
     eq(
-      'title, status, percent and data fields can only be used with progress messages',
+      "Conflict: title/status/percent/data not allowed with kind='echo'",
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { status = 'running' })
     )
 
     eq(
-      'title, status, percent and data fields can only be used with progress messages',
+      "Conflict: title/status/percent/data not allowed with kind='echo'",
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { percent = 10 })
     )
 
     eq(
-      'title, status, percent and data fields can only be used with progress messages',
+      "Conflict: title/status/percent/data not allowed with kind='echo'",
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { data = { tag = 'test' } })
     )
 
@@ -3709,7 +3710,7 @@ describe('progress-message', function()
     eq(13, id8)
   end)
 
-  it('supports string ids', function()
+  it('accepts caller-defined id (string)', function()
     -- string id works
     local id = api.nvim_echo(
       { { 'supports str-id' } },
