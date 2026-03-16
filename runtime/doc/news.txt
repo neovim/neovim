@@ -464,6 +464,7 @@ VIMSCRIPT
 • |chdir()| allows optionally specifying a scope argument.
 • |cmdcomplete_info()| gets current cmdline completion info.
 • |getcompletiontype()| gets command-line completion type for any string.
+• |has()| gained two new system dependent feature flags, |android| and |termux|.
 • |prompt_getinput()| gets current user-input in prompt-buffer.
 • |wildtrigger()| triggers command-line expansion.
 • |v:vim_did_init| is set after sourcing |init.vim| but before |load-plugins|.
