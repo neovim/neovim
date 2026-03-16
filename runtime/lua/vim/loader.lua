@@ -78,6 +78,24 @@ local function fs_stat_cached(path)
   return fs_stat_cache[path]
 end
 
+-- https://github.com/lunarmodules/lua-compat-5.3/blob/4f445bfaf6d970d7df1479b960fa4f2bac63047c/compat53/module.lua#L698
+---@param name string
+---@param path string
+---@param sep? string
+---@param rep? string
+---@return string?
+local searchpath = function(name, path, sep, rep)
+  sep = (sep or '.'):gsub('(%p)', '%%%1')
+  rep = (rep or package.config:sub(1, 1)):gsub('(%%)', '%%%1')
+  local pname = name:gsub(sep, rep):gsub('(%%)', '%%%1')
+  for subpath in path:gmatch('[^;]+') do
+    local fpath = subpath:gsub('%?', pname)
+    if fs_stat_cached(fpath) then
+      return fpath
+    end
+  end
+end
+
 local function normalize(path)
   return fs.normalize(path, { expand_env = false, _fast = true })
 end
@@ -388,6 +406,16 @@ function M.find(modname, opts)
     _find(opts.paths)
   end
 
+  if continue() then
+    local path = searchpath(modname, package.path) or searchpath(modname, package.cpath)
+    if path then
+      local stat = fs_stat_cached(path)
+      if stat then
+        results[#results + 1] = { modpath = path, stat = stat, modname = modname }
+      end
+    end
+  end
+
   if #results == 0 then
     -- module not found
     stats.find.not_found = stats.find.not_found + 1
@@ -437,7 +465,7 @@ function M.enable(enable)
   M.enabled = enable
 
   if enable then
-    vim.fn.mkdir(vim.fs.abspath(M.path), 'p')
+    vim.fn.mkdir(fs.abspath(M.path), 'p')
     _G.loadfile = loadfile_cached
     -- add Lua loader
     table.insert(loaders, 2, loader_cached)
