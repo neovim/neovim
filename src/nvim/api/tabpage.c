@@ -391,6 +391,8 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
     }
   }
 
+  // TODO(willothy): Handle `layout` or split `tabpage_config` with layout into separate struct.
+
   return tp->handle;
 #undef HAS_KEY_X
 }
