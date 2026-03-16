@@ -343,7 +343,8 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, tabpage_config, key)
   Buffer buffer_handle = buffer == 0 ? curbuf->handle : buffer;
-  if ((cmdwin_type != 0 && enter) || (cmdwin_buf != NULL && buffer_handle == cmdwin_buf->handle)) {
+  if ((cmdwin_type != 0 && enter) || (cmdwin_buf != NULL && buffer != -1 && buffer_handle ==
+                                      cmdwin_buf->handle)) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }
