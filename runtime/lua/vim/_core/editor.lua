@@ -1304,13 +1304,18 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   end
 end
 
+---@alias vim._set_layout.Node
+---     | [ 'leaf', integer ]
+---     | [ 'row'|'col', vim._set_layout.Node[] ]
+
 ---@param tabpage integer
----@param layout table
+---@param layout vim._set_layout.Node
 function vim._set_layout(tabpage, layout)
   if layout[1] == 'leaf' then
     -- top-level node is a leaf
     -- simplify the main traversal loop by special-casing this
-    local buf = layout[2]
+
+    local buf = layout[2] --[[@as integer]]
     if type(buf) == 'string' then
       buf = vim.fn.bufadd(buf)
       vim.api.nvim_set_option_value('buflisted', true, {
@@ -1330,6 +1335,7 @@ function vim._set_layout(tabpage, layout)
     local split = node[1] == 'row' and 'right' or 'below'
 
     for i = 1, #node[2] do
+      ---@type vim._set_layout.Node
       local child_node = node[2][i]
       if i > 1 then
         last = vim.api.nvim_open_win(0, false, {
@@ -1338,7 +1344,7 @@ function vim._set_layout(tabpage, layout)
         })
       end
       if child_node[1] == 'leaf' then
-        local buf = child_node[2]
+        local buf = child_node[2] --[[@as integer]]
         if type(buf) == 'string' then
           buf = vim.fn.bufadd(buf)
           vim.api.nvim_set_option_value('buflisted', true, {
