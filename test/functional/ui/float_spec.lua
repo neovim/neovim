@@ -44,6 +44,169 @@ describe('float window', function()
     eq(1000, fn.win_getid())
   end)
 
+  it('validation', function()
+    local buf = api.nvim_create_buf(false, false)
+    eq("Invalid key: 'bork'", pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, bork = true }))
+    eq("Required: 'relative' or 'external' when creating a float", pcall_err(api.nvim_open_win, buf, false, { win = 0 }))
+    eq(
+      "Conflict: 'vertical' not allowed with floating windows",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, vertical = true })
+    )
+    eq(
+      "Conflict: 'split' not allowed with floating windows",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, split = 'left' })
+    )
+    eq(
+      "Conflict: 'relative' not allowed with 'external'",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, external = true })
+    )
+    eq(
+      "Invalid 'relative': 'shell'",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'shell', row = 0, col = 0 })
+    )
+    eq(
+      "Invalid 'anchor': 'bottom'",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, anchor = 'bottom' })
+    )
+    eq(
+      "Required: 'relative' requires 'row'/'col' or 'bufpos'",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor' })
+    )
+    eq(
+      "Invalid 'width': expected positive Integer",
+      pcall_err(api.nvim_open_win, buf, false, { width = -1, height = 2, relative = 'editor', row = 0, col = 0 })
+    )
+    eq(
+      "Invalid 'height': expected positive Integer",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = -1, relative = 'editor', row = 0, col = 0 })
+    )
+    eq(
+      "Invalid 'height': expected positive Integer",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 0, relative = 'editor', row = 0, col = 0 })
+    )
+    eq("Required: 'width'", pcall_err(api.nvim_open_win, buf, false, { relative = 'editor', row = 0, col = 0 }))
+    eq("Required: 'height'", pcall_err(api.nvim_open_win, buf, false, { relative = 'editor', row = 0, col = 0, width = 2 }))
+
+    eq("Invalid 'split': 'up'", pcall_err(api.nvim_open_win, buf, false, { split = 'up' }))
+    eq(
+      "Invalid 'bufpos': expected [row, col] array",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, bufpos = { 0 } })
+    )
+    eq(
+      "Invalid 'zindex': expected positive Integer",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, zindex = 0 })
+    )
+    eq(
+      "Invalid 'zindex': expected positive Integer",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, zindex = -1 })
+    )
+    eq(
+      "Invalid 'style': 'bogus'",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, style = 'bogus' })
+    )
+    eq(
+      "Invalid 'border': 'bogus'",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = 'bogus' })
+    )
+    eq(
+      "Invalid 'border': expected 1, 2, 4, or 8 chars",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = { '', '', '' } })
+    )
+    eq(
+      "Invalid 'border': expected 1 or 2-item Array",
+      pcall_err(
+        api.nvim_open_win,
+        buf,
+        false,
+        { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = { { 'a', 'b', 'c' } } }
+      )
+    )
+    eq(
+      "Invalid 'border': expected Array of Strings",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = { { 1 } } })
+    )
+    eq(
+      "Invalid 'border': expected String or Array, got Integer",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = { 42 } })
+    )
+    eq(
+      "Invalid 'border': expected only one-cell chars",
+      pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = { 'aa' } })
+    )
+    eq(
+      "Invalid 'border': expected corner char between edge chars",
+      pcall_err(
+        api.nvim_open_win,
+        buf,
+        false,
+        { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = { '', '-', '', '|', '', '-', '', '|' } }
+      )
+    )
+
+    -- title_pos/footer_pos validation
+    eq(
+      "Invalid 'title_pos': 'bogus'",
+      pcall_err(
+        api.nvim_open_win,
+        buf,
+        false,
+        { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = 'single', title = 'T', title_pos = 'bogus' }
+      )
+    )
+    eq(
+      "Invalid 'footer_pos': 'bogus'",
+      pcall_err(
+        api.nvim_open_win,
+        buf,
+        false,
+        { width = 20, height = 2, relative = 'editor', row = 0, col = 0, border = 'single', footer = 'F', footer_pos = 'bogus' }
+      )
+    )
+    eq(
+      "Required: 'footer' requires 'footer_pos'",
+      pcall_err(
+        api.nvim_open_win,
+        buf,
+        false,
+        { relative = 'editor', width = 9, height = 2, row = 2, col = 5, border = 'single', footer_pos = 'left' }
+      )
+    )
+    eq(
+      "Required: 'title' requires 'title_pos'",
+      pcall_err(
+        api.nvim_open_win,
+        buf,
+        false,
+        { relative = 'editor', width = 9, height = 2, row = 2, col = 5, border = 'single', title_pos = 'left' }
+      )
+    )
+  end)
+
+  it('validation: split window', function()
+    local buf = api.nvim_create_buf(false, true)
+    eq("Conflict: 'zindex' not allowed with non-float window", pcall_err(api.nvim_open_win, buf, false, { split = 'left', zindex = 100 }))
+    eq("Conflict: 'title' not allowed with non-float window", pcall_err(api.nvim_open_win, buf, false, { split = 'left', title = 'T' }))
+    eq("Conflict: 'footer' not allowed with non-float window", pcall_err(api.nvim_open_win, buf, false, { split = 'left', footer = 'F' }))
+    eq(
+      "Conflict: 'border' not allowed with non-float window",
+      pcall_err(api.nvim_open_win, buf, false, { split = 'left', border = 'single' })
+    )
+    eq("Conflict: 'row' not allowed with non-float window", pcall_err(api.nvim_open_win, buf, true, { split = 'right', row = 10 }))
+    eq("Conflict: 'col' not allowed with non-float window", pcall_err(api.nvim_open_win, buf, true, { split = 'right', col = 10 }))
+    eq(
+      "Conflict: 'bufpos' not allowed with non-float window",
+      pcall_err(api.nvim_open_win, buf, true, { split = 'right', bufpos = { 0, 0 } })
+    )
+
+    local winid = api.nvim_open_win(buf, true, { split = 'right' })
+    eq("Conflict: 'row' not allowed with non-float window", pcall_err(api.nvim_win_set_config, winid, { split = 'right', row = 10 }))
+    eq("Conflict: 'col' not allowed with non-float window", pcall_err(api.nvim_win_set_config, winid, { split = 'right', col = 10 }))
+    eq(
+      "Conflict: 'bufpos' not allowed with non-float window",
+      pcall_err(api.nvim_win_set_config, winid, { split = 'right', bufpos = { 0, 0 } })
+    )
+  end)
+
   it('win_execute() should work', function()
     local buf = api.nvim_create_buf(false, false)
     api.nvim_buf_set_lines(buf, 0, -1, true, { 'the floatwin', 'abc', 'def' })
@@ -221,23 +384,12 @@ describe('float window', function()
     eq({ 14, 12 }, { pos[1], pos[2] })
   end)
 
-  it('error message when invalid field specified for split', function()
-    local bufnr = api.nvim_create_buf(false, true)
-    eq("non-float cannot have 'row'", pcall_err(api.nvim_open_win, bufnr, true, { split = 'right', row = 10 }))
-    eq("non-float cannot have 'col'", pcall_err(api.nvim_open_win, bufnr, true, { split = 'right', col = 10 }))
-    eq("non-float cannot have 'bufpos'", pcall_err(api.nvim_open_win, bufnr, true, { split = 'right', bufpos = { 0, 0 } }))
-    local winid = api.nvim_open_win(bufnr, true, { split = 'right' })
-    eq("non-float cannot have 'row'", pcall_err(api.nvim_win_set_config, winid, { split = 'right', row = 10 }))
-    eq("non-float cannot have 'col'", pcall_err(api.nvim_win_set_config, winid, { split = 'right', col = 10 }))
-    eq("non-float cannot have 'bufpos'", pcall_err(api.nvim_win_set_config, winid, { split = 'right', bufpos = { 0, 0 } }))
-  end)
-
-  it('error message when reconfig missing relative field', function()
+  it('error when reconfig missing relative field', function()
     local bufnr = api.nvim_create_buf(false, true)
     local opts = { width = 10, height = 10, col = 5, row = 5, relative = 'editor', style = 'minimal' }
     local winid = api.nvim_open_win(bufnr, true, opts)
     eq(
-      "Missing 'relative' field when reconfiguring floating window 1001",
+      "Required: 'relative' when reconfiguring floating window 1001",
       pcall_err(api.nvim_win_set_config, winid, { width = 3, height = 3, row = 10, col = 10 })
     )
   end)
@@ -2093,23 +2245,7 @@ describe('float window', function()
       end
     end)
 
-    it('validates title title_pos', function()
-      local buf = api.nvim_create_buf(false, false)
-      eq(
-        'title_pos requires title to be set',
-        pcall_err(api.nvim_open_win, buf, false, {
-          relative = 'editor',
-          width = 9,
-          height = 2,
-          row = 2,
-          col = 5,
-          border = 'single',
-          title_pos = 'left',
-        })
-      )
-    end)
-
-    it('validate title_pos in nvim_win_get_config', function()
+    it('nvim_win_get_config.title_pos', function()
       local title_pos = exec_lua([[
         local bufnr = vim.api.nvim_create_buf(false, false)
         local opts = {
@@ -2130,23 +2266,7 @@ describe('float window', function()
       eq('center', title_pos)
     end)
 
-    it('validates footer footer_pos', function()
-      local buf = api.nvim_create_buf(false, false)
-      eq(
-        'footer_pos requires footer to be set',
-        pcall_err(api.nvim_open_win, buf, false, {
-          relative = 'editor',
-          width = 9,
-          height = 2,
-          row = 2,
-          col = 5,
-          border = 'single',
-          footer_pos = 'left',
-        })
-      )
-    end)
-
-    it('validate footer_pos in nvim_win_get_config', function()
+    it('nvim_win_get_config.footer_pos', function()
       local footer_pos = exec_lua([[
         local bufnr = vim.api.nvim_create_buf(false, false)
         local opts = {
@@ -3779,56 +3899,15 @@ describe('float window', function()
       end)
     end)
 
-    it('API has proper error messages', function()
-      local buf = api.nvim_create_buf(false, false)
-      eq("Invalid key: 'bork'", pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, bork = true }))
-      eq("Must specify 'relative' or 'external' when creating a float", pcall_err(api.nvim_open_win, buf, false, { win = 0 }))
-      eq(
-        "floating windows cannot have 'vertical'",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, vertical = true })
-      )
-      eq(
-        "floating windows cannot have 'split'",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, split = 'left' })
-      )
-      eq(
-        "Only one of 'relative' and 'external' must be used",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, external = true })
-      )
-      eq(
-        "Invalid value of 'relative' key",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'shell', row = 0, col = 0 })
-      )
-      eq(
-        "Invalid value of 'anchor' key",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor', row = 0, col = 0, anchor = 'bottom' })
-      )
-      eq(
-        "'relative' requires 'row'/'col' or 'bufpos'",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 2, relative = 'editor' })
-      )
-      eq(
-        "'width' key must be a positive Integer",
-        pcall_err(api.nvim_open_win, buf, false, { width = -1, height = 2, relative = 'editor', row = 0, col = 0 })
-      )
-      eq(
-        "'height' key must be a positive Integer",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = -1, relative = 'editor', row = 0, col = 0 })
-      )
-      eq(
-        "'height' key must be a positive Integer",
-        pcall_err(api.nvim_open_win, buf, false, { width = 20, height = 0, relative = 'editor', row = 0, col = 0 })
-      )
-      eq("Must specify 'width'", pcall_err(api.nvim_open_win, buf, false, { relative = 'editor', row = 0, col = 0 }))
-      eq("Must specify 'height'", pcall_err(api.nvim_open_win, buf, false, { relative = 'editor', row = 0, col = 0, width = 2 }))
-
+    it('validation: multigrid', function()
       if multigrid then
+        local buf = api.nvim_create_buf(false, false)
         eq(
-          "external window cannot have 'win'",
+          "Conflict: 'win' not allowed with external window",
           pcall_err(api.nvim_open_win, buf, false, { external = true, win = 0, width = 10, height = 10 })
         )
         api.nvim_open_win(buf, true, { external = true, width = 10, height = 10 })
-        eq("external window cannot have 'win'", pcall_err(api.nvim_win_set_config, 0, { win = 0 }))
+        eq("Conflict: 'win' not allowed with external window", pcall_err(api.nvim_win_set_config, 0, { win = 0 }))
         -- OK to include "win" if external window is also reconfigured to a normal float.
         api.nvim_win_set_config(0, { relative = 'editor', win = 0, row = 0, col = 0, width = 5, height = 5 })
         eq('editor', api.nvim_win_get_config(0).relative)

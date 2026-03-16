@@ -2507,6 +2507,8 @@ function vim.api.nvim_win_set_buf(window, buffer) end
 --- Reconfigures the layout and properties of a window.
 ---
 --- - Updates only the given keys; unspecified (`nil`) keys will not be changed.
+--- - Can move a window to another tabpage.
+--- - Can transform a window to/from a float.
 --- - Keys `row` / `col` / `relative` must be specified together.
 --- - Cannot move the last window in a tabpage to a different one.
 ---
@@ -2522,7 +2524,7 @@ function vim.api.nvim_win_set_buf(window, buffer) end
 --- @param config vim.api.keyset.win_config Map defining the window configuration, see [nvim_open_win()]
 function vim.api.nvim_win_set_config(window, config) end
 
---- Sets the (1,0)-indexed cursor position in the window. `api-indexing`
+--- Sets the (1,0)-indexed cursor position (byte offset) in the window. `api-indexing`
 --- This scrolls the window even if it is not the current one.
 ---
 --- @param window integer `window-ID`, or 0 for current window

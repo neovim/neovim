@@ -261,7 +261,6 @@ Call |nvim_buf_attach()| to receive these events on the channel:
 
                                                         *nvim_buf_lines_event*
 nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, {more}]
-
     When the buffer text between {firstline} and {lastline} (end-exclusive,
     zero-indexed) were changed to the new text in the {linedata} list. The
     granularity is a line, i.e. if a single character is changed in the
@@ -271,45 +270,41 @@ nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, 
     changed but not the buffer contents. {linedata} contains the changed
     screen lines. This happens when 'inccommand' shows a buffer preview.
 
-    Properties: ~
-        {buf} API buffer handle (buffer number)
-
-        {changedtick} value of |b:changedtick| for the buffer. If you send an
-        API command back to nvim you can check the value of |b:changedtick| as
-        part of your request to ensure that no other changes have been made.
-
-        {firstline} integer line number of the first line that was replaced.
-        Zero-indexed: if line 1 was replaced then {firstline} will be zero,
-        not one. {firstline} is always less than or equal to the number of
-        lines that were in the buffer before the lines were replaced.
-
-        {lastline} integer line number of the first line that was not replaced
-        (i.e. the range {firstline}, {lastline} is end-exclusive).
-        Zero-indexed: if line numbers 2 to 5 were replaced, this will be 5
-        instead of 6. {lastline} is always be less than or equal to the number
-        of lines that were in the buffer before the lines were replaced.
-        {lastline} will be -1 if the event is part of the initial update after
-        attaching.
-
-        {linedata} list of strings containing the contents of the new buffer
-        lines. Newline characters are omitted; empty lines are sent as empty
-        strings.
-
-        {more} boolean, true for a "multipart" change notification: the
-        current change was chunked into multiple |nvim_buf_lines_event|
-        notifications (e.g. because it was too big).
+    Parameters: ~
+      • {buf}         (`integer`) Buffer id
+      • {changedtick} (`integer`) Value of |b:changedtick|. If you send an API
+                      command back to Nvim you can check |b:changedtick| as
+                      part of your request to ensure that no other changes
+                      have been made.
+      • {firstline}   (`integer`) The first line that was replaced.
+                      Zero-indexed: if line 1 was replaced then {firstline}
+                      will be zero, not one. Always less than or equal to
+                      the number of lines that were in the buffer before the
+                      lines were replaced.
+      • {lastline}    (`integer`) The first line that was not replaced (i.e.
+                      the range {firstline}, {lastline} is end-exclusive).
+                      Zero-indexed: if line numbers 2 to 5 were replaced,
+                      this will be 5 instead of 6. Always less than or equal
+                      to the number of lines that were in the buffer before
+                      the lines were replaced. Will be -1 if the event is
+                      part of the initial update after attaching.
+      • {linedata}    (`string[]`) Contents of the new buffer lines. Newline
+                      characters are omitted; empty lines are sent as empty
+                      strings.
+      • {more}        (`boolean`) true for a "multipart" change notification:
+                      the current change was chunked into multiple
+                      |nvim_buf_lines_event| notifications (e.g. because it
+                      was too big).
 
 nvim_buf_changedtick_event[{buf}, {changedtick}]  *nvim_buf_changedtick_event*
-
     When |b:changedtick| was incremented but no text was changed. Relevant for
     undo/redo.
 
-    Properties: ~
-        {buf} API buffer handle (buffer number)
-        {changedtick} new value of |b:changedtick| for the buffer
+    Parameters: ~
+      • {buf}         (`integer`) Buffer id
+      • {changedtick} (`integer`) New value of |b:changedtick|.
 
 nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
-
     When buffer is detached (i.e. updates are disabled). Triggered explicitly by
     |nvim_buf_detach()| or implicitly in these cases:
     - Buffer was |abandon|ed and 'hidden' is not set.
@@ -317,8 +312,8 @@ nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
       |:checktime| or 'autoread'.
     - Generally: whenever the buffer contents are unloaded from memory.
 
-    Properties: ~
-        {buf} API buffer handle (buffer number)
+    Parameters: ~
+      • {buf}         (`integer`) Buffer id
 
 
 EXAMPLE ~
@@ -409,7 +404,7 @@ after adding them, the returned |extmark| id can be used. >lua
 See also |vim.hl.range()|.
 
 ==============================================================================
-Floating windows				*api-floatwin* *floating-windows*
+Floating windows                                *api-floatwin* *floating-windows*
 
 Floating windows ("floats") are displayed on top of normal windows.  This is
 useful to implement simple widgets, such as tooltips displayed next to the
@@ -3982,6 +3977,8 @@ nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
     Reconfigures the layout and properties of a window.
     • Updates only the given keys; unspecified (`nil`) keys will not be
       changed.
+    • Can move a window to another tabpage.
+    • Can transform a window to/from a float.
     • Keys `row` / `col` / `relative` must be specified together.
     • Cannot move the last window in a tabpage to a different one.
 
@@ -4191,8 +4188,8 @@ nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
       • {buffer}  (`integer`) Buffer id
 
 nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
-    Sets the (1,0)-indexed cursor position in the window. |api-indexing| This
-    scrolls the window even if it is not the current one.
+    Sets the (1,0)-indexed cursor position (byte offset) in the window.
+    |api-indexing| This scrolls the window even if it is not the current one.
 
     Attributes: ~
         Since: 0.1.0

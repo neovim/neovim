@@ -26,7 +26,7 @@ describe('nvim_ui_attach()', function()
   end)
 
   it('validation', function()
-    eq('No such UI option: foo', pcall_err(api.nvim_ui_attach, 80, 24, { foo = { 'foo' } }))
+    eq("Invalid UI option: 'foo'", pcall_err(api.nvim_ui_attach, 80, 24, { foo = { 'foo' } }))
 
     eq(
       "Invalid 'ext_linegrid': expected Boolean, got Array",

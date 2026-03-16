@@ -116,6 +116,9 @@ describe('API: set highlight', function()
       "Invalid 'blend': expected Integer, got Array",
       pcall_err(api.nvim_set_hl, 0, 'Test_hl3', { fg = '#FF00FF', blend = {} })
     )
+    -- 'url' is rejected. #38162
+    eq("Invalid key: 'url'", pcall_err(api.nvim_set_hl, 0, 'Test', { url = 'https://example.com' }))
+    assert_alive()
   end)
 
   it('can set gui highlight', function()
@@ -252,10 +255,6 @@ describe('API: set highlight', function()
       "Invalid highlight name: 'foo bar'",
       pcall_err(api.nvim_set_hl, 0, 'foo bar', { bold = true })
     )
-    assert_alive()
-  end)
-  it("'url' is rejected with an error #38162", function()
-    eq("Invalid Key: 'url'", pcall_err(api.nvim_set_hl, 0, 'Test', { url = 'https://example.com' }))
     assert_alive()
   end)
 end)

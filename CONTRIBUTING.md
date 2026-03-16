@@ -36,6 +36,8 @@ Reporting problems
 Developer guidelines
 --------------------
 
+- New functionality should generally be implemented in Lua, not C. PRs [#37757](https://github.com/neovim/neovim/pull/37757), [#37831](https://github.com/neovim/neovim/pull/37831)
+  are excellent examples of this.
 - Read [:help dev-quickstart](https://neovim.io/doc/user/dev_tools.html#dev-quickstart) to see how to run tests and start hacking on the codebase.
 - Read [:help dev](https://neovim.io/doc/user/dev.html#dev) and [:help dev-doc][dev-doc-guide] if you are working on Nvim core.
 - Read [:help dev-ui](https://neovim.io/doc/user/dev.html#dev-ui) if you are developing a UI.
@@ -195,7 +197,7 @@ Coding
 You can run the linter locally by:
 
 ```bash
-make lint
+make lint  # or lintc, lintlua, lintquery, lintdoc
 ```
 
 ### Style
@@ -206,7 +208,6 @@ make lint
   ```
   This will format changed C, Lua, and treesitter query files with all
   appropriate flags set.
-
 - Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
   the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
   ```vim
@@ -214,8 +215,8 @@ make lint
     setlocal formatprg=uncrustify\ -q\ -l\ C\ -c\ src/uncrustify.cfg\ --no-backup
   endif
   ```
-- There is also `.clang-format` which has drifted from the [style-guide], but
-  is available for reference. To use the Nvim `gq` command with `clang-format`:
+- There is also `.clang-format` which is "mostly" aligned with uncrustify.
+  To use the Nvim `gq` command with `clang-format`:
   ```vim
   if !empty(findfile('.clang-format', ';'))
     setlocal formatprg=clang-format\ -style=file

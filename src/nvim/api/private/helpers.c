@@ -140,10 +140,9 @@ Object dict_get_value(dict_T *dict, String key, Arena *arena, Error *err)
 {
   dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
-  if (di == NULL) {
-    api_set_error(err, kErrorTypeValidation, "Key not found: %s", key.data);
+  VALIDATE(di != NULL, "Key not found: %s", key.data, {
     return (Object)OBJECT_INIT;
-  }
+  });
 
   return vim_to_object(&di->di_tv, arena, true);
 }
@@ -269,9 +268,9 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
 
   buf_T *rv = handle_get_buffer(buffer);
 
-  if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid buffer id: %d", buffer);
-  }
+  VALIDATE_INT(rv, "buffer id", buffer, {
+    return NULL;
+  });
 
   return rv;
 }
@@ -284,9 +283,9 @@ win_T *find_window_by_handle(Window window, Error *err)
 
   win_T *rv = handle_get_window(window);
 
-  if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid window id: %d", window);
-  }
+  VALIDATE_INT(rv, "window id", window, {
+    return NULL;
+  });
 
   return rv;
 }
@@ -299,9 +298,9 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
 
   tabpage_T *rv = handle_get_tabpage(tabpage);
 
-  if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id: %d", tabpage);
-  }
+  VALIDATE_INT(rv, "tabpage id", tabpage, {
+    return NULL;
+  });
 
   return rv;
 }
@@ -480,10 +479,9 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
 {
   String rv = STRING_INIT;
 
-  if (lnum >= MAXLNUM) {
-    api_set_error(err, kErrorTypeValidation, "Line index is too high");
+  VALIDATE_RANGE((lnum < MAXLNUM), "line index", {
     return rv;
-  }
+  });
 
   char *bufstr = ml_get_buf(buf, (linenr_T)lnum);
   colnr_T line_length = ml_get_buf_len(buf, (linenr_T)lnum);
@@ -720,7 +718,7 @@ bool api_object_to_bool(Object obj, const char *what, bool nil_value, Error *err
   } else if (obj.type == kObjectTypeNil) {
     return nil_value;  // caller decides what NIL (missing retval in Lua) means
   } else {
-    api_set_error(err, kErrorTypeValidation, "%s is not a boolean", what);
+    VALIDATE_EXP(false, what, "boolean", NULL, {});
     return false;
   }
 }
@@ -734,7 +732,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
     int id = (int)obj.data.integer;
     return (1 <= id && id <= highlight_num_groups()) ? id : 0;
   } else {
-    api_set_error(err, kErrorTypeValidation, "Invalid hl_group: %s", what);
+    VALIDATE_S(false, "hl_group", what, {});
     return 0;
   }
 }
@@ -1010,14 +1008,12 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
     col = 0;
     deleting = true;
   } else {
-    if (col > MAXCOL) {
-      api_set_error(err, kErrorTypeValidation, "Column value outside range");
+    VALIDATE_RANGE(!(col > MAXCOL), "column", {
       return res;
-    }
-    if (line < 1 || line > buf->b_ml.ml_line_count) {
-      api_set_error(err, kErrorTypeValidation, "Line value outside range");
+    });
+    VALIDATE_RANGE(!(line < 1 || line > buf->b_ml.ml_line_count), "line", {
       return res;
-    }
+    });
   }
   assert(INT32_MIN <= line && line <= INT32_MAX);
   pos_T pos = { (linenr_T)line, (int)col, 0 };

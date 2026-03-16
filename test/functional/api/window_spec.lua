@@ -2163,7 +2163,7 @@ describe('API/win', function()
 
     it('no memory leak with valid title and invalid footer', function()
       eq(
-        'title/footer must be string or array',
+        "Invalid 'title/footer': expected String or Array, got Integer",
         pcall_err(api.nvim_open_win, 0, false, {
           relative = 'editor',
           row = 10,
@@ -2179,7 +2179,7 @@ describe('API/win', function()
 
     it('no memory leak with invalid title and valid footer', function()
       eq(
-        'title/footer must be string or array',
+        "Invalid 'title/footer': expected String or Array, got Integer",
         pcall_err(api.nvim_open_win, 0, false, {
           relative = 'editor',
           row = 10,
@@ -2523,11 +2523,11 @@ describe('API/win', function()
       eq('below', config.split)
 
       eq(
-        "non-float with 'win' requires at least 'split' or 'vertical'",
+        "Required: non-float with 'win' requires 'split' or 'vertical'",
         pcall_err(api.nvim_win_set_config, 0, { win = 0 })
       )
       eq(
-        "non-float with 'win' requires at least 'split' or 'vertical'",
+        "Required: non-float with 'win' requires 'split' or 'vertical'",
         pcall_err(api.nvim_win_set_config, 0, { win = 0, relative = '' })
       )
 
@@ -3310,7 +3310,7 @@ describe('API/win', function()
       eq(true, pcall(api.nvim_win_set_config, win, cfg))
       cfg.noautocmd = false
       eq(
-        "'noautocmd' cannot be changed with existing windows",
+        "'noautocmd' cannot be changed on existing window",
         pcall_err(api.nvim_win_set_config, win, cfg)
       )
     end)
@@ -3596,13 +3596,13 @@ describe('API/win', function()
         border = 'single',
       })
       eq(
-        'title/footer must be string or array',
+        "Invalid 'title/footer': expected String or Array, got Integer",
         pcall_err(api.nvim_win_set_config, win, { title = 0 })
       )
       command('redraw!')
       assert_alive()
       eq(
-        'title/footer cannot be an empty array',
+        "Invalid 'title/footer': expected non-empty Array",
         pcall_err(api.nvim_win_set_config, win, { title = {} })
       )
       command('redraw!')
@@ -3620,13 +3620,13 @@ describe('API/win', function()
         border = 'single',
       })
       eq(
-        'title/footer must be string or array',
+        "Invalid 'title/footer': expected String or Array, got Integer",
         pcall_err(api.nvim_win_set_config, win, { footer = 0 })
       )
       command('redraw!')
       assert_alive()
       eq(
-        'title/footer cannot be an empty array',
+        "Invalid 'title/footer': expected non-empty Array",
         pcall_err(api.nvim_win_set_config, win, { footer = {} })
       )
       command('redraw!')
@@ -3651,7 +3651,7 @@ describe('API/win', function()
 
       it('with valid title and invalid footer', function()
         eq(
-          'title/footer must be string or array',
+          "Invalid 'title/footer': expected String or Array, got Integer",
           pcall_err(api.nvim_win_set_config, win, {
             title = { { 'NEW_TITLE' } },
             footer = 0,
@@ -3664,7 +3664,7 @@ describe('API/win', function()
 
       it('with invalid title and valid footer', function()
         eq(
-          'title/footer must be string or array',
+          "Invalid 'title/footer': expected String or Array, got Integer",
           pcall_err(api.nvim_win_set_config, win, {
             title = 0,
             footer = { { 'NEW_FOOTER' } },

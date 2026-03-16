@@ -2465,7 +2465,7 @@ describe('extmark decorations', function()
     ]])
 
     eq(
-      'Invalid hl_group: hl_group item',
+      "Invalid 'hl_group': 'hl_group item'",
       pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_row = 1, hl_group = { 'Group1', 'Group2', { 'fail' } }, hl_eol = true })
     )
   end)

@@ -92,7 +92,7 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Arena *arena, Error *err)
   return rv;
 }
 
-/// Sets the (1,0)-indexed cursor position in the window. |api-indexing|
+/// Sets the (1,0)-indexed cursor position (byte offset) in the window. |api-indexing|
 /// This scrolls the window even if it is not the current one.
 ///
 /// @param window   |window-ID|, or 0 for current window
@@ -107,26 +107,21 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
     return;
   }
 
-  if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
-      || pos.items[1].type != kObjectTypeInteger) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Argument \"pos\" must be a [row, col] array");
+  VALIDATE_EXP(!(pos.size != 2 || pos.items[0].type != kObjectTypeInteger
+                 || pos.items[1].type != kObjectTypeInteger), "pos", "[row, col] array", NULL, {
     return;
-  }
+  });
 
   int64_t row = pos.items[0].data.integer;
   int64_t col = pos.items[1].data.integer;
 
-  if (row <= 0 || row > win->w_buffer->b_ml.ml_line_count) {
-    api_set_error(err, kErrorTypeValidation, "Cursor position outside buffer");
+  VALIDATE_RANGE(!(row <= 0 || row > win->w_buffer->b_ml.ml_line_count), "cursor line", {
     return;
-  }
+  });
 
-  if (col > MAXCOL || col < 0) {
-    api_set_error(err, kErrorTypeValidation, "Column value outside range");
+  VALIDATE_RANGE(!(col > MAXCOL || col < 0), "cursor column", {
     return;
-  }
+  });
 
   win->w_cursor.lnum = (linenr_T)row;
   win->w_cursor.col = (colnr_T)col;
@@ -450,9 +445,9 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
   }
 
   // -1 is allowed as inherit global namespace
-  if (ns_id < -1) {
-    api_set_error(err, kErrorTypeValidation, "no such namespace");
-  }
+  VALIDATE_S((ns_id >= -1), "namespace", "", {
+    return;
+  });
 
   win->w_ns_hl = (NS)ns_id;
   win->w_hl_needs_update = true;

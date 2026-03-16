@@ -119,6 +119,11 @@ end
 describe('API: buffer events:', function()
   before_each(clear)
 
+  it('validation', function()
+    local b = editoriginal(false)
+    eq("Invalid key: 'builtin'", pcall_err(api.nvim_buf_attach, b, false, { builtin = 'asfd' }))
+  end)
+
   it('when lines are added', function()
     local b, tick = editoriginal(true)
 
@@ -796,11 +801,6 @@ describe('API: buffer events:', function()
     local b, tick = editoriginal(false)
     ok(api.nvim_buf_attach(b, false, {}))
     expectn('nvim_buf_changedtick_event', { b, tick })
-  end)
-
-  it('returns a proper error on nonempty options dict', function()
-    local b = editoriginal(false)
-    eq("Invalid key: 'builtin'", pcall_err(api.nvim_buf_attach, b, false, { builtin = 'asfd' }))
   end)
 
   it('nvim_buf_attach returns response after delay #8634', function()
