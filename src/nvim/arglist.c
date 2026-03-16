@@ -205,6 +205,8 @@ void alist_set(alist_T *al, int count, char **files, int use_curbuf, int *fnum_l
 /// @param set_fnum  1: set buffer number; 2: re-use curbuf
 void alist_add(alist_T *al, char *fname, int set_fnum)
 {
+  win_T *wp = curwin;
+
   if (fname == NULL) {          // don't add NULL file names
     return;
   }
@@ -212,7 +214,7 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
     return;
   }
   arglist_locked = true;
-  curwin->w_locked = true;
+  wp->w_locked = true;
 
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(fname);
@@ -225,7 +227,7 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   al->al_ga.ga_len++;
 
   arglist_locked = false;
-  curwin->w_locked = false;
+  wp->w_locked = false;
 }
 
 #if defined(BACKSLASH_IN_FILENAME)
@@ -345,25 +347,28 @@ static void alist_add_list(int count, char **files, int after, bool will_edit)
   FUNC_ATTR_NONNULL_ALL
 {
   int old_argcount = ARGCOUNT;
-  ga_grow(&ALIST(curwin)->al_ga, count);
+
   if (check_arglist_locked() != FAIL) {
+    win_T *wp = curwin;
+
+    ga_grow(&ALIST(wp)->al_ga, count);
     after = MIN(MAX(after, 0), ARGCOUNT);
     if (after < ARGCOUNT) {
       memmove(&(ARGLIST[after + count]), &(ARGLIST[after]),
               (size_t)(ARGCOUNT - after) * sizeof(aentry_T));
     }
     arglist_locked = true;
-    curwin->w_locked = true;
+    wp->w_locked = true;
     for (int i = 0; i < count; i++) {
       const int flags = BLN_LISTED | (will_edit ? BLN_CURBUF : 0);
       ARGLIST[after + i].ae_fname = files[i];
       ARGLIST[after + i].ae_fnum = buflist_add(files[i], flags);
     }
     arglist_locked = false;
-    curwin->w_locked = false;
-    ALIST(curwin)->al_ga.ga_len += count;
-    if (old_argcount > 0 && curwin->w_arg_idx >= after) {
-      curwin->w_arg_idx += count;
+    wp->w_locked = false;
+    ALIST(wp)->al_ga.ga_len += count;
+    if (old_argcount > 0 && wp->w_arg_idx >= after) {
+      wp->w_arg_idx += count;
     }
     return;
   }
