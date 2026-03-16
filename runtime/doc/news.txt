@@ -165,6 +165,7 @@ API
 • |nvim_echo()| can create |Progress| messages
 • |nvim_get_commands()| returns `preview` and `callback` as Lua functions if
   they were so specified in `nvim_create_user_command()`.
+• |nvim_open_tabpage()| can open a new |tab-page|.
 • |nvim_open_win()| floating windows can show a 'statusline'. Plugins can use
   `style='minimal'` or `:setlocal statusline=` to hide the statusline.
 • |nvim_win_set_config()| can move windows to other tab pages as floats.

@@ -3544,6 +3544,25 @@ nvim_set_option_value({name}, {value}, {opts})
 ==============================================================================
 Tabpage Functions                                                *api-tabpage*
 
+nvim_open_tabpage({buffer}, {enter}, {config})           *nvim_open_tabpage()*
+    Opens a new tabpage.
+
+    Attributes: ~
+        not allowed when |textlock| is active
+        Since: 0.12.0
+
+    Parameters: ~
+      • {buffer}  (`integer`) Buffer to open in the first window of the new
+                  tabpage. Use 0 for current buffer.
+      • {enter}   (`boolean`) Enter the tabpage (make it the current tabpage).
+      • {config}  (`vim.api.keyset.tabpage_config`) Configuration for the new
+                  tabpage. Keys:
+                  • after: Position to insert tabpage (default: -1; after
+                    current). 0 = first, N = after Nth.
+
+    Return: ~
+        (`integer`) Tabpage handle of the created tabpage
+
 nvim_tabpage_del_var({tabpage}, {name})               *nvim_tabpage_del_var()*
     Removes a tab-scoped (t:) variable
 

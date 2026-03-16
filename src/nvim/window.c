@@ -494,8 +494,7 @@ newwindow:
       // First create a new tab with the window, then go back to
       // the old tab and close the window there.
       win_T *wp = curwin;
-      if (win_new_tabpage(Prenum, NULL) == OK
-          && valid_tabpage(oldtab)) {
+      if (win_new_tabpage(Prenum, NULL, true, NULL) && valid_tabpage(oldtab)) {
         tabpage_T *newtab = curtab;
         goto_tabpage_tp(oldtab, true, true);
         if (curwin == wp) {
@@ -4471,28 +4470,41 @@ void free_tabpage(tabpage_T *tp)
 /// are not completely setup yet and could cause dereferencing
 /// NULL pointers
 ///
+/// NOTE: `first` and the return value may have already been freed by autocmds!
+///
 /// @param after Put new tabpage after tabpage "after", or after the current
 ///              tabpage in case of 0.
 /// @param filename Will be passed to apply_autocmds().
-/// @return Was the new tabpage created successfully? FAIL or OK.
-int win_new_tabpage(int after, char *filename)
+/// @param enter Whether to enter the new tabpage.
+/// @param first If not NULL, set to the window opened for the new tabpage.
+/// @return pointer to new tabpage on success, NULL otherwise.
+tabpage_T *win_new_tabpage(int after, char *filename, bool enter, win_T **first)
 {
   tabpage_T *old_curtab = curtab;
 
-  if (cmdwin_type != 0) {
+  if (enter && cmdwin_type != 0) {
     emsg(_(e_cmdwin));
-    return FAIL;
+    return NULL;
   }
   if (window_layout_locked(CMD_tabnew)) {
-    return FAIL;
+    return NULL;
   }
 
   tabpage_T *newtp = alloc_tabpage();
 
   // Remember the current windows in this Tab page.
-  if (leave_tabpage(curbuf, true) == FAIL) {
-    xfree(newtp);
-    return FAIL;
+  // Avoid side-effects via unuse_tabpage when not entering.
+  if (enter) {
+    if (leave_tabpage(curbuf, true) == FAIL) {
+      xfree(newtp);
+      return NULL;
+    }
+  } else {
+    unuse_tabpage(curtab);
+    // Save this to tell if we need to make room for the tabline.
+    curtab->tp_old_Rows_avail = ROWS_AVAIL;
+    firstwin = NULL;
+    lastwin = NULL;
   }
 
   newtp->tp_localdir = old_curtab->tp_localdir
@@ -4501,59 +4513,79 @@ int win_new_tabpage(int after, char *filename)
   curtab = newtp;
 
   // Create a new empty window.
-  if (win_alloc_firstwin(old_curtab->tp_curwin) == OK) {
-    // Make the new Tab page the new topframe.
-    if (after == 1) {
-      // New tab page becomes the first one.
-      newtp->tp_next = first_tabpage;
-      first_tabpage = newtp;
-    } else {
-      tabpage_T *tp = old_curtab;
+  const int result = win_alloc_firstwin(old_curtab->tp_curwin);
+  assert(result == OK);  // does not fail for first window of new tabpage
+  (void)result;
+  if (first) {
+    *first = curwin;
+  }
 
-      if (after > 0) {
-        // Put new tab page before tab page "after".
-        int n = 2;
-        for (tp = first_tabpage; tp->tp_next != NULL
-             && n < after; tp = tp->tp_next) {
-          n++;
-        }
+  // Make the new Tab page the new topframe.
+  if (after == 1) {
+    // New tab page becomes the first one.
+    newtp->tp_next = first_tabpage;
+    first_tabpage = newtp;
+  } else {
+    tabpage_T *tp = old_curtab;
+
+    if (after > 0) {
+      // Put new tab page before tab page "after".
+      int n = 2;
+      for (tp = first_tabpage; tp->tp_next != NULL
+           && n < after; tp = tp->tp_next) {
+        n++;
       }
-      newtp->tp_next = tp->tp_next;
-      tp->tp_next = newtp;
     }
-    newtp->tp_firstwin = newtp->tp_lastwin = newtp->tp_curwin = curwin;
+    newtp->tp_next = tp->tp_next;
+    tp->tp_next = newtp;
+  }
+  newtp->tp_firstwin = newtp->tp_lastwin = newtp->tp_curwin = curwin;
 
-    win_init_size();
-    firstwin->w_winrow = tabline_height();
-    firstwin->w_prev_winrow = firstwin->w_winrow;
-    win_comp_scroll(curwin);
+  win_init_size();
+  firstwin->w_winrow = tabline_height();
+  firstwin->w_prev_winrow = firstwin->w_winrow;
+  win_comp_scroll(curwin);
 
-    newtp->tp_topframe = topframe;
-    last_status(false);
+  newtp->tp_topframe = topframe;
+  last_status(false);
 
-    if (curbuf->terminal) {
-      terminal_check_size(curbuf->terminal);
-    }
+  if (curbuf->terminal) {
+    terminal_check_size(curbuf->terminal);
+  }
 
+  if (enter) {
     redraw_all_later(UPD_NOT_VALID);
-
     tabpage_check_windows(old_curtab);
-
     lastused_tabpage = old_curtab;
-
     entering_window(curwin);
 
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
     apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+  } else {
+    unuse_tabpage(curtab);
+    use_tabpage(old_curtab);
+    // Tabline maybe added, or its contents changed.
+    redraw_tabline = true;
+    if (curtab->tp_old_Rows_avail != ROWS_AVAIL) {
+      win_new_screen_rows();
+    }
 
-    return OK;
+    // Trigger autocommands in the context of the new window. Let switch_win_noblock handle stuff
+    // like temporarily resetting VIsual_active.
+    switchwin_T switchwin;
+    const int sw_result = switch_win_noblock(&switchwin, newtp->tp_curwin, newtp, true);
+    assert(sw_result == OK);  // tp_curwin is valid in newtp
+    (void)sw_result;
+
+    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
+
+    restore_win_noblock(&switchwin, true);
   }
 
-  // Failed, get back the previous Tab page
-  enter_tabpage(curtab, curbuf, true, true);
-  return FAIL;
+  return newtp;
 }
 
 // Open a new tab page if ":tab cmd" was used.  It will edit the same buffer,
@@ -4569,7 +4601,7 @@ static int may_open_tabpage(void)
 
   cmdmod.cmod_tab = 0;         // reset it to avoid doing it twice
   postponed_split_tab = 0;
-  int status = win_new_tabpage(n, NULL);
+  int status = win_new_tabpage(n, NULL, true, NULL) ? OK : FAIL;
   if (status == OK) {
     apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
   }
@@ -4591,7 +4623,7 @@ int make_tabpages(int maxcount)
 
   int todo;
   for (todo = count - 1; todo > 0; todo--) {
-    if (win_new_tabpage(0, NULL) == FAIL) {
+    if (!win_new_tabpage(0, NULL, true, NULL)) {
       break;
     }
   }

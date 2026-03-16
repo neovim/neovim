@@ -437,6 +437,9 @@ error('Cannot require a meta file')
 --- @field scoped? boolean
 --- @field _subpriority? integer
 
+--- @class vim.api.keyset.tabpage_config
+--- @field after? integer
+
 --- @class vim.api.keyset.user_command
 --- @field addr? any
 --- @field bang? boolean
