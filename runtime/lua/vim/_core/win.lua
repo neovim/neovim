@@ -38,7 +38,7 @@ function vim._set_layout(tabpage, layout)
         })
       end
       if child_node[1] == 'leaf' then
-        local buf = child_node[2] --[[@as integer]]
+        local buf = child_node[2] --[[@as integer|string]]
         if type(buf) == 'string' then
           buf = vim.fn.bufadd(buf)
           vim.api.nvim_set_option_value('buflisted', true, {
