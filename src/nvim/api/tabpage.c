@@ -328,11 +328,14 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 /// Opens a new tabpage.
 ///
 /// @param buffer Buffer to open in the first window of the new tabpage.
-///               Use 0 for current buffer.
+///               Use 0 for current buffer. Ignored if `layout` is specified
+///               in `config`.
 /// @param enter  Enter the tabpage (make it the current tabpage).
 /// @param config Configuration for the new tabpage. Keys:
 ///   - after: Position to insert tabpage (default: -1; after current).
 ///            0 = first, N = after Nth.
+///   - layout: Initial window layout for the tabpage, as a nested list. See |nvim_tabpage_set()| for
+///            details.
 /// @param[out] err Error details, if any
 /// @return |tab-ID| of the new tabpage
 Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *config, Error *err)
@@ -370,8 +373,24 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
     return 0;
   }
 
-  // Set the buffer in the new window if different from current
-  if (tabpage_win_valid(tp, wp) && wp->w_buffer != buf) {
+  if (HAS_KEY_X(config, layout)) {
+    if (buf != 0) {
+      api_set_error(err, kErrorTypeValidation, "Cannot specify buffer when setting layout");
+      return 0;
+    }
+
+    MAXSIZE_TEMP_ARRAY(a, 2);
+    ADD(a, TABPAGE_OBJ(tp->handle));
+    ADD(a, ARRAY_OBJ(config->layout));
+
+    NLUA_EXEC_STATIC("vim._set_layout(...)", a, kRetNilBool, NULL, err);
+
+    if (!valid_tabpage(tp)) {
+      api_clear_error(err);  // maybe set by _set_layout
+      api_set_error(err, kErrorTypeException, "Tabpage was closed immediately");
+      return 0;
+    }
+  } else if (tabpage_win_valid(tp, wp) && wp->w_buffer != buf) {  // Set the buffer in the new window if different from current
     // win_set_buf temporarily makes `wp` the curwin to set the buffer.
     // If not entering `wp`, block Enter and Leave events. (cringe)
     const bool au_no_enter_leave = curwin != wp;
