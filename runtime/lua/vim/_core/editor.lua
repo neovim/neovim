@@ -1359,7 +1359,7 @@ function vim._set_layout(tabpage, layout)
   end
 end
 
-require('vim._options')
+require('vim._core.options')
 
 --- Remove at Nvim 1.0
 ---@deprecated
