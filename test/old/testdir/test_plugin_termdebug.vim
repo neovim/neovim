@@ -8,6 +8,27 @@ CheckUnix
 CheckExecutable gdb
 CheckExecutable gcc
 
+func s:TryAssert(assert)
+  let res = 1
+  try
+    let res = a:assert()
+  catch
+    let res = assert_report(v:exception)
+  endtry
+  return res
+endfunc
+
+" Override WaitForAssert() to turn exceptions into test failures, preventing
+" them from aborting a test.
+let s:SaveWaitForAssert = funcref('WaitForAssert')
+func! WaitForAssert(assert, ...)
+  let Assert = a:assert
+  if type(a:assert) == v:t_func
+    let Assert = function('s:TryAssert', [a:assert])
+  endif
+  call call(s:SaveWaitForAssert, [Assert] + a:000)
+endfunc
+
 let g:GDB = exepath('gdb')
 if g:GDB->empty()
   throw 'Skipped: gdb is not found in $PATH'
@@ -83,7 +104,6 @@ func Test_termdebug_basic()
         \  'group': 'TermDebug'},
         \ {'lnum': 9, 'id': 1014, 'name': 'debugBreakpoint1.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        "\ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
         \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
   Finish
   call Nterm_wait(gdb_buf)
@@ -264,7 +284,6 @@ func Test_termdebug_tbreak()
         \  'group': 'TermDebug'},
         \ {'lnum': bp_line, 'id': 2014, 'name': 'debugBreakpoint2.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        "\ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
         \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
 
   wincmd t
