@@ -49,7 +49,7 @@
 ///     ```
 Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config, Arena *arena,
                                       Error *err)
-  FUNC_API_SINCE(13)
+  FUNC_API_SINCE(14)
 {
   tabpage_T *tab;
   if (tabpage == 0) {
@@ -117,7 +117,7 @@ Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config
 ///
 /// @param[out] err Error details, if any.
 void nvim_tabpage_set(Tabpage tabpage, Dict(tabpage_config) *config, Arena *arena, Error *err)
-  FUNC_API_SINCE(13)
+  FUNC_API_SINCE(14)
 {
   tabpage_T *tab;
 
