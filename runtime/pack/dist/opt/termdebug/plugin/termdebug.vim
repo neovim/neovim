@@ -1409,7 +1409,6 @@ func s:GetEvaluationExpression(range, arg)
   if a:arg != ''
     " user supplied evaluation
     let expr = s:CleanupExpr(a:arg)
-    " DSW: replace "likely copy + paste" assignment
     let expr = substitute(expr, '"\([^"]*\)": *', '\1=', 'g')
   elseif a:range == 2
     let pos = getcurpos()
