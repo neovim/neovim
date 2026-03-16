@@ -1,5 +1,5 @@
 ---@alias vim._set_layout.Node
----     | [ 'leaf', integer ]
+---     | [ 'leaf', integer, { focused?: boolean } ]
 ---     | [ 'row'|'col', vim._set_layout.Node[] ]
 
 ---@param tabpage integer
@@ -20,6 +20,11 @@ function vim._set_layout(tabpage, layout)
     return
   end
 
+  -- Breadth-first traversal of the expected layout tree, creating windows as we go.
+  -- We always create splits top to bottom, left to right.
+  --
+  -- Focus target is saved during traversal and focused at the end to avoid focus-dependent split
+  -- behavior.
   local queue = { layout }
   local focus = nil
 
@@ -31,12 +36,15 @@ function vim._set_layout(tabpage, layout)
     for i = 1, #node[2] do
       ---@type vim._set_layout.Node
       local child_node = node[2][i]
+
+      -- For the first child, we reuse the existing window.
       if i > 1 then
         last = vim.api.nvim_open_win(0, false, {
           split = split,
           win = last,
         })
       end
+
       if child_node[1] == 'leaf' then
         local buf = child_node[2] --[[@as integer|string]]
         if type(buf) == 'string' then
@@ -46,6 +54,8 @@ function vim._set_layout(tabpage, layout)
           })
         end
         vim.api.nvim_win_set_buf(last, buf)
+
+        -- Mark window for focusing after the layout setup is complete
         if child_node[3] and child_node[3].focused then
           focus = last
         end
