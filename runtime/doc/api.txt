@@ -3576,7 +3576,7 @@ nvim_tabpage_get({tabpage}, {config})                     *nvim_tabpage_get()*
     Gets the config of a tabpage.
 
     Attributes: ~
-        Since: 0.11.0
+        Since: 0.12.0
 
     Parameters: ~
       • {tabpage}  (`integer`) Tabpage handle, or 0 for current tabpage
@@ -3666,7 +3666,7 @@ nvim_tabpage_set({tabpage}, {config})                     *nvim_tabpage_set()*
     Manages configuration for a tabpage.
 
     Attributes: ~
-        Since: 0.11.0
+        Since: 0.12.0
 
     Parameters: ~
       • {tabpage}  (`integer`) Tabpage handle, or 0 for current tabpage
