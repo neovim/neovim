@@ -146,11 +146,6 @@ local all_clients = {}
 ---
 --- @field attached_buffers table<integer,true>
 ---
---- Track which buffers have had textDocument/didOpen sent.
---- This is used to prevent duplicate didOpen notifications (LSP spec violation).
---- TODO: Consider exposing this as a public API if there's demand.
---- @field _did_open_sent table<integer,true>
----
 --- Capabilities provided by the client (editor or tool), at startup.
 --- @field capabilities lsp.ClientCapabilities
 ---
@@ -222,6 +217,10 @@ local all_clients = {}
 ---
 --- Whether on-type formatting is enabled for this client.
 --- @field _otf_enabled boolean?
+---
+--- Track which URIs have had textDocument/didOpen sent.
+--- Used internally to prevent duplicate didOpen notifications (LSP spec violation).
+--- @field _did_open_sent table<string,true>
 ---
 --- Timer for stop() with timeout.
 --- @field private _shutdown_timer uv.uv_timer_t?
@@ -1110,7 +1109,8 @@ end
 function Client:_text_document_did_open_handler(bufnr)
   -- Prevent duplicate didOpen notifications (LSP spec violation).
   -- An open notification must not be sent more than once without a corresponding close.
-  if self._did_open_sent[bufnr] then
+  local uri = vim.uri_from_bufnr(bufnr)
+  if self._did_open_sent[uri] then
     return
   end
 
@@ -1122,12 +1122,12 @@ function Client:_text_document_did_open_handler(bufnr)
     return
   end
 
-  self._did_open_sent[bufnr] = true
+  self._did_open_sent[uri] = true
 
   self:notify('textDocument/didOpen', {
     textDocument = {
       version = lsp.util.buf_versions[bufnr],
-      uri = vim.uri_from_bufnr(bufnr),
+      uri = uri,
       languageId = self:_get_language_id(bufnr),
       text = lsp._buf_get_full_text(bufnr),
     },
@@ -1365,8 +1365,9 @@ function Client:_on_detach(bufnr)
 
   self.attached_buffers[bufnr] = nil
 
-  -- Clear the didOpen tracking state so the buffer can be re-opened later.
-  self._did_open_sent[bufnr] = nil
+  -- Clear the didOpen tracking state for this URI, allowing it to be re-opened later.
+  local uri = vim.uri_from_bufnr(bufnr)
+  self._did_open_sent[uri] = nil
 
   local namespace = lsp.diagnostic.get_namespace(self.id)
   vim.diagnostic.reset(namespace, bufnr)

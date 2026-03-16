@@ -917,7 +917,7 @@ local function buf_attach(bufnr)
           client:notify('textDocument/didClose', params)
         end
         -- Clear didOpen state so it can be re-sent after reload
-        client._did_open_sent[bufnr] = nil
+        client._did_open_sent[uri] = nil
       end
       for _, client in ipairs(clients) do
         client:_text_document_did_open_handler(bufnr)
