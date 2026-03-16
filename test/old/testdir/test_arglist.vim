@@ -802,4 +802,24 @@ func Test_crash_arglist_uaf2()
   au! BufAdd
 endfunc
 
+func Test_arglist_w_locked_unlock()
+  au BufAdd * split
+
+  args a
+  call assert_equal(2, winnr('$'))
+  wincmd p
+  quit
+  call assert_equal(1, winnr('$'))
+
+  argedit b
+  call assert_equal(2, winnr('$'))
+  wincmd p
+  quit
+  call assert_equal(1, winnr('$'))
+
+  %argd
+  %bw!
+  au! BufAdd
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
