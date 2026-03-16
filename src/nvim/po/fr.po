@@ -4880,12 +4880,12 @@ msgstr ""
 msgid "E783: duplicate char in MAP entry"
 msgstr "E783: caractère dupliqué dans l'entrée MAP"
 
-msgid "Sorry, no suggestions"
-msgstr "Désolé, aucune suggestion"
+msgid "No suggestions"
+msgstr "Aucune suggestion"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Désolé, seulement %ld suggestions"
+msgid "Only %ld suggestions"
+msgstr "Seulement %ld suggestions"
 
 #, c-format
 msgid "Change \"%.*s\" to:"

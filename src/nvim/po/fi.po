@@ -1566,15 +1566,15 @@ msgid "E478: Don't panic!"
 msgstr "E478: Älä panikoi."
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
+msgid "E661: No '%s' help for %s"
 msgstr "E661: ei löydy %s-ohjetta kohteelle %s"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
+msgid "E149: No help for %s"
 msgstr "E149: ei löydy ohjetta kohteelle %s"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
+msgid "Help file \"%s\" not found"
 msgstr "ohjetiedostoa %s ei löydy"
 
 #, c-format
@@ -4709,11 +4709,11 @@ msgstr "Varoitus: Ei löydetty sanalistaa %s.%s.spl tai %s.ascii.spl"
 msgid "Warning: region %s not supported"
 msgstr "Varoitus: osaa %s ei tueta"
 
-msgid "Sorry, no suggestions"
+msgid "No suggestions"
 msgstr "ei ehdotuksia"
 
 #, fuzzy, c-format
-#~ msgid "Sorry, only %<PRId64> suggestions"
+#~ msgid "Only %<PRId64> suggestions"
 #~ msgstr "vain %ld ehdotusta"
 
 #, c-format

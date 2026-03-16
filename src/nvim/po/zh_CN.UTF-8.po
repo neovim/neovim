@@ -3539,18 +3539,18 @@ msgstr "E478: 不要慌！"
 
 #: ../help.c:120
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: 抱歉，没有 '%s' 的 %s 的说明"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: 没有 '%s' 的 %s 的说明"
 
 #: ../help.c:122
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: 抱歉，没有 %s 的说明"
+msgid "E149: No help for %s"
+msgstr "E149: 没有 %s 的说明"
 
 #: ../help.c:154
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "抱歉，找不到帮助文件 \"%s\""
+msgid "Help file \"%s\" not found"
+msgstr "找不到帮助文件 \"%s\""
 
 #: ../help.c:900 ../help.c:1094
 #, c-format
@@ -6570,13 +6570,13 @@ msgid "E783: duplicate char in MAP entry"
 msgstr "E783: MAP 条目中有重复的字符"
 
 #: ../spellsuggest.c:530
-msgid "Sorry, no suggestions"
-msgstr "抱歉，没有建议"
+msgid "No suggestions"
+msgstr "没有建议"
 
 #: ../spellsuggest.c:533
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "抱歉，只有 %<PRId64> 条建议"
+msgid "Only %<PRId64> suggestions"
+msgstr "只有 %<PRId64> 条建议"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

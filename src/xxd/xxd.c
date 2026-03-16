@@ -464,7 +464,7 @@ static int huntype(FILE *fpi, FILE *fpo, int cols, int hextype, long base_off)
       }
 #endif
       if (base_off + want_off < have_off) {
-        error_exit(5, "Sorry, cannot seek backwards.");
+        error_exit(5, "Cannot seek backwards.");
       }
       for (; have_off < base_off + want_off; have_off++) {
         putc_or_die(0, fpo);
@@ -1000,7 +1000,7 @@ int main(int argc, char *argv[])
                      negseek ? -seekoff : seekoff);
       break;
     default:
-      error_exit(-1, "Sorry, cannot revert this type of hexdump");
+      error_exit(-1, "Cannot revert this type of hexdump");
     }
   }
 
@@ -1013,7 +1013,7 @@ int main(int argc, char *argv[])
                 negseek ? SEEK_END : SEEK_SET);
     }
     if (e < 0 && negseek) {
-      error_exit(4, "Sorry, cannot seek.");
+      error_exit(4, "Cannot seek.");
     }
     if (e >= 0) {
       seekoff = ftell(fp);
@@ -1024,7 +1024,7 @@ int main(int argc, char *argv[])
 
       while (s--) {
         if (getc_or_die(fp) == EOF) {
-          error_exit(4, "Sorry, cannot seek.");
+          error_exit(4, "Cannot seek.");
         }
       }
     }

@@ -1289,18 +1289,18 @@ msgstr "E478: 당황하지 마십시오!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: 미안합니다, 도움말 '%s'이(가) %s에 대해 없습니다"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: 도움말 '%s'이(가) %s에 대해 없습니다"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: 미안합니다, %s에 대한 도움말이 없습니다"
+msgid "E149: No help for %s"
+msgstr "E149: %s에 대한 도움말이 없습니다"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "미안합니다, 도움말 파일 \"%s\"을(를) 찾을 수 없습니다"
+msgid "Help file \"%s\" not found"
+msgstr "도움말 파일 \"%s\"을(를) 찾을 수 없습니다"
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -5471,13 +5471,13 @@ msgid "E763: Word characters differ between spell files"
 msgstr "E763: 단어가 spell 파일 간에 다릅니다"
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
-msgstr "죄송, 제안할 게 없습니다"
+msgid "No suggestions"
+msgstr "제안할 게 없습니다"
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "죄송, %<PRId64>개만 제안"
+msgid "Only %<PRId64> suggestions"
+msgstr "%<PRId64>개만 제안"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

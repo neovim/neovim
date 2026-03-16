@@ -1304,17 +1304,17 @@ msgstr "E478: Ingen panikk!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Dessverre ingen '%s' hjelp for %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Ingen '%s' hjelp for %s"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Dessverre ingen hjelp for %s"
+msgid "E149: No help for %s"
+msgstr "E149: Ingen hjelp for %s"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
+msgid "Help file \"%s\" not found"
 msgstr "Fant ikke hjelpefilen \"%s\""
 
 #: ../ex_cmds.c:5323
@@ -5485,13 +5485,13 @@ msgid "E763: Word characters differ between spell files"
 msgstr "E763: Tegn i ord varierer mellom stavefiler"
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
-msgstr "Dessverre, ingen forslag"
+msgid "No suggestions"
+msgstr "Ingen forslag"
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Dessverre bare %<PRId64> forslag"
+msgid "Only %<PRId64> suggestions"
+msgstr "Bare %<PRId64> forslag"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

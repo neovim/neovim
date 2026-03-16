@@ -1038,16 +1038,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: Tag det bare helt roligt!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Beklager, ingen '%s' hjælp til %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Ingen '%s' hjælp til %s"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Beklager, ingen hjælp til %s"
+msgid "E149: No help for %s"
+msgstr "E149: Ingen hjælp til %s"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Beklager, hjælpfilen \"%s\" ikke fundet"
+msgid "Help file \"%s\" not found"
+msgstr "Hjælpfilen \"%s\" ikke fundet"
 
 #, c-format
 msgid "E151: No match: %s"
@@ -4924,12 +4924,12 @@ msgstr "E797: SpellFileMissing-autokommando slettede buffer"
 msgid "Warning: region %s not supported"
 msgstr "Advarsel: regionen %s understøttes ikke"
 
-msgid "Sorry, no suggestions"
-msgstr "Beklager, ingen forslag"
+msgid "No suggestions"
+msgstr "Ingen forslag"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Beklager, kun %ld forslag"
+msgid "Only %ld suggestions"
+msgstr "Kun %ld forslag"
 
 #, c-format
 msgid "Change \"%.*s\" to:"

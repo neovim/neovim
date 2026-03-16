@@ -1399,16 +1399,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: Bly kalm!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Jammer, geen '%s' hulp vir %s nie"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Geen '%s' hulp vir %s nie"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Jammer, geen hulp vir %s nie"
+msgid "E149: No help for %s"
+msgstr "E149: Geen hulp vir %s nie"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Jammer, hulplêer \"%s\" kan nie gevind word nie"
+msgid "Help file \"%s\" not found"
+msgstr "Hulplêer \"%s\" kan nie gevind word nie"
 
 #, fuzzy, c-format
 #~ msgid "E151: No match: %s"
@@ -4651,11 +4651,11 @@ msgstr " GEFAAL"
 #~ msgid "Warning: region %s not supported"
 #~ msgstr "E519: Opsie is nie ondersteun nie"
 
-#~ msgid "Sorry, no suggestions"
+#~ msgid "No suggestions"
 #~ msgstr ""
 
 #, fuzzy, c-format
-#~ msgid "Sorry, only %<PRId64> suggestions"
+#~ msgid "Only %<PRId64> suggestions"
 #~ msgstr " op %<PRId64> reëls"
 
 #. for when 'cmdheight' > 1

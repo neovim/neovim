@@ -1137,8 +1137,8 @@ msgid "Print job sent."
 msgstr "Skrivarjobb skickat."
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Tyvärr, hjälpfil \"%s\" hittades inte"
+msgid "Help file \"%s\" not found"
+msgstr "Hjälpfil \"%s\" hittades inte"
 
 msgid "W18: Invalid character in group name"
 msgstr "W18: Ogiltigt tecken i gruppnamn"
@@ -3251,12 +3251,12 @@ msgstr "Sökfel i spellfile"
 msgid "Word '%.*s' added to %s"
 msgstr "Ordet '%.*s' har lagts till i %s"
 
-msgid "Sorry, no suggestions"
-msgstr "Tyvärr, inga förslag"
+msgid "No suggestions"
+msgstr "Inga förslag"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Tyvärr, bara %ld förslag"
+msgid "Only %ld suggestions"
+msgstr "Bara %ld förslag"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -4498,8 +4498,8 @@ msgid "E148: Regular expression missing from :global"
 msgstr "E148: Reguljära uttryck saknas från :global"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Tyvärr, ingen hjälp för %s"
+msgid "E149: No help for %s"
+msgstr "E149: Ingen hjälp för %s"
 
 #, c-format
 msgid "E150: Not a directory: %s"
@@ -6250,8 +6250,8 @@ msgid "E659: Cannot invoke Python recursively"
 msgstr "E659: Kan inte anropa Python rekursivt"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Tyvärr, ingen \"%s\"-hjälp för %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Ingen \"%s\"-hjälp för %s"
 
 msgid "E662: At start of changelist"
 msgstr "E662: Vid början av ändringslista"

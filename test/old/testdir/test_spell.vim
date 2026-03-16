@@ -476,7 +476,7 @@ func Test_spellsuggest_option_number()
   \ , a)
 
   set spell spellsuggest=0
-  call assert_equal("\nSorry, no suggestions", execute('norm $z='))
+  call assert_equal("\nNo suggestions", execute('norm $z='))
 
   " Unlike z=, function spellsuggest(...) should not be affected by the
   " max number of suggestions (2) set by the 'spellsuggest' option.

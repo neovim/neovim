@@ -514,10 +514,10 @@ void spell_suggest(int count)
   int selected = count;
   msg_ext_set_kind("confirm");
   if (GA_EMPTY(&sug.su_ga)) {
-    msg(_("Sorry, no suggestions"), 0);
+    msg(_("No suggestions"), 0);
   } else if (count > 0) {
     if (count > sug.su_ga.ga_len) {
-      smsg(0, _("Sorry, only %" PRId64 " suggestions"),
+      smsg(0, _("Only %" PRId64 " suggestions"),
            (int64_t)sug.su_ga.ga_len);
     }
   } else {
