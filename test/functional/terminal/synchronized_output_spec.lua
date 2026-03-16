@@ -49,6 +49,11 @@ describe(':terminal synchronized output (mode 2026)', function()
                                                         |
                                                         |
     ]])
+    -- Buffer lines should also match.
+    local lines = api.nvim_buf_get_lines(buf, 0, -1, true)
+    eq('line 1', lines[1])
+    eq('line 2', lines[2])
+    eq('line 5', lines[5])
   end)
 
   it('handles multiple synchronized update cycles', function()
@@ -113,37 +118,26 @@ describe(':terminal synchronized output (mode 2026)', function()
     assert_alive()
   end)
 
-  it('handles sync mode set without reset', function()
-    -- Begin sync but send reset later — terminal should recover.
-    api.nvim_chan_send(chan, CSI .. '?2026h')
-    api.nvim_chan_send(chan, 'orphaned\r\n')
-    -- Explicitly end the sync.
-    api.nvim_chan_send(chan, CSI .. '?2026l')
+  it('defers screen update during sync mode', function()
+    -- Establish a known screen state first.
+    api.nvim_chan_send(chan, 'visible\r\n')
     screen:expect([[
-      ^orphaned                                          |
+      ^visible                                           |
                                                         |*5
                                                         |
     ]])
-    assert_alive()
-  end)
-
-  it('buffer lines are correct after synchronized update', function()
+    -- Begin sync and send more content — screen should not change.
     api.nvim_chan_send(chan, CSI .. '?2026h')
-    api.nvim_chan_send(chan, 'aaa\r\nbbb\r\nccc\r\n')
+    api.nvim_chan_send(chan, 'deferred\r\n')
+    screen:expect_unchanged()
+    -- End sync — now the deferred content should appear.
     api.nvim_chan_send(chan, CSI .. '?2026l')
-    -- Wait for the screen to update before checking buffer lines.
     screen:expect([[
-      ^aaa                                               |
-      bbb                                               |
-      ccc                                               |
-                                                        |*3
+      ^visible                                           |
+      deferred                                          |
+                                                        |*4
                                                         |
     ]])
-
-    local lines = api.nvim_buf_get_lines(buf, 0, -1, true)
-    eq('aaa', lines[1])
-    eq('bbb', lines[2])
-    eq('ccc', lines[3])
   end)
 
   it('handles rapid sync on/off toggling', function()

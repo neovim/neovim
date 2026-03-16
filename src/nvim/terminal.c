@@ -1355,6 +1355,20 @@ static void terminal_send_key(Terminal *term, int c)
   }
 }
 
+/// Callback scheduled on the main loop when a synchronized update ends.
+/// Refreshes a single terminal with full-screen damage.
+static void on_sync_flush(void **argv)
+{
+  handle_T buf_handle = (handle_T)(intptr_t)argv[0];
+  buf_T *buf = handle_get_buffer(buf_handle);
+  if (!buf || !buf->terminal) {
+    return;
+  }
+  block_autocmds();
+  refresh_terminal(buf->terminal);
+  unblock_autocmds();
+}
+
 void terminal_receive(Terminal *term, const char *data, size_t len)
 {
   if (!data) {
@@ -1383,19 +1397,15 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
   // neovim's UI could repaint showing stale buffer content.
   if (term->sync_flush_pending) {
     term->sync_flush_pending = false;
-    // Schedule a full-screen refresh via the normal timer path.
+    // Schedule a full-screen refresh for this terminal on the main loop.
     // Force full-screen damage so every row is updated, not just
     // the rows with accumulated damage from individual callbacks.
     int height;
     vterm_get_size(term->vt, &height, NULL);
     term->invalid_start = 0;
     term->invalid_end = height;
-    set_put(ptr_t, &invalidated_terminals, term);
-    // Use delay=0 to trigger refresh on the next event loop iteration,
-    // which is the safe context for buffer modifications.  Restart the
-    // timer even if one is pending, to ensure zero-delay.
-    time_watcher_start(&refresh_timer, refresh_timer_cb, 0, 0);
-    refresh_pending = true;
+    multiqueue_put(main_loop.events, on_sync_flush,
+                   (void *)(intptr_t)term->buf_handle);
   }
 }
 
