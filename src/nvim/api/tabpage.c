@@ -342,14 +342,6 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
   FUNC_API_SINCE(14) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, tabpage_config, key)
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (buf == NULL) {
-    return 0;
-  }
-  if ((cmdwin_type != 0 && enter) || buf == cmdwin_buf) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-    return 0;
-  }
 
   int after = -1;  // Default to after current tabpage
   if (HAS_KEY_X(config, after)) {
@@ -374,8 +366,9 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
   }
 
   if (HAS_KEY_X(config, layout)) {
-    if (buf != 0) {
-      api_set_error(err, kErrorTypeValidation, "Cannot specify buffer when setting layout");
+    if (buffer != -1) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Cannot specify buffer other than `-1` when setting layout");
       return 0;
     }
 
@@ -390,23 +383,34 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
       api_set_error(err, kErrorTypeException, "Tabpage was closed immediately");
       return 0;
     }
-  } else if (tabpage_win_valid(tp, wp) && wp->w_buffer != buf) {  // Set the buffer in the new window if different from current
-    // win_set_buf temporarily makes `wp` the curwin to set the buffer.
-    // If not entering `wp`, block Enter and Leave events. (cringe)
-    const bool au_no_enter_leave = curwin != wp;
-    if (au_no_enter_leave) {
-      autocmd_no_enter++;
-      autocmd_no_leave++;
-    }
-    win_set_buf(wp, buf, err);
-    if (au_no_enter_leave) {
-      autocmd_no_enter--;
-      autocmd_no_leave--;
-    }
-    if (!valid_tabpage(tp)) {
-      api_clear_error(err);  // maybe set by win_new_tabpage/win_set_buf, but wasn't fatal
-      api_set_error(err, kErrorTypeException, "Tabpage was closed immediately");
+  } else if (tabpage_win_valid(tp, wp)) {  // Set the buffer in the new window if different from current
+    buf_T *buf = find_buffer_by_handle(buffer, err);
+    if (buf == NULL) {
       return 0;
+    }
+    if ((cmdwin_type != 0 && enter) || buf == cmdwin_buf) {
+      api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+      return 0;
+    }
+
+    if (wp->w_buffer != buf) {
+      // win_set_buf temporarily makes `wp` the curwin to set the buffer.
+      // If not entering `wp`, block Enter and Leave events. (cringe)
+      const bool au_no_enter_leave = curwin != wp;
+      if (au_no_enter_leave) {
+        autocmd_no_enter++;
+        autocmd_no_leave++;
+      }
+      win_set_buf(wp, buf, err);
+      if (au_no_enter_leave) {
+        autocmd_no_enter--;
+        autocmd_no_leave--;
+      }
+      if (!valid_tabpage(tp)) {
+        api_clear_error(err);  // maybe set by win_new_tabpage/win_set_buf, but wasn't fatal
+        api_set_error(err, kErrorTypeException, "Tabpage was closed immediately");
+        return 0;
+      }
     }
   }
 
