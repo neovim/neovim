@@ -3572,12 +3572,16 @@ nvim_tabpage_del_var({tabpage}, {name})               *nvim_tabpage_del_var()*
 nvim_tabpage_get({tabpage}, {config})                     *nvim_tabpage_get()*
     Gets the config of a tabpage.
 
+    Attributes: ~
+        Since: 0.11.0
+
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
-      • {config}   Configuration options. Reserved for future use.
+      • {tabpage}  (`integer`) Tabpage handle, or 0 for current tabpage
+      • {config}   (`vim.api.keyset.tabpage_get`) Configuration options.
+                   Reserved for future use.
 
     Return: ~
-        Tabpage configuration object. Keys:
+        (`vim.api.keyset.tabpage_config`) Tabpage configuration object. Keys:
         • layout: Window layout tree.
           For a leaf window, it returns: `["leaf", {winid}]` For horizontally
           split windows, which form a column, it returns:
@@ -3658,9 +3662,13 @@ nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
 nvim_tabpage_set({tabpage}, {config})                     *nvim_tabpage_set()*
     Manages configuration for a tabpage.
 
+    Attributes: ~
+        Since: 0.11.0
+
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
-      • {config}   The tabpage's intended configuration. keys:
+      • {tabpage}  (`integer`) Tabpage handle, or 0 for current tabpage
+      • {config}   (`vim.api.keyset.tabpage_config`) The tabpage's intended
+                   configuration. keys:
                    • layout: The intended layout as a nested list
                      The layout param expects a nested list, similar to the
                      result of `nvim_tabpage_get(...).layout`. Each element in
