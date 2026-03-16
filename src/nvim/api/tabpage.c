@@ -342,6 +342,11 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
   FUNC_API_SINCE(14) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, tabpage_config, key)
+  Buffer buffer_handle = buffer == 0 ? curbuf->handle : buffer;
+  if ((cmdwin_type != 0 && enter) || (cmdwin_buf != NULL && buffer_handle == cmdwin_buf->handle)) {
+    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+    return 0;
+  }
 
   int after = -1;  // Default to after current tabpage
   if (HAS_KEY_X(config, after)) {
@@ -386,10 +391,6 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
   } else if (tabpage_win_valid(tp, wp)) {  // Set the buffer in the new window if different from current
     buf_T *buf = find_buffer_by_handle(buffer, err);
     if (buf == NULL) {
-      return 0;
-    }
-    if ((cmdwin_type != 0 && enter) || buf == cmdwin_buf) {
-      api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
       return 0;
     }
 
