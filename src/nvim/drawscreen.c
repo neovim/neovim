@@ -120,6 +120,7 @@
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 /// corner value flags for hsep_connected and vsep_connected
 typedef enum {
@@ -629,6 +630,10 @@ int update_screen(void)
     update_window_hl(wp, type >= UPD_NOT_VALID || hl_changed);
 
     buf_T *buf = wp->w_buffer;
+    if (wp->w_floating && wp->w_p_pvw && wp->w_float_last_changedtick != buf_get_changedtick(buf)) {
+      win_float_adjust_position(wp);
+    }
+
     if (buf->b_mod_set) {
       if (buf->b_mod_tick_syn < display_tick
           && syntax_present(wp)) {

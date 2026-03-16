@@ -7,15 +7,26 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
+#include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
+#include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
+#include "nvim/fileio.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/grid_defs.h"
+#include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
+#include "nvim/highlight_group.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
@@ -24,6 +35,8 @@
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
+#include "nvim/os/fs.h"
+#include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -374,10 +387,16 @@ bool win_float_valid(const win_T *win)
   return false;
 }
 
-win_T *win_float_find_preview(void)
+/// Searches for a floating window matching given criteria.
+///
+/// @param kind floating window preview kind.
+///
+/// @return A pointer to the a floating window structure.
+win_T *win_float_find_preview(WinFloatKind kind)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
-    if (wp->w_float_is_info) {
+    if (kind == kWinFloatPreview ? wp->w_p_pvw : wp->w_float_is_info) {
       return wp;
     }
   }
@@ -423,9 +442,10 @@ static inline win_T *handle_error_and_cleanup(win_T *wp, Error *err)
 ///
 /// @param[in] bool enter floating window.
 /// @param[in] bool create a new buffer for window.
+/// @param[in] int floating preview window kind.
 ///
 /// @return win_T
-win_T *win_float_create_preview(bool enter, bool new_buf)
+win_T *win_float_create_preview(bool enter, bool new_buf, WinFloatKind kind)
 {
   WinConfig config = WIN_CONFIG_INIT;
   config.col = curwin->w_wcol;
@@ -438,6 +458,22 @@ win_T *win_float_create_preview(bool enter, bool new_buf)
   config.hide = true;
   config.style = kWinStyleMinimal;
   Error err = ERROR_INIT;
+  bool preview = kind == kWinFloatPreview;
+
+  if (preview) {
+    if (!win_float_parse_option(NULL, &config)) {
+      emsg(_(e_invarg));
+      return NULL;
+    }
+
+    if (*p_winborder != NUL && !parse_winborder(&config, p_winborder, &err)) {
+      if (ERROR_SET(&err)) {
+        emsg(err.msg);
+        api_clear_error(&err);
+        return NULL;
+      }
+    }
+  }
 
   block_autocmds();
   win_T *wp = win_new_float(NULL, false, config, &err);
@@ -464,11 +500,177 @@ win_T *win_float_create_preview(bool enter, bool new_buf)
   }
   unblock_autocmds();
   wp->w_p_diff = false;
-  wp->w_float_is_info = true;
   wp->w_p_wrap = true;  // 'wrap' is default on
   wp->w_p_so = 0;       // 'scrolloff' zero
+
+  if (preview) {
+    wp->w_p_pvw = true;
+    wp->w_maxheight = config.height;
+    wp->w_maxwidth = config.width;
+    wp->w_wantline = curwin->w_winrow + curwin->w_wrow;
+    wp->w_wantcol = curwin->w_wincol + curwin->w_wcol;
+    // will switch to another buffer soon, dummy one can be wiped.
+    wp->w_buffer->b_locked = false;
+  } else {
+    wp->w_float_is_info = true;
+  }
+
   if (enter) {
     win_enter(wp, false);
   }
+
   return wp;
+}
+
+/// Closes a specified floating window used for previews or popups.
+/// Searches for and closes a floating window based on given criteria.
+///
+/// @param kind floating window preview kind.
+///
+/// @return True if the window is successfully closed, otherwise false.
+bool win_float_close(WinFloatKind kind)
+{
+  win_T *wp = win_float_find_preview(kind);
+  return wp && win_close(wp, false, false) != FAIL;
+}
+
+/// Set bufname as title for a floating window.
+/// Title position is center.
+///
+/// @param wp pointer of floating preview window
+void win_float_set_title(win_T *wp)
+{
+  if (!wp->w_floating || !wp->w_config.border || wp->w_buffer->b_fname == NULL) {
+    return;
+  }
+
+  char dirname[MAXPATHL];
+  os_dirname(dirname, MAXPATHL);
+  shorten_buf_fname(wp->w_buffer, dirname, false);
+  if (wp->w_config.title) {
+    clear_virttext(&wp->w_config.title_chunks);
+  }
+
+  wp->w_config.title = true;
+  wp->w_config.title_pos = kAlignCenter;
+  wp->w_config.title_width = (int)mb_string2cells(wp->w_buffer->b_fname);
+  kv_push(wp->w_config.title_chunks,
+          ((VirtTextChunk){ .text = xstrdup(wp->w_buffer->b_fname), .hl_id = -1 }));
+  win_config_float(wp, wp->w_config);
+}
+
+/// adjust a preview floating window postion to fit screen and buffer in wp.
+///
+/// @param wp pointer of floating preview window
+void win_float_adjust_position(win_T *wp)
+{
+  if (!wp->w_floating || !wp->w_buffer) {
+    return;
+  }
+
+  int cursor_row = wp->w_wantline;
+  int cursor_col = wp->w_wantcol;
+  int border_h = win_border_height(wp);
+  int border_w = win_border_width(wp);
+
+  // available space in each direction
+  int space_right = Columns - cursor_col - 1;
+  int space_left = cursor_col;
+  int space_below = Rows - cursor_row - 2;
+  int space_above = cursor_row - 1;
+
+  // total size needed (content + border)
+  int need_w = wp->w_maxwidth + border_w;
+  int need_h = wp->w_maxheight + border_h;
+
+  // Prefer right; fall back to left only if left fits and right doesn't
+  bool place_right = space_right >= need_w || space_left < need_w;
+  // Prefer below; fall back to above only if above fits and below doesn't
+  bool place_below = space_below >= need_h || space_above < need_h;
+
+  // max content size in chosen direction
+  int max_width = (place_right ? space_right : space_left) - border_w;
+  int max_height = (place_below ? space_below : space_above) - border_h;
+
+  wp->w_config.width = MAX(1, MIN(wp->w_maxwidth, max_width));
+  wp->w_config.height = MAX(1, MIN(wp->w_maxheight, max_height));
+  wp->w_float_last_changedtick = buf_get_changedtick(wp->w_buffer);
+
+  // Set anchor and position
+  if (place_below && place_right) {
+    wp->w_config.anchor = 0;  // NW
+    wp->w_config.row = cursor_row + 1;
+    wp->w_config.col = cursor_col + 1;
+  } else if (place_below && !place_right) {
+    wp->w_config.anchor = kFloatAnchorEast;  // NE
+    wp->w_config.row = cursor_row + 1;
+    wp->w_config.col = cursor_col;
+  } else if (!place_below && place_right) {
+    wp->w_config.anchor = kFloatAnchorSouth;  // SW
+    wp->w_config.row = cursor_row;
+    wp->w_config.col = cursor_col + 1;
+  } else {
+    wp->w_config.anchor = kFloatAnchorSouth | kFloatAnchorEast;  // SE
+    wp->w_config.row = cursor_row;
+    wp->w_config.col = cursor_col;
+  }
+
+  wp->w_config.hide = false;
+  win_config_float(wp, wp->w_config);
+}
+
+/// Parses options for configuring floating windows for completion popups or preview popups.
+///
+/// @param wp pointer of floating window
+/// @param config The floating window configuration to modify.
+///
+/// @return True if options are successfully parsed, otherwise false.
+bool win_float_parse_option(win_T *wp, WinConfig *config)
+{
+  if (*p_pvp == NUL) {
+    return true;
+  }
+
+  int height = 0;
+  int width = 0;
+  const char *p = p_pvp;
+
+  while (*p != NUL) {
+    if (strncmp(p, "height:", 7) == 0) {
+      p += 7;
+      char *end;
+      long val = strtol(p, &end, 10);
+      if (end == p || val < 1 || (*end != ',' && *end != NUL)) {
+        return false;
+      }
+      height = (int)val;
+      p = end;
+    } else if (strncmp(p, "width:", 6) == 0) {
+      p += 6;
+      char *end;
+      long val = strtol(p, &end, 10);
+      if (end == p || val < 1 || (*end != ',' && *end != NUL)) {
+        return false;
+      }
+      width = (int)val;
+      p = end;
+    } else {
+      return false;  // unknown sub-option
+    }
+    if (*p == ',') {
+      p++;
+    }
+  }
+
+  if (height == 0 && width == 0) {
+    return false;
+  }
+
+  config->height = height;
+  config->width = width;
+  if (wp) {
+    wp->w_maxheight = height;
+    wp->w_maxwidth = width;
+  }
+  return true;
 }

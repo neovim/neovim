@@ -460,6 +460,7 @@ EXTERN unsigned rdb_flags;
 EXTERN OptInt p_rdt;            ///< 'redrawtime'
 EXTERN OptInt p_re;             ///< 'regexpengine'
 EXTERN OptInt p_report;         ///< 'report'
+EXTERN char *p_pvp;             ///< 'previewpopup'
 EXTERN OptInt p_pvh;            ///< 'previewheight'
 EXTERN OptInt p_chi;            ///< 'chistory'
 EXTERN int p_ari;               ///< 'allowrevins'
