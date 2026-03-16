@@ -144,7 +144,6 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__tabpage_config_;
-  Boolean enter;
   Integer after;
 } Dict(tabpage_config);
 

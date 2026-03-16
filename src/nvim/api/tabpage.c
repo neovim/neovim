@@ -193,24 +193,19 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 ///
 /// @param buffer Buffer to open in the first window of the new tabpage.
 ///               Use 0 for current buffer.
+/// @param enter  Enter the tabpage (make it the current tabpage).
 /// @param config Configuration for the new tabpage. Keys:
-///   - enter: Whether to enter the new tabpage (default: true)
 ///   - after: Position to insert tabpage (default: -1; after current).
 ///            0 = first, N = after Nth.
 /// @param[out] err Error details, if any
 /// @return Tabpage handle of the created tabpage
-Tabpage nvim_open_tabpage(Buffer buffer, Dict(tabpage_config) *config, Error *err)
+Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *config, Error *err)
   FUNC_API_SINCE(14) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, tabpage_config, key)
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (buf == NULL) {
     return 0;
-  }
-
-  bool enter = true;
-  if (HAS_KEY_X(config, enter)) {
-    enter = config->enter;
   }
   if ((cmdwin_type != 0 && enter) || buf == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
