@@ -6311,7 +6311,7 @@ static void frame_setheight(frame_T *curfrp, int height)
     }
     // If there is only a 'winfixheight' window and making the
     // window smaller, need to make the other window taller.
-    if (take < 0 && room - curfrp->fr_height < room_reserved) {
+    if (take < 0 && room - curfrp->fr_height <= room_reserved) {
       room_reserved = 0;
     }
 
