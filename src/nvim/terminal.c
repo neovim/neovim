@@ -951,12 +951,12 @@ bool terminal_enter(void)
   may_trigger_modechanged();
   s->term->refcount--;
   if (s->term->buf_handle == 0) {
-    s->close = true;  // skip entering and close
-  } else {
-    s->state.execute = terminal_execute;
-    s->state.check = terminal_check;
-    state_enter(&s->state);
+    s->close = true;
   }
+
+  s->state.execute = terminal_execute;
+  s->state.check = terminal_check;
+  state_enter(&s->state);
 
   if (!s->got_bsl_o) {
     restart_edit = 0;
