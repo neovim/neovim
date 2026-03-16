@@ -139,7 +139,7 @@ void nvim_tabpage_set(Tabpage tabpage, Dict(tabpage_config) *config, Arena *aren
         if (tab == curtab) {
           win_close(wp, false, true);
         } else {
-          win_close_othertab(wp, false, tab);
+          win_close_othertab(wp, false, tab, true);
         }
       }
     }

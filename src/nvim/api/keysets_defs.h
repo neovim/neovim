@@ -145,11 +145,12 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__tabpage_get_;
-  Integer after;
+  Array layout;
 } Dict(tabpage_get);
 
 typedef struct {
   OptionalKeys is_set__tabpage_config_;
+  Integer after;
   Array layout;
 } Dict(tabpage_config);
 
