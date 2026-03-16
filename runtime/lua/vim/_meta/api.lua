@@ -1662,12 +1662,15 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 --- Opens a new tabpage.
 ---
 --- @param buffer integer Buffer to open in the first window of the new tabpage.
---- Use 0 for current buffer.
+--- Use 0 for current buffer. Ignored if `layout` is specified
+--- in `config`.
 --- @param enter boolean Enter the tabpage (make it the current tabpage).
 --- @param config vim.api.keyset.tabpage_config Configuration for the new tabpage. Keys:
 --- - after: Position to insert tabpage (default: -1; after current).
 ---          0 = first, N = after Nth.
---- @return integer # |tab-ID| of the new tabpage
+--- - layout: Initial window layout for the tabpage, as a nested list. See `nvim_tabpage_set()` for
+---          details.
+--- @return integer # Tabpage handle of the created tabpage
 function vim.api.nvim_open_tabpage(buffer, enter, config) end
 
 --- Open a terminal instance in a buffer
