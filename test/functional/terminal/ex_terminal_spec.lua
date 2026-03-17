@@ -215,7 +215,7 @@ local function test_terminal_with_fake_shell(backslash)
     command('terminal')
     screen:expect([[
       ^ready $                                           |
-      [Process exited 0]                                |
+                                                        |
                                                         |*2
     ]])
   end)
@@ -297,7 +297,7 @@ local function test_terminal_with_fake_shell(backslash)
     command('terminal')
     screen:expect([[
       ^ready $                                           |
-      [Process exited 0]                                |
+                                                        |
                                                         |*2
     ]])
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
