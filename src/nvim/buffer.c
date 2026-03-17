@@ -2764,7 +2764,7 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
     wip->wi_mark.mark.lnum = lnum;
     wip->wi_mark.mark.col = col;
     if (win != NULL) {
-      wip->wi_mark.view = mark_view_make(win->w_topline, wip->wi_mark.mark);
+      wip->wi_mark.view = mark_view_make(win, wip->wi_mark.mark);
     }
   }
   if (win != NULL) {

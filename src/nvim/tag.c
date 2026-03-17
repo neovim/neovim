@@ -534,7 +534,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
       if (save_pos) {
         tagstack[tagstackidx].fmark.mark = curwin->w_cursor;
         tagstack[tagstackidx].fmark.fnum = curbuf->b_fnum;
-        tagstack[tagstackidx].fmark.view = mark_view_make(curwin->w_topline, curwin->w_cursor);
+        tagstack[tagstackidx].fmark.view = mark_view_make(curwin, curwin->w_cursor);
       }
 
       // Curwin will change in the call to jumpto_tag() if ":stag" was

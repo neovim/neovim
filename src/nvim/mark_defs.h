@@ -74,9 +74,10 @@ typedef enum {
 typedef struct {
   linenr_T topline_offset;  ///< Amount of lines from the mark lnum to the top of the window.
                             ///< Use MAXLNUM to indicate that the mark does not have a view.
+  colnr_T skipcol;
 } fmarkv_T;
 
-#define INIT_FMARKV { MAXLNUM }
+#define INIT_FMARKV { MAXLNUM, 0 }
 
 /// Structure defining single local mark
 typedef struct {
