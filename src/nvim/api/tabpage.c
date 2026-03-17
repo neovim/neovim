@@ -328,7 +328,7 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 /// Opens a new tabpage.
 ///
 /// @param buffer Buffer to open in the first window of the new tabpage.
-///               Use 0 for current buffer. Ignored if `layout` is specified
+///               Use 0 for current buffer. Must be -1 if `layout` is specified
 ///               in `config`.
 /// @param enter  Enter the tabpage (make it the current tabpage).
 /// @param config Configuration for the new tabpage. Keys:

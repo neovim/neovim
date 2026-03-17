@@ -3549,7 +3549,7 @@ nvim_open_tabpage({buffer}, {enter}, {config})           *nvim_open_tabpage()*
 
     Parameters: ~
       • {buffer}  (`integer`) Buffer to open in the first window of the new
-                  tabpage. Use 0 for current buffer. Ignored if `layout` is
+                  tabpage. Use 0 for current buffer. Must be -1 if `layout` is
                   specified in `config`.
       • {enter}   (`boolean`) Enter the tabpage (make it the current tabpage).
       • {config}  (`vim.api.keyset.tabpage_config`) Configuration for the new
