@@ -267,7 +267,10 @@ local function get_doc(item)
   then
     -- Shows snippet preview in doc popup if completeopt=popup.
     local text = parse_snippet(item.insertText or item.textEdit.newText)
-    return ('```%s\n%s\n```'):format(vim.bo.filetype, text)
+    item.documentation = {
+      kind = lsp.protocol.MarkupKind.Markdown,
+      value = ('```%s\n%s\n```'):format(vim.bo.filetype, text),
+    }
   end
 
   local doc = item.documentation
@@ -778,7 +781,20 @@ local function on_completechanged(group, bufnr)
       local completed_item = vim.v.event.completed_item or {}
       if (completed_item.info or '') ~= '' then
         local data = vim.fn.complete_info({ 'selected' })
-        update_popup_window(data.preview_winid, data.preview_bufnr)
+        local kind = vim.tbl_get(
+          completed_item,
+          'user_data',
+          'nvim',
+          'lsp',
+          'completion_item',
+          'documentation',
+          'kind'
+        )
+        update_popup_window(
+          data.preview_winid,
+          data.preview_bufnr,
+          kind or lsp.protocol.MarkupKind.PlainText
+        )
         return
       end
 
