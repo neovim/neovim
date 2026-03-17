@@ -187,7 +187,34 @@ static void tinput_done_event(void **argv)
 /// Send all pending input in key buffer to Nvim server.
 static void tinput_flush(TermInput *input)
 {
-  String keys = { .data = input->key_buffer, .size = input->key_buffer_len };
+  size_t len = input->key_buffer_len;
+
+  // During paste, avoid splitting multi-byte UTF-8 characters at the flush
+  // boundary.  Back up to the last complete character so that trailing
+  // incomplete bytes stay in the buffer for the next flush.
+  if (input->paste && len > 0) {
+    uint8_t last = (uint8_t)input->key_buffer[len - 1];
+    if (last >= 0xC0 && last <= 0xF4) {
+      // Last byte is a multi-byte lead byte with no continuation bytes yet.
+      len--;
+    } else if ((last & 0xC0) == 0x80) {
+      // Last byte is a continuation byte; walk back to find the lead byte.
+      size_t trail = 0;
+      while (trail < len && ((uint8_t)input->key_buffer[len - 1 - trail] & 0xC0) == 0x80) {
+        trail++;
+      }
+      if (trail < len) {
+        uint8_t lead = (uint8_t)input->key_buffer[len - 1 - trail];
+        int expected = (lead >= 0xF0) ? 3 : (lead >= 0xE0) ? 2 : (lead >= 0xC0) ? 1 : 0;
+        if ((int)trail < expected) {
+          // Incomplete sequence: exclude lead byte + continuation bytes from this flush.
+          len -= trail + 1;
+        }
+      }
+    }
+  }
+
+  String keys = { .data = input->key_buffer, .size = len };
   if (input->paste) {  // produce exactly one paste event
     MAXSIZE_TEMP_ARRAY(args, 3);
     ADD_C(args, STRING_OBJ(keys));  // 'data'
@@ -207,7 +234,13 @@ static void tinput_flush(TermInput *input)
       rpc_send_event(ui_client_channel_id, "nvim_input", args);
     }
   }
-  input->key_buffer_len = 0;
+
+  // Keep any unsent trailing bytes in the buffer for the next flush.
+  size_t remaining = input->key_buffer_len - len;
+  if (remaining > 0) {
+    memmove(input->key_buffer, input->key_buffer + len, remaining);
+  }
+  input->key_buffer_len = remaining;
 }
 
 static void tinput_enqueue(TermInput *input, const char *buf, size_t size)
