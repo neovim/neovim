@@ -215,6 +215,10 @@ static void tinput_flush(TermInput *input)
     }
   }
 
+  if (input->paste && len == 0) {
+    return;  // Nothing to flush; incomplete bytes stay for the next call.
+  }
+
   String keys = { .data = input->key_buffer, .size = len };
   if (input->paste) {  // produce exactly one paste event
     MAXSIZE_TEMP_ARRAY(args, 3);
