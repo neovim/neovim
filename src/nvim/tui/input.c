@@ -11,6 +11,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option_vars.h"
@@ -205,7 +206,7 @@ static void tinput_flush(TermInput *input)
       }
       if (trail < len) {
         uint8_t lead = (uint8_t)input->key_buffer[len - 1 - trail];
-        int expected = (lead >= 0xF0) ? 3 : (lead >= 0xE0) ? 2 : (lead >= 0xC0) ? 1 : 0;
+        int expected = MB_BYTE2LEN(lead) - 1;
         if ((int)trail < expected) {
           // Incomplete sequence: exclude lead byte + continuation bytes from this flush.
           len -= trail + 1;
