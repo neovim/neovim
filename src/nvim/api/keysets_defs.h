@@ -259,6 +259,10 @@ typedef struct {
 } Dict(clear_autocmds);
 
 typedef struct {
+  String glob;
+} Dict(glob_pattern);
+
+typedef struct {
   OptionalKeys is_set__create_autocmd_;
   Buffer buffer;
   Union(String, LuaRefOf((DictAs(create_autocmd__callback_args) args), *Boolean)) callback;
@@ -267,7 +271,7 @@ typedef struct {
   Union(Integer, String) group;
   Boolean nested;
   Boolean once;
-  Union(String, ArrayOf(String)) pattern;
+  Union(String, ArrayOf(String), Dict(glob_pattern)) pattern;
 } Dict(create_autocmd);
 
 typedef struct {
