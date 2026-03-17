@@ -5009,17 +5009,14 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
     See also: ~
       • |vim.system()|
 
-vim.ui.progress_get_running()                  *vim.ui.progress_get_running()*
-    Returns raw list of currently active progress objects.
-
-    Return: ~
-        (`ProgressMessage[]`)
-
 vim.ui.progress_status()                            *vim.ui.progress_status()*
-    Function to format the list of running progress messages for statusline
+    Gets the status of currently running progress messages, in a format
+    convenient for inclusion in 'statusline'. Also returns a list of current
+    progress messages as the second return value.
 
-    Return: ~
-        (`string`) Statusline component text
+    Return (multiple): ~
+        (`string`) formatted text of progress status for statusline
+        (`ProgressMessage[]`) list of currently active progress messages
 
 vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
     Prompts the user to pick from a list of items, allowing arbitrary

@@ -373,17 +373,14 @@ do
     end
   end
 
-  ---Returns raw list of currently active progress objects.
-  ---@return ProgressMessage[]
-  function M.progress_get_running()
-    return vim.tbl_values(progress)
-  end
-
-  --- Function to format the list of running progress messages for statusline
-  ---@return string Statusline component text
+  --- Gets the status of currently running progress messages, in a format
+  --- convenient for inclusion in 'statusline'.
+  --- Also returns a list of current progress messages as the second return value.
+  ---@return string formatted text of progress status for statusline
+  ---@return ProgressMessage[] list of currently active progress messages
   function M.progress_status()
-    local running = M.progress_get_running()
-    return progress_status_fmt(running) or ''
+    local running = vim.tbl_values(progress)
+    return progress_status_fmt(running) or '', running
   end
 end
 

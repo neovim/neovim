@@ -944,6 +944,7 @@ describe('default statusline', function()
     screen = Screen.new(60, 16)
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Magenta1, bold = true },
+      [131] = { foreground = Screen.colors.NvimDarkGreen },
     }
     command('set laststatus=2')
     command('set ruler')
@@ -1043,10 +1044,11 @@ describe('default statusline', function()
   end)
 
   it('shows and updates progress status', function()
+    exec_lua("vim.o.statusline = ''")
     local function get_progress()
       return exec_lua(function()
-        local stl_str = vim.ui.progress_status()
-        return vim.api.nvim_eval_statusline(stl_str, {}).str
+        local stl_str, msgs = vim.ui.progress_status()
+        return vim.api.nvim_eval_statusline(stl_str, {}).str, msgs
       end)
     end
 
@@ -1058,18 +1060,28 @@ describe('default statusline', function()
       { kind = 'progress', title = 'test', status = 'running', percent = 10 }
     )
     eq('test: 10% ', get_progress())
+
     api.nvim_echo(
       { { 'searching' } },
       true,
       { id = id1, kind = 'progress', percent = 50, status = 'running', title = 'terminal(ripgrep)' }
     )
-    eq('terminal(ripgrep): 50% ', get_progress())
+    local status_text, progress_msgs = get_progress()
+    eq('terminal(ripgrep): 50% ', status_text)
+    eq({ { id = 1, percent = 50, status = 'running', title = 'terminal(ripgrep)' } }, progress_msgs)
+
     api.nvim_echo(
       { { 'searching...' } },
       true,
       { kind = 'progress', title = 'second-item', status = 'running', percent = 20 }
     )
-    eq('Progress: 2 items 35% ', get_progress())
+    status_text, progress_msgs = get_progress()
+    eq('Progress: 2 items 35% ', status_text)
+    eq({
+      { id = 1, percent = 50, status = 'running', title = 'terminal(ripgrep)' },
+      { id = 2, percent = 20, status = 'running', title = 'second-item' },
+    }, progress_msgs)
+
     api.nvim_echo({ { 'searching' } }, true, {
       id = id1,
       kind = 'progress',
@@ -1077,7 +1089,17 @@ describe('default statusline', function()
       status = 'success',
       title = 'terminal(ripgrep)',
     })
-    eq('second-item: 20% ', get_progress())
+    status_text, progress_msgs = get_progress()
+    eq('second-item: 20% ', status_text)
+    eq({ { id = 2, percent = 20, status = 'running', title = 'second-item' } }, progress_msgs)
+
+    exec('redrawstatus')
+    screen:expect([[
+      ^                                                           |
+      {1:~                                                           }|*13
+      {3:[No Name]                second-item: 20% 0,0-1          All}|
+      {131:terminal(ripgrep)}: {19:100% }searching                           |
+    ]])
   end)
 end)
 
