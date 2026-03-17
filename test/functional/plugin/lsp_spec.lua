@@ -5607,6 +5607,128 @@ describe('LSP', function()
       }
       eq(expected, result)
     end)
+
+    it('does not crash on error response with null id (JSON-RPC 2.0 parse error)', function()
+      local result = exec_lua(function()
+        local server = assert(vim.uv.new_tcp())
+        local messages = {}
+        server:bind('127.0.0.1', 0)
+        server:listen(127, function(err)
+          assert(not err, err)
+          local socket = assert(vim.uv.new_tcp())
+          server:accept(socket)
+          socket:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
+            local payload = vim.json.decode(body)
+            if payload.method then
+              table.insert(messages, payload.method)
+              if payload.method == 'initialize' then
+                -- Send a valid initialize response first
+                local msg = vim.json.encode({
+                  id = payload.id,
+                  jsonrpc = '2.0',
+                  result = {
+                    capabilities = {},
+                  },
+                })
+                socket:write(table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg }))
+              elseif payload.method == 'initialized' then
+                -- Then send an error response with null id (parse error per JSON-RPC 2.0 §5)
+                local msg =
+                  '{"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"},"id":null}'
+                socket:write(table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg }))
+              end
+            end
+          end))
+        end)
+        local port = server:getsockname().port
+        local on_error_called = false
+        local client_id = assert(vim.lsp.start({
+          name = 'null-id-test',
+          cmd = vim.lsp.rpc.connect('127.0.0.1', port),
+          on_error = function(_code, _err)
+            on_error_called = true
+          end,
+        }))
+        vim.lsp.get_client_by_id(client_id)
+        -- Wait for the initialized notification to be sent and the null-id error to be received
+        vim.wait(1000, function()
+          return #messages >= 2 and on_error_called
+        end)
+        server:close()
+        server:shutdown()
+        return {
+          messages = messages,
+          on_error_called = on_error_called,
+        }
+      end)
+      -- The key assertion: Neovim should not crash, and the error handler should be called
+      eq(true, result.on_error_called)
+      eq(true, #result.messages >= 2)
+    end)
+
+    it('does not misclassify server request with null id as notification', function()
+      local result = exec_lua(function()
+        local server = assert(vim.uv.new_tcp())
+        local messages = {}
+        server:bind('127.0.0.1', 0)
+        server:listen(127, function(err)
+          assert(not err, err)
+          local socket = assert(vim.uv.new_tcp())
+          server:accept(socket)
+          socket:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
+            local payload = vim.json.decode(body)
+            if payload.method then
+              table.insert(messages, payload.method)
+              if payload.method == 'initialize' then
+                local msg = vim.json.encode({
+                  id = payload.id,
+                  jsonrpc = '2.0',
+                  result = {
+                    capabilities = {},
+                  },
+                })
+                socket:write(table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg }))
+              elseif payload.method == 'initialized' then
+                -- Send a server request with null id (invalid per JSON-RPC 2.0)
+                local msg =
+                  '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]},"id":null}'
+                socket:write(table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg }))
+              end
+            end
+          end))
+        end)
+        local port = server:getsockname().port
+        local on_error_called = false
+        local notification_received = false
+        local client_id = assert(vim.lsp.start({
+          name = 'null-id-request-test',
+          cmd = vim.lsp.rpc.connect('127.0.0.1', port),
+          on_error = function(_code, _err)
+            on_error_called = true
+          end,
+          handlers = {
+            ['workspace/configuration'] = function()
+              notification_received = true
+              return {}
+            end,
+          },
+        }))
+        vim.lsp.get_client_by_id(client_id)
+        vim.wait(1000, function()
+          return #messages >= 2 and (on_error_called or notification_received)
+        end)
+        server:close()
+        server:shutdown()
+        return {
+          messages = messages,
+          on_error_called = on_error_called,
+          notification_received = notification_received,
+        }
+      end)
+      -- Should be dispatched as an error, NOT silently handled as a notification
+      eq(true, result.on_error_called)
+      eq(false, result.notification_received)
+    end)
   end)
 
   describe('#dynamic vim.lsp._dynamic', function()
