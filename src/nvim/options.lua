@@ -2459,7 +2459,10 @@ local options = {
         				difference.  Non-alphanumeric
         				multi-byte characters such as emoji
         				and CJK characters are considered
-        				individual words.
+        				individual words.  Small gaps of
+        				non-word characters (5 bytes or less)
+        				between changes are merged into a
+        				single highlight block.
 
         	internal	Use the internal diff library.  This is
         			ignored when 'diffexpr' is set.  *E960*
