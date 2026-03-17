@@ -254,7 +254,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
 
     if (curwin->w_buffer == buf) {
       if (lnum >= curwin->w_topline && lnum <= curwin->w_botline) {
-        view = mark_view_make(curwin->w_topline, curwin->w_cursor);
+        view = mark_view_make(curwin, curwin->w_cursor);
       }
     }
     RESET_FMARK(&buf->b_last_change, ((pos_T) { lnum, col, 0 }), buf->handle, view);

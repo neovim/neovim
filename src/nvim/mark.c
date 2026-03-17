@@ -41,6 +41,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/time_defs.h"
 #include "nvim/path.h"
+#include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/quickfix.h"
 #include "nvim/strings.h"
@@ -63,7 +64,7 @@
 // Returns OK on success, FAIL if bad name given.
 int setmark(int c)
 {
-  fmarkv_T view = mark_view_make(curwin->w_topline, curwin->w_cursor);
+  fmarkv_T view = mark_view_make(curwin, curwin->w_cursor);
   return setmark_pos(c, &curwin->w_cursor, curbuf->b_fnum, &view);
 }
 
@@ -283,7 +284,7 @@ void setpcmark(void)
   curwin->w_jumplistidx = curwin->w_jumplistlen;
   fm = &curwin->w_jumplist[curwin->w_jumplistlen - 1];
 
-  fmarkv_T view = mark_view_make(curwin->w_topline, curwin->w_pcmark);
+  fmarkv_T view = mark_view_make(curwin, curwin->w_pcmark);
   SET_XFMARK(fm, curwin->w_pcmark, curbuf->b_fnum, view, NULL);
 }
 
@@ -691,13 +692,17 @@ void mark_view_restore(fmark_T *fm)
     // and this check can prevent restoring mark view in that case.
     if (topline >= 1) {
       set_topline(curwin, topline);
+      curwin->w_skipcol = (fm->view.skipcol > 0
+                           && !hasFolding(curwin, topline, NULL, NULL)
+                           && fm->view.skipcol < linetabsize_eol(curwin, topline))
+                          ? fm->view.skipcol : 0;
     }
   }
 }
 
-fmarkv_T mark_view_make(linenr_T topline, pos_T pos)
+fmarkv_T mark_view_make(const win_T *wp, pos_T pos)
 {
-  return (fmarkv_T){ pos.lnum - topline };
+  return (fmarkv_T){ pos.lnum - wp->w_topline, wp->w_skipcol };
 }
 
 /// Search for the next named mark in the current file from a start position.
