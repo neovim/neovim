@@ -194,7 +194,7 @@ static void tinput_flush(TermInput *input)
   // incomplete bytes stay in the buffer for the next flush.
   if (input->paste && len > 0) {
     uint8_t last = (uint8_t)input->key_buffer[len - 1];
-    if (last >= 0xC0 && last <= 0xF4) {
+    if (last >= 0xC2 && last <= 0xF4) {
       // Last byte is a multi-byte lead byte with no continuation bytes yet.
       len--;
     } else if ((last & 0xC0) == 0x80) {
