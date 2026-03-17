@@ -17,7 +17,7 @@ describe('autocmd api', function()
   describe('nvim_create_autocmd', function()
     it('validation', function()
       eq(
-        "Cannot use both 'callback' and 'command'",
+        "Conflict: 'callback' not allowed with 'command'",
         pcall_err(api.nvim_create_autocmd, 'BufReadPost', {
           pattern = '*.py,*.pyi',
           command = "echo 'Should Have Errored",
@@ -25,7 +25,7 @@ describe('autocmd api', function()
         })
       )
       eq(
-        "Cannot use both 'pattern' and 'buffer' for the same autocmd",
+        "Conflict: 'pattern' not allowed with 'buffer'",
         pcall_err(api.nvim_create_autocmd, 'FileType', {
           command = 'let g:called = g:called + 1',
           buffer = 0,
@@ -1534,7 +1534,7 @@ describe('autocmd api', function()
   describe('nvim_clear_autocmds', function()
     it('validation', function()
       eq(
-        "Cannot use both 'pattern' and 'buffer'",
+        "Conflict: 'pattern' not allowed with 'buffer'",
         pcall_err(api.nvim_clear_autocmds, {
           pattern = '*',
           buffer = 42,

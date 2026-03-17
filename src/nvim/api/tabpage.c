@@ -198,7 +198,7 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 ///   - after: Position to insert tabpage (default: -1; after current).
 ///            0 = first, N = after Nth.
 /// @param[out] err Error details, if any
-/// @return Tabpage handle of the created tabpage
+/// @return |tab-ID| of the new tabpage
 Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *config, Error *err)
   FUNC_API_SINCE(14) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
