@@ -5011,12 +5011,10 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
 
 vim.ui.progress_status()                            *vim.ui.progress_status()*
     Gets the status of currently running progress messages, in a format
-    convenient for inclusion in 'statusline'. Also returns a list of current
-    progress messages as the second return value.
+    convenient for inclusion in 'statusline'.
 
-    Return (multiple): ~
+    Return: ~
         (`string`) formatted text of progress status for statusline
-        (`ProgressMessage[]`) list of currently active progress messages
 
 vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
     Prompts the user to pick from a list of items, allowing arbitrary

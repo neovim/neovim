@@ -1047,8 +1047,8 @@ describe('default statusline', function()
     exec_lua("vim.o.statusline = ''")
     local function get_progress()
       return exec_lua(function()
-        local stl_str, msgs = vim.ui.progress_status()
-        return vim.api.nvim_eval_statusline(stl_str, {}).str, msgs
+        local stl_str = vim.ui.progress_status()
+        return vim.api.nvim_eval_statusline(stl_str, {}).str
       end)
     end
 
@@ -1066,21 +1066,14 @@ describe('default statusline', function()
       true,
       { id = id1, kind = 'progress', percent = 50, status = 'running', title = 'terminal(ripgrep)' }
     )
-    local status_text, progress_msgs = get_progress()
-    eq('terminal(ripgrep): 50% ', status_text)
-    eq({ { id = 1, percent = 50, status = 'running', title = 'terminal(ripgrep)' } }, progress_msgs)
+    eq('terminal(ripgrep): 50% ', get_progress())
 
     api.nvim_echo(
       { { 'searching...' } },
       true,
       { kind = 'progress', title = 'second-item', status = 'running', percent = 20 }
     )
-    status_text, progress_msgs = get_progress()
-    eq('Progress: 2 items 35% ', status_text)
-    eq({
-      { id = 1, percent = 50, status = 'running', title = 'terminal(ripgrep)' },
-      { id = 2, percent = 20, status = 'running', title = 'second-item' },
-    }, progress_msgs)
+    eq('Progress: 2 items 35% ', get_progress())
 
     api.nvim_echo({ { 'searching' } }, true, {
       id = id1,
@@ -1089,13 +1082,11 @@ describe('default statusline', function()
       status = 'success',
       title = 'terminal(ripgrep)',
     })
-    status_text, progress_msgs = get_progress()
-    eq('second-item: 20% ', status_text)
-    eq({ { id = 2, percent = 20, status = 'running', title = 'second-item' } }, progress_msgs)
+    eq('second-item: 20% ', get_progress())
 
     exec('redrawstatus')
     screen:expect([[
-      ^                                                           |
+      ^                                                            |
       {1:~                                                           }|*13
       {3:[No Name]                second-item: 20% 0,0-1          All}|
       {131:terminal(ripgrep)}: {19:100% }searching                           |

@@ -319,33 +319,38 @@ do
   local progress = {}
 
   -- store progress events
-  local progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
-  vim.api.nvim_create_autocmd('Progress', {
-    group = progress_group,
-    desc = 'Track progress messages for statusline',
-    ---@param ev {data: {id: integer, title: string, status: string, percent: integer}}
-    callback = function(ev)
-      if not ev.data or not ev.data.id then
-        return
-      end
-      progress[ev.data.id] = {
-        id = ev.data.id,
-        title = ev.data.title,
-        status = ev.data.status,
-        percent = ev.data.percent or 0,
-      }
+  local progress_group, progress_autocmd = nil, nil
 
-      -- Clear finished items
-      if
-        ev.data.status == 'success'
-        or ev.data.percent == 100
-        or ev.data.status == 'failed'
-        or ev.data.status == 'cancel'
-      then
-        progress[ev.data.id] = nil
-      end
-    end,
-  })
+  ---Initialize progress event listeners
+  local function progress_init()
+    progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
+    progress_autocmd = vim.api.nvim_create_autocmd('Progress', {
+      group = progress_group,
+      desc = 'Track progress messages for statusline',
+      ---@param ev {data: {id: integer, title: string, status: string, percent: integer}}
+      callback = function(ev)
+        if not ev.data or not ev.data.id then
+          return
+        end
+        progress[ev.data.id] = {
+          id = ev.data.id,
+          title = ev.data.title,
+          status = ev.data.status,
+          percent = ev.data.percent or 0,
+        }
+
+        -- Clear finished items
+        if
+          ev.data.status == 'success'
+          or ev.data.percent == 100
+          or ev.data.status == 'failed'
+          or ev.data.status == 'cancel'
+        then
+          progress[ev.data.id] = nil
+        end
+      end,
+    })
+  end
 
   ---Return statusline text summarizing progress messages.
   --- - If none: returns empty string
@@ -375,12 +380,15 @@ do
 
   --- Gets the status of currently running progress messages, in a format
   --- convenient for inclusion in 'statusline'.
-  --- Also returns a list of current progress messages as the second return value.
   ---@return string formatted text of progress status for statusline
-  ---@return ProgressMessage[] list of currently active progress messages
   function M.progress_status()
+    -- Create progress event listener on first call
+    if progress_autocmd == nil then
+      progress_init()
+    end
+
     local running = vim.tbl_values(progress)
-    return progress_status_fmt(running) or '', running
+    return progress_status_fmt(running) or ''
   end
 end
 
