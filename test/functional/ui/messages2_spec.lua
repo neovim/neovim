@@ -175,6 +175,43 @@ describe('messages2', function()
       {3:[Pager]                            1,1            Top}|
                                                            |
     ]])
+    feed(':<C-F>')
+    screen:expect([[
+      {3:                                                     }|
+      foo                                                  |*4
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}^                                                    |
+      {1:~                                                    }|*5
+      {3:[Command Line]                     2,0-1          All}|
+                                                           |
+    ]])
+    command('wincmd +')
+    screen:expect([[
+      {3:                                                     }|
+      foo                                                  |*3
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}^                                                    |
+      {1:~                                                    }|*6
+      {3:[Command Line]                     2,0-1          All}|
+                                                           |
+    ]])
+    command('echo "foo"')
+    screen:expect([[
+      {3:                                                     }|
+      foo                                                  |*3
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}^                                                    |
+      {1:~                                                    }|*6
+      {3:[Command Line]                     2,0-1          All}|
+      foo                                                  |
+    ]])
+    feed('<C-C>')
+    screen:expect([[
+      {3:                                                     }|
+      foo                                                  |*11
+      {3:[Pager]                            1,1            Top}|
+      {16::}^                                                    |
+    ]])
   end)
 
   it('new buffer, window and options after closing a buffer or switching tabpage', function()

@@ -371,6 +371,7 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   end
 end
 
+local in_pager = false -- Whether the pager is or will be the current window.
 --- Route the message to the appropriate sink.
 ---
 ---@param kind string
@@ -388,7 +389,7 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     -- When the pager is open always route typed commands there. This better simulates
     -- the UI1 behavior after opening the cmdline below a previous multiline message,
     -- and seems useful enough even when the pager was entered manually.
-    or (trigger == 'typed_cmd' and api.nvim_get_current_win() == ui.wins.pager) and 'pager'
+    or (trigger == 'typed_cmd' and in_pager and fn.getcmdwintype() == '') and 'pager'
     -- Otherwise route to configured target: trigger takes precedence over kind.
     or ui.cfg.msg.targets[trigger]
     or ui.cfg.msg.targets[kind]
@@ -432,12 +433,12 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     end
     ui.cmd.expand = ui.cmd.expand + (ui.cmd.expand > 0 and 1 or 0)
 
-    local enter_pager = tgt == 'pager' and api.nvim_get_current_win() ~= ui.wins.pager
-    M.show_msg(tgt, kind, content, replace_last or enter_pager, append, id)
+    local enter_pager = tgt == 'pager' and not in_pager
+    M.show_msg(tgt, kind, content, replace_last or enter_pager or ui.cmd.expand > 0, append, id)
     -- Don't remember search_cmd message as actual message.
     if kind == 'search_cmd' then
       M.cmd.ids, M.prev_msg = {}, ''
-    elseif api.nvim_get_current_win() == ui.wins.pager and not enter_pager then
+    elseif tgt == 'pager' and in_pager and not enter_pager then
       api.nvim_win_set_cursor(ui.wins.pager, { api.nvim_buf_line_count(ui.bufs.pager), 0 })
     end
   end
@@ -570,21 +571,67 @@ local dialog_on_key = function(_, typed)
   end
 end
 
+---@param min integer Minimum window height.
+local function win_row_height(win, min)
+  if win ~= ui.wins.pager then
+    return (win == ui.wins.msg and 0 or 1) - ui.cmd.wmnumode,
+      math.min(min, math.ceil(o.lines * 0.5))
+  end
+  local cmdwin = fn.getcmdwintype() ~= '' and api.nvim_win_get_height(0) or 0
+  local global_stl = (cmdwin > 0 or o.laststatus == 3) and 1 or 0
+  local row = 1 - cmdwin - global_stl
+  return row, math.min(min, o.lines - 1 - ui.cmdheight - global_stl - cmdwin)
+end
+
+local function enter_pager()
+  in_pager = true
+  -- Cmdwin is closed one event iteration later so schedule in case it was open.
+  vim.schedule(function()
+    local height, id = api.nvim_win_get_height(ui.wins.pager), 0
+    api.nvim_win_set_cursor(ui.wins.pager, { 1, 0 })
+    api.nvim_set_option_value('eiw', '', { scope = 'local', win = ui.wins.pager })
+    api.nvim_set_current_win(ui.wins.pager)
+    id = api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'WinResized' }, {
+      group = ui.augroup,
+      callback = function(ev)
+        if fn.getcmdtype() ~= '' then
+          -- WinEnter fires before we can detect cmdwin will be entered: keep open.
+          return
+        elseif ev.event == 'WinResized' and fn.getcmdwintype() == '' then
+          -- Remember height to be restored when cmdwin is closed.
+          height = api.nvim_win_get_height(ui.wins.pager)
+        elseif ev.event == 'WinEnter' then
+          -- Close when no longer current window.
+          in_pager = api.nvim_get_current_win() == ui.wins.pager
+        end
+        in_pager = in_pager and api.nvim_win_is_valid(ui.wins.pager)
+        local cfg = in_pager and { relative = 'laststatus', col = 0 } or { hide = true }
+        if in_pager then
+          cfg.row, cfg.height = win_row_height(ui.wins.pager, height)
+        end
+        pcall(api.nvim_win_set_config, ui.wins.pager, cfg)
+        if not in_pager then
+          pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
+          api.nvim_del_autocmd(id)
+        end
+      end,
+      desc = 'Hide or reposition pager window.',
+    })
+  end)
+end
+
 --- Adjust visibility and dimensions of the message windows after certain events.
 ---
 ---@param tgt? 'cmd'|'dialog'|'msg'|'pager' Target window to be positioned (nil for all).
 function M.set_pos(tgt)
   local function win_set_pos(win)
-    local cfg = { hide = false, relative = 'laststatus', col = 10000 }
     local texth = api.nvim_win_text_height(win, {})
     local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
-    local lines = o.lines - (win == ui.wins.pager and ui.cmdheight + (o.ls == 3 and 2 or 0) or 0)
-    cfg.height = math.min(texth.all, math.ceil(lines * (win == ui.wins.pager and 1 or 0.5)))
+    local title = { 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging', 'MsgSeparator' }
+    local cfg = { hide = false, relative = 'laststatus', col = 10000 }
+    cfg.row, cfg.height = win_row_height(win, texth.all)
     cfg.border = win ~= ui.wins.msg and { '', top, '', '', '', '', '', '' } or nil
     cfg.mouse = tgt == 'cmd' or nil
-    cfg.row = (win == ui.wins.msg and 0 or 1) - ui.cmd.wmnumode
-    cfg.row = cfg.row - ((win == ui.wins.pager and o.laststatus == 3) and 1 or 0)
-    local title = { 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging', 'MsgSeparator' }
     cfg.title = tgt == 'dialog' and cfg.height < texth.all and { title } or nil
     api.nvim_win_set_config(win, cfg)
 
@@ -602,36 +649,14 @@ function M.set_pos(tgt)
     elseif tgt == 'msg' then
       -- Ensure last line is visible and first line is at top of window.
       fn.win_execute(ui.wins.msg, 'norm! Gzb')
-    elseif tgt == 'pager' and api.nvim_get_current_win() ~= ui.wins.pager then
+    elseif tgt == 'pager' and not in_pager then
       if fn.getcmdwintype() ~= '' then
         -- Cannot leave the cmdwin to enter the pager, so close it.
         -- NOTE: regression w.r.t. the message grid, which allowed this.
         -- Resolving that would require somehow bypassing textlock for the pager.
         api.nvim_command('quit')
       end
-
-      -- Cmdwin is actually closed one event iteration later so schedule in case it was open.
-      vim.schedule(function()
-        -- Allow events while the user is in the pager.
-        api.nvim_set_option_value('eiw', '', { scope = 'local', win = ui.wins.pager })
-        api.nvim_set_current_win(ui.wins.pager)
-        api.nvim_win_set_cursor(ui.wins.pager, { 1, 0 })
-
-        -- Make pager relative to cmdwin when it is opened, restore when it is closed.
-        api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'CmdwinLeave' }, {
-          callback = function(ev)
-            if api.nvim_win_is_valid(ui.wins.pager) then
-              local config = ev.event == 'CmdwinLeave' and cfg
-                or ev.event == 'WinEnter' and { hide = true }
-                or { relative = 'win', win = 0, row = 0, col = 0 }
-              api.nvim_win_set_config(ui.wins.pager, config)
-              api.nvim_set_option_value('eiw', 'all', { scope = 'local', win = ui.wins.pager })
-            end
-            return ev.event == 'WinEnter'
-          end,
-          desc = 'Hide or reposition pager window.',
-        })
-      end)
+      enter_pager()
     end
   end
 
