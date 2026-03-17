@@ -151,10 +151,18 @@ RSC['client/registerCapability'] = function(_, params, ctx)
     vim.lsp._set_defaults(client, bufnr)
   end
   for _, reg in ipairs(params.registrations) do
-    if reg.method == 'textDocument/documentColor' then
-      for bufnr in pairs(client.attached_buffers) do
-        if vim.lsp.document_color.is_enabled(bufnr) then
-          vim.lsp.document_color._buf_refresh(bufnr, client.id)
+    -- The capability framework's attach loop only runs during initial Client:on_attach.
+    -- When a client dynamically registers a new method, we need to manually trigger
+    -- on_attach for capabilities that are now supported.
+    for _, Cap in pairs(vim.lsp._capability.all) do
+      if reg.method == Cap.method then
+        for bufnr in pairs(client.attached_buffers) do
+          if vim.lsp._capability.is_enabled(Cap.name, { bufnr = bufnr, client_id = client.id }) then
+            local capability = Cap.active[bufnr] or Cap:new(bufnr)
+            if not capability.client_state[client.id] then
+              capability:on_attach(client.id)
+            end
+          end
         end
       end
     end
