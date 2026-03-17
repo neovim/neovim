@@ -1078,22 +1078,6 @@ describe('default statusline', function()
       title = 'terminal(ripgrep)',
     })
     eq('second-item: 20% ', get_progress())
-
-    -- works with custom formater
-    eq(
-      '20/100',
-      exec_lua(function()
-        return vim.ui.progress_status({
-          fmt = function(items)
-            local tot = 0
-            for _, item in ipairs(items) do
-              tot = tot + item.percent
-            end
-            return tostring(math.floor(tot / #items)) .. '/100'
-          end,
-        })
-      end)
-    )
   end)
 end)
 

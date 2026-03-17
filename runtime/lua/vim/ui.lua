@@ -308,6 +308,7 @@ end
 
 do
   ---@class ProgressMessage
+  ---@field id? number|string  ID of the progress message
   ---@field title? string   Title of the progress message
   ---@field status string  Status: "running" | "success" | "failed" | "cancel"
   ---@field percent? integer Percent complete (0–100)
@@ -318,7 +319,7 @@ do
   local progress = {}
 
   -- store progress events
-  local progress_group = vim.api.nvim_create_augroup('nvim.status.progress', { clear = true })
+  local progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
   vim.api.nvim_create_autocmd('Progress', {
     group = progress_group,
     desc = 'Track progress messages for statusline',
@@ -328,6 +329,7 @@ do
         return
       end
       progress[ev.data.id] = {
+        id = ev.data.id,
         title = ev.data.title,
         status = ev.data.status,
         percent = ev.data.percent or 0,
@@ -371,31 +373,17 @@ do
     end
   end
 
-  ---@class vim.ui.progress_status.Opts
-  ---@inlinedoc
-  ---
-  ---custom formater for progress messages
-  ---@field fmt? fun(running: ProgressMessage[]):string
-  --
-  --- Function to format the list of running progress messages for statusline
-  ---@param opts? vim.ui.progress_status.Opts Options
-  ---@return string Statusline component text
-  function M.progress_status(opts)
-    vim.validate('opts', opts, 'table', true)
-    if opts ~= nil then
-      vim.validate('fmt', opts.fmt, 'function', true)
-    end
-    if opts == nil or opts.fmt == nil then
-      opts = { fmt = progress_status_fmt }
-    end
+  ---Returns raw list of currently active progress objects.
+  ---@return ProgressMessage[]
+  function M.progress_get_running()
+    return vim.tbl_values(progress)
+  end
 
-    local running = {} ---@type ProgressMessage[]
-    for _, msg in pairs(progress) do
-      if msg.status == 'running' then
-        table.insert(running, msg)
-      end
-    end
-    return opts.fmt(running) or ''
+  --- Function to format the list of running progress messages for statusline
+  ---@return string Statusline component text
+  function M.progress_status()
+    local running = M.progress_get_running()
+    return progress_status_fmt(running) or ''
   end
 end
 
