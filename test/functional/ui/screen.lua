@@ -800,6 +800,7 @@ function Screen:_wait(check, flags)
   local minimal_timeout = default_timeout_factor * 2
 
   local immediate_seen, intermediate_seen = false, false
+  local intermediate_state_snapshot = ''
   if not check() then
     minimal_timeout = default_timeout_factor * 20
     immediate_seen = true
@@ -828,6 +829,10 @@ function Screen:_wait(check, flags)
     err = check()
     checked = true
     if err and immediate_seen then
+      if not intermediate_seen and flags.unchanged then
+        -- Save the first intermediate state for the error message.
+        intermediate_state_snapshot = self:_print_snapshot()
+      end
       intermediate_seen = true
     end
 
@@ -916,10 +921,14 @@ between asynchronous (feed(), nvim_input()) and synchronous API calls.
     print(string.sub(tb, 1, index))
   end
 
-  if flags.intermediate then
-    assert(intermediate_seen, 'expected intermediate screen state before final screen state')
-  elseif flags.unchanged then
-    assert(not intermediate_seen, 'expected screen state to be unchanged')
+  if flags.intermediate and not intermediate_seen then
+    busted.fail('Expected intermediate screen state before final screen state', 3)
+  elseif flags.unchanged and intermediate_seen then
+    busted.fail(
+      'Expected screen state to be unchanged.\nIntermediate screen state:\n'
+        .. intermediate_state_snapshot,
+      3
+    )
   end
 end
 
