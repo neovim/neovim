@@ -809,11 +809,18 @@ end
 ---
 --- @param pat string
 --- @return any[], integer
-function vim._expand_pat(pat, env)
+function vim._expand_pat(pat, env, local_env)
   env = env or _G
 
   if pat == '' then
     local result = vim.tbl_keys(env)
+
+    if local_env ~= nil then
+      for k in pairs(local_env) do
+        table.insert(result, k)
+      end
+    end
+
     table.sort(result)
     return result, 0
   end
@@ -836,7 +843,8 @@ function vim._expand_pat(pat, env)
   local prefix_match_pat = string.sub(pat, 1, #pat - #match_part) or ''
   local last_char = string.sub(last_part, #last_part)
 
-  local final_env = env
+  local final_env = env or local_env
+  local final_idx = 0
 
   --- Allows submodules to be defined on a `vim.<module>` table without eager-loading the module.
   ---
@@ -869,7 +877,7 @@ function vim._expand_pat(pat, env)
     end
   end
 
-  for _, part in ipairs(parts) do
+  for i, part in ipairs(parts) do
     if type(final_env) ~= 'table' then
       return {}, 0
     end
@@ -900,9 +908,18 @@ function vim._expand_pat(pat, env)
       key = result
     end
     final_env = safe_tbl_get(final_env, key)
+    final_idx = i
 
     if not final_env then
-      return {}, 0
+      if i > 1 or not local_env then
+        return {}, 0
+      end
+
+      -- on first iteration we try looking for the part in the local environment
+      final_env = safe_tbl_get(local_env, key)
+      if not final_env then
+        return {}, 0
+      end
     end
   end
 
@@ -991,6 +1008,11 @@ function vim._expand_pat(pat, env)
     --- @type table<string, vim.api.keyset.get_option_info>
     local options = vim.api.nvim_get_all_options_info()
     insert_keys(vim.iter(options):filter(filter):fold({}, _fold_to_map))
+  end
+
+  -- if top level prediction, take local env into account as well
+  if final_idx == 0 and type(local_env) == 'table' then
+    insert_keys(local_env)
   end
 
   keys = vim.tbl_keys(keys)

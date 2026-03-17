@@ -2014,7 +2014,18 @@ void nlua_expand_pat(expand_T *xp)
   ptrdiff_t patlen = xp->xp_line + xp->xp_col - pat;
   lua_pushlstring(lstate, pat, (size_t)patlen);
 
-  if (nlua_pcall(lstate, 1, 2) != 0) {
+  lua_pushnil(lstate);
+
+  lua_newtable(lstate);
+  lua_newtable(lstate);
+  lua_pushinteger(lstate, 0);
+  lua_setfield(lstate, -2, "startline");
+  lua_pushinteger(lstate, 0);
+  lua_setfield(lstate, -2, "endline");
+
+  lua_setfield(lstate, -2, "ev");
+
+  if (nlua_pcall(lstate, 3, 2) != 0) {
     nlua_error(lstate, _("vim._expand_pat: %.*s"));
     return;
   }
