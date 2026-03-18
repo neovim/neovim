@@ -1670,7 +1670,7 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 ---          0 = first, N = after Nth.
 --- - layout: Initial window layout for the tabpage, as a nested list. See `nvim_tabpage_set()` for
 ---          details.
---- @return integer # Tabpage handle of the created tabpage
+--- @return integer # |tab-ID| of the new tabpage
 function vim.api.nvim_open_tabpage(buffer, enter, config) end
 
 --- Open a terminal instance in a buffer
