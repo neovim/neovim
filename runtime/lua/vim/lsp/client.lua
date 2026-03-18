@@ -1370,7 +1370,7 @@ local function reset_defaults(bufnr)
   vim._with({ buf = bufnr }, function()
     local keymap = vim.fn.maparg('K', 'n', false, true)
     if keymap and keymap.callback == lsp.buf.hover and keymap.buffer == 1 then
-      vim.keymap.del('n', 'K', { buffer = bufnr })
+      vim.keymap.del('n', 'K', { buf = bufnr })
     end
   end)
 end

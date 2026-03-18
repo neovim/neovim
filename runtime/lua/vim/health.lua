@@ -505,7 +505,7 @@ function M._check(mods, plugin_names)
         if not pcall(vim.cmd.close) then
           vim.cmd.bdelete()
         end
-      end, { buffer = bufnr, silent = true, noremap = true, nowait = true })
+      end, { buf = bufnr, silent = true, noremap = true, nowait = true })
     end
   end)
 

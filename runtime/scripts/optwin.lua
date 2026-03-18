@@ -701,9 +701,9 @@ else
       local name = line:match('[^\t]*')
       vim.cmd.help(("'%s'"):format(name))
     end
-  end, { buffer = buf })
+  end, { buf = buf })
 
-  vim.keymap.set({ 'n', 'i' }, '<space>', update_current_line, { buffer = buf })
+  vim.keymap.set({ 'n', 'i' }, '<space>', update_current_line, { buf = buf })
 end
 
 vim.cmd '1'

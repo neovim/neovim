@@ -462,12 +462,12 @@ function M.signature_help(config)
       vim.keymap.set('n', '<Plug>(nvim.lsp.ctrl-s)', function()
         show_signature(fwin)
       end, {
-        buffer = fbuf,
+        buf = fbuf,
         desc = 'Cycle next signature',
       })
       if vim.fn.hasmapto('<Plug>(nvim.lsp.ctrl-s)', 'n') == 0 then
         vim.keymap.set('n', '<C-s>', '<Plug>(nvim.lsp.ctrl-s)', {
-          buffer = fbuf,
+          buf = fbuf,
           desc = 'Cycle next signature',
         })
       end
