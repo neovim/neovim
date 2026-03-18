@@ -3583,8 +3583,8 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
       • {modes}  (`string|string[]`)
       • {lhs}    (`string`)
       • {opts}   (`table?`) A table with the following fields:
-                 • {buffer}? (`integer|boolean`) Remove a mapping from the
-                   given buffer. When `0` or `true`, use the current buffer.
+                 • {buf}? (`integer|boolean`) Remove a mapping from the given
+                   buffer. When `0` or `true`, use the current buffer.
 
     See also: ~
       • |vim.keymap.set()|
@@ -3630,7 +3630,7 @@ vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
                    below).
 
                  Also accepts:
-                 • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
+                 • {buf}? (`integer|boolean`) Creates buffer-local mapping,
                    `0` or `true` for current buffer.
                  • {remap}? (`boolean`, default: `false`) Make the mapping
                    recursive. Inverse of {noremap}.
