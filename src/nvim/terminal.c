@@ -2499,7 +2499,7 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
   const size_t scbk = (size_t)buf->b_p_scbk;
   assert(term->sb_current < SIZE_MAX);
   if (term->sb_pending > 0) {  // Pending rows must be processed first.
-    abort();
+    return;
   }
 
   // Delete lines exceeding the new 'scrollback' limit.
