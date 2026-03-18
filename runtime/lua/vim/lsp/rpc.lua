@@ -481,11 +481,11 @@ function Client:handle_body(body)
   elseif decoded.id == vim.NIL then
     log.warn('Server sent response with null id', decoded.error)
     self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
-  elseif type(decoded.method) == 'string' and decoded.id == vim.NIL then
-    -- Server request with null id is invalid per JSON-RPC 2.0 (id SHOULD NOT be null).
-    -- Do not fall through to the notification branch: the presence of id (even null)
-    -- distinguishes a request from a notification (§4.1).
-    log.warn('Server sent request with null id', decoded.method)
+  elseif
+    type(decoded.method) == 'string'
+    and not vim.tbl_contains({ 'number', 'string' }, type(decoded.id))
+  then
+    log.warn('Server sent request with invalid id', decoded.method, decoded.id)
     self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
   elseif type(decoded.method) == 'string' then
     -- Notification
