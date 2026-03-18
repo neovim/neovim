@@ -54,10 +54,10 @@ mode. *t_CTRL-\_CTRL-O*
 
 Terminal-mode forces these local options:
 
-    'cursorlineopt' = number
-    'nocursorcolumn'
-    'scrolloff' = 0
-    'sidescrolloff' = 0
+- 'cursorlineopt' = number
+- 'nocursorcolumn'
+- 'scrolloff' = 0
+- 'sidescrolloff' = 0
 
 Terminal-mode has its own |:tnoremap| namespace for mappings, this can be used
 to automate any terminal interaction.
@@ -101,6 +101,7 @@ Configuration                                                  *terminal-config*
 
 - Options: 'modified', 'scrollback'
 - Events: |TermOpen|, |TermEnter|, |TermLeave|, |TermClose|
+- Event groups: "nvim.terminal" |default-autocmds|
 - Highlight groups: |hl-TermCursor|
 
 Terminal sets local defaults for some options, which may differ from your
@@ -114,7 +115,13 @@ global configuration.
 - 'foldcolumn' is set to "0"
 
 You can change the defaults with a TermOpen autocommand: >vim
-    au TermOpen * setlocal list
+    :autocmd TermOpen * setlocal list
+
+By default, "[Process exited]" is displayed when the terminal process ends. To
+disable that, you can delete the "nvim.terminal" TermClose handler (this also
+deletes other |default-autocmds| TermClose functionality): >vim
+    :autocmd! nvim.terminal TermClose
+<
 
 TERMINAL COLORS ~
 

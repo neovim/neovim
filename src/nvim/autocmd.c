@@ -1556,7 +1556,7 @@ static void deferred_event(void **argv)
 /// @param event event that occurred
 /// @param fname filename, NULL or empty means use actual file name
 /// @param fname_io filename to use for <afile> on cmdline
-/// @param force When true, ignore autocmd_busy
+/// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param buf Buffer for <abuf>
 ///
 /// @return true if some commands were executed.
@@ -1571,7 +1571,7 @@ bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_
 /// @param event event that occurred
 /// @param fname NULL or empty means use actual file name
 /// @param fname_io fname to use for <afile> on cmdline
-/// @param force When true, ignore autocmd_busy
+/// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param buf Buffer for <abuf>
 /// @param exarg Ex command arguments
 ///
@@ -1590,7 +1590,7 @@ bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force
 /// @param event event that occurred
 /// @param fname NULL or empty means use actual file name
 /// @param fname_io fname to use for <afile> on cmdline
-/// @param force When true, ignore autocmd_busy
+/// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param buf Buffer for <abuf>
 /// @param[in,out] retval caller's retval
 ///
@@ -1643,7 +1643,7 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param fname filename, NULL or empty means use actual file name
 /// @param fname_io filename to use for <afile> on cmdline,
 ///                 NULL means use `fname`.
-/// @param force When true, ignore autocmd_busy
+/// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param group autocmd group ID or AUGROUP_ALL
 /// @param buf Buffer for <abuf>
 /// @param eap Ex command arguments
