@@ -461,7 +461,7 @@ These existing features changed their behavior.
   absolute paths (to the current drive) and no longer relative.
 • When 'shelltemp' is off, shell commands now use `pipe()` and not `socketpair()`
   for input and output. This matters mostly for Linux where some command lines
-  using "/dev/stdin" and similiar would break as these special files can be
+  using "/dev/stdin" and similar would break as these special files can be
   reopened when backed by pipes but not when backed by socket pairs.
 
 ==============================================================================
