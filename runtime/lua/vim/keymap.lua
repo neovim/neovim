@@ -24,7 +24,7 @@ local keymap = {}
 --- -- Map "x" to a Lua function:
 --- vim.keymap.set('n', 'x', function() print('real lua function') end)
 --- -- Map "<leader>x" to multiple modes for the current buffer:
---- vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buffer = true })
+--- vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buf = true })
 --- -- Map <Tab> to an expression (|:map-<expr>|):
 --- vim.keymap.set('i', '<Tab>', function()
 ---   return vim.fn.pumvisible() == 1 and '<C-n>' or '<Tab>'
@@ -118,7 +118,7 @@ end
 --- ```lua
 --- vim.keymap.del('n', 'lhs')
 ---
---- vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
+--- vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buf = 5 })
 --- ```
 ---
 ---@param modes string|string[]

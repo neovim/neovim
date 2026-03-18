@@ -138,7 +138,7 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
         -- Unset 'omnifunc'
         vim.bo[ev.buf].omnifunc = nil
         -- Unmap K
-        vim.keymap.del('n', 'K', { buffer = ev.buf })
+        vim.keymap.del('n', 'K', { buf = ev.buf })
         -- Disable document colors
         vim.lsp.document_color.enable(false, ev.buf)
       end,
