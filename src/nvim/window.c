@@ -7279,6 +7279,61 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
       wp->w_hsep_height = 0;
       comp_col();
     }
+  } else if (fr->fr_layout == FR_ROW && statusline && !is_stl_global) {
+    int max_stlh = 0;
+    // Find the max status height needed across all leaf windows.
+    frame_T *fp;
+    FOR_ALL_FRAMES(fp, fr->fr_child) {
+      max_stlh = STATUS_HEIGHT;
+      break;
+    }
+    if (max_stlh == 0) {
+      return;
+    }
+
+    // Find a frame to take max_stlh lines from.
+    frame_T *fp2 = fr;
+    while (fp2->fr_height - frame_minheight(fp2, NULL) < max_stlh) {
+      if (fp2 == topframe) {
+        emsg(_(e_noroom));
+        return;
+      }
+      if (fp2->fr_parent->fr_layout == FR_COL && fp2->fr_prev != NULL) {
+        fp2 = fp2->fr_prev;
+      } else {
+        fp2 = fp2->fr_parent;
+      }
+    }
+
+    int new_row_height;
+    if (fp2 != fr) {
+      frame_new_height(fp2, fp2->fr_height - max_stlh, false, false, false);
+      new_row_height = fr->fr_height + max_stlh;
+    } else {
+      new_row_height = fr->fr_height;
+    }
+
+    // Set status and content heights for all leaves.
+    FOR_ALL_FRAMES(fp, fr->fr_child) {
+      if (fp->fr_win != NULL) {
+        win_T *wp = fp->fr_win;
+        if (wp->w_status_height == 0) {
+          wp->w_status_height = 1;
+          win_new_height(wp, new_row_height - wp->w_status_height);
+          frame_fix_height(wp);
+          comp_col();
+          redraw_all_later(UPD_SOME_VALID);
+          if (abs(wp->w_height - wp->w_prev_height) == 1) {
+            wp->w_prev_height = wp->w_height;
+          }
+        }
+      } else {
+        last_status_rec(fp, statusline, is_stl_global);  // nested frames
+      }
+    }
+
+    fr->fr_height = new_row_height;
+    win_comp_pos();
   } else {
     // For a column or row frame, recursively call this function for all child frames
     frame_T *fp;

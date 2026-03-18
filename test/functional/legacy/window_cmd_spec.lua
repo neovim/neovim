@@ -431,3 +431,24 @@ it('resizing window from another tabpage', function()
                                                                                |
   ]])
 end)
+
+-- oldtest: Test_laststatus_vsplit_row_height()
+it("changing 'laststatus' from 0 to 2 with vertical splits", function()
+  clear()
+  local screen = Screen.new(75, 8)
+  exec([[
+    set ls=0
+    vsplit
+    topleft new
+    wincmd _
+    set ls=2
+  ]])
+  screen:expect([[
+    ^                                                                           |
+    {1:~                                                                          }|*3
+    {3:[No Name]                                                                  }|
+                                         │                                     |
+    {2:[No Name]                             [No Name]                            }|
+                                                                               |
+  ]])
+end)
