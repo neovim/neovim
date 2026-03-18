@@ -3178,7 +3178,7 @@ describe('vim.keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.keymap.set('n', 'asdf', function() GlobalCount = GlobalCount + 1 end, {buffer=true})
+      vim.keymap.set('n', 'asdf', function() GlobalCount = GlobalCount + 1 end, {buf=true})
       return GlobalCount
     ]]
     )
@@ -3188,7 +3188,7 @@ describe('vim.keymap', function()
     eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
-      vim.keymap.del('n', 'asdf', {buffer=true})
+      vim.keymap.del('n', 'asdf', {buf=true})
     ]]
 
     feed('asdf\n')
@@ -3201,16 +3201,16 @@ describe('vim.keymap', function()
     eq(
       true,
       exec_lua [[
-      opts = {buffer=true}
+      opts = {buf=true}
       vim.keymap.set('n', 'asdf', function() end, opts)
-      return opts.buffer
+      return opts.buf
     ]]
     )
     eq(
       true,
       exec_lua [[
       vim.keymap.del('n', 'asdf', opts)
-      return opts.buffer
+      return opts.buf
     ]]
     )
   end)
