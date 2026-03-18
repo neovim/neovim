@@ -119,7 +119,7 @@ end
 ---@param ctx lsp.HandlerContext
 function Completor:handler(err, result, ctx)
   if err then
-    log.error('inlinecompletion', err)
+    log.error('inline_completion', err)
     return
   end
   if not result or not vim.startswith(api.nvim_get_mode().mode, 'i') then
