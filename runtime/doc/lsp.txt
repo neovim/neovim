@@ -1157,7 +1157,13 @@ get_clients({filter})                                  *vim.lsp.get_clients()*
 get_configs({filter})                                  *vim.lsp.get_configs()*
     Get LSP configs.
 
-    Note: Will eagerly evaluate config files in `'runtimepath'` if necessary.
+    WARNING:
+    • May eagerly (prematurely!) evaluate config files in 'runtimepath'.
+    • Configs may be in a partial state if they have async properties such as
+      `on_dir()`.
+
+    Attributes: ~
+        Since: 0.12.0
 
     Parameters: ~
       • {filter}  (`table?`) Key-value pairs used to filter the returned

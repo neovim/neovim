@@ -322,7 +322,7 @@ do
   -- store progress events
   local progress_group, progress_autocmd = nil, nil
 
-  ---Initialize progress event listeners
+  --- Initialize Progress handlers.
   local function progress_init()
     progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
     progress_autocmd = vim.api.nvim_create_autocmd('Progress', {
@@ -333,12 +333,8 @@ do
         if not ev.data or not ev.data.id then
           return
         end
-        progress[ev.data.id] = {
-          id = ev.data.id,
-          title = ev.data.title,
-          status = ev.data.status,
-          percent = ev.data.percent or 0,
-        }
+        ev.data.percent = ev.data.percent or 0
+        progress[ev.data.id] = ev.data
 
         -- Clear finished items
         if
@@ -353,7 +349,7 @@ do
     })
   end
 
-  ---Return statusline text summarizing progress messages.
+  --- Gets a status description summarizing currently running progress messages.
   --- - If none: returns empty string
   --- - If one running item: "title: 42%"
   --- - If multiple running items: "Progress: N items AVG%"
@@ -379,11 +375,11 @@ do
     end
   end
 
-  --- Gets the status of currently running progress messages, in a format
-  --- convenient for inclusion in 'statusline'.
-  ---@return string formatted text of progress status for statusline
+  --- Gets a status description summarizing currently running progress messages.
+  --- Convenient for inclusion in 'statusline'.
+  ---
+  ---@return string # Progress status
   function M.progress_status()
-    -- Create progress event listener on first call
     if progress_autocmd == nil then
       progress_init()
     end

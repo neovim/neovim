@@ -157,8 +157,6 @@ API
 • |vim.secure.read()| now returns `true` for trusted directories. Previously
   it would return `nil`, thus impossible to tell if the directory was actually
   trusted.
-• Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
-  by |vim.lsp.enable()|.
 • |nvim_ui_send()| writes arbitrary data to a UI's stdout. Use this to write
   escape sequences to the terminal when Nvim is running in the |TUI|.
 • |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
@@ -281,6 +279,7 @@ LSP
   non-applicable LSP clients.
 • |vim.lsp.is_enabled()| checks if a LSP config is enabled (without
   "resolving" it).
+• |vim.lsp.get_configs()| gets all LSP configs matching an optional filter.
 • Support for `workspace/diagnostic`: |vim.lsp.buf.workspace_diagnostics()|
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
 • Incremental selection is now supported via `textDocument/selectionRange`.
@@ -331,7 +330,6 @@ LSP
 • Support for `workspace/codeLens/refresh`:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
 • |gx| opens `textDocument/documentLink` items found at cursor.
-• |vim.lsp.get_configs()| can get all LSP configs matching certain conditions.
 
 LUA
 
@@ -466,8 +464,8 @@ UI
 • Cursor shape indicates when it is behind an unfocused floating window.
 • Improved LSP signature help rendering.
 • Multigrid UIs can call nvim_input_mouse with grid 0 to let Nvim decide the grid.
-• |vim.ui.progress_status()| returns a formatted string of currently
-running |progress-message|.
+• |vim.ui.progress_status()| returns a status description of currently running
+  |progress-message|s.
 
 VIMSCRIPT
 

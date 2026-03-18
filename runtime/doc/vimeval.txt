@@ -1436,7 +1436,7 @@ The sequence must be an even number of hex characters.  Example: >
 ------------------------------------------------------------------------------
 literal-string						*literal-string* *E115*
 
-'string'		string constant			*expr-'*
+`'string'`		string constant			*expr-'*
 
 Note that single quotes are used.
 

@@ -2380,7 +2380,7 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
     if (p == NULL) {
       p = strrchr(fname, '\\');
     }
-    if (p == NULL && ASCII_ISALPHA(fname[0]) && fname[1] == ':') {
+    if (p == NULL && ASCII_ISALPHA(fname[0]) && fname[1] == ':') {  // drive letter
       p = fname + 1;
     }
 #endif
