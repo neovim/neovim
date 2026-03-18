@@ -4,8 +4,6 @@
 local api = vim.api
 local lsp = vim.lsp
 local util = lsp.util
-local Range = vim.treesitter._range
-
 local Capability = require('vim.lsp._capability')
 
 local M = {}
@@ -13,7 +11,7 @@ local M = {}
 --- @class (private) vim.lsp.document_color.HighlightInfo
 --- @field lsp_info lsp.ColorInformation Unprocessed LSP color information
 --- @field hex_code string Resolved HEX color
---- @field range Range4 Range of the highlight
+--- @field range vim.Range Range of the highlight
 --- @field hl_group? string Highlight group name. Won't be present if the style is a custom function.
 
 --- @class (private) vim.lsp.document_color.ClientState
@@ -28,7 +26,7 @@ local M = {}
 --- Highlight style. It can be one of the pre-defined styles, a string to be used as virtual text, or a
 --- function that receives the buffer handle, the range (start line, start col, end line, end col) and
 --- the resolved hex color. (default: `'background'`)
---- @field style? 'background'|'foreground'|'virtual'|string|fun(bufnr: integer, range: Range4, hex_code: string)
+--- @field style? 'background'|'foreground'|'virtual'|string|fun(bufnr: integer, range: vim.Range, hex_code: string)
 
 -- Default options.
 --- @type vim.lsp.document_color.Opts
@@ -201,12 +199,7 @@ function Provider:handler(err, result, ctx)
   local style = document_color_opts.style
   local position_encoding = assert(lsp.get_client_by_id(ctx.client_id)).offset_encoding
   for _, res in ipairs(result) do
-    local range = {
-      res.range.start.line,
-      util._get_line_byte_from_position(self.bufnr, res.range.start, position_encoding),
-      res.range['end'].line,
-      util._get_line_byte_from_position(self.bufnr, res.range['end'], position_encoding),
-    }
+    local range = vim.range.lsp(self.bufnr, res.range, position_encoding)
     local hex_code = get_hex_code(res.color)
     --- @type vim.lsp.document_color.HighlightInfo
     local hl_info = { range = range, hex_code = hex_code, lsp_info = res }
@@ -270,19 +263,31 @@ api.nvim_set_decoration_provider(document_color_ns, {
           if type(style) == 'function' then
             style(bufnr, hl.range, hl.hex_code)
           elseif style == 'foreground' or style == 'background' then
-            api.nvim_buf_set_extmark(bufnr, state.namespace, hl.range[1], hl.range[2], {
-              end_row = hl.range[3],
-              end_col = hl.range[4],
-              hl_group = hl.hl_group,
-              strict = false,
-            })
+            api.nvim_buf_set_extmark(
+              bufnr,
+              state.namespace,
+              hl.range.start.row,
+              hl.range.start.col,
+              {
+                end_row = hl.range.end_.row,
+                end_col = hl.range.end_.col,
+                hl_group = hl.hl_group,
+                strict = false,
+              }
+            )
           else
             -- Default swatch: \uf0c8
             local swatch = style == 'virtual' and ' ' or style
-            api.nvim_buf_set_extmark(bufnr, state.namespace, hl.range[1], hl.range[2], {
-              virt_text = { { swatch, hl.hl_group } },
-              virt_text_pos = 'inline',
-            })
+            api.nvim_buf_set_extmark(
+              bufnr,
+              state.namespace,
+              hl.range.start.row,
+              hl.range.start.col,
+              {
+                virt_text = { { swatch, hl.hl_group } },
+                virt_text_pos = 'inline',
+              }
+            )
           end
         end
 
@@ -297,11 +302,11 @@ api.nvim_set_decoration_provider(document_color_ns, {
 local function get_hl_info_under_cursor(provider)
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
   cursor_row = cursor_row - 1 -- Convert to 0-based index
-  local cursor_range = { cursor_row, cursor_col, cursor_row, cursor_col } --- @type Range4
+  local cursor_pos = vim.pos(cursor_row, cursor_col)
 
   for client_id, state in pairs(provider.client_state) do
     for _, hl in ipairs(state.hl_info) do
-      if Range.contains(hl.range, cursor_range) then
+      if vim.Range.has(hl.range, cursor_pos) then
         return hl, client_id
       end
     end
@@ -330,10 +335,7 @@ function M.color_presentation()
   local params = {
     textDocument = { uri = uri },
     color = hl_info.lsp_info.color,
-    range = {
-      start = { line = hl_info.range[1], character = hl_info.range[2] },
-      ['end'] = { line = hl_info.range[3], character = hl_info.range[4] },
-    },
+    range = hl_info.range:to_lsp(client.offset_encoding),
   }
 
   --- @param result lsp.ColorPresentation[]

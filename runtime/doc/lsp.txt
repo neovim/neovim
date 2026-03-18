@@ -2146,7 +2146,7 @@ enable({enable}, {filter}, {opts})           *vim.lsp.document_color.enable()*
                     for all.
       • {opts}    (`table?`) A table with the following fields:
                   • {style}?
-                    (`'background'|'foreground'|'virtual'|string|fun(bufnr: integer, range: Range4, hex_code: string)`)
+                    (`'background'|'foreground'|'virtual'|string|fun(bufnr: integer, range: vim.Range, hex_code: string)`)
                     Highlight style. It can be one of the pre-defined styles,
                     a string to be used as virtual text, or a function that
                     receives the buffer handle, the range (start line, start
