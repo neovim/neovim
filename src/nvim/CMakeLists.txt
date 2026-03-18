@@ -134,6 +134,8 @@ elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     $<$<CONFIG:Release>:-Wno-unused-result>
     $<$<CONFIG:RelWithDebInfo>:-Wno-unused-result>
     $<$<CONFIG:MinSizeRel>:-Wno-unused-result>)
+
+  target_link_options(nvim_bin PRIVATE -Wno-free-nonheap-object) # see #37250
 elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
   # 3.4.1 used there.
