@@ -64,7 +64,6 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/extmark.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -211,7 +210,6 @@ struct terminal {
   VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
 
   size_t refcount;                  // reference count
-  uint32_t exitmsg_id;
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
@@ -681,10 +679,6 @@ void terminal_close(Terminal **termpp, int status)
     // If called from buf_close_terminal() after the process has already exited, we
     // only need to call the close callback to clean up the terminal object.
     only_destroy = true;
-    // Buffer may be reused so delete the "[Process exited]" msg
-    if (buf) {
-      extmark_del_id(buf, (uint32_t)-1, term->exitmsg_id);
-    }
   } else {
     // flush any pending changes to the buffer
     if (!exiting) {
@@ -695,6 +689,7 @@ void terminal_close(Terminal **termpp, int status)
     term->closed = true;
   }
 
+  int pos = buf ? buf->b_ml.ml_line_count - 1 : 0;
   if (status == -1 || exiting) {
     // If this was called by buf_close_terminal() (status is -1), or if exiting, we
     // must inform the buffer the terminal no longer exists so that buf_freeall()
@@ -714,37 +709,15 @@ void terminal_close(Terminal **termpp, int status)
   } else if (!only_destroy) {
     // Associated channel has been closed and the editor is not exiting.
     // Do not call the close callback now. Wait for the user to press a key.
-    char msg[sizeof("[Process exited ]") + NUMBUFLEN];
-    if (((Channel *)term->opts.data)->streamtype == kChannelStreamInternal) {
-      snprintf(msg, sizeof msg, "[Terminal closed]");
-    } else {
-      snprintf(msg, sizeof msg, "[Process exited %d]", status);
-    }
-
-    // Show the msg as virtual text instead of adding it to buffer
-    VirtTextChunk *chunk = xmalloc(sizeof(VirtTextChunk));
-    *chunk = (VirtTextChunk) { .text = xstrdup(msg), .hl_id = -1 };
-    DecorVirtText *virt_text = xmalloc(sizeof(DecorVirtText));
-    *virt_text = (DecorVirtText) {
-      .priority = DECOR_PRIORITY_BASE,
-      .pos = kVPosWinCol,
-      .data.virt_text = { .items = chunk, .size = 1 }
-    };
-    DecorInline decor = {
-      .ext = true, .data.ext = { .sh_idx = DECOR_ID_INVALID, .vt = virt_text }
-    };
-
-    int pos = MIN(row_to_linenr(term, term->cursor.row),
-                  buf->b_ml.ml_line_count - 1);
-    extmark_set(buf, (uint32_t)-1, &term->exitmsg_id, pos, 0, -1, 0,
-                decor, 0, true, false, true, false, NULL);
-
     // Redraw statusline to show the exit code.
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_buffer == buf) {
         wp->w_redr_status = true;
       }
     }
+
+    // Gets the line number to display "[Process exited]" virt text
+    pos = MIN(row_to_linenr(term, term->cursor.row), pos);
   }
 
   if (only_destroy) {
@@ -756,7 +729,13 @@ void terminal_close(Terminal **termpp, int status)
     dict_T *dict = get_v_event(&save_v_event);
     tv_dict_add_nr(dict, S_LEN("status"), status);
     tv_dict_set_keys_readonly(dict);
-    apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
+
+    MAXSIZE_TEMP_DICT(data, 1);
+    PUT_C(data, "pos", INTEGER_OBJ(pos));
+
+    apply_autocmds_group(EVENT_TERMCLOSE, NULL, NULL, status >= 0, AUGROUP_ALL,
+                         buf, NULL, &DICT_OBJ(data));
+
     restore_v_event(dict, &save_v_event);
   }
 }
