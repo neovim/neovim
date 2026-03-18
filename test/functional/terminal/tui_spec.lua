@@ -3316,8 +3316,6 @@ describe('TUI FocusGained/FocusLost', function()
   it('in hit-enter prompt', function()
     t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     feed_data(":echom 'msg1'|echom 'msg2'|echom 'msg3'|echom 'msg4'|echom 'msg5'\n")
-    -- Execute :messages to provoke the hit-enter prompt.
-    feed_data(':messages\n')
     screen:expect([[
       msg1                                              |
       msg2                                              |
