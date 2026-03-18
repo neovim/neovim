@@ -865,6 +865,12 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     goto error;
   });
 
+  // Message-id may be user-defined only if String, not Integer.
+  VALIDATE(opts->id.type != kObjectTypeInteger || msg_id_exists(opts->id.data.integer),
+           "Invalid 'id': %" PRId64, opts->id.data.integer, {
+    goto error;
+  });
+
   MessageData msg_data = { .title = opts->title, .status = opts->status,
                            .percent = opts->percent, .data = opts->data };
 

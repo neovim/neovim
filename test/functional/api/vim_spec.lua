@@ -3792,6 +3792,11 @@ describe('API', function()
         pcall_err(api.nvim_echo, { { '', '', '' } }, 1, {})
       )
       eq("Invalid 'hl_group': 'text highlight'", pcall_err(api.nvim_echo, { { '', false } }, 1, {}))
+      eq("Invalid 'id': 4", pcall_err(api.nvim_echo, { { 'foo' } }, false, { id = 4 }))
+      eq("Invalid 'id': 0", pcall_err(api.nvim_echo, { { 'foo' } }, false, { id = 0 }))
+      eq("Invalid 'id': -1", pcall_err(api.nvim_echo, { { 'foo' } }, false, { id = -1 }))
+      -- String ids are always allowed (user-defined).
+      eq('my.msg.id', api.nvim_echo({ { 'foo' } }, false, { id = 'my.msg.id' }))
     end)
 
     it('should clear cmdline message before echo', function()
@@ -3884,8 +3889,8 @@ describe('API', function()
 
     it('increments message ID', function()
       eq(1, api.nvim_echo({ { 'foo' } }, false, {}))
-      eq(4, api.nvim_echo({ { 'foo' } }, false, { id = 4 }))
-      eq(5, api.nvim_echo({ { 'foo' } }, false, {}))
+      eq(1, api.nvim_echo({ { 'foo' } }, false, { id = 1 })) -- User may pass existing id.
+      eq(2, api.nvim_echo({ { 'foo' } }, false, {}))
     end)
 
     it('no use-after-free for custom kind with :messages #38289', function()
