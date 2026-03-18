@@ -137,6 +137,7 @@ EDITOR
   kind/menu/info/abbr for the popup menu.
 • |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
+• |:detach!| detaches all other UIs, keeping only the current one.
 • |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
 
