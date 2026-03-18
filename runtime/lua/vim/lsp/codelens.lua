@@ -128,6 +128,8 @@ function Provider:handler(err, result, ctx)
 
   state.row_lenses = row_lenses
   self.version = ctx.version
+
+  api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
 end
 
 ---@package

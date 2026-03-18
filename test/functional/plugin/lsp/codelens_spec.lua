@@ -178,12 +178,18 @@ describe('vim.lsp.codelens', function()
     screen:expect({ grid = grid_with_lenses })
   end)
 
-  it('clears code lenses when disabled', function()
+  it('clears/shows code lenses when disabled/enabled', function()
     exec_lua(function()
       vim.lsp.codelens.enable(false)
     end)
 
     screen:expect({ grid = grid_without_lenses })
+
+    exec_lua(function()
+      vim.lsp.codelens.enable(true)
+    end)
+
+    screen:expect({ grid = grid_with_lenses })
   end)
 
   it('clears code lenses when sole client detaches', function()
