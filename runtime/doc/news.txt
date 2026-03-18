@@ -199,6 +199,7 @@ DEFAULTS
   Unset 'exrc' to stop further search.
 • Mappings:
   • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
+  • |grx| in Normal mode maps to |vim.lsp.codelens.run()|
 • 'shada' default now excludes "/tmp/" and "/private/" paths to reduce clutter in |:oldfiles|.
 • Enabled treesitter highlighting for Markdown files
 
