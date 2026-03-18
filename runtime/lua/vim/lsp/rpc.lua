@@ -478,8 +478,8 @@ function Client:handle_body(body)
       self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
       log.error('No callback found for server response id ' .. result_id)
     end
-  elseif decoded.id == vim.NIL and decoded.error ~= nil and decoded.error ~= vim.NIL then
-    log.warn('Server sent error response with null id', decoded.error)
+  elseif decoded.id == vim.NIL then
+    log.warn('Server sent response with null id', decoded.error)
     self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
   elseif type(decoded.method) == 'string' and decoded.id == vim.NIL then
     -- Server request with null id is invalid per JSON-RPC 2.0 (id SHOULD NOT be null).
