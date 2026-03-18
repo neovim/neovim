@@ -435,6 +435,9 @@ local to_vim_value = {
   map = function(_, value)
     if type(value) == 'string' then
       return value
+    elseif vim.isarray(value) then
+      value = remove_duplicate_values(value)
+      return table.concat(value, ',')
     end
 
     local result = {}
