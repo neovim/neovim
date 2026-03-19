@@ -2,6 +2,7 @@ local api = vim.api
 
 ---@alias vim.lsp.capability.Name
 ---| 'codelens'
+---| 'document_color'
 ---| 'semantic_tokens'
 ---| 'folding_range'
 ---| 'linked_editing_range'

@@ -64,6 +64,8 @@ body {
     }
 
     bufnr = n.api.nvim_get_current_buf()
+    insert(text)
+
     client_id = exec_lua(function()
       _G.server = _G._create_server({
         capabilities = {
@@ -92,12 +94,6 @@ body {
       })
 
       return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
-    end)
-
-    insert(text)
-
-    exec_lua(function()
-      vim.lsp.document_color.enable(true, bufnr)
     end)
 
     screen:expect({ grid = grid_with_colors })
@@ -159,7 +155,7 @@ body {
   end)
 
   it('does not clear document colors when one of several clients detaches', function()
-    local client_id2 = exec_lua(function()
+    exec_lua(function()
       _G.server2 = _G._create_server({
         capabilities = {
           colorProvider = true,
@@ -170,16 +166,14 @@ body {
           end,
         },
       })
-      local client_id2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
-      vim.lsp.document_color.enable(true, bufnr)
-      return client_id2
+      vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
     end)
 
     exec_lua(function()
-      vim.lsp.get_client_by_id(client_id2):stop()
+      vim.lsp.get_client_by_id(client_id):stop()
     end)
 
-    screen:expect({ grid = grid_with_colors, unchanged = true })
+    screen:expect({ grid = grid_without_colors })
   end)
 
   describe('is_enabled()', function()
@@ -187,27 +181,27 @@ body {
       eq(
         true,
         exec_lua(function()
-          return vim.lsp.document_color.is_enabled(bufnr)
+          return vim.lsp.document_color.is_enabled({ bufnr = bufnr })
         end)
       )
 
       exec_lua(function()
-        vim.lsp.get_client_by_id(client_id):stop()
+        vim.lsp.document_color.enable(false, { bufnr = bufnr })
       end)
 
       eq(
         false,
         exec_lua(function()
-          return vim.lsp.document_color.is_enabled(bufnr)
+          return vim.lsp.document_color.is_enabled({ bufnr = bufnr })
         end)
       )
     end)
 
     it('does not error when called on a new unattached buffer', function()
       eq(
-        false,
+        true,
         exec_lua(function()
-          return vim.lsp.document_color.is_enabled(vim.api.nvim_create_buf(false, true))
+          return vim.lsp.document_color.is_enabled({ bufnr = vim.api.nvim_create_buf(false, true) })
         end)
       )
     end)
@@ -226,7 +220,7 @@ body {                                               |
       ]]
 
       exec_lua(function()
-        vim.lsp.document_color.enable(true, bufnr, { style = 'foreground' })
+        vim.lsp.document_color.enable(true, nil, { style = 'foreground' })
       end)
 
       screen:expect({ grid = grid_with_fg_colors })
@@ -244,7 +238,7 @@ body {                                               |
       ]]
 
       exec_lua(function()
-        vim.lsp.document_color.enable(true, bufnr, { style = ' :) ' })
+        vim.lsp.document_color.enable(true, nil, { style = ' :) ' })
       end)
 
       screen:expect({ grid = grid_with_swatches })
@@ -252,9 +246,7 @@ body {                                               |
 
     it('will not create highlights with custom style function', function()
       exec_lua(function()
-        vim.lsp.document_color.enable(true, bufnr, {
-          style = function() end,
-        })
+        vim.lsp.document_color.enable(true, nil, { style = function() end })
       end)
 
       screen:expect({ grid = grid_without_colors })

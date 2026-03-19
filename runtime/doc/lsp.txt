@@ -122,7 +122,7 @@ BUFFER-LOCAL DEFAULTS
 - |K| is mapped to |vim.lsp.buf.hover()| unless 'keywordprg' is customized or
   a custom keymap for `K` exists.
 - Document colors are enabled for highlighting color references in a document.
-  - To opt out call `vim.lsp.document_color.enable(false, ev.buf)` on |LspAttach|.
+  - To opt out call `vim.lsp.document_color.enable(false, { bufnr = ev.buf })` on |LspAttach|.
 
 DISABLING DEFAULTS                                      *lsp-defaults-disable*
 
@@ -140,7 +140,7 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
         -- Unmap K
         vim.keymap.del('n', 'K', { buffer = ev.buf })
         -- Disable document colors
-        vim.lsp.document_color.enable(false, ev.buf)
+        vim.lsp.document_color.enable(false, { bufnr = ev.buf })
       end,
     })
 <
@@ -2144,9 +2144,8 @@ document. Highlighting is enabled by default.
 color_presentation()             *vim.lsp.document_color.color_presentation()*
     Select from a list of presentations for the color under the cursor.
 
-enable({enable}, {bufnr}, {opts})            *vim.lsp.document_color.enable()*
-    Enables document highlighting from the given language client in the given
-    buffer.
+enable({enable}, {filter}, {opts})           *vim.lsp.document_color.enable()*
+    Enables or disables document color highlighting for the {filter}ed scope.
 
     To "toggle", pass the inverse of `is_enabled()`: >lua
         vim.lsp.document_color.enable(not vim.lsp.document_color.is_enabled())
@@ -2155,21 +2154,29 @@ enable({enable}, {bufnr}, {opts})            *vim.lsp.document_color.enable()*
     Parameters: ~
       • {enable}  (`boolean?`) True to enable, false to disable. (default:
                   `true`)
-      • {bufnr}   (`integer?`) Buffer handle, or 0 for current. (default: 0)
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
       • {opts}    (`table?`) A table with the following fields:
                   • {style}?
-                    (`'background'|'foreground'|'virtual'|string|fun(bufnr: integer, range: Range4, hex_code: string)`)
+                    (`'background'|'foreground'|'virtual'|string|fun(bufnr: integer, range: vim.Range, hex_code: string)`)
                     Highlight style. It can be one of the pre-defined styles,
                     a string to be used as virtual text, or a function that
                     receives the buffer handle, the range (start line, start
                     col, end line, end col) and the resolved hex color.
                     (default: `'background'`)
 
-is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
-    Query whether document colors are enabled in the given buffer.
+is_enabled({filter})                     *vim.lsp.document_color.is_enabled()*
+    Query whether document colors are enabled in the {filter}ed scope.
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer handle, or 0 for current. (default: 0)
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
 
     Return: ~
         (`boolean`)

@@ -527,6 +527,7 @@ function Client:initialize()
   require('vim.lsp.semantic_tokens')
   require('vim.lsp._folding_range')
   require('vim.lsp.inline_completion')
+  require('vim.lsp.document_color')
 
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
@@ -1137,10 +1138,6 @@ function Client:on_attach(bufnr)
   self:_text_document_did_open_handler(bufnr)
 
   lsp._set_defaults(self, bufnr)
-  -- `enable(true)` cannot be called from `_set_defaults` for features with dynamic registration,
-  -- because it overrides the state every time `client/registerCapability` is received.
-  -- To allow disabling it once in `LspAttach`, we enable it once here instead.
-  lsp.document_color.enable(true, bufnr)
 
   api.nvim_exec_autocmds('LspAttach', {
     buffer = bufnr,
