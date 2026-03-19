@@ -1346,6 +1346,9 @@ static void terminal_send_key(Terminal *term, int c)
 /// Refreshes a single terminal with full-screen damage.
 static void on_sync_flush(void **argv)
 {
+  if (exiting) {
+    return;
+  }
   handle_T buf_handle = (handle_T)(intptr_t)argv[0];
   buf_T *buf = handle_get_buffer(buf_handle);
   if (!buf || !buf->terminal) {

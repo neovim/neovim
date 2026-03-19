@@ -916,6 +916,14 @@ describe('API: buffer events:', function()
     local s = string.rep('\nxyz', 30)
     sendkeys(s)
     assert_match_somewhere(expected_lines, buffer_lines)
+
+    -- Trigger synchronized output in child Nvim, and then exit parent Nvim after
+    -- blocking its event loop for a while. This should not cause an error log.
+    n.expect_exit(n.exec_lua, function()
+      vim.api.nvim_chan_send(vim.bo.channel, 'aaa')
+      vim.uv.sleep(5)
+      vim.cmd('qall!')
+    end)
   end)
 
   it('no spurious event with nvim_open_term() on empty buffer', function()
