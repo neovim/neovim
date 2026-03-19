@@ -140,6 +140,7 @@ typedef struct {
   Object title;
   Enum("center", "left", "right") title_pos;
   Integer _cmdline_offset;
+  Boolean draggable;
 } Dict(win_config);
 
 typedef struct {

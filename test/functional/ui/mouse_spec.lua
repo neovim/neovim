@@ -2145,6 +2145,111 @@ describe('ui/mouse/input', function()
       api.nvim_input_mouse('left', 'press', '', 0, count, 0)
       eq('', api.nvim_get_vvar('errmsg'))
     end)
+
+    it('drag on float window border #test', function()
+      screen:try_resize(25, 15)
+      command('%delete')
+      local fwin = api.nvim_open_win(
+        0,
+        false,
+        { relative = 'editor', row = 2, col = 2, height = 4, width = 4, border = 'single' }
+      )
+      poke_eventloop()
+      local drag_test = function(test_cases)
+        for _, case in ipairs(test_cases) do
+          local start_pos, drag1, drag2, exp1, exp2 = unpack(case)
+          feed(string.format('<LeftMouse><%d,%d>', start_pos[1], start_pos[2]))
+          poke_eventloop()
+          feed(string.format('<LeftDrag><%d,%d>', drag1[1], drag1[2]))
+          local conf = api.nvim_win_get_config(fwin)
+          for k, exp in pairs(exp1) do
+            eq(exp, conf[k])
+          end
+          feed(string.format('<LeftDrag><%d,%d>', drag2[1], drag2[2]))
+          conf = api.nvim_win_get_config(fwin)
+          for k, exp in pairs(exp2) do
+            eq(exp, conf[k])
+          end
+          feed('<LeftRelease><0,0>')
+        end
+      end
+      drag_test({
+        { { 7, 3 }, { 10, 3 }, { 7, 3 }, { width = 7 }, { width = 4 } }, -- right border
+        { { 2, 3 }, { 1, 3 }, { 2, 3 }, { width = 5 }, { width = 4 } }, -- left border
+        { { 4, 7 }, { 4, 10 }, { 4, 7 }, { height = 7 }, { height = 4 } }, -- bottom border
+        { { 4, 2 }, { 4, 0 }, { 4, 2 }, { height = 6 }, { height = 4 } }, -- top border
+      })
+
+      api.nvim_win_set_config(fwin, { title = 'test' }) -- drag title to move
+      drag_test({
+        { { 5, 2 }, { 10, 2 }, { 5, 2 }, { col = 7 }, { col = 2 } },
+      })
+
+      -- update row, col of anchor after drag
+      -- anchor is right-bot corner
+      api.nvim_win_set_config(fwin, { title = '', anchor = 'SE' })
+      drag_test({
+        { { 5, 2 }, { 10, 2 }, { 5, 2 }, { col = 10 }, { col = 5 } }, -- right border
+        { { 2, 5 }, { 2, 10 }, { 2, 5 }, { row = 10 }, { row = 5 } }, -- bot border
+      })
+
+      -- anchor is right-top corner
+      api.nvim_win_set_config(fwin, { anchor = 'NE' })
+      drag_test({
+        { { 5, 6 }, { 10, 6 }, { 5, 6 }, { col = 10 }, { col = 5 } }, -- right border
+        { { 2, 5 }, { 2, 2 }, { 2, 5 }, { row = 2 }, { row = 5 } }, -- top border
+      })
+
+      -- anchor is left-bot corner
+      api.nvim_win_set_config(fwin, { anchor = 'SW' })
+      drag_test({
+        { { 6, 2 }, { 2, 2 }, { 6, 2 }, { col = 2 }, { col = 6 } }, -- left border
+        { { 7, 5 }, { 7, 7 }, { 7, 5 }, { row = 7 }, { row = 5 } }, -- bot border
+      })
+
+      -- drag corner resize
+      api.nvim_win_set_config(
+        fwin,
+        { relative = 'editor', anchor = 'NW', row = 4, col = 4, draggable = true }
+      )
+      drag_test({
+        {
+          { 4, 4 },
+          { 3, 3 },
+          { 4, 4 },
+          { width = 5, height = 5, row = 3, col = 3 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- left-top corner
+        {
+          { 4, 9 },
+          { 1, 10 },
+          { 4, 9 },
+          { width = 7, height = 5, row = 4, col = 1 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- left-bot corner
+        {
+          { 9, 4 },
+          { 10, 3 },
+          { 9, 4 },
+          { width = 5, height = 5, row = 3, col = 4 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- right-top corner
+        {
+          { 9, 9 },
+          { 8, 8 },
+          { 9, 9 },
+          { width = 3, height = 3, row = 4, col = 4 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- right-bot corner
+        {
+          { 6, 6 },
+          { 9, 7 },
+          { 6, 6 },
+          { width = 4, height = 4, row = 5, col = 7 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- drag on content area
+      })
+    end)
   end
 
   describe('with ext_multigrid', function()
