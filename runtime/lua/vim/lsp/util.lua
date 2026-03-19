@@ -321,7 +321,9 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
     -- Fix reversed range and indexing each text_edits
     for index, text_edit in ipairs(text_edits) do
       --- @cast text_edit lsp.TextEdit|{_index: integer}
-      text_edit._index = index
+      if text_edit._index == nil then
+        text_edit._index = index
+      end
 
       if
         text_edit.range.start.line > text_edit.range['end'].line
