@@ -301,6 +301,44 @@ LOOPING OVER TAB PAGES:
 		Also see |:windo|, |:argdo|, |:bufdo|, |:cdo|, |:ldo|, |:cfdo|
 		and |:lfdo|.
 
+SAVING AND RESTORING TAB PAGES:
+
+							*:mkt* *:mktab*
+:mkt[ab][!] [file]	Write a Vim script that restores the current editing
+			tabpage.
+			When [!] is included, an existing file is overwritten.
+			When [file] is omitted, "Tabpage.vim" is used.
+
+The output of ":mktab" is like ":mkvimrc", but additional commands are
+added to the file.  Which ones depends on the 'taboptions' option.  The
+resulting file, when executed with a ":source" command:
+1. Restores global mappings and options, if 'taboptions' contains
+   "options".  Script-local mappings will not be written.
+2. Restores global variables that start with an uppercase letter and contain
+   at least one lowercase letter, if 'taboptions' contains "globals".
+3. Open a new tabpage, leaving all your current tabpages, windows and buffers
+   untouched.
+4. Restores the current directory, if 'taboptions' contains "curdir", or
+   sets the current directory to where the Tabpage file is, if
+   'taboptions' contains "tabdir".
+5. Restores GUI Vim window position, if 'taboptions' contains "winpos".
+6. Restores screen size, if 'taboptions' contains "resize".
+7. Reloads the buffer list, with the last cursor positions.  If
+   'taboptions' contains "buffers" then all buffers are restored,
+   including hidden and unloaded buffers.  Otherwise, only buffers in windows
+   are restored.
+8. Restores all windows with the same layout.  If 'taboptions' contains
+   "help", help windows are restored.  If 'taboptions' contains "blank",
+   windows editing a buffer without a name will be restored.
+   If 'taboptions' contains "winsize" and no (help/blank) windows were
+   left out, the window sizes are restored (relative to the screen size).
+   Otherwise, the windows are just given sensible sizes.
+9. Restores the Views for all the windows, as with |:mkview|.  But
+   'taboptions' is used instead of 'viewoptions'.
+10. If a file exists with the same name as the Tabpage file, but ending in
+   "x.vim" (for eXtra), executes that as well.  You can use `*x.vim` files to
+   specify additional settings and actions associated with a given Session,
+   such as creating menu items in the GUI version.
 ==============================================================================
 3. Other items						*tab-page-other*
 

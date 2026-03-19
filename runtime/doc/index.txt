@@ -1445,6 +1445,7 @@ Tag		Command		Action ~
 |:mkexrc|	:mk[exrc]	write current mappings and settings to a file
 |:mksession|	:mks[ession]	write session info to a file
 |:mkspell|	:mksp[ell]	produce .spl spell file
+|:mktab|	:mkt[ab]	write tabpage info to a file
 |:mkvimrc|	:mkv[imrc]	write current mappings and settings to a file
 |:mkview|	:mkvie[w]	write view of current window to a file
 |:mode|		:mod[e]		show or change the screen mode

@@ -135,7 +135,6 @@ describe(':mktab', function()
     local cwd_dir = fn.getcwd()
     mkdir(tab_dir)
 
-    -- :mksession does not save empty tabs, so create some buffers.
     command('edit ' .. tmpfile_base .. '1')
     command('tabnew')
     command('edit ' .. tmpfile_base .. '2')
