@@ -753,4 +753,10 @@ describe('vim.fs', function()
       assert_rm_symlinked_dir({ recursive = true, force = true })
     end)
   end)
+
+  describe('ext()', function()
+    it('works', function()
+      -- See test/functional/vimscript/fnamemodify_spec.lua
+    end)
+  end)
 end)
