@@ -8726,53 +8726,11 @@ describe('builtin popupmenu', function()
               ╰───────────────╯|
             ]],
             win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 30,
-                win = 1000,
-              },
+              [2] = { height = 10, startcol = 0, startrow = 0, width = 30, win = 1000 },
             },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
               [4] = { 1001, 'NW', 1, 1, 17, true, 50, 1, 1, 17 },
-            },
-            win_viewport = {
-              [2] = {
-                win = 1000,
-                topline = 0,
-                botline = 2,
-                curline = 0,
-                curcol = 3,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-              [4] = {
-                win = 1001,
-                topline = 0,
-                botline = 1,
-                curline = 0,
-                curcol = 0,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-            },
-            win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
             },
           })
         else
@@ -8812,53 +8770,11 @@ describe('builtin popupmenu', function()
               ╰─────────────────╯|
             ]],
             win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 30,
-                win = 1000,
-              },
+              [2] = { height = 10, startcol = 0, startrow = 0, width = 30, win = 1000 },
             },
             float_pos = {
               [5] = { -1, 'NW', 2, 2, 11, false, 100, 2, 2, 11 },
               [4] = { 1001, 'NW', 1, 2, 6, true, 50, 1, 2, 6 },
-            },
-            win_viewport = {
-              [2] = {
-                win = 1000,
-                topline = 0,
-                botline = 2,
-                curline = 0,
-                curcol = 31,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-              [4] = {
-                win = 1001,
-                topline = 0,
-                botline = 1,
-                curline = 0,
-                curcol = 0,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-            },
-            win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
             },
           })
         else
@@ -8971,36 +8887,10 @@ describe('builtin popupmenu', function()
               ╰────────────────╯|
             ]],
             win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 30,
-                win = 1000,
-              },
+              [2] = { height = 10, startcol = 0, startrow = 0, width = 30, win = 1000 },
             },
             float_pos = {
               [4] = { -1, 'SW', 1, 8, 0, false, 250, 2, 0, 0 },
-            },
-            win_viewport = {
-              [2] = {
-                win = 1000,
-                topline = 0,
-                botline = 2,
-                curline = 0,
-                curcol = 0,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-            },
-            win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
             },
           })
         else
@@ -9074,36 +8964,10 @@ describe('builtin popupmenu', function()
               ╰───────────────╯|
             ]],
             win_pos = {
-              [2] = {
-                height = 5,
-                startcol = 0,
-                startrow = 0,
-                width = 30,
-                win = 1000,
-              },
+              [2] = { height = 5, startcol = 0, startrow = 0, width = 30, win = 1000 },
             },
             float_pos = {
               [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 },
-            },
-            win_viewport = {
-              [2] = {
-                win = 1000,
-                topline = 0,
-                botline = 2,
-                curline = 0,
-                curcol = 3,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-            },
-            win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
             },
           })
         else
@@ -9278,26 +9142,6 @@ describe('builtin popupmenu', function()
             float_pos = {
               [4] = { -1, 'SW', 1, 10, 0, false, 250, 2, 0, 0 },
             },
-            win_viewport = {
-              [2] = {
-                win = 1000,
-                topline = 0,
-                botline = 2,
-                curline = 0,
-                curcol = 0,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-            },
-            win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-            },
           })
         else
           screen:expect([[
@@ -9359,7 +9203,7 @@ describe('builtin popupmenu', function()
         eq({ 4, 1 }, { #fn.complete_info({ 'items' }).items, fn.pumvisible() })
       end)
 
-      it("works with 'pummaxwidth' #test", function()
+      it("works with 'pummaxwidth'", function()
         exec([[
           set pummaxwidth=10
           set cot+=menuone
