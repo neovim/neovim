@@ -273,7 +273,7 @@ describe(':help', function()
 
     n.command(':help lsp')
     n.feed('gg/codelens.run()|<cr>')
-    eq({ '|vim.lsp.codelens.run()|.', 'lsp.txt' }, buf_word())
+    eq({ '|vim.lsp.codelens.run()|', 'lsp.txt' }, buf_word())
     --             ^ cursor on "codelens"
     n.command(':help!')
     eq({ '*vim.lsp.codelens.run()*', 'lsp.txt' }, buf_word())
