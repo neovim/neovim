@@ -2060,6 +2060,7 @@ local pattern = {
     ['/etc/DIR_COLORS$'] = 'dircolors',
     ['/etc/dnsmasq%.conf$'] = 'dnsmasq',
     ['/etc/dnsmasq%.d/'] = starsetf('dnsmasq'),
+    ['/etc/wireguard/.*%.conf$'] = 'dosini',
     ['/etc/yum%.conf$'] = 'dosini',
     ['/etc/yum%.repos%.d/'] = starsetf('dosini'),
     ['/etc/gitconfig%.d/'] = starsetf('gitconfig'),
