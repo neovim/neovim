@@ -94,7 +94,7 @@ vim.pack.add({
   -- Fuzzy picker
   'https://github.com/ibhagwan/fzf-lua',
   -- Autocompletion
-  'https://github.com/echasnovski/mini.completion',
+  'https://github.com/nvim-mini/mini.completion',
   -- Enhanced quickfix/loclist
   'https://github.com/stevearc/quicker.nvim',
   -- Git integration
