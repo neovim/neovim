@@ -169,6 +169,12 @@ static int msg_grid_pos_at_flush = 0;
 
 static int64_t msg_id_next = 1;           ///< message id to be allocated to next message
 
+/// Returns true if the given integer message-id was previously generated.
+bool msg_id_exists(int64_t id)
+{
+  return id > 0 && id < msg_id_next;
+}
+
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
   char buf[MAX_SCHAR_SIZE];
@@ -356,12 +362,13 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
 MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
                   MessageData *msg_data, bool *needs_msg_clear)
 {
-  // provide a new id if not given
+  // - Nil: Generate a new Integer id.
+  // - Integer: Existing id.
+  // - String: User-defined id (new or existing).
   if (id.type == kObjectTypeNil) {
     id = INTEGER_OBJ(msg_id_next++);
-  } else if (id.type == kObjectTypeInteger) {
-    id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next++);
-    msg_id_next = MAX(msg_id_next, id.data.integer + 1);
+  } else if (id.type == kObjectTypeInteger && !msg_id_exists(id.data.integer)) {
+    abort();
   }
 
   // don't display progress message in cmd when target doesn't have cmd
@@ -1341,7 +1348,7 @@ void ex_messages(exarg_T *eap)
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
       bool needs_clear = false;
-      msg_multihl(INTEGER_OBJ(0), p->msg, p->kind, false, false, NULL, &needs_clear);
+      msg_multihl(NIL, p->msg, p->kind, false, false, NULL, &needs_clear);
       msg_silent -= ui_has(kUIMessages);
     }
   }

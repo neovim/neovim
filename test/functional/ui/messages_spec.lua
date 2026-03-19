@@ -3674,9 +3674,9 @@ describe('progress-message', function()
     local id5 = api.nvim_echo(
       { { 'test-message 30' } },
       true,
-      { id = 10, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+      { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
-    eq(10, id5)
+    eq(5, id5)
 
     -- updating progress message does not create new msg-id
     local id5_update = api.nvim_echo(
@@ -3691,7 +3691,7 @@ describe('progress-message', function()
       true,
       { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
-    eq(11, id6)
+    eq(6, id6)
 
     local id7 = api.nvim_echo(
       { { 'supports str-id' } },
@@ -3707,7 +3707,7 @@ describe('progress-message', function()
       true,
       { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
-    eq(13, id8)
+    eq(8, id8)
   end)
 
   it('accepts caller-defined id (string)', function()
