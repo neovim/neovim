@@ -1,5 +1,5 @@
 -- Set <space> as the leader key
--- See `:help mapleader`
+-- See `:h mapleader`
 -- NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 
@@ -7,7 +7,7 @@ vim.g.mapleader = ' '
 --
 -- See `:h vim.o`
 -- NOTE: You can change these options as you wish!
--- For more options, you can see `:help option-list`
+-- For more options, you can see `:h option-list`
 -- To see documentation for an option, you can use `:h 'optionname'`, for example `:h 'number'`
 -- (Note the single quotes)
 
@@ -19,7 +19,7 @@ vim.o.relativenumber = true
 
 -- Sync clipboard between OS and Neovim. Schedule the setting after `UIEnter` because it can
 -- increase startup-time. Remove this option if you want your OS clipboard to remain independent.
--- See `:help 'clipboard'`
+-- See `:h 'clipboard'`
 vim.api.nvim_create_autocmd('UIEnter', {
   callback = function()
     vim.o.clipboard = 'unnamedplus'
@@ -35,7 +35,7 @@ vim.o.scrolloff = 10 -- Keep this many screen lines above/below the cursor.
 vim.o.list = true -- Show <tab> and trailing spaces.
 
 -- if performing an operation that would fail due to unsaved changes in the buffer (like `:q`),
--- instead raise a dialog asking if you wish to save the current file(s) See `:help 'confirm'`
+-- instead raise a dialog asking if you wish to save the current file(s) See `:h 'confirm'`
 vim.o.confirm = true
 
 -- KEYMAPS
