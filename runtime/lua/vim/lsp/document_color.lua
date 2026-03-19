@@ -306,7 +306,7 @@ local function get_hl_info_under_cursor(provider)
 
   for client_id, state in pairs(provider.client_state) do
     for _, hl in ipairs(state.hl_info) do
-      if vim.Range.has(hl.range, cursor_pos) then
+      if hl.range:has(cursor_pos) then
         return hl, client_id
       end
     end
