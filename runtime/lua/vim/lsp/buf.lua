@@ -1365,6 +1365,7 @@ function M.code_action(opts)
       params.context = context
     else
       local ns_push = lsp.diagnostic.get_namespace(client.id, false)
+      -- TODO(tris203): should we aggregate diagnostics from all the possible pull namespaces?
       local ns_pull = lsp.diagnostic.get_namespace(client.id, true)
       local diagnostics = {}
       local lnum = api.nvim_win_get_cursor(0)[1] - 1

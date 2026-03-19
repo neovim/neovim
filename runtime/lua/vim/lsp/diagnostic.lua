@@ -261,6 +261,8 @@ end
 ---@param params lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 function M.on_publish_diagnostics(_, params, ctx)
+  -- TODO(tris203): if empty array then clear diags
+  -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics
   handle_diagnostics(params.uri, ctx.client_id, params.diagnostics, false)
 end
 
@@ -396,7 +398,9 @@ function M._refresh(bufnr, client_id, only_visible)
       local params = {
         identifier = cap.identifier,
         textDocument = util.make_text_document_params(bufnr),
-        previousResultId = bufstate.client_result_id[key],
+        previousResultId = bufstate
+          and bufstate.client_result_id
+          and bufstate.client_result_id[key],
       }
       client:request(method, params, nil, bufnr)
     end)
