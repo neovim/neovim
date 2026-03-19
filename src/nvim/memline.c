@@ -1305,42 +1305,42 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 
   // Do the loop for every directory in 'directory'.
   // First allocate some memory to put the directory name in.
-  char *dir_name = xmalloc(strlen(p_dir) + 1);
+  String dir_name;
+  dir_name.data = xmalloc(strlen(p_dir) + 1);
   char *dirp = p_dir;
   while (*dirp) {
     // Isolate a directory name from *dirp and put it in dir_name (we know
     // it is large enough, so use 31000 for length).
     // Advance dirp to next directory name.
-    copy_option_part(&dirp, dir_name, 31000, ",");
+    dir_name.size = copy_option_part(&dirp, dir_name.data, 31000, ",");
 
-    if (dir_name[0] == '.' && dir_name[1] == NUL) {     // check current dir
+    if (dir_name.data[0] == '.' && dir_name.data[1] == NUL) {     // check current dir
       if (fname == NULL) {
-        names[0] = xstrdup("*.sw?");
+        names[0] = xmemdupz(S_LEN("*.sw?"));
         // For Unix names starting with a dot are special.  MS-Windows
         // supports this too, on some file systems.
-        names[1] = xstrdup(".*.sw?");
-        names[2] = xstrdup(".sw?");
+        names[1] = xmemdupz(S_LEN(".*.sw?"));
+        names[2] = xmemdupz(S_LEN(".sw?"));
         num_names = 3;
       } else {
         num_names = recov_file_names(names, fname_res, true);
       }
     } else {                      // check directory dir_name
       if (fname == NULL) {
-        names[0] = concat_fnames(dir_name, "*.sw?", true);
+        names[0] = concat_fnames(dir_name.data, "*.sw?", true);
         // For Unix names starting with a dot are special.  MS-Windows
         // supports this too, on some file systems.
-        names[1] = concat_fnames(dir_name, ".*.sw?", true);
-        names[2] = concat_fnames(dir_name, ".sw?", true);
+        names[1] = concat_fnames(dir_name.data, ".*.sw?", true);
+        names[2] = concat_fnames(dir_name.data, ".sw?", true);
         num_names = 3;
       } else {
-        int len = (int)strlen(dir_name);
-        p = dir_name + len;
-        if (after_pathsep(dir_name, p) && len > 1 && p[-1] == p[-2]) {
+        p = dir_name.data + dir_name.size;
+        if (after_pathsep(dir_name.data, p) && dir_name.size > 1 && p[-1] == p[-2]) {
           // Ends with '//', Use Full path for swap name
-          tail = make_percent_swname(dir_name, p, fname_res);
+          tail = make_percent_swname(dir_name.data, p, fname_res);
         } else {
           tail = path_tail(fname_res);
-          tail = concat_fnames(dir_name, tail, true);
+          tail = concat_fnames(dir_name.data, tail, true);
         }
         num_names = recov_file_names(names, tail, false);
         xfree(tail);
@@ -1401,7 +1401,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
         dirp = "";                        // stop searching
       }
     } else if (do_list) {
-      if (dir_name[0] == '.' && dir_name[1] == NUL) {
+      if (dir_name.data[0] == '.' && dir_name.data[1] == NUL) {
         if (fname == NULL) {
           msg_puts(_("   In current directory:\n"));
         } else {
@@ -1409,7 +1409,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
         }
       } else {
         msg_puts(_("   In directory "));
-        msg_home_replace(dir_name);
+        msg_home_replace(dir_name.data);
         msg_puts(":\n");
       }
 
@@ -1433,7 +1433,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
       ui_flush();
     } else if (ret_list != NULL) {
       for (int i = 0; i < num_files; i++) {
-        char *name = concat_fnames(dir_name, files[i], true);
+        char *name = concat_fnames(dir_name.data, files[i], true);
         tv_list_append_allocated_string(ret_list, name);
       }
     } else {
@@ -1447,7 +1447,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
       FreeWild(num_files, files);
     }
   }
-  xfree(dir_name);
+  xfree(dir_name.data);
   return file_count;
 }
 

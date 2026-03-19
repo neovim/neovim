@@ -455,8 +455,7 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
     char *rtp = rtp_copy;
     while (*rtp != NUL && (do_all || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
-      copy_option_part(&rtp, buf, MAXPATHL, ",");
-      size_t buflen = strlen(buf);
+      size_t buflen = copy_option_part(&rtp, buf, MAXPATHL, ",");
 
       // Skip after or non-after directories.
       if (flags & (DIP_NOAFTER | DIP_AFTER)) {
@@ -840,9 +839,9 @@ static RuntimeSearchPath runtime_search_path_build(void)
   static char buf[MAXPATHL];
   for (char *entry = p_pp; *entry != NUL;) {
     char *cur_entry = entry;
-    copy_option_part(&entry, buf, MAXPATHL, ",");
+    size_t buflen = copy_option_part(&entry, buf, MAXPATHL, ",");
 
-    String the_entry = { .data = cur_entry, .size = strlen(buf) };
+    String the_entry = { .data = cur_entry, .size = buflen };
 
     kv_push(pack_entries, the_entry);
     map_put(String, int)(&pack_used, the_entry, 0);
@@ -851,8 +850,7 @@ static RuntimeSearchPath runtime_search_path_build(void)
   char *rtp_entry;
   for (rtp_entry = p_rtp; *rtp_entry != NUL;) {
     char *cur_entry = rtp_entry;
-    copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
-    size_t buflen = strlen(buf);
+    size_t buflen = copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
 
     if (path_is_after(buf, buflen)) {
       rtp_entry = cur_entry;
@@ -895,9 +893,9 @@ static RuntimeSearchPath runtime_search_path_build(void)
   // "after" dirs in rtp
   for (; *rtp_entry != NUL;) {
     char *cur_entry = rtp_entry;
-    copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
+    size_t buflen = copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
     size_t pos_in_rtp = (size_t)(cur_entry - p_rtp);
-    expand_rtp_entry(&search_path, &rtp_used, buf, path_is_after(buf, strlen(buf)), pos_in_rtp);
+    expand_rtp_entry(&search_path, &rtp_used, buf, path_is_after(buf, buflen), pos_in_rtp);
   }
 
   // strings are not owned

@@ -1242,6 +1242,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     char *lead_repl = NULL;                 // replaces comment leader
     int lead_repl_len = 0;                  // length of *lead_repl
     char lead_middle[COM_MAX_LEN];          // middle-comment string
+    int lead_middle_len;                    // length of the lead_middle
     char lead_end[COM_MAX_LEN];             // end-comment string
     char *comment_end = NULL;               // where lead_end has been found
     int extra_space = false;                // append extra space
@@ -1276,7 +1277,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
+        lead_middle_len = (int)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
 
         while (*p && p[-1] != ':') {  // find end of end flags
           // Check whether we allow automatic ending of comments
@@ -1307,7 +1308,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         if (lead_len > 0) {
           if (current_flag == COM_START) {
             lead_repl = lead_middle;
-            lead_repl_len = (int)strlen(lead_middle);
+            lead_repl_len = lead_middle_len;
           }
 
           // If we have hit RETURN immediately after the start
