@@ -81,15 +81,15 @@ end, { desc = 'Print the git blame for the current line' })
 
 -- PLUGINS
 --
--- * Enable optional, builtin plugins via ":packadd".
--- * Install third-party plugins via "vim.pack".
+-- See `:h :packadd`, `:h vim.pack`
 
--- Example: add the "nohlsearch" package to automatically disable search highlighting after
+-- Add the "nohlsearch" package to automatically disable search highlighting after
 -- 'updatetime' and when going to insert mode.
 vim.cmd('packadd! nohlsearch')
 
--- Example: Install third-party plugins by calling "vim.pack.add{}".
+-- Install third-party plugins via "vim.pack.add()".
 vim.pack.add({
+  -- Quickstart configs for LSP
   'https://github.com/neovim/nvim-lspconfig',
   -- Fuzzy picker
   'https://github.com/ibhagwan/fzf-lua',
