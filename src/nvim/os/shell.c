@@ -51,7 +51,7 @@
 #define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
-#define SHELL_SPECIAL "\t \"&'$;<>()\\|"
+#define SHELL_SPECIAL "\t \"&'$;<>()\\|\n"
 
 #include "os/shell.c.generated.h"
 
