@@ -6987,6 +6987,38 @@ describe('LSP', function()
       )
     end)
 
+    it('attaches to buftype=help when buftypes includes help', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+
+      eq(
+        { 1, 0 },
+        exec_lua(function()
+          local server = _G._create_server()
+
+          vim.lsp.config('with_help', {
+            cmd = server.cmd,
+            buftypes = { '', 'help' },
+          })
+          vim.lsp.config('without_help', {
+            cmd = server.cmd,
+          })
+
+          vim.lsp.enable('with_help')
+          vim.lsp.enable('without_help')
+
+          vim.cmd.edit(assert(tmp1))
+          vim.bo.buftype = 'help'
+          vim.bo.filetype = 'help'
+
+          local with = vim.lsp.get_clients({ name = 'with_help', bufnr = 0 })
+          local without = vim.lsp.get_clients({ name = 'without_help', bufnr = 0 })
+          return { #with, #without }
+        end)
+      )
+    end)
+
     it('does not allow wildcards in config name', function()
       local err =
         '.../lsp.lua:0: name: expected non%-wildcard string, got foo%*%. Info: LSP config name cannot contain wildcard %("%*"%)'

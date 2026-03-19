@@ -269,6 +269,8 @@ LSP
 
 • |:lsp| can be used to interactively manage LSP clients.
 • |vim.lsp.ClientConfig| gained `workspace_required`.
+• |vim.lsp.Config| gained |lsp-buftypes| to control which 'buftype' values a
+  config will attach to (default: empty buftype only).
 • You can control the priority of |vim.lsp.Config| `root_markers`.
 • Support for `textDocument/documentColor`: |lsp-document_color|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor

@@ -826,6 +826,14 @@ Lua module: vim.lsp                                                 *lsp-core*
                            ".git": >
                            root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
 <
+      • {buftypes}?      (`string[]`) *lsp-buftypes* Buffer types the client
+                         will attach to, or `nil` for normal (empty `buftype`)
+                         buffers only (default `{ '' }`). Set this to restrict
+                         attachment to specific buffer types such as `help`: >lua
+                             vim.lsp.config('vimdoc_ls', {
+                               buftypes = { 'help' },
+                             })
+<
 
 
 buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
