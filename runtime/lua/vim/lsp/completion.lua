@@ -850,6 +850,10 @@ local function on_complete_done()
   local position_encoding = client.offset_encoding or 'utf-16'
   local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
 
+  -- Keep reference to avoid race where completion/resolve response arrives after on_insert_leave
+  -- and Context.cursor got cleared before clear_word() gets called
+  local context_cursor = assert(Context.cursor)
+
   local function clear_word()
     if not expand_snippet then
       return nil
@@ -858,8 +862,8 @@ local function on_complete_done()
     -- Remove the already inserted word.
     api.nvim_buf_set_text(
       bufnr,
-      Context.cursor[1] - 1,
-      Context.cursor[2] - 1,
+      context_cursor[1] - 1,
+      context_cursor[2] - 1,
       cursor_row,
       cursor_col,
       { '' }
