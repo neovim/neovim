@@ -847,6 +847,7 @@ void channel_terminal_alloc(buf_T *buf, Channel *chan)
     .data = chan,
     .width = chan->stream.pty.width,
     .height = chan->stream.pty.height,
+    .read_pause_cb = term_read_pause,
     .write_cb = term_write,
     .resize_cb = term_resize,
     .resume_cb = term_resume,
@@ -856,6 +857,19 @@ void channel_terminal_alloc(buf_T *buf, Channel *chan)
   buf->b_p_channel = (OptInt)chan->id;  // 'channel' option
   channel_incref(chan);
   chan->term = terminal_alloc(buf, topts);
+}
+
+static void term_read_pause(bool pause, void *data)
+{
+  Channel *chan = data;
+  if (chan->stream.proc.out.s.closed) {
+    return;
+  }
+  if (pause) {
+    rstream_stop_inner(&chan->stream.proc.out);
+  } else {
+    rstream_start_inner(&chan->stream.proc.out);
+  }
 }
 
 static void term_write(const char *buf, size_t size, void *data)

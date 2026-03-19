@@ -2530,6 +2530,10 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Terminal *term, buf_T *buf)
 {
+  // Buffer update callbacks may poll for uv events.
+  // Avoid polling for output to the same terminal as the one being refreshed.
+  term->opts.read_pause_cb(true, term->opts.data);
+
   linenr_T deleted = (linenr_T)(term->sb_deleted - term->old_sb_deleted);
   deleted = MIN(deleted, buf->b_ml.ml_line_count);
   mark_adjust_buf(buf, 1, deleted, MAXLNUM, -deleted, true, kMarkAdjustTerm, kExtmarkUndo);
@@ -2569,6 +2573,8 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
   }
 
   adjust_scrollback(term, buf);
+
+  term->opts.read_pause_cb(false, term->opts.data);
 }
 
 // Refresh the screen (visible part of the buffer when the terminal is

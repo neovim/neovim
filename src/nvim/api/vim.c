@@ -1153,6 +1153,7 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     // displaying the buffer
     .width = (uint16_t)MAX(curwin->w_view_width - win_col_off(curwin), 0),
     .height = (uint16_t)curwin->w_view_height,
+    .read_pause_cb = term_read_pause,
     .write_cb = term_write,
     .resize_cb = term_resize,
     .resume_cb = term_resume,
@@ -1183,6 +1184,11 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   }
 
   return (Integer)chan->id;
+}
+
+static void term_read_pause(bool pause, void *data)
+{
+  // Not currently needed as sending to channel isn't allowed during buffer updates.
 }
 
 static void term_write(const char *buf, size_t size, void *data)
