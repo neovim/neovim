@@ -679,6 +679,7 @@ local extension = {
   bd = 'json',
   bda = 'json',
   xci = 'json',
+  cps = 'json',
   json5 = 'json5',
   jsonc = 'jsonc',
   jsonl = 'jsonl',
