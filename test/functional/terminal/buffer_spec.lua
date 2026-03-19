@@ -992,8 +992,9 @@ describe(':terminal buffer', function()
   end)
 
   --- @param subcmd 'REP'|'REPFAST'
-  local function check_term_rep(subcmd, count)
+  local function check_term_rep(subcmd, count, scrollback)
     local screen = Screen.new(50, 7)
+    api.nvim_set_option_value('scrollback', scrollback, {})
     api.nvim_create_autocmd('TermClose', { command = 'let g:did_termclose = 1' })
     fn.jobstart({ testprg('shell-test'), subcmd, count, 'TEST' }, { term = true })
     retry(nil, nil, function()
@@ -1010,23 +1011,24 @@ describe(':terminal buffer', function()
       {5:-- TERMINAL --}                                    |
     ]]):format(count - 5, count - 4, count - 3, count - 2, count - 1))
     local lines = api.nvim_buf_get_lines(0, 0, -1, true)
-    for i = 1, count do
-      eq(('%d: TEST'):format(i - 1), lines[i])
+    local start = math.max(count + 1 - scrollback - 6, 0)
+    for i = start, count - 1 do
+      eq(('%d: TEST'):format(i), lines[i - start + 1])
     end
+    eq('', lines[#lines])
+    eq(count - start + 1, #lines)
   end
 
   it('does not drop data when job exits immediately after output #3030', function()
-    api.nvim_set_option_value('scrollback', 30000, {})
-    check_term_rep('REPFAST', 20000)
+    check_term_rep('REPFAST', 20000, 30000)
   end)
 
   it('does not drop data when autocommands poll for events #37559', function()
-    api.nvim_set_option_value('scrollback', 30000, {})
     api.nvim_create_autocmd('BufFilePre', { command = 'sleep 50m', nested = true })
     api.nvim_create_autocmd('BufFilePost', { command = 'sleep 50m', nested = true })
     api.nvim_create_autocmd('TermOpen', { command = 'sleep 50m', nested = true })
     -- REP pauses 1 ms every 100 lines, so each autocommand processes some output.
-    check_term_rep('REP', 20000)
+    check_term_rep('REP', 20000, 30000)
   end)
 
   describe('scrollback is correct if all output is drained by', function()
@@ -1037,10 +1039,41 @@ describe(':terminal buffer', function()
           it(('%.1f * terminal refresh delay'):format(delay / 10), function()
             local cmd = ('sleep %dm'):format(delay)
             api.nvim_create_autocmd(event, { command = cmd, nested = true })
-            check_term_rep('REPFAST', 200)
+            check_term_rep('REPFAST', 200, 10000)
           end)
         end
       end)
+    end
+  end)
+
+  it('scrollback is correct if buffer update callbacks poll for uv events', function()
+    -- Use vim.regex:match_str(), which may poll for uv events.
+    exec_lua(function()
+      local regex = vim.regex([[^\d\+: TEST]])
+      _G.matched_lines = {} --- @type table<string,boolean>
+      vim.api.nvim_create_autocmd('TermOpen', {
+        callback = function(ev)
+          vim.api.nvim_buf_attach(ev.buf, false, {
+            on_lines = function(_, buf, _, first, _, last, _)
+              local lines = vim.api.nvim_buf_get_lines(buf, first, last, true)
+              for _, line in ipairs(lines) do
+                if regex:match_str(line) then
+                  _G.matched_lines[vim.trim(line)] = true
+                end
+              end
+            end,
+          })
+        end,
+      })
+    end)
+    -- Use a 'scrollback' value smaller than the number of printed lines.
+    -- REP pauses 1 ms every 100 lines, so this can take at least 20 refresh cycles.
+    check_term_rep('REP', 20000, 10000)
+    -- Check that buffer update callbacks have seen all output lines.
+    local matched_lines = exec_lua('return _G.matched_lines')
+    for i = 0, 19999 do
+      local line = ('%d: TEST'):format(i)
+      eq(true, matched_lines[line], line)
     end
   end)
 
