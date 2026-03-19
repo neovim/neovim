@@ -2151,20 +2151,19 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     feed(':intro<CR>')
     screen:expect([[
                                                                                       |*6
-      {MATCH:.*}|
+      {MATCH:.*}{26:╲}{MATCH:.*}|
+      {MATCH:.*}{26:╲╲││}{MATCH:.*}|
+      {MATCH:.*}{26:╲}{MATCH:.*}|
                                                                                       |
-                        Nvim is open source and freely distributable                  |
-                                  https://neovim.io/#chat                             |
-                                                                                      |
-                       type  :help nvim{18:<Enter>}       if you are new!                  |
-                       type  :checkhealth{18:<Enter>}     to optimize Nvim                 |
-                       type  :q{18:<Enter>}               to exit                          |
-                       type  :help{18:<Enter>}            for help                         |
-      {MATCH: +}type  :help news{18:<Enter>} {MATCH:.*}|
+                       type  {18::}{25:help nvim}{18:<Enter>}       if you are new!                  |
+                       type  {18::}{25:checkhealth}{18:<Enter>}     to optimize Nvim                 |
+                       type  {18::}{25:q}{18:<Enter>}               to exit                          |
+                       type  {18::}{25:help}{18:<Enter>}            for help                         |
+                       type  {18::}{25:help news}{18:<Enter>}       for v{MATCH:%d+%.%d+} notes                  |
                                                                                       |
                                Help poor children in Uganda!                          |
-                       type  :help Kuwasha{18:<Enter>}    for information                  |
-                                                                                      |*4
+                       type  {18::}{25:help Kuwasha}{18:<Enter>}    for information                  |
+                                                                                      |*5
       ^                                                                                |
     ]])
     feed('<CR>')
@@ -2208,20 +2207,19 @@ describe('ui/ext_messages', function()
     local introscreen = [[
       ^                                                                                |
       {1:~                                                                               }|*5
-      {MATCH:.*}|
+      {1:~             }{MATCH:.*}{26:╲}{MATCH:.*}|
+      {1:~             }{MATCH:.*}{26:╲╲││}{MATCH:.*}|
+      {1:~             }{MATCH:.*}{26:╲}{MATCH:.*}|
       {1:~                                                                               }|
-      {1:~                 }Nvim is open source and freely distributable{1:                  }|
-      {1:~                           }https://neovim.io/#chat{1:                             }|
-      {1:~                                                                               }|
-      {1:~                }type  :help nvim{18:<Enter>}       if you are new! {1:                 }|
-      {1:~                }type  :checkhealth{18:<Enter>}     to optimize Nvim{1:                 }|
-      {1:~                }type  :q{18:<Enter>}               to exit         {1:                 }|
-      {1:~                }type  :help{18:<Enter>}            for help        {1:                 }|
-      {1:~{MATCH: +}}type  :help news{18:<Enter>} {MATCH:.*}|
+      {1:~                }type  {18::}{25:help nvim}{18:<Enter>}       if you are new! {1:                 }|
+      {1:~                }type  {18::}{25:checkhealth}{18:<Enter>}     to optimize Nvim{1:                 }|
+      {1:~                }type  {18::}{25:q}{18:<Enter>}               to exit         {1:                 }|
+      {1:~                }type  {18::}{25:help}{18:<Enter>}            for help        {1:                 }|
+      {1:~                }type  {18::}{25:help news}{18:<Enter>}       for v{MATCH:%d+%.%d+} notes{1:                  }|
       {1:~                                                                               }|
       {1:~                        }Help poor children in Uganda!{1:                          }|
-      {1:~                }type  :help Kuwasha{18:<Enter>}    for information {1:                 }|
-      {1:~                                                                               }|*5
+      {1:~                }type  {18::}{25:help Kuwasha}{18:<Enter>}    for information {1:                 }|
+      {1:~                                                                               }|*6
     ]]
     local showmode = { { '-- INSERT --', 5, 'ModeMsg' } }
     screen:expect(introscreen)
@@ -2243,20 +2241,19 @@ describe('ui/ext_messages', function()
         ^                                                                                |
         {1:~    }{4:     }{1:                                                                      }|
         {1:~                                                                               }|*4
-        {MATCH:.*}|
+        {1:~             }{MATCH:.*}{26:╲}{MATCH:.*}|
+        {1:~             }{MATCH:.*}{26:╲╲││}{MATCH:.*}|
+        {1:~             }{MATCH:.*}{26:╲}{MATCH:.*}|
         {1:~                                                                               }|
-        {1:~                 }Nvim is open source and freely distributable{1:                  }|
-        {1:~                           }https://neovim.io/#chat{1:                             }|
-        {1:~                                                                               }|
-        {1:~                }type  :help nvim{18:<Enter>}       if you are new! {1:                 }|
-        {1:~                }type  :checkhealth{18:<Enter>}     to optimize Nvim{1:                 }|
-        {1:~                }type  :q{18:<Enter>}               to exit         {1:                 }|
-        {1:~                }type  :help{18:<Enter>}            for help        {1:                 }|
-        {1:~{MATCH: +}}type  :help news{18:<Enter>} {MATCH:.*}|
+        {1:~                }type  {18::}{25:help nvim}{18:<Enter>}       if you are new! {1:                 }|
+        {1:~                }type  {18::}{25:checkhealth}{18:<Enter>}     to optimize Nvim{1:                 }|
+        {1:~                }type  {18::}{25:q}{18:<Enter>}               to exit         {1:                 }|
+        {1:~                }type  {18::}{25:help}{18:<Enter>}            for help        {1:                 }|
+        {1:~                }type  {18::}{25:help news}{18:<Enter>}       for v{MATCH:%d+%.%d+} notes{1:                  }|
         {1:~                                                                               }|
         {1:~                        }Help poor children in Uganda!{1:                          }|
-        {1:~                }type  :help Kuwasha{18:<Enter>}    for information {1:                 }|
-        {1:~                                                                               }|*5
+        {1:~                }type  {18::}{25:help Kuwasha}{18:<Enter>}    for information {1:                 }|
+        {1:~                                                                               }|*6
       ]],
       showmode = showmode,
     }
@@ -2280,19 +2277,18 @@ describe('ui/ext_messages', function()
         ^                                                                                |
                                                                                         |*5
         {MATCH:.*}|
+        {MATCH:.*}|
+        {MATCH:.*}|
                                                                                         |
-                          Nvim is open source and freely distributable                  |
-                                    https://neovim.io/#chat                             |
-                                                                                        |
-                         type  :help nvim{18:<Enter>}       if you are new!                  |
-                         type  :checkhealth{18:<Enter>}     to optimize Nvim                 |
-                         type  :q{18:<Enter>}               to exit                          |
-                         type  :help{18:<Enter>}            for help                         |
-        {MATCH: +}type  :help news{18:<Enter>} {MATCH:.*}|
+                         type  {18::}{25:help nvim}{18:<Enter>}       if you are new!                  |
+                         type  {18::}{25:checkhealth}{18:<Enter>}     to optimize Nvim                 |
+                         type  {18::}{25:q}{18:<Enter>}               to exit                          |
+                         type  {18::}{25:help}{18:<Enter>}            for help                         |
+                         type  {18::}{25:help news}{18:<Enter>}       for v{MATCH:%d+%.%d+} notes                  |
                                                                                         |
                                  Help poor children in Uganda!                          |
-                         type  :help Kuwasha{18:<Enter>}    for information                  |
-                                                                                        |*5
+                         type  {18::}{25:help Kuwasha}{18:<Enter>}    for information                  |
+                                                                                        |*6
       ]],
     }
 
@@ -2408,20 +2404,19 @@ it('ui/ext_multigrid supports intro screen', function()
     ## grid 2
       ^                                                                                |
       {1:~                                                                               }|*5
-      {MATCH:.*}|
+      {1:~             }{MATCH:.*}{26:╲}{MATCH:.*}|
+      {1:~             }{MATCH:.*}{26:╲╲││}{MATCH:.*}|
+      {1:~             }{MATCH:.*}{26:╲}{MATCH:.*}|
       {1:~                                                                               }|
-      {1:~                 }Nvim is open source and freely distributable{1:                  }|
-      {1:~                           }https://neovim.io/#chat{1:                             }|
-      {1:~                                                                               }|
-      {1:~                }type  :help nvim{18:<Enter>}       if you are new! {1:                 }|
-      {1:~                }type  :checkhealth{18:<Enter>}     to optimize Nvim{1:                 }|
-      {1:~                }type  :q{18:<Enter>}               to exit         {1:                 }|
-      {1:~                }type  :help{18:<Enter>}            for help        {1:                 }|
-      {1:~{MATCH: +}}type  :help news{18:<Enter>} {MATCH:.*}|
+      {1:~                }type  {18::}{25:help nvim}{18:<Enter>}       if you are new! {1:                 }|
+      {1:~                }type  {18::}{25:checkhealth}{18:<Enter>}     to optimize Nvim{1:                 }|
+      {1:~                }type  {18::}{25:q}{18:<Enter>}               to exit         {1:                 }|
+      {1:~                }type  {18::}{25:help}{18:<Enter>}            for help        {1:                 }|
+      {1:~                }type  {18::}{25:help news}{18:<Enter>}       for v{MATCH:%d+%.%d+} notes{1:                  }|
       {1:~                                                                               }|
       {1:~                        }Help poor children in Uganda!{1:                          }|
-      {1:~                }type  :help Kuwasha{18:<Enter>}    for information {1:                 }|
-      {1:~                                                                               }|*4
+      {1:~                }type  {18::}{25:help Kuwasha}{18:<Enter>}    for information {1:                 }|
+      {1:~                                                                               }|*5
     ## grid 3
                                                                                       |
     ]],

@@ -26,6 +26,7 @@
 #include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -4187,17 +4188,26 @@ bool may_show_intro(void)
 /// @param colon true for ":intro"
 void intro_message(bool colon)
 {
-  static char *(lines[]) = {
-    N_(NVIM_VERSION_LONG),
-    "",
+  static char *logo_prefix[] = {
+    "│ ╲ ││",
+    "││╲╲││",
+    "││ ╲ │",
+  };
+  static char *logo_text[] = {
+    NVIM_VERSION_LONG,
     N_("Nvim is open source and freely distributable"),
     "https://neovim.io/#chat",
+  };
+  static char *(lines[]) = {
+    "",  // placeholder for logo line 0
+    "",  // placeholder for logo line 1
+    "",  // placeholder for logo line 2
     "",
     N_("type  :help nvim<Enter>       if you are new! "),
     N_("type  :checkhealth<Enter>     to optimize Nvim"),
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>            for help        "),
-    N_("type  :help news<Enter>       ✨ v%s.%s news ✨"),
+    N_("type  :help news<Enter>       for v%s.%s notes"),
     "",
     N_("Help poor children in Uganda!"),
     N_("type  :help Kuwasha<Enter>    for information "),
@@ -4206,7 +4216,6 @@ void intro_message(bool colon)
   // blanklines = screen height - # message lines
   size_t lines_size = ARRAY_SIZE(lines);
   assert(lines_size <= LONG_MAX);
-
   int blanklines = Rows - ((int)lines_size - 1);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
@@ -4221,7 +4230,18 @@ void intro_message(bool colon)
   // start displaying the message lines after half of the blank lines
   int row = blanklines / 2;
 
+  int string_attr = syn_id2attr(syn_name2id("String"));
+
   if (((row >= 2) && (Columns >= 50)) || colon) {
+    // Compute the widest logo line for uniform left-alignment.
+    int logo_max_width = 0;
+    for (int i = 0; i < (int)ARRAY_SIZE(logo_prefix); i++) {
+      int w = vim_strsize(logo_prefix[i]) + 1 + vim_strsize(_(logo_text[i]));
+      if (w > logo_max_width) {
+        logo_max_width = w;
+      }
+    }
+
     for (int i = 0; i < (int)ARRAY_SIZE(lines); i++) {
       char *p = lines[i];
       char *mesg = NULL;
@@ -4245,7 +4265,12 @@ void intro_message(bool colon)
         }
       }
 
-      if (*mesg != NUL) {
+      if (i < (int)ARRAY_SIZE(logo_prefix)) {
+        char *text = _(logo_text[i]);
+        // Version line (i == 0) gets String highlight.
+        int text_attr = (i == 0) ? string_attr : 0;
+        do_intro_logo_line(row, logo_prefix[i], text, text_attr, logo_max_width, colon);
+      } else if (*mesg != NUL) {
         do_intro_line(row, mesg, colon);
       }
       row++;
@@ -4257,20 +4282,62 @@ void intro_message(bool colon)
   }
 }
 
-static void do_intro_line(int row, char *mesg, bool colon)
+/// Renders a logo line (first 3 lines of the intro): logo prefix + space + text, left-aligned.
+/// - Logo chars before the first "╲" are highlighted as "Special"
+/// - Logo chars after that are highlighted as "String".
+///
+/// @param max_width  Display-width of the widest logo line (for uniform left-alignment).
+/// @param text_attr  Highlight attribute for the text portion (0 for none).
+static void do_intro_logo_line(int row, char *logo, char *text, int text_attr, int max_width,
+                               bool colon)
 {
-  int l;
+  int special_attr = syn_id2attr(syn_name2id("Special"));
+  int string_attr = syn_id2attr(syn_name2id("String"));
 
-  // Center the message horizontally.
-  int col = vim_strsize(mesg);
-
-  col = (Columns - col) / 2;
-
+  // All logo lines share the same left edge, based on the widest line.
+  int col = (Columns - max_width) / 2;
   if (col < 0) {
     col = 0;
   }
 
   grid_line_start((!colon && ui_has(kUIMultigrid)) ? &firstwin->w_grid : &default_gridview, row);
+
+  // Logo prefix:
+  bool seen_backslash = false;
+  for (char *p = logo; *p != NUL;) {
+    int clen = utfc_ptr2len(p);
+    int attr = 0;
+    if ((uint8_t)(*p) >= 0x80) {
+      seen_backslash = seen_backslash || utf_ptr2char(p) == 0x2572;  // Found "╲" diagonal box-drawing char.
+      attr = seen_backslash ? string_attr : special_attr;
+    }
+    col += grid_line_puts(col, p, clen, attr);
+    p += clen;
+  }
+
+  // Space separator + text:
+  col += grid_line_puts(col, " ", 1, 0);
+  col += grid_line_puts(col, text, (int)strlen(text), text_attr);
+
+  grid_line_flush();
+}
+
+/// Renders an intro line (after the "logo lines").
+/// Highlights "type :help …" lines.
+static void do_intro_line(int row, char *mesg, bool colon)
+{
+  int l;
+  // Center the message horizontally.
+  int col = vim_strsize(mesg);
+  col = (Columns - col) / 2;
+  if (col < 0) {
+    col = 0;
+  }
+
+  grid_line_start((!colon && ui_has(kUIMultigrid)) ? &firstwin->w_grid : &default_gridview, row);
+
+  // Highlight ":command" with this hl group.
+  int id_attr = syn_id2attr(syn_name2id("Identifier"));
 
   // Split up in parts to highlight <> items differently.
   for (char *p = mesg; *p != NUL; p += l) {
@@ -4280,7 +4347,24 @@ static void do_intro_line(int row, char *mesg, bool colon)
       l += utfc_ptr2len(p + l) - 1;
     }
     assert(row <= INT_MAX && col <= INT_MAX);
-    col += grid_line_puts(col, p, l, *p == '<' ? HL_ATTR(HLF_8) : 0);
+    if (*p == '<') {
+      col += grid_line_puts(col, p, l, HL_ATTR(HLF_8));
+    } else {
+      // Check for ":command" pattern before a <key> segment.
+      char *colon_pos = memchr(p, ':', (size_t)l);
+      if (colon_pos != NULL && p[l] == '<') {
+        // No highlight for "type  ".
+        int prefix_len = (int)(colon_pos - p);
+        col += grid_line_puts(col, p, prefix_len, 0);
+        // Highlight ":".
+        col += grid_line_puts(col, colon_pos, 1, HL_ATTR(HLF_8));
+        // Highlight "command" (after the ":").
+        int cmd_len = l - prefix_len - 1;
+        col += grid_line_puts(col, colon_pos + 1, cmd_len, id_attr);
+      } else {
+        col += grid_line_puts(col, p, l, 0);
+      }
+    }
   }
   grid_line_flush();
 }

@@ -26,7 +26,7 @@ describe('Normal mode', function()
 
   it('&showcmd does not crash with :startinsert #28419', function()
     local screen = Screen.new(60, 17)
-    fn.jobstart({ n.nvim_prog, '--clean', '--cmd', 'startinsert' }, {
+    fn.jobstart({ n.nvim_prog, '--clean', '--cmd', 'set shortmess+=I', '--cmd', 'startinsert' }, {
       term = true,
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
