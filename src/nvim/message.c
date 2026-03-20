@@ -362,6 +362,7 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
 MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
                   MessageData *msg_data, bool *needs_msg_clear)
 {
+  // Message `id`:
   // - Nil: Generate a new Integer id.
   // - Integer: Existing id.
   // - String: User-defined id (new or existing).

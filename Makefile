@@ -112,17 +112,18 @@ build/.ran-cmake: | deps
 	$(CMAKE) -B build -G $(CMAKE_GENERATOR) $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
 	$(TOUCH) $@
 
+ifneq ($(call filter-true,$(USE_BUNDLED)),)
+deps: ;
+else
 deps: | build/.ran-deps-cmake
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	$(CMAKE) --build $(DEPS_BUILD_DIR)
-endif
 
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
 $(DEPS_BUILD_DIR):
 	$(MKDIR) $@
 build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
 	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(DEPS_CMAKE_FLAGS)
 endif
+
 build/.ran-deps-cmake::
 	$(MKDIR) build
 	$(TOUCH) "$@"
@@ -136,6 +137,7 @@ else
 	@# Handle TEST_FILE=test_foo{,.res,.vim}.
 	$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
 endif
+
 # Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
 test/old/testdir/%.vim: phony_force nvim

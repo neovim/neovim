@@ -1304,7 +1304,7 @@ vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
       • {backtrace}    (`boolean?`) Prints backtrace. Defaults to true.
 
     Return: ~
-        (`string?`) Deprecated message, or nil if no message was shown.
+        (`string?`) Deprecation message, or nil if no message was shown.
 
 vim.inspect()                                                  *vim.inspect()*
     Gets a human-readable representation of the given object.
@@ -5032,11 +5032,11 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
       • |vim.system()|
 
 vim.ui.progress_status()                            *vim.ui.progress_status()*
-    Gets the status of currently running progress messages, in a format
-    convenient for inclusion in 'statusline'.
+    Gets a status description summarizing currently running progress messages.
+    Convenient for inclusion in 'statusline'.
 
     Return: ~
-        (`string`) formatted text of progress status for statusline
+        (`string`) Progress status
 
 vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
     Prompts the user to pick from a list of items, allowing arbitrary
