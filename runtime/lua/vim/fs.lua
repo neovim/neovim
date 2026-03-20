@@ -409,7 +409,7 @@ end
 ---
 --- -- Find the parent directory containing any file with a .csproj extension
 --- vim.fs.root(0, function(name, path)
----   return name:match('%.csproj$') ~= nil
+---   return vim.fs.ext(name) == 'csproj'
 --- end)
 ---
 --- -- Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json"; if
@@ -833,6 +833,29 @@ function M.relpath(base, target, opts)
   base = prefix .. base .. (base ~= '/' and '/' or '')
 
   return vim.startswith(target, base) and target:sub(#base + 1) or nil
+end
+
+--- Return the file's last extension, if any.
+---
+--- Similar to |fnamemodify()| with the |::e| modifier. The extension does not include a leading
+--- period.
+---
+--- Examples:
+---
+--- ```lua
+--- vim.fs.ext('archive.tar.gz') -- 'gz'
+--- vim.fs.ext('~/.git') -- ''
+--- vim.fs.ext('plugin/myplug.lua') -- 'lua'
+--- ```
+---
+---@since 14
+---@param file string Path
+---@param opts table? Reserved for future use
+---@return string Extension of {file}
+function M.ext(file, opts)
+  vim.validate('file', file, 'string')
+  vim.validate('opts', opts, 'table', true)
+  return vim.fn.fnamemodify(file, ':e')
 end
 
 return M
