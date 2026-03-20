@@ -306,4 +306,91 @@ function M._get_urls()
   return urls
 end
 
+do
+  ---@class ProgressMessage
+  ---@field id? number|string  ID of the progress message
+  ---@field title? string   Title of the progress message
+  ---@field status string  Status: "running" | "success" | "failed" | "cancel"
+  ---@field percent? integer Percent complete (0–100)
+  ---@private
+
+  --- Cache of active progress messages, keyed by msg_id
+  --- TODO(justinmk): visibility of "stale" (never-finished) Progress. https://github.com/neovim/neovim/pull/35428#discussion_r2942696157
+  ---@type table<integer, ProgressMessage>
+  local progress = {}
+
+  -- store progress events
+  local progress_group, progress_autocmd = nil, nil
+
+  ---Initialize progress event listeners
+  local function progress_init()
+    progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
+    progress_autocmd = vim.api.nvim_create_autocmd('Progress', {
+      group = progress_group,
+      desc = 'Tracks progress messages for vim.ui.progress_status()',
+      ---@param ev {data: {id: integer, title: string, status: string, percent: integer}}
+      callback = function(ev)
+        if not ev.data or not ev.data.id then
+          return
+        end
+        progress[ev.data.id] = {
+          id = ev.data.id,
+          title = ev.data.title,
+          status = ev.data.status,
+          percent = ev.data.percent or 0,
+        }
+
+        -- Clear finished items
+        if
+          ev.data.status == 'success'
+          or ev.data.percent == 100
+          or ev.data.status == 'failed'
+          or ev.data.status == 'cancel'
+        then
+          progress[ev.data.id] = nil
+        end
+      end,
+    })
+  end
+
+  ---Return statusline text summarizing progress messages.
+  --- - If none: returns empty string
+  --- - If one running item: "title: 42%"
+  --- - If multiple running items: "Progress: N items AVG%"
+  ---@param running ProgressMessage[]
+  ---@return string
+  local function progress_status_fmt(running)
+    local count = #running
+    if count == 0 then
+      return '' -- nothing to show
+    elseif count == 1 then
+      local progress_item = running[1]
+      if progress_item.title == nil then
+        return string.format('%d%%%% ', progress_item.percent or 0)
+      end
+      return string.format('%s: %d%%%% ', progress_item.title, progress_item.percent or 0)
+    else
+      local sum = 0 ---@type integer
+      for _, progress_item in ipairs(running) do
+        sum = sum + (progress_item.percent or 0)
+      end
+      local avg = math.floor(sum / count)
+      return string.format('Progress: %d items %d%%%% ', count, avg)
+    end
+  end
+
+  --- Gets the status of currently running progress messages, in a format
+  --- convenient for inclusion in 'statusline'.
+  ---@return string formatted text of progress status for statusline
+  function M.progress_status()
+    -- Create progress event listener on first call
+    if progress_autocmd == nil then
+      progress_init()
+    end
+
+    local running = vim.tbl_values(progress)
+    return progress_status_fmt(running) or ''
+  end
+end
+
 return M
