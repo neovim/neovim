@@ -157,7 +157,10 @@ RSC['client/registerCapability'] = function(_, params, ctx)
     for _, Cap in pairs(vim.lsp._capability.all) do
       if reg.method == Cap.method then
         for bufnr in pairs(client.attached_buffers) do
-          if vim.lsp._capability.is_enabled(Cap.name, { bufnr = bufnr, client_id = client.id }) then
+          if
+            client:supports_method(Cap.method, bufnr)
+            and vim.lsp._capability.is_enabled(Cap.name, { bufnr = bufnr, client_id = client.id })
+          then
             local capability = Cap.active[bufnr] or Cap:new(bufnr)
             if not capability.client_state[client.id] then
               capability:on_attach(client.id)
