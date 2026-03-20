@@ -314,7 +314,8 @@ do
   ---@field percent? integer Percent complete (0–100)
   ---@private
 
-  ---Cache of active progress messages, keyed by msg_id
+  --- Cache of active progress messages, keyed by msg_id
+  --- TODO(justinmk): visibility of "stale" (never-finished) Progress. https://github.com/neovim/neovim/pull/35428#discussion_r2942696157
   ---@type table<integer, ProgressMessage>
   local progress = {}
 
