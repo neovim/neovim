@@ -326,7 +326,7 @@ do
     progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
     progress_autocmd = vim.api.nvim_create_autocmd('Progress', {
       group = progress_group,
-      desc = 'Track progress messages for statusline',
+      desc = 'Tracks progress messages for vim.ui.progress_status()',
       ---@param ev {data: {id: integer, title: string, status: string, percent: integer}}
       callback = function(ev)
         if not ev.data or not ev.data.id then
