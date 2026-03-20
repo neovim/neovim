@@ -101,7 +101,7 @@ vim.pack.add({
   'https://github.com/lewis6991/gitsigns.nvim',
 })
 
-require('fzf-lua').setup({ fzf_colors = true })
+require('fzf-lua').setup { fzf_colors = true }
 require('mini.completion').setup {}
 require('quicker').setup {}
 require('gitsigns').setup {}

@@ -32,7 +32,7 @@
 ---
 --- There are four special windows/buffers for presenting messages and cmdline:
 --- - "cmd": Cmdline. Also used for 'showcmd', 'showmode', 'ruler', and messages by default.
---- - "msg": Message window, shows fleeting messages useful for 'cmdheight' == 0.
+--- - "msg": Message window, shows ephemeral messages useful for 'cmdheight' == 0.
 --- - "pager": Pager window, shows |:messages| and certain messages that are never "collapsed".
 --- - "dialog": Dialog window, shows modal prompts that expect user input.
 ---

@@ -483,7 +483,7 @@ It is an error to directly invoke `vim.api` functions (except |api-fast|) in
       vim.api.nvim_command('echomsg "test"')
     end)
 <
-To avoid the error use |vim.schedule_wrap()| to defer the callback: >lua
+To avoid the error, |schedule| the callback: >lua
 
     local timer = vim.uv.new_timer()
     timer:start(1000, 0, vim.schedule_wrap(function()
@@ -1279,8 +1279,8 @@ vim.cmd({command})                                                 *vim.cmd()*
 vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
     Defers calling {fn} until {timeout} ms passes.
 
-    Use to do a one-shot timer that calls {fn} Note: The {fn} is
-    |vim.schedule()|d automatically, so API functions are safe to call.
+    Use to do a one-shot timer that calls {fn}. Note: The {fn} is |schedule|d
+    automatically, so API functions are safe to call.
 
     Parameters: ~
       • {fn}       (`function`) Callback to call once `timeout` expires
@@ -4156,11 +4156,8 @@ Lua module: vim.net                                                  *vim.net*
 
 
 vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
-    Makes an HTTP GET request to the given URL (asynchronous).
-
-    This function is asynchronous (non-blocking), returning immediately and
-    passing the response object to the optional `on_response` handler on
-    completion.
+    Makes an HTTP GET request to the given URL, asynchronously passing the
+    result to the specified `on_response`, `outpath` or `outbuf`.
 
     Examples: >lua
         -- Write response body to file
@@ -5452,7 +5449,7 @@ To enable this feature (default opts shown): >lua
 There are four special windows/buffers for presenting messages and cmdline:
 • "cmd": Cmdline. Also used for 'showcmd', 'showmode', 'ruler', and messages
   by default.
-• "msg": Message window, shows fleeting messages useful for 'cmdheight' == 0.
+• "msg": Message window, shows ephemeral messages useful for 'cmdheight' == 0.
 • "pager": Pager window, shows |:messages| and certain messages that are never
   "collapsed".
 • "dialog": Dialog window, shows modal prompts that expect user input.

@@ -9717,7 +9717,7 @@ function vim.fn.stridx(haystack, needle, start) end
 --- parsed back with |eval()|.
 ---
 ---   {expr} type  result ~
----   String    "string"
+---   String    `'string'`
 ---   Number    123
 ---   Float    123.123456 or 1.123456e8 or
 ---       `str2float('inf')`

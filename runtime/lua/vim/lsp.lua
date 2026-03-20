@@ -1163,7 +1163,7 @@ end
 --- Also return uninitialized clients.
 --- @field package _uninitialized? boolean
 
---- Get active clients.
+--- Gets active clients.
 ---
 ---@since 12
 ---

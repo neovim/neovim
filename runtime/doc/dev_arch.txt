@@ -56,7 +56,8 @@ Lua code lives in one of four places:
    primarily user-facing, not an API.
    - "Opt-out" plugins (activated on startup): `runtime/plugin/`
    - "Opt-in" plugins (activated via `:packadd`): `runtime/pack/dist/opt/`
-   - NOTE: New plugins should place Lua modules in the shared "nvim"
+   - Note: Update |standard-plugin-list|.
+   - Note: New plugins should place Lua modules in the shared "nvim"
      namespace: `require('nvim.foo')`, not `require('foo')`.
    - Examples:
      - ✅ spellfile `runtime/lua/nvim/spellfile.lua`

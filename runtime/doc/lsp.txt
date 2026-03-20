@@ -370,6 +370,17 @@ LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
 to the server. (Notifications, as opposed to requests, are fire-and-forget:
 there is no response, so they can't be handled. |lsp-notification|)
 
+Each handler has the following signature: >
+
+    vim.lsp.ResponseHandler:
+        fun(err, result, ctx)
+
+    vim.lsp.NotificationHandler:
+        fun(err, params, ctx)
+
+    vim.lsp.RequestHandler:
+        fun(err, params, ctx): Result?, lsp.ResponseError?
+
 Each response handler has this signature: >
 
     function(err, result, ctx)
@@ -390,10 +401,15 @@ Each response handler has this signature: >
                                  current document version to check if the
                                  response is "stale". See also |b:changedtick|.
 
-    Returns: ~
-        Two values `result, err` where `err` is shaped like an RPC error: >
+    Return (multiple): ~
+        • (`Result?`) `result` on success, or `nil` on error.
+        • (`lsp.ResponseError?`) `error` on failure, or `nil` on success.
+          RPC error shape: >
             { code, message, data? }
-<        You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
+<          You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
+
+        |lsp-response| and |lsp-notification| handlers do not have return
+        values.
 
                                                       *lsp-handler-resolution*
 Handlers can be set by (in increasing priority):
@@ -450,12 +466,23 @@ name: >lua
     vim.lsp.protocol.TextDocumentSyncKind[1] == "Full"
 <
 
+                                                                *lsp-request*
+LSP request shape: >
+    { id: integer|string, method: string, params?: Params }
+<
+https://microsoft.github.io/language-server-protocol/specifications/specification-current/#requestMessage
+
                                                                 *lsp-response*
-LSP response shape:
+LSP response shape: >
+    { id: integer|string|nil, result: Result, error: nil }       (on success)
+    { id: integer|string|nil, result: nil, error: ResponseError }  (on error)
+<
 https://microsoft.github.io/language-server-protocol/specifications/specification-current/#responseMessage
 
                                                                 *lsp-notification*
-LSP notification shape:
+LSP notification shape: >
+    { method: string, params?: Params }
+<
 https://microsoft.github.io/language-server-protocol/specifications/specification-current/#notificationMessage
 
 ================================================================================
@@ -1136,7 +1163,7 @@ get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
         (`vim.lsp.Client?`) client rpc object. See |vim.lsp.Client|.
 
 get_clients({filter})                                  *vim.lsp.get_clients()*
-    Get active clients.
+    Gets active clients.
 
     Attributes: ~
         Since: 0.10.0

@@ -635,7 +635,7 @@ words that were generated from that .spl file.
 SPELL FILE MISSING				    *spell-SpellFileMissing*
 
 If a spell file is missing, the user is asked whether to download it. See
-|spellfile.lua|.
+|package-spellfile|.
 
 							*E797*
 Note that the SpellFileMissing autocommand must not change or destroy the

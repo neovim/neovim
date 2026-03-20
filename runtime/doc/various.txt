@@ -105,6 +105,9 @@ gx			Opens the current filepath, URL (decided by
 			|<cfile>|, 'isfname'), or |LSP| "documentLink" at
 			cursor using the system default handler.
 
+			In |help| files, gx treats help tags as
+			https://neovim.io/doc/user/ URLs.
+
 			Mapped to |vim.ui.open()|.
 
 							*v_gx*

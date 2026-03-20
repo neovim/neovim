@@ -965,10 +965,7 @@ vim.go.cb = vim.go.clipboard
 --- used.  The command-line will cover the last line of the screen when
 --- shown.
 ---
---- WARNING: `cmdheight=0` is EXPERIMENTAL. Expect some unwanted behaviour.
---- Some 'shortmess' flags and similar mechanism might fail to take effect,
---- causing unwanted hit-enter prompts.  Some informative messages, both
---- from Nvim itself and plugins, will not be displayed.
+--- WARNING: `cmdheight=0` is EXPERIMENTAL. Works better with `ui2` enabled.
 ---
 --- @type integer
 vim.o.cmdheight = 1
@@ -3807,7 +3804,6 @@ vim.go.js = vim.go.joinspaces
 --- 		the action occurred.
 ---
 ---   clean         Remove unloaded buffers from the jumplist.
---- 		EXPERIMENTAL: this flag may change in the future.
 ---
 --- @type string
 vim.o.jumpoptions = "clean"
@@ -6527,7 +6523,7 @@ vim.bo.spf = vim.bo.spellfile
 --- encoding is used, Vim doesn't check it.
 --- How the related spell files are found is explained here: `spell-load`.
 ---
---- If the `spellfile.lua` plugin is active and you use a language name
+--- If the `package-spellfile` plugin is active and you use a language name
 --- for which Vim cannot find the .spl file in 'runtimepath' the plugin
 --- will ask you if you want to download the file.
 ---

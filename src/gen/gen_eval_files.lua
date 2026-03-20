@@ -272,6 +272,12 @@ local function render_api_meta(_f, fun, write)
     write('--- @deprecated')
   end
 
+  local internal = vim.startswith(fun.name, 'nvim__')
+  if internal or (fun.since and tonumber(fun.since) == 0) then
+    write('--- WARNING: This feature is experimental/unstable.')
+    write('---')
+  end
+
   local desc = fun.desc
   if desc then
     write(util.prefix_lines('--- ', norm_text(desc)))
