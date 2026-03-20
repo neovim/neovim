@@ -365,6 +365,9 @@ function STHighlighter:send_range_request(client, state, version)
 
     -- Only process range response if we got a valid response and don't have a full result yet
     if err or not response or state.has_full_result then
+      if err then
+        vim.lsp.log.error('semantic_tokens', err)
+      end
       active_request.request_id = nil
       active_request.version = nil
       return
@@ -423,6 +426,9 @@ function STHighlighter:send_full_delta_request(client, state, version)
     end
 
     if err or not response then
+      if err then
+        vim.lsp.log.error('semantic_tokens', err)
+      end
       active_request.request_id = nil
       active_request.version = nil
       return
