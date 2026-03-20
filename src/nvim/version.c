@@ -4251,7 +4251,7 @@ void intro_message(bool colon)
         }
       }
 
-      if (*mesg != NUL) {
+      if (*mesg != NUL && row < Rows - 1) {
         do_intro_line(row, mesg, colon, i < 3);
       }
       row++;
