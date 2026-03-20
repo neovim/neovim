@@ -1768,11 +1768,12 @@ describe('ui/builtin messages', function()
     -- ignore final whitespace inside string
     -- luacheck: push ignore
     eq(
-      [[--- Syntax items ---
-vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vimCommentGroup,vimCommentString 
-                   match /\<endif\s\+".*$/ms=s+5,lc=5  contains=@vimCommentGroup,vimCommentString 
-                   match /\<else\s\+".*$/ms=s+4,lc=4  contains=@vimCommentGroup,vimCommentString 
-                   links to Comment]],
+      t.dedent [[
+        --- Syntax items ---
+        vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vimCommentGroup,vimCommentString 
+                           match /\<endif\s\+".*$/ms=s+5,lc=5  contains=@vimCommentGroup,vimCommentString 
+                           match /\<else\s\+".*$/ms=s+4,lc=4  contains=@vimCommentGroup,vimCommentString 
+                           links to Comment]],
       exec_capture('syntax list vimComment')
     )
     -- luacheck: pop
@@ -2172,6 +2173,14 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                                                                                       |*2
       ^                                                                                |
     ]])
+    feed('<CR>')
+    assert_alive()
+  end)
+
+  it(':intro with small screen #38396', function()
+    screen:try_resize(80, 6)
+    feed(':intro<CR>')
+    screen:expect({ any = 'NVIM' })
     feed('<CR>')
     assert_alive()
   end)
