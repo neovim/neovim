@@ -443,9 +443,9 @@ function M._lsp_to_complete_items(
       local kind, kind_hlgroup = generate_kind(item)
       local completion_item = {
         word = word,
-        abbr = item.label,
+        abbr = ('%s%s'):format(item.label, vim.tbl_get(item, 'labelDetails', 'detail') or ''),
         kind = kind,
-        menu = item.detail or '',
+        menu = vim.tbl_get(item, 'labelDetails', 'description') or item.detail or '',
         info = get_doc(item),
         icase = 1,
         dup = 1,
