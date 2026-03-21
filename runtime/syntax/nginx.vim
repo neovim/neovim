@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: nginx.conf
 " Maintainer: Chris Aumann <me@chr4.org>
-" Last Change: Nov 25, 2023
+" Last Change: Jan 09, 2026
 
 if exists("b:current_syntax")
   finish
@@ -2300,7 +2300,7 @@ let b:current_syntax = "nginx"
 " Enable nested LUA syntax highlighting
 unlet b:current_syntax
 syn include @LUA syntax/lua.vim
-syn region ngxLua start=+^\s*\w\+_by_lua_block\s*{+ end=+}+me=s-1 contains=ngxBlock,@LUA
+syn region ngxLua start=+^\s*\w\+_by_lua_block\s*\(\$\w\+\s*\)\?{+ end=+}+me=s-1 contains=ngxBlock,@LUA
 let b:current_syntax = "nginx"
 
 

@@ -93,12 +93,8 @@ local ga_append = function(garr, b)
   end
 end
 
-local ga_concat_strings = function(garr)
-  return internalize(garray.ga_concat_strings(garr))
-end
-
-local ga_concat_strings_sep = function(garr, sep)
-  return internalize(garray.ga_concat_strings_sep(garr, to_cstr(sep)))
+local ga_concat_strings = function(garr, sep)
+  return internalize(garray.ga_concat_strings(garr, to_cstr(sep)))
 end
 
 local ga_remove_duplicate_strings = function(garr)
@@ -320,19 +316,16 @@ describe('garray', function()
     end)
   end)
 
-  local function test_concat_fn(input, fn, sep)
+  local function test_concat_fn(input, sep)
     local garr = new_string_garray()
     ga_append_strings(garr, unpack(input))
-    if sep == nil then
-      eq(table.concat(input, ','), fn(garr))
-    else
-      eq(table.concat(input, sep), fn(garr, sep))
-    end
+    eq(table.concat(input, sep), ga_concat_strings(garr, sep))
   end
 
   describe('ga_concat_strings', function()
     itp('returns an empty string when concatenating an empty array', function()
-      test_concat_fn({}, ga_concat_strings)
+      test_concat_fn({}, ',')
+      test_concat_fn({}, '---')
     end)
 
     itp('can concatenate a non-empty array', function()
@@ -340,22 +333,12 @@ describe('garray', function()
         'oh',
         'my',
         'neovim',
-      }, ga_concat_strings)
-    end)
-  end)
-
-  describe('ga_concat_strings_sep', function()
-    itp('returns an empty string when concatenating an empty array', function()
-      test_concat_fn({}, ga_concat_strings_sep, '---')
-    end)
-
-    itp('can concatenate a non-empty array', function()
-      local sep = '-●●-'
+      }, ',')
       test_concat_fn({
         'oh',
         'my',
         'neovim',
-      }, ga_concat_strings_sep, sep)
+      }, '-●●-')
     end)
   end)
 

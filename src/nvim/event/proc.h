@@ -25,6 +25,7 @@ static inline Proc proc_init(Loop *loop, ProcType type, void *data)
     .out = { .s.closed = false, .s.fd = STDOUT_FILENO },
     .err = { .s.closed = false, .s.fd = STDERR_FILENO },
     .cb = NULL,
+    .state_cb = NULL,
     .closed = false,
     .internal_close_cb = NULL,
     .internal_exit_cb = NULL,
@@ -45,6 +46,4 @@ static inline bool proc_is_stopped(Proc *proc)
   return exited || (proc->stopped_time != 0);
 }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/proc.h.generated.h"
-#endif
+#include "event/proc.h.generated.h"

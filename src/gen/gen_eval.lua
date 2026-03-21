@@ -1,10 +1,10 @@
+---@diagnostic disable: no-unknown
 local mpack = vim.mpack
 
-local autodir = arg[1]
+local funcsfname = arg[1]
 local metadata_file = arg[2]
 local funcs_file = arg[3]
-
-local funcsfname = autodir .. '/funcs.generated.h'
+local eval_file = arg[4]
 
 --Will generate funcs.generated.h with definition of functions static const array.
 
@@ -14,21 +14,27 @@ local hashpipe = assert(io.open(funcsfname, 'wb'))
 
 hashpipe:write([[
 #include "nvim/arglist.h"
+#include "nvim/channel.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
+#include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
 #include "nvim/eval/deprecated.h"
 #include "nvim/eval/fs.h"
 #include "nvim/eval/funcs.h"
+#include "nvim/eval/list.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
+#include "nvim/fuzzy.h"
 #include "nvim/getchar.h"
+#include "nvim/indent.h"
+#include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/mapping.h"
 #include "nvim/match.h"
@@ -47,7 +53,7 @@ hashpipe:write([[
 
 ]])
 
-local funcs = require('nvim.eval').funcs
+local funcs = loadfile(eval_file)().funcs
 for _, func in pairs(funcs) do
   if func.float_func then
     func.func = 'float_op_wrapper'
@@ -84,11 +90,14 @@ hashpipe:write('static const EvalFuncDef functions[] = {\n')
 
 for _, name in ipairs(neworder) do
   local def = funcs[name]
-  local args = def.args or 0
-  if type(args) == 'number' then
-    args = { args, args }
-  elseif #args == 1 then
-    args[2] = 'MAX_FUNC_ARGS'
+  local min_args = 0
+  local max_args = 0 --- @type integer|string
+  local def_args = def.args
+  if type(def_args) == 'number' then
+    min_args, max_args = def_args, def_args
+  elseif type(def_args) == 'table' then
+    min_args = def_args[1] or 0
+    max_args = def_args[2] or 'MAX_FUNC_ARGS'
   end
   local base = def.base or 'BASE_NONE'
   local func = def.func or ('f_' .. name)
@@ -97,8 +106,8 @@ for _, name in ipairs(neworder) do
   hashpipe:write(
     ('  { "%s", %s, %s, %s, %s, &%s, %s },\n'):format(
       name,
-      args[1],
-      args[2],
+      min_args,
+      max_args,
       base,
       fast,
       func,

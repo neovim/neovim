@@ -376,8 +376,7 @@ strongly advised not to rely on undefined or implementation-defined behavior.
 ==============================================================================
 COPYRIGHT
 
-Lua BitOp is Copyright (C) 2008-2012 Mike Pall.
+Lua BitOp is Copyright (C) 2008-2025 Mike Pall.
 Lua BitOp is free software, released under the MIT license.
 
-==============================================================================
  vim:tw=78:ts=4:sw=4:sts=4:et:ft=help:norl:

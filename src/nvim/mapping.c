@@ -25,8 +25,10 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_session.h"
+#include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
@@ -50,7 +52,6 @@
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
-#include "nvim/search.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -117,9 +118,7 @@ typedef struct map_arguments MapArguments;
 #define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, false, \
                              { 0 }, 0, { 0 }, 0, NULL, 0, LUA_NOREF, false, NULL, 0, NULL }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mapping.c.generated.h"
-#endif
+#include "mapping.c.generated.h"
 
 static const char e_global_abbreviation_already_exists_for_str[]
   = N_("E224: Global abbreviation already exists for %s");
@@ -215,8 +214,7 @@ static void showmap(mapblock_T *mp, bool local)
     return;
   }
 
-  // When ext_messages is active, msg_didout is never set.
-  if (msg_didout || msg_silent != 0 || ui_has(kUIMessages)) {
+  if (msg_col > 0 || msg_silent != 0) {
     msg_putchar('\n');
     if (got_int) {          // 'q' typed at MORE prompt
       return;
@@ -681,12 +679,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
           if ((mp->m_mode & mode) != 0
               && mp->m_keylen == len
               && strncmp(mp->m_keys, lhs, (size_t)len) == 0) {
-            if (is_abbrev) {
-              semsg(_(e_global_abbreviation_already_exists_for_str), mp->m_keys);
-            } else {
-              semsg(_(e_global_mapping_already_exists_for_str), mp->m_keys);
-            }
-            retval = 5;
+            retval = 6;
             goto theend;
           }
         }
@@ -799,11 +792,6 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                 did_it = true;
                 break;
               } else if (args->unique) {
-                if (is_abbrev) {
-                  semsg(_(e_abbreviation_already_exists_for_str), p);
-                } else {
-                  semsg(_(e_mapping_already_exists_for_str), p);
-                }
                 retval = 5;
                 goto theend;
               } else {
@@ -962,6 +950,7 @@ theend:
 ///         - 2 for no match
 ///         - 4 for out of mem (deprecated, WON'T HAPPEN)
 ///         - 5 for entry not unique
+///         - 6 for buflocal unique entry conflicts with global entry
 ///
 int do_map(int maptype, char *arg, int mode, bool is_abbrev)
 {
@@ -1349,7 +1338,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
       match = vim_regexec(regmatch, p, 0);
     } else {
       score = fuzzy_match_str(p, pat);
-      match = (score != 0);
+      match = (score != FUZZY_SCORE_NONE);
     }
 
     if (!match) {
@@ -1395,7 +1384,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
         match = vim_regexec(regmatch, p, 0);
       } else {
         score = fuzzy_match_str(p, pat);
-        match = (score != 0);
+        match = (score != FUZZY_SCORE_NONE);
       }
 
       if (!match) {
@@ -1664,7 +1653,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
     }
     api_free_object(ret);
     if (ERROR_SET(&err)) {
-      semsg_multiline("E5108: %s", err.msg);
+      semsg_multiline("emsg", "E5108: %s", err.msg);
       api_clear_error(&err);
     }
   } else {
@@ -1935,7 +1924,17 @@ int put_escstr(FILE *fd, const char *strstart, int what)
       if (str[1] == KS_MODIFIER) {
         modifiers = str[2];
         str += 3;
-        c = *str;
+
+        // Modifiers can be applied too to multi-byte characters.
+        p = mb_unescape((const char **)&str);
+
+        if (p == NULL) {
+          c = *str;
+        } else {
+          // retrieve codepoint (character number) from unescaped string
+          c = utf_ptr2char(p);
+          str--;
+        }
       }
       if (c == K_SPECIAL) {
         c = TO_SPECIAL(str[1], str[2]);
@@ -2128,9 +2127,7 @@ static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt
   PUT_C(dict, "lnum", INTEGER_OBJ(mp->m_script_ctx.sc_lnum));
   PUT_C(dict, "buffer", INTEGER_OBJ(buffer_value));
   PUT_C(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
-  if (mp->m_replace_keycodes) {
-    PUT_C(dict, "replace_keycodes", INTEGER_OBJ(1));
-  }
+  PUT_C(dict, "replace_keycodes", INTEGER_OBJ(mp->m_replace_keycodes ? 1 : 0));
   PUT_C(dict, "mode", CSTR_AS_OBJ(mapmode));
   PUT_C(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
   PUT_C(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));
@@ -2577,21 +2574,23 @@ const char *did_set_langmap(optset_T *args)
         p++;
       }
       int from = utf_ptr2char(p);
+      const char *const from_ptr = p;
       int to = NUL;
+      const char *to_ptr = "";
       if (p2 == NULL) {
         MB_PTR_ADV(p);
         if (p[0] != ',') {
           if (p[0] == '\\') {
             p++;
           }
-          to = utf_ptr2char(p);
+          to = utf_ptr2char(to_ptr = p);
         }
       } else {
         if (p2[0] != ',') {
           if (p2[0] == '\\') {
             p2++;
           }
-          to = utf_ptr2char(p2);
+          to = utf_ptr2char(to_ptr = p2);
         }
       }
       if (to == NUL) {
@@ -2604,7 +2603,10 @@ const char *did_set_langmap(optset_T *args)
       if (from >= 256) {
         langmap_set_entry(from, to);
       } else {
-        assert(to <= UCHAR_MAX);
+        if (to > UCHAR_MAX) {
+          swmsg(true, "'langmap': Mapping from %.*s to %.*s will not work properly",
+                utf_ptr2len(from_ptr), from_ptr, utf_ptr2len(to_ptr), to_ptr);
+        }
         langmap_mapchar[from & 255] = (uint8_t)to;
       }
 
@@ -2637,16 +2639,47 @@ static void do_exmap(exarg_T *eap, int isabbrev)
   char *cmdp = eap->cmd;
   int mode = get_map_mode(&cmdp, eap->forceit || isabbrev);
 
-  switch (do_map((*cmdp == 'n') ? MAPTYPE_NOREMAP
-                                : (*cmdp == 'u') ? MAPTYPE_UNMAP : MAPTYPE_MAP,
-                 eap->arg, mode, isabbrev)) {
+  int maptype;
+  if (*cmdp == 'n') {
+    maptype = MAPTYPE_NOREMAP;
+  } else if (*cmdp == 'u') {
+    maptype = MAPTYPE_UNMAP;
+  } else {
+    maptype = MAPTYPE_MAP;
+  }
+  MapArguments parsed_args;
+  int result = str_to_mapargs(eap->arg, maptype == MAPTYPE_UNMAP, &parsed_args);
+  switch (result) {
+  case 0:
+    break;
+  case 1:
+    emsg(_(e_invarg));
+    goto free_rhs;
+    break;
+  default:
+    assert(false && "Unknown return code from str_to_mapargs!");
+    goto free_rhs;
+  }
+  switch (buf_do_map(maptype, &parsed_args, mode, isabbrev, curbuf)) {
   case 1:
     emsg(_(e_invarg));
     break;
   case 2:
     emsg(isabbrev ? _(e_noabbr) : _(e_nomap));
     break;
+  case 5:
+    semsg(isabbrev ? _(e_abbreviation_already_exists_for_str)
+                   : _(e_mapping_already_exists_for_str),
+          parsed_args.lhs);
+    break;
+  case 6:
+    semsg(isabbrev ? _(e_global_abbreviation_already_exists_for_str)
+                   : _(e_global_mapping_already_exists_for_str),
+          parsed_args.lhs);
   }
+free_rhs:
+  xfree(parsed_args.rhs);
+  xfree(parsed_args.orig_rhs);
 }
 
 /// ":abbreviate" and friends.
@@ -2805,7 +2838,14 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   case 5:
     api_set_error(err, kErrorTypeException,
-                  "E227: mapping already exists for %s", parsed_args.lhs);
+                  is_abbrev ? e_abbreviation_already_exists_for_str
+                            : e_mapping_already_exists_for_str, lhs.data);
+    goto fail_and_free;
+    break;
+  case 6:
+    api_set_error(err, kErrorTypeException,
+                  is_abbrev ? e_global_abbreviation_already_exists_for_str
+                            : e_global_mapping_already_exists_for_str, lhs.data);
     goto fail_and_free;
   default:
     assert(false && "Unrecognized return code!");
@@ -2855,7 +2895,10 @@ ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
       }
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
-        kvi_push(mappings, DICT_OBJ(mapblock_fill_dict(current_maphash, NULL, buffer_value,
+        kvi_push(mappings, DICT_OBJ(mapblock_fill_dict(current_maphash,
+                                                       current_maphash->m_alt
+                                                       ? current_maphash->m_alt->m_keys : NULL,
+                                                       buffer_value,
                                                        is_abbrev, false, arena)));
       }
     }

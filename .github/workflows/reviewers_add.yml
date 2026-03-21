@@ -3,6 +3,9 @@ on:
   pull_request_target:
     types: [labeled, ready_for_review, reopened]
   workflow_call:
+
+permissions: {}
+
 jobs:
   request-reviewer:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && !endsWith(github.actor, '[bot]')
@@ -10,9 +13,12 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - name: 'Request reviewers'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.github/scripts/reviewers_add.js')

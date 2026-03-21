@@ -278,7 +278,7 @@ describe('fs.c', function()
       itp('does not change owner and group if respective IDs are equal to -1', function()
         local uid = uv.fs_stat(filename).uid
         local gid = uv.fs_stat(filename).gid
-        eq(0, os_fchown(filename, -1, -1))
+        eq(0, os_fchown(filename, -1ULL, -1ULL))
         eq(uid, uv.fs_stat(filename).uid)
         return eq(gid, uv.fs_stat(filename).gid)
       end)
@@ -304,7 +304,7 @@ describe('fs.c', function()
             -- User can be a member of only one group.
             -- In that case we can not perform this test.
             if new_gid then
-              eq(0, (os_fchown(filename, -1, new_gid)))
+              eq(0, (os_fchown(filename, -1ULL, new_gid)))
               eq(new_gid, uv.fs_stat(filename).gid)
             end
           end
@@ -378,7 +378,7 @@ describe('fs.c', function()
     end
     -- For some reason if length of NUL-bytes-string is the same as `char[?]`
     -- size luajit crashes. Though it does not do so in this test suite, better
-    -- be cautios and allocate more elements then needed. I only did this to
+    -- be cautious and allocate more elements then needed. I only did this to
     -- strings.
     local function os_read(fd, size)
       local buf = nil

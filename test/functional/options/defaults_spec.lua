@@ -195,7 +195,7 @@ describe('startup defaults', function()
       os.remove('Xtest-foo')
     end)
 
-    clear { args = {}, args_rm = { '-i' }, env = env }
+    clear { args = {}, args_rm = { '-i', '--cmd' }, env = env }
     -- Default 'shadafile' is empty.
     -- This means use the default location. :help shada-file-name
     eq('', api.nvim_get_option_value('shadafile', {}))
@@ -203,16 +203,18 @@ describe('startup defaults', function()
     -- Handles viminfo/viminfofile as alias for shada/shadafile.
     eq('\n  shadafile=', eval('execute("set shadafile?")'))
     eq('\n  shadafile=', eval('execute("set viminfofile?")'))
-    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set shada?")'))
-    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set viminfo?")'))
+    eq("\n  shada=!,'100,<50,s10,h,r/tmp/,r/private/", eval('execute("set shada?")'))
+    eq("\n  shada=!,'100,<50,s10,h,r/tmp/,r/private/", eval('execute("set viminfo?")'))
 
+    -- Remove /tmp/ exclusion so test works when run in temp directories.
+    command("set shada=!,'100,<50,s10,h")
     -- Check that shada data (such as v:oldfiles) is saved/restored.
     command('edit Xtest-foo')
     command('write')
     local f = eval('fnamemodify(@%,":p")')
     assert(string.len(f) > 3)
     expect_exit(command, 'qall')
-    clear { args = {}, args_rm = { '-i' }, env = env }
+    clear { args = {}, args_rm = { '-i', '--cmd' }, env = env }
     eq({ f }, eval('v:oldfiles'))
   end)
 
@@ -250,7 +252,7 @@ describe('startup defaults', function()
       eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
     end)
 
-    it('defaults to stdpath("log")/log if empty', function()
+    it('defaults to stdpath("log")/nvim.log if empty', function()
       eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({
         env = {
@@ -258,10 +260,10 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '', -- Empty is invalid.
         },
       })
-      eq(xdgstatedir .. '/log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
+      eq(xdgstatedir .. '/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
     end)
 
-    it('defaults to stdpath("log")/log if invalid', function()
+    it('defaults to stdpath("log")/nvim.log if invalid', function()
       eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({
         env = {
@@ -269,7 +271,7 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '.', -- Any directory is invalid.
         },
       })
-      eq(xdgstatedir .. '/log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
+      eq(xdgstatedir .. '/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
       -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
       expect_exit(command, 'qall!')
     end)
@@ -1171,7 +1173,11 @@ describe('stdpath()', function()
           set_paths_via_system(env_var_name, paths)
           eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
           if not is_os('win') then
-            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+            assert_log(
+              '$TMPDIR tempdir not a directory[^\n]*TMPDIR%-should%-be%-ignored',
+              testlog,
+              100
+            )
           end
         end)
 
@@ -1179,7 +1185,11 @@ describe('stdpath()', function()
           set_paths_at_runtime(env_var_name, paths)
           eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
           if not is_os('win') then
-            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+            assert_log(
+              '$TMPDIR tempdir not a directory[^\n]*TMPDIR%-should%-be%-ignored',
+              testlog,
+              100
+            )
           end
         end)
       end)

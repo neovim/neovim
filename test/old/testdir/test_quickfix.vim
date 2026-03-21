@@ -43,6 +43,8 @@ func s:setup_commands(cchar)
     command! -count=1 -nargs=0 Xabove <mods><count>cabove
     command! -count=1 -nargs=0 Xbefore <mods><count>cbefore
     command! -count=1 -nargs=0 Xafter <mods><count>cafter
+    command! -nargs=1 Xsethist <mods>set chistory=<args>
+    command! -nargs=0 Xsethistdefault <mods>set chistory&
     let g:Xgetlist = function('getqflist')
     let g:Xsetlist = function('setqflist')
     call setqflist([], 'f')
@@ -80,6 +82,9 @@ func s:setup_commands(cchar)
     command! -count=1 -nargs=0 Xabove <mods><count>labove
     command! -count=1 -nargs=0 Xbefore <mods><count>lbefore
     command! -count=1 -nargs=0 Xafter <mods><count>lafter
+    command! -nargs=1 Xsethist <mods>set lhistory=<args>
+    command! -nargs=1 Xsetlocalhist <mods>setlocal lhistory=<args>
+    command! -nargs=0 Xsethistdefault <mods>set lhistory&
     let g:Xgetlist = function('getloclist', [0])
     let g:Xsetlist = function('setloclist', [0])
     call setloclist(0, [], 'f')
@@ -663,6 +668,150 @@ endfunc
 func Test_browse()
   call Xtest_browse('c')
   call Xtest_browse('l')
+endfunc
+
+" Test for memory allocation failures
+func Xnomem_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  call test_alloc_fail(GetAllocId('qf_dirname_start'), 0, 0)
+  call assert_fails('Xvimgrep vim runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_dirname_now'), 0, 0)
+  call assert_fails('Xvimgrep vim runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_namebuf'), 0, 0)
+  call assert_fails('Xfile runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_errmsg'), 0, 0)
+  call assert_fails('Xfile runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_pattern'), 0, 0)
+  call assert_fails('Xfile runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_efm_fmtstr'), 0, 0)
+  set efm=%f
+  call assert_fails('Xexpr ["Xfile1"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_efm_fmtpart'), 0, 0)
+  set efm=%f:%l:%m,%f-%l-%m
+  call assert_fails('Xaddexpr ["Xfile2", "Xfile3"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_title'), 0, 0)
+  call assert_fails('Xexpr ""', 'E342:')
+  call assert_equal('', g:Xgetlist({'all': 1}).title)
+
+  call test_alloc_fail(GetAllocId('qf_mef_name'), 0, 0)
+  set makeef=Xtmp##.err
+  call assert_fails('Xgrep needle haystack', 'E342:')
+  set makeef&
+
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  call assert_fails('Xexpr "Xfile1:10:Line10"', 'E342:')
+
+  if a:cchar == 'l'
+    for id in ['qf_qfline', 'qf_qfinfo']
+      lgetexpr ["Xfile1:10:L10", "Xfile2:20:L20"]
+      call test_alloc_fail(GetAllocId(id), 0, 0)
+      call assert_fails('new', 'E342:')
+      call assert_equal(2, winnr('$'))
+      call assert_equal([], getloclist(0))
+      %bw!
+    endfor
+  endif
+
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  try
+    call assert_fails('Xvimgrep vim runtest.vim', 'E342:')
+  catch /^Vim:Interrupt$/
+  endtry
+
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  try
+    call assert_fails('Xvimgrep /vim/f runtest.vim', 'E342:')
+  catch /^Vim:Interrupt$/
+  endtry
+
+  let l = getqflist({"lines": ["Xfile1:10:L10"]})
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  call assert_fails('call g:Xsetlist(l.items)', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  try
+    call assert_fails('Xhelpgrep quickfix', 'E342:')
+  catch /^Vim:Interrupt$/
+  endtry
+
+  call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+  call assert_fails('let l = g:Xgetlist({"lines": ["Xfile1:10:L10"]})', 'E342:')
+  call assert_equal(#{items: []}, l)
+
+  if a:cchar == 'l'
+    call setqflist([], 'f')
+    call setloclist(0, [], 'f')
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lhelpgrep quickfix', 'E342:')
+    call assert_equal([], getloclist(0))
+
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lvimgrep vim runtest.vim', 'E342:')
+
+    let l = getqflist({"lines": ["Xfile1:10:L10"]})
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('call setloclist(0, l.items)', 'E342:')
+
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lbuffer', 'E342:')
+
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lexpr ["Xfile1:10:L10", "Xfile2:20:L20"]', 'E342:')
+
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lfile runtest.vim', 'E342:')
+  endif
+
+  call test_alloc_fail(GetAllocId('qf_dirstack'), 0, 0)
+  set efm=%DEntering\ dir\ %f,%f:%l:%m
+  call assert_fails('Xexpr ["Entering dir abc", "abc.txt:1:Hello world"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_dirstack'), 0, 0)
+  set efm=%+P[%f],(%l)%m
+  call assert_fails('Xexpr ["[runtest.vim]", "(1)Hello"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_multiline_pfx'), 0, 0)
+  set efm=%EError,%Cline\ %l,%Z%m
+  call assert_fails('Xexpr ["Error", "line 1", "msg"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_makecmd'), 0, 0)
+  call assert_fails('Xgrep vim runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_linebuf'), 0, 0)
+  call assert_fails('Xexpr repeat("a", 8192)', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_linebuf'), 0, 0)
+  call assert_fails('Xexpr [repeat("a", 8192)]', 'E342:')
+
+  new
+  call setline(1, repeat('a', 8192))
+  call test_alloc_fail(GetAllocId('qf_linebuf'), 0, 0)
+  call assert_fails('Xbuffer', 'E342:')
+  %bw!
+
+  call writefile([repeat('a', 8192)], 'Xtest')
+  call test_alloc_fail(GetAllocId('qf_linebuf'), 0, 0)
+  call assert_fails('Xfile Xtest', 'E342:')
+  call delete('Xtest')
+endfunc
+
+func Test_nomem()
+  throw 'Skipped: Nvim does not support test_alloc_fail()'
+  call Xnomem_tests('c')
+  call Xnomem_tests('l')
 endfunc
 
 func s:test_xhelpgrep(cchar)
@@ -2215,6 +2364,25 @@ func Test_grep()
   call s:test_xgrep('l')
 endfunc
 
+func Test_local_grepformat()
+  let save_grepformat = &grepformat
+  set grepformat=%f:%l:%m
+  " The following line are used for the local grep test. Don't remove.
+  " UNIQUEPREFIX:2:3: Local grepformat test
+  new
+  setlocal grepformat=UNIQUEPREFIX:%c:%n:%m
+  call assert_equal('UNIQUEPREFIX:%c:%n:%m', &l:grepformat)
+  call assert_equal('%f:%l:%m', &g:grepformat)
+
+  set grepprg=internal
+  silent grep "^[[:space:]]*\" UNIQUEPREFIX:" test_quickfix.vim
+  call assert_equal(1, len(getqflist()))
+  set grepprg&vim
+
+  bwipe!
+  let &grepformat = save_grepformat
+endfunc
+
 func Test_two_windows()
   " Use one 'errorformat' for two windows.  Add an expression to each of them,
   " make sure they each keep their own state.
@@ -3072,16 +3240,15 @@ endfunc
 " Test for incsearch highlighting of the :vimgrep pattern
 " This test used to cause "E315: ml_get: invalid lnum" errors.
 func Test_vimgrep_incsearch()
-  CheckFunction test_override
   enew
   set incsearch
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
 
   call feedkeys(":2vimgrep assert test_quickfix.vim test_cdo.vim\<CR>", "ntx")
   let l = getqflist()
   call assert_equal(2, len(l))
 
-  call test_override("ALL", 0)
+  call Ntest_override("ALL", 0)
   set noincsearch
 endfunc
 
@@ -3260,7 +3427,7 @@ endfunc
 func Test_cclose_in_autocmd()
   " Problem is only triggered if "starting" is zero, so that the OptionSet
   " event will be triggered.
-  " call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   augroup QF_Test
     au!
     au FileType qf :call assert_fails(':cclose', 'E788')
@@ -3270,7 +3437,7 @@ func Test_cclose_in_autocmd()
     au!
   augroup END
   augroup! QF_Test
-  " call test_override('starting', 0)
+  call Ntest_override('starting', 0)
 endfunc
 
 " Check that ":file" without an argument is possible even when "curbuf->b_ro_locked"
@@ -6594,6 +6761,271 @@ func Test_hardlink_fname()
   CheckExecutable ln
   call Xtest_hardlink_fname('c')
   call Xtest_hardlink_fname('l')
+endfunc
+
+" Test for checking if correct number of tests are deleted
+" and current list stays the same after setting Xhistory
+" to a smaller number. Do roughly the same for growing the stack.
+func Xtest_resize_list_stack(cchar)
+  call s:setup_commands(a:cchar)
+  Xsethist 100
+
+  for i in range(1, 100)
+    Xexpr string(i)
+  endfor
+  Xopen
+  call assert_equal(g:Xgetlist({'nr': '$'}).nr, 100)
+  call assert_equal("|| 100", getline(1))
+  Xsethist 8
+  call assert_equal("|| 100", getline(1))
+  Xolder 5
+  call assert_equal("|| 95", getline(1))
+  Xsethist 6
+  call assert_equal("|| 95", getline(1))
+  Xsethist 1
+  call assert_equal("|| 100", getline(1))
+
+  " grow array again
+  Xsethist 100
+  for i in range(1, 99)
+    Xexpr string(i)
+  endfor
+  call assert_equal("|| 99", getline(1))
+  Xolder 99
+  call assert_equal("|| 100", getline(1))
+
+  Xsethistdefault
+endfunc
+
+func Test_resize_list_stack()
+  call Xtest_resize_list_stack('c')
+  call Xtest_resize_list_stack('l')
+endfunc
+
+" Test to check if order of lists is from
+" oldest at the bottom to newest at the top
+func Xtest_Xhistory_check_order(cchar)
+
+  Xsethist 100
+
+  for i in range(1, 100)
+    Xexpr string(i)
+  endfor
+
+  Xopen
+  for i in range(100, 1, -1)
+    let l:ret = assert_equal("|| " .. i, getline(1))
+
+    if ret == 1 || i == 1
+      break
+    endif
+    Xolder
+  endfor
+
+  for i in range(1, 50)
+    Xexpr string(i)
+  endfor
+
+  for i in range(50, 1, -1)
+    let l:ret = assert_equal("|| " .. i, getline(1))
+
+    if ret == 1 || i == 50
+      break
+    endif
+    Xolder
+  endfor
+
+  for i in range(50, 1, -1)
+    let l:ret = assert_equal("|| " .. i, getline(1))
+
+    if ret == 1 || i == 50
+      break
+    endif
+    Xolder
+  endfor
+
+  Xsethistdefault
+endfunc
+
+func Test_set_history_to_check_order()
+  call Xtest_Xhistory_check_order('c')
+  call Xtest_Xhistory_check_order('l')
+endfunc
+
+" Check if 'lhistory' is the same between the location list window
+" and associated normal window
+func Test_win_and_loc_synced()
+  new
+  set lhistory=2
+  lexpr "Text"
+  lopen
+
+  " check if lhistory is synced when modified inside the
+  " location list window
+  setlocal lhistory=1
+  wincmd k
+  call assert_equal(&lhistory, 1)
+
+  " check if lhistory is synced when modified inside the
+  " normal window
+  setlocal lhistory=10
+  lopen
+  call assert_equal(&lhistory, 10)
+
+  wincmd k
+  lclose
+  wincmd q
+
+  set lhistory&
+endfunc
+
+" Test if setting the lhistory of one window doesn't affect the other
+func Test_two_win_are_independent_of_history()
+  setlocal lhistory=10
+  new
+  setlocal lhistory=20
+  wincmd  w
+  call assert_equal(&lhistory, 10)
+  wincmd w
+  wincmd q
+
+  set lhistory&
+endfunc
+
+" Test if lhistory is copied over to a new window
+func Test_lhistory_copied_over()
+  setlocal lhistory=3
+  split
+  call assert_equal(&lhistory, 3)
+  wincmd q
+
+  set lhistory&
+endfunc
+
+" Test if error occurs when given invalid history number
+func Xtest_invalid_history_num(cchar)
+  call s:setup_commands(a:cchar)
+
+  call assert_fails('Xsethist -10000', "E1542:")
+  call assert_fails('Xsethist 10000', "E1543:")
+  Xsethistdefault
+endfunc
+
+func Test_invalid_history_num()
+  call Xtest_invalid_history_num('c')
+  call Xtest_invalid_history_num('l')
+endfunc
+
+" Test if chistory and lhistory don't affect each other
+func Test_chi_and_lhi_are_independent()
+  set chistory=100
+  set lhistory=100
+
+  set chistory=10
+  call assert_equal(&lhistory, 100)
+
+  set lhistory=1
+  call assert_equal(&chistory, 10)
+
+  set chistory&
+  set lhistory&
+endfunc
+
+func Test_quickfix_close_buffer_crash()
+  new
+  lexpr 'test' | lopen
+  wincmd k
+  lclose
+  wincmd q
+endfunc
+
+func Test_vimgrep_dummy_buffer_crash()
+  augroup DummyCrash
+    autocmd!
+    " Make the dummy buffer non-current, but still open in a window.
+    autocmd BufReadCmd * ++once let s:dummy_buf = bufnr()
+          \| split | wincmd p | enew
+
+    " Autocmds from cleaning up the dummy buffer in this case should be blocked.
+    autocmd BufWipeout *
+          \ call assert_notequal(s:dummy_buf, str2nr(expand('<abuf>')))
+  augroup END
+
+  silent! vimgrep /./ .
+  redraw! " Window to freed dummy buffer used to remain; heap UAF.
+  call assert_equal([], win_findbuf(s:dummy_buf))
+  call assert_equal(0, bufexists(s:dummy_buf))
+
+  unlet! s:dummy_buf
+  autocmd! DummyCrash
+  %bw!
+endfunc
+
+func Test_vimgrep_dummy_buffer_keep()
+  augroup DummyKeep
+    autocmd!
+    " Trigger a wipe of the dummy buffer by aborting script processing. Prevent
+    " wiping it by splitting it from the autocmd window into an only window.
+    autocmd BufReadCmd * ++once let s:dummy_buf = bufnr()
+          \| tab split | call interrupt()
+  augroup END
+
+  call assert_fails('vimgrep /./ .')
+  call assert_equal(1, bufexists(s:dummy_buf))
+  " Ensure it's no longer considered a dummy; should be able to switch to it.
+  execute s:dummy_buf 'sbuffer'
+
+  unlet! s:dummy_buf
+  autocmd! DummyKeep
+  %bw!
+endfunc
+
+func Test_quickfix_restore_current_win()
+  let curwin = win_getid()
+  vsplit Xb
+  wincmd p
+  botright copen
+  cclose
+
+  call assert_equal(curwin, win_getid())
+  bw! Xb
+endfunc
+
+func Test_quickfixtextfunc_wipes_buffer()
+  let g:crash=""
+  new
+  fu QFexpr(dummy)
+    bw
+  endfu
+  try
+    set quickfixtextfunc=QFexpr
+    lad "['0:4:e']"
+    lw
+  catch /^Vim\%((\S\+)\)\=:E565:/
+    let g:crash='caught'
+  endtry
+  " close location list window
+  bw
+  delfunc QFexpr
+  set quickfixtextfunc=
+  call assert_equal('caught', g:crash)
+  unlet g:crash
+  " close the newly opened window
+  bw
+endfunc
+
+func Test_quickfix_longline_noeol()
+  let qf = 'Xquickfix'
+  let args = $"-q {qf}"
+  let after =<< trim [CODE]
+    call writefile(['okay'], "XDONE")
+    qall!
+  [CODE]
+  defer delete("XDONE")
+  call writefile([repeat('A', 1024)], qf, 'bD')
+  call RunVim([], after, args)
+  call WaitForAssert({-> assert_true(filereadable("XDONE"))})
+  call assert_equal(['okay'], readfile("XDONE"))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -24,6 +24,23 @@ describe('nlua_expand_pat', function()
 
   it('returns empty table when nothing matches', function()
     eq({ {}, 0 }, get_completions('foo', { bar = true }))
+
+    -- can access non-exist field
+    for _, m in ipairs {
+      'vim.',
+      'vim.lsp.',
+      'vim.treesitter.',
+      'vim.deepcopy.',
+      'vim.fn.',
+      'vim.api.',
+      'vim.o.',
+      'vim.b.',
+    } do
+      eq({ {}, m:len() }, get_completions(m .. 'foo'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.bar'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.bar.'))
+    end
   end)
 
   it('returns nice completions with function call prefix', function()
@@ -99,10 +116,26 @@ describe('nlua_expand_pat', function()
 
   it('with lazy submodules of "vim" global', function()
     eq({ { 'inspect', 'inspect_pos' }, 4 }, get_completions('vim.inspec'))
-
     eq({ { 'treesitter' }, 4 }, get_completions('vim.treesi'))
-
+    eq({ { 'dev' }, 15 }, get_completions('vim.treesitter.de'))
+    eq({ { 'edit_query' }, 19 }, get_completions('vim.treesitter.dev.edit_'))
     eq({ { 'set' }, 11 }, get_completions('vim.keymap.se'))
+  end)
+
+  it('include keys in mt.__index and ._submodules', function()
+    eq(
+      { { 'bar1', 'bar2', 'bar3' }, 4 },
+      exec_lua(function() -- metatable cannot be serialized
+        return {
+          vim._expand_pat('foo.', {
+            foo = setmetatable(
+              { bar1 = true, _submodules = { bar2 = true } },
+              { __index = { bar3 = true } }
+            ),
+          }),
+        }
+      end)
+    )
   end)
 
   it('excludes private fields after "."', function()
@@ -236,31 +269,45 @@ describe('nlua_expand_pat', function()
       }
       eq(expected, actual)
     end)
+
+    it('vim.env', function()
+      exec_lua [[
+        vim.env.NLUA_ENV_VAR = 'foo'
+      ]]
+      local actual = get_completions('vim.env.NLUA')
+      local expected = {
+        { 'NLUA_ENV_VAR' },
+        #'vim.env.',
+      }
+      eq(expected, actual)
+    end)
   end)
 
   describe('completes', function()
     -- for { vim.o, vim.go, vim.opt, vim.opt_local, vim.opt_global }
     local test_opt = function(accessor)
-      do
-        local actual = get_completions(accessor .. '.file')
-        local expected = {
-          'fileencoding',
-          'fileencodings',
-          'fileformat',
-          'fileformats',
-          'fileignorecase',
-          'filetype',
-        }
-        eq({ expected, #accessor + 1 }, actual, accessor .. '.file')
-      end
-      do
-        local actual = get_completions(accessor .. '.winh')
-        local expected = {
-          'winheight',
-          'winhighlight',
-        }
-        eq({ expected, #accessor + 1 }, actual, accessor .. '.winh')
-      end
+      it(accessor, function()
+        do
+          local actual = get_completions(accessor .. '.file')
+          local expected = {
+            'fileencoding',
+            'fileencodings',
+            'fileformat',
+            'fileformats',
+            'fileignorecase',
+            'filetype',
+          }
+          eq({ expected, #accessor + 1 }, actual, accessor .. '.file')
+        end
+        do
+          local actual = get_completions(accessor .. '.winh')
+          local expected = {
+            'winheight',
+            'winhighlight',
+          }
+          eq({ expected, #accessor + 1 }, actual, accessor .. '.winh')
+        end
+      end)
     end
 
     test_opt('vim.o')

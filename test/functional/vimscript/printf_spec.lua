@@ -9,7 +9,7 @@ local api = n.api
 local exc_exec = n.exc_exec
 
 describe('printf()', function()
-  before_each(clear)
+  setup(clear)
 
   it('works with zero and %b', function()
     eq('0', fn.printf('%lb', 0))

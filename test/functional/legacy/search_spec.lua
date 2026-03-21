@@ -731,6 +731,111 @@ describe('search cmdline', function()
     feed('<Esc>')
     screen:expect(s)
   end)
+
+  -- oldtest: Test_incsearch_delimiter_ctrlg()
+  it('incsearch does not include trailing delimiter', function()
+    screen:try_resize(20, 6)
+    exec([[
+      set incsearch hls
+      call setline(1, ["1 vim inc", "2 vim /", "3 vim /", "4 vim ?", "5 vim ?"])
+      normal gg
+      redraw
+    ]])
+
+    feed('/')
+    poke_eventloop()
+    feed('v')
+    poke_eventloop()
+    feed('i')
+    poke_eventloop()
+    feed('m')
+    poke_eventloop()
+    feed(' ')
+    poke_eventloop()
+    feed('/')
+    poke_eventloop()
+    feed('<C-G>')
+    screen:expect([[
+      1 {10:vim }inc           |
+      2 {2:vim }/             |
+      3 {10:vim }/             |
+      4 {10:vim }?             |
+      5 {10:vim }?             |
+      /vim /^              |
+    ]])
+    feed('<Esc>')
+
+    command('5')
+    feed('?')
+    poke_eventloop()
+    feed('v')
+    poke_eventloop()
+    feed('i')
+    poke_eventloop()
+    feed('m')
+    poke_eventloop()
+    feed(' ')
+    poke_eventloop()
+    feed('?')
+    poke_eventloop()
+    feed('<C-T>')
+    screen:expect([[
+      1 {10:vim }inc           |
+      2 {10:vim }/             |
+      3 {2:vim }/             |
+      4 {10:vim }?             |
+      5 {10:vim }?             |
+      ?vim ?^              |
+    ]])
+    feed('<Esc>')
+
+    feed('/')
+    poke_eventloop()
+    feed('v')
+    poke_eventloop()
+    feed('i')
+    poke_eventloop()
+    feed('m')
+    poke_eventloop()
+    feed(' ')
+    poke_eventloop()
+    feed('\\/')
+    poke_eventloop()
+    feed('<C-G>')
+    screen:expect([[
+      1 vim inc           |
+      2 {10:vim /}             |
+      3 {2:vim /}             |
+      4 vim ?             |
+      5 vim ?             |
+      /vim \/^             |
+    ]])
+    feed('<Esc>')
+
+    command('5')
+    feed('?')
+    poke_eventloop()
+    feed('v')
+    poke_eventloop()
+    feed('i')
+    poke_eventloop()
+    feed('m')
+    poke_eventloop()
+    feed(' ')
+    poke_eventloop()
+    feed('\\?')
+    poke_eventloop()
+    feed('<C-T>')
+    screen:expect([[
+      1 vim inc           |
+      2 vim /             |
+      3 vim /             |
+      4 {10:vim ?}             |
+      5 {2:vim ?}             |
+      ?vim \?^             |
+    ]])
+    feed('<Esc>')
+  end)
 end)
 
 describe('Search highlight', function()

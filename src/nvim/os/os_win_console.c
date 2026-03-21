@@ -7,9 +7,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_win_console.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/os_win_console.c.generated.h"
-#endif
+#include "os/os_win_console.c.generated.h"
 
 static char origTitle[256] = { 0 };
 static HWND hWnd = NULL;
@@ -27,6 +25,11 @@ int os_open_conin_fd(void)
   int conin_fd = _open_osfhandle((intptr_t)conin_handle, _O_RDONLY);
   assert(conin_fd != -1);
   return conin_fd;
+}
+
+void os_clear_hwnd(void)
+{
+  hWnd = NULL;
 }
 
 void os_replace_stdin_to_conin(void)
@@ -53,20 +56,18 @@ void os_replace_stdout_and_stderr_to_conout(void)
   assert(conerr_fd == STDERR_FILENO);
 }
 
-/// Sets Windows console icon, or pass NULL to restore original icon.
-void os_icon_set(HICON hIconSmall, HICON hIcon)
+/// Resets Windows console icon if we got an original one on startup.
+void os_icon_reset(void)
 {
   if (hWnd == NULL) {
     return;
   }
-  hIconSmall = hIconSmall ? hIconSmall : hOrigIconSmall;
-  hIcon = hIcon ? hIcon : hOrigIcon;
 
-  if (hIconSmall != NULL) {
-    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hIconSmall);
+  if (hOrigIconSmall) {
+    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hOrigIconSmall);
   }
-  if (hIcon != NULL) {
-    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hIcon);
+  if (hOrigIcon) {
+    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hOrigIcon);
   }
 }
 
@@ -78,11 +79,8 @@ void os_icon_init(void)
   if ((hWnd = GetConsoleWindow()) == NULL) {
     return;
   }
-  // Save Windows console icon to be restored later.
-  hOrigIconSmall = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_SMALL, (LPARAM)0);
-  hOrigIcon = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_BIG, (LPARAM)0);
 
-  const char *vimruntime = os_getenv("VIMRUNTIME");
+  char *vimruntime = os_getenv("VIMRUNTIME");
   if (vimruntime != NULL) {
     snprintf(NameBuff, MAXPATHL, "%s/neovim.ico", vimruntime);
     if (!os_path_exists(NameBuff)) {
@@ -90,8 +88,10 @@ void os_icon_init(void)
     } else {
       HICON hVimIcon = LoadImage(NULL, NameBuff, IMAGE_ICON, 64, 64,
                                  LR_LOADFROMFILE | LR_LOADMAP3DCOLORS);
-      os_icon_set(hVimIcon, hVimIcon);
+      hOrigIconSmall = (HICON)SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hVimIcon);
+      hOrigIcon = (HICON)SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hVimIcon);
     }
+    xfree(vimruntime);
   }
 }
 
@@ -117,7 +117,7 @@ void os_title_reset(void)
 /// @param out_fd stdout file descriptor
 void os_tty_guess_term(const char **term, int out_fd)
 {
-  bool conemu_ansi = strequal(os_getenv("ConEmuANSI"), "ON");
+  bool conemu_ansi = strequal(os_getenv_noalloc("ConEmuANSI"), "ON");
   bool vtp = false;
 
   HANDLE handle = (HANDLE)_get_osfhandle(out_fd);

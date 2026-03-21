@@ -3,6 +3,7 @@
 " Maintainer:   Romain Lafourcade <romainlafourcade@gmail.com>
 " Last Change:  2024 Apr 21
 "               2024 May 24 by Riley Bruins <ribru17@gmail.com> ('commentstring')
+"               2025 Aug 29 by Vim project, add try/catch around json_decode(), #18141
 
 if exists("b:did_ftplugin")
     finish
@@ -52,13 +53,19 @@ function! s:CollectPathsFromConfig() abort
         endif
     endif
 
-    let paths_from_config = config_json
+    try
+        let paths_from_config = config_json
                 \ ->readfile()
                 \ ->filter({ _, val -> val =~ '^\s*[\[\]{}"0-9]' })
                 \ ->join()
                 \ ->json_decode()
                 \ ->get('compilerOptions', {})
                 \ ->get('paths', {})
+    catch /^Vim\%((\a\+)\)\=:E491:/ " invalid json
+        let paths_from_config = {}
+    catch /^Vim\%((\a\+)\)\=:E474:/ " invalid json in Nvim
+        let paths_from_config = {}
+    endtry
 
     if !empty(paths_from_config)
         let b:astro_paths = paths_from_config

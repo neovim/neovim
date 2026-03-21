@@ -6,6 +6,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
@@ -47,9 +48,7 @@ typedef struct {
   bool ext_widgets[kUIGlobalCount];
 } UIEventCallback;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui.c.generated.h"
-#endif
+#include "ui.c.generated.h"
 
 #define MAX_UI_COUNT 16
 
@@ -117,9 +116,7 @@ static void ui_log(const char *funname)
     } \
   } while (0)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_events_call.generated.h"
-#endif
+#include "ui_events_call.generated.h"
 
 void ui_init(void)
 {
@@ -222,12 +219,15 @@ void ui_refresh(void)
 
   // Reset 'cmdheight' for all tabpages when ext_messages toggles.
   if (had_message != ui_ext[kUIMessages]) {
-    set_option_value(kOptCmdheight, NUMBER_OPTVAL(had_message), 0);
-    FOR_ALL_TABS(tp) {
-      tp->tp_ch_used = had_message;
+    if (ui_refresh_cmdheight) {
+      set_option_value(kOptCmdheight, NUMBER_OPTVAL(had_message), 0);
+      FOR_ALL_TABS(tp) {
+        tp->tp_ch_used = had_message;
+      }
     }
     msg_scroll_flush();
   }
+  msg_ui_refresh();
 
   if (!ui_active()) {
     return;
@@ -371,9 +371,14 @@ void do_autocmd_uienter_all(void)
   }
 }
 
+bool ui_can_attach_more(void)
+{
+  return ui_count < MAX_UI_COUNT;
+}
+
 void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
 {
-  if (ui_count == MAX_UI_COUNT) {
+  if (ui_count >= MAX_UI_COUNT) {
     abort();
   }
   if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]
@@ -409,6 +414,9 @@ void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
 
 void ui_detach_impl(RemoteUI *ui, uint64_t chanid)
 {
+  if (ui_count > MAX_UI_COUNT) {
+    abort();
+  }
   size_t shift_index = MAX_UI_COUNT;
 
   // Find the index that will be removed
@@ -419,7 +427,7 @@ void ui_detach_impl(RemoteUI *ui, uint64_t chanid)
     }
   }
 
-  if (shift_index == MAX_UI_COUNT) {
+  if (shift_index >= MAX_UI_COUNT) {
     abort();
   }
 
@@ -535,14 +543,36 @@ void ui_flush(void)
   if (!ui_active()) {
     return;
   }
-  cmdline_ui_flush();
+
+  static bool was_busy = false;
+
+  if (!(State & MODE_CMDLINE) && curwin->w_floating && curwin->w_config.hide) {
+    if (!was_busy) {
+      ui_call_busy_start();
+      was_busy = true;
+    }
+  } else if (was_busy) {
+    ui_call_busy_stop();
+    was_busy = false;
+  }
+
   win_ui_flush(false);
-  msg_ext_ui_flush();
+  // Avoid flushing callbacks expected to change text during textlock.
+  if (textlock == 0 && expr_map_lock == 0) {
+    cmdline_ui_flush();
+    msg_ext_ui_flush();
+  }
   msg_scroll_flush();
 
   if (pending_cursor_update) {
     ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);
     pending_cursor_update = false;
+    // The cursor move might change the composition order,
+    // so flush again to update the windows that changed
+    // TODO(bfredl): refactor the flow of information so that win_ui_flush()
+    // only is called once. (as order state is exposed, it should be owned
+    // by nvim core, not the compositor)
+    win_ui_flush(false);
   }
   if (pending_mode_info_update) {
     Arena arena = ARENA_EMPTY;
@@ -552,11 +582,18 @@ void ui_flush(void)
     arena_mem_free(arena_finish(&arena));
     pending_mode_info_update = false;
   }
-  if (pending_mode_update && !starting) {
-    char *full_name = shape_table[ui_mode_idx].full_name;
-    ui_call_mode_change(cstr_as_string(full_name), ui_mode_idx);
+
+  static bool cursor_was_obscured = false;
+  bool cursor_obscured = ui_cursor_is_behind_floatwin();
+  if ((cursor_obscured != cursor_was_obscured || pending_mode_update) && !starting) {
+    // Show "empty box" (underline style) cursor instead if behind a floatwin.
+    int idx = cursor_obscured ? SHAPE_IDX_R : ui_mode_idx;
+    char *full_name = shape_table[idx].full_name;
+    ui_call_mode_change(cstr_as_string(full_name), idx);
     pending_mode_update = false;
+    cursor_was_obscured = cursor_obscured;
   }
+
   if (pending_has_mouse != has_mouse) {
     (has_mouse ? ui_call_mouse_on : ui_call_mouse_off)();
     pending_has_mouse = has_mouse;
@@ -589,8 +626,8 @@ void ui_check_mouse(void)
     checkfor = MOUSE_INSERT;
   } else if (State & MODE_CMDLINE) {
     checkfor = MOUSE_COMMAND;
-  } else if (State == MODE_CONFIRM || State == MODE_EXTERNCMD) {
-    checkfor = ' ';  // don't use mouse for ":confirm" or ":!cmd"
+  } else if (State == MODE_EXTERNCMD) {
+    checkfor = ' ';  // don't use mouse for ":!cmd"
   }
 
   // mouse should be active if at least one of the following is true:
@@ -647,6 +684,22 @@ void ui_cursor_shape(void)
   conceal_check_cursor_line();
 }
 
+/// Check if the cursor is behind a floating window (only in compositor mode).
+/// @return true if cursor is obscured by a float with higher zindex
+static bool ui_cursor_is_behind_floatwin(void)
+{
+  if ((State & MODE_CMDLINE) || !ui_comp_should_draw()) {
+    return false;
+  }
+
+  int crow = curwin->w_winrow + curwin->w_winrow_off + curwin->w_wrow;
+  int ccol = curwin->w_wincol + curwin->w_wincol_off
+             + (curwin->w_p_rl ? curwin->w_view_width - curwin->w_wcol - 1 : curwin->w_wcol);
+
+  ScreenGrid *top_grid = ui_comp_get_grid_at_coord(crow, ccol);
+  return top_grid != &curwin->w_grid_alloc && top_grid != &default_grid;
+}
+
 /// Returns true if the given UI extension is enabled.
 bool ui_has(UIExtension ext)
 {
@@ -700,8 +753,8 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
 
   if (wp->w_floating) {
     if (width != wp->w_width || height != wp->w_height) {
-      wp->w_config.width = width;
-      wp->w_config.height = height;
+      wp->w_config.width = MAX(width, 1);
+      wp->w_config.height = MAX(height, 1);
       win_config_float(wp, wp->w_config);
     }
   } else {
@@ -712,34 +765,61 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
   }
 }
 
-void ui_call_event(char *name, bool fast, Array args)
+static void ui_attach_error(uint32_t ns_id, const char *name, const char *msg)
 {
-  bool handled = false;
-  UIEventCallback *event_cb;
+  const char *ns = describe_ns((NS)ns_id, "(UNKNOWN PLUGIN)");
+  ELOG("Error in \"%s\" UI event handler (ns=%s):\n%s", name, ns, msg);
+  msg_schedule_semsg_multiline("Error in \"%s\" UI event handler (ns=%s):\n%s", name, ns, msg);
+}
 
-  // Return prompt is still a non-fast event, other prompt messages are
-  // followed by a "cmdline_show" event.
-  if (strcmp(name, "msg_show") == 0) {
-    fast = !strequal(args.items[0].data.string.data, "return_prompt");
+void ui_call_event(char *name, Array args)
+{
+  // Internal messages are considered unsafe and are executed in fast context.
+  bool fast = strcmp(name, "msg_show") == 0;
+  const char *not_fast[] = {
+    "empty",
+    "echo",
+    "echomsg",
+    "echoerr",
+    "list_cmd",
+    "lua_error",
+    "lua_print",
+    "progress",
+    "shell_cmd",
+    "shell_err",
+    "shell_out",
+    "shell_ret",
+    NULL,
+  };
+
+  for (int i = 0; fast && not_fast[i]; i++) {
+    fast = !strequal(not_fast[i], args.items[0].data.string.data);
   }
 
+  // Don't impose textlock restrictions upon UI event handlers.
+  int save_expr_map_lock = expr_map_lock;
+  int save_textlock = textlock;
+  expr_map_lock = 0;
+  textlock = 0;
+
+  bool handled = false;
+  UIEventCallback *event_cb;
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
     uint32_t ns_id = ui_event_ns_id;
     Object res = nlua_call_ref_ctx(fast, event_cb->cb, name, args, kRetNilBool, NULL, &err);
     ui_event_ns_id = 0;
-    // TODO(bfredl/luukvbaal): should this be documented or reconsidered?
-    // Why does truthy return from Lua callback mean remote UI should not receive
-    // the event.
     if (LUARET_TRUTHY(res)) {
       handled = true;
     }
     if (ERROR_SET(&err)) {
-      ELOG("Error executing UI event callback: %s", err.msg);
+      ui_attach_error(ns_id, name, err.msg);
       ui_remove_cb(ns_id, true);
     }
     api_clear_error(&err);
   })
+  expr_map_lock = save_expr_map_lock;
+  textlock = save_textlock;
 
   if (!handled) {
     UI_CALL(true, event, ui, name, args);
@@ -792,13 +872,14 @@ void ui_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
 void ui_remove_cb(uint32_t ns_id, bool checkerr)
 {
   UIEventCallback *item = pmap_get(uint32_t)(&ui_event_cbs, ns_id);
-  if (item && (!checkerr || ++item->errors > 10)) {
+  if (item && (!checkerr || ++item->errors > CB_MAX_ERROR)) {
     pmap_del(uint32_t)(&ui_event_cbs, ns_id, NULL);
     free_ui_event_callback(item);
     ui_cb_update_ext();
     ui_refresh();
     if (checkerr) {
-      msg_schedule_semsg("Excessive errors in vim.ui_attach() callback from ns: %d.", ns_id);
+      const char *ns = describe_ns((NS)ns_id, "(UNKNOWN PLUGIN)");
+      msg_schedule_semsg("Excessive errors in vim.ui_attach() callback (ns=%s)", ns);
     }
   }
 }

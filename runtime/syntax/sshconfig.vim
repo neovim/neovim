@@ -3,14 +3,11 @@
 " Author:	David Necas (Yeti)
 " Maintainer:	Jakub Jelen <jakuje at gmail dot com>
 " Previous Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
-" Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
-" Contributor:  Karsten Hopp <karsten@redhat.com>
-" Contributor:  Dean, Adam Kenneth <adam.ken.dean@hpe.com>
-" Last Change:	2022 Nov 10
-"		Added RemoteCommand from pull request #4809
-"		Included additional keywords from Martin.
-"		Included PR #5753
-" SSH Version:	8.5p1
+" Contributor:	Leonard Ehrenfried <leonard.ehrenfried@web.de>
+"		Karsten Hopp <karsten@redhat.com>
+"		Dean, Adam Kenneth <adam.ken.dean@hpe.com>
+" Last Change:	2026 Mar 11
+" SSH Version:	10.1p1
 "
 
 " Setup
@@ -108,7 +105,8 @@ syn keyword sshconfigAddressFamily  inet inet6
 
 syn match   sshconfigIPQoS	"\<af[1-4][1-3]\>"
 syn match   sshconfigIPQoS	"\<cs[0-7]\>"
-syn keyword sshconfigIPQoS	ef le lowdelay throughput reliability
+syn keyword sshconfigIPQoS	ef le
+syn keyword sshconfigIPQoSDeprecated	lowdelay throughput reliability
 syn keyword sshconfigKbdInteractive bsdauth pam skey
 
 syn keyword sshconfigKexAlgo diffie-hellman-group1-sha1
@@ -221,6 +219,7 @@ syn keyword sshconfigKeyword ProxyUseFdpass
 syn keyword sshconfigKeyword PubkeyAcceptedAlgorithms
 syn keyword sshconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshconfigKeyword PubkeyAuthentication
+syn keyword sshconfigKeyword RefuseConnection
 syn keyword sshconfigKeyword RekeyLimit
 syn keyword sshconfigKeyword RemoteCommand
 syn keyword sshconfigKeyword RemoteForward
@@ -248,7 +247,9 @@ syn keyword sshconfigKeyword UseBlacklistedKeys
 syn keyword sshconfigKeyword User
 syn keyword sshconfigKeyword UserKnownHostsFile
 syn keyword sshconfigKeyword VerifyHostKeyDNS
+syn keyword sshconfigKeyword VersionAddendum
 syn keyword sshconfigKeyword VisualHostKey
+syn keyword sshconfigKeyword WarnWeakCrypto
 syn keyword sshconfigKeyword XAuthLocation
 
 " Deprecated/ignored/remove/unsupported keywords
@@ -283,6 +284,7 @@ hi def link sshconfigLogLevel       sshconfigEnum
 hi def link sshconfigSysLogFacility sshconfigEnum
 hi def link sshconfigAddressFamily  sshconfigEnum
 hi def link sshconfigIPQoS          sshconfigEnum
+hi def link sshconfigIPQoSDeprecated sshconfigDeprecated
 hi def link sshconfigKbdInteractive sshconfigEnum
 hi def link sshconfigKexAlgo        sshconfigEnum
 hi def link sshconfigTunnel         sshconfigEnum

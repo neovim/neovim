@@ -8,7 +8,6 @@ local insert = n.insert
 local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local api = n.api
-local fn = n.fn
 
 local function get_query_result(query_text)
   local cquery = vim.treesitter.query.parse('c', query_text)
@@ -550,7 +549,7 @@ void ui_refresh(void)
       end)
 
       -- Remove this 'do' block in 0.12
-      eq(0, fn.has('nvim-0.12'))
+      -- eq(0, n.fn.has('nvim-0.12'))
       eq({ { 0, 4, 0, 8 } }, res)
     end
 
@@ -683,7 +682,7 @@ void ui_refresh(void)
 
   it('supports the old broken version of iter_matches #24738', function()
     -- Delete this test in 0.12 when iter_matches is removed
-    eq(0, fn.has('nvim-0.12'))
+    -- eq(0, n.fn.has('nvim-0.12'))
 
     insert(test_text)
     local res = exec_lua(function()
@@ -746,6 +745,47 @@ void ui_refresh(void)
     end)
 
     eq({ { 1, 10, 1, 13 } }, ret)
+  end)
+
+  it('iter_captures supports columns', function()
+    local txt = table.concat({
+      'int aaa = 1, bbb = 2;',
+      'int foo = 1, bar = 2;',
+      'int baz = 3, qux = 4;',
+      'int ccc = 1, ddd = 2;',
+    }, '\n')
+
+    local function test(opts)
+      local parser = vim.treesitter.get_string_parser(txt, 'c')
+
+      local nodes = {}
+      local query = vim.treesitter.query.parse('c', '((identifier) @foo)')
+      local root = assert(parser:parse()[1]:root())
+      local iter = query:iter_captures(root, txt, 1, 2, opts)
+
+      while true do
+        local capture, node = iter()
+        if not capture then
+          break
+        end
+        table.insert(nodes, { node:range() })
+      end
+
+      return nodes
+    end
+
+    local ret
+    ret = exec_lua(test, { start_col = 7, end_col = 13 })
+    eq({ { 1, 13, 1, 16 }, { 2, 4, 2, 7 } }, ret)
+
+    ret = exec_lua(test, { start_col = 7 })
+    eq({ { 1, 13, 1, 16 } }, ret)
+
+    ret = exec_lua(test, { end_col = 13 })
+    eq({ { 1, 4, 1, 7 }, { 1, 13, 1, 16 }, { 2, 4, 2, 7 } }, ret)
+
+    ret = exec_lua(test, {})
+    eq({ { 1, 4, 1, 7 }, { 1, 13, 1, 16 } }, ret)
   end)
 
   it('fails to load queries', function()

@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:      perlcritic
-" Maintainer:    vim-perl <vim-perl@googlegroups.com>
+" Maintainer:    vim-perl <vim-perl@googlegroups.com> (need to be subscribed to post)
 " Author:        Doug Kearns <dougkearns@gmail.com>
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues

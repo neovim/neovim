@@ -1,8 +1,9 @@
 " Vim filetype plugin file
 " Original Author: Maxim Kim <habamax@gmail.com>
+" Previous Maintainer:  Luca Saccarola <github.e41mv@aleeas.com>
+" Maintainer:      This runtime file is looking for a new maintainer.
 " Language:        asciidoc
-" Maintainer:      Luca Saccarola <github.e41mv@aleeas.com>
-" Last Change:     2024 Jan 16
+" Last Change:     2025 Aug 05
 
 if exists("b:did_ftplugin")
     finish

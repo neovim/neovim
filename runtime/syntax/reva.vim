@@ -3,7 +3,7 @@
 " Version:	2011.2
 " Last Change:	2019 Sep 27
 " Maintainer:	Ron Aaron <ron@ronware.org>
-" URL:		http://ronware.org/reva/
+" URL:		https://github.com/ronaaron/reva
 " Filetypes:	*.rf *.frt
 " NOTE: 	You should also have the ftplugin/reva.vim file to set 'isk'
 

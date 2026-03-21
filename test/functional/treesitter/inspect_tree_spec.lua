@@ -35,6 +35,37 @@ describe('vim.treesitter.inspect_tree', function()
       ]]
   end)
 
+  it('sets correct buffer name', function()
+    t.skip(t.is_zig_build(), 'vim.treesitter not found after chdir with build.zig')
+
+    n.api.nvim_set_current_dir(t.paths.test_source_path .. '/test/functional/fixtures')
+    n.command('edit lua/syntax_error.lua')
+    eq('lua/syntax_error.lua', n.fn.bufname('%'))
+    local full_path = n.api.nvim_buf_get_name(0)
+
+    n.exec_lua('vim.treesitter.start(0, "lua")')
+    n.exec_lua('vim.treesitter.inspect_tree()')
+    local expected = [[
+      (chunk ; [0, 0] - [1, 0]
+        (ERROR ; [0, 0] - [0, 21]
+          (identifier) ; [0, 5] - [0, 8]
+          (identifier) ; [0, 9] - [0, 15]
+          (identifier))) ; [0, 16] - [0, 21]
+      ]]
+    expect_tree(expected)
+    eq('Syntax tree for lua/syntax_error.lua', n.fn.bufname('%'))
+
+    n.command('bwipe!')
+    eq('lua/syntax_error.lua', n.fn.bufname('%'))
+
+    n.api.nvim_set_current_dir('pack')
+    eq(full_path, n.fn.bufname('%'))
+
+    n.exec_lua('vim.treesitter.inspect_tree()')
+    expect_tree(expected)
+    eq('Syntax tree for ' .. full_path, n.fn.bufname('%'))
+  end)
+
   it('can toggle to show anonymous nodes', function()
     insert([[
       print('hello')
@@ -87,6 +118,45 @@ describe('vim.treesitter.inspect_tree', function()
               (block_continuation)) ; [2, 0] - [2, 0]
             (fenced_code_block_delimiter)))) ; [2, 0] - [2, 3]
       ]]
+  end)
+
+  it('works with multiple injection on the same node', function()
+    insert([[--* #include<stdio.h>]])
+    exec_lua(function()
+      vim.treesitter.query.set(
+        'lua',
+        'injections',
+        [[
+        (comment
+          content: (_) @injection.content
+          (#set! injection.language "markdown"))
+        (comment
+          content: (_) @injection.content
+          (#set! injection.language "c")
+          (#offset! @injection.content 0 1 0 0))
+        ]]
+      )
+      vim.treesitter.start(0, 'lua')
+      vim.treesitter.get_parser():parse(true)
+      vim.treesitter.inspect_tree()
+    end)
+    feed('I')
+    expect_tree [[
+      (chunk ; [0, 0] - [1, 0] lua
+        (comment ; [0, 0] - [0, 21] lua
+          content: (comment_content ; [0, 2] - [0, 21] lua
+            (document ; [0, 2] - [0, 21] markdown
+              (section ; [0, 2] - [0, 21] markdown
+                (list ; [0, 2] - [0, 21] markdown
+                  (list_item ; [0, 2] - [0, 21] markdown
+                    (list_marker_star) ; [0, 2] - [0, 4] markdown
+                    (paragraph ; [0, 4] - [0, 21] markdown
+                      (inline ; [0, 4] - [0, 21] markdown
+                        (inline))))))) ; [0, 4] - [0, 21] markdown_inline
+            (translation_unit ; [0, 4] - [0, 21] c
+              (preproc_include ; [0, 4] - [0, 21] c
+                path: (system_lib_string)))))) ; [0, 12] - [0, 21] c
+    ]]
   end)
 
   it('can toggle to show languages', function()

@@ -8,6 +8,7 @@ local dedent = t.dedent
 local eq = t.eq
 local neq = t.neq
 local eval = n.eval
+local exec = n.exec
 local feed = n.feed
 local clear = n.clear
 local matches = t.matches
@@ -16,7 +17,6 @@ local pcall_err = t.pcall_err
 local fn = n.fn
 local expect = n.expect
 local command = n.command
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
 local retry = t.retry
 local source = n.source
@@ -150,7 +150,10 @@ describe('autocmd', function()
       })
 
       command('autocmd BufLeave * bwipeout yy')
-      eq('Vim(edit):E143: Autocommands unexpectedly deleted new buffer yy', exc_exec('edit yy'))
+      eq(
+        'Vim(edit):E143: Autocommands unexpectedly deleted new buffer yy',
+        pcall_err(command, 'edit yy')
+      )
 
       expect([[
         start of test file xx
@@ -377,7 +380,7 @@ describe('autocmd', function()
     -- Also check with win_splitmove().
     exec_lua [[
       vim._with({buf = _G.buf}, function()
-        vim.fn.win_splitmove(vim.fn.winnr(), vim.fn.win_getid(1))
+        vim.fn.win_splitmove(vim.fn.win_getid(), vim.fn.win_getid(1))
       end)
     ]]
     screen:expect_unchanged()
@@ -426,6 +429,23 @@ describe('autocmd', function()
         return _G.config.relative
       ]]
     )
+  end)
+
+  it('cannot close `aucmd_win` in non-current tabpage', function()
+    exec([[
+      file Xa
+      tabnew Xb
+      call setline(1, 'foo')
+      tabfirst
+      autocmd BufWriteCmd Xb tablast | bwipe! Xa
+    ]])
+    eq(
+      'BufWriteCmd Autocommands for "Xb": Vim(bwipeout):E813: Cannot close autocmd window',
+      pcall_err(command, 'wall')
+    )
+    -- Sanity check: :bwipe failing to close all windows into Xa should keep it loaded.
+    -- (So there's no risk of it being left unloaded inside a window)
+    eq(1, eval('bufloaded("Xa")'))
   end)
 
   describe('closing last non-floating window in tab from `aucmd_win`', function()
@@ -694,5 +714,146 @@ describe('autocmd', function()
       })
       vim.cmd "tabnew"
     ]]
+  end)
+
+  it('no use-after-free when wiping buffer in Syntax autocommand', function()
+    exec([[
+      new
+      autocmd Syntax * ++once bwipe!
+      setlocal syntax=vim
+    ]])
+    assert_alive()
+  end)
+
+  it('no use-after-free from win_enter autocommands in win_move_after', function()
+    exec [[
+      split foo
+      split bar
+      lcd ..
+      wincmd b
+    ]]
+    eq(fn.winnr('$'), fn.winnr())
+    -- Using DirChanged as Enter/Leave autocmds are blocked by :ball here.
+    exec [[
+      autocmd DirChanged * ++once split flarb | only!
+      ball
+    ]]
+    eq('flarb', fn.bufname())
+  end)
+
+  it('does not ignore comma-separated patterns after a buffer-local pattern', function()
+    exec [[
+      edit baz  " reuses buffer 1
+      edit bazinga
+      edit bar
+      edit boop
+      edit foo
+      edit floob
+
+      let g:events1 = []
+      autocmd BufEnter <buffer>,<buffer=1>,boop,bar let g:events1 += [expand('<afile>')]
+      let g:events2 = []
+      augroup flobby
+        autocmd BufEnter <buffer=2>,foo let g:events2 += [expand('<afile>')]
+        autocmd BufEnter foo,<buffer=3> let g:events2 += ['flobby ' .. expand('<afile>')]
+      augroup END
+    ]]
+    eq(
+      dedent([=[
+
+      --- Autocommands ---
+      BufEnter
+          <buffer=6>
+                    let g:events1 += [expand('<afile>')]
+          <buffer=1>
+                    let g:events1 += [expand('<afile>')]
+          boop      let g:events1 += [expand('<afile>')]
+          bar       let g:events1 += [expand('<afile>')]
+      flobby  BufEnter
+          <buffer=2>
+                    let g:events2 += [expand('<afile>')]
+          foo       let g:events2 += [expand('<afile>')]
+                    let g:events2 += ['flobby ' .. expand('<afile>')]
+          <buffer=3>
+                    let g:events2 += ['flobby ' .. expand('<afile>')]]=]),
+      fn.execute('autocmd BufEnter')
+    )
+    command('bufdo "')
+    eq({ 'baz', 'bar', 'boop', 'floob' }, eval('g:events1'))
+    eq({ 'bazinga', 'flobby bar', 'foo', 'flobby foo' }, eval('g:events2'))
+
+    -- Also make sure it doesn't repeat the group/event name or pattern for each printed event.
+    -- Do however repeat the pattern if the user specified it multiple times to be printed.
+    -- These conditions aim to make the output consistent with Vim.
+    eq(
+      dedent([=[
+
+      --- Autocommands ---
+      BufEnter
+          <buffer=1>
+                    let g:events1 += [expand('<afile>')]
+          bar       let g:events1 += [expand('<afile>')]
+          bar       let g:events1 += [expand('<afile>')]
+      flobby  BufEnter
+          foo       let g:events2 += [expand('<afile>')]
+                    let g:events2 += ['flobby ' .. expand('<afile>')]
+          foo       let g:events2 += [expand('<afile>')]
+                    let g:events2 += ['flobby ' .. expand('<afile>')]
+      BufEnter
+          <buffer=6>
+                    let g:events1 += [expand('<afile>')]
+          <buffer=6>
+                    let g:events1 += [expand('<afile>')]
+          <buffer=6>
+                    let g:events1 += [expand('<afile>')]]=]),
+      fn.execute('autocmd BufEnter <buffer=1>,bar,bar,foo,foo,<buffer>,<buffer=6>,<buffer>')
+    )
+  end)
+
+  it('parses empty comma-delimited patterns correctly', function()
+    exec [[
+      autocmd User , "
+      autocmd User ,, "
+      autocmd User ,,according,to,,all,known,,,laws,, "
+    ]]
+    api.nvim_create_autocmd('User', { pattern = ',,of,,,aviation,,,,there,,', command = '' })
+    api.nvim_create_autocmd('User', {
+      pattern = { ',,,,is,,no', ',,way,,,', 'a,,bee{,should be, able to,},fly' },
+      command = '',
+    })
+    eq(
+      {
+        'according',
+        'to',
+        'all',
+        'known',
+        'laws',
+        'of',
+        'aviation',
+        'there',
+        'is',
+        'no',
+        'way',
+        'a',
+        'bee{,should be, able to,}',
+        'fly',
+      },
+      exec_lua(function()
+        return vim.tbl_map(function(v)
+          return v.pattern
+        end, vim.api.nvim_get_autocmds({ event = 'User' }))
+      end)
+    )
+    eq(
+      dedent([[
+
+      --- Autocommands ---
+      User
+          there
+          is
+          a
+          fly]]),
+      fn.execute('autocmd User ,,,there,is,,a,fly,,')
+    )
   end)
 end)

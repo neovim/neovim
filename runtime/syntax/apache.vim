@@ -4,6 +4,7 @@
 " License: This file can be redistribued and/or modified under the same terms
 "		as Vim itself.
 " Last Change: 2024 Nov 24
+" 2026 Feb 19 by Vim project: Add SSLVHostSNIPolicy
 " Notes: Last synced with apache-2.4.62, version 1.x is no longer supported
 " TODO: see particular FIXME's scattered through the file
 "		make it really linewise?
@@ -163,7 +164,7 @@ syn keyword apacheOption inherit
 syn keyword apacheDeclaration BrowserMatch BrowserMatchNoCase SetEnvIf SetEnvIfNoCase
 syn keyword apacheDeclaration LoadFile LoadModule
 syn keyword apacheDeclaration CheckSpelling CheckCaseOnly
-syn keyword apacheDeclaration SSLCACertificateFile SSLCACertificatePath SSLCADNRequestFile SSLCADNRequestPath SSLCARevocationFile SSLCARevocationPath SSLCertificateChainFile SSLCertificateFile SSLCertificateKeyFile SSLCipherSuite SSLCompression SSLCryptoDevice SSLEngine SSLFIPS SSLHonorCipherOrder SSLInsecureRenegotiation SSLMutex SSLOptions SSLPassPhraseDialog SSLProtocol SSLProxyCACertificateFile SSLProxyCACertificatePath SSLProxyCARevocationFile SSLProxyCARevocationPath SSLProxyCheckPeerCN SSLProxyCheckPeerExpire SSLProxyCipherSuite SSLProxyEngine SSLProxyMachineCertificateChainFile SSLProxyMachineCertificateFile SSLProxyMachineCertificatePath SSLProxyProtocol SSLProxyVerify SSLProxyVerifyDepth SSLRandomSeed SSLRenegBufferSize SSLRequire SSLRequireSSL SSLSessionCache SSLSessionCacheTimeout SSLSessionTicketKeyFile SSLSessionTickets SSLStrictSNIVHostCheck SSLUserName SSLVerifyClient SSLVerifyDepth
+syn keyword apacheDeclaration SSLCACertificateFile SSLCACertificatePath SSLCADNRequestFile SSLCADNRequestPath SSLCARevocationFile SSLCARevocationPath SSLCertificateChainFile SSLCertificateFile SSLCertificateKeyFile SSLCipherSuite SSLCompression SSLCryptoDevice SSLEngine SSLFIPS SSLHonorCipherOrder SSLInsecureRenegotiation SSLMutex SSLOptions SSLPassPhraseDialog SSLProtocol SSLProxyCACertificateFile SSLProxyCACertificatePath SSLProxyCARevocationFile SSLProxyCARevocationPath SSLProxyCheckPeerCN SSLProxyCheckPeerExpire SSLProxyCipherSuite SSLProxyEngine SSLProxyMachineCertificateChainFile SSLProxyMachineCertificateFile SSLProxyMachineCertificatePath SSLProxyProtocol SSLProxyVerify SSLProxyVerifyDepth SSLRandomSeed SSLRenegBufferSize SSLRequire SSLRequireSSL SSLSessionCache SSLSessionCacheTimeout SSLSessionTicketKeyFile SSLSessionTickets SSLStrictSNIVHostCheck SSLUserName SSLVerifyClient SSLVerifyDepth SSLVHostSNIPolicy
 syn match apacheOption "[+-]\?\<\(StdEnvVars\|CompatEnvVars\|ExportCertData\|FakeBasicAuth\|StrictRequire\|OptRenegotiate\)\>"
 syn keyword apacheOption builtin sem
 syn match apacheOption "\(file\|exec\|egd\|dbm\|shm\):"

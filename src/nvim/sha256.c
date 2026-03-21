@@ -3,7 +3,8 @@
 /// FIPS-180-2 compliant SHA-256 implementation
 /// GPL by Christophe Devine, applies to older version.
 /// Modified for md5deep, in public domain.
-/// Modified For Vim, Mohsin Ahmed, http://www.cs.albany.edu/~mosh
+/// Modified For Vim, Mohsin Ahmed,
+/// (original link www.cs.albany.edu/~mosh no longer available)
 /// Mohsin Ahmed states this work is distributed under the VIM License or GPL,
 /// at your choice.
 ///
@@ -19,9 +20,7 @@
 #include "nvim/memory.h"
 #include "nvim/sha256.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "sha256.c.generated.h"
-#endif
+#include "sha256.c.generated.h"
 #define GET_UINT32(n, b, i) { \
   (n) = ((uint32_t)(b)[(i)] << 24) \
         | ((uint32_t)(b)[(i) + 1] << 16) \

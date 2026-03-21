@@ -9,13 +9,14 @@ endif
 
 runtime plugin/zipPlugin.vim
 
-func Test_zip_basic()
-
-  "## get our zip file
-  if !filecopy("samples/test.zip", "X.zip")
-    call assert_report("Can't copy samples/test.zip")
-    return
+func s:CopyZipFile(source)
+  if !filecopy($"samples/{a:source}", "X.zip")
+    call assert_report($"Can't copy samples/{a:source}.zip")
   endif
+endfunc
+
+func Test_zip_basic()
+  call s:CopyZipFile("test.zip")
   defer delete("X.zip")
 
   e X.zip
@@ -142,11 +143,7 @@ func Test_zip_glob_fname()
   CheckNotMSWindows
   " does not work on Windows, why?
 
-  "## copy sample zip file
-  if !filecopy("samples/testa.zip", "X.zip")
-    call assert_report("Can't copy samples/testa.zip")
-    return
-  endif
+  call s:CopyZipFile("testa.zip")
   defer delete("X.zip")
   defer delete('zipglob', 'rf')
 
@@ -240,10 +237,7 @@ func Test_zip_fname_leading_hyphen()
   CheckNotMSWindows
 
   "## copy sample zip file
-  if !filecopy("samples/poc.zip", "X.zip")
-    call assert_report("Can't copy samples/poc.zip")
-    return
-  endif
+  call s:CopyZipFile("poc.zip")
   defer delete("X.zip")
   defer delete('-d', 'rf')
   defer delete('/tmp/pwned', 'rf')
@@ -256,5 +250,28 @@ func Test_zip_fname_leading_hyphen()
   normal x
   call assert_true(filereadable('-d/tmp'))
   call assert_false(filereadable('/tmp/pwned'))
+  bw
+endfunc
+
+func Test_zip_fname_evil_path()
+  CheckNotMSWindows
+  " needed for writing the zip file
+  CheckExecutable zip
+
+  call s:CopyZipFile("evil.zip")
+  defer delete("X.zip")
+  e X.zip
+
+  :1
+  let fname = 'pwn'
+  call search('\V' .. fname)
+  normal x
+  call assert_false(filereadable('/etc/ax-pwn'))
+  let mess  = execute(':mess')
+  call assert_match('Path Traversal Attack', mess)
+
+  exe ":normal \<cr>"
+  :w
+  call assert_match('zipfile://.*::etc/ax-pwn', @%)
   bw
 endfunc

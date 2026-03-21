@@ -319,6 +319,9 @@ func Test_ruby_Vim_evaluate()
   call assert_equal('foo',      rubyeval('Vim::evaluate("\"foo\"")'))
   call assert_equal('String',   rubyeval('Vim::evaluate("\"foo\"").class'))
 
+  call assert_equal(["\x01\xAB"],   rubyeval('Vim::evaluate("0z01ab").unpack("M")'))
+  call assert_equal('String',       rubyeval('Vim::evaluate("0z01ab").class'))
+
   call assert_equal([1, 2],     rubyeval('Vim::evaluate("[1, 2]")'))
   call assert_equal('Array',    rubyeval('Vim::evaluate("[1, 2]").class'))
 

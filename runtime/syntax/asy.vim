@@ -3,6 +3,7 @@
 " Maintainer:   Avid Seeker <avidseeker7@protonmail.com>
 "               Andy Hammerlindl
 " Last Change:  2022 Jan 05
+" 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 
 " Hacked together from Bram Moolenaar's C syntax file, and Claudio Fleiner's
 " Java syntax file.
@@ -10,6 +11,9 @@
 if exists("b:current_syntax")
   finish
 endif
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 " useful C/C++/Java keywords
 syn keyword     asyStatement     break return continue unravel
@@ -241,3 +245,5 @@ hi def link asyTodo                 Todo
 hi def link asyPathSpec             Statement
 
 let b:current_syntax = "asy"
+let &cpo = s:cpo_save
+unlet s:cpo_save

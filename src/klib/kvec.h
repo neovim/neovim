@@ -139,8 +139,6 @@
                            && memmove(&kv_A(v, (i)), &kv_A(v, (i)+(n)), \
                                       ((v).size-(i))*sizeof(kv_A(v, i))))
 
-#define kv_printf(v, ...) kv_do_printf(&(v), __VA_ARGS__)
-
 /// Type of a vector with a few first members allocated on stack
 ///
 /// Is compatible with #kv_A, #kv_pop, #kv_size, #kv_max, #kv_last.

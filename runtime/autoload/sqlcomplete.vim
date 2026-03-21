@@ -3,6 +3,7 @@
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
 " Version:     16.0
 " Last Change: 2017 Oct 15
+" 2025 Nov 11 by Vim project: only set 'omnifunc' if dbext script was loaded #18716
 " Homepage:    http://www.vim.org/scripts/script.php?script_id=1572
 " Usage:       For detailed help
 "              ":help sql.txt"
@@ -98,12 +99,11 @@
 " Set completion with CTRL-X CTRL-O to autoloaded function.
 " This check is in place in case this script is
 " sourced directly instead of using the autoload feature.
-if exists('&omnifunc')
-    " Do not set the option if already set since this
-    " results in an E117 warning.
-    if &omnifunc == ""
-        setlocal omnifunc=sqlcomplete#Complete
-    endif
+"
+" Do not set the option if already set since this
+" results in an E117 warning.
+if exists('&omnifunc') && &omnifunc == "" && exists('g:loaded_dbext')
+    setlocal omnifunc=sqlcomplete#Complete
 endif
 
 if exists('g:loaded_sql_completion')

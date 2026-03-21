@@ -94,11 +94,12 @@ function vim.empty_dict() end
 --- @param ...? any
 function vim.rpcnotify(channel, method, ...) end
 
---- Sends a request to {channel} to invoke {method} via |RPC| and blocks until
---- a response is received.
+--- Invokes |RPC| `method` on `channel` and blocks until a response is received.
 ---
---- Note: NIL values as part of the return value is represented as |vim.NIL|
---- special value
+--- Note: Msgpack NIL values in the response are represented as |vim.NIL|.
+---
+--- Example: see [nvim_exec_lua()]
+---
 --- @param channel integer
 --- @param method string
 --- @param ...? any
@@ -177,63 +178,60 @@ function vim.iconv(str, from, to, opts) end
 --- Schedules {fn} to be invoked soon by the main event-loop. Useful
 --- to avoid |textlock| or other temporary restrictions.
 --- @param fn fun()
+--- @return nil result
+--- @return string? err Error message if scheduling failed, `nil` otherwise.
 function vim.schedule(fn) end
 
---- Wait for {time} in milliseconds until {callback} returns `true`.
+--- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
+--- `callback` immediately, then on user events, internal events, and approximately every
+--- `interval` milliseconds (default 200). Returns all `callback` results on success.
 ---
---- Executes {callback} immediately and at approximately {interval}
---- milliseconds (default 200). Nvim still processes other events during
---- this time.
----
---- Cannot be called while in an |api-fast| event.
+--- Nvim processes other events while waiting.
+--- Cannot be called during an |api-fast| event.
 ---
 --- Examples:
 ---
 --- ```lua
---- ---
---- -- Wait for 100 ms, allowing other events to process
---- vim.wait(100, function() end)
+--- -- Wait for 100 ms, allowing other events to process.
+--- vim.wait(100)
 ---
---- ---
---- -- Wait for 100 ms or until global variable set.
---- vim.wait(100, function() return vim.g.waiting_for_var end)
+--- -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
+--- vim.wait(1000, function() return vim.g.foo end, 500)
 ---
---- ---
---- -- Wait for 1 second or until global variable set, checking every ~500 ms
---- vim.wait(1000, function() return vim.g.waiting_for_var end, 500)
+--- -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
+--- local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
+---   return vim.g.foo, 'a', 42, { ok = { 'yes' } }
+--- end)
 ---
---- ---
---- -- Schedule a function to set a value in 100ms
+--- -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
+--- -- only waits 100ms because `vim.wait` processes other events while waiting.
 --- vim.defer_fn(function() vim.g.timer_result = true end, 100)
----
---- -- Would wait ten seconds if results blocked. Actually only waits  100 ms
 --- if vim.wait(10000, function() return vim.g.timer_result end) then
 ---   print('Only waiting a little bit of time!')
 --- end
 --- ```
 ---
---- @param time integer Number of milliseconds to wait
---- @param callback? fun(): boolean Optional callback. Waits until {callback} returns true
+--- @param time number Number of milliseconds to wait. Must be non-negative number, any fractional
+--- part is truncated.
+--- @param callback? fun(): boolean, ... Optional callback. Waits until {callback} returns true
 --- @param interval? integer (Approximate) number of milliseconds to wait between polls
 --- @param fast_only? boolean If true, only |api-fast| events will be processed.
---- @return boolean, nil|-1|-2
----     - If {callback} returns `true` during the {time}: `true, nil`
----     - If {callback} never returns `true` during the {time}: `false, -1`
----     - If {callback} is interrupted during the {time}: `false, -2`
----     - If {callback} errors, the error is raised.
+--- @return boolean, nil|-1|-2, ...
+---     - If callback returns `true` before timeout: `true, nil, ...`
+---     - On timeout: `false, -1`
+---     - On interrupt: `false, -2`
+---     - On error: the error is raised.
 function vim.wait(time, callback, interval, fast_only) end
 
 --- Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events in a Lua callback.
 --- Used to implement screen elements like popupmenu or message handling in Lua.
 ---
---- {options} is a dict with one or more `ext_…` |ui-option|s set to true to enable events for
---- the respective UI element.
----
 --- {callback} receives event name plus additional parameters. See |ui-popupmenu|
 --- and the sections below for event format for respective events.
 ---
---- Callbacks for `msg_show` events are executed in |api-fast| context; showing
---- the message should be scheduled.
+--- Callbacks for `msg_show` events originating from internal messages (as
+--- opposed to events from commands or API calls) are executed in |api-fast|
+--- context; showing the message needs to be scheduled.
 ---
 --- Excessive errors inside the callback will result in forced detachment.
 ---
@@ -263,12 +261,18 @@ function vim.wait(time, callback, interval, fast_only) end
 ---
 --- @since 0
 ---
---- @param ns integer
---- @param options table<string, any>
---- @param callback fun()
-function vim.ui_attach(ns, options, callback) end
+--- @param ns integer Namespace ID
+--- @param opts table<string, any> Optional parameters.
+---             - {ext_…}? (`boolean`) Any of |ui-ext-options|, if true
+---               enable events for the respective UI element.
+---             - {set_cmdheight}? (`boolean`) If false, avoid setting
+---               'cmdheight' to 0 when `ext_messages` is enabled.
+--- @param callback fun(event: string, ...): any Function called for each UI event.
+---                 A truthy return value signals to Nvim that the event is handled,
+---                 in which case it is not propagated to remote UIs.
+function vim.ui_attach(ns, opts, callback) end
 
 --- Detach a callback previously attached with |vim.ui_attach()| for the
 --- given namespace {ns}.
---- @param ns integer
+--- @param ns integer Namespace ID
 function vim.ui_detach(ns) end

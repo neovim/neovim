@@ -9,7 +9,7 @@ local uv = vim.uv
 --- @field write fun(self, data: string|string[])
 --- @field read_start fun(self, cb: fun(chunk: string))
 --- @field read_stop fun(self)
---- @field close fun(self, signal?: string)
+--- @field close fun(self, signal?: string, noblock?: boolean)
 
 --- Stream over given pipes.
 ---
@@ -67,8 +67,15 @@ function SocketStream.open(file)
     _stream_error = nil,
   }, SocketStream)
   uv.pipe_connect(socket, file, function(err)
+    uv.stop()
     self._stream_error = self._stream_error or err
   end)
+  -- On Windows, writing to the pipe doesn't work if it's not connected yet,
+  -- so wait for the connect callback to be called.
+  uv.run()
+  if self._stream_error then
+    error(self._stream_error)
+  end
   return self
 end
 
@@ -126,6 +133,8 @@ end
 --- @field private _child_stdin uv.uv_pipe_t
 --- @field private _child_stdout uv.uv_pipe_t
 --- @field private _child_stderr uv.uv_pipe_t
+--- @field package _closed integer
+--- @field package _on_exit fun(closed: integer?)
 --- Collects stdout (if `collect_text=true`). Treats data as text (CRLF converted to LF).
 --- @field stdout string
 --- Collects stderr as raw data.
@@ -147,8 +156,11 @@ ProcStream.__index = ProcStream
 --- @param argv string[]
 --- @param env string[]?
 --- @param io_extra uv.uv_pipe_t?
+--- @param on_exit fun(closed: integer?)? Called after the child process exits.
+--- `closed` is the timestamp (uv.now()) when close() was called, or nil if it wasn't.
+--- @param forward_stderr boolean? Forward child process stderr, otherwise collect it.
 --- @return test.ProcStream
-function ProcStream.spawn(argv, env, io_extra)
+function ProcStream.spawn(argv, env, io_extra, on_exit, forward_stderr)
   local self = setmetatable({
     collect_text = false,
     output = function(self)
@@ -165,15 +177,17 @@ function ProcStream.spawn(argv, env, io_extra)
     _child_stdout = assert(uv.new_pipe(false)),
     _child_stderr = assert(uv.new_pipe(false)),
     _exiting = false,
+    _on_exit = on_exit,
   }, ProcStream)
   local prog = argv[1]
   local args = {} --- @type string[]
   for i = 2, #argv do
     args[#args + 1] = argv[i]
   end
+  local stderr = forward_stderr and 1 or self._child_stderr
   --- @diagnostic disable-next-line:missing-fields
   self._proc, self._pid = uv.spawn(prog, {
-    stdio = { self._child_stdin, self._child_stdout, self._child_stderr, io_extra },
+    stdio = { self._child_stdin, self._child_stdout, stderr, io_extra },
     args = args,
     --- @diagnostic disable-next-line:assign-type-mismatch
     env = env,
@@ -181,6 +195,9 @@ function ProcStream.spawn(argv, env, io_extra)
     self.signal = signal
     -- "Abort" exit may not set status; force to nonzero in that case.
     self.status = (0 ~= (status or 0) or 0 == (signal or 0)) and status or (128 + (signal or 0))
+    if self._on_exit then
+      self._on_exit(self._closed)
+    end
   end)
 
   if not self._proc then
@@ -238,11 +255,11 @@ function ProcStream:read_stop()
   self._child_stderr:read_stop()
 end
 
-function ProcStream:close(signal)
+function ProcStream:close(signal, noblock)
   if self._closed then
     return
   end
-  self._closed = true
+  self._closed = uv.now()
   self:read_stop()
   self._child_stdin:close()
   self._child_stdout:close()
@@ -250,10 +267,12 @@ function ProcStream:close(signal)
   if type(signal) == 'string' then
     self._proc:kill('sig' .. signal)
   end
-  while self.status == nil do
-    uv.run 'once'
+  if not noblock then
+    while self.status == nil do
+      uv.run 'once'
+    end
+    return self.status, self.signal
   end
-  return self.status, self.signal
 end
 
 return {

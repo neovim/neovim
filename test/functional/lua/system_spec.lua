@@ -53,12 +53,54 @@ describe('vim.system', function()
 
   for name, system in pairs { sync = system_sync, async = system_async } do
     describe('(' .. name .. ')', function()
+      it('failure modes', function()
+        t.matches(
+          "ENOENT%: no such file .* %(cmd%): 'non%-existent%-cmd'",
+          t.pcall_err(system, { 'non-existent-cmd', 'arg1', 'arg2' }, { text = true })
+        )
+
+        t.matches(
+          "ENOENT%: no such file .* %(cwd%): 'non%-existent%-cwd'",
+          t.pcall_err(system, { 'echo', 'hello' }, { cwd = 'non-existent-cwd', text = true })
+        )
+      end)
+
       it('can run simple commands', function()
         eq('hello\n', system({ 'echo', 'hello' }, { text = true }).stdout)
       end)
 
       it('handle input', function()
         eq('hellocat', system({ 'cat' }, { stdin = 'hellocat', text = true }).stdout)
+      end)
+
+      it('can set environment', function()
+        local function test_env(opt)
+          eq('TESTVAL', system({ n.testprg('printenv-test'), 'TEST' }, opt).stdout)
+        end
+
+        test_env({ env = { TEST = 'TESTVAL' }, text = true })
+        test_env({ clear_env = true, env = { TEST = 'TESTVAL' }, text = true })
+      end)
+
+      it('can set environment with clear_env = true and env = nil', function()
+        exec_lua(function()
+          vim.env.TEST = 'TESTVAL'
+        end)
+
+        -- Not passing env with clear_env should not clear the environment
+        eq(
+          'TESTVAL',
+          system({ n.testprg('printenv-test'), 'TEST' }, { clear_env = true, text = true }).stdout
+        )
+
+        -- Passing env = {} with clear_env should clear the environment
+        eq(
+          '',
+          system(
+            { n.testprg('printenv-test'), 'TEST' },
+            { env = {}, clear_env = true, text = true }
+          ).stdout
+        )
       end)
 
       it('supports timeout', function()

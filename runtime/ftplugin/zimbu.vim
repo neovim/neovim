@@ -1,8 +1,10 @@
 " Vim filetype plugin file
 " Language:	Zimbu
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2025 Jun 08
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
+" Note:	Zimbu was the programming language invented by Bram,
+"	but it seems to be lost by now
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -16,7 +18,7 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo-=C
 
-let b:undo_ftplugin = "setl fo< com< ofu< efm< tw< et< sts< sw<"
+let b:undo_ftplugin = "setl fo< com< cms< ofu< efm< tw< et< sts< sw<"
 
 " Set 'formatoptions' to break comment lines but not other lines,
 " and insert the comment leader when hitting <CR> or using "o".
@@ -30,6 +32,7 @@ endif
 " Set 'comments' to format dashed lists in comments.
 " And to keep Zudocu comment characters.
 setlocal comments=sO:#\ -,mO:#\ \ ,exO:#/,s:/*,m:\ ,ex:*/,:#=,:#-,:#%,:#
+setlocal commentstring=#\ %s
 
 setlocal errorformat^=%f\ line\ %l\ col\ %c:\ %m,ERROR:\ %m
 

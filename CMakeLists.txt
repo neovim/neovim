@@ -35,6 +35,11 @@ include(InstallHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 
+if(NOT PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+  # Auto-create a .gitignore in the specified "build" directory.
+  file(GENERATE OUTPUT .gitignore CONTENT "*")
+endif()
+
 #-------------------------------------------------------------------------------
 # User settings
 #-------------------------------------------------------------------------------
@@ -125,6 +130,7 @@ else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
 option(ENABLE_LIBINTL "enable libintl" ON)
+option(ENABLE_UNIBILIUM "enable unibilium" ON)
 option(ENABLE_WASMTIME "enable wasmtime" OFF)
 
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
@@ -140,19 +146,19 @@ endif()
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 11)
+set(NVIM_VERSION_MINOR 12)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 13)        # Bump this after any API/stdlib change.
+set(NVIM_API_LEVEL 14)        # Bump this after any API/stdlib change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
-  string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-  string(REPLACE "/DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+  string(REPLACE "-DNDEBUG" "-DRELDEBUG" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+  string(REPLACE "/DNDEBUG" "/DRELDEBUG" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
   string(REPLACE "  " " " CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}") # Remove duplicate whitespace
 endif()
 
@@ -230,13 +236,15 @@ find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
 mark_as_advanced(SHELLCHECK_PRG)
 find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
 mark_as_advanced(STYLUA_PRG)
+find_program(TS_QUERY_LS_PRG ts_query_ls ${LINT_REQUIRED})
+mark_as_advanced(TS_QUERY_LS_PRG)
 
 set(STYLUA_DIRS runtime scripts src test contrib)
 
 add_glob_target(
   TARGET lintlua-luacheck
   COMMAND $<TARGET_FILE:nvim_bin>
-  FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr luacheck -q
+  FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr/share/lua/5.1 luacheck -q
   GLOB_DIRS runtime scripts src test
   GLOB_PAT *.lua
   TOUCH_STRATEGY PER_DIR)
@@ -249,6 +257,16 @@ add_glob_target(
   GLOB_DIRS ${STYLUA_DIRS}
   GLOB_PAT *.lua
   TOUCH_STRATEGY PER_DIR)
+# Special handling of some files (which are ignored in .styluaignore).
+# Workaround because stylua doesn't(?) support file-specific settings.
+add_custom_target(lintlua-stylua2
+  COMMAND ${STYLUA_PRG} --config-path "${PROJECT_SOURCE_DIR}/.stylua2.toml"
+    --color=always --check
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/decorations_spec.lua"
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/float_spec.lua"
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/multigrid_spec.lua"
+)
+add_dependencies(lintlua-stylua lintlua-stylua2)
 
 add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
@@ -261,12 +279,24 @@ add_glob_target(
   GLOB_PAT *.sh
   TOUCH_STRATEGY PER_DIR)
 
+add_custom_target(lintquery-compilation
+  COMMAND ${TS_QUERY_LS_PRG}
+  check ${PROJECT_SOURCE_DIR}/runtime/queries --config
+  '{"parser_install_directories": ["${DEPS_PREFIX}/lib/nvim/parser"]}')
+
+add_custom_target(lintquery-format
+  COMMAND ${TS_QUERY_LS_PRG}
+  format ${PROJECT_SOURCE_DIR}/runtime/queries --check)
+
+add_custom_target(lintquery)
+add_dependencies(lintquery lintquery-compilation lintquery-format)
+
 add_custom_target(lintcommit
-  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
+  COMMAND $<TARGET_FILE:nvim_bin> --clean -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
 add_dependencies(lintcommit nvim_bin)
 
 add_custom_target(lint)
-add_dependencies(lint lintc lintlua lintsh)
+add_dependencies(lint lintc lintlua lintsh lintquery)
 
 # Format
 add_glob_target(
@@ -276,9 +306,22 @@ add_glob_target(
   GLOB_DIRS ${STYLUA_DIRS}
   GLOB_PAT *.lua
   TOUCH_STRATEGY PER_DIR)
+# Special handling of some files (which are ignored in .styluaignore).
+# Workaround because stylua doesn't(?) support file-specific settings.
+add_custom_target(formatlua2
+  COMMAND ${STYLUA_PRG} --config-path "${PROJECT_SOURCE_DIR}/.stylua2.toml"
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/decorations_spec.lua"
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/float_spec.lua"
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/multigrid_spec.lua"
+)
+add_dependencies(formatlua formatlua2)
+
+add_custom_target(formatquery
+  COMMAND ${TS_QUERY_LS_PRG}
+  format ${PROJECT_SOURCE_DIR}/runtime/queries)
 
 add_custom_target(format)
-add_dependencies(format formatc formatlua)
+add_dependencies(format formatc formatlua formatquery)
 
 install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
@@ -288,6 +331,8 @@ add_custom_target(nvim ALL)
 add_dependencies(nvim nvim_bin nvim_runtime_deps nvim_runtime)
 
 add_subdirectory(src/nvim)
+add_subdirectory(src/tee)
+add_subdirectory(src/xxd)
 add_subdirectory(cmake.config)
 add_subdirectory(runtime)
 add_subdirectory(test)
@@ -304,6 +349,7 @@ ExternalProject_Add(uncrustify
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/uncrustify
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
     -D CMAKE_RUNTIME_OUTPUT_DIRECTORY=${DEPS_BIN_DIR}
+    -D CMAKE_SKIP_RPATH=true
   EXCLUDE_FROM_ALL TRUE
   ${EXTERNALPROJECT_OPTIONS})
 
@@ -322,13 +368,13 @@ else()
   add_custom_target(lua_dev_deps)
 endif()
 
-if (CMAKE_SYSTEM_PROCESSOR MATCHES arm64)
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch")
   set(LUALS_ARCH arm64)
 else()
   set(LUALS_ARCH x64)
 endif()
 
-set(LUALS_VERSION 3.13.9)
+set(LUALS_VERSION 3.15.0)
 set(LUALS "lua-language-server-${LUALS_VERSION}-${CMAKE_SYSTEM_NAME}-${LUALS_ARCH}")
 set(LUALS_TARBALL ${LUALS}.tar.gz)
 set(LUALS_URL https://github.com/LuaLS/lua-language-server/releases/download/${LUALS_VERSION}/${LUALS_TARBALL})

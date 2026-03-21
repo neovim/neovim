@@ -26,15 +26,13 @@
 #include "nvim/types_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/window.c.generated.h"  // IWYU pragma: keep
-#endif
+#include "api/window.c.generated.h"  // IWYU pragma: keep
 
 /// Gets the current buffer in a window
 ///
 /// @param window   |window-ID|, or 0 for current window
 /// @param[out] err Error details, if any
-/// @return Buffer handle
+/// @return Buffer id
 Buffer nvim_win_get_buf(Window window, Error *err)
   FUNC_API_SINCE(1)
 {
@@ -47,10 +45,11 @@ Buffer nvim_win_get_buf(Window window, Error *err)
   return win->w_buffer->handle;
 }
 
-/// Sets the current buffer in a window, without side effects
+/// Sets the current buffer in a window.
 ///
+/// Note: As a side-effect, this executes |BufEnter| and |BufLeave| autocommands.
 /// @param window   |window-ID|, or 0 for current window
-/// @param buffer   Buffer handle
+/// @param buffer   Buffer id
 /// @param[out] err Error details, if any
 void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   FUNC_API_SINCE(5)
@@ -93,7 +92,7 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Arena *arena, Error *err)
   return rv;
 }
 
-/// Sets the (1,0)-indexed cursor position in the window. |api-indexing|
+/// Sets the (1,0)-indexed cursor position (byte offset) in the window. |api-indexing|
 /// This scrolls the window even if it is not the current one.
 ///
 /// @param window   |window-ID|, or 0 for current window
@@ -108,26 +107,21 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
     return;
   }
 
-  if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
-      || pos.items[1].type != kObjectTypeInteger) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Argument \"pos\" must be a [row, col] array");
+  VALIDATE_EXP(!(pos.size != 2 || pos.items[0].type != kObjectTypeInteger
+                 || pos.items[1].type != kObjectTypeInteger), "pos", "[row, col] array", NULL, {
     return;
-  }
+  });
 
   int64_t row = pos.items[0].data.integer;
   int64_t col = pos.items[1].data.integer;
 
-  if (row <= 0 || row > win->w_buffer->b_ml.ml_line_count) {
-    api_set_error(err, kErrorTypeValidation, "Cursor position outside buffer");
+  VALIDATE_RANGE(!(row <= 0 || row > win->w_buffer->b_ml.ml_line_count), "cursor line", {
     return;
-  }
+  });
 
-  if (col > MAXCOL || col < 0) {
-    api_set_error(err, kErrorTypeValidation, "Column value outside range");
+  VALIDATE_RANGE(!(col > MAXCOL || col < 0), "cursor column", {
     return;
-  }
+  });
 
   win->w_cursor.lnum = (linenr_T)row;
   win->w_cursor.col = (colnr_T)col;
@@ -374,7 +368,7 @@ void nvim_win_hide(Window window, Error *err)
     } else if (tabpage == curtab) {
       win_close(win, false, false);
     } else {
-      win_close_othertab(win, false, tabpage);
+      win_close_othertab(win, false, tabpage, false);
     }
   });
 }
@@ -451,12 +445,11 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
   }
 
   // -1 is allowed as inherit global namespace
-  if (ns_id < -1) {
-    api_set_error(err, kErrorTypeValidation, "no such namespace");
-  }
+  VALIDATE_S((ns_id >= -1), "namespace", "", {
+    return;
+  });
 
   win->w_ns_hl = (NS)ns_id;
-  win->w_ns_hl_winhl = -1;
   win->w_hl_needs_update = true;
   redraw_later(win, UPD_NOT_VALID);
 }
@@ -483,13 +476,25 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
 ///                              When omitted include the whole line.
 ///                - end_vcol: Ending virtual column index on "end_row",
 ///                            0-based exclusive, rounded up to full screen lines.
-///                            When omitted include the whole line.
+///                            When 0 only include diff filler and virtual lines above
+///                            "end_row". When omitted include the whole line.
+///                - max_height: Don't add the height of lines below the row
+///                              for which this height is reached. Useful to e.g. limit the
+///                              height to the window height, avoiding unnecessary work. Or
+///                              to find out how many buffer lines beyond "start_row" take
+///                              up a certain number of logical lines (returned in
+///                              "end_row" and "end_vcol").
 /// @return  Dict containing text height information, with these keys:
 ///          - all: The total number of screen lines occupied by the range.
 ///          - fill: The number of diff filler or virtual lines among them.
+///          - end_row: The row on which the returned height is reached (first row of
+///            a closed fold).
+///          - end_vcol: Ending virtual column in "end_row" where "max_height" or the returned
+///            height is reached. 0 if "end_row" is a closed fold.
 ///
 /// @see |virtcol()| for text width.
-Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *arena, Error *err)
+DictAs(win_text_height_ret) nvim_win_text_height(Window window, Dict(win_text_height) *opts,
+                                                 Arena *arena, Error *err)
   FUNC_API_SINCE(12)
 {
   Dict rv = arena_dict(arena, 2);
@@ -545,6 +550,14 @@ Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *are
     });
   }
 
+  int64_t max = INT64_MAX;
+  if (HAS_KEY(opts, win_text_height, max_height)) {
+    VALIDATE_RANGE(opts->max_height > 0, "max_height", {
+      return rv;
+    });
+    max = opts->max_height;
+  }
+
   if (start_lnum == end_lnum && start_vcol >= 0 && end_vcol >= 0) {
     VALIDATE((start_vcol <= end_vcol), "%s", "'start_vcol' is higher than 'end_vcol'", {
       return rv;
@@ -552,7 +565,7 @@ Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *are
   }
 
   int64_t fill = 0;
-  int64_t all = win_text_height(win, start_lnum, start_vcol, end_lnum, end_vcol, &fill);
+  int64_t all = win_text_height(win, start_lnum, start_vcol, &end_lnum, &end_vcol, &fill, max);
   if (!HAS_KEY(opts, win_text_height, end_row)) {
     const int64_t end_fill = win_get_fill(win, line_count + 1);
     fill += end_fill;
@@ -560,5 +573,7 @@ Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *are
   }
   PUT_C(rv, "all", INTEGER_OBJ(all));
   PUT_C(rv, "fill", INTEGER_OBJ(fill));
+  PUT_C(rv, "end_row", INTEGER_OBJ(end_lnum - 1));
+  PUT_C(rv, "end_vcol", INTEGER_OBJ(end_vcol));
   return rv;
 }

@@ -60,5 +60,4 @@ Many other distributions are available for Windows like
 https://chocolatey.org/packages/less/. Make sure `less` is in a directory
 listed in the `PATH` environment variable, which chocolatey above does.
 
-------------------------------------------------------------------------------
  vim:ft=help:

@@ -99,6 +99,9 @@ typedef struct {
   uint8_t reganch;
   uint8_t *regmust;
   int regmlen;
+#ifdef REGEXP_DEBUG
+  int regsz;
+#endif
   uint8_t reghasz;
   uint8_t program[];
 } bt_regprog_T;
@@ -367,6 +370,8 @@ static const char e_nfa_regexp_missing_value_in_chr[]
 static const char e_atom_engine_must_be_at_start_of_pattern[]
   = N_("E1281: Atom '\\%%#=%c' must be at the start of the pattern");
 static const char e_substitute_nesting_too_deep[] = N_("E1290: substitute nesting too deep");
+static const char e_unicode_val_too_large[]
+  = N_("E1541: Value too large, max Unicode codepoint is U+10FFFF");
 
 #define NOT_MULTI       0
 #define MULTI_ONE       1
@@ -643,9 +648,7 @@ typedef struct {
 static regengine_T bt_regengine;
 static regengine_T nfa_regengine;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "regexp.c.generated.h"
-#endif
+#include "regexp.c.generated.h"
 
 // Return true if compiled regular expression "prog" can match a line break.
 int re_multiline(const regprog_T *prog)
@@ -1582,6 +1585,7 @@ static void reg_nextline(void)
 // Returns RA_FAIL, RA_NOMATCH or RA_MATCH.
 // If "bytelen" is not NULL, it is set to the byte length of the match in the
 // last line.
+// Optional: ignore case if rex.reg_ic is set.
 static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T end_lnum,
                               colnr_T end_col, int *bytelen)
 {
@@ -1619,7 +1623,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
       len = reg_getline_len(clnum) - ccol;
     }
 
-    if (cstrncmp(p + ccol, (char *)rex.input, &len) != 0) {
+    if ((!rex.reg_ic && cstrncmp(p + ccol, (char *)rex.input, &len) != 0)
+        || (rex.reg_ic && mb_strnicmp(p + ccol, (char *)rex.input, (size_t)len) != 0)) {
       return RA_NOMATCH;  // doesn't match
     }
     if (bytelen != NULL) {
@@ -1727,7 +1732,8 @@ static void mb_decompose(int c, int *c1, int *c2, int *c3)
     *c3 = d.c;
   } else {
     *c1 = c;
-    *c2 = *c3 = 0;
+    *c2 = 0;
+    *c3 = 0;
   }
 }
 
@@ -4367,7 +4373,8 @@ static uint8_t *regatom(int *flagp)
     if (one_exactly) {
       EMSG_ONE_RET_NULL;
     }
-    IEMSG_RET_NULL(_(e_internal));       // Supposed to be caught earlier.
+    // Supposed to be caught earlier.
+    IEMSG_RET_NULL(_(e_internal_error_in_regexp));
   // NOTREACHED
 
   case Magic('='):
@@ -4796,6 +4803,11 @@ collection:
                        || *regparse == 'u'
                        || *regparse == 'U') {
               startc = coll_get_char();
+              // max UTF-8 Codepoint is U+10FFFF,
+              // but allow values until INT_MAX
+              if (startc == INT_MAX) {
+                EMSG_RET_NULL(_(e_unicode_val_too_large));
+              }
               if (startc == 0) {
                 regc(0x0a);
               } else {
@@ -5440,6 +5452,9 @@ static regprog_T *bt_regcomp(uint8_t *expr, int re_flags)
   // Allocate space.
   bt_regprog_T *r = xmalloc(offsetof(bt_regprog_T, program) + (size_t)regsize);
   r->re_in_use = false;
+#ifdef REGEXP_DEBUG
+  r->regsz = regsize;
+#endif
 
   // Second pass: emit code.
   regcomp_start(expr, re_flags);
@@ -5548,11 +5563,14 @@ static int coll_get_char(void)
   case 'U':
     nr = gethexchrs(8); break;
   }
-  if (nr < 0 || nr > INT_MAX) {
+  if (nr < 0) {
     // If getting the number fails be backwards compatible: the character
     // is a backslash.
     regparse--;
     nr = '\\';
+  }
+  if (nr > INT_MAX) {
+    nr = INT_MAX;
   }
   return (int)nr;
 }
@@ -7820,10 +7838,10 @@ static void regdump(uint8_t *pattern, bt_regprog_T *r)
   s = &r->program[1];
   // Loop until we find the END that isn't before a referred next (an END
   // can also appear in a NOMATCH operand).
-  while (op != END || s <= end) {
+  while ((op != END || s <= end) && s < r->program + r->regsz) {
     op = OP(s);
     fprintf(f, "%2d%s", (int)(s - r->program), regprop(s));     // Where, what.
-    next = regnext(s);
+    next = (s + 3 <= r->program + r->regsz) ? regnext(s) : NULL;
     if (next == NULL) {         // Next ptr.
       fprintf(f, "(0)");
     } else {
@@ -7847,13 +7865,18 @@ static void regdump(uint8_t *pattern, bt_regprog_T *r)
       s += 5;
     }
     s += 3;
+    if (op == MULTIBYTECODE) {
+      fprintf(f, " mbc=%d", utf_ptr2char(s));
+      s += utfc_ptr2len(s);
+    }
     if (op == ANYOF || op == ANYOF + ADD_NL
         || op == ANYBUT || op == ANYBUT + ADD_NL
         || op == EXACTLY) {
       // Literal string, where present.
       fprintf(f, "\nxxxxxxxxx\n");
-      while (*s != NUL) {
-        fprintf(f, "%c", *s++);
+      while (*s != NUL && s < r->program + r->regsz) {
+        fprintf(f, "%c", *s);
+        s += utfc_ptr2len(s);  // advance by full char including combining
       }
       fprintf(f, "\nxxxxxxxxx\n");
       s++;
@@ -10067,7 +10090,7 @@ static int nfa_regatom(void)
         rc_did_emsg = true;
         return FAIL;
       }
-      siemsg("INTERNAL: Unknown character class char: %" PRId64, (int64_t)c);
+      siemsg("INTERNAL: Unknown character class char: %d", c);
       return FAIL;
     }
     // When '.' is followed by a composing char ignore the dot, so that
@@ -10407,6 +10430,7 @@ collection:
     p = (uint8_t *)regparse;
     endp = (uint8_t *)skip_anyof((char *)p);
     if (*endp == ']') {
+      bool range_endpoint;
       // Try to reverse engineer character classes. For example,
       // recognize that [0-9] stands for \d and [A-Za-z_] for \h,
       // and perform the necessary substitutions in the NFA.
@@ -10443,6 +10467,7 @@ collection:
       emit_range = false;
       while ((uint8_t *)regparse < endp) {
         int oldstartc = startc;
+        range_endpoint = false;
         startc = -1;
         got_coll_char = false;
         if (*regparse == '[') {
@@ -10565,6 +10590,11 @@ collection:
                      || *regparse == 'U') {
             // TODO(RE): This needs more testing
             startc = coll_get_char();
+            // max UTF-8 Codepoint is U+10FFFF,
+            // but allow values until INT_MAX
+            if (startc == INT_MAX) {
+              EMSG_RET_FAIL(_(e_unicode_val_too_large));
+            }
             got_coll_char = true;
             MB_PTR_BACK(old_regparse, regparse);
           } else {
@@ -10581,6 +10611,7 @@ collection:
         // Previous char was '-', so this char is end of range.
         if (emit_range) {
           int endc = startc;
+          range_endpoint = true;
           startc = oldstartc;
           if (startc > endc) {
             EMSG_RET_FAIL(_(e_reverse_range));
@@ -10645,7 +10676,14 @@ collection:
         }
 
         int plen;
-        if (utf_ptr2len(regparse) != (plen = utfc_ptr2len(regparse))) {
+        //
+        // If this character was consumed as the end of a range, do not emit its
+        // composing characters separately.  Range handling only uses the base
+        // codepoint; emitting the composing part again would duplicate the
+        // character in the postfix stream and corrupt the NFA stack.
+        //
+        if (!range_endpoint
+            && utf_ptr2len(regparse) != (plen = utfc_ptr2len(regparse))) {
           int i = utf_ptr2len(regparse);
 
           c = utf_ptr2char(regparse + i);
@@ -11570,9 +11608,9 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
   // grow indent for state->out
   indent->ga_len -= 1;
   if (state->out1) {
-    ga_concat(indent, (uint8_t *)"| ");
+    GA_CONCAT_LITERAL(indent, "| ");
   } else {
-    ga_concat(indent, (uint8_t *)"  ");
+    GA_CONCAT_LITERAL(indent, "  ");
   }
   ga_append(indent, NUL);
 
@@ -11580,7 +11618,7 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
 
   // replace last part of indent for state->out1
   indent->ga_len -= 3;
-  ga_concat(indent, (uint8_t *)"  ");
+  GA_CONCAT_LITERAL(indent, "  ");
   ga_append(indent, NUL);
 
   nfa_print_state2(debugf, state->out1, indent);
@@ -11811,7 +11849,11 @@ static int nfa_max_width(nfa_state_T *startstate, int depth)
       // Matches some character, including composing chars.
       len += MB_MAXBYTES;
       if (state->c != NFA_ANY) {
-        // Skip over the characters.
+        // Skip over the compiled collection.
+        // malformed NFAs must not crash width estimation.
+        if (state->out1 == NULL || state->out1->out == NULL) {
+          return -1;
+        }
         state = state->out1->out;
         continue;
       }
@@ -14782,7 +14824,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
               result = FAIL;
             }
 
-            if (t->state->out->out1->c == NFA_END_COMPOSING) {
+            if (t->state->out->out1 != NULL
+                && t->state->out->out1->c == NFA_END_COMPOSING) {
               end = t->state->out->out1;
               ADD_STATE_IF_MATCH(end);
             }
@@ -15034,7 +15077,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         int subidx;
         int bytelen;
 
-        if (t->state->c <= NFA_BACKREF9) {
+        if (t->state->c >= NFA_BACKREF1 && t->state->c <= NFA_BACKREF9) {
           subidx = t->state->c - NFA_BACKREF1 + 1;
           result = match_backref(&t->subs.norm, subidx, &bytelen);
         } else {

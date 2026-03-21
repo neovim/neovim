@@ -4,7 +4,7 @@
 " Repository:   https://github.com/chrisbra/vim-sqloracle-syntax
 " License:      Vim
 " Previous Maintainer:	Paul Moore
-" Last Change:	2018 June 24
+" Last Change:	2022 February 10
 
 " Changes:
 " 02.04.2016: Support for when keyword
@@ -12,6 +12,7 @@
 " 22.07.2016: Support Oracle Q-Quote-Syntax
 " 25.07.2016: Support for Oracle N'-Quote syntax
 " 22.06.2018: Remove skip part for sqlString (do not escape strings)
+" 10.02.2022: Add some more Oracle SQLKeywords https://github.com/vim/vim/issues/9737
 " (https://web.archive.org/web/20150922065035/https://mariadb.com/kb/en/sql-99/character-string-literals/)
 
 if exists("b:current_syntax")
@@ -33,7 +34,7 @@ syn keyword sqlKeyword	maxextents maxtrans mode modify monitoring
 syn keyword sqlKeyword	nocache nocompress nologging noparallel nowait of offline on online start
 syn keyword sqlKeyword	parallel successful synonym table tablespace then to trigger uid
 syn keyword sqlKeyword	unique user validate values view when whenever
-syn keyword sqlKeyword	where with option order pctfree pctused privileges procedure
+syn keyword sqlKeyword	where with within option order pctfree pctused privileges procedure
 syn keyword sqlKeyword	public resource return row rowlabel rownum rows
 syn keyword sqlKeyword	session share size smallint type using
 syn keyword sqlKeyword	join cross inner outer left right
@@ -86,7 +87,7 @@ syn sync ccomment sqlComment
 " (Oracle 11g)
 " Aggregate Functions
 syn keyword sqlFunction	avg collect corr corr_s corr_k count covar_pop covar_samp cume_dist dense_rank first
-syn keyword sqlFunction	group_id grouping grouping_id last max median min percentile_cont percentile_disc percent_rank rank
+syn keyword sqlFunction	group_id grouping grouping_id last listagg max median min percentile_cont percentile_disc percent_rank rank
 syn keyword sqlFunction	regr_slope regr_intercept regr_count regr_r2 regr_avgx regr_avgy regr_sxx regr_syy regr_sxy
 syn keyword sqlFunction	stats_binomial_test stats_crosstab stats_f_test stats_ks_test stats_mode stats_mw_test
 syn keyword sqlFunction	stats_one_way_anova stats_t_test_one stats_t_test_paired stats_t_test_indep stats_t_test_indepu
@@ -95,7 +96,7 @@ syn keyword sqlFunction	sys_xmlagg var_pop var_samp variance xmlagg
 " Char Functions
 syn keyword sqlFunction	ascii chr concat initcap instr length lower lpad ltrim
 syn keyword sqlFunction	nls_initcap nls_lower nlssort nls_upper regexp_instr regexp_replace
-syn keyword sqlFunction	regexp_substr replace rpad rtrim soundex substr translate treat trim upper
+syn keyword sqlFunction	regexp_substr replace rpad rtrim soundex substr translate treat trim upper wm_concat
 " Comparison Functions
 syn keyword sqlFunction	greatest least
 " Conversion Functions

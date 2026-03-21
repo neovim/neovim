@@ -33,6 +33,4 @@ typedef enum {
 
 extern int kCtxAll;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "context.h.generated.h"
-#endif
+#include "context.h.generated.h"

@@ -15,17 +15,13 @@ Channels are Nvim's way of communicating with external processes.
 
 There are several ways to open a channel:
 
-  1. Through stdin/stdout when `nvim` is started with `--headless` and a startup
-     script or `--cmd` command opens the stdio channel using |stdioopen()|.
-
-  2. Through stdin, stdout and stderr of a process spawned by |jobstart()|.
-
-  3. Through the PTY master end opened with `jobstart(…, {'pty': v:true})`.
-
-  4. By connecting to a TCP/IP socket or named pipe with |sockconnect()|.
-
-  5. By another process connecting to a socket listened to by Nvim. This only
-     supports RPC channels, see |rpc-connecting|.
+1. Through stdin/stdout when `nvim` is started with `--headless` and a startup
+   script or `--cmd` command opens the stdio channel using |stdioopen()|.
+2. Through stdin, stdout and stderr of a process spawned by |jobstart()|.
+3. Through the PTY master end opened with `jobstart(…, {'pty': v:true})`.
+4. By connecting to a TCP/IP socket or named pipe with |sockconnect()|.
+5. By another process connecting to a socket listened to by Nvim. This only
+   supports RPC channels, see |rpc-connecting|.
 
 Channels support multiple modes or protocols. In the most basic
 mode of operation, raw bytes are read and written to the channel.
@@ -177,84 +173,92 @@ Put this in `uppercase.vim` and run:  >bash
 ==============================================================================
 5. Using a prompt buffer				*prompt-buffer*
 
-If you want to type input for the job in a Vim window you have a few options:
-- Use a normal buffer and handle all possible commands yourself.
-  This will be complicated, since there are so many possible commands.
-- Use a terminal window.  This works well if what you type goes directly to
-  the job and the job output is directly displayed in the window.
-  See |terminal|.
-- Use a window with a prompt buffer. This works well when entering a line for
-  the job in Vim while displaying (possibly filtered) output from the job.
+Prompt buffers provide a "prompt" interface: they are like regular buffers,
+except only the last section of the buffer is editable, and the user can
+"submit" the prompt by hitting Enter. Useful for implementing:
+
+- chat UI
+- REPL or shell plugins
+- advanced "picker" plugins
 
 A prompt buffer is created by setting 'buftype' to "prompt". You would
-normally only do that in a newly created buffer.
+normally only do that in a new, empty buffer: >vim
 
-The user can edit and enter one line of text at the very last line of the
-buffer.  When pressing Enter in the prompt line the callback set with
-|prompt_setcallback()| is invoked.  It would normally send the line to a job.
-Another callback would receive the output from the job and display it in the
-buffer, below the prompt (and above the next prompt).
+    :set buftype=prompt
 
-Only the text in the last line, after the prompt, is editable. The rest of the
-buffer is not modifiable with Normal mode commands.  It can be modified by
-calling functions, such as |append()|.  Using other commands may mess up the
-buffer.
+Prompt buffers do not implicitly set 'modified' on user input or other
+changes. But a user or plugin can set 'modified' explicitly, to prevent the
+buffer from being easily closed.
 
-After setting 'buftype' to "prompt" Vim does not automatically start Insert
-mode, use `:startinsert` if you want to enter Insert mode, so that the user
-can start typing a line.
+The user can edit and input text at the end of the buffer. Pressing Enter in
+the input section invokes the |prompt_setcallback()| callback, which is
+typically expected to process the prompt and show results by appending to the
+buffer. To input multiline text, use *Shift-<Enter>* to add a new line without
+submitting the prompt, or just |put| or |paste| multiline text.
 
-The text of the prompt can be set with the |prompt_setprompt()| function. If
-no prompt is set with |prompt_setprompt()|, "% " is used. You can get the
-effective prompt text for a buffer, with |prompt_getprompt()|.
+Only the section starting with the mark |':| of the buffer (after the prompt)
+is editable. The rest of the buffer is not modifiable with Normal mode
+commands, though it can be modified by functions such as |append()|.  Using
+other commands may mess up the buffer.
+
+After setting `buftype=prompt`:
+- Nvim unsets the 'comments' option.
+- Nvim does not automatically start Insert mode (use `:startinsert` if you
+  want to enter Insert mode)
+
+The prompt prefix defaults to "% ", but can be set with |prompt_setprompt()|.
+You can get the effective prompt prefix for with |prompt_getprompt()|.
 
 The user can go to Normal mode and navigate through the buffer.  This can be
 useful to see older output or copy text.
 
-The CTRL-W key can be used to start a window command, such as CTRL-W w to
-switch to the next window.  This also works in Insert mode (use Shift-CTRL-W
-to delete a word). When leaving the window Insert mode will be stopped.  When
-coming back to the prompt window Insert mode will be restored.
+By default during prompt insert-mode, the CTRL-W key can be used to start
+a window command, such as CTRL-W w to switch to the next window. (Use
+Shift-CTRL-W to delete a word). When leaving the window Insert mode will be
+stopped. When coming back to the prompt window Insert mode will be restored.
 
 Any command that starts Insert mode, such as "a", "i", "A" and "I", will move
 the cursor to the last line.  "A" will move to the end of the line, "I" to the
 start of the line.
 
-Here is an example for Unix.  It starts a shell in the background and prompts
-for the next shell command.  Output from the shell is displayed above the
-prompt. >vim
+Example: start a shell in the background and prompt for the next shell
+command, displaying shell output above the prompt: >lua
 
-	" Function handling a line of text that has been typed.
-	func TextEntered(text)
-	  " Send the text to a shell with Enter appended.
-	  call chansend(g:shell_job, [a:text, ''])
-	endfunc
+    local shell_job
 
-	" Function handling output from the shell: Add it above the prompt.
-	func GotOutput(channel, msg, name)
-	  call append(line("$") - 1, a:msg)
-	endfunc
+    -- Handles a line of user input.
+    local function on_submit(text)
+      -- Send the text to the shell with Enter appended.
+      vim.api.nvim_chan_send(shell_job, text .. "\n")
+    end
 
-	" Function handling the shell exits: close the window.
-	func JobExit(job, status, event)
-	  quit!
-	endfunc
+    -- Handles output from the shell.
+    local function on_output(_, msg, _)
+      -- Add shell output above the prompt.
+      local input_start = vim.api.nvim_buf_get_mark(0, ":")[1]
+      vim.fn.append(input_start - 1, msg)
+    end
 
-	" Start a shell in the background.
-	let shell_job = jobstart(["/bin/sh"], #{
-		\ on_stdout: function('GotOutput'),
-		\ on_stderr: function('GotOutput'),
-		\ on_exit: function('JobExit'),
-		\ })
+    -- Handles the shell exit.
+    local function on_exit(_, _, _)
+      vim.cmd("quit!")
+    end
 
-	new
-	set buftype=prompt
-	let buf = bufnr('')
-	call prompt_setcallback(buf, function("TextEntered"))
-	call prompt_setprompt(buf, "shell command: ")
+    -- Start a shell in the background.
+    shell_job = vim.fn.jobstart({ "/bin/sh" }, {
+      on_stdout = on_output,
+      on_stderr = on_output,
+      on_exit = on_exit,
+    })
 
-	" start accepting shell commands
-	startinsert
+    vim.cmd("new")
+    vim.bo.buftype = "prompt"
+    local buf = vim.api.nvim_get_current_buf()
+    vim.fn.prompt_setcallback(buf, on_submit)
+    vim.fn.prompt_setprompt(buf, "shell command: ")
+
+    -- Start accepting shell commands.
+    vim.cmd("startinsert")
 <
 
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:et:sw=4:ft=help:norl:

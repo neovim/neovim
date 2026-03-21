@@ -78,19 +78,22 @@ typedef void (*stream_close_cb)(Stream *stream, void *data);
 
 struct stream {
   bool closed;
+  bool use_poll;
   union {
     uv_pipe_t pipe;
     uv_tcp_t tcp;
     uv_idle_t idle;
 #ifdef MSWIN
     uv_tty_t tty;
+#else
+    uv_poll_t poll;
 #endif
   } uv;
   uv_stream_t *uvstream;  ///< NULL when the stream is a file
   uv_file fd;    ///< When the stream is a file, this is its file descriptor
   int64_t fpos;  ///< When the stream is a file, this is the position in file
   void *cb_data;
-  stream_close_cb close_cb, internal_close_cb;
+  stream_close_cb before_close_cb, close_cb, internal_close_cb;
   void *close_cb_data, *internal_data;
   size_t pending_reqs;
   MultiQueue *events;
@@ -149,6 +152,7 @@ typedef enum {
 /// OS process
 typedef struct proc Proc;
 typedef void (*proc_exit_cb)(Proc *proc, int status, void *data);
+typedef void (*proc_state_cb)(Proc *proc, bool suspended, void *data);
 typedef void (*internal_proc_cb)(Proc *proc);
 
 struct proc {
@@ -166,6 +170,7 @@ struct proc {
   RStream out, err;
   /// Exit handler. If set, user must call proc_free().
   proc_exit_cb cb;
+  proc_state_cb state_cb;
   internal_proc_cb internal_exit_cb, internal_close_cb;
   bool closed, detach, overlapped, fwd_err;
   MultiQueue *events;

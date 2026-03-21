@@ -70,9 +70,7 @@ end
 ---
 --- If needed, this will create the parser.
 ---
---- If no parser can be created, an error is thrown. Set `opts.error = false` to suppress this and
---- return nil (and an error message) instead. WARNING: This behavior will become default in Nvim
---- 0.12 and the option will be removed.
+--- If no parser can be created, nil (and an error message) is returned.
 ---
 ---@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
 ---@param lang (string|nil) Language of this parser (default: from buffer filetype)
@@ -82,7 +80,6 @@ end
 ---@return string? error message, if applicable
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
-  local should_error = opts.error == nil or opts.error
 
   bufnr = vim._resolve_bufnr(bufnr)
 
@@ -92,25 +89,17 @@ function M.get_parser(bufnr, lang, opts)
 
   if not valid_lang(lang) then
     if not parsers[bufnr] then
-      local err_msg =
+      return nil,
         string.format('Parser not found for buffer %s: language could not be determined', bufnr)
-      if should_error then
-        error(err_msg)
-      end
-      return nil, err_msg
     end
   elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
     if not api.nvim_buf_is_loaded(bufnr) then
-      error(('Buffer %s must be loaded to create parser'):format(bufnr))
+      return nil, string.format('Buffer %s must be loaded to create parser', bufnr)
     end
     local parser = vim.F.npcall(M._create_parser, bufnr, lang, opts)
     if not parser then
-      local err_msg =
+      return nil,
         string.format('Parser could not be created for buffer %s and language "%s"', bufnr, lang)
-      if should_error then
-        error(err_msg)
-      end
-      return nil, err_msg
     end
     parsers[bufnr] = parser
   end
@@ -153,9 +142,9 @@ end
 ---@param node_or_range TSNode|Range4 Node or table of positions
 ---
 ---@return integer start_row
----@return integer start_col
+---@return integer start_col # (byte offset)
 ---@return integer end_row
----@return integer end_col
+---@return integer end_col # (byte offset)
 function M.get_node_range(node_or_range)
   if type(node_or_range) == 'table' then
     --- @cast node_or_range -TSNode LuaLS bug
@@ -165,6 +154,31 @@ function M.get_node_range(node_or_range)
   end
 end
 
+---@param node TSNode
+---@param source integer|string Buffer or string from which the {node} is extracted
+---@param offset Range4
+---@return Range6
+local function apply_range_offset(node, source, offset)
+  ---@diagnostic disable-next-line: missing-fields LuaLS varargs bug
+  local range = { node:range() } ---@type Range4
+  local start_row_offset = offset[1]
+  local start_col_offset = offset[2]
+  local end_row_offset = offset[3]
+  local end_col_offset = offset[4]
+
+  range[1] = range[1] + start_row_offset
+  range[2] = range[2] + start_col_offset
+  range[3] = range[3] + end_row_offset
+  range[4] = range[4] + end_col_offset
+
+  if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
+    return M._range.add_bytes(source, range)
+  end
+
+  -- If this produces an invalid range, we just skip it.
+  return { node:range(true) }
+end
+
 ---Get the range of a |TSNode|. Can also supply {source} and {metadata}
 ---to get the range with directives applied.
 ---@param node TSNode
@@ -172,9 +186,12 @@ end
 ---@param metadata vim.treesitter.query.TSMetadata|nil
 ---@return Range6
 function M.get_range(node, source, metadata)
-  if metadata and metadata.range then
-    assert(source)
-    return M._range.add_bytes(source, metadata.range)
+  if metadata then
+    if metadata.range then
+      return M._range.add_bytes(assert(source), metadata.range)
+    elseif metadata.offset then
+      return apply_range_offset(node, assert(source), metadata.offset)
+    end
   end
   return { node:range(true) }
 end
@@ -280,18 +297,19 @@ function M.get_captures_at_pos(bufnr, row, col)
     end
 
     local q = buf_highlighter:get_query(tree:lang())
+    local query = q:query()
 
     -- Some injected languages may not have highlight queries.
-    if not q:query() then
+    if not query then
       return
     end
 
-    local iter = q:query():iter_captures(root, buf_highlighter.bufnr, row, row + 1)
+    local iter = query:iter_captures(root, buf_highlighter.bufnr, row, row + 1)
 
     for id, node, metadata, match in iter do
       if M.is_in_node_range(node, row, col) then
         ---@diagnostic disable-next-line: invisible
-        local capture = q._query.captures[id] -- name of the capture in the query
+        local capture = query.captures[id] -- name of the capture in the query
         if capture ~= nil then
           local _, pattern_id = match:info()
           table.insert(matches, {
@@ -385,7 +403,7 @@ function M.get_node(opts)
 
   local ts_range = { row, col, row, col }
 
-  local root_lang_tree = M.get_parser(bufnr, opts.lang, { error = false })
+  local root_lang_tree = M.get_parser(bufnr, opts.lang)
   if not root_lang_tree then
     return
   end
@@ -401,7 +419,7 @@ end
 --- Can be used in an ftplugin or FileType autocommand.
 ---
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
---- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
+--- In this case, add `vim.bo.syntax = 'ON'` after the call to `start`.
 ---
 --- Note: By default, the highlighter parses code asynchronously, using a segment time of 3ms.
 ---
@@ -409,9 +427,9 @@ end
 ---
 --- ```lua
 --- vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
----     callback = function(args)
----         vim.treesitter.start(args.buf, 'latex')
----         vim.bo[args.buf].syntax = 'on'  -- only if additional legacy syntax is needed
+---     callback = function(ev)
+---         vim.treesitter.start(ev.buf, 'latex')
+---         vim.bo[ev.buf].syntax = 'ON'  -- only if additional legacy syntax is needed
 ---     end
 --- })
 --- ```
@@ -428,7 +446,7 @@ function M.start(bufnr, lang)
       vim.fn.bufload(bufnr)
     end
   end
-  local parser = assert(M.get_parser(bufnr, lang, { error = false }))
+  local parser = assert(M.get_parser(bufnr, lang))
   M.highlighter.new(parser)
 end
 

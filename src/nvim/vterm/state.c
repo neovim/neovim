@@ -11,11 +11,14 @@
 #include "nvim/vterm/vterm.h"
 #include "nvim/vterm/vterm_internal_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "vterm/state.c.generated.h"
-#endif
+#include "vterm/state.c.generated.h"
 
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)
+
+// Primary Device Attributes (DA1) response.
+// We make this a global (extern) variable so that we can override it with FFI
+// in tests.
+DLLEXPORT char vterm_primary_device_attr[] = "61;22;52";
 
 // Some convenient wrappers to make callback functions easier
 
@@ -318,6 +321,9 @@ static int on_text(const char bytes[], size_t len, void *user)
                                                 : state->vt->mode.utf8 ? &state->encoding_utf8
                                                                        : &state->encoding[state->
                                                                                           gr_set];
+  if (encoding->enc == state->encoding_utf8.enc) {
+    encoding = &state->encoding_utf8;  // Only use one UTF-8 encoding state.
+  }
 
   (*encoding->enc->decode)(encoding->enc, encoding->data,
                            codepoints, &npoints, state->gsingle_set ? 1 : (int)maxpoints,
@@ -339,13 +345,15 @@ static int on_text(const char bytes[], size_t len, void *user)
 
   // See if the cursor has moved since
   if (state->pos.row == state->combine_pos.row
-      && state->pos.col == state->combine_pos.col + state->combine_width) {
+      && state->pos.col >= state->combine_pos.col
+      && state->pos.col <= state->combine_pos.col + state->combine_width) {
     // This is a combining char. that needs to be merged with the previous glyph output
     if (utf_iscomposing((int)state->grapheme_last, (int)codepoints[i], &state->grapheme_state)) {
       // Find where we need to append these combining chars
       grapheme_len = state->grapheme_len;
       grapheme_state = state->grapheme_state;
       state->pos.col = state->combine_pos.col;
+      state->at_phantom = 0;
       recombine = true;
     } else {
       DEBUG_LOG("libvterm: TODO: Skip over split char+combining\n");
@@ -829,6 +837,10 @@ static void set_dec_mode(VTermState *state, int num, int val)
     state->mode.bracketpaste = (unsigned)val;
     break;
 
+  case 2026:  // Synchronized output
+    settermprop_bool(state, VTERM_PROP_SYNCOUTPUT, val);
+    break;
+
   case 2031:
     settermprop_bool(state, VTERM_PROP_THEMEUPDATES, val);
     break;
@@ -906,6 +918,10 @@ static void request_dec_mode(VTermState *state, int num)
 
   case 2004:
     reply = state->mode.bracketpaste;
+    break;
+
+  case 2026:
+    reply = state->mode.synchronized_output;
     break;
 
   case 2031:
@@ -1385,7 +1401,7 @@ static int on_csi(const char *leader, const long args[], int argcount, const cha
     val = CSI_ARG_OR(args[0], 0);
     if (val == 0) {
       // DEC VT100 response
-      vterm_push_output_sprintf_ctrl(state->vt, C1_CSI, "?1;2c");
+      vterm_push_output_sprintf_ctrl(state->vt, C1_CSI, "?%sc", vterm_primary_device_attr);
     }
     break;
 
@@ -1948,28 +1964,26 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   case 0:
     settermprop_string(state, VTERM_PROP_ICONNAME, frag);
     settermprop_string(state, VTERM_PROP_TITLE, frag);
-    return 1;
+    break;
 
   case 1:
     settermprop_string(state, VTERM_PROP_ICONNAME, frag);
-    return 1;
+    break;
 
   case 2:
     settermprop_string(state, VTERM_PROP_TITLE, frag);
-    return 1;
+    break;
 
   case 52:
     if (state->selection.callbacks) {
       osc_selection(state, frag);
     }
+    break;
+  }
 
-    return 1;
-
-  default:
-    if (state->fallbacks && state->fallbacks->osc) {
-      if ((*state->fallbacks->osc)(command, frag, state->fbdata)) {
-        return 1;
-      }
+  if (state->fallbacks && state->fallbacks->osc) {
+    if ((*state->fallbacks->osc)(command, frag, state->fbdata)) {
+      return 1;
     }
   }
 
@@ -2424,6 +2438,9 @@ int vterm_state_set_termprop(VTermState *state, VTermProp prop, VTermValue *val)
     return 1;
   case VTERM_PROP_THEMEUPDATES:
     state->mode.theme_updates = (unsigned)val->boolean;
+    return 1;
+  case VTERM_PROP_SYNCOUTPUT:
+    state->mode.synchronized_output = (unsigned)val->boolean;
     return 1;
 
   case VTERM_N_PROPS:

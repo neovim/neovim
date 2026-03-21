@@ -12,9 +12,7 @@
 #include "nvim/math.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "math.c.generated.h"
-#endif
+#include "math.c.generated.h"
 
 int xfpclassify(double d)
   FUNC_ATTR_CONST

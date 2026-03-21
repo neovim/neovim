@@ -25,6 +25,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_session.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
@@ -106,9 +107,7 @@ typedef void (*LevelGetter)(fline_T *);
 
 // static functions {{{2
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fold.c.generated.h"
-#endif
+#include "fold.c.generated.h"
 static const char *e_nofold = N_("E490: No fold found");
 
 // While updating the folds lines between invalid_top and invalid_bot have an
@@ -323,7 +322,7 @@ foldinfo_T fold_info(win_T *win, linenr_T lnum)
 /// @return  true if 'foldmethod' is "manual"
 bool foldmethodIsManual(win_T *wp)
 {
-  return wp->w_p_fdm[3] == 'u';
+  return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[3] == 'u');
 }
 
 // foldmethodIsIndent() {{{2
@@ -337,14 +336,14 @@ bool foldmethodIsIndent(win_T *wp)
 /// @return  true if 'foldmethod' is "expr"
 bool foldmethodIsExpr(win_T *wp)
 {
-  return wp->w_p_fdm[1] == 'x';
+  return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[1] == 'x');
 }
 
 // foldmethodIsMarker() {{{2
 /// @return  true if 'foldmethod' is "marker"
 bool foldmethodIsMarker(win_T *wp)
 {
-  return wp->w_p_fdm[2] == 'r';
+  return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[2] == 'r');
 }
 
 // foldmethodIsSyntax() {{{2
@@ -1721,7 +1720,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
     int level = MIN(foldinfo.fi_level, (int)sizeof(dashes) - 1);
     memset(dashes, '-', (size_t)level);
     dashes[level] = NUL;
-    set_vim_var_string(VV_FOLDDASHES, dashes, -1);
+    set_vim_var_string(VV_FOLDDASHES, dashes, level);
     set_vim_var_nr(VV_FOLDLEVEL, (varnumber_T)level);
 
     // skip evaluating 'foldtext' on errors
@@ -3099,7 +3098,7 @@ static int put_folds_recurse(FILE *fd, garray_T *gap, linenr_T off)
     if (put_folds_recurse(fd, &fp->fd_nested, off + fp->fd_top) == FAIL) {
       return FAIL;
     }
-    if (fprintf(fd, "%" PRId64 ",%" PRId64 "fold",
+    if (fprintf(fd, "sil! %" PRId64 ",%" PRId64 "fold",
                 (int64_t)fp->fd_top + off,
                 (int64_t)(fp->fd_top + off + fp->fd_len - 1)) < 0
         || put_eol(fd) == FAIL) {
@@ -3121,9 +3120,10 @@ static int put_foldopen_recurse(FILE *fd, win_T *wp, garray_T *gap, linenr_T off
     if (fp->fd_flags != FD_LEVEL) {
       if (!GA_EMPTY(&fp->fd_nested)) {
         // open nested folds while this fold is open
+        // ignore errors
         if (fprintf(fd, "%" PRId64, (int64_t)fp->fd_top + off) < 0
             || put_eol(fd) == FAIL
-            || put_line(fd, "normal! zo") == FAIL) {
+            || put_line(fd, "sil! normal! zo") == FAIL) {
           return FAIL;
         }
         if (put_foldopen_recurse(fd, wp, &fp->fd_nested,
@@ -3164,7 +3164,7 @@ static int put_fold_open_close(FILE *fd, fold_T *fp, linenr_T off)
 {
   if (fprintf(fd, "%" PRIdLINENR, fp->fd_top + off) < 0
       || put_eol(fd) == FAIL
-      || fprintf(fd, "normal! z%c",
+      || fprintf(fd, "sil! normal! z%c",
                  fp->fd_flags == FD_CLOSED ? 'c' : 'o') < 0
       || put_eol(fd) == FAIL) {
     return FAIL;

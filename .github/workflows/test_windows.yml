@@ -9,16 +9,22 @@ on:
         type: number
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   windows:
-    runs-on: windows-2022
+    runs-on: windows-2025
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         test: [functional, old]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Build deps
@@ -27,8 +33,10 @@ jobs:
           cmake --build .deps
 
       - name: Build
+        env:
+          BUILD_FLAGS: ${{ inputs.build_flags }}
         run: |
-          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' ${{ inputs.build_flags }}
+          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' $env:BUILD_FLAGS
           cmake --build build
 
       - name: Install test deps
@@ -54,10 +62,19 @@ jobs:
       - if: ${{ matrix.test == 'functional' }}
         name: functionaltest
         timeout-minutes: ${{ inputs.functionaltest_timeout }}
-        run: cmake --build build --target functionaltest
+        env:
+          # With parallel tests, use shorter timeout for a single group.
+          TEST_TIMEOUT: 600
+        run: |
+          $ErrorActionPreference = 'Continue'
+          # `-k 0` tells ninja to continue running all targets even if some fail.
+          cmake --build build --target functionaltest-parallel -j 2 -- -k 0
+          $exitCode = $LASTEXITCODE
+          cmake --build build --target functionaltest-summary
+          exit $exitCode
 
       - if: ${{ matrix.test == 'old' }}
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@4f806de0a5a7294ffabaff804b38a9b435a73bda # v2.30.0
         with:
           update: true
           install: unzip

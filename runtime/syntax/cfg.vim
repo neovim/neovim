@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Good old CFG files
 " Maintainer:	Igor N. Prischepoff (igor@tyumbit.ru, pri_igor@mail.ru)
-" Last change:	2012 Aug 11
+" Last Change:	2012 Aug 11
 " 2024 Nov 14 by Vim project:  // only denotes a comment when starting a line (#16051)
 
 " quit when a syntax file was already loaded

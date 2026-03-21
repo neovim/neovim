@@ -11,11 +11,16 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
+#include "nvim/drawscreen.h"
+#include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/window.h"
+#include "nvim/ex_cmds.h"
+#include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memline.h"
@@ -24,6 +29,7 @@
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
@@ -35,9 +41,7 @@ typedef struct {
   int cob_save_VIsual_active;
 } cob_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/buffer.c.generated.h"
-#endif
+#include "eval/buffer.c.generated.h"
 
 /// Find a buffer by number or exact name.
 buf_T *find_buffer(typval_T *avar)
@@ -381,8 +385,8 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
   int winid;
   bool found_buf = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    winnr++;
-    if (wp->w_buffer == buf) {
+    winnr += win_has_winnr(wp, curtab);
+    if (wp->w_buffer == buf && (!get_nr || win_has_winnr(wp, curtab))) {
       found_buf = true;
       winid = wp->handle;
       break;
@@ -454,7 +458,7 @@ void f_deletebufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   for (linenr_T lnum = first; lnum <= last; lnum++) {
-    ml_delete(first, true);
+    ml_delete_flags(first, ML_DEL_MESSAGE);
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -607,12 +611,16 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, bool retl
     }
     tv_list_alloc_ret(rettv, end - start + 1);
     while (start <= end) {
-      tv_list_append_string(rettv->vval.v_list, ml_get_buf(buf, start++), -1);
+      tv_list_append_string(rettv->vval.v_list,
+                            ml_get_buf(buf, start), (int)ml_get_buf_len(buf, start));
+      start++;
     }
   } else {
     rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = ((start >= 1 && start <= buf->b_ml.ml_line_count)
-                            ? xstrdup(ml_get_buf(buf, start)) : NULL);
+    rettv->vval.v_string =
+      start >= 1 && start <= buf->b_ml.ml_line_count
+      ? xstrnsave(ml_get_buf(buf, start), (size_t)ml_get_buf_len(buf, start))
+      : NULL;
   }
 }
 
@@ -706,26 +714,112 @@ void restore_buffer(bufref_T *save_curbuf)
   }
 }
 
-/// Find a window for buffer "buf".
-/// If found true is returned and "wp" and "tp" are set to
-/// the window and tabpage.
-/// If not found, false is returned.
-///
-/// @param       buf  buffer to find a window for
-/// @param[out]  wp   stores the found window
-/// @param[out]  tp   stores the found tabpage
-///
-/// @return  true if a window was found for the buffer.
-bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
+/// "prompt_setcallback({buffer}, {callback})" function
+void f_prompt_setcallback(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  *wp = NULL;
-  *tp = NULL;
-  FOR_ALL_TAB_WINDOWS(tp2, wp2) {
-    if (wp2->w_buffer == buf) {
-      *tp = tp2;
-      *wp = wp2;
-      return true;
+  Callback prompt_callback = CALLBACK_INIT;
+
+  if (check_secure()) {
+    return;
+  }
+  buf_T *buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+    if (!callback_from_typval(&prompt_callback, &argvars[1])) {
+      return;
     }
   }
-  return false;
+
+  callback_free(&buf->b_prompt_callback);
+  buf->b_prompt_callback = prompt_callback;
+}
+
+/// "prompt_setinterrupt({buffer}, {callback})" function
+void f_prompt_setinterrupt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  Callback interrupt_callback = CALLBACK_INIT;
+
+  if (check_secure()) {
+    return;
+  }
+  buf_T *buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+    if (!callback_from_typval(&interrupt_callback, &argvars[1])) {
+      return;
+    }
+  }
+
+  callback_free(&buf->b_prompt_interrupt);
+  buf->b_prompt_interrupt = interrupt_callback;
+}
+
+/// "prompt_setprompt({buffer}, {text})" function
+void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  if (check_secure()) {
+    return;
+  }
+  buf_T *buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    return;
+  }
+
+  const char *new_prompt = tv_get_string(&argvars[1]);
+  int new_prompt_len = (int)strlen(new_prompt);
+
+  // Update the prompt-text and prompt-marks if a plugin calls prompt_setprompt()
+  // even while user is editing their input.
+  if (bt_prompt(buf) && buf->b_ml.ml_mfp != NULL) {
+    // In case the mark is set to a nonexistent line.
+    buf->b_prompt_start.mark.lnum = MAX(1, MIN(buf->b_prompt_start.mark.lnum,
+                                               buf->b_ml.ml_line_count));
+
+    linenr_T prompt_lno = buf->b_prompt_start.mark.lnum;
+    char *old_prompt = buf_prompt_text(buf);
+    char *old_line = ml_get_buf(buf, prompt_lno);
+    colnr_T old_line_len = ml_get_buf_len(buf, prompt_lno);
+
+    int old_prompt_len = (int)strlen(old_prompt);
+    colnr_T cursor_col = curwin->w_cursor.col;
+
+    if (buf->b_prompt_start.mark.col < old_prompt_len
+        || buf->b_prompt_start.mark.col > old_line_len
+        || !strnequal(old_prompt, old_line + buf->b_prompt_start.mark.col - old_prompt_len,
+                      (size_t)old_prompt_len)) {
+      // If for some odd reason the old prompt is missing,
+      // replace prompt line with new-prompt (discards user-input).
+      ml_replace_buf(buf, prompt_lno, (char *)new_prompt, true, false);
+      extmark_splice_cols(buf, prompt_lno - 1, 0, old_line_len, new_prompt_len, kExtmarkNoUndo);
+      cursor_col = new_prompt_len;
+    } else {
+      // Replace prev-prompt + user-input with new-prompt + user-input
+      char *new_line = concat_str(new_prompt, old_line + buf->b_prompt_start.mark.col);
+      if (ml_replace_buf(buf, prompt_lno, new_line, false, false) != OK) {
+        xfree(new_line);
+      }
+      extmark_splice_cols(buf, prompt_lno - 1, 0, buf->b_prompt_start.mark.col, new_prompt_len,
+                          kExtmarkNoUndo);
+      cursor_col += new_prompt_len - buf->b_prompt_start.mark.col;
+    }
+
+    if (curwin->w_buffer == buf && curwin->w_cursor.lnum == prompt_lno) {
+      curwin->w_cursor.col = cursor_col;
+      check_cursor_col(curwin);
+    }
+    changed_lines(buf, prompt_lno, 0, prompt_lno + 1, 0, true);
+    // Undo history contains the old prompt.
+    u_clearallandblockfree(buf);
+  }
+
+  // Clear old prompt text and replace with the new one
+  xfree(buf->b_prompt_text);
+  buf->b_prompt_text = xstrdup(new_prompt);
+  buf->b_prompt_start.mark.col = (colnr_T)new_prompt_len;
 }

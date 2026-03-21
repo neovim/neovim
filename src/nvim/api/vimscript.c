@@ -10,6 +10,7 @@
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
@@ -29,9 +30,7 @@
 #include "nvim/viml/parser/parser.h"
 #include "nvim/viml/parser/parser_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/vimscript.c.generated.h"
-#endif
+#include "api/vimscript.c.generated.h"
 
 /// Executes Vimscript (multiline block of Ex commands), like anonymous
 /// |:source|.
@@ -72,6 +71,7 @@ Dict nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *e
 String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
 {
   const int save_msg_silent = msg_silent;
+  const bool save_redir_off = redir_off;
   garray_T *const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
   garray_T capture_local;
@@ -83,6 +83,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
   TRY_WRAP(err, {
     if (opts->output) {
       msg_silent++;
+      redir_off = false;
       msg_col = 0;  // prevent leading spaces
     }
 
@@ -92,6 +93,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
     if (opts->output) {
       capture_ga = save_capture_ga;
       msg_silent = save_msg_silent;
+      redir_off = save_redir_off;
       // Put msg_col back where it was, since nothing should have been written.
       msg_col = save_msg_col;
     }
@@ -302,8 +304,9 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
     object_to_vim(dict, &rettv, err);
     break;
   default:
-    api_set_error(err, kErrorTypeValidation, "dict argument type must be String or Dict");
-    return rv;
+    VALIDATE_EXP(false, "dict argument", "String or Dict", NULL, {
+      return rv;
+    });
   }
   dict_T *self_dict = rettv.vval.v_dict;
   if (rettv.v_type != VAR_DICT || !self_dict) {
@@ -313,29 +316,26 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
 
   if (fn.data && fn.size > 0 && dict.type != kObjectTypeDict) {
     dictitem_T *const di = tv_dict_find(self_dict, fn.data, (ptrdiff_t)fn.size);
-    if (di == NULL) {
-      api_set_error(err, kErrorTypeValidation, "Not found: %s", fn.data);
+    VALIDATE(di != NULL, "Not found: %s", fn.data, {
       goto end;
-    }
+    });
     if (di->di_tv.v_type == VAR_PARTIAL) {
       api_set_error(err, kErrorTypeValidation,
                     "partial function not supported");
       goto end;
     }
-    if (di->di_tv.v_type != VAR_FUNC) {
-      api_set_error(err, kErrorTypeValidation, "Not a function: %s", fn.data);
+    VALIDATE((di->di_tv.v_type == VAR_FUNC), "Not a function: %s", fn.data, {
       goto end;
-    }
+    });
     fn = (String) {
       .data = di->di_tv.vval.v_string,
       .size = strlen(di->di_tv.vval.v_string),
     };
   }
 
-  if (!fn.data || fn.size < 1) {
-    api_set_error(err, kErrorTypeValidation, "Invalid (empty) function name");
+  VALIDATE((fn.data && fn.size >= 1), "Invalid function name: %s", "(empty)", {
     goto end;
-  }
+  });
 
   rv = _call_function(fn, args, self_dict, arena, err);
 end:
@@ -381,7 +381,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///        - "error": Dict with error, present only if parser saw some
 ///                 error. Contains the following keys:
 ///          - "message": String, error message in printf format, translated.
-///                       Must contain exactly one "%.*s".
+///                       Must contain exactly one `%.*s`.
 ///          - "arg": String, error message argument.
 ///        - "len": Amount of bytes successfully parsed. With flags equal to ""
 ///                 that should be equal to the length of expr string.

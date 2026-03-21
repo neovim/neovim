@@ -2,7 +2,7 @@
 " Language:             modules.conf(5) configuration file
 " Maintainer:           This runtime file is looking for a new maintainer.
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2024-09-20 (remove erroneous endif)
+" Latest Revision:      2025-07-22 (use :hor term #17822)
 
 if exists("b:did_ftplugin")
   finish
@@ -19,7 +19,7 @@ setlocal formatoptions-=t formatoptions+=croql
 
 if has('unix') && executable('less') && exists(':terminal') == 2
   command -buffer -nargs=1 ModconfKeywordPrg
-        \ silent exe ':term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s{,8}' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'modprobe.d'
+        \ silent exe ':hor term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s{,8}' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'modprobe.d'
   setlocal iskeyword+=-
   setlocal keywordprg=:ModconfKeywordPrg
   let b:undo_ftplugin .= '| setlocal keywordprg< iskeyword< | sil! delc -buffer ModconfKeywordPrg'

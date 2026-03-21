@@ -27,7 +27,7 @@ describe(':echo :echon :echomsg :echoerr', function()
     end
   end
 
-  before_each(function()
+  setup(function()
     clear()
     source([[
       function String(s)
@@ -149,7 +149,7 @@ describe(':echo :echon :echomsg :echoerr', function()
   end)
 
   describe('used to represent funcrefs', function()
-    before_each(function()
+    setup(function()
       source([[
         function Test1()
         endfunction
@@ -256,7 +256,7 @@ describe(':echo :echon :echomsg :echoerr', function()
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
-      -- test/unit/api/private_t_spec.lua.
+      -- test/unit/api/private_helpers_spec.lua.
       eval('add(l, function("Test1", l))')
       eq(
         dedent(

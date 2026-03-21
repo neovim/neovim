@@ -1,7 +1,7 @@
 *pattern.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Patterns and search commands				*pattern-searches*
@@ -62,7 +62,7 @@ N			Repeat the latest "/" or "?" [count] times in
 *			Search forward for the [count]'th occurrence of the
 			word nearest to the cursor.  The word used for the
 			search is the first of:
-				1. the keyword under the cursor |'iskeyword'|
+				1. the keyword under the cursor 'iskeyword'
 				2. the first keyword after the cursor, in the
 				   current line
 				3. the non-blank word under the cursor
@@ -170,6 +170,17 @@ found", for Vi compatibility.
 For the |:s| command the "e" flag can be used to avoid the error message
 |:s_flags|.
 
+					*search-options*
+The following options affect how a search is performed in Vim:
+    'hlsearch'		highlight matches
+    'ignorecase'	ignore case when searching
+    'imsearch'		use IME when entering the search pattern
+    'incsearch'		show matches incrementally as the pattern is typed
+    'maxsearchcount'	maximum number for the search count |shm-S|
+    'shortmess'		suppress messages |shm-s|; show search count |shm-S|
+    'smartcase'		override 'ignorecase' if pattern contains uppercase
+    'wrapscan'		continue searching from the start of the file
+
 					*search-offset* *{offset}*
 These commands search for the specified pattern.  With "/" and "?" an
 additional offset may be given.  There are two types of offsets: line offsets
@@ -263,9 +274,9 @@ When searching backwards, searching starts at the start of the line, using the
 cursor position is used.
 
 In Vi the ":tag" command sets the last search pattern when the tag is searched
-for.  In Vim this is not done, the previous search pattern is still remembered,
-unless the 't' flag is present in 'cpoptions'.  The search pattern is always
-put in the search history.
+for.  In Vim this is not done, the previous search pattern is still
+remembered, unless the 't' flag is present in 'cpoptions'.  The search pattern
+is always put in the search history.
 
 If the 'wrapscan' option is on (which is the default), searches wrap around
 the end of the buffer.  If 'wrapscan' is not set, the backward search stops
@@ -334,10 +345,10 @@ For starters, read chapter 27 of the user manual |usr_27.txt|.
 						*/branch* */\&*
 2. A branch is one or more concats, separated by "\&".  It matches the last
    concat, but only if all the preceding concats also match at the same
-   position.  Examples:
+   position.  Examples: >
 	"foobeep\&..." matches "foo" in "foobeep".
 	".*Peter\&.*Bob" matches in a line containing both "Peter" and "Bob"
-
+<
    branch ::=	    concat
 		or  concat \& concat
 		or  concat \& concat \& concat
@@ -407,9 +418,9 @@ preceded with a backslash to match literally.  For example "." matches any
 character while "\." matches a dot.
 
 If a character is taken literally or not depends on the 'magic' option and the
-items in the pattern mentioned next.  The 'magic' option should always be set,
-but it can be switched off for Vi compatibility.  We mention the effect of
-'nomagic' here for completeness, but we recommend against using that.
+items in the pattern mentioned next.  The 'magic' option should always be set.
+We mention the effect of 'nomagic' here for completeness, but we recommend
+against using that.
 							*/\m* */\M*
 Use of "\m" makes the pattern after it be interpreted as if 'magic' is set,
 ignoring the actual value of the 'magic' option.
@@ -598,18 +609,18 @@ overview.
 							*/star* */\star*
 *	(use \* when 'magic' is not set)
 	Matches 0 or more of the preceding atom, as many as possible.
-	Example  'nomagic'	matches ~
+	Example  'nomagic'	matches >
 	a*	   a\*		"", "a", "aa", "aaa", etc.
 	.*	   \.\*		anything, also an empty string, no end-of-line
 	\_.*	   \_.\*	everything up to the end of the buffer
 	\_.*END	   \_.\*END	everything up to and including the last "END"
 				in the buffer
-
+<
 	Exception: When "*" is used at the start of the pattern or just after
 	"^" it matches the star character.
 
 	Be aware that repeating "\_." can match a lot of text and take a long
-	time.  For example, "\_.*END" matches all text from the current
+	time.  For example, `\_.*END` matches all text from the current
 	position to the last occurrence of "END" in the file.  Since the "*"
 	will match as many as possible, this first skips over all lines until
 	the end of the file and then tries matching "END", backing up one
@@ -693,8 +704,8 @@ overview.
 	if \(\(then\)\@!.\)*$	"if " not followed by "then"
 
 	Using "\@!" is tricky, because there are many places where a pattern
-	does not match.  "a.*p\@!" will match from an "a" to the end of the
-	line, because ".*" can match all characters in the line and the "p"
+	does not match.  `a.*p\@!` will match from an "a" to the end of the
+	line, because `.*` can match all characters in the line and the "p"
 	doesn't match at the end of the line.  "a.\{-}p\@!" will match any
 	"a", "ap", "app", etc. that isn't followed by a "p", because the "."
 	can match a "p" and "p\@!" doesn't match after that.
@@ -708,7 +719,7 @@ overview.
 	Useful example: to find "foo" in a line that does not contain "bar": >
 		/^\%(.*bar\)\@!.*\zsfoo
 <	This pattern first checks that there is not a single position in the
-	line where "bar" matches.  If ".*bar" matches somewhere the \@! will
+	line where "bar" matches.  If `.*bar` matches somewhere the \@! will
 	reject the pattern.  When there is no match any "foo" will be found.
 	The "\zs" is to have the match start just before "foo".
 
@@ -761,13 +772,13 @@ overview.
 	before what follows.  |/zero-width|
 	Like "(?<!pattern)" in Perl, but Vim allows non-fixed-width patterns.
 	The match with the preceding atom is made to end just before the match
-	with what follows, thus an atom that ends in ".*" will work.
+	with what follows, thus an atom that ends in `.*` will work.
 	Warning: This can be slow (because many positions need to be checked
 	for a match).  Use a limit if you can, see below.
-	Example			matches ~
+	Example			matches >
 	\(foo\)\@<!bar		any "bar" that's not in "foobar"
 	\(\/\/.*\)\@<!in	"in" which is not after "//"
-
+<
 \@123<!
 	Like "\@<!" but only look back 123 bytes.  This avoids trying lots of
 	matches that are known to fail and make executing the pattern very
@@ -832,7 +843,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 
 							*/\_.*
 \_.	Matches any single character or end-of-line.
-	Careful: "\_.*" matches all text to the end of the buffer!
+	Careful: `\_.*` matches all text to the end of the buffer!
 
 							*/\<*
 \<	Matches the beginning of a word: The next char is the first char of a
@@ -1009,7 +1020,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	this will also highlight column 17: >
 		/.*\%17v
 <	Column 17 is highlighted by 'hlsearch' because there is another match
-	where ".*" matches zero characters.
+	where `.*` matches zero characters.
 
 
 Character classes:
@@ -1123,11 +1134,12 @@ x	A single character, with no special meaning, matches itself
 	in the collection: "[^xyz]" matches anything but 'x', 'y' and 'z'.
 	- If two characters in the sequence are separated by '-', this is
 	  shorthand for the full list of ASCII characters between them.  E.g.,
-	  "[0-9]" matches any decimal digit.  If the starting character exceeds
-	  the ending character, e.g. [c-a], E944 occurs.  Non-ASCII characters
-	  can be used, but the character values must not be more than 256 apart
-	  in the old regexp engine.  For example, searching by [\u3000-\u4000]
-	  after setting re=1 emits a E945 error.  Prepending \%#=2 will fix it.
+	  "[0-9]" matches any decimal digit.  If the starting character
+	  exceeds the ending character, e.g. [c-a], E944 occurs.  Non-ASCII
+	  characters can be used, but the character values must not be more
+	  than 256 apart in the old regexp engine.  For example, searching by
+	  [\u3000-\u4000] after setting re=1 emits a E945 error.  Prepending
+	  \%#=2 will fix it.
 	- A character class expression is evaluated to the set of characters
 	  belonging to that character class.  The following character classes
 	  are supported:
@@ -1140,13 +1152,15 @@ x	A single character, with no special meaning, matches itself
 *[:graph:]*	  [:graph:]   isgraph	ASCII printable characters excluding
 					space
 *[:lower:]*	  [:lower:]   (1)	lowercase letters (all letters when
-					'ignorecase' is used)
+					'ignorecase' is used and the old
+					engine is in use |two-engines|)
 *[:print:]*	  [:print:]   (2)	printable characters including space
 *[:punct:]*	  [:punct:]   ispunct	ASCII punctuation characters
 *[:space:]*	  [:space:]		whitespace characters: space, tab, CR,
 					NL, vertical tab, form feed
 *[:upper:]*	  [:upper:]   (3)	uppercase letters (all letters when
-					'ignorecase' is used)
+					'ignorecase' is used and the old
+					engine is in use |two-engines|)
 *[:xdigit:]*	  [:xdigit:]		hexadecimal digits: 0-9, a-f, A-F
 *[:return:]*	  [:return:]		the <CR> character
 *[:tab:]*	  [:tab:]		the <Tab> character
@@ -1206,7 +1220,8 @@ x	A single character, with no special meaning, matches itself
 		\o40	octal number of character up to 0o377
 		\x20	hexadecimal number of character up to 0xff
 		\u20AC	hex. number of multibyte character up to 0xffff
-		\U1234	hex. number of multibyte character up to 0xffffffff
+		\U1234	hex. number of multibyte character up to 8 characters
+			0xffffffff |E1541|
 	  NOTE: The other backslash codes mentioned above do not work inside
 	  []!
 	- Matching with a collection can be slow, because each character in
@@ -1246,7 +1261,8 @@ x	A single character, with no special meaning, matches itself
 \%u20AC	Matches the character specified with up to four hexadecimal
 	characters.
 \%U1234abcd	Matches the character specified with up to eight hexadecimal
-	characters, up to 0x7fffffff
+	characters, up to 0x7fffffff (the maximum allowed value is INT_MAX
+	|E1541|, but the maximum valid Unicode codepoint is U+10FFFF).
 
 ==============================================================================
 7. Ignoring case in a pattern					*/ignorecase*
@@ -1468,38 +1484,56 @@ Finally, these constructs are unique to Perl:
 ==============================================================================
 11. Fuzzy matching					*fuzzy-matching*
 
-Fuzzy matching refers to matching strings using a non-exact search string.
-Fuzzy matching will match a string, if all the characters in the search string
-are present anywhere in the string in the same order.  Case is ignored.  In a
-matched string, other characters can be present between two consecutive
-characters in the search string.  If the search string has multiple words, then
-each word is matched separately.  So the words in the search string can be
-present in any order in a string.
+Fuzzy matching scores how well a string matches a pattern when the pattern
+characters appear in order but not necessarily contiguously.
 
-Fuzzy matching assigns a score for each matched string based on the following
-criteria:
-    - The number of sequentially matching characters.
-    - The number of characters (distance) between two consecutive matching
-      characters.
-    - Matches at the beginning of a word
-    - Matches at a camel case character (e.g. Case in CamelCase)
-    - Matches after a path separator or a hyphen.
-    - The number of unmatched characters in a string.
-    - A full/exact match is preferred.
-The matching string with the highest score is returned first.
+Example: >
+    Pattern:	"vim"
+    Candidates:	"vim"	     -> perfect
+		"vimeo"	     -> good (v i m)
+		"voice mail" -> weaker (v _ i _ _ _ m)
+		"vintage"    -> no match (no "m")
+<
+If the search string has multiple words, each word is matched separately and
+may appear in any order in the candidate.  For example "get pat" matches
+"GetPattern", "PatternGet", "getPattern", "patGetter", "getSomePattern",
+"MatchpatternGet", etc.
 
-For example, when you search for the "get pat" string using fuzzy matching, it
-will match the strings "GetPattern", "PatternGet", "getPattern", "patGetter",
-"getSomePattern", "MatchpatternGet" etc.
+The 'ignorecase' and 'smartcase' options do not apply, case is ignored if the
+pattern is all lower case.
 
-The functions |matchfuzzy()| and |matchfuzzypos()| can be used to fuzzy search
-a string in a List of strings.  The matchfuzzy() function returns a List of
-matching strings.  The matchfuzzypos() functions returns the List of matches,
-the matching positions and the fuzzy match scores.
+Vim's implementation is based on the algorithm from the fzy project:
+https://github.com/jhawthorn/fzy
+
+It uses dynamic programming to compute an optimal score for a given pattern
+and candidate.
+
+The algorithm works in two stages:
+
+1. Forward pass
+   Scan the candidate left to right, tracking the best score for each
+   pattern position.  Matches score higher when they occur at the start
+   of the candidate, the start of a word (space, underscore, dash,
+   camelCase), or directly after the previous match.
+
+2. Backward pass
+   Start from the best-scoring end position and step back to find match
+   positions, ensuring the alignment is optimal.
+
+Vim extends the original algorithm to support multibyte codepoints, allowing
+correct matching for UTF-8 and other encodings.
+
+Time complexity is O(pattern * candidate).  Memory usage is proportional
+to the same.
+
+The |matchfuzzy()| and |matchfuzzypos()| functions perform fuzzy searching in
+a List of strings.  |matchfuzzy()| returns the matching strings, while
+|matchfuzzypos()| returns the matches along with their positions and scores.
 
 The "f" flag of `:vimgrep` enables fuzzy matching.
 
-To enable fuzzy matching for |ins-completion|, add the "fuzzy" value to the
-'completeopt' option.
+To enable fuzzy matching for |ins-completion|, add "fuzzy" to the
+'completeopt' option.  For |cmdline-completion|, add "fuzzy" to the
+'wildoptions' option.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -69,7 +69,7 @@ func Test_global_print()
   v/foo\|bar/p
   call assert_notequal('', v:statusmsg)
 
-  close!
+  bw!
 endfunc
 
 func Test_global_empty_pattern()
@@ -93,7 +93,7 @@ func Test_global_newline()
   call setline(1, ["foo\<NL>bar"])
   exe "g/foo/s/foo\\\<NL>bar/xyz/"
   call assert_equal('xyz', getline(1))
-  close!
+  bw!
 endfunc
 
 " Test :g with ? as delimiter.

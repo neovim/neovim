@@ -24,6 +24,14 @@ describe('insert-mode', function()
     eq(' x', curbuf_contents())
   end)
 
+  it('indent works properly with autocompletion enabled #35381', function()
+    command('set autoindent cindent autocomplete')
+    feed('ivoid func(void) {<CR>')
+    expect('void func(void) {\n\t')
+    feed('}')
+    expect('void func(void) {\n}')
+  end)
+
   it('CTRL-@', function()
     -- Inserts last-inserted text, leaves insert-mode.
     insert('hello')
@@ -81,6 +89,36 @@ describe('insert-mode', function()
         ^                                                  |
         {1:~                                                 }|*4
         {5:-- INSERT --}                                      |
+      ]])
+    end)
+
+    it('inserts named/clipboard registers literally', function()
+      local screen = Screen.new(50, 6)
+      -- regular text without special character command
+      command('let @a = "test"')
+      feed('i<C-R>a<ESC>')
+      screen:expect([[
+        tes^t                                              |
+        {1:~                                                 }|*4
+                                                          |
+      ]])
+
+      -- text with backspace character gets written literally by default
+      command('let @a = "test\\<C-H>"')
+      feed('cc<C-R>a<ESC>')
+      screen:expect([[
+        test{18:^^H}                                            |
+        {1:~                                                 }|*4
+                                                          |
+      ]])
+
+      -- =@reg<CR> can be used to get effect of keypress
+      command('let @a = "test\\<C-H>"')
+      feed('cc<C-R>=@a<CR><ESC>')
+      screen:expect([[
+        te^s                                               |
+        {1:~                                                 }|*4
+                                                          |
       ]])
     end)
   end)

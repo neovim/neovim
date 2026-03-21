@@ -1,5 +1,21 @@
 local M = {}
 
+---@class vim.ui.select.Opts
+---@inlinedoc
+---
+--- Text of the prompt. Defaults to `Select one of:`
+---@field prompt? string
+---
+--- Function to format an
+--- individual item from `items`. Defaults to `tostring`.
+---@field format_item? fun(item: any):string
+---
+--- Arbitrary hint string indicating the item shape.
+--- Plugins reimplementing `vim.ui.select` may wish to
+--- use this to infer the structure or semantics of
+--- `items`, or the context in which select() was called.
+---@field kind? string
+
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
 --- work until `on_choice`.
 ---
@@ -22,17 +38,7 @@ local M = {}
 ---
 ---@generic T
 ---@param items T[] Arbitrary items
----@param opts table Additional options
----     - prompt (string|nil)
----               Text of the prompt. Defaults to `Select one of:`
----     - format_item (function item -> text)
----               Function to format an
----               individual item from `items`. Defaults to `tostring`.
----     - kind (string|nil)
----               Arbitrary hint string indicating the item shape.
----               Plugins reimplementing `vim.ui.select` may wish to
----               use this to infer the structure or semantics of
----               `items`, or the context in which select() was called.
+---@param opts vim.ui.select.Opts Additional options
 ---@param on_choice fun(item: T|nil, idx: integer|nil)
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `items`.
@@ -56,6 +62,26 @@ function M.select(items, opts, on_choice)
   end
 end
 
+---@class vim.ui.input.Opts
+---@inlinedoc
+---
+---Text of the prompt
+---@field prompt? string
+---
+---Default reply to the input
+---@field default? string
+---
+---Specifies type of completion supported
+---for input. Supported types are the same
+---that can be supplied to a user-defined
+---command using the "-complete=" argument.
+---See |:command-completion|
+---@field completion? string
+---
+---Function that will be used for highlighting
+---user inputs.
+---@field highlight? function
+
 --- Prompts the user for input, allowing arbitrary (potentially asynchronous) work until
 --- `on_confirm`.
 ---
@@ -67,21 +93,8 @@ end
 --- end)
 --- ```
 ---
----@param opts table? Additional options. See |input()|
----     - prompt (string|nil)
----               Text of the prompt
----     - default (string|nil)
----               Default reply to the input
----     - completion (string|nil)
----               Specifies type of completion supported
----               for input. Supported types are the same
----               that can be supplied to a user-defined
----               command using the "-complete=" argument.
----               See |:command-completion|
----     - highlight (function)
----               Function that will be used for highlighting
----               user inputs.
----@param on_confirm function ((input|nil) -> ())
+---@param opts? vim.ui.input.Opts Additional options. See |input()|
+---@param on_confirm fun(input?: string)
 ---               Called once the user confirms or abort the input.
 ---               `input` is what the user typed (it might be
 ---               an empty string if nothing was entered), or
@@ -104,6 +117,12 @@ function M.input(opts, on_confirm)
     on_confirm(input)
   end
 end
+
+---@class vim.ui.open.Opts
+---@inlinedoc
+---
+--- Command used to open the path or URL.
+---@field cmd? string[]
 
 --- Opens `path` with the system default handler (macOS `open`, Windows `explorer.exe`, Linux
 --- `xdg-open`, …), or returns (but does not show) an error message on failure.
@@ -128,8 +147,7 @@ end
 --- ```
 ---
 ---@param path string Path or URL to open
----@param opt? { cmd?: string[] } Options
----     - cmd string[]|nil Command used to open the path or URL.
+---@param opt? vim.ui.open.Opts Options
 ---
 ---@return vim.SystemObj|nil # Command object, or nil if not found.
 ---@return nil|string # Error message on failure, or nil on success.
@@ -148,29 +166,79 @@ function M.open(path, opt)
 
   if opt.cmd then
     cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { path })
-  elseif vim.fn.has('mac') == 1 then
-    cmd = { 'open', path }
-  elseif vim.fn.has('win32') == 1 then
-    if vim.fn.executable('rundll32') == 1 then
-      cmd = { 'rundll32', 'url.dll,FileProtocolHandler', path }
-    else
-      return nil, 'vim.ui.open: rundll32 not found'
-    end
-  elseif vim.fn.executable('xdg-open') == 1 then
-    cmd = { 'xdg-open', path }
-    job_opt.stdout = false
-    job_opt.stderr = false
-  elseif vim.fn.executable('wslview') == 1 then
-    cmd = { 'wslview', path }
-  elseif vim.fn.executable('explorer.exe') == 1 then
-    cmd = { 'explorer.exe', path }
-  elseif vim.fn.executable('lemonade') == 1 then
-    cmd = { 'lemonade', 'open', path }
   else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+    local open_cmd, err = M._get_open_cmd()
+    if err then
+      return nil, err
+    end
+    ---@cast open_cmd string[]
+    if open_cmd[1] == 'xdg-open' then
+      job_opt.stdout = false
+      job_opt.stderr = false
+    end
+    cmd = vim.list_extend(open_cmd, { path })
   end
 
   return vim.system(cmd, job_opt), nil
+end
+
+--- Get an available command used to open the path or URL.
+---
+--- @return string[]|nil # Command, or nil if not found.
+--- @return nil|string # Error message on failure, or nil on success.
+function M._get_open_cmd()
+  if vim.fn.has('mac') == 1 then
+    return { 'open' }, nil
+  elseif vim.fn.has('win32') == 1 then
+    return { 'cmd.exe', '/c', 'start', '' }, nil
+  elseif vim.fn.executable('xdg-open') == 1 then
+    return { 'xdg-open' }, nil
+  elseif vim.fn.executable('wslview') == 1 then
+    return { 'wslview' }, nil
+  elseif vim.fn.executable('explorer.exe') == 1 then
+    return { 'explorer.exe' }, nil
+  elseif vim.fn.executable('lemonade') == 1 then
+    return { 'lemonade', 'open' }, nil
+  else
+    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+  end
+end
+
+--- @param bufnr integer
+local get_lsp_urls = function(bufnr)
+  local has_lsp_support = false
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+    has_lsp_support = has_lsp_support or client:supports_method('textDocument/documentLink', bufnr)
+  end
+  if not has_lsp_support then
+    return {}
+  end
+  local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
+  local results = vim.lsp.buf_request_sync(bufnr, 'textDocument/documentLink', params)
+
+  local urls = {}
+  for client_id, result in pairs(results or {}) do
+    if result.error then
+      vim.lsp.log.error(result.error)
+    else
+      local client = assert(vim.lsp.get_client_by_id(client_id))
+      local lsp_position = vim.lsp.util.make_position_params(0, client.offset_encoding).position
+      local position = vim.pos.lsp(bufnr, lsp_position, client.offset_encoding)
+
+      local document_links = result.result or {} ---@type lsp.DocumentLink[]
+      for _, document_link in ipairs(document_links) do
+        local range = vim.range.lsp(bufnr, document_link.range, client.offset_encoding)
+        if document_link.target and range:has(position) then
+          local target = document_link.target ---@type string
+          if vim.startswith(target, 'file://') then
+            target = vim.uri_to_fname(target)
+          end
+          table.insert(urls, target)
+        end
+      end
+    end
+  end
+  return urls
 end
 
 --- Returns all URLs at cursor, if any.
@@ -182,6 +250,9 @@ function M._get_urls()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
   local col = cursor[2]
+
+  urls = vim.list_extend(urls, get_lsp_urls(bufnr))
+
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, { row, col }, { row, col }, {
     details = true,
     type = 'highlight',
@@ -233,6 +304,89 @@ function M._get_urls()
   end
 
   return urls
+end
+
+do
+  ---@class ProgressMessage
+  ---@field id? number|string  ID of the progress message
+  ---@field title? string   Title of the progress message
+  ---@field status string  Status: "running" | "success" | "failed" | "cancel"
+  ---@field percent? integer Percent complete (0–100)
+  ---@private
+
+  --- Cache of active progress messages, keyed by msg_id
+  --- TODO(justinmk): visibility of "stale" (never-finished) Progress. https://github.com/neovim/neovim/pull/35428#discussion_r2942696157
+  ---@type table<integer, ProgressMessage>
+  local progress = {}
+
+  -- store progress events
+  local progress_group, progress_autocmd = nil, nil
+
+  --- Initialize Progress handlers.
+  local function progress_init()
+    progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
+    progress_autocmd = vim.api.nvim_create_autocmd('Progress', {
+      group = progress_group,
+      desc = 'Tracks progress messages for vim.ui.progress_status()',
+      ---@param ev {data: {id: integer, title: string, status: string, percent: integer}}
+      callback = function(ev)
+        if not ev.data or not ev.data.id then
+          return
+        end
+        ev.data.percent = ev.data.percent or 0
+        progress[ev.data.id] = ev.data
+
+        -- Clear finished items
+        if
+          ev.data.status == 'success'
+          or ev.data.percent == 100
+          or ev.data.status == 'failed'
+          or ev.data.status == 'cancel'
+        then
+          progress[ev.data.id] = nil
+        end
+      end,
+    })
+  end
+
+  --- Gets a status description summarizing currently running progress messages.
+  --- - If none: returns empty string
+  --- - If one running item: "title: 42%"
+  --- - If multiple running items: "Progress: N items AVG%"
+  ---@param running ProgressMessage[]
+  ---@return string
+  local function progress_status_fmt(running)
+    local count = #running
+    if count == 0 then
+      return '' -- nothing to show
+    elseif count == 1 then
+      local progress_item = running[1]
+      if progress_item.title == nil then
+        return string.format('%d%%%% ', progress_item.percent or 0)
+      end
+      return string.format('%s: %d%%%% ', progress_item.title, progress_item.percent or 0)
+    else
+      local sum = 0 ---@type integer
+      for _, progress_item in ipairs(running) do
+        sum = sum + (progress_item.percent or 0)
+      end
+      local avg = math.floor(sum / count)
+      return string.format('Progress: %d items %d%%%% ', count, avg)
+    end
+  end
+
+  --- Gets a status description summarizing currently running progress messages.
+  --- Convenient for inclusion in 'statusline'.
+  ---
+  ---@return string # Progress status
+  function M.progress_status()
+    if progress_autocmd == nil then
+      progress_init()
+    end
+
+    local running = vim.tbl_values(progress)
+    return progress_status_fmt(running) or ''
+  end
 end
 
 return M

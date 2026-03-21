@@ -25,6 +25,8 @@ end
 return function(options)
   local busted = require 'busted'
   local handler = require 'busted.outputHandlers.base'()
+  local args = options.arguments
+  args = vim.json.decode(#args > 0 and table.concat(args, ',') or '{}')
 
   local c = {
     succ = function(s)
@@ -106,6 +108,19 @@ return function(options)
   local failureCount = 0
   local errorCount = 0
 
+  local naCheck = function(pending)
+    if vim.list_contains(vim.split(pending.name, '[ :]'), 'N/A') then
+      return true
+    end
+    if type(pending.message) ~= 'string' then
+      return false
+    end
+    if vim.list_contains(vim.split(pending.message, '[ :]'), 'N/A') then
+      return true
+    end
+    return false
+  end
+
   local pendingDescription = function(pending)
     local string = ''
 
@@ -140,10 +155,8 @@ return function(options)
   local getFileLine = function(element)
     local fileline = ''
     if element.trace or element.trace.short_src then
-      fileline = colors.cyan(element.trace.short_src)
-        .. ' @ '
-        .. colors.cyan(element.trace.currentline)
-        .. ': '
+      local fname = vim.fs.normalize(element.trace.short_src)
+      fileline = colors.cyan(fname) .. ' @ ' .. colors.cyan(element.trace.currentline) .. ': '
     end
     return fileline
   end
@@ -158,10 +171,21 @@ return function(options)
 
       local testString = summaryStrings[status].test
       if testString then
+        local naCount = 0
         for _, t in ipairs(list) do
-          local fullname = getFileLine(t.element) .. colors.bright(t.name)
-          string = string .. testString:format(fullname)
-          string = string .. getDescription(t)
+          if status == 'skipped' and naCheck(t) then
+            naCount = naCount + 1
+          else
+            local fullname = getFileLine(t.element) .. colors.bright(t.name)
+            string = string .. testString:format(fullname)
+            string = string .. getDescription(t)
+          end
+        end
+        if naCount > 0 then
+          string = string
+            .. colors.bright(
+              ('%d N/A %s not shown\n'):format(naCount, naCount == 1 and 'test' or 'tests')
+            )
         end
       end
     end
@@ -232,13 +256,25 @@ return function(options)
     local elapsedTime_ms = getElapsedTime(suite)
     local tests = (testCount == 1 and 'test' or 'tests')
     local files = (fileCount == 1 and 'file' or 'files')
-    io.write(globalTeardown)
-    io.write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
-    io.write(getSummaryString())
-    if failureCount > 0 or errorCount > 0 then
-      io.write(t_global.read_nvim_log(nil, true))
+    if type(args.test_path) == 'string' then
+      files = files .. ' of ' .. args.test_path
     end
+    local sf = type(args.summary_file) == 'string'
+        and args.summary_file ~= '-'
+        and io.open(args.summary_file, 'w')
+      or io.stdout
+    io.write(globalTeardown)
     io.flush()
+    sf:write('\n')
+    sf:write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
+    sf:write(getSummaryString())
+    if failureCount > 0 or errorCount > 0 then
+      sf:write(t_global.read_nvim_log(nil, true))
+    end
+    sf:flush()
+    if sf ~= io.stdout then
+      sf:close()
+    end
 
     return nil, true
   end

@@ -1246,16 +1246,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: Не паничите!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Жао нам је, нема '%s' помоћи за %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Нема '%s' помоћи за %s"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Жао нам је, нема помоћи за %s"
+msgid "E149: No help for %s"
+msgstr "E149: Нема помоћи за %s"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Жао нам је, датотека помоћи \"%s\" није пронађена"
+msgid "Help file \"%s\" not found"
+msgstr "Датотека помоћи \"%s\" није пронађена"
 
 #, c-format
 msgid "E151: No match: %s"
@@ -4021,12 +4021,8 @@ msgstr "E773: Symlink петља за \"%s\""
 msgid "E325: ATTENTION"
 msgstr "E325: ПАЖЊА"
 
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Пронађена је swap датотека под именом \""
+msgid "Found a swap file by the name \""
+msgstr "Пронађена је swap датотека под именом \""
 
 msgid "While opening file \""
 msgstr "Док се отварала датотекa \""
@@ -4737,12 +4733,8 @@ msgstr ""
 "\n"
 "Командно окружење sh не може да се изврши\n"
 
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"командно окружење је вратило "
+msgid "shell returned "
+msgstr "командно окружење је вратило "
 
 msgid ""
 "\n"

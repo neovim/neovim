@@ -4,15 +4,20 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - 'master'
+
+permissions:
+  contents: read
+
 jobs:
   lint-commits:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
 
       - uses: ./.github/actions/setup
 

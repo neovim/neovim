@@ -11,9 +11,7 @@
 #include "nvim/vterm/vterm_defs.h"
 #include "nvim/vterm/vterm_internal_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "vterm/screen.c.generated.h"
-#endif
+#include "vterm/screen.c.generated.h"
 
 #define UNICODE_SPACE 0x20
 #define UNICODE_LINEFEED 0x0a
@@ -401,6 +399,12 @@ static int setpenattr(VTermAttr attr, VTermValue *val, void *user)
   case VTERM_ATTR_URI:
     screen->pen.uri = val->number;
     return 1;
+  case VTERM_ATTR_DIM:
+    screen->pen.dim = (unsigned)val->boolean;
+    return 1;
+  case VTERM_ATTR_OVERLINE:
+    screen->pen.overline = (unsigned)val->boolean;
+    return 1;
 
   case VTERM_N_ATTRS:
     return 0;
@@ -490,7 +494,7 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
           old_cols, old_rows, new_cols, new_rows, old_cursor.col, old_cursor.row);
 #endif
 
-  // Keep track of the final row that is knonw to be blank, so we know what spare space we have for
+  // Keep track of the final row that is known to be blank, so we know what spare space we have for
   // scrolling into
   int final_blank_row = new_rows;
 
@@ -672,6 +676,8 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
         dst->pen.font = src->attrs.font;
         dst->pen.small = src->attrs.small;
         dst->pen.baseline = src->attrs.baseline;
+        dst->pen.dim = src->attrs.dim;
+        dst->pen.overline = src->attrs.overline;
 
         dst->pen.fg = src->fg;
         dst->pen.bg = src->bg;
@@ -933,6 +939,8 @@ int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCe
   cell->attrs.font = intcell->pen.font;
   cell->attrs.small = intcell->pen.small;
   cell->attrs.baseline = intcell->pen.baseline;
+  cell->attrs.dim = intcell->pen.dim;
+  cell->attrs.overline = intcell->pen.overline;
 
   cell->attrs.dwl = intcell->pen.dwl;
   cell->attrs.dhl = intcell->pen.dhl;

@@ -2,15 +2,21 @@ name: "reviewers: remove"
 on:
   pull_request_target:
     types: [converted_to_draft, closed]
+
+permissions: {}
+
 jobs:
   remove-reviewers:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - name: 'Remove reviewers'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.github/scripts/reviewers_remove.js')

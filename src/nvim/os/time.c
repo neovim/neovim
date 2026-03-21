@@ -18,9 +18,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/time.c.generated.h"
-#endif
+#include "os/time.c.generated.h"
 
 /// Gets a high-resolution (nanosecond), monotonically-increasing time relative
 /// to an arbitrary time in the past.
@@ -98,8 +96,8 @@ struct tm *os_localtime_r(const time_t *restrict clock,
   // Call tzset(3) to update the global timezone variables if it has.
   // POSIX standard doesn't require localtime_r() implementations to do that
   // as it does with localtime(), and we don't want to call tzset() every time.
-  const char *tz = os_getenv("TZ");
-  if (tz == NULL) {
+  const char *tz = os_getenv_noalloc("TZ");
+  if (!tz) {
     tz = "";
   }
   if (strncmp(tz_cache, tz, sizeof(tz_cache) - 1) != 0) {

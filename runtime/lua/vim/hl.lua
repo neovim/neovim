@@ -17,9 +17,6 @@ M.priorities = {
   user = 200,
 }
 
-local range_timer --- @type uv.uv_timer_t?
-local range_hl_clear --- @type fun()?
-
 --- @class vim.hl.range.Opts
 --- @inlinedoc
 ---
@@ -44,9 +41,13 @@ local range_hl_clear --- @type fun()?
 ---@param bufnr integer Buffer number to apply highlighting to
 ---@param ns integer Namespace to add highlight to
 ---@param higroup string Highlight group to use for highlighting
----@param start integer[]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
----@param finish integer[]|string End of region as a (line, column) tuple or string accepted by |getpos()|
+---@param start [integer,integer]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
+---@param finish [integer,integer]|string End of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param opts? vim.hl.range.Opts
+--- @return uv.uv_timer_t? range_timer A timer which manages how much time the
+--- highlight has left
+--- @return fun()? range_clear A function which allows clearing the highlight manually.
+--- nil is returned if timeout is not specified
 function M.range(bufnr, ns, higroup, start, finish, opts)
   opts = opts or {}
   local regtype = opts.regtype or 'v'
@@ -71,7 +72,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
       0,
     }
 
-  local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
+  local buf_line_count = api.nvim_buf_line_count(bufnr)
   pos1[2] = math.min(pos1[2], buf_line_count)
   pos2[2] = math.min(pos2[2], buf_line_count)
 
@@ -97,49 +98,54 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   })
   -- For non-blockwise selection, use a single extmark.
   if regtype == 'v' or regtype == 'V' then
-    region = { { region[1][1], region[#region][2] } }
+    --- @type [ [integer, integer, integer, integer], [integer, integer, integer, integer]][]
+    region = { { assert(region[1])[1], assert(region[#region])[2] } }
+    local region1 = assert(region[1])
     if
       regtype == 'V'
-      or region[1][2][2] == pos1[2] and pos1[3] == v_maxcol
-      or region[1][2][2] == pos2[2] and pos2[3] == v_maxcol
+      or region1[2][2] == pos1[2] and pos1[3] == v_maxcol
+      or region1[2][2] == pos2[2] and pos2[3] == v_maxcol
     then
-      region[1][2][2] = region[1][2][2] + 1
-      region[1][2][3] = 0
+      region1[2][2] = region1[2][2] + 1
+      region1[2][3] = 0
     end
   end
 
-  if range_timer and not range_timer:is_closing() then
-    range_timer:close()
-    assert(range_hl_clear)
-    range_hl_clear()
-  end
-
-  range_hl_clear = function()
-    range_timer = nil
-    range_hl_clear = nil
-    pcall(vim.api.nvim_buf_clear_namespace, bufnr, ns, 0, -1)
-    pcall(vim.api.nvim__ns_set, { wins = {} })
-  end
-
+  local extmarks = {} --- @type integer[]
   for _, res in ipairs(region) do
     local start_row = res[1][2] - 1
     local start_col = res[1][3] - 1
     local end_row = res[2][2] - 1
     local end_col = res[2][3]
-    api.nvim_buf_set_extmark(bufnr, ns, start_row, start_col, {
-      hl_group = higroup,
-      end_row = end_row,
-      end_col = end_col,
-      priority = priority,
-      strict = false,
-    })
+    table.insert(
+      extmarks,
+      api.nvim_buf_set_extmark(bufnr, ns, start_row, start_col, {
+        hl_group = higroup,
+        end_row = end_row,
+        end_col = end_col,
+        priority = priority,
+        strict = false,
+      })
+    )
+  end
+
+  local range_hl_clear = function()
+    if not api.nvim_buf_is_valid(bufnr) then
+      return
+    end
+    for _, mark in ipairs(extmarks) do
+      api.nvim_buf_del_extmark(bufnr, ns, mark)
+    end
   end
 
   if timeout ~= -1 then
-    range_timer = vim.defer_fn(range_hl_clear, timeout)
+    local range_timer = vim.defer_fn(range_hl_clear, timeout)
+    return range_timer, range_hl_clear
   end
 end
 
+local yank_timer --- @type uv.uv_timer_t?
+local yank_hl_clear --- @type fun()?
 local yank_ns = api.nvim_create_namespace('nvim.hlyank')
 
 --- Highlight the yanked text during a |TextYankPost| event.
@@ -176,11 +182,17 @@ function M.on_yank(opts)
 
   local higroup = opts.higroup or 'IncSearch'
 
-  local bufnr = vim.api.nvim_get_current_buf()
-  local winid = vim.api.nvim_get_current_win()
+  local bufnr = api.nvim_get_current_buf()
+  local winid = api.nvim_get_current_win()
 
-  vim.api.nvim__ns_set(yank_ns, { wins = { winid } })
-  M.range(bufnr, yank_ns, higroup, "'[", "']", {
+  if yank_timer and not yank_timer:is_closing() then
+    yank_timer:close()
+    assert(yank_hl_clear)
+    yank_hl_clear()
+  end
+
+  api.nvim__ns_set(yank_ns, { wins = { winid } })
+  yank_timer, yank_hl_clear = M.range(bufnr, yank_ns, higroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = true,
     priority = opts.priority or M.priorities.user,

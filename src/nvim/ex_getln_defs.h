@@ -57,6 +57,8 @@ struct cmdline_info {
   int xp_context;               ///< type of expansion
   char *xp_arg;                 ///< user-defined expansion arg
   int input_fn;                 ///< when true Invoked for input() function
+  bool cmdbuff_replaced;        ///< when true cmdline was replaced externally
+                                ///< (e.g. by setcmdline())
   unsigned prompt_id;           ///< Prompt number, used to disable coloring on errors.
   Callback highlight_callback;  ///< Callback used for coloring user input.
   ColoredCmdline last_colors;   ///< Last cmdline colors

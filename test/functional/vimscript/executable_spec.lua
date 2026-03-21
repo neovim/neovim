@@ -20,6 +20,9 @@ describe('executable()', function()
 
   if is_os('win') then
     it('exepath respects shellslash', function()
+      -- test/ cannot be a symlink in this test.
+      n.api.nvim_set_current_dir(t.paths.test_source_path)
+
       command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
       eq(
         [[test\functional\fixtures\bin\null.CMD]],
@@ -33,9 +36,18 @@ describe('executable()', function()
     end)
 
     it('stdpath respects shellslash', function()
-      eq([[build\Xtest_xdg\share\nvim-data]], call('fnamemodify', call('stdpath', 'data'), ':.'))
+      -- Needs to check paths relative to repo root dir.
+      n.api.nvim_set_current_dir(t.paths.test_source_path)
+
+      t.matches(
+        [[build\Xtest_xdg[%w_]*\share\nvim%-data]],
+        call('fnamemodify', call('stdpath', 'data'), ':.')
+      )
       command('set shellslash')
-      eq('build/Xtest_xdg/share/nvim-data', call('fnamemodify', call('stdpath', 'data'), ':.'))
+      t.matches(
+        'build/Xtest_xdg[%w_]*/share/nvim%-data',
+        call('fnamemodify', call('stdpath', 'data'), ':.')
+      )
     end)
   end
 
@@ -202,9 +214,9 @@ describe('executable() (Windows)', function()
     clear({ env = { PATHEXT = '' } })
     command('set shell=sh')
     for _, ext in ipairs(exts) do
-      eq(1, call('executable', 'test_executable_' .. ext .. '.' .. ext))
+      eq(0, call('executable', 'test_executable_' .. ext .. '.' .. ext))
     end
-    eq(1, call('executable', 'test_executable_zzz.zzz'))
+    eq(0, call('executable', 'test_executable_zzz.zzz'))
   end)
 
   it("relative path, Unix-style 'shell' (backslashes)", function()

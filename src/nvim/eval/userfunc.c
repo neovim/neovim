@@ -56,9 +56,7 @@
 #include "nvim/ui_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/userfunc.c.generated.h"
-#endif
+#include "eval/userfunc.c.generated.h"
 
 /// structure used as item in "fc_defer"
 typedef struct {
@@ -283,7 +281,7 @@ static ufunc_T *alloc_ufunc(const char *name, size_t namelen)
 {
   size_t len = offsetof(ufunc_T, uf_name) + namelen + 1;
   ufunc_T *fp = xcalloc(1, len);
-  STRCPY(fp->uf_name, name);
+  xmemcpyz(fp->uf_name, name, namelen);
   fp->uf_namelen = namelen;
 
   if ((uint8_t)name[0] == K_SPECIAL) {
@@ -417,10 +415,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
 
 errret:
   ga_clear_strings(&newargs);
-  if (fp != NULL) {
-    xfree(fp->uf_name_exp);
-    xfree(fp);
-  }
+  assert(fp == NULL);
   xfree(pt);
   if (evalarg != NULL && evalarg->eval_tofree == NULL) {
     evalarg->eval_tofree = tofree;
@@ -601,6 +596,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_
   return ret;
 }
 
+// fixed buffer length for fname_trans_sid()
 #define FLEN_FIXED 40
 
 /// Check whether function name starts with <SID> or s:
@@ -722,16 +718,24 @@ ufunc_T *find_func(const char *name)
   return NULL;
 }
 
+/// @return  true if "ufunc" is a global function.
+static bool func_is_global(const ufunc_T *ufunc)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  return (uint8_t)ufunc->uf_name[0] != K_SPECIAL;
+}
+
 /// Copy the function name of "fp" to buffer "buf".
 /// "buf" must be able to hold the function name plus three bytes.
 /// Takes care of script-local function names.
-static int cat_func_name(char *buf, size_t bufsize, ufunc_T *fp)
+static int cat_func_name(char *buf, size_t bufsize, const ufunc_T *fp)
+  FUNC_ATTR_NONNULL_ALL
 {
   int len = -1;
   size_t uflen = fp->uf_namelen;
   assert(uflen > 0);
 
-  if ((uint8_t)fp->uf_name[0] == K_SPECIAL && uflen > 3) {
+  if (!func_is_global(fp) && uflen > 3) {
     len = snprintf(buf, bufsize, "<SNR>%s", fp->uf_name + 3);
   } else {
     len = snprintf(buf, bufsize, "%s", fp->uf_name);
@@ -1006,6 +1010,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   bool started_profiling = false;
   bool did_save_redo = false;
   save_redo_T save_redo;
+  ESTACK_CHECK_DECLARATION;
 
   // If depth of calling is getting too high, don't execute the function
   if (depth >= p_mfd) {
@@ -1177,6 +1182,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   }
 
   estack_push_ufunc(fp, 1);
+  ESTACK_CHECK_SETUP;
   if (p_verbose >= 12) {
     no_wait_return++;
     verbose_enter_scroll();
@@ -1328,6 +1334,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     no_wait_return--;
   }
 
+  ESTACK_CHECK_NOW;
   estack_pop();
   current_sctx = save_current_sctx;
   if (do_profiling_yes) {
@@ -1367,14 +1374,16 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 }
 
 /// There are two kinds of function names:
-/// 1. ordinary names, function defined with :function
-/// 2. numbered functions and lambdas
+/// 1. ordinary names, function defined with :function;
+///    can start with "<SNR>123_" literally or with K_SPECIAL.
+/// 2. Numbered functions and lambdas: "<lambda>123"
 /// For the first we only count the name stored in func_hashtab as a reference,
 /// using function() does not count as a reference, because the function is
 /// looked up by name.
 static bool func_name_refcount(const char *name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  return isdigit((uint8_t)(*name)) || *name == '<';
+  return isdigit((uint8_t)(*name)) || (name[0] == '<' && name[1] == 'l');
 }
 
 /// Check the argument count for user function "fp".
@@ -2232,6 +2241,7 @@ static void list_functions(regmatch_T *regmatch)
   size_t todo = func_hashtab.ht_used;
   const hashitem_T *const ht_array = func_hashtab.ht_array;
 
+  msg_ext_set_kind("list_cmd");
   for (const hashitem_T *hi = ht_array; todo > 0 && !got_int; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
       ufunc_T *fp = HI2UF(hi);
@@ -2250,6 +2260,99 @@ static void list_functions(regmatch_T *regmatch)
       }
     }
   }
+}
+
+/// ":function /pat": list functions matching pattern.
+static char *list_functions_matching_pat(exarg_T *eap)
+{
+  char *p = skip_regexp(eap->arg + 1, '/', true);
+  if (!eap->skip) {
+    regmatch_T regmatch;
+
+    char c = *p;
+    *p = NUL;
+    regmatch.regprog = vim_regcomp(eap->arg + 1, RE_MAGIC);
+    *p = c;
+    if (regmatch.regprog != NULL) {
+      regmatch.rm_ic = p_ic;
+      list_functions(&regmatch);
+      vim_regfree(regmatch.regprog);
+    }
+  }
+  if (*p == '/') {
+    p++;
+  }
+
+  return p;
+}
+
+/// List function "name".
+/// If bang is given:
+///  - include "!" in function head
+///  - exclude line numbers from function body
+/// Returns the function pointer or NULL on failure.
+static ufunc_T *list_one_function(exarg_T *eap, char *name, char *p)
+{
+  if (!ends_excmd(*skipwhite(p))) {
+    semsg(_(e_trailing_arg), p);
+    return NULL;
+  }
+
+  eap->nextcmd = check_nextcmd(p);
+
+  if (eap->nextcmd != NULL) {
+    *p = NUL;
+  }
+
+  if (eap->skip || got_int) {
+    return NULL;
+  }
+
+  ufunc_T *fp = find_func(name);
+
+  if (fp == NULL) {
+    emsg_funcname(N_("E123: Undefined function: %s"), name);
+    return NULL;
+  }
+
+  // Check no function was added or removed from a callback, e.g. at
+  // the more prompt.  "fp" may then be invalid.
+  const int prev_ht_changed = func_hashtab.ht_changed;
+
+  msg_ext_set_kind("list_cmd");
+  if (list_func_head(fp, !eap->forceit, eap->forceit) != OK) {
+    return fp;
+  }
+
+  for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
+    if (FUNCLINE(fp, j) == NULL) {
+      continue;
+    }
+    msg_putchar('\n');
+    if (!eap->forceit) {
+      msg_outnum(j + 1);
+      if (j < 9) {
+        msg_putchar(' ');
+      }
+      if (j < 99) {
+        msg_putchar(' ');
+      }
+      if (function_list_modified(prev_ht_changed)) {
+        break;
+      }
+    }
+    msg_prt_line(FUNCLINE(fp, j), false);
+    line_breakcheck();  // show multiple lines at a time!
+  }
+
+  if (!got_int) {
+    msg_putchar('\n');
+    if (!function_list_modified(prev_ht_changed)) {
+      msg_puts(eap->forceit ? "endfunction" : "   endfunction");
+    }
+  }
+
+  return fp;
 }
 
 #define MAX_FUNC_NESTING 50
@@ -2408,19 +2511,14 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
       }
 
       // Check for ":append", ":change", ":insert".
-      p = skip_range(p, NULL);
-      if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
-          || (p[0] == 'c'
-              && (!ASCII_ISALPHA(p[1])
-                  || (p[1] == 'h' && (!ASCII_ISALPHA(p[2])
-                                      || (p[2] == 'a'
-                                          && (strncmp(&p[3], "nge", 3) != 0
-                                              || !ASCII_ISALPHA(p[6])))))))
-          || (p[0] == 'i'
-              && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
-                                           && (!ASCII_ISALPHA(p[2])
-                                               || (p[2] == 's')))))) {
+      char *const tp = p = skip_range(p, NULL);
+      if ((checkforcmd(&p, "append", 1)
+           || checkforcmd(&p, "change", 1)
+           || checkforcmd(&p, "insert", 1))
+          && (*p == '!' || *p == '|' || ascii_iswhite_nl_or_nul(*p))) {
         skip_until = xmemdupz(".", 1);
+      } else {
+        p = tp;
       }
 
       // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
@@ -2459,10 +2557,11 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
       }
 
       if (!is_heredoc) {
-        // Check for ":let v =<< [trim] EOF"
-        //       and ":let [a, b] =<< [trim] EOF"
+        // Check for ":cmd v =<< [trim] EOF"
+        //       and ":cmd [a, b] =<< [trim] EOF"
+        // Where "cmd" can be "let" or "const".
         arg = p;
-        if (checkforcmd(&arg, "let", 2)) {
+        if (checkforcmd(&arg, "let", 2) || checkforcmd(&p, "const", 5)) {
           int var_count = 0;
           int semicolon = 0;
           arg = (char *)skip_var_list(arg, &var_count, &semicolon, true);
@@ -2492,6 +2591,7 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
               heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
               heredoc_trimmed = xmemdupz(theline, heredoc_trimmedlen);
             }
+            XFREE_CLEAR(skip_until);
             skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
             do_concat = false;
             is_heredoc = true;
@@ -2563,23 +2663,7 @@ void ex_function(exarg_T *eap)
 
   // ":function /pat": list functions matching pattern.
   if (*eap->arg == '/') {
-    char *p = skip_regexp(eap->arg + 1, '/', true);
-    if (!eap->skip) {
-      regmatch_T regmatch;
-
-      char c = *p;
-      *p = NUL;
-      regmatch.regprog = vim_regcomp(eap->arg + 1, RE_MAGIC);
-      *p = c;
-      if (regmatch.regprog != NULL) {
-        regmatch.rm_ic = p_ic;
-        list_functions(&regmatch);
-        vim_regfree(regmatch.regprog);
-      }
-    }
-    if (*p == '/') {
-      p++;
-    }
+    char *p = list_functions_matching_pat(eap);
     eap->nextcmd = check_nextcmd(p);
     return;
   }
@@ -2620,60 +2704,9 @@ void ex_function(exarg_T *eap)
   const int saved_did_emsg = did_emsg;
   did_emsg = false;
 
-  //
   // ":function func" with only function name: list function.
-  // If bang is given:
-  //  - include "!" in function head
-  //  - exclude line numbers from function body
-  //
   if (!paren) {
-    if (!ends_excmd(*skipwhite(p))) {
-      semsg(_(e_trailing_arg), p);
-      goto ret_free;
-    }
-    eap->nextcmd = check_nextcmd(p);
-    if (eap->nextcmd != NULL) {
-      *p = NUL;
-    }
-    if (!eap->skip && !got_int) {
-      fp = find_func(name);
-      if (fp != NULL) {
-        // Check no function was added or removed from a callback, e.g. at
-        // the more prompt.  "fp" may then be invalid.
-        const int prev_ht_changed = func_hashtab.ht_changed;
-
-        if (list_func_head(fp, !eap->forceit, eap->forceit) == OK) {
-          for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
-            if (FUNCLINE(fp, j) == NULL) {
-              continue;
-            }
-            msg_putchar('\n');
-            if (!eap->forceit) {
-              msg_outnum(j + 1);
-              if (j < 9) {
-                msg_putchar(' ');
-              }
-              if (j < 99) {
-                msg_putchar(' ');
-              }
-              if (function_list_modified(prev_ht_changed)) {
-                break;
-              }
-            }
-            msg_prt_line(FUNCLINE(fp, j), false);
-            line_breakcheck();  // show multiple lines at a time!
-          }
-          if (!got_int) {
-            msg_putchar('\n');
-            if (!function_list_modified(prev_ht_changed)) {
-              msg_puts(eap->forceit ? "endfunction" : "   endfunction");
-            }
-          }
-        }
-      } else {
-        emsg_funcname(N_("E123: Undefined function: %s"), name);
-      }
-    }
+    fp = list_one_function(eap, name, p);
     goto ret_free;
   }
 
@@ -3762,21 +3795,33 @@ int func_has_abort(void *cookie)
 /// Changes "rettv" in-place.
 void make_partial(dict_T *const selfdict, typval_T *const rettv)
 {
-  char *tofree = NULL;
-  ufunc_T *fp;
+  ufunc_T *fp = NULL;
   char fname_buf[FLEN_FIXED + 1];
   int error;
 
-  if (rettv->v_type == VAR_PARTIAL && rettv->vval.v_partial->pt_func != NULL) {
+  if (rettv->v_type == VAR_PARTIAL
+      && rettv->vval.v_partial != NULL
+      && rettv->vval.v_partial->pt_func != NULL) {
     fp = rettv->vval.v_partial->pt_func;
   } else {
     char *fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
                   ? rettv->vval.v_string
+                  : rettv->vval.v_partial == NULL
+                  ? NULL
                   : rettv->vval.v_partial->pt_name;
-    // Translate "s:func" to the stored function name.
-    fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
-    fp = find_func(fname);
-    xfree(tofree);
+    if (fname == NULL) {
+      // There is no point binding a dict to a NULL function, just create
+      // a function reference.
+      rettv->v_type = VAR_FUNC;
+      rettv->vval.v_string = NULL;
+    } else {
+      char *tofree = NULL;
+
+      // Translate "s:func" to the stored function name.
+      fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
+      fp = find_func(fname);
+      xfree(tofree);
+    }
   }
 
   // Turn "dict.Func" into a partial for "Func" with "dict".
@@ -3890,50 +3935,66 @@ funccall_T *get_funccal(void)
   return funccal;
 }
 
+/// @return  dict used for local variables in the current funccal or
+///          NULL if there is no current funccal.
+dict_T *get_funccal_local_dict(void)
+{
+  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
+    return NULL;
+  }
+  return &get_funccal()->fc_l_vars;
+}
+
 /// @return  hashtable used for local variables in the current funccal or
 ///          NULL if there is no current funccal.
 hashtab_T *get_funccal_local_ht(void)
 {
-  if (current_funccal == NULL) {
-    return NULL;
-  }
-  return &get_funccal()->fc_l_vars.dv_hashtab;
+  dict_T *d = get_funccal_local_dict();
+  return d != NULL ? &d->dv_hashtab : NULL;
 }
 
 /// @return   the l: scope variable or
 ///           NULL if there is no current funccal.
 dictitem_T *get_funccal_local_var(void)
 {
-  if (current_funccal == NULL) {
+  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
     return NULL;
   }
   return (dictitem_T *)&get_funccal()->fc_l_vars_var;
+}
+
+/// @return  the dict used for argument in the current funccal or
+///          NULL if there is no current funccal.
+dict_T *get_funccal_args_dict(void)
+{
+  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
+    return NULL;
+  }
+  return &get_funccal()->fc_l_avars;
 }
 
 /// @return  the hashtable used for argument in the current funccal or
 ///          NULL if there is no current funccal.
 hashtab_T *get_funccal_args_ht(void)
 {
-  if (current_funccal == NULL) {
-    return NULL;
-  }
-  return &get_funccal()->fc_l_avars.dv_hashtab;
+  dict_T *d = get_funccal_args_dict();
+  return d != NULL ? &d->dv_hashtab : NULL;
 }
 
 /// @return  the a: scope variable or
 ///          NULL if there is no current funccal.
 dictitem_T *get_funccal_args_var(void)
 {
-  if (current_funccal == NULL) {
+  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
     return NULL;
   }
-  return (dictitem_T *)&current_funccal->fc_l_avars_var;
+  return (dictitem_T *)&get_funccal()->fc_l_avars_var;
 }
 
 /// List function variables, if there is a function.
 void list_func_vars(int *first)
 {
-  if (current_funccal != NULL) {
+  if (current_funccal != NULL && current_funccal->fc_l_vars.dv_refcount > 0) {
     list_hashtable_vars(&current_funccal->fc_l_vars.dv_hashtab, "l:", false,
                         first);
   }

@@ -35,8 +35,8 @@
 //
 // Thanks to Olaf Seibert for providing an example implementation of this tree
 // and the compression mechanism.
-// LZ trie ideas:
-//      http://www.irb.hr/hr/home/ristov/papers/RistovLZtrieRevision1.pdf
+// LZ trie ideas, original link (now dead)
+//      irb.hr/hr/home/ristov/papers/RistovLZtrieRevision1.pdf
 // More papers: http://www-igm.univ-mlv.fr/~laporte/publi_en.html
 //
 // Matching involves checking the caps type: Onecap ALLCAP KeepCap.
@@ -186,9 +186,7 @@ typedef struct {
 spelltab_T spelltab;
 bool did_set_spelltab;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spell.c.generated.h"
-#endif
+#include "spell.c.generated.h"
 
 /// mode values for find_word
 enum {
@@ -1488,7 +1486,7 @@ size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *a
         lnum = wp->w_buffer->b_ml.ml_line_count;
         wrapped = true;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning(_(top_bot_msg), true);
+          give_warning(_(top_bot_msg), true, false);
         }
       }
       capcol = -1;
@@ -1503,7 +1501,7 @@ size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *a
         lnum = 1;
         wrapped = true;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning(_(bot_top_msg), true);
+          give_warning(_(bot_top_msg), true, false);
         }
       }
 
@@ -1609,10 +1607,10 @@ static void spell_load_lang(char *lang)
   if (r == FAIL) {
     if (starting) {
       // Prompt the user at VimEnter if spell files are missing. #3027
-      // Plugins aren't loaded yet, so spellfile.vim cannot handle this case.
+      // Plugins aren't loaded yet, so nvim/spellfile.lua cannot handle this case.
       char autocmd_buf[512] = { 0 };
       snprintf(autocmd_buf, sizeof(autocmd_buf),
-               "autocmd VimEnter * call spellfile#LoadFile('%s')|set spell",
+               "autocmd VimEnter * call v:lua.require'nvim.spellfile'.get('%s')|set spell",
                lang);
       do_cmdline_cmd(autocmd_buf);
     } else {
@@ -1957,9 +1955,8 @@ char *parse_spelllang(win_T *wp)
   // Loop over comma separated language names.
   for (char *splp = spl_copy; *splp != NUL;) {
     // Get one language name.
-    copy_option_part(&splp, lang, MAXWLEN, ",");
+    int len = (int)copy_option_part(&splp, lang, MAXWLEN, ",");
     char *region = NULL;
-    int len = (int)strlen(lang);
 
     if (!valid_spelllang(lang)) {
       continue;
@@ -2091,8 +2088,8 @@ char *parse_spelllang(win_T *wp)
       int_wordlist_spl(spf_name);
     } else {
       // One entry in 'spellfile'.
-      copy_option_part(&spf, spf_name, MAXPATHL - 4, ",");
-      strcat(spf_name, ".spl");
+      int len = (int)copy_option_part(&spf, spf_name, MAXPATHL - 4, ",");
+      STRCPY(spf_name + len, ".spl");
       int c;
 
       // If it was already found above then skip it.
@@ -3189,16 +3186,21 @@ void ex_spellinfo(exarg_T *eap)
     return;
   }
 
+  msg_ext_set_kind("list_cmd");
   msg_start();
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; lpi++) {
     langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     msg_puts("file: ");
     msg_puts(lp->lp_slang->sl_fname);
-    msg_putchar('\n');
     const char *const p = lp->lp_slang->sl_info;
+    if (lpi < curwin->w_s->b_langp.ga_len || p != NULL) {
+      msg_putchar('\n');
+    }
     if (p != NULL) {
       msg_puts(p);
-      msg_putchar('\n');
+      if (lpi < curwin->w_s->b_langp.ga_len - 1) {
+        msg_putchar('\n');
+      }
     }
   }
   msg_end();
@@ -3234,7 +3236,7 @@ void ex_spelldump(exarg_T *eap)
 
   // Delete the empty line that we started with.
   if (curbuf->b_ml.ml_line_count > 1) {
-    ml_delete(curbuf->b_ml.ml_line_count, false);
+    ml_delete(curbuf->b_ml.ml_line_count);
   }
   redraw_later(curwin, UPD_NOT_VALID);
 }
@@ -3483,7 +3485,7 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
               ? mb_strnicmp(p, pat, strlen(pat)) == 0
               : strncmp(p, pat, strlen(pat)) == 0)
              && ins_compl_add_infercase(p, (int)strlen(p),
-                                        p_ic, NULL, *dir, false) == OK) {
+                                        p_ic, NULL, *dir, false, 0) == OK) {
     // if dir was BACKWARD then honor it just once
     *dir = FORWARD;
   }

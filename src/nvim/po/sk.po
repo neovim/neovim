@@ -1292,18 +1292,18 @@ msgstr "E478: ®iadnu paniku!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: ¥utujem, ¾iadny '%s' pomocník pre %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: ®iadny '%s' pomocník pre %s"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: ¥utujem, pre %s nie je ¾iadny pomocník"
+msgid "E149: No help for %s"
+msgstr "E149: Pre %s nie je ¾iadny pomocník"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "¥utujem, súbor \"%s\" s pomocníkom nebol nájdený"
+msgid "Help file \"%s\" not found"
+msgstr "Súbor \"%s\" s pomocníkom nebol nájdený"
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -4635,12 +4635,8 @@ msgstr ""
 "Nedá sa spusti» shell "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-" návratová hodnota shellu "
+msgid "shell returned "
+msgstr " návratová hodnota shellu "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""
@@ -5503,13 +5499,13 @@ msgid "E763: Word characters differ between spell files"
 msgstr "E763: Znaky slov sa odli¹ujú medzi slovníkovými súbormi"
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
-msgstr "Prepáète, ¾iadne návrhy"
+msgid "No suggestions"
+msgstr "®iadne návrhy"
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Prepáète, iba %<PRId64> návrhov"
+msgid "Only %<PRId64> suggestions"
+msgstr "Iba %<PRId64> návrhov"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

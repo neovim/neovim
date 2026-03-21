@@ -21,6 +21,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -192,9 +193,7 @@ typedef struct {
   hashtab_T ht_match[MT_COUNT];  ///< stores matches by key
 } findtags_state_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tag.c.generated.h"
-#endif
+#include "tag.c.generated.h"
 
 static const char e_tag_stack_empty[]
   = N_("E73: Tag stack empty");
@@ -229,20 +228,18 @@ static Callback tfu_cb;          // 'tagfunc' callback function
 const char *did_set_tagfunc(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
+  int retval;
 
-  callback_free(&tfu_cb);
-  callback_free(&buf->b_tfu_cb);
-
-  if (*buf->b_p_tfu == NUL) {
-    return NULL;
+  if (args->os_flags & OPT_LOCAL) {
+    retval = option_set_callback_func(args->os_newval.string.data, &buf->b_tfu_cb);
+  } else {
+    retval = option_set_callback_func(args->os_newval.string.data, &tfu_cb);
+    if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
+      set_buflocal_tfu_callback(buf);
+    }
   }
 
-  if (option_set_callback_func(buf->b_p_tfu, &tfu_cb) == FAIL) {
-    return e_invarg;
-  }
-
-  callback_copy(&buf->b_tfu_cb, &tfu_cb);
-  return NULL;
+  return retval == FAIL ? e_invarg : NULL;
 }
 
 #if defined(EXITFREE)
@@ -346,6 +343,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
 
   clearpos(&saved_fmark.mark);          // shutup gcc 4.0
   saved_fmark.fnum = 0;
+  saved_fmark.view = (fmarkv_T)INIT_FMARKV;
 
   // Don't add a tag to the tagstack if 'tagstack' has been reset.
   assert(tag != NULL);
@@ -449,6 +447,9 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         }
         curwin->w_cursor.col = saved_fmark.mark.col;
         curwin->w_set_curswant = true;
+        if (jop_flags & kOptJopFlagView) {
+          mark_view_restore(&saved_fmark);
+        }
         check_cursor(curwin);
         if ((fdo_flags & kOptFdoFlagTag) && old_KeyTyped) {
           foldOpenCursor();
@@ -533,6 +534,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
       if (save_pos) {
         tagstack[tagstackidx].fmark.mark = curwin->w_cursor;
         tagstack[tagstackidx].fmark.fnum = curbuf->b_fnum;
+        tagstack[tagstackidx].fmark.view = mark_view_make(curwin, curwin->w_cursor);
       }
 
       // Curwin will change in the call to jumpto_tag() if ":stag" was
@@ -738,17 +740,16 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
           msg(IObuff, ic ? HLF_W : 0);
           msg_scroll = true;  // Don't overwrite this message.
         } else {
-          give_warning(IObuff, ic);
+          give_warning(IObuff, ic, true);
         }
         if (ic && !msg_scrolled && msg_silent == 0) {
-          ui_flush();
-          os_delay(1007, true);
+          msg_delay(1007, true);
         }
       }
 
       // Let the SwapExists event know what tag we are jumping to.
-      vim_snprintf(IObuff, IOSIZE, ":ta %s\r", name);
-      set_vim_var_string(VV_SWAPCOMMAND, IObuff, -1);
+      size_t IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, ":ta %s\r", name);
+      set_vim_var_string(VV_SWAPCOMMAND, IObuff, (ptrdiff_t)IObufflen);
 
       // Jump to the desired match.
       int i = jumpto_tag(matches[cur_match], forceit, true);
@@ -1228,7 +1229,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
 
   // create 'info' dict argument
   dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
-  if (tag != NULL && tag->user_data != NULL) {
+  if (!(flags & TAG_INS_COMP) && tag != NULL && tag->user_data != NULL) {
     tv_dict_add_str(d, S_LEN("user_data"), tag->user_data);
   }
   if (buf_ffname != NULL) {
@@ -1250,6 +1251,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
   pos_T save_pos = curwin->w_cursor;
   int result = callback_call(&curbuf->b_tfu_cb, 3, args, &rettv);
   curwin->w_cursor = save_pos;  // restore the cursor position
+  check_cursor(curwin);         // make sure cursor position is valid
   d->dv_refcount--;
 
   if (result == FAIL) {
@@ -1501,7 +1503,8 @@ static bool findtags_in_help_init(findtags_state_T *st)
 /// Use the function set in 'tagfunc' (if configured and enabled) to get the
 /// tags.
 /// Return OK if at least 1 tag has been successfully found, NOTDONE if the
-/// 'tagfunc' is not used or the 'tagfunc' returns v:null and FAIL otherwise.
+/// 'tagfunc' is not used, still executing or the 'tagfunc' returned v:null and
+/// FAIL otherwise.
 static int findtags_apply_tfu(findtags_state_T *st, char *pat, char *buf_ffname)
 {
   const bool use_tfu = ((st->flags & TAG_NO_TAGFUNC) == 0);
@@ -2453,7 +2456,9 @@ static bool found_tagfile_cb(int num_fnames, char **fnames, bool all, void *cook
 void free_tag_stuff(void)
 {
   ga_clear_strings(&tag_fnames);
-  do_tag(NULL, DT_FREE, 0, 0, 0);
+  if (curwin != NULL) {
+    do_tag(NULL, DT_FREE, 0, 0, 0);
+  }
   tag_freematch();
 
   tagstack_clear_entry(&ptag_entry);
@@ -2495,7 +2500,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
         return FAIL;
       }
       tnp->tn_hf_idx++;
-      STRCPY(buf, p_hf);
+      xstrlcpy(buf, p_hf, MAXPATHL - STRLEN_LITERAL("tags"));
       STRCPY(path_tail(buf), "tags");
 #ifdef BACKSLASH_IN_FILENAME
       slash_adjust(buf);
@@ -2860,6 +2865,17 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
   }
   if (getfile_result == GETFILE_UNUSED
       && (postponed_split || cmdmod.cmod_tab != 0)) {
+    if (swb_flags & kOptSwbFlagVsplit) {
+      // If 'switchbuf' contains 'vsplit', then use a new vertically
+      // split window.
+      cmdmod.cmod_split |= WSP_VERT;
+    }
+
+    if ((swb_flags & kOptSwbFlagNewtab) && cmdmod.cmod_tab == 0) {
+      // If 'switchbuf' contains 'newtab', then use a new tabpage
+      cmdmod.cmod_tab = tabpage_index(curtab) + 1;
+    }
+
     if (win_split(postponed_split > 0 ? postponed_split : 0,
                   postponed_split_flags) == FAIL) {
       RedrawingDisabled--;
@@ -2965,8 +2981,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
           if (found == 2 || !save_p_ic) {
             msg(_("E435: Couldn't find tag, just guessing!"), 0);
             if (!msg_scrolled && msg_silent == 0) {
-              ui_flush();
-              os_delay(1010, true);
+              msg_delay(1010, true);
             }
           }
           retval = OK;
@@ -3414,6 +3429,7 @@ static void tagstack_push_item(win_T *wp, char *tagname, int cur_fnum, int cur_m
   tagstack[idx].cur_match = MAX(tagstack[idx].cur_match, 0);
   tagstack[idx].fmark.mark = mark;
   tagstack[idx].fmark.fnum = fnum;
+  tagstack[idx].fmark.view = (fmarkv_T)INIT_FMARKV;
   tagstack[idx].user_data = user_data;
 }
 

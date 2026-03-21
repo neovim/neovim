@@ -12,6 +12,8 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   analyze:
     name: Analyze
@@ -22,15 +24,18 @@ jobs:
       security-events: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+
     - uses: ./.github/actions/setup
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       with:
         languages: cpp
 
     - run: make
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4

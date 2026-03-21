@@ -13,8 +13,10 @@
 
 #include "auto/config.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
+#include "nvim/api/vimscript.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -24,6 +26,7 @@
 #include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
+#include "nvim/clipboard.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
@@ -32,10 +35,11 @@
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
+#include "nvim/eval/fs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/ex_cmds.h"
@@ -69,10 +73,8 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
-#include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"
-#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -101,6 +103,7 @@
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_client.h"
 #include "nvim/undo.h"
 #include "nvim/undo_defs.h"
 #include "nvim/usercmd.h"
@@ -167,14 +170,10 @@ struct dbg_stuff {
   except_T *current_exception;
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_docmd.c.generated.h"
-#endif
+#include "ex_docmd.c.generated.h"
 
 // Declare cmdnames[].
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds_defs.generated.h"
-#endif
+#include "ex_cmds_defs.generated.h"
 
 static char dollar_command[2] = { '$', 0 };
 
@@ -406,7 +405,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   bool msg_didout_before_start = false;
   int count = 0;                        // line number count
   bool did_inc = false;                 // incremented RedrawingDisabled
-  int block_indent = -1;                // indent for ext_cmdline block event
+  bool did_block = false;               // emitted cmdline_block event
   int retval = OK;
   cstack_T cstack = {                   // conditional stack
     .cs_idx = -1,
@@ -575,16 +574,18 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     // 2. If no line given, get an allocated line with fgetline().
     if (next_cmdline == NULL) {
       int indent = cstack.cs_idx < 0 ? 0 : (cstack.cs_idx + 1) * 2;
-      if (count >= 1 && getline_equal(fgetline, cookie, getexline)) {
+
+      if (count == 1 && getline_equal(fgetline, cookie, getexline)) {
         if (ui_has(kUICmdline)) {
-          ui_ext_cmdline_block_append((size_t)MAX(0, block_indent), last_cmdline);
-          block_indent = indent;
-        } else if (count == 1) {
-          // Need to set msg_didout for the first line after an ":if",
-          // otherwise the ":if" will be overwritten.
-          msg_didout = true;
+          // Emit cmdline_block event for loop/conditional block.
+          ui_ext_cmdline_block_append(0, last_cmdline);
+          did_block = true;
         }
+        // Need to set msg_didout for the first line after an ":if",
+        // otherwise the ":if" will be overwritten.
+        msg_didout = true;
       }
+
       if (fgetline == NULL || (next_cmdline = fgetline(':', cookie, indent, true)) == NULL) {
         // Don't call wait_return() for aborted command line.  The NULL
         // returned for the end of a sourced file or executed function
@@ -596,6 +597,12 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
         break;
       }
       used_getline = true;
+
+      // Emit all but the first cmdline_block event immediately; waiting until after
+      // command execution would mess up event ordering with nested command lines.
+      if (ui_has(kUICmdline) && count > 0 && getline_equal(fgetline, cookie, getexline)) {
+        ui_ext_cmdline_block_append((size_t)indent, next_cmdline);
+      }
 
       // Keep the first typed line.  Clear it when more lines are typed.
       if (flags & DOCMD_KEEPLINE) {
@@ -683,8 +690,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
       // If the command was typed, remember it for the ':' register.
       // Do this AFTER executing the command to make :@: work.
-      if (getline_equal(fgetline, cookie, getexline)
-          && new_last_cmdline != NULL) {
+      if (getline_equal(fgetline, cookie, getexline) && new_last_cmdline != NULL) {
         xfree(last_cmdline);
         last_cmdline = new_last_cmdline;
         new_last_cmdline = NULL;
@@ -942,7 +948,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     }
   }
 
-  if (block_indent >= 0) {
+  if (did_block) {
     ui_ext_cmdline_block_leave();
   }
 
@@ -958,6 +964,7 @@ void handle_did_throw(void)
   assert(current_exception != NULL);
   char *p = NULL;
   msglist_T *messages = NULL;
+  ESTACK_CHECK_DECLARATION;
 
   // If the uncaught exception is a user exception, report it as an
   // error.  If it is an error exception, display the saved error
@@ -979,6 +986,7 @@ void handle_did_throw(void)
   }
 
   estack_push(ETYPE_EXCEPT, current_exception->throw_name, current_exception->throw_lnum);
+  ESTACK_CHECK_SETUP;
   current_exception->throw_name = NULL;
 
   discard_current_exception();              // uses IObuff if 'verbose'
@@ -1003,6 +1011,7 @@ void handle_did_throw(void)
     xfree(p);
   }
   xfree(SOURCING_NAME);
+  ESTACK_CHECK_NOW;
   estack_pop();
 }
 
@@ -1393,8 +1402,9 @@ static void parse_register(exarg_T *eap)
       // Do not allow register = for user commands
       && (!IS_USER_CMDIDX(eap->cmdidx) || *eap->arg != '=')
       && !((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg))) {
-    if (valid_yank_reg(*eap->arg, (eap->cmdidx != CMD_put
-                                   && !IS_USER_CMDIDX(eap->cmdidx)))) {
+    if (valid_yank_reg(*eap->arg,
+                       (!IS_USER_CMDIDX(eap->cmdidx)
+                        && eap->cmdidx != CMD_put && eap->cmdidx != CMD_iput))) {
       eap->regname = (uint8_t)(*eap->arg++);
       // for '=' register: accept the rest of the line as an expression
       if (eap->arg[-1] == '=' && eap->arg[0] != NUL) {
@@ -1475,6 +1485,40 @@ bool is_cmd_ni(cmdidx_T cmdidx)
                                      || cmdnames[cmdidx].cmd_func == ex_script_ni);
 }
 
+// Find the command name after skipping range specifiers.
+static char *find_excmd_after_range(exarg_T *eap)
+{
+  // Save location after command modifiers.
+  char *cmd = eap->cmd;
+  eap->cmd = skip_range(eap->cmd, NULL);
+  char *p = find_ex_command(eap, NULL);
+  eap->cmd = cmd;  // Restore original position for address parsing
+  return p;
+}
+
+// Set the forceit flag based on the presence of '!' after the command.
+static bool parse_bang(const exarg_T *eap, char **p)
+{
+  if (**p == '!'
+      && eap->cmdidx != CMD_substitute
+      && eap->cmdidx != CMD_smagic
+      && eap->cmdidx != CMD_snomagic) {
+    (*p)++;
+    return true;
+  }
+  return false;
+}
+
+/// Check if command expects expression arguments that need special parsing
+bool cmd_has_expr_args(cmdidx_T cmdidx)
+{
+  return cmdidx == CMD_execute
+         || cmdidx == CMD_echo
+         || cmdidx == CMD_echon
+         || cmdidx == CMD_echomsg
+         || cmdidx == CMD_echoerr;
+}
+
 /// Parse command line and return information about the first command.
 /// If parsing is done successfully, need to free cmod_filter_pat and cmod_filter_regmatch.regprog
 /// after calling, usually done using undo_cmdmod() or execute_cmd().
@@ -1485,7 +1529,7 @@ bool is_cmd_ni(cmdidx_T cmdidx)
 /// @param[out] errormsg Error message, if any
 ///
 /// @return Success or failure
-bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const char **errormsg)
+bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const char **errormsg)
 {
   char *after_modifier = NULL;
   bool retval = false;
@@ -1503,26 +1547,22 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
   *eap = (exarg_T){
     .line1 = 1,
     .line2 = 1,
-    .cmd = cmdline,
-    .cmdlinep = &cmdline,
+    .cmd = *cmdline,
+    .cmdlinep = cmdline,
     .ea_getline = NULL,
     .cookie = NULL,
   };
 
-  // Parse command modifiers
-  if (parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false) == FAIL) {
+  char *orig_cmd = eap->cmd;
+  // If parse command modifiers failed but modifiers were passed, continue
+  int result = parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false);
+  after_modifier = eap->cmd;
+  if (result == FAIL && after_modifier == orig_cmd) {
     goto end;
   }
-  after_modifier = eap->cmd;
 
-  // Save location after command modifiers
-  char *cmd = eap->cmd;
-  // Skip ranges to find command name since we need the command to know what kind of range it uses
-  eap->cmd = skip_range(eap->cmd, NULL);
-  if (*eap->cmd == '*') {
-    eap->cmd = skipwhite(eap->cmd + 1);
-  }
-  char *p = find_ex_command(eap, NULL);
+  // We need the command name to know what kind of range it uses.
+  char *p = find_excmd_after_range(eap);
   if (p == NULL) {
     *errormsg = _(e_ambiguous_use_of_user_defined_command);
     goto end;
@@ -1530,35 +1570,46 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
 
   // Set command address type and parse command range
   set_cmd_addr_type(eap, p);
-  eap->cmd = cmd;
   if (parse_cmd_address(eap, errormsg, true) == FAIL) {
     goto end;
   }
 
   // Skip colon and whitespace
   eap->cmd = skip_colon_white(eap->cmd, true);
-  // Fail if command is a comment or if command doesn't exist
-  if (*eap->cmd == NUL || *eap->cmd == '"') {
+  // Fail if command is a comment
+  if (*eap->cmd == '"') {
     goto end;
   }
+  // Fail only if: empty command AND no range AND no modifier
+  if (*eap->cmd == NUL && eap->addr_count == 0 && after_modifier == *cmdline) {
+    goto end;
+  }
+
+  // Allow range-only (:1) or modifier-only (:aboveleft) commands.
+  if (*eap->cmd == NUL && eap->cmdidx == CMD_SIZE) {
+    eap->arg = eap->cmd;
+    if (eap->addr_count > 0) {
+      eap->argt = EX_RANGE;
+    } else {
+      eap->argt = 0;
+      eap->addr_type = ADDR_NONE;
+    }
+    retval = true;
+    goto end;
+  }
+
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
     xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
     // If the modifier was parsed OK the error must be in the following command
-    char *cmdname = after_modifier ? after_modifier : cmdline;
+    char *cmdname = after_modifier ? after_modifier : *cmdline;
     append_command(cmdname);
     *errormsg = IObuff;
     goto end;
   }
 
   // Correctly set 'forceit' for commands
-  if (*p == '!' && eap->cmdidx != CMD_substitute
-      && eap->cmdidx != CMD_smagic && eap->cmdidx != CMD_snomagic) {
-    p++;
-    eap->forceit = true;
-  } else {
-    eap->forceit = false;
-  }
+  eap->forceit = parse_bang(eap, &p);
 
   // Parse arguments.
   if (!IS_USER_CMDIDX(eap->cmdidx)) {
@@ -1566,23 +1617,33 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
   }
   // Skip to start of argument.
   // Don't do this for the ":!" command, because ":!! -l" needs the space.
-  if (eap->cmdidx == CMD_bang) {
-    eap->arg = p;
-  } else {
-    eap->arg = skipwhite(p);
-  }
+  eap->arg = eap->cmdidx == CMD_bang ? p : skipwhite(p);
 
   // Don't treat ":r! filter" like a bang
-  if (eap->cmdidx == CMD_read) {
-    if (eap->forceit) {
-      eap->forceit = false;                     // :r! filter
-    }
+  if (eap->cmdidx == CMD_read && eap->forceit) {
+    eap->forceit = false;  // :r! filter
   }
 
   // Check for '|' to separate commands and '"' to start comments.
   // Don't do this for ":read !cmd" and ":write !cmd".
   if ((eap->argt & EX_TRLBAR)) {
     separate_nextcmd(eap);
+  } else if (cmd_has_expr_args(eap->cmdidx)) {
+    // For commands without EX_TRLBAR, check for '|' separator
+    // by skipping over expressions (including string literals)
+    char *arg = eap->arg;
+    while (*arg != NUL && *arg != '|' && *arg != '\n') {
+      char *start = arg;
+      skip_expr(&arg, NULL);
+      // If skip_expr didn't advance, move forward to avoid infinite loop
+      if (arg == start) {
+        arg++;
+      }
+    }
+    if (*arg == '|' || *arg == '\n') {
+      eap->nextcmd = check_nextcmd(arg);
+      *arg = NUL;
+    }
   }
   // Fail if command doesn't support bang but is used with a bang
   if (!(eap->argt & EX_BANG) && eap->forceit) {
@@ -1752,7 +1813,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
 
   if (!MODIFIABLE(curbuf) && (eap->argt & EX_MODIFY)
       // allow :put in terminals
-      && !(curbuf->terminal && eap->cmdidx == CMD_put)) {
+      && !(curbuf->terminal && (eap->cmdidx == CMD_put || eap->cmdidx == CMD_iput))) {
     errormsg = _(e_modifiable);
     goto end;
   }
@@ -1782,6 +1843,10 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   }
 
   correct_range(eap);
+  if (eap->cmdidx == CMD_SIZE && eap->addr_count > 0) {
+    errormsg = ex_range_without_command(eap);
+    goto end;
+  }
 
   if (((eap->argt & EX_WHOLEFOLD) || eap->addr_count >= 2) && !global_busy
       && eap->addr_type == ADDR_LINES) {
@@ -1938,7 +2003,6 @@ static bool skip_cmd(const exarg_T *eap)
     case CMD_throw:
     case CMD_tilde:
     case CMD_topleft:
-    case CMD_trust:
     case CMD_unlet:
     case CMD_unlockvar:
     case CMD_verbose:
@@ -2028,13 +2092,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // 3. Skip over the range to find the command. Let "p" point to after it.
   //
   // We need the command to know what kind of range it uses.
-  char *cmd = ea.cmd;
-  ea.cmd = skip_range(ea.cmd, NULL);
-  if (*ea.cmd == '*') {
-    ea.cmd = skipwhite(ea.cmd + 1);
-  }
-  char *p = find_ex_command(&ea, NULL);
-
+  char *p = find_excmd_after_range(&ea);
   profile_cmd(&ea, cstack, fgetline, cookie);
 
   if (!exiting) {
@@ -2063,7 +2121,6 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // is equal to the lower.
   set_cmd_addr_type(&ea, p);
 
-  ea.cmd = cmd;
   if (parse_cmd_address(&ea, &errormsg, false) == FAIL) {
     goto doend;
   }
@@ -2094,13 +2151,13 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   if (p != NULL && ea.cmdidx == CMD_SIZE && !ea.skip
       && ASCII_ISUPPER(*ea.cmd)
       && has_event(EVENT_CMDUNDEFINED)) {
-    p = ea.cmd;
-    while (ASCII_ISALNUM(*p)) {
-      p++;
+    char *cmdname = ea.cmd;
+    while (ASCII_ISALNUM(*cmdname)) {
+      cmdname++;
     }
-    p = xmemdupz(ea.cmd, (size_t)(p - ea.cmd));
-    int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
-    xfree(p);
+    cmdname = xmemdupz(ea.cmd, (size_t)(cmdname - ea.cmd));
+    int ret = apply_autocmds(EVENT_CMDUNDEFINED, cmdname, cmdname, true, NULL);
+    xfree(cmdname);
     // If the autocommands did something and didn't cause an error, try
     // finding the command again.
     p = (ret && !aborting()) ? find_ex_command(&ea, NULL) : ea.cmd;
@@ -2133,14 +2190,8 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // set when Not Implemented
   const int ni = is_cmd_ni(ea.cmdidx);
 
-  // Forced commands.
-  ea.forceit = *p == '!'
-               && ea.cmdidx != CMD_substitute
-               && ea.cmdidx != CMD_smagic
-               && ea.cmdidx != CMD_snomagic;
-  if (ea.forceit) {
-    p++;
-  }
+  // Determine if command has forceit flag ('!')
+  ea.forceit = parse_bang(&ea, &p);
 
   // 6. Parse arguments.  Then check for errors.
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
@@ -2155,7 +2206,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     }
     if (!MODIFIABLE(curbuf) && (ea.argt & EX_MODIFY)
         // allow :put in terminals
-        && (!curbuf->terminal || ea.cmdidx != CMD_put)) {
+        && !(curbuf->terminal && (ea.cmdidx == CMD_put || ea.cmdidx == CMD_iput))) {
       // Command not allowed in non-'modifiable' buffer
       errormsg = _(e_modifiable);
       goto doend;
@@ -2314,12 +2365,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     // Also do this for ":read !cmd", ":write !cmd" and ":global".
     // Any others?
     for (char *s = ea.arg; *s; s++) {
-      // Remove one backslash before a newline, so that it's possible to
-      // pass a newline to the shell and also a newline that is preceded
-      // with a backslash.  This makes it impossible to end a shell
-      // command in a backslash, but that doesn't appear useful.
-      // Halving the number of backslashes is incompatible with previous
-      // versions.
+      // Remove one backslash before a newline.
       if (*s == '\\' && s[1] == '\n') {
         STRMOVE(s, s + 1);
       } else if (*s == '\n') {
@@ -2484,7 +2530,25 @@ static char *ex_range_without_command(exarg_T *eap)
 /// @return  FAIL when the command is not to be executed.
 int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod, bool skip_only)
 {
+  char *orig_cmd = eap->cmd;
+  char *cmd_start = NULL;
+  bool use_plus_cmd = false;
+  bool has_visual_range = false;
   CLEAR_POINTER(cmod);
+
+  if (strncmp(eap->cmd, "'<,'>", 5) == 0) {
+    // The automatically inserted Visual area range is skipped, so that
+    // typing ":cmdmod cmd" in Visual mode works without having to move the
+    // range to after the modifiers. The command will be "'<,'>cmdmod cmd",
+    // parse "cmdmod cmd" and then put back "'<,'>" before "cmd" below.
+    // Only skip '<,'>' if there's a command after it
+    const char *p = skipwhite(eap->cmd + 5);
+    if (*p != NUL && *p != '|') {
+      eap->cmd += 5;
+      cmd_start = eap->cmd;
+      has_visual_range = true;
+    }
+  }
 
   // Repeat until no more command modifiers are found.
   while (true) {
@@ -2494,14 +2558,16 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       eap->cmd++;
     }
 
-    // in ex mode, an empty line works like :+
+    // in ex mode, an empty command (after modifiers) works like :+
     if (*eap->cmd == NUL && exmode_active
         && getline_equal(eap->ea_getline, eap->cookie, getexline)
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
       eap->cmd = exmode_plus;
+      use_plus_cmd = true;
       if (!skip_only) {
         ex_pressedreturn = true;
       }
+      break;  // no modifiers following
     }
 
     // ignore comment and empty lines
@@ -2721,6 +2787,39 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       continue;
     }
     break;
+  }
+
+  if (has_visual_range) {
+    if (eap->cmd > cmd_start) {
+      // Move the '<,'> range to after the modifiers and insert a colon.
+      // Since the modifiers have been parsed put the colon on top of the
+      // space: "'<,'>mod cmd" -> "mod:'<,'>cmd
+      // Put eap->cmd after the colon.
+      if (use_plus_cmd) {
+        size_t len = strlen(cmd_start);
+
+        // Special case: empty command uses "+":
+        //  "'<,'>mods" -> "mods *+
+        //  Use "*" instead of "'<,'>" to avoid the command getting
+        //  longer, in case is was allocated.
+        memmove(orig_cmd, cmd_start, len);
+        xmemcpyz(orig_cmd + len, S_LEN(" *+"));
+      } else {
+        memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
+        eap->cmd -= 5;
+        memmove(eap->cmd - 1, ":'<,'>", 6);
+      }
+    } else {
+      // No modifiers, move the pointer back.
+      // Special case: change empty command to "+".
+      if (use_plus_cmd) {
+        eap->cmd = "'<,'>+";
+      } else {
+        eap->cmd = orig_cmd;
+      }
+    }
+  } else if (use_plus_cmd) {
+    eap->cmd = exmode_plus;
   }
 
   return OK;
@@ -3021,13 +3120,16 @@ static void append_command(const char *cmd)
 }
 
 /// Return true and set "*idx" if "p" points to a one letter command.
-/// - The 'k' command can directly be followed by any character.
+/// - The 'k' command can directly be followed by any character
+///          but :keepa[lt] is another command, as are :keepj[umps],
+///          :kee[pmarks] and :keepp[atterns].
 /// - The 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
 ///          but :sre[wind] is another command, as are :scr[iptnames],
 ///          :scs[cope], :sim[alt], :sig[ns] and :sil[ent].
 static int one_letter_cmd(const char *p, cmdidx_T *idx)
 {
-  if (*p == 'k') {
+  if (p[0] == 'k'
+      && (p[1] != 'e' || (p[1] == 'e' && p[2] != 'e'))) {
     *idx = CMD_k;
     return true;
   }
@@ -3060,6 +3162,9 @@ char *find_ex_command(exarg_T *eap, int *full)
   char *p = eap->cmd;
   if (one_letter_cmd(p, &eap->cmdidx)) {
     p++;
+    if (full != NULL) {
+      *full = true;
+    }
   } else {
     while (ASCII_ISALPHA(*p)) {
       p++;
@@ -3340,6 +3445,11 @@ char *skip_range(const char *cmd, int *ctx)
   // Skip ":" and white space.
   cmd = skip_colon_white(cmd, false);
 
+  // Skip "*" used for Visual range.
+  if (*cmd == '*') {
+    cmd = skipwhite(cmd + 1);
+  }
+
   return (char *)cmd;
 }
 
@@ -3365,9 +3475,9 @@ static const char *addr_error(cmd_addr_T addr_type)
 /// @param errormsg       Error message, if any
 ///
 /// @return               MAXLNUM when no Ex address was found.
-static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
-                            int to_other_file, int address_count, const char **errormsg)
-  FUNC_ATTR_NONNULL_ALL
+linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
+                     int to_other_file, int address_count, const char **errormsg)
+  FUNC_ATTR_NONNULL_ARG(2, 8)
 {
   int c;
   int i;
@@ -3532,7 +3642,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
         // next/previous line.
         curwin->w_cursor.col = (c == '/' && curwin->w_cursor.lnum > 0) ? MAXCOL : 0;
         searchcmdlen = 0;
-        flags = silent ? 0 : SEARCH_HIS | SEARCH_MSG;
+        flags = silent ? SEARCH_KEEP : SEARCH_HIS | SEARCH_MSG;
         if (!do_search(NULL, c, c, cmd, strlen(cmd), 1, flags, NULL)) {
           curwin->w_cursor = pos;
           cmd = NULL;
@@ -3725,8 +3835,9 @@ char *invalid_range(exarg_T *eap)
   if (eap->argt & EX_RANGE) {
     switch (eap->addr_type) {
     case ADDR_LINES:
-      if (eap->line2 > (curbuf->b_ml.ml_line_count
-                        + (eap->cmdidx == CMD_diffget))) {
+      if (eap->line2 >
+          (curbuf->b_ml.ml_line_count
+           + (eap->cmdidx == CMD_diffget || eap->cmdidx == CMD_diffput))) {
         return _(e_invrange);
       }
       break;
@@ -4144,7 +4255,7 @@ void separate_nextcmd(exarg_T *eap)
 }
 
 /// get + command from ex argument
-static char *getargcmd(char **argp)
+char *getargcmd(char **argp)
 {
   char *arg = *argp;
   char *command = NULL;
@@ -4219,7 +4330,7 @@ static char *get_bad_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 /// Get "++opt=arg" argument.
 ///
 /// @return  FAIL or OK.
-static int getargopt(exarg_T *eap)
+int getargopt(exarg_T *eap)
 {
   char *arg = eap->arg + 2;
   int *pp = NULL;
@@ -4642,8 +4753,8 @@ static int check_more(bool message, bool forceit)
         }
         return FAIL;
       }
-      semsg(NGETTEXT("E173: %" PRId64 " more file to edit",
-                     "E173: %" PRId64 " more files to edit", n), (int64_t)n);
+      semsg(NGETTEXT("E173: %d more file to edit",
+                     "E173: %d more files to edit", n), n);
       quitmore = 2;                 // next try to quit is allowed
     }
     return FAIL;
@@ -4670,6 +4781,7 @@ static void ex_colorscheme(exarg_T *eap)
     emsg_off--;
     xfree(expr);
 
+    msg_ext_set_kind("list_cmd");
     if (p != NULL) {
       msg(p, 0);
       xfree(p);
@@ -4691,9 +4803,16 @@ static void ex_highlight(exarg_T *eap)
 
 /// Call this function if we thought we were going to exit, but we won't
 /// (because of an error).  May need to restore the terminal mode.
-void not_exiting(void)
+void not_exiting(bool save_exiting)
 {
-  exiting = false;
+  exiting = save_exiting;
+}
+
+/// Call this function if we thought we were going to restart, but we won't
+/// (because of an error).
+void not_restarting(void)
+{
+  restarting = false;
 }
 
 bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
@@ -4763,6 +4882,7 @@ static void ex_quit(exarg_T *eap)
     return;
   }
 
+  bool save_exiting = exiting;
   // If there is only one relevant window we will exit.
   if (check_more(false, eap->forceit) == OK && only_one_window()) {
     exiting = true;
@@ -4773,7 +4893,7 @@ static void ex_quit(exarg_T *eap)
                         | CCGD_EXCMD))
       || check_more(true, eap->forceit) == FAIL
       || (only_one_window() && check_changed_any(eap->forceit, true))) {
-    not_exiting();
+    not_exiting(save_exiting);
   } else {
     // quit last window
     // Note: only_one_window() returns true, even so a help window is
@@ -4784,7 +4904,7 @@ static void ex_quit(exarg_T *eap)
     if (only_one_window() && (ONE_WINDOW || eap->addr_count == 0)) {
       getout(0);
     }
-    not_exiting();
+    not_exiting(save_exiting);
     // close window; may free buffer
     win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit, eap->forceit);
   }
@@ -4825,16 +4945,94 @@ int before_quit_all(exarg_T *eap)
 }
 
 /// ":qall": try to quit all windows
-static void ex_quit_all(exarg_T *eap)
+static void ex_quitall(exarg_T *eap)
 {
   if (before_quit_all(eap) == FAIL) {
     return;
   }
+  bool save_exiting = exiting;
   exiting = true;
   if (eap->forceit || !check_changed_any(false, false)) {
     getout(0);
   }
-  not_exiting();
+  not_exiting(save_exiting);
+}
+
+/// ":restart": restart the Nvim server (using ":qall!").
+/// ":restart +cmd": restart the Nvim server using ":cmd".
+/// ":restart +cmd <command>": restart the Nvim server using ":cmd" and add -c <command> to the new server.
+static void ex_restart(exarg_T *eap)
+{
+  const list_T *l = get_vim_var_list(VV_ARGV);
+  int argc = tv_list_len(l);
+  list_T *argv_cpy = tv_list_alloc(eap->arg ? argc + 2 : argc);
+
+  // Copy v:argv, skipping unwanted items.
+  for (listitem_T *li = l != NULL ? l->lv_first : NULL; li != NULL; li = li->li_next) {
+    const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
+    size_t arg_size = strlen(arg);
+    assert(arg_size <= (size_t)SSIZE_MAX);
+
+    if (strequal(arg, "--embed") || strequal(arg, "--headless")) {
+      continue;  // Drop --embed/--headless: the client decides how to start+attach the server.
+    } else if (strequal(arg, "-")) {
+      continue;  // Drop stdin ("-") argument.
+    } else if (strequal(arg, "-s")) {
+      // Drop "-s <scriptfile>": skip the scriptfile arg too.
+      if (li->li_next != NULL) {
+        li = li->li_next;
+      }
+      continue;
+    } else if (strequal(arg, "+:::")) {
+      // The special placeholder "+:::" marks a previous :restart command.
+      // Drop the `"+:::", "-c", "…"` triplet, to avoid "stacking" commands from previous :restart(s).
+      listitem_T *next1 = li->li_next;
+      if (next1 != NULL && strequal(tv_get_string(TV_LIST_ITEM_TV(next1)), "-c")) {
+        listitem_T *next2 = next1->li_next;
+        if (next2 != NULL) {
+          li = next2;
+          continue;
+        }
+      }
+      continue;  // If the triplet is incomplete, just skip "+:::"
+    } else if (strequal(arg, "--")) {
+      break;  // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
+    }
+
+    tv_list_append_string(argv_cpy, arg, (ssize_t)arg_size);
+  }
+  // Append `"+:::", "-c", "<command>"` to end of v:argv.
+  // The "+:::" item is a no-op placeholder to mark the :restart "<command>".
+  if (eap->arg && eap->arg[0] != '\0') {
+    tv_list_append_string(argv_cpy, S_LEN("+:::"));
+    tv_list_append_string(argv_cpy, S_LEN("-c"));
+    tv_list_append_string(argv_cpy, eap->arg, (ssize_t)strlen(eap->arg));
+  }
+  set_vim_var_list(VV_ARGV, argv_cpy);
+
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+  char *quit_cmd_copy = NULL;
+
+  // Prepend "confirm " to cmd if :confirm is used
+  if (cmdmod.cmod_flags & CMOD_CONFIRM) {
+    quit_cmd_copy = concat_str("confirm ", quit_cmd);
+    quit_cmd = quit_cmd_copy;
+  }
+
+  Error err = ERROR_INIT;
+  restarting = true;
+  nvim_command(cstr_as_string(quit_cmd), &err);
+  xfree(quit_cmd_copy);
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);  // Could not exit
+    api_clear_error(&err);
+    not_restarting();
+    return;
+  }
+  if (!exiting) {
+    emsg("restart failed: +cmd did not quit the server");
+    not_restarting();
+  }
 }
 
 /// ":close": close current window, unless it is the last one
@@ -4885,6 +5083,9 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
     emsg(_(e_autocmd_close));
     return;
   }
+  if (!win->w_floating && window_layout_locked(CMD_close)) {
+    return;
+  }
 
   buf_T *buf = win->w_buffer;
 
@@ -4908,7 +5109,7 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
   if (tp == NULL) {
     win_close(win, !need_hide && !buf_hide(buf), forceit);
   } else {
-    win_close_othertab(win, !need_hide && !buf_hide(buf), tp);
+    win_close_othertab(win, !need_hide && !buf_hide(buf), tp, forceit);
   }
 }
 
@@ -4923,6 +5124,10 @@ static void ex_tabclose(exarg_T *eap)
 
   if (first_tabpage->tp_next == NULL) {
     emsg(_("E784: Cannot close last tab page"));
+    return;
+  }
+
+  if (window_layout_locked(CMD_tabclose)) {
     return;
   }
 
@@ -4957,6 +5162,10 @@ static void ex_tabonly(exarg_T *eap)
     return;
   }
 
+  if (window_layout_locked(CMD_tabonly)) {
+    return;
+  }
+
   int tab_number = get_tabpage_arg(eap);
   if (eap->errmsg != NULL) {
     return;
@@ -4987,6 +5196,14 @@ static void ex_tabonly(exarg_T *eap)
 /// Close the current tab page.
 void tabpage_close(int forceit)
 {
+  if (window_layout_locked(CMD_tabclose)) {
+    return;
+  }
+
+  trigger_tabclosedpre(curtab);
+  curtab->tp_did_tabclosedpre = true;
+  tabpage_T *const save_curtab = curtab;
+
   // First close all the windows but the current one.  If that worked then
   // close the last window in this tab, that will close it.
   while (curwin->w_floating) {
@@ -4997,6 +5214,11 @@ void tabpage_close(int forceit)
   }
   if (ONE_WINDOW) {
     ex_win_close(forceit, curwin, NULL);
+  }
+  if (curtab == save_curtab) {
+    // When closing the tab page failed, reset tp_did_tabclosedpre so that
+    // TabClosedPre behaves consistently on next :close vs :tabclose.
+    curtab->tp_did_tabclosedpre = false;
   }
 }
 
@@ -5009,6 +5231,13 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   int done = 0;
   char prev_idx[NUMBUFLEN];
 
+  if (window_layout_locked(CMD_SIZE)) {
+    return;
+  }
+
+  trigger_tabclosedpre(tp);
+  tp->tp_did_tabclosedpre = true;
+
   // Limit to 1000 windows, autocommands may add a window while we close
   // one.  OK, so I'm paranoid...
   while (++done < 1000) {
@@ -5016,20 +5245,33 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     win_T *wp = tp->tp_lastwin;
     ex_win_close(forceit, wp, tp);
 
-    // Autocommands may delete the tab page under our fingers and we may
-    // fail to close a window with a modified buffer.
-    if (!valid_tabpage(tp) || tp->tp_lastwin == wp) {
+    // Autocommands may delete the tab page under our fingers.
+    if (!valid_tabpage(tp)) {
       break;
     }
+    // We may fail to close a window with a modified buffer.
+    if (tp->tp_lastwin == wp) {
+      done = 1000;
+      break;
+    }
+  }
+  if (done >= 1000) {
+    // When closing the tab page failed, reset tp_did_tabclosedpre so that
+    // TabClosedPre behaves consistently on next :close vs :tabclose.
+    tp->tp_did_tabclosedpre = false;
+    return;
   }
 }
 
 /// ":only".
 static void ex_only(exarg_T *eap)
 {
-  win_T *wp;
+  if (window_layout_locked(CMD_only)) {
+    return;
+  }
 
   if (eap->addr_count > 0) {
+    win_T *wp;
     linenr_T wnr = eap->line2;
     for (wp = firstwin; --wnr > 0;) {
       if (wp->w_next == NULL) {
@@ -5037,11 +5279,9 @@ static void ex_only(exarg_T *eap)
       }
       wp = wp->w_next;
     }
-  } else {
-    wp = curwin;
-  }
-  if (wp != curwin) {
-    win_goto(wp);
+    if (wp != curwin) {
+      win_goto(wp);
+    }
   }
   close_others(true, eap->forceit);
 }
@@ -5053,11 +5293,11 @@ static void ex_hide(exarg_T *eap)
     return;
   }
 
+  win_T *win = NULL;
   if (eap->addr_count == 0) {
-    win_close(curwin, false, eap->forceit);  // don't free buffer
+    win = curwin;
   } else {
     int winnr = 0;
-    win_T *win = NULL;
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       winnr++;
@@ -5069,8 +5309,13 @@ static void ex_hide(exarg_T *eap)
     if (win == NULL) {
       win = lastwin;
     }
-    win_close(win, false, eap->forceit);
   }
+
+  if (!win->w_floating && window_layout_locked(CMD_hide)) {
+    return;
+  }
+
+  win_close(win, false, eap->forceit);  // don't free buffer
 }
 
 /// ":stop" and ":suspend": Suspend Vim.
@@ -5097,6 +5342,7 @@ static void ex_exit(exarg_T *eap)
     return;
   }
 
+  bool save_exiting = exiting;
   // we plan to exit if there is only one relevant window
   if (check_more(false, eap->forceit) == OK && only_one_window()) {
     exiting = true;
@@ -5108,13 +5354,13 @@ static void ex_exit(exarg_T *eap)
       || before_quit_autocmds(curwin, false, eap->forceit)
       || check_more(true, eap->forceit) == FAIL
       || (only_one_window() && check_changed_any(eap->forceit, false))) {
-    not_exiting();
+    not_exiting(save_exiting);
   } else {
     if (only_one_window()) {
       // quit last window, exit Vim
       getout(0);
     }
-    not_exiting();
+    not_exiting(save_exiting);
     // Quit current window, may free the buffer.
     win_close(curwin, !buf_hide(curwin->w_buffer), eap->forceit);
   }
@@ -5126,14 +5372,13 @@ static void ex_print(exarg_T *eap)
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     emsg(_(e_empty_buffer));
   } else {
-    for (; !got_int; os_breakcheck()) {
-      print_line(eap->line1,
+    for (linenr_T line = eap->line1; line <= eap->line2 && !got_int; os_breakcheck()) {
+      print_line(line,
                  (eap->cmdidx == CMD_number || eap->cmdidx == CMD_pound
                   || (eap->flags & EXFLAG_NR)),
-                 eap->cmdidx == CMD_list || (eap->flags & EXFLAG_LIST));
-      if (++eap->line1 > eap->line2) {
-        break;
-      }
+                 eap->cmdidx == CMD_list || (eap->flags & EXFLAG_LIST),
+                 line == eap->line1);
+      line++;
     }
     setpcmark();
     // put cursor at last line
@@ -5246,6 +5491,7 @@ int expand_findfunc(char *pat, char ***files, int *numMatches)
 
   int len = tv_list_len(l);
   if (len == 0) {  // empty List
+    tv_list_free(l);
     return FAIL;
   }
 
@@ -5400,7 +5646,7 @@ void ex_splitview(exarg_T *eap)
   // Either open new tab page or split the window.
   if (use_tab) {
     if (win_new_tabpage(cmdmod.cmod_tab != 0 ? cmdmod.cmod_tab : eap->addr_count == 0
-                        ? 0 : (int)eap->line2 + 1, eap->arg) != FAIL) {
+                        ? 0 : (int)eap->line2 + 1, eap->arg, true, NULL)) {
       do_exedit(eap, old_curwin);
       apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
 
@@ -5500,6 +5746,7 @@ static void ex_tabs(exarg_T *eap)
 {
   int tabcount = 1;
 
+  msg_ext_set_kind("list_cmd");
   msg_start();
   msg_scroll = true;
 
@@ -5512,7 +5759,9 @@ static void ex_tabs(exarg_T *eap)
       break;
     }
 
-    msg_putchar('\n');
+    if (msg_col > 0) {
+      msg_putchar('\n');
+    }
     vim_snprintf(IObuff, IOSIZE, _("Tab page %d"), tabcount++);
     msg_outtrans(IObuff, HLF_T, false);
     os_breakcheck();
@@ -5520,7 +5769,7 @@ static void ex_tabs(exarg_T *eap)
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (got_int) {
         break;
-      } else if (!wp->w_config.focusable) {
+      } else if (!wp->w_config.focusable || wp->w_config.hide) {
         continue;
       }
 
@@ -5551,8 +5800,8 @@ static void ex_detach(exarg_T *eap)
   if (eap && eap->forceit) {
     emsg("bang (!) not supported yet");
   } else {
-    // 1. (TODO) Send "detach" UI-event (notification only).
-    // 2. Perform server-side `nvim_ui_detach`.
+    // 1. Send "error_exit" UI-event (notification only).
+    // 2. Perform server-side UI detach.
     // 3. Close server-side channel without self-exit.
 
     if (!current_ui) {
@@ -5569,7 +5818,7 @@ static void ex_detach(exarg_T *eap)
 
     // Server-side UI detach. Doesn't close the channel.
     Error err2 = ERROR_INIT;
-    nvim_ui_detach(chan->id, &err2);
+    remote_ui_disconnect(chan->id, &err2, true);
     if (ERROR_SET(&err2)) {
       emsg(err2.msg);  // UI disappeared already?
       api_clear_error(&err2);
@@ -5587,6 +5836,32 @@ static void ex_detach(exarg_T *eap)
     // assert(!find_channel(chan->id));
 
     ILOG("detach current_ui=%" PRId64, chan->id);
+  }
+}
+
+/// ":connect"
+///
+/// Connects the current UI to a different server
+///
+/// ":connect <address>" detaches the current UI and connects to the given server.
+/// ":connect! <address>" stops the current server if no other UIs are attached, then connects to the given server.
+static void ex_connect(exarg_T *eap)
+{
+  bool stop_server = eap->forceit ? (ui_active() == 1) : false;
+
+  Error err = ERROR_INIT;
+  remote_ui_connect(current_ui, eap->arg, &err);
+
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+    return;
+  }
+
+  ex_detach(NULL);
+  if (stop_server) {
+    exiting = true;
+    getout(0);
   }
 }
 
@@ -5683,6 +5958,12 @@ static void ex_edit(exarg_T *eap)
     return;
   }
 
+  // prevent use of :edit on prompt-buffers
+  if (bt_prompt(curbuf) && eap->cmdidx == CMD_edit && *eap->arg == NUL) {
+    emsg("cannot :edit a prompt buffer");
+    return;
+  }
+
   do_exedit(eap, NULL);
 }
 
@@ -5696,6 +5977,9 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
                         || eap->cmdidx == CMD_view)) {
     exmode_active = false;
     ex_pressedreturn = false;
+    if (ui_has(kUICmdline)) {
+      ui_ext_cmdline_block_leave();
+    }
     if (*eap->arg == NUL) {
       // Special case:  ":global/pat/visual\NLvi-commands"
       if (global_busy) {
@@ -5927,7 +6211,7 @@ static void ex_read(exarg_T *eap)
         lnum = 1;
       }
       if (*ml_get(lnum) == NUL && u_savedel(lnum, 1) == OK) {
-        ml_delete(lnum, false);
+        ml_delete(lnum);
         if (curwin->w_cursor.lnum > 1
             && curwin->w_cursor.lnum >= lnum) {
           curwin->w_cursor.lnum--;
@@ -6006,7 +6290,7 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   }
 
   last_chdir_reason = NULL;
-  shorten_fnames(true);
+  shorten_fnames(vim_strchr(p_cpo, CPO_NOSYMLINKS) == NULL);
 
   if (trigger_dirchanged) {
     do_autocmd_dirchanged(cwd, scope, kCdCauseManual, false);
@@ -6042,11 +6326,7 @@ bool changedir_func(char *new_dir, CdScope scope)
 
   // For UNIX ":cd" means: go to home directory.
   // On other systems too if 'cdhome' is set.
-#if defined(UNIX)
-  if (*new_dir == NUL) {
-#else
   if (*new_dir == NUL && p_cdh) {
-#endif
     // Use NameBuff for home directory name.
     expand_env("$HOME", NameBuff, MAXPATHL);
     new_dir = NameBuff;
@@ -6085,13 +6365,11 @@ bool changedir_func(char *new_dir, CdScope scope)
 void ex_cd(exarg_T *eap)
 {
   char *new_dir = eap->arg;
-#if !defined(UNIX)
   // for non-UNIX ":cd" means: print current directory unless 'cdhome' is set
   if (*new_dir == NUL && !p_cdh) {
     ex_pwd(NULL);
     return;
   }
-#endif
 
   CdScope scope = kCdScopeGlobal;
   switch (eap->cmdidx) {
@@ -6306,6 +6584,20 @@ static void ex_put(exarg_T *eap)
          PUT_LINE|PUT_CURSLINE);
 }
 
+/// ":iput".
+static void ex_iput(exarg_T *eap)
+{
+  // ":0iput" works like ":1iput!".
+  if (eap->line2 == 0) {
+    eap->line2 = 1;
+    eap->forceit = true;
+  }
+  curwin->w_cursor.lnum = eap->line2;
+  check_cursor_col(curwin);
+  do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1L,
+         PUT_LINE|PUT_CURSLINE|PUT_FIXINDENT);
+}
+
 /// Handle ":copy" and ":move".
 static void ex_copymove(exarg_T *eap)
 {
@@ -6343,7 +6635,7 @@ void ex_may_print(exarg_T *eap)
 {
   if (eap->flags != 0) {
     print_line(curwin->w_cursor.lnum, (eap->flags & EXFLAG_NR),
-               (eap->flags & EXFLAG_LIST));
+               (eap->flags & EXFLAG_LIST), true);
     ex_no_reprint = true;
   }
 }
@@ -6968,21 +7260,26 @@ void exec_normal_cmd(char *cmd, int remap, bool silent)
 {
   // Stuff the argument into the typeahead buffer.
   ins_typebuf(cmd, remap, 0, true, silent);
-  exec_normal(false);
+  exec_normal(false, false);
 }
 
 /// Execute normal_cmd() until there is no typeahead left.
 ///
 /// @param was_typed whether or not something was typed
-void exec_normal(bool was_typed)
+/// @param use_vpeekc  true to use vpeekc() to check for available chars
+void exec_normal(bool was_typed, bool use_vpeekc)
 {
   oparg_T oa;
+  int c;
 
+  // When calling vpeekc() from feedkeys() it will return Ctrl_C when there
+  // is nothing to get, so also check for Ctrl_C.
   clear_oparg(&oa);
   finish_op = false;
   while ((!stuff_empty()
           || ((was_typed || !typebuf_typed())
-              && typebuf.tb_len > 0))
+              && typebuf.tb_len > 0)
+          || (use_vpeekc && (c = vpeekc()) != NUL && c != Ctrl_C))
          && !got_int) {
     update_topline_cursor();
     normal_cmd(&oa, true);      // execute a Normal mode cmd
@@ -6993,7 +7290,7 @@ static void ex_checkpath(exarg_T *eap)
 {
   find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1,
                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
-                       1, (linenr_T)MAXLNUM, eap->forceit);
+                       1, (linenr_T)MAXLNUM, eap->forceit, false);
 }
 
 /// ":psearch"
@@ -7051,8 +7348,8 @@ static void ex_findpat(exarg_T *eap)
   }
   if (!eap->skip) {
     find_pattern_in_path(eap->arg, 0, strlen(eap->arg), whole, !eap->forceit,
-                         *eap->cmd == 'd' ? FIND_DEFINE : FIND_ANY,
-                         n, action, eap->line1, eap->line2, eap->forceit);
+                         *eap->cmd == 'd' ? FIND_DEFINE : FIND_ANY, n, action,
+                         eap->line1, eap->line2, eap->forceit, false);
   }
 }
 
@@ -7251,7 +7548,7 @@ ssize_t find_cmdline_var(const char *src, size_t *usedlen)
 char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnump,
                 const char **errormsg, int *escaped, bool empty_is_error)
 {
-  char *result;
+  char *result = "";
   char *resultbuf = NULL;
   size_t resultlen;
   int valid = VALID_HEAD | VALID_PATH;  // Assume valid result.
@@ -7288,7 +7585,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
                                         ? (FIND_IDENT | FIND_STRING)
                                         : (spec_idx == SPEC_CEXPR
                                            ? (FIND_IDENT | FIND_STRING | FIND_EVAL)
-                                           : FIND_STRING));
+                                           : FIND_STRING), NULL);
     if (resultlen == 0) {
       *errormsg = "";
       return NULL;
@@ -7467,7 +7764,6 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
     default:
       // should not happen
       *errormsg = "";
-      result = "";    // avoid gcc warning
       break;
     }
 
@@ -7793,8 +8089,8 @@ static void ex_checkhealth(exarg_T *eap)
     return;
   }
 
-  const char *vimruntime_env = os_getenv("VIMRUNTIME");
-  if (vimruntime_env == NULL) {
+  char *vimruntime_env = os_getenv_noalloc("VIMRUNTIME");
+  if (!vimruntime_env) {
     emsg(_("E5009: $VIMRUNTIME is empty or unset"));
   } else {
     bool rtp_ok = NULL != strstr(p_rtp, vimruntime_env);
@@ -7804,7 +8100,7 @@ static void ex_checkhealth(exarg_T *eap)
       emsg(_("E5009: Invalid 'runtimepath'"));
     }
   }
-  semsg_multiline(err.msg);
+  semsg_multiline("emsg", err.msg);
   api_clear_error(&err);
 }
 
@@ -7860,6 +8156,21 @@ static void ex_terminal(exarg_T *eap)
   }
 
   do_cmdline_cmd(ex_cmd);
+}
+
+/// ":lsp {subcmd} {clients}"
+static void ex_lsp(exarg_T *eap)
+{
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 1);
+
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
+
+  NLUA_EXEC_STATIC("require'vim._core.ex_cmd'.ex_lsp(...)", args, kRetNilBool, NULL, &err);
+  if (ERROR_SET(&err)) {
+    emsg_multiline(err.msg, "lua_error", HLF_E, true);
+  }
+  api_clear_error(&err);
 }
 
 /// ":fclose"
@@ -8163,4 +8474,19 @@ void verify_command(char *cmd)
 uint32_t get_cmd_argt(cmdidx_T cmdidx)
 {
   return cmdnames[(int)cmdidx].cmd_argt;
+}
+
+/// Check if a command is a :map/:abbrev command.
+bool is_map_cmd(cmdidx_T cmdidx)
+{
+  if (IS_USER_CMDIDX(cmdidx)) {
+    return false;
+  }
+
+  ex_func_T func = cmdnames[cmdidx].cmd_func;
+  return func == ex_map           // :map, :nmap, :noremap, etc.
+         || func == ex_unmap         // :unmap, :nunmap, etc.
+         || func == ex_mapclear      // :mapclear, :nmapclear, etc.
+         || func == ex_abbreviate    // :abbreviate, :iabbrev, etc.
+         || func == ex_abclear;      // :abclear, :iabclear, etc.
 }

@@ -62,6 +62,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/file_search.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -186,9 +187,7 @@ typedef struct {
 
 // locally needed functions
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "file_search.c.generated.h"
-#endif
+#include "file_search.c.generated.h"
 
 static const char e_path_too_long_for_completion[]
   = N_("E854: Path too long for completion");
@@ -332,17 +331,6 @@ void *vim_findfile_init(char *path, char *filename, size_t filenamelen, char *st
     ff_expand_buffer.size = strlen(ff_expand_buffer.data);
 
     search_ctx->ffsc_start_dir = copy_string(ff_expand_buffer, NULL);
-
-#ifdef BACKSLASH_IN_FILENAME
-    // A path that starts with "/dir" is relative to the drive, not to the
-    // directory (but not for "//machine/dir").  Only use the drive name.
-    if ((*path == '/' || *path == '\\')
-        && path[1] != path[0]
-        && search_ctx->ffsc_start_dir.data[1] == ':') {
-      search_ctx->ffsc_start_dir.data[2] = NUL;
-      search_ctx->ffsc_start_dir.size = 2;
-    }
-#endif
   }
 
   // If stopdirs are given, split them into an array of pointers.
@@ -1031,7 +1019,7 @@ fail:
 
 /// Free the list of lists of visited files and directories
 /// Can handle it if the passed search_context is NULL;
-void vim_findfile_free_visited(void *search_ctx_arg)
+static void vim_findfile_free_visited(void *search_ctx_arg)
 {
   if (search_ctx_arg == NULL) {
     return;
@@ -1449,11 +1437,10 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
     // copy file name into NameBuff, expanding environment variables
     char save_char = ptr[len];
     ptr[len] = NUL;
-    expand_env_esc(ptr, NameBuff, MAXPATHL, false, true, NULL);
+    file_to_findlen = expand_env_esc(ptr, NameBuff, MAXPATHL, false, true, NULL);
     ptr[len] = save_char;
 
     xfree(*file_to_find);
-    file_to_findlen = strlen(NameBuff);
     *file_to_find = xmemdupz(NameBuff, file_to_findlen);
     if (options & FNAME_UNESC) {
       // Change all "\ " to " ".
@@ -1681,7 +1668,8 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
 
   // Search forward for the last char of the file name.
   // Also allow ":/" when ':' is not in 'isfname'.
-  len = path_has_drive_letter(ptr) ? 2 : 0;
+  // TODO(justinmk): Check for driveletter "x:/" at start, regardless of 'isfname'.
+  len = path_has_drive_letter(ptr, strlen(ptr)) ? 2 : 0;
   while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
          || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {

@@ -45,6 +45,7 @@ describe('nvim_get_keymap', function()
     silent = 0,
     rhs = 'bar',
     expr = 0,
+    replace_keycodes = 0,
     sid = 0,
     scriptversion = 1,
     buffer = 0,
@@ -306,6 +307,7 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = 0,
       scriptversion = 1,
       buffer = 0,
@@ -316,7 +318,11 @@ describe('nvim_get_keymap', function()
     }
     local function cpomap(lhs, rhs, mode)
       local ret = shallowcopy(cpo_table)
+      local lhsraw = api.nvim_eval(('"%s"'):format(lhs:gsub('\\', '\\\\'):gsub('<', '\\<*')))
+      local lhsrawalt = api.nvim_eval(('"%s"'):format(lhs:gsub('\\', '\\\\'):gsub('<', '\\<')))
       ret.lhs = lhs
+      ret.lhsraw = lhsraw
+      ret.lhsrawalt = lhsrawalt ~= lhsraw and lhsrawalt or nil
       ret.rhs = rhs
       ret.mode = mode
       ret.mode_bits = mode_bits_map[mode]
@@ -339,16 +345,6 @@ describe('nvim_get_keymap', function()
     command('onoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
     command('onoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
 
-    -- wrapper around get_keymap() that drops "lhsraw" and "lhsrawalt" which are hard to check
-    local function get_keymap_noraw(...)
-      local ret = api.nvim_get_keymap(...)
-      for _, item in ipairs(ret) do
-        item.lhsraw = nil
-        item.lhsrawalt = nil
-      end
-      return ret
-    end
-
     for _, cmd in ipairs({
       'set cpo-=B',
       'set cpo+=B',
@@ -357,19 +353,19 @@ describe('nvim_get_keymap', function()
       eq({
         cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'n'),
         cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'n'),
-      }, get_keymap_noraw('n'))
+      }, api.nvim_get_keymap('n'))
       eq({
         cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'x'),
         cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'x'),
-      }, get_keymap_noraw('x'))
+      }, api.nvim_get_keymap('x'))
       eq({
         cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 's'),
         cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 's'),
-      }, get_keymap_noraw('s'))
+      }, api.nvim_get_keymap('s'))
       eq({
         cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 'o'),
         cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 'o'),
-      }, get_keymap_noraw('o'))
+      }, api.nvim_get_keymap('o'))
     end
   end)
 
@@ -384,6 +380,7 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = 0,
       scriptversion = 1,
       buffer = 0,
@@ -431,6 +428,7 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = sid_lua,
       scriptversion = 1,
       buffer = 0,
@@ -452,6 +450,7 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = sid_api_client,
       scriptversion = 1,
       buffer = 0,
@@ -473,6 +472,7 @@ describe('nvim_get_keymap', function()
       abbr = 1,
       buffer = 0,
       expr = 0,
+      replace_keycodes = 0,
       lhs = 'foo',
       lhsraw = 'foo',
       lnum = 0,
@@ -490,6 +490,7 @@ describe('nvim_get_keymap', function()
       abbr = 1,
       buffer = 1,
       expr = 0,
+      replace_keycodes = 0,
       lhs = 'foo',
       lhsraw = 'foo',
       lnum = 0,
@@ -555,6 +556,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     to_return.silent = not opts.silent and 0 or 1
     to_return.nowait = not opts.nowait and 0 or 1
     to_return.expr = not opts.expr and 0 or 1
+    to_return.replace_keycodes = not opts.replace_keycodes and 0 or 1
     to_return.sid = not opts.sid and sid_api_client or opts.sid
     to_return.scriptversion = 1
     to_return.buffer = not opts.buffer and 0 or opts.buffer
@@ -647,7 +649,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('Invalid mode shortname: "xnoremap"', pcall_err(api.nvim_del_keymap, 'xnoremap', 'lhs'))
   end)
 
-  it('error on invalid optnames', function()
+  it('validation', function()
     eq(
       "Invalid key: 'silentt'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { silentt = true })
@@ -657,16 +659,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       "Invalid key: 'nowaiT'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { nowaiT = false })
     )
-  end)
 
-  it('error on <buffer> option key', function()
+    -- <buffer> option key
     eq(
       "Invalid key: 'buffer'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { buffer = true })
     )
-  end)
 
-  it('error when "replace_keycodes" is used without "expr"', function()
     eq(
       '"replace_keycodes" requires "expr"',
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { replace_keycodes = true })
@@ -679,7 +678,10 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     it('throws an error when given non-boolean value for ' .. opt, function()
       local opts = {}
       opts[opt] = 'fooo'
-      eq(opt .. ' is not a boolean', pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', opts))
+      eq(
+        ("Invalid '%s': expected boolean"):format(opt),
+        pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', opts)
+      )
     end)
   end
 
@@ -803,11 +805,23 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('throws appropriate error messages when setting <unique> maps', function()
     api.nvim_set_keymap('l', 'lhs', 'rhs', {})
     eq(
-      'E227: mapping already exists for lhs',
+      'E227: Mapping already exists for lhs',
       pcall_err(api.nvim_set_keymap, 'l', 'lhs', 'rhs', { unique = true })
     )
     -- different mapmode, no error should be thrown
     api.nvim_set_keymap('t', 'lhs', 'rhs', { unique = true })
+
+    api.nvim_set_keymap('n', '<tab>', 'rhs', {})
+    eq(
+      'E227: Mapping already exists for <tab>',
+      pcall_err(api.nvim_set_keymap, 'n', '<tab>', 'rhs', { unique = true })
+    )
+
+    api.nvim_set_keymap('ia', 'lhs', 'rhs', {})
+    eq(
+      'E226: Abbreviation already exists for lhs',
+      pcall_err(api.nvim_set_keymap, 'ia', 'lhs', 'rhs', { unique = true })
+    )
   end)
 
   it('can set <expr> mappings whose RHS change dynamically', function()
@@ -1452,5 +1466,25 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     eq(1, exec_lua [[return GlobalCount]])
     eq('\nNo mapping found', n.exec_capture('nmap <C-I>'))
+  end)
+
+  it('does not overwrite in <unique> mappings', function()
+    api.nvim_buf_set_keymap(0, 'i', 'lhs', 'rhs', {})
+    eq(
+      'E227: Mapping already exists for lhs',
+      pcall_err(api.nvim_buf_set_keymap, 0, 'i', 'lhs', 'rhs', { unique = true })
+    )
+
+    api.nvim_buf_set_keymap(0, 'ia', 'lhs2', 'rhs2', {})
+    eq(
+      'E226: Abbreviation already exists for lhs2',
+      pcall_err(api.nvim_buf_set_keymap, 0, 'ia', 'lhs2', 'rhs2', { unique = true })
+    )
+
+    api.nvim_set_keymap('n', 'lhs', 'rhs', {})
+    eq(
+      'E225: Global mapping already exists for lhs',
+      pcall_err(api.nvim_buf_set_keymap, 0, 'n', 'lhs', 'rhs', { unique = true })
+    )
   end)
 end)

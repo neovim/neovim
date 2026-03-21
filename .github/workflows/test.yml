@@ -10,6 +10,9 @@ on:
       - 'release-[0-9]+.[0-9]+'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -20,7 +23,7 @@ env:
   BUILD_DIR: ${{ github.workspace }}/build
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   LOG_DIR: ${{ github.workspace }}/build/log
-  NVIM_LOG_FILE: ${{ github.workspace }}/build/.nvimlog
+  NVIM_LOG_FILE: ${{ github.workspace }}/build/nvim.log
   TSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/tsan
   VALGRIND_LOG: ${{ github.workspace }}/build/log/valgrind-%p.log
   # TEST_FILE: test/functional/core/startup_spec.lua
@@ -28,18 +31,26 @@ env:
 
 jobs:
   lint:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Install stylua
         run: |
-          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
+          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-aarch64.zip
           (cd "$BIN_DIR"; unzip stylua*.zip)
+
+      - name: Install ts_query_ls
+        run: |
+          wget --directory-prefix="$BIN_DIR" https://github.com/ribru17/ts_query_ls/releases/latest/download/ts_query_ls-aarch64-unknown-linux-gnu.tar.gz
+          (cd "$BIN_DIR"; tar -xzvf ts_query_ls-aarch64-unknown-linux-gnu.tar.gz)
 
       - name: Build third-party deps
         run: |
@@ -51,7 +62,9 @@ jobs:
       - if: "!cancelled()"
         name: Determine if run should be aborted
         id: abort_job
-        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: echo "status=${JOB_STATUS}" >> $GITHUB_OUTPUT
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: stylua
@@ -70,7 +83,11 @@ jobs:
         run: cmake --build build --target lintsh
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clint.py
+        name: lintquery
+        run: cmake --build build --target lintquery
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: clint.lua
         run: cmake --build build --target lintc-clint
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
@@ -82,12 +99,15 @@ jobs:
         run: cmake --build build --target lintc-uncrustify
 
   clang-analyzer:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 20
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
       - name: Build third-party deps
         run: |
@@ -111,9 +131,9 @@ jobs:
             { runner: ubuntu-24.04, os: ubuntu, flavor: asan, cc: clang, flags: -D ENABLE_ASAN_UBSAN=ON },
             { runner: ubuntu-24.04, os: ubuntu, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
             { runner: ubuntu-24.04, os: ubuntu, flavor: release, cc: gcc, flags: -D CMAKE_BUILD_TYPE=Release -D ENABLE_TRANSLATIONS=ON },
-            # { runner: ubuntu-24.04-arm, os: ubuntu, flavor: arm, cc: gcc, flags: -D CMAKE_BUILD_TYPE=RelWithDebInfo },
-            { runner: macos-13, os: macos, flavor: intel, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
-            { runner: macos-15, os: macos, flavor: arm, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
+            { runner: ubuntu-24.04-arm, os: ubuntu, flavor: arm, cc: clang, flags: -D CMAKE_BUILD_TYPE=RelWithDebInfo },
+            { runner: macos-15-intel, os: macos, flavor: intel, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
+            { runner: macos-26, os: macos, flavor: arm, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
             { runner: ubuntu-24.04, os: ubuntu, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
           ]
         test: [unittest, functionaltest, oldtest]
@@ -124,12 +144,18 @@ jobs:
             build: { flavor: puc-lua }
           - test: oldtest
             build: { flavor: tsan }
+          - test: oldtest
+            build: { runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.build.runner }}
     timeout-minutes: 45
     env:
       CC: ${{ matrix.build.cc }}
+      NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
         with:
           install_flags: "--test"
@@ -151,29 +177,47 @@ jobs:
         run: cmake -E rm -rf -- .git
 
       - name: Build third-party deps
+        env:
+          BUILD_DEPS_FLAGS: ${{ matrix.build.deps_flags }}
         run: |
-          cmake -S cmake.deps --preset ci -D CMAKE_BUILD_TYPE=Debug ${{ matrix.build.deps_flags }}
+          cmake -S cmake.deps --preset ci -D CMAKE_BUILD_TYPE=Debug $BUILD_DEPS_FLAGS
           cmake --build .deps
 
       - name: Build
+        env:
+          BUILD_FLAGS: ${{ matrix.build.flags }}
         run: |
-          cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
+          cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX $BUILD_FLAGS
           cmake --build build
 
+      - if: ${{ matrix.test == 'unittest' }}
+        name: unittest
+        timeout-minutes: 20
+        run: cmake --build build --target unittest
+
+      - if: ${{ matrix.test == 'functionaltest' }}
+        name: functionaltest
+        timeout-minutes: 20
+        env:
+          # With parallel tests, use shorter timeout for a single group.
+          TEST_TIMEOUT: 600
+        run: |
+          set +e
+          # `-k 0` tells ninja to continue running all targets even if some fail.
+          cmake --build build --target functionaltest-parallel -j 2 -- -k 0
+          exit_code="$?"
+          cmake --build build --target functionaltest-summary
+          exit "$exit_code"
+
       - if: ${{ matrix.test == 'oldtest' }}
-        name: ${{ matrix.test }}
+        name: oldtest
         timeout-minutes: 20
         run: make -C test/old/testdir NVIM_PRG=$(realpath build)/bin/nvim
-
-      - if: ${{ matrix.test != 'oldtest' }}
-        name: ${{ matrix.test }}
-        timeout-minutes: 20
-        run: cmake --build build --target ${{ matrix.test }}
 
       - name: Install
         run: |
           cmake --install build
-          "$INSTALL_PREFIX/bin/nvim" --version
+          "$INSTALL_PREFIX/bin/nvim" -V1 --version
           if ! "$INSTALL_PREFIX/bin/nvim" -u NONE -e -c ':help' -c ':qall'; then
             echo "Running ':help' in the installed nvim failed."
             echo "Maybe the helptags have not been generated properly."
@@ -201,16 +245,81 @@ jobs:
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
 
+  # TODO: matrixify
+  zig-build-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    name: build using zig build (linux)
+    env:
+      OPTS: -Doptimize=ReleaseSafe
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.15.2
+      - run: sudo apt-get install -y inotify-tools
+
+      - run: zig build $OPTS test_nlua0
+      - run: zig build $OPTS nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build $OPTS unittest
+      - run: zig build $OPTS functionaltest
+      # `zig build` uses a lua script for doctags in order to support cross-compiling
+      # compare with the builtin generator that they match
+      - run: cd runtime; ../zig-out/bin/nvim -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
+      - run: diff -u runtime/doc/tags zig-out/runtime/doc/tags
+
+  zig-build-macos-15:
+    runs-on: macos-15
+    timeout-minutes: 45
+    name: build using zig build (macos 15)
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.15.2
+
+      - run: zig build test_nlua0 -Dluajit=false
+      - run: zig build nvim_bin -Dluajit=false && ./zig-out/bin/nvim --version
+      - run: zig build functionaltest -Dluajit=false
+
+  zig-build-windows:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    name: build using zig build (windows)
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.15.2
+
+      - run: zig build test_nlua0
+      - run: zig build nvim_bin
+      - run: ./zig-out/bin/nvim --version
+      # TODO: support entire test suite
+      - run: zig build functionaltest -- test/functional/api/buffer_spec.lua
+
   windows:
     uses: ./.github/workflows/test_windows.yml
 
   with-external-deps:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     env:
       CC: gcc
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Install dependencies

@@ -1,7 +1,7 @@
 *remote.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Vim client-server communication				*client-server*

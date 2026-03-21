@@ -47,6 +47,7 @@ hi('WildMenu',     { fg = 'Black', bg = 'Yellow',       ctermfg = 'Black', cterm
 hi('VertSplit',      { link = 'Normal' })
 hi('WinSeparator',   { link = 'VertSplit' })
 hi('WinBarNC',       { link = 'WinBar' })
+hi('DiffTextAdd',    { link = 'DiffText' })
 hi('EndOfBuffer',    { link = 'NonText' })
 hi('LineNrAbove',    { link = 'LineNr' })
 hi('LineNrBelow',    { link = 'LineNr' })
@@ -60,7 +61,10 @@ hi('PmenuMatch',     { link = 'Pmenu' })
 hi('PmenuMatchSel',  { link = 'PmenuSel' })
 hi('PmenuExtra',     { link = 'Pmenu' })
 hi('PmenuExtraSel',  { link = 'PmenuSel' })
+hi('PreInsert',      { link = 'Added' })
 hi('ComplMatchIns',  {})
+hi('ComplHint',      { link = 'NonText' })
+hi('ComplHintMore',  { link = 'MoreMsg' })
 hi('Substitute',     { link = 'Search' })
 hi('Whitespace',     { link = 'NonText' })
 hi('MsgSeparator',   { link = 'StatusLine' })
@@ -69,8 +73,8 @@ hi('FloatBorder',    { link = 'WinSeparator' })
 hi('FloatTitle',     { link = 'Title' })
 hi('FloatFooter',    { link = 'Title' })
 
-hi('FloatShadow',          { bg = 'Black', blend=80 })
-hi('FloatShadowThrough',   { bg = 'Black', blend=100 })
+hi('FloatShadow',          { bg = 'Black', blend = 80 })
+hi('FloatShadowThrough',   { bg = 'Black', blend = 100 })
 hi('RedrawDebugNormal',    { reverse = true,             cterm = { reverse = true } })
 hi('RedrawDebugClear',     { bg = 'Yellow',              ctermbg = 'Yellow' })
 hi('RedrawDebugComposed',  { bg = 'Green',               ctermbg = 'Green' })
@@ -133,6 +137,7 @@ hi('DiagnosticDeprecated',       { sp = 'Red', strikethrough = true,    cterm = 
 hi('DiagnosticUnnecessary', { link = 'Comment' })
 hi('LspInlayHint',          { link = 'NonText' })
 hi('SnippetTabstop',        { link = 'Visual' })
+hi('SnippetTabstopActive',  { link = 'SnippetTabstop' })
 
 -- Text
 hi('@markup.raw',       { link = 'Comment' })
@@ -251,6 +256,9 @@ if vim.o.background == 'light' then
   hi('Type',             { fg = 'SeaGreen', bold = true,                ctermfg = 'DarkGreen' })
   hi('Underlined',       { fg = 'SlateBlue', underline = true,          ctermfg = 'DarkMagenta', cterm = { underline = true } })
   hi('Ignore',           {                                              ctermfg = 'White' })
+  hi('Added',            { fg = 'SeaGreen',                             ctermfg = 'DarkGreen' })
+  hi('Changed',          { fg = 'DodgerBlue',                           ctermfg = 'Blue' })
+  hi('Removed',          { fg = 'Red',                                  ctermfg = 'Red' })
 else
   -- Default colors only used with a dark background.
   hi('ColorColumn',      { bg = 'DarkRed',                               ctermbg = 'DarkRed' })
@@ -292,5 +300,8 @@ else
   hi('Type',             { fg = '#60ff60', bold = true,                  ctermfg = 'LightGreen' })
   hi('Underlined',       { fg = '#80a0ff', underline = true,             ctermfg = 'LightBlue', cterm = { underline = true } })
   hi('Ignore',           {                                               ctermfg = 'Black' })
+  hi('Added',            { fg = 'LimeGreen',                             ctermfg = 'Green' })
+  hi('Changed',          { fg = 'DodgerBlue',                            ctermfg = 'Blue' })
+  hi('Removed',          { fg = 'Red',                                   ctermfg = 'Red' })
 end
 --stylua: ignore end

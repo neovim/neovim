@@ -32,6 +32,7 @@ describe('autochdir behavior', function()
     eq(dir, eval([[substitute(getcwd(), '.*/\(\k*\)', '\1', '')]]))
   end)
 
+  -- oldtest: Test_set_filename_other_window()
   it(':file in win_execute() does not cause wrong directory', function()
     command('cd ' .. dir)
     source([[
@@ -64,6 +65,7 @@ describe('autochdir behavior', function()
     expected_empty()
   end)
 
+  -- oldtest: Test_acd_win_execute()
   it('win_execute() does not change directory', function()
     local subdir = 'Xfile'
     command('cd ' .. dir)
@@ -78,6 +80,7 @@ describe('autochdir behavior', function()
     matches(dir .. '$', eval('getcwd()'))
   end)
 
+  -- oldtest: Test_verbose_pwd()
   it(':verbose pwd shows whether autochdir is used', function()
     local subdir = 'Xautodir'
     command('cd ' .. dir)
@@ -114,5 +117,29 @@ describe('autochdir behavior', function()
     matches('%[global%].*' .. dir .. '$', exec_capture('verbose pwd'))
     command('wincmd w')
     matches('%[window%].*' .. dir .. '/' .. subdir .. '$', exec_capture('verbose pwd'))
+  end)
+
+  it('overriding via :lcd is not clobbered by win_execute()', function()
+    command('cd ' .. dir)
+    source([[
+      func Test_lcd_win_execute()
+        let startdir = getcwd()
+        call mkdir('Xsubdir', 'R')
+        set autochdir
+        edit Xsubdir/file
+        call assert_match('_autochdir.Xsubdir.file$', expand('%:p'))
+        split
+        lcd ..
+        call assert_match('_autochdir.Xsubdir.file$', expand('%:p'))
+        call win_execute(win_getid(2), "")
+        call assert_match('_autochdir.Xsubdir.file$', expand('%:p'))
+
+        set noautochdir
+        bwipe!
+        call chdir(startdir)
+      endfunc
+    ]])
+    call('Test_lcd_win_execute')
+    expected_empty()
   end)
 end)

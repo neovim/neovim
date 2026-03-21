@@ -40,10 +40,6 @@ local heading_queries = {
   ]],
 }
 
-local function hash_tick(bufnr)
-  return tostring(vim.b[bufnr].changedtick)
-end
-
 ---@class TS.Heading
 ---@field bufnr integer
 ---@field lnum integer
@@ -53,12 +49,12 @@ end
 --- Extract headings from buffer
 --- @param bufnr integer buffer to extract headings from
 --- @return TS.Heading[]
-local get_headings = vim.func._memoize(hash_tick, function(bufnr)
+local get_headings = function(bufnr)
   local lang = ts.language.get_lang(vim.bo[bufnr].filetype)
   if not lang then
     return {}
   end
-  local parser = assert(ts.get_parser(bufnr, lang, { error = false }))
+  local parser = assert(ts.get_parser(bufnr, lang))
   local query = ts.query.parse(lang, heading_queries[lang])
   local root = parser:parse()[1]:root()
   local headings = {}
@@ -85,27 +81,28 @@ local get_headings = vim.func._memoize(hash_tick, function(bufnr)
     end
   end
   return headings
-end)
+end
 
---- Show a table of contents for the help buffer in a loclist
-function M.show_toc()
+--- @param qf_height? integer height of loclist window
+--- Shows an Outline (table of contents) of the current buffer, in the loclist.
+function M.show_toc(qf_height)
   local bufnr = api.nvim_get_current_buf()
+  local bufname = api.nvim_buf_get_name(bufnr)
   local headings = get_headings(bufnr)
   if #headings == 0 then
     return
   end
   -- add indentation for nicer list formatting
   for _, heading in pairs(headings) do
-    if heading.level > 2 then
-      heading.text = '  ' .. heading.text
-    end
-    if heading.level > 4 then
-      heading.text = '  ' .. heading.text
-    end
+    -- Quickfix trims whitespace, so use non-breaking space instead
+    heading.text = ('\194\160'):rep((heading.level - 1) * 2) .. heading.text
   end
   vim.fn.setloclist(0, headings, ' ')
-  vim.fn.setloclist(0, {}, 'a', { title = 'Help TOC' })
-  vim.cmd.lopen()
+  vim.fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
+  vim.cmd.lopen(qf_height)
+  vim.w.qf_toc = bufname
+  -- reload syntax file after setting qf_toc variable
+  vim.bo.filetype = 'qf'
 end
 
 --- Jump to section

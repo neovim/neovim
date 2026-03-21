@@ -7,9 +7,7 @@
 #include "nvim/tui/termkey/termkey-internal.h"
 #include "nvim/tui/termkey/termkey_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/termkey/driver-csi.c.generated.h"
-#endif
+#include "tui/termkey/driver-csi.c.generated.h"
 
 // There are 64 codes 0x40 - 0x7F
 static int keyinfo_initialised = 0;
@@ -507,7 +505,7 @@ static TermKeyResult parse_csi(TermKey *tk, size_t introlen, size_t *csi_len,
       present = 0;
       argi++;
 
-      if (argi > 16) {
+      if (argi >= 16) {
         break;
       }
     } else if (c >= 0x20 && c <= 0x2f) {
@@ -685,7 +683,7 @@ static int register_keys(void)
   return 1;
 }
 
-void *new_driver_csi(TermKey *tk, const char *term)
+void *new_driver_csi(TermKey *tk, TerminfoEntry *term)
 {
   if (!keyinfo_initialised) {
     if (!register_keys()) {
@@ -869,7 +867,7 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
   }
 
 #ifdef DEBUG
-  fprintf(stderr, "Found a control string: %*s",
+  fprintf(stderr, "Found a control string: %.*s",
           str_end - introlen, tk->buffer + tk->buffstart + introlen);
 #endif
 
@@ -890,8 +888,22 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
   strncpy(csi->saved_string, (char *)tk->buffer + tk->buffstart + introlen, len);  // NOLINT(runtime/printf)
   csi->saved_string[len] = 0;
 
-  key->type = (CHARAT(introlen - 1) & 0x1f) == 0x10
-              ? TERMKEY_TYPE_DCS : TERMKEY_TYPE_OSC;
+  char type = CHARAT(introlen - 1) & 0x1f;
+  switch (type) {
+  case 0x10:
+    key->type = TERMKEY_TYPE_DCS;
+    break;
+  case 0x1d:
+    key->type = TERMKEY_TYPE_OSC;
+    break;
+  case 0x1f:
+    key->type = TERMKEY_TYPE_APC;
+    break;
+  default:
+    // Unreachable
+    abort();
+  }
+
   key->code.number = csi->saved_string_id;
   key->modifiers = 0;
 
@@ -918,6 +930,7 @@ TermKeyResult peekkey_csi(TermKey *tk, void *info, TermKeyKey *key, int force, s
 
     case 0x50:  // ESC-prefixed DCS
     case 0x5d:  // ESC-prefixed OSC
+    case 0x5f:  // ESC-prefixed APC
       return peekkey_ctrlstring(tk, csi, 2, key, force, nbytep);
 
     case 0x5b:  // ESC-prefixed CSI

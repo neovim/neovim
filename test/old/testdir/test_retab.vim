@@ -11,10 +11,13 @@ func TearDown()
   bwipe!
 endfunc
 
-func Retab(bang, n)
+func Retab(bang, n, subopt='', test_line='')
   let l:old_tabstop = &tabstop
   let l:old_line = getline(1)
-  exe "retab" . a:bang . a:n
+  if a:test_line != ''
+    call setline(1, a:test_line)
+  endif
+  exe "retab" . a:bang . ' ' . a:subopt . ' ' . a:n
   let l:line = getline(1)
   call setline(1, l:old_line)
   if a:n > 0
@@ -73,6 +76,70 @@ func Test_retab()
   call assert_equal("    a       b        c    ",         Retab('',  5))
   call assert_equal("    a       b        c    ",         Retab('!', 5))
 
+  " Test with '-indentonly'
+  let so='-indentonly'
+  set tabstop=8 noexpandtab
+  call assert_equal("\ta  \t    b        c    ",          Retab('',  '', so))
+  call assert_equal("\ta  \t    b        c    ",          Retab('',  0, so))
+  call assert_equal("\ta  \t    b        c    ",          Retab('',  8, so))
+  call assert_equal("\ta  \t    b        c    ",          Retab('!', '', so))
+  call assert_equal("\ta  \t    b        c    ",          Retab('!', 0, so))
+  call assert_equal("\ta  \t    b        c    ",          Retab('!', 8, so))
+
+  call assert_equal("\t\ta  \t    b        c    ",        Retab('',  4, so))
+  call assert_equal("\t\ta  \t    b        c    ",        Retab('!', 4, so))
+
+  call assert_equal("        a  \t    b        c    ",    Retab('',  10, so))
+  call assert_equal("        a  \t    b        c    ",    Retab('!', 10, so))
+
+  set tabstop=8 expandtab
+  call assert_equal("        a  \t    b        c    ",    Retab('',  '', so))
+  call assert_equal("        a  \t    b        c    ",    Retab('',  0, so))
+  call assert_equal("        a  \t    b        c    ",    Retab('',  8, so))
+  call assert_equal("        a  \t    b        c    ",    Retab('!', '', so))
+  call assert_equal("        a  \t    b        c    ",    Retab('!', 0, so))
+  call assert_equal("        a  \t    b        c    ",    Retab('!', 8, so))
+
+  call assert_equal("        a  \t    b        c    ",    Retab(' ', 4, so))
+  call assert_equal("        a  \t    b        c    ",    Retab('!', 4, so))
+
+  call assert_equal("        a  \t    b        c    ",    Retab(' ', 10, so))
+  call assert_equal("        a  \t    b        c    ",    Retab('!', 10, so))
+
+  set tabstop=4 noexpandtab
+  call assert_equal("\ta  \t    b        c    ",          Retab('',  '', so))
+  call assert_equal("\ta  \t    b        c    ",          Retab('!', '', so))
+  call assert_equal("\t a  \t    b        c    ",         Retab('',  3, so))
+  call assert_equal("\t a  \t    b        c    ",         Retab('!', 3, so))
+  call assert_equal("    a  \t    b        c    ",        Retab('',  5, so))
+  call assert_equal("    a  \t    b        c    ",        Retab('!', 5, so))
+
+  set tabstop=4 expandtab
+  call assert_equal("    a  \t    b        c    ",        Retab('',  '', so))
+  call assert_equal("    a  \t    b        c    ",        Retab('!', '', so))
+  call assert_equal("    a  \t    b        c    ",        Retab('',  3, so))
+  call assert_equal("    a  \t    b        c    ",        Retab('!', 3, so))
+  call assert_equal("    a  \t    b        c    ",        Retab('',  5, so))
+  call assert_equal("    a  \t    b        c    ",        Retab('!', 5, so))
+
+  " Test for variations in leading whitespace
+  let so='-indentonly'
+  let test_line="    \t    a\t        "
+  set tabstop=8 noexpandtab
+  call assert_equal("\t    a\t        ",    Retab('',  '', so, test_line))
+  call assert_equal("\t    a\t        ",    Retab('!',  '', so, test_line))
+  set tabstop=8 expandtab
+  call assert_equal("            a\t        ", Retab('',  '', so, test_line))
+  call assert_equal("            a\t        ", Retab('!',  '', so, test_line))
+
+  let test_line="            a\t        "
+  set tabstop=8 noexpandtab
+  call assert_equal(test_line,              Retab('',  '', so, test_line))
+  call assert_equal("\t    a\t        ",    Retab('!',  '', so, test_line))
+  set tabstop=8 expandtab
+  call assert_equal(test_line,              Retab('',  '', so, test_line))
+  call assert_equal(test_line,              Retab('!',  '', so, test_line))
+
   set tabstop& expandtab&
 endfunc
 
@@ -82,6 +149,9 @@ func Test_retab_error()
   call assert_fails('ret -1000', 'E487:')
   call assert_fails('ret 10000', 'E475:')
   call assert_fails('ret 80000000000000000000', 'E475:')
+  call assert_fails('retab! -in', 'E475:')
+  call assert_fails('retab! -indentonly2', 'E475:')
+  call assert_fails('retab! -indentonlyx 0', 'E475:')
 endfunc
 
 func RetabLoop()

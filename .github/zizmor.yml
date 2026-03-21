@@ -1,0 +1,15 @@
+rules:
+  cache-poisoning:
+    ignore:
+      - test.yml
+  dangerous-triggers:
+    ignore:
+      - backport.yml
+      - labeler_pr.yml
+      - reviewers_add.yml
+      - reviewers_remove.yml
+  unpinned-uses:
+    config:
+      policies:
+        actions/*: ref-pin
+        github/*: ref-pin

@@ -14,6 +14,4 @@
 #include "nvim/lua/executor.h"  // IWYU pragma: keep
 #include "nvim/memory.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua_api_c_bindings.generated.h"  // IWYU pragma: keep
-#endif
+#include "lua_api_c_bindings.generated.h"  // IWYU pragma: keep

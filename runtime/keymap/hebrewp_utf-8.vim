@@ -6,33 +6,33 @@
 " Use this short name in the status line.
 let b:keymap_name = "hebp"
 loadkeymap
-w	<char-0x5e9>	" ù - shin
-n	<char-0x5e0>	" ğ - nun
-b	<char-0x5d1>	" á - bet
-g	<char-0x5d2>	" â - gimel
-q	<char-0x5e7>	" ÷ - qof
-k	<char-0x5db>	" ë - kaf
-g	<char-0x5e2>	" ò - ayin
-y	<char-0x5d9>	" é - yod
-N	<char-0x5df>	" ï - final nun
-j	<char-0x5d7>	" ç - het
-l	<char-0x5dc>	" ì - lamed
-K	<char-0x5da>	" ê - final kaf
-x	<char-0x5e6>	" ö - tsadi
-m	<char-0x5de>	" î - mem
-M	<char-0x5dd>	" í - final mem
-p	<char-0x5e4>	" ô - pe
-r	<char-0x5e8>	" ø - resh
-d	<char-0x5d3>	" ã - dalet
-a	<char-0x5d0>	" à - alef
-v	<char-0x5d5>	" å - vav
-h	<char-0x5d4>	" ä - he
-s	<char-0x5e1>	" ñ - samekh
-T	<char-0x5d8>	" è - tet
-z	<char-0x5d6>	" æ - zayin
-t	<char-0x5ea>	" ú - tav
-X	<char-0x5e5>	" õ - final tsadi
-P	<char-0x5e3>	" ó - final pe
+w	<char-0x5e9>	" ×© - shin
+n	<char-0x5e0>	" ×  - nun
+b	<char-0x5d1>	" ×‘ - bet
+g	<char-0x5d2>	" ×’ - gimel
+q	<char-0x5e7>	" ×§ - qof
+k	<char-0x5db>	" ×› - kaf
+g	<char-0x5e2>	" ×¢ - ayin
+y	<char-0x5d9>	" ×™ - yod
+N	<char-0x5df>	" ×Ÿ - final nun
+j	<char-0x5d7>	" ×— - het
+l	<char-0x5dc>	" ×œ - lamed
+K	<char-0x5da>	" ×š - final kaf
+x	<char-0x5e6>	" ×¦ - tsadi
+m	<char-0x5de>	" × - mem
+M	<char-0x5dd>	" × - final mem
+p	<char-0x5e4>	" ×¤ - pe
+r	<char-0x5e8>	" ×¨ - resh
+d	<char-0x5d3>	" ×“ - dalet
+a	<char-0x5d0>	" × - alef
+v	<char-0x5d5>	" ×• - vav
+h	<char-0x5d4>	" ×” - he
+s	<char-0x5e1>	" ×¡ - samekh
+T	<char-0x5d8>	" ×˜ - tet
+z	<char-0x5d6>	" ×– - zayin
+t	<char-0x5ea>	" ×ª - tav
+X	<char-0x5e5>	" ×¥ - final tsadi
+P	<char-0x5e3>	" ×£ - final pe
 A:	<Char-0x5b0>	" sheva
 HE	<Char-0x5b1>	" hataf segol
 HA	<Char-0x5b2>	" hataf patah
@@ -47,7 +47,7 @@ U	<Char-0x5bb>	" qubuts
 D	<Char-0x5bc>	" dagesh
 ]T	<Char-0x5bd>	" meteg
 ]Q	<Char-0x5be>	" maqaf
-]R      <ÌChar-0x5bf>	" rafe
+]R      <Ö¼Char-0x5bf>	" rafe
 ]p      <Char-0x5c0>    " paseq
 SR	<Char-0x5c1>	" shin-dot
 SL	<Char-0x5c2>	" sin-dot

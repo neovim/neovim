@@ -6,6 +6,4 @@
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/options.h.generated.h"
-#endif
+#include "api/options.h.generated.h"

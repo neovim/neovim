@@ -48,10 +48,8 @@ describe(':source', function()
   end)
 
   it("changing 'shellslash' changes the result of expand()", function()
-    if not is_os('win') then
-      pending("'shellslash' only works on Windows")
-      return
-    end
+    t.skip(not is_os('win'), "N/A: 'shellslash' only works on Windows")
+
     api.nvim_set_option_value('shellslash', false, {})
     mkdir('Xshellslash')
 
@@ -247,12 +245,15 @@ describe(':source', function()
         feed('dd')
 
         feed_command(':source')
-
+        local filepath = fn.expand('%:p')
+        if filepath == '' then
+          filepath = ':source buffer=1'
+        end
         eq(12, eval('g:c'))
         eq('  \\ 1\n "\\ 2', exec_lua('return _G.a'))
-        eq(':source buffer=1', api.nvim_get_var('sfile_value'))
-        eq(':source buffer=1', api.nvim_get_var('stack_value'))
-        eq(':source buffer=1', api.nvim_get_var('script_value'))
+        eq(filepath, api.nvim_get_var('sfile_value'))
+        eq(filepath, api.nvim_get_var('stack_value'))
+        eq(filepath, api.nvim_get_var('script_value'))
       end)
     end
 
@@ -292,6 +293,35 @@ describe(':source', function()
     eq(false, ok)
     eq(nil, result:find('E484'))
     os.remove(test_file)
+  end)
+
+  it('sources Lua/Vimscript codeblocks based on treesitter injection', function()
+    insert([[
+      *test.txt*  Test help file
+
+      Lua example: >lua
+        vim.g.test_lua = 42
+      <
+
+      Vim example: >vim
+        let g:test_vim = 99
+      <]])
+    command('setlocal filetype=help')
+
+    -- Source Lua codeblock (line 4 contains the Lua code)
+    command(':4source')
+    eq(42, eval('g:test_lua'))
+
+    -- Source Vimscript codeblock (line 8 contains the Vim code)
+    command(':8source')
+    eq(99, eval('g:test_vim'))
+
+    -- Test fallback without treesitter
+    command('enew')
+    insert([[let g:test_no_ts = 123]])
+    command('setlocal filetype=')
+    command('source')
+    eq(123, eval('g:test_no_ts'))
   end)
 end)
 

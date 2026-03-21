@@ -33,14 +33,11 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "winfloat.c.generated.h"
-#endif
+#include "winfloat.c.generated.h"
 
-/// Create a new float.
+/// Creates a new float, or transforms an existing window to a float.
 ///
 /// @param wp      if NULL, allocate a new window, otherwise turn existing window into a float.
-///                It must then already belong to the current tabpage!
 /// @param last    make the window the last one in the window list.
 ///                Only used when allocating the autocommand window.
 /// @param config  must already have been validated!
@@ -48,7 +45,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
 {
   if (wp == NULL) {
     tabpage_T *tp = NULL;
-    win_T *tp_last = last ? lastwin : lastwin_nofloating();
+    win_T *tp_last = last ? lastwin : lastwin_nofloating(NULL);
     if (fconfig.window != 0) {
       assert(!last);
       win_T *parent_wp = find_window_by_handle(fconfig.window, err);
@@ -59,10 +56,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       if (!tp) {
         return NULL;
       }
-      tp_last = tp == curtab ? lastwin : tp->tp_lastwin;
-      while (tp_last->w_floating && tp_last->w_prev) {
-        tp_last = tp_last->w_prev;
-      }
+      tp_last = lastwin_nofloating(tp == curtab ? NULL : tp);
     }
     wp = win_alloc(tp_last, false);
     win_init(wp, curwin, 0);
@@ -72,22 +66,26 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       }
       wp->w_p_wbr = empty_string_option;
     }
+    if (wp->w_p_stl && wp->w_p_stl != empty_string_option) {
+      free_string_option(wp->w_p_stl);
+      wp->w_p_stl = empty_string_option;
+    }
   } else {
     assert(!last);
     assert(!wp->w_floating);
-    if (firstwin == wp && lastwin_nofloating() == wp) {
-      // last non-float
-      api_set_error(err, kErrorTypeException,
-                    "Cannot change last window into float");
-      return NULL;
-    } else if (!win_valid(wp)) {
-      api_set_error(err, kErrorTypeException,
-                    "Cannot change window from different tabpage into float");
+    tabpage_T *win_tp = win_find_tabpage(wp);
+    assert(win_tp);
+    if ((win_tp == curtab && firstwin == wp && lastwin_nofloating(NULL) == wp)
+        || (win_tp != curtab && win_tp->tp_firstwin == wp && lastwin_nofloating(win_tp) == wp)) {
+      api_set_error(err, kErrorTypeException, "Cannot change last window into float");
       return NULL;
     } else if (cmdwin_win != NULL && !cmdwin_win->w_floating) {
       // cmdwin can't become the only non-float. Check for others.
       bool other_nonfloat = false;
-      for (win_T *wp2 = firstwin; wp2 != NULL && !wp2->w_floating; wp2 = wp2->w_next) {
+      FOR_ALL_WINDOWS_IN_TAB(wp2, win_tp) {
+        if (wp2->w_floating) {
+          break;
+        }
         if (wp2 != wp && wp2 != cmdwin_win) {
           other_nonfloat = true;
           break;
@@ -98,22 +96,25 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
         return NULL;
       }
     }
+    tabpage_T *tp = win_tp == curtab ? NULL : win_tp;
     int dir;
-    winframe_remove(wp, &dir, NULL, NULL);
+    winframe_remove(wp, &dir, tp, NULL);
     XFREE_CLEAR(wp->w_frame);
-    win_comp_pos();  // recompute window positions
-    win_remove(wp, NULL);
-    win_append(lastwin_nofloating(), wp, NULL);
+    win_remove(wp, tp);
+    if (win_tp == curtab) {
+      last_status(false);  // may need to remove last status line
+      win_comp_pos();  // recompute window positions
+    }
+    win_append(lastwin_nofloating(tp), wp, tp);
   }
   wp->w_floating = true;
-  wp->w_status_height = 0;
+  wp->w_status_height = wp->w_p_stl && *wp->w_p_stl != NUL
+                        && (p_ls == 1 || p_ls == 2) ? STATUS_HEIGHT : 0;
   wp->w_winbar_height = 0;
   wp->w_hsep_height = 0;
   wp->w_vsep_width = 0;
 
   win_config_float(wp, fconfig);
-  win_set_inner_size(wp, true);
-  wp->w_pos_changed = true;
   redraw_later(wp, UPD_VALID);
   return wp;
 }
@@ -166,7 +167,16 @@ void win_set_minimal_style(win_T *wp)
   // statuscolumn: cleared
   if (wp->w_p_stc != NULL && *wp->w_p_stc != NUL) {
     free_string_option(wp->w_p_stc);
-    wp->w_p_stc = xstrdup("");
+    wp->w_p_stc = empty_string_option;
+  }
+
+  // statusline: cleared (for floating windows)
+  if (wp->w_floating && wp->w_p_stl != NULL && *wp->w_p_stl != NUL) {
+    free_string_option(wp->w_p_stl);
+    wp->w_p_stl = empty_string_option;
+    if (wp->w_status_height > 0) {
+      win_config_float(wp, wp->w_config);
+    }
   }
 }
 
@@ -182,6 +192,14 @@ int win_border_width(win_T *wp)
 
 void win_config_float(win_T *wp, WinConfig fconfig)
 {
+  // Process statusline changes before applying new height from config
+  bool show_stl = *wp->w_p_stl != NUL && (p_ls == 1 || p_ls == 2);
+  if (wp->w_status_height && !show_stl) {
+    win_remove_status_line(wp, false);
+  } else if (wp->w_status_height == 0 && show_stl) {
+    wp->w_status_height = STATUS_HEIGHT;
+  }
+
   wp->w_width = MAX(fconfig.width, 1);
   wp->w_height = MAX(fconfig.height, 1);
 
@@ -194,7 +212,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
     int row = mouse_row;
     int col = mouse_col;
     int grid = mouse_grid;
-    win_T *mouse_win = mouse_find_win(&grid, &row, &col);
+    win_T *mouse_win = mouse_find_win_inner(&grid, &row, &col);
     if (mouse_win != NULL) {
       fconfig.relative = kFloatRelativeWindow;
       fconfig.row += row;
@@ -221,13 +239,14 @@ void win_config_float(win_T *wp, WinConfig fconfig)
   }
 
   if (!ui_has(kUIMultigrid)) {
-    wp->w_height = MIN(wp->w_height, Rows - win_border_height(wp));
+    int above_ch = wp->w_config.zindex < kZIndexMessages ? (int)p_ch : 0;
+    wp->w_height = MIN(wp->w_height, Rows - win_border_height(wp) - above_ch);
     wp->w_width = MIN(wp->w_width, Columns - win_border_width(wp));
   }
 
   win_set_inner_size(wp, true);
   set_must_redraw(UPD_VALID);
-
+  wp->w_redr_status = wp->w_status_height;
   wp->w_pos_changed = true;
   if (change_external || change_border) {
     wp->w_hl_needs_update = true;
@@ -243,12 +262,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
     if (parent) {
       row += parent->w_winrow;
       col += parent->w_wincol;
-      ScreenGrid *grid = &parent->w_grid;
-      int row_off = 0;
-      int col_off = 0;
-      grid_adjust(&grid, &row_off, &col_off);
-      row += row_off;
-      col += col_off;
+      grid_adjust(&parent->w_grid, &row, &col);
       if (wp->w_config.bufpos.lnum >= 0) {
         pos_T pos = { MIN(wp->w_config.bufpos.lnum + 1, parent->w_buffer->b_ml.ml_line_count),
                       wp->w_config.bufpos.col, 0 };
@@ -290,7 +304,8 @@ void win_float_remove(bool bang, int count)
     qsort(float_win_arr.items, float_win_arr.size, sizeof(win_T *), float_zindex_cmp);
   }
   for (size_t i = 0; i < float_win_arr.size; i++) {
-    if (win_close(float_win_arr.items[i], false, false) == FAIL) {
+    win_T *wp = float_win_arr.items[i];
+    if (win_valid(wp) && win_close(wp, false, false) == FAIL) {
       break;
     }
     if (!bang) {
@@ -310,6 +325,17 @@ void win_check_anchored_floats(win_T *win)
     if (wp->w_config.relative == kFloatRelativeWindow
         && wp->w_config.window == win->handle) {
       wp->w_pos_changed = true;
+    }
+  }
+}
+
+void win_float_update_statusline(void)
+{
+  for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
+    bool has_status = wp->w_status_height > 0;
+    bool should_show = *wp->w_p_stl != NUL && (p_ls == 1 || p_ls == 2);
+    if (should_show != has_status) {
+      win_config_float(wp, wp->w_config);
     }
   }
 }
@@ -367,16 +393,18 @@ win_T *win_float_find_preview(void)
 win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  win_T *wp = prevwin;
   if (tp == NULL) {
-    return (win_valid(prevwin) && prevwin != win) ? prevwin : firstwin;
+    return (win_valid(wp) && wp != win && wp->w_config.focusable
+            && !wp->w_config.hide) ? wp : firstwin;
   }
 
   assert(tp != curtab);
-  return (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) ? tp->tp_prevwin
-                                                                          : tp->tp_firstwin;
+  wp = tabpage_win_valid(tp, tp->tp_prevwin) ? tp->tp_prevwin : tp->tp_firstwin;
+  return (wp->w_config.focusable && !wp->w_config.hide) ? wp : tp->tp_firstwin;
 }
 
-/// Inline helper function for handling errors and cleanup in win_float_create.
+/// Inline helper function for handling errors and cleanup in win_float_create_preview.
 static inline win_T *handle_error_and_cleanup(win_T *wp, Error *err)
 {
   if (ERROR_SET(err)) {
@@ -397,14 +425,14 @@ static inline win_T *handle_error_and_cleanup(win_T *wp, Error *err)
 /// @param[in] bool create a new buffer for window.
 ///
 /// @return win_T
-win_T *win_float_create(bool enter, bool new_buf)
+win_T *win_float_create_preview(bool enter, bool new_buf)
 {
   WinConfig config = WIN_CONFIG_INIT;
   config.col = curwin->w_wcol;
   config.row = curwin->w_wrow;
   config.relative = kFloatRelativeEditor;
   config.focusable = false;
-  config.mouse = false;
+  config.mouse = true;
   config.anchor = 0;  // NW
   config.noautocmd = true;
   config.hide = true;
@@ -437,6 +465,8 @@ win_T *win_float_create(bool enter, bool new_buf)
   unblock_autocmds();
   wp->w_p_diff = false;
   wp->w_float_is_info = true;
+  wp->w_p_wrap = true;  // 'wrap' is default on
+  wp->w_p_so = 0;       // 'scrolloff' zero
   if (enter) {
     win_enter(wp, false);
   }

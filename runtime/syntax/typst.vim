@@ -1,13 +1,16 @@
 " Vim syntax file
+" Previous Maintainer:  Luca Saccarola <github.e41mv@aleeas.com>
+" Maintainer:  This runtime file is looking for a new maintainer.
 " Language:    Typst
-" Previous Maintainer:  Gregory Anders
-" Maintainer:  Luca Saccarola <github.e41mv@aleeas.com>
-" Last Change: 2024 Dec 09
-" Based on:    https://github.com/kaarmu/typst.vim
+" Based On:    https://github.com/kaarmu/typst.vim
+" Last Change: 2025 Aug 05
 
 if exists('b:current_syntax')
     finish
 endif
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 syntax sync fromstart
 syntax spell toplevel
@@ -469,5 +472,8 @@ highlight default typstMarkupItalic                     term=italic             
 highlight default typstMarkupBoldItalic                 term=bold,italic        cterm=bold,italic       gui=bold,italic
 
 let b:current_syntax = 'typst'
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " }}}1

@@ -175,7 +175,7 @@ func Test_writefile_autowrite()
   next
   call assert_equal(['aaa'], readfile('Xa'))
   call setline(1, 'bbb')
-  call assert_fails('edit XX')
+  call assert_fails('edit XX', 'E37: No write since last change (add ! to override)')
   call assert_false(filereadable('Xb'))
 
   set autowriteall

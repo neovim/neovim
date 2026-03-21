@@ -1276,18 +1276,18 @@ msgstr "E478: Nie panikuj!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Przykro mi, brak '%s' pomocy dla %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Brak '%s' pomocy dla %s"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Przykro mi, ale brak pomocy o %s"
+msgid "E149: No help for %s"
+msgstr "E149: Brak pomocy o %s"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Przykro mi, nie ma pliku pomocy \"%s\""
+msgid "Help file \"%s\" not found"
+msgstr "Nie ma pliku pomocy \"%s\""
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -3909,12 +3909,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: UWAGA"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Znalazłem plik wymiany o nazwie \""
+msgid "Found a swap file by the name \""
+msgstr "Znalazłem plik wymiany o nazwie \""
 
 #: ../memline.c:3226
 msgid "While opening file \""
@@ -4595,12 +4591,8 @@ msgstr ""
 "Nie mogę wykonać powłoki "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"powłoka zwróciła "
+msgid "shell returned "
+msgstr "powłoka zwróciła "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""
@@ -5475,13 +5467,13 @@ msgid "E763: Word characters differ between spell files"
 msgstr "E763: Znaki wyrazów różnią się między plikami sprawdzania pisowni"
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
-msgstr "Przykro mi, brak podpowiedzi"
+msgid "No suggestions"
+msgstr "Brak podpowiedzi"
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Przykro mi, tylko %<PRId64> podpowiedzi"
+msgid "Only %<PRId64> suggestions"
+msgstr "Tylko %<PRId64> podpowiedzi"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

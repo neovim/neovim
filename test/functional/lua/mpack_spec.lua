@@ -27,4 +27,18 @@ describe('lua vim.mpack', function()
       end)
     )
   end)
+
+  it('encodes dict keys of length 20-31 as fixstr #32784', function()
+    -- MessagePack fixstr format: 0xa0 | length (for lengths 0-31)
+    -- Before #36737, strings 20-31 bytes were incorrectly encoded as str8 (0xd9, len)
+    for len = 20, 31 do
+      local expected_header = string.char(0xa0 + len) -- fixstr header
+      local result = exec_lua(function(keylen)
+        local key = string.rep('x', keylen)
+        return vim.mpack.encode({ [key] = 1 })
+      end, len)
+      -- Byte 1 is fixmap header (0x81), byte 2 should be fixstr header for the key
+      eq(expected_header, result:sub(2, 2), 'dict key length ' .. len .. ' should use fixstr')
+    end
+  end)
 end)

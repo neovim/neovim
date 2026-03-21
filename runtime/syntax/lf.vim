@@ -1,236 +1,254 @@
 " Vim syntax file
 " Language: lf file manager configuration file (lfrc)
-" Maintainer: Andis Sprinkis <andis@sprinkis.com>
+" Maintainer: Andis Sprinkis <andis@sprinkis.com>, @CatsDeservePets
 " Former Maintainer: Cameron Wright
-" Former URL: https://github.com/andis-sprinkis/lf-vim
-" Last Change: 13 October 2024
+" URL: https://github.com/andis-sprinkis/lf-vim
+" Last Change: 4 Feb 2026
 "
 " The shell syntax highlighting is configurable. See $VIMRUNTIME/doc/syntax.txt
-" lf version: 32
+" lf version: 41
 
-if exists("b:current_syntax")
-    finish
-endif
+if exists("b:current_syntax") | finish | endif
+
+let s:cpo = &cpo
+set cpo&vim
 
 let b:current_syntax = "lf"
 
 "{{{ Comment Matching
-syn match    lfComment        '#.*$'
+syn match lfComment '#.*$'
 "}}}
 
 "{{{ String Matching
-syn match    lfString         "'.*'"
-syn match    lfString         '".*"' contains=lfVar,lfSpecial
-"}}}
-
-"{{{ Match lf Variables
-syn match    lfVar            '\$f\|\$fx\|\$fs\|\$id'
+syn match lfString "'.*'"
+syn match lfString '".*"' contains=lfSpecial
 "}}}
 
 "{{{ Keywords
-syn keyword  lfKeyword        set setlocal cmd map cmap skipwhite
+syn keyword lfKeyword set setlocal cmd map cmap nmap vmap skipwhite
 "}}}
 
 "{{{ Options Keywords
-syn keyword  lfOptions
-    \ quit
-    \ up
-    \ half-up
-    \ page-up
-    \ scroll-up
-    \ down
-    \ half-down
-    \ page-down
-    \ scroll-down
-    \ updir
-    \ open
-    \ jump-next
-    \ jump-prev
-    \ top
-    \ bottom
-    \ high
-    \ middle
-    \ low
-    \ toggle
-    \ invert
-    \ invert-below
-    \ unselect
-    \ glob-select
-    \ glob-unselect
-    \ calcdirsize
-    \ clearmaps
-    \ copy
-    \ cut
-    \ paste
-    \ clear
-    \ sync
-    \ draw
-    \ redraw
-    \ load
-    \ reload
-    \ echo
-    \ echomsg
-    \ echoerr
-    \ cd
-    \ select
-    \ delete
-    \ rename
-    \ source
-    \ push
-    \ read
-    \ shell
-    \ shell-pipe
-    \ shell-wait
-    \ shell-async
-    \ find
-    \ find-back
-    \ find-next
-    \ find-prev
-    \ search
-    \ search-back
-    \ search-next
-    \ search-prev
-    \ filter
-    \ setfilter
-    \ mark-save
-    \ mark-load
-    \ mark-remove
-    \ tag
-    \ tag-toggle
-    \ cmd-escape
-    \ cmd-complete
-    \ cmd-menu-complete
-    \ cmd-menu-complete-back
-    \ cmd-menu-accept
-    \ cmd-enter
-    \ cmd-interrupt
-    \ cmd-history-next
-    \ cmd-history-prev
-    \ cmd-left
-    \ cmd-right
-    \ cmd-home
-    \ cmd-end
-    \ cmd-delete
-    \ cmd-delete-back
-    \ cmd-delete-home
-    \ cmd-delete-end
-    \ cmd-delete-unix-word
-    \ cmd-yank
-    \ cmd-transpose
-    \ cmd-transpose-word
-    \ cmd-word
-    \ cmd-word-back
-    \ cmd-delete-word
-    \ cmd-delete-word-back
-    \ cmd-capitalize-word
-    \ cmd-uppercase-word
-    \ cmd-lowercase-word
-    \ anchorfind
-    \ autoquit
-    \ borderfmt
-    \ cleaner
-    \ copyfmt
-    \ cursoractivefmt
-    \ cursorparentfmt
-    \ cursorpreviewfmt
-    \ cutfmt
-    \ dircache
-    \ dircounts
-    \ dirfirst
-    \ dironly
-    \ dirpreviews
-    \ drawbox
-    \ dupfilefmt
-    \ errorfmt
-    \ filesep
-    \ findlen
-    \ globfilter
-    \ globsearch
-    \ hidden
-    \ hiddenfiles
-    \ hidecursorinactive
-    \ history
-    \ icons
-    \ ifs
-    \ ignorecase
-    \ ignoredia
-    \ incfilter
-    \ incsearch
-    \ info
-    \ infotimefmtnew
-    \ infotimefmtold
-    \ mouse
-    \ number
-    \ numberfmt
-    \ period
-    \ preserve
-    \ preview
-    \ previewer
-    \ promptfmt
-    \ ratios
-    \ relativenumber
-    \ reverse
-    \ roundbox
-    \ ruler
-    \ rulerfmt
-    \ scrolloff
-    \ selectfmt
-    \ selmode
-    \ shell
-    \ shellflag
-    \ shellopts
-    \ sixel
-    \ smartcase
-    \ smartdia
-    \ sortby
-    \ statfmt
-    \ tabstop
-    \ tagfmt
-    \ tempmarks
-    \ timefmt
-    \ truncatechar
-    \ truncatepct
-    \ waitmsg
-    \ wrapscan
-    \ wrapscroll
-    \ pre-cd
-    \ on-cd
-    \ on-select
-    \ on-redraw
-    \ on-quit
+syn keyword lfOptions
+  \ addcustominfo
+  \ anchorfind
+  \ autoquit
+  \ borderfmt
+  \ bottom
+  \ calcdirsize
+  \ cd
+  \ cleaner
+  \ clear
+  \ clearmaps
+  \ cmaps
+  \ cmd-capitalize-word
+  \ cmd-complete
+  \ cmd-delete
+  \ cmd-delete-back
+  \ cmd-delete-end
+  \ cmd-delete-home
+  \ cmd-delete-unix-word
+  \ cmd-delete-word
+  \ cmd-delete-word-back
+  \ cmd-end
+  \ cmd-enter
+  \ cmd-escape
+  \ cmd-history-next
+  \ cmd-history-prev
+  \ cmd-home
+  \ cmd-insert
+  \ cmd-interrupt
+  \ cmd-left
+  \ cmd-lowercase-word
+  \ cmd-menu-accept
+  \ cmd-menu-complete
+  \ cmd-menu-complete-back
+  \ cmd-menu-discard
+  \ cmd-right
+  \ cmd-transpose
+  \ cmd-transpose-word
+  \ cmd-uppercase-word
+  \ cmd-word
+  \ cmd-word-back
+  \ cmd-yank
+  \ cmds
+  \ copy
+  \ copyfmt
+  \ cursoractivefmt
+  \ cursorparentfmt
+  \ cursorpreviewfmt
+  \ cut
+  \ cutfmt
+  \ delete
+  \ dircounts
+  \ dirfirst
+  \ dironly
+  \ dirpreviews
+  \ down
+  \ draw
+  \ drawbox
+  \ dupfilefmt
+  \ echo
+  \ echoerr
+  \ echomsg
+  \ errorfmt
+  \ filesep
+  \ filter
+  \ filtermethod
+  \ find
+  \ find-back
+  \ find-next
+  \ find-prev
+  \ findlen
+  \ glob-select
+  \ glob-unselect
+  \ half-down
+  \ half-up
+  \ help
+  \ hidden
+  \ hiddenfiles
+  \ high
+  \ history
+  \ icons
+  \ ifs
+  \ ignorecase
+  \ ignoredia
+  \ incfilter
+  \ incsearch
+  \ info
+  \ infotimefmtnew
+  \ infotimefmtold
+  \ invert
+  \ jump-next
+  \ jump-prev
+  \ load
+  \ low
+  \ maps
+  \ mark-load
+  \ mark-remove
+  \ mark-save
+  \ menufmt
+  \ menuheaderfmt
+  \ menuselectfmt
+  \ mergeindicators
+  \ middle
+  \ mouse
+  \ nmaps
+  \ number
+  \ numberfmt
+  \ on-cd
+  \ on-focus-gained
+  \ on-focus-lost
+  \ on-init
+  \ on-load
+  \ on-quit
+  \ on-redraw
+  \ on-select
+  \ open
+  \ page-down
+  \ page-up
+  \ paste
+  \ period
+  \ pre-cd
+  \ preload
+  \ preserve
+  \ preview
+  \ previewer
+  \ promptfmt
+  \ push
+  \ quit
+  \ ratios
+  \ read
+  \ redraw
+  \ relativenumber
+  \ reload
+  \ rename
+  \ reverse
+  \ roundbox
+  \ rulerfile
+  \ rulerfmt
+  \ scroll-down
+  \ scroll-up
+  \ scrolloff
+  \ search
+  \ search-back
+  \ search-next
+  \ search-prev
+  \ searchmethod
+  \ select
+  \ selectfmt
+  \ selmode
+  \ setfilter
+  \ shell
+  \ shell-async
+  \ shell-pipe
+  \ shell-wait
+  \ shellflag
+  \ shellopts
+  \ showbinds
+  \ sizeunits
+  \ smartcase
+  \ smartdia
+  \ sortby
+  \ source
+  \ statfmt
+  \ sync
+  \ tabstop
+  \ tag
+  \ tag-toggle
+  \ tagfmt
+  \ tempmarks
+  \ timefmt
+  \ toggle
+  \ top
+  \ truncatechar
+  \ truncatepct
+  \ tty-write
+  \ unselect
+  \ up
+  \ updir
+  \ visual
+  \ visual-accept
+  \ visual-change
+  \ visual-discard
+  \ visual-unselect
+  \ visualfmt
+  \ vmaps
+  \ waitmsg
+  \ watch
+  \ wrapscan
+  \ wrapscroll
 "}}}
 
 "{{{ Special Matching
-syn match    lfSpecial        '<.*>\|\\.'
+syn match lfSpecial '\v\<[^>]+\>'
+syn match lfSpecial '\v\\(["\\abfnrtv]|\o+)'
 "}}}
 
 "{{{ Shell Script Matching for cmd
 let s:shell_syntax = get(g:, 'lf_shell_syntax', "syntax/sh.vim")
 let s:shell_syntax = get(b:, 'lf_shell_syntax', s:shell_syntax)
+
 unlet b:current_syntax
 exe 'syn include @Shell '.s:shell_syntax
+syn iskeyword @,-
 let b:current_syntax = "lf"
-syn region   lfIgnore         start=".{{\n" end="^}}"
-    \ keepend contains=lfExternalShell,lfExternalPatch
-syn match    lfShell          '\$[a-zA-Z].*$
-    \\|:[a-zA-Z].*$
-    \\|%[a-zA-Z].*$
-    \\|![a-zA-Z].*$
-    \\|&[a-zA-Z].*$'
-    \ transparent contains=@Shell,lfExternalPatch
-syn match    lfExternalShell  "^.*$" transparent contained contains=@Shell
-syn match    lfExternalPatch  "^\s*cmd\ .*\ .{{$\|^}}$" contained
+
+syn region lfCommand matchgroup=lfCommandMarker start=' \zs:\ze' end='$' keepend transparent
+syn region lfCommand matchgroup=lfCommandMarker start=' \zs:{{\ze' end='}}' keepend transparent
+syn region lfShell matchgroup=lfShellMarker start=' \zs[$!%&]\ze' end='$' keepend contains=@Shell
+syn region lfShell matchgroup=lfShellMarker start=' \zs[$!%&]{{\ze' end='}}' keepend contains=@Shell
 "}}}
 
 "{{{ Link Highlighting
-hi def link  lfComment        Comment
-hi def link  lfVar            Type
-hi def link  lfSpecial        Special
-hi def link  lfString         String
-hi def link  lfKeyword        Statement
-hi def link  lfOptions        Constant
-hi def link  lfConstant       Constant
-hi def link  lfExternalShell  Normal
-hi def link  lfExternalPatch  Special
-hi def link  lfIgnore         Special
+hi def link lfComment       Comment
+hi def link lfSpecial       SpecialChar
+hi def link lfString        String
+hi def link lfKeyword       Statement
+hi def link lfOptions       Constant
+hi def link lfCommandMarker Special
+hi def link lfShellMarker   Special
 "}}}
+
+let &cpo = s:cpo
+unlet s:cpo

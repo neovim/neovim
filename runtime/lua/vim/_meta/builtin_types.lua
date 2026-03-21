@@ -39,6 +39,14 @@
 --- @field pos [integer, integer, integer, integer]
 --- @field file string
 
+--- @class vim.fn.getmatches.ret.item
+--- @field id integer
+--- @field group string
+--- @field pattern? string
+--- @field priority integer
+--- @field conceal? string
+--- @field [string] [integer, integer, integer] all strings of format 'pos%d'
+
 --- @class vim.fn.getmousepos.ret
 --- @field screenrow integer
 --- @field screencol integer
@@ -52,6 +60,7 @@
 --- @field botline integer
 --- @field bufnr integer
 --- @field height integer
+--- @field leftcol integer
 --- @field loclist integer
 --- @field quickfix integer
 --- @field tabnr integer
@@ -145,14 +154,14 @@
 --- list number in the quickfix stack; zero
 --- means the current quickfix list and "$" means
 --- the last quickfix list.
---- @field nr? integer
+--- @field nr? integer|'$'
 ---
 --- function to get the text to display in the
 --- quickfix window. The value can be the name of
 --- a function or a funcref or a lambda. Refer
 --- to |quickfix-window-function| for an explanation
 --- of how to write the function and an example.
---- @field quickfixtextfunc? function
+--- @field quickfixtextfunc? string|function
 ---
 --- quickfix list title text. See |quickfix-title|
 --- @field title? string
@@ -184,14 +193,14 @@
 --- @field signs vim.fn.sign[]
 
 --- @class vim.fn.sign_place.dict
---- @field lnum? integer
+--- @field lnum? integer|string
 --- @field priority? integer
 
 --- @class vim.fn.sign_placelist.list.item
 --- @field buffer integer|string
 --- @field group? string
 --- @field id? integer
---- @field lnum integer
+--- @field lnum? integer|string
 --- @field name string
 --- @field priority? integer
 
@@ -297,3 +306,18 @@
 --- A list of dictionaries with information about
 --- undo blocks.
 --- @field entries vim.fn.undotree.entry[]
+
+--- @class vim.fn.winlayout.leaf
+--- @field [1] "leaf" Node type
+--- @field [2] integer winid
+
+--- @class vim.fn.winlayout.branch
+--- @field [1] "row" | "col" Node type
+--- @field [2] (vim.fn.winlayout.leaf|vim.fn.winlayout.branch)[] children
+
+--- @class vim.fn.winlayout.empty
+
+--- @alias vim.fn.winlayout.ret
+--- | vim.fn.winlayout.leaf
+--- | vim.fn.winlayout.branch
+--- | vim.fn.winlayout.empty

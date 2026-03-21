@@ -1,12 +1,8 @@
 local t = require('test.testutil')
-local n = require('test.functional.testnvim')()
 
-local clear = n.clear
 local eq = t.eq
 
 describe('vim.text', function()
-  before_each(clear)
-
   describe('indent()', function()
     it('validation', function()
       t.matches('size%: expected number, got string', t.pcall_err(vim.text.indent, 'x', 'x'))

@@ -5,9 +5,7 @@
 #include "nvim/event/defs.h"  // IWYU pragma: keep
 #include "nvim/os/time.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/multiqueue.h.generated.h"
-#endif
+#include "event/multiqueue.h.generated.h"
 
 #define multiqueue_put(q, h, ...) \
   do { \

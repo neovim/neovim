@@ -31,6 +31,42 @@ func Test__mksession_arglocal()
   call delete('Xtest_mks.out')
 endfunc
 
+func Test_mksession_arglocal_localdir()
+  call mkdir('Xa', 'R')
+  call writefile(['This is Xb'], 'Xa/Xb.txt', 'D')
+  let olddir = getcwd()
+  let oldargs = argv()
+
+  for tabpage in [v:false, v:true]
+    let msg = tabpage ? 'tabpage-local' : 'window-local'
+
+    exe tabpage ? 'tabnew' : 'botright new'
+    exe tabpage ? 'tcd Xa' : 'lcd Xa'
+    let localdir = getcwd()
+    arglocal
+    $argadd Xb.txt
+    let localargs = argv()
+    exe tabpage ? 'tabprev' : 'wincmd p'
+    call assert_equal(olddir, getcwd(), msg)
+    call assert_equal(oldargs, argv(), msg)
+    mksession! Xtest_mks_localdir.out
+    exe tabpage ? '+tabclose' : '$close'
+    bwipe! Xa/Xb.txt
+
+    source Xtest_mks_localdir.out
+    exe tabpage ? 'tabnext' : 'wincmd b'
+    call assert_equal(localdir, getcwd(), msg)
+    call assert_equal(localargs, argv(), msg)
+    $argument
+    call assert_equal('This is Xb', getline(1), msg)
+
+    bwipe!
+    call assert_equal(olddir, getcwd(), msg)
+    call assert_equal(oldargs, argv(), msg)
+    call delete('Xtest_mks_localdir.out')
+  endfor
+endfunc
+
 func Test_mksession()
   tabnew
   let wrap_save = &wrap
@@ -1086,10 +1122,10 @@ endfunc
 func Test_mkvimrc()
   let entries = [
         \ ['', 'nothing', '<Nop>'],
-        \ ['n', 'normal', 'NORMAL'],
-        \ ['v', 'visual', 'VISUAL'],
-        \ ['s', 'select', 'SELECT'],
-        \ ['x', 'visualonly', 'VISUALONLY'],
+        \ ['n', 'normal', 'NORMAL<Up>'],
+        \ ['v', 'visual', 'VISUAL<S-Down>'],
+        \ ['s', 'select', 'SELECT<C-Left>'],
+        \ ['x', 'visualonly', 'VISUALONLY<M-Right>'],
         \ ['o', 'operator', 'OPERATOR'],
         \ ['i', 'insert', 'INSERT'],
         \ ['l', 'lang', 'LANG'],
@@ -1120,7 +1156,7 @@ func Test_mkvimrc()
   " set pastetoggle=<F5>
   set wildchar=<F6>
   set wildcharm=<F7>
-  call assert_fails('mkvimrc Xtestvimrc')
+  call assert_fails('mkvimrc Xtestvimrc', 'E189: "Xtestvimrc" exists')
   mkvimrc! Xtestvimrc
   " call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set pastetoggle=<F5>'))
   call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set wildchar=<F6>'))
@@ -1170,8 +1206,8 @@ endfunc
 
 " Test for creating views with manual folds
 func Test_mkview_manual_fold()
-  call writefile(range(1,10), 'Xfile')
-  new Xfile
+  call writefile(range(1,10), 'Xmkvfile', 'D')
+  new Xmkvfile
   " create recursive folds
   5,6fold
   4,7fold
@@ -1194,9 +1230,44 @@ func Test_mkview_manual_fold()
   source Xview
   call assert_equal([-1, -1, -1, -1, -1, -1], [foldclosed(3), foldclosed(4),
         \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
-  call delete('Xfile')
   call delete('Xview')
   bw!
+endfunc
+
+" Test for handling invalid folds within views
+func Test_mkview_ignore_invalid_folds()
+  call writefile(range(1,10), 'Xmkvfile', 'D')
+  new Xmkvfile
+  " create some folds
+  5,6fold
+  4,7fold
+  mkview Xview
+  normal zE
+  " delete lines to make folds invalid
+  call deletebufline('', 6, '$')
+  source Xview
+  call assert_equal([-1, -1, -1, -1, -1, -1], [foldclosed(3), foldclosed(4),
+        \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
+  call delete('Xview')
+  bw!
+endfunc
+
+" Test default 'viewdir' value
+func Test_mkview_default_home()
+  throw 'Skipped: N/A'
+  if has('win32')
+    " use escape() to handle backslash path separators
+    call assert_match('^' .. escape($ORIGHOME, '\') .. '/vimfiles', &viewdir)
+  elseif has('unix')
+    call assert_match(
+          \ '^' .. $ORIGHOME .. '/.vim\|' ..
+          \ '^' .. $XDG_CONFIG_HOME .. '/vim'
+          \ , &viewdir)
+  elseif has('amiga')
+    call assert_match('^home:vimfiles', &viewdir)
+  elseif has('mac')
+    call assert_match('^' .. $VIM .. '/vimfiles', &viewdir)
+  endif
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

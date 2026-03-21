@@ -6,7 +6,7 @@ freebsd_task:
   name: FreeBSD
   only_if: $BRANCH != "master"
   freebsd_instance:
-    image_family: freebsd-14-2
+    image_family: freebsd-15-0-amd64-ufs
   timeout_in: 30m
   install_script:
     - pkg install -y cmake gmake ninja unzip wget gettext python git
@@ -20,7 +20,12 @@ freebsd_task:
     - pw useradd cirrus -m
     - chown -R cirrus:cirrus .
   functionaltest_script:
-    - sudo -u cirrus gmake functionaltest
+    - set +e
+    # `-k 0` tells ninja to continue running all targets even if some fail.
+    - sudo -u cirrus cmake --build build --target functionaltest-parallel -j 2 -- -k 0
+    - exit_code="$?"
+    - cmake --build build --target functionaltest-summary
+    - exit "$exit_code"
   unittest_script:
     - sudo -u cirrus gmake unittest
   oldtest_script:

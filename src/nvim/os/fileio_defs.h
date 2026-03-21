@@ -15,9 +15,7 @@ typedef struct {
   uint64_t bytes_read;  ///< total bytes read so far
 } FileDescriptor;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/fileio_defs.h.inline.generated.h"
-#endif
+#include "os/fileio_defs.h.inline.generated.h"
 
 /// Check whether end of file was encountered
 ///

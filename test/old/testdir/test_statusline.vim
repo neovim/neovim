@@ -16,6 +16,10 @@ func TearDown()
 endfunc
 
 func s:get_statusline()
+  if has('gui_running')
+    redraw!
+    sleep 1m
+  endif
   return ScreenLines(&lines - 1, &columns)[0]
 endfunc
 
@@ -60,7 +64,9 @@ func Test_statusline_will_be_disabled_with_error()
   catch
   endtry
   call assert_true(s:func_in_statusline_called)
-  call assert_equal('', &statusline)
+  " Nvim: resets to default value instead.
+  " call assert_equal('', &statusline)
+  call assert_equal(nvim_get_option_info2('statusline', {}).default, &statusline)
   set statusline=
 endfunc
 
@@ -166,9 +172,16 @@ func Test_statusline()
   call assert_match('^0,Top\s*$', s:get_statusline())
   norm G
   call assert_match('^100,Bot\s*$', s:get_statusline())
-  9000
-  " Don't check the exact percentage as it depends on the window size
-  call assert_match('^90,\(Top\|Bot\|\d\+%\)\s*$', s:get_statusline())
+  " The exact percentage depends on the window height, so create a window with
+  " known height.
+  9000 | botright 10split | setlocal scrolloff=0 | normal! zb
+  call assert_match('^90,89%\s*$', s:get_statusline())
+  normal! zt
+  call assert_match('^90,90%\s*$', s:get_statusline())
+  " %P should result in a string with 3 in length when not translated.
+  normal! 500zb
+  call assert_match('^5, 4%\s*$', s:get_statusline())
+  close
 
   " %q: "[Quickfix List]", "[Location List]" or empty.
   set statusline=%q
@@ -315,6 +328,8 @@ func Test_statusline()
   call assert_equal(sa3, screenattr(&lines - 1, 7))
 
   " %*: Set highlight group to User{N}
+  " Nvim: Combined with hl-StatusLine so needs to be set.
+  hi link User1 ErrorMsg
   set statusline=a%1*b%0*c
   call assert_match('^abc\s*$', s:get_statusline())
   let sa1=screenattr(&lines - 1, 1)
@@ -637,6 +652,83 @@ func Test_statusline_highlight_group_cleared()
   call VerifyScreenDump(buf, 'Test_statusline_stl_1', {})
 
   call StopVimInTerminal(buf)
+endfunc
+
+" Test for setting both global and local 'statusline' values in a sandbox
+func Test_statusline_in_sandbox()
+  func SandboxStatusLine()
+    call writefile(['after'], 'Xsandboxstatusline_write')
+    return "status line"
+  endfunc
+
+  func Check_statusline_in_sandbox(set_cmd0, set_cmd1)
+    only
+    11new | 20vsplit
+    call setline(1, 'foo')
+    windo setlocal statusline=SomethingElse
+    wincmd t
+    setlocal statusline=
+    call writefile(['before'], 'Xsandboxstatusline_write', 'D')
+
+    exe 'sandbox' a:set_cmd0 'statusline=%!SandboxStatusLine()'
+    call assert_equal('', &l:statusline)
+    sandbox setlocal statusline=%!SandboxStatusLine()
+    call assert_fails('redrawstatus', 'E48:')
+    call assert_equal(['before'], readfile('Xsandboxstatusline_write'))
+    wincmd b
+    call assert_fails('redrawstatus!', 'E48:')
+    call assert_equal(['before'], readfile('Xsandboxstatusline_write'))
+    wincmd t
+
+    5split
+    call assert_fails('redrawstatus!', 'E48:')
+    call assert_equal(['before'], readfile('Xsandboxstatusline_write'))
+    close
+
+    setlocal statusline=%!SandboxStatusLine() | redrawstatus
+    call assert_equal('status line', Screenline(12))
+    call assert_equal(['after'], readfile('Xsandboxstatusline_write'))
+
+    call writefile(['before'], 'Xsandboxstatusline_write')
+    setlocal statusline=
+    call assert_fails('redrawstatus', 'E48:')
+    call assert_equal(['before'], readfile('Xsandboxstatusline_write'))
+
+    5split
+    call assert_fails('redrawstatus!', 'E48:')
+    call assert_equal(['before'], readfile('Xsandboxstatusline_write'))
+
+    exe a:set_cmd1 'statusline=%!SandboxStatusLine()' | redrawstatus!
+    call assert_equal('', &l:statusline)
+    call assert_equal('status line', Screenline(6))
+    call assert_equal('status line', Screenline(12))
+    call assert_equal(['after'], readfile('Xsandboxstatusline_write'))
+    bwipe!
+  endfunc
+
+  set noequalalways
+  call Check_statusline_in_sandbox('setglobal', 'setglobal')
+  call Check_statusline_in_sandbox('setglobal', 'set')
+  call Check_statusline_in_sandbox('set', 'setglobal')
+  call Check_statusline_in_sandbox('set', 'set')
+
+  set equalalways& statusline&
+  delfunc SandboxStatusLine
+  delfunc Check_statusline_in_sandbox
+endfunc
+
+" This used to call memmove with a negative size and crash Vim
+func Test_statusline_singlebyte_negative()
+  let [_columns, _ls, _stl, _enc]  = [&columns, &ls, &stl, &enc]
+  " set encoding=latin1
+  set laststatus=2 columns=15
+  setl stl=%#ErrorMsg#abcdtàØ?}}o@`s`ÿæCú\xE%#Normal#
+  vsp
+  setl stl=%#ErrorMsg#abcdtàØ?}}o@`s`ÿæCú\xE%#Normal#
+  redraw!
+  redrawstatus
+  bw!
+  let [&columns, &ls, &stl, &enc] = [_columns, _ls, _stl, _enc]
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

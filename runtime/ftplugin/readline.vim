@@ -3,6 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
 " Last Change:		2024 Sep 19 (simplify keywordprg #15696)
+" 2024 Jul 22 by Vim project (use :hor term #17822)
 
 if exists("b:did_ftplugin")
   finish
@@ -36,7 +37,7 @@ endif
 
 if has('unix') && executable('less') && exists(':terminal') == 2
   command -buffer -nargs=1 ReadlineKeywordPrg
-        \ silent exe 'term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . '3 readline'
+        \ silent exe 'hor term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . '3 readline'
   setlocal iskeyword+=-
   setlocal keywordprg=:ReadlineKeywordPrg
   let b:undo_ftplugin .= '| setlocal keywordprg< iskeyword< | sil! delc -buffer ReadlineKeywordPrg'

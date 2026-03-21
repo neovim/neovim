@@ -4,6 +4,9 @@ Contributing to Neovim
 Getting started
 ---------------
 
+If you are new to the codebase, read [:help dev-quickstart](https://neovim.io/doc/user/dev_tools.html#dev-quickstart)
+to see how to run tests and start hacking on the codebase.
+
 If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
@@ -11,9 +14,9 @@ low-risk/isolated tasks:
 - Fix bugs found by [Coverity](#coverity).
 - [Merge a Vim patch] (requires strong familiarity with Vim)
   - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
-    - Vimscript and documentation files are (mostly) maintained by [Vim], not Nvim.
+    - *Vimscript* files are (mostly) maintained by [Vim], not Nvim.
+    - *Lua* files are maintained by *Nvim*.
     - Nvim's [filetype detection](https://github.com/neovim/neovim/blob/master/runtime/lua/vim/filetype.lua) behavior matches Vim, so changes to filetype detection should be submitted to [Vim] first.
-    - Lua files are maintained by Nvim.
 
 Reporting problems
 ------------------
@@ -33,9 +36,12 @@ Reporting problems
 Developer guidelines
 --------------------
 
-- Read [:help dev](https://neovim.io/doc/user/develop.html#dev) and [:help dev-doc][dev-doc-guide] if you are working on Nvim core.
-- Read [:help dev-ui](https://neovim.io/doc/user/develop.html#dev-ui) if you are developing a UI.
-- Read [:help dev-api-client](https://neovim.io/doc/user/develop.html#dev-api-client) if you are developing an API client.
+- New functionality should generally be implemented in Lua, not C. PRs [#37757](https://github.com/neovim/neovim/pull/37757), [#37831](https://github.com/neovim/neovim/pull/37831)
+  are excellent examples of this.
+- Read [:help dev-quickstart](https://neovim.io/doc/user/dev_tools.html#dev-quickstart) to see how to run tests and start hacking on the codebase.
+- Read [:help dev](https://neovim.io/doc/user/dev.html#dev) and [:help dev-doc][dev-doc-guide] if you are working on Nvim core.
+- Read [:help dev-ui](https://neovim.io/doc/user/dev.html#dev-ui) if you are developing a UI.
+- Read [:help dev-api-client](https://neovim.io/doc/user/dev.html#dev-api-client) if you are developing an API client.
 - Install `ninja` for faster builds of Nvim.
   ```bash
   sudo apt-get install ninja-build
@@ -51,12 +57,26 @@ Developer guidelines
 Pull requests (PRs)
 ---------------------
 
-- To avoid duplicate work, create a draft pull request.
+### Guidelines
+
+- Don't ask to be assigned to an issue, just send a (reasonably complete) PR and
+  mark it as Draft until it is ready for review.
 - Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
-- Use a _rebase workflow_ for all PRs.
-  - After addressing review comments, it's fine to force-push.
+- Use a _rebase workflow_. After addressing review comments, it's fine to force-push.
+
+### AI-assisted work
+
+Using AI for contributions is acceptable, given the following:
+
+- YOU review the output before sending a non-Draft PR. Do NOT request review
+  until YOU have checked the AI generated PR and verify the following:
+- REMOVE verbosity and blathering from documentation, comments, PR description,
+  commit message, etc. All resources, including names, should be CONCISE and
+  CLEAR. They should contain USEFUL information and nothing more.
+- REMOVE and DEDUPLICATE redundant code, tests, explanations, etc. Explicitness
+  and clarity are GOOD but verbosity, over-explanation, and redundancy is BAD.
 
 ### Merging to master
 
@@ -69,16 +89,22 @@ For maintainers: when a PR is ready to merge to master,
 
 Pull requests have two stages: Draft and Ready for review.
 
-1. [Create a Draft PR][pr-draft] while you are _not_ requesting feedback as
-  you are still working on the PR.
-    - You can skip this if your PR is ready for review.
-2. [Change your PR to ready][pr-ready] when the PR is ready for review.
+1. [Create a Draft PR][pr-draft] while you are _not_ requesting feedback and
+   still working on the PR.
+2. [Change your PR to Ready][pr-ready] when the PR is ready for review.
     - You can convert back to Draft at any time.
 
 Do __not__ add labels like `[RFC]` or `[WIP]` in the title to indicate the
-state of your PR: this just adds noise. Non-Draft PRs are assumed to be open
-for comments; if you want feedback from specific people, `@`-mention them in
-a comment.
+state of your PR: this just adds noise.
+
+### PR description
+
+For bugfixes, your PR title should be essentially the same as (1) the
+"Problem" statement and (2) the test-case name. For example [PR #38048](https://github.com/neovim/neovim/pull/38048):
+
+- Title: `fix(lua): extra CR (\r) in nvim -l output`
+- Problem: `nvim -l prints an extra \r to stdout: ...`
+- Test name: `it('outputs the EOF as LF (not CRLF) #36853' ...`
 
 ### Commit messages
 
@@ -171,16 +197,17 @@ Coding
 You can run the linter locally by:
 
 ```bash
-make lint
+make lint  # or lintc, lintlua, lintquery, lintdoc
 ```
 
 ### Style
 
 - You can format files by using:
   ```bash
-  make format  # or formatc, formatlua
+  make format  # or formatc, formatlua, formatquery
   ```
-  This will format changed Lua and C files with all appropriate flags set.
+  This will format changed C, Lua, and treesitter query files with all
+  appropriate flags set.
 - Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
   the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
   ```vim
@@ -188,8 +215,8 @@ make lint
     setlocal formatprg=uncrustify\ -q\ -l\ C\ -c\ src/uncrustify.cfg\ --no-backup
   endif
   ```
-- There is also `.clang-format` which has drifted from the [style-guide], but
-  is available for reference. To use the Nvim `gq` command with `clang-format`:
+- There is also `.clang-format` which is "mostly" aligned with uncrustify.
+  To use the Nvim `gq` command with `clang-format`:
   ```vim
   if !empty(findfile('.clang-format', ';'))
     setlocal formatprg=clang-format\ -style=file
@@ -227,10 +254,10 @@ See [#549][549] for more details.
 
 ### Lua runtime files
 
-Most of the Lua core [`runtime/`](./runtime) modules are precompiled to
-bytecode, so changes to those files won't get used unless you rebuild Nvim or
-by passing `--luamod-dev` and `$VIMRUNTIME`. For example, try adding a function
-to `runtime/lua/vim/_editor.lua` then:
+The Lua [`runtime/lua/vim/_core/`](./runtime/lua/vim/_core/) modules are
+precompiled to bytecode, so changes won't be usable unless you (1) rebuild Nvim
+or (2) start Nvim with `--luamod-dev` and `$VIMRUNTIME`. For example try adding
+a function to `runtime/lua/vim/_core/editor.lua`, then:
 
 ```bash
 VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
@@ -273,7 +300,7 @@ If you need to modify or debug the documentation flow, these are the main files:
   runtime/lua/vim/*     =>  runtime/doc/lua.txt
   runtime/lua/vim/lsp/  =>  runtime/doc/lsp.txt
   src/nvim/api/*        =>  runtime/doc/api.txt
-  src/nvim/eval.lua     =>  runtime/doc/builtin.txt
+  src/nvim/eval.lua     =>  runtime/doc/vimfn.txt
   src/nvim/options.lua  =>  runtime/doc/options.txt
   ```
 
@@ -283,24 +310,6 @@ If you need to modify or debug the documentation flow, these are the main files:
 
 Use [LuaLS] annotations in Lua docstrings to annotate parameter types, return
 types, etc. See [:help dev-lua-doc][dev-lua-doc].
-
-- The template for function documentation is:
-  ```lua
-  --- {Brief}
-  ---
-  --- {Long explanation}
-  ---
-  --- @param arg1 type {description}
-  --- @param arg2 type {description}
-  --- ...
-  ---
-  --- @return type {description}
-  ```
-- If possible, add type information (`table`, `string`, `number`, ...). Multiple valid types are separated by a bar (`string|table`). Indicate optional parameters via `type|nil`.
-- If a function in your Lua module should _not_ be documented, add `@nodoc`.
-- If the function is internal or otherwise non-public add `@private`.
-      - Private functions usually should be underscore-prefixed (named "_foo", not "foo").
-- Mark deprecated functions with `@deprecated`.
 
 Third-party dependencies
 ------------------------
@@ -343,18 +352,16 @@ as context, use the `-W` argument as well.
 
 [549]: https://github.com/neovim/neovim/issues/549
 [1820]: https://github.com/neovim/neovim/pull/1820
-[3174]: https://github.com/neovim/neovim/issues/3174
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
 [Cirrus CI]: https://cirrus-ci.com/github/neovim/neovim
-[Clang report]: https://neovim.io/doc/reports/clang/
 [GitHub Actions]: https://github.com/neovim/neovim/actions
 [Vim]: https://github.com/vim/vim
 [clangd]: https://clangd.llvm.org
 [Merge a Vim patch]: https://neovim.io/doc/user/dev_vimpatch.html
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [conventional_commits]: https://www.conventionalcommits.org
-[dev-doc-guide]: https://neovim.io/doc/user/develop.html#dev-doc
-[dev-lua-doc]: https://neovim.io/doc/user/develop.html#dev-lua-doc
+[dev-doc-guide]: https://neovim.io/doc/user/dev.html#dev-doc
+[dev-lua-doc]: https://neovim.io/doc/user/dev.html#dev-lua-doc
 [LuaLS]: https://luals.github.io/wiki/annotations/
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [gh]: https://cli.github.com/
@@ -368,6 +375,6 @@ as context, use the `-W` argument as well.
 [nvim-lspconfig/clangd]: https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#clangd
 [pr-draft]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
-[run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
+[run-tests]: https://github.com/neovim/neovim/blob/master/runtime/doc/dev_test.txt
 [style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [wiki-faq]: https://neovim.io/doc/user/faq.html

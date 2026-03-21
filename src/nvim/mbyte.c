@@ -83,9 +83,7 @@ struct interval {
 };
 
 // uncrustify:off
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mbyte.c.generated.h"
-#endif
+#include "mbyte.c.generated.h"
 // uncrustify:on
 
 static const char e_list_item_nr_is_not_list[]
@@ -417,11 +415,11 @@ void remove_bom(char *s)
   }
 }
 
-// Get class of pointer:
-// 0 for blank or NUL
-// 1 for punctuation
-// 2 for an (ASCII) word character
-// >2 for other word characters
+/// Get class of pointer:
+/// 0 for blank or NUL
+/// 1 for punctuation
+/// 2 for an alphanumeric word character
+/// >2 for other word characters, including CJK and emoji
 int mb_get_class(const char *p)
   FUNC_ATTR_PURE
 {
@@ -1174,7 +1172,7 @@ bool utf_printable(int c)
 
 // Return true if "c" is in "table".
 static bool intable(const struct interval *table, size_t n_items, int c)
-  FUNC_ATTR_PURE
+  FUNC_ATTR_CONST
 {
   assert(n_items > 0);
   // first quick check for Latin1 etc. characters
@@ -1202,11 +1200,11 @@ static bool intable(const struct interval *table, size_t n_items, int c)
 // Return true for characters that can be displayed in a normal way.
 // Only for characters of 0x100 and above!
 bool utf_printable(int c)
-  FUNC_ATTR_PURE
+  FUNC_ATTR_CONST
 {
   // Sorted list of non-overlapping intervals.
   // 0xd800-0xdfff is reserved for UTF-16, actually illegal.
-  static struct interval nonprint[] = {
+  static const struct interval nonprint[] = {
     { 0x070f, 0x070f }, { 0x180b, 0x180e }, { 0x200b, 0x200f }, { 0x202a, 0x202e },
     { 0x2060, 0x206f }, { 0xd800, 0xdfff }, { 0xfeff, 0xfeff }, { 0xfff9, 0xfffb },
     { 0xfffe, 0xffff }
@@ -1274,7 +1272,7 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
     { 0x202f, 0x202f, 0 },
     { 0x2030, 0x205e, 1 },              // punctuation and symbols
     { 0x205f, 0x205f, 0 },
-    { 0x2060, 0x27ff, 1 },              // punctuation and symbols
+    { 0x2060, 0x206f, 1 },              // punctuation and symbols
     { 0x2070, 0x207f, 0x2070 },         // superscript
     { 0x2080, 0x2094, 0x2080 },         // subscript
     { 0x20a0, 0x27ff, 1 },              // all kinds of symbols
@@ -2187,7 +2185,7 @@ void mb_adjust_cursor(void)
 }
 
 /// Checks and adjusts cursor column. Not mode-dependent.
-/// @see check_cursor_col_win
+/// @see check_cursor_col
 ///
 /// @param  win_  Places cursor on a valid column for this window.
 void mb_check_adjust_col(void *win_)
@@ -2412,14 +2410,15 @@ char *enc_locale(void)
   char buf[50];
 
   const char *s;
+
 #ifdef HAVE_NL_LANGINFO_CODESET
   if (!(s = nl_langinfo(CODESET)) || *s == NUL)
 #endif
   {
     if (!(s = setlocale(LC_CTYPE, NULL)) || *s == NUL) {
-      if ((s = os_getenv("LC_ALL"))) {
-        if ((s = os_getenv("LC_CTYPE"))) {
-          s = os_getenv("LANG");
+      if ((s = os_getenv_noalloc("LC_ALL"))) {
+        if ((s = os_getenv_noalloc("LC_CTYPE"))) {
+          s = os_getenv_noalloc("LANG");
         }
       }
     }

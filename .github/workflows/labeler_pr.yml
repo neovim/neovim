@@ -1,20 +1,28 @@
 name: "labeler: PR"
 on:
   pull_request_target:
-    types: [opened]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
 jobs:
   changed-files:
+    if: github.event.action == 'opened'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/labeler@v5
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+
+    - uses: actions/labeler@v6
       with:
         configuration-path: .github/scripts/labeler_configuration.yml
 
   type-scope:
+    if: github.event.action == 'opened'
     needs: changed-files
     runs-on: ubuntu-latest
     permissions:
@@ -33,14 +41,56 @@ jobs:
     - name: "Extract if the PR is a breaking change and add it as label"
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
 
+  ai-assisted:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      AI_LABEL: 'AI assisted 🤖'
+    steps:
+    - name: "Label PRs with disclosed AI-assisted commits"
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        commit_messages=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER/commits" --paginate --jq '.[].commit.message')
+
+        has_ai_disclosure=false
+        for pattern in \
+          '^(AI|LLM|GPT)([ -][A-Za-z-]+)?: *.+' \
+          'supported +by +AI' \
+          '^Co-authored(-| +)by: .*(Claude|Codex|Copilot|Cursor|Gemini|Aider|Cline|Windsurf|OpenAI|OpenCode|Amp|Anthropic|GPT)'; do
+          if grep -Eiq "$pattern" <<< "$commit_messages"; then
+            has_ai_disclosure=true
+            break
+          fi
+        done
+
+        if [[ "$has_ai_disclosure" == false ]]; then
+          # No supported AI disclosure found in commits
+          exit 0
+        fi
+
+        pr_labels=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
+        if grep -Fxq "$AI_LABEL" <<< "$pr_labels"; then
+          # Already has label
+          exit 0
+        fi
+
+        gh pr edit "$PR_NUMBER" --add-label "$AI_LABEL"
+
   target-release:
+    if: github.event.action == 'opened'
     needs: ["changed-files", "type-scope"]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
     - if: startsWith(github.base_ref, 'release')
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           github.rest.issues.addLabels({
@@ -51,6 +101,7 @@ jobs:
           })
 
   request-reviewer:
+    if: github.event.action == 'opened'
     needs: ["changed-files", "type-scope", "target-release"]
     permissions:
       pull-requests: write

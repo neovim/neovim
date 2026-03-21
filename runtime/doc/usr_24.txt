@@ -1,6 +1,8 @@
 *usr_24.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			     Inserting quickly
 
@@ -187,6 +189,7 @@ with a certain type of item:
 	CTRL-X CTRL-D		macro definitions (also in included files)
 	CTRL-X CTRL-I		current and included files
 	CTRL-X CTRL-K		words from a dictionary
+	CTRL-X CTRL-R		contents from registers
 	CTRL-X CTRL-T		words from a thesaurus
 	CTRL-X CTRL-]		tags
 	CTRL-X CTRL-V		Vim command line
@@ -564,17 +567,16 @@ that combination.  Thus CTRL-K dP also works.  Since there is no digraph for
 
 	Note:
 	The digraphs depend on the character set that Vim assumes you are
-	using.  Always use ":digraphs" to find out which digraphs are currently
-	available.
+	using.  Always use ":digraphs" to find out which digraphs are
+	currently available.
 
-You can define your own digraphs.  Example: >
+You can define your own digraphs by specifying the target character with a
+decimal number.  Example: >
 
-	:digraph a" ä
+	:digraph a\" 228
 
-This defines that CTRL-K a" inserts an ä character.  You can also specify the
-character with a decimal number.  This defines the same digraph: >
-
-	:digraph a" 228
+This defines that CTRL-K a" inserts an ä character.  Note: we had to escape
+the " character since otherwise it would act as a comment character.
 
 More information about digraphs here: |digraphs|
    Another way to insert special characters is with a keymap.  More about that

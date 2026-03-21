@@ -57,28 +57,94 @@ describe(':emenu', function()
     -- Assert that Edit.Paste pasted @" into the commandline.
     eq('thiscmdmode', eval('getcmdline()'))
   end)
+
+  it('popup menu in visual mode via <C-o> from insert mode #19473', function()
+    n.exec([[
+      aunmenu *
+      source $VIMRUNTIME/menu.vim
+    ]])
+    feed('itext<C-o>V')
+    command('emenu PopUp.Cut')
+    eq('', fn.getline(1))
+    eq('text\n', fn.getreg('"'))
+    eq('', n.api.nvim_get_vvar('errmsg'))
+  end)
+end)
+
+local test_menus_cmd = [=[
+  aunmenu *
+
+  nnoremenu &Test.Test inormal<ESC>
+  inoremenu Test.Test insert
+  vnoremenu Test.Test x
+  cnoremenu Test.Test cmdmode
+  menu Test.Nested.test level1
+  menu Test.Nested.Nested2 level2
+
+  nnoremenu <script> Export.Script p
+  tmenu Export.Script This is the tooltip
+  menu ]Export.hidden thisoneshouldbehidden
+
+  nnoremenu Edit.Paste p
+  cnoremenu Edit.Paste <C-R>"
+]=]
+
+describe(':menu listing', function()
+  before_each(function()
+    clear()
+    command(test_menus_cmd)
+  end)
+
+  it('matches by path argument', function()
+    eq(
+      [[
+--- Menus ---
+500 Edit
+  500 Paste
+      c*   <C-R>"]],
+      n.exec_capture('cmenu Edit')
+    )
+    eq(
+      [[
+--- Menus ---
+500 &Test
+  500 Test
+      n*   inormal<Esc>
+  500 Nested
+    500 test
+        n    level1
+    500 Nested2
+        n    level2]],
+      n.exec_capture('nmenu Test')
+    )
+    eq(
+      [[
+--- Menus ---
+500 Nested
+  500 test
+      o    level1
+  500 Nested2
+      o    level2]],
+      n.exec_capture('omenu Test.Nested')
+    )
+    eq(
+      [[
+--- Menus ---
+500 Test
+    n*   inormal<Esc>
+    v*   x
+    s*   x
+    i*   insert
+    c*   cmdmode]],
+      n.exec_capture('amenu Test.Test')
+    )
+  end)
 end)
 
 describe('menu_get', function()
   before_each(function()
     clear()
-    command([=[
-      aunmenu *
-
-      nnoremenu &Test.Test inormal<ESC>
-      inoremenu Test.Test insert
-      vnoremenu Test.Test x
-      cnoremenu Test.Test cmdmode
-      menu Test.Nested.test level1
-      menu Test.Nested.Nested2 level2
-
-      nnoremenu <script> Export.Script p
-      tmenu Export.Script This is the tooltip
-      menu ]Export.hidden thisoneshouldbehidden
-
-      nnoremenu Edit.Paste p
-      cnoremenu Edit.Paste <C-R>"
-    ]=])
+    command(test_menus_cmd)
   end)
 
   it("path='', modes='a'", function()

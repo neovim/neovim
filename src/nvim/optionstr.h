@@ -11,6 +11,4 @@ typedef enum {
   kListchars,
 } CharsOption;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "optionstr.h.generated.h"
-#endif
+#include "optionstr.h.generated.h"

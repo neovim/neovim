@@ -1,4 +1,8 @@
 
+func SetUp()
+  source $VIMRUNTIME/menu.vim
+endfunc
+
 func Test_colorscheme()
   " call assert_equal('16777216', &t_Co)
 
@@ -38,6 +42,39 @@ func Test_colorscheme()
   augroup END
   unlet g:color_count g:after_colors g:before_colors
   redraw!
+endfunc
+
+" Test that Buffers menu generates the correct index for different buffer
+" names for sorting.
+func Test_Buffers_Menu()
+  doautocmd LoadBufferMenu VimEnter
+
+  " Non-ASCII characters only use the first character as idx
+  let idx_emoji = or(char2nr('😑'), 0x40000000)
+
+  " Only first five letters are used for alphanumeric:
+  " ('a'-32) << 24 + ('b'-32) << 18 + ('c'-32) << 12 + ('d'-32) << 6 + ('e'-32)
+  let idx_abcde = 0x218A3925
+  " ('a'-32) << 24 + ('b'-32) << 18 + ('c'-32) << 12 + ('d'-32) << 6 + ('f'-32)
+  let idx_abcdf = 0x218A3926
+  " ('a'-32) << 24 + 63 (clamped) << 18 + ('c'-32) << 12 + ('d'-32) << 6 + ('e'-32)
+  let idx_a_emoji_cde = 0x21FE3925
+
+  let names = ['😑', '😑1', '😑2', 'abcde', 'abcdefghi', 'abcdf', 'a😑cde']
+  let indices = [idx_emoji, idx_emoji, idx_emoji, idx_abcde, idx_abcde, idx_abcdf, idx_a_emoji_cde]
+  for i in range(len(names))
+    let name = names[i]
+    let idx = indices[i]
+    exe ':badd ' .. name
+    let nr = bufnr('$')
+
+    let cmd = printf(':amenu Buffers.%s\ (%d)', name, nr)
+    let menu = split(execute(cmd), '\n')[1]
+    call assert_inrange(0, 0x7FFFFFFF, idx)
+    call assert_match('^' .. idx .. ' '.. name, menu)
+  endfor
+
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

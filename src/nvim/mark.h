@@ -9,10 +9,8 @@
 #include "nvim/mark_defs.h"  // IWYU pragma: keep
 #include "nvim/os/time.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mark.h.generated.h"
-# include "mark.h.inline.generated.h"
-#endif
+#include "mark.h.generated.h"
+#include "mark.h.inline.generated.h"
 
 /// Convert mark name to the offset
 static inline int mark_global_index(const char name)

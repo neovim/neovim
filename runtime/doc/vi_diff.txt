@@ -1,7 +1,7 @@
 *vi_diff.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Differences between Vim and Vi				*vi-differences*
@@ -31,8 +31,11 @@ Maximum display width	   Unix and Win32: 1024 characters, otherwise 255
 Maximum lhs of a mapping   50 characters.
 Number of different highlighting types: over 30000
 Range of a Number variable:  -2147483648 to 2147483647 (might be more on 64
-			   bit systems)
+			   bit systems)  See also: |v:numbermax|,
+			   |v:numbermin| and |v:numbersize|
 Maximum length of a line in a tags file: 512 bytes.
+							*E1541*
+Maximum value for |/\U| and |/\%U|: 2147483647 (for 32bit integer).
 
 Information for undo and text in registers is kept in memory, thus when making
 (big) changes the amount of (virtual) memory available limits the number of
@@ -76,7 +79,8 @@ Multiple windows and buffers.				|windows.txt|
 	is called a hidden buffer.  Many commands and options have been added
 	for this facility.
 	Vim can also use multiple tab pages, each with one or more windows.  A
-	line with tab labels can be used to quickly switch between these pages.
+	line with tab labels can be used to quickly switch between these
+	pages.
 	|tab-page|
 
 Syntax highlighting.					|:syntax|
@@ -90,8 +94,8 @@ Syntax highlighting.					|:syntax|
 	this is using a |:colorscheme| command.
 	The highlighted text can be exported as HTML. |convert-to-HTML|
 	Other items that can be highlighted are matches with the search string
-	|'hlsearch'|, matching parens |matchparen| and the cursor line and
-	column |'cursorline'| |'cursorcolumn'|.
+	'hlsearch', matching parens |matchparen| and the cursor line and
+	column 'cursorline' 'cursorcolumn'.
 
 Spell checking.						|spell|
 	When the 'spell' option is set Vim will highlight spelling mistakes.
@@ -227,9 +231,10 @@ Insert-mode completion.					|ins-completion|
 	|i_CTRL-X_CTRL-D|	definitions or macros
 	|i_CTRL-X_CTRL-O|	Omni completion: clever completion
 				specifically for a file type
+	|i_CTRL-X_CTRL-R|	contents from registers
 	etc.
 
-Long line support.					|'wrap'| |'linebreak'|
+Long line support.					'wrap' 'linebreak'
 	If the 'wrap' option is off, long lines will not wrap and only part
 	of them will be shown.  When the cursor is moved to a part that is not
 	shown, the screen will scroll horizontally.  The minimum number of
@@ -282,7 +287,7 @@ Finding matches in files.				|:vimgrep|
 	advanced Vim regexp pattern, works on all systems and also works to
 	search in compressed files.
 
-Improved indenting for programs.			|'cindent'|
+Improved indenting for programs.			'cindent'
 	When the 'cindent' option is on the indent of each line is
 	automatically adjusted.  C syntax is mostly recognized.  The indent
 	for various styles can be set with 'cinoptions'.  The keys to trigger
@@ -351,7 +356,7 @@ Editing binary files.					|edit-binary|
 	executable file, without corrupting it.  Vim doesn't remove NUL
 	characters (they are represented as <NL> internally).
 	|-b|		command-line argument to start editing a binary file
-	|'binary'|	Option set by |-b|.  Prevents adding an <EOL> for the
+	'binary'	Option set by |-b|.  Prevents adding an <EOL> for the
 			last line in the file.
 
 Multi-language support.					|multi-lang|

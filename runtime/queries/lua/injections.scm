@@ -34,10 +34,10 @@
     (_)
     .
     (string
-      content: _ @_method)
+      content: (_) @_method)
     .
     (string
-      content: _ @injection.content)))
+      content: (_) @injection.content)))
   (#any-of? @_vimcmd_identifier "vim.rpcrequest" "vim.rpcnotify")
   (#eq? @_method "nvim_exec_lua")
   (#set! injection.language "lua"))

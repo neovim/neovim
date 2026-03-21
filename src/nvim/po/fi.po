@@ -1566,15 +1566,15 @@ msgid "E478: Don't panic!"
 msgstr "E478: Älä panikoi."
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
+msgid "E661: No '%s' help for %s"
 msgstr "E661: ei löydy %s-ohjetta kohteelle %s"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
+msgid "E149: No help for %s"
 msgstr "E149: ei löydy ohjetta kohteelle %s"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
+msgid "Help file \"%s\" not found"
 msgstr "ohjetiedostoa %s ei löydy"
 
 #, c-format
@@ -3633,12 +3633,8 @@ msgstr "E773: Symlinkkisilmukka kohteelle %s"
 msgid "E325: ATTENTION"
 msgstr "E325: HUOMAA"
 
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Swap-tiedosto löytyi: \""
+msgid "Found a swap file by the name \""
+msgstr "Swap-tiedosto löytyi: \""
 
 msgid "While opening file \""
 msgstr "Avattaessa tiedostoa "
@@ -4182,12 +4178,8 @@ msgstr "dlerror = %s"
 msgid "Vim: Error reading input, exiting...\n"
 msgstr "Vim: Virhe luettaessa syötettä, poistutaan...\n"
 
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"kuoren palautusarvo "
+msgid "shell returned "
+msgstr "kuoren palautusarvo "
 
 #~ msgid ""
 #~ "\n"
@@ -4717,11 +4709,11 @@ msgstr "Varoitus: Ei löydetty sanalistaa %s.%s.spl tai %s.ascii.spl"
 msgid "Warning: region %s not supported"
 msgstr "Varoitus: osaa %s ei tueta"
 
-msgid "Sorry, no suggestions"
+msgid "No suggestions"
 msgstr "ei ehdotuksia"
 
 #, fuzzy, c-format
-#~ msgid "Sorry, only %<PRId64> suggestions"
+#~ msgid "Only %<PRId64> suggestions"
 #~ msgstr "vain %ld ehdotusta"
 
 #, c-format

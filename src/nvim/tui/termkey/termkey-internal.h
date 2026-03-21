@@ -20,7 +20,7 @@ typedef SSIZE_T ssize_t;
 
 struct TermKeyDriver {
   const char *name;
-  void *(*new_driver)(TermKey *tk, const char *term);
+  void *(*new_driver)(TermKey *tk, TerminfoEntry *term);
   void (*free_driver)(void *info);
   int (*start_driver)(TermKey *tk, void *info);
   int (*stop_driver)(TermKey *tk, void *info);

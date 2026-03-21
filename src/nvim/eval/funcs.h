@@ -28,6 +28,4 @@ typedef struct {
   EvalFuncData data;  ///< Userdata for function implementation.
 } EvalFuncDef;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/funcs.h.generated.h"
-#endif
+#include "eval/funcs.h.generated.h"

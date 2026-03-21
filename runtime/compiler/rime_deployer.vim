@@ -3,6 +3,7 @@
 " Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
 " URL:                  https://rime.im
 " Latest Revision:      2024-04-09
+" Last Change:          2025 Nov 16 by The Vim Project (set errorformat)
 
 if exists('b:current_compiler')
   finish
@@ -25,6 +26,8 @@ for s:shared_data_dir in ['/sdcard/rime-data', '/run/current-system/sw/share/rim
 endfor
 execute 'CompilerSet makeprg=rime_deployer\ --build\ %:p:h:S\' s:shared_data_dir
 unlet s:prefix s:shared_data_dir
+" CompilerSet errorformat=%f:%l:%c:\ %m,%f:%l:\ %m
+CompilerSet errorformat&
 
 let &cpoptions = s:save_cpoptions
 unlet s:save_cpoptions

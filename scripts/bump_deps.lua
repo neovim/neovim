@@ -26,6 +26,15 @@ local repos = {
   'uncrustify/uncrustify',
 }
 
+local zig_mode = {
+  luajit = false,
+  uncrustify = false,
+  wasmtime = false,
+  unibilium = 'nested',
+  utf8proc = 'nested',
+  libuv = 'nested',
+}
+
 local dependency_table = {} --- @type table<string, string>
 for _, repo in pairs(repos) do
   dependency_table[vim.fs.basename(repo)] = repo
@@ -56,6 +65,7 @@ end
 
 -- Run a command, die on failure with err_msg
 local function run_die(cmd, err_msg)
+  -- print(vim.inspect(table.concat(cmd, ' ')))
   return _run(cmd, true, err_msg)
 end
 
@@ -65,7 +75,7 @@ local deps_file = nvim_src_dir .. '/' .. 'cmake.deps/deps.txt'
 --- @param repo string
 --- @param ref string
 local function get_archive_info(repo, ref)
-  local temp_dir = os.getenv('TMPDIR') or os.getenv('TEMP')
+  local temp_dir = os.getenv('TMPDIR') or os.getenv('TEMP') or '/tmp'
 
   local archive_name = ref .. '.tar.gz'
   local archive_path = temp_dir .. '/' .. archive_name
@@ -113,7 +123,8 @@ end
 
 local function ref(name, _ref)
   local repo = dependency_table[name]
-  local symbol = string.gsub(name, 'tree%-sitter', 'treesitter'):gsub('%-', '_'):upper()
+  local symbol = string.gsub(name, 'tree%-sitter', 'treesitter'):gsub('%-', '_')
+  local symbol_upper = symbol:upper()
 
   run_die(
     { 'git', 'diff', '--quiet', 'HEAD', '--', deps_file },
@@ -138,12 +149,29 @@ local function ref(name, _ref)
   end
 
   print('Updating ' .. name .. ' to ' .. archive.url .. '\n')
-  update_deps_file(symbol, 'URL', archive.url:gsub('/', '\\/'))
-  update_deps_file(symbol, 'SHA256', archive.sha)
+  update_deps_file(symbol_upper, 'URL', archive.url:gsub('/', '\\/'))
+  update_deps_file(symbol_upper, 'SHA256', archive.sha)
+  run_die({ 'git', 'add', deps_file })
+
+  local zig = zig_mode[symbol]
+  if zig ~= false then
+    if zig == 'nested' then
+      -- don't care about un-cding, "git commit" doesn't care and then we die
+      vim.fn.chdir('deps/' .. symbol)
+    end
+    -- note: get_gh_commit_sha is likely superfluous with zig. but use the same resolved hash, for consistency.
+    run_die({
+      'zig',
+      'fetch',
+      '--save=' .. symbol,
+      'git+https://github.com/' .. repo .. '#' .. _ref,
+    })
+    run_die({ 'git', 'add', 'build.zig.zon' })
+  end
+
   run_die({
     'git',
     'commit',
-    deps_file,
     '-m',
     commit_prefix .. 'bump ' .. name .. ' to ' .. comment,
   }, 'git failed to commit')

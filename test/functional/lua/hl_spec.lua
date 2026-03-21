@@ -139,6 +139,80 @@ describe('vim.hl.range', function()
                                                                   |
     ]])
   end)
+
+  it('shows multiple highlights with different timeouts simultaneously', function()
+    local timeout1 = 300
+    local timeout2 = 600
+    exec_lua(function()
+      local ns = vim.api.nvim_create_namespace('')
+      vim.hl.range(0, ns, 'Search', { 0, 0 }, { 4, 0 }, { timeout = timeout1 })
+      vim.hl.range(0, ns, 'Search', { 2, 6 }, { 3, 5 }, { timeout = timeout2 })
+    end)
+    screen:expect({
+      grid = [[
+        {10:^asdfghjkl}{100:$}                                                  |
+        {10:«口=口»}{100:$}                                                    |
+        {10:qwertyuiop}{100:$}                                                 |
+        {10:口口=口口}{1:$}                                                  |
+        zxcvbnm{1:$}                                                    |
+                                                                    |
+      ]],
+      timeout = timeout1 / 3,
+    })
+    screen:expect({
+      grid = [[
+        ^asdfghjkl{1:$}                                                  |
+        «口=口»{1:$}                                                    |
+        qwerty{10:uiop}{100:$}                                                 |
+        {10:口口}=口口{1:$}                                                  |
+        zxcvbnm{1:$}                                                    |
+                                                                    |
+      ]],
+      timeout = timeout1 + ((timeout2 - timeout1) / 3),
+    })
+    screen:expect([[
+      ^asdfghjkl{1:$}                                                  |
+      «口=口»{1:$}                                                    |
+      qwertyuiop{1:$}                                                 |
+      口口=口口{1:$}                                                  |
+      zxcvbnm{1:$}                                                    |
+                                                                  |
+    ]])
+  end)
+
+  it('allows cancelling a highlight that has not timed out', function()
+    exec_lua(function()
+      local timeout = 3000
+      local range_timer
+      local range_hl_clear
+      local ns = vim.api.nvim_create_namespace('')
+      range_timer, range_hl_clear = vim.hl.range(
+        0,
+        ns,
+        'Search',
+        { 0, 0 },
+        { 4, 0 },
+        { timeout = timeout }
+      )
+      if range_timer and not range_timer:is_closing() then
+        range_timer:close()
+        assert(range_hl_clear)
+        range_hl_clear()
+        range_hl_clear() -- Exercise redundant call
+      end
+    end)
+    screen:expect({
+      grid = [[
+        ^asdfghjkl{1:$}                                                  |
+        «口=口»{1:$}                                                    |
+        qwertyuiop{1:$}                                                 |
+        口口=口口{1:$}                                                  |
+        zxcvbnm{1:$}                                                    |
+                                                                    |
+      ]],
+      unchanged = true,
+    })
+  end)
 end)
 
 describe('vim.hl.on_yank', function()
@@ -148,6 +222,7 @@ describe('vim.hl.on_yank', function()
 
   it('does not show errors even if buffer is wiped before timeout', function()
     command('new')
+    n.feed('ifoo<esc>') -- set '[, ']
     exec_lua(function()
       vim.hl.on_yank({
         timeout = 10,
@@ -184,9 +259,9 @@ describe('vim.hl.on_yank', function()
     eq({ win }, api.nvim__ns_get(ns).wins)
     command('wincmd w')
     eq({ win }, api.nvim__ns_get(ns).wins)
-    -- Use a new vim.hl.range() call to cancel the previous timer
+    -- Use a new vim.hl.on_yank() call to cancel the previous timer
     exec_lua(function()
-      vim.hl.range(0, ns, 'Search', { 0, 0 }, { 0, 0 }, { timeout = 0 })
+      vim.hl.on_yank({ timeout = 0, on_macro = true, event = { operator = 'y' } })
     end)
   end)
 
@@ -209,9 +284,9 @@ describe('vim.hl.on_yank', function()
     eq({ win }, api.nvim__ns_get(ns).wins)
     command('wincmd w')
     eq({ win }, api.nvim__ns_get(ns).wins)
-    -- Use a new vim.hl.range() call to cancel the previous timer
+    -- Use a new vim.hl.on_yank() call to cancel the previous timer
     exec_lua(function()
-      vim.hl.range(0, ns, 'Search', { 0, 0 }, { 0, 0 }, { timeout = 0 })
+      vim.hl.on_yank({ timeout = 0, on_macro = true, event = { operator = 'y' } })
     end)
   end)
 
@@ -246,5 +321,9 @@ describe('vim.hl.on_yank', function()
       {1:~                                                           }|
                                                                   |
     ]])
+    -- Use a new vim.hl.on_yank() call to cancel the previous timer
+    exec_lua(function()
+      vim.hl.on_yank({ timeout = 0, on_macro = true, event = { operator = 'y' } })
+    end)
   end)
 end)

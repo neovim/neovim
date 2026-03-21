@@ -3,6 +3,7 @@
 " Maintainer:	Mike Williams <mrw@eandem.co.uk>
 " Last Change:	24th April 2012
 "		2024 Jan 14 by Vim Project (browsefilter)
+"		2025 Jun 08 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -17,6 +18,7 @@ set cpo&vim
 
 " PS comment formatting
 setlocal comments=b:%
+setlocal commentstring=%\ %s
 setlocal formatoptions-=t formatoptions+=rol
 
 " Define patterns for the matchit macro
@@ -36,7 +38,7 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   endif
 endif
 
-let b:undo_ftplugin = "setlocal comments< formatoptions<"
+let b:undo_ftplugin = "setlocal comments< commentstring< formatoptions<"
     \ . "| unlet! b:browsefilter b:match_ignorecase b:match_words"
 
 let &cpo = s:cpo_save

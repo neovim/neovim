@@ -222,7 +222,7 @@ describe('server -> client', function()
 
     it('returns an error if the request failed', function()
       eq(
-        "Vim:Error invoking 'does-not-exist' on channel 3:\nInvalid method: does-not-exist",
+        "Vim:Invoking 'does-not-exist' on channel 3:\nInvalid method: does-not-exist",
         pcall_err(eval, "rpcrequest(vim, 'does-not-exist')")
       )
     end)
@@ -297,13 +297,27 @@ describe('server -> client', function()
       eq(serverpid, fn.getpid())
       eq('hello', api.nvim_get_current_line())
 
-      -- method calls work both ways
+      -- Method calls work both ways.
       fn.rpcrequest(client_id, 'nvim_set_current_line', 'howdy!')
       eq(id, fn.rpcrequest(client_id, 'nvim_get_chan_info', 0).id)
 
       set_session(client)
       eq(clientpid, fn.getpid())
       eq('howdy!', api.nvim_get_current_line())
+
+      -- Sending notification and then closing channel immediately still works.
+      -- Use a fast API here, as a deferred API call may be aborted by EOF. #13537
+      n.exec_lua(function()
+        vim.rpcnotify(id, 'nvim_input', 'ccbye!<Esc>')
+        vim.fn.chanclose(id)
+      end)
+
+      set_session(server)
+      eq(serverpid, fn.getpid())
+      -- Wait for the notification to be processed.
+      t.retry(nil, 1000, function()
+        eq('bye!', api.nvim_get_current_line())
+      end)
 
       server:close()
       client:close()
@@ -348,7 +362,7 @@ describe('server -> client', function()
       connect_test(server, 'tcp', address)
     end)
 
-    it('does not crash on receiving UI events', function()
+    local function start_server_and_client()
       local server = n.new_session(false)
       set_session(server)
       local address = fn.serverlist()[1]
@@ -356,11 +370,55 @@ describe('server -> client', function()
       set_session(client)
 
       local id = fn.sockconnect('pipe', address, { rpc = true })
+
+      finally(function()
+        server:close()
+        client:close()
+      end)
+
+      return id
+    end
+
+    it('does not crash on receiving UI events', function()
+      local id = start_server_and_client()
       fn.rpcrequest(id, 'nvim_ui_attach', 80, 24, {})
       assert_alive()
+    end)
 
-      server:close()
-      client:close()
+    it('does not leak memory with channel closed before response', function()
+      local id = start_server_and_client()
+      eq(
+        ('ch %d was closed by the peer'):format(id),
+        pcall_err(n.exec_lua, function()
+          vim.rpcrequest(id, 'nvim_command', 'qall!')
+        end)
+      )
+      eq({}, api.nvim_get_chan_info(id)) -- Channel is closed.
+    end)
+
+    it('response works with channel closed just after response #24214', function()
+      local id = start_server_and_client()
+      eq(
+        'RESPONSE',
+        n.exec_lua(function()
+          local prepare = assert(vim.uv.new_prepare())
+          -- Block the event loop after writing the request but before polling for I/O
+          -- so that response and EOF arrive at the same uv_run() call.
+          prepare:start(function()
+            vim.uv.sleep(50)
+            prepare:close()
+          end)
+          return vim.rpcrequest(
+            id,
+            'nvim_exec_lua',
+            [[vim.schedule(function() vim.cmd('qall!') end); return 'RESPONSE']],
+            {}
+          )
+        end)
+      )
+      t.retry(nil, nil, function()
+        eq({}, api.nvim_get_chan_info(id)) -- Channel is closed.
+      end)
     end)
 
     it('via stdio, with many small flushes does not crash #23781', function()

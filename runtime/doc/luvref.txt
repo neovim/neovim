@@ -32,7 +32,7 @@ Here is a small example showing a TCP echo server:
     local uv = vim.uv
 
     local server = uv.new_tcp()
-    server:bind("127.0.0.1", 1337)
+    assert(server:bind("127.0.0.1", 1337))
     server:listen(128, function (err)
       assert(not err, err)
       local client = uv.new_tcp()
@@ -220,6 +220,12 @@ TTY Modes ~
 - `TTY_MODE_NORMAL`: "normal"
 - `TTY_MODE_RAW`: "raw"
 - `TTY_MODE_IO`: "io"
+ `TTY_MODE_RAW_VT`: "raw_vt"
+
+FS Modification Times ~
+
+- `FS_UTIME_NOW`: "now"
+- `FS_UTIME_OMIT`: "omit"
 
 ==============================================================================
 ERROR HANDLING                                              *luv-error-handling*
@@ -1410,7 +1416,8 @@ uv.spawn({path}, {options}, {on_exit})                              *uv.spawn()*
                     available to the child process only if the child processes
                     uses the MSVCRT runtime.)
                   - `options.env` - Set environment variables for the new
-                    process.
+                    process. Each entry should be a string in the form of
+                    `NAME=VALUE`.
                   - `options.cwd` - Set the current working directory for the
                     sub-process.
                   - `options.uid` - Set the child process' user id.
@@ -1444,7 +1451,8 @@ uv.spawn({path}, {options}, {on_exit})                              *uv.spawn()*
                 When the child process exits, `on_exit` is called with an exit
                 code and signal.
 
-                Returns: `uv_process_t userdata`, `integer`
+                Returns: `uv_process_t userdata` or `nil`, `integer` or
+                `string`, `uv.error_name` or `nil`
 
 uv.process_kill({process}, {signame})                         *uv.process_kill()*
 
@@ -1779,19 +1787,27 @@ uv.tcp_nodelay({tcp}, {enable})                               *uv.tcp_nodelay()*
 
                 Returns: `0` or `fail`
 
-uv.tcp_keepalive({tcp}, {enable} [, {delay}])               *uv.tcp_keepalive()*
+                                                            *uv.tcp_keepalive()*
+uv.tcp_keepalive({tcp}, {enable} [, {delay}, {intvl}, {cnt}])
 
-                > method form `tcp:keepalive(enable, [delay])`
+                > method form `tcp:keepalive(enable, [delay], [intvl], [cnt])`
 
                 Parameters:
                 - `tcp`: `uv_tcp_t userdata`
                 - `enable`: `boolean`
                 - `delay`: `integer` or `nil`
+                - `intvl`: `integer` or `nil`
+                - `cnt`: `integer` or `nil`
 
                 Enable / disable TCP keep-alive. `delay` is the initial delay
-                in seconds, ignored when enable is `false`.
+                in seconds, `intvl` is the time in seconds between individual
+                keep-alive probes, and `cnt` is the number of probes to send
+                before assuming the connection is dead.
+                Ignored when enable is `false`.
 
                 Returns: `0` or `fail`
+
+                Note: `intvl` and `cnt` are only supported with Libuv >= 1.52.0.
 
 uv.tcp_simultaneous_accepts({tcp}, {enable})     *uv.tcp_simultaneous_accepts()*
 
@@ -2196,7 +2212,7 @@ uv.pipe_bind2({pipe}, {name}, {flags})                         *uv.pipe_bind2()*
 
                 Returns: `0` or `fail`
 
-                *Note*:
+                Note:
                 1. Paths on Unix get truncated to sizeof(sockaddr_un.sun_path)
                    bytes, typically between 92 and 108 bytes.
                 2. New in version 1.46.0.
@@ -2229,7 +2245,7 @@ uv.pipe_connect2(pipe, name, [flags], [callback])           *uv.pipe_connect2()*
 
                 Returns: `uv_connect_t userdata` or `fail`
 
-                *Note*:
+                Note:
                 1. Paths on Unix get truncated to sizeof(sockaddr_un.sun_path)
                    bytes, typically between 92 and 108 bytes.
                 2. New in version 1.46.0.
@@ -2398,13 +2414,16 @@ uv.udp_get_send_queue_count()                    *uv.udp_get_send_queue_count()*
 
                 Returns: `integer`
 
-uv.udp_open({udp}, {fd})                                         *uv.udp_open()*
+uv.udp_open({udp}, {fd}, [{flags}])                              *uv.udp_open()*
 
-                > method form `udp:open(fd)`
+                > method form `udp:open(fd, [flags])`
 
                 Parameters:
                 - `udp`: `uv_udp_t userdata`
                 - `fd`: `integer`
+                - `flags`: `table` or `integer` or `nil`
+                  - `reuseaddr`: `boolean` or `nil`
+                  - `reuseport`: `boolean` or `nil`
 
                 Opens an existing file descriptor or Windows SOCKET as a UDP
                 handle.
@@ -2423,6 +2442,8 @@ uv.udp_open({udp}, {fd})                                         *uv.udp_open()*
 
                 Returns: `0` or `fail`
 
+                Note: `flags` is only supported with Libuv >= 1.52.0.
+
 uv.udp_bind({udp}, {host}, {port} [, {flags}])                   *uv.udp_bind()*
 
                 > method form `udp:bind(host, port, [flags])`
@@ -2432,14 +2453,47 @@ uv.udp_bind({udp}, {host}, {port} [, {flags}])                   *uv.udp_bind()*
                 - `host`: `string`
                 - `port`: `number`
                 - `flags`: `table` or `nil`
-                  - `ipv6only`: `boolean`
-                  - `reuseaddr`: `boolean`
+                  - `ipv6only`: `boolean` or `nil`
+                  - `reuseaddr`: `boolean` or `nil`
+                  - `linux_recverr`: `boolean` or `nil`
+                  - `reuseport`: `boolean` or `nil`
 
                 Bind the UDP handle to an IP address and port. Any `flags` are
-                set with a table with fields `reuseaddr` or `ipv6only` equal
-                to `true` or `false`.
+                set with a table with fields `reuseaddr`, `ipv6only`,
+                `linux_recverr`, `reuseport` equal to `true` or `false`.
+
+                - `reuseaddr`: Indicates if SO_REUSEADDR will be set when
+                  binding the handle. This sets the SO_REUSEPORT socket flag on
+                  the BSDs (except for DragonFlyBSD), OS X, and other platforms
+                  where SO_REUSEPORTs don't have the capability of load
+                  balancing, as the opposite of what `reuseport` would do. On
+                  other Unix platforms, it sets the SO_REUSEADDR flag. What that
+                  means is that multiple threads or processes can bind to the
+                  same address without error (provided they all set the flag)
+                  but only the last one to bind will receive any traffic, in
+                  effect "stealing" the port from the previous listener.
+                - `ipv6only`: Disables dual stack mode.
+                - `linux_recverr`: Indicates if IP_RECVERR/IPV6_RECVERR will
+                  be set when binding the handle. This sets IP_RECVERR for IPv4
+                  and IPV6_RECVERR for IPv6 UDP sockets on Linux. This stops the
+                  Linux kernel from suppressing some ICMP error messages and
+                  enables full ICMP error reporting for faster failover. This
+                  flag is no-op on platforms other than Linux.
+                - `reuseport`: Indicates if SO_REUSEPORT will be set when
+                  binding the handle. This sets the SO_REUSEPORT socket option
+                  on supported platforms. Unlike `reuseaddr`, this flag will
+                  make multiple threads or processes that are binding to the
+                  same address and port "share" the port, which means incoming
+                  datagrams are distributed across the receiving sockets among
+                  threads or processes. This flag is available only on Linux
+                  3.9+, DragonFlyBSD 3.6+, FreeBSD 12.0+, Solaris 11.4, and AIX
+                  7.2.5+ for now.
 
                 Returns: `0` or `fail`
+
+                Note: The flag `linux_recverr` is only supported with Libuv >=
+                1.42.0. The flag `reuseport` is only supported with Libuv >=
+                1.49.0.
 
 uv.udp_getsockname({udp})                                 *uv.udp_getsockname()*
 
@@ -3276,12 +3330,12 @@ uv.fs_fchmod({fd}, {mode} [, {callback}])                       *uv.fs_fchmod()*
 
                 Returns (async version): `uv_fs_t userdata`
 
-uv.fs_utime({path}, {atime}, {mtime} [, {callback}])             *uv.fs_utime()*
+uv.fs_utime({path} [, {atime}, {mtime}, {callback}])             *uv.fs_utime()*
 
                 Parameters:
                 - `path`: `string`
-                - `atime`: `number`
-                - `mtime`: `number`
+                - `atime`: `number` or `string` or `nil`
+                - `mtime`: `number` or `string` or `nil`
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
                   - `err`: `nil` or `string`
@@ -3289,39 +3343,66 @@ uv.fs_utime({path}, {atime}, {mtime} [, {callback}])             *uv.fs_utime()*
 
                 Equivalent to `utime(2)`.
 
+                See |luv-constants| for supported FS Modification Time
+                constants.
+
+                Passing `"now"` or `uv.constants.FS_UTIME_NOW` as the atime or
+                mtime sets the timestamp to the current time.
+
+                Passing `nil`, `"omit"`, or `uv.constants.FS_UTIME_OMIT` as
+                the atime or mtime leaves the timestamp untouched.
+
                 Returns (sync version): `boolean` or `fail`
 
                 Returns (async version): `uv_fs_t userdata`
 
-uv.fs_futime({fd}, {atime}, {mtime} [, {callback}])             *uv.fs_futime()*
+uv.fs_futime({fd} [, {atime}, {mtime}, {callback}])             *uv.fs_futime()*
 
                 Parameters:
                 - `fd`: `integer`
-                - `atime`: `number`
-                - `mtime`: `number`
+                - `atime`: `number` or `string` or `nil`
+                - `mtime`: `number` or `string` or `nil`
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
                   - `err`: `nil` or `string`
                   - `success`: `boolean` or `nil`
 
-                Equivalent to `futime(2)`.
+                Equivalent to `futimes(3)`.
+
+                See |luv-constants| for supported FS Modification Time
+                constants.
+
+                Passing `"now"` or `uv.constants.FS_UTIME_NOW` as the atime or
+                mtime sets the timestamp to the current time.
+
+                Passing `nil`, `"omit"`, or `uv.constants.FS_UTIME_OMIT` as
+                the atime or mtime leaves the timestamp untouched.
 
                 Returns (sync version): `boolean` or `fail`
 
                 Returns (async version): `uv_fs_t userdata`
 
-uv.fs_lutime({path}, {atime}, {mtime} [, {callback}])           *uv.fs_lutime()*
+uv.fs_lutime({path} [, {atime}, {mtime}, {callback}])           *uv.fs_lutime()*
 
                 Parameters:
                 - `path`: `string`
-                - `atime`: `number`
-                - `mtime`: `number`
+                - `atime`: `number` or `string` or `nil`
+                - `mtime`: `number` or `string` or `nil`
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
                   - `err`: `nil` or `string`
                   - `success`: `boolean` or `nil`
 
-                Equivalent to `lutime(2)`.
+                Equivalent to `lutimes(3)`.
+
+                See |luv-constants| for supported FS Modification Time
+                constants.
+
+                Passing `"now"` or `uv.constants.FS_UTIME_NOW` as the atime or
+                mtime sets the timestamp to the current time.
+
+                Passing `nil`, `"omit"`, or `uv.constants.FS_UTIME_OMIT` as
+                the atime or mtime leaves the timestamp untouched.
 
                 Returns (sync version): `boolean` or `fail`
 
@@ -3547,6 +3628,7 @@ uv.fs_statfs({path} [, {callback}])                             *uv.fs_statfs()*
                 - `bavail` : `integer`
                 - `files` : `integer`
                 - `ffree` : `integer`
+                - `frsize`: `integer` or `nil`
 
 ==============================================================================
 THREAD POOL WORK SCHEDULING                    *luv-thread-pool-work-scheduling*
@@ -3882,6 +3964,70 @@ uv.sleep({msec})                                                    *uv.sleep()*
 
                 Returns: Nothing.
 
+uv.new_sem([{value}])                                             *uv.new_sem()*
+
+                Parameters:
+                - `value`: `integer` or `nil`
+
+                Creates a new semaphore with the specified initial value. A
+                semaphore is safe to share across threads. It represents an
+                unsigned integer value that can incremented and decremented
+                atomically but any attempt to make it negative will "wait"
+                until the value can be decremented by another thread
+                incrementing it.
+
+                The initial value must be a non-negative integer.
+
+                Returns: `luv_sem_t userdata` or `fail`
+
+                Note: A semaphore must be shared between threads, any
+                `uv.sem_wait()` on a single thread that blocks will deadlock.
+
+uv.sem_post({sem})                                               *uv.sem_post()*
+
+                > method form `sem:post()`
+
+                Parameters:
+                - `sem`: `luv_sem_t userdata`
+
+                Increments (unlocks) a semaphore, if the semaphore's value
+                consequently becomes greater than zero then another thread
+                blocked in a sem_wait call will be woken and proceed to
+                decrement the semaphore.
+
+                Returns: Nothing.
+
+uv.sem_wait({sem})                                               *uv.sem_wait()*
+
+                > method form `sem:wait()`
+
+                Parameters:
+                - `sem`: `luv_sem_t userdata`
+
+                Decrements (locks) a semaphore, if the semaphore's value is
+                greater than zero then the value is decremented and the call
+                returns immediately. If the semaphore's value is zero then the
+                call blocks until the semaphore's value rises above zero or
+                the call is interrupted by a signal.
+
+                Returns: Nothing.
+
+uv.sem_trywait({sem})                                         *uv.sem_trywait()*
+
+                > method form `sem:trywait()`
+
+                Parameters:
+                - `sem`: `luv_sem_t userdata`
+
+                The same as `uv.sem_wait()` but returns immediately if the
+                semaphore is not available.
+
+                If the semaphore's value was decremented then `true` is
+                returned, otherwise the semaphore has a value of zero and
+                `false` is returned.
+
+                Returns: `boolean`
+
 ==============================================================================
 MISCELLANEOUS UTILITIES                            *luv-miscellaneous-utilities*
 
@@ -4109,7 +4255,7 @@ uv.hrtime()                                                        *uv.hrtime()*
                 clock drift. The primary use is for measuring time between
                 intervals.
 
-                Returns: `number`
+                Returns: `integer`
 
 uv.clock_gettime({clock_id})                                *uv.clock_gettime()*
 
@@ -4189,7 +4335,7 @@ uv.interface_addresses()                              *uv.interface_addresses()*
 
                 See |luv-constants| for supported address `family` output values.
 
-                Returns: `table`
+                Returns: `table` or `fail`
                 - `[name(s)]` : `table`
                   - `ip` : `string`
                   - `family` : `string`
@@ -4306,11 +4452,11 @@ uv.os_get_passwd()                                          *uv.os_get_passwd()*
 
                 Returns password file information.
 
-                Returns: `table`
+                Returns: `table` or `fail`
                 - `username` : `string`
-                - `uid` : `integer`
-                - `gid` : `integer`
-                - `shell` : `string`
+                - `uid` : `integer?` (`nil` on Windows)
+                - `gid` : `integer?` (`nil` on Windows)
+                - `shell` : `string?`` (`nil` on Windows)
                 - `homedir` : `string`
 
 uv.os_getpid()                                                  *uv.os_getpid()*

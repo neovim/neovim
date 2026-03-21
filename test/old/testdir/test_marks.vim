@@ -253,7 +253,7 @@ func Test_marks_k_cmd()
   call setline(1, ['foo', 'bar', 'baz', 'qux'])
   1,3kr
   call assert_equal([0, 3, 1, 0], getpos("'r"))
-  close!
+  bw!
 endfunc
 
 " Test for file marks (A-Z)
@@ -301,7 +301,12 @@ func Test_getmarklist()
   call assert_equal({'mark' : "'r", 'pos' : [bufnr(), 2, 2, 0]},
         \ bufnr()->getmarklist()[0])
   call assert_equal([], {}->getmarklist())
-  close!
+  normal! yy
+  call assert_equal([
+        \ {'mark': "'[", 'pos': [bufnr(), 2, 1, 0]},
+        \ {'mark': "']", 'pos': [bufnr(), 2, v:maxcol, 0]},
+        \ ], getmarklist(bufnr())[-2:])
+  bw!
 endfunc
 
 " This was using freed memory

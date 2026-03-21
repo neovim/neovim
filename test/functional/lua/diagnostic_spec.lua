@@ -7,6 +7,7 @@ local exec_lua = n.exec_lua
 local eq = t.eq
 local neq = t.neq
 local matches = t.matches
+local retry = t.retry
 local api = n.api
 local pcall_err = t.pcall_err
 local fn = n.fn
@@ -607,6 +608,21 @@ describe('vim.diagnostic', function()
         vim.diagnostic.hide(_G.diagnostic_ns)
       end)
     end)
+
+    it('handles diagnostics without extmark_id', function()
+      exec_lua(function()
+        vim.diagnostic.config({ virtual_text = true })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error message', 0, 0, 0, 5),
+        })
+
+        local diags = vim.diagnostic.get(_G.diagnostic_bufnr, { namespace = _G.diagnostic_ns })
+        diags[1]._extmark_id = nil
+
+        vim.diagnostic.show(_G.diagnostic_ns, _G.diagnostic_bufnr, diags)
+      end)
+    end)
   end)
 
   describe('enable() and disable()', function()
@@ -625,14 +641,6 @@ describe('vim.diagnostic', function()
         pcall_err(exec_lua, [[vim.diagnostic.enable(42, {})]])
       )
       matches('expected boolean, got table', pcall_err(exec_lua, [[vim.diagnostic.enable({}, 42)]]))
-
-      -- Deprecated signature.
-      matches('Invalid buffer id: 42', pcall_err(exec_lua, [[vim.diagnostic.enable(42)]]))
-      -- Deprecated signature.
-      matches(
-        'namespace does not exist or is anonymous',
-        pcall_err(exec_lua, [[vim.diagnostic.enable(nil, 42)]])
-      )
     end)
 
     it('without arguments', function()
@@ -828,7 +836,7 @@ describe('vim.diagnostic', function()
     end)
 
     --- @return table
-    local function test_enable(legacy)
+    local function test_enable()
       return exec_lua(function()
         local other_bufnr = vim.api.nvim_create_buf(true, false)
 
@@ -860,11 +868,7 @@ describe('vim.diagnostic', function()
             + _G.count_extmarks(other_bufnr, _G.diagnostic_ns)
         )
 
-        if legacy then
-          vim.diagnostic.disable(_G.diagnostic_bufnr, _G.diagnostic_ns)
-        else
-          vim.diagnostic.enable(false, { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns })
-        end
+        vim.diagnostic.enable(false, { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns })
 
         table.insert(
           result,
@@ -873,11 +877,7 @@ describe('vim.diagnostic', function()
             + _G.count_extmarks(other_bufnr, _G.diagnostic_ns)
         )
 
-        if legacy then
-          vim.diagnostic.disable(_G.diagnostic_bufnr, _G.other_ns)
-        else
-          vim.diagnostic.enable(false, { bufnr = _G.diagnostic_bufnr, ns_id = _G.other_ns })
-        end
+        vim.diagnostic.enable(false, { bufnr = _G.diagnostic_bufnr, ns_id = _G.other_ns })
 
         table.insert(
           result,
@@ -886,11 +886,7 @@ describe('vim.diagnostic', function()
             + _G.count_extmarks(other_bufnr, _G.diagnostic_ns)
         )
 
-        if legacy then
-          vim.diagnostic.enable(_G.diagnostic_bufnr, _G.diagnostic_ns)
-        else
-          vim.diagnostic.enable(true, { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns })
-        end
+        vim.diagnostic.enable(true, { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns })
 
         table.insert(
           result,
@@ -899,13 +895,8 @@ describe('vim.diagnostic', function()
             + _G.count_extmarks(other_bufnr, _G.diagnostic_ns)
         )
 
-        if legacy then
-          -- Should have no effect
-          vim.diagnostic.disable(other_bufnr, _G.other_ns)
-        else
-          -- Should have no effect
-          vim.diagnostic.enable(false, { bufnr = other_bufnr, ns_id = _G.other_ns })
-        end
+        -- Should have no effect
+        vim.diagnostic.enable(false, { bufnr = other_bufnr, ns_id = _G.other_ns })
 
         table.insert(
           result,
@@ -919,17 +910,7 @@ describe('vim.diagnostic', function()
     end
 
     it('with both buffer and namespace arguments', function()
-      local result = test_enable(false)
-      eq(4, result[1])
-      eq(2, result[2])
-      eq(1, result[3])
-      eq(3, result[4])
-      eq(3, result[5])
-    end)
-
-    it('with both buffer and namespace arguments (deprecated signature)', function()
-      -- Exercise the legacy/deprecated signature.
-      local result = test_enable(true)
+      local result = test_enable()
       eq(4, result[1])
       eq(2, result[2])
       eq(1, result[3])
@@ -1129,7 +1110,7 @@ describe('vim.diagnostic', function()
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 1, 1 })
-          vim.diagnostic.jump({ count = 1, float = false })
+          vim.diagnostic.jump({ count = 1 })
           local next = vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
           return { next.lnum, next.col }
         end)
@@ -1146,7 +1127,7 @@ describe('vim.diagnostic', function()
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 1, 1 })
-          vim.diagnostic.jump({ count = 1, float = false })
+          vim.diagnostic.jump({ count = 1 })
           local next = vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
           return { next.lnum, next.col }
         end)
@@ -1447,6 +1428,111 @@ describe('vim.diagnostic', function()
         end)
       )
     end)
+
+    it('supports on_jump() handler', function()
+      exec_lua(function()
+        _G.jumped = false
+
+        vim.diagnostic.jump({
+          count = 1,
+          on_jump = function()
+            _G.jumped = true
+          end,
+        })
+      end)
+
+      retry(nil, nil, function()
+        eq(true, exec_lua('return _G.jumped'))
+      end)
+    end)
+
+    describe('after inserting text before diagnostic position', function()
+      before_each(function()
+        api.nvim_buf_set_text(0, 3, 0, 3, 0, { 'new line', 'new ' })
+      end)
+
+      it('finds next diagnostic at a logical location', function()
+        eq(
+          { 5, 4 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 3, 1 })
+            vim.diagnostic.jump({ count = 1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+
+      it('finds previous diagnostic at a logical location', function()
+        eq(
+          { 5, 4 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 6, 4 })
+            vim.diagnostic.jump({ count = -1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+    end)
+
+    describe('if diagnostic is set after last character in line', function()
+      before_each(function()
+        exec_lua(function()
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Diagnostic #1', 2, 3, 3, 4),
+          })
+        end)
+      end)
+
+      it('finds next diagnostic at the end of the line', function()
+        eq(
+          { 3, 2 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 3, 0 })
+            vim.diagnostic.jump({ count = 1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+
+      it('finds previous diagnostic at the end of the line', function()
+        eq(
+          { 3, 2 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 4, 2 })
+            vim.diagnostic.jump({ count = -1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+    end)
+
+    describe('after entire text range with a diagnostic was deleted', function()
+      before_each(function()
+        api.nvim_buf_set_text(0, 1, 1, 1, 4, {})
+      end)
+
+      it('does not find next diagnostic inside the deleted range', function()
+        eq(
+          { 3, 0 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 1, 0 })
+            vim.diagnostic.jump({ count = 1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+
+      it('does not find previous diagnostic inside the deleted range', function()
+        eq(
+          { 1, 0 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 3, 0 })
+            vim.diagnostic.jump({ count = -1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+    end)
   end)
 
   describe('get()', function()
@@ -1545,6 +1631,29 @@ describe('vim.diagnostic', function()
           })
 
           return #vim.diagnostic.get(_G.diagnostic_bufnr, { lnum = 2 })
+        end)
+      )
+    end)
+
+    it('allows filtering by enablement', function()
+      eq(
+        { 3, 1, 2 },
+        exec_lua(function()
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Error 1', 1, 1, 1, 5),
+          })
+          vim.diagnostic.set(_G.other_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Error 2', 1, 1, 1, 5),
+            _G.make_error('Error 3', 3, 1, 3, 5),
+          })
+
+          vim.diagnostic.enable(false, { ns_id = _G.other_ns })
+
+          return {
+            #vim.diagnostic.get(_G.diagnostic_bufnr),
+            #vim.diagnostic.get(_G.diagnostic_bufnr, { enabled = true }),
+            #vim.diagnostic.get(_G.diagnostic_bufnr, { enabled = false }),
+          }
         end)
       )
     end)
@@ -1929,6 +2038,35 @@ describe('vim.diagnostic', function()
       eq('DiagnosticUnderlineInfo', underline_hl)
     end)
 
+    it(
+      'shows deprecated and unnecessary highlights in addition to severity-based highlights',
+      function()
+        ---@type string[]
+        local result = exec_lua(function()
+          local diagnostic = _G.make_error('Some error', 0, 0, 0, 0, 'source x')
+          diagnostic._tags = {
+            deprecated = true,
+            unnecessary = true,
+          }
+
+          local diagnostics = { diagnostic }
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
+
+          local extmarks = _G.get_underline_extmarks(_G.diagnostic_ns)
+          local hl_groups = vim.tbl_map(function(extmark)
+            return extmark[4].hl_group
+          end, extmarks)
+          return hl_groups
+        end)
+
+        eq({
+          'DiagnosticDeprecated',
+          'DiagnosticUnnecessary',
+          'DiagnosticUnderlineError',
+        }, result)
+      end
+    )
+
     it('can show diagnostic sources in virtual text', function()
       local result = exec_lua(function()
         local diagnostics = {
@@ -2179,6 +2317,50 @@ describe('vim.diagnostic', function()
       eq(1, #result)
       eq(' Error here!', result[1][4].virt_text[3][1])
     end)
+
+    it('can hide virtual_text for the current line', function()
+      local result = exec_lua(function()
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        vim.diagnostic.config({ virtual_text = { current_line = false } })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error here!', 0, 0, 0, 0, 'foo_server'),
+          _G.make_error('Another error there!', 1, 0, 1, 0, 'foo_server'),
+        })
+
+        local extmarks = _G.get_virt_text_extmarks(_G.diagnostic_ns)
+        return extmarks
+      end)
+
+      eq(1, #result)
+      eq(' Another error there!', result[1][4].virt_text[3][1])
+    end)
+
+    it('only renders virtual_line diagnostics within buffer length', function()
+      local result = exec_lua(function()
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        vim.diagnostic.config({ virtual_text = { current_line = false } })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Hidden Error here!', 0, 0, 0, 0, 'foo_server'),
+          _G.make_error('First Error here!', 1, 0, 1, 0, 'foo_server'),
+          _G.make_error('Second Error here!', 2, 0, 2, 0, 'foo_server'),
+          _G.make_error('First Ignored Error here!', 3, 0, 3, 0, 'foo_server'),
+          _G.make_error('Second Ignored Error here!', 6, 0, 6, 0, 'foo_server'),
+          _G.make_error('Third Ignored Error here!', 8, 0, 8, 0, 'foo_server'),
+        })
+
+        vim.api.nvim_buf_set_lines(_G.diagnostic_bufnr, 2, 5, false, {})
+        vim.api.nvim_exec_autocmds('CursorMoved', { buffer = _G.diagnostic_bufnr })
+        return _G.get_virt_text_extmarks(_G.diagnostic_ns)
+      end)
+
+      eq(2, #result)
+      eq(' First Error here!', result[1][4].virt_text[3][1])
+      eq(' Second Error here!', result[2][4].virt_text[3][1])
+    end)
   end)
 
   describe('handlers.virtual_lines', function()
@@ -2370,6 +2552,31 @@ describe('vim.diagnostic', function()
         return extmarks[1][4].virt_lines
       end)
       eq('Error here!', result[1][3][1])
+    end)
+
+    it('sorts by severity with stable tiebreaker #37137', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({ severity_sort = true, virtual_lines = { current_line = true } })
+        local m = 100
+        local diagnostics = {
+          { end_col = m, lnum = 0, message = 'a', severity = 2 },
+          { end_col = m, lnum = 0, message = 'b', severity = 2 },
+          { end_col = m, lnum = 0, message = 'c', severity = 2 },
+          { end_col = m, lnum = 2, message = 'd', severity = 2 },
+          { end_col = m, lnum = 2, message = 'e', severity = 2 },
+          { end_col = m, lnum = 2, message = 'f', severity = 2 },
+        }
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics, {})
+        vim.diagnostic.show(_G.diagnostic_ns, _G.diagnostic_bufnr)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        local result = {}
+        for _, d in ipairs(extmarks[1][4].virt_lines) do
+          table.insert(result, d[3][1])
+        end
+        return result
+      end)
+      eq({ 'c', 'b', 'a' }, result)
     end)
   end)
 
@@ -2665,65 +2872,21 @@ describe('vim.diagnostic', function()
       end
     end)
 
-    it('respects legacy signs placed with :sign define or sign_define #26618', function()
-      -- Legacy signs for diagnostics were deprecated in 0.10 and will be removed in 0.12
-      eq(0, n.fn.has('nvim-0.12'))
-
-      n.command('sign define DiagnosticSignError text= texthl= linehl=ErrorMsg numhl=ErrorMsg')
-      n.command('sign define DiagnosticSignWarn text= texthl= linehl=WarningMsg numhl=WarningMsg')
-      n.command('sign define DiagnosticSignInfo text= texthl= linehl=Underlined numhl=Underlined')
-      n.command('sign define DiagnosticSignHint text= texthl= linehl=Underlined numhl=Underlined')
-
+    it('always passes a table to DiagnosticChanged autocommand', function()
       local result = exec_lua(function()
-        vim.diagnostic.config({
-          signs = true,
+        local changed_diags --- @type vim.Diagnostic[]?
+        vim.api.nvim_create_autocmd('DiagnosticChanged', {
+          buffer = _G.diagnostic_bufnr,
+          callback = function(ev)
+            --- @type vim.Diagnostic[]
+            changed_diags = ev.data.diagnostics
+          end,
         })
-
-        local diagnostics = {
-          _G.make_error('Error', 1, 1, 1, 2),
-          _G.make_warning('Warning', 3, 3, 3, 3),
-        }
-
-        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
-
-        local ns = vim.diagnostic.get_namespace(_G.diagnostic_ns)
-        local sign_ns = ns.user_data.sign_ns
-
-        local signs = vim.api.nvim_buf_get_extmarks(
-          _G.diagnostic_bufnr,
-          sign_ns,
-          0,
-          -1,
-          { type = 'sign', details = true }
-        )
-        local result = {}
-        for _, s in ipairs(signs) do
-          result[#result + 1] = {
-            lnum = s[2] + 1,
-            name = s[4].sign_hl_group,
-            text = s[4].sign_text or '',
-            numhl = s[4].number_hl_group,
-            linehl = s[4].line_hl_group,
-          }
-        end
-        return result
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {})
+        return changed_diags
       end)
-
-      eq({
-        lnum = 2,
-        name = 'DiagnosticSignError',
-        text = '',
-        numhl = 'ErrorMsg',
-        linehl = 'ErrorMsg',
-      }, result[1])
-
-      eq({
-        lnum = 4,
-        name = 'DiagnosticSignWarn',
-        text = '',
-        numhl = 'WarningMsg',
-        linehl = 'WarningMsg',
-      }, result[2])
+      eq('table', type(result))
+      eq(0, #result)
     end)
   end)
 
@@ -2918,7 +3081,7 @@ describe('vim.diagnostic', function()
           local float_bufnr, winnr = vim.diagnostic.open_float({
             header = false,
             scope = 'cursor',
-            pos = { 0, first_line_len },
+            pos = { 0, first_line_len - 1 },
           })
           local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
           vim.api.nvim_win_close(winnr, true)
@@ -2953,7 +3116,7 @@ describe('vim.diagnostic', function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
           vim.api.nvim_win_set_cursor(0, { 1, 1 })
           local float_bufnr, winnr =
-            vim.diagnostic.open_float({ header = false, scope = 'cursor', pos = { 2, 1 } })
+            vim.diagnostic.open_float({ header = false, scope = 'cursor', pos = { 2, 0 } })
           local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
           vim.api.nvim_win_close(winnr, true)
           return lines
@@ -3008,7 +3171,7 @@ describe('vim.diagnostic', function()
 
     it('allows filtering by namespace', function()
       eq(
-        2,
+        { 'Diagnostics:', '1. Syntax error' },
         exec_lua(function()
           local ns_1_diagnostics = {
             _G.make_error('Syntax error', 0, 1, 0, 3),
@@ -3023,33 +3186,69 @@ describe('vim.diagnostic', function()
             vim.diagnostic.open_float(_G.diagnostic_bufnr, { namespace = _G.diagnostic_ns })
           local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
           vim.api.nvim_win_close(winnr, true)
-          return #lines
+          return lines
         end)
       )
     end)
 
-    it(
-      'creates floating window and returns float bufnr and winnr without header, if requested',
-      function()
-        -- One line (since no header):
-        --    1. <msg>
-        eq(
-          1,
-          exec_lua(function()
-            local diagnostics = {
-              _G.make_error('Syntax error', 0, 1, 0, 3),
-            }
-            vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
-            vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
-            local float_bufnr, winnr =
-              vim.diagnostic.open_float(_G.diagnostic_bufnr, { header = false })
-            local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
-            vim.api.nvim_win_close(winnr, true)
-            return #lines
-          end)
-        )
-      end
-    )
+    it('allows filtering by multiple namespaces', function()
+      eq(
+        { 'Diagnostics:', '1. Syntax error', '2. Some warning' },
+        exec_lua(function()
+          local ns_1_diagnostics = {
+            _G.make_error('Syntax error', 0, 1, 0, 3),
+          }
+          local ns_2_diagnostics = {
+            _G.make_warning('Some warning', 0, 1, 0, 3),
+          }
+          vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, ns_1_diagnostics)
+          vim.diagnostic.set(_G.other_ns, _G.diagnostic_bufnr, ns_2_diagnostics)
+          local float_bufnr, winnr = vim.diagnostic.open_float(
+            _G.diagnostic_bufnr,
+            { namespace = { _G.diagnostic_ns, _G.other_ns } }
+          )
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return lines
+        end)
+      )
+    end)
+
+    it('creates floating window without header and supports function-based float config', function()
+      -- One line (since no header):
+      --    1. <msg>
+      eq(
+        { 1, '╭', '┌' },
+        exec_lua(function()
+          local diagnostics = {
+            _G.make_error('Syntax error', 0, 1, 0, 3),
+          }
+          vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
+          local float_bufnr, winnr =
+            vim.diagnostic.open_float(_G.diagnostic_bufnr, { header = false })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          vim.diagnostic.config({
+            float = function(_, bufnr)
+              return { border = bufnr == _G.diagnostic_bufnr and 'rounded' or 'single' }
+            end,
+          })
+          _, winnr = vim.diagnostic.open_float()
+          local border1 = vim.api.nvim_win_get_config(winnr).border
+          vim.api.nvim_win_close(winnr, true)
+
+          local other_bufnr = vim.api.nvim_create_buf(true, true)
+          vim.api.nvim_win_set_buf(0, other_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, other_bufnr, diagnostics)
+          local _, winnr1 = vim.diagnostic.open_float()
+          local border2 = vim.api.nvim_win_get_config(winnr1).border
+          vim.api.nvim_win_close(winnr1, true)
+          return { #lines, border1[1], border2[1] }
+        end)
+      )
+    end)
 
     it('clamps diagnostic line numbers within the valid range', function()
       eq(
@@ -3353,6 +3552,92 @@ describe('vim.diagnostic', function()
       )
     end)
 
+    it('can add LSP related information to a diagnostic', function()
+      local related_info_uri = 'file:///fake/uri'
+
+      -- Populate the related info buffer.
+      exec_lua(function()
+        local fake_bufnr = vim.uri_to_bufnr(related_info_uri)
+        vim.fn.bufload(fake_bufnr)
+        vim.api.nvim_buf_set_lines(fake_bufnr, 0, 1, false, {
+          'O, the Pelican,',
+          'so smoothly doth he crest.',
+          'a wind god!',
+        })
+        vim.api.nvim_win_set_buf(0, fake_bufnr)
+      end)
+
+      -- Displays related info.
+      eq(
+        {
+          '1. Some warning',
+          '   uri:2:1: Some extra info',
+          '   uri:3:4: Some more extra info',
+        },
+        exec_lua(function()
+          ---@type vim.Diagnostic
+          local diagnostic = _G.make_warning('Some warning', 1, 1, 1, 3)
+          diagnostic.user_data = {
+            -- Related information comes from LSP user_data
+            lsp = {
+              relatedInformation = {
+                {
+                  message = 'Some extra info',
+                  location = {
+                    uri = related_info_uri,
+                    range = {
+                      start = {
+                        line = 1,
+                        character = 0,
+                      },
+                      ['end'] = {
+                        line = 1,
+                        character = 1,
+                      },
+                    },
+                  },
+                },
+                {
+                  message = 'Some more extra info',
+                  location = {
+                    uri = related_info_uri,
+                    range = {
+                      start = {
+                        line = 2,
+                        character = 3,
+                      },
+                      ['end'] = {
+                        line = 4,
+                        character = 5,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }
+          vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, { diagnostic })
+          local float_bufnr, winnr = vim.diagnostic.open_float({ header = false, scope = 'buffer' })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          -- Put the cursor on a line with related info
+          vim.api.nvim_tabpage_set_win(0, winnr)
+          vim.api.nvim_win_set_cursor(0, { 2, 0 })
+          return lines
+        end)
+      )
+
+      -- Jumps to related info.
+      eq(
+        'so smoothly doth he crest.',
+        exec_lua(function()
+          vim.cmd.norm('gf')
+          vim.wait(20, function() end)
+          return vim.api.nvim_get_current_line()
+        end)
+      )
+    end)
+
     it('works with the old signature', function()
       eq(
         { '1. Syntax error' },
@@ -3448,6 +3733,88 @@ describe('vim.diagnostic', function()
         end)
       )
     end)
+
+    it('shows diagnostics at their logical locations after text changes before', function()
+      exec_lua(function()
+        vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Diagnostic #1', 1, 4, 1, 7),
+          _G.make_error('Diagnostic #2', 3, 0, 3, 3),
+        })
+      end)
+
+      api.nvim_buf_set_text(0, 3, 0, 3, 0, { 'new line', 'new ' })
+
+      eq(
+        { 'Diagnostic #1' },
+        exec_lua(function()
+          vim.api.nvim_win_set_cursor(0, { 2, 4 })
+          local float_bufnr, winnr = vim.diagnostic.open_float({ header = '', scope = 'cursor' })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return lines
+        end)
+      )
+
+      eq(
+        { 'Diagnostic #2' },
+        exec_lua(function()
+          vim.api.nvim_win_set_cursor(0, { 5, 4 })
+          local float_bufnr, winnr = vim.diagnostic.open_float({ header = '', scope = 'cursor' })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return lines
+        end)
+      )
+    end)
+
+    it('shows diagnostics at their logical locations after text changes inside', function()
+      exec_lua(function()
+        vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Diagnostic #1', 1, 0, 1, 7),
+        })
+      end)
+
+      api.nvim_buf_set_text(0, 1, 4, 1, 4, { 'new ' })
+
+      eq(
+        { 'Diagnostic #1' },
+        exec_lua(function()
+          vim.api.nvim_win_set_cursor(0, { 2, 10 })
+          local float_bufnr, winnr = vim.diagnostic.open_float({ header = '', scope = 'cursor' })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return lines
+        end)
+      )
+    end)
+
+    it(
+      'shows diagnostics at the end of the line if diagnostic is set after last character in line',
+      function()
+        exec_lua(function()
+          vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Diagnostic #1', 2, 3, 3, 4),
+          })
+        end)
+
+        eq(
+          { 'Diagnostic #1' },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 3, 2 })
+            local float_bufnr, winnr = vim.diagnostic.open_float({ header = '', scope = 'cursor' })
+            local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+            vim.api.nvim_win_close(winnr, true)
+            return lines
+          end)
+        )
+      end
+    )
   end)
 
   describe('setloclist()', function()
@@ -3486,6 +3853,52 @@ describe('vim.diagnostic', function()
       end)
 
       assert(loc_list[1].lnum < loc_list[2].lnum)
+    end)
+
+    it('sets diagnostics from the specified namespaces', function()
+      local loc_list = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error here!', 1, 1, 1, 1),
+        })
+        vim.diagnostic.set(_G.other_ns, _G.diagnostic_bufnr, {
+          _G.make_warning('Error there!', 2, 2, 2, 2),
+        })
+
+        vim.diagnostic.setloclist({ namespace = { _G.diagnostic_ns } })
+
+        return vim.fn.getloclist(0)
+      end)
+
+      eq(1, #loc_list)
+      eq('Error here!', loc_list[1].text)
+    end)
+
+    it('supports format function', function()
+      local loc_list = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error', 1, 1, 1, 1, 'foo_ls'),
+          _G.make_error('Another error', 2, 2, 2, 2, 'foo_ls'),
+        })
+
+        vim.diagnostic.setloclist({
+          format = function(diagnostic)
+            if diagnostic.lnum > 1 then
+              return nil
+            end
+
+            return string.format('%s: %s', diagnostic.source, diagnostic.message)
+          end,
+        })
+
+        return vim.fn.getloclist(0)
+      end)
+
+      eq(1, #loc_list)
+      eq('foo_ls: Error', loc_list[1].text)
     end)
   end)
 
@@ -3554,6 +3967,32 @@ describe('vim.diagnostic', function()
       end)
 
       neq(0, qf_winid)
+    end)
+
+    it('supports format function', function()
+      local qf_list = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error', 1, 1, 1, 1, 'foo_ls'),
+          _G.make_error('Another error', 2, 2, 2, 2, 'foo_ls'),
+        })
+
+        vim.diagnostic.setqflist({
+          format = function(diagnostic)
+            if diagnostic.lnum > 1 then
+              return nil
+            end
+
+            return string.format('%s: %s', diagnostic.source, diagnostic.message)
+          end,
+        })
+
+        return vim.fn.getqflist()
+      end)
+
+      eq(1, #qf_list)
+      eq('foo_ls: Error', qf_list[1].text)
     end)
   end)
 
@@ -3638,7 +4077,7 @@ describe('vim.diagnostic', function()
     end)
   end)
 
-  describe('toqflist() and fromqflist()', function()
+  describe('toqflist(), fromqflist()', function()
     it('works', function()
       local result = exec_lua(function()
         vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
@@ -3652,15 +4091,191 @@ describe('vim.diagnostic', function()
         local list = vim.fn.getqflist()
         local new_diagnostics = vim.diagnostic.fromqflist(list)
 
-        -- Remove namespace since it isn't present in the return value of
-        -- fromlist()
+        -- Remove extra properties not present in the return value of fromlist()
         for _, v in ipairs(diagnostics) do
+          v._extmark_id = nil
           v.namespace = nil
         end
 
         return { diagnostics, new_diagnostics }
       end)
       eq(result[1], result[2])
+    end)
+
+    it('merge_lines=true merges continuation lines', function()
+      local function get_fromqflist(merge_lines)
+        return exec_lua(function(merge_lines_)
+          local qflist = {
+            {
+              bufnr = 1,
+              lnum = 10,
+              col = 5,
+              end_lnum = 10,
+              end_col = 10,
+              text = 'error: [GHC-83865]',
+              type = 'E',
+              nr = 0,
+              valid = 1,
+            },
+            {
+              bufnr = 1,
+              lnum = 0,
+              col = 0,
+              end_lnum = 0,
+              end_col = 0,
+              text = "    Couldn't match expected type",
+              type = '',
+              nr = 0,
+              valid = 0,
+            },
+            {
+              bufnr = 1,
+              lnum = 0,
+              col = 0,
+              end_lnum = 0,
+              end_col = 0,
+              text = '    with actual type',
+              type = '',
+              nr = 0,
+              valid = 0,
+            },
+            {
+              bufnr = 1,
+              lnum = 20,
+              col = 1,
+              end_lnum = 20,
+              end_col = 5,
+              text = 'warning: unused',
+              type = 'W',
+              nr = 0,
+              valid = 1,
+            },
+          }
+          return vim.diagnostic.fromqflist(qflist, { merge_lines = merge_lines_ })
+        end, merge_lines)
+      end
+
+      -- merge_lines=true
+      local result = get_fromqflist(true)
+      eq(2, #result)
+      eq(
+        "error: [GHC-83865]\n    Couldn't match expected type\n    with actual type",
+        result[1].message
+      )
+      eq('warning: unused', result[2].message)
+
+      -- merge_lines=false
+      result = get_fromqflist(false)
+      eq(2, #result)
+      eq('error: [GHC-83865]', result[1].message)
+    end)
+  end)
+
+  describe('status()', function()
+    it('returns empty string if no diagnostics', function()
+      local result = exec_lua(function()
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {})
+        return vim.diagnostic.status()
+      end)
+
+      eq('', result)
+    end)
+
+    it('returns count for each diagnostic kind', function()
+      local result = exec_lua(function()
+        vim.diagnostic.set(_G.diagnostic_ns, 0, {
+          _G.make_error('Error 1', 0, 1, 0, 1),
+
+          _G.make_warning('Warning 1', 2, 2, 2, 2),
+          _G.make_warning('Warning 2', 2, 2, 2, 2),
+
+          _G.make_info('Info 1', 3, 3, 3, 3),
+          _G.make_info('Info 2', 3, 3, 3, 3),
+          _G.make_info('Info 3', 3, 3, 3, 3),
+
+          _G.make_hint('Hint 1', 4, 4, 4, 4),
+          _G.make_hint('Hint 2', 4, 4, 4, 4),
+          _G.make_hint('Hint 3', 4, 4, 4, 4),
+          _G.make_hint('Hint 4', 4, 4, 4, 4),
+        })
+        return vim.diagnostic.status()
+      end)
+
+      eq(
+        '%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:2 %#DiagnosticSignInfo#I:3 %#DiagnosticSignHint#H:4%##',
+        result
+      )
+
+      exec_lua('vim.cmd.enew()')
+
+      -- Empty diagnostics for a buffer without diagnostics
+      eq(
+        '',
+        exec_lua(function()
+          return vim.diagnostic.status()
+        end)
+      )
+    end)
+
+    it('uses text from diagnostic.config().status.format[severity]', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({
+          status = {
+            format = {
+              [vim.diagnostic.severity.ERROR] = '⨯',
+              [vim.diagnostic.severity.WARN] = '⚠︎',
+            },
+          },
+        })
+
+        vim.diagnostic.set(_G.diagnostic_ns, 0, {
+          _G.make_error('Error 1', 0, 1, 0, 1),
+          _G.make_warning('Warning 1', 2, 2, 2, 2),
+        })
+
+        return vim.diagnostic.status()
+      end)
+
+      eq('%#DiagnosticSignError#⨯:1 %#DiagnosticSignWarn#⚠︎:1%##', result)
+    end)
+
+    it('uses format function diagnostic.config().status.format', function()
+      local result = exec_lua(function()
+        local signs = {
+          [vim.diagnostic.severity.ERROR] = 'EE',
+          [vim.diagnostic.severity.WARN] = 'WW',
+          [vim.diagnostic.severity.INFO] = 'II',
+          [vim.diagnostic.severity.HINT] = 'HH',
+        }
+        local hl_map = {
+          [vim.diagnostic.severity.ERROR] = 'ERROR',
+          [vim.diagnostic.severity.WARN] = 'WARN',
+          [vim.diagnostic.severity.INFO] = 'INFO',
+          [vim.diagnostic.severity.HINT] = 'HINT',
+        }
+        vim.diagnostic.config({
+          status = {
+            format = function(counts)
+              local items = {}
+              for severity, sign in ipairs(signs) do
+                local count = counts[severity] or 0
+                local hl = hl_map[severity]
+                table.insert(items, ('%%#%s#%s %s'):format(hl, sign, count))
+              end
+              return table.concat(items, ' ')
+            end,
+          },
+        })
+
+        vim.diagnostic.set(_G.diagnostic_ns, 0, {
+          _G.make_error('Error 1', 0, 1, 0, 1),
+          _G.make_warning('Warning 1', 2, 2, 2, 2),
+        })
+
+        return vim.diagnostic.status()
+      end)
+
+      eq('%#ERROR#EE 1 %#WARN#WW 1 %#INFO#II 0 %#HINT#HH 0%##', result)
     end)
   end)
 
@@ -3758,8 +4373,8 @@ describe('vim.diagnostic', function()
 
           local triggered = {}
           vim.api.nvim_create_autocmd('DiagnosticChanged', {
-            callback = function(args)
-              triggered = { args.buf, #args.data.diagnostics }
+            callback = function(ev)
+              triggered = { ev.buf, #ev.data.diagnostics }
             end,
           })
           vim.api.nvim_buf_set_name(_G.diagnostic_bufnr, 'test | test')
@@ -3820,38 +4435,6 @@ describe('vim.diagnostic', function()
             vim.diagnostic.is_enabled { bufnr = _G.diagnostic_bufnr },
             vim.diagnostic.is_enabled { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns },
             vim.diagnostic.is_enabled { bufnr = 0, ns_id = _G.diagnostic_ns },
-          }
-        end)
-      )
-    end)
-
-    it('is_disabled (deprecated)', function()
-      eq(
-        { true, true, true, true },
-        exec_lua(function()
-          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
-            _G.make_error('Diagnostic #1', 1, 1, 1, 1),
-          })
-          vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
-          vim.diagnostic.disable()
-          return {
-            vim.diagnostic.is_disabled(),
-            vim.diagnostic.is_disabled(_G.diagnostic_bufnr),
-            vim.diagnostic.is_disabled(_G.diagnostic_bufnr, _G.diagnostic_ns),
-            vim.diagnostic.is_disabled(0, _G.diagnostic_ns),
-          }
-        end)
-      )
-
-      eq(
-        { false, false, false, false },
-        exec_lua(function()
-          vim.diagnostic.enable()
-          return {
-            vim.diagnostic.is_disabled(),
-            vim.diagnostic.is_disabled(_G.diagnostic_bufnr),
-            vim.diagnostic.is_disabled(_G.diagnostic_bufnr, _G.diagnostic_ns),
-            vim.diagnostic.is_disabled(0, _G.diagnostic_ns),
           }
         end)
       )

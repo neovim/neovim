@@ -43,9 +43,11 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/proc.h"
+#include "nvim/event/socket.h"
 #include "nvim/event/stream.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
@@ -92,6 +94,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/shada.h"
@@ -135,9 +138,7 @@ enum {
   EDIT_QF = 4,     // start in quickfix mode
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "main.c.generated.h"
-#endif
+#include "main.c.generated.h"
 
 Loop main_loop;
 
@@ -154,8 +155,10 @@ static const char *err_extra_cmd =
 void event_init(void)
 {
   loop_init(&main_loop, NULL);
+  env_init();
   resize_events = multiqueue_new_child(main_loop.events);
 
+  autocmd_init();
   signal_init();
   // mspgack-rpc initialization
   channel_init();
@@ -165,7 +168,7 @@ void event_init(void)
 }
 
 /// @returns false if main_loop could not be closed gracefully
-bool event_teardown(void)
+static bool event_teardown(void)
 {
   if (!main_loop.events) {
     input_stop();
@@ -190,6 +193,7 @@ bool event_teardown(void)
 /// Needed for unit tests.
 void early_init(mparm_T *paramp)
 {
+  os_hint_priority();
   estack_init();
   cmdline_init();
   eval_init();          // init global variables
@@ -238,6 +242,9 @@ void early_init(mparm_T *paramp)
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
+
+  // initialize quickfix list
+  qf_init_stack();
 }
 
 #ifdef MAKE_LIB
@@ -294,8 +301,23 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
 
+  set_argf_var();
+
   nlua_init(argv, argc, params.lua_arg0);
   TIME_MSG("init lua interpreter");
+
+  // On Windows, channel_from_stdio() replaces fd 2 with CONOUT$ (for ConPTY
+  // support). Save a dup of the original stderr first so that if server_init()
+  // fails, print_mainerr() can write through the pipe to the TUI client's relay.
+#ifdef MSWIN
+  int startup_stderr_fd = -1;
+  if (embedded_mode) {
+    startup_stderr_fd = os_dup(STDERR_FILENO);
+    if (startup_stderr_fd >= 0) {
+      os_set_cloexec(startup_stderr_fd);
+    }
+  }
+#endif
 
   if (embedded_mode) {
     const char *err;
@@ -331,7 +353,8 @@ int main(int argc, char **argv)
 
   if (use_builtin_ui && !remote_ui) {
     ui_client_forward_stdin = !stdin_isatty;
-    uint64_t rv = ui_client_start_server(params.argc, params.argv);
+    uint64_t rv = ui_client_start_server(get_vim_var_str(VV_PROGPATH),
+                                         (size_t)params.argc, params.argv);
     if (!rv) {
       fprintf(stderr, "Failed to start Nvim server!\n");
       os_exit(1);
@@ -347,8 +370,26 @@ int main(int argc, char **argv)
   // Nvim server...
 
   if (!server_init(params.listen_addr)) {
+#ifdef MSWIN
+    // Restore the original stderr (pipe to TUI client) so print_mainerr()
+    // output is visible in the TUI terminal via the relay in on_channel_output.
+    if (startup_stderr_fd >= 0) {
+      dup2(startup_stderr_fd, STDERR_FILENO);
+      close(startup_stderr_fd);
+      startup_stderr_fd = -1;
+    }
+#endif
     mainerr(IObuff, NULL, NULL);
   }
+
+#ifdef MSWIN
+  // Server started successfully. Close the saved fd so the pipe write end is
+  // fully released — child processes inherit CONOUT$ (fd 2), not the pipe.
+  if (startup_stderr_fd >= 0) {
+    close(startup_stderr_fd);
+    startup_stderr_fd = -1;
+  }
+#endif
 
   TIME_MSG("expanding arguments");
 
@@ -460,6 +501,8 @@ int main(int argc, char **argv)
     // disable syntax highlighting with `:syntax off` if they wish.
     syn_maybe_enable();
   }
+
+  set_vim_var_nr(VV_VIM_DID_INIT, 1);
 
   // Read all the plugin files.
   load_plugins();
@@ -674,7 +717,19 @@ void os_exit(int r)
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
   }
-  if (!ui_client_channel_id) {
+  if (ui_client_channel_id) {
+#ifdef HAVE_TERMIOS_H
+    // Sometimes the final output to TTY can be lost (at least on FreeBSD).
+    // Call tcdrain() to ensure all output has been transmitted to host terminal.
+    // Do this after event_teardown() as libuv events may write to stderr.
+    if (stdout_isatty) {
+      tcdrain(STDOUT_FILENO);
+    }
+    if (stderr_isatty) {
+      tcdrain(STDERR_FILENO);
+    }
+#endif
+  } else {
     ml_close_all(true);  // remove all memfiles
   }
   if (used_stdin) {
@@ -706,6 +761,7 @@ void getout(int exitval)
     exitval += ex_exitval;
   }
 
+  set_vim_var_type(VV_EXITING, VAR_NUMBER);
   set_vim_var_nr(VV_EXITING, exitval);
 
   // Invoked all deferred functions in the function stack.
@@ -805,13 +861,24 @@ void getout(int exitval)
     ui_call_set_title(cstr_as_string(p_titleold));
   }
 
+  if (restarting) {
+    Error err = ERROR_INIT;
+    if (!remote_ui_restart(current_ui, &err)) {
+      if (ERROR_SET(&err)) {
+        ELOG("%s", err.msg);  // UI disappeared already?
+        api_clear_error(&err);
+      }
+    }
+    restarting = false;
+  }
+
   if (garbage_collect_at_exit) {
     garbage_collect(false);
   }
 
 #ifdef MSWIN
   // Restore Windows console icon before exiting.
-  os_icon_set(NULL, NULL);
+  os_icon_reset();
   os_title_reset();
 #endif
 
@@ -846,7 +913,7 @@ void preserve_exit(const char *errmsg)
     ui_client_stop();
   }
   if (errmsg != NULL && errmsg[0] != NUL) {
-    size_t has_eol = '\n' == errmsg[strlen(errmsg) - 1];
+    bool has_eol = '\n' == errmsg[strlen(errmsg) - 1];
     fprintf(stderr, has_eol ? "%s" : "%s\n", errmsg);
   }
   if (ui_client_channel_id) {
@@ -906,9 +973,9 @@ static uint64_t server_connect(char *server_addr, const char **errmsg)
   }
   CallbackReader on_data = CALLBACK_READER_INIT;
   const char *error = NULL;
-  bool is_tcp = strrchr(server_addr, ':') ? true : false;
+  bool is_tcp = socket_address_tcp_host_end(server_addr) != NULL;
   // connected to channel
-  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &error);
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 500, &error);
   if (error) {
     *errmsg = error;
     return 0;
@@ -933,14 +1000,18 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
 
   if (is_ui) {
     if (!chan) {
+#ifdef MSWIN
+      // The TUI client is spawned in a ConPTY which only captures stdout.
+      // Redirect stderr to stdout so this error appears in the terminal.
+      dup2(STDOUT_FILENO, STDERR_FILENO);
+#endif
       fprintf(stderr, "Remote ui failed to start: %s\n", connect_error);
       os_exit(1);
-    } else if (strequal(server_addr, os_getenv("NVIM"))) {
+    } else if (strequal(server_addr, os_getenv_noalloc("NVIM"))) {
       fprintf(stderr, "%s", "Cannot attach UI of :terminal child to its parent. ");
       fprintf(stderr, "%s\n", "(Unset $NVIM to skip this check)");
       os_exit(1);
     }
-
     ui_client_channel_id = chan;
     return;
   }
@@ -958,7 +1029,7 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   ADD_C(a, CSTR_AS_OBJ(connect_error));
   ADD_C(a, ARRAY_OBJ(args));
   String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
-  Object o = nlua_exec(s, a, kRetObject, NULL, &err);
+  Object o = nlua_exec(s, NULL, a, kRetObject, NULL, &err);
   kv_destroy(args);
   if (ERROR_SET(&err)) {
     fprintf(stderr, "%s\n", err.msg);
@@ -1475,14 +1546,30 @@ scripterror:
 
   // If there is a "+123" or "-c" command, set v:swapcommand to the first one.
   if (parmp->n_commands > 0) {
-    const size_t swcmd_len = strlen(parmp->commands[0]) + 3;
-    char *const swcmd = xmalloc(swcmd_len);
-    snprintf(swcmd, swcmd_len, ":%s\r", parmp->commands[0]);
-    set_vim_var_string(VV_SWAPCOMMAND, swcmd, -1);
+    const size_t swcmd_len = strlen(parmp->commands[0]) + 2;
+    char *const swcmd = xmalloc(swcmd_len + 1);
+    snprintf(swcmd, swcmd_len + 1, ":%s\r", parmp->commands[0]);
+    set_vim_var_string(VV_SWAPCOMMAND, swcmd, (ptrdiff_t)swcmd_len);
     xfree(swcmd);
   }
 
   TIME_MSG("parsing arguments");
+}
+
+static void set_argf_var(void)
+{
+  list_T *list = tv_list_alloc(kListLenMayKnow);
+
+  for (int i = 0; i < GARGCOUNT; i++) {
+    char *fname = alist_name(&GARGLIST[i]);
+    if (fname != NULL) {
+      (void)vim_FullName(fname, NameBuff, sizeof(NameBuff), false);
+      tv_list_append_string(list, NameBuff, -1);
+    }
+  }
+
+  tv_list_set_lock(list, VAR_FIXED);
+  set_vim_var_list(VV_ARGF, list);
 }
 
 // Many variables are in "params" so that we can pass them to invoked
@@ -1611,15 +1698,49 @@ static void read_stdin(void)
   swap_exists_action = SEA_DIALOG;
   no_wait_return = true;
   bool save_msg_didany = msg_didany;
-  set_buflisted(true);
-  // Create memfile and read from stdin.
-  open_buffer(true, NULL, 0);
-  if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
-    // stdin was empty, go to buffer 2 (e.g. "echo file1 | xargs nvim"). #8561
-    do_cmdline_cmd("silent! bnext");
-    // Delete the empty stdin buffer.
-    do_cmdline_cmd("bwipeout 1");
+
+  if (curbuf->b_ffname) {
+    // curbuf is already opened for a file, create a new buffer for stdin. #35269
+    buf_T *stdin_buf = buflist_new(NULL, NULL, 0, BLN_LISTED);
+    if (stdin_buf == NULL) {
+      semsg("Failed to create buffer for stdin");
+      return;
+    }
+
+    // remember the current buffer number so we can go back to it
+    handle_T initial_buf_handle = curbuf->handle;
+
+    // set the buffer we just created as curbuf so we can read stdin into it
+    set_curbuf(stdin_buf, 0, false);
+    readfile(NULL, NULL, 0, 0, (linenr_T)MAXLNUM, NULL, READ_NEW + READ_STDIN, true);
+
+    // remember stdin_buf_handle so we can close it if stdin_buf ends up empty
+    handle_T stdin_buf_handle = stdin_buf->handle;
+    bool stdin_buf_empty = buf_is_empty(curbuf);
+
+    // switch back to the original starting buffer
+    char buf[100];
+    vim_snprintf(buf, sizeof(buf), "silent! buffer %d", initial_buf_handle);
+    do_cmdline_cmd(buf);
+
+    if (stdin_buf_empty) {
+      // stdin buffer may be first or last ("echo foo | nvim file1 -"). #35269
+      // only wipe buffer after having switched to original starting buffer. #35681
+      vim_snprintf(buf, sizeof(buf), "silent! bwipeout! %d", stdin_buf_handle);
+      do_cmdline_cmd(buf);
+    }
+  } else {
+    // stdin buffer is first so we can just use curbuf
+    set_buflisted(true);
+    // Create memfile and read from stdin.
+    open_buffer(true, NULL, 0);
+    // stdin was empty so we should wipe it (e.g. "echo file1 | xargs nvim"). #8561
+    if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
+      do_cmdline_cmd("silent! bnext");
+      do_cmdline_cmd("silent! bwipeout 1");
+    }
   }
+
   no_wait_return = false;
   msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
@@ -1646,9 +1767,8 @@ static void create_windows(mparm_T *parmp)
     if (parmp->window_layout == WIN_TABS) {
       parmp->window_count = make_tabpages(parmp->window_count);
       TIME_MSG("making tab pages");
-    } else if (firstwin->w_next == NULL) {
-      parmp->window_count = make_windows(parmp->window_count,
-                                         parmp->window_layout == WIN_VER);
+    } else if (firstwin->w_next == NULL || firstwin->w_next->w_floating) {
+      parmp->window_count = make_windows(parmp->window_count, parmp->window_layout == WIN_VER);
       TIME_MSG("making windows");
     } else {
       parmp->window_count = win_count();
@@ -1865,6 +1985,7 @@ static void exe_pre_commands(mparm_T *parmp)
 {
   char **cmds = parmp->pre_commands;
   int cnt = parmp->n_pre_commands;
+  ESTACK_CHECK_DECLARATION;
 
   if (cnt <= 0) {
     return;
@@ -1872,10 +1993,12 @@ static void exe_pre_commands(mparm_T *parmp)
 
   curwin->w_cursor.lnum = 0;     // just in case..
   estack_push(ETYPE_ARGS, _("pre-vimrc command line"), 0);
+  ESTACK_CHECK_SETUP;
   current_sctx.sc_sid = SID_CMDARG;
   for (int i = 0; i < cnt; i++) {
     do_cmdline_cmd(cmds[i]);
   }
+  ESTACK_CHECK_NOW;
   estack_pop();
   current_sctx.sc_sid = 0;
   TIME_MSG("--cmd commands");
@@ -1884,6 +2007,8 @@ static void exe_pre_commands(mparm_T *parmp)
 // Execute "+", "-c" and "-S" arguments.
 static void exe_commands(mparm_T *parmp)
 {
+  ESTACK_CHECK_DECLARATION;
+
   // We start commands on line 0, make "vim +/pat file" match a
   // pattern on line 1.  But don't move the cursor when an autocommand
   // with g`" was used.
@@ -1892,6 +2017,7 @@ static void exe_commands(mparm_T *parmp)
     curwin->w_cursor.lnum = 0;
   }
   estack_push(ETYPE_ARGS, "command line", 0);
+  ESTACK_CHECK_SETUP;
   current_sctx.sc_sid = SID_CARG;
   current_sctx.sc_seq = 0;
   for (int i = 0; i < parmp->n_commands; i++) {
@@ -1900,6 +2026,7 @@ static void exe_commands(mparm_T *parmp)
       xfree(parmp->commands[i]);
     }
   }
+  ESTACK_CHECK_NOW;
   estack_pop();
   current_sctx.sc_sid = 0;
   if (curwin->w_cursor.lnum == 0) {
@@ -1921,15 +2048,17 @@ static void exe_commands(mparm_T *parmp)
 ///
 /// Does one of the following things, stops after whichever succeeds:
 ///
-/// 1. Source system vimrc file from $XDG_CONFIG_DIRS/nvim/sysinit.vim
+/// 1. Source system vimrc file from $XDG_CONFIG_DIRS/$NVIM_APPNAME/sysinit.vim
 /// 2. Source system vimrc file from $VIM
 static void do_system_initialization(void)
 {
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
   if (config_dirs != NULL) {
     const void *iter = NULL;
-    const char path_tail[] = {
-      'n', 'v', 'i', 'm', PATHSEP,
+    const char *appname = get_appname(false);
+    size_t appname_len = strlen(appname);
+    const char sysinit_suffix[] = {
+      PATHSEP,
       's', 'y', 's', 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL
     };
     do {
@@ -1939,13 +2068,15 @@ static void do_system_initialization(void)
       if (dir == NULL || dir_len == 0) {
         break;
       }
-      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
+      size_t path_len = dir_len + 1 + appname_len + sizeof(sysinit_suffix);
+      char *vimrc = xmalloc(path_len);
       memcpy(vimrc, dir, dir_len);
       if (vimrc[dir_len - 1] != PATHSEP) {
         vimrc[dir_len] = PATHSEP;
         dir_len += 1;
       }
-      memcpy(vimrc + dir_len, path_tail, sizeof(path_tail));
+      memcpy(vimrc + dir_len, appname, appname_len);
+      memcpy(vimrc + dir_len + appname_len, sysinit_suffix, sizeof(sysinit_suffix));
       if (do_source(vimrc, false, DOSO_NONE, NULL) != FAIL) {
         xfree(vimrc);
         xfree(config_dirs);
@@ -1967,8 +2098,8 @@ static void do_system_initialization(void)
 /// Does one of the following things, stops after whichever succeeds:
 ///
 /// 1. Execution of VIMINIT environment variable.
-/// 2. Sourcing user vimrc file ($XDG_CONFIG_HOME/nvim/init.vim).
-/// 3. Sourcing other vimrc files ($XDG_CONFIG_DIRS[1]/nvim/init.vim, …).
+/// 2. Sourcing user config file ($XDG_CONFIG_HOME/$NVIM_APPNAME/init.lua or init.vim).
+/// 3. Sourcing other config files ($XDG_CONFIG_DIRS[1]/$NVIM_APPNAME/init.lua or init.vim, …).
 /// 4. Execution of EXINIT environment variable.
 ///
 /// @return True if it is needed to attempt to source exrc file according to
@@ -1989,8 +2120,7 @@ static bool do_user_initialization(void)
   if (os_path_exists(init_lua_path)
       && do_source(init_lua_path, true, DOSO_VIMRC, NULL)) {
     if (os_path_exists(user_vimrc)) {
-      semsg(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
-            user_vimrc);
+      semsg(e_conflicting_configs, init_lua_path, user_vimrc);
     }
 
     xfree(user_vimrc);
@@ -2013,6 +2143,9 @@ static bool do_user_initialization(void)
 
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
   if (config_dirs != NULL) {
+    const char *appname = get_appname(false);
+    size_t appname_len = strlen(appname);
+
     const void *iter = NULL;
     do {
       const char *dir;
@@ -2021,22 +2154,49 @@ static bool do_user_initialization(void)
       if (dir == NULL || dir_len == 0) {
         break;
       }
-      const char path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
-                                 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
-      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
-      memmove(vimrc, dir, dir_len);
-      vimrc[dir_len] = PATHSEP;
-      memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
-      if (do_source(vimrc, true, DOSO_VIMRC, NULL) != FAIL) {
+
+      // Build: <xdg_dir>/<appname>/init.lua
+      const char init_lua_suffix[] = { PATHSEP, 'i', 'n', 'i', 't', '.', 'l', 'u', 'a', NUL };
+      size_t init_lua_len = dir_len + 1 + appname_len + sizeof(init_lua_suffix);
+      char *init_lua = xmalloc(init_lua_len);
+      memcpy(init_lua, dir, dir_len);
+      init_lua[dir_len] = PATHSEP;
+      memcpy(init_lua + dir_len + 1, appname, appname_len);
+      memcpy(init_lua + dir_len + 1 + appname_len, init_lua_suffix, sizeof(init_lua_suffix));
+
+      // Build: <xdg_dir>/<appname>/init.vim
+      const char init_vim_suffix[] = { PATHSEP, 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
+      size_t init_vim_len = dir_len + 1 + appname_len + sizeof(init_vim_suffix);
+      char *init_vim = xmalloc(init_vim_len);
+      memcpy(init_vim, dir, dir_len);
+      init_vim[dir_len] = PATHSEP;
+      memcpy(init_vim + dir_len + 1, appname, appname_len);
+      memcpy(init_vim + dir_len + 1 + appname_len, init_vim_suffix, sizeof(init_vim_suffix));
+
+      if (os_path_exists(init_lua)
+          && do_source(init_lua, true, DOSO_VIMRC, NULL)) {
+        if (os_path_exists(init_vim)) {
+          semsg(e_conflicting_configs, init_lua, init_vim);
+        }
+
+        xfree(init_vim);
+        xfree(init_lua);
+        xfree(config_dirs);
+        do_exrc = p_exrc;
+        return do_exrc;
+      }
+      xfree(init_lua);
+
+      if (do_source(init_vim, true, DOSO_VIMRC, NULL) != FAIL) {
         do_exrc = p_exrc;
         if (do_exrc) {
-          do_exrc = (path_full_compare(VIMRC_FILE, vimrc, false, true) != kEqualFiles);
+          do_exrc = (path_full_compare(VIMRC_FILE, init_vim, false, true) != kEqualFiles);
         }
-        xfree(vimrc);
+        xfree(init_vim);
         xfree(config_dirs);
         return do_exrc;
       }
-      xfree(vimrc);
+      xfree(init_vim);
     } while (iter != NULL);
     xfree(config_dirs);
   }
@@ -2049,37 +2209,18 @@ static bool do_user_initialization(void)
 }
 
 // Read initialization commands from ".nvim.lua", ".nvimrc", or ".exrc" in
-// current directory.  This is only done if the 'exrc' option is set.
-// Only do this if VIMRC_FILE is not the same as vimrc file sourced in
-// do_user_initialization.
+// current directory and all parent directories.  This is only done if the 'exrc'
+// option is set. Only do this if VIMRC_FILE is not the same as vimrc file
+// sourced in do_user_initialization.
 static void do_exrc_initialization(void)
 {
-  char *str;
+  lua_State *const L = get_global_lstate();
+  assert(L);
 
-  if (os_path_exists(VIMRC_LUA_FILE)) {
-    str = nlua_read_secure(VIMRC_LUA_FILE);
-    if (str != NULL) {
-      Error err = ERROR_INIT;
-      nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
-      xfree(str);
-      if (ERROR_SET(&err)) {
-        semsg("Error detected while processing %s:", VIMRC_LUA_FILE);
-        semsg_multiline(err.msg);
-        api_clear_error(&err);
-      }
-    }
-  } else if (os_path_exists(VIMRC_FILE)) {
-    str = nlua_read_secure(VIMRC_FILE);
-    if (str != NULL) {
-      do_source_str(str, VIMRC_FILE);
-      xfree(str);
-    }
-  } else if (os_path_exists(EXRC_FILE)) {
-    str = nlua_read_secure(EXRC_FILE);
-    if (str != NULL) {
-      do_source_str(str, EXRC_FILE);
-      xfree(str);
-    }
+  lua_getglobal(L, "require");
+  lua_pushstring(L, "vim._core.exrc");
+  if (nlua_pcall(L, 1, 0)) {
+    fprintf(stderr, "%s\n", lua_tostring(L, -1));
   }
 }
 
@@ -2093,7 +2234,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
       // Do nothing.
     } else {
       if (do_source(parmp->use_vimrc, false, DOSO_NONE, NULL) != OK) {
-        semsg(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
+        semsg(_(e_cannot_read_from_str_2), parmp->use_vimrc);
       }
     }
   } else if (!silent_mode) {
@@ -2115,20 +2256,25 @@ static void source_startup_scripts(const mparm_T *const parmp)
 static int execute_env(char *env)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *initstr = os_getenv(env);
+  ESTACK_CHECK_DECLARATION;
+  char *initstr = os_getenv(env);
   if (initstr == NULL) {
     return FAIL;
   }
 
   estack_push(ETYPE_ENV, env, 0);
+  ESTACK_CHECK_SETUP;
   const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_sid = SID_ENV;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = 0;
   do_cmdline_cmd(initstr);
 
+  ESTACK_CHECK_NOW;
   estack_pop();
   current_sctx = save_current_sctx;
+
+  xfree(initstr);
   return OK;
 }
 

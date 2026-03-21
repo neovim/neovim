@@ -1,6 +1,5 @@
-" Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
-" Former Maintainer: Bruno Sutic
-" Upstream: <https://github.com/saccarosium/netrw.vim>
+" Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
+" Maintainer: This runtime file is looking for a new maintainer.
 
 " netrw_gitignore#Hide: gitignore-based hiding
 "  Function returns a string of comma separated patterns convenient for

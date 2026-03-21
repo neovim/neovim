@@ -3,7 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Haakon Riiser <hakonrk@fys.uio.no>
 " Contributor:		Jack Haden-Enneking
-" Last Change:		2022 Oct 15
+" Last Change:		2026 Mar 06
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -16,10 +16,31 @@ syn match sedError	"\S"
 
 syn match sedWhitespace "\s\+" contained
 syn match sedSemicolon	";"
-syn match sedAddress	"[[:digit:]$]"
+
+" Addresses {{{1
+syn match sedAddress	"\d\+\|\$"
+
+" GNU extensions
 syn match sedAddress	"\d\+\~\d\+"
-syn region sedAddress	matchgroup=Special start="[{,;]\s*/\%(\\/\)\="lc=1 skip="[^\\]\%(\\\\\)*\\/" end="/I\=" contains=sedTab,sedRegexpMeta
-syn region sedAddress	matchgroup=Special start="^\s*/\%(\\/\)\=" skip="[^\\]\%(\\\\\)*\\/" end="/I\=" contains=sedTab,sedRegexpMeta
+syn match sedAddress	"\~\d\+"
+syn match sedAddress	"[-+]\d\+"
+
+syn region sedAddress
+      \ matchgroup=Delimiter
+      \ start="[{,;]\s*/\%(\\/\)\="lc=1
+      \ skip="[^\\]\%(\\\\\)*\\/"
+      "\ GNU extensions
+      \ end="/\%(IM\|MI\|[IM]\)\="
+      \ contains=sedTab,sedRegexpMeta
+syn region sedAddress
+      \ matchgroup=Delimiter
+      \ start="^\s*/\%(\\/\)\="
+      "\ GNU extensions
+      \ skip="[^\\]\%(\\\\\)*\\/"
+      \ end="/\%(IM\|MI\|[IM]\)\="
+      \ contains=sedTab,sedRegexpMeta
+" }}}
+
 syn match sedFunction	"[dDgGhHlnNpPqQx=]\s*\%($\|;\)" contains=sedSemicolon,sedWhitespace
 if exists("g:sed_dialect") && g:sed_dialect ==? "bsd"
   syn match sedComment	"^\s*#.*$" contains=sedTodo
@@ -50,7 +71,7 @@ syn region sedFlagWrite	    matchgroup=sedFlag start="w" matchgroup=sedSemicolon
 syn match sedFlag	    "[[:digit:]gpI]*w\=" contains=sedFlagWrite contained
 syn match sedRegexpMeta	    "[.*^$]" contained
 syn match sedRegexpMeta	    "\\." contains=sedTab contained
-syn match sedRegexpMeta	    "\[.\{-}\]" contains=sedTab contained
+syn match sedRegexpMeta	    "\[\^\=\]\=\%(\[:.\{-}:\]\|\[\..\{-}\.\]\|\[=.\{-}=\]\|[^]]\)*\]" contains=sedTab contained
 syn match sedRegexpMeta	    "\\{\d\*,\d*\\}" contained
 syn match sedRegexpMeta	    "\\%(.\{-}\\)" contains=sedTab contained
 syn match sedReplaceMeta    "&\|\\\%($\|.\)" contains=sedTab contained
@@ -68,15 +89,44 @@ let s:metacharacters = '$*.\^[~'
 while s:i <= s:last
   let s:delimiter = escape(nr2char(s:i), s:metacharacters)
   if s:i != s:at
-    exe 'syn region sedAddress matchgroup=Special start=@\\'.s:delimiter.'\%(\\'.s:delimiter.'\)\=@ skip=@[^\\]\%(\\\\\)*\\'.s:delimiter.'@ end=@'.s:delimiter.'[IM]\=@ contains=sedTab'
-    exe 'syn region sedRegexp'.s:i  'matchgroup=Special start=@'.s:delimiter.'\%(\\\\\|\\'.s:delimiter.'\)*@ skip=@[^\\'.s:delimiter.']\%(\\\\\)*\\'.s:delimiter.'@ end=@'.s:delimiter.'@me=e-1 contains=sedTab,sedRegexpMeta keepend contained nextgroup=sedReplacement'.s:i
-    exe 'syn region sedReplacement'.s:i 'matchgroup=Special start=@'.s:delimiter.'\%(\\\\\|\\'.s:delimiter.'\)*@ skip=@[^\\'.s:delimiter.']\%(\\\\\)*\\'.s:delimiter.'@ end=@'.s:delimiter.'@ contains=sedTab,sedReplaceMeta keepend contained nextgroup=@sedFlags'
+    exe 'syn region sedAddress'
+	  \ 'matchgroup=Delimiter'
+	  \ 'start=@\\' .. s:delimiter .. '\%(\\' .. s:delimiter .. '\)\=@'
+	  \ 'skip=@[^\\]\%(\\\\\)*\\' .. s:delimiter .. '\|\[.\{-}' .. s:delimiter .. '@'
+	  \ 'end=@' .. s:delimiter .. '\%(IM\|MI\|[IM]\)\=@'
+	  \ 'contains=sedTab,sedRegexpMeta'
+    exe 'syn region sedRegexp' .. s:i 'contained'
+	  \ 'matchgroup=Delimiter'
+	  \ 'start=@' .. s:delimiter .. '\%(\\\\\|\\' .. s:delimiter .. '\)*@'
+	  \ 'end=@' .. s:delimiter .. '@me=e-1'
+	  \ 'nextgroup=sedReplacement' .. s:i
+	  \ 'contains=sedTab,sedRegexpMeta'
+    exe 'syn region sedReplacement' .. s:i 'contained'
+	  \ 'matchgroup=Delimiter'
+	  \ 'start=@' .. s:delimiter .. '\%(\\\\\|\\' .. s:delimiter .. '\)*@'
+	  \ 'end=@' .. s:delimiter .. '@'
+	  \ 'nextgroup=@sedFlags'
+	  \ 'contains=sedTab,sedReplaceMeta'
   endif
   let s:i = s:i + 1
 endwhile
-syn region sedAddress matchgroup=Special start=+\\@\%(\\@\)\=+ skip=+[^\\]\%(\\\\\)*\\@+ end=+@I\=+ contains=sedTab,sedRegexpMeta
-syn region sedRegexp64 matchgroup=Special start=+@\%(\\\\\|\\@\)*+ skip=+[^\\@]\%(\\\\\)*\\@+ end=+@+me=e-1 contains=sedTab,sedRegexpMeta keepend contained nextgroup=sedReplacement64
-syn region sedReplacement64 matchgroup=Special start=+@\%(\\\\\|\\@\)*+ skip=+[^\\@]\%(\\\\\)*\\@+ end=+@+ contains=sedTab,sedReplaceMeta keepend contained nextgroup=sedFlag
+syn region sedAddress
+      \ matchgroup=Delimiter
+      \ start=+\\\z(@\)+
+      \ end=+\z1\%(IM\|MI\|[IM]\)\=+
+      \ contains=sedTab,sedRegexpMeta
+syn region sedRegexp64 contained
+      \ matchgroup=Delimiter
+      \ start=+@\%(\\\\\|\\@\)*+
+      \ end=+@+me=e-1
+      \ nextgroup=sedReplacement64
+      \ contains=sedTab,sedRegexpMeta
+syn region sedReplacement64 contained
+      \ matchgroup=Delimiter
+      \ start=+@\%(\\\\\|\\@\)*+
+      \ end=+@+
+      \ nextgroup=sedFlag
+      \ contains=sedTab,sedReplaceMeta
 
 " Since the syntax for the substitution command is very similar to the
 " syntax for the transform command, I use the same pattern matching
@@ -110,8 +160,8 @@ if s:highlight_tabs
 endif
 let s:i = char2nr(" ") " ASCII: 32, EBCDIC: 64
 while s:i <= s:last
-  exe "hi def link sedRegexp".s:i	"Macro"
-  exe "hi def link sedReplacement".s:i	"NONE"
+  exe "hi def link sedRegexp" .. s:i		"Macro"
+  exe "hi def link sedReplacement" .. s:i	"NONE"
   let s:i = s:i + 1
 endwhile
 
@@ -120,4 +170,4 @@ unlet s:highlight_tabs
 
 let b:current_syntax = "sed"
 
-" vim: nowrap sw=2 sts=2 ts=8 noet:
+" vim: nowrap sw=2 sts=2 ts=8 noet fdm=marker:

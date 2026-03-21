@@ -69,7 +69,7 @@ allows you to associate names with a specific node in a pattern. A `predicate`
 adds arbitrary metadata and conditional data to a match.
 
 Queries are written in a lisp-like language documented in
-https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax
+https://tree-sitter.github.io/tree-sitter/using-parsers/queries/1-syntax.html
 Note: The predicates listed there differ from those Nvim supports. See
 |treesitter-predicates| for a complete list of predicates supported by Nvim.
 
@@ -120,7 +120,7 @@ The following predicates are built in:
         match.
 
     `lua-match?`                              *treesitter-predicate-lua-match?*
-         Match |lua-patterns| against the text corresponding to a node,
+         Match |lua-pattern|s against the text corresponding to a node,
          similar to `match?`
 
     `any-lua-match?`                      *treesitter-predicate-any-lua-match?*
@@ -219,7 +219,9 @@ The following directives are built in:
         Takes the range of the captured node and applies an offset. This will
         set a new range in the form of a list like { {start_row}, {start_col},
         {end_row}, {end_col} } for the captured node with `capture_id` as
-        `metadata[capture_id].range`. Useful for |treesitter-language-injections|.
+        `metadata[capture_id].offset`. This offset will be applied to the
+        range returned in |vim.treesitter.get_range()|. Useful for
+        |treesitter-language-injections|.
 
         Parameters: ~
             {capture_id}
@@ -546,10 +548,9 @@ When multiple captures set this metadata over a region, only the innermost
 
 ==============================================================================
 TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*
-<
 
 Note the following information is adapted from:
-  https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
+https://tree-sitter.github.io/tree-sitter/3-syntax-highlighting.html#language-injection
 
 Some source files contain code written in multiple different languages.
 Examples include:
@@ -573,7 +574,10 @@ parent tree. The language injection query allows you to specify these
 “injections” using the following captures:
 
     • `@injection.content` - indicates that the captured node should have its
-      contents re-parsed using another language.
+      contents re-parsed using another language. If there are multiple
+      `@injection.content` captures in one pattern, all ranges will be
+      collected and parsed as one tree. This allows query authors to create
+      "scoped" injections with injection query quantifiers.
     • `@injection.language` - indicates that the captured node’s text may
       contain the name of a language that should be used to re-parse the
       `@injection.content`.
@@ -601,6 +605,27 @@ associated with patterns:
 Injection queries are currently run over the entire buffer, which can be slow
 for large buffers. To disable injections for, e.g.,  `c`, just place an
 empty `queries/c/injections.scm` file in your 'runtimepath'.
+
+==============================================================================
+DEFAULTS                                                 *treesitter-defaults*
+
+							*v_an*
+an			Selects [count]th parent node.
+
+			If buffer has no treesitter parser,
+			falls back to |vim.lsp.buf.selection_range()|.
+
+							*v_in*
+in			Selects [count]th previous (or first) child node.
+
+			If buffer has no treesitter parser,
+			falls back to |vim.lsp.buf.selection_range()|.
+
+							*v_]n*
+]n			Selects [count]th next node.
+
+							*v_[n*
+[n			Selects [count]th previous node.
 
 ==============================================================================
 VIM.TREESITTER                                                *lua-treesitter*
@@ -646,8 +671,9 @@ TSTree:root()                                                  *TSTree:root()*
 TREESITTER NODES                                    *treesitter-node* *TSNode*
 
 A "treesitter node" represents one specific element of the parsed contents of
-a buffer, which can be captured by a |Query| for, e.g., highlighting. It is a
-|userdata| reference to an object held by the treesitter library.
+a buffer, which can be captured by a |treesitter-query| for, e.g.,
+highlighting. It is a |userdata| reference to an object held by the treesitter
+library.
 
 An instance `TSNode` of a treesitter node supports the following methods.
 
@@ -804,6 +830,12 @@ TSNode:named_child_count()                        *TSNode:named_child_count()*
     Return: ~
         (`integer`)
 
+TSNode:named_children()                              *TSNode:named_children()*
+    Returns a list of the node's named children.
+
+    Return: ~
+        (`TSNode[]`)
+
                                          *TSNode:named_descendant_for_range()*
 TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row},
                                   {end_col})
@@ -863,6 +895,9 @@ TSNode:range({include_bytes})                                 *TSNode:range()*
 
     Parameters: ~
       • {include_bytes}  (`false?`)
+
+    Overloads: ~
+      • `fun(self: TSNode, include_bytes: true): integer, integer, integer, integer, integer, integer`
 
     Return (multiple): ~
         (`integer`)
@@ -982,9 +1017,9 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
 
     Return (multiple): ~
         (`integer`) start_row
-        (`integer`) start_col
+        (`integer`) start_col (byte offset)
         (`integer`) end_row
-        (`integer`) end_col
+        (`integer`) end_col (byte offset)
 
                                               *vim.treesitter.get_node_text()*
 get_node_text({node}, {source}, {opts})
@@ -1007,10 +1042,7 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
 
     If needed, this will create the parser.
 
-    If no parser can be created, an error is thrown. Set `opts.error = false`
-    to suppress this and return nil (and an error message) instead. WARNING:
-    This behavior will become default in Nvim 0.12 and the option will be
-    removed.
+    If no parser can be created, nil (and an error message) is returned.
 
     Parameters: ~
       • {bufnr}  (`integer?`) Buffer the parser should be tied to (default:
@@ -1123,7 +1155,7 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
     Can be used in an ftplugin or FileType autocommand.
 
     Note: By default, disables regex syntax highlighting, which may be
-    required for some plugins. In this case, add `vim.bo.syntax = 'on'` after
+    required for some plugins. In this case, add `vim.bo.syntax = 'ON'` after
     the call to `start`.
 
     Note: By default, the highlighter parses code asynchronously, using a
@@ -1131,9 +1163,9 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
 
     Example: >lua
         vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
-            callback = function(args)
-                vim.treesitter.start(args.buf, 'latex')
-                vim.bo[args.buf].syntax = 'on'  -- only if additional legacy syntax is needed
+            callback = function(ev)
+                vim.treesitter.start(ev.buf, 'latex')
+                vim.bo[ev.buf].syntax = 'ON'  -- only if additional legacy syntax is needed
             end
         })
 <
@@ -1234,6 +1266,263 @@ register({lang}, {filetype})              *vim.treesitter.language.register()*
 
 
 ==============================================================================
+Lua module: vim.treesitter.languagetree              *treesitter-languagetree*
+
+A *LanguageTree* contains a tree of parsers: the root treesitter parser for
+{lang} and any "injected" language parsers, which themselves may inject other
+languages, recursively. For example a Lua buffer containing some Vimscript
+commands needs multiple parsers to fully understand its contents.
+
+To create a LanguageTree (parser object) for a given buffer and language, use: >lua
+    local parser = vim.treesitter.get_parser(bufnr, lang)
+<
+
+(where `bufnr=0` means current buffer). `lang` defaults to 'filetype'. Note:
+currently the parser is retained for the lifetime of a buffer but this may
+change; a plugin should keep a reference to the parser object if it wants
+incremental updates.
+
+Whenever you need to access the current syntax tree, parse the buffer: >lua
+    local tree = parser:parse({ start_row, end_row })
+<
+
+This returns a table of immutable |treesitter-tree| objects representing the
+current state of the buffer. When the plugin wants to access the state after a
+(possible) edit it must call `parse()` again. If the buffer wasn't edited, the
+same tree will be returned again without extra work. If the buffer was parsed
+before, incremental parsing will be done of the changed parts.
+
+Note: To use the parser directly inside a |nvim_buf_attach()| Lua callback,
+you must call |vim.treesitter.get_parser()| before you register your callback.
+But preferably parsing shouldn't be done directly in the change callback
+anyway as they will be very frequent. Rather a plugin that does any kind of
+analysis on a tree should use a timer to throttle too frequent updates.
+
+
+LanguageTree:children()                              *LanguageTree:children()*
+    Returns a map of language to child tree.
+
+    Return: ~
+        (`table<string,vim.treesitter.LanguageTree>`)
+
+LanguageTree:contains({range})                       *LanguageTree:contains()*
+    Determines whether {range} is contained in the |LanguageTree|.
+
+    Parameters: ~
+      • {range}  (`table`) A table with the following fields:
+                 • {[1]} (`integer`) start row
+                 • {[2]} (`integer`) start column
+                 • {[3]} (`integer`) end row
+                 • {[4]} (`integer`) end column
+
+    Return: ~
+        (`boolean`)
+
+LanguageTree:destroy()                                *LanguageTree:destroy()*
+    Destroys this |LanguageTree| and all its children.
+
+    Any cleanup logic should be performed here.
+
+    Note: This DOES NOT remove this tree from a parent. Instead,
+    `remove_child` must be called on the parent to remove it.
+
+LanguageTree:for_each_tree({fn})                *LanguageTree:for_each_tree()*
+    Invokes the callback for each |LanguageTree| recursively.
+
+    Note: This includes the invoking tree's child trees as well.
+
+    Parameters: ~
+      • {fn}  (`fun(tree: TSTree, ltree: vim.treesitter.LanguageTree)`)
+
+LanguageTree:included_regions()              *LanguageTree:included_regions()*
+    Gets the set of included regions managed by this LanguageTree. This can be
+    different from the regions set by injection query, because a partial
+    |LanguageTree:parse()| drops the regions outside the requested range. Each
+    list represents a range in the form of { {start_row}, {start_col},
+    {start_bytes}, {end_row}, {end_col}, {end_bytes} }.
+
+    Return: ~
+        (`table<integer, Range6[]>`)
+
+LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
+    Invalidates this parser and its children.
+
+    Should only be called when the tracked state of the LanguageTree is not
+    valid against the parse tree in treesitter. Doesn't clear filesystem
+    cache. Called often, so needs to be fast.
+
+    Parameters: ~
+      • {reload}  (`boolean?`)
+
+                                                     *LanguageTree:is_valid()*
+LanguageTree:is_valid({exclude_children}, {range})
+    Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()|
+    reflects the latest state of the source. If invalid, user should call
+    |LanguageTree:parse()|.
+
+    Parameters: ~
+      • {exclude_children}  (`boolean?`) whether to ignore the validity of
+                            children (default `false`)
+      • {range}             (`Range|Range[]?`) range (or list of ranges,
+                            sorted by starting point in ascending order) to
+                            check for validity
+
+    Return: ~
+        (`boolean`)
+
+LanguageTree:lang()                                      *LanguageTree:lang()*
+    Gets the language of this tree node.
+
+    Return: ~
+        (`string`)
+
+                                           *LanguageTree:language_for_range()*
+LanguageTree:language_for_range({range})
+    Gets the appropriate language that contains {range}.
+
+    Parameters: ~
+      • {range}  (`table`) A table with the following fields:
+                 • {[1]} (`integer`) start row
+                 • {[2]} (`integer`) start column
+                 • {[3]} (`integer`) end row
+                 • {[4]} (`integer`) end column
+
+    Return: ~
+        (`vim.treesitter.LanguageTree`) tree Managing {range}
+
+                                         *LanguageTree:named_node_for_range()*
+LanguageTree:named_node_for_range({range}, {opts})
+    Gets the smallest named node that contains {range}.
+
+    Parameters: ~
+      • {range}  (`table`) A table with the following fields:
+                 • {[1]} (`integer`) start row
+                 • {[2]} (`integer`) start column
+                 • {[3]} (`integer`) end row
+                 • {[4]} (`integer`) end column
+      • {opts}   (`table?`) A table with the following fields:
+                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
+                   injected languages
+
+    Return: ~
+        (`TSNode?`)
+
+                                               *LanguageTree:node_for_range()*
+LanguageTree:node_for_range({range}, {opts})
+    Gets the smallest node that contains {range}.
+
+    Parameters: ~
+      • {range}  (`table`) A table with the following fields:
+                 • {[1]} (`integer`) start row
+                 • {[2]} (`integer`) start column
+                 • {[3]} (`integer`) end row
+                 • {[4]} (`integer`) end column
+      • {opts}   (`table?`) A table with the following fields:
+                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
+                   injected languages
+
+    Return: ~
+        (`TSNode?`)
+
+LanguageTree:parent()                                  *LanguageTree:parent()*
+    Returns the parent tree. `nil` for the root tree.
+
+    Return: ~
+        (`vim.treesitter.LanguageTree?`)
+
+LanguageTree:parse({range}, {on_parse})                 *LanguageTree:parse()*
+    Recursively parse all regions in the language tree using
+    |treesitter-parsers| for the corresponding languages and run injection
+    queries on the parsed trees to determine whether child trees should be
+    created and parsed.
+
+    Any region with empty range (`{}`, typically only the root tree) is always
+    parsed; otherwise (typically injections) only if it intersects {range} (or
+    if {range} is `true`).
+
+    Parameters: ~
+      • {range}     (`boolean|Range|Range[]?`) Parse this range (or list of
+                    ranges, sorted by starting point in ascending order) in
+                    the parser's source. Set to `true` to run a complete parse
+                    of the source (Note: Can be slow!) Set to `false|nil` to
+                    only parse regions with empty ranges (typically only the
+                    root tree without injections).
+      • {on_parse}  (`fun(err?: string, trees?: table<integer, TSTree>)?`)
+                    Function invoked when parsing completes. When provided and
+                    `vim.g._ts_force_sync_parsing` is not set, parsing will
+                    run asynchronously. The first argument to the function is
+                    a string representing the error type, in case of a failure
+                    (currently only possible for timeouts). The second
+                    argument is the list of trees returned by the parse (upon
+                    success), or `nil` if the parse timed out (determined by
+                    'redrawtime').
+
+                    If parsing was still able to finish synchronously (within
+                    3ms), `parse()` returns the list of trees. Otherwise, it
+                    returns `nil`.
+
+    Return: ~
+        (`table<integer, TSTree>?`)
+
+                                                 *LanguageTree:register_cbs()*
+LanguageTree:register_cbs({cbs}, {recursive})
+    Registers callbacks for the |LanguageTree|.
+
+    Parameters: ~
+      • {cbs}        (`table<TSCallbackNameOn,function>`) An
+                     |nvim_buf_attach()|-like table argument with the
+                     following handlers:
+                     • `on_bytes` : see |nvim_buf_attach()|.
+                     • `on_changedtree` : a callback that will be called every
+                       time the tree has syntactical changes. It will be
+                       passed two arguments: a table of the ranges (as node
+                       ranges) that changed and the changed tree.
+                     • `on_child_added` : emitted when a child is added to the
+                       tree.
+                     • `on_child_removed` : emitted when a child is removed
+                       from the tree.
+                     • `on_detach` : emitted when the buffer is detached, see
+                       |nvim_buf_detach_event|. Takes one argument, the number
+                       of the buffer.
+      • {recursive}  (`boolean?`) Apply callbacks recursively for all
+                     children. Any new children will also inherit the
+                     callbacks.
+
+LanguageTree:source()                                  *LanguageTree:source()*
+    Returns the source content of the language tree (bufnr or string).
+
+    Return: ~
+        (`integer|string`)
+
+                                               *LanguageTree:tree_for_range()*
+LanguageTree:tree_for_range({range}, {opts})
+    Gets the tree that contains {range}.
+
+    Parameters: ~
+      • {range}  (`table`) A table with the following fields:
+                 • {[1]} (`integer`) start row
+                 • {[2]} (`integer`) start column
+                 • {[3]} (`integer`) end row
+                 • {[4]} (`integer`) end column
+      • {opts}   (`table?`) A table with the following fields:
+                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
+                   injected languages
+
+    Return: ~
+        (`TSTree?`)
+
+LanguageTree:trees()                                    *LanguageTree:trees()*
+    Returns all trees of the regions parsed by this parser. Does not include
+    child languages. The result is list-like if
+    • this LanguageTree is the root, in which case the result is empty or a
+      singleton list; or
+    • the root LanguageTree is fully parsed.
+
+    Return: ~
+        (`table<integer, TSTree>`)
+
+
+==============================================================================
 Lua module: vim.treesitter.query                        *lua-treesitter-query*
 
 This Lua |treesitter-query| interface allows you to create queries and use
@@ -1254,7 +1543,7 @@ them to parse text. See |vim.treesitter.query.parse()| for a working example.
       • {has_combined_injections}  (`boolean`) whether the query contains
                                    combined injections
       • {query}                    (`TSQuery`) userdata query object
-      • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
+      • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start_row: integer?, end_row: integer?, opts: table?): fun(end_line: integer?, end_col: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
                                    See |Query:iter_captures()|.
       • {iter_matches}             (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
                                    See |Query:iter_matches()|.
@@ -1307,12 +1596,13 @@ add_predicate({name}, {handler}, {opts})
 edit({lang})                                     *vim.treesitter.query.edit()*
     Opens a live editor to query the buffer you started from.
 
-    Can also be shown with *:EditQuery*.
+    Can also be shown with the *:EditQuery* command. `:EditQuery <tab>`
+    completes available parsers.
 
     If you move the cursor to a capture name ("@foo"), text matching the
-    capture is highlighted in the source buffer. The query editor is a scratch
-    buffer, use `:write` to save it. You can find example queries at
-    `$VIMRUNTIME/queries/`.
+    capture is highlighted with |hl-DiagnosticVirtualTextHint| in the source
+    buffer. The query editor is a scratch buffer, use `:write` to save it. You
+    can find example queries at `$VIMRUNTIME/queries/`.
 
     Parameters: ~
       • {lang}  (`string?`) language to open the query editor for. If omitted,
@@ -1424,7 +1714,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       • |vim.treesitter.query.get()|
 
                                                        *Query:iter_captures()*
-Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
+Query:iter_captures({node}, {source}, {start_row}, {end_row}, {opts})
     Iterates over all captures from all matches in {node}.
 
     {source} is required if the query contains predicates; then the caller
@@ -1437,8 +1727,11 @@ Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
 
     The iterator returns four values:
     1. the numeric id identifying the capture
+
     2. the captured node
+
     3. metadata from any directives processing the match
+
     4. the match itself
 
     Example: how to get captures by name: >lua
@@ -1456,22 +1749,26 @@ Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
         contained predicates.
 
     Parameters: ~
-      • {node}    (`TSNode`) under which the search will occur
-      • {source}  (`integer|string`) Source buffer or string to extract text
-                  from
-      • {start}   (`integer?`) Starting line for the search. Defaults to
-                  `node:start()`.
-      • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
-                  Defaults to `node:end_()`.
-      • {opts}    (`table?`) Optional keyword arguments:
-                  • max_start_depth (integer) if non-zero, sets the maximum
-                    start depth for each match. This is used to prevent
-                    traversing too deep into a tree.
-                  • match_limit (integer) Set the maximum number of
-                    in-progress matches (Default: 256).
+      • {node}       (`TSNode`) under which the search will occur
+      • {source}     (`integer|string`) Source buffer or string to extract
+                     text from
+      • {start_row}  (`integer?`) Starting line for the search. Defaults to
+                     `node:start()`.
+      • {end_row}    (`integer?`) Stopping line for the search (end-inclusive,
+                     unless `stop_col` is provided). Defaults to
+                     `node:end_()`.
+      • {opts}       (`table?`) Optional keyword arguments:
+                     • max_start_depth (integer) if non-zero, sets the maximum
+                       start depth for each match. This is used to prevent
+                       traversing too deep into a tree.
+                     • match_limit (integer) Set the maximum number of
+                       in-progress matches (Default: 256).
+                     • start_col (integer) Starting column for the search.
+                     • end_col (integer) Stopping column for the search
+                       (end-exclusive).
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
+        (`fun(end_line: integer?, end_col: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
         capture id, capture node, metadata, match, tree
 
                                                         *Query:iter_matches()*
@@ -1510,11 +1807,12 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                     start depth for each match. This is used to prevent
                     traversing too deep into a tree.
                   • match_limit (integer) Set the maximum number of
-                    in-progress matches (Default: 256). all (boolean) When
-                    `false` (default `true`), the returned table maps capture
-                    IDs to a single (last) node instead of the full list of
-                    matching nodes. This option is only for backward
-                    compatibility and will be removed in a future release.
+                    in-progress matches (Default: 256).
+                  • all (boolean) When `false` (default `true`), the returned
+                    table maps capture IDs to a single (last) node instead of
+                    the full list of matching nodes. This option is only for
+                    backward compatibility and will be removed in a future
+                    release.
 
     Return: ~
         (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
@@ -1590,260 +1888,6 @@ TSQuery:disable_pattern({pattern_index})           *TSQuery:disable_pattern()*
 
     Parameters: ~
       • {pattern_index}  (`integer`)
-
-
-==============================================================================
-Lua module: vim.treesitter.languagetree              *treesitter-languagetree*
-
-A *LanguageTree* contains a tree of parsers: the root treesitter parser for
-{lang} and any "injected" language parsers, which themselves may inject other
-languages, recursively. For example a Lua buffer containing some Vimscript
-commands needs multiple parsers to fully understand its contents.
-
-To create a LanguageTree (parser object) for a given buffer and language, use: >lua
-    local parser = vim.treesitter.get_parser(bufnr, lang)
-<
-
-(where `bufnr=0` means current buffer). `lang` defaults to 'filetype'. Note:
-currently the parser is retained for the lifetime of a buffer but this may
-change; a plugin should keep a reference to the parser object if it wants
-incremental updates.
-
-Whenever you need to access the current syntax tree, parse the buffer: >lua
-    local tree = parser:parse({ start_row, end_row })
-<
-
-This returns a table of immutable |treesitter-tree| objects representing the
-current state of the buffer. When the plugin wants to access the state after a
-(possible) edit it must call `parse()` again. If the buffer wasn't edited, the
-same tree will be returned again without extra work. If the buffer was parsed
-before, incremental parsing will be done of the changed parts.
-
-Note: To use the parser directly inside a |nvim_buf_attach()| Lua callback,
-you must call |vim.treesitter.get_parser()| before you register your callback.
-But preferably parsing shouldn't be done directly in the change callback
-anyway as they will be very frequent. Rather a plugin that does any kind of
-analysis on a tree should use a timer to throttle too frequent updates.
-
-
-LanguageTree:children()                              *LanguageTree:children()*
-    Returns a map of language to child tree.
-
-    Return: ~
-        (`table<string,vim.treesitter.LanguageTree>`)
-
-LanguageTree:contains({range})                       *LanguageTree:contains()*
-    Determines whether {range} is contained in the |LanguageTree|.
-
-    Parameters: ~
-      • {range}  (`table`) A table with the following fields:
-                 • {[1]} (`integer`) start row
-                 • {[2]} (`integer`) start column
-                 • {[3]} (`integer`) end row
-                 • {[4]} (`integer`) end column
-
-    Return: ~
-        (`boolean`)
-
-LanguageTree:destroy()                                *LanguageTree:destroy()*
-    Destroys this |LanguageTree| and all its children.
-
-    Any cleanup logic should be performed here.
-
-    Note: This DOES NOT remove this tree from a parent. Instead,
-    `remove_child` must be called on the parent to remove it.
-
-LanguageTree:for_each_tree({fn})                *LanguageTree:for_each_tree()*
-    Invokes the callback for each |LanguageTree| recursively.
-
-    Note: This includes the invoking tree's child trees as well.
-
-    Parameters: ~
-      • {fn}  (`fun(tree: TSTree, ltree: vim.treesitter.LanguageTree)`)
-
-LanguageTree:included_regions()              *LanguageTree:included_regions()*
-    Gets the set of included regions managed by this LanguageTree. This can be
-    different from the regions set by injection query, because a partial
-    |LanguageTree:parse()| drops the regions outside the requested range. Each
-    list represents a range in the form of { {start_row}, {start_col},
-    {start_bytes}, {end_row}, {end_col}, {end_bytes} }.
-
-    Return: ~
-        (`table<integer, Range6[]>`)
-
-LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
-    Invalidates this parser and its children.
-
-    Should only be called when the tracked state of the LanguageTree is not
-    valid against the parse tree in treesitter. Doesn't clear filesystem
-    cache. Called often, so needs to be fast.
-
-    Parameters: ~
-      • {reload}  (`boolean?`)
-
-                                                     *LanguageTree:is_valid()*
-LanguageTree:is_valid({exclude_children}, {range})
-    Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()|
-    reflects the latest state of the source. If invalid, user should call
-    |LanguageTree:parse()|.
-
-    Parameters: ~
-      • {exclude_children}  (`boolean?`) whether to ignore the validity of
-                            children (default `false`)
-      • {range}             (`Range?`) range to check for validity
-
-    Return: ~
-        (`boolean`)
-
-LanguageTree:lang()                                      *LanguageTree:lang()*
-    Gets the language of this tree node.
-
-    Return: ~
-        (`string`)
-
-                                           *LanguageTree:language_for_range()*
-LanguageTree:language_for_range({range})
-    Gets the appropriate language that contains {range}.
-
-    Parameters: ~
-      • {range}  (`table`) A table with the following fields:
-                 • {[1]} (`integer`) start row
-                 • {[2]} (`integer`) start column
-                 • {[3]} (`integer`) end row
-                 • {[4]} (`integer`) end column
-
-    Return: ~
-        (`vim.treesitter.LanguageTree`) tree Managing {range}
-
-                                         *LanguageTree:named_node_for_range()*
-LanguageTree:named_node_for_range({range}, {opts})
-    Gets the smallest named node that contains {range}.
-
-    Parameters: ~
-      • {range}  (`table`) A table with the following fields:
-                 • {[1]} (`integer`) start row
-                 • {[2]} (`integer`) start column
-                 • {[3]} (`integer`) end row
-                 • {[4]} (`integer`) end column
-      • {opts}   (`table?`) A table with the following fields:
-                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
-                   injected languages
-
-    Return: ~
-        (`TSNode?`)
-
-                                               *LanguageTree:node_for_range()*
-LanguageTree:node_for_range({range}, {opts})
-    Gets the smallest node that contains {range}.
-
-    Parameters: ~
-      • {range}  (`table`) A table with the following fields:
-                 • {[1]} (`integer`) start row
-                 • {[2]} (`integer`) start column
-                 • {[3]} (`integer`) end row
-                 • {[4]} (`integer`) end column
-      • {opts}   (`table?`) A table with the following fields:
-                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
-                   injected languages
-
-    Return: ~
-        (`TSNode?`)
-
-LanguageTree:parent()                                  *LanguageTree:parent()*
-    Returns the parent tree. `nil` for the root tree.
-
-    Return: ~
-        (`vim.treesitter.LanguageTree?`)
-
-LanguageTree:parse({range}, {on_parse})                 *LanguageTree:parse()*
-    Recursively parse all regions in the language tree using
-    |treesitter-parsers| for the corresponding languages and run injection
-    queries on the parsed trees to determine whether child trees should be
-    created and parsed.
-
-    Any region with empty range (`{}`, typically only the root tree) is always
-    parsed; otherwise (typically injections) only if it intersects {range} (or
-    if {range} is `true`).
-
-    Parameters: ~
-      • {range}     (`boolean|Range?`) Parse this range in the parser's
-                    source. Set to `true` to run a complete parse of the
-                    source (Note: Can be slow!) Set to `false|nil` to only
-                    parse regions with empty ranges (typically only the root
-                    tree without injections).
-      • {on_parse}  (`fun(err?: string, trees?: table<integer, TSTree>)?`)
-                    Function invoked when parsing completes. When provided and
-                    `vim.g._ts_force_sync_parsing` is not set, parsing will
-                    run asynchronously. The first argument to the function is
-                    a string representing the error type, in case of a failure
-                    (currently only possible for timeouts). The second
-                    argument is the list of trees returned by the parse (upon
-                    success), or `nil` if the parse timed out (determined by
-                    'redrawtime').
-
-                    If parsing was still able to finish synchronously (within
-                    3ms), `parse()` returns the list of trees. Otherwise, it
-                    returns `nil`.
-
-    Return: ~
-        (`table<integer, TSTree>?`)
-
-                                                 *LanguageTree:register_cbs()*
-LanguageTree:register_cbs({cbs}, {recursive})
-    Registers callbacks for the |LanguageTree|.
-
-    Parameters: ~
-      • {cbs}        (`table<TSCallbackNameOn,function>`) An
-                     |nvim_buf_attach()|-like table argument with the
-                     following handlers:
-                     • `on_bytes` : see |nvim_buf_attach()|.
-                     • `on_changedtree` : a callback that will be called every
-                       time the tree has syntactical changes. It will be
-                       passed two arguments: a table of the ranges (as node
-                       ranges) that changed and the changed tree.
-                     • `on_child_added` : emitted when a child is added to the
-                       tree.
-                     • `on_child_removed` : emitted when a child is removed
-                       from the tree.
-                     • `on_detach` : emitted when the buffer is detached, see
-                       |nvim_buf_detach_event|. Takes one argument, the number
-                       of the buffer.
-      • {recursive}  (`boolean?`) Apply callbacks recursively for all
-                     children. Any new children will also inherit the
-                     callbacks.
-
-LanguageTree:source()                                  *LanguageTree:source()*
-    Returns the source content of the language tree (bufnr or string).
-
-    Return: ~
-        (`integer|string`)
-
-                                               *LanguageTree:tree_for_range()*
-LanguageTree:tree_for_range({range}, {opts})
-    Gets the tree that contains {range}.
-
-    Parameters: ~
-      • {range}  (`table`) A table with the following fields:
-                 • {[1]} (`integer`) start row
-                 • {[2]} (`integer`) start column
-                 • {[3]} (`integer`) end row
-                 • {[4]} (`integer`) end column
-      • {opts}   (`table?`) A table with the following fields:
-                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
-                   injected languages
-
-    Return: ~
-        (`TSTree?`)
-
-LanguageTree:trees()                                    *LanguageTree:trees()*
-    Returns all trees of the regions parsed by this parser. Does not include
-    child languages. The result is list-like if
-    • this LanguageTree is the root, in which case the result is empty or a
-      singleton list; or
-    • the root LanguageTree is fully parsed.
-
-    Return: ~
-        (`table<integer, TSTree>`)
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

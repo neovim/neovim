@@ -1,3 +1,4 @@
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -6,6 +7,7 @@ local command = n.command
 local exec = n.exec
 local feed = n.feed
 local api = n.api
+local fn = n.fn
 local nvim_dir = n.nvim_dir
 local assert_alive = n.assert_alive
 
@@ -192,7 +194,7 @@ describe('messages', function()
         {6:-- More --}^                                                                 |
       ]])
 
-      -- Down a screen with <Space>, f, or <PageDown>.
+      -- Down a screen with <Space>, f, <C-F>, or <PageDown>.
       feed('f')
       screen:expect([[
         {8: 10 }10                                                                     |
@@ -202,7 +204,7 @@ describe('messages', function()
         {8: 14 }14                                                                     |
         {6:-- More --}^                                                                 |
       ]])
-      feed('<Space>')
+      feed('\6')
       screen:expect([[
         {8: 15 }15                                                                     |
         {8: 16 }16                                                                     |
@@ -211,7 +213,7 @@ describe('messages', function()
         {8: 19 }19                                                                     |
         {6:-- More --}^                                                                 |
       ]])
-      feed('<PageDown>')
+      feed(' ')
       screen:expect([[
         {8: 20 }20                                                                     |
         {8: 21 }21                                                                     |
@@ -220,15 +222,24 @@ describe('messages', function()
         {8: 24 }24                                                                     |
         {6:-- More --}^                                                                 |
       ]])
+      feed('<PageDown>')
+      screen:expect([[
+        {8: 25 }25                                                                     |
+        {8: 26 }26                                                                     |
+        {8: 27 }27                                                                     |
+        {8: 28 }28                                                                     |
+        {8: 29 }29                                                                     |
+        {6:-- More --}^                                                                 |
+      ]])
 
       -- Down a page (half a screen) with d.
       feed('d')
       screen:expect([[
-        {8: 23 }23                                                                     |
-        {8: 24 }24                                                                     |
-        {8: 25 }25                                                                     |
-        {8: 26 }26                                                                     |
-        {8: 27 }27                                                                     |
+        {8: 28 }28                                                                     |
+        {8: 29 }29                                                                     |
+        {8: 30 }30                                                                     |
+        {8: 31 }31                                                                     |
+        {8: 32 }32                                                                     |
         {6:-- More --}^                                                                 |
       ]])
 
@@ -272,7 +283,7 @@ describe('messages', function()
         {6:-- More --}^                                                                 |
       ]])
 
-      -- Up a screen with b or <PageUp>.
+      -- Up a screen with b, <C-B> or <PageUp>.
       feed('b')
       screen:expect([[
         {8: 88 }88                                                                     |
@@ -282,7 +293,7 @@ describe('messages', function()
         {8: 92 }92                                                                     |
         {6:-- More --}^                                                                 |
       ]])
-      feed('<PageUp>')
+      feed('\2')
       screen:expect([[
         {8: 83 }83                                                                     |
         {8: 84 }84                                                                     |
@@ -291,15 +302,44 @@ describe('messages', function()
         {8: 87 }87                                                                     |
         {6:-- More --}^                                                                 |
       ]])
+      feed('<PageUp>')
+      screen:expect([[
+        {8: 78 }78                                                                     |
+        {8: 79 }79                                                                     |
+        {8: 80 }80                                                                     |
+        {8: 81 }81                                                                     |
+        {8: 82 }82                                                                     |
+        {6:-- More --}^                                                                 |
+      ]])
 
       -- Up a page (half a screen) with u.
       feed('u')
+      screen:expect([[
+        {8: 75 }75                                                                     |
+        {8: 76 }76                                                                     |
+        {8: 77 }77                                                                     |
+        {8: 78 }78                                                                     |
+        {8: 79 }79                                                                     |
+        {6:-- More --}^                                                                 |
+      ]])
+
+      -- Test <C-F> and <C-B> as keycodes instead of raw control chars.
+      feed('<C-F>')
       screen:expect([[
         {8: 80 }80                                                                     |
         {8: 81 }81                                                                     |
         {8: 82 }82                                                                     |
         {8: 83 }83                                                                     |
         {8: 84 }84                                                                     |
+        {6:-- More --}^                                                                 |
+      ]])
+      feed('<C-B>')
+      screen:expect([[
+        {8: 75 }75                                                                     |
+        {8: 76 }76                                                                     |
+        {8: 77 }77                                                                     |
+        {8: 78 }78                                                                     |
+        {8: 79 }79                                                                     |
         {6:-- More --}^                                                                 |
       ]])
 
@@ -314,7 +354,7 @@ describe('messages', function()
         {6:-- More --}^                                                                 |
       ]])
 
-      -- All the way down. Pressing f should do nothing but pressing
+      -- All the way down. Pressing f or CTRL-F should do nothing but pressing
       -- space should end the more prompt.
       feed('G')
       screen:expect([[
@@ -326,6 +366,8 @@ describe('messages', function()
         {6:Press ENTER or type command to continue}^                                    |
       ]])
       feed('f')
+      screen:expect_unchanged()
+      feed('<C-F>')
       screen:expect_unchanged()
       feed('<Space>')
       screen:expect([[
@@ -408,6 +450,51 @@ describe('messages', function()
         {8:  5 }5                                                                      |
         Hello                                                                      |
         {6:Press ENTER or type command to continue}^                                    |
+      ]])
+    end)
+
+    -- oldtest: Test_message_more_recording()
+    it("hitting 'q' at hit-enter prompt does not start recording", function()
+      screen = Screen.new(60, 6)
+      command('call setline(1, range(1, 100))')
+      feed(':%p\n')
+      screen:expect([[
+        1                                                           |
+        2                                                           |
+        3                                                           |
+        4                                                           |
+        5                                                           |
+        {6:-- More --}^                                                  |
+      ]])
+      feed('G')
+      screen:expect([[
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        99                                                          |
+        100                                                         |
+        {6:Press ENTER or type command to continue}^                     |
+      ]])
+
+      -- Hitting 'q' at the end of the more prompt should not start recording
+      feed('q')
+      screen:expect([[
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        99                                                          |
+        ^100                                                         |
+                                                                    |
+      ]])
+      -- Hitting 'k' now should move the cursor up instead of recording keys
+      feed('k')
+      screen:expect([[
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        ^99                                                          |
+        100                                                         |
+                                                                    |
       ]])
     end)
 
@@ -749,6 +836,54 @@ describe('messages', function()
       ^                                             |
       {1:~                                            }|*4
                                                    |
+    ]])
+  end)
+
+  -- oldtest: Test_long_formatprg_no_hit_enter()
+  it("long 'formatprg' doesn't cause hit-enter prompt or wrong cursor pos", function()
+    t.skip(fn.executable('sed') == 0, 'missing "sed" command')
+
+    screen = Screen.new(75, 10)
+    exec([[
+      setlocal scrolloff=0
+      call setline(1, range(1, 40))
+      let &l:formatprg = $'sed{repeat(' ', &columns)}p'
+      normal 20Gmz
+      normal 10Gzt
+    ]])
+    screen:expect([[
+      ^10                                                                         |
+      11                                                                         |
+      12                                                                         |
+      13                                                                         |
+      14                                                                         |
+      15                                                                         |
+      16                                                                         |
+      17                                                                         |
+      18                                                                         |
+                                                                                 |
+    ]])
+    feed('gq2j')
+    screen:expect([[
+      10                                                                         |*2
+      11                                                                         |*2
+      12                                                                         |
+      ^12                                                                         |
+      13                                                                         |
+      14                                                                         |
+      15                                                                         |
+                                                                                 |
+    ]])
+    feed(':messages<CR>')
+    screen:expect([[
+      10                                                                         |*2
+      11                                                                         |*2
+      12                                                                         |
+      ^12                                                                         |
+      13                                                                         |
+      14                                                                         |
+      15                                                                         |
+      3 lines filtered                                                           |
     ]])
   end)
 end)

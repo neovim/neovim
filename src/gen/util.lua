@@ -20,6 +20,7 @@ end
 -- Map of api_level:version, by inspection of:
 --    :lua= vim.mpack.decode(vim.fn.readfile('test/functional/fixtures/api_level_9.mpack','B')).version
 M.version_level = {
+  [14] = '0.12.0',
   [13] = '0.11.0',
   [12] = '0.10.0',
   [11] = '0.9.0',
@@ -237,6 +238,8 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
   elseif ntype == 'html_tag' then
     error('html_tag: ' .. node.text)
   elseif ntype == 'inline_link' then
+    -- Markdown links with empty URLs, e.g. [lsp-buftypes](), are converted
+    -- to vim help tags, e.g. *lsp-buftypes*.
     vim.list_extend(parts, { '*', node[1].text, '*' })
   elseif ntype == 'shortcut_link' then
     if node[1].text:find('^<.*>$') then
@@ -315,6 +318,10 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
   elseif contains(ntype, { 'list_marker_minus', 'list_marker_star' }) then
     parts[#parts + 1] = '• '
   elseif ntype == 'list_item' then
+    -- HACK(MariaSolOs): Revert this after the vimdoc parser supports numbered list-items (https://github.com/neovim/tree-sitter-vimdoc/issues/144)
+    if (node[1].text or ''):match('[2-9]%.') then
+      parts[#parts + 1] = '\n'
+    end
     parts[#parts + 1] = string.rep(' ', indent)
     local offset = node[1].type == 'list_marker_dot' and 3 or 2
     for i, child in ipairs(node) do

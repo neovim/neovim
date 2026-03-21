@@ -15,9 +15,9 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
@@ -240,9 +240,7 @@ enum {
 
 static int spell_suggest_timeout = 5000;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spellsuggest.c.generated.h"
-#endif
+#include "spellsuggest.c.generated.h"
 
 /// Returns true when the sequence of flags in "compflags" plus "flag" can
 /// possibly form a valid compounded word.  This also checks the COMPOUNDRULE
@@ -441,11 +439,7 @@ int spell_check_sps(void)
 void spell_suggest(int count)
 {
   pos_T prev_cursor = curwin->w_cursor;
-  char wcopy[MAXWLEN + 2];
-  suginfo_T sug;
-  suggest_T *stp;
   bool mouse_used = false;
-  int selected = count;
   int badlen = 0;
   int msg_scroll_save = msg_scroll;
   const int wo_spell_save = curwin->w_p_spell;
@@ -457,7 +451,7 @@ void spell_suggest(int count)
 
   if (*curwin->w_s->b_p_spl == NUL) {
     emsg(_(e_no_spell));
-    return;
+    goto skip;
   }
 
   if (VIsual_active) {
@@ -465,7 +459,7 @@ void spell_suggest(int count)
     // a multi-line selection.
     if (curwin->w_cursor.lnum != VIsual.lnum) {
       vim_beep(kOptBoFlagSpell);
-      return;
+      goto skip;
     }
     badlen = (int)curwin->w_cursor.col - (int)VIsual.col;
     if (badlen < 0) {
@@ -483,11 +477,11 @@ void spell_suggest(int count)
     // No bad word or it starts after the cursor: use the word under the
     // cursor.
     curwin->w_cursor = prev_cursor;
-    char *line = get_cursor_line_ptr();
-    char *p = line + curwin->w_cursor.col;
+    char *curline = get_cursor_line_ptr();
+    char *p = curline + curwin->w_cursor.col;
     // Backup to before start of word.
-    while (p > line && spell_iswordp_nmw(p, curwin)) {
-      MB_PTR_BACK(line, p);
+    while (p > curline && spell_iswordp_nmw(p, curwin)) {
+      MB_PTR_BACK(curline, p);
     }
     // Forward to start of word.
     while (*p != NUL && !spell_iswordp_nmw(p, curwin)) {
@@ -496,9 +490,9 @@ void spell_suggest(int count)
 
     if (!spell_iswordp_nmw(p, curwin)) {                // No word found.
       beep_flush();
-      return;
+      goto skip;
     }
-    curwin->w_cursor.col = (colnr_T)(p - line);
+    curwin->w_cursor.col = (colnr_T)(p - curline);
   }
 
   // Get the word and its length.
@@ -512,16 +506,18 @@ void spell_suggest(int count)
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
   // 'spellsuggest', whatever is smaller.
+  suginfo_T sug;
   int limit = MIN(sps_limit, Rows - 2);
   spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit,
                      true, need_cap, true);
 
+  int selected = count;
   msg_ext_set_kind("confirm");
   if (GA_EMPTY(&sug.su_ga)) {
-    msg(_("Sorry, no suggestions"), 0);
+    msg(_("No suggestions"), 0);
   } else if (count > 0) {
     if (count > sug.su_ga.ga_len) {
-      smsg(0, _("Sorry, only %" PRId64 " suggestions"),
+      smsg(0, _("Only %" PRId64 " suggestions"),
            (int64_t)sug.su_ga.ga_len);
     }
   } else {
@@ -545,10 +541,11 @@ void spell_suggest(int count)
 
     msg_scroll = true;
     for (int i = 0; i < sug.su_ga.ga_len; i++) {
-      stp = &SUG(sug.su_ga, i);
+      suggest_T *stp = &SUG(sug.su_ga, i);
 
       // The suggested word may replace only part of the bad word, add
       // the not replaced part.  But only when it's not getting too long.
+      char wcopy[MAXWLEN + 2];
       xstrlcpy(wcopy, stp->st_word, MAXWLEN + 1);
       int el = sug.su_badlen - stp->st_orglen;
       if (el > 0 && stp->st_wordlen + el <= MAXWLEN) {
@@ -611,7 +608,7 @@ void spell_suggest(int count)
     XFREE_CLEAR(repl_from);
     XFREE_CLEAR(repl_to);
 
-    stp = &SUG(sug.su_ga, selected - 1);
+    suggest_T *stp = &SUG(sug.su_ga, selected - 1);
     if (sug.su_badlen > stp->st_orglen) {
       // Replacing less than "su_badlen", append the remainder to
       // repl_to.
@@ -651,6 +648,7 @@ void spell_suggest(int count)
 
   spell_find_cleanup(&sug);
   xfree(line);
+skip:
   curwin->w_p_spell = wo_spell_save;
 }
 

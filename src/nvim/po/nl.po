@@ -1291,18 +1291,18 @@ msgstr "E478: geen paniek!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: helaas, geen '%s'-hulp voor %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Geen '%s'-hulp voor %s"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: helaas, geen hulp voor %s"
+msgid "E149: No help for %s"
+msgstr "E149: Geen hulp voor %s"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "helaas, hulpbestand \"%s\" is niet gevonden"
+msgid "Help file \"%s\" not found"
+msgstr "Hulpbestand \"%s\" is niet gevonden"
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -3943,12 +3943,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: OPGELET"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Er is een wisselbestand aangetroffen met de naam \""
+msgid "Found a swap file by the name \""
+msgstr "Er is een wisselbestand aangetroffen met de naam \""
 
 #: ../memline.c:3226
 msgid "While opening file \""
@@ -4626,9 +4622,7 @@ msgid ""
 msgstr ""
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
+msgid "shell returned "
 msgstr ""
 
 #: ../os_unix.c:465 ../os_unix.c:471
@@ -5484,12 +5478,12 @@ msgid "E763: Word characters differ between spell files"
 msgstr ""
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
+msgid "No suggestions"
 msgstr ""
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
+msgid "Only %<PRId64> suggestions"
 msgstr ""
 
 #. for when 'cmdheight' > 1

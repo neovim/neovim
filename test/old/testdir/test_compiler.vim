@@ -38,7 +38,7 @@ func Test_compiler()
   w!
   call feedkeys(":make\<CR>\<CR>", 'tx')
   let a=execute('clist')
-  call assert_match('\n \d\+ Xfoo.pl:3: Global symbol "$foo" '
+  call assert_match('\d\+ Xfoo.pl:3: Global symbol "$foo" '
   \ .               'requires explicit package name', a)
 
   compiler make

@@ -1,5 +1,6 @@
 local cdoc_grammar = require('gen.cdoc_grammar')
 local c_grammar = require('gen.c_grammar')
+local api_type = require('gen.api_types')
 
 --- @class nvim.cdoc.parser.param
 --- @field name string
@@ -9,7 +10,7 @@ local c_grammar = require('gen.c_grammar')
 --- @class nvim.cdoc.parser.return
 --- @field name string
 --- @field type string
---- @field desc string
+--- @field desc? string
 
 --- @class nvim.cdoc.parser.note
 --- @field desc string
@@ -24,7 +25,8 @@ local c_grammar = require('gen.c_grammar')
 --- @field returns nvim.cdoc.parser.return[]
 --- @field desc string
 --- @field deprecated? true
---- @field since? string
+--- @field deprecated_since? integer
+--- @field since? string|integer
 --- @field attrs? string[]
 --- @field nodoc? true
 --- @field notes? nvim.cdoc.parser.note[]
@@ -106,6 +108,8 @@ local function process_doc_line(line, state)
     table.insert(cur_obj.params, state.last_doc_item)
   elseif kind == 'return' then
     cur_obj.returns = { {
+      name = '',
+      type = '',
       desc = parsed.desc,
     } }
     state.last_doc_item_indent = nil
@@ -131,7 +135,7 @@ local function process_doc_line(line, state)
   end
 end
 
---- @param item table
+--- @param item nvim.c_grammar.Proto
 --- @param state nvim.cdoc.parser.State
 local function process_proto(item, state)
   state.cur_obj = state.cur_obj or {}
@@ -140,8 +144,12 @@ local function process_proto(item, state)
   cur_obj.params = cur_obj.params or {}
 
   for _, p in ipairs(item.parameters) do
-    local param = { name = p[2], type = p[1] }
+    local event_type = 'vim.api.keyset.events|vim.api.keyset.events[]'
+    local event = (item.name == 'nvim_create_autocmd' or item.name == 'nvim_exec_autocmds')
+      and p[2] == 'event'
+    local param = { name = p[2], type = event and event_type or api_type(p[1]) }
     local added = false
+
     for _, cp in ipairs(cur_obj.params) do
       if cp.name == param.name then
         cp.type = param.type
@@ -155,8 +163,12 @@ local function process_proto(item, state)
     end
   end
 
-  cur_obj.returns = cur_obj.returns or { {} }
-  cur_obj.returns[1].type = item.return_type
+  cur_obj.returns = cur_obj.returns or { {
+    name = '',
+    type = '',
+    desc = nil,
+  } }
+  cur_obj.returns[1].type = api_type(item.return_type)
 
   for _, a in ipairs({
     'fast',
@@ -186,7 +198,7 @@ end
 local M = {}
 
 --- @param filename string
---- @return {} classes
+--- @return table<string,nvim.luacats.parser.class> classes
 --- @return nvim.cdoc.parser.fun[] funs
 --- @return string[] briefs
 function M.parse(filename)
@@ -203,7 +215,7 @@ function M.parse(filename)
     else
       add_doc_lines_to_obj(state)
       if item[1] == 'proto' then
-        process_proto(item, state)
+        process_proto(item --[[@as nvim.c_grammar.Proto]], state)
         table.insert(funs, state.cur_obj)
       end
       local cur_obj = state.cur_obj

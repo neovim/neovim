@@ -14,7 +14,7 @@ local to_cstr = t.to_cstr
 --- @return Unpacker* unpacker `unpacker[0]` to dereference
 local function make_unpacker()
   return ffi.gc(ffi.cast('Unpacker*', lib.xcalloc(1, ffi.sizeof('Unpacker'))), function(unpacker)
-    lib.unpacker_teardown(unpacker, nil, nil)
+    lib.unpacker_teardown(unpacker)
     lib.xfree(unpacker)
   end)
 end

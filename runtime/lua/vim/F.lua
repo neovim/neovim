@@ -37,6 +37,10 @@ function F.ok_or_nil(status, ...)
 end
 
 -- Nil pcall.
+--- @generic T
+--- @param fn  fun(...):T
+--- @param ... T?
+--- @return T
 function F.npcall(fn, ...)
   return F.ok_or_nil(pcall(fn, ...))
 end

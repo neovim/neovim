@@ -1,7 +1,7 @@
 *provider.txt*		Nvim
 
 
-		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+		 NVIM REFERENCE MANUAL	  by Thiago de Arruda
 
 
 Providers					*provider*
@@ -11,7 +11,7 @@ the providers and how to install them.
 						*E319*
 Use of a feature requiring a missing provider is an error: >
 
-    E319: No "foo" provider found. Run ":checkhealth provider"
+    E319: No "foo" provider found. Run ":checkhealth vim.provider"
 
 Run the |:checkhealth| command, and review the sections below.
 
@@ -35,21 +35,18 @@ if you already have it (some package managers install the module with Nvim
 itself).
 
 For Python 3 plugins:
-1. Make sure Python 3.4+ is available in your $PATH.
-2. Install the module (try "python" if "python3" is missing): >bash
-   python3 -m pip install --user --upgrade pynvim
+1. Make sure Python 3.9+ is available in your $PATH.
+2. Install either uv (https://docs.astral.sh/uv/) or pipx
+   (https://pipx.pypa.io/stable/).
+3. Install the module: >bash
+   pipx install pynvim
+   # or:
+   uv tool install --upgrade pynvim
 
-The pip `--upgrade` flag ensures that you get the latest version even if
+The `--upgrade` flag ensures that you get the latest version even if
 a previous version was already installed.
 
 See also |python-virtualenv|.
-
-Note: The old "neovim" module was renamed to "pynvim".
-https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
-If you run into problems, uninstall _both_ then install "pynvim" again: >bash
-  python -m pip uninstall neovim pynvim
-  python -m pip install --user --upgrade pynvim
-
 
 PYTHON PROVIDER CONFIGURATION ~
 						*g:python3_host_prog*
@@ -65,20 +62,18 @@ To disable Python 3 support: >vim
 
 PYTHON VIRTUALENVS ~
 						*python-virtualenv*
-If you plan to use per-project virtualenvs often, you should assign one
-virtualenv for Nvim and hard-code the interpreter path via
-|g:python3_host_prog| so that the "pynvim" package is not required
-for each virtualenv.
+Using pynvim 0.6.0+ installed via uv or pipx, Nvim will automatically detect
+pynvim even if other Python virtual environments are activated (technical
+note: via the "pynvim-python" global python tool).  For older pynvim (or older
+Neovim), where detection involved finding the first Python interpreter and
+checking if it could import pynvim, automatic detection would fail when
+another virtual environment is active.  Upgrading to the latest pynvim is the
+recommended solution to this; but if that's not an option, then you can set
+the variable |g:python3_host_prog| in `init.vim` to point to the full path to
+the Python interpreter where `pynvim` is installed, e.g.: >vim
 
-Example using pyenv: >bash
-    pyenv install 3.4.4
-    pyenv virtualenv 3.4.4 py3nvim
-    pyenv activate py3nvim
-    python3 -m pip install pynvim
-    pyenv which python  # Note the path
-The last command reports the interpreter path, add it to your init.vim: >vim
-    let g:python3_host_prog = '/path/to/py3nvim/bin/python'
-
+  let g:python3_host_prog = '/path/to/pynvim-venv/bin/python'
+<
 See also: https://github.com/zchee/deoplete-jedi/wiki/Setting-up-Python-for-Neovim
 
 ==============================================================================
@@ -182,101 +177,120 @@ the "+" and/or "*" registers explicitly): >vim
 See 'clipboard' for details and options.
 
 							      *clipboard-tool*
-The presence of a working clipboard tool implicitly enables the '+' and "*"
-registers. Nvim looks for these clipboard tools, in order of priority:
+The presence of a working clipboard tool implicitly enables the "+" and "*"
+registers. Nvim supports these clipboard tools, in order of priority:
 
-  - |g:clipboard| (unless unset or `false`)
-  - pbcopy, pbpaste (macOS)
-  - wl-copy, wl-paste (if $WAYLAND_DISPLAY is set)
-  - waycopy, waypaste (if $WAYLAND_DISPLAY is set)
-  - xsel (if $DISPLAY is set)
-  - xclip (if $DISPLAY is set)
-  - lemonade (for SSH) https://github.com/pocke/lemonade
-  - doitclient (for SSH) https://www.chiark.greenend.org.uk/~sgtatham/doit/
-  - *win32yank* (Windows)
-  - putclip, getclip (Windows) https://cygwin.com/packages/summary/cygutils.html
-  - clip, powershell (Windows) https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/clip
-  - termux (via termux-clipboard-set, termux-clipboard-set)
-  - tmux (if $TMUX is set)
+- |g:clipboard| : User override (if set to a dict or any string "name" below;
+  e.g. `g:clipboard="tmux"` forces tmux clipboard and skips auto-detection).
+- "pbcopy"    : pbcopy, pbpaste (macOS)
+- "wl-copy"   : wl-copy, wl-paste (if $WAYLAND_DISPLAY is set)
+- "wayclip"   : waycopy, waypaste (if $WAYLAND_DISPLAY is set)
+- "xsel"      : xsel (if $DISPLAY is set)
+- "xclip"     : xclip (if $DISPLAY is set)
+- "lemonade"  : lemonade (for SSH) https://github.com/pocke/lemonade
+- "doitclient": doitclient (for SSH) https://www.chiark.greenend.org.uk/~sgtatham/doit/
+- "win32yank" : *win32yank* (Windows)
+- "putclip"   : putclip, getclip (Windows) https://cygwin.com/packages/summary/cygutils.html
+- "clip"      : clip, powershell (Windows) https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/clip
+- "termux"    : termux (via termux-clipboard-set, termux-clipboard-get)
+- "tmux"      : tmux (if $TMUX is set)
+- "osc52"     : |clipboard-osc52| (if supported by your terminal)
 
 								 *g:clipboard*
-To configure a custom clipboard tool, set g:clipboard to a dictionary.
-For example this configuration integrates the tmux clipboard: >vim
+To configure a custom clipboard tool, set `g:clipboard` to a string name (from
+the above |clipboard-tool| list), or dict (to explicitly specify the shell
+commands or |lambda| functions) before clipboard providers are initialized.
 
-    let g:clipboard = {
-          \   'name': 'myClipboard',
-          \   'copy': {
-          \      '+': ['tmux', 'load-buffer', '-'],
-          \      '*': ['tmux', 'load-buffer', '-'],
-          \    },
-          \   'paste': {
-          \      '+': ['tmux', 'save-buffer', '-'],
-          \      '*': ['tmux', 'save-buffer', '-'],
-          \   },
-          \   'cache_enabled': 1,
-          \ }
+Note: Clipboard providers are initialized by calling `has('clipboard')`, which
+is best avoided before setting `g:clipboard`. See "G:CLIPBOARD SETTINGS ARE NOT
+USED" in |faq-runtime| for workarounds.
 
 If "cache_enabled" is |TRUE| then when a selection is copied Nvim will cache
 the selection until the copy command process dies. When pasting, if the copy
 process has not died the cached selection is applied.
 
-g:clipboard can also use functions (see |lambda|) instead of strings.
-For example this configuration uses the g:foo variable as a fake clipboard:
->vim
-
-    let g:clipboard = {
-          \   'name': 'myClipboard',
-          \   'copy': {
-          \      '+': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
-          \      '*': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
-          \    },
-          \   'paste': {
-          \      '+': {-> get(g:, 'foo', [])},
-          \      '*': {-> get(g:, 'foo', [])},
-          \   },
-          \ }
-
 The "copy" function stores a list of lines and the register type. The "paste"
 function returns the clipboard as a `[lines, regtype]` list, where `lines` is
 a list of lines and `regtype` is a register type conforming to |setreg()|.
 
+Example: set to "osc52" to force OSC52, skipping auto-detection of terminal
+support: >vim
+
+    let g:clipboard = 'osc52'
+
+Example: set to "wayclip" to force waycopy/waypaste: >vim
+
+    let g:clipboard = 'wayclip'
+
+Example: set to a dict which integrates the tmux clipboard: >vim
+
+    let g:clipboard = {
+      \   'name': 'myClipboard',
+      \   'copy': {
+      \      '+': ['tmux', 'load-buffer', '-'],
+      \      '*': ['tmux', 'load-buffer', '-'],
+      \    },
+      \   'paste': {
+      \      '+': ['tmux', 'save-buffer', '-'],
+      \      '*': ['tmux', 'save-buffer', '-'],
+      \   },
+      \   'cache_enabled': 1,
+      \ }
+
+
+Example: set to a dict which uses g:foo as a fake clipboard: >vim
+
+    let g:clipboard = {
+      \   'name': 'myClipboard',
+      \   'copy': {
+      \      '+': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
+      \      '*': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
+      \    },
+      \   'paste': {
+      \      '+': {-> get(g:, 'foo', [])},
+      \      '*': {-> get(g:, 'foo', [])},
+      \   },
+      \ }
+<
 							      *clipboard-wsl*
 For Windows WSL, try this g:clipboard definition:
 >vim
     let g:clipboard = {
-                \   'name': 'WslClipboard',
-                \   'copy': {
-                \      '+': 'clip.exe',
-                \      '*': 'clip.exe',
-                \    },
-                \   'paste': {
-                \      '+': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-                \      '*': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-                \   },
-                \   'cache_enabled': 0,
-                \ }
+      \   'name': 'WslClipboard',
+      \   'copy': {
+      \      '+': 'clip.exe',
+      \      '*': 'clip.exe',
+      \    },
+      \   'paste': {
+      \      '+': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+      \      '*': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+      \   },
+      \   'cache_enabled': 0,
+      \ }
 <
 							    *clipboard-osc52*
 Nvim bundles a clipboard provider that allows copying to the system clipboard
-using OSC 52. OSC 52 is an Operating System Command control sequence that
-causes the terminal emulator to write to or read from the system clipboard.
+using OSC 52, an "Operating System Command" control-sequence that causes the
+terminal emulator to write to or read from the system clipboard.
 
-When Nvim is running in the |TUI|, it will automatically attempt to determine if
-the host terminal emulator supports OSC 52. If it does, then Nvim will use OSC
-52 for copying and pasting if no other |clipboard-tool| is found and when
-'clipboard' is unset. NOTE: Using a terminal multiplexer (e.g. tmux) may
-inhibit automatic OSC 52 support detection.
+When Nvim is running in the |TUI|, it automatically detects host terminal
+support for OSC 52. If successful, then Nvim will use OSC 52 for copying and
+pasting if no other |clipboard-tool| is found and when 'clipboard' is unset.
+NOTE: Using a terminal multiplexer (e.g. tmux) may inhibit automatic OSC 52
+support detection.
 
 							*g:termfeatures*
 To disable the automatic detection, set the "osc52" key of |g:termfeatures| to
-|v:false| in the |config| file. Example: >lua
+false early in your |config|. Example: >lua
 	local termfeatures = vim.g.termfeatures or {}
 	termfeatures.osc52 = false
 	vim.g.termfeatures = termfeatures
 <
-To force Nvim to always use the OSC 52 provider you can use the following
-|g:clipboard| definition: >lua
+To force Nvim to use the OSC 52 provider you can set |g:clipboard|: >lua
 
+    vim.g.clipboard = 'osc52'
+
+Which is equivalent to: >lua
     vim.g.clipboard = {
       name = 'OSC 52',
       copy = {
@@ -289,7 +303,7 @@ To force Nvim to always use the OSC 52 provider you can use the following
       },
     }
 <
-Note that not all terminal emulators support reading from the system clipboard
+Note: not all terminal emulators support reading from the system clipboard
 (and even for those that do, users should be aware of the security
 implications), so using OSC 52 for pasting may not be possible (and not
 necessary, because you can |paste| instead using your system paste function).
@@ -351,5 +365,4 @@ generally inserted with the middle mouse button.
 Nvim's X11 clipboard providers only use the PRIMARY and CLIPBOARD selections,
 for the "*" and "+" registers, respectively.
 
-==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

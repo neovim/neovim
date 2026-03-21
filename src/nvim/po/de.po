@@ -53,12 +53,8 @@ msgstr ""
 "Shell kann nicht ausführt werden "
 
 #: ../os/shell.c:450
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Shell beendet "
+msgid "shell returned "
+msgstr "Shell beendet "
 
 #: ../buffer.c:88
 msgid "[Location List]"
@@ -729,17 +725,17 @@ msgstr "E478: Nur keine Panik!"
 
 #: ../ex_cmds.c:4711
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
+msgid "E661: No '%s' help for %s"
 msgstr "E661: Kein '%s'-Hilfeeintrag für %s"
 
 #: ../ex_cmds.c:4713
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Schade, keine Hilfe für %s"
+msgid "E149: No help for %s"
+msgstr "E149: Keine Hilfe für %s"
 
 #: ../ex_cmds.c:4745
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
+msgid "Help file \"%s\" not found"
 msgstr "Hilfe-Datei \"%s\" nicht gefunden"
 
 #: ../ex_cmds.c:5314
@@ -3399,12 +3395,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: ACHTUNG"
 
 #: ../memline.c:3179
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Auslagerungsdatei mit folgendem Namen gefunden: \""
+msgid "Found a swap file by the name \""
+msgstr "Auslagerungsdatei mit folgendem Namen gefunden: \""
 
 #: ../memline.c:3183
 msgid "While opening file \""
@@ -4971,13 +4963,13 @@ msgstr ""
 "E763: 'Word Characters' unterscheiden sich zwischen Rechtschreibwörterbüchern"
 
 #: ../spell.c:8495
-msgid "Sorry, no suggestions"
-msgstr "Leider keine Vorschläge"
+msgid "No suggestions"
+msgstr "Keine Vorschläge"
 
 #: ../spell.c:8498
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Leider nur %<PRId64> Vorschläge"
+msgid "Only %<PRId64> suggestions"
+msgstr "Nur %<PRId64> Vorschläge"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

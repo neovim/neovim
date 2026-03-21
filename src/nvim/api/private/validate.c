@@ -14,7 +14,7 @@ void api_err_invalid(Error *err, const char *name, const char *val_s, int64_t va
   ErrorType errtype = kErrorTypeValidation;
   // Treat `name` without whitespace as a parameter (surround in quotes).
   // Treat `name` with whitespace as a description (no quotes).
-  char *has_space = strchr(name, ' ');
+  const char *has_space = strchr(name, ' ');
 
   // No value.
   if (val_s && val_s[0] == NUL) {
@@ -43,7 +43,7 @@ void api_err_exp(Error *err, const char *name, const char *expected, const char 
   ErrorType errtype = kErrorTypeValidation;
   // Treat `name` without whitespace as a parameter (surround in quotes).
   // Treat `name` with whitespace as a description (no quotes).
-  char *has_space = strchr(name, ' ');
+  const char *has_space = strchr(name, ' ');
 
   if (!actual) {
     api_set_error(err, errtype,
@@ -55,6 +55,31 @@ void api_err_exp(Error *err, const char *name, const char *expected, const char 
   api_set_error(err, errtype,
                 has_space ? "Invalid %s: expected %s, got %s" : "Invalid '%s': expected %s, got %s",
                 name, expected, actual);
+}
+
+/// Creates "Required: …" message and sets it on `err`.
+void api_err_required(Error *err, const char *name)
+{
+  ErrorType errtype = kErrorTypeValidation;
+  // Treat `name` without whitespace as a parameter (surround in quotes).
+  // Treat `name` with whitespace as a description (no quotes).
+  const char *has_space = strchr(name, ' ');
+
+  api_set_error(err, errtype, has_space ? "Required: %s" : "Required: '%s'", name);
+}
+
+/// Creates "Conflict: … not allowed with …" message and sets it on `err`.
+void api_err_conflict(Error *err, const char *name, const char *name2)
+{
+  ErrorType errtype = kErrorTypeValidation;
+  // Treat `name` without whitespace as a parameter (surround in quotes).
+  // Treat `name` with whitespace as a description (no quotes).
+  const char *has_space2 = strchr(name2, ' ');
+
+  api_set_error(err, errtype, has_space2
+                ? "Conflict: '%s' not allowed with %s"
+                : "Conflict: '%s' not allowed with '%s'",
+                name, name2);
 }
 
 bool check_string_array(Array arr, char *name, bool disallow_nl, Error *err)

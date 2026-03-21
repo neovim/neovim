@@ -69,7 +69,7 @@ local termkey = t.cimport(
 
 describe('termkey', function()
   itp('01base', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     t.neq(tk, nil)
 
     t.eq(termkey.termkey_get_buffer_size(tk), 256)
@@ -85,7 +85,7 @@ describe('termkey', function()
   end)
 
   itp('02getkey', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     local key = t.ffi.new('TermKeyKey') ---@type TermKeyKey
 
     t.eq(termkey.termkey_get_buffer_remaining(tk), 256) -- buffer free initially 256
@@ -159,7 +159,7 @@ describe('termkey', function()
   end)
 
   itp('03utf8', function()
-    local tk = termkey.termkey_new_abstract('vt100', termkey.TERMKEY_FLAG_UTF8)
+    local tk = termkey.termkey_new_abstract(nil, termkey.TERMKEY_FLAG_UTF8)
     local key = t.ffi.new('TermKeyKey') ---@type TermKeyKey
 
     termkey.termkey_push_bytes(tk, 'a', 1)
@@ -291,7 +291,7 @@ describe('termkey', function()
   end)
 
   itp('04flags', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     local key = t.ffi.new('TermKeyKey') ---@type TermKeyKey
 
     termkey.termkey_push_bytes(tk, ' ', 1)
@@ -316,7 +316,7 @@ describe('termkey', function()
   end)
 
   itp('06buffer', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     local key = t.ffi.new('TermKeyKey') ---@type TermKeyKey
 
     t.eq(termkey.termkey_get_buffer_remaining(tk), 256) -- buffer free initially 256
@@ -347,7 +347,7 @@ describe('termkey', function()
   end
 
   itp('10keyname', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
 
     local sym = termkey_keyname2sym(tk, 'SomeUnknownKey')
     t.eq(sym, termkey.TERMKEY_SYM_UNKNOWN) -- keyname2sym SomeUnknownKey
@@ -374,7 +374,7 @@ describe('termkey', function()
   end)
 
   itp('11strfkey', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     ---@type TermKeyKey
     local key = t.ffi.new(
       'TermKeyKey',
@@ -598,7 +598,7 @@ describe('termkey', function()
       return key1.modifiers - key2.modifiers
     end
 
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     ---@type TermKeyKey
     local key1 = t.ffi.new('TermKeyKey', {
       type = termkey.TERMKEY_TYPE_UNICODE,
@@ -656,7 +656,7 @@ describe('termkey', function()
   end)
 
   itp('30mouse', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     local key = t.ffi.new('TermKeyKey', { type = -1 }) ---@type TermKeyKey
     local ev = t.ffi.new('TermKeyMouseEvent[1]')
     local button = t.ffi.new('int[1]')
@@ -809,7 +809,7 @@ describe('termkey', function()
   end)
 
   itp('31position', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     local key = t.ffi.new('TermKeyKey') ---@type TermKeyKey
     local line = t.ffi.new('int[1]')
     local col = t.ffi.new('int[1]')
@@ -839,7 +839,7 @@ describe('termkey', function()
   end)
 
   itp('32modereport', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     local key = t.ffi.new('TermKeyKey') ---@type TermKeyKey
     local initial = t.ffi.new('int[1]')
     local mode = t.ffi.new('int[1]')
@@ -879,7 +879,7 @@ describe('termkey', function()
   end)
 
   itp('38csi', function()
-    local tk = termkey.termkey_new_abstract('vt100', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     local key = t.ffi.new('TermKeyKey') ---@type TermKeyKey
     local args = t.ffi.new('TermKeyCsiParam[16]')
     local nargs = t.ffi.new('size_t[1]')
@@ -916,7 +916,7 @@ describe('termkey', function()
   end)
 
   itp('39dcs', function()
-    local tk = termkey.termkey_new_abstract('xterm', 0)
+    local tk = termkey.termkey_new_abstract(nil, 0)
     local key = t.ffi.new('TermKeyKey') ---@type TermKeyKey
 
     -- 7bit DCS

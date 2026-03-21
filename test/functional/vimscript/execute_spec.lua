@@ -214,9 +214,9 @@ describe('execute()', function()
     -- echoerr does not set did_emsg
     -- "ef" was overwritten since msg_col was recovered wrongly
     screen:expect([[
+      {3:                                        }|
       1234                                    |
-      {9:Error detected while processing function}|
-      {9: Test4:}                                 |
+      {9:Error in function Test4:}                |
       {8:line    2:}                              |
       {9:abcd}ABCD                                |
       {6:Press ENTER or type command to continue}^ |
@@ -232,9 +232,9 @@ describe('execute()', function()
 
     feed([[:call Test6()<cr>]])
     screen:expect([[
+      {3:                                        }|
                                               |
-      {9:Error detected while processing function}|
-      {9: Test6:}                                 |
+      {9:Error in function Test6:}                |
       {8:line    2:}                              |
       {9:E121}ABCD                                |
       {6:Press ENTER or type command to continue}^ |
@@ -242,8 +242,8 @@ describe('execute()', function()
 
     feed([[:call Test7()<cr>]])
     screen:expect([[
-      {9:Error detected while processing function}|
-      {9: Test6:}                                 |
+                                              |
+      {9:Error in function Test6:}                |
       {8:line    2:}                              |
       {9:E121}ABCD                                |
       ABCD                                    |

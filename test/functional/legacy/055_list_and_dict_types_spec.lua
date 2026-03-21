@@ -687,7 +687,7 @@ describe('list and dictionary types', function()
       Vim(foldopen):E490:
 
 
-      Error detected while processing :
+      Error in :
       E492: Not an editor command: foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry
       ]])
   end)

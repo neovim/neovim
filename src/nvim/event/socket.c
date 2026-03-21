@@ -21,18 +21,36 @@
 #include "nvim/path.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/socket.c.generated.h"
-#endif
+#include "event/socket.c.generated.h"
+
+/// Checks if an address string looks like a TCP endpoint, and returns the end of the host part.
+///
+/// @param address Address string
+/// @return pointer to the end of the host part of the address, or NULL if it is not a TCP address
+char *socket_address_tcp_host_end(char *address)
+{
+  if (address == NULL) {
+    return NULL;
+  }
+
+  // Windows drive letter path: "X:\..." or "X:/..." is a local path, not TCP.
+  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':'
+      && (address[2] == '\\' || address[2] == '/')) {
+    return NULL;
+  }
+
+  char *colon = strrchr(address, ':');
+  return colon != NULL && colon != address ? colon : NULL;
+}
 
 int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint)
   FUNC_ATTR_NONNULL_ALL
 {
   xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr));
   char *addr = watcher->addr;
-  char *host_end = strrchr(addr, ':');
+  char *host_end = socket_address_tcp_host_end(addr);
 
-  if (host_end && addr != host_end) {
+  if (host_end) {
     // Split user specified address into two strings, addr (hostname) and port.
     // The port part in watcher->addr will be updated later.
     *host_end = NUL;
@@ -79,6 +97,37 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
   return 0;
 }
 
+/// Callback for closing a handle initialized by socket_connect().
+static void connect_close_cb(uv_handle_t *handle)
+{
+  bool *closed = handle->data;
+  *closed = true;
+}
+
+/// Check if a socket is alive by attempting to connect to it.
+/// @param loop Event loop
+/// @param addr Socket address to probe
+/// @return true if socket is alive (connection succeeded), false otherwise
+static bool socket_alive(Loop *loop, const char *addr)
+{
+  RStream stream;
+  const char *error = NULL;
+
+  // Try to connect with a 500ms timeout (fast failure for dead sockets)
+  bool connected = socket_connect(loop, &stream, false, addr, 500, &error);
+  if (!connected) {
+    return false;
+  }
+
+  // Connection succeeded - socket is alive. Close the probe connection properly.
+  bool closed = false;
+  stream.s.uv.pipe.data = &closed;
+  uv_close((uv_handle_t *)&stream.s.uv.pipe, connect_close_cb);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
+
+  return true;
+}
+
 int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -114,6 +163,40 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
     uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
   } else {
     result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+
+    // If bind failed with EACCES/EADDRINUSE, check if socket is stale
+    if (result == UV_EACCES || result == UV_EADDRINUSE) {
+      Loop *loop = watcher->stream->loop->data;
+
+      if (!socket_alive(loop, watcher->addr)) {
+        // Socket exists but is dead - remove it
+        ILOG("Removing stale socket: %s", watcher->addr);
+        int rm_result = os_remove(watcher->addr);
+
+        if (rm_result != 0) {
+          WLOG("Failed to remove stale socket %s: %s",
+               watcher->addr, uv_strerror(rm_result));
+        } else {
+          // Close and reinit the pipe handle before retrying bind
+          uv_loop_t *uv_loop = watcher->uv.pipe.handle.loop;
+          bool closed = false;
+          watcher->uv.pipe.handle.data = &closed;
+          uv_close((uv_handle_t *)&watcher->uv.pipe.handle, connect_close_cb);
+          LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
+
+          uv_pipe_init(uv_loop, &watcher->uv.pipe.handle, 0);
+          watcher->stream = (uv_stream_t *)(&watcher->uv.pipe.handle);
+          watcher->stream->data = watcher;
+
+          // Retry bind with fresh handle
+          result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+        }
+      } else {
+        // Socket is alive - this is a real error
+        ELOG("Socket already in use by another Nvim instance: %s", watcher->addr);
+      }
+    }
+
     if (result == 0) {
       result = uv_listen(watcher->stream, backlog, connection_cb);
     }
@@ -156,7 +239,7 @@ int socket_watcher_accept(SocketWatcher *watcher, RStream *stream)
     return result;
   }
 
-  stream_init(NULL, &stream->s, -1, client);
+  stream_init(NULL, &stream->s, -1, false, client);
   return 0;
 }
 
@@ -192,8 +275,9 @@ static void connect_cb(uv_connect_t *req, int status)
 {
   int *ret_status = req->data;
   *ret_status = status;
-  if (status != 0) {
-    uv_close((uv_handle_t *)req->handle, NULL);
+  uv_handle_t *handle = (uv_handle_t *)req->handle;
+  if (status != 0 && !uv_is_closing(handle)) {
+    uv_close(handle, connect_close_cb);
   }
 }
 
@@ -201,6 +285,7 @@ bool socket_connect(Loop *loop, RStream *stream, bool is_tcp, const char *addres
                     const char **error)
 {
   bool success = false;
+  bool closed;
   int status;
   uv_connect_t req;
   req.data = &status;
@@ -242,16 +327,28 @@ tcp_retry:
     uv_pipe_connect(&req,  pipe, address, connect_cb);
     uv_stream = (uv_stream_t *)pipe;
   }
+  uv_stream->data = &closed;
+  closed = false;
   status = 1;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
   if (status == 0) {
-    stream_init(NULL, &stream->s, -1, uv_stream);
+    stream_init(NULL, &stream->s, -1, false, uv_stream);
+    assert(uv_stream->data != &closed);  // Should have been set by stream_init().
     success = true;
-  } else if (is_tcp && addrinfo->ai_next) {
-    addrinfo = addrinfo->ai_next;
-    goto tcp_retry;
   } else {
-    *error = _("connection refused");
+    if (!uv_is_closing((uv_handle_t *)uv_stream)) {
+      uv_close((uv_handle_t *)uv_stream, connect_close_cb);
+    }
+    // Wait for the close callback to arrive before retrying or returning, otherwise
+    // it may lead to a hang or stack-use-after-return.
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
+
+    if (is_tcp && addrinfo->ai_next) {
+      addrinfo = addrinfo->ai_next;
+      goto tcp_retry;
+    } else {
+      *error = _("connection refused");
+    }
   }
 
 cleanup:

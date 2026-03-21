@@ -29,6 +29,7 @@ return {
     CmdlineChanged = false, -- command line was modified
     CmdlineEnter = false, -- after entering cmdline mode
     CmdlineLeave = false, -- before leaving cmdline mode
+    CmdlineLeavePre = false, -- just before leaving the command line
     CmdwinEnter = false, -- after entering the cmdline window
     CmdwinLeave = false, -- before leaving the cmdline window
     ColorScheme = false, -- after loading a colorscheme
@@ -80,18 +81,23 @@ return {
     LspProgress = false, -- after a LSP progress update
     LspRequest = false, -- after an LSP request is started, canceled, or completed
     LspTokenUpdate = false, -- after a visible LSP token is updated
+    MarkSet = false, -- after a mark is set
     MenuPopup = false, -- just before popup menu is displayed
     ModeChanged = false, -- after changing the mode
     OptionSet = false, -- after setting any option
     QuickFixCmdPost = false, -- after :make, :grep etc.
     QuickFixCmdPre = false, -- before :make, :grep etc.
     QuitPre = false, -- before :quit
+    PackChangedPre = false, -- before trying to change state of `vim.pack` plugin
+    PackChanged = false, -- after changing state of `vim.pack` plugin
+    Progress = false, -- after showing/updating a progress message
     RecordingEnter = true, -- when starting to record a macro
     RecordingLeave = true, -- just before a macro stops recording
     RemoteReply = false, -- upon string reception from a remote vim
     SafeState = false, -- going to wait for a character
     SearchWrapped = true, -- after the search wrapped around
     SessionLoadPost = false, -- after loading a session file
+    SessionLoadPre = false, -- before loading a session file
     SessionWritePost = false, -- after writing a session file
     ShellCmdPost = false, -- after ":!cmd"
     ShellFilterPost = true, -- after ":1,2!cmd", ":w !cmd", ":r !cmd".
@@ -104,7 +110,8 @@ return {
     StdinReadPre = false, -- before reading from stdin
     SwapExists = false, -- found existing swap file
     Syntax = false, -- syntax selected
-    TabClosed = false, -- a tab has closed
+    TabClosed = false, -- after closing a tab page
+    TabClosedPre = false, -- before closing a tab page
     TabEnter = false, -- after entering a tab page
     TabLeave = false, -- before leaving a tab page
     TabNew = false, -- when creating a new tab
@@ -133,7 +140,8 @@ return {
     WinClosed = true, -- after closing a window
     WinEnter = true, -- after entering a window
     WinLeave = true, -- before leaving a window
-    WinNew = false, -- when entering a new window
+    WinNewPre = false, -- before creating a new window
+    WinNew = false, -- after creating a new window
     WinResized = true, -- after a window was resized
     WinScrolled = true, -- after a window was scrolled or resized
   },
@@ -157,6 +165,9 @@ return {
     LspProgress = true,
     LspRequest = true,
     LspTokenUpdate = true,
+    PackChangedPre = true,
+    PackChanged = true,
+    Progress = true,
     RecordingEnter = true,
     RecordingLeave = true,
     Signal = true,

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Microsoft Macro Assembler (80x86)
 " Maintainer:	Wu Yongwei <wuyongwei@gmail.com>
-" Last Change:	2022-04-24 21:24:52 +0800
+" Last Change:	2025-06-09 04:40:00 +0800
 
 if exists("b:did_ftplugin")
   finish
@@ -11,9 +11,11 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let b:undo_ftplugin = "setl iskeyword<"
+let b:undo_ftplugin = "setl iskeyword< comments< commentstring<"
 
 setlocal iskeyword=@,48-57,_,36,60,62,63,@-@
+setlocal comments=:;
+setlocal commentstring=;\ %s
 
 " Matchit support
 if !exists('b:match_words')

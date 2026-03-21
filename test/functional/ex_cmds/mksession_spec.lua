@@ -158,7 +158,7 @@ describe(':mksession', function()
     -- Create a new test instance of Nvim.
     clear()
 
-    -- Use :silent to avoid press-enter prompt due to long path
+    -- Use :silent to avoid hit-enter prompt due to long path
     command('silent source ' .. session_path)
     command('tabnext 1')
     eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', fn.expand('%:p'))
@@ -167,8 +167,6 @@ describe(':mksession', function()
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
-    skip(is_os('win'), 'causes rmdir() to fail')
-
     local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     cwd_dir = t.fix_slashes(cwd_dir) -- :mksession always uses unix slashes.
     local session_path = cwd_dir .. '/' .. session_file
@@ -177,7 +175,7 @@ describe(':mksession', function()
     command('terminal')
     command('cd ' .. cwd_dir)
     command('mksession ' .. session_path)
-    command('%bwipeout!')
+    command('sleep 5m | %bwipeout!')
     if is_os('win') then
       sleep(100) -- Make sure all child processes have exited.
     end
@@ -188,7 +186,9 @@ describe(':mksession', function()
 
     local expected_cwd = cwd_dir .. '/' .. tab_dir
     matches('^term://' .. pesc(expected_cwd) .. '//%d+:', fn.expand('%'))
-    command('%bwipeout!')
+    -- Wait some time for the PTY process to call setsid() and chdir(), otherwise
+    -- SIGHUP may be sent to the parent, or after_each() may run before chdir().
+    command('sleep 5m | %bwipeout!')
     if is_os('win') then
       sleep(100) -- Make sure all child processes have exited.
     end
@@ -232,6 +232,11 @@ describe(':mksession', function()
     local tmpfile = file_prefix .. '-tmpfile-float'
 
     command('edit ' .. tmpfile)
+    eq(80, fn.winwidth(1))
+    command('30vsplit')
+    eq(2, #api.nvim_list_wins())
+    eq(30, fn.winwidth(1))
+    eq(49, fn.winwidth(2))
     local buf = api.nvim_create_buf(false, true)
     local config = {
       relative = 'editor',
@@ -243,6 +248,7 @@ describe(':mksession', function()
       style = 'minimal',
     }
     api.nvim_open_win(buf, false, config)
+    eq(3, #api.nvim_list_wins())
     local cmdheight = api.nvim_get_option_value('cmdheight', {})
     command('mksession ' .. session_file)
 
@@ -252,9 +258,12 @@ describe(':mksession', function()
     command('source ' .. session_file)
 
     eq(tmpfile, fn.expand('%'))
-    -- Check that there is only a single window, which indicates the floating
+    -- Check that there are only two windows, which indicates the floating
     -- window was not restored.
-    eq(1, fn.winnr('$'))
+    -- Don't use winnr('$') as that doesn't count unfocusable floating windows.
+    eq(2, #api.nvim_list_wins())
+    eq(30, fn.winwidth(1))
+    eq(49, fn.winwidth(2))
     -- The command-line height should remain the same as it was.
     eq(cmdheight, api.nvim_get_option_value('cmdheight', {}))
 

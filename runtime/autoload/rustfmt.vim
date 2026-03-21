@@ -1,5 +1,9 @@
 " Author: Stephen Sugden <stephen@stephensugden.com>
 " Last Modified: 2023-09-11
+" Last Change:
+" 2025 Oct 27 by Vim project: don't use rustfmt as 'formatprg' by default
+" 2026 Jan 25 by Vim project: don't hide rustfmt errors, restore default var
+"
 "
 " Adapted from https://github.com/fatih/vim-go
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
@@ -21,6 +25,12 @@ if !exists("g:rustfmt_fail_silently")
 endif
 
 function! rustfmt#DetectVersion()
+    let s:rustfmt_version = "0"
+    let s:rustfmt_help = ""
+    let s:rustfmt_unstable_features = ""
+    if !get(g:, 'rustfmt_detect_version', 0)
+        return s:rustfmt_version
+    endif
     " Save rustfmt '--help' for feature inspection
     silent let s:rustfmt_help = system(g:rustfmt_command . " --help")
     let s:rustfmt_unstable_features = s:rustfmt_help =~# "--unstable-features"
@@ -29,9 +39,7 @@ function! rustfmt#DetectVersion()
     silent let l:rustfmt_version_full = system(g:rustfmt_command . " --version")
     let l:rustfmt_version_list = matchlist(l:rustfmt_version_full,
         \    '\vrustfmt ([0-9]+[.][0-9]+[.][0-9]+)')
-    if len(l:rustfmt_version_list) < 3
-        let s:rustfmt_version = "0"
-    else
+    if len(l:rustfmt_version_list) >= 3
         let s:rustfmt_version = l:rustfmt_version_list[1]
     endif
     return s:rustfmt_version
@@ -62,6 +70,12 @@ function! s:RustfmtWriteMode()
 endfunction
 
 function! s:RustfmtConfigOptions()
+    let default = '--edition 2018'
+
+    if !get(g:, 'rustfmt_find_toml', 0)
+        return default
+    endif
+
     let l:rustfmt_toml = findfile('rustfmt.toml', expand('%:p:h') . ';')
     if l:rustfmt_toml !=# ''
         return '--config-path '.shellescape(fnamemodify(l:rustfmt_toml, ":p"))
@@ -73,7 +87,7 @@ function! s:RustfmtConfigOptions()
     endif
 
     " Default to edition 2018 in case no rustfmt.toml was found.
-    return '--edition 2018'
+    return default
 endfunction
 
 function! s:RustfmtCommandRange(filename, line1, line2)
@@ -192,7 +206,7 @@ function! s:RunRustfmt(command, tmpname, from_writepre)
             echo "rust.vim: was not able to parse rustfmt messages. Here is the raw output:"
             echo "\n"
             for l:line in l:stderr
-                echo l:line
+                echomsg l:line
             endfor
         endif
 
@@ -211,7 +225,10 @@ function! s:RunRustfmt(command, tmpname, from_writepre)
 
     " Open lwindow after we have changed back to the previous directory
     if l:open_lwindow == 1
+        try
         lwindow
+        catch /^Vim\%((\S\+)\)\=:E776:/
+        endtry
     endif
 
     call winrestview(l:view)

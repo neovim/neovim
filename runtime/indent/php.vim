@@ -1,10 +1,9 @@
-" Vim indent file
 " Language:	PHP
 " Author:	John Wellesz <John.wellesz (AT) gmail (DOT) com>
 " URL:		https://www.2072productions.com/vim/indent/php.vim
 " Home:		https://github.com/2072/PHP-Indenting-for-VIm
-" Last Change:	2023 August 18th
-" Version:	1.75
+" Last Change:	2025 November 16th
+" Version:	1.76
 "
 "
 "	Type :help php-indent for available options
@@ -839,12 +838,14 @@ function! GetPhpIndent()
 
 		continue
 	    else
-		let isSingleLineBlock = 0
 
-		if getline(last_line_num) =~# '^\s*else\%(if\)\=\>'
+		if getline(last_line_num) =~# '^\s*else\%(if\)\=\>' && !isSingleLineBlock
 		    let last_line_num = FindTheIfOfAnElse(last_line_num, 0)
+		    let isSingleLineBlock = 0
 		    continue
 		endif
+
+		let isSingleLineBlock = 0
 
 
 		let last_match = last_line_num

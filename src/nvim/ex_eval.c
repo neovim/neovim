@@ -16,6 +16,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/eval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -33,9 +34,7 @@
 #include "nvim/strings.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_eval.c.generated.h"
-#endif
+#include "ex_eval.c.generated.h"
 
 static const char e_multiple_else[] = N_("E583: Multiple :else");
 static const char e_multiple_finally[] = N_("E607: Multiple :finally");
@@ -156,7 +155,7 @@ bool aborted_in_try(void)
 /// When several messages appear in the same command, the first is usually the
 /// most specific one and used as the exception value.  The "severe" flag can be
 /// set to true, if a later but severer message should be used instead.
-bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
+bool cause_errthrow(const char *mesg, bool multiline, bool concat, bool severe, bool *ignore)
   FUNC_ATTR_NONNULL_ALL
 {
   msglist_T *elem;
@@ -242,6 +241,12 @@ bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
     if (msg_list != NULL) {
       msglist_T **plist = msg_list;
       while (*plist != NULL) {
+        // Concatenate (a multihl message) instead.
+        if ((*plist)->next == NULL && concat) {
+          (*plist)->msg = xrealloc((*plist)->msg, strlen((*plist)->msg) + strlen(mesg) + 1);
+          (*plist)->throw_msg = strcat((*plist)->msg, mesg);
+          return true;
+        }
         plist = &(*plist)->next;
       }
 
@@ -590,13 +595,14 @@ static void catch_exception(except_T *excp)
   set_vim_var_string(VV_EXCEPTION, excp->value, -1);
   set_vim_var_list(VV_STACKTRACE, excp->stacktrace);
   if (*excp->throw_name != NUL) {
+    size_t IObufflen;
     if (excp->throw_lnum != 0) {
-      vim_snprintf(IObuff, IOSIZE, _("%s, line %" PRId64),
-                   excp->throw_name, (int64_t)excp->throw_lnum);
+      IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, _("%s, line %" PRId64),
+                                       excp->throw_name, (int64_t)excp->throw_lnum);
     } else {
-      vim_snprintf(IObuff, IOSIZE, "%s", excp->throw_name);
+      IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, "%s", excp->throw_name);
     }
-    set_vim_var_string(VV_THROWPOINT, IObuff, -1);
+    set_vim_var_string(VV_THROWPOINT, IObuff, (ptrdiff_t)IObufflen);
   } else {
     // throw_name not set on an exception from a command that was typed.
     set_vim_var_string(VV_THROWPOINT, NULL, -1);
@@ -640,15 +646,16 @@ static void finish_exception(except_T *excp)
     set_vim_var_string(VV_EXCEPTION, caught_stack->value, -1);
     set_vim_var_list(VV_STACKTRACE, caught_stack->stacktrace);
     if (*caught_stack->throw_name != NUL) {
+      size_t IObufflen;
       if (caught_stack->throw_lnum != 0) {
-        vim_snprintf(IObuff, IOSIZE,
-                     _("%s, line %" PRId64), caught_stack->throw_name,
-                     (int64_t)caught_stack->throw_lnum);
+        IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, _("%s, line %" PRId64),
+                                         caught_stack->throw_name,
+                                         (int64_t)caught_stack->throw_lnum);
       } else {
-        vim_snprintf(IObuff, IOSIZE, "%s",
-                     caught_stack->throw_name);
+        IObufflen = vim_snprintf_safelen(IObuff, IOSIZE, "%s",
+                                         caught_stack->throw_name);
       }
-      set_vim_var_string(VV_THROWPOINT, IObuff, -1);
+      set_vim_var_string(VV_THROWPOINT, IObuff, (ptrdiff_t)IObufflen);
     } else {
       // throw_name not set on an exception from a command that was
       // typed.
@@ -799,7 +806,7 @@ void report_make_pending(int pending, void *value)
 
 /// If something pending in a finally clause is resumed at the ":endtry", report
 /// it if required by the 'verbose' option or when debugging.
-void report_resume_pending(int pending, void *value)
+static void report_resume_pending(int pending, void *value)
 {
   if (p_verbose >= 14 || debug_break_level > 0) {
     if (debug_break_level <= 0) {
@@ -814,7 +821,7 @@ void report_resume_pending(int pending, void *value)
 
 /// If something pending in a finally clause is discarded, report it if required
 /// by the 'verbose' option or when debugging.
-void report_discard_pending(int pending, void *value)
+static void report_discard_pending(int pending, void *value)
 {
   if (p_verbose >= 14 || debug_break_level > 0) {
     if (debug_break_level <= 0) {

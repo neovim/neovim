@@ -623,7 +623,7 @@ func Test_format_align()
     right
     setlocal norightleft
     call assert_equal("Vim", getline(1))
-    close!
+    bw!
   endif
 
   set tw&
@@ -1033,7 +1033,7 @@ func Test_mps_latin1()
   normal %
   call assert_equal(4, col('.'))
   let &encoding = save_enc
-  close!
+  bw!
 endfunc
 
 func Test_empty_matchpairs()
@@ -1158,6 +1158,32 @@ func Test_fo_a_w()
   %bw!
 endfunc
 
+" Test that auto-format ('a' flag) preserves spaces typed in the middle of a line
+func Test_fo_a_midline_space()
+  new
+  let lines = [
+    \ 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa it but',
+    \ 'Lorem Ipsum is simply dummy text of the printing and typesetting dasddd',
+    \ 'industry.',
+    \ ]
+  call setline(1, lines)
+  set fo=ta tw=70
+
+  " Prevent INPUT_BUFLEN batching so auto_format runs between keystrokes
+  autocmd InsertCharPre * " nothing
+
+  " Position at 't' of 'it' (col 68) and type space then Z
+  call cursor(1, 68)
+  call feedkeys("a Z\<Esc>", 'xt')
+
+  " The space between 'it' and 'Z' must be preserved
+  call assert_match('it Z', getline(1))
+
+  autocmd! InsertCharPre
+  set fo& tw&
+  bw!
+endfunc
+
 " Test for formatting lines using gq in visual mode
 func Test_visual_gq_format()
   new
@@ -1173,7 +1199,7 @@ func Test_visual_gq_format()
   redraw!
   normal gq
   setl textwidth&
-  close!
+  bw!
 endfunc
 
 " Test for 'n' flag in 'formatoptions' to format numbered lists
@@ -1186,7 +1212,7 @@ func Test_fo_n()
   normal gggqG
   call assert_equal(['  1) one two', '     three', '     four', '  2) two'],
         \ getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for 'formatlistpat' option
@@ -1200,7 +1226,7 @@ func Test_formatlistpat()
   normal gggqG
   call assert_equal(['  - one', '    two', '    three', '  - two'],
         \ getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for the 'b' and 'v' flags in 'formatoptions'
@@ -1233,7 +1259,7 @@ func Test_fo_b()
   call feedkeys('Amore five', 'xt')
   call assert_equal(['one two three fourmore', 'five'], getline(1, '$'))
 
-  close!
+  bw!
 endfunc
 
 " Test for the '1' flag in 'formatoptions'. Don't wrap text after a one letter
@@ -1253,7 +1279,7 @@ func Test_fo_1()
   call feedkeys('A a bird', 'xt')
   call assert_equal(['one two three four', 'a bird'], getline(1, '$'))
 
-  close!
+  bw!
 endfunc
 
 " Test for 'l' flag in 'formatoptions'. When starting insert mode, if a line
@@ -1273,7 +1299,7 @@ func Test_fo_l()
   call feedkeys('A six', 'xt')
   call assert_equal(['one two three four five six'], getline(1, '$'))
 
-  close!
+  bw!
 endfunc
 
 " Test for the '2' flag in 'formatoptions'
@@ -1289,7 +1315,7 @@ func Test_fo_2()
   call assert_equal(["\tfirst line of a",
         \ "paragraph.  second line of the",
         \ "same paragraph.  third line."], getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " This was leaving the cursor after the end of a line.  Complicated way to

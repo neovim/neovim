@@ -6,8 +6,17 @@
 ---
 --- >lua
 ---   if vim.uv.fs_stat(file) then
----     vim.print("file exists")
+---     vim.print('file exists')
 ---   end
+--- <
+---
+--- *vim.fs.read()*
+--- You can use |readblob()| to get a file's contents without explicitly opening/closing it.
+---
+--- Example:
+---
+--- >lua
+---   vim.print(vim.fn.readblob('.git/config'))
 --- <
 
 local uv = vim.uv
@@ -19,21 +28,21 @@ local sysname = uv.os_uname().sysname:lower()
 local iswin = not not (sysname:find('windows') or sysname:find('mingw'))
 local os_sep = iswin and '\\' or '/'
 
---- Iterate over all the parents of the given path.
+--- Iterate over all the parents of the given path (not expanded/resolved, the caller must do that).
 ---
 --- Example:
 ---
 --- ```lua
 --- local root_dir
 --- for dir in vim.fs.parents(vim.api.nvim_buf_get_name(0)) do
----   if vim.fn.isdirectory(dir .. "/.git") == 1 then
+---   if vim.fn.isdirectory(dir .. '/.git') == 1 then
 ---     root_dir = dir
 ---     break
 ---   end
 --- end
 ---
 --- if root_dir then
----   print("Found git repository at", root_dir)
+---   print('Found git repository at', root_dir)
 --- end
 --- ```
 ---
@@ -55,7 +64,7 @@ function M.parents(start)
     start
 end
 
---- Return the parent directory of the given path
+--- Gets the parent directory of the given path (not expanded/resolved, the caller must do that).
 ---
 ---@since 10
 ---@generic T : string|nil
@@ -85,7 +94,7 @@ function M.dirname(file)
   return dir
 end
 
---- Return the basename of the given path
+--- Gets the basename of the given path (not expanded/resolved).
 ---
 ---@since 10
 ---@generic T : string|nil
@@ -107,37 +116,56 @@ end
 
 --- Concatenates partial paths (one absolute or relative path followed by zero or more relative
 --- paths). Slashes are normalized: redundant slashes are removed, and (on Windows) backslashes are
---- replaced with forward-slashes.
+--- replaced with forward-slashes. Empty segments are removed. Paths are not expanded/resolved.
 ---
 --- Examples:
 --- - "foo/", "/bar" => "foo/bar"
+--- - "", "after/plugin" => "after/plugin"
 --- - Windows: "a\foo\", "\bar" => "a/foo/bar"
 ---
 ---@since 12
 ---@param ... string
 ---@return string
 function M.joinpath(...)
-  local path = table.concat({ ... }, '/')
-  if iswin then
-    path = path:gsub('\\', '/')
+  local n = select('#', ...)
+  ---@type string[]
+  local segments = {}
+  for i = 1, n do
+    local s = select(i, ...)
+    if s and #s > 0 then
+      segments[#segments + 1] = s
+    end
   end
-  return (path:gsub('//+', '/'))
+
+  local path = table.concat(segments, '/')
+
+  return (path:gsub(iswin and '[/\\][/\\]*' or '//+', '/'))
 end
+
+--- @class vim.fs.dir.Opts
+--- @inlinedoc
+---
+--- How deep to traverse.
+--- (default: `1`)
+--- @field depth? integer
+---
+--- Predicate to control traversal.
+--- Return false to stop searching the current directory.
+--- Only useful when depth > 1
+--- Return an iterator over the items located in {path}
+--- @field skip? (fun(dir_name: string): boolean)
+---
+--- Follow symbolic links.
+--- (default: `false`)
+--- @field follow? boolean
 
 ---@alias Iterator fun(): string?, string?
 
---- Return an iterator over the items located in {path}
+--- Gets an iterator over items found in `path` (normalized via |vim.fs.normalize()|).
 ---
 ---@since 10
----@param path (string) An absolute or relative path to the directory to iterate
----            over. The path is first normalized |vim.fs.normalize()|.
---- @param opts table|nil Optional keyword arguments:
----             - depth: integer|nil How deep the traverse (default 1)
----             - skip: (fun(dir_name: string): boolean)|nil Predicate
----               to control traversal. Return false to stop searching the current directory.
----               Only useful when depth > 1
----             - follow: boolean|nil Follow symbolic links. (default: false)
----
+---@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()|.
+---@param opts? vim.fs.dir.Opts Optional keyword arguments:
 ---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
 ---        "type" is one of the following:
@@ -179,9 +207,9 @@ function M.dir(path, opts)
         if
           opts.depth
           and level < opts.depth
-          and (t == 'directory' or (t == 'link' and opts.follow and (vim.uv.fs_stat(
-            M.joinpath(path, f)
-          ) or {}).type == 'directory'))
+          and (t == 'directory' or (t == 'link' and opts.follow and (
+            uv.fs_stat(M.joinpath(path, f)) or {}
+          ).type == 'directory'))
           and (not opts.skip or opts.skip(f) ~= false)
         then
           dirs[#dirs + 1] = { f, level + 1 }
@@ -194,25 +222,20 @@ end
 --- @class vim.fs.find.Opts
 --- @inlinedoc
 ---
---- Path to begin searching from. If
---- omitted, the |current-directory| is used.
+--- Path to begin searching from, defaults to |current-directory|. Not expanded.
 --- @field path? string
 ---
---- Search upward through parent directories.
---- Otherwise, search through child directories (recursively).
+--- Search upward through parent directories. Otherwise, search child directories (recursively).
 --- (default: `false`)
 --- @field upward? boolean
 ---
---- Stop searching when this directory is reached.
---- The directory itself is not searched.
+--- Stop searching when this directory is reached. The directory itself is not searched.
 --- @field stop? string
 ---
---- Find only items of the given type.
---- If omitted, all items that match {names} are included.
+--- Find only items of the given type. If omitted, all items that match {names} are included.
 --- @field type? string
 ---
---- Stop the search after finding this many matches.
---- Use `math.huge` to place no limit on the number of matches.
+--- Stop searching after this many matches. Use `math.huge` for "unlimited".
 --- (default: `1`)
 --- @field limit? number
 ---
@@ -234,16 +257,17 @@ end
 --- Examples:
 ---
 --- ```lua
---- -- list all test directories under the runtime directory
---- local test_dirs = vim.fs.find(
----   {'test', 'tst', 'testdir'},
----   {limit = math.huge, type = 'directory', path = './runtime/'}
+--- -- List all test directories under the runtime directory.
+--- local dirs = vim.fs.find(
+---   { 'test', 'tst', 'testdir' },
+---   { limit = math.huge, type = 'directory', path = './runtime/' }
 --- )
 ---
---- -- get all files ending with .cpp or .hpp inside lib/
---- local cpp_hpp = vim.fs.find(function(name, path)
+--- -- Get all "lib/*.cpp" and "lib/*.hpp" files, using Lua patterns.
+--- -- Or use `vim.glob.to_lpeg(…):match(…)` for glob/wildcard matching.
+--- local files = vim.fs.find(function(name, path)
 ---   return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
---- end, {limit = math.huge, type = 'file'})
+--- end, { limit = math.huge, type = 'file' })
 --- ```
 ---
 ---@since 10
@@ -255,7 +279,7 @@ end
 ---
 ---             The function should return `true` if the given item is considered a match.
 ---
----@param opts vim.fs.find.Opts Optional keyword arguments:
+---@param opts? vim.fs.find.Opts Optional keyword arguments:
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {}
@@ -357,7 +381,7 @@ function M.find(names, opts)
 
         if
           type_ == 'directory'
-          or (type_ == 'link' and opts.follow and (vim.uv.fs_stat(f) or {}).type == 'directory')
+          or (type_ == 'link' and opts.follow and (uv.fs_stat(f) or {}).type == 'directory')
         then
           dirs[#dirs + 1] = f
         end
@@ -374,7 +398,7 @@ end
 --- If the buffer is unnamed (has no backing file) or has a non-empty 'buftype' then the search
 --- begins from Nvim's |current-directory|.
 ---
---- Example:
+--- Examples:
 ---
 --- ```lua
 --- -- Find the root of a Python project, starting from file 'main.py'
@@ -385,16 +409,23 @@ end
 ---
 --- -- Find the parent directory containing any file with a .csproj extension
 --- vim.fs.root(0, function(name, path)
----   return name:match('%.csproj$') ~= nil
+---   return vim.fs.ext(name) == 'csproj'
 --- end)
+---
+--- -- Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json"; if
+--- -- not found, find the first ancestor containing ".git":
+--- vim.fs.root(0, { { 'stylua.toml', '.luarc.json' }, '.git' })
 --- ```
 ---
 --- @since 12
 --- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
----               relative to the |current-directory|) to begin the search from.
---- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
----               of markers, to search for. If a function, the function is called for each
----               evaluated item and should return true if {name} and {path} are a match.
+---               relative, expanded via `abspath()`) to begin the search from.
+--- @param marker (string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean
+---               Filename, function, or list thereof, that decides how to find the root. To
+---               indicate "equal priority", specify items in a nested list `{ { 'a.txt', 'b.lua' }, … }`.
+---               A function item must return true if `name` and `path` are a match. Each item
+---               (which may itself be a nested list) is evaluated in-order against all ancestors,
+---               until a match is found.
 --- @return string? # Directory path containing one of the given markers, or nil if no directory was
 ---                   found.
 function M.root(source, marker)
@@ -414,16 +445,20 @@ function M.root(source, marker)
     error('invalid type for argument "source": expected string or buffer number')
   end
 
-  local paths = M.find(marker, {
-    upward = true,
-    path = vim.fn.fnamemodify(path, ':p:h'),
-  })
+  local markers = type(marker) == 'table' and marker or { marker }
+  for _, mark in ipairs(markers) do
+    local paths = M.find(mark, {
+      upward = true,
+      path = M.abspath(path),
+    })
 
-  if #paths == 0 then
-    return nil
+    if #paths ~= 0 then
+      local dir = M.dirname(paths[1])
+      return dir and M.abspath(dir) or nil
+    end
   end
 
-  return vim.fs.dirname(paths[1])
+  return nil
 end
 
 --- Split a Windows path into a prefix and a body, such that the body can be processed like a POSIX
@@ -695,20 +730,27 @@ end
 --- @class vim.fs.rm.Opts
 --- @inlinedoc
 ---
---- Remove directories and their contents recursively
+--- Remove directory contents recursively.
 --- @field recursive? boolean
 ---
---- Ignore nonexistent files and arguments
+--- Ignore nonexistent files and arguments.
 --- @field force? boolean
 
---- Remove files or directories
+--- Removes a file or directory.
+---
+--- Removes symlinks without touching the origin. To remove the origin, resolve it explicitly
+--- with |uv.fs_realpath()|:
+--- ```lua
+--- vim.fs.rm(vim.uv.fs_realpath('symlink-dir'), { recursive = true })
+--- ```
+---
 --- @since 13
---- @param path string Path to remove
+--- @param path string Path to remove (not expanded/resolved).
 --- @param opts? vim.fs.rm.Opts
 function M.rm(path, opts)
   opts = opts or {}
 
-  local stat, err, errnm = uv.fs_stat(path)
+  local stat, err, errnm = uv.fs_lstat(path)
   if stat then
     rm(path, stat.type, opts.recursive, opts.force)
   elseif not opts.force or errnm ~= 'ENOENT' then
@@ -716,14 +758,17 @@ function M.rm(path, opts)
   end
 end
 
---- Convert path to an absolute path. A tilde (~) character at the beginning of the path is expanded
+--- Converts `path` to an absolute path. Expands tilde (~) at the beginning of the path
 --- to the user's home directory. Does not check if the path exists, normalize the path, resolve
 --- symlinks or hardlinks (including `.` and `..`), or expand environment variables. If the path is
 --- already absolute, it is returned unchanged. Also converts `\` path separators to `/`.
 ---
+--- @since 13
 --- @param path string Path
 --- @return string Absolute path
 function M.abspath(path)
+  -- TODO(justinmk): mark f_fnamemodify as API_FAST and use it, ":p:h" should be safe...
+
   vim.validate('path', path, 'string')
 
   -- Expand ~ to user's home directory
@@ -745,12 +790,14 @@ function M.abspath(path)
 
   -- Windows allows paths like C:foo/bar, these paths are relative to the current working directory
   -- of the drive specified in the path
-  local cwd = (iswin and prefix:match('^%w:$')) and uv.fs_realpath(prefix) or uv.cwd()
-  assert(cwd ~= nil)
+  local cwd = assert((iswin and prefix:match('^%w:$')) and uv.fs_realpath(prefix) or uv.cwd())
   -- Convert cwd path separator to `/`
   cwd = cwd:gsub(os_sep, '/')
 
-  -- Prefix is not needed for expanding relative paths, as `cwd` already contains it.
+  if path == '.' then
+    return cwd
+  end
+  -- Prefix is not needed for expanding relative paths, `cwd` already contains it.
   return M.joinpath(cwd, path)
 end
 
@@ -763,6 +810,7 @@ end
 --- vim.fs.relpath('/var', '/usr/bin') -- nil
 --- ```
 ---
+--- @since 13
 --- @param base string
 --- @param target string
 --- @param opts table? Reserved for future use
@@ -772,8 +820,8 @@ function M.relpath(base, target, opts)
   vim.validate('target', target, 'string')
   vim.validate('opts', opts, 'table', true)
 
-  base = vim.fs.normalize(vim.fs.abspath(base))
-  target = vim.fs.normalize(vim.fs.abspath(target))
+  base = M.normalize(M.abspath(base))
+  target = M.normalize(M.abspath(target))
   if base == target then
     return '.'
   end
@@ -785,6 +833,29 @@ function M.relpath(base, target, opts)
   base = prefix .. base .. (base ~= '/' and '/' or '')
 
   return vim.startswith(target, base) and target:sub(#base + 1) or nil
+end
+
+--- Return the file's last extension, if any.
+---
+--- Similar to |fnamemodify()| with the |::e| modifier. The extension does not include a leading
+--- period.
+---
+--- Examples:
+---
+--- ```lua
+--- vim.fs.ext('archive.tar.gz') -- 'gz'
+--- vim.fs.ext('~/.git') -- ''
+--- vim.fs.ext('plugin/myplug.lua') -- 'lua'
+--- ```
+---
+---@since 14
+---@param file string Path
+---@param opts table? Reserved for future use
+---@return string Extension of {file}
+function M.ext(file, opts)
+  vim.validate('file', file, 'string')
+  vim.validate('opts', opts, 'table', true)
+  return vim.fn.fnamemodify(file, ':e')
 end
 
 return M

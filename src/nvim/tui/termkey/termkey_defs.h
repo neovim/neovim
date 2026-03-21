@@ -2,10 +2,15 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <unibilium.h>
+
+#ifdef HAVE_UNIBILIUM
+# include <unibilium.h>
+#endif
+
 #include <uv.h>
 
 #include "nvim/event/defs.h"
+#include "nvim/tui/terminfo_defs.h"
 #include "nvim/tui/tui_defs.h"
 #include "nvim/types_defs.h"
 
@@ -111,6 +116,7 @@ typedef enum {
   TERMKEY_TYPE_MODEREPORT,
   TERMKEY_TYPE_DCS,
   TERMKEY_TYPE_OSC,
+  TERMKEY_TYPE_APC,
   // add other recognised types here
 
   TERMKEY_TYPE_UNKNOWN_CSI = -1,
@@ -151,6 +157,7 @@ enum {
   TERMKEY_FLAG_CTRLC       = 1 << 6,  // Allow Ctrl-C to be read as normal, disabling SIGINT
   TERMKEY_FLAG_EINTR       = 1 << 7,  // Return ERROR on signal (EINTR) rather than retry
   TERMKEY_FLAG_NOSTART     = 1 << 8,  // Do not call termkey_start() in constructor
+  TERMKEY_FLAG_KEEPC0      = 1 << 9,  // Keep raw C0 control codes
 };
 
 enum {
@@ -199,7 +206,7 @@ typedef enum {
 typedef struct {
   TermKey *tk;
 
-  unibi_term *unibi;  // only valid until first 'start' call
+  TerminfoEntry *ti;  // not used after first 'start' call
 
   struct trie_node *root;
 

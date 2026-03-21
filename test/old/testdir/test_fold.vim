@@ -1097,7 +1097,7 @@ func Test_fold_expr_error()
   endfor
 
   set foldmethod& foldexpr&
-  close!
+  bw!
 endfunc
 
 func Test_undo_fold_deletion()
@@ -1303,6 +1303,56 @@ func Test_foldtextresult()
   bw!
 endfunc
 
+" Test for foldtext and fillchars with 'rightleft' enabled
+func Test_foldtext_and_fillchars_rightleft()
+  CheckFeature rightleft
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let script_lines =<< trim END
+    let longtext = 'Lorem ipsum dolor sit amet, consectetur adipiscing'
+    let g:multibyte = 'Ｌｏｒｅｍ ｉｐｓｕｍ ｄｏｌｏｒ ｓｉｔ ａｍｅｔ'
+
+    call setline(1, [longtext, longtext, longtext])
+    1,2fold
+
+    setlocal rightleft
+    set noshowmode noshowcmd
+  END
+  call writefile(script_lines, 'XTest_foldtext_and_fillchars_rightleft', 'D')
+  let buf = RunVimInTerminal('-S XTest_foldtext_and_fillchars_rightleft', {'rows': 5, 'cols': 70})
+
+  call VerifyScreenDump(buf, 'Test_foldtext_and_fillchars_rightleft_01', {})
+  call term_sendkeys(buf, ":call setline(1, [g:multibyte, g:multibyte, g:multibyte])\<CR>")
+  call VerifyScreenDump(buf, 'Test_foldtext_and_fillchars_rightleft_02', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test for foldtextresult() with 'rightleft' enabled
+func Test_foldtextresult_rightleft()
+  CheckFeature rightleft
+
+  let save_columns = &columns
+  new
+  set columns=70
+  setlocal rightleft
+
+  let longtext = 'Lorem ipsum dolor sit amet, consectetur adipiscing'
+  let multibyte = 'Ｌｏｒｅｍ ｉｐｓｕｍ ｄｏｌｏｒ ｓｉｔ ａｍｅｔ'
+
+  call setline(1, [longtext, longtext, longtext])
+  1,2fold
+  call assert_equal('+--  2 lines: ' .. longtext, foldtextresult(1))
+
+  call setline(1, [multibyte, multibyte, multibyte])
+  call assert_equal('+--  2 lines: ' .. multibyte, foldtextresult(1))
+
+  bw!
+  let &columns = save_columns
+endfunc
+
 " Test for merging two recursive folds when an intermediate line with no fold
 " is removed
 func Test_fold_merge_recursive()
@@ -1499,7 +1549,7 @@ endfunc
 " in a sandbox
 func Test_foldtext_in_modeline()
   func ModelineFoldText()
-    call feedkeys('aFoo', 'xt')
+    call writefile(['after'], 'Xmodelinefoldtext_write')
     return "folded text"
   endfunc
   let lines =<< trim END
@@ -1510,24 +1560,78 @@ func Test_foldtext_in_modeline()
   END
   call writefile(lines, 'Xmodelinefoldtext', 'D')
 
+  func Check_foldtext_in_modeline(set_cmd)
+    call writefile(['before'], 'Xmodelinefoldtext_write', 'D')
+    split Xmodelinefoldtext
+    call cursor(1, 1)
+    normal! zf3j
+    call assert_equal('folded text', foldtextresult(1))
+    call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+
+    split
+    call assert_equal('folded text', foldtextresult(1))
+    call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+    close
+
+    setglobal foldtext=ModelineFoldText()
+    call assert_equal('folded text', foldtextresult(1))
+    call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+
+    setglobal foldtext&
+    call assert_equal('folded text', foldtextresult(1))
+    call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+
+    exe a:set_cmd 'foldtext=ModelineFoldText()'
+    call assert_equal('folded text', foldtextresult(1))
+    call assert_equal(['after'], readfile('Xmodelinefoldtext_write'))
+
+    call writefile(['before'], 'Xmodelinefoldtext_write')
+    exe 'sandbox' a:set_cmd 'foldtext=ModelineFoldText()'
+    call assert_equal('folded text', foldtextresult(1))
+    call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+
+    exe a:set_cmd 'foldtext=ModelineFoldText()'
+    call assert_equal('folded text', foldtextresult(1))
+    call assert_equal(['after'], readfile('Xmodelinefoldtext_write'))
+    bw!
+  endfunc
+
   set modeline modelineexpr
-  split Xmodelinefoldtext
+  call Check_foldtext_in_modeline('setlocal')
+  call Check_foldtext_in_modeline('set')
 
-  call cursor(1, 1)
-  normal! zf3j
+  new Xa
+  sandbox setglobal foldenable foldtext=ModelineFoldText()
+  setlocal bufhidden=wipe
+  call writefile(['before'], 'Xmodelinefoldtext_write', 'D')
+  edit! Xb
+  call setline(1, ['func T()', '  let i = 1', 'endfunc']) | %fold
   call assert_equal('folded text', foldtextresult(1))
-  call assert_equal(lines, getbufline('', 1, '$'))
+  call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+  setglobal foldtext=ModelineFoldText()
+  call assert_equal('folded text', foldtextresult(1))
+  call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+  setlocal foldtext=ModelineFoldText()
+  call assert_equal('folded text', foldtextresult(1))
+  call assert_equal(['after'], readfile('Xmodelinefoldtext_write'))
+  setlocal bufhidden=wipe
+  call writefile(['before'], 'Xmodelinefoldtext_write', 'D')
+  edit! Xc
+  call setline(1, ['func T()', '  let i = 1', 'endfunc']) | %fold
+  call assert_equal('folded text', foldtextresult(1))
+  call assert_equal(['after'], readfile('Xmodelinefoldtext_write'))
+  bwipe!
 
-  bw!
   set modeline& modelineexpr&
   delfunc ModelineFoldText
+  delfunc Check_foldtext_in_modeline
 endfunc
 
 " Test for setting 'foldexpr' from the modeline and executing the expression
 " in a sandbox
 func Test_foldexpr_in_modeline()
   func ModelineFoldExpr()
-    call feedkeys('aFoo', 'xt')
+    call writefile(['after'], 'Xmodelinefoldexpr_write')
     return strlen(matchstr(getline(v:lnum),'^\s*'))
   endfunc
   let lines =<< trim END
@@ -1541,15 +1645,69 @@ func Test_foldexpr_in_modeline()
   END
   call writefile(lines, 'Xmodelinefoldexpr', 'D')
 
+  func Check_foldexpr_in_modeline(set_cmd)
+    call writefile(['before'], 'Xmodelinefoldexpr_write', 'D')
+    split Xmodelinefoldexpr
+    call assert_equal(2, foldlevel(3))
+    call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+
+    split
+    call assert_equal(2, foldlevel(3))
+    call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+    close
+
+    setglobal foldexpr=ModelineFoldExpr()
+    call assert_equal(2, foldlevel(3))
+    call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+
+    setglobal foldexpr&
+    call assert_equal(2, foldlevel(3))
+    call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+
+    exe a:set_cmd 'foldexpr=ModelineFoldExpr()'
+    call assert_equal(2, foldlevel(3))
+    call assert_equal(['after'], readfile('Xmodelinefoldexpr_write'))
+
+    call writefile(['before'], 'Xmodelinefoldexpr_write')
+    exe 'sandbox' a:set_cmd 'foldexpr=ModelineFoldExpr()'
+    call assert_equal(2, foldlevel(3))
+    call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+
+    exe a:set_cmd 'foldexpr=ModelineFoldExpr()'
+    call assert_equal(2, foldlevel(3))
+    call assert_equal(['after'], readfile('Xmodelinefoldexpr_write'))
+    bw!
+  endfunc
+
   set modeline modelineexpr
-  split Xmodelinefoldexpr
+  call Check_foldexpr_in_modeline('setlocal')
+  call Check_foldexpr_in_modeline('set')
 
+  new Xa
+  sandbox setglobal foldenable foldmethod=expr foldexpr=ModelineFoldExpr()
+  setlocal bufhidden=wipe
+  call writefile(['before'], 'Xmodelinefoldexpr_write', 'D')
+  edit! Xb
+  call setline(1, lines[0:5])
   call assert_equal(2, foldlevel(3))
-  call assert_equal(lines, getbufline('', 1, '$'))
+  call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+  setglobal foldexpr=ModelineFoldExpr()
+  call assert_equal(2, foldlevel(3))
+  call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+  setlocal foldexpr=ModelineFoldExpr()
+  call assert_equal(2, foldlevel(3))
+  call assert_equal(['after'], readfile('Xmodelinefoldexpr_write'))
+  setlocal bufhidden=wipe
+  call writefile(['before'], 'Xmodelinefoldexpr_write', 'D')
+  edit! Xc
+  call setline(1, lines[0:5])
+  call assert_equal(2, foldlevel(3))
+  call assert_equal(['after'], readfile('Xmodelinefoldexpr_write'))
+  bwipe!
 
-  bw!
   set modeline& modelineexpr&
   delfunc ModelineFoldExpr
+  delfunc Check_foldexpr_in_modeline
 endfunc
 
 " Make sure a fold containing a nested fold is split correctly when using

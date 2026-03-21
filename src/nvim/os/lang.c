@@ -1,4 +1,4 @@
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(ZIG_BUILD)
 # define Boolean CFBoolean  // Avoid conflict with API's Boolean
 # define FileInfo CSFileInfo  // Avoid conflict with API's Fileinfo
 # include <CoreServices/CoreServices.h>
@@ -16,7 +16,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
@@ -32,9 +32,7 @@
 #include "nvim/profile.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/lang.c.generated.h"
-#endif
+#include "os/lang.c.generated.h"
 
 static char *get_locale_val(int what)
 {
@@ -70,6 +68,7 @@ char *get_mess_lang(void)
 }
 
 /// Get the language used for messages from the environment.
+/// The function may be using NameBuff.
 ///
 /// This uses LC_MESSAGES when available, which it is for most systems we build for
 /// except for windows. Then fallback to get the value from the environment
@@ -79,17 +78,17 @@ static char *get_mess_env(void)
 #ifdef LC_MESSAGES
   return get_locale_val(LC_MESSAGES);
 #else
-  char *p = (char *)os_getenv("LC_ALL");
+  char *p = os_getenv_noalloc("LC_ALL");
   if (p != NULL) {
     return p;
   }
 
-  p = (char *)os_getenv("LC_MESSAGES");
+  p = os_getenv_noalloc("LC_MESSAGES");
   if (p != NULL) {
     return p;
   }
 
-  p = (char *)os_getenv("LANG");
+  p = os_getenv_noalloc("LANG");
   if (p != NULL && ascii_isdigit(*p)) {
     p = NULL;  // ignore something like "1043"
   }
@@ -339,8 +338,8 @@ char *get_locales(expand_T *xp, int idx)
 
 void lang_init(void)
 {
-#ifdef __APPLE__
-  if (os_getenv("LANG") == NULL) {
+#if defined(__APPLE__) && !defined(ZIG_BUILD)
+  if (!os_env_exists("LANG", true)) {
     char buf[50] = { 0 };
 
     // $LANG is not set, either because it was unset or Nvim was started

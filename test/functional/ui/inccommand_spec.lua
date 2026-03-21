@@ -11,7 +11,7 @@ local feed = n.feed
 local insert = n.insert
 local fn = n.fn
 local api = n.api
-local neq = t.neq
+local matches = t.matches
 local ok = t.ok
 local retry = t.retry
 local source = n.source
@@ -1633,12 +1633,12 @@ describe("'inccommand' and :cnoremap", function()
       refresh(case, true)
       command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
 
-      feed(':%s/tw/tox<enter>')
-      screen:expect { any = [[{9:^E565:]] }
-      feed('<c-c>')
-
+      api.nvim_set_vvar('errmsg', '')
+      feed(':%s/tw/tox')
       -- error thrown b/c of the mapping
-      neq(nil, eval('v:errmsg'):find('^E565:'))
+      matches('^E565:', api.nvim_get_vvar('errmsg'))
+
+      feed('<enter>')
       expect([[
       Inc substitution on
       toxo lines
@@ -2936,4 +2936,16 @@ it("'inccommand' disables preview if preview buffer can't be created #27086", fu
     :%s/foo/bar^                   |
   ]])
   eq('nosplit', api.nvim_get_option_value('inccommand', {}))
+end)
+
+it("'inccommand' :substitute preview skips input() prompt #11940", function()
+  clear()
+  local screen = Screen.new(30, 3)
+  common_setup(screen, 'split', 'foo')
+  feed([[:s/f/\=input("sub: ")]])
+  screen:expect([[
+    oo                            |
+    {1:~                             }|
+    :s/f/\=input("sub: ")^         |
+  ]])
 end)

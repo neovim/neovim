@@ -24,27 +24,43 @@ end
 M.create_tcp_echo_server = function()
   --- Create a TCP server that echos the first message it receives.
   --- @param host string
-  ---@return uv.uv_tcp_t
-  ---@return integer
-  ---@return fun():string|nil
+  --- @return integer
   function _G._create_tcp_server(host)
     local uv = vim.uv
     local server = assert(uv.new_tcp())
-    local init = nil
+    local on_read = require('vim.lsp.rpc').create_read_loop(
+      function(body)
+        vim.rpcnotify(1, 'body', body)
+      end,
+      nil,
+      function(err, code)
+        vim.rpcnotify(1, 'error', err, code)
+      end
+    )
     server:bind(host, 0)
-    server:listen(127, function(err)
-      assert(not err, err)
+    server:listen(127, function(e)
+      assert(not e, e)
       local socket = assert(uv.new_tcp())
       server:accept(socket)
-      socket:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
-        init = body
+      socket:read_start(function(err, chunk)
+        on_read(err, chunk)
+        socket:shutdown()
         socket:close()
-      end))
+        server:shutdown()
+        server:close()
+      end)
     end)
-    local port = server:getsockname().port
-    return server, port, function()
-      return init
-    end
+    return server:getsockname().port
+  end
+  function _G._send_msg_to_server(msg)
+    local port = _G._create_tcp_server('127.0.0.1')
+    local client = assert(vim.uv.new_tcp())
+    client:connect('127.0.0.1', port, function()
+      client:write(msg, function()
+        client:shutdown()
+        client:close()
+      end)
+    end)
   end
 end
 
@@ -54,7 +70,7 @@ M.create_server_definition = function()
     local server = {}
     server.messages = {}
 
-    function server.cmd(dispatchers)
+    function server.cmd(dispatchers, _config)
       local closing = false
       local handlers = opts.handlers or {}
       local srv = {}
@@ -94,6 +110,7 @@ M.create_server_definition = function()
 
       function srv.terminate()
         closing = true
+        dispatchers.on_exit(0, 15)
       end
 
       return srv
@@ -199,31 +216,34 @@ function M.test_rpc_server(config)
   })
   --- @type integer, integer
   local code, signal
+  local busy = 0
+  local exited = false
   local function on_request(method, args)
-    if method == 'setup' then
-      if config.on_setup then
-        config.on_setup()
-      end
-      return NIL
+    busy = busy + 1
+    if method == 'setup' and config.on_setup then
+      config.on_setup()
     end
-    if method == 'init' then
-      if config.on_init then
-        config.on_init(client, unpack(args))
-      end
-      return NIL
+    if method == 'init' and config.on_init then
+      config.on_init(client, unpack(args))
     end
-    if method == 'handler' then
-      if config.on_handler then
-        config.on_handler(unpack(args))
-      end
+    if method == 'handler' and config.on_handler then
+      config.on_handler(unpack(args))
+    end
+    busy = busy - 1
+    if busy == 0 and exited then
+      stop()
     end
     return NIL
   end
   local function on_notify(method, args)
     if method == 'exit' then
       code, signal = unpack(args)
-      return stop()
+      exited = true
+      if busy == 0 then
+        stop()
+      end
     end
+    return NIL
   end
   --  TODO specify timeout?
   --  run(on_request, on_notify, nil, 1000)

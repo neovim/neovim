@@ -9,7 +9,6 @@ local exec_capture, dedent = n.exec_capture, t.dedent
 -- First test it's implemented using the :lmap and :lnoremap commands, then
 -- check those mappings behave as expected.
 describe("'keymap' / :lmap", function()
-  clear()
   before_each(function()
     clear()
     insert('lllaaa')

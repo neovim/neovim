@@ -6,7 +6,7 @@
 
 Nvim style guide                                        *dev-style*
 
-Style guidelines for developers working Nvim's source code.
+Style guidelines for developers working on Nvim's source code.
 
 License: CC-By 3.0 https://creativecommons.org/licenses/by/3.0/
 
@@ -119,9 +119,9 @@ Nvim-Specific Magic
 
 clint ~
 
-Use `clint.py` to detect style errors.
+Use `clint.lua` to detect style errors.
 
-`src/clint.py` is a Python script that reads a source file and identifies
+`src/clint.lua` is a Lua script that reads a source file and identifies
 style errors. It is not perfect, and has both false positives and false
 negatives, but it is still a valuable tool. False positives can be ignored by
 putting `// NOLINT` at the end of the line.
@@ -129,7 +129,7 @@ putting `// NOLINT` at the end of the line.
 uncrustify ~
 
 src/uncrustify.cfg is the authority for expected code formatting, for cases
-not covered by clint.py.  We remove checks in clint.py if they are covered by
+not covered by clint.lua.  We remove checks in clint.lua if they are covered by
 uncrustify rules.
 
 ==============================================================================
@@ -255,8 +255,7 @@ functions. >c
 
 Integration with declarations generator ~
 
-Every C file must contain #include of the generated header file, guarded by
-#ifdef INCLUDE_GENERATED_DECLARATIONS.
+Every C file must contain #include of the generated header file.
 
 Include must go after other #includes and typedefs in .c files and after
 everything else in header files. It is allowed to omit #include in a .c file
@@ -272,9 +271,7 @@ contain only non-static function declarations. >c
 
     typedef int FooType;
 
-    #ifdef INCLUDE_GENERATED_DECLARATIONS
-    # include "foo.c.generated.h"
-    #endif
+    #include "foo.c.generated.h"
 
     …
 
@@ -284,9 +281,7 @@ contain only non-static function declarations. >c
 
     …
 
-    #ifdef INCLUDE_GENERATED_DECLARATIONS
-    # include "foo.h.generated.h"
-    #endif
+    #include "foo.h.generated.h"
 
 
 64-bit Portability ~
@@ -901,8 +896,8 @@ Return Values ~
 
 Do not needlessly surround the `return` expression with parentheses.
 
-Use parentheses in `return expr`; only where you would use them in `x =
-expr;`. >c
+Use parentheses in `return expr;` only where you would also use them in
+`x = expr;`. >c
 
     return result;
     return (some_long_condition && another_condition);

@@ -25,7 +25,11 @@ typedef enum {
   HL_STANDOUT      = 0x0040,
   HL_STRIKETHROUGH = 0x0080,
   HL_ALTFONT       = 0x0100,
-  // 0x0200 spare
+  HL_DIM           = 0x0200,
+  HL_BLINK         = 0x8000,
+  // SGR attribute, unrelated to HL_CONCEAL syntax flag.
+  HL_CONCEALED     = 0x10000,
+  HL_OVERLINE      = 0x20000,
   HL_NOCOMBINE     = 0x0400,
   HL_BG_INDEXED    = 0x0800,
   HL_FG_INDEXED    = 0x1000,
@@ -36,7 +40,7 @@ typedef enum {
 /// Stores a complete highlighting entry, including colors and attributes
 /// for both TUI and GUI.
 typedef struct {
-  int16_t rgb_ae_attr, cterm_ae_attr;  ///< HlAttrFlags
+  int32_t rgb_ae_attr, cterm_ae_attr;  ///< HlAttrFlags
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int16_t cterm_fg_color, cterm_bg_color;
   int32_t hl_blend;
@@ -93,6 +97,7 @@ typedef enum {
   HLF_CHD,        ///< Changed diff line
   HLF_DED,        ///< Deleted diff line
   HLF_TXD,        ///< Text Changed in diff line
+  HLF_TXA,        ///< Text Added in changed diff line
   HLF_SC,         ///< Sign column
   HLF_CONCEAL,    ///< Concealed text
   HLF_SPB,        ///< SpellBad
@@ -109,6 +114,7 @@ typedef enum {
   HLF_PSX,        ///< popup menu selected item "menu" (extra text)
   HLF_PSB,        ///< popup menu scrollbar
   HLF_PST,        ///< popup menu scrollbar thumb
+  HLF_PBR,        ///< popup menu border
   HLF_TP,         ///< tabpage line
   HLF_TPS,        ///< tabpage line selected
   HLF_TPF,        ///< tabpage line filler
@@ -129,6 +135,10 @@ typedef enum {
   HLF_BFOOTER,    ///< Float Border Footer
   HLF_TS,         ///< status line for terminal window
   HLF_TSNC,       ///< status line for non-current terminal window
+  HLF_SE,         ///< stderr messages (from shell)
+  HLF_SO,         ///< stdout messages (from shell)
+  HLF_OK,         ///< OK message
+  HLF_PRE,        ///< "preinsert" in 'completeopt'
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 
@@ -157,6 +167,8 @@ typedef struct {
 } ColorKey;
 #define ColorKey(n, s) (ColorKey) { .ns_id = (int)(n), .syn_id = (s) }
 
+#define HlAttrKey(a, b) ((uint64_t)(uint32_t)(a) << 32 | (uint32_t)(b))
+
 typedef struct {
   int attr_id;
   int link_id;
@@ -167,4 +179,4 @@ typedef struct {
 #define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, .version = -1, \
                                  .is_default = false, .link_global = false }
 
-enum { HLATTRS_DICT_SIZE = 16, };
+enum { HLATTRS_DICT_SIZE = 20, };

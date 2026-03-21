@@ -1,5 +1,7 @@
 #pragma once
 
+#include <inttypes.h>
+
 #include "nvim/gettext_defs.h"
 #include "nvim/macros_defs.h"
 
@@ -25,7 +27,6 @@ EXTERN const char e_while[] INIT(= N_("E588: :endwhile without :while"));
 EXTERN const char e_for[] INIT(= N_("E588: :endfor without :for"));
 EXTERN const char e_exists[] INIT(= N_("E13: File exists (add ! to override)"));
 EXTERN const char e_failed[] INIT(= N_("E472: Command failed"));
-EXTERN const char e_internal[] INIT(= N_("E473: Internal error"));
 EXTERN const char e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN const char e_interr[] INIT(= N_("Interrupted"));
 EXTERN const char e_invarg[] INIT(= N_("E474: Invalid argument"));
@@ -35,6 +36,7 @@ EXTERN const char e_invargNval[] INIT(= N_("E475: Invalid value for argument %s:
 EXTERN const char e_duparg2[] INIT(= N_("E983: Duplicate argument: %s"));
 EXTERN const char e_invexpr2[] INIT(= N_("E15: Invalid expression: \"%s\""));
 EXTERN const char e_invrange[] INIT(= N_("E16: Invalid range"));
+EXTERN const char e_internal_error_in_regexp[] INIT(= N_("E473: Internal error in regexp"));
 EXTERN const char e_invcmd[] INIT(= N_("E476: Invalid command"));
 EXTERN const char e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN const char e_no_spell[] INIT(= N_("E756: Spell checking is not possible"));
@@ -72,7 +74,7 @@ EXTERN const char e_noroom[] INIT(= N_("E36: Not enough room"));
 EXTERN const char e_notmp[] INIT(= N_("E483: Can't get temp file name"));
 EXTERN const char e_notopen[] INIT(= N_("E484: Can't open file %s"));
 EXTERN const char e_notopen_2[] INIT(= N_("E484: Can't open file %s: %s"));
-EXTERN const char e_notread[] INIT(= N_("E485: Can't read file %s"));
+EXTERN const char e_cant_read_file_str[] INIT(= N_("E485: Can't read file %s"));
 EXTERN const char e_null[] INIT(= N_("E38: Null argument"));
 EXTERN const char e_number_exp[] INIT(= N_("E39: Number expected"));
 EXTERN const char e_openerrf[] INIT(= N_("E40: Can't open errorfile %s"));
@@ -90,8 +92,7 @@ EXTERN const char e_readonly[] INIT(= N_("E45: 'readonly' option is set (add ! t
 EXTERN const char e_letwrong[] INIT(= N_("E734: Wrong variable type for %s="));
 EXTERN const char e_illvar[] INIT(= N_("E461: Illegal variable name: %s"));
 EXTERN const char e_cannot_mod[] INIT(= N_("E995: Cannot modify existing variable"));
-EXTERN const char e_readonlyvar[] INIT(= N_("E46: Cannot change read-only variable \"%.*s\""));
-EXTERN const char e_stringreq[] INIT(= N_("E928: String required"));
+EXTERN const char e_cannot_change_readonly_variable_str[] INIT(= N_("E46: Cannot change read-only variable \"%.*s\""));
 EXTERN const char e_dictreq[] INIT(= N_("E715: Dictionary required"));
 EXTERN const char e_blobidx[] INIT(= N_("E979: Blob index out of range: %" PRId64));
 EXTERN const char e_invalblob[] INIT(= N_("E978: Invalid operation for Blob"));
@@ -101,6 +102,7 @@ EXTERN const char e_dictkey[] INIT(= N_("E716: Key not present in Dictionary: \"
 EXTERN const char e_dictkey_len[] INIT(= N_("E716: Key not present in Dictionary: \"%.*s\""));
 EXTERN const char e_listreq[] INIT(= N_("E714: List required"));
 EXTERN const char e_listblobreq[] INIT(= N_("E897: List or Blob required"));
+EXTERN const char e_listblobarg[] INIT(= N_("E899: Argument of %s must be a List or Blob"));
 EXTERN const char e_listdictarg[] INIT(= N_("E712: Argument of %s must be a List or Dictionary"));
 EXTERN const char e_listdictblobarg[] INIT(= N_("E896: Argument of %s must be a List, Dictionary or Blob"));
 EXTERN const char e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
@@ -129,8 +131,14 @@ EXTERN const char e_missingparen[] INIT(= N_("E107: Missing parentheses: %s"));
 EXTERN const char e_empty_buffer[] INIT(= N_("E749: Empty buffer"));
 EXTERN const char e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
+EXTERN const char e_no_write_since_last_change[] INIT(= N_("E37: No write since last change"));
+EXTERN const char e_no_write_since_last_change_add_bang_to_override[] INIT(= N_("E37: No write since last change (add ! to override)"));
+EXTERN const char e_no_write_since_last_change_for_buffer_nr_add_bang_to_override[] INIT(= N_("E89: No write since last change for buffer %d (add ! to override)"));
+EXTERN const char e_buffer_nr_not_found[] INIT(= N_("E92: Buffer %d not found"));
 EXTERN const char e_unknown_function_str[] INIT(= N_("E117: Unknown function: %s"));
 EXTERN const char e_str_not_inside_function[] INIT(= N_("E193: %s not inside a function"));
+EXTERN const char e_job_still_running[] INIT(= N_("E948: Job still running"));
+EXTERN const char e_job_still_running_add_bang_to_end_the_job[] INIT(= N_("E948: Job still running (add ! to end the job)"));
 
 EXTERN const char e_invalpat[] INIT(= N_("E682: Invalid search pattern or delimiter"));
 EXTERN const char e_bufloaded[] INIT(= N_("E139: File is loaded in another buffer"));
@@ -141,6 +149,7 @@ EXTERN const char e_au_recursive[] INIT(= N_("E952: Autocommand caused recursive
 EXTERN const char e_menu_only_exists_in_another_mode[]
 INIT(= N_("E328: Menu only exists in another mode"));
 EXTERN const char e_autocmd_close[] INIT(= N_("E813: Cannot close autocmd window"));
+EXTERN const char e_list_index_out_of_range_nr[] INIT(= N_("E684: List index out of range: %" PRId64));
 EXTERN const char e_listarg[] INIT(= N_("E686: Argument of %s must be a List"));
 EXTERN const char e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN const char e_fnametoolong[] INIT(= N_("E856: Filename too long"));
@@ -162,7 +171,16 @@ EXTERN const char e_cant_find_file_str_in_path[] INIT(= N_("E345: Can't find fil
 EXTERN const char e_no_more_directory_str_found_in_cdpath[] INIT(= N_("E346: No more directory \"%s\" found in cdpath"));
 EXTERN const char e_no_more_file_str_found_in_path[] INIT(= N_("E347: No more file \"%s\" found in path"));
 
+EXTERN const char e_value_is_locked[] INIT(= N_("E741: Value is locked"));
+EXTERN const char e_value_is_locked_str[] INIT(= N_("E741: Value is locked: %.*s"));
+EXTERN const char e_cannot_change_value[] INIT(= N_("E742: Cannot change value"));
+EXTERN const char e_cannot_change_value_of_str[] INIT(= N_("E742: Cannot change value of %.*s"));
+EXTERN const char e_cannot_set_variable_in_sandbox_str[] INIT(= N_("E794: Cannot set variable in the sandbox: \"%.*s\""));
+EXTERN const char e_cannot_delete_variable_str[] INIT(= N_("E795: Cannot delete variable %.*s"));
+EXTERN const char e_problem_creating_internal_diff[] INIT(= N_("E960: Problem creating the internal diff"));
+
 EXTERN const char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
+EXTERN const char e_cannot_change_arglist_recursively[] INIT(= N_("E1156: Cannot change the argument list recursively"));
 
 EXTERN const char e_resulting_text_too_long[] INIT(= N_("E1240: Resulting text too long"));
 
@@ -172,13 +190,22 @@ EXTERN const char e_highlight_group_name_invalid_char[] INIT(= N_("E5248: Invali
 
 EXTERN const char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group name too long"));
 
+EXTERN const char e_string_required[] INIT(= N_("E928: String required"));
+
 EXTERN const char e_invalid_column_number_nr[] INIT( = N_("E964: Invalid column number: %ld"));
 EXTERN const char e_invalid_line_number_nr[] INIT(= N_("E966: Invalid line number: %ld"));
 
+EXTERN const char e_reduce_of_an_empty_str_with_no_initial_value[] INIT(= N_("E998: Reduce of an empty %s with no initial value"));
+
+EXTERN const char e_invalid_value_for_blob_nr[] INIT(= N_("E1239: Invalid value for blob: 0x" PRIX64));
 EXTERN const char e_stray_closing_curly_str[]
 INIT(= N_("E1278: Stray '}' without a matching '{': %s"));
 EXTERN const char e_missing_close_curly_str[]
 INIT(= N_("E1279: Missing '}': %s"));
+EXTERN const char e_cannot_change_menus_while_listing[]
+INIT(= N_("E1310: Cannot change menus while listing"));
+EXTERN const char e_not_allowed_to_change_window_layout_in_this_autocmd[]
+INIT(= N_("E1312: Not allowed to change the window layout in this autocmd"));
 
 EXTERN const char e_val_too_large[] INIT(= N_("E1510: Value too large: %s"));
 
@@ -188,8 +215,16 @@ INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch")
 EXTERN const char e_winfixbuf_cannot_go_to_buffer[]
 INIT(= N_("E1513: Cannot switch buffer. 'winfixbuf' is enabled"));
 EXTERN const char e_invalid_return_type_from_findfunc[] INIT( = N_("E1514: 'findfunc' did not return a List type"));
+EXTERN const char e_cannot_switch_to_a_closing_buffer[] INIT( = N_("E1546: Cannot switch to a closing buffer"));
+EXTERN const char e_cannot_have_more_than_nr_diff_anchors[] INIT( = N_("E1549: Cannot have more than %d diff anchors"));
+EXTERN const char e_failed_to_find_all_diff_anchors[] INIT( = N_("E1550: Failed to find all diff anchors"));
+EXTERN const char e_diff_anchors_with_hidden_windows[] INIT( = N_("E1562: Diff anchors cannot be used with hidden diff windows"));
+EXTERN const char e_leadtab_requires_tab[] INIT( = N_("E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
+EXTERN const char e_cannot_read_from_str_2[] INIT(= N_("E282: Cannot read from \"%s\""));
+
+EXTERN const char e_conflicting_configs[] INIT(= N_("E5422: Conflicting configs: \"%s\" \"%s\""));
 
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
 

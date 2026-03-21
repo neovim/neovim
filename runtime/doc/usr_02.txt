@@ -1,6 +1,8 @@
 *usr_02.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			    The first steps in Vim
 
@@ -25,14 +27,14 @@ Table of contents: |usr_toc.txt|
 ==============================================================================
 *02.1*	Running Vim for the First Time
 
-To start Vim, enter this command: >
+To start Nvim, enter this command: >
 
-	gvim file.txt
+	nvim file.txt
 
 On Unix you can type this at any command prompt.  If you are running Microsoft
 Windows, open a Command Prompt and enter the command.  In either case, Vim
 starts editing a file called file.txt.  Because this is a new file, you get a
-blank window. This is what your screen will look like:
+blank window.  This is what your screen will look like:
 >
 	+---------------------------------------+
 	|#					|
@@ -49,20 +51,6 @@ runs out of file to display, it displays tilde lines.  At the bottom of the
 screen, a message line indicates the file is named file.txt and shows that you
 are creating a new file.  The message information is temporary and other
 information overwrites it.
-
-
-THE VIM COMMAND
-
-The gvim command causes the editor to create a new window for editing.  If you
-use this command: >
-
-	vim file.txt
-
-the editing occurs inside your command window.  In other words, if you are
-running inside an xterm, the editor uses your xterm window.  If you are using
-the command prompt under Microsoft Windows, the editing occurs inside this
-window.  The text in the window will look the same for both versions, but with
-gvim you have extra features, like a menu bar.  More about that later.
 
 ==============================================================================
 *02.2*	Inserting text
@@ -312,7 +300,7 @@ the "a" (append) command.
 to
 	and that's not saying much for the turtle!!! ~
 
-move the cursor over to the dot at the end of the line. Then type "x" to
+move the cursor over to the dot at the end of the line.  Then type "x" to
 delete the period.  The cursor is now positioned at the end of the line on the
 e in turtle.  Now type >
 
@@ -428,9 +416,9 @@ of the tag given by the word under the cursor.)
    After a few jumps, you might want to go back.  CTRL-T (pop tag) takes you
 back to the preceding position.  CTRL-O (jump to older position) also works
 nicely here.
-   At the top of the help screen, there is the notation *help.txt*.  This name
-between "*" characters is used by the help system to define a tag (hyperlink
-destination).
+   At the top of the help screen, there is the notation "*help.txt*".  This
+name between "*" characters is used by the help system to define a tag
+(hyperlink destination).
    See |29.1| for details about using tags.
 
 To get help on a given subject, use the following command: >
@@ -510,8 +498,8 @@ Summary:					*help-summary*  >
 <   You can see the user guide topics |03.9| and |usr_27.txt| in the
    introduction.
 
-3) Options are enclosed in single apostrophes.  To go to the help topic for the
-   list option: >
+3) Options are enclosed in single apostrophes.  To go to the help topic for
+   the list option: >
 	:help 'list'
 <   If you only know you are looking for a certain option, you can also do: >
 	:help options.txt
@@ -525,7 +513,7 @@ Summary:					*help-summary*  >
 <   And for the 'guioptions' flags: >
 	:help go-<letter>
 
-4) Normal mode commands do not have a prefix. To go to the help page for the
+4) Normal mode commands do not have a prefix.  To go to the help page for the
    "gt" command: >
 	:help gt
 
@@ -575,26 +563,26 @@ Summary:					*help-summary*  >
     at: >
 	:help pattern.txt
 
-12) Registers always start with "quote". To find out about the special ":"
+12) Registers always start with "quote".  To find out about the special ":"
     register: >
 	:help quote:
 
-13) Vim Script is available at >
-	:help eval.txt
-<   Certain aspects of the language are available at :h expr-X where "X" is a
-   single letter. E.g.  >
+13) Vim script is available at >
+	:help vimeval.txt
+<    Certain aspects of the language are available at :h expr-X where "X" is a
+    single letter. E.g.  >
 	:help expr-!
-<   will take you to the topic describing the "!" (Not) operator for Vim
-   Script.
-   Also important is >
+<    will take you to the topic describing the "!" (Not) operator for Vim
+    Script.
+    Also important is >
 	:help function-list
-<   to find a short description of all functions available.  Help topics for
-   Vim script functions always include the "()", so: >
+<    to find a short description of all functions available.  Help topics for
+    Vim script functions always include the "()", so: >
 	:help append()
-<   talks about the append Vim script function rather than how to append text
-   in the current buffer.
+<    talks about the append Vim script function rather than how to append text
+    in the current buffer.
 
-14) Mappings are talked about in the help page :h |map.txt|. Use >
+14) Mappings are talked about in the help page :h |map.txt|.  Use >
 	:help mapmode-i
 <    to find out about the |:imap| command.  Also use :map-topic
     to find out about certain subtopics particular for mappings.  e.g: >
@@ -604,7 +592,7 @@ Summary:					*help-summary*  >
 <    for how the '|' is handled in mappings.
 
 15) Command definitions are talked about :h command-topic, so use >
-	:help command-bar
+	:help command-bang
 <    to find out about the '!' argument for custom commands.
 
 16) Window management commands always start with CTRL-W, so you find the
@@ -630,7 +618,7 @@ Summary:					*help-summary*  >
     friendly way.  Start at |usr_toc.txt| to find the table of content (as you
     might have guessed): >
 	:help usr_toc.txt
-<    Skim over the contents to find interesting topics. The "Digraphs" and
+<    Skim over the contents to find interesting topics.  The "Digraphs" and
     "Entering special characters" items are in chapter 24, so to go to that
     particular help page: >
 	:help usr_24.txt
@@ -660,10 +648,13 @@ Summary:					*help-summary*  >
     command switch of Vim use: >
 	:help -f
 
-24) Optional features always start with "+".  To find out about the
-    conceal feature use: >
-	:help +conceal
-
+24) Lua language and Nvim's Lua standard library are available at >vim
+	:help lua.txt
+<    Guide to using Lua in Nvim is available at >vim
+	:help lua-guide.txt
+<    Lua 5.1 reference manual is available at >vim
+	:help luaref.txt
+<
 25) Documentation for included filetype specific functionality is usually
     available  in the form ft-<filetype>-<functionality>.  So >
 	:help ft-c-syntax

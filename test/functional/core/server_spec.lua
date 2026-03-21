@@ -162,7 +162,9 @@ describe('server', function()
   end)
 
   it('serverlist() returns the list of servers', function()
-    clear()
+    -- Set XDG_RUNTIME_DIR to a temp dir in this session to properly test serverlist({peer = true}). See #35492
+    local tmp_dir = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
+    local current_server = clear({ env = { XDG_RUNTIME_DIR = tmp_dir } })
     -- There should already be at least one server.
     local _n = eval('len(serverlist())')
 
@@ -186,33 +188,106 @@ describe('server', function()
     end
     -- After serverstop() the servers should NOT be in the list.
     eq(_n, eval('len(serverlist())'))
+
+    -- serverlist({peer=true}) returns servers from other Nvim sessions.
+    if t.is_os('win') then
+      return
+    end
+
+    local old_servs_num = #fn.serverlist({ peer = true })
+    local peer_temp = n.new_pipename()
+    local peer_name = peer_temp:match('[^/]*$')
+
+    local tmp_dir2 = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
+    local peer_addr = ('%s/%s'):format(tmp_dir2, peer_name)
+    -- Set XDG_RUNTIME_DIR to a temp dir in this session to properly test serverlist({peer = true}). See #35492
+    local client = n.new_session(true, {
+      args = { '--clean', '--listen', peer_addr, '--embed' },
+      env = { XDG_RUNTIME_DIR = tmp_dir2 },
+      merge = false,
+    })
+    n.set_session(client)
+    eq(peer_addr, fn.serverlist()[1])
+
+    n.set_session(current_server)
+
+    new_servs = fn.serverlist({ peer = true })
+    local servers_without_peer = fn.serverlist()
+    eq(true, vim.list_contains(new_servs, peer_addr))
+    eq(true, #servers_without_peer < #new_servs)
+    eq(true, old_servs_num < #new_servs)
+    client:close()
+  end)
+
+  it('removes stale socket files automatically #36581', function()
+    -- Windows named pipes are ephemeral kernel objects that are automatically
+    -- cleaned up when the process terminates. Unix domain sockets persist as
+    -- files on the filesystem and can become stale after crashes.
+    t.skip(is_os('win'), 'N/A on Windows')
+
+    clear()
+    clear_serverlist()
+    local socket_path = './Xtest-stale-socket'
+
+    -- Create stale socket file (simulate crash)
+    vim.uv.fs_close(vim.uv.fs_open(socket_path, 'w', 438))
+
+    -- serverstart() should detect and remove stale socket
+    eq(socket_path, fn.serverstart(socket_path))
+    fn.serverstop(socket_path)
+
+    -- Same test with --listen flag
+    vim.uv.fs_close(vim.uv.fs_open(socket_path, 'w', 438))
+    clear({ args = { '--listen', socket_path } })
+    eq(socket_path, api.nvim_get_vvar('servername'))
+    fn.serverstop(socket_path)
+  end)
+
+  it('does not remove live sockets #36581', function()
+    t.skip(is_os('win'), 'N/A on Windows')
+
+    clear()
+    local socket_path = './Xtest-live-socket'
+    eq(socket_path, fn.serverstart(socket_path))
+
+    -- Second instance should fail without removing live socket
+    local result = n.exec_lua(function(sock)
+      return vim
+        .system(
+          { vim.v.progpath, '--headless', '--listen', sock },
+          { text = true, env = { NVIM_LOG_FILE = testlog } }
+        )
+        :wait()
+    end, socket_path)
+    t.assert_log('Socket already in use by another Nvim instance: ', testlog, 100)
+    t.assert_log('Failed to start server: address already in use: ', testlog, 100)
+
+    neq(0, result.code)
+    matches('Failed.*listen', result.stderr)
+    fn.serverstop(socket_path)
   end)
 end)
 
 describe('startup --listen', function()
   -- Tests Nvim output when failing to start, with and without "--headless".
-  -- TODO(justinmk): clear() should have a way to get stdout if Nvim fails to start.
   local function _test(args, env, expected)
     local function run(cmd)
-      return n.exec_lua(function(cmd_, env_)
-        return vim
-          .system(cmd_, {
-            text = true,
-            env = vim.tbl_extend(
-              'force',
-              -- Avoid noise in the logs; we expect failures for these tests.
-              { NVIM_LOG_FILE = testlog },
-              env_ or {}
-            ),
-          })
-          :wait()
-      end, cmd, env) --[[@as vim.SystemCompleted]]
+      return n.spawn_wait {
+        merge = false,
+        args = cmd,
+        env = vim.tbl_extend(
+          'force',
+          -- Avoid noise in the logs; we expect failures for these tests.
+          { NVIM_LOG_FILE = testlog },
+          env or {}
+        ),
+      }
     end
 
-    local cmd = vim.list_extend({ n.nvim_prog, '+qall!', '--headless' }, args)
+    local cmd = vim.list_extend({ '--clean', '+qall!', '--headless' }, args)
     local r = run(cmd)
-    eq(1, r.code)
-    matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
+    eq(1, r.status)
+    matches(expected, r:output():gsub('\\n', ' '))
 
     if is_os('win') then
       return -- On Windows, output without --headless is garbage.
@@ -220,8 +295,8 @@ describe('startup --listen', function()
     table.remove(cmd, 3) -- Remove '--headless'.
     assert(not vim.tbl_contains(cmd, '--headless'))
     r = run(cmd)
-    eq(1, r.code)
-    matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
+    eq(1, r.status)
+    matches(expected, r:output():gsub('\\n', ' '))
   end
 
   it('validates', function()

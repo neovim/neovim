@@ -129,7 +129,7 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 
 			There are no normal mode commands to mark words as
 			rare as this is a fairly uncommon command and all
-			intuitive commands for this are already taken. If you
+			intuitive commands for this are already taken.  If you
 			want you can add mappings with e.g.: >
 		nnoremap z?  :exe ':spellrare  ' .. expand('<cWORD>')<CR>
 		nnoremap z/  :exe ':spellrare! ' .. expand('<cWORD>')<CR>
@@ -207,7 +207,7 @@ CTRL-X s to find suggestions.  This works like Insert mode completion.  Use
 CTRL-N to use the next suggestion, CTRL-P to go back. |i_CTRL-X_s|
 
 The 'spellsuggest' option influences how the list of suggestions is generated
-and sorted.  See |'spellsuggest'|.
+and sorted.  See 'spellsuggest'.
 
 The 'spellcapcheck' option is used to check the first word of a sentence
 starts with a capital.  This doesn't work for the first word in the file.
@@ -289,7 +289,7 @@ In a table:
 
 							*spell-cjk*
 Chinese, Japanese and other East Asian characters are normally marked as
-errors, because spell checking of these characters is not supported. If
+errors, because spell checking of these characters is not supported.  If
 'spelllang' includes "cjk", these characters are not marked as errors.  This
 is useful when editing text with spell checking while some Asian words are
 present.
@@ -312,10 +312,6 @@ Examples:
 Only the first file is loaded, the one that is first in 'runtimepath'.  If
 this succeeds then additionally files with the name LL.EEE.add.spl are loaded.
 All the ones that are found are used.
-
-If no spell file is found the |SpellFileMissing| autocommand event is
-triggered.  This may trigger the |spellfile.vim| plugin to offer you
-downloading the spell file.
 
 Additionally, the files related to the names in 'spellfile' are loaded.  These
 are the files that |zg| and |zw| add good and wrong words to.
@@ -491,18 +487,14 @@ Vim uses a binary file format for spelling.  This greatly speeds up loading
 the word list and keeps it small.
 						    *.aff* *.dic* *Myspell*
 You can create a Vim spell file from the .aff and .dic files that Myspell
-uses.  Myspell is used by OpenOffice.org and Mozilla. The OpenOffice .oxt
-files are zip files which contain the .aff and .dic files. You should be able
+uses.  Myspell is used by OpenOffice.org and Mozilla.  The OpenOffice .oxt
+files are zip files which contain the .aff and .dic files.  You should be able
 to find them here:
-	https://extensions.services.openoffice.org/dictionary
+	https://extensions.openoffice.org/en/search@f%5B0%5D%3Dfield_project_tags%253A311.html
 The older, OpenOffice 2 files may be used if this doesn't work:
 	http://wiki.services.openoffice.org/wiki/Dictionaries
 You can also use a plain word list.  The results are the same, the choice
 depends on what word lists you can find.
-
-If you install Aap (from www.a-a-p.org) you can use the recipes in the
-runtime/spell/??/ directories.  Aap will take care of downloading the files,
-apply patches needed for Vim and build the .spl file.
 
 Make sure your current locale is set properly, otherwise Vim doesn't know what
 characters are upper/lower case letters.  If the locale isn't available (e.g.,
@@ -640,48 +632,11 @@ Comment lines with the name of the .spl file are used as a header above the
 words that were generated from that .spl file.
 
 
-SPELL FILE MISSING		*spell-SpellFileMissing* *spellfile.vim*
+SPELL FILE MISSING				    *spell-SpellFileMissing*
 
-If the spell file for the language you are using is not available, you will
-get an error message.  But if the "spellfile.vim" plugin is active it will
-offer you to download the spell file.  Just follow the instructions, it will
-ask you where to write the file (there must be a writable directory in
-'runtimepath' for this).
+If a spell file is missing, the user is asked whether to download it. See
+|spellfile.lua|.
 
-The plugin has a default place where to look for spell files, on the Vim ftp
-server.  The protocol used is SSL (https://) for security.  If you want to use
-another location or another protocol, set the g:spellfile_URL variable to the
-directory that holds the spell files.  You can use http:// or ftp://, but you
-are taking a security risk then.  The |netrw| plugin is used for getting the
-file, look there for the specific syntax of the URL.  Example: >
-	let g:spellfile_URL = 'https://ftp.nluug.nl/vim/runtime/spell'
-You may need to escape special characters.
-
-The plugin will only ask about downloading a language once.  If you want to
-try again anyway restart Vim, or set g:spellfile_URL to another value (e.g.,
-prepend a space).
-
-To avoid using the "spellfile.vim" plugin do this in your vimrc file: >
-
-	let loaded_spellfile_plugin = 1
-
-Instead of using the plugin you can define a |SpellFileMissing| autocommand to
-handle the missing file yourself.  You can use it like this: >
-
-	:au SpellFileMissing * call Download_spell_file(expand('<amatch>'))
-
-Thus the <amatch> item contains the name of the language.  Another important
-value is 'encoding', since every encoding has its own spell file.  With two
-exceptions:
-- For ISO-8859-15 (latin9) the name "latin1" is used (the encodings only
-  differ in characters not used in dictionary words).
-- The name "ascii" may also be used for some languages where the words use
-  only ASCII letters for most of the words.
-
-The default "spellfile.vim" plugin uses this autocommand, if you define your
-autocommand afterwards you may want to use ":au! SpellFileMissing" to overrule
-it.  If you define your autocommand before the plugin is loaded it will notice
-this and not do anything.
 							*E797*
 Note that the SpellFileMissing autocommand must not change or destroy the
 buffer the user was editing.
@@ -826,8 +781,8 @@ starting with an upper-case letter.
 
 When the word includes an upper-case letter, this means the upper-case letter
 is required at this position.  The same word with a lower-case letter at this
-position will not match. When some of the other letters are upper-case it will
-not match either.
+position will not match.  When some of the other letters are upper-case it
+will not match either.
 
 The word with all upper-case characters will always be OK,
 
@@ -1166,9 +1121,10 @@ WORDS WITH A SLASH					*spell-SLASH*
 
 The slash is used in the .dic file to separate the basic word from the affix
 letters and other flags.  Unfortunately, this means you cannot use a slash in
-a word.  Thus "TCP/IP" is not a word but "TCP" with the flags "IP".  To include
-a slash in the word put a backslash before it: "TCP\/IP".  In the rare case
-you want to use a backslash inside a word you need to use two backslashes.
+a word.  Thus "TCP/IP" is not a word but "TCP" with the flags "IP".  To
+include a slash in the word put a backslash before it: "TCP\/IP".  In the rare
+case you want to use a backslash inside a word you need to use two
+backslashes.
 Any other use of the backslash is reserved for future expansion.
 
 
@@ -1597,7 +1553,7 @@ CHECKCOMPOUNDTRIPLE  (Hunspell)			*spell-CHECKCOMPOUNDTRIPLE*
 
 CHECKSHARPS  (Hunspell)				*spell-CHECKSHARPS*
 		SS letter pair in uppercased (German) words may be upper case
-		sharp s (ß). Not supported.
+		sharp s (ß).  Not supported.
 
 COMPLEXPREFIXES  (Hunspell)				*spell-COMPLEXPREFIXES*
 		Enables using two prefixes.  Not supported.

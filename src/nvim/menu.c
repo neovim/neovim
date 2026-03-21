@@ -14,9 +14,9 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
@@ -46,9 +46,11 @@
 
 #define MENUDEPTH   10          // maximum depth of menus
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "menu.c.generated.h"
-#endif
+#include "menu.c.generated.h"
+
+/// When non-zero no menu must be added or cleared.  Prevents the list of menus
+/// changing while listing them.
+static int menus_locked = 0;
 
 /// The character for each menu mode
 static char *menu_mode_chars[] = { "n", "v", "s", "o", "i", "c", "tl", "t" };
@@ -67,6 +69,17 @@ static vimmenu_T **get_root_menu(const char *const name)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return &root_menu;
+}
+
+/// If "menus_locked" is set then give an error and return true.
+/// Otherwise return false.
+static int is_menus_locked(void)
+{
+  if (menus_locked > 0) {
+    emsg(_(e_cannot_change_menus_while_listing));
+    return true;
+  }
+  return false;
 }
 
 /// Do the :menu command and relatives.
@@ -204,6 +217,10 @@ void ex_menu(exarg_T *eap)
     }
     menu_enable_recurse(*root_menu_ptr, menu_path, modes, enable);
   } else if (unmenu) {
+    if (is_menus_locked()) {
+      goto theend;
+    }
+
     // Delete menu(s).
     if (strcmp(menu_path, "*") == 0) {          // meaning: remove all menus
       menu_path = "";
@@ -223,6 +240,10 @@ void ex_menu(exarg_T *eap)
     // Careful: remove_menu() changes menu_path
     remove_menu(root_menu_ptr, menu_path, modes, false);
   } else {
+    if (is_menus_locked()) {
+      goto theend;
+    }
+
     // Add menu(s).
     // Replace special key codes.
     if (STRICMP(map_to, "<nop>") == 0) {        // "<Nop>" means nothing
@@ -708,9 +729,12 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 /// @return false if could not find path_name
 bool menu_get(char *const path_name, int modes, list_T *list)
 {
-  vimmenu_T *menu = find_menu(*get_root_menu(path_name), path_name, modes);
-  if (!menu) {
-    return false;
+  vimmenu_T *menu = *get_root_menu(path_name);
+  if (*path_name != NUL) {
+    menu = find_menu(menu, path_name, modes);
+    if (!menu) {
+      return false;
+    }
   }
   for (; menu != NULL; menu = menu->next) {
     dict_T *d = menu_get_recursive(menu, modes);
@@ -726,13 +750,17 @@ bool menu_get(char *const path_name, int modes, list_T *list)
   return true;
 }
 
-/// Find menu matching `name` and `modes`.
+/// Find menu matching `name` and `modes`. Does not handle empty `name`.
 ///
-/// @param menu top menu to start looking from
-/// @param name path towards the menu
-/// @return menu if \p name is null, found menu or NULL
-static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
+/// @param menu       top menu to start looking from
+/// @param path_name  path towards the menu
+/// @return found menu or NULL
+static vimmenu_T *find_menu(vimmenu_T *menu, const char *path_name, int modes)
 {
+  assert(*path_name);
+  char *const saved_name = xstrdup(path_name);
+  char *name = saved_name;
+
   while (*name) {
     // find the end of one dot-separated name and put a NUL at the dot
     char *p = menu_name_skip(name);
@@ -741,12 +769,14 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
         // Found menu
         if (*p != NUL && menu->children == NULL) {
           emsg(_(e_notsubmenu));
-          return NULL;
+          menu = NULL;
+          goto theend;
         } else if ((menu->modes & modes) == 0x0) {
           emsg(_(e_menu_only_exists_in_another_mode));
-          return NULL;
+          menu = NULL;
+          goto theend;
         } else if (*p == NUL) {  // found a full match
-          return menu;
+          goto theend;
         }
         break;
       }
@@ -755,35 +785,39 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
 
     if (menu == NULL) {
       semsg(_(e_nomenu), name);
-      return NULL;
+      break;
     }
     // Found a match, search the sub-menu.
     name = p;
+    assert(*name);
     menu = menu->children;
   }
+
+theend:
+  xfree(saved_name);
   return menu;
 }
 
 /// Show the mapping associated with a menu item or hierarchy in a sub-menu.
 static int show_menus(char *const path_name, int modes)
 {
-  vimmenu_T *menu = *get_root_menu(path_name);
-  if (menu != NULL) {
+  vimmenu_T *menu = NULL;
+  if (*path_name != NUL) {
     // First, find the (sub)menu with the given name
-    menu = find_menu(menu, path_name, modes);
+    menu = find_menu(*get_root_menu(path_name), path_name, modes);
     if (menu == NULL) {
       return FAIL;
     }
   }
-  // When there are no menus at all, the title still needs to be shown.
 
-  // Now we have found the matching menu, and we list the mappings
-  // Highlight title
+  // make sure the list of menus doesn't change while listing them
+  menus_locked++;
+
+  // list the matching menu mappings
   msg_puts_title(_("\n--- Menus ---"));
+  show_menus_recursive(menu, modes, 0);
 
-  if (menu != NULL) {
-    show_menus_recursive(menu->parent, modes, 0);
-  }
+  menus_locked--;
   return OK;
 }
 
@@ -1087,7 +1121,7 @@ char *get_menu_names(expand_T *xp, int idx)
 ///
 /// @param name may be modified.
 /// @return start of the next element
-char *menu_name_skip(char *const name)
+static char *menu_name_skip(char *const name)
 {
   char *p;
 
@@ -1437,18 +1471,18 @@ void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
   int idx = mode_idx;
 
   if (idx < 0) {
-    // Use the Insert mode entry when returning to Insert mode.
-    if (((State & MODE_INSERT) || restart_edit) && current_sctx.sc_sid == 0) {
-      idx = MENU_INDEX_INSERT;
+    if (State & MODE_TERMINAL) {
+      idx = MENU_INDEX_TERMINAL;
     } else if (State & MODE_CMDLINE) {
       idx = MENU_INDEX_CMDLINE;
-    } else if (State & MODE_TERMINAL) {
-      idx = MENU_INDEX_TERMINAL;
     } else if (get_real_state() & MODE_VISUAL) {
       // Detect real visual mode -- if we are really in visual mode we
       // don't need to do any guesswork to figure out what the selection
       // is. Just execute the visual binding for the menu.
       idx = MENU_INDEX_VISUAL;
+    } else if (((State & MODE_INSERT) || restart_edit) && current_sctx.sc_sid == 0) {
+      // Use the Insert mode entry when returning to Insert mode.
+      idx = MENU_INDEX_INSERT;
     } else if (eap != NULL && eap->addr_count) {
       pos_T tpos;
 

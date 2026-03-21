@@ -1941,7 +1941,7 @@ func Test_normal25_tag()
 
   " Testing for CTRL-] g CTRL-] g]
   " CTRL-W g] CTRL-W CTRL-] CTRL-W g CTRL-]
-  h
+  help helphelp
   " Test for CTRL-]
   call search('\<x\>$')
   exe "norm! \<c-]>"
@@ -2611,8 +2611,14 @@ func Test_normal33_g_cmd2()
   exe "norm! G0\<c-v>4k4ly"
   exe "norm! gvood"
   call assert_equal(['', 'abfgh', 'abfgh', 'abfgh', 'fgh', 'fgh', 'fgh', 'fgh', 'fgh'], getline(1,'$'))
-  " gv cannot be used in operator pending mode
-  call assert_beeps('normal! cgv')
+  " gv works in operator pending mode
+  call assert_nobeep('normal! cgvxyza')
+  call assert_equal(['', 'abfgh', 'abfgh', 'abfgh', 'xyza', 'xyza', 'xyza', 'xyza', 'xyza'], getline(1,'$'))
+  exe "norm! ^\<c-v>Gydgv..cgvbc"
+  call assert_equal(['', 'abfgh', 'abfgh', 'abfgh', 'bc', 'bc', 'bc', 'bc', 'bc'], getline(1,'$'))
+  exe "norm! v^GragggUgv"
+  call assert_equal(['', 'abfgh', 'abfgh', 'abfgh', 'bA', 'AA', 'AA', 'AA', 'Ac'], getline(1,'$'))
+
   " gv should beep without a previously selected visual area
   new
   call assert_beeps('normal! gv')
@@ -2704,6 +2710,22 @@ func Test_normal33_g_cmd2()
   norm! 60gMyl
   call assert_equal(87, col('.'))
   call assert_equal('E', getreg(0))
+
+  " Have an odd number of chars in the line
+  norm! A.
+  call assert_equal(145, col('.'))
+  norm! gMyl
+  call assert_equal(73, col('.'))
+  call assert_equal('0', getreg(0))
+
+  " 'listchars' "eol" should not affect gM behavior
+  setlocal list listchars=eol:$
+  norm! $
+  call assert_equal(145, col('.'))
+  norm! gMyl
+  call assert_equal(73, col('.'))
+  call assert_equal('0', getreg(0))
+  setlocal nolist
 
   " Test for gM with Tab characters
   call setline('.', "\ta\tb\tc\td\te\tf")
@@ -4186,6 +4208,17 @@ func Test_normal33_g_cmd_nonblank()
   call assert_equal(20, col('.'))
   exe "normal 0g\<kEnd>"
   call assert_equal(11, col('.'))
+
+  " Test visual mode at end of line
+  normal 0$bvg$y
+  call assert_equal(80, col("'>"))
+  exe "normal 0$bvg\<End>y"
+  call assert_equal(71, col("'>"))
+  setlocal nowrap virtualedit=all
+  exe "normal 0$\<C-v>llg\<End>y"
+  call assert_equal(71, col("'<"))
+  exe "normal 0$llvg\<End>y"
+  call assert_equal(71, col("'<"))
   bw!
 endfunc
 
@@ -4318,6 +4351,80 @@ func Test_normal_go()
   call assert_equal('three four', getline(1))
 
   bwipe!
+endfunc
+
+" Test for Ctrl-D with 'scrolloff' and narrow window does not get stuck.
+func Test_scroll_longline_scrolloff()
+  11new
+  36vsplit
+  set scrolloff=5
+
+  call setline(1, ['']->repeat(5))
+  call setline(6, ['foo'->repeat(20)]->repeat(2))
+  call setline(8, ['bar'->repeat(30)])
+  call setline(9, ['']->repeat(5))
+  exe "normal! \<C-D>"
+  call assert_equal(6, line('w0'))
+  exe "normal! \<C-D>"
+  call assert_equal(7, line('w0'))
+
+  set scrolloff&
+  bwipe!
+endfunc
+
+" Benchmark test for Ctrl-F with 'nosmoothscroll'
+func Test_scroll_longline_benchmark()
+  call setline(1, ['foo'->repeat(20000)] + [''])
+  let start = reltime()
+  exe "normal! \<C-F>"
+  call assert_inrange(0, 0.1, reltimefloat(reltime(start)))
+  bwipe!
+endfunc
+
+" Test Ctrl-B with 'nosmoothscroll' not stuck with line exactly window width.
+func Test_scroll_longline_winwidth()
+  10new
+  call setline(1, ['']->repeat(20) + ['A'->repeat(20 * winwidth(0))] + ['']->repeat(20))
+  exe "normal! G3\<C-B>"
+  call assert_equal(22, line('w0'))
+  exe "normal! \<C-B>"
+  call assert_equal(21, line('w0'))
+  exe "normal! \<C-B>"
+  call assert_equal(11, line('w0'))
+  exe "normal! \<C-B>"
+  call assert_equal(3, line('w0'))
+  exe "normal! \<C-B>"
+  call assert_equal(1, line('w0'))
+  bwipe!
+endfunc
+
+func Test_pos_percentage_in_turkish_locale()
+  CheckRunVimInTerminal
+  CheckNotMac
+  defer execute(':lang C')
+  if !filereadable('../po/tr.mo')
+        throw 'Skipped: tr.mo not built, run make in src/po first'
+  endif
+
+  try
+    let dir = expand('$VIMRUNTIME/lang/tr/')
+    let target = expand('$VIMRUNTIME/lang/tr/LC_MESSAGES/')
+    let tr = '../po/tr.mo'
+    call mkdir(dir, 'R')
+    call mkdir(target, '')
+    call filecopy(tr, target .. 'vim.mo')
+    lang tr_TR.UTF-8
+    let buf = RunVimInTerminal('', {'rows': 5, 'cols': 40})
+    call term_sendkeys(buf, ":lang tr_TR.UTF-8\<cr>")
+    call term_sendkeys(buf, ":put =range(1,40)\<cr>")
+    call term_sendkeys(buf, ":5\<cr>")
+    call WaitForAssert({-> assert_match('%8$', term_getline(buf, 5))})
+
+    call StopVimInTerminal(buf)
+  catch /E197:/
+    " can't use Turkish locale
+    throw 'Skipped: Turkish locale not available'
+  endtry
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

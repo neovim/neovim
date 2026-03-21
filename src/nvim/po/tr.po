@@ -2974,16 +2974,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: Panik yok!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Üzgünüm, '%s' yardımı %s için mevcut değil"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: '%s' yardımı %s için mevcut değil"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Üzgünüm, %s için yardım mevcut değil"
+msgid "E149: No help for %s"
+msgstr "E149: %s için yardım mevcut değil"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Üzgünüm, \"%s\" yardım dosyası bulunamadı"
+msgid "Help file \"%s\" not found"
+msgstr "\"%s\" yardım dosyası bulunamadı"
 
 #, c-format
 msgid "E151: No match: %s"
@@ -3917,12 +3917,8 @@ msgstr "E773: \"%s\" için sembol bağı döngüsü"
 msgid "E325: ATTENTION"
 msgstr "E325: DİKKAT"
 
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Şu adla bir takas dosyası bulundu: \""
+msgid "Found a swap file by the name \""
+msgstr "Şu adla bir takas dosyası bulundu: \""
 
 msgid "While opening file \""
 msgstr "şu dosya açılırken: \""
@@ -4418,12 +4414,8 @@ msgstr "Şu anki %sdil: \"%s\""
 msgid "E197: Cannot set language to \"%s\""
 msgstr "E197: \"%s\" diline ayarlanamıyor"
 
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Program çıktı: "
+msgid "shell returned "
+msgstr "Program çıktı: "
 
 msgid ""
 "\n"
@@ -5365,12 +5357,12 @@ msgstr "'%.*s' sözcüğü %s dosyasına eklendi"
 msgid "E763: Word characters differ between spell files"
 msgstr "E763: Sözcük karakterleri yazım dosyaları arasında ayrım gösteriyor"
 
-msgid "Sorry, no suggestions"
-msgstr "Üzgünüm, şu an için bir önerim yok"
+msgid "No suggestions"
+msgstr "Şu an için bir önerim yok"
 
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Üzgünüm, yalnızca %<PRId64> öneri"
+msgid "Only %<PRId64> suggestions"
+msgstr "Yalnızca %<PRId64> öneri"
 
 #, c-format
 msgid "Change \"%.*s\" to:"

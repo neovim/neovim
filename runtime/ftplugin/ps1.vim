@@ -5,6 +5,7 @@
 "              2024 Jan 14 by Vim Project (browsefilter)
 "              2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 "              2024 Sep 19 by Konfekt (simplify keywordprg #15696)
+"              2025 Jul 22 by phanium (use :hor term #17822)
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -51,7 +52,7 @@ endif
 
 if exists('s:pwsh_cmd')
   if exists(':terminal') == 2
-    command! -buffer -nargs=1 GetHelp silent exe 'term ' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>"' . (executable('less') ? ' | less' : '')
+    command! -buffer -nargs=1 GetHelp silent exe 'hor term ' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>"' . (executable('less') ? ' | less' : '')
   else
     command! -buffer -nargs=1 GetHelp echo system(s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full <args>')
   endif

@@ -39,7 +39,7 @@ static void die(const char *fmt, ...)
     va_end(arg);
     fprintf(stderr, "\n");
 
-    exit(-1);
+    abort();
 }
 
 void strbuf_init(strbuf_t *s, size_t len)
@@ -51,7 +51,7 @@ void strbuf_init(strbuf_t *s, size_t len)
     else
         size = len + 1;         /* \0 terminator */
     if (size < len)
-        die("Overflow, len %zu", len);
+        die("Overflow, len: %zu", len);
     s->buf = NULL;
     s->size = size;
     s->length = 0;
@@ -132,7 +132,7 @@ static size_t calculate_new_size(strbuf_t *s, size_t len)
     /* Ensure there is room for optional NULL termination */
     reqsize = len + 1;
     if (reqsize < len)
-        die("Overflow, len %zu", len);
+        die("Overflow, len: %zu", len);
 
     /* If the user has requested to shrink the buffer, do it exactly */
     if (s->size > reqsize)
@@ -193,6 +193,7 @@ void strbuf_append_string(strbuf_t *s, const char *str)
         space--;
     }
 }
+
 
 /* vi:ai et sw=4 ts=4:
  */

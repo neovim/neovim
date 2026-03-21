@@ -17,15 +17,8 @@ Table of contents:
 
 ## SETTING UP *setting-up*
 
-First, you'll need to enable "debug" mode
-~~~ cmd
-    :let g:tutor_debug = 1
-~~~
-This will allow saving changes to the tutor files and will disable conceals, so
-you can more easily check your changes.
-
-After this, create a new .tutor file (we will be practicing on this very file, so you
-don't need to do this now):
+Create a new .tutor file (we will be practicing on this very file, so you don't
+need to do this now):
 ~~~ cmd
     :e new-tutorial.tutor
 ~~~

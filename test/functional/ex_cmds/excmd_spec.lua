@@ -62,4 +62,17 @@ describe('Ex cmds', function()
     eq(2, fn.exists(':defer'))
     eq('defer', fn.fullcommand('defer'))
   end)
+
+  it('various command abbreviations', function()
+    -- :connect needs at least :conn
+    eq('change', fn.fullcommand('c'))
+    eq('copy', fn.fullcommand('co'))
+    eq('continue', fn.fullcommand('con'))
+    eq('connect', fn.fullcommand('conn'))
+    -- :restart needs at least :rest
+    eq('read', fn.fullcommand('r'))
+    eq('read', fn.fullcommand('re'))
+    eq('resize', fn.fullcommand('res'))
+    eq('restart', fn.fullcommand('rest'))
+  end)
 end)

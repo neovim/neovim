@@ -19,6 +19,11 @@ for _, p in ipairs(paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
+-- add some nonstandard header locations
+if paths.apple_sysroot ~= '' then
+  Preprocess.add_apple_sysroot(paths.apple_sysroot)
+end
+
 local child_pid = nil --- @type integer?
 --- @generic F: function
 --- @param func F
@@ -141,6 +146,13 @@ local function filter_complex_blocks(body)
         or string.find(line, '_Float')
         or string.find(line, '__s128')
         or string.find(line, '__u128')
+        or string.find(line, '__SVFloat32_t')
+        or string.find(line, '__SVFloat64_t')
+        or string.find(line, '__SVBool_t')
+        or string.find(line, '__f32x4_t')
+        or string.find(line, '__f64x2_t')
+        or string.find(line, '__sv_f32_t')
+        or string.find(line, '__sv_f64_t')
         or string.find(line, 'msgpack_zone_push_finalizer')
         or string.find(line, 'msgpack_unpacker_reserve_buffer')
         or string.find(line, 'value_init_')
@@ -151,6 +163,8 @@ local function filter_complex_blocks(body)
         -- used by macOS headers
         or string.find(line, 'typedef enum : ')
         or string.find(line, 'mach_vm_range_recipe')
+        or string.find(line, 'ipc_info_object_type_t')
+        or string.find(line, '__Reply__mach_port_kobject_t')
       )
     then
       -- Remove GCC's extension keyword which is just used to disable warnings.
@@ -187,8 +201,10 @@ local function is_child_cdefs()
   return os.getenv('NVIM_TEST_MAIN_CDEFS') ~= '1'
 end
 
--- use this helper to import C files, you can pass multiple paths at once,
--- this helper will return the C namespace of the nvim library.
+--- use this helper to import C files, you can pass multiple paths at once,
+--- this helper will return the C namespace of the nvim library.
+---
+--- @param ... string
 local function cimport(...)
   local previous_defines --- @type string
   local preprocess_cache --- @type table<string,string>
@@ -340,6 +356,9 @@ local function alloc_log_new()
         end
       end
     end
+    -- JIT-compiled FFI calls cannot call back into Lua, so disable JIT.
+    -- Ref: https://luajit.org/ext_ffi_semantics.html#callback
+    jit.off()
   end
 
   log.set_mocks = child_call(log.set_mocks)

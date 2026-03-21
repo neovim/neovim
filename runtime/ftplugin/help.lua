@@ -57,7 +57,7 @@ end
 
 vim.keymap.set('n', 'gO', function()
   require('vim.treesitter._headings').show_toc()
-end, { buffer = 0, silent = true, desc = 'Show table of contents for current buffer' })
+end, { buffer = 0, silent = true, desc = 'Show an Outline of the current buffer' })
 
 vim.keymap.set('n', ']]', function()
   require('vim.treesitter._headings').jump({ count = 1 })
@@ -66,58 +66,105 @@ vim.keymap.set('n', '[[', function()
   require('vim.treesitter._headings').jump({ count = -1 })
 end, { buffer = 0, silent = false, desc = 'Jump to previous section' })
 
--- Add "runnables" for Lua/Vimscript code examples.
----@type table<integer, { lang: string, code: string }>
-local code_blocks = {}
-local parser = assert(vim.treesitter.get_parser(0, 'vimdoc', { error = false }))
-local query = vim.treesitter.query.parse(
-  'vimdoc',
-  [[
-  (codeblock
-    (language) @_lang
-    .
-    (code) @code
-    (#any-of? @_lang "lua" "vim")
-    (#set! @code lang @_lang))
-]]
-)
-local root = parser:parse()[1]:root()
-local run_message_ns = vim.api.nvim_create_namespace('nvim.vimdoc.run_message')
+local parser = assert(vim.treesitter.get_parser(0, 'vimdoc'))
 
-vim.api.nvim_buf_clear_namespace(0, run_message_ns, 0, -1)
-for _, match, metadata in query:iter_matches(root, 0, 0, -1) do
-  for id, nodes in pairs(match) do
-    local name = query.captures[id]
-    local node = nodes[1]
-    local start, _, end_ = node:parent():range()
+local function runnables()
+  ---@type table<integer, { lang: string, code: string }>
+  local code_blocks = {}
+  local query = vim.treesitter.query.parse(
+    'vimdoc',
+    [[
+    (codeblock
+      (language) @_lang
+      .
+      (code) @code
+      (#any-of? @_lang "lua" "vim")
+      (#set! @code lang @_lang))
+  ]]
+  )
 
-    if name == 'code' then
-      vim.api.nvim_buf_set_extmark(0, run_message_ns, start, 0, {
-        virt_text = { { 'Run with `g==`', 'LspCodeLens' } },
-      })
-      local code = vim.treesitter.get_node_text(node, 0)
-      local lang_node = match[metadata[id].lang][1] --[[@as TSNode]]
-      local lang = vim.treesitter.get_node_text(lang_node, 0)
-      for i = start + 1, end_ do
-        code_blocks[i] = { lang = lang, code = code }
+  local root = parser:parse()[1]:root()
+  for _, match, metadata in query:iter_matches(root, 0, 0, -1) do
+    for id, nodes in pairs(match) do
+      local name = query.captures[id]
+      local node = nodes[1]
+      local start, _, end_ = node:parent():range()
+
+      if name == 'code' then
+        local code = vim.treesitter.get_node_text(node, 0)
+        local lang_node = match[metadata[id].lang][1] --[[@as TSNode]]
+        local lang = vim.treesitter.get_node_text(lang_node, 0)
+        for i = start + 1, end_ do
+          code_blocks[i] = { lang = lang, code = code }
+        end
+      end
+    end
+  end
+
+  vim.keymap.set('n', 'g==', function()
+    local pos = vim.api.nvim_win_get_cursor(0)[1]
+    local code_block = code_blocks[pos]
+    if not code_block then
+      vim.print('No code block found')
+    elseif code_block.lang == 'lua' then
+      vim.cmd.lua(code_block.code)
+    elseif code_block.lang == 'vim' then
+      vim.cmd(code_block.code)
+    end
+  end, { buffer = true })
+end
+
+-- Retry once if the buffer has changed during the iteration of the code
+-- blocks. See #36574.
+if not pcall(runnables) then
+  runnables()
+end
+
+local url_ns = vim.api.nvim_create_namespace('nvim.help.urls')
+local function urls()
+  local filepath = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+
+  if vim.fs.relpath(vim.env.VIMRUNTIME, filepath) ~= nil then
+    local base = 'https://neovim.io/doc/user/helptag/?tag='
+    local query = vim.treesitter.query.parse(
+      'vimdoc',
+      [[
+    ((optionlink) @helplink)
+    (taglink
+      text: (_) @helplink)
+    (tag
+      text: (_) @helplink)
+    ]]
+    )
+
+    vim.api.nvim_buf_clear_namespace(0, url_ns, 0, -1)
+    local root = parser:parse()[1]:root()
+    for _, match, _ in query:iter_matches(root, 0, 0, -1) do
+      for id, nodes in pairs(match) do
+        if query.captures[id] == 'helplink' then
+          for _, node in ipairs(nodes) do
+            local start_line, start_col, end_line, end_col = node:range()
+            local tag = vim.treesitter.get_node_text(node, 0)
+            vim.api.nvim_buf_set_extmark(0, url_ns, start_line, start_col, {
+              end_line = end_line,
+              end_col = end_col,
+              url = base .. vim.uri_encode(tag),
+            })
+          end
+        end
       end
     end
   end
 end
 
-vim.keymap.set('n', 'g==', function()
-  local pos = vim.api.nvim_win_get_cursor(0)[1]
-  local code_block = code_blocks[pos]
-  if not code_block then
-    vim.print('No code block found')
-  elseif code_block.lang == 'lua' then
-    vim.cmd.lua(code_block.code)
-  elseif code_block.lang == 'vim' then
-    vim.cmd(code_block.code)
-  end
-end, { buffer = true })
+-- Retry once if the buffer has changed during the iteration of the code
+-- blocks. See #36574.
+if not pcall(urls) then
+  urls()
+end
 
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
   .. '\n sil! exe "nunmap <buffer> gO" | sil! exe "nunmap <buffer> g=="'
   .. '\n sil! exe "nunmap <buffer> ]]" | sil! exe "nunmap <buffer> [["'
+  .. ('\n call v:lua.vim.api.nvim_buf_clear_namespace(0, %d, 0, -1)'):format(url_ns)
 vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'

@@ -1336,18 +1336,18 @@ msgstr "E478: 不要驚慌!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: 抱歉, 沒有關於 %s-%s 的說明"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: 沒有關於 %s-%s 的說明"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: 抱歉, 沒有 %s 的說明"
+msgid "E149: No help for %s"
+msgstr "E149: 沒有 %s 的說明"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "抱歉, 找不到說明檔 \"%s\""
+msgid "Help file \"%s\" not found"
+msgstr "找不到說明檔 \"%s\""
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -3977,12 +3977,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: 注意"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"找到暫存檔 \""
+msgid "Found a swap file by the name \""
+msgstr "找到暫存檔 \""
 
 #: ../memline.c:3226
 msgid "While opening file \""
@@ -4673,12 +4669,8 @@ msgstr ""
 "不能執行 shell"
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Shell 已返回"
+msgid "shell returned "
+msgstr "Shell 已返回"
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""
@@ -5547,12 +5539,12 @@ msgid "E763: Word characters differ between spell files"
 msgstr "E763: 拼寫文件之間的字元不相同"
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
-msgstr "抱歉，没有建议"
+msgid "No suggestions"
+msgstr "没有建议"
 
 #: ../spell.c:8687
 #, fuzzy, c-format
-msgid "Sorry, only %<PRId64> suggestions"
+msgid "Only %<PRId64> suggestions"
 msgstr "，範圍： %<PRId64> 行 "
 
 #. for when 'cmdheight' > 1

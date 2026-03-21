@@ -3,27 +3,20 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local clear, feed_command, eval, eq, api = n.clear, n.feed_command, n.eval, t.eq, n.api
+local clear, command, eval, eq, api = n.clear, n.command, n.eval, t.eq, n.api
+local matches, pcall_err = t.matches, t.pcall_err
 
 local function should_fail(opt, value, errmsg)
-  feed_command('setglobal ' .. opt .. '=' .. value)
-  eq(errmsg, eval('v:errmsg'):match('E%d*'))
-  feed_command('let v:errmsg = ""')
-  feed_command('setlocal ' .. opt .. '=' .. value)
-  eq(errmsg, eval('v:errmsg'):match('E%d*'))
-  feed_command('let v:errmsg = ""')
-  local status, err = pcall(api.nvim_set_option_value, opt, value, {})
-  eq(false, status)
-  eq(errmsg, err:match('E%d*'))
-  eq('', eval('v:errmsg'))
+  matches(errmsg .. ':', pcall_err(command, 'setglobal ' .. opt .. '=' .. value))
+  matches(errmsg .. ':', pcall_err(command, 'setlocal ' .. opt .. '=' .. value))
+  matches(errmsg .. ':', pcall_err(api.nvim_set_option_value, opt, value, {}))
 end
 
 local function should_succeed(opt, value)
-  feed_command('setglobal ' .. opt .. '=' .. value)
-  feed_command('setlocal ' .. opt .. '=' .. value)
+  command('setglobal ' .. opt .. '=' .. value)
+  command('setlocal ' .. opt .. '=' .. value)
   api.nvim_set_option_value(opt, value, {})
   eq(value, api.nvim_get_option_value(opt, {}))
-  eq('', eval('v:errmsg'))
 end
 
 describe(':setlocal', function()
@@ -31,10 +24,10 @@ describe(':setlocal', function()
 
   it('setlocal sets only local value', function()
     eq(0, api.nvim_get_option_value('iminsert', { scope = 'global' }))
-    feed_command('setlocal iminsert=1')
+    command('setlocal iminsert=1')
     eq(0, api.nvim_get_option_value('iminsert', { scope = 'global' }))
     eq(-1, api.nvim_get_option_value('imsearch', { scope = 'global' }))
-    feed_command('setlocal imsearch=1')
+    command('setlocal imsearch=1')
     eq(-1, api.nvim_get_option_value('imsearch', { scope = 'global' }))
   end)
 end)
@@ -77,42 +70,32 @@ describe(':set validation', function()
     should_fail('numberwidth', 0, 'E487')
 
     -- If smaller than 1 this one is set to 'lines'-1
-    feed_command('setglobal window=-10')
+    command('setglobal window=-10')
     api.nvim_set_option_value('window', -10, {})
     eq(23, api.nvim_get_option_value('window', {}))
     eq('', eval('v:errmsg'))
 
     -- 'scrolloff' and 'sidescrolloff' can have a -1 value when
     -- set for the current window, but not globally
-    feed_command('setglobal scrolloff=-1')
-    eq('E487', eval('v:errmsg'):match('E%d*'))
+    matches('E487:', pcall_err(command, 'setglobal scrolloff=-1'))
+    matches('E487:', pcall_err(command, 'setglobal sidescrolloff=-1'))
 
-    feed_command('setglobal sidescrolloff=-1')
-    eq('E487', eval('v:errmsg'):match('E%d*'))
-
-    feed_command('let v:errmsg=""')
-
-    feed_command('setlocal scrolloff=-1')
-    eq('', eval('v:errmsg'))
-
-    feed_command('setlocal sidescrolloff=-1')
-    eq('', eval('v:errmsg'))
+    eq(true, pcall(command, 'setlocal scrolloff=-1'))
+    eq(true, pcall(command, 'setlocal sidescrolloff=-1'))
   end)
 
   it('set wmh/wh wmw/wiw checks', function()
-    feed_command('set winheight=2')
-    feed_command('set winminheight=3')
-    eq('E591', eval('v:errmsg'):match('E%d*'))
+    command('set winheight=2')
+    matches('E591:', pcall_err(command, 'set winminheight=3'))
 
-    feed_command('set winwidth=2')
-    feed_command('set winminwidth=3')
-    eq('E592', eval('v:errmsg'):match('E%d*'))
+    command('set winwidth=2')
+    matches('E592:', pcall_err(command, 'set winminwidth=3'))
   end)
 
   it('set maxcombine resets to 6', function()
     local function setto(value)
-      feed_command('setglobal maxcombine=' .. value)
-      feed_command('setlocal maxcombine=' .. value)
+      command('setglobal maxcombine=' .. value)
+      command('setlocal maxcombine=' .. value)
       api.nvim_set_option_value('maxcombine', value, {})
       eq(6, api.nvim_get_option_value('maxcombine', {}))
       eq('', eval('v:errmsg'))

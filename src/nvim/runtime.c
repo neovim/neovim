@@ -26,6 +26,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
@@ -93,15 +94,15 @@ typedef struct {
 typedef struct {
   char *path;
   bool after;
+  bool pack_inserted;
   TriState has_lua;
+  size_t pos_in_rtp;
 } SearchPathItem;
 
 typedef kvec_t(SearchPathItem) RuntimeSearchPath;
 typedef kvec_t(char *) CharVec;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "runtime.c.generated.h"
-#endif
+#include "runtime.c.generated.h"
 
 garray_T exestack = { 0, 0, sizeof(estack_T), 50, NULL };
 garray_T script_items = { 0, 0, sizeof(scriptitem_T *), 20, NULL };
@@ -196,39 +197,44 @@ char *estack_sfile(estack_arg_T which)
   for (int idx = 0; idx < exestack.ga_len; idx++) {
     entry = ((estack_T *)exestack.ga_data) + idx;
     if (entry->es_name != NULL) {
-      size_t len = strlen(entry->es_name) + 15;
-      char *type_name = "";
+      String type_name = STATIC_CSTR_AS_STRING("");
+      String es_name = cstr_as_string(entry->es_name);
       if (entry->es_type != last_type) {
         switch (entry->es_type) {
         case ETYPE_SCRIPT:
-          type_name = "script "; break;
+          type_name = STATIC_CSTR_AS_STRING("script "); break;
         case ETYPE_UFUNC:
-          type_name = "function "; break;
+          type_name = STATIC_CSTR_AS_STRING("function "); break;
         default:
-          type_name = ""; break;
+          break;
         }
         last_type = entry->es_type;
       }
-      len += strlen(type_name);
-      ga_grow(&ga, (int)len);
       linenr_T lnum = idx == exestack.ga_len - 1
                       ? which == ESTACK_STACK ? SOURCING_LNUM : 0
                       : entry->es_lnum;
-      char *dots = idx == exestack.ga_len - 1 ? "" : "..";
-      if (lnum == 0) {
-        // For the bottom entry of <sfile>: do not add the line number,
-        // it is used in <slnum>.  Also leave it out when the number is
-        // not set.
-        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s%s",
-                     type_name, entry->es_name, dots);
-      } else {
-        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]%s",
-                     type_name, entry->es_name, lnum, dots);
+
+      size_t len = es_name.size + type_name.size + 26;
+      ga_grow(&ga, (int)len);
+      ga_concat_len(&ga, type_name.data, type_name.size);
+      ga_concat_len(&ga, es_name.data, es_name.size);
+      // For the bottom entry of <sfile>: do not add the line number, it is used in
+      // <slnum>.  Also leave it out when the number is not set.
+      if (lnum != 0) {
+        ga.ga_len += (int)vim_snprintf_safelen((char *)ga.ga_data + ga.ga_len,
+                                               len - (size_t)ga.ga_len,
+                                               "[%" PRIdLINENR "]", lnum);
       }
-      ga.ga_len += (int)strlen((char *)ga.ga_data + ga.ga_len);
+      if (idx != exestack.ga_len - 1) {
+        GA_CONCAT_LITERAL(&ga, "..");
+      }
     }
   }
 
+  // Only NUL-terminate when not returning NULL.
+  if (ga.ga_data != NULL) {
+    ga_append(&ga, NUL);
+  }
   return (char *)ga.ga_data;
 }
 
@@ -288,6 +294,7 @@ void f_getstacktrace(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 static bool runtime_search_path_valid = false;
+static bool runtime_search_path_valid_thread = false;
 static int *runtime_search_path_ref = NULL;
 static RuntimeSearchPath runtime_search_path;
 static RuntimeSearchPath runtime_search_path_thread;
@@ -448,8 +455,7 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
     char *rtp = rtp_copy;
     while (*rtp != NUL && (do_all || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
-      copy_option_part(&rtp, buf, MAXPATHL, ",");
-      size_t buflen = strlen(buf);
+      size_t buflen = copy_option_part(&rtp, buf, MAXPATHL, ",");
 
       // Skip after or non-after directories.
       if (flags & (DIP_NOAFTER | DIP_AFTER)) {
@@ -527,8 +533,9 @@ static RuntimeSearchPath copy_runtime_search_path(const RuntimeSearchPath src)
 {
   RuntimeSearchPath dst = KV_INITIAL_VALUE;
   for (size_t j = 0; j < kv_size(src); j++) {
-    SearchPathItem src_item = kv_A(src, j);
-    kv_push(dst, ((SearchPathItem){ xstrdup(src_item.path), src_item.after, src_item.has_lua }));
+    SearchPathItem item = kv_A(src, j);
+    kv_push(dst, ((SearchPathItem){ xstrdup(item.path), item.after, item.pack_inserted,
+                                    item.has_lua, item.pos_in_rtp }));
   }
 
   return dst;
@@ -638,13 +645,20 @@ Array runtime_inspect(Arena *arena)
 
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
-    Array entry = arena_array(arena, 3);
-    ADD_C(entry, CSTR_AS_OBJ(item->path));
-    ADD_C(entry, BOOLEAN_OBJ(item->after));
-    if (item->has_lua != kNone) {
-      ADD_C(entry, BOOLEAN_OBJ(item->has_lua == kTrue));
+    Dict entry = arena_dict(arena, 5);
+    PUT_C(entry, "path", CSTR_AS_OBJ(item->path));
+    if (item->after) {
+      PUT_C(entry, "after", BOOLEAN_OBJ(true));
     }
-    ADD_C(rv, ARRAY_OBJ(entry));
+    if (item->pack_inserted) {
+      PUT_C(entry, "pack_inserted", BOOLEAN_OBJ(true));
+    }
+    if (item->has_lua != kNone) {
+      PUT_C(entry, "has_lua",  BOOLEAN_OBJ(item->has_lua == kTrue));
+    }
+    PUT_C(entry, "pos_in_rtp", INTEGER_OBJ((Integer)item->pos_in_rtp));
+
+    ADD_C(rv, DICT_OBJ(entry));
   }
   return rv;
 }
@@ -748,25 +762,27 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
   return done;
 }
 
-static void push_path(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
-                      bool after)
+static bool push_path(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
+                      bool after, size_t pos_in_rtp)
 {
   String *key_alloc;
   if (set_put_ref(String, rtp_used, cstr_as_string(entry), &key_alloc)) {
     *key_alloc = cstr_to_string(entry);
-    kv_push(*search_path, ((SearchPathItem){ key_alloc->data, after, kNone }));
+    kv_push(*search_path, ((SearchPathItem){ key_alloc->data, after, false, kNone, pos_in_rtp }));
+    return true;
   }
+  return false;
 }
 
 static void expand_rtp_entry(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
-                             bool after)
+                             bool after, size_t pos_in_rtp)
 {
   if (set_has(String, rtp_used, cstr_as_string(entry))) {
     return;
   }
 
   if (!*entry) {
-    push_path(search_path, rtp_used, entry, after);
+    push_path(search_path, rtp_used, entry, after, pos_in_rtp);
   }
 
   int num_files;
@@ -774,14 +790,16 @@ static void expand_rtp_entry(RuntimeSearchPath *search_path, Set(String) *rtp_us
   char *(pat[]) = { entry };
   if (gen_expand_wildcards(1, pat, &num_files, &files, EW_DIR | EW_NOBREAK) == OK) {
     for (int i = 0; i < num_files; i++) {
-      push_path(search_path, rtp_used, files[i], after);
+      // reuses position but it is ok, we need to be monotonic but not strictly
+      push_path(search_path, rtp_used, files[i], after, pos_in_rtp);
     }
     FreeWild(num_files, files);
   }
 }
 
 static void expand_pack_entry(RuntimeSearchPath *search_path, Set(String) *rtp_used,
-                              CharVec *after_path, char *pack_entry, size_t pack_entry_len)
+                              CharVec *after_path, char *pack_entry, size_t pack_entry_len,
+                              size_t pos_in_rtp)
 {
   static char buf[MAXPATHL];
   char *(start_pat[]) = { "/pack/*/start/*", "/start/*" };  // NOLINT
@@ -791,7 +809,7 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, Set(String) *rtp_u
     }
     xstrlcpy(buf, pack_entry, sizeof buf);
     xstrlcpy(buf + pack_entry_len, start_pat[i], sizeof buf - pack_entry_len);
-    expand_rtp_entry(search_path, rtp_used, buf, false);
+    expand_rtp_entry(search_path, rtp_used, buf, false, pos_in_rtp);
     size_t after_size = strlen(buf) + 7;
     char *after = xmallocz(after_size);
     xstrlcpy(after, buf, after_size);
@@ -821,9 +839,9 @@ static RuntimeSearchPath runtime_search_path_build(void)
   static char buf[MAXPATHL];
   for (char *entry = p_pp; *entry != NUL;) {
     char *cur_entry = entry;
-    copy_option_part(&entry, buf, MAXPATHL, ",");
+    size_t buflen = copy_option_part(&entry, buf, MAXPATHL, ",");
 
-    String the_entry = { .data = cur_entry, .size = strlen(buf) };
+    String the_entry = { .data = cur_entry, .size = buflen };
 
     kv_push(pack_entries, the_entry);
     map_put(String, int)(&pack_used, the_entry, 0);
@@ -832,42 +850,52 @@ static RuntimeSearchPath runtime_search_path_build(void)
   char *rtp_entry;
   for (rtp_entry = p_rtp; *rtp_entry != NUL;) {
     char *cur_entry = rtp_entry;
-    copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
-    size_t buflen = strlen(buf);
+    size_t buflen = copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
 
     if (path_is_after(buf, buflen)) {
       rtp_entry = cur_entry;
       break;
     }
 
+    size_t pos_in_rtp = (size_t)(cur_entry - p_rtp);
+
     // fact: &rtp entries can contain wild chars
-    expand_rtp_entry(&search_path, &rtp_used, buf, false);
+    expand_rtp_entry(&search_path, &rtp_used, buf, false, pos_in_rtp);
 
     handle_T *h = map_ref(String, int)(&pack_used, cstr_as_string(buf), NULL);
     if (h) {
       (*h)++;
-      expand_pack_entry(&search_path, &rtp_used, &after_path, buf, buflen);
+      expand_pack_entry(&search_path, &rtp_used, &after_path, buf, buflen, pos_in_rtp);
     }
   }
+
+  // The following entries were not explicit in rtp.
+  // this is fine, but keep pos_in_rtp monotonic:
+  // use the comma between two entries as a sentinel
+  size_t sentinel_pos_in_rtp = (size_t)(rtp_entry - p_rtp);
+  sentinel_pos_in_rtp -= (sentinel_pos_in_rtp > 0) ? 1 : 0;
 
   for (size_t i = 0; i < kv_size(pack_entries); i++) {
     String item = kv_A(pack_entries, i);
     handle_T h = map_get(String, int)(&pack_used, item);
     if (h == 0) {
-      expand_pack_entry(&search_path, &rtp_used, &after_path, item.data, item.size);
+      expand_pack_entry(&search_path, &rtp_used, &after_path, item.data, item.size,
+                        sentinel_pos_in_rtp);
     }
   }
 
   // "after" packages
   for (size_t i = 0; i < kv_size(after_path); i++) {
-    expand_rtp_entry(&search_path, &rtp_used, kv_A(after_path, i), true);
+    expand_rtp_entry(&search_path, &rtp_used, kv_A(after_path, i), true, sentinel_pos_in_rtp);
     xfree(kv_A(after_path, i));
   }
 
   // "after" dirs in rtp
   for (; *rtp_entry != NUL;) {
-    copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
-    expand_rtp_entry(&search_path, &rtp_used, buf, path_is_after(buf, strlen(buf)));
+    char *cur_entry = rtp_entry;
+    size_t buflen = copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
+    size_t pos_in_rtp = (size_t)(cur_entry - p_rtp);
+    expand_rtp_entry(&search_path, &rtp_used, buf, path_is_after(buf, buflen), pos_in_rtp);
   }
 
   // strings are not owned
@@ -910,11 +938,21 @@ void runtime_search_path_validate(void)
     runtime_search_path = runtime_search_path_build();
     runtime_search_path_valid = true;
     runtime_search_path_ref = NULL;  // initially unowned
-    uv_mutex_lock(&runtime_search_path_mutex);
-    runtime_search_path_free(runtime_search_path_thread);
-    runtime_search_path_thread = copy_runtime_search_path(runtime_search_path);
-    uv_mutex_unlock(&runtime_search_path_mutex);
+    update_runtime_search_path_thread(true);
   }
+}
+
+void update_runtime_search_path_thread(bool force)
+{
+  if (!force && !(runtime_search_path_valid && !runtime_search_path_valid_thread)) {
+    return;
+  }
+
+  uv_mutex_lock(&runtime_search_path_mutex);
+  runtime_search_path_free(runtime_search_path_thread);
+  runtime_search_path_thread = copy_runtime_search_path(runtime_search_path);
+  uv_mutex_unlock(&runtime_search_path_mutex);
+  runtime_search_path_valid_thread = true;
 }
 
 /// Just like do_in_path_and_pp(), using 'runtimepath' for "path".
@@ -1008,8 +1046,8 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   }
 
   // now we have:
-  // rtp/pack/name/start/name
-  //    p4   p3   p2   p1
+  // rtp/pack/name/(start|opt)/name
+  //    p4   p3   p2           p1
   //
   // find the part up to "pack" in 'runtimepath'
   p4++;  // append pathsep in order to expand symlink
@@ -1087,16 +1125,20 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   // We now have 'rtp' parts: {keep}{keep_after}{rest}.
   // Create new_rtp, first: {keep},{fname}
   size_t keep = (size_t)(insp - p_rtp);
+  size_t first_pos = keep;
   memmove(new_rtp, p_rtp, keep);
   size_t new_rtp_len = keep;
   if (*insp == NUL) {
     new_rtp[new_rtp_len++] = ',';  // add comma before
+    first_pos++;
   }
   memmove(new_rtp + new_rtp_len, fname, addlen - 1);
   new_rtp_len += addlen - 1;
   if (*insp != NUL) {
     new_rtp[new_rtp_len++] = ',';  // add comma after
   }
+
+  size_t after_pos = 0;
 
   if (afterlen > 0 && after_insp != NULL) {
     size_t keep_after = (size_t)(after_insp - p_rtp);
@@ -1108,6 +1150,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
     new_rtp_len += afterlen - 1;
     new_rtp[new_rtp_len++] = ',';
     keep = keep_after;
+    after_pos = keep_after;
   }
 
   if (p_rtp[keep] != NUL) {
@@ -1120,11 +1163,51 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   if (afterlen > 0 && after_insp == NULL) {
     // Append afterdir when "after" was not found:
     // {keep},{fname}{rest},{afterdir}
-    xstrlcat(new_rtp, ",", new_rtp_capacity);
+    after_pos = xstrlcat(new_rtp, ",", new_rtp_capacity);
     xstrlcat(new_rtp, afterdir, new_rtp_capacity);
   }
 
+  bool was_valid = runtime_search_path_valid;
   set_option_value_give_err(kOptRuntimepath, CSTR_AS_OPTVAL(new_rtp), 0);
+
+  assert(!runtime_search_path_valid);
+  // If this is the result of "packadd opt_pack", rebuilding runtime_search_pat
+  // from scratch is needlessly slow. splice in the package and its afterdir instead.
+  // But don't do this for "pack/*/start/*" (is_pack=true):
+  // we want properly expand wildcards in a "start" bundle.
+  if (was_valid && !is_pack && !runtime_search_path_ref) {
+    runtime_search_path_valid = true;
+    runtime_search_path_valid_thread = false;
+    kv_pushp(runtime_search_path);
+    ssize_t i = (ssize_t)(kv_size(runtime_search_path)) - 1;
+
+    if (afterlen > 0) {
+      kv_pushp(runtime_search_path);
+      i += 1;
+      for (; i >= 1; i--) {
+        if (i > 1 && kv_A(runtime_search_path, i - 2).pos_in_rtp >= after_pos) {
+          kv_A(runtime_search_path, i) = kv_A(runtime_search_path, i - 2);
+          kv_A(runtime_search_path, i).pos_in_rtp += addlen + afterlen;
+        } else {
+          kv_A(runtime_search_path, i) = (SearchPathItem){ xstrdup(afterdir), true, true, kNone,
+                                                           after_pos + addlen };
+          i--;
+          break;
+        }
+      }
+    }
+
+    for (; i >= 0; i--) {
+      if (i > 0 && kv_A(runtime_search_path, i - 1).pos_in_rtp >= first_pos) {
+        kv_A(runtime_search_path, i) = kv_A(runtime_search_path, i - 1);
+        kv_A(runtime_search_path, i).pos_in_rtp += addlen;
+      } else {
+        kv_A(runtime_search_path, i) = (SearchPathItem){ xstrdup(fname), false, true, kNone,
+                                                         first_pos };
+        break;
+      }
+    }
+  }
   xfree(new_rtp);
   retval = OK;
 
@@ -1276,6 +1359,8 @@ void load_start_packages(void)
              add_start_pack_plugins, &APP_LOAD);
   do_in_path(p_pp, "", "start/*", DIP_ALL + DIP_DIR,  // NOLINT
              add_start_pack_plugins, &APP_LOAD);
+
+  update_runtime_search_path_thread(false);
 }
 
 // ":packloadall"
@@ -1343,6 +1428,8 @@ void ex_packadd(exarg_T *eap)
   do_in_path(p_pp, "", pat, DIP_ALL + DIP_DIR + (res == FAIL ? DIP_ERR : 0),
              add_opt_pack_plugins, cookie);
 
+  update_runtime_search_path_thread(false);
+
   xfree(pat);
 }
 
@@ -1351,41 +1438,46 @@ static void ExpandRTDir_int(char *pat, size_t pat_len, int flags, bool keep_ext,
 {
   // TODO(bfredl): this is bullshit, expandpath should not reinvent path logic.
   for (int i = 0; dirnames[i] != NULL; i++) {
-    const size_t buf_len = strlen(dirnames[i]) + pat_len + 31;
-    char *const buf = xmalloc(buf_len);
-    char *const tail = buf + 15;
-    const size_t tail_buflen = buf_len - 15;
+    const size_t buf_len = strlen(dirnames[i]) + pat_len + 64;
+    char *buf = xmalloc(buf_len);
     int glob_flags = 0;
     bool expand_dirs = false;
-
-    if (*dirnames[i] == NUL) {  // empty dir used for :runtime
-      snprintf(tail, tail_buflen, "%s*.{vim,lua}", pat);
-    } else {
-      snprintf(tail, tail_buflen, "%s/%s*.{vim,lua}", dirnames[i], pat);
-    }
+    // Build base pattern
+    snprintf(buf, buf_len, "%s%s%s%s", *dirnames[i] ? dirnames[i] : "", *dirnames[i] ? "/" : "",
+             pat, "*.{vim,lua}");
 
 expand:
     if ((flags & DIP_NORTP) == 0) {
-      globpath(p_rtp, tail, gap, glob_flags, expand_dirs);
+      globpath(p_rtp, buf, gap, glob_flags, expand_dirs);
     }
 
     if (flags & DIP_START) {
-      memcpy(tail - 15, "pack/*/start/*/", 15);  // NOLINT
-      globpath(p_pp, tail - 15, gap, glob_flags, expand_dirs);
-      memcpy(tail - 8, "start/*/", 8);  // NOLINT
-      globpath(p_pp, tail - 8, gap, glob_flags, expand_dirs);
+      // pack/*/start/*/ patterns
+      snprintf(buf, buf_len, "pack/*/start/*/%s%s%s%s", *dirnames[i] ? dirnames[i] : "",  // NOLINT
+               *dirnames[i] ? "/" : "", pat, expand_dirs ? "*" : "*.{vim,lua}");
+      globpath(p_pp, buf, gap, glob_flags, expand_dirs);
+
+      // start/*/ patterns
+      snprintf(buf, buf_len, "start/*/%s%s%s%s", *dirnames[i] ? dirnames[i] : "",  // NOLINT
+               *dirnames[i] ? "/" : "", pat, expand_dirs ? "*" : "*.{vim,lua}");
+      globpath(p_pp, buf, gap, glob_flags, expand_dirs);
     }
 
     if (flags & DIP_OPT) {
-      memcpy(tail - 13, "pack/*/opt/*/", 13);  // NOLINT
-      globpath(p_pp, tail - 13, gap, glob_flags, expand_dirs);
-      memcpy(tail - 6, "opt/*/", 6);  // NOLINT
-      globpath(p_pp, tail - 6, gap, glob_flags, expand_dirs);
+      // pack/*/opt/*/ patterns
+      snprintf(buf, buf_len, "pack/*/opt/*/%s%s%s%s", *dirnames[i] ? dirnames[i] : "",  // NOLINT
+               *dirnames[i] ? "/" : "", pat, expand_dirs ? "*" : "*.{vim,lua}");
+      globpath(p_pp, buf, gap, glob_flags, expand_dirs);
+
+      // opt/*/ patterns
+      snprintf(buf, buf_len, "opt/*/%s%s%s%s", *dirnames[i] ? dirnames[i] : "",  // NOLINT
+               *dirnames[i] ? "/" : "", pat, expand_dirs ? "*" : "*.{vim,lua}");
+      globpath(p_pp, buf, gap, glob_flags, expand_dirs);
     }
 
+    // Second round for directories
     if (*dirnames[i] == NUL && !expand_dirs) {
-      // expand dir names in another round
-      snprintf(tail, tail_buflen, "%s*", pat);
+      snprintf(buf, buf_len, "%s*", pat);
       glob_flags = WILD_ADD_SLASH;
       expand_dirs = true;
       goto expand;
@@ -1746,8 +1838,7 @@ char *runtimepath_default(bool clean_arg)
   size_t config_len = 0;
   size_t vimruntime_len = 0;
   size_t libdir_len = 0;
-  const char *appname = get_appname(false);
-  size_t appname_len = strlen(appname);
+  size_t appname_len = strlen(get_appname(false));
   if (data_home != NULL) {
     data_len = strlen(data_home);
     size_t nvim_data_size = appname_len;
@@ -1990,14 +2081,19 @@ static char *do_source_buffer_init(source_cookie_T *sp, const exarg_T *eap, bool
     return NULL;
   }
 
-  if (ex_lua) {
-    // Use ":{range}lua buffer=<num>" as the script name
-    snprintf(IObuff, IOSIZE, ":{range}lua buffer=%d", curbuf->b_fnum);
+  char *fname;
+  if (curbuf->b_ffname != NULL) {
+    fname = xstrdup(curbuf->b_ffname);
   } else {
-    // Use ":source buffer=<num>" as the script name
-    snprintf(IObuff, IOSIZE, ":source buffer=%d", curbuf->b_fnum);
+    if (ex_lua) {
+      // Use ":{range}lua buffer=<num>" as the script name
+      snprintf(IObuff, IOSIZE, ":{range}lua buffer=%d", curbuf->b_fnum);
+    } else {
+      // Use ":source buffer=<num>" as the script name
+      snprintf(IObuff, IOSIZE, ":source buffer=%d", curbuf->b_fnum);
+    }
+    fname = xstrdup(IObuff);
   }
-  char *fname = xstrdup(IObuff);
 
   ga_init(&sp->buflines, sizeof(char *), 100);
   // Copy the lines from the buffer into a grow array
@@ -2079,6 +2175,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   scriptitem_T *si = NULL;
   proftime_T wait_start;
   bool trigger_source_post = false;
+  ESTACK_CHECK_DECLARATION;
 
   CLEAR_FIELD(cookie);
   char *fname_exp = NULL;
@@ -2242,6 +2339,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
 
   // Keep the sourcing name/lnum, for recursive calls.
   estack_push(ETYPE_SCRIPT, si != NULL ? si->sn_name : fname_exp, 0);
+  ESTACK_CHECK_SETUP;
 
   if (l_do_profiling == PROF_YES && si != NULL) {
     bool forceit = false;
@@ -2260,8 +2358,26 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
 
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
+  // Check if treesitter detects this range as Lua (for injections like vimdoc codeblocks)
+  bool ts_lua = false;
+  if (fname == NULL && eap != NULL && !ex_lua
+      && !strequal(curbuf->b_p_ft, "lua")
+      && !(curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
+    MAXSIZE_TEMP_ARRAY(args, 3);
+    ADD_C(args, INTEGER_OBJ(curbuf->handle));
+    ADD_C(args, INTEGER_OBJ(eap->line1));
+    ADD_C(args, INTEGER_OBJ(eap->line2));
+    Error err = ERROR_INIT;
+    Object result = NLUA_EXEC_STATIC("return require('vim._core.util').source_is_lua(...)",
+                                     args, kRetNilBool, NULL, &err);
+    if (!ERROR_SET(&err) && LUARET_TRUTHY(result)) {
+      ts_lua = true;
+    }
+    api_clear_error(&err);
+  }
+
   if (fname == NULL
-      && (ex_lua || strequal(curbuf->b_p_ft, "lua")
+      && (ex_lua || ts_lua || strequal(curbuf->b_p_ft, "lua")
           || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua")))) {
     // Source lines from the current buffer as lua
     nlua_exec_ga(&cookie.buflines, fname_exp);
@@ -2303,6 +2419,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   if (got_int) {
     emsg(_(e_interr));
   }
+  ESTACK_CHECK_NOW;
   estack_pop();
   if (p_verbose > 1) {
     verbose_enter();
@@ -2411,12 +2528,15 @@ void ex_scriptnames(exarg_T *eap)
     return;
   }
 
+  msg_ext_set_kind("list_cmd");
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i)->sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i)->sn_name, NameBuff, MAXPATHL, true);
       vim_snprintf(IObuff, IOSIZE, "%3d: %s", i, NameBuff);
       if (!message_filtered(IObuff)) {
-        msg_putchar('\n');
+        if (msg_col > 0) {
+          msg_putchar('\n');
+        }
         msg_outtrans(IObuff, 0, false);
         line_breakcheck();
       }

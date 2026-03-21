@@ -8,10 +8,6 @@ local feed_data = tt.feed_data
 local enter_altscreen = tt.enter_altscreen
 local exit_altscreen = tt.exit_altscreen
 
-if t.skip(t.is_os('win')) then
-  return
-end
-
 describe(':terminal altscreen', function()
   local screen
 
@@ -36,13 +32,13 @@ describe(':terminal altscreen', function()
       line7                                             |
       line8                                             |
       ^                                                  |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
     enter_altscreen()
     screen:expect([[
                                                         |*5
       ^                                                  |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
     eq(10, api.nvim_buf_line_count(0))
   end)
@@ -56,12 +52,14 @@ describe(':terminal altscreen', function()
       line3                                             |
                                                         |*3
     ]])
+    -- ED 3 is no-op in altscreen
+    feed_data('\027[3J')
+    screen:expect_unchanged()
   end)
 
-  describe('on exit', function()
-    before_each(exit_altscreen)
-
-    it('restores buffer state', function()
+  describe('restores buffer state', function()
+    local function test_exit_altscreen_restores_buffer_state()
+      exit_altscreen()
       screen:expect([[
         line4                                             |
         line5                                             |
@@ -69,7 +67,7 @@ describe(':terminal altscreen', function()
         line7                                             |
         line8                                             |
         ^                                                  |
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
       feed('<c-\\><c-n>gg')
       screen:expect([[
@@ -81,6 +79,20 @@ describe(':terminal altscreen', function()
         line5                                             |
                                                           |
       ]])
+    end
+
+    it('after exit', function()
+      test_exit_altscreen_restores_buffer_state()
+    end)
+
+    it('after ED 2 and ED 3 and exit', function()
+      feed_data('\027[H\027[2J\027[3J')
+      screen:expect([[
+        ^                                                  |
+                                                          |*5
+        {5:-- TERMINAL --}                                    |
+      ]])
+      test_exit_altscreen_restores_buffer_state()
     end)
   end)
 
@@ -104,7 +116,7 @@ describe(':terminal altscreen', function()
         line15                                            |
         line16                                            |
         ^                                                  |
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end)
 
@@ -133,7 +145,7 @@ describe(':terminal altscreen', function()
                                                           |*2
         rows: 4, cols: 50                                 |
         ^                                                  |
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end
 
@@ -156,12 +168,18 @@ describe(':terminal altscreen', function()
       end)
 
       it('restore buffer state', function()
-        screen:expect([[
+        screen:expect(t.is_os('win') and [[
+          line6                                             |
+          line7                                             |
+          line8                                             |
+          ^                                                  |
+          {5:-- TERMINAL --}                                    |
+        ]] or [[
           line5                                             |
           line6                                             |
           line7                                             |
           ^line8                                             |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
     end)

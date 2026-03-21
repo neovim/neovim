@@ -476,7 +476,7 @@ func Test_spellsuggest_option_number()
   \ , a)
 
   set spell spellsuggest=0
-  call assert_equal("\nSorry, no suggestions", execute('norm $z='))
+  call assert_equal("\nNo suggestions", execute('norm $z='))
 
   " Unlike z=, function spellsuggest(...) should not be affected by the
   " max number of suggestions (2) set by the 'spellsuggest' option.
@@ -1578,5 +1578,19 @@ let g:test_data_aff_sal = [
       \"SAL ZZ-                  _",
       \"SAL Z                    S",
       \ ]
+
+func Test_suggest_spell_restore()
+  norm! z=
+  call assert_equal(0, &spell)
+  set spelllang=
+  sil! norm! z=
+  call assert_equal(0, &spell)
+  set spelllang=en
+  call setline(1, ['1','2'])
+  norm! vjz=
+  call assert_equal(0, &spell)
+  set spelllang&
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

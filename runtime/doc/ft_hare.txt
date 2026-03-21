@@ -73,5 +73,4 @@ The maximum search depth can be set to any integer, but using values higher
 than 2 is not recommended, and will likely provide no tangible benefit in most
 situations.
 
-==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

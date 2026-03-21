@@ -76,12 +76,21 @@ endif
 DEPS_CMAKE_FLAGS ?=
 USE_BUNDLED ?=
 
+ifdef BUNDLED_CMAKE_FLAG
+  $(error BUNDLED_CMAKE_FLAG was removed. Use DEPS_CMAKE_FLAGS instead)
+endif
+
+ifdef BUNDLED_LUA_CMAKE_FLAG
+  $(error BUNDLED_LUA_CMAKE_FLAG was removed. Use DEPS_CMAKE_FLAGS instead)
+endif
+
+# If USE_BUNDLED is non-empty, prepend the flag to DEPS_CMAKE_FLAGS
 ifneq (,$(USE_BUNDLED))
-  BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED)
+  DEPS_CMAKE_FLAGS := -DUSE_BUNDLED=$(USE_BUNDLED) $(DEPS_CMAKE_FLAGS)
 endif
 
 ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
-  BUNDLED_LUA_CMAKE_FLAG := -DUSE_BUNDLED_LUA=ON
+  DEPS_CMAKE_FLAGS := -DUSE_BUNDLED_LUA=ON $(DEPS_CMAKE_FLAGS)
   $(shell [ -x $(DEPS_BUILD_DIR)/usr/bin/lua ] || $(RM) build/.ran-*)
 endif
 
@@ -103,17 +112,18 @@ build/.ran-cmake: | deps
 	$(CMAKE) -B build -G $(CMAKE_GENERATOR) $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
 	$(TOUCH) $@
 
+ifneq ($(call filter-true,$(USE_BUNDLED)),)
+deps: ;
+else
 deps: | build/.ran-deps-cmake
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	$(CMAKE) --build $(DEPS_BUILD_DIR)
-endif
 
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
 $(DEPS_BUILD_DIR):
 	$(MKDIR) $@
 build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
-	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) $(DEPS_CMAKE_FLAGS)
+	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(DEPS_CMAKE_FLAGS)
 endif
+
 build/.ran-deps-cmake::
 	$(MKDIR) build
 	$(TOUCH) "$@"
@@ -127,6 +137,7 @@ else
 	@# Handle TEST_FILE=test_foo{,.res,.vim}.
 	$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
 endif
+
 # Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
 test/old/testdir/%.vim: phony_force nvim
@@ -135,8 +146,8 @@ test/old/testdir/%.vim: phony_force nvim
 functionaltest-lua: | nvim
 	$(CMAKE) --build build --target functionaltest
 
-FORMAT=formatc formatlua format
-LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lint luals
+FORMAT=formatc formatlua formatquery format
+LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lintdocurls lint luals lintquery
 TEST=functionaltest unittest
 generated-sources benchmark $(FORMAT) $(LINT) $(TEST) doc: | build/.ran-cmake
 	$(CMAKE) --build build --target $@
@@ -162,11 +173,12 @@ ifneq ($(wildcard build),)
 	$(CMAKE) --build build --target clean
 endif
 	$(MAKE) -C test/old/testdir clean
-	$(MAKE) -C runtime/indent clean
 
 distclean:
 	$(call rmdir, $(DEPS_BUILD_DIR))
 	$(call rmdir, build)
+	$(call rmdir, .zig-cache)
+	$(call rmdir, zig-out)
 	$(MAKE) clean
 
 install: checkprefix nvim
@@ -182,3 +194,9 @@ appimage-%:
 	bash scripts/genappimage.sh $*
 
 .PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
+
+.PHONY: emmylua-check
+emmylua-check:
+	-emmylua_check runtime/lua \
+		--config .luarc.json \
+		--config .emmyrc.json

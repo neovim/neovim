@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>  // IWYU pragma: keep
 
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
@@ -16,6 +17,7 @@
 /// Note: before the screen is initialized and when out of memory these can be
 /// NULL.
 EXTERN ScreenGrid default_grid INIT( = SCREEN_GRID_INIT);
+EXTERN GridView default_gridview INIT( = { .target = &default_grid });
 
 #define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
 
@@ -44,6 +46,4 @@ enum {
 # define schar_from_ascii(x) ((schar_T)(x))
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "grid.h.generated.h"
-#endif
+#include "grid.h.generated.h"

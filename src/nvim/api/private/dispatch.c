@@ -4,9 +4,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/dispatch_wrappers.generated.h"
-#endif
+#include "api/private/dispatch_wrappers.generated.h"
 
 /// @param name API method name
 /// @param name_len name size (includes terminating NUL)

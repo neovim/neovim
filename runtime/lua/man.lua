@@ -8,6 +8,10 @@ local M = {}
 --- @param env? table<string,string|number>
 --- @return string
 local function system(cmd, silent, env)
+  if fn.executable(cmd[1]) == 0 then
+    error(string.format('executable not found: "%s"', cmd[1]), 0)
+  end
+
   local r = vim.system(cmd, { env = env, timeout = 10000 }):wait()
 
   if not silent then
@@ -215,6 +219,25 @@ end
 local function get_path(name, sect)
   name = name or ''
   sect = sect or ''
+  -- We can avoid relying on -S or -s here since they are very
+  -- inconsistently supported. Instead, call -w with a section and a name.
+  local cmd = sect == '' and { 'man', '-w', name } or { 'man', '-w', sect, name }
+
+  local lines = system(cmd, true)
+  local results = vim.split(lines, '\n', { trimempty = true })
+
+  return M._match_manpage_path(results, name, sect)
+end
+
+--- Given an array of paths returned by man -w,
+--- find the correct path for the given name and section.
+--- @param paths? string[]
+--- @param name? string
+--- @param sect? string
+function M._match_manpage_path(paths, name, sect)
+  paths = paths or {}
+  name = name or ''
+  sect = sect or ''
   -- Some man implementations (OpenBSD) return all available paths from the
   -- search command. Previously, this function would simply select the first one.
   --
@@ -230,20 +253,7 @@ local function get_path(name, sect)
   -- clock_getres.2, which is the right page. Searching the results for
   -- clock_gettime will no longer work. In this case, we should just use the
   -- first one that was found in the correct section.
-  --
-  -- Finally, we can avoid relying on -S or -s here since they are very
-  -- inconsistently supported. Instead, call -w with a section and a name.
-  local cmd --- @type string[]
-  if sect == '' then
-    cmd = { 'man', '-w', name }
-  else
-    cmd = { 'man', '-w', sect, name }
-  end
-
-  local lines = system(cmd, true)
-  local results = vim.split(lines, '\n', { trimempty = true })
-
-  if #results == 0 then
+  if #paths == 0 then
     return
   end
 
@@ -251,26 +261,39 @@ local function get_path(name, sect)
   -- stops us from actually determining if a path has a corresponding man file.
   -- Since `:Man /some/path/to/man/file` isn't supported anyway, we should just
   -- error out here if we detect this is the case.
-  if sect == '' and #results == 1 and results[1] == name then
+  if sect == '' and #paths == 1 and paths[1] == name then
     return
   end
 
   -- find any that match the specified name
   --- @param v string
   local namematches = vim.tbl_filter(function(v)
-    local tail = fn.fnamemodify(v, ':t')
+    local tail = vim.fs.basename(v)
     return tail:find(name, 1, true) ~= nil
-  end, results) or {}
+  end, paths) or {}
   local sectmatches = {}
 
   if #namematches > 0 and sect ~= '' then
     --- @param v string
     sectmatches = vim.tbl_filter(function(v)
-      return fn.fnamemodify(v, ':e') == sect
+      -- On some systems, there are multiple extensions, e.g. strlen.3.gz
+      -- We must test all of the extensions to make sure we get the correct match.
+      -- Limit to 3 tests to avoid the risk of getting stuck.
+      local root = v
+      for _ = 1, 3 do
+        local extension = fn.fnamemodify(root, ':e')
+        if extension == sect then
+          return true
+        elseif extension == '' then
+          return false
+        end
+        root = fn.fnamemodify(root, ':r')
+      end
+      return false
     end, namematches)
   end
 
-  return (sectmatches[1] or namematches[1] or results[1]):gsub('\n+$', '')
+  return (sectmatches[1] or namematches[1] or paths[1]):gsub('\n+$', '')
 end
 
 --- Attempt to extract the name and sect out of 'name(sect)'
@@ -360,7 +383,7 @@ end
 --- @return string name
 --- @return string sect
 local function parse_path(path)
-  local tail = fn.fnamemodify(path, ':t')
+  local tail = vim.fs.basename(path)
   if
     path:match('%.[glx]z$')
     or path:match('%.bz2$')
@@ -411,11 +434,12 @@ local function get_page(path, silent)
   -- Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   -- Soft-wrap: ftplugin/man.lua sets wrap/breakindent/….
   -- Hard-wrap: driven by `man`.
-  local manwidth --- @type integer|string
+  local manwidth --- @type integer
   if (vim.g.man_hardwrap or 1) ~= 1 then
     manwidth = 999
   elseif vim.env.MANWIDTH then
-    manwidth = vim.env.MANWIDTH --- @type string|integer
+    vim.env.MANWIDTH = vim._tointeger(vim.env.MANWIDTH) or 0
+    manwidth = math.min(vim.env.MANWIDTH, api.nvim_win_get_width(0) - vim.o.wrapmargin)
   else
     manwidth = api.nvim_win_get_width(0) - vim.o.wrapmargin
   end
@@ -423,7 +447,8 @@ local function get_page(path, silent)
   if localfile_arg == nil then
     local mpath = get_path('man')
     -- Check for -l support.
-    localfile_arg = (mpath and system({ 'man', '-l', mpath }, true) or '') ~= ''
+    localfile_arg = (mpath and system({ 'man', '-l', mpath }, true, { MANPAGER = 'cat' }) or '')
+      ~= ''
   end
 
   local cmd = localfile_arg and { 'man', '-l', path } or { 'man', path }
@@ -577,7 +602,10 @@ function M.man_complete(arg_lead, cmd_line)
     return {}
   end
 
-  local pages = get_paths(name, sect)
+  local ok, pages = pcall(get_paths, name, sect)
+  if not ok then
+    return nil
+  end
 
   -- We check for duplicates in case the same manpage in different languages
   -- was found.
@@ -639,8 +667,21 @@ function M.init_pager()
   local _, sect, err = pcall(parse_ref, ref)
   vim.b.man_sect = err ~= nil and sect or ''
 
-  if not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
-    vim.cmd.file({ 'man://' .. fn.fnameescape(ref):lower(), mods = { silent = true } })
+  local man_bufname = 'man://' .. fn.fnameescape(ref):lower()
+
+  -- Raw manpage into (:Man!) overlooks `match('man://')` condition,
+  -- so if the buffer already exists, create new with a non existing name.
+  if fn.bufexists(man_bufname) == 1 then
+    local new_bufname = man_bufname
+    for i = 1, 100 do
+      if fn.bufexists(new_bufname) == 0 then
+        break
+      end
+      new_bufname = ('%s?new=%s'):format(man_bufname, i)
+    end
+    vim.cmd.file({ new_bufname, mods = { silent = true } })
+  elseif not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
+    vim.cmd.file({ man_bufname, mods = { silent = true } })
   end
 
   set_options()
@@ -787,7 +828,7 @@ function M.show_toc()
 
   local lnum = 2
   local last_line = fn.line('$') - 1
-  while lnum and lnum < last_line do
+  while lnum > 0 and lnum < last_line do
     local text = fn.getline(lnum)
     if text:match('^%s+[-+]%S') or text:match('^   %S') or text:match('^%S') then
       toc[#toc + 1] = {
@@ -800,9 +841,11 @@ function M.show_toc()
   end
 
   fn.setloclist(0, toc, ' ')
-  fn.setloclist(0, {}, 'a', { title = 'Man TOC' })
+  fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
   vim.cmd.lopen()
   vim.w.qf_toc = bufname
+  -- reload syntax file after setting qf_toc variable
+  vim.bo.filetype = 'qf'
 end
 
 return M

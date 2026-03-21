@@ -13,7 +13,7 @@ local poke_eventloop = n.poke_eventloop
 
 describe('vim.ui', function()
   before_each(function()
-    clear()
+    clear({ args_rm = { '-u' }, args = { '--clean' } })
   end)
 
   describe('select()', function()
@@ -109,7 +109,7 @@ describe('vim.ui', function()
       eq(true, exec_lua('return (nil == result)'))
     end)
 
-    it('can return opts.cacelreturn when aborted with ESC with cancelreturn opt #18144', function()
+    it('can return opts.cancelreturn when aborted with ESC with cancelreturn opt #18144', function()
       feed(':lua result = "on_confirm not called"<cr>')
       feed(':lua vim.ui.input({ cancelreturn = "CANCEL" }, function(input) result = input end)<cr>')
       feed('Inputted Text<esc>')
@@ -143,8 +143,13 @@ describe('vim.ui', function()
         exec_lua [[vim.system = function() return { wait=function() return { code=3 } end } end]]
       end
       if not is_os('bsd') then
-        local rv =
-          exec_lua [[local cmd = vim.ui.open('non-existent-file'); return cmd:wait(100).code]]
+        local rv = exec_lua([[
+          local cmd, err = vim.ui.open('non-existent-file')
+          if err and err:find('no handler found') then
+            return -1
+          end
+          return cmd:wait(100).code
+        ]])
         ok(type(rv) == 'number' and rv ~= 0, 'nonzero exit code', rv)
       end
 
@@ -179,6 +184,38 @@ describe('vim.ui', function()
           return cmd:wait()
         end, { n.testprg('printargs-test'), 'arg1' })
       )
+    end)
+
+    it('gx on a help tag opens URL', function()
+      n.command('helptags $VIMRUNTIME/doc')
+      n.command('help nvim.txt')
+
+      local link_ns = n.api.nvim_create_namespace('nvim.help.urls')
+      local tag = n.api.nvim_buf_get_extmarks(0, link_ns, 0, -1, {
+        limit = 1,
+        details = true,
+      })[1]
+
+      local url = tag[4].url
+      assert(url)
+
+      --- points to the neovim.io site
+      eq(true, vim.startswith(url, 'https://neovim.io/doc'))
+
+      -- tag is URI encoded
+      local param = url:match('%?tag=(.*)')
+      local tagname =
+        n.api.nvim_buf_get_text(0, tag[2], tag[3], tag[4].end_row, tag[4].end_col, {})[1]
+      eq(vim.uri_encode(tagname), param)
+
+      -- non-nvim tags are ignored
+      local buf = n.api.nvim_create_buf(false, false)
+      n.api.nvim_buf_set_lines(buf, 0, 0, false, {
+        '|nonexisting|',
+      })
+      n.api.nvim_set_option_value('filetype', 'help', { buf = buf, scope = 'local' })
+      local tags = n.api.nvim_buf_get_extmarks(buf, link_ns, 0, -1, {})
+      eq(#tags, 0)
     end)
   end)
 end)

@@ -6,6 +6,7 @@
 "			by Daniel Hahler, 2019 Jul 12
 "			added line suggested by Anton Lindqvist 2016 Mar 31
 "			2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
+"			2025 Dec 17 by The Vim Project (correctly parse: 'make: *** [Makefile:2: all] Error 1')
 
 if exists("current_compiler")
   finish
@@ -16,6 +17,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 CompilerSet errorformat=
+      \make:\ ***\ [%f:%l:\ %m,
       \%*[^\"]\"%f\"%*\\D%l:%c:\ %m,
       \%*[^\"]\"%f\"%*\\D%l:\ %m,
       \\"%f\"%*\\D%l:%c:\ %m,

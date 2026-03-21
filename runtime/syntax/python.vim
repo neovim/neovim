@@ -1,9 +1,15 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2023 Feb 28
+" Last Change:	2025 Sep 08
+" 2025 Sep 25 by Vim Project: fix wrong type highlighting #18394
+" 2025 Dec 03 by Vim Project: highlight t-strings #18679
+" 2026 Jan 26 by Vim Project: highlight constants #18922
+" 2026 Mar 11 by Vim Project: fix number performance #19630
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
+"		Rob B
+"		Jon Parise
 "
 "		This version is a major rewrite by Zvezdan Petkovic.
 "
@@ -30,6 +36,7 @@
 "   let python_no_exception_highlight = 1
 "   let python_no_number_highlight = 1
 "   let python_space_error_highlight = 1
+"   let python_constant_highlight = 1
 "
 " All the options above can be switched on together.
 "
@@ -81,6 +88,7 @@ if exists("python_highlight_all")
     unlet python_no_number_highlight
   endif
   let python_space_error_highlight = 1
+  let python_constant_highlight = 1
 endif
 
 " Keep Python keywords in alphabetical order inside groups for easy
@@ -93,10 +101,12 @@ endif
 "
 " python3 -c 'import keyword, pprint; pprint.pprint(keyword.kwlist + keyword.softkwlist, compact=True)'
 "
-syn keyword pythonStatement	False None True
+syn keyword pythonBoolean	False True
+syn keyword pythonConstant	None
 syn keyword pythonStatement	as assert break continue del global
 syn keyword pythonStatement	lambda nonlocal pass return with yield
-syn keyword pythonStatement	class def nextgroup=pythonFunction skipwhite
+syn keyword pythonStatement	class nextgroup=pythonClass skipwhite
+syn keyword pythonStatement	def nextgroup=pythonFunction skipwhite
 syn keyword pythonConditional	elif else if
 syn keyword pythonRepeat	for while
 syn keyword pythonOperator	and in is not or
@@ -110,6 +120,11 @@ syn keyword pythonAsync		async await
 " for more on this.
 syn match   pythonConditional   "^\s*\zscase\%(\s\+.*:.*$\)\@="
 syn match   pythonConditional   "^\s*\zsmatch\%(\s\+.*:\s*\%(#.*\)\=$\)\@="
+syn match   pythonStatement     "\<type\ze\s\+\h\w*" nextgroup=pythonType skipwhite
+
+" These names are special by convention. While they aren't real keywords,
+" giving them distinct highlighting provides a nice visual cue.
+syn keyword pythonClassVar	self cls
 
 " Decorators
 " A dot must be allowed because of @MyClass.myfunc decorators.
@@ -122,21 +137,23 @@ syn match   pythonDecoratorName	"@\s*\h\%(\w\|\.\)*" display contains=pythonDeco
 " Single line multiplication.
 syn match   pythonMatrixMultiply
       \ "\%(\w\|[])]\)\s*@"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonType,pythonDoctestValue
       \ transparent
 " Multiplication continued on the next line after backslash.
 syn match   pythonMatrixMultiply
       \ "[^\\]\\\s*\n\%(\s*\.\.\.\s\)\=\s\+@"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonType,pythonDoctestValue
       \ transparent
 " Multiplication in a parenthesized expression over multiple lines with @ at
 " the start of each continued line; very similar to decorators and complex.
 syn match   pythonMatrixMultiply
       \ "^\s*\%(\%(>>>\|\.\.\.\)\s\+\)\=\zs\%(\h\|\%(\h\|[[(]\).\{-}\%(\w\|[])]\)\)\s*\n\%(\s*\.\.\.\s\)\=\s\+@\%(.\{-}\n\%(\s*\.\.\.\s\)\=\s\+@\)*"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonType,pythonDoctestValue
       \ transparent
 
+syn match   pythonClass		"\h\w*" display contained
 syn match   pythonFunction	"\h\w*" display contained
+syn match   pythonType		"\h\w*" display contained
 
 syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
 syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
@@ -144,23 +161,98 @@ syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
 " Triple-quoted strings can contain doctests.
 syn region  pythonString matchgroup=pythonQuotes
       \ start=+[uU]\=\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
-      \ contains=pythonEscape,@Spell
+      \ contains=pythonEscape,pythonUnicodeEscape,@Spell
 syn region  pythonString matchgroup=pythonTripleQuotes
       \ start=+[uU]\=\z('''\|"""\)+ skip=+\\["']+ end="\z1" keepend
-      \ contains=pythonEscape,pythonSpaceError,pythonDoctest,@Spell
+      \ contains=pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
 syn region  pythonRawString matchgroup=pythonQuotes
-      \ start=+[uU]\=[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
+      \ start=+[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=@Spell
 syn region  pythonRawString matchgroup=pythonTripleQuotes
-      \ start=+[uU]\=[rR]\z('''\|"""\)+ end="\z1" keepend
+      \ start=+[rR]\z('''\|"""\)+ end="\z1" keepend
       \ contains=pythonSpaceError,pythonDoctest,@Spell
+
+" Formatted string literals (f-strings)
+" https://docs.python.org/3/reference/lexical_analysis.html#f-strings
+" Template string literals (t-strings)
+" https://docs.python.org/3/reference/lexical_analysis.html#template-string-literals
+syn region  pythonFString
+      \ matchgroup=pythonQuotes
+      \ start=+\c[FT]\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=pythonFStringField,pythonFStringSkip,pythonEscape,pythonUnicodeEscape,@Spell
+syn region  pythonFString
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\c[FT]\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonFStringField,pythonFStringSkip,pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
+syn region  pythonRawFString
+      \ matchgroup=pythonQuotes
+      \ start=+\c\%([FT]R\|R[FT]\)\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=pythonFStringField,pythonFStringSkip,@Spell
+syn region  pythonRawFString
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\c\%([FT]R\|R[FT]\)\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonFStringField,pythonFStringSkip,pythonSpaceError,pythonDoctest,@Spell
+
+" Bytes
+syn region  pythonBytes
+      \ matchgroup=pythonQuotes
+      \ start=+\cB\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=pythonEscape
+syn region  pythonBytes
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\cB\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonEscape
+syn region  pythonRawBytes
+      \ matchgroup=pythonQuotes
+      \ start=+\c\%(BR\|RB\)\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+syn region  pythonRawBytes
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\c\%(BR\|RB\)\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+
+" F-string replacement fields
+"
+" - Matched parentheses, brackets and braces are skipped
+" - A bare = (followed by optional whitespace) enables debugging
+" - A bare ! prefixes a conversion field (followed by optional whitespace)
+" - A bare : begins a format specification
+"     - Matched braces inside a format specification are skipped
+"
+syn region  pythonFStringField
+    \ matchgroup=pythonFStringDelimiter
+    \ start=/{/
+    \ end=/\%(=\s*\)\=\%(!\a\s*\)\=\%(:\%({\_[^}]*}\|[^{}]*\)\+\)\=}/
+    \ contained
+    \ contains=ALLBUT,pythonFStringField,pythonClass,pythonFunction,pythonType,pythonDoctest,pythonDoctestValue,@Spell
+syn match   pythonFStringFieldSkip  /(\_[^()]*)\|\[\_[^][]*]\|{\_[^{}]*}/
+    \ contained
+    \ contains=ALLBUT,pythonFStringField,pythonClass,pythonFunction,pythonType,pythonDoctest,pythonDoctestValue,@Spell
+
+" Doubled braces are not replacement fields
+syn match   pythonFStringSkip	/{{/ transparent contained contains=NONE
 
 syn match   pythonEscape	+\\[abfnrtv'"\\]+ contained
 syn match   pythonEscape	"\\\o\{1,3}" contained
 syn match   pythonEscape	"\\x\x\{2}" contained
-syn match   pythonEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
+syn match   pythonUnicodeEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
 " Python allows case-insensitive Unicode IDs: http://www.unicode.org/charts/
-syn match   pythonEscape	"\\N{\a\+\%(\s\a\+\)*}" contained
+" The specification: https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-4/#G135165
+syn match   pythonUnicodeEscape	"\\N{\a\+\%(\%(\s\a\+[[:alnum:]]*\)\|\%(-[[:alnum:]]\+\)\)*}" contained
 syn match   pythonEscape	"\\$"
 
 " It is very important to understand all details before changing the
@@ -179,16 +271,21 @@ syn match   pythonEscape	"\\$"
 " https://docs.python.org/reference/lexical_analysis.html#numeric-literals
 if !exists("python_no_number_highlight")
   " numbers (including complex)
-  syn match   pythonNumber	"\<0[oO]\%(_\=\o\)\+\>"
-  syn match   pythonNumber	"\<0[xX]\%(_\=\x\)\+\>"
-  syn match   pythonNumber	"\<0[bB]\%(_\=[01]\)\+\>"
-  syn match   pythonNumber	"\<\%([1-9]\%(_\=\d\)*\|0\+\%(_\=0\)*\)\>"
-  syn match   pythonNumber	"\<\d\%(_\=\d\)*[jJ]\>"
-  syn match   pythonNumber	"\<\d\%(_\=\d\)*[eE][+-]\=\d\%(_\=\d\)*[jJ]\=\>"
+  syn match   pythonNumber	"\<0[oO]_\=\o\+\%(_\o\+\)*\>"
+  syn match   pythonNumber	"\<0[xX]_\=\x\+\%(_\x\+\)*\>"
+  syn match   pythonNumber	"\<0[bB]_\=[01]\+\%(_[01]\+\)*\>"
+  syn match   pythonNumber	"\<\%([1-9]\d*\%(_\d\+\)*\|0\+\%(_0\+\)*\)\>"
+  syn match   pythonNumber	"\<\d\+\%(_\d\+\)*[jJ]\>"
+  syn match   pythonNumber	"\<\d\+\%(_\d\+\)*[eE][+-]\=\d\+\%(_\d\+\)*[jJ]\=\>"
+  " \d\.
   syn match   pythonNumber
-        \ "\<\d\%(_\=\d\)*\.\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\%(\W\|$\)\@="
+        \ "\<\d\+\%(_\d\+\)*\.\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\%(\W\|$\)\@="
+  " \d\.\d
   syn match   pythonNumber
-        \ "\%(^\|\W\)\zs\%(\d\%(_\=\d\)*\)\=\.\d\%(_\=\d\)*\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\>"
+        \ "\<\d\+\%(_\d\+\)*\.\d\+\%(_\d\+\)*\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\>"
+  " \.\d
+  syn match   pythonNumber
+        \ "\%(^\|\W\)\@1<=\.\d\+\%(_\d\+\)*\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\>"
 endif
 
 " Group the built-ins in the order in the 'Python Library Reference' for
@@ -209,8 +306,8 @@ endif
 if !exists("python_no_builtin_highlight")
   " built-in constants
   " 'False', 'True', and 'None' are also reserved words in Python 3
-  syn keyword pythonBuiltin	False True None
-  syn keyword pythonBuiltin	NotImplemented Ellipsis __debug__
+  syn keyword pythonBoolean	False True
+  syn keyword pythonConstant	None NotImplemented Ellipsis __debug__
   " constants added by the `site` module
   syn keyword pythonBuiltin	quit exit copyright credits license
   " built-in functions
@@ -223,11 +320,15 @@ if !exists("python_no_builtin_highlight")
   syn keyword pythonBuiltin	memoryview min next object oct open ord pow
   syn keyword pythonBuiltin	print property range repr reversed round set
   syn keyword pythonBuiltin	setattr slice sorted staticmethod str sum super
-  syn keyword pythonBuiltin	tuple type vars zip __import__
+  syn keyword pythonBuiltin	tuple vars zip __import__
+  " only match `type` as a builtin when it's not followed by an identifier
+  syn match   pythonBuiltin	"\<type\>\ze\(\s\+\h\w*\)\@!"
   " avoid highlighting attributes as builtins
   syn match   pythonAttribute	/\.\h\w*/hs=s+1
-	\ contains=ALLBUT,pythonBuiltin,pythonFunction,pythonAsync
+	\ contains=ALLBUT,pythonBuiltin,pythonClass,pythonFunction,pythonType,pythonAsync
 	\ transparent
+  " the ellipsis literal `...` can be used in multiple syntactic contexts
+  syn match   pythonEllipsis	"\.\@1<!\.\.\.\ze\.\@!" display
 endif
 
 " From the 'Python Library Reference' class hierarchy at the bottom.
@@ -283,10 +384,12 @@ if !exists("python_no_doctest_highlight")
   if !exists("python_no_doctest_code_highlight")
     syn region pythonDoctest
 	  \ start="^\s*>>>\s" end="^\s*$"
-	  \ contained contains=ALLBUT,pythonDoctest,pythonFunction,@Spell
+	  \ contained contains=ALLBUT,pythonDoctest,pythonEllipsis,pythonClass,pythonFunction,pythonType,@Spell
     syn region pythonDoctestValue
 	  \ start=+^\s*\%(>>>\s\|\.\.\.\s\|"""\|'''\)\@!\S\++ end="$"
-	  \ contained
+	  \ contained contains=pythonEllipsis
+    syn match pythonEllipsis "\%(^\s*\)\@<!\.\@1<!\zs\.\.\.\ze\.\@!" display
+	  \ contained containedin=pythonDoctest
   else
     syn region pythonDoctest
 	  \ start="^\s*>>>" end="^\s*$"
@@ -294,10 +397,12 @@ if !exists("python_no_doctest_highlight")
   endif
 endif
 
-" Sync at the beginning of class, function, or method definition.
-syn sync match pythonSync grouphere NONE "^\%(def\|class\)\s\+\h\w*\s*[(:]"
+" Sync at the beginning of (async) function or class definitions.
+syn sync match pythonSync grouphere NONE "^\%(def\|class\|async\s\+def\)\s\+\h\w*\s*[(:]"
 
 " The default highlight links.  Can be overridden later.
+hi def link pythonBoolean		Statement
+hi def link pythonConstant		Statement
 hi def link pythonStatement		Statement
 hi def link pythonConditional		Conditional
 hi def link pythonRepeat		Repeat
@@ -305,21 +410,33 @@ hi def link pythonOperator		Operator
 hi def link pythonException		Exception
 hi def link pythonInclude		Include
 hi def link pythonAsync			Statement
+hi def link pythonClassVar		Identifier
 hi def link pythonDecorator		Define
 hi def link pythonDecoratorName		Function
+hi def link pythonClass			Structure
 hi def link pythonFunction		Function
+hi def link pythonType			Type
 hi def link pythonComment		Comment
 hi def link pythonTodo			Todo
 hi def link pythonString		String
 hi def link pythonRawString		String
+hi def link pythonFString		String
+hi def link pythonRawFString		String
+hi def link pythonBytes 		String
+hi def link pythonRawBytes 		String
 hi def link pythonQuotes		String
 hi def link pythonTripleQuotes		pythonQuotes
 hi def link pythonEscape		Special
+hi def link pythonUnicodeEscape		pythonEscape
+hi def link pythonFStringDelimiter	Special
 if !exists("python_no_number_highlight")
   hi def link pythonNumber		Number
 endif
 if !exists("python_no_builtin_highlight")
+  hi! def link pythonBoolean		Function
+  hi! def link pythonConstant		Function
   hi def link pythonBuiltin		Function
+  hi def link pythonEllipsis		pythonBuiltin
 endif
 if !exists("python_no_exception_highlight")
   hi def link pythonExceptions		Structure
@@ -330,6 +447,10 @@ endif
 if !exists("python_no_doctest_highlight")
   hi def link pythonDoctest		Special
   hi def link pythonDoctestValue	Define
+endif
+if exists("python_constant_highlight")
+  hi! def link pythonBoolean		Boolean
+  hi! def link pythonConstant		Constant
 endif
 
 let b:current_syntax = "python"

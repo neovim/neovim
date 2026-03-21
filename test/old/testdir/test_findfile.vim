@@ -840,5 +840,36 @@ func Test_findfunc_callback()
   %bw!
 endfunc
 
+" Test using environment variables with spaces
+func Test_path_env_variable_with_whitespaces()
+    let save_path = &path
+    defer execute('let &path = save_path')
+
+    let $testdir = 'Xpath with some whites'
+    call mkdir($testdir, 'R')
+
+    " Check direct usage yields the same result that autocomplete
+    call feedkeys(':set path=$testdir' .. "\<C-A>\<CR>", 'xt')
+    let auto_testpath = &path
+    " include autocomplete suffix
+    exe "set path=$testdir" .. "/"
+    call assert_equal(auto_testpath, &path)
+
+    " Check a file can be found using environment variables
+    let expanded_test_path = expand('$testdir/test.txt')
+    call writefile(['testing...'], expanded_test_path)
+
+    " hinting an environment variable path
+    call assert_equal(expanded_test_path, findfile('test.txt', $test_dir))
+
+    " using 'path' option with an environment variable
+    set path=$testdir
+    call assert_equal(expanded_test_path, findfile('test.txt'))
+
+    " using :find instead of findfile()
+    find test.txt
+    call assert_equal(expanded_test_path, expand('%:.'))
+    enew
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

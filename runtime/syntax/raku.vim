@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:      Raku
-" Maintainer:    vim-perl <vim-perl@googlegroups.com>
+" Maintainer:    vim-perl <vim-perl@googlegroups.com> (need to be subscribed to post)
 " Homepage:      https://github.com/Raku/vim-raku
 " Bugs/requests: https://github.com/Raku/vim-raku/issues
 " Last Change:   2021-04-16

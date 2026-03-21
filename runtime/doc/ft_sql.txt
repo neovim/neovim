@@ -8,27 +8,7 @@ The Structured Query Language (SQL) is a standard which specifies statements
 that allow a user to interact with a relational database.  Vim includes
 features for navigation, indentation and syntax highlighting.
 
-1. Navigation					|sql-navigation|
-    1.1 Matchit					|sql-matchit|
-    1.2 Text Object Motions			|sql-object-motions|
-    1.3 Predefined Object Motions		|sql-predefined-objects|
-    1.4 Macros					|sql-macros|
-2. SQL Dialects					|sql-dialects|
-    2.1 SQLSetType				|SQLSetType|
-    2.2 SQLGetType				|SQLGetType|
-    2.3 SQL Dialect Default			|sql-type-default|
-3. Adding new SQL Dialects			|sql-adding-dialects|
-4. OMNI SQL Completion				|sql-completion|
-    4.1 Static mode				|sql-completion-static|
-    4.2 Dynamic mode				|sql-completion-dynamic|
-    4.3 Tutorial				|sql-completion-tutorial|
-	4.3.1 Complete Tables			|sql-completion-tables|
-	4.3.2 Complete Columns			|sql-completion-columns|
-	4.3.3 Complete Procedures		|sql-completion-procedures|
-	4.3.4 Complete Views			|sql-completion-views|
-    4.4 Completion Customization		|sql-completion-customization|
-    4.5 SQL Maps				|sql-completion-maps|
-    4.6 Using with other filetypes		|sql-completion-filetypes|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Navigation					*sql-navigation*
@@ -172,7 +152,7 @@ with comments: >
 ------------------------------------------------------------------------------
 1.4 Macros					   *sql-macros*
 
-Vim's feature to find macro definitions, |'define'|, is supported using this
+Vim's feature to find macro definitions, 'define', is supported using this
 regular expression: >
     \c\<\(VARIABLE\|DECLARE\|IN\|OUT\|INOUT\)\>
 
@@ -249,7 +229,7 @@ key to complete the optional parameter.
 After typing the function name and a space, you can use the completion to
 supply a parameter.  The function takes the name of the Vim script you want to
 source.  Using the |cmdline-completion| feature, the SQLSetType function will
-search the |'runtimepath'| for all Vim scripts with a name containing "sql".
+search the 'runtimepath' for all Vim scripts with a name containing "sql".
 This takes the guess work out of the spelling of the names.  The following are
 examples: >
     :SQLSetType
@@ -412,7 +392,7 @@ Here are some examples of the entries which are pulled from the syntax files: >
 
 Dynamic mode populates the popups with data directly from a database.  In
 order for the dynamic feature to be enabled you must have the dbext.vim
-plugin installed, (https://vim.sourceforge.net/script.php?script_id=356).
+plugin installed, (https://www.vim.org/scripts/script.php?script_id=356).
 
 Dynamic mode is used by several features of the SQL completion plugin.
 After installing the dbext plugin see the dbext-tutorial for additional
@@ -496,7 +476,7 @@ depending on the syntax file you are using.  The SQL Anywhere syntax file
 Dynamic features ~
 
 To take advantage of the dynamic features you must first install the
-dbext.vim plugin (https://vim.sourceforge.net/script.php?script_id=356).  It
+dbext.vim plugin (https://www.vim.org/scripts/script.php?script_id=356).  It
 also comes with a tutorial.  From the SQL completion plugin's perspective,
 the main feature dbext provides is a connection to a database.  dbext
 connection profiles are the most efficient mechanism to define connection
@@ -760,7 +740,7 @@ Step 1 ~
 Begins by editing a Perl file.  Vim automatically sets the filetype to
 "perl".  By default, Vim runs the appropriate filetype file
 ftplugin/perl.vim.  If you are using the syntax completion plugin by following
-the directions at |ft-syntax-omni| then the |'omnifunc'| option has been set to
+the directions at |ft-syntax-omni| then the 'omnifunc' option has been set to
 "syntax#Complete".  Pressing <C-X><C-O> will display the omni popup containing
 the syntax items for Perl.
 
@@ -772,7 +752,7 @@ maps for SQL completion, see |sql-completion-maps|.  Now these maps have
 been created and the SQL completion plugin has been initialized.  All SQL
 syntax items have been cached in preparation.  The SQL filetype script detects
 we are attempting to use two different completion plugins.  Since the SQL maps
-begin with <C-C>, the maps will toggle the |'omnifunc'| when in use.  So you
+begin with <C-C>, the maps will toggle the 'omnifunc' when in use.  So you
 can use <C-X><C-O> to continue using the completion for Perl (using the syntax
 completion plugin) and <C-C> to use the SQL completion features.
 

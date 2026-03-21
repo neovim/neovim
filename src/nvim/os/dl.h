@@ -1,5 +1,5 @@
 #pragma once
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/dl.h.generated.h"
-#endif
+#include <stdbool.h>
+
+#include "os/dl.h.generated.h"

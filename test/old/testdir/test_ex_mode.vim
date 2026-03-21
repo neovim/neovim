@@ -113,7 +113,7 @@ func Test_Ex_emptybuf()
   call setline(1, "abc")
   call assert_fails('call feedkeys("Q\<CR>", "xt")', 'E501:')
   call assert_fails('call feedkeys("Q%d\<CR>", "xt")', 'E749:')
-  close!
+  bw!
 endfunc
 
 " Test for the :open command
@@ -126,7 +126,7 @@ func Test_open_command()
   call feedkeys("Qopen /bar/\<CR>", 'xt')
   call assert_equal(5, col('.'))
   call assert_fails('call feedkeys("Qopen /baz/\<CR>", "xt")', 'E479:')
-  close!
+  bw!
 endfunc
 
 func Test_open_command_flush_line()
@@ -174,6 +174,39 @@ func Test_Ex_global()
   call assert_equal('bax', getline(3))
   call assert_equal('bay', getline(5))
   bwipe!
+
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  new
+  call setline(1, ['foo', 'bar'])
+  call feedkeys("Qg/./i\\\na\\\n.\\\na\\\nb\\\n.", "xt")
+  call assert_equal(['a', 'b', 'foo', 'a', 'b', 'bar'], getline(1, '$'))
+  bwipe!
+endfunc
+
+func Test_Ex_shell()
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  CheckUnix
+
+  new
+  call feedkeys("Qr !echo foo\\\necho bar\n", 'xt')
+  call assert_equal(['', 'foo', 'bar'], getline(1, '$'))
+  bwipe!
+
+  new
+  call feedkeys("Qr !echo foo\\\\\nbar\n", 'xt')
+  call assert_equal(['', 'foobar'], getline(1, '$'))
+  bwipe!
+
+  new
+  call feedkeys("Qr !echo foo\\ \\\necho bar\n", 'xt')
+  call assert_equal(['', 'foo ', 'bar'], getline(1, '$'))
+  bwipe!
+
+  new
+  call setline(1, ['bar', 'baz'])
+  call feedkeys("Qg/./!echo \\\ns/b/c/", "xt")
+  call assert_equal(['car', 'caz'], getline(1, '$'))
+  bwipe!
 endfunc
 
 " Test for pressing Ctrl-C in :append inside a loop in Ex mode
@@ -213,20 +246,12 @@ func Test_Ex_append()
   call setline(1, "\t   abc")
   call feedkeys("Qappend!\npqr\nxyz\n.\nvisual\n", 'xt')
   call assert_equal(["\t   abc", "\t   pqr", "\t   xyz"], getline(1, '$'))
-  close!
-endfunc
+  bw!
 
-" In Ex-mode, backslashes at the end of a command should be halved.
-func Test_Ex_echo_backslash()
-  throw 'Skipped: Nvim only supports Vim Ex mode'
-  " This test works only when the language is English
-  CheckEnglish
-  let bsl = '\\\\'
-  let bsl2 = '\\\'
-  call assert_fails('call feedkeys("Qecho " .. bsl .. "\nvisual\n", "xt")',
-        \ 'E15: Invalid expression: "\\"')
-  call assert_fails('call feedkeys("Qecho " .. bsl2 .. "\nm\nvisual\n", "xt")',
-        \ "E15: Invalid expression: \"\\\nm\"")
+  new
+  call feedkeys("Qappend\na\\\n.", 'xt')
+  call assert_equal(['a\'], getline(1, '$'))
+  bw!
 endfunc
 
 func Test_ex_mode_errors()
@@ -259,6 +284,31 @@ func Test_ex_mode_errors()
   quit
 endfunc
 
+func Test_ex_mode_with_global()
+  CheckNotGui
+  CheckFeature timers
+
+  " This will get stuck in Normal mode after the failed "J", use a timer to
+  " get going again.
+  let lines =<< trim END
+    " call ch_logfile('logfile', 'w')
+    pedit
+    func FeedQ(id)
+      call feedkeys('gQ', 't')
+    endfunc
+    call timer_start(10, 'FeedQ')
+    g/^/vi|HJ
+    call writefile(['done'], 'Xdidexmode')
+    qall!
+  END
+  call writefile(lines, 'Xexmodescript')
+  call assert_equal(1, RunVim([], [], '-e -s -S Xexmodescript'))
+  call assert_equal(['done'], readfile('Xdidexmode'))
+
+  call delete('Xdidexmode')
+  call delete('Xexmodescript')
+endfunc
+
 func Test_ex_mode_count_overflow()
   " The multiplication causes an integer overflow
   CheckNotAsan
@@ -287,6 +337,35 @@ func Test_ex_mode_large_indent()
   bwipe!
 endfunc
 
+" This was accessing illegal memory when using "+" for eap->cmd.
+func Test_empty_command_visual_mode()
+  let lines =<< trim END
+      r<sfile>
+      0norm0V:
+      :qall!
+  END
+  call writefile(lines, 'Xexmodescript')
+  call assert_equal(1, RunVim([], [], '-u NONE -e -s -S Xexmodescript'))
+
+  call delete('Xexmodescript')
+endfunc
+
+" Test using backslash in ex-mode
+func Test_backslash_multiline()
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  new
+  call setline(1, 'enum')
+  call feedkeys('Qg/enum/i\\.', "xt")
+  call assert_equal(["", "enum"], getline(1, 2))
+endfunc
+
+" Test using backslash in ex-mode after patch 9.1.0535
+func Test_backslash_multiline2()
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  new
+  call feedkeys('QaX \\Y.', "xt")
+  call assert_equal(['X \\', "Y"], getline(1, 2))
+endfunc
 
 " Testing implicit print command
 func Test_implicit_print()

@@ -17,7 +17,7 @@ local M = {}
 --- @field is_first_lang boolean Whether this is the first language of a linter run checking queries for multiple `langs`
 
 --- Adds a diagnostic for node in the query buffer
---- @param diagnostics vim.Diagnostic[]
+--- @param diagnostics vim.Diagnostic.Set[]
 --- @param range Range4
 --- @param lint string
 --- @param lang string?
@@ -40,8 +40,9 @@ end
 local function guess_query_lang(buf)
   local filename = api.nvim_buf_get_name(buf)
   if filename ~= '' then
-    local resolved_filename = vim.F.npcall(vim.fn.fnamemodify, filename, ':p:h:t')
-    return resolved_filename and vim.treesitter.language.get_lang(resolved_filename)
+    -- get <lang> from /path/<lang>/<query_type>.scm
+    local resolved = vim.fs.basename(vim.fs.dirname(vim.fs.abspath(filename)))
+    return vim.treesitter.language.get_lang(resolved)
   end
 end
 
@@ -85,7 +86,8 @@ local function get_error_entry(err, node)
   local start_line, start_col = node:range()
   local line_offset, col_offset, msg = err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')() ---@type string, string, string
   start_line, start_col =
-    start_line + tonumber(line_offset) - 1, start_col + tonumber(col_offset) - 1
+    start_line + vim._assert_integer(line_offset) - 1,
+    start_col + vim._assert_integer(col_offset) - 1
   local end_line, end_col = start_line, start_col
   if msg:match('^Invalid syntax') or msg:match('^Impossible') then
     -- Use the length of the underlined node
@@ -126,7 +128,7 @@ end)
 --- @param match table<integer,TSNode[]>
 --- @param query vim.treesitter.Query
 --- @param lang_context QueryLinterLanguageContext
---- @param diagnostics vim.Diagnostic[]
+--- @param diagnostics vim.Diagnostic.Set[]
 local function lint_match(buf, match, query, lang_context, diagnostics)
   local lang = lang_context.lang
   local parser_info = lang_context.parser_info
@@ -154,7 +156,6 @@ local function lint_match(buf, match, query, lang_context, diagnostics)
   end
 end
 
---- @private
 --- @param buf integer Buffer to lint
 --- @param opts vim.treesitter.query.lint.Opts|QueryLinterNormalizedOpts|nil Options for linting
 function M.lint(buf, opts)
@@ -162,7 +163,7 @@ function M.lint(buf, opts)
     buf = api.nvim_get_current_buf()
   end
 
-  local diagnostics = {}
+  local diagnostics = {} --- @type vim.Diagnostic.Set[]
   local query = vim.treesitter.query.parse('query', lint_query)
 
   opts = normalize_opts(buf, opts)
@@ -179,7 +180,7 @@ function M.lint(buf, opts)
       is_first_lang = i == 1,
     }
 
-    local parser = assert(vim.treesitter.get_parser(buf, nil, { error = false }))
+    local parser = assert(vim.treesitter.get_parser(buf, nil))
     parser:parse()
     parser:for_each_tree(function(tree, ltree)
       if ltree:lang() == 'query' then
@@ -193,13 +194,11 @@ function M.lint(buf, opts)
   vim.diagnostic.set(namespace, buf, diagnostics)
 end
 
---- @private
 --- @param buf integer
 function M.clear(buf)
   vim.diagnostic.reset(namespace, buf)
 end
 
---- @private
 --- @param findstart 0|1
 --- @param base string
 function M.omnifunc(findstart, base)

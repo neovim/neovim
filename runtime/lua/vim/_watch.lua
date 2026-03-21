@@ -69,10 +69,12 @@ function M.watch(path, opts, callback)
   local uvflags = opts and opts.uvflags or {}
   local handle = assert(uv.new_fs_event())
 
+  local watching_dir = (uv.fs_stat(path) or {}).type == 'directory'
+
   local _, start_err, start_errname = handle:start(path, uvflags, function(err, filename, events)
     assert(not err, err)
     local fullpath = path
-    if filename then
+    if filename and watching_dir then
       fullpath = vim.fs.normalize(vim.fs.joinpath(fullpath, filename))
     end
 
@@ -102,6 +104,7 @@ function M.watch(path, opts, callback)
       -- This is mostly a placeholder until we have `nvim_log` API.
       vim.notify_once(('watch.watch: %s'):format(start_err), vim.log.levels.INFO)
     end
+    handle:close()
     -- TODO(justinmk): log important errors once we have `nvim_log` API.
     return function() end
   end

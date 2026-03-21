@@ -6,15 +6,33 @@ error('Cannot require a meta file')
 --- @class vim.v
 vim.v = ...
 
---- The command line arguments Vim was invoked with.  This is a
---- list of strings.  The first item is the Vim command.
---- See `v:progpath` for the command with full path.
+--- File arguments (expanded to absolute paths) given at startup.
+---
+--- Unlike `v:argv`, this does not include option arguments
+--- such as `-u`, `--cmd`, or `+cmd`. Unlike `argv()`, it is not
+--- affected by later `:args`, `:argadd`, or plugin modifications.
+---
+--- Example:
+--- ```
+---   nvim file1.txt +ls -- file2.txt
+---   :echo v:argf
+---   " ['/path/to/cwd/file1.txt', '/path/to/cwd/file2.txt']
+--- ```
+--- @type string[]
+vim.v.argf = ...
+
+--- Command line arguments (`-u`, `--cmd`, `+cmd`, …) Nvim was
+--- invoked with.  The first item is the Nvim command.
+---
+--- See `v:progpath` to get the full path to Nvim.
+--- See `v:argf` to get only file args, without other options.
 --- @type string[]
 vim.v.argv = ...
 
 --- Argument for evaluating 'formatexpr' and used for the typed
 --- character when using <expr> in an abbreviation `:map-<expr>`.
---- It is also used by the `InsertCharPre` and `InsertEnter` events.
+--- It is also used by the `InsertCharPre`, `InsertEnter`,
+--- `CmdlineLeave` and `CmdlineLeavePre` events.
 --- @type string
 vim.v.char = ...
 
@@ -109,14 +127,16 @@ vim.v.ctype = ...
 vim.v.dying = ...
 
 --- Number of screen cells that can be used for an `:echo` message
---- in the last screen line before causing the `hit-enter-prompt`.
+--- in the last screen line before causing the `hit-enter` prompt
+--- (or "overflow" with `ui2`).
+---
 --- Depends on 'showcmd', 'ruler' and 'columns'.  You need to
 --- check 'cmdheight' for whether there are full-width lines
 --- available above the last line.
 --- @type integer
 vim.v.echospace = ...
 
---- Last given error message.
+--- Last error message that occurred (not necessarily displayed).
 --- Modifiable (can be set).
 --- Example:
 ---
@@ -160,45 +180,43 @@ vim.v.errors = ...
 ---                    an aborting condition (e.g. `c_Esc` or
 ---                    `c_CTRL-C` for `CmdlineLeave`).
 ---   chan             `channel-id`
----   info             Dict of arbitrary event data.
+---   changed_window   Is `v:true` if the event fired while
+---                    changing window  (or tab) on `DirChanged`.
 ---   cmdlevel         Level of cmdline.
 ---   cmdtype          Type of cmdline, `cmdline-char`.
+---   col              Column count of popup menu on `CompleteChanged`,
+---                    relative to screen.
+---   complete_type    See `complete_info_mode`
+---   complete_word    The selected word, or empty if completion
+---                    was abandoned/discarded.
+---   completed_item   Current selected item on `CompleteChanged`,
+---                    or `{}` if no item selected.
 ---   cwd              Current working directory.
+---   height           Height of popup menu on `CompleteChanged`
 ---   inclusive        Motion is `inclusive`, else exclusive.
----   scope            Event-specific scope name.
+---   info             Dict of arbitrary event data.
 ---   operator         Current `operator`.  Also set for Ex
 ---                    commands (unlike `v:operator`). For
 ---                    example if `TextYankPost` is triggered
 ---                    by the `:yank` Ex command then
 ---                    `v:event.operator` is "y".
+---   reason           `CompleteDone` reason.
 ---   regcontents      Text stored in the register as a
 ---                    `readfile()`-style list of lines.
----   regname          Requested register (e.g "x" for "xyy)
----                    or the empty string for an unnamed
----                    operation.
+---   regname          Requested register (e.g "x" for "xyy), or
+---                    empty string for an unnamed operation.
 ---   regtype          Type of register as returned by
 ---                    `getregtype()`.
----   visual           Selection is visual (as opposed to,
----                    e.g., via motion).
----   completed_item   Current selected complete item on
----                    `CompleteChanged`, Is `{}` when no complete
----                    item selected.
----   height           Height of popup menu on `CompleteChanged`
----   width            Width of popup menu on `CompleteChanged`
 ---   row              Row count of popup menu on `CompleteChanged`,
 ---                    relative to screen.
----   col              Col count of popup menu on `CompleteChanged`,
----                    relative to screen.
+---   scope            Event-specific scope name.
+---   scrollbar        `v:true` if popup menu has a scrollbar, or
+---                    `v:false` if not.
 ---   size             Total number of completion items on
 ---                    `CompleteChanged`.
----   scrollbar        Is `v:true` if popup menu have scrollbar, or
----                    `v:false` if not.
----   changed_window   Is `v:true` if the event fired while
----                    changing window  (or tab) on `DirChanged`.
 ---   status           Job status or exit code, -1 means "unknown". `TermClose`
----   reason           Reason for completion being done. `CompleteDone`
----   complete_word    The word that was selected, empty if abandoned complete.
----   complete_type    See `complete_info_mode`
+---   visual           Selection is visual (as opposed to e.g. a motion range).
+---   width            Width of popup menu on `CompleteChanged`
 ---   windows          List of window IDs that changed on `WinResized`
 --- @type vim.v.event
 vim.v.event = ...
@@ -234,7 +252,7 @@ vim.v.exiting = ...
 --- `json_encode()`.  This value is converted to "v:false" when used
 --- as a String (e.g. in `expr5` with string concatenation
 --- operator) and to zero when used as a Number (e.g. in `expr5`
---- or `expr7` when used with numeric operators). Read-only.
+--- or `expr7` when used with numeric operators).  Read-only.
 --- @type boolean
 vim.v['false'] = ...
 
@@ -330,7 +348,7 @@ vim.v.foldlevel = ...
 vim.v.foldstart = ...
 
 --- Variable that indicates whether search highlighting is on.
---- Setting it makes sense only if 'hlsearch' is enabled. Setting
+--- Setting it makes sense only if 'hlsearch' is enabled.  Setting
 --- this variable to zero acts like the `:nohlsearch` command,
 --- setting it to one acts like
 ---
@@ -430,7 +448,7 @@ vim.v.msgpack_types = ...
 --- See `json_encode()`.  This value is converted to "v:null" when
 --- used as a String (e.g. in `expr5` with string concatenation
 --- operator) and to zero when used as a Number (e.g. in `expr5`
---- or `expr7` when used with numeric operators). Read-only.
+--- or `expr7` when used with numeric operators).  Read-only.
 --- In some places `v:null` can be used for a List, Dict, etc.
 --- that is not set.  That is slightly different than an empty
 --- List, Dict, etc.
@@ -480,7 +498,7 @@ vim.v.oldfiles = ...
 --- @type string
 vim.v.operator = ...
 
---- Command used to set the option. Valid while executing an
+--- Command used to set the option.  Valid while executing an
 --- `OptionSet` autocommand.
 ---   value        option was set via ~
 ---   "setlocal"   `:setlocal` or `:let l:xxx`
@@ -490,30 +508,30 @@ vim.v.operator = ...
 --- @type string
 vim.v.option_command = ...
 
---- New value of the option. Valid while executing an `OptionSet`
+--- New value of the option.  Valid while executing an `OptionSet`
 --- autocommand.
 --- @type any
 vim.v.option_new = ...
 
---- Old value of the option. Valid while executing an `OptionSet`
---- autocommand. Depending on the command used for setting and the
---- kind of option this is either the local old value or the
+--- Old value of the option.  Valid while executing an `OptionSet`
+--- autocommand.  Depending on the command used for setting and
+--- the kind of option this is either the local old value or the
 --- global old value.
 --- @type any
 vim.v.option_old = ...
 
---- Old global value of the option. Valid while executing an
+--- Old global value of the option.  Valid while executing an
 --- `OptionSet` autocommand.
 --- @type any
 vim.v.option_oldglobal = ...
 
---- Old local value of the option. Valid while executing an
+--- Old local value of the option.  Valid while executing an
 --- `OptionSet` autocommand.
 --- @type any
 vim.v.option_oldlocal = ...
 
---- Scope of the set command. Valid while executing an
---- `OptionSet` autocommand. Can be either "global" or "local"
+--- Scope of the set command.  Valid while executing an
+--- `OptionSet` autocommand.  Can be either "global" or "local"
 --- @type string
 vim.v.option_type = ...
 
@@ -565,8 +583,6 @@ vim.v.relnum = ...
 --- screen to scroll up.  It's only set when it is empty, thus the
 --- first reason is remembered.  It is set to "Unknown" for a
 --- typed command.
---- This can be used to find out why your script causes the
---- hit-enter prompt.
 --- @type string
 vim.v.scrollstart = ...
 
@@ -588,17 +604,24 @@ vim.v.searchforward = ...
 --- Read-only.
 ---
 ---                                                      *$NVIM*
---- $NVIM is set by `terminal` and `jobstart()`, and is thus
---- a hint that the current environment is a subprocess of Nvim.
---- Example:
+--- $NVIM is set to v:servername by `terminal` and `jobstart()`,
+--- and is thus a hint that the current environment is a child
+--- (direct subprocess) of Nvim.
 ---
---- ```vim
----   if $NVIM
----     echo nvim_get_chan_info(v:parent)
----   endif
+--- Example: a child Nvim process can detect and make requests to
+--- its parent Nvim:
+---
+--- ```lua
+---
+---   if vim.env.NVIM then
+---     local ok, chan = pcall(vim.fn.sockconnect, 'pipe', vim.env.NVIM, {rpc=true})
+---     if ok and chan then
+---       local client = vim.api.nvim_get_chan_info(chan).client
+---       local rv = vim.rpcrequest(chan, 'nvim_exec_lua', [[return ... + 1]], { 41 })
+---       vim.print(('got "%s" from parent Nvim'):format(rv))
+---     end
+---   end
 --- ```
----
---- Note the contents of $NVIM may change in the future.
 --- @type string
 vim.v.servername = ...
 
@@ -746,7 +769,7 @@ vim.v.throwpoint = ...
 --- `json_encode()`.  This value is converted to "v:true" when used
 --- as a String (e.g. in `expr5` with string concatenation
 --- operator) and to one when used as a Number (e.g. in `expr5` or
---- `expr7` when used with numeric operators). Read-only.
+--- `expr7` when used with numeric operators).  Read-only.
 --- @type boolean
 vim.v['true'] = ...
 
@@ -767,10 +790,31 @@ vim.v.val = ...
 --- @type integer
 vim.v.version = ...
 
+--- Like v:version, but also including the patchlevel in the last
+--- four digits.  Version 8.1 with patch 123 has value 8010123.
+--- This can be used like this:
+--- ```
+---   if v:versionlong >= 8010123
+--- ```
+---
+--- However, if there are gaps in the list of patches included
+--- this will not work well.  This can happen if a recent patch
+--- was included into an older version, e.g. for a security fix.
+--- Use the has() function to make sure the patch is actually
+--- included.
+--- @type integer
+vim.v.versionlong = ...
+
 --- 0 during startup, 1 just before `VimEnter`.
 --- Read-only.
 --- @type integer
 vim.v.vim_did_enter = ...
+
+--- 0 during initialization, 1 after sourcing `vimrc` and just
+--- before `load-plugins`.
+--- Read-only.
+--- @type integer
+vim.v.vim_did_init = ...
 
 --- Virtual line number for the 'statuscolumn' expression.
 --- Negative when drawing the status column for virtual lines, zero

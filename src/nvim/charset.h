@@ -28,10 +28,8 @@ typedef enum {
   STR2NR_QUOTE = (1 << 4),  ///< Ignore embedded single quotes.
 } ChStr2NrFlags;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "charset.h.generated.h"
-# include "charset.h.inline.generated.h"
-#endif
+#include "charset.h.generated.h"
+#include "charset.h.inline.generated.h"
 
 /// Check if `c` is one of the characters in 'breakat'.
 /// Used very often if 'linebreak' is set

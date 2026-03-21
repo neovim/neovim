@@ -1283,18 +1283,18 @@ msgstr "E478: Спокойствие, только спокойствие!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: К сожалению, справка '%s' для %s отсутствует"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Справка '%s' для %s отсутствует"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: К сожалению справка для %s отсутствует"
+msgid "E149: No help for %s"
+msgstr "E149: Справка для %s отсутствует"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Извините, файл справки \"%s\" не найден"
+msgid "Help file \"%s\" not found"
+msgstr "Файл справки \"%s\" не найден"
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -3946,12 +3946,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: ВНИМАНИЕ"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Обнаружен своп-файл с именем \""
+msgid "Found a swap file by the name \""
+msgstr "Обнаружен своп-файл с именем \""
 
 # С маленькой буквы, чтобы соответствовало по стилю соседним сообщениям.
 #: ../memline.c:3226
@@ -4645,12 +4641,8 @@ msgstr ""
 "Невозможно запустить оболочку "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Оболочка завершила работу "
+msgid "shell returned "
+msgstr "Оболочка завершила работу "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""
@@ -5543,13 +5535,13 @@ msgid "E763: Word characters differ between spell files"
 msgstr "E763: Символы слов отличаются в файлах правописания"
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
-msgstr "Извините, нет предположений"
+msgid "No suggestions"
+msgstr "Нет предположений"
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Извините, только %<PRId64> предположений"
+msgid "Only %<PRId64> suggestions"
+msgstr "Только %<PRId64> предположений"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

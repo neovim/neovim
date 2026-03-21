@@ -1,5 +1,9 @@
 " Tests for user defined commands
 
+source check.vim
+source screendump.vim
+source vim9.vim
+
 " Test for <mods> in user defined commands
 function Test_cmdmods()
   let g:mods = ''
@@ -304,12 +308,25 @@ func Test_CmdErrors()
   call assert_fails('com! -complete=custom DoCmd :', 'E467:')
   call assert_fails('com! -complete=customlist DoCmd :', 'E467:')
   " call assert_fails('com! -complete=behave,CustomComplete DoCmd :', 'E468:')
-  call assert_fails('com! -complete=file DoCmd :', 'E1208:')
-  call assert_fails('com! -nargs=0 -complete=file DoCmd :', 'E1208:')
   call assert_fails('com! -nargs=x DoCmd :', 'E176:')
   call assert_fails('com! -count=1 -count=2 DoCmd :', 'E177:')
   call assert_fails('com! -count=x DoCmd :', 'E178:')
   call assert_fails('com! -range=x DoCmd :', 'E178:')
+
+  call assert_fails('com! -complete=file DoCmd :', 'E1208:')
+  call assert_fails('com! -nargs=0 -complete=file DoCmd :', 'E1208:')
+
+  let lines =<< trim END
+      vim9script
+      com! -complete=file DoCmd :
+  END
+  call CheckScriptFailure(lines, 'E1208:', 2)
+
+  let lines =<< trim END
+      vim9script
+      com! -nargs=0 -complete=file DoCmd :
+  END
+  call CheckScriptFailure(lines, 'E1208:', 2)
 
   com! -nargs=0 DoCmd :
   call assert_fails('DoCmd x', 'E488:')
@@ -362,6 +379,14 @@ func Test_CmdCompletion()
   call feedkeys(":com MyCmd chist\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal("\"com MyCmd chistory", @:)
 
+  " delete the Check commands to avoid them showing up
+  call feedkeys(":com Check\<C-A>\<C-B>\"\<CR>", 'tx')
+  let cmds = substitute(@:, '"com ', '', '')->split()
+  for cmd in cmds
+    exe 'delcommand ' .. cmd
+  endfor
+  delcommand MissingFeature
+
   command! DoCmd1 :
   command! DoCmd2 :
   call feedkeys(":com \<C-A>\<C-B>\"\<CR>", 'tx')
@@ -394,6 +419,10 @@ func Test_CmdCompletion()
   " com! -nargs=1 -complete=behave DoCmd :
   " call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"DoCmd mswin xterm', @:)
+
+  com! -nargs=1 -complete=retab DoCmd :
+  call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"DoCmd -indentonly', @:)
 
   " Test for file name completion
   com! -nargs=1 -complete=file DoCmd :
@@ -715,7 +744,7 @@ func Test_recursive_define()
   call DefCmd('Command')
 
   let name = 'Command'
-  while len(name) < 30
+  while len(name) <= 30
     exe 'delcommand ' .. name
     let name ..= 'x'
   endwhile
@@ -754,6 +783,26 @@ func Test_multibyte_in_usercmd()
   call assert_equal('Hello.', getline(1))
   bw!
   delcommand SubJapanesePeriodToDot
+endfunc
+
+" Test for listing user commands.
+func Test_command_list_0()
+  " Check space padding of attribute and name in command list
+  set vbs&
+  command! ShortCommand echo "ShortCommand"
+  command! VeryMuchLongerCommand echo "VeryMuchLongerCommand"
+
+  redi @"> | com | redi END
+  pu
+
+  let bl = matchbufline(bufnr('%'), "^    ShortCommand      0", 1, '$')
+  call assert_false(bl == [])
+  let bl = matchbufline(bufnr('%'), "^    VeryMuchLongerCommand 0", 1, '$')
+  call assert_false(bl == [])
+
+  bwipe!
+  delcommand ShortCommand
+  delcommand VeryMuchLongerCommand
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

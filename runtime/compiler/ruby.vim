@@ -3,7 +3,6 @@
 " Function:		Syntax check and/or error reporting
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
-" Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
 " Last Change:		2019 Jan 06
 "			2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 

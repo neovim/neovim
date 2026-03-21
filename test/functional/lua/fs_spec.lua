@@ -4,11 +4,13 @@ local n = require('test.functional.testnvim')()
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
+local eq_paths = t.eq_paths
 local mkdir_p = n.mkdir_p
 local rmdir = n.rmdir
 local nvim_dir = n.nvim_dir
 local command = n.command
 local api = n.api
+local fn = n.fn
 local test_build_dir = t.paths.test_build_dir
 local test_source_path = t.paths.test_source_path
 local nvim_prog = n.nvim_prog
@@ -53,7 +55,7 @@ local tests_windows_paths = {
   'c:\\users\\foo\\bar\\..\\',
 }
 
-before_each(clear)
+setup(clear)
 
 describe('vim.fs', function()
   describe('parents()', function()
@@ -245,8 +247,8 @@ describe('vim.fs', function()
   describe('find()', function()
     it('works', function()
       eq(
-        { test_build_dir .. '/build' },
-        vim.fs.find('build', { path = nvim_dir, upward = true, type = 'directory' })
+        { test_build_dir .. '/bin' },
+        vim.fs.find('bin', { path = nvim_dir, upward = true, type = 'directory' })
       )
       eq({ nvim_prog }, vim.fs.find(nvim_prog_basename, { path = test_build_dir, type = 'file' }))
 
@@ -255,7 +257,7 @@ describe('vim.fs', function()
     end)
 
     it('follows symlinks', function()
-      local build_dir = test_source_path .. '/build' ---@type string
+      local build_dir = test_build_dir ---@type string
       local symlink = test_source_path .. '/build_link' ---@type string
       vim.uv.fs_symlink(build_dir, symlink, { junction = true, dir = true })
 
@@ -263,8 +265,11 @@ describe('vim.fs', function()
         vim.uv.fs_unlink(symlink)
       end)
 
+      local cases = { nvim_prog, symlink .. '/bin/' .. nvim_prog_basename }
+      table.sort(cases)
+
       eq(
-        { nvim_prog, symlink .. '/bin/' .. nvim_prog_basename },
+        cases,
         vim.fs.find(nvim_prog_basename, {
           path = test_source_path,
           type = 'file',
@@ -273,6 +278,9 @@ describe('vim.fs', function()
         })
       )
 
+      if t.is_zig_build() then
+        return pending('broken with build.zig')
+      end
       eq(
         { nvim_prog },
         vim.fs.find(nvim_prog_basename, {
@@ -285,8 +293,11 @@ describe('vim.fs', function()
     end)
 
     it('follow=true handles symlink loop', function()
-      local cwd = test_source_path ---@type string
-      local symlink = test_source_path .. '/loop_link' ---@type string
+      if t.is_zig_build() then
+        return pending('broken/slow with build.zig')
+      end
+      local cwd = vim.uv.fs_realpath(test_source_path) ---@type string
+      local symlink = cwd .. '/loop_link' ---@type string
       vim.uv.fs_symlink(cwd, symlink, { junction = true, dir = true })
 
       finally(function()
@@ -294,7 +305,7 @@ describe('vim.fs', function()
       end)
 
       eq(link_limit, #vim.fs.find(nvim_prog_basename, {
-        path = test_source_path,
+        path = cwd,
         type = 'file',
         limit = math.huge,
         follow = true,
@@ -304,9 +315,9 @@ describe('vim.fs', function()
     it('accepts predicate as names', function()
       local opts = { path = nvim_dir, upward = true, type = 'directory' }
       eq(
-        { test_build_dir .. '/build' },
+        { test_build_dir .. '/bin' },
         vim.fs.find(function(x)
-          return x == 'build'
+          return x == 'bin'
         end, opts)
       )
       eq(
@@ -345,15 +356,49 @@ describe('vim.fs', function()
       command('edit test/functional/fixtures/tty-test.c')
     end)
 
+    after_each(function()
+      command('bwipe!')
+    end)
+
     it('works with a single marker', function()
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      eq_paths(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
     end)
 
     it('works with multiple markers', function()
       local bufnr = api.nvim_get_current_buf()
-      eq(
+      eq_paths(
         vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
         exec_lua([[return vim.fs.root(..., {'CMakeLists.txt', 'CMakePresets.json'})]], bufnr)
+      )
+    end)
+
+    it('nested markers have equal priority', function()
+      local bufnr = api.nvim_get_current_buf()
+      eq_paths(
+        vim.fs.joinpath(test_source_path, 'test/functional'),
+        exec_lua(
+          [[return vim.fs.root(..., { 'example_spec.lua', {'CMakeLists.txt', 'CMakePresets.json'}, '.luarc.json'})]],
+          bufnr
+        )
+      )
+      eq_paths(
+        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
+        exec_lua(
+          [[return vim.fs.root(..., { {'CMakeLists.txt', 'CMakePresets.json'}, 'example_spec.lua', '.luarc.json'})]],
+          bufnr
+        )
+      )
+      eq_paths(
+        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
+        exec_lua(
+          [[return vim.fs.root(..., {
+              function(name, _)
+                return name:match('%.txt$')
+              end,
+              'example_spec.lua',
+              '.luarc.json' })]],
+          bufnr
+        )
       )
     end)
 
@@ -364,7 +409,7 @@ describe('vim.fs', function()
           return name:match('%.txt$')
         end)
       end)
-      eq(vim.fs.joinpath(test_source_path, 'test/functional/fixtures'), result)
+      eq_paths(vim.fs.joinpath(test_source_path, 'test/functional/fixtures'), result)
     end)
 
     it('works with a filename argument', function()
@@ -372,22 +417,32 @@ describe('vim.fs', function()
     end)
 
     it('works with a relative path', function()
-      eq(
+      eq_paths(
         test_source_path,
         exec_lua([[return vim.fs.root(..., 'CMakePresets.json')]], vim.fs.basename(nvim_prog))
       )
     end)
 
-    it('uses cwd for unnamed buffers', function()
+    it('returns CWD (absolute path) for unnamed buffers', function()
+      assert(n.fn.isabsolutepath(test_source_path) == 1)
       command('new')
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      eq_paths(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
     end)
 
-    it("uses cwd for buffers with non-empty 'buftype'", function()
+    it("returns CWD (absolute path) for buffers with non-empty 'buftype'", function()
+      assert(n.fn.isabsolutepath(test_source_path) == 1)
       command('new')
       command('set buftype=nofile')
       command('file lua://')
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      eq_paths(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+    end)
+
+    it('returns CWD (absolute path) if no match is found', function()
+      assert(n.fn.isabsolutepath(test_source_path) == 1)
+      eq_paths(
+        test_source_path,
+        exec_lua([[return vim.fs.root('file://bogus', 'CMakePresets.json')]])
+      )
     end)
   end)
 
@@ -410,6 +465,12 @@ describe('vim.fs', function()
         eq('foo/bar/baz/zub/', vim.fs.joinpath([[foo]], [[//bar////baz]], [[zub/]]))
       end
     end)
+    it('handles empty segments', function()
+      eq('foo/bar', vim.fs.joinpath('', 'foo', '', 'bar', ''))
+      eq('foo/bar', vim.fs.joinpath('', '', 'foo', 'bar', '', ''))
+      eq('', vim.fs.joinpath(''))
+      eq('', vim.fs.joinpath('', '', '', ''))
+    end)
   end)
 
   describe('normalize()', function()
@@ -427,8 +488,9 @@ describe('vim.fs', function()
       eq(
         xdg_config_home .. '/nvim',
         exec_lua(function()
-          vim.env.XDG_CONFIG_HOME = xdg_config_home
-          return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
+          return vim._with({ env = { XDG_CONFIG_HOME = xdg_config_home } }, function()
+            return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
+          end)
         end)
       )
     end)
@@ -569,7 +631,9 @@ describe('vim.fs', function()
     local cwd = assert(t.fix_slashes(assert(vim.uv.cwd())))
     local home = t.fix_slashes(assert(vim.uv.os_homedir()))
 
-    it('works', function()
+    it('expands relative paths', function()
+      assert(n.fn.isabsolutepath(cwd) == 1)
+      eq(cwd, vim.fs.abspath('.'))
       eq(cwd .. '/foo', vim.fs.abspath('foo'))
       eq(cwd .. '/././foo', vim.fs.abspath('././foo'))
       eq(cwd .. '/.././../foo', vim.fs.abspath('.././../foo'))
@@ -650,6 +714,49 @@ describe('vim.fs', function()
         eq('.', vim.fs.relpath('\\\\foo\\bar\\baz', '\\\\foo\\bar\\baz'))
         eq(nil, vim.fs.relpath('C:\\foo\\test', 'C:\\foo\\Test\\bar\\package.json'))
       end
+    end)
+  end)
+
+  describe('rm()', function()
+    before_each(function()
+      t.mkdir('Xtest_fs-rm')
+      t.write_file('Xtest_fs-rm/file-to-link', 'File to link')
+      t.mkdir('Xtest_fs-rm/dir-to-link')
+      t.write_file('Xtest_fs-rm/dir-to-link/file', 'File in dir to link')
+    end)
+
+    after_each(function()
+      vim.uv.fs_unlink('Xtest_fs-rm/dir-to-link/file')
+      vim.uv.fs_rmdir('Xtest_fs-rm/dir-to-link')
+      vim.uv.fs_unlink('Xtest_fs-rm/file-to-link')
+      vim.uv.fs_rmdir('Xtest_fs-rm')
+    end)
+
+    it('symlink', function()
+      -- File
+      vim.uv.fs_symlink('Xtest_fs-rm/file-to-link', 'Xtest_fs-rm/file-as-link')
+      vim.fs.rm('Xtest_fs-rm/file-as-link')
+      eq(vim.uv.fs_stat('Xtest_fs-rm/file-as-link'), nil)
+      eq({ 'File to link' }, fn.readfile('Xtest_fs-rm/file-to-link'))
+
+      -- Directory
+      local function assert_rm_symlinked_dir(opts)
+        vim.uv.fs_symlink('Xtest_fs-rm/dir-to-link', 'Xtest_fs-rm/dir-as-link')
+        vim.fs.rm('Xtest_fs-rm/dir-as-link', opts)
+        eq(vim.uv.fs_stat('Xtest_fs-rm/dir-as-link'), nil)
+        eq({ 'File in dir to link' }, fn.readfile('Xtest_fs-rm/dir-to-link/file'))
+      end
+
+      assert_rm_symlinked_dir({})
+      assert_rm_symlinked_dir({ force = true })
+      assert_rm_symlinked_dir({ recursive = true })
+      assert_rm_symlinked_dir({ recursive = true, force = true })
+    end)
+  end)
+
+  describe('ext()', function()
+    it('works', function()
+      -- See test/functional/vimscript/fnamemodify_spec.lua
     end)
   end)
 end)

@@ -7,6 +7,7 @@ local loaders = package.loaders
 local _loadfile = loadfile
 
 local VERSION = 4
+local is_appimage = (os.getenv('APPIMAGE') ~= nil)
 
 local M = {}
 
@@ -66,7 +67,7 @@ local indexed = {}
 --- @return uv.fs_stat.result?
 local function fs_stat_cached(path)
   if not fs_stat_cache then
-    return uv.fs_stat(path)
+    return (uv.fs_stat(path))
   end
 
   if not fs_stat_cache[path] then
@@ -116,6 +117,12 @@ end
 --- @param name string can be a module name, or a file name
 --- @return string file_name
 local function cache_filename(name)
+  if is_appimage then
+    -- Avoid cache pollution caused by AppImage randomizing the program root. #31165
+    -- "/tmp/.mount_nvimAmpHPH/usr/share/nvim/runtime" => "/usr/share/nvim/runtime"
+    name = name:match('(/usr/.*)') or name
+  end
+
   local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
   return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
 end
@@ -167,13 +174,21 @@ local function read_cachefile(cname)
 
   --- @type integer[]|{[0]:integer}
   local header = vim.split(data:sub(1, zero - 1), ',')
-  if tonumber(header[1]) ~= VERSION then
+  local version = vim._tointeger(header[1])
+  if version ~= VERSION then
+    return
+  end
+
+  local size = vim._tointeger(header[2])
+  local sec = vim._tointeger(header[3])
+  local nsec = vim._tointeger(header[4])
+  if not (size and sec and nsec) then
     return
   end
 
   local hash = {
-    size = tonumber(header[2]),
-    mtime = { sec = tonumber(header[3]), nsec = tonumber(header[4]) },
+    size = size,
+    mtime = { sec = sec, nsec = nsec },
   }
 
   local chunk = data:sub(zero + 1)
@@ -422,7 +437,7 @@ function M.enable(enable)
   M.enabled = enable
 
   if enable then
-    vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
+    vim.fn.mkdir(vim.fs.abspath(M.path), 'p')
     _G.loadfile = loadfile_cached
     -- add Lua loader
     table.insert(loaders, 2, loader_cached)
@@ -458,7 +473,7 @@ end
 --- @return F
 local function track(stat, f)
   return function(...)
-    local start = vim.uv.hrtime()
+    local start = uv.hrtime()
     local r = { f(...) }
     stats[stat] = stats[stat] or { total = 0, time = 0 }
     stats[stat].total = stats[stat].total + 1
@@ -485,7 +500,7 @@ function M._profile(opts)
 
   if opts and opts.loaders then
     for l, loader in pairs(loaders) do
-      local loc = debug.getinfo(loader, 'Sn').source:sub(2)
+      local loc = debug.getinfo(loader, 'Sn').source:gsub('^@', '')
       loaders[l] = track('loader ' .. l .. ': ' .. loc, loader)
     end
   end

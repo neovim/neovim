@@ -1,9 +1,11 @@
 #pragma once
 
-#include <unibilium.h>  // IWYU pragma: keep
-
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
+#include "nvim/tui/terminfo_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/terminfo.h.generated.h"
-#endif
+typedef struct {
+  long num;
+  char *string;
+} TPVAR;
+
+#include "tui/terminfo.h.generated.h"

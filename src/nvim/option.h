@@ -60,6 +60,4 @@ static inline const char *optval_type_get_name(const OptValType type)
 #define STATIC_CSTR_AS_OPTVAL(s) STRING_OPTVAL(STATIC_CSTR_AS_STRING(s))
 #define STATIC_CSTR_TO_OPTVAL(s) STRING_OPTVAL(STATIC_CSTR_TO_STRING(s))
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "option.h.generated.h"
-#endif
+#include "option.h.generated.h"

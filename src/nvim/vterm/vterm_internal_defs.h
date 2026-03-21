@@ -15,7 +15,7 @@
 
 #define INTERMED_MAX 16
 
-#define CSI_ARGS_MAX 16
+#define CSI_ARGS_MAX 32
 #define CSI_LEADER_MAX 16
 
 #define BUFIDX_PRIMARY   0
@@ -51,6 +51,8 @@ struct VTermPen {
   unsigned font:4;  // To store 0-9
   unsigned small:1;
   unsigned baseline:2;
+  unsigned dim:1;
+  unsigned overline:1;
 };
 
 // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
@@ -142,6 +144,7 @@ struct VTermState {
     unsigned bracketpaste:1;
     unsigned report_focus:1;
     unsigned theme_updates:1;
+    unsigned synchronized_output:1;
   } mode;
 
   VTermEncodingInstance encoding[4], encoding_utf8;

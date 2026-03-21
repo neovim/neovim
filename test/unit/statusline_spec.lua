@@ -12,7 +12,7 @@ local stl = t.cimport('./src/nvim/statusline.h')
 local grid = t.cimport('./src/nvim/grid.h')
 
 describe('build_stl_str_hl', function()
-  local buffer_byte_size = 100
+  local buffer_byte_size = 120
   local STL_INITIAL_ITEMS = 20
   local output_buffer = ''
 

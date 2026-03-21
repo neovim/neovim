@@ -59,12 +59,11 @@ func Test_different_script()
   call assert_fails('source XtwoScript', 'E121:')
 endfunc
 
-" When sourcing a vim script, shebang should be ignored.
+" When sourcing a Vim script, shebang should be ignored.
 func Test_source_ignore_shebang()
-  call writefile(['#!./xyzabc', 'let g:val=369'], 'Xfile.vim')
-  source Xfile.vim
+  call writefile(['#!./xyzabc', 'let g:val=369'], 'Xsisfile.vim', 'D')
+  source Xsisfile.vim
   call assert_equal(g:val, 369)
-  call delete('Xfile.vim')
 endfunc
 
 " Test for expanding <sfile> in a autocmd and for <slnum> and <sflnum>
@@ -415,7 +414,7 @@ func Test_source_buffer_vim9()
   source
   call assert_equal(10, Xtestfunc())
 
-  " test for sourcing a vim9 script with line continuation
+  " test for sourcing a Vim9 script with line continuation
   %d _
   let lines =<< trim END
      vim9script
@@ -577,6 +576,13 @@ func Test_source_buffer_vim9()
   vim9cmd :2,10source
   call assert_equal(#{pi: 3.12, e: 2.71828}, g:Math)
   call assert_equal(['vim', 'nano'], g:Editors)
+
+  " '<,'> range before the cmd modifier works
+  unlet g:Math
+  unlet g:Editors
+  exe "normal 6GV4j:vim9cmd source\<CR>"
+  call assert_equal(['vim', 'nano'], g:Editors)
+  unlet g:Editors
 
   " test for using try/catch
   %d _

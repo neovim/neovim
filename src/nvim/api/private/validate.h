@@ -16,6 +16,23 @@
     } \
   } while (0)
 
+#define VALIDATE_R(cond, name, code) \
+  do { \
+    if (!(cond)) { \
+      api_err_required(err, name); \
+      code; \
+    } \
+  } while (0)
+
+/// Shows a "not allowed with" message, for mutually-exclusive args.
+#define VALIDATE_CON(cond, name, name2, code) \
+  do { \
+    if (!(cond)) { \
+      api_err_conflict(err, name, name2); \
+      code; \
+    } \
+  } while (0)
+
 #define VALIDATE_INT(cond, name, val_, code) \
   do { \
     if (!(cond)) { \
@@ -88,9 +105,4 @@
     } \
   } while (0)
 
-#define VALIDATE_R(cond, name, code) \
-  VALIDATE(cond, "Required: '%s'", name, code);
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/validate.h.generated.h"
-#endif
+#include "api/private/validate.h.generated.h"

@@ -17,6 +17,4 @@ typedef struct conpty {
   STARTUPINFOEXW si_ex;
 } conpty_t;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_conpty_win.h.generated.h"
-#endif
+#include "os/pty_conpty_win.h.generated.h"

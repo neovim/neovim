@@ -24,6 +24,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/ex_cmds.h"
@@ -160,9 +161,7 @@ enum {
   KEYLEN_PART_MAP = -2,  ///< keylen value for incomplete mapping
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "getchar.c.generated.h"
-#endif
+#include "getchar.c.generated.h"
 
 static const char e_recursive_mapping[] = N_("E223: Recursive mapping");
 static const char e_cmd_mapping_must_end_with_cr[]
@@ -426,7 +425,7 @@ bool stuff_empty(void)
 }
 
 /// @return  true if readbuf1 is empty.  There may still be redo characters in
-///          redbuf2.
+///          readbuf2.
 bool readbuf1_empty(void)
   FUNC_ATTR_PURE
 {
@@ -450,9 +449,18 @@ void flush_buffers(flush_buffers_T flush_typeahead)
   while (read_readbuffers(true) != NUL) {}
 
   if (flush_typeahead == FLUSH_MINIMAL) {
-    // remove mapped characters at the start only
-    typebuf.tb_off += typebuf.tb_maplen;
-    typebuf.tb_len -= typebuf.tb_maplen;
+    // remove mapped characters at the start only,
+    // but only when enough space left in typebuf
+    if (typebuf.tb_off + typebuf.tb_maplen >= typebuf.tb_buflen) {
+      typebuf.tb_off = MAXMAPLEN;
+      typebuf.tb_len = 0;
+    } else {
+      typebuf.tb_off += typebuf.tb_maplen;
+      typebuf.tb_len -= typebuf.tb_maplen;
+    }
+    if (typebuf.tb_len == 0) {
+      typebuf_was_filled = false;
+    }
   } else {
     // remove typeahead
     if (flush_typeahead == FLUSH_INPUT) {
@@ -1282,7 +1290,7 @@ void may_sync_undo(void)
 }
 
 /// Make "typebuf" empty and allocate new buffers.
-void alloc_typebuf(void)
+static void alloc_typebuf(void)
 {
   typebuf.tb_buf = xmalloc(TYPELEN_INIT);
   typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
@@ -1295,10 +1303,11 @@ void alloc_typebuf(void)
   if (++typebuf.tb_change_cnt == 0) {
     typebuf.tb_change_cnt = 1;
   }
+  typebuf_was_filled = false;
 }
 
 /// Free the buffers of "typebuf".
-void free_typebuf(void)
+static void free_typebuf(void)
 {
   if (typebuf.tb_buf == typebuf_init) {
     internal_error("Free typebuf 1");
@@ -1799,6 +1808,16 @@ int vgetc(void)
   // Execute Lua on_key callbacks.
   kvi_push(on_key_buf, NUL);
   if (nlua_execute_on_key(c, on_key_buf.items)) {
+    // Keys following K_COMMAND/K_LUA/K_PASTE_START aren't normally received by
+    // vim.on_key() callbacks, so discard them along with the current key.
+    if (c == K_COMMAND) {
+      xfree(getcmdkeycmd(NUL, NULL, 0, false));
+    } else if (c == K_LUA) {
+      map_execute_lua(false, true);
+    } else if (c == K_PASTE_START) {
+      paste_repeat(0);
+    }
+    // Discard the current key.
     c = K_IGNORE;
   }
   kvi_destroy(on_key_buf);
@@ -1866,6 +1885,9 @@ int vpeekc_any(void)
 /// @return  true if a character is available, false otherwise.
 bool char_avail(void)
 {
+  if (test_disable_char_avail) {
+    return false;
+  }
   no_mapping++;
   int retval = vpeekc();
   no_mapping--;
@@ -2012,7 +2034,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
         int winnr = 1;
         // Find the window at the mouse coordinates and compute the
         // text position.
-        win_T *const win = mouse_find_win(&grid, &row, &col);
+        win_T *const win = mouse_find_win_inner(&grid, &row, &col);
         if (win == NULL) {
           return;
         }
@@ -2197,7 +2219,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       && !(p_paste && (State & (MODE_INSERT | MODE_CMDLINE)))
       && !(State == MODE_HITRETURN && (tb_c1 == CAR || tb_c1 == ' '))
       && State != MODE_ASKMORE
-      && State != MODE_CONFIRM
       && !at_ins_compl_key()) {
     int mlen;
     int nolmaplen;
@@ -2675,7 +2696,7 @@ static int vgetorpeek(bool advance)
 
           if (result == map_result_get) {
             // get a character: 2. from the typeahead buffer
-            c = typebuf.tb_buf[typebuf.tb_off] & 255;
+            c = typebuf.tb_buf[typebuf.tb_off];
             if (advance) {  // remove chars from tb_buf
               cmd_silent = (typebuf.tb_silent > 0);
               if (typebuf.tb_maplen > 0) {
@@ -2749,8 +2770,8 @@ static int vgetorpeek(bool advance)
                 }
 
                 curwin->w_wrow = curwin->w_cline_row
-                                 + curwin->w_wcol / curwin->w_width_inner;
-                curwin->w_wcol %= curwin->w_width_inner;
+                                 + curwin->w_wcol / curwin->w_view_width;
+                curwin->w_wcol %= curwin->w_view_width;
                 curwin->w_wcol += win_col_off(curwin);
                 col = 0;  // no correction needed
               } else {
@@ -2759,7 +2780,7 @@ static int vgetorpeek(bool advance)
               }
             } else if (curwin->w_p_wrap && curwin->w_wrow) {
               curwin->w_wrow--;
-              curwin->w_wcol = curwin->w_width_inner - 1;
+              curwin->w_wcol = curwin->w_view_width - 1;
               col = curwin->w_cursor.col - 1;
             }
             if (col > 0 && curwin->w_wcol > 0) {
@@ -3004,7 +3025,7 @@ static int vgetorpeek(bool advance)
 ///  Return -1 when end of input script reached.
 ///
 /// @param wait_time  milliseconds
-int inchar(uint8_t *buf, int maxlen, long wait_time)
+static int inchar(uint8_t *buf, int maxlen, long wait_time)
 {
   int len = 0;  // Init for GCC.
   int retesc = false;  // Return ESC with gotint.
@@ -3181,7 +3202,7 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       emsg(_(e_cmd_mapping_must_end_with_cr_before_second_cmd));
       aborted = true;
     } else if (c1 == K_SNR) {
-      ga_concat(&line_ga, "<SNR>");
+      GA_CONCAT_LITERAL(&line_ga, "<SNR>");
     } else {
       if (cmod != 0) {
         ga_append(&line_ga, K_SPECIAL);
@@ -3212,9 +3233,10 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 /// Handle a Lua mapping: get its LuaRef from typeahead and execute it.
 ///
 /// @param may_repeat  save the LuaRef for redoing with "." later
+/// @param discard     discard the keys instead of executing the LuaRef
 ///
 /// @return  false if getting the LuaRef was aborted, true otherwise
-bool map_execute_lua(bool may_repeat)
+bool map_execute_lua(bool may_repeat, bool discard)
 {
   garray_T line_ga;
   int c1 = -1;
@@ -3240,9 +3262,9 @@ bool map_execute_lua(bool may_repeat)
 
   no_mapping--;
 
-  if (aborted) {
+  if (aborted || discard) {
     ga_clear(&line_ga);
-    return false;
+    return !aborted;
   }
 
   LuaRef ref = (LuaRef)atoi(line_ga.ga_data);
@@ -3254,7 +3276,7 @@ bool map_execute_lua(bool may_repeat)
   Array args = ARRAY_DICT_INIT;
   nlua_call_ref(ref, NULL, args, kRetNilBool, NULL, &err);
   if (ERROR_SET(&err)) {
-    semsg_multiline("E5108: %s", err.msg);
+    semsg_multiline("emsg", "E5108: %s", err.msg);
     api_clear_error(&err);
   }
 

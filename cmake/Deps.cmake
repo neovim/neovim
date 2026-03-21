@@ -68,9 +68,13 @@ set_directory_properties(PROPERTIES
 
 file(READ ${depsfile} DEPENDENCIES)
 STRING(REGEX REPLACE "\n" ";" DEPENDENCIES "${DEPENDENCIES}")
+# Process deps.txt:
 foreach(dep ${DEPENDENCIES})
   STRING(REGEX REPLACE " " ";" dep "${dep}")
   list(GET dep 0 name)
+  if(${name} MATCHES "^#") # Skip comment lines.
+    continue()
+  endif()
   list(GET dep 1 value)
   if(NOT ${name})
     # _URL variables must NOT be set when USE_EXISTING_SRC_DIR is set,
@@ -87,7 +91,7 @@ function(get_externalproject_options name DEPS_IGNORE_SHA)
 
   set(EXTERNALPROJECT_OPTIONS
     DOWNLOAD_NO_PROGRESS TRUE
-    EXTERNALPROJECT_OPTIONS URL ${${name_allcaps}_URL}
+    URL ${${name_allcaps}_URL}
     CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
 
   if(NOT ${DEPS_IGNORE_SHA})

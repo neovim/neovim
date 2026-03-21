@@ -218,6 +218,7 @@ func Test_message_more()
   CheckRunVimInTerminal
 
   let buf = RunVimInTerminal('', {'rows': 6})
+  let chan = buf->term_getjob()->job_getchannel()
   call term_sendkeys(buf, ":call setline(1, range(1, 100))\n")
 
   call term_sendkeys(buf, ":%pfoo\<C-H>\<C-H>\<C-H>#")
@@ -241,18 +242,20 @@ func Test_message_more()
   call term_sendkeys(buf, "\<Down>")
   call WaitForAssert({-> assert_equal('  9 9', term_getline(buf, 5))})
 
-  " Down a screen with <Space>, f, or <PageDown>.
+  " Down a screen with <Space>, f, <C-F> or <PageDown>.
   call term_sendkeys(buf, 'f')
   call WaitForAssert({-> assert_equal(' 14 14', term_getline(buf, 5))})
   call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
-  call term_sendkeys(buf, ' ')
+  call term_sendkeys(buf, "\<C-F>")
   call WaitForAssert({-> assert_equal(' 19 19', term_getline(buf, 5))})
-  call term_sendkeys(buf, "\<PageDown>")
+  call term_sendkeys(buf, ' ')
   call WaitForAssert({-> assert_equal(' 24 24', term_getline(buf, 5))})
+  call term_sendkeys(buf, "\<PageDown>")
+  call WaitForAssert({-> assert_equal(' 29 29', term_getline(buf, 5))})
 
   " Down a page (half a screen) with d.
   call term_sendkeys(buf, 'd')
-  call WaitForAssert({-> assert_equal(' 27 27', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal(' 32 32', term_getline(buf, 5))})
 
   " Down all the way with 'G'.
   call term_sendkeys(buf, 'G')
@@ -267,15 +270,30 @@ func Test_message_more()
   call term_sendkeys(buf, "\<Up>")
   call WaitForAssert({-> assert_equal(' 97 97', term_getline(buf, 5))})
 
-  " Up a screen with b or <PageUp>.
+  " Up a screen with b, <C-B> or <PageUp>.
   call term_sendkeys(buf, 'b')
   call WaitForAssert({-> assert_equal(' 92 92', term_getline(buf, 5))})
-  call term_sendkeys(buf, "\<PageUp>")
+  call term_sendkeys(buf, "\<C-B>")
   call WaitForAssert({-> assert_equal(' 87 87', term_getline(buf, 5))})
+  call term_sendkeys(buf, "\<PageUp>")
+  call WaitForAssert({-> assert_equal(' 82 82', term_getline(buf, 5))})
 
   " Up a page (half a screen) with u.
   call term_sendkeys(buf, 'u')
-  call WaitForAssert({-> assert_equal(' 84 84', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal(' 79 79', term_getline(buf, 5))})
+
+  " Test <C-F> and <C-B> with different keyboard protocols.
+  for [ctrl_f, ctrl_b] in [
+        \ [GetEscCodeCSI27('f', 5), GetEscCodeCSI27('b', 5)],
+        \ [GetEscCodeCSI27('F', 5), GetEscCodeCSI27('B', 5)],
+        \ [GetEscCodeCSIu('f', 5), GetEscCodeCSIu('b', 5)],
+        \ [GetEscCodeCSIu('F', 5), GetEscCodeCSIu('B', 5)],
+        \ ]
+    call ch_sendraw(chan, ctrl_f)
+    call WaitForAssert({-> assert_equal(' 84 84', term_getline(buf, 5))})
+    call ch_sendraw(chan, ctrl_b)
+    call WaitForAssert({-> assert_equal(' 79 79', term_getline(buf, 5))})
+  endfor
 
   " Up all the way with 'g'.
   call term_sendkeys(buf, 'g')
@@ -283,13 +301,17 @@ func Test_message_more()
   call WaitForAssert({-> assert_equal(':%p#', term_getline(buf, 1))})
   call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
 
-  " All the way down. Pressing f should do nothing but pressing
+  " All the way down. Pressing f or Ctrl-F should do nothing but pressing
   " space should end the more prompt.
   call term_sendkeys(buf, 'G')
   call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
   call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
   call term_sendkeys(buf, 'f')
   call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
+  call term_sendkeys(buf, "\<C-F>")
+  call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
   call term_sendkeys(buf, ' ')
   call WaitForAssert({-> assert_equal('100', term_getline(buf, 5))})
 
@@ -327,8 +349,28 @@ func Test_message_more()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_message_more_recording()
+  CheckRunVimInTerminal
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, ":call setline(1, range(1, 100))\n")
+  call term_sendkeys(buf, ":%p\n")
+  call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
+  call term_sendkeys(buf, 'G')
+  call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
+
+  " Hitting 'q' at the end of the more prompt should not start recording
+  call term_sendkeys(buf, 'q')
+  call WaitForAssert({-> assert_equal(5, term_getcursor(buf)[0])})
+  " Hitting 'k' now should move the cursor up instead of recording keys
+  call term_sendkeys(buf, 'k')
+  call WaitForAssert({-> assert_equal(4, term_getcursor(buf)[0])})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test more-prompt scrollback
 func Test_message_more_scrollback()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
@@ -347,12 +389,18 @@ func Test_message_more_scrollback()
   call term_sendkeys(buf, 'b')
   call VerifyScreenDump(buf, 'Test_more_scrollback_2', {})
 
+  call term_sendkeys(buf, "\<C-F>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "\<C-B>")
+  call VerifyScreenDump(buf, 'Test_more_scrollback_2', {})
+
   call term_sendkeys(buf, 'q')
   call TermWait(buf)
   call StopVimInTerminal(buf)
 endfunc
 
 func Test_message_not_cleared_after_mode()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
@@ -388,6 +436,7 @@ func Test_message_not_cleared_after_mode()
 endfunc
 
 func Test_mode_cleared_after_silent_message()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
@@ -412,6 +461,7 @@ endfunc
 
 " Test verbose message before echo command
 func Test_echo_verbose_system()
+  CheckScreendump
   CheckRunVimInTerminal
   CheckUnix    " needs the "seq" command
   CheckNotMac  " the macos TMPDIR is too long for snapshot testing
@@ -676,6 +726,31 @@ func Test_messagesopt_wait()
   call term_sendkeys(buf, ":set messagesopt=wait:100,history:500\n")
   call term_sendkeys(buf, ":echo 'foo' | echo 'bar' | echo 'baz'\n")
   call WaitForAssert({-> assert_equal('                           0,0-1         All', term_getline(buf, 6))})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+" Check that using a long 'formatprg' doesn't cause a hit-enter prompt or
+" wrong cursor position.
+func Test_long_formatprg_no_hit_enter()
+  CheckScreendump
+  CheckExecutable sed
+
+  let lines =<< trim END
+    setlocal scrolloff=0
+    call setline(1, range(1, 40))
+    let &l:formatprg = $'sed{repeat(' ', &columns)}p'
+    normal 20Gmz
+    normal 10Gzt
+  END
+  call writefile(lines, 'XtestLongFormatprg', 'D')
+  let buf = RunVimInTerminal('-S XtestLongFormatprg', #{rows: 10})
+  call VerifyScreenDump(buf, 'Test_long_formatprg_no_hit_enter_1', {})
+  call term_sendkeys(buf, 'gq2j')
+  call VerifyScreenDump(buf, 'Test_long_formatprg_no_hit_enter_2', {})
+  call term_sendkeys(buf, ":messages\<CR>")
+  call VerifyScreenDump(buf, 'Test_long_formatprg_no_hit_enter_3', {})
 
   " clean up
   call StopVimInTerminal(buf)

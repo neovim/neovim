@@ -108,9 +108,9 @@ func Test_options_command()
 
   " Check if the option-window is opened horizontally.
   wincmd j
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   wincmd k
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
@@ -118,9 +118,9 @@ func Test_options_command()
   vert options
   " Check if the option-window is opened vertically.
   wincmd l
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   wincmd h
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
@@ -141,16 +141,16 @@ func Test_options_command()
   tab options
   " Check if the option-window is opened in a tab.
   normal gT
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   normal gt
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
   " Open the options window browse
   if has('browse')
     browse set
-    call assert_equal('option-window', bufname(''))
+    call assert_equal('nvim-optwin://optwin', bufname(''))
     close
   endif
 endfunc
@@ -176,7 +176,7 @@ func Test_signcolumn()
   call assert_equal("auto", &signcolumn)
   set signcolumn=yes
   set signcolumn=no
-  call assert_fails('set signcolumn=nope')
+  call assert_fails('set signcolumn=nope', 'E474: Invalid argument: signcolumn=nope')
 endfunc
 
 func Test_filetype_valid()
@@ -276,19 +276,42 @@ func Test_complete()
   new
   call feedkeys("i\<C-N>\<Esc>", 'xt')
   bwipe!
-  call assert_fails('set complete=ix', 'E535:')
+  call assert_fails('set complete=ix', 'E535: Illegal character after <i>')
+  call assert_fails('set complete=x', 'E539: Illegal character <x>')
+  call assert_fails('set complete=..', 'E535: Illegal character after <.>')
+  set complete=.,w,b,u,k,\ s,i,d,],t,U,F,o
+  call assert_fails('set complete=i^-10', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=i^x', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=k^2,t^-1,s^', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=t^-1', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=kfoo^foo2', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=kfoo^', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=.^', 'E535: Illegal character after <^>')
+  set complete=.,w,b,u,k,s,i,d,],t,U,F,o
+  set complete=.
+  set complete=.^10,t^0
+
+  func Foo(a, b)
+    return ''
+  endfunc
+
+  set complete+=Ffuncref('Foo'\\,\ [10])
+  set complete=Ffuncref('Foo'\\,\ [10])^10
   set complete&
+  set complete+=Ffunction('g:Foo'\\,\ [10\\,\ 20])
+  set complete&
+  delfunc Foo
 endfun
 
 func Test_set_completion()
   call feedkeys(":set di\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"set dictionary diff diffexpr diffopt digraph directory display', @:)
+  call assert_equal('"set dictionary diff diffanchors diffexpr diffopt digraph directory display', @:)
 
   call feedkeys(":setlocal di\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"setlocal dictionary diff diffexpr diffopt digraph directory display', @:)
+  call assert_equal('"setlocal dictionary diff diffanchors diffexpr diffopt digraph directory display', @:)
 
   call feedkeys(":setglobal di\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"setglobal dictionary diff diffexpr diffopt digraph directory display', @:)
+  call assert_equal('"setglobal dictionary diff diffanchors diffexpr diffopt digraph directory display', @:)
 
   " Expand boolean options. When doing :set no<Tab> Vim prefixes the option
   " names with "no".
@@ -313,11 +336,18 @@ func Test_set_completion()
   call feedkeys(":set suffixes:\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set suffixes:.bak,~,.o,.h,.info,.swp,.obj', @:)
 
-  " Expand key codes.
+  " " Expand key codes.
   " call feedkeys(":set <H\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"set <Help> <Home>', @:)
-
-  " Expand terminal options.
+  " " <BackSpace> (alt name) and <BS> should both show up in auto-complete
+  " call feedkeys(":set <B\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set <BackSpace> <Bar> <BS> <Bslash>', @:)
+  " " <ScrollWheelDown> has alt name <MouseUp> but it should not show up here
+  " " nor show up as duplicates
+  " call feedkeys(":set <ScrollWheel\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set <ScrollWheelDown> <ScrollWheelLeft> <ScrollWheelRight> <ScrollWheelUp>', @:)
+  "
+  " " Expand terminal options.
   " call feedkeys(":set t_A\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"set t_AB t_AF t_AU t_AL', @:)
   " call assert_fails('call feedkeys(":set <t_afoo>=\<C-A>\<CR>", "xt")', 'E474:')
@@ -333,7 +363,7 @@ func Test_set_completion()
   call assert_match(' ./samples/.* ./summarize.vim', @:)
 
   call feedkeys(":set tags=./\\\\ dif\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"set tags=./\\ diff diffexpr diffopt', @:)
+  call assert_equal('"set tags=./\\ diff diffanchors diffexpr diffopt', @:)
 
   " Expand files with spaces/commas in them. Make sure we delimit correctly.
   "
@@ -513,6 +543,7 @@ func Test_set_completion_string_values()
   endif
   call assert_equal('.', getcompletion('set complete=', 'cmdline')[1])
   call assert_equal('menu', getcompletion('set completeopt=', 'cmdline')[1])
+  " call assert_equal('keyword', getcompletion('set completefuzzycollect=', 'cmdline')[0])
   if exists('+completeslash')
     call assert_equal('backslash', getcompletion('set completeslash=', 'cmdline')[1])
   endif
@@ -589,6 +620,7 @@ func Test_set_completion_string_values()
 
   " Other string options that queries the system rather than fixed enum names
   call assert_equal(['all', 'BufAdd'], getcompletion('set eventignore=', 'cmdline')[0:1])
+  call assert_equal(['-BufAdd', '-BufCreate'], getcompletion('set eventignore=all,-', 'cmdline')[0:1])
   call assert_equal(['WinLeave', 'WinResized', 'WinScrolled'], getcompletion('set eiw=', 'cmdline')[-3:-1])
   call assert_equal('latin1', getcompletion('set fileencodings=', 'cmdline')[1])
   " call assert_equal('top', getcompletion('set printoptions=', 'cmdline')[0])
@@ -596,7 +628,9 @@ func Test_set_completion_string_values()
 
   call assert_equal('eol', getcompletion('set listchars+=', 'cmdline')[0])
   call assert_equal(['multispace', 'leadmultispace'], getcompletion('set listchars+=', 'cmdline')[-2:])
+  call assert_equal(['tab', 'leadtab'], getcompletion('set listchars+=', 'cmdline')[5:6])
   call assert_equal('eol', getcompletion('setl listchars+=', 'cmdline')[0])
+  call assert_equal(['tab', 'leadtab'], getcompletion('setl listchars+=', 'cmdline')[5:6])
   call assert_equal(['multispace', 'leadmultispace'], getcompletion('setl listchars+=', 'cmdline')[-2:])
   call assert_equal('stl', getcompletion('set fillchars+=', 'cmdline')[0])
   call assert_equal('stl', getcompletion('setl fillchars+=', 'cmdline')[0])
@@ -621,10 +655,11 @@ func Test_set_completion_string_values()
   " call assert_equal([], getcompletion('set completepopup=bogusname:', 'cmdline'))
   " set previewpopup& completepopup&
 
-  " diffopt: special handling of algorithm:<alg_list>
+  " diffopt: special handling of algorithm:<alg_list> and inline:<inline_type>
   call assert_equal('filler', getcompletion('set diffopt+=', 'cmdline')[0])
   call assert_equal([], getcompletion('set diffopt+=iblank,foldcolumn:', 'cmdline'))
   call assert_equal('patience', getcompletion('set diffopt+=iblank,algorithm:pat*', 'cmdline')[0])
+  call assert_equal('char', getcompletion('set diffopt+=iwhite,inline:ch*', 'cmdline')[0])
 
   " highlight: special parsing, including auto-completing highlight groups
   " after ':'
@@ -647,7 +682,7 @@ func Test_set_completion_string_values()
   " call assert_equal("\"set hl=8bi i", @:)
 
   " messagesopt
-  call assert_equal(['history:', 'hit-enter', 'wait:'],
+  call assert_equal(['history:', 'hit-enter', 'progress:', 'wait:'],
         \ getcompletion('set messagesopt+=', 'cmdline')->sort())
 
   "
@@ -713,8 +748,8 @@ func Test_set_completion_string_values()
   set diffopt=
   call assert_equal([], getcompletion('set diffopt-=', 'cmdline'))
   " Test all possible values
-  call assert_equal(['filler', 'context:', 'iblank', 'icase', 'iwhite', 'iwhiteall', 'iwhiteeol', 'horizontal',
-        \ 'vertical', 'closeoff', 'hiddenoff', 'foldcolumn:', 'followwrap', 'internal', 'indent-heuristic', 'algorithm:', 'linematch:'],
+  call assert_equal(['filler', 'anchor', 'context:', 'iblank', 'icase', 'iwhite', 'iwhiteall', 'iwhiteeol', 'horizontal',
+        \ 'vertical', 'closeoff', 'hiddenoff', 'foldcolumn:', 'followwrap', 'internal', 'indent-heuristic', 'algorithm:', 'inline:', 'linematch:'],
         \ getcompletion('set diffopt=', 'cmdline'))
   set diffopt&
 
@@ -833,7 +868,7 @@ func Test_set_option_errors()
   call assert_fails('set rulerformat=%15(%%', 'E542:')
 
   " Test for 'statusline' errors
-  call assert_fails('set statusline=%$', 'E539:')
+  call assert_fails('set statusline=%^', 'E539:')  " Nvim: supports %$
   call assert_fails('set statusline=%{', 'E540:')
   call assert_fails('set statusline=%{%', 'E540:')
   call assert_fails('set statusline=%{%}', 'E539:')
@@ -841,7 +876,7 @@ func Test_set_option_errors()
   call assert_fails('set statusline=%)', 'E542:')
 
   " Test for 'tabline' errors
-  call assert_fails('set tabline=%$', 'E539:')
+  call assert_fails('set tabline=%^', 'E539:')  " Nvim: supports %$
   call assert_fails('set tabline=%{', 'E540:')
   call assert_fails('set tabline=%{%', 'E540:')
   call assert_fails('set tabline=%{%}', 'E539:')
@@ -1128,11 +1163,14 @@ func Test_backupskip()
     call setenv(var, '/duplicate/path')
   endfor
 
+  " unset $HOME, so that it won't try to read init files
+  let saveenv['HOME'] = getenv("HOME")
+  call setenv('HOME', v:null)
   exe 'silent !' . cmd
   call assert_equal(['errors:'], readfile('Xtestout'))
 
   " restore environment variables
-  for var in ['TMPDIR', 'TMP', 'TEMP']
+  for var in ['TMPDIR', 'TMP', 'TEMP', 'HOME']
     call setenv(var, saveenv[var])
   endfor
 
@@ -1626,27 +1664,36 @@ endfunc
 
 " Test for setting boolean global-local option value
 func Test_set_boolean_global_local_option()
-  setglobal autoread
-  setlocal noautoread
+  CheckUnix
+
+  setglobal autoread fsync
+  setlocal noautoread nofsync
   call assert_equal(1, &g:autoread)
   call assert_equal(0, &l:autoread)
   call assert_equal(0, &autoread)
+  call assert_equal(1, &g:fsync)
+  call assert_equal(0, &l:fsync)
+  call assert_equal(0, &fsync)
 
   " :setlocal {option}< set the effective value of {option} to its global value.
-  "set autoread<
-  setlocal autoread<
+  "set autoread< fsync<
+  setlocal autoread< fsync<
   call assert_equal(1, &l:autoread)
   call assert_equal(1, &autoread)
+  call assert_equal(1, &l:fsync)
+  call assert_equal(1, &fsync)
 
   " :set {option}< removes the local value, so that the global value will be used.
-  setglobal noautoread
-  setlocal autoread
-  "setlocal autoread<
-  set autoread<
+  setglobal noautoread nofsync
+  setlocal autoread fsync
+  "setlocal autoread< fsync<
+  set autoread< fsync<
   call assert_equal(-1, &l:autoread)
   call assert_equal(0, &autoread)
+  call assert_equal(-1, &l:fsync)
+  call assert_equal(0, &fsync)
 
-  set autoread&
+  set autoread& fsync&
 endfunc
 
 func Test_set_in_sandbox()
@@ -2235,7 +2282,7 @@ func Test_VIM_POSIX()
     qall
   [CODE]
   if RunVim([], after, '')
-    call assert_equal(['aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\.;',
+    call assert_equal(['aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\.;~',
           \            'AS'], readfile('X_VIM_POSIX'))
   endif
 
@@ -2497,8 +2544,8 @@ func Test_string_option_revert_on_failure()
         \ ['completeopt', 'preview', 'a123'],
         "\ ['completepopup', 'width:20', 'border'],
         \ ['concealcursor', 'v', 'xyz'],
-        "\ ['cpoptions', 'HJ', '~'],
-        \ ['cpoptions', 'J', '~'],
+        "\ ['cpoptions', 'HJ', 'Q'],
+        \ ['cpoptions', 'J', 'Q'],
         "\ ['cryptmethod', 'zip', 'a123'],
         \ ['cursorlineopt', 'screenline', 'a123'],
         \ ['debug', 'throw', 'a123'],
@@ -2660,7 +2707,7 @@ func GetGlobalLocalWindowOptions()
   " Filter for global or local to window
   v/^'.*'.*\n.*global or local to window |global-local/d
   " get option value and type
-  sil %s/^'\([^']*\)'.*'\s\+\(\w\+\)\s\+(default \%(\(".*"\|\d\+\|empty\)\).*/\1 \2 \3/g
+  sil %s/^'\([^']*\)'.*'\s\+\(\w\+\)\s\+(default \%(\(".*"\|\d\+\|empty\|is very long\)\).*/\1 \2 \3/g
   " sil %s/empty/""/g
   " split the result
   " let result=getline(1,'$')->map({_, val -> split(val, ' ')})
@@ -2675,6 +2722,10 @@ func Test_set_option_window_global_local_all()
   let optionlist = GetGlobalLocalWindowOptions()
   for [opt, type, default] in optionlist
     let _old = eval('&g:' .. opt)
+    if opt == 'statusline'
+      " parsed default value is "is very long" as it is a doc string, not actual value
+      let default = "\"" . _old . "\""
+    endif
     if type == 'string'
       if opt == 'fillchars'
         exe 'setl ' .. opt .. '=vert:+'
@@ -2861,6 +2912,18 @@ func Test_set_missing_options()
   set w300=23
   set w1200=23
   set w9600=23
+endfunc
+
+func Test_showcmd()
+  throw 'Skipped: Nvim does not support support Vi-compatible mode'
+  " in no-cp mode, 'showcmd' is enabled
+  let _cp=&cp
+  call assert_equal(1, &showcmd)
+  set cp
+  call assert_equal(0, &showcmd)
+  set nocp
+  call assert_equal(1, &showcmd)
+  let &cp = _cp
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

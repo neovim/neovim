@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2026 Jan 19
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
@@ -84,7 +84,7 @@ an <silent> 9999.40 &Help.&Find\.\.\.	:call <SID>Helpfind()<CR>
 an 9999.45 &Help.-sep1-			<Nop>
 an 9999.50 &Help.&Credits		:help credits<CR>
 an 9999.60 &Help.Co&pying		:help copying<CR>
-an 9999.70 &Help.&Sponsor/Register	:help sponsor<CR>
+an 9999.70 &Help.&Sponsor		:help sponsor<CR>
 an 9999.70 &Help.O&rphans		:help kcc<CR>
 an 9999.75 &Help.-sep2-			<Nop>
 an 9999.80 &Help.&Version		:version<CR>
@@ -98,7 +98,7 @@ if exists(':tlmenu')
   tlnoremenu 9999.45 &Help.-sep1-			<Nop>
   tlnoremenu 9999.50 &Help.&Credits			<C-W>:help credits<CR>
   tlnoremenu 9999.60 &Help.Co&pying			<C-W>:help copying<CR>
-  tlnoremenu 9999.70 &Help.&Sponsor/Register		<C-W>:help sponsor<CR>
+  tlnoremenu 9999.70 &Help.&Sponsor			<C-W>:help sponsor<CR>
   tlnoremenu 9999.70 &Help.O&rphans			<C-W>:help kcc<CR>
   tlnoremenu 9999.75 &Help.-sep2-			<Nop>
   tlnoremenu 9999.80 &Help.&Version			<C-W>:version<CR>
@@ -171,7 +171,7 @@ vnoremenu 20.340 &Edit.Cu&t<Tab>"+x		"+x
 vnoremenu 20.350 &Edit.&Copy<Tab>"+y		"+y
 cnoremenu 20.350 &Edit.&Copy<Tab>"+y		<C-Y>
 if exists(':tlmenu')
-  tlnoremenu 20.350 &Edit.&Copy<Tab>"+y 	<C-W>:<C-Y><CR>
+  tlnoremenu 20.350 &Edit.&Copy<Tab>"+y		<C-W>:<C-Y><CR>
 endif
 nnoremenu 20.360 &Edit.&Paste<Tab>"+gP		"+gP
 cnoremenu	 &Edit.&Paste<Tab>"+gP		<C-R>+
@@ -744,19 +744,25 @@ func s:BMShow(...)
 
   " Remove old menu, if it exists; keep one entry to avoid a torn off menu to
   " disappear.  Use try/catch to avoid setting v:errmsg
-  try | unmenu &Buffers | catch | endtry
-  exe 'noremenu ' . g:bmenu_priority . ".1 &Buffers.Dummy l"
-  try | unmenu! &Buffers | catch | endtry
+  try
+    unmenu &Buffers
+  catch
+  endtry
+  exe 'noremenu ' .. g:bmenu_priority .. ".1 &Buffers.Dummy l"
+  try
+    unmenu! &Buffers
+  catch
+  endtry
 
   " create new menu; set 'cpo' to include the <CR>
   let cpo_save = &cpo
   set cpo&vim
-  exe 'an <silent> ' . g:bmenu_priority . ".2 &Buffers.&Refresh\\ menu :call <SID>BMShow()<CR>"
-  exe 'an ' . g:bmenu_priority . ".4 &Buffers.&Delete :confirm bd<CR>"
-  exe 'an ' . g:bmenu_priority . ".6 &Buffers.&Alternate :confirm b #<CR>"
-  exe 'an ' . g:bmenu_priority . ".7 &Buffers.&Next :confirm bnext<CR>"
-  exe 'an ' . g:bmenu_priority . ".8 &Buffers.&Previous :confirm bprev<CR>"
-  exe 'an ' . g:bmenu_priority . ".9 &Buffers.-SEP- :"
+  exe 'an <silent> ' .. g:bmenu_priority .. ".2 &Buffers.&Refresh\\ menu :call <SID>BMShow()<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".4 &Buffers.&Delete :confirm bd<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".6 &Buffers.&Alternate :confirm b #<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".7 &Buffers.&Next :confirm bnext<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".8 &Buffers.&Previous :confirm bprev<CR>"
+  exe 'an ' .. g:bmenu_priority .. ".9 &Buffers.-SEP- :"
   let &cpo = cpo_save
   unmenu &Buffers.Dummy
 
@@ -790,8 +796,21 @@ func s:BMShow(...)
 endfunc
 
 func s:BMHash(name)
-  " Make name all upper case, so that chars are between 32 and 96
-  let nm = substitute(a:name, ".*", '\U\0', "")
+  " Create a sortable numeric hash of the name. This number has to be within
+  " the bounds of a signed 32-bit integer as this is what Vim GUI uses
+  " internally for the index.
+
+  " Make name all upper case, so that alphanumeric chars are between 32 and 96
+  let nm = toupper(a:name)
+
+  if char2nr(nm->slice(0, 1)) < 32 || char2nr(nm->slice(0, 1)) > 96
+    " We don't have an ASCII character, so just return the raw character value
+    " for first character (clamped to 2^31) and set the high bit to make it
+    " sort after other items. This means only the first character will be
+    " sorted, unfortunately.
+    return or(and(char2nr(nm), 0x7fffffff), 0x40000000)
+  endif
+
   if has("ebcdic")
     " HACK: Replace all non alphabetics with 'Z'
     "       Just to make it work for now.
@@ -800,13 +819,19 @@ func s:BMHash(name)
   else
     let sp = char2nr(' ')
   endif
-  " convert first six chars into a number for sorting:
-  return (char2nr(nm[0]) - sp) * 0x800000 + (char2nr(nm[1]) - sp) * 0x20000 + (char2nr(nm[2]) - sp) * 0x1000 + (char2nr(nm[3]) - sp) * 0x80 + (char2nr(nm[4]) - sp) * 0x20 + (char2nr(nm[5]) - sp)
+  " convert first five chars into a number for sorting by compressing each
+  " char into 5 bits (0-63), to a total of 30 bits. If any character is not
+  " ASCII, it will simply be clamped to prevent overflow.
+  " Nvim: no << operator
+  return (max([0, min([63, char2nr(nm->slice(0, 1)) - sp])]) * 0x1000000) +
+        \ (max([0, min([63, char2nr(nm->slice(1, 2)) - sp])]) * 0x40000) +
+        \ (max([0, min([63, char2nr(nm->slice(2, 3)) - sp])]) * 0x1000) +
+        \ (max([0, min([63, char2nr(nm->slice(3, 4)) - sp])]) * 0x40) +
+        \ max([0, min([63, char2nr(nm->slice(4, 5)) - sp])])
 endfunc
 
 func s:BMHash2(name)
-  let nm = substitute(a:name, ".", '\L\0', "")
-  " Not exactly right for EBCDIC...
+  let nm = tolower(a:name->slice(0, 1))
   if nm[0] < 'a' || nm[0] > 'z'
     return '&others.'
   elseif nm[0] <= 'd'

@@ -30,6 +30,4 @@ typedef struct {
   AdditionalData *additional_data;  ///< Additional entries from ShaDa file.
 } histentry_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cmdhist.h.generated.h"
-#endif
+#include "cmdhist.h.generated.h"

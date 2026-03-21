@@ -25,9 +25,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/shada.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "context.c.generated.h"
-#endif
+#include "context.c.generated.h"
 
 int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs
                | kCtxFuncs);

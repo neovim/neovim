@@ -1266,17 +1266,17 @@ msgstr ""
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
+msgid "E661: No '%s' help for %s"
 msgstr ""
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
+msgid "E149: No help for %s"
 msgstr ""
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
+msgid "Help file \"%s\" not found"
 msgstr ""
 
 #: ../ex_cmds.c:5323
@@ -3817,9 +3817,7 @@ msgid "E325: ATTENTION"
 msgstr ""
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
+msgid "Found a swap file by the name \""
 msgstr ""
 
 #: ../memline.c:3226
@@ -4447,9 +4445,7 @@ msgid ""
 msgstr ""
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
+msgid "shell returned "
 msgstr ""
 
 #: ../os_unix.c:465 ../os_unix.c:471
@@ -5302,12 +5298,12 @@ msgid "E763: Word characters differ between spell files"
 msgstr ""
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
+msgid "No suggestions"
 msgstr ""
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
+msgid "Only %<PRId64> suggestions"
 msgstr ""
 
 #. for when 'cmdheight' > 1

@@ -33,8 +33,8 @@ function M.query(caps, cb)
 
   local id = vim.api.nvim_create_autocmd('TermResponse', {
     nested = true,
-    callback = function(args)
-      local resp = args.data.sequence ---@type string
+    callback = function(ev)
+      local resp = ev.data.sequence ---@type string
       local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
       if k and rest then
         local cap = vim.text.hexdecode(k)
@@ -71,7 +71,7 @@ function M.query(caps, cb)
 
   local query = string.format('\027P+q%s\027\\', table.concat(encoded, ';'))
 
-  io.stdout:write(query)
+  vim.api.nvim_ui_send(query)
 
   timer:start(1000, 0, function()
     -- Delete the autocommand if no response was received

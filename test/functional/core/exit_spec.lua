@@ -58,6 +58,7 @@ end)
 describe(':cquit', function()
   local function test_cq(cmdline, exit_code, redir_msg)
     if redir_msg then
+      n.clear()
       eq(
         redir_msg,
         pcall_err(function()
@@ -66,15 +67,12 @@ describe(':cquit', function()
       )
       poke_eventloop()
       assert_alive()
+      n.check_close()
     else
       local p = n.spawn_wait('--cmd', cmdline)
       eq(exit_code, p.status)
     end
   end
-
-  before_each(function()
-    n.clear()
-  end)
 
   it('exits with non-zero after :cquit', function()
     test_cq('cquit', 1, nil)
@@ -118,5 +116,33 @@ describe(':cquit', function()
       nil,
       'nvim_exec2(), line 1: Vim(cquit):E488: Trailing characters: -1: cquit -1'
     )
+  end)
+end)
+
+describe('no crash after :quit non-last window during exit', function()
+  before_each(function()
+    n.clear()
+  end)
+
+  it('in vim.schedule() callback and when piping to stdin #14379', function()
+    n.fn.system({
+      n.nvim_prog,
+      '-es',
+      '--cmd',
+      "lua vim.schedule(function() vim.cmd('vsplit | quit') end)",
+      '+quit',
+    }, '')
+    eq(0, n.api.nvim_get_vvar('shell_error'))
+  end)
+
+  it('in vim.defer_fn() callback and when piping to stdin #14379', function()
+    n.fn.system({
+      n.nvim_prog,
+      '-es',
+      '--cmd',
+      "lua vim.defer_fn(function() vim.cmd('vsplit | quit') end, 0)",
+      '+quit',
+    }, '')
+    eq(0, n.api.nvim_get_vvar('shell_error'))
   end)
 end)

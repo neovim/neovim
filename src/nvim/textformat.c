@@ -13,6 +13,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
@@ -41,9 +42,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "textformat.c.generated.h"
-#endif
+#include "textformat.c.generated.h"
 
 static bool did_add_space = false;  ///< auto_format() added an extra space
                                     ///< under the cursor
@@ -355,7 +354,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     if (State & VREPLACE_FLAG) {
       // In MODE_VREPLACE state, we will backspace over the text to be
       // wrapped, so save a copy now to put on the next line.
-      saved_text = xstrdup(get_cursor_pos_ptr());
+      saved_text = xstrnsave(get_cursor_pos_ptr(), (size_t)get_cursor_pos_len());
       curwin->w_cursor.col = orig_col;
       saved_text[startcol] = NUL;
 
@@ -547,7 +546,7 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
 
   // Get current line and next line, compare the leaders.
   // The first line has to be saved, only one line can be locked at a time.
-  char *line1 = xstrdup(ml_get(lnum));
+  char *line1 = xstrnsave(ml_get(lnum), (size_t)ml_get_len(lnum));
   for (idx1 = 0; ascii_iswhite(line1[idx1]); idx1++) {}
   char *line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; idx2++) {
@@ -647,6 +646,22 @@ void auto_format(bool trailblank, bool prev_line)
     curwin->w_cursor = pos;
   }
 
+  // Also skip formatting when the user just typed whitespace in the
+  // middle of the line.  Reformatting would join all paragraph lines and
+  // re-wrap, consuming the space at the line break point via
+  // OPENLINE_DELSPACES.  By deferring, the next non-whitespace character
+  // will be inserted adjacent to the space, keeping it protected from
+  // being consumed at a line break.  auto_format() will then reformat
+  // properly on the next keystroke.
+  if (*old != NUL && !trailblank && !wasatend && pos.col > 0
+      && (State & MODE_INSERT)) {
+    char *line = get_cursor_line_ptr();
+    if (WHITECHAR(line[pos.col - 1])) {
+      curwin->w_cursor = pos;
+      return;
+    }
+  }
+
   // With the 'c' flag in 'formatoptions' and 't' missing: only format
   // comments.
   if (has_format_option(FO_WRAP_COMS) && !has_format_option(FO_WRAP)
@@ -734,7 +749,7 @@ void check_auto_format(bool end_insert)
 
 /// Find out textwidth to be used for formatting:
 ///      if 'textwidth' option is set, use it
-///      else if 'wrapmargin' option is set, use curwin->w_width_inner-'wrapmargin'
+///      else if 'wrapmargin' option is set, use curwin->w_view_width-'wrapmargin'
 ///      if invalid value, use 0.
 ///      Set default to window width (maximum 79) for "gq" operator.
 ///
@@ -745,7 +760,7 @@ int comp_textwidth(bool ff)
   if (textwidth == 0 && curbuf->b_p_wm) {
     // The width is the window width minus 'wrapmargin' minus all the
     // things that add to the margin.
-    textwidth = curwin->w_width_inner - (int)curbuf->b_p_wm;
+    textwidth = curwin->w_view_width - (int)curbuf->b_p_wm;
     if (curbuf == cmdwin_buf) {
       textwidth -= 1;
     }
@@ -758,7 +773,7 @@ int comp_textwidth(bool ff)
   }
   textwidth = MAX(textwidth, 0);
   if (ff && textwidth == 0) {
-    textwidth = MIN(curwin->w_width_inner - 1, 79);
+    textwidth = MIN(curwin->w_view_width - 1, 79);
   }
   return textwidth;
 }

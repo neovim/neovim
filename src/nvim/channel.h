@@ -46,10 +46,8 @@ struct Channel {
   bool callback_scheduled;
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "channel.h.generated.h"
-# include "channel.h.inline.generated.h"
-#endif
+#include "channel.h.generated.h"
+#include "channel.h.inline.generated.h"
 
 static inline bool callback_reader_set(CallbackReader reader)
 {

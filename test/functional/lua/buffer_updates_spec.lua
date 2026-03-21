@@ -14,6 +14,8 @@ local feed = n.feed
 local expect_events = t.expect_events
 local write_file = t.write_file
 local dedent = t.dedent
+local matches = t.matches
+local pcall_err = t.pcall_err
 
 local origlines = {
   'original line 1',
@@ -58,7 +60,7 @@ before_each(function()
   end)
 end)
 
-describe('lua buffer event callbacks: on_lines', function()
+describe('lua: nvim_buf_attach on_lines', function()
   local function setup_eventcheck(verify, utf_sizes, lines)
     local lastsize
     api.nvim_buf_set_lines(0, 0, -1, true, lines)
@@ -281,48 +283,6 @@ describe('lua buffer event callbacks: on_lines', function()
     eq(2, api.nvim_win_get_cursor(0)[1])
   end)
 
-  it('does not SEGFAULT when accessing window buffer info in on_detach #14998', function()
-    local code = function()
-      local buf = vim.api.nvim_create_buf(false, false)
-
-      vim.cmd 'split'
-      vim.api.nvim_win_set_buf(0, buf)
-
-      vim.api.nvim_buf_attach(buf, false, {
-        on_detach = function(_, buf0)
-          vim.fn.tabpagebuflist()
-          vim.fn.win_findbuf(buf0)
-        end,
-      })
-    end
-
-    exec_lua(code)
-    command('q!')
-    n.assert_alive()
-
-    exec_lua(code)
-    command('bd!')
-    n.assert_alive()
-  end)
-
-  it('no invalid lnum error for closed memline in on_detach #31251', function()
-    eq(vim.NIL, exec_lua('return _G.did_detach'))
-    exec_lua([[
-      vim.api.nvim_buf_set_lines(0, 0, -1, false, { '' })
-      local bufname = 'buf2'
-      local buf = vim.api.nvim_create_buf(false, true)
-      vim.api.nvim_buf_set_name(buf, bufname)
-      vim.bo[buf].bufhidden = 'wipe'
-      vim.cmd('vertical diffsplit '..bufname)
-      vim.api.nvim_buf_attach(0, false, { on_detach = function()
-        vim.cmd("redraw")
-        _G.did_detach = true
-      end})
-      vim.cmd.bdelete()
-    ]])
-    eq(true, exec_lua('return _G.did_detach'))
-  end)
-
   it('#12718 lnume', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { '1', '2', '3' })
     exec_lua(function()
@@ -419,6 +379,98 @@ describe('lua buffer event callbacks: on_lines', function()
 
     feed('i<Tab>')
     eq({ '\ta' }, exec_lua('return _G.res[#_G.res]'))
+  end)
+
+  it('quickfix buffer send change', function()
+    command('copen')
+    exec_lua(function()
+      vim.api.nvim_buf_attach(vim.api.nvim_get_current_buf(), false, {
+        on_lines = function(...)
+          vim.g.qf_on_lines = { ... }
+        end,
+        on_bytes = function(...)
+          vim.g.qf_on_bytes = { ... }
+        end,
+      })
+    end)
+    command('caddexpr "foo"')
+    eq({ 'bytes', 2, 2, 0, 0, 0, 0, 0, 0, 0, 6, 6 }, api.nvim_get_var('qf_on_bytes'))
+    eq({ 'lines', 2, 3, 0, 1, 1, 1 }, api.nvim_get_var('qf_on_lines'))
+
+    command('caddexpr "bar"')
+    eq({ 'bytes', 2, 3, 0, 6, 6, 0, 0, 0, 1, 6, 6 }, api.nvim_get_var('qf_on_bytes'))
+    eq({ 'lines', 2, 4, 1, 1, 2, 0 }, api.nvim_get_var('qf_on_lines'))
+
+    command('caddexpr ["line1", "line2", "line3"]')
+    eq({ 'bytes', 2, 4, 1, 6, 13, 0, 0, 0, 3, 8, 26 }, api.nvim_get_var('qf_on_bytes'))
+    eq({ 'lines', 2, 5, 2, 2, 5, 0 }, api.nvim_get_var('qf_on_lines'))
+
+    command('cexpr "replace"')
+    eq({ 'bytes', 2, 5, 0, 0, 0, 4, 0, 40, 0, 10, 10 }, api.nvim_get_var('qf_on_bytes'))
+    eq({ 'lines', 2, 6, 0, 5, 1, 42 }, api.nvim_get_var('qf_on_lines'))
+  end)
+
+  it('single-line visual block insert should not trigger extra on_lines #22009', function()
+    exec_lua(function()
+      _G.res = {}
+      vim.api.nvim_buf_attach(0, false, {
+        on_lines = function(_, bufnr, _, first, last, last_updated, _, _, _)
+          _G.res = { bufnr, first, last, last_updated }
+        end,
+      })
+    end)
+    feed('<C-v>I <ESC>')
+    eq({ api.nvim_get_current_buf(), 0, 1, 1 }, exec_lua('return _G.res'))
+  end)
+
+  it('prompt buffer', function()
+    local check_events = setup_eventcheck(false, nil, {})
+    api.nvim_set_option_value('buftype', 'prompt', {})
+    feed('i')
+    check_events {
+      { 'test1', 'lines', 1, 4, 0, 1, 1, 1 },
+    }
+    fn.prompt_setprompt('', 'foo > ')
+    check_events {
+      { 'test1', 'lines', 1, 5, 0, 1, 1, 3 },
+    }
+    feed('hello')
+    check_events {
+      { 'test1', 'lines', 1, 6, 0, 1, 1, 7 },
+    }
+    fn.prompt_setprompt('', 'super-foo > ')
+    check_events {
+      { 'test1', 'lines', 1, 7, 0, 1, 1, 12 },
+    }
+    eq({ 'super-foo > hello' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    -- Do this in the same event.
+    exec_lua(function()
+      vim.fn.setpos("':", { 0, 1, 999, 0 })
+      vim.fn.prompt_setprompt('', 'discard > ')
+    end)
+    check_events {
+      { 'test1', 'lines', 1, 8, 0, 1, 1, 18 },
+    }
+    eq({ 'discard > ' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    feed('hello<S-CR>there')
+    check_events {
+      { 'test1', 'lines', 1, 9, 0, 1, 1, 11 },
+      { 'test1', 'lines', 1, 10, 0, 1, 2, 16 },
+      { 'test1', 'lines', 1, 11, 1, 2, 2, 1 },
+    }
+    fn.prompt_setprompt('', 'foo > ')
+    check_events {
+      { 'test1', 'lines', 1, 12, 0, 1, 1, 16 },
+    }
+    eq({ 'foo > hello', 'there' }, api.nvim_buf_get_lines(0, 0, -1, true))
+
+    -- init_prompt uses appended_lines_mark when appending to fix prompt.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'hi' })
+    eq({ 'hi', 'foo > ' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    check_events {
+      { 'test1', 'lines', 1, 13, 0, 2, 1, 18 },
+      { 'test1', 'lines', 1, 14, 1, 1, 2, 0 },
+    }
   end)
 end)
 
@@ -1206,6 +1258,255 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it('on_bytes sees modified buffer after substitute', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'Hello' })
+
+      local buffer_lines = exec_lua(function()
+        local lines
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function()
+            lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+          end,
+        })
+        vim.cmd('s/llo/y/')
+        return lines
+      end)
+
+      -- Make sure on_bytes is called after the buffer is modified.
+      eq({ 'Hey' }, buffer_lines)
+    end)
+
+    it('on_bytes called multiple times for multiple substitutions on same line', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'Hello Hello' })
+
+      local call_count, args = exec_lua(function()
+        local count = 0
+        local args = {}
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function(
+            _,
+            _,
+            _,
+            start_row,
+            start_col,
+            start_byte,
+            old_row,
+            old_col,
+            old_byte,
+            new_row,
+            new_col,
+            new_byte
+          )
+            count = count + 1
+            table.insert(args, {
+              start_row = start_row,
+              start_col = start_col,
+              start_byte = start_byte,
+              old_row = old_row,
+              old_col = old_col,
+              old_byte = old_byte,
+              new_row = new_row,
+              new_col = new_col,
+              new_byte = new_byte,
+              buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, true),
+            })
+          end,
+        })
+        vim.cmd('s/llo/y/g')
+        return count, args
+      end)
+
+      -- Should be called twice, once for each match.
+      eq(2, call_count)
+
+      -- First match: "llo" at column 2 -> "y".
+      eq({
+        start_row = 0,
+        start_col = 2,
+        start_byte = 2,
+        old_row = 0,
+        old_col = 3,
+        old_byte = 3,
+        new_row = 0,
+        new_col = 1,
+        new_byte = 1,
+        buffer_lines = { 'Hey Hey' },
+      }, args[1])
+
+      -- Second match: "llo" at column 8 (in original) -> column 6 (after first substitution).
+      eq({
+        start_row = 0,
+        start_col = 6, -- Adjusted position after first substitution.
+        start_byte = 6,
+        old_row = 0,
+        old_col = 3,
+        old_byte = 3,
+        new_row = 0,
+        new_col = 1,
+        new_byte = 1,
+        buffer_lines = { 'Hey Hey' },
+      }, args[2])
+    end)
+
+    it('on_bytes called correctly for multi-line substitutions', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'baz qux' })
+
+      local call_count, args = exec_lua(function()
+        local count = 0
+        local args = {}
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function(
+            _,
+            _,
+            _,
+            start_row,
+            start_col,
+            start_byte,
+            old_row,
+            old_col,
+            old_byte,
+            new_row,
+            new_col,
+            new_byte
+          )
+            count = count + 1
+            table.insert(args, {
+              start_row = start_row,
+              start_col = start_col,
+              start_byte = start_byte,
+              old_row = old_row,
+              old_col = old_col,
+              old_byte = old_byte,
+              new_row = new_row,
+              new_col = new_col,
+              new_byte = new_byte,
+              buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, true),
+            })
+          end,
+        })
+        vim.cmd('s/bar/X\\rY/')
+        return count, args
+      end)
+
+      -- Should be called once for the substitution.
+      eq(1, call_count)
+
+      eq({
+        start_row = 0,
+        start_col = 4,
+        start_byte = 4,
+        old_row = 0,
+        old_col = 3,
+        old_byte = 3,
+        new_row = 1,
+        new_col = 1,
+        new_byte = 3,
+        buffer_lines = { 'foo X', 'Y', 'baz qux' },
+      }, args[1])
+    end)
+
+    it('on_bytes called multiple times for global substitution creating multiple lines', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar baz' })
+
+      local call_count, args = exec_lua(function()
+        local count = 0
+        local args = {}
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function(
+            _,
+            _,
+            _,
+            start_row,
+            start_col,
+            start_byte,
+            old_row,
+            old_col,
+            old_byte,
+            new_row,
+            new_col,
+            new_byte
+          )
+            count = count + 1
+            table.insert(args, {
+              start_row = start_row,
+              start_col = start_col,
+              start_byte = start_byte,
+              old_row = old_row,
+              old_col = old_col,
+              old_byte = old_byte,
+              new_row = new_row,
+              new_col = new_col,
+              new_byte = new_byte,
+              buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, true),
+            })
+          end,
+        })
+        -- Global substitution with newlines in replacement.
+        vim.cmd([[s/ /\r/g]])
+        return count, args
+      end)
+
+      -- Should be called once per space replacement.
+      eq(2, call_count)
+
+      eq({
+        start_row = 0,
+        start_col = 3,
+        start_byte = 3,
+        old_row = 0,
+        old_col = 1,
+        old_byte = 1,
+        new_row = 1,
+        new_col = 0,
+        new_byte = 1,
+        buffer_lines = { 'foo', 'bar', 'baz' },
+      }, args[1])
+
+      eq({
+        start_row = 1,
+        start_col = 3,
+        start_byte = 7,
+        old_row = 0,
+        old_col = 1,
+        old_byte = 1,
+        new_row = 1,
+        new_col = 0,
+        new_byte = 1,
+        buffer_lines = { 'foo', 'bar', 'baz' },
+      }, args[2])
+    end)
+
+    it(
+      'no buffer update event is emitted while editing substitute command, only after confirmation',
+      function()
+        api.nvim_buf_set_lines(0, 0, -1, true, { 'Hello world', 'Hello Neovim' })
+
+        exec_lua(function()
+          _G.num_buffer_updates = 0
+          vim.api.nvim_buf_attach(0, false, {
+            on_bytes = function()
+              _G.num_buffer_updates = _G.num_buffer_updates + 1
+            end,
+          })
+        end)
+
+        -- Start typing the substitute command - no events should be emitted yet.
+        feed(':%s/Hello/Hi')
+        eq(0, exec_lua('return _G.num_buffer_updates'))
+
+        -- Continue editing the command - still no events.
+        feed('<BS><BS>Hey')
+        eq(0, exec_lua('return _G.num_buffer_updates'))
+
+        -- After confirming the substitution, two events should be emitted (one per line).
+        feed('<CR>')
+        eq(2, exec_lua('return _G.num_buffer_updates'))
+
+        -- Verify the buffer was actually modified.
+        eq({ 'Hey world', 'Hey Neovim' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      end
+    )
+
     it('flushes delbytes on join', function()
       local check_events = setup_eventcheck(verify, { 'AAA', 'BBB', 'CCC' })
 
@@ -1325,6 +1626,48 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { 'test1', 'bytes', 1, 6, 2, 0, 6, 0, 0, 0, 1, 0, 1 },
         { 'test1', 'bytes', 1, 7, 2, 0, 6, 0, 0, 0, 0, 2, 2 },
       }
+      fn.prompt_setprompt('', 'foo > ')
+      check_events {
+        { 'test1', 'bytes', 1, 8, 2, 0, 6, 0, 2, 2, 0, 6, 6 },
+      }
+      feed('hello')
+      check_events {
+        { 'test1', 'bytes', 1, 9, 2, 6, 12, 0, 0, 0, 0, 5, 5 },
+      }
+      fn.prompt_setprompt('', 'uber-foo > ')
+      check_events {
+        { 'test1', 'bytes', 1, 10, 2, 0, 6, 0, 6, 6, 0, 11, 11 },
+      }
+      eq({ '% ', '% ', 'uber-foo > hello' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      -- Do this in the same event.
+      exec_lua(function()
+        vim.fn.setpos("':", { 0, vim.fn.line('.'), 999, 0 })
+        vim.fn.prompt_setprompt('', 'discard > ')
+      end)
+      check_events {
+        { 'test1', 'bytes', 1, 11, 2, 0, 6, 0, 16, 16, 0, 10, 10 },
+      }
+      eq({ '% ', '% ', 'discard > ' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      feed('sup<S-CR>dood')
+      check_events {
+        { 'test1', 'bytes', 1, 12, 2, 10, 16, 0, 0, 0, 0, 3, 3 },
+        { 'test1', 'bytes', 1, 13, 2, 13, 19, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 14, 3, 0, 20, 0, 0, 0, 0, 4, 4 },
+      }
+      eq({ '% ', '% ', 'discard > sup', 'dood' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      fn.prompt_setprompt('', 'cool > ')
+      check_events {
+        { 'test1', 'bytes', 1, 15, 2, 0, 6, 0, 10, 10, 0, 7, 7 },
+      }
+      eq({ '% ', '% ', 'cool > sup', 'dood' }, api.nvim_buf_get_lines(0, 0, -1, true))
+
+      -- init_prompt uses appended_lines_mark when appending to fix prompt.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'hi' })
+      eq({ 'hi', 'cool > ' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      check_events {
+        { 'test1', 'bytes', 1, 16, 0, 0, 0, 4, 0, 22, 1, 0, 3 },
+        { 'test1', 'bytes', 1, 17, 1, 0, 3, 0, 0, 0, 1, 0, 8 },
+      }
     end)
 
     local function test_lockmarks(mode)
@@ -1383,4 +1726,181 @@ describe('lua: nvim_buf_attach on_bytes', function()
   describe('(without verify) handles', function()
     do_both(false)
   end)
+end)
+
+describe('nvim_buf_attach on_detach', function()
+  it('does not SEGFAULT when accessing window buffer info #14998', function()
+    local code = function()
+      local buf = vim.api.nvim_create_buf(false, false)
+
+      vim.cmd 'split'
+      vim.api.nvim_win_set_buf(0, buf)
+
+      vim.api.nvim_buf_attach(buf, false, {
+        on_detach = function(_, buf0)
+          vim.fn.tabpagebuflist()
+          vim.fn.win_findbuf(buf0)
+        end,
+      })
+    end
+
+    exec_lua(code)
+    command('q!')
+    n.assert_alive()
+
+    exec_lua(code)
+    command('bd!')
+    n.assert_alive()
+  end)
+
+  it('no invalid lnum error for closed memline #31251', function()
+    eq(vim.NIL, exec_lua('return _G.did_detach'))
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { '' })
+      local bufname = 'buf2'
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_name(buf, bufname)
+      vim.bo[buf].bufhidden = 'wipe'
+      vim.cmd('vertical diffsplit ' .. bufname)
+      vim.api.nvim_buf_attach(0, false, {
+        on_detach = function()
+          vim.cmd('redraw')
+          _G.did_detach = true
+        end,
+      })
+      vim.cmd.bdelete()
+    end)
+    eq(true, exec_lua('return _G.did_detach'))
+  end)
+
+  it('called before buf_freeall autocommands', function()
+    exec_lua(function()
+      vim.api.nvim_create_autocmd({ 'BufUnload', 'BufDelete', 'BufWipeout' }, {
+        callback = function(ev)
+          table.insert(
+            _G.events,
+            ('%s: %d %s'):format(ev.event, ev.buf, tostring(vim.api.nvim_buf_is_loaded(ev.buf)))
+          )
+        end,
+      })
+      function _G.on_detach(_, b)
+        table.insert(
+          _G.events,
+          ('on_detach: %d %s'):format(b, tostring(vim.api.nvim_buf_is_loaded(b)))
+        )
+      end
+      _G.events = {}
+      vim.cmd 'new'
+      vim.bo.bufhidden = 'wipe'
+      vim.api.nvim_buf_attach(0, false, { on_detach = _G.on_detach })
+      vim.cmd 'quit!'
+    end)
+
+    eq(
+      { 'on_detach: 2 true', 'BufUnload: 2 true', 'BufDelete: 2 true', 'BufWipeout: 2 true' },
+      exec_lua('return _G.events')
+    )
+    eq(false, api.nvim_buf_is_valid(2))
+
+    exec_lua(function()
+      _G.events = {}
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_attach(buf, false, { on_detach = _G.on_detach })
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end)
+
+    -- Was unlisted, so no BufDelete.
+    eq(
+      { 'on_detach: 3 true', 'BufUnload: 3 true', 'BufWipeout: 3 true' },
+      exec_lua('return _G.events')
+    )
+    eq(false, api.nvim_buf_is_valid(3))
+
+    exec_lua(function()
+      _G.events = {}
+      vim.api.nvim_buf_attach(1, false, { on_detach = _G.on_detach })
+      vim.api.nvim_create_autocmd('BufUnload', {
+        buffer = 1,
+        once = true,
+        callback = function()
+          vim.api.nvim_buf_attach(1, false, {
+            on_detach = function(...)
+              vim.fn.bufload(1) -- Leaks the memfile it were to run inside free_buffer_stuff.
+              return _G.on_detach(...)
+            end,
+          })
+          table.insert(_G.events, 'local BufUnload')
+        end,
+      })
+      vim.cmd 'edit asdf' -- Reuses buffer 1.
+    end)
+
+    -- on_detach shouldn't run after autocommands when reusing a buffer (in free_buffer_stuff), even
+    -- if those autocommands registered it, as curbuf may be in a semi-unloaded state at that point.
+    eq({
+      'on_detach: 1 true',
+      'BufUnload: 1 true',
+      'local BufUnload',
+      'BufDelete: 1 true',
+      'BufWipeout: 1 true',
+    }, exec_lua('return _G.events'))
+
+    exec_lua(function()
+      _G.events = {}
+      vim.api.nvim_buf_attach(0, false, { on_detach = _G.on_detach })
+      vim.cmd 'edit'
+    end)
+
+    -- Re-edit buffer; on_detach is called.
+    eq({ 'on_detach: 1 true', 'BufUnload: 1 true' }, exec_lua('return _G.events'))
+    eq(true, api.nvim_buf_is_valid(1))
+
+    exec_lua(function()
+      vim.cmd '%bwipeout!'
+      vim.bo.modified = true
+      _G.events = {}
+      vim.api.nvim_buf_attach(0, false, { on_detach = _G.on_detach })
+      vim.api.nvim_buf_delete(0, { force = true })
+    end)
+
+    -- on_detach must still be first when wiping the last buffer if it's listed and non-reusable.
+    -- Previously: BufUnload → BufDelete → on_detach → BufWipeout.
+    eq(
+      { 'on_detach: 4 true', 'BufUnload: 4 true', 'BufDelete: 4 true', 'BufWipeout: 4 false' },
+      exec_lua('return _G.events')
+    )
+  end)
+
+  it('disallows splitting', function()
+    command('new | setlocal bufhidden=wipe')
+    local buf = api.nvim_get_current_buf()
+    exec_lua(function()
+      vim.api.nvim_buf_attach(0, false, {
+        on_detach = function()
+          -- Used to allow opening more views into a closing buffer, resulting in open windows to an
+          -- unloaded buffer.
+          vim.cmd [=[execute "normal! \<C-W>s"]=]
+        end,
+      })
+    end)
+    matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit!'))
+    eq({}, fn.win_findbuf(buf))
+    eq(false, api.nvim_buf_is_valid(buf))
+  end)
+end)
+
+it('nvim_buf_attach from buf_freeall autocommands does not leak', function()
+  exec_lua(function()
+    local b = vim.api.nvim_create_buf(true, true)
+    vim.api.nvim_create_autocmd('BufWipeout', {
+      buffer = b,
+      once = true,
+      callback = function()
+        vim.api.nvim_buf_attach(b, false, {})
+        _G.autocmd_fired = true
+      end,
+    })
+    vim.api.nvim_buf_delete(b, { force = true })
+  end)
+  eq(true, exec_lua('return _G.autocmd_fired'))
 end)

@@ -3539,18 +3539,18 @@ msgstr "E478: 不要慌！"
 
 #: ../help.c:120
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: 抱歉，没有 '%s' 的 %s 的说明"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: 没有 '%s' 的 %s 的说明"
 
 #: ../help.c:122
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: 抱歉，没有 %s 的说明"
+msgid "E149: No help for %s"
+msgstr "E149: 没有 %s 的说明"
 
 #: ../help.c:154
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "抱歉，找不到帮助文件 \"%s\""
+msgid "Help file \"%s\" not found"
+msgstr "找不到帮助文件 \"%s\""
 
 #: ../help.c:900 ../help.c:1094
 #, c-format
@@ -4741,12 +4741,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: 注意"
 
 #: ../memline.c:3073
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"发现交换文件 \""
+msgid "Found a swap file by the name \""
+msgstr "发现交换文件 \""
 
 #: ../memline.c:3077
 msgid "While opening file \""
@@ -5339,12 +5335,8 @@ msgid "Vim: Error reading input, exiting...\n"
 msgstr "Vim：读取输入时出错，正在退出……\n"
 
 #: ../os/shell.c:696
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Shell 返回了 "
+msgid "shell returned "
+msgstr "Shell 返回了 "
 
 #: ../os/shell.c:878
 msgid ""
@@ -6578,13 +6570,13 @@ msgid "E783: duplicate char in MAP entry"
 msgstr "E783: MAP 条目中有重复的字符"
 
 #: ../spellsuggest.c:530
-msgid "Sorry, no suggestions"
-msgstr "抱歉，没有建议"
+msgid "No suggestions"
+msgstr "没有建议"
 
 #: ../spellsuggest.c:533
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "抱歉，只有 %<PRId64> 条建议"
+msgid "Only %<PRId64> suggestions"
+msgstr "只有 %<PRId64> 条建议"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -7601,7 +7593,7 @@ msgstr "\" 在索引行上按 <回车> 来跳转到那里。"
 
 #: ../../../runtime/optwin.vim:159
 msgid "\" Hit <Space> on a \"set\" line to refresh it."
-msgstr "\" 在 \"set\" 行上按 <空格> 来刷新。 "
+msgstr "\" 在 \"set\" 行上按 <空格> 来刷新。"
 
 #: ../../../runtime/optwin.vim:228
 msgid "important"

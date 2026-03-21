@@ -2,7 +2,7 @@
 " Language:		tcsh scripts
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Gautam Iyer <gi1242+vim@NoSpam.com> where NoSpam=gmail (Original Author)
-" Last Change:		2021 Oct 15
+" Last Change:		2026 Jan 16
 
 " Description: We break up each statement into a "command" and an "end" part.
 " All groups are either a "command" or part of the "end" of a statement (ie
@@ -129,11 +129,12 @@ syn match tcshExprEnd	contained '\v.*$'hs=e+1 contains=@tcshConditions
 syn match tcshExprEnd	contained '\v.{-};'hs=e	contains=@tcshConditions
 
 " ----- Comments: ----- {{{1
-syn match tcshComment	'#\s.*' contains=tcshTodo,tcshCommentTi,@Spell
-syn match tcshComment	'\v#($|\S.*)' contains=tcshTodo,tcshCommentTi
-syn match tcshSharpBang '^#! .*$'
-syn match tcshCommentTi contained '\v#\s*\u\w*(\s+\u\w*)*:'hs=s+1 contains=tcshTodo
-syn match tcshTodo	contained '\v\c<todo>'
+syn match tcshSharpBang '\%^#!.*$'
+syn match tcshComment	'#.*' contains=tcshTodo,@Spell
+syn match tcshTodo	contained '\v%(^\s*#\s*)@<=\c<%(TODO|FIXME|XXX)>'
+
+" TODO: leading whitespace match is needed to prevent keyword matching
+syn match tcshLabel     '^\s*\w\+:\ze\s*$'
 
 " ----- Strings ----- {{{1
 " Tcsh does not allow \" in strings unless the "backslash_quote" shell
@@ -141,14 +142,14 @@ syn match tcshTodo	contained '\v\c<todo>'
 " want VIM to assume that no backslash quote constructs exist.
 
 " Backquotes are treated as commands, and are not contained in anything
-if exists('tcsh_backslash_quote') && tcsh_backslash_quote == 0
-    syn region tcshSQuote	keepend contained start="\v\\@<!'" end="'"
-    syn region tcshDQuote	keepend contained start='\v\\@<!"' end='"' contains=@tcshVarList,tcshSpecial,@Spell
-    syn region tcshBQuote	keepend start='\v\\@<!`' end='`' contains=@tcshStatements
+if get(g:, 'tcsh_backslash_quote', 1)
+    syn region tcshSQuote	contained start="'" skip="\v\\\\|\\'" end="'"
+    syn region tcshDQuote	contained start='"' end='"' contains=@tcshVarList,tcshSpecial,@Spell
+    syn region tcshBQuote	keepend matchgroup=tcshBQuoteGrp start='`' skip='\v\\\\|\\`' end='`' contains=@tcshStatements
 else
-    syn region tcshSQuote	contained start="\v\\@<!'" skip="\v\\\\|\\'" end="'"
-    syn region tcshDQuote	contained start='\v\\@<!"' end='"' contains=@tcshVarList,tcshSpecial,@Spell
-    syn region tcshBQuote	keepend matchgroup=tcshBQuoteGrp start='\v\\@<!`' skip='\v\\\\|\\`' end='`' contains=@tcshStatements
+    syn region tcshSQuote	keepend contained start="'" end="'"
+    syn region tcshDQuote	keepend contained start='"' end='"' contains=@tcshVarList,tcshSpecial,@Spell
+    syn region tcshBQuote	keepend start='`' end='`' contains=@tcshStatements
 endif
 
 " ----- Variables ----- {{{1
@@ -181,8 +182,8 @@ syn match tcshRedir contained	'\v\<|\>\>?\&?!?'
 syn match tcshMeta  contained	'\v[]{}*?[]'
 
 " Here documents (<<)
-syn region tcshHereDoc contained matchgroup=tcshShellVar start='\v\<\<\s*\z(\h\w*)' end='^\z1$' contains=@tcshVarList,tcshSpecial
-syn region tcshHereDoc contained matchgroup=tcshShellVar start="\v\<\<\s*'\z(\h\w*)'" start='\v\<\<\s*"\z(\h\w*)"$' start='\v\<\<\s*\\\z(\h\w*)$' end='^\z1$'
+syn region tcshHereDoc contained matchgroup=tcshShellVar start='\v\<\<\s*\z(\h\w*)' end='^\z1$' contains=@tcshVarList,tcshSpecial fold
+syn region tcshHereDoc contained matchgroup=tcshShellVar start="\v\<\<\s*'\z(\h\w*)'" start='\v\<\<\s*"\z(\h\w*)"$' start='\v\<\<\s*\\\z(\h\w*)$' end='^\z1$' fold
 
 " Operators
 syn match tcshOperator	contained '&&\|!\~\|!=\|<<\|<=\|==\|=\~\|>=\|>>\|\*\|\^\|\~\|||\|!\|%\|&\|+\|-\|/\|<\|>\||'
@@ -226,10 +227,9 @@ hi def link tcshExprVar		tcshUsrVar
 hi def link tcshExprOp		tcshOperator
 hi def link tcshExprEnd		tcshOperator
 hi def link tcshComment		Comment
-hi def link tcshCommentTi	Preproc
-hi def link tcshSharpBang	tcshCommentTi
+hi def link tcshSharpBang	PreProc
 hi def link tcshTodo		Todo
-hi def link tcshSQuote		Constant
+hi def link tcshSQuote		String
 hi def link tcshDQuote		tcshSQuote
 hi def link tcshBQuoteGrp	Include
 hi def link tcshVarError	Error
@@ -245,6 +245,7 @@ hi def link tcshOperator	Operator
 hi def link tcshNumber		Number
 hi def link tcshArgument	Special
 hi def link tcshSpecial		SpecialChar
+hi def link tcshLabel		Label
 " }}}
 
 let &cpo = s:oldcpo

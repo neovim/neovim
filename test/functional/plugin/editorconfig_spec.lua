@@ -106,6 +106,10 @@ setup(function()
 
     [long_spelling_language.txt]
     spelling_language = en-NZ
+
+    [custom_properties.txt]
+    property1 = something1
+    property2 = x[something2]x
     ]]
   )
 end)
@@ -239,5 +243,21 @@ But not this one
   it('sets spelllang', function()
     test_case('short_spelling_language.txt', { spelllang = 'de' })
     test_case('long_spelling_language.txt', { spelllang = 'en_nz' })
+  end)
+
+  it('set custom properties', function()
+    n.exec_lua(function()
+      local editorconfig = require('editorconfig')
+      editorconfig.properties.property1 = function(bufnr, val, _opts)
+        vim.b[bufnr].property1 = val
+      end
+      editorconfig.properties.property2 = function(bufnr, val, _opts)
+        vim.b[bufnr].property2 = val
+      end
+    end)
+
+    command('edit ' .. testdir .. pathsep .. 'custom_properties.txt')
+    eq('something1', fn.luaeval('vim.b.property1'), 'property1')
+    eq('x[something2]x', fn.luaeval('vim.b.property2'), 'property2')
   end)
 end)

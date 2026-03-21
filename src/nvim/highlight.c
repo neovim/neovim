@@ -32,16 +32,14 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "highlight.c.generated.h"
-#endif
+#include "highlight.c.generated.h"
 
 static bool hlstate_active = false;
 
 static Set(HlEntry) attr_entries = SET_INIT;
-static Map(int, int) combine_attr_entries = MAP_INIT;
-static Map(int, int) blend_attr_entries = MAP_INIT;
-static Map(int, int) blendthrough_attr_entries = MAP_INIT;
+static Map(uint64_t, int) combine_attr_entries = MAP_INIT;
+static Map(uint64_t, int) blend_attr_entries = MAP_INIT;
+static Map(uint64_t, int) blendthrough_attr_entries = MAP_INIT;
 static Set(cstr_t) urls = SET_INIT;
 
 #define attr_entry(i) attr_entries.keys[i]
@@ -217,7 +215,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
 
     // TODO(bfredl): or "inherit", combine with global value?
     bool fallback = true;
-    int tmp = false;
+    bool tmp = false;
     HlAttrs attrs = HLATTRS_INIT;
     if (ret.type == kObjectTypeDict) {
       fallback = false;
@@ -233,7 +231,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
     }
 
     it.attr_id = fallback ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
-    it.version = p->hl_valid - tmp;
+    it.version = p->hl_valid - (int)tmp;
     it.is_default = attrs.rgb_ae_attr & HL_DEFAULT;
     it.link_global = attrs.rgb_ae_attr & HL_GLOBAL;
     map_put(ColorKey, ColorItem)(&ns_hls, ColorKey(ns_id, hl_id), it);
@@ -327,16 +325,16 @@ int hl_get_ui_attr(int ns_id, int idx, int final_id, bool optional)
 
 /// Apply 'winblend' to highlight attributes.
 ///
-/// @param wp    The window to get 'winblend' value from.
+/// @param winbl The 'winblend' value.
 /// @param attr  The original attribute code.
 ///
 /// @return      The attribute code with 'winblend' applied.
-int hl_apply_winblend(win_T *wp, int attr)
+int hl_apply_winblend(int winbl, int attr)
 {
   HlEntry entry = attr_entry(attr);
   // if blend= attribute is not set, 'winblend' value overrides it.
-  if (entry.attr.hl_blend == -1 && wp->w_p_winbl > 0) {
-    entry.attr.hl_blend = (int)wp->w_p_winbl;
+  if (entry.attr.hl_blend == -1 && winbl > 0) {
+    entry.attr.hl_blend = winbl;
     attr = get_attr_entry(entry);
   }
   return attr;
@@ -350,8 +348,10 @@ void update_window_hl(win_T *wp, bool invalid)
   if (ns_id != wp->w_ns_hl_active || wp->w_ns_hl_attr == NULL) {
     wp->w_ns_hl_active = ns_id;
 
-    wp->w_ns_hl_attr = *(NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns_id);
-    if (!wp->w_ns_hl_attr) {
+    NSHlAttr *hl_def_ptr = (NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns_id);
+    if (hl_def_ptr) {
+      wp->w_ns_hl_attr = *hl_def_ptr;
+    } else {
       // No specific highlights, use the defaults.
       wp->w_ns_hl_attr = highlight_attr;
     }
@@ -381,7 +381,7 @@ void update_window_hl(win_T *wp, bool invalid)
   }
 
   if (wp->w_floating) {
-    wp->w_hl_attr_normal = hl_apply_winblend(wp, wp->w_hl_attr_normal);
+    wp->w_hl_attr_normal = hl_apply_winblend((int)wp->w_p_winbl, wp->w_hl_attr_normal);
   }
 
   wp->w_config.shadow = false;
@@ -392,7 +392,7 @@ void update_window_hl(win_T *wp, bool invalid)
         attr = hl_get_ui_attr(ns_id, HLF_BORDER,
                               wp->w_config.border_hl_ids[i], false);
       }
-      attr = hl_apply_winblend(wp, attr);
+      attr = hl_apply_winblend((int)wp->w_p_winbl, attr);
       if (syn_attr2entry(attr).hl_blend > 0) {
         wp->w_config.shadow = true;
       }
@@ -413,7 +413,7 @@ void update_window_hl(win_T *wp, bool invalid)
   }
 
   if (wp->w_floating) {
-    wp->w_hl_attr_normalnc = hl_apply_winblend(wp, wp->w_hl_attr_normalnc);
+    wp->w_hl_attr_normalnc = hl_apply_winblend((int)wp->w_p_winbl, wp->w_hl_attr_normalnc);
   }
 }
 
@@ -470,18 +470,11 @@ int win_bg_attr(win_T *wp)
 /// Gets HL_UNDERLINE highlight.
 int hl_get_underline(void)
 {
+  HlAttrs attrs = HLATTRS_INIT;
+  attrs.cterm_ae_attr = (int16_t)HL_UNDERLINE;
+  attrs.rgb_ae_attr = (int16_t)HL_UNDERLINE;
   return get_attr_entry((HlEntry){
-    .attr = (HlAttrs){
-      .cterm_ae_attr = (int16_t)HL_UNDERLINE,
-      .cterm_fg_color = 0,
-      .cterm_bg_color = 0,
-      .rgb_ae_attr = (int16_t)HL_UNDERLINE,
-      .rgb_fg_color = -1,
-      .rgb_bg_color = -1,
-      .rgb_sp_color = -1,
-      .hl_blend = -1,
-      .url = -1,
-    },
+    .attr = attrs,
     .kind = kHlUI,
     .id1 = 0,
     .id2 = 0,
@@ -543,9 +536,9 @@ void clear_hl_tables(bool reinit)
   if (reinit) {
     set_clear(HlEntry, &attr_entries);
     highlight_init();
-    map_clear(int, &combine_attr_entries);
-    map_clear(int, &blend_attr_entries);
-    map_clear(int, &blendthrough_attr_entries);
+    map_clear(uint64_t, &combine_attr_entries);
+    map_clear(uint64_t, &blend_attr_entries);
+    map_clear(uint64_t, &blendthrough_attr_entries);
     set_clear(cstr_t, &urls);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
@@ -553,9 +546,9 @@ void clear_hl_tables(bool reinit)
     screen_invalidate_highlights();
   } else {
     set_destroy(HlEntry, &attr_entries);
-    map_destroy(int, &combine_attr_entries);
-    map_destroy(int, &blend_attr_entries);
-    map_destroy(int, &blendthrough_attr_entries);
+    map_destroy(uint64_t, &combine_attr_entries);
+    map_destroy(uint64_t, &blend_attr_entries);
+    map_destroy(uint64_t, &blendthrough_attr_entries);
     map_destroy(ColorKey, &ns_hls);
     set_destroy(cstr_t, &urls);
   }
@@ -563,19 +556,19 @@ void clear_hl_tables(bool reinit)
 
 void hl_invalidate_blends(void)
 {
-  map_clear(int, &blend_attr_entries);
-  map_clear(int, &blendthrough_attr_entries);
+  map_clear(uint64_t, &blend_attr_entries);
+  map_clear(uint64_t, &blendthrough_attr_entries);
   highlight_changed();
   update_window_hl(curwin, true);
 }
 
 /// Combine HlAttrFlags.
 /// The underline attribute in "prim_ae" overrules the one in "char_ae" if both are present.
-static int16_t hl_combine_ae(int16_t char_ae, int16_t prim_ae)
+static int32_t hl_combine_ae(int32_t char_ae, int32_t prim_ae)
 {
-  int16_t char_ul = char_ae & HL_UNDERLINE_MASK;
-  int16_t prim_ul = prim_ae & HL_UNDERLINE_MASK;
-  int16_t new_ul = prim_ul ? prim_ul : char_ul;
+  int32_t char_ul = char_ae & HL_UNDERLINE_MASK;
+  int32_t prim_ul = prim_ae & HL_UNDERLINE_MASK;
+  int32_t new_ul = prim_ul ? prim_ul : char_ul;
   return (char_ae & ~HL_UNDERLINE_MASK) | (prim_ae & ~HL_UNDERLINE_MASK) | new_ul;
 }
 
@@ -593,9 +586,8 @@ int hl_combine_attr(int char_attr, int prim_attr)
     return char_attr;
   }
 
-  // TODO(bfredl): could use a struct for clearer intent.
-  int combine_tag = (char_attr << 16) + prim_attr;
-  int id = map_get(int, int)(&combine_attr_entries, combine_tag);
+  uint64_t combine_tag = HlAttrKey(char_attr, prim_attr);
+  int id = map_get(uint64_t, int)(&combine_attr_entries, combine_tag);
   if (id > 0) {
     return id;
   }
@@ -656,7 +648,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
                                  .id1 = char_attr, .id2 = prim_attr });
   if (id > 0) {
-    map_put(int, int)(&combine_attr_entries, combine_tag, id);
+    map_put(uint64_t, int)(&combine_attr_entries, combine_tag, id);
   }
 
   return id;
@@ -666,9 +658,8 @@ int hl_combine_attr(int char_attr, int prim_attr)
 ///
 /// If colors are unset, use builtin default colors. Never returns -1
 /// Cterm colors are unchanged.
-static HlAttrs get_colors_force(int attr)
+static HlAttrs get_colors_force(HlAttrs attrs)
 {
-  HlAttrs attrs = syn_attr2entry(attr);
   if (attrs.rgb_bg_color == -1) {
     attrs.rgb_bg_color = normal_bg;
   }
@@ -699,36 +690,38 @@ static HlAttrs get_colors_force(int attr)
 /// @return the resulting attributes.
 int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 {
+  // Cannot blend uninitialized cells, use front_attr for uninitialized background cells.
   if (front_attr < 0 || back_attr < 0) {
-    return -1;
+    return front_attr;
   }
 
-  HlAttrs fattrs = get_colors_force(front_attr);
+  HlAttrs fattrs_raw = syn_attr2entry(front_attr);
+  HlAttrs fattrs = get_colors_force(fattrs_raw);
   int ratio = fattrs.hl_blend;
   if (ratio <= 0) {
     *through = false;
     return front_attr;
   }
 
-  int combine_tag = (back_attr << 16) + front_attr;
-  Map(int, int) *map = (*through
-                        ? &blendthrough_attr_entries
-                        : &blend_attr_entries);
-  int id = map_get(int, int)(map, combine_tag);
+  uint64_t combine_tag = HlAttrKey(back_attr, front_attr);
+  Map(uint64_t, int) *map = (*through
+                             ? &blendthrough_attr_entries
+                             : &blend_attr_entries);
+  int id = map_get(uint64_t, int)(map, combine_tag);
   if (id > 0) {
     return id;
   }
 
-  HlAttrs battrs = get_colors_force(back_attr);
+  HlAttrs battrs_raw = syn_attr2entry(back_attr);
+  HlAttrs battrs = get_colors_force(battrs_raw);
   HlAttrs cattrs;
 
   if (*through) {
     cattrs = battrs;
-    cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color,
-                                    fattrs.rgb_bg_color);
-    if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
-      cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color,
-                                      fattrs.rgb_bg_color);
+    cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color, fattrs.rgb_bg_color);
+    // Only apply special colors when the foreground attribute has an underline style.
+    if (fattrs_raw.rgb_ae_attr & HL_UNDERLINE_MASK) {
+      cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color, fattrs.rgb_bg_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
@@ -739,30 +732,33 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     cattrs.rgb_ae_attr &= ~(HL_FG_INDEXED | HL_BG_INDEXED);
   } else {
     cattrs = fattrs;
-    if (ratio >= 50) {
-      cattrs.rgb_ae_attr = hl_combine_ae(battrs.rgb_ae_attr, cattrs.rgb_ae_attr);
-    }
-    cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
-                                    fattrs.rgb_fg_color);
+    cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color, fattrs.rgb_fg_color);
     if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
-      cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color,
-                                      fattrs.rgb_sp_color);
+      cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color, fattrs.rgb_sp_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
 
     cattrs.rgb_ae_attr &= ~HL_BG_INDEXED;
   }
-  cattrs.rgb_bg_color = rgb_blend(ratio, battrs.rgb_bg_color,
-                                  fattrs.rgb_bg_color);
 
+  // Check if we should preserve background transparency
+  // Special case for blend=100: preserve back layer background exactly (including bg=NONE)
+  if (ratio == 100 && battrs_raw.rgb_bg_color == -1) {
+    // For 100% blend with transparent background, preserve the transparency
+    cattrs.rgb_bg_color = -1;
+  } else {
+    // Use the raw attributes (before forcing colors) to check original transparency
+    cattrs.rgb_bg_color = (battrs_raw.rgb_bg_color == -1) && (fattrs_raw.rgb_bg_color == -1)
+                          ? -1
+                          : rgb_blend(ratio, battrs.rgb_bg_color, fattrs.rgb_bg_color);
+  }
   cattrs.hl_blend = -1;  // blend property was consumed
-
   HlKind kind = *through ? kHlBlendThrough : kHlBlend;
   id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
                                  .id1 = back_attr, .id2 = front_attr });
   if (id > 0) {
-    map_put(int, int)(map, combine_tag, id);
+    map_put(uint64_t, int)(map, combine_tag, id);
   }
   return id;
 }
@@ -882,7 +878,7 @@ Dict hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *err)
     return dic;
   }
 
-  if (attr_id <= 0 || attr_id >= (int)set_size(&attr_entries)) {
+  if (attr_id < 0 || attr_id >= (int)set_size(&attr_entries)) {
     api_set_error(err, kErrorTypeException,
                   "Invalid attribute id: %" PRId64, attr_id);
     return dic;
@@ -952,6 +948,22 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
     PUT_C(*hl_attrs, "altfont", BOOLEAN_OBJ(true));
   }
 
+  if (mask & HL_DIM) {
+    PUT_C(*hl_attrs, "dim", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_BLINK) {
+    PUT_C(*hl_attrs, "blink", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_CONCEALED) {
+    PUT_C(*hl_attrs, "conceal", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_OVERLINE) {
+    PUT_C(*hl_attrs, "overline", BOOLEAN_OBJ(true));
+  }
+
   if (mask & HL_NOCOMBINE) {
     PUT_C(*hl_attrs, "nocombine", BOOLEAN_OBJ(true));
   }
@@ -1003,8 +1015,8 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   int32_t ctermbg = -1;
   int32_t sp = -1;
   int blend = -1;
-  int16_t mask = 0;
-  int16_t cterm_mask = 0;
+  int32_t mask = 0;
+  int32_t cterm_mask = 0;
   bool cterm_mask_provided = false;
 
 #define CHECK_FLAG(d, m, name, extra, flag) \
@@ -1026,6 +1038,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
   CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);
   CHECK_FLAG(dict, mask, altfont, , HL_ALTFONT);
+  CHECK_FLAG(dict, mask, dim, , HL_DIM);
+  CHECK_FLAG(dict, mask, blink, , HL_BLINK);
+  CHECK_FLAG(dict, mask, conceal, , HL_CONCEALED);
+  CHECK_FLAG(dict, mask, overline, , HL_OVERLINE);
   if (use_rgb) {
     CHECK_FLAG(dict, mask, fg_indexed, , HL_FG_INDEXED);
     CHECK_FLAG(dict, mask, bg_indexed, , HL_BG_INDEXED);
@@ -1087,10 +1103,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   }
 
   // Handle cterm attrs
-  if (dict->cterm.type == kObjectTypeDict) {
+  if (HAS_KEY_X(dict, cterm)) {
     Dict(highlight_cterm) cterm[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(cterm, KeyDict_highlight_cterm_get_field,
-                             dict->cterm.data.dict, err)) {
+                             dict->cterm, err)) {
       return hlattrs;
     }
 
@@ -1106,15 +1122,11 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     CHECK_FLAG(cterm, cterm_mask, standout, , HL_STANDOUT);
     CHECK_FLAG(cterm, cterm_mask, strikethrough, , HL_STRIKETHROUGH);
     CHECK_FLAG(cterm, cterm_mask, altfont, , HL_ALTFONT);
+    CHECK_FLAG(cterm, cterm_mask, dim, , HL_DIM);
+    CHECK_FLAG(cterm, cterm_mask, blink, , HL_BLINK);
+    CHECK_FLAG(cterm, cterm_mask, conceal, , HL_CONCEALED);
+    CHECK_FLAG(cterm, cterm_mask, overline, , HL_OVERLINE);
     CHECK_FLAG(cterm, cterm_mask, nocombine, , HL_NOCOMBINE);
-  } else if (dict->cterm.type == kObjectTypeArray && dict->cterm.data.array.size == 0) {
-    // empty list from Lua API should clear all cterm attributes
-    // TODO(clason): handle via gen_api_dispatch
-    cterm_mask_provided = true;
-  } else if (HAS_KEY_X(dict, cterm)) {
-    VALIDATE_EXP(false, "cterm", "Dict", api_typename(dict->cterm.type), {
-      return hlattrs;
-    });
   }
 #undef CHECK_FLAG
 

@@ -3,6 +3,10 @@ Checks: >
   Enable all warnings by default. This ensures we don't miss new and useful
   warnings when a new version of clang-tidy is dropped.
 
+  To list all available checks:
+
+      clang-tidy --list-checks --checks="*"
+
   IMPORTANT
   clang-tidy doesn't support comments but we can simulate comments by just
   writing text directly here. These are then interpreted as warnings and will
@@ -18,6 +22,7 @@ Checks: >
   -bugprone-not-null-terminated-result,
   -bugprone-suspicious-memory-comparison,
   -bugprone-switch-missing-default-case,
+  -bugprone-tagged-union-member-count,
   -cert-env33-c,
   -cert-err33-c,
   -cert-err34-c,
@@ -37,6 +42,7 @@ Checks: >
   -readability-else-after-return,
   -readability-enum-initial-value,
   -readability-function-size,
+  -readability-implicit-bool-conversion,
   -readability-isolate-declaration,
 
   Warnings that are rarely useful,
@@ -54,15 +60,18 @@ Checks: >
   -misc-misplaced-const,
   -misc-no-recursion,
   -performance-no-int-to-ptr,
+  -portability-avoid-pragma-once,
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-magic-numbers,
   -readability-math-missing-parentheses,
   -readability-redundant-declaration, Conflicts with our header generation scripts,
   -readability-suspicious-call-argument,
+  -readability-use-concise-preprocessor-directives,
 
   Aliases. These are just duplicates of other warnings and should always be ignored,
   -bugprone-narrowing-conversions,
+  -cert-arr39-c,
   -cert-dcl37-c,
   -cert-dcl51-cpp,
   -cert-exp42-c,

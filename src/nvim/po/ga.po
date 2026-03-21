@@ -1028,16 +1028,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: Ná téigh i scaoll!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Tá brón orm, ní aon chabhair '%s' do %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Ní aon chabhair '%s' do %s"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Tá brón orm, níl aon chabhair do %s"
+msgid "E149: No help for %s"
+msgstr "E149: Níl aon chabhair do %s"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Tá brón orm, comhad cabhrach \"%s\" gan aimsiú"
+msgid "Help file \"%s\" not found"
+msgstr "Comhad cabhrach \"%s\" gan aimsiú"
 
 #, c-format
 msgid "E151: No match: %s"
@@ -3667,12 +3667,8 @@ msgstr "E773: Ciogal i naisc shiombalacha le haghaidh \"%s\""
 msgid "E325: ATTENTION"
 msgstr "E325: AIRE"
 
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Fuarthas comhad babhtála darbh ainm \""
+msgid "Found a swap file by the name \""
+msgstr "Fuarthas comhad babhtála darbh ainm \""
 
 msgid "While opening file \""
 msgstr "Agus an comhad seo á oscailt: \""
@@ -4480,12 +4476,8 @@ msgstr ""
 "\n"
 "Ní féidir an bhlaosc sh a rith\n"
 
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"d'aisfhill an bhlaosc "
+msgid "shell returned "
+msgstr "d'aisfhill an bhlaosc "
 
 msgid ""
 "\n"
@@ -4993,12 +4985,12 @@ msgstr "E797: Scrios uathordú SpellFileMissing an maolán"
 msgid "Warning: region %s not supported"
 msgstr "Rabhadh: réigiún %s gan tacaíocht"
 
-msgid "Sorry, no suggestions"
-msgstr "Tá brón orm, níl aon mholadh ann"
+msgid "No suggestions"
+msgstr "Níl aon mholadh ann"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Tá brón orm, níl ach %ld moladh ann"
+msgid "Only %ld suggestions"
+msgstr "Níl ach %ld moladh ann"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

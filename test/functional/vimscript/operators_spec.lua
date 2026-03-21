@@ -6,7 +6,7 @@ local eval = n.eval
 local clear = n.clear
 
 describe('Division operator', function()
-  before_each(clear)
+  setup(clear)
 
   it('returns infinity on {positive}/0.0', function()
     eq("str2float('inf')", eval('string(1.0/0.0)'))

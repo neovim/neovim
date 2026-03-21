@@ -50,7 +50,7 @@ if vim.api then
 end
 
 -- builtin functions which always should be available
-require('vim.shared')
+require('vim._core.shared')
 
 vim._submodules = {
   inspect = true,
@@ -86,7 +86,7 @@ setmetatable(vim, {
 })
 
 --- <Docs described in |vim.empty_dict()| >
----@private
+---@nodoc
 --- TODO: should be in vim.shared when vim.shared always uses nvim-lua
 --- @diagnostic disable-next-line:duplicate-set-field
 function vim.empty_dict()
@@ -95,5 +95,6 @@ end
 
 -- only on main thread: functions for interacting with editor state
 if vim.api and not vim.is_thread() then
-  require('vim._editor')
+  require('vim._core.editor')
+  require('vim._core.system')
 end

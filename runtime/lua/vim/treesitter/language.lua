@@ -41,7 +41,7 @@ function M.get_lang(filetype)
     return ft_to_lang[filetype]
   end
   -- for subfiletypes like html.glimmer use only "main" filetype
-  filetype = vim.split(filetype, '.', { plain = true })[1]
+  filetype = assert(vim.split(filetype, '.', { plain = true })[1])
   return ft_to_lang[filetype] or filetype
 end
 
@@ -184,6 +184,17 @@ end
 function M.inspect(lang)
   M.add(lang)
   return vim._ts_inspect_language(lang)
+end
+
+--- Returns available treesitter languages.
+function M._complete()
+  local parsers = api.nvim_get_runtime_file('parser/*', true)
+  local parser_names_set = {} ---@type table<string, boolean>
+  for _, parser in ipairs(parsers) do
+    local parser_name = vim.fn.fnamemodify(parser, ':t:r')
+    parser_names_set[parser_name] = true
+  end
+  return vim.tbl_keys(parser_names_set)
 end
 
 return M

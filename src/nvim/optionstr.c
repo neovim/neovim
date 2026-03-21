@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -12,6 +13,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
@@ -28,6 +30,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -41,23 +44,26 @@
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/shada.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/strings.h"
+#include "nvim/tag.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "optionstr.c.generated.h"
-#endif
+#include "optionstr.c.generated.h"
 
-static const char e_unclosed_expression_sequence[]
-  = N_("E540: Unclosed expression sequence");
+static const char e_illegal_character_after_chr[]
+  = N_("E535: Illegal character after <%c>");
 static const char e_comma_required[]
   = N_("E536: Comma required");
+static const char e_unclosed_expression_sequence[]
+  = N_("E540: Unclosed expression sequence");
 static const char e_unbalanced_groups[]
   = N_("E542: Unbalanced groups");
 static const char e_backupext_and_patchmode_are_equal[]
@@ -110,6 +116,15 @@ char *illegal_char(char *errbuf, size_t errbuflen, int c)
   return errbuf;
 }
 
+static char *illegal_char_after_chr(char *errbuf, size_t errbuflen, int c)
+{
+  if (errbuf == NULL) {
+    return "";
+  }
+  vim_snprintf(errbuf, errbuflen, _(e_illegal_character_after_chr), c);
+  return errbuf;
+}
+
 /// Check string options in a buffer for NULL value.
 void check_buf_options(buf_T *buf)
 {
@@ -152,6 +167,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_cfu);
   check_string_option(&buf->b_p_ofu);
   check_string_option(&buf->b_p_keymap);
+  check_string_option(&buf->b_p_gefm);
   check_string_option(&buf->b_p_gp);
   check_string_option(&buf->b_p_mp);
   check_string_option(&buf->b_p_efm);
@@ -162,6 +178,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_tfu);
   check_string_option(&buf->b_p_tc);
   check_string_option(&buf->b_p_dict);
+  check_string_option(&buf->b_p_dia);
   check_string_option(&buf->b_p_tsr);
   check_string_option(&buf->b_p_tsrfu);
   check_string_option(&buf->b_p_lw);
@@ -689,6 +706,15 @@ const char *did_set_buftype(optset_T *args)
       || opt_strings_flags(buf->b_p_bt, opt_bt_values, NULL, false) != OK) {
     return e_invarg;
   }
+  // buftype=prompt:
+  if (buf->b_p_bt[0] == 'p') {
+    // Set default value for 'comments'
+    set_option_direct(kOptComments, STATIC_CSTR_AS_OPTVAL(""), OPT_LOCAL, SID_NONE);
+    // set the prompt start position to lastline.
+    pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = buf->b_prompt_start.mark.col,
+                          .coladd = 0 };
+    RESET_FMARK(&buf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
+  }
   if (win->w_status_height || global_stl_height()) {
     win->w_redr_status = true;
     redraw_later(win, UPD_VALID);
@@ -833,41 +859,70 @@ const char *did_set_commentstring(optset_T *args)
   return NULL;
 }
 
-/// The 'complete' option is changed.
+/// Check if value for 'complete' is valid when 'complete' option is changed.
 const char *did_set_complete(optset_T *args)
 {
   char **varp = (char **)args->os_varp;
+  char buffer[LSIZE];
+  uint8_t char_before = NUL;
 
-  // check if it is a valid value for 'complete' -- Acevedo
-  for (char *s = *varp; *s;) {
-    while (*s == ',' || *s == ' ') {
-      s++;
-    }
-    if (!*s) {
-      break;
-    }
-    if (vim_strchr(".wbuksid]tUf", (uint8_t)(*s)) == NULL) {
-      return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*s));
-    }
-    if (*++s != NUL && *s != ',' && *s != ' ') {
-      if (s[-1] == 'k' || s[-1] == 's') {
-        // skip optional filename after 'k' and 's'
-        while (*s && *s != ',' && *s != ' ') {
-          if (*s == '\\' && s[1] != NUL) {
-            s++;
-          }
-          s++;
-        }
+  for (char *p = *varp; *p;) {
+    memset(buffer, 0, LSIZE);
+    char *buf_ptr = buffer;
+    int escape = 0;
+
+    // Extract substring while handling escaped commas
+    while (*p && (*p != ',' || escape) && buf_ptr < (buffer + LSIZE - 1)) {
+      if (*p == '\\' && *(p + 1) == ',') {
+        escape = 1;  // Mark escape mode
+        p++;         // Skip '\'
       } else {
-        if (args->os_errbuf != NULL) {
-          vim_snprintf(args->os_errbuf, args->os_errbuflen,
-                       _("E535: Illegal character after <%c>"),
-                       *--s);
-          return args->os_errbuf;
+        escape = 0;
+        *buf_ptr++ = *p;
+      }
+      p++;
+    }
+    *buf_ptr = NUL;
+
+    if (vim_strchr(".wbuksid]tUfFo", (uint8_t)(*buffer)) == NULL) {
+      return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*buffer));
+    }
+
+    if (vim_strchr("ksF", (uint8_t)(*buffer)) == NULL && *(buffer + 1) != NUL
+        && *(buffer + 1) != '^') {
+      char_before = (uint8_t)(*buffer);
+    } else {
+      char *t;
+      // Test for a number after '^'
+      if ((t = vim_strchr(buffer, '^')) != NULL) {
+        *t++ = NUL;
+        if (!*t) {
+          char_before = '^';
+        } else {
+          for (; *t; t++) {
+            if (!ascii_isdigit(*t)) {
+              char_before = '^';
+              break;
+            }
+          }
         }
-        return "";
       }
     }
+    if (char_before != NUL) {
+      if (args->os_errbuf != NULL) {
+        return illegal_char_after_chr(args->os_errbuf, args->os_errbuflen,
+                                      char_before);
+      }
+      return NULL;
+    }
+    // Skip comma and spaces
+    while (*p == ',' || *p == ' ') {
+      p++;
+    }
+  }
+
+  if (set_cpt_callbacks(args) != OK) {
+    return illegal_char_after_chr(args->os_errbuf, args->os_errbuflen, 'F');
   }
   return NULL;
 }
@@ -932,10 +987,6 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
     buf->b_cot_flags = 0;
   }
 
-  if (opt_strings_flags(cot, opt_cot_values, NULL, true) != OK) {
-    return e_invarg;
-  }
-
   if (opt_strings_flags(cot, opt_cot_values, flags, true) != OK) {
     return e_invarg;
   }
@@ -996,6 +1047,16 @@ const char *did_set_cursorlineopt(optset_T *args)
   return NULL;
 }
 
+/// The 'diffanchors' option is changed.
+const char *did_set_diffanchors(optset_T *args)
+{
+  if (diffanchors_changed(args->os_flags & OPT_LOCAL) == FAIL) {
+    return e_invarg;
+  }
+
+  return NULL;
+}
+
 /// The 'diffopt' option is changed.
 const char *did_set_diffopt(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -1014,6 +1075,16 @@ int expand_set_diffopt(optexpand_T *args, int *numMatches, char ***matches)
       return expand_set_opt_string(args,
                                    opt_dip_algorithm_values,
                                    ARRAY_SIZE(opt_dip_algorithm_values) - 1,
+                                   numMatches,
+                                   matches);
+    }
+    // Within "inline:", we have a subgroup of possible options.
+    const size_t inline_len = strlen("inline:");
+    if (xp->xp_pattern - args->oe_set_arg >= (int)inline_len
+        && strncmp(xp->xp_pattern - inline_len, "inline:", inline_len) == 0) {
+      return expand_set_opt_string(args,
+                                   opt_dip_inline_values,
+                                   ARRAY_SIZE(opt_dip_inline_values) - 1,
                                    numMatches,
                                    matches);
     }
@@ -1097,12 +1168,20 @@ static bool expand_eiw = false;
 
 static char *get_eventignore_name(expand_T *xp, int idx)
 {
+  bool subtract = *xp->xp_pattern == '-';
   // 'eventignore(win)' allows special keyword "all" in addition to
   // all event names.
-  if (idx == 0) {
+  if (!subtract && idx == 0) {
     return "all";
   }
-  return get_event_name_no_group(xp, idx - 1, expand_eiw);
+
+  char *name = get_event_name_no_group(xp, idx - 1 + subtract, expand_eiw);
+  if (name == NULL) {
+    return NULL;
+  }
+
+  snprintf(IObuff, IOSIZE, "%s%s", subtract ? "-" : "", name);
+  return IObuff;
 }
 
 int expand_set_eventignore(optexpand_T *args, int *numMatches, char ***matches)
@@ -1781,6 +1860,22 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
   }
   const char *errmsg = NULL;
   char *s = *varp;
+  bool is_stl = args->os_idx == kOptStatusline;
+
+  // reset statusline to default when setting global option and empty string is being set
+  if (is_stl
+      && ((args->os_flags & OPT_GLOBAL) || !(args->os_flags & OPT_LOCAL))
+      && s[0] == NUL) {
+    xfree(*varp);
+    *varp = xstrdup(get_option_default(args->os_idx, args->os_flags).data.string.data);
+    s = *varp;
+  }
+
+  // handle floating window statusline changes
+  if (is_stl && win && win->w_floating) {
+    win_config_float(win, win->w_config);
+  }
+
   if (rulerformat && *s == '%') {
     // set ru_wid if 'ruf' starts with "%99("
     if (*++s == '-') {        // ignore a '-'
@@ -1994,6 +2089,35 @@ const char *did_set_winbar(optset_T *args)
   return did_set_statustabline_rulerformat(args, false, false);
 }
 
+static bool parse_border_opt(char *border_opt)
+{
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  Error err = ERROR_INIT;
+  bool result = true;
+  if (!parse_winborder(&fconfig, border_opt, &err)) {
+    result = false;
+  }
+  api_clear_error(&err);
+  return result;
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  if (!parse_border_opt(p_winborder)) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
+const char *did_set_pumborder(optset_T *args)
+{
+  if (!parse_border_opt(p_pumborder)) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
 /// The 'winhighlight' option is changed.
 const char *did_set_winhighlight(optset_T *args)
 {
@@ -2103,39 +2227,43 @@ struct chars_tab {
 
 static fcs_chars_T fcs_chars;
 static const struct chars_tab fcs_tab[] = {
-  CHARSTAB_ENTRY(&fcs_chars.stl,        "stl",       " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.stlnc,      "stlnc",     " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.wbr,        "wbr",       " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.horiz,      "horiz",     "─", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.horizup,    "horizup",   "┴", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.horizdown,  "horizdown", "┬", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.vert,       "vert",      "│", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.vertleft,   "vertleft",  "┤", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.vertright,  "vertright", "├", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.verthoriz,  "verthoriz", "┼", "+"),
-  CHARSTAB_ENTRY(&fcs_chars.fold,       "fold",      "·", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.foldopen,   "foldopen",  "-", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.foldclosed, "foldclose", "+", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.foldsep,    "foldsep",   "│", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.stl,        "stl",       " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.stlnc,      "stlnc",     " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.wbr,        "wbr",       " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.horiz,      "horiz",     "─",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.horizup,    "horizup",   "┴",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.horizdown,  "horizdown", "┬",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.vert,       "vert",      "│",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.vertleft,   "vertleft",  "┤",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.vertright,  "vertright", "├",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.verthoriz,  "verthoriz", "┼",  "+"),
+  CHARSTAB_ENTRY(&fcs_chars.fold,       "fold",      "·",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.foldopen,   "foldopen",  "-",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.foldclosed, "foldclose", "+",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.foldsep,    "foldsep",   "│",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.foldinner,  "foldinner", NULL, NULL),
+  CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.trunc,      "trunc",     ">",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.truncrl,    "truncrl",   "<",  NULL),
 };
 
 static lcs_chars_T lcs_chars;
 static const struct chars_tab lcs_tab[] = {
-  CHARSTAB_ENTRY(&lcs_chars.eol,     "eol",            NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.ext,     "extends",        NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.nbsp,    "nbsp",           NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.prec,    "precedes",       NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.space,   "space",          NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.tab2,    "tab",            NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.lead,    "lead",           NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.trail,   "trail",          NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.conceal, "conceal",        NULL, NULL),
-  CHARSTAB_ENTRY(NULL,               "multispace",     NULL, NULL),
-  CHARSTAB_ENTRY(NULL,               "leadmultispace", NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.eol,      "eol",            NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.ext,      "extends",        NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.nbsp,     "nbsp",           NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.prec,     "precedes",       NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.space,    "space",          NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.tab2,     "tab",            NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.leadtab2, "leadtab",        NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.lead,     "lead",           NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.trail,    "trail",          NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.conceal,  "conceal",        NULL, NULL),
+  CHARSTAB_ENTRY(NULL,                "multispace",     NULL, NULL),
+  CHARSTAB_ENTRY(NULL,                "leadmultispace", NULL, NULL),
 };
 
 #undef CHARSTAB_ENTRY
@@ -2185,6 +2313,8 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
 
   // first round: check for valid value, second round: assign values
   for (int round = 0; round <= (apply ? 1 : 0); round++) {
+    bool has_tab = false, has_leadtab = false;
+
     if (round > 0) {
       // After checking that the value is valid: set defaults
       for (int i = 0; i < entries; i++) {
@@ -2199,6 +2329,8 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
       if (what == kListchars) {
         lcs_chars.tab1 = NUL;
         lcs_chars.tab3 = NUL;
+        lcs_chars.leadtab1 = NUL;
+        lcs_chars.leadtab3 = NUL;
 
         if (multispace_len > 0) {
           lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(schar_T));
@@ -2226,6 +2358,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         }
 
         const char *s = p + tab[i].name.size + 1;
+
         if (what == kListchars && strcmp(tab[i].name.data, "multispace") == 0) {
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
@@ -2246,7 +2379,6 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
                                      e_wrong_number_of_characters_for_field_str,
                                      tab[i].name.data);
             }
-            p = s;
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
@@ -2255,14 +2387,14 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
                 lcs_chars.multispace[multispace_pos++] = c1;
               }
             }
-            p = s;
           }
+          p = s;
           break;
         }
 
         if (what == kListchars && strcmp(tab[i].name.data, "leadmultispace") == 0) {
           if (round == 0) {
-            // get length of lcs-leadmultispace string in first round
+            // Get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
             lead_multispace_len = 0;
             while (*s != NUL && *s != ',') {
@@ -2280,7 +2412,6 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
                                      e_wrong_number_of_characters_for_field_str,
                                      tab[i].name.data);
             }
-            p = s;
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
@@ -2289,8 +2420,8 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
                 lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
             }
-            p = s;
           }
+          p = s;
           break;
         }
 
@@ -2307,7 +2438,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         }
         schar_T c2 = 0;
         schar_T c3 = 0;
-        if (tab[i].cp == &lcs_chars.tab2) {
+        if (tab[i].cp == &lcs_chars.tab2 || tab[i].cp == &lcs_chars.leadtab2) {
           if (*s == NUL) {
             return field_value_err(errbuf, errbuflen,
                                    e_wrong_number_of_characters_for_field_str,
@@ -2327,6 +2458,11 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
                                      tab[i].name.data);
             }
           }
+          if (tab[i].cp == &lcs_chars.tab2) {
+            has_tab = true;
+          } else {  // tab[i].cp == &lcs_chars.leadtab2
+            has_leadtab = true;
+          }
         }
 
         if (*s == ',' || *s == NUL) {
@@ -2335,6 +2471,10 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
               lcs_chars.tab1 = c1;
               lcs_chars.tab2 = c2;
               lcs_chars.tab3 = c3;
+            } else if (tab[i].cp == &lcs_chars.leadtab2) {
+              lcs_chars.leadtab1 = c1;
+              lcs_chars.leadtab2 = c2;
+              lcs_chars.leadtab3 = c3;
             } else if (tab[i].cp != NULL) {
               *(tab[i].cp) = c1;
             }
@@ -2355,6 +2495,10 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
       if (*p == ',') {
         p++;
       }
+    }
+
+    if (what == kListchars && has_leadtab && !has_tab) {
+      return e_leadtab_requires_tab;
     }
   }
 

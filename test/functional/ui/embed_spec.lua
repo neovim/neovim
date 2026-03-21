@@ -30,8 +30,8 @@ local function test_embed(ext_linegrid)
       [100] = { foreground = Screen.colors.NvimDarkCyan },
       [101] = { foreground = Screen.colors.NvimDarkRed },
       [102] = {
-        background = Screen.colors.NvimDarkGrey3,
-        foreground = Screen.colors.NvimLightGrey3,
+        background = Screen.colors.NvimLightGrey4,
+        foreground = Screen.colors.NvimDarkGrey2,
       },
     }
   end
@@ -40,8 +40,8 @@ local function test_embed(ext_linegrid)
     startup('--cmd', 'echoerr invalid+')
     screen:expect([[
                                                                   |*4
-      {102:                                                            }|
-      {9:Error detected while processing pre-vimrc command line:}     |
+      {3:                                                            }|
+      {9:Error in pre-vimrc command line:}                            |
       {9:E121: Undefined variable: invalid}                           |
       {6:Press ENTER or type command to continue}^                     |
     ]])
@@ -62,7 +62,7 @@ local function test_embed(ext_linegrid)
     screen:expect([[
                                                                   |*3
       {102:                                                            }|
-      {9:Error detected while processing pre-vimrc command line:}     |
+      {9:Error in pre-vimrc command line:}                            |
       {9:foo}                                                         |
       {101:bar}                                                         |
       {100:Press ENTER or type command to continue}^                     |
@@ -74,8 +74,8 @@ local function test_embed(ext_linegrid)
     screen:expect {
       grid = [[
                                                                   |*3
-      {102:                                                            }|
-      {9:Error detected while processing pre-vimrc command line:}     |
+      {3:                                                            }|
+      {9:Error in pre-vimrc command line:}                            |
       {9:foo}                                                         |
       {9:bar}                                                         |
       {6:Press ENTER or type command to continue}^                     |
@@ -236,6 +236,7 @@ describe('--embed UI', function()
 
   it('updates cwd of attached UI #21771', function()
     clear { args_rm = { '--headless' } }
+    api.nvim_set_current_dir(t.paths.test_source_path)
 
     local screen = Screen.new(40, 8)
 
@@ -282,11 +283,22 @@ describe('--embed UI', function()
       end,
     }
   end)
+
+  it('closing stdio with another remote UI does not leak memory #36392', function()
+    clear({ args_rm = { '--headless' } })
+    Screen.new()
+    eq(1, #api.nvim_list_uis())
+    local server = api.nvim_get_vvar('servername')
+    local other_session = n.connect(server)
+    Screen.new(nil, nil, nil, other_session)
+    eq(2, #api.nvim_list_uis())
+    check_close()
+    other_session:close()
+  end)
 end)
 
 describe('--embed --listen UI', function()
   it('waits for connection on listening address', function()
-    t.skip(t.is_os('win'))
     clear()
     local child_server = assert(n.new_pipename())
     fn.jobstart({

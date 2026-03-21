@@ -13,6 +13,9 @@
 // forkpty is not in POSIX, so headers are platform-specific
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 # include <libutil.h>
+// TODO(bfredl): this is available on darwin, but there is an issue with cross-compile headers
+#elif defined(__APPLE__) && !defined(HAVE_FORKPTY)
+int forkpty(int *, char *, const struct termios *, const struct winsize *);
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 # include <util.h>
 #elif defined(__sun)
@@ -28,6 +31,9 @@
 #ifdef __APPLE__
 # include <crt_externs.h>
 #endif
+#ifdef __linux__
+# include <poll.h>
+#endif
 
 #include "auto/config.h"
 #include "klib/kvec.h"
@@ -42,19 +48,22 @@
 #include "nvim/os/pty_proc_unix.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_proc_unix.c.generated.h"
-#endif
+#include "os/pty_proc_unix.c.generated.h"
 
-#if defined(__sun) && !defined(HAVE_FORKPTY)
+#if !defined(HAVE_FORKPTY) && !defined(__APPLE__)
 
 // this header defines STR, just as nvim.h, but it is defined as ('S'<<8),
 // to avoid #undef STR, #undef STR, #define STR ('S'<<8) just delay the
 // inclusion of the header even though it gets include out of order.
-# include <sys/stropts.h>
 
-static int openpty(int *amaster, int *aslave, char *name, struct termios *termp,
-                   struct winsize *winp)
+# if !defined(__HAIKU__)
+#  include <sys/stropts.h>
+# else
+#  define I_PUSH 0  // XXX: find the actual value
+# endif
+
+static int vim_openpty(int *amaster, int *aslave, char *name, struct termios *termp,
+                       struct winsize *winp)
 {
   int slave = -1;
   int master = open("/dev/ptmx", O_RDWR);
@@ -114,7 +123,7 @@ error:
   return -1;
 }
 
-static int login_tty(int fd)
+static int vim_login_tty(int fd)
 {
   setsid();
   if (ioctl(fd, TIOCSCTTY, NULL) == -1) {
@@ -131,10 +140,10 @@ static int login_tty(int fd)
   return 0;
 }
 
-static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
+pid_t vim_forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
 {
   int master, slave;
-  if (openpty(&master, &slave, name, termp, winp) == -1) {
+  if (vim_openpty(&master, &slave, name, termp, winp) == -1) {
     return -1;
   }
 
@@ -146,7 +155,7 @@ static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct win
     return -1;
   case 0:
     close(master);
-    login_tty(slave);
+    vim_login_tty(slave);
     return 0;
   default:
     close(slave);
@@ -154,7 +163,7 @@ static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct win
     return pid;
   }
 }
-
+# define forkpty vim_forkpty
 #endif
 
 /// @returns zero on success, or negative error code
@@ -208,10 +217,7 @@ int pty_proc_spawn(PtyProc *ptyproc)
       && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
     goto error;
   }
-  if (!proc->out.s.closed
-      && (status = set_duplicating_descriptor(master, &proc->out.s.uv.pipe))) {
-    goto error;
-  }
+  // The stream_init() call in proc_spawn() will initialize proc->out.s.uv.poll.
 
   ptyproc->tty_fd = master;
   proc->pid = pid;
@@ -236,6 +242,30 @@ void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
+void pty_proc_resume(PtyProc *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Send SIGCONT to the entire process group, as some shells (e.g. fish) don't
+  // propagate SIGCONT to suspended child processes.
+  killpg(((Proc *)ptyproc)->pid, SIGCONT);
+}
+
+/// On Linux, libuv's polling (which uses epoll) doesn't flush PTY master's pending
+/// work on kernel workqueue, so use an explcit poll() before that. #37982
+/// Note that poll() only flushes pending work if no data is immediately available,
+/// so this function is needed before every libuv poll in flush_stream().
+void pty_proc_flush_master(PtyProc *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
+{
+#ifdef __linux__
+  struct pollfd pollfd = { .fd = ptyproc->tty_fd, .events = POLLIN };
+  int n = 0;
+  do {
+    n = poll(&pollfd, 1, 0);
+  } while (n < 0 && errno == EINTR);
+#endif
+}
+
 void pty_proc_close(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -246,7 +276,8 @@ void pty_proc_close(PtyProc *ptyproc)
   }
 }
 
-void pty_proc_close_master(PtyProc *ptyproc) FUNC_ATTR_NONNULL_ALL
+void pty_proc_close_master(PtyProc *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (ptyproc->tty_fd >= 0) {
     close(ptyproc->tty_fd);
@@ -260,7 +291,7 @@ void pty_proc_teardown(Loop *loop)
 }
 
 static void init_child(PtyProc *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NORETURN
 {
 #if defined(HAVE__NSGETENVIRON)
 # define environ (*_NSGetEnviron())
@@ -278,9 +309,11 @@ static void init_child(PtyProc *ptyproc)
   signal(SIGALRM, SIG_DFL);
 
   Proc *proc = (Proc *)ptyproc;
-  if (proc->cwd && os_chdir(proc->cwd) != 0) {
-    ELOG("chdir(%s) failed: %s", proc->cwd, strerror(errno));
-    return;
+  int err = 0;
+  // Don't use os_chdir() as that may buffer UI events unnecessarily.
+  if (proc->cwd && (err = uv_chdir(proc->cwd)) != 0) {
+    ELOG("chdir(%s) failed: %s", proc->cwd, uv_strerror(err));
+    _exit(122);
   }
 
   const char *prog = proc_get_exepath(proc);
@@ -343,9 +376,11 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_cc[VSTART] = 0x1f & 'Q';
   termios->c_cc[VSTOP] = 0x1f & 'S';
   termios->c_cc[VSUSP] = 0x1f & 'Z';
+#if !defined(__HAIKU__)
   termios->c_cc[VREPRINT] = 0x1f & 'R';
   termios->c_cc[VWERASE] = 0x1f & 'W';
   termios->c_cc[VLNEXT] = 0x1f & 'V';
+#endif
   termios->c_cc[VMIN] = 1;
   termios->c_cc[VTIME] = 0;
 }
@@ -390,10 +425,19 @@ static void chld_handler(uv_signal_t *handle, int signum)
   for (size_t i = 0; i < kv_size(loop->children); i++) {
     Proc *proc = kv_A(loop->children, i);
     do {
-      pid = waitpid(proc->pid, &stat, WNOHANG);
+      pid = waitpid(proc->pid, &stat, WNOHANG|WUNTRACED|WCONTINUED);
     } while (pid < 0 && errno == EINTR);
 
     if (pid <= 0) {
+      continue;
+    }
+
+    if (WIFSTOPPED(stat)) {
+      proc->state_cb(proc, true, proc->data);
+      continue;
+    }
+    if (WIFCONTINUED(stat)) {
+      proc->state_cb(proc, false, proc->data);
       continue;
     }
 

@@ -1123,6 +1123,7 @@ endfunc
 " When 'spellfile' is not set, adding a new good word will automatically set
 " the 'spellfile'
 func Test_init_spellfile()
+  throw 'Skipped: Nvim defaults spellfile to stdpath("data")/spell/'
   let save_rtp = &rtp
   let save_encoding = &encoding
   call mkdir('Xrtp/spell', 'pR')

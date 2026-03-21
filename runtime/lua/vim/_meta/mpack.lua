@@ -2,6 +2,9 @@
 
 -- luacheck: no unused args
 
+---@nodoc
+vim.mpack = {}
+
 --- @brief
 ---
 --- This module provides encoding and decoding of Lua objects to and

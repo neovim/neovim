@@ -2,7 +2,7 @@
 " Language:	Diff (context or unified)
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
 "		Translations by Jakson Alves de Aquino.
-" Last Change:	2023 Aug 10
+" Last Change:	2025 Aug 16
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -16,7 +16,7 @@ syn match diffIdentical	"^Files .* and .* are identical$"
 syn match diffDiffer	"^Files .* and .* differ$"
 syn match diffBDiffer	"^Binary files .* and .* differ$"
 syn match diffIsA	"^File .* is a .* while file .* is a .*"
-syn match diffNoEOL	"^\\ No newline at end of file .*"
+syn match diffNoEOL	"^\\ No newline at end of file.*"
 syn match diffCommon	"^Common subdirectories: .*"
 
 " Disable the translations by setting diff_translations to zero.
@@ -312,9 +312,9 @@ syn match diffCommon	"^Thư mục con chung: .* và .*"
 
 " zh_CN
 syn match diffOnly	"^只在 .* 存在：.*"
-syn match diffIdentical	"^檔案 .* 和 .* 相同$"
+syn match diffIdentical	"^文件 .* 和 .* 相同$"
 syn match diffDiffer	"^文件 .* 和 .* 不同$"
-syn match diffBDiffer	"^文件 .* 和 .* 不同$"
+syn match diffBDiffer	"^二进制文件 .* 和 .* 不同$"
 syn match diffIsA	"^文件 .* 是.*而文件 .* 是.*"
 syn match diffNoEOL	"^\\ 文件尾没有 newline 字符"
 syn match diffCommon	"^.* 和 .* 有共同的子目录$"

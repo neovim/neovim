@@ -3213,12 +3213,8 @@ msgstr "E773: cycle de liens symboliques avec \"%s\""
 msgid "E325: ATTENTION"
 msgstr "E325: ATTENTION"
 
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Trouvé un fichier d'échange nommé \""
+msgid "Found a swap file by the name \""
+msgstr "Trouvé un fichier d'échange nommé \""
 
 msgid "While opening file \""
 msgstr "Lors de l'ouverture du fichier \""
@@ -3925,12 +3921,8 @@ msgstr ""
 "\n"
 "Impossible d'exécuter le shell sh\n"
 
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"le shell a retourné "
+msgid "shell returned "
+msgstr "le shell a retourné "
 
 msgid ""
 "\n"
@@ -4888,12 +4880,12 @@ msgstr ""
 msgid "E783: duplicate char in MAP entry"
 msgstr "E783: caractère dupliqué dans l'entrée MAP"
 
-msgid "Sorry, no suggestions"
-msgstr "Désolé, aucune suggestion"
+msgid "No suggestions"
+msgstr "Aucune suggestion"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Désolé, seulement %ld suggestions"
+msgid "Only %ld suggestions"
+msgstr "Seulement %ld suggestions"
 
 #, c-format
 msgid "Change \"%.*s\" to:"

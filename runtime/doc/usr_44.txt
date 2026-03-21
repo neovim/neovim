@@ -1,6 +1,8 @@
 *usr_44.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			 Your own syntax highlighted
 
@@ -511,7 +513,7 @@ syntax file.  The ":syntax include" command reads in a syntax file and stores
 the elements it defined in a syntax cluster.  For Perl, the statements are as
 follows: >
 
-	:syntax include @Pod <sfile>:p:h/pod.vim
+	:syntax include @Pod <script>:p:h/pod.vim
 	:syntax region perlPOD start=/^=head/ end=/^=cut/ contains=@Pod
 
 When "=head" is found in a Perl file, the perlPOD region starts.  In this
@@ -522,7 +524,7 @@ region ends and we go back to the items defined in the Perl file.
 command in the included file.  And an argument such as "contains=ALL" will
 only contain items defined in the included file, not in the file that includes
 it.
-   The "<sfile>:p:h/" part uses the name of the current file (<sfile>),
+   The "<script>:p:h/" part uses the name of the current file (<script>),
 expands it to a full path (:p) and then takes the head (:h).  This results in
 the directory name of the file.  This causes the pod.vim file in the same
 directory to be included.
@@ -627,10 +629,10 @@ be included in the next Vim version!
 
 ADDING TO AN EXISTING SYNTAX FILE
 
-We were assuming you were adding a completely new syntax file.  When an existing
-syntax file works, but is missing some items, you can add items in a separate
-file.  That avoids changing the distributed syntax file, which will be lost
-when installing a new version of Vim.
+We were assuming you were adding a completely new syntax file.  When an
+existing syntax file works, but is missing some items, you can add items in a
+separate file.  That avoids changing the distributed syntax file, which will
+be lost when installing a new version of Vim.
    Write syntax commands in your file, possibly using group names from the
 existing syntax.  For example, to add new variable types to the C syntax file:
 >

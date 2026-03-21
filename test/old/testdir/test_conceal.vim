@@ -394,6 +394,10 @@ func Test_conceal_mouse_click()
   syn match Concealed "this" conceal
   hi link Concealed Search
 
+  " Nvim: need to redraw before processing every key, because mouse clicks set
+  " w_redr_type, which prevent using vcols[].
+  lua _G.NS = vim.on_key(function() vim.cmd.redraw() end)
+
   " Test with both 'nocursorline' and 'cursorline', as they use two different
   " code paths to set virtual columns for the cells to clear.
   for cul in [v:false, v:true]
@@ -550,6 +554,8 @@ func Test_conceal_mouse_click()
     setlocal number& signcolumn&
   endfor
 
+  lua vim.on_key(nil, _G.NS); _G.NS = nil
+
   call CloseWindow()
   set mouse&
 endfunc
@@ -557,6 +563,8 @@ endfunc
 " Test that cursor is drawn at the correct column when it is after end of the
 " line with 'virtualedit' and concealing.
 func Run_test_conceal_virtualedit_after_eol(wrap)
+  CheckScreendump
+
   let code =<< trim eval [CODE]
     let &wrap = {a:wrap}
     call setline(1, 'abcdefgh|hidden|ijklmnpop')
@@ -589,6 +597,8 @@ endfunc
 
 " Same as Run_test_conceal_virtualedit_after_eol(), but with 'rightleft'.
 func Run_test_conceal_virtualedit_after_eol_rightleft(wrap)
+  CheckScreendump
+
   let code =<< trim eval [CODE]
     let &wrap = {a:wrap}
     call setline(1, 'abcdefgh|hidden|ijklmnpop')
@@ -622,6 +632,8 @@ endfunc
 
 " Test that cursor position is correct when double-width chars are concealed.
 func Run_test_conceal_double_width(wrap)
+  CheckScreendump
+
   let code =<< trim eval [CODE]
     let &wrap = {a:wrap}
     call setline(1, ['aaaaa口=口bbbbb口=口ccccc', 'foobar'])

@@ -1295,18 +1295,18 @@ msgstr "E478: Non lasciarti prendere dal panico!"
 
 #: ../ex_cmds.c:4717
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Spiacente, nessun aiuto '%s' per %s"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: Nessun aiuto '%s' per %s"
 
 #: ../ex_cmds.c:4719
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: Spiacente, nessun aiuto per %s"
+msgid "E149: No help for %s"
+msgstr "E149: Nessun aiuto per %s"
 
 #: ../ex_cmds.c:4751
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "Spiacente, non trovo file di aiuto \"%s\""
+msgid "Help file \"%s\" not found"
+msgstr "Non trovo file di aiuto \"%s\""
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -4001,12 +4001,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: ATTENZIONE"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Trovato uno swap file di nome \""
+msgid "Found a swap file by the name \""
+msgstr "Trovato uno swap file di nome \""
 
 #: ../memline.c:3226
 msgid "While opening file \""
@@ -4702,12 +4698,8 @@ msgstr ""
 "Non riesco a eseguire shell "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"shell terminato con return-code "
+msgid "shell returned "
+msgstr "shell terminato con return-code "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""
@@ -5611,13 +5603,13 @@ msgid "E763: Word characters differ between spell files"
 msgstr "E763: Caratteri di parola differenti nei file ortografici"
 
 #: ../spell.c:8684
-msgid "Sorry, no suggestions"
-msgstr "Spiacente, nessun suggerimento"
+msgid "No suggestions"
+msgstr "Nessun suggerimento"
 
 #: ../spell.c:8687
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "Spiacente, solo %<PRId64> suggerimenti"
+msgid "Only %<PRId64> suggestions"
+msgstr "Solo %<PRId64> suggerimenti"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt

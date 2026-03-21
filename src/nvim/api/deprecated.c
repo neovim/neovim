@@ -16,6 +16,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
@@ -31,9 +32,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/deprecated.c.generated.h"
-#endif
+#include "api/deprecated.c.generated.h"
 
 /// @deprecated Use nvim_exec2() instead.
 /// @see nvim_exec2
@@ -62,14 +61,14 @@ Object nvim_execute_lua(String code, Array args, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return nlua_exec(code, args, kRetObject, arena, err);
+  return nlua_exec(code, NULL, args, kRetObject, arena, err);
 }
 
 /// Gets the buffer number
 ///
 /// @deprecated The buffer number now is equal to the object id
 ///
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param[out] err   Error details, if any
 /// @return Buffer number
 Integer nvim_buf_get_number(Buffer buffer, Error *err)
@@ -100,7 +99,7 @@ static uint32_t src2ns(Integer *src_id)
 ///
 /// @deprecated use |nvim_buf_clear_namespace()|.
 ///
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param ns_id      Namespace to clear, or -1 to clear all.
 /// @param line_start Start of range of lines to clear
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
@@ -131,7 +130,7 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
 /// supported for backwards compatibility, new code should use
 /// |nvim_create_namespace()| to create a new empty namespace.
 ///
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param ns_id      namespace to use or -1 for ungrouped highlight
 /// @param hl_group   Name of the highlight group to use
 /// @param line       Line to highlight (zero-indexed)
@@ -207,7 +206,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
 /// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
 /// virtual text, the allocated id is then returned.
 ///
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param src_id     Namespace to use or 0 to create a namespace,
 ///                   or -1 for a ungrouped annotation
 /// @param line       Line to annotate with virtual text (zero-indexed)
@@ -309,7 +308,7 @@ Dict nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
 ///
 /// @deprecated use nvim_buf_set_lines(buffer, lnum, lnum, true, lines)
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer id
 /// @param lnum       Insert the lines after `lnum`. If negative, appends to
 ///                   the end of the buffer.
 /// @param lines      Array of lines
@@ -330,7 +329,7 @@ void buffer_insert(Buffer buffer, Integer lnum, ArrayOf(String) lines, Arena *ar
 ///             for negative indices use
 ///                 "nvim_buf_get_lines(buffer, index-1, index, true)"
 ///
-/// @param buffer   Buffer handle
+/// @param buffer   Buffer id
 /// @param index    Line index
 /// @param[out] err Error details, if any
 /// @return Line string
@@ -357,7 +356,7 @@ String buffer_get_line(Buffer buffer, Integer index, Arena *arena, Error *err)
 ///             for negative indices use
 ///                 "nvim_buf_set_lines(buffer, index-1, index, true, [line])"
 ///
-/// @param buffer   Buffer handle
+/// @param buffer   Buffer id
 /// @param index    Line index
 /// @param line     Contents of the new line
 /// @param[out] err Error details, if any
@@ -377,7 +376,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Arena *arena, Er
 ///                 "nvim_buf_set_lines(buffer, index, index+1, true, [])"
 ///             for negative indices use
 ///                 "nvim_buf_set_lines(buffer, index-1, index, true, [])"
-/// @param buffer   buffer handle
+/// @param buffer   buffer id
 /// @param index    line index
 /// @param[out] err Error details, if any
 void buffer_del_line(Buffer buffer, Integer index, Arena *arena, Error *err)
@@ -394,7 +393,7 @@ void buffer_del_line(Buffer buffer, Integer index, Arena *arena, Error *err)
 ///             where newstart = start + int(not include_start) - int(start < 0)
 ///                   newend = end + int(include_end) - int(end < 0)
 ///                   int(bool) = 1 if bool is true else 0
-/// @param buffer         Buffer handle
+/// @param buffer         Buffer id
 /// @param start          First line index
 /// @param end            Last line index
 /// @param include_start  True if the slice includes the `start` parameter
@@ -422,7 +421,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 ///                   newend = end + int(include_end) + int(end < 0)
 ///                   int(bool) = 1 if bool is true else 0
 ///
-/// @param buffer         Buffer handle, or 0 for current buffer
+/// @param buffer         Buffer id, or 0 for current buffer
 /// @param start          First line index
 /// @param end            Last line index
 /// @param include_start  True if the slice includes the `start` parameter
@@ -444,7 +443,7 @@ void buffer_set_line_slice(Buffer buffer, Integer start, Integer end, Boolean in
 ///
 /// @deprecated
 ///
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param name       Variable name
 /// @param value      Variable value
 /// @param[out] err   Error details, if any
@@ -468,7 +467,7 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Arena *arena, Er
 ///
 /// @deprecated
 ///
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param name       Variable name
 /// @param[out] err   Error details, if any
 /// @return Old value
@@ -580,7 +579,7 @@ Object tabpage_del_var(Tabpage tabpage, String name, Arena *arena, Error *err)
 Object vim_set_var(String name, Object value, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
-  return dict_set_var(&globvardict, name, value, false, true, arena, err);
+  return dict_set_var(get_globvar_dict(), name, value, false, true, arena, err);
 }
 
 /// @deprecated
@@ -588,7 +587,7 @@ Object vim_set_var(String name, Object value, Arena *arena, Error *err)
 Object vim_del_var(String name, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
-  return dict_set_var(&globvardict, name, NIL, true, true, arena, err);
+  return dict_set_var(get_globvar_dict(), name, NIL, true, true, arena, err);
 }
 
 static int64_t convert_index(int64_t index)
@@ -603,7 +602,7 @@ static int64_t convert_index(int64_t index)
 /// @param          name Option name
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dict nvim_get_option_info(String name, Arena *arena, Error *err)
+DictAs(get_option_info) nvim_get_option_info(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_DEPRECATED_SINCE(11)
 {
@@ -641,7 +640,7 @@ Object nvim_get_option(String name, Error *err)
 /// Gets a buffer option value
 ///
 /// @deprecated
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param name       Option name
 /// @param[out] err   Error details, if any
 /// @return Option value
@@ -664,7 +663,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
 ///
 /// @deprecated
 /// @param channel_id
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param name       Option name
 /// @param value      Option value
 /// @param[out] err   Error details, if any

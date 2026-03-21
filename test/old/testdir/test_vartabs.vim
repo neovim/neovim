@@ -387,14 +387,14 @@ func Test_vartabs_shiftwidth()
 endfunc
 
 func Test_vartabs_failures()
-  call assert_fails('set vts=8,')
-  call assert_fails('set vsts=8,')
-  call assert_fails('set vts=8,,8')
-  call assert_fails('set vsts=8,,8')
-  call assert_fails('set vts=8,,8,')
-  call assert_fails('set vsts=8,,8,')
-  call assert_fails('set vts=,8')
-  call assert_fails('set vsts=,8')
+  call assert_fails('set vts=8,', 'E475: Invalid argument: 8,')
+  call assert_fails('set vsts=8,', 'E475: Invalid argument: 8,')
+  call assert_fails('set vts=8,,8', 'E474: Invalid argument: vts=8,,8')
+  call assert_fails('set vsts=8,,8', 'E474: Invalid argument: vsts=8,,8')
+  call assert_fails('set vts=8,,8,', 'E474: Invalid argument: vts=8,,8,')
+  call assert_fails('set vsts=8,,8,', 'E474: Invalid argument: vsts=8,,8,')
+  call assert_fails('set vts=,8', 'E474: Invalid argument: vts=,8')
+  call assert_fails('set vsts=,8', 'E474: Invalid argument: vsts=,8')
 endfunc
 
 func Test_vartabs_reset()

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+  "format": {
+    "externalTool": {
+      "program": "stylua",
+      "args": [
+        "-",
+        "--stdin-filepath",
+        "${file}"
+      ]
+    }
+  },
+  "diagnostics": {
+    "disable": [
+      "unnecessary-if"
+    ]
+  },
+  "codeAction": {
+    "insertSpace": true
+  },
+  "strict": {
+    "typeCall": true,
+    "arrayIndex": true
+  }
+}

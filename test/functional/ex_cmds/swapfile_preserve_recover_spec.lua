@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local tt = require('test.functional.testterm')
 local Screen = require('test.functional.ui.screen')
 
 local uv = vim.uv
@@ -9,6 +10,7 @@ local clear = n.clear
 local command = n.command
 local feed = n.feed
 local fn = n.fn
+local neq = t.neq
 local nvim_prog = n.nvim_prog
 local ok = t.ok
 local rmdir = n.rmdir
@@ -23,6 +25,7 @@ local poke_eventloop = n.poke_eventloop
 local api = n.api
 local retry = t.retry
 local write_file = t.write_file
+local expect_exitcode = tt.expect_exitcode
 
 describe(':recover', function()
   before_each(clear)
@@ -51,7 +54,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     set swapfile fileformat=unix undolevels=-1
   ]]
 
-  local nvim0
+  local nvim0 --- @type test.Session
   before_each(function()
     nvim0 = n.new_session(false)
     set_session(nvim0)
@@ -63,12 +66,13 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     rmdir(swapdir)
   end)
 
+  --- @return string
   local function setup_swapname()
     exec(init)
     command('edit! ' .. testfile)
     feed('isometext<esc>')
     exec('redir => g:swapname | silent swapname | redir END')
-    return eval('g:swapname')
+    return eval('g:swapname'):match('[^\n]*$')
   end
 
   local function test_recover(swappath1)
@@ -99,6 +103,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   it('with :preserve and SIGKILL', function()
     local swappath1 = setup_swapname()
     command('preserve')
+    neq(nil, uv.fs_stat(swappath1))
     eq(0, vim.uv.kill(eval('getpid()'), 'sigkill'))
     test_recover(swappath1)
   end)
@@ -106,11 +111,11 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   it('closing stdio channel without :preserve #22096', function()
     local swappath1 = setup_swapname()
     nvim0:close()
+    neq(nil, uv.fs_stat(swappath1))
     test_recover(swappath1)
   end)
 
   it('killing TUI process without :preserve #22096', function()
-    t.skip(t.is_os('win'))
     local screen0 = Screen.new()
     local child_server = new_pipename()
     fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
@@ -122,15 +127,49 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     set_session(child_session)
     local swappath1 = setup_swapname()
     set_session(nvim0)
+    -- n.exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     command('call chanclose(&channel)') -- Kill the child process.
     screen0:expect({ any = pesc('[Process exited 1]') }) -- Wait for the child process to stop.
+    neq(nil, uv.fs_stat(swappath1))
     test_recover(swappath1)
+  end)
+
+  it('manual :recover with multiple swapfiles', function()
+    local swappath1 = setup_swapname()
+    eq('.swp', swappath1:match('%.[^.]+$'))
+    nvim0:close()
+    neq(nil, uv.fs_stat(swappath1))
+    local swappath2 = swappath1:gsub('%.swp$', '.swo')
+    eq(true, uv.fs_copyfile(swappath1, swappath2))
+    clear()
+    exec(init)
+    local screen = Screen.new(256, 40)
+    feed(':recover! ' .. testfile .. '<CR>')
+    screen:expect({
+      any = {
+        '\nSwap files found:',
+        '\n   In directory ',
+        vim.pesc('\n1.    '),
+        vim.pesc('\n2.    '),
+        vim.pesc('\nEnter number of swap file to use (0 to quit): ^'),
+      },
+      none = vim.pesc('{18:^@}'),
+    })
+    feed('2<CR>')
+    screen:expect({
+      any = {
+        vim.pesc('\nRecovery completed.'),
+        vim.pesc('\n{6:Press ENTER or type command to continue}^'),
+      },
+    })
+    feed('<CR>')
+    expect('sometext')
   end)
 end)
 
 describe('swapfile detection', function()
   local swapdir = uv.cwd() .. '/Xtest_swapdialog_dir'
-  local nvim0
+  local nvim0 --- @type test.Session
   -- Put swapdir at the start of the 'directory' list. #1836
   -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
   -- attempt to create a swapfile in different directory.
@@ -169,7 +208,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     exec(init)
     command('edit! ' .. testfile)
     command('preserve')
-    local nvim2 = n.new_session(true, { args = { '--clean', '--embed' }, merge = false })
+    local args2 = { '--clean', '--embed', '--cmd', n.runtime_set }
+    local nvim2 = n.new_session(true, { args = args2, merge = false })
     set_session(nvim2)
     local screen2 = Screen.new(100, 40)
     screen2:add_extra_attr_ids({
@@ -182,14 +222,18 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
       [104] = { foreground = Screen.colors.NvimLightCyan },
       [105] = { foreground = Screen.colors.NvimDarkGrey4 },
       [106] = {
-        foreground = Screen.colors.NvimDarkGrey3,
-        background = Screen.colors.NvimLightGrey3,
+        foreground = Screen.colors.NvimLightGrey2,
+        background = Screen.colors.NvimDarkGrey4,
       },
+      [107] = { foreground = Screen.colors.NvimLightGrey2, bold = true },
+      [108] = { foreground = Screen.colors.NvimLightBlue },
     })
     exec(init)
     command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
     feed(':edit ' .. testfile .. '<CR>')
+    eq('r?', api.nvim_get_mode().mode)
     feed('E:source<CR>')
+    eq('r?', api.nvim_get_mode().mode)
     screen2:sleep(1000)
     feed('E')
     screen2:expect([[
@@ -321,11 +365,6 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     command('preserve') -- Make sure the swap file exists.
 
     local screen = Screen.new(75, 18)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-    })
-
     local nvim1 = n.new_session(true)
     set_session(nvim1)
     screen:attach()
@@ -334,13 +373,18 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     feed(':split Xfile1\n')
     -- The default SwapExists handler does _not_ skip this prompt.
     screen:expect({
-      any = pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+      any = pesc('{6:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
     })
     feed('q')
+    screen:expect([[
+      ^                                                                           |
+      {1:~                                                                          }|*16
+                                                                                 |
+    ]])
     feed(':<CR>')
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|*16
+      {1:~                                                                          }|*16
       :                                                                          |
     ]])
     nvim1:close()
@@ -353,16 +397,16 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     command('set more')
     command('au bufadd * let foo_w = wincol()')
     feed(':e Xfile1<CR>')
-    screen:expect({ any = pesc('{1:-- More --}^') })
+    screen:expect({ any = pesc('{6:-- More --}^') })
     feed('<Space>')
     screen:expect({
-      any = pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+      any = pesc('{6:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
     })
     feed('q')
     command([[echo 'hello']])
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|*16
+      {1:~                                                                          }|*16
       hello                                                                      |
     ]])
     nvim2:close()
@@ -372,11 +416,6 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
   --- @param on_swapfile_running fun(screen: any) Called after swapfile ("STILL RUNNING") prompt.
   local function test_swapfile_after_reboot(swapexists, on_swapfile_running)
     local screen = Screen.new(75, 30)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-      [2] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
-    })
 
     exec(init)
     if not swapexists then
@@ -436,8 +475,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     feed(':edit Xswaptest<CR>')
     screen:expect({
       any = table.concat({
-        pesc('{2:E325: ATTENTION}'),
-        pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort: }^'),
+        '{9:E325: ATTENTION}',
+        pesc('{6:[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort: }^'),
       }, '.*'),
     })
 
@@ -449,10 +488,10 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     test_swapfile_after_reboot(false, function(screen)
       screen:expect({
         any = table.concat({
-          pesc('{2:E325: ATTENTION}'),
-          'file name: .*Xswaptest',
-          'process ID: %d* %(STILL RUNNING%)',
-          pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+          '{9:E325: ATTENTION}',
+          '{6:        process ID: %d* %(STILL RUNNING%)}',
+          '{6:While opening file "Xswaptest"}',
+          pesc('{6:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
         }, '.*'),
       })
     end)
@@ -515,12 +554,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'q')
-    retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
-    end)
+    expect_exitcode(1)
   end)
 
   it('(A)bort at second file argument with -p', function()
@@ -548,12 +582,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'a')
-    retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
-    end)
+    expect_exitcode(1)
   end)
 
   it('(Q)uit at file opened by -t', function()
@@ -589,13 +618,6 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'q')
-    retry(nil, nil, function()
-      eq(
-        { '[Process exited 1]' },
-        eval(
-          "[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})->filter({_, s -> !empty(trim(s))})"
-        )
-      )
-    end)
+    expect_exitcode(1)
   end)
 end)

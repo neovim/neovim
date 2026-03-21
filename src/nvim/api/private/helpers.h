@@ -180,9 +180,7 @@ typedef struct {
     code; \
   }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/helpers.h.generated.h"
-#endif
+#include "api/private/helpers.h.generated.h"
 
 #define WITH_SCRIPT_CONTEXT(channel_id, code) \
   do { \

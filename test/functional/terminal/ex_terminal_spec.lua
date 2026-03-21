@@ -4,11 +4,12 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = n.assert_alive
 local clear, poke_eventloop = n.clear, n.poke_eventloop
-local testprg, source, eq = n.testprg, n.source, t.eq
+local testprg, source, eq, neq = n.testprg, n.source, t.eq, t.neq
 local feed = n.feed
-local feed_command, eval = n.feed_command, n.eval
+local eval = n.eval
 local fn = n.fn
 local api = n.api
+local exec_lua = n.exec_lua
 local retry = t.retry
 local ok = t.ok
 local command = n.command
@@ -40,7 +41,7 @@ describe(':terminal', function()
     retry(nil, 4000, function()
       ok(fn.line('$') > 6)
     end)
-    feed_command('messages')
+    feed(':messages<CR>')
     screen:expect([[
       msg1                                              |
       msg2                                              |
@@ -52,35 +53,35 @@ describe(':terminal', function()
   it('reads output buffer on terminal reporting #4151', function()
     skip(is_ci('cirrus') or is_os('win'))
     if is_os('win') then
-      feed_command(
+      command(
         [[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]]
       )
     else
-      feed_command([[terminal printf '\e[6n'; sleep 0.5 ]])
+      command([[terminal printf '\e[6n'; sleep 0.5 ]])
     end
     screen:expect { any = '%^%[%[1;1R' }
   end)
 
   it('in normal-mode :split does not move cursor', function()
     if is_os('win') then
-      feed_command(
+      command(
         [[terminal for /L \\%I in (1,0,2) do ( echo foo & ping -w 100 -n 1 127.0.0.1 > nul )]]
       )
     else
-      feed_command([[terminal while true; do echo foo; sleep .1; done]])
+      command([[terminal while true; do echo foo; sleep .1; done]])
     end
     feed([[<C-\><C-N>M]]) -- move cursor away from last line
     poke_eventloop()
     eq(3, eval("line('$')")) -- window height
     eq(2, eval("line('.')")) -- cursor is in the middle
-    feed_command('vsplit')
+    feed(':vsplit<CR>')
     eq(2, eval("line('.')")) -- cursor stays where we put it
-    feed_command('split')
+    feed(':split<CR>')
     eq(2, eval("line('.')")) -- cursor stays where we put it
   end)
 
   it('Enter/Leave does not increment jumplist #3723', function()
-    feed_command('terminal')
+    feed(':terminal<CR>')
     local function enter_and_leave()
       local lines_before = fn.line('$')
       -- Create a new line (in the shell). For a normal buffer this
@@ -153,7 +154,35 @@ describe(':terminal', function()
     feed('i')
     eq({ blocking = false, mode = 'i' }, api.nvim_get_mode())
     command('stopinsert | wincmd p')
+    feed('<Ignore>') -- Add input to separate two RPC requests
     eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
+  end)
+
+  it('switching to another terminal buffer in Terminal mode', function()
+    command('terminal')
+    local buf0 = api.nvim_get_current_buf()
+    command('terminal')
+    local buf1 = api.nvim_get_current_buf()
+    command('terminal')
+    local buf2 = api.nvim_get_current_buf()
+    neq(buf0, buf1)
+    neq(buf0, buf2)
+    neq(buf1, buf2)
+    feed('i')
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    api.nvim_set_current_buf(buf1)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    api.nvim_set_current_buf(buf0)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    exec_lua(function()
+      vim.api.nvim_set_current_buf(buf1)
+      vim.api.nvim_buf_delete(buf0, { force = true })
+    end)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    api.nvim_set_current_buf(buf2)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    api.nvim_set_current_buf(buf1)
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
   end)
 end)
 
@@ -173,67 +202,66 @@ local function test_terminal_with_fake_shell(backslash)
     api.nvim_set_option_value('shell', shell_path, {})
     api.nvim_set_option_value('shellcmdflag', 'EXE', {})
     api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
+    t.mkdir('Xsomedir')
+    t.write_file('Xsomedir/Xuniquefile', '')
+  end)
+
+  after_each(function()
+    n.rmdir('Xsomedir')
   end)
 
   it('with no argument, acts like jobstart(…,{term=true})', function()
     command('autocmd! nvim.terminal TermClose')
-    feed_command('terminal')
+    command('terminal')
     screen:expect([[
       ^ready $                                           |
-      [Process exited 0]                                |
                                                         |
-      :terminal                                         |
+                                                        |*2
     ]])
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
     api.nvim_set_option_value('shell', '', {})
-    feed_command('terminal')
-    screen:expect([[
-      ^                                                  |
-      ~                                                 |*2
-      E91: 'shell' option is empty                      |
-    ]])
+    eq("Vim(terminal):E91: 'shell' option is empty", t.pcall_err(command, 'terminal'))
   end)
 
   it("with no argument, but 'shell' has arguments, acts like jobstart(…,{term=true})", function()
     api.nvim_set_option_value('shell', shell_path .. ' INTERACT', {})
-    feed_command('terminal')
+    command('terminal')
     screen:expect([[
       ^interact $                                        |
-                                                        |*2
-      :terminal                                         |
+                                                        |*3
     ]])
   end)
 
   it('executes a given command through the shell', function()
-    feed_command('terminal echo hi')
+    command('terminal echo hi')
     screen:expect([[
       ^ready $ echo hi                                   |
                                                         |
       [Process exited 0]                                |
-      :terminal echo hi                                 |
+                                                        |
     ]])
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
     api.nvim_set_option_value('shell', shell_path .. ' -t jeff', {})
-    feed_command('terminal echo hi')
+    command('terminal echo hi')
     screen:expect([[
       ^jeff $ echo hi                                    |
                                                         |
       [Process exited 0]                                |
-      :terminal echo hi                                 |
+                                                        |
     ]])
   end)
 
   it('allows quotes and slashes', function()
-    feed_command([[terminal echo 'hello' \ "world"]])
+    command([[terminal echo 'hello' \ "world"]])
     screen:expect([[
       ^ready $ echo 'hello' \ "world"                    |
                                                         |
       [Process exited 0]                                |
-      :terminal echo 'hello' \ "world"                  |
+                                                        |
     ]])
   end)
 
@@ -247,7 +275,7 @@ local function test_terminal_with_fake_shell(backslash)
 
   it('ignores writes if the backing stream closes', function()
     command('autocmd! nvim.terminal TermClose')
-    feed_command('terminal')
+    command('terminal')
     feed('iiXXXXXXX')
     poke_eventloop()
     -- Race: Though the shell exited (and streams were closed by SIGCHLD
@@ -259,42 +287,41 @@ local function test_terminal_with_fake_shell(backslash)
 
   it('works with findfile()', function()
     command('autocmd! nvim.terminal TermClose')
-    feed_command('terminal')
+    command('terminal')
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
-    eq('scripts/shadacat.py', eval('findfile("scripts/shadacat.py", ".")'))
+    eq('Xsomedir/Xuniquefile', eval('findfile("Xsomedir/Xuniquefile", ".")'))
   end)
 
   it('works with :find', function()
     command('autocmd! nvim.terminal TermClose')
-    feed_command('terminal')
+    command('terminal')
     screen:expect([[
       ^ready $                                           |
-      [Process exited 0]                                |
                                                         |
-      :terminal                                         |
+                                                        |*2
     ]])
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[<C-\><C-N>]])
-    feed_command([[find */shadacat.py]])
+    command([[find */Xuniquefile]])
     if is_os('win') then
-      eq('scripts\\shadacat.py', eval('bufname("%")'))
+      eq('Xsomedir\\Xuniquefile', eval('bufname("%")'))
     else
-      eq('scripts/shadacat.py', eval('bufname("%")'))
+      eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
     end
   end)
 
   it('works with gf', function()
-    feed_command([[terminal echo "scripts/shadacat.py"]])
+    command([[terminal echo "Xsomedir/Xuniquefile"]])
     screen:expect([[
-      ^ready $ echo "scripts/shadacat.py"                |
+      ^ready $ echo "Xsomedir/Xuniquefile"               |
                                                         |
       [Process exited 0]                                |
-      :terminal echo "scripts/shadacat.py"              |
+                                                        |
     ]])
     feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[ggf"lgf]])
-    eq('scripts/shadacat.py', eval('bufname("%")'))
+    eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
   end)
 
   it('with bufhidden=delete #3958', function()
@@ -313,12 +340,11 @@ local function test_terminal_with_fake_shell(backslash)
       it(('with updatetime=%d'):format(ut), function()
         api.nvim_set_option_value('updatetime', ut, {})
         api.nvim_set_option_value('shellcmdflag', 'EXIT', {})
-        feed_command('terminal 42')
+        command('terminal 42')
         screen:expect([[
           ^                                                  |
           [Process exited 42]                               |
-                                                            |
-          :terminal 42                                      |
+                                                            |*2
         ]])
       end)
     end

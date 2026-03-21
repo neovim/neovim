@@ -17,7 +17,7 @@ func Test_comment_nested()
     >>>> H
   END
   call assert_equal(expected, getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for the 'b' flag in 'comments'
@@ -36,7 +36,7 @@ func Test_comment_blank()
     H
   END
   call assert_equal(expected, getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for the 'f' flag in 'comments' (only the first line has a comment
@@ -50,7 +50,7 @@ func Test_comment_firstline()
   setlocal comments=:-
   exe "normal i- B\nD\<C-C>ggoC\<C-C>ggOA\<C-C>"
   call assert_equal(['- A', '- B', '- C', '- D'], getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for the 's', 'm' and 'e' flags in 'comments'
@@ -75,7 +75,7 @@ func Test_comment_threepiece()
   setlocal autoindent noexpandtab
   call feedkeys("a\t/*\tone\ntwo\n/", 'xt')
   call assert_equal(["\t/*\tone", "\t *\ttwo", "\t */"], getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for the 'r' flag in 'comments' (right align comment)
@@ -97,7 +97,7 @@ func Test_comment_rightalign()
     G
   END
   call assert_equal(expected, getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for the 'O' flag in 'comments'
@@ -112,7 +112,7 @@ func Test_comment_O()
     * D
   END
   call assert_equal(expected, getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for using a multibyte character as a comment leader
@@ -185,7 +185,7 @@ func Test_comment_multibyte_leader()
   call assert_equal(expected, getline(1, '$'))
 
   set tw& fo& comments&
-  close!
+  bw!
 endfunc
 
 " Test for a space character in 'comments' setting
@@ -205,7 +205,7 @@ func Test_comment_space()
      > H
   END
   call assert_equal(expected, getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for formatting lines with and without comments
@@ -214,7 +214,7 @@ func Test_comment_format_lines()
   call setline(1, ['one', '/* two */', 'three'])
   normal gggqG
   call assert_equal(['one', '/* two */', 'three'], getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for using 'a' in 'formatoptions' with comments
@@ -243,7 +243,7 @@ func Test_comment_autoformat()
   call assert_equal(['one'], getline(1, '$'))
   set backspace&
 
-  close!
+  bw!
 endfunc
 
 " Test for joining lines with comments ('j' flag in 'formatoptions')
@@ -262,7 +262,7 @@ func Test_comment_join_lines_fo_j()
   call setline(1, ['i++; > ) > ) comment1', '           > ) comment2'])
   normal J
   call assert_equal('i++; > ) > ) comment1 comment2', getline(1))
-  close!
+  bw!
 endfunc
 
 " Test for formatting lines where only the first line has a comment.
@@ -277,7 +277,7 @@ func Test_comment_format_firstline_comment()
   call setline(1, ['- one', '- two'])
   normal gggqG
   call assert_equal(['- one', '- two'], getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

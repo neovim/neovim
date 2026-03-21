@@ -122,6 +122,7 @@ SynMenu C.C++:cpp
 SynMenu C.C#:cs
 SynMenu C.Cabal\ Haskell\ build\ file:cabal
 SynMenu C.Calendar:calendar
+SynMenu C.Cangjie:cangjie
 SynMenu C.Cascading\ Style\ Sheets:css
 SynMenu C.CDL:cdl
 SynMenu C.Cdrdao\ TOC:cdrtoc

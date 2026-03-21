@@ -1,0 +1,102 @@
+-- Nursery for random things that may later find their way into stdlib if they mature.
+
+local M = {}
+
+--- Adds one or more blank lines above or below the cursor.
+-- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
+--- @param above? boolean Place blank line(s) above the cursor
+local function add_blank(above)
+  local offset = above and 1 or 0
+  local repeated = vim.fn['repeat']({ '' }, vim.v.count1)
+  local linenr = vim.api.nvim_win_get_cursor(0)[1]
+  vim.api.nvim_buf_set_lines(0, linenr - offset, linenr - offset, true, repeated)
+end
+
+-- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
+function M.space_above()
+  add_blank(true)
+end
+
+-- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
+function M.space_below()
+  add_blank()
+end
+
+--- Edit a file in a specific window
+--- @param winnr number
+--- @param file string
+--- @return number buffer number of the edited buffer
+M.edit_in = function(winnr, file)
+  local function resolved_path(path)
+    if not path or path == '' then
+      return ''
+    end
+    return vim.fn.resolve(vim.fs.abspath(path))
+  end
+
+  return vim.api.nvim_win_call(winnr, function()
+    local current_buf = vim.api.nvim_win_get_buf(winnr)
+    local current = resolved_path(vim.api.nvim_buf_get_name(current_buf))
+
+    -- Check if the current buffer is already the target file
+    if current == resolved_path(file) then
+      return current_buf
+    end
+
+    -- Read the file into the buffer
+    vim.cmd.edit(vim.fn.fnameescape(file))
+    return vim.api.nvim_get_current_buf()
+  end)
+end
+
+--- Read a chunk of data from a file
+--- @param file string
+--- @param size number
+--- @return string? chunk or nil on error
+function M.read_chunk(file, size)
+  local fd = io.open(file, 'rb')
+  if not fd then
+    return nil
+  end
+  local chunk = fd:read(size)
+  fd:close()
+  return tostring(chunk)
+end
+
+--- Check if a range in a buffer is inside a Lua codeblock via treesitter injection.
+--- Used by :source to detect Lua code in non-Lua files (e.g., vimdoc).
+--- @param bufnr integer Buffer number
+--- @param line1 integer Start line (1-indexed)
+--- @param line2 integer End line (1-indexed)
+--- @return boolean True if the range is in a Lua injection
+function M.source_is_lua(bufnr, line1, line2)
+  local parser = vim.treesitter.get_parser(bufnr)
+  if not parser then
+    return false
+  end
+  -- Parse from buffer start through one line past line2 to include injection closing markers
+  local range = { line1 - 1, 0, line2 - 1, -1 }
+  parser:parse({ 0, 0, line2, -1 })
+  local lang_tree = parser:language_for_range(range)
+  return lang_tree:lang() == 'lua'
+end
+
+--- Returns the exit code string for the current buffer, given:
+--- - Channel is attached to the current buffer
+--- - Current buffer is a terminal buffer
+---
+--- @return string
+function M.term_exitcode()
+  local chan_id = vim.bo.channel
+  if chan_id == 0 or vim.bo.buftype ~= 'terminal' then
+    return ''
+  end
+
+  local info = vim.api.nvim_get_chan_info(chan_id)
+  if info.exitcode and info.exitcode >= 0 then
+    return string.format('[Exit: %d]', info.exitcode)
+  end
+  return ''
+end
+
+return M

@@ -8,10 +8,8 @@
 #include "nvim/mbyte_defs.h"
 #include "nvim/viml/parser/parser_defs.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/parser/parser.h.generated.h"
-# include "viml/parser/parser.h.inline.generated.h"
-#endif
+#include "viml/parser/parser.h.generated.h"
+#include "viml/parser/parser.h.inline.generated.h"
 
 /// Initialize a new parser state instance
 ///

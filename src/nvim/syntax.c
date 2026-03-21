@@ -16,7 +16,6 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
@@ -157,9 +156,7 @@ typedef struct {
   char *pattern;
 } time_entry_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "syntax.c.generated.h"
-#endif
+#include "syntax.c.generated.h"
 
 static char *(spo_name_tab[SPO_COUNT]) =
 { "ms=", "me=", "hs=", "he=", "rs=", "re=", "lc=" };
@@ -3215,6 +3212,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
     return;
   }
 
+  msg_ext_set_kind("list_cmd");
   if (!syntax_present(curwin)) {
     msg(_(msg_no_items), 0);
     return;
@@ -5252,6 +5250,7 @@ void ex_syntax(exarg_T *eap)
   }
 }
 
+/// @deprecated
 void ex_ownsyntax(exarg_T *eap)
 {
   if (curwin->w_s == &curwin->w_buffer->b_s) {

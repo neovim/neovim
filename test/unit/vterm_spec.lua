@@ -94,7 +94,7 @@ local vterm = t.cimport(
   './src/nvim/vterm/screen.h',
   './src/nvim/vterm/state.h',
   './src/nvim/vterm/vterm.h',
-  './src/nvim/vterm/vterm_internal.h',
+  './src/nvim/vterm/vterm_internal_defs.h',
   './test/unit/fixtures/vterm_test.h'
 )
 
@@ -285,7 +285,8 @@ local function lineinfo(row, expected, state)
 end
 
 local function pen(attribute, expected, state)
-  local is_bool = { bold = true, italic = true, blink = true, reverse = true }
+  local is_bool =
+    { bold = true, italic = true, blink = true, reverse = true, dim = true, overline = true }
   local vterm_attribute = {
     bold = vterm.VTERM_ATTR_BOLD,
     underline = vterm.VTERM_ATTR_UNDERLINE,
@@ -293,6 +294,8 @@ local function pen(attribute, expected, state)
     blink = vterm.VTERM_ATTR_BLINK,
     reverse = vterm.VTERM_ATTR_REVERSE,
     font = vterm.VTERM_ATTR_FONT,
+    dim = vterm.VTERM_ATTR_DIM,
+    overline = vterm.VTERM_ATTR_OVERLINE,
   }
 
   local val = t.ffi.new('VTermValue') --- @type {boolean: integer}
@@ -386,11 +389,13 @@ local function screen_cell(row, col, expected, screen)
   end
   actual = string.format('%s} width=%d attrs={', actual, cell['width'])
   actual = actual .. (cell['attrs'].bold ~= 0 and 'B' or '')
+  actual = actual .. (cell['attrs'].dim ~= 0 and 'D' or '')
   actual = actual
     .. (cell['attrs'].underline ~= 0 and string.format('U%d', cell['attrs'].underline) or '')
   actual = actual .. (cell['attrs'].italic ~= 0 and 'I' or '')
   actual = actual .. (cell['attrs'].blink ~= 0 and 'K' or '')
   actual = actual .. (cell['attrs'].reverse ~= 0 and 'R' or '')
+  actual = actual .. (cell['attrs'].overline ~= 0 and 'O' or '')
   actual = actual .. (cell['attrs'].font ~= 0 and string.format('F%d', cell['attrs'].font) or '')
   actual = actual .. (cell['attrs'].small ~= 0 and 'S' or '')
   if cell['attrs'].baseline ~= 0 then
@@ -992,6 +997,7 @@ describe('vterm', function()
     push('e' .. string.rep('\xCC\x81', 20), vt)
     expect('putglyph 65,301,301,301,301,301,301,301,301,301,301,301,301,301,301 1 0,0') -- and nothing more
 
+    -- Combining across buffers multiple times
     reset(state, nil)
     push('e', vt)
     expect('putglyph 65 1 0,0')
@@ -999,6 +1005,32 @@ describe('vterm', function()
     expect('putglyph 65,301 1 0,0')
     push('\xCC\x82', vt)
     expect('putglyph 65,301,302 1 0,0')
+
+    -- Combining across buffers at right edge
+    reset(state, nil)
+    push('\x1b[5;80H', vt)
+    push('e', vt)
+    expect('putglyph 65 1 4,79')
+    push('\xCC\x81', vt)
+    expect('putglyph 65,301 1 4,79')
+    push('\xCC\x82Z', vt)
+    expect('putglyph 65,301,302 1 4,79\nputglyph 5a 1 5,0')
+
+    -- Combining regional indicators
+    reset(state, nil)
+    push('\x1b[5;77H', vt)
+    push('🇦', vt)
+    expect('putglyph 1f1e6 2 4,76')
+    push('🇩', vt)
+    expect('putglyph 1f1e6,1f1e9 2 4,76')
+    push('🇱', vt)
+    expect('putglyph 1f1f1 2 4,78')
+    push('🇮', vt)
+    expect('putglyph 1f1f1,1f1ee 2 4,78')
+    push('🇲', vt)
+    expect('putglyph 1f1f2 2 5,0')
+    push('🇨', vt)
+    expect('putglyph 1f1f2,1f1e8 2 5,0')
 
     -- emoji with ZWJ and variant selectors, as one chunk
     reset(state, nil)
@@ -1800,11 +1832,20 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     expect('putglyph 2592 1 0,1')
 
     vterm.vterm_set_utf8(vt, true)
+
+    -- Mixed US-ASCII and UTF-8
     -- U+0108 == c4 88
     reset(state, nil)
     push('\x1b(B', vt)
     push('AB\xc4\x88D', vt)
     expect('putglyph 41 1 0,0\nputglyph 42 1 0,1\nputglyph 108 1 0,2\nputglyph 44 1 0,3')
+
+    -- Split UTF-8 after US-ASCII
+    reset(state, nil)
+    push('AB\xc4', vt)
+    expect('putglyph 41 1 0,0\nputglyph 42 1 0,1')
+    push('\x88D', vt)
+    expect('putglyph 108 1 0,2\nputglyph 44 1 0,3')
   end)
 
   itp('15state_mode', function()
@@ -2580,6 +2621,22 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     vterm.vterm_state_focus_out(state)
     expect_output('\x1b[O')
 
+    -- Synchronized output mode 2026
+    push('\x1b[?2026h', vt)
+    expect('settermprop 11 true')
+    push('\x1b[?2026l', vt)
+    expect('settermprop 11 false')
+
+    -- DECRQM on synchronized output
+    push('\x1b[?2026h', vt)
+    expect('settermprop 11 true')
+    push('\x1b[?2026$p', vt)
+    expect_output('\x1b[?2026;1$y')
+    push('\x1b[?2026l', vt)
+    expect('settermprop 11 false')
+    push('\x1b[?2026$p', vt)
+    expect_output('\x1b[?2026;2$y')
+
     -- Disambiguate escape codes disabled
     push('\x1b[<u', vt)
 
@@ -2659,7 +2716,7 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     -- DA
     reset(state, nil)
     push('\x1b[c', vt)
-    expect_output('\x1b[?1;2c')
+    expect_output('\x1b[?61;22;52c')
 
     -- XTVERSION
     reset(state, nil)
@@ -2913,6 +2970,30 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     pen('font', 0, state)
     push('\x1b[11m\x1b[m', vt)
     pen('font', 0, state)
+
+    -- Dim
+    push('\x1b[2m', vt)
+    pen('dim', true, state)
+    push('\x1b[22m', vt)
+    pen('dim', false, state)
+    push('\x1b[2m\x1b[m', vt)
+    pen('dim', false, state)
+
+    -- Bold and Dim interaction (SGR 22 turns off both)
+    push('\x1b[1;2m', vt)
+    pen('bold', true, state)
+    pen('dim', true, state)
+    push('\x1b[22m', vt)
+    pen('bold', false, state)
+    pen('dim', false, state)
+
+    -- Overline
+    push('\x1b[53m', vt)
+    pen('overline', true, state)
+    push('\x1b[55m', vt)
+    pen('overline', false, state)
+    push('\x1b[53m\x1b[m', vt)
+    pen('overline', false, state)
 
     -- TODO(dundargoc): fix
     -- Foreground
@@ -3448,6 +3529,14 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     screen_cell(0, 8, '{78} width=1 attrs={} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
     screen_cell(0, 9, '{30} width=1 attrs={S_} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
     screen_cell(0, 10, '{32} width=1 attrs={S^} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
+
+    -- Dim
+    push('\x1b[2mI\x1b[m', vt)
+    screen_cell(0, 11, '{49} width=1 attrs={D} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
+
+    -- Overline
+    push('\x1b[53mJ\x1b[m', vt)
+    screen_cell(0, 12, '{4a} width=1 attrs={O} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
 
     -- EL sets only colours to end of line, not other attrs
     push('\x1b[H\x1b[7;33;44m\x1b[K', vt)

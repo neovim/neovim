@@ -5,17 +5,6 @@ local Paths = require('test.cmakeconfig.paths')
 
 luaassert:set_parameter('TableFormatLevel', 100)
 
-local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
-
---- @param str string
---- @return string
-local function shell_quote(str)
-  if string.find(str, quote_me) or str == '' then
-    return '"' .. str:gsub('[$%%"\\]', '\\%0') .. '"'
-  end
-  return str
-end
-
 --- Functions executing in the context of the test runner (not the current nvim test session).
 --- @class test.testutil
 local M = {
@@ -60,25 +49,21 @@ function M.fix_slashes(obj)
 end
 
 --- @param ... string|string[]
---- @return string
+--- @return string[]
 function M.argss_to_cmd(...)
   local cmd = {} --- @type string[]
   for i = 1, select('#', ...) do
     local arg = select(i, ...)
     if type(arg) == 'string' then
-      cmd[#cmd + 1] = shell_quote(arg)
+      cmd[#cmd + 1] = arg
     else
       --- @cast arg string[]
       for _, subarg in ipairs(arg) do
-        cmd[#cmd + 1] = shell_quote(subarg)
+        cmd[#cmd + 1] = subarg
       end
     end
   end
-  return table.concat(cmd, ' ')
-end
-
-function M.popen_r(...)
-  return io.popen(M.argss_to_cmd(...), 'r')
+  return cmd
 end
 
 --- Calls fn() until it succeeds, up to `max` times or until `max_ms`
@@ -88,8 +73,8 @@ end
 --- @param fn function
 --- @return any
 function M.retry(max, max_ms, fn)
-  luaassert(max == nil or max > 0)
-  luaassert(max_ms == nil or max_ms > 0)
+  assert(max == nil or max > 0)
+  assert(max_ms == nil or max_ms > 0)
   local tries = 1
   local timeout = (max_ms and max_ms or 10000)
   local start_time = uv.now()
@@ -121,18 +106,23 @@ function M.neq(expected, actual, context)
   return luaassert.are_not.same(expected, actual, context)
 end
 
+--- Compare paths after resolving symlinks with realpath.
+function M.eq_paths(expected, actual, context)
+  return M.eq(uv.fs_realpath(expected), uv.fs_realpath(actual), context)
+end
+
 --- Asserts that `cond` is true, or prints a message.
 ---
 --- @param cond (boolean) expression to assert
 --- @param expected (any) description of expected result
 --- @param actual (any) description of actual result
 function M.ok(cond, expected, actual)
-  luaassert(
+  assert(
     (not expected and not actual) or (expected and actual),
     'if "expected" is given, "actual" is also required'
   )
   local msg = expected and ('expected %s, got: %s'):format(expected, tostring(actual)) or nil
-  return luaassert(cond, msg)
+  return assert(cond, msg)
 end
 
 local function epicfail(state, arguments, _)
@@ -155,40 +145,34 @@ function M.matches(pat, actual)
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
 
---- Asserts that `pat` matches (or *not* if inverse=true) any line in the tail of `logfile`.
+--- Asserts that `pat` matches (or *not* if inverse=true) any text in the tail of `logfile`.
+---
+--- Matches are not restricted to a single line.
 ---
 --- Retries for 1 second in case of filesystem delay.
 ---
----@param pat (string) Lua pattern to match lines in the log file
+---@param pat (string) Lua pattern to match text in the log file
 ---@param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
 ---@param nrlines? (number) Search up to this many log lines (default 10)
 ---@param inverse? (boolean) Assert that the pattern does NOT match.
 function M.assert_log(pat, logfile, nrlines, inverse)
-  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  luaassert(logfile ~= nil, 'no logfile')
+  logfile = logfile or os.getenv('NVIM_LOG_FILE') or 'nvim.log'
+  assert(logfile ~= nil, 'no logfile')
   nrlines = nrlines or 10
-  inverse = inverse or false
 
   M.retry(nil, 1000, function()
     local lines = M.read_file_list(logfile, -nrlines) or {}
-    local msg = string.format(
-      'Pattern %q %sfound in log (last %d lines): %s:\n%s',
-      pat,
-      (inverse and '' or 'not '),
-      nrlines,
-      logfile,
-      '    ' .. table.concat(lines, '\n    ')
-    )
-    for _, line in ipairs(lines) do
-      if line:match(pat) then
-        if inverse then
-          error(msg)
-        else
-          return
-        end
-      end
-    end
-    if not inverse then
+    local text = table.concat(lines, '\n')
+    local ismatch = not not text:match(pat)
+    if (ismatch and inverse) or not (ismatch or inverse) then
+      local msg = string.format(
+        'Pattern %s %sfound in log (last %d lines): %q:\n%s',
+        vim.inspect(pat),
+        (inverse and '' or 'not '),
+        nrlines,
+        logfile,
+        vim.text.indent(4, text)
+      )
       error(msg)
     end
   end)
@@ -208,7 +192,7 @@ end
 --- @param ... any
 --- @return boolean, any
 function M.pcall(fn, ...)
-  luaassert(type(fn) == 'function')
+  assert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)
   if status then
     return status, rv
@@ -257,7 +241,7 @@ end
 --- @param fn function
 --- @return string
 function M.pcall_err_withfile(fn, ...)
-  luaassert(type(fn) == 'function')
+  assert(type(fn) == 'function')
   local status, rv = M.pcall(fn, ...)
   if status == true then
     error('expected failure, but got success')
@@ -274,7 +258,7 @@ function M.pcall_err_withtrace(fn, ...)
   return (
     errmsg
       :gsub('^%.%.%./testnvim%.lua:0: ', '')
-      :gsub('^Error executing lua:- ', '')
+      :gsub('^Lua:- ', '')
       :gsub('^%[string "<nvim>"%]:0: ', '')
   )
 end
@@ -362,7 +346,7 @@ function M.check_logs()
           local status, f
           local out = io.stdout
           if os.getenv('SYMBOLIZER') then
-            status, f = pcall(M.popen_r, os.getenv('SYMBOLIZER'), '-l', file)
+            status, f = pcall(M.repeated_read_cmd, os.getenv('SYMBOLIZER'), '-l', file)
           end
           out:write(start_msg .. '\n')
           if status then
@@ -420,6 +404,10 @@ end
 
 function M.is_asan()
   return M.paths.is_asan
+end
+
+function M.is_zig_build()
+  return M.paths.is_zig_build
 end
 
 local tmpname_id = 0
@@ -541,16 +529,37 @@ end
 
 --- @return string?
 function M.repeated_read_cmd(...)
-  for _ = 1, 10 do
-    local stream = M.popen_r(...)
-    local ret = stream:read('*a')
-    stream:close()
-    if ret then
-      return ret
+  local cmd = M.argss_to_cmd(...)
+  local data = {}
+  local got_code = nil
+  local stdout = assert(vim.uv.new_pipe(false))
+  local handle = assert(
+    vim.uv.spawn(
+      cmd[1],
+      { args = vim.list_slice(cmd, 2), stdio = { nil, stdout, 2 }, hide = true },
+      function(code, _signal)
+        got_code = code
+      end
+    )
+  )
+  stdout:read_start(function(err, chunk)
+    if err or chunk == nil then
+      stdout:read_stop()
+      stdout:close()
+    else
+      table.insert(data, chunk)
     end
+  end)
+
+  while not stdout:is_closing() or got_code == nil do
+    vim.uv.run('once')
   end
-  print('ERROR: Failed to execute ' .. M.argss_to_cmd(...) .. ': nil return after 10 attempts')
-  return nil
+
+  if got_code ~= 0 then
+    error('command ' .. vim.inspect(cmd) .. 'unexpectedly exited with status ' .. got_code)
+  end
+  handle:close()
+  return table.concat(data)
 end
 
 --- @generic T
@@ -640,6 +649,29 @@ function M.concat_tables(...)
     end
   end
   return ret
+end
+
+--- Get all permutations of an array.
+---
+--- @param arr any[]
+--- @return any[][]
+function M.permutations(arr)
+  local res = {} --- @type any[][]
+  --- @param a any[]
+  --- @param n integer
+  local function gen(a, n)
+    if n == 0 then
+      res[#res + 1] = M.shallowcopy(a)
+      return
+    end
+    for i = 1, n do
+      a[n], a[i] = a[i], a[n]
+      gen(a, n - 1)
+      a[n], a[i] = a[i], a[n]
+    end
+  end
+  gen(M.shallowcopy(arr), #arr)
+  return res
 end
 
 --- @param str string
@@ -758,7 +790,7 @@ end
 --- @return boolean
 function M.is_ci(name)
   local any = (name == nil)
-  luaassert(any or name == 'github' or name == 'cirrus')
+  assert(any or name == 'github' or name == 'cirrus')
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
   local cirrus = ((any or name == 'cirrus') and nil ~= os.getenv('CIRRUS_CI'))
   return gh or cirrus
@@ -767,7 +799,8 @@ end
 -- Gets the (tail) contents of `logfile`.
 -- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
 function M.read_nvim_log(logfile, ci_rename)
-  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+  logfile = logfile or os.getenv('NVIM_LOG_FILE') or 'nvim.log'
+  assert(uv.fs_stat(logfile), ('logfile not found: %q'):format(logfile))
   local is_ci = M.is_ci()
   local keep = is_ci and 100 or 10
   local lines = M.read_file_list(logfile, -keep) or {}

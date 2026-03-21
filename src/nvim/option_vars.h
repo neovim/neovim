@@ -6,22 +6,20 @@
 #include "nvim/statusline_defs.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "option_vars.generated.h"  // NOLINT(build/include_defs)
-#endif
+#include "option_vars.generated.h"  // NOLINT(build/include_defs)
 
 // option_vars.h: definition of global variables for settable options
 
 #define HIGHLIGHT_INIT \
-  "8:SpecialKey,~:EndOfBuffer,z:TermCursor,@:NonText,d:Directory,e:ErrorMsg," \
-  "i:IncSearch,l:Search,y:CurSearch,m:MoreMsg,M:ModeMsg,n:LineNr,a:LineNrAbove,b:LineNrBelow," \
-  "N:CursorLineNr,G:CursorLineSign,O:CursorLineFold,r:Question,s:StatusLine,S:StatusLineNC," \
-  "c:VertSplit,t:Title,v:Visual,V:VisualNOS,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn," \
-  "A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal,B:SpellBad,P:SpellCap," \
+  "8:SpecialKey,~:EndOfBuffer,z:TermCursor,@:NonText,d:Directory,e:ErrorMsg,i:IncSearch,l:Search," \
+  "y:CurSearch,m:MoreMsg,M:ModeMsg,n:LineNr,a:LineNrAbove,b:LineNrBelow,N:CursorLineNr," \
+  "G:CursorLineSign,O:CursorLineFold,r:Question,s:StatusLine,S:StatusLineNC,c:VertSplit,t:Title," \
+  "v:Visual,V:VisualNOS,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn,A:DiffAdd,C:DiffChange," \
+  "D:DiffDelete,T:DiffText,E:DiffTextAdd,>:SignColumn,-:Conceal,B:SpellBad,P:SpellCap," \
   "R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel,k:PmenuMatch,<:PmenuMatchSel,[:PmenuKind," \
   "]:PmenuKindSel,{:PmenuExtra,}:PmenuExtraSel,x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel," \
   "_:TabLineFill,!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine,z:StatusLineTerm," \
-  "Z:StatusLineTermNC,g:MsgArea,h:ComplMatchIns,0:Whitespace,I:NormalNC"
+  "Z:StatusLineTermNC,g:MsgArea,h:ComplMatchIns,0:Whitespace,I:PreInsert"
 
 // Default values for 'errorformat'.
 // The "%f|%l| %m" one is used for when the contents of the quickfix window is
@@ -32,6 +30,17 @@
 #else
 # define DFLT_EFM \
   "%*[^\"]\"%f\"%*\\D%l: %m,\"%f\"%*\\D%l: %m,%-Gg%\\?make[%*\\d]: *** [%f:%l:%m,%-Gg%\\?make: *** [%f:%l:%m,%-G%f:%l: (Each undeclared identifier is reported only once,%-G%f:%l: for each function it appears in.),%-GIn file included from %f:%l:%c:,%-GIn file included from %f:%l:%c\\,,%-GIn file included from %f:%l:%c,%-GIn file included from %f:%l,%-G%*[ ]from %f:%l:%c,%-G%*[ ]from %f:%l:,%-G%*[ ]from %f:%l\\,,%-G%*[ ]from %f:%l,%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,\"%f\"\\, line %l%*\\D%c%*[^ ] %m,%D%*\\a[%*\\d]: Entering directory %*[`']%f',%X%*\\a[%*\\d]: Leaving directory %*[`']%f',%D%*\\a: Entering directory %*[`']%f',%X%*\\a: Leaving directory %*[`']%f',%DMaking %*\\a in %f,%f|%l| %m"
+#endif
+
+// Default values for 'guifont'
+#ifdef MSWIN
+# define DFLT_GFN "Cascadia Code,Cascadia Mono,Consolas,Courier New,monospace"
+#elif defined(__APPLE__)
+# define DFLT_GFN "SF Mono,Menlo,Monaco,Courier New,monospace"
+#elif defined(__linux__)
+# define DFLT_GFN "Source Code Pro,DejaVu Sans Mono,Courier New,monospace"
+#else
+# define DFLT_GFN "DejaVu Sans Mono,Courier New,monospace"
 #endif
 
 #define DFLT_GREPFORMAT "%f:%l:%m,%f:%l%m,%f  %l%m"
@@ -121,10 +130,11 @@
 #define CPO_REGAPPEND   '>'     // insert NL when appending to a register
 #define CPO_SCOLON      ';'     // using "," and ";" will skip over char if
                                 // cursor would not move
+#define CPO_NOSYMLINKS  '~'     // don't resolve symlinks when changing directory
 #define CPO_CHANGEW     '_'     // "cw" special-case
 // default values for Vim and Vi
 #define CPO_VIM         "aABceFs_"
-#define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+>;_"
+#define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+>;~_"
 
 // characters for p_ww option:
 #define WW_ALL          "bshl<>[]~"
@@ -179,6 +189,7 @@ enum {
 #define GO_ASELML       'A'             // autoselect modeless selection
 #define GO_BOT          'b'             // use bottom scrollbar
 #define GO_CONDIALOG    'c'             // use console dialog
+#define GO_TITLEBAR     'C'             // use 'hl-TitleBar'
 #define GO_DARKTHEME    'd'             // use dark theme variant
 #define GO_TABLINE      'e'             // may show tabline
 #define GO_FORG         'f'             // start GUI in foreground
@@ -197,7 +208,7 @@ enum {
 #define GO_FOOTER       'F'             // add footer
 #define GO_VERTICAL     'v'             // arrange dialog buttons vertically
 #define GO_KEEPWINSIZE  'k'             // keep GUI window size
-#define GO_ALL "!aAbcdefFghilLmMpPrRtTvk"  // all possible flags for 'go'
+#define GO_ALL "!aAbcCdefFghilLmMpPrRtTvk"  // all possible flags for 'go'
 
 // flags for 'comments' option
 #define COM_NEST        'n'             // comments strings nest
@@ -222,8 +233,8 @@ enum {
     STL_PREVIEWFLAG, STL_PREVIEWFLAG_ALT, STL_MODIFIED, STL_MODIFIED_ALT, \
     STL_QUICKFIX, STL_PERCENTAGE, STL_ALTPERCENT, STL_ARGLISTSTAT, STL_PAGENUM, \
     STL_SHOWCMD, STL_FOLDCOL, STL_SIGNCOL, STL_VIM_EXPR, STL_SEPARATE, \
-    STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, STL_TABPAGENR, STL_TABCLOSENR, \
-    STL_CLICK_FUNC, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
+    STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, STL_HIGHLIGHT_COMB, STL_TABPAGENR, \
+    STL_TABCLOSENR, STL_CLICK_FUNC, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
     0, })
 
 // arguments for can_bs()
@@ -279,6 +290,7 @@ EXTERN char *p_bsk;             ///< 'backupskip'
 EXTERN char *p_breakat;         ///< 'breakat'
 EXTERN char *p_bh;              ///< 'bufhidden'
 EXTERN char *p_bt;              ///< 'buftype'
+EXTERN OptInt p_busy;           ///< 'busy'
 EXTERN char *p_cmp;             ///< 'casemap'
 EXTERN unsigned cmp_flags;
 EXTERN char *p_enc;             ///< 'encoding'
@@ -292,23 +304,30 @@ EXTERN OptInt p_cwh;            ///< 'cmdwinheight'
 EXTERN OptInt p_ch;             ///< 'cmdheight'
 EXTERN char *p_cms;             ///< 'commentstring'
 EXTERN char *p_cpt;             ///< 'complete'
+EXTERN OptInt p_cto;            ///< 'completetimeout'
 EXTERN OptInt p_columns;        ///< 'columns'
 EXTERN int p_confirm;           ///< 'confirm'
 EXTERN char *p_cia;             ///< 'completeitemalign'
-EXTERN unsigned cia_flags;      ///<  order flags of 'completeitemalign'
+EXTERN unsigned cia_flags;      ///< order flags of 'completeitemalign'
 EXTERN char *p_cot;             ///< 'completeopt'
 EXTERN unsigned cot_flags;      ///< flags from 'completeopt'
+EXTERN int p_ac;                ///< 'autocomplete'
+EXTERN OptInt p_act;            ///< 'autocompletetimeout'
+EXTERN OptInt p_acl;            ///< 'autocompletedelay'
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char *p_csl;             ///< 'completeslash'
 #endif
+EXTERN char *p_pumborder;       ///< 'pumborder'
 EXTERN OptInt p_pb;             ///< 'pumblend'
 EXTERN OptInt p_ph;             ///< 'pumheight'
 EXTERN OptInt p_pw;             ///< 'pumwidth'
+EXTERN OptInt p_pmw;            ///< 'pummaxwidth'
 EXTERN char *p_com;             ///< 'comments'
 EXTERN char *p_cpo;             ///< 'cpoptions'
 EXTERN char *p_debug;           ///< 'debug'
 EXTERN char *p_def;             ///< 'define'
 EXTERN char *p_inc;
+EXTERN char *p_dia;             ///< 'diffanchors'
 EXTERN char *p_dip;             ///< 'diffopt'
 EXTERN char *p_dex;             ///< 'diffexpr'
 EXTERN char *p_dict;            ///< 'dictionary'
@@ -407,6 +426,7 @@ EXTERN OptInt p_mmd;            ///< 'maxmapdepth'
 EXTERN OptInt p_mmp;            ///< 'maxmempattern'
 EXTERN OptInt p_mis;            ///< 'menuitems'
 EXTERN char *p_mopt;            ///< 'messagesopt'
+EXTERN OptInt p_msc;            ///< 'maxsearchcount'
 EXTERN char *p_msm;             ///< 'mkspellmem'
 EXTERN int p_ml;                ///< 'modeline'
 EXTERN int p_mle;               ///< 'modelineexpr'
@@ -441,6 +461,7 @@ EXTERN OptInt p_rdt;            ///< 'redrawtime'
 EXTERN OptInt p_re;             ///< 'regexpengine'
 EXTERN OptInt p_report;         ///< 'report'
 EXTERN OptInt p_pvh;            ///< 'previewheight'
+EXTERN OptInt p_chi;            ///< 'chistory'
 EXTERN int p_ari;               ///< 'allowrevins'
 EXTERN int p_ri;                ///< 'revins'
 EXTERN int p_ru;                ///< 'ruler'
@@ -566,6 +587,7 @@ EXTERN OptInt p_wcm;            ///< 'wildcharm'
 EXTERN int p_wic;               ///< 'wildignorecase'
 EXTERN char *p_wim;             ///< 'wildmode'
 EXTERN int p_wmnu;              ///< 'wildmenu'
+EXTERN char *p_winborder;       ///< 'winborder'
 EXTERN OptInt p_wh;             ///< 'winheight'
 EXTERN OptInt p_wmh;            ///< 'winminheight'
 EXTERN OptInt p_wmw;            ///< 'winminwidth'
@@ -583,7 +605,7 @@ EXTERN int p_cdh;               ///< 'cdhome'
 
 #define ERR_BUFLEN 80
 
-#define SB_MAX 100000  // Maximum 'scrollback' value.
+#define SB_MAX 1000000  // Maximum 'scrollback' value.
 
 #define MAX_NUMBERWIDTH 20      // used for 'numberwidth'
 

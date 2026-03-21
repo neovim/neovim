@@ -45,8 +45,8 @@ function M.detect()
       prog = ''
     else
       -- neovim-ruby-host could be an rbenv shim for another Ruby version.
-      vim.fn.system(p)
-      prog = vim.v.shell_error ~= 0 and '' or p
+      local result = vim.system({ p }):wait()
+      prog = result.code ~= 0 and '' or p
     end
   end
   local err = prog == '' and 'missing ruby or ruby-host' or ''

@@ -2,7 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local set_session, clear = n.set_session, n.clear
+local set_session, clear, assert_alive = n.set_session, n.clear, n.assert_alive
 local feed, command = n.feed, n.command
 local exec = n.exec
 local insert = n.insert
@@ -644,6 +644,20 @@ local function screen_tests(linegrid)
         {0:~                   }|*12
                             |
       ]])
+    end)
+
+    it('does not crash when windows fill the screen #33883', function()
+      screen:try_resize(80, 20)
+      while true do
+        local ok = pcall(command, 'wincmd v')
+        if not ok then
+          break
+        end
+      end
+
+      screen:try_resize(60, 20)
+
+      assert_alive()
     end)
 
     it('clamps &cmdheight for current tabpage', function()
