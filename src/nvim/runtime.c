@@ -222,7 +222,7 @@ char *estack_sfile(estack_arg_T which)
       // <slnum>.  Also leave it out when the number is not set.
       if (lnum != 0) {
         ga.ga_len += (int)vim_snprintf_safelen((char *)ga.ga_data + ga.ga_len,
-                                               len - (size_t)ga.ga_len,
+                                               (size_t)(ga.ga_maxlen - ga.ga_len),
                                                "[%" PRIdLINENR "]", lnum);
       }
       if (idx != exestack.ga_len - 1) {
