@@ -277,7 +277,7 @@ api.nvim_set_decoration_provider(document_color_ns, {
             )
           else
             -- Default swatch: \uf0c8
-            local swatch = style == 'virtual' and ' ' or style
+            local swatch = style == 'virtual' and ' ' or style
             api.nvim_buf_set_extmark(
               bufnr,
               state.namespace,
