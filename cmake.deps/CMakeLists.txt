@@ -1,5 +1,5 @@
 # This is not meant to be included by the top-level.
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 project(NVIM_DEPS C)
 
 if(POLICY CMP0135)
@@ -58,6 +58,19 @@ endif()
 if(NOT ENABLE_WASMTIME AND USE_BUNDLED_WASMTIME)
   message(FATAL_ERROR "ENABLE_WASMTIME is set to OFF while USE_BUNDLED_WASMTIME is set to ON.\
   You need set ENABLE_WASMTIME to ON if you want to use wasmtime.")
+endif()
+
+option(ENABLE_GHOSTTY "Use ghostty." OFF)
+if(ENABLE_GHOSTTY)
+  if(USE_BUNDLED)
+    option(USE_BUNDLED_GHOSTTY "Use bundled ghostty." ON)
+  else()
+    option(USE_BUNDLED_GHOSTTY "Use bundled ghostty." OFF)
+  endif()
+endif()
+if(NOT ENABLE_GHOSTTY AND USE_BUNDLED_GHOSTTY)
+  message(FATAL_ERROR "ENABLE_GHOSTTY is set to OFF while USE_BUNDLED_GHOSTTY is set to ON.\
+  You need set ENABLE_GHOSTTY to ON if you want to use wasmtime.")
 endif()
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
@@ -165,6 +178,10 @@ endif()
 
 if(USE_BUNDLED_UTF8PROC)
   include(BuildUTF8proc)
+endif()
+
+if(USE_BUNDLED_GHOSTTY)
+  include(BuildGhostty)
 endif()
 
 if(WIN32)

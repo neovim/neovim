@@ -7,7 +7,7 @@
 #     - verbose output: cmake --build build --verbose
 
 # Version should match the tested CMAKE_URL in .github/workflows/build.yml.
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 
 project(nvim C)
 
@@ -134,6 +134,7 @@ endif()
 option(ENABLE_LIBINTL "enable libintl" ON)
 option(ENABLE_UNIBILIUM "enable unibilium" ON)
 option(ENABLE_WASMTIME "enable wasmtime" OFF)
+option(ENABLE_GHOSTTY "enable ghostty" OFF)
 
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
