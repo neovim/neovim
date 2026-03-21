@@ -1,5 +1,5 @@
 # This is not meant to be included by the top-level.
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 project(NVIM_DEPS C)
 
 if(POLICY CMP0135)
@@ -36,6 +36,7 @@ option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
 option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_UTF8PROC "Use the bundled utf8proc library." ${USE_BUNDLED})
+option(USE_BUNDLED_GHOSTTY "Use the bundled ghostty library." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
@@ -163,6 +164,10 @@ endif()
 
 if(USE_BUNDLED_UTF8PROC)
   include(BuildUTF8proc)
+endif()
+
+if(USE_BUNDLED_GHOSTTY)
+  include(BuildGhostty)
 endif()
 
 if(WIN32)
