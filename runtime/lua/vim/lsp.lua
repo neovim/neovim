@@ -862,7 +862,7 @@ function lsp._set_defaults(client, bufnr)
     then
       vim.keymap.set('n', 'K', function()
         vim.lsp.buf.hover()
-      end, { buffer = bufnr, desc = 'vim.lsp.buf.hover()' })
+      end, { buf = bufnr, desc = 'vim.lsp.buf.hover()' })
     end
   end)
   if client:supports_method('textDocument/diagnostic') then

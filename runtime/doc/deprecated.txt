@@ -51,6 +51,7 @@ LSP
 LUA
 
 • *vim.diff()*				Renamed to |vim.text.diff()|
+• "buffer" in `vim.keymap.set.Opts` and `vim.keymap.del.Opts`	Renamed to "buf"
 
 UI
 

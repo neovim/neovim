@@ -59,7 +59,7 @@ local map_section_jump = function(lhs, search_flags, desc)
     for _ = 1, vim.v.count1 do
       vim.fn.search('^## ', search_flags)
     end
-  end, { buffer = 0, desc = desc })
+  end, { buf = 0, desc = desc })
 end
 
 map_section_jump('[[', 'bsW', 'Previous plugin')

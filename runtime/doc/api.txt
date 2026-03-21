@@ -1315,7 +1315,7 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
             line2
             line3
           ]], false, -1)
-        end, { buffer = true })
+        end, { buf = true })
 <
 
     Attributes: ~
