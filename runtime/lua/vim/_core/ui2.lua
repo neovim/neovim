@@ -13,23 +13,36 @@
 ---     ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
 ---     ---or table mapping |ui-messages| kinds and triggers to a target.
 ---     targets = 'cmd',
----     timeout = 4000, -- Time a message is visible in the message window.
+---     cmd = { -- Options related to messages in the cmdline window.
+---       height = 0.5 -- Maximum height while expanded for messages beyond 'cmdheight'.
+---     },
+---     dialog = { -- Options related to dialog window.
+---       height = 0.5, -- Maximum height.
+---     },
+---     msg = { -- Options related to msg window.
+---       height = 0.5, -- Maximum height.
+---       timeout = 4000, -- Time a message is visible in the message window.
+---     },
+---     pager = { -- Options related to message window.
+---       height = 1, -- Maximum height.
+---     },
 ---   },
 --- })
 --- ```
 ---
 --- There are four special windows/buffers for presenting messages and cmdline:
---- - "cmd": Cmdline. Also used for 'showcmd', 'showmode', 'ruler', and messages if 'cmdheight' > 0.
---- - "msg": Message window, shows messages when 'cmdheight' == 0.
+--- - "cmd": Cmdline. Also used for 'showcmd', 'showmode', 'ruler', and messages by default.
+--- - "msg": Message window, shows fleeting messages useful for 'cmdheight' == 0.
 --- - "pager": Pager window, shows |:messages| and certain messages that are never "collapsed".
 --- - "dialog": Dialog window, shows modal prompts that expect user input.
 ---
---- The buffer 'filetype' is to the above-listed id ("cmd", "msg", …). Handle the |FileType| event
---- to configure any local options for these windows and their respective buffers.
+--- The buffer 'filetype' is set to the above-listed id ("cmd", "msg", …).
+--- Handle the |FileType| event to configure any local options for these
+--- windows and their respective buffers.
 ---
---- Unlike the legacy |hit-enter| prompt, messages that overflow the cmdline area are instead
---- "collapsed", followed by a `[+x]` "spill" indicator, where `x` indicates the spilled lines. To
---- see the full messages, do either:
+--- Unlike the legacy |hit-enter| prompt, messages exceeding 'cmdheight' are
+--- instead "collapsed", followed by a `[+x]` "spill" indicator, where `x`
+--- indicates the spilled lines. To see the full messages, do either:
 --- - ENTER immediately after a message from interactive |:| cmdline.
 --- - |g<| at any time.
 
@@ -46,7 +59,19 @@ local M = {
     msg = { -- Options related to the message module.
       target = 'cmd', ---@type 'cmd'|'msg' Default message target if not present in targets.
       targets = {}, ---@type table<string, 'cmd'|'msg'|'pager'> Kind specific message targets.
-      timeout = 4000, -- Time a message is visible in the message window.
+      cmd = { -- Options related to messages in the cmdline window.
+        height = 0.5, -- Maximum height while expanded for messages beyond 'cmdheight'.
+      },
+      dialog = { -- Options related to dialog window.
+        height = 0.5, -- Maximum height.
+      },
+      msg = { -- Options related to msg window.
+        height = 0.5, -- Maximum height.
+        timeout = 4000, -- Time a message is visible in the message window.
+      },
+      pager = { -- Options related to message window.
+        height = 1, -- Maximum height.
+      },
     },
   },
 }

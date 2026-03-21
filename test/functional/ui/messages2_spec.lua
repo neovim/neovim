@@ -9,7 +9,7 @@ local api, clear, command, exec_lua, feed = n.api, n.clear, n.command, n.exec_lu
 local msg_timeout = 200
 local function set_msg_target_zero_ch()
   exec_lua(function()
-    require('vim._core.ui2').enable({ msg = { target = 'msg', timeout = msg_timeout } })
+    require('vim._core.ui2').enable({ msg = { target = 'msg', msg = { timeout = msg_timeout } } })
     vim.o.cmdheight = 0
   end)
 end
@@ -211,6 +211,51 @@ describe('messages2', function()
       foo                                                  |*11
       {3:[Pager]                            1,1            Top}|
       {16::}^                                                    |
+    ]])
+    -- Can enter pager from cmdwin.
+    feed('<Esc>qq:')
+    screen:expect([[
+      x                                                    |
+      {1:~                                                    }|*3
+      ─────────────────────────────────────────────────────|
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}^                                                    |
+      {1:~                                                    }|*5
+      {3:[Command Line]                     2,0-1          All}|
+                                                           |
+    ]])
+    feed(':messages<CR>')
+    screen:expect([[
+      {3:                                                     }|
+      ^foo                                                  |
+      foo                                                  |*10
+      {3:[Pager]                            1,1            Top}|
+                                                           |
+    ]])
+    -- Cmdwin is restored after pager is closed.
+    feed('q')
+    screen:expect([[
+      x                                                    |
+      {1:~                                                    }|*3
+      ─────────────────────────────────────────────────────|
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}messages                                            |
+      {1::}^                                                    |
+      {1:~                                                    }|*4
+      {3:[Command Line]                     3,0-1          All}|
+                                                           |
+    ]])
+    -- Configured maximum height.
+    command('quit | lua require("vim._core.ui2").enable({msg = {pager = {height = 2 } } })')
+    command('messages')
+    screen:expect([[
+      x                                                    |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      ^foo                                                  |
+      foo                                                  |
+      {3:[Pager]                            1,1            Top}|
+                                                           |
     ]])
   end)
 
@@ -435,6 +480,21 @@ describe('messages2', function()
 
   it('paging prompt dialog #35191', function()
     screen:try_resize(71, screen._height)
+    -- Don't consume <Esc> when paging is not necessary.
+    feed(':call confirm("Ok?")<CR>')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*10
+      {3:                                                                       }|
+      {6:Ok?}                                                                    |
+      {6:[O]k: }^                                                                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                                                                       |
+      {1:~                                                                      }|*12
+                                                                             |
+    ]])
     local top = [[
                                                                              |
       {1:~                                                                      }|*4

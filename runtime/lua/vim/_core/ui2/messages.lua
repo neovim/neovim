@@ -78,7 +78,7 @@ function M.msg:start_timer(buf, id)
       pcall(api.nvim_win_set_config, ui.wins.msg, { hide = true })
       self.width, M.virt.msg[M.virt.idx.dupe][1] = 1, nil
     end
-  end, ui.cfg.msg.timeout)
+  end, ui.cfg.msg.msg.timeout)
 end
 
 --- Place or delete a virtual text mark in the cmdline or message window.
@@ -537,6 +537,7 @@ local function set_top_bot_spill()
   M.virt.bot[1][1] = botspill > 0 and { 0, (' [+%d]'):format(botspill) } or nil
   set_virttext('bot', 'dialog')
   api.nvim__redraw({ flush = true })
+  return topspill > 0 or botspill > 0
 end
 
 --- Allow paging in the dialog window, consume the key if the topline changes.
@@ -571,20 +572,26 @@ local dialog_on_key = function(_, typed)
   end
 end
 
+local was_cmdwin = ''
 ---@param min integer Minimum window height.
-local function win_row_height(win, min)
-  if win ~= ui.wins.pager then
-    return (win == ui.wins.msg and 0 or 1) - ui.cmd.wmnumode,
-      math.min(min, math.ceil(o.lines * 0.5))
+local function win_row_height(tgt, min)
+  local cfgmin = ui.cfg.msg[tgt].height --[[@as number]]
+  cfgmin = cfgmin > 1 and cfgmin or math.ceil(o.lines * cfgmin)
+  if tgt ~= 'pager' then
+    return (tgt == 'msg' and 0 or 1) - ui.cmd.wmnumode, math.min(min, cfgmin)
   end
-  local cmdwin = fn.getcmdwintype() ~= '' and api.nvim_win_get_height(0) or 0
+  local cmdwin = fn.getcmdwintype() ~= was_cmdwin and api.nvim_win_get_height(0) or 0
   local global_stl = (cmdwin > 0 or o.laststatus == 3) and 1 or 0
   local row = 1 - cmdwin - global_stl
-  return row, math.min(min, o.lines - 1 - ui.cmdheight - global_stl - cmdwin)
+  return row, math.min(math.min(cfgmin, min), o.lines - 1 - ui.cmdheight - global_stl - cmdwin)
 end
 
 local function enter_pager()
-  in_pager = true
+  -- Cannot leave the cmdwin to enter the pager, so close and re-open it.
+  in_pager, was_cmdwin = true, fn.getcmdwintype()
+  if was_cmdwin ~= '' then
+    api.nvim_command('quit')
+  end
   -- Cmdwin is closed one event iteration later so schedule in case it was open.
   vim.schedule(function()
     local height, id = api.nvim_win_get_height(ui.wins.pager), 0
@@ -607,13 +614,16 @@ local function enter_pager()
         in_pager = in_pager and api.nvim_win_is_valid(ui.wins.pager)
         local cfg = in_pager and { relative = 'laststatus', col = 0 } or { hide = true }
         if in_pager then
-          cfg.row, cfg.height = win_row_height(ui.wins.pager, height)
-        end
-        pcall(api.nvim_win_set_config, ui.wins.pager, cfg)
-        if not in_pager then
+          cfg.row, cfg.height = win_row_height('pager', height)
+        else
           pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
           api.nvim_del_autocmd(id)
+          if was_cmdwin ~= '' then
+            api.nvim_feedkeys('q' .. was_cmdwin, 'n', false)
+            was_cmdwin = ''
+          end
         end
+        pcall(api.nvim_win_set_config, ui.wins.pager, cfg)
       end,
       desc = 'Hide or reposition pager window.',
     })
@@ -624,48 +634,37 @@ end
 ---
 ---@param tgt? 'cmd'|'dialog'|'msg'|'pager' Target window to be positioned (nil for all).
 function M.set_pos(tgt)
-  local function win_set_pos(win)
-    local texth = api.nvim_win_text_height(win, {})
-    local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
-    local title = { 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging', 'MsgSeparator' }
-    local cfg = { hide = false, relative = 'laststatus', col = 10000 }
-    cfg.row, cfg.height = win_row_height(win, texth.all)
-    cfg.border = win ~= ui.wins.msg and { '', top, '', '', '', '', '', '' } or nil
-    cfg.mouse = tgt == 'cmd' or nil
-    cfg.title = tgt == 'dialog' and cfg.height < texth.all and { title } or nil
-    api.nvim_win_set_config(win, cfg)
-
-    if tgt == 'cmd' and not M.cmd_on_key then
-      -- Temporarily expand the cmdline, until next key press.
-      local save_spill = M.virt.msg[M.virt.idx.spill][1]
-      local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
-      M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
-      set_virttext('msg', 'cmd')
-      M.virt.msg[M.virt.idx.spill][1] = save_spill
-      M.cmd_on_key = vim.on_key(cmd_on_key, ui.ns)
-    elseif tgt == 'dialog' then
-      M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)
-      set_top_bot_spill()
-    elseif tgt == 'msg' then
-      -- Ensure last line is visible and first line is at top of window.
-      fn.win_execute(ui.wins.msg, 'norm! Gzb')
-    elseif tgt == 'pager' and not in_pager then
-      if fn.getcmdwintype() ~= '' then
-        -- Cannot leave the cmdwin to enter the pager, so close it.
-        -- NOTE: regression w.r.t. the message grid, which allowed this.
-        -- Resolving that would require somehow bypassing textlock for the pager.
-        api.nvim_command('quit')
-      end
-      enter_pager()
-    end
-  end
-
   for t, win in pairs(ui.wins) do
     local cfg = (t == tgt or (tgt == nil and t ~= 'cmd'))
       and api.nvim_win_is_valid(win)
       and api.nvim_win_get_config(win)
     if cfg and (tgt or not cfg.hide) then
-      win_set_pos(win)
+      local texth = api.nvim_win_text_height(win, {})
+      local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
+      local hint = { 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging', 'MsgSeparator' }
+      cfg = { hide = false, relative = 'laststatus', col = 10000 } ---@type table
+      cfg.row, cfg.height = win_row_height(t, texth.all)
+      cfg.border = t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
+      cfg.mouse = tgt == 'cmd' or nil
+      cfg.title = tgt == 'dialog' and cfg.height < texth.all and { hint } or nil
+      api.nvim_win_set_config(win, cfg)
+
+      if tgt == 'cmd' and not M.cmd_on_key then
+        -- Temporarily expand the cmdline, until next key press.
+        local save_spill = M.virt.msg[M.virt.idx.spill][1]
+        local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
+        M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
+        set_virttext('msg', 'cmd')
+        M.virt.msg[M.virt.idx.spill][1] = save_spill
+        M.cmd_on_key = vim.on_key(cmd_on_key, ui.ns)
+      elseif tgt == 'dialog' and set_top_bot_spill() then
+        M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)
+      elseif tgt == 'msg' then
+        -- Ensure last line is visible and first line is at top of window.
+        fn.win_execute(ui.wins.msg, 'norm! Gzb')
+      elseif tgt == 'pager' and not in_pager then
+        enter_pager()
+      end
     end
   end
 end
