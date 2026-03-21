@@ -330,6 +330,7 @@ local extension = {
   cbl = 'cobol',
   atg = 'coco',
   recipe = 'conaryrecipe',
+  cto = 'concerto',
   ctags = 'conf',
   hook = function(_path, bufnr)
     return M._getline(bufnr, 1) == '[Trigger]' and 'confini' or nil
