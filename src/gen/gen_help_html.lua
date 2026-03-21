@@ -95,6 +95,7 @@ local new_layout = {
   ['nvim.txt'] = true,
   ['pack.txt'] = true,
   ['provider.txt'] = true,
+  ['starting.txt'] = true,
   ['terminal.txt'] = true,
   ['tui.txt'] = true,
   ['ui.txt'] = true,

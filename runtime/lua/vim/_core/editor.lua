@@ -304,7 +304,7 @@ end
 
 local VIM_CMD_ARG_MAX = 20
 
---- Executes Vimscript (|Ex-commands|).
+--- Executes Vimscript (|Ex-command|s).
 ---
 --- Can be indexed with a command name to get a function, thus you can write `vim.cmd.echo(…)`
 --- instead of `vim.cmd{cmd='echo',…}`.

@@ -17,7 +17,7 @@ get an idea of what lurks beneath: >vim
     :lua vim.print(package.loaded)
 
 Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
-"editor stdlib" (|vimscript-functions| + |Ex-commands|) and the |API|, all of
+"editor stdlib" (|vimscript-functions| + |Ex-command|s) and the |API|, all of
 which can be used from Lua code (|lua-vimscript| |vim.api|). These three
 namespaces form the Nvim programming interface.
 
@@ -1231,7 +1231,7 @@ vim.wo[{winid}][{bufnr}]                                              *vim.wo*
 Lua module: vim                                                      *lua-vim*
 
 vim.cmd({command})                                                 *vim.cmd()*
-    Executes Vimscript (|Ex-commands|).
+    Executes Vimscript (|Ex-command|s).
 
     Can be indexed with a command name to get a function, thus you can write
     `vim.cmd.echo(…)` instead of `vim.cmd{cmd='echo',…}`.
