@@ -219,6 +219,16 @@ end
 ---   ```
 ---
 --- @field root_markers? (string|string[])[]
+---
+--- [lsp-buftypes]()
+--- Buffer types the client will attach to, or `nil` for normal (empty `buftype`) buffers only (default `{ '' }`).
+--- Set this to restrict attachment to specific buffer types such as `help`:
+--- ```lua
+--- vim.lsp.config('vimdoc_ls', {
+---   buftypes = { 'help' },
+--- })
+--- ```
+--- @field buftypes? string[]
 
 --- Sets the default configuration for an LSP client (or _all_ clients if the special name "*" is
 --- used).
@@ -478,6 +488,7 @@ local function validate_config(config)
   validate('cmd', config.cmd, validate_cmd, 'expected function or table with executable command')
   validate('reuse_client', config.reuse_client, 'function', true)
   validate('filetypes', config.filetypes, 'table', true)
+  validate('buftypes', config.buftypes, 'table', true)
 end
 
 --- Returns true if:
@@ -490,6 +501,12 @@ end
 --- @param logging boolean
 local function can_start(bufnr, config, logging)
   assert(config)
+
+  local allowed_buftypes = config.buftypes or { '' }
+  if not vim.tbl_contains(allowed_buftypes, vim.bo[bufnr].buftype) then
+    return false
+  end
+
   if
     type(config.filetypes) == 'table'
     and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype)
@@ -520,11 +537,6 @@ end
 
 --- @param bufnr integer
 local function lsp_enable_callback(bufnr)
-  -- Only ever attach to buffers that represent an actual file.
-  if vim.bo[bufnr].buftype ~= '' then
-    return
-  end
-
   -- Stop any clients that no longer apply to this buffer.
   local clients = lsp.get_clients({ bufnr = bufnr, _uninitialized = true })
   for _, client in ipairs(clients) do
