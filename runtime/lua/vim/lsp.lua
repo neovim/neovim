@@ -502,8 +502,10 @@ end
 local function can_start(bufnr, config, logging)
   assert(config)
 
-  local allowed_buftypes = config.buftypes or { '' }
-  if not vim.tbl_contains(allowed_buftypes, vim.bo[bufnr].buftype) then
+  if
+    type(config.buftypes) == 'table'
+    and not vim.tbl_contains(config.buftypes, vim.bo[bufnr].buftype)
+  then
     return false
   end
 
