@@ -11,6 +11,11 @@ local get_completions = function(input, env)
 end
 
 --- @return { [1]: string[], [2]: integer }
+local get_completions_with_local = function(input, local_env)
+  return exec_lua('return { vim._expand_pat(...) }', input, {}, local_env)
+end
+
+--- @return { [1]: string[], [2]: integer }
 local get_compl_parts = function(parts)
   return exec_lua('return { vim._expand_pat_get_parts(...) }', parts)
 end
@@ -373,5 +378,26 @@ describe('nlua_expand_pat', function()
     eq({ { 'vim', 'nested', 'api' }, 22 }, get_compl_parts('vim["nested"]["api"].nvim_buf'))
     eq({ { 'vim', 'nested', 'api' }, 25 }, get_compl_parts('vim[ "nested"  ]["api"].nvim_buf'))
     eq({ { 'vim', { 'NESTED' }, 'api' }, 20 }, get_compl_parts('vim[NESTED]["api"].nvim_buf'))
+  end)
+
+  describe('local environment', function()
+    it('shows up in list of available globals', function()
+      eq({ { 'environ' }, 0 }, get_completions_with_local('env', { environ = {} }))
+    end)
+
+    it('does not show up in list of table fields for globals', function()
+      eq({ {}, 0 }, get_completions_with_local('vim.env', { environ = {} }))
+    end)
+
+    it('can show fields of loval environment', function()
+      eq(
+        { { 'bar', 'foo' }, 8 },
+        get_completions_with_local('environ.', { environ = { foo = 0, bar = 0 } })
+      )
+      eq(
+        { { 'foo' }, 8 },
+        get_completions_with_local('environ.f', { environ = { foo = 0, bar = 0 } })
+      )
+    end)
   end)
 end)
