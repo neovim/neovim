@@ -735,4 +735,35 @@ func Test_compiler_spotbugs_properties()
   let &shellslash = save_shellslash
 endfunc
 
+func Test_compiler_just()
+  CheckFeature quickfix
+
+  compiler just
+  call assert_equal('just', b:current_compiler)
+  call assert_equal('just', &makeprg)
+  let verbose_efm = execute('verbose set efm')
+  call assert_match('Last set from .*[/\\]compiler[/\\]just.vim ', verbose_efm)
+
+  " Test that the errorformat can parse just error output
+  let lines =<< trim END
+    error: Variable `name` not defined
+      ——▶ justfile:2:15
+       │
+     2 │   echo {{name}}
+       │          ^^^^
+  END
+  call writefile(lines, 'Xjusterr.txt')
+  cgetfile Xjusterr.txt
+  let l = getqflist()
+  call assert_equal(1, len(l))
+  call assert_equal('E', l[0].type)
+  call assert_equal('Variable `name` not defined', l[0].text)
+  call assert_equal(2, l[0].lnum)
+  call assert_equal(15, l[0].col)
+
+  call setqflist([])
+  call delete('Xjusterr.txt')
+  compiler make
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
