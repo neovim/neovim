@@ -1984,6 +1984,7 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
   char *name = NULL;
   int len;
   lval_T lv;
+  static const char *e_function_name = N_("E129: Function name required");
 
   if (fdp != NULL) {
     CLEAR_POINTER(fdp);
@@ -2010,7 +2011,7 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
                              lead > 2 ? 0 : FNE_CHECK_START);
   if (end == start) {
     if (!skip) {
-      emsg(_("E129: Function name required"));
+      emsg(_(e_function_name));
     }
     goto theend;
   }
@@ -2120,6 +2121,12 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
       lv.ll_name_len -= 2;
     }
     len = (int)(end - lv.ll_name);
+  }
+  if (len <= 0) {
+    if (!skip) {
+      emsg(_(e_function_name));
+    }
+    goto theend;
   }
 
   size_t sid_buflen = 0;
