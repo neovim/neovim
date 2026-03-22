@@ -4282,6 +4282,20 @@ func Test_single_line_filler_zb()
   bw!
 endfunc
 
+" Test for zb with fewer buffer lines than window height, non-zero 'scrolloff'
+" and cursor on fold.
+func Test_zb_with_cursor_on_fold()
+  15new
+  call setline(1, range(1, 5) + ['', 'foo{{{', 'bar}}}', '', 'baz'])
+  setlocal foldmethod=marker scrolloff=1
+  call assert_equal(8, foldclosedend(7))
+  call cursor(7, 1)
+  normal! zb
+  call assert_equal(1, line('w0'))
+
+  bwipe!
+endfunc
+
 " Test for Ctrl-U not getting stuck at end of buffer with 'scrolloff'.
 func Test_halfpage_scrolloff_eob()
   set scrolloff=5
