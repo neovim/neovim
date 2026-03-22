@@ -218,6 +218,7 @@ local function test_terminal_with_fake_shell(backslash)
                                                         |
                                                         |*2
     ]])
+    eq(0, api.nvim_get_vvar('shell_error'))
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
