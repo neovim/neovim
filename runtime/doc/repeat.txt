@@ -192,9 +192,8 @@ Using Vim scripts					*using-scripts*
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source*
-:so[urce] {file}	Runs |Ex-commands| or Lua code (".lua" files) from
-			{file}.
-			Triggers the |SourcePre| autocommand.
+:so[urce] {file}	Runs |Ex-command|s or Lua code (".lua" files) from
+			{file}. Triggers the |SourcePre| autocommand.
 
 :[range]so[urce]	Read Ex commands or Lua code from the [range] of lines
 			in the current buffer.  When [range] is omitted read

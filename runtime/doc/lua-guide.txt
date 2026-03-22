@@ -29,7 +29,7 @@ The purpose of this guide is to introduce the different ways of interacting
 with Nvim through Lua (the "API"). This API consists of three different
 layers:
 
-1. The "Vim API" inherited from Vim: |Ex-commands| and |vimscript-functions|
+1. The "Vim API" inherited from Vim: |Ex-command|s and |vimscript-functions|
    as well as |user-function|s in Vimscript. These are accessed through
    |vim.cmd()| and |vim.fn| respectively, which are discussed under
    |lua-guide-vimscript| below.
