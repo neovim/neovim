@@ -1865,4 +1865,18 @@ describe('completion', function()
     command(('set path=%s'):format(path))
     eq({ 'A', 'B', 'C', 'sub1/', 'sub2/' }, fn.getcompletion('find ', 'cmdline'))
   end)
+
+  it('complete-items commit_chars', function()
+    exec_lua(function()
+      _G.Omnifunc = function(findstart, _)
+        return findstart == 1 and 0 or { { word = 'foobar', commit_chars = '(' } }
+      end
+      vim.bo.omnifunc = 'v:lua.Omnifunc'
+    end)
+    n.command('set completeopt=menuone,noinsert')
+    feed('i<C-x><C-o>')
+    poke_eventloop()
+    feed('(')
+    eq('foobar(', n.api.nvim_get_current_line())
+  end)
 end)

@@ -30,6 +30,14 @@
 --- - Extend `client.server_capabilities.completionProvider.triggerCharacters` on `LspAttach`,
 ---   before you call `vim.lsp.completion.enable(… {autotrigger=true})`. See the |lsp-attach| example.
 --- - Call `vim.lsp.completion.get()` from an |InsertCharPre| autocommand.
+---
+--- If the server provides `commitCharacters` for a completion item, typing one
+--- of those characters while the item is selected accepts the completion and
+--- then inserts the character. To disable this:
+---
+--- ```lua
+--- vim.lsp.completion.enable(true, client_id, bufnr, { commit_characters = false })
+--- ```
 
 local M = {}
 
@@ -47,6 +55,7 @@ local ns_to_ms = 0.000001
 -- literal/anonymous types (see https://github.com/neovim/neovim/pull/27542/files#r1495259331).
 --- @nodoc
 --- @class lsp.ItemDefaults
+--- @field commitCharacters string[]?
 --- @field editRange lsp.Range | { insert: lsp.Range, replace: lsp.Range } | nil
 --- @field insertTextFormat lsp.InsertTextFormat?
 --- @field insertTextMode lsp.InsertTextMode?
@@ -232,6 +241,7 @@ local function apply_defaults(item, defaults)
     return
   end
 
+  item.commitCharacters = item.commitCharacters or defaults.commitCharacters
   item.insertTextFormat = item.insertTextFormat or defaults.insertTextFormat
   item.insertTextMode = item.insertTextMode or defaults.insertTextMode
   item.data = item.data or defaults.data
@@ -392,6 +402,28 @@ local function complete_item_info(item)
   return info, kind, complete
 end
 
+--- Flatten commitCharacters array to a string; keep only the first codepoint
+--- of each entry.
+---
+--- @param chars string[]
+--- @return string
+local function commit_chars_str(chars)
+  if type(chars) ~= 'table' then
+    return ''
+  end
+  local result = {} --- @type string[]
+  for _, ch in ipairs(chars) do
+    -- commit characters "should have `length=1`" and superfluous
+    -- characters are ignored.  Keep the first codepoint.
+    local b = type(ch) == 'string' and ch:byte(1)
+    if b then
+      local len = b < 0x80 and 1 or b < 0xe0 and 2 or b < 0xf0 and 3 or 4
+      result[#result + 1] = ch:sub(1, len)
+    end
+  end
+  return table.concat(result)
+end
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -444,8 +476,22 @@ function M._lsp_to_complete_items(
   local bufnr = api.nvim_get_current_buf()
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
-  local client = client_id and vim.lsp.get_client_by_id(client_id)
+  local client = client_id and lsp.get_client_by_id(client_id)
   local server_supports_resolve = client and client:supports_method('completionItem/resolve')
+  local use_commit = vim.tbl_get(buf_handles, bufnr, 'commit_characters') ~= false
+  local commit_support = client
+    and vim.tbl_get(
+      client.capabilities,
+      'textDocument',
+      'completion',
+      'completionItem',
+      'commitCharactersSupport'
+    )
+
+  local all_commit_chars = client
+    and vim.tbl_get(client.server_capabilities or {}, 'completionProvider', 'allCommitCharacters')
+  local all_commit_str = all_commit_chars and commit_chars_str(all_commit_chars) or nil
+
   for _, item in ipairs(items) do
     local match, score = matches(item)
     if match then
@@ -478,6 +524,15 @@ function M._lsp_to_complete_items(
       end
       local kind, kind_hlgroup = generate_kind(item)
       local info, info_kind, info_complete = complete_item_info(item)
+      local commit_chars --- @type string?
+      if use_commit then
+        if commit_support and item.commitCharacters then
+          -- may be '': an explicit empty list also suppresses allCommitCharacters
+          commit_chars = commit_chars_str(item.commitCharacters)
+        else
+          commit_chars = all_commit_str
+        end
+      end
       local completion_item = {
         word = word,
         abbr = ('%s%s'):format(item.label, vim.tbl_get(item, 'labelDetails', 'detail') or ''),
@@ -490,6 +545,7 @@ function M._lsp_to_complete_items(
         abbr_hlgroup = hl_group,
         kind_hlgroup = kind_hlgroup,
         preselect = item.preselect,
+        commit_chars = commit_chars,
         user_data = {
           nvim = {
             lsp = {
@@ -1142,6 +1198,7 @@ end
 --- @field autotrigger? boolean  (default: false) When true, completion triggers automatically based on the server's `triggerCharacters`.
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
 --- @field cmp? fun(a: table, b: table): boolean Comparator for sorting merged completion items from all servers.
+--- @field commit_characters? boolean  (default: true) When false, commit characters are ignored.
 
 ---@param client_id integer
 ---@param bufnr integer
@@ -1149,7 +1206,13 @@ end
 local function enable_completions(client_id, bufnr, opts)
   local buf_handle = buf_handles[bufnr]
   if not buf_handle then
-    buf_handle = { clients = {}, triggers = {}, convert = opts.convert, cmp = opts.cmp }
+    buf_handle = {
+      clients = {},
+      triggers = {},
+      convert = opts.convert,
+      cmp = opts.cmp,
+      commit_characters = opts.commit_characters ~= false,
+    }
     buf_handles[bufnr] = buf_handle
 
     -- Attach to buffer events.
