@@ -521,7 +521,8 @@ end
 --- @param bufnr integer
 local function lsp_enable_callback(bufnr)
   -- Only ever attach to buffers that represent an actual file.
-  if vim.bo[bufnr].buftype ~= '' then
+  -- Also allow 'help' buffers, which are real files with a filetype.
+  if not vim.tbl_contains({ '', 'help' }, vim.bo[bufnr].buftype) then
     return
   end
 
