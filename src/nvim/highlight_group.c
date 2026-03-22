@@ -252,6 +252,11 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticSignInfo         DiagnosticInfo",
   "default link DiagnosticSignHint         DiagnosticHint",
   "default link DiagnosticSignOk           DiagnosticOk",
+  "default link DiagnosticLineNrError      DiagnosticError",
+  "default link DiagnosticLineNrWarn       DiagnosticWarn",
+  "default link DiagnosticLineNrInfo       DiagnosticInfo",
+  "default link DiagnosticLineNrHint       DiagnosticHint",
+  "default link DiagnosticLineNrOk         DiagnosticOk",
   "default link DiagnosticUnnecessary      Comment",
 
   // Treesitter standard groups

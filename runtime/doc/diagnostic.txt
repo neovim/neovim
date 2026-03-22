@@ -377,6 +377,26 @@ DiagnosticSignHint
 DiagnosticSignOk
     Used for "Ok" signs in sign column.
 
+                                                *hl-DiagnosticLineNrError*
+DiagnosticLineNrError
+    Used for the line number where the "Error" sign is placed.
+
+                                                *hl-DiagnosticLineNrWarn*
+DiagnosticLineNrWarn
+    Used for the line number where the "Warn" sign is placed.
+
+                                                *hl-DiagnosticLineNrInfo*
+DiagnosticLineNrInfo
+    Used for the line number where the "Info" sign is placed.
+
+                                                *hl-DiagnosticLineNrHint*
+DiagnosticLineNrHint
+    Used for the line number where the "Hint" sign is placed.
+
+                                                *hl-DiagnosticLineNrOk*
+DiagnosticLineNrOk
+    Used for the line number where the "Ok" sign is placed.
+
                                                 *hl-DiagnosticDeprecated*
 DiagnosticDeprecated
     Used for deprecated or obsolete code.
@@ -649,11 +669,14 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                      signs use the same priority.
       • {text}?      (`table<vim.diagnostic.Severity,string>`) A table mapping
                      |diagnostic-severity| to the sign text to display in the
-                     sign column. The default is to use `"E"`, `"W"`, `"I"`,
-                     and `"H"` for errors, warnings, information, and hints,
-                     respectively. Example: >lua
+                     sign column. Example: >lua
                          vim.diagnostic.config({
-                           signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
+                           signs = { text = {
+                             [vim.diagnostic.severity.ERROR] = 'E',
+                             [vim.diagnostic.severity.WARN] = 'W',
+                             [vim.diagnostic.severity.INFO] = 'I',
+                             [vim.diagnostic.severity.HINT] = 'H',
+                           }}
                          })
 <
       • {numhl}?     (`table<vim.diagnostic.Severity,string>`) A table mapping
