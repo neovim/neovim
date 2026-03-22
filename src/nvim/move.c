@@ -1923,8 +1923,10 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
 
   if (set_topbot) {
     int used = 0;
-    wp->w_botline = cln + 1;
-    loff.lnum = cln + 1;
+    linenr_T cln_last = cln;
+    hasFolding(wp, cln, NULL, &cln_last);
+    wp->w_botline = cln_last + 1;
+    loff.lnum = cln_last + 1;
     loff.fill = 0;
     while (true) {
       topline_back_winheight(wp, &loff, false);
