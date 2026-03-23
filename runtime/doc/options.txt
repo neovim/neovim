@@ -78,6 +78,17 @@ achieve special effects.  These options come in three forms:
 			If the option is a list of flags, superfluous flags
 			are removed.  When adding a flag that was already
 			present the option value doesn't change.
+			When the option supports "key:value" items and {value}
+			contains a "key:value" item or multiple
+			comma-separated items, each item is processed
+			individually:
+			- A "key:value" item where the key already exists with
+			  a different value: the old item is removed and the
+			  new item is appended to the end.
+			- A "key:value" item that is an exact duplicate is
+			  left unchanged.
+			- Other items that already exist are left unchanged.
+			- New items are appended to the end.
 			Also see |:set-args| above.
 
 :se[t] {option}^={value}				*:set^=*
@@ -85,6 +96,11 @@ achieve special effects.  These options come in three forms:
 			the {value} to a string option.  When the option is a
 			comma-separated list, a comma is added, unless the
 			value was empty.
+			When the option supports "key:value" items and {value}
+			contains a "key:value" item or multiple
+			comma-separated items, each item is processed
+			individually.  Works like |:set+=| but new items are
+			prepended to the beginning instead of appended.
 			Also see |:set-args| above.
 
 :se[t] {option}-={value}				*:set-=*
@@ -97,6 +113,12 @@ achieve special effects.  These options come in three forms:
 			When the option is a list of flags, {value} must be
 			exactly as they appear in the option.  Remove flags
 			one by one to avoid problems.
+			When the option supports "key:value" items and {value}
+			contains a "key:value" item or multiple
+			comma-separated items, each item is processed
+			individually.  A "key:value" item removes the existing
+			item with that key regardless of its value.  A "key:"
+			item also removes by key match.
 			The individual values from a comma separated list or
 			list of flags can be inserted by typing 'wildchar'.
 			See |complete-set-option|.
