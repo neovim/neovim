@@ -611,7 +611,41 @@ describe('search cmdline', function()
       the {10:on}e 1           |
       :sort ni u /on^      |
     ]])
-    feed('<esc>')
+    feed('<Esc>')
+
+    feed(':sort! /on')
+    screen:expect([[
+      another {2:on}e 2       |
+      that {10:on}e 3          |
+      the {10:on}e 1           |
+      :sort! /on^          |
+    ]])
+    feed('<Esc>')
+  end)
+
+  -- oldtest: Test_incsearch_uniq_dump().
+  it('incsearch works with :uniq', function()
+    screen:try_resize(20, 4)
+    command('set incsearch hlsearch scrolloff=0')
+    fn.setline(1, { 'another one 2', 'that one 3', 'the one 1' })
+
+    feed(':uniq /on')
+    screen:expect([[
+      another {2:on}e 2       |
+      that {10:on}e 3          |
+      the {10:on}e 1           |
+      :uniq /on^           |
+    ]])
+    feed('<Esc>')
+
+    feed(':uniq! /on')
+    screen:expect([[
+      another {2:on}e 2       |
+      that {10:on}e 3          |
+      the {10:on}e 1           |
+      :uniq! /on^          |
+    ]])
+    feed('<Esc>')
   end)
 
   -- oldtest: Test_incsearch_vimgrep_dump().

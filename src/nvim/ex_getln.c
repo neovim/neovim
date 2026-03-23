@@ -317,7 +317,7 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
 
   // Skip over the range to find the command.
   char *cmd = skip_range(ea.cmd, NULL);
-  if (vim_strchr("sgvl", (uint8_t)(*cmd)) == NULL) {
+  if (vim_strchr("sgvlu", (uint8_t)(*cmd)) == NULL) {
     return false;
   }
 
