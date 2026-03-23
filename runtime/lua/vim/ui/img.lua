@@ -98,6 +98,7 @@ end
 
 ---Optional image arguments:
 ---@class vim.ui.img.ImgOpts
+---@inlinedoc
 ---@field data? string data of a loaded file
 ---@field filename? string path to the file (e.g. path/to/img.png)
 
