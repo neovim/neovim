@@ -1,45 +1,70 @@
-vim.g.loaded_remote_file_loader = true
-
---- Callback for BufReadCmd on remote URLs.
---- @param ev { buf: integer }
-local function on_remote_read(ev)
-  if vim.fn.executable('curl') ~= 1 then
-    vim.api.nvim_echo({
-      { 'Warning: `curl` not found; remote URL loading disabled.', 'WarningMsg' },
-    }, true, {})
-    return true
-  end
-
-  local bufnr = ev.buf
-  local url = vim.api.nvim_buf_get_name(bufnr)
-  local view = vim.fn.winsaveview()
-
-  vim.api.nvim_echo({ { 'Fetching ' .. url .. ' …', 'MoreMsg' } }, true, {})
-
-  vim.net.request(
-    url,
-    { retry = 3 },
-    vim.schedule_wrap(function(err, content)
-      if err then
-        vim.notify('Failed to fetch ' .. url .. ': ' .. tostring(err), vim.log.levels.ERROR)
-        vim.fn.winrestview(view)
-        return
-      end
-
-      local lines = vim.split(content.body, '\n', { plain = true })
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
-      vim.api.nvim_exec_autocmds('BufRead', { group = 'filetypedetect', buffer = bufnr })
-      vim.bo[bufnr].modified = false
-
-      vim.fn.winrestview(view)
-      vim.api.nvim_echo({ { 'Loaded ' .. url, 'Normal' } }, true, {})
-    end)
-  )
+if vim.g.loaded_nvim_net_plugin ~= nil then
+  return
 end
+vim.g.loaded_nvim_net_plugin = true
+
+local augroup = vim.api.nvim_create_augroup('nvim.net.remotefile', {})
+local url_patterns = { 'http://*', 'https://*' }
 
 vim.api.nvim_create_autocmd('BufReadCmd', {
-  group = vim.api.nvim_create_augroup('nvim.net.remotefile', {}),
-  pattern = { 'http://*', 'https://*' },
+  group = augroup,
+  pattern = url_patterns,
   desc = 'Edit remote files (:edit https://example.com)',
-  callback = on_remote_read,
+  callback = function(ev)
+    if vim.fn.executable('curl') ~= 1 then
+      vim.notify('vim.net.request: curl not found', vim.log.levels.WARN)
+      return
+    end
+
+    local url = ev.file
+    vim.notify(('Fetching %s …'):format(url), vim.log.levels.INFO)
+
+    vim.net.request(
+      url,
+      { outbuf = ev.buf },
+      vim.schedule_wrap(function(err, _)
+        if err then
+          vim.notify(('Failed to fetch %s: %s'):format(url, err), vim.log.levels.ERROR)
+          return
+        end
+
+        vim.api.nvim_exec_autocmds('BufRead', { group = 'filetypedetect', buffer = ev.buf })
+        vim.bo[ev.buf].modified = false
+        vim.notify(('Loaded %s'):format(url), vim.log.levels.INFO)
+      end)
+    )
+  end,
+})
+
+vim.api.nvim_create_autocmd('FileReadCmd', {
+  group = augroup,
+  pattern = url_patterns,
+  desc = 'Read remote files (:read https://example.com)',
+  callback = function(ev)
+    if vim.fn.executable('curl') ~= 1 then
+      vim.notify('vim.net.request: curl not found', vim.log.levels.WARN)
+      return
+    end
+
+    local url = ev.file
+    vim.notify(('Fetching %s …'):format(url), vim.log.levels.INFO)
+
+    vim.net.request(
+      url,
+      {},
+      vim.schedule_wrap(function(err, response)
+        if err or not response then
+          vim.notify(('Failed to fetch %s: %s'):format(url, err), vim.log.levels.ERROR)
+          return
+        end
+
+        -- Start inserting the response at the line number given by read (e.g. :10read).
+        -- FIXME: Doesn't work for :0read as '[ is set to 1. See #7177 for possible solutions.
+        local start = vim.fn.line("'[")
+        local lines = vim.split(response.body or '', '\n', { plain = true })
+        vim.api.nvim_buf_set_lines(ev.buf, start, start, true, lines)
+        vim.notify(('Loaded %s'):format(url), vim.log.levels.INFO)
+      end)
+    )
+  end,
 })

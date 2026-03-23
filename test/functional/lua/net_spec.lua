@@ -21,9 +21,8 @@ describe('vim.net.request', function()
     local content = exec_lua([[
       local done = false
       local result
-      local M = require('vim.net')
 
-      M.request("https://httpbingo.org/anything", { retry = 3 }, function(err, body)
+      vim.net.request("https://httpbingo.org/anything", { retry = 3 }, function(err, body)
         assert(not err, err)
         result = body.body
         done = true
@@ -63,9 +62,8 @@ describe('vim.net.request', function()
     local err = exec_lua([[
       local done = false
       local result
-      local M = require('vim.net')
 
-      M.request("https://httpbingo.org/status/404", {}, function(e, _)
+      vim.net.request("https://httpbingo.org/status/404", {}, function(e, _)
         result = e
         done = true
       end)
@@ -75,5 +73,44 @@ describe('vim.net.request', function()
     ]])
 
     assert_404_error(err)
+  end)
+
+  it('plugin writes output to buffer', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    local content = exec_lua([[
+      local lines
+
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.net.request("https://httpbingo.org", { outbuf = buf })
+
+      vim.wait(2000, function()
+        lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+        return lines[1] ~= ""
+      end)
+
+      return lines
+    ]])
+    assert(content and content[1]:find('html'))
+  end)
+
+  it('works with :read', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    local content = exec_lua([[
+      vim.cmd('runtime plugin/net.lua')
+      local lines
+
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'Here is some text' })
+      vim.cmd(':read https://example.com')
+
+      vim.wait(2000, function()
+        lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+        return #lines > 1
+      end)
+
+      return lines
+    ]])
+    t.eq(true, content ~= nil)
+    t.eq(true, content[1]:find('Here') ~= nil)
+    t.eq(true, content[2]:find('html') ~= nil)
   end)
 end)
