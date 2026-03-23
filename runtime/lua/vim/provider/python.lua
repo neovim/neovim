@@ -5,6 +5,7 @@ local s_host ---@type string?
 
 local python_candidates = {
   'python3',
+  'python3.14',
   'python3.13',
   'python3.12',
   'python3.11',

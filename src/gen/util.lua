@@ -238,6 +238,8 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
   elseif ntype == 'html_tag' then
     error('html_tag: ' .. node.text)
   elseif ntype == 'inline_link' then
+    -- Markdown links with empty URLs, e.g. [lsp-buftypes](), are converted
+    -- to vim help tags, e.g. *lsp-buftypes*.
     vim.list_extend(parts, { '*', node[1].text, '*' })
   elseif ntype == 'shortcut_link' then
     if node[1].text:find('^<.*>$') then

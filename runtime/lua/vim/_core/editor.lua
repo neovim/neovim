@@ -304,7 +304,7 @@ end
 
 local VIM_CMD_ARG_MAX = 20
 
---- Executes Vimscript (|Ex-commands|).
+--- Executes Vimscript (|Ex-command|s).
 ---
 --- Can be indexed with a command name to get a function, thus you can write `vim.cmd.echo(…)`
 --- instead of `vim.cmd{cmd='echo',…}`.
@@ -1256,7 +1256,7 @@ end
 ---                              Defaults to "Nvim".
 ---@param backtrace   boolean|nil Prints backtrace. Defaults to true.
 ---
----@return string|nil # Deprecated message, or nil if no message was shown.
+---@return string|nil # Deprecation message, or nil if no message was shown.
 function vim.deprecate(name, alternative, version, plugin, backtrace)
   plugin = plugin or 'Nvim'
   if plugin == 'Nvim' then

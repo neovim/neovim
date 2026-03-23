@@ -209,6 +209,10 @@ do
       vim.lsp.buf.code_action()
     end, { desc = 'vim.lsp.buf.code_action()' })
 
+    vim.keymap.set('n', 'grx', function()
+      vim.lsp.codelens.run()
+    end, { desc = 'vim.lsp.codelens.run()' })
+
     vim.keymap.set('n', 'grr', function()
       vim.lsp.buf.references()
     end, { desc = 'vim.lsp.buf.references()' })
@@ -737,10 +741,10 @@ do
 
       vim.keymap.set({ 'n', 'x', 'o' }, '[[', function()
         jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, -vim.v.count1)
-      end, { buffer = ev.buf, desc = 'Jump [count] shell prompts backward' })
+      end, { buf = ev.buf, desc = 'Jump [count] shell prompts backward' })
       vim.keymap.set({ 'n', 'x', 'o' }, ']]', function()
         jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, vim.v.count1)
-      end, { buffer = ev.buf, desc = 'Jump [count] shell prompts forward' })
+      end, { buf = ev.buf, desc = 'Jump [count] shell prompts forward' })
 
       -- If the terminal buffer is being reused, clear the previous exit msg
       vim.api.nvim_buf_clear_namespace(ev.buf, nvim_terminal_exitmsg_ns, 0, -1)

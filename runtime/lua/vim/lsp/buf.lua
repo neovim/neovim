@@ -462,12 +462,12 @@ function M.signature_help(config)
       vim.keymap.set('n', '<Plug>(nvim.lsp.ctrl-s)', function()
         show_signature(fwin)
       end, {
-        buffer = fbuf,
+        buf = fbuf,
         desc = 'Cycle next signature',
       })
       if vim.fn.hasmapto('<Plug>(nvim.lsp.ctrl-s)', 'n') == 0 then
         vim.keymap.set('n', '<C-s>', '<Plug>(nvim.lsp.ctrl-s)', {
-          buffer = fbuf,
+          buf = fbuf,
           desc = 'Cycle next signature',
         })
       end
@@ -1365,10 +1365,17 @@ function M.code_action(opts)
       params.context = context
     else
       local ns_push = lsp.diagnostic.get_namespace(client.id, false)
-      local ns_pull = lsp.diagnostic.get_namespace(client.id, true)
       local diagnostics = {}
       local lnum = api.nvim_win_get_cursor(0)[1] - 1
-      vim.list_extend(diagnostics, vim.diagnostic.get(bufnr, { namespace = ns_pull, lnum = lnum }))
+
+      client:_provider_foreach('textDocument/diagnostic', function(cap)
+        local ns_pull = lsp.diagnostic.get_namespace(client.id, cap.identifier)
+        vim.list_extend(
+          diagnostics,
+          vim.diagnostic.get(bufnr, { namespace = ns_pull, lnum = lnum })
+        )
+      end)
+
       vim.list_extend(diagnostics, vim.diagnostic.get(bufnr, { namespace = ns_push, lnum = lnum }))
       params.context = vim.tbl_extend('force', context, {
         ---@diagnostic disable-next-line: no-unknown

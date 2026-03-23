@@ -93,7 +93,7 @@ struct stream {
   uv_file fd;    ///< When the stream is a file, this is its file descriptor
   int64_t fpos;  ///< When the stream is a file, this is the position in file
   void *cb_data;
-  stream_close_cb close_cb, internal_close_cb;
+  stream_close_cb before_close_cb, close_cb, internal_close_cb;
   void *close_cb_data, *internal_data;
   size_t pending_reqs;
   MultiQueue *events;

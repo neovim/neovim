@@ -74,7 +74,7 @@ functionality and (2) the options are empty or were set by the builtin runtime
 (ftplugin) files. The options are not restored when the LSP client is stopped
 or detached.
 
-GLOBAL DEFAULTS                       *gra* *gri* *grn* *grr* *grt* *i_CTRL-S*
+GLOBAL DEFAULTS                       *gra* *gri* *grn* *grr* *grt* *grx* *i_CTRL-S*
 
 These GLOBAL keymaps are created unconditionally when Nvim starts:
 
@@ -83,6 +83,7 @@ These GLOBAL keymaps are created unconditionally when Nvim starts:
 - "grn" is mapped to |vim.lsp.buf.rename()|
 - "grr" is mapped to |vim.lsp.buf.references()|
 - "grt" is mapped to |vim.lsp.buf.type_definition()|
+- "grx" is mapped to |vim.lsp.codelens.run()|
 - "gO" is mapped to |vim.lsp.buf.document_symbol()|
 - CTRL-S (Insert mode) is mapped to |vim.lsp.buf.signature_help()|
 - |v_an| and |v_in| fall back to LSP |vim.lsp.buf.selection_range()| if
@@ -138,7 +139,7 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
         -- Unset 'omnifunc'
         vim.bo[ev.buf].omnifunc = nil
         -- Unmap K
-        vim.keymap.del('n', 'K', { buffer = ev.buf })
+        vim.keymap.del('n', 'K', { buf = ev.buf })
         -- Disable document colors
         vim.lsp.document_color.enable(false, { bufnr = ev.buf })
       end,
@@ -1037,7 +1038,7 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
     config to activate: >lua
         vim.lsp.config('lua_ls', {
           root_dir = function(bufnr, on_dir)
-            if not vim.fn.bufname(bufnr):match('%.txt$') then
+            if vim.fs.ext(vim.fn.bufname(bufnr)) ~= 'txt' then
               on_dir(vim.fn.getcwd())
             end
           end
@@ -1156,7 +1157,13 @@ get_clients({filter})                                  *vim.lsp.get_clients()*
 get_configs({filter})                                  *vim.lsp.get_configs()*
     Get LSP configs.
 
-    Note: Will eagerly evaluate config files in `'runtimepath'` if necessary.
+    WARNING:
+    • May eagerly (prematurely!) evaluate config files in 'runtimepath'.
+    • Configs may be in a partial state if they have async properties such as
+      `on_dir()`.
+
+    Attributes: ~
+        Since: 0.12.0
 
     Parameters: ~
       • {filter}  (`table?`) Key-value pairs used to filter the returned

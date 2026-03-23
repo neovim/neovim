@@ -187,6 +187,21 @@ describe('vim.lsp.completion: item conversion', function()
     eq({ { word = 'text-red-300', kind_hlgroup = '@lsp.color.fca5a5', kind = '■' } }, result)
   end)
 
+  it('uses labelDetails for abbr and menu', function()
+    local completion_list = {
+      {
+        label = 'printf',
+        kind = 3,
+        detail = 'int',
+        labelDetails = { detail = '(const char *restrict, ...)', description = 'stdio.h' },
+      },
+    }
+    local result = complete('|', completion_list)
+    local item = result.items[1]
+    eq('printf(const char *restrict, ...)', item.abbr)
+    eq('stdio.h', item.menu)
+  end)
+
   ---@param prefix string
   ---@param items lsp.CompletionItem[]
   ---@param expected table[]

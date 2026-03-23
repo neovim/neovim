@@ -120,7 +120,7 @@ end
 ---@param ctx lsp.HandlerContext
 function LinkedEditor:handler(err, result, ctx)
   if err then
-    log.error('linkededitingrange', err)
+    log.error('linked_editing_range', err)
     return
   end
 

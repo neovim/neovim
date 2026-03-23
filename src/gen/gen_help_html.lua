@@ -30,9 +30,6 @@
 --   * visit_validate() is the core function used by validate().
 --   * Files in `new_layout` will be generated with a "flow" layout instead of preformatted/fixed-width layout.
 --
--- TODO:
---   * Conjoin listitem "blocks" (blank-separated). Example: starting.txt
-
 local pending_urls = 0
 local tagmap = nil ---@type table<string, string>
 local helpfiles = nil ---@type string[]
@@ -98,6 +95,7 @@ local new_layout = {
   ['nvim.txt'] = true,
   ['pack.txt'] = true,
   ['provider.txt'] = true,
+  ['starting.txt'] = true,
   ['terminal.txt'] = true,
   ['tui.txt'] = true,
   ['ui.txt'] = true,
@@ -117,10 +115,7 @@ local redirects = {
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
 local exclude_invalid = {
-  ["'string'"] = 'vimeval.txt',
-  Query = 'treesitter.txt',
   matchit = 'vim_diff.txt',
-  ['set!'] = 'treesitter.txt',
 }
 
 -- False-positive "invalid URLs".
@@ -395,6 +390,13 @@ local function first(node, name)
   return nil
 end
 
+--- Gets the last child of `node`, or nil.
+---@param node TSNode
+local function last(node)
+  local n = node:child_count()
+  return n > 0 and node:child(n - 1) or nil
+end
+
 --- Gets the kind and node text of the previous and next siblings of node `n`.
 --- @param n any node
 local function get_prev_next(n)
@@ -626,6 +628,36 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if is_blank(text) then
       return ''
     end
+
+    -- Conjoin list-item blocks: merge adjacent blocks that form a contiguous list.
+    local prev_block = root:prev_sibling()
+    local next_block = root:next_sibling()
+    local prev_last = prev_block and prev_block:type() == 'block' and last(prev_block)
+    local next_first = next_block and next_block:type() == 'block' and next_block:child(0)
+    local continues_list = root:child(0)
+      and root:child(0):type() == 'line_li'
+      and prev_last
+      and prev_last:type() == 'line_li'
+    local list_continues = last(root)
+      and last(root):type() == 'line_li'
+      and next_first
+      and next_first:type() == 'line_li'
+    if continues_list and list_continues then
+      return text
+    elseif continues_list then
+      -- Last continuation block: close the wrapper opened by the first block.
+      if opt.old then
+        return ('%s</div>\n'):format(trim(text, 2))
+      end
+      return string.format('%s\n</div>\n', text)
+    elseif list_continues then
+      -- First block of a list that continues: open wrapper but don't close.
+      if opt.old then
+        return ('<div class="old-help-para">%s'):format(trim(text, 2))
+      end
+      return string.format('<div class="help-para">\n%s', text)
+    end
+
     if opt.old then
       -- XXX: Treat "old" docs as preformatted: they use indentation for layout.
       --      Trim trailing newlines to avoid too much whitespace between divs.
@@ -652,6 +684,17 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     local sib = root:prev_sibling()
     local prev_li = sib and sib:type() == 'line_li'
     local cssclass = numli and 'help-li-num' or 'help-li'
+
+    -- Conjoin list items separated by blank lines (wrapped in separate blocks).
+    if not prev_li then
+      local parent_block = root:parent()
+      local prev_block = parent_block and parent_block:prev_sibling()
+      local prev_last = prev_block and prev_block:type() == 'block' and last(prev_block)
+      if prev_last and prev_last:type() == 'line_li' then
+        prev_li = true
+        sib = prev_last
+      end
+    end
 
     if not prev_li then
       opt.indent = 1

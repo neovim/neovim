@@ -2455,18 +2455,24 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   if (exiting) {  // Cannot redraw (requires event loop) during teardown/exit.
     return;
   }
-  Terminal *term;
-  void *stub; (void)(stub);
-  // don't process autocommands while updating terminal buffers
+
+  // Don't process autocommands while updating terminal buffers.
   block_autocmds();
-  set_foreach(&invalidated_terminals, term, {
+  // Refreshing one terminal may poll for output to another, which should not
+  // interfere with the set_foreach() below.
+  Set(ptr_t) to_refresh = invalidated_terminals;
+  invalidated_terminals = (Set(ptr_t)) SET_INIT;
+
+  Terminal *term;
+  set_foreach(&to_refresh, term, {
     // Skip terminals in synchronized output — they will be refreshed
     // when the synchronized update ends (mode 2026 reset).
     if (!term->synchronized_output) {
       refresh_terminal(term);
     }
   });
-  set_clear(ptr_t, &invalidated_terminals);
+
+  set_destroy(ptr_t, &to_refresh);
   unblock_autocmds();
 }
 
@@ -2612,9 +2618,11 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 
   int change_start = row_to_linenr(term, term->invalid_start);
   int change_end = change_start + changed;
-  changed_lines(buf, change_start, 0, change_end, added, true);
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
+  // Call this after resetting the invalid region, as buffer update callbacks may
+  // poll for terminal output and lead to new invalidations.
+  changed_lines(buf, change_start, 0, change_end, added, true);
 }
 
 static void adjust_topline_cursor(Terminal *term, buf_T *buf, int added)

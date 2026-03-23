@@ -999,7 +999,7 @@ void ex_mkrc(exarg_T *eap)
     }
 
     if (eap->cmdidx == CMD_mksession) {
-      if (put_line(fd, "let SessionLoad = 1") == FAIL) {
+      if (put_line(fd, "let g:SessionLoad = 1") == FAIL) {
         failed = true;
       }
     }
@@ -1073,7 +1073,7 @@ void ex_mkrc(exarg_T *eap)
         failed = true;
       }
       if (eap->cmdidx == CMD_mksession) {
-        if (fprintf(fd, "unlet SessionLoad\n") < 0) {
+        if (fprintf(fd, "unlet g:SessionLoad\n") < 0) {
           failed = true;
         }
       }

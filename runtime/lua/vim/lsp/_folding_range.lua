@@ -133,7 +133,7 @@ function State:multi_handler(results, ctx)
 
   for client_id, result in pairs(results) do
     if result.err then
-      log.error(result.err)
+      log.error('folding_range', result.err)
     else
       self.client_state[client_id] = result.result
     end

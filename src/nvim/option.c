@@ -854,6 +854,206 @@ static void stropt_remove_val(const char *origval, char *newval, uint32_t flags,
   }
 }
 
+/// Find a comma-separated item in "src" that matches the key part of "key".
+/// The key is the part before ':'.  "keylen" is the length including ':'.
+/// Returns a pointer to the found item in "src", or NULL if not found.
+/// Sets "*itemlenp" to the length of the found item (up to ',' or NUL).
+static char *find_key_item(char *src, char *key, ptrdiff_t keylen, ptrdiff_t *itemlenp)
+{
+  char *p = src;
+
+  while (*p != NUL) {
+    // Check if this item starts with the same key
+    if ((p == src || *(p - 1) == ',') && strncmp(p, key, (size_t)keylen) == 0) {
+      // Find the end of this item
+      char *end = vim_strchr(p, ',');
+      if (end == NULL) {
+        end = p + strlen(p);
+      }
+      *itemlenp = end - p;
+      return p;
+    }
+    p++;
+  }
+  return NULL;
+}
+
+/// Remove one item of length "itemlen" at position "item" from comma-separated
+/// string "str" in-place.  Handles the comma before or after the item.
+static void remove_comma_item(const char *str, char *item, ptrdiff_t itemlen)
+{
+  if (item[itemlen] == ',') {
+    // Remove item and trailing comma
+    STRMOVE(item, item + itemlen + 1);
+  } else if (item > str && *(item - 1) == ',') {
+    // Last item: remove leading comma and item
+    STRMOVE(item - 1, item + itemlen);
+  } else {
+    // Only item
+    *item = NUL;
+  }
+}
+
+/// Remove all items matching "key" (with ':') from comma-separated string "str"
+/// in-place.  If "skip" is not NULL, the item at that position is kept.
+static void remove_key_item(char *str, char *key, ptrdiff_t keylen, const char *skip)
+{
+  ptrdiff_t itemlen;
+  char *found;
+
+  while ((found = find_key_item(str, key, keylen, &itemlen)) != NULL) {
+    if (found == skip) {
+      // Search for the next match after this one.
+      char *next = found + itemlen;
+      if (*next == ',') {
+        next++;
+      }
+      found = find_key_item(next, key, keylen, &itemlen);
+      if (found == NULL) {
+        break;
+      }
+    }
+
+    remove_comma_item(str, found, itemlen);
+  }
+}
+
+/// Append a comma-separated item to the end of "str" in-place.
+/// Adds a comma before the item if "str" is not empty.
+static void append_item(char *str, char *item, ptrdiff_t item_len)
+{
+  ptrdiff_t len = (ptrdiff_t)strlen(str);
+
+  if (len > 0) {
+    str[len++] = ',';
+  }
+  memmove(str + len, item, (size_t)item_len);
+  str[len + item_len] = NUL;
+}
+
+/// Prepend a comma-separated item to the beginning of "str" in-place.
+/// Adds a comma after the item if "str" is not empty.
+static void prepend_item(char *str, char *item, ptrdiff_t item_len)
+{
+  ptrdiff_t len = (ptrdiff_t)strlen(str);
+  int comma = (len > 0) ? 1 : 0;
+
+  memmove(str + item_len + comma, str, (size_t)len + 1);
+  memmove(str, item, (size_t)item_len);
+  if (comma) {
+    str[item_len] = ',';
+  }
+}
+
+/// For a P_COMMA option: process "key:value" items in "newval" individually.
+/// Each comma-separated item in "newval" is checked against "origval":
+///
+/// For OP_ADDING/OP_PREPENDING, each item is handled as follows:
+///   - colon item, key exists with different value: replace (remove old, add)
+///   - colon item, exact duplicate: do nothing
+///   - colon item, not found: add to end
+///   - non-colon item, exists: do nothing
+///   - non-colon item, not found: add to end
+///
+/// For OP_REMOVING, each item is handled as follows:
+///   - colon item: remove by key match
+///   - non-colon item: remove by exact match
+///
+/// The result is written to "newval".
+/// Returns true if the operation was fully handled (caller should skip the
+/// normal add/remove logic).  Returns false if newval is a single non-colon
+/// item, meaning the caller should use the existing code path.
+static bool stropt_handle_keymatch(const char *origval, char *newval, set_op_T op, uint32_t flags)
+{
+  // Check if newval contains any "key:value" item or multiple
+  // comma-separated items.  If neither, let the caller use the existing
+  // code path.
+  if (vim_strchr(newval, ':') == NULL && vim_strchr(newval, ',') == NULL) {
+    return false;
+  }
+
+  // Work on a copy of newval for iteration.
+  char *newval_copy = xstrdup(newval);
+
+  // Build the result in newval.  Start with a copy of origval, then
+  // modify it per-item.  newval buffer has room for origval + arg.
+  STRCPY(newval, origval);
+
+  // Process each item individually, modifying newval in-place.
+  char *item_start = newval_copy;
+  while (true) {
+    char *p = vim_strchr(item_start, ',');
+    ptrdiff_t item_len = p == NULL ? (ptrdiff_t)strlen(item_start) : p - item_start;
+
+    if (item_len > 0) {
+      char *colon = vim_strchr(item_start, ':');
+      if (colon != NULL && colon < item_start + item_len) {
+        ptrdiff_t keylen = (colon - item_start) + 1;
+
+        if (op == OP_ADDING || op == OP_PREPENDING) {
+          ptrdiff_t old_itemlen;
+          char *found = find_key_item(newval, item_start, keylen, &old_itemlen);
+          if (found != NULL) {
+            if (old_itemlen == item_len
+                && strncmp(found, item_start, (size_t)item_len) == 0) {
+              // Exact duplicate: keep it in place, but
+              // remove other items with the same key.
+              remove_key_item(newval, item_start, keylen, found);
+            } else {
+              // Key match with different value: remove all
+              // items with the same key, then add.
+              remove_key_item(newval, item_start, keylen, NULL);
+              if (op == OP_PREPENDING) {
+                prepend_item(newval, item_start, item_len);
+              } else {
+                append_item(newval, item_start, item_len);
+              }
+            }
+          } else {
+            // New item.
+            if (op == OP_PREPENDING) {
+              prepend_item(newval, item_start, item_len);
+            } else {
+              append_item(newval, item_start, item_len);
+            }
+          }
+        } else if (op == OP_REMOVING) {
+          remove_key_item(newval, item_start, keylen, NULL);
+        }
+      } else {
+        if (op == OP_ADDING || op == OP_PREPENDING) {
+          const char *found = find_dup_item(newval, item_start, (size_t)item_len,
+                                            kOptFlagComma);
+          if (found == NULL) {
+            // New item.
+            if (op == OP_PREPENDING) {
+              prepend_item(newval, item_start, item_len);
+            } else {
+              append_item(newval, item_start, item_len);
+            }
+          }
+          // else: exact duplicate — do nothing
+        } else if (op == OP_REMOVING) {
+          char *found = (char *)find_dup_item(newval, item_start, (size_t)item_len,
+                                              kOptFlagComma);
+          if (found != NULL) {
+            remove_comma_item(newval, found, item_len);
+          }
+        }
+      }
+    }
+
+    if (p == NULL) {
+      break;
+    }
+    item_start = p + 1;
+  }
+
+  xfree(newval_copy);
+
+  return true;
+}
+
 /// Remove flags that appear twice in the string option value 'newval'.
 static void stropt_remove_dupflags(char *newval, uint32_t flags)
 {
@@ -909,32 +1109,40 @@ static char *stropt_get_newval(int nextchar, OptIndex opt_idx, char **argp, void
     newval = stropt_expand_envvar(opt_idx, origval, newval, op);
   }
 
-  // locate newval[] in origval[] when removing it
-  // and when adding to avoid duplicates
-  int len = 0;
-  if (op == OP_REMOVING || (flags & kOptFlagNoDup)) {
-    len = (int)strlen(newval);
-    s = find_dup_item(origval, newval, (size_t)len, flags);
+  // For kOptFlagComma|kOptFlagColon options with "key:value" items: process each item
+  // individually by matching on the key part.
+  // If handled, skip the normal add/remove logic below.
+  if ((flags & kOptFlagComma) && (flags & kOptFlagColon) && op != OP_NONE
+      && stropt_handle_keymatch(origval, newval, op, flags)) {
+    // fully handled
+  } else {
+    // locate newval[] in origval[] when removing it and when
+    // adding to avoid duplicates
+    int len = 0;
+    if (op == OP_REMOVING || (flags & kOptFlagNoDup)) {
+      len = (int)strlen(newval);
+      s = find_dup_item(origval, newval, (size_t)len, flags);
 
-    // do not add if already there
-    if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
-      op = OP_NONE;
-      STRCPY(newval, origval);
+      // do not add if already there
+      if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
+        op = OP_NONE;
+        STRCPY(newval, origval);
+      }
+
+      // if no duplicate, move pointer to end of original value
+      if (s == NULL) {
+        s = origval + (int)strlen(origval);
+      }
     }
 
-    // if no duplicate, move pointer to end of original value
-    if (s == NULL) {
-      s = origval + (int)strlen(origval);
+    // concatenate the two strings; add a ',' if needed
+    if (op == OP_ADDING || op == OP_PREPENDING) {
+      stropt_concat_with_comma(origval, newval, op, flags);
+    } else if (op == OP_REMOVING) {
+      // Remove newval[] from origval[]. (Note: "len" has been
+      // set above and is used here).
+      stropt_remove_val(origval, newval, flags, s, len);
     }
-  }
-
-  // concatenate the two strings; add a ',' if needed
-  if (op == OP_ADDING || op == OP_PREPENDING) {
-    stropt_concat_with_comma(origval, newval, op, flags);
-  } else if (op == OP_REMOVING) {
-    // Remove newval[] from origval[]. (Note: "len" has been set above
-    // and is used here).
-    stropt_remove_val(origval, newval, flags, s, len);
   }
 
   if (flags & kOptFlagFlagList) {

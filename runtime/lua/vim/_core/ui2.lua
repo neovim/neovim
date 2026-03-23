@@ -13,23 +13,36 @@
 ---     ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
 ---     ---or table mapping |ui-messages| kinds and triggers to a target.
 ---     targets = 'cmd',
----     timeout = 4000, -- Time a message is visible in the message window.
+---     cmd = { -- Options related to messages in the cmdline window.
+---       height = 0.5 -- Maximum height while expanded for messages beyond 'cmdheight'.
+---     },
+---     dialog = { -- Options related to dialog window.
+---       height = 0.5, -- Maximum height.
+---     },
+---     msg = { -- Options related to msg window.
+---       height = 0.5, -- Maximum height.
+---       timeout = 4000, -- Time a message is visible in the message window.
+---     },
+---     pager = { -- Options related to message window.
+---       height = 1, -- Maximum height.
+---     },
 ---   },
 --- })
 --- ```
 ---
 --- There are four special windows/buffers for presenting messages and cmdline:
---- - "cmd": Cmdline. Also used for 'showcmd', 'showmode', 'ruler', and messages if 'cmdheight' > 0.
---- - "msg": Message window, shows messages when 'cmdheight' == 0.
+--- - "cmd": Cmdline. Also used for 'showcmd', 'showmode', 'ruler', and messages by default.
+--- - "msg": Message window, shows fleeting messages useful for 'cmdheight' == 0.
 --- - "pager": Pager window, shows |:messages| and certain messages that are never "collapsed".
 --- - "dialog": Dialog window, shows modal prompts that expect user input.
 ---
---- The buffer 'filetype' is to the above-listed id ("cmd", "msg", …). Handle the |FileType| event
---- to configure any local options for these windows and their respective buffers.
+--- The buffer 'filetype' is set to the above-listed id ("cmd", "msg", …).
+--- Handle the |FileType| event to configure any local options for these
+--- windows and their respective buffers.
 ---
---- Unlike the legacy |hit-enter| prompt, messages that overflow the cmdline area are instead
---- "collapsed", followed by a `[+x]` "spill" indicator, where `x` indicates the spilled lines. To
---- see the full messages, do either:
+--- Unlike the legacy |hit-enter| prompt, messages exceeding 'cmdheight' are
+--- instead "collapsed", followed by a `[+x]` "spill" indicator, where `x`
+--- indicates the spilled lines. To see the full messages, do either:
 --- - ENTER immediately after a message from interactive |:| cmdline.
 --- - |g<| at any time.
 
@@ -46,27 +59,34 @@ local M = {
     msg = { -- Options related to the message module.
       target = 'cmd', ---@type 'cmd'|'msg' Default message target if not present in targets.
       targets = {}, ---@type table<string, 'cmd'|'msg'|'pager'> Kind specific message targets.
-      timeout = 4000, -- Time a message is visible in the message window.
+      cmd = { -- Options related to messages in the cmdline window.
+        height = 0.5, -- Maximum height while expanded for messages beyond 'cmdheight'.
+      },
+      dialog = { -- Options related to dialog window.
+        height = 0.5, -- Maximum height.
+      },
+      msg = { -- Options related to msg window.
+        height = 0.5, -- Maximum height.
+        timeout = 4000, -- Time a message is visible in the message window.
+      },
+      pager = { -- Options related to message window.
+        height = 1, -- Maximum height.
+      },
     },
   },
 }
 
-local tab = 0
 ---Ensure target buffers and windows are still valid.
 function M.check_targets()
   local curtab = api.nvim_get_current_tabpage()
   for i, type in ipairs({ 'cmd', 'dialog', 'msg', 'pager' }) do
-    local oldbuf = api.nvim_buf_is_valid(M.bufs[type]) and M.bufs[type]
-    local oldwin, setopt = api.nvim_win_is_valid(M.wins[type]) and M.wins[type], not oldbuf
-    M.bufs[type] = oldbuf or api.nvim_create_buf(false, false)
+    local buf = api.nvim_buf_is_valid(M.bufs[type]) and M.bufs[type]
+    local win = api.nvim_win_is_valid(M.wins[type]) and M.wins[type]
+    local floating = win and api.nvim_win_get_config(win).zindex
+    local setopt = not buf or not win or not floating
+    M.bufs[type] = buf or api.nvim_create_buf(false, false)
 
-    if tab ~= curtab and oldwin then
-      -- Ensure dynamically set window configuration (M.msg.set_pos()) is copied
-      -- over when switching tabpage. TODO: move to tabpage instead after #35816.
-      M.wins[type] = api.nvim_open_win(M.bufs[type], false, api.nvim_win_get_config(oldwin))
-      api.nvim_win_close(oldwin, true)
-      setopt = true
-    elseif not oldwin or not api.nvim_win_get_config(M.wins[type]).zindex then
+    if not win or not floating then
       -- Open a new window when closed or no longer floating (e.g. wincmd J).
       local cfg = { col = 0, row = 1, width = 10000, height = 1, mouse = false, noautocmd = true }
       cfg.focusable = false
@@ -80,9 +100,11 @@ function M.check_targets()
       -- kZIndexMessages < cmd zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
       cfg.zindex = 201 - i
       M.wins[type] = api.nvim_open_win(M.bufs[type], false, cfg)
-      setopt = true
-    elseif api.nvim_win_get_buf(M.wins[type]) ~= M.bufs[type] then
-      api.nvim_win_set_buf(M.wins[type], M.bufs[type])
+    elseif api.nvim_win_get_tabpage(M.wins[type]) ~= curtab then
+      api.nvim_win_set_config(M.wins[type], { win = api.nvim_tabpage_get_win(curtab) })
+    end
+    if win and floating and api.nvim_win_get_buf(win) ~= M.bufs[type] then
+      api.nvim_win_set_buf(win, M.bufs[type])
       setopt = true
     end
 
@@ -125,7 +147,6 @@ function M.check_targets()
       end
     end
   end
-  tab = curtab
 end
 
 local function ui_callback(redraw_msg, event, ...)
@@ -220,16 +241,6 @@ function M.enable(opts)
       M.msg.set_pos()
     end,
     desc = 'Set cmdline and message window dimensions after shell resize or tabpage change.',
-  })
-
-  api.nvim_create_autocmd('WinEnter', {
-    callback = function()
-      local win = api.nvim_get_current_win()
-      if vim.tbl_contains(M.wins, win) and api.nvim_win_get_config(win).hide then
-        vim.cmd.wincmd('p')
-      end
-    end,
-    desc = 'Make sure hidden UI window is never current.',
   })
 end
 

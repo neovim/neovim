@@ -317,7 +317,7 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
 
   // Skip over the range to find the command.
   char *cmd = skip_range(ea.cmd, NULL);
-  if (vim_strchr("sgvl", (uint8_t)(*cmd)) == NULL) {
+  if (vim_strchr("sgvlu", (uint8_t)(*cmd)) == NULL) {
     return false;
   }
 
@@ -1261,21 +1261,23 @@ static int command_line_wildchar_complete(CommandLineState *s)
   return (res == OK) ? CMDLINE_CHANGED : CMDLINE_NOT_CHANGED;
 }
 
-static void command_line_end_wildmenu(CommandLineState *s, bool key_is_wc)
+static void command_line_end_wildmenu(CommandLineState *s, bool key_is_wc, int c)
 {
   if (cmdline_pum_active()) {
-    s->skip_pum_redraw = (s->skip_pum_redraw && !key_is_wc
-                          && !ascii_iswhite(s->c)
-                          && (vim_isprintc(s->c)
-                              || s->c == K_BS || s->c == Ctrl_H || s->c == K_DEL
-                              || s->c == K_KDEL || s->c == Ctrl_W || s->c == Ctrl_U));
-    cmdline_pum_remove(s->skip_pum_redraw);
+    if (c != -1) {
+      s->skip_pum_redraw = (s->skip_pum_redraw && !key_is_wc
+                            && !ascii_iswhite(c)
+                            && (vim_isprintc(c)
+                                || c == K_BS || c == Ctrl_H || c == K_DEL
+                                || c == K_KDEL || c == Ctrl_W || c == Ctrl_U));
+    }
+    cmdline_pum_remove(c != -1 && s->skip_pum_redraw);
   }
   if (s->xpc.xp_numfiles != -1) {
     ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
   }
   s->did_wild_list = false;
-  if (!p_wmnu || (s->c != K_UP && s->c != K_DOWN)) {
+  if (!p_wmnu || (c != K_UP && c != K_DOWN)) {
     s->xpc.xp_context = EXPAND_NOTHING;
   }
   s->wim_index = 0;
@@ -1291,6 +1293,14 @@ static int command_line_execute(VimState *state, int key)
   disptick_T display_tick_saved = display_tick;
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
+
+  // If the cmdline was replaced externally (e.g. by setcmdline()
+  // during an <expr> mapping), clean up the wildmenu completion
+  // state to avoid using stale completion data.
+  if (ccline.cmdbuff_replaced && s->xpc.xp_numfiles > 0) {
+    command_line_end_wildmenu(s, false, -1);
+  }
+  ccline.cmdbuff_replaced = false;
 
   // Skip wildmenu during history navigation via Up/Down keys
   if (s->c == K_WILD && s->did_hist_navigate) {
@@ -1322,7 +1332,7 @@ static int command_line_execute(VimState *state, int key)
         nextwild(&s->xpc, WILD_PUM_WANT, 0, s->firstc != '@');
         if (pum_want.finish) {
           nextwild(&s->xpc, WILD_APPLY, WILD_NO_BEEP, s->firstc != '@');
-          command_line_end_wildmenu(s, false);
+          command_line_end_wildmenu(s, false, s->c);
         }
       }
       pum_want.active = false;
@@ -1430,7 +1440,7 @@ static int command_line_execute(VimState *state, int key)
 
   // free expanded names when finished walking through matches
   if (end_wildmenu) {
-    command_line_end_wildmenu(s, key_is_wc);
+    command_line_end_wildmenu(s, key_is_wc, s->c);
   }
 
   if (p_wmnu) {
@@ -4388,6 +4398,7 @@ static int set_cmdline_str(const char *str, int pos)
 
   p->cmdpos = pos < 0 || pos > p->cmdlen ? p->cmdlen : pos;
   new_cmdpos = p->cmdpos;
+  p->cmdbuff_replaced = true;
 
   redrawcmd();
 

@@ -2661,7 +2661,7 @@ function M.open_float(opts, ...)
     else
       vim.cmd.normal({ 'gf', bang = true })
     end
-  end, { buffer = float_bufnr, remap = false })
+  end, { buf = float_bufnr, remap = false })
 
   --- @diagnostic disable-next-line: deprecated
   local add_highlight = api.nvim_buf_add_highlight

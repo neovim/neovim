@@ -4410,6 +4410,23 @@ func Test_setcmdline()
   call feedkeys(":a\<CR>", 'tx')
   call assert_equal('let foo=0', @:)
   cunmap a
+
+  " setcmdline() during wildmenu completion should not freeze.
+  " Stripping completion state when cmdline was replaced externally.
+  set wildmenu
+  call mkdir('Xsetcmdlinedir', 'pR')
+  call writefile([], 'Xsetcmdlinedir/Xfile1')
+  call writefile([], 'Xsetcmdlinedir/Xfile2')
+  func g:SetCmdLineEmpty()
+    call setcmdline('', 1)
+    return "\<Left>"
+  endfunc
+  cnoremap <expr> a g:SetCmdLineEmpty()
+  call feedkeys(":e Xsetcmdlinedir/\<Tab>a\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"', @:)
+  cunmap a
+  delfunc g:SetCmdLineEmpty
+  set nowildmenu
 endfunc
 
 func Test_rulerformat_position()

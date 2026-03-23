@@ -239,7 +239,7 @@ A plugin tailored to Rust development might have initialization in
     -- e.g. add a |<Plug>| mapping or create a command
     vim.keymap.set('n', '<Plug>(MyPluginBufferAction)', function()
         print('Hello')
-    end, { buffer = bufnr, })
+    end, { buf = bufnr })
 <
 ==============================================================================
 Configuration                                              *lua-plugin-config*
