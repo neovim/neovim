@@ -1364,7 +1364,7 @@ function M.code_action(opts)
     if context.diagnostics then
       params.context = context
     else
-      local ns_push = lsp.diagnostic.get_namespace(client.id, false)
+      local ns_push = lsp.diagnostic.get_namespace(client.id)
       local diagnostics = {}
       local lnum = api.nvim_win_get_cursor(0)[1] - 1
 
