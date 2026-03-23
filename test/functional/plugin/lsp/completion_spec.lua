@@ -193,13 +193,23 @@ describe('vim.lsp.completion: item conversion', function()
         label = 'printf',
         kind = 3,
         detail = 'int',
+        sortText = '1',
         labelDetails = { detail = '(const char *restrict, ...)', description = 'stdio.h' },
+      },
+      {
+        label = ' flush',
+        kind = 2,
+        insertText = 'flush()',
+        insertTextFormat = 2,
+        filterText = 'flush',
+        sortText = '2',
+        labelDetails = { detail = '()' },
       },
     }
     local result = complete('|', completion_list)
-    local item = result.items[1]
-    eq('printf(const char *restrict, ...)', item.abbr)
-    eq('stdio.h', item.menu)
+    eq('printf(const char *restrict, ...)', result.items[1].abbr)
+    eq('stdio.h', result.items[1].menu)
+    eq('flush', result.items[2].word)
   end)
 
   ---@param prefix string

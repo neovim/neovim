@@ -195,7 +195,11 @@ local function get_completion_word(item, prefix, match)
       --
       -- Typing `i` would remove the candidate because newText starts with `t`.
       local text = parse_snippet(item.insertText or item.textEdit.newText)
-      local word = #text < #item.label and vim.fn.matchstr(text, '\\k*') or item.label
+      local word = #text < #item.label and vim.fn.matchstr(text, '\\k*')
+        or (
+          item.filterText and vim.fn.match(item.label, '^\\k') == -1 and item.filterText
+          or item.label
+        )
       if item.filterText and not match(word, prefix) then
         return item.filterText
       else
