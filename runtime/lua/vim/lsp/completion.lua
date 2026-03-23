@@ -258,21 +258,6 @@ end
 ---@param item lsp.CompletionItem
 ---@return string
 local function get_doc(item)
-  if
-    has_completeopt('popup')
-    and item.insertTextFormat == protocol.InsertTextFormat.Snippet
-    and (type(item.documentation) ~= 'string' or #item.documentation == 0)
-    and vim.bo.filetype ~= ''
-    and (item.textEdit or (item.insertText and item.insertText ~= ''))
-  then
-    -- Shows snippet preview in doc popup if completeopt=popup.
-    local text = parse_snippet(item.insertText or item.textEdit.newText)
-    item.documentation = {
-      kind = lsp.protocol.MarkupKind.Markdown,
-      value = ('```%s\n%s\n```'):format(vim.bo.filetype, text),
-    }
-  end
-
   local doc = item.documentation
   if not doc then
     return ''
@@ -759,13 +744,22 @@ function CompletionResolver:request(bufnr, param, selected_word)
       end
 
       local value = vim.tbl_get(result, 'documentation', 'value')
+      local kind = vim.tbl_get(result, 'documentation', 'kind')
+      local text_format = vim.tbl_get(result, 'insertTextFormat')
       if not value then
-        return
+        if text_format ~= protocol.InsertTextFormat.Snippet then
+          return
+        end
+        -- generate snippet preview info
+        local insert_text = vim.tbl_get(result, 'insertText')
+        if insert_text then
+          value = ('```%s\n%s\n```'):format(vim.bo.filetype, parse_snippet(insert_text))
+          kind = lsp.protocol.MarkupKind.Markdown
+        end
       end
       local windata = vim.api.nvim__complete_set(cmp_info.selected, {
         info = value,
       })
-      local kind = vim.tbl_get(result, 'documentation', 'kind')
       update_popup_window(windata.winid, windata.bufnr, kind)
     end, bufnr)
   end, debounce_time)
@@ -779,21 +773,14 @@ local function on_completechanged(group, bufnr)
     buffer = bufnr,
     callback = function(ev)
       local completed_item = vim.v.event.completed_item or {}
+      local lsp_item = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'completion_item')
+      local data = vim.fn.complete_info({ 'selected' })
       if (completed_item.info or '') ~= '' then
-        local data = vim.fn.complete_info({ 'selected' })
-        local kind = vim.tbl_get(
-          completed_item,
-          'user_data',
-          'nvim',
-          'lsp',
-          'completion_item',
-          'documentation',
-          'kind'
-        )
+        local kind = vim.tbl_get(lsp_item or {}, 'documentation', 'kind')
         update_popup_window(
           data.preview_winid,
           data.preview_bufnr,
-          kind or lsp.protocol.MarkupKind.PlainText
+          kind or protocol.MarkupKind.Markdown
         )
         return
       end
@@ -805,15 +792,26 @@ local function on_completechanged(group, bufnr)
           bufnr = ev.buf,
         }) == 0
       then
+        if
+          has_completeopt('popup')
+          and lsp_item
+          and lsp_item.insertTextFormat == protocol.InsertTextFormat.Snippet
+        then
+          -- Shows snippet preview in doc popup if completeopt=popup.
+          local text = parse_snippet(lsp_item.insertText or lsp_item.textEdit.newText)
+          api.nvim__complete_set(
+            data.selected,
+            { info = ('```%s\n%s\n```'):format(vim.bo.filetype, text) }
+          )
+        end
         return
       end
 
       -- Retrieve the raw LSP completionItem from completed_item as the parameter for
       -- the completionItem/resolve request
-      local param = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'completion_item')
-      if param then
+      if lsp_item then
         Context.resolve_handler = Context.resolve_handler or CompletionResolver.new()
-        Context.resolve_handler:request(ev.buf, param, completed_item.word)
+        Context.resolve_handler:request(ev.buf, lsp_item, completed_item.word)
       end
     end,
     desc = 'Request and display LSP completion item documentation via completionItem/resolve',

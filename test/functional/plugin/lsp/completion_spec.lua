@@ -766,45 +766,11 @@ describe('vim.lsp.completion: item conversion', function()
     eq(1, #result.items)
     eq('foobar', result.items[1].user_data.nvim.lsp.completion_item.textEdit.newText)
   end)
-
-  it('shows snippet source in doc popup if completeopt=popup', function()
-    exec_lua([[
-      vim.opt.completeopt:append('popup')
-      vim.bo.filetype = 'lua'
-    ]])
-    local completion_list = {
-      isIncomplete = false,
-      items = {
-        {
-          insertText = 'for ${1:index}, ${2:value} in ipairs(${3:t}) do\n\t$0\nend',
-          insertTextFormat = 2,
-          kind = 15,
-          label = 'for .. ipairs',
-          sortText = '0001',
-        },
-        {
-          insertText = 'for ${1:i}, ${2:v} in ipairs(${3:t}) do\n\t$0\nend',
-          insertTextFormat = 2,
-          kind = 15,
-          label = 'for .. ipairs 2',
-          sortText = '0002',
-          documentation = vim.NIL,
-        },
-      },
-    }
-    local result = complete('|', completion_list)
-    eq('for .. ipairs', result.items[1].word)
-    eq('```lua\nfor index, value in ipairs(t) do\n\t\nend\n```', result.items[1].info)
-    eq('markdown', result.items[1].user_data.nvim.lsp.completion_item.documentation.kind)
-    eq('for .. ipairs 2', result.items[2].word)
-    eq('```lua\nfor i, v in ipairs(t) do\n\t\nend\n```', result.items[2].info)
-    eq('markdown', result.items[2].user_data.nvim.lsp.completion_item.documentation.kind)
-  end)
 end)
 
 --- @param name string
 --- @param completion_result vim.lsp.CompletionResult
---- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem, delay?: integer, cmp?: string}
+--- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem|lsp.CompletionItem[], delay?: integer, cmp?: string}
 --- @return integer
 local function create_server(name, completion_result, opts)
   opts = opts or {}
@@ -827,8 +793,13 @@ local function create_server(name, completion_result, opts)
             callback(nil, completion_result)
           end
         end,
-        ['completionItem/resolve'] = function(_, _, callback)
-          callback(nil, opts.resolve_result)
+        ['completionItem/resolve'] = function(_, request_item, callback)
+          if type(opts.resolve_result) == 'table' and not opts.resolve_result.label then
+            local selected = vim.fn.complete_info({ 'selected' }).selected
+            callback(nil, opts.resolve_result[selected + 1] or request_item)
+          else
+            callback(nil, opts.resolve_result)
+          end
         end,
       },
     })
@@ -1383,7 +1354,7 @@ describe('vim.lsp.completion: integration', function()
     eq('w-1/2', n.api.nvim_get_current_line())
   end)
 
-  it('selecting an item triggers completionItem/resolve + preview', function()
+  it('selecting an item triggers completionItem/resolve + (snippet) preview', function()
     local screen = Screen.new(50, 20)
     screen:add_extra_attr_ids({
       [100] = { background = Screen.colors.Plum1, foreground = Screen.colors.Blue },
@@ -1398,6 +1369,20 @@ describe('vim.lsp.completion: integration', function()
           label = 'nvim__id_array(arr)',
           sortText = '0002',
         },
+        {
+          insertText = 'for ${1:i} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+          insertTextFormat = 2,
+          kind = 15,
+          label = 'for i = ..',
+          sortText = '0003',
+        },
+        {
+          insertText = '_assert_integer(${1:x}, ${2:base?})',
+          insertTextFormat = 2,
+          kind = 3,
+          label = '_assert_integer(x, base)',
+          sortText = '0005',
+        },
       },
     }
     exec_lua(function()
@@ -1405,20 +1390,41 @@ describe('vim.lsp.completion: integration', function()
     end)
     create_server('dummy', completion_list, {
       resolve_result = {
-        detail = 'function',
-        documentation = {
-          kind = 'markdown',
-          value = [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]],
+        {
+          detail = 'function',
+          documentation = {
+            kind = 'markdown',
+            value = [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]],
+          },
+          insertText = 'nvim__id_array',
+          insertTextFormat = 1,
+          kind = 3,
+          label = 'nvim__id_array(arr)',
+          sortText = '0002',
         },
-        insertText = 'nvim__id_array',
-        insertTextFormat = 1,
-        kind = 3,
-        label = 'nvim__id_array(arr)',
-        sortText = '0002',
+        {
+          insertText = 'for ${1:i} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+          insertTextFormat = 2,
+          kind = 15,
+          label = 'for i = ..',
+          sortText = '0003',
+        },
+        {
+          detail = 'function',
+          documentation = {
+            kind = 'markdown',
+            value = [[```lua\nmore doc for vim._assert_integer\n```]],
+          },
+          insertText = 'nvim__id_array',
+          insertTextFormat = 2,
+          kind = 3,
+          label = '_assert_integer',
+          sortText = '0005',
+        },
       },
     })
 
-    feed('Sapi.<C-X><C-O>')
+    feed('S<C-X><C-O>')
     retry(nil, nil, function()
       eq(
         { true, true, [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]] },
@@ -1433,12 +1439,29 @@ describe('vim.lsp.completion: integration', function()
       )
     end)
     screen:expect([[
-      api.nvim__id_array^                                |
-      {1:~  }{12: nvim__id_array Function }{100:lua\nfunction vim.}{4:   }{1: }|
-      {1:~                           }{100:api.nvim__id_array(ar}{1: }|
-      {1:~                           }{100:r: any[])\n  -> any[]}{1: }|
-      {1:~                           }{100:\n}{4:                   }{1: }|
-      {1:~                                                 }|*14
+      nvim__id_array^                                    |
+      {12:nvim__id_array  Function }{100:lua\nfunction vim.api}{4:   }{1: }|
+      {4:for i = ..      Snippet  }{100:.nvim__id_array(arr: any}{1: }|
+      {4:_assert_integer Function }{100:[])\n  -> any[]\n}{4:       }{1: }|
+      {1:~                                                 }|*15
+      {5:-- INSERT --}                                      |
+    ]])
+    feed('<C-N>')
+    screen:expect([[
+      for i = ..^                                        |
+      {4:nvim__id_array  Function }{100:for i = 1, 10, 1 do}{1:      }|
+      {12:for i = ..      Snippet  }{100:        }{4:           }{1:      }|
+      {4:_assert_integer Function }{100:end}{4:                }{1:      }|
+      {1:~                                                 }|*15
+      {5:-- INSERT --}                                      |
+    ]])
+    feed('<C-N>')
+    screen:expect([[
+      _assert_integer(x, base)^                          |
+      {4:nvim__id_array  Function }{100:lua\nmore doc for vim}{4:   }{1: }|
+      {4:for i = ..      Snippet  }{100:._assert_integer\n}{4:      }{1: }|
+      {12:_assert_integer Function }{1:                         }|
+      {1:~                                                 }|*15
       {5:-- INSERT --}                                      |
     ]])
   end)
