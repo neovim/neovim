@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: true
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.BACKPORT_APP }}
