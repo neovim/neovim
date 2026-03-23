@@ -84,6 +84,7 @@ local new_layout = {
   ['gui.txt'] = true,
   ['intro.txt'] = true,
   ['lua.txt'] = true,
+  ['lua-bit.txt'] = true,
   ['lua-guide.txt'] = true,
   ['lua-plugin.txt'] = true,
   ['luaref.txt'] = true,
