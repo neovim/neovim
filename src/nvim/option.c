@@ -11,6 +11,7 @@
 //   - For a buffer string option, add code to check_buf_options().
 // - If it's a numeric option, add any necessary bounds checks to check_num_option_bounds().
 // - If it's a list of flags, add some code in do_set(), search for WW_ALL.
+// - If it depends on options values, add it to didset_string_options().
 // - Add documentation! "desc" in options.lua, and any other related places.
 // - Add an entry in runtime/scripts/optwin.lua.
 
