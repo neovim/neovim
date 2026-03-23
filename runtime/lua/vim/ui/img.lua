@@ -121,6 +121,7 @@ end
 
 ---Optional placment arguments:
 ---@class vim.ui.img.PlacementOpts
+---@inlinedoc
 ---@field row? integer starting row where image will appear
 ---@field col? integer starting column where image will appear
 ---@field width? integer width (in cells) to resize the image
