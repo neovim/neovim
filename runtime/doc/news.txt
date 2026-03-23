@@ -384,6 +384,8 @@ OPTIONS
   previous highlight attributes)
 • 'messagesopt' added progress:c to control if progress messages are shown in
   cmdline.
+• Improved |:set+=|, |:set^=| and |:set-=| handling of comma-separated "key:value"
+  pairs (e.g. 'listchars', 'fillchars', 'diffopt').
 
 PERFORMANCE
 
