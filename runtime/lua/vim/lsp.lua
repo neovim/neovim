@@ -521,7 +521,6 @@ end
 --- @param bufnr integer
 local function lsp_enable_callback(bufnr)
   -- Only ever attach to buffers that represent an actual file.
-  -- Also allow 'help' buffers, which are real files with a filetype.
   if vim.bo[bufnr].buftype ~= '' and vim.bo[bufnr].buftype ~= 'help' then
     return
   end
