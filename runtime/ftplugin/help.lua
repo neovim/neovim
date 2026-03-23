@@ -111,7 +111,7 @@ local function runnables()
     elseif code_block.lang == 'vim' then
       vim.cmd(code_block.code)
     end
-  end, { buf = true })
+  end, { buf = 0 })
 end
 
 -- Retry once if the buffer has changed during the iteration of the code

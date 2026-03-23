@@ -1320,7 +1320,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 ///     line2
 ///     line3
 ///   ]], false, -1)
-/// end, { buf = true })
+/// end, { buf = 0 })
 /// ```
 ///
 /// @param data  Multiline input. Lines break at LF ("\n"). May be binary (containing NUL bytes).
