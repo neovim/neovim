@@ -1182,12 +1182,13 @@ get_clients({filter})                                  *vim.lsp.get_clients()*
         (`vim.lsp.Client[]`) List of |vim.lsp.Client| objects
 
 get_configs({filter})                                  *vim.lsp.get_configs()*
-    Get LSP configs.
+    Gets LSP configs.
 
-    WARNING:
-    • May eagerly (prematurely!) evaluate config files in 'runtimepath'.
-    • Configs may be in a partial state if they have async properties such as
-      `on_dir()`.
+    See also |vim.lsp.get_clients()| to get the runtime values of dynamic
+    fields like `root_dir`, which depend on the current buffer/workspace/etc.
+
+    WARNING: May eagerly (prematurely!) evaluate config files in
+    'runtimepath'.
 
     Attributes: ~
         Since: 0.12.0

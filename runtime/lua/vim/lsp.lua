@@ -421,11 +421,12 @@ end
 --- Only return configs which attach to the given filetype.
 --- @field filetype? string
 
---- Get LSP configs.
+--- Gets LSP configs.
 ---
---- WARNING:
---- - May eagerly (prematurely!) evaluate config files in 'runtimepath'.
---- - Configs may be in a partial state if they have async properties such as `on_dir()`.
+--- See also [vim.lsp.get_clients()] to get the runtime values of dynamic fields like `root_dir`,
+--- which depend on the current buffer/workspace/etc.
+---
+--- WARNING: May eagerly (prematurely!) evaluate config files in 'runtimepath'.
 ---
 --- @since 14
 --- @param filter? vim.lsp.get_configs.Filter
@@ -437,13 +438,10 @@ function lsp.get_configs(filter)
 
   local configs = {} --- @type vim.lsp.Config[]
 
-  local config_names --- @type string[]
-  if not filter.enabled then
-    config_names = get_config_names()
-  else
-    -- Shortcut filtering enabled configs by directly getting enabled configs
-    config_names = vim.tbl_keys(lsp._enabled_configs)
-  end
+  local config_names = filter.enabled
+      -- Get enabled configs, without resolving other configs.
+      and vim.tbl_keys(lsp._enabled_configs)
+    or get_config_names()
 
   for _, config_name in ipairs(config_names) do
     local config = lsp.config[config_name]
