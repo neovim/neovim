@@ -1004,7 +1004,7 @@ do
         -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
         -- terminal
         local caps = {} ---@type table<string, boolean>
-        require('vim.termcap').query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
+        require('vim.tty').query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
           if not found then
             return
           end
