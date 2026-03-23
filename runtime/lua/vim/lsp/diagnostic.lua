@@ -233,7 +233,7 @@ end
 --- @param uri string
 --- @param client_id? integer
 --- @param diagnostics lsp.Diagnostic[]
---- @param pull_id boolean|string
+--- @param pull_id? boolean|string
 local function handle_diagnostics(uri, client_id, diagnostics, pull_id)
   local fname = vim.uri_to_fname(uri)
 
@@ -263,7 +263,7 @@ end
 function M.on_publish_diagnostics(_, params, ctx)
   -- TODO(tris203): if empty array then clear diags
   -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics
-  handle_diagnostics(params.uri, ctx.client_id, params.diagnostics, false)
+  handle_diagnostics(params.uri, ctx.client_id, params.diagnostics)
 end
 
 --- |lsp-handler| for the method "textDocument/diagnostic"
@@ -299,11 +299,11 @@ function M.on_diagnostic(error, result, ctx)
     return
   end
 
-  handle_diagnostics(params.textDocument.uri, client_id, result.items, params.identifier or true)
+  handle_diagnostics(params.textDocument.uri, client_id, result.items, params.identifier or 'nil')
 
   for uri, related_result in pairs(result.relatedDocuments or {}) do
     if related_result.kind == 'full' then
-      handle_diagnostics(uri, client_id, related_result.items, params.identifier or true)
+      handle_diagnostics(uri, client_id, related_result.items, params.identifier or 'nil')
     end
 
     local related_bufnr = vim.uri_to_bufnr(uri)
@@ -341,7 +341,7 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
   end
 
   if client_id then
-    diag_opts.namespace = M.get_namespace(client_id, false)
+    diag_opts.namespace = M.get_namespace(client_id)
   end
 
   diag_opts.lnum = line_nr or (api.nvim_win_get_cursor(0)[1] - 1)
@@ -548,7 +548,7 @@ function M._workspace_diagnostics(opts)
         -- We favor document pull requests over workspace results, so only update the buffer
         -- state if we're not pulling document diagnostics for this buffer.
         if bufstates[bufnr].pull_kind == 'workspace' and report.kind == 'full' then
-          handle_diagnostics(report.uri, ctx.client_id, report.items, params.identifier or true)
+          handle_diagnostics(report.uri, ctx.client_id, report.items, params.identifier or 'nil')
           local key = result_id_key(ctx.client_id, params.identifier)
           bufstates[bufnr].client_result_id[key] = report.resultId
         end
