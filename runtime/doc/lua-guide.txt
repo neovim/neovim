@@ -429,7 +429,7 @@ useful options:
 • `buf`: If given, only set the mapping for the buffer with the specified
   number; `0` or `true` means the current buffer. >lua
     -- set mapping for the current buffer
-    vim.keymap.set('n', '<Leader>pl1', require('plugin').action, { buf = true })
+    vim.keymap.set('n', '<Leader>pl1', require('plugin').action, { buf = 0 })
     -- set mapping for the buffer number 4
     vim.keymap.set('n', '<Leader>pl1', require('plugin').action, { buf = 4 })
 <
@@ -467,7 +467,7 @@ Removing mappings                                       *lua-guide-mappings-del*
 A specific mapping can be removed with |vim.keymap.del()|:
 >lua
     vim.keymap.del('n', '<Leader>ex1')
-    vim.keymap.del({'n', 'c'}, '<Leader>ex2', { buf = true })
+    vim.keymap.del({'n', 'c'}, '<Leader>ex2', { buf = 0 })
 <
 See also:
 • `vim.api.`|nvim_get_keymap()|:     return all global mapping

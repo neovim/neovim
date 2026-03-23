@@ -9,8 +9,8 @@ local keymap = {}
 --- @class vim.keymap.set.Opts : vim.api.keyset.keymap
 --- @inlinedoc
 ---
---- Creates buffer-local mapping, `0` or `true` for current buffer.
---- @field buf? integer|boolean
+--- Creates buffer-local mapping, `0` for current buffer.
+--- @field buf? integer
 ---
 --- Make the mapping recursive. Inverse of {noremap}.
 --- (Default: `false`)
@@ -24,7 +24,7 @@ local keymap = {}
 --- -- Map "x" to a Lua function:
 --- vim.keymap.set('n', 'x', function() print('real lua function') end)
 --- -- Map "<leader>x" to multiple modes for the current buffer:
---- vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buf = true })
+--- vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buf = 0 })
 --- -- Map <Tab> to an expression (|:map-<expr>|):
 --- vim.keymap.set('i', '<Tab>', function()
 ---   return vim.fn.pumvisible() == 1 and '<C-n>' or '<Tab>'
@@ -89,12 +89,11 @@ function keymap.set(modes, lhs, rhs, opts)
   if opts.buffer ~= nil then
     -- TODO(skewb1k): soft-deprecate `buffer` option in 0.13, remove in 0.15.
     assert(buf == nil, "Conflict: 'buf' not allowed with 'buffer'")
-    buf = opts.buffer
+    buf = opts.buffer == true and 0 or opts.buffer --[[@as integer?]]
     opts.buffer = nil
   end
 
   if buf then
-    buf = buf == true and 0 or buf
     for _, m in ipairs(modes) do
       vim.api.nvim_buf_set_keymap(buf, m, lhs, rhs, opts)
     end
@@ -108,9 +107,8 @@ end
 --- @class vim.keymap.del.Opts
 --- @inlinedoc
 ---
---- Remove a mapping from the given buffer.
---- When `0` or `true`, use the current buffer.
---- @field buf? integer|boolean
+--- Remove a mapping from the given buffer. `0` for current.
+--- @field buf? integer
 
 --- Remove an existing mapping.
 --- Examples:
@@ -139,11 +137,10 @@ function keymap.del(modes, lhs, opts)
   if opts.buffer ~= nil then
     -- TODO(skewb1k): soft-deprecate `buffer` option in 0.13, remove in 0.15.
     assert(opts.buf == nil, "Conflict: 'buf' not allowed with 'buffer'")
-    buf = opts.buffer
+    buf = opts.buffer == true and 0 or opts.buffer --[[@as integer?]]
   end
 
   if buf then
-    buf = buf == true and 0 or buf
     for _, mode in ipairs(modes) do
       vim.api.nvim_buf_del_keymap(buf, mode, lhs)
     end

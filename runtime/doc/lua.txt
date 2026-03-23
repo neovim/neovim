@@ -3605,8 +3605,8 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
       • {modes}  (`string|string[]`)
       • {lhs}    (`string`)
       • {opts}   (`table?`) A table with the following fields:
-                 • {buf}? (`integer|boolean`) Remove a mapping from the given
-                   buffer. When `0` or `true`, use the current buffer.
+                 • {buf}? (`integer`) Remove a mapping from the given buffer.
+                   `0` for current.
 
     See also: ~
       • |vim.keymap.set()|
@@ -3618,7 +3618,7 @@ vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
         -- Map "x" to a Lua function:
         vim.keymap.set('n', 'x', function() print('real lua function') end)
         -- Map "<leader>x" to multiple modes for the current buffer:
-        vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buf = true })
+        vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buf = 0 })
         -- Map <Tab> to an expression (|:map-<expr>|):
         vim.keymap.set('i', '<Tab>', function()
           return vim.fn.pumvisible() == 1 and '<C-n>' or '<Tab>'
@@ -3652,8 +3652,8 @@ vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
                    below).
 
                  Also accepts:
-                 • {buf}? (`integer|boolean`) Creates buffer-local mapping,
-                   `0` or `true` for current buffer.
+                 • {buf}? (`integer`) Creates buffer-local mapping, `0` for
+                   current buffer.
                  • {remap}? (`boolean`, default: `false`) Make the mapping
                    recursive. Inverse of {noremap}.
 

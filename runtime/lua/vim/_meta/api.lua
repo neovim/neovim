@@ -2018,7 +2018,7 @@ function vim.api.nvim_parse_expression(expr, flags, highlight) end
 ---     line2
 ---     line3
 ---   ]], false, -1)
---- end, { buf = true })
+--- end, { buf = 0 })
 --- ```
 ---
 --- @param data string Multiline input. Lines break at LF ("\n"). May be binary (containing NUL bytes).
