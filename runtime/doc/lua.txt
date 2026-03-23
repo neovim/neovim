@@ -2275,6 +2275,26 @@ vim.base64.encode({str})                                 *vim.base64.encode()*
     Return: ~
         (`string`) Encoded string
 
+EXAMPLES ~
+
+Encoding and decoding a string:
+
+>lua
+local encoded = vim.base64.encode("hello from nvim")
+print(encoded)  -- base64 encoded string
+
+local decoded = vim.base64.decode(encoded)
+print(decoded)
+<
+
+Using buffer content:
+
+>lua
+local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+local content = table.concat(lines, "\n")
+local encoded = vim.base64.encode(content)
+print(encoded)  -- base64 encoded string
+<
 
 ==============================================================================
 Lua module: vim.filetype                                        *vim.filetype*
