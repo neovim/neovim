@@ -2062,6 +2062,7 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
     if (boff.lnum < wp->w_buffer->b_ml.ml_line_count) {
       // Add one line below
       botline_forw(wp, &boff);
+      assert(boff.height != MAXCOL);
       used += boff.height;
       if (used > wp->w_view_height) {
         break;
