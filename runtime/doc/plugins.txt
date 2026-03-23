@@ -50,8 +50,9 @@ Compares two directories or files side-by-side.
 Supports directory diffing, rename detection, and highlights changes
 in quickfix list. Replaces the built-in `nvim -d` diff mode with this interface.
 
-The plugin is not loaded by default; use `:packadd nvim.difftool` before
-invoking `:DiffTool`.
+The plugin is not loaded by default; use `:packadd` to activate it: >
+    :packadd nvim.difftool
+<
 
 Example `git difftool -d` integration using `nvim -d` replacement: >ini
     [difftool "nvim_difftool"]
@@ -240,6 +241,10 @@ Converts the buffer shown in the current window to HTML, opens the generated
 HTML in a new split window, and saves its contents to {file}. If {file} is not
 given, a temporary file (created by |tempname()|) is used.
 
+The plugin is not loaded by default; use `:packadd` to activate it: >
+    :packadd nvim.tohtml
+<
+
 
 tohtml({winid}, {opt})                                       *tohtml.tohtml()*
     Converts the buffer shown in the window {winid} to HTML and returns the
@@ -268,17 +273,15 @@ tohtml({winid}, {opt})                                       *tohtml.tohtml()*
 Builtin plugin: undotree                                     *undotree-plugin*
 
 open({opts})                                                 *undotree.open()*
-    Open a window that displays a textual representation of the |undo-tree|.
+    Open a window that displays a textual representation of the |undo-tree|,
+    or closes the window if it is already open. Can also be shown with
+    `:Undotree`.                                                   *:Undotree*
 
     While in the window, moving the cursor changes the undo.
 
-    Closes the window if it is already open
-
-    Load the plugin with this command: >
-                packadd nvim.undotree
+    The plugin is not loaded by default; use `:packadd` to activate it: >
+        :packadd nvim.undotree
 <
-
-    Can also be shown with `:Undotree`.                            *:Undotree*
 
     Parameters: ~
       • {opts}  (`table?`) A table with the following fields:

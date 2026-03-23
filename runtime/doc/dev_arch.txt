@@ -51,17 +51,30 @@ LUA CODE
 Lua code lives in one of four places:
 
 1. Plugins! Not everything needs to live on `vim.*`. Plugins are the correct
-   model for non-essential features which the user may disable or replace with
-   a third-party plugin, and which do not have a formal API. Examples:
-   "editorconfig", "comment".
-   - "opt-out": `runtime/plugin/`
-   - "opt-in": `runtime/pack/dist/opt/`
-2. `runtime/lua/vim/` (the runtime): Lazy-loaded modules. Examples: `treesitter`, `lpeg`.
-3. `runtime/lua/vim/_core/shared.lua`: pure Lua functions which always are available.
-   Used in the test runner, and worker threads/processes launched from Nvim.
-4. `runtime/lua/vim/_core/`: Eager-loaded code which directly interacts with the Nvim
-   editor state. Only available in the main thread. See |dev-lua-builtin|
-   below.
+   model for non-essential functionality which (1) has "autoload" behavior,
+   (2) the user may disable or replace with a third-party plugin, (3) is
+   primarily user-facing, not an API.
+   - "Opt-out" plugins (activated on startup): `runtime/plugin/`
+   - "Opt-in" plugins (activated via `:packadd`): `runtime/pack/dist/opt/`
+   - NOTE: New plugins should place Lua modules in the shared "nvim"
+     namespace: `require('nvim.foo')`, not `require('foo')`.
+   - Examples:
+     - ✅ spellfile `runtime/lua/nvim/spellfile.lua`
+     - ✅ tutor
+   - Don't use these legacy plugins as examples (their modules should live
+     in `lua/nvim/x.lua`, not `lua/x.lua`):
+     - ❌ editorconfig.lua
+     - ❌ man.lua
+     - ❌ nvim.difftool
+     - ❌ nvim.tohtml
+     - ❌ nvim.undotree
+2. Runtime: `runtime/lua/vim/`. Lazy-loaded modules. Examples: `treesitter`, `lpeg`.
+3. Core: `runtime/lua/vim/_core/`. Compiled-into Nvim binary, may directly
+   interact with Nvim internals. Only available in the main thread. See
+   |dev-lua-builtin| below.
+4. "Shared" core: `runtime/lua/vim/_core/shared.lua`. Pure Lua functions which
+   always are available. Used in the test runner, and worker threads/processes
+   launched from Nvim.
 
 The top-level `vim.` namespace is for fundamental Lua and editor features. Use
 submodules (`vim.foo`) for everything else (but avoid excessive "nesting"), or

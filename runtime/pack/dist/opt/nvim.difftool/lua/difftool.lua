@@ -6,7 +6,10 @@
 ---in quickfix list. Replaces the built-in `nvim -d` diff mode with this interface.
 ---</pre>
 ---
---- The plugin is not loaded by default; use `:packadd nvim.difftool` before invoking `:DiffTool`.
+--- The plugin is not loaded by default; use `:packadd` to activate it:
+--- ```
+--- :packadd nvim.difftool
+--- ```
 ---
 --- Example `git difftool -d` integration using `nvim -d` replacement:
 ---
