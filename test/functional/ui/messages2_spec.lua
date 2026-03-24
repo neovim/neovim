@@ -6,7 +6,7 @@ local Screen = require('test.functional.ui.screen')
 
 local api, clear, command, exec_lua, feed = n.api, n.clear, n.command, n.exec_lua, n.feed
 
-local msg_timeout = 200
+local msg_timeout = 400
 local function set_msg_target_zero_ch()
   exec_lua(function()
     require('vim._core.ui2').enable({ msg = { target = 'msg', msg = { timeout = msg_timeout } } })
@@ -447,9 +447,9 @@ describe('messages2', function()
       foo                                                  |
       {1:~                                                    }|*8
       {3:                                                     }|
-      ^foo                                                  |
+      foo                                                  |
       bar                                                  |
-      baz                                                  |
+      ^baz                                                  |
       {16::}{15:echo} {26:"baz"}                                          |
     ]])
     -- Subsequent typed commands are appended to the pager.

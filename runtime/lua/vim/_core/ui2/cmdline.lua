@@ -92,10 +92,11 @@ end
 ---@param level integer
 ---@param hl_id integer
 function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
-  -- When entering the cmdline while it is expanded, place cmdline below messages.
+  -- When entering the cmdline while it is expanded, move messages to dialog window.
   if M.level == 0 and ui.msg.cmd_on_key then
-    M.srow = api.nvim_buf_line_count(ui.bufs.cmd)
-    M.expand, ui.msg.cmd_on_key = 1, nil
+    M.expand, M.dialog, ui.msg.cmd_on_key = 1, true, nil
+    api.nvim_win_set_config(ui.wins.cmd, { border = 'none' })
+    ui.msg.expand_msg('cmd')
   elseif ui.msg.cmd.msg_row ~= -1 and M.expand == 0 then
     ui.msg.msg_clear()
   end
