@@ -352,7 +352,7 @@ do
   --- Gets a status description summarizing currently running progress messages.
   --- - If none: returns empty string
   --- - If one running item: "title: 42%"
-  --- - If multiple running items: "Progress: N items AVG%"
+  --- - If multiple running items: "Progress: AVG%(N)"
   ---@param running ProgressMessage[]
   ---@return string
   local function progress_status_fmt(running)
@@ -371,7 +371,7 @@ do
         sum = sum + (progress_item.percent or 0)
       end
       local avg = math.floor(sum / count)
-      return string.format('Progress: %d items %d%%%% ', count, avg)
+      return string.format('Progress: %d%%%%(%d) ', avg, count)
     end
   end
 

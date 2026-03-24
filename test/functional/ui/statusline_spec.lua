@@ -1073,7 +1073,7 @@ describe('default statusline', function()
       true,
       { kind = 'progress', title = 'second-item', status = 'running', percent = 20 }
     )
-    eq('Progress: 2 items 35% ', get_progress())
+    eq('Progress: 35%(2) ', get_progress())
 
     api.nvim_echo({ { 'searching' } }, true, {
       id = id1,
