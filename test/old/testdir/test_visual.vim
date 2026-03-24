@@ -2908,4 +2908,58 @@ func Test_getregionpos_block_linebreak_matches_getpos()
   let &columns = save_columns
   bw!
 endfunc
+
+func Test_visual_ended_in_wiped_buffer()
+  edit Xfoo
+  edit Xbar
+  setlocal bufhidden=wipe
+  augroup testing
+    autocmd BufWipeout * ++once normal! v
+  augroup END
+  " Must be the last window.
+  call assert_equal(1, winnr('$'))
+  call assert_equal(1, tabpagenr('$'))
+  " Was a member access on a NULL curbuf from Vim ending Visual mode.
+  buffer #
+  call assert_equal(0, bufexists('Xbar'))
+  call assert_equal('n', mode())
+
+  autocmd! testing
+  %bw!
+endfunc
+
+func Test_visual_ended_in_unloaded_buffer()
+  throw 'Skipped: needs clipboard=autoselect'
+  CheckFeature clipboard
+  CheckNotGui
+  set clipboard+=autoselect
+  edit Xfoo
+  edit Xbar
+  call setline(1, 'hi')
+  setlocal nomodified
+  let s:fired = 0
+  augroup testing
+    autocmd BufUnload Xbar call assert_equal('Xbar', bufname())
+          \| execute 'normal! V'
+          \| call assert_equal('V', mode())
+
+    " From Vim ending Visual mode.  Used to occur too late, after the buffer was
+    " unloaded, so @* didn't contain the selection.  Window also had a NULL
+    " w_buffer here!
+    autocmd TextYankPost * ++once let s:fired = 1
+          \| if has('clipboard_working') | call assert_equal("hi\n", @*) | endif
+          \| call tabpagebuflist() " was a NULL member access on w_buffer
+  augroup END
+
+  buffer Xfoo
+  call assert_equal(0, bufloaded('Xbar'))
+  call assert_equal('n', mode())
+  call assert_equal(1, s:fired)
+
+  autocmd! testing
+  unlet! s:fired
+  set clipboard&
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
