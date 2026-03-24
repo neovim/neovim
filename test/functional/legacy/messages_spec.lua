@@ -886,4 +886,33 @@ describe('messages', function()
       3 lines filtered                                                           |
     ]])
   end)
+
+  -- oldtest: Test_fileinfo_after_last_bd()
+  it('fileinfo is shown after :bd on last listed buffer', function()
+    screen = Screen.new(50, 10)
+    exec([[
+      set shortmess-=F
+      edit xxx
+      edit yyy
+    ]])
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*8
+      "yyy" [New]                                       |
+    ]])
+
+    command('bd')
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*8
+      "xxx" [New] --No lines in buffer--                |
+    ]])
+
+    command('bd')
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*8
+      "[No Name]" --No lines in buffer--                |
+    ]])
+  end)
 end)

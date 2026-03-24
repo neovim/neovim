@@ -1266,6 +1266,9 @@ static int empty_curbuf(bool close_others, int forceit, int action)
 
   if (!close_others) {
     need_fileinfo = false;
+  } else if (retval == OK && !shortmess(SHM_FILEINFO)) {
+    // do_ecmd() does not display file info for a new empty buffer.
+    need_fileinfo = true;
   }
 
   return retval;
