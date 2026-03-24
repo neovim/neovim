@@ -142,14 +142,13 @@ typedef enum {
 
 static void trigger_undo_ftplugin(buf_T *buf, win_T *win)
 {
-  const bool win_was_locked = win->w_locked;
   window_layout_lock();
   buf->b_locked++;
-  win->w_locked = true;
+  win->w_locked++;
   // b:undo_ftplugin may be set, undo it
   do_cmdline_cmd("if exists('b:undo_ftplugin') | exe b:undo_ftplugin | endif");
   buf->b_locked--;
-  win->w_locked = win_was_locked;
+  win->w_locked--;
   window_layout_unlock();
 }
 

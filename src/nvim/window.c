@@ -2778,10 +2778,10 @@ static bool win_close_buffer(win_T *win, int action, bool abort_if_last)
   if (win->w_buffer != NULL) {
     bufref_T bufref;
     set_bufref(&bufref, curbuf);
-    win->w_locked = true;
+    win->w_locked++;
     retval = close_buffer(win, win->w_buffer, action, abort_if_last, true, true);
     if (win_valid_any_tab(win)) {
-      win->w_locked = false;
+      win->w_locked--;
     }
 
     // Make sure curbuf is valid. It can become invalid if 'bufhidden' is
@@ -2910,22 +2910,22 @@ int win_close(win_T *win, bool free_buf, bool force)
       if (!win_valid(win)) {
         return FAIL;
       }
-      win->w_locked = true;
+      win->w_locked++;
       apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
       if (!win_valid(win)) {
         return FAIL;
       }
-      win->w_locked = false;
+      win->w_locked--;
       if (last_window(win)) {
         return FAIL;
       }
     }
-    win->w_locked = true;
+    win->w_locked++;
     apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
     if (!win_valid(win)) {
       return FAIL;
     }
-    win->w_locked = false;
+    win->w_locked--;
     if (last_window(win)) {
       return FAIL;
     }
