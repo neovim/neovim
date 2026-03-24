@@ -574,7 +574,8 @@ describe('vim.pack', function()
               "version": ">=0.0.0"
             }
           }
-        }]]):format(
+        }
+        ]]):format(
         basic_rev,
         repos_src.basic,
         defbranch_rev,

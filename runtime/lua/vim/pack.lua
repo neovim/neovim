@@ -819,7 +819,7 @@ local function lock_write()
   local fd = assert(uv.fs_open(path, 'w', 438))
 
   local data = vim.json.encode(lock, { indent = '  ', sort_keys = true })
-  assert(uv.fs_write(fd, data))
+  assert(uv.fs_write(fd, data .. '\n'))
   assert(uv.fs_close(fd))
 end
 
