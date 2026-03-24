@@ -2498,12 +2498,6 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     // autocommands try to edit a closing buffer, which like splitting, can
     // result in more windows displaying it; abort
     if (buf->b_locked_split) {
-      // window was split, but not editing the new buffer, reset b_nwindows again
-      if (oldwin == NULL
-          && curwin->w_buffer != NULL
-          && curwin->w_buffer->b_nwindows > 1) {
-        curwin->w_buffer->b_nwindows--;
-      }
       emsg(_(e_cannot_switch_to_a_closing_buffer));
       goto theend;
     }
@@ -2591,7 +2585,6 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         auto_buf = true;
       } else {
         win_T *the_curwin = curwin;
-        buf_T *was_curbuf = curbuf;
 
         // Set w_locked to avoid that autocommands close the window.
         // Set b_locked for the same reason.
@@ -2602,15 +2595,14 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
           buf_copy_options(buf, BCO_ENTER);
         }
 
-        // Close the link to the current buffer. This will set
-        // oldwin->w_buffer to NULL.
+        // Close the link to the current buffer. This may set
+        // curwin->w_buffer to NULL.
         u_sync(false);
-        const bool did_decrement
-          = close_buffer(oldwin, curbuf,
-                         (flags & ECMD_HIDE)
-                         || (curbuf->terminal && terminal_running(curbuf->terminal))
-                         ? 0 : DOBUF_UNLOAD,
-                         false, false);
+        close_buffer(curwin, curbuf,
+                     (flags & ECMD_HIDE)
+                     || (curbuf->terminal && terminal_running(curbuf->terminal))
+                     ? 0 : DOBUF_UNLOAD,
+                     false, false, oldwin != NULL);
 
         // Autocommands may have closed the window.
         if (win_valid(the_curwin)) {
@@ -2626,20 +2618,17 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         }
         // Be careful again, like above.
         if (!bufref_valid(&au_new_curbuf)) {
-          // New buffer has been deleted.
-          delbuf_msg(new_name);  // Frees new_name.
-          au_new_curbuf = save_au_new_curbuf;
-          goto theend;
+          // New buffer was deleted.  If curwin->w_buffer is NULL, we
+          // must enter some buffer.  Hopefully the last one is OK.
+          if (curwin->w_buffer == NULL) {
+            buf = lastbuf;
+          } else {
+            delbuf_msg(new_name);  // Frees new_name.
+            au_new_curbuf = save_au_new_curbuf;
+            goto theend;
+          }
         }
         if (buf == curbuf) {  // already in new buffer
-          // close_buffer() has decremented the window count,
-          // increment it again here and restore w_buffer.
-          if (did_decrement && buf_valid(was_curbuf)) {
-            was_curbuf->b_nwindows++;
-          }
-          if (win_valid_any_tab(oldwin) && oldwin->w_buffer == NULL) {
-            oldwin->w_buffer = was_curbuf;
-          }
           auto_buf = true;
         } else {
           // <VN> We could instead free the synblock
@@ -2647,6 +2636,10 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
           if (curwin->w_buffer == NULL
               || curwin->w_s == &(curwin->w_buffer->b_s)) {
             curwin->w_s = &(buf->b_s);
+          }
+
+          if (curwin->w_buffer != NULL) {
+            curwin->w_buffer->b_nwindows--;
           }
 
           curwin->w_buffer = buf;

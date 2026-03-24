@@ -957,7 +957,7 @@ void free_all_mem(void)
     // callbacks are called, so free them before closing the buffer.
     buf_free_callbacks(buf);
 
-    close_buffer(NULL, buf, DOBUF_WIPE, false, false);
+    close_buffer(NULL, buf, DOBUF_WIPE, false, false, false);
     // Didn't work, try next one.
     buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
   }

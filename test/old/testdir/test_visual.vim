@@ -2956,6 +2956,26 @@ func Test_visual_ended_in_unloaded_buffer()
   call assert_equal('n', mode())
   call assert_equal(1, s:fired)
 
+  augroup testing
+    autocmd!
+    autocmd BufHidden Xfoo ++once call assert_equal('Xfoo', bufname())
+          \| execute 'normal! v'
+          \| call assert_equal('v', mode())
+
+    " Check b_nwindows is not decremented too early when Visual mode ends in a
+    " loaded buffer.  Buffer should not be considered hidden in TextYankPost, as
+    " by that point it's still loaded and displayed in the current window.
+    autocmd TextYankPost * ++once let s:fired = 2
+          \| call assert_equal(1, bufloaded(bufnr()))
+          \| call assert_equal(0, getbufinfo(bufnr())[0].hidden)
+  augroup END
+  edit Xbar
+  edit Xfoo
+  only
+  hide buffer #
+  call assert_equal('n', mode())
+  call assert_equal(2, s:fired)
+
   autocmd! testing
   unlet! s:fired
   set clipboard&
