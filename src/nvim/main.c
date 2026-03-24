@@ -319,7 +319,8 @@ int main(int argc, char **argv)
   }
 #endif
 
-  if (embedded_mode) {
+  bool listen_and_embed = params.listen_addr != NULL;
+  if (embedded_mode && !listen_and_embed) {
     const char *err;
     if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
       abort();
@@ -436,7 +437,6 @@ int main(int argc, char **argv)
   // Wait for UIs to set up Nvim or show early messages
   // and prompts (--cmd, swapfile dialog, …).
   bool use_remote_ui = (embedded_mode && !headless_mode);
-  bool listen_and_embed = params.listen_addr != NULL;
   if (use_remote_ui) {
     TIME_MSG("waiting for UI");
     remote_ui_wait_for_attach(!listen_and_embed);
