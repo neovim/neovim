@@ -2390,4 +2390,29 @@ func Test_winfixheight_resize_wmh_zero()
   set winminheight& laststatus&
 endfunc
 
+func Test_window_w_locked_bypass()
+  split Xfoo
+  let s:win = win_getid()
+
+  augroup TestBypass
+    " :quit fired this with w_locked set.  Shouldn't be able to unset w_locked
+    " and close s:win if we do other stuff that also sets it.
+    au WinLeave * ++once call assert_equal(s:win, win_getid())
+                      \| quit | call assert_notequal(0, win_id2win(s:win))
+                      \| args Xbar
+                      \| argadd Xbaz
+                      \| edit Xbaz-but-cooler
+                      \| quit | call assert_notequal(0, win_id2win(s:win))
+  augroup END
+  quit
+  call assert_equal(1, bufexists('Xbaz-but-cooler')) " check WinLeave ran
+
+  unlet! s:win
+  augroup TestBypass
+    au!
+  augroup END
+  %argd!
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

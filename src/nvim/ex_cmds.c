@@ -2588,7 +2588,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
 
         // Set w_locked to avoid that autocommands close the window.
         // Set b_locked for the same reason.
-        the_curwin->w_locked = true;
+        the_curwin->w_locked++;
         buf->b_locked++;
 
         if (curbuf == old_curbuf.br_buf) {
@@ -2606,7 +2606,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
 
         // Autocommands may have closed the window.
         if (win_valid(the_curwin)) {
-          the_curwin->w_locked = false;
+          the_curwin->w_locked--;
         }
         buf->b_locked--;
 
