@@ -353,6 +353,7 @@ LUA
 • |Iter:take()| and |Iter:skip()| now optionally accept predicates.
 • |Iter:peek()| now works for all iterator types, not just |list-iterator|.
 • Built-in plugin manager |vim.pack|
+• |vim.defer_fn()| allows more execution conditions.
 • |vim.list.unique()| and |Iter:unique()| to deduplicate lists and iterators,
   respectively.
 • |vim.list.bisect()| for binary search.
