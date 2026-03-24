@@ -450,10 +450,16 @@ api.nvim_create_autocmd('OptionSet', {
       or foldinfos[buf] and { buf }
       or {}
     for _, bufnr in ipairs(bufs) do
-      foldinfos[bufnr] = FoldInfo.new(bufnr)
+      local foldinfo = FoldInfo.new(bufnr)
+      foldinfos[bufnr] = foldinfo
       api.nvim_buf_call(bufnr, function()
-        compute_folds_levels(bufnr, foldinfos[bufnr], nil, nil, function()
-          foldinfos[bufnr]:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
+        compute_folds_levels(bufnr, foldinfo, nil, nil, function()
+          -- FileType/BufUnload can clear or replace the fold state while this
+          -- async parse is in flight. Ignore callbacks for stale generations.
+          if foldinfos[bufnr] ~= foldinfo then
+            return
+          end
+          foldinfo:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
         end)
       end)
     end
