@@ -551,7 +551,7 @@ describe('ui/ext_messages', function()
     })
 
     -- 3 empty message events, not for an empty chunk after a non-printable character
-    feed(':echo "foo\\n" | echo "" | echom "" | lua print()<CR>')
+    feed(':echo "foo\\n" | echo | echom "" | lua print()<CR>')
     screen:expect({
       grid = [[
         line 1                   |
