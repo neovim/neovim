@@ -4611,7 +4611,7 @@ static int open_cmdwin(void)
     }
     // win_close() autocommands may have already deleted the buffer.
     if (newbuf_status == OK && bufref_valid(&bufref) && bufref.br_buf != curbuf) {
-      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false, false);
+      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false, false, false);
     }
 
     cmdwin_type = 0;
@@ -4796,7 +4796,7 @@ static int open_cmdwin(void)
     // win_close() may have already wiped the buffer when 'bh' is
     // set to 'wipe', autocommands may have closed other windows
     if (bufref_valid(&bufref) && bufref.br_buf != curbuf) {
-      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false, false);
+      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false, false, false);
     }
 
     // Restore window sizes.
