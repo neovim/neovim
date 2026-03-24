@@ -4,7 +4,7 @@
 		 NVIM REFERENCE MANUAL	  by Thiago de Arruda
 
 
-Nvim job control					*job* *job-control*
+Nvim job control					    *job* *job-control*
 
 Job control is a way to perform multitasking in Nvim, so scripts can spawn and
 control multiple processes without blocking the current Nvim instance.
@@ -14,7 +14,7 @@ control multiple processes without blocking the current Nvim instance.
 ==============================================================================
 Concepts
 
-Job Id							*job-id*
+Job Id								       *job-id*
 
 Each job is identified by an integer id, unique for the life of the current
 Nvim session. Each job-id is a valid |channel-id|: they share the same "key
@@ -25,7 +25,7 @@ Job stdio streams form a |channel| which can send and receive raw bytes or
 |msgpack-rpc| messages.
 
 ==============================================================================
-Usage							*job-control-usage*
+Usage							    *job-control-usage*
 
 To control jobs, use the "job…" family of functions: |jobstart()|,
 |jobstop()|, etc.
@@ -50,7 +50,7 @@ Example: >vim
     \ }
     let job1 = jobstart(['bash'], extend({'shell': 'shell 1'}, s:callbacks))
     let job2 = jobstart(['bash', '-c', 'for i in {1..10}; do echo hello $i!; sleep 1; done'], extend({'shell': 'shell 2'}, s:callbacks))
-
+<
 To test the above script, copy it to a file ~/foo.vim and run it: >bash
     nvim -u ~/foo.vim
 <
@@ -64,10 +64,11 @@ Description of what happens:
     events. It displays stdout/stderr data received from the shells.
 
 For |on_stdout| and |on_stderr| see |channel-callback|.
-							*on_exit*
+								      *on_exit*
 Arguments passed to on_exit callback:
   0: |job-id|
-  1: Exit-code of the process, or 128+SIGNUM if by signal (e.g. 143 on SIGTERM).
+  1: Exit-code of the process, or 128+SIGNUM if by signal (e.g. 143 on
+     SIGTERM).
   2: Event type: "exit"
 
 
@@ -84,8 +85,7 @@ Arguments passed to on_exit callback:
             \ {'on_stdout': 'Receive'})
 <       https://github.com/neovim/neovim/issues/1592
 
-  Note 2:
-	Job event handlers may receive partial (incomplete) lines. For a given
+  Note: Job event handlers may receive partial (incomplete) lines. For a given
 	invocation of on_stdout/on_stderr, `a:data` is not guaranteed to end
 	with a newline.
 	  - `abcdefg` may arrive as `['abc']`, `['defg']`.
@@ -134,8 +134,7 @@ To send data to the job's stdin, use |chansend()|: >vim
     :call chansend(job1, "invalid-command\n")
     :call chansend(job1, "exit\n")
 <
-A job may be killed at any time with the |jobstop()| function:
->vim
+A job may be killed at any time with the |jobstop()| function: >vim
     :call jobstop(job1)
 <
 Individual streams can be closed without killing the job, see |chanclose()|.
