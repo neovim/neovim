@@ -685,16 +685,6 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   // windows, so that autocommands in buf_freeall() don't get confused.
   bool is_curbuf = (buf == curbuf);
 
-  // When closing the current buffer stop Visual mode before freeing
-  // anything.
-  if (is_curbuf && VIsual_active
-#if defined(EXITFREE)
-      && !entered_free_all_mem
-#endif
-      ) {
-    end_visual_mode();
-  }
-
   buf->b_nwindows = nwindows;
 
   buf_freeall(buf, ((del_buf ? BFA_DEL : 0)
@@ -889,6 +879,16 @@ void buf_freeall(buf_T *buf, int flags)
   if (buf == curbuf && !is_curbuf) {
     return;
   }
+
+  // If curbuf, stop Visual mode just before freeing, but after autocmds that may restart it.
+  if (buf == curbuf && VIsual_active
+#if defined(EXITFREE)
+      && !entered_free_all_mem
+#endif
+      ) {
+    end_visual_mode();
+  }
+
   diff_buf_delete(buf);             // Can't use 'diff' for unloaded buffer.
   // Remove any ownsyntax, unless exiting.
   if (curwin != NULL && curwin->w_buffer == buf) {
@@ -1754,7 +1754,8 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
 /// be pointing to freed memory.
 static void enter_buffer(buf_T *buf)
 {
-  // when closing the current buffer stop Visual mode
+  // Stop Visual mode before changing curbuf.  Assumes curbuf and curwin->w_buffer is valid; if not,
+  // buf_freeall() should've done this already!
   if (VIsual_active
 #if defined(EXITFREE)
       && !entered_free_all_mem
