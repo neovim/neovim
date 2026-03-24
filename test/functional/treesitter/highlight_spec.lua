@@ -980,10 +980,9 @@ describe('treesitter highlighting (C)', function()
   end)
 
   it('#35575', function()
-    clear()
     -- Window size is 14x14, and first string literal ends at byte 14
     -- See: https://github.com/neovim/neovim/pull/35587
-    screen = Screen.new(14, 15)
+    screen:try_resize(14, 15)
 
     exec_lua(function()
       local line = 'A a="\240\157\158\140\240\157\158\140" "aaaaaaaaaaaaaaaaaaaaaaaa";'

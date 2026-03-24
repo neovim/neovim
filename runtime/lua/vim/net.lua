@@ -20,11 +20,8 @@ local M = {}
 ---The HTTP body of the request
 ---@field body string
 
---- Makes an HTTP GET request to the given URL (asynchronous).
----
---- This function is asynchronous (non-blocking), returning immediately and
---- passing the response object to the optional `on_response` handler on
---- completion.
+--- Makes an HTTP GET request to the given URL, asynchronously passing the result to the specified
+--- `on_response`, `outpath` or `outbuf`.
 ---
 --- Examples:
 --- ```lua

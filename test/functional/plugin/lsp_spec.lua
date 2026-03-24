@@ -6579,6 +6579,18 @@ describe('LSP', function()
   end)
 
   describe('vim.lsp.config() and vim.lsp.enable()', function()
+    ---@param names string[]
+    local function get_resolved(names)
+      return exec_lua(function(names_)
+        local rv = {}
+        local cs = vim.lsp._enabled_configs
+        for _, k in ipairs(names_) do
+          rv[k] = not not (cs[k] and cs[k].resolved_config)
+        end
+        return rv
+      end, names)
+    end
+
     it('merges settings from "*"', function()
       eq(
         {
@@ -7151,12 +7163,14 @@ describe('LSP', function()
         return config_names
       end
 
+      eq({ 'foo' }, names(exec_lua([[return vim.lsp.get_configs { enabled = true }]])))
+      -- Does NOT resolve non-enabled configs.
+      eq({ foo = true, bar = false }, get_resolved({ 'bar', 'foo' }))
+
+      eq({ 'bar' }, names(exec_lua([[return vim.lsp.get_configs { enabled = false }]])))
+
       -- With no filter, return all configs
       eq({ 'bar', 'foo' }, names(exec_lua([[return vim.lsp.get_configs()]])))
-
-      -- Confirm `enabled` works
-      eq({ 'foo' }, names(exec_lua([[return vim.lsp.get_configs { enabled = true }]])))
-      eq({ 'bar' }, names(exec_lua([[return vim.lsp.get_configs { enabled = false }]])))
 
       -- Confirm `filetype` works
       eq({ 'foo' }, names(exec_lua([[return vim.lsp.get_configs { filetype = 'foofile' }]])))
@@ -7170,6 +7184,8 @@ describe('LSP', function()
         {},
         names(exec_lua([[return vim.lsp.get_configs { filetype = 'foofile', enabled = false }]]))
       )
+      -- Does NOT resolve non-enabled configs.
+      eq({ foo = true, bar = false }, get_resolved({ 'bar', 'foo' }))
     end)
   end)
 

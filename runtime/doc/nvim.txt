@@ -25,6 +25,7 @@ To learn how to use Vim in 30 minutes, try the tutorial: >vim
 <
 Or watch this 10-minute video: https://youtu.be/TQn2hJeHQbM .
 
+                                               *config-example* *example-init*
 To customize Nvim, you will need a config file. Create your |init.lua| by
 copying the "example_init.lua" file: >vim
 
@@ -43,7 +44,7 @@ not support them):
 - *lazyvim* https://www.lazyvim.org/
 - *nvchad* https://nvchad.com/
 - *kickstart* https://github.com/nvim-lua/kickstart.nvim
-  - Not recommended; use `$VIMRUNTIME/example_init.lua` instead.
+  - Not recommended; use |example-init| instead.
 
 However, we recommend (eventually) taking time to learn Nvim from its stock
 configuration, and incrementally setting options and adding plugins to your

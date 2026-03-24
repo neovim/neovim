@@ -28,7 +28,10 @@ Help-link		Loaded	Short description ~
 |package-cfilter|	No	Filtering quickfix/location list
 |package-justify|	No	Justify text
 |package-nohlsearch|	No	Automatically run :nohlsearch
+|package-spellfile|	Yes	Install spellfile if missing
 |package-termdebug|	No	Debug inside Nvim with gdb
+|package-tohtml|	No	Convert buffer to html, syntax included
+|package-undotree|	No	Interactive textual undotree
 |pi_gzip.txt|		Yes	Reading and writing compressed files
 |pi_msgpack.txt|	No	msgpack utilities
 |pi_paren.txt|		Yes	Highlight matching parens
@@ -37,9 +40,6 @@ Help-link		Loaded	Short description ~
 |pi_tar.txt|		Yes	Tar file explorer
 |pi_tutor.txt|		Yes	Interactive tutorial
 |pi_zip.txt|		Yes	Zip archive explorer
-|spellfile.lua|		Yes	Install spellfile if missing
-|tohtml|		Yes	Convert buffer to html, syntax included
-|undotree-plugin|	No	Interactive textual undotree
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
@@ -183,7 +183,7 @@ trim_trailing_whitespace               *editorconfig.trim_trailing_whitespace*
 
 
 ==============================================================================
-Builtin plugin: spellfile                                      *spellfile.lua*
+Builtin plugin: spellfile                                  *package-spellfile*
 
 Asks the user to download missing spellfiles. The spellfile is written to
 `stdpath('data') .. 'site/spell'` or the first writable directory in the
@@ -233,7 +233,7 @@ get({lang})                                                  *spellfile.get()*
 
 
 ==============================================================================
-Builtin plugin: tohtml                                                *tohtml*
+Builtin plugin: tohtml                                        *package-tohtml*
 
 
 :[range]TOhtml {file}                                                *:TOhtml*
@@ -270,7 +270,7 @@ tohtml({winid}, {opt})                                       *tohtml.tohtml()*
 
 
 ==============================================================================
-Builtin plugin: undotree                                     *undotree-plugin*
+Builtin plugin: undotree                                    *package-undotree*
 
 open({opts})                                                 *undotree.open()*
     Open a window that displays a textual representation of the |undo-tree|,

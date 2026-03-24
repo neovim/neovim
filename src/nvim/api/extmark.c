@@ -1244,8 +1244,6 @@ String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error 
   return mt_inspect(buf->b_marktree, keys, dot);
 }
 
-/// EXPERIMENTAL: this API will change in the future.
-///
 /// Set some properties for namespace
 ///
 /// @param ns_id Namespace
@@ -1321,8 +1319,6 @@ void nvim__ns_set(Integer ns_id, Dict(ns_opts) *opts, Error *err)
   }
 }
 
-/// EXPERIMENTAL: this API will change in the future.
-///
 /// Get the properties for namespace
 ///
 /// @param ns_id Namespace
