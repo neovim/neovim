@@ -2,9 +2,10 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq, neq, eval = t.eq, t.neq, n.eval
-local clear, fn, api = n.clear, n.fn, n.api
+local clear, command, fn, api, exec_lua = n.clear, n.command, n.fn, n.api, n.exec_lua
 local matches = t.matches
 local pcall_err = t.pcall_err
+local retry = t.retry
 local check_close = n.check_close
 local mkdir = t.mkdir
 local rmdir = n.rmdir
@@ -16,6 +17,94 @@ local function clear_serverlist()
   for _, server in pairs(fn.serverlist()) do
     fn.serverstop(server)
   end
+end
+
+local function make_tmpdir()
+  local tmp_dir = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
+  finally(function()
+    fn.delete(tmp_dir, 'rf')
+  end)
+  return tmp_dir
+end
+
+local function clear_with_runtime_dir(tmp_dir)
+  local run_dir = tmp_dir .. '/run'
+  assert(vim.uv.fs_mkdir(run_dir, 448))
+  clear({ env = { XDG_RUNTIME_DIR = run_dir } })
+end
+
+local function start_peer(tmp_dir)
+  local peer_run_dir = tmp_dir .. '/peer_run'
+  assert(vim.uv.fs_mkdir(peer_run_dir, 448))
+  local peer_addr = ('%s/%s'):format(tmp_dir, n.new_pipename():match('[^/]*$'))
+  local peer = n.new_session(true, {
+    args = { '--clean', '--listen', peer_addr, '--embed' },
+    env = { XDG_RUNTIME_DIR = peer_run_dir },
+    merge = false,
+  })
+  retry(nil, nil, function()
+    eq(true, vim.list_contains(fn.serverlist({ peer = true }), peer_addr))
+  end)
+  return peer_addr, peer
+end
+
+local function connect_with_async_error(mods)
+  return exec_lua(
+    [[
+      local mods = ...
+      local written
+      local schedule, select, nvim_cmd, nvim_echo, serverlist =
+        vim.schedule, vim.ui.select, vim.api.nvim_cmd, vim.api.nvim_echo, vim.fn.serverlist
+
+      vim.fn.serverlist = function(opts)
+        if opts and opts.peer then
+          return { '/tmp/nvim.peer' }
+        end
+        return {}
+      end
+      vim.schedule = function(cb) cb() end
+      vim.ui.select = function(_, _, on_choice) on_choice('/tmp/nvim.peer', 1) end
+      vim.api.nvim_cmd = function() error('boom\n') end
+      vim.api.nvim_echo = function(chunks) written = chunks[1][1] end
+
+      local ok = require('vim._core.server').connect(false, mods)
+
+      vim.fn.serverlist, vim.schedule, vim.ui.select, vim.api.nvim_cmd, vim.api.nvim_echo =
+        serverlist, schedule, select, nvim_cmd, nvim_echo
+
+      return { ok, written }
+    ]],
+    mods
+  )
+end
+
+local function exec_connect(bang, choice, mods)
+  local choice_expr = choice and ('%q'):format(choice) or 'nil'
+  local mods_expr = mods and vim.inspect(mods) or 'nil'
+  return exec_lua(([[
+    local selected, invoked
+    local schedule, select, nvim_cmd = vim.schedule, vim.ui.select, vim.api.nvim_cmd
+    vim.schedule = function(cb) cb() end
+    vim.ui.select = function(items, _, on_choice)
+      selected = items
+      on_choice(%s, 1)
+    end
+    vim.api.nvim_cmd = function(cmd, _) invoked = cmd end
+    local ok = require('vim._core.server').connect(%s, %s)
+    vim.schedule, vim.ui.select, vim.api.nvim_cmd = schedule, select, nvim_cmd
+    return { ok, selected, invoked }
+  ]]):format(choice_expr, tostring(bang), mods_expr))
+end
+
+local function with_peer(cb)
+  t.skip(is_os('win'), 'N/A on Windows')
+  local tmp_dir = make_tmpdir()
+  clear_with_runtime_dir(tmp_dir)
+  local peer_addr, peer = start_peer(tmp_dir)
+  finally(function()
+    peer:close()
+  end)
+  return cb(peer_addr)
 end
 
 after_each(function()
@@ -217,6 +306,84 @@ describe('server', function()
     eq(true, #servers_without_peer < #new_servs)
     eq(true, old_servs_num < #new_servs)
     client:close()
+  end)
+
+  it('connect() ignores local aliases', function()
+    t.skip(is_os('win'), 'N/A on Windows')
+
+    local tmp_dir = make_tmpdir()
+    clear_with_runtime_dir(tmp_dir)
+
+    local alias = tmp_dir .. '/nvim.alias'
+    eq(alias, fn.serverstart(alias))
+
+    local peer_addr, peer = start_peer(tmp_dir)
+    retry(nil, nil, function()
+      local peers = fn.serverlist({ peer = true })
+      eq(true, vim.list_contains(peers, alias))
+      eq(true, vim.list_contains(peers, peer_addr))
+    end)
+
+    local rv = exec_connect(false, nil)
+    eq({ 0, { peer_addr } }, rv)
+
+    eq(1, fn.serverstop(alias))
+    peer:close()
+  end)
+
+  it('connect() returns 1 when no peer servers are found', function()
+    clear_with_runtime_dir(make_tmpdir())
+
+    local rv = exec_lua([[return require('vim._core.server').connect(false)]])
+    eq(1, rv)
+  end)
+
+  it('connect() fails fast without a UI', function()
+    clear()
+    matches(
+      'Vim%(connect%):E5769: :connect without an address requires a UI',
+      pcall_err(command, 'connect')
+    )
+  end)
+
+  it('connect() suppresses async follow-up errors when emsg_silent is set', function()
+    clear()
+    eq({ 0, nil }, connect_with_async_error({ emsg_silent = true }))
+  end)
+
+  it('connect() reports async follow-up errors when only silent is set', function()
+    clear()
+    local rv = connect_with_async_error({ silent = true })
+    eq(0, rv[1])
+    matches('boom$', rv[2])
+  end)
+
+  it('connect() can be cancelled', function()
+    with_peer(function(peer_addr)
+      local rv = exec_connect(true, nil)
+      eq({ 0, { peer_addr } }, rv)
+    end)
+  end)
+
+  it('connect() forwards bang and mods', function()
+    with_peer(function(peer_addr)
+      local mods = {
+        confirm = true,
+        keepalt = true,
+        silent = true,
+        split = 'botright',
+        tab = 2,
+        vertical = true,
+      }
+      eq(
+        { 0, { peer_addr }, { cmd = 'connect', bang = false, args = { peer_addr }, mods = mods } },
+        exec_connect(false, peer_addr, mods)
+      )
+      eq(
+        { 0, { peer_addr }, { cmd = 'connect', bang = true, args = { peer_addr }, mods = {} } },
+        exec_connect(true, peer_addr)
+      )
+    end)
   end)
 
   it('removes stale socket files automatically #36581', function()

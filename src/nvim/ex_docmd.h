@@ -2,10 +2,12 @@
 
 #include <stdbool.h>
 
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/getchar_defs.h"
+#include "nvim/memory_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/vim_defs.h"  // IWYU pragma: keep
 

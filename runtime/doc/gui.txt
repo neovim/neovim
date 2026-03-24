@@ -94,14 +94,27 @@ Connect UI to a different server
 
                                                 *:connect*
 
-:connect {address}
+:connect [address]
                 Detaches the UI from the server it is currently attached to
-                and attaches it to the server at {address} instead.
+                and attaches it to the server at [address] instead.
+
+                                                *E5768*
+                If [address] is omitted, presents a |vim.ui.select()| picker
+                of other discovered peer server addresses. If no other peer
+                addresses are found, E5768 is reported.
 
                 Note: If the current UI hasn't implemented the "connect" UI
                 event, this command is equivalent to |:detach|.
 
-:connect! {address}
+                                                *E5769*
+                If no UI is attached (e.g. |--headless| mode), E5769 is
+                reported.
+
+                Note: Peer discovery covers only |serverlist()| addresses (not
+                TCP listeners; Windows cross-process discovery is not yet
+                supported).
+
+:connect! [address]
                 Same as |:connect| but it also stops the detached server if
                 no other UI is currently attached to it.
 

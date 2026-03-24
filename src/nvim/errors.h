@@ -211,6 +211,8 @@ EXTERN const char e_val_too_large[] INIT(= N_("E1510: Value too large: %s"));
 
 EXTERN const char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
+EXTERN const char e_no_other_servers_found[] INIT(= N_("E5768: No other servers found"));
+EXTERN const char e_connect_requires_ui[] INIT(= N_("E5769: :connect without an address requires a UI"));
 
 EXTERN const char e_winfixbuf_cannot_go_to_buffer[]
 INIT(= N_("E1513: Cannot switch buffer. 'winfixbuf' is enabled"));
