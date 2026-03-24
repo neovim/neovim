@@ -155,8 +155,10 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.h`		g:c_syntax_for_h	|ft-c-syntax|
 	`*.i`		g:filetype_i		|ft-progress-syntax|
 	`*.inc`		g:filetype_inc
+	`*.int`		g:filetype_int
 	`*.lsl`		g:filetype_lsl
 	`*.m`		g:filetype_m		|ft-mathematica-syntax|
+	`*.mac`		g:filetype_mac
 	`*[mM]makefile,*.mk,*.mak,[mM]akefile*`
 			g:make_flavor		|ft-make-syntax|
 	`*.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,*.md`

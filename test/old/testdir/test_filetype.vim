@@ -2765,6 +2765,12 @@ func Test_inc_file()
   call assert_equal('pov', &filetype)
   bwipe!
 
+  " ObjectScript routine
+  call writefile(['ROUTINE Sample [Type=INC]'], 'Xfile.inc', 'D')
+  split Xfile.inc
+  call assert_equal('objectscript_routine', &filetype)
+  bwipe!
+
   let g:filetype_inc = 'foo'
   split Xfile.inc
   call assert_equal('foo', &filetype)
@@ -2846,6 +2852,54 @@ func Test_inc_file()
   split Xfile.inc
   call assert_equal('foo', &filetype)
   bwipe!
+
+  filetype off
+endfunc
+
+func Test_int_file()
+  filetype on
+
+  " Intel HEX
+  call writefile([':10010000214601360121470136007EFE09D2190140'], 'Xfile.int', 'D')
+  split Xfile.int
+  call assert_equal('hex', &filetype)
+  bwipe!
+
+  " ObjectScript routine
+  call writefile(['ROUTINE Sample [Type=INT]'], 'Xfile.int', 'D')
+  split Xfile.int
+  call assert_equal('objectscript_routine', &filetype)
+  bwipe!
+
+  let g:filetype_int = 'foo'
+  split Xfile.int
+  call assert_equal('foo', &filetype)
+  bwipe!
+  unlet g:filetype_int
+
+  filetype off
+endfunc
+
+func Test_mac_file()
+  filetype on
+
+  " Assembly
+  call writefile(['looks like asm'], 'Xfile.mac', 'D')
+  split Xfile.mac
+  call assert_equal('asm', &filetype)
+  bwipe!
+
+  " ObjectScript routine
+  call writefile(['ROUTINE Sample [Type=MAC]'], 'Xfile.mac', 'D')
+  split Xfile.mac
+  call assert_equal('objectscript_routine', &filetype)
+  bwipe!
+
+  let g:filetype_mac = 'foo'
+  split Xfile.mac
+  call assert_equal('foo', &filetype)
+  bwipe!
+  unlet g:filetype_mac
 
   filetype off
 endfunc
