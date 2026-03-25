@@ -255,7 +255,25 @@ end
 
 --- |lsp-handler| for the method "textDocument/publishDiagnostics"
 ---
---- See |vim.diagnostic.config()| for configuration options.
+--- See |vim.diagnostic.config()| for configuration options. Handler-specific
+--- configuration can be set using |vim.func.on_fun()|:
+---     <pre>lua
+---     vim.func.on_fun(vim.lsp.handlers, 'textDocument/publishDiagnostics', function(fn, args)
+---       -- Enable underline, use default values
+---       args.config.underline = true
+---       -- Enable virtual text, override spacing to 4
+---       args.config.virtual_text = { spacing = 4 }
+---       -- Dynamically turn signs on/off via buffer-local variables.
+---       args.config.signs = function(namespace, bufnr)
+---         return vim.b[bufnr].show_signs == true
+---       end
+---       -- Disable a feature.
+---       args.config.update_in_insert = false
+---       return vim.lsp.diagnostic.on_publish_diagnostics(unpack(args))
+---     end)
+---     </pre>
+---
+---@param config table Configuration table (see |vim.diagnostic.config()|).
 ---
 ---@param _ lsp.ResponseError?
 ---@param params lsp.PublishDiagnosticsParams
