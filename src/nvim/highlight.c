@@ -221,7 +221,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
       fallback = false;
       Dict(highlight) dict = KEYDICT_INIT;
       if (api_dict_to_keydict(&dict, KeyDict_highlight_get_field, ret.data.dict, &err)) {
-        attrs = dict2hlattrs(&dict, true, &it.link_id, &err);
+        attrs = dict2hlattrs(&dict, true, &it.link_id, NULL, &err);
         fallback = GET_BOOL_OR_TRUE(&dict, highlight, fallback);
         tmp = dict.fallback;  // or false
         if (it.link_id >= 0) {
@@ -291,6 +291,28 @@ bool win_check_ns_hl(win_T *wp)
   return hl_check_ns();
 }
 
+/// Get highlight attributes for a highlight group
+///
+/// @param ns_id Namespace ID (0 for global namespace)
+/// @param hl_id Highlight group ID (1-based)
+/// @param[in] optional If non-NULL, passed to syn_ns_id2attr to track
+///                      whether the group was explicitly defined in the namespace.
+/// @param[out] attrs Pointer to store the attributes
+/// @return true if highlight group exists and has valid attributes
+bool hl_ns_get_attrs(int ns_id, int hl_id, bool *optional, HlAttrs *attrs)
+{
+  bool opt = optional ? *optional : true;
+  int syn_attr = syn_ns_id2attr(ns_id, hl_id, &opt);
+  if (optional) {
+    *optional = opt;
+  }
+  if (syn_attr <= 0) {
+    return false;
+  }
+  *attrs = syn_attr2entry(syn_attr);
+  return true;
+}
+
 /// Get attribute code for a builtin highlight group.
 ///
 /// The final syntax group could be modified by hi-link or 'winhighlight'.
@@ -300,11 +322,7 @@ int hl_get_ui_attr(int ns_id, int idx, int final_id, bool optional)
   bool available = false;
 
   if (final_id > 0) {
-    int syn_attr = syn_ns_id2attr(ns_id, final_id, &optional);
-    if (syn_attr > 0) {
-      attrs = syn_attr2entry(syn_attr);
-      available = true;
-    }
+    available = hl_ns_get_attrs(ns_id, final_id, &optional, &attrs);
   }
 
   if (HLF_PNI <= idx && idx <= HLF_PST) {
@@ -1005,49 +1023,53 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
   }
 }
 
-HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)
+HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, HlAttrs *base, Error *err)
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, highlight, key)
   HlAttrs hlattrs = HLATTRS_INIT;
-  int32_t fg = -1;
-  int32_t bg = -1;
-  int32_t ctermfg = -1;
-  int32_t ctermbg = -1;
-  int32_t sp = -1;
-  int blend = -1;
-  int32_t mask = 0;
-  int32_t cterm_mask = 0;
+  int32_t fg = base ? base->rgb_fg_color : -1;
+  int32_t bg = base ? base->rgb_bg_color : -1;
+  int32_t ctermfg = base ? (base->cterm_fg_color == 0 ? -1 : base->cterm_fg_color - 1) : -1;
+  int32_t ctermbg = base ? (base->cterm_bg_color == 0 ? -1 : base->cterm_bg_color - 1) : -1;
+  int32_t sp = base ? base->rgb_sp_color : -1;
+  int blend = base ? base->hl_blend : -1;
+  int32_t mask = base ? base->rgb_ae_attr : 0;
+  int32_t cterm_mask = base ? base->cterm_ae_attr : 0;
   bool cterm_mask_provided = false;
 
-#define CHECK_FLAG(d, m, name, extra, flag) \
-  if (d->name##extra) { \
-    if (flag & HL_UNDERLINE_MASK) { \
-      m &= ~HL_UNDERLINE_MASK; \
+#define CHECK_FLAG_WITH_KEY(d, m, name, extra, flag) \
+  if (HAS_KEY_X(d, name)) { \
+    if (d->name##extra) { \
+      if (flag & HL_UNDERLINE_MASK) { \
+        m &= ~HL_UNDERLINE_MASK; \
+      } \
+      m |= flag; \
+    } else { \
+      m &= ~flag; \
     } \
-    m |= flag; \
   }
 
-  CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
-  CHECK_FLAG(dict, mask, bold, , HL_BOLD);
-  CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
-  CHECK_FLAG(dict, mask, underline, , HL_UNDERLINE);
-  CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
-  CHECK_FLAG(dict, mask, underdouble, , HL_UNDERDOUBLE);
-  CHECK_FLAG(dict, mask, underdotted, , HL_UNDERDOTTED);
-  CHECK_FLAG(dict, mask, underdashed, , HL_UNDERDASHED);
-  CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
-  CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);
-  CHECK_FLAG(dict, mask, altfont, , HL_ALTFONT);
-  CHECK_FLAG(dict, mask, dim, , HL_DIM);
-  CHECK_FLAG(dict, mask, blink, , HL_BLINK);
-  CHECK_FLAG(dict, mask, conceal, , HL_CONCEALED);
-  CHECK_FLAG(dict, mask, overline, , HL_OVERLINE);
+  CHECK_FLAG_WITH_KEY(dict, mask, reverse, , HL_INVERSE);
+  CHECK_FLAG_WITH_KEY(dict, mask, bold, , HL_BOLD);
+  CHECK_FLAG_WITH_KEY(dict, mask, italic, , HL_ITALIC);
+  CHECK_FLAG_WITH_KEY(dict, mask, underline, , HL_UNDERLINE);
+  CHECK_FLAG_WITH_KEY(dict, mask, undercurl, , HL_UNDERCURL);
+  CHECK_FLAG_WITH_KEY(dict, mask, underdouble, , HL_UNDERDOUBLE);
+  CHECK_FLAG_WITH_KEY(dict, mask, underdotted, , HL_UNDERDOTTED);
+  CHECK_FLAG_WITH_KEY(dict, mask, underdashed, , HL_UNDERDASHED);
+  CHECK_FLAG_WITH_KEY(dict, mask, standout, , HL_STANDOUT);
+  CHECK_FLAG_WITH_KEY(dict, mask, strikethrough, , HL_STRIKETHROUGH);
+  CHECK_FLAG_WITH_KEY(dict, mask, altfont, , HL_ALTFONT);
+  CHECK_FLAG_WITH_KEY(dict, mask, dim, , HL_DIM);
+  CHECK_FLAG_WITH_KEY(dict, mask, blink, , HL_BLINK);
+  CHECK_FLAG_WITH_KEY(dict, mask, conceal, , HL_CONCEALED);
+  CHECK_FLAG_WITH_KEY(dict, mask, overline, , HL_OVERLINE);
   if (use_rgb) {
-    CHECK_FLAG(dict, mask, fg_indexed, , HL_FG_INDEXED);
-    CHECK_FLAG(dict, mask, bg_indexed, , HL_BG_INDEXED);
+    CHECK_FLAG_WITH_KEY(dict, mask, fg_indexed, , HL_FG_INDEXED);
+    CHECK_FLAG_WITH_KEY(dict, mask, bg_indexed, , HL_BG_INDEXED);
   }
-  CHECK_FLAG(dict, mask, nocombine, , HL_NOCOMBINE);
-  CHECK_FLAG(dict, mask, default, _, HL_DEFAULT);
+  CHECK_FLAG_WITH_KEY(dict, mask, nocombine, , HL_NOCOMBINE);
+  CHECK_FLAG_WITH_KEY(dict, mask, default, _, HL_DEFAULT);
 
   if (HAS_KEY_X(dict, fg)) {
     fg = object_to_color(dict->fg, "fg", use_rgb, err);
@@ -1111,6 +1133,16 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     }
 
     cterm_mask_provided = true;
+    cterm_mask = 0;
+
+#define CHECK_FLAG(d, m, name, extra, flag) \
+  if (d->name##extra) { \
+    if (flag & HL_UNDERLINE_MASK) { \
+      m &= ~HL_UNDERLINE_MASK; \
+    } \
+    m |= flag; \
+  }
+
     CHECK_FLAG(cterm, cterm_mask, reverse, , HL_INVERSE);
     CHECK_FLAG(cterm, cterm_mask, bold, , HL_BOLD);
     CHECK_FLAG(cterm, cterm_mask, italic, , HL_ITALIC);
@@ -1129,6 +1161,7 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     CHECK_FLAG(cterm, cterm_mask, nocombine, , HL_NOCOMBINE);
   }
 #undef CHECK_FLAG
+#undef CHECK_FLAG_WITH_KEY
 
   if (HAS_KEY_X(dict, ctermfg)) {
     ctermfg = object_to_color(dict->ctermfg, "ctermfg", false, err);

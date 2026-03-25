@@ -936,6 +936,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     g->sg_link = 0;
   }
 
+  bool update = HAS_KEY(dict, highlight, update) && dict->update;
   g->sg_gui = attrs.rgb_ae_attr &~HL_DEFAULT;
 
   g->sg_rgb_fg = attrs.rgb_fg_color;
@@ -954,20 +955,29 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   };
 
   for (int j = 0; cattrs[j].dest; j++) {
-    if (cattrs[j].val < 0) {
+    if (cattrs[j].name.type != kObjectTypeNil) {
+      if (cattrs[j].val < 0) {
+        *cattrs[j].dest = kColorIdxNone;
+      } else if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
+        name_to_color(cattrs[j].name.data.string.data, cattrs[j].dest);
+      } else {
+        *cattrs[j].dest = kColorIdxHex;
+      }
+    } else if (!update) {
       *cattrs[j].dest = kColorIdxNone;
-    } else if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
-      name_to_color(cattrs[j].name.data.string.data, cattrs[j].dest);
-    } else {
-      *cattrs[j].dest = kColorIdxHex;
     }
   }
 
   g->sg_cterm = attrs.cterm_ae_attr &~HL_DEFAULT;
   g->sg_cterm_bg = attrs.cterm_bg_color;
   g->sg_cterm_fg = attrs.cterm_fg_color;
+
   g->sg_cterm_bold = g->sg_cterm & HL_BOLD;
-  g->sg_blend = attrs.hl_blend;
+  if (attrs.hl_blend != -1) {
+    g->sg_blend = attrs.hl_blend;
+  } else if (!update) {
+    g->sg_blend = -1;
+  }
 
   g->sg_script_ctx = current_sctx;
   g->sg_script_ctx.sc_lnum += SOURCING_LNUM;
