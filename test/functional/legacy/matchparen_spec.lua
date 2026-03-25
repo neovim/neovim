@@ -225,7 +225,7 @@ describe('matchparen', function()
     })
     screen:expect([[
       {18:#!/bin/sh}                               |
-      {25:SUSUWU_PRINT() (}                        |
+      {25:SUSUWU_PRINT()} {15:(}                        |
         {15:case} {15:"}{100:${LEVEL}}{15:"} {15:in}                    |
           {15:"}{100:$SUSUWU_SH_NOTICE}{15:"^)}                |
           {100:${SUSUWU_S}} {15:&&} {15:return} {26:1}             |
@@ -235,7 +235,7 @@ describe('matchparen', function()
         {15:;;}                                    |
         {15:esac}                                  |
         {18:# snip}                                |
-      {25:)}                                       |
+      {15:)}                                       |
       {1:~                                       }|*2
                                               |
     ]])
@@ -246,7 +246,7 @@ describe('matchparen', function()
     end
     screen:expect([[
       {18:#!/bin/sh}                               |
-      {25:SUSUWU_PRINT() (}                        |
+      {25:SUSUWU_PRINT()} {15:(}                        |
         {15:case} {15:"}{100:${LEVEL}}{15:"} {15:in}                    |
           {15:"}{100:$SUSUWU_SH_NOTICE}{15:")} foobar^         |
           {100:${SUSUWU_S}} {15:&&} {15:return} {26:1}             |
@@ -256,7 +256,7 @@ describe('matchparen', function()
         {15:;;}                                    |
         {15:esac}                                  |
         {18:# snip}                                |
-      {25:)}                                       |
+      {15:)}                                       |
       {1:~                                       }|*2
       {5:-- INSERT --}                            |
     ]])

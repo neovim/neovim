@@ -22,6 +22,7 @@
 "		2026 Jan 15 highlight command switches that contain a digit
 "		2026 Feb 11 improve support for KornShell function names and variables
 "		2026 Feb 15 improve comment handling #19414
+"		2026 Mar 23 improve matching of function definitions #19638
 " }}}
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
@@ -261,7 +262,7 @@ syn cluster shErrorList	contains=shDoError,shIfError,shInError,shCaseError,shEsa
 if exists("b:is_kornshell") || exists("b:is_bash")
     syn cluster ErrorList add=shDTestError
 endif
-syn cluster shArithParenList	contains=shArithmetic,shArithParen,shCaseEsac,shComment,shDeref,shDerefVarArray,shDo,shDerefSimple,shEcho,shEscape,shExpr,shNumber,shOperator,shPosnParm,shExSingleQuote,shExDoubleQuote,shHereString,shRedir,shSingleQuote,shDoubleQuote,shStatement,shVariable,shAlias,shTest,shCtrlSeq,shSpecial,shParen,bashSpecialVariables,bashStatement,shIf,shFor,shFunctionKey,shFunctionOne,shFunctionTwo,shNamespaceOne
+syn cluster shArithParenList	contains=shArithmetic,shArithParen,shCaseEsac,shComment,shDeref,shDerefVarArray,shDo,shDerefSimple,shEcho,shEscape,shExpr,shNumber,shOperator,shPosnParm,shExSingleQuote,shExDoubleQuote,shHereString,shRedir,shSingleQuote,shDoubleQuote,shStatement,shVariable,shAlias,shTest,shCtrlSeq,shSpecial,shParen,bashSpecialVariables,bashStatement,shIf,shFor
 syn cluster shArithList	contains=@shArithParenList,shParenError
 syn cluster shBracketExprList	contains=shCharClassOther,shCharClass,shCollSymb,shEqClass
 syn cluster shCaseEsacList	contains=shCaseStart,shCaseLabel,shCase,shCaseBar,shCaseIn,shComment,shDeref,shDerefSimple,shCaseCommandSub,shCaseExSingleQuote,shCaseSingleQuote,shCaseDoubleQuote,shCtrlSeq,@shErrorList,shStringSpecial,shCaseRange
@@ -278,7 +279,16 @@ syn cluster shDerefVarList	contains=shDerefOffset,shDerefOp,shDerefVarArray,shDe
 syn cluster shEchoList	contains=shArithmetic,shBracketExpr,shCommandSub,shCommandSubBQ,shDerefVarArray,shSubshare,shValsub,shDeref,shDerefSimple,shEscape,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shCtrlSeq,shEchoQuote
 syn cluster shExprList1	contains=shBracketExpr,shNumber,shOperator,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shExpr,shDblBrace,shDeref,shDerefSimple,shCtrlSeq
 syn cluster shExprList2	contains=@shExprList1,@shCaseList,shTest
-syn cluster shFunctionList	contains=shBracketExpr,@shCommandSubList,shCaseEsac,shColon,shComment,shDo,shEcho,shExpr,shFor,shHereDoc,shIf,shOption,shHereString,shRedir,shSetList,shSource,shStatement,shVariable,shOperator,shCtrlSeq
+syn cluster shFunctionCmds	contains=shFor,shCaseEsac,shIf,shRepeat,shDblBrace,shDblParen
+if exists("b:is_ksh88") || exists("b:is_mksh")
+    " Offer "shFunctionCmds" as is.
+elseif exists("b:is_kornshell") || exists("b:is_bash")
+    syn cluster shFunctionCmds	add=shForPP
+else
+    syn cluster shFunctionCmds	remove=shDblBrace,shDblParen
+endif
+syn cluster shFunctionDefList	contains=shDoError,shIfError,shFunctionKey,shFunctionOne,shFunctionThree,shFunctionCmdOne
+syn cluster shFunctionList	contains=shBracketExpr,@shCommandSubList,shCaseEsac,shColon,shComment,shDo,shEcho,shExpr,shFor,shHereDoc,shIf,shOption,shHereString,shRedir,shSetList,shSource,shStatement,shVariable,shOperator,shCtrlSeq,@shFunctionDefList
 if exists("b:is_kornshell") || exists("b:is_bash")
     syn cluster shFunctionList	add=shRepeat,shDblBrace,shDblParen,shForPP
     syn cluster shDerefList	add=shCommandSubList,shEchoDeref
@@ -287,7 +297,7 @@ syn cluster shHereBeginList	contains=@shCommandSubList
 syn cluster shHereList	contains=shBeginHere,shHerePayload
 syn cluster shHereListDQ	contains=shBeginHere,@shDblQuoteList,shHerePayload
 syn cluster shIdList	contains=shArithmetic,shCommandSub,shCommandSubBQ,shDerefVarArray,shSubshare,shValsub,shWrapLineOperator,shSetOption,shComment,shDeref,shDerefSimple,shHereString,shNumber,shOperator,shRedir,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shExpr,shCtrlSeq,shStringSpecial,shAtExpr
-syn cluster shIfList	contains=@shLoopList,shDblBrace,shDblParen,shFunctionKey,shFunctionOne,shFunctionTwo,shNamespaceOne
+syn cluster shIfList	contains=@shLoopList,shDblBrace,shDblParen,@shFunctionDefList
 syn cluster shLoopList	contains=@shCaseList,@shErrorList,shCaseEsac,shConditional,shDblBrace,shExpr,shFor,shIf,shOption,shSet,shTest,shTestOpr,shTouch
 if exists("b:is_kornshell") || exists("b:is_bash")
     syn cluster shLoopList	add=shForPP,shDblParen
@@ -647,39 +657,52 @@ endif
 
 " Functions: {{{1
 if !exists("b:is_posix")
-    syn keyword shFunctionKey function	skipwhite skipnl nextgroup=shFunctionTwo
+    syn keyword shFunctionKey function	skipwhite skipnl nextgroup=shDoError,shIfError,shFunctionTwo,shFunctionFour,shFunctionCmdTwo
 endif
+
+ShFoldFunctions syn region shFunctionExpr	matchgroup=shFunctionExprRegion start="{"	end="}"	contains=@shFunctionList	 contained skipwhite skipnl nextgroup=shQuickComment
+ShFoldFunctions syn region shFunctionSubSh	matchgroup=shFunctionSubShRegion start="("	end=")"	contains=@shFunctionList	 contained skipwhite skipnl nextgroup=shQuickComment
 
 if exists("b:is_bash")
     syn keyword shFunctionKey coproc
-    ShFoldFunctions syn region shFunctionOne	matchgroup=shFunction start="^\s*[A-Za-z_0-9:][-a-zA-Z_0-9:]*\s*()\_s*{"		end="}"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionTwo	matchgroup=shFunction start="\%(do\)\@!\&\<[A-Za-z_0-9:][-a-zA-Z_0-9:]*\>\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionThree	matchgroup=shFunction start="^\s*[A-Za-z_0-9:][-a-zA-Z_0-9:]*\s*()\_s*("		end=")"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionFour	matchgroup=shFunction start="\%(do\)\@!\&\<[A-Za-z_0-9:][-a-zA-Z_0-9:]*\>\s*\%(()\)\=\_s*)"	end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+    syn match shFunctionCmdOne	"^\s*\zs\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionCmdTwo	"\%(\<\k\+\>\|[^()<>|&$;\t ]\+\)\+\ze\s*\%(()\ze\)\=\_s*\%(\<\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	contained skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionOne	"^\s*\zs\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionTwo	"\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\ze\s*\%(()\ze\)\=\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionThree	"^\s*\zs\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh
+    syn match shFunctionFour	"\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\ze\s*\%(\%(()\ze\)\=\)\@>\_s*((\@!"	contained skipwhite skipnl nextgroup=shFunctionSubSh
 elseif exists("b:is_ksh88")
     " AT&T ksh88
-    ShFoldFunctions syn region shFunctionOne	matchgroup=shFunction start="^\s*[A-Za-z_][A-Za-z_0-9]*\s*()\_s*{"		end="}"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionTwo	matchgroup=shFunction start="\%(do\)\@!\&\<[A-Za-z_][A-Za-z_0-9]*\>\_s*{"		end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionThree	matchgroup=shFunction start="^\s*[A-Za-z_][A-Za-z_0-9]*\s*()\_s*("		end=")"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionFour	matchgroup=shFunction start="\%(do\)\@!\&\<[A-Za-z_][A-Za-z_0-9]*\>\_s*("		end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+    syn match shFunctionCmdOne	"^\s*\zs\h\w*\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionOne	"^\s*\zs\h\w*\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionTwo	"\<\h\w*\>\ze\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionThree	"^\s*\zs\h\w*\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh
 elseif exists("b:is_mksh")
     " MirBSD ksh is the wild west of absurd and abstruse function names...
-    ShFoldFunctions syn region shFunctionOne	matchgroup=shFunction start="^\s*[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\s*()\_s*{"		end="}"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionTwo	matchgroup=shFunction start="\%(do\)\@!\&\<[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\>\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionThree	matchgroup=shFunction start="^\s*[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\s*()\_s*("		end=")"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionFour	matchgroup=shFunction start="\%(do\)\@!\&\<[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\>\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+    syn match shFunctionCmdOne	"^\s*\zs[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionOne	"^\s*\zs[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionTwo	"\%([@!+.%,:-]\+\|\<\w\+\)*[-A-Za-z_.%,0-9:]\ze\s*\%(()\ze\)\=\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionThree	"^\s*\zs[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh
 elseif exists("b:is_kornshell")
     " ksh93
-    ShFoldFunctions syn region shFunctionOne	matchgroup=shFunction start="^\s*[A-Za-z_.][A-Za-z_.0-9]*\s*()\_s*{"		end="}"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionTwo	matchgroup=shFunction start="\%(do\)\@!\&\<[A-Za-z_.][A-Za-z_.0-9]*\>\_s*{"		end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionThree	matchgroup=shFunction start="^\s*[A-Za-z_.][A-Za-z_.0-9]*\s*()\_s*("		end=")"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionFour	matchgroup=shFunction start="\%(do\)\@!\&\<[A-Za-z_.][A-Za-z_.0-9]*\>\_s*("		end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shNamespaceOne	matchgroup=shFunction start="\%(do\)\@!\&\<\h\w*\>\_s*{"			end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+    syn match shFunctionCmdOne	"^\s*\zs[A-Za-z_.][A-Za-z_.0-9]*\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionOne	"^\s*\zs[A-Za-z_.][A-Za-z_.0-9]*\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionTwo	"\%(\.\|\<\h\+\)[A-Za-z_.0-9]*\ze\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionThree	"^\s*\zs[A-Za-z_.][A-Za-z_.0-9]*\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh
+    syn match shNamespaceOne	"\<\h\w*\>\ze\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
 else
-    ShFoldFunctions syn region shFunctionOne	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*{"			end="}"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionTwo	matchgroup=shFunction start="\%(do\)\@!\&\<\h\w*\>\s*\%(()\)\=\_s*{"		end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionThree	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*("			end=")"	contains=@shFunctionList		 skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-    ShFoldFunctions syn region shFunctionFour	matchgroup=shFunction start="\%(do\)\@!\&\<\h\w*\>\s*\%(()\)\=\_s*("		end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+    syn match shFunctionCmdOne	"^\s*\zs\h\w*\s*()\ze\_s*\%(for\|case\|if\|while\|until\)\>"	skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionCmdTwo	"\<\h\w*\s*()\ze\_s*\%(for\|case\|if\|while\|until\)\>"	contained skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionOne	"^\s*\zs\h\w*\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionTwo	"\<\h\w*\>\s*()\ze\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionThree	"^\s*\zs\h\w*\s*()\ze\_s*("	skipwhite skipnl nextgroup=shFunctionSubSh
+    syn match shFunctionFour	"\<\h\w*\>\s*()\ze\_s*("	contained skipwhite skipnl nextgroup=shFunctionSubSh
+endif
+
+if !exists("g:sh_no_error")
+    syn match   shDoError "\<do\%(ne\)\=\s*()"
+    syn match   shIfError "\<then\s*()"
+    syn match   shIfError "\<else\s*()"
 endif
 
 " Parameter Dereferencing: {{{1
@@ -882,7 +905,6 @@ if !exists("skip_sh_syntax_inits")
     hi def link shEchoDelim	shOperator
     hi def link shEchoQuote	shString
     hi def link shForPP	shLoop
-    hi def link shFunction	Function
     hi def link shEmbeddedEcho	shString
     hi def link shEscape	shCommandSub
     hi def link shExDoubleQuote	shDoubleQuote
@@ -960,8 +982,16 @@ if !exists("skip_sh_syntax_inits")
     hi def link shConditional		Conditional
     hi def link shCtrlSeq		Special
     hi def link shExprRegion		Delimiter
-    hi def link shFunctionKey		Function
-    hi def link shFunctionName		Function
+    hi def link shFunctionKey		Keyword
+    hi def link shFunctionOne		Function
+    hi def link shFunctionTwo		shFunctionOne
+    hi def link shFunctionThree		shFunctionOne
+    hi def link shFunctionFour		shFunctionOne
+    hi def link shFunctionCmdOne	shFunctionOne
+    hi def link shFunctionCmdTwo	shFunctionOne
+    hi def link shFunctionExprRegion	shExprRegion
+    hi def link shFunctionSubShRegion	shSubShRegion
+    hi def link shNamespaceOne		Function
     hi def link shNumber		Number
     hi def link shOperator		Operator
     hi def link shRepeat		Repeat
