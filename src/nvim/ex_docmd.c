@@ -4967,7 +4967,6 @@ static void ex_restart(exarg_T *eap)
   const list_T *l = get_vim_var_list(VV_ARGV);
   int argc = tv_list_len(l);
 
-
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
   TV_LIST_ITER_CONST(l, li, {
@@ -5085,7 +5084,7 @@ static void ex_restart(exarg_T *eap)
   }
 
   // Reconnect to v:servername
-  if (!server_start(servername)) {
+  if (server_start(servername)) {
     emsg("couldn't start listening on v:servername");
     return;
   }
