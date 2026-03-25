@@ -950,6 +950,8 @@ void free_all_mem(void)
     bufref_T bufref;
     set_bufref(&bufref, buf);
     nextbuf = buf->b_next;
+    // All windows were freed.  Reset b_nwindows so buffers can be wiped.
+    buf->b_nwindows = 0;
 
     // Since options (in addition to other stuff) have been freed above we need to ensure no
     // callbacks are called, so free them before closing the buffer.

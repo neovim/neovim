@@ -3663,7 +3663,7 @@ void ex_buffer_all(exarg_T *eap)
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW
-          && !(win_locked(curwin) || wp->w_buffer->b_locked > 0)
+          && !(win_locked(wp) || wp->w_buffer->b_locked > 0)
           && !is_aucmd_win(wp)) {
         if (win_close(wp, false, false) == FAIL) {
           break;
