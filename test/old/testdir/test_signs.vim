@@ -2093,4 +2093,44 @@ func Test_sign_number_without_signtext()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_sign_signcolumn_change_no_clear()
+  " In the GUI, sign icons need UPD_CLEAR to redraw properly,
+  " so this optimization only applies to non-GUI mode.
+  CheckNotGui
+  new
+  call setline(1, ['a', 'b', 'c'])
+  set number signcolumn=auto
+  sign define SignA text=>> texthl=Search
+  exe 'sign place 1 line=1 name=SignA buffer=' .. bufnr()
+  redraw!
+
+  " Put a marker on the command line
+  echon 'SIGNTEST'
+  " Change signcolumn - with P_RWIN this should NOT trigger UPD_CLEAR,
+  " so the command line should retain the marker text.
+  " With P_RCLR, UPD_CLEAR would blank the entire screen including
+  " the command line, causing the marker to disappear.
+  set signcolumn=number
+  redraw
+
+  " Verify sign and number column are correctly displayed after the change.
+  " Line 1 has sign '>>' shown in the number column.
+  " Line 2 has no sign, so line number '2' is shown.
+  call assert_equal(' >> a', s:ScreenLine(1, 1, 5))
+  call assert_equal('  2 b', s:ScreenLine(2, 1, 5))
+
+  " Verify the command line was NOT cleared (P_RWIN does not trigger
+  " UPD_CLEAR, unlike P_RCLR).
+  let cmdline = ''
+  for i in range(1, 8)
+    let cmdline ..= screenstring(&lines, i)
+  endfor
+  call assert_equal('SIGNTEST', cmdline)
+
+  sign unplace * group=*
+  sign undefine SignA
+  set signcolumn& number&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
