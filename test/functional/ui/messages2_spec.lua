@@ -412,25 +412,23 @@ describe('messages2', function()
     ]])
   end)
 
-  it('not restoring already open hit-enter-prompt config #35298', function()
-    command('echo "foo\nbar"')
+  it('entering cmdline below expanded messages', function()
+    command('echo "foo\n"->repeat(&lines)')
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*10
+      {1:~                                                    }|*5
       {3:                                                     }|
-      foo                                                  |
-      bar                                                  |
+      foo                                                  |*6
+      foo [+8]                                             |
     ]])
-    command('echo "foo\nbar"')
-    screen:expect_unchanged()
-    -- Place cmdline below expanded cmdline instead: #37653.
+    -- Place cmdline below expanded messages: #37653, without "more" title #38481.
     feed(':call setline(1, "foo")')
     screen:expect([[
                                                            |
-      {1:~                                                    }|*9
+      {1:~                                                    }|*4
       {3:                                                     }|
-      foo                                                  |
-      bar                                                  |
+      foo                                                  |*6
+      foo [+8]                                             |
       {16::}{15:call} {25:setline}{16:(}{26:1}{16:,} {26:"foo"}{16:)}^                              |
     ]])
     -- No message closes expanded cmdline and keeps the entered command.
@@ -498,7 +496,7 @@ describe('messages2', function()
     local top = [[
                                                                              |
       {1:~                                                                      }|*4
-      {3: f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging           }|
+      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
       0                                                                      |
       1                                                                      |
       2                                                                      |
@@ -514,7 +512,7 @@ describe('messages2', function()
     screen:expect([[
                                                                              |
       {1:~                                                                      }|*4
-      {3: f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging           }|
+      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
       1 [+1]                                                                 |
       2                                                                      |
       3                                                                      |
@@ -530,7 +528,7 @@ describe('messages2', function()
     screen:expect([[
                                                                              |
       {1:~                                                                      }|*4
-      {3: f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging           }|
+      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
       3 [+3]                                                                 |
       4                                                                      |
       5                                                                      |
@@ -546,7 +544,7 @@ describe('messages2', function()
     screen:expect([[
                                                                              |
       {1:~                                                                      }|*4
-      {3: f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging           }|
+      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
       5 [+5]                                                                 |
       6                                                                      |
       7                                                                      |
@@ -562,7 +560,7 @@ describe('messages2', function()
     screen:expect([[
                                                                              |
       {1:~                                                                      }|*4
-      {3: f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging           }|
+      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
       93 [+93]                                                               |
       94                                                                     |
       95                                                                     |
@@ -577,7 +575,7 @@ describe('messages2', function()
     screen:expect([[
                                                                              |
       {1:~                                                                      }|*3
-      {3: f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging           }|
+      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
       93 [+93]                                                               |
       94                                                                     |
       95                                                                     |
