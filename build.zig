@@ -542,8 +542,6 @@ pub fn build(b: *std.Build) !void {
 
     const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, funcs_data);
 
-    const lua_dev_deps = b.dependency("lua_dev_deps", .{});
-
     const test_deps = b.step("test_deps", "test prerequisites");
     test_deps.dependOn(&nvim_exe_install.step);
     // running tests doesn't require copying the static runtime, only the generated stuff
@@ -670,7 +668,6 @@ pub fn build(b: *std.Build) !void {
         b,
         nvim_exe,
         test_deps,
-        lua_dev_deps.path("."),
         test_config_step.getDirectory(),
         unit_headers,
     );
@@ -801,7 +798,7 @@ pub fn test_config(b: *std.Build) ![]u8 {
         \\M.test_source_path = "{[src_path]s}"
         \\M.test_lua_prg = ""
         \\M.test_luajit_prg = ""
-        \\ -- include path passed on the cmdline, see test/lua_runner.lua
+        \\ -- include path passed on the cmdline, see test/runner.lua
         \\M.include_paths = _G.c_include_path or {{}}
         \\
         \\return M

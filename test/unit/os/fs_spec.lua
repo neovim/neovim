@@ -76,8 +76,8 @@ describe('fs.c', function()
     uv.fs_symlink('test.file', 'unit-test-directory/test_link.file')
 
     uv.fs_symlink('non_existing_file.file', 'unit-test-directory/test_broken_link.file')
-    -- The tests are invoked with an absolute path to `busted` executable.
-    absolute_executable = arg[0]
+    -- The tests are invoked with an absolute executable path in arg[0].
+    absolute_executable = vim.fs.normalize(assert(uv.exepath()))
     -- Split the absolute_executable path into a directory and filename.
     directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')
   end)

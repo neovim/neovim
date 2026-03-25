@@ -275,6 +275,13 @@ local function push(input, vt)
   vterm.vterm_input_write(vt, input, string.len(input))
 end
 
+-- vterm_input_write() can synchronously invoke the Lua callbacks installed
+-- above. LuaJIT must not JIT-compile an FFI call that re-enters Lua, or the
+-- test can panic with "bad callback".
+if jit then
+  jit.off(push, true)
+end
+
 local function expect(expected)
   local actual = read_rm()
   t.eq(expected .. '\n', actual)

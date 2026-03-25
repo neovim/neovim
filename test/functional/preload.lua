@@ -1,6 +1,6 @@
--- Modules loaded here will NOT be cleared and reloaded by Busted.
--- Busted started doing this to help provide more isolation.  See issue #62
--- for more information about this.
+-- Modules loaded here will not be cleared and reloaded by the local harness.
+-- Keeping these preloaded preserves cross-file setup while still resetting
+-- non-helper modules between files.
 local t = require('test.testutil')
 require('test.functional.testnvim')()
 require('test.functional.ui.screen')

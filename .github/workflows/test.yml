@@ -75,10 +75,6 @@ jobs:
         run: cmake --build build --target luals
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: luacheck
-        run: cmake --build build --target lintlua-luacheck
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
         run: cmake --build build --target lintsh
 

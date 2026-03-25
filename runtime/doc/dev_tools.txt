@@ -388,7 +388,7 @@ Gdb                                                          *dev-tools-gdb*
 
 USING GDB TO STEP THROUGH FUNCTIONAL TESTS
 
-Use `TEST_TAG` to run tests matching busted tags (of the form `#foo` e.g.
+Use `TEST_TAG` to run tests matching `#foo` tags (e.g.
 `it("test #foo ...", ...)`):
 >bash
     GDB=1 TEST_TAG=foo make functionaltest
@@ -403,7 +403,7 @@ Then, in another terminal:
 USING LLDB TO STEP THROUGH UNIT TESTS
 
 >
-    lldb .deps/usr/bin/luajit -- .deps/usr/bin/busted --lpath="./build/?.lua" test/unit/
+    lldb build/bin/nvim -- -ll test/runner.lua --lpath=./build/?.lua test/unit/
 <
 USING GDB
 

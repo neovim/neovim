@@ -5,7 +5,6 @@ local Preprocess = require('test.unit.preprocess')
 local t_global = require('test.testutil')
 local paths = t_global.paths
 local assert = require('luassert')
-local say = require('say')
 
 local check_cores = t_global.check_cores
 local dedent = t_global.dedent
@@ -538,19 +537,6 @@ if os.getenv('NVIM_TEST_PRINT_SYSCALLS') == '1' then
   end
 end
 
-local function just_fail(_)
-  return false
-end
-say:set('assertion.just_fail.positive', '%s')
-say:set('assertion.just_fail.negative', '%s')
-assert:register(
-  'assertion',
-  'just_fail',
-  just_fail,
-  'assertion.just_fail.positive',
-  'assertion.just_fail.negative'
-)
-
 local hook_fnamelen = 30
 local hook_sfnamelen = 30
 local hook_numlen = 5
@@ -769,7 +755,7 @@ local function check_child_err(rd)
       end
     end
     if err ~= '' then
-      assert.just_fail(err)
+      error(err, 0)
     end
   end
 end
@@ -810,7 +796,7 @@ local function gen_itp(it)
     end
 
     -- Pre-emptively calculating error location, wasteful, ugh!
-    -- But the way this code messes around with busted implies the real location is strictly
+    -- But the way this code wraps the local harness means the real location is strictly
     -- not available in the parent when an actual error occurs. so we have to do this here.
     local location = debug.traceback()
     it(name, function()

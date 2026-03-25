@@ -668,6 +668,8 @@ local function deep_equal(left, right, seen)
     return false
   end
 
+  ---@cast left table<any, any>
+  ---@cast right table<any, any>
   seen = seen or {}
   local seen_left = seen[left]
   if seen_left and seen_left[right] ~= nil then

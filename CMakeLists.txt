@@ -242,15 +242,6 @@ mark_as_advanced(TS_QUERY_LS_PRG)
 set(STYLUA_DIRS runtime scripts src test contrib)
 
 add_glob_target(
-  TARGET lintlua-luacheck
-  COMMAND $<TARGET_FILE:nvim_bin>
-  FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr/share/lua/5.1 luacheck -q
-  GLOB_DIRS runtime scripts src test
-  GLOB_PAT *.lua
-  TOUCH_STRATEGY PER_DIR)
-add_dependencies(lintlua-luacheck lua_dev_deps)
-
-add_glob_target(
   TARGET lintlua-stylua
   COMMAND ${STYLUA_PRG}
   FLAGS --color=always --check --respect-ignores
@@ -269,7 +260,7 @@ add_custom_target(lintlua-stylua2
 add_dependencies(lintlua-stylua lintlua-stylua2)
 
 add_custom_target(lintlua)
-add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
+add_dependencies(lintlua lintlua-stylua)
 
 add_glob_target(
   TARGET lintsh
@@ -352,21 +343,6 @@ ExternalProject_Add(uncrustify
     -D CMAKE_SKIP_RPATH=true
   EXCLUDE_FROM_ALL TRUE
   ${EXTERNALPROJECT_OPTIONS})
-
-option(USE_BUNDLED_BUSTED "Use bundled busted" ON)
-if(USE_BUNDLED_BUSTED)
-  get_externalproject_options(lua_dev_deps ${DEPS_IGNORE_SHA})
-  ExternalProject_Add(lua_dev_deps
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua_dev_deps
-    SOURCE_DIR ${DEPS_SHARE_DIR}
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    EXCLUDE_FROM_ALL TRUE
-    ${EXTERNALPROJECT_OPTIONS})
-else()
-  add_custom_target(lua_dev_deps)
-endif()
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch")
   set(LUALS_ARCH arm64)
