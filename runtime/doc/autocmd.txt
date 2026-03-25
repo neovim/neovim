@@ -236,6 +236,14 @@ BufAdd				After adding a new buffer or existing unlisted
 				Before |BufEnter|.
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
+                                 Example (Lua):
+                                 >
+                                   vim.api.nvim_create_autocmd("BufAdd", {
+                                      callback = function(ev)
+                                       print(ev.buf)  " buffer number
+                                      end
+                                   })
+                                  <
 							*BufDelete*
 BufDelete			Before deleting a buffer from the buffer list.
 				The BufUnload may be called first (if the
