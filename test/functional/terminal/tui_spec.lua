@@ -262,11 +262,8 @@ describe('TUI :restart', function()
     local server_session = n.connect(server_pipe)
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
     local function assert_new_pid()
-      tt.feed_data(string.format(':lua vim.fn.serverstart(%q)\n', server_pipe))
-      screen:expect({ unchanged = true })
-
+      server_session:close()
       server_session = n.connect(server_pipe)
-
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
       t.neq(server_pid, new_pid)
       server_pid = new_pid
@@ -392,36 +389,22 @@ describe('TUI :restart', function()
 
     --- Check that ":restart" uses the updated size after terminal resize.
     tt.feed_data(':restart\013')
-    screen_expect([[
-      ^                                                            |
-      {100:~                                                           }|*2
-      {3:[No Name]                                                   }|
-                                                                  |
-      {5:-- TERMINAL --}                                              |
-    ]])
+    screen:expect({ unchanged = true })
     assert_new_pid()
     assert_no_gui_running()
-
-    -- Cleanup the environment
-    if server_session then
-      server_session:close()
-    end
-    tt.feed_data(string.format(':lua vim.fn.serverstop(%q)\n', server_pipe))
-    os.remove(server_pipe)
   end)
 
   it('drops "-" and "-- [files…]" from v:argv #34417', function()
     t.skip(is_os('win'), 'stdin behavior differs on Windows')
     clear()
     local server_session
-    local server_pipe = new_pipename()
     finally(function()
       if server_session then
         server_session:close()
       end
-      os.remove(server_pipe)
       n.check_close()
     end)
+    local server_pipe = new_pipename()
     local screen = tt.setup_child_nvim({
       '-u',
       'NONE',
@@ -460,16 +443,12 @@ describe('TUI :restart', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    -- Tell the new server to start listening on the pipe again.
-    tt.feed_data(string.format(':lua vim.fn.serverstart(%q)\013', server_pipe))
-    screen:expect({ unchanged = true })
-
+    server_session:close()
     server_session = n.connect(server_pipe)
 
     eq({ true, false }, { server_session:request('nvim_eval', expr) })
     eq({ true, false }, { server_session:request('nvim_eval', has_s) })
 
-    tt.feed_data(string.format(':lua vim.fn.serverstop(%q)\013', server_pipe))
     -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
     -- eq(13, #argv)
     -- eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))

@@ -1696,6 +1696,7 @@ nvim__chan_set_detach({detach})                      *nvim__chan_set_detach()*
 
     Attributes: ~
         |RPC| only
+        Since: 0.12.0
 
     Parameters: ~
       • {detach}  (`boolean`) New detach value for the channel.

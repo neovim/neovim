@@ -4967,6 +4967,7 @@ static void ex_restart(exarg_T *eap)
   const list_T *l = get_vim_var_list(VV_ARGV);
   int argc = tv_list_len(l);
 
+
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
   TV_LIST_ITER_CONST(l, li, {
@@ -4974,11 +4975,6 @@ static void ex_restart(exarg_T *eap)
     // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
     if (i > 0 && strequal(arg, "--")) {
       break;
-    }
-    // The new server will not be able to listen on the same address as the old server.
-    if (strequal(arg, "--listen")) {
-      li = TV_LIST_ITEM_NEXT(l, li);
-      continue;
     }
     // Drop "-s <scriptfile>": skip the scriptfile arg too.
     if (strequal(arg, "-s")) {
@@ -5003,6 +4999,14 @@ static void ex_restart(exarg_T *eap)
   on_err.fwd_err = false;
   bool detach = true;
   varnumber_T exit_status;
+
+  // Stop listening on v:servername
+  char *servername = get_vim_var_str(VV_SEND_SERVER);
+  if (!server_stop(servername)) {
+    emsg("couldn't stop listening on v:servername");
+    return;
+  }
+
   Channel *channel = channel_job_start(argv, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, detach, kChannelStdinPipe,
@@ -5078,6 +5082,12 @@ static void ex_restart(exarg_T *eap)
   const int pid = channel->stream.proc.pid;
   if (!os_proc_tree_kill(pid, SIGTERM)) {
     emsg("killing new nvim server failed");
+  }
+
+  // Reconnect to v:servername
+  if (!server_start(servername)) {
+    emsg("couldn't start listening on v:servername");
+    return;
   }
 }
 
