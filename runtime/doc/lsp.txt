@@ -448,6 +448,40 @@ Handlers can be set by (in increasing priority):
       my_handler
     )
 <
+                                                   *lsp-handler-config*
+
+To override or augment a builtin |lsp-handler|, use |vim.on_fun()|.
+
+Example: this code overrides |vim.lsp.diagnostic.on_publish_diagnostics()|, to
+disable signs for diagnostics: >lua
+
+  vim.on_fun(vim.lsp.handlers, 'textDocument/publishDiagnostics', function(err, result, ctx, config)
+    config.signs = false,  -- Disable signs
+  end)
+<
+To configure handlers per-server you can use the {handlers} key of
+|vim.lsp.start()|: >lua
+
+  vim.lsp.start{
+    handlers = {
+      ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+          config.virtual_text = false,  -- Disable virtual text.
+          vim.lsp.diagnostic.on_publish_diagnostics(err, result, ctx, config)
+        end)
+    },
+    ...,  -- Other configuration omitted.
+  }
+<
+or if using "nvim-lspconfig", use the {handlers} key of `setup()`: >lua
+
+  require('lspconfig').rust_analyzer.setup {
+    handlers = {
+      -- (same as above)
+    }
+  }
+<
+Most handlers do not have a dedicated handler function (such as
+||vim.lsp.diagnostic.on_publish_diagnostics()|).
 
                                                             *vim.lsp.log_levels*
 Log levels are defined in |vim.log.levels|
