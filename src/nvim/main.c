@@ -178,10 +178,10 @@ static bool event_teardown(void)
   multiqueue_process_events(main_loop.events);
   loop_poll_events(&main_loop, 0);  // Drain thread_events, fast_events.
   input_stop();
+  server_teardown();
   channel_teardown();
   proc_teardown(&main_loop);
   timer_teardown();
-  server_teardown();
   signal_teardown();
   terminal_teardown();
 
