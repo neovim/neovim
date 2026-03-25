@@ -5084,6 +5084,8 @@ static void ex_restart(exarg_T *eap)
   }
 
   // Reconnect to v:servername
+  // Unset v:servername first to reset it to the old value.
+  set_vim_var_string(VV_SEND_SERVER, "", -1);
   if (server_start(servername)) {
     emsg("couldn't start listening on v:servername");
     return;
