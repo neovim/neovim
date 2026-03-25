@@ -1135,7 +1135,7 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
     return;
   }
 
-  MAXSIZE_TEMP_DICT(data, 7);
+  MAXSIZE_TEMP_DICT(data, 6);
   ArrayOf(String) messages = ARRAY_DICT_INIT;
   for (size_t i = 0; i < msg.size; i++) {
     ADD(messages, STRING_OBJ(msg.items[i].text));
