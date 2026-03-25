@@ -129,7 +129,9 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     set_session(nvim0)
     -- n.exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     command('call chanclose(&channel)') -- Kill the child process.
-    screen0:expect({ any = pesc('[Process exited 1]') }) -- Wait for the child process to stop.
+    -- Wait for the child process to stop.
+    -- FIXME: with ASAN the signal sometimes isn't caught.
+    screen0:expect({ any = t.is_asan() and '%[Process exited %d+%]' or '%[Process exited 1%]' })
     neq(nil, uv.fs_stat(swappath1))
     test_recover(swappath1)
   end)
