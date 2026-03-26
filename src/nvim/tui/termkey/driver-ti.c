@@ -285,7 +285,7 @@ static int load_terminfo(TermKeyTI *ti)
   }
 
   // Finally mouse mode
-  // This is overriden in nvim: we only want driver-csi mouse support
+  // This is overridden in nvim: we only want driver-csi mouse support
   if (false) {
     const char *value = NULL;
 
