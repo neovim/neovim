@@ -1059,21 +1059,21 @@ describe('default statusline', function()
       true,
       { kind = 'progress', title = 'test', status = 'running', percent = 10 }
     )
-    eq('test: 10% ', get_progress())
+    eq('10%(1) ', get_progress())
 
     api.nvim_echo(
       { { 'searching' } },
       true,
       { id = id1, kind = 'progress', percent = 50, status = 'running', title = 'terminal(ripgrep)' }
     )
-    eq('terminal(ripgrep): 50% ', get_progress())
+    eq('50%(1) ', get_progress())
 
     api.nvim_echo(
       { { 'searching...' } },
       true,
       { kind = 'progress', title = 'second-item', status = 'running', percent = 20 }
     )
-    eq('Progress: 35%(2) ', get_progress())
+    eq('35%(2) ', get_progress())
 
     api.nvim_echo({ { 'searching' } }, true, {
       id = id1,
@@ -1082,13 +1082,13 @@ describe('default statusline', function()
       status = 'success',
       title = 'terminal(ripgrep)',
     })
-    eq('second-item: 20% ', get_progress())
+    eq('20%(1) ', get_progress())
 
     exec('redrawstatus')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13
-      {3:[No Name]                second-item: 20% 0,0-1          All}|
+      {3:[No Name]                          20%(1) 0,0-1          All}|
       {131:terminal(ripgrep)}: {19:100% }searching                           |
     ]])
 
@@ -1097,7 +1097,7 @@ describe('default statusline', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*6
-      {3:[No Name]                second-item: 20% 0,0-1          All}|
+      {3:[No Name]                          20%(1) 0,0-1          All}|
                                                                   |
       {1:~                                                           }|*5
       {2:[No Name]                                 0,0-1          All}|
@@ -1111,7 +1111,7 @@ describe('default statusline', function()
       {2:[No Name]                                 0,0-1          All}|
       ^                                                            |
       {1:~                                                           }|*5
-      {3:[No Name]                second-item: 20% 0,0-1          All}|
+      {3:[No Name]                          20%(1) 0,0-1          All}|
       {131:terminal(ripgrep)}: {19:100% }searching                           |
     ]])
   end)
