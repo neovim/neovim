@@ -214,7 +214,7 @@ int server_start(const char *addr)
 /// Stops listening on the address specified by `endpoint`.
 ///
 /// @param endpoint Address of the server.
-bool server_stop(char *endpoint)
+bool server_stop(const char *endpoint, bool keep_vservername)
 {
   SocketWatcher *watcher;
   bool watcher_found = false;
@@ -247,7 +247,7 @@ bool server_stop(char *endpoint)
   watchers.ga_len--;
 
   // Bump v:servername to the next available server, if any.
-  if (strequal(addr, get_vim_var_str(VV_SEND_SERVER))) {
+  if (!keep_vservername && strequal(addr, get_vim_var_str(VV_SEND_SERVER))) {
     set_vservername(&watchers);
   }
 
