@@ -251,6 +251,7 @@ EDITOR
 • |:wall| permits a |++p| option for creating parent directories when writing
   changed buffers.
 • The |:DiffTool| command compares directories (and files).
+• |:log| for opening log files
 
 EVENTS
 

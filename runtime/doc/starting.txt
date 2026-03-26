@@ -1450,9 +1450,10 @@ To run Nvim without creating any directories or data files: >
 
 LOG FILE                                        *log* *$NVIM_LOG_FILE* *E5430*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
-debugging, plugins and RPC clients. >
-        :echo $NVIM_LOG_FILE
-Default location is stdpath("log")/log ($XDG_STATE_HOME/nvim/logs/nvim.log)
+debugging, plugins and RPC clients. The log file can be viewed with: >
+        :log nvim
+
+Default location is stdpath("log")/nvim.log ($XDG_STATE_HOME/nvim/logs/nvim.log)
 unless that path is inaccessible or $NVIM_LOG_FILE was set before |startup|.
 
 

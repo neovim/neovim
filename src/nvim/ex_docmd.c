@@ -8158,6 +8158,21 @@ static void ex_terminal(exarg_T *eap)
   do_cmdline_cmd(ex_cmd);
 }
 
+/// ":log {name}"
+static void ex_log(exarg_T *eap)
+{
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 1);
+
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
+
+  NLUA_EXEC_STATIC("require'vim._core.ex_cmd'.ex_log(...)", args, kRetNilBool, NULL, &err);
+  if (ERROR_SET(&err)) {
+    emsg_multiline(err.msg, "lua_error", HLF_E, true);
+  }
+  api_clear_error(&err);
+}
+
 /// ":lsp {subcmd} {clients}"
 static void ex_lsp(exarg_T *eap)
 {

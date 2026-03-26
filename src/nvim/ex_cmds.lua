@@ -1587,6 +1587,12 @@ M.cmds = {
     func = 'ex_lockvar',
   },
   {
+    command = 'log',
+    flags = bit.bor(EXTRA, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_log',
+  },
+  {
     command = 'lolder',
     flags = bit.bor(RANGE, COUNT, TRLBAR),
     addr_type = 'ADDR_UNSIGNED',
