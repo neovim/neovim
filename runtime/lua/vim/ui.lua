@@ -359,19 +359,13 @@ do
     local count = #running
     if count == 0 then
       return '' -- nothing to show
-    elseif count == 1 then
-      local progress_item = running[1]
-      if progress_item.title == nil then
-        return string.format('%d%%%% ', progress_item.percent or 0)
-      end
-      return string.format('%s: %d%%%% ', progress_item.title, progress_item.percent or 0)
     else
       local sum = 0 ---@type integer
       for _, progress_item in ipairs(running) do
         sum = sum + (progress_item.percent or 0)
       end
       local avg = math.floor(sum / count)
-      return string.format('Progress: %d%%%%(%d) ', avg, count)
+      return string.format('%d%%%%(%d) ', avg, count)
     end
   end
 
