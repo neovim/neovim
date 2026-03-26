@@ -4969,6 +4969,7 @@ static void ex_restart(exarg_T *eap)
 
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
+  const char *listen_arg = NULL;
   TV_LIST_ITER_CONST(l, li, {
     const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
     // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
@@ -4979,6 +4980,16 @@ static void ex_restart(exarg_T *eap)
     if (strequal(arg, "-s")) {
       li = TV_LIST_ITEM_NEXT(l, li);
       continue;
+    }
+    // The address after --listen may be in use by the current server.
+    if (strequal(arg, "--listen")) {
+      listitem_T *next_li = TV_LIST_ITEM_NEXT(l, li);
+      if (next_li != NULL) {
+        const char *addr = tv_get_string(TV_LIST_ITEM_TV(next_li));
+        if (strstr(addr, ":") || strstr(addr, "/") || strstr(addr, "\\")) {
+          listen_arg = addr;
+        }
+      }
     }
     // Replace `--embed` OR `--headless` with `--embed --headless` once.
     // Drop stdin ("-") argument.
@@ -4992,19 +5003,26 @@ static void ex_restart(exarg_T *eap)
     }
   });
 
+  bool server_stopped = false;
+  if (listen_arg != NULL) {
+    // Send restart event with --listen address to current UI.
+    if (!remote_ui_restart(current_ui, listen_arg, cstr_as_string(eap->arg), &err)) {
+      if (ERROR_SET(&err)) {
+        ELOG("%s", err.msg);  // UI disappeared already?
+        api_clear_error(&err);
+      }
+      return;
+    }
+    // Stop listening on the --listen address so that the new server can listen.
+    server_stopped = server_stop(listen_arg, true);
+  }
+
   CallbackReader on_err = CALLBACK_READER_INIT;
   // This temporary bootstrap channel is closed intentionally once we obtain
   // the new server address. Don't forward child stderr to the current UI.
   on_err.fwd_err = false;
   bool detach = true;
   varnumber_T exit_status;
-
-  // Stop listening on v:servername
-  char *servername = get_vim_var_str(VV_SEND_SERVER);
-  if (*servername != NUL && !server_stop(servername, true)) {
-    emsg("couldn't stop listening on v:servername");
-    return;
-  }
 
   Channel *channel = channel_job_start(argv, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
@@ -5015,27 +5033,8 @@ static void ex_restart(exarg_T *eap)
     return;
   }
 
-  // Get new server's listen address.
-  MAXSIZE_TEMP_ARRAY(servername_args, 1);
-  ADD_C(servername_args, CSTR_AS_OBJ("servername"));
-  ArenaMem result_mem = NULL;
-  Object result = rpc_send_call(channel->id, "nvim_get_vvar", servername_args, &result_mem, &err);
-  if (ERROR_SET(&err)) {
-    emsg(err.msg);
-    api_clear_error(&err);
-    arena_mem_free(result_mem);
-    return;
-  }
-  if (result.type != kObjectTypeString || result.data.string.size == 0) {
-    arena_mem_free(result_mem);
-    emsg("restart failed: could not get listen address from new server");
-    return;
-  }
-  char *listen_addr = xmemdupz(result.data.string.data, result.data.string.size);
-  arena_mem_free(result_mem);
-
   // Prevent new server from self-exiting when the channel closes.
-  result_mem = NULL;
+  ArenaMem result_mem = NULL;
   MAXSIZE_TEMP_ARRAY(detach_args, 1);
   ADD_C(detach_args, BOOLEAN_OBJ(true));
   rpc_send_call(channel->id, "nvim__chan_set_detach", detach_args, &result_mem, &err);
@@ -5043,21 +5042,41 @@ static void ex_restart(exarg_T *eap)
     emsg(err.msg);
     api_clear_error(&err);
     arena_mem_free(result_mem);
-    xfree(listen_addr);
     return;
   }
   arena_mem_free(result_mem);
 
-  // Send restart event to current UI.
-  if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg), &err)) {
+  if (listen_arg == NULL) {
+    // Get new server's listen address.
+    MAXSIZE_TEMP_ARRAY(servername_args, 1);
+    ADD_C(servername_args, CSTR_AS_OBJ("servername"));
+    result_mem = NULL;
+    Object result = rpc_send_call(channel->id, "nvim_get_vvar", servername_args, &result_mem, &err);
     if (ERROR_SET(&err)) {
-      ELOG("%s", err.msg);  // UI disappeared already?
+      emsg(err.msg);
       api_clear_error(&err);
+      arena_mem_free(result_mem);
+      return;
+    }
+    if (result.type != kObjectTypeString || result.data.string.size == 0) {
+      arena_mem_free(result_mem);
+      emsg("restart failed: could not get listen address from new server");
+      return;
+    }
+    char *listen_addr = xmemdupz(result.data.string.data, result.data.string.size);
+    arena_mem_free(result_mem);
+
+    // Send restart event with new listen address to current UI.
+    if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg), &err)) {
+      if (ERROR_SET(&err)) {
+        ELOG("%s", err.msg);  // UI disappeared already?
+        api_clear_error(&err);
+      }
+      xfree(listen_addr);
+      return;
     }
     xfree(listen_addr);
-    return;
   }
-  xfree(listen_addr);
 
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *quit_cmd_copy = NULL;
@@ -5083,9 +5102,9 @@ static void ex_restart(exarg_T *eap)
     emsg("killing new nvim server failed");
   }
 
-  // Reconnect to v:servername
-  if (*servername != NUL && server_start(servername)) {
-    emsg("couldn't start listening on v:servername");
+  // Restart listening on the --listen address.
+  if (server_stopped && server_start(listen_arg) != 0) {
+    semsg("couldn't resume listening on %s", listen_arg);
     return;
   }
 }

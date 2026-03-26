@@ -282,6 +282,7 @@ bool remote_ui_restart(uint64_t channel_id, const char *listen_addr, String comm
   ADD_C(args, STRING_OBJ(command));
 
   push_call(ui, "restart", args);
+  ui_flush_buf(ui, false);
   return true;
 }
 
