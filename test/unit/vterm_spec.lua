@@ -98,6 +98,28 @@ local vterm = t.cimport(
   './test/unit/fixtures/vterm_test.h'
 )
 
+-- libvterm stores pointers to these callback structs instead of copying them.
+-- Keep the cdata alive for as long as the owning handle exists, and let the
+-- weak-key table release everything once the handle itself becomes unreachable.
+local callback_structs = setmetatable({}, { __mode = 'k' })
+
+---@param owner any
+---@param ... any
+local function keep_callback_structs(owner, ...)
+  local refs = callback_structs[owner]
+  if refs == nil then
+    refs = {}
+    callback_structs[owner] = refs
+  end
+
+  for i = 1, select('#', ...) do
+    local ref = select(i, ...)
+    if ref ~= nil then
+      refs[#refs + 1] = ref
+    end
+  end
+end
+
 --- @return string
 local function read_rm()
   local f = assert(io.open(t.paths.vterm_test_file, 'rb'))
@@ -137,6 +159,7 @@ local function wantparser(vt)
   parser_cbs['sos'] = vterm.parser_sos
 
   vterm.vterm_parser_set_callbacks(vt, parser_cbs, nil)
+  keep_callback_structs(vt, parser_cbs)
 end
 
 --- @return any
@@ -179,23 +202,27 @@ local function wantstate(vt, opts)
   vterm.vterm_state_set_bold_highbright(state, 1)
   vterm.vterm_state_reset(state, 1)
 
-  local fallbacks = t.ffi.new('VTermStateFallbacks')
-  fallbacks['control'] = parser_control
-  fallbacks['csi'] = vterm.parser_csi
-  fallbacks['osc'] = vterm.parser_osc
-  fallbacks['dcs'] = vterm.parser_dcs
-  fallbacks['apc'] = vterm.parser_apc
-  fallbacks['pm'] = vterm.parser_pm
-  fallbacks['sos'] = vterm.parser_sos
+  local fallback_cbs
+  if opts.f then
+    fallback_cbs = t.ffi.new('VTermStateFallbacks')
+    fallback_cbs['control'] = parser_control
+    fallback_cbs['csi'] = vterm.parser_csi
+    fallback_cbs['osc'] = vterm.parser_osc
+    fallback_cbs['dcs'] = vterm.parser_dcs
+    fallback_cbs['apc'] = vterm.parser_apc
+    fallback_cbs['pm'] = vterm.parser_pm
+    fallback_cbs['sos'] = vterm.parser_sos
+  end
 
   vterm.want_state_scrollback = opts.b or false
   vterm.want_state_erase = opts.e or false
-  vterm.vterm_state_set_unrecognised_fallbacks(state, opts.f and fallbacks or nil, nil)
+  vterm.vterm_state_set_unrecognised_fallbacks(state, fallback_cbs, nil)
   vterm.want_state_putglyph = opts.g or false
   vterm.want_state_moverect = opts.m or false
   vterm.want_state_settermprop = opts.p or false
   vterm.want_state_scrollrect = opts.s or false
 
+  keep_callback_structs(state, state_cbs, selection_cbs, fallback_cbs)
   return state
 end
 
@@ -230,6 +257,7 @@ local function wantscreen(vt, opts)
     vterm.vterm_screen_enable_reflow(screen, true)
   end
 
+  keep_callback_structs(screen, screen_cbs)
   return screen
 end
 
