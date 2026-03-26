@@ -517,7 +517,7 @@ local cmd_on_key = function(_, typed)
   M.cmd_on_key, M.cmd.ids = nil, {}
 
   -- Check if window was entered and reopen with original config.
-  local entered = typed == '<CR>'
+  local entered = typed == '<CR>' and not api.nvim_get_mode().mode:match('[it]')
     or typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd
   pcall(api.nvim_win_close, ui.wins.cmd, true)
   ui.check_targets()
