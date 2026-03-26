@@ -5001,7 +5001,7 @@ static void ex_restart(exarg_T *eap)
 
   // Stop listening on v:servername
   char *servername = get_vim_var_str(VV_SEND_SERVER);
-  if (*servername != NUL && !server_stop(servername, true, true)) {
+  if (*servername != NUL && !server_stop(servername, true)) {
     emsg("couldn't stop listening on v:servername");
     return;
   }

@@ -8,7 +8,6 @@
 #include "nvim/channel.h"
 #include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
-#include "nvim/event/multiqueue.h"
 #include "nvim/event/socket.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
@@ -215,7 +214,7 @@ int server_start(const char *addr)
 /// Stops listening on the address specified by `endpoint`.
 ///
 /// @param endpoint Address of the server.
-bool server_stop(const char *endpoint, bool keep_vservername, bool wait)
+bool server_stop(const char *endpoint, bool keep_vservername)
 {
   SocketWatcher *watcher;
   bool watcher_found = false;
@@ -238,12 +237,7 @@ bool server_stop(const char *endpoint, bool keep_vservername, bool wait)
     return false;
   }
 
-  bool stopped = false;
-  watcher->data = wait ? &stopped : NULL;
   socket_watcher_close(watcher, free_server);
-  if (wait) {
-    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, stopped);
-  }
 
   // Remove this server from the list by swapping it with the last item.
   if (i != watchers.ga_len - 1) {
@@ -288,8 +282,5 @@ static void connection_cb(SocketWatcher *watcher, int result, void *data)
 
 static void free_server(SocketWatcher *watcher, void *data)
 {
-  if (data != NULL) {
-    *(bool *)data = true;
-  }
   xfree(watcher);
 }
