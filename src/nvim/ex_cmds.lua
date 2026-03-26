@@ -3405,6 +3405,12 @@ M.cmds = {
     addr_type = 'ADDR_LINES',
     func = 'ex_termsave',
   },
+  {
+    command = 'TermLoad',
+    flags = bit.bor(FILE1),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_termload',
+  },
 }
 
 return M
