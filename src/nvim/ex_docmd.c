@@ -5005,6 +5005,9 @@ static void ex_restart(exarg_T *eap)
     emsg("couldn't stop listening on v:servername");
     return;
   }
+  if (socket_address_tcp_host_end(servername) == NULL) {  // is a pipe
+    os_remove(servername);
+  }
 
   Channel *channel = channel_job_start(argv, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
