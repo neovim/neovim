@@ -388,8 +388,14 @@ describe('TUI :restart', function()
     ]])
 
     --- Check that ":restart" uses the updated size after terminal resize.
-    tt.feed_data(':restart\013')
-    screen:expect({ unchanged = true })
+    tt.feed_data(':restart echo "restarted"\013')
+    screen_expect([[
+      ^                                                            |
+      {100:~                                                           }|*2
+      {3:[No Name]                                                   }|
+      restarted                                                   |
+      {5:-- TERMINAL --}                                              |
+    ]])
     assert_new_pid()
     assert_no_gui_running()
   end)
