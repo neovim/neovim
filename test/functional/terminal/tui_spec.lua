@@ -4167,8 +4167,7 @@ describe('TUI client', function()
   it(':restart works when connecting to remote instance (with its own TUI)', function()
     local _, screen_server, screen_client = start_tui_and_remote_client()
 
-    -- Run :restart on the remote client.
-    -- The remote client should start a new server while the original one should exit.
+    -- The remote client should attach to the new server.
     feed_data(':restart +qall!\n')
     screen_client:expect([[
       ^                                                  |
@@ -4265,8 +4264,7 @@ describe('TUI client', function()
   it(':restart works when connecting to remote instance (--headless)', function()
     local _, server_pipe, screen_client = start_headless_server_and_client(false)
 
-    -- Run :restart on the client.
-    -- The client should start a new server while the original server should exit.
+    -- The client should attach to the new server and the original server should exit.
     feed_data(':restart +qall!\n')
     screen_client:expect([[
       ^                                                  |
