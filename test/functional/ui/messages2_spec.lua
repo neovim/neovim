@@ -150,9 +150,8 @@ describe('messages2', function()
       {1:~                                                    }|*11
       foo [+1]                            1,1           All|
     ]])
-    -- Changing 'laststatus' reveals the global statusline with a pager height
-    -- exceeding the available lines: #38008.
-    command('tabonly | call nvim_echo([["foo\n"]]->repeat(&lines), 1, {})')
+    -- Don't enter the pager in insert mode.
+    command('tabonly | call nvim_echo([["foo\n"]]->repeat(&lines), 1, {}) | startinsert')
     screen:expect([[
       ^x                                                    |
       {1:~                                                    }|*5
@@ -162,11 +161,30 @@ describe('messages2', function()
     ]])
     feed('<CR>')
     screen:expect([[
+                                                           |
+      ^x                                                    |
+      {1:~                                                    }|*11
+      foo [+14]                           2,1           All|
+    ]])
+    feed('<BS><Esc>')
+    command('call nvim_echo([["foo\n"]]->repeat(&lines), 1, {})')
+    screen:expect([[
+      ^x                                                    |
+      {1:~                                                    }|*5
+      {3:                                                     }|
+      foo                                                  |*6
+      foo [+8]                                             |
+    ]])
+    -- Do enter the pager in normal mode.
+    feed('<CR>')
+    screen:expect([[
       {3:                                                     }|
       ^foo                                                  |
       foo                                                  |*11
                                           1,1           Top|
     ]])
+    -- Changing 'laststatus' reveals the global statusline with a pager height
+    -- exceeding the available lines: #38008.
     command('set laststatus=3')
     screen:expect([[
       {3:                                                     }|
