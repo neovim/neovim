@@ -818,6 +818,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///          - kind (`string?`) Decides the |ui-messages| kind in the emitted message. Set "progress"
 ///            to emit a |progress-message|.
 ///          - percent (`integer?`) |progress-message| percentage.
+///          - source (`string?`) |progress-message| source.
 ///          - status (`string?`) |progress-message| status:
 ///            - "success": Process completed successfully.
 ///            - "running": Process is ongoing.
@@ -850,8 +851,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
 
   VALIDATE(is_progress
            || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
-               && opts->data.size == 0),
-           "Conflict: title/status/percent/data not allowed with kind='%s'", kind,
+               && opts->data.size == 0 && opts->source.size == 0),
+           "Conflict: title/source/status/percent/data not allowed with kind='%s'", kind,
   {
     goto error;
   });
@@ -876,7 +877,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   });
 
   MessageData msg_data = { .title = opts->title, .status = opts->status,
-                           .percent = opts->percent, .data = opts->data };
+                           .percent = opts->percent, .data = opts->data,
+                           .source = opts->source };
 
   id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data, &needs_clear);
 

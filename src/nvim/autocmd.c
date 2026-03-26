@@ -1806,6 +1806,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_MENUPOPUP
         || event == EVENT_MODECHANGED
         || event == EVENT_OPTIONSET
+        || event == EVENT_PROGRESS
         || event == EVENT_QUICKFIXCMDPOST
         || event == EVENT_QUICKFIXCMDPRE
         || event == EVENT_REMOTEREPLY

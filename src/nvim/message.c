@@ -1135,7 +1135,7 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
     return;
   }
 
-  MAXSIZE_TEMP_DICT(data, 6);
+  MAXSIZE_TEMP_DICT(data, 7);
   ArrayOf(String) messages = ARRAY_DICT_INIT;
   for (size_t i = 0; i < msg.size; i++) {
     ADD(messages, STRING_OBJ(msg.items[i].text));
@@ -1145,12 +1145,15 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
   PUT_C(data, "text", ARRAY_OBJ(messages));
   if (msg_data != NULL) {
     PUT_C(data, "percent", INTEGER_OBJ(msg_data->percent));
+    PUT_C(data, "source", STRING_OBJ(msg_data->source));
     PUT_C(data, "status", STRING_OBJ(msg_data->status));
     PUT_C(data, "title", STRING_OBJ(msg_data->title));
     PUT_C(data, "data", DICT_OBJ(msg_data->data));
   }
 
-  apply_autocmds_group(EVENT_PROGRESS, msg_data ? msg_data->title.data : "", NULL, true,
+  apply_autocmds_group(EVENT_PROGRESS,
+                       (msg_data && msg_data->source.size > 0) ? msg_data->source.data : "", NULL,
+                       false,
                        AUGROUP_ALL, NULL, NULL, &DICT_OBJ(data));
   kv_destroy(messages);
 }
