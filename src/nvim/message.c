@@ -1721,7 +1721,11 @@ void msg_start(void)
     msg_row = cmdline_row;
     msg_col = 0;
   } else if ((msg_didout || p_ch == 0) && !ui_has(kUIMessages)) {  // start message on next line
-    msg_putchar('\n');
+    if (p_ch == 0 && !msg_didout && msg_use_printf()) {
+      msg_puts_display("\n", 1, 0, false);
+    } else {
+      msg_putchar('\n');
+    }
     did_return = true;
     cmdline_row = msg_row;
   }
