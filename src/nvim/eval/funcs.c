@@ -7161,7 +7161,7 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else if (strequal(p, "state")) {
     rettv->vval.v_string = get_xdg_home(kXDGStateHome);
   } else if (strequal(p, "log")) {
-    rettv->vval.v_string = get_xdg_home(kXDGStateHome);
+    rettv->vval.v_string = concat_fnames_realloc(get_xdg_home(kXDGStateHome), "logs", true);
   } else if (strequal(p, "run")) {
     rettv->vval.v_string = stdpaths_get_xdg_var(kXDGRuntimeDir);
   } else if (strequal(p, "config_dirs")) {

@@ -67,6 +67,7 @@ API
 • Decoration provider has `on_range()` callback.
 • |nvim_get_commands()| returns `complete` as a Lua function, if it was
   defined as such.
+• `stdpath("log")` moved to `stdpath("state")/logs`.
 
 BUILD
 

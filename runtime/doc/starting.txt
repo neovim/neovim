@@ -1406,12 +1406,15 @@ CACHE DIRECTORY (DEFAULT) ~
     Unix:         ~/.cache                    ~/.cache/nvim
     Windows:      ~/AppData/Local/Temp        ~/AppData/Local/Temp/nvim-data
 
+LOG DIRECTORY (DEFAULT) ~
+                  *$XDG_STATE_HOME*/.../logs    Nvim: stdpath("log") >
+    Unix:         Not applicable              ~/.local/state/nvim/logs
+    Windows:      Not applicable              ~/AppData/Local/nvim-data/logs
+
 LOG FILE (DEFAULT) ~
                   `$NVIM_LOG_FILE`              Nvim: stdpath("log")/nvim.log >
-    Unix:         ~/.local/state/nvim         ~/.local/state/nvim/nvim.log
-    Windows:      ~/AppData/Local/nvim-data   ~/AppData/Local/nvim-data/nvim.log
-
-Note that stdpath("log") is currently an alias for stdpath("state").
+    Unix:         ~/.local/state/nvim         ~/.local/state/nvim/logs/nvim.log
+    Windows:      ~/AppData/Local/nvim-data   ~/AppData/Local/nvim-data/logs/nvim.log
 
 ADDITIONAL CONFIGS DIRECTORY (DEFAULT) ~
                   *$XDG_CONFIG_DIRS*            Nvim: stdpath("config_dirs") >
@@ -1449,8 +1452,8 @@ LOG FILE                                        *log* *$NVIM_LOG_FILE* *E5430*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
 debugging, plugins and RPC clients. >
         :echo $NVIM_LOG_FILE
-Default location is stdpath("log")/log ($XDG_STATE_HOME/nvim/nvim.log) unless
-that path is inaccessible or $NVIM_LOG_FILE was set before |startup|.
+Default location is stdpath("log")/log ($XDG_STATE_HOME/nvim/logs/nvim.log)
+unless that path is inaccessible or $NVIM_LOG_FILE was set before |startup|.
 
 
  vim:et:tw=78:ts=8:sw=4:ft=help:norl:
