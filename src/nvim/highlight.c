@@ -1106,14 +1106,14 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, HlAttrs 
     blend = (int)blend0;
   }
 
-  if (HAS_KEY_X(dict, link) || HAS_KEY_X(dict, global_link)) {
+  if (HAS_KEY_X(dict, link) || HAS_KEY_X(dict, link_global)) {
     if (!link_id) {
       api_set_error(err, kErrorTypeValidation, "Invalid Key: '%s'",
-                    HAS_KEY_X(dict, global_link) ? "global_link" : "link");
+                    HAS_KEY_X(dict, link_global) ? "link_global" : "link");
       return hlattrs;
     }
-    if (HAS_KEY_X(dict, global_link)) {
-      *link_id = (int)dict->global_link;
+    if (HAS_KEY_X(dict, link_global)) {
+      *link_id = (int)dict->link_global;
       mask |= HL_GLOBAL;
     } else {
       *link_id = (int)dict->link;
