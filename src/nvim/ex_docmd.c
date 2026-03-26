@@ -44,6 +44,7 @@
 #include "nvim/eval_defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
+#include "nvim/event/proc.h"
 #include "nvim/event/socket.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
@@ -88,7 +89,6 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/os/proc.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/plines.h"
@@ -5078,8 +5078,8 @@ static void ex_restart(exarg_T *eap)
   }
 
   // Kill the new nvim server.
-  const int pid = channel->stream.proc.pid;
-  if (!os_proc_tree_kill(pid, SIGTERM)) {
+  proc_stop(&channel->stream.proc);
+  if (proc_wait(&channel->stream.proc, -1, NULL) < 0) {
     emsg("killing new nvim server failed");
   }
 
