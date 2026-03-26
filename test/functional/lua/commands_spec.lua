@@ -232,6 +232,28 @@ describe(':lua', function()
     eq('', exec_capture('1lua gvar = 42'))
     eq(42, fn.luaeval('gvar'))
   end)
+
+  it('has local environment ev', function()
+    eq('-1', exec_capture('lua =ev.startline'))
+    eq('-1', exec_capture('lua =ev.endline'))
+  end)
+
+  it('properly supplies single line ranges', function()
+    api.nvim_buf_set_lines(0, 0, 0, false, { 'foo', 'bar', 'baz' })
+
+    eq('2', exec_capture('2lua =ev.startline'))
+    eq('2', exec_capture('2lua =ev.endline'))
+  end)
+
+  it('properly supplies multiline line ranges', function()
+    api.nvim_buf_set_lines(0, 0, 0, false, { 'foo', 'bar', 'baz' })
+
+    eq('1', exec_capture('1,2lua =ev.startline'))
+    eq('2', exec_capture('1,2lua =ev.endline'))
+
+    eq('1', exec_capture('%lua =ev.startline'))
+    eq('4', exec_capture('%lua =ev.endline'))
+  end)
 end)
 
 describe(':luado command', function()
