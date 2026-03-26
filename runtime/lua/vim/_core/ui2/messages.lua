@@ -642,12 +642,14 @@ function M.set_pos(tgt)
     if cfg and (tgt or not cfg.hide) then
       local texth = api.nvim_win_text_height(win, {})
       local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
-      local hint = { 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging', 'MsgSeparator' }
+      local hint = 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging'
       cfg = { hide = false, relative = 'laststatus', col = 10000 } ---@type table
       cfg.row, cfg.height = win_row_height(t, texth.all)
       cfg.border = t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
       cfg.mouse = tgt == 'cmd' or nil
-      cfg.title = tgt == 'dialog' and { cfg.height < texth.all and hint or { '' } } or nil
+      cfg.title = tgt == 'dialog'
+          and { { ui.cmd.expand == 0 and cfg.height < texth.all and hint or '', 'MsgMore' } }
+        or nil
       api.nvim_win_set_config(win, cfg)
 
       if tgt == 'cmd' and not M.cmd_on_key then
@@ -658,7 +660,7 @@ function M.set_pos(tgt)
         set_virttext('msg', 'cmd')
         M.virt.msg[M.virt.idx.spill][1] = save_spill
         M.cmd_on_key = vim.on_key(cmd_on_key, ui.ns)
-      elseif tgt == 'dialog' and set_top_bot_spill() then
+      elseif tgt == 'dialog' and set_top_bot_spill() and #cfg.title[1][1] > 0 then
         M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)
       elseif tgt == 'msg' then
         -- Ensure last line is visible and first line is at top of window.
