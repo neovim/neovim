@@ -5027,7 +5027,7 @@ static void ex_restart(exarg_T *eap)
                                        false, true, true, detach, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
   if (!channel) {
-    ELOG("cannot create a channel job");
+    emsg("cannot create a channel job");
     return;
   }
 
