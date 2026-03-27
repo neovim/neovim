@@ -1512,6 +1512,29 @@ describe('vim.lsp.completion: integration', function()
     feed('<C-y>')
     eq('hallo', n.api.nvim_get_current_line())
   end)
+
+  it('preselect completion item', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'aaa' },
+        { label = 'zzz', preselect = true },
+        { label = 'mmm' },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect,preselect'
+    end)
+    create_server('dummy', completion_list)
+    feed('i<C-x><C-o>')
+    wait_for_pum()
+    eq(
+      2,
+      exec_lua(function()
+        return vim.fn.complete_info({ 'selected' }).selected
+      end)
+    )
+  end)
 end)
 
 describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
