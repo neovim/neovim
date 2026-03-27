@@ -117,6 +117,7 @@ API
 • |vim.secure.trust()| accepts `path` for the `allow` action.
 • |nvim_get_chan_info()| includes `exitcode` field for :terminal buffers.
 • |nvim_set_hl()| supports updating specified attributes only.
+• |TabClosed| passes tab id in |event-data|
 
 BUILD
 

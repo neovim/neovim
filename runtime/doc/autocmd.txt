@@ -1058,7 +1058,11 @@ Syntax				When the 'syntax' option has been set.  The
 				See |:syn-on|.
 							*TabClosed*
 TabClosed			After closing a tab page. <afile> expands to
-				the tab page number.
+				the tab page number. The |event-data| is a table
+				with the following fields:
+
+				- id: id of the closed tab page
+
 							*TabClosedPre*
 TabClosedPre			Before closing a tab page.  The window layout
 				is locked, thus opening and closing of windows
