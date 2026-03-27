@@ -440,6 +440,10 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.tabpage_config
 --- @field after? integer
+--- @field layout? any[]
+
+--- @class vim.api.keyset.tabpage_get
+--- @field layout? any[]
 
 --- @class vim.api.keyset.user_command
 --- @field addr? any

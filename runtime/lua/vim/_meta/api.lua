@@ -1690,11 +1690,14 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 --- Opens a new tabpage.
 ---
 --- @param buffer integer Buffer to open in the first window of the new tabpage.
---- Use 0 for current buffer.
+--- Use 0 for current buffer. Must be -1 if `layout` is specified
+--- in `config`.
 --- @param enter boolean Enter the tabpage (make it the current tabpage).
 --- @param config vim.api.keyset.tabpage_config Configuration for the new tabpage. Keys:
 --- - after: Position to insert tabpage (default: -1; after current).
 ---          0 = first, N = after Nth.
+--- - layout: Initial window layout for the tabpage, as a nested list. See `nvim_tabpage_set()` for
+---          details.
 --- @return integer # |tab-ID| of the new tabpage
 function vim.api.nvim_open_tabpage(buffer, enter, config) end
 
@@ -2350,6 +2353,30 @@ function vim.api.nvim_strwidth(text) end
 --- @param name string Variable name
 function vim.api.nvim_tabpage_del_var(tabpage, name) end
 
+--- Gets the config of a tabpage.
+---
+--- @param tabpage integer Tabpage handle, or 0 for current tabpage
+--- @param config vim.api.keyset.tabpage_get Configuration options. Reserved for future use.
+--- @return vim.api.keyset.tabpage_config # Tabpage configuration object. Keys:
+--- - layout: Window layout tree.
+---
+---   For a leaf window, it returns: `["leaf", {winid}]`
+---   For horizontally split windows, which form a column, it
+---   returns: `["col", [{nested list of windows}]]`
+---   For vertically split windows, which form a row, it returns: `["row", [{nested list of windows}]]`
+---   Example:
+---   ```vim
+---     " Only one window in the tab page
+---     echo nvim_tabpage_get(0, {}) " ['leaf', 1000]
+---     " Two horizontally split windows
+---     echo nvim_tabpage_get(0, {}) " ['col', [['leaf', 1000], ['leaf', 1001]]]
+---     " The second tab page, with three horizontally split
+---     " windows, with two vertically split windows in the
+---     " middle window
+---     echo nvim_tabpage_get(2, {}) " ['col', [['leaf', 1002], ['row', [['leaf', 1003], ['leaf', 1001]]], ['leaf', 1000]]]
+---   ```
+function vim.api.nvim_tabpage_get(tabpage, config) end
+
 --- Gets the tabpage number
 ---
 --- @param tabpage integer `tab-ID`, or 0 for current tabpage
@@ -2380,6 +2407,40 @@ function vim.api.nvim_tabpage_is_valid(tabpage) end
 --- @param tabpage integer `tab-ID`, or 0 for current tabpage
 --- @return integer[] # List of windows in `tabpage`
 function vim.api.nvim_tabpage_list_wins(tabpage) end
+
+--- Manages configuration for a tabpage.
+---
+--- @param tabpage integer Tabpage handle, or 0 for current tabpage
+--- @param config vim.api.keyset.tabpage_config The tabpage's intended configuration.  keys:
+--- - layout: The intended layout as a nested list
+---
+---   The layout param expects a nested list, similar to the result of `nvim_tabpage_get(...).layout`.
+---   Each element in the list is either a frame or a window.
+---
+---   Frames are represented by a list with two elements:
+---   - The first element is the type of the frame, either "row" or "col"
+---   - The second element is a list of the child frames/windows
+---
+---   Windows are represented by a list with three elements:
+---   - The first element is the type, always "leaf" for windows
+---   - The second element is a buffer handle or filename to be opened in the window
+---   - The third elemnt is a dictionary containing information about the window
+---     - "focused" (Boolean): Whether the window is focused
+---
+---   The following example creates two vertical splits, and focuses the one on the right:
+---
+---   ```lua
+---       vim.api.nvim_tabpage_set(0, {
+---         layout = {
+---           "row",
+---           {
+---               { "leaf", vim.api.nvim_get_current_buf() },
+---               { "leaf", vim.api.nvim_get_current_buf(), { focused = true } },
+---           }
+---         }
+---       })
+---   ```
+function vim.api.nvim_tabpage_set(tabpage, config) end
 
 --- Sets a tab-scoped (t:) variable
 ---

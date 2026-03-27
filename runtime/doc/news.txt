@@ -489,6 +489,8 @@ VIMSCRIPT
 • |wildtrigger()| triggers command-line expansion.
 • |v:vim_did_init| is set after sourcing |init.vim| but before |load-plugins|.
 
+• Added |nvim_tabpage_get()| and |nvim_tabpage_set()| to manage tabpage configuration.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
