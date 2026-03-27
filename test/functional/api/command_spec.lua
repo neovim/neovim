@@ -928,6 +928,142 @@ describe('nvim_create_user_command', function()
     ]])
     eq('hello 12', n.exec_capture('1,2Test2'))
   end)
+
+  it('"range" specifiers', function()
+    local lines = { 'a', 'b', 'c', 'd', 'e' }
+    api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    api.nvim_win_set_cursor(0, { 3, 0 })
+
+    api.nvim_cmd({ cmd = 'delete', range = { '.' } }, {})
+    eq({ 'a', 'b', 'd', 'e' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_cmd({ cmd = 'delete', range = { '$' } }, {})
+    eq({ 'a', 'b', 'd' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    -- offset specifiers
+    api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    api.nvim_cmd({ cmd = 'delete', range = { '.+1' } }, {})
+    eq({ 'a', 'c', 'd', 'e' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    api.nvim_cmd({ cmd = 'delete', range = { '$-1' } }, {})
+    eq({ 'a', 'b', 'c', 'e' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_cmd({ cmd = 'delete', range = { '%' } }, {})
+    eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    api.nvim_cmd({ cmd = 'delete', range = { '.', '$' } }, {})
+    eq({ 'a' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    -- integer + string
+    api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    api.nvim_cmd({ cmd = 'delete', range = { 2, '$' } }, {})
+    eq({ 'a' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    -- mark: set mark a on line 2, then delete from mark to end
+    api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    command('mark a')
+    api.nvim_cmd({ cmd = 'delete', range = { "'a", '$' } }, {})
+    eq({ 'a' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    -- '*' targets last visual selection
+    api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    command('normal! ggVGy')
+    api.nvim_cmd({ cmd = 'delete', range = { '*' } }, {})
+    eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    matches(
+      'Invalid range element',
+      pcall_err(api.nvim_cmd, { cmd = 'delete', range = { 'bogus' } }, {})
+    )
+
+    -- integers
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'a', 'b', 'c' })
+    api.nvim_cmd({ cmd = 'delete', range = { 1, 2 } }, {})
+    eq({ 'c' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    local test_lines = { 'aa', 'bb', 'cc', 'dd', 'ee' }
+    -- /pattern/ search range
+    api.nvim_buf_set_lines(0, 0, -1, false, test_lines)
+    api.nvim_cmd({ cmd = 'delete', range = { '/cc/' } }, {})
+    eq({ 'aa', 'bb', 'dd', 'ee' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_buf_set_lines(0, 0, -1, false, test_lines)
+    command('/cc')
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    api.nvim_cmd({ cmd = 'delete', range = { '\\/' } }, {})
+    eq({ 'aa', 'bb', 'dd', 'ee' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    command('u')
+    eq(test_lines, api.nvim_buf_get_lines(0, 0, -1, false))
+    api.nvim_win_set_cursor(0, { 5, 0 })
+    api.nvim_cmd({ cmd = 'delete', range = { '\\?' } }, {})
+    eq({ 'aa', 'bb', 'dd', 'ee' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_buf_set_lines(0, 0, -1, false, test_lines)
+    api.nvim_win_set_cursor(0, { 4, 0 })
+    api.nvim_cmd({ cmd = 'delete', range = { '?bb?' } }, {})
+    eq({ 'aa', 'cc', 'dd', 'ee' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_buf_set_lines(0, 0, -1, false, vim.list_extend(test_lines, { 'cc' }))
+    command('3s/cc/CC/')
+    eq({ 'aa', 'bb', 'CC', 'dd', 'ee', 'cc' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    api.nvim_cmd({ cmd = 'delete', range = { '\\&' } }, {})
+    eq({ 'aa', 'bb', 'CC', 'dd', 'ee' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    command('command -addr=other -range OtherDefault let g:_l2 = <line2>')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'a', 'b', 'c' })
+    api.nvim_win_set_cursor(0, { 3, 0 })
+    api.nvim_cmd({ cmd = 'OtherDefault' }, {})
+    eq(1, api.nvim_get_var('_l2'))
+  end)
+
+  it('"range" validation', function()
+    matches(
+      'Invalid range element',
+      pcall_err(api.nvim_cmd, { cmd = 'delete', range = { '$\0x' } }, {})
+    )
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'a', 'b', 'c', 'd', 'e' })
+    matches(
+      'Invalid range element',
+      pcall_err(api.nvim_cmd, { cmd = 'delete', range = { '1,3' } }, {})
+    )
+    matches(
+      'Invalid range element',
+      pcall_err(api.nvim_cmd, { cmd = 'delete', range = { '1;3' } }, {})
+    )
+    eq({ 'a', 'b', 'c', 'd', 'e' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    matches('E20: Mark not set', pcall_err(api.nvim_cmd, { cmd = 'delete', range = { "'q" } }, {}))
+    matches(
+      "'args' requires",
+      pcall_err(api.nvim_cmd, { cmd = '', range = { 1 }, args = { 'x' } }, {})
+    )
+
+    exec_lua([[vim.api.nvim_create_user_command('ArgProbe',
+      function(o) _G.probe = o.fargs end, { nargs = '*' })]])
+    api.nvim_cmd({ cmd = 'ArgProbe', args = { ' x', 'y' } }, {})
+    eq({ ' x', 'y' }, exec_lua('return _G.probe'))
+
+    matches(
+      'Invalid range element',
+      pcall_err(api.nvim_cmd, { cmd = 'delete', range = { '/cc' } }, {})
+    )
+    matches("Invalid 'range'", pcall_err(api.nvim_cmd, { cmd = '', range = { 999 } }, {}))
+  end)
+
+  it('range-only moves the cursor like Ex ":{address}"', function()
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'a', 'b', 'c' })
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    api.nvim_cmd({ cmd = '', range = { 3 } }, {})
+    eq({ 3, 0 }, api.nvim_win_get_cursor(0))
+    api.nvim_cmd({ cmd = '', range = { '.-1' } }, {})
+    eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+  end)
 end)
 
 describe('nvim_del_user_command', function()

@@ -1539,9 +1539,12 @@ bool cmd_has_expr_args(cmdidx_T cmdidx)
 /// @param[out] eap Ex command arguments
 /// @param[out] cmod Command modifiers
 /// @param[out] errormsg Error message, if any
+/// @param mode kCmdlineParseFull parses the whole line; kCmdlineParseStructured skips
+///             modifiers, nextcmd, register and count (the caller provides them).
 ///
 /// @return Success or failure
-bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **errormsg)
+bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **errormsg,
+                   CmdlineParseMode mode)
 {
   char *after_modifier = NULL;
   bool retval = false;
@@ -1566,11 +1569,16 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
   };
 
   char *orig_cmd = eap->cmd;
-  // If parse command modifiers failed but modifiers were passed, continue
-  int result = parse_command_modifiers(eap, errormsg, cmod, false);
-  after_modifier = eap->cmd;
-  if (result == FAIL && after_modifier == orig_cmd) {
-    goto end;
+
+  if (mode == kCmdlineParseFull) {
+    // If parse command modifiers failed but modifiers were passed, continue
+    int result = parse_command_modifiers(eap, errormsg, cmod, false);
+    after_modifier = eap->cmd;
+    if (result == FAIL && after_modifier == orig_cmd) {
+      goto end;
+    }
+  } else {
+    after_modifier = eap->cmd;
   }
 
   // We need the command name to know what kind of range it uses.
@@ -1638,25 +1646,27 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
 
   // Check for '|' to separate commands and '"' to start comments.
   // Don't do this for ":read !cmd" and ":write !cmd".
-  if ((eap->argt & EX_TRLBAR)) {
-    separate_nextcmd(eap);
-  } else if (cmd_has_expr_args(eap->cmdidx)) {
-    // For commands without EX_TRLBAR, check for '|' separator
-    // by skipping over expressions (including string literals)
-    char *arg = eap->arg;
-    while (*arg != NUL && *arg != '|' && *arg != '\n') {
-      char *start = arg;
-      emsg_skip++;
-      skip_expr(&arg, NULL);
-      emsg_skip--;
-      // If skip_expr didn't advance, move forward to avoid infinite loop
-      if (arg == start) {
-        arg++;
+  if (mode == kCmdlineParseFull) {
+    if ((eap->argt & EX_TRLBAR)) {
+      separate_nextcmd(eap);
+    } else if (cmd_has_expr_args(eap->cmdidx)) {
+      // For commands without EX_TRLBAR, check for '|' separator
+      // by skipping over expressions (including string literals)
+      char *arg = eap->arg;
+      while (*arg != NUL && *arg != '|' && *arg != '\n') {
+        char *start = arg;
+        emsg_skip++;
+        skip_expr(&arg, NULL);
+        emsg_skip--;
+        // If skip_expr didn't advance, move forward to avoid infinite loop
+        if (arg == start) {
+          arg++;
+        }
       }
-    }
-    if (*arg == '|' || *arg == '\n') {
-      eap->nextcmd = check_nextcmd(arg);
-      *arg = NUL;
+      if (*arg == '|' || *arg == '\n') {
+        eap->nextcmd = check_nextcmd(arg);
+        *arg = NUL;
+      }
     }
   }
   // Fail if command doesn't support bang but is used with a bang
@@ -1665,7 +1675,7 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
     goto end;
   }
   // Fail if command doesn't support a range but it is given a range
-  if (!(eap->argt & EX_RANGE) && eap->addr_count > 0) {
+  if (mode == kCmdlineParseFull && !(eap->argt & EX_RANGE) && eap->addr_count > 0) {
     *errormsg = _(e_norange);
     goto end;
   }
@@ -1674,10 +1684,12 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
     set_cmd_dflall_range(eap);
   }
 
-  // Parse register and count
-  parse_register(eap);
-  if (parse_count(eap, errormsg, false) == FAIL) {
-    goto end;
+  // Parse register and count from the command line.
+  if (mode == kCmdlineParseFull) {
+    parse_register(eap);
+    if (parse_count(eap, errormsg, false) == FAIL) {
+      goto end;
+    }
   }
 
   // Remove leading whitespace and colon from next command
@@ -1685,7 +1697,7 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
     eap->nextcmd = skip_colon_white(eap->nextcmd, true);
   }
 
-  // Set the "magic" values (characters that get treated specially)
+  // Set default magic flags from argt.
   eap->magic.file = eap->argt & EX_XFILE;
   eap->magic.bar = eap->argt & EX_TRLBAR;
 

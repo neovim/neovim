@@ -160,6 +160,8 @@ API
 • |nvim_set_option_value()| accepts a new `operation` field to modify the
   existing option value.
 • |nvim_set_option_value()| returns the new option value.
+• |nvim_cmd()| accepts Ex address strings such as ".", "$", "%", "'m" and
+  "/pat/" in the "range" field.
 
 BUILD
 
@@ -377,6 +379,8 @@ These existing features changed their behavior.
 • Markdown inline highlighting now conceals the backslash in backslash escapes.
 • Markdown inline backslash escapes and hard line breaks no longer use the
   `@string.escape` capture.
+• |nvim_cmd()| reports unknown commands with |E492| instead of
+  "Command not found".
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

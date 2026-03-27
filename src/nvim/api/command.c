@@ -31,6 +31,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/register.h"
+#include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/usercmd.h"
@@ -132,7 +133,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
 
-  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg)) {
+  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg, kCmdlineParseFull)) {
     if (errormsg != NULL) {
       api_set_error(err, kErrorTypeException, "Parsing command-line: %s", errormsg);
     } else {
@@ -321,6 +322,127 @@ end:
   return result;
 }
 
+/// Check whether a string is a valid Ex range element.
+///
+/// @param[out] errmsg  Error message from the address parser, if any.
+static bool valid_range_element(String str, const char **errmsg)
+{
+  char *s = xmemdupz(str.data, str.size);
+  exarg_T ea;
+  CLEAR_FIELD(ea);
+  ea.cmd = s;
+  ea.cmdlinep = &s;
+  ea.line1 = 1;
+  ea.line2 = 1;
+  // Validate using line-address syntax. Command-specific range acceptance
+  // (EX_RANGE) is checked later by nvim_cmd() after command lookup.
+  ea.addr_type = ADDR_LINES;
+  const pos_T save_cursor = curwin->w_cursor;
+  save_last_search_pattern();
+
+  // The whole string must be consumed and hold a single address. "%" and "*"
+  // are counted twice by parse_cmd_address(), anything else above 1 had a "," or ";".
+  bool ok = parse_cmd_address(&ea, errmsg, true) == OK
+            && (size_t)(ea.cmd - s) == str.size
+            && (ea.addr_count == 1
+                || (str.size == 1 && (str.data[0] == '%' || str.data[0] == '*')));
+
+  // Reject an unterminated /pat or ?pat: text serialized after the element
+  // (the ',' separator or the command name) would be absorbed into the pattern.
+  int xp_ctx = EXPAND_UNSUCCESSFUL;
+  skip_range(s, &xp_ctx);
+  ok = ok && xp_ctx != EXPAND_NOTHING;
+
+  curwin->w_cursor = save_cursor;
+  restore_last_search_pattern();
+  xfree(s);
+  return ok;
+}
+
+/// Build a command line from Dict(cmd) for parse_cmdline().
+/// Caller must xfree() the result.
+static char *cmd_dict_to_str(Dict(cmd) *cmd, Error *err)
+{
+  StringBuilder sb = KV_INITIAL_VALUE;
+
+  if (HAS_KEY(cmd, cmd, range)) {
+    for (size_t i = 0; i < cmd->range.size; i++) {
+      if (i > 0) {
+        kv_push(sb, ',');
+      }
+
+      Object elem = cmd->range.items[i];
+      switch (elem.type) {
+      case kObjectTypeInteger:
+        VALIDATE_EXP(elem.data.integer >= 0, "range element", "non-negative Integer", NULL, {
+          goto fail;
+        });
+        kv_printf(sb, "%" PRId64, elem.data.integer);
+        break;
+      case kObjectTypeString: {
+        const char *errmsg = NULL;
+        if (!valid_range_element(elem.data.string, &errmsg)) {
+          if (errmsg != NULL) {
+            api_set_error(err, kErrorTypeException, "Invalid range element: %s", errmsg);
+          } else {
+            api_set_error(err, kErrorTypeValidation,
+                          "Invalid range element: expected valid address, got %s",
+                          elem.data.string.data);
+          }
+          goto fail;
+        }
+        kv_concat_len(sb, elem.data.string.data, elem.data.string.size);
+        break;
+      }
+      default:
+        VALIDATE_EXP(false, "range element", "valid type", api_typename(elem.type), {
+          goto fail;
+        });
+      }
+    }
+  }
+
+  kv_concat_len(sb, cmd->cmd.data, cmd->cmd.size);
+
+  if (HAS_KEY(cmd, cmd, args)) {
+    for (size_t i = 0; i < cmd->args.size; i++) {
+      kv_push(sb, ' ');
+
+      Object elem = cmd->args.items[i];
+      switch (elem.type) {
+      case kObjectTypeString:
+        VALIDATE_EXP(*skipwhite(elem.data.string.data) != NUL,
+                     "command arg", "non-whitespace", NULL, {
+          goto fail;
+        });
+        kv_concat_len(sb, elem.data.string.data, elem.data.string.size);
+        break;
+      case kObjectTypeBoolean:
+        kv_printf(sb, "%d", elem.data.boolean ? 1 : 0);
+        break;
+      case kObjectTypeBuffer:
+      case kObjectTypeWindow:
+      case kObjectTypeTabpage:
+      case kObjectTypeInteger:
+        kv_printf(sb, "%" PRId64, elem.data.integer);
+        break;
+      default:
+        VALIDATE(false, "Invalid command arg: expected valid type, got %s",
+                 api_typename(elem.type), {
+          goto fail;
+        });
+      }
+    }
+  }
+
+  kv_push(sb, NUL);
+  return sb.items;
+
+fail:
+  kv_destroy(sb);
+  return NULL;
+}
+
 /// Executes an Ex command `cmd`, specified as a Dict with the same structure as returned by
 /// |nvim_parse_cmd()|.
 ///
@@ -347,6 +469,10 @@ end:
 /// @param cmd       Command to execute, a Dict with the same structure as the return value of
 ///                  |nvim_parse_cmd()| (except "addr", "nargs" and "nextcmd" are ignored).
 ///                  All keys except "cmd" are optional.
+///                  Range elements may be integers or Ex address strings such as
+///                  ".", "$", "%", "'m" and "/pat/". Each string must be a single
+///                  address; patterns are resolved when the command is parsed
+///                  and do not become the last search pattern.
 /// @param opts      Optional parameters.
 ///                  - output: (boolean, default false) Whether to return command output.
 /// @param[out] err  Error details, if any.
@@ -356,23 +482,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 {
   exarg_T ea;
   CLEAR_FIELD(ea);
-
   cmdmod_T cmod;
   CLEAR_FIELD(cmod);
-
   char *cmdline = NULL;
-  char *cmdname = NULL;
-  ArrayOf(String) args = ARRAY_DICT_INIT;
-
-  String retv = (String)STRING_INIT;
-
-#define OBJ_TO_BOOL(var, value, default, varname) \
-  do { \
-    (var) = api_object_to_bool(value, varname, default, err); \
-    if (ERROR_SET(err)) { \
-      goto end; \
-    } \
-  } while (0)
+  const char *errormsg = NULL;
+  String retv = STRING_INIT;
+  bool count_from_arg = false;
 
 #define VALIDATE_MOD(cond, mod_, name_) \
   do { \
@@ -391,256 +506,273 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
                  "cmd", "non-empty String", NULL, {
       goto end;
     });
-  }
-
-  cmdname = arena_string(arena, cmd->cmd).data;
-  ea.cmd = cmdname;
-
-  char *p = find_ex_command(&ea, NULL);
-
-  // If this looks like an undefined user command and there are CmdUndefined
-  // autocommands defined, trigger the matching autocommands.
-  if (p != NULL && ea.cmdidx == CMD_SIZE && ASCII_ISUPPER(*ea.cmd)
-      && has_event(EVENT_CMDUNDEFINED)) {
-    p = arena_string(arena, cmd->cmd).data;
-    int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
-    // If the autocommands did something and didn't cause an error, try
-    // finding the command again.
-    p = (ret && !aborting()) ? find_ex_command(&ea, NULL) : ea.cmd;
-  }
-
-  // Commands such as ":1" are "range only" commands.
-  bool range_only = ea.cmdidx == CMD_SIZE && cmd->cmd.data[0] == NUL
-                    && HAS_KEY(cmd, cmd, range) && cmd->range.size > 0;
-
-  // modifier only
-  if (ea.cmdidx == CMD_SIZE && cmd->cmd.data[0] == NUL
-      && (!HAS_KEY(cmd, cmd, range) || cmd->range.size == 0)
-      && HAS_KEY(cmd, cmd, mods)) {
-    goto end;
-  }
-  // Allow CMD_SIZE only for range-only commands (empty cmd with range)
-  VALIDATE((p != NULL && ea.cmdidx != CMD_SIZE) || range_only,
-           "Command not found: %s", cmdname, {
-    goto end;
-  });
-
-  VALIDATE(range_only || !is_cmd_ni(ea.cmdidx), "Command not implemented: %s", cmdname, {
-    goto end;
-  });
-
-  if (!range_only) {
-    const char *fullname = IS_USER_CMDIDX(ea.cmdidx)
-                           ? get_user_command_name(ea.useridx, ea.cmdidx)
-                           : get_command_name(NULL, ea.cmdidx);
-    VALIDATE(strncmp(fullname, cmdname, strlen(cmdname)) == 0,
-             "Invalid command: \"%s\"", cmdname, {
+    // Serialized args after an empty cmd would be parsed as the command name.
+    VALIDATE(!HAS_KEY(cmd, cmd, args) || cmd->args.size == 0,
+             "%s", "'args' requires non-empty 'cmd'", {
       goto end;
     });
-  }
-
-  if (range_only) {
-    ea.argt = EX_RANGE | EX_SBOXOK;
-  } else if (!IS_USER_CMDIDX(ea.cmdidx)) {
-    // Get the command flags so that we can know what type of arguments the command uses.
-    // Not required for a user command since `find_ex_command` already deals with it in that case.
-    ea.argt = excmd_get_argt(ea.cmdidx);
-  }
-
-  // Track whether the first argument was interpreted as count to avoid conflicts
-  bool count_from_first_arg = false;
-  // Parse command arguments since it's needed to get the command address type.
-  if (HAS_KEY(cmd, cmd, args)) {
-    // Special handling: for commands that support count but not regular arguments,
-    // if a single numeric argument is provided, interpret it as count
-    if (cmd->args.size == 1 && (ea.argt & EX_COUNT) && !(ea.argt & EX_EXTRA)) {
-      Object first_arg = cmd->args.items[0];
-      bool is_numeric = false;
-      int64_t count_value = 0;
-
-      if (first_arg.type == kObjectTypeInteger) {
-        is_numeric = true;
-        count_value = first_arg.data.integer;
-      } else if (first_arg.type == kObjectTypeString) {
-        // Try to parse string as a number Example: vim.api.nvim_cmd({cmd = 'copen', args = {'10'}}, {})
-        char *endptr = first_arg.data.string.data;
-        long val = getdigits_long(&endptr, false, 0);
-        // Check if entire string was consumed (valid number) and string is not empty
-        if (*endptr == '\0' && first_arg.data.string.size > 0) {
-          is_numeric = true;
-          count_value = val;
-        }
-      }
-
-      if (is_numeric && count_value >= 0) {
-        // Interpret the argument as count
-        count_from_first_arg = true;
-        ea.addr_count = 1;
-        ea.line1 = ea.line2 = (linenr_T)count_value;
-        args = arena_array(arena, 0);
-      }
-    }
-
-    if (!count_from_first_arg) {
-      // Process all arguments. Convert non-String arguments to String and check if String arguments
-      // have non-whitespace characters.
-      args = arena_array(arena, cmd->args.size);
-      for (size_t i = 0; i < cmd->args.size; i++) {
-        Object elem = cmd->args.items[i];
-        char *data_str;
-
-        switch (elem.type) {
-        case kObjectTypeBoolean:
-          data_str = arena_alloc(arena, 2, false);
-          data_str[0] = elem.data.boolean ? '1' : '0';
-          data_str[1] = NUL;
-          ADD_C(args, CSTR_AS_OBJ(data_str));
-          break;
-        case kObjectTypeBuffer:
-        case kObjectTypeWindow:
-        case kObjectTypeTabpage:
-        case kObjectTypeInteger:
-          data_str = arena_alloc(arena, NUMBUFLEN, false);
-          snprintf(data_str, NUMBUFLEN, "%" PRId64, elem.data.integer);
-          ADD_C(args, CSTR_AS_OBJ(data_str));
-          break;
-        case kObjectTypeString:
-          VALIDATE_EXP(!string_iswhite(elem.data.string), "command arg", "non-whitespace", NULL, {
-            goto end;
-          });
-          ADD_C(args, elem);
-          break;
-        default:
-          VALIDATE_EXP(false, "command arg", "valid type", api_typename(elem.type), {
-            goto end;
-          });
-          break;
-        }
-      }
-
-      bool argc_valid;
-
-      // Check if correct number of arguments is used.
-      switch (ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
-      case EX_EXTRA | EX_NOSPC | EX_NEEDARG:
-        argc_valid = args.size == 1;
-        break;
-      case EX_EXTRA | EX_NOSPC:
-        argc_valid = args.size <= 1;
-        break;
-      case EX_EXTRA | EX_NEEDARG:
-        argc_valid = args.size >= 1;
-        break;
-      case EX_EXTRA:
-        argc_valid = true;
-        break;
-      default:
-        argc_valid = args.size == 0;
-        break;
-      }
-
-      VALIDATE(argc_valid, "%s", "Wrong number of arguments", {
-        goto end;
-      });
-    }
-  }
-
-  if (!range_only) {
-    // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
-    // since it only ever checks the first argument.
-    set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
   }
 
   if (HAS_KEY(cmd, cmd, range)) {
-    VALIDATE_MOD((ea.argt & EX_RANGE), "range", cmd->cmd.data);
-    VALIDATE_EXP((cmd->range.size <= 2), "range", "<=2 elements", NULL, {
-      goto end;
-    });
-
-    Array range = cmd->range;
-    ea.addr_count = (int)range.size;
-
-    for (size_t i = 0; i < range.size; i++) {
-      Object elem = range.items[i];
-      VALIDATE_EXP((elem.type == kObjectTypeInteger && elem.data.integer >= 0),
-                   "range element", "non-negative Integer", NULL, {
-        goto end;
-      });
-    }
-
-    if (range.size > 0) {
-      ea.line1 = (linenr_T)range.items[0].data.integer;
-      ea.line2 = (linenr_T)range.items[range.size - 1].data.integer;
-    }
-
-    VALIDATE_S((invalid_range(&ea) == NULL), "range", "", {
+    VALIDATE_EXP(cmd->range.size <= 2, "range", "<=2 elements", NULL, {
       goto end;
     });
   }
-  if (ea.addr_count == 0) {
-    if (ea.argt & EX_DFLALL) {
-      set_cmd_dflall_range(&ea);  // Default range for range=%
-    } else {
-      ea.line1 = ea.line2 = get_cmd_default_range(&ea);  // Default range.
 
-      if (ea.addr_type == ADDR_OTHER) {
-        // Default is 1, not cursor.
-        ea.line2 = 1;
+  if (HAS_KEY(cmd, cmd, reg)) {
+    VALIDATE_EXP(cmd->reg.size == 1, "reg", "single character", cmd->reg.data, {
+      goto end;
+    });
+    VALIDATE(cmd->reg.data[0] != '=', "%s", "Cannot use register \"=", {
+      goto end;
+    });
+  }
+
+  if (cmd->cmd.data[0] == NUL
+      && (!HAS_KEY(cmd, cmd, range) || cmd->range.size == 0)
+      && HAS_KEY(cmd, cmd, mods)) {
+    // Accept modifier-only structured commands as a no-op for now.
+    // TODO(glepnir): apply/undo cmdmod here for full Ex path consistency.
+    goto end;
+  }
+
+  // parse_cmdline() does not trigger CmdUndefined, so do it here to keep
+  // nvim_cmd() behavior consistent with the Ex command path.
+  if (cmd->cmd.data[0] != NUL) {
+    exarg_T tmp;
+    CLEAR_FIELD(tmp);
+    tmp.cmd = cmd->cmd.data;
+    char *p = find_ex_command(&tmp, NULL);
+
+    if (p != NULL && tmp.cmdidx == CMD_SIZE && ASCII_ISUPPER(*tmp.cmd)
+        && has_event(EVENT_CMDUNDEFINED)) {
+      char *name = arena_string(arena, cmd->cmd).data;
+      apply_autocmds(EVENT_CMDUNDEFINED, name, name, true, NULL);
+      if (aborting()) {
+        goto end;
+      }
+    }
+
+    // "cmd" must be exactly one Ex command token. Abbreviations are allowed,
+    // but extra text such as arguments/comments is not.
+    VALIDATE(p != NULL && (size_t)(p - tmp.cmd) == cmd->cmd.size,
+             "Invalid command: \"%s\"", cmd->cmd.data, {
+      goto end;
+    });
+  }
+
+  cmdline = cmd_dict_to_str(cmd, err);
+  if (ERROR_SET(err)) {
+    goto end;
+  }
+
+  // Reuse the Ex parser for command lookup, range, addr_type and default range.
+  // Structured fields such as bang, register and count are applied afterwards.
+  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg, kCmdlineParseStructured)) {
+    api_set_error(err, kErrorTypeException, "%s",
+                  errormsg ? errormsg : "Parsing command-line");
+    goto end;
+  }
+
+  bool range_only = (*ea.cmd == NUL && ea.cmdidx == CMD_SIZE);
+  if (range_only) {
+    ea.argt = EX_RANGE | EX_SBOXOK;
+  } else {
+    VALIDATE(ea.cmdidx != CMD_SIZE, "Invalid command: \"%s\"", cmd->cmd.data, {
+      goto end;
+    });
+
+    VALIDATE(!is_cmd_ni(ea.cmdidx), "Command not implemented: %s", cmd->cmd.data, {
+      goto end;
+    });
+  }
+
+  if (ea.addr_type == ADDR_OTHER && ea.addr_count == 0) {
+    // default is 1, not cursor
+    ea.line2 = 1;
+  }
+
+  if (cmd->bang) {
+    VALIDATE_MOD(ea.argt & EX_BANG, "bang", cmd->cmd.data);
+    ea.forceit = true;
+  }
+
+  if (HAS_KEY(cmd, cmd, range) && !range_only) {
+    VALIDATE_MOD(ea.argt & EX_RANGE, "range", cmd->cmd.data);
+  }
+
+  // Structured args stay structured. Do not let parse_cmdline() reinterpret them.
+  if (HAS_KEY(cmd, cmd, args)) {
+    if (cmd->args.size > 0) {
+      bool use_first_arg_as_count = false;
+      if (!range_only && cmd->args.size == 1
+          && (ea.argt & EX_COUNT)
+          && !(ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG))) {
+        Object elem = cmd->args.items[0];
+        if (elem.type == kObjectTypeInteger) {
+          VALIDATE_EXP(elem.data.integer >= 0, "count", "non-negative Integer", NULL, {
+            goto end;
+          });
+          VALIDATE(!HAS_KEY(cmd, cmd, count), "%s",
+                   "Cannot specify both 'count' and numeric argument", {
+            goto end;
+          });
+          set_cmd_count(&ea, (linenr_T)elem.data.integer, true);
+          use_first_arg_as_count = true;
+          count_from_arg = true;
+        } else if (elem.type == kObjectTypeString) {
+          VALIDATE_EXP(*skipwhite(elem.data.string.data) != NUL,
+                       "command arg", "non-whitespace", NULL, {
+            goto end;
+          });
+          if (elem.data.string.size > 0 && *skipdigits(elem.data.string.data) == NUL) {
+            VALIDATE(!HAS_KEY(cmd, cmd, count), "%s",
+                     "Cannot specify both 'count' and numeric argument", {
+              goto end;
+            });
+            char *endptr = elem.data.string.data;
+            long n = getdigits_long(&endptr, false, 0);
+            set_cmd_count(&ea, (linenr_T)n, true);
+            use_first_arg_as_count = true;
+            count_from_arg = true;
+          }
+        }
+      }
+
+      if (!use_first_arg_as_count) {
+        ea.argc = cmd->args.size;
+        ea.args = xcalloc(ea.argc, sizeof(char *));
+        ea.arglens = xcalloc(ea.argc, sizeof(size_t));
+
+        // Not ea.arg: the parser skips the first arg's leading whitespace.
+        char *p = ea.cmd + cmd->cmd.size;
+        for (size_t i = 0; i < ea.argc; i++) {
+          p++;  // separator space
+          ea.args[i] = p;
+
+          Object elem = cmd->args.items[i];
+          switch (elem.type) {
+          case kObjectTypeString:
+            VALIDATE_EXP(*skipwhite(elem.data.string.data) != NUL,
+                         "command arg", "non-whitespace", NULL, {
+              goto end;
+            });
+            ea.arglens[i] = elem.data.string.size;
+            break;
+          case kObjectTypeBoolean:
+            ea.arglens[i] = 1;
+            break;
+          case kObjectTypeBuffer:
+          case kObjectTypeWindow:
+          case kObjectTypeTabpage:
+          case kObjectTypeInteger: {
+            char numbuf[NUMBUFLEN];
+            ea.arglens[i] = (size_t)snprintf(numbuf, sizeof(numbuf),
+                                             "%" PRId64, elem.data.integer);
+            break;
+          }
+          default:
+            VALIDATE(false, "Invalid command arg: expected valid type, got %s",
+                     api_typename(elem.type), {
+              goto end;
+            });
+          }
+          p += ea.arglens[i];
+        }
+
+        ea.arg = ea.args[0];  // keep leading whitespace, as build_cmdline_str() did
+
+        bool argc_valid;
+        switch (ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
+        case EX_EXTRA | EX_NOSPC | EX_NEEDARG:
+          argc_valid = ea.argc == 1;
+          break;
+        case EX_EXTRA | EX_NOSPC:
+          argc_valid = ea.argc <= 1;
+          break;
+        case EX_EXTRA | EX_NEEDARG:
+          argc_valid = ea.argc >= 1;
+          break;
+        case EX_EXTRA:
+          argc_valid = true;
+          break;
+        default:
+          argc_valid = ea.argc == 0;
+          break;
+        }
+        VALIDATE(argc_valid, "%s", "Wrong number of arguments", {
+          goto end;
+        });
+      } else {
+        // Drop the count from the cmdline, execute_cmd() would parse it again.
+        ea.arg = ea.cmd + cmd->cmd.size;
+        *ea.arg = NUL;
+      }
+    } else {
+      // Only validate argc when args key is explicitly provided.
+      // Without it, let the command itself report errors (can be suppressed by emsg_silent).
+      if (!range_only) {
+        bool argc_valid = true;
+        if ((ea.argt & EX_NEEDARG) != 0) {
+          argc_valid = false;
+        }
+        VALIDATE(argc_valid, "%s", "Wrong number of arguments", {
+          goto end;
+        });
       }
     }
   }
 
-  if (HAS_KEY(cmd, cmd, count)) {
-    VALIDATE(!count_from_first_arg, "%s", "Cannot specify both 'count' and numeric argument", {
+  if (HAS_KEY(cmd, cmd, reg)) {
+    VALIDATE_MOD(ea.argt & EX_REGSTR, "register", cmd->cmd.data);
+    VALIDATE(valid_yank_reg(cmd->reg.data[0],
+                            (!IS_USER_CMDIDX(ea.cmdidx)
+                             && ea.cmdidx != CMD_put && ea.cmdidx != CMD_iput)),
+             "Invalid register: \"%c", cmd->reg.data[0], {
       goto end;
     });
-    VALIDATE_MOD((ea.argt & EX_COUNT), "count", cmd->cmd.data);
-    VALIDATE_EXP((cmd->count >= 0), "count", "non-negative Integer", NULL, {
+    ea.regname = (uint8_t)cmd->reg.data[0];
+  }
+
+  if (HAS_KEY(cmd, cmd, count)) {
+    VALIDATE(!count_from_arg, "%s", "Cannot specify both 'count' and numeric argument", {
+      goto end;
+    });
+    VALIDATE_MOD(ea.argt & EX_COUNT, "count", cmd->cmd.data);
+    VALIDATE_EXP(cmd->count >= 0, "count", "non-negative Integer", NULL, {
       goto end;
     });
     set_cmd_count(&ea, (linenr_T)cmd->count, true);
   }
 
-  if (HAS_KEY(cmd, cmd, reg)) {
-    VALIDATE_MOD((ea.argt & EX_REGSTR), "register", cmd->cmd.data);
-    VALIDATE_EXP((cmd->reg.size == 1),
-                 "reg", "single character", cmd->reg.data, {
+  // Check the final resolved range after applying structured range/count.
+  if (HAS_KEY(cmd, cmd, range)) {
+    VALIDATE_S(invalid_range(&ea) == NULL, "range", "", {
       goto end;
     });
-    char regname = cmd->reg.data[0];
-    VALIDATE((regname != '='), "%s", "Cannot use register \"=", {
-      goto end;
-    });
-    VALIDATE(valid_yank_reg(regname,
-                            (!IS_USER_CMDIDX(ea.cmdidx)
-                             && ea.cmdidx != CMD_put && ea.cmdidx != CMD_iput)),
-             "Invalid register: \"%c", regname, {
-      goto end;
-    });
-    ea.regname = (uint8_t)regname;
   }
 
-  ea.forceit = cmd->bang;
-  VALIDATE_MOD((!ea.forceit || (ea.argt & EX_BANG)), "bang", cmd->cmd.data);
-
+  // parse_cmdline() sets the default magic flags from argt; Dict values override them.
   if (HAS_KEY(cmd, cmd, magic)) {
     Dict(cmd_magic) magic[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(magic, DictHash(cmd_magic), cmd->magic, err)) {
       goto end;
     }
-
-    ea.magic.file = HAS_KEY(magic, cmd_magic, file) ? magic->file : (ea.argt & EX_XFILE);
-    ea.magic.bar = HAS_KEY(magic, cmd_magic, bar) ? magic->bar : (ea.argt & EX_TRLBAR);
+    if (HAS_KEY(magic, cmd_magic, file)) {
+      ea.magic.file = magic->file;
+    }
+    if (HAS_KEY(magic, cmd_magic, bar)) {
+      ea.magic.bar = magic->bar;
+    }
     if (ea.magic.file) {
       ea.argt |= EX_XFILE;
     } else {
       ea.argt &= ~EX_XFILE;
     }
-  } else {
-    ea.magic.file = ea.argt & EX_XFILE;
-    ea.magic.bar = ea.argt & EX_TRLBAR;
   }
 
+  // Modifiers are not serialized into the command line, because names such as
+  // "hide" and "silent" are ambiguous: they can be modifiers or commands.
   if (HAS_KEY(cmd, cmd, mods)) {
     Dict(cmd_mods) mods[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(mods, DictHash(cmd_mods), cmd->mods, err)) {
@@ -649,12 +781,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
     if (HAS_KEY(mods, cmd_mods, filter)) {
       Dict(cmd_mods_filter) filter[1] = KEYDICT_INIT;
-
-      if (!api_dict_to_keydict(&filter, DictHash(cmd_mods_filter),
-                               mods->filter, err)) {
+      if (!api_dict_to_keydict(&filter, DictHash(cmd_mods_filter), mods->filter, err)) {
         goto end;
       }
-
       if (HAS_KEY(filter, cmd_mods_filter, pattern)) {
         cmod.cmod_filter_force = filter->force;
 
@@ -667,29 +796,21 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
       }
     }
 
-    if (HAS_KEY(mods, cmd_mods, tab)) {
-      if ((int)mods->tab >= 0) {
-        // Silently ignore negative integers to allow mods.tab to be set to -1.
-        cmod.cmod_tab = (int)mods->tab + 1;
-      }
+    if (HAS_KEY(mods, cmd_mods, tab) && (int)mods->tab >= 0) {
+      // Silently ignore negative integers to allow mods.tab to be set to -1.
+      cmod.cmod_tab = (int)mods->tab + 1;
+    }
+    if (HAS_KEY(mods, cmd_mods, verbose) && (int)mods->verbose >= 0) {
+      // Silently ignore negative integers to allow mods.verbose to be set to -1.
+      cmod.cmod_verbose = (int)mods->verbose + 1;
     }
 
-    if (HAS_KEY(mods, cmd_mods, verbose)) {
-      if ((int)mods->verbose >= 0) {
-        // Silently ignore negative integers to allow mods.verbose to be set to -1.
-        cmod.cmod_verbose = (int)mods->verbose + 1;
-      }
-    }
+    cmod.cmod_split |= mods->vertical ? WSP_VERT : 0;
+    cmod.cmod_split |= mods->horizontal ? WSP_HOR : 0;
 
-    cmod.cmod_split |= (mods->vertical ? WSP_VERT : 0);
-
-    cmod.cmod_split |= (mods->horizontal ? WSP_HOR : 0);
-
-    if (HAS_KEY(mods, cmd_mods, split)) {
-      if (*mods->split.data == NUL) {
-        // Empty string, do nothing.
-      } else if (strcmp(mods->split.data, "aboveleft") == 0
-                 || strcmp(mods->split.data, "leftabove") == 0) {
+    if (HAS_KEY(mods, cmd_mods, split) && *mods->split.data != NUL) {
+      if (strcmp(mods->split.data, "aboveleft") == 0
+          || strcmp(mods->split.data, "leftabove") == 0) {
         cmod.cmod_split |= WSP_ABOVE;
       } else if (strcmp(mods->split.data, "belowright") == 0
                  || strcmp(mods->split.data, "rightbelow") == 0) {
@@ -737,10 +858,15 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     });
   }
 
-  // Finally, build the command line string that will be stored inside ea.cmdlinep.
-  // This also sets the values of ea.cmd, ea.arg, ea.args and ea.arglens.
-  build_cmdline_str(&cmdline, &ea, &cmod, args);
   ea.cmdlinep = &cmdline;
+
+  char *newarg = replace_makeprg(&ea, ea.arg, &cmdline);
+  if (newarg != ea.arg) {
+    ea.arg = newarg;
+    XFREE_CLEAR(ea.args);
+    XFREE_CLEAR(ea.arglens);
+    ea.argc = 0;
+  }
 
   // Check for "++opt=val" argument.
   if (ea.argt & EX_ARGOPT) {
@@ -761,7 +887,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   garray_T capture_local;
   const int save_msg_silent = msg_silent;
   const bool save_redir_off = redir_off;
-  garray_T * const save_capture_ga = capture_ga;
+  garray_T *const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
 
   if (opts->output) {
@@ -790,7 +916,10 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   });
 
   if (ERROR_SET(err)) {
-    goto clear_ga;
+    if (opts->output) {
+      ga_clear(&capture_local);
+    }
+    goto end;
   }
 
   if (opts->output && capture_local.ga_len > 1) {
@@ -802,165 +931,19 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
       retv.size--;
     }
   }
-clear_ga:
+
   if (opts->output) {
     ga_clear(&capture_local);
   }
+
 end:
   xfree(cmdline);
   xfree(ea.args);
   xfree(ea.arglens);
-
   return retv;
 
-#undef OBJ_TO_BOOL
 #undef OBJ_TO_CMOD_FLAG
 #undef VALIDATE_MOD
-}
-
-/// Check if a string contains only whitespace characters.
-static bool string_iswhite(String str)
-{
-  for (size_t i = 0; i < str.size; i++) {
-    if (!ascii_iswhite(str.data[i])) {
-      // Found a non-whitespace character
-      return false;
-    } else if (str.data[i] == NUL) {
-      // Terminate at first occurrence of a NUL character
-      break;
-    }
-  }
-  return true;
-}
-
-/// Build cmdline string for command, used by `nvim_cmd()`.
-static void build_cmdline_str(char **cmdlinep, exarg_T *eap, cmdmod_T *cmod, ArrayOf(String) args)
-{
-  size_t argc = args.size;
-  StringBuilder cmdline = KV_INITIAL_VALUE;
-  kv_resize(cmdline, 32);  // Make it big enough to handle most typical commands
-
-  // Add command modifiers
-  if (cmod->cmod_tab != 0) {
-    kv_printf(cmdline, "%dtab ", cmod->cmod_tab - 1);
-  }
-  if (cmod->cmod_verbose > 0) {
-    kv_printf(cmdline, "%dverbose ", cmod->cmod_verbose - 1);
-  }
-
-  if (cmod->cmod_flags & CMOD_ERRSILENT) {
-    kv_concat(cmdline, "silent! ");
-  } else if (cmod->cmod_flags & CMOD_SILENT) {
-    kv_concat(cmdline, "silent ");
-  }
-
-  if (cmod->cmod_flags & CMOD_UNSILENT) {
-    kv_concat(cmdline, "unsilent ");
-  }
-
-  switch (cmod->cmod_split & (WSP_ABOVE | WSP_BELOW | WSP_TOP | WSP_BOT)) {
-  case WSP_ABOVE:
-    kv_concat(cmdline, "aboveleft ");
-    break;
-  case WSP_BELOW:
-    kv_concat(cmdline, "belowright ");
-    break;
-  case WSP_TOP:
-    kv_concat(cmdline, "topleft ");
-    break;
-  case WSP_BOT:
-    kv_concat(cmdline, "botright ");
-    break;
-  default:
-    break;
-  }
-
-#define CMDLINE_APPEND_IF(cond, str) \
-  do { \
-    if (cond) { \
-      kv_concat(cmdline, str); \
-    } \
-  } while (0)
-
-  CMDLINE_APPEND_IF(cmod->cmod_split & WSP_VERT, "vertical ");
-  CMDLINE_APPEND_IF(cmod->cmod_split & WSP_HOR, "horizontal ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_SANDBOX, "sandbox ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_NOAUTOCMD, "noautocmd ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_BROWSE, "browse ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_CONFIRM, "confirm ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_HIDE, "hide ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPALT, "keepalt ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPJUMPS, "keepjumps ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPMARKS, "keepmarks ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPPATTERNS, "keeppatterns ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_LOCKMARKS, "lockmarks ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_NOSWAPFILE, "noswapfile ");
-#undef CMDLINE_APPEND_IF
-
-  // Command range / count.
-  if (eap->argt & EX_RANGE) {
-    if (eap->addr_count == 1) {
-      kv_printf(cmdline, "%" PRIdLINENR, eap->line2);
-    } else if (eap->addr_count > 1) {
-      kv_printf(cmdline, "%" PRIdLINENR ",%" PRIdLINENR, eap->line1, eap->line2);
-      eap->addr_count = 2;  // Make sure address count is not greater than 2
-    }
-  }
-
-  // Keep the index of the position where command name starts, so eap->cmd can point to it.
-  size_t cmdname_idx = cmdline.size;
-  kv_concat(cmdline, eap->cmd);
-
-  // Command bang.
-  if (eap->argt & EX_BANG && eap->forceit) {
-    kv_concat(cmdline, "!");
-  }
-
-  // Command register.
-  if (eap->argt & EX_REGSTR && eap->regname) {
-    kv_printf(cmdline, " %c", eap->regname);
-  }
-
-  eap->argc = argc;
-  eap->arglens = eap->argc > 0 ? xcalloc(argc, sizeof(size_t)) : NULL;
-  size_t argstart_idx = cmdline.size;
-  for (size_t i = 0; i < argc; i++) {
-    String s = args.items[i].data.string;
-    eap->arglens[i] = s.size;
-    kv_concat(cmdline, " ");
-    kv_concat_len(cmdline, s.data, s.size);
-  }
-
-  // Done appending to cmdline, ensure it is NUL terminated
-  kv_push(cmdline, NUL);
-
-  // Now that all the arguments are appended, use the command index and argument indices to set the
-  // values of eap->cmd, eap->arg and eap->args.
-  eap->cmd = cmdline.items + cmdname_idx;
-  eap->args = eap->argc > 0 ? xcalloc(argc, sizeof(char *)) : NULL;
-  size_t offset = argstart_idx;
-  for (size_t i = 0; i < argc; i++) {
-    offset++;  // Account for space
-    eap->args[i] = cmdline.items + offset;
-    offset += eap->arglens[i];
-  }
-  // If there isn't an argument, make eap->arg point to end of cmdline.
-  eap->arg = argc > 0 ? eap->args[0]
-                      : cmdline.items + cmdline.size - 1;  // Subtract 1 to account for NUL
-
-  // Finally, make cmdlinep point to the cmdline string.
-  *cmdlinep = cmdline.items;
-
-  // Replace, :make and :grep with 'makeprg' and 'grepprg'.
-  char *p = replace_makeprg(eap, eap->arg, cmdlinep);
-  if (p != eap->arg) {
-    // If replace_makeprg() modified the cmdline string, correct the eap->arg pointer.
-    eap->arg = p;
-    // This cannot be a user command, so eap->args will not be used.
-    XFREE_CLEAR(eap->args);
-    XFREE_CLEAR(eap->arglens);
-    eap->argc = 0;
-  }
 }
 
 // uncrustify:off
