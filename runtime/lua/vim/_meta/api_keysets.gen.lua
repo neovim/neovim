@@ -34,7 +34,7 @@ error('Cannot require a meta file')
 --- @field mods? vim.api.keyset.cmd.mods
 --- @field nargs? integer|"?"|"+"|"*"
 --- @field nextcmd? string
---- @field range? integer[]
+--- @field range? (integer|string)[]
 --- @field reg? string
 
 --- @class vim.api.keyset.cmd_magic
