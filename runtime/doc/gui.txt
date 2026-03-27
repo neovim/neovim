@@ -87,7 +87,7 @@ Restart Nvim
 <
                 Note: Only works if the UI and server are on the same system.
                 Note: If the UI hasn't implemented the "restart" UI event,
-                this command is equivalent to `:qall` (or |+cmd|, if given).
+                this command will lead to a dangling server process.
 
 ------------------------------------------------------------------------------
 Connect UI to a different server
