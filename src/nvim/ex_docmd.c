@@ -4970,6 +4970,11 @@ static void ex_restart(exarg_T *eap)
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
   const char *listen_arg = NULL;
+#ifdef MSWIN
+# define HANDLE_LISTEN_ADDR li = next_li; continue
+#else
+# define HANDLE_LISTEN_ADDR listen_arg = addr
+#endif
   TV_LIST_ITER_CONST(l, li, {
     const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
     // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
@@ -4987,7 +4992,7 @@ static void ex_restart(exarg_T *eap)
       if (next_li != NULL) {
         const char *addr = tv_get_string(TV_LIST_ITEM_TV(next_li));
         if (strstr(addr, ":") || strstr(addr, "/") || strstr(addr, "\\")) {
-          listen_arg = addr;
+          HANDLE_LISTEN_ADDR;
         }
       }
     }
@@ -5002,6 +5007,7 @@ static void ex_restart(exarg_T *eap)
       }
     }
   });
+#undef HANDLE_LISTEN_ADDR
 
   bool server_stopped = false;
   if (listen_arg != NULL) {
