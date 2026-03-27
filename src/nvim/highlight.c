@@ -1039,13 +1039,12 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, HlAttrs 
 
 #define CHECK_FLAG_WITH_KEY(d, m, name, extra, flag) \
   if (HAS_KEY_X(d, name)) { \
+    int32_t flag_ = (flag); \
+    int32_t cmask_ = (flag_ & HL_UNDERLINE_MASK) ? HL_UNDERLINE_MASK : flag_; \
     if (d->name##extra) { \
-      if (flag & HL_UNDERLINE_MASK) { \
-        m &= ~HL_UNDERLINE_MASK; \
-      } \
-      m |= flag; \
-    } else { \
-      m &= ~flag; \
+      m = (m & ~cmask_) | flag_; \
+    } else if ((m & cmask_) == flag_) { \
+      m &= ~cmask_; \
     } \
   }
 
