@@ -3378,11 +3378,14 @@ describe('progress-message', function()
     }, 'progress autocmd receives progress messages')
 
     -- can update progress messages
-    api.nvim_echo(
-      { { 'test-message-updated' } },
-      true,
-      { id = id, kind = 'progress', title = 'TestSuit', percent = 50, status = 'running' }
-    )
+    api.nvim_echo({ { 'test-message-updated' } }, true, {
+      id = id,
+      kind = 'progress',
+      source = 'tests',
+      title = 'TestSuit',
+      percent = 50,
+      status = 'running',
+    })
     screen:expect({
       grid = [[
         ^                         |
@@ -3406,7 +3409,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message-updated' },
       percent = 50,
-      source = '',
+      source = 'tests',
       status = 'running',
       title = 'TestSuit',
       id = 1,
@@ -3417,7 +3420,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message (success)' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 100, status = 'success' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 100, status = 'success' }
     )
     screen:expect({
       grid = [[
@@ -3443,7 +3446,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message (fail)' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 35, status = 'failed' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 35, status = 'failed' }
     )
     screen:expect({
       grid = [[
@@ -3469,7 +3472,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message (cancel)' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 30, status = 'cancel' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 30, status = 'cancel' }
     )
     screen:expect({
       grid = [[
@@ -3495,7 +3498,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message (no-tile or percent)' } },
       true,
-      { kind = 'progress', status = 'cancel' }
+      { kind = 'progress', source = 'tests', status = 'cancel' }
     )
     screen:expect({
       grid = [[
@@ -3517,7 +3520,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message-updated' } },
       true,
-      { id = id, kind = 'progress', percent = 80, status = 'running' }
+      { id = id, kind = 'progress', source = 'other_source', percent = 80, status = 'running' }
     )
     assert_progress_autocmd(nil, 'No progress message with Tests source yet')
 
@@ -3545,7 +3548,7 @@ describe('progress-message', function()
       kind = 'progress',
       title = 'TestSuit',
       percent = 10,
-      source = '',
+      source = 'tests',
       status = 'running',
       data = { test_attribute = 1 },
     })
@@ -3572,7 +3575,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message' },
       percent = 10,
-      source = '',
+      source = 'tests',
       status = 'running',
       title = 'TestSuit',
       id = 1,
@@ -3614,7 +3617,7 @@ describe('progress-message', function()
         api.nvim_echo,
         { { 'test-message' } },
         false,
-        { kind = 'progress', status = 'live' }
+        { kind = 'progress', source = 'tests', status = 'live' }
       )
     )
 
@@ -3625,7 +3628,7 @@ describe('progress-message', function()
         api.nvim_echo,
         { { 'test-message' } },
         false,
-        { kind = 'progress', status = 'running', percent = -1 }
+        { kind = 'progress', source = 'tests', status = 'running', percent = -1 }
       )
     )
 
@@ -3635,18 +3638,31 @@ describe('progress-message', function()
         api.nvim_echo,
         { { 'test-message' } },
         false,
-        { kind = 'progress', status = 'running', percent = 101 }
+        { kind = 'progress', source = 'tests', status = 'running', percent = 101 }
       )
     )
 
     -- throws error if data is not a dictionary
     eq(
       "Invalid 'data': expected Dict, got String",
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, {
+        kind = 'progress',
+        source = 'tests',
+        title = 'TestSuit',
+        percent = 10,
+        status = 'running',
+        data = 'test',
+      })
+    )
+
+    -- throws error if source is not given
+    eq(
+      "Required: 'opts.source'",
       t.pcall_err(
         api.nvim_echo,
         { { 'test-message' } },
         false,
-        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running', data = 'test' }
+        { kind = 'progress', status = 'running' }
       )
     )
   end)
@@ -3655,15 +3671,18 @@ describe('progress-message', function()
     local id = api.nvim_echo(
       { { 'test-message 10' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 10, status = 'running' }
     )
     eq('TestSuit:  10% test-message 10', exec_capture('messages'))
 
-    api.nvim_echo(
-      { { 'test-message 20' } },
-      true,
-      { id = id, kind = 'progress', title = 'TestSuit', percent = 20, status = 'running' }
-    )
+    api.nvim_echo({ { 'test-message 20' } }, true, {
+      id = id,
+      kind = 'progress',
+      source = 'tests',
+      title = 'TestSuit',
+      percent = 20,
+      status = 'running',
+    })
     eq('TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20', exec_capture('messages'))
 
     api.nvim_echo({ { 'middle msg' } }, true, {})
@@ -3671,21 +3690,27 @@ describe('progress-message', function()
       'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg',
       exec_capture('messages')
     )
-    api.nvim_echo(
-      { { 'test-message 30' } },
-      true,
-      { id = id, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
-    )
+    api.nvim_echo({ { 'test-message 30' } }, true, {
+      id = id,
+      kind = 'progress',
+      source = 'tests',
+      title = 'TestSuit',
+      percent = 30,
+      status = 'running',
+    })
     eq(
       'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg\nTestSuit:  30% test-message 30',
       exec_capture('messages')
     )
 
-    api.nvim_echo(
-      { { 'test-message 50' } },
-      true,
-      { id = id, kind = 'progress', title = 'TestSuit', percent = 50, status = 'running' }
-    )
+    api.nvim_echo({ { 'test-message 50' } }, true, {
+      id = id,
+      kind = 'progress',
+      source = 'tests',
+      title = 'TestSuit',
+      percent = 50,
+      status = 'running',
+    })
     eq(
       'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg\nTestSuit:  30% test-message 30\nTestSuit:  50% test-message 50',
       exec_capture('messages')
@@ -3696,14 +3721,14 @@ describe('progress-message', function()
     local id1 = api.nvim_echo(
       { { 'test-message 10' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 10, status = 'running' }
     )
     eq(1, id1)
 
     local id2 = api.nvim_echo(
       { { 'test-message 20' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 20, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 20, status = 'running' }
     )
     eq(2, id2)
 
@@ -3716,30 +3741,36 @@ describe('progress-message', function()
     local id5 = api.nvim_echo(
       { { 'test-message 30' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 30, status = 'running' }
     )
     eq(5, id5)
 
     -- updating progress message does not create new msg-id
-    local id5_update = api.nvim_echo(
-      { { 'test-message 40' } },
-      true,
-      { id = id5, kind = 'progress', title = 'TestSuit', percent = 40, status = 'running' }
-    )
+    local id5_update = api.nvim_echo({ { 'test-message 40' } }, true, {
+      id = id5,
+      kind = 'progress',
+      source = 'tests',
+      title = 'TestSuit',
+      percent = 40,
+      status = 'running',
+    })
     eq(id5, id5_update)
 
     local id6 = api.nvim_echo(
       { { 'test-message 30' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 30, status = 'running' }
     )
     eq(6, id6)
 
-    local id7 = api.nvim_echo(
-      { { 'supports str-id' } },
-      true,
-      { id = 'str-id', kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
-    )
+    local id7 = api.nvim_echo({ { 'supports str-id' } }, true, {
+      id = 'str-id',
+      kind = 'progress',
+      source = 'tests',
+      title = 'TestSuit',
+      percent = 30,
+      status = 'running',
+    })
     eq('str-id', id7)
 
     -- internal messages are also assigned an ID (and thus advance the next progress ID)
@@ -3747,18 +3778,21 @@ describe('progress-message', function()
     local id8 = api.nvim_echo(
       { { 'test-message 30' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 30, status = 'running' }
     )
     eq(8, id8)
   end)
 
   it('accepts caller-defined id (string)', function()
     -- string id works
-    local id = api.nvim_echo(
-      { { 'supports str-id' } },
-      true,
-      { id = 'str-id', kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
-    )
+    local id = api.nvim_echo({ { 'supports str-id' } }, true, {
+      id = 'str-id',
+      kind = 'progress',
+      source = 'tests',
+      title = 'TestSuit',
+      percent = 30,
+      status = 'running',
+    })
     eq('str-id', id)
 
     screen:expect({
@@ -3781,16 +3815,19 @@ describe('progress-message', function()
       },
     })
 
-    local id_update = api.nvim_echo(
-      { { 'supports str-id updated' } },
-      true,
-      { id = id, kind = 'progress', title = 'testsuit', percent = 40, status = 'running' }
-    )
+    local id_update = api.nvim_echo({ { 'supports str-id updated' } }, true, {
+      id = id,
+      kind = 'progress',
+      source = 'tests',
+      title = 'testsuit',
+      percent = 40,
+      status = 'running',
+    })
     eq(id, id_update)
     assert_progress_autocmd({
       text = { 'supports str-id updated' },
       percent = 40,
-      source = '',
+      source = 'tests',
       status = 'running',
       title = 'testsuit',
       id = 'str-id',
@@ -3804,7 +3841,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuit', percent = 10, status = 'running' }
     )
     screen:expect([[
       ^                                        |
@@ -3818,7 +3855,7 @@ describe('progress-message', function()
       kind = 'progress',
       title = 'TestSuit',
       percent = 10,
-      source = '',
+      source = 'tests',
       status = 'running',
     })
 
@@ -3844,7 +3881,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message' },
       percent = 10,
-      source = '',
+      source = 'tests',
       status = 'running',
       title = 'TestSuit',
       id = 1,
@@ -3857,7 +3894,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message: not shown in cmdline' } },
       true,
-      { kind = 'progress', title = 'TestSuite', percent = 10, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuite', percent = 10, status = 'running' }
     )
     screen:expect([[
       ^                         |
@@ -3867,7 +3904,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message: not shown in cmdline' },
       percent = 10,
-      source = '',
+      source = 'tests',
       status = 'running',
       title = 'TestSuite',
       id = 1,
@@ -3878,7 +3915,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message: shown in cmdline' } },
       true,
-      { kind = 'progress', title = 'TestSuite', percent = 10, status = 'running' }
+      { kind = 'progress', source = 'tests', title = 'TestSuite', percent = 10, status = 'running' }
     )
     screen:expect({
       grid = [[
@@ -3903,7 +3940,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message: shown in cmdline' },
       percent = 10,
-      source = '',
+      source = 'tests',
       status = 'running',
       title = 'TestSuite',
       id = 2,
