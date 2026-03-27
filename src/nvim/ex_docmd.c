@@ -4969,7 +4969,7 @@ static void ex_restart(exarg_T *eap)
 
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
-  const char *listen_arg = NULL;
+  const char *listen_addr_deferred = NULL;
   TV_LIST_ITER_CONST(l, li, {
     const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
     // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
@@ -4986,8 +4986,11 @@ static void ex_restart(exarg_T *eap)
       listitem_T *next_li = TV_LIST_ITEM_NEXT(l, li);
       if (next_li != NULL) {
         const char *addr = tv_get_string(TV_LIST_ITEM_TV(next_li));
-        if (strstr(addr, ":") || strstr(addr, "/") || strstr(addr, "\\")) {
-          listen_arg = addr;
+        if (server_find(addr)) {
+          // Drop --listen and its argument. Restore then later.
+          listen_addr_deferred = addr;
+          li = next_li;
+          continue;
         }
       }
     }
@@ -5002,12 +5005,6 @@ static void ex_restart(exarg_T *eap)
       }
     }
   });
-
-  bool server_stopped = false;
-  if (listen_arg != NULL) {
-    // Stop listening on the --listen address so that the new server can listen.
-    server_stopped = server_stop(listen_arg, true, true);
-  }
 
   CallbackReader on_err = CALLBACK_READER_INIT;
   // This temporary bootstrap channel is closed intentionally once we obtain
@@ -5068,6 +5065,35 @@ static void ex_restart(exarg_T *eap)
   }
   xfree(listen_addr);
 
+  lua_State *lstate = get_global_lstate();
+  lua_getglobal(lstate, "vim");
+  lua_getfield(lstate, -1, "_listen_addr");
+  char *listen_addr_from_lua = NULL;
+  if (lua_isstring(lstate, -1)) {
+    size_t len;
+    const char *s = lua_tolstring(lstate, -1, &len);
+    listen_addr_from_lua = xmemdupz(s, len);
+    listen_addr_deferred = listen_addr_from_lua;
+  }
+  lua_pop(lstate, 2);
+
+  if (listen_addr_deferred != NULL) {
+    (void)server_stop(listen_addr_deferred, true, true);
+
+    MAXSIZE_TEMP_ARRAY(serverstart_args, 1);
+    ADD_C(serverstart_args, CSTR_AS_OBJ(listen_addr_deferred));
+    MAXSIZE_TEMP_ARRAY(lua_args, 2);
+    // Save the listen address as vim._listen_addr, for further restarts.
+    ADD_C(lua_args, STATIC_CSTR_AS_OBJ("vim._listen_addr = vim.fn.serverstart(...)"));
+    ADD_C(lua_args, ARRAY_OBJ(serverstart_args));
+    result_mem = NULL;
+    rpc_send_call(channel->id, "nvim_exec_lua", lua_args, &result_mem, &err);
+    if (ERROR_SET(&err)) {
+      api_clear_error(&err);
+    }
+    arena_mem_free(result_mem);
+  }
+
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *quit_cmd_copy = NULL;
 
@@ -5092,11 +5118,10 @@ static void ex_restart(exarg_T *eap)
     emsg("killing new nvim server failed");
   }
 
-  // Restart listening on the --listen address.
-  if (server_stopped && server_start(listen_arg) != 0) {
-    semsg("couldn't resume listening on %s", listen_arg);
-    return;
+  if (listen_addr_deferred != NULL && server_start(listen_addr_deferred) != 0) {
+    semsg("couldn't resume listening on %s", listen_addr_deferred);
   }
+  xfree(listen_addr_from_lua);
 }
 
 /// ":close": close current window, unless it is the last one

@@ -212,6 +212,22 @@ int server_start(const char *addr)
   return 0;
 }
 
+bool server_find(const char *endpoint)
+{
+  char addr[ADDRESS_MAX_SIZE];
+
+  // Trim to `ADDRESS_MAX_SIZE`
+  xstrlcpy(addr, endpoint, sizeof(addr));
+
+  for (int i = 0; i < watchers.ga_len; i++) {
+    SocketWatcher *watcher = ((SocketWatcher **)watchers.ga_data)[i];
+    if (strcmp(addr, watcher->addr) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Stops listening on the address specified by `endpoint`.
 ///
 /// @param endpoint Address of the server.
