@@ -3345,7 +3345,7 @@ describe('progress-message', function()
     local id = api.nvim_echo(
       { { 'test-message' } },
       true,
-      { kind = 'progress', title = 'testsuit', percent = 10, status = 'running' }
+      { kind = 'progress', title = 'testsuit', percent = 10, status = 'running', source = 'tests' }
     )
 
     screen:expect({
@@ -3370,6 +3370,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message' },
       percent = 10,
+      source = 'tests',
       status = 'running',
       title = 'testsuit',
       id = 1,
@@ -3405,6 +3406,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message-updated' },
       percent = 50,
+      source = '',
       status = 'running',
       title = 'TestSuit',
       id = 1,
@@ -3510,25 +3512,29 @@ describe('progress-message', function()
       },
     })
 
-    -- progress event can filter by title
-    setup_autocmd('Special Title')
+    -- progress event can filter by source
+    setup_autocmd('Tests')
     api.nvim_echo(
       { { 'test-message-updated' } },
       true,
       { id = id, kind = 'progress', percent = 80, status = 'running' }
     )
-    assert_progress_autocmd(nil, 'No progress message with Special Title yet')
+    assert_progress_autocmd(nil, 'No progress message with Tests source yet')
 
-    api.nvim_echo(
-      { { 'test-message-updated' } },
-      true,
-      { id = id, kind = 'progress', title = 'Special Title', percent = 100, status = 'success' }
-    )
+    api.nvim_echo({ { 'test-message-updated' } }, true, {
+      id = id,
+      kind = 'progress',
+      title = 'Title',
+      percent = 100,
+      status = 'success',
+      source = 'Tests',
+    })
     assert_progress_autocmd({
       text = { 'test-message-updated' },
       percent = 100,
+      source = 'Tests',
       status = 'success',
-      title = 'Special Title',
+      title = 'Title',
       id = 1,
       data = {},
     }, 'Progress autocmd receives progress update')
@@ -3539,6 +3545,7 @@ describe('progress-message', function()
       kind = 'progress',
       title = 'TestSuit',
       percent = 10,
+      source = '',
       status = 'running',
       data = { test_attribute = 1 },
     })
@@ -3565,6 +3572,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message' },
       percent = 10,
+      source = '',
       status = 'running',
       title = 'TestSuit',
       id = 1,
@@ -3575,23 +3583,28 @@ describe('progress-message', function()
   it('validation', function()
     -- throws error if title, status, percent, data is used in non progress message
     eq(
-      "Conflict: title/status/percent/data not allowed with kind='echo'",
+      "Conflict: title/source/status/percent/data not allowed with kind='echo'",
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { title = 'TestSuit' })
     )
 
     eq(
-      "Conflict: title/status/percent/data not allowed with kind='echo'",
+      "Conflict: title/source/status/percent/data not allowed with kind='echo'",
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { status = 'running' })
     )
 
     eq(
-      "Conflict: title/status/percent/data not allowed with kind='echo'",
+      "Conflict: title/source/status/percent/data not allowed with kind='echo'",
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { percent = 10 })
     )
 
     eq(
-      "Conflict: title/status/percent/data not allowed with kind='echo'",
+      "Conflict: title/source/status/percent/data not allowed with kind='echo'",
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { data = { tag = 'test' } })
+    )
+
+    eq(
+      "Conflict: title/source/status/percent/data not allowed with kind='echo'",
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { source = 'tests' })
     )
 
     -- throws error if anything other then running/success/failed/cancel is used in status
@@ -3777,6 +3790,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'supports str-id updated' },
       percent = 40,
+      source = '',
       status = 'running',
       title = 'testsuit',
       id = 'str-id',
@@ -3804,6 +3818,7 @@ describe('progress-message', function()
       kind = 'progress',
       title = 'TestSuit',
       percent = 10,
+      source = '',
       status = 'running',
     })
 
@@ -3829,6 +3844,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message' },
       percent = 10,
+      source = '',
       status = 'running',
       title = 'TestSuit',
       id = 1,
@@ -3851,6 +3867,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message: not shown in cmdline' },
       percent = 10,
+      source = '',
       status = 'running',
       title = 'TestSuite',
       id = 1,
@@ -3886,6 +3903,7 @@ describe('progress-message', function()
     assert_progress_autocmd({
       text = { 'test-message: shown in cmdline' },
       percent = 10,
+      source = '',
       status = 'running',
       title = 'TestSuite',
       id = 2,

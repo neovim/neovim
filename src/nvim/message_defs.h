@@ -13,6 +13,7 @@ typedef kvec_t(HlMessageChunk) HlMessage;
 #define MsgID Union(Integer, String)
 
 typedef struct msg_data {
+  String source;          ///< Source of progress message
   Integer percent;        ///< Progress percentage
   String title;           ///< Title for progress message
   String status;          ///< Status for progress message
