@@ -163,7 +163,14 @@ PERFORMANCE
 
 PLUGINS
 
-• todo
+• Customize :checkhealth by handling a `FileType checkhealth` event.
+  |health-usage|
+• Simplify Python provider setup to a single step: `uv tool install pynvim`
+  Nvim will detect the plugin's location without user configuration, even if
+  unrelated Python virtual environments are activated.
+  |provider-python|
+• |:checkhealth| now checks for an available |vim.ui.open()| handler.
+• provider: add bun support for Node.js plugins
 
 STARTUP
 
