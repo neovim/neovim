@@ -316,7 +316,8 @@ local function assert_progress_report(action, step_names)
   local n_steps = #step_names
   eq(n_steps + 2, #echo_log)
 
-  local progress = { kind = 'progress', title = 'vim.pack', status = 'running', percent = 0 }
+  local progress =
+    { kind = 'progress', source = 'vim.pack', title = 'vim.pack', status = 'running', percent = 0 }
   local init_step = { { { ('%s (0/%d)'):format(action, n_steps) } }, true, progress }
   eq(init_step, echo_log[1])
 
