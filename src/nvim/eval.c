@@ -6725,6 +6725,7 @@ theend:
   u_clearallandblockfree(curbuf);
 
   curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
+  curbuf->b_prompt_append_new_line = true;
 }
 
 /// @return  true when the interrupt callback was invoked.

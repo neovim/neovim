@@ -274,6 +274,74 @@ void f_appendbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   buf_set_append_line(argvars, rettv, true);
 }
 
+/// "prompt_appendbuf({buffer}, string/list)" function
+void f_prompt_appendbuf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const int did_emsg_before = did_emsg;
+
+  // Return an 1 by default, e.g. append failed or not a prompt buffer
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 1;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL || !bt_prompt(buf)) {
+    return;
+  }
+
+  linenr_T lnum = MAX(0, buf->b_prompt_start.mark.lnum - 1);
+  typval_T *lines = &argvars[1];
+  if (!buf->b_prompt_append_new_line) {
+    // Since we are not creating a new line we need to append input to current line
+    const char *text = (lnum > 0) ? (const char *)ml_get_buf(buf, lnum) : "";
+    if (lines->v_type == VAR_LIST) {
+      list_T *l = lines->vval.v_list;
+      if (l != NULL && tv_list_len(l) > 0) {
+        listitem_T *li = tv_list_first(l);
+        const char *str = tv_get_string(&li->li_tv);
+        char *new_str = concat_str(text, str);
+        tv_clear(&li->li_tv);
+        li->li_tv.v_type = VAR_STRING;
+        li->li_tv.vval.v_string = new_str;
+      }
+    } else if (lines->v_type == VAR_STRING) {
+      const char *str = tv_get_string(lines);
+      char *new_str = concat_str(text, str);
+      tv_clear(lines);
+      lines->v_type = VAR_STRING;
+      lines->vval.v_string = new_str;
+    }
+  }
+
+  if (did_emsg == did_emsg_before) {
+    set_buffer_lines(buf, lnum, buf->b_prompt_append_new_line, lines, rettv);
+  }
+
+  if (rettv->vval.v_number == 0) {
+    // Ok we've inserted the lines successfully now check if last string ended with '\n'
+    // to determine if we need to insert a new line before next append
+    buf->b_prompt_append_new_line = false;
+    if (lines->v_type == VAR_LIST) {
+      list_T *l = lines->vval.v_list;
+      if (l != NULL && tv_list_len(l) > 0) {
+        listitem_T *li = tv_list_last(l);
+        const char *str = tv_get_string(&li->li_tv);
+        size_t len = strlen(str);
+        if (len > 0 && str[len - 1] == '\n') {
+          buf->b_prompt_append_new_line = true;
+        }
+      }
+    } else if (lines->v_type == VAR_STRING) {
+      const char *str = tv_get_string(lines);
+      size_t len = strlen(str);
+
+      if (len > 0 && str[len - 1] == '\n') {
+        buf->b_prompt_append_new_line = true;
+      }
+    }
+  }
+}
+
 /// "bufadd(expr)" function
 void f_bufadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -778,8 +846,12 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // even while user is editing their input.
   if (bt_prompt(buf) && buf->b_ml.ml_mfp != NULL) {
     // In case the mark is set to a nonexistent line.
-    buf->b_prompt_start.mark.lnum = MAX(1, MIN(buf->b_prompt_start.mark.lnum,
-                                               buf->b_ml.ml_line_count));
+    if (buf->b_prompt_start.mark.lnum < 1
+        || buf->b_prompt_start.mark.lnum > curbuf->b_ml.ml_line_count) {
+      buf->b_prompt_start.mark.lnum = MAX(1, MIN(buf->b_prompt_start.mark.lnum,
+                                                 buf->b_ml.ml_line_count));
+      curbuf->b_prompt_append_new_line = true;
+    }
 
     linenr_T prompt_lno = buf->b_prompt_start.mark.lnum;
     char *old_prompt = buf_prompt_text(buf);
