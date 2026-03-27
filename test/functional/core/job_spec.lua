@@ -1256,9 +1256,6 @@ describe('jobs', function()
   end)
 
   describe('running tty-test program', function()
-    if skip(is_os('win')) then
-      return
-    end
     local function next_chunk()
       local rv
       while true do
