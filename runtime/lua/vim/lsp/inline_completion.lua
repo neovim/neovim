@@ -15,8 +15,13 @@
 --- 2. Define a config, (or copy `lsp/copilot.lua` from https://github.com/neovim/nvim-lspconfig):
 ---    ```lua
 ---    vim.lsp.config('copilot', {
----      cmd = { 'copilot-language-server', '--stdio', },
+---      cmd = { 'copilot-language-server', '--stdio' },
 ---      root_markers = { '.git' },
+---       init_options = {
+---         editorInfo = {
+---           name = 'Neovim', version = tostring(vim.version()) },
+---           editorPluginInfo = { name = 'Neovim', version = tostring(vim.version()) },
+---         },
 ---    })
 ---    ```
 --- 3. Activate the config:
