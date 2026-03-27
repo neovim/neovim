@@ -28,6 +28,12 @@ enum {
 // Whether a command index indicates a user command.
 #define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
 
+/// parse_cmdline() mode.
+typedef enum {
+  kCmdlineParseFull = 0,    ///< Parse modifiers, nextcmd, register and count.
+  kCmdlineParseStructured,  ///< Skip them; caller provides structured fields.
+} CmdlineParseMode;
+
 enum { DIALOG_MSG_SIZE = 1000, };  ///< buffer size for dialog_msg()
 
 /// Structure used to save the current state.  Used when executing Normal mode

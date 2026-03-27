@@ -1067,3 +1067,14 @@ sctx_T api_set_sctx(uint64_t channel_id)
   }
   return old_current_sctx;
 }
+
+/// Check if a string contains only whitespace characters.
+bool string_iswhite(String str)
+{
+  for (size_t i = 0; i < str.size; i++) {
+    if (!ascii_iswhite(str.data[i])) {
+      return false;
+    }
+  }
+  return true;
+}
