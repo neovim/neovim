@@ -4977,12 +4977,12 @@ static void ex_restart(exarg_T *eap)
       break;
     }
     // Drop "-s <scriptfile>": skip the scriptfile arg too.
-    if (strequal(arg, "-s")) {
+    if (i > 0 && strequal(arg, "-s")) {
       li = TV_LIST_ITEM_NEXT(l, li);
       continue;
     }
     // The address after --listen may be in use by the current server.
-    if (strequal(arg, "--listen")) {
+    if (i > 0 && strequal(arg, "--listen")) {
       listitem_T *next_li = TV_LIST_ITEM_NEXT(l, li);
       if (next_li != NULL) {
         const char *addr = tv_get_string(TV_LIST_ITEM_TV(next_li));
