@@ -715,6 +715,7 @@ struct file_buffer {
   char *b_prompt_text;          // set by prompt_setprompt()
   Callback b_prompt_callback;   // set by prompt_setcallback()
   Callback b_prompt_interrupt;  // set by prompt_setinterrupt()
+  bool b_prompt_append_new_line;  // prompt_appendlines() should start a newline
   int b_prompt_insert;          // value for restart_edit when entering
                                 // a prompt buffer window.
   fmark_T b_prompt_start;       // Start of the editable area of a prompt buffer.
