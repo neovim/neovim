@@ -8371,7 +8371,7 @@ M.funcs = {
     signature = 'printf({fmt}, {expr1} ...)',
     returns = 'string',
   },
-  prompt_appendbuffer = {
+  prompt_appendbuf = {
     args = 2,
     base = 2,
     desc = [=[
@@ -8383,7 +8383,7 @@ M.funcs = {
 
       Example: >vim
         func TextEntered(text)
-          call prompt_appendbuffer(bufnr(''), split('Entered: "' . a:text . '"', '\n'))
+          call prompt_appendbuf(bufnr(''), split('Entered: "' . a:text . '"', '\n'))
         endfunc
 
         set buftype=prompt
@@ -8392,10 +8392,10 @@ M.funcs = {
         startinsert
       <
     ]=],
-    name = 'prompt_appendbuffer',
+    name = 'prompt_appendbuf',
     params = { { 'buf', 'integer|string' }, { 'text', 'string|string[]' } },
     returns = '0|1',
-    signature = 'prompt_appendbuffer({buf}, {text})',
+    signature = 'prompt_appendbuf({buf}, {text})',
   },
   prompt_getinput = {
     args = 1,

@@ -236,7 +236,7 @@ command, displaying shell output above the prompt: >lua
     local function on_output(_, msg, _)
       -- Add shell output above the prompt.
       local buf = vim.api.nvim_get_current_buf()
-      vim.fn.prompt_appendbuffer(buf, msg)
+      vim.fn.prompt_appendbuf(buf, msg)
     end
 
     -- Handles the shell exit.

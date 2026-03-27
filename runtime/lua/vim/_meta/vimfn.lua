@@ -6901,7 +6901,7 @@ function vim.fn.printf(fmt, expr1) end
 ---
 --- Example: >vim
 ---   func TextEntered(text)
----     call prompt_appendbuffer(bufnr(''), split('Entered: "' . a:text . '"', '\n'))
+---     call prompt_appendbuf(bufnr(''), split('Entered: "' . a:text . '"', '\n'))
 ---   endfunc
 ---
 ---   set buftype=prompt
@@ -6913,7 +6913,7 @@ function vim.fn.printf(fmt, expr1) end
 --- @param buf integer|string
 --- @param text string|string[]
 --- @return 0|1
-function vim.fn.prompt_appendbuffer(buf, text) end
+function vim.fn.prompt_appendbuf(buf, text) end
 
 --- Gets the current user-input in |prompt-buffer| {buf} without invoking
 --- prompt_callback. {buf} can be a buffer name or number.

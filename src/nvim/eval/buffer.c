@@ -274,8 +274,8 @@ void f_appendbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   buf_set_append_line(argvars, rettv, true);
 }
 
-/// "prompt_appendbuffer({buffer}, string/list)" function
-void f_prompt_appendbuffer(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+/// "prompt_appendbuf({buffer}, string/list)" function
+void f_prompt_appendbuf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   FUNC_ATTR_NONNULL_ALL
 {
   const int did_emsg_before = did_emsg;

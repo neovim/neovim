@@ -31,7 +31,7 @@ describe('prompt buffer', function()
           close
         else
           " Add the output above the current prompt.
-          call prompt_appendbuffer(bufnr(''), split('Command: "' . a:text . '"', '\n'))
+          call prompt_appendbuf(bufnr(''), split('Command: "' . a:text . '"', '\n'))
           " Reset &modified to allow the buffer to be closed.
           set nomodified
           call timer_start(20, {id -> TimerFunc(a:text)})
@@ -40,7 +40,7 @@ describe('prompt buffer', function()
 
       func TimerFunc(text)
         " Add the output above the current prompt.
-        call prompt_appendbuffer(bufnr(''),  split('Result: "' . a:text .'"', '\n'))
+        call prompt_appendbuf(bufnr(''),  split('Result: "' . a:text .'"', '\n'))
         " Reset &modified to allow the buffer to be closed.
         set nomodified
       endfunc
