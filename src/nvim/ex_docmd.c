@@ -5005,14 +5005,6 @@ static void ex_restart(exarg_T *eap)
 
   bool server_stopped = false;
   if (listen_arg != NULL) {
-    // Send restart event with --listen address to current UI.
-    if (!remote_ui_restart(current_ui, listen_arg, cstr_as_string(eap->arg), &err)) {
-      if (ERROR_SET(&err)) {
-        ELOG("%s", err.msg);  // UI disappeared already?
-        api_clear_error(&err);
-      }
-      return;
-    }
     // Stop listening on the --listen address so that the new server can listen.
     server_stopped = server_stop(listen_arg, true, true);
   }
@@ -5046,37 +5038,35 @@ static void ex_restart(exarg_T *eap)
   }
   arena_mem_free(result_mem);
 
-  if (listen_arg == NULL) {
-    // Get new server's listen address.
-    MAXSIZE_TEMP_ARRAY(servername_args, 1);
-    ADD_C(servername_args, CSTR_AS_OBJ("servername"));
-    result_mem = NULL;
-    Object result = rpc_send_call(channel->id, "nvim_get_vvar", servername_args, &result_mem, &err);
-    if (ERROR_SET(&err)) {
-      emsg(err.msg);
-      api_clear_error(&err);
-      arena_mem_free(result_mem);
-      return;
-    }
-    if (result.type != kObjectTypeString || result.data.string.size == 0) {
-      arena_mem_free(result_mem);
-      emsg("restart failed: could not get listen address from new server");
-      return;
-    }
-    char *listen_addr = xmemdupz(result.data.string.data, result.data.string.size);
+  // Get new server's listen address.
+  MAXSIZE_TEMP_ARRAY(servername_args, 1);
+  ADD_C(servername_args, CSTR_AS_OBJ("servername"));
+  result_mem = NULL;
+  Object result = rpc_send_call(channel->id, "nvim_get_vvar", servername_args, &result_mem, &err);
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
     arena_mem_free(result_mem);
+    return;
+  }
+  if (result.type != kObjectTypeString || result.data.string.size == 0) {
+    arena_mem_free(result_mem);
+    emsg("restart failed: could not get listen address from new server");
+    return;
+  }
+  char *listen_addr = xmemdupz(result.data.string.data, result.data.string.size);
+  arena_mem_free(result_mem);
 
-    // Send restart event with new listen address to current UI.
-    if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg), &err)) {
-      if (ERROR_SET(&err)) {
-        ELOG("%s", err.msg);  // UI disappeared already?
-        api_clear_error(&err);
-      }
-      xfree(listen_addr);
-      return;
+  // Send restart event with new listen address to current UI.
+  if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg), &err)) {
+    if (ERROR_SET(&err)) {
+      ELOG("%s", err.msg);  // UI disappeared already?
+      api_clear_error(&err);
     }
     xfree(listen_addr);
+    return;
   }
+  xfree(listen_addr);
 
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *quit_cmd_copy = NULL;
