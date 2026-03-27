@@ -5079,9 +5079,6 @@ static void ex_restart(exarg_T *eap)
 
   if (listen_addr_deferred != NULL) {
     (void)server_stop(listen_addr_deferred, true, true);
-    if (strchr(listen_addr_deferred, '/') || strchr(listen_addr_deferred, '\\')) {
-      os_remove(listen_addr_deferred);
-    }
 
     MAXSIZE_TEMP_ARRAY(serverstart_args, 1);
     ADD_C(serverstart_args, CSTR_AS_OBJ(listen_addr_deferred));
