@@ -5028,7 +5028,7 @@ static void ex_restart(exarg_T *eap)
                                        NULL, 0, 0, NULL, &exit_status);
   if (!channel) {
     emsg("cannot create a channel job");
-    return;
+    goto fail_1;
   }
 
   // Prevent new server from self-exiting when the channel closes.
@@ -5040,7 +5040,7 @@ static void ex_restart(exarg_T *eap)
     emsg(err.msg);
     api_clear_error(&err);
     arena_mem_free(result_mem);
-    return;
+    goto fail_2;
   }
   arena_mem_free(result_mem);
 
@@ -5053,12 +5053,12 @@ static void ex_restart(exarg_T *eap)
     emsg(err.msg);
     api_clear_error(&err);
     arena_mem_free(result_mem);
-    return;
+    goto fail_2;
   }
   if (result.type != kObjectTypeString || result.data.string.size == 0) {
     arena_mem_free(result_mem);
     emsg("restart failed: could not get listen address from new server");
-    return;
+    goto fail_2;
   }
   char *listen_addr = xmemdupz(result.data.string.data, result.data.string.size);
   arena_mem_free(result_mem);
@@ -5070,7 +5070,7 @@ static void ex_restart(exarg_T *eap)
       api_clear_error(&err);
     }
     xfree(listen_addr);
-    return;
+    goto fail_2;
   }
   xfree(listen_addr);
 
@@ -5092,16 +5092,17 @@ static void ex_restart(exarg_T *eap)
     emsg("restart failed: +cmd did not quit the server");
   }
 
+fail_2:
   // Kill the new nvim server.
   proc_stop(&channel->stream.proc);
   if (proc_wait(&channel->stream.proc, -1, NULL) < 0) {
     emsg("killing new nvim server failed");
   }
 
+fail_1:
   // Restart listening on the --listen address.
   if (server_stopped && server_start(listen_arg) != 0) {
     semsg("couldn't resume listening on %s", listen_arg);
-    return;
   }
 }
 
