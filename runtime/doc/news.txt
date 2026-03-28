@@ -181,6 +181,8 @@ API
 • |vim.secure.trust()| accepts `path` for the `allow` action.
 • |nvim_get_chan_info()| includes `exitcode` field for terminal buffers
 • |nvim_set_hl()| supports updating specified attributes only.
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
+  and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
 
 BUILD
 
@@ -520,6 +522,9 @@ These deprecated features were removed.
 
 • |vim.treesitter.get_parser()| instead of throwing an error
   `get_parser()` now always returns nil when it fails to create a parser.
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
+  and |vim.lsp.buf.implementation()| now no longer accepts `reuse_win` argument,
+  use 'switchbuf' to control this behavior instead.
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
