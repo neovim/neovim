@@ -1476,6 +1476,56 @@ describe('vim.lsp.completion: integration', function()
     ]])
   end)
 
+  it("selecting an item shows snippet preview when server can't completionItem/resolve", function()
+    local screen = Screen.new(50, 20)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Plum1, foreground = Screen.colors.Blue },
+    })
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          insertText = 'nvim__id_array',
+          insertTextFormat = 1,
+          kind = 3,
+          label = 'nvim__id_array(arr)',
+          sortText = '0001',
+        },
+        {
+          insertText = 'for ${1:i} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+          insertTextFormat = 2,
+          kind = 15,
+          label = 'for i = ..',
+          sortText = '0002',
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,popup'
+    end)
+    create_server('dummy', completion_list)
+
+    feed('i<C-X><C-O>')
+    -- No popup shown for item without snippet
+    screen:expect([[
+      nvim__id_array^                                    |
+      {12:nvim__id_array Function }{1:                          }|
+      {4:for i = ..     Snippet  }{1:                          }|
+      {1:~                                                 }|*16
+      {5:-- INSERT --}                                      |
+    ]])
+    feed('<C-N>')
+    -- Popup shown for item with snippet
+    screen:expect([[
+      for i = ..^                                        |
+      {4:nvim__id_array Function }{100:for i = 1, 10, 1 do}{1:       }|
+      {12:for i = ..     Snippet  }{100:        }{4:           }{1:       }|
+      {1:~                       }{100:end}{4:                }{1:       }|
+      {1:~                                                 }|*15
+      {5:-- INSERT --}                                      |
+    ]])
+  end)
+
   it('omnifunc works without enable() #38252', function()
     local completion_list = {
       isIncomplete = false,

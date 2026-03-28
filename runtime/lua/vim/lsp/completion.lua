@@ -803,10 +803,11 @@ local function on_completechanged(group, bufnr)
         then
           -- Shows snippet preview in doc popup if completeopt=popup.
           local text = parse_snippet(lsp_item.insertText or lsp_item.textEdit.newText)
-          api.nvim__complete_set(
+          local windata = api.nvim__complete_set(
             data.selected,
             { info = ('```%s\n%s\n```'):format(vim.bo.filetype, text) }
           )
+          update_popup_window(windata.winid, windata.bufnr, protocol.MarkupKind.Markdown)
         end
         return
       end
