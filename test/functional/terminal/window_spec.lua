@@ -12,6 +12,7 @@ local command = n.command
 local retry = t.retry
 local eq = t.eq
 local eval = n.eval
+local fn = n.fn
 local skip = t.skip
 local is_os = t.is_os
 local testprg = n.testprg
@@ -206,31 +207,31 @@ describe(':terminal window', function()
   end)
 
   describe('with fold set', function()
-    before_each(function()
-      feed([[<C-\><C-N>:set foldenable foldmethod=manual<CR>i]])
-      feed_data({ 'line1', 'line2', 'line3', 'line4', '' })
-      screen:expect([[
-        tty ready                                         |
-        line1                                             |
-        line2                                             |
-        line3                                             |
-        line4                                             |
-        ^                                                  |
-        {5:-- TERMINAL --}                                    |
-      ]])
+    it('supports marker folds', function()
+      feed_data('start {{{\nbody\n}}}\n')
+      retry(nil, nil, function()
+        eq('}}}', fn.getline(4))
+      end)
+
+      feed('<C-\\><C-N>')
+      command('setlocal foldenable foldmethod=marker')
+      command('normal! zM')
+
+      eq(1, fn.foldlevel(2))
+      eq(4, fn.foldclosedend(2))
     end)
 
-    it('wont show any folds', function()
-      feed([[<C-\><C-N>ggvGzf]])
-      poke_eventloop()
-      screen:expect([[
-        ^tty ready                                         |
-        line1                                             |
-        line2                                             |
-        line3                                             |
-        line4                                             |
-                                                          |*2
-      ]])
+    it('supports manual folds', function()
+      feed_data('one\ntwo\nthree\n')
+      retry(nil, nil, function()
+        eq('three', fn.getline(4))
+      end)
+
+      feed('<C-\\><C-N>')
+      command('setlocal foldenable foldmethod=manual')
+      command('2,4fold')
+
+      eq(4, fn.foldclosedend(2))
     end)
   end)
 

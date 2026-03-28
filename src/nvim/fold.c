@@ -147,7 +147,7 @@ void copyFoldingState(win_T *wp_from, win_T *wp_to)
 int hasAnyFolding(win_T *win)
 {
   // very simple now, but can become more complex later
-  return !win->w_buffer->terminal && win->w_p_fen
+  return win->w_p_fen
          && (!foldmethodIsManual(win) || !GA_EMPTY(&win->w_folds));
 }
 
