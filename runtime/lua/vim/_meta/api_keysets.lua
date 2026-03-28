@@ -332,6 +332,7 @@ error('Cannot require a meta file')
 --- @field force? boolean
 --- @field update? boolean
 --- @field url? string
+--- @field font? string
 
 --- @class vim.api.keyset.highlight_cterm
 --- @field bold? boolean
