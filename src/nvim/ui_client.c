@@ -277,6 +277,7 @@ void ui_client_event_raw_line(GridLineEvent *g)
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
 }
 
+/// Handles the "connect" ui-event.
 void ui_client_event_connect(Array args)
 {
   if (args.size < 1 || args.items[0].type != kObjectTypeString) {
@@ -315,11 +316,12 @@ static void channel_connect_event(void **argv)
   xfree(server_addr);
 }
 
-/// When a "restart" UI event is received, its arguments are saved here when
+/// When a "restart" ui-event is received, its arguments are saved here when
 /// waiting for the server to exit.
 static Array restart_args = ARRAY_DICT_INIT;
 static bool restart_pending = false;
 
+/// Handles the "restart" ui-event.
 void ui_client_event_restart(Array args)
 {
   // NB: don't send nvim_ui_detach to server, as it may have already exited.
@@ -331,7 +333,7 @@ void ui_client_event_restart(Array args)
   restart_pending = true;
 }
 
-/// Called when the current server has exited.
+/// Called during "restart" when the old server just exited.
 void ui_client_attach_to_restarted_server(void)
 {
   if (!restart_pending) {
@@ -378,6 +380,7 @@ cleanup:
   restart_args = (Array)ARRAY_DICT_INIT;
 }
 
+/// Handles the "error_exit" ui-event.
 void ui_client_event_error_exit(Array args)
 {
   if (args.size < 1
