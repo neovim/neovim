@@ -266,47 +266,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   PUT_KEY(result, cmd, addr, cstr_as_string(addr));
   PUT_KEY(result, cmd, nextcmd, cstr_as_string(ea.nextcmd));
 
-  // TODO(bfredl): nested keydict would be nice..
-  Dict mods = arena_dict(arena, 20);
-
-  Dict filter = arena_dict(arena, 2);
-  PUT_C(filter, "pattern", CSTR_TO_ARENA_OBJ(arena, cmdinfo.cmdmod.cmod_filter_pat));
-  PUT_C(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
-  PUT_C(mods, "filter", DICT_OBJ(filter));
-
-  PUT_C(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
-  PUT_C(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
-  PUT_C(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
-  PUT_C(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
-  PUT_C(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
-  PUT_C(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab - 1));
-  PUT_C(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
-  PUT_C(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
-  PUT_C(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
-  PUT_C(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_HIDE));
-  PUT_C(mods, "keepalt", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPALT));
-  PUT_C(mods, "keepjumps", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPJUMPS));
-  PUT_C(mods, "keepmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPMARKS));
-  PUT_C(mods, "keeppatterns", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPPATTERNS));
-  PUT_C(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_LOCKMARKS));
-  PUT_C(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOSWAPFILE));
-  PUT_C(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_VERT));
-  PUT_C(mods, "horizontal", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_HOR));
-
-  char *split;
-  if (cmdinfo.cmdmod.cmod_split & WSP_BOT) {
-    split = "botright";
-  } else if (cmdinfo.cmdmod.cmod_split & WSP_TOP) {
-    split = "topleft";
-  } else if (cmdinfo.cmdmod.cmod_split & WSP_BELOW) {
-    split = "belowright";
-  } else if (cmdinfo.cmdmod.cmod_split & WSP_ABOVE) {
-    split = "aboveleft";
-  } else {
-    split = "";
-  }
-  PUT_C(mods, "split", CSTR_AS_OBJ(split));
-
+  Dict mods = cmdmods_dict(&cmdinfo.cmdmod, arena);
   PUT_KEY(result, cmd, mods, mods);
 
   Dict magic = arena_dict(arena, 2);

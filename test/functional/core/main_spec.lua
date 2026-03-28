@@ -215,7 +215,9 @@ describe('vim._core', function()
     t.matches("^module 'vim%.hl' not found:", t.pcall_err(n.exec_lua, [[require('vim.hl')]]))
 
     -- All `vim._core.*` modules are builtin.
-    t.eq({ 'serverlist' }, n.exec_lua([[return vim.tbl_keys(require('vim._core.server'))]]))
+    local server_keys = n.exec_lua([[return vim.tbl_keys(require('vim._core.server'))]])
+    table.sort(server_keys)
+    t.eq({ 'connect', 'serverlist' }, server_keys)
     local expected = {
       'vim.F',
       'vim._core.defaults',
