@@ -2737,21 +2737,27 @@ void ex_function(exarg_T *eap)
     }
     if (arg != NULL && (fudi.fd_di == NULL || !tv_is_func(fudi.fd_di->di_tv))) {
       char *name_base = arg;
-      if ((uint8_t)(*arg) == K_SPECIAL) {
-        name_base = vim_strchr(arg, '_');
-        if (name_base == NULL) {
-          name_base = arg + 3;
-        } else {
-          name_base++;
+      // When defining a dictionary function with bracket notation
+      // (e.g. obj['foo-bar']()), the key is a dictionary key and is not
+      // required to follow function naming rules.  Skip the identifier
+      // check in that case.
+      if (arg != fudi.fd_newkey) {
+        if ((uint8_t)(*arg) == K_SPECIAL) {
+          name_base = vim_strchr(arg, '_');
+          if (name_base == NULL) {
+            name_base = arg + 3;
+          } else {
+            name_base++;
+          }
         }
-      }
-      int i;
-      for (i = 0; name_base[i] != NUL && (i == 0
-                                          ? eval_isnamec1(name_base[i])
-                                          : eval_isnamec(name_base[i])); i++) {}
-      if (name_base[i] != NUL) {
-        emsg_funcname(e_invarg2, arg);
-        goto ret_free;
+        int i;
+        for (i = 0; name_base[i] != NUL && (i == 0
+                                            ? eval_isnamec1(name_base[i])
+                                            : eval_isnamec(name_base[i])); i++) {}
+        if (name_base[i] != NUL) {
+          emsg_funcname(e_invarg2, arg);
+          goto ret_free;
+        }
       }
     }
     // Disallow using the g: dict.
