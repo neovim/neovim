@@ -23,4 +23,4 @@ typedef struct {
     } \
   } while (0)
 
-#include "ugrid.h.generated.h"
+#include "tui/ugrid.h.generated.h"

@@ -3,9 +3,9 @@
 
 #include "nvim/grid.h"
 #include "nvim/memory.h"
-#include "nvim/ugrid.h"
+#include "nvim/tui/ugrid.h"
 
-#include "ugrid.c.generated.h"
+#include "tui/ugrid.c.generated.h"
 
 void ugrid_init(UGrid *grid)
 {
