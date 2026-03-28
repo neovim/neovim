@@ -6,6 +6,7 @@ local command = n.command
 local eval = n.eval
 local exec = n.exec
 local exec_capture = n.exec_capture
+local exec_lua = n.exec_lua
 
 describe('TabClosed', function()
   before_each(clear)
@@ -123,6 +124,23 @@ describe('TabClosed', function()
         eq('tabclosed:2:2:1', exec_capture('close'))
         eq({ 1, 1 }, eval('[tabpagenr(), tabpagenr("$")]'))
       end)
+    end)
+  end)
+
+  describe('nvim_create_autocmd TabClosed', function()
+    it('event-data contains tab id', function()
+      exec_lua(function()
+        vim.api.nvim_create_autocmd('TabClosed', {
+          callback = function(args)
+            vim.cmd(string.format('echom "tabclosed:%s:%d"', args.file, args.data.id))
+          end,
+        })
+      end)
+
+      command('tabnew')
+      command('tabnew')
+      eq('tabclosed:3:3', exec_capture('close'))
+      eq('tabclosed:2:2', exec_capture('close'))
     end)
   end)
 end)
