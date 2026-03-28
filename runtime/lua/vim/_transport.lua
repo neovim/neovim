@@ -11,29 +11,29 @@ local function is_dir(filename)
   return stat and stat.type == 'directory' or false
 end
 
---- @class (private) vim.lsp.rpc.Transport
---- @field write fun(self: vim.lsp.rpc.Transport, msg: string)
---- @field is_closing fun(self: vim.lsp.rpc.Transport): boolean
---- @field terminate fun(self: vim.lsp.rpc.Transport)
+--- @class (private) vim.Transport
+--- @field write fun(self: vim.Transport, msg: string)
+--- @field is_closing fun(self: vim.Transport): boolean
+--- @field terminate fun(self: vim.Transport)
 
---- @class (private,exact) vim.lsp.rpc.Transport.Run : vim.lsp.rpc.Transport
---- @field new fun(): vim.lsp.rpc.Transport.Run
+--- @class (private,exact) vim.Transport.Run : vim.Transport
+--- @field new fun(): vim.Transport.Run
 --- @field sysobj? vim.SystemObj
 local TransportRun = {}
 
---- @return vim.lsp.rpc.Transport.Run
+--- @return vim.Transport.Run
 function TransportRun.new()
   return setmetatable({}, { __index = TransportRun })
 end
 
---- @param cmd string[] Command to start the LSP server.
---- @param extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
+--- @param cmd string[] Command to start process.
+--- @param extra_spawn_params? vim.transport.ExtraSpawnParams
 --- @param on_read fun(err: any, data: string)
 --- @param on_exit fun(code: integer, signal: integer)
 function TransportRun:run(cmd, extra_spawn_params, on_read, on_exit)
   local function on_stderr(_, chunk)
     if chunk then
-      log.error('rpc', cmd[1], 'stderr', chunk)
+      log.error('transport', cmd[1], 'stderr', chunk)
     end
   end
 
@@ -62,10 +62,10 @@ function TransportRun:run(cmd, extra_spawn_params, on_read, on_exit)
   if not ok then
     local err = sysobj_or_err --[[@as string]]
     local sfx = err:match('ENOENT')
-        and '. The language server is either not installed, missing from PATH, or not executable.'
+        and '. The command is either not installed, missing from PATH, or not executable.'
       or string.format(' with error message: %s', err)
 
-    error(('Spawning language server with cmd: `%s` failed%s'):format(vim.inspect(cmd), sfx))
+    error(('Spawning process with cmd: `%s` failed%s'):format(vim.inspect(cmd), sfx))
   end
 
   self.sysobj = sysobj_or_err --[[@as vim.SystemObj]]
@@ -83,8 +83,8 @@ function TransportRun:terminate()
   assert(self.sysobj):kill(15)
 end
 
---- @class (private,exact) vim.lsp.rpc.Transport.Connect : vim.lsp.rpc.Transport
---- @field new fun(): vim.lsp.rpc.Transport.Connect
+--- @class (private,exact) vim..Transport.Connect : vim.Transport
+--- @field new fun(): vim..Transport.Connect
 --- @field handle? uv.uv_pipe_t|uv.uv_tcp_t
 --- Connect returns a PublicClient synchronously so the caller
 --- can immediately send messages before the connection is established
@@ -95,12 +95,12 @@ end
 --- @field on_exit? fun(code: integer, signal: integer)
 local TransportConnect = {}
 
---- @return vim.lsp.rpc.Transport.Connect
+--- @return vim..Transport.Connect
 function TransportConnect.new()
   return setmetatable({
     connected = false,
     -- size should be enough because the client can't really do anything until initialization is done
-    -- which required a response from the server - implying the connection got established
+    -- which required a response from the process - implying the connection got established
     msgbuf = vim.ringbuf(10),
     closing = false,
   }, { __index = TransportConnect })

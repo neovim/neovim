@@ -766,7 +766,7 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 
   // vim.json
   lua_cjson_new(lstate);
-  lua_setfield(lstate, -2, "json");
+  lua_setfield(lstate, -2, "_json");
 
 #ifdef NVIM_VENDOR_BIT
   // if building with puc lua, use internal fallback for require'bit'

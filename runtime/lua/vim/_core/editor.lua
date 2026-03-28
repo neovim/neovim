@@ -17,6 +17,7 @@ for k, v in pairs({
   keymap = true,
   ui = true,
   health = true,
+  json = true,
   secure = true,
   snippet = true,
   pack = true,
