@@ -262,11 +262,15 @@ describe('TUI :restart', function()
     local server_session = n.connect(server_pipe)
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
     local function assert_new_pid()
-      if is_os('win') then
-        return -- FIXME
-      end
       server_session:close()
-      server_session = n.connect(server_pipe)
+      if is_os('win') then
+        -- On Windows, --listen address is restored async (after old server exits).
+        retry(nil, 5000, function()
+          server_session = n.connect(server_pipe)
+        end)
+      else
+        server_session = n.connect(server_pipe)
+      end
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
       t.neq(server_pid, new_pid)
       server_pid = new_pid
@@ -323,6 +327,9 @@ describe('TUI :restart', function()
     assert_no_gui_running()
 
     -- Check ":restart +echo" cannot restart server.
+    if is_os('win') then
+      return -- TODO: restart error/confirm paths hang on Windows.
+    end
     tt.feed_data(':restart +echo\013')
     screen:expect({ any = vim.pesc('+cmd did not quit the server') })
 

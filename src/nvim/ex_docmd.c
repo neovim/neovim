@@ -4970,8 +4970,10 @@ static void ex_restart(exarg_T *eap)
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
   const char *listen_arg = NULL;
-#ifdef MSWIN  // FIXME: --listen doesn't work on Windows and needs to be dropped
-# define HANDLE_LISTEN_ADDR li = next_li; continue
+#ifdef MSWIN
+  // On Windows, don't pass --listen to new server (named pipe can't be reused
+  // immediately). Instead, the address is handed off via serverstart() RPC below.
+# define HANDLE_LISTEN_ADDR listen_arg = addr; li = next_li; continue
 #else
 # define HANDLE_LISTEN_ADDR listen_arg = addr
 #endif
@@ -5008,6 +5010,22 @@ static void ex_restart(exarg_T *eap)
     }
   });
 #undef HANDLE_LISTEN_ADDR
+
+#ifdef MSWIN
+  // On Windows, --listen is dropped from argv. On subsequent restarts, recover
+  // from v:servername if TUI previously handed off the --listen address
+  // (vim._listen_handoff is set by the TUI's serverstart handoff).
+  if (listen_arg == NULL) {
+    lua_State *lstate = get_global_lstate();
+    lua_getglobal(lstate, "vim");
+    lua_getfield(lstate, -1, "_listen_handoff");
+    bool has_handoff = lua_toboolean(lstate, -1);
+    lua_pop(lstate, 2);
+    if (has_handoff) {
+      listen_arg = get_vim_var_str(VV_SEND_SERVER);
+    }
+  }
+#endif
 
   bool server_stopped = false;
   if (listen_arg != NULL) {
@@ -5064,7 +5082,15 @@ static void ex_restart(exarg_T *eap)
   arena_mem_free(result_mem);
 
   // Send restart event with new listen address to current UI.
-  if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg), &err)) {
+  // On Windows, also send the --listen address for TUI-mediated handoff to the new server.
+  String listen_handoff = STRING_INIT;
+#ifdef MSWIN
+  if (listen_arg != NULL) {
+    listen_handoff = cstr_as_string((char *)listen_arg);
+  }
+#endif
+  if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg),
+                         listen_handoff, &err)) {
     if (ERROR_SET(&err)) {
       ELOG("%s", err.msg);  // UI disappeared already?
       api_clear_error(&err);

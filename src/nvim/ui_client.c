@@ -319,6 +319,7 @@ static void channel_connect_event(void **argv)
 /// waiting for the server to exit.
 static Array restart_args = ARRAY_DICT_INIT;
 static bool restart_pending = false;
+static char *listen_handoff_addr = NULL;  ///< --listen address to hand off after restart.
 
 void ui_client_event_restart(Array args)
 {
@@ -329,6 +330,13 @@ void ui_client_event_restart(Array args)
   api_free_array(restart_args);
   restart_args = copy_array(args, NULL);
   restart_pending = true;
+
+  // Save --listen handoff address (persists across restarts in the TUI process).
+  if (args.size >= 3 && args.items[2].type == kObjectTypeString
+      && args.items[2].data.string.size > 0) {
+    xfree(listen_handoff_addr);
+    listen_handoff_addr = xstrdup(args.items[2].data.string.data);
+  }
 }
 
 /// Called when the current server has exited.
@@ -361,6 +369,25 @@ void ui_client_attach_to_restarted_server(void)
   ui_client_channel_id = chan_id;
   ui_client_is_remote = is_tcp;
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
+
+  // Hand off --listen address to new server. The old server's pipe is released
+  // because it has exited by the time the TUI reconnects here.
+  if (listen_handoff_addr != NULL) {
+    MAXSIZE_TEMP_ARRAY(addr_args, 1);
+    ADD_C(addr_args, CSTR_AS_OBJ(listen_handoff_addr));
+
+    MAXSIZE_TEMP_ARRAY(lua_args, 2);
+    ADD_C(lua_args, STATIC_CSTR_AS_OBJ(
+      "local a = ...\n"
+      "vim.fn.serverstart(a)\n"
+      "for _, s in ipairs(vim.fn.serverlist()) do\n"
+      "  if s ~= a then vim.fn.serverstop(s) end end\n"
+      "vim._listen_handoff = true"));
+    ADD_C(lua_args, ARRAY_OBJ(addr_args));
+    if (!rpc_send_event(ui_client_channel_id, "nvim_exec_lua", lua_args)) {
+      ELOG("restart: listen handoff failed for %s", listen_handoff_addr);
+    }
+  }
 
   String command = restart_args.items[1].data.string;
   if (command.size > 0) {
