@@ -2142,6 +2142,139 @@ describe('TUI', function()
     eq({ 1, 2, 3 }, { rv[1], rv[2], rv[#rv] })
   end)
 
+  it('paste: multibyte chars not split across chunks', function()
+    -- Hook vim.paste to detect invalid UTF-8 in any paste chunk.
+    -- The bug: TUI flushes its 4KB key buffer at arbitrary byte boundaries,
+    -- which can split a multi-byte UTF-8 character across two nvim_paste calls.
+    child_exec_lua([[
+      local band = bit.band
+      -- Check that a string contains only complete UTF-8 sequences.
+      local function is_valid_utf8(s)
+        local len = #s
+        if len == 0 then return true end
+        -- Check start: orphan continuation byte (10xxxxxx)
+        if band(s:byte(1), 0xC0) == 0x80 then return false end
+        -- Check end: incomplete multi-byte sequence
+        local b = s:byte(len)
+        if b >= 0xC0 and b <= 0xF4 then return false end  -- lead byte with no continuation
+        if band(b, 0xC0) == 0x80 then
+          -- Continuation byte at end; walk back to find lead byte
+          local trail = 0
+          local pos = len
+          while pos > 0 and band(s:byte(pos), 0xC0) == 0x80 do
+            trail = trail + 1
+            pos = pos - 1
+          end
+          if pos == 0 then return false end
+          local lead = s:byte(pos)
+          local expected = (lead >= 0xF0 and 3) or (lead >= 0xE0 and 2) or (lead >= 0xC0 and 1) or 0
+          if trail ~= expected then return false end
+        end
+        return true
+      end
+      _G.paste_utf8_valid = true
+      vim.paste = (function(original)
+        return function(lines, phase)
+          for _, line in ipairs(lines) do
+            if not is_valid_utf8(line) then
+              _G.paste_utf8_valid = false
+            end
+          end
+          return original(lines, phase)
+        end
+      end)(vim.paste)
+    ]])
+    -- Paste enough 3-byte UTF-8 chars (─ = e2 94 80) to exceed KEY_BUFFER_SIZE (4096).
+    local line = string.rep('\xe2\x94\x80', 1500) -- 4500 bytes > 4096
+    feed_data('i')
+    wait_for_mode('i')
+    feed_data('\027[200~' .. line .. '\027[201~')
+    expect_child_buf_lines({ line })
+    -- Verify no paste chunk had invalid UTF-8
+    retry(nil, nil, function()
+      eq(true, child_exec_lua('return _G.paste_utf8_valid'))
+    end)
+  end)
+
+  it('paste: 4-byte UTF-8 chars (emoji) not split across chunks', function()
+    child_exec_lua([[
+      local band = bit.band
+      local function is_valid_utf8(s)
+        local len = #s
+        if len == 0 then return true end
+        if band(s:byte(1), 0xC0) == 0x80 then return false end
+        local b = s:byte(len)
+        if b >= 0xC0 and b <= 0xF4 then return false end
+        if band(b, 0xC0) == 0x80 then
+          local trail, pos = 0, len
+          while pos > 0 and band(s:byte(pos), 0xC0) == 0x80 do trail = trail + 1; pos = pos - 1 end
+          if pos == 0 then return false end
+          local lead = s:byte(pos)
+          local expected = (lead >= 0xF0 and 3) or (lead >= 0xE0 and 2) or (lead >= 0xC0 and 1) or 0
+          if trail ~= expected then return false end
+        end
+        return true
+      end
+      _G.paste_utf8_valid = true
+      vim.paste = (function(original)
+        return function(lines, phase)
+          for _, line in ipairs(lines) do
+            if not is_valid_utf8(line) then _G.paste_utf8_valid = false end
+          end
+          return original(lines, phase)
+        end
+      end)(vim.paste)
+    ]])
+    local line = string.rep('\xf0\x9f\x94\xa5', 1100) -- 4400 bytes > 4096
+    feed_data('i')
+    wait_for_mode('i')
+    feed_data('\027[200~' .. line .. '\027[201~')
+    expect_child_buf_lines({ line })
+    retry(nil, nil, function()
+      eq(true, child_exec_lua('return _G.paste_utf8_valid'))
+    end)
+  end)
+
+  it('paste: mixed ASCII and multibyte not split across chunks', function()
+    child_exec_lua([[
+      local band = bit.band
+      local function is_valid_utf8(s)
+        local len = #s
+        if len == 0 then return true end
+        if band(s:byte(1), 0xC0) == 0x80 then return false end
+        local b = s:byte(len)
+        if b >= 0xC0 and b <= 0xF4 then return false end
+        if band(b, 0xC0) == 0x80 then
+          local trail, pos = 0, len
+          while pos > 0 and band(s:byte(pos), 0xC0) == 0x80 do trail = trail + 1; pos = pos - 1 end
+          if pos == 0 then return false end
+          local lead = s:byte(pos)
+          local expected = (lead >= 0xF0 and 3) or (lead >= 0xE0 and 2) or (lead >= 0xC0 and 1) or 0
+          if trail ~= expected then return false end
+        end
+        return true
+      end
+      _G.paste_utf8_valid = true
+      vim.paste = (function(original)
+        return function(lines, phase)
+          for _, line in ipairs(lines) do
+            if not is_valid_utf8(line) then _G.paste_utf8_valid = false end
+          end
+          return original(lines, phase)
+        end
+      end)(vim.paste)
+    ]])
+    local segment = 'abc\xe2\x94\x80def\xe2\x94\x80' -- 12 bytes
+    local line = string.rep(segment, 400) -- 4800 bytes > 4096
+    feed_data('i')
+    wait_for_mode('i')
+    feed_data('\027[200~' .. line .. '\027[201~')
+    expect_child_buf_lines({ line })
+    retry(nil, nil, function()
+      eq(true, child_exec_lua('return _G.paste_utf8_valid'))
+    end)
+  end)
+
   it('allows termguicolors to be set at runtime', function()
     t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     screen:set_option('rgb', true)
