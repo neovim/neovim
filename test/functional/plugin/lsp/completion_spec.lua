@@ -1398,7 +1398,7 @@ describe('vim.lsp.completion: integration', function()
     exec_lua(function()
       vim.o.completeopt = 'menuone,popup'
     end)
-    create_server('dummy', completion_list, {
+    local dummy_client_id = create_server('dummy', completion_list, {
       resolve_result = {
         {
           detail = 'function',
@@ -1472,6 +1472,41 @@ describe('vim.lsp.completion: integration', function()
       {4:for i = ..      Snippet  }{100:._assert_integer\n}{4:      }{1: }|
       {12:_assert_integer Function }{1:                         }|
       {1:~                                                 }|*15
+      {5:-- INSERT --}                                      |
+    ]])
+
+    n.command('lua vim.lsp.buf_detach_client(0, ' .. dummy_client_id .. ')')
+    -- Server which doesn't support completionItem/resolve
+    create_server('dummy2', {
+      isIncomplete = false,
+      items = {
+        {
+          insertText = 'package main',
+          insertTextFormat = 1,
+          kind = 9,
+          label = 'package main',
+          sortText = '0001',
+        },
+        {
+          insertText = 'package ${1:name}',
+          insertTextFormat = 2,
+          kind = 9,
+          label = 'package',
+          sortText = '0002',
+        },
+      },
+    })
+    feed('<ESC>S<C-x><C-O>')
+    -- No popup shown for item without snippet
+    wait_for_pum()
+    eq(true, n.fn.complete_info({ 'selected' }).preview_bufnr == nil)
+    feed('<C-N>')
+    -- Popup shown for item with snippet
+    screen:expect([[
+      package^                                           |
+      {4:package main Module }{100:package name}{1:                  }|
+      {12:package      Module }{1:                              }|
+      {1:~                                                 }|*16
       {5:-- INSERT --}                                      |
     ]])
   end)
