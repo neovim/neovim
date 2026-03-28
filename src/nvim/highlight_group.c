@@ -1633,7 +1633,8 @@ static void highlight_list_one(const int id)
 static bool hlgroup2dict(Dict *hl, NS ns_id, int hl_id, Arena *arena)
 {
   HlGroup *sgp = &hl_table[hl_id - 1];
-  int link = ns_id == 0 ? sgp->sg_link : ns_get_hl(&ns_id, hl_id, true, sgp->sg_set);
+  NS ns = ns_id;
+  int link = ns_id == 0 ? sgp->sg_link : ns_get_hl(&ns, hl_id, true, sgp->sg_set);
   if (link == -1) {
     return false;
   }
@@ -1641,8 +1642,10 @@ static bool hlgroup2dict(Dict *hl, NS ns_id, int hl_id, Arena *arena)
     // table entry was created but not ever set
     return false;
   }
-  HlAttrs attr =
-    syn_attr2entry(ns_id == 0 ? sgp->sg_attr : ns_get_hl(&ns_id, hl_id, false, sgp->sg_set));
+  ns = ns_id;
+  HlAttrs attr = syn_attr2entry(ns_id == 0 ? sgp->sg_attr : ns_get_hl(&ns, hl_id, false,
+                                                                      sgp->sg_set));
+  syn_attr2entry(ns_id == 0 ? sgp->sg_attr : ns_get_hl(&ns, hl_id, false, sgp->sg_set));
   *hl = arena_dict(arena, HLATTRS_DICT_SIZE + 1);
   if (attr.rgb_ae_attr & HL_DEFAULT) {
     PUT_C(*hl, "default", BOOLEAN_OBJ(true));

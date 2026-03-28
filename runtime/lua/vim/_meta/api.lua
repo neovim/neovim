@@ -2225,28 +2225,29 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- `nvim_set_hl_ns()` or `nvim_win_set_hl_ns()` to activate them.
 --- @param name string Highlight group name, e.g. "ErrorMsg"
 --- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
+--- - altfont: boolean
 --- - bg: color name or "#RRGGBB", see note.
 --- - bg_indexed: boolean (default false) If true, bg is a terminal palette index (0-255).
 --- - blend: integer between 0 and 100
+--- - blink: boolean
+--- - bold: boolean
+--- - conceal: boolean Concealment at the UI level (terminal SGR), unrelated to `:syn-conceal`.
 --- - cterm: cterm attribute map, like `highlight-args`. If not set, cterm attributes
 ---   will match those from the attribute map documented above.
 --- - ctermbg: Sets background of cterm color `ctermbg`
 --- - ctermfg: Sets foreground of cterm color `ctermfg`
 --- - default: boolean Don't override existing definition `:hi-default`
+--- - dim: boolean
 --- - fg: color name or "#RRGGBB", see note.
 --- - fg_indexed: boolean (default false) If true, fg is a terminal palette index (0-255).
 --- - force: if true force update the highlight group when it exists.
---- - link: Name of highlight group to link to. `:hi-link`
---- - sp: color name or "#RRGGBB"
---- - altfont: boolean
---- - blink: boolean
---- - bold: boolean
---- - conceal: boolean Concealment at the UI level (terminal SGR), unrelated to `:syn-conceal`.
---- - dim: boolean
+--- - link_global: Like "link", but always resolved in the global (ns=0) namespace.
 --- - italic: boolean
+--- - link: Name of highlight group to link to. `:hi-link`
 --- - nocombine: boolean
 --- - overline: boolean
 --- - reverse: boolean
+--- - sp: color name or "#RRGGBB"
 --- - standout: boolean
 --- - strikethrough: boolean
 --- - undercurl: boolean
