@@ -5,7 +5,7 @@
 --- RPC events. Example:
 --- ```lua
 --- vim.lsp.log.set_level 'trace'
---- require('vim.lsp.log').set_format_func(vim.inspect)
+--- vim.lsp.log.set_format_func(vim.inspect)
 --- ```
 ---
 --- Then try to run the language server, and open the log with:

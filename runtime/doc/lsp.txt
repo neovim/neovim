@@ -2462,7 +2462,7 @@ The `vim.lsp.log` module provides logging for the Nvim LSP client.
 When debugging language servers, it is helpful to enable extra-verbose logging
 of the LSP client RPC events. Example: >lua
     vim.lsp.log.set_level 'trace'
-    require('vim.lsp.log').set_format_func(vim.inspect)
+    vim.lsp.log.set_format_func(vim.inspect)
 <
 
 Then try to run the language server, and open the log with: >vim
