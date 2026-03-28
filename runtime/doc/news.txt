@@ -197,6 +197,8 @@ EVENTS
   support implicit marks like |'[| or |'<|, …).
 • |SessionLoadPre| is triggered before loading a |Session| file.
 • |TabClosedPre| is triggered before closing a |tabpage|.
+• New `terminator` parameter for |TermRequest| event.
+• LuaLS types for |event-data| fields (e.g. `vim.event.lspattach.data`).
 • |TermRequest| event gained a `terminator` parameter.
 
 HIGHLIGHTS

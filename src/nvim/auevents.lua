@@ -154,6 +154,69 @@ return {
     BufWrite = 'BufWritePre',
     FileEncoding = 'EncodingChanged',
   },
+  --- @type table<string, {[1]: string, [2]: string}[]>
+  --- Keys are event names that provide |event-data|.
+  --- Values are lists of {field_name, field_type} pairs.
+  data = {
+    LspAttach = {
+      { 'client_id', 'integer' },
+    },
+    LspDetach = {
+      { 'client_id', 'integer' },
+    },
+    LspNotify = {
+      { 'client_id', 'integer' },
+      { 'method', 'string' },
+      { 'params', 'table' },
+    },
+    LspProgress = {
+      { 'client_id', 'integer' },
+      { 'params', 'lsp.ProgressParams' },
+    },
+    LspRequest = {
+      { 'client_id', 'integer' },
+      { 'request_id', 'integer' },
+      { 'request', 'table' },
+    },
+    LspTokenUpdate = {
+      { 'client_id', 'integer' },
+      { 'token', 'table' },
+    },
+    MarkSet = {
+      { 'name', 'string' },
+      { 'line', 'integer' },
+      { 'col', 'integer' },
+    },
+    PackChanged = {
+      { 'active', 'boolean' },
+      { 'kind', 'string' },
+      { 'spec', 'vim.pack.Spec' },
+      { 'path', 'string' },
+    },
+    PackChangedPre = {
+      { 'active', 'boolean' },
+      { 'kind', 'string' },
+      { 'spec', 'vim.pack.Spec' },
+      { 'path', 'string' },
+    },
+    Progress = {
+      { 'id', 'any' },
+      { 'text', 'string[]' },
+      { 'data?', 'table' },
+      { 'percent?', 'integer' },
+      { 'source?', 'string' },
+      { 'status?', 'string' },
+      { 'title?', 'string' },
+    },
+    TermRequest = {
+      { 'sequence', 'string' },
+      { 'terminator', 'string' },
+      { 'cursor', 'integer[]' },
+    },
+    TermResponse = {
+      { 'sequence', 'string' },
+    },
+  },
   --- @type table<string,true>
   --- List of Nvim-specific events or aliases for generating syntax file.
   nvim_specific = {
