@@ -249,8 +249,8 @@ the editor.
 
 ["restart", listen_addr, command] ~
 	|:restart| command has been used and the Nvim server is about to exit.
-	The UI should wait for EOF on the server's channel, and then attach to
-	the new server's listening address at `listen_addr`, and finally execute
+	After the current server's channel is closed, the UI should attach to
+	the new server's listening address at `listen_addr`, and then execute
 	`command` on the new server.
 
 ["suspend"] ~

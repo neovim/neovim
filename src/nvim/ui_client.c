@@ -360,7 +360,7 @@ void ui_client_attach_to_restarted_server(void)
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   String command = restart_args.items[1].data.string;
-  if (command.data && strlen(command.data) > 0) {
+  if (command.size > 0) {
     MAXSIZE_TEMP_ARRAY(cmd_args, 1);
     ADD_C(cmd_args, STRING_OBJ(command));
     // TODO(justinmk): if reattaching multiple UIs, only 1 UI should do this command.
