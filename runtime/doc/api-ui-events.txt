@@ -247,11 +247,10 @@ the editor.
 	Indicates to the UI that it must stop rendering the cursor. This event
 	is misnamed and does not actually have anything to do with busyness.
 
-["restart", listen_addr, command] ~
+["restart", listen_addr] ~
 	|:restart| command has been used and the Nvim server is about to exit.
 	After the current server's channel is closed, the UI should attach to
-	the new server's listening address at `listen_addr`, and then execute
-	`command` on the new server.
+	the new server's listening address at `listen_addr`.
 
 ["suspend"] ~
 	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or

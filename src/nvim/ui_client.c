@@ -340,9 +340,7 @@ void ui_client_attach_to_restarted_server(void)
 
   restart_pending = false;
 
-  if (restart_args.size < 2
-      || restart_args.items[0].type != kObjectTypeString
-      || restart_args.items[1].type != kObjectTypeString) {
+  if (restart_args.size < 1 || restart_args.items[0].type != kObjectTypeString) {
     ELOG("Error handling ui event 'restart'");
     goto cleanup;
   }
@@ -361,16 +359,6 @@ void ui_client_attach_to_restarted_server(void)
   ui_client_channel_id = chan_id;
   ui_client_is_remote = is_tcp;
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
-
-  String command = restart_args.items[1].data.string;
-  if (command.size > 0) {
-    MAXSIZE_TEMP_ARRAY(cmd_args, 1);
-    ADD_C(cmd_args, STRING_OBJ(command));
-    // TODO(justinmk): if reattaching multiple UIs, only 1 UI should do this command.
-    if (!rpc_send_event(ui_client_channel_id, "nvim_command", cmd_args)) {
-      ELOG("cannot execute '%s'", command.data);
-    }
-  }
 
   ILOG("restarted server address=%s id=%" PRId64, listen_addr, chan_id);
 cleanup:

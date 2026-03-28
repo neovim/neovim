@@ -5037,34 +5037,44 @@ static void ex_restart(exarg_T *eap)
   ADD_C(detach_args, BOOLEAN_OBJ(true));
   rpc_send_call(channel->id, "nvim__chan_set_detach", detach_args, &result_mem, &err);
   if (ERROR_SET(&err)) {
-    emsg(err.msg);
-    api_clear_error(&err);
-    arena_mem_free(result_mem);
     goto fail_2;
   }
   arena_mem_free(result_mem);
+  result_mem = NULL;
+
+  if (*eap->arg != NUL) {
+    // Execute [command] on new server on UIEnter.
+    MAXSIZE_TEMP_DICT(autocmd_opts, 2);
+    PUT_C(autocmd_opts, "once", BOOLEAN_OBJ(true));
+    PUT_C(autocmd_opts, "command", CSTR_AS_OBJ(eap->arg));
+    MAXSIZE_TEMP_ARRAY(autocmd_args, 2);
+    ADD_C(autocmd_args, CSTR_AS_OBJ("UIEnter"));
+    ADD_C(autocmd_args, DICT_OBJ(autocmd_opts));
+    rpc_send_call(channel->id, "nvim_create_autocmd", autocmd_args, &result_mem, &err);
+    if (ERROR_SET(&err)) {
+      goto fail_2;
+    }
+    arena_mem_free(result_mem);
+    result_mem = NULL;
+  }
 
   // Get new server's listen address.
   MAXSIZE_TEMP_ARRAY(servername_args, 1);
   ADD_C(servername_args, CSTR_AS_OBJ("servername"));
-  result_mem = NULL;
   Object result = rpc_send_call(channel->id, "nvim_get_vvar", servername_args, &result_mem, &err);
   if (ERROR_SET(&err)) {
-    emsg(err.msg);
-    api_clear_error(&err);
-    arena_mem_free(result_mem);
     goto fail_2;
   }
   if (result.type != kObjectTypeString || result.data.string.size == 0) {
-    arena_mem_free(result_mem);
     emsg("restart failed: could not get listen address from new server");
     goto fail_2;
   }
   char *listen_addr = xmemdupz(result.data.string.data, result.data.string.size);
   arena_mem_free(result_mem);
+  result_mem = NULL;
 
   // Send restart event with new listen address to current UI.
-  if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg), &err)) {
+  if (!remote_ui_restart(current_ui, listen_addr, &err)) {
     if (ERROR_SET(&err)) {
       ELOG("%s", err.msg);  // UI disappeared already?
       api_clear_error(&err);
@@ -5093,6 +5103,12 @@ static void ex_restart(exarg_T *eap)
   }
 
 fail_2:
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+  }
+  arena_mem_free(result_mem);
+
   // Kill the new nvim server.
   proc_stop(&channel->stream.proc);
   if (proc_wait(&channel->stream.proc, -1, NULL) < 0) {
