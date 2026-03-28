@@ -1153,7 +1153,7 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
 
   apply_autocmds_group(EVENT_PROGRESS,
                        (msg_data && msg_data->source.size > 0) ? msg_data->source.data : "", NULL,
-                       false,
+                       true,
                        AUGROUP_ALL, NULL, NULL, &DICT_OBJ(data));
   kv_destroy(messages);
 }

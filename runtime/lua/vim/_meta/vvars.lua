@@ -806,12 +806,14 @@ vim.v.version = ...
 vim.v.versionlong = ...
 
 --- 0 during startup, 1 just before `VimEnter`.
+--- See also `v:vim_did_init`, which is set earlier.
 --- Read-only.
 --- @type integer
 vim.v.vim_did_enter = ...
 
---- 0 during initialization, 1 after sourcing `vimrc` and just
---- before `load-plugins`.
+--- 0 during initialization, 1 after sourcing the user `vimrc`,
+--- just before `load-plugins`.
+--- See also `v:vim_did_enter`, which is set later.
 --- Read-only.
 --- @type integer
 vim.v.vim_did_init = ...

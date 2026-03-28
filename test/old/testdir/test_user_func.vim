@@ -540,6 +540,18 @@ func Test_func_dict()
   call assert_fails('call mydict.nonexist()', 'E716:')
 endfunc
 
+func Test_func_dict_bracket_key()
+  " Dictionary function can be defined with bracket notation using a key
+  " that does not follow function naming rules (e.g. containing a hyphen).
+  let obj = {}
+  function obj['foo-bar']() dict
+    return self.value
+  endfunction
+  let obj.value = 42
+  call assert_equal(42, obj['foo-bar']())
+  call assert_equal(42, call(obj['foo-bar'], []))
+endfunc
+
 func Test_func_range()
   new
   call setline(1, range(1, 8))

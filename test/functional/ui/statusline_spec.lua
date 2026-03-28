@@ -1057,27 +1057,33 @@ describe('default statusline', function()
     local id1 = api.nvim_echo(
       { { 'searching...' } },
       true,
-      { kind = 'progress', title = 'test', status = 'running', percent = 10 }
+      { kind = 'progress', source = 'tests', title = 'test', status = 'running', percent = 10 }
     )
     eq('10%(1) ', get_progress())
 
-    api.nvim_echo(
-      { { 'searching' } },
-      true,
-      { id = id1, kind = 'progress', percent = 50, status = 'running', title = 'terminal(ripgrep)' }
-    )
+    api.nvim_echo({ { 'searching' } }, true, {
+      id = id1,
+      kind = 'progress',
+      source = 'tests',
+      percent = 50,
+      status = 'running',
+      title = 'terminal(ripgrep)',
+    })
     eq('50%(1) ', get_progress())
 
-    api.nvim_echo(
-      { { 'searching...' } },
-      true,
-      { kind = 'progress', title = 'second-item', status = 'running', percent = 20 }
-    )
+    api.nvim_echo({ { 'searching...' } }, true, {
+      kind = 'progress',
+      source = 'tests',
+      title = 'second-item',
+      status = 'running',
+      percent = 20,
+    })
     eq('35%(2) ', get_progress())
 
     api.nvim_echo({ { 'searching' } }, true, {
       id = id1,
       kind = 'progress',
+      source = 'tests',
       percent = 100,
       status = 'success',
       title = 'terminal(ripgrep)',

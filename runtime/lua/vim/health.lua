@@ -375,7 +375,7 @@ end
 ---@param len integer
 ---@return fun(status: 'success'|'running', idx: integer, fmt: string, ...: any): nil
 local function progress_report(len)
-  local progress = { kind = 'progress', title = 'checkhealth' }
+  local progress = { kind = 'progress', source = 'vim.health', title = 'checkhealth' }
 
   return function(status, idx, fmt, ...)
     progress.status = status

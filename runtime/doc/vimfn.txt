@@ -117,7 +117,7 @@ append({lnum}, {text})                                                *append()*
                   (`0|1`)
 
 appendbufline({buf}, {lnum}, {text})                           *appendbufline()*
-		Like |append()| but append the text in buffer {expr}.
+		Like |append()| but append the text in buffer {buf}.
 
 		This function works only for loaded buffers.  First call
 		|bufload()| if needed.

@@ -2238,6 +2238,7 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - force: if true force update the highlight group when it exists.
 --- - link: Name of highlight group to link to. `:hi-link`
 --- - sp: color name or "#RRGGBB"
+--- - update: boolean (default false) Update specified attributes only, leave others unchanged.
 --- - altfont: boolean
 --- - blink: boolean
 --- - bold: boolean
@@ -2254,7 +2255,6 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - underdotted: boolean
 --- - underdouble: boolean
 --- - underline: boolean
---- - update: boolean false by default; true updates only specified attributes, leaving others unchanged.
 function vim.api.nvim_set_hl(ns_id, name, val) end
 
 --- Set active namespace for highlights defined with `nvim_set_hl()`. This can be set for

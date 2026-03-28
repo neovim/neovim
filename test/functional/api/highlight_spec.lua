@@ -262,14 +262,14 @@ describe('API: set highlight', function()
     api.nvim_set_hl(0, 'TestGroup', { fg = '#ff0000', bg = '#0000ff', bold = true })
     api.nvim_set_hl(0, 'TestGroup', { bg = '#00ff00', update = true })
     local hl = api.nvim_get_hl(0, { name = 'TestGroup' })
-    eq(16711680, hl.fg)
-    eq(65280, hl.bg)
+    eq(tonumber('0xff0000'), hl.fg)
+    eq(tonumber('0x00ff00'), hl.bg)
     eq(true, hl.bold)
 
     api.nvim_set_hl(0, 'TestGroup', { bold = false, update = true })
     hl = api.nvim_get_hl(0, { name = 'TestGroup' })
     eq(nil, hl.bold)
-    eq(16711680, hl.fg)
+    eq(tonumber('0xff0000'), hl.fg)
 
     api.nvim_set_hl(0, 'TestGroup', { italic = true })
 
@@ -282,13 +282,46 @@ describe('API: set highlight', function()
     api.nvim_set_hl(ns, 'TestGroup', { fg = '#ff0000', italic = true })
     api.nvim_set_hl(ns, 'TestGroup', { fg = '#00ff00', update = true })
     hl = api.nvim_get_hl(ns, { name = 'TestGroup' })
-    eq(65280, hl.fg)
+    eq(tonumber('0x00ff00'), hl.fg)
     eq(true, hl.italic)
 
     api.nvim_set_hl(0, 'LinkedGroup', { link = 'Normal' })
     api.nvim_set_hl(0, 'LinkedGroup', { bold = true, update = true })
     hl = api.nvim_get_hl(0, { name = 'LinkedGroup' })
     eq(nil, hl.link)
+    eq(true, hl.bold)
+
+    -- underline style flags: false must not corrupt other styles
+    local unders = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
+    for _, a in ipairs(unders) do
+      for _, b in ipairs(unders) do
+        if a ~= b then
+          api.nvim_set_hl(0, 'TestGroup', { [a] = true, [b] = false })
+          hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+          eq(true, hl[a])
+          eq(nil, hl[b])
+        end
+      end
+    end
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = true, fg = '#ff0000', bold = true })
+    api.nvim_set_hl(0, 'TestGroup', { fg = '#00ff00', update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdouble)
+    eq(true, hl.bold)
+    eq(65280, hl.fg)
+
+    api.nvim_set_hl(0, 'TestGroup', { underdashed = true, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdashed)
+    eq(nil, hl.underdouble)
+
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = true, bold = true })
+    api.nvim_set_hl(0, 'TestGroup', { underdashed = false, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdouble)
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = false, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(nil, hl.underdouble)
     eq(true, hl.bold)
   end)
 end)

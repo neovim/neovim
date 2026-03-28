@@ -1016,7 +1016,7 @@ static void nlua_print_event(void **argv)
   msg_multihl(NIL, msg, "lua_print", true, false, NULL, &needs_clear);
 }
 
-/// Print as a Vim message
+/// Implements Lua print() as a Nvim message.
 ///
 /// @param  lstate  Lua interpreter state.
 static int nlua_print(lua_State *const lstate)

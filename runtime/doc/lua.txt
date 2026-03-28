@@ -2096,8 +2096,8 @@ vim.tbl_filter({fn}, {t})                                   *vim.tbl_filter()*
         (`any[]`) Table of filtered values
 
 vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
-    Index into a table (first argument) via string keys passed as subsequent
-    arguments. Return `nil` if the key does not exist.
+    Gets a value from (nested) table `o` given by the sequence of keys `...`,
+    or `nil` if not found.
 
     Examples: >lua
         vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
@@ -2246,7 +2246,8 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
                        `'userdata'`.
                      • (`fun(val:any): boolean, string?`) A function that
                        returns a boolean and an optional string message.
-      • {optional}   (`boolean?`) Argument is optional (may be omitted)
+      • {optional}   (`boolean?`) Parameter is optional (may be omitted or
+                     nil)
       • {message}    (`string?`) message when validation fails
 
     Overloads: ~
@@ -2538,6 +2539,13 @@ vim.filetype.match({args})                              *vim.filetype.match()*
 ==============================================================================
 Lua module: vim.fs                                                    *vim.fs*
 
+
+                                                               *vim.fs.copy()*
+Use |filecopy()| or |uv.fs_copyfile()| to performantly copy an existing file.
+
+Example: >lua
+  vim.fn.filecopy('foo.txt', 'bar.txt')
+<
 
                                                              *vim.fs.exists()*
 Use |uv.fs_stat()| to check a file's type, and whether it exists.
@@ -3666,9 +3674,10 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
       • {opts}  (`table?`) A table with the following fields:
                 • {escape_slash}? (`boolean`, default: `false`) Escape slash
                   characters "/" in string values.
-                • {indent}? (`string`, default: `""`) If non-empty, the
-                  returned JSON is formatted with newlines and whitespace,
-                  where `indent` defines the whitespace at each nesting level.
+                • {indent}? (`string`, default: `""`) If non-empty, each value
+                  in a JSON object or array starts on a new line and is
+                  prefixed with `indent` per nesting level. Adds a space after
+                  colons. Does not add a final newline.
                 • {sort_keys}? (`boolean`, default: `false`) Sort object keys
                   in alphabetical order.
 
@@ -5159,16 +5168,13 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
 
     Example: >lua
         vim.ui.select({ 'tabs', 'spaces' }, {
-            prompt = 'Select tabs or spaces:',
-            format_item = function(item)
-                return "I'd like to choose " .. item
-            end,
+          prompt = 'Select tabs or spaces:',
+          format_item = function(item)
+            return ('I choose %s!'):format(item)
+          end,
         }, function(choice)
-            if choice == 'spaces' then
-                vim.o.expandtab = true
-            else
-                vim.o.expandtab = false
-            end
+          vim.o.expandtab = choice == 'spaces'
+          vim.print(('Selected "%s" => expandtab=%s'):format(choice, vim.o.expandtab))
         end)
 <
 
@@ -5546,7 +5552,8 @@ and their respective buffers.
 Unlike the legacy |hit-enter| prompt, messages exceeding 'cmdheight' are
 instead "collapsed", followed by a `[+x]` "spill" indicator, where `x`
 indicates the spilled lines. To see the full messages, do either:
-• ENTER while cmdline is expanded (not in |Insert-mode| and |Terminal-mode|).
+• ENTER immediately after interactive |:| cmdline shows a message and returns
+  to |Normal-mode|.
 • |g<| at any time.
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
