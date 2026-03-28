@@ -612,6 +612,7 @@ followed by another Vim command:
     :ldo
     :lfdo
     :lhelpgrep
+    :lsp
     :make
     :normal
     :perlfile

@@ -1,8 +1,7 @@
 ---@brief
 ---
---- EXPERIMENTAL: This API may change in the future. Its semantics are not yet finalized.
---- Subscribe to https://github.com/neovim/neovim/issues/25509
---- to stay updated or contribute to its development.
+--- EXPERIMENTAL: This API is unstable, do not use it. Its semantics are not yet finalized.
+--- Subscribe to this issue to stay updated: https://github.com/neovim/neovim/issues/25509
 ---
 --- Provides operations to compare, calculate, and convert positions represented by |vim.Pos|
 --- objects.

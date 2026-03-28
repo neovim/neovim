@@ -1,8 +1,7 @@
 ---@brief
 ---
---- EXPERIMENTAL: This API may change in the future. Its semantics are not yet finalized.
---- Subscribe to https://github.com/neovim/neovim/issues/25509
---- to stay updated or contribute to its development.
+--- EXPERIMENTAL: This API is unstable, do not use it. Its semantics are not yet finalized.
+--- Subscribe to this issue to stay updated: https://github.com/neovim/neovim/issues/25509
 ---
 --- Provides operations to compare, calculate, and convert ranges represented by |vim.Range|
 --- objects.
@@ -10,11 +9,12 @@
 local validate = vim.validate
 local api = vim.api
 
---- Represents a well-defined range.
+--- Represents a range. Call `vim.range()` to create a new range.
 ---
---- A |vim.Range| object contains a {start} and a {end_} position(see |vim.Pos|).
---- Note that the {end_} position is exclusive.
---- To create a new |vim.Range| object, call `vim.range()`.
+--- A range contains a start and end position (see |vim.Pos|). The end position is exclusive.
+--- Positions must have the same optional fields.
+---
+--- May include optional fields that enable additional capabilities, such as format conversions.
 ---
 --- Example:
 --- ```lua
@@ -35,10 +35,6 @@ local api = vim.api
 ---   print("range1 and range2 are the same range")
 --- end
 --- ```
----
---- It may include optional fields that enable additional capabilities,
---- such as format conversions. Note that the {start} and {end_} positions
---- need to have the same optional fields.
 ---
 ---@class vim.Range
 ---@field start_row integer 0-based byte index.
