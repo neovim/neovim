@@ -651,36 +651,63 @@ function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)
 end
 
+---@param left any
+---@param right any
+---@param seen? table<table, table<table, boolean>>
+---@return boolean
+local function deep_equal(left, right, seen)
+  if left == right then
+    return true
+  end
+
+  if type(left) ~= type(right) then
+    return false
+  end
+
+  if type(left) ~= 'table' then
+    return false
+  end
+
+  ---@cast left table<any, any>
+  ---@cast right table<any, any>
+  seen = seen or {}
+  local seen_left = seen[left]
+  if seen_left and seen_left[right] ~= nil then
+    return seen_left[right]
+  end
+
+  seen_left = seen_left or {}
+  seen[left] = seen_left
+  -- Assume equality while descending so recursive structures can terminate.
+  seen_left[right] = true
+
+  for k, v in pairs(left) do
+    if not deep_equal(v, right[k], seen) then
+      seen_left[right] = false
+      return false
+    end
+  end
+
+  for k in pairs(right) do
+    if left[k] == nil then
+      seen_left[right] = false
+      return false
+    end
+  end
+
+  return true
+end
+
 --- Deep compare values for equality
 ---
 --- Tables are compared recursively unless they both provide the `eq` metamethod.
 --- All other types are compared using the equality `==` operator.
+--- Cyclic tables are supported.
 ---@param a any First value
 ---@param b any Second value
 ---@return boolean `true` if values are equals, else `false`
 function vim.deep_equal(a, b)
-  if a == b then
-    return true
-  end
-  if type(a) ~= type(b) then
-    return false
-  end
-  if type(a) == 'table' then
-    --- @cast a table<any,any>
-    --- @cast b table<any,any>
-    for k, v in pairs(a) do
-      if not vim.deep_equal(v, b[k]) then
-        return false
-      end
-    end
-    for k in pairs(b) do
-      if a[k] == nil then
-        return false
-      end
-    end
-    return true
-  end
-  return false
+  return deep_equal(a, b)
 end
 
 --- Add the reverse lookup values to an existing table.

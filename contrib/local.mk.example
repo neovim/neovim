@@ -41,7 +41,6 @@
 # Uncomment these entries to instead use system-wide installations of
 # them.
 #
-# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_BUSTED=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_GETTEXT=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LIBICONV=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LIBUV=OFF

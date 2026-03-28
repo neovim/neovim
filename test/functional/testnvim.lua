@@ -1,6 +1,7 @@
 local uv = vim.uv
 local t = require('test.testutil')
-local busted = require('busted')
+---@type test.harness
+local harness = require('test.harness')
 
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
@@ -528,7 +529,7 @@ function M.new_session(keep, ...)
   return new_session
 end
 
-busted.subscribe({ 'suite', 'end' }, function()
+harness.on_suite_end(function()
   M.check_close(true)
   local timed_out = false
   local timer = assert(vim.uv.new_timer())

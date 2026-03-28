@@ -7,7 +7,6 @@ set(TEST_OPTIONS
       -D BUILD_DIR=${CMAKE_BINARY_DIR}
       -D CIRRUS_CI=$ENV{CIRRUS_CI}
       -D CI_BUILD=${CI_BUILD}
-      -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
       -D NVIM_PRG=$<TARGET_FILE:nvim_bin>
       -D TEST_DIR=${TEST_DIR}
       -D ROOT_DIR=${PROJECT_SOURCE_DIR})
@@ -20,7 +19,7 @@ if(LUA_HAS_FFI)
       ${TEST_OPTIONS}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     USES_TERMINAL)
-  add_dependencies(unittest lua_dev_deps nvim)
+  add_dependencies(unittest nvim)
 else()
   message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
 endif()
@@ -36,7 +35,7 @@ add_custom_target(benchmark
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
   DEPENDS tty-test
   USES_TERMINAL)
-add_dependencies(benchmark lua_dev_deps nvim)
+add_dependencies(benchmark nvim)
 
 add_custom_target(functionaltest
   COMMAND ${CMAKE_COMMAND}
@@ -45,7 +44,7 @@ add_custom_target(functionaltest
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
   DEPENDS printenv-test printargs-test shell-test pwsh-test streams-test tty-test
   USES_TERMINAL)
-add_dependencies(functionaltest lua_dev_deps nvim)
+add_dependencies(functionaltest nvim)
 
 # Create multiple targets for groups of functional tests to enable parallel testing.
 set(group_targets "")
@@ -66,7 +65,7 @@ foreach(test_file ${test_files})
         ${TEST_OPTIONS}
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS printenv-test printargs-test shell-test pwsh-test streams-test tty-test)
-    add_dependencies(${group_target} lua_dev_deps nvim)
+    add_dependencies(${group_target} nvim)
     list(APPEND group_targets ${group_target})
     list(APPEND summary_files ${summary_file})
   endif()

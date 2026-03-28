@@ -1630,6 +1630,7 @@ vim.deep_equal({a}, {b})                                    *vim.deep_equal()*
 
     Tables are compared recursively unless they both provide the `eq`
     metamethod. All other types are compared using the equality `==` operator.
+    Cyclic tables are supported.
 
     Parameters: ~
       • {a}  (`any`) First value

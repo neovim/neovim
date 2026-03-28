@@ -37,11 +37,22 @@ You can learn [Lua concepts 15 minutes](https://learnxinyminutes.com/docs/lua/),
 see also |lua-guide|. Use any existing test as a template to start writing new
 tests, or see |dev-quickstart|.
 
-Tests are run by the `/cmake/RunTests.cmake` script using `busted` (a Lua test-runner).
+Tests are run by the `/cmake/RunTests.cmake` script using the repo-local Lua
+test harness in `/test/harness.lua`.
 For some failures, `./build/nvim.log` (or `$NVIM_LOG_FILE`) may provide insight.
 
 Depending on the presence of binaries (e.g., `xclip`) some tests will be
 skipped.
+
+Harness isolation                                  *dev-test-harness-isolation*
+
+The Lua harness runs all selected spec files in one low-level `nvim -ll`
+process, then restores a baseline before each file. The baseline is captured
+after `--helper` is loaded, so helper-provided modules and defaults persist
+across files.
+
+The harness restores `_G`, `package.loaded`, `package.preload`, `arg`, and the
+process environment with the same shallow file boundary model that busted uses.
 
 ==============================================================================
 Test Layout
@@ -56,7 +67,7 @@ Test Layout
 - `/test/includes` : include-files for use by luajit `ffi.cdef` C definitions
   parser: normally used to make macros not accessible via this mechanism
   accessible the other way.
-- `/test/*/preload.lua` : modules preloaded by busted `--helper` option
+- `/test/*/preload.lua` : modules preloaded by the harness `--helper` option
 - `/test/**/testutil.lua` : common utility functions in the context of the test
   runner
 - `/test/**/testnvim.lua` : common utility functions in the context of the
@@ -145,9 +156,7 @@ need to install and configure:
 2. [local-lua-debugger-vscode](https://github.com/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation#local-lua-debugger-vscode)
 3. [nlua](https://github.com/mfussenegger/nlua)
 4. [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind) (called `osv`)
-5. A `nbusted` command in `$PATH`. This command can be a copy of `busted` with
-   `exec '/usr/bin/lua5.1'"` replaced with `"exec '/usr/bin/nlua'"` (or the
-   path to your `nlua`)
+5. An `nlua` command in `$PATH`.
 
 
 The setup roughly looks like this: >
@@ -163,7 +172,7 @@ The setup roughly looks like this: >
               │                     │
               ▼                     │
          ┌─────────┐                │
-         │ nbusted │                │
+         │   nlua  │                │
          └─────────┘                │
               │                     │
               ▼                     │
@@ -206,11 +215,11 @@ With these installed you can use a configuration like this: >
       request = "launch",
       cwd = "${workspaceFolder}",
       program = {
-        command = "nbusted",
+        command = "nlua",
       },
       args = {
-        "--ignore-lua",
-        "--lazy",
+        "-ll",
+        "test/runner.lua",
         "--helper=test/functional/preload.lua",
         "--lpath=build/?.lua",
         "--lpath=?.lua",
@@ -274,7 +283,7 @@ Limitations:
     if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
       require("lldebugger").start()
     end
-<  This is a [local-lua-debugger limitation](https://github.com/tomblind/local-lua-debugger-vscode?tab=readme-ov-file#busted)
+<  This is a local-lua-debugger limitation.
 - You cannot step into code of files which get baked into the nvim binary
   (such as `_core/*.lua` and `inspect.lua`).
 
@@ -314,10 +323,10 @@ or >
     cmake -E env "TEST_FILE=test/functional/foo.lua" cmake --build build --target functionaltest
 
 To _repeat_ a test: >
-    BUSTED_ARGS="--repeat=100 --no-keep-going" TEST_FILE=test/functional/foo_spec.lua make functionaltest
+    TEST_ARGS="--repeat=100 --no-keep-going" TEST_FILE=test/functional/foo_spec.lua make functionaltest
 
 or >
-    cmake -E env "TEST_FILE=test/functional/foo_spec.lua" cmake -E env BUSTED_ARGS="--repeat=100 --no-keep-going" cmake --build build --target functionaltest
+    cmake -E env "TEST_FILE=test/functional/foo_spec.lua" cmake -E env TEST_ARGS="--repeat=100 --no-keep-going" cmake --build build --target functionaltest
 
 FILTER BY TAG
 
@@ -430,7 +439,7 @@ Test behaviour is affected by environment variables. Currently supported
 treated as Integer; when defined, treated as String; when defined, treated as
 Number; !must be defined to function properly):
 
-- `BUSTED_ARGS` (F) (U): arguments forwarded to `busted`.
+- `TEST_ARGS` (F) (U): arguments forwarded to the local test harness.
 
 - `CC` (U) (S): specifies which C compiler to use to preprocess files.
   Currently only compilers with gcc-compatible arguments are supported.

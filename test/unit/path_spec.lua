@@ -397,14 +397,6 @@ describe('path.c', function()
   setup(function()
     mkdir('unit-test-directory')
     io.open('unit-test-directory/test.file', 'w'):close()
-
-    -- Since the tests are executed, they are called by an executable. We use
-    -- that executable for several asserts.
-    local absolute_executable = arg[0]
-
-    -- Split absolute_executable into a directory and the actual file name for
-    -- later usage.
-    local directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$') -- luacheck: ignore
   end)
 
   teardown(function()
