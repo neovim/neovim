@@ -44,6 +44,7 @@ DIAGNOSTICS
 OPTIONS
 
 • `'completefuzzycollect'` and `'isexpand'` have been removed.
+• `'taboptions'` have been added.
 
 TREESITTER
 
@@ -56,6 +57,10 @@ UI
 VIMSCRIPT
 
 • `complete_match()` has been removed.
+
+CMDS
+
+• `':mktab'` has been added.
 
 ==============================================================================
 BREAKING CHANGES                                                *news-breaking*

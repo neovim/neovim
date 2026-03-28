@@ -92,6 +92,7 @@ void didset_string_options(void)
   check_str_opt(kOptBelloff, NULL);
   check_str_opt(kOptCompleteopt, NULL);
   check_str_opt(kOptSessionoptions, NULL);
+  check_str_opt(kOptTaboptions, NULL);
   check_str_opt(kOptViewoptions, NULL);
   check_str_opt(kOptFoldopen, NULL);
   check_str_opt(kOptDisplay, NULL);
@@ -1657,6 +1658,21 @@ const char *did_set_sessionoptions(optset_T *args)
     return errmsg;
   }
   if ((ssop_flags & kOptSsopFlagCurdir) && (ssop_flags & kOptSsopFlagSesdir)) {
+    // Don't allow both "sesdir" and "curdir".
+    const char *oldval = args->os_oldval.string.data;
+    opt_strings_flags(oldval, opt_ssop_values, &ssop_flags, true);
+    return e_invarg;
+  }
+  return NULL;
+}
+
+const char *did_set_taboptions(optset_T *args)
+{
+  const char *errmsg = did_set_str_generic(args);
+  if (errmsg != NULL) {
+    return errmsg;
+  }
+  if ((tbop_flags & kOptTbopFlagCurdir) && (tbop_flags & kOptTbopFlagTabdir)) {
     // Don't allow both "sesdir" and "curdir".
     const char *oldval = args->os_oldval.string.data;
     opt_strings_flags(oldval, opt_ssop_values, &ssop_flags, true);
