@@ -2277,6 +2277,91 @@ vim.base64.encode({str})                                 *vim.base64.encode()*
 
 
 ==============================================================================
+Event data types                                                  *vim.events*
+
+*vim.event.lspattach.data*
+
+    Fields: ~
+      • {client_id}  (`integer`)
+
+*vim.event.lspdetach.data*
+
+    Fields: ~
+      • {client_id}  (`integer`)
+
+*vim.event.lspnotify.data*
+
+    Fields: ~
+      • {client_id}  (`integer`)
+      • {method}     (`string`)
+      • {params}     (`table`)
+
+*vim.event.lspprogress.data*
+
+    Fields: ~
+      • {client_id}  (`integer`)
+      • {params}     (`lsp.ProgressParams`)
+
+*vim.event.lsprequest.data*
+
+    Fields: ~
+      • {client_id}   (`integer`)
+      • {request_id}  (`integer`)
+      • {request}     (`table`)
+
+*vim.event.lsptokenupdate.data*
+
+    Fields: ~
+      • {client_id}  (`integer`)
+      • {token}      (`table`)
+
+*vim.event.markset.data*
+
+    Fields: ~
+      • {name}  (`string`)
+      • {line}  (`integer`)
+      • {col}   (`integer`)
+
+*vim.event.packchanged.data*
+
+    Fields: ~
+      • {active}  (`boolean`)
+      • {kind}    (`string`)
+      • {spec}    (`vim.pack.Spec`)
+      • {path}    (`string`)
+
+*vim.event.packchangedpre.data*
+
+    Fields: ~
+      • {active}  (`boolean`)
+      • {kind}    (`string`)
+      • {spec}    (`vim.pack.Spec`)
+      • {path}    (`string`)
+
+*vim.event.progress.data*
+
+    Fields: ~
+      • {id}        (`any`)
+      • {text}      (`string[]`)
+      • {data}?     (`table`)
+      • {percent}?  (`integer`)
+      • {source}?   (`string`)
+      • {status}?   (`string`)
+      • {title}?    (`string`)
+
+*vim.event.termrequest.data*
+
+    Fields: ~
+      • {sequence}    (`string`)
+      • {terminator}  (`string`)
+      • {cursor}      (`integer[]`)
+
+*vim.event.termresponse.data*
+
+    Fields: ~
+      • {sequence}  (`string`)
+
+==============================================================================
 Lua module: vim.filetype                                        *vim.filetype*
 
 vim.filetype.add({filetypes})                             *vim.filetype.add()*
