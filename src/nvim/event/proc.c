@@ -462,6 +462,20 @@ void exit_on_closed_chan(int status)
   multiqueue_put(main_loop.fast_events, exit_event, (void *)(intptr_t)status);
 }
 
+static void child_server_exit_event(void **argv)
+{
+  int status = (int)(intptr_t)argv[0];
+  uint64_t server_chan_id = (uint64_t)(intptr_t)argv[1];
+  // Need to call ui_client_attach_to_restarted_server() here as well, as sometimes
+  // rpc_close_event() hasn't been called yet (also see comments in on_proc_exit()).
+  ui_client_attach_to_restarted_server();
+  if (ui_client_channel_id == server_chan_id) {
+    // If the current embedded server has exited and no new server is started,
+    // the client should exit with the same status.
+    exit_on_closed_chan(status);
+  }
+}
+
 static void on_proc_exit(Proc *proc)
 {
   Loop *loop = proc->loop;
@@ -476,14 +490,9 @@ static void on_proc_exit(Proc *proc)
     Channel *server_chan = find_channel(server_chan_id);
     if (server_chan != NULL && server_chan->streamtype == kChannelStreamProc
         && proc == &server_chan->stream.proc) {
-      // Need to call ui_client_attach_to_restarted_server() here as well, as sometimes
-      // rpc_close_event() hasn't been called yet (also see comments above).
-      ui_client_attach_to_restarted_server();
-      if (ui_client_channel_id == server_chan_id) {
-        // If the current embedded server has exited and no new server is started,
-        // the client should exit with the same status.
-        exit_on_closed_chan(proc->status);
-      }
+      // Schedule this as ui_client_attach_to_restarted_server() runs event loop.
+      multiqueue_put(main_loop.fast_events, child_server_exit_event,
+                     (void *)(intptr_t)proc->status, (void *)(intptr_t)server_chan_id);
     }
   }
 
