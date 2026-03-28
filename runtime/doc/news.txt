@@ -137,7 +137,7 @@ DEFAULTS
   was implemented as an internal C routine).
 • Default 'statusline' shows:
   • |vim.diagnostic.status()|
-  • |vim.ui.progress_status()
+  • |vim.ui.progress_status()|
   • :terminal exit code
 • Project-local configuration ('exrc') is also loaded from parent directories.
   Unset 'exrc' to stop further search.
