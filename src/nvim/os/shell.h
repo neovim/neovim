@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>  // IWYU pragma: keep
 
 // Flags for os_call_shell() second argument

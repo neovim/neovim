@@ -259,10 +259,10 @@ func Test_mksession_one_buffer_two_windows()
     if line =~ 'edit \f\{-}Xtest2'
       let count2 += 1
     endif
-    if line =~ 'buffer \f\{-}Xtest2'
+    if line =~ 'fnamemodify("Xtest2", ":p")'
       let count2buf += 1
     endif
-    if line =~ 'bufexists(fnamemodify(.*, ":p")'
+    if line =~ 'bufexists(s:fname)'
       let bufexists += 1
     endif
   endfor
