@@ -1498,7 +1498,17 @@ describe('user config init', function()
 
       -- a total of 2 exrc files are executed
       feed(':echo g:exrc_count<CR>')
-      screen:expect({ any = '2' })
+      screen:expect([[
+        ^{MATCH: +}|
+        ~{MATCH: +}|*4
+        [No Name]{MATCH: +}0,0-1{MATCH: +}All|
+        2{MATCH: +}|
+        -- TERMINAL --{MATCH: +}|
+      ]])
+
+      -- The server is now detached and needs to be quit explicitly.
+      feed(':qall!<CR>')
+      screen:expect({ any = vim.pesc('[Process exited 0]') })
     end)
   end)
 

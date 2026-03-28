@@ -401,6 +401,10 @@ describe('TUI :restart', function()
     ]])
     assert_new_pid()
     assert_no_gui_running()
+
+    -- The server is now detached and needs to be quit explicitly.
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
   it('drops "-" and "-- [files…]" from v:argv #34417', function()
@@ -461,6 +465,10 @@ describe('TUI :restart', function()
     -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
     -- eq(13, #argv)
     -- eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
+
+    -- The server is now detached and needs to be quit explicitly.
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 end)
 

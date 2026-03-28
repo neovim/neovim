@@ -4970,7 +4970,7 @@ static void ex_restart(exarg_T *eap)
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
   const char *listen_arg = NULL;
-#ifdef MSWIN
+#ifdef MSWIN  // FIXME: --listen doesn't work on Windows and needs to be dropped
 # define HANDLE_LISTEN_ADDR li = next_li; continue
 #else
 # define HANDLE_LISTEN_ADDR listen_arg = addr
