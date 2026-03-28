@@ -328,6 +328,7 @@ LSP
   • |vim.lsp.completion.enable()| gained a `cmp` option for custom ordering.
   • Supports colored symbol preview for color items.
   • Shows a preview ("completionItem/resolve") if 'completeopt' has "popup".
+  • Supports `commitCharacters`.
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
 • Support for dynamic registration for `textDocument/diagnostic`

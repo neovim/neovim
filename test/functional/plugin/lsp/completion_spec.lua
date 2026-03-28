@@ -1512,6 +1512,50 @@ describe('vim.lsp.completion: integration', function()
     feed('<C-y>')
     eq('hallo', n.api.nvim_get_current_line())
   end)
+
+  it('support commitCharacters', function()
+    n.command('set completeopt=menuone,menu,noinsert')
+    -- from typescript-language-server
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          commitCharacters = { '.', ',', ';', '(' },
+          data = {
+            cacheId = 1,
+          },
+          filterText = '.bar',
+          kind = 2,
+          label = 'bar',
+          sortText = '11',
+          textEdit = {
+            newText = '.bar',
+            range = {
+              ['end'] = {
+                character = 2,
+                line = 0,
+              },
+              start = {
+                character = 1,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
+    }
+    create_server('dummy', completion_list, { trigger_chars = { '.' } })
+    feed('Sf.')
+    wait_for_pum()
+    feed('(')
+    eq('f.bar(', n.api.nvim_get_current_line())
+
+    n.command('set completeopt+=noselect')
+    feed('<ESC>Sf.')
+    wait_for_pum()
+    feed('(')
+    eq('f.(', n.api.nvim_get_current_line())
+  end)
 end)
 
 describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()

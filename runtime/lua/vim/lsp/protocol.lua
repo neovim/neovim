@@ -473,7 +473,7 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false,
         completionItem = {
           snippetSupport = true,
-          commitCharactersSupport = false,
+          commitCharactersSupport = true,
           preselectSupport = false,
           deprecatedSupport = true,
           documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
@@ -495,6 +495,7 @@ function protocol.make_client_capabilities()
         },
         completionList = {
           itemDefaults = {
+            'commitCharacters',
             'editRange',
             'insertTextFormat',
             'insertTextMode',
