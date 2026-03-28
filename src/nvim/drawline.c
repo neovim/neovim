@@ -1066,6 +1066,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
   const bool is_wrapped = wp->w_p_wrap
                           && !has_fold;       // Never wrap folded lines
+  const int wrap_width = is_wrapped ? win_wrap_width(wp) : view_width;
 
   int saved_attr2 = 0;                  // char_attr saved for n_attr
   int n_attr3 = 0;                      // chars with overruling special attr
@@ -1790,8 +1791,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         decor_redraw_col(wp, (colnr_T)(ptr - line) - 1, wlv.off, true, &decor_state,
                          decor_provider_end_col - 1);
       }
-      if (wlv.col >= view_width) {
-        wlv.col = wlv.off = view_width;
+      if (wlv.col >= wrap_width) {
+        wlv.col = wlv.off = wrap_width;
         goto end_check;
       }
     }
@@ -2036,7 +2037,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
         // If a double-width char doesn't fit display a '>' in the last column.
         // Don't advance the pointer but put the character at the start of the next line.
-        if (wlv.col >= view_width - 1 && schar_cells(mb_schar) == 2) {
+        if (wlv.col >= wrap_width - 1 && schar_cells(mb_schar) == 2) {
           mb_c = '>';
           mb_l = 1;
           mb_schar = schar_from_ascii(mb_c);
@@ -2159,7 +2160,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       // If a double-width char doesn't fit display a '>' in the
       // last column; the character is displayed at the start of the
       // next line.
-      if (wlv.col >= view_width - 1 && schar_cells(mb_schar) == 2) {
+      if (wlv.col >= wrap_width - 1 && schar_cells(mb_schar) == 2) {
         mb_schar = schar_from_ascii('>');
         mb_c = '>';
         mb_l = 1;
@@ -2341,7 +2342,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             search_attr = 0;
           }
 
-          if (mb_c == TAB && wlv.n_extra + wlv.col > view_width) {
+          if (mb_c == TAB && wlv.n_extra + wlv.col > wrap_width) {
             wlv.n_extra = tabstop_padding(wlv.vcol, wp->w_buffer->b_p_ts,
                                           wp->w_buffer->b_p_vts_array) - 1;
           }
@@ -3086,7 +3087,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       wlv.char_attr = saved_attr2;
     }
 
-    if (has_decor && wlv.filler_todo <= 0 && wlv.col >= view_width) {
+    if (has_decor && wlv.filler_todo <= 0 && wlv.col >= wrap_width) {
       // At the end of screen line: might need to peek for decorations just after
       // this position.
       if (is_wrapped && wlv.n_extra == 0) {
@@ -3105,7 +3106,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 end_check:
     // At end of screen line and there is more to come: Display the line
     // so far.  If there is no more to display it is caught above.
-    if (wlv.col >= view_width && (!has_foldtext || virt_line_index >= 0)
+    if (wlv.col >= wrap_width && (!has_foldtext || virt_line_index >= 0)
         && (wlv.col <= leftcols_width
             || *ptr != NUL
             || wlv.filler_todo > 0
@@ -3127,7 +3128,8 @@ end_check:
       }
 
       // Apply 'cursorline' highlight.
-      if (wlv.boguscols != 0 && (wlv.line_attr_lowprio != 0 || wlv.line_attr != 0)) {
+      if ((wlv.boguscols != 0 || wrap_width < view_width)
+          && (wlv.line_attr_lowprio != 0 || wlv.line_attr != 0)) {
         int attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.line_attr);
         while (draw_col < view_width) {
           linebuf_char[wlv.off] = schar_from_char(' ');
@@ -3270,7 +3272,7 @@ static int decor_providers_setup(int rows_to_draw, bool draw_from_line_start, li
   // the effects of 'linebreak', 'breakindent', etc.
   int rem_vcols;
   if (wp->w_p_wrap) {
-    int width = wp->w_view_width - win_col_off(wp);
+    int width = win_wrap_width(wp) - win_col_off(wp);
     int width2 = width + win_col_off2(wp);
 
     int first_row_width = draw_from_line_start ? width : width2;

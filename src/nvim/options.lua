@@ -10846,6 +10846,31 @@ local options = {
       type = 'boolean',
     },
     {
+      abbreviation = 'wcl',
+      defaults = 0,
+      desc = [=[
+        When 'wrap' is on and this option is greater than zero, lines will
+        visually wrap at the specified column instead of at the window edge.
+        This is a display-only setting — it does not modify the buffer.
+
+        If the window is narrower than the specified column, wrapping falls
+        back to the window edge (same as default 'wrap' behavior).
+
+        When combined with 'linebreak', wrapping respects word boundaries as
+        usual, but uses the 'wrapcolumn' as the line width for breaking.
+
+        Works naturally with 'colorcolumn': setting both to the same value
+        means text wraps exactly where the column marker is displayed.
+
+        Has no effect when 'wrap' is off.  The value 0 disables this feature.
+      ]=],
+      full_name = 'wrapcolumn',
+      redraw = { 'current_window' },
+      scope = { 'win' },
+      short_desc = N_('column at which lines visually wrap'),
+      type = 'number',
+    },
+    {
       abbreviation = 'wm',
       defaults = 0,
       desc = [=[

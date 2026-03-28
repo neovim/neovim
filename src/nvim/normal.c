@@ -2517,14 +2517,15 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
 
   col_off1 = win_col_off(curwin);
   col_off2 = col_off1 - win_col_off2(curwin);
-  width1 = curwin->w_view_width - col_off1;
-  width2 = curwin->w_view_width - col_off2;
+  int wrap_width = win_wrap_width(curwin);
+  width1 = wrap_width - col_off1;
+  width2 = wrap_width - col_off2;
 
   if (width2 == 0) {
     width2 = 1;  // Avoid divide by zero.
   }
 
-  if (curwin->w_view_width != 0) {
+  if (wrap_width != 0) {
     int n;
     // Instead of sticking at the last character of the buffer line we
     // try to stick in the last column of the screen.
@@ -5237,8 +5238,9 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
-  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
-    int width1 = curwin->w_view_width - win_col_off(curwin);
+  int ww = win_wrap_width(curwin);
+  if (curwin->w_p_wrap && ww != 0) {
+    int width1 = ww - win_col_off(curwin);
     int width2 = width1 + win_col_off2(curwin);
 
     validate_virtcol(curwin);
@@ -5250,7 +5252,7 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
     // When ending up below 'smoothscroll' marker, move just beyond it so
     // that skipcol is not adjusted later.
     if (curwin->w_skipcol > 0 && curwin->w_cursor.lnum == curwin->w_topline) {
-      int overlap = sms_marker_overlap(curwin, curwin->w_view_width - width2);
+      int overlap = sms_marker_overlap(curwin, ww - width2);
       if (overlap > 0 && i == curwin->w_skipcol) {
         i += overlap;
       }
@@ -5262,7 +5264,7 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
   // 'relativenumber' is on and lines are wrapping the middle can be more
   // to the left.
   if (cap->nchar == 'm') {
-    i += (curwin->w_view_width - win_col_off(curwin)
+    i += (ww - win_col_off(curwin)
           + ((curwin->w_p_wrap && i > 0) ? win_col_off2(curwin) : 0)) / 2;
   }
   coladvance(curwin, (colnr_T)i);
@@ -5318,10 +5320,11 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = true;
-  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
+  int ww_end = win_wrap_width(curwin);
+  if (curwin->w_p_wrap && ww_end != 0) {
     curwin->w_curswant = MAXCOL;              // so we stay at the end
     if (cap->count1 == 1) {
-      int width1 = curwin->w_view_width - col_off;
+      int width1 = ww_end - col_off;
       int width2 = width1 + win_col_off2(curwin);
 
       validate_virtcol(curwin);
