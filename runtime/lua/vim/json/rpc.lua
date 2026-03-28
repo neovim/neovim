@@ -79,7 +79,7 @@ end
 local M = {}
 
 --- Mapping of error codes used by the client
---- @enum vim.lsp.rpc.ClientErrors
+--- @enum vim.json.rpc.ClientErrors
 local client_errors = {
   INVALID_SERVER_MESSAGE = 1,
   INVALID_SERVER_JSON = 2,
@@ -147,14 +147,14 @@ function M.rpc_response_error(code, message, data)
 end
 
 --- Dispatchers for LSP message types.
---- @class vim.lsp.rpc.Dispatchers
+--- @class vim.json.rpc.Dispatchers
 --- @inlinedoc
 --- @field notification fun(method: vim.lsp.protocol.Method.ClientToServer.Notification, params: table)
 --- @field server_request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table): any?, lsp.ResponseError?
 --- @field on_exit fun(code: integer, signal: integer)
 --- @field on_error fun(code: integer, err: any)
 
---- @type vim.lsp.rpc.Dispatchers
+--- @type vim.json.rpc.Dispatchers
 local default_dispatchers = {
   --- Default dispatcher for notifications sent to an LSP server.
   ---
@@ -216,7 +216,7 @@ end
 --- @private
 --- @param handle_body fun(body: string)
 --- @param on_exit? fun()
---- @param on_error? fun(err: any, errkind: vim.lsp.rpc.ClientErrors)
+--- @param on_error? fun(err: any, errkind: vim.json.rpc.ClientErrors)
 function M.create_read_loop(handle_body, on_exit, on_error)
   on_exit = on_exit or function() end
   on_error = on_error or function() end
@@ -252,12 +252,12 @@ function M.create_read_loop(handle_body, on_exit, on_error)
   end
 end
 
----@class (private) vim.lsp.rpc.Client
+---@class (private) vim.json.rpc.Client
 ---@field message_index integer
 ---@field message_callbacks table<integer, function> dict of message_id to callback
 ---@field notify_reply_callbacks table<integer, function> dict of message_id to callback
 ---@field transport vim.Transport
----@field dispatchers vim.lsp.rpc.Dispatchers
+---@field dispatchers vim.json.rpc.Dispatchers
 local Client = {}
 
 ---@private
@@ -329,7 +329,7 @@ function Client:request(method, params, callback, notify_reply_callback)
 end
 
 ---@package
----@param errkind vim.lsp.rpc.ClientErrors
+---@param errkind vim.json.rpc.ClientErrors
 ---@param ... any
 function Client:on_error(errkind, ...)
   assert(M.client_errors[errkind])
@@ -491,9 +491,9 @@ function Client:handle_body(body)
   end
 end
 
----@param dispatchers vim.lsp.rpc.Dispatchers
+---@param dispatchers vim.json.rpc.Dispatchers
 ---@param transport vim.Transport
----@return vim.lsp.rpc.Client
+---@return vim.json.rpc.Client
 local function new_client(dispatchers, transport)
   local state = {
     message_index = 0,
@@ -506,7 +506,7 @@ local function new_client(dispatchers, transport)
 end
 
 --- Client RPC object
---- @class vim.lsp.rpc.PublicClient
+--- @class vim.json.rpc.PublicClient
 ---
 --- See [vim.lsp.rpc.request()]
 --- @field request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?
@@ -520,10 +520,10 @@ end
 --- Terminates the RPC client.
 --- @field terminate fun()
 
----@param client vim.lsp.rpc.Client
----@return vim.lsp.rpc.PublicClient
+---@param client vim.json.rpc.Client
+---@return vim.json.rpc.PublicClient
 local function public_client(client)
-  ---@type vim.lsp.rpc.PublicClient
+  ---@type vim.json.rpc.PublicClient
   ---@diagnostic disable-next-line: missing-fields
   local result = {}
 
@@ -560,8 +560,8 @@ local function public_client(client)
   return result
 end
 
----@param dispatchers vim.lsp.rpc.Dispatchers?
----@return vim.lsp.rpc.Dispatchers
+---@param dispatchers vim.json.rpc.Dispatchers?
+---@return vim.json.rpc.Dispatchers
 local function merge_dispatchers(dispatchers)
   if not dispatchers then
     return default_dispatchers
@@ -572,7 +572,7 @@ local function merge_dispatchers(dispatchers)
       error(string.format('dispatcher.%s must be a function', name))
     end
   end
-  ---@type vim.lsp.rpc.Dispatchers
+  ---@type vim.json.rpc.Dispatchers
   local merged = {
     notification = (
       dispatchers.notification and schedule_wrap(dispatchers.notification)
@@ -588,7 +588,7 @@ local function merge_dispatchers(dispatchers)
   return merged
 end
 
---- @param client vim.lsp.rpc.Client
+--- @param client vim.json.rpc.Client
 --- @param on_exit? fun()
 local function create_client_read_loop(client, on_exit)
   --- @param body string
@@ -596,7 +596,7 @@ local function create_client_read_loop(client, on_exit)
     client:handle_body(body)
   end
 
-  --- @param errkind vim.lsp.rpc.ClientErrors
+  --- @param errkind vim.json.rpc.ClientErrors
   local function on_error(err, errkind)
     client:on_error(errkind, err)
     if errkind == M.client_errors.INVALID_SERVER_MESSAGE then
@@ -618,7 +618,7 @@ end
 ---
 ---@param host_or_path string host to connect to or path to a pipe/domain socket
 ---@param port integer? TCP port to connect to. If absent the first argument must be a pipe
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
+---@return fun(dispatchers: vim.json.rpc.Dispatchers): vim.json.rpc.PublicClient
 function M.connect(host_or_path, port)
   validate('host_or_path', host_or_path, 'string')
   validate('port', port, 'number', true)
@@ -639,21 +639,14 @@ function M.connect(host_or_path, port)
   end
 end
 
---- Additional context for the spawned process.
---- @class vim.transport.ExtraSpawnParams
---- @inlinedoc
---- @field cwd? string Working directory for the spawned process
---- @field detached? boolean Detach the spawned process from the current process
---- @field env? table<string,string> Additional environment variables for spawned process. See |vim.system()|
-
 --- Starts an LSP server process and create an LSP RPC client object to
 --- interact with it. Communication with the spawned process happens via stdio. For
 --- communication via TCP, spawn a process manually and use |vim.lsp.rpc.connect()|
 ---
 --- @param cmd string[] Command to start the LSP server.
---- @param dispatchers? vim.lsp.rpc.Dispatchers
+--- @param dispatchers? vim.json.rpc.Dispatchers
 --- @param extra_spawn_params? vim.transport.ExtraSpawnParams
---- @return vim.lsp.rpc.PublicClient
+--- @return vim.json.rpc.PublicClient
 function M.start(cmd, dispatchers, extra_spawn_params)
   log.info('Starting RPC client', { cmd = cmd, extra = extra_spawn_params })
 

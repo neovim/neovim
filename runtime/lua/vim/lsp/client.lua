@@ -45,7 +45,7 @@ local all_clients = {}
 --- a table with member functions `request`, `notify`, `is_closing` and `terminate`.
 --- See |vim.lsp.rpc.request()|, |vim.lsp.rpc.notify()|.
 --- For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
---- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient
+--- @field cmd string[]|fun(dispatchers: vim.json.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.json.rpc.PublicClient
 ---
 --- Directory to launch the `cmd` process. Not related to `root_dir`.
 --- (default: cwd)
@@ -199,7 +199,7 @@ local all_clients = {}
 ---
 --- RPC client object, for low level interaction with the client.
 --- See |vim.lsp.rpc.start()|.
---- @field rpc vim.lsp.rpc.PublicClient
+--- @field rpc vim.json.rpc.PublicClient
 ---
 --- Response from the server sent on `initialize` describing the server's capabilities.
 --- @field server_capabilities lsp.ServerCapabilities?
@@ -453,7 +453,7 @@ function Client.create(config)
   --- @type table<string|integer, string> title of unfinished progress sequences by token
   self.progress.pending = {}
 
-  --- @type vim.lsp.rpc.Dispatchers
+  --- @type vim.json.rpc.Dispatchers
   local dispatchers = {
     notification = function(...)
       self:_notification(...)

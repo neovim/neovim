@@ -1,4 +1,6 @@
-local json = vim._defer_require('vim.json', {})
+local json = vim._defer_require('vim.json', {
+  rpc = ..., ---@module 'vim.json.rpc'
+})
 
 --- @class vim.json.decode.Opts
 --- @inlinedoc

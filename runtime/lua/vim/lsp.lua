@@ -169,7 +169,7 @@ end
 ---
 --- See `cmd` in [vim.lsp.ClientConfig].
 --- See also `reuse_client` to dynamically decide (per-buffer) when `cmd` should be re-invoked.
---- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient
+--- @field cmd? string[]|fun(dispatchers: vim.json.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.json.rpc.PublicClient
 ---
 --- Filetypes the client will attach to, or `nil` for ALL filetypes. To match files by name,
 --- pattern, or contents, you can define a custom filetype using |vim.filetype.add()|:
