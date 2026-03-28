@@ -1386,7 +1386,7 @@ M.funcs = {
     tags = { 'E785' },
   },
   complete_add = {
-    args = 1,
+    args = { 1, 2 },
     base = 1,
     desc = [=[
       Add {expr} to the list of matches.  Only to be used by the
@@ -1399,7 +1399,7 @@ M.funcs = {
 
     ]=],
     name = 'complete_add',
-    params = { { 'expr', 'any' } },
+    params = { { 'expr', 'any' }, { 'startcol', 'integer' } },
     returns = '0|1|2',
     signature = 'complete_add({expr})',
   },

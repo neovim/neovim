@@ -1539,7 +1539,7 @@ describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
     retry(nil, nil, function()
       local matches = vim.tbl_map(function(m)
         return m.word
-      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
+      end, exec_lua('return vim.fn.complete_info({ "matches" })').matches)
       eq(expected, matches)
     end)
   end
@@ -1553,7 +1553,7 @@ describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
     -- wait for one completion request to start and then request another before
     -- the first one finishes, then wait for both to finish
     feed('ihillo<cr>h')
-    vim.uv.sleep(1)
+    vim.uv.sleep(5)
     feed('e')
 
     assert_matches({ 'hello' })
