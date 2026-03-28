@@ -568,7 +568,7 @@ void spell_suggest(int count)
         msg_puts(IObuff);
       }
 
-      if (p_verbose > 0) {
+      if (p_verbose > 1) {
         // Add the score.
         if (sps_flags & (SPS_DOUBLE | SPS_BEST)) {
           vim_snprintf(IObuff, IOSIZE, " (%s%d - %d)",

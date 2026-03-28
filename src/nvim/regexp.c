@@ -16109,7 +16109,7 @@ void free_regexp_stuff(void)
 
 static void report_re_switch(const char *pat)
 {
-  if (p_verbose > 0) {
+  if (p_verbose > 1) {
     verbose_enter();
     msg_puts(_("Switching to backtracking RE engine for pattern: "));
     msg_puts(pat);

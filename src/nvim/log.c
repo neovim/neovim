@@ -29,7 +29,15 @@
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"
+#include "nvim/strings.h"
 #include "nvim/ui_client.h"
+
+static const char *log_levels[] = {
+  [LOGLVL_DBG] = "DBG",
+  [LOGLVL_INF] = "INF",
+  [LOGLVL_WRN] = "WRN",
+  [LOGLVL_ERR] = "ERR",
+};
 
 /// Cached location of the expanded log file path decided by log_path_init().
 static char log_file_path[MAXPATHL + 1] = { 0 };
@@ -127,6 +135,17 @@ void log_unlock(void)
   uv_mutex_unlock(&mutex);
 }
 
+int log_level_from_name(char *name)
+{
+  for (size_t i = 0; i < sizeof(log_levels); i++) {
+    if (striequal(name, log_levels[i])) {
+      assert(i <= INT_MAX);
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
 /// Logs a message to $NVIM_LOG_FILE.
 ///
 /// @param log_level  Log level (see log.h)
@@ -134,12 +153,15 @@ void log_unlock(void)
 /// @param func_name  Function name, or NULL
 /// @param line_num   Source line number, or -1
 /// @param eol        Append linefeed "\n"
+/// @param join       Replace line endings with SPACE
+/// @param trunc      Truncate to this length
 /// @param fmt        printf-style format string
 ///
 /// @return true if log was emitted normally, false if failed or recursive
-bool logmsg(int log_level, const char *context, const char *func_name, int line_num, bool eol,
+bool logmsg(int log_level, const char *context, const char *func_name,
+            int line_num, bool join, size_t trunc, bool eol,
             const char *fmt, ...)
-  FUNC_ATTR_PRINTF(6, 7)
+  FUNC_ATTR_PRINTF(8, 9)
 {
   static bool recursive = false;
   static bool did_msg = false;  // Showed recursion message?
@@ -190,7 +212,7 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
   va_list args;
   va_start(args, fmt);
   ret = v_do_log_to_file(log_file, log_level, context, func_name, line_num,
-                         eol, fmt, args);
+                         join, trunc, eol, fmt, args);
   va_end(args);
 
   if (log_file != stderr && log_file != stdout) {
@@ -235,7 +257,7 @@ FILE *open_log_file(void)
   //  - LOG() is called before log_init()
   //  - Directory does not exist
   //  - File is not writable
-  do_log_to_file(stderr, LOGLVL_ERR, NULL, __func__, __LINE__, true,
+  do_log_to_file(stderr, LOGLVL_ERR, NULL, __func__, __LINE__, false, 0, true,
                  "failed to open $" ENV_LOGFILE " (%s): %s",
                  strerror(errno), log_file_path);
   return stderr;
@@ -264,7 +286,7 @@ void log_callstack_to_file(FILE *log_file, const char *const func_name, const in
   // Now we have a command string like:
   //    addr2line -e /path/to/exe -f -p 0x123 0x456 ...
 
-  do_log_to_file(log_file, LOGLVL_DBG, NULL, func_name, line_num, true, "trace:");
+  do_log_to_file(log_file, LOGLVL_DBG, NULL, func_name, line_num, false, 0, true, "trace:");
   FILE *fp = popen(cmdbuf, "r");
   assert(fp);
   char linebuf[IOSIZE];
@@ -288,32 +310,28 @@ void log_callstack(const char *const func_name, const int line_num)
 #endif
 
 static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
-                           const char *func_name, int line_num, bool eol, const char *fmt, ...)
-  FUNC_ATTR_PRINTF(7, 8)
+                           const char *func_name, int line_num, bool join,
+                           size_t trunc, bool eol, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(9, 10)
 {
   va_list args;
   va_start(args, fmt);
   bool ret = v_do_log_to_file(log_file, log_level, context, func_name,
-                              line_num, eol, fmt, args);
+                              line_num, join, trunc, eol, fmt, args);
   va_end(args);
 
   return ret;
 }
 
 static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
-                             const char *func_name, int line_num, bool eol, const char *fmt,
+                             const char *func_name, int line_num, bool join,
+                             size_t trunc, bool eol, const char *fmt,
                              va_list args)
-  FUNC_ATTR_PRINTF(7, 0)
+  FUNC_ATTR_PRINTF(9, 0)
 {
   // Name of the Nvim instance that produced the log.
   static char name[32] = { 0 };
 
-  static const char *log_levels[] = {
-    [LOGLVL_DBG] = "DBG",
-    [LOGLVL_INF] = "INF",
-    [LOGLVL_WRN] = "WRN",
-    [LOGLVL_ERR] = "ERR",
-  };
   assert(log_level >= LOGLVL_DBG && log_level <= LOGLVL_ERR);
 
   // Format the timestamp.
@@ -358,20 +376,35 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
     }
   }
 
-  // Print the log message.
-  int rv = (line_num == -1 || func_name == NULL)
-           ? fprintf(log_file, "%s %s.%03d %-10s %s",
-                     log_levels[log_level], date_time, millis, name,
+  int len = 0;  // Total length.
+  // Format the log-message "prefix".
+  int prefixlen = (line_num == -1 || func_name == NULL)
+           ? snprintf(os_buf, sizeof(os_buf), "%-*.*s %s.%03d %-10s %s",
+                     5, 5, log_levels[log_level], date_time, millis, name,
                      (context == NULL ? "?:" : context))
-           : fprintf(log_file, "%s %s.%03d %-10s %s%s:%d: ",
-                     log_levels[log_level], date_time, millis, name,
+           : snprintf(os_buf, sizeof(os_buf), "%-*.*s %s.%03d %-10s %s%s:%d: ",
+                     5, 5, log_levels[log_level], date_time, millis, name,
                      (context == NULL ? "" : context),
                      func_name, line_num);
 
-  if (rv < 0) {
-    return false;
+  // Append the caller-provided stuff to log message prefix.
+  if (prefixlen >= 0 && (size_t)prefixlen < sizeof(os_buf)) {
+    len = vsnprintf(os_buf + prefixlen, sizeof(os_buf) - (size_t)prefixlen,
+                    fmt, args);
+    len = len >= 0 && (size_t)len > sizeof(os_buf) ? sizeof(os_buf) : MAX(0, len);
+    len += prefixlen;
   }
-  if (vfprintf(log_file, fmt, args) < 0) {
+  // Scrub CRLF if requested.
+  if (join && len - prefixlen > 0) {
+    memchrsub(os_buf + prefixlen, '\n', ' ', (size_t)len - (size_t)prefixlen);
+    memchrsub(os_buf + prefixlen, '\r', ' ', (size_t)len - (size_t)prefixlen);
+  }
+  // Write result to file (truncate if specified).
+  int rv = (trunc > 0)
+    ? fprintf(log_file, "%.*s", (int)trunc + prefixlen, os_buf)
+    : fprintf(log_file, "%s", os_buf);
+
+  if (rv < 0) {
     return false;
   }
   if (eol) {

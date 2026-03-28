@@ -501,7 +501,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
   // Set "v:val" to the bad word.
   prepare_vimvar(VV_VAL, &save_val);
   set_vim_var_string(VV_VAL, badword, -1);
-  if (p_verbose == 0) {
+  if (p_verbose <= 1) {
     emsg_off++;
   }
   sctx_T *ctx = get_option_sctx(kOptSpellsuggest);
@@ -521,7 +521,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
     }
   }
 
-  if (p_verbose == 0) {
+  if (p_verbose <= 1) {
     emsg_off--;
   }
   tv_clear(get_vim_var_tv(VV_VAL));
