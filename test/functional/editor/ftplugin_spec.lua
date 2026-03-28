@@ -101,9 +101,16 @@ describe("ftplugin: Lua 'includeexpr'", function()
   end)
 
   it('non-Nvim-style Lua modules', function()
+    -- work with module in cwd
     command('cd ' .. temp_dir)
     eq(temp_dir .. '/general-foo/bar/init.lua', lua_includeexpr('general-foo.bar'))
     eq(temp_dir .. '/general-foo/bar/baz.lua', lua_includeexpr('general-foo.bar.baz'))
     command('cd -')
+    -- work with module in package.{path,cpath}
+    exec_lua(function()
+      package.path = package.path .. ';' .. temp_dir .. '/?/init.lua;' .. temp_dir .. '/?.lua'
+    end)
+    eq(temp_dir .. '/general-foo/bar/init.lua', lua_includeexpr('general-foo.bar'))
+    eq(temp_dir .. '/general-foo/bar/baz.lua', lua_includeexpr('general-foo.bar.baz'))
   end)
 end)
