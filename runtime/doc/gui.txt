@@ -93,7 +93,6 @@ Restart Nvim
 Connect UI to a different server
 
                                                 *:connect*
-
 :connect {address}
                 Detaches the UI from the server it is currently attached to
                 and attaches it to the server at {address} instead.
