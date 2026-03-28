@@ -3399,6 +3399,18 @@ M.cmds = {
     addr_type = 'ADDR_OTHER',
     func = 'ex_previous',
   },
+  {
+    command = 'TermSave',
+    flags = bit.bor(RANGE, FILE1),
+    addr_type = 'ADDR_LINES',
+    func = 'ex_termsave',
+  },
+  {
+    command = 'TermLoad',
+    flags = bit.bor(FILE1),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_termload',
+  },
 }
 
 return M

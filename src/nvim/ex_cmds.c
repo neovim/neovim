@@ -5092,3 +5092,69 @@ void ex_oldfiles(exarg_T *eap)
     }
   }
 }
+
+void ex_termsave(exarg_T *eap)
+{
+  buf_T *buf = curbuf;
+
+  // ensure the current buffer is terminal only
+  if (buf->terminal == NULL) {
+    emsg("E: Current buffer is not a terminal");
+    return;
+  }
+
+  if (*eap->arg == NUL) {
+    emsg("E: Filename required");
+    return;
+  }
+
+  StringBuilder sb = KV_INITIAL_VALUE;
+
+  read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &sb);
+
+  FILE *fp = fopen(eap->arg, "w");
+  if (!fp) {
+    emsg("E: Failed to open file");
+    kv_destroy(sb);
+    return;
+  }
+
+  fwrite(sb.items, 1, kv_size(sb), fp);
+  fclose(fp);
+
+  kv_destroy(sb);
+}
+
+void ex_termload(exarg_T *eap) {
+  if (*eap->arg == NUL) {
+    emsg("E: filename required");
+    return; 
+  }
+  char *fname = fix_fname(eap->arg);
+
+  FILE *fp = fopen(fname, "r");
+
+  if (!fp) {
+    semsg("E: failed to open file %s", fname);
+    return;
+  }
+ do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
+ buf_T *buf = curbuf;
+ char line[4096];
+ linenr_T lnum = 1;
+
+ while(fgets(line, sizeof(line), fp)) {
+   size_t len = strlen(line);
+   if (len > 0 && line[len - 1] == '\n') {
+      line[len - 1] = '\0';
+    }
+
+    ml_append(lnum - 1, (char *)line, 0, false);
+    lnum++;
+ }
+ fclose(fp);
+   if (buf->b_ml.ml_line_count > 1) {
+    ml_delete(1);
+  }
+
+}
