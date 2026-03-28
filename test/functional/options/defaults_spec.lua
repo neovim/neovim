@@ -260,7 +260,7 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '', -- Empty is invalid.
         },
       })
-      eq(xdgstatedir .. '/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
+      eq(xdgstatedir .. '/logs/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
     end)
 
     it('defaults to stdpath("log")/nvim.log if invalid', function()
@@ -271,7 +271,7 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '.', -- Any directory is invalid.
         },
       })
-      eq(xdgstatedir .. '/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
+      eq(xdgstatedir .. '/logs/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
       -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
       expect_exit(command, 'qall!')
     end)
@@ -928,7 +928,7 @@ describe('stdpath()', function()
     clear({ env = { NVIM_APPNAME = appname, NVIM_LOG_FILE = testlog } })
     eq(appname, fn.fnamemodify(fn.stdpath('config'), ':t'))
     eq(appname, fn.fnamemodify(fn.stdpath('cache'), ':t'))
-    eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('log'), ':t'))
+    eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('log'), ':h:t'))
     eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('data'), ':t'))
     eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('state'), ':t'))
     -- config_dirs and data_dirs are empty on windows, so don't check them on
