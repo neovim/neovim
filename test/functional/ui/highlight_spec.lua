@@ -2683,4 +2683,24 @@ describe('fg/bg special colors', function()
       ]],
     })
   end)
+
+  it('setting cterm=/gui= does not block color update on bg change #26603', function()
+    clear()
+    command('highlight clear')
+    command('set bg=dark')
+    command('hi String cterm=underline')
+    local dark_ctermfg = api.nvim_get_hl(0, { name = 'String' }).ctermfg
+    command('set bg=light')
+    local light_hl = api.nvim_get_hl(0, { name = 'String' })
+    eq(true, light_hl.cterm.underline)
+    t.neq(dark_ctermfg, light_hl.ctermfg)
+
+    command('set bg=dark')
+    command('hi String gui=italic')
+    local dark_fg = api.nvim_get_hl(0, { name = 'String' }).fg
+    command('set bg=light')
+    local light_hl2 = api.nvim_get_hl(0, { name = 'String' })
+    eq(true, light_hl2.italic)
+    t.neq(dark_fg, light_hl2.fg)
+  end)
 end)
