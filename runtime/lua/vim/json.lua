@@ -1,9 +1,4 @@
----@meta
-
----@nodoc
-vim.json = {}
-
--- luacheck: no unused args
+local json = vim._defer_require('vim.json', {})
 
 --- @class vim.json.decode.Opts
 --- @inlinedoc
@@ -55,7 +50,12 @@ vim.json = {}
 ---@param str string Stringified JSON data.
 ---@param opts? vim.json.decode.Opts
 ---@return any
-function vim.json.decode(str, opts) end
+function json.decode(str, opts)
+  if type(opts) == 'nil' then
+    return vim._json.decode(str)
+  end
+  return vim._json.decode(str, opts)
+end
 
 --- Encodes (or "packs") a Lua object to stringified JSON.
 ---
@@ -77,4 +77,11 @@ function vim.json.decode(str, opts) end
 ---@param obj any
 ---@param opts? vim.json.encode.Opts
 ---@return string
-function vim.json.encode(obj, opts) end
+function json.encode(obj, opts)
+  if type(opts) == 'nil' then
+    return vim._json.encode(obj)
+  end
+  return vim._json.encode(obj, opts)
+end
+
+return json
