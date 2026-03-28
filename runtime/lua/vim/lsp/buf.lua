@@ -184,9 +184,18 @@ local function request_with_opts(name, params, opts)
 end
 
 ---@param method vim.lsp.protocol.Method.ClientToServer.Request
----@param opts? vim.lsp.LocationOpts
+---@param opts? vim.lsp.ListOpts
 local function get_locations(method, opts)
   opts = opts or {}
+  ---@diagnostic disable-next-line: undefined-field
+  if opts.reuse_win then
+    vim.deprecate(
+      'vim.lsp.buf.<method>({ reuse_win = true })',
+      "vim.lsp.buf.<method>() and the value of 'switchbuf' of preference",
+      '0.13'
+    )
+  end
+
   local bufnr = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
 
@@ -232,39 +241,24 @@ local function get_locations(method, opts)
       return
     end
 
-    if #all_items == 1 then
-      local item = all_items[1]
-      local b = item.bufnr or vim.fn.bufadd(item.filename)
-
-      -- Save position in jumplist
-      vim.cmd("normal! m'")
-      -- Push a new item into tagstack
-      local tagstack = { { tagname = tagname, from = from } }
-      vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
-
-      vim.bo[b].buflisted = true
-      local w = win
-      if opts.reuse_win and api.nvim_win_get_buf(w) ~= b then
-        w = vim.fn.bufwinid(b)
-        w = w >= 0 and w or vim.fn.win_findbuf(b)[1] or win
-        if w ~= win then
-          api.nvim_set_current_win(w)
-        end
-      end
-      api.nvim_win_set_buf(w, b)
-      api.nvim_win_set_cursor(w, { item.lnum, item.col - 1 })
-      vim._with({ win = w }, function()
-        -- Open folds under the cursor
-        vim.cmd('normal! zv')
-      end)
-      return
-    end
     if opts.loclist then
       vim.fn.setloclist(0, {}, ' ', { title = title, items = all_items })
-      vim.cmd.lopen()
+      if #all_items == 1 then
+        local tagstack = { { tagname = tagname, from = from } }
+        vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+        vim.cmd('lfirst')
+      else
+        vim.cmd.lopen()
+      end
     else
       vim.fn.setqflist({}, ' ', { title = title, items = all_items })
-      vim.cmd('botright copen')
+      if #all_items == 1 then
+        local tagstack = { { tagname = tagname, from = from } }
+        vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+        vim.cmd('cfirst')
+      else
+        vim.cmd('botright copen')
+      end
     end
   end)
 end
@@ -283,7 +277,7 @@ end
 --- vim.lsp.buf.definition({ on_list = on_list })
 --- vim.lsp.buf.references(nil, { on_list = on_list })
 --- ```
---- @field on_list? fun(t: vim.lsp.LocationOpts.OnList)
+--- @field on_list? fun(t: vim.lsp.ListOpts.OnList)
 ---
 --- Whether to use the |location-list| or the |quickfix| list in the default handler.
 --- ```lua
@@ -292,33 +286,28 @@ end
 --- ```
 --- @field loclist? boolean
 
---- @class vim.lsp.LocationOpts.OnList
+--- @class vim.lsp.ListOpts.OnList
 --- @field items vim.quickfix.entry[] See |setqflist-what|
 --- @field title? string Title for the list.
 --- @field context? { bufnr: integer, method: string } Subset of `ctx` from |lsp-handler|.
 
---- @class vim.lsp.LocationOpts: vim.lsp.ListOpts
----
---- Jump to existing window if buffer is already open.
---- @field reuse_win? boolean
-
 --- Jumps to the declaration of the symbol under the cursor.
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
---- @param opts? vim.lsp.LocationOpts
+--- @param opts? vim.lsp.ListOpts
 function M.declaration(opts)
   validate('opts', opts, 'table', true)
   get_locations('textDocument/declaration', opts)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
---- @param opts? vim.lsp.LocationOpts
+--- @param opts? vim.lsp.ListOpts
 function M.definition(opts)
   validate('opts', opts, 'table', true)
   get_locations('textDocument/definition', opts)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
---- @param opts? vim.lsp.LocationOpts
+--- @param opts? vim.lsp.ListOpts
 function M.type_definition(opts)
   validate('opts', opts, 'table', true)
   get_locations('textDocument/typeDefinition', opts)
@@ -326,7 +315,7 @@ end
 
 --- Lists all the implementations for the symbol under the cursor in the
 --- quickfix window.
---- @param opts? vim.lsp.LocationOpts
+--- @param opts? vim.lsp.ListOpts
 function M.implementation(opts)
   validate('opts', opts, 'table', true)
   get_locations('textDocument/implementation', opts)
