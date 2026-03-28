@@ -37,6 +37,13 @@ option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLE
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_UTF8PROC "Use the bundled utf8proc library." ${USE_BUNDLED})
 
+# Emscripten/WASM: LuaJIT cannot be compiled by emcc.
+# Force PUC Lua and disable LuaJIT for WASM builds.
+if(EMSCRIPTEN)
+  set(USE_BUNDLED_LUAJIT OFF CACHE BOOL "" FORCE)
+  set(USE_BUNDLED_LUA    ON  CACHE BOOL "" FORCE)
+endif()
+
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." ON)
@@ -85,7 +92,12 @@ if(CMAKE_TOOLCHAIN_FILE)
   )
 endif()
 
-set(DEPS_INCLUDE_FLAGS "-I\"${DEPS_INSTALL_DIR}/include\" -I\"${DEPS_INSTALL_DIR}/include/luajit-2.1\"")
+# For WASM builds, PUC Lua headers are used instead of LuaJIT headers.
+if(EMSCRIPTEN)
+  set(DEPS_INCLUDE_FLAGS "-I\"${DEPS_INSTALL_DIR}/include\" -I\"${DEPS_INSTALL_DIR}/include/lua\"")
+else()
+  set(DEPS_INCLUDE_FLAGS "-I\"${DEPS_INSTALL_DIR}/include\" -I\"${DEPS_INSTALL_DIR}/include/luajit-2.1\"")
+endif()
 
 # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
 # fall back to local system version. Needs to be done here and in top-level CMakeLists.txt.
