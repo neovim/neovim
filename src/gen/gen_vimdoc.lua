@@ -186,6 +186,7 @@ local config = {
       'text.lua',
       'ui.lua',
       'uri.lua',
+      'img.lua', -- ui/img.lua
       'version.lua',
 
       -- Sections at the end, in a specific order:
@@ -220,6 +221,7 @@ local config = {
       'runtime/lua/vim/snippet.lua',
       'runtime/lua/vim/text.lua',
       'runtime/lua/vim/ui.lua',
+      'runtime/lua/vim/ui/img.lua',
       'runtime/lua/vim/uri.lua',
       'runtime/lua/vim/version.lua',
     },
@@ -240,6 +242,7 @@ local config = {
     end,
     section_name = {
       ['_inspector.lua'] = 'inspector',
+      ['img.lua'] = 'ui.img',
       ['ui2.lua'] = 'ui2',
     },
     section_fmt = function(name)
