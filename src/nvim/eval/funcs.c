@@ -6409,7 +6409,7 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
   if (argvars[0].vval.v_string) {
-    bool rv = server_stop(argvars[0].vval.v_string, false, false);
+    bool rv = server_stop(argvars[0].vval.v_string, false);
     rettv->vval.v_number = (rv ? 1 : 0);
   }
 }

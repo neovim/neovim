@@ -5012,7 +5012,7 @@ static void ex_restart(exarg_T *eap)
   bool server_stopped = false;
   if (listen_arg != NULL) {
     // Stop listening on the --listen address so that the new server can listen.
-    server_stopped = server_stop(listen_arg, true, true);
+    server_stopped = server_stop(listen_arg, true);
   }
 
   CallbackReader on_err = CALLBACK_READER_INIT;
