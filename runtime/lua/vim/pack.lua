@@ -739,9 +739,8 @@ local function infer_update_details(p)
     -- `--topo-order` makes showing divergent branches nicer, but by itself
     -- doesn't ensure that reverted ("left", shown with `<`) and added
     -- ("right", shown with `>`) commits have fixed order.
-    local l = git_cmd({ 'log', format, '--topo-order', '--left-only', decorate, range }, p.path)
-    local r = git_cmd({ 'log', format, '--topo-order', '--right-only', decorate, range }, p.path)
-    p.info.update_details = l == '' and r or (r == '' and l or (l .. '\n' .. r))
+    p.info.update_details =
+      git_cmd({ 'log', format, '--topo-order', '--left-right', decorate, range }, p.path)
     return
   end
 
