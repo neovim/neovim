@@ -5482,6 +5482,10 @@ WildMenu	Current match in 'wildmenu' completion.
 WinBar		Window bar of current window.
 							*hl-WinBarNC*
 WinBarNC	Window bar of not-current windows.
+							*hl-WinPadding*
+WinPadding	Window padding of current window.
+							*hl-WinPaddingNC*
+WinPaddingNC	Window padding of non-current window.
 
 					*hl-User1* *hl-User1..9* *hl-User9*
 The 'statusline' syntax allows the use of 9 different highlights in the
