@@ -99,4 +99,16 @@ function M.term_exitcode()
   return ''
 end
 
+--- Returns false and notifies if $VIMRUNTIME is inaccessible or invalid.
+---
+--- @return boolean
+function M._validate_vimruntime()
+  local rt = vim.fn.getenv('VIMRUNTIME')
+  if not rt or rt == '' or not vim.uv.fs_stat(rt .. '/filetype.lua') then
+    vim.notify(('E5009: Invalid $VIMRUNTIME: %q'):format(rt), vim.log.levels.ERROR)
+    return false
+  end
+  return true
+end
+
 return M
