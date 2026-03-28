@@ -290,6 +290,39 @@ describe('API: set highlight', function()
     hl = api.nvim_get_hl(0, { name = 'LinkedGroup' })
     eq(nil, hl.link)
     eq(true, hl.bold)
+
+    -- underline style flags: false must not corrupt other styles
+    local unders = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
+    for _, a in ipairs(unders) do
+      for _, b in ipairs(unders) do
+        if a ~= b then
+          api.nvim_set_hl(0, 'TestGroup', { [a] = true, [b] = false })
+          hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+          eq(true, hl[a])
+          eq(nil, hl[b])
+        end
+      end
+    end
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = true, fg = '#ff0000', bold = true })
+    api.nvim_set_hl(0, 'TestGroup', { fg = '#00ff00', update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdouble)
+    eq(true, hl.bold)
+    eq(65280, hl.fg)
+
+    api.nvim_set_hl(0, 'TestGroup', { underdashed = true, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdashed)
+    eq(nil, hl.underdouble)
+
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = true, bold = true })
+    api.nvim_set_hl(0, 'TestGroup', { underdashed = false, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdouble)
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = false, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(nil, hl.underdouble)
+    eq(true, hl.bold)
   end)
 end)
 
