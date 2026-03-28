@@ -426,7 +426,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-                                                           |
+      foo [+1]                                             |
     ]])
   end)
 
