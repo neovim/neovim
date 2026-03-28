@@ -2634,15 +2634,15 @@ start({cmd}, {dispatchers}, {extra_spawn_params})        *vim.lsp.rpc.start()*
                               • {on_exit}
                                 (`fun(code: integer, signal: integer)`)
                               • {on_error} (`fun(code: integer, err: any)`)
-      • {extra_spawn_params}  (`table?`) Additional context for the LSP server
+      • {extra_spawn_params}  (`table?`) Additional context for the spawned
                               process.
                               • {cwd}? (`string`) Working directory for the
-                                LSP server process
-                              • {detached}? (`boolean`) Detach the LSP server
+                                spawned process
+                              • {detached}? (`boolean`) Detach the spawned
                                 process from the current process
                               • {env}? (`table<string,string>`) Additional
-                                environment variables for LSP server process.
-                                See |vim.system()|
+                                environment variables for spawned process. See
+                                |vim.system()|
 
     Return: ~
         (`vim.lsp.rpc.PublicClient`) See |vim.lsp.rpc.PublicClient|.

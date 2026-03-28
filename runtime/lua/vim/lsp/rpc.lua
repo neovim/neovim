@@ -1,6 +1,6 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local lsp_transport = require('vim.lsp._transport')
+local vim_transport = require('vim._transport')
 local strbuffer = require('vim._core.stringbuffer')
 local validate, schedule_wrap = vim.validate, vim.schedule_wrap
 
@@ -256,7 +256,7 @@ end
 ---@field message_index integer
 ---@field message_callbacks table<integer, function> dict of message_id to callback
 ---@field notify_reply_callbacks table<integer, function> dict of message_id to callback
----@field transport vim.lsp.rpc.Transport
+---@field transport vim.Transport
 ---@field dispatchers vim.lsp.rpc.Dispatchers
 local Client = {}
 
@@ -492,7 +492,7 @@ function Client:handle_body(body)
 end
 
 ---@param dispatchers vim.lsp.rpc.Dispatchers
----@param transport vim.lsp.rpc.Transport
+---@param transport vim.Transport
 ---@return vim.lsp.rpc.Client
 local function new_client(dispatchers, transport)
   local state = {
@@ -628,7 +628,7 @@ function M.connect(host_or_path, port)
 
     dispatchers = merge_dispatchers(dispatchers)
 
-    local transport = lsp_transport.TransportConnect.new()
+    local transport = vim_transport.TransportConnect.new()
     local client = new_client(dispatchers, transport)
     local on_read = create_client_read_loop(client, function()
       transport:terminate()
@@ -639,12 +639,12 @@ function M.connect(host_or_path, port)
   end
 end
 
---- Additional context for the LSP server process.
---- @class vim.lsp.rpc.ExtraSpawnParams
+--- Additional context for the spawned process.
+--- @class vim.transport.ExtraSpawnParams
 --- @inlinedoc
---- @field cwd? string Working directory for the LSP server process
---- @field detached? boolean Detach the LSP server process from the current process
---- @field env? table<string,string> Additional environment variables for LSP server process. See |vim.system()|
+--- @field cwd? string Working directory for the spawned process
+--- @field detached? boolean Detach the spawned process from the current process
+--- @field env? table<string,string> Additional environment variables for spawned process. See |vim.system()|
 
 --- Starts an LSP server process and create an LSP RPC client object to
 --- interact with it. Communication with the spawned process happens via stdio. For
@@ -652,7 +652,7 @@ end
 ---
 --- @param cmd string[] Command to start the LSP server.
 --- @param dispatchers? vim.lsp.rpc.Dispatchers
---- @param extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
+--- @param extra_spawn_params? vim.transport.ExtraSpawnParams
 --- @return vim.lsp.rpc.PublicClient
 function M.start(cmd, dispatchers, extra_spawn_params)
   log.info('Starting RPC client', { cmd = cmd, extra = extra_spawn_params })
@@ -662,7 +662,7 @@ function M.start(cmd, dispatchers, extra_spawn_params)
 
   dispatchers = merge_dispatchers(dispatchers)
 
-  local transport = lsp_transport.TransportRun.new()
+  local transport = vim_transport.TransportRun.new()
   local client = new_client(dispatchers, transport)
   local on_read = create_client_read_loop(client)
   transport:run(cmd, extra_spawn_params, on_read, dispatchers.on_exit)
