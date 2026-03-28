@@ -3426,3 +3426,47 @@ it(':diffput to empty buffer redraws properly', function()
                                                                                |
   ]])
 end)
+
+it('diffget in 3-way diff with linematch:40 gets entire hunk', function()
+  exec([[
+    set diffopt=internal,filler,linematch:40
+    new
+    file Buffer1
+    call setline(1, ['aaa', 'bbb', 'ccc'])
+    diffthis
+    vnew
+    file Buffer2
+    call setline(1, ['aaa', 'xxx', 'ccc'])
+    diffthis
+    vnew
+    file Buffer3
+    call setline(1, ['aaa', 'yyy', 'zzz', 'ccc'])
+    diffthis
+  ]])
+  feed('2G')
+  command('diffget Buffer1')
+
+  eq({ 'aaa', 'bbb', 'ccc' }, api.nvim_buf_get_lines(0, 0, -1, false))
+end)
+
+it('diffput in 3-way diff with linematch:40 puts entire hunk', function()
+  exec([[
+    set diffopt=internal,filler,linematch:40
+    new
+    file Buffer1
+    call setline(1, ['aaa', 'bbb', 'ccc'])
+    diffthis
+    vnew
+    file Buffer2
+    call setline(1, ['aaa', 'xxx', 'yyy', 'ccc'])
+    diffthis
+    vnew
+    file Buffer3
+    call setline(1, ['aaa', 'zzz', 'ccc'])
+    diffthis
+  ]])
+  feed('2G')
+  command('diffput Buffer1')
+  feed('<C-w><C-w>') -- go to Buffer1
+  eq({ 'aaa', 'xxx', 'yyy', 'ccc' }, api.nvim_buf_get_lines(0, 0, -1, false))
+end)

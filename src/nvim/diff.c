@@ -3693,12 +3693,22 @@ static bool valid_diff(diff_T *diff)
 /// @param eap
 void ex_diffgetput(exarg_T *eap)
 {
+  // Disable the linematch algorithm only when in a 3way split and a buffer is specified with
+  // :diffget. If using a specified range, or using do/dp or not in a 3 way split then linematch
+  // will still work
+  int saved_linematch_lines = linematch_lines;
+  if (linematch_lines > 0 && eap->addr_count == 0 && *eap->arg != NUL) {
+    linematch_lines = 0;
+    ex_diffupdate(NULL);
+  }
+
   int idx_other;
 
   // Find the current buffer in the list of diff buffers.
   int idx_cur = diff_buf_idx(curbuf, curtab);
   if (idx_cur == DB_COUNT) {
     emsg(_("E99: Current buffer is not in diff mode"));
+    linematch_lines = saved_linematch_lines;
     return;
   }
 
@@ -3722,6 +3732,7 @@ void ex_diffgetput(exarg_T *eap)
       } else {
         emsg(_("E100: No other buffer in diff mode"));
       }
+      linematch_lines = saved_linematch_lines;
       return;
     }
 
@@ -3733,6 +3744,7 @@ void ex_diffgetput(exarg_T *eap)
               || MODIFIABLE(curtab->tp_diffbuf[i]))) {
         emsg(_("E101: More than two buffers in diff mode, don't know "
                "which one to use"));
+        linematch_lines = saved_linematch_lines;
         return;
       }
     }
@@ -3754,6 +3766,7 @@ void ex_diffgetput(exarg_T *eap)
 
       if (i < 0) {
         // error message already given
+        linematch_lines = saved_linematch_lines;
         return;
       }
     }
@@ -3761,17 +3774,20 @@ void ex_diffgetput(exarg_T *eap)
 
     if (buf == NULL) {
       semsg(_("E102: Can't find buffer \"%s\""), eap->arg);
+      linematch_lines = saved_linematch_lines;
       return;
     }
 
     if (buf == curbuf) {
       // nothing to do
+      linematch_lines = saved_linematch_lines;
       return;
     }
     idx_other = diff_buf_idx(buf, curtab);
 
     if (idx_other == DB_COUNT) {
       semsg(_("E103: Buffer \"%s\" is not in diff mode"), eap->arg);
+      linematch_lines = saved_linematch_lines;
       return;
     }
   }
@@ -3862,6 +3878,7 @@ theend:
     diff_redraw(false);
     apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
   }
+  linematch_lines = saved_linematch_lines;
 }
 
 /// Apply diffget/diffput to buffers and diffblocks
