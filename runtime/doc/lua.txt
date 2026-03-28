@@ -1526,43 +1526,91 @@ vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
 ==============================================================================
 Lua module: vim.inspector                                      *vim.inspector*
 
-vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
+*vim.inspect_pos.ExtmarkItem*
+    Extends: |vim.inspect_pos.Item|
+
+
+    Fields: ~
+      • {id}     (`integer`) extmark id
+      • {ns_id}  (`integer`) namespace id
+      • {ns}     (`string`) namespace name
+      • {opts}   (`vim.api.keyset.extmark_details`) raw extmark details from
+                 |nvim_buf_get_extmarks()|.
+
+*vim.inspect_pos.Item*
+
+    Fields: ~
+      • {hl_group}       (`string`) highlight group name
+      • {hl_group_link}  (`string`) resolved highlight group (after following
+                         links)
+      • {row}?           (`integer`) start row (0-based)
+      • {col}?           (`integer`) start column (0-based)
+      • {end_row}?       (`integer`) end row (0-based, exclusive)
+      • {end_col}?       (`integer`) end column (0-based, exclusive)
+
+*vim.inspect_pos.TSItem*
+    Extends: |vim.inspect_pos.Item|
+
+
+    Fields: ~
+      • {capture}     (`string`) treesitter capture name
+      • {lang}        (`string`) parser language
+      • {metadata}    (`vim.treesitter.query.TSMetadata`) capture metadata
+      • {id}          (`integer`) capture id
+      • {pattern_id}  (`integer`) pattern id
+
+
+vim.inspect_pos({bufnr}, {row}, {col}, {opts})             *vim.inspect_pos()*
     Get all the items at a given buffer position.
 
     Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
+
+    When `end_row` and `end_col` are given in the `opts` table, items
+    overlapping the range `(row, col)` to `(end_row, end_col)` are returned
+    instead of only those at a single position. `end_col` is exclusive
+    (past-the-end).
 
     Attributes: ~
         Since: 0.9.0
 
     Parameters: ~
-      • {bufnr}   (`integer?`) defaults to the current buffer
-      • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
-                  the current cursor
-      • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
-                  the current cursor
-      • {filter}  (`table?`) Table with key-value pairs to filter the items
-                  • {syntax} (`boolean`, default: `true`) Include syntax based
-                    highlight groups.
-                  • {treesitter} (`boolean`, default: `true`) Include
-                    treesitter based highlight groups.
-                  • {extmarks} (`boolean|"all"`, default: true) Include
-                    extmarks. When `all`, then extmarks without a `hl_group`
-                    will also be included.
-                  • {semantic_tokens} (`boolean`, default: true) Include
-                    semantic token highlights.
+      • {bufnr}  (`integer?`) defaults to the current buffer
+      • {row}    (`integer?`) row to inspect, 0-based. Defaults to the row of
+                 the current cursor
+      • {col}    (`integer?`) col to inspect, 0-based. Defaults to the col of
+                 the current cursor
+      • {opts}   (`table?`) A table with the following fields:
+                 • {syntax} (`boolean`, default: `true`) Include syntax based
+                   highlight groups.
+                 • {treesitter} (`boolean`, default: `true`) Include
+                   treesitter based highlight groups.
+                 • {extmarks} (`boolean|"all"`, default: true) Include
+                   extmarks. When `all`, then extmarks without a `hl_group`
+                   will also be included.
+                 • {semantic_tokens} (`boolean`, default: true) Include
+                   semantic token highlights.
+                 • {end_row}? (`integer`, default: `nil`, single position) End
+                   row (0-based, inclusive) for range inspection. When
+                   specified together with `end_col`, items overlapping the
+                   range from `(row, col)` to `(end_row, end_col)` are
+                   returned.
+                 • {end_col}? (`integer`, default: `nil`, single position) End
+                   column (0-based, exclusive) for range inspection.
 
     Return: ~
-        (`table`) a table with the following key-value pairs. Items are in
-        "traversal order":
-        • treesitter: a list of treesitter captures
-        • syntax: a list of syntax groups
-        • semantic_tokens: a list of semantic tokens
-        • extmarks: a list of extmarks
-        • buffer: the buffer used to get the items
-        • row: the row used to get the items
-        • col: the col used to get the items
+        (`table`) A table with the following fields:
+        • {buffer} (`integer`) buffer number
+        • {row} (`integer`) queried start row (0-based)
+        • {col} (`integer`) queried start column (0-based)
+        • {end_row}? (`integer`) queried end row (only set for range queries)
+        • {end_col}? (`integer`) queried end column (only set for range
+          queries)
+        • {treesitter} (`vim.inspect_pos.TSItem[]`)
+        • {syntax} (`vim.inspect_pos.Item[]`)
+        • {extmarks} (`vim.inspect_pos.ExtmarkItem[]`)
+        • {semantic_tokens} (`vim.inspect_pos.ExtmarkItem[]`)
 
-vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
+vim.show_pos({bufnr}, {row}, {col}, {opts})                   *vim.show_pos()*
     Show all the items at a given buffer position.
 
     Can also be shown with `:Inspect`.                              *:Inspect*
@@ -1576,21 +1624,28 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
         Since: 0.9.0
 
     Parameters: ~
-      • {bufnr}   (`integer?`) defaults to the current buffer
-      • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
-                  the current cursor
-      • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
-                  the current cursor
-      • {filter}  (`table?`) A table with the following fields:
-                  • {syntax} (`boolean`, default: `true`) Include syntax based
-                    highlight groups.
-                  • {treesitter} (`boolean`, default: `true`) Include
-                    treesitter based highlight groups.
-                  • {extmarks} (`boolean|"all"`, default: true) Include
-                    extmarks. When `all`, then extmarks without a `hl_group`
-                    will also be included.
-                  • {semantic_tokens} (`boolean`, default: true) Include
-                    semantic token highlights.
+      • {bufnr}  (`integer?`) defaults to the current buffer
+      • {row}    (`integer?`) row to inspect, 0-based. Defaults to the row of
+                 the current cursor
+      • {col}    (`integer?`) col to inspect, 0-based. Defaults to the col of
+                 the current cursor
+      • {opts}   (`table?`) A table with the following fields:
+                 • {syntax} (`boolean`, default: `true`) Include syntax based
+                   highlight groups.
+                 • {treesitter} (`boolean`, default: `true`) Include
+                   treesitter based highlight groups.
+                 • {extmarks} (`boolean|"all"`, default: true) Include
+                   extmarks. When `all`, then extmarks without a `hl_group`
+                   will also be included.
+                 • {semantic_tokens} (`boolean`, default: true) Include
+                   semantic token highlights.
+                 • {end_row}? (`integer`, default: `nil`, single position) End
+                   row (0-based, inclusive) for range inspection. When
+                   specified together with `end_col`, items overlapping the
+                   range from `(row, col)` to `(end_row, end_col)` are
+                   returned.
+                 • {end_col}? (`integer`, default: `nil`, single position) End
+                   column (0-based, exclusive) for range inspection.
 
 
 
