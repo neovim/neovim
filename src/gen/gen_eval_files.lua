@@ -325,6 +325,36 @@ local function render_api_meta(_f, fun, write)
 end
 
 --- @return table<string, vim.EvalFn>
+local function get_event_data_meta()
+  local auevents = require('nvim.auevents')
+  local ret = {} --- @type table<string, vim.EvalFn>
+  for event, fields in pairs(auevents.data or {}) do
+    local params = {}
+    for _, field in ipairs(fields) do
+      table.insert(params, { field[1], field[2] })
+    end
+    ret[event] = {
+      signature = 'NA',
+      name = event,
+      params = params,
+    }
+  end
+  return ret
+end
+
+--- Generates LuaLS @class for event-data types.
+--- @param _f string
+--- @param fun vim.EvalFn
+--- @param write fun(line: string)
+local function render_event_data_meta(_f, fun, write)
+  write('')
+  write('--- @class vim.event.' .. fun.name:lower() .. '.data')
+  for _, p in ipairs(fun.params) do
+    write('--- @field ' .. p[1] .. ' ' .. p[2])
+  end
+end
+
+--- @return table<string, vim.EvalFn>
 local function get_api_keysets_meta()
   local mpack_f = assert(io.open(DEP_API_METADATA, 'rb'))
   local metadata = assert(vim.mpack.decode(mpack_f:read('*all')))
@@ -878,6 +908,12 @@ local CONFIG = {
     header = LUA_META_HEADER,
     funcs = get_api_keysets_meta,
     render = render_api_keyset_meta,
+  },
+  {
+    path = 'runtime/lua/vim/_meta/events.lua',
+    header = LUA_META_HEADER,
+    funcs = get_event_data_meta,
+    render = render_event_data_meta,
   },
   {
     path = 'runtime/doc/vimfn.txt',

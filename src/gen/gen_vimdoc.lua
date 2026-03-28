@@ -164,6 +164,7 @@ local config = {
 
       -- Sections in alphanumeric order:
       'base64.lua',
+      'events.lua',
       'filetype.lua',
       'fs.lua',
       'glob.lua',
@@ -200,6 +201,7 @@ local config = {
       'runtime/lua/vim/_inspector.lua',
       'runtime/lua/vim/_meta/base64.lua',
       'runtime/lua/vim/_meta/builtin.lua',
+      'runtime/lua/vim/_meta/events.lua',
       'runtime/lua/vim/_meta/json.lua',
       'runtime/lua/vim/_meta/lpeg.lua',
       'runtime/lua/vim/_meta/mpack.lua',
@@ -240,6 +242,7 @@ local config = {
     end,
     section_name = {
       ['_inspector.lua'] = 'inspector',
+      ['events.lua'] = 'events',
       ['ui2.lua'] = 'ui2',
     },
     section_fmt = function(name)
@@ -252,6 +255,8 @@ local config = {
         return 'LUA-VIMSCRIPT BRIDGE'
       elseif name == 'builtin' then
         return 'VIM'
+      elseif name == 'events' then
+        return 'Event data types'
       elseif name == 'ui2' then
         return 'UI2'
       end
