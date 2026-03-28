@@ -214,7 +214,7 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
     return;
   }
   arglist_locked = true;
-  wp->w_locked = true;
+  wp->w_locked++;
 
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(fname);
@@ -227,7 +227,7 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   al->al_ga.ga_len++;
 
   arglist_locked = false;
-  wp->w_locked = false;
+  wp->w_locked--;
 }
 
 #if defined(BACKSLASH_IN_FILENAME)
@@ -358,14 +358,14 @@ static void alist_add_list(int count, char **files, int after, bool will_edit)
               (size_t)(ARGCOUNT - after) * sizeof(aentry_T));
     }
     arglist_locked = true;
-    wp->w_locked = true;
+    wp->w_locked++;
     for (int i = 0; i < count; i++) {
       const int flags = BLN_LISTED | (will_edit ? BLN_CURBUF : 0);
       ARGLIST[after + i].ae_fname = files[i];
       ARGLIST[after + i].ae_fnum = buflist_add(files[i], flags);
     }
     arglist_locked = false;
-    wp->w_locked = false;
+    wp->w_locked--;
     ALIST(wp)->al_ga.ga_len += count;
     if (old_argcount > 0 && wp->w_arg_idx >= after) {
       wp->w_arg_idx += count;
