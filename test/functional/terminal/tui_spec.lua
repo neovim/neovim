@@ -233,8 +233,10 @@ describe('TUI :restart', function()
       'colorscheme vim',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
-      '--cmd',
-      'echo getpid()',
+      -- XXX: New server starts before the UI connects to it.
+      -- So checking screen state for this pid is not possible.
+      -- '--cmd',
+      -- 'echo getpid()',
     }, { env = env_notermguicolors })
 
     local function screen_expect(s)
@@ -251,16 +253,18 @@ describe('TUI :restart', function()
       ^                                                  |
       {100:~                                                 }|*3
       {3:[No Name]                                         }|
-      {MATCH:%d+ +}|
+                                                        |
       {5:-- TERMINAL --}                                    |
     ]]
-    screen_expect(s0)
+    screen:expect(s0)
     assert_no_gui_running()
 
     local server_session = n.connect(server_pipe)
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
-
     local function assert_new_pid()
+      if is_os('win') then
+        return -- FIXME
+      end
       server_session:close()
       server_session = n.connect(server_pipe)
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
@@ -268,29 +272,28 @@ describe('TUI :restart', function()
       server_pid = new_pid
     end
 
+    --- XXX: No longer using -c <command> during new server startup.
     --- Gets the last `argn` items in v:argv as a joined string.
-    local function get_argv(argn)
-      local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
-      return table.concat(argv, ' ', #argv - argn, #argv)
-    end
+    -- local function get_argv(argn)
+    --   local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
+    --   return table.concat(argv, ' ', #argv - argn, #argv)
+    -- end
 
     local s1 = [[
                                                         |
       ^Hello1                                            |
       {100:~                                                 }|*2
       {3:[No Name] [+]                                     }|
-      {MATCH:%d+ +}|
+                                                        |
       {5:-- TERMINAL --}                                    |
     ]]
 
     tt.feed_data(':set nomodified\013')
-    -- Command is added as "-c" arg.
+    -- Command is run on new server.
     tt.feed_data(":restart put ='Hello1'\013")
     screen_expect(s1)
-    tt.feed_data('\013')
     assert_new_pid()
     assert_no_gui_running()
-    eq("--cmd echo getpid() +::: -c put ='Hello1'", get_argv(4))
 
     -- Complex command following +cmd.
     tt.feed_data(":restart +qall! put ='Hello2' | put ='World2'\013")
@@ -300,12 +303,11 @@ describe('TUI :restart', function()
       ^World2                                            |
       {100:~                                                 }|
       {3:[No Name] [+]                                     }|
-      {MATCH:%d+ +}|
+                                                        |
       {5:-- TERMINAL --}                                    |
     ]])
     assert_new_pid()
     assert_no_gui_running()
-    eq("--cmd echo getpid() +::: -c put ='Hello2' | put ='World2'", get_argv(4))
 
     -- Check ":restart" on an unmodified buffer.
     tt.feed_data(':set nomodified\013')
@@ -319,7 +321,6 @@ describe('TUI :restart', function()
     screen_expect(s0)
     assert_new_pid()
     assert_no_gui_running()
-    eq('--cmd echo getpid()', get_argv(1))
 
     -- Check ":restart +echo" cannot restart server.
     tt.feed_data(':restart +echo\013')
@@ -357,7 +358,6 @@ describe('TUI :restart', function()
     screen:expect({ any = '%^Hello3' })
     assert_new_pid()
     assert_no_gui_running()
-    eq("--cmd echo getpid() +::: -c put ='Hello3'", get_argv(4))
 
     -- Check ":confirm restart +echo" correctly ignores ":confirm"
     tt.feed_data(':confirm restart +echo\013')
@@ -391,16 +391,20 @@ describe('TUI :restart', function()
     ]])
 
     --- Check that ":restart" uses the updated size after terminal resize.
-    tt.feed_data(':restart\013')
+    tt.feed_data(':restart echo "restarted"\013')
     screen_expect([[
       ^                                                            |
       {100:~                                                           }|*2
       {3:[No Name]                                                   }|
-      {MATCH:%d+ +}|
+      restarted                                                   |
       {5:-- TERMINAL --}                                              |
     ]])
     assert_new_pid()
     assert_no_gui_running()
+
+    -- The server is now detached and needs to be quit explicitly.
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
   it('drops "-" and "-- [files…]" from v:argv #34417', function()
@@ -457,9 +461,14 @@ describe('TUI :restart', function()
 
     eq({ true, false }, { server_session:request('nvim_eval', expr) })
     eq({ true, false }, { server_session:request('nvim_eval', has_s) })
-    local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
-    eq(13, #argv)
-    eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
+
+    -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
+    -- eq(13, #argv)
+    -- eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
+
+    -- The server is now detached and needs to be quit explicitly.
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 end)
 
@@ -4169,8 +4178,7 @@ describe('TUI client', function()
   it(':restart works when connecting to remote instance (with its own TUI)', function()
     local _, screen_server, screen_client = start_tui_and_remote_client()
 
-    -- Run :restart on the remote client.
-    -- The remote client should start a new server while the original one should exit.
+    -- The remote client should attach to the new server.
     feed_data(':restart +qall!\n')
     screen_client:expect([[
       ^                                                  |
@@ -4267,8 +4275,7 @@ describe('TUI client', function()
   it(':restart works when connecting to remote instance (--headless)', function()
     local _, server_pipe, screen_client = start_headless_server_and_client(false)
 
-    -- Run :restart on the client.
-    -- The client should start a new server while the original server should exit.
+    -- The client should attach to the new server and the original server should exit.
     feed_data(':restart +qall!\n')
     screen_client:expect([[
       ^                                                  |

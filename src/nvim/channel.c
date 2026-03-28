@@ -42,6 +42,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
+#include "nvim/ui_client.h"
 
 #ifdef MSWIN
 # include "nvim/os/fs.h"
@@ -779,6 +780,21 @@ static void channel_proc_exit_cb(Proc *proc, int status, void *data)
   Channel *chan = data;
   if (chan->term) {
     terminal_close(&chan->term, status);
+  }
+
+  // TODO(justinmk): figure out why rpc_close sometimes(??) isn't called.
+  // Theories:
+  // - EOF not received in receive_msgpack, then doesn't call chan_close_on_err().
+  // - proc_close_handles not tickled by ui_client.c's LOOP_PROCESS_EVENTS?
+  if (!exiting && ui_client_channel_id == chan->id) {
+    // Need to call ui_client_attach_to_restarted_server() here as well, as sometimes
+    // rpc_close_event() hasn't been called yet (also see comments above).
+    ui_client_attach_to_restarted_server();
+    if (ui_client_channel_id == chan->id) {
+      // If the current embedded server has exited and no new server is started,
+      // the client should exit with the same status.
+      exit_on_closed_chan(status);
+    }
   }
 
   // If process did not exit, we only closed the handle of a detached process.

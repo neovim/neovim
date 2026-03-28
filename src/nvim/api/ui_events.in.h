@@ -29,7 +29,7 @@ void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
 void connect(Array args)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
-void restart(String progpath, Array argv)
+void restart(String listen_addr, String command)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
 void suspend(void)
   FUNC_API_SINCE(3);

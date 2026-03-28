@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -40,8 +41,11 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval_defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
+#include "nvim/event/proc.h"
+#include "nvim/event/socket.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_cmds_defs.h"
@@ -73,6 +77,8 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"
 #include "nvim/option.h"
@@ -4808,13 +4814,6 @@ void not_exiting(bool save_exiting)
   exiting = save_exiting;
 }
 
-/// Call this function if we thought we were going to restart, but we won't
-/// (because of an error).
-void not_restarting(void)
-{
-  restarting = false;
-}
-
 bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
 {
   apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
@@ -4960,55 +4959,120 @@ static void ex_quitall(exarg_T *eap)
 
 /// ":restart": restart the Nvim server (using ":qall!").
 /// ":restart +cmd": restart the Nvim server using ":cmd".
-/// ":restart +cmd <command>": restart the Nvim server using ":cmd" and add -c <command> to the new server.
+/// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
+  Error err = ERROR_INIT;
+  const char *exepath = get_vim_var_str(VV_PROGPATH);
   const list_T *l = get_vim_var_list(VV_ARGV);
   int argc = tv_list_len(l);
-  list_T *argv_cpy = tv_list_alloc(eap->arg ? argc + 2 : argc);
 
-  // Copy v:argv, skipping unwanted items.
-  for (listitem_T *li = l != NULL ? l->lv_first : NULL; li != NULL; li = li->li_next) {
+  char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
+  size_t i = 0;
+  const char *listen_arg = NULL;
+#ifdef MSWIN  // FIXME: --listen doesn't work on Windows and needs to be dropped
+# define HANDLE_LISTEN_ADDR li = next_li; continue
+#else
+# define HANDLE_LISTEN_ADDR listen_arg = addr
+#endif
+  TV_LIST_ITER_CONST(l, li, {
     const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
-    size_t arg_size = strlen(arg);
-    assert(arg_size <= (size_t)SSIZE_MAX);
-
-    if (strequal(arg, "--embed") || strequal(arg, "--headless")) {
-      continue;  // Drop --embed/--headless: the client decides how to start+attach the server.
-    } else if (strequal(arg, "-")) {
-      continue;  // Drop stdin ("-") argument.
-    } else if (strequal(arg, "-s")) {
-      // Drop "-s <scriptfile>": skip the scriptfile arg too.
-      if (li->li_next != NULL) {
-        li = li->li_next;
-      }
+    // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
+    if (i > 0 && strequal(arg, "--")) {
+      break;
+    }
+    // Drop "-s <scriptfile>": skip the scriptfile arg too.
+    if (i > 0 && strequal(arg, "-s")) {
+      li = TV_LIST_ITEM_NEXT(l, li);
       continue;
-    } else if (strequal(arg, "+:::")) {
-      // The special placeholder "+:::" marks a previous :restart command.
-      // Drop the `"+:::", "-c", "…"` triplet, to avoid "stacking" commands from previous :restart(s).
-      listitem_T *next1 = li->li_next;
-      if (next1 != NULL && strequal(tv_get_string(TV_LIST_ITEM_TV(next1)), "-c")) {
-        listitem_T *next2 = next1->li_next;
-        if (next2 != NULL) {
-          li = next2;
-          continue;
+    }
+    // The address after --listen may be in use by the current server.
+    if (i > 0 && strequal(arg, "--listen")) {
+      listitem_T *next_li = TV_LIST_ITEM_NEXT(l, li);
+      if (next_li != NULL) {
+        const char *addr = tv_get_string(TV_LIST_ITEM_TV(next_li));
+        if (strstr(addr, ":") || strstr(addr, "/") || strstr(addr, "\\")) {
+          HANDLE_LISTEN_ADDR;
         }
       }
-      continue;  // If the triplet is incomplete, just skip "+:::"
-    } else if (strequal(arg, "--")) {
-      break;  // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
     }
+    // Replace `--embed` OR `--headless` with `--embed --headless` once.
+    // Drop stdin ("-") argument.
+    if (i == 0
+        || (!strequal(arg, "--embed") && !strequal(arg, "--headless") && !strequal(arg, "-"))) {
+      argv[i++] = xstrdup(arg);
+      if (i == 1) {
+        argv[i++] = xstrdup("--embed");
+        argv[i++] = xstrdup("--headless");
+      }
+    }
+  });
+#undef HANDLE_LISTEN_ADDR
 
-    tv_list_append_string(argv_cpy, arg, (ssize_t)arg_size);
+  bool server_stopped = false;
+  if (listen_arg != NULL) {
+    // Stop listening on the --listen address so that the new server can listen.
+    server_stopped = server_stop(listen_arg, true);
   }
-  // Append `"+:::", "-c", "<command>"` to end of v:argv.
-  // The "+:::" item is a no-op placeholder to mark the :restart "<command>".
-  if (eap->arg && eap->arg[0] != '\0') {
-    tv_list_append_string(argv_cpy, S_LEN("+:::"));
-    tv_list_append_string(argv_cpy, S_LEN("-c"));
-    tv_list_append_string(argv_cpy, eap->arg, (ssize_t)strlen(eap->arg));
+
+  CallbackReader on_err = CALLBACK_READER_INIT;
+  // This temporary bootstrap channel is closed intentionally once we obtain
+  // the new server address. Don't forward child stderr to the current UI.
+  on_err.fwd_err = false;
+  bool detach = true;
+  varnumber_T exit_status;
+
+  Channel *channel = channel_job_start(argv, exepath,
+                                       CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
+                                       false, true, true, detach, kChannelStdinPipe,
+                                       NULL, 0, 0, NULL, &exit_status);
+  if (!channel) {
+    emsg("cannot create a channel job");
+    goto fail_1;
   }
-  set_vim_var_list(VV_ARGV, argv_cpy);
+
+  // Prevent new server from self-exiting when the channel closes.
+  ArenaMem result_mem = NULL;
+  MAXSIZE_TEMP_ARRAY(detach_args, 1);
+  ADD_C(detach_args, BOOLEAN_OBJ(true));
+  rpc_send_call(channel->id, "nvim__chan_set_detach", detach_args, &result_mem, &err);
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+    arena_mem_free(result_mem);
+    goto fail_2;
+  }
+  arena_mem_free(result_mem);
+
+  // Get new server's listen address.
+  MAXSIZE_TEMP_ARRAY(servername_args, 1);
+  ADD_C(servername_args, CSTR_AS_OBJ("servername"));
+  result_mem = NULL;
+  Object result = rpc_send_call(channel->id, "nvim_get_vvar", servername_args, &result_mem, &err);
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+    arena_mem_free(result_mem);
+    goto fail_2;
+  }
+  if (result.type != kObjectTypeString || result.data.string.size == 0) {
+    arena_mem_free(result_mem);
+    emsg("restart failed: could not get listen address from new server");
+    goto fail_2;
+  }
+  char *listen_addr = xmemdupz(result.data.string.data, result.data.string.size);
+  arena_mem_free(result_mem);
+
+  // Send restart event with new listen address to current UI.
+  if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg), &err)) {
+    if (ERROR_SET(&err)) {
+      ELOG("%s", err.msg);  // UI disappeared already?
+      api_clear_error(&err);
+    }
+    xfree(listen_addr);
+    goto fail_2;
+  }
+  xfree(listen_addr);
 
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *quit_cmd_copy = NULL;
@@ -5018,20 +5082,27 @@ static void ex_restart(exarg_T *eap)
     quit_cmd_copy = concat_str("confirm ", quit_cmd);
     quit_cmd = quit_cmd_copy;
   }
-
-  Error err = ERROR_INIT;
-  restarting = true;
   nvim_command(cstr_as_string(quit_cmd), &err);
   xfree(quit_cmd_copy);
+
   if (ERROR_SET(&err)) {
     emsg(err.msg);  // Could not exit
     api_clear_error(&err);
-    not_restarting();
-    return;
-  }
-  if (!exiting) {
+  } else if (!exiting) {
     emsg("restart failed: +cmd did not quit the server");
-    not_restarting();
+  }
+
+fail_2:
+  // Kill the new nvim server.
+  proc_stop(&channel->stream.proc);
+  if (proc_wait(&channel->stream.proc, -1, NULL) < 0) {
+    emsg("killing new nvim server failed");
+  }
+
+fail_1:
+  // Restart listening on the --listen address.
+  if (server_stopped && server_start(listen_arg) != 0) {
+    semsg("couldn't resume listening on %s", listen_arg);
   }
 }
 

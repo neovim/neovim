@@ -1688,6 +1688,20 @@ nvim_strwidth({text})                                        *nvim_strwidth()*
     Return: ~
         (`integer`) Number of cells
 
+nvim__chan_set_detach({detach})                      *nvim__chan_set_detach()*
+    WARNING: This feature is experimental/unstable.
+
+    Sets the detach flag for the channel.
+
+    Detached channels do not trigger self-exit when they are closed.
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.12.0
+
+    Parameters: ~
+      • {detach}  (`boolean`) New detach value for the channel.
+
 nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
     WARNING: This feature is experimental/unstable.
 
