@@ -659,13 +659,23 @@ void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep
 }
 
 /// check if curgrid is covered on row or above
-///
-/// TODO(bfredl): currently this only handles message row
 static bool curgrid_covered_above(int row)
 {
-  bool above_msg = (kv_A(layers, kv_size(layers) - 1) == &msg_grid
-                    && row < msg_current_row - (msg_was_scrolled ? 1 : 0));
-  return kv_size(layers) - (above_msg ? 1 : 0) > curgrid->comp_index + 1;
+  // check if curgrid is below the row
+  if (curgrid->comp_row > row) {
+    return false;
+  }
+
+  // check all layers above curgrid. if any are on or above row then curgrid
+  // is covered. account for the msg_sep_row if the msg_grid layer was scrolled.
+  for (size_t i = curgrid->comp_index + 1; i < kv_size(layers); i++) {
+    ScreenGrid *g = kv_A(layers, i);
+    if (g->comp_row - (g == &msg_grid && msg_was_scrolled ? 1 : 0) <= row) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer right,
