@@ -502,7 +502,7 @@ static void rpc_close_event(void **argv)
     } else {
       ui_client_attach_to_restarted_server();
       if (ui_client_channel_id != channel->id) {
-        // A new server has been started. Don't exit.
+        // Attached to new server. Don't exit.
         return;
       }
     }

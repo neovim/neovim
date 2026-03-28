@@ -169,7 +169,9 @@ void ui_client_run(bool remote_ui)
 
   // os_exit() will be invoked when the client channel detaches
   while (true) {
-    LOOP_PROCESS_EVENTS(&main_loop, resize_events, -1);
+    // Need to process main_loop.events,
+    // otherwise channels closed due to server restart are never freed.
+    LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
   }
 }
 
