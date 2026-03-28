@@ -40,4 +40,14 @@ typedef enum file_comparison {
   kEqualFileNames = 7,  ///< Both don't exist and file names are same.
 } FileComparison;
 
+#ifdef BACKSLASH_IN_FILENAME
+# define TO_SLASH(p) path_to_slash(p)
+# define TO_SLASH_SAVE(p) path_to_slash_save(p)
+# define TO_BACKSLASH(p) path_to_backslash(p)
+#else
+# define TO_SLASH(...)
+# define TO_SLASH_SAVE(p) xstrdup(p)
+# define TO_BACKSLASH(...)
+#endif
+
 #include "path.h.generated.h"
