@@ -172,7 +172,7 @@ describe('cmdline2', function()
     t.eq(n.eval('v:errmsg'), "E1514: 'findfunc' did not return a List type")
   end)
 
-  it('substitution match does not clear cmdline', function()
+  it('substitution match, empty message does not clear active cmdline', function()
     exec('call setline(1, "foo")')
     feed(':s/f')
     screen:expect([[
@@ -180,6 +180,14 @@ describe('cmdline2', function()
       {1:~                                                    }|*12
       {16::}{15:s}{16:/f^ }                                                |
     ]])
+    feed('<Esc>:foo')
+    screen:expect([[
+      foo                                                  |
+      {1:~                                                    }|*12
+      {16::}{15:foo}^                                                 |
+    ]])
+    exec('echo')
+    screen:expect_unchanged(true)
   end)
 
   it('dialog position is adjusted for toggled non-pum wildmenu', function()
