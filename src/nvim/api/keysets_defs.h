@@ -297,7 +297,7 @@ typedef struct {
 typedef struct {
   OptionalKeys is_set__cmd_;
   String cmd;
-  ArrayOf(Integer) range;
+  ArrayOf(Union(Integer, String)) range;
   Integer count;
   String reg;
   Boolean bang;
