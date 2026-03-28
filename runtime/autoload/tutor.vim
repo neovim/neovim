@@ -14,7 +14,8 @@ endfunction
 
 " Loads metadata file, if available
 function! tutor#LoadMetadata()
-    let b:tutor_metadata = json_decode(join(readfile(expand('%').'.json'), "\n"))
+    let l:metadata_file = exists('b:tutor_file') ?  b:tutor_file : expand('%')
+    let b:tutor_metadata = json_decode(readfile(l:metadata_file .. '.json'))
 endfunction
 
 " Mappings: {{{1
@@ -184,8 +185,14 @@ function! tutor#TutorCmd(tutor_name)
         let l:to_open = l:tutors[l:tutor_to_open-1]
     endif
 
+    let l:tutor_file_og = l:to_open
+    let l:tutor_file_tmp = tempname() .. '.' .. fnamemodify(l:tutor_file_og, ':t')
+    call filecopy(l:tutor_file_og, l:tutor_file_tmp)
+
     call tutor#SetupVim()
-    exe "drop ".fnameescape(l:to_open)
+    exe "drop" fnameescape(l:tutor_file_tmp)
+    let b:tutor_file = l:tutor_file_og
+    call tutor#LoadMetadata()
     call tutor#EnableInteractive(v:true)
     call tutor#ApplyTransform()
 endfunction
