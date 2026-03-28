@@ -161,7 +161,7 @@ M.funcs = {
     args = 3,
     base = 3,
     desc = [=[
-      Like |append()| but append the text in buffer {expr}.
+      Like |append()| but append the text in buffer {buf}.
 
       This function works only for loaded buffers.  First call
       |bufload()| if needed.

@@ -1701,7 +1701,7 @@ describe('cmdheight=0', function()
     ]])
   end)
 
-  it('no spurious newline before first message in headless mode', function()
+  it('no spurious newline before first message with --headless mode', function()
     local p = n.spawn_wait({
       args = { '--cmd', 'set cmdheight=0', '-c', 'echo 1', '+q' },
     })

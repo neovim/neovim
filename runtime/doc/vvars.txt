@@ -760,12 +760,14 @@ v:versionlong
 			*v:vim_did_enter* *vim_did_enter-variable*
 v:vim_did_enter
 		0 during startup, 1 just before |VimEnter|.
+		See also |v:vim_did_init|, which is set earlier.
 		Read-only.
 
 				*v:vim_did_init* *vim_did_init-variable*
 v:vim_did_init
-		0 during initialization, 1 after sourcing |vimrc| and just
-		before |load-plugins|.
+		0 during initialization, 1 after sourcing the user |vimrc|,
+		just before |load-plugins|.
+		See also |v:vim_did_enter|, which is set later.
 		Read-only.
 
 					*v:virtnum* *virtnum-variable*

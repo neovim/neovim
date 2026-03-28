@@ -713,8 +713,7 @@ function vim.tbl_add_reverse_lookup(o)
   return o
 end
 
---- Index into a table (first argument) via string keys passed as subsequent arguments.
---- Return `nil` if the key does not exist.
+--- Gets a value from (nested) table `o` given by the sequence of keys `...`, or `nil` if not found.
 ---
 --- Examples:
 ---
@@ -1223,7 +1222,7 @@ do
   ---     `'thread'`, `'userdata'`.
   ---   - (`fun(val:any): boolean, string?`) A function that returns a boolean and an optional
   ---     string message.
-  --- @param optional? boolean Argument is optional (may be omitted)
+  --- @param optional? boolean Parameter is optional (may be omitted or nil)
   --- @param message? string message when validation fails
   --- @overload fun(name: string, val: any, validator: vim.validate.Validator, message: string)
   --- @overload fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)

@@ -43,7 +43,7 @@
 --- Unlike the legacy |hit-enter| prompt, messages exceeding 'cmdheight' are
 --- instead "collapsed", followed by a `[+x]` "spill" indicator, where `x`
 --- indicates the spilled lines. To see the full messages, do either:
---- - ENTER while cmdline is expanded (not in |Insert-mode| and |Terminal-mode|).
+--- - ENTER immediately after interactive |:| cmdline shows a message and returns to |Normal-mode|.
 --- - |g<| at any time.
 
 local api = vim.api

@@ -90,7 +90,7 @@ function vim.fn.api_info() end
 --- @return 0|1
 function vim.fn.append(lnum, text) end
 
---- Like |append()| but append the text in buffer {expr}.
+--- Like |append()| but append the text in buffer {buf}.
 ---
 --- This function works only for loaded buffers.  First call
 --- |bufload()| if needed.

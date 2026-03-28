@@ -1,4 +1,13 @@
 --- @brief <pre>help
+--- *vim.fs.copy()*
+--- Use |filecopy()| or |uv.fs_copyfile()| to performantly copy an existing file.
+---
+--- Example:
+---
+--- >lua
+---   vim.fn.filecopy('foo.txt', 'bar.txt')
+--- <
+---
 --- *vim.fs.exists()*
 --- Use |uv.fs_stat()| to check a file's type, and whether it exists.
 ---
