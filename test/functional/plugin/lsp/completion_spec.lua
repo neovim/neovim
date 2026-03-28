@@ -780,7 +780,7 @@ end)
 
 --- @param name string
 --- @param completion_result vim.lsp.CompletionResult
---- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem|lsp.CompletionItem[], delay?: integer, cmp?: string}
+--- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem|lsp.CompletionItem[], delay?: integer, cmp?: string, forIncomplete?: table}
 --- @return integer
 local function create_server(name, completion_result, opts)
   opts = opts or {}
@@ -799,6 +799,8 @@ local function create_server(name, completion_result, opts)
             vim.defer_fn(function()
               callback(nil, completion_result)
             end, opts.delay)
+          elseif opts.forIncomplete then
+            callback(nil, opts.forIncomplete)
           else
             callback(nil, completion_result)
           end
@@ -1511,6 +1513,144 @@ describe('vim.lsp.completion: integration', function()
     wait_for_pum()
     feed('<C-y>')
     eq('hallo', n.api.nvim_get_current_line())
+  end)
+
+  it('dot-to-arrow with isIncomplete', function()
+    local completion_list = {
+      isIncomplete = true,
+      items = {
+        {
+          detail = 'handle_T',
+          filterText = 'handle',
+          insertText = '->handle',
+          insertTextFormat = 1,
+          kind = 5,
+          label = ' handle',
+          score = 0.43193808197975,
+          sortText = '4122d903handle',
+          textEdit = {
+            newText = '->handle',
+            range = {
+              ['end'] = {
+                character = 3,
+                line = 0,
+              },
+              start = {
+                character = 2,
+                line = 0,
+              },
+            },
+          },
+        },
+        {
+          detail = 'int',
+          filterText = 'w_alt_fnum',
+          insertText = '->w_alt_fnum',
+          insertTextFormat = 1,
+          kind = 5,
+          label = ' w_alt_fnum',
+          score = 0.43193808197975,
+          sortText = '4122d903w_alt_fnum',
+          textEdit = {
+            newText = '->w_alt_fnum',
+            range = {
+              ['end'] = {
+                character = 3,
+                line = 0,
+              },
+              start = {
+                character = 2,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    create_server('dummy', completion_list, {
+      forIncomplete = {
+        isIncomplete = false,
+        items = {
+          {
+            detail = 'int',
+            filterText = 'w_arg_idx',
+            insertText = '->w_arg_idx',
+            insertTextFormat = 1,
+            kind = 5,
+            label = ' w_arg_idx',
+            score = 0.43193808197975,
+            sortText = '4122d903w_arg_idx',
+            textEdit = {
+              newText = '->w_arg_idx',
+              range = {
+                ['end'] = {
+                  character = 3,
+                  line = 0,
+                },
+                start = {
+                  character = 2,
+                  line = 0,
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+
+    feed('iwp.<c-x><c-o>')
+    wait_for_pum()
+
+    feed('w')
+    wait_for_pum()
+
+    -- accept textEdit
+    feed('<C-y>')
+    eq(
+      { 'wp->w_arg_idx', { 1, 13 } },
+      exec_lua(function()
+        return { vim.api.nvim_get_current_line(), vim.api.nvim_win_get_cursor(0) }
+      end)
+    )
+  end)
+
+  it('accept text.Edit when end_col equals the column at the end of the line.', function()
+    create_server('dummy1', {
+      isIncomplete = false,
+      items = {
+        {
+          detail = 'runtime/lua/vim/treesitter.lua',
+          insertTextFormat = 1,
+          kind = 17,
+          label = 'vim.treesitter',
+          sortText = '0082',
+          textEdit = {
+            newText = 'vim.treesitter',
+            range = {
+              ['end'] = {
+                character = 13,
+                line = 0,
+              },
+              start = {
+                character = 9,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
+    })
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    n.api.nvim_buf_set_lines(0, 0, -1, false, { 'require("vim.")' })
+    feed('A<left><left><C-x><C-O>')
+    wait_for_pum()
+    feed('<C-Y>')
+    eq('require("vim.treesitter")', exec_lua([[return vim.api.nvim_get_current_line()]]))
   end)
 end)
 
