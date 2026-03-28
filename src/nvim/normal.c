@@ -1884,7 +1884,7 @@ void clear_showcmd(void)
     return;
   }
 
-  if (VIsual_active && !char_avail()) {
+  if (VIsual_active && stuff_empty() && typebuf.tb_len == 0 && !using_script()) {
     bool cursor_bot = lt(VIsual, curwin->w_cursor);
     int lines;
     colnr_T leftcol, rightcol;
