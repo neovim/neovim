@@ -312,11 +312,15 @@ end
 --- @field priority? integer
 ---
 --- A table mapping |diagnostic-severity| to the sign text to display in the
---- sign column. The default is to use `"E"`, `"W"`, `"I"`, and `"H"` for errors,
---- warnings, information, and hints, respectively. Example:
+--- sign column. Example:
 --- ```lua
 --- vim.diagnostic.config({
----   signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
+---   signs = { text = {
+---     [vim.diagnostic.severity.ERROR] = 'E',
+---     [vim.diagnostic.severity.WARN] = 'W',
+---     [vim.diagnostic.severity.INFO] = 'I',
+---     [vim.diagnostic.severity.HINT] = 'H',
+---   }}
 --- })
 --- ```
 --- @field text? table<vim.diagnostic.Severity,string>
@@ -675,6 +679,7 @@ local virtual_lines_highlight_map = make_highlight_map('VirtualLines')
 local underline_highlight_map = make_highlight_map('Underline')
 local floating_highlight_map = make_highlight_map('Floating')
 local sign_highlight_map = make_highlight_map('Sign')
+local num_highlight_map = make_highlight_map('LineNr')
 
 --- Get a position based on an extmark referenced by `_extmark_id` field
 --- @param diagnostic vim.Diagnostic
@@ -1773,16 +1778,8 @@ M.handlers.signs = {
           api.nvim_create_namespace(string.format('nvim.%s.diagnostic.signs', ns.name))
       end
 
-      local text = {} ---@type table<vim.diagnostic.Severity|string, string>
-      for k in pairs(M.severity) do
-        if opts.signs.text and opts.signs.text[k] then
-          text[k] = opts.signs.text[k]
-        elseif type(k) == 'string' and not text[k] then
-          text[k] = k:sub(1, 1):upper()
-        end
-      end
-
-      local numhl = opts.signs.numhl or {}
+      local text = opts.signs.text or {}
+      local numhl = vim.tbl_extend('keep', opts.signs.numhl or {}, num_highlight_map)
       local linehl = opts.signs.linehl or {}
 
       local line_count = api.nvim_buf_line_count(bufnr)
@@ -1790,7 +1787,7 @@ M.handlers.signs = {
       for _, diagnostic in ipairs(diagnostics) do
         if diagnostic.lnum <= line_count then
           api.nvim_buf_set_extmark(bufnr, ns.user_data.sign_ns, diagnostic.lnum, 0, {
-            sign_text = text[diagnostic.severity] or text[M.severity[diagnostic.severity]] or 'U',
+            sign_text = text[diagnostic.severity] or text[M.severity[diagnostic.severity]],
             sign_hl_group = sign_highlight_map[diagnostic.severity],
             number_hl_group = numhl[diagnostic.severity],
             line_hl_group = linehl[diagnostic.severity],
