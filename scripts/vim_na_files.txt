@@ -67,6 +67,7 @@ runtime/tools/vim_vs_net.cmd
 runtime/tools/vimm
 runtime/tools/vimspell.sh
 runtime/tools/vimspell.txt
+runtime/xdg.vim
 src/README.md
 src/blowfish.c
 src/channel.c
