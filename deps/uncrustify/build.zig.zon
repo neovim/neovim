@@ -1,0 +1,13 @@
+.{
+    .name = .uncrustify,
+    .fingerprint = 0x1e60de76ed5d45aa,
+    .version = "0.82.0",
+    .paths = .{""},
+
+    .dependencies = .{
+        .uncrustify = .{
+            .url = "git+https://github.com/uncrustify/uncrustify?ref=uncrustify-0.82.0#2d5cbe4b74bedc36cdc534835967fc1d5ac5979f",
+            .hash = "N-V-__8AAHWzhQANFfJSGldSrTy4v5tPE4lrzwVl0lp4PcO3",
+        },
+    },
+}

@@ -674,6 +674,43 @@ pub fn build(b: *std.Build) !void {
         test_config_step.getDirectory(),
         unit_headers,
     );
+
+    try addFormatcStep(b, nvim_sources, nvim_headers);
+}
+
+fn addFormatcStep(
+    b: *std.Build,
+    nvim_sources: std.ArrayList(gen.SourceItem),
+    nvim_headers: std.ArrayList([]u8),
+) !void {
+    const formatc = b.step("formatc", "Run uncrustify on C source");
+    const uncrustify = b.dependency("uncrustify", .{
+        .target = b.graph.host,
+        .optimize = .ReleaseFast,
+    });
+    const uncrustify_exe = uncrustify.artifact("uncrustify");
+
+    var uncrustify_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 140);
+    for (nvim_sources.items) |source| {
+        try uncrustify_files.append(b.allocator, b.fmt("src/nvim/{s}", .{source.name}));
+    }
+    for (nvim_headers.items) |header| {
+        try uncrustify_files.append(b.allocator, b.fmt("src/nvim/{s}", .{header}));
+    }
+    try uncrustify_files.append(b.allocator, "src/tee/tee.c");
+    try uncrustify_files.append(b.allocator, "src/xxd/xxd.c");
+
+    const update = b.addUpdateSourceFiles();
+    for (uncrustify_files.items) |file| {
+        const run = b.addRunArtifact(uncrustify_exe);
+        run.addArgs(&.{ "-c", "src/uncrustify.cfg", "-f" });
+        run.addFileArg(b.path(file));
+        run.addArg("-o");
+        const output_name = try std.mem.replaceOwned(u8, b.allocator, file, "/", "-");
+        const output = run.addOutputFileArg(output_name);
+        update.addCopyFileToSource(output, file);
+    }
+    formatc.dependOn(&update.step);
 }
 
 pub fn test_fixture(

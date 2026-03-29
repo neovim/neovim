@@ -36,6 +36,7 @@
         },
         .utf8proc = .{ .path = "./deps/utf8proc/", .lazy = true },
         .unibilium = .{ .path = "./deps/unibilium/", .lazy = true },
+        .uncrustify = .{ .path = "./deps/uncrustify/" },
         .libiconv = .{
             .url = "git+https://github.com/allyourcodebase/libiconv#9def4c8a1743380e85bcedb80f2c15b455e236f3",
             .hash = "libiconv-1.18.0-p9sJwWnqAACzVYeWgXB5r5lOQ74XwTPlptixV0JPRO28",
