@@ -190,6 +190,11 @@ If you want to keep the changed buffer without saving it, switch on the
 			are discarded. Without [!] the command fails if there
 			are unsaved changes, unless 'hidden' is set or
 			'autowriteall' is set and the file can be written.
+
+			Special chars in the name are expanded according to
+			|cmdline-special|, except if the name is a URI "xx://…"
+			(but quotes must always be escaped: `:b term://[\"ls\"]`).
+
 			Also see |++opt| and |+cmd|.
 
 							*:edit_#* *:e#*
@@ -411,8 +416,7 @@ does apply like to other wildcards.
 Environment variables in the expression are expanded when evaluating the
 expression, thus this works: >
 	:e `=$HOME .. '/.vimrc'`
-This uses $HOME inside a string and it will be used literally, most likely not
-what you intended: >
+Whereas this evaluates to the literal string "$HOME/.vimrc": >
 	:e `='$HOME' .. '/.vimrc'`
 
 If the expression returns a string then names are to be separated with line

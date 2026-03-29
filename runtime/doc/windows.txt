@@ -1272,6 +1272,9 @@ list of buffers. |unlisted-buffer|
 		the buffer name starts with a `+`, it will be interpreted as
 		the start of a |+cmd|.
 		Insert a backslash before a space in a buffer name.
+		Special chars in the name are expanded according to
+		|cmdline-special|, except if the name is a URI "xx://…"
+		(but quotes must always be escaped: `:b term://[\"ls\"]`).
 		See |:buffer-!| for [!].
 		This will also edit a buffer that is not in the buffer list,
 		without setting the 'buflisted' flag.
