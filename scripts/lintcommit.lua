@@ -49,6 +49,11 @@ local function validate_commit(commit_message)
     return nil
   end
 
+  -- Skip release commits.
+  if commit_message:match('^NVIM v%d+%.%d+%.%d+') then
+    return nil
+  end
+
   -- Check that message isn't too long.
   if commit_message:len() > 80 then
     return [[Commit message is too long, a maximum of 80 characters is allowed.]]
@@ -212,6 +217,7 @@ function M._test()
   local test_cases = {
     ['ci: normal message'] = true,
     ['build: normal message'] = true,
+    ['build: version bump'] = true,
     ['docs: normal message'] = true,
     ['feat: normal message'] = true,
     ['fix: normal message'] = true,
@@ -224,6 +230,7 @@ function M._test()
     ['ci(tui)!: message with scope and breaking change'] = true,
     ['vim-patch:8.2.3374: Pyret files are not recognized (#15642)'] = true,
     ['vim-patch:8.1.1195,8.2.{3417,3419}'] = true,
+    ['NVIM v0.12.0'] = true,
     ['revert: "ci: use continue-on-error instead of "|| true""'] = true,
     ['fixup'] = false,
     ['fixup: commit message'] = false,
