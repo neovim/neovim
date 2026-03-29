@@ -2126,7 +2126,6 @@ msgstr "サイズ:"
 msgid "E256: Hangul automata ERROR"
 msgstr "E256: ハングルオートマトンエラー"
 
-
 #, c-format
 msgid "E799: Invalid ID: %d (must be greater than or equal to 1)"
 msgstr "E799: 無効な ID: %d (1 以上でなければなりません)"
@@ -3988,7 +3987,6 @@ msgstr "オプション: %s"
 
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: 式が終了していません"
-
 
 msgid "E542: unbalanced groups"
 msgstr "E542: グループが釣合いません"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neovim Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-14 17:27+0300\n"
+"POT-Creation-Date: 2026-03-30 00:56+0900\n"
 "PO-Revision-Date: 2023-06-14 23:00+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <https://github.com/bitigchi/neovim>\n"
@@ -18,91 +18,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "(local to window)"
-msgstr "(pencereye yerel)"
-
-msgid "(local to buffer)"
-msgstr "(arabelleğe yerel)"
-
-msgid "(global or local to buffer)"
-msgstr "(arabelleğe global veya yerel)"
-
-msgid ""
-"\" Each \"set\" line shows the current value of an option (on the left)."
-msgstr ""
-"Her bir \"set\" satırı, bir seçeneğin geçerli değerini gösterir (solda)."
-
-msgid "\" Hit <Enter> on a \"set\" line to execute it."
-msgstr "Bir satırı yürütmek için \"set\" üzerinde <Enter>'a basın."
-
-msgid "\"            A boolean option will be toggled."
-msgstr "\"            Bir Boole değeri açılır/kapatılır."
-
-msgid "pattern for an include-file line"
-msgstr "bir include dosyası satırı için dizgi"
-
-msgid "use binary searching in tags files"
-msgstr "etiket dosyalarında ikili arama kullan"
-
-msgid "long lines wrap"
-msgstr "uzun satırları kaydırılır"
-
-msgid "show the line number for each line"
-msgstr "her bir satır için satır numarasını göster"
-
-msgid "name of syntax highlighting used"
-msgstr "kullanılan sözdizim vurgulamanın adı"
-
-msgid "default height for the preview window"
-msgstr "önizleme penceresinin öntanımlı yüksekliği"
-
-msgid "identifies the preview window"
-msgstr "önizleme penceresini tanımlar"
-
-msgid "terminal"
-msgstr "uçbirim"
-
-msgid "file to write messages in"
-msgstr "iletilerin içine yazılacağı dosya"
-
-msgid "list of directories for undo files"
-msgstr "geri al dosyaları için dizinler listesi"
-
-msgid "list of pairs that match for the \"%\" command"
-msgstr "\"%\" komutu için eşleşen eşler listesi"
-
-msgid "folding"
-msgstr "kıvırma"
-
-msgid "mapping"
-msgstr "eşlemleme"
-
-msgid "reading and writing files"
-msgstr "dosyaları okuma ve yazma"
-
-msgid "automatically write a file when leaving a modified buffer"
-msgstr "değiştirilmiş bir arabellekten ayrılırken kendiliğinden bir dosya yaz"
-
-msgid "the swap file"
-msgstr "takas dosyası"
-
-msgid "use a swap file for this buffer"
-msgstr "bu arabellek için bir takas dosyası kullan"
-
-msgid "specifies how command line completion works"
-msgstr "komut satırı tamamlamasının nasıl çalıştığını belirtir"
-
-msgid "executing external commands"
-msgstr "dış komutları yürütme"
-
-msgid "specifies the characters in a file name"
-msgstr "bir dosya adındaki karakterleri belirtir"
-
 msgid "E249: Window layout changed unexpectedly"
 msgstr "E249: Pencere yerleşimi beklenmedik bir biçimde değişti"
-
-msgid "E1156: Cannot change the argument list recursively"
-msgstr "E1156: Argüman listesi özyineli olarak değiştirilemiyor"
 
 msgid "E163: There is only one file to edit"
 msgstr "E163: Düzenlenecek yalnızca bir dosya var"
@@ -178,9 +95,6 @@ msgstr "E216: Böyle bir olay yok: %s"
 msgid "E216: No such group or event: %s"
 msgstr "E216: Böyle bir grup veya olay yok: %s"
 
-msgid "E855: Autocommands caused command to abort"
-msgstr "E855: Otokomutlar komutun durmasına neden oldu"
-
 #, c-format
 msgid "E937: Attempt to delete a buffer that is in use: %s"
 msgstr "E937: Kullanımda olan bir arabellek silinmeye çalışılıyor: %s"
@@ -234,35 +148,11 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: İlk arabellekten öncesine gidilemez"
 
 #, c-format
-msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
-msgstr ""
-"E89: %<PRId64> numaralı arabellek son değişiklikten sonra yazılmadı "
-"(geçersiz kılmak için ! ekleyin)"
-
-#, c-format
 msgid "E89: %s will be killed (add ! to override)"
 msgstr "E89: %s sonlandırılacak (geçersiz kılmak için ! ekleyin)"
 
-msgid "E948: Job still running (add ! to end the job)"
-msgstr "E948: İş hâlâ sürüyor (bitirmek için ! ekleyin)"
-
-msgid "E37: No write since last change (add ! to override)"
-msgstr ""
-"E37: Son değişiklikten sonra yazılmadı (geçersiz kılmak için ! ekleyin)"
-
-msgid "E948: Job still running"
-msgstr "E948: İş hâlâ sürüyor"
-
-msgid "E37: No write since last change"
-msgstr "E37: Son değişiklikten sonra yazılmadı"
-
 msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Uyarı: Dosya adları taşımı"
-
-#, c-format
-msgid "E92: Buffer %<PRId64> not found"
-msgstr "E92: %<PRId64> numaralı arabellek bulunamadı"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -285,6 +175,9 @@ msgstr " [Değiştirildi]"
 msgid "[Not edited]"
 msgstr "[Değiştirilmedi]"
 
+msgid "[New]"
+msgstr "[Yeni]"
+
 msgid "[Read errors]"
 msgstr "[Okuma hataları]"
 
@@ -304,12 +197,6 @@ msgstr[1] "%<PRId64>. satır --%%%d--"
 msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
 msgstr "satır %<PRId64>/%<PRId64> --%%%d-- sütun "
 
-msgid "[No Name]"
-msgstr "[Adsız]"
-
-msgid "help"
-msgstr "yardım"
-
 msgid "All"
 msgstr "Tüm Belge"
 
@@ -324,6 +211,10 @@ msgid "%d%%"
 msgstr "%%%d"
 
 #, c-format
+msgid "%3s"
+msgstr ""
+
+#, c-format
 msgid " (%d of %d)"
 msgstr " (%d/%d)"
 
@@ -331,22 +222,20 @@ msgstr " (%d/%d)"
 msgid " ((%d) of %d)"
 msgstr " ((%d)/%d)"
 
-#, c-format
-msgid " (file %d of %d)"
-msgstr " (dosya %d/%d)"
-
-#, c-format
-msgid " (file (%d) of %d)"
-msgstr " (dosya (%d)/%d)"
-
 msgid "E382: Cannot write, 'buftype' option is set"
 msgstr "E382: Yazılamıyor, 'buftype' seçeneği ayarlanmamış"
+
+msgid "[Command Line]"
+msgstr "[Komut Satırı]"
 
 msgid "[Prompt]"
 msgstr "[İstem]"
 
 msgid "[Scratch]"
 msgstr "[Geçici alan]"
+
+msgid "[No Name]"
+msgstr "[Adsız]"
 
 msgid "[Location List]"
 msgstr "[Konum Listesi]"
@@ -427,14 +316,20 @@ msgstr " DÖNÜŞTÜRME HATASI"
 msgid " in line %<PRId64>;"
 msgstr " %<PRId64>. satırda;"
 
+#, c-format
 msgid "[NOT converted]"
 msgstr "[dönüştürülmedi]"
 
+#, c-format
 msgid "[converted]"
 msgstr "[dönüştürüldü]"
 
 msgid "[Device]"
 msgstr "[Aygıt]"
+
+#, c-format
+msgid "[noeol]"
+msgstr "[satır sonu yok]"
 
 msgid " [a]"
 msgstr " [i]"
@@ -487,9 +382,6 @@ msgstr " dosya türü\n"
 
 msgid "'history' option is zero"
 msgstr "'history' seçeneği sıfır"
-
-msgid "E474: Failed to convert list to msgpack string buffer"
-msgstr "E474: Liste, msgpack dizi arabelleğine dönüştürülemedi"
 
 msgid "E548: Digit expected"
 msgstr "E548: Basamak bekleniyordu"
@@ -549,22 +441,15 @@ msgstr "%3d  %s %s  %<PRId64>. satır"
 msgid "%3d  expr %s"
 msgstr "%3d  ifade %s"
 
-#, c-format
-msgid "E96: Cannot diff more than %<PRId64> buffers"
+#, fuzzy, c-format
+msgid "E96: Cannot diff more than %d buffers"
 msgstr "E96: %<PRId64> arabellekten fazlasında karşılaştırma yapılamıyor"
-
-#, c-format
-msgid "Not enough memory to use internal diff for buffer \"%s\""
-msgstr "\"%s\" arabelleği için karşılaştırma yapacak yeterli bellek yok"
 
 msgid "E810: Cannot read or write temp files"
 msgstr "E810: Geçici dosyalar okunamıyor veya yazılamıyor"
 
 msgid "E97: Cannot create diffs"
 msgstr "E97: Karşılaştırma yapılamıyor"
-
-msgid "E960: Problem creating the internal diff"
-msgstr "E960: Karşılaştırma hazırlanırken sorun"
 
 msgid "E816: Cannot read patch output"
 msgstr "E816: Yama çıktısı okunamıyor"
@@ -752,6 +637,662 @@ msgstr " BLOK SEÇ"
 msgid "recording"
 msgstr "kaydediliyor"
 
+msgid "E470: Command aborted"
+msgstr "E470: Komut durduruldu"
+
+msgid "E905: Cannot set this option after startup"
+msgstr "E905: Bu seçenek, başlangıçtan sonra ayarlanamaz"
+
+msgid "E903: Could not spawn API job"
+msgstr "E903: API işi ortaya çıkarılamadı"
+
+msgid "E471: Argument required"
+msgstr "E471: Argüman gerekiyor"
+
+msgid "E10: \\ should be followed by /, ? or &"
+msgstr "E10: \\ sonrasında /, ? veya & gelmeli"
+
+msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
+msgstr "E11: Komut satırı penceresinde geçersiz; <CR> çalıştırır, CTRL-C çıkar"
+
+msgid "E12: Command not allowed in secure mode in current dir or tag search"
+msgstr ""
+"E12: Geçerli dizin veya etiket aramasında güvenli kipteyken komuta izin "
+"verilmiyor"
+
+#, c-format
+msgid "E158: Invalid buffer name: %s"
+msgstr "E158: Geçersiz arabellek adı: %s"
+
+msgid "E169: Command too recursive"
+msgstr "E169: Komut çok özyineli"
+
+msgid "E681: Buffer is not loaded"
+msgstr "E681: Arabellek yüklenemedi"
+
+msgid "E171: Missing :endif"
+msgstr "E171: :endif eksik"
+
+msgid "E600: Missing :endtry"
+msgstr "E600: :endtry eksik"
+
+msgid "E170: Missing :endwhile"
+msgstr "E170: :endwhile eksik"
+
+msgid "E170: Missing :endfor"
+msgstr "E170: :endfor eksik"
+
+msgid "E588: :endwhile without :while"
+msgstr "E588: :while olmadan :endwhile"
+
+msgid "E588: :endfor without :for"
+msgstr "E588: :for olmadan :endfor"
+
+msgid "E13: File exists (add ! to override)"
+msgstr "E13: Dosya mevcut (geçersiz kılmak için ! ekleyin)"
+
+msgid "E472: Command failed"
+msgstr "E472: Komut başarısız oldu"
+
+#, c-format
+msgid "E685: Internal error: %s"
+msgstr "E685: İçsel hata: %s"
+
+msgid "Interrupted"
+msgstr "Yarıda kesildi"
+
+msgid "E474: Invalid argument"
+msgstr "E474: Geçersiz argüman"
+
+#, c-format
+msgid "E475: Invalid argument: %s"
+msgstr "E475: Geçersiz argüman: %s"
+
+#, c-format
+msgid "E475: Invalid value for argument %s"
+msgstr "E475: %s argümanı için geçersiz değer"
+
+#, c-format
+msgid "E475: Invalid value for argument %s: %s"
+msgstr "E475: %s argümanı için geçersiz değer: %s"
+
+#, c-format
+msgid "E983: Duplicate argument: %s"
+msgstr "E983: Yinelenen argüman: %s"
+
+#, c-format
+msgid "E15: Invalid expression: \"%s\""
+msgstr "E15: Geçersiz ifade: \"%s\""
+
+msgid "E16: Invalid range"
+msgstr "E16: Geçersiz erim"
+
+#, fuzzy
+msgid "E473: Internal error in regexp"
+msgstr "E473: İçsel hata"
+
+msgid "E476: Invalid command"
+msgstr "E476: Geçersiz komut"
+
+#, c-format
+msgid "E17: \"%s\" is a directory"
+msgstr "E17: \"%s\" bir dizin"
+
+msgid "E756: Spell checking is not possible"
+msgstr "E756: Yazım denetimi olanaklı değil"
+
+msgid "E900: Invalid channel id"
+msgstr "E900: Geçersiz kanal kimliği"
+
+msgid "E900: Invalid channel id: not a job"
+msgstr "E900: Geçersiz kanal kimliği: Bir iş değil"
+
+msgid "E901: Job table is full"
+msgstr "E901: İş tablosu dolu"
+
+#, c-format
+msgid "E903: Process failed to start: %s: \"%s\""
+msgstr "E903: Süreç başlatılamadı: %s: \"%s\""
+
+msgid "E904: channel is not a pty"
+msgstr "E904: Kanal bir pty değil"
+
+#, c-format
+msgid "E905: Couldn't open stdio channel: %s"
+msgstr "E905: stdio kanalı açılamadı: %s"
+
+msgid "E906: invalid stream for channel"
+msgstr "E906: Kanal için geçersiz akış"
+
+msgid "E906: invalid stream for rpc channel, use 'rpc'"
+msgstr "E906: rpc kanalı için geçersiz akış, 'rpc' kullanın"
+
+#, c-format
+msgid ""
+"E5210: dict key '%s' already set for buffered stream in channel %<PRIu64>"
+msgstr ""
+"E5210: '%s' sözlük anahtarı, %<PRIu64> kanalında halihazırda arabelleklenmiş "
+"akış için ayarlandı"
+
+#, c-format
+msgid "E364: Library call failed for \"%s()\""
+msgstr "E364: \"%s()\" için kitaplık çağrısı başarısız oldu"
+
+#, c-format
+msgid "E667: Fsync failed: %s"
+msgstr "E667: Fsync başarısız oldu: %s"
+
+#, c-format
+msgid "E739: Cannot create directory %s: %s"
+msgstr "E739: Dizin oluşturulamıyor: %s: %s"
+
+msgid "E19: Mark has invalid line number"
+msgstr "E19: İm satır numarası geçersiz"
+
+msgid "E20: Mark not set"
+msgstr "E20: İm ayarlanmamış"
+
+msgid "E21: Cannot make changes, 'modifiable' is off"
+msgstr "E21: Değişiklik yapılamıyor, 'modifiable' kapalı"
+
+msgid "E22: Scripts nested too deep"
+msgstr "E22: Betikler çok iç içe geçmiş"
+
+msgid "E23: No alternate file"
+msgstr "E23: Başka bir dosya yok"
+
+msgid "E24: No such abbreviation"
+msgstr "E24: Böyle bir kısaltma yok"
+
+msgid "E477: No ! allowed"
+msgstr "E477: ! imine izin verilmiyor"
+
+#, c-format
+msgid "E28: No such highlight group name: %s"
+msgstr "E28: Böyle bir vurgulama grup adı yok: %s"
+
+msgid "E29: No inserted text yet"
+msgstr "E29: Henüz bir metin eklenmedi"
+
+msgid "E30: No previous command line"
+msgstr "E30: Öncesinde komut satırı yok"
+
+msgid "E31: No such mapping"
+msgstr "E31: Böyle bir eşlem yok"
+
+msgid "E479: No match"
+msgstr "E479: Eşleşme yok"
+
+#, c-format
+msgid "E480: No match: %s"
+msgstr "E480: Eşleşme yok: %s"
+
+msgid "E32: No file name"
+msgstr "E32: Dosya adı yok"
+
+msgid "E33: No previous substitute regular expression"
+msgstr "E33: Öncesinde yerine geçen bir düzenli ifade yok"
+
+msgid "E34: No previous command"
+msgstr "E34: Öncesinde komut yok"
+
+msgid "E35: No previous regular expression"
+msgstr "E35: Öncesinde düzenli ifade yok"
+
+msgid "E481: No range allowed"
+msgstr "E481: Erime izin verilmiyor"
+
+msgid "E36: Not enough room"
+msgstr "E36: Yeterli alan yok"
+
+msgid "E483: Can't get temp file name"
+msgstr "E483: Geçici dosya adı alınamıyor"
+
+#, c-format
+msgid "E484: Can't open file %s"
+msgstr "E484: %s dosyası açılamıyor"
+
+#, c-format
+msgid "E484: Can't open file %s: %s"
+msgstr "E484: %s dosyası açılamıyor: %s"
+
+#, c-format
+msgid "E485: Can't read file %s"
+msgstr "E485: %s dosyası okunamıyor"
+
+msgid "E38: Null argument"
+msgstr "E38: Anlamsız argüman"
+
+msgid "E39: Number expected"
+msgstr "E39: Sayı bekleniyordu"
+
+#, c-format
+msgid "E40: Can't open errorfile %s"
+msgstr "E40: Hata dosyası %s açılamıyor"
+
+msgid "E41: Out of memory!"
+msgstr "E41: Bellek tükendi!"
+
+msgid "Pattern not found"
+msgstr "Dizgi bulunamadı"
+
+#, c-format
+msgid "E486: Pattern not found: %s"
+msgstr "E486: Dizgi bulunamadı: %s"
+
+msgid "E487: Argument must be positive"
+msgstr "E487: Değişken pozitif olmalı"
+
+msgid "E459: Cannot go back to previous directory"
+msgstr "E459: Bir önceki dizine gidilemiyor"
+
+msgid "E42: No Errors"
+msgstr "E42: Hata yok"
+
+msgid "E776: No location list"
+msgstr "E776: Konum listesi yok"
+
+msgid "E43: Damaged match string"
+msgstr "E43: Hasarlı eşleşme dizisi"
+
+msgid "E44: Corrupted regexp program"
+msgstr "E44: Bozulmuş regexp programı"
+
+msgid "E45: 'readonly' option is set (add ! to override)"
+msgstr "E45: 'readonly' seçeneği ayarlanmış (geçersiz kılmak için ! ekleyin)"
+
+#, c-format
+msgid "E734: Wrong variable type for %s="
+msgstr "E734: %s= için yanlış değişken türü"
+
+#, c-format
+msgid "E461: Illegal variable name: %s"
+msgstr "E461: İzin verilmeyen değişken adı: %s"
+
+msgid "E995: Cannot modify existing variable"
+msgstr "E995: Mevcut değişken değiştirilemiyor"
+
+#, c-format
+msgid "E46: Cannot change read-only variable \"%.*s\""
+msgstr "E46: Saltokunur değişken \"%.*s\" değiştirilemiyor"
+
+msgid "E715: Dictionary required"
+msgstr "E715: Sözlük gerekiyor"
+
+#, c-format
+msgid "E979: Blob index out of range: %<PRId64>"
+msgstr "E979: İkili geniş nesne indeksi erimin dışında: %<PRId64>"
+
+msgid "E978: Invalid operation for Blob"
+msgstr "E978: İkili geniş nesne için geçersiz işlem"
+
+#, c-format
+msgid "E118: Too many arguments for function: %s"
+msgstr "E118: İşlev için pek fazla argüman: %s"
+
+#, c-format
+msgid "E119: Not enough arguments for function: %s"
+msgstr "E119: Şu işlev için yetersiz sayıda argüman: %s"
+
+#, c-format
+msgid "E716: Key not present in Dictionary: \"%s\""
+msgstr "E716: Anahtar sözlükte mevcut değil: \"%s\""
+
+#, fuzzy, c-format
+msgid "E716: Key not present in Dictionary: \"%.*s\""
+msgstr "E716: Anahtar sözlükte mevcut değil: \"%s\""
+
+msgid "E714: List required"
+msgstr "E714: Liste gerekiyor"
+
+msgid "E897: List or Blob required"
+msgstr "E897: Liste veya ikili geniş nesne gerekiyor"
+
+#, c-format
+msgid "E899: Argument of %s must be a List or Blob"
+msgstr "E899: %s argümanı bir liste veya ikili geniş nesne olmalıdır"
+
+#, c-format
+msgid "E712: Argument of %s must be a List or Dictionary"
+msgstr "E712: %s ögesinin argümanı bir liste veya sözlük olmalıdır"
+
+#, c-format
+msgid "E896: Argument of %s must be a List, Dictionary or Blob"
+msgstr "E896: %s argümanı bir liste, sözlük veya ikili geniş nesne olmalıdır"
+
+msgid "E47: Error while reading errorfile"
+msgstr "E47: Hata dosyası okunurken hata"
+
+msgid "E48: Not allowed in sandbox"
+msgstr "E48: Kum havuzunda izin verilmiyor"
+
+msgid "E523: Not allowed here"
+msgstr "E523: Burada izin verilmiyor"
+
+msgid "E565: Not allowed to change text or change window"
+msgstr "E565: Metin veya pencere değiştirmeye izin verilmiyor"
+
+msgid "E359: Screen mode setting not supported"
+msgstr "E359: Ekran kipi ayarı desteklenmiyor"
+
+msgid "E49: Invalid scroll size"
+msgstr "E49: Geçersiz kaydırma boyutu"
+
+msgid "E91: 'shell' option is empty"
+msgstr "E91: 'shell' seçeneği boş"
+
+msgid "E255: Couldn't read in sign data!"
+msgstr "E255: İşaret verisinde okunamadı!"
+
+msgid "E72: Close error on swap file"
+msgstr "E72: Takas dosyasında kapatma hatası"
+
+msgid "E74: Command too complex"
+msgstr "E74: Komut çok karmaşık"
+
+msgid "E75: Name too long"
+msgstr "E75: Ad çok uzun"
+
+msgid "E76: Too many ["
+msgstr "E76: Çok fazla ["
+
+msgid "E77: Too many file names"
+msgstr "E77: Çok fazla dosya adı"
+
+msgid "E488: Trailing characters"
+msgstr "E488: Sonda fazladan karakterler"
+
+#, c-format
+msgid "E488: Trailing characters: %s"
+msgstr "E488: Sonda fazladan karakterler: %s"
+
+msgid "E78: Unknown mark"
+msgstr "E78: Bilinmeyen im"
+
+msgid "E79: Cannot expand wildcards"
+msgstr "E79: Joker karakterleri genişletilemiyor"
+
+msgid "E591: 'winheight' cannot be smaller than 'winminheight'"
+msgstr "E591: 'winheight' değeri 'winminheight' değerinden küçük olamaz"
+
+msgid "E592: 'winwidth' cannot be smaller than 'winminwidth'"
+msgstr "E592: 'winwidth' değeri 'winminwidth' değerinden küçük olamaz"
+
+msgid "E80: Error while writing"
+msgstr "E80: Yazma sırasında hata"
+
+msgid "E939: Positive count required"
+msgstr "E939: Pozitif sayım gerekiyor"
+
+msgid "E81: Using <SID> not in a script context"
+msgstr "E81: <SID> bir betik bağlamında kullanılmıyor"
+
+#, c-format
+msgid "E107: Missing parentheses: %s"
+msgstr "E107: Ayraç eksik: %s"
+
+msgid "E749: Empty buffer"
+msgstr "E749: Boş arabellek"
+
+#, c-format
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Arabellek %<PRId64> mevcut değil"
+
+msgid "E37: No write since last change"
+msgstr "E37: Son değişiklikten sonra yazılmadı"
+
+msgid "E37: No write since last change (add ! to override)"
+msgstr ""
+"E37: Son değişiklikten sonra yazılmadı (geçersiz kılmak için ! ekleyin)"
+
+#, fuzzy, c-format
+msgid "E89: No write since last change for buffer %d (add ! to override)"
+msgstr ""
+"E89: %<PRId64> numaralı arabellek son değişiklikten sonra yazılmadı "
+"(geçersiz kılmak için ! ekleyin)"
+
+#, fuzzy, c-format
+msgid "E92: Buffer %d not found"
+msgstr "E92: %<PRId64> numaralı arabellek bulunamadı"
+
+#, c-format
+msgid "E117: Unknown function: %s"
+msgstr "E117: Bilinmeyen işlev: %s"
+
+#, c-format
+msgid "E193: %s not inside a function"
+msgstr "E193: %s bir işlev içinde değil"
+
+msgid "E948: Job still running"
+msgstr "E948: İş hâlâ sürüyor"
+
+msgid "E948: Job still running (add ! to end the job)"
+msgstr "E948: İş hâlâ sürüyor (bitirmek için ! ekleyin)"
+
+msgid "E682: Invalid search pattern or delimiter"
+msgstr "E682: Geçersiz arama dizgisi veya sınırlandırıcısı"
+
+msgid "E139: File is loaded in another buffer"
+msgstr "E139: Dosya başka bir arabellekte yüklü"
+
+#, c-format
+msgid "E764: Option '%s' is not set"
+msgstr "E764: '%s' seçeneği ayarlanmamış"
+
+msgid "E850: Invalid register name"
+msgstr "E850: Geçersiz yazmaç adı"
+
+#, c-format
+msgid "E919: Directory not found in '%s': \"%s\""
+msgstr "E919: '%s' içinde dizin bulunamadı: \"%s\""
+
+msgid "E952: Autocommand caused recursive behavior"
+msgstr "E952: Otokomut özyineli davranışa neden oldu"
+
+msgid "E328: Menu only exists in another mode"
+msgstr "E328: Menü yalnızca başka bir kipte mevcut"
+
+msgid "E813: Cannot close autocmd window"
+msgstr "E813: Otokomut penceresi kapatılamıyor"
+
+#, c-format
+msgid "E684: List index out of range: %<PRId64>"
+msgstr "E684: Liste indeksi erim dışında: %<PRId64>"
+
+#, c-format
+msgid "E686: Argument of %s must be a List"
+msgstr "E686: %s argümanı bir liste olmalı"
+
+msgid "E519: Option not supported"
+msgstr "E519: Özellik desteklenmiyor"
+
+msgid "E856: Filename too long"
+msgstr "E856: Dosya adı pek uzun"
+
+msgid "E806: Using a Float as a String"
+msgstr "E806: Bir dizi olarak kayan noktalı değer kullanılıyor"
+
+msgid "E788: Not allowed to edit another buffer now"
+msgstr "E788: Şu anda başka bir arabellek düzenlenemez"
+
+#, c-format
+msgid "E1023: Using a Number as a Bool: %d"
+msgstr "E1023: Bir Boole olarak bir sayı kullanılıyor: %d"
+
+#, c-format
+msgid "E1085: Not a callable type: %s"
+msgstr "E1085: Çağrılabilir bir tür değil: %s"
+
+msgid "E855: Autocommands caused command to abort"
+msgstr "E855: Otokomutlar komutun durmasına neden oldu"
+
+#, c-format
+msgid "E5555: API call: %s"
+msgstr "E5555: API çağrısı: %s"
+
+#, fuzzy, c-format
+msgid "E5560: %s must not be called in a fast event context"
+msgstr "E5560: %s, bir lua döngü geri çağrısında çağrılmamalıdır"
+
+msgid "E5601: Cannot close window, only floating window would remain"
+msgstr "E5601: Pencere kapatılamıyor, yalnızca yüzen pencere açık kalır"
+
+msgid "E5602: Cannot exchange or rotate float"
+msgstr "E5602: Kayan noktalı değer değiştirilemiyor veya döndürülemiyor"
+
+#, c-format
+msgid "E344: Can't find directory \"%s\" in cdpath"
+msgstr "E344: \"%s\" dizini cdpath içinde bulunamadı"
+
+#, c-format
+msgid "E345: Can't find file \"%s\" in path"
+msgstr "E345: \"%s\" dosyası yol içinde bulunamadı"
+
+#, c-format
+msgid "E346: No more directory \"%s\" found in cdpath"
+msgstr "E346: Başka bir \"%s\" dizini cdpath içinde bulunamadı"
+
+#, c-format
+msgid "E347: No more file \"%s\" found in path"
+msgstr "E347: Başka bir \"%s\" dosyası yol içinde bulunamadı"
+
+#, fuzzy
+msgid "E741: Value is locked"
+msgstr "E741: Değer kilitli: %.*s"
+
+#, c-format
+msgid "E741: Value is locked: %.*s"
+msgstr "E741: Değer kilitli: %.*s"
+
+#, fuzzy
+msgid "E742: Cannot change value"
+msgstr "E742: %.*s ögesinin değeri değiştirilemiyor"
+
+#, c-format
+msgid "E742: Cannot change value of %.*s"
+msgstr "E742: %.*s ögesinin değeri değiştirilemiyor"
+
+#, c-format
+msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
+msgstr "E794: Kum havuzunda değişken ayarlanamaz: \"%.*s\""
+
+#, c-format
+msgid "E795: Cannot delete variable %.*s"
+msgstr "E795: %.*s değişkeni silinemiyor"
+
+msgid "E960: Problem creating the internal diff"
+msgstr "E960: Karşılaştırma hazırlanırken sorun"
+
+msgid "E1155: Cannot define autocommands for ALL events"
+msgstr "E1155: Otokomutlar TÜM olaylar için tanımlanamıyor"
+
+msgid "E1156: Cannot change the argument list recursively"
+msgstr "E1156: Argüman listesi özyineli olarak değiştirilemiyor"
+
+msgid "E1240: Resulting text too long"
+msgstr "E1240: Ortaya çıkan metin pek uzun"
+
+msgid "E1247: Line number out of range"
+msgstr "E1247: Satır numarası erim dışında"
+
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Grup adında geçersiz karakter"
+
+msgid "E1249: Highlight group name too long"
+msgstr "E1249: Vurgulama grubu adı pek uzun"
+
+msgid "E928: String required"
+msgstr "E928: Dizi gerekiyor"
+
+#, fuzzy, c-format
+msgid "E964: Invalid column number: %ld"
+msgstr "E966: Geçersiz satır numarası: %ld"
+
+#, c-format
+msgid "E966: Invalid line number: %ld"
+msgstr "E966: Geçersiz satır numarası: %ld"
+
+#, c-format
+msgid "E998: Reduce of an empty %s with no initial value"
+msgstr "E998: Başlangıç değeri olmayan boş bir %s için reduce() yapılamıyor"
+
+#, fuzzy
+msgid "E1239: Invalid value for blob: 0x<PRIX64>"
+msgstr "E1239: İkili nesne için geçersiz değer: %d"
+
+#, c-format
+msgid "E1278: Stray '}' without a matching '{': %s"
+msgstr "E1278: Eşleşen bir '{' olmadan başıboş '}': %s"
+
+#, c-format
+msgid "E1279: Missing '}': %s"
+msgstr "E1279: '}' eksik: %s"
+
+#, fuzzy
+msgid "E1310: Cannot change menus while listing"
+msgstr "E1156: Argüman listesi özyineli olarak değiştirilemiyor"
+
+#, fuzzy
+msgid "E1312: Not allowed to change the window layout in this autocmd"
+msgstr "E811: Şu anda arabellek bilgisi değiştirilemez"
+
+#, fuzzy, c-format
+msgid "E1510: Value too large: %s"
+msgstr "E741: Değer kilitli: %.*s"
+
+msgid "E5767: Cannot use :undo! to redo or move to a different undo branch"
+msgstr ""
+"E5767: Yinelemek veya başka bir geri al dalına taşımak için :undo! "
+"kullanılamaz"
+
+msgid "E1513: Cannot switch buffer. 'winfixbuf' is enabled"
+msgstr ""
+
+msgid "E1514: 'findfunc' did not return a List type"
+msgstr ""
+
+#, fuzzy
+msgid "E1546: Cannot switch to a closing buffer"
+msgstr "E1159: Arabellek kapatılırken bir pencere bölünemez"
+
+#, fuzzy, c-format
+msgid "E1549: Cannot have more than %d diff anchors"
+msgstr "E96: %<PRId64> arabellekten fazlasında karşılaştırma yapılamıyor"
+
+msgid "E1550: Failed to find all diff anchors"
+msgstr ""
+
+msgid "E1562: Diff anchors cannot be used with hidden diff windows"
+msgstr ""
+
+msgid "E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"
+msgstr ""
+
+#, c-format
+msgid "E5570: Cannot update trust file: %s"
+msgstr "E5570: Güven dosyası güncellenemiyor: %s"
+
+#, c-format
+msgid "E282: Cannot read from \"%s\""
+msgstr "E282: Şuradan okunamıyor: \"%s\""
+
+#, c-format
+msgid "E5422: Conflicting configs: \"%s\" \"%s\""
+msgstr "E5422: Çakışan yapılandırmalar: \"%s\" \"%s\""
+
+#, c-format
+msgid "E355: Unknown option: %s"
+msgstr "E355: Bilinmeyen seçenek: %s"
+
+msgid "search hit TOP, continuing at BOTTOM"
+msgstr "Arama dosyanın BAŞINI geçti, dosyanın SONUNDAN sürüyor"
+
+msgid "search hit BOTTOM, continuing at TOP"
+msgstr "Arama dosyanın SONUNU geçti, dosyanın BAŞINDAN sürüyor"
+
+msgid " line "
+msgstr " satır "
+
 msgid "E111: Missing ']'"
 msgstr "E111: ']' eksik"
 
@@ -767,10 +1308,6 @@ msgstr "E909: Özel bir değişken dizinlenemiyor"
 
 msgid "E274: No white space allowed before parenthesis"
 msgstr "E274: Ayraçtan önce boşluğa izin verilmiyor"
-
-#, c-format
-msgid "E80: Error while writing: %s"
-msgstr "E80: Yazma sırasında hata: %s"
 
 msgid "E695: Cannot index a Funcref"
 msgstr "E695: Bir Funcref dizinlenemiyor"
@@ -792,16 +1329,9 @@ msgstr "E1203: İki nokta yalnızca bir sözlük üzerinde kullanılabilir: %s"
 msgid "E1192: Empty function name"
 msgstr "E1192: İşlev adı boş"
 
-msgid ""
-"E5700: Expression from 'spellsuggest' must yield lists with exactly two "
-"values"
-msgstr ""
-"E5700: 'spellsuggest'ten olan ifade, yalnızca iki değerli listelere izin "
-"vermelidir"
-
-#, c-format
-msgid "E121: Undefined variable: %.*s"
-msgstr "E121: Tanımlanmamış değişken: %.*s"
+#, fuzzy
+msgid "E1265: Cannot use a partial here"
+msgstr "E862: g: burada kullanılamaz"
 
 msgid "E689: Can only index a List, Dictionary or Blob"
 msgstr ""
@@ -815,6 +1345,10 @@ msgstr "E713: . sonrası boş anahtar kullanılamaz"
 
 msgid "E709: [:] requires a List or Blob value"
 msgstr "E709: [:] bir liste veya ikili geniş nesne değeri gerektirir"
+
+#, c-format
+msgid "E121: Undefined variable: %.*s"
+msgstr "E121: Tanımlanmamış değişken: %.*s"
 
 msgid "E996: Cannot lock a range"
 msgstr "E996: Erim kilitlenemiyor"
@@ -880,22 +1414,6 @@ msgstr "E722: Sözlükte virgül eksik: %s"
 msgid "E723: Missing end of Dictionary '}': %s"
 msgstr "E723: Sözlük sonu '}' eksik: %s"
 
-msgid "map() argument"
-msgstr "map() argümanı"
-
-msgid "filter() argument"
-msgstr "filter() argümanı"
-
-#, c-format
-msgid "E700: Unknown function: %s"
-msgstr "E700: Bilinmeyen işlev: %s"
-
-msgid "E923: Second argument of function() must be a list or a dict"
-msgstr "E923: function() ikinci argümanı bir liste veya sözlük olmalıdır"
-
-msgid "E5050: {opts} must be the only argument"
-msgstr "E5050: {opts}, tek argüman olmalıdır"
-
 #, c-format
 msgid "Executing command: \"%s\""
 msgstr "Komut çalıştırılıyor: \"%s\""
@@ -910,15 +1428,8 @@ msgstr ""
 "\n"
 "\tEn son şuradan ayarlandı: "
 
-msgid "E5009: $VIMRUNTIME is empty or unset"
-msgstr "E5009: $VIMRUNTIME boş veya ayarlanmamış"
-
-#, c-format
-msgid "E5009: Invalid $VIMRUNTIME: %s"
-msgstr "E5009: Geçersiz VIMRUNTIME: %s"
-
-msgid "E5009: Invalid 'runtimepath'"
-msgstr "E5009: Geçersiz 'runtimepath'"
+msgid " (run Nvim with -V1 for more details)"
+msgstr ""
 
 msgid "E977: Can only compare Blob with Blob"
 msgstr ""
@@ -1116,6 +1627,10 @@ msgid "E474: Unexpected end of input: %.*s"
 msgstr "E474: Beklenmedik girdi sonu: %.*s"
 
 #, c-format
+msgid "E5010: List item %d of the second argument is not a string"
+msgstr "E5010: İkinci argümanın %d liste ögesi bir dizi değil"
+
+#, c-format
 msgid "key %s"
 msgstr "%s anahtarı"
 
@@ -1190,12 +1705,41 @@ msgid "E5005: Unable to dump %s: container references itself in %s"
 msgstr "E5005: %s dökülemiyor: Kapsayıcı, %s içinde özüne başvuruyor"
 
 #, c-format
-msgid "E684: List index out of range: %<PRId64>"
-msgstr "E684: Liste indeksi erim dışında: %<PRId64>"
+msgid "E80: Error while writing: %s"
+msgstr "E80: Yazma sırasında hata: %s"
+
+msgid "E5000: Cannot find tab number."
+msgstr "E5000: Sekme numarası bulunamıyor."
+
+msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
+msgstr "E5001: Daha yüksek kapsam, düşük kapsam >= 0 ise -1 olamaz."
+
+msgid "E5002: Cannot find window number."
+msgstr "E5002: Pencere numarası bulunamıyor."
+
+msgid "<empty>"
+msgstr "<boş>"
+
+msgid "E655: Too many symbolic links (cycle?)"
+msgstr "E655: Çok fazla sembolik bağlantı (çevrim?)"
+
+msgid "writefile() first argument must be a List or a Blob"
+msgstr "writefile() ilk argümanı bir liste veya ikili geniş nesne olmalıdır"
 
 #, c-format
-msgid "E899: Argument of %s must be a List or Blob"
-msgstr "E899: %s argümanı bir liste veya ikili geniş nesne olmalıdır"
+msgid "E5060: Unknown flag: %s"
+msgstr "E5060: Bilinmeyen bayrak: %s"
+
+msgid "E482: Can't open file with an empty name"
+msgstr "E482: Adı boş olan bir dosya açılamaz"
+
+#, c-format
+msgid "E482: Can't open file %s for writing: %s"
+msgstr "E482: %s dosyası yazma için açılamıyor: %s"
+
+#, c-format
+msgid "E80: Error when closing file %s: %s"
+msgstr "E80: %s dosyası kapatılırken hata: %s"
 
 msgid "E957: Invalid window number"
 msgstr "E957: Geçersiz pencere numarası"
@@ -1204,23 +1748,8 @@ msgstr "E957: Geçersiz pencere numarası"
 msgid "E935: Invalid submatch number: %d"
 msgstr "E935: Geçersiz alteşleşme numarası: %d"
 
-#, c-format
-msgid "E998: Reduce of an empty %s with no initial value"
-msgstr "E998: Başlangıç değeri olmayan boş bir %s için reduce() yapılamıyor"
-
 msgid "E1132: Missing function argument"
 msgstr "E1132: İşlev argümanı eksik"
-
-#, c-format
-msgid "Error converting the call result: %s"
-msgstr "Çağrı sonuçlarını dönüştürürken hata: %s"
-
-msgid "add() argument"
-msgstr "add() argümanı"
-
-#, c-format
-msgid "E158: Invalid buffer name: %s"
-msgstr "E158: Geçersiz arabellek adı: %s"
 
 #, c-format
 msgid "Invalid channel stream \"%s\""
@@ -1241,29 +1770,25 @@ msgstr "E900: maxdepth negatif olmayan bir sayı olmalı"
 msgid "flatten() argument"
 msgstr "flatten() argümanı"
 
-msgid "extend() argument"
-msgstr "extend() argümanı"
+#, c-format
+msgid "E700: Unknown function: %s"
+msgstr "E700: Bilinmeyen işlev: %s"
 
-msgid "extendnew() argument"
-msgstr "extendnew() argümanı"
-
-msgid "E5000: Cannot find tab number."
-msgstr "E5000: Sekme numarası bulunamıyor."
-
-msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
-msgstr "E5001: Daha yüksek kapsam, düşük kapsam >= 0 ise -1 olamaz."
-
-msgid "E5002: Cannot find window number."
-msgstr "E5002: Pencere numarası bulunamıyor."
+msgid "E923: Second argument of function() must be a list or a dict"
+msgstr "E923: function() ikinci argümanı bir liste veya sözlük olmalıdır"
 
 msgid "called inputrestore() more often than inputsave()"
 msgstr "inputrestore(), inputsave()'den daha fazla çağrıldı"
 
-msgid "insert() argument"
-msgstr "insert() argümanı"
-
 msgid "E786: Range not allowed"
 msgstr "E786: Erime izin verilmiyor"
+
+msgid "jobstart(...,{term=true}) requires unmodified buffer"
+msgstr ""
+
+#, c-format
+msgid "Terminal already connected to buffer %d"
+msgstr ""
 
 msgid "E474: Failed to convert list to string"
 msgstr "E474: Liste, diziye dönüştürülemedi"
@@ -1292,22 +1817,6 @@ msgstr "E726: Sıfır adım"
 msgid "E727: Start past end"
 msgstr "E727: Başlangıç bitişten sonra"
 
-msgid "<empty>"
-msgstr "<boş>"
-
-msgid "remove() argument"
-msgstr "remove() argümanı"
-
-msgid "E655: Too many symbolic links (cycle?)"
-msgstr "E655: Çok fazla sembolik bağlantı (çevrim?)"
-
-msgid "reverse() argument"
-msgstr "reverse() argümanı"
-
-#, c-format
-msgid "E5010: List item %d of the second argument is not a string"
-msgstr "E5010: İkinci argümanın %d liste ögesi bir dizi değil"
-
 #, c-format
 msgid "E962: Invalid action: '%s'"
 msgstr "E962: Geçersiz eylem: '%s'"
@@ -1323,26 +1832,45 @@ msgstr "E6100: \"%s\", geçerli bir stdpath değil"
 msgid "(Invalid)"
 msgstr "(Geçersiz)"
 
-msgid "Can only call this function in an unmodified buffer"
-msgstr "Bu işlev yalnızca değiştirilmemiş bir arabellekte çağrılabilir"
+#, fuzzy, c-format
+msgid "E706: Argument of %s must be a List, String or Dictionary"
+msgstr "E712: %s ögesinin argümanı bir liste veya sözlük olmalıdır"
 
-msgid "writefile() first argument must be a List or a Blob"
-msgstr "writefile() ilk argümanı bir liste veya ikili geniş nesne olmalıdır"
+#, fuzzy, c-format
+msgid "E1250: Argument of %s must be a List, String, Dictionary or Blob"
+msgstr "E896: %s argümanı bir liste, sözlük veya ikili geniş nesne olmalıdır"
 
-#, c-format
-msgid "E5060: Unknown flag: %s"
-msgstr "E5060: Bilinmeyen bayrak: %s"
+msgid "map() argument"
+msgstr "map() argümanı"
 
-msgid "E482: Can't open file with an empty name"
-msgstr "E482: Adı boş olan bir dosya açılamaz"
+#, fuzzy
+msgid "mapnew() argument"
+msgstr "map() argümanı"
 
-#, c-format
-msgid "E482: Can't open file %s for writing: %s"
-msgstr "E482: %s dosyası yazma için açılamıyor: %s"
+msgid "filter() argument"
+msgstr "filter() argümanı"
 
-#, c-format
-msgid "E80: Error when closing file %s: %s"
-msgstr "E80: %s dosyası kapatılırken hata: %s"
+#, fuzzy
+msgid "foreach() argument"
+msgstr "sort() argümanı"
+
+msgid "add() argument"
+msgstr "add() argümanı"
+
+msgid "extend() argument"
+msgstr "extend() argümanı"
+
+msgid "extendnew() argument"
+msgstr "extendnew() argümanı"
+
+msgid "insert() argument"
+msgstr "insert() argümanı"
+
+msgid "remove() argument"
+msgstr "remove() argümanı"
+
+msgid "reverse() argument"
+msgstr "reverse() argümanı"
 
 msgid "E743: Variable nested too deep for (un)lock"
 msgstr "E743: Değişken kilitlenemez/kilidi açılamaz, çok iç içe geçmiş"
@@ -1386,6 +1914,10 @@ msgstr "E1220: %d argümanı için sayı veya dizi gerekiyor"
 msgid "E1222: String or List required for argument %d"
 msgstr "E1222: %d argümanı için dizi veya liste gerekiyor"
 
+#, fuzzy, c-format
+msgid "E1225: List, Dictionary, Blob or String required for argument %d"
+msgstr "E1226: %d argümanı için liste veya ikili nesne gerekiyor"
+
 #, c-format
 msgid "E1226: List or Blob required for argument %d"
 msgstr "E1226: %d argümanı için liste veya ikili nesne gerekiyor"
@@ -1394,9 +1926,9 @@ msgstr "E1226: %d argümanı için liste veya ikili nesne gerekiyor"
 msgid "E1238: Blob required for argument %d"
 msgstr "E1238: %d argümanı için ikili nesne gerekiyor"
 
-#, c-format
-msgid "E1239: Invalid value for blob: %d"
-msgstr "E1239: İkili nesne için geçersiz değer: %d"
+#, fuzzy, c-format
+msgid "E1252: String, List or Blob required for argument %d"
+msgstr "E1226: %d argümanı için liste veya ikili nesne gerekiyor"
 
 #, c-format
 msgid "E1256: String or function required for argument %d"
@@ -1412,17 +1944,17 @@ msgstr "E710: Liste değeri hedeften daha fazla ögeye sahip"
 msgid "E711: List value has not enough items"
 msgstr "E711: Liste değeri yeterli ögeye sahip değil"
 
-msgid "sort() argument"
-msgstr "sort() argümanı"
-
-msgid "uniq() argument"
-msgstr "uniq() argümanı"
-
 msgid "E702: Sort compare function failed"
 msgstr "E702: Sıralayıp karşılaştırma işlevi başarısız oldu"
 
 msgid "E882: Uniq compare function failed"
 msgstr "E882: Benzersizlik karşılaştırma işlevi başarısız oldu"
+
+msgid "sort() argument"
+msgstr "sort() argümanı"
+
+msgid "uniq() argument"
+msgstr "uniq() argümanı"
 
 msgid "E6000: Argument is not a function or function name"
 msgstr "E6000: Argüman bir işlev veya işlev adı değil"
@@ -1433,17 +1965,6 @@ msgstr "E737: Anahtar hâlihazırda var: %s"
 
 msgid "E972: Blob value does not have the right number of bytes"
 msgstr "E972: İkili geniş nesne değeri doğru bayt sayısına sahip değil"
-
-#, c-format
-msgid "E741: Value is locked: %.*s"
-msgstr "E741: Değer kilitli: %.*s"
-
-#, c-format
-msgid "E742: Cannot change value of %.*s"
-msgstr "E742: %.*s ögesinin değeri değiştirilemiyor"
-
-msgid "Unknown"
-msgstr "Bilinmiyor"
 
 msgid "E805: Expected a Number or a String, Float found"
 msgstr "E805: Bir sayı veya dizi bekleniyordu, kayan noktalı değer bulundu"
@@ -1514,10 +2035,6 @@ msgstr ""
 
 msgid "E808: Number or Float required"
 msgstr "E808: Sayı veya kayan noktalı değer gerekiyor"
-
-#, c-format
-msgid "E117: Unknown function: %s"
-msgstr "E117: Bilinmeyen işlev: %s"
 
 #, c-format
 msgid "E122: Function %s already exists, add ! to replace it"
@@ -1630,6 +2147,13 @@ msgstr "E884: İşlev adı iki nokta içeremez: %s"
 msgid "E123: Undefined function: %s"
 msgstr "E123: Tanımlanmamış işlev: %s"
 
+msgid "E126: Missing :endfunction"
+msgstr "E126: :endfunction eksik"
+
+#, c-format
+msgid "W22: Text found after :endfunction: %s"
+msgstr "W22: :endfunction sonrası metin bulundu: %s"
+
 #, c-format
 msgid "E124: Missing '(': %s"
 msgstr "E124: '(' eksik: %s"
@@ -1640,13 +2164,6 @@ msgstr "E862: g: burada kullanılamaz"
 #, c-format
 msgid "E932: Closure function should not be at top level: %s"
 msgstr "E932: Kapatma işlevi en üst düzeyde olmamalıdır: %s"
-
-msgid "E126: Missing :endfunction"
-msgstr "E126: :endfunction eksik"
-
-#, c-format
-msgid "W22: Text found after :endfunction: %s"
-msgstr "W22: :endfunction sonrası metin bulundu: %s"
 
 #, c-format
 msgid "E707: Function name conflicts with variable: %s"
@@ -1674,16 +2191,30 @@ msgstr "E133: :return bir işlev içinde değil"
 msgid "E18: Unexpected characters in :let"
 msgstr "E18: :let içinde beklenmedik karakter"
 
+msgid "E452: Double ; in list of variables"
+msgstr "E452: Değişkenler listesinde çifte ;"
+
 #, c-format
 msgid "E940: Cannot lock or unlock variable %s"
 msgstr "E940: Değişken %s kilitlenemiyor veya açılamıyor"
 
-#, c-format
-msgid "E963: Setting %s to value with wrong type"
+#, fuzzy, c-format
+msgid "E963: Setting v:%s to value with wrong type"
 msgstr "E963: %s yanlış türe sahip değere ayarlanıyor"
+
+#, c-format
+msgid "E990: Missing end marker '%s'"
+msgstr "E990: Son imleyici '%s' eksik"
 
 msgid "E991: Cannot use =<< here"
 msgstr "E991: Burada =<< kullanılamıyor"
+
+msgid ""
+"E5700: Expression from 'spellsuggest' must yield lists with exactly two "
+"values"
+msgstr ""
+"E5700: 'spellsuggest'ten olan ifade, yalnızca iki değerli listelere izin "
+"vermelidir"
 
 msgid "E221: Marker cannot start with lower case letter"
 msgstr "E221: İmleyici küçük harfle başlayamaz"
@@ -1691,18 +2222,11 @@ msgstr "E221: İmleyici küçük harfle başlayamaz"
 msgid "E172: Missing marker"
 msgstr "E172: İmleyici eksik"
 
-#, c-format
-msgid "E990: Missing end marker '%s'"
-msgstr "E990: Son imleyici '%s' eksik"
-
 msgid "E687: Less targets than List items"
 msgstr "E687: Liste ögelerinden daha az hedef var"
 
 msgid "E688: More targets than List items"
 msgstr "E688: Liste ögelerinden daha fazla hedef var"
-
-msgid "E452: Double ; in list of variables"
-msgstr "E452: Değişkenler listesinde çifte ;"
 
 #, c-format
 msgid "E738: Can't list variables for %s"
@@ -1721,17 +2245,9 @@ msgstr "E996: Yazmaç kilitlenemiyor"
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: Böyle bir değişken yok: \"%s\""
 
-#, c-format
-msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
-msgstr "E794: Kum havuzunda değişken ayarlanamaz: \"%.*s\""
-
-#, c-format
-msgid "E1122: Variable is locked: %*s"
+#, fuzzy, c-format
+msgid "E1122: Variable is locked: %.*s"
 msgstr "E1122: Değer kilitli: %*s"
-
-#, c-format
-msgid "E795: Cannot delete variable %.*s"
-msgstr "E795: %.*s değişkeni silinemiyor"
 
 #, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
@@ -2018,9 +2534,9 @@ msgid_plural "%d more files to edit.  Quit anyway?"
 msgstr[0] ""
 msgstr[1] ""
 
-#, c-format
-msgid "E173: %<PRId64> more file to edit"
-msgid_plural "E173: %<PRId64> more files to edit"
+#, fuzzy, c-format
+msgid "E173: %d more file to edit"
+msgid_plural "E173: %d more files to edit"
 msgstr[0] "E173: Düzenlenecek %<PRId64> dosya daha var"
 msgstr[1] "E173: Düzenlenecek %<PRId64> dosya daha var"
 
@@ -2082,6 +2598,16 @@ msgstr "E500: Boş bir satır olarak değer biçer"
 
 msgid "Untitled"
 msgstr "Adsız"
+
+msgid "E5009: $VIMRUNTIME is empty or unset"
+msgstr "E5009: $VIMRUNTIME boş veya ayarlanmamış"
+
+#, c-format
+msgid "E5009: Invalid $VIMRUNTIME: %s"
+msgstr "E5009: Geçersiz VIMRUNTIME: %s"
+
+msgid "E5009: Invalid 'runtimepath'"
+msgstr "E5009: Geçersiz 'runtimepath'"
 
 msgid "E583: Multiple :else"
 msgstr "E583: Birden çok :else"
@@ -2181,6 +2707,10 @@ msgstr "E606: :try olmadan :finally"
 msgid "E602: :endtry without :try"
 msgstr "E602: :try olmadan :endtry"
 
+#, fuzzy
+msgid "E199: Active window or buffer changed or deleted"
+msgstr "E199: Etkin pencere veya arabellek silinmiş"
+
 msgid "E811: Not allowed to change buffer information now"
 msgstr "E811: Şu anda arabellek bilgisi değiştirilemez"
 
@@ -2215,11 +2745,8 @@ msgstr "E5404: %i parçası bitiş %"
 msgid "E5406: Chunk %i end %"
 msgstr "E5406: %i parçası bitiş %"
 
-msgid "[Command Line]"
-msgstr "[Komut Satırı]"
-
-msgid "E199: Active window or buffer deleted"
-msgstr "E199: Etkin pencere veya arabellek silinmiş"
+msgid "E5050: {opts} must be the only argument"
+msgstr "E5050: {opts}, tek argüman olmalıdır"
 
 msgid "E854: Path too long for completion"
 msgstr "E854: Yol tamamlama için pek uzun"
@@ -2232,21 +2759,12 @@ msgstr ""
 "E343: Geçersiz yol: '**[sayı]' yolun sonunda olmalı veya sonrasında '%s' "
 "gelmelidir"
 
-#, c-format
-msgid "E344: Can't find directory \"%s\" in cdpath"
-msgstr "E344: \"%s\" dizini cdpath içinde bulunamadı"
+msgid "E446: No file name under cursor"
+msgstr "E446: İmleç altında dosya adı yok"
 
 #, c-format
-msgid "E345: Can't find file \"%s\" in path"
-msgstr "E345: \"%s\" dosyası yol içinde bulunamadı"
-
-#, c-format
-msgid "E346: No more directory \"%s\" found in cdpath"
-msgstr "E346: Başka bir \"%s\" dizini cdpath içinde bulunamadı"
-
-#, c-format
-msgid "E347: No more file \"%s\" found in path"
-msgstr "E347: Başka bir \"%s\" dosyası yol içinde bulunamadı"
+msgid "E447: Can't find file \"%s\" in path"
+msgstr "E447: \"%s\" dosyası yol içinde bulunamadı"
 
 msgid "E812: Autocommands changed buffer or buffer name"
 msgstr "E812: Otokomutlar arabelleği veya arabellek adını değiştirdi"
@@ -2275,18 +2793,23 @@ msgstr "E201: *ReadPre otokomutları şu anki arabelleği değiştirmemeli"
 msgid "E202: Conversion made file unreadable!"
 msgstr "E202: Dönüştürme dosyayı okunamaz hale getirdi!"
 
+#, c-format
 msgid "[fifo]"
 msgstr "[ilk giren ilk çıkar]"
 
+#, c-format
 msgid "[socket]"
 msgstr "[uç nokta]"
 
+#, c-format
 msgid "[character special]"
 msgstr "[özel karakterli]"
 
+#, c-format
 msgid "[CR missing]"
 msgstr "[Eksik CR]"
 
+#, c-format
 msgid "[long lines split]"
 msgstr "[uzun satırlar bölünmüş]"
 
@@ -2298,6 +2821,7 @@ msgstr "[%<PRId64>. satırda DÖNÜŞTÜRME HATASI]"
 msgid "[ILLEGAL BYTE in line %<PRId64>]"
 msgstr "[%<PRId64>. satırda İZİN VERİLMEYEN BAYT]"
 
+#, c-format
 msgid "[READ ERRORS]"
 msgstr "[OKUMA HATALARI]"
 
@@ -2310,33 +2834,22 @@ msgstr "'charconvert' ile dönüştürme başarısız"
 msgid "can't read output of 'charconvert'"
 msgstr "'charconvert' çıktısı okunamıyor"
 
-msgid "[New File]"
-msgstr "[Yeni Dosya]"
-
-msgid "[New]"
-msgstr "[Yeni]"
-
-msgid "[dos format]"
-msgstr "[dos biçimi]"
-
 msgid "[dos]"
 msgstr "[dos]"
-
-msgid "[mac format]"
-msgstr "[mac biçimi]"
 
 msgid "[mac]"
 msgstr "[mac]"
 
-msgid "[unix format]"
-msgstr "[unix biçimi]"
-
 msgid "[unix]"
 msgstr "[unix]"
 
-#, c-format
-msgid "%<PRId64> line, "
-msgid_plural "%<PRId64> lines, "
+#, fuzzy, c-format
+msgid "%s%<PRId64>L, %<PRId64>B"
+msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
+
+#, fuzzy, c-format
+msgid "%s%<PRId64> line, "
+msgid_plural "%s%<PRId64> lines, "
 msgstr[0] "%<PRId64> satır, "
 msgstr[1] "%<PRId64> satır, "
 
@@ -2345,24 +2858,6 @@ msgid "%<PRId64> byte"
 msgid_plural "%<PRId64> bytes"
 msgstr[0] "%<PRId64> bayt"
 msgstr[1] "%<PRId64> bayt"
-
-msgid "[Incomplete last line]"
-msgstr "[Tamamlanmamış son satır]"
-
-msgid "[noeol]"
-msgstr "[satır sonu yok]"
-
-#, c-format
-msgid "E208: Error writing to \"%s\""
-msgstr "E208: Şuraya yazılamadı: \"%s\""
-
-#, c-format
-msgid "E209: Error closing \"%s\""
-msgstr "E209: \"%s\" kapatılırken hata"
-
-#, c-format
-msgid "E210: Error reading \"%s\""
-msgstr "E210: \"%s\" okunurken hata"
 
 msgid "E246: FileChangedShell autocommand deleted buffer"
 msgstr "E246: FileChangedShell otokomutu arabelleği sildi"
@@ -2434,15 +2929,15 @@ msgstr "E350: Şu anki 'foldmethod' ile kıvırma oluşturulamıyor"
 msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: Şu anki 'foldmethod' ile kıvırma silinemiyor"
 
-#, c-format
-msgid "+--%3ld line folded"
-msgid_plural "+--%3ld lines folded "
-msgstr[0] ""
-msgstr[1] ""
+#, fuzzy, c-format
+msgid "+--%3d line folded"
+msgid_plural "+--%3d lines folded "
+msgstr[0] "+-%s%3ld satır: "
+msgstr[1] "+-%s%3ld satır: "
 
-#, c-format
-msgid "+-%s%3ld line: "
-msgid_plural "+-%s%3ld lines: "
+#, fuzzy, c-format
+msgid "+-%s%3d line: "
+msgid_plural "+-%s%3d lines: "
 msgstr[0] "+-%s%3ld satır: "
 msgstr[1] "+-%s%3ld satır: "
 
@@ -2458,520 +2953,16 @@ msgstr "E1136: <Cmd> eşlemlemesi ikinci <Cmd>'den önce <CR> ile bitmelidir"
 msgid "E222: Add to read buffer"
 msgstr "E222: Okunan arabelleğe ekle"
 
+#, c-format
+msgid "Cannot open for reading: \"%s\": %s\n"
+msgstr "Okuma için açılamıyor: \"%s\": %s\n"
+
 msgid "--No lines in buffer--"
 msgstr "--Arabellek içinde satır yok--"
-
-msgid "E470: Command aborted"
-msgstr "E470: Komut durduruldu"
-
-msgid "E905: Cannot set this option after startup"
-msgstr "E905: Bu seçenek, başlangıçtan sonra ayarlanamaz"
-
-msgid "E903: Could not spawn API job"
-msgstr "E903: API işi ortaya çıkarılamadı"
-
-msgid "E471: Argument required"
-msgstr "E471: Argüman gerekiyor"
-
-msgid "E10: \\ should be followed by /, ? or &"
-msgstr "E10: \\ sonrasında /, ? veya & gelmeli"
-
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr "E11: Komut satırı penceresinde geçersiz; <CR> çalıştırır, CTRL-C çıkar"
-
-msgid "E12: Command not allowed in secure mode in current dir or tag search"
-msgstr ""
-"E12: Geçerli dizin veya etiket aramasında güvenli kipteyken komuta izin "
-"verilmiyor"
-
-msgid "E169: Command too recursive"
-msgstr "E169: Komut çok özyineli"
-
-msgid "E171: Missing :endif"
-msgstr "E171: :endif eksik"
-
-msgid "E600: Missing :endtry"
-msgstr "E600: :endtry eksik"
-
-msgid "E170: Missing :endwhile"
-msgstr "E170: :endwhile eksik"
-
-msgid "E170: Missing :endfor"
-msgstr "E170: :endfor eksik"
-
-msgid "E588: :endwhile without :while"
-msgstr "E588: :while olmadan :endwhile"
-
-msgid "E588: :endfor without :for"
-msgstr "E588: :for olmadan :endfor"
-
-msgid "E13: File exists (add ! to override)"
-msgstr "E13: Dosya mevcut (geçersiz kılmak için ! ekleyin)"
-
-msgid "E472: Command failed"
-msgstr "E472: Komut başarısız oldu"
-
-msgid "E473: Internal error"
-msgstr "E473: İçsel hata"
-
-#, c-format
-msgid "E685: Internal error: %s"
-msgstr "E685: İçsel hata: %s"
-
-msgid "Interrupted"
-msgstr "Yarıda kesildi"
-
-msgid "E474: Invalid argument"
-msgstr "E474: Geçersiz argüman"
-
-#, c-format
-msgid "E475: Invalid argument: %s"
-msgstr "E475: Geçersiz argüman: %s"
-
-#, c-format
-msgid "E475: Invalid value for argument %s"
-msgstr "E475: %s argümanı için geçersiz değer"
-
-#, c-format
-msgid "E475: Invalid value for argument %s: %s"
-msgstr "E475: %s argümanı için geçersiz değer: %s"
-
-#, c-format
-msgid "E983: Duplicate argument: %s"
-msgstr "E983: Yinelenen argüman: %s"
-
-#, c-format
-msgid "E15: Invalid expression: \"%s\""
-msgstr "E15: Geçersiz ifade: \"%s\""
-
-msgid "E16: Invalid range"
-msgstr "E16: Geçersiz erim"
-
-msgid "E476: Invalid command"
-msgstr "E476: Geçersiz komut"
-
-#, c-format
-msgid "E17: \"%s\" is a directory"
-msgstr "E17: \"%s\" bir dizin"
-
-msgid "E756: Spell checking is not possible"
-msgstr "E756: Yazım denetimi olanaklı değil"
-
-msgid "E900: Invalid channel id"
-msgstr "E900: Geçersiz kanal kimliği"
-
-msgid "E900: Invalid channel id: not a job"
-msgstr "E900: Geçersiz kanal kimliği: Bir iş değil"
-
-msgid "E901: Job table is full"
-msgstr "E901: İş tablosu dolu"
-
-#, c-format
-msgid "E903: Process failed to start: %s: \"%s\""
-msgstr "E903: Süreç başlatılamadı: %s: \"%s\""
-
-msgid "E904: channel is not a pty"
-msgstr "E904: Kanal bir pty değil"
-
-#, c-format
-msgid "E905: Couldn't open stdio channel: %s"
-msgstr "E905: stdio kanalı açılamadı: %s"
-
-msgid "E906: invalid stream for channel"
-msgstr "E906: Kanal için geçersiz akış"
-
-msgid "E906: invalid stream for rpc channel, use 'rpc'"
-msgstr "E906: rpc kanalı için geçersiz akış, 'rpc' kullanın"
-
-#, c-format
-msgid ""
-"E5210: dict key '%s' already set for buffered stream in channel %<PRIu64>"
-msgstr ""
-"E5210: '%s' sözlük anahtarı, %<PRIu64> kanalında halihazırda arabelleklenmiş "
-"akış için ayarlandı"
-
-#, c-format
-msgid "E364: Library call failed for \"%s()\""
-msgstr "E364: \"%s()\" için kitaplık çağrısı başarısız oldu"
-
-#, c-format
-msgid "E667: Fsync failed: %s"
-msgstr "E667: Fsync başarısız oldu: %s"
-
-#, c-format
-msgid "E739: Cannot create directory %s: %s"
-msgstr "E739: Dizin oluşturulamıyor: %s: %s"
-
-msgid "E19: Mark has invalid line number"
-msgstr "E19: İm satır numarası geçersiz"
-
-msgid "E20: Mark not set"
-msgstr "E20: İm ayarlanmamış"
-
-msgid "E21: Cannot make changes, 'modifiable' is off"
-msgstr "E21: Değişiklik yapılamıyor, 'modifiable' kapalı"
-
-msgid "E22: Scripts nested too deep"
-msgstr "E22: Betikler çok iç içe geçmiş"
-
-msgid "E23: No alternate file"
-msgstr "E23: Başka bir dosya yok"
-
-msgid "E24: No such abbreviation"
-msgstr "E24: Böyle bir kısaltma yok"
-
-msgid "E477: No ! allowed"
-msgstr "E477: ! imine izin verilmiyor"
-
-#, c-format
-msgid "E28: No such highlight group name: %s"
-msgstr "E28: Böyle bir vurgulama grup adı yok: %s"
-
-msgid "E29: No inserted text yet"
-msgstr "E29: Henüz bir metin eklenmedi"
-
-msgid "E30: No previous command line"
-msgstr "E30: Öncesinde komut satırı yok"
-
-msgid "E31: No such mapping"
-msgstr "E31: Böyle bir eşlem yok"
-
-msgid "E479: No match"
-msgstr "E479: Eşleşme yok"
-
-#, c-format
-msgid "E480: No match: %s"
-msgstr "E480: Eşleşme yok: %s"
-
-msgid "E32: No file name"
-msgstr "E32: Dosya adı yok"
-
-msgid "E33: No previous substitute regular expression"
-msgstr "E33: Öncesinde yerine geçen bir düzenli ifade yok"
-
-msgid "E34: No previous command"
-msgstr "E34: Öncesinde komut yok"
-
-msgid "E35: No previous regular expression"
-msgstr "E35: Öncesinde düzenli ifade yok"
-
-msgid "E481: No range allowed"
-msgstr "E481: Erime izin verilmiyor"
-
-msgid "E36: Not enough room"
-msgstr "E36: Yeterli alan yok"
-
-msgid "E483: Can't get temp file name"
-msgstr "E483: Geçici dosya adı alınamıyor"
-
-#, c-format
-msgid "E484: Can't open file %s"
-msgstr "E484: %s dosyası açılamıyor"
-
-#, c-format
-msgid "E484: Can't open file %s: %s"
-msgstr "E484: %s dosyası açılamıyor: %s"
-
-#, c-format
-msgid "E485: Can't read file %s"
-msgstr "E485: %s dosyası okunamıyor"
-
-msgid "E38: Null argument"
-msgstr "E38: Anlamsız argüman"
-
-msgid "E39: Number expected"
-msgstr "E39: Sayı bekleniyordu"
-
-#, c-format
-msgid "E40: Can't open errorfile %s"
-msgstr "E40: Hata dosyası %s açılamıyor"
-
-msgid "E41: Out of memory!"
-msgstr "E41: Bellek tükendi!"
-
-msgid "Pattern not found"
-msgstr "Dizgi bulunamadı"
-
-#, c-format
-msgid "E486: Pattern not found: %s"
-msgstr "E486: Dizgi bulunamadı: %s"
-
-msgid "E487: Argument must be positive"
-msgstr "E487: Değişken pozitif olmalı"
-
-msgid "E459: Cannot go back to previous directory"
-msgstr "E459: Bir önceki dizine gidilemiyor"
-
-msgid "E42: No Errors"
-msgstr "E42: Hata yok"
-
-msgid "E776: No location list"
-msgstr "E776: Konum listesi yok"
-
-msgid "E43: Damaged match string"
-msgstr "E43: Hasarlı eşleşme dizisi"
-
-msgid "E44: Corrupted regexp program"
-msgstr "E44: Bozulmuş regexp programı"
-
-msgid "E45: 'readonly' option is set (add ! to override)"
-msgstr "E45: 'readonly' seçeneği ayarlanmış (geçersiz kılmak için ! ekleyin)"
-
-#, c-format
-msgid "E734: Wrong variable type for %s="
-msgstr "E734: %s= için yanlış değişken türü"
-
-#, c-format
-msgid "E461: Illegal variable name: %s"
-msgstr "E461: İzin verilmeyen değişken adı: %s"
-
-msgid "E995: Cannot modify existing variable"
-msgstr "E995: Mevcut değişken değiştirilemiyor"
-
-#, c-format
-msgid "E46: Cannot change read-only variable \"%.*s\""
-msgstr "E46: Saltokunur değişken \"%.*s\" değiştirilemiyor"
-
-msgid "E928: String required"
-msgstr "E928: Dizi gerekiyor"
-
-msgid "E715: Dictionary required"
-msgstr "E715: Sözlük gerekiyor"
-
-#, c-format
-msgid "E979: Blob index out of range: %<PRId64>"
-msgstr "E979: İkili geniş nesne indeksi erimin dışında: %<PRId64>"
-
-msgid "E978: Invalid operation for Blob"
-msgstr "E978: İkili geniş nesne için geçersiz işlem"
-
-#, c-format
-msgid "E118: Too many arguments for function: %s"
-msgstr "E118: İşlev için pek fazla argüman: %s"
-
-#, c-format
-msgid "E119: Not enough arguments for function: %s"
-msgstr "E119: Şu işlev için yetersiz sayıda argüman: %s"
-
-#, c-format
-msgid "E716: Key not present in Dictionary: \"%s\""
-msgstr "E716: Anahtar sözlükte mevcut değil: \"%s\""
-
-msgid "E714: List required"
-msgstr "E714: Liste gerekiyor"
-
-msgid "E897: List or Blob required"
-msgstr "E897: Liste veya ikili geniş nesne gerekiyor"
-
-#, c-format
-msgid "E712: Argument of %s must be a List or Dictionary"
-msgstr "E712: %s ögesinin argümanı bir liste veya sözlük olmalıdır"
-
-#, c-format
-msgid "E896: Argument of %s must be a List, Dictionary or Blob"
-msgstr "E896: %s argümanı bir liste, sözlük veya ikili geniş nesne olmalıdır"
-
-msgid "E47: Error while reading errorfile"
-msgstr "E47: Hata dosyası okunurken hata"
-
-msgid "E48: Not allowed in sandbox"
-msgstr "E48: Kum havuzunda izin verilmiyor"
-
-msgid "E523: Not allowed here"
-msgstr "E523: Burada izin verilmiyor"
-
-msgid "E565: Not allowed to change text or change window"
-msgstr "E565: Metin veya pencere değiştirmeye izin verilmiyor"
-
-msgid "E359: Screen mode setting not supported"
-msgstr "E359: Ekran kipi ayarı desteklenmiyor"
-
-msgid "E49: Invalid scroll size"
-msgstr "E49: Geçersiz kaydırma boyutu"
-
-msgid "E91: 'shell' option is empty"
-msgstr "E91: 'shell' seçeneği boş"
-
-msgid "E255: Couldn't read in sign data!"
-msgstr "E255: İşaret verisinde okunamadı!"
-
-msgid "E72: Close error on swap file"
-msgstr "E72: Takas dosyasında kapatma hatası"
-
-msgid "E74: Command too complex"
-msgstr "E74: Komut çok karmaşık"
-
-msgid "E75: Name too long"
-msgstr "E75: Ad çok uzun"
-
-msgid "E76: Too many ["
-msgstr "E76: Çok fazla ["
-
-msgid "E77: Too many file names"
-msgstr "E77: Çok fazla dosya adı"
-
-msgid "E488: Trailing characters"
-msgstr "E488: Sonda fazladan karakterler"
-
-#, c-format
-msgid "E488: Trailing characters: %s"
-msgstr "E488: Sonda fazladan karakterler: %s"
-
-msgid "E78: Unknown mark"
-msgstr "E78: Bilinmeyen im"
-
-msgid "E79: Cannot expand wildcards"
-msgstr "E79: Joker karakterleri genişletilemiyor"
-
-msgid "E591: 'winheight' cannot be smaller than 'winminheight'"
-msgstr "E591: 'winheight' değeri 'winminheight' değerinden küçük olamaz"
-
-msgid "E592: 'winwidth' cannot be smaller than 'winminwidth'"
-msgstr "E592: 'winwidth' değeri 'winminwidth' değerinden küçük olamaz"
-
-msgid "E80: Error while writing"
-msgstr "E80: Yazma sırasında hata"
-
-msgid "E939: Positive count required"
-msgstr "E939: Pozitif sayım gerekiyor"
-
-msgid "E81: Using <SID> not in a script context"
-msgstr "E81: <SID> bir betik bağlamında kullanılmıyor"
-
-#, c-format
-msgid "E107: Missing parentheses: %s"
-msgstr "E107: Ayraç eksik: %s"
-
-msgid "E749: Empty buffer"
-msgstr "E749: Boş arabellek"
-
-#, c-format
-msgid "E86: Buffer %<PRId64> does not exist"
-msgstr "E86: Arabellek %<PRId64> mevcut değil"
-
-#, c-format
-msgid "E193: %s not inside a function"
-msgstr "E193: %s bir işlev içinde değil"
-
-msgid "E682: Invalid search pattern or delimiter"
-msgstr "E682: Geçersiz arama dizgisi veya sınırlandırıcısı"
-
-msgid "E139: File is loaded in another buffer"
-msgstr "E139: Dosya başka bir arabellekte yüklü"
-
-#, c-format
-msgid "E764: Option '%s' is not set"
-msgstr "E764: '%s' seçeneği ayarlanmamış"
-
-msgid "E850: Invalid register name"
-msgstr "E850: Geçersiz yazmaç adı"
-
-#, c-format
-msgid "E919: Directory not found in '%s': \"%s\""
-msgstr "E919: '%s' içinde dizin bulunamadı: \"%s\""
-
-msgid "E952: Autocommand caused recursive behavior"
-msgstr "E952: Otokomut özyineli davranışa neden oldu"
-
-msgid "E328: Menu only exists in another mode"
-msgstr "E328: Menü yalnızca başka bir kipte mevcut"
-
-msgid "E813: Cannot close autocmd window"
-msgstr "E813: Otokomut penceresi kapatılamıyor"
-
-#, c-format
-msgid "E686: Argument of %s must be a List"
-msgstr "E686: %s argümanı bir liste olmalı"
-
-msgid "E519: Option not supported"
-msgstr "E519: Özellik desteklenmiyor"
-
-msgid "E856: Filename too long"
-msgstr "E856: Dosya adı pek uzun"
-
-msgid "E806: Using a Float as a String"
-msgstr "E806: Bir dizi olarak kayan noktalı değer kullanılıyor"
-
-msgid "E788: Not allowed to edit another buffer now"
-msgstr "E788: Şu anda başka bir arabellek düzenlenemez"
-
-#, c-format
-msgid "E1023: Using a Number as a Bool: %d"
-msgstr "E1023: Bir Boole olarak bir sayı kullanılıyor: %d"
-
-#, c-format
-msgid "E1085: Not a callable type: %s"
-msgstr "E1085: Çağrılabilir bir tür değil: %s"
-
-#, c-format
-msgid "E5555: API call: %s"
-msgstr "E5555: API çağrısı: %s"
-
-#, c-format
-msgid "E5560: %s must not be called in a lua loop callback"
-msgstr "E5560: %s, bir lua döngü geri çağrısında çağrılmamalıdır"
-
-msgid "E5601: Cannot close window, only floating window would remain"
-msgstr "E5601: Pencere kapatılamıyor, yalnızca yüzen pencere açık kalır"
-
-msgid "E5602: Cannot exchange or rotate float"
-msgstr "E5602: Kayan noktalı değer değiştirilemiyor veya döndürülemiyor"
-
-msgid "E1155: Cannot define autocommands for ALL events"
-msgstr "E1155: Otokomutlar TÜM olaylar için tanımlanamıyor"
-
-msgid "E1240: Resulting text too long"
-msgstr "E1240: Ortaya çıkan metin pek uzun"
-
-msgid "E1247: Line number out of range"
-msgstr "E1247: Satır numarası erim dışında"
-
-msgid "E5248: Invalid character in group name"
-msgstr "E5248: Grup adında geçersiz karakter"
-
-msgid "E1249: Highlight group name too long"
-msgstr "E1249: Vurgulama grubu adı pek uzun"
-
-#, c-format
-msgid "E966: Invalid line number: %ld"
-msgstr "E966: Geçersiz satır numarası: %ld"
-
-#, c-format
-msgid "E1278: Stray '}' without a matching '{': %s"
-msgstr "E1278: Eşleşen bir '{' olmadan başıboş '}': %s"
-
-#, c-format
-msgid "E1279: Missing '}': %s"
-msgstr "E1279: '}' eksik: %s"
-
-msgid "E5767: Cannot use :undo! to redo or move to a different undo branch"
-msgstr ""
-"E5767: Yinelemek veya başka bir geri al dalına taşımak için :undo! "
-"kullanılamaz"
-
-#, c-format
-msgid "E5570: Cannot update trust file: %s"
-msgstr "E5570: Güven dosyası güncellenemiyor: %s"
-
-#, c-format
-msgid "E355: Unknown option: %s"
-msgstr "E355: Bilinmeyen seçenek: %s"
-
-msgid "search hit TOP, continuing at BOTTOM"
-msgstr "Arama dosyanın BAŞINI geçti, dosyanın SONUNDAN sürüyor"
-
-msgid "search hit BOTTOM, continuing at TOP"
-msgstr "Arama dosyanın SONUNU geçti, dosyanın BAŞINDAN sürüyor"
-
-msgid " line "
-msgstr " satır "
 
 #, c-format
 msgid "E685: Internal error: hash_add(): duplicate key \"%s\""
 msgstr "E685: İçsel hata: hash_add(): Yinelenmiş anahtar \"%s\""
-
-msgid "E478: Don't panic!"
-msgstr "E478: Panik yok!"
 
 #, c-format
 msgid "E661: No '%s' help for %s"
@@ -2996,10 +2987,6 @@ msgstr "E152: %s yazma için açılamıyor"
 #, c-format
 msgid "E153: Unable to open %s for reading"
 msgstr "E153: %s okuma için açılamıyor"
-
-#, c-format
-msgid "E670: Mix of help file encodings within a language: %s"
-msgstr "E670: Bir dilde yardım dosyası kodlamaları karıştı: %s"
 
 #, c-format
 msgid "E154: Duplicate tag \"%s\" in file %s/%s"
@@ -3066,6 +3053,20 @@ msgstr "E669: Grup adında yazdırılamayan karakter"
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: Çok fazla vurgulama ve sözdizim grupları"
 
+#, c-format
+msgid "%<PRId64> lines to indent... "
+msgstr "girintilenecek %<PRId64> satır kaldı... "
+
+#, c-format
+msgid "%<PRId64> line indented "
+msgid_plural "%<PRId64> lines indented "
+msgstr[0] "%<PRId64> satır girintilendi"
+msgstr[1] "%<PRId64> satır girintilendi"
+
+#, c-format
+msgid "%s (y/n)?"
+msgstr ""
+
 msgid "Type number and <Enter> or click with the mouse (q or empty cancels): "
 msgstr ""
 "Sayı girip <Enter>'a veya fare düğmesine basın (q veya boş iptal eder): "
@@ -3076,7 +3077,8 @@ msgstr "Sayı girip <Enter>'a basın (q veya boş iptal eder): "
 msgid " Keyword completion (^N^P)"
 msgstr " Anahtar sözcük tamamlaması (^N^P)"
 
-msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+#, fuzzy
+msgid " ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)"
 msgstr " ^X kipi (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
 
 msgid " Whole line completion (^L^N^P)"
@@ -3114,6 +3116,10 @@ msgstr " Yazım önerisi (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Dahili anahtar sözcük tamamlaması (^N^P)"
+
+#, fuzzy
+msgid " Register completion (^N^P)"
+msgstr " Anahtar sözcük tamamlaması (^N^P)"
 
 msgid "Hit end of paragraph"
 msgstr "Paragrafın sonuna varıldı"
@@ -3177,99 +3183,103 @@ msgstr "eşleşme %d"
 msgid "E1502: Lua failed to grow stack to %i"
 msgstr "E1502: Lua, yığını %i olarak büyütemedi"
 
+#, fuzzy
 msgid ""
-"E5100: Cannot convert given lua table: table should either have a sequence "
-"of positive integer keys or contain only string keys"
+"E5100: Cannot convert given Lua table: table should contain either only "
+"integer keys or only string keys"
 msgstr ""
 "E5100: Verilen lua tablosu dönüştürülemiyor: Tabloda ya bir tamsayı anahtar "
 "sıramalası olmalı veya yalnızca dizi anahtarlar içermeli"
 
-msgid "E5101: Cannot convert given lua type"
+#, fuzzy
+msgid "E5101: Cannot convert given Lua type"
 msgstr "E5101: Verilen lua türü dönüştürülemiyor"
 
 #, c-format
 msgid "E5102: Lua failed to grow stack to %i"
 msgstr "E5102: Lua, yığını %i olarak büyütemedi"
 
-#, c-format
-msgid "Error executing vim.schedule lua callback: %.*s"
+#, fuzzy, c-format
+msgid "vim.schedule callback: %.*s"
 msgstr "vim.schedule lua geri çağrısı çalıştırılırken hata: %.*s"
 
-msgid "E970: Failed to initialize lua interpreter\n"
+#, fuzzy, c-format
+msgid "E970: Failed to initialize Lua interpreter\n"
 msgstr "E970: lua yorumlayıcısı ilklendirilemedi\n"
 
-msgid "E970: Failed to initialize builtin lua modules\n"
+#, fuzzy, c-format
+msgid "E970: Failed to initialize builtin Lua modules\n"
 msgstr "E970: Gömülü lua modülleri ilklendirilemedi\n"
 
-#, c-format
-msgid "E5114: Error while converting print argument #%i: %.*s"
+#, fuzzy, c-format
+msgid "E5114: Converting print argument #%i: %.*s"
 msgstr "E5114: Yazdırma argümanı #%i dönüştürülürken hata: %.*s"
 
-#, c-format
-msgid "E5115: Error while loading debug string: %.*s"
+#, fuzzy, c-format
+msgid "E5115: Loading Lua debug string: %.*s"
 msgstr "E5115: Hata ayıklama dizisi yüklenirken hata: %.*s"
 
-#, c-format
-msgid "E5116: Error while calling debug string: %.*s"
+#, fuzzy, c-format
+msgid "E5116: Calling Lua debug string: %.*s"
 msgstr "E5116: Hata ayıklama dizisi çağrılırken hata: %.*s"
 
-#, c-format
-msgid "E5108: Error executing Lua function: %.*s"
+#, fuzzy, c-format
+msgid "E5108: Lua function: %.*s"
 msgstr "E5108: Lua işlevi çalıştırılırken hata: %.*s"
 
-#, c-format
-msgid "E5107: Error loading lua %.*s"
+#, fuzzy, c-format
+msgid "E5107: Lua: %.*s"
 msgstr "E5107: lua %.*s yüklenirken hata"
 
-#, c-format
-msgid "E5108: Error executing lua %.*s"
-msgstr "E5108: lua %.*s çalıştırılırken hata"
+#, fuzzy, c-format
+msgid "E5108: Lua: %.*s"
+msgstr "E5109: lua yüklenirken hata: %.*s"
 
-#, c-format
-msgid "Error executing lua callback: %.*s"
-msgstr "lua geri çağrısı çalıştırılırken hata: %.*s"
+#, fuzzy, c-format
+msgid "Lua callback: %.*s"
+msgstr "Lua geri çağrısı çalıştırılırken hata: %.*s"
 
 msgid "cannot save undo information"
 msgstr "Geri al bilgisi kaydedilemiyor"
 
-#, c-format
-msgid "E5109: Error loading lua: %.*s"
+#, fuzzy, c-format
+msgid "E5109: Lua: %.*s"
 msgstr "E5109: lua yüklenirken hata: %.*s"
 
-#, c-format
-msgid "E5110: Error executing lua: %.*s"
+#, fuzzy, c-format
+msgid "E5110: Lua: %.*s"
 msgstr "E5110: lua çalıştırılırken hata: %.*s"
 
-#, c-format
-msgid "E5111: Error calling lua: %.*s"
+#, fuzzy, c-format
+msgid "E5111: Lua: %.*s"
 msgstr "E5111: lua çağrılırken hata: %.*s"
 
-#, c-format
-msgid "E5112: Error while creating lua chunk: %.*s"
+#, fuzzy, c-format
+msgid "E5112: Lua chunk: %.*s"
 msgstr "E5112: lua parçası oluşturulurken hata: %.*s"
 
-#, c-format
-msgid "E5113: Error while calling lua chunk: %.*s"
+#, fuzzy, c-format
+msgid "E5113: Lua chunk: %.*s"
 msgstr "E5113: lua parçası çağrılırken hata: %.*s"
 
-#, c-format
-msgid "Error executing vim._expand_pat: %.*s"
+#, fuzzy, c-format
+msgid "vim._expand_pat: %.*s"
 msgstr "vim._expand_pat çalıştırılırken hata: %.*s"
 
-#, c-format
-msgid "Error executing  vim.on_key Lua callback: %.*s"
+#, fuzzy, c-format
+msgid "vim.on_key() callbacks: %.*s"
 msgstr "vim.on_key Lua geri çağrısı çalıştırılırken hata: %.*s"
 
 #, c-format
-msgid "Error executing Lua callback: %.*s"
-msgstr "Lua geri çağrısı çalıştırılırken hata: %.*s"
+msgid "Lua :command callback: %.*s"
+msgstr ""
 
-#, c-format
-msgid "Error executing vim.secure.read: %.*s"
+#, fuzzy, c-format
+msgid "vim.secure.read: %.*s"
 msgstr "vim.secure.read yürütülürken hata: %.*s"
 
-#, c-format
-msgid "Error executing vim.secure.trust: %.*s"
+#, fuzzy, c-format
+msgid "vim.secure.trust: %.*s"
 msgstr "vim.secure.trust yürütülürken hata: %.*s"
 
 msgid "Argument missing after"
@@ -3288,8 +3298,12 @@ msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
 msgstr "Çok fazla \"+komut\", \"-c komut\" veya \"--cmd komut\" argümanı"
 
 #, c-format
-msgid "E5421: Failed to open stdin: %s"
-msgstr "E5421: stdin açılamadı: %s"
+msgid "Cannot open for script output: \""
+msgstr "Betik çıktısı için açılamıyor: \""
+
+#, c-format
+msgid "E5420: Failed to write to file: %s"
+msgstr "E5420: Dosyaya yazılamadı: %s"
 
 #, c-format
 msgid "Attempt to open script file again: \"%s %s\"\n"
@@ -3298,24 +3312,10 @@ msgstr "Betik dosyası yeniden açılmaya çalışılıyor: \"%s %s\"\n"
 msgid "--embed conflicts with -es/-Es/-l"
 msgstr "--embed, -es/-Es/-l ile çakışıyor"
 
-#, c-format
-msgid "Cannot open for reading: \"%s\": %s\n"
-msgstr "Okuma için açılamıyor: \"%s\": %s\n"
-
-msgid "Cannot open for script output: \""
-msgstr "Betik çıktısı için açılamıyor: \""
-
 msgid "pre-vimrc command line"
 msgstr "vimrc uygulanma öncesi komut satırı"
 
 #, c-format
-msgid "E5422: Conflicting configs: \"%s\" \"%s\""
-msgstr "E5422: Çakışan yapılandırmalar: \"%s\" \"%s\""
-
-#, c-format
-msgid "E282: Cannot read from \"%s\""
-msgstr "E282: Şuradan okunamıyor: \"%s\""
-
 msgid ""
 "\n"
 "More info with \""
@@ -3323,19 +3323,15 @@ msgstr ""
 "\n"
 "Daha fazla bilgi için: \""
 
+#, c-format
 msgid "Usage:\n"
 msgstr "Kullanım:\n"
 
-msgid "  nvim [options] [file ...]      Edit file(s)\n"
+#, fuzzy, c-format
+msgid "  nvim [options] [file ...]\n"
 msgstr "nvim [seçenekler] [dosya ...]      Dosyaları düzenle\n"
 
-msgid "  nvim [options] -t <tag>        Edit file where tag is defined\n"
-msgstr ""
-"nvim [seçenekler] -t <etiket>      Etiketin tanımlandığı dosyayı düzenle\n"
-
-msgid "  nvim [options] -q [errorfile]  Edit file with first error\n"
-msgstr "nvim [seçenekler] -q [hatadosyası] İlk hatalı dosyayı düzenle\n"
-
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
@@ -3343,89 +3339,90 @@ msgstr ""
 "\n"
 "Seçenekler:\n"
 
-msgid "  --                    Only file names after this\n"
-msgstr "--                    Yalnızca bundan sonraki dosya adları\n"
-
-msgid "  +                     Start at end of file\n"
-msgstr "+                     Dosyanın sonunda başlat\n"
-
+#, c-format
 msgid "  --cmd <cmd>           Execute <cmd> before any config\n"
 msgstr ""
 "--cmd <komut>         Herhangi bir yapılandırma öncesi <komut> çalıştır\n"
 
+#, c-format
 msgid "  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"
 msgstr ""
 "+<komut>, -c <komut>  Yapılandırma ve ilk dosya sonrası <komut> çalıştır\n"
 
+#, c-format
+msgid "  -l <script> [args...] Execute Lua <script> (with optional args)\n"
+msgstr ""
 
-msgid "  -b                    Binary mode\n"
-msgstr "-b                    İkili kip\n"
+#, c-format
+msgid "  -S <session>          Source <session> after loading the first file\n"
+msgstr ""
+"-S <oturum>           İlk dosyayı yükledikten sonra <oturum>'u kaynak al\n"
 
+#, c-format
+msgid "  -s <scriptin>         Read Normal mode commands from <scriptin>\n"
+msgstr "-s <betikgir>         Normal kip komutlarını <betikgir>'den oku\n"
+
+#, c-format
+msgid "  -u <config>           Use this config file\n"
+msgstr "-u <yapılandırma>     Bu yapılandırma dosyasını kullan\n"
+
+#, c-format
 msgid "  -d                    Diff mode\n"
 msgstr "-d                    Diff kipi\n"
 
-msgid "  -e, -E                Ex mode\n"
-msgstr "-e, -E                Ex kipi\n"
-
+#, c-format
 msgid "  -es, -Es              Silent (batch) mode\n"
 msgstr "-es, -Es              Sessiz (toplu iş) kipi\n"
 
+#, c-format
 msgid "  -h, --help            Print this help message\n"
 msgstr "-h, --help            Bu yardım iletisini yazdır\n"
 
+#, c-format
 msgid "  -i <shada>            Use this shada file\n"
 msgstr "-i <shada>            Bu shada (paylaşılan veri) dosyasını kullan\n"
 
-msgid "  -m                    Modifications (writing files) not allowed\n"
-msgstr "-m                    Değişikliklere (dosya yazmaya) izin verme\n"
-
-msgid "  -M                    Modifications in text not allowed\n"
-msgstr "-M                    Metinde değişikliklere izin verme\n"
-
+#, c-format
 msgid "  -n                    No swap file, use memory only\n"
 msgstr "-n                    Takas dosyası yok, yalnızca belleği kullan\n"
 
+#, c-format
 msgid "  -o[N]                 Open N windows (default: one per file)\n"
 msgstr ""
 "-o[N]                 N pencere aç (öntanımlı: dosya başına bir tane)\n"
 
+#, c-format
 msgid ""
 "  -O[N]                 Open N vertical windows (default: one per file)\n"
 msgstr ""
 "-O[N]                 N dikey pencere aç (öntanımlı: dosya başına bir tane)\n"
 
+#, c-format
 msgid "  -p[N]                 Open N tab pages (default: one per file)\n"
 msgstr ""
 "-p[N]                 N sekme sayfası aç (öntanımlı: dosya başına bir tane)\n"
 
-msgid "  -r, -L                List swap files\n"
-msgstr "-r, -L                Takas dosyalarını listele\n"
-
-msgid "  -r <file>             Recover edit state for this file\n"
-msgstr "-r <dosya>            Bu dosyanın düzenleme durumunu kurtar\n"
-
-msgid "  -R                    Read-only mode\n"
+#, fuzzy, c-format
+msgid "  -R                    Read-only (view) mode\n"
 msgstr "-R                    Saltokunur kip\n"
 
-msgid "  -S <session>          Source <session> after loading the first file\n"
-msgstr ""
-"-S <oturum>           İlk dosyayı yükledikten sonra <oturum>'u kaynak al\n"
-
-msgid "  -s <scriptin>         Read Normal mode commands from <scriptin>\n"
-msgstr "-s <betikgir>         Normal kip komutlarını <betikgir>'den oku\n"
-
-msgid "  -u <config>           Use this config file\n"
-msgstr "-u <yapılandırma>     Bu yapılandırma dosyasını kullan\n"
-
+#, c-format
 msgid "  -v, --version         Print version information\n"
 msgstr "-v, --version         Sürüm bilgisini yazdır\n"
 
+#, c-format
 msgid "  -V[N][file]           Verbose [level][file]\n"
 msgstr "-V[N][dosya]          Ayrıntılı bilgi ver [düzey][dosya]\n"
 
+#, c-format
+msgid "  --                    Only file names after this\n"
+msgstr "--                    Yalnızca bundan sonraki dosya adları\n"
+
+#, c-format
 msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
 msgstr "--api-info            stdout'a msgpack kodlu API üstverisi yaz\n"
 
+#, c-format
 msgid ""
 "  --clean               \"Factory defaults\" (skip user config and plugins, "
 "shada)\n"
@@ -3433,28 +3430,32 @@ msgstr ""
 "  --clean               \"Fabrika ayarları\" (yapılandırma/eklentileri atla, "
 "shada)\n"
 
+#, c-format
 msgid "  --embed               Use stdin/stdout as a msgpack-rpc channel\n"
 msgstr ""
 "--embed               stdin/stdout'u msgpack-rpc kanalı olarak kullan\n"
 
+#, c-format
 msgid "  --headless            Don't start a user interface\n"
 msgstr "--headless            Bir kullanıcı arayüzü başlatma\n"
 
+#, c-format
 msgid "  --listen <address>    Serve RPC API from this address\n"
 msgstr "--listen <adres>      Bu adresten RPC API'si sun\n"
 
-msgid "  --noplugin            Don't load plugins\n"
-msgstr "--noplugin            Eklentileri yükleme\n"
-
+#, c-format
 msgid "  --remote[-subcommand] Execute commands remotely on a server\n"
 msgstr "--remote[-subcommand] Bir sunucuda komutları uzaktan çalıştır\n"
 
-msgid "  --server <address>    Specify RPC server to send commands to\n"
+#, fuzzy, c-format
+msgid "  --server <address>    Connect to this Nvim server\n"
 msgstr "--server <adres>      Komut gönderilecek RPC sunucusunu belirt\n"
 
+#, c-format
 msgid "  --startuptime <file>  Write startup timing messages to <file>\n"
 msgstr "--startuptime <dosya> Başlangıç zamanlama iletilerini <dosya>'ya yaz\n"
 
+#, c-format
 msgid ""
 "\n"
 "See \":help startup-options\" for all options.\n"
@@ -3480,6 +3481,10 @@ msgstr "E227: %s için eşlemleme hâlihazırda var"
 
 msgid "E460: Entries missing in mapset() dict argument"
 msgstr "E460: mapset() sözlük argümanında eksik girdiler"
+
+#, fuzzy, c-format
+msgid "E1276: Illegal map mode string: '%s'"
+msgstr "E125: İzin verilmeyen argüman: %s"
 
 msgid "No abbreviation found"
 msgstr "Kısaltma bulunamadı"
@@ -3558,12 +3563,12 @@ msgstr "E474: Liste ögesi %d, ya bir sözlük değil ya da boş bir sözlük"
 msgid "E474: List item %d is missing one of the required keys"
 msgstr "E474: Liste ögesi %d, gerekli anahtarlardan birini içermiyor"
 
-#, c-format
-msgid "E798: ID is reserved for \":match\": %<PRId64>"
+#, fuzzy, c-format
+msgid "E798: ID is reserved for \":match\": %d"
 msgstr "E798: Kimlik, \":match\" için ayrılmış: %<PRId64>"
 
-#, c-format
-msgid "E798: ID is reserved for \"match\": %<PRId64>"
+#, fuzzy, c-format
+msgid "E798: ID is reserved for \"match\": %d"
 msgstr "E798: Kimlik, \":match\" için ayrılmış: %<PRId64>"
 
 #, c-format
@@ -3674,21 +3679,23 @@ msgstr "E306: %s açılamıyor"
 msgid "Unable to read block 0 from "
 msgstr "Blok 0 şuradan okunamıyor: "
 
+#, fuzzy
 msgid ""
 "\n"
-"Maybe no changes were made or Vim did not update the swap file."
+"Maybe no changes were made or Nvim did not update the swap file."
 msgstr ""
 "\n"
 "Herhangi bir değişiklik yapılmadı veya Vim takas dosyasını güncellemedi."
 
-msgid " cannot be used with this version of Vim.\n"
+#, fuzzy
+msgid " cannot be used with this version of Nvim.\n"
 msgstr " Vim'in bu sürümüyle kullanılamaz.\n"
 
 msgid "Use Vim version 3.0.\n"
 msgstr "Vim 3.0 sürümünü kullanın.\n"
 
-#, c-format
-msgid "E307: %s does not look like a Vim swap file"
+#, fuzzy, c-format
+msgid "E307: %s does not look like a Nvim swap file"
 msgstr "E307: %s Vim takas dosyasına pek benzemiyor"
 
 msgid " cannot be used on this computer.\n"
@@ -3734,6 +3741,9 @@ msgstr "???BOŞ BLOK"
 msgid "???LINES MISSING"
 msgstr "???SATIRLAR EKSİK"
 
+msgid "???ILLEGAL BLOCK NUMBER"
+msgstr ""
+
 #, c-format
 msgid "E310: Block 1 ID wrong (%s not a .swp file?)"
 msgstr "E310: Blok 1 kimliği yanlış (%s bir .swp dosyası değil mi?)"
@@ -3748,6 +3758,8 @@ msgid "??? from here until ???END lines may have been inserted/deleted"
 msgstr ""
 "??? konumundan ???SON konumuna kadar satırlar eklenmiş/silinmiş olabilir"
 
+msgid "??? lines may be missing"
+msgstr ""
 
 msgid "???END"
 msgstr "???SON"
@@ -3820,7 +3832,8 @@ msgstr "           tarih: "
 msgid "         [from Vim version 3.0]"
 msgstr "         [Vim 3.0 sürümünden itibaren]"
 
-msgid "         [does not look like a Vim swap file]"
+#, fuzzy
+msgid "         [does not look like a Nvim swap file]"
 msgstr "         [bir Vim takas dosyasına benzemiyor]"
 
 msgid "         [garbled strings (not nul terminated)]"
@@ -3972,9 +3985,6 @@ msgstr "Swap dosyası \""
 msgid "\" already exists!"
 msgstr "\" zaten var!"
 
-msgid "VIM - ATTENTION"
-msgstr "VİM - DİKKAT"
-
 msgid ""
 "&Open Read-Only\n"
 "&Edit anyway\n"
@@ -4003,6 +4013,9 @@ msgstr ""
 "Çı&k\n"
 "Du&rdur"
 
+msgid "VIM - ATTENTION"
+msgstr "VİM - DİKKAT"
+
 msgid "E326: Too many swap files found"
 msgstr "E326: Çok fazla takas dosyası bulundu"
 
@@ -4013,12 +4026,13 @@ msgid ""
 msgstr ""
 "E303: Takas dosyası için \"%s\" dizini oluşturulamadı, kurtarma olanaksız: %s"
 
-msgid "Vim: Data too large to fit into virtual memory space\n"
-msgstr "Vim: Veri, sanal bellek alanına sığmak için çok büyük\n"
-
 #, c-format
 msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
 msgstr "E342: Bellek tükendi!! (%<PRIu64> bayt ayrılıyor)"
+
+#, fuzzy
+msgid "Nvim: Data too large to fit into virtual memory space\n"
+msgstr "Vim: Veri, sanal bellek alanına sığmak için çok büyük\n"
 
 msgid "E327: Part of menu-item path is not sub-menu"
 msgstr "E327: Menü öge yolunun bir kısmı alt menü değil"
@@ -4063,13 +4077,13 @@ msgstr "E336: Menü yolu bir alt menüye çıkmalı"
 msgid "E337: Menu not found - check menu names"
 msgstr "E337: Menü bulunamadı - menü adlarını denetleyin"
 
-#, c-format
-msgid "Error detected while processing %s:"
-msgstr "%s işlenirken hata algılandı:"
+#, fuzzy, c-format
+msgid "Error in %s:"
+msgstr "%s seçeneği için"
 
-#, c-format
-msgid "line %4ld:"
-msgstr "satır %4ld:"
+#, fuzzy
+msgid "line %4"
+msgstr "satır %"
 
 #, c-format
 msgid "E354: Invalid register name: '%s'"
@@ -4081,20 +4095,23 @@ msgstr "Yarıda kes: "
 msgid "Press ENTER or type command to continue"
 msgstr "Sürdürmek için ENTER'a basın veya komut girin"
 
-#, c-format
-msgid "%ld more line"
-msgid_plural "%ld more lines"
+#, fuzzy, c-format
+msgid "%d more line"
+msgid_plural "%d more lines"
 msgstr[0] "%ld daha çok satır"
 msgstr[1] "%ld daha çok satır"
 
-#, c-format
-msgid "%ld line less"
-msgid_plural "%ld fewer lines"
+#, fuzzy, c-format
+msgid "%d line less"
+msgid_plural "%d fewer lines"
 msgstr[0] "%ld daha az satır"
 msgstr[1] "%ld daha az satır"
 
 msgid " (Interrupted)"
 msgstr " (Yarıda kesildi)"
+
+msgid "Unknown"
+msgstr "Bilinmiyor"
 
 #, c-format
 msgid "%s line %<PRId64>"
@@ -4166,12 +4183,6 @@ msgstr ""
 msgid "Type  :qa  and press <Enter> to exit Nvim"
 msgstr "Nvim'den çıkmak için :qa yazıp <Enter>'a basın"
 
-msgid ""
-"E883: Search pattern and expression register may not contain two or more "
-"lines"
-msgstr ""
-"E883: Arama dizgisi ve ifade yazmacı iki veya daha fazla satır içeremez"
-
 #, c-format
 msgid "%<PRId64> line %sed %d time"
 msgid_plural "%<PRId64> line %sed %d times"
@@ -4185,50 +4196,10 @@ msgstr[0] "%<PRId64> satır, %s %d kez"
 msgstr[1] "%<PRId64> satır, %s %d kez"
 
 #, c-format
-msgid "%<PRId64> lines to indent... "
-msgstr "girintilenecek %<PRId64> satır kaldı... "
-
-#, c-format
-msgid "%<PRId64> line indented "
-msgid_plural "%<PRId64> lines indented "
-msgstr[0] "%<PRId64> satır girintilendi"
-msgstr[1] "%<PRId64> satır girintilendi"
-
-msgid "E748: No previously used register"
-msgstr "E748: Daha önce kullanılan bir yazmaç yok"
-
-#, c-format
 msgid "%<PRId64> line changed"
 msgid_plural "%<PRId64> lines changed"
 msgstr[0] "%<PRId64> satır değiştirildi"
 msgstr[1] "%<PRId64> satır değiştirildi"
-
-#, c-format
-msgid " into \"%c"
-msgstr " \"%c"
-
-#, c-format
-msgid "block of %<PRId64> line yanked%s"
-msgid_plural "block of %<PRId64> lines yanked%s"
-msgstr[0] "%<PRId64> satırlık blok şuraya kopyalandı:%s"
-msgstr[1] "%<PRId64> satırlık blok şuraya kopyalandı:%s"
-
-#, c-format
-msgid "%<PRId64> line yanked%s"
-msgid_plural "%<PRId64> lines yanked%s"
-msgstr[0] "%<PRId64> satır şuraya kopyalandı:%s"
-msgstr[1] "%<PRId64> satır şuraya kopyalandı:%s"
-
-#, c-format
-msgid "E353: Nothing in register %s"
-msgstr "E353: %s yazmacında bir şey yok"
-
-msgid ""
-"\n"
-"Type Name Content"
-msgstr ""
-"\n"
-"Tür  Ad   İçerik"
 
 #, c-format
 msgid "%<PRId64> lines changed"
@@ -4288,14 +4259,17 @@ msgstr "E520: Bir kip satırında izin verilmiyor"
 msgid "E992: Not allowed in a modeline when 'modelineexpr' is off"
 msgstr "E992: 'modelineexpr' kapalıyken  bir kip satırında izin verilmiyor"
 
-msgid "E846: Key code not set"
-msgstr "E846: Anahtar kodu ayarlanmamış"
-
 msgid "E521: Number required after ="
 msgstr "E521: = sonrası sayı gerekiyor"
 
 msgid "E590: A preview window already exists"
 msgstr "E590: Bir önizleme penceresi hâlihazırda mevcut"
+
+msgid "E1542: Cannot have a negative or zero number of quickfix/location lists"
+msgstr ""
+
+msgid "E1543: Cannot have more than a hundred quickfix/location lists"
+msgstr ""
 
 msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
 msgstr "W17: Arapça, UTF-8 gerektirir; ':set encoding=utf-8' yapın"
@@ -4307,6 +4281,12 @@ msgstr "E593: En azından %d satır gerekli"
 #, c-format
 msgid "E594: Need at least %d columns"
 msgstr "E594: En azından %d sütun gerekli"
+
+#, fuzzy
+msgid "Cannot unset global option value"
+msgstr ""
+"\n"
+"--- Global seçenek değerleri ---"
 
 #, c-format
 msgid "Invalid value for option '%s': expected %s, got %s %s"
@@ -4336,11 +4316,15 @@ msgstr ""
 msgid "E356: get_varp ERROR"
 msgstr "E356: get_varp HATASI"
 
-msgid "E540: Unclosed expression sequence"
-msgstr "E540: Kapatılmamış ifade sıralaması"
+#, c-format
+msgid "E535: Illegal character after <%c>"
+msgstr "E535: <%c> sonrası izin verilmeyen karakter"
 
 msgid "E536: Comma required"
 msgstr "E536: Virgül gerekiyor"
+
+msgid "E540: Unclosed expression sequence"
+msgstr "E540: Kapatılmamış ifade sıralaması"
 
 msgid "E542: Unbalanced groups"
 msgstr "E542: Dengelenmemiş gruplar"
@@ -4351,25 +4335,30 @@ msgstr "E589: 'backupext' ve 'patchmode' birbirine eşit"
 msgid "E595: 'showbreak' contains unprintable or wide character"
 msgstr "E595: 'showbreak' yazdırılamaz veya geniş karakter içeriyor"
 
-msgid "E1336: Internal error: shortmess too long"
-msgstr "E1336: İçsel hata: Kısalık pek uzun"
+#, c-format
+msgid "E1511: Wrong number of characters for field \"%s\""
+msgstr ""
+
+#, c-format
+msgid "E1512: Wrong character width for field \"%s\""
+msgstr ""
 
 #, c-format
 msgid "E539: Illegal character <%s>"
 msgstr "E539: İzin verilmeyen karakter <%s>"
-
-#, c-format
-msgid "For option %s"
-msgstr "%s seçeneği için"
-
-msgid "E5080: Digit expected"
-msgstr "E5080: Basamak bekleniyordu"
 
 msgid "E524: Missing colon"
 msgstr "E524: İki nokta eksik"
 
 msgid "E525: Zero length string"
 msgstr "E525: Sıfır uzunlukta dizi"
+
+#, c-format
+msgid "E537: 'commentstring' must be empty or contain %s"
+msgstr "E537: 'commentstring' boş olmalı veya %s içermeli"
+
+msgid "E5080: Digit expected"
+msgstr "E5080: Basamak bekleniyordu"
 
 #, c-format
 msgid "E526: Missing number after <%s>"
@@ -4381,14 +4370,6 @@ msgstr "E527: Virgül eksik"
 msgid "E528: Must specify a ' value"
 msgstr "E528: Bir ' değeri belirtmeli"
 
-#, c-format
-msgid "E535: Illegal character after <%c>"
-msgstr "E535: <%c> sonrası izin verilmeyen karakter"
-
-#, c-format
-msgid "E537: 'commentstring' must be empty or contain %s"
-msgstr "E537: 'commentstring' boş olmalı veya %s içermeli"
-
 msgid "E834: Conflicts with value of 'listchars'"
 msgstr "E834: 'listchars' değeriyle çakışmalar var"
 
@@ -4399,11 +4380,19 @@ msgstr "E835: 'fillchars' değeriyle çakışmalar var"
 msgid "dlerror = \"%s\""
 msgstr "dlerror = \"%s\""
 
-#, c-format
-msgid "E5420: Failed to write to file: %s"
-msgstr "E5420: Dosyaya yazılamadı: %s"
+msgid "E1506: Buffer too small to copy xattr value or key"
+msgstr ""
 
-msgid "Vim: Error reading input, exiting...\n"
+msgid ""
+"E1508: Size of the extended attribute value is larger than the maximum size "
+"allowed"
+msgstr ""
+
+msgid "E1509: Error occurred when reading or writing extended attribute"
+msgstr ""
+
+#, fuzzy
+msgid "Nvim: Error reading input, exiting...\n"
 msgstr "Vim: Girdi okunurken hata, çıkılıyor...\n"
 
 #, c-format
@@ -4431,10 +4420,6 @@ msgstr "E5677: Girdi, kabuk komutuna yazılırken hata: %s"
 #, no-c-format
 msgid "%a %b %d %H:%M:%S %Y"
 msgstr "%a %b %d %H:%M:%S %Y"
-
-#, c-format
-msgid "E447: Can't find file \"%s\" in path"
-msgstr "E447: \"%s\" dosyası yol içinde bulunamadı"
 
 msgid "E750: First use \":profile start {fname}\""
 msgstr "E750: İlk kullanım \":profile start {dosyaadı}\""
@@ -4509,9 +4494,6 @@ msgstr "\"%s\" dosyası açılamıyor"
 
 msgid "cannot have both a list and a \"what\" argument"
 msgstr "ya birinci ya da son argüman belirtilmelidir"
-
-msgid "E681: Buffer is not loaded"
-msgstr "E681: Arabellek yüklenemedi"
 
 msgid "E777: String or List expected"
 msgstr "E777: Dizi veya liste bekleniyordu"
@@ -4592,6 +4574,9 @@ msgstr "E1281: '\\%%#=%c' atomu dizginin başında olmalı"
 msgid "E1290: substitute nesting too deep"
 msgstr "E1290: Değiştirme iç içe geçmesi pek derin"
 
+msgid "E1541: Value too large, max Unicode codepoint is U+10FFFF"
+msgstr ""
+
 #, c-format
 msgid "E554: Syntax error in %s{...}"
 msgstr "E554: %s{...} içinde sözdizim hatası"
@@ -4599,6 +4584,118 @@ msgstr "E554: %s{...} içinde sözdizim hatası"
 #, c-format
 msgid "E888: (NFA regexp) cannot repeat %s"
 msgstr "E888: (BSO düzenli ifadesi) %s yinelenemiyor"
+
+#, fuzzy
+msgid "E65: Illegal back reference"
+msgstr "E549: İzin verilmeyen yüzde"
+
+#, c-format
+msgid "E64: %s%c follows nothing"
+msgstr ""
+
+#, fuzzy
+msgid "E68: Invalid character after \\z"
+msgstr "E59: %s@ sonrası geçersiz karakter"
+
+#, fuzzy, c-format
+msgid "E678: Invalid character after %s%%[dxouU]"
+msgstr "E59: %s@ sonrası geçersiz karakter"
+
+#, fuzzy, c-format
+msgid "E71: Invalid character after %s%%"
+msgstr "E59: %s@ sonrası geçersiz karakter"
+
+#, c-format
+msgid "E60: Too many complex %s{...}s"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "E61: Nested %s*"
+msgstr "E451: } bekleniyordu: %s"
+
+#, c-format
+msgid "E62: Nested %s%c"
+msgstr ""
+
+#, fuzzy
+msgid "E50: Too many \\z("
+msgstr "E76: Çok fazla ["
+
+#, fuzzy, c-format
+msgid "E51: Too many %s("
+msgstr "E76: Çok fazla ["
+
+#, fuzzy
+msgid "E52: Unmatched \\z("
+msgstr "E54: Eşleşmemiş %s("
+
+#, fuzzy
+msgid "E339: Pattern too long"
+msgstr "E75: Ad çok uzun"
+
+#, c-format
+msgid "External submatches:\n"
+msgstr ""
+
+#, fuzzy
+msgid "E865: (NFA) Regexp end encountered prematurely"
+msgstr "E888: (BSO düzenli ifadesi) %s yinelenemiyor"
+
+#, fuzzy, c-format
+msgid "E866: (NFA regexp) Misplaced %c"
+msgstr "E888: (BSO düzenli ifadesi) %s yinelenemiyor"
+
+#, c-format
+msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
+msgstr ""
+
+#, fuzzy
+msgid "E951: \\% value too large"
+msgstr "E75: Ad çok uzun"
+
+#, c-format
+msgid "E867: (NFA) Unknown operator '\\z%c'"
+msgstr ""
+
+#, c-format
+msgid "E867: (NFA) Unknown operator '\\%%%c'"
+msgstr ""
+
+#, c-format
+msgid "E869: (NFA) Unknown operator '\\@%c'"
+msgstr ""
+
+#, fuzzy
+msgid "E870: (NFA regexp) Error reading repetition limits"
+msgstr "E888: (BSO düzenli ifadesi) %s yinelenemiyor"
+
+msgid "E871: (NFA regexp) Can't have a multi follow a multi"
+msgstr ""
+
+#, fuzzy
+msgid "E872: (NFA regexp) Too many '('"
+msgstr "E888: (BSO düzenli ifadesi) %s yinelenemiyor"
+
+#, fuzzy
+msgid "E879: (NFA regexp) Too many \\z("
+msgstr "E888: (BSO düzenli ifadesi) %s yinelenemiyor"
+
+msgid "E873: (NFA regexp) proper termination error"
+msgstr ""
+
+msgid "Could not open temporary log file for writing, displaying on stderr... "
+msgstr ""
+
+msgid "E874: (NFA) Could not pop the stack!"
+msgstr ""
+
+msgid ""
+"E875: (NFA regexp) (While converting from postfix to NFA),too many states "
+"left on stack"
+msgstr ""
+
+msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
+msgstr ""
 
 msgid ""
 "E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
@@ -4609,6 +4706,46 @@ msgstr ""
 
 msgid "Switching to backtracking RE engine for pattern: "
 msgstr "Şu dizgi için düzenli ifade iz sürme motoruna geçiliyor: "
+
+msgid ""
+"E883: Search pattern and expression register may not contain two or more "
+"lines"
+msgstr ""
+"E883: Arama dizgisi ve ifade yazmacı iki veya daha fazla satır içeremez"
+
+msgid "E748: No previously used register"
+msgstr "E748: Daha önce kullanılan bir yazmaç yok"
+
+#, c-format
+msgid " into \"%c"
+msgstr " \"%c"
+
+#, c-format
+msgid "block of %<PRId64> line yanked%s"
+msgid_plural "block of %<PRId64> lines yanked%s"
+msgstr[0] "%<PRId64> satırlık blok şuraya kopyalandı:%s"
+msgstr[1] "%<PRId64> satırlık blok şuraya kopyalandı:%s"
+
+#, c-format
+msgid "%<PRId64> line yanked%s"
+msgid_plural "%<PRId64> lines yanked%s"
+msgstr[0] "%<PRId64> satır şuraya kopyalandı:%s"
+msgstr[1] "%<PRId64> satır şuraya kopyalandı:%s"
+
+#, c-format
+msgid "E353: Nothing in register %s"
+msgstr "E353: %s yazmacında bir şey yok"
+
+msgid ""
+"\n"
+"Type Name Content"
+msgstr ""
+"\n"
+"Tür  Ad   İçerik"
+
+#, fuzzy, c-format
+msgid "Searching for \"%s\" under \"%s\" in \"%s\""
+msgstr "\"%s\", \"%s\" içinde aranıyor"
 
 #, c-format
 msgid "Searching for \"%s\" in \"%s\""
@@ -4751,28 +4888,24 @@ msgstr "E388: Tanım bulunamadı"
 msgid "E389: Couldn't find pattern"
 msgstr "E389: Dizgi bulunamadı"
 
-msgid "too few bytes read"
-msgstr "pek az bayt okundu"
-
 #, c-format
 msgid "System error while skipping in ShaDa file: %s"
 msgstr "Paylaşılan veri dosyası içinde atlanırken sistem hatası: %s"
 
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Error while reading ShaDa file: last entry specified that it occupies "
-"%<PRIu64> bytes, but file ended earlier"
+"Reading ShaDa file: last entry specified that it occupies %<PRIu64> bytes, "
+"but file ended earlier"
 msgstr ""
 "Paylaşılan veri dosyası okunurken hata: Son girdi, %<PRIu64> bayt tuttuğunu "
 "belirtti; ancak dosya daha erken sonlandı"
 
+msgid "too few bytes read"
+msgstr "pek az bayt okundu"
+
 #, c-format
 msgid "System error while closing ShaDa file: %s"
 msgstr "Paylaşılan veri dosyası kapatılırken sistem hatası: %s"
-
-#, c-format
-msgid "System error while writing ShaDa file: %s"
-msgstr "Paylaşılan veri dosyası yazılırken sistem hatası: %s"
 
 #, c-format
 msgid "Reading ShaDa file \"%s\"%s%s%s%s"
@@ -4794,23 +4927,17 @@ msgstr " BAŞARISIZ"
 msgid "System error while opening ShaDa file %s for reading: %s"
 msgstr "%s paylaşılan veri dosyası açılırken sistem hatası: %s"
 
-msgid "additional elements of ShaDa "
-msgstr "paylaşılan verinin ek ögeleri "
-
-msgid "additional data of ShaDa "
-msgstr "paylaşılan verinin ek verisi"
-
 #, c-format
 msgid "Failed to write variable %s"
 msgstr "%s değişkeni yazılamadı"
 
 #, c-format
 msgid ""
-"Failed to parse ShaDa file due to a msgpack parser error at position "
+"Failed to parse ShaDa file: extra bytes in msgpack string at position "
 "%<PRIu64>"
 msgstr ""
-"%<PRIu64> konumundaki bir msgpack ayrıştırıcı hatası nedeniyle paylaşılan "
-"veri dosyası ayrıştırılamadı"
+"Paylaşılan veri dosyası ayrıştırılamadı: %<PRIu64> konumundaki msgpack "
+"dizisinde ek baytlar"
 
 #, c-format
 msgid ""
@@ -4821,11 +4948,11 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Failed to parse ShaDa file: extra bytes in msgpack string at position "
+"Failed to parse ShaDa file due to a msgpack parser error at position "
 "%<PRIu64>"
 msgstr ""
-"Paylaşılan veri dosyası ayrıştırılamadı: %<PRIu64> konumundaki msgpack "
-"dizisinde ek baytlar"
+"%<PRIu64> konumundaki bir msgpack ayrıştırıcı hatası nedeniyle paylaşılan "
+"veri dosyası ayrıştırılamadı"
 
 #, c-format
 msgid ""
@@ -4889,6 +5016,14 @@ msgid "System error while reading ShaDa file: %s"
 msgstr "Paylaşılan veri dosyası okunurken sistem hatası: %s"
 
 #, c-format
+msgid ""
+"Error while reading ShaDa file: last entry specified that it occupies "
+"%<PRIu64> bytes, but file ended earlier"
+msgstr ""
+"Paylaşılan veri dosyası okunurken hata: Son girdi, %<PRIu64> bayt tuttuğunu "
+"belirtti; ancak dosya daha erken sonlandı"
+
+#, c-format
 msgid "System error while reading integer from ShaDa file: %s"
 msgstr "Paylaşılan veri dosyasından tamsayı okunurken sistem hatası: %s"
 
@@ -4924,10 +5059,10 @@ msgstr ""
 "Paylaşılan veri dosyası okunurken hata: %<PRIu64> konumunda orada olmaması "
 "gereken bir öge var: Eksik ögeler yalnızca iç kullanım içindir"
 
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Error while reading ShaDa file: buffer list at position %<PRIu64> contains "
-"entry that is not a dictionary"
+"entry that %s"
 msgstr ""
 "Paylaşılan veri dosyası okunurken hata: %<PRIu64> konumundaki arabellek "
 "listesi bir sözlük olmayan bir girdi içeriyor"
@@ -4956,9 +5091,6 @@ msgstr ""
 "Paylaşılan veri dosyası okunurken hata: %<PRIu64> konumundaki arabellek "
 "listesi bir dosya adına iye olmayan bir girdi içeriyor"
 
-msgid "[Deleted]"
-msgstr "[Silindi]"
-
 msgid ""
 "\n"
 "--- Signs ---"
@@ -4971,15 +5103,16 @@ msgid "Signs for %s:"
 msgstr "%s için işaretler:"
 
 #, c-format
+msgid "  name=%s"
+msgstr ""
+
+#, c-format
 msgid "  group=%s"
 msgstr "  grup=%s"
 
-#, c-format
-msgid "    line=%ld  id=%d%s  name=%s  priority=%d"
-msgstr "    satır=%ld  id=%d%s  ad=%s  öncelik=%d"
-
-msgid "E612: Too many signs defined"
-msgstr "E612: Çok fazla işaret tanımlanmış"
+#, fuzzy
+msgid "    line=%"
+msgstr " satır "
 
 #, c-format
 msgid "E239: Invalid sign text: %s"
@@ -4989,19 +5122,22 @@ msgstr "E239: Geçersiz işaret metni: %s"
 msgid "E155: Unknown sign: %s"
 msgstr "E155: Bilinmeyen işaret: %s"
 
+msgid " (not supported)"
+msgstr " (desteklenmiyor)"
+
 #, c-format
 msgid "E885: Not possible to change sign %s"
 msgstr "E885: %s işaretini değiştirmek olanaklı değil"
 
-msgid "E159: Missing sign number"
-msgstr "E159: İşaret numarası eksik"
-
-#, c-format
-msgid "E157: Invalid sign ID: %<PRId64>"
+#, fuzzy, c-format
+msgid "E157: Invalid sign ID: %d"
 msgstr "E157: Geçersiz işaret kimliği: %<PRId64>"
 
 msgid "E934: Cannot jump to a buffer that does not have a name"
 msgstr "E934: Adı olmayan bir arabelleğe atlamak olanaklı değil"
+
+msgid "E159: Missing sign number"
+msgstr "E159: İşaret numarası eksik"
 
 #, c-format
 msgid "E160: Unknown sign command: %s"
@@ -5009,9 +5145,6 @@ msgstr "E160: Bilinmeyen işaret komutu: %s"
 
 msgid "E156: Missing sign name"
 msgstr "E156: İşaret adı eksik"
-
-msgid " (not supported)"
-msgstr " (desteklenmiyor)"
 
 msgid "E759: Format error in spell file"
 msgstr "E759: Takas dosyasında biçim hatası"
@@ -5231,8 +5364,8 @@ msgstr "Sözlük dosyası %s okunuyor..."
 msgid "E760: No word count in %s"
 msgstr "E760: %s içinde sözcük sayımı yok"
 
-#, c-format
-msgid "line %6d, word %6ld - %s"
+#, fuzzy, c-format
+msgid "line %6d, word %6d - %s"
 msgstr "satır %6d, sözcük %6ld - %s"
 
 #, c-format
@@ -5255,45 +5388,45 @@ msgstr "%d sözcük %s içinde ASCII olmayan karakterler içerdiğinden yok say�
 msgid "Reading word file %s..."
 msgstr "Sözcük dosyası %s okunuyor..."
 
-#, c-format
-msgid "Conversion failure for word in %s line %ld: %s"
-msgstr "%s içinde %ld. satırda sözcük için dönüştürme hatası: %s"
+#, fuzzy
+msgid "Conversion failure for word in %s line %"
+msgstr "%s içinde %d. satırda sözcük için dönüştürme hatası: %s"
 
-#, c-format
-msgid "Duplicate /encoding= line ignored in %s line %ld: %s"
+#, fuzzy
+msgid "Duplicate /encoding= line ignored in %s line %"
 msgstr "%s içinde %ld. satırda yinelenen /encoding= satırı yok sayıldı: %s"
 
-#, c-format
-msgid "/encoding= line after word ignored in %s line %ld: %s"
+#, fuzzy
+msgid "/encoding= line after word ignored in %s line %"
 msgstr ""
 "%s içinde %ld. satırda sözcükten sonra gelen /encoding= yok sayıldı: %s"
 
-#, c-format
-msgid "Duplicate /regions= line ignored in %s line %ld: %s"
+#, fuzzy
+msgid "Duplicate /regions= line ignored in %s line %"
 msgstr "%s içinde %ld. satırda yinelenen /regions= satırı yok sayıldı: %s"
 
-#, c-format
-msgid "Too many regions in %s line %ld: %s"
+#, fuzzy
+msgid "Too many regions in %s line %"
 msgstr "%s içinde %ld. satırda pek fazla bölge: %s"
 
-#, c-format
-msgid "/ line ignored in %s line %ld: %s"
+#, fuzzy
+msgid "/ line ignored in %s line %"
 msgstr "%s içinde %ld. satırda / satırı yok sayılıyor: %s"
 
-#, c-format
-msgid "Invalid region nr in %s line %ld: %s"
+#, fuzzy
+msgid "Invalid region nr in %s line %"
 msgstr "%s içinde %ld. satırda geçersiz bölge numarası: %s"
 
-#, c-format
-msgid "Unrecognized flags in %s line %ld: %s"
+#, fuzzy
+msgid "Unrecognized flags in %s line %"
 msgstr "%s içinde %ld. satırda tanınmayan bayraklar: %s"
 
 #, c-format
 msgid "Ignored %d words with non-ASCII characters"
 msgstr "ASCII olmayan karakter içeren %d sözcük yok sayıldı"
 
-#, c-format
-msgid "Compressed %s of %ld nodes; %ld (%ld%%) remaining"
+#, fuzzy, c-format
+msgid "Compressed %s: %d of %d nodes; %d (%ld%%) remaining"
 msgstr "%s/%ld uç sıkıştırıldı; %ld (%%%ld) kalan"
 
 msgid "Reading back spell file..."
@@ -5339,8 +5472,8 @@ msgstr "Yazım dosyası %s yazılıyor..."
 msgid "Done!"
 msgstr "Yapıldı!"
 
-#, c-format
-msgid "E765: 'spellfile' does not have %<PRId64> entries"
+#, fuzzy, c-format
+msgid "E765: 'spellfile' does not have %d entries"
 msgstr "E765: 'spellfile' içinde %<PRId64> adet girdi yok"
 
 #, c-format
@@ -5372,11 +5505,86 @@ msgstr "\"%.*s\" şuna değiştirilecek:"
 msgid " < \"%.*s\""
 msgstr " < \"%.*s\""
 
+#, fuzzy, c-format
+msgid "%<PRId64>,"
+msgstr "%<PRId64> satır, "
+
 msgid "[Help]"
 msgstr "[Yardım]"
 
 msgid "[Preview]"
 msgstr "[Önizleme]"
+
+#, c-format
+msgid "E1500: Cannot mix positional and non-positional arguments: %s"
+msgstr ""
+
+#, c-format
+msgid "E1501: format argument %d unused in $-style format: %s"
+msgstr ""
+
+#, c-format
+msgid ""
+"E1502: Positional argument %d used as field width reused as different type: "
+"%s/%s"
+msgstr ""
+
+#, c-format
+msgid "E1503: Positional argument %d out of bounds: %s"
+msgstr ""
+
+#, c-format
+msgid "E1504: Positional argument %d type used inconsistently: %s/%s"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "E1505: Invalid format specifier: %s"
+msgstr "E180: Geçersiz tam değer: %s"
+
+#, fuzzy
+msgid "unknown"
+msgstr "Bilinmiyor"
+
+msgid "int"
+msgstr ""
+
+#, fuzzy
+msgid "long int"
+msgstr "[uzun satırlar bölünmüş]"
+
+#, fuzzy
+msgid "long long int"
+msgstr "[uzun satırlar bölünmüş]"
+
+msgid "signed size_t"
+msgstr ""
+
+msgid "unsigned int"
+msgstr ""
+
+msgid "unsigned long int"
+msgstr ""
+
+msgid "unsigned long long int"
+msgstr ""
+
+msgid "size_t"
+msgstr ""
+
+msgid "pointer"
+msgstr ""
+
+msgid "percent"
+msgstr ""
+
+msgid "char"
+msgstr ""
+
+msgid "string"
+msgstr ""
+
+msgid "float"
+msgstr ""
 
 msgid "E766: Insufficient arguments for printf()"
 msgstr "E766: printf() için yetersiz argüman"
@@ -5563,6 +5771,8 @@ msgstr "E986: Etiket yığını tagfunc dahilinde değiştirilemiyor"
 msgid "E987: Invalid return value from tagfunc"
 msgstr "E987: Etiket işlevinden geçersiz dönüş değeri"
 
+msgid "E1299: Window unexpectedly closed while searching for tags"
+msgstr ""
 
 msgid "E425: Cannot go before first matching tag"
 msgstr "E425: İlk eşleşen etiketten önceye gidilemiyor"
@@ -5640,8 +5850,15 @@ msgstr ""
 "E856: \"assert_fails()\" ikinci argümanı bir dizi veya bir veya iki dizili "
 "bir liste olmalı"
 
+#, fuzzy
+msgid "E1115: \"assert_fails()\" fourth argument must be a number"
+msgstr "E1116: \"assert_fails()\" beşinci argümanı bir dizi olmalı"
+
 msgid "E1116: \"assert_fails()\" fifth argument must be a string"
 msgstr "E1116: \"assert_fails()\" beşinci argümanı bir dizi olmalı"
+
+msgid "E1142: Calling test_garbagecollect_now() while v:testing is not set"
+msgstr ""
 
 msgid "Beep!"
 msgstr "Bip!"
@@ -5852,39 +6069,32 @@ msgstr "$VIMRUNTIME öntanımlı konumu: \""
 msgid "Nvim is open source and freely distributable"
 msgstr "Nvim açık kaynaklıdır ve özgürce dağıtılabilir"
 
-msgid "type  :help nvim<Enter>       if you are new! "
+#, fuzzy
+msgid "type  :help nvim<Enter>     if you are new! "
 msgstr "eğer yeniyseniz         :help nvim<Enter>       "
 
-msgid "type  :checkhealth<Enter>     to optimize Nvim"
+#, fuzzy
+msgid "type  :checkhealth<Enter>   to optimize Nvim"
 msgstr "Nvim'i eniyilemek için  :help checkhealth<Enter>"
 
-msgid "type  :q<Enter>               to exit         "
+#, fuzzy
+msgid "type  :q<Enter>             to exit         "
 msgstr "çıkmak için             :q<Enter>               "
 
-msgid "type  :help<Enter>            for help        "
+#, fuzzy
+msgid "type  :help<Enter>          for help        "
 msgstr "yardım için             :help<Enter>            "
 
-#, c-format
-msgid "type  :help news<Enter> to see changes in v%s.%s"
+#, fuzzy, c-format
+msgid "type  :help news<Enter>     for v%s.%s notes "
 msgstr "v%s.%s değişiklikleri   :help news<Enter>"
 
 msgid "Help poor children in Uganda!"
 msgstr "Uganda'daki yoksul çocuklara yardım edin!"
 
-msgid "type  :help iccf<Enter>       for information "
-msgstr "ek bilgi için           :help iccf<Enter>      "
-
-msgid "Sponsor Vim development!"
-msgstr "Vim'in geliştirilmesine sponsor olun!"
-
-msgid "Become a registered Vim user!"
-msgstr "Kayıtlı bir Vim kullanıcısı olun!"
-
-msgid "type  :help sponsor<Enter>    for information "
+#, fuzzy
+msgid "type  :help Kuwasha<Enter>  for information "
 msgstr "bilgi için              :help sponsor<Enter>   "
-
-msgid "type  :help register<Enter>   for information "
-msgstr "bilgi için              :help register<Enter>  "
 
 #, c-format
 msgid "E15: Invalid control character present in input: %.*s"
@@ -6052,6 +6262,9 @@ msgstr "E15: Lambda için kapatma kıvrımlı ayracı eksik: %.*s"
 msgid "E109: Missing ':' after '?': %.*s"
 msgstr "E109: '?' sonrası ':' eksik: %.*s"
 
+msgid "E444: Cannot close last window"
+msgstr "E444: Son pencere kapatılamıyor"
+
 msgid "E1159: Cannot split a window when closing the buffer"
 msgstr "E1159: Arabellek kapatılırken bir pencere bölünemez"
 
@@ -6061,17 +6274,11 @@ msgstr "Zaten tek pencere"
 msgid "E441: There is no preview window"
 msgstr "E441: Önizleme penceresi yok"
 
-msgid "E242: Can't split a window while closing another"
-msgstr "E242: Bir pencere kapatılırken başka bir pencere bölünemez"
-
 msgid "E442: Can't split topleft and botright at the same time"
 msgstr "E442: Üst sol ve alt sağ pencereler aynı anda bölünemez"
 
 msgid "E443: Cannot rotate when another window is split"
 msgstr "E443: Başka bir pencere bölünmüşken döndürme yapılamaz"
-
-msgid "E444: Cannot close last window"
-msgstr "E444: Son pencere kapatılamıyor"
 
 msgid "E814: Cannot close window, only autocmd window would remain"
 msgstr "E814: Pencere kapatılamıyor, yalnızca otokomut penceresi açık kalır"
@@ -6079,5 +6286,1347 @@ msgstr "E814: Pencere kapatılamıyor, yalnızca otokomut penceresi açık kalı
 msgid "E445: Other window contains changes"
 msgstr "E445: Diğer pencerede değişiklikler var"
 
-msgid "E446: No file name under cursor"
-msgstr "E446: İmleç altında dosya adı yok"
+msgid "important"
+msgstr ""
+
+msgid "list of flags to specify Vi compatibility"
+msgstr ""
+
+#, fuzzy
+msgid "list of directories used for runtime files and plugins"
+msgstr "geri al dosyaları için dizinler listesi"
+
+#, fuzzy
+msgid "list of directories used for plugin packages"
+msgstr "geri al dosyaları için dizinler listesi"
+
+msgid "name of the main help file"
+msgstr ""
+
+msgid "moving around, searching and patterns"
+msgstr ""
+
+msgid "list of flags specifying which commands wrap to another line"
+msgstr ""
+
+msgid ""
+"many jump commands move the cursor to the first non-blank\n"
+"character of a line"
+msgstr ""
+
+msgid "nroff macro names that separate paragraphs"
+msgstr ""
+
+msgid "nroff macro names that separate sections"
+msgstr ""
+
+#, fuzzy
+msgid "list of directory names used for file searching"
+msgstr "geri al dosyaları için dizinler listesi"
+
+msgid "function called for :find"
+msgstr ""
+
+msgid ":cd without argument goes to the home directory"
+msgstr ""
+
+#, fuzzy
+msgid "list of directory names used for :cd"
+msgstr "geri al dosyaları için dizinler listesi"
+
+msgid "change to directory of file in buffer"
+msgstr ""
+
+msgid "search commands wrap around the end of the buffer"
+msgstr ""
+
+msgid "show match for partly typed search command"
+msgstr ""
+
+msgid "select the default regexp engine used"
+msgstr ""
+
+msgid "ignore case when using a search pattern"
+msgstr ""
+
+msgid "override 'ignorecase' when pattern has upper case characters"
+msgstr ""
+
+msgid "maximum number for the search count feature"
+msgstr ""
+
+msgid "what method to use for changing case of letters"
+msgstr ""
+
+msgid "maximum amount of memory in Kbyte used for pattern matching"
+msgstr ""
+
+#, fuzzy
+msgid "pattern for a macro definition line"
+msgstr "bir include dosyası satırı için dizgi"
+
+msgid "pattern for an include-file line"
+msgstr "bir include dosyası satırı için dizgi"
+
+msgid "expression used to transform an include line to a file name"
+msgstr ""
+
+msgid "controls the behavior of the jumplist"
+msgstr ""
+
+msgid "tags"
+msgstr ""
+
+msgid "use binary searching in tags files"
+msgstr "etiket dosyalarında ikili arama kullan"
+
+msgid "number of significant characters in a tag name or zero"
+msgstr ""
+
+msgid "list of file names to search for tags"
+msgstr ""
+
+msgid ""
+"how to handle case when searching in tags files:\n"
+"\"followic\" to follow 'ignorecase', \"ignore\" or \"match\""
+msgstr ""
+
+msgid "file names in a tags file are relative to the tags file"
+msgstr ""
+
+msgid "a :tag command will use the tagstack"
+msgstr ""
+
+msgid "when completing tags in Insert mode show more info"
+msgstr ""
+
+msgid "a function to be used to perform tag searches"
+msgstr ""
+
+msgid "displaying text"
+msgstr ""
+
+msgid "number of lines to scroll for CTRL-U and CTRL-D"
+msgstr ""
+
+msgid "scroll by screen line"
+msgstr ""
+
+msgid "number of screen lines to show around the cursor"
+msgstr ""
+
+msgid "long lines wrap"
+msgstr "uzun satırları kaydırılır"
+
+msgid "wrap long lines at a character in 'breakat'"
+msgstr ""
+
+msgid "preserve indentation in wrapped text"
+msgstr ""
+
+msgid "adjust breakindent behaviour"
+msgstr ""
+
+msgid "which characters might cause a line break"
+msgstr ""
+
+msgid "string to put before wrapped screen lines"
+msgstr ""
+
+msgid "minimal number of columns to scroll horizontally"
+msgstr ""
+
+msgid "minimal number of columns to keep left and right of the cursor"
+msgstr ""
+
+msgid ""
+"include \"lastline\" to show the last line even if it doesn't fit\n"
+"include \"uhex\" to show unprintable characters as a hex number"
+msgstr ""
+
+msgid ""
+"characters to use for the status line, folds, diffs,\n"
+"buffer text, filler lines and truncation in the completion menu"
+msgstr ""
+
+msgid "number of lines used for the command-line"
+msgstr ""
+
+msgid "width of the display"
+msgstr ""
+
+msgid "number of lines in the display"
+msgstr ""
+
+msgid "number of lines to scroll for CTRL-F and CTRL-B"
+msgstr ""
+
+msgid "don't redraw while executing macros"
+msgstr ""
+
+msgid "timeout for 'hlsearch' and :match highlighting in msec"
+msgstr ""
+
+msgid "delay in msec for each char written to the display"
+msgstr ""
+
+msgid "change the way redrawing works (debug)"
+msgstr ""
+
+msgid "show <Tab> as ^I and end-of-line as $"
+msgstr ""
+
+msgid "list of strings used for list mode"
+msgstr ""
+
+msgid "show the line number for each line"
+msgstr "her bir satır için satır numarasını göster"
+
+#, fuzzy
+msgid "show the relative line number for each line"
+msgstr "her bir satır için satır numarasını göster"
+
+msgid "number of columns to use for the line number"
+msgstr ""
+
+msgid "maximum number of quickfix lists that can be stored in history"
+msgstr ""
+
+msgid "maximum number of location lists that can be stored in history"
+msgstr ""
+
+msgid "controls whether concealable text is hidden"
+msgstr ""
+
+msgid "modes in which text in the cursor line can be concealed"
+msgstr ""
+
+#, fuzzy
+msgid "syntax, highlighting and spelling"
+msgstr "kullanılan sözdizim vurgulamanın adı"
+
+msgid "\"dark\" or \"light\"; the background color brightness"
+msgstr ""
+
+msgid "type of file; triggers the FileType event when set"
+msgstr ""
+
+msgid "name of syntax highlighting used"
+msgstr "kullanılan sözdizim vurgulamanın adı"
+
+msgid "maximum column to look for syntax items"
+msgstr ""
+
+msgid "highlight all matches for the last used search pattern"
+msgstr ""
+
+msgid "use GUI colors for the terminal"
+msgstr ""
+
+msgid "highlight the screen column of the cursor"
+msgstr ""
+
+msgid "highlight the screen line of the cursor"
+msgstr ""
+
+msgid "specifies which area 'cursorline' highlights"
+msgstr ""
+
+msgid "columns to highlight"
+msgstr ""
+
+msgid "highlight spelling mistakes"
+msgstr ""
+
+msgid "list of accepted languages"
+msgstr ""
+
+msgid "file that \"zg\" adds good words to"
+msgstr ""
+
+msgid "pattern to locate the end of a sentence"
+msgstr ""
+
+msgid "flags to change how spell checking works"
+msgstr ""
+
+msgid "methods used to suggest corrections"
+msgstr ""
+
+msgid "amount of memory used by :mkspell before compressing"
+msgstr ""
+
+msgid "override highlighting-groups window-locally"
+msgstr ""
+
+msgid "multiple windows"
+msgstr ""
+
+msgid "0, 1, 2 or 3; when to use a status line for the last window"
+msgstr ""
+
+msgid "custom format for the status column"
+msgstr ""
+
+msgid "alternate format to be used for a status line"
+msgstr ""
+
+msgid "make all windows the same size when adding/removing windows"
+msgstr ""
+
+msgid "in which direction 'equalalways' works: \"ver\", \"hor\" or \"both\""
+msgstr ""
+
+msgid "minimal number of lines used for the current window"
+msgstr ""
+
+msgid "minimal number of lines used for any window"
+msgstr ""
+
+msgid "keep window focused on a single buffer"
+msgstr ""
+
+#, fuzzy
+msgid "keep the height of the window"
+msgstr "önizleme penceresinin öntanımlı yüksekliği"
+
+msgid "keep the width of the window"
+msgstr ""
+
+msgid "minimal number of columns used for the current window"
+msgstr ""
+
+msgid "minimal number of columns used for any window"
+msgstr ""
+
+#, fuzzy
+msgid "initial height of the help window"
+msgstr "önizleme penceresinin öntanımlı yüksekliği"
+
+msgid "default height for the preview window"
+msgstr "önizleme penceresinin öntanımlı yüksekliği"
+
+msgid "identifies the preview window"
+msgstr "önizleme penceresini tanımlar"
+
+msgid "custom format for the window bar"
+msgstr ""
+
+msgid "border of floating window"
+msgstr ""
+
+msgid "transparency level for floating windows"
+msgstr ""
+
+msgid "don't unload a buffer when no longer shown in a window"
+msgstr ""
+
+msgid ""
+"\"useopen\" and/or \"split\"; which window to use when jumping\n"
+"to a buffer"
+msgstr ""
+
+msgid "a new window is put below the current one"
+msgstr ""
+
+msgid "determines scroll behavior for split windows"
+msgstr ""
+
+msgid "a new window is put right of the current one"
+msgstr ""
+
+msgid "this window scrolls together with other bound windows"
+msgstr ""
+
+msgid "\"ver\", \"hor\" and/or \"jump\"; list of options for 'scrollbind'"
+msgstr ""
+
+msgid "this window's cursor moves together with other bound windows"
+msgstr ""
+
+msgid "multiple tab pages"
+msgstr ""
+
+msgid "0, 1 or 2; when to use a tab pages line"
+msgstr ""
+
+msgid "behaviour when closing tab pages: left, uselast or empty"
+msgstr ""
+
+msgid "maximum number of tab pages to open for -p and \"tab all\""
+msgstr ""
+
+msgid "custom tab pages line"
+msgstr ""
+
+msgid "terminal"
+msgstr "uçbirim"
+
+msgid "minimal number of lines to scroll at a time"
+msgstr ""
+
+msgid "specifies what the cursor looks like in different modes"
+msgstr ""
+
+msgid "show info in the window title"
+msgstr ""
+
+msgid "percentage of 'columns' used for the window title"
+msgstr ""
+
+msgid "when not empty, string to be used for the window title"
+msgstr ""
+
+msgid "string to restore the title to when exiting Vim"
+msgstr ""
+
+msgid "set the text of the icon for this window"
+msgstr ""
+
+msgid "when not empty, text for the icon of this window"
+msgstr ""
+
+msgid "using the mouse"
+msgstr ""
+
+msgid "list of flags for using the mouse"
+msgstr ""
+
+msgid "amount to scroll by when scrolling with a mouse"
+msgstr ""
+
+msgid "the window with the mouse pointer becomes the current one"
+msgstr ""
+
+msgid "hide the mouse pointer while typing"
+msgstr ""
+
+msgid ""
+"\"extend\", \"popup\" or \"popup_setpos\"; what the right\n"
+"mouse button is used for"
+msgstr ""
+
+msgid "maximum time in msec to recognize a double-click"
+msgstr ""
+
+msgid "deliver mouse move events to input queue"
+msgstr ""
+
+msgid "GUI"
+msgstr ""
+
+msgid "list of font names to be used in the GUI"
+msgstr ""
+
+msgid "list of font names to be used for double-wide characters"
+msgstr ""
+
+msgid ""
+"\"last\", \"buffer\" or \"current\": which directory used for\n"
+"the file browser"
+msgstr ""
+
+msgid "language to be used for the menus"
+msgstr ""
+
+msgid "maximum number of items in one menu"
+msgstr ""
+
+msgid "\"no\", \"yes\" or \"menu\"; how to use the ALT key"
+msgstr ""
+
+msgid "number of pixel lines to use between characters"
+msgstr ""
+
+msgid "synchronize redraw output with the host terminal"
+msgstr ""
+
+msgid "messages and info"
+msgstr ""
+
+msgid "list of flags to make messages shorter"
+msgstr ""
+
+msgid "options for outputting messages"
+msgstr ""
+
+msgid "show (partial) command keys in location given by 'showcmdloc'"
+msgstr ""
+
+msgid "location where to show the (partial) command keys for 'showcmd'"
+msgstr ""
+
+msgid "display the current mode in the status line"
+msgstr ""
+
+msgid "show cursor position below each window"
+msgstr ""
+
+msgid "alternate format to be used for the ruler"
+msgstr ""
+
+msgid "threshold for reporting number of changed lines"
+msgstr ""
+
+#, fuzzy
+msgid "the higher the more messages are given"
+msgstr "iletilerin içine yazılacağı dosya"
+
+msgid "file to write messages in"
+msgstr "iletilerin içine yazılacağı dosya"
+
+msgid "pause listings when the screen is full"
+msgstr ""
+
+msgid "start a dialog when a command fails"
+msgstr ""
+
+msgid "ring the bell for error messages"
+msgstr ""
+
+msgid "use a visual bell instead of beeping"
+msgstr ""
+
+msgid "do not ring the bell for these reasons"
+msgstr ""
+
+msgid "list of preferred languages for finding help"
+msgstr ""
+
+msgid "selecting text"
+msgstr ""
+
+msgid "\"old\", \"inclusive\" or \"exclusive\"; how selecting text behaves"
+msgstr ""
+
+msgid ""
+"\"mouse\", \"key\" and/or \"cmd\"; when to start Select mode\n"
+"instead of Visual mode"
+msgstr ""
+
+msgid ""
+"\"unnamed\" to use the * register like unnamed register\n"
+"\"autoselect\" to always put selected text on the clipboard"
+msgstr ""
+
+msgid "\"startsel\" and/or \"stopsel\"; what special keys can do"
+msgstr ""
+
+msgid "editing text"
+msgstr ""
+
+msgid "maximum number of changes that can be undone"
+msgstr ""
+
+msgid "automatically save and restore undo history"
+msgstr ""
+
+msgid "list of directories for undo files"
+msgstr "geri al dosyaları için dizinler listesi"
+
+msgid "maximum number lines to save for undo on a buffer reload"
+msgstr ""
+
+msgid "changes have been made and not written to a file"
+msgstr ""
+
+msgid "buffer is not to be written"
+msgstr ""
+
+msgid "changes to the text are possible"
+msgstr ""
+
+msgid "line length above which to break a line"
+msgstr ""
+
+msgid "margin from the right in which to break a line"
+msgstr ""
+
+msgid "specifies what <BS>, CTRL-W, etc. can do in Insert mode"
+msgstr ""
+
+msgid "definition of what comment lines look like"
+msgstr ""
+
+msgid "template for comments; used to put the marker in"
+msgstr ""
+
+msgid "list of flags that tell how automatic formatting works"
+msgstr ""
+
+msgid "pattern to recognize a numbered list"
+msgstr ""
+
+msgid "expression used for \"gq\" to format lines"
+msgstr ""
+
+#, fuzzy
+msgid "specifies how Insert mode completion works for CTRL-N and CTRL-P"
+msgstr "komut satırı tamamlamasının nasıl çalıştığını belirtir"
+
+msgid "automatic completion in insert mode"
+msgstr ""
+
+msgid "initial decay timeout for 'autocomplete' algorithm"
+msgstr ""
+
+msgid "initial decay timeout for CTRL-N and CTRL-P completion"
+msgstr ""
+
+msgid "delay in msec before menu appears after typing"
+msgstr ""
+
+msgid "whether to use a popup menu for Insert mode completion"
+msgstr ""
+
+msgid "popup menu item align order"
+msgstr ""
+
+msgid "maximum height of the popup menu"
+msgstr ""
+
+msgid "minimum width of the popup menu"
+msgstr ""
+
+msgid "maximum width of the popup menu"
+msgstr ""
+
+msgid "transparency level of popup menu"
+msgstr ""
+
+msgid "border of popupmenu"
+msgstr ""
+
+msgid "user defined function for Insert mode completion"
+msgstr ""
+
+msgid "function for filetype-specific Insert mode completion"
+msgstr ""
+
+#, fuzzy
+msgid "list of dictionary files for keyword completion"
+msgstr "geri al dosyaları için dizinler listesi"
+
+msgid "list of thesaurus files for keyword completion"
+msgstr ""
+
+msgid "function used for thesaurus completion"
+msgstr ""
+
+msgid "adjust case of a keyword completion match"
+msgstr ""
+
+msgid "enable entering digraphs with c1 <BS> c2"
+msgstr ""
+
+msgid "the \"~\" command behaves like an operator"
+msgstr ""
+
+msgid "function called for the \"g@\" operator"
+msgstr ""
+
+msgid "when inserting a bracket, briefly jump to its match"
+msgstr ""
+
+msgid "tenth of a second to show a match for 'showmatch'"
+msgstr ""
+
+msgid "list of pairs that match for the \"%\" command"
+msgstr "\"%\" komutu için eşleşen eşler listesi"
+
+msgid "use two spaces after '.' when joining a line"
+msgstr ""
+
+msgid ""
+"\"alpha\", \"octal\", \"hex\", \"bin\" and/or \"unsigned\"; number formats\n"
+"recognized for CTRL-A and CTRL-X commands"
+msgstr ""
+
+msgid "tabs and indenting"
+msgstr ""
+
+msgid "number of spaces a <Tab> in the text stands for"
+msgstr ""
+
+msgid "number of spaces used for each step of (auto)indent"
+msgstr ""
+
+msgid "list of number of spaces a tab counts for"
+msgstr ""
+
+msgid "list of number of spaces a soft tabsstop counts for"
+msgstr ""
+
+msgid "a <Tab> in an indent inserts 'shiftwidth' spaces"
+msgstr ""
+
+msgid "if non-zero, number of spaces to insert for a <Tab>"
+msgstr ""
+
+msgid "round to 'shiftwidth' for \"<<\" and \">>\""
+msgstr ""
+
+msgid "expand <Tab> to spaces in Insert mode"
+msgstr ""
+
+msgid "automatically set the indent of a new line"
+msgstr ""
+
+msgid "do clever autoindenting"
+msgstr ""
+
+msgid "enable specific indenting for C code"
+msgstr ""
+
+msgid "options for C-indenting"
+msgstr ""
+
+msgid "keys that trigger C-indenting in Insert mode"
+msgstr ""
+
+msgid "list of words that cause more C-indent"
+msgstr ""
+
+msgid "list of scope declaration names used by cino-g"
+msgstr ""
+
+msgid "expression used to obtain the indent of a line"
+msgstr ""
+
+msgid "keys that trigger indenting with 'indentexpr' in Insert mode"
+msgstr ""
+
+msgid "copy whitespace for indenting from previous line"
+msgstr ""
+
+msgid "preserve kind of whitespace when changing indent"
+msgstr ""
+
+msgid "enable lisp mode"
+msgstr ""
+
+msgid "words that change how lisp indenting works"
+msgstr ""
+
+msgid "options for Lisp indenting"
+msgstr ""
+
+msgid "folding"
+msgstr "kıvırma"
+
+msgid "unset to display all folds open"
+msgstr ""
+
+msgid "folds with a level higher than this number will be closed"
+msgstr ""
+
+msgid "value for 'foldlevel' when starting to edit a file"
+msgstr ""
+
+msgid "width of the column used to indicate folds"
+msgstr ""
+
+msgid "expression used to display the text of a closed fold"
+msgstr ""
+
+msgid "set to \"all\" to close a fold when the cursor leaves it"
+msgstr ""
+
+#, fuzzy
+msgid "specifies for which commands a fold will be opened"
+msgstr "komut satırı tamamlamasının nasıl çalıştığını belirtir"
+
+msgid "minimum number of screen lines for a fold to be closed"
+msgstr ""
+
+msgid ""
+"folding type: \"manual\", \"indent\", \"expr\", \"marker\",\n"
+"\"syntax\" or \"diff\""
+msgstr ""
+
+msgid "expression used when 'foldmethod' is \"expr\""
+msgstr ""
+
+msgid "used to ignore lines when 'foldmethod' is \"indent\""
+msgstr ""
+
+msgid "markers used when 'foldmethod' is \"marker\""
+msgstr ""
+
+msgid "maximum fold depth for when 'foldmethod' is \"indent\" or \"syntax\""
+msgstr ""
+
+msgid "diff mode"
+msgstr ""
+
+#, fuzzy
+msgid "use diff mode for the current window"
+msgstr "önizleme penceresinin öntanımlı yüksekliği"
+
+msgid "options for using diff mode"
+msgstr ""
+
+msgid "expression used to obtain a diff file"
+msgstr ""
+
+#, fuzzy
+msgid "list of addresses for anchoring a diff"
+msgstr "geri al dosyaları için dizinler listesi"
+
+msgid "expression used to patch a file"
+msgstr ""
+
+msgid "mapping"
+msgstr "eşlemleme"
+
+msgid "maximum depth of mapping"
+msgstr ""
+
+msgid "allow timing out halfway into a mapping"
+msgstr ""
+
+msgid "allow timing out halfway into a key code"
+msgstr ""
+
+msgid "time in msec for 'timeout'"
+msgstr ""
+
+msgid "time in msec for 'ttimeout'"
+msgstr ""
+
+msgid "reading and writing files"
+msgstr "dosyaları okuma ve yazma"
+
+msgid "enable using settings from modelines when reading a file"
+msgstr ""
+
+msgid "allow setting expression options from a modeline"
+msgstr ""
+
+msgid "number of lines to check for modelines"
+msgstr ""
+
+msgid "binary file editing"
+msgstr ""
+
+msgid "last line in the file has an end-of-line"
+msgstr ""
+
+msgid "last line in the file followed by CTRL-Z"
+msgstr ""
+
+msgid "fixes missing end-of-line at end of text file"
+msgstr ""
+
+msgid "prepend a Byte Order Mark to the file"
+msgstr ""
+
+msgid "end-of-line format: \"dos\", \"unix\" or \"mac\""
+msgstr ""
+
+msgid "list of file formats to look for when editing a file"
+msgstr ""
+
+msgid "writing files is allowed"
+msgstr ""
+
+msgid "write a backup file before overwriting a file"
+msgstr ""
+
+msgid "keep a backup after overwriting a file"
+msgstr ""
+
+msgid "patterns that specify for which files a backup is not made"
+msgstr ""
+
+msgid "whether to make the backup as a copy or rename the existing file"
+msgstr ""
+
+#, fuzzy
+msgid "list of directories to put backup files in"
+msgstr "geri al dosyaları için dizinler listesi"
+
+msgid "file name extension for the backup file"
+msgstr ""
+
+msgid "automatically write a file when leaving a modified buffer"
+msgstr "değiştirilmiş bir arabellekten ayrılırken kendiliğinden bir dosya yaz"
+
+msgid "as 'autowrite', but works with more commands"
+msgstr ""
+
+msgid "always write without asking for confirmation"
+msgstr ""
+
+#, fuzzy
+msgid "automatically read a file when it was modified outside of Vim"
+msgstr "değiştirilmiş bir arabellekten ayrılırken kendiliğinden bir dosya yaz"
+
+msgid "keep oldest version of a file; specifies file name extension"
+msgstr ""
+
+msgid "forcibly sync the file to disk after writing it"
+msgstr ""
+
+msgid "the swap file"
+msgstr "takas dosyası"
+
+#, fuzzy
+msgid "list of directories for the swap file"
+msgstr "geri al dosyaları için dizinler listesi"
+
+msgid "use a swap file for this buffer"
+msgstr "bu arabellek için bir takas dosyası kullan"
+
+msgid "number of characters typed to cause a swap file update"
+msgstr ""
+
+msgid "time in msec after which the swap file will be updated"
+msgstr ""
+
+msgid "command line editing"
+msgstr ""
+
+msgid "how many command lines are remembered"
+msgstr ""
+
+msgid "key that triggers command-line expansion"
+msgstr ""
+
+msgid "like 'wildchar' but can also be used in a mapping"
+msgstr ""
+
+msgid "specifies how command line completion works"
+msgstr "komut satırı tamamlamasının nasıl çalıştığını belirtir"
+
+msgid "empty or \"tagfile\" to list file name of matching tags"
+msgstr ""
+
+msgid "list of file name extensions that have a lower priority"
+msgstr ""
+
+msgid "list of file name extensions added when searching for a file"
+msgstr ""
+
+msgid "list of patterns to ignore files for file name completion"
+msgstr ""
+
+msgid "ignore case when using file names"
+msgstr ""
+
+msgid "ignore case when completing file names"
+msgstr ""
+
+msgid "command-line completion shows a list of matches"
+msgstr ""
+
+msgid "key used to open the command-line window"
+msgstr ""
+
+#, fuzzy
+msgid "height of the command-line window"
+msgstr "önizleme penceresinin öntanımlı yüksekliği"
+
+msgid "executing external commands"
+msgstr "dış komutları yürütme"
+
+msgid "name of the shell program used for external commands"
+msgstr ""
+
+msgid "character(s) to enclose a shell command in"
+msgstr ""
+
+msgid "like 'shellquote' but include the redirection"
+msgstr ""
+
+msgid "characters to escape when 'shellxquote' is ("
+msgstr ""
+
+msgid "argument for 'shell' to execute a command"
+msgstr ""
+
+msgid "used to redirect command output to a file"
+msgstr ""
+
+msgid "use a temp file for shell commands instead of using a pipe"
+msgstr ""
+
+msgid "program used for \"=\" command"
+msgstr ""
+
+msgid "program used to format lines with \"gq\" command"
+msgstr ""
+
+#, fuzzy
+msgid "program used for the \"K\" command"
+msgstr "\"%\" komutu için eşleşen eşler listesi"
+
+msgid "warn when using a shell command and a buffer has changes"
+msgstr ""
+
+msgid "running make and jumping to errors (quickfix)"
+msgstr ""
+
+msgid "name of the file that contains error messages"
+msgstr ""
+
+msgid "list of formats for error messages"
+msgstr ""
+
+msgid "program used for the \":make\" command"
+msgstr ""
+
+msgid "string used to put the output of \":make\" in the error file"
+msgstr ""
+
+msgid "name of the errorfile for the 'makeprg' command"
+msgstr ""
+
+msgid "program used for the \":grep\" command"
+msgstr ""
+
+msgid "list of formats for output of 'grepprg'"
+msgstr ""
+
+msgid "encoding of the \":make\" and \":grep\" output"
+msgstr ""
+
+msgid "function to display text in the quickfix window"
+msgstr ""
+
+msgid "system specific"
+msgstr ""
+
+msgid "use forward slashes in file names; for Unix-like shells"
+msgstr ""
+
+msgid "specifies slash/backslash used for completion"
+msgstr ""
+
+msgid "language specific"
+msgstr ""
+
+msgid "specifies the characters in a file name"
+msgstr "bir dosya adındaki karakterleri belirtir"
+
+#, fuzzy
+msgid "specifies the characters in an identifier"
+msgstr "bir dosya adındaki karakterleri belirtir"
+
+#, fuzzy
+msgid "specifies the characters in a keyword"
+msgstr "bir dosya adındaki karakterleri belirtir"
+
+#, fuzzy
+msgid "specifies printable characters"
+msgstr "bir dosya adındaki karakterleri belirtir"
+
+#, fuzzy
+msgid "specifies escape characters in a string"
+msgstr "bir dosya adındaki karakterleri belirtir"
+
+msgid "display the buffer right-to-left"
+msgstr ""
+
+msgid "when to edit the command-line right-to-left"
+msgstr ""
+
+msgid "insert characters backwards"
+msgstr ""
+
+msgid "allow CTRL-_ in Insert and Command-line mode to toggle 'revins'"
+msgstr ""
+
+msgid "prepare for editing Arabic text"
+msgstr ""
+
+msgid "perform shaping of Arabic characters"
+msgstr ""
+
+msgid "terminal will perform bidi handling"
+msgstr ""
+
+msgid "name of a keyboard mapping"
+msgstr ""
+
+msgid "list of characters that are translated in Normal mode"
+msgstr ""
+
+msgid "apply 'langmap' to mapped characters"
+msgstr ""
+
+msgid "in Insert mode: 1: use :lmap; 2: use IM; 0: neither"
+msgstr ""
+
+msgid "entering a search pattern: 1: use :lmap; 2: use IM; 0: neither"
+msgstr ""
+
+msgid "multi-byte characters"
+msgstr ""
+
+msgid "character encoding for the current file"
+msgstr ""
+
+msgid "automatically detected character encodings"
+msgstr ""
+
+msgid "expression used for character encoding conversion"
+msgstr ""
+
+msgid "delete combining (composing) characters on their own"
+msgstr ""
+
+msgid "width of ambiguous width characters"
+msgstr ""
+
+msgid "emoji characters are full width"
+msgstr ""
+
+msgid "various"
+msgstr ""
+
+msgid ""
+"when to use virtual editing: \"block\", \"insert\", \"all\"\n"
+"and/or \"onemore\""
+msgstr ""
+
+msgid "list of autocommand events which are to be ignored"
+msgstr ""
+
+msgid "list of autocommand events which are to be ignored in a window"
+msgstr ""
+
+msgid "load plugin scripts when starting up"
+msgstr ""
+
+msgid "enable reading .vimrc/.exrc/.gvimrc in the current directory"
+msgstr ""
+
+msgid "maximum depth of function calls"
+msgstr ""
+
+msgid "list of words that specifies what to put in a session file"
+msgstr ""
+
+msgid "list of words that specifies what to save for :mkview"
+msgstr ""
+
+msgid "directory where to store files with :mkview"
+msgstr ""
+
+msgid "list that specifies what to write in the ShaDa file"
+msgstr ""
+
+msgid "overrides the filename used for shada"
+msgstr ""
+
+msgid "what happens with a buffer when it's no longer in a window"
+msgstr ""
+
+msgid "empty, \"nofile\", \"nowrite\", \"quickfix\", etc.: type of buffer"
+msgstr ""
+
+msgid "whether the buffer shows up in the buffer list"
+msgstr ""
+
+msgid "set to \"msg\" to see all error messages"
+msgstr ""
+
+msgid "whether to show the signcolumn"
+msgstr ""
+
+msgid "whether to use Python 2 or 3"
+msgstr ""
+
+msgid "live preview of substitution"
+msgstr ""
+
+#, fuzzy
+msgid "buffer is busy"
+msgstr "%d arabellek yok edildi"
+
+msgid "characters removed when pasting into terminal window"
+msgstr ""
+
+msgid "number of lines kept beyond the visible screen in terminal buffer"
+msgstr ""
+
+msgid "(local to window)"
+msgstr "(pencereye yerel)"
+
+msgid "(local to buffer)"
+msgstr "(arabelleğe yerel)"
+
+msgid "(global or local to buffer)"
+msgstr "(arabelleğe global veya yerel)"
+
+#, fuzzy
+msgid "(global or local to window)"
+msgstr "(arabelleğe global veya yerel)"
+
+msgid ""
+"\" Each \"set\" line shows the current value of an option (on the left)."
+msgstr ""
+"Her bir \"set\" satırı, bir seçeneğin geçerli değerini gösterir (solda)."
+
+msgid "\" Hit <Enter> on a \"set\" line to execute it."
+msgstr "Bir satırı yürütmek için \"set\" üzerinde <Enter>'a basın."
+
+msgid "\"            A boolean option will be toggled."
+msgstr "\"            Bir Boole değeri açılır/kapatılır."
+
+msgid ""
+"\"            For other options you can edit the value before hitting "
+"<Enter>."
+msgstr ""
+
+#, fuzzy
+msgid "\" Hit <Enter> on a help line to open a help window on this option."
+msgstr "Bir satırı yürütmek için \"set\" üzerinde <Enter>'a basın."
+
+#, fuzzy
+msgid "\" Hit <Enter> on an index line to jump there."
+msgstr "Bir satırı yürütmek için \"set\" üzerinde <Enter>'a basın."
+
+#, fuzzy
+msgid "\" Hit <Space> on a \"set\" line to refresh it."
+msgstr "Bir satırı yürütmek için \"set\" üzerinde <Enter>'a basın."
+
+#~ msgid "    line=%ld  id=%d%s  name=%s  priority=%d"
+#~ msgstr "    satır=%ld  id=%d%s  ad=%s  öncelik=%d"
+
+#~ msgid "  +                     Start at end of file\n"
+#~ msgstr "+                     Dosyanın sonunda başlat\n"
+
+#~ msgid "  --noplugin            Don't load plugins\n"
+#~ msgstr "--noplugin            Eklentileri yükleme\n"
+
+#~ msgid "  -M                    Modifications in text not allowed\n"
+#~ msgstr "-M                    Metinde değişikliklere izin verme\n"
+
+#~ msgid "  -b                    Binary mode\n"
+#~ msgstr "-b                    İkili kip\n"
+
+#~ msgid "  -e, -E                Ex mode\n"
+#~ msgstr "-e, -E                Ex kipi\n"
+
+#~ msgid "  -m                    Modifications (writing files) not allowed\n"
+#~ msgstr "-m                    Değişikliklere (dosya yazmaya) izin verme\n"
+
+#~ msgid "  -r <file>             Recover edit state for this file\n"
+#~ msgstr "-r <dosya>            Bu dosyanın düzenleme durumunu kurtar\n"
+
+#~ msgid "  -r, -L                List swap files\n"
+#~ msgstr "-r, -L                Takas dosyalarını listele\n"
+
+#~ msgid "  nvim [options] -q [errorfile]  Edit file with first error\n"
+#~ msgstr "nvim [seçenekler] -q [hatadosyası] İlk hatalı dosyayı düzenle\n"
+
+#~ msgid "  nvim [options] -t <tag>        Edit file where tag is defined\n"
+#~ msgstr ""
+#~ "nvim [seçenekler] -t <etiket>      Etiketin tanımlandığı dosyayı düzenle\n"
+
+#~ msgid " (file %d of %d)"
+#~ msgstr " (dosya %d/%d)"
+
+#~ msgid " (file (%d) of %d)"
+#~ msgstr " (dosya (%d)/%d)"
+
+#~ msgid "Become a registered Vim user!"
+#~ msgstr "Kayıtlı bir Vim kullanıcısı olun!"
+
+#~ msgid "Can only call this function in an unmodified buffer"
+#~ msgstr "Bu işlev yalnızca değiştirilmemiş bir arabellekte çağrılabilir"
+
+#~ msgid "Conversion failure for word in %s line %ld: %s"
+#~ msgstr "%s içinde %ld. satırda sözcük için dönüştürme hatası: %s"
+
+#~ msgid "E1336: Internal error: shortmess too long"
+#~ msgstr "E1336: İçsel hata: Kısalık pek uzun"
+
+#~ msgid "E208: Error writing to \"%s\""
+#~ msgstr "E208: Şuraya yazılamadı: \"%s\""
+
+#~ msgid "E209: Error closing \"%s\""
+#~ msgstr "E209: \"%s\" kapatılırken hata"
+
+#~ msgid "E210: Error reading \"%s\""
+#~ msgstr "E210: \"%s\" okunurken hata"
+
+#~ msgid "E242: Can't split a window while closing another"
+#~ msgstr "E242: Bir pencere kapatılırken başka bir pencere bölünemez"
+
+#~ msgid "E474: Failed to convert list to msgpack string buffer"
+#~ msgstr "E474: Liste, msgpack dizi arabelleğine dönüştürülemedi"
+
+#~ msgid "E478: Don't panic!"
+#~ msgstr "E478: Panik yok!"
+
+#~ msgid "E5108: Error executing lua %.*s"
+#~ msgstr "E5108: lua %.*s çalıştırılırken hata"
+
+#~ msgid "E5421: Failed to open stdin: %s"
+#~ msgstr "E5421: stdin açılamadı: %s"
+
+#~ msgid "E612: Too many signs defined"
+#~ msgstr "E612: Çok fazla işaret tanımlanmış"
+
+#~ msgid "E670: Mix of help file encodings within a language: %s"
+#~ msgstr "E670: Bir dilde yardım dosyası kodlamaları karıştı: %s"
+
+#~ msgid "E846: Key code not set"
+#~ msgstr "E846: Anahtar kodu ayarlanmamış"
+
+#~ msgid "Error converting the call result: %s"
+#~ msgstr "Çağrı sonuçlarını dönüştürürken hata: %s"
+
+#~ msgid "Error detected while processing %s:"
+#~ msgstr "%s işlenirken hata algılandı:"
+
+#~ msgid "Error executing lua callback: %.*s"
+#~ msgstr "lua geri çağrısı çalıştırılırken hata: %.*s"
+
+#~ msgid "Not enough memory to use internal diff for buffer \"%s\""
+#~ msgstr "\"%s\" arabelleği için karşılaştırma yapacak yeterli bellek yok"
+
+#~ msgid "Sponsor Vim development!"
+#~ msgstr "Vim'in geliştirilmesine sponsor olun!"
+
+#~ msgid "System error while writing ShaDa file: %s"
+#~ msgstr "Paylaşılan veri dosyası yazılırken sistem hatası: %s"
+
+#~ msgid "[Deleted]"
+#~ msgstr "[Silindi]"
+
+#~ msgid "[Incomplete last line]"
+#~ msgstr "[Tamamlanmamış son satır]"
+
+#~ msgid "[New File]"
+#~ msgstr "[Yeni Dosya]"
+
+#~ msgid "[dos format]"
+#~ msgstr "[dos biçimi]"
+
+#~ msgid "[mac format]"
+#~ msgstr "[mac biçimi]"
+
+#~ msgid "[unix format]"
+#~ msgstr "[unix biçimi]"
+
+#~ msgid "additional data of ShaDa "
+#~ msgstr "paylaşılan verinin ek verisi"
+
+#~ msgid "additional elements of ShaDa "
+#~ msgstr "paylaşılan verinin ek ögeleri "
+
+#~ msgid "help"
+#~ msgstr "yardım"
+
+#~ msgid "line %4ld:"
+#~ msgstr "satır %4ld:"
+
+#~ msgid "type  :help iccf<Enter>       for information "
+#~ msgstr "ek bilgi için           :help iccf<Enter>      "
+
+#~ msgid "type  :help register<Enter>   for information "
+#~ msgstr "bilgi için              :help register<Enter>  "
