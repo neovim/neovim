@@ -168,7 +168,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     set(poFile "${CMAKE_CURRENT_SOURCE_DIR}/${LANGUAGE}.po")
 
     add_custom_target(update-po-${LANGUAGE}
-      COMMAND ${GETTEXT_MSGMERGE_EXECUTABLE} -q --update --backup=none --sort-by-file
+      COMMAND ${GETTEXT_MSGMERGE_EXECUTABLE} -q --update --backup=none --no-location --sort-by-file
       ${poFile} ${NVIM_POT}
       COMMENT "Updating ${LANGUAGE}.po"
       DEPENDS ${NVIM_POT})
