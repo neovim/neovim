@@ -28,6 +28,7 @@ Checks: >
   -cert-err34-c,
   -concurrency-mt-unsafe,
   -cppcoreguidelines-narrowing-conversions,
+  -clang-diagnostic-unused-command-line-argument,
 
   Warnings that may be useful, but are too inconsistent to enable by default
   May yield useful results with some manual triaging,
