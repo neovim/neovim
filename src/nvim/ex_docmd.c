@@ -5044,8 +5044,9 @@ static void ex_restart(exarg_T *eap)
 
   if (*eap->arg != NUL) {
     // Execute [command] on new server on UIEnter.
-    MAXSIZE_TEMP_DICT(autocmd_opts, 2);
+    MAXSIZE_TEMP_DICT(autocmd_opts, 3);
     PUT_C(autocmd_opts, "once", BOOLEAN_OBJ(true));
+    PUT_C(autocmd_opts, "nested", BOOLEAN_OBJ(true));
     PUT_C(autocmd_opts, "command", CSTR_AS_OBJ(eap->arg));
     MAXSIZE_TEMP_ARRAY(autocmd_args, 2);
     ADD_C(autocmd_args, CSTR_AS_OBJ("UIEnter"));
