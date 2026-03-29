@@ -364,7 +364,7 @@ int main(int argc, char **argv)
 
   // NORETURN: Start builtin UI client.
   if (ui_client_channel_id) {
-    ui_client_run(remote_ui);  // NORETURN
+    ui_client_run();  // NORETURN
   }
   assert(!ui_client_channel_id && !use_builtin_ui);
   // Nvim server...

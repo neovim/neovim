@@ -39,7 +39,6 @@ static int tui_width = 0;
 static int tui_height = 0;
 static char *tui_term = "";
 static bool tui_rgb = false;
-static bool ui_client_is_remote = false;
 
 // uncrustify:off
 #include "ui_client.c.generated.h"
@@ -153,10 +152,9 @@ void ui_client_detach(void)
   ui_client_attached = false;
 }
 
-void ui_client_run(bool remote_ui)
+void ui_client_run(void)
   FUNC_ATTR_NORETURN
 {
-  ui_client_is_remote = remote_ui;
   tui_start(&tui, &tui_width, &tui_height, &tui_term, &tui_rgb);
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
@@ -308,7 +306,6 @@ static void channel_connect_event(void **argv)
   }
 
   ui_client_channel_id = chan;
-  ui_client_is_remote = true;
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   ILOG("Connected to server %s on channel %" PRId64, server_addr, chan);
@@ -357,7 +354,6 @@ void ui_client_attach_to_restarted_server(void)
 
   // Client-side server re-attach.
   ui_client_channel_id = chan_id;
-  ui_client_is_remote = is_tcp;
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   ILOG("restarted server address=%s id=%" PRId64, listen_addr, chan_id);
