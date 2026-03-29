@@ -1159,17 +1159,15 @@ msgstr "E346: У cdpath немає більше каталогу «%s»"
 msgid "E347: No more file \"%s\" found in path"
 msgstr "E347: У шляху пошуку більше немає файлів «%s»"
 
-#, fuzzy
 msgid "E741: Value is locked"
-msgstr "E741: Значення захищене: %.*s"
+msgstr ""
 
 #, c-format
 msgid "E741: Value is locked: %.*s"
 msgstr "E741: Значення захищене: %.*s"
 
-#, fuzzy
 msgid "E742: Cannot change value"
-msgstr "E742: Не можна змінити значення %.*s"
+msgstr ""
 
 #, c-format
 msgid "E742: Cannot change value of %.*s"
@@ -1219,9 +1217,8 @@ msgstr "E966: Некоректний номер рядка: %ld"
 msgid "E998: Reduce of an empty %s with no initial value"
 msgstr "E998: Скорочення порожнього %s без початкового значення"
 
-#, fuzzy
 msgid "E1239: Invalid value for blob: 0x<PRIX64>"
-msgstr "E1239: Некоректне значення для blob: %d"
+msgstr ""
 
 #, c-format
 msgid "E1278: Stray '}' without a matching '{': %s"
@@ -1909,9 +1906,9 @@ msgstr "E1220: Потрібен String або Number в аргументі %d"
 msgid "E1222: String or List required for argument %d"
 msgstr "E1222: Потрібен String або List в аргументі %d"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1225: List, Dictionary, Blob or String required for argument %d"
-msgstr "E1226: Потрібен List або Blob в аргументі %d"
+msgstr ""
 
 #, c-format
 msgid "E1226: List or Blob required for argument %d"
@@ -3202,13 +3199,13 @@ msgstr "E5102: Lua не вдалося збільшити стек до %i"
 msgid "vim.schedule callback: %.*s"
 msgstr "зворотній виклик vim.schedule: %.*s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E970: Failed to initialize Lua interpreter\n"
-msgstr "E970: Не вдалося ініціалізувати інтерпретатор lua\n"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E970: Failed to initialize builtin Lua modules\n"
-msgstr "E970: Не вдалося ініціалізувати інтерпретатор lua\n"
+msgstr ""
 
 #, c-format
 msgid "E5114: Converting print argument #%i: %.*s"
@@ -6052,32 +6049,27 @@ msgstr " заміна для $VIMRUNTIME: \""
 msgid "Nvim is open source and freely distributable"
 msgstr "Nvim — це відкрита й вільно розповсюджувана програма"
 
-#, fuzzy
 msgid "type  :help nvim<Enter>     if you are new! "
-msgstr ":help nvim<Enter>       якщо ви вперше!       "
+msgstr ""
 
-#, fuzzy
 msgid "type  :checkhealth<Enter>   to optimize Nvim"
-msgstr ":checkhealth<Enter>     щоб оптимізувати Nvim "
+msgstr ""
 
-#, fuzzy
 msgid "type  :q<Enter>             to exit         "
-msgstr ":q<Enter>               вихід з Vim           "
+msgstr ""
 
-#, fuzzy
 msgid "type  :help<Enter>          for help        "
-msgstr ":help<Enter>            щоб отримати допомогу "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "type  :help news<Enter>     for v%s.%s notes "
-msgstr ":help news<Enter>    щоб побачити зміни у v%s.%s"
+msgstr ""
 
 msgid "Help poor children in Uganda!"
 msgstr "Допоможіть сиротам з Уганди!"
 
-#, fuzzy
 msgid "type  :help Kuwasha<Enter>  for information "
-msgstr ":help Kuwasha<Enter>    подальша інформація   "
+msgstr ""
 
 #, c-format
 msgid "E15: Invalid control character present in input: %.*s"
@@ -7494,11 +7486,38 @@ msgstr "\" Натисніть <Пробіл> на рядку «set» для он
 #~ msgid "E1225: String, List or Dictionary required for argument %d"
 #~ msgstr "E1225: String, List або Dictionary потрібен в аргументі %d"
 
+#~ msgid "E1239: Invalid value for blob: %d"
+#~ msgstr "E1239: Некоректне значення для blob: %d"
+
 #~ msgid "E478: Don't panic!"
 #~ msgstr "E478: Без паніки!"
 
+#~ msgid "E970: Failed to initialize builtin lua modules\n"
+#~ msgstr "E970: Не вдалося ініціалізувати інтерпретатор lua\n"
+
+#~ msgid "E970: Failed to initialize lua interpreter\n"
+#~ msgstr "E970: Не вдалося ініціалізувати інтерпретатор lua\n"
+
 #~ msgid "change the way backslashes are used in search patterns"
 #~ msgstr "змінити спосіб вжитку \\ у шаблонах пошуку"
+
+#~ msgid "type  :checkhealth<Enter>     to optimize Nvim"
+#~ msgstr ":checkhealth<Enter>     щоб оптимізувати Nvim "
+
+#~ msgid "type  :help Kuwasha<Enter>    for information "
+#~ msgstr ":help Kuwasha<Enter>    подальша інформація   "
+
+#~ msgid "type  :help news<Enter> to see changes in v%s.%s"
+#~ msgstr ":help news<Enter>    щоб побачити зміни у v%s.%s"
+
+#~ msgid "type  :help nvim<Enter>       if you are new! "
+#~ msgstr ":help nvim<Enter>       якщо ви вперше!       "
+
+#~ msgid "type  :help<Enter>            for help        "
+#~ msgstr ":help<Enter>            щоб отримати допомогу "
+
+#~ msgid "type  :q<Enter>               to exit         "
+#~ msgstr ":q<Enter>               вихід з Vim           "
 
 #~ msgid "use the 'g' flag for \":substitute\""
 #~ msgstr "вживати прапорець 'g' у «:substitute»"

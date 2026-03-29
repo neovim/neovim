@@ -55,9 +55,8 @@ msgstr ""
 msgid "E367: No such group: \"%s\""
 msgstr ""
 
-#, fuzzy
 msgid "E936: Cannot delete the current group"
-msgstr "E738: Cannot list variables for %s"
+msgstr ""
 
 msgid "W19: Deleting augroup that is still in use"
 msgstr ""
@@ -156,9 +155,9 @@ msgstr ""
 msgid "E88: Cannot go before first buffer"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: %s will be killed (add ! to override)"
-msgstr "E510: Cannot make backup file (add ! to override)"
+msgstr ""
 
 msgid "W14: Warning: List of file names overflow"
 msgstr ""
@@ -252,16 +251,14 @@ msgstr ""
 msgid "[Quickfix List]"
 msgstr ""
 
-#, fuzzy
 msgid "E206: Patchmode: can't touch empty original file"
-msgstr "E206: patchmode: cannot touch empty original file"
+msgstr ""
 
 msgid "E513: Write error, conversion failed (make 'fenc' empty to override)"
 msgstr ""
 
-#, fuzzy
 msgid "E513: Write error, conversion failed in line %"
-msgstr "E138: Cannot write viminfo file %s!"
+msgstr ""
 
 msgid "E514: Write error (file system full?)"
 msgstr ""
@@ -292,9 +289,9 @@ msgstr ""
 msgid "is read-only (add ! to override)"
 msgstr "E508: Cannot read file for backup (add ! to override)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E303: Unable to create directory \"%s\" for backup file: %s"
-msgstr "E482: Cannot create file %s"
+msgstr ""
 
 #, fuzzy
 msgid "E509: Cannot create backup file (add ! to override)"
@@ -312,9 +309,9 @@ msgstr ""
 msgid "E166: Can't open linked file for writing"
 msgstr "E166: Cannot open linked file for writing"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E212: Can't open file for writing: %s"
-msgstr "E212: Cannot open file for writing"
+msgstr ""
 
 #, c-format
 msgid "E512: Close failed: %s"
@@ -449,9 +446,9 @@ msgstr ""
 msgid "%3d  expr %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E96: Cannot diff more than %d buffers"
-msgstr "E96: Cannot diff more than %<PRId64> buffers"
+msgstr ""
 
 #, fuzzy
 msgid "E810: Cannot read or write temp files"
@@ -718,24 +715,23 @@ msgstr ""
 msgid "E475: Invalid value for argument %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s: %s"
-msgstr "Unrecognised flags in %s line %d: %s"
+msgstr ""
 
 #, c-format
 msgid "E983: Duplicate argument: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid expression: \"%s\""
-msgstr "E40: Cannot open errorfile %s"
+msgstr ""
 
 msgid "E16: Invalid range"
 msgstr ""
 
-#, fuzzy
 msgid "E473: Internal error in regexp"
-msgstr "E40: Cannot open errorfile %s"
+msgstr ""
 
 msgid "E476: Invalid command"
 msgstr ""
@@ -786,9 +782,9 @@ msgstr ""
 msgid "E667: Fsync failed: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E739: Cannot create directory %s: %s"
-msgstr "E482: Cannot create file %s"
+msgstr ""
 
 msgid "E19: Mark has invalid line number"
 msgstr ""
@@ -857,9 +853,9 @@ msgstr "E483: Cannot get temp file name"
 msgid "E484: Can't open file %s"
 msgstr "E484: Cannot open file %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E484: Can't open file %s: %s"
-msgstr "E484: Cannot open file %s"
+msgstr ""
 
 #, c-format
 msgid "E485: Can't read file %s"
@@ -915,13 +911,12 @@ msgstr "E738: Cannot list variables for %s"
 msgid "E461: Illegal variable name: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E995: Cannot modify existing variable"
-msgstr "E738: Cannot list variables for %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E46: Cannot change read-only variable \"%.*s\""
-msgstr "E456: Cannot open file \"%s\""
+msgstr ""
 
 msgid "E715: Dictionary required"
 msgstr ""
@@ -1053,9 +1048,9 @@ msgstr ""
 msgid "E37: No write since last change (add ! to override)"
 msgstr "E506: Cannot write to backup file (add ! to override)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: No write since last change for buffer %d (add ! to override)"
-msgstr "E508: Cannot read file for backup (add ! to override)"
+msgstr ""
 
 #, c-format
 msgid "E92: Buffer %d not found"
@@ -1143,9 +1138,8 @@ msgstr ""
 msgid "E5601: Cannot close window, only floating window would remain"
 msgstr ""
 
-#, fuzzy
 msgid "E5602: Cannot exchange or rotate float"
-msgstr "E482: Cannot create file %s"
+msgstr ""
 
 #, c-format
 msgid "E344: Can't find directory \"%s\" in cdpath"
@@ -1170,28 +1164,26 @@ msgstr ""
 msgid "E741: Value is locked: %.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E742: Cannot change value"
-msgstr "E482: Cannot create file %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E742: Cannot change value of %.*s"
-msgstr "E482: Cannot create file %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
-msgstr "E738: Cannot list variables for %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E795: Cannot delete variable %.*s"
-msgstr "E738: Cannot list variables for %s"
+msgstr ""
 
 msgid "E960: Problem creating the internal diff"
 msgstr ""
 
-#, fuzzy
 msgid "E1155: Cannot define autocommands for ALL events"
-msgstr "E217: Cannot execute autocommands for ALL events"
+msgstr ""
 
 msgid "E1156: Cannot change the argument list recursively"
 msgstr ""
@@ -1234,9 +1226,8 @@ msgstr ""
 msgid "E1279: Missing '}': %s"
 msgstr ""
 
-#, fuzzy
 msgid "E1310: Cannot change menus while listing"
-msgstr "E456: Cannot open file \"%s\""
+msgstr ""
 
 msgid "E1312: Not allowed to change the window layout in this autocmd"
 msgstr ""
@@ -1254,13 +1245,12 @@ msgstr ""
 msgid "E1514: 'findfunc' did not return a List type"
 msgstr ""
 
-#, fuzzy
 msgid "E1546: Cannot switch to a closing buffer"
-msgstr "E102: Cannot find buffer \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1549: Cannot have more than %d diff anchors"
-msgstr "E96: Cannot diff more than %<PRId64> buffers"
+msgstr ""
 
 msgid "E1550: Failed to find all diff anchors"
 msgstr ""
@@ -1271,9 +1261,9 @@ msgstr ""
 msgid "E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5570: Cannot update trust file: %s"
-msgstr "E40: Cannot open errorfile %s"
+msgstr ""
 
 #, fuzzy, c-format
 msgid "E282: Cannot read from \"%s\""
@@ -1303,13 +1293,11 @@ msgstr ""
 msgid "E697: Missing end of List ']': %s"
 msgstr ""
 
-#, fuzzy
 msgid "E719: Cannot slice a Dictionary"
-msgstr "E214: Cannot find temp file for writing"
+msgstr ""
 
-#, fuzzy
 msgid "E909: Cannot index a special variable"
-msgstr "E738: Cannot list variables for %s"
+msgstr ""
 
 msgid "E274: No white space allowed before parenthesis"
 msgstr ""
@@ -1334,9 +1322,8 @@ msgstr ""
 msgid "E1192: Empty function name"
 msgstr ""
 
-#, fuzzy
 msgid "E1265: Cannot use a partial here"
-msgstr "E738: Cannot list variables for %s"
+msgstr ""
 
 msgid "E689: Can only index a List, Dictionary or Blob"
 msgstr ""
@@ -1344,24 +1331,21 @@ msgstr ""
 msgid "E708: [:] must come last"
 msgstr ""
 
-#, fuzzy
 msgid "E713: Cannot use empty key after ."
-msgstr "E214: Cannot find temp file for writing"
+msgstr ""
 
 msgid "E709: [:] requires a List or Blob value"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E121: Undefined variable: %.*s"
-msgstr "E738: Cannot list variables for %s"
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a range"
-msgstr "E102: Cannot find buffer \"%s\""
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a list or dict"
-msgstr "E102: Cannot find buffer \"%s\""
+msgstr ""
 
 msgid "E690: Missing \"in\" after :for"
 msgstr ""
@@ -1702,9 +1686,8 @@ msgstr ""
 msgid "E80: Error while writing: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E5000: Cannot find tab number."
-msgstr "E102: Cannot find buffer \"%s\""
+msgstr ""
 
 msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
 msgstr ""
@@ -1725,17 +1708,16 @@ msgstr ""
 msgid "E5060: Unknown flag: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E482: Can't open file with an empty name"
-msgstr "E212: Cannot open file for writing"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E482: Can't open file %s for writing: %s"
-msgstr "E212: Cannot open file for writing"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error when closing file %s: %s"
-msgstr "E138: Cannot write viminfo file %s!"
+msgstr ""
 
 msgid "E957: Invalid window number"
 msgstr ""
@@ -2057,9 +2039,8 @@ msgstr ""
 msgid "E1145: Missing heredoc end marker: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E1300: Cannot use a partial with dictionary for :defer"
-msgstr "E214: Cannot find temp file for writing"
+msgstr ""
 
 #, c-format
 msgid "E125: Illegal argument: %s"
@@ -2110,9 +2091,9 @@ msgstr ""
 msgid "E699: Too many arguments"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E276: Cannot use function as a method: %s"
-msgstr "E738: Cannot list variables for %s"
+msgstr ""
 
 #, c-format
 msgid "E933: Function was deleted: %s"
@@ -2188,9 +2169,9 @@ msgstr ""
 msgid "E452: Double ; in list of variables"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E940: Cannot lock or unlock variable %s"
-msgstr "E456: Cannot open file \"%s\""
+msgstr ""
 
 #, c-format
 msgid "E963: Setting v:%s to value with wrong type"
@@ -2224,16 +2205,14 @@ msgstr ""
 msgid "E738: Can't list variables for %s"
 msgstr "E738: Cannot list variables for %s"
 
-#, fuzzy
 msgid "E996: Cannot lock an environment variable"
-msgstr "E456: Cannot open file \"%s\""
+msgstr ""
 
 msgid "E996: Cannot lock an option"
 msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a register"
-msgstr "E102: Cannot find buffer \"%s\""
+msgstr ""
 
 #, c-format
 msgid "E108: No such variable: \"%s\""
@@ -2520,11 +2499,11 @@ msgid_plural "%d more files to edit.  Quit anyway?"
 msgstr[0] ""
 msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E173: %d more file to edit"
 msgid_plural "E173: %d more files to edit"
-msgstr[0] "E447: Cannot find file \"%s\" in path"
-msgstr[1] "E447: Cannot find file \"%s\" in path"
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy, c-format
 msgid "E185: Cannot find color scheme '%s'"
@@ -2932,16 +2911,16 @@ msgstr ""
 msgid "E222: Add to read buffer"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open for reading: \"%s\": %s\n"
-msgstr "E212: Cannot open file for writing"
+msgstr ""
 
 msgid "--No lines in buffer--"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E685: Internal error: hash_add(): duplicate key \"%s\""
-msgstr "E40: Cannot open errorfile %s"
+msgstr ""
 
 #, c-format
 msgid "E661: No '%s' help for %s"
@@ -3274,9 +3253,9 @@ msgstr ""
 msgid "Cannot open for script output: \""
 msgstr "E324: Cannot open PostScript output file"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5420: Failed to write to file: %s"
-msgstr "E482: Cannot create file %s"
+msgstr ""
 
 #, c-format
 msgid "Attempt to open script file again: \"%s %s\"\n"
@@ -3568,9 +3547,9 @@ msgstr ""
 msgid "E315: ml_get: Invalid lnum: %<PRId64>"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E316: ml_get: Cannot find line %<PRId64>in buffer %d %s"
-msgstr "E96: Cannot diff more than %<PRId64> buffers"
+msgstr ""
 
 msgid "E317: Pointer block id wrong"
 msgstr ""
@@ -3642,9 +3621,9 @@ msgstr ""
 msgid "Use Vim version 3.0.\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E307: %s does not look like a Nvim swap file"
-msgstr "E781: .sug file does not match .spl file: %s"
+msgstr ""
 
 msgid " cannot be used on this computer.\n"
 msgstr ""
@@ -3770,9 +3749,8 @@ msgstr ""
 msgid "         [from Vim version 3.0]"
 msgstr ""
 
-#, fuzzy
 msgid "         [does not look like a Nvim swap file]"
-msgstr "E781: .sug file does not match .spl file: %s"
+msgstr ""
 
 msgid "         [garbled strings (not nul terminated)]"
 msgstr ""
@@ -4170,9 +4148,9 @@ msgstr ""
 msgid "Cannot unset global option value"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid value for option '%s': expected %s, got %s %s"
-msgstr "Unrecognised flags in %s line %d: %s"
+msgstr ""
 
 msgid ""
 "\n"
@@ -4429,9 +4407,8 @@ msgstr ""
 msgid "E70: Empty %s%%[]"
 msgstr ""
 
-#, fuzzy
 msgid "E956: Cannot use pattern recursively"
-msgstr "E482: Cannot create file %s"
+msgstr ""
 
 #, c-format
 msgid "E1204: No Number allowed after .: '\\%%%c'"
@@ -4547,9 +4524,8 @@ msgstr ""
 msgid "E873: (NFA regexp) proper termination error"
 msgstr ""
 
-#, fuzzy
 msgid "Could not open temporary log file for writing, displaying on stderr... "
-msgstr "E214: Cannot find temp file for writing"
+msgstr ""
 
 msgid "E874: (NFA) Could not pop the stack!"
 msgstr ""
@@ -4765,9 +4741,9 @@ msgstr ""
 msgid "System error while closing ShaDa file: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading ShaDa file \"%s\"%s%s%s%s"
-msgstr "E624: Cannot open file \"%s\""
+msgstr ""
 
 msgid " info"
 msgstr ""
@@ -4816,9 +4792,9 @@ msgstr ""
 msgid "E138: All %s.tmp.X files exist, cannot write ShaDa file!"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while opening temporary ShaDa file %s for writing: %s"
-msgstr "E214: Cannot find temp file for writing"
+msgstr ""
 
 #, c-format
 msgid "Failed to create directory %s for writing ShaDa file: %s"
@@ -4828,9 +4804,9 @@ msgstr ""
 msgid "System error while opening ShaDa file %s for writing: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing ShaDa file \"%s\""
-msgstr "E138: Cannot write viminfo file %s!"
+msgstr ""
 
 #, c-format
 msgid "E137: ShaDa file is not writable: %s"
@@ -4994,9 +4970,9 @@ msgstr ""
 msgid "E758: Truncated spell file"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E782: Error while reading .sug file: %s"
-msgstr "E138: Cannot write viminfo file %s!"
+msgstr ""
 
 msgid "E783: Duplicate char in MAP entry"
 msgstr ""
@@ -5022,9 +4998,9 @@ msgstr "E624: Cannot open file \"%s\""
 msgid "E757: This does not look like a spell file"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5042: Failed to read spell file %s: %s"
-msgstr "E482: Cannot create file %s"
+msgstr ""
 
 msgid "E771: Old spell file, needs to be updated"
 msgstr ""
@@ -5051,9 +5027,9 @@ msgstr ""
 msgid "E781: .sug file doesn't match .spl file: %s"
 msgstr "E781: .sug file does not match .spl file: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading affix file %s..."
-msgstr "E624: Cannot open file \"%s\""
+msgstr ""
 
 #, fuzzy, c-format
 msgid "Conversion failure for word in %s line %d: %s"
@@ -5173,9 +5149,9 @@ msgstr "Unrecognised flags in %s line %d: %s"
 msgid "%s value differs from what is used in another .aff file"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading dictionary file %s..."
-msgstr "E624: Cannot open file \"%s\""
+msgstr ""
 
 #, c-format
 msgid "E760: No word count in %s"
@@ -5201,41 +5177,33 @@ msgstr ""
 msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading word file %s..."
-msgstr "E624: Cannot open file \"%s\""
+msgstr ""
 
-#, fuzzy
 msgid "Conversion failure for word in %s line %"
-msgstr "Unrecognised flags in %s line %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Duplicate /encoding= line ignored in %s line %"
-msgstr "Unrecognised or duplicate item in %s line %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "/encoding= line after word ignored in %s line %"
-msgstr "Unrecognised or duplicate item in %s line %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Duplicate /regions= line ignored in %s line %"
-msgstr "Unrecognised or duplicate item in %s line %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Too many regions in %s line %"
-msgstr "Unrecognised flags in %s line %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "/ line ignored in %s line %"
-msgstr "Unrecognised flags in %s line %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Invalid region nr in %s line %"
-msgstr "Unrecognised flags in %s line %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Unrecognized flags in %s line %"
-msgstr "Unrecognised flags in %s line %d: %s"
+msgstr ""
 
 #, c-format
 msgid "Ignored %d words with non-ASCII characters"
@@ -5259,9 +5227,9 @@ msgstr ""
 msgid "Total number of words: %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing suggestion file %s..."
-msgstr "E138: Cannot write viminfo file %s!"
+msgstr ""
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5281,9 +5249,9 @@ msgstr ""
 msgid "Warning: both compounding and NOBREAK specified"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing spell file %s..."
-msgstr "E624: Cannot open file \"%s\""
+msgstr ""
 
 msgid "Done!"
 msgstr ""
@@ -5561,9 +5529,9 @@ msgstr ""
 msgid "E73: Tag stack empty"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E426: Tag not found: %s"
-msgstr "E456: Cannot open file \"%s\""
+msgstr ""
 
 msgid "E555: At bottom of tag stack"
 msgstr ""
@@ -5670,9 +5638,9 @@ msgstr ""
 msgid "E440: Undo line missing"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E829: Write error in undo file: %s"
-msgstr "E138: Cannot write viminfo file %s!"
+msgstr ""
 
 msgid "E881: Line count changed unexpectedly"
 msgstr ""
@@ -5681,9 +5649,9 @@ msgstr ""
 msgid "E828: Cannot open undo file for writing: %s"
 msgstr "E212: Cannot open file for writing"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5003: Unable to create directory \"%s\" for undo file: %s"
-msgstr "E344: Cannot find directory \"%s\" in cdpath"
+msgstr ""
 
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
@@ -6059,9 +6027,8 @@ msgstr ""
 msgid "E444: Cannot close last window"
 msgstr ""
 
-#, fuzzy
 msgid "E1159: Cannot split a window when closing the buffer"
-msgstr "E102: Cannot find buffer \"%s\""
+msgstr ""
 
 msgid "Already only one window"
 msgstr ""
@@ -7294,6 +7261,26 @@ msgstr ""
 #~ msgid "-foreground <color>\tUse <color> for normal text (also: -fg)"
 #~ msgstr "-foreground <colour>\tUse <colour> for normal text (also: -fg)"
 
+#, fuzzy, c-format
+#~ msgid "/ line ignored in %s line %d: %s"
+#~ msgstr "Unrecognised flags in %s line %d: %s"
+
+#, fuzzy, c-format
+#~ msgid "/encoding= line after word ignored in %s line %d: %s"
+#~ msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
+#, fuzzy
+#~ msgid "Cannot open for reading: \""
+#~ msgstr "E212: Cannot open file for writing"
+
+#, fuzzy
+#~ msgid "Could not open temporary log file for writing "
+#~ msgstr "E214: Cannot find temp file for writing"
+
+#, fuzzy, c-format
+#~ msgid "Duplicate /regions= line ignored in %s line %d: %s"
+#~ msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
 #~ msgid "E138: Can't write viminfo file %s!"
 #~ msgstr "E138: Cannot write viminfo file %s!"
 
@@ -7301,11 +7288,21 @@ msgstr ""
 #~ msgid "E195: Cannot open viminfo file for reading"
 #~ msgstr "E166: Cannot open linked file for writing"
 
+#~ msgid "E206: patchmode: can't touch empty original file"
+#~ msgstr "E206: patchmode: cannot touch empty original file"
+
+#~ msgid "E212: Can't open file for writing"
+#~ msgstr "E212: Cannot open file for writing"
+
 #~ msgid "E288: input method doesn't support any style"
 #~ msgstr "E288: input method does not support any style"
 
 #~ msgid "E289: input method doesn't support my preedit type"
 #~ msgstr "E289: input method does not support my preedit type"
+
+#, fuzzy, c-format
+#~ msgid "E46: Cannot change read-only variable \"%s\""
+#~ msgstr "E456: Cannot open file \"%s\""
 
 #~ msgid "E506: Can't write to backup file (add ! to override)"
 #~ msgstr "E506: Cannot write to backup file (add ! to override)"
@@ -7319,6 +7316,10 @@ msgstr ""
 
 #~ msgid "E533: can't select wide font"
 #~ msgstr "E533: cannot select wide font"
+
+#, fuzzy
+#~ msgid "E557: Cannot open termcap file"
+#~ msgstr "E40: Cannot open errorfile %s"
 
 #~ msgid "E597: can't select fontset"
 #~ msgstr "E597: cannot select fontset"
@@ -7337,9 +7338,52 @@ msgstr ""
 #~ msgstr "E616: vim_SelFile: cannot get font %s"
 
 #, fuzzy
+#~ msgid "E713: Cannot use empty key for Dictionary"
+#~ msgstr "E214: Cannot find temp file for writing"
+
+#, fuzzy, c-format
+#~ msgid "E739: Cannot create directory: %s"
+#~ msgstr "E482: Cannot create file %s"
+
+#, fuzzy, c-format
+#~ msgid "E742: Cannot change value of %s"
+#~ msgstr "E482: Cannot create file %s"
+
+#, fuzzy
 #~ msgid ""
 #~ "E747: Cannot change directory, buffer is modified (add ! to override)"
 #~ msgstr "E506: Cannot write to backup file (add ! to override)"
+
+#, fuzzy, c-format
+#~ msgid "E794: Cannot set variable in the sandbox: \"%s\""
+#~ msgstr "E738: Cannot list variables for %s"
+
+#, fuzzy, c-format
+#~ msgid "E795: Cannot delete variable %s"
+#~ msgstr "E738: Cannot list variables for %s"
+
+#, fuzzy, c-format
+#~ msgid "E829: write error in undo file: %s"
+#~ msgstr "E138: Cannot write viminfo file %s!"
+
+#, fuzzy, c-format
+#~ msgid ""
+#~ "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+#~ msgstr "E508: Cannot read file for backup (add ! to override)"
+
+#~ msgid "E96: Can not diff more than %<PRId64> buffers"
+#~ msgstr "E96: Cannot diff more than %<PRId64> buffers"
+
+#, fuzzy, c-format
+#~ msgid "Invalid region nr in %s line %d: %s"
+#~ msgstr "Unrecognised flags in %s line %d: %s"
+
+#, fuzzy, c-format
+#~ msgid "Too many regions in %s line %d: %s"
+#~ msgstr "Unrecognised flags in %s line %d: %s"
+
+#~ msgid "Unrecognized flags in %s line %d: %s"
+#~ msgstr "Unrecognised flags in %s line %d: %s"
 
 #~ msgid "VIM: Can't open window!\n"
 #~ msgstr "VIM: Cannot open window!\n"
@@ -7348,6 +7392,10 @@ msgstr ""
 #~ "Vim E458: Cannot allocate colormap entry, some colors may be incorrect"
 #~ msgstr ""
 #~ "Vim E458: Cannot allocate colourmap entry, some colours may be incorrect"
+
+#, fuzzy, c-format
+#~ msgid "Writing viminfo file \"%s\""
+#~ msgstr "E138: Cannot write viminfo file %s!"
 
 #~ msgid "can't delete OutputObject attributes"
 #~ msgstr "cannot delete OutputObject attributes"

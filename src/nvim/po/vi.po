@@ -28,10 +28,8 @@ msgstr "E164: Đây là tập tin đầu tiên"
 msgid "E165: Cannot go beyond last file"
 msgstr "E165: Đây là tập tin cuối cùng"
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E610: No argument to delete"
-msgstr "E144: Tham số của lệnh :z phải là số"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 msgid "E218: Autocommand nesting too deep"
@@ -48,10 +46,8 @@ msgstr ""
 msgid "E367: No such group: \"%s\""
 msgstr "E367: Nhóm \"%s\" không tồn tại"
 
-#, fuzzy
 msgid "E936: Cannot delete the current group"
 msgstr ""
-"E351: Không thể xóa nếp gấp với giá trị hiện thời của tùy chọn 'foldmethod'"
 
 msgid "W19: Deleting augroup that is still in use"
 msgstr ""
@@ -63,16 +59,16 @@ msgstr ""
 "\n"
 "--- Câu lệnh tự động ---"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E680: <buffer=%d>: invalid buffer number "
-msgstr "số của bộ đệm không đúng"
+msgstr ""
 
 msgid "E217: Can't execute autocommands for ALL events"
 msgstr "E217: Không thể thực hiện câu lệnh tự động cho MỌI sự kiện"
 
-#, fuzzy, c-format
+#, c-format
 msgid "No matching autocommands: %s"
-msgstr "Không có câu lệnh tự động tương ứng"
+msgstr ""
 
 #, c-format
 msgid "%s Autocommands for \"%s\""
@@ -117,23 +113,23 @@ msgstr "E516: Không có bộ đệm nào bị xóa"
 msgid "E517: No buffers were wiped out"
 msgstr "E517: Không có bộ đệm nào được làm sạch"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer unloaded"
 msgid_plural "%d buffers unloaded"
-msgstr[0] "%d bộ đệm được bỏ nạp từ bộ nhớ"
-msgstr[1] "%d bộ đệm được bỏ nạp từ bộ nhớ"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer deleted"
 msgid_plural "%d buffers deleted"
-msgstr[0] "%d bộ đệm được bỏ nạp"
-msgstr[1] "%d bộ đệm được bỏ nạp"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer wiped out"
 msgid_plural "%d buffers wiped out"
-msgstr[0] "%d bộ đệm được làm sạch"
-msgstr[1] "%d bộ đệm được làm sạch"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: Không thể bỏ nạp từ bộ nhớ bộ đệm cuối cùng"
@@ -150,9 +146,9 @@ msgstr "E87: Đây là bộ đệm cuối cùng"
 msgid "E88: Cannot go before first buffer"
 msgstr "E88: Đây là bộ đệm đầu tiên"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: %s will be killed (add ! to override)"
-msgstr "E189: \"%s\" đã có (thêm !, để ghi đè)"
+msgstr ""
 
 msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Cảnh báo: Danh sách tên tập tin quá đầy"
@@ -165,9 +161,9 @@ msgstr "E93: Tìm thấy vài tương ứng với %s"
 msgid "E94: No matching buffer for %s"
 msgstr "E94: Không có bộ đệm tương ứng với %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64>"
-msgstr "dòng %ld"
+msgstr ""
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Đã có bộ đệm với tên như vậy"
@@ -190,15 +186,15 @@ msgstr "[Chỉ đọc]"
 msgid "[readonly]"
 msgstr "[chỉ đọc]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line --%d%%--"
 msgid_plural "%<PRId64> lines --%d%%--"
-msgstr[0] "%ld dòng --%d%%--"
-msgstr[1] "%ld dòng --%d%%--"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
-msgstr "dòng %ld của %ld --%d%%-- cột "
+msgstr ""
 
 msgid "All"
 msgstr "Tất cả"
@@ -217,20 +213,19 @@ msgstr ""
 msgid "%3s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid " (%d of %d)"
-msgstr "(%d của %d)%s%s: "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid " ((%d) of %d)"
-msgstr "(%d của %d)%s%s: "
+msgstr ""
 
 msgid "E382: Cannot write, 'buftype' option is set"
 msgstr "E382: Không ghi nhớ được, giá trị 'buftype' không phải là chuỗi rỗng"
 
-#, fuzzy
 msgid "[Command Line]"
-msgstr "Dòng lệnh"
+msgstr ""
 
 msgid "[Prompt]"
 msgstr ""
@@ -238,9 +233,8 @@ msgstr ""
 msgid "[Scratch]"
 msgstr ""
 
-#, fuzzy
 msgid "[No Name]"
-msgstr "[Không có tập tin]"
+msgstr ""
 
 msgid "[Location List]"
 msgstr ""
@@ -254,23 +248,19 @@ msgstr ""
 "E206: Chế độ vá lỗi (patch): không thể thay đổi tham số của tập tin gốc "
 "trống rỗng"
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E513: Write error, conversion failed (make 'fenc' empty to override)"
-msgstr "E513: Lỗi ghi nhớ, biến đổi không thành công"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E513: Write error, conversion failed in line %"
-msgstr "E513: Lỗi ghi nhớ, biến đổi không thành công"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 msgid "E514: Write error (file system full?)"
 msgstr "E514: lỗi ghi nhớ (không còn chỗ trống?)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E676: No matching autocommands for buftype=%s buffer"
-msgstr "Không có câu lệnh tự động tương ứng"
+msgstr ""
 
 msgid "WARNING: The file has been changed since reading it!!!"
 msgstr "CẢNH BÁO: Tập tin đã thay đổi so với thời điểm đọc!!!"
@@ -293,11 +283,9 @@ msgstr "không phải là một tập tin thay một thiết bị có thể ghi 
 msgid "is read-only (add ! to override)"
 msgstr "là tập tin chỉ đọc (thêm ! để ghi nhớ bằng mọi giá)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E303: Unable to create directory \"%s\" for backup file: %s"
 msgstr ""
-"E303: Không mở được tập tin trao đổi (swap) cho \"%s\", nên không thể phục "
-"hồi"
 
 msgid "E509: Cannot create backup file (add ! to override)"
 msgstr ""
@@ -317,13 +305,13 @@ msgstr ""
 msgid "E166: Can't open linked file for writing"
 msgstr "E166: Không thể mở tập tin liên kết để ghi nhớ"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E212: Can't open file for writing: %s"
-msgstr "E212: Không thể mở tập tin để ghi nhớ"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E512: Close failed: %s"
-msgstr "E512: Thao tác đóng không thành công"
+msgstr ""
 
 msgid " CONVERSION ERROR"
 msgstr " LỖI BIẾN ĐỔI"
@@ -382,9 +370,8 @@ msgstr "W10: Cảnh báo: Thay đổi một tập tin chỉ có quyền đọc"
 msgid "can only be opened in headless mode"
 msgstr ""
 
-#, fuzzy
 msgid "channel was already open"
-msgstr "Tập tin đã được tạo trên "
+msgstr ""
 
 msgid "Can't send data to closed stream"
 msgstr ""
@@ -425,9 +412,9 @@ msgstr ""
 msgid "Newval = \"%s\""
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64>: %s"
-msgstr "dòng %ld: %s"
+msgstr ""
 
 #, c-format
 msgid "cmd: %s"
@@ -440,9 +427,9 @@ msgstr ""
 msgid "frame at highest level: %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Breakpoint in \"%s%s\" line %<PRId64>"
-msgstr "Điểm dừng trên \"%s%s\" dòng %ld"
+msgstr ""
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -451,28 +438,26 @@ msgstr "E161: Không tìm thấy điểm dừng: %s"
 msgid "No breakpoints defined"
 msgstr "Điểm dừng không được xác định"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%3d  %s %s  line %<PRId64>"
-msgstr "%3d  %s %s dòng %ld"
+msgstr ""
 
 #, c-format
 msgid "%3d  expr %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E96: Cannot diff more than %d buffers"
-msgstr "E96: Chỉ có thể theo dõi sự khác nhau trong nhiều nhất %ld bộ đệm"
+msgstr ""
 
-#, fuzzy
 msgid "E810: Cannot read or write temp files"
-msgstr "E557: Không thể mở tập tin termcap"
+msgstr ""
 
 msgid "E97: Cannot create diffs"
 msgstr "E97: Không thể tạo tập tin khác biệt (diff)"
 
-#, fuzzy
 msgid "E816: Cannot read patch output"
-msgstr "E98: Không thể đọc dữ liệu ra của lệnh diff"
+msgstr ""
 
 msgid "E98: Cannot read diff output"
 msgstr "E98: Không thể đọc dữ liệu ra của lệnh diff"
@@ -480,9 +465,8 @@ msgstr "E98: Không thể đọc dữ liệu ra của lệnh diff"
 msgid "E99: Current buffer is not in diff mode"
 msgstr "E99: Bộ đệm hiện thời không nằm trong chế độ khác biệt (diff)"
 
-#, fuzzy
 msgid "E793: No other buffer in diff mode is modifiable"
-msgstr "E100: Không còn bộ đệm trong chế độ khác biệt (diff) nào nữa"
+msgstr ""
 
 msgid "E100: No other buffer in diff mode"
 msgstr "E100: Không còn bộ đệm trong chế độ khác biệt (diff) nào nữa"
@@ -530,13 +514,11 @@ msgstr ""
 msgid "Cyrillic"
 msgstr ""
 
-#, fuzzy
 msgid "Hebrew"
-msgstr " Do thái"
+msgstr ""
 
-#, fuzzy
 msgid "Arabic"
-msgstr " Ả rập"
+msgstr ""
 
 msgid "Latin extended"
 msgstr ""
@@ -661,13 +643,11 @@ msgstr "đang ghi"
 msgid "E470: Command aborted"
 msgstr "E470: Câu lệnh bị dừng"
 
-#, fuzzy
 msgid "E905: Cannot set this option after startup"
-msgstr "E529: Giá trị của tùy chọn 'term' không thể là một chuỗi trống rỗng"
+msgstr ""
 
-#, fuzzy
 msgid "E903: Could not spawn API job"
-msgstr "E623: Chạy tiến trình cscope không thành công"
+msgstr ""
 
 msgid "E471: Argument required"
 msgstr "E471: Cần chỉ ra tham số"
@@ -678,11 +658,8 @@ msgstr "E10: Sau \\ phải là các ký tự /, ? hoặc &"
 msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
 msgstr "E11: Lỗi trong cửa sổ dòng lệnh; <CR> thực hiện, CTRL-C thoát"
 
-#, fuzzy
 msgid "E12: Command not allowed in secure mode in current dir or tag search"
 msgstr ""
-"E12: Câu lệnh không cho phép từ exrc/vimrc trong thư mục hiện thời hoặc "
-"trong tìm kiếm thẻ ghi"
 
 #, c-format
 msgid "E158: Invalid buffer name: %s"
@@ -691,9 +668,8 @@ msgstr "E158: Tên bộ đệm không đúng: %s"
 msgid "E169: Command too recursive"
 msgstr "E169: Câu lệnh quá đệ quy"
 
-#, fuzzy
 msgid "E681: Buffer is not loaded"
-msgstr "1 bộ đệm được bỏ nạp từ bộ nhớ"
+msgstr ""
 
 msgid "E171: Missing :endif"
 msgstr "E171: Thiếu câu lệnh :endif"
@@ -704,16 +680,14 @@ msgstr "E600: Thiếu câu lệnh :endtry"
 msgid "E170: Missing :endwhile"
 msgstr "E170: Thiếu câu lệnh :endwhile"
 
-#, fuzzy
 msgid "E170: Missing :endfor"
-msgstr "E171: Thiếu câu lệnh :endif"
+msgstr ""
 
 msgid "E588: :endwhile without :while"
 msgstr "E588: Câu lệnh :endwhile không có lệnh :while (1 cặp)"
 
-#, fuzzy
 msgid "E588: :endfor without :for"
-msgstr "E580: :endif không có :if"
+msgstr ""
 
 msgid "E13: File exists (add ! to override)"
 msgstr "E13: Tập tin đã tồn tại (thêm ! để ghi chèn)"
@@ -721,9 +695,9 @@ msgstr "E13: Tập tin đã tồn tại (thêm ! để ghi chèn)"
 msgid "E472: Command failed"
 msgstr "E472: Không thực hiện thành công câu lệnh"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E685: Internal error: %s"
-msgstr "E473: Lỗi nội bộ"
+msgstr ""
 
 msgid "Interrupted"
 msgstr "Bị gián đoạn"
@@ -735,28 +709,27 @@ msgstr "E474: Tham số không cho phép"
 msgid "E475: Invalid argument: %s"
 msgstr "E475: Tham số không cho phép: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s"
-msgstr "E475: Tham số không cho phép: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s: %s"
-msgstr "E475: Tham số không cho phép: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E983: Duplicate argument: %s"
-msgstr "E390: Tham số không cho phép: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid expression: \"%s\""
-msgstr "E15: Biểu thức không cho phép: %s"
+msgstr ""
 
 msgid "E16: Invalid range"
 msgstr "E16: Vùng không cho phép"
 
-#, fuzzy
 msgid "E473: Internal error in regexp"
-msgstr "E473: Lỗi nội bộ"
+msgstr ""
 
 msgid "E476: Invalid command"
 msgstr "E476: Câu lệnh không cho phép"
@@ -768,9 +741,8 @@ msgstr "E17: \"%s\" là mộ thư mục"
 msgid "E756: Spell checking is not possible"
 msgstr ""
 
-#, fuzzy
 msgid "E900: Invalid channel id"
-msgstr "E476: Câu lệnh không cho phép"
+msgstr ""
 
 msgid "E900: Invalid channel id: not a job"
 msgstr ""
@@ -782,18 +754,15 @@ msgstr ""
 msgid "E903: Process failed to start: %s: \"%s\""
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E904: channel is not a pty"
-msgstr "E664: danh sách những thay đổi trống rỗng"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E905: Couldn't open stdio channel: %s"
-msgstr "E456: Không thể mở tập tin \"%s\""
+msgstr ""
 
-#, fuzzy
 msgid "E906: invalid stream for channel"
-msgstr "E16: Vùng không cho phép"
+msgstr ""
 
 msgid "E906: invalid stream for rpc channel, use 'rpc'"
 msgstr ""
@@ -807,13 +776,13 @@ msgstr ""
 msgid "E364: Library call failed for \"%s()\""
 msgstr "E364: Gọi hàm số \"%s()\" của thư viện không thành công"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E667: Fsync failed: %s"
-msgstr "E667: Không thực hiện thành công hàm số fsync()"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E739: Cannot create directory %s: %s"
-msgstr "Không thể thực hiện một thư mục: \"%s\""
+msgstr ""
 
 msgid "E19: Mark has invalid line number"
 msgstr "E19: Dấu hiệu chỉ đến một số thứ tự dòng không đúng"
@@ -881,9 +850,9 @@ msgstr "E483: Không nhận được tên tập tin tạm thời (temp)"
 msgid "E484: Can't open file %s"
 msgstr "E484: Không mở được tập tin %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E484: Can't open file %s: %s"
-msgstr "E484: Không mở được tập tin %s"
+msgstr ""
 
 #, c-format
 msgid "E485: Can't read file %s"
@@ -941,21 +910,19 @@ msgstr "E461: Tên biến không cho phép: %s"
 msgid "E995: Cannot modify existing variable"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E46: Cannot change read-only variable \"%.*s\""
-msgstr "E46: Không thay đổi được biến chỉ đọc \"%s\""
+msgstr ""
 
-#, fuzzy
 msgid "E715: Dictionary required"
-msgstr "E129: Cần tên hàm số"
+msgstr ""
 
 #, c-format
 msgid "E979: Blob index out of range: %<PRId64>"
 msgstr ""
 
-#, fuzzy
 msgid "E978: Invalid operation for Blob"
-msgstr "E178: Giá trị của số đếm theo mặc định không đúng"
+msgstr ""
 
 #, c-format
 msgid "E118: Too many arguments for function: %s"
@@ -973,21 +940,19 @@ msgstr ""
 msgid "E716: Key not present in Dictionary: \"%.*s\""
 msgstr ""
 
-#, fuzzy
 msgid "E714: List required"
-msgstr "E471: Cần chỉ ra tham số"
+msgstr ""
 
-#, fuzzy
 msgid "E897: List or Blob required"
-msgstr "E397: Yêu cầu tên tập tin"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E899: Argument of %s must be a List or Blob"
-msgstr "E487: Tham số phải là một số dương"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E712: Argument of %s must be a List or Dictionary"
-msgstr "E487: Tham số phải là một số dương"
+msgstr ""
 
 #, c-format
 msgid "E896: Argument of %s must be a List, Dictionary or Blob"
@@ -1035,9 +1000,9 @@ msgstr "E77: Quá nhiều tên tập tin"
 msgid "E488: Trailing characters"
 msgstr "E488: Ký tự thừa ở đuôi"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E488: Trailing characters: %s"
-msgstr "E488: Ký tự thừa ở đuôi"
+msgstr ""
 
 msgid "E78: Unknown mark"
 msgstr "E78: Dấu hiệu không biết"
@@ -1054,9 +1019,8 @@ msgstr "E592: giá trị của 'winwidth' không thể nhỏ hơn 'winminwidth'"
 msgid "E80: Error while writing"
 msgstr "E80: Lỗi khi ghi nhớ"
 
-#, fuzzy
 msgid "E939: Positive count required"
-msgstr "E397: Yêu cầu tên tập tin"
+msgstr ""
 
 msgid "E81: Using <SID> not in a script context"
 msgstr "E81: Sử dụng <SID> ngoài phạm vi script"
@@ -1068,102 +1032,91 @@ msgstr "E107: Thiếu dấu ngoặc: %s"
 msgid "E749: Empty buffer"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E86: Buffer %<PRId64> does not exist"
-msgstr "E86: Bộ đệm %ld không tồn tại"
+msgstr ""
 
-#, fuzzy
 msgid "E37: No write since last change"
-msgstr "[Thay đổi chưa được ghi nhớ]\n"
+msgstr ""
 
 msgid "E37: No write since last change (add ! to override)"
 msgstr "E37: Thay đổi chưa được ghi nhớ (thêm ! để bỏ qua ghi nhớ)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: No write since last change for buffer %d (add ! to override)"
 msgstr ""
-"E89: Thay đổi trong bộ đệm %ld chưa được ghi lại (thêm ! để thoát ra bằng "
-"mọi giá)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E92: Buffer %d not found"
-msgstr "E92: Bộ đệm %ld không được tìm thấy"
+msgstr ""
 
 #, c-format
 msgid "E117: Unknown function: %s"
 msgstr "E117: Hàm số không biết: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E193: %s not inside a function"
-msgstr "E133: lệnh :return ở ngoài một hàm"
+msgstr ""
 
-#, fuzzy
 msgid "E948: Job still running"
-msgstr " (vẫn đang chạy)"
+msgstr ""
 
 msgid "E948: Job still running (add ! to end the job)"
 msgstr ""
 
-#, fuzzy
 msgid "E682: Invalid search pattern or delimiter"
-msgstr "E383: Chuỗi tìm kiếm không đúng: %s"
+msgstr ""
 
 msgid "E139: File is loaded in another buffer"
 msgstr "E139: Tập tin được nạp trong bộ đệm khác"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E764: Option '%s' is not set"
-msgstr "E236: Phông chữ \"%s\" không có độ rộng cố định (fixed-width)"
+msgstr ""
 
-#, fuzzy
 msgid "E850: Invalid register name"
-msgstr "E354: Tên sổ đăng ký không cho phép: '%s'"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E919: Directory not found in '%s': \"%s\""
-msgstr "E161: Không tìm thấy điểm dừng: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E952: Autocommand caused recursive behavior"
-msgstr "E169: Câu lệnh quá đệ quy"
+msgstr ""
 
 msgid "E328: Menu only exists in another mode"
 msgstr "E328: Trình đơn chỉ có trong chế độ khác"
 
-#, fuzzy
 msgid "E813: Cannot close autocmd window"
-msgstr "E444: Không được đóng cửa sổ cuối cùng"
+msgstr ""
 
 #, c-format
 msgid "E684: List index out of range: %<PRId64>"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E686: Argument of %s must be a List"
-msgstr "E487: Tham số phải là một số dương"
+msgstr ""
 
 msgid "E519: Option not supported"
 msgstr "E519: Tùy chọn không được hỗ trợ"
 
-#, fuzzy
 msgid "E856: Filename too long"
-msgstr "E75: Tên quá dài"
+msgstr ""
 
-#, fuzzy
 msgid "E806: Using a Float as a String"
-msgstr "E374: Thiếu ] trong chuỗi định dạng"
+msgstr ""
 
-#, fuzzy
 msgid "E788: Not allowed to edit another buffer now"
-msgstr "E48: Không cho phép trong hộp cát (sandbox)"
+msgstr ""
 
 #, c-format
 msgid "E1023: Using a Number as a Bool: %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1085: Not a callable type: %s"
-msgstr "E108: Không có biến như vậy: \"%s\""
+msgstr ""
 
 msgid "E855: Autocommands caused command to abort"
 msgstr ""
@@ -1179,9 +1132,8 @@ msgstr ""
 msgid "E5601: Cannot close window, only floating window would remain"
 msgstr ""
 
-#, fuzzy
 msgid "E5602: Cannot exchange or rotate float"
-msgstr "E530: Không thể thay đổi terminal trong giao diện đồ họa GUI"
+msgstr ""
 
 #, c-format
 msgid "E344: Can't find directory \"%s\" in cdpath"
@@ -1206,61 +1158,52 @@ msgstr ""
 msgid "E741: Value is locked: %.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E742: Cannot change value"
-msgstr "E284: Không đặt được giá trị nội dung nhập vào (IC)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E742: Cannot change value of %.*s"
-msgstr "E284: Không đặt được giá trị nội dung nhập vào (IC)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
-msgstr "E46: Không thay đổi được biến chỉ đọc \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E795: Cannot delete variable %.*s"
-msgstr "E46: Không thay đổi được biến chỉ đọc \"%s\""
+msgstr ""
 
 msgid "E960: Problem creating the internal diff"
 msgstr ""
 
-#, fuzzy
 msgid "E1155: Cannot define autocommands for ALL events"
-msgstr "E217: Không thể thực hiện câu lệnh tự động cho MỌI sự kiện"
+msgstr ""
 
-#, fuzzy
 msgid "E1156: Cannot change the argument list recursively"
-msgstr "E659: Không thể gọi Python một cách đệ quy"
+msgstr ""
 
-#, fuzzy
 msgid "E1240: Resulting text too long"
-msgstr "E340: Dòng đang trở thành quá dài"
+msgstr ""
 
-#, fuzzy
 msgid "E1247: Line number out of range"
-msgstr "số thứ tự của dòng vượt quá giới hạn"
+msgstr ""
 
-#, fuzzy
 msgid "E5248: Invalid character in group name"
-msgstr "W18: Ký tự không cho phép trong tên nhóm"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E1249: Highlight group name too long"
-msgstr "E411: không tìm thấy nhóm chiếu sáng cú pháp: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E928: String required"
-msgstr "E397: Yêu cầu tên tập tin"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E964: Invalid column number: %ld"
-msgstr "E182: Tên câu lệnh không đúng"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E966: Invalid line number: %ld"
-msgstr "E19: Dấu hiệu chỉ đến một số thứ tự dòng không đúng"
+msgstr ""
 
 #, c-format
 msgid "E998: Reduce of an empty %s with no initial value"
@@ -1269,25 +1212,23 @@ msgstr ""
 msgid "E1239: Invalid value for blob: 0x<PRIX64>"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E1278: Stray '}' without a matching '{': %s"
-msgstr "E384: tìm kiếm kết thúc ở ĐẦU tập tin; không tìm thấy %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1279: Missing '}': %s"
-msgstr "E124: Thiếu '(': %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1310: Cannot change menus while listing"
-msgstr "E530: Không thể thay đổi terminal trong giao diện đồ họa GUI"
+msgstr ""
 
 msgid "E1312: Not allowed to change the window layout in this autocmd"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1510: Value too large: %s"
-msgstr "E125: Tham số không cho phép: %s"
+msgstr ""
 
 msgid "E5767: Cannot use :undo! to redo or move to a different undo branch"
 msgstr ""
@@ -1298,13 +1239,12 @@ msgstr ""
 msgid "E1514: 'findfunc' did not return a List type"
 msgstr ""
 
-#, fuzzy
 msgid "E1546: Cannot switch to a closing buffer"
-msgstr "E96: Chỉ có thể theo dõi sự khác nhau trong nhiều nhất %ld bộ đệm"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1549: Cannot have more than %d diff anchors"
-msgstr "E96: Chỉ có thể theo dõi sự khác nhau trong nhiều nhất %ld bộ đệm"
+msgstr ""
 
 msgid "E1550: Failed to find all diff anchors"
 msgstr ""
@@ -1315,9 +1255,9 @@ msgstr ""
 msgid "E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5570: Cannot update trust file: %s"
-msgstr "E557: Không thể mở tập tin termcap"
+msgstr ""
 
 #, c-format
 msgid "E282: Cannot read from \"%s\""
@@ -1337,31 +1277,27 @@ msgstr "tìm kiếm sẽ được tiếp tục từ CUỐI tài liệu"
 msgid "search hit BOTTOM, continuing at TOP"
 msgstr "tìm kiếm sẽ được tiếp tục từ ĐẦU tài liệu"
 
-#, fuzzy
 msgid " line "
-msgstr "1 dòng, "
+msgstr ""
 
 msgid "E111: Missing ']'"
 msgstr "E111: Thiếu ']'"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E697: Missing end of List ']': %s"
-msgstr "E398: Thiếu '=': %s"
+msgstr ""
 
-#, fuzzy
 msgid "E719: Cannot slice a Dictionary"
-msgstr "E79: Không thực hiện được phép thế theo wildcard"
+msgstr ""
 
-#, fuzzy
 msgid "E909: Cannot index a special variable"
-msgstr "E46: Không thay đổi được biến chỉ đọc \"%s\""
+msgstr ""
 
 msgid "E274: No white space allowed before parenthesis"
 msgstr ""
 
-#, fuzzy
 msgid "E695: Cannot index a Funcref"
-msgstr "E90: Không thể bỏ nạp từ bộ nhớ bộ đệm cuối cùng"
+msgstr ""
 
 msgid "E698: Variable nested too deep for making a copy"
 msgstr ""
@@ -1369,21 +1305,19 @@ msgstr ""
 msgid "E1098: String, List or Blob required"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1169: Expression too recursive: %s"
-msgstr "E169: Câu lệnh quá đệ quy"
+msgstr ""
 
 #, c-format
 msgid "E1203: Dot can only be used on a dictionary: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E1192: Empty function name"
-msgstr "E129: Cần tên hàm số"
+msgstr ""
 
-#, fuzzy
 msgid "E1265: Cannot use a partial here"
-msgstr "E165: Đây là tập tin cuối cùng"
+msgstr ""
 
 msgid "E689: Can only index a List, Dictionary or Blob"
 msgstr ""
@@ -1391,42 +1325,36 @@ msgstr ""
 msgid "E708: [:] must come last"
 msgstr ""
 
-#, fuzzy
 msgid "E713: Cannot use empty key after ."
-msgstr "E529: Giá trị của tùy chọn 'term' không thể là một chuỗi trống rỗng"
+msgstr ""
 
 msgid "E709: [:] requires a List or Blob value"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E121: Undefined variable: %.*s"
-msgstr "E121: Biến không xác định: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a range"
-msgstr "E90: Không thể bỏ nạp từ bộ nhớ bộ đệm cuối cùng"
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a list or dict"
-msgstr "E90: Không thể bỏ nạp từ bộ nhớ bộ đệm cuối cùng"
+msgstr ""
 
-#, fuzzy
 msgid "E690: Missing \"in\" after :for"
-msgstr "E69: Thiếu ] sau %s%%["
+msgstr ""
 
 msgid "E109: Missing ':' after '?'"
 msgstr "E109: Thiếu ':' sau '?'"
 
-#, fuzzy
 msgid "E804: Cannot use '%' with Float"
-msgstr "E360: Không chạy được shell với tùy chọn -f"
+msgstr ""
 
 msgid "E110: Missing ')'"
 msgstr "E110: Thiếu ')'"
 
-#, fuzzy
 msgid "E260: Missing name after ->"
-msgstr "E526: Thiếu một số sau <%s>"
+msgstr ""
 
 #, c-format
 msgid "E112: Option name missing: %s"
@@ -1447,37 +1375,35 @@ msgstr "E114: Thiếu ngoặc kép: %s"
 msgid "E115: Missing quote: %s"
 msgstr "E115: Thiếu ngoặc kép: %s"
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E696: Missing comma in List: %s"
-msgstr "E416: thiếu dấu bằng: %s"
+msgstr ""
 
 msgid "Not enough memory to set references, garbage collection aborted!"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E720: Missing colon in Dictionary: %s"
-msgstr "E405: Thiếu dấu bằng: %s"
+msgstr ""
 
 #, c-format
 msgid "E721: Duplicate key in Dictionary: \"%s\""
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E722: Missing comma in Dictionary: %s"
-msgstr "E527: Thiếu dấu phẩy"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E723: Missing end of Dictionary '}': %s"
-msgstr "E126: Thiếu lệnh :endfunction"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Executing command: \"%s\""
-msgstr "Thực hiện %s"
+msgstr ""
 
-#, fuzzy
 msgid "E921: Invalid callback argument"
-msgstr "E474: Tham số không cho phép"
+msgstr ""
 
 msgid ""
 "\n"
@@ -1495,21 +1421,17 @@ msgstr ""
 msgid "E691: Can only compare List with List"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E692: Invalid operation for List"
-msgstr "E59: ký tự không cho phép sau %s@"
+msgstr ""
 
 msgid "E735: Can only compare Dictionary with Dictionary"
 msgstr ""
 
-#, fuzzy
 msgid "E736: Invalid operation for Dictionary"
-msgstr "E116: Tham số cho hàm %s đưa ra không đúng"
+msgstr ""
 
-#, fuzzy
 msgid "E694: Invalid operation for Funcrefs"
-msgstr "E116: Tham số cho hàm %s đưa ra không đúng"
+msgstr ""
 
 #, c-format
 msgid "E474: Expected comma before list item: %s"
@@ -1519,18 +1441,17 @@ msgstr ""
 msgid "E474: Expected colon before dictionary value: %s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string key: %s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Expected comma before dictionary key: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unfinished escape sequence: %.*s"
-msgstr "E540: Dãy các biểu thức không đóng"
+msgstr ""
 
 #, c-format
 msgid "E474: Unfinished unicode escape sequence: %.*s"
@@ -1540,9 +1461,9 @@ msgstr ""
 msgid "E474: Expected four hex digits after \\u: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unknown escape sequence: %.*s"
-msgstr "E409: Tên nhóm không biết: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: ASCII control characters cannot be present inside string: %.*s"
@@ -1558,27 +1479,25 @@ msgid ""
 "%.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string end: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Leading zeroes are not allowed: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after minus sign: %.*s"
-msgstr "E526: Thiếu một số sau <%s>"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after decimal dot: %.*s"
-msgstr "E526: Thiếu một số sau <%s>"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing exponent: %.*s"
-msgstr "E417: thiếu tham số: %s"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -1607,18 +1526,17 @@ msgstr ""
 msgid "E474: Closing dictionary with square bracket: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing comma: %.*s"
-msgstr "E488: Ký tự thừa ở đuôi"
+msgstr ""
 
 #, c-format
 msgid "E474: Expected value after colon: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected value: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Comma not inside container: %.*s"
@@ -1628,9 +1546,9 @@ msgstr ""
 msgid "E474: Duplicate comma: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Comma after colon: %.*s"
-msgstr "E254: Không chỉ định được màu %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Using comma in place of colon: %.*s"
@@ -1644,14 +1562,13 @@ msgstr ""
 msgid "E474: Colon not inside container: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using colon not in dictionary: %.*s"
-msgstr "Quét từ điển: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected colon: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Colon after comma: %.*s"
@@ -1661,33 +1578,29 @@ msgstr ""
 msgid "E474: Duplicate colon: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected null: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected true: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected false: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unidentified byte: %.*s"
-msgstr "E121: Biến không xác định: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing characters: %.*s"
-msgstr "E488: Ký tự thừa ở đuôi"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected end of input: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E5010: List item %d of the second argument is not a string"
@@ -1708,9 +1621,9 @@ msgstr ""
 msgid "partial"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "argument %i"
-msgstr " vim [các tham số] "
+msgstr ""
 
 msgid "partial self dictionary"
 msgstr ""
@@ -1751,9 +1664,8 @@ msgstr ""
 msgid "encode_tv2string() argument"
 msgstr ""
 
-#, fuzzy
 msgid ":echo argument"
-msgstr "E38: Tham sô bằng 0"
+msgstr ""
 
 msgid "encode_tv2json() argument"
 msgstr ""
@@ -1766,20 +1678,18 @@ msgstr ""
 msgid "E5005: Unable to dump %s: container references itself in %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error while writing: %s"
-msgstr "E80: Lỗi khi ghi nhớ"
+msgstr ""
 
-#, fuzzy
 msgid "E5000: Cannot find tab number."
-msgstr "E320: Không tìm được dòng %ld"
+msgstr ""
 
 msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
 msgstr ""
 
-#, fuzzy
 msgid "E5002: Cannot find window number."
-msgstr "E671: Không tìm được tiêu đề cửa sổ \"%s\""
+msgstr ""
 
 msgid "<empty>"
 msgstr ""
@@ -1790,38 +1700,34 @@ msgstr "E655: Quá nhiều liên kết tượng trưng (vòng lặp?)"
 msgid "writefile() first argument must be a List or a Blob"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5060: Unknown flag: %s"
-msgstr "E235: Không rõ phông chữ: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E482: Can't open file with an empty name"
-msgstr "E212: Không thể mở tập tin để ghi nhớ"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E482: Can't open file %s for writing: %s"
-msgstr "E212: Không thể mở tập tin để ghi nhớ"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error when closing file %s: %s"
-msgstr "E209: Lỗi đóng \"%s\""
+msgstr ""
 
-#, fuzzy
 msgid "E957: Invalid window number"
-msgstr "E534: Phông chữ, với ký tự có chiều rộng gấp đôi, không đúng"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E935: Invalid submatch number: %d"
-msgstr "E354: Tên sổ đăng ký không cho phép: '%s'"
+msgstr ""
 
-#, fuzzy
 msgid "E1132: Missing function argument"
-msgstr "E126: Thiếu lệnh :endfunction"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid channel stream \"%s\""
-msgstr "E59: ký tự không cho phép sau %s@"
+msgstr ""
 
 msgid "&Ok"
 msgstr "&Ok"
@@ -1838,9 +1744,9 @@ msgstr ""
 msgid "flatten() argument"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E700: Unknown function: %s"
-msgstr "E117: Hàm số không biết: %s"
+msgstr ""
 
 msgid "E923: Second argument of function() must be a list or a dict"
 msgstr ""
@@ -1848,9 +1754,8 @@ msgstr ""
 msgid "called inputrestore() more often than inputsave()"
 msgstr "Hàm số inputrestore() được gọi nhiều hơn hàm inputsave()"
 
-#, fuzzy
 msgid "E786: Range not allowed"
-msgstr "E481: Không cho phép sử dụng phạm vi"
+msgstr ""
 
 msgid "jobstart(...,{term=true}) requires unmodified buffer"
 msgstr ""
@@ -1859,17 +1764,15 @@ msgstr ""
 msgid "Terminal already connected to buffer %d"
 msgstr ""
 
-#, fuzzy
 msgid "E474: Failed to convert list to string"
-msgstr "E620: Không thể chuyển từ các ký tự nhiều byte thành bảng mã \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Failed to parse %.*s"
-msgstr "E241: Không thể gửi tin nhắn tới %s"
+msgstr ""
 
-#, fuzzy
 msgid "E701: Invalid type for len()"
-msgstr "E596: Phông chữ không đúng"
+msgstr ""
 
 #, c-format
 msgid "msgpackdump() argument, index %i"
@@ -1888,17 +1791,17 @@ msgstr ""
 msgid "E727: Start past end"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E962: Invalid action: '%s'"
-msgstr "E383: Chuỗi tìm kiếm không đúng: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "connection failed: %s"
-msgstr "XSMP thực hiện SmcOpenConnection không thành công: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E6100: \"%s\" is not a valid stdpath"
-msgstr "E236: Phông chữ \"%s\" không có độ rộng cố định (fixed-width)"
+msgstr ""
 
 msgid "(Invalid)"
 msgstr "(Không đúng)"
@@ -1911,13 +1814,11 @@ msgstr ""
 msgid "E1250: Argument of %s must be a List, String, Dictionary or Blob"
 msgstr ""
 
-#, fuzzy
 msgid "map() argument"
-msgstr " vim [các tham số] "
+msgstr ""
 
-#, fuzzy
 msgid "mapnew() argument"
-msgstr "Có quá nhiều tham số soạn thảo"
+msgstr ""
 
 msgid "filter() argument"
 msgstr ""
@@ -1925,9 +1826,8 @@ msgstr ""
 msgid "foreach() argument"
 msgstr ""
 
-#, fuzzy
 msgid "add() argument"
-msgstr "Tham số không được phép cho"
+msgstr ""
 
 msgid "extend() argument"
 msgstr ""
@@ -1935,9 +1835,8 @@ msgstr ""
 msgid "extendnew() argument"
 msgstr ""
 
-#, fuzzy
 msgid "insert() argument"
-msgstr "Có quá nhiều tham số soạn thảo"
+msgstr ""
 
 msgid "remove() argument"
 msgstr ""
@@ -1951,67 +1850,65 @@ msgstr ""
 msgid "E908: Using an invalid value as a String"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E1174: String required for argument %d"
-msgstr "E179: yêu cầu đưa ra tham số để kết thúc"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1175: Non-empty string required for argument %d"
-msgstr "E467: Phần phục đặc biệt yêu cầu một tham số của hàm"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1206: Dictionary required for argument %d"
-msgstr "E467: Phần phục đặc biệt yêu cầu một tham số của hàm"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1210: Number required for argument %d"
-msgstr "E521: Sau dấu = cần đưa ra một số"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1211: List required for argument %d"
-msgstr "E466: câu lệnh :winpos yêu câu hai tham số bằng số"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1212: Bool required for argument %d"
-msgstr "E466: câu lệnh :winpos yêu câu hai tham số bằng số"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1219: Float or Number required for argument %d"
-msgstr "E521: Sau dấu = cần đưa ra một số"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E1220: String or Number required for argument %d"
-msgstr "E179: yêu cầu đưa ra tham số để kết thúc"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1222: String or List required for argument %d"
-msgstr "E466: câu lệnh :winpos yêu câu hai tham số bằng số"
+msgstr ""
 
 #, c-format
 msgid "E1225: List, Dictionary, Blob or String required for argument %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1226: List or Blob required for argument %d"
-msgstr "E467: Phần phục đặc biệt yêu cầu một tham số của hàm"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1238: Blob required for argument %d"
-msgstr "E466: câu lệnh :winpos yêu câu hai tham số bằng số"
+msgstr ""
 
 #, c-format
 msgid "E1252: String, List or Blob required for argument %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1256: String or function required for argument %d"
-msgstr "E467: Phần phục đặc biệt yêu cầu một tham số của hàm"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1297: Non-NULL Dictionary required for argument %d"
-msgstr "E467: Phần phục đặc biệt yêu cầu một tham số của hàm"
+msgstr ""
 
 msgid "E710: List value has more items than target"
 msgstr ""
@@ -2019,9 +1916,8 @@ msgstr ""
 msgid "E711: List value has not enough items"
 msgstr ""
 
-#, fuzzy
 msgid "E702: Sort compare function failed"
-msgstr "E237: Chọn máy in không thành công"
+msgstr ""
 
 msgid "E882: Uniq compare function failed"
 msgstr ""
@@ -2029,17 +1925,15 @@ msgstr ""
 msgid "sort() argument"
 msgstr ""
 
-#, fuzzy
 msgid "uniq() argument"
-msgstr "Tham số không được phép cho"
+msgstr ""
 
 msgid "E6000: Argument is not a function or function name"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E737: Key already exists: %s"
-msgstr "E227: đã có ánh xạ cho %s"
+msgstr ""
 
 msgid "E972: Blob value does not have the right number of bytes"
 msgstr ""
@@ -2062,9 +1956,8 @@ msgstr ""
 msgid "E5299: Expected a Number or a String, Boolean found"
 msgstr ""
 
-#, fuzzy
 msgid "E5300: Expected a Number or a String"
-msgstr "E373: Không mong đợi %%%c trong chuỗi định dạng"
+msgstr ""
 
 msgid "E745: Using a List as a Number"
 msgstr ""
@@ -2078,13 +1971,11 @@ msgstr ""
 msgid "E974: Using a Blob as a Number"
 msgstr ""
 
-#, fuzzy
 msgid "E685: using an invalid value as a Number"
-msgstr "E19: Dấu hiệu chỉ đến một số thứ tự dòng không đúng"
+msgstr ""
 
-#, fuzzy
 msgid "E730: Using a List as a String"
-msgstr "E374: Thiếu ] trong chuỗi định dạng"
+msgstr ""
 
 msgid "E731: Using a Dictionary as a String"
 msgstr ""
@@ -2113,41 +2004,36 @@ msgstr ""
 msgid "E975: Using a Blob as a Float"
 msgstr ""
 
-#, fuzzy
 msgid "E808: Number or Float required"
-msgstr "E521: Sau dấu = cần đưa ra một số"
+msgstr ""
 
 #, c-format
 msgid "E122: Function %s already exists, add ! to replace it"
 msgstr "E122: Hàm số %s đã có, hãy thêm ! để thay thế nó."
 
-#, fuzzy
 msgid "E717: Dictionary entry already exists"
-msgstr "E95: Đã có bộ đệm với tên như vậy"
+msgstr ""
 
-#, fuzzy
 msgid "E718: Funcref required"
-msgstr "E129: Cần tên hàm số"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E130: Unknown function: %s"
-msgstr "E117: Hàm số không biết: %s"
+msgstr ""
 
 msgid "E454: Function list was modified"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E1058: Function nesting too deep"
-msgstr "E218: câu lệnh tự động xếp lồng vào nhau quá xâu"
+msgstr ""
 
 #, c-format
 msgid "E1068: No white space allowed before '%s': %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1145: Missing heredoc end marker: %s"
-msgstr "E114: Thiếu ngoặc kép: %s"
+msgstr ""
 
 msgid "E1300: Cannot use a partial with dictionary for :defer"
 msgstr ""
@@ -2156,21 +2042,20 @@ msgstr ""
 msgid "E125: Illegal argument: %s"
 msgstr "E125: Tham số không cho phép: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E853: Duplicate argument name: %s"
-msgstr "E154: Thẻ ghi lặp lại \"%s\" trong tập tin %s"
+msgstr ""
 
 msgid "E989: Non-default argument follows default argument"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E451: Expected }: %s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E740: Too many arguments for function %s"
-msgstr "E118: Quá nhiều tham số cho hàm: %s"
+msgstr ""
 
 #, c-format
 msgid "E116: Invalid arguments for function %s"
@@ -2187,29 +2072,28 @@ msgstr "lời gọi %s"
 msgid "%s aborted"
 msgstr "%s dừng"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s returning #%<PRId64>"
-msgstr "%s trả lại #%ld"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s returning %s"
-msgstr "%s trả lại \"%s\""
+msgstr ""
 
 #, c-format
 msgid "continuing in %s"
 msgstr "tiếp tục trong %s"
 
-#, fuzzy
 msgid "E699: Too many arguments"
-msgstr "Có quá nhiều tham số soạn thảo"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E276: Cannot use function as a method: %s"
-msgstr "E127: Không thể định nghĩa lại hàm số %s: hàm đang được sử dụng"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E933: Function was deleted: %s"
-msgstr "E129: Cần tên hàm số"
+msgstr ""
 
 #, c-format
 msgid "E120: Using <SID> not in a script context: %s"
@@ -2222,13 +2106,13 @@ msgstr ""
 msgid "E129: Function name required"
 msgstr "E129: Cần tên hàm số"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E884: Function name cannot contain a colon: %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr ""
 
 #, c-format
 msgid "E123: Undefined function: %s"
@@ -2237,63 +2121,61 @@ msgstr "E123: Hàm số không xác định: %s"
 msgid "E126: Missing :endfunction"
 msgstr "E126: Thiếu lệnh :endfunction"
 
-#, fuzzy, c-format
+#, c-format
 msgid "W22: Text found after :endfunction: %s"
-msgstr "E123: Hàm số không xác định: %s"
+msgstr ""
 
 #, c-format
 msgid "E124: Missing '(': %s"
 msgstr "E124: Thiếu '(': %s"
 
-#, fuzzy
 msgid "E862: Cannot use g: here"
-msgstr "E284: Không đặt được giá trị nội dung nhập vào (IC)"
+msgstr ""
 
 #, c-format
 msgid "E932: Closure function should not be at top level: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E707: Function name conflicts with variable: %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr ""
 
 #, c-format
 msgid "E127: Cannot redefine function %s: It is in use"
 msgstr "E127: Không thể định nghĩa lại hàm số %s: hàm đang được sử dụng"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E746: Function name does not match script file name: %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr ""
 
 #, c-format
 msgid "E131: Cannot delete function %s: It is in use"
 msgstr "E131: Không thể xóa hàm số %s: Hàm đang được sử dụng"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot delete function %s: It is being used internally"
-msgstr "E131: Không thể xóa hàm số %s: Hàm đang được sử dụng"
+msgstr ""
 
 msgid "E133: :return not inside a function"
 msgstr "E133: lệnh :return ở ngoài một hàm"
 
-#, fuzzy
 msgid "E18: Unexpected characters in :let"
-msgstr "E18: Ở trước '=' có các ký tự không mong đợi"
+msgstr ""
 
 msgid "E452: Double ; in list of variables"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E940: Cannot lock or unlock variable %s"
-msgstr "E46: Không thay đổi được biến chỉ đọc \"%s\""
+msgstr ""
 
 #, c-format
 msgid "E963: Setting v:%s to value with wrong type"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E990: Missing end marker '%s'"
-msgstr "E69: Thiếu ] sau %s%%["
+msgstr ""
 
 msgid "E991: Cannot use =<< here"
 msgstr ""
@@ -2303,13 +2185,11 @@ msgid ""
 "values"
 msgstr ""
 
-#, fuzzy
 msgid "E221: Marker cannot start with lower case letter"
-msgstr "E183: Câu lệnh người dùng định nghĩa phải bắt đầu với một ký tự hoa"
+msgstr ""
 
-#, fuzzy
 msgid "E172: Missing marker"
-msgstr "E527: Thiếu dấu phẩy"
+msgstr ""
 
 msgid "E687: Less targets than List items"
 msgstr ""
@@ -2317,20 +2197,18 @@ msgstr ""
 msgid "E688: More targets than List items"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E738: Can't list variables for %s"
-msgstr "E138: Không thể ghi tập tin viminfo %s!"
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock an environment variable"
-msgstr "E46: Không thay đổi được biến chỉ đọc \"%s\""
+msgstr ""
 
 msgid "E996: Cannot lock an option"
 msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a register"
-msgstr "E90: Không thể bỏ nạp từ bộ nhớ bộ đệm cuối cùng"
+msgstr ""
 
 #, c-format
 msgid "E108: No such variable: \"%s\""
@@ -2340,17 +2218,17 @@ msgstr "E108: Không có biến như vậy: \"%s\""
 msgid "E1122: Variable is locked: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr ""
 
 #, c-format
 msgid "E705: Variable name conflicts with existing function: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E521: Number required: &%s = '%s'"
-msgstr "E521: Sau dấu = cần đưa ra một số"
+msgstr ""
 
 msgid "E1308: Cannot resize a window in another tab page"
 msgstr ""
@@ -2361,29 +2239,28 @@ msgstr ""
 msgid "failed to lookup host or port"
 msgstr ""
 
-#, fuzzy
 msgid "connection refused"
-msgstr "được kết nối"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 msgid "E144: Non-numeric argument to :z"
 msgstr "E144: Tham số của lệnh :z phải là số"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"
-msgstr "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
+msgstr ""
 
 #, c-format
 msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
 msgstr "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
 
-#, fuzzy, c-format
+#, c-format
 msgid "> %d, Hex %04x, Oct %o, Digr %s"
-msgstr "> %d, Hex %04x, Octal %o"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "> %d, Hex %08x, Oct %o, Digr %s"
-msgstr "> %d, Hex %08x, Octal %o"
+msgstr ""
 
 #, c-format
 msgid "> %d, Hex %04x, Octal %o"
@@ -2393,23 +2270,22 @@ msgstr "> %d, Hex %04x, Octal %o"
 msgid "> %d, Hex %08x, Octal %o"
 msgstr "> %d, Hex %08x, Octal %o"
 
-#, fuzzy
 msgid "E134: Cannot move a range of lines into itself"
-msgstr "E134: Di chuyển các dòng lên chính chúng"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line moved"
 msgid_plural "%<PRId64> lines moved"
-msgstr[0] "Đã di chuyển %ld dòng"
-msgstr[1] "Đã di chuyển %ld dòng"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "E482: Can't create file %s"
 msgstr "E482: Không tạo được tập tin %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines filtered"
-msgstr "Đã lọc %ld dòng"
+msgstr ""
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: Các lệnh tự động *Filter* không được thay đổi bộ đệm hiện thời"
@@ -2417,9 +2293,9 @@ msgstr "E135: Các lệnh tự động *Filter* không được thay đổi bộ
 msgid "[No write since last change]\n"
 msgstr "[Thay đổi chưa được ghi nhớ]\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E503: \"%s\" is not a file or writable device"
-msgstr "không phải là một tập tin thay một thiết bị có thể ghi nhớ"
+msgstr ""
 
 msgid "Write partial file?"
 msgstr "Ghi nhớ một phần tập tin?"
@@ -2427,32 +2303,30 @@ msgstr "Ghi nhớ một phần tập tin?"
 msgid "E140: Use ! to write partial buffer"
 msgstr "E140: Sử dụng ! để ghi nhớ một phần bộ đệm"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Overwrite existing file \"%s\"?"
-msgstr "Ghi đè lên tập tin đã có \"%.*s\"?"
+msgstr ""
 
 #, c-format
 msgid "Swap file \"%s\" exists, overwrite anyway?"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E768: Swap file exists: %s (:silent! overrides)"
-msgstr "E13: Tập tin đã tồn tại (thêm ! để ghi chèn)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E141: No file name for buffer %<PRId64>"
-msgstr "E141: Không có tên tập tin cho bộ đệm %ld"
+msgstr ""
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: Tập tin chưa được ghi nhớ: Ghi nhớ bị tắt bởi tùy chọn 'write'"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "'readonly' option is set for \"%s\".\n"
 "Do you wish to write anyway?"
 msgstr ""
-"Tùy chọn 'readonly' được đặt cho \"%.*s\".\n"
-"Ghi nhớ bằng mọi giá?"
 
 #, c-format
 msgid ""
@@ -2461,9 +2335,9 @@ msgid ""
 "Do you wish to try?"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E505: \"%s\" is read-only (add ! to override)"
-msgstr "là tập tin chỉ đọc (thêm ! để ghi nhớ bằng mọi giá)"
+msgstr ""
 
 #, c-format
 msgid "E143: Autocommands unexpectedly deleted new buffer %s"
@@ -2504,9 +2378,8 @@ msgid_plural "%<PRId64> substitutions on %<PRId64> lines"
 msgstr[0] ""
 msgstr[1] ""
 
-#, fuzzy
 msgid "E147: Cannot do :global recursive with a range"
-msgstr "E147: Không thực hiện được lệnh :global đệ qui"
+msgstr ""
 
 msgid "E148: Regular expression missing from global"
 msgstr "E148: Thiếu biểu thức chính quy trong lệnh :global"
@@ -2515,30 +2388,29 @@ msgstr "E148: Thiếu biểu thức chính quy trong lệnh :global"
 msgid "Pattern found in every line: %s"
 msgstr "Tìm thấy tương ứng trên mọi dòng: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Pattern not found: %s"
-msgstr "Không tìm thấy mẫu (pattern)"
+msgstr ""
 
-#, fuzzy
 msgid "No old files"
-msgstr "Không có tập tin được tính đến"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 #, c-format
 msgid "E666: Compiler not supported: %s"
 msgstr "E666: trình biên dịch không được hỗ trợ: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Save changes to \"%s\"?"
-msgstr "Ghi nhớ thay đổi vào \"%.*s\"?"
+msgstr ""
 
 #, c-format
 msgid "Close \"%s\"?"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E947: Job still running in buffer \"%s\""
-msgstr "E94: Không có bộ đệm tương ứng với %s"
+msgstr ""
 
 #, c-format
 msgid "E162: No write since last change for buffer \"%s\""
@@ -2552,10 +2424,8 @@ msgstr ""
 msgid "E464: Ambiguous use of user-defined command"
 msgstr "E464: Sự sử dụng không rõ ràng câu lệnh do người dùng định nghĩa"
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E489: No call stack to substitute for \"<stack>\""
-msgstr "E498: không có tên tập tin :source để thay thế \"<sfile>\""
+msgstr ""
 
 msgid "E492: Not an editor command"
 msgstr "E492: Không phải là câu lệnh của trình soạn thảo"
@@ -2577,20 +2447,14 @@ msgstr "E497: Không có tên tương ứng câu lệnh tự động để thay 
 msgid "E498: No :source file name to substitute for \"<sfile>\""
 msgstr "E498: không có tên tập tin :source để thay thế \"<sfile>\""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E842: No line number to use for \"<slnum>\""
-msgstr "E498: không có tên tập tin :source để thay thế \"<sfile>\""
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E961: No line number to use for \"<sflnum>\""
-msgstr "E498: không có tên tập tin :source để thay thế \"<sfile>\""
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E1274: No script file name to substitute for \"<script>\""
-msgstr "E498: không có tên tập tin :source để thay thế \"<sfile>\""
+msgstr ""
 
 msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
 msgstr ""
@@ -2599,13 +2463,12 @@ msgstr ""
 msgid "E501: At end-of-file"
 msgstr "E501: Ở cuối tập tin"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Executing: %s"
-msgstr "Thực hiện %s"
+msgstr ""
 
-#, fuzzy
 msgid "line %"
-msgstr "dòng %ld"
+msgstr ""
 
 msgid "End of sourced file"
 msgstr "Kết thúc tập tin script"
@@ -2633,40 +2496,37 @@ msgstr "E494: Hãy sử dụng w hoặc w>>"
 msgid "E943: Command table needs to be updated, run 'make'"
 msgstr ""
 
-#, fuzzy
 msgid "E319: The command is not available in this version"
-msgstr "E319: Xin lỗi, câu lệnh này không có trong phiên bản này"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d more file to edit.  Quit anyway?"
 msgid_plural "%d more files to edit.  Quit anyway?"
-msgstr[0] "Còn %d tập tin nữa chưa soạn thảo. Thoát?"
-msgstr[1] "Còn %d tập tin nữa chưa soạn thảo. Thoát?"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E173: %d more file to edit"
 msgid_plural "E173: %d more files to edit"
-msgstr[0] "E173: %ld tập tin nữa chưa soạn thảo."
-msgstr[1] "E173: %ld tập tin nữa chưa soạn thảo."
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E185: Cannot find color scheme '%s'"
-msgstr "E185: Không tin thấy sơ đồ màu sắc %s"
+msgstr ""
 
 msgid "Greetings, Vim user!"
 msgstr "Xin chào người dùng Vim!"
 
-#, fuzzy
 msgid "E784: Cannot close last tab page"
-msgstr "E444: Không được đóng cửa sổ cuối cùng"
+msgstr ""
 
-#, fuzzy
 msgid "Already only one tab page"
-msgstr "Chỉ có một cửa sổ"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Tab page %d"
-msgstr "Trang %d"
+msgstr ""
 
 msgid "E25: Nvim does not have a built-in GUI"
 msgstr ""
@@ -2717,9 +2577,8 @@ msgstr ""
 msgid "E5009: Invalid $VIMRUNTIME: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E5009: Invalid 'runtimepath'"
-msgstr "E598: Bộ phông chữ không đúng"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 msgid "E583: Multiple :else"
@@ -2745,9 +2604,9 @@ msgstr "Trường hợp ngoại lệ bị bỏ qua: %s"
 msgid "Exception finished: %s"
 msgstr "Kết thúc việc xử lý trường hợp ngoại lệ: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s, line %<PRId64>"
-msgstr "%s, dòng %ld"
+msgstr ""
 
 #, c-format
 msgid "Exception caught: %s"
@@ -2793,25 +2652,20 @@ msgstr "E582: :elseif không có :if"
 msgid "E584: :elseif after :else"
 msgstr "E584: :elseif sau :else"
 
-#, fuzzy
 msgid "E585: :while/:for nesting too deep"
-msgstr "E585: :while xếp lồng vào nhau quá sâu"
+msgstr ""
 
-#, fuzzy
 msgid "E586: :continue without :while or :for"
-msgstr "E586: :continue không có :while"
+msgstr ""
 
-#, fuzzy
 msgid "E587: :break without :while or :for"
-msgstr "E587: :break không có :while"
+msgstr ""
 
-#, fuzzy
 msgid "E732: Using :endfor with :while"
-msgstr "E170: Thiếu câu lệnh :endwhile"
+msgstr ""
 
-#, fuzzy
 msgid "E733: Using :endwhile with :for"
-msgstr "E170: Thiếu câu lệnh :endwhile"
+msgstr ""
 
 msgid "E601: :try nesting too deep"
 msgstr "E601: :try xếp lồng vào nhau quá sâu"
@@ -2828,13 +2682,11 @@ msgstr "E606: :finally không có :try"
 msgid "E602: :endtry without :try"
 msgstr "E602: :endtry không có :try"
 
-#, fuzzy
 msgid "E199: Active window or buffer changed or deleted"
-msgstr "E199: Cửa sổ hoặc bộ đệm hoạt động bị xóa"
+msgstr ""
 
-#, fuzzy
 msgid "E811: Not allowed to change buffer information now"
-msgstr "E94: Không có bộ đệm tương ứng với %s"
+msgstr ""
 
 #, c-format
 msgid "E5408: Unable to get g:Nvim_color_cmdline callback: %s"
@@ -2888,9 +2740,8 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 msgid "E447: Can't find file \"%s\" in path"
 msgstr "E447: Không tìm thấy tập tin \"%s\" trong đường dẫn"
 
-#, fuzzy
 msgid "E812: Autocommands changed buffer or buffer name"
-msgstr "E135: Các lệnh tự động *Filter* không được thay đổi bộ đệm hiện thời"
+msgstr ""
 
 msgid "Illegal file name"
 msgstr "Tên tập tin không cho phép"
@@ -2925,9 +2776,9 @@ msgstr "[fifo]"
 msgid "[socket]"
 msgstr "[socket]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "[character special]"
-msgstr "%ld ký tự"
+msgstr ""
 
 #, c-format
 msgid "[CR missing]"
@@ -2937,13 +2788,13 @@ msgstr "[thiếu ký tự CR]"
 msgid "[long lines split]"
 msgstr "[dòng dài được chia nhỏ]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "[CONVERSION ERROR in line %<PRId64>]"
-msgstr "[LỖI CHUYỂN BẢNG MÃ]"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "[ILLEGAL BYTE in line %<PRId64>]"
-msgstr "[BYTE KHÔNG CHO PHÉP trên dòng %ld]"
+msgstr ""
 
 #, c-format
 msgid "[READ ERRORS]"
@@ -2971,11 +2822,11 @@ msgstr "[unix]"
 msgid "%s%<PRId64>L, %<PRId64>B"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s%<PRId64> line, "
 msgid_plural "%s%<PRId64> lines, "
-msgstr[0] "%ld dòng, "
-msgstr[1] "%ld dòng, "
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "%<PRId64> byte"
@@ -2986,9 +2837,9 @@ msgstr[1] ""
 msgid "E246: FileChangedShell autocommand deleted buffer"
 msgstr "E246: Bộ đệm bị xóa khi thực hiện câu lệnh tự động FileChangedShell"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E211: File \"%s\" no longer available"
-msgstr "E211: Cảnh báo: Tập tin \"%s\" không còn truy cập được nữa"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -2998,9 +2849,8 @@ msgstr ""
 "W12: Cảnh báo: Tập tin \"%s\" và bộ đệm Vim đã thay đổi không phụ thuộc vào "
 "nhau"
 
-#, fuzzy
 msgid "See \":help W12\" for more info."
-msgstr "Hãy xem thông tin chi tiết trong \":help W11\"."
+msgstr ""
 
 #, c-format
 msgid "W11: Warning: File \"%s\" has changed since editing started"
@@ -3016,9 +2866,8 @@ msgstr ""
 "W16: Cảnh báo: chế độ truy cập tới tập tin \"%s\" đã thay đổi sau khi bắt "
 "đầu soạn thảo"
 
-#, fuzzy
 msgid "See \":help W16\" for more info."
-msgstr "Hãy xem thông tin chi tiết trong \":help W11\"."
+msgstr ""
 
 #, c-format
 msgid "W13: Warning: File \"%s\" has been created after editing started"
@@ -3059,17 +2908,17 @@ msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr ""
 "E351: Không thể xóa nếp gấp với giá trị hiện thời của tùy chọn 'foldmethod'"
 
-#, fuzzy, c-format
+#, c-format
 msgid "+--%3d line folded"
 msgid_plural "+--%3d lines folded "
-msgstr[0] "+--%3ld dòng được gấp"
-msgstr[1] "+--%3ld dòng được gấp"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "+-%s%3d line: "
 msgid_plural "+-%s%3d lines: "
-msgstr[0] "+-%s%3ld dòng: "
-msgstr[1] "+-%s%3ld dòng: "
+msgstr[0] ""
+msgstr[1] ""
 
 # TODO: Capitalise first word of message?
 msgid "E223: Recursive mapping"
@@ -3084,9 +2933,9 @@ msgstr ""
 msgid "E222: Add to read buffer"
 msgstr "E222: Thêm vào bộ đệm đang đọc"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open for reading: \"%s\": %s\n"
-msgstr "Không mở để đọc được: \""
+msgstr ""
 
 msgid "--No lines in buffer--"
 msgstr "-- Không có dòng nào trong bộ đệm --"
@@ -3107,9 +2956,9 @@ msgstr "E149: Không có trợ giúp cho %s"
 msgid "Help file \"%s\" not found"
 msgstr "Không tìm thấy tập tin trợ giúp \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E151: No match: %s"
-msgstr "E480: Không có tương ứng: %s"
+msgstr ""
 
 #, c-format
 msgid "E152: Cannot open %s for writing"
@@ -3119,9 +2968,9 @@ msgstr "E152: Không thể mở %s để ghi"
 msgid "E153: Unable to open %s for reading"
 msgstr "E153: Không thể mở %s để đọc"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E154: Duplicate tag \"%s\" in file %s/%s"
-msgstr "E154: Thẻ ghi lặp lại \"%s\" trong tập tin %s"
+msgstr ""
 
 #, c-format
 msgid "E150: Not a directory: %s"
@@ -3162,9 +3011,8 @@ msgstr "E412: Không đủ tham số: \":highlight link %s\""
 msgid "E413: Too many arguments: \":highlight link %s\""
 msgstr "E413: Quá nhiều tham số: \":highlight link %s\""
 
-#, fuzzy
 msgid "E423: Illegal argument"
-msgstr "E423: Tham số không cho phép: %s"
+msgstr ""
 
 #, c-format
 msgid "E418: Illegal value: %s"
@@ -3190,15 +3038,15 @@ msgstr "E669: Ký tự không thể tin ra trong tên nhóm"
 msgid "E849: Too many highlight and syntax groups"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines to indent... "
-msgstr "Thụt đầu %ld dòng..."
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line indented "
 msgid_plural "%<PRId64> lines indented "
-msgstr[0] "%ld dòng đã thụt đầu"
-msgstr[1] "%ld dòng đã thụt đầu"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "%s (y/n)?"
@@ -3213,9 +3061,8 @@ msgstr ""
 msgid " Keyword completion (^N^P)"
 msgstr " Tự động kết thúc cho từ khóa (^N^P)"
 
-#, fuzzy
 msgid " ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)"
-msgstr " Chế độ ^X (^E^Y^L^]^F^I^K^D^V^N^P)"
+msgstr ""
 
 msgid " Whole line completion (^L^N^P)"
 msgstr " Tự động kết thúc cho cả dòng (^L^N^P)"
@@ -3241,24 +3088,20 @@ msgstr " Tự động kết thúc từ đồng âm (^T^N^P)"
 msgid " Command-line completion (^V^N^P)"
 msgstr " Tự động kết thúc dòng lệnh (^V^N^P)"
 
-#, fuzzy
 msgid " User defined completion (^U^N^P)"
-msgstr " Tự động kết thúc cho cả dòng (^L^N^P)"
+msgstr ""
 
-#, fuzzy
 msgid " Omni completion (^O^N^P)"
-msgstr " Tự động kết thúc thẻ đánh dấu (^]^N^P)"
+msgstr ""
 
-#, fuzzy
 msgid " Spelling suggestion (^S^N^P)"
-msgstr " Tự động kết thúc cho cả dòng (^L^N^P)"
+msgstr ""
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Tự động kết thúc nội bộ cho từ khóa (^N^P)"
 
-#, fuzzy
 msgid " Register completion (^N^P)"
-msgstr " Tự động kết thúc cho từ khóa (^N^P)"
+msgstr ""
 
 msgid "Hit end of paragraph"
 msgstr "Kết thúc của đoạn văn"
@@ -3282,9 +3125,8 @@ msgstr " (chèn) Cuộn (^E/^Y)"
 msgid " (replace) Scroll (^E/^Y)"
 msgstr " (thay thế) Cuộn (^E/^Y)"
 
-#, fuzzy
 msgid "E785: complete() can only be used in Insert mode"
-msgstr "E328: Trình đơn chỉ có trong chế độ khác"
+msgstr ""
 
 #, c-format
 msgid "Scanning: %s"
@@ -3293,9 +3135,8 @@ msgstr "Quét: %s"
 msgid "Scanning tags."
 msgstr "Tìm kiếm trong số thẻ đánh dấu."
 
-#, fuzzy
 msgid "match in file"
-msgstr "Tập tin vá lỗi (patch)"
+msgstr ""
 
 msgid " Adding"
 msgstr " Thêm"
@@ -3360,9 +3201,9 @@ msgstr ""
 msgid "E5116: Calling Lua debug string: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5108: Lua function: %.*s"
-msgstr "E130: Hàm số %s chưa xác định"
+msgstr ""
 
 #, c-format
 msgid "E5107: Lua: %.*s"
@@ -3422,13 +3263,11 @@ msgstr ""
 msgid "Argument missing after"
 msgstr "Thiếu tham số sau"
 
-#, fuzzy
 msgid "Garbage after option argument"
-msgstr "Rác sau tùy chọn"
+msgstr ""
 
-#, fuzzy
 msgid "Unknown option argument"
-msgstr "Tùy chọn không biết"
+msgstr ""
 
 msgid "Too many edit arguments"
 msgstr "Có quá nhiều tham số soạn thảo"
@@ -3441,13 +3280,13 @@ msgstr ""
 msgid "Cannot open for script output: \""
 msgstr "Không mở cho đầu ra script được: \""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5420: Failed to write to file: %s"
-msgstr "E365: In tập tin PostScript không thành công"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Attempt to open script file again: \"%s %s\"\n"
-msgstr "Thử mở tập tin script một lần nữa: \""
+msgstr ""
 
 msgid "--embed conflicts with -es/-Es/-l"
 msgstr ""
@@ -3455,61 +3294,53 @@ msgstr ""
 msgid "pre-vimrc command line"
 msgstr "dòng lệnh chạy trước khi thực hiện vimrc"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "More info with \""
 msgstr ""
-"\n"
-"Xem thông tin chi tiết với: \"vim -h\"\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Usage:\n"
 msgstr ""
-"\n"
-"\n"
-"Sử dụng:"
 
 #, c-format
 msgid "  nvim [options] [file ...]\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
 msgstr ""
-"\n"
-"--- Tùy chọn ---"
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --cmd <cmd>           Execute <cmd> before any config\n"
-msgstr "--cmd <câu lệnh>\tThực hiện <câu lệnh> trước khi nạp tập tin vimrc"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"
-msgstr "-c <câu lệnh>\t\tThực hiện <câu lệnh> sau khi nạp tập tin đầu tiên"
+msgstr ""
 
 #, c-format
 msgid "  -l <script> [args...] Execute Lua <script> (with optional args)\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -S <session>          Source <session> after loading the first file\n"
-msgstr "-S <session>\t\tThực hiện <session> sau khi nạp tập tin đầu tiên"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -s <scriptin>         Read Normal mode commands from <scriptin>\n"
 msgstr ""
-"-s <scriptin>\tĐọc các lệnh của chế độ Thông thường từ tập tin <scriptin>"
 
 #, c-format
 msgid "  -u <config>           Use this config file\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -d                    Diff mode\n"
-msgstr "                                 cho hai chế độ               "
+msgstr ""
 
 #, c-format
 msgid "  -es, -Es              Silent (batch) mode\n"
@@ -3523,38 +3354,38 @@ msgstr ""
 msgid "  -i <shada>            Use this shada file\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -n                    No swap file, use memory only\n"
-msgstr "-n\t\t\tKhông sử dụng tập tin swap, chỉ sử dụng bộ nhớ"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -o[N]                 Open N windows (default: one per file)\n"
-msgstr "-o[N]\t\tMở N cửa sổ (theo mặc định: mỗi cửa sổ cho một tập tin)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  -O[N]                 Open N vertical windows (default: one per file)\n"
-msgstr "-o[N]\t\tMở N cửa sổ (theo mặc định: mỗi cửa sổ cho một tập tin)"
+msgstr ""
 
 #, c-format
 msgid "  -p[N]                 Open N tab pages (default: one per file)\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -R                    Read-only (view) mode\n"
-msgstr "                                 cho hai chế độ               "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -v, --version         Print version information\n"
-msgstr "--version\t\tĐưa ra thông tin về phiên bản Vim và thoát"
+msgstr ""
 
 #, c-format
 msgid "  -V[N][file]           Verbose [level][file]\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --                    Only file names after this\n"
-msgstr "--\t\t\tSau tham số chỉ đưa ra tên tập tin"
+msgstr ""
 
 #, c-format
 msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
@@ -3619,9 +3450,9 @@ msgstr "E227: đã có ánh xạ cho %s"
 msgid "E460: Entries missing in mapset() dict argument"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1276: Illegal map mode string: '%s'"
-msgstr "E125: Tham số không cho phép: %s"
+msgstr ""
 
 msgid "No abbreviation found"
 msgstr "Không tìm thấy viết tắt"
@@ -3680,17 +3511,17 @@ msgstr ""
 msgid "E5030: Empty list at position %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5031: List or number required at position %d"
-msgstr "E521: Sau dấu = cần đưa ra một số"
+msgstr ""
 
 #, c-format
 msgid "E802: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E803: ID not found: %<PRId64>"
-msgstr "E334: Không tìm thấy trình đơn: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: List item %d is either not a dictionary or an empty one"
@@ -3751,15 +3582,13 @@ msgid "E300: Swap file already exists (symlink attack?)"
 msgstr ""
 "E300: Tập tin trao đổi (swap) đã tồn tại (sử dụng liên kết mềm tấn công?)"
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E315: ml_get: Invalid lnum: %<PRId64>"
-msgstr "E315: ml_get: giá trị lnum không đúng: %ld"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E316: ml_get: Cannot find line %<PRId64>in buffer %d %s"
-msgstr "E316: ml_get: không tìm được dòng %ld"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 msgid "E317: Pointer block id wrong"
@@ -3777,15 +3606,13 @@ msgstr "E317: Giá trị của pointer khối số 3 không đúng"
 msgid "E317: Pointer block id wrong 4"
 msgstr "E317: Giá trị của pointer khối số 4 không đúng"
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E322: Line number out of range: %<PRId64> past the end"
-msgstr "E322: số thứ tự dòng vượt quá giới hạn : %ld"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E323: Line count wrong in block %<PRId64>"
-msgstr "E323: giá trị đếm dòng không đúng trong khối %ld"
+msgstr ""
 
 msgid "E1364: Warning: Pointer block corrupted"
 msgstr ""
@@ -3811,9 +3638,8 @@ msgstr ""
 "E303: Không mở được tập tin trao đổi (swap) cho \"%s\", nên không thể phục "
 "hồi"
 
-#, fuzzy
 msgid "E304: ml_upd_block0(): Didn't get block 0??"
-msgstr "E304: ml_timestamp: Chưa lấy khối số 0??"
+msgstr ""
 
 #, c-format
 msgid "E305: No swap file found for %s"
@@ -3829,24 +3655,20 @@ msgstr "E306: Không mở được %s"
 msgid "Unable to read block 0 from "
 msgstr "Không thể đọc khối số 0 từ "
 
-#, fuzzy
 msgid ""
 "\n"
 "Maybe no changes were made or Nvim did not update the swap file."
 msgstr ""
-"\n"
-"Chưa có thay đổi nào hoặc Vim không thể cập nhật tập tin trao đổi (swap)"
 
-#, fuzzy
 msgid " cannot be used with this version of Nvim.\n"
-msgstr " không thể sử dụng trong phiên bản Vim này.\n"
+msgstr ""
 
 msgid "Use Vim version 3.0.\n"
 msgstr "Hãy sử dụng Vim phiên bản 3.0.\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E307: %s does not look like a Nvim swap file"
-msgstr "E307: %s không phải là tập tin trao đổi (swap) của Vim"
+msgstr ""
 
 msgid " cannot be used on this computer.\n"
 msgstr " không thể sử dụng trên máy tính này.\n"
@@ -3934,9 +3756,8 @@ msgstr ""
 "\n"
 "(Có thể ghi nhớ tập tin với tên khác và so sánh với tập\n"
 
-#, fuzzy
 msgid "and run diff with the original file to check for changes)"
-msgstr "gốc bằng chương trình diff).\n"
+msgstr ""
 
 msgid "Recovery completed. Buffer contents equals file contents."
 msgstr ""
@@ -3978,9 +3799,8 @@ msgstr "              ngày: "
 msgid "         [from Vim version 3.0]"
 msgstr "         [từ Vim phiên bản 3.0]"
 
-#, fuzzy
 msgid "         [does not look like a Nvim swap file]"
-msgstr "         [không phải là tập tin trao đổi (swap) của Vim]"
+msgstr ""
 
 msgid "         [garbled strings (not nul terminated)]"
 msgstr ""
@@ -4059,9 +3879,9 @@ msgstr "E318: Đã cập nhật quá nhiều khối?"
 msgid "deleted block 1?"
 msgstr "đã xóa khối số 1?"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E320: Cannot find line %<PRId64>"
-msgstr "E320: Không tìm được dòng %ld"
+msgstr ""
 
 msgid "pe_line_count is zero"
 msgstr "giá trị pe_line_count bằng không"
@@ -4082,35 +3902,24 @@ msgstr "Tìm thấy một tập tin trao đổi (swap) với tên \""
 msgid "While opening file \""
 msgstr "Khi mở tập tin: \""
 
-#, fuzzy
 msgid "      CANNOT BE FOUND"
-msgstr " KHÔNG TÌM THẤY"
+msgstr ""
 
 msgid "      NEWER than swap file!\n"
 msgstr "                    MỚI hơn so với tập tin trao đổi (swap)\n"
 
-#, fuzzy
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
 "    be careful not to end up with two different instances of the same\n"
 "    file when making changes.  Quit, or continue with caution.\n"
 msgstr ""
-"\n"
-"(1) Rất có thể một chương trình khác đang soạn thảo tập tin.\n"
-"    Nếu như vậy, hãy cẩn thận khi thay đổi, làm sao để không thu\n"
-"    được hai phương án khác nhau của cùng một tập tin.\n"
 
-#, fuzzy
 msgid "(2) An edit session for this file crashed.\n"
 msgstr ""
-"\n"
-"(2) Lần soạn thảo trước của tập tin này gặp sự cố.\n"
 
-#, fuzzy
 msgid "    If this is the case, use \":recover\" or \"nvim -r "
 msgstr ""
-"    Trong trường hợp này, hãy sử dụng câu lệnh \":recover\" hoặc \"vim -r "
 
 msgid ""
 "\"\n"
@@ -4130,9 +3939,8 @@ msgstr ""
 "\"\n"
 "    để tránh sự xuất hiện của thông báo này trong tương lai.\n"
 
-#, fuzzy
 msgid "Found a swap file that is not useful, deleting it"
-msgstr "Tìm thấy một tập tin trao đổi (swap) với tên \""
+msgstr ""
 
 msgid "Swap file \""
 msgstr "Tập tin trao đổi (swap) \""
@@ -4153,7 +3961,6 @@ msgstr ""
 "&Q Thoát\n"
 "&A Gián đoạn"
 
-#, fuzzy
 msgid ""
 "&Open Read-Only\n"
 "&Edit anyway\n"
@@ -4162,11 +3969,6 @@ msgid ""
 "&Quit\n"
 "&Abort"
 msgstr ""
-"&O Mở chỉ để đọc\n"
-"&E Vẫn soạn thảo\n"
-"&R Phục hồi\n"
-"&Q Thoát\n"
-"&A Gián đoạn"
 
 msgid "VIM - ATTENTION"
 msgstr "VIM - CHÚ Ý"
@@ -4174,17 +3976,15 @@ msgstr "VIM - CHÚ Ý"
 msgid "E326: Too many swap files found"
 msgstr "E326: Tìm thấy quá nhiều tập tin trao đổi (swap)"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "E303: Unable to create directory \"%s\" for swap file, recovery impossible: "
 "%s"
 msgstr ""
-"E303: Không mở được tập tin trao đổi (swap) cho \"%s\", nên không thể phục "
-"hồi"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
-msgstr "E342: Không đủ bộ nhớ! (phân chia %lu byte)"
+msgstr ""
 
 msgid "Nvim: Data too large to fit into virtual memory space\n"
 msgstr ""
@@ -4194,9 +3994,9 @@ msgstr ""
 "E327: Một phần của đường dẫn tới phần tử của trình đơn không phải là trình "
 "đơn con"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E329: No menu \"%s\""
-msgstr "E329: Không có trình đơn với tên như vậy"
+msgstr ""
 
 msgid "E792: Empty menu name"
 msgstr ""
@@ -4235,13 +4035,12 @@ msgstr "E336: Đường dẫn tới trình đơn phải đưa tới một trình
 msgid "E337: Menu not found - check menu names"
 msgstr "E337: Không tìm thấy trình đơn - hãy kiểm tra tên trình đơn"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Error in %s:"
-msgstr "[Danh sách lỗi]"
+msgstr ""
 
-#, fuzzy
 msgid "line %4"
-msgstr "dòng %4ld:"
+msgstr ""
 
 #, c-format
 msgid "E354: Invalid register name: '%s'"
@@ -4250,21 +4049,20 @@ msgstr "E354: Tên sổ đăng ký không cho phép: '%s'"
 msgid "Interrupt: "
 msgstr "Gián đoạn: "
 
-#, fuzzy
 msgid "Press ENTER or type command to continue"
-msgstr "Nhấn phím ENTER hoặc nhập câu lệnh để tiếp tục"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d more line"
 msgid_plural "%d more lines"
-msgstr[0] "Thêm %ld dòng"
-msgstr[1] "Thêm %ld dòng"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d line less"
 msgid_plural "%d fewer lines"
-msgstr[0] "Bớt 1 dòng"
-msgstr[1] "Bớt 1 dòng"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid " (Interrupted)"
 msgstr " (Bị gián đoạn)"
@@ -4272,9 +4070,9 @@ msgstr " (Bị gián đoạn)"
 msgid "Unknown"
 msgstr "Không rõ"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s line %<PRId64>"
-msgstr "%s, dòng %ld"
+msgstr ""
 
 msgid "-- More --"
 msgstr "-- Còn nữa --"
@@ -4340,43 +4138,42 @@ msgstr "E663: Ở cuối danh sách những thay đổi"
 msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Nvim"
 msgstr ""
 
-#, fuzzy
 msgid "Type  :qa  and press <Enter> to exit Nvim"
-msgstr "Gõ :quit<Enter>  để thoát khỏi Vim"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line %sed %d time"
 msgid_plural "%<PRId64> line %sed %d times"
-msgstr[0] "Trên %ld dòng %s %d lần"
-msgstr[1] "Trên %ld dòng %s %d lần"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines %sed %d time"
 msgid_plural "%<PRId64> lines %sed %d times"
-msgstr[0] "Trên %ld dòng %s %d lần"
-msgstr[1] "Trên %ld dòng %s %d lần"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line changed"
 msgid_plural "%<PRId64> lines changed"
-msgstr[0] "%ld đã thay đổi"
-msgstr[1] "%ld đã thay đổi"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines changed"
 msgid_plural "%<PRId64> lines changed"
-msgstr[0] "%ld đã thay đổi"
-msgstr[1] "%ld đã thay đổi"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> Cols; "
-msgstr "%ld Cột; "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
 "%<PRId64> of %<PRId64> Bytes"
-msgstr "Chọn %s%ld của %ld Dòng; %ld của %ld Từ; %ld của %ld Byte"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -4384,11 +4181,11 @@ msgid ""
 "%<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> Bytes"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte "
 "%<PRId64> of %<PRId64>"
-msgstr "Cột %s của %s;  Dòng %ld của %ld; Từ %ld của %ld; Byte %ld của %ld"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -4396,13 +4193,12 @@ msgid ""
 "%<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "(+%<PRId64> for BOM)"
-msgstr "(+%ld cho BOM)"
+msgstr ""
 
-#, fuzzy
 msgid "E774: 'operatorfunc' is empty"
-msgstr "E91: Tùy chọn 'shell' là một chuỗi rỗng"
+msgstr ""
 
 msgid "E518: Unknown option"
 msgstr "E518: Tùy chọn không biết"
@@ -4410,9 +4206,8 @@ msgstr "E518: Tùy chọn không biết"
 msgid "E520: Not allowed in a modeline"
 msgstr "E520: Không cho phép trên dòng chế độ (modeline)"
 
-#, fuzzy
 msgid "E992: Not allowed in a modeline when 'modelineexpr' is off"
-msgstr "E520: Không cho phép trên dòng chế độ (modeline)"
+msgstr ""
 
 msgid "E521: Number required after ="
 msgstr "E521: Sau dấu = cần đưa ra một số"
@@ -4437,11 +4232,8 @@ msgstr "E593: Cần ít nhất %d dòng"
 msgid "E594: Need at least %d columns"
 msgstr "E594: Cần ít nhất %d cột"
 
-#, fuzzy
 msgid "Cannot unset global option value"
 msgstr ""
-"\n"
-"--- Giá trị tùy chọn toàn cầu ---"
 
 #, c-format
 msgid "Invalid value for option '%s': expected %s, got %s %s"
@@ -4489,9 +4281,8 @@ msgstr "E542: các nhóm không cân bằng"
 msgid "E589: 'backupext' and 'patchmode' are equal"
 msgstr "E589: giá trị của tùy chọn 'backupext' và 'patchmode' bằng nhau"
 
-#, fuzzy
 msgid "E595: 'showbreak' contains unprintable or wide character"
-msgstr "E595: chứa ký tự không in ra hoặc ký tự với chiều rộng gấp đôi"
+msgstr ""
 
 #, c-format
 msgid "E1511: Wrong number of characters for field \"%s\""
@@ -4515,10 +4306,8 @@ msgstr "E525: Chuỗi có độ dài bằng không"
 msgid "E537: 'commentstring' must be empty or contain %s"
 msgstr "E537: Giá trị của tùy chọn 'commentstring' phải rỗng hoặc chứa %s"
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E5080: Digit expected"
-msgstr "E548: yêu cầu một số"
+msgstr ""
 
 #, c-format
 msgid "E526: Missing number after <%s>"
@@ -4551,9 +4340,8 @@ msgstr ""
 msgid "E1509: Error occurred when reading or writing extended attribute"
 msgstr ""
 
-#, fuzzy
 msgid "Nvim: Error reading input, exiting...\n"
-msgstr "Vim: Lỗi đọc dữ liệu nhập, thoát...\n"
+msgstr ""
 
 #, c-format
 msgid "Current %slanguage: \"%s\""
@@ -4630,9 +4418,9 @@ msgstr "(%d của %d)%s%s: "
 msgid " (line deleted)"
 msgstr " (dòng bị xóa)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%serror list %d of %d; %d errors "
-msgstr "danh sách lỗi %d của %d; %d lỗi"
+msgstr ""
 
 msgid "E380: At bottom of quickfix stack"
 msgstr "E380: Ở dưới của đống sửa nhanh"
@@ -4646,21 +4434,19 @@ msgstr ""
 msgid "E683: File name missing or invalid pattern"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open file \"%s\""
-msgstr "E624: Không thể mở tập tin \"%s\""
+msgstr ""
 
 msgid "cannot have both a list and a \"what\" argument"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E777: String or List expected"
-msgstr "E548: yêu cầu một số"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E927: Invalid action: '%s'"
-msgstr "E383: Chuỗi tìm kiếm không đúng: %s"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 #, c-format
@@ -4679,17 +4465,16 @@ msgstr ""
 msgid "E369: Invalid item in %s%%[]"
 msgstr "E369: phần tử không cho phép trong %s%%[]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E654: Missing delimiter after search pattern: %s"
-msgstr "E526: Thiếu một số sau <%s>"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E769: Missing ] after %s["
-msgstr "E69: Thiếu ] sau %s%%["
+msgstr ""
 
-#, fuzzy
 msgid "E944: Reverse range in character class"
-msgstr "E488: Ký tự thừa ở đuôi"
+msgstr ""
 
 msgid "E945: Range too large in character class"
 msgstr ""
@@ -4720,9 +4505,8 @@ msgstr "E69: Thiếu ] sau %s%%["
 msgid "E70: Empty %s%%[]"
 msgstr "E70: %s%%[] rỗng"
 
-#, fuzzy
 msgid "E956: Cannot use pattern recursively"
-msgstr "E659: Không thể gọi Python một cách đệ quy"
+msgstr ""
 
 #, c-format
 msgid "E1204: No Number allowed after .: '\\%%%c'"
@@ -4736,10 +4520,8 @@ msgstr ""
 msgid "E1281: Atom '\\%%#=%c' must be at the start of the pattern"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E1290: substitute nesting too deep"
-msgstr "E579: :if xếp lồng vào nhau quá sâu"
+msgstr ""
 
 msgid "E1541: Value too large, max Unicode codepoint is U+10FFFF"
 msgstr ""
@@ -4762,9 +4544,9 @@ msgstr "E64: %s%c không theo sau gì cả"
 msgid "E68: Invalid character after \\z"
 msgstr "E68: Ký tự không cho phép sau \\z"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E678: Invalid character after %s%%[dxouU]"
-msgstr "E71: Ký tự không cho phép sau %s%%"
+msgstr ""
 
 #, c-format
 msgid "E71: Invalid character after %s%%"
@@ -4810,9 +4592,8 @@ msgstr ""
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
 msgstr ""
 
-#, fuzzy
 msgid "E951: \\% value too large"
-msgstr "E75: Tên quá dài"
+msgstr ""
 
 #, c-format
 msgid "E867: (NFA) Unknown operator '\\z%c'"
@@ -4835,9 +4616,8 @@ msgstr ""
 msgid "E872: (NFA regexp) Too many '('"
 msgstr ""
 
-#, fuzzy
 msgid "E879: (NFA regexp) Too many \\z("
-msgstr "E50: Quá nhiều \\z("
+msgstr ""
 
 msgid "E873: (NFA regexp) proper termination error"
 msgstr ""
@@ -4869,9 +4649,8 @@ msgid ""
 "lines"
 msgstr ""
 
-#, fuzzy
 msgid "E748: No previously used register"
-msgstr "E186: Không có thư mục trước"
+msgstr ""
 
 #, c-format
 msgid " into \"%c"
@@ -4883,11 +4662,11 @@ msgid_plural "block of %<PRId64> lines yanked%s"
 msgstr[0] ""
 msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line yanked%s"
 msgid_plural "%<PRId64> lines yanked%s"
-msgstr[0] "đã sao chép %ld dòng"
-msgstr[1] "đã sao chép %ld dòng"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4898,9 +4677,9 @@ msgid ""
 "Type Name Content"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Searching for \"%s\" under \"%s\" in \"%s\""
-msgstr "Tìm kiếm \"%s\" trong \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Searching for \"%s\" in \"%s\""
@@ -4910,17 +4689,17 @@ msgstr "Tìm kiếm \"%s\" trong \"%s\""
 msgid "Searching for \"%s\""
 msgstr "Tìm kiếm \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "not found in '%s': \"%s\""
-msgstr "không tìm thấy trong 'runtimepath': \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Searching for \"%s\" in runtime path"
-msgstr "Tìm kiếm \"%s\" trong \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "not found in runtime path: \"%s\""
-msgstr "không tìm thấy trong 'runtimepath': \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Cannot source a directory: \"%s\""
@@ -4930,40 +4709,36 @@ msgstr "Không thể thực hiện một thư mục: \"%s\""
 msgid "could not source \"%s\""
 msgstr "không thực hiện được \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64>: could not source \"%s\""
-msgstr "dòng %ld: không thực hiện được \"%s\""
+msgstr ""
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "thực hiện \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64>: sourcing \"%s\""
-msgstr "dòng %ld: thực hiện \"%s\""
+msgstr ""
 
 #, c-format
 msgid "finished sourcing %s"
 msgstr "thực hiện xong %s"
 
-#, fuzzy
 msgid "modeline"
-msgstr "Thêm 1 dòng"
+msgstr ""
 
-#, fuzzy
 msgid "--cmd argument"
-msgstr " vim [các tham số] "
+msgstr ""
 
-#, fuzzy
 msgid "-c argument"
-msgstr " vim [các tham số] "
+msgstr ""
 
 msgid "environment variable"
 msgstr ""
 
-#, fuzzy
 msgid "error handler"
-msgstr "Lỗi và sự gián đoạn"
+msgstr ""
 
 msgid "changed window size"
 msgstr ""
@@ -5030,9 +4805,9 @@ msgstr " KHÔNG TÌM THẤY"
 msgid "Scanning included file: %s"
 msgstr "Quét trong tập tin được tính đến: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Searching included file %s"
-msgstr "Quét trong tập tin được tính đến: %s"
+msgstr ""
 
 msgid "E387: Match is on current line"
 msgstr "E387: Tương ứng nằm trên dòng hiện tại"
@@ -5066,9 +4841,9 @@ msgstr ""
 msgid "System error while closing ShaDa file: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading ShaDa file \"%s\"%s%s%s%s"
-msgstr "Đọc tập tin viminfo \"%s\"%s%s%s"
+msgstr ""
 
 msgid " info"
 msgstr " thông tin"
@@ -5076,9 +4851,8 @@ msgstr " thông tin"
 msgid " marks"
 msgstr " dấu hiệu"
 
-#, fuzzy
 msgid " oldfiles"
-msgstr "Không có tập tin được tính đến"
+msgstr ""
 
 msgid " FAILED"
 msgstr " KHÔNG THÀNH CÔNG"
@@ -5130,13 +4904,13 @@ msgstr ""
 msgid "System error while opening ShaDa file %s for writing: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing ShaDa file \"%s\""
-msgstr "Ghi tập tin viminfo \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E137: ShaDa file is not writable: %s"
-msgstr "E137: Thiếu quyền ghi lên tập tin viminfo: %s"
+msgstr ""
 
 #, c-format
 msgid "Failed setting uid and gid for file %s: %s"
@@ -5146,9 +4920,9 @@ msgstr ""
 msgid "Can't rename ShaDa file from %s to %s!"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Did not rename %s because %s does not look like a ShaDa file"
-msgstr "         [không phải là tập tin trao đổi (swap) của Vim]"
+msgstr ""
 
 #, c-format
 msgid "Did not rename %s to %s because there were errors during writing it"
@@ -5158,9 +4932,9 @@ msgstr ""
 msgid "Do not forget to remove %s or rename it manually to %s."
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading ShaDa file: %s"
-msgstr "E47: Lỗi khi đọc tập tin lỗi"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5168,9 +4942,9 @@ msgid ""
 "%<PRIu64> bytes, but file ended earlier"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading integer from ShaDa file: %s"
-msgstr "E47: Lỗi khi đọc tập tin lỗi"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5239,11 +5013,8 @@ msgstr ""
 msgid "  group=%s"
 msgstr ""
 
-#, fuzzy
 msgid "    line=%"
 msgstr ""
-"\n"
-"   #   dòng"
 
 #, c-format
 msgid "E239: Invalid sign text: %s"
@@ -5260,9 +5031,9 @@ msgstr " (không được hỗ trợ)"
 msgid "E885: Not possible to change sign %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E157: Invalid sign ID: %d"
-msgstr "E157: ID của ký hiệu không đúng: %ld"
+msgstr ""
 
 msgid "E934: Cannot jump to a buffer that does not have a name"
 msgstr ""
@@ -5277,47 +5048,43 @@ msgstr "E160: Câu lệnh ký hiệu không biết: %s"
 msgid "E156: Missing sign name"
 msgstr "E156: Thiếu tên ký hiệu"
 
-#, fuzzy
 msgid "E759: Format error in spell file"
-msgstr "E297: Lỗi ghi nhớ tập tin trao đổi (swap)"
+msgstr ""
 
 #, c-format
 msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
 msgstr ""
 
-#, fuzzy
 msgid "E797: SpellFileMissing autocommand deleted buffer"
-msgstr "E246: Bộ đệm bị xóa khi thực hiện câu lệnh tự động FileChangedShell"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: region %s not supported"
-msgstr "E519: Tùy chọn không được hỗ trợ"
+msgstr ""
 
-#, fuzzy
 msgid "E752: No previous spell replacement"
-msgstr "E35: Không có biểu thức chính quy trước"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E753: Not found: %s"
-msgstr "E334: Không tìm thấy trình đơn: %s"
+msgstr ""
 
 msgid "E758: Truncated spell file"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E782: Error while reading .sug file: %s"
-msgstr "E47: Lỗi khi đọc tập tin lỗi"
+msgstr ""
 
 msgid "E783: Duplicate char in MAP entry"
 msgstr ""
 
-#, fuzzy
 msgid "E1280: Illegal character in word"
-msgstr "E539: Ký tự không cho phép <%s>"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Trailing text in %s line %d: %s"
-msgstr "Điểm dừng trên \"%s%s\" dòng %ld"
+msgstr ""
 
 #, c-format
 msgid "Affix name too long in %s line %d: %s"
@@ -5326,32 +5093,29 @@ msgstr ""
 msgid "Compressing word tree..."
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading spell file \"%s\""
-msgstr "Đang sử dụng tập tin trao đổi (swap) \"%s\""
+msgstr ""
 
-#, fuzzy
 msgid "E757: This does not look like a spell file"
-msgstr "E307: %s không phải là tập tin trao đổi (swap) của Vim"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5042: Failed to read spell file %s: %s"
-msgstr "E482: Không tạo được tập tin %s"
+msgstr ""
 
-#, fuzzy
 msgid "E771: Old spell file, needs to be updated"
-msgstr "E173: %ld tập tin nữa chưa soạn thảo."
+msgstr ""
 
 msgid "E772: Spell file is for newer version of Vim"
 msgstr ""
 
-#, fuzzy
 msgid "E770: Unsupported section in spell file"
-msgstr "E297: Lỗi ghi nhớ tập tin trao đổi (swap)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E778: This does not look like a .sug file: %s"
-msgstr "E307: %s không phải là tập tin trao đổi (swap) của Vim"
+msgstr ""
 
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"
@@ -5365,9 +5129,9 @@ msgstr ""
 msgid "E781: .sug file doesn't match .spl file: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading affix file %s..."
-msgstr "Tìm kiếm tập tin thẻ ghi %s"
+msgstr ""
 
 #, c-format
 msgid "Conversion failure for word in %s line %d: %s"
@@ -5421,9 +5185,9 @@ msgstr ""
 msgid "Different combining flag in continued affix block in %s line %d: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicate affix in %s line %d: %s"
-msgstr "E154: Thẻ ghi lặp lại \"%s\" trong tập tin %s"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5435,9 +5199,9 @@ msgstr ""
 msgid "Expected Y or N in %s line %d: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Broken condition in %s line %d: %s"
-msgstr "Điểm dừng trên \"%s%s\" dòng %ld"
+msgstr ""
 
 #, c-format
 msgid "Expected REP(SAL) count in %s line %d"
@@ -5458,13 +5222,11 @@ msgstr ""
 msgid "COMPOUNDSYLMAX used without SYLLABLE"
 msgstr ""
 
-#, fuzzy
 msgid "Too many postponed prefixes"
-msgstr "Có quá nhiều tham số soạn thảo"
+msgstr ""
 
-#, fuzzy
 msgid "Too many compound flags"
-msgstr "Có quá nhiều tham số soạn thảo"
+msgstr ""
 
 msgid "Too many postponed prefixes and/or compound flags"
 msgstr ""
@@ -5489,22 +5251,21 @@ msgstr ""
 msgid "%s value differs from what is used in another .aff file"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading dictionary file %s..."
-msgstr "Quét từ điển: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E760: No word count in %s"
-msgstr "E567: không có kết nối với cscope"
+msgstr ""
 
 #, c-format
 msgid "line %6d, word %6d - %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicate word in %s line %d: %s"
-msgstr "Tìm thấy tương ứng trên mọi dòng: %s"
+msgstr ""
 
 #, c-format
 msgid "First duplicate word in %s line %d: %s"
@@ -5518,9 +5279,9 @@ msgstr ""
 msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading word file %s..."
-msgstr "Đọc từ đầu vào tiêu chuẩn stdin..."
+msgstr ""
 
 msgid "Conversion failure for word in %s line %"
 msgstr ""
@@ -5537,9 +5298,8 @@ msgstr ""
 msgid "Too many regions in %s line %"
 msgstr ""
 
-#, fuzzy
 msgid "/ line ignored in %s line %"
-msgstr " dòng trước dòng đầu tiên"
+msgstr ""
 
 msgid "Invalid region nr in %s line %"
 msgstr ""
@@ -5569,9 +5329,9 @@ msgstr ""
 msgid "Total number of words: %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing suggestion file %s..."
-msgstr "Ghi tập tin viminfo \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5580,20 +5340,20 @@ msgstr ""
 msgid "E751: Output file name must not have region name"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E754: Only up to %d regions supported"
-msgstr "E519: Tùy chọn không được hỗ trợ"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E755: Invalid region in %s"
-msgstr "E15: Biểu thức không cho phép: %s"
+msgstr ""
 
 msgid "Warning: both compounding and NOBREAK specified"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing spell file %s..."
-msgstr "Ghi tập tin viminfo \"%s\""
+msgstr ""
 
 msgid "Done!"
 msgstr ""
@@ -5606,9 +5366,8 @@ msgstr ""
 msgid "Word '%.*s' removed from %s"
 msgstr ""
 
-#, fuzzy
 msgid "Seek error in spellfile"
-msgstr "E294: Lỗi tìm kiếm khi đọc tập tin trao đổi (swap)"
+msgstr ""
 
 #, c-format
 msgid "Word '%.*s' added to %s"
@@ -5617,17 +5376,16 @@ msgstr ""
 msgid "E763: Word characters differ between spell files"
 msgstr ""
 
-#, fuzzy
 msgid "No suggestions"
-msgstr "Câu hỏi"
+msgstr ""
 
 #, c-format
 msgid "Only %<PRId64> suggestions"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Change \"%.*s\" to:"
-msgstr "Ghi nhớ thay đổi vào \"%.*s\"?"
+msgstr ""
 
 #, c-format
 msgid " < \"%.*s\""
@@ -5637,9 +5395,8 @@ msgstr ""
 msgid "%<PRId64>,"
 msgstr ""
 
-#, fuzzy
 msgid "[Help]"
-msgstr "[trợ giúp]"
+msgstr ""
 
 msgid "[Preview]"
 msgstr "[Xem trước]"
@@ -5666,24 +5423,21 @@ msgstr ""
 msgid "E1504: Positional argument %d type used inconsistently: %s/%s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1505: Invalid format specifier: %s"
-msgstr "E180: Giá trị phần phụ không đúng: %s"
+msgstr ""
 
-#, fuzzy
 msgid "unknown"
-msgstr "Không rõ"
+msgstr ""
 
 msgid "int"
 msgstr ""
 
-#, fuzzy
 msgid "long int"
-msgstr "[dòng dài được chia nhỏ]"
+msgstr ""
 
-#, fuzzy
 msgid "long long int"
-msgstr "[dòng dài được chia nhỏ]"
+msgstr ""
 
 msgid "signed size_t"
 msgstr ""
@@ -5715,16 +5469,14 @@ msgstr ""
 msgid "float"
 msgstr ""
 
-#, fuzzy
 msgid "E766: Insufficient arguments for printf()"
-msgstr "E116: Tham số cho hàm %s đưa ra không đúng"
+msgstr ""
 
 msgid "E807: Expected Float argument for printf()"
 msgstr ""
 
-#, fuzzy
 msgid "E767: Too many arguments to printf()"
-msgstr "E118: Quá nhiều tham số cho hàm: %s"
+msgstr ""
 
 #, c-format
 msgid "E390: Illegal argument: %s"
@@ -5734,13 +5486,12 @@ msgstr "E390: Tham số không cho phép: %s"
 msgid "E395: Contains argument not accepted here"
 msgstr "E395: không được sử dụng tham số contains ở đây"
 
-#, fuzzy
 msgid "E844: Invalid cchar value"
-msgstr "E474: Tham số không cho phép"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E890: Trailing char after ']': %s]%s"
-msgstr "E488: Ký tự thừa ở đuôi"
+msgstr ""
 
 msgid "No Syntax items defined for this buffer"
 msgstr "Không có phần tử cú pháp nào được định nghĩa cho bộ đệm này"
@@ -5761,9 +5512,8 @@ msgstr "Đồng bộ hóa theo chú thích kiểu C"
 msgid "no syncing"
 msgstr "không đồng bộ hóa"
 
-#, fuzzy
 msgid "syncing starts at the first line"
-msgstr "đồng bộ hóa bắt đầu "
+msgstr ""
 
 msgid "syncing starts "
 msgstr "đồng bộ hóa bắt đầu "
@@ -5796,9 +5546,8 @@ msgstr ""
 msgid "E392: No such syntax cluster: %s"
 msgstr "E392: Không có cụm cú pháp như vậy: %s"
 
-#, fuzzy
 msgid "from the first line"
-msgstr "Từ của dòng khác"
+msgstr ""
 
 msgid "minimal "
 msgstr "nhỏ nhất "
@@ -5822,13 +5571,12 @@ msgstr "E394: Phần tử vùng cho %s không tìm thấy"
 msgid "E397: Filename required"
 msgstr "E397: Yêu cầu tên tập tin"
 
-#, fuzzy
 msgid "E847: Too many syntax includes"
-msgstr "E77: Quá nhiều tên tập tin"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E789: Missing ']': %s"
-msgstr "E398: Thiếu '=': %s"
+msgstr ""
 
 #, c-format
 msgid "E398: Missing '=': %s"
@@ -5838,9 +5586,8 @@ msgstr "E398: Thiếu '=': %s"
 msgid "E399: Not enough arguments: syntax region %s"
 msgstr "E399: Không đủ tham số: vùng cú pháp %s"
 
-#, fuzzy
 msgid "E848: Too many syntax clusters"
-msgstr "E391: Không có cụm cú pháp như vậy: %s"
+msgstr ""
 
 msgid "E400: No cluster specified"
 msgstr "E400: Chưa chỉ ra cụm"
@@ -5853,10 +5600,8 @@ msgstr "E401: Không tìm thấy ký tự phân chia mẫu (pattern): %s"
 msgid "E402: Garbage after pattern: %s"
 msgstr "E402: Rác ở sau mẫu (pattern): %s"
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E403: syntax sync: line continuations pattern specified twice"
-msgstr "E403: đồng bộ hóa cú pháp: mẫu tiếp tục của dòng chỉ ra hai lần"
+msgstr ""
 
 #, c-format
 msgid "E404: Illegal arguments: %s"
@@ -5907,13 +5652,11 @@ msgstr "E555: ở cuối đống thẻ ghi"
 msgid "E556: At top of tag stack"
 msgstr "E556: ở đầu đống thẻ ghi"
 
-#, fuzzy
 msgid "E986: Cannot modify the tag stack within tagfunc"
-msgstr "E428: Không chuyển được tới vị trí ở sau thẻ ghi tương ứng cuối cùng"
+msgstr ""
 
-#, fuzzy
 msgid "E987: Invalid return value from tagfunc"
-msgstr "E178: Giá trị của số đếm theo mặc định không đúng"
+msgstr ""
 
 msgid "E1299: Window unexpectedly closed while searching for tags"
 msgstr ""
@@ -5962,9 +5705,9 @@ msgstr ""
 msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Lỗi định dạng trong tập tin thẻ ghi \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Before byte %<PRId64>"
-msgstr "Trước byte %ld"
+msgstr ""
 
 #, c-format
 msgid "Searching tags file %s"
@@ -6012,20 +5755,20 @@ msgstr "E439: danh sách hủy thao tác (undo) bị hỏng"
 msgid "E440: Undo line missing"
 msgstr "E440: bị mất dòng hủy thao tác"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E829: Write error in undo file: %s"
-msgstr "E297: Lỗi ghi nhớ tập tin trao đổi (swap)"
+msgstr ""
 
 msgid "E881: Line count changed unexpectedly"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E828: Cannot open undo file for writing: %s"
-msgstr "E212: Không thể mở tập tin để ghi nhớ"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5003: Unable to create directory \"%s\" for undo file: %s"
-msgstr "E346: Trong đường dẫn thay đổi thư mục không còn có thư mục \"%s\" nữa"
+msgstr ""
 
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
@@ -6045,77 +5788,67 @@ msgstr ""
 msgid "Skipping undo file write, nothing to undo"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing undo file: %s"
-msgstr "Ghi tập tin viminfo \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Not reading undo file, owner differs: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading undo file: %s"
-msgstr "Đọc tập tin viminfo \"%s\"%s%s%s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E822: Cannot open undo file for reading: %s"
-msgstr "E195: Không thể mở tập tin viminfo để đọc"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E823: Not an undo file: %s"
-msgstr "E484: Không mở được tập tin %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E824: Incompatible undo file: %s"
-msgstr "E484: Không mở được tập tin %s"
+msgstr ""
 
 msgid "File contents changed, cannot use undo info"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Finished reading undo file %s"
-msgstr "thực hiện xong %s"
+msgstr ""
 
-#, fuzzy
 msgid "Already at oldest change"
-msgstr "%ld đã thay đổi"
+msgstr ""
 
-#, fuzzy
 msgid "Already at newest change"
-msgstr "%ld đã thay đổi"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E830: Undo number %<PRId64> not found"
-msgstr "E92: Bộ đệm %ld không được tìm thấy"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E438: u_undo: line numbers wrong"
-msgstr "E438: u_undo: số thứ tự dòng không đúng"
+msgstr ""
 
-#, fuzzy
 msgid "more line"
-msgstr "Thêm 1 dòng"
+msgstr ""
 
-#, fuzzy
 msgid "more lines"
-msgstr "Thêm 1 dòng"
+msgstr ""
 
-#, fuzzy
 msgid "line less"
-msgstr "Bớt 1 dòng"
+msgstr ""
 
-#, fuzzy
 msgid "fewer lines"
-msgstr "Bớt %ld dòng"
+msgstr ""
 
-#, fuzzy
 msgid "change"
-msgstr "duy nhất 1 thay đổi"
+msgstr ""
 
-#, fuzzy
 msgid "changes"
-msgstr "duy nhất 1 thay đổi"
+msgstr ""
 
 #, c-format
 msgid "%<PRId64> %s; %s #%<PRId64>  %s"
@@ -6133,21 +5866,18 @@ msgid_plural "%<PRId64> seconds ago"
 msgstr[0] ""
 msgstr[1] ""
 
-#, fuzzy
 msgid "Nothing to undo"
-msgstr "Không tìm thấy ánh xạ"
+msgstr ""
 
 msgid "number changes  when               saved"
 msgstr ""
 
-#, fuzzy
 msgid "E790: undojoin is not allowed after undo"
-msgstr "E407: %s không được cho phép ở đây"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E179: Argument required for %s"
-msgstr "E179: yêu cầu đưa ra tham số để kết thúc"
+msgstr ""
 
 #, c-format
 msgid "E184: No such user-defined command: %s"
@@ -6156,24 +5886,21 @@ msgstr "E184: Không có câu lệnh người dùng định nghĩa như vậy: %
 msgid "E1208: -complete used without allowing arguments"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1237: No such user-defined command in current buffer: %s"
-msgstr "E184: Không có câu lệnh người dùng định nghĩa như vậy: %s"
+msgstr ""
 
-#, fuzzy
 msgid ""
 "\n"
 "    Name              Args Address Complete    Definition"
 msgstr ""
-"\n"
-"    Tên\t\tTham_số Phạm_vi Phần_phụ Định_nghĩa"
 
 msgid "No user-defined commands found"
 msgstr "Không tìm thấy câu lệnh do người dùng định nghĩa"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E180: Invalid address type value: %s"
-msgstr "E180: Giá trị phần phụ không đúng: %s"
+msgstr ""
 
 #, c-format
 msgid "E180: Invalid complete value: %s"
@@ -6202,9 +5929,9 @@ msgstr "E178: Giá trị của số đếm theo mặc định không đúng"
 msgid "E181: Invalid attribute: %s"
 msgstr "E181: Thuộc tính không đúng: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E174: Command already exists: add ! to replace it: %s"
-msgstr "E174: Đã có câu lệnh: Thêm ! để thay thế"
+msgstr ""
 
 msgid "E182: Invalid command name"
 msgstr "E182: Tên câu lệnh không đúng"
@@ -6212,9 +5939,8 @@ msgstr "E182: Tên câu lệnh không đúng"
 msgid "E183: User defined commands must start with an uppercase letter"
 msgstr "E183: Câu lệnh người dùng định nghĩa phải bắt đầu với một ký tự hoa"
 
-#, fuzzy
 msgid "E841: Reserved name, cannot be used for user defined command"
-msgstr "E464: Sự sử dụng không rõ ràng câu lệnh do người dùng định nghĩa"
+msgstr ""
 
 msgid "   system vimrc file: \""
 msgstr "            tập tin vimrc chung cho hệ thống: \""
@@ -6225,61 +5951,54 @@ msgstr "          giá trị $VIM theo mặc định: \""
 msgid " f-b for $VIMRUNTIME: \""
 msgstr "   giá trị $VIMRUNTIME theo mặc định: \""
 
-#, fuzzy
 msgid "Nvim is open source and freely distributable"
-msgstr "Vim là chương trình mã nguồn mở và phân phối tự do"
+msgstr ""
 
-#, fuzzy
 msgid "type  :help nvim<Enter>     if you are new! "
-msgstr "hãy gõ :help iccf<Enter>       để biết thêm thông tin"
+msgstr ""
 
-#, fuzzy
 msgid "type  :checkhealth<Enter>   to optimize Nvim"
-msgstr "hãy gõ :help cp-default<Enter> để có thêm thông tin về điều này"
+msgstr ""
 
-#, fuzzy
 msgid "type  :q<Enter>             to exit         "
-msgstr "    hãy gõ :q<Enter>               để thoát khỏi chương trình     "
+msgstr ""
 
-#, fuzzy
 msgid "type  :help<Enter>          for help        "
-msgstr "    hãy gõ :q<Enter>               để thoát khỏi chương trình     "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "type  :help news<Enter>     for v%s.%s notes "
-msgstr "hãy gõ :help sponsor<Enter>    để biết thêm thông tin "
+msgstr ""
 
 msgid "Help poor children in Uganda!"
 msgstr "Hãy giúp đỡ trẻ em nghèo Uganda!"
 
-#, fuzzy
 msgid "type  :help Kuwasha<Enter>  for information "
-msgstr "hãy gõ :help sponsor<Enter>    để biết thêm thông tin "
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid control character present in input: %.*s"
-msgstr "E59: ký tự không cho phép sau %s@"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E112: Option name missing: %.*s"
-msgstr "E112: Không đưa ra tên tùy chọn: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected EOC character: %.*s"
-msgstr "E18: Ở trước '=' có các ký tự không mong đợi"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unidentified character: %.*s"
-msgstr "E121: Biến không xác định: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Operator is not associative: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing operator: %.*s"
-msgstr "E115: Thiếu ngoặc kép: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected lambda arguments list or arrow: %.*s"
@@ -6293,27 +6012,23 @@ msgstr ""
 msgid "E15: Expected assignment operator or subscript: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E15: Unexpected "
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Unexpected multiplication-like operator: %.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E15: Environment variable name missing"
-msgstr "E461: Tên biến không cho phép: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected value, got comparison operator: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got comma: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Comma outside of call, lambda or literal: %.*s"
@@ -6327,14 +6042,13 @@ msgstr ""
 msgid "E15: Expected value, got closing bracket: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Unable to assign to empty list: %.*s"
-msgstr "E241: Không thể gửi tin nhắn tới %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing figure brace: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E475: Nested lists not allowed when assigning: %.*s"
@@ -6348,100 +6062,91 @@ msgstr ""
 msgid "E15: Don't know what figure brace means: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected arrow: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Arrow outside of lambda: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected dot: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Cannot concatenate in assignments: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got parenthesis: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing parenthesis: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got question mark: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E114: Missing double quote: %.*s"
-msgstr "E114: Thiếu ngoặc kép: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E115: Missing single quote: %.*s"
-msgstr "E115: Thiếu ngoặc kép: %s"
+msgstr ""
 
 #, c-format
 msgid "E475: Expected closing bracket to end list assignment lvalue: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Misplaced assignment: %.*s"
-msgstr "E417: thiếu tham số: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected assignment: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got EOC: %.*s"
-msgstr "E415: dấu bằng không được mong đợi: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E116: Missing closing parenthesis for function call: %.*s"
-msgstr "E116: Tham số cho hàm %s đưa ra không đúng"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E110: Missing closing parenthesis for nested expression: %.*s"
-msgstr "E107: Thiếu dấu ngoặc: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E697: Missing end of List ']': %.*s"
-msgstr "E398: Thiếu '=': %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E723: Missing end of Dictionary '}': %.*s"
-msgstr "E126: Thiếu lệnh :endfunction"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing closing figure brace: %.*s"
-msgstr "E159: Thiếu số của ký hiệu"
+msgstr ""
 
 #, c-format
 msgid "E15: Missing closing figure brace for lambda: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E109: Missing ':' after '?': %.*s"
-msgstr "E109: Thiếu ':' sau '?'"
+msgstr ""
 
 msgid "E444: Cannot close last window"
 msgstr "E444: Không được đóng cửa sổ cuối cùng"
 
-#, fuzzy
 msgid "E1159: Cannot split a window when closing the buffer"
-msgstr "E90: Không thể bỏ nạp từ bộ nhớ bộ đệm cuối cùng"
+msgstr ""
 
 msgid "Already only one window"
 msgstr "Chỉ có một cửa sổ"
@@ -6456,9 +6161,8 @@ msgstr ""
 msgid "E443: Cannot rotate when another window is split"
 msgstr "E443: Không đổi được chỗ khi cửa sổ khác được chia"
 
-#, fuzzy
 msgid "E814: Cannot close window, only autocmd window would remain"
-msgstr "E444: Không được đóng cửa sổ cuối cùng"
+msgstr ""
 
 msgid "E445: Other window contains changes"
 msgstr "E445: Cửa sổ khác có thay đổi chưa được ghi nhớ"
@@ -6525,9 +6229,8 @@ msgstr ""
 msgid "override 'ignorecase' when pattern has upper case characters"
 msgstr ""
 
-#, fuzzy
 msgid "maximum number for the search count feature"
-msgstr "E569: đã đạt tới số kết nối lớn nhất cho phép với cscope"
+msgstr ""
 
 msgid "what method to use for changing case of letters"
 msgstr ""
@@ -6538,9 +6241,8 @@ msgstr ""
 msgid "pattern for a macro definition line"
 msgstr ""
 
-#, fuzzy
 msgid "pattern for an include-file line"
-msgstr "Tìm thấy tương ứng trên mọi dòng: %s"
+msgstr ""
 
 msgid "expression used to transform an include line to a file name"
 msgstr ""
@@ -6551,9 +6253,8 @@ msgstr ""
 msgid "tags"
 msgstr ""
 
-#, fuzzy
 msgid "use binary searching in tags files"
-msgstr "Tìm kiếm tập tin thẻ ghi %s"
+msgstr ""
 
 msgid "number of significant characters in a tag name or zero"
 msgstr ""
@@ -6590,9 +6291,8 @@ msgstr ""
 msgid "number of screen lines to show around the cursor"
 msgstr ""
 
-#, fuzzy
 msgid "long lines wrap"
-msgstr "[dòng dài được chia nhỏ]"
+msgstr ""
 
 msgid "wrap long lines at a character in 'breakat'"
 msgstr ""
@@ -6628,9 +6328,8 @@ msgstr ""
 msgid "number of lines used for the command-line"
 msgstr ""
 
-#, fuzzy
 msgid "width of the display"
-msgstr "Không có màn hình"
+msgstr ""
 
 msgid "number of lines in the display"
 msgstr ""
@@ -6656,9 +6355,8 @@ msgstr ""
 msgid "list of strings used for list mode"
 msgstr ""
 
-#, fuzzy
 msgid "show the line number for each line"
-msgstr " dòng trước dòng đầu tiên"
+msgstr ""
 
 msgid "show the relative line number for each line"
 msgstr ""
@@ -6777,13 +6475,11 @@ msgstr ""
 msgid "initial height of the help window"
 msgstr ""
 
-#, fuzzy
 msgid "default height for the preview window"
-msgstr "E441: Không có cửa sổ xem trước"
+msgstr ""
 
-#, fuzzy
 msgid "identifies the preview window"
-msgstr "E441: Không có cửa sổ xem trước"
+msgstr ""
 
 msgid "custom format for the window bar"
 msgstr ""
@@ -6832,9 +6528,8 @@ msgstr ""
 msgid "maximum number of tab pages to open for -p and \"tab all\""
 msgstr ""
 
-#, fuzzy
 msgid "custom tab pages line"
-msgstr "không nhận được dòng"
+msgstr ""
 
 msgid "terminal"
 msgstr ""
@@ -6969,9 +6664,8 @@ msgstr ""
 msgid "list of preferred languages for finding help"
 msgstr ""
 
-#, fuzzy
 msgid "selecting text"
-msgstr "Lựa chọn"
+msgstr ""
 
 msgid "\"old\", \"inclusive\" or \"exclusive\"; how selecting text behaves"
 msgstr ""
@@ -7177,9 +6871,8 @@ msgstr ""
 msgid "preserve kind of whitespace when changing indent"
 msgstr ""
 
-#, fuzzy
 msgid "enable lisp mode"
-msgstr "-l\t\t\tChế độ Lisp"
+msgstr ""
 
 msgid "words that change how lisp indenting works"
 msgstr ""
@@ -7187,9 +6880,8 @@ msgstr ""
 msgid "options for Lisp indenting"
 msgstr ""
 
-#, fuzzy
 msgid "folding"
-msgstr "đang ghi"
+msgstr ""
 
 msgid "unset to display all folds open"
 msgstr ""
@@ -7241,20 +6933,17 @@ msgstr ""
 msgid "options for using diff mode"
 msgstr ""
 
-#, fuzzy
 msgid "expression used to obtain a diff file"
-msgstr "biểu thức bị tắt khi biên dịch"
+msgstr ""
 
 msgid "list of addresses for anchoring a diff"
 msgstr ""
 
-#, fuzzy
 msgid "expression used to patch a file"
-msgstr "biểu thức bị tắt khi biên dịch"
+msgstr ""
 
-#, fuzzy
 msgid "mapping"
-msgstr "Không tìm thấy ánh xạ"
+msgstr ""
 
 msgid "maximum depth of mapping"
 msgstr ""
@@ -7304,9 +6993,8 @@ msgstr ""
 msgid "list of file formats to look for when editing a file"
 msgstr ""
 
-#, fuzzy
 msgid "writing files is allowed"
-msgstr "-m\t\t\tKhông có khả năng ghi nhớ thay đổi (ghi nhớ tập tin)"
+msgstr ""
 
 msgid "write a backup file before overwriting a file"
 msgstr ""
@@ -7344,16 +7032,14 @@ msgstr ""
 msgid "forcibly sync the file to disk after writing it"
 msgstr ""
 
-#, fuzzy
 msgid "the swap file"
-msgstr "Không có tập tin swap"
+msgstr ""
 
 msgid "list of directories for the swap file"
 msgstr ""
 
-#, fuzzy
 msgid "use a swap file for this buffer"
-msgstr "Không có phần tử cú pháp nào được định nghĩa cho bộ đệm này"
+msgstr ""
 
 msgid "number of characters typed to cause a swap file update"
 msgstr ""
@@ -7361,9 +7047,8 @@ msgstr ""
 msgid "time in msec after which the swap file will be updated"
 msgstr ""
 
-#, fuzzy
 msgid "command line editing"
-msgstr "Dòng lệnh"
+msgstr ""
 
 msgid "how many command lines are remembered"
 msgstr ""
@@ -7374,9 +7059,8 @@ msgstr ""
 msgid "like 'wildchar' but can also be used in a mapping"
 msgstr ""
 
-#, fuzzy
 msgid "specifies how command line completion works"
-msgstr " Tự động kết thúc dòng lệnh (^V^N^P)"
+msgstr ""
 
 msgid "empty or \"tagfile\" to list file name of matching tags"
 msgstr ""
@@ -7405,9 +7089,8 @@ msgstr ""
 msgid "height of the command-line window"
 msgstr ""
 
-#, fuzzy
 msgid "executing external commands"
-msgstr "Tùy chọn 'columns' khác 80, chương trình ngoại trú không thể thực hiện"
+msgstr ""
 
 msgid "name of the shell program used for external commands"
 msgstr ""
@@ -7493,9 +7176,8 @@ msgstr ""
 msgid "specifies the characters in a keyword"
 msgstr ""
 
-#, fuzzy
 msgid "specifies printable characters"
-msgstr "E595: chứa ký tự không in ra hoặc ký tự với chiều rộng gấp đôi"
+msgstr ""
 
 msgid "specifies escape characters in a string"
 msgstr ""
@@ -7536,9 +7218,8 @@ msgstr ""
 msgid "entering a search pattern: 1: use :lmap; 2: use IM; 0: neither"
 msgstr ""
 
-#, fuzzy
 msgid "multi-byte characters"
-msgstr "%ld ký tự"
+msgstr ""
 
 msgid "character encoding for the current file"
 msgstr ""
@@ -7614,13 +7295,11 @@ msgstr ""
 msgid "whether to use Python 2 or 3"
 msgstr ""
 
-#, fuzzy
 msgid "live preview of substitution"
-msgstr "%ld thay thế"
+msgstr ""
 
-#, fuzzy
 msgid "buffer is busy"
-msgstr "1 bộ đệm được làm sạch"
+msgstr ""
 
 msgid "characters removed when pasting into terminal window"
 msgstr ""
@@ -7628,9 +7307,8 @@ msgstr ""
 msgid "number of lines kept beyond the visible screen in terminal buffer"
 msgstr ""
 
-#, fuzzy
 msgid "(local to window)"
-msgstr "Chỉ có một cửa sổ"
+msgstr ""
 
 msgid "(local to buffer)"
 msgstr ""
@@ -7679,10 +7357,33 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
+#~ "\n"
+#~ "Usage:"
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "Sử dụng:"
+
+#~ msgid ""
+#~ "\n"
 #~ "         [not usable with this version of Vim]"
 #~ msgstr ""
 #~ "\n"
 #~ "         [không sử dụng được với phiên bản này của Vim]"
+
+#~ msgid ""
+#~ "\n"
+#~ "    Name        Args Range Complete  Definition"
+#~ msgstr ""
+#~ "\n"
+#~ "    Tên\t\tTham_số Phạm_vi Phần_phụ Định_nghĩa"
+
+#~ msgid ""
+#~ "\n"
+#~ "   #   line"
+#~ msgstr ""
+#~ "\n"
+#~ "   #   dòng"
 
 #~ msgid ""
 #~ "\n"
@@ -7748,6 +7449,24 @@ msgstr ""
 #~ msgstr ""
 #~ "\n"
 #~ "# biến toàn cầu:\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "(1) Another program may be editing the same file.\n"
+#~ "    If this is the case, be careful not to end up with two\n"
+#~ "    different instances of the same file when making changes.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "(1) Rất có thể một chương trình khác đang soạn thảo tập tin.\n"
+#~ "    Nếu như vậy, hãy cẩn thận khi thay đổi, làm sao để không thu\n"
+#~ "    được hai phương án khác nhau của cùng một tập tin.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "(2) An edit session for this file crashed.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "(2) Lần soạn thảo trước của tập tin này gặp sự cố.\n"
 
 #~ msgid ""
 #~ "\n"
@@ -7933,6 +7652,20 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
+#~ "Maybe no changes were made or Vim did not update the swap file."
+#~ msgstr ""
+#~ "\n"
+#~ "Chưa có thay đổi nào hoặc Vim không thể cập nhật tập tin trao đổi (swap)"
+
+#~ msgid ""
+#~ "\n"
+#~ "More info with: \"vim -h\"\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Xem thông tin chi tiết với: \"vim -h\"\n"
+
+#~ msgid ""
+#~ "\n"
 #~ "Normal version "
 #~ msgstr ""
 #~ "\n"
@@ -7977,11 +7710,21 @@ msgstr ""
 #~ msgstr ""
 #~ "                                 để chuyển vào chế độ Vim mặc định       "
 
+#~ msgid "                              for two modes      "
+#~ msgstr "                                 cho hai chế độ               "
+
+#~ msgid "         [does not look like a Vim swap file]"
+#~ msgstr "         [không phải là tập tin trao đổi (swap) của Vim]"
+
 #~ msgid "      user exrc file: \""
 #~ msgstr "         tập tin exrc của người dùng: \""
 
 #~ msgid "     user vimrc file: \""
 #~ msgstr "         tập tin vimrc của người dùng: \""
+
+#~ msgid "    If this is the case, use \":recover\" or \"vim -r "
+#~ msgstr ""
+#~ "    Trong trường hợp này, hãy sử dụng câu lệnh \":recover\" hoặc \"vim -r "
 
 #~ msgid "    Quit, or continue with caution.\n"
 #~ msgstr "    Thoát hoặc tiếp tục với sự cẩn thận.\n"
@@ -8022,6 +7765,9 @@ msgstr ""
 #~ msgid " (lang)"
 #~ msgstr " (ngôn ngữ)"
 
+#~ msgid " (still running)"
+#~ msgstr " (vẫn đang chạy)"
+
 #~ msgid " 2nd user vimrc file: \""
 #~ msgstr "  tập tin vimrc thứ hai của người dùng: \""
 
@@ -8030,6 +7776,15 @@ msgstr ""
 
 #~ msgid " Copy %d of %d"
 #~ msgstr " Sao chép %d của %d"
+
+#~ msgid " Hebrew"
+#~ msgstr " Do thái"
+
+#~ msgid " ^X mode (^E^Y^L^]^F^I^K^D^V^N^P)"
+#~ msgstr " Chế độ ^X (^E^Y^L^]^F^I^K^D^V^N^P)"
+
+#~ msgid " cannot be used with this version of Vim.\n"
+#~ msgstr " không thể sử dụng trong phiên bản Vim này.\n"
 
 #~ msgid " in Win32s mode"
 #~ msgstr " trong chế độ Win32"
@@ -8042,6 +7797,9 @@ msgstr ""
 
 #~ msgid " returned\n"
 #~ msgstr " thoát\n"
+
+#~ msgid " vim [arguments] "
+#~ msgstr " vim [các tham số] "
 
 #~ msgid " with OLE support"
 #~ msgstr " với hỗ trợ OLE"
@@ -8062,20 +7820,86 @@ msgstr ""
 #~ msgid "%-5s: %-30s (Usage: %s)"
 #~ msgstr "%-5s: %-30s (Sử dụng: %s)"
 
+#~ msgid "%3d  %s %s  line %ld"
+#~ msgstr "%3d  %s %s dòng %ld"
+
 #~ msgid "%<%f%h%m%=Page %N"
 #~ msgstr "%<%f%h%m%=Trang %N"
+
+#~ msgid "%d buffers deleted"
+#~ msgstr "%d bộ đệm được bỏ nạp"
+
+#~ msgid "%d buffers unloaded"
+#~ msgstr "%d bộ đệm được bỏ nạp từ bộ nhớ"
+
+#~ msgid "%d buffers wiped out"
+#~ msgstr "%d bộ đệm được làm sạch"
 
 #~ msgid "%d files to edit\n"
 #~ msgstr "%d tập tin để soạn thảo\n"
 
+#~ msgid "%d more files to edit.  Quit anyway?"
+#~ msgstr "Còn %d tập tin nữa chưa soạn thảo. Thoát?"
+
 #~ msgid "%d of %d edited"
 #~ msgstr "đã soạn thảo %d từ %d"
+
+#~ msgid "%ld Cols; "
+#~ msgstr "%ld Cột; "
 
 #~ msgid "%ld changes"
 #~ msgstr "%ld thay đổi"
 
+#~ msgid "%ld characters"
+#~ msgstr "%ld ký tự"
+
+#~ msgid "%ld fewer lines"
+#~ msgstr "Bớt %ld dòng"
+
+#~ msgid "%ld lines %sed %d times"
+#~ msgstr "Trên %ld dòng %s %d lần"
+
 #~ msgid "%ld lines %sed 1 time"
 #~ msgstr "Trên %ld dòng %s 1 lần"
+
+#~ msgid "%ld lines --%d%%--"
+#~ msgstr "%ld dòng --%d%%--"
+
+#~ msgid "%ld lines changed"
+#~ msgstr "%ld đã thay đổi"
+
+#~ msgid "%ld lines filtered"
+#~ msgstr "Đã lọc %ld dòng"
+
+#~ msgid "%ld lines indented "
+#~ msgstr "%ld dòng đã thụt đầu"
+
+#~ msgid "%ld lines moved"
+#~ msgstr "Đã di chuyển %ld dòng"
+
+#~ msgid "%ld lines to indent... "
+#~ msgstr "Thụt đầu %ld dòng..."
+
+#~ msgid "%ld lines yanked"
+#~ msgstr "đã sao chép %ld dòng"
+
+#~ msgid "%ld lines, "
+#~ msgstr "%ld dòng, "
+
+#~ msgid "%ld more lines"
+#~ msgstr "Thêm %ld dòng"
+
+#~ msgid "%ld substitutions"
+#~ msgstr "%ld thay thế"
+
+#~ msgid "%s returning \"%s\""
+#~ msgstr "%s trả lại \"%s\""
+
+#~ msgid "%s returning #%ld"
+#~ msgstr "%s trả lại #%ld"
+
+#~ msgid "%s, line %ld"
+#~ msgstr "%s, dòng %ld"
 
 #~ msgid "%sviminfo: %s in line: "
 #~ msgstr "%sviminfo: %s trên dòng: "
@@ -8114,8 +7938,28 @@ msgstr ""
 #~ msgid "' not known. Available builtin terminals are:"
 #~ msgstr "' không rõ. Có các terminal gắn sẵn (builtin) sau:"
 
+#~ msgid "'columns' is not 80, cannot execute external commands"
+#~ msgstr ""
+#~ "Tùy chọn 'columns' khác 80, chương trình ngoại trú không thể thực hiện"
+
+#~ msgid ""
+#~ "'readonly' option is set for \"%.*s\".\n"
+#~ "Do you wish to write anyway?"
+#~ msgstr ""
+#~ "Tùy chọn 'readonly' được đặt cho \"%.*s\".\n"
+#~ "Ghi nhớ bằng mọi giá?"
+
+#~ msgid "(+%ld for BOM)"
+#~ msgstr "(+%ld cho BOM)"
+
 #~ msgid "+\t\t\tStart at end of file"
 #~ msgstr "+\t\t\tBắt đầu soạn thảo từ cuối tập tin"
+
+#~ msgid "+-%s%3ld lines: "
+#~ msgstr "+-%s%3ld dòng: "
+
+#~ msgid "+--%3ld lines folded "
+#~ msgstr "+--%3ld dòng được gấp"
 
 #~ msgid "+<lnum>\t\tStart at line <lnum>"
 #~ msgstr ""
@@ -8126,6 +7970,12 @@ msgstr ""
 
 #~ msgid "-               read text from stdin"
 #~ msgstr "-                đọc văn bản từ đầu vào stdin"
+
+#~ msgid "--\t\t\tOnly file names after this"
+#~ msgstr "--\t\t\tSau tham số chỉ đưa ra tên tập tin"
+
+#~ msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
+#~ msgstr "--cmd <câu lệnh>\tThực hiện <câu lệnh> trước khi nạp tập tin vimrc"
 
 #~ msgid "--columns <number>\tInitial width of window in columns"
 #~ msgstr "--columns <số>\tChiều rộng ban đầu của cửa sổ tính theo số cột"
@@ -8178,6 +8028,9 @@ msgstr ""
 #~ msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
 #~ msgstr "--socketid <xid>\tMở Vim bên trong thành phần GTK khác"
 
+#~ msgid "--version\t\tPrint version information and exit"
+#~ msgstr "--version\t\tĐưa ra thông tin về phiên bản Vim và thoát"
+
 #~ msgid "-A\t\t\tStart in Arabic mode"
 #~ msgstr "-A\t\t\tKhởi động vào chế độ Ả Rập"
 
@@ -8211,6 +8064,9 @@ msgstr ""
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tChế độ chỉ đọc (giống \"view\")"
 
+#~ msgid "-S <session>\t\tSource file <session> after loading the first file"
+#~ msgstr "-S <session>\t\tThực hiện <session> sau khi nạp tập tin đầu tiên"
+
 #~ msgid "-T <terminal>\tSet terminal type to <terminal>"
 #~ msgstr "-T <terminal>\tĐặt loại terminal thành <terminal>"
 
@@ -8242,6 +8098,9 @@ msgstr ""
 #~ msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
 #~ msgstr ""
 #~ "-borderwidth <rộng>\tSử dụng đường viền có chiều <rộng> (cũng như: -bw)"
+
+#~ msgid "-c <command>\t\tExecute <command> after loading the first file"
+#~ msgstr "-c <câu lệnh>\t\tThực hiện <câu lệnh> sau khi nạp tập tin đầu tiên"
 
 #~ msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
 #~ msgstr "-d\t\t\tChế độ khác biệt, diff (giống \"vimdiff\")"
@@ -8298,12 +8157,24 @@ msgstr ""
 #~ msgid "-italicfont <font>\tUse <font> for italic text"
 #~ msgstr "-italicfont <phông>\tSử dụng <phông> chữ cho văn bản in nghiêng"
 
+#~ msgid "-l\t\t\tLisp mode"
+#~ msgstr "-l\t\t\tChế độ Lisp"
+
+#~ msgid "-m\t\t\tModifications (writing files) not allowed"
+#~ msgstr "-m\t\t\tKhông có khả năng ghi nhớ thay đổi (ghi nhớ tập tin)"
+
 #~ msgid "-menuheight <height>\tUse a menu bar height of <height> (also: -mh)"
 #~ msgstr ""
 #~ "-menuheight <cao>\tSử dụng thanh trình đơn với chiều <cao> (cũng như: -mh)"
 
+#~ msgid "-n\t\t\tNo swap file, use memory only"
+#~ msgstr "-n\t\t\tKhông sử dụng tập tin swap, chỉ sử dụng bộ nhớ"
+
 #~ msgid "-name <name>\t\tUse resource as if vim was <name>"
 #~ msgstr "-name <tên>\t\tSử dụng tài nguyên giống như khi vim có <tên>"
+
+#~ msgid "-o[N]\t\tOpen N windows (default: one for each file)"
+#~ msgstr "-o[N]\t\tMở N cửa sổ (theo mặc định: mỗi cửa sổ cho một tập tin)"
 
 #~ msgid "-q [errorfile]  edit file with first error"
 #~ msgstr "-q [tập tin lỗi] soạn thảo tập tin với lỗi đầu tiên"
@@ -8322,6 +8193,10 @@ msgstr ""
 
 #~ msgid "-s\t\t\tSilent (batch) mode (only for \"ex\")"
 #~ msgstr "-s\t\t\tChế độ ít đưa thông báo (gói) (chỉ dành cho \"ex\")"
+
+#~ msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"
+#~ msgstr ""
+#~ "-s <scriptin>\tĐọc các lệnh của chế độ Thông thường từ tập tin <scriptin>"
 
 #~ msgid ""
 #~ "-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
@@ -8358,6 +8233,15 @@ msgstr ""
 #~ msgid "1 buffer deleted"
 #~ msgstr "1 bộ đệm bị xóa"
 
+#~ msgid "1 buffer unloaded"
+#~ msgstr "1 bộ đệm được bỏ nạp từ bộ nhớ"
+
+#~ msgid "1 buffer wiped out"
+#~ msgstr "1 bộ đệm được làm sạch"
+
+#~ msgid "1 change"
+#~ msgstr "duy nhất 1 thay đổi"
+
 #~ msgid "1 character"
 #~ msgstr "1 ký tự"
 
@@ -8376,14 +8260,23 @@ msgstr ""
 #~ msgid "1 line indented "
 #~ msgstr "Đã thụt đầu 1 dòng"
 
+#~ msgid "1 line less"
+#~ msgstr "Bớt 1 dòng"
+
 #~ msgid "1 line moved"
 #~ msgstr "Đã di chuyển 1 dòng"
 
 #~ msgid "1 line yanked"
 #~ msgstr "đã sao chép 1 dòng"
 
+#~ msgid "1 line, "
+#~ msgstr "1 dòng, "
+
 #~ msgid "1 more file to edit.  Quit anyway?"
 #~ msgstr "Còn 1 tập tin nữa cần soạn thảo. Thoát?"
+
+#~ msgid "1 more line"
+#~ msgstr "Thêm 1 dòng"
 
 #~ msgid "1 substitution"
 #~ msgstr "1 thay thế"
@@ -8436,8 +8329,17 @@ msgstr ""
 #~ msgid "At line"
 #~ msgstr "Tại dòng"
 
+#~ msgid "Attempt to open script file again: \""
+#~ msgstr "Thử mở tập tin script một lần nữa: \""
+
 #~ msgid "Become a registered Vim user!"
 #~ msgstr "Hãy trở thành người dùng đăng ký của Vim!"
+
+#~ msgid "Before byte %ld"
+#~ msgstr "Trước byte %ld"
+
+#~ msgid "Breakpoint in \"%s%s\" line %ld"
+#~ msgstr "Điểm dừng trên \"%s%s\" dòng %ld"
 
 #~ msgid "Browse class"
 #~ msgstr "Duyệt hạng"
@@ -8462,6 +8364,15 @@ msgstr ""
 
 #~ msgid "Cannot open NIL:\n"
 #~ msgstr "Không mở được NIL:\n"
+
+#~ msgid "Cannot open for reading: \""
+#~ msgstr "Không mở để đọc được: \""
+
+#~ msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
+#~ msgstr "Cột %s của %s;  Dòng %ld của %ld; Từ %ld của %ld; Byte %ld của %ld"
+
+#~ msgid "Command Line"
+#~ msgstr "Dòng lệnh"
 
 #~ msgid "Compilation: "
 #~ msgstr "Tham số biên dịch: "
@@ -8500,27 +8411,85 @@ msgstr ""
 #~ msgid "E106: Unknown variable: \"%s\""
 #~ msgstr "E106: Biến không biết: \"%s\""
 
+#~ msgid "E121: Undefined variable: %s"
+#~ msgstr "E121: Biến không xác định: %s"
+
+#~ msgid "E128: Function name must start with a capital: %s"
+#~ msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+
+#~ msgid ""
+#~ "E12: Command not allowed from exrc/vimrc in current dir or tag search"
+#~ msgstr ""
+#~ "E12: Câu lệnh không cho phép từ exrc/vimrc trong thư mục hiện thời hoặc "
+#~ "trong tìm kiếm thẻ ghi"
+
+#~ msgid "E130: Undefined function: %s"
+#~ msgstr "E130: Hàm số %s chưa xác định"
+
+#~ msgid "E134: Move lines into themselves"
+#~ msgstr "E134: Di chuyển các dòng lên chính chúng"
+
 #~ msgid "E136: viminfo: Too many errors, skipping rest of file"
 #~ msgstr ""
 #~ "E136: viminfo: Quá nhiều lỗi, phần còn lại của tập tin sẽ được bỏ qua"
 
+#~ msgid "E137: Viminfo file is not writable: %s"
+#~ msgstr "E137: Thiếu quyền ghi lên tập tin viminfo: %s"
+
+#~ msgid "E138: Can't write viminfo file %s!"
+#~ msgstr "E138: Không thể ghi tập tin viminfo %s!"
+
+#~ msgid "E141: No file name for buffer %ld"
+#~ msgstr "E141: Không có tên tập tin cho bộ đệm %ld"
+
 #~ msgid "E145: Shell commands not allowed in rvim"
 #~ msgstr "E145: Không cho phép sử dụng lệnh shell trong rvim."
+
+#~ msgid "E147: Cannot do :global recursive"
+#~ msgstr "E147: Không thực hiện được lệnh :global đệ qui"
 
 #~ msgid "E14: Invalid address"
 #~ msgstr "E14: Địa chỉ không cho phép"
 
+#~ msgid "E154: Duplicate tag \"%s\" in file %s"
+#~ msgstr "E154: Thẻ ghi lặp lại \"%s\" trong tập tin %s"
+
+#~ msgid "E157: Invalid sign ID: %ld"
+#~ msgstr "E157: ID của ký hiệu không đúng: %ld"
+
+#~ msgid "E15: Invalid expression: %s"
+#~ msgstr "E15: Biểu thức không cho phép: %s"
+
 #~ msgid "E172: Only one file name allowed"
 #~ msgstr "E172: Chỉ cho phép sử dụng một tên tập tin"
+
+#~ msgid "E173: %ld more files to edit"
+#~ msgstr "E173: %ld tập tin nữa chưa soạn thảo."
 
 #~ msgid "E173: 1 more file to edit"
 #~ msgstr "E173: 1 tập tin nữa chờ soạn thảo."
 
+#~ msgid "E174: Command already exists: add ! to replace it"
+#~ msgstr "E174: Đã có câu lệnh: Thêm ! để thay thế"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E179: Argument required for complete"
+#~ msgstr "E179: yêu cầu đưa ra tham số để kết thúc"
+
+#~ msgid "E185: Cannot find color scheme %s"
+#~ msgstr "E185: Không tin thấy sơ đồ màu sắc %s"
+
 #~ msgid "E188: Obtaining window position not implemented for this platform"
 #~ msgstr "E188: Trên hệ thống này việc xác định vị trí cửa sổ không làm việc"
 
+#~ msgid "E18: Unexpected characters before '='"
+#~ msgstr "E18: Ở trước '=' có các ký tự không mong đợi"
+
 #~ msgid "E193: :endfunction not inside a function"
 #~ msgstr "E193: lệnh :endfunction chỉ được sử dụng trong một hàm số"
+
+#~ msgid "E195: Cannot open viminfo file for reading"
+#~ msgstr "E195: Không thể mở tập tin viminfo để đọc"
 
 #~ msgid "E196: No digraphs in this version"
 #~ msgstr "E196: Trong phiên bản này chữ ghép không được hỗ trợ"
@@ -8528,11 +8497,23 @@ msgstr ""
 #~ msgid "E198: cmd_pchar beyond the command length"
 #~ msgstr "E198: cmd_pchar lớn hơn chiều dài câu lệnh"
 
+#~ msgid "E199: Active window or buffer deleted"
+#~ msgstr "E199: Cửa sổ hoặc bộ đệm hoạt động bị xóa"
+
 #~ msgid "E208: Error writing to \"%s\""
 #~ msgstr "E208: Lỗi ghi nhớ vào \"%s\""
 
+#~ msgid "E209: Error closing \"%s\""
+#~ msgstr "E209: Lỗi đóng \"%s\""
+
 #~ msgid "E210: Error reading \"%s\""
 #~ msgstr "E210: Lỗi đọc \"%s\""
+
+#~ msgid "E211: Warning: File \"%s\" no longer available"
+#~ msgstr "E211: Cảnh báo: Tập tin \"%s\" không còn truy cập được nữa"
+
+#~ msgid "E212: Can't open file for writing"
+#~ msgstr "E212: Không thể mở tập tin để ghi nhớ"
 
 #~ msgid "E229: Cannot start the GUI"
 #~ msgstr "E229: Không chạy được giao diện đồ họa GUI"
@@ -8554,11 +8535,23 @@ msgstr ""
 #~ msgid "E234: Unknown fontset: %s"
 #~ msgstr "E234: Không rõ bộ phông chữ: %s"
 
+#~ msgid "E235: Unknown font: %s"
+#~ msgstr "E235: Không rõ phông chữ: %s"
+
+#~ msgid "E236: Font \"%s\" is not fixed-width"
+#~ msgstr "E236: Phông chữ \"%s\" không có độ rộng cố định (fixed-width)"
+
+#~ msgid "E237: Printer selection failed"
+#~ msgstr "E237: Chọn máy in không thành công"
+
 #~ msgid "E238: Print error: %s"
 #~ msgstr "E238: Lỗi in: %s"
 
 #~ msgid "E240: No connection to Vim server"
 #~ msgstr "E240: Không có kết nối với máy chủ Vim"
+
+#~ msgid "E241: Unable to send to %s"
+#~ msgstr "E241: Không thể gửi tin nhắn tới %s"
 
 #~ msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
 #~ msgstr ""
@@ -8588,6 +8581,9 @@ msgstr ""
 
 #~ msgid "E253: Fontset name: %s\n"
 #~ msgstr "E253: Bộ phông chữ: %s\n"
+
+#~ msgid "E254: Cannot allocate color %s"
+#~ msgstr "E254: Không chỉ định được màu %s"
 
 #~ msgid "E256: Hangul automata ERROR"
 #~ msgstr "E256: LỖI máy tự động Hangual (tiếng Hàn)"
@@ -8658,6 +8654,9 @@ msgstr ""
 #~ "E281: LỖI TCL: mã thoát ra không phải là một số nguyên!? Hãy thông báo "
 #~ "điều này đến danh sách thư (mailing list) vim-dev@vim.org"
 
+#~ msgid "E284: Cannot set IC values"
+#~ msgstr "E284: Không đặt được giá trị nội dung nhập vào (IC)"
+
 #~ msgid "E285: Failed to create input context"
 #~ msgstr "E285: Không tạo được nội dung nhập vào"
 
@@ -8685,16 +8684,56 @@ msgstr ""
 #~ "E299: Không cho phép sự tính toán Perl trong hộp cát mà không có môđun An "
 #~ "toàn"
 
+#~ msgid "E304: ml_timestamp: Didn't get block 0??"
+#~ msgstr "E304: ml_timestamp: Chưa lấy khối số 0??"
+
+#~ msgid "E307: %s does not look like a Vim swap file"
+#~ msgstr "E307: %s không phải là tập tin trao đổi (swap) của Vim"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E315: ml_get: Invalid lnum: %ld"
+#~ msgstr "E315: ml_get: giá trị lnum không đúng: %ld"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E316: ml_get: Cannot find line %ld"
+#~ msgstr "E316: ml_get: không tìm được dòng %ld"
+
+#~ msgid "E319: Sorry, the command is not available in this version"
+#~ msgstr "E319: Xin lỗi, câu lệnh này không có trong phiên bản này"
+
+#~ msgid "E320: Cannot find line %ld"
+#~ msgstr "E320: Không tìm được dòng %ld"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E322: Line number out of range: %ld past the end"
+#~ msgstr "E322: số thứ tự dòng vượt quá giới hạn : %ld"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E323: Line count wrong in block %ld"
+#~ msgstr "E323: giá trị đếm dòng không đúng trong khối %ld"
+
 #~ msgid "E324: Can't open PostScript output file"
 #~ msgstr "E324: Không thể mở tập tin PostScript"
+
+#~ msgid "E329: No menu of that name"
+#~ msgstr "E329: Không có trình đơn với tên như vậy"
 
 #~ msgid "E338: Sorry, no file browser in console mode"
 #~ msgstr ""
 #~ "E338: Xin lỗi nhưng không có trình duyệt tập tin trong chế độ kênh giao "
 #~ "tác (console)"
 
+#~ msgid "E340: Line is becoming too long"
+#~ msgstr "E340: Dòng đang trở thành quá dài"
+
 #~ msgid "E341: Internal error: lalloc(%ld, )"
 #~ msgstr "E341: Lỗi nội bộ: lalloc(%ld, )"
+
+#~ msgid "E342: Out of memory!  (allocating %lu bytes)"
+#~ msgstr "E342: Không đủ bộ nhớ! (phân chia %lu byte)"
+
+#~ msgid "E360: Cannot execute shell with -f option"
+#~ msgstr "E360: Không chạy được shell với tùy chọn -f"
 
 #~ msgid "E361: Crash intercepted; regexp too complex?"
 #~ msgstr "E361: Sự cố được ngăn chặn; biểu thức chính quy quá phức tạp?"
@@ -8702,6 +8741,9 @@ msgstr ""
 # TODO: Capitalise first word of message?
 #~ msgid "E363: Pattern caused out-of-stack error"
 #~ msgstr "E363: sử dụng mẫu (pattern) gây ra lỗi out-of-stack"
+
+#~ msgid "E365: Failed to print PostScript file"
+#~ msgstr "E365: In tập tin PostScript không thành công"
 
 #~ msgid "E370: Could not load library %s"
 #~ msgstr "E370: Không nạp được thư viện %s"
@@ -8711,6 +8753,10 @@ msgstr ""
 
 #~ msgid "E396: containedin argument not accepted here"
 #~ msgstr "E396: không được sử dụng tham số containedin ở đây"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E403: syntax sync: Line continuations pattern specified twice"
+#~ msgstr "E403: đồng bộ hóa cú pháp: mẫu tiếp tục của dòng chỉ ra hai lần"
 
 # TODO: Capitalise first word of message?
 #~ msgid "E422: Terminal code too long: %s"
@@ -8725,6 +8771,10 @@ msgstr ""
 # TODO: Capitalise first word of message?
 #~ msgid "E437: Terminal capability \"cm\" required"
 #~ msgstr "E437: cần khả năng của terminal \"cm\""
+
+# TODO: Capitalise first word of message?
+#~ msgid "E438: u_undo: Line numbers wrong"
+#~ msgstr "E438: u_undo: số thứ tự dòng không đúng"
 
 #~ msgid "E448: Could not load library function %s"
 #~ msgstr "E448: Nạp hàm số %s của thư viện không thành công"
@@ -8741,15 +8791,27 @@ msgstr ""
 #~ msgid "E456: Can't find PostScript resource file \"prolog.ps\""
 #~ msgstr "E456: Không tìm thấy tập tin tài nguyên PostScript \"prolog.ps\""
 
+#~ msgid "E456: Can't open file \"%s\""
+#~ msgstr "E456: Không thể mở tập tin \"%s\""
+
 #~ msgid "E457: Can't read PostScript resource file \"%s\""
 #~ msgstr "E457: Không thể đọc tập tin tài nguyên PostScript \"%s\""
 
 #~ msgid "E463: Region is guarded, cannot modify"
 #~ msgstr "E463: Không thể thay đổi vùng đã được bảo vệ"
 
+#~ msgid "E466: :winpos requires two number arguments"
+#~ msgstr "E466: câu lệnh :winpos yêu câu hai tham số bằng số"
+
 # TODO: Capitalise first word of message?
 #~ msgid "E469: Invalid cscopequickfix flag %c for %c"
 #~ msgstr "E469: cờ cscopequickfix %c cho %c không chính xác"
+
+#~ msgid "E46: Cannot set read-only variable \"%s\""
+#~ msgstr "E46: Không thay đổi được biến chỉ đọc \"%s\""
+
+#~ msgid "E473: Internal error"
+#~ msgstr "E473: Lỗi nội bộ"
 
 #~ msgid "E478: Don't panic!"
 #~ msgstr "E478: Hãy bình tĩnh, đừng hoảng hốt!"
@@ -8766,8 +8828,21 @@ msgstr ""
 #~ msgstr ""
 #~ "E508: Không đọc được tập tin lưu trữ (thêm ! để bỏ qua việc kiểm tra lại)"
 
+#~ msgid "E512: Close failed"
+#~ msgstr "E512: Thao tác đóng không thành công"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E513: Write error, conversion failed"
+#~ msgstr "E513: Lỗi ghi nhớ, biến đổi không thành công"
+
 #~ msgid "E522: Not found in termcap"
 #~ msgstr "E522: Không tìm thấy trong termcap"
+
+#~ msgid "E529: Cannot set 'term' to empty string"
+#~ msgstr "E529: Giá trị của tùy chọn 'term' không thể là một chuỗi trống rỗng"
+
+#~ msgid "E530: Cannot change term in GUI"
+#~ msgstr "E530: Không thể thay đổi terminal trong giao diện đồ họa GUI"
 
 #~ msgid "E531: Use \":gui\" to start the GUI"
 #~ msgstr "E531: Hãy sử dụng \":gui\" để chạy giao diện đồ họa GUI"
@@ -8775,6 +8850,9 @@ msgstr ""
 # TODO: Capitalise first word of message?
 #~ msgid "E533: Can't select wide font"
 #~ msgstr "E533: không chọn được phông chữ với các ký tự có chiều rộng gấp đôi"
+
+#~ msgid "E534: Invalid wide font"
+#~ msgstr "E534: Phông chữ, với ký tự có chiều rộng gấp đôi, không đúng"
 
 #~ msgid "E538: No mouse support"
 #~ msgstr "E538: Chuột không được hỗ trợ"
@@ -8794,6 +8872,9 @@ msgstr ""
 # TODO: Capitalise first word of message?
 #~ msgid "E552: Digit expected"
 #~ msgstr "E552: Cần chỉ ra một số"
+
+#~ msgid "E557: Cannot open termcap file"
+#~ msgstr "E557: Không thể mở tập tin termcap"
 
 #~ msgid "E558: Terminal entry not found in terminfo"
 #~ msgstr "E558: Trong terminfo không có bản ghi nào về terminal này"
@@ -8825,8 +8906,15 @@ msgstr ""
 #~ msgstr "E566: Không tạo được đường ống (pipe) cho cscope"
 
 # TODO: Capitalise first word of message?
+#~ msgid "E567: No cscope connections"
+#~ msgstr "E567: không có kết nối với cscope"
+
+# TODO: Capitalise first word of message?
 #~ msgid "E568: Duplicate cscope database not added"
 #~ msgstr "E568: cơ sở dữ liệu này của cscope đã được gắn vào từ trước"
+
+#~ msgid "E569: maximum number of cscope connections reached"
+#~ msgstr "E569: đã đạt tới số kết nối lớn nhất cho phép với cscope"
 
 #~ msgid "E56: %s* operand could be empty"
 #~ msgstr "E56: operand %s* không thể rỗng"
@@ -8851,12 +8939,30 @@ msgstr ""
 #~ msgid "E57: %s+ operand could be empty"
 #~ msgstr "E57: operand %s+ không thể rỗng"
 
+#~ msgid "E585: :while nesting too deep"
+#~ msgstr "E585: :while xếp lồng vào nhau quá sâu"
+
+#~ msgid "E586: :continue without :while"
+#~ msgstr "E586: :continue không có :while"
+
+#~ msgid "E587: :break without :while"
+#~ msgstr "E587: :break không có :while"
+
 #~ msgid "E58: %s{ operand could be empty"
 #~ msgstr "E58: operand %s{ không thể rỗng"
+
+#~ msgid "E595: contains unprintable or wide character"
+#~ msgstr "E595: chứa ký tự không in ra hoặc ký tự với chiều rộng gấp đôi"
+
+#~ msgid "E596: Invalid font(s)"
+#~ msgstr "E596: Phông chữ không đúng"
 
 # TODO: Capitalise first word of message?
 #~ msgid "E597: Can't select fontset"
 #~ msgstr "E597: không chọn được bộ phông chữ"
+
+#~ msgid "E598: Invalid fontset"
+#~ msgstr "E598: Bộ phông chữ không đúng"
 
 #~ msgid "E599: Value of 'imactivatekey' is invalid"
 #~ msgstr "E599: Giá trị của 'imactivatekey' không đúng"
@@ -8891,11 +8997,20 @@ msgstr ""
 #~ msgstr ""
 #~ "E619: \"%s\" không phải là tập tin tài nguyên PostScript được hỗ trợ"
 
+#~ msgid "E620: Unable to convert from multi-byte to \"%s\" encoding"
+#~ msgstr "E620: Không thể chuyển từ các ký tự nhiều byte thành bảng mã \"%s\""
+
 #~ msgid "E621: \"%s\" resource file has wrong version"
 #~ msgstr "E621: tập tin tài nguyên \"%s\" có phiên bản không đúng"
 
 #~ msgid "E622: Could not fork for cscope"
 #~ msgstr "E622: Không thực hiện được fork() cho cscope"
+
+#~ msgid "E623: Could not spawn cscope process"
+#~ msgstr "E623: Chạy tiến trình cscope không thành công"
+
+#~ msgid "E624: Can't open file \"%s\""
+#~ msgstr "E624: Không thể mở tập tin \"%s\""
 
 # TODO: Capitalise first word of message?
 #~ msgid "E625: Cannot open cscope database: %s"
@@ -8908,9 +9023,15 @@ msgstr ""
 #~ msgid "E658: NetBeans connection lost for buffer %ld"
 #~ msgstr "E658: Bị mất liên kết với NetBeans cho bộ đệm %ld"
 
+#~ msgid "E659: Cannot invoke Python recursively"
+#~ msgstr "E659: Không thể gọi Python một cách đệ quy"
+
 #~ msgid "E665: Cannot start GUI, no valid font found"
 #~ msgstr ""
 #~ "E665: Không chạy được giao diện đồ họa GUI, đưa ra phông chữ không đúng"
+
+#~ msgid "E667: Fsync failed"
+#~ msgstr "E667: Không thực hiện thành công hàm số fsync()"
 
 #~ msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
 #~ msgstr ""
@@ -8922,11 +9043,28 @@ msgstr ""
 #~ "E670: Tập tin trợ giúp sử dụng nhiều bảng mã khác nhau cho một ngôn ngữ: "
 #~ "%s"
 
+#~ msgid "E671: Cannot find window title \"%s\""
+#~ msgstr "E671: Không tìm được tiêu đề cửa sổ \"%s\""
+
 #~ msgid "E672: Unable to open window inside MDI application"
 #~ msgstr "E672: Không mở được cửa sổ bên trong ứng dụng MDI"
 
 #~ msgid "E800: Arabic cannot be used: Not enabled at compile time\n"
 #~ msgstr "E800: Tiếng Ả Rập không được chọn khi biên dịch\n"
+
+#~ msgid "E86: Buffer %ld does not exist"
+#~ msgstr "E86: Bộ đệm %ld không tồn tại"
+
+#~ msgid "E89: No write since last change for buffer %ld (add ! to override)"
+#~ msgstr ""
+#~ "E89: Thay đổi trong bộ đệm %ld chưa được ghi lại (thêm ! để thoát ra bằng "
+#~ "mọi giá)"
+
+#~ msgid "E92: Buffer %ld not found"
+#~ msgstr "E92: Bộ đệm %ld không được tìm thấy"
+
+#~ msgid "E96: Can not diff more than %ld buffers"
+#~ msgstr "E96: Chỉ có thể theo dõi sự khác nhau trong nhiều nhất %ld bộ đệm"
 
 #~ msgid "ERROR: "
 #~ msgstr "LỖI: "
@@ -9018,11 +9156,17 @@ msgstr ""
 #~ msgid "Font1: %s\n"
 #~ msgstr "Font1: %s\n"
 
+#~ msgid "Garbage after option"
+#~ msgstr "Rác sau tùy chọn"
+
 #~ msgid "Generate docu for"
 #~ msgstr "Tạo docu cho"
 
 #~ msgid "Help"
 #~ msgstr "Trợ giúp"
+
+#~ msgid "Hit ENTER or type command to continue"
+#~ msgstr "Nhấn phím ENTER hoặc nhập câu lệnh để tiếp tục"
 
 #~ msgid "Hit ENTER to continue"
 #~ msgstr "Nhấn phím ENTER để tiếp tục"
@@ -9041,6 +9185,9 @@ msgstr ""
 
 #~ msgid "Input _Methods"
 #~ msgstr "Phương pháp _nhập liệu"
+
+#~ msgid "Invalid argument for"
+#~ msgstr "Tham số không được phép cho"
 
 #~ msgid "Keys don't match!"
 #~ msgstr "Hai mật khẩu không trùng nhau!"
@@ -9077,8 +9224,14 @@ msgstr ""
 #~ msgid "NetBeans disallows writes of unmodified buffers"
 #~ msgstr "NetBeans không cho phép ghi nhớ bộ đệm chưa có thay đổi nào"
 
+#~ msgid "No display"
+#~ msgstr "Không có màn hình"
+
 #~ msgid "No display: Send expression failed.\n"
 #~ msgstr "Không có màn hình: gửi biểu thức không thành công.\n"
+
+#~ msgid "No matching autocommands"
+#~ msgstr "Không có câu lệnh tự động tương ứng"
 
 #~ msgid "No text to be printed"
 #~ msgstr "Không có gì để in"
@@ -9107,8 +9260,17 @@ msgstr ""
 #~ msgid "Opening the X display took %ld msec"
 #~ msgstr "Mở màn hình X mất %ld mili giây"
 
+#~ msgid "Overwrite existing file \"%.*s\"?"
+#~ msgstr "Ghi đè lên tập tin đã có \"%.*s\"?"
+
+#~ msgid "Page %d"
+#~ msgstr "Trang %d"
+
 #~ msgid "Partial writes disallowed for NetBeans buffers"
 #~ msgstr "Ghi nhớ một phần bộ đệm NetBeans không được cho phép"
+
+#~ msgid "Patch file"
+#~ msgstr "Tập tin vá lỗi (patch)"
 
 #~ msgid "Path length too long!"
 #~ msgstr "Đường dẫn quá dài!"
@@ -9133,6 +9295,12 @@ msgstr ""
 
 #~ msgid "Query for a pattern"
 #~ msgstr "Yêu cầu theo một mẫu"
+
+#~ msgid "Reading from stdin..."
+#~ msgstr "Đọc từ đầu vào tiêu chuẩn stdin..."
+
+#~ msgid "Reading viminfo file \"%s\"%s%s%s"
+#~ msgstr "Đọc tập tin viminfo \"%s\"%s%s%s"
 
 #~ msgid "Reinit all connections"
 #~ msgstr "Khởi đầu lại tất cả các kết nối"
@@ -9182,11 +9350,20 @@ msgstr ""
 #~ msgid "Save View"
 #~ msgstr "Ghi nhớ vẻ ngoài"
 
+#~ msgid "Save changes to \"%.*s\"?"
+#~ msgstr "Ghi nhớ thay đổi vào \"%.*s\"?"
+
 #~ msgid "Scrollbar Widget: Could not get geometry of thumb pixmap."
 #~ msgstr "Thanh cuộn: Không thể xác định hình học của thanh cuộn."
 
 #~ msgid "Search String"
 #~ msgstr "Chuỗi tìm kiếm"
+
+#~ msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
+#~ msgstr "Chọn %s%ld của %ld Dòng; %ld của %ld Từ; %ld của %ld Byte"
+
+#~ msgid "Selection"
+#~ msgstr "Lựa chọn"
 
 #~ msgid "Sending to printer..."
 #~ msgstr "Gửi tới máy in..."
@@ -9246,11 +9423,17 @@ msgstr ""
 #~ msgid "Toggle implementation/definition"
 #~ msgstr "Bật tắt giữa thi hành/định nghĩa"
 
+#~ msgid "Type  :quit<Enter>  to exit Vim"
+#~ msgstr "Gõ :quit<Enter>  để thoát khỏi Vim"
+
 #~ msgid "Unable to register a command server name"
 #~ msgstr "Không đăng ký được một tên cho máy chủ câu lệnh"
 
 #~ msgid "Undo"
 #~ msgstr "Hủy thao tác"
+
+#~ msgid "Unknown option"
+#~ msgstr "Tùy chọn không biết"
 
 #~ msgid "Up"
 #~ msgstr "Lên"
@@ -9303,6 +9486,9 @@ msgstr ""
 #~ msgid "Vim exiting with %d\n"
 #~ msgstr "Thoát Vim với mã %d\n"
 
+#~ msgid "Vim is open source and freely distributable"
+#~ msgstr "Vim là chương trình mã nguồn mở và phân phối tự do"
+
 #~ msgid "Vim: Caught %s event\n"
 #~ msgstr "Vim: Nhận được sự kiện %s\n"
 
@@ -9314,6 +9500,9 @@ msgstr ""
 
 #~ msgid "Vim: Double signal, exiting\n"
 #~ msgstr "Vim: Tín hiệu đôi, thoát\n"
+
+#~ msgid "Vim: Error reading input, exiting...\n"
+#~ msgstr "Vim: Lỗi đọc dữ liệu nhập, thoát...\n"
 
 #~ msgid "Vim: Finished.\n"
 #~ msgstr "Vim: Đã xong.\n"
@@ -9336,6 +9525,9 @@ msgstr ""
 #~ msgid "Vim: preserving files...\n"
 #~ msgstr "Vim: ghi nhớ các tập tin...\n"
 
+#~ msgid "W18: Invalid character in group name"
+#~ msgstr "W18: Ký tự không cho phép trong tên nhóm"
+
 #~ msgid "WARNING: Windows 95/98/ME detected"
 #~ msgstr "CẢNH BÁO: nhận ra Windows 95/98/ME"
 
@@ -9345,8 +9537,14 @@ msgstr ""
 #~ msgid "Window position: X %d, Y %d"
 #~ msgstr "Vị trí cửa sổ: X %d, Y %d"
 
+#~ msgid "Writing viminfo file \"%s\""
+#~ msgstr "Ghi tập tin viminfo \"%s\""
+
 #~ msgid "XSMP ICE connection watch failed"
 #~ msgstr "XSMP mất theo dõi kết nối ICE"
+
+#~ msgid "XSMP SmcOpenConnection failed: %s"
+#~ msgstr "XSMP thực hiện SmcOpenConnection không thành công: %s"
 
 #~ msgid "XSMP handling save-yourself request"
 #~ msgstr "XSMP xử lý yêu cầu tự động ghi nhớ"
@@ -9372,8 +9570,17 @@ msgstr ""
 #~ msgid "Zero count"
 #~ msgstr "Giá trị của bộ đếm bằng 0"
 
+#~ msgid "[CONVERSION ERROR]"
+#~ msgstr "[LỖI CHUYỂN BẢNG MÃ]"
+
 #~ msgid "[Deleted]"
 #~ msgstr "[bị xóa]"
+
+#~ msgid "[Error List]"
+#~ msgstr "[Danh sách lỗi]"
+
+#~ msgid "[ILLEGAL BYTE in line %ld]"
+#~ msgstr "[BYTE KHÔNG CHO PHÉP trên dòng %ld]"
 
 #~ msgid "[Incomplete last line]"
 #~ msgstr "[Dòng cuối cùng không đầy đủ]"
@@ -9388,6 +9595,9 @@ msgstr ""
 #~ msgstr "[Tập tin mới]"
 
 #~ msgid "[No File]"
+#~ msgstr "[Không có tập tin]"
+
+#~ msgid "[No file]"
 #~ msgstr "[Không có tập tin]"
 
 #~ msgid ""
@@ -9409,6 +9619,9 @@ msgstr ""
 #~ msgid "[file ..]       edit specified file(s)"
 #~ msgstr "[tập tin ..]     soạn thảo (các) tập tin chỉ ra"
 
+#~ msgid "[help]"
+#~ msgstr "[trợ giúp]"
+
 #~ msgid "[mac format]"
 #~ msgstr "[định dạng mac]"
 
@@ -9417,6 +9630,9 @@ msgstr ""
 
 #~ msgid "[unix format]"
 #~ msgstr "[định dạng unix]"
+
+#~ msgid "and run diff with the original file to check for changes)\n"
+#~ msgstr "gốc bằng chương trình diff).\n"
 
 #~ msgid "attempt to refer to deleted buffer"
 #~ msgstr "cố chỉ đến bộ đệm đã bị xóa"
@@ -9442,6 +9658,9 @@ msgstr ""
 
 #~ msgid "cannot delete line"
 #~ msgstr "không xóa được dòng"
+
+#~ msgid "cannot get line"
+#~ msgstr "không nhận được dòng"
 
 #~ msgid "cannot insert line"
 #~ msgstr "không chèn được dòng"
@@ -9474,6 +9693,9 @@ msgstr ""
 #~ msgid "close"
 #~ msgstr "đóng"
 
+#~ msgid "connected"
+#~ msgstr "được kết nối"
+
 #~ msgid "cs_create_connection exec failed"
 #~ msgstr "thực hiện cs_create_connection không thành công"
 
@@ -9495,6 +9717,12 @@ msgstr ""
 #~ msgid "defaulting to '"
 #~ msgstr "theo mặc định '"
 
+#~ msgid "error list %d of %d; %d errors"
+#~ msgstr "danh sách lỗi %d của %d; %d lỗi"
+
+#~ msgid "expressions disabled at compile time"
+#~ msgstr "biểu thức bị tắt khi biên dịch"
+
 #~ msgid "filename / context / line\n"
 #~ msgstr "tên tập tin / nội dung / dòng\n"
 
@@ -9510,6 +9738,9 @@ msgstr ""
 #~ msgid "invalid attribute"
 #~ msgstr "thuộc tính không đúng"
 
+#~ msgid "invalid buffer number"
+#~ msgstr "số của bộ đệm không đúng"
+
 #~ msgid "invalid expression"
 #~ msgstr "biểu thức không đúng"
 
@@ -9518,6 +9749,27 @@ msgstr ""
 
 #~ msgid "keyboard interrupt"
 #~ msgstr "sự gián đoạn của bàn phím"
+
+#~ msgid "line %4ld:"
+#~ msgstr "dòng %4ld:"
+
+#~ msgid "line %ld"
+#~ msgstr "dòng %ld"
+
+#~ msgid "line %ld of %ld --%d%%-- col "
+#~ msgstr "dòng %ld của %ld --%d%%-- cột "
+
+#~ msgid "line %ld: %s"
+#~ msgstr "dòng %ld: %s"
+
+#~ msgid "line %ld: could not source \"%s\""
+#~ msgstr "dòng %ld: không thực hiện được \"%s\""
+
+#~ msgid "line %ld: sourcing \"%s\""
+#~ msgstr "dòng %ld: thực hiện \"%s\""
+
+#~ msgid "line number out of range"
+#~ msgstr "số thứ tự của dòng vượt quá giới hạn"
 
 #~ msgid "logoff"
 #~ msgstr "thoát"
@@ -9557,6 +9809,9 @@ msgstr ""
 #~ msgid "not "
 #~ msgstr "không "
 
+#~ msgid "not found in 'runtimepath': \"%s\""
+#~ msgstr "không tìm thấy trong 'runtimepath': \"%s\""
+
 #~ msgid "not implemented yet"
 #~ msgstr "tạm thời chưa được thực thi"
 
@@ -9587,8 +9842,17 @@ msgstr ""
 #~ msgid "to %s on %s"
 #~ msgstr "tới %s trên %s"
 
+#~ msgid "type  :help cp-default<Enter> for info on this"
+#~ msgstr "hãy gõ :help cp-default<Enter> để có thêm thông tin về điều này"
+
+#~ msgid "type  :help iccf<Enter>       for information "
+#~ msgstr "hãy gõ :help iccf<Enter>       để biết thêm thông tin"
+
 #~ msgid "type  :help register<Enter>   for information "
 #~ msgstr "hãy gõ :help register<Enter>   để biết thêm thông tin "
+
+#~ msgid "type  :help sponsor<Enter>    for information "
+#~ msgstr "hãy gõ :help sponsor<Enter>    để biết thêm thông tin "
 
 #~ msgid "type  :help version9<Enter>   for version info"
 #~ msgstr "hãy gõ :help version9<Enter>   để biết về phiên bản này  "
@@ -9598,6 +9862,9 @@ msgstr ""
 
 #~ msgid "type  :help<Enter>  or  <F1>  for on-line help"
 #~ msgstr " hãy gõ :help<Enter> hoặc <F1>  để có được trợ giúp        "
+
+#~ msgid "type  :q<Enter>               to exit         "
+#~ msgstr "    hãy gõ :q<Enter>               để thoát khỏi chương trình     "
 
 #~ msgid "type  :set nocp<Enter>        for Vim defaults"
 #~ msgstr "hãy gõ :set nocp<Enter>        để chuyển vào chế độ Vim     "

@@ -18,9 +18,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#, fuzzy
 msgid "E249: Window layout changed unexpectedly"
-msgstr "E787: buffer is onverwacht gewijzigd"
+msgstr ""
 
 msgid "E163: There is only one file to edit"
 msgstr "E163: slechts een bestand beschikbaar voor bewerking"
@@ -31,13 +30,11 @@ msgstr "E164: kan niet verder terug dan eerste bestand"
 msgid "E165: Cannot go beyond last file"
 msgstr "E165: kan niet verder dan laatste bestand"
 
-#, fuzzy
 msgid "E610: No argument to delete"
-msgstr "E144: niet-numeriek argument voor :z"
+msgstr ""
 
-#, fuzzy
 msgid "E218: Autocommand nesting too deep"
-msgstr "E218: hierarchie van aanroepen autocommands te diep"
+msgstr ""
 
 msgid "--Deleted--"
 msgstr "--Verwijderd--"
@@ -50,9 +47,8 @@ msgstr "automatisch verwijderen 'autocommand': %s <buffer=%d>"
 msgid "E367: No such group: \"%s\""
 msgstr "E367: groep \"%s\" bestaat niet"
 
-#, fuzzy
 msgid "E936: Cannot delete the current group"
-msgstr "E351: kan geen vouw verwijderen met huidige 'vouwmethode'"
+msgstr ""
 
 msgid "W19: Deleting augroup that is still in use"
 msgstr ""
@@ -71,9 +67,9 @@ msgstr "E680: <buffer=%d>: ongeldig buffernummer "
 msgid "E217: Can't execute autocommands for ALL events"
 msgstr "E217: autocommands kunnen niet voor alle 'events' worden uitgevoerd"
 
-#, fuzzy, c-format
+#, c-format
 msgid "No matching autocommands: %s"
-msgstr "Geen overeenkomstige autocommands"
+msgstr ""
 
 #, c-format
 msgid "%s Autocommands for \"%s\""
@@ -118,23 +114,23 @@ msgstr "E516: geen van de buffers is verwijderd"
 msgid "E517: No buffers were wiped out"
 msgstr "E517: geen van de buffers is gewist"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer unloaded"
 msgid_plural "%d buffers unloaded"
-msgstr[0] "%d buffers gelost"
-msgstr[1] "%d buffers gelost"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer deleted"
 msgid_plural "%d buffers deleted"
-msgstr[0] "%d buffers verwijderd"
-msgstr[1] "%d buffers verwijderd"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer wiped out"
 msgid_plural "%d buffers wiped out"
-msgstr[0] "%d buffers gewist"
-msgstr[1] "%d buffers gewist"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: kan laatste buffer niet legen"
@@ -151,9 +147,9 @@ msgstr "E87: kan niet voorbij het laatste buffer komen"
 msgid "E88: Cannot go before first buffer"
 msgstr "E88: kan niet vóór het eerste buffer komen"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: %s will be killed (add ! to override)"
-msgstr "E189: \"%s\" bestaat al (voeg ! toe om te forceren)"
+msgstr ""
 
 msgid "W14: Warning: List of file names overflow"
 msgstr "W14: waarschuwing: lijst met bestandsnamen is vol"
@@ -191,11 +187,11 @@ msgstr "[RO]"
 msgid "[readonly]"
 msgstr "[alleen-lezen]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line --%d%%--"
 msgid_plural "%<PRId64> lines --%d%%--"
-msgstr[0] "%<PRId64> regels --%d%%--"
-msgstr[1] "%<PRId64> regels --%d%%--"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
@@ -218,20 +214,19 @@ msgstr ""
 msgid "%3s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid " (%d of %d)"
-msgstr "resultaat %d van %d"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid " ((%d) of %d)"
-msgstr "resultaat %d van %d"
+msgstr ""
 
 msgid "E382: Cannot write, 'buftype' option is set"
 msgstr ""
 
-#, fuzzy
 msgid "[Command Line]"
-msgstr "Opdrachtregel"
+msgstr ""
 
 msgid "[Prompt]"
 msgstr ""
@@ -249,29 +244,21 @@ msgstr "[Locatielijst]"
 msgid "[Quickfix List]"
 msgstr "[Quickfix-lijst]"
 
-#, fuzzy
 msgid "E206: Patchmode: can't touch empty original file"
-msgstr "E206: patch-modus: kan oorspronkelijk leeg bestand niet aanraken"
+msgstr ""
 
-#, fuzzy
 msgid "E513: Write error, conversion failed (make 'fenc' empty to override)"
 msgstr ""
-"E513: schrijffout waarbij omzetting is mislukt (leeg 'fenc' om te "
-"overschrijven)"
 
-#, fuzzy
 msgid "E513: Write error, conversion failed in line %"
 msgstr ""
-"E513: schrijffout waarbij omzetting is mislukt (leeg 'fenc' om te "
-"overschrijven)"
 
-#, fuzzy
 msgid "E514: Write error (file system full?)"
-msgstr "E514: schrijffout (is bestandssysteem vol?)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E676: No matching autocommands for buftype=%s buffer"
-msgstr "E676: geen overeenkomende autocommands voor 'acwrite'-buffer"
+msgstr ""
 
 msgid "WARNING: The file has been changed since reading it!!!"
 msgstr "WAARSCHUWING: het bestand is na het laden gewijzigd!!!"
@@ -297,9 +284,9 @@ msgstr "is geen bestand of schrijfbaar apparaat"
 msgid "is read-only (add ! to override)"
 msgstr "is alleen-lezen (voeg ! toe om te schrijven)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E303: Unable to create directory \"%s\" for backup file: %s"
-msgstr "E241: verzenden naar %s onmogelijk"
+msgstr ""
 
 msgid "E509: Cannot create backup file (add ! to override)"
 msgstr ""
@@ -317,13 +304,13 @@ msgstr "E213: kan niet omzetten (voeg ! toe om zonder omzetting op te slaan)"
 msgid "E166: Can't open linked file for writing"
 msgstr "E166: kan niet schrijven naar gekoppeld bestand"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E212: Can't open file for writing: %s"
-msgstr "E212: kan niet schrijven naar bestand"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E512: Close failed: %s"
-msgstr "E512: Afsluiten is mislukt"
+msgstr ""
 
 msgid " CONVERSION ERROR"
 msgstr " OMZETTINGFOUT"
@@ -399,9 +386,8 @@ msgstr "soor bestand\n"
 msgid "'history' option is zero"
 msgstr "'history'-optie is nul"
 
-#, fuzzy
 msgid "E548: Digit expected"
-msgstr "E39: getal verwacht"
+msgstr ""
 
 msgid "E545: Missing colon"
 msgstr ""
@@ -431,9 +417,8 @@ msgstr "regel %<PRId64>: %s"
 msgid "cmd: %s"
 msgstr "cmd: %s"
 
-#, fuzzy
 msgid "frame is zero"
-msgstr "E726: stap is nul"
+msgstr ""
 
 #, c-format
 msgid "frame at highest level: %d"
@@ -458,9 +443,9 @@ msgstr "%3d  %s %s  regel %<PRId64>"
 msgid "%3d  expr %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E96: Cannot diff more than %d buffers"
-msgstr "E96: kan niet meer dan %<PRId64> buffers vergelijken"
+msgstr ""
 
 msgid "E810: Cannot read or write temp files"
 msgstr "E810: kan tijdelijke bestand niet lezen of opslaan"
@@ -658,9 +643,8 @@ msgstr "E470: opdracht afgebroken"
 msgid "E905: Cannot set this option after startup"
 msgstr ""
 
-#, fuzzy
 msgid "E903: Could not spawn API job"
-msgstr "E623: voortbrengen cscope-proces is mislukt"
+msgstr ""
 
 msgid "E471: Argument required"
 msgstr "E471: Argument vereist"
@@ -722,28 +706,27 @@ msgstr "E474: ongeldig argument"
 msgid "E475: Invalid argument: %s"
 msgstr "E475: ongeldig argument: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s"
-msgstr "E475: ongeldig argument: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s: %s"
-msgstr "E475: ongeldig argument: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E983: Duplicate argument: %s"
-msgstr "E125: ongeldig argument: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid expression: \"%s\""
-msgstr "E15: ongeldige expressie: %s"
+msgstr ""
 
 msgid "E16: Invalid range"
 msgstr "E16: ongeldig bereik"
 
-#, fuzzy
 msgid "E473: Internal error in regexp"
-msgstr "E473: interne fout"
+msgstr ""
 
 msgid "E476: Invalid command"
 msgstr "E476: ongeldige opdracht"
@@ -755,13 +738,11 @@ msgstr ""
 msgid "E756: Spell checking is not possible"
 msgstr ""
 
-#, fuzzy
 msgid "E900: Invalid channel id"
-msgstr "E49: ongeldige scroll-grootte"
+msgstr ""
 
-#, fuzzy
 msgid "E900: Invalid channel id: not a job"
-msgstr "E49: ongeldige scroll-grootte"
+msgstr ""
 
 msgid "E901: Job table is full"
 msgstr ""
@@ -770,17 +751,15 @@ msgstr ""
 msgid "E903: Process failed to start: %s: \"%s\""
 msgstr ""
 
-#, fuzzy
 msgid "E904: channel is not a pty"
-msgstr "E664: wijzigingslijst is leeg"
+msgstr ""
 
 #, c-format
 msgid "E905: Couldn't open stdio channel: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E906: invalid stream for channel"
-msgstr "E701: ongeldig type voor len()"
+msgstr ""
 
 msgid "E906: invalid stream for rpc channel, use 'rpc'"
 msgstr ""
@@ -794,13 +773,13 @@ msgstr ""
 msgid "E364: Library call failed for \"%s()\""
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E667: Fsync failed: %s"
-msgstr "E667: fsync is mislukt"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E739: Cannot create directory %s: %s"
-msgstr "E739: kan map %s niet aanmaken"
+msgstr ""
 
 msgid "E19: Mark has invalid line number"
 msgstr "E19: markering heeft een ongeldig regelnummer"
@@ -868,9 +847,9 @@ msgstr "E483: bepalen naam tijdelijk bestand is mislukt"
 msgid "E484: Can't open file %s"
 msgstr "E484: openen bestand %s is mislukt"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E484: Can't open file %s: %s"
-msgstr "E484: openen bestand %s is mislukt"
+msgstr ""
 
 #, c-format
 msgid "E485: Can't read file %s"
@@ -926,24 +905,22 @@ msgstr "E734: onjuist type variabele voor %s="
 msgid "E461: Illegal variable name: %s"
 msgstr "E461: ongeldige variabelenaam: %s"
 
-#, fuzzy
 msgid "E995: Cannot modify existing variable"
-msgstr "E795: kan variabele %s niet verwijderen"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E46: Cannot change read-only variable \"%.*s\""
-msgstr "E46: kan alleen-lezenvariabele \"%s\" niet veranderen"
+msgstr ""
 
 msgid "E715: Dictionary required"
 msgstr "E715: Dictionary is vereist"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E979: Blob index out of range: %<PRId64>"
-msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+msgstr ""
 
-#, fuzzy
 msgid "E978: Invalid operation for Blob"
-msgstr "E692: ongeldige bewerking voor Listen"
+msgstr ""
 
 #, c-format
 msgid "E118: Too many arguments for function: %s"
@@ -953,32 +930,31 @@ msgstr "E118: te veel argumenten voor functie: %s"
 msgid "E119: Not enough arguments for function: %s"
 msgstr "E119: onvoldoende argumenten voor functie: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E716: Key not present in Dictionary: \"%s\""
-msgstr "E716: trefwoord niet aangetroffen in Dictionary: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E716: Key not present in Dictionary: \"%.*s\""
-msgstr "E716: trefwoord niet aangetroffen in Dictionary: %s"
+msgstr ""
 
 msgid "E714: List required"
 msgstr "E714: List is vereist"
 
-#, fuzzy
 msgid "E897: List or Blob required"
-msgstr "E714: List is vereist"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E899: Argument of %s must be a List or Blob"
-msgstr "E686: argument van %s moet een List zijn"
+msgstr ""
 
 #, c-format
 msgid "E712: Argument of %s must be a List or Dictionary"
 msgstr "E712: argument van %s moet een List of Dictionary zijn"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E896: Argument of %s must be a List, Dictionary or Blob"
-msgstr "E712: argument van %s moet een List of Dictionary zijn"
+msgstr ""
 
 msgid "E47: Error while reading errorfile"
 msgstr "E47: fout tijdens lezen foutenbestand"
@@ -989,9 +965,8 @@ msgstr "E48: niet toegestaan in zandbak"
 msgid "E523: Not allowed here"
 msgstr "E523: hier niet toegestaan"
 
-#, fuzzy
 msgid "E565: Not allowed to change text or change window"
-msgstr "E811: nu bufferinformatie wijzigen is niet toegestaan"
+msgstr ""
 
 msgid "E359: Screen mode setting not supported"
 msgstr "E359: instelling schermmodus niet ondersteund"
@@ -1023,9 +998,9 @@ msgstr "E77: teveel bestandsnamen"
 msgid "E488: Trailing characters"
 msgstr "E488: nakomende tekens"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E488: Trailing characters: %s"
-msgstr "E488: nakomende tekens"
+msgstr ""
 
 msgid "E78: Unknown mark"
 msgstr "E78: onbekende markering"
@@ -1042,9 +1017,8 @@ msgstr "E592: 'winwidth' kan niet kleiner zijn dan 'winminwidth'"
 msgid "E80: Error while writing"
 msgstr "E80: opslaan is mislukt"
 
-#, fuzzy
 msgid "E939: Positive count required"
-msgstr "E715: Dictionary is vereist"
+msgstr ""
 
 msgid "E81: Using <SID> not in a script context"
 msgstr "E81: <SID> wordt buiten de scriptcontext gebruikt"
@@ -1053,9 +1027,8 @@ msgstr "E81: <SID> wordt buiten de scriptcontext gebruikt"
 msgid "E107: Missing parentheses: %s"
 msgstr "E107: ontbrekende haakjes: %s"
 
-#, fuzzy
 msgid "E749: Empty buffer"
-msgstr "E749: leeg buffer"
+msgstr ""
 
 #, c-format
 msgid "E86: Buffer %<PRId64> does not exist"
@@ -1069,27 +1042,24 @@ msgid "E37: No write since last change (add ! to override)"
 msgstr ""
 "E37: niets opgeslagen sinds laatste wijziging (voeg ! toe om te forceren)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: No write since last change for buffer %d (add ! to override)"
 msgstr ""
-"E89: niets opgeslagen sinds laatste wijziging van buffer %<PRId64> (voeg ! "
-"toe om te forceren)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E92: Buffer %d not found"
-msgstr "E92: buffer %<PRId64> niet gevonden"
+msgstr ""
 
 #, c-format
 msgid "E117: Unknown function: %s"
 msgstr "E117: onbekende functie: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E193: %s not inside a function"
-msgstr "E133: :return niet binnen een functie"
+msgstr ""
 
-#, fuzzy
 msgid "E948: Job still running"
-msgstr "    (nog actief)"
+msgstr ""
 
 msgid "E948: Job still running (add ! to end the job)"
 msgstr ""
@@ -1108,13 +1078,12 @@ msgstr "E764: Optie '%s' is niet ingesteld"
 msgid "E850: Invalid register name"
 msgstr "ongeldige registernaam"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E919: Directory not found in '%s': \"%s\""
-msgstr "E161: 'Breakpoint' niet gevonden: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E952: Autocommand caused recursive behavior"
-msgstr "E812: buffer of buffernaam gewijzigd door autocommands"
+msgstr ""
 
 msgid "E328: Menu only exists in another mode"
 msgstr "E328: menu bestaat alleen in andere modus"
@@ -1122,9 +1091,9 @@ msgstr "E328: menu bestaat alleen in andere modus"
 msgid "E813: Cannot close autocmd window"
 msgstr "E813: sluiten autocmd-venster is mislukt"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E684: List index out of range: %<PRId64>"
-msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+msgstr ""
 
 #, c-format
 msgid "E686: Argument of %s must be a List"
@@ -1133,24 +1102,22 @@ msgstr "E686: argument van %s moet een List zijn"
 msgid "E519: Option not supported"
 msgstr "E519: optie niet ondersteund"
 
-#, fuzzy
 msgid "E856: Filename too long"
-msgstr "E75: te lange naam"
+msgstr ""
 
-#, fuzzy
 msgid "E806: Using a Float as a String"
-msgstr "E806: Float gebruiken als een String"
+msgstr ""
 
 msgid "E788: Not allowed to edit another buffer now"
 msgstr "E788: nu een andere buffer bewerken is niet toegestaan"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1023: Using a Number as a Bool: %d"
-msgstr "E703: een Funcref wordt als Number gebruikt"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1085: Not a callable type: %s"
-msgstr "E108: onbekende variabele: \"%s\""
+msgstr ""
 
 #, fuzzy
 msgid "E855: Autocommands caused command to abort"
@@ -1164,14 +1131,11 @@ msgstr ""
 msgid "E5560: %s must not be called in a fast event context"
 msgstr ""
 
-#, fuzzy
 msgid "E5601: Cannot close window, only floating window would remain"
 msgstr ""
-"E814: venster kan niet sluiten want autocmd-venster blijft als enige achter"
 
-#, fuzzy
 msgid "E5602: Cannot exchange or rotate float"
-msgstr "E810: kan tijdelijke bestand niet lezen of opslaan"
+msgstr ""
 
 #, c-format
 msgid "E344: Can't find directory \"%s\" in cdpath"
@@ -1189,94 +1153,84 @@ msgstr ""
 msgid "E347: No more file \"%s\" found in path"
 msgstr ""
 
-#, fuzzy
 msgid "E741: Value is locked"
-msgstr "E741: waarde is geblokkeerd: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E741: Value is locked: %.*s"
-msgstr "E741: waarde is geblokkeerd: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E742: Cannot change value"
-msgstr "E742: kan waarde van %s niet veranderen"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E742: Cannot change value of %.*s"
-msgstr "E742: kan waarde van %s niet veranderen"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
-msgstr "E794: kan variabele niet instellen in de zandbak: \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E795: Cannot delete variable %.*s"
-msgstr "E795: kan variabele %s niet verwijderen"
+msgstr ""
 
 msgid "E960: Problem creating the internal diff"
 msgstr ""
 
-#, fuzzy
 msgid "E1155: Cannot define autocommands for ALL events"
-msgstr "E217: autocommands kunnen niet voor alle 'events' worden uitgevoerd"
+msgstr ""
 
-#, fuzzy
 msgid "E1156: Cannot change the argument list recursively"
-msgstr "E659: Python kan niet recursief worden aangeroepen"
+msgstr ""
 
 msgid "E1240: Resulting text too long"
 msgstr ""
 
-#, fuzzy
 msgid "E1247: Line number out of range"
-msgstr "regelnummer valt buiten het bereik"
+msgstr ""
 
 msgid "E5248: Invalid character in group name"
 msgstr ""
 
-#, fuzzy
 msgid "E1249: Highlight group name too long"
-msgstr "E28: naam van deze oplichtgroep is onbekend: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E928: String required"
-msgstr "E129: functienaam is vereist"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E964: Invalid column number: %ld"
-msgstr "E182: ongeldige opdrachtnaam"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E966: Invalid line number: %ld"
-msgstr "E19: markering heeft een ongeldig regelnummer"
+msgstr ""
 
 #, c-format
 msgid "E998: Reduce of an empty %s with no initial value"
 msgstr ""
 
-#, fuzzy
 msgid "E1239: Invalid value for blob: 0x<PRIX64>"
-msgstr "E157: ongeldige id margeteken: %<PRId64>"
+msgstr ""
 
 #, c-format
 msgid "E1278: Stray '}' without a matching '{': %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1279: Missing '}': %s"
-msgstr "E124: ontbrekende '(': %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1310: Cannot change menus while listing"
-msgstr "E46: kan alleen-lezenvariabele \"%s\" niet veranderen"
+msgstr ""
 
-#, fuzzy
 msgid "E1312: Not allowed to change the window layout in this autocmd"
-msgstr "E811: nu bufferinformatie wijzigen is niet toegestaan"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1510: Value too large: %s"
-msgstr "E741: waarde is geblokkeerd: %s"
+msgstr ""
 
 msgid "E5767: Cannot use :undo! to redo or move to a different undo branch"
 msgstr ""
@@ -1287,13 +1241,12 @@ msgstr ""
 msgid "E1514: 'findfunc' did not return a List type"
 msgstr ""
 
-#, fuzzy
 msgid "E1546: Cannot switch to a closing buffer"
-msgstr "E90: kan laatste buffer niet legen"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1549: Cannot have more than %d diff anchors"
-msgstr "E96: kan niet meer dan %<PRId64> buffers vergelijken"
+msgstr ""
 
 msgid "E1550: Failed to find all diff anchors"
 msgstr ""
@@ -1304,9 +1257,9 @@ msgstr ""
 msgid "E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5570: Cannot update trust file: %s"
-msgstr "E795: kan variabele %s niet verwijderen"
+msgstr ""
 
 #, c-format
 msgid "E282: Cannot read from \"%s\""
@@ -1326,9 +1279,8 @@ msgstr "zoeken bereikte TOP, verder vanaf BODEM"
 msgid "search hit BOTTOM, continuing at TOP"
 msgstr "zoeken bereikte BODEM, verder vanaf TOP"
 
-#, fuzzy
 msgid " line "
-msgstr "1 regel, "
+msgstr ""
 
 msgid "E111: Missing ']'"
 msgstr "E111: ontbrekende ']'"
@@ -1337,13 +1289,11 @@ msgstr "E111: ontbrekende ']'"
 msgid "E697: Missing end of List ']': %s"
 msgstr "E697: einde van List ']' ontbreekt: %s"
 
-#, fuzzy
 msgid "E719: Cannot slice a Dictionary"
-msgstr "E719: kan [:] niet met een Dictionary gebruiken"
+msgstr ""
 
-#, fuzzy
 msgid "E909: Cannot index a special variable"
-msgstr "E695: een Funcref kan niet geÃ¯ndexeerd worden"
+msgstr ""
 
 msgid "E274: No white space allowed before parenthesis"
 msgstr ""
@@ -1351,56 +1301,47 @@ msgstr ""
 msgid "E695: Cannot index a Funcref"
 msgstr "E695: een Funcref kan niet geÃ¯ndexeerd worden"
 
-#, fuzzy
 msgid "E698: Variable nested too deep for making a copy"
-msgstr "E698: variabele te diep genest om een kopie te maken"
+msgstr ""
 
-#, fuzzy
 msgid "E1098: String, List or Blob required"
-msgstr "E808: Number of Float vereist"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1169: Expression too recursive: %s"
-msgstr "E169: opdracht te recursief"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1203: Dot can only be used on a dictionary: %s"
-msgstr "E716: trefwoord niet aangetroffen in Dictionary: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1192: Empty function name"
-msgstr "E792: menunaam is leeg"
+msgstr ""
 
-#, fuzzy
 msgid "E1265: Cannot use a partial here"
-msgstr "E804: '%' kan niet met Float worden gebruikt"
+msgstr ""
 
-#, fuzzy
 msgid "E689: Can only index a List, Dictionary or Blob"
-msgstr "E689: alleen een List of Dictionary kan geÃ¯ndexeerd worden"
+msgstr ""
 
 msgid "E708: [:] must come last"
 msgstr "E708: [:] moet als laatste staan"
 
-#, fuzzy
 msgid "E713: Cannot use empty key after ."
-msgstr "E713: kan geen leeg trefwoord als Dictionary gebruiken"
+msgstr ""
 
-#, fuzzy
 msgid "E709: [:] requires a List or Blob value"
-msgstr "E709: [:] vereist een Listwaarde"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E121: Undefined variable: %.*s"
-msgstr "E121: ongedefinieerde variabele: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a range"
-msgstr "E784: laatste tabpagina kan niet afgesloten worden"
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a list or dict"
-msgstr "E90: kan laatste buffer niet legen"
+msgstr ""
 
 msgid "E690: Missing \"in\" after :for"
 msgstr "E690: \"in\" ontbreekt na :for"
@@ -1414,9 +1355,8 @@ msgstr "E804: '%' kan niet met Float worden gebruikt"
 msgid "E110: Missing ')'"
 msgstr "E110: ')' ontbreekt"
 
-#, fuzzy
 msgid "E260: Missing name after ->"
-msgstr "E690: \"in\" ontbreekt na :for"
+msgstr ""
 
 #, c-format
 msgid "E112: Option name missing: %s"
@@ -1460,13 +1400,12 @@ msgstr "E722: komma ontbreekt in Dictionary: %s"
 msgid "E723: Missing end of Dictionary '}': %s"
 msgstr "E723: einde van Dictionary '}' ontbreekt: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Executing command: \"%s\""
-msgstr "%s uitvoeren"
+msgstr ""
 
-#, fuzzy
 msgid "E921: Invalid callback argument"
-msgstr "E474: ongeldig argument"
+msgstr ""
 
 msgid ""
 "\n"
@@ -1478,16 +1417,14 @@ msgstr ""
 msgid " (run Nvim with -V1 for more details)"
 msgstr ""
 
-#, fuzzy
 msgid "E977: Can only compare Blob with Blob"
-msgstr "E691: List kan alleen met een Lijst worden vergeleken"
+msgstr ""
 
 msgid "E691: Can only compare List with List"
 msgstr "E691: List kan alleen met een Lijst worden vergeleken"
 
-#, fuzzy
 msgid "E692: Invalid operation for List"
-msgstr "E692: ongeldige bewerking voor Listen"
+msgstr ""
 
 msgid "E735: Can only compare Dictionary with Dictionary"
 msgstr "E735: Dictionary kan alleen met Woordenboek worden vergeleken"
@@ -1510,13 +1447,13 @@ msgstr ""
 msgid "E474: Expected string key: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected comma before dictionary key: %s"
-msgstr "E722: komma ontbreekt in Dictionary: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unfinished escape sequence: %.*s"
-msgstr "E540: ongepaarde expressie-volgorde"
+msgstr ""
 
 #, c-format
 msgid "E474: Unfinished unicode escape sequence: %.*s"
@@ -1526,9 +1463,9 @@ msgstr ""
 msgid "E474: Expected four hex digits after \\u: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unknown escape sequence: %.*s"
-msgstr "E275: onbekend SNiFF+-verzoek: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: ASCII control characters cannot be present inside string: %.*s"
@@ -1548,21 +1485,21 @@ msgstr ""
 msgid "E474: Expected string end: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Leading zeroes are not allowed: %.*s"
-msgstr "E786: bereik niet toegestaan"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after minus sign: %.*s"
-msgstr "E769: ontbrekende ] na %s["
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after decimal dot: %.*s"
-msgstr "E769: ontbrekende ] na %s["
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing exponent: %.*s"
-msgstr "E114: ontbrekend aanhaalteken: %s"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -1587,13 +1524,13 @@ msgstr ""
 msgid "E474: Closing list with curly bracket: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Closing dictionary with square bracket: %.*s"
-msgstr "E725: dict-functie aanroep zonder Dictionary: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing comma: %.*s"
-msgstr "E488: nakomende tekens"
+msgstr ""
 
 #, c-format
 msgid "E474: Expected value after colon: %.*s"
@@ -1607,17 +1544,17 @@ msgstr ""
 msgid "E474: Comma not inside container: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate comma: %.*s"
-msgstr "E721: dubbele sleutel in Dictionary: \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Comma after colon: %.*s"
-msgstr "E254: kan de kleur %s niet reserveren"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using comma in place of colon: %.*s"
-msgstr "E722: komma ontbreekt in Dictionary: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Leading comma: %.*s"
@@ -1627,45 +1564,45 @@ msgstr ""
 msgid "E474: Colon not inside container: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using colon not in dictionary: %.*s"
-msgstr "E720: dubbelepunt in Dictionary ontbreekt: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected colon: %.*s"
-msgstr "E270: onverwachte herstelopdracht"
+msgstr ""
 
 #, c-format
 msgid "E474: Colon after comma: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate colon: %.*s"
-msgstr "E721: dubbele sleutel in Dictionary: \"%s\""
+msgstr ""
 
 #, c-format
 msgid "E474: Expected null: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected true: %.*s"
-msgstr "E270: onverwachte herstelopdracht"
+msgstr ""
 
 #, c-format
 msgid "E474: Expected false: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unidentified byte: %.*s"
-msgstr "E121: ongedefinieerde variabele: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing characters: %.*s"
-msgstr "E488: nakomende tekens"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected end of input: %.*s"
-msgstr "E270: onverwachte herstelopdracht"
+msgstr ""
 
 #, c-format
 msgid "E5010: List item %d of the second argument is not a string"
@@ -1686,9 +1623,9 @@ msgstr ""
 msgid "partial"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "argument %i"
-msgstr "argument van -c"
+msgstr ""
 
 msgid "partial self dictionary"
 msgstr ""
@@ -1723,21 +1660,17 @@ msgstr ""
 msgid "E474: Error while dumping %s, %s: attempt to dump function reference"
 msgstr ""
 
-#, fuzzy
 msgid "E474: Invalid key in special dictionary"
-msgstr "E736: ongeldige bewerking voor Dictionary"
+msgstr ""
 
-#, fuzzy
 msgid "encode_tv2string() argument"
-msgstr "argument van --cmd"
+msgstr ""
 
-#, fuzzy
 msgid ":echo argument"
-msgstr "argument van -c"
+msgstr ""
 
-#, fuzzy
 msgid "encode_tv2json() argument"
-msgstr "argument van --cmd"
+msgstr ""
 
 #, c-format
 msgid "E5004: Error while dumping %s, %s: attempt to dump function reference"
@@ -1747,20 +1680,18 @@ msgstr ""
 msgid "E5005: Unable to dump %s: container references itself in %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error while writing: %s"
-msgstr "E80: opslaan is mislukt"
+msgstr ""
 
-#, fuzzy
 msgid "E5000: Cannot find tab number."
-msgstr "E695: een Funcref kan niet geÃ¯ndexeerd worden"
+msgstr ""
 
 msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
 msgstr ""
 
-#, fuzzy
 msgid "E5002: Cannot find window number."
-msgstr "E671: kan venstertitel \"%s\" niet vinden"
+msgstr ""
 
 msgid "<empty>"
 msgstr "<leeg>"
@@ -1771,37 +1702,34 @@ msgstr "E655: teveel symbolische koppelingen (oneindige lus?)"
 msgid "writefile() first argument must be a List or a Blob"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5060: Unknown flag: %s"
-msgstr "E155: onbekend margeteken: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E482: Can't open file with an empty name"
-msgstr "E212: kan niet schrijven naar bestand"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E482: Can't open file %s for writing: %s"
-msgstr "E212: kan niet schrijven naar bestand"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error when closing file %s: %s"
-msgstr "E209: afsluiten van \"%s\" is mislukt"
+msgstr ""
 
-#, fuzzy
 msgid "E957: Invalid window number"
-msgstr "E19: markering heeft een ongeldig regelnummer"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E935: Invalid submatch number: %d"
-msgstr "E383: ongeldige zoekstring: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1132: Missing function argument"
-msgstr "E126: ontbrekende :endfunction"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid channel stream \"%s\""
-msgstr "E71: onjuist teken na %s%%"
+msgstr ""
 
 msgid "&Ok"
 msgstr "&Ok"
@@ -1809,24 +1737,21 @@ msgstr "&Ok"
 msgid "Context stack is empty"
 msgstr ""
 
-#, fuzzy
 msgid "dictwatcheradd() argument"
-msgstr "argument van -c"
+msgstr ""
 
 msgid "E900: maxdepth must be non-negative number"
 msgstr ""
 
-#, fuzzy
 msgid "flatten() argument"
-msgstr "argument van -c"
+msgstr ""
 
 #, c-format
 msgid "E700: Unknown function: %s"
 msgstr "E700: onbekende functie: %s"
 
-#, fuzzy
 msgid "E923: Second argument of function() must be a list or a dict"
-msgstr "E712: argument van %s moet een List of Dictionary zijn"
+msgstr ""
 
 msgid "called inputrestore() more often than inputsave()"
 msgstr "inputrestore() vaker aangeroepen dan inputsave()"
@@ -1851,9 +1776,9 @@ msgstr ""
 msgid "E701: Invalid type for len()"
 msgstr "E701: ongeldig type voor len()"
 
-#, fuzzy, c-format
+#, c-format
 msgid "msgpackdump() argument, index %i"
-msgstr "argument van -c"
+msgstr ""
 
 msgid "E5070: Character number must not be less than zero"
 msgstr ""
@@ -1868,13 +1793,13 @@ msgstr "E726: stap is nul"
 msgid "E727: Start past end"
 msgstr "E727: start na einde"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E962: Invalid action: '%s'"
-msgstr "E383: ongeldige zoekstring: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "connection failed: %s"
-msgstr "Afgeronde uitzondering: %s"
+msgstr ""
 
 #, c-format
 msgid "E6100: \"%s\" is not a valid stdpath"
@@ -1883,29 +1808,27 @@ msgstr ""
 msgid "(Invalid)"
 msgstr "(ongeldig)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E706: Argument of %s must be a List, String or Dictionary"
-msgstr "E712: argument van %s moet een List of Dictionary zijn"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1250: Argument of %s must be a List, String, Dictionary or Blob"
-msgstr "E712: argument van %s moet een List of Dictionary zijn"
+msgstr ""
 
 #, fuzzy
 msgid "map() argument"
 msgstr "argument van -c"
 
-#, fuzzy
 msgid "mapnew() argument"
-msgstr "argument van -c"
+msgstr ""
 
 #, fuzzy
 msgid "filter() argument"
 msgstr "argument van -c"
 
-#, fuzzy
 msgid "foreach() argument"
-msgstr "argument van -c"
+msgstr ""
 
 #, fuzzy
 msgid "add() argument"
@@ -1915,9 +1838,8 @@ msgstr "argument van -c"
 msgid "extend() argument"
 msgstr "argument van --cmd"
 
-#, fuzzy
 msgid "extendnew() argument"
-msgstr "argument van --cmd"
+msgstr ""
 
 #, fuzzy
 msgid "insert() argument"
@@ -1931,73 +1853,71 @@ msgstr "argument van --cmd"
 msgid "reverse() argument"
 msgstr "argument van -c"
 
-#, fuzzy
 msgid "E743: Variable nested too deep for (un)lock"
-msgstr "E743: variabele is te diep genest om te beveiligen"
+msgstr ""
 
-#, fuzzy
 msgid "E908: Using an invalid value as a String"
-msgstr "E806: Float gebruiken als een String"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1174: String required for argument %d"
-msgstr "E466: :winpos vereist twee getallen als argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1175: Non-empty string required for argument %d"
-msgstr "E467: aangepaste voltooiing vereist een functieargument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1206: Dictionary required for argument %d"
-msgstr "E715: Dictionary is vereist"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1210: Number required for argument %d"
-msgstr "E521: 'Number' vereist: &%s = '%s'"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1211: List required for argument %d"
-msgstr "E466: :winpos vereist twee getallen als argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1212: Bool required for argument %d"
-msgstr "E466: :winpos vereist twee getallen als argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1219: Float or Number required for argument %d"
-msgstr "E179: argument vereist voor -complete"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1220: String or Number required for argument %d"
-msgstr "E179: argument vereist voor -complete"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1222: String or List required for argument %d"
-msgstr "E466: :winpos vereist twee getallen als argument"
+msgstr ""
 
 #, c-format
 msgid "E1225: List, Dictionary, Blob or String required for argument %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1226: List or Blob required for argument %d"
-msgstr "E467: aangepaste voltooiing vereist een functieargument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1238: Blob required for argument %d"
-msgstr "E466: :winpos vereist twee getallen als argument"
+msgstr ""
 
 #, c-format
 msgid "E1252: String, List or Blob required for argument %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1256: String or function required for argument %d"
-msgstr "E467: aangepaste voltooiing vereist een functieargument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1297: Non-NULL Dictionary required for argument %d"
-msgstr "E715: Dictionary is vereist"
+msgstr ""
 
 msgid "E710: List value has more items than target"
 msgstr "E710: Listwaarde heeft meer  value has more items than target"
@@ -2060,41 +1980,32 @@ msgstr "E728: Dictionary gebruiken als een Number"
 msgid "E805: Using a Float as a Number"
 msgstr "E805: een Float wordt als Number gebruikt"
 
-#, fuzzy
 msgid "E974: Using a Blob as a Number"
-msgstr "E745: List wordt als een Number gebruikt"
+msgstr ""
 
-#, fuzzy
 msgid "E685: using an invalid value as a Number"
-msgstr "E805: een Float wordt als Number gebruikt"
+msgstr ""
 
-#, fuzzy
 msgid "E730: Using a List as a String"
-msgstr "E730: List gebruiken als een String"
+msgstr ""
 
-#, fuzzy
 msgid "E731: Using a Dictionary as a String"
-msgstr "E731: Dictionary gebruiken als een String"
+msgstr ""
 
-#, fuzzy
 msgid "E976: Using a Blob as a String"
-msgstr "E806: Float gebruiken als een String"
+msgstr ""
 
-#, fuzzy
 msgid "E891: Using a Funcref as a Float"
-msgstr "E703: een Funcref wordt als Number gebruikt"
+msgstr ""
 
-#, fuzzy
 msgid "E892: Using a String as a Float"
-msgstr "E728: Dictionary gebruiken als een Number"
+msgstr ""
 
-#, fuzzy
 msgid "E893: Using a List as a Float"
-msgstr "E745: List wordt als een Number gebruikt"
+msgstr ""
 
-#, fuzzy
 msgid "E894: Using a Dictionary as a Float"
-msgstr "E728: Dictionary gebruiken als een Number"
+msgstr ""
 
 msgid "E362: Using a boolean value as a Float"
 msgstr ""
@@ -2102,9 +2013,8 @@ msgstr ""
 msgid "E907: Using a special value as a Float"
 msgstr ""
 
-#, fuzzy
 msgid "E975: Using a Blob as a Float"
-msgstr "E805: een Float wordt als Number gebruikt"
+msgstr ""
 
 msgid "E808: Number or Float required"
 msgstr "E808: Number of Float vereist"
@@ -2126,21 +2036,19 @@ msgstr "E130: onbekende functie: %s"
 msgid "E454: Function list was modified"
 msgstr ""
 
-#, fuzzy
 msgid "E1058: Function nesting too deep"
-msgstr "E218: hierarchie van aanroepen autocommands te diep"
+msgstr ""
 
 #, c-format
 msgid "E1068: No white space allowed before '%s': %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1145: Missing heredoc end marker: %s"
-msgstr "E114: ontbrekend aanhaalteken: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1300: Cannot use a partial with dictionary for :defer"
-msgstr "E719: kan [:] niet met een Dictionary gebruiken"
+msgstr ""
 
 #, c-format
 msgid "E125: Illegal argument: %s"
@@ -2153,9 +2061,9 @@ msgstr "E125: ongeldig argument: %s"
 msgid "E989: Non-default argument follows default argument"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E451: Expected }: %s"
-msgstr "E61: geneste %s*"
+msgstr ""
 
 #, c-format
 msgid "E740: Too many arguments for function %s"
@@ -2191,13 +2099,13 @@ msgstr "voortzetten in %s"
 msgid "E699: Too many arguments"
 msgstr "E699:teveel argumenten"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E276: Cannot use function as a method: %s"
-msgstr "E127: kan functie %s niet opnieuw definiÃ«ren, het is in gebruik"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E933: Function was deleted: %s"
-msgstr "E129: functienaam is vereist"
+msgstr ""
 
 #, c-format
 msgid "E120: Using <SID> not in a script context: %s"
@@ -2229,9 +2137,9 @@ msgstr "E123: ongedefinieerde functie: %s"
 msgid "E126: Missing :endfunction"
 msgstr "E126: ontbrekende :endfunction"
 
-#, fuzzy, c-format
+#, c-format
 msgid "W22: Text found after :endfunction: %s"
-msgstr "E123: ongedefinieerde functie: %s"
+msgstr ""
 
 #, c-format
 msgid "E124: Missing '(': %s"
@@ -2262,9 +2170,9 @@ msgstr ""
 msgid "E131: Cannot delete function %s: It is in use"
 msgstr "E131: functie %s wordt gebruikt en kan niet worden verwijderd"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot delete function %s: It is being used internally"
-msgstr "E131: functie %s wordt gebruikt en kan niet worden verwijderd"
+msgstr ""
 
 msgid "E133: :return not inside a function"
 msgstr "E133: :return niet binnen een functie"
@@ -2272,40 +2180,34 @@ msgstr "E133: :return niet binnen een functie"
 msgid "E18: Unexpected characters in :let"
 msgstr "E18: onverwachte tekens in :let"
 
-#, fuzzy
 msgid "E452: Double ; in list of variables"
-msgstr "Dubbele ; in variabelenlijst"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E940: Cannot lock or unlock variable %s"
-msgstr "E46: kan alleen-lezenvariabele \"%s\" niet veranderen"
+msgstr ""
 
 #, c-format
 msgid "E963: Setting v:%s to value with wrong type"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E990: Missing end marker '%s'"
-msgstr "E769: ontbrekende ] na %s["
+msgstr ""
 
-#, fuzzy
 msgid "E991: Cannot use =<< here"
-msgstr "E804: '%' kan niet met Float worden gebruikt"
+msgstr ""
 
 msgid ""
 "E5700: Expression from 'spellsuggest' must yield lists with exactly two "
 "values"
 msgstr ""
 
-#, fuzzy
 msgid "E221: Marker cannot start with lower case letter"
 msgstr ""
-"E183: door gebruiker gedefinieerde opdrachten moet een een hoofdletter "
-"beginnen"
 
-#, fuzzy
 msgid "E172: Missing marker"
-msgstr "E159: ontbrekend nummer margeteken"
+msgstr ""
 
 msgid "E687: Less targets than List items"
 msgstr "E687: minder doelen dan Listitems"
@@ -2317,24 +2219,22 @@ msgstr "E688: meer doelen dan Listitems"
 msgid "E738: Can't list variables for %s"
 msgstr "E738: kan variabelen voor %s niet tonen"
 
-#, fuzzy
 msgid "E996: Cannot lock an environment variable"
-msgstr "omgevingsvariabele"
+msgstr ""
 
 msgid "E996: Cannot lock an option"
 msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a register"
-msgstr "E90: kan laatste buffer niet legen"
+msgstr ""
 
 #, c-format
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: onbekende variabele: \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1122: Variable is locked: %.*s"
-msgstr "E741: waarde is geblokkeerd: %s"
+msgstr ""
 
 #, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
@@ -2348,9 +2248,8 @@ msgstr "E705: variablenaam botst met bestaande functie: %s"
 msgid "E521: Number required: &%s = '%s'"
 msgstr "E521: 'Number' vereist: &%s = '%s'"
 
-#, fuzzy
 msgid "E1308: Cannot resize a window in another tab page"
-msgstr "E784: laatste tabpagina kan niet afgesloten worden"
+msgstr ""
 
 msgid "tcp address must be host:port"
 msgstr ""
@@ -2358,29 +2257,27 @@ msgstr ""
 msgid "failed to lookup host or port"
 msgstr ""
 
-#, fuzzy
 msgid "connection refused"
-msgstr "verbonden"
+msgstr ""
 
-#, fuzzy
 msgid "E144: Non-numeric argument to :z"
-msgstr "E144: niet-numeriek argument voor :z"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"
-msgstr "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
+msgstr ""
 
 #, c-format
 msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
 msgstr "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
 
-#, fuzzy, c-format
+#, c-format
 msgid "> %d, Hex %04x, Oct %o, Digr %s"
-msgstr "> %d, Hex %04x, Octal %o"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "> %d, Hex %08x, Oct %o, Digr %s"
-msgstr "> %d, Hex %08x, Octal %o"
+msgstr ""
 
 #, c-format
 msgid "> %d, Hex %04x, Octal %o"
@@ -2390,15 +2287,14 @@ msgstr "> %d, Hex %04x, Octal %o"
 msgid "> %d, Hex %08x, Octal %o"
 msgstr "> %d, Hex %08x, Octal %o"
 
-#, fuzzy
 msgid "E134: Cannot move a range of lines into itself"
-msgstr "E134: verplaats regels in zichzelf"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line moved"
 msgid_plural "%<PRId64> lines moved"
-msgstr[0] "%<PRId64> regels verplaatst"
-msgstr[1] "%<PRId64> regels verplaatst"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "E482: Can't create file %s"
@@ -2414,9 +2310,9 @@ msgstr "E135: *Filter* Autocommands mogen huidige buffer niet wijzigen"
 msgid "[No write since last change]\n"
 msgstr "[Niets opgeslagen sinds laatste wijziging]\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E503: \"%s\" is not a file or writable device"
-msgstr "is geen bestand of schrijfbaar apparaat"
+msgstr ""
 
 msgid "Write partial file?"
 msgstr "Gedeeltelijk bestand opslaan?"
@@ -2480,33 +2376,32 @@ msgstr "vervang door %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
 msgid "(Interrupted) "
 msgstr "(Onderbroken) "
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> match on %<PRId64> line"
 msgid_plural "%<PRId64> matches on %<PRId64> line"
-msgstr[0] " op %<PRId64> regels"
-msgstr[1] " op %<PRId64> regels"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> substitution on %<PRId64> line"
 msgid_plural "%<PRId64> substitutions on %<PRId64> line"
-msgstr[0] "%<PRId64> vervangingen"
-msgstr[1] "%<PRId64> vervangingen"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> match on %<PRId64> lines"
 msgid_plural "%<PRId64> matches on %<PRId64> lines"
-msgstr[0] " op %<PRId64> regels"
-msgstr[1] " op %<PRId64> regels"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> substitution on %<PRId64> lines"
 msgid_plural "%<PRId64> substitutions on %<PRId64> lines"
-msgstr[0] "%<PRId64> vervangingen"
-msgstr[1] "%<PRId64> vervangingen"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy
 msgid "E147: Cannot do :global recursive with a range"
-msgstr "E147: kan :global niet recursief uitvoeren"
+msgstr ""
 
 msgid "E148: Regular expression missing from global"
 msgstr "E148: reguliere expressies ontbreken bij global"
@@ -2522,21 +2417,21 @@ msgstr "patroon niet gevonden"
 msgid "No old files"
 msgstr "Geen oudere bestanden"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E666: Compiler not supported: %s"
-msgstr "E666: compiler niet ondersteund: %s"
+msgstr ""
 
 #, c-format
 msgid "Save changes to \"%s\"?"
 msgstr "veranderingen opslaan in \"%s\"?"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Close \"%s\"?"
-msgstr "Sluiten"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E947: Job still running in buffer \"%s\""
-msgstr "E94: geen overeenkomstig buffer voor %s"
+msgstr ""
 
 #, c-format
 msgid "E162: No write since last change for buffer \"%s\""
@@ -2550,42 +2445,32 @@ msgstr ""
 msgid "E464: Ambiguous use of user-defined command"
 msgstr "E464: dubbelzinnig gebruik van gebruikergedefinieerde opdracht"
 
-#, fuzzy
 msgid "E489: No call stack to substitute for \"<stack>\""
-msgstr "E498: er is geen :source-bestandsnaam om \"<sfile>\" te vervangen"
+msgstr ""
 
 msgid "E492: Not an editor command"
 msgstr "E492: geen editor-opdracht"
 
-#, fuzzy
 msgid "E495: No autocommand file name to substitute for \"<afile>\""
 msgstr ""
-"E495: er is geen 'autocommand'-bestandsnaam om \"<afile>\" te vervangen"
 
-#, fuzzy
 msgid "E496: No autocommand buffer number to substitute for \"<abuf>\""
-msgstr "E496: er is geen 'autocommand'-buffernummer om \"<abuf>\" te vervangen"
+msgstr ""
 
-#, fuzzy
 msgid "E497: No autocommand match name to substitute for \"<amatch>\""
 msgstr ""
-"E497: er is geen 'autocommand'-naamovereenkomst om \"<amatch>\" te vervangen"
 
-#, fuzzy
 msgid "E498: No :source file name to substitute for \"<sfile>\""
-msgstr "E498: er is geen :source-bestandsnaam om \"<sfile>\" te vervangen"
+msgstr ""
 
-#, fuzzy
 msgid "E842: No line number to use for \"<slnum>\""
-msgstr "E498: er is geen :source-bestandsnaam om \"<sfile>\" te vervangen"
+msgstr ""
 
-#, fuzzy
 msgid "E961: No line number to use for \"<sflnum>\""
-msgstr "E498: er is geen :source-bestandsnaam om \"<sfile>\" te vervangen"
+msgstr ""
 
-#, fuzzy
 msgid "E1274: No script file name to substitute for \"<script>\""
-msgstr "E498: er is geen :source-bestandsnaam om \"<sfile>\" te vervangen"
+msgstr ""
 
 msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
 msgstr "Ex-modus betreden.  Typ \"visual\" om naar de Normaal-modus te gaan."
@@ -2593,13 +2478,12 @@ msgstr "Ex-modus betreden.  Typ \"visual\" om naar de Normaal-modus te gaan."
 msgid "E501: At end-of-file"
 msgstr "E501: bij bestandseinde"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Executing: %s"
-msgstr "%s uitvoeren"
+msgstr ""
 
-#, fuzzy
 msgid "line %"
-msgstr "regel %4ld:"
+msgstr ""
 
 msgid "End of sourced file"
 msgstr "Einde van geladen bestand"
@@ -2630,17 +2514,17 @@ msgstr ""
 msgid "E319: The command is not available in this version"
 msgstr "E319: Helaas, in deze versie is de opdracht niet beschikbaar"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d more file to edit.  Quit anyway?"
 msgid_plural "%d more files to edit.  Quit anyway?"
-msgstr[0] "%d bestanden wachten nog op bewerking.  Toch stoppen?"
-msgstr[1] "%d bestanden wachten nog op bewerking.  Toch stoppen?"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E173: %d more file to edit"
 msgid_plural "E173: %d more files to edit"
-msgstr[0] "E173: 1 bestand wacht op bewerking"
-msgstr[1] "E173: 1 bestand wacht op bewerking"
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy, c-format
 msgid "E185: Cannot find color scheme '%s'"
@@ -2711,17 +2595,14 @@ msgstr ""
 msgid "E5009: Invalid $VIMRUNTIME: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E5009: Invalid 'runtimepath'"
-msgstr "E474: ongeldig argument"
+msgstr ""
 
-#, fuzzy
 msgid "E583: Multiple :else"
-msgstr "E583: meerdere :else"
+msgstr ""
 
-#, fuzzy
 msgid "E607: Multiple :finally"
-msgstr "E607: meerdere :finally"
+msgstr ""
 
 msgid "E608: Cannot :throw exceptions with 'Vim' prefix"
 msgstr "E608: :throw exceptions met 'Vim' als voorvoegsel zijn niet mogelijk"
@@ -2815,9 +2696,8 @@ msgstr "E606: :finally zonder :try"
 msgid "E602: :endtry without :try"
 msgstr "E602: :endtry zonder :try"
 
-#, fuzzy
 msgid "E199: Active window or buffer changed or deleted"
-msgstr "E199: actieve venster of buffer verwijderd"
+msgstr ""
 
 msgid "E811: Not allowed to change buffer information now"
 msgstr "E811: nu bufferinformatie wijzigen is niet toegestaan"
@@ -2949,21 +2829,21 @@ msgstr "[mac]"
 msgid "[unix]"
 msgstr "[unix]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s%<PRId64>L, %<PRId64>B"
-msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s%<PRId64> line, "
 msgid_plural "%s%<PRId64> lines, "
-msgstr[0] "%<PRId64> regels, "
-msgstr[1] "%<PRId64> regels, "
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> byte"
 msgid_plural "%<PRId64> bytes"
-msgstr[0] "%<PRId64> overeenkomsten"
-msgstr[1] "%<PRId64> overeenkomsten"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "E246: FileChangedShell autocommand deleted buffer"
 msgstr "E246: buffer verwijderd door 'autocommand' FileChangedShell"
@@ -3037,21 +2917,20 @@ msgstr "E350: kan geen vouw aanmaken met huidige 'vouwmethode'"
 msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: kan geen vouw verwijderen met huidige 'vouwmethode'"
 
-#, fuzzy, c-format
+#, c-format
 msgid "+--%3d line folded"
 msgid_plural "+--%3d lines folded "
-msgstr[0] "+--%3ld regels gevouwen "
-msgstr[1] "+--%3ld regels gevouwen "
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "+-%s%3d line: "
 msgid_plural "+-%s%3d lines: "
-msgstr[0] "+-%s%3ld regels: "
-msgstr[1] "+-%s%3ld regels: "
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy
 msgid "E223: Recursive mapping"
-msgstr "E223: recursieve toewijzing"
+msgstr ""
 
 msgid "E1255: <Cmd> mapping must end with <CR>"
 msgstr ""
@@ -3062,16 +2941,16 @@ msgstr ""
 msgid "E222: Add to read buffer"
 msgstr "E222: aan leesbuffer toevoegen"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open for reading: \"%s\": %s\n"
-msgstr "Openen om te lezen is mislukt: \""
+msgstr ""
 
 msgid "--No lines in buffer--"
 msgstr "-- geen regels in buffer --"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E685: Internal error: hash_add(): duplicate key \"%s\""
-msgstr "E685: interne fout: %s"
+msgstr ""
 
 #, c-format
 msgid "E661: No '%s' help for %s"
@@ -3085,9 +2964,9 @@ msgstr "E149: Geen hulp voor %s"
 msgid "Help file \"%s\" not found"
 msgstr "Hulpbestand \"%s\" is niet gevonden"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E151: No match: %s"
-msgstr "E480: geen overeenkomst: %s"
+msgstr ""
 
 #, c-format
 msgid "E152: Cannot open %s for writing"
@@ -3108,24 +2987,24 @@ msgstr "E150: geen map: %s"
 msgid "E424: Too many different highlighting attributes in use"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E411: Highlight group not found: %s"
-msgstr "E426: tag niet gevonden: %s"
+msgstr ""
 
 msgid "E414: Group has settings, highlight link ignored"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E415: Unexpected equal sign: %s"
-msgstr "E18: onverwachte tekens in :let"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E416: Missing equal sign: %s"
-msgstr "E156: ontbrekende naam margeteken"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E417: Missing argument: %s"
-msgstr "E107: ontbrekende haakjes: %s"
+msgstr ""
 
 #, c-format
 msgid "E412: Not enough arguments: \":highlight link %s\""
@@ -3135,9 +3014,8 @@ msgstr ""
 msgid "E413: Too many arguments: \":highlight link %s\""
 msgstr ""
 
-#, fuzzy
 msgid "E423: Illegal argument"
-msgstr "E125: ongeldig argument: %s"
+msgstr ""
 
 #, c-format
 msgid "E418: Illegal value: %s"
@@ -3167,11 +3045,11 @@ msgstr ""
 msgid "%<PRId64> lines to indent... "
 msgstr "%<PRId64> in te springen regels... "
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line indented "
 msgid_plural "%<PRId64> lines indented "
-msgstr[0] "%<PRId64> regels ingesprongen "
-msgstr[1] "%<PRId64> regels ingesprongen "
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "%s (y/n)?"
@@ -3186,9 +3064,8 @@ msgstr ""
 msgid " Keyword completion (^N^P)"
 msgstr " trefwoordvoltooiing (^N^P)"
 
-#, fuzzy
 msgid " ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)"
-msgstr " ^X-modus (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+msgstr ""
 
 msgid " Whole line completion (^L^N^P)"
 msgstr " gehele-regelvoltooiing (^L^N^P)"
@@ -3226,9 +3103,8 @@ msgstr " spellingsuggestie (^S^N^P)"
 msgid " Keyword Local completion (^N^P)"
 msgstr " lokaal-trefwoordvoltooiing (^N^P)"
 
-#, fuzzy
 msgid " Register completion (^N^P)"
-msgstr " trefwoordvoltooiing (^N^P)"
+msgstr ""
 
 msgid "Hit end of paragraph"
 msgstr "Einde van paragraaf"
@@ -3262,9 +3138,8 @@ msgstr "doorzoeken: %s"
 msgid "Scanning tags."
 msgstr "Doorzoeken tags."
 
-#, fuzzy
 msgid "match in file"
-msgstr "Patch-bestand"
+msgstr ""
 
 msgid " Adding"
 msgstr " toevoegen"
@@ -3329,9 +3204,9 @@ msgstr ""
 msgid "E5116: Calling Lua debug string: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5108: Lua function: %.*s"
-msgstr "E130: onbekende functie: %s"
+msgstr ""
 
 #, c-format
 msgid "E5107: Lua: %.*s"
@@ -3407,13 +3282,13 @@ msgstr "Teveel \"+opdracht\", \"-c opdracht\" of \"--cmd opdracht\"-argumenten"
 msgid "Cannot open for script output: \""
 msgstr "Openen voor script-uitvoer is mislukt: \""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5420: Failed to write to file: %s"
-msgstr "E810: kan tijdelijke bestand niet lezen of opslaan"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Attempt to open script file again: \"%s %s\"\n"
-msgstr "Poging scriptbestand wederom te openen: \""
+msgstr ""
 
 msgid "--embed conflicts with -es/-Es/-l"
 msgstr ""
@@ -3421,49 +3296,41 @@ msgstr ""
 msgid "pre-vimrc command line"
 msgstr "pre-vimrc-opdracjtregel"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "More info with \""
 msgstr ""
-"\n"
-"Meer informatie via: \"vim -h\"\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Usage:\n"
 msgstr ""
-"\n"
-"\n"
-"Gebruik:"
 
 #, c-format
 msgid "  nvim [options] [file ...]\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
 msgstr ""
-"\n"
-"--- Opties ---"
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --cmd <cmd>           Execute <cmd> before any config\n"
 msgstr ""
-"--cmd <opdracht>\tOpdracht <opdracht> uitvoeren voor enige vimrc-bestand"
 
-#, fuzzy, c-format
+#, c-format
 msgid "  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"
-msgstr "-c <opdracht>\t\tOpdracht <opdracht> uitvoeren na eerste bestand"
+msgstr ""
 
 #, c-format
 msgid "  -l <script> [args...] Execute Lua <script> (with optional args)\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -S <session>          Source <session> after loading the first file\n"
-msgstr "-c <opdracht>\t\tOpdracht <opdracht> uitvoeren na eerste bestand"
+msgstr ""
 
 #, c-format
 msgid "  -s <scriptin>         Read Normal mode commands from <scriptin>\n"
@@ -3473,9 +3340,9 @@ msgstr ""
 msgid "  -u <config>           Use this config file\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -d                    Diff mode\n"
-msgstr "-               lees tekst vanuit stdin"
+msgstr ""
 
 #, c-format
 msgid "  -es, -Es              Silent (batch) mode\n"
@@ -3489,38 +3356,38 @@ msgstr ""
 msgid "  -i <shada>            Use this shada file\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -n                    No swap file, use memory only\n"
-msgstr "-n\t\t\tGeen wisselbestand, alleen geheugen gebruiken"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -o[N]                 Open N windows (default: one per file)\n"
-msgstr "-o[N]\t\tN vensters openen (standaard: 1 per bestand)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  -O[N]                 Open N vertical windows (default: one per file)\n"
-msgstr "-o[N]\t\tN vensters openen (standaard: 1 per bestand)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -p[N]                 Open N tab pages (default: one per file)\n"
-msgstr "-p[N]\t\tN tabpagina's openen (standaard: 1 per bestand)"
+msgstr ""
 
 #, c-format
 msgid "  -R                    Read-only (view) mode\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -v, --version         Print version information\n"
-msgstr "--version\t\tVersieinformatie tonen en stoppen"
+msgstr ""
 
 #, c-format
 msgid "  -V[N][file]           Verbose [level][file]\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --                    Only file names after this\n"
-msgstr "--\t\t\tHierna alleen bestandsnamen"
+msgstr ""
 
 #, c-format
 msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
@@ -3562,28 +3429,28 @@ msgid ""
 "See \":help startup-options\" for all options.\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E224: Global abbreviation already exists for %s"
-msgstr "E224: algemene afkorting bestaat al voor %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E225: Global mapping already exists for %s"
-msgstr "E225: er bestaat al een algemene toewijzing voor %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E226: Abbreviation already exists for %s"
-msgstr "E226: er bestaat al een afkorting voor %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E227: Mapping already exists for %s"
-msgstr "E227: toewijzing bestaat al voor %s"
+msgstr ""
 
 msgid "E460: Entries missing in mapset() dict argument"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1276: Illegal map mode string: '%s'"
-msgstr "E125: ongeldig argument: %s"
+msgstr ""
 
 msgid "No abbreviation found"
 msgstr "Geen afkorting gevonden"
@@ -3629,9 +3496,9 @@ msgstr ""
 msgid "E799: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E801: ID already taken: %<PRId64>"
-msgstr "E157: ongeldige id margeteken: %<PRId64>"
+msgstr ""
 
 #, c-format
 msgid "E5030: Empty list at position %d"
@@ -3645,9 +3512,9 @@ msgstr ""
 msgid "E802: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E803: ID not found: %<PRId64>"
-msgstr " in regel %<PRId64>;"
+msgstr ""
 
 #, c-format
 msgid "E474: List item %d is either not a dictionary or an empty one"
@@ -3665,9 +3532,9 @@ msgstr ""
 msgid "E798: ID is reserved for \"match\": %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1109: List item %d is not a List"
-msgstr "E711: Listwaarde heeft onvoldoende items"
+msgstr ""
 
 #, c-format
 msgid "E1110: List item %d does not contain 3 numbers"
@@ -3708,13 +3575,13 @@ msgstr "E677: opslaan van temp-bestand is mislukt"
 msgid "E300: Swap file already exists (symlink attack?)"
 msgstr "Wisselbestand bestaat reeds."
 
-#, fuzzy, c-format
+#, c-format
 msgid "E315: ml_get: Invalid lnum: %<PRId64>"
-msgstr "E157: ongeldige id margeteken: %<PRId64>"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E316: ml_get: Cannot find line %<PRId64>in buffer %d %s"
-msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+msgstr ""
 
 msgid "E317: Pointer block id wrong"
 msgstr ""
@@ -3728,13 +3595,13 @@ msgstr ""
 msgid "E317: Pointer block id wrong 4"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E322: Line number out of range: %<PRId64> past the end"
-msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E323: Line count wrong in block %<PRId64>"
-msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+msgstr ""
 
 msgid "E1364: Warning: Pointer block corrupted"
 msgstr ""
@@ -3783,19 +3650,16 @@ msgid ""
 "Maybe no changes were made or Nvim did not update the swap file."
 msgstr ""
 
-#, fuzzy
 msgid " cannot be used with this version of Nvim.\n"
 msgstr ""
-"\n"
-"         [onbruikbaar met deze versie van Vim]"
 
 #, fuzzy
 msgid "Use Vim version 3.0.\n"
 msgstr "         [van Vim-versie 3.0]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E307: %s does not look like a Nvim swap file"
-msgstr "         [lijkt geen Vvim-wisselbestand te zijn]"
+msgstr ""
 
 #, fuzzy
 msgid " cannot be used on this computer.\n"
@@ -3893,14 +3757,10 @@ msgstr ""
 "Herstel is afgerond. Inhoud van het buffer komt overeen met de "
 "bestandsinhoud."
 
-#, fuzzy
 msgid ""
 "\n"
 "You may want to delete the .swp file now."
 msgstr ""
-"\n"
-"Het .swp-bestand kan nu verwijderd worden.\n"
-"\n"
 
 msgid ""
 "\n"
@@ -3934,9 +3794,8 @@ msgstr "             datum: "
 msgid "         [from Vim version 3.0]"
 msgstr "         [van Vim-versie 3.0]"
 
-#, fuzzy
 msgid "         [does not look like a Nvim swap file]"
-msgstr "         [lijkt geen Vvim-wisselbestand te zijn]"
+msgstr ""
 
 msgid "         [garbled strings (not nul terminated)]"
 msgstr ""
@@ -4038,24 +3897,18 @@ msgstr "Er is een wisselbestand aangetroffen met de naam \""
 msgid "While opening file \""
 msgstr "bij het openen van bestand \""
 
-#, fuzzy
 msgid "      CANNOT BE FOUND"
-msgstr "  NIET GEVONDEN"
+msgstr ""
 
 msgid "      NEWER than swap file!\n"
 msgstr "    NIEUWER dan het wisselbestand!\n"
 
-#, fuzzy
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
 "    be careful not to end up with two different instances of the same\n"
 "    file when making changes.  Quit, or continue with caution.\n"
 msgstr ""
-"\n"
-"(1) Mogelijk wordt dit bestand met een ander programma bewerkt.\n"
-"    Als dit het geval is, pas dan op niet met twee verschillende\n"
-"    versies van hetzelfde bestand te eindigen bij het bewerken.\n"
 
 #, fuzzy
 msgid "(2) An edit session for this file crashed.\n"
@@ -4083,9 +3936,8 @@ msgstr ""
 "\"\n"
 "    om dit bericht te voorkomen.\n"
 
-#, fuzzy
 msgid "Found a swap file that is not useful, deleting it"
-msgstr "Er is een wisselbestand aangetroffen met de naam \""
+msgstr ""
 
 msgid "Swap file \""
 msgstr "Wisselbestand \""
@@ -4185,13 +4037,12 @@ msgstr ""
 msgid "E337: Menu not found - check menu names"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Error in %s:"
-msgstr "E209: afsluiten van \"%s\" is mislukt"
+msgstr ""
 
-#, fuzzy
 msgid "line %4"
-msgstr "regel %4ld:"
+msgstr ""
 
 #, c-format
 msgid "E354: Invalid register name: '%s'"
@@ -4203,17 +4054,17 @@ msgstr ""
 msgid "Press ENTER or type command to continue"
 msgstr "Toets ENTER of typ een opdracht om verder te gaan"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d more line"
 msgid_plural "%d more lines"
-msgstr[0] "1 regel meer"
-msgstr[1] "1 regel meer"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d line less"
 msgid_plural "%d fewer lines"
-msgstr[0] "1 regel minder"
-msgstr[1] "1 regel minder"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid " (Interrupted)"
 msgstr " (onderbroken)"
@@ -4256,9 +4107,8 @@ msgid ""
 "&Cancel"
 msgstr ""
 
-#, fuzzy
 msgid "E664: Changelist is empty"
-msgstr "E664: wijzigingslijst is leeg"
+msgstr ""
 
 msgid "E1292: Command-line window is already open"
 msgstr ""
@@ -4281,27 +4131,26 @@ msgstr "E663: einde van wijzigingslijst"
 msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Nvim"
 msgstr ""
 
-#, fuzzy
 msgid "Type  :qa  and press <Enter> to exit Nvim"
-msgstr "Typ :quit<Enter> om Vim te verlaten"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line %sed %d time"
 msgid_plural "%<PRId64> line %sed %d times"
-msgstr[0] "%<PRId64> regels %sed %d maal"
-msgstr[1] "%<PRId64> regels %sed %d maal"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines %sed %d time"
 msgid_plural "%<PRId64> lines %sed %d times"
-msgstr[0] "%<PRId64> regels %sed %d maal"
-msgstr[1] "%<PRId64> regels %sed %d maal"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line changed"
 msgid_plural "%<PRId64> lines changed"
-msgstr[0] "%<PRId64> regels gewijzigd"
-msgstr[1] "%<PRId64> regels gewijzigd"
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy, c-format
 msgid "%<PRId64> lines changed"
@@ -4384,11 +4233,8 @@ msgstr "E593: vereist minstens %d regels"
 msgid "E594: Need at least %d columns"
 msgstr "E594: vereist minstens %d kolommen"
 
-#, fuzzy
 msgid "Cannot unset global option value"
 msgstr ""
-"\n"
-"--- Globale optiewaarden ---"
 
 #, c-format
 msgid "Invalid value for option '%s': expected %s, got %s %s"
@@ -4422,16 +4268,14 @@ msgstr ""
 msgid "E535: Illegal character after <%c>"
 msgstr "E535: ongeldig teken na <%c>"
 
-#, fuzzy
 msgid "E536: Comma required"
-msgstr "E536: komma is vereist"
+msgstr ""
 
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: ongepaarde expressie-volgorde"
 
-#, fuzzy
 msgid "E542: Unbalanced groups"
-msgstr "E542: ongepaarde groepen"
+msgstr ""
 
 msgid "E589: 'backupext' and 'patchmode' are equal"
 msgstr ""
@@ -4495,9 +4339,8 @@ msgstr ""
 msgid "E1509: Error occurred when reading or writing extended attribute"
 msgstr ""
 
-#, fuzzy
 msgid "Nvim: Error reading input, exiting...\n"
-msgstr "Vim: lezen van de invoer is mislukt. Stoppen...\n"
+msgstr ""
 
 #, c-format
 msgid "Current %slanguage: \"%s\""
@@ -4515,9 +4358,9 @@ msgid ""
 "shell failed to start: "
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5677: Error writing input to shell-command: %s"
-msgstr "E677: opslaan van temp-bestand is mislukt"
+msgstr ""
 
 #, no-c-format
 msgid "%a %b %d %H:%M:%S %Y"
@@ -4600,25 +4443,23 @@ msgstr ""
 msgid "E777: String or List expected"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E927: Invalid action: '%s'"
-msgstr "E383: ongeldige zoekstring: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E59: Invalid character after %s@"
-msgstr "E71: onjuist teken na %s%%"
+msgstr ""
 
-#, fuzzy
 msgid "E63: Invalid use of \\_"
-msgstr "E63: onjuist gebruikt van \\_"
+msgstr ""
 
-#, fuzzy
 msgid "E363: Pattern uses more memory than 'maxmempattern'"
-msgstr "E363: patroon gebruikt meer geheugen dan 'maxmempattern'"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E369: Invalid item in %s%%[]"
-msgstr "E239: ongeldige tekst margeteken: %s"
+msgstr ""
 
 #, c-format
 msgid "E654: Missing delimiter after search pattern: %s"
@@ -4628,9 +4469,8 @@ msgstr ""
 msgid "E769: Missing ] after %s["
 msgstr "E769: ontbrekende ] na %s["
 
-#, fuzzy
 msgid "E944: Reverse range in character class"
-msgstr "E488: nakomende tekens"
+msgstr ""
 
 msgid "E945: Range too large in character class"
 msgstr ""
@@ -4650,9 +4490,8 @@ msgstr "E55: %s) is ongepaard"
 msgid "E66: \\z( not allowed here"
 msgstr "E66: \\z( hier niet toegestaan"
 
-#, fuzzy
 msgid "E67: \\z1 - \\z9 not allowed here"
-msgstr "E67: \\z1 en andere hier niet toegestaan"
+msgstr ""
 
 #, c-format
 msgid "E69: Missing ] after %s%%["
@@ -4662,9 +4501,8 @@ msgstr "E69: ontbrekende ] na %s%%["
 msgid "E70: Empty %s%%[]"
 msgstr "E70: leeg %s%%[]"
 
-#, fuzzy
 msgid "E956: Cannot use pattern recursively"
-msgstr "E659: Python kan niet recursief worden aangeroepen"
+msgstr ""
 
 #, c-format
 msgid "E1204: No Number allowed after .: '\\%%%c'"
@@ -4678,9 +4516,8 @@ msgstr ""
 msgid "E1281: Atom '\\%%#=%c' must be at the start of the pattern"
 msgstr ""
 
-#, fuzzy
 msgid "E1290: substitute nesting too deep"
-msgstr "E579: te diepe :if-nesting"
+msgstr ""
 
 msgid "E1541: Value too large, max Unicode codepoint is U+10FFFF"
 msgstr ""
@@ -4751,9 +4588,8 @@ msgstr ""
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
 msgstr ""
 
-#, fuzzy
 msgid "E951: \\% value too large"
-msgstr "E75: te lange naam"
+msgstr ""
 
 #, c-format
 msgid "E867: (NFA) Unknown operator '\\z%c'"
@@ -4782,9 +4618,8 @@ msgstr ""
 msgid "E873: (NFA regexp) proper termination error"
 msgstr ""
 
-#, fuzzy
 msgid "Could not open temporary log file for writing, displaying on stderr... "
-msgstr "E214: kan tijdelijk bestand voor wegschrijven niet vinden"
+msgstr ""
 
 msgid "E874: (NFA) Could not pop the stack!"
 msgstr ""
@@ -4817,17 +4652,17 @@ msgstr ""
 msgid " into \"%c"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "block of %<PRId64> line yanked%s"
 msgid_plural "block of %<PRId64> lines yanked%s"
-msgstr[0] "blok van %<PRId64> regels gekopieerd"
-msgstr[1] "blok van %<PRId64> regels gekopieerd"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line yanked%s"
 msgid_plural "%<PRId64> lines yanked%s"
-msgstr[0] "%<PRId64> regels gekopieerd"
-msgstr[1] "%<PRId64> regels gekopieerd"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4838,9 +4673,9 @@ msgid ""
 "Type Name Content"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Searching for \"%s\" under \"%s\" in \"%s\""
-msgstr "Naar \"%s\" in \"%s\" zoeken"
+msgstr ""
 
 #, c-format
 msgid "Searching for \"%s\" in \"%s\""
@@ -4850,17 +4685,17 @@ msgstr "Naar \"%s\" in \"%s\" zoeken"
 msgid "Searching for \"%s\""
 msgstr "Naar \"%s\" zoeken"
 
-#, fuzzy, c-format
+#, c-format
 msgid "not found in '%s': \"%s\""
-msgstr "niet gevonden in 'runtimepath': \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Searching for \"%s\" in runtime path"
-msgstr "Naar \"%s\" in \"%s\" zoeken"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "not found in runtime path: \"%s\""
-msgstr "niet gevonden in 'runtimepath': \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Cannot source a directory: \"%s\""
@@ -4927,13 +4762,13 @@ msgstr "E167: :scriptencoding buiten een geladen bestand gebruikt"
 msgid "E168: :finish used outside of a sourced file"
 msgstr "E168: :finish buiten een geladen bestand gebruikt"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E384: Search hit TOP without match for: %s"
-msgstr "E384: TOP bereikt zonder overeenkomst voor: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E385: Search hit BOTTOM without match for: %s"
-msgstr "E385: BODEM bereikt zonder overeenkomst voor: %s"
+msgstr ""
 
 #, c-format
 msgid "E383: Invalid search string: %s"
@@ -5000,9 +4835,9 @@ msgstr ""
 msgid "System error while closing ShaDa file: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading ShaDa file \"%s\"%s%s%s%s"
-msgstr "Inlezen viminfo-bestand \"%s\"%s%s%s"
+msgstr ""
 
 msgid " info"
 msgstr " info"
@@ -5051,9 +4886,9 @@ msgstr ""
 msgid "E138: All %s.tmp.X files exist, cannot write ShaDa file!"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while opening temporary ShaDa file %s for writing: %s"
-msgstr "E214: kan tijdelijk bestand voor wegschrijven niet vinden"
+msgstr ""
 
 #, c-format
 msgid "Failed to create directory %s for writing ShaDa file: %s"
@@ -5063,13 +4898,13 @@ msgstr ""
 msgid "System error while opening ShaDa file %s for writing: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing ShaDa file \"%s\""
-msgstr "viminfo-bestand \"%s\" opslaan"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E137: ShaDa file is not writable: %s"
-msgstr "E137: viminfo-bestand is niet schrijfbaar: %s"
+msgstr ""
 
 #, c-format
 msgid "Failed setting uid and gid for file %s: %s"
@@ -5079,9 +4914,9 @@ msgstr ""
 msgid "Can't rename ShaDa file from %s to %s!"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Did not rename %s because %s does not look like a ShaDa file"
-msgstr "         [lijkt geen Vvim-wisselbestand te zijn]"
+msgstr ""
 
 #, c-format
 msgid "Did not rename %s to %s because there were errors during writing it"
@@ -5091,9 +4926,9 @@ msgstr ""
 msgid "Do not forget to remove %s or rename it manually to %s."
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading ShaDa file: %s"
-msgstr "E47: fout tijdens lezen foutenbestand"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5101,9 +4936,9 @@ msgid ""
 "%<PRIu64> bytes, but file ended earlier"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading integer from ShaDa file: %s"
-msgstr "E47: fout tijdens lezen foutenbestand"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5172,11 +5007,8 @@ msgstr ""
 msgid "  group=%s"
 msgstr ""
 
-#, fuzzy
 msgid "    line=%"
 msgstr ""
-"\n"
-"   #   regel"
 
 #, c-format
 msgid "E239: Invalid sign text: %s"
@@ -5193,9 +5025,9 @@ msgstr "(niet ondersteund)"
 msgid "E885: Not possible to change sign %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E157: Invalid sign ID: %d"
-msgstr "E157: ongeldige id margeteken: %<PRId64>"
+msgstr ""
 
 msgid "E934: Cannot jump to a buffer that does not have a name"
 msgstr ""
@@ -5217,9 +5049,8 @@ msgstr ""
 msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
 msgstr ""
 
-#, fuzzy
 msgid "E797: SpellFileMissing autocommand deleted buffer"
-msgstr "E246: buffer verwijderd door 'autocommand' FileChangedShell"
+msgstr ""
 
 #, c-format
 msgid "Warning: region %s not supported"
@@ -5235,17 +5066,15 @@ msgstr ""
 msgid "E758: Truncated spell file"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E782: Error while reading .sug file: %s"
-msgstr "E47: fout tijdens lezen foutenbestand"
+msgstr ""
 
-#, fuzzy
 msgid "E783: Duplicate char in MAP entry"
-msgstr "E125: ongeldig argument: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1280: Illegal character in word"
-msgstr "E215: ongeldig teken na *: %s"
+msgstr ""
 
 #, c-format
 msgid "Trailing text in %s line %d: %s"
@@ -5265,9 +5094,9 @@ msgstr ""
 msgid "E757: This does not look like a spell file"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5042: Failed to read spell file %s: %s"
-msgstr "E482: aanmaken bestand %s is mislukt"
+msgstr ""
 
 msgid "E771: Old spell file, needs to be updated"
 msgstr ""
@@ -5294,9 +5123,9 @@ msgstr ""
 msgid "E781: .sug file doesn't match .spl file: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading affix file %s..."
-msgstr "Lezen van standaardinvoer..."
+msgstr ""
 
 #, c-format
 msgid "Conversion failure for word in %s line %d: %s"
@@ -5416,9 +5245,9 @@ msgstr ""
 msgid "%s value differs from what is used in another .aff file"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading dictionary file %s..."
-msgstr "Doorzoeken Dictionary: %s"
+msgstr ""
 
 #, c-format
 msgid "E760: No word count in %s"
@@ -5444,9 +5273,9 @@ msgstr ""
 msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading word file %s..."
-msgstr "Lezen van standaardinvoer..."
+msgstr ""
 
 msgid "Conversion failure for word in %s line %"
 msgstr ""
@@ -5494,9 +5323,9 @@ msgstr ""
 msgid "Total number of words: %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing suggestion file %s..."
-msgstr "viminfo-bestand \"%s\" opslaan"
+msgstr ""
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5505,9 +5334,9 @@ msgstr ""
 msgid "E751: Output file name must not have region name"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E754: Only up to %d regions supported"
-msgstr "E519: optie niet ondersteund"
+msgstr ""
 
 #, c-format
 msgid "E755: Invalid region in %s"
@@ -5516,9 +5345,9 @@ msgstr ""
 msgid "Warning: both compounding and NOBREAK specified"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing spell file %s..."
-msgstr "viminfo-bestand \"%s\" opslaan"
+msgstr ""
 
 msgid "Done!"
 msgstr ""
@@ -5531,9 +5360,8 @@ msgstr ""
 msgid "Word '%.*s' removed from %s"
 msgstr ""
 
-#, fuzzy
 msgid "Seek error in spellfile"
-msgstr "E677: opslaan van temp-bestand is mislukt"
+msgstr ""
 
 #, c-format
 msgid "Word '%.*s' added to %s"
@@ -5557,9 +5385,9 @@ msgstr ""
 msgid " < \"%.*s\""
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64>,"
-msgstr "regel %<PRId64>"
+msgstr ""
 
 msgid "[Help]"
 msgstr "[Hulp]"
@@ -5589,9 +5417,9 @@ msgstr ""
 msgid "E1504: Positional argument %d type used inconsistently: %s/%s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1505: Invalid format specifier: %s"
-msgstr "E180: ongeldige voltooiingswaarde: %s"
+msgstr ""
 
 msgid "unknown"
 msgstr "onbekend"
@@ -5599,13 +5427,11 @@ msgstr "onbekend"
 msgid "int"
 msgstr ""
 
-#, fuzzy
 msgid "long int"
-msgstr "[lange regels gesplitst]"
+msgstr ""
 
-#, fuzzy
 msgid "long long int"
-msgstr "[lange regels gesplitst]"
+msgstr ""
 
 msgid "signed size_t"
 msgstr ""
@@ -5653,13 +5479,12 @@ msgstr ""
 msgid "E395: Contains argument not accepted here"
 msgstr ""
 
-#, fuzzy
 msgid "E844: Invalid cchar value"
-msgstr "E474: ongeldig argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E890: Trailing char after ']': %s]%s"
-msgstr "E488: nakomende tekens"
+msgstr ""
 
 msgid "No Syntax items defined for this buffer"
 msgstr ""
@@ -5708,9 +5533,8 @@ msgstr ""
 msgid "E392: No such syntax cluster: %s"
 msgstr ""
 
-#, fuzzy
 msgid "from the first line"
-msgstr "Woord uit andere regel"
+msgstr ""
 
 msgid "minimal "
 msgstr ""
@@ -5803,23 +5627,21 @@ msgstr ""
 msgid "E73: Tag stack empty"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E426: Tag not found: %s"
-msgstr "E426: tag niet gevonden: %s"
+msgstr ""
 
 msgid "E555: At bottom of tag stack"
 msgstr ""
 
-#, fuzzy
 msgid "E556: At top of tag stack"
-msgstr "E662: begin van wijzigingslijst"
+msgstr ""
 
 msgid "E986: Cannot modify the tag stack within tagfunc"
 msgstr ""
 
-#, fuzzy
 msgid "E987: Invalid return value from tagfunc"
-msgstr "E178: ongeldige standaardwaarde voor aantal"
+msgstr ""
 
 msgid "E1299: Window unexpectedly closed while searching for tags"
 msgstr ""
@@ -5911,13 +5733,12 @@ msgstr "biep!"
 msgid "E439: Undo list corrupt"
 msgstr ""
 
-#, fuzzy
 msgid "E440: Undo line missing"
-msgstr "E438: u_undo: regelnummers onjuist"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E829: Write error in undo file: %s"
-msgstr "E677: opslaan van temp-bestand is mislukt"
+msgstr ""
 
 #, fuzzy
 msgid "E881: Line count changed unexpectedly"
@@ -5927,9 +5748,9 @@ msgstr "E787: buffer is onverwacht gewijzigd"
 msgid "E828: Cannot open undo file for writing: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5003: Unable to create directory \"%s\" for undo file: %s"
-msgstr "E739: kan map %s niet aanmaken"
+msgstr ""
 
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
@@ -6021,11 +5842,11 @@ msgstr "na"
 msgid "before"
 msgstr "voor"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> second ago"
 msgid_plural "%<PRId64> seconds ago"
-msgstr[0] "%<PRId64> seconden geleden"
-msgstr[1] "%<PRId64> seconden geleden"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Nothing to undo"
 msgstr "Niets om ongedaan te maken"
@@ -6036,9 +5857,9 @@ msgstr ""
 msgid "E790: undojoin is not allowed after undo"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E179: Argument required for %s"
-msgstr "E179: argument vereist voor -complete"
+msgstr ""
 
 #, c-format
 msgid "E184: No such user-defined command: %s"
@@ -6047,24 +5868,21 @@ msgstr "E184: deze door gebruiker gedefinieerde opdracht bestaat niet: %s"
 msgid "E1208: -complete used without allowing arguments"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1237: No such user-defined command in current buffer: %s"
-msgstr "E184: deze door gebruiker gedefinieerde opdracht bestaat niet: %s"
+msgstr ""
 
-#, fuzzy
 msgid ""
 "\n"
 "    Name              Args Address Complete    Definition"
 msgstr ""
-"\n"
-"    Naam        Args Berk.  Compleet  Definitie"
 
 msgid "No user-defined commands found"
 msgstr "Geen gebruikergedefinieerde opdrachten gevonden"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E180: Invalid address type value: %s"
-msgstr "E180: ongeldige voltooiingswaarde: %s"
+msgstr ""
 
 #, c-format
 msgid "E180: Invalid complete value: %s"
@@ -6093,9 +5911,9 @@ msgstr "E178: ongeldige standaardwaarde voor aantal"
 msgid "E181: Invalid attribute: %s"
 msgstr "E181: ongeldig attribute: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E174: Command already exists: add ! to replace it: %s"
-msgstr "E174: opdracht bestaat al: voeg ! toe om het te vervangen"
+msgstr ""
 
 msgid "E182: Invalid command name"
 msgstr "E182: ongeldige opdrachtnaam"
@@ -6118,60 +5936,54 @@ msgstr ""
 msgid " f-b for $VIMRUNTIME: \""
 msgstr ""
 
-#, fuzzy
 msgid "Nvim is open source and freely distributable"
-msgstr "Vim is open-source en vrij verspreidbaar"
+msgstr ""
 
-#, fuzzy
 msgid "type  :help nvim<Enter>     if you are new! "
-msgstr "typ :help iccf<Enter> voor informatie"
+msgstr ""
 
-#, fuzzy
 msgid "type  :checkhealth<Enter>   to optimize Nvim"
-msgstr "Typ :quit<Enter> om Vim te verlaten"
+msgstr ""
 
-#, fuzzy
 msgid "type  :q<Enter>             to exit         "
-msgstr "typ :q<Enter> om te stoppen"
+msgstr ""
 
-#, fuzzy
 msgid "type  :help<Enter>          for help        "
-msgstr "typ :q<Enter> om te stoppen"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "type  :help news<Enter>     for v%s.%s notes "
-msgstr "typ   :help sponsor<Enter>    voor informatie "
+msgstr ""
 
 msgid "Help poor children in Uganda!"
 msgstr "Help arme kinderen in Uganda!"
 
-#, fuzzy
 msgid "type  :help Kuwasha<Enter>  for information "
-msgstr "typ   :help sponsor<Enter>    voor informatie "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid control character present in input: %.*s"
-msgstr "E71: onjuist teken na %s%%"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E112: Option name missing: %.*s"
-msgstr "E112: optienaam ontbreekt: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected EOC character: %.*s"
-msgstr "E18: onverwachte tekens in :let"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unidentified character: %.*s"
-msgstr "E121: ongedefinieerde variabele: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Operator is not associative: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing operator: %.*s"
-msgstr "E115: ontbrekend aanhaalteken: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected lambda arguments list or arrow: %.*s"
@@ -6185,17 +5997,15 @@ msgstr ""
 msgid "E15: Expected assignment operator or subscript: %.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E15: Unexpected "
-msgstr "E268: onverwachte volgende"
+msgstr ""
 
 #, c-format
 msgid "E15: Unexpected multiplication-like operator: %.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E15: Environment variable name missing"
-msgstr "omgevingsvariabele"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected value, got comparison operator: %.*s"
@@ -6217,9 +6027,9 @@ msgstr ""
 msgid "E15: Expected value, got closing bracket: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Unable to assign to empty list: %.*s"
-msgstr "E258: verzenden nar client onmogelijk"
+msgstr ""
 
 #, c-format
 msgid "E15: Unexpected closing figure brace: %.*s"
@@ -6237,17 +6047,17 @@ msgstr ""
 msgid "E15: Don't know what figure brace means: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected arrow: %.*s"
-msgstr "E270: onverwachte herstelopdracht"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Arrow outside of lambda: %.*s"
-msgstr "E271: hernieuwde poging buiten de reddingsclausule"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected dot: %.*s"
-msgstr "E270: onverwachte herstelopdracht"
+msgstr ""
 
 #, c-format
 msgid "E15: Cannot concatenate in assignments: %.*s"
@@ -6257,72 +6067,71 @@ msgstr ""
 msgid "E15: Expected value, got parenthesis: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing parenthesis: %.*s"
-msgstr "E107: ontbrekende haakjes: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected value, got question mark: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E114: Missing double quote: %.*s"
-msgstr "E114: ontbrekend aanhaalteken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E115: Missing single quote: %.*s"
-msgstr "E115: ontbrekend aanhaalteken: %s"
+msgstr ""
 
 #, c-format
 msgid "E475: Expected closing bracket to end list assignment lvalue: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Misplaced assignment: %.*s"
-msgstr "E125: ongeldig argument: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected assignment: %.*s"
-msgstr "E18: onverwachte tekens in :let"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected value, got EOC: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E116: Missing closing parenthesis for function call: %.*s"
-msgstr "E116: ongeldige argumenten voor functie %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E110: Missing closing parenthesis for nested expression: %.*s"
-msgstr "E107: ontbrekende haakjes: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E697: Missing end of List ']': %.*s"
-msgstr "E697: einde van List ']' ontbreekt: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E723: Missing end of Dictionary '}': %.*s"
-msgstr "E723: einde van Dictionary '}' ontbreekt: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing closing figure brace: %.*s"
-msgstr "E159: ontbrekend nummer margeteken"
+msgstr ""
 
 #, c-format
 msgid "E15: Missing closing figure brace for lambda: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E109: Missing ':' after '?': %.*s"
-msgstr "E109: ':' ontbreekt na '?'"
+msgstr ""
 
 msgid "E444: Cannot close last window"
 msgstr "E444: sluiten laatste venster is mislukt"
 
-#, fuzzy
 msgid "E1159: Cannot split a window when closing the buffer"
-msgstr "E90: kan laatste buffer niet legen"
+msgstr ""
 
 msgid "Already only one window"
 msgstr "Reeds beperkt tot een venster"
@@ -6418,9 +6227,8 @@ msgstr ""
 msgid "pattern for a macro definition line"
 msgstr ""
 
-#, fuzzy
 msgid "pattern for an include-file line"
-msgstr "Patroon aangetroffen in iedere regel: %s"
+msgstr ""
 
 msgid "expression used to transform an include line to a file name"
 msgstr ""
@@ -6469,9 +6277,8 @@ msgstr ""
 msgid "number of screen lines to show around the cursor"
 msgstr ""
 
-#, fuzzy
 msgid "long lines wrap"
-msgstr "[lange regels gesplitst]"
+msgstr ""
 
 msgid "wrap long lines at a character in 'breakat'"
 msgstr ""
@@ -6654,13 +6461,11 @@ msgstr ""
 msgid "initial height of the help window"
 msgstr ""
 
-#, fuzzy
 msgid "default height for the preview window"
-msgstr "E441: er is geen voorvertoningsvenster"
+msgstr ""
 
-#, fuzzy
 msgid "identifies the preview window"
-msgstr "E441: er is geen voorvertoningsvenster"
+msgstr ""
 
 msgid "custom format for the window bar"
 msgstr ""
@@ -6709,9 +6514,8 @@ msgstr ""
 msgid "maximum number of tab pages to open for -p and \"tab all\""
 msgstr ""
 
-#, fuzzy
 msgid "custom tab pages line"
-msgstr "kan regel niet verkrijgen"
+msgstr ""
 
 msgid "terminal"
 msgstr ""
@@ -6846,9 +6650,8 @@ msgstr ""
 msgid "list of preferred languages for finding help"
 msgstr ""
 
-#, fuzzy
 msgid "selecting text"
-msgstr "Selectie"
+msgstr ""
 
 msgid "\"old\", \"inclusive\" or \"exclusive\"; how selecting text behaves"
 msgstr ""
@@ -7054,9 +6857,8 @@ msgstr ""
 msgid "preserve kind of whitespace when changing indent"
 msgstr ""
 
-#, fuzzy
 msgid "enable lisp mode"
-msgstr "-l\t\t\tLisp-modus"
+msgstr ""
 
 msgid "words that change how lisp indenting works"
 msgstr ""
@@ -7064,9 +6866,8 @@ msgstr ""
 msgid "options for Lisp indenting"
 msgstr ""
 
-#, fuzzy
 msgid "folding"
-msgstr "opnemen"
+msgstr ""
 
 msgid "unset to display all folds open"
 msgstr ""
@@ -7118,20 +6919,17 @@ msgstr ""
 msgid "options for using diff mode"
 msgstr ""
 
-#, fuzzy
 msgid "expression used to obtain a diff file"
-msgstr "tijdens compileren zijn de expressies uitgeschakeld"
+msgstr ""
 
 msgid "list of addresses for anchoring a diff"
 msgstr ""
 
-#, fuzzy
 msgid "expression used to patch a file"
-msgstr "tijdens compileren zijn de expressies uitgeschakeld"
+msgstr ""
 
-#, fuzzy
 msgid "mapping"
-msgstr "Geen toewijzing gevonden"
+msgstr ""
 
 msgid "maximum depth of mapping"
 msgstr ""
@@ -7181,9 +6979,8 @@ msgstr ""
 msgid "list of file formats to look for when editing a file"
 msgstr ""
 
-#, fuzzy
 msgid "writing files is allowed"
-msgstr "-m\t\t\tAanpassingen (bestanden opslaan) niet toegestaan"
+msgstr ""
 
 msgid "write a backup file before overwriting a file"
 msgstr ""
@@ -7221,16 +7018,14 @@ msgstr ""
 msgid "forcibly sync the file to disk after writing it"
 msgstr ""
 
-#, fuzzy
 msgid "the swap file"
-msgstr "Geen wisselbestand"
+msgstr ""
 
 msgid "list of directories for the swap file"
 msgstr ""
 
-#, fuzzy
 msgid "use a swap file for this buffer"
-msgstr "Er is een wisselbestand aangetroffen met de naam \""
+msgstr ""
 
 msgid "number of characters typed to cause a swap file update"
 msgstr ""
@@ -7238,9 +7033,8 @@ msgstr ""
 msgid "time in msec after which the swap file will be updated"
 msgstr ""
 
-#, fuzzy
 msgid "command line editing"
-msgstr "Opdrachtregel"
+msgstr ""
 
 msgid "how many command lines are remembered"
 msgstr ""
@@ -7251,9 +7045,8 @@ msgstr ""
 msgid "like 'wildchar' but can also be used in a mapping"
 msgstr ""
 
-#, fuzzy
 msgid "specifies how command line completion works"
-msgstr " opdrachtregelvoltooiing (^V^N^P)"
+msgstr ""
 
 msgid "empty or \"tagfile\" to list file name of matching tags"
 msgstr ""
@@ -7360,9 +7153,8 @@ msgstr ""
 msgid "language specific"
 msgstr ""
 
-#, fuzzy
 msgid "specifies the characters in a file name"
-msgstr "E18: onverwachte tekens in :let"
+msgstr ""
 
 msgid "specifies the characters in an identifier"
 msgstr ""
@@ -7412,9 +7204,8 @@ msgstr ""
 msgid "entering a search pattern: 1: use :lmap; 2: use IM; 0: neither"
 msgstr ""
 
-#, fuzzy
 msgid "multi-byte characters"
-msgstr "1 teken"
+msgstr ""
 
 msgid "character encoding for the current file"
 msgstr ""
@@ -7490,13 +7281,11 @@ msgstr ""
 msgid "whether to use Python 2 or 3"
 msgstr ""
 
-#, fuzzy
 msgid "live preview of substitution"
-msgstr "1 vervanging"
+msgstr ""
 
-#, fuzzy
 msgid "buffer is busy"
-msgstr "buffer is ongeldig"
+msgstr ""
 
 msgid "characters removed when pasting into terminal window"
 msgstr ""
@@ -7504,9 +7293,8 @@ msgstr ""
 msgid "number of lines kept beyond the visible screen in terminal buffer"
 msgstr ""
 
-#, fuzzy
 msgid "(local to window)"
-msgstr "Reeds beperkt tot een venster"
+msgstr ""
 
 msgid "(local to buffer)"
 msgstr ""
@@ -7550,6 +7338,15 @@ msgstr ""
 #~ "\n"
 #~ "Argumenten:\n"
 
+#~ msgid ""
+#~ "\n"
+#~ "\n"
+#~ "Usage:"
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "Gebruik:"
+
 #, fuzzy
 #~ msgid ""
 #~ "\n"
@@ -7571,6 +7368,20 @@ msgstr ""
 #~ "       i: zoek bestanden #inclusief dit bestand\n"
 #~ "       s: zoek dit C-symbool\n"
 #~ "       t: zoek toekenningen aan\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "    Name        Args Range Complete  Definition"
+#~ msgstr ""
+#~ "\n"
+#~ "    Naam        Args Berk.  Compleet  Definitie"
+
+#~ msgid ""
+#~ "\n"
+#~ "   #   line"
+#~ msgstr ""
+#~ "\n"
+#~ "   #   regel"
 
 #~ msgid ""
 #~ "\n"
@@ -7640,6 +7451,18 @@ msgstr ""
 #~ msgstr ""
 #~ "\n"
 #~ "# globale variabelen:\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "(1) Another program may be editing the same file.  If this is the case,\n"
+#~ "    be careful not to end up with two different instances of the same\n"
+#~ "    file when making changes."
+#~ msgstr ""
+#~ "\n"
+#~ "(1) Mogelijk wordt dit bestand met een ander programma bewerkt.\n"
+#~ "    Als dit het geval is, pas dan op niet met twee verschillende\n"
+#~ "    versies van hetzelfde bestand te eindigen bij het bewerken.\n"
 
 #~ msgid ""
 #~ "\n"
@@ -7769,6 +7592,13 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
+#~ "More info with: \"vim -h\"\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Meer informatie via: \"vim -h\"\n"
+
+#~ msgid ""
+#~ "\n"
 #~ "Normal version "
 #~ msgstr ""
 #~ "\n"
@@ -7817,6 +7647,18 @@ msgstr ""
 #~ "Daar waar hoofdletters genegeerd worden kan met / vlag in hoofdletters "
 #~ "gezet worden"
 
+#~ msgid ""
+#~ "\n"
+#~ "You may want to delete the .swp file now.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Het .swp-bestand kan nu verwijderd worden.\n"
+#~ "\n"
+
+#~ msgid "         [does not look like a Vim swap file]"
+#~ msgstr "         [lijkt geen Vvim-wisselbestand te zijn]"
+
 #~ msgid "    line=%<PRId64>  id=%d  name=%s"
 #~ msgstr "    regel=%<PRId64>  id=%d  naam=%s"
 
@@ -7833,8 +7675,23 @@ msgstr ""
 #~ msgid " (NOT FOUND)"
 #~ msgstr " (NIET GEVONDEN)"
 
+#~ msgid " (still running)"
+#~ msgstr "    (nog actief)"
+
+#~ msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+#~ msgstr " ^X-modus (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+
+#, fuzzy
+#~ msgid " cannot be used with this version of Vim.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "         [onbruikbaar met deze versie van Vim]"
+
 #~ msgid " in Win32s mode"
 #~ msgstr " in Win32s-modus"
+
+#~ msgid " on %<PRId64> lines"
+#~ msgstr " op %<PRId64> regels"
 
 #~ msgid " on 1 line"
 #~ msgstr " op 1 regel"
@@ -7870,14 +7727,53 @@ msgstr ""
 #~ msgid "%<PRId64> fewer lines"
 #~ msgstr "%<PRId64> regels minder"
 
+#~ msgid "%<PRId64> lines %sed %d times"
+#~ msgstr "%<PRId64> regels %sed %d maal"
+
 #~ msgid "%<PRId64> lines %sed 1 time"
 #~ msgstr "%<PRId64> regels %sed 1 maal"
+
+#~ msgid "%<PRId64> lines --%d%%--"
+#~ msgstr "%<PRId64> regels --%d%%--"
+
+#~ msgid "%<PRId64> lines indented "
+#~ msgstr "%<PRId64> regels ingesprongen "
+
+#~ msgid "%<PRId64> lines moved"
+#~ msgstr "%<PRId64> regels verplaatst"
+
+#~ msgid "%<PRId64> lines yanked"
+#~ msgstr "%<PRId64> regels gekopieerd"
+
+#~ msgid "%<PRId64> lines, "
+#~ msgstr "%<PRId64> regels, "
+
+#~ msgid "%<PRId64> matches"
+#~ msgstr "%<PRId64> overeenkomsten"
 
 #~ msgid "%<PRId64> more lines"
 #~ msgstr "%<PRId64> regels meer"
 
+#~ msgid "%<PRId64> seconds ago"
+#~ msgstr "%<PRId64> seconden geleden"
+
+#~ msgid "%<PRId64> substitutions"
+#~ msgstr "%<PRId64> vervangingen"
+
+#~ msgid "%d buffers deleted"
+#~ msgstr "%d buffers verwijderd"
+
+#~ msgid "%d buffers unloaded"
+#~ msgstr "%d buffers gelost"
+
+#~ msgid "%d buffers wiped out"
+#~ msgstr "%d buffers gewist"
+
 #~ msgid "%d files to edit\n"
 #~ msgstr "%d bestanden om te bewerken\n"
+
+#~ msgid "%d more files to edit.  Quit anyway?"
+#~ msgstr "%d bestanden wachten nog op bewerking.  Toch stoppen?"
 
 #~ msgid "%sviminfo: %s in line: "
 #~ msgstr "%sviminfo: %s in regel: "
@@ -7924,14 +7820,33 @@ msgstr ""
 #~ msgid "+\t\t\tStart at end of file"
 #~ msgstr "+\t\t\tAan einde van bestand beginnen"
 
+#~ msgid "+-%s%3ld lines: "
+#~ msgstr "+-%s%3ld regels: "
+
+#~ msgid "+--%3ld lines folded "
+#~ msgstr "+--%3ld regels gevouwen "
+
 #~ msgid "+<lnum>\t\tStart at line <lnum>"
 #~ msgstr "+<lnum>\t\tOp regel <lnum> beginnen"
+
+#~ msgid "-               read text from stdin"
+#~ msgstr "-               lees tekst vanuit stdin"
+
+#~ msgid "--\t\t\tOnly file names after this"
+#~ msgstr "--\t\t\tHierna alleen bestandsnamen"
+
+#~ msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
+#~ msgstr ""
+#~ "--cmd <opdracht>\tOpdracht <opdracht> uitvoeren voor enige vimrc-bestand"
 
 #~ msgid "--literal\t\tDon't expand wildcards"
 #~ msgstr "--literal\t\tJokertekens niet vervangen"
 
 #~ msgid "--noplugin\t\tDon't load plugin scripts"
 #~ msgstr "--noplugin\t\tGeen plugin-scripts laden"
+
+#~ msgid "--version\t\tPrint version information and exit"
+#~ msgstr "--version\t\tVersieinformatie tonen en stoppen"
 
 #~ msgid "-A\t\t\tstart in Arabic mode"
 #~ msgstr "-A\t\t\tIn Arabische modus starten"
@@ -7963,6 +7878,10 @@ msgstr ""
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tAlleen-lezen modus (zoals \"view\")"
 
+#, fuzzy
+#~ msgid "-S <session>\t\tSource file <session> after loading the first file"
+#~ msgstr "-c <opdracht>\t\tOpdracht <opdracht> uitvoeren na eerste bestand"
+
 #~ msgid "-T <terminal>\tSet terminal type to <terminal>"
 #~ msgstr "-T <terminal>\tTerminalsoort op <terminal> instellen"
 
@@ -7975,6 +7894,9 @@ msgstr ""
 
 #~ msgid "-b\t\t\tBinary mode"
 #~ msgstr "-b\t\t\tBinaire modus"
+
+#~ msgid "-c <command>\t\tExecute <command> after loading the first file"
+#~ msgstr "-c <opdracht>\t\tOpdracht <opdracht> uitvoeren na eerste bestand"
 
 #~ msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
 #~ msgstr "-d\t\t\tDiff-modus (zoals \"vimdiff\")"
@@ -8000,6 +7922,21 @@ msgstr ""
 #, fuzzy
 #~ msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
 #~ msgstr "-u <vimrc>\t\tGebruik <vimrc> in plaats van enige .vimrc"
+
+#~ msgid "-l\t\t\tLisp mode"
+#~ msgstr "-l\t\t\tLisp-modus"
+
+#~ msgid "-m\t\t\tModifications (writing files) not allowed"
+#~ msgstr "-m\t\t\tAanpassingen (bestanden opslaan) niet toegestaan"
+
+#~ msgid "-n\t\t\tNo swap file, use memory only"
+#~ msgstr "-n\t\t\tGeen wisselbestand, alleen geheugen gebruiken"
+
+#~ msgid "-o[N]\t\tOpen N windows (default: one for each file)"
+#~ msgstr "-o[N]\t\tN vensters openen (standaard: 1 per bestand)"
+
+#~ msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
+#~ msgstr "-p[N]\t\tN tabpagina's openen (standaard: 1 per bestand)"
 
 #~ msgid "-q [errorfile]  edit file with first error"
 #~ msgstr "-q [foutbestand]  bewerk bestand dat eerste fout bevat"
@@ -8040,6 +7977,9 @@ msgstr ""
 #~ msgid "1 buffer wiped out"
 #~ msgstr "1 buffer gewist"
 
+#~ msgid "1 character"
+#~ msgstr "1 teken"
+
 #~ msgid "1 line %sed %d times"
 #~ msgstr "1 regel %sed %d maal"
 
@@ -8055,17 +7995,29 @@ msgstr ""
 #~ msgid "1 line indented "
 #~ msgstr "1 regel ingesprongen "
 
+#~ msgid "1 line less"
+#~ msgstr "1 regel minder"
+
 #~ msgid "1 line moved"
 #~ msgstr "1 regel verplaatst"
 
 #~ msgid "1 line yanked"
 #~ msgstr "1 regel gekopieerd"
 
+#~ msgid "1 line, "
+#~ msgstr "1 regel, "
+
 #~ msgid "1 match"
 #~ msgstr "1 overeenkomst"
 
 #~ msgid "1 more file to edit.  Quit anyway?"
 #~ msgstr "1 bestand wacht nog op bewerking.  Toch stoppen?"
+
+#~ msgid "1 more line"
+#~ msgstr "1 regel meer"
+
+#~ msgid "1 substitution"
+#~ msgstr "1 vervanging"
 
 #~ msgid "<buffer object (deleted) at %p>"
 #~ msgstr "<buffer-object (verwijderd) bij %p>"
@@ -8097,6 +8049,9 @@ msgstr ""
 #~ msgid "At line"
 #~ msgstr "Bij regel"
 
+#~ msgid "Attempt to open script file again: \""
+#~ msgstr "Poging scriptbestand wederom te openen: \""
+
 #~ msgid "Become a registered Vim user!"
 #~ msgstr "Word een geregistreerde Vim-gebruiker!"
 
@@ -8116,14 +8071,27 @@ msgstr ""
 #~ msgid "Cannot create "
 #~ msgstr "Gefaald tijdens aanmaken van "
 
+#~ msgid "Cannot open for reading: \""
+#~ msgstr "Openen om te lezen is mislukt: \""
+
+#~ msgid "Close"
+#~ msgstr "Sluiten"
+
 #~ msgid "Close tab"
 #~ msgstr "Tabblad sluiten"
+
+#~ msgid "Command Line"
+#~ msgstr "Opdrachtregel"
 
 #~ msgid "Compilation: "
 #~ msgstr "Compilatie: "
 
 #~ msgid "Compiler: "
 #~ msgstr "Compiler: "
+
+#, fuzzy
+#~ msgid "Could not open temporary log file for writing "
+#~ msgstr "E214: kan tijdelijk bestand voor wegschrijven niet vinden"
 
 #~ msgid "Cscope tag: %s"
 #~ msgstr "Cscope-tag: %s"
@@ -8137,23 +8105,56 @@ msgstr ""
 #~ msgid "Directory\t*.nothing\n"
 #~ msgstr "Map\t*.niets\n"
 
+#~ msgid "Double ; in list of variables"
+#~ msgstr "Dubbele ; in variabelenlijst"
+
 #~ msgid "Down"
 #~ msgstr "Neerwaarts"
+
+#~ msgid "E121: Undefined variable: %s"
+#~ msgstr "E121: ongedefinieerde variabele: %s"
+
+#~ msgid "E134: Move lines into themselves"
+#~ msgstr "E134: verplaats regels in zichzelf"
 
 #~ msgid "E136: viminfo: Too many errors, skipping rest of file"
 #~ msgstr "E136: viminfo: teveel fouten, restand van bestand overgeslagen"
 
+#~ msgid "E137: Viminfo file is not writable: %s"
+#~ msgstr "E137: viminfo-bestand is niet schrijfbaar: %s"
+
 #~ msgid "E138: Can't write viminfo file %s!"
 #~ msgstr "E138: kan niet naar viminfo-bestand %s schrijven!"
 
+#~ msgid "E144: non-numeric argument to :z"
+#~ msgstr "E144: niet-numeriek argument voor :z"
+
+#~ msgid "E147: Cannot do :global recursive"
+#~ msgstr "E147: kan :global niet recursief uitvoeren"
+
 #~ msgid "E14: Invalid address"
 #~ msgstr "E14: ongeldig adres"
+
+#~ msgid "E157: Invalid sign ID: %<PRId64>"
+#~ msgstr "E157: ongeldige id margeteken: %<PRId64>"
+
+#~ msgid "E15: Invalid expression: %s"
+#~ msgstr "E15: ongeldige expressie: %s"
 
 #~ msgid "E172: Only one file name allowed"
 #~ msgstr "E172: slechts een bestandsnaam toegestaan"
 
 #~ msgid "E173: %<PRId64> more files to edit"
 #~ msgstr "E173: %<PRId64> bestanden wachten op bewerking"
+
+#~ msgid "E173: 1 more file to edit"
+#~ msgstr "E173: 1 bestand wacht op bewerking"
+
+#~ msgid "E174: Command already exists: add ! to replace it"
+#~ msgstr "E174: opdracht bestaat al: voeg ! toe om het te vervangen"
+
+#~ msgid "E179: argument required for -complete"
+#~ msgstr "E179: argument vereist voor -complete"
 
 #~ msgid "E188: Obtaining window position not implemented for this platform"
 #~ msgstr ""
@@ -8172,11 +8173,41 @@ msgstr ""
 #~ msgid "E198: cmd_pchar beyond the command length"
 #~ msgstr "E198: cmd_pchar is langer dan toegestaan voor een opdracht"
 
+#~ msgid "E199: Active window or buffer deleted"
+#~ msgstr "E199: actieve venster of buffer verwijderd"
+
+#~ msgid "E206: patchmode: can't touch empty original file"
+#~ msgstr "E206: patch-modus: kan oorspronkelijk leeg bestand niet aanraken"
+
 #~ msgid "E208: Error writing to \"%s\""
 #~ msgstr "E208: schrijven naar \"%s\" is mislukt"
 
+#~ msgid "E209: Error closing \"%s\""
+#~ msgstr "E209: afsluiten van \"%s\" is mislukt"
+
 #~ msgid "E210: Error reading \"%s\""
 #~ msgstr "E210: lezen van \"%s\" is mislukt"
+
+#~ msgid "E212: Can't open file for writing"
+#~ msgstr "E212: kan niet schrijven naar bestand"
+
+#~ msgid "E218: autocommand nesting too deep"
+#~ msgstr "E218: hierarchie van aanroepen autocommands te diep"
+
+#~ msgid "E223: recursive mapping"
+#~ msgstr "E223: recursieve toewijzing"
+
+#~ msgid "E224: global abbreviation already exists for %s"
+#~ msgstr "E224: algemene afkorting bestaat al voor %s"
+
+#~ msgid "E225: global mapping already exists for %s"
+#~ msgstr "E225: er bestaat al een algemene toewijzing voor %s"
+
+#~ msgid "E226: abbreviation already exists for %s"
+#~ msgstr "E226: er bestaat al een afkorting voor %s"
+
+#~ msgid "E227: mapping already exists for %s"
+#~ msgstr "E227: toewijzing bestaat al voor %s"
 
 #~ msgid "E229: Cannot start the GUI"
 #~ msgstr "E229: de GUI kan niet worden gestart"
@@ -8219,11 +8250,17 @@ msgstr ""
 #~ msgid "E253: Fontset name: %s\n"
 #~ msgstr "E253: naam lettertypeverzameling: %s\n"
 
+#~ msgid "E254: Cannot allocate color %s"
+#~ msgstr "E254: kan de kleur %s niet reserveren"
+
 #~ msgid "E256: Hangul automata ERROR"
 #~ msgstr "E256: 'Hangul automata'-fout"
 
 #~ msgid "E257: cstag: tag not found"
 #~ msgstr "E257: cstag: tag is gevonden"
+
+#~ msgid "E258: Unable to send to client"
+#~ msgstr "E258: verzenden nar client onmogelijk"
 
 #~ msgid "E259: no matches found for cscope query %s of %s"
 #~ msgstr "E259: cscope-zoekopdracht %s van %s leverde geen resultaten"
@@ -8257,8 +8294,17 @@ msgstr ""
 #~ msgid "E267: unexpected return"
 #~ msgstr "E267: onverwacht resultaat"
 
+#~ msgid "E268: unexpected next"
+#~ msgstr "E268: onverwachte volgende"
+
 #~ msgid "E269: unexpected break"
 #~ msgstr "E269: onverwachte onderbreking"
+
+#~ msgid "E270: unexpected redo"
+#~ msgstr "E270: onverwachte herstelopdracht"
+
+#~ msgid "E271: retry outside of rescue clause"
+#~ msgstr "E271: hernieuwde poging buiten de reddingsclausule"
 
 #~ msgid "E272: unhandled exception"
 #~ msgstr "E272: niet-afgehandelde uitzondering"
@@ -8268,6 +8314,9 @@ msgstr ""
 
 #~ msgid "E274: Sniff: Error during read. Disconnected"
 #~ msgstr "E274: Sniff: leesfout. Verbroken"
+
+#~ msgid "E275: Unknown SNiFF+ request: %s"
+#~ msgstr "E275: onbekend SNiFF+-verzoek: %s"
 
 #~ msgid "E276: Error connecting to SNiFF+"
 #~ msgstr "E276: verbinden met SNiFF+ is mislukt"
@@ -8295,11 +8344,43 @@ msgstr ""
 #~ "E281: Tcl-fout: afsluitcode is geen geheel getal!? Meld dit a.u.b. aan "
 #~ "vim-dev@vim.org"
 
+#, fuzzy, c-format
+#~ msgid "E307: %s does not look like a Vim swap file"
+#~ msgstr "         [lijkt geen Vvim-wisselbestand te zijn]"
+
+#, fuzzy, c-format
+#~ msgid "E315: ml_get: invalid lnum: %<PRId64>"
+#~ msgstr "E157: ongeldige id margeteken: %<PRId64>"
+
+#, fuzzy, c-format
+#~ msgid "E316: ml_get: cannot find line %<PRId64>"
+#~ msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+
+#, fuzzy, c-format
+#~ msgid "E322: line number out of range: %<PRId64> past the end"
+#~ msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+
+#, fuzzy, c-format
+#~ msgid "E323: line count wrong in block %<PRId64>"
+#~ msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+
+#~ msgid "E363: pattern uses more memory than 'maxmempattern'"
+#~ msgstr "E363: patroon gebruikt meer geheugen dan 'maxmempattern'"
+
 #~ msgid "E370: Could not load library %s"
 #~ msgstr "E370: laden van bibliotheek %s is mislukt"
 
 #~ msgid "E371: Command not found"
 #~ msgstr "E371: opdracht niet gevonden"
+
+#~ msgid "E384: search hit TOP without match for: %s"
+#~ msgstr "E384: TOP bereikt zonder overeenkomst voor: %s"
+
+#~ msgid "E385: search hit BOTTOM without match for: %s"
+#~ msgstr "E385: BODEM bereikt zonder overeenkomst voor: %s"
+
+#~ msgid "E426: tag not found: %s"
+#~ msgstr "E426: tag niet gevonden: %s"
 
 #~ msgid "E449: Invalid expression received"
 #~ msgstr "E449: ontvangen expressie is ongeldig"
@@ -8312,11 +8393,36 @@ msgstr ""
 #~ msgid "E463: Region is guarded, cannot modify"
 #~ msgstr "E463: Regio is bescherm en kan niet worden veranderd"
 
+#~ msgid "E466: :winpos requires two number arguments"
+#~ msgstr "E466: :winpos vereist twee getallen als argument"
+
 #~ msgid "E469: invalid cscopequickfix flag %c for %c"
 #~ msgstr "E469: cscopequickfix-vlag %c voor %c is ongeldig"
 
+#~ msgid "E46: Cannot change read-only variable \"%s\""
+#~ msgstr "E46: kan alleen-lezenvariabele \"%s\" niet veranderen"
+
+#~ msgid "E473: Internal error"
+#~ msgstr "E473: interne fout"
+
 #~ msgid "E478: Don't panic!"
 #~ msgstr "E478: geen paniek!"
+
+#~ msgid "E495: no autocommand file name to substitute for \"<afile>\""
+#~ msgstr ""
+#~ "E495: er is geen 'autocommand'-bestandsnaam om \"<afile>\" te vervangen"
+
+#~ msgid "E496: no autocommand buffer number to substitute for \"<abuf>\""
+#~ msgstr ""
+#~ "E496: er is geen 'autocommand'-buffernummer om \"<abuf>\" te vervangen"
+
+#~ msgid "E497: no autocommand match name to substitute for \"<amatch>\""
+#~ msgstr ""
+#~ "E497: er is geen 'autocommand'-naamovereenkomst om \"<amatch>\" te "
+#~ "vervangen"
+
+#~ msgid "E498: no :source file name to substitute for \"<sfile>\""
+#~ msgstr "E498: er is geen :source-bestandsnaam om \"<sfile>\" te vervangen"
 
 #~ msgid "E506: Can't write to backup file (add ! to override)"
 #~ msgstr "E506: kan niet naar back-upbestand schrijven (voeg hiervoor ! toe)"
@@ -8330,6 +8436,14 @@ msgstr ""
 #~ msgstr ""
 #~ "E508: kan bestand voor back-up niet lezen (voeg ! toe om toch te lezen)"
 
+#~ msgid "E512: Close failed"
+#~ msgstr "E512: Afsluiten is mislukt"
+
+#~ msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
+#~ msgstr ""
+#~ "E513: schrijffout waarbij omzetting is mislukt (leeg 'fenc' om te "
+#~ "overschrijven)"
+
 #~ msgid ""
 #~ "E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty "
 #~ "to override)"
@@ -8337,11 +8451,20 @@ msgstr ""
 #~ "E513: schrijffout waarbij omzetting in regel %<PRId64> is mislukt (leeg "
 #~ "'fenc' om te overschrijven)"
 
+#~ msgid "E514: write error (file system full?)"
+#~ msgstr "E514: schrijffout (is bestandssysteem vol?)"
+
+#~ msgid "E536: comma required"
+#~ msgstr "E536: komma is vereist"
+
 #~ msgid "E538: No mouse support"
 #~ msgstr "E538: geen muisondersteuning"
 
 #~ msgid "E541: too many items"
 #~ msgstr "E541: teveel items"
+
+#~ msgid "E542: unbalanced groups"
+#~ msgstr "E542: ongepaarde groepen"
 
 #~ msgid "E560: Usage: cs[cope] %s"
 #~ msgstr "E560: Gebruik: cs[cope] %s"
@@ -8386,8 +8509,14 @@ msgstr ""
 #~ msgid "E573: Invalid server id used: %s"
 #~ msgstr "E573: ongeldige server-id gebruikt: %s"
 
+#~ msgid "E583: multiple :else"
+#~ msgstr "E583: meerdere :else"
+
 #~ msgid "E599: Value of 'imactivatekey' is invalid"
 #~ msgstr "E599: waarde van 'imactivatekey' is ongeldig"
+
+#~ msgid "E607: multiple :finally"
+#~ msgstr "E607: meerdere :finally"
 
 #~ msgid "E609: Cscope error: %s"
 #~ msgstr "E609: Cscope-fout: %s"
@@ -8413,34 +8542,109 @@ msgstr ""
 #~ msgid "E622: Could not fork for cscope"
 #~ msgstr "E622: nieuw cscope-proces beginnen is mislukt"
 
+#~ msgid "E623: Could not spawn cscope process"
+#~ msgstr "E623: voortbrengen cscope-proces is mislukt"
+
 #~ msgid "E625: cannot open cscope database: %s"
 #~ msgstr "E625: openen is mislukt van cscope-databank: %s"
 
 #~ msgid "E626: cannot get cscope database information"
 #~ msgstr "E626: opvragen cscope-databankinformatie is mislukt"
 
+#~ msgid "E63: invalid use of \\_"
+#~ msgstr "E63: onjuist gebruikt van \\_"
+
+#~ msgid "E659: Cannot invoke Python recursively"
+#~ msgstr "E659: Python kan niet recursief worden aangeroepen"
+
+#~ msgid "E664: changelist is empty"
+#~ msgstr "E664: wijzigingslijst is leeg"
+
 #~ msgid "E665: Cannot start GUI, no valid font found"
 #~ msgstr ""
 #~ "E665: de GUI kan niet gestart worden, er is geen geldig lettertype "
 #~ "gevonden"
 
+#~ msgid "E666: compiler not supported: %s"
+#~ msgstr "E666: compiler niet ondersteund: %s"
+
+#~ msgid "E667: Fsync failed"
+#~ msgstr "E667: fsync is mislukt"
+
 #~ msgid "E670: Mix of help file encodings within a language: %s"
 #~ msgstr "E670: mengelmoes van hulpbestandcoderingen binnen een taal: %s"
+
+#~ msgid "E671: Cannot find window title \"%s\""
+#~ msgstr "E671: kan venstertitel \"%s\" niet vinden"
 
 #~ msgid "E672: Unable to open window inside MDI application"
 #~ msgstr "E672: kan geen venster binnen MDI-applicatie openen"
 
+#~ msgid "E676: No matching autocommands for acwrite buffer"
+#~ msgstr "E676: geen overeenkomende autocommands voor 'acwrite'-buffer"
+
+#~ msgid "E677: Error writing temp file"
+#~ msgstr "E677: opslaan van temp-bestand is mislukt"
+
+#~ msgid "E67: \\z1 et al. not allowed here"
+#~ msgstr "E67: \\z1 en andere hier niet toegestaan"
+
+#~ msgid "E684: list index out of range: %<PRId64>"
+#~ msgstr "E684: lijstindex buiten bereik: %<PRId64>"
+
+#~ msgid "E689: Can only index a List or Dictionary"
+#~ msgstr "E689: alleen een List of Dictionary kan geÃ¯ndexeerd worden"
+
+#~ msgid "E692: Invalid operation for Lists"
+#~ msgstr "E692: ongeldige bewerking voor Listen"
+
 #~ msgid "E693: Can only compare Funcref with Funcref"
 #~ msgstr "E693: Funcref kan alleen met Funcref worden vergeleken"
 
+#~ msgid "E698: variable nested too deep for making a copy"
+#~ msgstr "E698: variabele te diep genest om een kopie te maken"
+
+#~ msgid "E703: Using a Funcref as a Number"
+#~ msgstr "E703: een Funcref wordt als Number gebruikt"
+
 #~ msgid "E706: Variable type mismatch for: %s"
 #~ msgstr "E706: variabelesoort past niet bij: %s"
+
+#~ msgid "E709: [:] requires a List value"
+#~ msgstr "E709: [:] vereist een Listwaarde"
+
+#~ msgid "E713: Cannot use empty key for Dictionary"
+#~ msgstr "E713: kan geen leeg trefwoord als Dictionary gebruiken"
+
+#~ msgid "E716: Key not present in Dictionary: %s"
+#~ msgstr "E716: trefwoord niet aangetroffen in Dictionary: %s"
+
+#~ msgid "E719: Cannot use [:] with a Dictionary"
+#~ msgstr "E719: kan [:] niet met een Dictionary gebruiken"
 
 #~ msgid "E724: variable nested too deep for displaying"
 #~ msgstr "E724: variabele is te diep genest om te tonen"
 
 #~ msgid "E729: using Funcref as a String"
 #~ msgstr "E729: Funcref gebruiken als een String"
+
+#~ msgid "E730: using List as a String"
+#~ msgstr "E730: List gebruiken als een String"
+
+#~ msgid "E731: using Dictionary as a String"
+#~ msgstr "E731: Dictionary gebruiken als een String"
+
+#~ msgid "E739: Cannot create directory: %s"
+#~ msgstr "E739: kan map %s niet aanmaken"
+
+#~ msgid "E741: Value is locked: %s"
+#~ msgstr "E741: waarde is geblokkeerd: %s"
+
+#~ msgid "E742: Cannot change value of %s"
+#~ msgstr "E742: kan waarde van %s niet veranderen"
+
+#~ msgid "E743: variable nested too deep for (un)lock"
+#~ msgstr "E743: variabele is te diep genest om te beveiligen"
 
 #~ msgid "E744: NetBeans does not allow changes in read-only files"
 #~ msgstr ""
@@ -8451,6 +8655,18 @@ msgstr ""
 #~ msgstr ""
 #~ "E747: kan niet van map veranderen, buffer is gewijzigd (voeg ! toe om te "
 #~ "forceren)"
+
+#~ msgid "E749: empty buffer"
+#~ msgstr "E749: leeg buffer"
+
+#~ msgid "E794: Cannot set variable in the sandbox: \"%s\""
+#~ msgstr "E794: kan variabele niet instellen in de zandbak: \"%s\""
+
+#~ msgid "E795: Cannot delete variable %s"
+#~ msgstr "E795: kan variabele %s niet verwijderen"
+
+#~ msgid "E806: using Float as a String"
+#~ msgstr "E806: Float gebruiken als een String"
 
 #~ msgid "E809: #< is not available without the +eval feature"
 #~ msgstr "E809: #< is zonder de +eval-functionaliteit niet beschikbaar"
@@ -8483,6 +8699,30 @@ msgstr ""
 #, fuzzy
 #~ msgid "E839: Completion function changed window"
 #~ msgstr "E813: sluiten autocmd-venster is mislukt"
+
+#, fuzzy
+#~ msgid "E842: no line number to use for \"<slnum>\""
+#~ msgstr "E498: er is geen :source-bestandsnaam om \"<sfile>\" te vervangen"
+
+#, fuzzy
+#~ msgid "E844: invalid cchar value"
+#~ msgstr "E474: ongeldig argument"
+
+#~ msgid ""
+#~ "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+#~ msgstr ""
+#~ "E89: niets opgeslagen sinds laatste wijziging van buffer %<PRId64> "
+#~ "(voeg ! toe om te forceren)"
+
+#, fuzzy
+#~ msgid "E900: Invalid job id"
+#~ msgstr "E49: ongeldige scroll-grootte"
+
+#~ msgid "E92: Buffer %<PRId64> not found"
+#~ msgstr "E92: buffer %<PRId64> niet gevonden"
+
+#~ msgid "E96: Can not diff more than %<PRId64> buffers"
+#~ msgstr "E96: kan niet meer dan %<PRId64> buffers vergelijken"
 
 #~ msgid "Edit File"
 #~ msgstr "Bestand bewerken"
@@ -8609,6 +8849,9 @@ msgstr ""
 #~ msgid "No match at cursor, finding next"
 #~ msgstr "Op cursorpositie is geen overeenkomst: de volgende zoeken"
 
+#~ msgid "No matching autocommands"
+#~ msgstr "Geen overeenkomstige autocommands"
+
 #~ msgid "Not Used"
 #~ msgstr "Niet gebruikt"
 
@@ -8630,11 +8873,20 @@ msgstr ""
 #~ msgid "Partial writes disallowed for NetBeans buffers"
 #~ msgstr "Deelopslag voor buffers van Netbeans niet toegestaan"
 
+#~ msgid "Patch file"
+#~ msgstr "Patch-bestand"
+
 #~ msgid "Pathname:"
 #~ msgstr "Padnaam:"
 
 #~ msgid "Query for a pattern"
 #~ msgstr "Naar een patroon zoeken"
+
+#~ msgid "Reading from stdin..."
+#~ msgstr "Lezen van standaardinvoer..."
+
+#~ msgid "Reading viminfo file \"%s\"%s%s%s"
+#~ msgstr "Inlezen viminfo-bestand \"%s\"%s%s%s"
 
 #~ msgid "Reinit all connections"
 #~ msgstr "Alle verbindingen opnieuw initialiseren"
@@ -8691,6 +8943,9 @@ msgstr ""
 
 #~ msgid "Search String"
 #~ msgstr "Zoekstring"
+
+#~ msgid "Selection"
+#~ msgstr "Selectie"
 
 #~ msgid "Show base class of"
 #~ msgstr "Toon basisklasse van"
@@ -8753,6 +9008,9 @@ msgstr ""
 #~ msgid "Toggle implementation/definition"
 #~ msgstr "Implementatie/definitie wisselen"
 
+#~ msgid "Type  :quit<Enter>  to exit Nvim"
+#~ msgstr "Typ :quit<Enter> om Vim te verlaten"
+
 #, fuzzy
 #~ msgid "Unable to get option value"
 #~ msgstr "Rommel na optieargument"
@@ -8803,6 +9061,9 @@ msgstr ""
 #~ msgid "Vim exiting with %d\n"
 #~ msgstr "Vim stoppen met %d\n"
 
+#~ msgid "Vim is open source and freely distributable"
+#~ msgstr "Vim is open-source en vrij verspreidbaar"
+
 #~ msgid "Vim: Caught deadly signal\n"
 #~ msgstr "Vim: fataal signaal gevangen\n"
 
@@ -8811,6 +9072,9 @@ msgstr ""
 
 #~ msgid "Vim: Double signal, exiting\n"
 #~ msgstr "Vim: dubbel signaal, stoppen\n"
+
+#~ msgid "Vim: Error reading input, exiting...\n"
+#~ msgstr "Vim: lezen van de invoer is mislukt. Stoppen...\n"
 
 #~ msgid "Vim: Error: Failure to start gvim from NetBeans\n"
 #~ msgstr "Vim: Fout: gvim starten vanuit Netbeans is mislukt\n"
@@ -8835,6 +9099,9 @@ msgstr ""
 
 #~ msgid "Window position: X %d, Y %d"
 #~ msgstr "Vensterpositie: X %d, Y %d"
+
+#~ msgid "Writing viminfo file \"%s\""
+#~ msgstr "viminfo-bestand \"%s\" opslaan"
 
 #~ msgid "Xref has a"
 #~ msgstr "Xref heeft een"
@@ -8887,8 +9154,14 @@ msgstr ""
 #~ msgid "attempt to refer to deleted window"
 #~ msgstr "poging om naar een verwijderd venster te verwijzen"
 
+#~ msgid "block of %<PRId64> lines yanked"
+#~ msgstr "blok van %<PRId64> regels gekopieerd"
+
 #~ msgid "block of 1 line yanked"
 #~ msgstr "blok van 1 regel gekopieerd"
+
+#~ msgid "buffer is invalid"
+#~ msgstr "buffer is ongeldig"
 
 #~ msgid "by "
 #~ msgstr "door "
@@ -8905,6 +9178,9 @@ msgstr ""
 
 #~ msgid "cannot delete line"
 #~ msgstr "regel kan niet worden verwijderd"
+
+#~ msgid "cannot get line"
+#~ msgstr "kan regel niet verkrijgen"
 
 #~ msgid "cannot insert line"
 #~ msgstr "regel kan niet worden ingevoegd"
@@ -8938,6 +9214,9 @@ msgstr ""
 #~ msgid "close"
 #~ msgstr "sluiten"
 
+#~ msgid "connected"
+#~ msgstr "verbonden"
+
 #~ msgid "couldn't open buffer"
 #~ msgstr "buffer openen is mislukt"
 
@@ -8962,6 +9241,9 @@ msgstr ""
 
 #~ msgid "cursor position outside buffer"
 #~ msgstr "cursorpositie valt buiten buffer"
+
+#~ msgid "expressions disabled at compile time"
+#~ msgstr "tijdens compileren zijn de expressies uitgeschakeld"
 
 #~ msgid "filename / context / line\n"
 #~ msgstr "bestandsnaam / context / regel\n"
@@ -8989,6 +9271,12 @@ msgstr ""
 
 #~ msgid "keyboard interrupt"
 #~ msgstr "toetsenbord-interrupt"
+
+#~ msgid "line %4ld:"
+#~ msgstr "regel %4ld:"
+
+#~ msgid "line number out of range"
+#~ msgstr "regelnummer valt buiten het bereik"
 
 #~ msgid "linenr out of range"
 #~ msgstr "regelnummer buiten het bereik"
@@ -9026,6 +9314,9 @@ msgstr ""
 #~ msgid "not allowed in the Vim sandbox"
 #~ msgstr "niet toegestaan in de Vim-zandbak"
 
+#~ msgid "not found in 'runtimepath': \"%s\""
+#~ msgstr "niet gevonden in 'runtimepath': \"%s\""
+
 #~ msgid "not implemented yet"
 #~ msgstr "nog niet geïmplementeerd"
 
@@ -9050,8 +9341,14 @@ msgstr ""
 #~ msgid "type  :help cp-default<Enter> for info on this"
 #~ msgstr "typ :help cp-default<Enter> voor informatie hierover"
 
+#~ msgid "type  :help iccf<Enter>       for information "
+#~ msgstr "typ :help iccf<Enter> voor informatie"
+
 #~ msgid "type  :help register<Enter>   for information "
 #~ msgstr "typ   :help register<Enter>   voor informatie "
+
+#~ msgid "type  :help sponsor<Enter>    for information "
+#~ msgstr "typ   :help sponsor<Enter>    voor informatie "
 
 #~ msgid "type  :help version7<Enter>   for version info"
 #~ msgstr "typ :help version7<Enter> voor versieinformatie"
@@ -9061,6 +9358,10 @@ msgstr ""
 
 #~ msgid "type  :help<Enter>  or  <F1>  for on-line help"
 #~ msgstr "typ :help<Enter> of <F1> voor on-line hulp"
+
+#, fuzzy
+#~ msgid "type  :q<Enter>               to exit         "
+#~ msgstr "typ :q<Enter> om te stoppen"
 
 #, fuzzy
 #~ msgid "type  :set nocp<Enter>        for Vim defaults"

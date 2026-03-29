@@ -60,9 +60,9 @@ msgstr ""
 "\n"
 "--- Autokommandon ---"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E680: <buffer=%d>: invalid buffer number "
-msgstr "E680: <buffer=%d>: ogiltigt buffertnummer"
+msgstr ""
 
 msgid "E217: Can't execute autocommands for ALL events"
 msgstr "E217: Kan inte köra autokommandon för ALLA händelser"
@@ -147,9 +147,9 @@ msgstr "E87: Kan inte gå bortom sista buffert"
 msgid "E88: Cannot go before first buffer"
 msgstr "E88: Kan inte gå före första buffert"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: %s will be killed (add ! to override)"
-msgstr "E189: \"%s\" existerar (lägg till ! för att tvinga)"
+msgstr ""
 
 msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Varning: Lista över filnamn flödar över"
@@ -162,9 +162,9 @@ msgstr "E93: Fler än en träff för %s"
 msgid "E94: No matching buffer for %s"
 msgstr "E94: Ingen matchande buffert för %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64>"
-msgstr "rad %ld"
+msgstr ""
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Buffer med det här namnet existerar redan"
@@ -187,15 +187,15 @@ msgstr "[SS]"
 msgid "[readonly]"
 msgstr "[skrivskyddad]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line --%d%%--"
 msgid_plural "%<PRId64> lines --%d%%--"
-msgstr[0] "%ld rad --%d%%--"
-msgstr[1] "%ld rader --%d%%--"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
-msgstr "rad %ld av %ld --%d%%-- kol "
+msgstr ""
 
 msgid "All"
 msgstr "Alla"
@@ -252,11 +252,8 @@ msgid "E513: Write error, conversion failed (make 'fenc' empty to override)"
 msgstr ""
 "E513: skrivfel, konvertering misslyckades (gör 'fenc' tom för att tvinga)"
 
-#, fuzzy
 msgid "E513: Write error, conversion failed in line %"
 msgstr ""
-"E513: Skrivfel, konvertering misslyckades i rad %ld (gör 'fenc' tom för att "
-"åsidosätta)"
 
 # TODO: Capitalise first word of message?
 msgid "E514: Write error (file system full?)"
@@ -287,16 +284,15 @@ msgstr "är inte en fil eller skrivbar enhet"
 msgid "is read-only (add ! to override)"
 msgstr "är skrivskyddad (lägg till ! för att tvinga)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E303: Unable to create directory \"%s\" for backup file: %s"
-msgstr "E303: Kunde inte öppna växlingsfil för \"%s\", återskapning omöjlig"
+msgstr ""
 
 msgid "E509: Cannot create backup file (add ! to override)"
 msgstr "E509: Kan inte skapa säkerhetskopia (lägg till ! för att tvinga)"
 
-#, fuzzy
 msgid "E510: Can't make backup file (add ! to override)"
-msgstr "E509: Kan inte skapa säkerhetskopia (lägg till ! för att tvinga)"
+msgstr ""
 
 msgid "E214: Can't find temp file for writing"
 msgstr "E214: Kan inte hitta temporär fil för skrivning"
@@ -308,20 +304,20 @@ msgstr ""
 msgid "E166: Can't open linked file for writing"
 msgstr "E166: Kan inte öppna länkad fil för skrivning"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E212: Can't open file for writing: %s"
-msgstr "E212: Kan inte öppna fil för skrivning"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E512: Close failed: %s"
-msgstr "E512: Stängning misslyckades"
+msgstr ""
 
 msgid " CONVERSION ERROR"
 msgstr " KONVERTERINGSFEL"
 
-#, fuzzy, c-format
+#, c-format
 msgid " in line %<PRId64>;"
-msgstr " på rad %ld;"
+msgstr ""
 
 #, c-format
 msgid "[NOT converted]"
@@ -372,9 +368,8 @@ msgstr "W10: Varning: Ändrar en skrivskyddad fil"
 msgid "can only be opened in headless mode"
 msgstr ""
 
-#, fuzzy
 msgid "channel was already open"
-msgstr "Filen skapades på "
+msgstr ""
 
 msgid "Can't send data to closed stream"
 msgstr ""
@@ -415,9 +410,9 @@ msgstr "Oldval = \"%s\""
 msgid "Newval = \"%s\""
 msgstr "Newval = \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64>: %s"
-msgstr "rad %ld: %s"
+msgstr ""
 
 #, c-format
 msgid "cmd: %s"
@@ -430,9 +425,9 @@ msgstr "ram är noll"
 msgid "frame at highest level: %d"
 msgstr "ram vid högsta nivån: %d"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Breakpoint in \"%s%s\" line %<PRId64>"
-msgstr "Brytpunkt i \"%s%s\" rad %ld"
+msgstr ""
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -441,9 +436,9 @@ msgstr "E161: Brytpunkt hittades inte: %s"
 msgid "No breakpoints defined"
 msgstr "Inga brytpunkter definierade"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%3d  %s %s  line %<PRId64>"
-msgstr "%3d  %s %s  rad %ld"
+msgstr ""
 
 #, c-format
 msgid "%3d  expr %s"
@@ -605,9 +600,8 @@ msgstr " OMVÄND"
 msgid " INSERT"
 msgstr " INFOGA"
 
-#, fuzzy
 msgid " (terminal)"
-msgstr "terminal"
+msgstr ""
 
 msgid " (insert)"
 msgstr " (infoga)"
@@ -648,13 +642,11 @@ msgstr "spelar in"
 msgid "E470: Command aborted"
 msgstr "E470: Kommando avbrutet"
 
-#, fuzzy
 msgid "E905: Cannot set this option after startup"
-msgstr "E1040: Kan inte använda :scriptversion efter :vim9script"
+msgstr ""
 
-#, fuzzy
 msgid "E903: Could not spawn API job"
-msgstr "E623: Kunde inte starta cscope-process"
+msgstr ""
 
 msgid "E471: Argument required"
 msgstr "E471: Argument krävs"
@@ -662,15 +654,11 @@ msgstr "E471: Argument krävs"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: \\ borde följas av /, ? eller &"
 
-#, fuzzy
 msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr "E11: Ogiltigt i kommandoradsfönstret; :q<CR> stänger fönstret"
+msgstr ""
 
-#, fuzzy
 msgid "E12: Command not allowed in secure mode in current dir or tag search"
 msgstr ""
-"E12: Kommando inte tillåtet från exrc/vimrc i aktuell katalog eller "
-"taggsökning"
 
 #, c-format
 msgid "E158: Invalid buffer name: %s"
@@ -739,9 +727,8 @@ msgstr "E15: Ogiltigt uttryck: \"%s\""
 msgid "E16: Invalid range"
 msgstr "E16: Ogiltigt område"
 
-#, fuzzy
 msgid "E473: Internal error in regexp"
-msgstr "E685: Internt fel: %s"
+msgstr ""
 
 msgid "E476: Invalid command"
 msgstr "E476: Ogiltigt kommando"
@@ -753,34 +740,28 @@ msgstr "E17: \"%s\" är en katalog"
 msgid "E756: Spell checking is not possible"
 msgstr "E756: Stavningskontroll är inte möjlig"
 
-#, fuzzy
 msgid "E900: Invalid channel id"
-msgstr "E476: Ogiltigt kommando"
+msgstr ""
 
-#, fuzzy
 msgid "E900: Invalid channel id: not a job"
-msgstr "E1080: Ogiltig tilldelning"
+msgstr ""
 
 msgid "E901: Job table is full"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E903: Process failed to start: %s: \"%s\""
 msgstr ""
-"E852: Den underordnade processen kunde inte starta grafiska gränssnittet"
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E904: channel is not a pty"
-msgstr "E664: ändringslista är tom"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E905: Couldn't open stdio channel: %s"
-msgstr "E906: Inte en öppen kanal"
+msgstr ""
 
-#, fuzzy
 msgid "E906: invalid stream for channel"
-msgstr "E701: Ogiltig typ för len()"
+msgstr ""
 
 msgid "E906: invalid stream for rpc channel, use 'rpc'"
 msgstr ""
@@ -794,13 +775,13 @@ msgstr ""
 msgid "E364: Library call failed for \"%s()\""
 msgstr "E364: Biblioteksanrop misslyckades för \"%s()\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E667: Fsync failed: %s"
-msgstr "E667: Fsync misslyckades"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E739: Cannot create directory %s: %s"
-msgstr "E739: Kan inte skapa katalog: %s"
+msgstr ""
 
 msgid "E19: Mark has invalid line number"
 msgstr "E19: Markering har ogiltigt radnummer"
@@ -868,17 +849,16 @@ msgstr "E483: Kan inte hämta temporärt filnamn"
 msgid "E484: Can't open file %s"
 msgstr "E484: Kan inte öppna fil %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E484: Can't open file %s: %s"
-msgstr "E484: Kan inte öppna fil %s"
+msgstr ""
 
 #, c-format
 msgid "E485: Can't read file %s"
 msgstr "E485: Kan inte läsa fil %s"
 
-#, fuzzy
 msgid "E38: Null argument"
-msgstr "E390: Otillåtet argument: %s"
+msgstr ""
 
 msgid "E39: Number expected"
 msgstr "E39: Nummer väntat"
@@ -909,9 +889,8 @@ msgstr "E42: Inga fel"
 msgid "E776: No location list"
 msgstr "E776: Ingen positionslista"
 
-#, fuzzy
 msgid "E43: Damaged match string"
-msgstr "E383: Ogiltig söksträng: %s"
+msgstr ""
 
 msgid "E44: Corrupted regexp program"
 msgstr ""
@@ -930,16 +909,16 @@ msgstr "E461: Otillåtet variabelnamn: %s"
 msgid "E995: Cannot modify existing variable"
 msgstr "E995: Kan inte ändra befintlig variabel"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E46: Cannot change read-only variable \"%.*s\""
-msgstr "E46: Kan inte ändra skrivskyddad variabel \"%s\""
+msgstr ""
 
 msgid "E715: Dictionary required"
 msgstr "E715: Tabell krävs"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E979: Blob index out of range: %<PRId64>"
-msgstr "E979: Blob-index utanför intervallet: %ld"
+msgstr ""
 
 msgid "E978: Invalid operation for Blob"
 msgstr "E978: Ogiltig åtgärd för Blob"
@@ -956,9 +935,9 @@ msgstr "E119: För få argument till funktion: %s"
 msgid "E716: Key not present in Dictionary: \"%s\""
 msgstr "E716: Nyckel finns inte i ordlistan: \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E716: Key not present in Dictionary: \"%.*s\""
-msgstr "E716: Nyckel finns inte i ordlistan: \"%s\""
+msgstr ""
 
 msgid "E714: List required"
 msgstr "E714: Lista krävs"
@@ -999,9 +978,8 @@ msgstr "E49: Ogiltig rullningsstorlek"
 msgid "E91: 'shell' option is empty"
 msgstr "E91: 'shell' flagga är tom"
 
-#, fuzzy
 msgid "E255: Couldn't read in sign data!"
-msgstr "E255: Kunde inte läsa in teckendata"
+msgstr ""
 
 msgid "E72: Close error on swap file"
 msgstr "E72: Stängningsfel på växlingsfil"
@@ -1054,9 +1032,9 @@ msgstr "E107: Saknar hakparantes: %s"
 msgid "E749: Empty buffer"
 msgstr "E749: tom buffert"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E86: Buffer %<PRId64> does not exist"
-msgstr "E86: Buffert %ld existerar inte"
+msgstr ""
 
 msgid "E37: No write since last change"
 msgstr "E37: Ingen skrivning sedan senaste ändringen"
@@ -1112,14 +1090,12 @@ msgstr "E952: Autokommando orsakade rekursivt beteende"
 msgid "E328: Menu only exists in another mode"
 msgstr "E328: Meny existerar bara i ett annat läge"
 
-#, fuzzy
 msgid "E813: Cannot close autocmd window"
-msgstr "E813: Kan inte stänga autocmd eller popup-fönster"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E684: List index out of range: %<PRId64>"
-msgstr "E684: listindex utanför område: %ld"
+msgstr ""
 
 #, c-format
 msgid "E686: Argument of %s must be a List"
@@ -1128,9 +1104,8 @@ msgstr "E686: Argument av %s måste vara en List"
 msgid "E519: Option not supported"
 msgstr "E519: Flagga stöds inte"
 
-#, fuzzy
 msgid "E856: Filename too long"
-msgstr "E75: Namn för långt"
+msgstr ""
 
 msgid "E806: Using a Float as a String"
 msgstr "E806: Använder en Float som en String"
@@ -1138,9 +1113,9 @@ msgstr "E806: Använder en Float som en String"
 msgid "E788: Not allowed to edit another buffer now"
 msgstr "E788: Inte tillåtet att redigera en annan buffert nu"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1023: Using a Number as a Bool: %d"
-msgstr "E1023: Använder ett Number som en Bool: %lld"
+msgstr ""
 
 #, c-format
 msgid "E1085: Not a callable type: %s"
@@ -1157,13 +1132,11 @@ msgstr ""
 msgid "E5560: %s must not be called in a fast event context"
 msgstr ""
 
-#, fuzzy
 msgid "E5601: Cannot close window, only floating window would remain"
-msgstr "E814: Kan inte stänga fönster, endast autocmd-fönster skulle återstå"
+msgstr ""
 
-#, fuzzy
 msgid "E5602: Cannot exchange or rotate float"
-msgstr "E530: Kan inte ändra \"term\" i grafiska gränssnittet"
+msgstr ""
 
 #, c-format
 msgid "E344: Can't find directory \"%s\" in cdpath"
@@ -1184,24 +1157,24 @@ msgstr "E347: Ingen fil \"%s\" hittades i sökvägen"
 msgid "E741: Value is locked"
 msgstr "E741: Värdet är låst"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E741: Value is locked: %.*s"
-msgstr "E741: Värde är låst: %s"
+msgstr ""
 
 msgid "E742: Cannot change value"
 msgstr "E742: Kan inte ändra värdet"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E742: Cannot change value of %.*s"
-msgstr "E742: Kan inte ändra värde av %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
-msgstr "E794: Kan inte sätta variabel i sandlådan: \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E795: Cannot delete variable %.*s"
-msgstr "E795: Kan inte ta bort variabel %s"
+msgstr ""
 
 msgid "E960: Problem creating the internal diff"
 msgstr "E960: Problem med att skapa intern diff"
@@ -1218,9 +1191,8 @@ msgstr "E1240: Resulterande texten är för lång"
 msgid "E1247: Line number out of range"
 msgstr "E1247: Radnummer utanför intervallet"
 
-#, fuzzy
 msgid "E5248: Invalid character in group name"
-msgstr "W18: Ogiltigt tecken i gruppnamn"
+msgstr ""
 
 msgid "E1249: Highlight group name too long"
 msgstr "E1249: Markering av gruppnamn för långt"
@@ -1240,9 +1212,8 @@ msgstr "E966: Ogiltigt radnummer: %ld"
 msgid "E998: Reduce of an empty %s with no initial value"
 msgstr "E998: Minska ett tomt %s utan initialvärde"
 
-#, fuzzy
 msgid "E1239: Invalid value for blob: 0x<PRIX64>"
-msgstr "E1239: Ogiltigt värde för blob: 0x%lX"
+msgstr ""
 
 #, c-format
 msgid "E1278: Stray '}' without a matching '{': %s"
@@ -1287,9 +1258,9 @@ msgstr "E1562: Diff-ankare kan inte användas med dolda diff-fönster"
 msgid "E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5570: Cannot update trust file: %s"
-msgstr "E557: Kan inte öppna termcap-fil"
+msgstr ""
 
 #, c-format
 msgid "E282: Cannot read from \"%s\""
@@ -1342,9 +1313,9 @@ msgstr "E1098: String, List eller Blob krävs"
 msgid "E1169: Expression too recursive: %s"
 msgstr "E1169: Uttrycket är för rekursivt: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1203: Dot can only be used on a dictionary: %s"
-msgstr "E1094: Import kan endast användas i ett skript"
+msgstr ""
 
 msgid "E1192: Empty function name"
 msgstr "E1192: Tomt funktionsnamn"
@@ -1352,23 +1323,21 @@ msgstr "E1192: Tomt funktionsnamn"
 msgid "E1265: Cannot use a partial here"
 msgstr "E1265: Kan inte använda en delvis här"
 
-#, fuzzy
 msgid "E689: Can only index a List, Dictionary or Blob"
-msgstr "E896: Argumentet %s måste vara en List, Dictionary eller Blob"
+msgstr ""
 
 msgid "E708: [:] must come last"
 msgstr "E708: [:] måste komma sist"
 
-#, fuzzy
 msgid "E713: Cannot use empty key after ."
-msgstr "E713: Kan inte använda tom nyckel för Tabell"
+msgstr ""
 
 msgid "E709: [:] requires a List or Blob value"
 msgstr "E709: [:] kräver ett List- eller Blob-värde"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E121: Undefined variable: %.*s"
-msgstr "E121: Odefinierad variabel: %s"
+msgstr ""
 
 msgid "E996: Cannot lock a range"
 msgstr "E996: Kan inte låsa ett intervall"
@@ -1402,13 +1371,13 @@ msgstr "E113: Okänd flagga: %s"
 msgid "E973: Blob literal should have an even number of hex characters"
 msgstr "E973: Blob-literal bör ha ett jämnt antal hexadecimala tecken"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E114: Missing quote: %s"
-msgstr "E114: Saknar dubbelt citattecken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E115: Missing quote: %s"
-msgstr "E115: Saknar enkelt citattecken: %s"
+msgstr ""
 
 #, c-format
 msgid "E696: Missing comma in List: %s"
@@ -1434,9 +1403,9 @@ msgstr "E722: Saknar komma i Tabell: %s"
 msgid "E723: Missing end of Dictionary '}': %s"
 msgstr "E723: Saknar slut på Tabell '}': %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Executing command: \"%s\""
-msgstr "Kör: %s"
+msgstr ""
 
 msgid "E921: Invalid callback argument"
 msgstr "E921: Ogiltigt callback-argument"
@@ -1477,29 +1446,29 @@ msgstr ""
 msgid "E474: Expected colon before dictionary value: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string key: %s"
-msgstr "E451: Förväntade }: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected comma before dictionary key: %s"
-msgstr "E722: Saknar komma i Tabell: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unfinished escape sequence: %.*s"
-msgstr "E540: Ostängd uttryckssekvens"
+msgstr ""
 
 #, c-format
 msgid "E474: Unfinished unicode escape sequence: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected four hex digits after \\u: %.*s"
-msgstr "E1060: Förväntade punkt efter namn: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unknown escape sequence: %.*s"
-msgstr "E409: Okänt gruppnamn: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: ASCII control characters cannot be present inside string: %.*s"
@@ -1515,26 +1484,25 @@ msgid ""
 "%.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string end: %.*s"
-msgstr "E451: Förväntade }: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Leading zeroes are not allowed: %.*s"
-msgstr "E786: Område otillåtet"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after minus sign: %.*s"
-msgstr "E526: Saknar nummer efter <%s>"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after decimal dot: %.*s"
-msgstr "E526: Saknar nummer efter <%s>"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing exponent: %.*s"
-msgstr "E417: saknar argument: %s"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -1548,9 +1516,8 @@ msgid ""
 "consumed %i bytes in place of %zu"
 msgstr ""
 
-#, fuzzy
 msgid "E474: Attempt to decode a blank string"
-msgstr "E937: Försök att radera en buffert som används: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: No container to close: %.*s"
@@ -1560,91 +1527,89 @@ msgstr ""
 msgid "E474: Closing list with curly bracket: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Closing dictionary with square bracket: %.*s"
-msgstr "E725: Anropar tabell-funktion utan Tabell: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing comma: %.*s"
-msgstr "E476: Ogiltigt kommando: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected value after colon: %.*s"
-msgstr "E1060: Förväntade punkt efter namn: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected value: %.*s"
-msgstr "E451: Förväntade }: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Comma not inside container: %.*s"
-msgstr "E1146: Kommandot känns inte igen: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate comma: %.*s"
-msgstr "E1428: Dubblett av enum-värde: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Comma after colon: %.*s"
-msgstr "E1146: Kommandot känns inte igen: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using comma in place of colon: %.*s"
-msgstr "E1527: Saknar kommatecken i Tuple: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Leading comma: %.*s"
-msgstr "E476: Ogiltigt kommando: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Colon not inside container: %.*s"
-msgstr "E1146: Kommandot känns inte igen: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using colon not in dictionary: %.*s"
-msgstr "E720: Saknar kolon i Tabell: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected colon: %.*s"
-msgstr "E415: oväntat likamed-tecken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Colon after comma: %.*s"
-msgstr "E476: Ogiltigt kommando: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate colon: %.*s"
-msgstr "E1355: Dubblett funktion: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected null: %.*s"
-msgstr "E451: Förväntade }: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected true: %.*s"
-msgstr "E451: Förväntade }: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected false: %.*s"
-msgstr "E451: Förväntade }: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unidentified byte: %.*s"
-msgstr "E121: Odefinierad variabel: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing characters: %.*s"
-msgstr "E488: Efterföljande tecken: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected end of input: %.*s"
-msgstr "E415: oväntat likamed-tecken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5010: List item %d of the second argument is not a string"
-msgstr "E1109: Listobjekt %d är inte en List"
+msgstr ""
 
 #, c-format
 msgid "key %s"
@@ -1661,13 +1626,12 @@ msgstr ""
 msgid "partial"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "argument %i"
-msgstr "-c argument"
+msgstr ""
 
-#, fuzzy
 msgid "partial self dictionary"
-msgstr "kan inte ändra fast ordbok"
+msgstr ""
 
 msgid "itself"
 msgstr ""
@@ -1692,29 +1656,24 @@ msgid ""
 "%.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E474: Unable to convert EXT string to JSON"
-msgstr "E620: Kunde inte konvertera från utskriftkodning \"%s\""
+msgstr ""
 
 #, c-format
 msgid "E474: Error while dumping %s, %s: attempt to dump function reference"
 msgstr ""
 
-#, fuzzy
 msgid "E474: Invalid key in special dictionary"
-msgstr "E736: Ogiltig operation för Tabell"
+msgstr ""
 
-#, fuzzy
 msgid "encode_tv2string() argument"
-msgstr "extendnew()-argument"
+msgstr ""
 
-#, fuzzy
 msgid ":echo argument"
-msgstr "-c argument"
+msgstr ""
 
-#, fuzzy
 msgid "encode_tv2json() argument"
-msgstr "insert()-argument"
+msgstr ""
 
 #, c-format
 msgid "E5004: Error while dumping %s, %s: attempt to dump function reference"
@@ -1724,20 +1683,18 @@ msgstr ""
 msgid "E5005: Unable to dump %s: container references itself in %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error while writing: %s"
-msgstr "E80: Fel vid skrivning"
+msgstr ""
 
-#, fuzzy
 msgid "E5000: Cannot find tab number."
-msgstr "E1062: Kan inte indexera ett tal"
+msgstr ""
 
 msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
 msgstr ""
 
-#, fuzzy
 msgid "E5002: Cannot find window number."
-msgstr "E1062: Kan inte indexera ett tal"
+msgstr ""
 
 msgid "<empty>"
 msgstr "<tom>"
@@ -1748,22 +1705,20 @@ msgstr "E655: För många symboliska länkar (slinga?)"
 msgid "writefile() first argument must be a List or a Blob"
 msgstr "writefile() första argumentet måste vara en lista eller en blob"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5060: Unknown flag: %s"
-msgstr "E235: Okänt typsnitt: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E482: Can't open file with an empty name"
-msgstr "E212: Kan inte öppna fil för skrivning"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E482: Can't open file %s for writing: %s"
-msgstr "E212: Kan inte öppna fil för skrivning"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error when closing file %s: %s"
-msgstr "E782: fel vid läsning av .sug-fil: %s"
+msgstr ""
 
 msgid "E957: Invalid window number"
 msgstr "E957: Ogiltigt fönsternummer"
@@ -1775,10 +1730,9 @@ msgstr "E935: Ogiltigt delmatchningsnummer: %d"
 msgid "E1132: Missing function argument"
 msgstr "E1132: Saknar funktionsargument"
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid channel stream \"%s\""
-msgstr "E59: ogiltigt tecken efter %s@"
+msgstr ""
 
 msgid "&Ok"
 msgstr "&Ok"
@@ -1786,9 +1740,8 @@ msgstr "&Ok"
 msgid "Context stack is empty"
 msgstr ""
 
-#, fuzzy
 msgid "dictwatcheradd() argument"
-msgstr "add()-argument"
+msgstr ""
 
 msgid "E900: maxdepth must be non-negative number"
 msgstr "E900: maxdepth måste vara ett icke-negativt tal"
@@ -1816,28 +1769,26 @@ msgstr ""
 msgid "Terminal already connected to buffer %d"
 msgstr ""
 
-#, fuzzy
 msgid "E474: Failed to convert list to string"
-msgstr "E1105: Kan inte konvertera %s till sträng"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Failed to parse %.*s"
-msgstr "E241: Kunde inte sända till %s"
+msgstr ""
 
 msgid "E701: Invalid type for len()"
 msgstr "E701: Ogiltig typ för len()"
 
-#, fuzzy, c-format
+#, c-format
 msgid "msgpackdump() argument, index %i"
-msgstr "map()-argument"
+msgstr ""
 
-#, fuzzy
 msgid "E5070: Character number must not be less than zero"
-msgstr "numret måste vara större än noll"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5071: Character number must not be greater than INT_MAX (%i)"
-msgstr "numret måste vara större än noll"
+msgstr ""
 
 msgid "E726: Stride is zero"
 msgstr "E726: Kliv är noll"
@@ -1849,13 +1800,13 @@ msgstr "E727: Start efter slut"
 msgid "E962: Invalid action: '%s'"
 msgstr "E962: Ogiltig åtgärd: '%s'"
 
-#, fuzzy, c-format
+#, c-format
 msgid "connection failed: %s"
-msgstr "XSMP SmcOpenConnection misslyckades: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E6100: \"%s\" is not a valid stdpath"
-msgstr "E236: Typsnitt \"%s\" är inte bredd-fixerad"
+msgstr ""
 
 msgid "(Invalid)"
 msgstr "(Ogiltig)"
@@ -1902,9 +1853,8 @@ msgstr "reverse()-argument"
 msgid "E743: Variable nested too deep for (un)lock"
 msgstr "E743: variabel nästlade för djupt för (un)lock"
 
-#, fuzzy
 msgid "E908: Using an invalid value as a String"
-msgstr "E908: Använder ett ogiltigt värde som en String: %s"
+msgstr ""
 
 #, c-format
 msgid "E1174: String required for argument %d"
@@ -1942,9 +1892,9 @@ msgstr "E1220: String eller Number krävs för argument %d"
 msgid "E1222: String or List required for argument %d"
 msgstr "E1222: String eller List krävs för argument %d"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1225: List, Dictionary, Blob or String required for argument %d"
-msgstr "E1251: Lista, ordbok, blob eller sträng krävs för argument %d"
+msgstr ""
 
 #, c-format
 msgid "E1226: List or Blob required for argument %d"
@@ -1966,13 +1916,11 @@ msgstr "E1256: Sträng eller funktion krävs för argument %d"
 msgid "E1297: Non-NULL Dictionary required for argument %d"
 msgstr "E1297: Icke-NULL-ordbok krävs för argument %d"
 
-#, fuzzy
 msgid "E710: List value has more items than target"
-msgstr "E710: Listvärdet har fler objekt än mål"
+msgstr ""
 
-#, fuzzy
 msgid "E711: List value has not enough items"
-msgstr "E711: Listvärdet har inte tillräckligt många poster"
+msgstr ""
 
 msgid "E702: Sort compare function failed"
 msgstr "E702: Jämförelsefunktionen för sortering misslyckades"
@@ -1996,16 +1944,14 @@ msgstr "E737: Tangenten finns redan: %s"
 msgid "E972: Blob value does not have the right number of bytes"
 msgstr "E972: Blob-värdet har inte rätt antal byte"
 
-#, fuzzy
 msgid "E805: Expected a Number or a String, Float found"
-msgstr "E807: Förväntade Float-argument för printf()"
+msgstr ""
 
 msgid "E703: Expected a Number or a String, Funcref found"
 msgstr ""
 
-#, fuzzy
 msgid "E745: Expected a Number or a String, List found"
-msgstr "E807: Förväntade Float-argument för printf()"
+msgstr ""
 
 msgid "E728: Expected a Number or a String, Dictionary found"
 msgstr ""
@@ -2016,9 +1962,8 @@ msgstr ""
 msgid "E5299: Expected a Number or a String, Boolean found"
 msgstr ""
 
-#, fuzzy
 msgid "E5300: Expected a Number or a String"
-msgstr "E1024: Använder ett Number som en String"
+msgstr ""
 
 msgid "E745: Using a List as a Number"
 msgstr "E745: Använder en Lista som en siffra"
@@ -2032,9 +1977,8 @@ msgstr "E805: Använder Float som Number"
 msgid "E974: Using a Blob as a Number"
 msgstr "E974: Använder en Blob som en Number"
 
-#, fuzzy
 msgid "E685: using an invalid value as a Number"
-msgstr "E908: Använder ett ogiltigt värde som en String: %s"
+msgstr ""
 
 msgid "E730: Using a List as a String"
 msgstr "E730: Använder en List som en String"
@@ -2079,9 +2023,9 @@ msgstr "E717: Tabell-post existerar redan"
 msgid "E718: Funcref required"
 msgstr "E718: Funcref krävs"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E130: Unknown function: %s"
-msgstr "E700: Okänd funktion: %s"
+msgstr ""
 
 msgid "E454: Function list was modified"
 msgstr "E454: Funktionslistan har ändrats"
@@ -2134,9 +2078,9 @@ msgstr "anropar %s"
 msgid "%s aborted"
 msgstr "%s avbröts"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s returning #%<PRId64>"
-msgstr "%s returnerar #%ld"
+msgstr ""
 
 #, c-format
 msgid "%s returning %s"
@@ -2214,9 +2158,9 @@ msgstr "E746: Funktionsnamn matchar inte skriptfilnamn: %s"
 msgid "E131: Cannot delete function %s: It is in use"
 msgstr "E131: Kan inte ta bort funktion %s: Den används"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot delete function %s: It is being used internally"
-msgstr "E131: Kan inte ta bort funktion %s: Den används"
+msgstr ""
 
 msgid "E133: :return not inside a function"
 msgstr "E133: :return inte inom en funktion"
@@ -2276,9 +2220,9 @@ msgstr "E996: Kan inte låsa ett register"
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: Ingen sådan variabel: \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1122: Variable is locked: %.*s"
-msgstr "E1122: Variabeln är låst: %s"
+msgstr ""
 
 #, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
@@ -2301,9 +2245,8 @@ msgstr ""
 msgid "failed to lookup host or port"
 msgstr ""
 
-#, fuzzy
 msgid "connection refused"
-msgstr "Visa anslutningar"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 msgid "E144: Non-numeric argument to :z"
@@ -2336,19 +2279,19 @@ msgstr "> %d, Hex %08x, Oktalt %o"
 msgid "E134: Cannot move a range of lines into itself"
 msgstr "E134: Kan inte flytta ett antal rader till sig själv"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line moved"
 msgid_plural "%<PRId64> lines moved"
-msgstr[0] "%ld rad flyttad"
-msgstr[1] "%ld rader flyttade"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "E482: Can't create file %s"
 msgstr "E482: Kan inte skapa fil %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines filtered"
-msgstr "%ld rader filtrerade"
+msgstr ""
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: *Filter*-Autokommandon får inte ändra aktuell buffert"
@@ -2378,9 +2321,9 @@ msgstr "Växlingsfil \"%s\" existerar, skriv över ändå?"
 msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: Växlingsfil existerar: %s (:silent! tvingar)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E141: No file name for buffer %<PRId64>"
-msgstr "E141: Inget filnamn för buffert %ld"
+msgstr ""
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: Filen skrevs inte: Skrivning är inaktiverat med 'write'-flaggan"
@@ -2414,43 +2357,42 @@ msgstr "E143: Autokommandon tog oväntat bort ny buffert %s"
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Reguljära uttryck kan inte vara åtskilda av bokstäver"
 
-#, fuzzy, c-format
+#, c-format
 msgid "replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
-msgstr "ersätt med %s (y/n/a/q/l/^E/^Y)?"
+msgstr ""
 
 msgid "(Interrupted) "
 msgstr "(Avbruten) "
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> match on %<PRId64> line"
 msgid_plural "%<PRId64> matches on %<PRId64> line"
-msgstr[0] "%ld träff på %ld rad"
-msgstr[1] "%ld träffar på %ld rad"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> substitution on %<PRId64> line"
 msgid_plural "%<PRId64> substitutions on %<PRId64> line"
-msgstr[0] "%ld ersättning på %ld rad"
-msgstr[1] "%ld ersättningar på %ld rad"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> match on %<PRId64> lines"
 msgid_plural "%<PRId64> matches on %<PRId64> lines"
-msgstr[0] "%ld träff på %ld rader"
-msgstr[1] "%ld träffar på %ld rader"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> substitution on %<PRId64> lines"
 msgid_plural "%<PRId64> substitutions on %<PRId64> lines"
-msgstr[0] "%ld ersättning på %ld rader"
-msgstr[1] "%ld ersättningar på %ld rader"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "E147: Cannot do :global recursive with a range"
 msgstr "E147: Kan inte utföra :global rekursivt med ett intervall"
 
-#, fuzzy
 msgid "E148: Regular expression missing from global"
-msgstr "E148: Reguljära uttryck saknas från :global"
+msgstr ""
 
 #, c-format
 msgid "Pattern found in every line: %s"
@@ -2472,9 +2414,9 @@ msgstr "E666: kompilator stöds inte: %s"
 msgid "Save changes to \"%s\"?"
 msgstr "Spara ändringar till \"%s\"?"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Close \"%s\"?"
-msgstr "Stäng flik"
+msgstr ""
 
 #, c-format
 msgid "E947: Job still running in buffer \"%s\""
@@ -2531,9 +2473,8 @@ msgstr "E501: Vid filslut"
 msgid "Executing: %s"
 msgstr "Kör: %s"
 
-#, fuzzy
 msgid "line %"
-msgstr "rad %ld"
+msgstr ""
 
 msgid "End of sourced file"
 msgstr "Slut på läst fil"
@@ -2558,13 +2499,11 @@ msgstr "Bakåtområde givet, OK att växla"
 msgid "E494: Use w or w>>"
 msgstr "E494: Använd w eller w>>"
 
-#, fuzzy
 msgid "E943: Command table needs to be updated, run 'make'"
-msgstr "E779: Gammal .sug-fil, behöver bli uppdaterad: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E319: The command is not available in this version"
-msgstr "E319: Tyvärr, kommandot är inte tillgängligt i den här versionen"
+msgstr ""
 
 #, c-format
 msgid "%d more file to edit.  Quit anyway?"
@@ -2604,9 +2543,8 @@ msgstr "Ingen växlingsfil"
 msgid "E186: No previous directory"
 msgstr "E186: Ingen tidigare katalog"
 
-#, fuzzy
 msgid "E187: Unknown"
-msgstr "E78: Okänt märke"
+msgstr ""
 
 msgid "E465: :winsize requires two number arguments"
 msgstr "E465: :winsize kräver två sifferargument"
@@ -2642,13 +2580,12 @@ msgstr "Namnlös"
 msgid "E5009: $VIMRUNTIME is empty or unset"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5009: Invalid $VIMRUNTIME: %s"
-msgstr "E1014: Ogiltig tangent: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E5009: Invalid 'runtimepath'"
-msgstr "E598: Ogiltig typsnittsuppsättning"
+msgstr ""
 
 # TODO: Capitalise first word of message?
 msgid "E583: Multiple :else"
@@ -2673,9 +2610,9 @@ msgstr "Undantag förkastade: %s"
 msgid "Exception finished: %s"
 msgstr "Undantag färdiga: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s, line %<PRId64>"
-msgstr "%s, rad %ld"
+msgstr ""
 
 #, c-format
 msgid "Exception caught: %s"
@@ -2767,9 +2704,9 @@ msgstr ""
 msgid "E5400: Callback should return list"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5401: List item %i is not a List"
-msgstr "E1109: Listobjekt %d är inte en List"
+msgstr ""
 
 #, c-format
 msgid "E5402: List item %i has incorrect length: %d /= 3"
@@ -2787,9 +2724,8 @@ msgstr ""
 msgid "E5406: Chunk %i end %"
 msgstr ""
 
-#, fuzzy
 msgid "E5050: {opts} must be the only argument"
-msgstr "E1006: %s används som ett argument"
+msgstr ""
 
 msgid "E854: Path too long for completion"
 msgstr "E854: Sökvägen är för lång för att kunna kompletteras"
@@ -2856,13 +2792,13 @@ msgstr "[CR saknas]"
 msgid "[long lines split]"
 msgstr "[långa rader delade]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "[CONVERSION ERROR in line %<PRId64>]"
-msgstr "[KONVERTERINGSFEL på rad %ld]"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "[ILLEGAL BYTE in line %<PRId64>]"
-msgstr "[OTILLÅTEN BIT på rad %ld]"
+msgstr ""
 
 #, c-format
 msgid "[READ ERRORS]"
@@ -2890,17 +2826,17 @@ msgstr "[unix]"
 msgid "%s%<PRId64>L, %<PRId64>B"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s%<PRId64> line, "
 msgid_plural "%s%<PRId64> lines, "
-msgstr[0] "%s%ld rad, "
-msgstr[1] "%s%ld rader, "
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> byte"
 msgid_plural "%<PRId64> bytes"
-msgstr[0] "%lld byte"
-msgstr[1] "%lld byte"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "E246: FileChangedShell autocommand deleted buffer"
 msgstr "E246: FileChangedShell-autokommandot tog bort buffert"
@@ -2974,17 +2910,17 @@ msgstr "E350: Kan inte skapa vikning med nuvarande 'foldmethod'"
 msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: Kan inte ta bort vikning med nuvarande 'foldmethod'"
 
-#, fuzzy, c-format
+#, c-format
 msgid "+--%3d line folded"
 msgid_plural "+--%3d lines folded "
-msgstr[0] "+--%3ld rad vikt "
-msgstr[1] "+--%3ld rader vikta "
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "+-%s%3d line: "
 msgid_plural "+-%s%3d lines: "
-msgstr[0] "+-%s%3ld rad: "
-msgstr[1] "+-%s%3ld rader: "
+msgstr[0] ""
+msgstr[1] ""
 
 # TODO: Capitalise first word of message?
 msgid "E223: Recursive mapping"
@@ -2996,20 +2932,19 @@ msgstr "E1255: Mappning av <Cmd> måste avslutas med <CR>"
 msgid "E1136: <Cmd> mapping must end with <CR> before second <Cmd>"
 msgstr "E1136: <Cmd>-mappning måste sluta med <CR> före den andra <Cmd>"
 
-#, fuzzy
 msgid "E222: Add to read buffer"
-msgstr "misslyckades med att byta namn på buffert"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open for reading: \"%s\": %s\n"
-msgstr "Kan inte öppna för läsning: \""
+msgstr ""
 
 msgid "--No lines in buffer--"
 msgstr "--Inga rader i buffert--"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E685: Internal error: hash_add(): duplicate key \"%s\""
-msgstr "E685: Internt fel: %s"
+msgstr ""
 
 #, c-format
 msgid "E661: No '%s' help for %s"
@@ -3078,9 +3013,8 @@ msgstr "E412: Inte tillräckliga argument: \":highlight länk %s\""
 msgid "E413: Too many arguments: \":highlight link %s\""
 msgstr "E413: För många argument: \":highlight länk %s\""
 
-#, fuzzy
 msgid "E423: Illegal argument"
-msgstr "E423: Otillåtet argument: %s"
+msgstr ""
 
 #, c-format
 msgid "E418: Illegal value: %s"
@@ -3106,15 +3040,15 @@ msgstr "E669: Outskrivbart tecken i gruppnamn"
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: För många markeringar och syntaxgrupper"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines to indent... "
-msgstr "%ld rader att indentera... "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line indented "
 msgid_plural "%<PRId64> lines indented "
-msgstr[0] "%ld indragen rad "
-msgstr[1] "%ld indragna rader "
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "%s (y/n)?"
@@ -3239,9 +3173,8 @@ msgid ""
 "integer keys or only string keys"
 msgstr ""
 
-#, fuzzy
 msgid "E5101: Cannot convert given Lua type"
-msgstr "E950: Kan inte konvertera mellan %s och %s"
+msgstr ""
 
 #, c-format
 msgid "E5102: Lua failed to grow stack to %i"
@@ -3259,21 +3192,21 @@ msgstr ""
 msgid "E970: Failed to initialize builtin Lua modules\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5114: Converting print argument #%i: %.*s"
-msgstr "E1174: Sträng krävs för argument %d"
+msgstr ""
 
 #, c-format
 msgid "E5115: Loading Lua debug string: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5116: Calling Lua debug string: %.*s"
-msgstr "E1276: Ogiltig sträng för mappningsläge: '%s'"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5108: Lua function: %.*s"
-msgstr "E1355: Dubblett funktion: %s"
+msgstr ""
 
 #, c-format
 msgid "E5107: Lua: %.*s"
@@ -3350,13 +3283,13 @@ msgstr ""
 msgid "Cannot open for script output: \""
 msgstr "Kan inte öppna för skriptutmatning: \""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5420: Failed to write to file: %s"
-msgstr "E365: Misslyckades med att skriva ut PostScript-fil"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Attempt to open script file again: \"%s %s\"\n"
-msgstr "Försök att öppna skriptfil igen: \""
+msgstr ""
 
 msgid "--embed conflicts with -es/-Es/-l"
 msgstr ""
@@ -3364,60 +3297,53 @@ msgstr ""
 msgid "pre-vimrc command line"
 msgstr "pre-vimrc kommandorad"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "More info with \""
 msgstr ""
-"\n"
-"Mer info med: \"vim -h\"\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Usage:\n"
 msgstr ""
-"\n"
-"\n"
-"användning:"
 
 #, c-format
 msgid "  nvim [options] [file ...]\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
 msgstr ""
-"\n"
-"--- Flaggor ---"
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --cmd <cmd>           Execute <cmd> before any config\n"
-msgstr "--cmd <kommando>\tKör <kommando> före inläsning av någon vimrc fil"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"
-msgstr "-c <kommando>\tKör <kommando> efter inläsning av den första filen"
+msgstr ""
 
 #, c-format
 msgid "  -l <script> [args...] Execute Lua <script> (with optional args)\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -S <session>          Source <session> after loading the first file\n"
-msgstr "-S <session>\t\tKör fil <session> efter inläsning av den första filen"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -s <scriptin>         Read Normal mode commands from <scriptin>\n"
-msgstr "-s <inskript>\tLäs Normallägeskommandon från fil <inskript>"
+msgstr ""
 
 #, c-format
 msgid "  -u <config>           Use this config file\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -d                    Diff mode\n"
-msgstr "                              för två lägen      "
+msgstr ""
 
 #, c-format
 msgid "  -es, -Es              Silent (batch) mode\n"
@@ -3431,38 +3357,38 @@ msgstr ""
 msgid "  -i <shada>            Use this shada file\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -n                    No swap file, use memory only\n"
-msgstr "-n\t\t\tIngen växlingsfil, använd endast minnet"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -o[N]                 Open N windows (default: one per file)\n"
-msgstr "-o[N]\t\tÖppna N fönster (standard: ett för varje fil)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  -O[N]                 Open N vertical windows (default: one per file)\n"
-msgstr "-o[N]\t\tÖppna N fönster (standard: ett för varje fil)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -p[N]                 Open N tab pages (default: one per file)\n"
-msgstr "-p[N]\t\tÖppna N flikar (standard: en för varje fil)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -R                    Read-only (view) mode\n"
-msgstr "                              för två lägen      "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -v, --version         Print version information\n"
-msgstr "--version\t\tSkriv ut versionsinformation och avsluta"
+msgstr ""
 
 #, c-format
 msgid "  -V[N][file]           Verbose [level][file]\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --                    Only file names after this\n"
-msgstr "--\t\t\tBara filnamn efter det här"
+msgstr ""
 
 #, c-format
 msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
@@ -3494,9 +3420,9 @@ msgstr ""
 msgid "  --server <address>    Connect to this Nvim server\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --startuptime <file>  Write startup timing messages to <file>\n"
-msgstr "--startuptime <fil>\tSkriv starttidsmeddelanden till <fil>"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -3537,9 +3463,8 @@ msgstr "Ingen förkortning hittades"
 msgid "No mapping found"
 msgstr "Ingen mappning hittades"
 
-#, fuzzy
 msgid "E228: makemap: Illegal mode"
-msgstr "E546: Otillåtet läge"
+msgstr ""
 
 #, c-format
 msgid "E357: 'langmap': Matching character missing for %s"
@@ -3577,29 +3502,29 @@ msgstr ""
 "\n"
 "ändring rad  kol text"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E799: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
-msgstr "E799: Ogiltigt id: %d (måste vara större än eller lika med 1)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E801: ID already taken: %<PRId64>"
-msgstr "E801: ID redan upptaget: %d"
+msgstr ""
 
 #, c-format
 msgid "E5030: Empty list at position %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5031: List or number required at position %d"
-msgstr "E290: Lista eller nummer krävs"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E802: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
-msgstr "E802: Ogiltigt id: %d (måste vara större än eller lika med 1)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E803: ID not found: %<PRId64>"
-msgstr "E803: ID hittades inte: %d"
+msgstr ""
 
 #, c-format
 msgid "E474: List item %d is either not a dictionary or an empty one"
@@ -3613,9 +3538,9 @@ msgstr ""
 msgid "E798: ID is reserved for \":match\": %d"
 msgstr "E798: ID är reserverat för \":match\": %d"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E798: ID is reserved for \"match\": %d"
-msgstr "E798: ID är reserverat för \":match\": %d"
+msgstr ""
 
 #, c-format
 msgid "E1109: List item %d is not a List"
@@ -3669,21 +3594,18 @@ msgstr ""
 msgid "E317: Pointer block id wrong"
 msgstr ""
 
-#, fuzzy
 msgid "E317: Pointer block id wrong 2"
-msgstr "E237: Skrivarval misslyckades"
+msgstr ""
 
-#, fuzzy
 msgid "E317: Pointer block id wrong 3"
-msgstr "E237: Skrivarval misslyckades"
+msgstr ""
 
-#, fuzzy
 msgid "E317: Pointer block id wrong 4"
-msgstr "E237: Skrivarval misslyckades"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E322: Line number out of range: %<PRId64> past the end"
-msgstr "E1247: Radnummer utanför intervallet"
+msgstr ""
 
 #, c-format
 msgid "E323: Line count wrong in block %<PRId64>"
@@ -3728,25 +3650,20 @@ msgstr "E306: Kan inte öppna %s"
 msgid "Unable to read block 0 from "
 msgstr "Kunde inte läsa block 0 från "
 
-#, fuzzy
 msgid ""
 "\n"
 "Maybe no changes were made or Nvim did not update the swap file."
 msgstr ""
-"\n"
-"Kanske gjordes inte några förändringar eller så uppdaterade inte Vim "
-"växlingsfilen."
 
-#, fuzzy
 msgid " cannot be used with this version of Nvim.\n"
-msgstr " kan inte användas med den här versionen av Vim.\n"
+msgstr ""
 
 msgid "Use Vim version 3.0.\n"
 msgstr "Använd Vim version 3.0.\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E307: %s does not look like a Nvim swap file"
-msgstr "E307: %s ser inte ut som en Vim-växlingsfil"
+msgstr ""
 
 msgid " cannot be used on this computer.\n"
 msgstr " kan inte användas på den här datorn.\n"
@@ -3882,9 +3799,8 @@ msgstr "             daterad: "
 msgid "         [from Vim version 3.0]"
 msgstr "         [från Vim version 3.0]"
 
-#, fuzzy
 msgid "         [does not look like a Nvim swap file]"
-msgstr "         [ser inte ut som en Vim-växlingsfil]"
+msgstr ""
 
 msgid "         [garbled strings (not nul terminated)]"
 msgstr ""
@@ -3963,9 +3879,9 @@ msgstr ""
 msgid "deleted block 1?"
 msgstr "tagit bort block 1?"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E320: Cannot find line %<PRId64>"
-msgstr "E1061: Kan inte hitta funktionen %s"
+msgstr ""
 
 msgid "pe_line_count is zero"
 msgstr "pe_line_count är noll"
@@ -3980,11 +3896,8 @@ msgstr "E773: Symbolisk länk-loop för \"%s\""
 msgid "E325: ATTENTION"
 msgstr "E325: LYSTRING"
 
-#, fuzzy
 msgid "Found a swap file by the name \""
 msgstr ""
-"\n"
-"Hittade en växlingsfil med namnet \""
 
 msgid "While opening file \""
 msgstr "Vid öppning av fil \""
@@ -4009,9 +3922,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) En redigeringssession för den här filen kraschade.\n"
 
-#, fuzzy
 msgid "    If this is the case, use \":recover\" or \"nvim -r "
-msgstr "    Om så är fallet, använd \":recover\" eller \"vim -r "
+msgstr ""
 
 msgid ""
 "\"\n"
@@ -4073,19 +3985,18 @@ msgstr "VIM - LYSTRING"
 msgid "E326: Too many swap files found"
 msgstr "E326: För många växlingsfiler hittade"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "E303: Unable to create directory \"%s\" for swap file, recovery impossible: "
 "%s"
-msgstr "E303: Kunde inte öppna växlingsfil för \"%s\", återskapning omöjlig"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
-msgstr "E342: Slut på minne!  (allokerar %lu byte)"
+msgstr ""
 
-#, fuzzy
 msgid "Nvim: Data too large to fit into virtual memory space\n"
-msgstr "värdet är för stort för att passa in i C int-typ"
+msgstr ""
 
 msgid "E327: Part of menu-item path is not sub-menu"
 msgstr "E327: Del av menyföremål sökväg är inte undermeny"
@@ -4130,13 +4041,12 @@ msgstr "E336: Menysökväg måste leda till en undermeny"
 msgid "E337: Menu not found - check menu names"
 msgstr "E337: Meny hittades inte - kontrollera menynamn"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Error in %s:"
-msgstr "Felfil"
+msgstr ""
 
-#, fuzzy
 msgid "line %4"
-msgstr "rad %4ld:"
+msgstr ""
 
 #, c-format
 msgid "E354: Invalid register name: '%s'"
@@ -4148,17 +4058,17 @@ msgstr "Avbrott: "
 msgid "Press ENTER or type command to continue"
 msgstr "Tryck RETUR eller skriv kommando för att fortsätta"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d more line"
 msgid_plural "%d more lines"
-msgstr[0] "%ld ytterligare rad"
-msgstr[1] "%ld ytterligare rader"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d line less"
 msgid_plural "%d fewer lines"
-msgstr[0] "%ld rad mindre"
-msgstr[1] "%ld färre rader"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid " (Interrupted)"
 msgstr " (Avbruten)"
@@ -4166,9 +4076,9 @@ msgstr " (Avbruten)"
 msgid "Unknown"
 msgstr "Okänd"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s line %<PRId64>"
-msgstr "%s rad %ld"
+msgstr ""
 
 msgid "-- More --"
 msgstr "-- Mer --"
@@ -4230,77 +4140,67 @@ msgstr "E662: Vid början av ändringslista"
 msgid "E663: At end of changelist"
 msgstr "E663: Vid slutet av ändringslista"
 
-#, fuzzy
 msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Nvim"
 msgstr ""
-"Skriv  :qa!  och tryck på <Enter> för att avbryta alla ändringar och avsluta "
-"Vim"
 
-#, fuzzy
 msgid "Type  :qa  and press <Enter> to exit Nvim"
-msgstr "Skriv  :qa  och tryck på <Enter> för att avsluta Vim"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line %sed %d time"
 msgid_plural "%<PRId64> line %sed %d times"
-msgstr[0] "%ld rad %sad %d gång"
-msgstr[1] "%ld rad %sad %d gånger"
+msgstr[0] ""
+msgstr[1] ""
 
-# This string is unclear.. "%sed".. what will %s be? Looks messy.
-# Daniel
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines %sed %d time"
 msgid_plural "%<PRId64> lines %sed %d times"
-msgstr[0] "%ld rader %sad %d gång"
-msgstr[1] "%ld rader %sad %d gånger"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line changed"
 msgid_plural "%<PRId64> lines changed"
-msgstr[0] "%d rad ändrad"
-msgstr[1] "%d rader ändrade"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines changed"
 msgid_plural "%<PRId64> lines changed"
-msgstr[0] "%d rad ändrad"
-msgstr[1] "%d rader ändrade"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> Cols; "
-msgstr "%ld kolumner; "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
 "%<PRId64> of %<PRId64> Bytes"
-msgstr "Markerat %s%ld av %ld rader; %lld av %lld ord; %lld av %lld byte"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
 "%<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> Bytes"
 msgstr ""
-"Markerat %s%ld av %ld rader; %lld av %lld ord; %lld av %lld tecken; %lld av "
-"%lld byte"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte "
 "%<PRId64> of %<PRId64>"
-msgstr "Kol %s av %s; Rad %ld av %ld; Ord %lld av %lld; Byte %lld av %lld"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char "
 "%<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
 msgstr ""
-"Kol %s av %s; Rad %ld av %ld; Ord %lld av %lld; Tecken %lld av %lld; Byte "
-"%lld av %lld"
 
-#, fuzzy, c-format
+#, c-format
 msgid "(+%<PRId64> for BOM)"
-msgstr "(+%lld för BOM)"
+msgstr ""
 
 msgid "E774: 'operatorfunc' is empty"
 msgstr "E774: 'operatorfunc' är tom"
@@ -4339,13 +4239,12 @@ msgstr "E593: Behöver åtminstone %d rader"
 msgid "E594: Need at least %d columns"
 msgstr "E594: Behöver åtminstone %d kolumner"
 
-#, fuzzy
 msgid "Cannot unset global option value"
-msgstr "kunde inte inaktivera globala alternativet %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid value for option '%s': expected %s, got %s %s"
-msgstr "Ogiltigt värde för FLAG i %s rad %d: %s"
+msgstr ""
 
 msgid ""
 "\n"
@@ -4414,10 +4313,8 @@ msgstr "E525: Nollängdssträng"
 msgid "E537: 'commentstring' must be empty or contain %s"
 msgstr "E537: 'commentstring' måste vara tom eller innehålla %s"
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E5080: Digit expected"
-msgstr "E548: siffra förväntades"
+msgstr ""
 
 #, c-format
 msgid "E526: Missing number after <%s>"
@@ -4452,9 +4349,8 @@ msgstr ""
 msgid "E1509: Error occurred when reading or writing extended attribute"
 msgstr "E1509: Fel uppstod vid läsning eller skrivning av utökat attribut"
 
-#, fuzzy
 msgid "Nvim: Error reading input, exiting...\n"
-msgstr "Vim: Fel vid läsning av inmatning, avslutar...\n"
+msgstr ""
 
 #, c-format
 msgid "Current %slanguage: \"%s\""
@@ -4472,9 +4368,9 @@ msgid ""
 "shell failed to start: "
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5677: Error writing input to shell-command: %s"
-msgstr "E677: Fel vid skrivning av temporär fil"
+msgstr ""
 
 #, no-c-format
 msgid "%a %b %d %H:%M:%S %Y"
@@ -4702,24 +4598,24 @@ msgstr "E865: (NFA) Regexp-slut påträffades för tidigt"
 msgid "E866: (NFA regexp) Misplaced %c"
 msgstr "E866: (NFA regexp) Felplacerad %c"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
-msgstr "E877: (NFA regexp) Ogiltig teckenklass: %d"
+msgstr ""
 
 msgid "E951: \\% value too large"
 msgstr "E951: \\% värdet för stort"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E867: (NFA) Unknown operator '\\z%c'"
-msgstr "E867: (NFA regexp) Okänd operator '\\z%c'"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E867: (NFA) Unknown operator '\\%%%c'"
-msgstr "E867: (NFA regexp) Okänd operator '\\%%%c'"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E869: (NFA) Unknown operator '\\@%c'"
-msgstr "E869: (NFA regexp) Okänd operator '\\@%c'"
+msgstr ""
 
 msgid "E870: (NFA regexp) Error reading repetition limits"
 msgstr "E870: (NFA regexp) Fel vid läsning av repetitionsgränser"
@@ -4739,29 +4635,21 @@ msgstr "E873: (NFA regexp) fel vid korrekt avslutning"
 msgid "Could not open temporary log file for writing, displaying on stderr... "
 msgstr "Kunde inte öppna tillfällig loggfil för skrivning, visar på stderr... "
 
-#, fuzzy
 msgid "E874: (NFA) Could not pop the stack!"
-msgstr "E874: (NFA regexp) Kunde inte tömma stacken!"
+msgstr ""
 
-#, fuzzy
 msgid ""
 "E875: (NFA regexp) (While converting from postfix to NFA),too many states "
 "left on stack"
 msgstr ""
-"E875: (NFA regexp) (Vid konvertering från postfix till NFA) för många "
-"tillstånd kvar på stacken"
 
-#, fuzzy
 msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
-msgstr "E876: (NFA regexp) Otillräckligt utrymme för att lagra hela NFA"
+msgstr ""
 
-#, fuzzy
 msgid ""
 "E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
 "used "
 msgstr ""
-"E864: \\%#= kan endast följas av 0, 1 eller 2. Den automatiska motorn kommer "
-"att användas"
 
 msgid "Switching to backtracking RE engine for pattern: "
 msgstr "Växlar till backtracking RE-motor för mönster: "
@@ -4780,17 +4668,17 @@ msgstr "E748: Inget tidigare använt register"
 msgid " into \"%c"
 msgstr " till \"%c"
 
-#, fuzzy, c-format
+#, c-format
 msgid "block of %<PRId64> line yanked%s"
 msgid_plural "block of %<PRId64> lines yanked%s"
-msgstr[0] "block med %ld rad yankad%s"
-msgstr[1] "block med %ld rader yankade%s"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line yanked%s"
 msgid_plural "%<PRId64> lines yanked%s"
-msgstr[0] "%ld rad yankad%s"
-msgstr[1] "%ld rader yankade%s"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4819,13 +4707,13 @@ msgstr "Söker efter \"%s\""
 msgid "not found in '%s': \"%s\""
 msgstr "hittades inte i '%s': \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Searching for \"%s\" in runtime path"
-msgstr "Söker efter \"%s\" i \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "not found in runtime path: \"%s\""
-msgstr "hittades inte i '%s': \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Cannot source a directory: \"%s\""
@@ -4835,17 +4723,17 @@ msgstr "Kan inte läsa en katalog: \"%s\""
 msgid "could not source \"%s\""
 msgstr "kunde inte läsa \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64>: could not source \"%s\""
-msgstr "rad %ld: kunde inte läsa \"%s\""
+msgstr ""
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "läser \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %<PRId64>: sourcing \"%s\""
-msgstr "rad %ld: läser \"%s\""
+msgstr ""
 
 #, c-format
 msgid "finished sourcing %s"
@@ -4963,14 +4851,13 @@ msgstr ""
 msgid "too few bytes read"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "System error while closing ShaDa file: %s"
-msgstr "E782: fel vid läsning av .sug-fil: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading ShaDa file \"%s\"%s%s%s%s"
-msgstr "Läser viminfo-filen \"%s\"%s%s%s%s"
+msgstr ""
 
 msgid " info"
 msgstr " info"
@@ -4988,9 +4875,9 @@ msgstr " MISSLYCKADES"
 msgid "System error while opening ShaDa file %s for reading: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to write variable %s"
-msgstr "fil att skriva meddelanden i"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5031,25 +4918,25 @@ msgstr ""
 msgid "System error while opening ShaDa file %s for writing: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing ShaDa file \"%s\""
-msgstr "Skriver viminfo-fil \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E137: ShaDa file is not writable: %s"
-msgstr "E137: Viminfo-fil är inte skrivbar: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed setting uid and gid for file %s: %s"
-msgstr "Läste klart ångringsfilen %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Can't rename ShaDa file from %s to %s!"
-msgstr "E886: Det går inte att byta namn på viminfo-fil till %s!"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Did not rename %s because %s does not look like a ShaDa file"
-msgstr "         [ser inte ut som en Vim-växlingsfil]"
+msgstr ""
 
 #, c-format
 msgid "Did not rename %s to %s because there were errors during writing it"
@@ -5059,10 +4946,9 @@ msgstr ""
 msgid "Do not forget to remove %s or rename it manually to %s."
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading ShaDa file: %s"
-msgstr "E782: fel vid läsning av .sug-fil: %s"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5070,10 +4956,9 @@ msgid ""
 "%<PRIu64> bytes, but file ended earlier"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading integer from ShaDa file: %s"
-msgstr "E782: fel vid läsning av .sug-fil: %s"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5142,11 +5027,8 @@ msgstr ""
 msgid "  group=%s"
 msgstr "  grupp=%s"
 
-#, fuzzy
 msgid "    line=%"
 msgstr ""
-"\n"
-"   #   rad"
 
 #, c-format
 msgid "E239: Invalid sign text: %s"
@@ -5234,9 +5116,9 @@ msgstr "Läser stavningsfil \"%s\""
 msgid "E757: This does not look like a spell file"
 msgstr "E757: Det här ser inte ut som en stavningsfil"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5042: Failed to read spell file %s: %s"
-msgstr "E1505: Ogiltig formatangivelse: %s"
+msgstr ""
 
 msgid "E771: Old spell file, needs to be updated"
 msgstr "E771: Gammal stavningsfil, behöver bli uppdaterad"
@@ -5397,9 +5279,9 @@ msgstr "Läser ordboksfil %s..."
 msgid "E760: No word count in %s"
 msgstr "E760: Inget ordantal i %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "line %6d, word %6d - %s"
-msgstr "rad %6d, ord %6ld - %s"
+msgstr ""
 
 #, c-format
 msgid "Duplicate word in %s line %d: %s"
@@ -5421,45 +5303,37 @@ msgstr "Ignorerade %d ord med icke-ASCII tecken i %s"
 msgid "Reading word file %s..."
 msgstr "Läser ordfil %s..."
 
-#, fuzzy
 msgid "Conversion failure for word in %s line %"
-msgstr "Konvertering misslyckades för ord i %s rad %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Duplicate /encoding= line ignored in %s line %"
-msgstr "Duplicerad /encoding=-rad ignorerad i %s rad %ld: %s"
+msgstr ""
 
-#, fuzzy
 msgid "/encoding= line after word ignored in %s line %"
-msgstr "/encoding=-rad efter ord ignoreras i %s rad %ld: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Duplicate /regions= line ignored in %s line %"
-msgstr "Duplicerad /regions=-rad ignorerad i %s rad %ld: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Too many regions in %s line %"
-msgstr "För många regioner i %s rad %ld: %s"
+msgstr ""
 
-#, fuzzy
 msgid "/ line ignored in %s line %"
-msgstr "/ rad ignorerad i %s rad %ld: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Invalid region nr in %s line %"
-msgstr "Ogiltigt regionsnummer i %s rad %ld: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Unrecognized flags in %s line %"
-msgstr "Oigenkända flaggor i %s rad %ld: %s"
+msgstr ""
 
 #, c-format
 msgid "Ignored %d words with non-ASCII characters"
 msgstr "Ignorerade %d ord med icke-ASCII tecken"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Compressed %s: %d of %d nodes; %d (%ld%%) remaining"
-msgstr "Komprimerade %s: %ld av %ld noder; %ld (%ld%%) återstår"
+msgstr ""
 
 msgid "Reading back spell file..."
 msgstr "Läser tillbaka stavningsfil..."
@@ -5467,9 +5341,9 @@ msgstr "Läser tillbaka stavningsfil..."
 msgid "Performing soundfolding..."
 msgstr "Utför ljudvikning..."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Number of words after soundfolding: %<PRId64>"
-msgstr "Antal ord efter ljudvikning: %ld"
+msgstr ""
 
 #, c-format
 msgid "Total number of words: %d"
@@ -5525,9 +5399,9 @@ msgstr "E763: Ordtecken skiljer sig mellan stavningsfiler"
 msgid "No suggestions"
 msgstr "Inga förslag"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Only %<PRId64> suggestions"
-msgstr "Bara %ld förslag"
+msgstr ""
 
 #, c-format
 msgid "Change \"%.*s\" to:"
@@ -5587,9 +5461,8 @@ msgstr "long int"
 msgid "long long int"
 msgstr "long long int"
 
-#, fuzzy
 msgid "signed size_t"
-msgstr "osignerad int"
+msgstr ""
 
 msgid "unsigned int"
 msgstr "osignerad int"
@@ -5624,9 +5497,8 @@ msgstr "E766: Otillräckliga argument för printf()"
 msgid "E807: Expected Float argument for printf()"
 msgstr "E807: Förväntade Float-argument för printf()"
 
-#, fuzzy
 msgid "E767: Too many arguments to printf()"
-msgstr "E767: För många argument för printf()"
+msgstr ""
 
 #, c-format
 msgid "E390: Illegal argument: %s"
@@ -5750,10 +5622,8 @@ msgstr "E401: Mönsteravgränsare hittades inte: %s"
 msgid "E402: Garbage after pattern: %s"
 msgstr "E402: Skräp efter mönster: %s"
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E403: syntax sync: line continuations pattern specified twice"
-msgstr "E403: syntax-synk: radfortsättningsmönster angivet två gånger"
+msgstr ""
 
 #, c-format
 msgid "E404: Illegal arguments: %s"
@@ -5858,9 +5728,9 @@ msgstr ""
 msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Formateringsfel i tagg-fil \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Before byte %<PRId64>"
-msgstr "Före byte %ld"
+msgstr ""
 
 #, c-format
 msgid "Searching tags file %s"
@@ -5920,9 +5790,9 @@ msgstr "E881: Radantalet ändrades oväntat"
 msgid "E828: Cannot open undo file for writing: %s"
 msgstr "E828: Kan inte öppna ångringsfilen för skrivning: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5003: Unable to create directory \"%s\" for undo file: %s"
-msgstr "E346: Ingen katalog \"%s\" hittades i cdpath"
+msgstr ""
 
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
@@ -5979,9 +5849,9 @@ msgstr "Redan vid äldsta ändring"
 msgid "Already at newest change"
 msgstr "Redan vid nyaste ändring"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E830: Undo number %<PRId64> not found"
-msgstr "E830: Ångringsnummer %ld hittades inte"
+msgstr ""
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr ""
@@ -6004,9 +5874,9 @@ msgstr "ändring"
 msgid "changes"
 msgstr "ändringar"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> %s; %s #%<PRId64>  %s"
-msgstr "%ld %s; %s #%ld  %s"
+msgstr ""
 
 msgid "after"
 msgstr "efter"
@@ -6014,11 +5884,11 @@ msgstr "efter"
 msgid "before"
 msgstr "före"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> second ago"
 msgid_plural "%<PRId64> seconds ago"
-msgstr[0] "%ld sekund sedan"
-msgstr[1] "%ld sekunder sedan"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Nothing to undo"
 msgstr "Inget att ångra"
@@ -6107,65 +5977,58 @@ msgstr "  reserv för $VIM: \""
 msgid " f-b for $VIMRUNTIME: \""
 msgstr " reserv för $VIMRUNTIME: \""
 
-#, fuzzy
 msgid "Nvim is open source and freely distributable"
-msgstr "Vim är öppen källkod och fri att distribuera"
+msgstr ""
 
-#, fuzzy
 msgid "type  :help nvim<Enter>     if you are new! "
-msgstr "skriv  :help sponsor<Enter>     för information "
+msgstr ""
 
-#, fuzzy
 msgid "type  :checkhealth<Enter>   to optimize Nvim"
-msgstr "skriv  :help cp-default<Enter> för information om det här"
+msgstr ""
 
-#, fuzzy
 msgid "type  :q<Enter>             to exit         "
-msgstr "skriv  :q<Enter>                för att avsluta         "
+msgstr ""
 
-#, fuzzy
 msgid "type  :help<Enter>          for help        "
-msgstr "skriv  :q<Enter>                för att avsluta         "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "type  :help news<Enter>     for v%s.%s notes "
-msgstr "skriv  :help Kuwasha<Enter>    för information "
+msgstr ""
 
 msgid "Help poor children in Uganda!"
 msgstr "Hjälp fattiga barn i Uganda!"
 
-#, fuzzy
 msgid "type  :help Kuwasha<Enter>  for information "
-msgstr "skriv  :help Kuwasha<Enter>    för information "
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid control character present in input: %.*s"
-msgstr "E59: ogiltigt tecken efter %s@"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E112: Option name missing: %.*s"
-msgstr "E112: Flaggnamn saknas: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected EOC character: %.*s"
-msgstr "E18: Oväntade tecken i :let"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unidentified character: %.*s"
-msgstr "E121: Odefinierad variabel: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Operator is not associative: %.*s"
-msgstr "E1241: Separator stöds inte: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing operator: %.*s"
-msgstr "E1008: Saknar <type> efter %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected lambda arguments list or arrow: %.*s"
-msgstr "E807: Förväntade Float-argument för printf()"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected value part of assignment lvalue: %.*s"
@@ -6175,26 +6038,23 @@ msgstr ""
 msgid "E15: Expected assignment operator or subscript: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy
 msgid "E15: Unexpected "
-msgstr "E268: oväntad next"
+msgstr ""
 
 #, c-format
 msgid "E15: Unexpected multiplication-like operator: %.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E15: Environment variable name missing"
-msgstr "miljövariabel"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got comparison operator: %.*s"
-msgstr "E1056: Förväntade en typ: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got comma: %.*s"
-msgstr "E1056: Förväntade en typ: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Comma outside of call, lambda or literal: %.*s"
@@ -6204,18 +6064,17 @@ msgstr ""
 msgid "E15: Colon outside of dictionary or ternary operator: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got closing bracket: %.*s"
-msgstr "E1056: Förväntade en typ: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Unable to assign to empty list: %.*s"
-msgstr "E241: Kunde inte sända till %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing figure brace: %.*s"
-msgstr "E415: oväntat likamed-tecken: %s"
+msgstr ""
 
 #, c-format
 msgid "E475: Nested lists not allowed when assigning: %.*s"
@@ -6229,90 +6088,85 @@ msgstr ""
 msgid "E15: Don't know what figure brace means: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected arrow: %.*s"
-msgstr "E415: oväntat likamed-tecken: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Arrow outside of lambda: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected dot: %.*s"
-msgstr "E415: oväntat likamed-tecken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Cannot concatenate in assignments: %.*s"
-msgstr "E1165: Kan inte använda ett intervall med en tilldelning: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got parenthesis: %.*s"
-msgstr "E1056: Förväntade en typ: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing parenthesis: %.*s"
-msgstr "E415: oväntat likamed-tecken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got question mark: %.*s"
-msgstr "E1056: Förväntade en typ: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E114: Missing double quote: %.*s"
-msgstr "E114: Saknar dubbelt citattecken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E115: Missing single quote: %.*s"
-msgstr "E115: Saknar enkelt citattecken: %s"
+msgstr ""
 
 #, c-format
 msgid "E475: Expected closing bracket to end list assignment lvalue: %.*s"
 msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Misplaced assignment: %.*s"
-msgstr "E417: saknar argument: %s"
+msgstr ""
 
-# TODO: Capitalise first word of message?
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected assignment: %.*s"
-msgstr "E415: oväntat likamed-tecken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got EOC: %.*s"
-msgstr "E1056: Förväntade en typ: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E116: Missing closing parenthesis for function call: %.*s"
-msgstr "E116: Ogiltiga argument för funktion %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E110: Missing closing parenthesis for nested expression: %.*s"
-msgstr "E107: Saknar hakparantes: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E697: Missing end of List ']': %.*s"
-msgstr "E697: Saknar slut på Lista ']': %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E723: Missing end of Dictionary '}': %.*s"
-msgstr "E723: Saknar slut på Tabell '}': %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing closing figure brace: %.*s"
-msgstr "E115: Saknar enkelt citattecken: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing closing figure brace for lambda: %.*s"
-msgstr "E1259: Saknar namn efter importerat namn: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E109: Missing ':' after '?': %.*s"
-msgstr "E109: Saknar ':' efter '?'"
+msgstr ""
 
 msgid "E444: Cannot close last window"
 msgstr "E444: Kan inte stänga senaste fönstret"
@@ -6376,9 +6230,8 @@ msgstr "nroff-makronamn som separerar sektioner"
 msgid "list of directory names used for file searching"
 msgstr "lista över katalognamn som används för filsökning"
 
-#, fuzzy
 msgid "function called for :find"
-msgstr "funktion som anropas för operatorn \"g@\""
+msgstr ""
 
 msgid ":cd without argument goes to the home directory"
 msgstr ":cd utan argument går till hemkatalogen"
@@ -6527,11 +6380,8 @@ msgstr "rita inte om medan makron körs"
 msgid "timeout for 'hlsearch' and :match highlighting in msec"
 msgstr "tidsgräns för 'hlsearch' och :match-markering i ms"
 
-#, fuzzy
 msgid "delay in msec for each char written to the display"
 msgstr ""
-"fördröjning i ms för varje tecken som skrivs till\n"
-"skärmen (för felsökning)"
 
 msgid "change the way redrawing works (debug)"
 msgstr ""
@@ -6623,9 +6473,8 @@ msgstr ""
 msgid "multiple windows"
 msgstr "flera fönster"
 
-#, fuzzy
 msgid "0, 1, 2 or 3; when to use a status line for the last window"
-msgstr "0, 1 eller 2; när en statusrad ska användas för det sista fönstret"
+msgstr ""
 
 msgid "custom format for the status column"
 msgstr ""
@@ -6673,9 +6522,8 @@ msgstr "identifierar förhandsvisningsfönstret"
 msgid "custom format for the window bar"
 msgstr ""
 
-#, fuzzy
 msgid "border of floating window"
-msgstr "storlek på ett terminalfönster"
+msgstr ""
 
 msgid "transparency level for floating windows"
 msgstr ""
@@ -6940,23 +6788,14 @@ msgstr ""
 msgid "automatic completion in insert mode"
 msgstr "automatisk komplettering i infogningsläge"
 
-#, fuzzy
 msgid "initial decay timeout for 'autocomplete' algorithm"
 msgstr ""
-" \n"
-"initial förfallotidsgräns för algoritmen \"autocomplete\""
 
-#, fuzzy
 msgid "initial decay timeout for CTRL-N and CTRL-P completion"
 msgstr ""
-" \n"
-"initial förfallotidsgräns för komplettering med CTRL-N och CTRL-P"
 
-#, fuzzy
 msgid "delay in msec before menu appears after typing"
 msgstr ""
-" \n"
-"fördröjning i millisekunder innan menyn visas efter inmatning"
 
 msgid "whether to use a popup menu for Insert mode completion"
 msgstr "huruvida popup-menyn ska användas för komplettering i infogningsläget"
@@ -7497,13 +7336,11 @@ msgstr "lista över ord som anger vad som ska sparas för :mkview"
 msgid "directory where to store files with :mkview"
 msgstr "katalog där filer ska lagras med :mkview"
 
-#, fuzzy
 msgid "list that specifies what to write in the ShaDa file"
-msgstr "lista som anger vad som ska skrivas i viminfo-filen"
+msgstr ""
 
-#, fuzzy
 msgid "overrides the filename used for shada"
-msgstr "format på rubriken som används för :hardcopy"
+msgstr ""
 
 msgid "what happens with a buffer when it's no longer in a window"
 msgstr "vad händer med en buffert när den inte längre finns i ett fönster"
@@ -7526,13 +7363,11 @@ msgstr "huruvida att använda Python 2 eller 3"
 msgid "live preview of substitution"
 msgstr ""
 
-#, fuzzy
 msgid "buffer is busy"
-msgstr "buffert är ogiltig"
+msgstr ""
 
-#, fuzzy
 msgid "characters removed when pasting into terminal window"
-msgstr "tangent som föregår Vim-kommandon i ett terminalfönster"
+msgstr ""
 
 msgid "number of lines kept beyond the visible screen in terminal buffer"
 msgstr ""
@@ -7546,9 +7381,8 @@ msgstr "(lokal till buffert)"
 msgid "(global or local to buffer)"
 msgstr "(global eller lokal till buffert)"
 
-#, fuzzy
 msgid "(global or local to window)"
-msgstr "(global eller lokal till buffert)"
+msgstr ""
 
 msgid ""
 "\" Each \"set\" line shows the current value of an option (on the left)."
@@ -7590,6 +7424,15 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid ""
 #~ "\n"
+#~ "\n"
+#~ "Usage:"
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "användning:"
+
+#~ msgid ""
+#~ "\n"
 #~ "         [not usable with this version of Vim]"
 #~ msgstr ""
 #~ "\n"
@@ -7617,6 +7460,13 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ "       i: Hitta filer som #inkluderar denna fil\n"
 #~ "       s: Hitta denna C-symbol\n"
 #~ "       t: Hitta denna textsträng\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "   #   line"
+#~ msgstr ""
+#~ "\n"
+#~ "   #   rad"
 
 #~ msgid ""
 #~ "\n"
@@ -7792,6 +7642,13 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid ""
 #~ "\n"
+#~ "Found a swap file by the name \""
+#~ msgstr ""
+#~ "\n"
+#~ "Hittade en växlingsfil med namnet \""
+
+#~ msgid ""
+#~ "\n"
 #~ "Huge version "
 #~ msgstr ""
 #~ "\n"
@@ -7880,6 +7737,21 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgstr ""
 #~ "\n"
 #~ "MS-Windows ARM64 konsolversion"
+
+#~ msgid ""
+#~ "\n"
+#~ "Maybe no changes were made or Vim did not update the swap file."
+#~ msgstr ""
+#~ "\n"
+#~ "Kanske gjordes inte några förändringar eller så uppdaterade inte Vim "
+#~ "växlingsfilen."
+
+#~ msgid ""
+#~ "\n"
+#~ "More info with: \"vim -h\"\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Mer info med: \"vim -h\"\n"
 
 #~ msgid ""
 #~ "\n"
@@ -7979,10 +7851,31 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid ""
 #~ " \n"
+#~ "delay in msec before menu appears after typing"
+#~ msgstr ""
+#~ " \n"
+#~ "fördröjning i millisekunder innan menyn visas efter inmatning"
+
+#~ msgid ""
+#~ " \n"
 #~ "function to display text in the quickfix window"
 #~ msgstr ""
 #~ " \n"
 #~ "funktion för att visa text i snabbkorrigeringsfönstret"
+
+#~ msgid ""
+#~ " \n"
+#~ "initial decay timeout for 'autocomplete' algorithm"
+#~ msgstr ""
+#~ " \n"
+#~ "initial förfallotidsgräns för algoritmen \"autocomplete\""
+
+#~ msgid ""
+#~ " \n"
+#~ "initial decay timeout for CTRL-N and CTRL-P completion"
+#~ msgstr ""
+#~ " \n"
+#~ "initial förfallotidsgräns för komplettering med CTRL-N och CTRL-P"
 
 #~ msgid ""
 #~ " \n"
@@ -8015,6 +7908,12 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "                              for Vim defaults   "
 #~ msgstr "                              för Vim-defaults   "
 
+#~ msgid "                              for two modes      "
+#~ msgstr "                              för två lägen      "
+
+#~ msgid "         [does not look like a Vim swap file]"
+#~ msgstr "         [ser inte ut som en Vim-växlingsfil]"
+
 #~ msgid "       defaults file: \""
 #~ msgstr "       defaults-fil: \""
 
@@ -8023,6 +7922,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "     user vimrc file: \""
 #~ msgstr "     användar-vimrc-fil: \""
+
+#~ msgid "    If this is the case, use \":recover\" or \"vim -r "
+#~ msgstr "    Om så är fallet, använd \":recover\" eller \"vim -r "
 
 #~ msgid "    line=%ld  id=%d%s  name=%s  priority=%d"
 #~ msgstr "    rad=%ld id=%d%s namn=%s prioritet=%d"
@@ -8075,6 +7977,12 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
 #~ msgstr " ^X-läge (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
 
+#~ msgid " cannot be used with this version of Vim.\n"
+#~ msgstr " kan inte användas med den här versionen av Vim.\n"
+
+#~ msgid " in line %ld;"
+#~ msgstr " på rad %ld;"
+
 #~ msgid " returned\n"
 #~ msgstr " returnerade\n"
 
@@ -8119,30 +8027,136 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "%-5s: %s%*s (Usage: %s)"
 #~ msgstr "%-5s: %s%*s (Användning: %s)"
 
+#~ msgid "%3d  %s %s  line %ld"
+#~ msgstr "%3d  %s %s  rad %ld"
+
 #~ msgid "%d files to edit\n"
 #~ msgstr "%d filer att redigera\n"
 
+#~ msgid "%d line changed"
+#~ msgid_plural "%d lines changed"
+#~ msgstr[0] "%d rad ändrad"
+#~ msgstr[1] "%d rader ändrade"
+
 #~ msgid "%d of %d edited"
 #~ msgstr "%d av %d redigerade"
+
+#~ msgid "%ld %s; %s #%ld  %s"
+#~ msgstr "%ld %s; %s #%ld  %s"
+
+#~ msgid "%ld Cols; "
+#~ msgstr "%ld kolumner; "
+
+#~ msgid "%ld line %sed %d time"
+#~ msgid_plural "%ld line %sed %d times"
+#~ msgstr[0] "%ld rad %sad %d gång"
+#~ msgstr[1] "%ld rad %sad %d gånger"
+
+#~ msgid "%ld line --%d%%--"
+#~ msgid_plural "%ld lines --%d%%--"
+#~ msgstr[0] "%ld rad --%d%%--"
+#~ msgstr[1] "%ld rader --%d%%--"
 
 #~ msgid "%ld line changed"
 #~ msgid_plural "%ld lines changed"
 #~ msgstr[0] "%ld rad ändrad"
 #~ msgstr[1] "%ld rader ändrade"
 
+#~ msgid "%ld line indented "
+#~ msgid_plural "%ld lines indented "
+#~ msgstr[0] "%ld indragen rad "
+#~ msgstr[1] "%ld indragna rader "
+
+#~ msgid "%ld line less"
+#~ msgid_plural "%ld fewer lines"
+#~ msgstr[0] "%ld rad mindre"
+#~ msgstr[1] "%ld färre rader"
+
+#~ msgid "%ld line moved"
+#~ msgid_plural "%ld lines moved"
+#~ msgstr[0] "%ld rad flyttad"
+#~ msgstr[1] "%ld rader flyttade"
+
+#~ msgid "%ld line yanked%s"
+#~ msgid_plural "%ld lines yanked%s"
+#~ msgstr[0] "%ld rad yankad%s"
+#~ msgstr[1] "%ld rader yankade%s"
+
 #~ msgid "%ld line, "
 #~ msgid_plural "%ld lines, "
 #~ msgstr[0] "%ld rad, "
 #~ msgstr[1] "%ld rader, "
 
+# This string is unclear.. "%sed".. what will %s be? Looks messy.
+# Daniel
+#~ msgid "%ld lines %sed %d time"
+#~ msgid_plural "%ld lines %sed %d times"
+#~ msgstr[0] "%ld rader %sad %d gång"
+#~ msgstr[1] "%ld rader %sad %d gånger"
+
+#~ msgid "%ld lines filtered"
+#~ msgstr "%ld rader filtrerade"
+
+#~ msgid "%ld lines to indent... "
+#~ msgstr "%ld rader att indentera... "
+
+#~ msgid "%ld match on %ld line"
+#~ msgid_plural "%ld matches on %ld line"
+#~ msgstr[0] "%ld träff på %ld rad"
+#~ msgstr[1] "%ld träffar på %ld rad"
+
+#~ msgid "%ld match on %ld lines"
+#~ msgid_plural "%ld matches on %ld lines"
+#~ msgstr[0] "%ld träff på %ld rader"
+#~ msgstr[1] "%ld träffar på %ld rader"
+
+#~ msgid "%ld more line"
+#~ msgid_plural "%ld more lines"
+#~ msgstr[0] "%ld ytterligare rad"
+#~ msgstr[1] "%ld ytterligare rader"
+
+#~ msgid "%ld second ago"
+#~ msgid_plural "%ld seconds ago"
+#~ msgstr[0] "%ld sekund sedan"
+#~ msgstr[1] "%ld sekunder sedan"
+
+#~ msgid "%ld substitution on %ld line"
+#~ msgid_plural "%ld substitutions on %ld line"
+#~ msgstr[0] "%ld ersättning på %ld rad"
+#~ msgstr[1] "%ld ersättningar på %ld rad"
+
+#~ msgid "%ld substitution on %ld lines"
+#~ msgid_plural "%ld substitutions on %ld lines"
+#~ msgstr[0] "%ld ersättning på %ld rader"
+#~ msgstr[1] "%ld ersättningar på %ld rader"
+
 #~ msgid "%ld,"
 #~ msgstr "%ld,"
+
+#~ msgid "%lld byte"
+#~ msgid_plural "%lld bytes"
+#~ msgstr[0] "%lld byte"
+#~ msgstr[1] "%lld byte"
 
 #~ msgid "%s (%s, compiled %s)"
 #~ msgstr "%s (%s, kompilerad %s)"
 
+#~ msgid "%s line %ld"
+#~ msgstr "%s rad %ld"
+
+#~ msgid "%s returning #%ld"
+#~ msgstr "%s returnerar #%ld"
+
+#~ msgid "%s%ld line, "
+#~ msgid_plural "%s%ld lines, "
+#~ msgstr[0] "%s%ld rad, "
+#~ msgstr[1] "%s%ld rader, "
+
 #~ msgid "%s%ldL, %lldB"
 #~ msgstr "%s%ldL, %lldB"
+
+#~ msgid "%s, line %ld"
+#~ msgstr "%s, rad %ld"
 
 #~ msgid "%sviminfo: %s in line: "
 #~ msgstr "%sviminfo: %s på rad: "
@@ -8184,8 +8198,21 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "'g' and 'c' flags of \":substitute\" toggle"
 #~ msgstr "flaggorna 'g' och 'c' för \":substitute\" växlar"
 
+#~ msgid "(+%lld for BOM)"
+#~ msgstr "(+%lld för BOM)"
+
 #~ msgid "+\t\t\tStart at end of file"
 #~ msgstr "+\t\t\tStarta vid slut av fil"
+
+#~ msgid "+-%s%3ld line: "
+#~ msgid_plural "+-%s%3ld lines: "
+#~ msgstr[0] "+-%s%3ld rad: "
+#~ msgstr[1] "+-%s%3ld rader: "
+
+#~ msgid "+--%3ld line folded "
+#~ msgid_plural "+--%3ld lines folded "
+#~ msgstr[0] "+--%3ld rad vikt "
+#~ msgstr[1] "+--%3ld rader vikta "
 
 #~ msgid "+<lnum>\t\tStart at line <lnum>"
 #~ msgstr "+<lnr>\t\tStarta på rad <rnr>"
@@ -8196,6 +8223,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "-               read text from stdin"
 #~ msgstr "-              läs text från standard in"
 
+#~ msgid "--\t\t\tOnly file names after this"
+#~ msgstr "--\t\t\tBara filnamn efter det här"
+
 #~ msgid "--clean\t\t'nocompatible', Vim defaults, no plugins, no viminfo"
 #~ msgstr ""
 #~ "--clean\t\t'nocompatible', Vim-standardinställningar, inga instick, ingen "
@@ -8203,6 +8233,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "--clientserver <socket|x11> Backend for clientserver communication"
 #~ msgstr "--clientserver <socket|x11> Backend för clientserver-kommunikation"
+
+#~ msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
+#~ msgstr "--cmd <kommando>\tKör <kommando> före inläsning av någon vimrc fil"
 
 #~ msgid "--echo-wid\t\tMake gvim echo the Window ID on stdout"
 #~ msgstr "--echo-wid\t\tFå gvim att skriva ut fönster-id på stdout"
@@ -8272,9 +8305,15 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
 #~ msgstr "--socketid <xid>\tÖppna Vim innanför en annan GTK-widget"
 
+#~ msgid "--startuptime <file>\tWrite startup timing messages to <file>"
+#~ msgstr "--startuptime <fil>\tSkriv starttidsmeddelanden till <fil>"
+
 #~ msgid "--ttyfail\t\tExit if input or output is not a terminal"
 #~ msgstr ""
 #~ "--ttyfail\t\tAvsluta om inmatningen eller utmatningen inte är en terminal"
+
+#~ msgid "--version\t\tPrint version information and exit"
+#~ msgstr "--version\t\tSkriv ut versionsinformation och avsluta"
 
 #~ msgid "--windowid <HWND>\tOpen Vim inside another win32 widget"
 #~ msgstr "--windowid <HWND>\tÖppna Vim inne i en annan win32-widget"
@@ -8312,6 +8351,10 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tSkrivskyddat läge (som \"view\")"
 
+#~ msgid "-S <session>\t\tSource file <session> after loading the first file"
+#~ msgstr ""
+#~ "-S <session>\t\tKör fil <session> efter inläsning av den första filen"
+
 #~ msgid "-T <terminal>\tSet terminal type to <terminal>"
 #~ msgstr "-T <terminal>\tStäll in terminaltyp till <terminal>"
 
@@ -8345,6 +8388,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
 #~ msgstr "-borderwidth <bredd>\tAnvänd en rambredd med <bredd> (även: -bw)"
+
+#~ msgid "-c <command>\t\tExecute <command> after loading the first file"
+#~ msgstr "-c <kommando>\tKör <kommando> efter inläsning av den första filen"
 
 #~ msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
 #~ msgstr "-d\t\t\tDiff-läge (som \"vimdiff\")"
@@ -8404,6 +8450,15 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "-m\t\t\tModifications (writing files) not allowed"
 #~ msgstr "-m\t\t\tModifieringar (skriva filer) inte tillåtet"
 
+#~ msgid "-n\t\t\tNo swap file, use memory only"
+#~ msgstr "-n\t\t\tIngen växlingsfil, använd endast minnet"
+
+#~ msgid "-o[N]\t\tOpen N windows (default: one for each file)"
+#~ msgstr "-o[N]\t\tÖppna N fönster (standard: ett för varje fil)"
+
+#~ msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
+#~ msgstr "-p[N]\t\tÖppna N flikar (standard: en för varje fil)"
+
 #~ msgid "-q [errorfile]  edit file with first error"
 #~ msgstr "-q [felfil]    redigera fil med första fel"
 
@@ -8421,6 +8476,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "-s\t\t\tSilent (batch) mode (only for \"ex\")"
 #~ msgstr "-s\t\t\tTyst (batch) läge (bara för \"ex\")"
+
+#~ msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"
+#~ msgstr "-s <inskript>\tLäs Normallägeskommandon från fil <inskript>"
 
 #~ msgid ""
 #~ "-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
@@ -8452,8 +8510,17 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "-y\t\t\tEasy mode (like \"evim\", modeless)"
 #~ msgstr "-y\t\t\tLätt läge (som \"evim\", lägeslös)"
 
+#~ msgid "/ line ignored in %s line %ld: %s"
+#~ msgstr "/ rad ignorerad i %s rad %ld: %s"
+
+#~ msgid "/encoding= line after word ignored in %s line %ld: %s"
+#~ msgstr "/encoding=-rad efter ord ignoreras i %s rad %ld: %s"
+
 #~ msgid "0 or 1; the order in which \":cstag\" performs a search"
 #~ msgstr "0 eller 1; den ordning i vilken \":cstag\" utför en sökning"
+
+#~ msgid "0, 1 or 2; when to use a status line for the last window"
+#~ msgstr "0, 1 eller 2; när en statusrad ska användas för det sista fönstret"
 
 #~ msgid "0, 1 or 2; when to use the tabpanel"
 #~ msgstr "0, 1 eller 2; när ska man använda flikpanelen"
@@ -8521,8 +8588,17 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "At line"
 #~ msgstr "På rad"
 
+#~ msgid "Attempt to open script file again: \""
+#~ msgstr "Försök att öppna skriptfil igen: \""
+
 #~ msgid "Become a registered Vim user!"
 #~ msgstr "Bli en registrerad Vim-användare!"
+
+#~ msgid "Before byte %ld"
+#~ msgstr "Före byte %ld"
+
+#~ msgid "Breakpoint in \"%s%s\" line %ld"
+#~ msgstr "Brytpunkt i \"%s%s\" rad %ld"
 
 #~ msgid "Calling shell to execute: \"%s\""
 #~ msgstr "Anropar skal att köra: \"%s\""
@@ -8539,8 +8615,24 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "Cannot open NIL:\n"
 #~ msgstr "Kan inte öppna NIL:\n"
 
+#~ msgid "Cannot open for reading: \""
+#~ msgstr "Kan inte öppna för läsning: \""
+
 #~ msgid "Cleared"
 #~ msgstr "Rensad"
+
+#~ msgid "Close tab"
+#~ msgstr "Stäng flik"
+
+#~ msgid "Col %s of %s; Line %ld of %ld; Word %lld of %lld; Byte %lld of %lld"
+#~ msgstr "Kol %s av %s; Rad %ld av %ld; Ord %lld av %lld; Byte %lld av %lld"
+
+#~ msgid ""
+#~ "Col %s of %s; Line %ld of %ld; Word %lld of %lld; Char %lld of %lld; Byte "
+#~ "%lld of %lld"
+#~ msgstr ""
+#~ "Kol %s av %s; Rad %ld av %ld; Ord %lld av %lld; Tecken %lld av %lld; Byte "
+#~ "%lld av %lld"
 
 #~ msgid "Command Line"
 #~ msgstr "Kommandorad"
@@ -8550,6 +8642,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "Compiler: "
 #~ msgstr "Kompilator: "
+
+#~ msgid "Compressed %s: %ld of %ld nodes; %ld (%ld%%) remaining"
+#~ msgstr "Komprimerade %s: %ld av %ld noder; %ld (%ld%%) återstår"
 
 #~ msgid "Conversion failure for word in %s line %ld: %s"
 #~ msgstr "Konverteringsfel för ord i %s rad %ld: %s"
@@ -8593,6 +8688,12 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "Down"
 #~ msgstr "Ned"
 
+#~ msgid "Duplicate /encoding= line ignored in %s line %ld: %s"
+#~ msgstr "Duplicerad /encoding=-rad ignorerad i %s rad %ld: %s"
+
+#~ msgid "Duplicate /regions= line ignored in %s line %ld: %s"
+#~ msgstr "Duplicerad /regions=-rad ignorerad i %s rad %ld: %s"
+
 #~ msgid "E1001: Variable not found: %s"
 #~ msgstr "E1001: Variabel hittades inte: %s"
 
@@ -8608,8 +8709,14 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1005: Too many argument types"
 #~ msgstr "E1005: För många argumenttyper"
 
+#~ msgid "E1006: %s is used as an argument"
+#~ msgstr "E1006: %s används som ett argument"
+
 #~ msgid "E1007: Mandatory argument after optional argument"
 #~ msgstr "E1007: Obligatoriskt argument efter valfritt argument"
+
+#~ msgid "E1008: Missing <type> after %s"
+#~ msgstr "E1008: Saknar <type> efter %s"
 
 #~ msgid "E1009: Missing > after type: %s"
 #~ msgstr "E1009: Saknar > efter typ: %s"
@@ -8631,6 +8738,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1013: Argument %d: type mismatch, expected %s but got %s in %s"
 #~ msgstr "E1013: Argument %d: typkonflikt, förväntade %s men fick %s i %s"
+
+#~ msgid "E1014: Invalid key: %s"
+#~ msgstr "E1014: Ogiltig tangent: %s"
 
 #~ msgid "E1015: Name expected: %s"
 #~ msgstr "E1015: Namn förväntades: %s"
@@ -8658,6 +8768,12 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1022: Type or initialization required"
 #~ msgstr "E1022: Typ eller initialisering krävs"
+
+#~ msgid "E1023: Using a Number as a Bool: %lld"
+#~ msgstr "E1023: Använder ett Number som en Bool: %lld"
+
+#~ msgid "E1024: Using a Number as a String"
+#~ msgstr "E1024: Använder ett Number som en String"
 
 #~ msgid "E1025: Using } outside of a block scope"
 #~ msgstr "E1025: Användning av } utanför ett blockomfång"
@@ -8705,6 +8821,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1039: \"vim9script\" must be the first command in a script"
 #~ msgstr "E1039: \"vim9script\" måste vara det första kommandot i ett skript"
 
+#~ msgid "E1040: Cannot use :scriptversion after :vim9script"
+#~ msgstr "E1040: Kan inte använda :scriptversion efter :vim9script"
+
 #~ msgid "E1041: Redefining script item: \"%s\""
 #~ msgstr "E1041: Omdefiniering av skriptpost: \"%s\""
 
@@ -8744,11 +8863,23 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1055: Missing name after ..."
 #~ msgstr "E1055: Saknar namn efter ..."
 
+#~ msgid "E1056: Expected a type: %s"
+#~ msgstr "E1056: Förväntade en typ: %s"
+
 #~ msgid "E1057: Missing :enddef"
 #~ msgstr "E1057: Saknar: enddef"
 
 #~ msgid "E1059: No white space allowed before colon: %s"
 #~ msgstr "E1059: Inget blanksteg tillåtet före kolon: %s"
+
+#~ msgid "E1060: Expected dot after name: %s"
+#~ msgstr "E1060: Förväntade punkt efter namn: %s"
+
+#~ msgid "E1061: Cannot find function %s"
+#~ msgstr "E1061: Kan inte hitta funktionen %s"
+
+#~ msgid "E1062: Cannot index a Number"
+#~ msgstr "E1062: Kan inte indexera ett tal"
 
 #~ msgid "E1063: Type mismatch for v: variable"
 #~ msgstr "E1063: Typ för v:-variabel stämmer inte"
@@ -8795,6 +8926,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1079: Cannot declare a variable on the command line"
 #~ msgstr "E1079: Kan inte deklarera en variabel på kommandoraden"
 
+#~ msgid "E1080: Invalid assignment"
+#~ msgstr "E1080: Ogiltig tilldelning"
+
 #~ msgid "E1081: Cannot unlet %s"
 #~ msgstr "E1081: Kan inte avregistrera %s"
 
@@ -8828,6 +8962,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1093: Expected %d items but got %d"
 #~ msgstr "E1093: Förväntade %d objekt men fick %d"
 
+#~ msgid "E1094: Import can only be used in a script"
+#~ msgstr "E1094: Import kan endast användas i ett skript"
+
 #~ msgid "E1095: Unreachable code after :%s"
 #~ msgstr "E1095: Oåtkomlig kod efter :%s"
 
@@ -8855,6 +8992,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1104: Missing >"
 #~ msgstr "E1104: Saknar >"
 
+#~ msgid "E1105: Cannot convert %s to string"
+#~ msgstr "E1105: Kan inte konvertera %s till sträng"
+
 #~ msgid "E1106: One argument too many"
 #~ msgid_plural "E1106: %d arguments too many"
 #~ msgstr[0] "E1106: Ett argument för mycket"
@@ -8880,6 +9020,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1121: Cannot change dict item"
 #~ msgstr "E1121: Kan inte ändra dict-ord"
+
+#~ msgid "E1122: Variable is locked: %s"
+#~ msgstr "E1122: Variabeln är låst: %s"
 
 #~ msgid "E1123: Missing comma before argument: %s"
 #~ msgstr "E1123: Saknar kommatecken före argument: %s"
@@ -8939,6 +9082,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1144: Command \"%s\" is not followed by white space: %s"
 #~ msgstr "E1144: Kommandot \"%s\" följs inte av blanksteg: %s"
 
+#~ msgid "E1146: Command not recognized: %s"
+#~ msgstr "E1146: Kommandot känns inte igen: %s"
+
 #~ msgid "E1147: List not set"
 #~ msgstr "E1147: Lista inte inställd"
 
@@ -8947,6 +9093,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1149: Script variable is invalid after reload in function %s"
 #~ msgstr "E1149: Skriptvariabeln är ogiltig efter omläsning i funktion %s"
+
+#~ msgid "E114: Missing double quote: %s"
+#~ msgstr "E114: Saknar dubbelt citattecken: %s"
 
 #~ msgid "E1150: Script variable type changed"
 #~ msgstr "E1150: Skriptvariabelns typ har ändrats"
@@ -8970,6 +9119,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgstr ""
 #~ "E1158: Kan inte använda flatten() i Vim9-skript, använd flattennew()"
 
+#~ msgid "E115: Missing single quote: %s"
+#~ msgstr "E115: Saknar enkelt citattecken: %s"
+
 #~ msgid "E1160: Cannot use a default for variable arguments"
 #~ msgstr "E1160: Kan inte använda ett standardvärde för variabla argument"
 
@@ -8987,6 +9139,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1164: vim9cmd must be followed by a command"
 #~ msgstr "E1164: vim9cmd måste följas av ett kommando"
+
+#~ msgid "E1165: Cannot use a range with an assignment: %s"
+#~ msgstr "E1165: Kan inte använda ett intervall med en tilldelning: %s"
 
 #~ msgid "E1166: Cannot use a range with a dictionary"
 #~ msgstr "E1166: Kan inte använda ett intervall med en ordlista"
@@ -9086,6 +9241,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1199: Cannot decrypt buffer, not enough space"
 #~ msgstr "E1199: Kan inte avkryptera buffert, otillräckligt utrymme"
 
+#~ msgid "E11: Invalid in command-line window; :q<CR> closes the window"
+#~ msgstr "E11: Ogiltigt i kommandoradsfönstret; :q<CR> stänger fönstret"
+
 #~ msgid "E1200: Decryption failed!"
 #~ msgstr "E1200: Avkryptering misslyckades!"
 
@@ -9118,6 +9276,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E121: Undefined variable: %c:%s"
 #~ msgstr "E121: Odefinierad variabel: %c:%s"
+
+#~ msgid "E121: Undefined variable: %s"
+#~ msgstr "E121: Odefinierad variabel: %s"
 
 #~ msgid "E1221: String or Blob required for argument %d"
 #~ msgstr "E1221: String eller Blob krävs för argument %d"
@@ -9170,6 +9331,12 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1239: Invalid value for blob: %d"
 #~ msgstr "E1239: Ogiltigt värde för blob: %d"
 
+#~ msgid "E1239: Invalid value for blob: 0x%lX"
+#~ msgstr "E1239: Ogiltigt värde för blob: 0x%lX"
+
+#~ msgid "E1241: Separator not supported: %s"
+#~ msgstr "E1241: Separator stöds inte: %s"
+
 #~ msgid "E1242: No white space allowed before separator: %s"
 #~ msgstr "E1242: Inget blanksteg tillåtet före separator: %s"
 
@@ -9188,6 +9355,10 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1248: Closure called from invalid context"
 #~ msgstr "E1248: Stängning anropad från ogiltig kontext"
 
+#, fuzzy, c-format
+#~ msgid "E1251: List, Dictionary, Blob or String required for argument %d"
+#~ msgstr "E1251: Lista, ordbok, blob eller sträng krävs för argument %d"
+
 #~ msgid ""
 #~ "E1251: List, Tuple, Dictionary, Blob or String required for argument %d"
 #~ msgstr ""
@@ -9205,6 +9376,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1258: No '.' after imported name: %s"
 #~ msgstr "E1258: Ingen '.' efter importerat namn: %s"
+
+#~ msgid "E1259: Missing name after imported name: %s"
+#~ msgstr "E1259: Saknar namn efter importerat namn: %s"
 
 #~ msgid "E1260: Cannot unlet an imported item: %s"
 #~ msgstr "E1260: Kan inte avregistrera ett importerat objekt: %s"
@@ -9297,6 +9471,12 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1298: Non-NULL List required for argument %d"
 #~ msgstr "E1298: Icke-NULL-lista krävs för argument %d"
+
+#~ msgid ""
+#~ "E12: Command not allowed from exrc/vimrc in current dir or tag search"
+#~ msgstr ""
+#~ "E12: Kommando inte tillåtet från exrc/vimrc i aktuell katalog eller "
+#~ "taggsökning"
 
 #, fuzzy, c-format
 #~ msgid "E1301: String, Number, List or Blob required for argument %d"
@@ -9456,6 +9636,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1354: Cannot extend %s"
 #~ msgstr "E1354: Kan inte utöka %s"
 
+#~ msgid "E1355: Duplicate function: %s"
+#~ msgstr "E1355: Dubblett funktion: %s"
+
 #~ msgid "E1356: \"super\" must be followed by a dot"
 #~ msgstr "E1356: \"super\" måste följas av en punkt"
 
@@ -9539,6 +9722,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1379: Protected variable not supported in an interface"
 #~ msgstr "E1379: Skyddad variabel stöds inte i ett gränssnitt"
+
+#~ msgid "E137: Viminfo file is not writable: %s"
+#~ msgstr "E137: Viminfo-fil är inte skrivbar: %s"
 
 #~ msgid "E1380: Protected method not supported in an interface"
 #~ msgstr "E1380: Skyddad metod stöds inte i ett gränssnitt"
@@ -9660,6 +9846,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E1419: Not a valid command in an Enum: %s"
 #~ msgstr "E1419: Inte ett giltigt kommando i en Enum: %s"
 
+#~ msgid "E141: No file name for buffer %ld"
+#~ msgstr "E141: Inget filnamn för buffert %ld"
+
 #~ msgid "E1420: Missing :endenum"
 #~ msgstr "E1420: Saknar :endenum"
 
@@ -9683,6 +9872,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1427: Enum \"%s\" name cannot be modified"
 #~ msgstr "E1427: Enum \"%s\" namnet kan inte ändras"
+
+#~ msgid "E1428: Duplicate enum value: %s"
+#~ msgstr "E1428: Dubblett av enum-värde: %s"
 
 #~ msgid "E1429: Class can only be used in a script"
 #~ msgstr "E1429: Klass kan endast användas i ett skript"
@@ -9728,6 +9920,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E145: Shell commands and some functionality not allowed in rvim"
 #~ msgstr "E145: Skalkommandon och vissa funktioner är inte tillåtna i rvim"
 
+#~ msgid "E148: Regular expression missing from :global"
+#~ msgstr "E148: Reguljära uttryck saknas från :global"
+
 #~ msgid "E1515: Unable to convert from '%s' encoding"
 #~ msgstr "E1515: Kan inte konvertera från kodningen '%s'"
 
@@ -9766,6 +9961,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E1526: Missing end of Tuple ')': %s"
 #~ msgstr "E1526: Saknar slut för tupel ')': %s"
+
+#~ msgid "E1527: Missing comma in Tuple: %s"
+#~ msgstr "E1527: Saknar kommatecken i Tuple: %s"
 
 #~ msgid "E1528: List or Tuple or Blob required for argument %d"
 #~ msgstr "E1528: List, Tuple eller Blob krävs för argument %d"
@@ -9911,6 +10109,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E210: Error reading \"%s\""
 #~ msgstr "E210: Fel vid läsning av \"%s\""
 
+#~ msgid "E212: Can't open file for writing"
+#~ msgstr "E212: Kan inte öppna fil för skrivning"
+
 #~ msgid "E229: Cannot start the GUI"
 #~ msgstr "E229: Kan inte starta grafiskt gränssnitt"
 
@@ -9927,11 +10128,23 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E234: Unknown fontset: %s"
 #~ msgstr "E234: Okänd typsnittsuppsättning: %s"
 
+#~ msgid "E235: Unknown font: %s"
+#~ msgstr "E235: Okänt typsnitt: %s"
+
+#~ msgid "E236: Font \"%s\" is not fixed-width"
+#~ msgstr "E236: Typsnitt \"%s\" är inte bredd-fixerad"
+
+#~ msgid "E237: Printer selection failed"
+#~ msgstr "E237: Skrivarval misslyckades"
+
 #~ msgid "E238: Print error: %s"
 #~ msgstr "E238: Skrivarfel: %s"
 
 #~ msgid "E240: No connection to the X server"
 #~ msgstr "E240: Ingen anslutning till X-servern"
+
+#~ msgid "E241: Unable to send to %s"
+#~ msgstr "E241: Kunde inte sända till %s"
 
 #~ msgid "E242: Can't split a window while closing another"
 #~ msgstr "E242: Kan inte dela ett fönster medan ett annat stängs"
@@ -9968,6 +10181,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E254: Cannot allocate color %s"
 #~ msgstr "E254: Kan inte allokera färg %s"
+
+#~ msgid "E255: Couldn't read in sign data"
+#~ msgstr "E255: Kunde inte läsa in teckendata"
 
 # TODO: Capitalise first word of message?
 #~ msgid "E257: cstag: Tag not found"
@@ -10014,6 +10230,10 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 # TODO: Capitalise first word of message?
 #~ msgid "E267: Unexpected return"
 #~ msgstr "E267: oväntad returnering"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E268: Unexpected next"
+#~ msgstr "E268: oväntad next"
 
 # TODO: Capitalise first word of message?
 #~ msgid "E269: Unexpected break"
@@ -10071,8 +10291,17 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E289: Input method doesn't support my preedit type"
 #~ msgstr "E289: inmatningsmetod stöder inte min förredigeringstyp"
 
+#~ msgid "E290: List or number required"
+#~ msgstr "E290: Lista eller nummer krävs"
+
 #~ msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
 #~ msgstr "E299: Perl-evaluering förbjuden i sandlåda utan Safe-modulen"
+
+#~ msgid "E307: %s does not look like a Vim swap file"
+#~ msgstr "E307: %s ser inte ut som en Vim-växlingsfil"
+
+#~ msgid "E319: Sorry, the command is not available in this version"
+#~ msgstr "E319: Tyvärr, kommandot är inte tillgängligt i den här versionen"
 
 #~ msgid "E324: Can't open PostScript output file"
 #~ msgstr "E324: Kan inte öppna PostScript-utfil"
@@ -10084,8 +10313,14 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgstr ""
 #~ "E340: Internt fel; om du kan återskapa felet, rapportera det som ett bugg"
 
+#~ msgid "E342: Out of memory!  (allocating %lu bytes)"
+#~ msgstr "E342: Slut på minne!  (allokerar %lu byte)"
+
 #~ msgid "E360: Cannot execute shell with -f option"
 #~ msgstr "E360: Kan inte köra skal med -f-flagga"
+
+#~ msgid "E365: Failed to print PostScript file"
+#~ msgstr "E365: Misslyckades med att skriva ut PostScript-fil"
 
 #~ msgid "E366: Not allowed to enter a popup window"
 #~ msgstr "E366: Inte tillåtet att gå in i ett popup-fönster"
@@ -10101,6 +10336,10 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E371: Command not found"
 #~ msgstr "E371: Kommando hittades inte"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E403: syntax sync: Line continuations pattern specified twice"
+#~ msgstr "E403: syntax-synk: radfortsättningsmönster angivet två gånger"
 
 #~ msgid "E418: I'm a teapot"
 #~ msgstr "E418: Jag är en tekanna"
@@ -10163,6 +10402,12 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E46: Cannot change read-only variable"
 #~ msgstr "E46: Kan inte ändra skrivskyddad variabel"
 
+#~ msgid "E46: Cannot change read-only variable \"%s\""
+#~ msgstr "E46: Kan inte ändra skrivskyddad variabel \"%s\""
+
+#~ msgid "E476: Invalid command: %s"
+#~ msgstr "E476: Ogiltigt kommando: %s"
+
 #~ msgid "E476: Invalid command: %s, expected %s"
 #~ msgstr "E476: Ogiltigt kommando: %s, förväntade %s"
 
@@ -10202,11 +10447,24 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E511: NetBeans already connected"
 #~ msgstr "E511: NetBeans redan anslutet"
 
+#~ msgid "E512: Close failed"
+#~ msgstr "E512: Stängning misslyckades"
+
+#~ msgid ""
+#~ "E513: Write error, conversion failed in line %ld (make 'fenc' empty to "
+#~ "override)"
+#~ msgstr ""
+#~ "E513: Skrivfel, konvertering misslyckades i rad %ld (gör 'fenc' tom för "
+#~ "att åsidosätta)"
+
 #~ msgid "E522: Not found in termcap"
 #~ msgstr "E522: Inte hittat i termcap"
 
 #~ msgid "E529: Cannot set 'term' to empty string"
 #~ msgstr "E529: Kan inte sätta 'term' till tom sträng"
+
+#~ msgid "E530: Cannot change 'term' in the GUI"
+#~ msgstr "E530: Kan inte ändra \"term\" i grafiska gränssnittet"
 
 #~ msgid "E531: Use \":gui\" to start the GUI"
 #~ msgstr "E531: Använd \":gui\" för att starta grafiskt gränssnitt"
@@ -10239,6 +10497,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 # TODO: Capitalise first word of message?
 #~ msgid "E552: Digit expected"
 #~ msgstr "E552: siffra förväntades"
+
+#~ msgid "E557: Cannot open termcap file"
+#~ msgstr "E557: Kan inte öppna termcap-fil"
 
 #~ msgid "E558: Terminal entry not found in terminfo"
 #~ msgstr "E558: Terminalnotering hittades inte i terminfo"
@@ -10300,6 +10561,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E597: Can't select fontset"
 #~ msgstr "E597: kan inte välja typsnittsuppsättning"
 
+#~ msgid "E598: Invalid fontset"
+#~ msgstr "E598: Ogiltig typsnittsuppsättning"
+
 #~ msgid "E599: Value of 'imactivatekey' is invalid"
 #~ msgstr "E599: Värdet av 'imactivatekey' är ogiltigt"
 
@@ -10329,11 +10593,17 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E619: File \"%s\" is not a supported PostScript resource file"
 #~ msgstr "E619: fil \"%s\" är inte en PostScript-resursfil som stöds"
 
+#~ msgid "E620: Unable to convert to print encoding \"%s\""
+#~ msgstr "E620: Kunde inte konvertera från utskriftkodning \"%s\""
+
 #~ msgid "E621: \"%s\" resource file has wrong version"
 #~ msgstr "E621: \"%s\"-källfilen har fel version"
 
 #~ msgid "E622: Could not fork for cscope"
 #~ msgstr "E622: Kunde inte grena för cscope"
+
+#~ msgid "E623: Could not spawn cscope process"
+#~ msgstr "E623: Kunde inte starta cscope-process"
 
 #~ msgid "E624: Can't open file \"%s\""
 #~ msgstr "E624: Kan inte öppna fil \"%s\""
@@ -10428,6 +10698,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgstr ""
 #~ "E665: Kan inte starta grafiskt gränssnitt, inget giltigt typsnitt hittades"
 
+#~ msgid "E667: Fsync failed"
+#~ msgstr "E667: Fsync misslyckades"
+
 #~ msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
 #~ msgstr ""
 #~ "E668: Fel rättighetsläge för NetBeans-anslutningens info fil: \"%s\""
@@ -10450,9 +10723,19 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E675: No default font specified for multi-byte printing."
 #~ msgstr "E675: Ingen standardfont angiven för flerbitsutskrifter."
 
+#~ msgid "E677: Error writing temp file"
+#~ msgstr "E677: Fel vid skrivning av temporär fil"
+
 # TODO: Capitalise first word of message?
 #~ msgid "E679: Recursive loop loading syncolor.vim"
 #~ msgstr "E679: rekursiv slinga läser in syncolor.vim"
+
+#~ msgid "E680: <buffer=%d>: invalid buffer number"
+#~ msgstr "E680: <buffer=%d>: ogiltigt buffertnummer"
+
+# TODO: Capitalise first word of message?
+#~ msgid "E684: List index out of range: %ld"
+#~ msgstr "E684: listindex utanför område: %ld"
 
 #~ msgid "E689: Index not allowed after a %s: %s"
 #~ msgstr "E689: Index tillåts inte efter ett %s: %s"
@@ -10463,12 +10746,30 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E703: Using a Funcref as a Number"
 #~ msgstr "E703: Använder en Funcref som en siffra"
 
+#~ msgid "E710: List value has more items than targets"
+#~ msgstr "E710: Listvärdet har fler objekt än mål"
+
+#~ msgid "E711: List value does not have enough items"
+#~ msgstr "E711: Listvärdet har inte tillräckligt många poster"
+
+#~ msgid "E713: Cannot use empty key for Dictionary"
+#~ msgstr "E713: Kan inte använda tom nyckel för Tabell"
+
 # TODO: Capitalise first word of message?
 #~ msgid "E724: Variable nested too deep for displaying"
 #~ msgstr "E724: variabel nästlad för djupt för att visas"
 
 #~ msgid "E729: Using a Funcref as a String"
 #~ msgstr "E729: Använder en Funcref som en String"
+
+#~ msgid "E739: Cannot create directory: %s"
+#~ msgstr "E739: Kan inte skapa katalog: %s"
+
+#~ msgid "E741: Value is locked: %s"
+#~ msgstr "E741: Värde är låst: %s"
+
+#~ msgid "E742: Cannot change value of %s"
+#~ msgstr "E742: Kan inte ändra värde av %s"
 
 #~ msgid "E744: NetBeans does not allow changes in read-only files"
 #~ msgstr "E744: NetBeans tillåter inte ändringar i skrivskyddade filer"
@@ -10485,20 +10786,44 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E762: Character in FOL, LOW or UPP is out of range"
 #~ msgstr "E762: Tecken i FOL, LOW eller UPP är utanför område"
 
+#~ msgid "E767: Too many arguments for printf()"
+#~ msgstr "E767: För många argument för printf()"
+
 #~ msgid "E775: Eval feature not available"
 #~ msgstr "E775: Eval-funktionen inte tillgänglig"
 
 #~ msgid "E794: Cannot set variable in the sandbox"
 #~ msgstr "E794: Kan inte ställa in variabel i sandlådan"
 
+#~ msgid "E794: Cannot set variable in the sandbox: \"%s\""
+#~ msgstr "E794: Kan inte sätta variabel i sandlådan: \"%s\""
+
 #~ msgid "E795: Cannot delete variable"
 #~ msgstr "E795: Kan inte ta bort variabel"
+
+#~ msgid "E795: Cannot delete variable %s"
+#~ msgstr "E795: Kan inte ta bort variabel %s"
+
+#~ msgid "E799: Invalid ID: %d (must be greater than or equal to 1)"
+#~ msgstr "E799: Ogiltigt id: %d (måste vara större än eller lika med 1)"
 
 #~ msgid "E800: Arabic cannot be used: Not enabled at compile time\n"
 #~ msgstr "E800: Arabiska kan inte användas: Inte aktiverat vid kompilering\n"
 
+#~ msgid "E801: ID already taken: %d"
+#~ msgstr "E801: ID redan upptaget: %d"
+
+#~ msgid "E802: Invalid ID: %d (must be greater than or equal to 1)"
+#~ msgstr "E802: Ogiltigt id: %d (måste vara större än eller lika med 1)"
+
+#~ msgid "E803: ID not found: %d"
+#~ msgstr "E803: ID hittades inte: %d"
+
 #~ msgid "E809: #< is not available without the +eval feature"
 #~ msgstr "E809: #< är inte tillgängligt utan +eval-funktionen"
+
+#~ msgid "E813: Cannot close autocmd or popup window"
+#~ msgstr "E813: Kan inte stänga autocmd eller popup-fönster"
 
 #~ msgid ""
 #~ "E815: Sorry, this command is disabled, the MzScheme libraries could not "
@@ -10527,6 +10852,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E827: Undo file is encrypted: %s"
 #~ msgstr "E827: Ångringsfilen är krypterad: %s"
+
+#~ msgid "E830: Undo number %ld not found"
+#~ msgstr "E830: Ångringsnummer %ld hittades inte"
 
 #~ msgid "E832: Non-encrypted file has encrypted undo file: %s"
 #~ msgstr "E832: Icke-krypterad fil har krypterad ångringsfil: %s"
@@ -10559,6 +10887,10 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgstr ""
 #~ "E851: Misslyckades med att skapa en ny process för grafiska gränssnittet"
 
+#~ msgid "E852: The child process failed to start the GUI"
+#~ msgstr ""
+#~ "E852: Den underordnade processen kunde inte starta grafiska gränssnittet"
+
 #~ msgid "E857: Dictionary key \"%s\" required"
 #~ msgstr "E857: Ordboksnyckeln \"%s\" krävs"
 
@@ -10579,14 +10911,53 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E863: Not allowed for a terminal in a popup window"
 #~ msgstr "E863: Inte tillåtet för en terminal i ett popup-fönster"
 
+#, no-c-format
+#~ msgid ""
+#~ "E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will "
+#~ "be used"
+#~ msgstr ""
+#~ "E864: \\%#= kan endast följas av 0, 1 eller 2. Den automatiska motorn "
+#~ "kommer att användas"
+
+#~ msgid "E867: (NFA regexp) Unknown operator '\\%%%c'"
+#~ msgstr "E867: (NFA regexp) Okänd operator '\\%%%c'"
+
+#~ msgid "E867: (NFA regexp) Unknown operator '\\z%c'"
+#~ msgstr "E867: (NFA regexp) Okänd operator '\\z%c'"
+
 #~ msgid "E868: Error building NFA with equivalence class!"
 #~ msgstr "E868: Fel vid skapande av NFA med ekvivalensklass!"
+
+#~ msgid "E869: (NFA regexp) Unknown operator '\\@%c'"
+#~ msgstr "E869: (NFA regexp) Okänd operator '\\@%c'"
+
+#~ msgid "E86: Buffer %ld does not exist"
+#~ msgstr "E86: Buffert %ld existerar inte"
+
+#~ msgid "E874: (NFA regexp) Could not pop the stack!"
+#~ msgstr "E874: (NFA regexp) Kunde inte tömma stacken!"
+
+#~ msgid ""
+#~ "E875: (NFA regexp) (While converting from postfix to NFA), too many "
+#~ "states left on stack"
+#~ msgstr ""
+#~ "E875: (NFA regexp) (Vid konvertering från postfix till NFA) för många "
+#~ "tillstånd kvar på stacken"
+
+#~ msgid "E876: (NFA regexp) Not enough space to store the whole NFA"
+#~ msgstr "E876: (NFA regexp) Otillräckligt utrymme för att lagra hela NFA"
+
+#~ msgid "E877: (NFA regexp) Invalid character class: %d"
+#~ msgstr "E877: (NFA regexp) Ogiltig teckenklass: %d"
 
 #~ msgid "E878: (NFA regexp) Could not allocate memory for branch traversal!"
 #~ msgstr "E878: (NFA regexp) Kunde inte allokera minne för grentraversering!"
 
 #~ msgid "E880: Can't handle SystemExit of python exception in vim"
 #~ msgstr "E880: Kan inte hantera SystemExit för python-undantag i vim"
+
+#~ msgid "E886: Can't rename viminfo file to %s!"
+#~ msgstr "E886: Det går inte att byta namn på viminfo-fil till %s!"
 
 #~ msgid ""
 #~ "E887: Sorry, this command is disabled, the Python's site module could not "
@@ -10628,6 +10999,12 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E905: Received unknown command: %s"
 #~ msgstr "E905: Tog emot okänt kommando: %s"
+
+#~ msgid "E906: Not an open channel"
+#~ msgstr "E906: Inte en öppen kanal"
+
+#~ msgid "E908: Using an invalid value as a String: %s"
+#~ msgstr "E908: Använder ett ogiltigt värde som en String: %s"
 
 #~ msgid "E910: Using a Job as a Number"
 #~ msgstr "E910: Använder Job som Number"
@@ -10686,6 +11063,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "E949: File changed while writing"
 #~ msgstr "E949: Fil ändrades under skrivning"
 
+#~ msgid "E950: Cannot convert between %s and %s"
+#~ msgstr "E950: Kan inte konvertera mellan %s och %s"
+
 #~ msgid "E953: File exists: %s"
 #~ msgstr "E953: Filen finns: %s"
 
@@ -10715,6 +11095,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "E971: Property type %s does not exist"
 #~ msgstr "E971: Egenskapstyp %s finns inte"
+
+#~ msgid "E979: Blob index out of range: %ld"
+#~ msgstr "E979: Blob-index utanför intervallet: %ld"
 
 #~ msgid "E980: Lowlevel input not supported"
 #~ msgstr "E980: Lågnivåinmatning stöds inte"
@@ -10803,6 +11186,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "Error detected while processing %s:"
 #~ msgstr "Fel upptäcktes vid bearbetning av %s:"
+
+#~ msgid "Error file"
+#~ msgstr "Felfil"
 
 #~ msgid "Expression"
 #~ msgstr "Uttryck"
@@ -10898,6 +11284,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "Invalid font specification"
 #~ msgstr "Ogiltig typsnittsuppsättning"
 
+#~ msgid "Invalid region nr in %s line %ld: %s"
+#~ msgstr "Ogiltigt regionsnummer i %s rad %ld: %s"
+
 #~ msgid "Keys don't match!"
 #~ msgstr "Nycklar matchar inte!"
 
@@ -10984,6 +11373,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgstr ""
 #~ "Observera: Kryptering av växlingsfil stöds inte, inaktiverar växlingsfil"
 
+#~ msgid "Number of words after soundfolding: %ld"
+#~ msgstr "Antal ord efter ljudvikning: %ld"
+
 #~ msgid "OK"
 #~ msgstr "Ok"
 
@@ -10992,6 +11384,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "On"
 #~ msgstr "På"
+
+#~ msgid "Only %ld suggestions"
+#~ msgstr "Bara %ld förslag"
 
 #~ msgid "Open File dialog"
 #~ msgstr "Öppna fil-dialog"
@@ -11044,6 +11439,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "Reading from stdin..."
 #~ msgstr "Läser från standard in..."
 
+#~ msgid "Reading viminfo file \"%s\"%s%s%s%s"
+#~ msgstr "Läser viminfo-filen \"%s\"%s%s%s%s"
+
 #~ msgid "Reinit all connections"
 #~ msgstr "Ominitiera alla anslutningar"
 
@@ -11092,11 +11490,24 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "Select Directory dialog"
 #~ msgstr "Välj katalog-dialog"
 
+#~ msgid "Selected %s%ld of %ld Lines; %lld of %lld Words; %lld of %lld Bytes"
+#~ msgstr "Markerat %s%ld av %ld rader; %lld av %lld ord; %lld av %lld byte"
+
+#~ msgid ""
+#~ "Selected %s%ld of %ld Lines; %lld of %lld Words; %lld of %lld Chars; %lld "
+#~ "of %lld Bytes"
+#~ msgstr ""
+#~ "Markerat %s%ld av %ld rader; %lld av %lld ord; %lld av %lld tecken; %lld "
+#~ "av %lld byte"
+
 #~ msgid "Selection"
 #~ msgstr "Markering"
 
 #~ msgid "Sending to printer..."
 #~ msgstr "Skickar till skrivare..."
+
+#~ msgid "Show connections"
+#~ msgstr "Visa anslutningar"
 
 #~ msgid "Show size in Points"
 #~ msgstr "Visa storlek i punkter"
@@ -11166,8 +11577,22 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ "Tidsgräns att använda vid pollning efter data att läsa eller skriva i "
 #~ "wayland"
 
+#~ msgid "Too many regions in %s line %ld: %s"
+#~ msgstr "För många regioner i %s rad %ld: %s"
+
+#~ msgid "Type  :qa  and press <Enter> to exit Vim"
+#~ msgstr "Skriv  :qa  och tryck på <Enter> för att avsluta Vim"
+
+#~ msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Vim"
+#~ msgstr ""
+#~ "Skriv  :qa!  och tryck på <Enter> för att avbryta alla ändringar och "
+#~ "avsluta Vim"
+
 #~ msgid "Unable to register a command server name"
 #~ msgstr "Kunde inte registrera ett kommandoservernamn"
+
+#~ msgid "Unrecognized flags in %s line %ld: %s"
+#~ msgstr "Oigenkända flaggor i %s rad %ld: %s"
 
 #~ msgid "Up"
 #~ msgstr "Upp"
@@ -11220,6 +11645,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "Vim exiting with %d\n"
 #~ msgstr "Vim avslutar med %d\n"
 
+#~ msgid "Vim is open source and freely distributable"
+#~ msgstr "Vim är öppen källkod och fri att distribuera"
+
 #~ msgid ""
 #~ "Vim macro files (*.vim)\t*.vim\n"
 #~ "All Files (*)\t*\n"
@@ -11236,6 +11664,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "Vim: Caught %s event\n"
 #~ msgstr "Vim: Fångade %s-händelse\n"
+
+#~ msgid "Vim: Error reading input, exiting...\n"
+#~ msgstr "Vim: Fel vid läsning av inmatning, avslutar...\n"
 
 #~ msgid "Vim: Error: Failure to start gvim from NetBeans\n"
 #~ msgstr "Vim: Fel: Misslyckades att starta gvim från NetBeans\n"
@@ -11258,6 +11689,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "Vim: Warning: Output is not to a terminal\n"
 #~ msgstr "Vim: Varning: Utmatning är inte till en terminal\n"
+
+#~ msgid "W18: Invalid character in group name"
+#~ msgstr "W18: Ogiltigt tecken i gruppnamn"
 
 #~ msgid "W20: Required python version 2.x not supported, ignoring file: %s"
 #~ msgstr "W20: Nödvändig Python-version 2.x stöds inte, ignorerar fil: %s"
@@ -11295,8 +11729,14 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "Window position: X %d, Y %d"
 #~ msgstr "Fönsterposition: X %d, Y %d"
 
+#~ msgid "Writing viminfo file \"%s\""
+#~ msgstr "Skriver viminfo-fil \"%s\""
+
 #~ msgid "XSMP ICE connection watch failed"
 #~ msgstr "XSMP ICE-anslutning övervakning misslyckades"
+
+#~ msgid "XSMP SmcOpenConnection failed: %s"
+#~ msgstr "XSMP SmcOpenConnection misslyckades: %s"
 
 #~ msgid "XSMP handling save-yourself request"
 #~ msgstr "XSMP hanterar spara-själv-förfrågan"
@@ -11314,8 +11754,14 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ "You discovered the command-line window! You can close it with \":q\"."
 #~ msgstr "Du har upptäckt kommandoradsfönstret! Du kan stänga det med \":q\"."
 
+#~ msgid "[CONVERSION ERROR in line %ld]"
+#~ msgstr "[KONVERTERINGSFEL på rad %ld]"
+
 #~ msgid "[Deleted]"
 #~ msgstr "[Borttagen]"
+
+#~ msgid "[ILLEGAL BYTE in line %ld]"
+#~ msgstr "[OTILLÅTEN BIT på rad %ld]"
 
 #~ msgid "[Incomplete last line]"
 #~ msgstr "[Ofullständig sistarad]"
@@ -11398,8 +11844,16 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "behave very Vi compatible (not advisable)"
 #~ msgstr "beteende som väldigt Vi-kompatibel (rekommenderas inte)"
 
+#~ msgid "block of %ld line yanked%s"
+#~ msgid_plural "block of %ld lines yanked%s"
+#~ msgstr[0] "block med %ld rad yankad%s"
+#~ msgstr[1] "block med %ld rader yankade%s"
+
 #~ msgid "buffer"
 #~ msgstr "buffert"
+
+#~ msgid "buffer is invalid"
+#~ msgstr "buffert är ogiltig"
 
 #~ msgid "by "
 #~ msgstr "av "
@@ -11437,6 +11891,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "cannot insert/append line"
 #~ msgstr "kan inte infoga/lägga till rad"
+
+#~ msgid "cannot modify fixed dictionary"
+#~ msgstr "kan inte ändra fast ordbok"
 
 #~ msgid "cannot modify fixed list"
 #~ msgstr "kan inte ändra fast lista"
@@ -11542,6 +11999,13 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "delay in milliseconds before a balloon may pop up"
 #~ msgstr "fördröjning i ms innan en ballong kan dyka upp"
 
+#~ msgid ""
+#~ "delay in msec for each char written to the display\n"
+#~ "(for debugging)"
+#~ msgstr ""
+#~ "fördröjning i ms för varje tecken som skrivs till\n"
+#~ "skärmen (för felsökning)"
+
 #~ msgid "dictionary is locked"
 #~ msgstr "ordboken är låst"
 
@@ -11630,6 +12094,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "failed to find window in the current tab page"
 #~ msgstr "kunde inte hitta fönstret på den aktuella fliken"
 
+#~ msgid "failed to rename buffer"
+#~ msgstr "misslyckades med att byta namn på buffert"
+
 #~ msgid "failed to run function %s"
 #~ msgstr "misslyckades med att köra funktionen %s"
 
@@ -11650,6 +12117,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "finished"
 #~ msgstr "färdig"
+
+#~ msgid "format of the header used for :hardcopy"
+#~ msgstr "format på rubriken som används för :hardcopy"
 
 #~ msgid "function %s does not exist"
 #~ msgstr "funktionen %s finns inte"
@@ -11741,8 +12211,32 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "key that activates the X input method"
 #~ msgstr "tangent som aktiverar X-inmatningsmetoden"
 
+#~ msgid "key that precedes Vim commands in a terminal window"
+#~ msgstr "tangent som föregår Vim-kommandon i ett terminalfönster"
+
 #~ msgid "keyboard interrupt"
 #~ msgstr "tangentbordsavbrott"
+
+#~ msgid "line %4ld:"
+#~ msgstr "rad %4ld:"
+
+#~ msgid "line %6d, word %6ld - %s"
+#~ msgstr "rad %6d, ord %6ld - %s"
+
+#~ msgid "line %ld"
+#~ msgstr "rad %ld"
+
+#~ msgid "line %ld of %ld --%d%%-- col "
+#~ msgstr "rad %ld av %ld --%d%%-- kol "
+
+#~ msgid "line %ld: %s"
+#~ msgstr "rad %ld: %s"
+
+#~ msgid "line %ld: could not source \"%s\""
+#~ msgstr "rad %ld: kunde inte läsa \"%s\""
+
+#~ msgid "line %ld: sourcing \"%s\""
+#~ msgstr "rad %ld: läser \"%s\""
 
 #~ msgid "line number out of range"
 #~ msgstr "radnummer utanför område"
@@ -11779,6 +12273,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "list of items that control the format of :hardcopy output"
 #~ msgstr "lista över objekt som kontrollerar utdataformatet för :hardcopy"
+
+#~ msgid "list that specifies what to write in the viminfo file"
+#~ msgstr "lista som anger vad som ska skrivas i viminfo-filen"
 
 #~ msgid "logoff"
 #~ msgstr "logga ut"
@@ -11900,6 +12397,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "number must be greater or equal to zero"
 #~ msgstr "numret måste vara större än eller lika med noll"
 
+#~ msgid "number must be greater than zero"
+#~ msgstr "numret måste vara större än noll"
+
 #~ msgid "obsolete, use 'fileformat'"
 #~ msgstr "föråldrad, använd 'fileformat'"
 
@@ -11938,6 +12438,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "recognize mappings in mapped keys"
 #~ msgstr "känn igen mappningar i mappade tangenter"
+
+#~ msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
+#~ msgstr "ersätt med %s (y/n/a/q/l/^E/^Y)?"
 
 #~ msgid "report mouse movement events"
 #~ msgstr "rapportera musrörelser"
@@ -11978,6 +12481,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "shutdown"
 #~ msgstr "stäng av"
 
+#~ msgid "size of a terminal window"
+#~ msgstr "storlek på ett terminalfönster"
+
 #~ msgid "size of toolbar icons"
 #~ msgstr "storlek på verktygsfältets ikoner"
 
@@ -12017,17 +12523,29 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 #~ msgid "tuple index out of range"
 #~ msgstr "tupelindex utanför intervallet"
 
+#~ msgid "type  :help Kuwasha<Enter>    for information "
+#~ msgstr "skriv  :help Kuwasha<Enter>    för information "
+
+#~ msgid "type  :help cp-default<Enter> for info on this"
+#~ msgstr "skriv  :help cp-default<Enter> för information om det här"
+
 #~ msgid "type  :help iccf<Enter>       for information "
 #~ msgstr "skriv  :help iccf<Enter>        för information "
 
 #~ msgid "type  :help register<Enter>   for information "
 #~ msgstr "skriv  :help register<Enter>    för information "
 
+#~ msgid "type  :help sponsor<Enter>    for information "
+#~ msgstr "skriv  :help sponsor<Enter>     för information "
+
 #~ msgid "type  :help version9<Enter>   for version info"
 #~ msgstr "skriv  :help version9<Enter>    för versionsinformation"
 
 #~ msgid "type  :help<Enter>  or  <F1>  for on-line help"
 #~ msgstr "skriv  :help<Enter> eller <F1>  för onlinehjälp"
+
+#~ msgid "type  :q<Enter>               to exit         "
+#~ msgstr "skriv  :q<Enter>                för att avsluta         "
 
 #~ msgid "type  :set nocp<Enter>        for Vim defaults"
 #~ msgstr "skriv  :set nocp<Enter>        för Vim- standarder"
@@ -12046,6 +12564,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "unable to get option value"
 #~ msgstr "kan inte hämta flaggvärde"
+
+#~ msgid "unable to unset global option %s"
+#~ msgstr "kunde inte inaktivera globala alternativet %s"
 
 #~ msgid "unable to unset option %s which does not have global value"
 #~ msgstr ""
@@ -12096,6 +12617,9 @@ msgstr "\" Tryck <Mellanslag> på en \"set\"-rad för att uppdatera den."
 
 #~ msgid "use the 'g' flag for \":substitute\""
 #~ msgstr "använd flaggan 'g' för \":substitute\""
+
+#~ msgid "value is too large to fit into C int type"
+#~ msgstr "värdet är för stort för att passa in i C int-typ"
 
 #~ msgid "value is too small to fit into C int type"
 #~ msgstr "värdet är för litet för att passa in i C int-typ"

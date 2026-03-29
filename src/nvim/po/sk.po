@@ -29,13 +29,11 @@ msgstr "E164: Nedá sa preskoèi» pred prvý súbor"
 msgid "E165: Cannot go beyond last file"
 msgstr "E165: Nedá sa preskoèi» za posledný súbor"
 
-#, fuzzy
 msgid "E610: No argument to delete"
-msgstr "E144: neèíselný argument pre :z"
+msgstr ""
 
-#, fuzzy
 msgid "E218: Autocommand nesting too deep"
-msgstr "E218: vnorenia automatického príkazu sú príli¹ hlboké"
+msgstr ""
 
 msgid "--Deleted--"
 msgstr "--Vymazaný--"
@@ -48,9 +46,8 @@ msgstr "samomazací automatický príkaz: %s <buffer=%d>"
 msgid "E367: No such group: \"%s\""
 msgstr "E367: Skupina \"%s\" neexistuje"
 
-#, fuzzy
 msgid "E936: Cannot delete the current group"
-msgstr "E351: Nedá sa zru¹i» vnorenie s aktuálnou metódou 'foldmethod'"
+msgstr ""
 
 msgid "W19: Deleting augroup that is still in use"
 msgstr ""
@@ -69,9 +66,9 @@ msgstr "E680: <buffer=%d>: chybné èíslo bufferu"
 msgid "E217: Can't execute autocommands for ALL events"
 msgstr "E217: Automatické príkazy sa nedajú spusti» pre V©ETKY udalosti"
 
-#, fuzzy, c-format
+#, c-format
 msgid "No matching autocommands: %s"
-msgstr "®iadne vyhovujúce automatické príkazy"
+msgstr ""
 
 #, c-format
 msgid "%s Autocommands for \"%s\""
@@ -116,23 +113,23 @@ msgstr "E516: ®iadny buffer nebol vymazaný"
 msgid "E517: No buffers were wiped out"
 msgstr "E517: ®iadny buffer nebol vymazaný"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer unloaded"
 msgid_plural "%d buffers unloaded"
-msgstr[0] "%d bufferov uvoµnených"
-msgstr[1] "%d bufferov uvoµnených"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer deleted"
 msgid_plural "%d buffers deleted"
-msgstr[0] "%d bufferov vymazaných"
-msgstr[1] "%d bufferov vymazaných"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer wiped out"
 msgid_plural "%d buffers wiped out"
-msgstr[0] "%d bufferov odstránených"
-msgstr[1] "%d bufferov odstránených"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: Posledný buffer sa nedá odstráni»"
@@ -149,9 +146,9 @@ msgstr "E87: Za posledný buffer sa nedá preskoèi»"
 msgid "E88: Cannot go before first buffer"
 msgstr "E88: Pred prvý buffer sa nedá preskoèi»"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: %s will be killed (add ! to override)"
-msgstr "E189: \"%s\" existuje (pou¾ite ! pre vynútenie)"
+msgstr ""
 
 msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Varovanie: preteèenie zoznamu s názvami súborov"
@@ -189,11 +186,11 @@ msgstr "[RO]"
 msgid "[readonly]"
 msgstr "[iba pre èítanie]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line --%d%%--"
 msgid_plural "%<PRId64> lines --%d%%--"
-msgstr[0] "%<PRId64> riadkov --%d%%--"
-msgstr[1] "%<PRId64> riadkov --%d%%--"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
@@ -216,20 +213,19 @@ msgstr ""
 msgid "%3s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid " (%d of %d)"
-msgstr "(%d z %d)%s%s: "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid " ((%d) of %d)"
-msgstr "(%d z %d)%s%s: "
+msgstr ""
 
 msgid "E382: Cannot write, 'buftype' option is set"
 msgstr "E382: Nedá sa ulo¾i», je nastavená voµba 'buftype'"
 
-#, fuzzy
 msgid "[Command Line]"
-msgstr "Príkazový riadok"
+msgstr ""
 
 msgid "[Prompt]"
 msgstr ""
@@ -246,29 +242,21 @@ msgstr ""
 msgid "[Quickfix List]"
 msgstr ""
 
-#, fuzzy
 msgid "E206: Patchmode: can't touch empty original file"
-msgstr "E206: patchmode: nedá sa zapisova» do prázdneho pôvodného súboru"
+msgstr ""
 
-#, fuzzy
 msgid "E513: Write error, conversion failed (make 'fenc' empty to override)"
 msgstr ""
-"E513: chyba pri zápise, konverzia sa nepodarila (nastavte voµbu 'fenc' na "
-"prázdnu pre vynútenie)"
 
-#, fuzzy
 msgid "E513: Write error, conversion failed in line %"
 msgstr ""
-"E513: chyba pri zápise, konverzia sa nepodarila (nastavte voµbu 'fenc' na "
-"prázdnu pre vynútenie)"
 
-#, fuzzy
 msgid "E514: Write error (file system full?)"
-msgstr "E514: chyba pri ukladaní (plný disk?)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E676: No matching autocommands for buftype=%s buffer"
-msgstr "E676: ®iadne vyhovujúce automatické príkazy pre acwrite buffer "
+msgstr ""
 
 msgid "WARNING: The file has been changed since reading it!!!"
 msgstr "VAROVANIE: Súbor bol zmenený od jeho naèítania!!!"
@@ -293,9 +281,9 @@ msgstr "nie je súborom ani zapisovatelným zariadením"
 msgid "is read-only (add ! to override)"
 msgstr "je iba pre èítanie (pou¾ite ! pre vynútenie)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E303: Unable to create directory \"%s\" for backup file: %s"
-msgstr "E303: Nedá sa otvori» odkladací súbor pre \"%s\", oprava nemo¾ná"
+msgstr ""
 
 msgid "E509: Cannot create backup file (add ! to override)"
 msgstr "E509: Nedá sa vytvori» zálo¾ný súbor (pou¾ite ! pre vynútenie)"
@@ -312,13 +300,13 @@ msgstr "E213: Nedá sa spravi» konverzia (pou¾ite ! pre zápis bez konverzie)"
 msgid "E166: Can't open linked file for writing"
 msgstr "E166: Súbor sa nedá otvori» pre ukladanie"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E212: Can't open file for writing: %s"
-msgstr "E212: Súbor sa nedá otvori» pre ukladanie"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E512: Close failed: %s"
-msgstr "E512: Zatvorenie zlyhalo"
+msgstr ""
 
 msgid " CONVERSION ERROR"
 msgstr " CHYBA PREVODU"
@@ -376,9 +364,8 @@ msgstr "W10: Varovanie: mením súbor iba pre èítanie"
 msgid "can only be opened in headless mode"
 msgstr ""
 
-#, fuzzy
 msgid "channel was already open"
-msgstr "Súbor bol vytvorený "
+msgstr ""
 
 msgid "Can't send data to closed stream"
 msgstr ""
@@ -395,9 +382,8 @@ msgstr " typ súboru\n"
 msgid "'history' option is zero"
 msgstr "'voµba 'history' je nastavená na nulu"
 
-#, fuzzy
 msgid "E548: Digit expected"
-msgstr "E548: oèakávaná èíslica"
+msgstr ""
 
 msgid "E545: Missing colon"
 msgstr "E545: Chýba dvojbodka"
@@ -411,9 +397,9 @@ msgstr "E549: Neprípustné percento"
 msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Spú¹»am re¾im ladenia. Pre ukonèenie napí¹te \"cont\"."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Oldval = \"%s\""
-msgstr "dlerror = \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Newval = \"%s\""
@@ -427,9 +413,8 @@ msgstr "riadok %<PRId64>: %s"
 msgid "cmd: %s"
 msgstr "príkaz: %s"
 
-#, fuzzy
 msgid "frame is zero"
-msgstr "E726: Krok je nulový"
+msgstr ""
 
 #, c-format
 msgid "frame at highest level: %d"
@@ -454,9 +439,9 @@ msgstr "%3d  %s %s  riadok %<PRId64>"
 msgid "%3d  expr %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E96: Cannot diff more than %d buffers"
-msgstr "E96: Nemô¾em porovna» viac ako %<PRId64> bufferov"
+msgstr ""
 
 #, fuzzy
 msgid "E810: Cannot read or write temp files"
@@ -524,13 +509,11 @@ msgstr ""
 msgid "Cyrillic"
 msgstr ""
 
-#, fuzzy
 msgid "Hebrew"
-msgstr " Hebrejský"
+msgstr ""
 
-#, fuzzy
 msgid "Arabic"
-msgstr " Arabský"
+msgstr ""
 
 msgid "Latin extended"
 msgstr ""
@@ -655,13 +638,11 @@ msgstr "nahrávam"
 msgid "E470: Command aborted"
 msgstr "E470: Príkaz preru¹ený"
 
-#, fuzzy
 msgid "E905: Cannot set this option after startup"
-msgstr "E529: Voµba 'term' nemô¾e by» prázdna"
+msgstr ""
 
-#, fuzzy
 msgid "E903: Could not spawn API job"
-msgstr "E623: Nedajú sa vytvori» cscope rúry"
+msgstr ""
 
 msgid "E471: Argument required"
 msgstr "E471: Je vy¾adovaný argument"
@@ -673,11 +654,8 @@ msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
 msgstr ""
 "E11: Chybný príkaz v okne príkazového riadku; <Enter> spú¹»a, CTRL-C ukonèuje"
 
-#, fuzzy
 msgid "E12: Command not allowed in secure mode in current dir or tag search"
 msgstr ""
-"E12: Príkaz nie je z exrc/vimrc v aktuálnom adresári alebo pri hµadaní tagu "
-"povolený."
 
 #, c-format
 msgid "E158: Invalid buffer name: %s"
@@ -727,28 +705,27 @@ msgstr "E474: Chybný argument"
 msgid "E475: Invalid argument: %s"
 msgstr "E475: Chybný argument: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s"
-msgstr "E475: Chybný argument: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s: %s"
-msgstr "E475: Chybný argument: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E983: Duplicate argument: %s"
-msgstr "E125: Neprípustný argument: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid expression: \"%s\""
-msgstr "E15: Chybný výraz: %s"
+msgstr ""
 
 msgid "E16: Invalid range"
 msgstr "E16: Chybný rozsah"
 
-#, fuzzy
 msgid "E473: Internal error in regexp"
-msgstr "E473: Vnútorná chyba"
+msgstr ""
 
 msgid "E476: Invalid command"
 msgstr "E476: Chybný príkaz"
@@ -757,17 +734,14 @@ msgstr "E476: Chybný príkaz"
 msgid "E17: \"%s\" is a directory"
 msgstr "E17: \"%s\" je adresárom"
 
-#, fuzzy
 msgid "E756: Spell checking is not possible"
-msgstr "E756: Kontrola pravopisu nie je zapnutá"
+msgstr ""
 
-#, fuzzy
 msgid "E900: Invalid channel id"
-msgstr "E49: Chybná hodnota veµkosti rolovania"
+msgstr ""
 
-#, fuzzy
 msgid "E900: Invalid channel id: not a job"
-msgstr "E49: Chybná hodnota veµkosti rolovania"
+msgstr ""
 
 msgid "E901: Job table is full"
 msgstr ""
@@ -776,17 +750,15 @@ msgstr ""
 msgid "E903: Process failed to start: %s: \"%s\""
 msgstr ""
 
-#, fuzzy
 msgid "E904: channel is not a pty"
-msgstr "E664: zoznam zmien je prázdny"
+msgstr ""
 
 #, c-format
 msgid "E905: Couldn't open stdio channel: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E906: invalid stream for channel"
-msgstr "E701: Neplatný typ pre len()"
+msgstr ""
 
 msgid "E906: invalid stream for rpc channel, use 'rpc'"
 msgstr ""
@@ -800,13 +772,13 @@ msgstr ""
 msgid "E364: Library call failed for \"%s()\""
 msgstr "E364: Vyvolanie kni¾niènej funkcia zlyhalo pre \"%s()\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E667: Fsync failed: %s"
-msgstr "E667: Fsync zlyhal"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E739: Cannot create directory %s: %s"
-msgstr "E739: Nemo¾no vytvori» adresár: %s"
+msgstr ""
 
 msgid "E19: Mark has invalid line number"
 msgstr "E19: Znaèka má chybné èíslo riadku"
@@ -874,9 +846,9 @@ msgstr "E483: Nedá sa získa» názov doèasného súboru"
 msgid "E484: Can't open file %s"
 msgstr "E484: Nedá sa otvori» súbor %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E484: Can't open file %s: %s"
-msgstr "E484: Nedá sa otvori» súbor %s"
+msgstr ""
 
 #, c-format
 msgid "E485: Can't read file %s"
@@ -934,24 +906,22 @@ msgstr "E734: Zlý typ premennej pre %s="
 msgid "E461: Illegal variable name: %s"
 msgstr "E461: Neprípustné meno premennej: %s"
 
-#, fuzzy
 msgid "E995: Cannot modify existing variable"
-msgstr "E738: Nemo¾no vypísa» premenné pre %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E46: Cannot change read-only variable \"%.*s\""
-msgstr "E46: Nedá sa nastavi» premenná len na èítanie \"%s\""
+msgstr ""
 
 msgid "E715: Dictionary required"
 msgstr "E715: Vy¾aduje sa Slovník (Dictionary)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E979: Blob index out of range: %<PRId64>"
-msgstr "E684: index v zozname je mimo rozsah: %<PRId64>"
+msgstr ""
 
-#, fuzzy
 msgid "E978: Invalid operation for Blob"
-msgstr "E692: Neplatná operácia pre Zoznamy (Lists)"
+msgstr ""
 
 #, c-format
 msgid "E118: Too many arguments for function: %s"
@@ -961,32 +931,31 @@ msgstr "E118: Príli¹ mnoho argumentov pre funkciu %s"
 msgid "E119: Not enough arguments for function: %s"
 msgstr "E118: Príli¹ mnoho argumentov pre funkciu %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E716: Key not present in Dictionary: \"%s\""
-msgstr "E716: kµúè sa v Slovníku (Dictionary) nenachádza: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E716: Key not present in Dictionary: \"%.*s\""
-msgstr "E716: kµúè sa v Slovníku (Dictionary) nenachádza: %s"
+msgstr ""
 
 msgid "E714: List required"
 msgstr "E714: vy¾aduje sa Zoznam (List)"
 
-#, fuzzy
 msgid "E897: List or Blob required"
-msgstr "E714: vy¾aduje sa Zoznam (List)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E899: Argument of %s must be a List or Blob"
-msgstr "E686: Argument %s musí by» Zoznam (List)"
+msgstr ""
 
 #, c-format
 msgid "E712: Argument of %s must be a List or Dictionary"
 msgstr "E712: Argument %s musí by» Zoznam (List) alebo Slovník (Dictionary)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E896: Argument of %s must be a List, Dictionary or Blob"
-msgstr "E712: Argument %s musí by» Zoznam (List) alebo Slovník (Dictionary)"
+msgstr ""
 
 msgid "E47: Error while reading errorfile"
 msgstr "E47: Chyba pri èítaní chybového súboru"
@@ -997,9 +966,8 @@ msgstr "E48: Nie je dovolené v bezpeènostnej schránke"
 msgid "E523: Not allowed here"
 msgstr "E523: Nie je na povolené na tomto mieste"
 
-#, fuzzy
 msgid "E565: Not allowed to change text or change window"
-msgstr "E94: Vzoru %s nevyhovuje ¾iadny buffer"
+msgstr ""
 
 msgid "E359: Screen mode setting not supported"
 msgstr "E359: Nastavovanie re¾imu obrazovky nie je podporované"
@@ -1031,9 +999,9 @@ msgstr "E77: Príli¹ mnoho názvov súborov"
 msgid "E488: Trailing characters"
 msgstr "E488: Nadbytoèné znaky na konci"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E488: Trailing characters: %s"
-msgstr "E488: Nadbytoèné znaky na konci"
+msgstr ""
 
 msgid "E78: Unknown mark"
 msgstr "E78: Neznáma znaèka"
@@ -1054,9 +1022,8 @@ msgstr ""
 msgid "E80: Error while writing"
 msgstr "E80: Chyba pri ukladaní"
 
-#, fuzzy
 msgid "E939: Positive count required"
-msgstr "E397: Vy¾adovaný názov súboru"
+msgstr ""
 
 msgid "E81: Using <SID> not in a script context"
 msgstr "E81: Pou¾itie <SID> mimo kontext skriptu"
@@ -1065,9 +1032,8 @@ msgstr "E81: Pou¾itie <SID> mimo kontext skriptu"
 msgid "E107: Missing parentheses: %s"
 msgstr "E107: Chýbajú zátvorky: %s"
 
-#, fuzzy
 msgid "E749: Empty buffer"
-msgstr "E749: prázdny buffer"
+msgstr ""
 
 #, c-format
 msgid "E86: Buffer %<PRId64> does not exist"
@@ -1080,25 +1046,24 @@ msgstr "[Neulo¾ené zmeny]\n"
 msgid "E37: No write since last change (add ! to override)"
 msgstr "E37: Neulo¾ené zmeny (pou¾ite ! pre vynútenie)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E89: No write since last change for buffer %d (add ! to override)"
-msgstr "E89: Zmeny v bufferi %<PRId64> neboli ulo¾ené (! pre vynútenie)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E92: Buffer %d not found"
-msgstr "E92: buffer %<PRId64> nenájdený"
+msgstr ""
 
 #, fuzzy, c-format
 msgid "E117: Unknown function: %s"
 msgstr "E130: Neznáma funkcia: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E193: %s not inside a function"
-msgstr "E133: :return mimo funkciu"
+msgstr ""
 
-#, fuzzy
 msgid "E948: Job still running"
-msgstr " (stále be¾í)"
+msgstr ""
 
 msgid "E948: Job still running (add ! to end the job)"
 msgstr ""
@@ -1117,13 +1082,12 @@ msgstr "E764: Voµba \"%s\" nie je nastavená"
 msgid "E850: Invalid register name"
 msgstr "E354: '%s' nie je prístupné meno registru"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E919: Directory not found in '%s': \"%s\""
-msgstr "E161: Bod preru¹enia nenájdený: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E952: Autocommand caused recursive behavior"
-msgstr "E169: Príkaz je príli¹ rekurzívny"
+msgstr ""
 
 msgid "E328: Menu only exists in another mode"
 msgstr "E328: Ponuka existuje iba v inom móde"
@@ -1132,9 +1096,9 @@ msgstr "E328: Ponuka existuje iba v inom móde"
 msgid "E813: Cannot close autocmd window"
 msgstr "E444: Posledné okno sa nedá zatvori»"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E684: List index out of range: %<PRId64>"
-msgstr "E684: index v zozname je mimo rozsah: %<PRId64>"
+msgstr ""
 
 #, c-format
 msgid "E686: Argument of %s must be a List"
@@ -1143,25 +1107,23 @@ msgstr "E686: Argument %s musí by» Zoznam (List)"
 msgid "E519: Option not supported"
 msgstr "E519: Voµba nie je podporovaná"
 
-#, fuzzy
 msgid "E856: Filename too long"
-msgstr "E75: Názov je príli¹ dlhý"
+msgstr ""
 
-#, fuzzy
 msgid "E806: Using a Float as a String"
-msgstr "E730: Zoznam (List) pou¾itý ako Re»azec (String)"
+msgstr ""
 
 #, fuzzy
 msgid "E788: Not allowed to edit another buffer now"
 msgstr "E48: Nie je dovolené v bezpeènostnej schránke"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1023: Using a Number as a Bool: %d"
-msgstr "E703: Pou¾itý odkaz na Funkciu (Funcref) ako èíslo"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1085: Not a callable type: %s"
-msgstr "E108: Premenná \"%s\" neexistuje"
+msgstr ""
 
 msgid "E855: Autocommands caused command to abort"
 msgstr ""
@@ -1174,13 +1136,11 @@ msgstr ""
 msgid "E5560: %s must not be called in a fast event context"
 msgstr ""
 
-#, fuzzy
 msgid "E5601: Cannot close window, only floating window would remain"
-msgstr "E444: Posledné okno sa nedá zatvori»"
+msgstr ""
 
-#, fuzzy
 msgid "E5602: Cannot exchange or rotate float"
-msgstr "E557: Nedá sa otvori» termcap súbor"
+msgstr ""
 
 #, c-format
 msgid "E344: Can't find directory \"%s\" in cdpath"
@@ -1198,95 +1158,84 @@ msgstr "E346: ®iadny ïal¹í adresár \"%s\" nebol v cdpath nájdený"
 msgid "E347: No more file \"%s\" found in path"
 msgstr "E347: ®iadny ïal¹í súbor \"%s\" nebol v ceste nájdený"
 
-#, fuzzy
 msgid "E741: Value is locked"
-msgstr "E741: Hodnota je uzamknutá: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E741: Value is locked: %.*s"
-msgstr "E741: Hodnota je uzamknutá: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E742: Cannot change value"
-msgstr "E742: Nemo¾no zmeni» hodnotu %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E742: Cannot change value of %.*s"
-msgstr "E742: Nemo¾no zmeni» hodnotu %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
-msgstr "E46: Nedá sa nastavi» premenná v bezpeènostnej schránke: \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E795: Cannot delete variable %.*s"
-msgstr "E738: Nemo¾no vypísa» premenné pre %s"
+msgstr ""
 
 msgid "E960: Problem creating the internal diff"
 msgstr ""
 
-#, fuzzy
 msgid "E1155: Cannot define autocommands for ALL events"
-msgstr "E217: Automatické príkazy sa nedajú spusti» pre V©ETKY udalosti"
+msgstr ""
 
-#, fuzzy
 msgid "E1156: Cannot change the argument list recursively"
-msgstr "E659: Python nemô¾e by» spustený rekurzívne"
+msgstr ""
 
-#, fuzzy
 msgid "E1240: Resulting text too long"
-msgstr "E340: Riadok sa stáva príli¹ dlhým"
+msgstr ""
 
-#, fuzzy
 msgid "E1247: Line number out of range"
-msgstr "èíslo riadka mimo rozsah"
+msgstr ""
 
 msgid "E5248: Invalid character in group name"
 msgstr "E5248: Chybný znak v mene skupiny"
 
-#, fuzzy
 msgid "E1249: Highlight group name too long"
-msgstr "E411: skupina zvýraznenia %s nebola nájdená"
+msgstr ""
 
-#, fuzzy
 msgid "E928: String required"
-msgstr "E397: Vy¾adovaný názov súboru"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E964: Invalid column number: %ld"
-msgstr "E182: Chybné meno príkazu"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E966: Invalid line number: %ld"
-msgstr "E19: Znaèka má chybné èíslo riadku"
+msgstr ""
 
 #, c-format
 msgid "E998: Reduce of an empty %s with no initial value"
 msgstr ""
 
-#, fuzzy
 msgid "E1239: Invalid value for blob: 0x<PRIX64>"
-msgstr "E157: Chybné ID znaèky: %<PRId64>"
+msgstr ""
 
 #, c-format
 msgid "E1278: Stray '}' without a matching '{': %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1279: Missing '}': %s"
-msgstr "E789: Chýba ']': %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1310: Cannot change menus while listing"
-msgstr "E530: V grafickom móde (GUI) sa nedá meni» typ terminálu"
+msgstr ""
 
-#, fuzzy
 msgid "E1312: Not allowed to change the window layout in this autocmd"
-msgstr "E94: Vzoru %s nevyhovuje ¾iadny buffer"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1510: Value too large: %s"
-msgstr "E741: Hodnota je uzamknutá: %s"
+msgstr ""
 
 msgid "E5767: Cannot use :undo! to redo or move to a different undo branch"
 msgstr ""
@@ -1297,13 +1246,12 @@ msgstr ""
 msgid "E1514: 'findfunc' did not return a List type"
 msgstr ""
 
-#, fuzzy
 msgid "E1546: Cannot switch to a closing buffer"
-msgstr "E90: Posledný buffer sa nedá odstráni»"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1549: Cannot have more than %d diff anchors"
-msgstr "E96: Nemô¾em porovna» viac ako %<PRId64> bufferov"
+msgstr ""
 
 msgid "E1550: Failed to find all diff anchors"
 msgstr ""
@@ -1314,9 +1262,9 @@ msgstr ""
 msgid "E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5570: Cannot update trust file: %s"
-msgstr "E557: Nedá sa otvori» termcap súbor"
+msgstr ""
 
 #, c-format
 msgid "E282: Cannot read from \"%s\""
@@ -1336,9 +1284,8 @@ msgstr "hµadanie dosiahlo zaèiatok, pokraèovanie od konca"
 msgid "search hit BOTTOM, continuing at TOP"
 msgstr "hµadanie dosiahlo koniec, pokraèovanie od zaèiatku"
 
-#, fuzzy
 msgid " line "
-msgstr "1 riadok, "
+msgstr ""
 
 msgid "E111: Missing ']'"
 msgstr "E111: Chýba ']'"
@@ -1347,13 +1294,11 @@ msgstr "E111: Chýba ']'"
 msgid "E697: Missing end of List ']': %s"
 msgstr "E697: Chýba koniec Zoznamu (List) ']': %s"
 
-#, fuzzy
 msgid "E719: Cannot slice a Dictionary"
-msgstr "E719: Nemo¾no pou¾it [:] so Slovníkom (Dictionary)"
+msgstr ""
 
-#, fuzzy
 msgid "E909: Cannot index a special variable"
-msgstr "E695: Nemo¾no indexova» odkaz na Funkciu (Funcref)"
+msgstr ""
 
 msgid "E274: No white space allowed before parenthesis"
 msgstr ""
@@ -1361,56 +1306,47 @@ msgstr ""
 msgid "E695: Cannot index a Funcref"
 msgstr "E695: Nemo¾no indexova» odkaz na Funkciu (Funcref)"
 
-#, fuzzy
 msgid "E698: Variable nested too deep for making a copy"
-msgstr "E698: premenná je vnorená príli¹ hlboko pre skopírovanie"
+msgstr ""
 
-#, fuzzy
 msgid "E1098: String, List or Blob required"
-msgstr "E521: Po = je vy¾adované èíslo"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1169: Expression too recursive: %s"
-msgstr "E169: Príkaz je príli¹ rekurzívny"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1203: Dot can only be used on a dictionary: %s"
-msgstr "E716: kµúè sa v Slovníku (Dictionary) nenachádza: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1192: Empty function name"
-msgstr "E749: prázdny buffer"
+msgstr ""
 
-#, fuzzy
 msgid "E1265: Cannot use a partial here"
-msgstr "E284: Nedajú sa nastavi» IC hodnoty"
+msgstr ""
 
-#, fuzzy
 msgid "E689: Can only index a List, Dictionary or Blob"
-msgstr "E689: Indexova» mo¾no iba Zoznam (List) alebo Slovník (Dictionary)"
+msgstr ""
 
 msgid "E708: [:] must come last"
 msgstr "E708: [:] musí prís» ako posledná"
 
-#, fuzzy
 msgid "E713: Cannot use empty key after ."
-msgstr "E713: Nemo¾no pou¾i» prázdny kµúè pre Slovník (Dictionary)"
+msgstr ""
 
-#, fuzzy
 msgid "E709: [:] requires a List or Blob value"
-msgstr "E709: [:] vy¾aduje hodnotu Poµa (List value)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E121: Undefined variable: %.*s"
-msgstr "E121: Nedefinovaná premenná: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a range"
-msgstr "E444: Posledné okno sa nedá zatvori»"
+msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a list or dict"
-msgstr "E90: Posledný buffer sa nedá odstráni»"
+msgstr ""
 
 msgid "E690: Missing \"in\" after :for"
 msgstr "E690: Chýba \"in\" po :for"
@@ -1425,9 +1361,8 @@ msgstr "E719: Nemo¾no pou¾it [:] so Slovníkom (Dictionary)"
 msgid "E110: Missing ')'"
 msgstr "E110: Chýba ')'"
 
-#, fuzzy
 msgid "E260: Missing name after ->"
-msgstr "E526: Po <%s> chýba èíslo"
+msgstr ""
 
 #, c-format
 msgid "E112: Option name missing: %s"
@@ -1471,13 +1406,12 @@ msgstr "E722: Chýba èiarka v Slovníku (Dictionary): %s"
 msgid "E723: Missing end of Dictionary '}': %s"
 msgstr "E723: Chýba koniec Slovníka (Dictionary) '}': %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Executing command: \"%s\""
-msgstr "Spú¹»am %s"
+msgstr ""
 
-#, fuzzy
 msgid "E921: Invalid callback argument"
-msgstr "E474: Chybný argument"
+msgstr ""
 
 msgid ""
 "\n"
@@ -1489,16 +1423,14 @@ msgstr ""
 msgid " (run Nvim with -V1 for more details)"
 msgstr ""
 
-#, fuzzy
 msgid "E977: Can only compare Blob with Blob"
-msgstr "E691: Porovnáva» mo¾no iba Zoznam so Zoznamom (List with List)"
+msgstr ""
 
 msgid "E691: Can only compare List with List"
 msgstr "E691: Porovnáva» mo¾no iba Zoznam so Zoznamom (List with List)"
 
-#, fuzzy
 msgid "E692: Invalid operation for List"
-msgstr "E692: Neplatná operácia pre Zoznamy (Lists)"
+msgstr ""
 
 msgid "E735: Can only compare Dictionary with Dictionary"
 msgstr ""
@@ -1518,17 +1450,17 @@ msgstr ""
 msgid "E474: Expected colon before dictionary value: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string key: %s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected comma before dictionary key: %s"
-msgstr "E722: Chýba èiarka v Slovníku (Dictionary): %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unfinished escape sequence: %.*s"
-msgstr "E540: Neuzatvorené zoskupenie výrazov"
+msgstr ""
 
 #, c-format
 msgid "E474: Unfinished unicode escape sequence: %.*s"
@@ -1538,9 +1470,9 @@ msgstr ""
 msgid "E474: Expected four hex digits after \\u: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unknown escape sequence: %.*s"
-msgstr "E409: Neznámy názov skupiny: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: ASCII control characters cannot be present inside string: %.*s"
@@ -1556,25 +1488,25 @@ msgid ""
 "%.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string end: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Leading zeroes are not allowed: %.*s"
-msgstr "E745: Rozsah nie je povolený"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after minus sign: %.*s"
-msgstr "E526: Po <%s> chýba èíslo"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after decimal dot: %.*s"
-msgstr "E526: Po <%s> chýba èíslo"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing exponent: %.*s"
-msgstr "E114: Chýbajú úvodzovky: %s"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -1599,37 +1531,37 @@ msgstr ""
 msgid "E474: Closing list with curly bracket: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Closing dictionary with square bracket: %.*s"
-msgstr "E720: Chýba dvojbodka v Slovníku (Dictionary): %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing comma: %.*s"
-msgstr "E488: Nadbytoèné znaky na konci"
+msgstr ""
 
 #, c-format
 msgid "E474: Expected value after colon: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected value: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Comma not inside container: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate comma: %.*s"
-msgstr "E721: Duplikovaný kµúè v Slovníku (Dictionary): \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Comma after colon: %.*s"
-msgstr "E254: Nedá sa alokova» farba %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using comma in place of colon: %.*s"
-msgstr "E722: Chýba èiarka v Slovníku (Dictionary): %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Leading comma: %.*s"
@@ -1639,45 +1571,45 @@ msgstr ""
 msgid "E474: Colon not inside container: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using colon not in dictionary: %.*s"
-msgstr "E720: Chýba dvojbodka v Slovníku (Dictionary): %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected colon: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
 #, c-format
 msgid "E474: Colon after comma: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate colon: %.*s"
-msgstr "E721: Duplikovaný kµúè v Slovníku (Dictionary): \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected null: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected true: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected false: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unidentified byte: %.*s"
-msgstr "E121: Nedefinovaná premenná: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing characters: %.*s"
-msgstr "E488: Nadbytoèné znaky na konci"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected end of input: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
 #, c-format
 msgid "E5010: List item %d of the second argument is not a string"
@@ -1698,9 +1630,9 @@ msgstr ""
 msgid "partial"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "argument %i"
-msgstr "vim [argumenty] "
+msgstr ""
 
 msgid "partial self dictionary"
 msgstr ""
@@ -1735,21 +1667,17 @@ msgstr ""
 msgid "E474: Error while dumping %s, %s: attempt to dump function reference"
 msgstr ""
 
-#, fuzzy
 msgid "E474: Invalid key in special dictionary"
-msgstr "E736: Neplatná operácia pre Slovník"
+msgstr ""
 
-#, fuzzy
 msgid "encode_tv2string() argument"
-msgstr "Príli¹ mnoho upravovacích argumentov"
+msgstr ""
 
-#, fuzzy
 msgid ":echo argument"
-msgstr "vim [argumenty] "
+msgstr ""
 
-#, fuzzy
 msgid "encode_tv2json() argument"
-msgstr "Príli¹ mnoho upravovacích argumentov"
+msgstr ""
 
 #, c-format
 msgid "E5004: Error while dumping %s, %s: attempt to dump function reference"
@@ -1759,20 +1687,18 @@ msgstr ""
 msgid "E5005: Unable to dump %s: container references itself in %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error while writing: %s"
-msgstr "E80: Chyba pri ukladaní"
+msgstr ""
 
-#, fuzzy
 msgid "E5000: Cannot find tab number."
-msgstr "E695: Nemo¾no indexova» odkaz na Funkciu (Funcref)"
+msgstr ""
 
 msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
 msgstr ""
 
-#, fuzzy
 msgid "E5002: Cannot find window number."
-msgstr "E671: Nemo¾no nájs» okno s titulkom \"%s\""
+msgstr ""
 
 msgid "<empty>"
 msgstr "<prázdny>"
@@ -1783,63 +1709,56 @@ msgstr "E655: Príli¹ mnoho symbolických odkazov (sluèka?)"
 msgid "writefile() first argument must be a List or a Blob"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5060: Unknown flag: %s"
-msgstr "E235: Neznáme písmo: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E482: Can't open file with an empty name"
-msgstr "E212: Súbor sa nedá otvori» pre ukladanie"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E482: Can't open file %s for writing: %s"
-msgstr "E212: Súbor sa nedá otvori» pre ukladanie"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E80: Error when closing file %s: %s"
-msgstr "E209: Chyba pri uzatváraní \"%s\""
+msgstr ""
 
-#, fuzzy
 msgid "E957: Invalid window number"
-msgstr "E534: Chybné ¹iroké písmo"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E935: Invalid submatch number: %d"
-msgstr "E354: '%s' nie je prístupné meno registru"
+msgstr ""
 
-#, fuzzy
 msgid "E1132: Missing function argument"
-msgstr "E126: Chýba :endfunction"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid channel stream \"%s\""
-msgstr "E71: Neprípustný znak po %s%%"
+msgstr ""
 
 msgid "&Ok"
 msgstr "&Ok"
 
-#, fuzzy
 msgid "Context stack is empty"
-msgstr "E73: zoznam tagov je prázdny"
+msgstr ""
 
-#, fuzzy
 msgid "dictwatcheradd() argument"
-msgstr "Chybný argument pre"
+msgstr ""
 
 msgid "E900: maxdepth must be non-negative number"
 msgstr ""
 
-#, fuzzy
 msgid "flatten() argument"
-msgstr "Chybný argument pre"
+msgstr ""
 
 #, c-format
 msgid "E700: Unknown function: %s"
 msgstr "E700: Neznáma funkcia: %s"
 
-#, fuzzy
 msgid "E923: Second argument of function() must be a list or a dict"
-msgstr "E712: Argument %s musí by» Zoznam (List) alebo Slovník (Dictionary)"
+msgstr ""
 
 msgid "called inputrestore() more often than inputsave()"
 msgstr "funkcia inputrestore() volaná èastej¹ie ako inputsave()"
@@ -1858,16 +1777,16 @@ msgstr ""
 msgid "E474: Failed to convert list to string"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Failed to parse %.*s"
-msgstr "E241: Nemô¾em posla» na %s"
+msgstr ""
 
 msgid "E701: Invalid type for len()"
 msgstr "E701: Neplatný typ pre len()"
 
-#, fuzzy, c-format
+#, c-format
 msgid "msgpackdump() argument, index %i"
-msgstr "vim [argumenty] "
+msgstr ""
 
 msgid "E5070: Character number must not be less than zero"
 msgstr ""
@@ -1882,43 +1801,41 @@ msgstr "E726: Krok je nulový"
 msgid "E727: Start past end"
 msgstr "E727: Zaèiatok presahuje koniec"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E962: Invalid action: '%s'"
-msgstr "E383: Neprípustný hµadaný re»azec: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "connection failed: %s"
-msgstr "XSMP SmcOpenConnection zlyhalo: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E6100: \"%s\" is not a valid stdpath"
-msgstr "E236: Písmo \"%s\" nemá pevnú ¹írku"
+msgstr ""
 
 msgid "(Invalid)"
 msgstr "(Chybný)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E706: Argument of %s must be a List, String or Dictionary"
-msgstr "E712: Argument %s musí by» Zoznam (List) alebo Slovník (Dictionary)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1250: Argument of %s must be a List, String, Dictionary or Blob"
-msgstr "E712: Argument %s musí by» Zoznam (List) alebo Slovník (Dictionary)"
+msgstr ""
 
 #, fuzzy
 msgid "map() argument"
 msgstr "vim [argumenty] "
 
-#, fuzzy
 msgid "mapnew() argument"
-msgstr "vim [argumenty] "
+msgstr ""
 
 msgid "filter() argument"
 msgstr ""
 
-#, fuzzy
 msgid "foreach() argument"
-msgstr "Chybný argument pre"
+msgstr ""
 
 #, fuzzy
 msgid "add() argument"
@@ -1927,9 +1844,8 @@ msgstr "Chybný argument pre"
 msgid "extend() argument"
 msgstr ""
 
-#, fuzzy
 msgid "extendnew() argument"
-msgstr "Chybný argument pre"
+msgstr ""
 
 #, fuzzy
 msgid "insert() argument"
@@ -1941,73 +1857,71 @@ msgstr ""
 msgid "reverse() argument"
 msgstr ""
 
-#, fuzzy
 msgid "E743: Variable nested too deep for (un)lock"
-msgstr "E743: premenná je príli¹ vnorená na (od)blokovanie"
+msgstr ""
 
-#, fuzzy
 msgid "E908: Using an invalid value as a String"
-msgstr "E730: Zoznam (List) pou¾itý ako Re»azec (String)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1174: String required for argument %d"
-msgstr "E466: :winpos (pozícia okna) vy¾aduje dva argumenty"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1175: Non-empty string required for argument %d"
-msgstr "E467: Vlastné doplnenia vy¾adujú meno funkcie ako argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1206: Dictionary required for argument %d"
-msgstr "E715: Vy¾aduje sa Slovník (Dictionary)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1210: Number required for argument %d"
-msgstr "E521: Po = je vy¾adované èíslo"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1211: List required for argument %d"
-msgstr "E466: :winpos (pozícia okna) vy¾aduje dva argumenty"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1212: Bool required for argument %d"
-msgstr "E466: :winpos (pozícia okna) vy¾aduje dva argumenty"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1219: Float or Number required for argument %d"
-msgstr "E179: pre doplnenie (-complete) je potrebný argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1220: String or Number required for argument %d"
-msgstr "E179: pre doplnenie (-complete) je potrebný argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1222: String or List required for argument %d"
-msgstr "E466: :winpos (pozícia okna) vy¾aduje dva argumenty"
+msgstr ""
 
 #, c-format
 msgid "E1225: List, Dictionary, Blob or String required for argument %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1226: List or Blob required for argument %d"
-msgstr "E467: Vlastné doplnenia vy¾adujú meno funkcie ako argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1238: Blob required for argument %d"
-msgstr "E466: :winpos (pozícia okna) vy¾aduje dva argumenty"
+msgstr ""
 
 #, c-format
 msgid "E1252: String, List or Blob required for argument %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1256: String or function required for argument %d"
-msgstr "E467: Vlastné doplnenia vy¾adujú meno funkcie ako argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1297: Non-NULL Dictionary required for argument %d"
-msgstr "E715: Vy¾aduje sa Slovník (Dictionary)"
+msgstr ""
 
 msgid "E710: List value has more items than target"
 msgstr "E710: Hodnota Poµa (List value) má viac polo¾iek ako cieµ"
@@ -2039,16 +1953,14 @@ msgstr "E737: Kµúè u¾ existuje: %s"
 msgid "E972: Blob value does not have the right number of bytes"
 msgstr ""
 
-#, fuzzy
 msgid "E805: Expected a Number or a String, Float found"
-msgstr "E766: Chybné argumenty pre funkciu printf()"
+msgstr ""
 
 msgid "E703: Expected a Number or a String, Funcref found"
 msgstr ""
 
-#, fuzzy
 msgid "E745: Expected a Number or a String, List found"
-msgstr "E766: Chybné argumenty pre funkciu printf()"
+msgstr ""
 
 msgid "E728: Expected a Number or a String, Dictionary found"
 msgstr ""
@@ -2059,9 +1971,8 @@ msgstr ""
 msgid "E5299: Expected a Number or a String, Boolean found"
 msgstr ""
 
-#, fuzzy
 msgid "E5300: Expected a Number or a String"
-msgstr "E766: Chybné argumenty pre funkciu printf()"
+msgstr ""
 
 msgid "E745: Using a List as a Number"
 msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
@@ -2073,41 +1984,32 @@ msgstr "E728: Slovník (Dictionary) pou¾itý ako èíslo"
 msgid "E805: Using a Float as a Number"
 msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
 
-#, fuzzy
 msgid "E974: Using a Blob as a Number"
-msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
+msgstr ""
 
-#, fuzzy
 msgid "E685: using an invalid value as a Number"
-msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
+msgstr ""
 
-#, fuzzy
 msgid "E730: Using a List as a String"
-msgstr "E730: Zoznam (List) pou¾itý ako Re»azec (String)"
+msgstr ""
 
-#, fuzzy
 msgid "E731: Using a Dictionary as a String"
-msgstr "E731: Slovník (Dictionary) pou¾itý ako Re»azec (String)"
+msgstr ""
 
-#, fuzzy
 msgid "E976: Using a Blob as a String"
-msgstr "E730: Zoznam (List) pou¾itý ako Re»azec (String)"
+msgstr ""
 
-#, fuzzy
 msgid "E891: Using a Funcref as a Float"
-msgstr "E703: Pou¾itý odkaz na Funkciu (Funcref) ako èíslo"
+msgstr ""
 
-#, fuzzy
 msgid "E892: Using a String as a Float"
-msgstr "E728: Slovník (Dictionary) pou¾itý ako èíslo"
+msgstr ""
 
-#, fuzzy
 msgid "E893: Using a List as a Float"
-msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
+msgstr ""
 
-#, fuzzy
 msgid "E894: Using a Dictionary as a Float"
-msgstr "E728: Slovník (Dictionary) pou¾itý ako èíslo"
+msgstr ""
 
 msgid "E362: Using a boolean value as a Float"
 msgstr ""
@@ -2115,9 +2017,8 @@ msgstr ""
 msgid "E907: Using a special value as a Float"
 msgstr ""
 
-#, fuzzy
 msgid "E975: Using a Blob as a Float"
-msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
+msgstr ""
 
 #, fuzzy
 msgid "E808: Number or Float required"
@@ -2140,21 +2041,19 @@ msgstr "E130: Neznáma funkcia: %s"
 msgid "E454: Function list was modified"
 msgstr ""
 
-#, fuzzy
 msgid "E1058: Function nesting too deep"
-msgstr "E218: vnorenia automatického príkazu sú príli¹ hlboké"
+msgstr ""
 
 #, c-format
 msgid "E1068: No white space allowed before '%s': %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1145: Missing heredoc end marker: %s"
-msgstr "E114: Chýbajú úvodzovky: %s"
+msgstr ""
 
-#, fuzzy
 msgid "E1300: Cannot use a partial with dictionary for :defer"
-msgstr "E719: Nemo¾no pou¾it [:] so Slovníkom (Dictionary)"
+msgstr ""
 
 #, c-format
 msgid "E125: Illegal argument: %s"
@@ -2167,9 +2066,9 @@ msgstr "E125: Neprípustný argument: %s"
 msgid "E989: Non-default argument follows default argument"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E451: Expected }: %s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
 #, fuzzy, c-format
 msgid "E740: Too many arguments for function %s"
@@ -2205,13 +2104,13 @@ msgstr "pokraèujem v %s"
 msgid "E699: Too many arguments"
 msgstr "E699: Príli¹ mnoho argumentov"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E276: Cannot use function as a method: %s"
-msgstr "E131: Nedá sa vymaza» funkcia %s: je pou¾ívaná"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E933: Function was deleted: %s"
-msgstr "E129: Je vy¾adované meno funkcie"
+msgstr ""
 
 #, fuzzy, c-format
 msgid "E120: Using <SID> not in a script context: %s"
@@ -2243,9 +2142,9 @@ msgstr "E130: Neznáma funkcia: %s"
 msgid "E126: Missing :endfunction"
 msgstr "E126: Chýba :endfunction"
 
-#, fuzzy, c-format
+#, c-format
 msgid "W22: Text found after :endfunction: %s"
-msgstr "E130: Neznáma funkcia: %s"
+msgstr ""
 
 #, c-format
 msgid "E124: Missing '(': %s"
@@ -2275,9 +2174,9 @@ msgstr "E746: Meno funkcie sa nezhoduje s menom interpretovaného súboru: %s"
 msgid "E131: Cannot delete function %s: It is in use"
 msgstr "E131: Nedá sa vymaza» funkcia %s: je pou¾ívaná"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot delete function %s: It is being used internally"
-msgstr "E131: Nedá sa vymaza» funkcia %s: je pou¾ívaná"
+msgstr ""
 
 msgid "E133: :return not inside a function"
 msgstr "E133: :return mimo funkciu"
@@ -2285,38 +2184,34 @@ msgstr "E133: :return mimo funkciu"
 msgid "E18: Unexpected characters in :let"
 msgstr "E18: Neoèekávané znaky v :let"
 
-#, fuzzy
 msgid "E452: Double ; in list of variables"
-msgstr "Dvojitá ; v zozname premenných"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E940: Cannot lock or unlock variable %s"
-msgstr "E46: Nedá sa nastavi» premenná len na èítanie \"%s\""
+msgstr ""
 
 #, c-format
 msgid "E963: Setting v:%s to value with wrong type"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E990: Missing end marker '%s'"
-msgstr "E769: Chýbajúca ] po %s["
+msgstr ""
 
-#, fuzzy
 msgid "E991: Cannot use =<< here"
-msgstr "E284: Nedajú sa nastavi» IC hodnoty"
+msgstr ""
 
 msgid ""
 "E5700: Expression from 'spellsuggest' must yield lists with exactly two "
 "values"
 msgstr ""
 
-#, fuzzy
 msgid "E221: Marker cannot start with lower case letter"
-msgstr "E183: Pou¾ívateµom definované príkazy musia zaèína» veµkým písmenom"
+msgstr ""
 
-#, fuzzy
 msgid "E172: Missing marker"
-msgstr "E170: Chýba :endfor"
+msgstr ""
 
 msgid "E687: Less targets than List items"
 msgstr "E687: Menej cieµov ako polo¾iek Poµa (List items)"
@@ -2328,24 +2223,22 @@ msgstr "E688: Viac cieµov ako polo¾iek Poµa (List items)"
 msgid "E738: Can't list variables for %s"
 msgstr "E738: Nemo¾no vypísa» premenné pre %s"
 
-#, fuzzy
 msgid "E996: Cannot lock an environment variable"
-msgstr "E46: Nedá sa nastavi» premenná len na èítanie \"%s\""
+msgstr ""
 
 msgid "E996: Cannot lock an option"
 msgstr ""
 
-#, fuzzy
 msgid "E996: Cannot lock a register"
-msgstr "E90: Posledný buffer sa nedá odstráni»"
+msgstr ""
 
 #, c-format
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: Premenná \"%s\" neexistuje"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1122: Variable is locked: %.*s"
-msgstr "E741: Hodnota je uzamknutá: %s"
+msgstr ""
 
 #, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
@@ -2361,9 +2254,8 @@ msgstr "E705: Meno premennej je v konflikte s existujúcou funkciou: %s"
 msgid "E521: Number required: &%s = '%s'"
 msgstr "E521: Po = je vy¾adované èíslo"
 
-#, fuzzy
 msgid "E1308: Cannot resize a window in another tab page"
-msgstr "E444: Posledné okno sa nedá zatvori»"
+msgstr ""
 
 msgid "tcp address must be host:port"
 msgstr ""
@@ -2371,29 +2263,27 @@ msgstr ""
 msgid "failed to lookup host or port"
 msgstr ""
 
-#, fuzzy
 msgid "connection refused"
-msgstr "pripojený"
+msgstr ""
 
-#, fuzzy
 msgid "E144: Non-numeric argument to :z"
-msgstr "E144: neèíselný argument pre :z"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"
-msgstr "<%s>%s%s  %d,  ¹estnástkovo %02x,  osmièkovo %03o"
+msgstr ""
 
 #, c-format
 msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
 msgstr "<%s>%s%s  %d,  ¹estnástkovo %02x,  osmièkovo %03o"
 
-#, fuzzy, c-format
+#, c-format
 msgid "> %d, Hex %04x, Oct %o, Digr %s"
-msgstr "> %d,  ¹estnástkovo %04x,  osmièkovo %o"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "> %d, Hex %08x, Oct %o, Digr %s"
-msgstr "> %d,  ¹estnástkovo %08x,  osmièkovo %o"
+msgstr ""
 
 #, c-format
 msgid "> %d, Hex %04x, Octal %o"
@@ -2403,15 +2293,14 @@ msgstr "> %d,  ¹estnástkovo %04x,  osmièkovo %o"
 msgid "> %d, Hex %08x, Octal %o"
 msgstr "> %d,  ¹estnástkovo %08x,  osmièkovo %o"
 
-#, fuzzy
 msgid "E134: Cannot move a range of lines into itself"
-msgstr "E134: Prekrytie riadkov sebou samými"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line moved"
 msgid_plural "%<PRId64> lines moved"
-msgstr[0] "%<PRId64> riadkov presunutých"
-msgstr[1] "%<PRId64> riadkov presunutých"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "E482: Can't create file %s"
@@ -2427,9 +2316,9 @@ msgstr "E135: Automatické príkazy *Filter* nesmú meni» aktuálny buffer"
 msgid "[No write since last change]\n"
 msgstr "[Neulo¾ené zmeny]\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E503: \"%s\" is not a file or writable device"
-msgstr "nie je súborom ani zapisovatelným zariadením"
+msgstr ""
 
 msgid "Write partial file?"
 msgstr "Ulo¾i» neúplný súbor?"
@@ -2489,33 +2378,32 @@ msgstr "nahradi» %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
 msgid "(Interrupted) "
 msgstr "(preru¹ený) "
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> match on %<PRId64> line"
 msgid_plural "%<PRId64> matches on %<PRId64> line"
-msgstr[0] " na %<PRId64> riadkov"
-msgstr[1] " na %<PRId64> riadkov"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> substitution on %<PRId64> line"
 msgid_plural "%<PRId64> substitutions on %<PRId64> line"
-msgstr[0] "%<PRId64> nahradení"
-msgstr[1] "%<PRId64> nahradení"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> match on %<PRId64> lines"
 msgid_plural "%<PRId64> matches on %<PRId64> lines"
-msgstr[0] " na %<PRId64> riadkov"
-msgstr[1] " na %<PRId64> riadkov"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> substitution on %<PRId64> lines"
 msgid_plural "%<PRId64> substitutions on %<PRId64> lines"
-msgstr[0] "%<PRId64> nahradení"
-msgstr[1] "%<PRId64> nahradení"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy
 msgid "E147: Cannot do :global recursive with a range"
-msgstr "E147: :global sa nedá vola» rekurzívne"
+msgstr ""
 
 msgid "E148: Regular expression missing from global"
 msgstr "E148: Pri príkaze global chýba regulárny výraz"
@@ -2532,9 +2420,9 @@ msgstr "Vzor nenájdený"
 msgid "No old files"
 msgstr "®iadne vlo¾ené súbory"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E666: Compiler not supported: %s"
-msgstr "E666: prekladaè nie je podporovaný: %s"
+msgstr ""
 
 #, c-format
 msgid "Save changes to \"%s\"?"
@@ -2544,9 +2432,9 @@ msgstr "Ulo¾i» zmeny do \"%s\"?"
 msgid "Close \"%s\"?"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E947: Job still running in buffer \"%s\""
-msgstr "E94: Vzoru %s nevyhovuje ¾iadny buffer"
+msgstr ""
 
 #, c-format
 msgid "E162: No write since last change for buffer \"%s\""
@@ -2559,42 +2447,32 @@ msgstr ""
 msgid "E464: Ambiguous use of user-defined command"
 msgstr "E464: Nejednoznaèné pou¾itie pou¾ívateµom definovaného príkazu"
 
-#, fuzzy
 msgid "E489: No call stack to substitute for \"<stack>\""
-msgstr "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
+msgstr ""
 
 msgid "E492: Not an editor command"
 msgstr "E492: Nie je príkazom editoru"
 
-#, fuzzy
 msgid "E495: No autocommand file name to substitute for \"<afile>\""
-msgstr "E495: ¾iadny názov súboru, ktorým by bolo mo¾né nahradi» \"<afile>\""
+msgstr ""
 
-#, fuzzy
 msgid "E496: No autocommand buffer number to substitute for \"<abuf>\""
-msgstr "E496: ¾iadne èíslo bufferu, ktorým by bolo mo¾né nahradi» \"<abuf>\""
+msgstr ""
 
-#, fuzzy
 msgid "E497: No autocommand match name to substitute for \"<amatch>\""
 msgstr ""
-"E497: ¾iadna zhoda automatických príkazov, ktorou by bolo mo¾né nahradi» "
-"\"<amatch>\""
 
-#, fuzzy
 msgid "E498: No :source file name to substitute for \"<sfile>\""
-msgstr "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
+msgstr ""
 
-#, fuzzy
 msgid "E842: No line number to use for \"<slnum>\""
-msgstr "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
+msgstr ""
 
-#, fuzzy
 msgid "E961: No line number to use for \"<sflnum>\""
-msgstr "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
+msgstr ""
 
-#, fuzzy
 msgid "E1274: No script file name to substitute for \"<script>\""
-msgstr "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
+msgstr ""
 
 msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
 msgstr "Spú¹»am Ex re¾im. Napí¹te \"visual\" pre návrat do Normálneho re¾imu."
@@ -2602,13 +2480,12 @@ msgstr "Spú¹»am Ex re¾im. Napí¹te \"visual\" pre návrat do Normálneho re¾imu."
 msgid "E501: At end-of-file"
 msgstr "E501: Koniec súboru"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Executing: %s"
-msgstr "Spú¹»am %s"
+msgstr ""
 
-#, fuzzy
 msgid "line %"
-msgstr "riadok %4ld:"
+msgstr ""
 
 msgid "End of sourced file"
 msgstr "Koniec interpretovaného súboru"
@@ -2633,26 +2510,23 @@ msgstr "Zadaný spätný rozsah. OK pre zámenu"
 msgid "E494: Use w or w>>"
 msgstr "E494: Pou¾ite w alebo w>>"
 
-#, fuzzy
 msgid "E943: Command table needs to be updated, run 'make'"
-msgstr "E771: Starý slovníkový súbor, potrebuje by» zaktualizovaný"
+msgstr ""
 
 msgid "E319: The command is not available in this version"
 msgstr "E319: ¥utujem, ale tento príkaz nie je dostupný v tejto verzii"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d more file to edit.  Quit anyway?"
 msgid_plural "%d more files to edit.  Quit anyway?"
 msgstr[0] ""
-"E¹te zostáva %d súborov k úprave. Chcete napriek tomu ukonèi» editor?"
 msgstr[1] ""
-"E¹te zostáva %d súborov k úprave. Chcete napriek tomu ukonèi» editor?"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E173: %d more file to edit"
 msgid_plural "E173: %d more files to edit"
-msgstr[0] "E173: E¹te zostáva 1 súbor k úprave."
-msgstr[1] "E173: E¹te zostáva 1 súbor k úprave."
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy, c-format
 msgid "E185: Cannot find color scheme '%s'"
@@ -2723,17 +2597,14 @@ msgstr ""
 msgid "E5009: Invalid $VIMRUNTIME: %s"
 msgstr ""
 
-#, fuzzy
 msgid "E5009: Invalid 'runtimepath'"
-msgstr "E598: Chybná sada písiem"
+msgstr ""
 
-#, fuzzy
 msgid "E583: Multiple :else"
-msgstr "E583: viacnásobné :else"
+msgstr ""
 
-#, fuzzy
 msgid "E607: Multiple :finally"
-msgstr "E607: viacnásobné pou¾ité :finally"
+msgstr ""
 
 msgid "E608: Cannot :throw exceptions with 'Vim' prefix"
 msgstr "E608: Nemo¾no spracova» výnimku :throw s preponou 'Vim'"
@@ -2827,9 +2698,8 @@ msgstr "E606: :finally bez :try"
 msgid "E602: :endtry without :try"
 msgstr "E602: :endtry bez :try"
 
-#, fuzzy
 msgid "E199: Active window or buffer changed or deleted"
-msgstr "E199: Aktívne okno alebo buffer bol vymazaný"
+msgstr ""
 
 #, fuzzy
 msgid "E811: Not allowed to change buffer information now"
@@ -2965,21 +2835,21 @@ msgstr "[mac]"
 msgid "[unix]"
 msgstr "[unix]"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s%<PRId64>L, %<PRId64>B"
-msgstr "%<PRId64> riadkov upravených pomocou %s %d krát"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s%<PRId64> line, "
 msgid_plural "%s%<PRId64> lines, "
-msgstr[0] "%<PRId64> riadkov, "
-msgstr[1] "%<PRId64> riadkov, "
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> byte"
 msgid_plural "%<PRId64> bytes"
-msgstr[0] "%<PRId64> zhôd"
-msgstr[1] "%<PRId64> zhôd"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "E246: FileChangedShell autocommand deleted buffer"
 msgstr "E246: automatický príkaz FileChangedShell vymazal buffer"
@@ -3050,21 +2920,20 @@ msgstr "E350: Nedá sa vytvori» vnorenie s aktuálnou metódou 'foldmethod'"
 msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: Nedá sa zru¹i» vnorenie s aktuálnou metódou 'foldmethod'"
 
-#, fuzzy, c-format
+#, c-format
 msgid "+--%3d line folded"
 msgid_plural "+--%3d lines folded "
-msgstr[0] "+--%3ld riadkov zahnutých "
-msgstr[1] "+--%3ld riadkov zahnutých "
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "+-%s%3d line: "
 msgid_plural "+-%s%3d lines: "
-msgstr[0] "+-%s%3ld riadky: "
-msgstr[1] "+-%s%3ld riadky: "
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy
 msgid "E223: Recursive mapping"
-msgstr "E223: rekurzívne mapovanie"
+msgstr ""
 
 msgid "E1255: <Cmd> mapping must end with <CR>"
 msgstr ""
@@ -3075,16 +2944,16 @@ msgstr ""
 msgid "E222: Add to read buffer"
 msgstr "E222: Prida» do bufferu pre èítanie"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open for reading: \"%s\": %s\n"
-msgstr "Nedá sa otvori» pre zápis: \""
+msgstr ""
 
 msgid "--No lines in buffer--"
 msgstr "--Buffer neobsahuje ¾iadne riadky--"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E685: Internal error: hash_add(): duplicate key \"%s\""
-msgstr "E685: Vnútorná chyba: %s"
+msgstr ""
 
 #, c-format
 msgid "E661: No '%s' help for %s"
@@ -3098,9 +2967,9 @@ msgstr "E149: Pre %s nie je ¾iadny pomocník"
 msgid "Help file \"%s\" not found"
 msgstr "Súbor \"%s\" s pomocníkom nebol nájdený"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E151: No match: %s"
-msgstr "E480: ®iadna zhoda: %s"
+msgstr ""
 
 #, c-format
 msgid "E152: Cannot open %s for writing"
@@ -3121,25 +2990,24 @@ msgstr "E150: %s nie je adresárom"
 msgid "E424: Too many different highlighting attributes in use"
 msgstr "E424: Pou¾ívaných príli¹ veµa odli¹ných zvýrazòovacích vlastností"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E411: Highlight group not found: %s"
-msgstr "E411: skupina zvýraznenia %s nebola nájdená"
+msgstr ""
 
-#, fuzzy
 msgid "E414: Group has settings, highlight link ignored"
-msgstr "E414: skupina je nastavená, odkaz na zvýrazòovaciu skupinu ignorovaný"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E415: Unexpected equal sign: %s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E416: Missing equal sign: %s"
-msgstr "E416: chýba znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E417: Missing argument: %s"
-msgstr "E417: chýba argument: %s"
+msgstr ""
 
 #, c-format
 msgid "E412: Not enough arguments: \":highlight link %s\""
@@ -3149,9 +3017,8 @@ msgstr "E412: Príli¹ málo argumentov: \":highlight link %s\""
 msgid "E413: Too many arguments: \":highlight link %s\""
 msgstr "E413: Príli¹ mnoho argumentov: \":highlight link %s\""
 
-#, fuzzy
 msgid "E423: Illegal argument"
-msgstr "E423: Neprípustný argument: %s"
+msgstr ""
 
 #, c-format
 msgid "E418: Illegal value: %s"
@@ -3181,30 +3048,27 @@ msgstr ""
 msgid "%<PRId64> lines to indent... "
 msgstr "%<PRId64> riadkov pre odsadenie..."
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line indented "
 msgid_plural "%<PRId64> lines indented "
-msgstr[0] "%<PRId64> riadkov odsadených "
-msgstr[1] "%<PRId64> riadkov odsadených "
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "%s (y/n)?"
 msgstr ""
 
-#, fuzzy
 msgid "Type number and <Enter> or click with the mouse (q or empty cancels): "
-msgstr "Zadajte èíslo ale kliknite my¹ou (<Enter> zru¹í): "
+msgstr ""
 
-#, fuzzy
 msgid "Type number and <Enter> (q or empty cancels): "
-msgstr "Zvoµte èíslo (<Enter> zru¹í): "
+msgstr ""
 
 msgid " Keyword completion (^N^P)"
 msgstr " Doplòovanie kµúèových slov (^N^P)"
 
-#, fuzzy
 msgid " ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)"
-msgstr " ^X re¾im (^]^D^E^F^I^K^L^N^O^P^S^U^V^Y)"
+msgstr ""
 
 msgid " Whole line completion (^L^N^P)"
 msgstr " Doplòovanie celých riadkov (^L^N^P)"
@@ -3242,9 +3106,8 @@ msgstr " Doplòovanie celých riadkov (^S^N^P)"
 msgid " Keyword Local completion (^N^P)"
 msgstr " Miestne doplòovanie kµúèových slov (^N^P)"
 
-#, fuzzy
 msgid " Register completion (^N^P)"
-msgstr " Doplòovanie kµúèových slov (^N^P)"
+msgstr ""
 
 msgid "Hit end of paragraph"
 msgstr "Koniec odstavca"
@@ -3279,9 +3142,8 @@ msgstr "Prehµadávam: %s"
 msgid "Scanning tags."
 msgstr "Prehµadávam tagy."
 
-#, fuzzy
 msgid "match in file"
-msgstr "Záplatový súbor"
+msgstr ""
 
 msgid " Adding"
 msgstr " Pridávam"
@@ -3346,9 +3208,9 @@ msgstr ""
 msgid "E5116: Calling Lua debug string: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5108: Lua function: %.*s"
-msgstr "E130: Neznáma funkcia: %s"
+msgstr ""
 
 #, c-format
 msgid "E5107: Lua: %.*s"
@@ -3425,13 +3287,13 @@ msgstr ""
 msgid "Cannot open for script output: \""
 msgstr "Nedá sa otvori» pre výstup skriptu: \""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5420: Failed to write to file: %s"
-msgstr "E557: Nedá sa otvori» termcap súbor"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Attempt to open script file again: \"%s %s\"\n"
-msgstr "Pokus o opätovné otvorenie skriptu: \""
+msgstr ""
 
 msgid "--embed conflicts with -es/-Es/-l"
 msgstr ""
@@ -3439,61 +3301,53 @@ msgstr ""
 msgid "pre-vimrc command line"
 msgstr "pre-vimrc príkazový riadok"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "More info with \""
 msgstr ""
-"\n"
-"Podrobnej¹ie informácie získáte pomocou \"vim -h\"\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Usage:\n"
 msgstr ""
-"\n"
-"\n"
-"pou¾itie:"
 
 #, c-format
 msgid "  nvim [options] [file ...]\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
 msgstr ""
-"\n"
-"--- Mo¾nosti ---"
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --cmd <cmd>           Execute <cmd> before any config\n"
-msgstr "--cmd <príkaz>\t\tVykoná <príkaz> pred nahratím vimrc súboru"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"
-msgstr "-c <príkaz>\t\tPo nahratí prvého súboru vykoná <príkaz>"
+msgstr ""
 
 #, c-format
 msgid "  -l <script> [args...] Execute Lua <script> (with optional args)\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -S <session>          Source <session> after loading the first file\n"
 msgstr ""
-"-S <sedenie>\t\tPo nahratí prvého súboru vykoná príkazy v súbore <sedenie>"
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -s <scriptin>         Read Normal mode commands from <scriptin>\n"
-msgstr "-s <skript>\t\tNaèíta príkazy normálneho módu zo <skriptu>"
+msgstr ""
 
 #, c-format
 msgid "  -u <config>           Use this config file\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -d                    Diff mode\n"
-msgstr "                            pre dva re¾imy       "
+msgstr ""
 
 #, c-format
 msgid "  -es, -Es              Silent (batch) mode\n"
@@ -3507,38 +3361,38 @@ msgstr ""
 msgid "  -i <shada>            Use this shada file\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -n                    No swap file, use memory only\n"
-msgstr "-n\t\t\tNevytvára» odkladací súbor, pou¾íva» iba pamä»"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -o[N]                 Open N windows (default: one per file)\n"
-msgstr "-o[N]\t\tOtvorí N okien (implicitne jedno pre ka¾dý súbor)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  -O[N]                 Open N vertical windows (default: one per file)\n"
-msgstr "-o[N]\t\tOtvorí N okien (implicitne jedno pre ka¾dý súbor)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -p[N]                 Open N tab pages (default: one per file)\n"
-msgstr "-o[N]\t\tOtvorí N okien (implicitne jedno pre ka¾dý súbor)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -R                    Read-only (view) mode\n"
-msgstr "                            pre dva re¾imy       "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  -v, --version         Print version information\n"
-msgstr "--version\t\tVypí¹e informácie o verzii a skonèí"
+msgstr ""
 
 #, c-format
 msgid "  -V[N][file]           Verbose [level][file]\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "  --                    Only file names after this\n"
-msgstr "--\t\t\tMô¾u nasledova» iba názvy súborov"
+msgstr ""
 
 #, c-format
 msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
@@ -3580,28 +3434,28 @@ msgid ""
 "See \":help startup-options\" for all options.\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E224: Global abbreviation already exists for %s"
-msgstr "E224: pre %s u¾ globálna skratka existuje"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E225: Global mapping already exists for %s"
-msgstr "E225: pre %s u¾ globálne mapovanie existuje"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E226: Abbreviation already exists for %s"
-msgstr "E226: pre %s u¾ skratka existuje"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E227: Mapping already exists for %s"
-msgstr "E227: pre %s u¾ mapovanie existuje"
+msgstr ""
 
 msgid "E460: Entries missing in mapset() dict argument"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1276: Illegal map mode string: '%s'"
-msgstr "E125: Neprípustný argument: %s"
+msgstr ""
 
 msgid "No abbreviation found"
 msgstr "®iadna skratka nebola nájdená"
@@ -3652,25 +3506,25 @@ msgstr ""
 msgid "E799: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E801: ID already taken: %<PRId64>"
-msgstr "E157: Chybné ID znaèky: %<PRId64>"
+msgstr ""
 
 #, c-format
 msgid "E5030: Empty list at position %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5031: List or number required at position %d"
-msgstr "E521: Po = je vy¾adované èíslo"
+msgstr ""
 
 #, c-format
 msgid "E802: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E803: ID not found: %<PRId64>"
-msgstr "E320: Nedá sa nájs» riadok %<PRId64>"
+msgstr ""
 
 #, c-format
 msgid "E474: List item %d is either not a dictionary or an empty one"
@@ -3688,9 +3542,9 @@ msgstr ""
 msgid "E798: ID is reserved for \"match\": %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1109: List item %d is not a List"
-msgstr "E711: Hodnota Poµa (List value) nemá dostatok polo¾iek"
+msgstr ""
 
 #, c-format
 msgid "E1110: List item %d does not contain 3 numbers"
@@ -3708,13 +3562,11 @@ msgstr ""
 msgid "E1113: Overlapping ranges for 0x%lx"
 msgstr ""
 
-#, fuzzy
 msgid "E1114: Only values of 0x80 and higher supported"
-msgstr "E754: Podporovaných max. 8 regiónov"
+msgstr ""
 
-#, fuzzy
 msgid "E293: Block was not locked"
-msgstr "E293: blok nebol zamknutý"
+msgstr ""
 
 msgid "E294: Seek error in swap file read"
 msgstr "E294: Chyba posunu pri èítaní odkladacieho súboru"
@@ -3731,37 +3583,33 @@ msgstr "E297: Chyba pri ukladaní do odkladacieho súboru"
 msgid "E300: Swap file already exists (symlink attack?)"
 msgstr "E300: Odkladací súbor u¾ existuje (symlink útok?)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E315: ml_get: Invalid lnum: %<PRId64>"
-msgstr "E315: ml_get: chybné èíslo riadku: %<PRId64>"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E316: ml_get: Cannot find line %<PRId64>in buffer %d %s"
-msgstr "E316: ml_get: nedá sa nájs» riadok %<PRId64>"
+msgstr ""
 
-#, fuzzy
 msgid "E317: Pointer block id wrong"
-msgstr "E317: chybné èíslo ukazovateµa na blok"
+msgstr ""
 
-#, fuzzy
 msgid "E317: Pointer block id wrong 2"
-msgstr "E317: chybný èíslo ukazovateµa na blok 2"
+msgstr ""
 
-#, fuzzy
 msgid "E317: Pointer block id wrong 3"
-msgstr "E317: chybné èíslo ukazovateµa na blok 3"
+msgstr ""
 
-#, fuzzy
 msgid "E317: Pointer block id wrong 4"
-msgstr "E317: chybné èíslo ukazovateµa na blok 4"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E322: Line number out of range: %<PRId64> past the end"
-msgstr "E322: èíslo riadku je mimo rozsah: %<PRId64> (za koncom)"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E323: Line count wrong in block %<PRId64>"
-msgstr "E323: chybný poèet riadkov v bloku %<PRId64>"
+msgstr ""
 
 msgid "E1364: Warning: Pointer block corrupted"
 msgstr ""
@@ -3803,24 +3651,20 @@ msgstr "E306: Nedá sa otvori» %s"
 msgid "Unable to read block 0 from "
 msgstr "Nedá sa èíta» blok 0 z "
 
-#, fuzzy
 msgid ""
 "\n"
 "Maybe no changes were made or Nvim did not update the swap file."
 msgstr ""
-"\n"
-"Mo¾no nedo¹lo k ¾iadnym zmenám, alebo Vim neaktualizoval odkladací súbor."
 
-#, fuzzy
 msgid " cannot be used with this version of Nvim.\n"
-msgstr " nedá sa pou¾i» s touto verziou Vim.\n"
+msgstr ""
 
 msgid "Use Vim version 3.0.\n"
 msgstr "Pou¾ite Vim verziu 3.0.\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E307: %s does not look like a Nvim swap file"
-msgstr "E307: %s sa nezdá by» odkladacím súborom Vim"
+msgstr ""
 
 msgid " cannot be used on this computer.\n"
 msgstr " nedá sa pou¾í» na tomto poèítaèi.\n"
@@ -3915,13 +3759,10 @@ msgstr "a pomocou programu diff zistite zmeny oproti pôvodnému súboru)\n"
 msgid "Recovery completed. Buffer contents equals file contents."
 msgstr ""
 
-#, fuzzy
 msgid ""
 "\n"
 "You may want to delete the .swp file now."
 msgstr ""
-"Potom vyma¾te odkladací súbor s príponou .swp.\n"
-"\n"
 
 msgid ""
 "\n"
@@ -3955,9 +3796,8 @@ msgstr "    dátum vytvorenia: "
 msgid "         [from Vim version 3.0]"
 msgstr "         [od Vim verzie 3.0]"
 
-#, fuzzy
 msgid "         [does not look like a Nvim swap file]"
-msgstr "         [nevyzerá ako odkladací súbor Vim]"
+msgstr ""
 
 msgid "         [garbled strings (not nul terminated)]"
 msgstr ""
@@ -4053,33 +3893,24 @@ msgstr ""
 msgid "E325: ATTENTION"
 msgstr "E325: POZOR"
 
-#, fuzzy
 msgid "Found a swap file by the name \""
 msgstr ""
-"\n"
-"Nájdený odkladací súbor s menom \""
 
 msgid "While opening file \""
 msgstr "Pri otváraní súboru \""
 
-#, fuzzy
 msgid "      CANNOT BE FOUND"
-msgstr " NENÁJDENÉ"
+msgstr ""
 
 msgid "      NEWER than swap file!\n"
 msgstr "      NOV©Í ako odkladací súbor!\n"
 
-#, fuzzy
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
 "    be careful not to end up with two different instances of the same\n"
 "    file when making changes.  Quit, or continue with caution.\n"
 msgstr ""
-"\n"
-"(1) Súbor mô¾e by» upravovaný iným programom.\n"
-"    Ak je tomu tak, potom si dajte pozor, aby ste po ulo¾ení zmien\n"
-"    nemali dve rôzne verzie toho istého súboru.\n"
 
 #, fuzzy
 msgid "(2) An edit session for this file crashed.\n"
@@ -4150,11 +3981,11 @@ msgstr "VIM - POZOR"
 msgid "E326: Too many swap files found"
 msgstr "E326: Príli¹ mnoho odkladacích súborov"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "E303: Unable to create directory \"%s\" for swap file, recovery impossible: "
 "%s"
-msgstr "E303: Nedá sa otvori» odkladací súbor pre \"%s\", oprava nemo¾ná"
+msgstr ""
 
 #, c-format
 msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
@@ -4207,13 +4038,12 @@ msgstr "E336: Cesta ponuky musí vies» do podponuky"
 msgid "E337: Menu not found - check menu names"
 msgstr "E337: Ponuka nenájdená - skontrolujte názvy ponúk"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Error in %s:"
-msgstr "[Zoznam chýb]"
+msgstr ""
 
-#, fuzzy
 msgid "line %4"
-msgstr "riadok %4ld:"
+msgstr ""
 
 #, c-format
 msgid "E354: Invalid register name: '%s'"
@@ -4225,17 +4055,17 @@ msgstr "Preru¹enie: "
 msgid "Press ENTER or type command to continue"
 msgstr "Stlaète ENTER alebo zadajte príkaz pre pokraèovanie"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d more line"
 msgid_plural "%d more lines"
-msgstr[0] "1 nový riadok"
-msgstr[1] "1 nový riadok"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%d line less"
 msgid_plural "%d fewer lines"
-msgstr[0] "1 vymazaný riadok"
-msgstr[1] "1 vymazaný riadok"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid " (Interrupted)"
 msgstr " (Preru¹ené)"
@@ -4288,9 +4118,8 @@ msgstr ""
 "Zahodi» &v¹etko\n"
 "&Zru¹i»"
 
-#, fuzzy
 msgid "E664: Changelist is empty"
-msgstr "E664: zoznam zmien je prázdny"
+msgstr ""
 
 msgid "E1292: Command-line window is already open"
 msgstr ""
@@ -4313,27 +4142,26 @@ msgstr "E663: Na konci zoznamu zmien"
 msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Nvim"
 msgstr ""
 
-#, fuzzy
 msgid "Type  :qa  and press <Enter> to exit Nvim"
-msgstr "Zadajte  :quit<Enter>  pre ukonèenie programu Vim"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line %sed %d time"
 msgid_plural "%<PRId64> line %sed %d times"
-msgstr[0] "%<PRId64> riadkov upravených pomocou %s %d krát"
-msgstr[1] "%<PRId64> riadkov upravených pomocou %s %d krát"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines %sed %d time"
 msgid_plural "%<PRId64> lines %sed %d times"
-msgstr[0] "%<PRId64> riadkov upravených pomocou %s %d krát"
-msgstr[1] "%<PRId64> riadkov upravených pomocou %s %d krát"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line changed"
 msgid_plural "%<PRId64> lines changed"
-msgstr[0] "%<PRId64> zmenených riadkov"
-msgstr[1] "%<PRId64> zmenených riadkov"
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy, c-format
 msgid "%<PRId64> lines changed"
@@ -4391,9 +4219,8 @@ msgstr "E518: Neznáma voµba"
 msgid "E520: Not allowed in a modeline"
 msgstr "E520: Nie je v modeline povolené"
 
-#, fuzzy
 msgid "E992: Not allowed in a modeline when 'modelineexpr' is off"
-msgstr "E520: Nie je v modeline povolené"
+msgstr ""
 
 msgid "E521: Number required after ="
 msgstr "E521: Po = je vy¾adované èíslo"
@@ -4420,15 +4247,12 @@ msgstr "E593: Minimálny potrebný poèet riadkov je %d"
 msgid "E594: Need at least %d columns"
 msgstr "E594: Minimálne potrebný poèet ståpcov je %d"
 
-#, fuzzy
 msgid "Cannot unset global option value"
 msgstr ""
-"\n"
-"--- Nastavenie globálnych volieb ---"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid value for option '%s': expected %s, got %s %s"
-msgstr "Neplatná hodnota pre príznak (FLAG) v %s riadok %d: %s"
+msgstr ""
 
 msgid ""
 "\n"
@@ -4458,23 +4282,20 @@ msgstr "E356: get_varp CHYBA"
 msgid "E535: Illegal character after <%c>"
 msgstr "E535: Neprípustný znak po <%c>"
 
-#, fuzzy
 msgid "E536: Comma required"
-msgstr "E536: je nutná èiarka"
+msgstr ""
 
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Neuzatvorené zoskupenie výrazov"
 
-#, fuzzy
 msgid "E542: Unbalanced groups"
-msgstr "E542: nevyvá¾ené skupiny"
+msgstr ""
 
 msgid "E589: 'backupext' and 'patchmode' are equal"
 msgstr "E589: voµby 'backupext' a 'patchmode' majú rovnakú hodnotu"
 
-#, fuzzy
 msgid "E595: 'showbreak' contains unprintable or wide character"
-msgstr "E595: obsahuje netlaèiteµné znaky"
+msgstr ""
 
 #, c-format
 msgid "E1511: Wrong number of characters for field \"%s\""
@@ -4499,9 +4320,8 @@ msgid "E537: 'commentstring' must be empty or contain %s"
 msgstr ""
 "E537: 'commentstring' (komentár) musí by» prázdny alebo musí obsahova» %s"
 
-#, fuzzy
 msgid "E5080: Digit expected"
-msgstr "E548: oèakávaná èíslica"
+msgstr ""
 
 #, c-format
 msgid "E526: Missing number after <%s>"
@@ -4534,9 +4354,8 @@ msgstr ""
 msgid "E1509: Error occurred when reading or writing extended attribute"
 msgstr ""
 
-#, fuzzy
 msgid "Nvim: Error reading input, exiting...\n"
-msgstr "Vim: Chyba pri èítaní vstupu, konèím...\n"
+msgstr ""
 
 #, c-format
 msgid "Current %slanguage: \"%s\""
@@ -4554,9 +4373,9 @@ msgid ""
 "shell failed to start: "
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5677: Error writing input to shell-command: %s"
-msgstr "E677: Chyba pri zápise doèasného súboru"
+msgstr ""
 
 #, no-c-format
 msgid "%a %b %d %H:%M:%S %Y"
@@ -4615,9 +4434,9 @@ msgstr "(%d z %d)%s%s: "
 msgid " (line deleted)"
 msgstr " (riadok vymazaný)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%serror list %d of %d; %d errors "
-msgstr "zoznam chýb %d z %d; %d chýb"
+msgstr ""
 
 msgid "E380: At bottom of quickfix stack"
 msgstr "E380: Koniec quickfix zoznamu"
@@ -4642,37 +4461,34 @@ msgstr ""
 msgid "E777: String or List expected"
 msgstr "E552: oèakávaná èíslica"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E927: Invalid action: '%s'"
-msgstr "E383: Neprípustný hµadaný re»azec: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E59: Invalid character after %s@"
-msgstr "E59: Neprípustný znak po %s@"
+msgstr ""
 
-#, fuzzy
 msgid "E63: Invalid use of \\_"
-msgstr "E63: Chybne pou¾ité \\_"
+msgstr ""
 
-#, fuzzy
 msgid "E363: Pattern uses more memory than 'maxmempattern'"
-msgstr "E363: vzor pou¾íva viac pamäte ako 'maxmempattern'"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E369: Invalid item in %s%%[]"
-msgstr "E369: chybná polo¾ka v %s%%[]"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E654: Missing delimiter after search pattern: %s"
-msgstr "E526: Po <%s> chýba èíslo"
+msgstr ""
 
 #, c-format
 msgid "E769: Missing ] after %s["
 msgstr "E769: Chýbajúca ] po %s["
 
-#, fuzzy
 msgid "E944: Reverse range in character class"
-msgstr "E488: Nadbytoèné znaky na konci"
+msgstr ""
 
 msgid "E945: Range too large in character class"
 msgstr ""
@@ -4692,9 +4508,8 @@ msgstr "E55: Nespárované %s)"
 msgid "E66: \\z( not allowed here"
 msgstr "E66: \\z( tu nie je povolené"
 
-#, fuzzy
 msgid "E67: \\z1 - \\z9 not allowed here"
-msgstr "E67: \\z1 a spol. tu nie je povolené"
+msgstr ""
 
 #, c-format
 msgid "E69: Missing ] after %s%%["
@@ -4704,9 +4519,8 @@ msgstr "E69: Chýbajúca ] po %s%%["
 msgid "E70: Empty %s%%[]"
 msgstr "E70: Prázdny %s%%[]"
 
-#, fuzzy
 msgid "E956: Cannot use pattern recursively"
-msgstr "E659: Python nemô¾e by» spustený rekurzívne"
+msgstr ""
 
 #, c-format
 msgid "E1204: No Number allowed after .: '\\%%%c'"
@@ -4720,9 +4534,8 @@ msgstr ""
 msgid "E1281: Atom '\\%%#=%c' must be at the start of the pattern"
 msgstr ""
 
-#, fuzzy
 msgid "E1290: substitute nesting too deep"
-msgstr "E579: vnorenie :if je príli¹ hlboké"
+msgstr ""
 
 msgid "E1541: Value too large, max Unicode codepoint is U+10FFFF"
 msgstr ""
@@ -4731,9 +4544,9 @@ msgstr ""
 msgid "E554: Syntax error in %s{...}"
 msgstr "E554: Chyba syntaxe v %s{...}"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E888: (NFA regexp) cannot repeat %s"
-msgstr "E50: Príli¹ mnoho \\z("
+msgstr ""
 
 msgid "E65: Illegal back reference"
 msgstr "E65: Chybná spätná referencia"
@@ -4793,9 +4606,8 @@ msgstr ""
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
 msgstr ""
 
-#, fuzzy
 msgid "E951: \\% value too large"
-msgstr "E75: Názov je príli¹ dlhý"
+msgstr ""
 
 #, c-format
 msgid "E867: (NFA) Unknown operator '\\z%c'"
@@ -4825,9 +4637,8 @@ msgstr "E50: Príli¹ mnoho \\z("
 msgid "E873: (NFA regexp) proper termination error"
 msgstr ""
 
-#, fuzzy
 msgid "Could not open temporary log file for writing, displaying on stderr... "
-msgstr "E214: Nedá sa nájs» doèasný súbor pre ukladanie"
+msgstr ""
 
 msgid "E874: (NFA) Could not pop the stack!"
 msgstr ""
@@ -4860,17 +4671,17 @@ msgstr "E748: ®iadny predtým pou¾ívaný register"
 msgid " into \"%c"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "block of %<PRId64> line yanked%s"
 msgid_plural "block of %<PRId64> lines yanked%s"
-msgstr[0] "skopírovaný blok %<PRId64> riadkov"
-msgstr[1] "skopírovaný blok %<PRId64> riadkov"
+msgstr[0] ""
+msgstr[1] ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line yanked%s"
 msgid_plural "%<PRId64> lines yanked%s"
-msgstr[0] "%<PRId64> skopírovaných riadkov"
-msgstr[1] "%<PRId64> skopírovaných riadkov"
+msgstr[0] ""
+msgstr[1] ""
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4881,9 +4692,9 @@ msgid ""
 "Type Name Content"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Searching for \"%s\" under \"%s\" in \"%s\""
-msgstr "Hµadám \"%s\" v \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Searching for \"%s\" in \"%s\""
@@ -4893,17 +4704,17 @@ msgstr "Hµadám \"%s\" v \"%s\""
 msgid "Searching for \"%s\""
 msgstr "Hµadám \"%s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "not found in '%s': \"%s\""
-msgstr "súbor \"%s\" nebol nájdený v 'runtimepath'"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Searching for \"%s\" in runtime path"
-msgstr "Hµadám \"%s\" v \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "not found in runtime path: \"%s\""
-msgstr "súbor \"%s\" nebol nájdený v 'runtimepath'"
+msgstr ""
 
 #, c-format
 msgid "Cannot source a directory: \"%s\""
@@ -4974,13 +4785,13 @@ msgstr "E167: príkaz :scriptencoding pou¾itý mimo interpretovaný súbor"
 msgid "E168: :finish used outside of a sourced file"
 msgstr "E168: príkaz :finish pou¾itý mimo interpretovaný súbor"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E384: Search hit TOP without match for: %s"
-msgstr "E384: hµadanie dosiahlo zaèiatok bez nájdenia %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E385: Search hit BOTTOM without match for: %s"
-msgstr "E385: hµadanie dosiahlo koniec bez nájdenia %s"
+msgstr ""
 
 #, c-format
 msgid "E383: Invalid search string: %s"
@@ -5030,9 +4841,9 @@ msgstr "E388: Nedá sa nájs» definícia"
 msgid "E389: Couldn't find pattern"
 msgstr "E389: Nedá sa nájs» vzor"
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while skipping in ShaDa file: %s"
-msgstr "E47: Chyba pri èítaní chybového súboru"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5043,13 +4854,13 @@ msgstr ""
 msgid "too few bytes read"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while closing ShaDa file: %s"
-msgstr "E47: Chyba pri èítaní chybového súboru"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Reading ShaDa file \"%s\"%s%s%s%s"
-msgstr "Èítam viminfo súbor \"%s\"%s%s%s"
+msgstr ""
 
 msgid " info"
 msgstr " informácie"
@@ -5099,9 +4910,9 @@ msgstr ""
 msgid "E138: All %s.tmp.X files exist, cannot write ShaDa file!"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while opening temporary ShaDa file %s for writing: %s"
-msgstr "E214: Nedá sa nájs» doèasný súbor pre ukladanie"
+msgstr ""
 
 #, c-format
 msgid "Failed to create directory %s for writing ShaDa file: %s"
@@ -5111,25 +4922,25 @@ msgstr ""
 msgid "System error while opening ShaDa file %s for writing: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing ShaDa file \"%s\""
-msgstr "Ukládám viminfo súboru \"%s\""
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E137: ShaDa file is not writable: %s"
-msgstr "E137: Do viminfo súboru %s sa nedá zapisova»"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed setting uid and gid for file %s: %s"
-msgstr "dokonèená interpretácia %s"
+msgstr ""
 
 #, c-format
 msgid "Can't rename ShaDa file from %s to %s!"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Did not rename %s because %s does not look like a ShaDa file"
-msgstr "         [nevyzerá ako odkladací súbor Vim]"
+msgstr ""
 
 #, c-format
 msgid "Did not rename %s to %s because there were errors during writing it"
@@ -5139,9 +4950,9 @@ msgstr ""
 msgid "Do not forget to remove %s or rename it manually to %s."
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading ShaDa file: %s"
-msgstr "E47: Chyba pri èítaní chybového súboru"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5149,9 +4960,9 @@ msgid ""
 "%<PRIu64> bytes, but file ended earlier"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading integer from ShaDa file: %s"
-msgstr "E47: Chyba pri èítaní chybového súboru"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -5220,11 +5031,8 @@ msgstr ""
 msgid "  group=%s"
 msgstr ""
 
-#, fuzzy
 msgid "    line=%"
 msgstr ""
-"\n"
-"   #   riadok"
 
 #, c-format
 msgid "E239: Invalid sign text: %s"
@@ -5241,9 +5049,9 @@ msgstr " (nepodporované)"
 msgid "E885: Not possible to change sign %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E157: Invalid sign ID: %d"
-msgstr "E157: Chybné ID znaèky: %<PRId64>"
+msgstr ""
 
 msgid "E934: Cannot jump to a buffer that does not have a name"
 msgstr ""
@@ -5266,9 +5074,8 @@ msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
 msgstr ""
 "Varovanie: Nemo¾no nájs» zoznam slov \"%s.%s.spl\" alebo \"%s.ascii.spl\""
 
-#, fuzzy
 msgid "E797: SpellFileMissing autocommand deleted buffer"
-msgstr "E246: automatický príkaz FileChangedShell vymazal buffer"
+msgstr ""
 
 #, c-format
 msgid "Warning: region %s not supported"
@@ -5284,17 +5091,15 @@ msgstr "E753: Nenájdené: %s"
 msgid "E758: Truncated spell file"
 msgstr "E758: Odseknutý spell súbor (kontrola pravopisu)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E782: Error while reading .sug file: %s"
-msgstr "E47: Chyba pri èítaní chybového súboru"
+msgstr ""
 
-#, fuzzy
 msgid "E783: Duplicate char in MAP entry"
-msgstr "E783: duplicitný znak v MAP polo¾ke"
+msgstr ""
 
-#, fuzzy
 msgid "E1280: Illegal character in word"
-msgstr "E539: Neprípustný znak <%s>"
+msgstr ""
 
 #, c-format
 msgid "Trailing text in %s line %d: %s"
@@ -5314,9 +5119,9 @@ msgstr "Èítam slovníkový súbor \"%s\""
 msgid "E757: This does not look like a spell file"
 msgstr "E757: Toto sa nezdá by» slovníkovým súborom"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5042: Failed to read spell file %s: %s"
-msgstr "E482: Nedá sa vytvori» súbor %s"
+msgstr ""
 
 msgid "E771: Old spell file, needs to be updated"
 msgstr "E771: Starý slovníkový súbor, potrebuje by» zaktualizovaný"
@@ -5499,45 +5304,37 @@ msgstr "Ignorovaných %d slov s nepísmennými znakmi v %s"
 msgid "Reading word file %s..."
 msgstr "Naèítavam súbor so slovami %s..."
 
-#, fuzzy
 msgid "Conversion failure for word in %s line %"
-msgstr "Konverzia slova zlyhala v %s riadok %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Duplicate /encoding= line ignored in %s line %"
-msgstr "Duplicitný riadok /encoding= v %s riadok %d ignorovaný: %s "
+msgstr ""
 
-#, fuzzy
 msgid "/encoding= line after word ignored in %s line %"
-msgstr "/encoding= riadok nasledujúci po slove v %s riadok %d ignorovaný: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Duplicate /regions= line ignored in %s line %"
-msgstr "Duplicitný riadok /regions= v %s riadok %d ignorovaný: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Too many regions in %s line %"
-msgstr "Príli¹ mnoho regiónov v %s riadok %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "/ line ignored in %s line %"
-msgstr "Riadok / v %s riadok %d ignorovaný: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Invalid region nr in %s line %"
-msgstr "Pou¾íté chybné èíslo regiónu v %s riadok %d: %s"
+msgstr ""
 
-#, fuzzy
 msgid "Unrecognized flags in %s line %"
-msgstr "Nerozpoznaný príznak v %s riadok %d: %s"
+msgstr ""
 
 #, c-format
 msgid "Ignored %d words with non-ASCII characters"
 msgstr "Ignorovaných %d slov s nepísmennými znakmi"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Compressed %s: %d of %d nodes; %d (%ld%%) remaining"
-msgstr "Skomprimovaných %d z %d uzlov; %d%% zostáva"
+msgstr ""
 
 #, fuzzy
 msgid "Reading back spell file..."
@@ -5554,9 +5351,9 @@ msgstr ""
 msgid "Total number of words: %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Writing suggestion file %s..."
-msgstr "Ukládám slovníkový súbor %s ..."
+msgstr ""
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5565,9 +5362,9 @@ msgstr "Veµkos» pou¾ívanej pamäte: %d bajtov"
 msgid "E751: Output file name must not have region name"
 msgstr "E751: Výstupné meno súboru nesmie ma» názov regiónu"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E754: Only up to %d regions supported"
-msgstr "E754: Podporovaných max. 8 regiónov"
+msgstr ""
 
 #, c-format
 msgid "E755: Invalid region in %s"
@@ -5583,17 +5380,16 @@ msgstr "Ukládám slovníkový súbor %s..."
 msgid "Done!"
 msgstr "Hotovo!"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E765: 'spellfile' does not have %d entries"
-msgstr "E765: 'spellfile' nemá %<PRId64> polo¾iek"
+msgstr ""
 
 #, c-format
 msgid "Word '%.*s' removed from %s"
 msgstr ""
 
-#, fuzzy
 msgid "Seek error in spellfile"
-msgstr "E294: Chyba posunu pri èítaní odkladacieho súboru"
+msgstr ""
 
 #, c-format
 msgid "Word '%.*s' added to %s"
@@ -5617,9 +5413,9 @@ msgstr "Zmeni» \"%.*s\" na:"
 msgid " < \"%.*s\""
 msgstr " < \"%.*s\""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64>,"
-msgstr "riadok %<PRId64>"
+msgstr ""
 
 #, fuzzy
 msgid "[Help]"
@@ -5650,24 +5446,21 @@ msgstr ""
 msgid "E1504: Positional argument %d type used inconsistently: %s/%s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1505: Invalid format specifier: %s"
-msgstr "E180: Chybná hodnota doplnenia: %s"
+msgstr ""
 
-#, fuzzy
 msgid "unknown"
-msgstr "Neznámy"
+msgstr ""
 
 msgid "int"
 msgstr ""
 
-#, fuzzy
 msgid "long int"
-msgstr "[dlhé riadky zalomené]"
+msgstr ""
 
-#, fuzzy
 msgid "long long int"
-msgstr "[dlhé riadky zalomené]"
+msgstr ""
 
 msgid "signed size_t"
 msgstr ""
@@ -5713,17 +5506,15 @@ msgstr "E767: Príli¹ mnoho argumentov pre funkciu printf()"
 msgid "E390: Illegal argument: %s"
 msgstr "E390: Neprípustný argument: %s"
 
-#, fuzzy
 msgid "E395: Contains argument not accepted here"
-msgstr "E395: obsahuje argumenty, ktoré tu nie sú povolené"
+msgstr ""
 
-#, fuzzy
 msgid "E844: Invalid cchar value"
-msgstr "E474: Chybný argument"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E890: Trailing char after ']': %s]%s"
-msgstr "E488: Nadbytoèné znaky na konci"
+msgstr ""
 
 msgid "No Syntax items defined for this buffer"
 msgstr "Pre tento buffer nie sú definované ¾iadne polo¾ky syntaxe"
@@ -5744,9 +5535,8 @@ msgstr "synchronizujem podµa komentárov jazyka C"
 msgid "no syncing"
 msgstr "¾iadne synchronizácie"
 
-#, fuzzy
 msgid "syncing starts at the first line"
-msgstr "synchronizácia zaèína "
+msgstr ""
 
 msgid "syncing starts "
 msgstr "synchronizácia zaèína "
@@ -5779,9 +5569,8 @@ msgstr ""
 msgid "E392: No such syntax cluster: %s"
 msgstr "E392: Syntaktická zostava %s neexistuje"
 
-#, fuzzy
 msgid "from the first line"
-msgstr "Slovo z iného riadku"
+msgstr ""
 
 msgid "minimal "
 msgstr "minimálne "
@@ -5871,29 +5660,24 @@ msgid ""
 "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"
 msgstr ""
 
-#, fuzzy
 msgid "E73: Tag stack empty"
-msgstr "E73: zoznam tagov je prázdny"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E426: Tag not found: %s"
-msgstr "E426: tag %s nenájdený"
+msgstr ""
 
-#, fuzzy
 msgid "E555: At bottom of tag stack"
-msgstr "E555: na konci zoznamu tagov"
+msgstr ""
 
-#, fuzzy
 msgid "E556: At top of tag stack"
-msgstr "E556: na zaèiatku zoznamu tagov"
+msgstr ""
 
-#, fuzzy
 msgid "E986: Cannot modify the tag stack within tagfunc"
-msgstr "E428: Za posledný vyhovujúci tag sa nedá preskoèi»"
+msgstr ""
 
-#, fuzzy
 msgid "E987: Invalid return value from tagfunc"
-msgstr "E178: Chybná implicitná hodnota pre poèet"
+msgstr ""
 
 msgid "E1299: Window unexpectedly closed while searching for tags"
 msgstr ""
@@ -5984,17 +5768,15 @@ msgstr ""
 msgid "Beep!"
 msgstr "Piip!"
 
-#, fuzzy
 msgid "E439: Undo list corrupt"
-msgstr "E439: záznam o zmenách po¹kodený"
+msgstr ""
 
-#, fuzzy
 msgid "E440: Undo line missing"
-msgstr "E440: chýba opravný riadok"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E829: Write error in undo file: %s"
-msgstr "E297: Chyba pri ukladaní do odkladacieho súboru"
+msgstr ""
 
 msgid "E881: Line count changed unexpectedly"
 msgstr ""
@@ -6003,9 +5785,9 @@ msgstr ""
 msgid "E828: Cannot open undo file for writing: %s"
 msgstr "E212: Súbor sa nedá otvori» pre ukladanie"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E5003: Unable to create directory \"%s\" for undo file: %s"
-msgstr "E346: ®iadny ïal¹í adresár \"%s\" nebol v cdpath nájdený"
+msgstr ""
 
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
@@ -6103,11 +5885,11 @@ msgstr ""
 msgid "before"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> second ago"
 msgid_plural "%<PRId64> seconds ago"
-msgstr[0] "%<PRId64> Ståpcov; "
-msgstr[1] "%<PRId64> Ståpcov; "
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy
 msgid "Nothing to undo"
@@ -6120,9 +5902,9 @@ msgstr ""
 msgid "E790: undojoin is not allowed after undo"
 msgstr "E407: %s tu nie je povolené"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E179: Argument required for %s"
-msgstr "E179: pre doplnenie (-complete) je potrebný argument"
+msgstr ""
 
 #, c-format
 msgid "E184: No such user-defined command: %s"
@@ -6131,24 +5913,21 @@ msgstr "E184: Pou¾ívateµom definovaný príkaz %s neexistuje"
 msgid "E1208: -complete used without allowing arguments"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E1237: No such user-defined command in current buffer: %s"
-msgstr "E184: Pou¾ívateµom definovaný príkaz %s neexistuje"
+msgstr ""
 
-#, fuzzy
 msgid ""
 "\n"
 "    Name              Args Address Complete    Definition"
 msgstr ""
-"\n"
-"    Meno       Args Rozsah Úplnos»  Definícia"
 
 msgid "No user-defined commands found"
 msgstr "Neboli nájdené ¾iadne pou¾ivateµom definované príkazy"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E180: Invalid address type value: %s"
-msgstr "E180: Chybná hodnota doplnenia: %s"
+msgstr ""
 
 #, c-format
 msgid "E180: Invalid complete value: %s"
@@ -6177,9 +5956,9 @@ msgstr "E178: Chybná implicitná hodnota pre poèet"
 msgid "E181: Invalid attribute: %s"
 msgstr "E181: Chybná vlastnos»: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "E174: Command already exists: add ! to replace it: %s"
-msgstr "E174: Príkaz u¾ existuje: pou¾ite ! pre predefinovanie"
+msgstr ""
 
 msgid "E182: Invalid command name"
 msgstr "E182: Chybné meno príkazu"
@@ -6200,64 +5979,58 @@ msgstr "       implicitná hodnota $VIM:\""
 msgid " f-b for $VIMRUNTIME: \""
 msgstr " f-b pre $VIMRUNTIME: \""
 
-#, fuzzy
 msgid "Nvim is open source and freely distributable"
-msgstr "Vim je voµne ¹íriteµný program s otvoreným kódom"
+msgstr ""
 
-#, fuzzy
 msgid "type  :help nvim<Enter>     if you are new! "
-msgstr "zadajte  :help iccf<Enter>          pre informácie         "
+msgstr ""
 
-#, fuzzy
 msgid "type  :checkhealth<Enter>   to optimize Nvim"
-msgstr "Zadajte  :quit<Enter>  pre ukonèenie programu Vim"
+msgstr ""
 
-#, fuzzy
 msgid "type  :q<Enter>             to exit         "
-msgstr "zadajte  :q<Enter>                  pre ukonèenie programu "
+msgstr ""
 
-#, fuzzy
 msgid "type  :help<Enter>          for help        "
-msgstr "zadajte  :q<Enter>                  pre ukonèenie programu "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "type  :help news<Enter>     for v%s.%s notes "
-msgstr "zadajte  :help sponsor<Enter>          pre informácie         "
+msgstr ""
 
 msgid "Help poor children in Uganda!"
 msgstr "Pomô¾te chudobným de»om v Ugande!"
 
-#, fuzzy
 msgid "type  :help Kuwasha<Enter>  for information "
-msgstr "zadajte  :help sponsor<Enter>          pre informácie         "
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid control character present in input: %.*s"
-msgstr "E71: Neprípustný znak po %s%%"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E112: Option name missing: %.*s"
-msgstr "E112: Chýba meno voµby: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected EOC character: %.*s"
-msgstr "E18: Neoèekávané znaky v :let"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unidentified character: %.*s"
-msgstr "E121: Nedefinovaná premenná: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Operator is not associative: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing operator: %.*s"
-msgstr "E115: Chýbajú úvodzovky: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected lambda arguments list or arrow: %.*s"
-msgstr "E766: Chybné argumenty pre funkciu printf()"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected value part of assignment lvalue: %.*s"
@@ -6267,25 +6040,23 @@ msgstr ""
 msgid "E15: Expected assignment operator or subscript: %.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E15: Unexpected "
-msgstr "E548: oèakávaná èíslica"
+msgstr ""
 
 #, c-format
 msgid "E15: Unexpected multiplication-like operator: %.*s"
 msgstr ""
 
-#, fuzzy
 msgid "E15: Environment variable name missing"
-msgstr "E461: Neprípustné meno premennej: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Expected value, got comparison operator: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got comma: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Comma outside of call, lambda or literal: %.*s"
@@ -6299,13 +6070,13 @@ msgstr ""
 msgid "E15: Expected value, got closing bracket: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Unable to assign to empty list: %.*s"
-msgstr "E241: Nemô¾em posla» na %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing figure brace: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
 #, c-format
 msgid "E475: Nested lists not allowed when assigning: %.*s"
@@ -6319,92 +6090,91 @@ msgstr ""
 msgid "E15: Don't know what figure brace means: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected arrow: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Arrow outside of lambda: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected dot: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
 #, c-format
 msgid "E15: Cannot concatenate in assignments: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got parenthesis: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing parenthesis: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got question mark: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E114: Missing double quote: %.*s"
-msgstr "E114: Chýbajú úvodzovky: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E115: Missing single quote: %.*s"
-msgstr "E115: Chýbajú úvodzovky: %s"
+msgstr ""
 
 #, c-format
 msgid "E475: Expected closing bracket to end list assignment lvalue: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Misplaced assignment: %.*s"
-msgstr "E125: Neprípustný argument: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected assignment: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got EOC: %.*s"
-msgstr "E415: neoèakávané znamienko rovná sa: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E116: Missing closing parenthesis for function call: %.*s"
-msgstr "E118: Príli¹ mnoho argumentov pre funkciu %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E110: Missing closing parenthesis for nested expression: %.*s"
-msgstr "E107: Chýbajú zátvorky: %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E697: Missing end of List ']': %.*s"
-msgstr "E697: Chýba koniec Zoznamu (List) ']': %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E723: Missing end of Dictionary '}': %.*s"
-msgstr "E723: Chýba koniec Slovníka (Dictionary) '}': %s"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing closing figure brace: %.*s"
-msgstr "E159: Chýba èislo znaèky"
+msgstr ""
 
 #, c-format
 msgid "E15: Missing closing figure brace for lambda: %.*s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "E109: Missing ':' after '?': %.*s"
-msgstr "E109: Po '?' chýba ':'"
+msgstr ""
 
 msgid "E444: Cannot close last window"
 msgstr "E444: Posledné okno sa nedá zatvori»"
 
-#, fuzzy
 msgid "E1159: Cannot split a window when closing the buffer"
-msgstr "E90: Posledný buffer sa nedá odstráni»"
+msgstr ""
 
 msgid "Already only one window"
 msgstr "Existuje u¾ iba jedno okno"
@@ -6489,9 +6259,8 @@ msgstr ""
 msgid "override 'ignorecase' when pattern has upper case characters"
 msgstr ""
 
-#, fuzzy
 msgid "maximum number for the search count feature"
-msgstr "E569: dosiahnutý maximálny poèet cscope spojení"
+msgstr ""
 
 msgid "what method to use for changing case of letters"
 msgstr ""
@@ -6502,9 +6271,8 @@ msgstr ""
 msgid "pattern for a macro definition line"
 msgstr ""
 
-#, fuzzy
 msgid "pattern for an include-file line"
-msgstr "Vzor nájdený na ka¾dom riadku: %s"
+msgstr ""
 
 msgid "expression used to transform an include line to a file name"
 msgstr ""
@@ -6515,9 +6283,8 @@ msgstr ""
 msgid "tags"
 msgstr ""
 
-#, fuzzy
 msgid "use binary searching in tags files"
-msgstr "Prehµadávam súbor tagov %s"
+msgstr ""
 
 msgid "number of significant characters in a tag name or zero"
 msgstr ""
@@ -6554,9 +6321,8 @@ msgstr ""
 msgid "number of screen lines to show around the cursor"
 msgstr ""
 
-#, fuzzy
 msgid "long lines wrap"
-msgstr "[dlhé riadky zalomené]"
+msgstr ""
 
 msgid "wrap long lines at a character in 'breakat'"
 msgstr ""
@@ -6592,9 +6358,8 @@ msgstr ""
 msgid "number of lines used for the command-line"
 msgstr ""
 
-#, fuzzy
 msgid "width of the display"
-msgstr "Bez grafického rozhrania"
+msgstr ""
 
 msgid "number of lines in the display"
 msgstr ""
@@ -6620,9 +6385,8 @@ msgstr ""
 msgid "list of strings used for list mode"
 msgstr ""
 
-#, fuzzy
 msgid "show the line number for each line"
-msgstr " riadkov pred zaèiatkom"
+msgstr ""
 
 msgid "show the relative line number for each line"
 msgstr ""
@@ -6741,13 +6505,11 @@ msgstr ""
 msgid "initial height of the help window"
 msgstr ""
 
-#, fuzzy
 msgid "default height for the preview window"
-msgstr "E441: Nenájdené ¾iadne okno náhµadu"
+msgstr ""
 
-#, fuzzy
 msgid "identifies the preview window"
-msgstr "E441: Nenájdené ¾iadne okno náhµadu"
+msgstr ""
 
 msgid "custom format for the window bar"
 msgstr ""
@@ -6796,9 +6558,8 @@ msgstr ""
 msgid "maximum number of tab pages to open for -p and \"tab all\""
 msgstr ""
 
-#, fuzzy
 msgid "custom tab pages line"
-msgstr "nedá sa preèíta» riadok"
+msgstr ""
 
 msgid "terminal"
 msgstr ""
@@ -6933,9 +6694,8 @@ msgstr ""
 msgid "list of preferred languages for finding help"
 msgstr ""
 
-#, fuzzy
 msgid "selecting text"
-msgstr "Výber"
+msgstr ""
 
 msgid "\"old\", \"inclusive\" or \"exclusive\"; how selecting text behaves"
 msgstr ""
@@ -7141,9 +6901,8 @@ msgstr ""
 msgid "preserve kind of whitespace when changing indent"
 msgstr ""
 
-#, fuzzy
 msgid "enable lisp mode"
-msgstr "-l\t\t\tLisp mód"
+msgstr ""
 
 msgid "words that change how lisp indenting works"
 msgstr ""
@@ -7151,9 +6910,8 @@ msgstr ""
 msgid "options for Lisp indenting"
 msgstr ""
 
-#, fuzzy
 msgid "folding"
-msgstr "nahrávam"
+msgstr ""
 
 msgid "unset to display all folds open"
 msgstr ""
@@ -7205,20 +6963,17 @@ msgstr ""
 msgid "options for using diff mode"
 msgstr ""
 
-#, fuzzy
 msgid "expression used to obtain a diff file"
-msgstr "podpora výrazov bola vypnutá pri preklade programu"
+msgstr ""
 
 msgid "list of addresses for anchoring a diff"
 msgstr ""
 
-#, fuzzy
 msgid "expression used to patch a file"
-msgstr "podpora výrazov bola vypnutá pri preklade programu"
+msgstr ""
 
-#, fuzzy
 msgid "mapping"
-msgstr "®iadne mapovanie nebolo nájdené"
+msgstr ""
 
 msgid "maximum depth of mapping"
 msgstr ""
@@ -7235,9 +6990,8 @@ msgstr ""
 msgid "time in msec for 'ttimeout'"
 msgstr ""
 
-#, fuzzy
 msgid "reading and writing files"
-msgstr "Naèítavam slovník %s..."
+msgstr ""
 
 msgid "enable using settings from modelines when reading a file"
 msgstr ""
@@ -7269,9 +7023,8 @@ msgstr ""
 msgid "list of file formats to look for when editing a file"
 msgstr ""
 
-#, fuzzy
 msgid "writing files is allowed"
-msgstr "-m\t\t\tZmeny (ukladanie súborov) zakázané"
+msgstr ""
 
 msgid "write a backup file before overwriting a file"
 msgstr ""
@@ -7309,16 +7062,14 @@ msgstr ""
 msgid "forcibly sync the file to disk after writing it"
 msgstr ""
 
-#, fuzzy
 msgid "the swap file"
-msgstr "®iadny odkladací súbor"
+msgstr ""
 
 msgid "list of directories for the swap file"
 msgstr ""
 
-#, fuzzy
 msgid "use a swap file for this buffer"
-msgstr "Pre tento buffer nie sú definované ¾iadne polo¾ky syntaxe"
+msgstr ""
 
 msgid "number of characters typed to cause a swap file update"
 msgstr ""
@@ -7326,9 +7077,8 @@ msgstr ""
 msgid "time in msec after which the swap file will be updated"
 msgstr ""
 
-#, fuzzy
 msgid "command line editing"
-msgstr "Príkazový riadok"
+msgstr ""
 
 msgid "how many command lines are remembered"
 msgstr ""
@@ -7339,9 +7089,8 @@ msgstr ""
 msgid "like 'wildchar' but can also be used in a mapping"
 msgstr ""
 
-#, fuzzy
 msgid "specifies how command line completion works"
-msgstr " Doplòovanie príkazového riadka (^V^N^P)"
+msgstr ""
 
 msgid "empty or \"tagfile\" to list file name of matching tags"
 msgstr ""
@@ -7370,9 +7119,8 @@ msgstr ""
 msgid "height of the command-line window"
 msgstr ""
 
-#, fuzzy
 msgid "executing external commands"
-msgstr "'ståpce' nie je 80, nemô¾em spusti» externý príkaz"
+msgstr ""
 
 msgid "name of the shell program used for external commands"
 msgstr ""
@@ -7449,9 +7197,8 @@ msgstr ""
 msgid "language specific"
 msgstr ""
 
-#, fuzzy
 msgid "specifies the characters in a file name"
-msgstr "E18: Neoèekávané znaky v :let"
+msgstr ""
 
 msgid "specifies the characters in an identifier"
 msgstr ""
@@ -7459,9 +7206,8 @@ msgstr ""
 msgid "specifies the characters in a keyword"
 msgstr ""
 
-#, fuzzy
 msgid "specifies printable characters"
-msgstr "E595: obsahuje netlaèiteµné znaky"
+msgstr ""
 
 msgid "specifies escape characters in a string"
 msgstr ""
@@ -7502,9 +7248,8 @@ msgstr ""
 msgid "entering a search pattern: 1: use :lmap; 2: use IM; 0: neither"
 msgstr ""
 
-#, fuzzy
 msgid "multi-byte characters"
-msgstr "1 znak"
+msgstr ""
 
 msgid "character encoding for the current file"
 msgstr ""
@@ -7580,13 +7325,11 @@ msgstr ""
 msgid "whether to use Python 2 or 3"
 msgstr ""
 
-#, fuzzy
 msgid "live preview of substitution"
-msgstr "1 nahradenie"
+msgstr ""
 
-#, fuzzy
 msgid "buffer is busy"
-msgstr "buffer je neplatný"
+msgstr ""
 
 msgid "characters removed when pasting into terminal window"
 msgstr ""
@@ -7594,9 +7337,8 @@ msgstr ""
 msgid "number of lines kept beyond the visible screen in terminal buffer"
 msgstr ""
 
-#, fuzzy
 msgid "(local to window)"
-msgstr "Existuje u¾ iba jedno okno"
+msgstr ""
 
 msgid "(local to buffer)"
 msgstr ""
@@ -7645,10 +7387,33 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
+#~ "\n"
+#~ "Usage:"
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "pou¾itie:"
+
+#~ msgid ""
+#~ "\n"
 #~ "         [not usable with this version of Vim]"
 #~ msgstr ""
 #~ "\n"
 #~ "         [nepou¾iteµné s touto verziou Vim]"
+
+#~ msgid ""
+#~ "\n"
+#~ "    Name        Args Range Complete  Definition"
+#~ msgstr ""
+#~ "\n"
+#~ "    Meno       Args Rozsah Úplnos»  Definícia"
+
+#~ msgid ""
+#~ "\n"
+#~ "   #   line"
+#~ msgstr ""
+#~ "\n"
+#~ "   #   riadok"
 
 #~ msgid ""
 #~ "\n"
@@ -7714,6 +7479,18 @@ msgstr ""
 #~ msgstr ""
 #~ "\n"
 #~ "# globálne premenné:\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "(1) Another program may be editing the same file.  If this is the case,\n"
+#~ "    be careful not to end up with two different instances of the same\n"
+#~ "    file when making changes."
+#~ msgstr ""
+#~ "\n"
+#~ "(1) Súbor mô¾e by» upravovaný iným programom.\n"
+#~ "    Ak je tomu tak, potom si dajte pozor, aby ste po ulo¾ení zmien\n"
+#~ "    nemali dve rôzne verzie toho istého súboru.\n"
 
 #~ msgid ""
 #~ "\n"
@@ -7849,6 +7626,13 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
+#~ "Found a swap file by the name \""
+#~ msgstr ""
+#~ "\n"
+#~ "Nájdený odkladací súbor s menom \""
+
+#~ msgid ""
+#~ "\n"
 #~ "Huge version "
 #~ msgstr ""
 #~ "\n"
@@ -7912,6 +7696,20 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
+#~ "Maybe no changes were made or Vim did not update the swap file."
+#~ msgstr ""
+#~ "\n"
+#~ "Mo¾no nedo¹lo k ¾iadnym zmenám, alebo Vim neaktualizoval odkladací súbor."
+
+#~ msgid ""
+#~ "\n"
+#~ "More info with: \"vim -h\"\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Podrobnej¹ie informácie získáte pomocou \"vim -h\"\n"
+
+#~ msgid ""
+#~ "\n"
 #~ "Normal version "
 #~ msgstr ""
 #~ "\n"
@@ -7952,6 +7750,15 @@ msgstr ""
 #~ "\n"
 #~ "Vim: Chyba X ale pokraèujem ...\n"
 
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "You may want to delete the .swp file now.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Potom vyma¾te odkladací súbor s príponou .swp.\n"
+#~ "\n"
+
 #~ msgid ""
 #~ "\n"
 #~ "[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use "
@@ -7963,6 +7770,12 @@ msgstr ""
 
 #~ msgid "                              for Vim defaults   "
 #~ msgstr "                 pre predvolené vlastnosti Vim   "
+
+#~ msgid "                              for two modes      "
+#~ msgstr "                            pre dva re¾imy       "
+
+#~ msgid "         [does not look like a Vim swap file]"
+#~ msgstr "         [nevyzerá ako odkladací súbor Vim]"
 
 #~ msgid "      user exrc file: \""
 #~ msgstr "         u¾ívateµský exrc súbor: \""
@@ -8004,14 +7817,30 @@ msgstr ""
 #~ msgid " (lang)"
 #~ msgstr " (jazyk)"
 
+#~ msgid " (still running)"
+#~ msgstr " (stále be¾í)"
+
 #~ msgid " 2nd user vimrc file: \""
 #~ msgstr "  druhý u¾ívateµský vimrc súbor: \""
 
 #~ msgid " 3rd user vimrc file: \""
 #~ msgstr "  tretí u¾ívateµský vimrc súbor: \""
 
+#~ msgid " Hebrew"
+#~ msgstr " Hebrejský"
+
+#, fuzzy
+#~ msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+#~ msgstr " ^X re¾im (^]^D^E^F^I^K^L^N^O^P^S^U^V^Y)"
+
+#~ msgid " cannot be used with this version of Vim.\n"
+#~ msgstr " nedá sa pou¾i» s touto verziou Vim.\n"
+
 #~ msgid " in Win32s mode"
 #~ msgstr " vo Win32 re¾ime"
+
+#~ msgid " on %<PRId64> lines"
+#~ msgstr " na %<PRId64> riadkov"
 
 #~ msgid " on 1 line"
 #~ msgstr " na 1 riadku"
@@ -8054,14 +7883,55 @@ msgstr ""
 #~ msgid "%<PRId64> fewer lines"
 #~ msgstr "%<PRId64> vymazaných riadkov"
 
+#~ msgid "%<PRId64> lines %sed %d times"
+#~ msgstr "%<PRId64> riadkov upravených pomocou %s %d krát"
+
 #~ msgid "%<PRId64> lines %sed 1 time"
 #~ msgstr "%<PRId64> riadkov upravených naraz pomocou %s"
+
+#~ msgid "%<PRId64> lines --%d%%--"
+#~ msgstr "%<PRId64> riadkov --%d%%--"
+
+#~ msgid "%<PRId64> lines indented "
+#~ msgstr "%<PRId64> riadkov odsadených "
+
+#~ msgid "%<PRId64> lines moved"
+#~ msgstr "%<PRId64> riadkov presunutých"
+
+#~ msgid "%<PRId64> lines yanked"
+#~ msgstr "%<PRId64> skopírovaných riadkov"
+
+#~ msgid "%<PRId64> lines, "
+#~ msgstr "%<PRId64> riadkov, "
+
+#~ msgid "%<PRId64> matches"
+#~ msgstr "%<PRId64> zhôd"
 
 #~ msgid "%<PRId64> more lines"
 #~ msgstr "%<PRId64> nových riadkov"
 
+#, fuzzy, c-format
+#~ msgid "%<PRId64> seconds ago"
+#~ msgstr "%<PRId64> Ståpcov; "
+
+#~ msgid "%<PRId64> substitutions"
+#~ msgstr "%<PRId64> nahradení"
+
+#~ msgid "%d buffers deleted"
+#~ msgstr "%d bufferov vymazaných"
+
+#~ msgid "%d buffers unloaded"
+#~ msgstr "%d bufferov uvoµnených"
+
+#~ msgid "%d buffers wiped out"
+#~ msgstr "%d bufferov odstránených"
+
 #~ msgid "%d files to edit\n"
 #~ msgstr "%d súborov pre úpravu\n"
+
+#~ msgid "%d more files to edit.  Quit anyway?"
+#~ msgstr ""
+#~ "E¹te zostáva %d súborov k úprave. Chcete napriek tomu ukonèi» editor?"
 
 #~ msgid "%d of %d edited"
 #~ msgstr "%d upravených súborov z %d"
@@ -8122,8 +7992,17 @@ msgstr ""
 #~ msgid "' not known. Available builtin terminals are:"
 #~ msgstr "' nie je známy. Dostupné vstavané terminály:"
 
+#~ msgid "'columns' is not 80, cannot execute external commands"
+#~ msgstr "'ståpce' nie je 80, nemô¾em spusti» externý príkaz"
+
 #~ msgid "+\t\t\tStart at end of file"
 #~ msgstr "+\t\t\tNastaví kurzor na koniec súboru"
+
+#~ msgid "+-%s%3ld lines: "
+#~ msgstr "+-%s%3ld riadky: "
+
+#~ msgid "+--%3ld lines folded "
+#~ msgstr "+--%3ld riadkov zahnutých "
 
 #~ msgid "+<lnum>\t\tStart at line <lnum>"
 #~ msgstr "+<riadok>\t\tNastaví kurzor na <riadok>"
@@ -8133,6 +8012,12 @@ msgstr ""
 
 #~ msgid "-               read text from stdin"
 #~ msgstr "-                   èíta» text z ¹tandardného vstupu"
+
+#~ msgid "--\t\t\tOnly file names after this"
+#~ msgstr "--\t\t\tMô¾u nasledova» iba názvy súborov"
+
+#~ msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
+#~ msgstr "--cmd <príkaz>\t\tVykoná <príkaz> pred nahratím vimrc súboru"
 
 #~ msgid "--columns <number>\tInitial width of window in columns"
 #~ msgstr "--columns <poèet>\tPoèiatoèná ¹írka okna v ståpcoch"
@@ -8187,6 +8072,9 @@ msgstr ""
 #~ msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
 #~ msgstr "--socketid <xid>\tOtvorí Vim vnútri iného GTK programu."
 
+#~ msgid "--version\t\tPrint version information and exit"
+#~ msgstr "--version\t\tVypí¹e informácie o verzii a skonèí"
+
 #~ msgid "-A\t\t\tstart in Arabic mode"
 #~ msgstr "-A\t\t\tspusti v Arabic móde"
 
@@ -8220,6 +8108,10 @@ msgstr ""
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tMód iba pre èítanie (ako \"view\")"
 
+#~ msgid "-S <session>\t\tSource file <session> after loading the first file"
+#~ msgstr ""
+#~ "-S <sedenie>\t\tPo nahratí prvého súboru vykoná príkazy v súbore <sedenie>"
+
 #~ msgid "-T <terminal>\tSet terminal type to <terminal>"
 #~ msgstr "-T <terminál>\tNastaví typ terminálu na <terminál>"
 
@@ -8249,6 +8141,9 @@ msgstr ""
 
 #~ msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
 #~ msgstr "-borderwidth <¹írka>\tNastaví <¹írku> okrajov (tie¾ -bw)"
+
+#~ msgid "-c <command>\t\tExecute <command> after loading the first file"
+#~ msgstr "-c <príkaz>\t\tPo nahratí prvého súboru vykoná <príkaz>"
 
 #~ msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
 #~ msgstr "-d\t\t\tPorovnávací mód (rovnaké ako \"vimdiff\")"
@@ -8300,14 +8195,30 @@ msgstr ""
 #~ msgid "-italicfont <font>\tUse <font> for italic text"
 #~ msgstr "-italicfont <písmo>\tNastaví <písmo> pre kurzívu"
 
+#~ msgid "-l\t\t\tLisp mode"
+#~ msgstr "-l\t\t\tLisp mód"
+
+#~ msgid "-m\t\t\tModifications (writing files) not allowed"
+#~ msgstr "-m\t\t\tZmeny (ukladanie súborov) zakázané"
+
 #~ msgid "-menuheight <height>\tUse a menu bar height of <height> (also: -mh)"
 #~ msgstr "-menuheight <vý¹ka>\tNastaví <vý¹ku> ponuky (tie¾ -mh)"
+
+#~ msgid "-n\t\t\tNo swap file, use memory only"
+#~ msgstr "-n\t\t\tNevytvára» odkladací súbor, pou¾íva» iba pamä»"
 
 #~ msgid "-name <name>\t\tUse resource as if vim was <name>"
 #~ msgstr "-name <názov>\t\tPou¾ije resource ako by vim mal <názov>"
 
 #~ msgid "-notip\t\tDisable the tip dialog"
 #~ msgstr "-notip\t\tNezobrazuj tip pri ¹tarte"
+
+#~ msgid "-o[N]\t\tOpen N windows (default: one for each file)"
+#~ msgstr "-o[N]\t\tOtvorí N okien (implicitne jedno pre ka¾dý súbor)"
+
+#, fuzzy
+#~ msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
+#~ msgstr "-o[N]\t\tOtvorí N okien (implicitne jedno pre ka¾dý súbor)"
 
 #~ msgid "-q [errorfile]  edit file with first error"
 #~ msgstr "-q [chybový súbor]  upravi» súbor na mieste výskytu prvej chyby"
@@ -8326,6 +8237,9 @@ msgstr ""
 
 #~ msgid "-s\t\t\tSilent (batch) mode (only for \"ex\")"
 #~ msgstr "-s\t\t\tTichý (dávkový) mód (iba pre \"ex\")"
+
+#~ msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"
+#~ msgstr "-s <skript>\t\tNaèíta príkazy normálneho módu zo <skriptu>"
 
 #~ msgid ""
 #~ "-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
@@ -8362,6 +8276,13 @@ msgstr ""
 #~ msgid "...(truncated)"
 #~ msgstr "...(skrátené)"
 
+#~ msgid "/ line ignored in %s line %d: %s"
+#~ msgstr "Riadok / v %s riadok %d ignorovaný: %s"
+
+#~ msgid "/encoding= line after word ignored in %s line %d: %s"
+#~ msgstr ""
+#~ "/encoding= riadok nasledujúci po slove v %s riadok %d ignorovaný: %s"
+
 #~ msgid "1 buffer deleted"
 #~ msgstr "1 buffer vymazaný"
 
@@ -8370,6 +8291,9 @@ msgstr ""
 
 #~ msgid "1 buffer wiped out"
 #~ msgstr "1 buffer odstránený"
+
+#~ msgid "1 character"
+#~ msgstr "1 znak"
 
 #~ msgid "1 line %sed %d times"
 #~ msgstr "1 riadok upravený pomocou %s %d krát"
@@ -8386,17 +8310,29 @@ msgstr ""
 #~ msgid "1 line indented "
 #~ msgstr "1 riadok odsadený "
 
+#~ msgid "1 line less"
+#~ msgstr "1 vymazaný riadok"
+
 #~ msgid "1 line moved"
 #~ msgstr "1 riadok presunutý"
 
 #~ msgid "1 line yanked"
 #~ msgstr "1 riadok skopírovaný"
 
+#~ msgid "1 line, "
+#~ msgstr "1 riadok, "
+
 #~ msgid "1 match"
 #~ msgstr "1 zhoda"
 
 #~ msgid "1 more file to edit.  Quit anyway?"
 #~ msgstr "E¹te zostáva 1 súbor k úprave. Chcete napriek tomu ukonèi» editor?"
+
+#~ msgid "1 more line"
+#~ msgstr "1 nový riadok"
+
+#~ msgid "1 substitution"
+#~ msgstr "1 nahradenie"
 
 #~ msgid "2nd user gvimrc file: \""
 #~ msgstr "druhý u¾ívateµský gvimrc súbor: \""
@@ -8453,6 +8389,9 @@ msgstr ""
 #~ msgid "At line"
 #~ msgstr "Na riadku"
 
+#~ msgid "Attempt to open script file again: \""
+#~ msgstr "Pokus o opätovné otvorenie skriptu: \""
+
 #~ msgid "Become a registered Vim user!"
 #~ msgstr "Staòte sa registrovaným u¾ívateµom Vimu!"
 
@@ -8487,14 +8426,24 @@ msgstr ""
 #~ msgid "Cannot open NIL:\n"
 #~ msgstr "Nedá sa otvori» NIL:\n"
 
+#~ msgid "Cannot open for reading: \""
+#~ msgstr "Nedá sa otvori» pre zápis: \""
+
 #~ msgid "Character used for SLASH must be ASCII; in %s line %d: %s"
 #~ msgstr "Znak pou¾itý pre SLASH musí by» ASCII; v %s riadok %d: %s"
+
+#~ msgid "Command Line"
+#~ msgstr "Príkazový riadok"
 
 #~ msgid "Compilation: "
 #~ msgstr "Preklad: "
 
 #~ msgid "Compiler: "
 #~ msgstr "Prekladaè: "
+
+#, fuzzy, c-format
+#~ msgid "Compressed %d of %d nodes; %d (%d%%) remaining"
+#~ msgstr "Skomprimovaných %d z %d uzlov; %d%% zostáva"
 
 #~ msgid "Conversion in %s not supported"
 #~ msgstr "Konverzia v %s nie je podporovaná"
@@ -8504,6 +8453,10 @@ msgstr ""
 
 #~ msgid "Could not load vim32.dll!"
 #~ msgstr "Nemô¾em nahra» vim32.dll!"
+
+#, fuzzy
+#~ msgid "Could not open temporary log file for writing "
+#~ msgstr "E214: Nedá sa nájs» doèasný súbor pre ukladanie"
 
 #~ msgid "Cscope tag: %s"
 #~ msgstr "Cscope tag: %s"
@@ -8520,23 +8473,68 @@ msgstr ""
 #~ msgid "Directory\t*.nothing\n"
 #~ msgstr "Adresár\t*.niè\n"
 
+#~ msgid "Double ; in list of variables"
+#~ msgstr "Dvojitá ; v zozname premenných"
+
 #~ msgid "Down"
 #~ msgstr "Dolu"
+
+#~ msgid "Duplicate /encoding= line ignored in %s line %d: %s"
+#~ msgstr "Duplicitný riadok /encoding= v %s riadok %d ignorovaný: %s "
+
+#~ msgid "Duplicate /regions= line ignored in %s line %d: %s"
+#~ msgstr "Duplicitný riadok /regions= v %s riadok %d ignorovaný: %s"
+
+#~ msgid "E121: Undefined variable: %s"
+#~ msgstr "E121: Nedefinovaná premenná: %s"
+
+#~ msgid ""
+#~ "E12: Command not allowed from exrc/vimrc in current dir or tag search"
+#~ msgstr ""
+#~ "E12: Príkaz nie je z exrc/vimrc v aktuálnom adresári alebo pri hµadaní "
+#~ "tagu povolený."
+
+#~ msgid "E134: Move lines into themselves"
+#~ msgstr "E134: Prekrytie riadkov sebou samými"
 
 #~ msgid "E136: viminfo: Too many errors, skipping rest of file"
 #~ msgstr "E136: viminfo: príli¹ mnoho chýb, preskakujem zbytok súboru"
 
+#~ msgid "E137: Viminfo file is not writable: %s"
+#~ msgstr "E137: Do viminfo súboru %s sa nedá zapisova»"
+
 #~ msgid "E138: Can't write viminfo file %s!"
 #~ msgstr "E138: Nedá sa ulo¾i» viminfo súbor %s!"
 
+#~ msgid "E144: non-numeric argument to :z"
+#~ msgstr "E144: neèíselný argument pre :z"
+
+#~ msgid "E147: Cannot do :global recursive"
+#~ msgstr "E147: :global sa nedá vola» rekurzívne"
+
 #~ msgid "E14: Invalid address"
 #~ msgstr "E14: Chybná adresa"
+
+#~ msgid "E157: Invalid sign ID: %<PRId64>"
+#~ msgstr "E157: Chybné ID znaèky: %<PRId64>"
+
+#~ msgid "E15: Invalid expression: %s"
+#~ msgstr "E15: Chybný výraz: %s"
 
 #~ msgid "E172: Only one file name allowed"
 #~ msgstr "E172: Prípustný je iba jeden názov súboru"
 
 #~ msgid "E173: %<PRId64> more files to edit"
 #~ msgstr "E173: E¹te zostáva %<PRId64> súborov k úprave."
+
+#~ msgid "E173: 1 more file to edit"
+#~ msgstr "E173: E¹te zostáva 1 súbor k úprave."
+
+#~ msgid "E174: Command already exists: add ! to replace it"
+#~ msgstr "E174: Príkaz u¾ existuje: pou¾ite ! pre predefinovanie"
+
+#~ msgid "E179: argument required for -complete"
+#~ msgstr "E179: pre doplnenie (-complete) je potrebný argument"
 
 #~ msgid "E188: Obtaining window position not implemented for this platform"
 #~ msgstr "E188: Na tejto platforme sa nedá zisti» umiestnenie okna"
@@ -8553,11 +8551,41 @@ msgstr ""
 #~ msgid "E198: cmd_pchar beyond the command length"
 #~ msgstr "E198: cmd_pchar prevy¹uje då¾ku príkazu"
 
+#~ msgid "E199: Active window or buffer deleted"
+#~ msgstr "E199: Aktívne okno alebo buffer bol vymazaný"
+
+#~ msgid "E206: patchmode: can't touch empty original file"
+#~ msgstr "E206: patchmode: nedá sa zapisova» do prázdneho pôvodného súboru"
+
 #~ msgid "E208: Error writing to \"%s\""
 #~ msgstr "E208: Chyba pri zápise do \"%s\""
 
+#~ msgid "E209: Error closing \"%s\""
+#~ msgstr "E209: Chyba pri uzatváraní \"%s\""
+
 #~ msgid "E210: Error reading \"%s\""
 #~ msgstr "E210: Chyba pri èítaní \"%s\""
+
+#~ msgid "E212: Can't open file for writing"
+#~ msgstr "E212: Súbor sa nedá otvori» pre ukladanie"
+
+#~ msgid "E218: autocommand nesting too deep"
+#~ msgstr "E218: vnorenia automatického príkazu sú príli¹ hlboké"
+
+#~ msgid "E223: recursive mapping"
+#~ msgstr "E223: rekurzívne mapovanie"
+
+#~ msgid "E224: global abbreviation already exists for %s"
+#~ msgstr "E224: pre %s u¾ globálna skratka existuje"
+
+#~ msgid "E225: global mapping already exists for %s"
+#~ msgstr "E225: pre %s u¾ globálne mapovanie existuje"
+
+#~ msgid "E226: abbreviation already exists for %s"
+#~ msgstr "E226: pre %s u¾ skratka existuje"
+
+#~ msgid "E227: mapping already exists for %s"
+#~ msgstr "E227: pre %s u¾ mapovanie existuje"
 
 #~ msgid "E229: Cannot start the GUI"
 #~ msgstr "E229: Nedá sa spusti» GUI (grafické rozhranie)"
@@ -8579,6 +8607,12 @@ msgstr ""
 #~ msgid "E234: Unknown fontset: %s"
 #~ msgstr "E234: Neznáma sada písiem: %s"
 
+#~ msgid "E235: Unknown font: %s"
+#~ msgstr "E235: Neznáme písmo: %s"
+
+#~ msgid "E236: Font \"%s\" is not fixed-width"
+#~ msgstr "E236: Písmo \"%s\" nemá pevnú ¹írku"
+
 #~ msgid "E237: Printer selection failed"
 #~ msgstr "E237: Zlyhal výber tlaèiarne"
 
@@ -8587,6 +8621,9 @@ msgstr ""
 
 #~ msgid "E240: No connection to Vim server"
 #~ msgstr "E240: Neexistuje pripojenie k Vim serveru"
+
+#~ msgid "E241: Unable to send to %s"
+#~ msgstr "E241: Nemô¾em posla» na %s"
 
 #~ msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
 #~ msgstr "E243: Argument nie je podporovaný: \"-%s\"; Pou¾ite OLE verziu."
@@ -8614,6 +8651,9 @@ msgstr ""
 
 #~ msgid "E253: Fontset name: %s\n"
 #~ msgstr "E253: Názov sady písiem: %s\n"
+
+#~ msgid "E254: Cannot allocate color %s"
+#~ msgstr "E254: Nedá sa alokova» farba %s"
 
 #~ msgid "E256: Hangul automata ERROR"
 #~ msgstr "E256: Hangul ERROR - chyba kórejského spôsobu vkladania znakov"
@@ -8717,13 +8757,46 @@ msgstr ""
 #~ msgid "E292: Input Method Server is not running"
 #~ msgstr "E292: Server vstupných metód nebe¾í"
 
+#~ msgid "E293: block was not locked"
+#~ msgstr "E293: blok nebol zamknutý"
+
 #~ msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
 #~ msgstr ""
 #~ "E299: Vykonanie kódu v jazyku Perl nie je mo¾né v bezpeènostnej schránke "
 #~ "bez bezpeènostného modulu"
 
+#~ msgid "E307: %s does not look like a Vim swap file"
+#~ msgstr "E307: %s sa nezdá by» odkladacím súborom Vim"
+
+#~ msgid "E315: ml_get: invalid lnum: %<PRId64>"
+#~ msgstr "E315: ml_get: chybné èíslo riadku: %<PRId64>"
+
+#~ msgid "E316: ml_get: cannot find line %<PRId64>"
+#~ msgstr "E316: ml_get: nedá sa nájs» riadok %<PRId64>"
+
+#~ msgid "E317: pointer block id wrong"
+#~ msgstr "E317: chybné èíslo ukazovateµa na blok"
+
+#~ msgid "E317: pointer block id wrong 2"
+#~ msgstr "E317: chybný èíslo ukazovateµa na blok 2"
+
+#~ msgid "E317: pointer block id wrong 3"
+#~ msgstr "E317: chybné èíslo ukazovateµa na blok 3"
+
+#~ msgid "E317: pointer block id wrong 4"
+#~ msgstr "E317: chybné èíslo ukazovateµa na blok 4"
+
+#~ msgid "E322: line number out of range: %<PRId64> past the end"
+#~ msgstr "E322: èíslo riadku je mimo rozsah: %<PRId64> (za koncom)"
+
+#~ msgid "E323: line count wrong in block %<PRId64>"
+#~ msgstr "E323: chybný poèet riadkov v bloku %<PRId64>"
+
 #~ msgid "E338: Sorry, no file browser in console mode"
 #~ msgstr "E338: ¥utujem, ale konzolová verzia nepodporuje prehliadaè súborov"
+
+#~ msgid "E340: Line is becoming too long"
+#~ msgstr "E340: Riadok sa stáva príli¹ dlhým"
 
 #~ msgid "E341: Internal error: lalloc(%<PRId64>, )"
 #~ msgstr "E341: Vnútorná chyba: lalloc(%<PRId64>, )"
@@ -8731,17 +8804,51 @@ msgstr ""
 #~ msgid "E360: Cannot execute shell with -f option"
 #~ msgstr "E360: Nedá sa spusti» shell s -f voµbou"
 
+#~ msgid "E363: pattern uses more memory than 'maxmempattern'"
+#~ msgstr "E363: vzor pou¾íva viac pamäte ako 'maxmempattern'"
+
+#~ msgid "E369: invalid item in %s%%[]"
+#~ msgstr "E369: chybná polo¾ka v %s%%[]"
+
 #~ msgid "E370: Could not load library %s"
 #~ msgstr "E370: Nepodarilo sa nahra» kni¾nicu %s"
 
 #~ msgid "E371: Command not found"
 #~ msgstr "E371: Príkaz nenájdený"
 
+#~ msgid "E384: search hit TOP without match for: %s"
+#~ msgstr "E384: hµadanie dosiahlo zaèiatok bez nájdenia %s"
+
+#~ msgid "E385: search hit BOTTOM without match for: %s"
+#~ msgstr "E385: hµadanie dosiahlo koniec bez nájdenia %s"
+
+#~ msgid "E395: contains argument not accepted here"
+#~ msgstr "E395: obsahuje argumenty, ktoré tu nie sú povolené"
+
 #~ msgid "E396: containedin argument not accepted here"
 #~ msgstr "E396: obsahuje argumenty, ktoré tu nie sú povolené"
 
+#~ msgid "E411: highlight group not found: %s"
+#~ msgstr "E411: skupina zvýraznenia %s nebola nájdená"
+
+#~ msgid "E414: group has settings, highlight link ignored"
+#~ msgstr ""
+#~ "E414: skupina je nastavená, odkaz na zvýrazòovaciu skupinu ignorovaný"
+
+#~ msgid "E415: unexpected equal sign: %s"
+#~ msgstr "E415: neoèakávané znamienko rovná sa: %s"
+
+#~ msgid "E416: missing equal sign: %s"
+#~ msgstr "E416: chýba znamienko rovná sa: %s"
+
+#~ msgid "E417: missing argument: %s"
+#~ msgstr "E417: chýba argument: %s"
+
 #~ msgid "E422: terminal code too long: %s"
 #~ msgstr "E422: terminálový kód je príli¹ dlhý: %s"
+
+#~ msgid "E426: tag not found: %s"
+#~ msgstr "E426: tag %s nenájdený"
 
 #~ msgid "E430: Tag file path truncated for %s\n"
 #~ msgstr "E430: Cesta k súboru tagov %s bola orezaná\n"
@@ -8751,6 +8858,12 @@ msgstr ""
 
 #~ msgid "E437: terminal capability \"cm\" required"
 #~ msgstr "E437: Terminál musí ma» schopnos» \"cm\" (schopnos» pohybu kurzora)"
+
+#~ msgid "E439: undo list corrupt"
+#~ msgstr "E439: záznam o zmenách po¹kodený"
+
+#~ msgid "E440: undo line missing"
+#~ msgstr "E440: chýba opravný riadok"
 
 #~ msgid "E448: Could not load library function %s"
 #~ msgstr "E448: Nepodarilo sa nahra» funkciu kni¾nice %s"
@@ -8765,11 +8878,37 @@ msgstr ""
 #~ msgid "E463: Region is guarded, cannot modify"
 #~ msgstr "E463: Región je uzamknutý, nemo¾no modifikova»"
 
+#~ msgid "E466: :winpos requires two number arguments"
+#~ msgstr "E466: :winpos (pozícia okna) vy¾aduje dva argumenty"
+
 #~ msgid "E469: invalid cscopequickfix flag %c for %c"
 #~ msgstr "E469: chybný cscopequickfix príznak %c pre %c"
 
+#~ msgid "E46: Cannot change read-only variable \"%s\""
+#~ msgstr "E46: Nedá sa nastavi» premenná len na èítanie \"%s\""
+
+#~ msgid "E473: Internal error"
+#~ msgstr "E473: Vnútorná chyba"
+
 #~ msgid "E478: Don't panic!"
 #~ msgstr "E478: ®iadnu paniku!"
+
+#~ msgid "E495: no autocommand file name to substitute for \"<afile>\""
+#~ msgstr ""
+#~ "E495: ¾iadny názov súboru, ktorým by bolo mo¾né nahradi» \"<afile>\""
+
+#~ msgid "E496: no autocommand buffer number to substitute for \"<abuf>\""
+#~ msgstr ""
+#~ "E496: ¾iadne èíslo bufferu, ktorým by bolo mo¾né nahradi» \"<abuf>\""
+
+#~ msgid "E497: no autocommand match name to substitute for \"<amatch>\""
+#~ msgstr ""
+#~ "E497: ¾iadna zhoda automatických príkazov, ktorou by bolo mo¾né nahradi» "
+#~ "\"<amatch>\""
+
+#~ msgid "E498: no :source file name to substitute for \"<sfile>\""
+#~ msgstr ""
+#~ "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
 
 #~ msgid "E505: "
 #~ msgstr "E505: "
@@ -8785,6 +8924,14 @@ msgstr ""
 #~ msgid "E508: Can't read file for backup (add ! to override)"
 #~ msgstr "E508: Nedá sa naèíta» súbor pre zálohu (pou¾ite ! pre vynútenie)"
 
+#~ msgid "E512: Close failed"
+#~ msgstr "E512: Zatvorenie zlyhalo"
+
+#~ msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
+#~ msgstr ""
+#~ "E513: chyba pri zápise, konverzia sa nepodarila (nastavte voµbu 'fenc' na "
+#~ "prázdnu pre vynútenie)"
+
 #, fuzzy, c-format
 #~ msgid ""
 #~ "E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty "
@@ -8793,8 +8940,17 @@ msgstr ""
 #~ "E513: chyba pri zápise, konverzia sa nepodarila (nastavte voµbu 'fenc' na "
 #~ "prázdnu pre vynútenie)"
 
+#~ msgid "E514: write error (file system full?)"
+#~ msgstr "E514: chyba pri ukladaní (plný disk?)"
+
 #~ msgid "E522: Not found in termcap"
 #~ msgstr "E522: Nenájdený v termcape"
+
+#~ msgid "E529: Cannot set 'term' to empty string"
+#~ msgstr "E529: Voµba 'term' nemô¾e by» prázdna"
+
+#~ msgid "E530: Cannot change term in GUI"
+#~ msgstr "E530: V grafickom móde (GUI) sa nedá meni» typ terminálu"
 
 #~ msgid "E531: Use \":gui\" to start the GUI"
 #~ msgstr "E531: Pou¾ite \"gui\" pre spustenie GUI"
@@ -8802,17 +8958,38 @@ msgstr ""
 #~ msgid "E533: can't select wide font"
 #~ msgstr "E533: nedá sa vybra» ¹iroký font"
 
+#~ msgid "E534: Invalid wide font"
+#~ msgstr "E534: Chybné ¹iroké písmo"
+
+#~ msgid "E536: comma required"
+#~ msgstr "E536: je nutná èiarka"
+
 #~ msgid "E538: No mouse support"
 #~ msgstr "E538: Bez podpory my¹i"
 
 #~ msgid "E541: too many items"
 #~ msgstr "E541: príli¹ mnoho polo¾iek"
 
+#~ msgid "E542: unbalanced groups"
+#~ msgstr "E542: nevyvá¾ené skupiny"
+
 #~ msgid "E543: Not a valid codepage"
 #~ msgstr "E543: Chybná kódová stránka"
 
 #~ msgid "E547: Illegal mouseshape"
 #~ msgstr "E547: Chybný tvar my¹i"
+
+#~ msgid "E548: digit expected"
+#~ msgstr "E548: oèakávaná èíslica"
+
+#~ msgid "E555: at bottom of tag stack"
+#~ msgstr "E555: na konci zoznamu tagov"
+
+#~ msgid "E556: at top of tag stack"
+#~ msgstr "E556: na zaèiatku zoznamu tagov"
+
+#~ msgid "E557: Cannot open termcap file"
+#~ msgstr "E557: Nedá sa otvori» termcap súbor"
 
 #~ msgid "E558: Terminal entry not found in terminfo"
 #~ msgstr "E558: Terminfo neobsahuje polo¾ku pre tento terminál"
@@ -8847,6 +9024,9 @@ msgstr ""
 #~ msgid "E568: duplicate cscope database not added"
 #~ msgstr "E568: duplicitná cscope databáza nebola pridaná"
 
+#~ msgid "E569: maximum number of cscope connections reached"
+#~ msgstr "E569: dosiahnutý maximálny poèet cscope spojení"
+
 #~ msgid "E570: fatal error in cs_manage_matches"
 #~ msgstr "E570: vá¾na chyba v cs_manage_matches"
 
@@ -8865,14 +9045,29 @@ msgstr ""
 #~ msgid "E574: Unknown register type %d"
 #~ msgstr "E574: Neznámy typ registra %d"
 
+#~ msgid "E583: multiple :else"
+#~ msgstr "E583: viacnásobné :else"
+
+#~ msgid "E595: contains unprintable or wide character"
+#~ msgstr "E595: obsahuje netlaèiteµné znaky"
+
 #~ msgid "E596: Invalid font(s)"
 #~ msgstr "E596: Chybné písma"
 
 #~ msgid "E597: can't select fontset"
 #~ msgstr "E597: nedá sa vybra» sada písiem"
 
+#~ msgid "E598: Invalid fontset"
+#~ msgstr "E598: Chybná sada písiem"
+
 #~ msgid "E599: Value of 'imactivatekey' is invalid"
 #~ msgstr "E599: Hodnota 'imactivatekey' je nesprávne nastavená"
+
+#~ msgid "E59: invalid character after %s@"
+#~ msgstr "E59: Neprípustný znak po %s@"
+
+#~ msgid "E607: multiple :finally"
+#~ msgstr "E607: viacnásobné pou¾ité :finally"
 
 #~ msgid "E609: Cscope error: %s"
 #~ msgstr "E609: Chyba cscope: %s"
@@ -8898,19 +9093,37 @@ msgstr ""
 #~ msgid "E622: Could not fork for cscope"
 #~ msgstr "E622: Nemo¾no spusti» proces pre cscope"
 
+#~ msgid "E623: Could not spawn cscope process"
+#~ msgstr "E623: Nedajú sa vytvori» cscope rúry"
+
 #~ msgid "E625: cannot open cscope database: %s"
 #~ msgstr "E625: nemo¾no otvori» cscope databázu: %s"
 
 #~ msgid "E626: cannot get cscope database information"
 #~ msgstr "E626: nemo¾no získa» cscope databázové informácie"
 
+#~ msgid "E63: invalid use of \\_"
+#~ msgstr "E63: Chybne pou¾ité \\_"
+
 #~ msgid "E658: NetBeans connection lost for buffer %<PRId64>"
 #~ msgstr "E658: Stratené NetBeans spojenie pre buffer %<PRId64>"
+
+#~ msgid "E659: Cannot invoke Python recursively"
+#~ msgstr "E659: Python nemô¾e by» spustený rekurzívne"
+
+#~ msgid "E664: changelist is empty"
+#~ msgstr "E664: zoznam zmien je prázdny"
 
 #~ msgid "E665: Cannot start GUI, no valid font found"
 #~ msgstr ""
 #~ "E665: Nemo¾no na¹tartova» grafické rozhranie, nenájdený ¾iaden pou¾itelný "
 #~ "font"
+
+#~ msgid "E666: compiler not supported: %s"
+#~ msgstr "E666: prekladaè nie je podporovaný: %s"
+
+#~ msgid "E667: Fsync failed"
+#~ msgstr "E667: Fsync zlyhal"
 
 #~ msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
 #~ msgstr ""
@@ -8920,25 +9133,85 @@ msgstr ""
 #~ msgid "E670: Mix of help file encodings within a language: %s"
 #~ msgstr "E670: Rôzne kódovania pre súbory s pomocníkom pre jazyk: %s"
 
+#~ msgid "E671: Cannot find window title \"%s\""
+#~ msgstr "E671: Nemo¾no nájs» okno s titulkom \"%s\""
+
 #~ msgid "E672: Unable to open window inside MDI application"
 #~ msgstr "E672: Nemo¾no otvori» okno vnútri MDI aplikácie"
 
+#~ msgid "E676: No matching autocommands for acwrite buffer"
+#~ msgstr "E676: ®iadne vyhovujúce automatické príkazy pre acwrite buffer "
+
+#~ msgid "E677: Error writing temp file"
+#~ msgstr "E677: Chyba pri zápise doèasného súboru"
+
 #~ msgid "E679: recursive loop loading syncolor.vim"
 #~ msgstr "E679: rekurzívna sluèka pri naèítavaní syncolor.vim"
+
+#~ msgid "E67: \\z1 et al. not allowed here"
+#~ msgstr "E67: \\z1 a spol. tu nie je povolené"
+
+#~ msgid "E684: list index out of range: %<PRId64>"
+#~ msgstr "E684: index v zozname je mimo rozsah: %<PRId64>"
+
+#~ msgid "E689: Can only index a List or Dictionary"
+#~ msgstr "E689: Indexova» mo¾no iba Zoznam (List) alebo Slovník (Dictionary)"
+
+#~ msgid "E692: Invalid operation for Lists"
+#~ msgstr "E692: Neplatná operácia pre Zoznamy (Lists)"
 
 #~ msgid "E693: Can only compare Funcref with Funcref"
 #~ msgstr ""
 #~ "E693: Porovnáva» mo¾no iba odkaz na Funkciu s odkazom na Funkciu (Funcref "
 #~ "with Funcref)"
 
+#~ msgid "E698: variable nested too deep for making a copy"
+#~ msgstr "E698: premenná je vnorená príli¹ hlboko pre skopírovanie"
+
+#~ msgid "E703: Using a Funcref as a Number"
+#~ msgstr "E703: Pou¾itý odkaz na Funkciu (Funcref) ako èíslo"
+
 #~ msgid "E706: Variable type mismatch for: %s"
 #~ msgstr "E706: Typ premennej sa nezhoduje: %s"
+
+#~ msgid "E709: [:] requires a List value"
+#~ msgstr "E709: [:] vy¾aduje hodnotu Poµa (List value)"
+
+#~ msgid "E713: Cannot use empty key for Dictionary"
+#~ msgstr "E713: Nemo¾no pou¾i» prázdny kµúè pre Slovník (Dictionary)"
+
+#~ msgid "E716: Key not present in Dictionary: %s"
+#~ msgstr "E716: kµúè sa v Slovníku (Dictionary) nenachádza: %s"
+
+#~ msgid "E719: Cannot use [:] with a Dictionary"
+#~ msgstr "E719: Nemo¾no pou¾it [:] so Slovníkom (Dictionary)"
 
 #~ msgid "E724: variable nested too deep for displaying"
 #~ msgstr "E724: premenná je vnorená príli¹ hlboko pre zobrazenie"
 
 #~ msgid "E729: using Funcref as a String"
 #~ msgstr "E729: Odkaz na Funkciu (Funcref) pou¾itý ako Re»azec (String)"
+
+#~ msgid "E730: using List as a String"
+#~ msgstr "E730: Zoznam (List) pou¾itý ako Re»azec (String)"
+
+#~ msgid "E731: using Dictionary as a String"
+#~ msgstr "E731: Slovník (Dictionary) pou¾itý ako Re»azec (String)"
+
+#~ msgid "E739: Cannot create directory: %s"
+#~ msgstr "E739: Nemo¾no vytvori» adresár: %s"
+
+#~ msgid "E73: tag stack empty"
+#~ msgstr "E73: zoznam tagov je prázdny"
+
+#~ msgid "E741: Value is locked: %s"
+#~ msgstr "E741: Hodnota je uzamknutá: %s"
+
+#~ msgid "E742: Cannot change value of %s"
+#~ msgstr "E742: Nemo¾no zmeni» hodnotu %s"
+
+#~ msgid "E743: variable nested too deep for (un)lock"
+#~ msgstr "E743: premenná je príli¹ vnorená na (od)blokovanie"
 
 #~ msgid "E744: NetBeans does not allow changes in read-only files"
 #~ msgstr "E744: NetBeans nepovoµuje zmeny v súboroch len na èítanie"
@@ -8948,6 +9221,15 @@ msgstr ""
 #~ msgstr ""
 #~ "E747: Nemo¾no zmeni» adresár, buffer je modifikovaný (pou¾ite ! pre "
 #~ "vynútenie)"
+
+#~ msgid "E749: empty buffer"
+#~ msgstr "E749: prázdny buffer"
+
+#~ msgid "E754: Only up to 8 regions supported"
+#~ msgstr "E754: Podporovaných max. 8 regiónov"
+
+#~ msgid "E756: Spell checking is not enabled"
+#~ msgstr "E756: Kontrola pravopisu nie je zapnutá"
 
 #~ msgid "E761: Format error in affix file FOL, LOW or UPP"
 #~ msgstr ""
@@ -8959,9 +9241,58 @@ msgstr ""
 #~ "E762: Znak v FOL, LOW alebo UPP (NASLEDUJE, MALÉ alebo VE¥KÉ) je mimo "
 #~ "rozsah"
 
+#~ msgid "E765: 'spellfile' does not have %<PRId64> entries"
+#~ msgstr "E765: 'spellfile' nemá %<PRId64> polo¾iek"
+
+#, fuzzy, c-format
+#~ msgid "E782: error while reading .sug file: %s"
+#~ msgstr "E47: Chyba pri èítaní chybového súboru"
+
+#~ msgid "E783: duplicate char in MAP entry"
+#~ msgstr "E783: duplicitný znak v MAP polo¾ke"
+
+#, fuzzy, c-format
+#~ msgid "E794: Cannot set variable in the sandbox: \"%s\""
+#~ msgstr "E46: Nedá sa nastavi» premenná v bezpeènostnej schránke: \"%s\""
+
+#, fuzzy, c-format
+#~ msgid "E795: Cannot delete variable %s"
+#~ msgstr "E738: Nemo¾no vypísa» premenné pre %s"
+
 #~ msgid "E800: Arabic cannot be used: Not enabled at compile time\n"
 #~ msgstr ""
 #~ "E800: Nedá sa pou¾í» arabic re¾im: nebol zapnutý pri preklade programu\n"
+
+#, fuzzy
+#~ msgid "E806: using Float as a String"
+#~ msgstr "E730: Zoznam (List) pou¾itý ako Re»azec (String)"
+
+#, fuzzy, c-format
+#~ msgid "E829: write error in undo file: %s"
+#~ msgstr "E297: Chyba pri ukladaní do odkladacieho súboru"
+
+#, fuzzy
+#~ msgid "E842: no line number to use for \"<slnum>\""
+#~ msgstr ""
+#~ "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
+
+#, fuzzy
+#~ msgid "E844: invalid cchar value"
+#~ msgstr "E474: Chybný argument"
+
+#~ msgid ""
+#~ "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+#~ msgstr "E89: Zmeny v bufferi %<PRId64> neboli ulo¾ené (! pre vynútenie)"
+
+#, fuzzy
+#~ msgid "E900: Invalid job id"
+#~ msgstr "E49: Chybná hodnota veµkosti rolovania"
+
+#~ msgid "E92: Buffer %<PRId64> not found"
+#~ msgstr "E92: buffer %<PRId64> nenájdený"
+
+#~ msgid "E96: Can not diff more than %<PRId64> buffers"
+#~ msgstr "E96: Nemô¾em porovna» viac ako %<PRId64> bufferov"
 
 #~ msgid "ERROR: "
 #~ msgstr "CHYBA: "
@@ -9084,6 +9415,9 @@ msgstr ""
 #~ msgid "Invalid font specification"
 #~ msgstr "Chybná ¹pecifikácia písma"
 
+#~ msgid "Invalid region nr in %s line %d: %s"
+#~ msgstr "Pou¾íté chybné èíslo regiónu v %s riadok %d: %s"
+
 #~ msgid "Keys don't match!"
 #~ msgstr "Kµúèe sa nezhodujú!"
 
@@ -9120,11 +9454,17 @@ msgstr ""
 #~ msgid "NetBeans disallows writes of unmodified buffers"
 #~ msgstr "NetBeans rozhranie nedovolilo zapísa» nemodifikované buffre"
 
+#~ msgid "No display"
+#~ msgstr "Bez grafického rozhrania"
+
 #~ msgid "No display: Send expression failed.\n"
 #~ msgstr "®iaden graf. mód: Odoslanie výrazu zlyhalo.\n"
 
 #~ msgid "No match at cursor, finding next"
 #~ msgstr "®iadna zhoda na pozícii kurzora, hµadám ïalej"
+
+#~ msgid "No matching autocommands"
+#~ msgstr "®iadne vyhovujúce automatické príkazy"
 
 #~ msgid "No undo possible; continue anyway"
 #~ msgstr "Odstránenie zmien nie je mo¾né; chcete napriek tomu pokraèova»"
@@ -9153,6 +9493,9 @@ msgstr ""
 #~ msgid "Partial writes disallowed for NetBeans buffers"
 #~ msgstr "Èiastoèné zápisy nie sú povolené pre NetBeans buffre"
 
+#~ msgid "Patch file"
+#~ msgstr "Záplatový súbor"
+
 #~ msgid "Path length too long!"
 #~ msgstr "Príli¹ dlhá cesta!"
 
@@ -9167,6 +9510,9 @@ msgstr ""
 
 #~ msgid "Reading from stdin..."
 #~ msgstr "Èítam zo ¹tandardného vstupu..."
+
+#~ msgid "Reading viminfo file \"%s\"%s%s%s"
+#~ msgstr "Èítam viminfo súbor \"%s\"%s%s%s"
 
 #~ msgid "Reinit all connections"
 #~ msgstr "Znovu inicializova» v¹etky spojenia"
@@ -9230,6 +9576,9 @@ msgstr ""
 
 #~ msgid "Select Directory dialog"
 #~ msgstr "Dialóg pre vytvorenie adresára"
+
+#~ msgid "Selection"
+#~ msgstr "Výber"
 
 #~ msgid "Show base class of"
 #~ msgstr "Ukáza» základnú triedu"
@@ -9303,12 +9652,29 @@ msgstr ""
 #~ msgid "Toggle implementation/definition"
 #~ msgstr "Prepnú» implementáciu/definíciu"
 
+#~ msgid "Too many regions in %s line %d: %s"
+#~ msgstr "Príli¹ mnoho regiónov v %s riadok %d: %s"
+
+#~ msgid "Type  :quit<Enter>  to exit Nvim"
+#~ msgstr "Zadajte  :quit<Enter>  pre ukonèenie programu Vim"
+
+#, fuzzy
+#~ msgid "Type number and <Enter> (empty cancels): "
+#~ msgstr "Zvoµte èíslo (<Enter> zru¹í): "
+
+#, fuzzy
+#~ msgid "Type number and <Enter> or click with mouse (empty cancels): "
+#~ msgstr "Zadajte èíslo ale kliknite my¹ou (<Enter> zru¹í): "
+
 #, fuzzy
 #~ msgid "Unable to get option value"
 #~ msgstr "Chyby za parametrom voµby"
 
 #~ msgid "Unable to register a command server name"
 #~ msgstr "Nemô¾em zaregistrova» meno príkazového servra"
+
+#~ msgid "Unrecognized flags in %s line %d: %s"
+#~ msgstr "Nerozpoznaný príznak v %s riadok %d: %s"
 
 #~ msgid "Up"
 #~ msgstr "Hore"
@@ -9367,6 +9733,9 @@ msgstr ""
 #~ msgid "Vim exiting with %d\n"
 #~ msgstr "Vim ukonèený s %d\n"
 
+#~ msgid "Vim is open source and freely distributable"
+#~ msgstr "Vim je voµne ¹íriteµný program s otvoreným kódom"
+
 #~ msgid "Vim: Caught %s event\n"
 #~ msgstr "Vim: Zachytená udalos» %s\n"
 
@@ -9378,6 +9747,9 @@ msgstr ""
 
 #~ msgid "Vim: Double signal, exiting\n"
 #~ msgstr "Vim: dvojitý signál, konèím\n"
+
+#~ msgid "Vim: Error reading input, exiting...\n"
+#~ msgstr "Vim: Chyba pri èítaní vstupu, konèím...\n"
 
 #~ msgid "Vim: Error: Failure to start gvim from NetBeans\n"
 #~ msgstr "Vim: Chyba: Chyba spú¹»ania gvim pre NetBeans\n"
@@ -9409,8 +9781,18 @@ msgstr ""
 #~ msgid "Window position: X %d, Y %d"
 #~ msgstr "Pozícia okna: X %d, Y %d"
 
+#, fuzzy, c-format
+#~ msgid "Writing suggestion file %s ..."
+#~ msgstr "Ukládám slovníkový súbor %s ..."
+
+#~ msgid "Writing viminfo file \"%s\""
+#~ msgstr "Ukládám viminfo súboru \"%s\""
+
 #~ msgid "XSMP ICE connection watch failed"
 #~ msgstr "XSMP kontrola spojenia ICE zlyhala"
+
+#~ msgid "XSMP SmcOpenConnection failed: %s"
+#~ msgstr "XSMP SmcOpenConnection zlyhalo: %s"
 
 #~ msgid "XSMP handling save-yourself request"
 #~ msgstr "XSMP spracuváva po¾iadavku na samoulo¾enie"
@@ -9441,6 +9823,9 @@ msgstr ""
 
 #~ msgid "[Deleted]"
 #~ msgstr "[vymazaný]"
+
+#~ msgid "[Error List]"
+#~ msgstr "[Zoznam chýb]"
 
 #~ msgid "[Incomplete last line]"
 #~ msgstr "[neúplný posledný riadok]"
@@ -9485,8 +9870,14 @@ msgstr ""
 #~ msgid "attempt to refer to deleted window"
 #~ msgstr "pokus o odkaz na vymazané okno"
 
+#~ msgid "block of %<PRId64> lines yanked"
+#~ msgstr "skopírovaný blok %<PRId64> riadkov"
+
 #~ msgid "block of 1 line yanked"
 #~ msgstr "skopírovaný blok 1 riadku"
+
+#~ msgid "buffer is invalid"
+#~ msgstr "buffer je neplatný"
 
 #~ msgid "by "
 #~ msgstr " "
@@ -9505,6 +9896,9 @@ msgstr ""
 
 #~ msgid "cannot delete line"
 #~ msgstr "nedá sa vymaza» riadok"
+
+#~ msgid "cannot get line"
+#~ msgstr "nedá sa preèíta» riadok"
 
 #~ msgid "cannot insert line"
 #~ msgstr "nedá sa vlo¾i» riadok"
@@ -9537,6 +9931,9 @@ msgstr ""
 #~ msgid "close"
 #~ msgstr "zavrie»"
 
+#~ msgid "connected"
+#~ msgstr "pripojený"
+
 #~ msgid "couldn't open buffer"
 #~ msgstr "nemo¾no otvori» buffer"
 
@@ -9564,6 +9961,12 @@ msgstr ""
 
 #~ msgid "defaulting to '"
 #~ msgstr "nastavujem na '"
+
+#~ msgid "error list %d of %d; %d errors"
+#~ msgstr "zoznam chýb %d z %d; %d chýb"
+
+#~ msgid "expressions disabled at compile time"
+#~ msgstr "podpora výrazov bola vypnutá pri preklade programu"
 
 #~ msgid "filename / context / line\n"
 #~ msgstr "názov súboru/ kontext / riadok\n"
@@ -9594,6 +9997,12 @@ msgstr ""
 
 #~ msgid "keyboard interrupt"
 #~ msgstr "preru¹enie z klávesnice"
+
+#~ msgid "line %4ld:"
+#~ msgstr "riadok %4ld:"
+
+#~ msgid "line number out of range"
+#~ msgstr "èíslo riadka mimo rozsah"
 
 #~ msgid "linenr out of range"
 #~ msgstr "èíslo riadka mimo rozsah"
@@ -9640,6 +10049,9 @@ msgstr ""
 #~ msgid "not allowed in the Vim sandbox"
 #~ msgstr "nie je dovolené v bezpeènostnej schránke"
 
+#~ msgid "not found in 'runtimepath': \"%s\""
+#~ msgstr "súbor \"%s\" nebol nájdený v 'runtimepath'"
+
 #~ msgid "not implemented yet"
 #~ msgstr "nie je e¹te podporované"
 
@@ -9673,8 +10085,14 @@ msgstr ""
 #~ msgid "type  :help cp-default<Enter> for info on this"
 #~ msgstr "podrobnej¹ie informácie získate pomocou :help cp-default<Enter>"
 
+#~ msgid "type  :help iccf<Enter>       for information "
+#~ msgstr "zadajte  :help iccf<Enter>          pre informácie         "
+
 #~ msgid "type  :help register<Enter>   for information "
 #~ msgstr "zadajte  :help register<Enter>      pre informácie         "
+
+#~ msgid "type  :help sponsor<Enter>    for information "
+#~ msgstr "zadajte  :help sponsor<Enter>          pre informácie         "
 
 #~ msgid "type  :help version7<Enter>   for version info"
 #~ msgstr "zadajte  :help version7<Enter>      pre informácie o verzii"
@@ -9684,6 +10102,9 @@ msgstr ""
 
 #~ msgid "type  :help<Enter>  or  <F1>  for on-line help"
 #~ msgstr "zadajte  :help<Enter>  alebo  <F1>  pre pomocníka          "
+
+#~ msgid "type  :q<Enter>               to exit         "
+#~ msgstr "zadajte  :q<Enter>                  pre ukonèenie programu "
 
 #~ msgid "type  :set nocp<Enter>        for Vim defaults"
 #~ msgstr "zadajte  :set nocp<Enter>           pre implicitné nastavenie Vim"
