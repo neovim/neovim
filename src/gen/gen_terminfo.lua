@@ -113,6 +113,8 @@ local wanted_termkeys = {
   { 'select', false },
   { 'suspend', true },
   { 'undo', true },
+  { 'left', true },
+  { 'right', true },
 }
 
 local db = '/tmp/nvim_terminfo'

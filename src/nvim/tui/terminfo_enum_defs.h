@@ -77,5 +77,7 @@ typedef enum {
   kTermKey_select,
   kTermKey_suspend,
   kTermKey_undo,
+  kTermKey_left,
+  kTermKey_right,
   kTermKeyCount,
 } TerminfoKey;

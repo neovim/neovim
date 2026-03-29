@@ -52,7 +52,7 @@ static struct {
   // { KDEF(help),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_HELP,      0 },
   { KDEF(home),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_HOME,      0 },
   { KDEF(ic),        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_INSERT,    0 },
-  // { KDEF(left),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_LEFT,      0 }, // redundant: driver-csi
+  { KDEF(left),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_LEFT,      0 },
   // { KDEF(mark),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MARK,      0 },
   // { KDEF(message),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MESSAGE,   0 },
   // { KDEF(move),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MOVE,      0 },
@@ -69,12 +69,12 @@ static struct {
   // { KDEF(replace),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REPLACE,   0 },
   // { KDEF(restart),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RESTART,   0 },
   // { KDEF(resume),    TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RESUME,    0 },
-  // { KDEF(right),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RIGHT,     0 }, // redundant, driver-csi
+  { KDEF(right),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RIGHT,     0 },
   // { KDEF(save),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SAVE,      0 },
   { KDEF(select),    TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SELECT,    0 },
   { KDEF(suspend),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SUSPEND,   0 },
   { KDEF(undo),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_UNDO,      0 },
-  // { KDEF(up),        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_UP,        0 }, // redundant, driver-ci
+  // { KDEF(up),        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_UP,        0 }, // redundant, driver-csi
   { 0, NULL,         0,                   0,                     0 },
 };
 
