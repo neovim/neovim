@@ -266,11 +266,11 @@ api.nvim_set_decoration_provider(document_color_ns, {
             api.nvim_buf_set_extmark(
               bufnr,
               state.namespace,
-              hl.range.start.row,
-              hl.range.start.col,
+              hl.range.start_row,
+              hl.range.start_col,
               {
-                end_row = hl.range.end_.row,
-                end_col = hl.range.end_.col,
+                end_row = hl.range.end_row,
+                end_col = hl.range.end_col,
                 hl_group = hl.hl_group,
                 strict = false,
               }
@@ -281,8 +281,8 @@ api.nvim_set_decoration_provider(document_color_ns, {
             api.nvim_buf_set_extmark(
               bufnr,
               state.namespace,
-              hl.range.start.row,
-              hl.range.start.col,
+              hl.range.start_row,
+              hl.range.start_col,
               {
                 virt_text = { { swatch, hl.hl_group } },
                 virt_text_pos = 'inline',

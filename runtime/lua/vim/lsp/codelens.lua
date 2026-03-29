@@ -240,7 +240,7 @@ function Provider:on_win(toprow, botrow)
           local range = vim.range.lsp(bufnr, lenses[1].range, client.offset_encoding)
           ---@type [string, string][]
           local virt_text = {
-            { string.rep(' ', range.start.col), 'LspCodeLensSeparator' },
+            { string.rep(' ', range.start_col), 'LspCodeLensSeparator' },
           }
 
           for _, lens in ipairs(lenses) do
