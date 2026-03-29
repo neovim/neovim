@@ -2498,7 +2498,14 @@ bool vim_fgets(char *buf, int size, FILE *fp)
 {
   char *retval;
 
-  assert(size > 0);
+  // safety check
+  if (size < 2) {
+    if (size == 1) {
+      buf[0] = NUL;
+    }
+    return true;
+  }
+
   buf[size - 2] = NUL;
 
   do {
