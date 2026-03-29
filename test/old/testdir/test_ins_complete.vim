@@ -3914,7 +3914,7 @@ func Test_complete_fuzzy_collect()
   call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
   call assert_equal('completefuzzycollect', getline(line('.') - 1))
 
-  " keywords in 'dictonary'
+  " keywords in 'dictionary'
   call writefile(['hello', 'think'], 'Xtest_dict.txt', 'D')
   set dict=Xtest_dict.txt
   call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<CR>\<Esc>0", 'tx!')
@@ -3932,7 +3932,7 @@ func Test_complete_fuzzy_collect()
   call assert_equal('fuzzycollect', getline('.'))
 
   " when 'fuzzy' is not set, and 'infercase' and 'ignorecase' are set, then
-  " uppercase completes from lowercase words in dictonary
+  " uppercase completes from lowercase words in dictionary
   set completeopt&
   set infercase ignorecase
   call writefile(['hello'], 'Xtest_case.txt', 'D')

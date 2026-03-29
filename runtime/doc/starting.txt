@@ -195,12 +195,12 @@ argument.
 
                 -es reads/executes stdin as Ex commands. >
                         printf "put ='foo'\n%%print\n" | nvim -es
-
-<                -Es reads stdin as text (into buffer 1).  Use |-c| or "+" to
+<
+                -Es reads stdin as text (into buffer 1).  Use |-c| or "+" to
                 send commands. >
                         printf "foo\n" | nvim -Es +"%print"
-
-<               These commands display on stdout:
+<
+                These commands display on stdout:
                 • :list
                 • :number
                 • :print
@@ -427,7 +427,7 @@ argument.
 
                 To start the server on-demand with systemd, use a systemd
                 socket unit and associated service unit running: >
-                systemd-socket-proxyd --exit-idle-time
+                        systemd-socket-proxyd --exit-idle-time
 <
 ==============================================================================
 Initialization                                  *initialization* *startup*

@@ -1110,9 +1110,9 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			current line).
 
 							*:ip* *:iput*
-:[line]ip[ut] [x]	like |:put|, but adjust indent to the current line
+:[line]ip[ut] [x]	Like |:put|, but adjust indent to the current line.
 
-:[line]ip[ut]! [x]	like |:put|!, but adjust indent to the current line
+:[line]ip[ut]! [x]	Like |:put|!, but adjust indent to the current line.
 
 ["x]]p		    or					*]p* *]<MiddleMouse>*
 ["x]]<MiddleMouse>	Like "p", but adjust the indent to the current line.
