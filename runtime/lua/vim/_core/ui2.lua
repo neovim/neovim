@@ -168,6 +168,7 @@ local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 
 ---@nodoc
 function M.enable(opts)
+  opts = opts or {}
   vim.validate('opts', opts, 'table', true)
   M.cfg = vim.tbl_deep_extend('keep', opts, M.cfg)
   M.cfg.msg.target = type(M.cfg.msg.targets) == 'string' and M.cfg.msg.targets or M.cfg.msg.target
