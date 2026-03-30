@@ -717,7 +717,7 @@ LspProgress                                                       *LspProgress*
         vim.api.nvim_create_autocmd('LspProgress', { buffer = buf, callback = function(ev)
             local value = ev.data.params.value
             vim.api.nvim_echo({ { value.message or 'done' } }, false, {
-              id = 'lsp.' .. ev.data.client_id,
+              id = 'lsp.' .. ev.data.params.token,
               kind = 'progress',
               source = 'vim.lsp',
               title = value.title,
@@ -1732,6 +1732,16 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                where `params` is the parameters being sent to
                                the server and `config` is the config passed to
                                |vim.lsp.start()|.
+
+                               Hint: use |vim.tbl_deep_extend()| to set nested
+                               fields easily. >lua
+                                   before_init = function(_, config)
+                                     config.settings = vim.tbl_deep_extend('force',
+                                       config.settings,
+                                       { tailwindCSS = { experimental = { configFile = find_tailwind_global_css() } } }
+                                     )
+                                   end
+<
       • {capabilities}?        (`lsp.ClientCapabilities`) Map overriding the
                                default capabilities defined by
                                |vim.lsp.protocol.make_client_capabilities()|,

@@ -383,13 +383,12 @@ argument.
                 embed and control Nvim via the RPC |API|. If the channel is
                 closed (except by |:detach|), Nvim exits.
 
-                Waits for the client ("embedder") to call |nvim_ui_attach()|
-                before sourcing startup files and reading buffers, so that UIs
-                can deterministically handle (display) early messages,
-                dialogs, etc.  The client can do other requests before
-                `nvim_ui_attach` (e.g. `nvim_get_api_info` for feature-detection).
-                During this pre-startup phase the user config is of course not
-                available (similar to `--cmd`).
+                Waits for a client to call |nvim_ui_attach()| before sourcing
+                startup files and reading buffers, so that UIs can handle
+                (display) early messages, dialogs, etc. Clients can do other
+                requests before `nvim_ui_attach` (e.g. `nvim_get_api_info` for
+                feature-detection). During this pre-startup phase the user
+                config is of course not available (similar to `--cmd`).
 
                 Non-UI embedders must pass |--headless|, then startup will
                 continue without waiting for `nvim_ui_attach`: >

@@ -30,6 +30,16 @@ local all_clients = {}
 --- Callback which can modify parameters before they are sent to the server. Invoked before LSP
 --- "initialize" phase (after `cmd` is invoked), where `params` is the parameters being sent to the
 --- server and `config` is the config passed to |vim.lsp.start()|.
+---
+--- Hint: use |vim.tbl_deep_extend()| to set nested fields easily.
+--- ```lua
+--- before_init = function(_, config)
+---   config.settings = vim.tbl_deep_extend('force',
+---     config.settings,
+---     { tailwindCSS = { experimental = { configFile = find_tailwind_global_css() } } }
+---   )
+--- end
+--- ```
 --- @field before_init? fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 ---
 --- Map overriding the default capabilities defined by |vim.lsp.protocol.make_client_capabilities()|,

@@ -2038,13 +2038,22 @@ vim.tbl_count({t})                                           *vim.tbl_count()*
       • https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 
 vim.tbl_deep_extend({behavior}, {...})                 *vim.tbl_deep_extend()*
-    Merges recursively two or more tables.
+    Merges two or more tables recursively.
 
-    Only values that are empty tables or tables that are not |lua-list|s
-    (indexed by consecutive integers starting from 1) are merged recursively.
-    This is useful for merging nested tables like default and user
-    configurations where lists should be treated as literals (i.e., are
-    overwritten instead of merged).
+    Only |lua-dict| tables are merged recursively; |lua-list| tables are
+    treated as opaque values (overwritten instead of merged). That is
+    convenient for merging default/user configurations where lists typically
+    should not be merged together.
+
+    Example: >lua
+        -- Set `config.settings.…` without worrying about whether intermediate dicts exist.
+        local config = { settings = { tailwindCSS = { foo = 'bar' } } }
+        local merged = vim.tbl_deep_extend('force',
+          config,
+          { settings = { tailwindCSS = { experimental = { configFile = '/my/config.json' } } } }
+        )
+        vim.print(merged)
+<
 
     Parameters: ~
       • {behavior}  (`'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any`)
@@ -2096,12 +2105,17 @@ vim.tbl_filter({fn}, {t})                                   *vim.tbl_filter()*
         (`any[]`) Table of filtered values
 
 vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
-    Gets a value from (nested) table `o` given by the sequence of keys `...`,
-    or `nil` if not found.
+    Gets a (nested) value from table `o` given by a sequence of keys `...`, or
+    `nil` if not found.
 
-    Examples: >lua
-        vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
-        vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
+    Note: To set deeply nested keys, see |vim.tbl_deep_extend()|.
+
+    Example: >lua
+        local o = { a = { b = true } }
+        -- Get `o.a.b`.
+        vim.print(vim.tbl_get(o, 'a', 'b')) -- true
+        o.a = {}
+        vim.print(vim.tbl_get(o, 'a', 'b')) -- nil
 <
 
     Parameters: ~
@@ -2114,6 +2128,7 @@ vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
 
     See also: ~
       • |unpack()|
+      • |vim.tbl_deep_extend()|
 
 vim.tbl_isempty({t})                                       *vim.tbl_isempty()*
     Checks if a table is empty.

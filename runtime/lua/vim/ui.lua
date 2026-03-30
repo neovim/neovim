@@ -348,8 +348,7 @@ do
 
   --- Gets a status description summarizing currently running progress messages.
   --- - If none: returns empty string
-  --- - If one running item: "title: 42%"
-  --- - If multiple running items: "Progress: AVG%(N)"
+  --- - If N item running: "AVG%(N)"
   ---@param running ProgressMessage[]
   ---@return string
   local function progress_status_fmt(running)
