@@ -55,7 +55,7 @@ local all_clients = {}
 --- string.
 --- Example:
 --- ```lua
---- { PORT = 8080; HOST = '0.0.0.0'; }
+--- { PORT = 8080, HOST = '0.0.0.0' }
 --- ```
 --- @field cmd_env? table
 ---
