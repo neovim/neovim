@@ -707,6 +707,7 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
     }
     break;
   case 't':
+    bool inband_resize = false;
     if (nparams == 5) {
       // We only care about the first 3 parameters, and we ignore subparameters
       int args[3];
@@ -721,7 +722,37 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
         int height_chars = args[1];
         int width_chars = args[2];
         tui_set_size(input->tui_data, width_chars, height_chars);
+        inband_resize = true;
       }
+    }
+
+    if (!inband_resize) {
+      MAXSIZE_TEMP_ARRAY(args, 2);
+      ADD_C(args, STATIC_CSTR_AS_OBJ("termresponse"));
+
+      StringBuilder response = KV_INITIAL_VALUE;
+      kv_concat(response, "\x1b[");
+      if (initial != 0) {
+        kv_push(response, (char)initial);
+      }
+
+      for (size_t i = 0; i < nparams; i++) {
+        if (i > 0) {
+          kv_push(response, ';');
+        }
+        if (params[i].param != NULL) {
+          kv_concat_len(response, (const char *)params[i].param, params[i].length);
+        }
+      }
+
+      if (intermediate != 0) {
+        kv_push(response, (char)intermediate);
+      }
+      kv_push(response, (char)command);
+
+      ADD_C(args, STRING_OBJ(cbuf_as_string(response.items, response.size)));
+      rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
+      kv_destroy(response);
     }
     break;
   case 'n':

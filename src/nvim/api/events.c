@@ -28,6 +28,7 @@
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/packer.h"
 #include "nvim/msgpack_rpc/packer_defs.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 
@@ -65,6 +66,7 @@ void nvim_ui_term_event(uint64_t channel_id, String event, Object value, Error *
     });
 
     const String termresponse = value.data.string;
+    terminal_try_forward_termresponse(termresponse);
     set_vim_var_string(VV_TERMRESPONSE, termresponse.data, (ptrdiff_t)termresponse.size);
     do_termresponse_autocmd(termresponse);
   }

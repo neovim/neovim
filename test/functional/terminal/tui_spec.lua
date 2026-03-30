@@ -2765,6 +2765,22 @@ describe('TUI', function()
     end)
   end)
 
+  it('TermResponse includes CSI t window-size reports', function()
+    child_exec_lua([[
+      _G.termresponse = nil
+      vim.api.nvim_create_autocmd('TermResponse', {
+        once = true,
+        callback = function(ev)
+          _G.termresponse = ev.data.sequence
+        end,
+      })
+    ]])
+    feed_data('\027[4;800;1000t')
+    retry(nil, 4000, function()
+      eq('\027[4;800;1000t', child_exec_lua('return _G.termresponse'))
+    end)
+  end)
+
   it('TermResponse from unblock_autocmds() sets "data"', function()
     if not child_exec_lua('return pcall(require, "ffi")') then
       pending('N/A: missing LuaJIT FFI')

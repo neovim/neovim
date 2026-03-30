@@ -12,6 +12,7 @@ typedef void (*terminal_write_cb)(const char *buffer, size_t size, void *data);
 typedef void (*terminal_resize_cb)(uint16_t width, uint16_t height, void *data);
 typedef void (*terminal_resume_cb)(void *data);
 typedef void (*terminal_close_cb)(void *data);
+typedef void (*terminal_termresponse_cb)(const String sequence, void *data);
 
 typedef struct {
   void *data;  // PTY process channel
@@ -21,7 +22,10 @@ typedef struct {
   terminal_resize_cb resize_cb;
   terminal_resume_cb resume_cb;
   terminal_close_cb close_cb;
+  terminal_termresponse_cb termresponse_cb;
   bool force_crlf;
 } TerminalOptions;
+
+bool terminal_try_forward_termresponse(const String sequence);
 
 #include "terminal.h.generated.h"

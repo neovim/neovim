@@ -179,6 +179,11 @@ void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
   os_conpty_set_size(ptyproc->conpty, width, height);
 }
 
+void pty_proc_set_pixel_size(PtyProc *ptyproc, uint16_t xpixel, uint16_t ypixel)
+  FUNC_ATTR_NONNULL_ALL
+{
+}
+
 void pty_proc_resume(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {

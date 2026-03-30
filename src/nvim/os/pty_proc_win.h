@@ -21,4 +21,6 @@ typedef struct arg_node {
   QUEUE node;  // QUEUE structure.
 } ArgNode;
 
+void pty_proc_set_pixel_size(PtyProc *ptyproc, uint16_t xpixel, uint16_t ypixel);
+
 #include "os/pty_proc_win.h.generated.h"

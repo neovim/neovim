@@ -853,6 +853,8 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
   }
 }
 
+static void term_termresponse(const String sequence, void *data);
+
 /// Allocate terminal for channel
 ///
 /// Channel `chan` is assumed to be an open pty channel,
@@ -868,6 +870,7 @@ void channel_terminal_alloc(buf_T *buf, Channel *chan)
     .resize_cb = term_resize,
     .resume_cb = term_resume,
     .close_cb = term_close,
+    .termresponse_cb = term_termresponse,
     .force_crlf = false,
   };
   buf->b_p_channel = (OptInt)chan->id;  // 'channel' option
@@ -932,6 +935,26 @@ static void term_close(void *data)
   Channel *chan = data;
   proc_stop(&chan->stream.proc);
   multiqueue_put(chan->events, term_delayed_free, data);
+}
+
+static void term_termresponse(const String sequence, void *data)
+{
+  Channel *chan = data;
+  if (sequence.size < 6 || sequence.data[0] != '\x1b' || sequence.data[1] != '['
+      || sequence.data[sequence.size - 1] != 't') {
+    return;
+  }
+
+  char *resp = xmemdupz(sequence.data + 2, sequence.size - 3);
+  int mode = 0;
+  int height = 0;
+  int width = 0;
+  int n = sscanf(resp, "%d;%d;%d", &mode, &height, &width);
+  xfree(resp);
+
+  if (n == 3 && mode == 4 && height > 0 && width > 0) {
+    pty_proc_set_pixel_size(&chan->stream.pty, (uint16_t)width, (uint16_t)height);
+  }
 }
 
 void channel_info_changed(Channel *chan, bool new_chan)

@@ -8,6 +8,7 @@ local feed, clear = n.feed, n.clear
 local poke_eventloop = n.poke_eventloop
 local nvim_prog = n.nvim_prog
 local eval, source = n.eval, n.source
+local request = n.request
 local pcall_err = t.pcall_err
 local eq, neq = t.eq, t.neq
 local api = n.api
@@ -18,6 +19,7 @@ local command = n.command
 local matches = t.matches
 local exec_lua = n.exec_lua
 local sleep = vim.uv.sleep
+local uv = vim.uv
 local fn = n.fn
 local is_os = t.is_os
 local skip = t.skip
@@ -693,6 +695,97 @@ describe(':terminal buffer', function()
       local expected = '\027_Gfile://host' .. parent
       api.nvim_chan_send(term, string.format('%s\027\\', expected))
       eq(expected, eval('v:termrequest'))
+    end)
+
+    it('passes through kitty graphics APC to host UI', function()
+      local fds = assert(uv.pipe())
+
+      local read_pipe = assert(uv.new_pipe())
+      read_pipe:open(fds.read)
+
+      local read_data = {}
+      read_pipe:read_start(function(err, data)
+        assert(not err, err)
+        if data then
+          table.insert(read_data, data)
+        end
+      end)
+
+      local screen = Screen.new(50, 7, { stdout_tty = true })
+      screen:set_stdout(fds.write)
+
+      local term = api.nvim_open_term(0, {})
+      local expected = '\027_Gf=100;Zm9v\027\\'
+      api.nvim_chan_send(term, expected)
+
+      screen:expect({
+        unchanged = true,
+        condition = function()
+          poke_eventloop()
+          return table.concat(read_data) ~= ''
+        end,
+      })
+
+      local actual = table.concat(read_data)
+      eq(fn.str2list(expected, true), fn.str2list(actual, true))
+    end)
+
+    it('does not forward kitty graphics APC responses to terminal job', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local term = exec_lua([[
+        _G.input = {}
+        local term = vim.api.nvim_open_term(0, {
+          on_input = function(_, _, _, data)
+            table.insert(_G.input, data)
+          end,
+          force_crlf = false,
+        })
+        return term
+      ]])
+
+      api.nvim_chan_send(term, '\027_Gi=1,a=q\027\\')
+      request('nvim_ui_term_event', 'termresponse', '\027_Gi=1;OK\027\\')
+
+      eq({}, exec_lua('return _G.input'))
+    end)
+
+    it('forwards CSI pixel-size responses to terminal job', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local term = exec_lua([[
+        _G.input = {}
+        local term = vim.api.nvim_open_term(0, {
+          on_input = function(_, _, _, data)
+            table.insert(_G.input, data)
+          end,
+          force_crlf = false,
+        })
+        return term
+      ]])
+
+      api.nvim_chan_send(term, '\027[14t')
+      request('nvim_ui_term_event', 'termresponse', '\027[4;800;1000t')
+
+      eq({ '\027[4;800;1000t' }, exec_lua('return _G.input'))
+    end)
+
+    it('forwards multiple CSI window responses to terminal job', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local term = exec_lua([[
+        _G.input = {}
+        local term = vim.api.nvim_open_term(0, {
+          on_input = function(_, _, _, data)
+            table.insert(_G.input, data)
+          end,
+          force_crlf = false,
+        })
+        return term
+      ]])
+
+      api.nvim_chan_send(term, '\027[16t\027[14t')
+      request('nvim_ui_term_event', 'termresponse', '\027[6;16;8t')
+      request('nvim_ui_term_event', 'termresponse', '\027[4;800;1000t')
+
+      eq({ '\027[6;16;8t', '\027[4;800;1000t' }, exec_lua('return _G.input'))
     end)
 
     it('synchronization #27572', function()

@@ -208,6 +208,8 @@ struct terminal {
 
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
   VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
+  bool apc_kitty_passthrough;  ///< Forward kitty graphics APC bytes to the host UI
+  StringBuilder apc_kitty_buffer;  ///< Accumulated kitty APC payload for query parsing
 
   size_t refcount;                  // reference count
 };
@@ -231,6 +233,176 @@ static VTermSelectionCallbacks vterm_selection_callbacks = {
 };
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;
+
+static bool parse_uint32_slice(const char *start, size_t len, uint32_t *out)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (len == 0) {
+    return false;
+  }
+
+  uint64_t value = 0;
+  for (size_t i = 0; i < len; i++) {
+    if (start[i] < '0' || start[i] > '9') {
+      return false;
+    }
+    value = value * 10 + (uint64_t)(start[i] - '0');
+    if (value > UINT32_MAX) {
+      return false;
+    }
+  }
+
+  *out = (uint32_t)value;
+  return true;
+}
+
+static bool terminal_fast_reply_kitty_query(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Only for real PTY-backed terminals: open_term() users rely on explicit
+  // response forwarding tests and should not receive synthetic replies.
+  if (term->opts.termresponse_cb == NULL || term->apc_kitty_buffer.size < 2
+      || term->apc_kitty_buffer.items[0] != 'G') {
+    return false;
+  }
+
+  const char *buf = term->apc_kitty_buffer.items;
+  const size_t size = term->apc_kitty_buffer.size;
+  size_t end = 1;
+  while (end < size && buf[end] != ';') {
+    end++;
+  }
+
+  bool is_query = false;
+  bool has_id = false;
+  uint32_t image_id = 0;
+
+  size_t i = 1;
+  while (i < end) {
+    size_t token_end = i;
+    while (token_end < end && buf[token_end] != ',') {
+      token_end++;
+    }
+
+    size_t token_len = token_end - i;
+    if (token_len == 3 && memcmp(buf + i, "a=q", 3) == 0) {
+      is_query = true;
+    } else if (token_len > 2 && buf[i] == 'i' && buf[i + 1] == '=') {
+      uint32_t parsed = 0;
+      if (parse_uint32_slice(buf + i + 2, token_len - 2, &parsed)) {
+        has_id = true;
+        image_id = parsed;
+      }
+    }
+
+    i = token_end + 1;
+  }
+
+  if (!(is_query && has_id)) {
+    return false;
+  }
+
+  StringBuilder response = KV_INITIAL_VALUE;
+  kv_printf(response, "\x1b_Gi=%u;OK\x1b\\", image_id);
+  terminal_send(term, response.items, response.size);
+  kv_destroy(response);
+  return true;
+}
+
+static void terminal_apply_kitty_cursor_movement(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (term->apc_kitty_buffer.size < 2 || term->apc_kitty_buffer.items[0] != 'G') {
+    return;
+  }
+
+  const char *buf = term->apc_kitty_buffer.items;
+  const size_t size = term->apc_kitty_buffer.size;
+  size_t end = 1;
+  while (end < size && buf[end] != ';') {
+    end++;
+  }
+
+  char action = 't';
+  uint32_t cols = 0;
+  uint32_t rows = 0;
+  uint32_t cursor_policy = 0;
+  uint32_t unicode_placement = 0;
+
+  size_t i = 1;
+  while (i < end) {
+    size_t token_end = i;
+    while (token_end < end && buf[token_end] != ',') {
+      token_end++;
+    }
+
+    size_t token_len = token_end - i;
+    if (token_len >= 3 && buf[i] == 'a' && buf[i + 1] == '=') {
+      action = buf[i + 2];
+    } else if (token_len > 2 && buf[i] == 'c' && buf[i + 1] == '=') {
+      (void)parse_uint32_slice(buf + i + 2, token_len - 2, &cols);
+    } else if (token_len > 2 && buf[i] == 'r' && buf[i + 1] == '=') {
+      (void)parse_uint32_slice(buf + i + 2, token_len - 2, &rows);
+    } else if (token_len > 2 && buf[i] == 'C' && buf[i + 1] == '=') {
+      (void)parse_uint32_slice(buf + i + 2, token_len - 2, &cursor_policy);
+    } else if (token_len > 2 && buf[i] == 'U' && buf[i + 1] == '=') {
+      (void)parse_uint32_slice(buf + i + 2, token_len - 2, &unicode_placement);
+    }
+
+    i = token_end + 1;
+  }
+
+  // Kitty moves the cursor when placing an image (a=T / a=p) unless
+  // cursor movement is disabled (C=1) or unicode placeholders are used (U=1).
+  if (!((action == 'T' || action == 'p') && cursor_policy != 1 && unicode_placement == 0
+        && cols > 0)) {
+    return;
+  }
+
+  if (rows == 0) {
+    rows = 1;
+  }
+
+  StringBuilder movement = KV_INITIAL_VALUE;
+  for (uint32_t r = 0; r < rows; r++) {
+    for (uint32_t c = 0; c < cols; c++) {
+      kv_push(movement, ' ');
+    }
+    if (r + 1 < rows) {
+      kv_push(movement, '\r');
+      kv_push(movement, '\n');
+    }
+  }
+
+  if (movement.size > 0) {
+    terminal_receive(term, movement.items, movement.size);
+  }
+  kv_destroy(movement);
+}
+
+typedef enum {
+  kTermResponseForwardNone = 0,
+  kTermResponseForwardCsiWindow = 1 << 1,
+} TermResponseForwardMask;
+
+static handle_T termresponse_target = 0;
+static unsigned termresponse_forward_mask = kTermResponseForwardNone;
+
+static void terminal_set_termresponse_target(const Terminal *term, unsigned mask)
+  FUNC_ATTR_NONNULL_ALL
+{
+  termresponse_target = term->buf_handle;
+  termresponse_forward_mask |= mask;
+}
+
+static void terminal_clear_termresponse_target(const Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (termresponse_target == term->buf_handle) {
+    termresponse_target = 0;
+    termresponse_forward_mask = kTermResponseForwardNone;
+  }
+}
 
 static void emit_termrequest(void **argv)
 {
@@ -403,11 +575,79 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   return 1;
 }
 
+static int on_csi(const char *leader, const long args[], int argcount, const char *intermed,
+                  char command, void *user)
+{
+  Terminal *term = user;
+
+  // Passthrough window size queries in pixels/chars, so host terminal can answer.
+  // This is needed by tools like `kitten icat` for feature detection and sizing.
+  if (command != 't' || (intermed != NULL && intermed[0] != NUL)) {
+    return 0;
+  }
+
+  int first = argcount > 0 && args[0] != CSI_ARG_MISSING ? (int)CSI_ARG(args[0]) : 0;
+  if (!(first == 14 || first == 16 || first == 18)) {
+    return 0;
+  }
+
+  StringBuilder request = KV_INITIAL_VALUE;
+  kv_concat(request, "\x1b[");
+  if (leader != NULL) {
+    kv_concat(request, leader);
+  }
+
+  bool more = false;
+  for (int i = 0; i < argcount; i++) {
+    if (i > 0) {
+      kv_push(request, more ? ':' : ';');
+    }
+    if (args[i] != CSI_ARG_MISSING) {
+      kv_printf(request, "%ld", CSI_ARG(args[i]));
+    }
+    more = CSI_ARG_HAS_MORE(args[i]);
+  }
+
+  if (intermed != NULL) {
+    kv_concat(request, intermed);
+  }
+  kv_push(request, command);
+
+  ui_call_ui_send(cbuf_as_string(request.items, request.size));
+  terminal_set_termresponse_target(term, kTermResponseForwardCsiWindow);
+  kv_destroy(request);
+  return 1;
+}
+
 static int on_apc(VTermStringFragment frag, void *user)
 {
   Terminal *term = user;
-  if (frag.str == NULL || frag.len == 0) {
+  if (frag.str == NULL) {
     return 0;
+  }
+
+  if (frag.initial) {
+    term->apc_kitty_passthrough = frag.len > 0 && frag.str[0] == 'G';
+    if (term->apc_kitty_passthrough) {
+      kv_size(term->apc_kitty_buffer) = 0;
+    }
+  }
+
+  if (term->apc_kitty_passthrough) {
+    kv_concat_len(term->apc_kitty_buffer, frag.str, frag.len);
+    if (frag.initial) {
+      ui_call_ui_send(STATIC_CSTR_AS_STRING("\x1b_"));
+    }
+    ui_call_ui_send((String){ .data = (char *)frag.str, .size = frag.len });
+    if (frag.final) {
+      bool replied = terminal_fast_reply_kitty_query(term);
+      terminal_apply_kitty_cursor_movement(term);
+      ui_call_ui_send(frag.terminator == VTERM_TERMINATOR_BEL
+                      ? STATIC_CSTR_AS_STRING("\x07")
+                      : STATIC_CSTR_AS_STRING("\x1b\\"));
+      (void)replied;
+      term->apc_kitty_passthrough = false;
+    }
   }
 
   if (!has_event(EVENT_TERMREQUEST)) {
@@ -428,7 +668,7 @@ static int on_apc(VTermStringFragment frag, void *user)
 
 static VTermStateFallbacks vterm_fallbacks = {
   .control = NULL,
-  .csi = NULL,
+  .csi = on_csi,
   .osc = on_osc,
   .dcs = on_dcs,
   .apc = on_apc,
@@ -452,6 +692,41 @@ void terminal_teardown(void)
   // terminal_destroy might be called after terminal_teardown is invoked
   // make sure it is in an empty, valid state
   invalidated_terminals = (Set(ptr_t)) SET_INIT;
+  termresponse_target = 0;
+  termresponse_forward_mask = kTermResponseForwardNone;
+}
+
+bool terminal_try_forward_termresponse(const String sequence)
+{
+  if (termresponse_target == 0 || termresponse_forward_mask == kTermResponseForwardNone
+      || sequence.size < 2) {
+    return false;
+  }
+
+  buf_T *buf = handle_get_buffer(termresponse_target);
+  if (buf == NULL || buf->terminal == NULL) {
+    termresponse_target = 0;
+    termresponse_forward_mask = kTermResponseForwardNone;
+    return false;
+  }
+
+  bool forwarded = false;
+  if ((termresponse_forward_mask & kTermResponseForwardCsiWindow)
+             && sequence.data[0] == '\x1b' && sequence.data[1] == '['
+             && sequence.data[sequence.size - 1] == 't') {
+    terminal_send(buf->terminal, sequence.data, sequence.size);
+    forwarded = true;
+  }
+
+  if (forwarded && buf->terminal->opts.termresponse_cb != NULL) {
+    buf->terminal->opts.termresponse_cb(sequence, buf->terminal->opts.data);
+  }
+
+  if (termresponse_forward_mask == kTermResponseForwardNone) {
+    termresponse_target = 0;
+  }
+
+  return forwarded;
 }
 
 static void term_output_callback(const char *s, size_t len, void *user_data)
@@ -1208,6 +1483,7 @@ void terminal_destroy(Terminal **termpp)
   FUNC_ATTR_NONNULL_ALL
 {
   Terminal *term = *termpp;
+  terminal_clear_termresponse_target(term);
   buf_T *buf = handle_get_buffer(term->buf_handle);
   if (buf) {
     term->buf_handle = 0;
@@ -1230,6 +1506,7 @@ void terminal_destroy(Terminal **termpp)
     xfree(term->selection_buffer);
     kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
+    kv_destroy(term->apc_kitty_buffer);
     vterm_free(term->vt);
     xfree(term->pending.send);
     multiqueue_free(term->pending.events);

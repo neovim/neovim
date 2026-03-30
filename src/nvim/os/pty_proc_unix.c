@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <unistd.h>
 #include <uv.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
@@ -166,6 +167,38 @@ pid_t vim_forkpty(int *amaster, char *name, struct termios *termp, struct winsiz
 # define forkpty vim_forkpty
 #endif
 
+static void pty_proc_sync_pixel_size_from_host(PtyProc *ptyproc, uint16_t width, uint16_t height)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // kitty's icat reads ws_{x,y}pixel from TIOCGWINSZ, so derive per-cell
+  // pixel size from nvim's controlling terminal and project it to the PTY.
+  struct winsize host = { 0 };
+  int fd = STDOUT_FILENO;
+  if (ioctl(fd, TIOCGWINSZ, &host) != 0 || host.ws_col == 0 || host.ws_row == 0
+      || host.ws_xpixel == 0 || host.ws_ypixel == 0) {
+    fd = STDERR_FILENO;
+    if (ioctl(fd, TIOCGWINSZ, &host) != 0 || host.ws_col == 0 || host.ws_row == 0
+        || host.ws_xpixel == 0 || host.ws_ypixel == 0) {
+      fd = STDIN_FILENO;
+      if (ioctl(fd, TIOCGWINSZ, &host) != 0 || host.ws_col == 0 || host.ws_row == 0
+          || host.ws_xpixel == 0 || host.ws_ypixel == 0) {
+        return;
+      }
+    }
+  }
+
+  uint32_t cell_w = host.ws_xpixel / host.ws_col;
+  uint32_t cell_h = host.ws_ypixel / host.ws_row;
+  if (cell_w == 0 || cell_h == 0) {
+    return;
+  }
+
+  uint32_t xpixel = (uint32_t)width * cell_w;
+  uint32_t ypixel = (uint32_t)height * cell_h;
+  ptyproc->xpixel = (uint16_t)(xpixel > UINT16_MAX ? UINT16_MAX : xpixel);
+  ptyproc->ypixel = (uint16_t)(ypixel > UINT16_MAX ? UINT16_MAX : ypixel);
+}
+
 /// @returns zero on success, or negative error code
 int pty_proc_spawn(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
@@ -180,7 +213,9 @@ int pty_proc_spawn(PtyProc *ptyproc)
   Proc *proc = (Proc *)ptyproc;
   assert(proc->err.s.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
-  ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
+  pty_proc_sync_pixel_size_from_host(ptyproc, ptyproc->width, ptyproc->height);
+  ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width,
+                                       ptyproc->xpixel, ptyproc->ypixel };
   uv_disable_stdio_inheritance();
   int master;
   int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
@@ -241,7 +276,18 @@ const char *pty_proc_tty_name(PtyProc *ptyproc)
 void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
-  ptyproc->winsize = (struct winsize){ height, width, 0, 0 };
+  pty_proc_sync_pixel_size_from_host(ptyproc, width, height);
+  ptyproc->winsize = (struct winsize){ height, width, ptyproc->xpixel, ptyproc->ypixel };
+  ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
+}
+
+void pty_proc_set_pixel_size(PtyProc *ptyproc, uint16_t xpixel, uint16_t ypixel)
+  FUNC_ATTR_NONNULL_ALL
+{
+  ptyproc->xpixel = xpixel;
+  ptyproc->ypixel = ypixel;
+  ptyproc->winsize.ws_xpixel = xpixel;
+  ptyproc->winsize.ws_ypixel = ypixel;
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
