@@ -4963,6 +4963,7 @@ static void ex_quitall(exarg_T *eap)
 static void ex_restart(exarg_T *eap)
 {
   Error err = ERROR_INIT;
+  const bool no_ui = !ui_active();
   const char *exepath = get_vim_var_str(VV_PROGPATH);
   const list_T *l = get_vim_var_list(VV_ARGV);
   int argc = tv_list_len(l);
@@ -4996,14 +4997,18 @@ static void ex_restart(exarg_T *eap)
         }
       }
     }
-    // Replace `--embed` OR `--headless` with `--embed --headless` once.
+    // Replace `--embed` OR `--headless` with `--embed` or `--embed --headless` once.
     // Drop stdin ("-") argument.
     if (i == 0
         || (!strequal(arg, "--embed") && !strequal(arg, "--headless") && !strequal(arg, "-"))) {
       argv[i++] = xstrdup(arg);
       if (i == 1) {
         argv[i++] = xstrdup("--embed");
-        argv[i++] = xstrdup("--headless");
+        // Without --headless, embed waits for UI to attach.
+        // Only add --headless when there is no UI.
+        if (no_ui) {
+          argv[i++] = xstrdup("--headless");
+        }
       }
     }
   });
@@ -5075,7 +5080,7 @@ static void ex_restart(exarg_T *eap)
   result_mem = NULL;
 
   // Send restart event with new listen address to current UI.
-  if (!remote_ui_restart(current_ui, listen_addr, &err)) {
+  if (!no_ui && !remote_ui_restart(current_ui, listen_addr, &err)) {
     if (ERROR_SET(&err)) {
       ELOG("%s", err.msg);  // UI disappeared already?
       api_clear_error(&err);
