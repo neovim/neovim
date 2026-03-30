@@ -120,23 +120,9 @@ void remote_ui_free_all_mem(void)
 #endif
 
 /// Wait until UI has connected.
-///
-/// @param only_stdio UI is expected to connect on stdio.
-void remote_ui_wait_for_attach(bool only_stdio)
+void remote_ui_wait_for_attach(void)
 {
-  if (only_stdio) {
-    Channel *channel = find_channel(CHAN_STDIO);
-    if (!channel) {
-      // `only_stdio` implies --embed mode, thus stdio channel can be assumed.
-      abort();
-    }
-
-    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1,
-                              map_has(uint64_t, &connected_uis, CHAN_STDIO));
-  } else {
-    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1,
-                              ui_active());
-  }
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1, ui_active());
 }
 
 /// Activates UI events on the channel.

@@ -466,7 +466,7 @@ describe('TUI :restart', function()
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
-  it('autocommands are triggered by [command] properly #38549', function()
+  it('[command] triggers autocommands properly #38549', function()
     local screen = tt.setup_child_nvim({
       '--clean',
       '--cmd',
@@ -490,6 +490,80 @@ describe('TUI :restart', function()
       0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;      |
       0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;|
       TRIGGERED: 1                    1,1           Top |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    -- The server is now detached and needs to be quit explicitly.
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
+
+  it('new server loads user config after old server exits #38569', function()
+    local config_file = 'Xrestart_session_config.lua'
+    local session_file = 'Xrestart_session.vim'
+    write_file(
+      config_file,
+      ([[
+        vim.api.nvim_create_autocmd("VimLeavePre", {
+          callback = function()
+            vim.cmd('mksession! %s')
+          end,
+        })
+
+        if vim.v.vim_did_enter and vim.uv.fs_stat('%s') then
+          vim.cmd('source %s')
+        end
+      ]]):format(session_file, session_file, session_file)
+    )
+    finally(function()
+      os.remove(config_file)
+      os.remove(session_file)
+    end)
+
+    local screen = tt.setup_child_nvim({
+      '--clean',
+      '-u',
+      config_file,
+      '--cmd',
+      'set notermguicolors noswapfile laststatus=0 nowrap noruler',
+    }, { env = env_notermguicolors })
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*4
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    feed_data(':rightbelow 28vsplit test/functional/fixtures/bigfile.txt\r')
+    screen:expect([[
+                           │^0000;<control>;Cc;0;BN;;;;;N|
+      ~                    │0001;<control>;Cc;0;BN;;;;;N|
+      ~                    │0002;<control>;Cc;0;BN;;;;;N|
+      ~                    │0003;<control>;Cc;0;BN;;;;;N|
+      ~                    │0004;<control>;Cc;0;BN;;;;;N|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    feed_data(':restart echo "restarted"\r')
+    screen:expect([[
+      ^                     │0000;<control>;Cc;0;BN;;;;;N|
+      ~                    │0001;<control>;Cc;0;BN;;;;;N|
+      ~                    │0002;<control>;Cc;0;BN;;;;;N|
+      ~                    │0003;<control>;Cc;0;BN;;;;;N|
+      ~                    │0004;<control>;Cc;0;BN;;;;;N|
+      restarted                                         |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    feed_data(':set sessionoptions-=winsize | restart\r')
+    screen:expect([[
+      ^                         │0000;<control>;Cc;0;BN;;|
+      ~                        │0001;<control>;Cc;0;BN;;|
+      ~                        │0002;<control>;Cc;0;BN;;|
+      ~                        │0003;<control>;Cc;0;BN;;|
+      ~                        │0004;<control>;Cc;0;BN;;|
+                                                        |
       {5:-- TERMINAL --}                                    |
     ]])
 
