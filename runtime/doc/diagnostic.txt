@@ -198,7 +198,7 @@ following uses the `virtual_lines` handler when jumping to a diagnostic: >lua
     if not diagnostic then return end
 
     vim.diagnostic.show(
-      diagnostic.namespace
+      diagnostic.namespace,
       bufnr,
       { diagnostic },
       { virtual_lines = { current_line = true }, virtual_text = false }

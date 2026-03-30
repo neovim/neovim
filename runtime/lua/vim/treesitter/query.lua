@@ -268,8 +268,8 @@ local explicit_queries = setmetatable({}, {
 ---   'c',
 ---   'highlights',
 ---   [[;inherits c
----   (identifier) @spell]])
---- ]])
+---   (identifier) @spell]]
+--- )
 --- ```
 ---
 ---@param lang string Language to use for the query

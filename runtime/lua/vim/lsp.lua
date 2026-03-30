@@ -184,7 +184,7 @@ end
 --- })
 --- vim.lsp.config('…', {
 ---   filetypes = { 'my_filetype1', 'my_filetype2' },
---- }
+--- })
 --- ```
 --- @field filetypes? string[]
 ---

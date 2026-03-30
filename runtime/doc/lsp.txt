@@ -816,7 +816,7 @@ Lua module: vim.lsp                                                 *lsp-core*
                              })
                              vim.lsp.config('…', {
                                filetypes = { 'my_filetype1', 'my_filetype2' },
-                             }
+                             })
 <
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                          Predicate which decides if a client should be
@@ -1760,7 +1760,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {cmd_env}?             (`table`) Environment variables passed to the
                                LSP process on spawn. Non-string values are
                                coerced to string. Example: >lua
-                                   { PORT = 8080; HOST = '0.0.0.0'; }
+                                   { PORT = 8080, HOST = '0.0.0.0' }
 <
       • {commands}?            (`table<string,fun(command: lsp.Command, ctx: table)>`)
                                Map of client-defined commands overriding the

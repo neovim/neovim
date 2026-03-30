@@ -1817,8 +1817,8 @@ set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
           'c',
           'highlights',
           [[;inherits c
-          (identifier) @spell]])
-        ]])
+          (identifier) @spell]]
+        )
 <
 
     Parameters: ~
