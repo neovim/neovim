@@ -3,7 +3,7 @@
 " Last Change:
 " 2025 Oct 27 by Vim project: don't use rustfmt as 'formatprg' by default
 " 2026 Jan 25 by Vim project: don't hide rustfmt errors, restore default var
-"
+" 2026 Mar 30 by Vim project: use fnameescape for :chdir commands
 "
 " Adapted from https://github.com/fatih/vim-go
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
@@ -135,7 +135,7 @@ function! s:RunRustfmt(command, tmpname, from_writepre)
         " chdir to the directory of the file
         let l:has_lcd = haslocaldir()
         let l:prev_cd = getcwd()
-        execute 'lchdir! '.expand('%:h')
+        execute 'lchdir! ' . fnameescape(expand('%:h'))
 
         let l:buffer = getline(1, '$')
         if exists("*systemlist")
@@ -215,6 +215,7 @@ function! s:RunRustfmt(command, tmpname, from_writepre)
     endif
 
     " Restore the current directory if needed
+    let l:prev_cd = fnameescape(l:prev_cd)
     if a:tmpname ==# ''
         if l:has_lcd
             execute 'lchdir! '.l:prev_cd
