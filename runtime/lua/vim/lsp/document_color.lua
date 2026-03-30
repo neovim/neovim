@@ -236,6 +236,7 @@ end
 function Provider:clear()
   for _, state in pairs(self.client_state) do
     state.hl_info = {}
+    state.processed_version = nil
     state.applied_version = nil
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
   end
