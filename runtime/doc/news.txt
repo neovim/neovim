@@ -402,7 +402,7 @@ UI
   • Avoids delays from |W10| "Changing a readonly file" and other warnings.
   • Highlights the cmdline as you type.
   • Provides the |pager| as a buffer + window.
-  • Currently experimental. To enable it: `require('vim._core.ui2').enable()`
+  • Currently experimental. To enable it: `require('vim._core.ui2').enable{}`
 • |:restart| restarts Nvim and reattaches the current UI.
 • |:connect| dynamically connects the current UI to the server at the given
   address.
