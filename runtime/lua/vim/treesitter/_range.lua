@@ -185,6 +185,12 @@ local function get_offset(source, index)
   end
 
   if type(source) == 'number' then
+    -- nvim_buf_get_offset accepts 0..line_count (inclusive), where line_count
+    -- returns the total byte size. A stale treesitter node can reference rows
+    -- beyond the buffer (e.g. buffer was concurrently modified). Clamp to
+    -- avoid "Index out of bounds" errors.
+    local line_count = api.nvim_buf_line_count(source)
+    index = math.min(index, line_count)
     return api.nvim_buf_get_offset(source, index)
   end
 

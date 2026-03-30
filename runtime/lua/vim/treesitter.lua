@@ -209,7 +209,24 @@ local function buf_range_get_text(buf, range)
     end_col = -1
     end_row = end_row - 1
   end
-  local lines = api.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
+  -- A stale treesitter node can reference rows beyond the buffer when the
+  -- buffer is concurrently modified. Clamp to valid bounds.
+  local line_count = api.nvim_buf_line_count(buf)
+  if line_count == 0 then
+    return ''
+  end
+  local max_row = line_count - 1
+  start_row = math.min(start_row, max_row)
+  end_row = math.min(end_row, max_row)
+  if start_row == end_row then
+    local line_len = #(api.nvim_buf_get_lines(buf, end_row, end_row + 1, false)[1] or '')
+    start_col = math.min(start_col, line_len)
+    end_col = math.min(end_col, line_len)
+  end
+  local ok, lines = pcall(api.nvim_buf_get_text, buf, start_row, start_col, end_row, end_col, {})
+  if not ok then
+    return ''
+  end
   return table.concat(lines, '\n')
 end
 
