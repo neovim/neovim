@@ -156,15 +156,17 @@ configuring which commands and key mappings load the plugin.
 
 Your plugin should not depend on every user micro-managing their configuration
 in such a way. Nvim has a mechanism for every plugin to do its own implicit
-lazy-loading (in Vimscript it's called |autoload|), via `autoload/`
-(Vimscript) and `lua/` (Lua). Plugin authors can provide "lazy loading" by
-providing a `plugin/<name>.lua` file which defines their commands and
-keymappings. This file should be small, and should not eagerly `require()` the
-rest of your plugin. Commands and mappings should do the `require()`.
+lazy-loading, via |autoload| (Vimscript) and `lua/` (Lua).
+
+Plugin authors can provide "lazy loading" by providing a `plugin/<name>.lua`
+file which defines their commands and keymappings. This file should be small,
+and should not eagerly `require()` the rest of your plugin. Commands and
+mappings should do the `require()`.
 
 Guidance:
 
-- Plugins should arrange their "lazy" behavior once, instead of expecting every user to micromanage it.
+- Plugins should arrange their "lazy" behavior once, instead of expecting
+  every user to micromanage it.
 - Keep `plugin/<name>.lua` small, avoid eagerly calling `require()` on modules
   until a command or mapping is actually used.
 

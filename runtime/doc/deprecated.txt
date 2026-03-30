@@ -13,6 +13,11 @@ They should not be used in new scripts, and old scripts should be updated.
 Deprecated features
 
 ------------------------------------------------------------------------------
+DEPRECATED IN 0.13					*deprecated-0.13*
+
+• todo
+
+------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*
 
 API
