@@ -70,6 +70,10 @@
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.8.0#a225e21d81201be77da58de614e2b7851735677a",
             .hash = "N-V-__8AAMR5AwAzZ5_8S2p2COTEf5usBeeT4ORzh-lBGkWy",
         },
+        .compile_commands = .{
+            .url = "https://github.com/the-argus/zig-compile-commands/archive/70fb439897e12cae896c071717d7c9c382918689.tar.gz",
+            .hash = "zig_compile_commands-0.0.1-OZg5-ULBAABTh3NXO3WXoSUX1474ez0EouuoT2yDANhz",
+        },
     },
     .paths = .{
         // TODO(bfredl): explicitly list the subdirs which actually are used
