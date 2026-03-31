@@ -805,6 +805,19 @@ describe('statusline', function()
     ]])
   end)
 
+  it('ruler is cleared when window without statusline is closed', function()
+    local cfg = { relative = 'editor', row = 1, col = 1, height = 1, width = 1 }
+    local win = api.nvim_open_win(0, true, cfg)
+    command('set ruler laststatus=2')
+    api.nvim_win_close(win, true)
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*5
+      {3:[No Name]             0,0-1          All}|
+                                              |
+    ]])
+  end)
+
   it('hidden moves ruler to cmdline', function()
     -- Use long ruler to check 'ruler' with 'rulerformat' set has correct width.
     command [[

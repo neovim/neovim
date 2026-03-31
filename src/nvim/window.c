@@ -3012,6 +3012,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   // which may have changed since the last set_bufref. (e.g: close_buffer autocmds)
   set_bufref(&bufref, win->w_buffer);
 
+  bool had_cmdline_ruler = p_ru && win == curwin && win->w_status_height == 0;
   // Free the memory used for the window and get the window that received
   // the screen space.
   int dir;
@@ -3074,6 +3075,8 @@ int win_close(win_T *win, bool free_buf, bool force)
       win_comp_pos();
       win_fix_scroll(false);
     }
+  } else if (had_cmdline_ruler && wp->w_status_height > 0) {
+    redraw_cmdline = true;  // clear cmdline 'ruler'
   }
   if (bufref.br_buf && bufref_valid(&bufref) && bufref.br_buf->terminal) {
     terminal_check_size(bufref.br_buf->terminal);
