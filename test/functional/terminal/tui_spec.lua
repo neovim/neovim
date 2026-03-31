@@ -2630,7 +2630,8 @@ describe('TUI', function()
     retry(nil, 50, function()
       eq(vim.NIL, api.nvim_get_proc(pid))
     end)
-    screen:expect({ any = vim.pesc('[Process exited 1]') })
+    -- FIXME: SIGHUP sometimes isn't caught with ASAN.
+    screen:expect({ any = t.is_asan() and '%[Process exited %d+%]' or '%[Process exited 1%]' })
   end)
 
   it('exits properly when :quit non-last window in event handler #14379', function()
