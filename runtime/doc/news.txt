@@ -1,0 +1,159 @@
+*news.txt*    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Notable changes since Nvim 0.12                                 *news*
+
+For changes in the previous release, see |news-0.12|.
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+BREAKING CHANGES                                                *news-breaking*
+
+These changes may require adaptations in your config or plugins.
+
+API
+
+• todo
+
+DIAGNOSTICS
+
+• todo
+
+EDITOR
+
+• todo
+
+EVENTS
+
+• todo
+
+LSP
+
+• todo
+
+LUA
+
+• todo
+
+OPTIONS
+
+• todo
+
+PLUGINS
+
+• todo
+
+TREESITTER
+
+• todo
+
+==============================================================================
+NEW FEATURES                                                    *news-features*
+
+The following new features were added.
+
+API
+
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
+  and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
+
+BUILD
+
+• todo
+
+DEFAULTS
+
+• Mappings:
+  • For filetype=man, u / d scrolls upwards / downwards
+
+
+DIAGNOSTICS
+
+• todo
+
+EDITOR
+
+• todo
+
+EVENTS
+
+• todo
+
+HIGHLIGHTS
+
+• todo
+
+LSP
+
+• LSP capabilities:
+  • `textDocument/foo` …
+    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_codeLens
+  • `textDocument/bar` …
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_colorPresentation
+• todo
+
+LUA
+
+• todo
+
+OPTIONS
+
+• todo
+
+PERFORMANCE
+
+• todo
+
+PLUGINS
+
+• todo
+
+STARTUP
+
+• todo
+
+TERMINAL
+
+• todo
+
+TREESITTER
+
+• todo
+
+TUI
+
+• todo
+
+UI
+
+• todo
+
+VIMSCRIPT
+
+• todo
+
+==============================================================================
+CHANGED FEATURES                                                 *news-changed*
+
+These existing features changed their behavior.
+
+• todo
+
+==============================================================================
+REMOVED FEATURES                                                 *news-removed*
+
+These deprecated features were removed.
+
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
+  and |vim.lsp.buf.implementation()| no longer accept the `reuse_win` option.
+
+==============================================================================
+DEPRECATIONS                                                *news-deprecations*
+
+See |deprecated-0.13|.
+
+ vim:tw=78:ts=8:sw=2:et:ft=help:norl:

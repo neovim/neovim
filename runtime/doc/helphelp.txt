@@ -1,0 +1,552 @@
+*helphelp.txt*	Nvim
+
+
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
+
+
+Help on help files					*helphelp*
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+Help tag conventions					*help-context*
+
+Get specific help:  It is possible to go directly to whatever you want help
+on, by giving an argument to the |:help| command. Prepend something to specify
+the context: >
+
+	  WHAT			PREPEND    EXAMPLE
+      Normal mode command		   :help x
+      Visual mode command	  v_	   :help v_u
+      Insert mode command	  i_	   :help i_<Esc>
+      Command-line command	  :	   :help :quit
+      Command-line editing	  c_	   :help c_<Del>
+      Vim command argument	  -	   :help -r
+      Option			  '	   :help 'textwidth'
+      Regular expression	  /	   :help /[
+
+See |help-summary| for more contexts and an explanation.
+See |notation| for an explanation of the help syntax.
+
+SEARCH FOR HELP
+
+Type ":help word", then hit CTRL-D to see matching help entries for "word". Or
+use ":helpgrep word". |:helpgrep|
+
+==============================================================================
+Notation						*notation*
+
+When syntax highlighting is used to read this, text that is not typed
+literally is often highlighted with the Special group.  These are items in [],
+{} and <>, and CTRL-X.
+
+Note that Vim uses all possible characters in commands.  Sometimes the [], {}
+and <> are part of what you type, the context should make this clear.
+
+
+- []            Characters in square brackets are optional.
+
+                                                    *count* *[count]*
+- [count]       An optional number that may precede the command to multiply
+                or iterate the command.  If no number is given, a count of one
+                is used, unless otherwise noted.  Note that in this manual the
+                [count] is not mentioned in the description of the command,
+                but only in the explanation.  This was done to make the
+                commands easier to look up.  If the 'showcmd' option is on,
+                the (partially) entered count is shown at the bottom of the
+                window.  You can use <Del> to erase the last digit (|N<Del>|).
+
+                                                        *[quotex]*
+- ["x]          An optional register designation where text can be stored.
+                See |registers|.  The x is a single character between 'a' and
+                'z' or 'A' and 'Z' or '"', and in some cases (with the put
+                command) between '0' and '9', '%', '#', or others.  The
+                uppercase and lowercase letter designate the same register,
+                but the lowercase letter is used to overwrite the previous
+                register contents, while the uppercase letter is used to
+                append to the previous register contents.  Without the ""x" or
+                with """" the stored text is put into the unnamed register.
+
+                                                        *{}*
+- {}            Curly braces denote parts of the command which must appear,
+                but which can take a number of different values.  The
+                differences between Vim and Vi are also given in curly braces
+                (this will be clear from the context).
+
+                                                        *{char1-char2}*
+- {char1-char2} A single character from the range char1 to char2.  For
+                example: {a-z} is a lowercase letter.  Multiple ranges may be
+                concatenated.  For example, {a-zA-Z0-9} is any alphanumeric
+                character.
+
+                                                *{motion}* *movement*
+- {motion}      A command that moves the cursor.  These are explained in
+                |motion.txt|.
+                - Examples:
+                  - `w`           to start of next word
+                  - `b`           to begin of current word
+                  - `4j`          four lines down
+                  - `/The<CR>`    to next occurrence of "The"
+                - This is used after an |operator| command to move over the
+                  text that is to be operated upon.
+                  - If the motion includes a count and the operator also has
+                    a count, the two counts are multiplied.  For example:
+                    "2d3w" deletes six words.
+                  - The motion can be backwards, e.g. "db" to delete to the
+                    start of the word.
+                  - The motion can also be a mouse click.  The mouse is not
+                    supported in every terminal though.
+                  - The ":omap" command can be used to map characters while an
+                    operator is pending.
+                  - Ex commands can be used to move the cursor.  This can be
+                    used to call a function that does some complicated motion.
+                    The motion is always charwise exclusive, no matter what
+                    ":" command is used.  This means it's impossible to
+                    include the last character of a line without the line
+                    break (unless 'virtualedit' is set). If the Ex command
+                    changes the text before where the operator starts or jumps
+                    to another buffer the result is unpredictable.  It is
+                    possible to change the text further down.  Jumping to
+                    another buffer is possible if the current buffer is not
+                    unloaded.
+
+                                                        *{Visual}*
+- {Visual}      A selected text area.  It is started with the "v", "V", or
+                CTRL-V command, then any cursor movement command can be used
+                to change the end of the selected text.
+                This is used before an |operator| command to highlight the
+                text that is to be operated upon.
+                See |Visual-mode|.
+
+                                                        *<character>*
+- <character>   A special character from the table below, optionally with
+                modifiers, or a single ASCII character with modifiers.
+
+                                                        *'character'*
+- 'c'           A single ASCII character.
+
+                                                        *CTRL-{char}*
+- CTRL-{char}   {char} typed as a control character; that is, typing {char}
+                while holding the CTRL key down.  The case of {char} is
+                ignored; thus CTRL-A and CTRL-a are equivalent.  But in
+                some terminals and environments, using the SHIFT key will
+                produce a distinct code (e.g. CTRL-SHIFT-a); in these
+                environments using the SHIFT key will not trigger commands
+                such as CTRL-A.
+
+                                                        *'option'*
+- 'option'      An option, or parameter, that can be set to a value, is
+                enclosed in single quotes.  See |options|.
+
+                                                        *quotecommandquote*
+- "command"     A reference to a command that you can type is enclosed in
+                double quotes.
+- `command`     New style command, this distinguishes it from other quoted
+                text and strings.
+
+==============================================================================
+Help commands						*online-help*
+
+			*help* *<Help>* *:h* *:help* *<F1>* *i_<F1>* *i_<Help>*
+<Help>		or
+:h[elp]			Open a window and display the help file in read-only
+			mode.  If there is a help window open already, use
+			that one.  Otherwise, if the current window uses the
+			full width of the screen or is at least 80 characters
+			wide, the help window will appear just above the
+			current window.  Otherwise the new window is put at
+			the very top.
+			The 'helplang' option is used to select a language, if
+			the main help file is available in several languages.
+
+			Type |gO| to see the table of contents.
+
+							*:help!*
+:h[elp]!		Guesses a help tag from the |WORD| at cursor, in DWIM ("Do
+			What I Mean") fashion: trims punctuation using various
+			heuristics until a valid help tag is found.
+
+			For example, move the cursor anywhere in this code,
+			then run `:help!`: >
+
+				local v = vim.version.parse(vim.system({'foo'}):wait().stdout)
+<
+			Then compare to `:exe 'help' expand('<cword>')`.
+
+						*{subject}* *E149* *E661*
+:h[elp] {subject}	Like ":help", additionally jump to the tag {subject}.
+			For example:  >
+				:help options
+
+<			{subject} can include wildcards such as "*", "?" and
+			"[a-z]":
+			   :help z?	jump to help for any "z" command
+			   :help z.	jump to the help for "z."
+			But when a tag exists it is taken literally:
+			   :help :?	jump to help for ":?"
+
+			If there is no full match for the pattern, or there
+			are several matches, the "best" match will be used.
+			A sophisticated algorithm is used to decide which
+			match is better than another one.  These items are
+			considered in the computation:
+			- A match with same case is much better than a match
+			  with different case.
+			- A match that starts after a non-alphanumeric
+			  character is better than a match in the middle of a
+			  word.
+			- A match at or near the beginning of the tag is
+			  better than a match further on.
+			- The more alphanumeric characters match, the better.
+			- The shorter the length of the match, the better.
+
+			The 'helplang' option is used to select a language, if
+			the {subject} is available in several languages.
+			To find a tag in a specific language, append "@ab",
+			where "ab" is the two-letter language code.  See
+			|help-translated|.
+
+			Note that the longer the {subject} you give, the less
+			matches will be found.  You can get an idea how this
+			all works by using commandline completion (type CTRL-D
+			after ":help subject" |c_CTRL-D|).
+			If there are several matches, you can have them listed
+			by hitting CTRL-D.  Example: >
+				:help cont<Ctrl-D>
+
+<			Instead of typing ":help CTRL-V" to search for help
+			for CTRL-V you can type: >
+				:help ^V
+<			This also works together with other characters, for
+			example to find help for CTRL-V in Insert mode: >
+				:help i^V
+<
+			It is also possible to first do ":help" and then
+			use ":tag {pattern}" in the help window.  The
+			":tnext" command can then be used to jump to other
+			matches, "tselect" to list matches and choose one. >
+				:help index
+				:tselect /.*mode
+
+<			When there is no argument you will see matches for
+			"help", to avoid listing all possible matches (that
+			would be very slow).
+			The number of matches displayed is limited to 300.
+
+			The `:help` command can be followed by '|' and another
+			command, but you don't need to escape the '|' inside a
+			help command.  So these both work: >
+				:help |
+				:help k| only
+<			Note that a space before the '|' is seen as part of
+			the ":help" argument.
+			You can also use <NL> or <CR> to separate the help
+			command from a following command.  You need to type
+			CTRL-V first to insert the <NL> or <CR>.  Example: >
+				:help so<C-V><CR>only
+<
+
+:h[elp]! {subject}	Like ":help", but prefers tags with the same
+			|help-translated| language as the current file.
+
+			Unrelated to |:help!| (no {subject}).
+
+							*:helpc* *:helpclose*
+:helpc[lose]		Close one help window, if there is one.
+			Vim will try to restore the window layout (including
+			cursor position) to the same layout it was before
+			opening the help window initially.  This might cause
+			triggering several autocommands.
+
+							*:helpg* *:helpgrep*
+:helpg[rep] {pattern}[@xx]
+			Search all help text files and make a list of lines
+			in which {pattern} matches.  Jumps to the first match.
+			The optional [@xx] specifies that only matches in the
+			"xx" language are to be found.
+			You can navigate through the matches with the
+			|quickfix| commands, e.g., |:cnext| to jump to the
+			next one.  Or use |:cwindow| to get the list of
+			matches in the quickfix window.
+			{pattern} is used as a Vim regexp |pattern|.
+			'ignorecase' is not used, add "\c" to ignore case.
+			Example for case sensitive search: >
+				:helpgrep Uganda
+<			Example for case ignoring search: >
+				:helpgrep uganda\c
+<			Example for searching in French help: >
+				:helpgrep backspace@fr
+<			The pattern does not support line breaks, it must
+			match within one line.  You can use |:grep| instead,
+			but then you need to get the list of help files in a
+			complicated way.
+			Cannot be followed by another command, everything is
+			used as part of the pattern.  But you can use
+			|:execute| when needed.
+			Compressed help files will not be searched (Fedora
+			compresses the help files).
+
+							*:lh* *:lhelpgrep*
+:lh[elpgrep] {pattern}[@xx]
+			Same as ":helpgrep", except the location list is used
+			instead of the quickfix list.  If the help window is
+			already opened, then the location list for that window
+			is used.  Otherwise, a new help window is opened and
+			the location list for that window is set.  The
+			location list for the current window is not changed
+			then.
+
+							*:exu* *:exusage*
+:exu[sage]		Show help on Ex commands.  Added to simulate the Nvi
+			command.
+
+							*:viu* *:viusage*
+:viu[sage]		Show help on Normal mode commands.  Added to simulate
+			the Nvi command.
+
+When no argument is given to |:help| the file given with the 'helpfile' option
+will be opened.  Otherwise the specified tag is searched for in all "doc/tags"
+files in the directories specified in the 'runtimepath' option.
+
+If you would like to open the help in the current window, see this tip:
+|help-curwin|.
+
+The initial height of the help window can be set with the 'helpheight' option
+(default 20).
+						*help-buffer-options*
+When the help buffer is created, several local options are set to make sure
+the help text is displayed as it was intended:
+    'iskeyword'		nearly all ASCII chars except ' ', "*", '"' and '|'
+    'foldmethod'	"manual"
+    'tabstop'		8
+    'arabic'		off
+    'binary'		off
+    'buflisted'		off
+    'cursorbind'	off
+    'diff'		off
+    'foldenable'	off
+    'list'		off
+    'modifiable'	off
+    'number'		off
+    'relativenumber'	off
+    'rightleft'		off
+    'scrollbind'	off
+    'spell'		off
+
+Jump to specific subjects by using tags.  This can be done in two ways:
+- Use the "CTRL-]" command while standing on the name of a command or option.
+  This only works when the tag is a keyword.  "<C-Leftmouse>" and
+  "g<LeftMouse>" work just like "CTRL-]".
+- use the ":ta {subject}" command.  This also works with non-keyword
+  characters.
+
+Use CTRL-T or CTRL-O to jump back.
+Use ":q" to close the help window.
+Use `g==` to execute the current Lua/Vimscript code block.
+
+If there are several matches for an item you are looking for, this is how you
+can jump to each one of them:
+1. Open a help window
+2. Use the ":tag" command with a slash prepended to the tag.  E.g.: >
+	:tag /min
+3. Use ":tnext" to jump to the next matching tag.
+
+It is possible to add help files for plugins and other items.  You don't need
+to change the distributed help files for that.  See |add-local-help|.
+
+To write a local help file, see |write-local-help|.
+
+Note that the title lines from the local help files are automagically added to
+the "LOCAL ADDITIONS" section in the "help.txt" help file |local-additions|.
+This is done when viewing the file in Vim, the file itself is not changed.  It
+is done by going through all help files and obtaining the first line of each
+file.  The files in $VIMRUNTIME/doc are skipped.
+
+					*:helpt* *:helptags*
+			*E150* *E151* *E152* *E153* *E154* *E670* *E856*
+:helpt[ags] [++t] {dir}
+			Generate the help tags file(s) for directory {dir}.
+			When {dir} is ALL then all "doc" directories in
+			'runtimepath' will be used.
+
+			All "*.txt" and "*.??x" files in the directory and
+			sub-directories are scanned for a help tag definition
+			in between stars.  The "*.??x" files are for
+			translated docs, they generate the "tags-??" file, see
+			|help-translated|.  The generated tags files are
+			sorted.
+			When there are duplicates an error message is given.
+			An existing tags file is silently overwritten.
+
+			The optional "++t" argument forces adding the
+			"help-tags" tag.  This is also done when the {dir} is
+			equal to $VIMRUNTIME/doc.
+
+			To rebuild the help tags in the runtime directory
+			(requires write permission there): >
+				:helptags $VIMRUNTIME/doc
+<
+
+
+==============================================================================
+Translated help files					*help-translated*
+
+It is possible to add translated help files, next to the original English help
+files.  Vim will search for all help in "doc" directories in 'runtimepath'.
+
+At this moment translations are available for:
+	Chinese  - multiple authors
+	French   - translated by David Blanchet
+	Italian  - translated by Antonio Colombo
+	Japanese - multiple authors
+	Polish   - translated by Mikolaj Machowski
+	Russian  - translated by Vassily Ragosin
+See the Vim website to find them: https://www.vim.org/translations.php
+
+A set of translated help files consists of these files:
+
+	help.abx
+	howto.abx
+	...
+	tags-ab
+
+"ab" is the two-letter language code.  Thus for Italian the names are:
+
+	help.itx
+	howto.itx
+	...
+	tags-it
+
+The 'helplang' option can be set to the preferred language(s).  The default is
+set according to the environment.  Vim will first try to find a matching tag
+in the preferred language(s).  English is used when it cannot be found.
+
+To find a tag in a specific language, append "@ab" to a tag, where "ab" is the
+two-letter language code.  Example: >
+	:he user-manual@it
+	:he user-manual@en
+The first one finds the Italian user manual, even when 'helplang' is empty.
+The second one finds the English user manual, even when 'helplang' is set to
+"it".
+
+When using command-line completion for the ":help" command, the "@en"
+extension is only shown when a tag exists for multiple languages.  When the
+tag only exists for English "@en" is omitted.  When the first candidate has an
+"@ab" extension and it matches the first language in 'helplang' "@ab" is also
+omitted.
+
+When using |CTRL-]| or ":help!" in a non-English help file Vim will try to
+find the tag in the same language.  If not found then 'helplang' will be used
+to select a language.
+
+Help files must use latin1 or utf-8 encoding.  Vim assumes the encoding is
+utf-8 when finding non-ASCII characters in the first line.  Thus you must
+translate the header with "For Vim version".
+
+The same encoding must be used for the help files of one language in one
+directory.  You can use a different encoding for different languages and use
+a different encoding for help files of the same language but in a different
+directory.
+
+Hints for translators:
+- Do not translate the tags.  This makes it possible to use 'helplang' to
+  specify the preferred language.  You may add new tags in your language.
+- When you do not translate a part of a file, add tags to the English version,
+  using the "tag@en" notation.
+- Make a package with all the files and the tags file available for download.
+  Users can drop it in one of the "doc" directories and start use it.
+  Report to the development team, so they can add a link on www.vim.org.
+- Use the |:helptags| command to generate the tags files.  It will find all
+  languages in the specified directory.
+
+==============================================================================
+Writing help files					*help-writing*
+
+For ease of use, a Vim help file for a plugin should follow the format of the
+standard Vim help files, except for the first line.  If you are writing a new
+help file it's best to copy one of the existing files and use it as a
+template.
+
+The first line in a help file should have the following format: >
+
+	*plugin_name.txt*	{short description of the plugin}
+
+The first field is a help tag where ":help plugin_name" will jump to.  The
+remainder of the line, after a Tab, describes the plugin purpose in a short
+way.  This will show up in the "LOCAL ADDITIONS" section of the main help
+file.  Check there that it shows up properly: |local-additions|.
+
+If you want to add a version number or last modification date, put it in the
+second line, right aligned.
+
+At the bottom of the help file, place a Vim modeline to set the 'textwidth'
+and 'tabstop' options and the 'filetype' to "help".  Never set a global option
+in such a modeline, that can have undesired consequences.
+
+
+TAGS
+
+To define a help tag, place the name between asterisks ("*tag-name*").  The
+tag-name should be different from all the Vim help tag names and ideally
+should begin with the name of the Vim plugin.  The tag name is usually right
+aligned on a line.
+
+When referring to an existing help tag and to create a hot-link, place the
+name between two bars ("|") eg. |help-writing|.
+
+When referring to a Vim option in the help file, place the option name between
+two single quotes, eg. 'statusline'
+
+When referring to any other technical term or symbol, such as a filename or
+function parameter, surround it in backticks, eg. `~/.path/to/init.vim`. This
+renders it as "inline" code (as opposed to a "codeblock" |help-codeblock|).
+
+
+HIGHLIGHTING
+
+To define a column heading, use a tilde character at the end of the line,
+preceded by a space. This will highlight the column heading in a different
+color.  E.g.
+
+Column heading ~
+
+To separate sections in a help file, place a series of '=' characters in a
+line starting from the first column.  The section separator line is
+highlighted differently.
+
+							      *help-codeblock*
+To quote a block of ex-commands verbatim, place a greater than (>) character
+at the end of the line before the block and a less than (<) character as the
+first non-blank on a line following the block.  Any line starting in column 1
+also implicitly stops the block of ex-commands before it.  E.g. >
+	function Example_Func()
+	  echo "Example"
+	endfunction
+<
+To enable syntax highlighting for a block of code, place a language name
+annotation (e.g. "vim") after a greater than (>) character.  E.g. >vim
+	function Example_Func()
+	  echo "Example"
+	endfunction
+<
+						*help-notation*
+The following are highlighted differently in a Vim help file:
+  - a special key name expressed either in <> notation as in <PageDown>, or
+    as a Ctrl character as in CTRL-X
+  - anything between {braces}, e.g. {lhs} and {rhs}
+
+The word "Note", "Notes" and similar automagically receive distinctive
+highlighting.  So do these:
+	Todo	something to do
+	Error	something wrong
+
+You can find the details in $VIMRUNTIME/syntax/help.vim
+
+
+FILETYPE COMPLETION					*ft-help-omni*
+
+To get completion for help tags when writing a tag reference, you can use the
+|i_CTRL-X_CTRL-O| command.
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

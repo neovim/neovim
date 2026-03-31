@@ -1,0 +1,94 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local eq = t.eq
+local NIL = vim.NIL
+local eval = n.eval
+local clear = n.clear
+local api = n.api
+local fn = n.fn
+local command = n.command
+local exc_exec = n.exc_exec
+local pcall_err = t.pcall_err
+
+setup(clear)
+
+describe('sort()', function()
+  it('errors out when sorting special values', function()
+    eq(
+      'Vim(call):E362: Using a boolean value as a Float',
+      exc_exec('call sort([v:true, v:false], "f")')
+    )
+  end)
+
+  it('sorts “wrong” values between -0.0001 and 0.0001, preserving order', function()
+    api.nvim_set_var('list', {
+      true,
+      false,
+      NIL,
+      {},
+      { a = 42 },
+      'check',
+      0.0001,
+      -0.0001,
+    })
+    command('call insert(g:list, function("tr"))')
+    local error_lines = fn.split(fn.execute('silent! call sort(g:list, "f")'), '\n')
+    local errors = {}
+    for _, err in ipairs(error_lines) do
+      errors[err] = true
+    end
+    eq({
+      ['E362: Using a boolean value as a Float'] = true,
+      ['E891: Using a Funcref as a Float'] = true,
+      ['E892: Using a String as a Float'] = true,
+      ['E893: Using a List as a Float'] = true,
+      ['E894: Using a Dictionary as a Float'] = true,
+      ['E907: Using a special value as a Float'] = true,
+    }, errors)
+    eq(
+      "[-1.0e-4, function('tr'), v:true, v:false, v:null, [], {'a': 42}, 'check', 1.0e-4]",
+      eval('string(g:list)')
+    )
+  end)
+
+  it('can yield E702 and stop sorting after that', function()
+    command([[
+      function Cmp(a, b)
+        if type(a:a) == type([]) || type(a:b) == type([])
+          return []
+        endif
+        return (a:a > a:b) - (a:a < a:b)
+      endfunction
+    ]])
+    eq(
+      'Vim(let):E745: Using a List as a Number',
+      pcall_err(command, 'let sl = sort([1, 0, [], 3, 2], "Cmp")')
+    )
+  end)
+
+  it('handles large numbers properly', function()
+    local to_sort = {
+      { 229539777187355, 229539777187355 },
+      { 487766135067138, 491977135306566 },
+      { 188325333471071, 188931909913550 },
+      { 264028451845520, 265514296554744 },
+      { 245727634348687, 249469249579525 },
+      { 375117820166731, 378942174241518 },
+      { 535474757750378, 535849288071548 },
+    }
+    local expected = {
+      { 188325333471071, 188931909913550 },
+      { 229539777187355, 229539777187355 },
+      { 245727634348687, 249469249579525 },
+      { 264028451845520, 265514296554744 },
+      { 375117820166731, 378942174241518 },
+      { 487766135067138, 491977135306566 },
+      { 535474757750378, 535849288071548 },
+    }
+    eq(expected, fn.sort(to_sort))
+    api.nvim_set_var('to_sort', to_sort)
+    eq(expected, api.nvim_eval('sort(g:to_sort)'))
+    eq(expected, api.nvim_eval('sort(g:to_sort, {a, b -> a[0] - b[0]})'))
+  end)
+end)

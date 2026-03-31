@@ -1,0 +1,74 @@
+# configuration file for git-cliff
+
+[changelog]
+# changelog header
+header = """
+# Changelog\n
+Following is a list of commits (fixes/features only) in this release.\n
+See `:help news` in Nvim for release notes.\n
+"""
+# template for the changelog body
+# https://github.com/Keats/tera
+# https://keats.github.io/tera/docs/
+body = """
+{% if version %}\
+    # [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+    # [unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+    {{ group | striptags | upper_first }}
+    --------------------------------------------------------------------------------
+    {% for commit in commits | sort(attribute="message")%}\
+        {% if not commit.scope %}\
+            - {{ commit.id | truncate(length=12, end="") }} {{ commit.message }}
+        {% endif %}\
+    {% endfor %}\
+    {% for group, commits in commits | group_by(attribute="scope") %}\
+        {% for commit in commits | sort(attribute="message") %}\
+            - {{ commit.id | truncate(length=12, end="") }} {{commit.scope}}: {{ commit.message }}
+        {% endfor %}\
+    {% endfor %}
+{% endfor %}\n
+"""
+# remove the leading and trailing whitespace from the template
+trim = true
+
+[git]
+# parse the commits based on https://www.conventionalcommits.org
+conventional_commits = true
+# filter out the commits that are not conventional
+filter_unconventional = true
+# process each line of a commit as an individual commit
+split_commits = false
+# regex for preprocessing the commit messages
+commit_preprocessors = [
+#    { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](https://github.com/neovim/neovim/issues/${2}))"},
+]
+# regex for parsing and grouping commits
+commit_parsers = [
+    { message = "!:", group = "<!-- 0 -->BREAKING"},
+    { message = "^feat", group = "<!-- 1 -->FEATURES"},
+    { message = "^fix", group = "<!-- 2 -->FIXES"},
+    { message = "^perf", group = "<!-- 3 -->PERFORMANCE"},
+    { message = "^build", group = "<!-- 4 -->BUILD"},
+    { message = "^vim-patch", group = "<!-- 5 -->VIM PATCHES"},
+    { message = "^refactor", group = "<!-- 6 -->REFACTOR" },
+    { message = "^ci", group = "<!-- 8 -->CI" },
+    { message = "^test", group = "<!-- 9 -->TESTING" },
+    { message = "^docs", group = "<!-- 99 -->DOCUMENTATION" },
+    { message = "^revert", group = "<!-- 999 -->REVERTED CHANGES" },
+    { message = ".*", group = "<!-- 9999 -->OTHER"},
+]
+# filter out the commits that are not matched by commit parsers
+filter_commits = true
+# glob pattern for matching git tags
+tag_pattern = "v[0-9]*"
+# regex for skipping tags
+skip_tags = "v0.1.0-beta.1"
+# regex for ignoring tags
+ignore_tags = ""
+# sort the tags chronologically
+date_order = false
+# sort the commits inside sections by oldest/newest order
+sort_commits = "oldest"

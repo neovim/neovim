@@ -1,0 +1,53 @@
+name: backport
+on:
+  pull_request_target:
+    types: [closed, labeled]
+
+permissions: {}
+
+jobs:
+  backport:
+    permissions:
+      contents: write
+      pull-requests: write
+    name: Backport Pull Request
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.BACKPORT_APP }}
+          private-key: ${{ secrets.BACKPORT_KEY }}
+
+      - name: Create backport PR
+        id: backport
+        uses: korthout/backport-action@4aaf0e03a94ff0a619c9a511b61aeb42adea5b02 # v4.2.0
+        with:
+          pull_title: "${pull_title}"
+          label_pattern: "^ci:backport ([^ ]+)$"
+          github_token: ${{ steps.app-token.outputs.token }}
+
+      - name: Create failed backport label
+        if: ${{ steps.backport.outputs.was_successful == 'false' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['needs:backport']
+            })
+
+      - name: Enable automerge
+        if: ${{ steps.backport.outputs.was_successful == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CREATED_PULL_NUMBERS: ${{ steps.backport.outputs.created_pull_numbers }}
+        run: |
+          gh pr merge --rebase --auto "${CREATED_PULL_NUMBERS}"

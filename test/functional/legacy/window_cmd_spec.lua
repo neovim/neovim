@@ -1,0 +1,433 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
+
+local clear = n.clear
+local eq = t.eq
+local exec = n.exec
+local exec_lua = n.exec_lua
+local command = n.command
+local feed = n.feed
+local fn = n.fn
+
+-- oldtest: Test_window_cmd_ls0_split_scrolling()
+it('scrolling with laststatus=0 and :botright split', function()
+  clear('--cmd', 'set ruler')
+  local screen = Screen.new(40, 10)
+  exec([[
+    set laststatus=0
+    call setline(1, range(1, 100))
+    normal! G
+  ]])
+  command('botright split')
+  screen:expect([[
+    97                                      |
+    98                                      |
+    99                                      |
+    100                                     |
+    {2:[No Name] [+]         100,1          Bot}|
+    97                                      |
+    98                                      |
+    99                                      |
+    ^100                                     |
+                          100,1         Bot |
+  ]])
+end)
+
+describe('splitkeep', function()
+  local screen
+
+  before_each(function()
+    clear('--cmd', 'set splitkeep=screen')
+    screen = Screen.new()
+  end)
+
+  -- oldtest: Test_splitkeep_cursor()
+  it('does not adjust cursor in window that did not change size', function()
+    screen:try_resize(75, 8)
+    -- FIXME: bottom window is different without the "vsplit | close"
+    exec([[
+      vsplit | close
+      set scrolloff=5
+      set splitkeep=screen
+      autocmd CursorMoved * wincmd p | wincmd p
+      call setline(1, range(1, 200))
+      func CursorEqualize()
+        call cursor(100, 1)
+        wincmd =
+      endfunc
+      wincmd s
+      call CursorEqualize()
+    ]])
+
+    screen:expect([[
+      99                                                                         |
+      ^100                                                                        |
+      101                                                                        |
+      {3:[No Name] [+]                                                              }|
+      5                                                                          |
+      6                                                                          |
+      {2:[No Name] [+]                                                              }|
+                                                                                 |
+    ]])
+
+    feed('j')
+    screen:expect([[
+      100                                                                        |
+      ^101                                                                        |
+      102                                                                        |
+      {3:[No Name] [+]                                                              }|
+      5                                                                          |
+      6                                                                          |
+      {2:[No Name] [+]                                                              }|
+                                                                                 |
+    ]])
+
+    command('set scrolloff=0')
+    feed('G')
+    screen:expect([[
+      198                                                                        |
+      199                                                                        |
+      ^200                                                                        |
+      {3:[No Name] [+]                                                              }|
+      5                                                                          |
+      6                                                                          |
+      {2:[No Name] [+]                                                              }|
+                                                                                 |
+    ]])
+  end)
+
+  -- oldtest: Test_splitkeep_callback()
+  it('does not scroll when split in callback', function()
+    exec([[
+      call setline(1, range(&lines))
+      function C1(a, b, c)
+        split | wincmd p
+      endfunction
+      function C2(a, b, c)
+        close | split
+      endfunction
+    ]])
+    exec_lua([[
+      vim.api.nvim_set_keymap("n", "j", "", { callback = function()
+        vim.cmd("call jobstart([&sh, &shcf, 'true'], { 'on_exit': 'C1' })")
+      end
+    })]])
+    exec_lua([[
+      vim.api.nvim_set_keymap("n", "t", "", { callback = function()
+        vim.api.nvim_set_current_win(
+          vim.api.nvim_open_win(vim.api.nvim_create_buf(false, {}), false, {
+          width = 10,
+            relative = "cursor",
+            height = 4,
+            row = 0,
+            col = 0,
+          }))
+          vim.cmd("call jobstart([&sh, &shcf, 'true'], { 'term': v:true, 'on_exit': 'C2' })")
+      end
+    })]])
+    feed('j')
+    screen:expect([[
+      0                                                    |
+      1                                                    |
+      2                                                    |
+      3                                                    |
+      4                                                    |
+      5                                                    |
+      {2:[No Name] [+]                                        }|
+      ^7                                                    |
+      8                                                    |
+      9                                                    |
+      10                                                   |
+      11                                                   |
+      {3:[No Name] [+]                                        }|
+                                                           |
+    ]])
+    feed(':quit<CR>Ht')
+    screen:expect([[
+      ^0                                                    |
+      1                                                    |
+      2                                                    |
+      3                                                    |
+      4                                                    |
+      5                                                    |
+      {3:[No Name] [+]                                        }|
+      7                                                    |
+      8                                                    |
+      9                                                    |
+      10                                                   |
+      11                                                   |
+      {2:[No Name] [+]                                        }|
+      :quit                                                |
+    ]])
+    feed(':set sb<CR>:quit<CR>Gj')
+    screen:expect([[
+      1                                                    |
+      2                                                    |
+      3                                                    |
+      4                                                    |
+      ^5                                                    |
+      {3:[No Name] [+]                                        }|
+      7                                                    |
+      8                                                    |
+      9                                                    |
+      10                                                   |
+      11                                                   |
+      12                                                   |
+      {2:[No Name] [+]                                        }|
+      :quit                                                |
+    ]])
+    feed(':quit<CR>Gt')
+    screen:expect([[
+      1                                                    |
+      2                                                    |
+      3                                                    |
+      4                                                    |
+      5                                                    |
+      {2:[No Name] [+]                                        }|
+      7                                                    |
+      8                                                    |
+      9                                                    |
+      10                                                   |
+      11                                                   |
+      ^12                                                   |
+      {3:[No Name] [+]                                        }|
+      :quit                                                |
+    ]])
+  end)
+
+  -- oldtest: Test_splitkeep_fold()
+  it('does not scroll when window has closed folds', function()
+    exec([[
+      set commentstring=/*%s*/
+      set splitkeep=screen
+      set foldmethod=marker
+      set number
+      let line = 1
+      for n in range(1, &lines)
+        call setline(line, ['int FuncName() {/*{{{*/', 1, 2, 3, 4, 5, '}/*}}}*/',
+              \ 'after fold'])
+        let line += 8
+      endfor
+    ]])
+    feed('L:wincmd s<CR>')
+    screen:expect([[
+      {8:  1 }{13:+--  7 lines: int FuncName() {···················}|
+      {8:  8 }after fold                                       |
+      {8:  9 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 16 }after fold                                       |
+      {8: 17 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 24 }^after fold                                       |
+      {3:[No Name] [+]                                        }|
+      {8: 32 }after fold                                       |
+      {8: 33 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 40 }after fold                                       |
+      {8: 41 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 48 }after fold                                       |
+      {2:[No Name] [+]                                        }|
+      :wincmd s                                            |
+    ]])
+    feed(':quit<CR>')
+    screen:expect([[
+      {8:  1 }{13:+--  7 lines: int FuncName() {···················}|
+      {8:  8 }after fold                                       |
+      {8:  9 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 16 }after fold                                       |
+      {8: 17 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 24 }after fold                                       |
+      {8: 25 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 32 }after fold                                       |
+      {8: 33 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 40 }after fold                                       |
+      {8: 41 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 48 }after fold                                       |
+      {8: 49 }{13:^+--  7 lines: int FuncName() {···················}|
+      :quit                                                |
+    ]])
+    feed('H:below split<CR>')
+    screen:expect([[
+      {8:  1 }{13:+--  7 lines: int FuncName() {···················}|
+      {8:  8 }after fold                                       |
+      {8:  9 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 16 }after fold                                       |
+      {8: 17 }{13:+--  7 lines: int FuncName() {···················}|
+      {2:[No Name] [+]                                        }|
+      {8: 25 }{13:^+--  7 lines: int FuncName() {···················}|
+      {8: 32 }after fold                                       |
+      {8: 33 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 40 }after fold                                       |
+      {8: 41 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 48 }after fold                                       |
+      {3:[No Name] [+]                                        }|
+      :below split                                         |
+    ]])
+    feed(':wincmd k<CR>:quit<CR>')
+    screen:expect([[
+      {8:  1 }{13:+--  7 lines: int FuncName() {···················}|
+      {8:  8 }after fold                                       |
+      {8:  9 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 16 }after fold                                       |
+      {8: 17 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 24 }after fold                                       |
+      {8: 25 }{13:^+--  7 lines: int FuncName() {···················}|
+      {8: 32 }after fold                                       |
+      {8: 33 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 40 }after fold                                       |
+      {8: 41 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 48 }after fold                                       |
+      {8: 49 }{13:+--  7 lines: int FuncName() {···················}|
+      :quit                                                |
+    ]])
+  end)
+
+  -- oldtest: Test_splitkeep_status()
+  it('does not scroll when split in callback', function()
+    exec([[
+      call setline(1, ['a', 'b', 'c'])
+      set nomodified
+      set splitkeep=screen
+      let win = winnr()
+      wincmd s
+      wincmd j
+    ]])
+    feed(':call win_move_statusline(win, 1)<CR>')
+    screen:expect([[
+      a                                                    |
+      b                                                    |
+      c                                                    |
+      {1:~                                                    }|*4
+      {2:[No Name]                                            }|
+      ^a                                                    |
+      b                                                    |
+      c                                                    |
+      {1:~                                                    }|
+      {3:[No Name]                                            }|
+      :call win_move_statusline(win, 1)                    |
+    ]])
+  end)
+
+  -- oldtest: Test_splitkeep_skipcol()
+  it('skipcol is not reset unnecessarily and is copied to new window', function()
+    screen:try_resize(40, 12)
+    exec([[
+      set splitkeep=topline smoothscroll splitbelow scrolloff=0
+      call setline(1, 'with lots of text in one line '->repeat(6))
+      norm 2
+      wincmd s
+    ]])
+    screen:expect([[
+      {1:<<<}e line with lots of text in one line |
+      with lots of text in one line with lots |
+      of text in one line                     |
+      {1:~                                       }|
+      {2:[No Name] [+]                           }|
+      {1:<<<}e line with lots of text in one line |
+      ^with lots of text in one line with lots |
+      of text in one line                     |
+      {1:~                                       }|*2
+      {3:[No Name] [+]                           }|
+                                              |
+    ]])
+  end)
+
+  -- oldtest: Test_splitkeep_line()
+  it("no scrolling with 'splitkeep' and line()", function()
+    screen:try_resize(40, 6)
+    exec([[
+      set splitkeep=screen nosplitbelow
+      autocmd WinResized * call line('w0', 1000)
+      call setline(1, range(1000))
+    ]])
+    screen:expect([[
+      ^0                                       |
+      1                                       |
+      2                                       |
+      3                                       |
+      4                                       |
+                                              |
+    ]])
+    feed(':wincmd s<CR>')
+    screen:expect([[
+      ^0                                       |
+      1                                       |
+      {3:[No Name] [+]                           }|
+      3                                       |
+      {2:[No Name] [+]                           }|
+      :wincmd s                               |
+    ]])
+  end)
+end)
+
+-- oldtest: Test_winfixsize_vsep_statusline()
+it("'winfixwidth/height' does not leave stray vseps/statuslines", function()
+  clear()
+  local screen = Screen.new(75, 8)
+  exec([[
+    set noequalalways splitbelow splitright
+    vsplit
+    setlocal winfixwidth
+    vsplit
+  ]])
+  eq(16, fn.winwidth(1))
+  eq(37, fn.winwidth(2))
+  eq(20, fn.winwidth(3))
+
+  command('quit')
+  screen:expect([[
+    ^                                    │                                      |
+    {1:~                                   }│{1:~                                     }|*5
+    {3:[No Name]                            }{2:[No Name]                             }|
+                                                                               |
+  ]])
+  -- Checks w_view_width in Nvim; especially important as the screen test may still pass if only
+  -- w_width changed to make room for the vsep.
+  eq(36, fn.winwidth(1))
+  eq(38, fn.winwidth(2))
+
+  exec([[
+    set laststatus=0
+    only
+    split
+    set winfixheight
+    split
+  ]])
+  eq(1, fn.winheight(1))
+  eq(3, fn.winheight(2))
+  eq(1, fn.winheight(3))
+
+  command('quit')
+  screen:expect([[
+    ^                                                                           |
+    {1:~                                                                          }|
+    {3:[No Name]                                                                  }|
+                                                                               |
+    {1:~                                                                          }|*3
+                                                                               |
+  ]])
+  eq(2, fn.winheight(1))
+  eq(4, fn.winheight(2))
+end)
+
+-- oldtest: Test_resize_from_another_tabpage()
+it('resizing window from another tabpage', function()
+  clear()
+  local screen = Screen.new(75, 8)
+  screen:add_extra_attr_ids({
+    [100] = { foreground = Screen.colors.Magenta1, bold = true },
+  })
+  exec([[
+    set laststatus=2
+    vnew
+    let w = win_getid()
+    tabnew
+    call win_execute(w, 'vertical resize 20')
+    tabprev
+  ]])
+  screen:expect([[
+    {5: }{100:2}{5: [No Name] }{24: [No Name] }{2:                                                  }{24:X}|
+    ^                    │                                                      |
+    {1:~                   }│{1:~                                                     }|*4
+    {3:[No Name]            }{2:[No Name]                                             }|
+                                                                               |
+  ]])
+end)

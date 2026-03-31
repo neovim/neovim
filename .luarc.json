@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime": {
+    "version": "LuaJIT"
+  },
+  "workspace": {
+    "library": [
+      "${3rd}/busted/library"
+    ],
+    "ignoreDir": [
+      ".deps",
+      "build",
+      "test"
+    ],
+    "checkThirdParty": "Disable"
+  },
+  "diagnostics": {
+    "groupFileStatus": {
+      "strict": "Opened",
+      "strong": "Opened"
+    },
+    "groupSeverity": {
+      "strong": "Warning",
+      "strict": "Warning"
+    },
+    "unusedLocalExclude": [ "_*" ],
+    "disable": [
+      "luadoc-miss-see-name"
+    ]
+  }
+}

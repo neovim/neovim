@@ -1,0 +1,9 @@
+return {
+  {"major", ${NVIM_VERSION_MAJOR}},
+  {"minor", ${NVIM_VERSION_MINOR}},
+  {"patch", ${NVIM_VERSION_PATCH}},
+  {"prerelease", "${NVIM_VERSION_PRERELEASE}" ~= ""},
+  {"api_level", ${NVIM_API_LEVEL}},
+  {"api_compatible", ${NVIM_API_LEVEL_COMPAT}},
+  {"api_prerelease", ${NVIM_API_PRERELEASE}},
+}

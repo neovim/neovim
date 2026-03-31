@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="256"
+   height="256"
+   viewBox="0 0 256 256"
+   version="1.1"
+   id="svg4612"
+   sodipodi:docname="neovim.svg"
+   inkscape:version="0.92.4 5da689c313, 2019-01-14">
+  <metadata
+     id="metadata4616">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>neovim-mark@2x</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="2560"
+     inkscape:window-height="1333"
+     id="namedview4614"
+     showgrid="false"
+     inkscape:zoom="2.1945358"
+     inkscape:cx="132.84232"
+     inkscape:cy="196.34741"
+     inkscape:window-x="0"
+     inkscape:window-y="34"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4612" />
+  <title
+     id="title4587">neovim-mark@2x</title>
+  <description>Created with Sketch (http://www.bohemiancoding.com/sketch)</description>
+  <defs
+     id="defs4604">
+    <linearGradient
+       x1="167.95833"
+       y1="-0.46142399"
+       x2="167.95833"
+       y2="335.45523"
+       id="linearGradient-1"
+       gradientTransform="scale(0.46142398,2.1672042)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#16B0ED"
+         stop-opacity="0.800235524"
+         offset="0%"
+         id="stop4589" />
+      <stop
+         stop-color="#0F59B2"
+         stop-opacity="0.83700023"
+         offset="100%"
+         id="stop4591" />
+    </linearGradient>
+    <linearGradient
+       x1="1118.3427"
+       y1="-0.46586797"
+       x2="1118.3427"
+       y2="338.68604"
+       id="linearGradient-2"
+       gradientTransform="scale(0.46586797,2.1465309)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#7DB643"
+         offset="0%"
+         id="stop4594" />
+      <stop
+         stop-color="#367533"
+         offset="100%"
+         id="stop4596" />
+    </linearGradient>
+    <linearGradient
+       x1="356.33795"
+       y1="0"
+       x2="356.33795"
+       y2="612.90131"
+       id="linearGradient-3"
+       gradientTransform="scale(0.84189739,1.1877932)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#88C649"
+         stop-opacity="0.8"
+         offset="0%"
+         id="stop4599" />
+      <stop
+         stop-color="#439240"
+         stop-opacity="0.84"
+         offset="100%"
+         id="stop4601" />
+    </linearGradient>
+  </defs>
+  <g
+     id="Page-1"
+     sketch:type="MSPage"
+     style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
+     transform="matrix(0.34367476,0,0,0.34367476,25.312651,1.7737533)">
+    <g
+       id="mark-copy"
+       sketch:type="MSLayerGroup"
+       transform="translate(2,3)">
+      <path
+         d="M 0,155.5704 155,-1 V 727 L 0,572.23792 Z"
+         id="Left---green"
+         sketch:type="MSShapeGroup"
+         inkscape:connector-curvature="0"
+         style="fill:url(#linearGradient-1)" />
+      <path
+         d="M 443.0604,156.9824 600,-1 596.81879,727 442,572.21994 Z"
+         id="Right---blue"
+         sketch:type="MSShapeGroup"
+         transform="matrix(-1,0,0,1,1042,0)"
+         inkscape:connector-curvature="0"
+         style="fill:url(#linearGradient-2)" />
+      <path
+         d="M 154.98629,0 558,615.1897 445.2246,728 42,114.17202 Z"
+         id="Cross---blue"
+         sketch:type="MSShapeGroup"
+         inkscape:connector-curvature="0"
+         style="fill:url(#linearGradient-3)" />
+      <path
+         d="M 155,283.83232 154.78675,308 31,124.71061 42.461949,113 Z"
+         id="Shadow"
+         sketch:type="MSShapeGroup"
+         inkscape:connector-curvature="0"
+         style="fill:#000000;fill-opacity:0.12999998" />
+    </g>
+  </g>
+</svg>

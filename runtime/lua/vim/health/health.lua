@@ -1,0 +1,713 @@
+local M = {}
+local health = require('vim.health')
+
+---Run a system command and return ok and its stdout and stderr combined.
+---@param cmd string[]
+---@return boolean
+---@return string
+local function system(cmd)
+  local result = vim.system(cmd, { text = true }):wait()
+  return result.code == 0, vim.trim(('%s\n%s'):format(result.stdout, result.stderr))
+end
+
+local suggest_faq = 'https://neovim.io/doc/build/#building'
+
+local function check_runtime()
+  health.start('Runtime')
+  -- Files from an old installation.
+  local bad_files = {
+    ['autoload/health/nvim.vim'] = false,
+    ['autoload/health/provider.vim'] = false,
+    ['autoload/man.vim'] = false,
+    ['lua/provider/node/health.lua'] = false,
+    ['lua/provider/perl/health.lua'] = false,
+    ['lua/provider/python/health.lua'] = false,
+    ['lua/provider/ruby/health.lua'] = false,
+    ['lua/vim/_defaults.lua'] = false,
+    ['lua/vim/_editor.lua'] = false,
+    ['lua/vim/_extui.lua'] = false,
+    ['lua/vim/_extui/cmdline.lua'] = false,
+    ['lua/vim/_extui/messages.lua'] = false,
+    ['lua/vim/_extui/shared.lua'] = false,
+    ['lua/vim/_options.lua'] = false,
+    ['lua/vim/_stringbuffer.lua'] = false,
+    ['lua/vim/_system.lua'] = false,
+    ['lua/vim/shared.lua'] = false,
+    ['plugin/health.vim'] = false,
+    ['plugin/man.vim'] = false,
+    ['queries/help/highlights.scm'] = false,
+    ['queries/help/injections.scm'] = false,
+    ['scripts.vim'] = false,
+    ['syntax/syncolor.vim'] = false,
+  }
+  local bad_files_msg = ''
+  for k, _ in pairs(bad_files) do
+    local path = ('%s/%s'):format(vim.env.VIMRUNTIME, k)
+    if vim.uv.fs_stat(path) then
+      bad_files[k] = true
+      bad_files_msg = ('%s%s\n'):format(bad_files_msg, path)
+    end
+  end
+
+  local ok = (bad_files_msg == '')
+  local info = ok and health.ok or health.info
+  info(string.format('$VIMRUNTIME: %s', vim.env.VIMRUNTIME))
+  if not ok then
+    health.error(
+      string.format(
+        'Found old files in $VIMRUNTIME (this can cause weird behavior):\n%s',
+        bad_files_msg
+      ),
+      { 'Delete the $VIMRUNTIME directory, then reinstall Nvim.' }
+    )
+  end
+end
+
+local function check_config()
+  health.start('Configuration')
+  local ok = true
+
+  local init_lua = vim.fn.stdpath('config') .. '/init.lua'
+  local init_vim = vim.fn.stdpath('config') .. '/init.vim'
+  local vimrc = vim.env.MYVIMRC and vim.fs.normalize(vim.env.MYVIMRC) or init_lua
+
+  if vim.fn.filereadable(vimrc) == 0 and vim.fn.filereadable(init_vim) == 0 then
+    ok = false
+    local has_vim = vim.fn.filereadable(vim.fs.normalize('~/.vimrc')) == 1
+    health.warn(
+      ('%s user config file: %s'):format(
+        -1 == vim.fn.getfsize(vimrc) and 'Missing' or 'Unreadable',
+        vimrc
+      ),
+      { has_vim and ':help nvim-from-vim' or ':help config' }
+    )
+  end
+
+  -- If $VIM is empty we don't care. Else make sure it is valid.
+  if vim.env.VIM and vim.fn.filereadable(vim.env.VIM .. '/runtime/doc/nvim.txt') == 0 then
+    ok = false
+    health.error('$VIM is invalid: ' .. vim.env.VIM)
+  end
+
+  if vim.env.NVIM_TUI_ENABLE_CURSOR_SHAPE then
+    ok = false
+    health.warn('$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+', {
+      "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
+      'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402',
+    })
+  end
+
+  if vim.v.ctype == 'C' then
+    ok = false
+    health.error(
+      'Locale does not support UTF-8. Unicode characters may not display correctly.'
+        .. ('\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s'):format(
+          vim.env.LANG or '',
+          vim.env.LC_ALL or '',
+          vim.env.LC_CTYPE or ''
+        ),
+      {
+        'If using tmux, try the -u option.',
+        'Ensure that your terminal/shell/tmux/etc inherits the environment, or set $LANG explicitly.',
+        'Configure your system locale.',
+      }
+    )
+  end
+
+  if vim.o.paste == 1 then
+    ok = false
+    health.error(
+      "'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
+      {
+        'Remove `set paste` from your init.vim, if applicable.',
+        'Check `:verbose set paste?` to see if a plugin or script set the option.',
+      }
+    )
+  end
+
+  local writeable = true
+  local shadaopt = vim.fn.split(vim.o.shada, ',')
+  local shadafile = (
+    vim.o.shada == '' and vim.o.shada
+    or vim.fn.substitute(vim.fn.matchstr(shadaopt[#shadaopt], '^n.\\+'), '^n', '', '')
+  )
+  shadafile = (
+    vim.o.shadafile == ''
+      and (shadafile == '' and vim.fn.stdpath('state') .. '/shada/main.shada' or vim.fs.normalize(
+        shadafile
+      ))
+    or (vim.o.shadafile == 'NONE' and '' or vim.o.shadafile)
+  )
+  if shadafile ~= '' and vim.fn.glob(shadafile) == '' then
+    -- Since this may be the first time Nvim has been run, try to create a shada file.
+    if not pcall(vim.cmd.wshada) then
+      writeable = false
+    end
+  end
+  if
+    not writeable
+    or (
+      shadafile ~= ''
+      and (vim.fn.filereadable(shadafile) == 0 or vim.fn.filewritable(shadafile) ~= 1)
+    )
+  then
+    ok = false
+    health.error(
+      'shada file is not '
+        .. ((not writeable or vim.fn.filereadable(shadafile) == 1) and 'writeable' or 'readable')
+        .. ':\n'
+        .. shadafile
+    )
+  end
+
+  if ok then
+    health.ok('no issues found')
+  end
+end
+
+local function check_performance()
+  health.start('Performance')
+
+  -- Check buildtype
+  local buildtype = vim.fn.matchstr(vim.fn.execute('version'), [[\v\cbuild type:?\s*[^\n\r\t ]+]])
+  if buildtype == '' then
+    health.error('failed to get build type from :version')
+  elseif vim.regex([[\v(MinSizeRel|Release|RelWithDebInfo)]]):match_str(buildtype) then
+    health.ok(buildtype)
+  else
+    health.info(buildtype)
+    health.warn('Non-optimized debug build. Nvim will be slower.', {
+      'Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
+      suggest_faq,
+    })
+  end
+
+  -- check for slow shell invocation
+  local slow_cmd_time = 1.5e9
+  local start_time = vim.uv.hrtime()
+  -- Vimscript's system() is used to actually invoke a shell
+  vim.fn.system('echo')
+  local elapsed_time = vim.uv.hrtime() - start_time
+  if elapsed_time > slow_cmd_time then
+    health.warn(
+      'Slow shell invocation (took ' .. vim.fn.printf('%.2f', elapsed_time) .. ' seconds).'
+    )
+  end
+end
+
+-- Load the remote plugin manifest file and check for unregistered plugins
+local function check_rplugin_manifest()
+  health.start('Remote Plugins')
+
+  local existing_rplugins = {} --- @type table<string,string>
+  --- @type {path:string}[]
+  local items = vim.fn['remote#host#PluginsForHost']('python3')
+  for _, item in ipairs(items) do
+    existing_rplugins[item.path] = 'python3'
+  end
+
+  local require_update = false
+  local handle_path = function(path)
+    --- @type string[]
+    local python_glob = vim.fn.glob(path .. '/rplugin/python*', true, true)
+    if vim.tbl_isempty(python_glob) then
+      return
+    end
+
+    local python_dir = python_glob[1]
+    local python_version = vim.fs.basename(python_dir)
+
+    --- @type string[]
+    local scripts = vim.fn.glob(python_dir .. '/*.py', true, true)
+    vim.list_extend(scripts, vim.fn.glob(python_dir .. '/*/__init__.py', true, true))
+
+    for _, script in ipairs(scripts) do
+      local contents = vim.fn.join(vim.fn.readfile(script))
+      if vim.regex([[\<\%(from\|import\)\s\+neovim\>]]):match_str(contents) then
+        if vim.regex([[[\/]__init__\.py$]]):match_str(script) then
+          script = vim.fs.normalize(vim.fs.dirname(script))
+        end
+        if not existing_rplugins[script] then
+          local msg = vim.fn.printf('"%s" is not registered.', vim.fs.basename(path))
+          if python_version == 'pythonx' then
+            if vim.fn.has('python3') == 0 then
+              msg = msg .. ' (python3 not available)'
+            end
+          elseif vim.fn.has(python_version) == 0 then
+            msg = msg .. vim.fn.printf(' (%s not available)', python_version)
+          else
+            require_update = true
+          end
+
+          health.warn(msg)
+        end
+
+        break
+      end
+    end
+  end
+
+  --- @type string[]
+  local paths = vim.fn.map(vim.split(vim.o.runtimepath, ','), 'resolve(v:val)')
+
+  for _, path in ipairs(paths) do
+    handle_path(path)
+  end
+
+  if require_update then
+    health.warn('Out of date', { 'Run `:UpdateRemotePlugins`' })
+  else
+    health.ok('Up to date')
+  end
+end
+
+local function check_tmux()
+  if not vim.env.TMUX or vim.fn.executable('tmux') == 0 then
+    return
+  end
+
+  ---@param option string
+  local get_tmux_option = function(option)
+    local cmd = { 'tmux', 'show-option', '-qvg', option } -- try global scope
+    local ok, out = system(cmd)
+    local val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
+    if not ok then
+      health.error(('command failed: %s\n%s'):format(vim.inspect(cmd), out))
+      return 'error'
+    elseif val == '' then
+      cmd = { 'tmux', 'show-option', '-qvgs', option } -- try session scope
+      ok, out = system(cmd)
+      val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
+      if not ok then
+        health.error(('command failed: %s\n%s'):format(vim.inspect(cmd), out))
+        return 'error'
+      end
+    end
+    return val
+  end
+
+  health.start('tmux')
+
+  -- check escape-time
+  local suggestions =
+    { 'set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10', suggest_faq }
+  local tmux_esc_time = get_tmux_option('escape-time')
+  if tmux_esc_time ~= 'error' then
+    if tmux_esc_time == '' then
+      health.error('`escape-time` is not set', suggestions)
+    else
+      local tmux_esc_time_ms = vim._tointeger(tmux_esc_time)
+      if not tmux_esc_time_ms then
+        health.error('`escape-time` (' .. tmux_esc_time .. ') is not an integer', suggestions)
+      elseif tmux_esc_time_ms > 300 then
+        health.error('`escape-time` (' .. tmux_esc_time .. ') is higher than 300ms', suggestions)
+      else
+        health.ok('escape-time: ' .. tmux_esc_time)
+      end
+    end
+  end
+
+  -- check focus-events
+  local tmux_focus_events = get_tmux_option('focus-events')
+  if tmux_focus_events ~= 'error' then
+    if tmux_focus_events == '' or tmux_focus_events ~= 'on' then
+      health.warn(
+        "`focus-events` is not enabled. |'autoread'| may not work.",
+        { '(tmux 1.9+ only) Set `focus-events` in ~/.tmux.conf:\nset-option -g focus-events on' }
+      )
+    else
+      health.ok('focus-events: ' .. tmux_focus_events)
+    end
+  end
+
+  -- check default-terminal and $TERM
+  health.info('$TERM: ' .. vim.env.TERM)
+  local cmd = { 'tmux', 'show-option', '-qvg', 'default-terminal' }
+  local ok, out = system(cmd)
+  local tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
+  if tmux_default_term == '' then
+    cmd = { 'tmux', 'show-option', '-qvgs', 'default-terminal' }
+    ok, out = system(cmd)
+    tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
+  end
+
+  if not ok then
+    health.error(('command failed: %s\n%s'):format(vim.inspect(cmd), out))
+  elseif tmux_default_term ~= vim.env.TERM then
+    health.info('default-terminal: ' .. tmux_default_term)
+    health.error(
+      '$TERM differs from the tmux `default-terminal` setting. Colors might look wrong.',
+      { '$TERM may have been set by some rc (.bashrc, .zshrc, ...).' }
+    )
+  elseif
+    not vim.regex([[\v(tmux-256color|tmux-direct|screen-256color)]]):match_str(vim.env.TERM)
+  then
+    health.error(
+      '$TERM should be "screen-256color", "tmux-256color", or "tmux-direct" in tmux. Colors might look wrong.',
+      {
+        'Set default-terminal in ~/.tmux.conf:\nset-option -g default-terminal "screen-256color"',
+        suggest_faq,
+      }
+    )
+  end
+
+  -- check for RGB capabilities
+  local _, info = system({ 'tmux', 'show-messages', '-T' })
+  local has_setrgbb = vim.fn.stridx(info, ' setrgbb: (string)') ~= -1
+  local has_setrgbf = vim.fn.stridx(info, ' setrgbf: (string)') ~= -1
+  if not has_setrgbb or not has_setrgbf then
+    health.warn(
+      "True color support could not be detected. |'termguicolors'| won't work properly.",
+      {
+        "Add the following to your tmux configuration file, replacing XXX by the value of $TERM outside of tmux:\nset-option -a terminal-features 'XXX:RGB'",
+        "For older tmux versions use this instead:\nset-option -a terminal-overrides 'XXX:Tc'",
+      }
+    )
+  end
+end
+
+local function check_terminal()
+  if vim.fn.executable('infocmp') == 0 then
+    return
+  end
+
+  health.start('Terminal')
+  local cmd = { 'infocmp', '-L' }
+  local ok, out = system(cmd)
+  local kbs_entry = vim.fn.matchstr(out, 'key_backspace=[^,[:space:]]*')
+  local kdch1_entry = vim.fn.matchstr(out, 'key_dc=[^,[:space:]]*')
+
+  if
+    not ok
+    and (
+      vim.fn.has('win32') == 0
+      or vim.fn.matchstr(
+          out,
+          [[infocmp: couldn't open terminfo file .\+\%(conemu\|vtpcon\|win32con\)]]
+        )
+        == ''
+    )
+  then
+    health.error(('command failed: %s\n%s'):format(vim.inspect(cmd), out))
+  else
+    health.info(
+      vim.fn.printf(
+        'key_backspace (kbs) terminfo entry: `%s`',
+        (kbs_entry == '' and '? (not found)' or kbs_entry)
+      )
+    )
+
+    health.info(
+      vim.fn.printf(
+        'key_dc (kdch1) terminfo entry: `%s`',
+        (kbs_entry == '' and '? (not found)' or kdch1_entry)
+      )
+    )
+  end
+
+  for _, env_var in ipairs({
+    'XTERM_VERSION',
+    'VTE_VERSION',
+    'TERM_PROGRAM',
+    'COLORTERM',
+    'SSH_TTY',
+  }) do
+    if vim.env[env_var] then
+      health.info(string.format('$%s="%s"', env_var, vim.env[env_var]))
+    end
+  end
+end
+
+local function check_external_tools()
+  health.start('External Tools')
+
+  if vim.fn.executable('rg') == 1 then
+    local rg_path = vim.fn.exepath('rg')
+    local rg_job = vim.system({ rg_path, '-V' }):wait()
+    if rg_job.code == 0 then
+      health.ok(('%s (%s)'):format(vim.trim(rg_job.stdout), rg_path))
+    else
+      health.warn('found `rg` but failed to run `rg -V`', { rg_job.stderr })
+    end
+  else
+    health.warn('ripgrep not available')
+  end
+
+  local open_cmd, err = vim.ui._get_open_cmd()
+  if open_cmd then
+    health.ok(('vim.ui.open: handler found (%s)'):format(open_cmd[1]))
+  else
+    --- @cast err string
+    health.warn(err)
+  end
+
+  -- `vim.pack` prefers git 2.36 but tries to work with 2.x.
+  if vim.fn.executable('git') == 1 then
+    local git = vim.fn.exepath('git')
+    local version = vim.system({ 'git', 'version' }, {}):wait().stdout or ''
+    health.ok(('%s (%s)'):format(vim.trim(version), git))
+  else
+    health.warn('git not available (required by `vim.pack`)')
+  end
+
+  if vim.fn.executable('curl') == 1 then
+    local curl_path = vim.fn.exepath('curl')
+    local curl_job = vim.system({ curl_path, '--version' }):wait()
+
+    if curl_job.code == 0 then
+      local curl_out = curl_job.stdout
+      if not curl_out or curl_out == '' then
+        health.warn(
+          string.format('`%s --version` produced no output', curl_path),
+          { curl_job.stderr }
+        )
+        return
+      end
+      local curl_version = vim.version.parse(curl_out)
+      if not curl_version then
+        health.warn('Unable to parse curl version from `curl --version`')
+        return
+      end
+      if vim.version.le(curl_version, { 7, 12, 3 }) then
+        health.warn('curl version %s not compatible', curl_version)
+        return
+      end
+      local lines = { string.format('curl %s (%s)', curl_version, curl_path) }
+
+      for line in vim.gsplit(curl_out, '\n', { plain = true }) do
+        if line ~= '' then
+          table.insert(lines, line)
+        end
+      end
+
+      -- Add subtitle only if any env var is present
+      local added_env_header = false
+      for _, var in ipairs({
+        'curl_ca_bundle',
+        'curl_home',
+        'curl_ssl_backend',
+        'ssl_cert_dir',
+        'ssl_cert_file',
+        'https_proxy',
+        'http_proxy',
+        'all_proxy',
+        'no_proxy',
+      }) do
+        ---@type string?
+        local val = vim.env[var] or vim.env[var:upper()]
+        if val then
+          if not added_env_header then
+            table.insert(lines, 'curl-related environment variables:')
+            added_env_header = true
+          end
+          local shown_var = vim.env[var] and var or var:upper()
+          table.insert(lines, string.format('  %s=%s', shown_var, val))
+        end
+      end
+
+      health.ok(table.concat(lines, '\n'))
+    else
+      health.warn('curl is installed but failed to run `curl --version`', { curl_job.stderr })
+    end
+  else
+    health.error('curl not found', {
+      'Required for vim.net.request() to function.',
+      'Install curl using your package manager.',
+    })
+  end
+end
+
+local function detect_terminal()
+  local e = vim.env
+  if e.TERM_PROGRAM then
+    local v = e.TERM_PROGRAM_VERSION --- @type string?
+    return e.TERM_PROGRAM_VERSION and (e.TERM_PROGRAM .. ' ' .. v) or e.TERM_PROGRAM
+  end
+
+  local map = {
+    KITTY_WINDOW_ID = 'kitty',
+    ALACRITTY_SOCKET = 'alacritty',
+    ALACRITTY_LOG = 'alacritty',
+    WEZTERM_EXECUTABLE = 'wezterm',
+    KONSOLE_VERSION = function()
+      return 'konsole ' .. e.KONSOLE_VERSION
+    end,
+    VTE_VERSION = function()
+      return 'vte ' .. e.VTE_VERSION
+    end,
+  }
+
+  for key, val in pairs(map) do
+    local env = e[key] --- @type string?
+    if env then
+      return type(val) == 'function' and val() or val
+    end
+  end
+
+  return 'unknown'
+end
+
+---@param nvim_version string
+local function check_stable_version(nvim_version)
+  local result = vim
+    .system(
+      { 'git', 'ls-remote', '--tags', 'https://github.com/neovim/neovim' },
+      { text = true, timeout = 5000 }
+    )
+    :wait()
+  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+    return
+  end
+  local stable_sha = assert(
+    result.stdout:match('(%x+)%s+refs/tags/stable%^{}')
+      or result.stdout:match('(%x+)%s+refs/tags/stable\n')
+  )
+  local latest_version =
+    assert(result.stdout:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}'))
+  local current_version = assert(nvim_version:match('v?(%d+%.%d+%.%d+)'))
+  local current = vim.version.parse(current_version)
+  local latest = vim.version.parse(latest_version)
+  if current and latest and vim.version.lt(current, latest) then
+    vim.health.warn(('Nvim %s is available (current: %s)'):format(latest_version, current_version))
+  else
+    vim.health.ok(('Up to date (%s)'):format(current_version))
+  end
+end
+
+---@param commit string
+local function check_head_hash(commit)
+  local result = vim
+    .system(
+      { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD', 'refs/tags/nightly' },
+      { text = true, timeout = 5000 }
+    )
+    :wait()
+  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+    return
+  end
+
+  local refs = {} ---@type table<string, string>
+  for line in result.stdout:gmatch('[^\n]+') do
+    local sha, ref = line:match('^(%x+)%s+(%S+)$')
+    if sha and ref then
+      refs[ref] = sha
+    end
+  end
+
+  local head_sha = assert(refs['HEAD'])
+  local nightly_sha = refs['refs/tags/nightly']
+
+  if vim.startswith(head_sha, commit) then
+    vim.health.ok('Up to date (HEAD)')
+  elseif nightly_sha and vim.startswith(nightly_sha, commit) then
+    vim.health.ok('Up to date (nightly)')
+  else
+    vim.health.warn(
+      ('Build is outdated. Local: %s, HEAD: %s%s'):format(
+        commit,
+        head_sha:sub(1, 12),
+        nightly_sha and (', Nightly: ' .. nightly_sha:sub(1, 12)) or ''
+      )
+    )
+  end
+end
+
+local function check_sysinfo()
+  vim.health.start('System Info')
+
+  -- Use :version because `vim.version().build` returns "Homebrew" for brew installs.
+  local version_out = vim.api.nvim_exec2('version', { output = true }).output
+  local nvim_version = version_out:match('NVIM (v[^\n]+)') or 'unknown'
+  local commit --[[@type string]] = (version_out:match('%+g(%x+)') or ''):sub(1, 12)
+
+  if vim.fn.executable('git') ~= 1 then
+    vim.health.warn('Cannot check for updates: git not found')
+  elseif vim.trim(commit) ~= '' then
+    check_head_hash(commit)
+  else
+    check_stable_version(nvim_version)
+  end
+
+  local os_info = vim.uv.os_uname()
+  local os_string = os_info.sysname .. ' ' .. os_info.release
+  local terminal = detect_terminal()
+  local term_env = vim.env.TERM or 'unknown'
+
+  vim.health.info(('Nvim version: `%s` %s'):format(nvim_version, commit))
+  vim.health.info('Operating system: ' .. os_string)
+  vim.health.info('Terminal: ' .. terminal)
+  vim.health.info('$TERM: ' .. term_env)
+
+  local body = vim.text.indent(
+    0,
+    string.format(
+      [[
+    ## Problem
+
+    Describe the problem (concisely).
+
+    ## Steps to reproduce
+
+    ```
+    nvim --clean
+    ```
+
+    ## Expected behavior
+
+    ## System info
+
+    - Nvim version (nvim -v): `%s` neovim/neovim@%s
+    - Vim (not Nvim) behaves the same?: ?
+    - Operating system/version: %s
+    - Terminal name/version: %s
+    - $TERM environment variable: `%s`
+    - Installation: ?
+
+]],
+      nvim_version,
+      commit,
+      os_string,
+      terminal,
+      term_env
+    )
+  )
+
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'checkhealth',
+    once = true,
+    callback = function(ev)
+      local buf = ev.buf
+      local win = vim.fn.bufwinid(buf)
+      if win == -1 then
+        return
+      end
+      local encoded_body = vim.uri_encode(body) --- @type string
+      local issue_url = 'https://github.com/neovim/neovim/issues/new?type=Bug&body=' .. encoded_body
+
+      _G.nvim_health_bugreport_open = function()
+        vim.ui.open(issue_url)
+      end
+      vim.wo[win].winbar =
+        '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@Click to Create Bug Report on GitHub%X%*'
+
+      vim.api.nvim_create_autocmd('BufDelete', {
+        buffer = buf,
+        once = true,
+        command = 'lua _G.nvim_health_bugreport_open = nil',
+      })
+    end,
+  })
+end
+
+function M.check()
+  check_sysinfo()
+  check_config()
+  check_runtime()
+  check_performance()
+  check_rplugin_manifest()
+  check_terminal()
+  check_tmux()
+  check_external_tools()
+end
+
+return M

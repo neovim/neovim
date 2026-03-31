@@ -1,0 +1,37 @@
+name: 'Cache'
+description: "This action caches neovim dependencies"
+runs:
+  using: "composite"
+  steps:
+    - run: echo "CACHE_KEY=${GITHUB_WORKFLOW}" >> $GITHUB_ENV # zizmor: ignore[github-env]
+      shell: bash
+
+    - run: echo "CACHE_KEY=${GITHUB_JOB}" >> $GITHUB_ENV # zizmor: ignore[github-env]
+      shell: bash
+
+    - if: ${{ matrix }}
+      env:
+        MATRIX_JOIN: ${{ join(matrix.*, '-') }}
+      run: echo "CACHE_KEY=${CACHE_KEY}-${MATRIX_JOIN}" >> $GITHUB_ENV # zizmor: ignore[github-env]
+      shell: bash
+
+    - if: ${{ matrix.build }}
+      env:
+        MATRIX_JOIN: ${{ join(matrix.build.*, '-') }}
+      run: echo "CACHE_KEY=${CACHE_KEY}-${MATRIX_JOIN}" >> $GITHUB_ENV # zizmor: ignore[github-env]
+      shell: bash
+
+    - id: image
+      run: echo "version=$ImageVersion" >> $GITHUB_OUTPUT
+      shell: bash
+
+    # Avoid using '**/CMakeLists.txt' (or any pattern starting with '**/') even
+    # if it makes the expression below simpler. hashFiles() has a timer that
+    # will fail the job if it times out, which can happen if there are too many
+    # files to search through.
+    - uses: actions/cache@v5
+      with:
+        path: .deps
+        key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake**',
+          '.github/**', 'CMakeLists.txt',
+          'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}
