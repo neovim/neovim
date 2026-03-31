@@ -272,7 +272,7 @@ function Provider:on_win(toprow, botrow)
           -- Fix https://github.com/neovim/neovim/issues/16166
           -- Make sure the code lens on the first line is visible when updating.
           if row == 0 then
-            vim.cmd('normal! zb')
+            vim.fn.winrestview({ topfill = 1 })
           end
         end
         self.row_version[row] = self.version
