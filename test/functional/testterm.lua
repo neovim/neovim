@@ -214,13 +214,18 @@ end
 --- Remove this function when that's fixed.
 ---
 --- @param screen test.functional.ui.screen
---- @param s string
-function M.screen_expect(screen, s)
-  if t.is_os('win') then
-    s = s:gsub(' *%} +%|\n', '{MATCH: *}}{MATCH: *}|\n')
-    s = s:gsub('%}%^ +%|\n', '{MATCH:[ ^]*}}{MATCH:[ ^]*}|\n')
+function M.override_screen_expect_for_conpty(screen)
+  if not t.is_os('win') then
+    return
   end
-  screen:expect(s)
+  local orig_screen_expect = screen.expect
+  function screen.expect(self, expected, attr_ids, ...)
+    if type(expected) == 'string' then
+      expected = expected:gsub(' *%} +%|\n', '{MATCH: *}}{MATCH: *}|\n')
+      expected = expected:gsub('%}%^ +%|\n', '{MATCH:[ ^]*}}{MATCH:[ ^]*}|\n')
+    end
+    orig_screen_expect(self, expected, attr_ids, ...)
+  end
 end
 
 --- Asserts that the exit code of chan eventually matches the expected exit code
