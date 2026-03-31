@@ -304,6 +304,18 @@ describe(':Man', function()
         '/usr/share/man/man7/string_copying.7.gz',
       }, 'strcpy', '3')
     )
+
+    -- absolute paths bypass the echo-back guard and are returned as-is;
+    -- validation happens downstream in parse_path/render
+    eq('/tmp/somefile', _test({ '/tmp/somefile' }, '/tmp/somefile'))
+  end)
+
+  it('opens man page by absolute path #30873', function()
+    skip(is_ci('cirrus'))
+    local nvim_man = t.paths.test_source_path .. '/src/man/nvim.1'
+    local args = { nvim_prog, '--headless', '+:Man ' .. nvim_man, '+q' }
+    local out = fn.system(args, { '' })
+    assert(not out:match('no manual entry'), out)
   end)
 
   it('tries variants with spaces, underscores #22503', function()

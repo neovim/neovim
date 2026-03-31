@@ -257,11 +257,11 @@ function M._match_manpage_path(paths, name, sect)
     return
   end
 
-  -- `man -w /some/path` will return `/some/path` for any existent file, which
-  -- stops us from actually determining if a path has a corresponding man file.
-  -- Since `:Man /some/path/to/man/file` isn't supported anyway, we should just
-  -- error out here if we detect this is the case.
-  if sect == '' and #paths == 1 and paths[1] == name then
+  -- `man -w /some/path` will return `/some/path` for any existent file, not
+  -- just man pages. For non-absolute names, this echo-back means the file is
+  -- not a real man page, so we reject it. For absolute paths the caller
+  -- already knows what file they want; let it through.
+  if sect == '' and #paths == 1 and paths[1] == name and name:sub(1, 1) ~= '/' then
     return
   end
 
