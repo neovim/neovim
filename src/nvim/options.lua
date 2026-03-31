@@ -1545,6 +1545,7 @@ local options = {
         (CTRL-N) and is ignored during backward completion (CTRL-P).
       ]=],
       full_name = 'complete',
+      modelineexpr = true,
       list = 'onecomma',
       scope = { 'buf' },
       short_desc = N_('specify how Insert mode completion works'),
@@ -4256,6 +4257,7 @@ local options = {
         <
       ]=],
       full_name = 'guitabtooltip',
+      modelineexpr = true,
       redraw = { 'current_window' },
       scope = { 'global' },
       short_desc = N_('GUI: custom tooltip for a tab page'),

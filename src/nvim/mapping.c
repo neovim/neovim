@@ -26,6 +26,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_session.h"
 #include "nvim/fuzzy.h"
@@ -2277,6 +2278,10 @@ static int get_map_mode_string(const char *const mode_string, const bool abbr)
 /// "mapset()" function
 void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  if (check_secure()) {
+    return;
+  }
+
   const char *which;
   char buf[NUMBUFLEN];
   int is_abbr;
