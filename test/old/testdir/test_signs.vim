@@ -167,8 +167,8 @@ func Test_sign()
 
   sign define Sign5 text=X\  linehl=Comment
   sign undefine Sign5
-  " The use of execute in the next line is just to ensure the space for
-  " the text value is obvious and does not get accidently deleted.
+  " The use of :execute in the next line is just to ensure the space for
+  " the text value is obvious and does not get accidentally deleted.
   execute "sign define Sign5 linehl=Comment text=X\ "
   sign undefine Sign5
 
