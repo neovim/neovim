@@ -130,7 +130,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     -- n.exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     command('call chanclose(&channel)') -- Kill the child process.
     -- Wait for the child process to stop.
-    -- FIXME: with ASAN the signal sometimes isn't caught.
+    -- FIXME: SIGHUP sometimes isn't caught with ASAN.
     screen0:expect({ any = t.is_asan() and '%[Process exited %d+%]' or '%[Process exited 1%]' })
     neq(nil, uv.fs_stat(swappath1))
     test_recover(swappath1)
