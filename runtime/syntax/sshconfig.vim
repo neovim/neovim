@@ -6,7 +6,7 @@
 " Contributor:	Leonard Ehrenfried <leonard.ehrenfried@web.de>
 "		Karsten Hopp <karsten@redhat.com>
 "		Dean, Adam Kenneth <adam.ken.dean@hpe.com>
-" Last Change:	2026 Mar 11
+" Last Change:	2026 Mar 31
 " SSH Version:	10.1p1
 "
 
@@ -121,6 +121,8 @@ syn keyword sshconfigKexAlgo ecdh-sha2-nistp384
 syn keyword sshconfigKexAlgo ecdh-sha2-nistp521
 syn match sshconfigKexAlgo "\<curve25519-sha256\%(@libssh\.org\)\?\>"
 syn match sshconfigKexAlgo "\<sntrup761x25519-sha512@openssh\.com\>"
+syn keyword sshconfigKexAlgo sntrup761x25519-sha512
+syn keyword sshconfigKexAlgo mlkem768x25519-sha256
 
 syn keyword sshconfigTunnel	point-to-point ethernet
 
