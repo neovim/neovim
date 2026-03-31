@@ -756,4 +756,28 @@ func Test_long_formatprg_no_hit_enter()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that fileinfo is shown after deleting the last listed buffer with :bd
+func Test_fileinfo_after_last_bd()
+  CheckRunVimInTerminal
+
+  let content =<< trim END
+    set shortmess-=F
+    edit xxx
+    edit yyy
+  END
+
+  call writefile(content, 'Xtest_fileinfo_last_bd', 'D')
+  let buf = RunVimInTerminal('-S Xtest_fileinfo_last_bd', #{rows: 10})
+  call WaitForAssert({-> assert_match('^"yyy" \[New\]', term_getline(buf, 10))})
+
+  call term_sendkeys(buf, ":bd\<CR>")
+  call WaitForAssert({-> assert_match('^"xxx" \[New\]', term_getline(buf, 10))})
+
+  call term_sendkeys(buf, ":bd\<CR>")
+  call WaitForAssert({-> assert_match('^\"\[No Name\]\" --No lines in buffer--', term_getline(buf, 10))})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
