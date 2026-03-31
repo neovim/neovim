@@ -470,6 +470,10 @@ EXTERN int VIsual_reselect;
 EXTERN int VIsual_mode INIT( = 'v');
 /// true when redoing Visual.
 EXTERN bool redo_VIsual_busy INIT( = false);
+/// true if current visual selection came from a text object (iw, i(, etc.)
+EXTERN bool VIsual_from_textobject INIT( = false);
+/// true if the text object is "inner" (i) vs "around" (a)
+EXTERN bool VIsual_text_obj_inner INIT( = false);
 
 // The Visual area is remembered for reselection.
 EXTERN int resel_VIsual_mode INIT( = NUL);       // 'v', 'V', or Ctrl-V
