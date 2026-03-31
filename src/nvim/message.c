@@ -2338,6 +2338,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
     if (*str == NUL && ui_has(kUIMessages)) {
       ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
                        INTEGER_OBJ(-1), (String)STRING_INIT);
+      cmdline_was_last_drawn = false;
     }
     return;
   }
@@ -3311,6 +3312,7 @@ void msg_clr_eos_force(void)
   if (msg_row < Rows - 1 || msg_col == 0) {
     clear_cmdline = false;  // command line has been cleared
     mode_displayed = false;  // mode cleared or overwritten
+    cmdline_was_last_drawn = false;
   }
 }
 
