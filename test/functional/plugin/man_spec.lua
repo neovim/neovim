@@ -228,6 +228,40 @@ describe(':Man', function()
     matches('quit works!!', fn.system(args, { 'manpage contents' }))
   end)
 
+  describe('with a fixed size screen', function()
+    local half_screen_rows = 5
+
+    before_each(function()
+      -- Setting height = 21~25 makes it work w/ half_screen_rows=5
+      -- but I don't know why.
+      --
+      -- Not using setup_screen() here.
+      -- It sets scrollback which interferes with our testing
+      Screen.new(80, 25)
+    end)
+
+    it('u/d scrolls by half the screen height', function()
+      command('runtime plugin/man.lua')
+      command('runtime ftplugin.vim')
+      command('runtime ftplugin/man.vim')
+      command('Man ls(1)')
+
+      local function get_lineno()
+        return n.api.nvim_win_get_cursor(0)[1]
+      end
+
+      feed('d')
+      eq(1 + half_screen_rows, get_lineno())
+
+      -- Assuming ls(1) has at least 2 screens of text
+      feed('dd')
+      eq(1 + half_screen_rows * 3, get_lineno())
+
+      feed('u')
+      eq(1 + half_screen_rows * 2, get_lineno())
+    end)
+  end)
+
   it('raw manpage into (:Man!) creates a new buffer #30132', function()
     local args = {
       nvim_prog,

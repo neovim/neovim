@@ -27,6 +27,8 @@ if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nnoremap <silent> <buffer> gO            :lua require'man'.show_toc()<CR>
   nnoremap <silent> <buffer> <2-LeftMouse> :Man<CR>
   nnoremap <silent> <buffer> <nowait> q :lclose<CR><C-W>q
+  nnoremap <silent> <buffer> <nowait> d <C-D>
+  nnoremap <silent> <buffer> <nowait> u <C-U>
 endif
 
 if get(g:, 'ft_man_folding_enable', 0)

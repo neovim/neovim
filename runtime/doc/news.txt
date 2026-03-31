@@ -67,7 +67,9 @@ BUILD
 
 DEFAULTS
 
-• todo
+• Mappings:
+  • For filetype=man, u / d scrolls upwards / downwards
+
 
 DIAGNOSTICS
 

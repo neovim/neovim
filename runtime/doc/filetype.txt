@@ -815,6 +815,8 @@ To reuse the current window: >vim
     :hide Man printf
 
 Local mappings:
+u                         Scroll window Upwards in the buffer. See *CTRL-U*.
+d                         Scroll window Downwards in the buffer. See *CTRL-D*.
 K or CTRL-]               Jump to the manpage for the <cWORD> under the
                           cursor. Takes a count for the section.
 CTRL-T                    Jump back to the location that the manpage was
