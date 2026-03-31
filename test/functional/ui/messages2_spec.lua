@@ -39,7 +39,7 @@ describe('messages2', function()
   end)
 
   it('multiline messages and pager', function()
-    command('echo "foo\nbar"')
+    command('set ruler showcmd noshowmode | echo "foo\nbar"')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*10
@@ -47,8 +47,15 @@ describe('messages2', function()
       foo                                                  |
       bar                                                  |
     ]])
-    command('set ruler showcmd noshowmode')
-    feed('g<lt>')
+    feed('g')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      foo                                                  |
+      bar                                       g          |
+    ]])
+    feed('<lt>')
     screen:expect([[
                                                            |
       {1:~                                                    }|*9
@@ -76,7 +83,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo [+29]                           0,0-1         All|
+      foo [+29]                                            |
     ]])
     command('echo "foo"')
     -- New message clears spill indicator.
@@ -835,7 +842,7 @@ describe('messages2', function()
         - cCommentL                                        |
     ]])
     feed('Q')
-    screen:expect_unchanged()
+    screen:expect_unchanged(true)
     feed('<C-L>') -- close expanded cmdline
     set_msg_target_zero_ch()
     api.nvim_echo({ { 'foo' } }, true, { id = 1 })

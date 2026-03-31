@@ -96,7 +96,7 @@ function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   if M.level == 0 and ui.msg.cmd_on_key then
     M.expand, M.dialog, ui.msg.cmd_on_key = 1, true, nil
     api.nvim_win_set_config(ui.wins.cmd, { border = 'none' })
-    ui.msg.expand_msg('cmd')
+    ui.msg.expand_msg('cmd', 'dialog')
   elseif ui.msg.cmd.msg_row ~= -1 and M.expand == 0 then
     ui.msg.msg_clear()
   end

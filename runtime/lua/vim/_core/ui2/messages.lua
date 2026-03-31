@@ -86,7 +86,12 @@ end
 ---@param type 'last'|'msg'|'top'|'bot'
 ---@param tgt? 'cmd'|'msg'|'dialog'
 local function set_virttext(type, tgt)
-  if (type == 'last' and (ui.cmdheight == 0 or M.virt.delayed)) or M.cmd_on_key then
+  if
+    -- Cannot show with 0 'cmdheight' and delay for error.
+    (type == 'last' and (ui.cmdheight == 0 or M.virt.delayed))
+    -- Do not overwrite temporary spill indicator during expanded cmdline.
+    or (M.cmd_on_key and type == 'msg')
+  then
     return -- Don't show virtual text while cmdline is expanded or delaying for error.
   end
 
@@ -192,12 +197,12 @@ end
 
 local hlopts = { undo_restore = false, invalidate = true, priority = 1 }
 --- Move messages to expanded cmdline, dialog or pager to show in full.
-function M.expand_msg(src)
+function M.expand_msg(src, tgt)
   -- Copy and clear message from src to enlarged cmdline that is dismissed by any
   -- key press. Append to pager instead if it isn't hidden or we want to enter it
   -- after cmdline was entered during expanded cmdline.
   local hidden = api.nvim_win_get_config(ui.wins.pager).hide
-  local tgt = (src == 'dialog' or not hidden) and 'pager' or ui.cmd.expand > 0 and 'dialog' or 'cmd'
+  tgt = tgt or not hidden and 'pager' or 'cmd'
   if tgt ~= src then
     local srow = hidden and 0 or api.nvim_buf_line_count(ui.bufs.pager)
     local opts = { details = true, type = 'highlight' }
@@ -428,7 +433,7 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     -- When message was emitted below an already expanded cmdline, move and route to pager.
     tgt = ui.cmd.expand > 0 and 'pager' or tgt
     if ui.cmd.expand == 1 then
-      M.expand_msg('dialog')
+      M.expand_msg('dialog', 'pager')
     end
     ui.cmd.expand = ui.cmd.expand + (ui.cmd.expand > 0 and 1 or 0)
 
@@ -476,7 +481,7 @@ end
 ---
 ---@param content MsgContent
 function M.msg_ruler(content)
-  M.virt.last[M.virt.idx.ruler] = ui.cmd.level > 0 and {} or content
+  M.virt.last[M.virt.idx.ruler] = (ui.cmd.level > 0 or M.cmd_on_key) and {} or content
   set_virttext('last')
 end
 
@@ -493,7 +498,6 @@ function M.msg_history_show(entries, prev_cmd)
   -- Showing output of previous command, clear in case still visible.
   if M.cmd_on_key or prev_cmd then
     M.msg_clear()
-    api.nvim_feedkeys(vim.keycode('<Esc>'), 'n', false)
   end
 
   api.nvim_buf_set_lines(ui.bufs.pager, 0, -1, false, {})
@@ -505,28 +509,33 @@ function M.msg_history_show(entries, prev_cmd)
   M.set_pos('pager')
 end
 
-local cmd_on_key = function(_, typed)
+local typed_g = false
+local cmd_on_key = function(key, typed)
   typed = typed and fn.keytrans(typed)
-  if not typed or typed == '<MouseMove>' or typed == ':' then
-    if typed == ':' then
-      vim.on_key(nil, ui.ns)
-    end
+  -- Don't dismiss for non-typed keys and mouse movement. When 'g' is passed (typed
+  -- or mapped), wait until the next key to avoid flickering when the pager is opened.
+  if not typed_g and (not typed or typed == '<MouseMove>' or typed == 'g' or key == 'g') then
+    typed_g = typed == 'g' or key == 'g'
     return
   end
   vim.on_key(nil, ui.ns)
-  M.cmd_on_key, M.cmd.ids = nil, {}
+  if typed == ':' then
+    return -- Keep expanded messages open until cmdline closes.
+  end
 
   -- Check if window was entered and reopen with original config.
-  local entered = typed == '<CR>' and not api.nvim_get_mode().mode:match('[it]')
-    or typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd
+  local mode = not api.nvim_get_mode().mode:match('[it]')
+  local entered = mode and (typed == '<CR>' or typed_g and (typed == '<lt>' or key == '<'))
+    or (typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd)
+  if entered then
+    M.expand_msg('cmd', 'pager')
+  end
   pcall(api.nvim_win_close, ui.wins.cmd, true)
   ui.check_targets()
-
-  -- Show or clear the message depending on if the pager was opened.
-  if entered then
-    api.nvim_command('norm! g<')
-  end
   set_virttext('msg')
+  api.nvim__redraw({ flush = true })
+
+  typed_g, M.cmd_on_key, M.cmd.ids = false, nil, {}
   return entered and ''
 end
 
@@ -593,6 +602,8 @@ local function enter_pager()
   in_pager, was_cmdwin = true, fn.getcmdwintype()
   if was_cmdwin ~= '' then
     api.nvim_command('quit')
+  elseif M.cmd_on_key then
+    api.nvim_feedkeys(vim.keycode('<Esc>'), 'n', false)
   end
   -- Cmdwin is closed one event iteration later so schedule in case it was open.
   vim.schedule(function()
