@@ -2,6 +2,7 @@
 " Language:	Tera
 " Maintainer:	Muntasir Mahmud <muntasir.joypurhat@gmail.com>
 " Last Change:	2026 Jan 29
+" 2026 Mar 31 by Vim project: prevent code execution in filename
 
 if exists("b:current_syntax")
   finish
@@ -22,7 +23,7 @@ endif
 
 " Load the underlying language syntax if detected
 if s:underlying_filetype != ""
-  execute "runtime! syntax/" . s:underlying_filetype . ".vim"
+  execute "runtime! syntax/" . fnameescape(s:underlying_filetype) . ".vim"
   unlet! b:current_syntax
 else
   " Default to HTML if no specific language detected
