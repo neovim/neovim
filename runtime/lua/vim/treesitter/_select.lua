@@ -381,14 +381,17 @@ local function get_selection()
     --- @type Range4,Range4
     pos1, pos2 = pos2, pos1
   end
-  local range = { pos1[2] - 1, pos1[3] - 1, pos2[2] - 1, pos2[3] }
 
-  if range[4] == #vim.fn.getline(range[3] + 1) + 1 then
-    range[3] = range[3] + 1
-    range[4] = 0
+  if pos2[3] == #vim.fn.getline(pos2[2]) + 1 then
+    pos2[2] = pos2[2] + 1
+    pos2[3] = 0
+  else
+    -- set {pos2} to pos of last byte of character under {pos2} (rather than first)
+    local r = vim.fn.getregionpos(pos2, pos2, { exclusive = false })
+    pos2 = r[#r][2]
   end
 
-  return range
+  return { pos1[2] - 1, pos1[3] - 1, pos2[2] - 1, pos2[3] }
 end
 
 local function get_parent_from_range(range)

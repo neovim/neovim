@@ -176,6 +176,21 @@ describe('treesitter incremental-selection', function()
     treeselect('select_parent')
     eq('foo(1)\nbar(2)\n', get_selected())
   end)
+
+  it('handles unicode', function()
+    set_lines {
+      '',
+      'foo("abö")',
+      '',
+    }
+
+    feed('gg', 'jfb', 'v')
+    treeselect('select_node')
+    eq('abö', get_selected())
+
+    treeselect('select_parent')
+    eq('"abö"', get_selected())
+  end)
 end)
 
 describe('treesitter incremental-selection with injections', function()
