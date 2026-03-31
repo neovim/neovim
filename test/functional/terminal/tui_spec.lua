@@ -224,28 +224,32 @@ describe('TUI :restart', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
-      nvim_set .. ' notermguicolors laststatus=2 background=dark',
+      'set laststatus=2 background=dark noruler',
       -- XXX: New server starts before the UI connects to it.
       -- So checking screen state for this pid is not possible.
       -- '--cmd',
       -- 'echo getpid()',
-    }, { env = env_notermguicolors })
+    }, { env = { COLORTERM = 'truecolor' } })
+    screen:set_option('rgb', true)
 
+    -- 'termguicolors' support should be detected properly after :restart.
     -- The value of has("gui_running") should be 0 before and after :restart.
-    local function assert_no_gui_running()
+    local function assert_termguicolors_and_no_gui_running()
+      tt.feed_data(':echo "&termguicolors: " .. &termguicolors\013')
+      screen:expect({ any = '&termguicolors: 1' })
       tt.feed_data(':echo "GUI Running: " .. has("gui_running")\013')
       screen:expect({ any = 'GUI Running: 0' })
     end
 
     local s0 = [[
       ^                                                  |
-      {100:~                                                 }|*3
+      {1:~}{18:                                                 }|*3
       {3:[No Name]                                         }|
                                                         |
       {5:-- TERMINAL --}                                    |
     ]]
     screen:expect(s0)
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     local server_session = n.connect(server_pipe)
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
@@ -270,7 +274,7 @@ describe('TUI :restart', function()
     local s1 = [[
                                                         |
       ^Hello1                                            |
-      {100:~                                                 }|*2
+      {1:~}{18:                                                 }|*2
       {3:[No Name] [+]                                     }|
                                                         |
       {5:-- TERMINAL --}                                    |
@@ -281,7 +285,7 @@ describe('TUI :restart', function()
     tt.feed_data(":restart put ='Hello1'\013")
     screen:expect(s1)
     assert_new_pid()
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     -- Complex command following +cmd.
     tt.feed_data(":restart +qall! put ='Hello2' | put ='World2'\013")
@@ -289,26 +293,26 @@ describe('TUI :restart', function()
                                                         |
       Hello2                                            |
       ^World2                                            |
-      {100:~                                                 }|
+      {1:~}{18:                                                 }|
       {3:[No Name] [+]                                     }|
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
     assert_new_pid()
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     -- Check ":restart" on an unmodified buffer.
     tt.feed_data(':set nomodified\013')
     tt.feed_data(':restart\013')
     screen:expect(s0)
     assert_new_pid()
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     -- Check ":restart +qall!" on an unmodified buffer.
     tt.feed_data(':restart +qall!\013')
     screen:expect(s0)
     assert_new_pid()
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     -- Check ":restart +echo" cannot restart server.
     tt.feed_data(':restart +echo\013')
@@ -339,7 +343,7 @@ describe('TUI :restart', function()
     tt.feed_data('N\013')
     screen:expect({ any = '%^Hello3' })
     assert_new_pid()
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     -- Check ":confirm restart +echo" correctly ignores ":confirm"
     tt.feed_data(':confirm restart +echo\013')
@@ -355,18 +359,18 @@ describe('TUI :restart', function()
     tt.feed_data(':restart +qall!\013')
     screen:expect(s0)
     assert_new_pid()
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     -- No --listen conflict when server exit is delayed.
     feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
     screen:expect(s0)
     assert_new_pid()
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     screen:try_resize(60, 6)
     screen:expect([[
       ^                                                            |
-      {100:~                                                           }|*2
+      {1:~}{18:                                                           }|*2
       {3:[No Name]                                                   }|
                                                                   |
       {5:-- TERMINAL --}                                              |
@@ -376,13 +380,13 @@ describe('TUI :restart', function()
     tt.feed_data(':restart echo "restarted"\013')
     screen:expect([[
       ^                                                            |
-      {100:~                                                           }|*2
+      {1:~}{18:                                                           }|*2
       {3:[No Name]                                                   }|
       restarted                                                   |
       {5:-- TERMINAL --}                                              |
     ]])
     assert_new_pid()
-    assert_no_gui_running()
+    assert_termguicolors_and_no_gui_running()
 
     -- The server is now detached and needs to be quit explicitly.
     feed_data(':qall!\r')

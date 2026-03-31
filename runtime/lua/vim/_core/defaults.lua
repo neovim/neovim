@@ -781,7 +781,7 @@ do
   -- Check if a TTY is attached
   local tty = nil
   for _, ui in ipairs(vim.api.nvim_list_uis()) do
-    if ui.chan == 1 and ui.stdout_tty then
+    if ui.stdout_tty then
       tty = ui
       break
     end
