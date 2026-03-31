@@ -22,11 +22,14 @@ silent g/^msgstr"/s//msgstr "/
 silent g/^msgid"/s//msgid "/
 silent g/^msgstr ""\(\n"\)\@!/?^msgid?,.s/^/#\~ /
 
+" remove stray comment
+silent g/^\%(#.*\n\)\+\n/d
+
 " Comments only useful for the translator
 silent g/^#\./d _
 
 " clean up empty lines
-silent g/^\n\n\n/.d _
+silent g/^\n\n/.d _
 silent! %s/\n\+\%$//
 
 if s:was_diff
