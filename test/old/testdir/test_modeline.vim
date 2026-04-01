@@ -273,13 +273,16 @@ endfunc
 
 func Test_modeline_fails_modelineexpr()
   call s:modeline_fails('balloonexpr', 'balloonexpr=Something()', 'E992:')
+  call s:modeline_fails('complete', "complete=FSomething", 'E992:')
   call s:modeline_fails('foldexpr', 'foldexpr=Something()', 'E992:')
   call s:modeline_fails('foldtext', 'foldtext=Something()', 'E992:')
   call s:modeline_fails('formatexpr', 'formatexpr=Something()', 'E992:')
   call s:modeline_fails('guitablabel', 'guitablabel=Something()', 'E992:')
+  call s:modeline_fails('guitabtooltip', 'guitabtooltip=Something()', 'E992:')
   call s:modeline_fails('iconstring', 'iconstring=Something()', 'E992:')
   call s:modeline_fails('includeexpr', 'includeexpr=Something()', 'E992:')
   call s:modeline_fails('indentexpr', 'indentexpr=Something()', 'E992:')
+  call s:modeline_fails('printheader', 'printheader=Something()', 'E992:')
   call s:modeline_fails('rulerformat', 'rulerformat=Something()', 'E992:')
   call s:modeline_fails('statusline', 'statusline=Something()', 'E992:')
   call s:modeline_fails('tabline', 'tabline=Something()', 'E992:')
@@ -501,31 +504,6 @@ func Test_modeline_nowrap_lcs_extends()
   bwipe!
   delfunc Check_modeline_nowrap
   set equalalways&
-endfunc
-
-func Test_modeline_forbidden()
-  let tempfile = tempname()
-  let lines =<< trim END
-    some test text for completion
-    vim: set complete=F{->system('touch_should_not_run')} :
-  END
-  call writefile(lines, tempfile, 'D')
-  call assert_fails($'new {tempfile}', 'E992:')
-  bw!
-  let lines =<< trim END
-    some text
-    vim: set guitabtooltip=%{%mapset()%}:
-  END
-  call writefile(lines, tempfile)
-  call assert_fails($'new {tempfile}', 'E992:')
-  bw!
-  let lines =<< trim END
-    some text
-    vim: set printheader=%{mapset('n',0,{})%)%}:
-  END
-  call writefile(lines, tempfile, 'D')
-  "call assert_fails($'new {tempfile}', 'E992:')
-  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

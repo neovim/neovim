@@ -1110,6 +1110,8 @@ vim.bo.cms = vim.bo.commentstring
 --- Note: The match limit takes effect only during forward completion
 --- (CTRL-N) and is ignored during backward completion (CTRL-P).
 ---
+--- This option cannot be set in a modeline when 'modelineexpr' is off.
+---
 --- @type string
 vim.o.complete = ".,w,b,u,t"
 vim.o.cpt = vim.o.complete
