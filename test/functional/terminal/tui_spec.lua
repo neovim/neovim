@@ -4263,22 +4263,36 @@ describe('TUI client', function()
   it(':restart works when connecting to remote instance (with its own TUI)', function()
     local _, screen_server, screen_client = start_tui_and_remote_client()
 
-    -- The remote client should attach to the new server.
+    -- Both clients should attach to the new server.
     feed_data(':restart +qall!\n')
-    screen_client:expect([[
+    local screen_restarted = [[
       ^                                                  |
       {100:~                                                 }|*3
       {3:[No Name]                                         }|
                                                         |
       {5:-- TERMINAL --}                                    |
-    ]])
-    screen_server:expect({ any = vim.pesc('[Process exited 0]') })
+    ]]
+    screen_client:expect(screen_restarted)
+    screen_server:expect(screen_restarted)
 
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 0' })
 
-    feed_data(':q!\r')
+    -- The :vsplit command should only be executed once.
+    feed_data(':restart vsplit\r')
+    screen_restarted = [[
+      ^                         │                        |
+      {100:~                        }│{100:~                       }|*3
+      {3:[No Name]                 }{2:[No Name]               }|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]]
+    screen_client:expect(screen_restarted)
+    screen_server:expect(screen_restarted)
+
+    feed_data(':qall!\r')
     screen_client:expect({ any = vim.pesc('[Process exited 0]') })
+    screen_server:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
   local function start_headless_server_and_client(use_testlog)

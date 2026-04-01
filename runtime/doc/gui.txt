@@ -74,9 +74,8 @@ Restart Nvim
                 1. Stops Nvim using `:qall` (or |+cmd|, if given).
                 2. Starts a new Nvim server using the same |v:argv| (except
                    `-- [file…]` files).
-                3. Attaches the current UI to the new Nvim server and runs
-                   `[command]` on it. Other UIs (if any) will not reattach
-                   on restart (this may change in the future).
+                3. Attaches all UIs to the new Nvim server and runs `[command]`
+                   on it.
 
                 Example: discard changes and stop with `:qall!`, then restart: >
                     :restart +qall!
@@ -86,7 +85,7 @@ Restart Nvim
                     :restart lua vim.pack.update()
 <
                 Note: Only works if the UI and server are on the same system.
-                Note: If the UI hasn't implemented the "restart" UI event,
+                Note: If no attached UI implements the "restart" UI event,
                 this command will lead to a dangling server process.
 
 ------------------------------------------------------------------------------
