@@ -275,3 +275,25 @@ func Test_zip_fname_evil_path()
   call assert_match('zipfile://.*::etc/ax-pwn', @%)
   bw
 endfunc
+
+func Test_zip_fname_evil_path2()
+  CheckNotMSWindows
+  " needed for writing the zip file
+  CheckExecutable zip
+
+  call s:CopyZipFile("evil.zip")
+  defer delete("X.zip")
+  e X.zip
+
+  :1
+  let fname = 'foobar'
+  call search('\V' .. fname)
+  exe "normal \<cr>"
+  normal x
+  call assert_false(filereadable('/tmp/foobar'))
+  :w
+  let mess  = execute(':mess')
+  call assert_match('Path Traversal Attack', mess)
+  call assert_match('zipfile://.*::.*tmp/foobar', @%)
+  bw!
+endfunc

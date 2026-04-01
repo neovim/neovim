@@ -20,6 +20,7 @@
 " 2025 Dec 20 by Vim Project: use :lcd instead of :cd
 " 2026 Feb 08 by Vim Project: use system() instead of :!
 " 2026 Mar 08 by Vim Project: Make ZipUpdatePS() check for powershell
+" 2026 Apr 01 by Vim Project: Detect more path traversal attacks
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -367,6 +368,11 @@ fun! zip#Write(fname)
     return
   endif
 
+  if simplify(a:fname) =~ '\.\.[/\\]'
+    call s:Mess('Error', "***error*** (zip#Write) Path Traversal Attack detected, not writing!")
+    return
+  endif
+
   let curdir= getcwd()
   let tmpdir= tempname()
   if tmpdir =~ '\.'
@@ -481,7 +487,7 @@ fun! zip#Extract()
   if fname =~ '/$'
     call s:Mess('Error', "***error*** (zip#Extract) Please specify a file, not a directory")
     return
-  elseif fname =~ '^[.]\?[.]/'
+  elseif fname =~ '^[.]\?[.]/' || simplify(fname) =~ '\.\.[/\\]'
     call s:Mess('Error', "***error*** (zip#Browse) Path Traversal Attack detected, not extracting!")
     return
   endif
