@@ -1752,6 +1752,15 @@ vim.isarray({t})                                               *vim.isarray()*
     See also: ~
       • https://github.com/openresty/luajit2#tableisarray
 
+vim.isEven({n})                                                 *vim.isEven()*
+    Returns whether or not the given integer is even.
+
+    Parameters: ~
+      • {n}  (`integer`) The integer to check for parity.
+
+    Return: ~
+        (`boolean`) parity The parity.
+
 vim.islist({t})                                                 *vim.islist()*
     Tests if `t` is a "list": a table indexed only by contiguous integers
     starting from 1 (what |lua-length| calls a "regular array").
