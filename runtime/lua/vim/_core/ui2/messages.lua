@@ -536,7 +536,7 @@ local cmd_on_key = function(key, typed)
   api.nvim__redraw({ flush = true })
 
   typed_g, M.cmd_on_key, M.cmd.ids = false, nil, {}
-  return entered and ''
+  return entered and '' or nil
 end
 
 --- Add virtual [+x] text to indicate scrolling is possible.
