@@ -2142,14 +2142,18 @@ describe('builtin popupmenu', function()
         eq(1, n.eval([[len(uniq(copy(g:bufnrs))) == 1]]))
       end)
 
-      it('handles tabs in info width calculation', function()
+      it('handles tabs and "linebreak" in info width calculation', function()
         screen:try_resize(50, 11)
         command([[
+          set linebreak
           set cot+=menuone
           let g:list = [#{word: 'class', info: "\tClassName() = default;"}]
         ]])
         feed('S<C-x><C-o>')
         local info = fn.complete_info()
+        eq(30, api.nvim_win_get_width(info.preview_winid))
+        feed('<C-N><C-P>')
+        info = fn.complete_info()
         eq(30, api.nvim_win_get_width(info.preview_winid))
         feed('<ESC>')
         exec([[
