@@ -86,12 +86,7 @@ end
 ---@param type 'last'|'msg'|'top'|'bot'
 ---@param tgt? 'cmd'|'msg'|'dialog'
 local function set_virttext(type, tgt)
-  if
-    -- Cannot show with 0 'cmdheight' and delay for error.
-    (type == 'last' and (ui.cmdheight == 0 or M.virt.delayed))
-    -- Do not overwrite temporary spill indicator during expanded cmdline.
-    or (M.cmd_on_key and type == 'msg')
-  then
+  if type == 'last' and (ui.cmdheight == 0 or M.virt.delayed) then
     return -- Don't show virtual text while cmdline is expanded or delaying for error.
   end
 
@@ -184,7 +179,11 @@ local function set_virttext(type, tgt)
         pad = pad - ((mode > 0 or col == 0) and 0 or math.min(M.cmd.last_col, scol))
       end
       table.insert(chunks, mode + 1, { (' '):rep(pad) })
-      set_virttext('msg') -- Readjust to new M.cmd.last_col or clear for mode.
+      -- Readjust to new M.cmd.last_col or clear for mode, but don't overwrite
+      -- locked spill indicator while cmdline is expanded for messages.
+      if not M.cmd_on_key then
+        set_virttext('msg')
+      end
     end
 
     local opts = { undo_restore = false, invalidate = true, id = M.virt.ids[type] }
@@ -321,6 +320,13 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     local opts = { end_row = row, end_col = col, invalidate = true, undo_restore = false }
     M[tgt].ids[id] = M[tgt].ids[id] or {}
     M[tgt].ids[id].extid = api.nvim_buf_set_extmark(buf, ui.ns, start_row, start_col, opts)
+    M.prev_id, M.prev_msg, M.dupe = id, msg, dupe
+    if tgt == 'cmd' or row == api.nvim_buf_line_count(buf) - 1 then
+      -- Place (x) indicator for repeated messages. Mainly to mitigate unnecessary
+      -- resizing of the message window, but also placed in the cmdline.
+      M.virt.msg[M.virt.idx.dupe][1] = dupe > 0 and { 0, ('(%d)'):format(dupe) } or nil
+      set_virttext('msg')
+    end
   end
 
   if tgt == 'msg' then
@@ -357,14 +363,6 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   -- Set pager/dialog/msg dimensions unless sent to expanded cmdline.
   if tgt ~= 'cmd' and (tgt ~= 'msg' or M.msg.ids[id]) then
     M.set_pos(tgt)
-  end
-
-  if M[tgt] and (tgt == 'cmd' or row == api.nvim_buf_line_count(buf) - 1) then
-    -- Place (x) indicator for repeated messages. Mainly to mitigate unnecessary
-    -- resizing of the message window, but also placed in the cmdline.
-    M.virt.msg[M.virt.idx.dupe][1] = dupe > 0 and { 0, ('(%d)'):format(dupe) } or nil
-    M.prev_id, M.prev_msg, M.dupe = id, msg, dupe
-    set_virttext('msg')
   end
 
   -- Reset message state the next event loop iteration.
@@ -663,13 +661,12 @@ function M.set_pos(tgt)
         or nil
       api.nvim_win_set_config(win, cfg)
 
-      if tgt == 'cmd' and not M.cmd_on_key then
-        -- Temporarily expand the cmdline, until next key press.
-        local save_spill = M.virt.msg[M.virt.idx.spill][1]
+      if tgt == 'cmd' then
+        -- Dismiss temporarily expanded cmdline on next keypress and update spill indicator.
         local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
         M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
         set_virttext('msg', 'cmd')
-        M.virt.msg[M.virt.idx.spill][1] = save_spill
+        M.virt.msg[M.virt.idx.spill][1] = { 0, (' [+%d]'):format(texth.all - ui.cmdheight) }
         M.cmd_on_key = vim.on_key(cmd_on_key, ui.ns)
       elseif tgt == 'dialog' and set_top_bot_spill() and #cfg.title[1][1] > 0 then
         M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)

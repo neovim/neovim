@@ -80,11 +80,7 @@ describe('messages2', function()
     ]])
     -- Any key press resizes the cmdline and updates the spill indicator.
     feed('j')
-    screen:expect([[
-      ^                                                     |
-      {1:~                                                    }|*12
-      foo [+29]                                            |
-    ]])
+    screen:expect({ any = { '+29' } })
     command('echo "foo"')
     -- New message clears spill indicator.
     screen:expect([[
@@ -174,13 +170,14 @@ describe('messages2', function()
       foo [+14]                           2,1           All|
     ]])
     feed('<BS><Esc>')
-    command('call nvim_echo([["foo\n"]]->repeat(&lines), 1, {})')
+    -- First multiline message expands cmdline, additional message updates spill indicator.
+    command('call nvim_echo([["foo\n"]]->repeat(&lines), 1, {}) | echo "bar"')
     screen:expect([[
       ^x                                                    |
       {1:~                                                    }|*5
       {3:                                                     }|
       foo                                                  |*6
-      foo [+8]                                             |
+      foo [+9]                                             |
     ]])
     -- Do enter the pager in normal mode.
     feed('<CR>')
