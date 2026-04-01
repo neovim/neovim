@@ -210,11 +210,11 @@ end
 ---@param pos vim.Pos
 ---@return integer, integer
 function Pos.to_extmark(pos)
-  local line_num = #api.nvim_buf_get_lines(pos.buf, 0, -1, true)
+  local line_count = api.nvim_buf_line_count(pos.buf)
 
   local row = pos.row
   local col = pos.col
-  if pos.col == 0 and pos.row == line_num then
+  if pos.col == 0 and pos.row == line_count then
     row = row - 1
     col = #get_line(pos.buf, row)
   end
