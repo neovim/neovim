@@ -463,7 +463,7 @@ function M.run(opts)
 
   local winid = api.nvim_get_current_win()
   local bufnr = api.nvim_win_get_buf(winid)
-  local pos = vim.pos.cursor(api.nvim_win_get_cursor(winid))
+  local pos = vim.pos.cursor(bufnr, api.nvim_win_get_cursor(winid))
   local params = {
     textDocument = vim.lsp.util.make_text_document_params(bufnr),
   }

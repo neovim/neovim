@@ -41,16 +41,12 @@ local api = vim.api
 ---@field start_col integer 0-based byte index.
 ---@field end_row integer 0-based byte index.
 ---@field end_col integer 0-based byte index.
----
---- Optional buffer handle.
----
---- When specified, it indicates that this range belongs to a specific buffer.
---- This field is required when performing range conversions.
----@field buf? integer
+---@field buf integer Optional buffer handle.
 ---@field private [1] integer underlying representation of start_row
 ---@field private [2] integer underlying representation of start_col
 ---@field private [3] integer underlying representation of end_row
 ---@field private [4] integer underlying representation of end_col
+---@field private [5] integer underlying representation of buf
 local Range = {}
 
 ---@private
@@ -74,7 +70,7 @@ end
 
 ---@package
 ---@overload fun(self: vim.Range, start: vim.Pos, end_: vim.Pos): vim.Range
----@overload fun(self: vim.Range, start_row: integer, start_col: integer, end_row: integer, end_col: integer, opts?: vim.Pos.Optional): vim.Range
+---@overload fun(self: vim.Range, buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
 function Range.new(...)
   ---@type integer, integer, integer, integer, integer|nil
   local start_row, start_col, end_row, end_col, buf
@@ -91,11 +87,9 @@ function Range.new(...)
     end
     start_row, start_col, end_row, end_col, buf =
       start.row, start.col, end_.row, end_.col, start.buf
-  elseif nargs == 4 or nargs == 5 then
-    local opts
-    ---@type integer, integer, integer, integer, vim.Pos.Optional|nil
-    start_row, start_col, end_row, end_col, opts = ...
-    buf = opts and opts.buf
+  elseif nargs == 5 then
+    ---@type integer, integer, integer, integer, integer
+    buf, start_row, start_col, end_row, end_col = ...
   else
     error('invalid parameters')
   end
@@ -147,7 +141,7 @@ end
 ---@param col integer
 ---@param buf integer
 ---@return integer, integer
-local function to_inclusive_pos(row, col, buf)
+local function to_inclusive_pos(buf, row, col)
   if col > 0 then
     col = col - 1
   elseif col == 0 and row > 0 then
@@ -163,7 +157,7 @@ end
 ---@param r2 vim.Range
 function Range.__lt(r1, r2)
   local r1_inclusive_end_row, r1_inclusive_end_col =
-    to_inclusive_pos(r1.end_row, r1.end_col, r1.buf)
+    to_inclusive_pos(r1.buf, r1.end_row, r1.end_col)
   return cmp_pos(r1_inclusive_end_row, r1_inclusive_end_col, r2.start_row, r2.start_col) == -1
 end
 
@@ -172,7 +166,7 @@ end
 ---@param r2 vim.Range
 function Range.__le(r1, r2)
   local r1_inclusive_end_row, r1_inclusive_end_col =
-    to_inclusive_pos(r1.end_row, r1.end_col, r1.buf)
+    to_inclusive_pos(r1.buf, r1.end_row, r1.end_col)
   return cmp_pos(r1_inclusive_end_row, r1_inclusive_end_col, r2.start_row, r2.start_col) ~= 1
 end
 
@@ -189,7 +183,7 @@ end
 ---@return boolean `true` if the given range is empty
 function Range:is_empty()
   local inclusive_end_row, inclusive_end_col =
-    to_inclusive_pos(self.end_row, self.end_col, self.buf)
+    to_inclusive_pos(self.buf, self.end_row, self.end_col)
 
   return cmp_pos(self.start_row, self.start_col, inclusive_end_row, inclusive_end_col) ~= -1
 end
@@ -208,9 +202,9 @@ function Range.has(outer, inner)
   ---@cast inner -vim.Pos
 
   local outer_inclusive_end_row, outer_inclusive_end_col =
-    to_inclusive_pos(outer.end_row, outer.end_col, outer.buf)
+    to_inclusive_pos(outer.buf, outer.end_row, outer.end_col)
   local inner_inclusive_end_row, inner_inclusive_end_col =
-    to_inclusive_pos(inner.end_row, inner.end_col, inner.buf)
+    to_inclusive_pos(inner.buf, inner.end_row, inner.end_col)
 
   return cmp_pos(outer.start_row, outer.start_col, inner.start_row, inner.start_col) ~= 1
     and cmp_pos(outer.end_row, outer.end_col, inner.end_row, inner.end_col) ~= -1
@@ -234,9 +228,9 @@ end
 ---                   `nil` if such range does not exist.
 function Range.intersect(r1, r2)
   local r1_inclusive_end_row, r1_inclusive_end_col =
-    to_inclusive_pos(r1.end_row, r1.end_col, r1.buf)
+    to_inclusive_pos(r1.buf, r1.end_row, r1.end_col)
   local r2_inclusive_end_row, r2_inclusive_end_col =
-    to_inclusive_pos(r2.end_row, r2.end_col, r2.buf)
+    to_inclusive_pos(r2.buf, r2.end_row, r2.end_col)
 
   if
     cmp_pos(r1_inclusive_end_row, r1_inclusive_end_col, r2.start_row, r2.start_col) ~= 1
@@ -254,9 +248,8 @@ end
 ---
 --- Example:
 --- ```lua
---- -- `buf` is required for conversion to LSP range.
 --- local buf = vim.api.nvim_get_current_buf()
---- local range = vim.range(3, 5, 4, 0, { buf = buf })
+--- local range = vim.range(buf, 3, 5, 4, 0)
 ---
 --- -- Convert to LSP range, you can call it in a method style.
 --- local lsp_range = range:to_lsp('utf-16')
@@ -270,10 +263,8 @@ function Range.to_lsp(range, position_encoding)
 
   ---@type lsp.Range
   return {
-    ['start'] = vim
-      .pos(range.start_row, range.start_col, { buf = range.buf })
-      :to_lsp(position_encoding),
-    ['end'] = vim.pos(range.end_row, range.end_col, { buf = range.buf }):to_lsp(position_encoding),
+    ['start'] = vim.pos(range.buf, range.start_row, range.start_col):to_lsp(position_encoding),
+    ['end'] = vim.pos(range.buf, range.end_row, range.end_col):to_lsp(position_encoding),
   }
 end
 
@@ -287,7 +278,6 @@ end
 ---   ['end'] = { line = 4, character = 0 }
 --- }
 ---
---- -- `buf` is mandatory, as LSP ranges are always associated with a buffer.
 --- local range = vim.range.lsp(buf, lsp_range, 'utf-16')
 --- ```
 ---@param buf integer
@@ -310,9 +300,8 @@ end
 ---
 --- Example:
 --- ```lua
---- -- `buf` is required for conversion to extmark range.
 --- local buf = vim.api.nvim_get_current_buf()
---- local range = vim.range(3, 5, 4, 0, { buf = buf })
+--- local range = vim.range(buf, 3, 5, 4, 0)
 ---
 --- -- Convert to extmark range, you can call it in a method style.
 --- local extmark_range = range:to_extmark()
@@ -321,8 +310,8 @@ end
 function Range.to_extmark(range)
   validate('range', range, 'table')
 
-  local srow, scol = vim.pos(range.start_row, range.start_col, { buf = range.buf }):to_extmark()
-  local erow, ecol = vim.pos(range.end_row, range.end_col, { buf = range.buf }):to_extmark()
+  local srow, scol = vim.pos(range.buf, range.start_row, range.start_col):to_extmark()
+  local erow, ecol = vim.pos(range.buf, range.end_row, range.end_col):to_extmark()
   return srow, scol, erow, ecol
 end
 
@@ -332,21 +321,22 @@ end
 --- ```lua
 --- local buf = vim.api.nvim_get_current_buf()
 ---
---- local range = vim.range.extmark(3, 5, 4, 0, { buf = buf })
+--- local range = vim.range.extmark(buf, 3, 5, 4, 0)
 --- ```
+---@param buf integer
 ---@param start_row integer
 ---@param start_col integer
 ---@param end_row integer
 ---@param end_col integer
----@param opts vim.Pos.Optional|nil
-function Range.extmark(start_row, start_col, end_row, end_col, opts)
-  validate('range', start_row, 'number')
-  validate('range', start_col, 'number')
-  validate('range', end_row, 'number')
-  validate('range', end_col, 'number')
+function Range.extmark(buf, start_row, start_col, end_row, end_col)
+  validate('buf', buf, 'number')
+  validate('start_row', start_row, 'number')
+  validate('start_col', start_col, 'number')
+  validate('end_row', end_row, 'number')
+  validate('end_col', end_col, 'number')
 
-  local start = vim.pos.extmark(start_row, start_col, opts)
-  local end_ = vim.pos.extmark(end_row, end_col, opts)
+  local start = vim.pos.extmark(buf, start_row, start_col)
+  local end_ = vim.pos.extmark(buf, end_row, end_col)
 
   return Range.new(start, end_)
 end
@@ -355,9 +345,8 @@ end
 ---
 --- Example:
 --- ```lua
---- -- `buf` is required for conversion to extmark range.
 --- local buf = vim.api.nvim_get_current_buf()
---- local range = vim.range(3, 5, 4, 0, { buf = buf })
+--- local range = vim.range(buf, 3, 5, 4, 0)
 ---
 --- -- Convert to cursor range, you can call it in a method style.
 --- local cursor_range = range:to_cursor()
@@ -366,8 +355,8 @@ end
 function Range.to_cursor(range)
   validate('range', range, 'table')
 
-  local srow, scol = vim.pos(range.start_row, range.start_col, { buf = range.buf }):to_cursor()
-  local erow, ecol = vim.pos(range.end_row, range.end_col, { buf = range.buf }):to_cursor()
+  local srow, scol = vim.pos(range.buf, range.start_row, range.start_col):to_cursor()
+  local erow, ecol = vim.pos(range.buf, range.end_row, range.end_col):to_cursor()
   return srow, scol, erow, ecol
 end
 
@@ -380,19 +369,18 @@ end
 --- -- move the cursor
 --- local end_ = vim.api.nvim_win_get_cursor(0)
 ---
---- local range = vim.range.cursor(start, end_, { buf = buf })
+--- local range = vim.range.cursor(buf, start, end_)
 --- ```
 ---@param buf integer
 ---@param start_pos [integer, integer]
 ---@param end_pos [integer, integer]
----@param opts vim.Pos.Optional|nil
-function Range.cursor(buf, start_pos, end_pos, opts)
+function Range.cursor(buf, start_pos, end_pos)
   validate('buf', buf, 'number')
   validate('range', start_pos, 'table')
   validate('range', end_pos, 'table')
 
-  local start = vim.pos.cursor(start_pos, opts)
-  local end_ = vim.pos.cursor(end_pos, opts)
+  local start = vim.pos.cursor(buf, start_pos)
+  local end_ = vim.pos.cursor(buf, end_pos)
 
   return Range.new(start, end_)
 end
@@ -404,6 +392,6 @@ setmetatable(Range, {
   end,
 })
 ---@cast Range +fun(start: vim.Pos, end_: vim.Pos): vim.Range
----@cast Range +fun(start_row: integer, start_col: integer, end_row: integer, end_col: integer, opts?: vim.Pos.Optional): vim.Range
+---@cast Range +fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
 
 return Range
