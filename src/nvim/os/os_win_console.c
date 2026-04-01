@@ -56,6 +56,19 @@ void os_replace_stdout_and_stderr_to_conout(void)
   assert(conerr_fd == STDERR_FILENO);
 }
 
+/// Detach from the current console and switch stdio to a hidden private one.
+///
+/// Used when an embedded server must outlive its parent console, while keeping
+/// CONIN$/CONOUT$ and ConPTY functional for :terminal and stdio writes.
+void os_swap_to_hidden_console(void)
+{
+  FreeConsole();
+  AllocConsole();
+  ShowWindow(GetConsoleWindow(), SW_HIDE);
+  os_replace_stdin_to_conin();
+  os_replace_stdout_and_stderr_to_conout();
+}
+
 /// Resets Windows console icon if we got an original one on startup.
 void os_icon_reset(void)
 {

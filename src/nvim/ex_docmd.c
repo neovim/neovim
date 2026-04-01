@@ -17,6 +17,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
@@ -89,6 +90,9 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/plines.h"
@@ -5022,6 +5026,13 @@ static void ex_restart(exarg_T *eap)
     server_stopped = server_stop(listen_arg, true);
   }
 
+#ifdef MSWIN
+  bool restart_alloc_console_env = false;
+  if (os_setenv("__NVIM_RESTART_ALLOC_CONSOLE", "1", 1) == 0) {
+    restart_alloc_console_env = true;
+  }
+#endif
+
   CallbackReader on_err = CALLBACK_READER_INIT;
 #ifdef MSWIN
   // On Windows, don't forward stderr as it won't work after the current server exits.
@@ -5037,6 +5048,11 @@ static void ex_restart(exarg_T *eap)
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, detach, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
+#ifdef MSWIN
+  if (restart_alloc_console_env) {
+    os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
+  }
+#endif
   if (!channel) {
     emsg("cannot create a channel job");
     goto fail_1;
@@ -5917,7 +5933,10 @@ static void ex_detach(exarg_T *eap)
       emsg(e_invchan);
       return;
     }
-    chan->detach = true;  // Prevent self-exit on channel-close.
+    // Prevent self-exit on channel-close.
+    Error detach_err = ERROR_INIT;
+    nvim__chan_set_detach(chan->id, true, &detach_err);
+    api_clear_error(&detach_err);
 
     // Server-side UI detach. Doesn't close the channel.
     Error err2 = ERROR_INIT;
@@ -5937,6 +5956,12 @@ static void ex_detach(exarg_T *eap)
     }
     // XXX: Can't do this, channel_decref() is async...
     // assert(!find_channel(chan->id));
+
+#ifdef MSWIN
+    // After UI/channel detach, move this server off the parent's console so it
+    // survives terminal closure and still has working CONIN$/CONOUT$.
+    os_swap_to_hidden_console();
+#endif
 
     ILOG("detach current_ui=%" PRId64, chan->id);
   }
