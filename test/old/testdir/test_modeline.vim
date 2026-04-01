@@ -503,4 +503,29 @@ func Test_modeline_nowrap_lcs_extends()
   set equalalways&
 endfunc
 
+func Test_modeline_forbidden()
+  let tempfile = tempname()
+  let lines =<< trim END
+    some test text for completion
+    vim: set complete=F{->system('touch_should_not_run')} :
+  END
+  call writefile(lines, tempfile, 'D')
+  call assert_fails($'new {tempfile}', 'E992:')
+  bw!
+  let lines =<< trim END
+    some text
+    vim: set guitabtooltip=%{%mapset()%}:
+  END
+  call writefile(lines, tempfile)
+  call assert_fails($'new {tempfile}', 'E992:')
+  bw!
+  let lines =<< trim END
+    some text
+    vim: set printheader=%{mapset('n',0,{})%)%}:
+  END
+  call writefile(lines, tempfile, 'D')
+  "call assert_fails($'new {tempfile}', 'E992:')
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
