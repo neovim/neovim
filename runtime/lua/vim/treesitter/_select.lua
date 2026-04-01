@@ -364,6 +364,7 @@ local function visual_select(range)
     ecol = #vim.fn.getline(erow + 1) + 1
   end
 
+  vim.cmd.normal({ 'v', bang = true })
   vim.fn.setpos("'<", { 0, srow + 1, scol + 1, 0 })
   vim.fn.setpos("'>", { 0, erow + 1, ecol, 0 })
   if cursor_other_end_of_visual then
