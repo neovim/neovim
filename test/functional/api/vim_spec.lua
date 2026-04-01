@@ -4828,6 +4828,16 @@ describe('API', function()
       eq('execute', result.cmd)
       eq('edit foo', result.nextcmd)
     end)
+    it('parses expr-arg commands with invalid expr #38689', function()
+      for _, arg in ipairs({ '&', '[', '{', '"', "'" }) do
+        local result = api.nvim_parse_cmd('echo ' .. arg, {})
+        eq({ arg }, result.args)
+        eq('echo', result.cmd)
+        eq('', result.nextcmd)
+      end
+      -- v:errmsg shouldn't be set
+      eq('', api.nvim_get_vvar('errmsg'))
+    end)
     it('parses :map commands with space in RHS', function()
       eq({
         addr = 'none',

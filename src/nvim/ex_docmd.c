@@ -1640,7 +1640,9 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
     char *arg = eap->arg;
     while (*arg != NUL && *arg != '|' && *arg != '\n') {
       char *start = arg;
+      emsg_skip++;
       skip_expr(&arg, NULL);
+      emsg_skip--;
       // If skip_expr didn't advance, move forward to avoid infinite loop
       if (arg == start) {
         arg++;
