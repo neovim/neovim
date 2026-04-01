@@ -1599,6 +1599,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: The match limit takes effect only during forward completion
 	(CTRL-N) and is ignored during backward completion (CTRL-P).
 
+	This option cannot be set in a modeline when 'modelineexpr' is off.
+
 						*'completefunc'* *'cfu'*
 'completefunc' 'cfu'	string	(default "")
 			local to buffer
