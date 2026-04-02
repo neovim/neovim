@@ -9741,12 +9741,19 @@ local options = {
     {
       abbreviation = 'tf',
       defaults = true,
+      desc = [=[
+        Assume that the underlying terminal can respond quickly to support
+        features such as background detection. In slow scenarios like nvim over
+        SSH with high latency, you may wish to disable this option during
+        startup by setting the environment variable `NVIM_NOTTYFAST`. This
+        allows it to take effect before executing your config.
+      ]=],
       full_name = 'ttyfast',
       no_mkrc = true,
       scope = { 'global' },
-      short_desc = N_('Deprecated'),
+      short_desc = N_('assume terminal responds quickly, enabling more features'),
       type = 'boolean',
-      immutable = true,
+      varname = 'p_tf',
     },
     {
       abbreviation = 'udir',

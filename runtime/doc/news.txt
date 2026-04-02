@@ -154,7 +154,8 @@ the same range instances now compare equal.
 
 OPTIONS
 
-• todo
+• `ttyfast` can be disabled during startup by setting the environment variable
+  `NVIM_NOTTYFAST` to disable automatic background detection.
 
 PERFORMANCE
 
