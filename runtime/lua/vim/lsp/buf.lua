@@ -1369,7 +1369,7 @@ function M.code_action(opts)
       local lnum = api.nvim_win_get_cursor(0)[1] - 1
 
       client:_provider_foreach('textDocument/diagnostic', function(cap)
-        local ns_pull = lsp.diagnostic.get_namespace(client.id, cap.identifier)
+        local ns_pull = lsp.diagnostic.get_namespace(client.id, true, cap.identifier)
         vim.list_extend(
           diagnostics,
           vim.diagnostic.get(bufnr, { namespace = ns_pull, lnum = lnum })
