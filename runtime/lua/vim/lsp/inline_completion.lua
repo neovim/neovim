@@ -223,7 +223,9 @@ function Completor:show(hint)
   if current.range then
     row, col = current.range:to_extmark()
   else
-    row, col = vim.pos.cursor(api.nvim_win_get_cursor(vim.fn.bufwinid(self.bufnr))):to_extmark()
+    row, col = vim.pos
+      .cursor(api.nvim_win_get_cursor(vim.fn.bufwinid(self.bufnr)), { buf = self.bufnr })
+      :to_extmark()
   end
 
   -- To ensure that virtual text remains visible continuously (without flickering)
