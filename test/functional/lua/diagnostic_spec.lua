@@ -3492,7 +3492,7 @@ describe('vim.diagnostic', function()
       )
 
       eq(
-        '.../diagnostic.lua:0: prefix: expected string|table|function, got number',
+        '.../_float.lua:0: prefix: expected string|table|function, got number',
         pcall_err(exec_lua, [[ vim.diagnostic.open_float({ prefix = 42 }) ]])
       )
     end)
@@ -3549,7 +3549,7 @@ describe('vim.diagnostic', function()
       )
 
       eq(
-        '.../diagnostic.lua:0: suffix: expected string|table|function, got number',
+        '.../_float.lua:0: suffix: expected string|table|function, got number',
         pcall_err(exec_lua, [[ vim.diagnostic.open_float({ suffix = 42 }) ]])
       )
     end)
