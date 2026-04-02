@@ -1,6 +1,6 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local lsp_transport = require('vim.lsp._transport')
+local vim_transport = require('vim.net._transport')
 local strbuffer = require('vim._core.stringbuffer')
 local validate = vim.validate
 
@@ -263,7 +263,7 @@ end
 --- @field private message_index integer
 --- @field private message_callbacks table<integer, function> dict of message_id to callback
 --- @field private notify_reply_callbacks table<integer, function> dict of message_id to callback
---- @field private transport vim.lsp.rpc.Transport
+--- @field private transport vim.Transport
 --- @field private dispatchers vim.lsp.rpc.Dispatchers
 ---
 --- See [vim.lsp.rpc.request()]
@@ -281,7 +281,7 @@ local Client = {}
 
 ---@package
 ---@param dispatchers vim.lsp.rpc.Dispatchers
----@param transport vim.lsp.rpc.Transport
+---@param transport vim.Transport
 ---@return vim.lsp.rpc.Client
 function Client.new(dispatchers, transport)
   local result = {
@@ -636,13 +636,13 @@ function M.connect(host_or_path, port)
 
     dispatchers = merge_dispatchers(dispatchers)
 
-    local transport = lsp_transport.TransportConnect.new(host_or_path, port)
+    local transport = vim_transport.TransportConnect.new(host_or_path, port)
     return Client.new(dispatchers, transport)
   end
 end
 
 --- Additional context for the LSP server process.
---- @class vim.lsp.rpc.ExtraSpawnParams
+--- @class vim.transport.ExtraSpawnParams
 --- @inlinedoc
 --- @field cwd? string Working directory for the LSP server process
 --- @field detached? boolean Detach the LSP server process from the current process
@@ -654,7 +654,7 @@ end
 ---
 --- @param cmd string[] Command to start the LSP server.
 --- @param dispatchers? vim.lsp.rpc.Dispatchers
---- @param extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
+--- @param extra_spawn_params? vim.transport.ExtraSpawnParams
 --- @return vim.lsp.rpc.Client
 function M.start(cmd, dispatchers, extra_spawn_params)
   log.info('Starting RPC client', { cmd = cmd, extra = extra_spawn_params })
@@ -664,7 +664,7 @@ function M.start(cmd, dispatchers, extra_spawn_params)
 
   dispatchers = merge_dispatchers(dispatchers)
 
-  local transport = lsp_transport.TransportRun.new(cmd, extra_spawn_params)
+  local transport = vim_transport.TransportRun.new(cmd, extra_spawn_params)
   return Client.new(dispatchers, transport)
 end
 

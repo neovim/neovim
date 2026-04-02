@@ -3,23 +3,21 @@ local log = require('vim.lsp.log')
 
 --- Interface for transport implementations.
 ---
---- @class (private) vim.lsp.rpc.Transport
---- @field listen fun(self: vim.lsp.rpc.Transport, on_read: fun(err: any, data: string), on_exit: fun(code: integer, signal: integer))
---- @field write fun(self: vim.lsp.rpc.Transport, msg: string)
---- @field is_closing fun(self: vim.lsp.rpc.Transport): boolean
---- @field terminate fun(self: vim.lsp.rpc.Transport)
+--- @class (private, exact) vim.Transport
+--- @field listen fun(self: vim.Transport, on_read: fun(err: any, data: string), on_exit: fun(code: integer, signal: integer))
+--- @field write fun(self: vim.Transport, msg: string)
+--- @field is_closing fun(self: vim.Transport): boolean
+--- @field terminate fun(self: vim.Transport)
 
 --- Transport backed by newly spawned process using `vim.system()`.
 ---
---- @class (private) vim.lsp.rpc.Transport.Run : vim.lsp.rpc.Transport
---- @field cmd string[] Command to start the LSP server.
---- @field extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
---- @field sysobj? vim.SystemObj
+--- @class (private, exact) vim.TransportRun : vim.Transport
+--- @field private cmd string[] Command to start the process.
+--- @field private extra_spawn_params? vim.transport.ExtraSpawnParams
+--- @field private sysobj? vim.SystemObj
+--- @field new fun(cmd: string[], extra_spawn_params?: vim.transport.ExtraSpawnParams): vim.TransportRun
 local TransportRun = {}
 
---- @param cmd string[] Command to start the LSP server.
---- @param extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
---- @return vim.lsp.rpc.Transport.Run
 function TransportRun.new(cmd, extra_spawn_params)
   return setmetatable({
     cmd = cmd,
@@ -32,7 +30,7 @@ end
 function TransportRun:listen(on_read, on_exit)
   local function on_stderr(_, chunk)
     if chunk then
-      log.error('rpc', self.cmd[1], 'stderr', chunk)
+      log.error('transport', self.cmd[1], 'stderr', chunk)
     end
   end
 
@@ -64,10 +62,10 @@ function TransportRun:listen(on_read, on_exit)
   if not ok then ---@cast sysobj_or_err string
     local err = sysobj_or_err
     local sfx = err:match('ENOENT')
-        and '. The language server is either not installed, missing from PATH, or not executable.'
+        and '. The command is either not installed, missing from PATH, or not executable.'
       or string.format(' with error message: %s', err)
 
-    error(('Spawning language server with cmd: `%s` failed%s'):format(vim.inspect(self.cmd), sfx))
+    error(('Spawning process with cmd: `%s` failed%s'):format(vim.inspect(self.cmd), sfx))
   end ---@cast sysobj_or_err vim.SystemObj
 
   self.sysobj = sysobj_or_err
@@ -91,29 +89,27 @@ end
 
 --- Transport backed by an existing `uv.uv_pipe_t` or `uv.uv_tcp_t` connection.
 ---
---- @class (private) vim.lsp.rpc.Transport.Connect : vim.lsp.rpc.Transport
---- @field host_or_path string
---- @field port? integer
---- @field handle? uv.uv_pipe_t|uv.uv_tcp_t
+--- @class (private, exact) vim.TransportConnect : vim.Transport
+--- @field private host_or_path string
+--- @field private port? integer
+--- @field private handle? uv.uv_pipe_t|uv.uv_tcp_t
 --- Connect returns a PublicClient synchronously so the caller
 --- can immediately send messages before the connection is established.
 --- These messages are buffered in `msgbuf`.
---- @field connected boolean
---- @field closing boolean
---- @field msgbuf vim.Ringbuf
---- @field on_exit? fun(code: integer, signal: integer)
+--- @field private connected boolean
+--- @field private closing boolean
+--- @field private msgbuf vim.Ringbuf
+--- @field private on_exit? fun(code: integer, signal: integer)
+--- @field new fun(host_or_path: string, port?: integer): vim.TransportConnect
 local TransportConnect = {}
 
---- @param host_or_path string
---- @param port? integer
---- @return vim.lsp.rpc.Transport.Connect
 function TransportConnect.new(host_or_path, port)
   return setmetatable({
     host_or_path = host_or_path,
     port = port,
     connected = false,
     -- size should be enough because the client can't really do anything until initialization is done
-    -- which required a response from the server - implying the connection got established
+    -- which required a response from the process - implying the connection got established
     msgbuf = vim.ringbuf(10),
     closing = false,
   }, { __index = TransportConnect })
