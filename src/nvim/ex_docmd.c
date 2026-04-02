@@ -5081,15 +5081,9 @@ static void ex_restart(exarg_T *eap)
   arena_mem_free(result_mem);
   result_mem = NULL;
 
-  // Send restart event with new listen address to current UI.
-  if (!no_ui && !remote_ui_restart(current_ui, listen_addr, &err)) {
-    if (ERROR_SET(&err)) {
-      ELOG("%s", err.msg);  // UI disappeared already?
-      api_clear_error(&err);
-    }
-    xfree(listen_addr);
-    goto fail_2;
-  }
+  // Send restart event with new listen address to all UIs.
+  ui_call_restart(cstr_as_string(listen_addr));
+  ui_flush();
   xfree(listen_addr);
 
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";

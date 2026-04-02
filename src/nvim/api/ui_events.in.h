@@ -30,7 +30,7 @@ void flush(void)
 void connect(String server_addr)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
 void restart(String listen_addr)
-  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;
 void suspend(void)
   FUNC_API_SINCE(3);
 void set_title(String title)
