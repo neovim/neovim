@@ -23,6 +23,7 @@
 "		2026 Feb 11 improve support for KornShell function names and variables
 "		2026 Feb 15 improve comment handling #19414
 "		2026 Mar 23 improve matching of function definitions #19638
+"		2026 Apr 02 improve matching of function definitions #19849
 " }}}
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
@@ -665,12 +666,12 @@ ShFoldFunctions syn region shFunctionSubSh	matchgroup=shFunctionSubShRegion star
 
 if exists("b:is_bash")
     syn keyword shFunctionKey coproc
-    syn match shFunctionCmdOne	"^\s*\zs\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
-    syn match shFunctionCmdTwo	"\%(\<\k\+\>\|[^()<>|&$;\t ]\+\)\+\ze\s*\%(()\ze\)\=\_s*\%(\<\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	contained skipwhite skipnl nextgroup=@shFunctionCmds
-    syn match shFunctionOne	"^\s*\zs\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
-    syn match shFunctionTwo	"\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\ze\s*\%(()\ze\)\=\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
-    syn match shFunctionThree	"^\s*\zs\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh
-    syn match shFunctionFour	"\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\ze\s*\%(\%(()\ze\)\=\)\@>\_s*((\@!"	contained skipwhite skipnl nextgroup=shFunctionSubSh
+    syn match shFunctionCmdOne	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionCmdTwo	"\%#=1\%(\%(\<\k\+\>\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(()\ze\)\=\_s*\%(\<\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	contained skipwhite skipnl nextgroup=@shFunctionCmds
+    syn match shFunctionOne	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionTwo	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(()\ze\)\=\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionThree	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh
+    syn match shFunctionFour	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(\%(()\ze\)\=\)\@>\_s*((\@!"	contained skipwhite skipnl nextgroup=shFunctionSubSh
 elseif exists("b:is_ksh88")
     " AT&T ksh88
     syn match shFunctionCmdOne	"^\s*\zs\h\w*\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
@@ -681,13 +682,13 @@ elseif exists("b:is_mksh")
     " MirBSD ksh is the wild west of absurd and abstruse function names...
     syn match shFunctionCmdOne	"^\s*\zs[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
     syn match shFunctionOne	"^\s*\zs[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
-    syn match shFunctionTwo	"\%([@!+.%,:-]\+\|\<\w\+\)*[-A-Za-z_.%,0-9:]\ze\s*\%(()\ze\)\=\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionTwo	"\%#=1\%(\%(\<\w\+\|[@!+.%,:-]\+\)*[-A-Za-z_.%,0-9:]\)\@>\ze\s*\%(()\ze\)\=\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
     syn match shFunctionThree	"^\s*\zs[-A-Za-z_@!+.%,0-9:]*[-A-Za-z_.%,0-9:]\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh
 elseif exists("b:is_kornshell")
     " ksh93
     syn match shFunctionCmdOne	"^\s*\zs[A-Za-z_.][A-Za-z_.0-9]*\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds
     syn match shFunctionOne	"^\s*\zs[A-Za-z_.][A-Za-z_.0-9]*\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr
-    syn match shFunctionTwo	"\%(\.\|\<\h\+\)[A-Za-z_.0-9]*\ze\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
+    syn match shFunctionTwo	"\%(\<\h\+\|\.\)[A-Za-z_.0-9]*\ze\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
     syn match shFunctionThree	"^\s*\zs[A-Za-z_.][A-Za-z_.0-9]*\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh
     syn match shNamespaceOne	"\<\h\w*\>\ze\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr
 else
