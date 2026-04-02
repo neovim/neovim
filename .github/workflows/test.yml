@@ -258,10 +258,12 @@ jobs:
           version: 0.16.0
       - run: sudo apt-get install -y inotify-tools
 
+      - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
       - run: zig build $OPTS test_nlua0
       - run: zig build $OPTS nvim_bin && ./zig-out/bin/nvim --version
       - run: zig build $OPTS unittest
       - run: zig build $OPTS functionaltest
+      - run: zig build $OPTS oldtest
       # `zig build` uses a lua script for doctags in order to support cross-compiling
       # compare with the builtin generator that they match
       - run: cd runtime; ../zig-out/bin/nvim -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
@@ -271,6 +273,8 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 45
     name: build using zig build (macos 15)
+    env:
+      OPTS: # empty
     steps:
       - uses: actions/checkout@v6
         with:
@@ -280,9 +284,11 @@ jobs:
         with:
           version: 0.16.0
 
-      - run: zig build test_nlua0 -Dluajit=false
-      - run: zig build nvim_bin -Dluajit=false && ./zig-out/bin/nvim --version
-      - run: zig build functionaltest -Dluajit=false
+      - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
+      - run: zig build $OPTS test_nlua0
+      - run: zig build $OPTS nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build $OPTS functionaltest
+      - run: zig build $OPTS oldtest
 
   zig-build-windows:
     runs-on: windows-2025
@@ -297,6 +303,7 @@ jobs:
         with:
           version: 0.16.0
 
+      - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
       - run: zig build test_nlua0
       - run: zig build nvim_bin
       - run: ./zig-out/bin/nvim --version
