@@ -578,7 +578,9 @@ function Client:initialize()
   local rpc = self.rpc
 
   rpc.request('initialize', init_params, function(init_err, result)
-    assert(not init_err, tostring(init_err))
+    if init_err then
+      error(lsp.rpc.format_rpc_error(init_err))
+    end
     assert(result, 'server sent empty result')
     rpc.notify('initialized', vim.empty_dict())
     self.initialized = true

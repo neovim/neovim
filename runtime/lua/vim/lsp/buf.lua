@@ -1460,7 +1460,8 @@ function M.selection_range(direction, timeout_ms)
   timeout_ms = timeout_ms or 1000
   local result, err = lsp.buf_request_sync(0, method, params, timeout_ms)
   if err then
-    lsp.log.error('selectionRange request failed: ' .. err)
+    local err_message = type(err) == 'table' and lsp.rpc.format_rpc_error(err) or err
+    lsp.log.error('selectionRange request failed: ' .. err_message)
     return
   end
   if not result or not result[client.id] or not result[client.id].result then

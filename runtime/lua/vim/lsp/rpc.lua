@@ -137,13 +137,11 @@ function M.rpc_response_error(code, message, data)
   -- TODO should this error or just pick a sane error (like InternalError)?
   ---@type string
   local code_name = assert(protocol.ErrorCodes[code], 'Invalid RPC error code')
-  return setmetatable({
+  return {
     code = code,
     message = message or code_name,
     data = data,
-  }, {
-    __tostring = M.format_rpc_error,
-  })
+  }
 end
 
 --- Dispatchers for LSP message types.
@@ -540,9 +538,6 @@ function Client:handle_body(body)
     if callback then
       self.message_callbacks[result_id] = nil
       validate('callback', callback, 'function')
-      if decoded.error then
-        setmetatable(decoded.error, { __tostring = M.format_rpc_error })
-      end
       self:try_call(
         M.client_errors.SERVER_RESULT_CALLBACK_ERROR,
         callback,
