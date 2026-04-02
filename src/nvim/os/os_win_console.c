@@ -14,6 +14,16 @@ static HWND hWnd = NULL;
 static HICON hOrigIconSmall = NULL;
 static HICON hOrigIcon = NULL;
 
+/// Re-enable normal Ctrl-C processing after detached startup.
+///
+/// On Windows, UV_PROCESS_DETACHED implies CREATE_NEW_PROCESS_GROUP, which
+/// disables Ctrl-C handling for the new process. Restore the default behavior
+/// once the embedded server has a console so terminal jobs inherit it.
+void os_enable_ctrl_c(void)
+{
+  SetConsoleCtrlHandler(NULL, FALSE);
+}
+
 int os_open_conin_fd(void)
 {
   const HANDLE conin_handle = CreateFile("CONIN$",
@@ -65,6 +75,7 @@ void os_swap_to_hidden_console(void)
   FreeConsole();
   AllocConsole();
   ShowWindow(GetConsoleWindow(), SW_HIDE);
+  os_enable_ctrl_c();
   os_replace_stdin_to_conin();
   os_replace_stdout_and_stderr_to_conout();
 }

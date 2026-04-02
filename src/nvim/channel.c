@@ -556,23 +556,24 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
     os_set_cloexec(stdin_dup_fd);
     stdout_dup_fd = os_dup(STDOUT_FILENO);
     os_set_cloexec(stdout_dup_fd);
+    // :restart spawns a replacement server that must not borrow the parent
+    // Nvim process console, because that parent process will soon exit.
     const bool restart_alloc_console = os_env_exists("__NVIM_RESTART_ALLOC_CONSOLE", true);
     if (restart_alloc_console) {
       os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
     }
     if (!GetConsoleWindow()) {
-      if (restart_alloc_console) {
-        AllocConsole();
-        ShowWindow(GetConsoleWindow(), SW_HIDE);
-      } else if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-        // Borrow the parent's console so CONOUT$ resolves to the real terminal,
-        // preserving io.stdout rendering (e.g. SIXEL/Kitty images).  Only fall
-        // back to a hidden AllocConsole when there is no parent console (e.g.
-        // launched from a non-console parent).
+      // Borrow the parent's console so CONOUT$ resolves to the real terminal,
+      // preserving io.stdout rendering (e.g. SIXEL/Kitty images). Only fall
+      // back to a hidden AllocConsole when there is no parent console (e.g.
+      // launched from a non-console parent), or for the replacement server
+      // spawned by :restart, because the parent Nvim process will soon exit.
+      if (restart_alloc_console || !AttachConsole(ATTACH_PARENT_PROCESS)) {
         AllocConsole();
         ShowWindow(GetConsoleWindow(), SW_HIDE);
       }
     }
+    os_enable_ctrl_c();
     os_replace_stdin_to_conin();
     os_replace_stdout_and_stderr_to_conout();
   }

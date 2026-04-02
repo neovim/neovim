@@ -16,6 +16,8 @@ local ok = t.ok
 local rmdir = n.rmdir
 local new_pipename = n.new_pipename
 local pesc = vim.pesc
+local is_os = t.is_os
+local skip = t.skip
 local set_session = n.set_session
 local async_meths = n.async_meths
 local expect_msg_seq = n.expect_msg_seq
@@ -116,6 +118,10 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   end)
 
   it('killing TUI process without :preserve #22096', function()
+    -- Windows(#38669): inner server could attach to the outer Nvim terminal's console
+    -- and die abruptly when the outer terminal job closed, leaving an unreadable swapfile
+    skip(is_os('win'), 'unreadable swapfile on Windows after TUI process exit')
+
     local screen0 = Screen.new()
     local child_server = new_pipename()
     fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
