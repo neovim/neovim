@@ -124,7 +124,8 @@ TREESITTER
 
 TUI
 
-• todo
+• The TUI will re-query the terminal's background color when resuming from
+  a suspended state, and Nvim will update 'background' accordingly.
 
 UI
 
