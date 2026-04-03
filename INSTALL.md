@@ -19,7 +19,8 @@ Downloads are available on the [Releases](https://github.com/neovim/neovim/relea
     * [macOS arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-arm64.tar.gz)
     * [Linux x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz)
     * [Linux arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.tar.gz)
-    * [Windows](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
+    * [Windows x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
+    * [Windows arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-win-arm64.msi)
 * Latest [development prerelease](https://github.com/neovim/neovim/releases/nightly)
 
 
