@@ -905,6 +905,7 @@ local extension = {
   obj = 'obj',
   objdump = 'objdump',
   cppobjdump = 'objdump',
+  rtn = 'objectscript_routine',
   obl = 'obse',
   obse = 'obse',
   oblivion = 'obse',
