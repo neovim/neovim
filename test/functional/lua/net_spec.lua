@@ -113,4 +113,54 @@ describe('vim.net.request', function()
     t.eq(true, content[1]:find('Here') ~= nil)
     t.eq(true, content[2]:find('html') ~= nil)
   end)
+
+  it('opens remote tar.gz URLs as tar archives', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
+    local rv = exec_lua([[
+      vim.cmd('runtime! plugin/net.lua')
+      vim.cmd('runtime! plugin/tarPlugin.vim')
+
+      vim.cmd('edit https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-x86_64.tar.gz')
+
+      vim.wait(2500, function()
+        return vim.bo.filetype == 'tar' or vim.b.tarfile ~= nil
+      end)
+
+      return {
+        filetype = vim.bo.filetype,
+        modified = vim.bo.modified,
+        tarfile = vim.b.tarfile ~= nil,
+      }
+    ]])
+
+    t.eq('tar', rv.filetype)
+    t.eq(false, rv.modified)
+    t.eq(true, rv.tarfile)
+  end)
+
+  it('opens remote zip URLs as zip archives', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
+    local rv = exec_lua([[
+      vim.cmd('runtime! plugin/net.lua')
+      vim.cmd('runtime! plugin/zipPlugin.vim')
+
+      vim.cmd('edit https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.zip')
+
+      vim.wait(2500, function()
+        return vim.bo.filetype == 'zip' or vim.b.zipfile ~= nil
+      end)
+
+      return {
+        filetype = vim.bo.filetype,
+        modified = vim.bo.modified,
+        zipfile = vim.b.zipfile ~= nil,
+      }
+    ]])
+
+    t.eq('zip', rv.filetype)
+    t.eq(false, rv.modified)
+    t.eq(true, rv.zipfile)
+  end)
 end)
