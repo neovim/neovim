@@ -385,4 +385,71 @@ func Test_visual_ends_before_showbreak()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_visual_block_hl_with_linebreak()
+  CheckScreendump
+
+  let lines =<< trim END
+    func Case1()
+      20vnew
+      setlocal linebreak
+      call setline(1, ['foo ' .. repeat('x', 10), 'foo ' .. repeat('x', 20)])
+      exe "normal! gg0\<C-V>3lj"
+    endfunc
+
+    func Case2()
+      setlocal nolinebreak
+      call setline(1, ["foo\tbar", 'foo12345bar', "foo\tbar"])
+      exe "normal! gg03l\<C-V>2j2h"
+    endfunc
+
+    func Case3()
+      setlocal nolinebreak
+      call setline(1, ["foo\uffffbar", 'foo123456bar', "foo\uffffbar"])
+      exe "normal! gg03l\<C-V>2j2h"
+    endfunc
+
+    func Case4()
+      setlocal nolinebreak
+      call setline(1, [repeat('x', 15), repeat('x', 10), repeat('x', 10)])
+      call prop_type_add('test', {})
+      call prop_add(2, 5, #{text: "foo: ",type: "test"})
+      call prop_add(3, 5, #{text: "bar: ",type: "test"})
+      exe "normal! gg02l\<C-V>2j2l"
+    endfunc
+
+    " FIXME: clipboard=autoselect sometimes changes Visual highlight
+    set clipboard=
+  END
+  call writefile(lines, 'XvisualBlockHlWithLinebreak', 'D')
+  let buf = RunVimInTerminal('-S XvisualBlockHlWithLinebreak', #{rows: 6})
+
+  " 'linebreak' after end char (initially fixed by patch 7.4.467)
+  call term_sendkeys(buf, ":call Case1()\r")
+  call VerifyScreenDump(buf, 'Test_visual_block_hl_with_linebreak_1', {})
+
+  " TAB as end char: 'linebreak' shouldn't break Visual block hl
+  call term_sendkeys(buf, "\<Esc>:bwipe! | call Case2()\r")
+  call VerifyScreenDump(buf, 'Test_visual_block_hl_with_linebreak_2', {})
+  call term_sendkeys(buf, "\<Esc>:setlocal linebreak\rgv")
+  call term_wait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_visual_block_hl_with_linebreak_2', {})
+
+  " Unprintable end char: 'linebreak' shouldn't break Visual block hl
+  call term_sendkeys(buf, "\<Esc>:bwipe! | call Case3()\r")
+  call VerifyScreenDump(buf, 'Test_visual_block_hl_with_linebreak_3', {})
+  call term_sendkeys(buf, "\<Esc>:setlocal linebreak\rgv")
+  call term_wait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_visual_block_hl_with_linebreak_3', {})
+
+  " Virtual text before end char: 'linebreak' shouldn't break Visual block hl
+  call term_sendkeys(buf, "\<Esc>:bwipe! | call Case4()\r")
+  call VerifyScreenDump(buf, 'Test_visual_block_hl_with_linebreak_4', {})
+  call term_sendkeys(buf, "\<Esc>:setlocal linebreak\rgv")
+  call term_wait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_visual_block_hl_with_linebreak_4', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

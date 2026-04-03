@@ -305,8 +305,8 @@ static int do_popup(int which_button, int m_pos_flag, pos_T m_pos)
           jump_flags = MOUSE_MAY_STOP_VIS;
         } else if (VIsual_mode == Ctrl_V) {
           colnr_T leftcol, rightcol;
-          getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
-          getvcol(curwin, &m_pos, NULL, &m_pos.col, NULL);
+          getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol, 0);
+          getvcol(curwin, &m_pos, NULL, &m_pos.col, NULL, 0);
           if (m_pos.col < leftcol || m_pos.col > rightcol) {
             jump_flags = MOUSE_MAY_STOP_VIS;
           }
@@ -769,7 +769,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     // that is in the quarter that the cursor is in.
     if (VIsual_mode == Ctrl_V) {
       colnr_T leftcol, rightcol;
-      getvcols(curwin, &start_visual, &end_visual, &leftcol, &rightcol);
+      getvcols(curwin, &start_visual, &end_visual, &leftcol, &rightcol, 0);
       if (curwin->w_curswant > (leftcol + rightcol) / 2) {
         end_visual.col = leftcol;
       } else {

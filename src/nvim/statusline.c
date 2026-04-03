@@ -485,7 +485,7 @@ void redraw_ruler(void)
   colnr_T virtcol = wp->w_virtcol;
   if (wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL) {
     wp->w_p_list = false;
-    getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
+    getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL, 0);
     wp->w_p_list = true;
   }
 

@@ -34,6 +34,7 @@ typedef struct {
 typedef struct {
   int width;
   int head;  ///< Size of 'breakindent' etc. before the character (included in width).
+  int tail;  ///< Size of 'linebreak' after the character (included in width).
 } CharSize;
 
 #include "plines.h.generated.h"
@@ -89,3 +90,8 @@ static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T 
     return linesize_regular(&csarg, 0, len);
   }
 }
+
+/// Flags used by getvcol()
+enum {
+  GETVCOL_END_EXCL_LBR = 1,
+};

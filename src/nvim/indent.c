@@ -766,7 +766,7 @@ int get_number_indent(linenr_T lnum)
   if ((pos.lnum == 0) || (*ml_get_pos(&pos) == NUL)) {
     return -1;
   }
-  getvcol(curwin, &pos, &col, NULL, NULL);
+  getvcol(curwin, &pos, &col, NULL, NULL, 0);
   return (int)col;
 }
 

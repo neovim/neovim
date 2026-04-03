@@ -2285,8 +2285,8 @@ static int getregionpos(typval_T *argvars, typval_T *rettv, pos_T *p1, pos_T *p2
   } else if (*region_type == kMTBlockWise) {
     colnr_T sc1, ec1, sc2, ec2;
     const bool lbr_saved = reset_lbr();
-    getvvcol(curwin, p1, &sc1, NULL, &ec1);
-    getvvcol(curwin, p2, &sc2, NULL, &ec2);
+    getvvcol(curwin, p1, &sc1, NULL, &ec1, 0);
+    getvvcol(curwin, p2, &sc2, NULL, &ec2, 0);
     restore_lbr(lbr_saved);
     oap->motion_type = kMTBlockWise;
     oap->inclusive = true;
@@ -7763,7 +7763,7 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         fp->col = len;
       }
     }
-    getvvcol(wp, fp, &vcol_start, NULL, &vcol_end);
+    getvvcol(wp, fp, &vcol_start, NULL, &vcol_end, 0);
     vcol_start++;
     vcol_end++;
   }

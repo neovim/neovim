@@ -308,7 +308,7 @@ void update_topline(win_T *wp)
 
         // Check that the cursor position is visible.  Add columns for
         // the marker displayed in the top-left if needed.
-        getvvcol(wp, &wp->w_cursor, &vcol, NULL, NULL);
+        getvvcol(wp, &wp->w_cursor, &vcol, NULL, NULL, 0);
         int overlap = sms_marker_overlap(wp, -1);
         if (wp->w_skipcol + overlap > vcol) {
           check_topline = true;
@@ -730,7 +730,7 @@ void validate_virtcol(win_T *wp)
     return;
   }
 
-  getvvcol(wp, &wp->w_cursor, NULL, &(wp->w_virtcol), NULL);
+  getvvcol(wp, &wp->w_cursor, NULL, &(wp->w_virtcol), NULL, 0);
   redraw_for_cursorcolumn(wp);
   wp->w_valid |= VALID_VIRTCOL;
 }
@@ -823,7 +823,7 @@ void curs_columns(win_T *wp, int may_scroll)
     // In a folded line the cursor is always in the first column
     startcol = wp->w_virtcol = endcol = wp->w_leftcol;
   } else {
-    getvvcol(wp, &wp->w_cursor, &startcol, &(wp->w_virtcol), &endcol);
+    getvvcol(wp, &wp->w_cursor, &startcol, &(wp->w_virtcol), &endcol, 0);
   }
 
   // remove '$' from change command when cursor moves onto it
@@ -1083,7 +1083,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1 + off;
     } else {
       assert(lnum == pos->lnum);
-      getvcol(wp, pos, &scol, &ccol, &ecol);
+      getvcol(wp, pos, &scol, &ccol, &ecol, 0);
 
       // similar to what is done in validate_cursor_col()
       colnr_T col = scol;

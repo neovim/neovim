@@ -2820,7 +2820,7 @@ static void replace_do_bs(int limit_col)
     if (l_State & VREPLACE_FLAG) {
       // Get the number of screen cells used by the character we are
       // going to delete.
-      getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL);
+      getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL, 0);
       orig_vcols = win_chartabsize(curwin, get_cursor_pos_ptr(), start_vcol);
     }
     del_char_after_col(limit_col);
@@ -4009,8 +4009,8 @@ static bool ins_tab(void)
     }
 
     // compute virtual column numbers of first white and cursor
-    getvcol(curwin, &fpos, &vcol, NULL, NULL);
-    getvcol(curwin, cursor, &want_vcol, NULL, NULL);
+    getvcol(curwin, &fpos, &vcol, NULL, NULL, 0);
+    getvcol(curwin, cursor, &want_vcol, NULL, NULL, 0);
 
     char *tab = "\t";
     int32_t tab_v = (uint8_t)(*tab);

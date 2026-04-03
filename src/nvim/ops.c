@@ -1806,7 +1806,7 @@ void adjust_cursor_eol(void)
     colnr_T scol, ecol;
 
     // Coladd is set to the width of the last character.
-    getvcol(curwin, &curwin->w_cursor, &scol, NULL, &ecol);
+    getvcol(curwin, &curwin->w_cursor, &scol, NULL, &ecol, 0);
     curwin->w_cursor.coladd = ecol - scol + 1;
   }
 }
@@ -2076,6 +2076,9 @@ theend:
   return ret;
 }
 
+/// TODO(zeertzjq): consider using CharSize.tail instead of temporarily
+/// resetting 'linebreak'.
+///
 /// Reset 'linebreak' and take care of side effects.
 /// @return  the previous value, to be passed to restore_lbr().
 bool reset_lbr(void)
@@ -2253,7 +2256,7 @@ void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T
   if (lnum == start.lnum) {
     startcol = start.col;
     if (virtual_op) {
-      getvcol(curwin, &start, &cs, NULL, &ce);
+      getvcol(curwin, &start, &cs, NULL, &ce, 0);
       if (ce != cs && start.coladd > 0) {
         // Part of a tab selected -- but don't double-count it.
         bdp->start_char_vcols = ce - cs + 1;
@@ -2266,7 +2269,7 @@ void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T
   if (lnum == end.lnum) {
     endcol = end.col;
     if (virtual_op) {
-      getvcol(curwin, &end, &cs, NULL, &ce);
+      getvcol(curwin, &end, &cs, NULL, &ce, 0);
       if (p[endcol] == NUL || (cs + end.coladd < ce
                                // Don't add space for double-wide
                                // char; endcol will be on last byte
@@ -2871,7 +2874,7 @@ void cursor_pos_info(dict_T *dict)
         oparg.is_VIsual = true;
         oparg.motion_type = kMTBlockWise;
         oparg.op_type = OP_NOP;
-        getvcols(curwin, &min_pos, &max_pos, &oparg.start_vcol, &oparg.end_vcol);
+        getvcols(curwin, &min_pos, &max_pos, &oparg.start_vcol, &oparg.end_vcol, 0);
         p_sbr = saved_sbr;
         curwin->w_p_sbr = saved_w_sbr;
         if (curwin->w_curswant == MAXCOL) {
@@ -2961,7 +2964,7 @@ void cursor_pos_info(dict_T *dict)
     if (dict == NULL) {
       if (l_VIsual_active) {
         if (l_VIsual_mode == Ctrl_V && curwin->w_curswant < MAXCOL) {
-          getvcols(curwin, &min_pos, &max_pos, &min_pos.col, &max_pos.col);
+          getvcols(curwin, &min_pos, &max_pos, &min_pos.col, &max_pos.col, 0);
           int64_t cols;
           STRICT_SUB(oparg.end_vcol + 1, oparg.start_vcol, &cols, int64_t);
           vim_snprintf(buf1, sizeof(buf1), _("%" PRId64 " Cols; "),
@@ -3213,9 +3216,9 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
   // prevent from moving onto a trail byte
   mark_mb_adjustpos(curwin->w_buffer, &oap->end);
 
-  getvvcol(curwin, &(oap->start), &oap->start_vcol, NULL, &oap->end_vcol);
+  getvvcol(curwin, &(oap->start), &oap->start_vcol, NULL, &oap->end_vcol, 0);
   if (!redo_VIsual_busy) {
-    getvvcol(curwin, &(oap->end), &start, NULL, &end);
+    getvvcol(curwin, &(oap->end), &start, NULL, &end, 0);
 
     oap->start_vcol = MIN(oap->start_vcol, start);
     if (end > oap->end_vcol) {
@@ -3235,7 +3238,7 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
     oap->end_vcol = 0;
     for (curwin->w_cursor.lnum = oap->start.lnum;
          curwin->w_cursor.lnum <= oap->end.lnum; curwin->w_cursor.lnum++) {
-      getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &end);
+      getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &end, 0);
       oap->end_vcol = MAX(oap->end_vcol, end);
     }
   } else if (redo_VIsual_busy) {
@@ -3480,13 +3483,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           resel_VIsual_vcol = MAXCOL;
         } else {
           if (VIsual_mode != Ctrl_V) {
-            getvvcol(curwin, &(oap->end),
-                     NULL, NULL, &oap->end_vcol);
+            getvvcol(curwin, &(oap->end), NULL, NULL, &oap->end_vcol, 0);
           }
           if (VIsual_mode == Ctrl_V || oap->line_count <= 1) {
             if (VIsual_mode != Ctrl_V) {
-              getvvcol(curwin, &(oap->start),
-                       &oap->start_vcol, NULL, NULL);
+              getvvcol(curwin, &(oap->start), &oap->start_vcol, NULL, NULL, 0);
             }
             resel_VIsual_vcol = oap->end_vcol - oap->start_vcol + 1;
           } else {

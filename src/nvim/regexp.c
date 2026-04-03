@@ -1493,8 +1493,8 @@ static bool reg_match_visual(void)
       return false;
     }
   } else if (mode == Ctrl_V) {
-    getvvcol(wp, &top, &start, NULL, &end);
-    getvvcol(wp, &bot, &start2, NULL, &end2);
+    getvvcol(wp, &top, &start, NULL, &end, 0);
+    getvvcol(wp, &bot, &start2, NULL, &end2, 0);
     if (start2 < start) {
       start = start2;
     }
@@ -4681,7 +4681,7 @@ static uint8_t *regatom(int *flagp)
           } else {
             if (cur) {
               colnr_T vcol = 0;
-              getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol);
+              getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol, 0);
               n = (uint32_t)(++vcol);
             }
             ret = regnode(RE_VCOL);
@@ -10389,7 +10389,7 @@ static int nfa_regatom(void)
         } else {
           if (cur) {
             colnr_T vcol = 0;
-            getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol);
+            getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol, 0);
             n = ++vcol;
           }
           // \%{n}v  \%{n}<v  \%{n}>v

@@ -3959,10 +3959,10 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
 
               colnr_T sc, ec;
-              getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL);
+              getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL, 0);
               curwin->w_cursor.col = MAX(regmatch.endpos[0].col - 1, 0);
 
-              getvcol(curwin, &curwin->w_cursor, NULL, NULL, &ec);
+              getvcol(curwin, &curwin->w_cursor, NULL, NULL, &ec, 0);
               curwin->w_cursor.col = regmatch.startpos[0].col;
               if (subflags.do_number || curwin->w_p_nu) {
                 int numw = number_width(curwin) + 1;
