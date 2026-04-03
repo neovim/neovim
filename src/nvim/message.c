@@ -283,7 +283,7 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
     if (check_int && got_int) {
       return;
     }
-    if (*s == '\n' || *s == TAB || *s == '\r') {
+    if (*s == '\n' || *s == TAB || *s == '\r' || *s == BELL) {
       // Print all chars before the delimiter
       msg_outtrans_len(chunk, (int)(s - chunk), hl_id, hist);
 
@@ -291,7 +291,11 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
         msg_clr_eos();
         *need_clear = false;
       }
-      msg_putchar_hl((uint8_t)(*s), hl_id);
+      if (*s == BELL) {
+        vim_beep(kOptBoFlagShell);
+      } else {
+        msg_putchar_hl((uint8_t)(*s), hl_id);
+      }
       chunk = s + 1;
     }
     s++;
