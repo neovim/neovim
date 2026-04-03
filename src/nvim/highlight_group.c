@@ -737,6 +737,24 @@ int highlight_link_id(int id)
   return hl_table[id].sg_link;
 }
 
+/// Resolve a highlight group to the effective global group used for its colors.
+static int highlight_resolve_global_id(int hl_id)
+{
+  for (int count = 100; --count >= 0;) {
+    HlGroup *sgp = &hl_table[hl_id - 1];
+
+    if (sgp->sg_link > 0 && sgp->sg_link <= highlight_ga.ga_len) {
+      hl_id = sgp->sg_link;
+    } else if (sgp->sg_cleared && sgp->sg_parent > 0) {
+      hl_id = sgp->sg_parent;
+    } else {
+      break;
+    }
+  }
+
+  return hl_id;
+}
+
 /// Create default links for Nvim* highlight groups used for cmdline coloring
 void syn_init_cmdline_highlight(bool reset, bool init)
 {
@@ -919,6 +937,14 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
 
   HlGroup *g = &hl_table[idx];
   g->sg_cleared = false;
+  bool update = HAS_KEY(dict, highlight, update) && dict->update;
+  int base_rgb_idx[] = { g->sg_rgb_fg_idx, g->sg_rgb_bg_idx, g->sg_rgb_sp_idx };
+  if (update) {
+    HlGroup *base = &hl_table[highlight_resolve_global_id(id) - 1];
+    base_rgb_idx[0] = base->sg_rgb_fg_idx;
+    base_rgb_idx[1] = base->sg_rgb_bg_idx;
+    base_rgb_idx[2] = base->sg_rgb_sp_idx;
+  }
 
   if (link_id > 0) {
     g->sg_link = link_id;
@@ -935,8 +961,6 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   } else {
     g->sg_link = 0;
   }
-
-  bool update = HAS_KEY(dict, highlight, update) && dict->update;
   g->sg_gui = attrs.rgb_ae_attr &~HL_DEFAULT;
 
   g->sg_rgb_fg = attrs.rgb_fg_color;
@@ -963,7 +987,9 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
       } else {
         *cattrs[j].dest = kColorIdxHex;
       }
-    } else if (!update) {
+    } else if (update) {
+      *cattrs[j].dest = base_rgb_idx[j];
+    } else {
       *cattrs[j].dest = kColorIdxNone;
     }
   }

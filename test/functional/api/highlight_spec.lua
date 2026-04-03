@@ -291,6 +291,15 @@ describe('API: set highlight', function()
     eq(nil, hl.link)
     eq(true, hl.bold)
 
+    api.nvim_set_hl(0, 'RedBG', { bg = 'red' })
+    api.nvim_set_hl(0, 'LinkedGroup', { link = 'RedBG' })
+    api.nvim_set_hl(0, 'LinkedGroup', { fg = '#00ff00', update = true })
+    hl = api.nvim_get_hl(0, { name = 'LinkedGroup' })
+    eq(tonumber('0x00ff00'), hl.fg)
+    eq(tonumber('0xff0000'), hl.bg)
+    eq(nil, hl.link)
+    eq('LinkedGroup    xxx guifg=#00ff00 guibg=Red', exec_capture('highlight LinkedGroup'))
+
     -- underline style flags: false must not corrupt other styles
     local unders = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
     for _, a in ipairs(unders) do
