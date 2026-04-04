@@ -44,7 +44,9 @@ endif()
 # User settings
 #-------------------------------------------------------------------------------
 
-set(DEPS_IGNORE_SHA FALSE)
+if(NOT DEPS_IGNORE_SHA)
+  set(DEPS_IGNORE_SHA FALSE)
+endif()
 
 #-------------------------------------------------------------------------------
 # Variables
