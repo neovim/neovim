@@ -247,7 +247,7 @@ describe('linebreak', function()
       {17:foo}^                 │{1:~                                      }|
       xxxxxxxxxxxxxxxxxxxx│{1:~                                      }|
       {1:~                   }│{1:~                                      }|*2
-      {5:-- VISUAL BLOCK --}              2x20      2,4           All |
+      {5:-- VISUAL BLOCK --}              2x4       2,4           All |
     ]])
 
     -- TAB as end char: 'linebreak' shouldn't break Visual block hl

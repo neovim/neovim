@@ -412,11 +412,12 @@ func Test_visual_block_hl_with_linebreak()
       setlocal nolinebreak
       call setline(1, [repeat('x', 15), repeat('x', 10), repeat('x', 10)])
       call prop_type_add('test', {})
-      call prop_add(2, 5, #{text: "foo: ",type: "test"})
-      call prop_add(3, 5, #{text: "bar: ",type: "test"})
+      call prop_add(2, 5, #{text: "foo: ", type: "test"})
+      call prop_add(3, 5, #{text: "bar: ", type: "test"})
       exe "normal! gg02l\<C-V>2j2l"
     endfunc
 
+    set laststatus=0 showcmd ruler
     " FIXME: clipboard=autoselect sometimes changes Visual highlight
     set clipboard=
   END
