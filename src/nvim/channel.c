@@ -167,7 +167,13 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       chan->stream.err.closed = true;
       // Don't close on exit, in case late error messages
       if (!exiting) {
-        fclose(stderr);
+        // Don't close the file descriptor, as that may cause later writes to stderr
+        // to go to an unrelated file. Redirect it to NUL or /dev/null instead.
+#ifdef MSWIN
+        freopen("NUL:", "w", stderr);
+#else
+        freopen("/dev/null", "w", stderr);
+#endif
       }
       channel_decref(chan);
     }
