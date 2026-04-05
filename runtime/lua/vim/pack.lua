@@ -499,8 +499,16 @@ local function new_progress_report(action)
   end)
 end
 
-local n_threads = 2 * #(uv.cpu_info() or { {} })
 local copcall = package.loaded.jit and pcall or require('coxpcall').pcall
+
+local function async_join_run_wait(funs)
+  local n_threads = 2 * (uv.available_parallelism() or 1)
+  --- @async
+  local function joined_f()
+    async.join(n_threads, funs)
+  end
+  async.run(joined_f):wait()
+end
 
 --- Execute function in parallel for each non-errored plugin in the list
 --- @param plug_list vim.pack.Plug[]
@@ -536,13 +544,7 @@ local function run_list(plug_list, f, progress_action)
 
   -- Run async in parallel but wait for all to finish/timeout
   report_progress('begin', 0, '(0/%d)', #funs)
-
-  --- @async
-  local function joined_f()
-    async.join(n_threads, funs)
-  end
-  async.run(joined_f):wait()
-
+  async_join_run_wait(funs)
   report_progress('end', 100, '(%d/%d)', #funs, #funs)
 end
 
@@ -1407,11 +1409,7 @@ local function add_p_data_info(p_data_list)
       p_data.tags = git_get_tags(path)
     end
   end
-  --- @async
-  local function joined_f()
-    async.join(n_threads, funs)
-  end
-  async.run(joined_f):wait()
+  async_join_run_wait(funs)
 end
 
 --- Gets |vim.pack| plugin info, optionally filtered by `names`.
