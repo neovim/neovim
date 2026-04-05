@@ -291,11 +291,18 @@ describe('vim.secure', function()
       ]]
       )
       t.write_file(
+        'Xfile_err_table',
+        [[
+        error({ msg = "table error object" })
+      ]]
+      )
+      t.write_file(
         'Xfile_syntax',
         [[
         this is not valid lua
       ]]
       )
+      t.mkdir('Xdir')
       screen = Screen.new(500, 8)
     end)
 
@@ -303,7 +310,9 @@ describe('vim.secure', function()
       screen:detach()
       os.remove('Xfile')
       os.remove('Xfile_err')
+      os.remove('Xfile_err_table')
       os.remove('Xfile_syntax')
+      n.rmdir('Xdir')
       n.rmdir(xstate)
     end)
 
@@ -361,6 +370,43 @@ describe('vim.secure', function()
       ]]
       local err = exec_lua(code)
       matches('.*Xfile_err.*runtime error test.*', err)
+    end)
+
+    it('handles non-string runtime errors', function()
+      local cwd = fn.getcwd()
+      local hash = fn.sha256(assert(read_file('Xfile_err_table')))
+      t.write_file(
+        stdpath('state') .. pathsep .. 'trust',
+        string.format('%s %s', hash, cwd .. pathsep .. 'Xfile_err_table')
+      )
+
+      local code = [[
+        _G.notif_msg = nil
+        local orig_notify = vim.notify
+        vim.notify = function(msg, level)
+          _G.notif_msg = msg
+        end
+        vim.secure.source('Xfile_err_table')
+        vim.notify = orig_notify
+        return _G.notif_msg
+      ]]
+      local err = exec_lua(code)
+      matches('.*table:.*', err)
+    end)
+
+    it('silently rejects directories', function()
+      local code = [[
+        _G.notif_msg = nil
+        local orig_notify = vim.notify
+        vim.notify = function(msg, level)
+          _G.notif_msg = msg
+        end
+        vim.secure.source('Xdir')
+        vim.notify = orig_notify
+        return _G.notif_msg
+      ]]
+      local err = exec_lua(code)
+      eq(vim.NIL, err)
     end)
   end)
 

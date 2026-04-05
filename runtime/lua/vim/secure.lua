@@ -168,20 +168,25 @@ end
 ---
 ---@param path (string) Path to a file to read and evaluate.
 function M.source(path)
+  local fullpath = vim.uv.fs_realpath(vim.fs.normalize(path))
+  if not fullpath or vim.fn.isdirectory(fullpath) == 1 then
+    return
+  end
+
   local content = M.read(path)
   if type(content) ~= 'string' then
     return
   end
 
-  local chunk, err = load(content, '@' .. path)
+  local chunk, err = load(content, '@' .. path, 't')
   if not chunk then
-    vim.notify(err, vim.log.levels.ERROR)
+    vim.notify(tostring(err), vim.log.levels.ERROR)
     return
   end
 
   local ok, run_err = pcall(chunk)
   if not ok then
-    vim.notify(run_err, vim.log.levels.ERROR)
+    vim.notify(tostring(run_err), vim.log.levels.ERROR)
   end
 end
 
