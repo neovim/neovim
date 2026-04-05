@@ -2639,6 +2639,7 @@ describe('LSP', function()
           return vim.api.nvim_buf_get_lines(target_bufnr, 0, -1, false)
         end, make_workspace_edit(edits))
       )
+      eq(true, api.nvim_get_option_value('buflisted', { buf = target_bufnr }))
     end)
 
     it('apply_workspace_edit applies multiple edits', function()
