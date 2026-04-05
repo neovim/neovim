@@ -114,6 +114,10 @@ void ex_help(exarg_T *eap)
     }
     api_free_object(res);
     api_clear_error(&err);
+    if (allocated_arg == NULL) {
+      emsg(_(e_noident));
+      return;
+    }
   }
 
   // Check if there is a match for the argument.

@@ -132,8 +132,6 @@ static inline void normal_state_init(NormalState *s)
 // n_*(): functions called to handle Normal mode commands.
 // v_*(): functions called to handle Visual mode commands.
 
-static const char *e_noident = N_("E349: No identifier under cursor");
-
 /// Function to be called for a Normal or Visual mode command.
 /// The argument is a cmdarg_T.
 typedef void (*nv_func_T)(cmdarg_T *cap);
