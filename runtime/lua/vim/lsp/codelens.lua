@@ -484,10 +484,13 @@ function M.on_refresh(err, _, ctx)
   for bufnr, provider in pairs(Provider.active) do
     for client_id in pairs(provider.client_state) do
       if client_id == ctx.client_id then
-        provider:request(client_id, function()
-          provider.row_version = {}
-          vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
-        end)
+        -- Do nothing if a request is already scheduled.
+        if not provider.timer then
+          provider:request(client_id, function()
+            provider.row_version = {}
+            vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+          end)
+        end
       end
     end
   end
