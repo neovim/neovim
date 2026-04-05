@@ -867,6 +867,12 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   // environment variable $NoDefaultCurrentDirectoryInExePath
   char *oldval = os_getenv("NoDefaultCurrentDirectoryInExePath");
   os_setenv("NoDefaultCurrentDirectoryInExePath", "1", true);
+
+  UINT old_output_cp = GetConsoleOutputCP();
+  UINT old_input_cp = GetConsoleCP();
+  // Force console codepage to UTF-8 before spawning child process. #33480
+  SetConsoleOutputCP(CP_UTF8);
+  SetConsoleCP(CP_UTF8);
 #endif
 
   out_data_decide_throttle(0);  // Initialize throttle decider.
@@ -982,6 +988,8 @@ end:
 #ifdef MSWIN
   // Restore original value of NoDefaultCurrentDirectoryInExePath
   restore_env_var("NoDefaultCurrentDirectoryInExePath", oldval, true);
+  SetConsoleOutputCP(old_output_cp);
+  SetConsoleCP(old_input_cp);
 #endif
 
   return exitcode;

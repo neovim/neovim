@@ -166,6 +166,11 @@ describe('system()', function()
         test_shell_unquoting()
       end)
 
+      it('spawns child process with UTF-8 codepage', function()
+        command('set shell=cmd.exe')
+        eq('тест\n', eval([[system('echo тест')]]))
+      end)
+
       it('with shell=cmd', function()
         command('set shell=cmd')
         eq('"a b"\n', eval([[system('echo "a b"')]]))
