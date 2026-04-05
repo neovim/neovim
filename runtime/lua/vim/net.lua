@@ -87,9 +87,7 @@ function M.request(url, opts, on_response)
       err = res.stderr ~= '' and res.stderr or ('Request failed with exit code %d'):format(res.code)
     else
       if on_response then
-        response = {
-          body = res.stdout --[[@as string]],
-        }
+        response = { body = res.stdout or '' }
       end
     end
 
