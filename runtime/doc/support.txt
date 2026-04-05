@@ -16,13 +16,13 @@ Linux (x86_64)   1      >= 2.6.32, glibc >= 2.12     Ubuntu 24.04
 Linux (arm64)    1      >= 2.6.32, glibc >= 2.12     Ubuntu 24.04
 macOS (x86_64)   1      >= 11                        macOS 15
 macOS (arm64)    1      >= 11                        macOS 26
-Windows 64-bit   1      >= Windows 10 Version 1809   Windows Server 2025
+Windows 64-bit   1      >= Windows 10 Version 2004   Windows Server 2025
 FreeBSD          1      >= 10                        FreeBSD 15
 OpenBSD          2      >= 7
 MinGW            2      MinGW-w64
-Windows 64-bit   3      < Windows 10 Version 1809
+Windows 64-bit   3      < Windows 10 Version 2004
 
-Note: Windows 10 "Version 1809" or later is required for |:terminal|. To check
+Note: Windows 10 "Version 2004" or later is required for |:terminal|. To check
 your Windows version, run the "winver" command and look for "Version xxxx"
 (NOT "OS Build").
 
@@ -31,14 +31,12 @@ https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=ms
 
 Support types ~
 
-* Tier 1: Officially supported and tested with CI. Any contributed patch
+- Tier 1: Officially supported and tested with CI. Any contributed patch
   MUST NOT break support for such platforms.
-
-* Tier 2: Officially supported, but not necessarily tested with CI. Support
+- Tier 2: Officially supported, but not necessarily tested with CI. Support
   for these platforms are maintained by best effort, without being a top
   priority.
-
-* Tier 3: Not tested and no guarantees, and not all features may work.
+- Tier 3: Not tested and no guarantees, and not all features may work.
 
 Adding support for a new platform ~
 
