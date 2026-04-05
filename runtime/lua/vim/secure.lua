@@ -159,6 +159,32 @@ function M.read(path)
   return contents
 end
 
+--- Attempt to read {path}, trusting it if necessary, and compile and execute the result.
+--- Semantically equivalent to `vim.secure.read()`, `load()`, and `pcall()`, with proper error
+--- reporting and chunk naming.
+---
+---@since 13
+---@see |vim.secure.read()|
+---
+---@param path (string) Path to a file to read and evaluate.
+function M.source(path)
+  local content = M.read(path)
+  if type(content) ~= 'string' then
+    return
+  end
+
+  local chunk, err = load(content, '@' .. path)
+  if not chunk then
+    vim.notify(err, vim.log.levels.ERROR)
+    return
+  end
+
+  local ok, run_err = pcall(chunk)
+  if not ok then
+    vim.notify(run_err, vim.log.levels.ERROR)
+  end
+end
+
 --- @class vim.trust.opts
 --- @inlinedoc
 ---

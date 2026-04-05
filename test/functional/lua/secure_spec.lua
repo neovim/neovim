@@ -271,6 +271,99 @@ describe('vim.secure', function()
     end)
   end)
 
+  describe('source()', function()
+    local xstate = 'Xstate_lua_secure'
+    local screen ---@type test.functional.ui.screen
+
+    before_each(function()
+      clear { env = { XDG_STATE_HOME = xstate } }
+      n.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      t.write_file(
+        'Xfile',
+        [[
+        _G.foobar = 42
+      ]]
+      )
+      t.write_file(
+        'Xfile_err',
+        [[
+        error("runtime error test")
+      ]]
+      )
+      t.write_file(
+        'Xfile_syntax',
+        [[
+        this is not valid lua
+      ]]
+      )
+      screen = Screen.new(500, 8)
+    end)
+
+    after_each(function()
+      screen:detach()
+      os.remove('Xfile')
+      os.remove('Xfile_err')
+      os.remove('Xfile_syntax')
+      n.rmdir(xstate)
+    end)
+
+    it('executes trusted files', function()
+      local cwd = fn.getcwd()
+      local hash = fn.sha256(assert(read_file('Xfile')))
+      t.write_file(
+        stdpath('state') .. pathsep .. 'trust',
+        string.format('%s %s', hash, cwd .. pathsep .. 'Xfile')
+      )
+
+      exec_lua([[vim.secure.source('Xfile')]])
+      eq(42, exec_lua([[return _G.foobar]]))
+    end)
+
+    it('notifies on syntax error', function()
+      local cwd = fn.getcwd()
+      local hash = fn.sha256(assert(read_file('Xfile_syntax')))
+      t.write_file(
+        stdpath('state') .. pathsep .. 'trust',
+        string.format('%s %s', hash, cwd .. pathsep .. 'Xfile_syntax')
+      )
+
+      local code = [[
+        _G.notif_msg = nil
+        local orig_notify = vim.notify
+        vim.notify = function(msg, level)
+          _G.notif_msg = msg
+        end
+        vim.secure.source('Xfile_syntax')
+        vim.notify = orig_notify
+        return _G.notif_msg
+      ]]
+      local err = exec_lua(code)
+      matches('.*Xfile_syntax.*', err)
+    end)
+
+    it('notifies on runtime error', function()
+      local cwd = fn.getcwd()
+      local hash = fn.sha256(assert(read_file('Xfile_err')))
+      t.write_file(
+        stdpath('state') .. pathsep .. 'trust',
+        string.format('%s %s', hash, cwd .. pathsep .. 'Xfile_err')
+      )
+
+      local code = [[
+        _G.notif_msg = nil
+        local orig_notify = vim.notify
+        vim.notify = function(msg, level)
+          _G.notif_msg = msg
+        end
+        vim.secure.source('Xfile_err')
+        vim.notify = orig_notify
+        return _G.notif_msg
+      ]]
+      local err = exec_lua(code)
+      matches('.*Xfile_err.*runtime error test.*', err)
+    end)
+  end)
+
   describe('trust()', function()
     local xstate = 'Xstate_lua_secure'
     local test_file = 'Xtest_functional_lua_secure'

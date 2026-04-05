@@ -96,6 +96,7 @@ LSP
 
 LUA
 
+• vim.secure.source() safely reads and evaluates trusted files.
 • todo
 
 OPTIONS

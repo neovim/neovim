@@ -4709,6 +4709,20 @@ vim.secure.read({path})                                    *vim.secure.read()*
     See also: ~
       • |:trust|
 
+vim.secure.source({path})                                *vim.secure.source()*
+    Attempt to read {path}, trusting it if necessary, and compile and execute
+    the result. Semantically equivalent to `vim.secure.read()`, `load()`, and
+    `pcall()`, with proper error reporting and chunk naming.
+
+    Attributes: ~
+        Since: 0.11.0
+
+    Parameters: ~
+      • {path}  (`string`) Path to a file to read and evaluate.
+
+    See also: ~
+      • |vim.secure.read()|
+
 vim.secure.trust({opts})                                  *vim.secure.trust()*
     Manage the trust database.
 
