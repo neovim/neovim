@@ -169,15 +169,17 @@ local function check_performance()
   health.start('Performance')
 
   -- Check buildtype
-  local buildtype = vim.fn.matchstr(vim.fn.execute('version'), [[\v\cbuild type:?\s*[^\n\r\t ]+]])
+  local buildtype = vim.fn.matchstr(vim.fn.execute('version'), [[\v\cbuild type:?\s*[^\n\r\t]+]])
   if buildtype == '' then
     health.error('failed to get build type from :version')
-  elseif vim.regex([[\v(MinSizeRel|Release|RelWithDebInfo)]]):match_str(buildtype) then
+  elseif
+    vim.regex([[\v(MinSizeRel|RelWithDebInfo|Release(Fast|Safe|Small)?)]]):match_str(buildtype)
+  then
     health.ok(buildtype)
   else
     health.info(buildtype)
     health.warn('Non-optimized debug build. Nvim will be slower.', {
-      'Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
+      'Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo` (CMake) or `-Doptimize=ReleaseFast` (Zig).',
       suggest_faq,
     })
   end
