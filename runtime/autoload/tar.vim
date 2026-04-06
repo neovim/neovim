@@ -19,6 +19,7 @@
 "   2025 Jul 13 by Vim Project: warn with path traversal attacks
 "   2026 Feb 06 by Vim Project: consider 'nowrapscan' (#19333)
 "   2026 Feb 07 by Vim Project: make the path traversal detection more robust (#19341)
+"   2026 Apr 06 by Vim Project: fix bugs with lz4 support (#19925)
 "
 "	Contains many ideas from Michael Toren's <tar.vim>
 "
@@ -703,7 +704,9 @@ fun! tar#Extract()
    endif
 
   elseif filereadable(tarbase.".tlz4")
-   let extractcmd= substitute(extractcmd,"-","-I lz4","")
+   if has("linux")
+    let extractcmd= substitute(extractcmd,"-","-I lz4 -","")
+   endif
    call system(extractcmd." ".shellescape(tarbase).".tlz4 ".shellescape(fname))
    if v:shell_error != 0
     call s:Msg('tar#Extract', 'error', $"{extractcmd} {tarbase}.tlz4 {fname}: failed!")
@@ -712,8 +715,10 @@ fun! tar#Extract()
    endif
 
   elseif filereadable(tarbase.".tar.lz4")
-   let extractcmd= substitute(extractcmd,"-","-I lz4","")
-   call system(extractcmd." ".shellescape(tarbase).".tar.lz4".shellescape(fname))
+   if has("linux")
+    let extractcmd= substitute(extractcmd,"-","-I lz4 -","")
+   endif
+   call system(extractcmd." ".shellescape(tarbase).".tar.lz4 ".shellescape(fname))
    if v:shell_error != 0
     call s:Msg('tar#Extract', 'error', $"{extractcmd} {tarbase}.tar.lz4 {fname}: failed!")
    else

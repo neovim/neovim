@@ -150,3 +150,57 @@ func Test_tar_path_traversal_with_nowrapscan()
 
   bw!
 endfunc
+
+func Test_tar_lz4_extract()
+  CheckExecutable lz4
+
+  call delete('X.txt')
+  call delete('Xarchive.tar')
+  call delete('Xarchive.tar.lz4')
+  call writefile(['hello'], 'X.txt')
+  call system('tar -cf Xarchive.tar X.txt')
+  call assert_equal(0, v:shell_error)
+
+  call system('lz4 -z Xarchive.tar Xarchive.tar.lz4')
+  call assert_equal(0, v:shell_error)
+
+  call delete('X.txt')
+  call delete('Xarchive.tar')
+  defer delete('Xarchive.tar.lz4')
+
+  e Xarchive.tar.lz4
+  call assert_match('X.txt', getline(5))
+  :5
+  normal x
+  call assert_true(filereadable('X.txt'))
+  call assert_equal(['hello'], readfile('X.txt'))
+  call delete('X.txt')
+  bw!
+endfunc
+
+func Test_tlz4_extract()
+  CheckExecutable lz4
+
+  call delete('X.txt')
+  call delete('Xarchive.tar')
+  call delete('Xarchive.tlz4')
+  call writefile(['goodbye'], 'X.txt')
+  call system('tar -cf Xarchive.tar X.txt')
+  call assert_equal(0, v:shell_error)
+
+  call system('lz4 -z Xarchive.tar Xarchive.tlz4')
+  call assert_equal(0, v:shell_error)
+
+  call delete('X.txt')
+  call delete('Xarchive.tar')
+  defer delete('Xarchive.tlz4')
+
+  e Xarchive.tlz4
+  call assert_match('X.txt', getline(5))
+  :5
+  normal x
+  call assert_true(filereadable('X.txt'))
+  call assert_equal(['goodbye'], readfile('X.txt'))
+  call delete('X.txt')
+  bw!
+endfunc
