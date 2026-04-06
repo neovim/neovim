@@ -498,17 +498,19 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
   // scrolling into
   int final_blank_row = new_rows;
 
+  bool do_reflow = screen->reflow && (bufidx == BUFIDX_PRIMARY);
+
   while (old_row >= 0) {
     int old_row_end = old_row;
     // TODO(vterm): Stop if dwl or dhl
-    while (screen->reflow && old_lineinfo && old_row > 0 && old_lineinfo[old_row].continuation) {
+    while (do_reflow && old_lineinfo && old_row > 0 && old_lineinfo[old_row].continuation) {
       old_row--;
     }
     int old_row_start = old_row;
 
     int width = 0;
     for (int row = old_row_start; row <= old_row_end; row++) {
-      if (screen->reflow && row < (old_rows - 1) && old_lineinfo[row + 1].continuation) {
+      if (do_reflow && row < (old_rows - 1) && old_lineinfo[row + 1].continuation) {
         width += old_cols;
       } else {
         width += line_popcount(old_buffer, row, old_rows, old_cols);
@@ -519,7 +521,7 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
       final_blank_row = new_row;
     }
 
-    int new_height = screen->reflow
+    int new_height = do_reflow
                      ? width ? (width + new_cols - 1) / new_cols : 1
                      : 1;
 
@@ -595,7 +597,7 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
         if (old_col == old_cols) {
           old_row++;
 
-          if (!screen->reflow) {
+          if (!do_reflow) {
             new_col++;
             break;
           }
