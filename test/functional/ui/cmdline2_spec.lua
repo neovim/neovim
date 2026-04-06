@@ -237,6 +237,32 @@ describe('cmdline2', function()
       {16::}{15:call} {25:Foo}{16:()}^                                          |
     ]])
   end)
+
+  it('updated after setcmdline() #38764', function()
+    -- Also check that command-preview is updated.
+    exec('call setline(1, "foo")')
+    feed(':%s/foo')
+    screen:expect([[
+      {10:foo}                                                  |
+      {1:~                                                    }|*12
+      {16::}%{15:s}{16:/foo^ }                                             |
+    ]])
+    exec_lua(function()
+      _G.events = {}
+      vim.api.nvim_create_autocmd({ 'CmdlineChanged', 'CursorMovedC' }, {
+        callback = function(ev)
+          _G.events[ev.event] = (_G.events[ev.event] or 0) + 1
+        end,
+      })
+    end)
+    exec('call setcmdline("%s/fo")')
+    screen:expect([[
+      {10:fo}o                                                  |
+      {1:~                                                    }|*12
+      {16::}%{15:s}{16:/fo^ }                                              |
+    ]])
+    t.eq({ CmdlineChanged = 1, CursorMovedC = 1 }, exec_lua('return _G.events'))
+  end)
 end)
 
 describe('cmdline2', function()

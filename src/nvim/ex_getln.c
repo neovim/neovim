@@ -1324,6 +1324,10 @@ static int command_line_execute(VimState *state, int key)
     if (display_tick > display_tick_saved && s->is_state.did_incsearch) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
+    // If f_setcmdline() changed the cmdline treat it as such.
+    if (ccline.cmdbuff_replaced) {
+      command_line_changed(s);
+    }
 
     // nvim_select_popupmenu_item() can be called from the handling of
     // K_EVENT, K_COMMAND, or K_LUA.
@@ -2893,8 +2897,9 @@ static int command_line_changed(CommandLineState *s)
     }
   }
 
-  if (ccline.cmdpos != s->prev_cmdpos
-      || (s->prev_cmdbuff != NULL && strcmp(s->prev_cmdbuff, ccline.cmdbuff) != 0)) {
+  if (!ccline.cmdbuff_replaced
+      && (ccline.cmdpos != s->prev_cmdpos
+          || (s->prev_cmdbuff != NULL && strcmp(s->prev_cmdbuff, ccline.cmdbuff) != 0))) {
     // Trigger CmdlineChanged autocommands.
     do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
   }
