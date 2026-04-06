@@ -918,7 +918,7 @@ static list_T *tv_list_slice(list_T *ol, varnumber_T n1, varnumber_T n2)
   listitem_T *item = tv_list_find(ol, (int)n1);
   for (; n1 <= n2; n1++) {
     tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
-    item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
+    item = TV_LIST_ITEM_NEXT(ol, item);
   }
   return l;
 }
