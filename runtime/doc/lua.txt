@@ -2561,15 +2561,18 @@ vim.fs.dirname({file})                                      *vim.fs.dirname()*
         (`string?`) Parent directory of {file}
 
 vim.fs.ext({file}, {opts})                                      *vim.fs.ext()*
-    Return the file's last extension, if any.
+    Return the file's extension(s).
 
     Similar to |fnamemodify()| with the |::e| modifier. The extension does not
-    include a leading period.
+    include a leading period. If {opts.max} is provided, limit the number of
+    extensions to that value. The default is `1`, returning only the last
+    extension. The maximum number of extensions is capped at 50.
 
     Examples: >lua
         vim.fs.ext('archive.tar.gz') -- 'gz'
         vim.fs.ext('~/.git') -- ''
-        vim.fs.ext('plugin/myplug.lua') -- 'lua'
+
+        vim.fs.ext('archive.tar.gz', { max = 2 }) -- 'tar.gz'
 <
 
     Attributes: ~
@@ -2577,7 +2580,9 @@ vim.fs.ext({file}, {opts})                                      *vim.fs.ext()*
 
     Parameters: ~
       • {file}  (`string`) Path
-      • {opts}  (`table?`) Reserved for future use
+      • {opts}  (`table?`) A table with the following fields:
+                • {max}? (`integer`, default: `1`) Maximum number of
+                  extensions returned.
 
     Return: ~
         (`string`) Extension of {file}

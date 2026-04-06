@@ -844,27 +844,44 @@ function M.relpath(base, target, opts)
   return vim.startswith(target, base) and target:sub(#base + 1) or nil
 end
 
---- Return the file's last extension, if any.
+--- @class vim.fs.ext.Opts
+--- @inlinedoc
 ---
---- Similar to |fnamemodify()| with the |::e| modifier. The extension does not include a leading
---- period.
+--- Maximum number of extensions returned.
+--- (default: `1`)
+--- @field max? integer
+
+--- Return the file's extension(s).
+---
+--- Similar to |fnamemodify()| with the |::e| modifier. The extension does not
+--- include a leading period. If {opts.max} is provided, limit the number of
+--- extensions to that value. The default is `1`, returning only the last
+--- extension. The maximum number of extensions is capped at 50.
 ---
 --- Examples:
 ---
 --- ```lua
 --- vim.fs.ext('archive.tar.gz') -- 'gz'
 --- vim.fs.ext('~/.git') -- ''
---- vim.fs.ext('plugin/myplug.lua') -- 'lua'
+---
+--- vim.fs.ext('archive.tar.gz', { max = 2 }) -- 'tar.gz'
 --- ```
 ---
 ---@since 14
 ---@param file string Path
----@param opts table? Reserved for future use
+---@param opts vim.fs.ext.Opts?
 ---@return string Extension of {file}
 function M.ext(file, opts)
   vim.validate('file', file, 'string')
   vim.validate('opts', opts, 'table', true)
-  return vim.fn.fnamemodify(file, ':e')
+  opts = opts or {}
+  local max = math.min(opts.max or 1, 50)
+  vim.validate('opts.max', max, function(x)
+    return 0 < x
+  end, 'positive number')
+
+  local modifier = string.rep(':e', max)
+  return vim.fn.fnamemodify(file, modifier)
 end
 
 return M

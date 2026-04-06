@@ -96,7 +96,8 @@ LSP
 
 LUA
 
-• todo
+• |vim.fs.ext()| now supports a `max` parameter that sets the maximum number of
+  extensions returned. The default is `1` (only the last extension).
 
 OPTIONS
 
