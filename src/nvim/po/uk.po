@@ -5518,44 +5518,14 @@ msgstr "E1505: Некоректний специфікатор формату: %
 msgid "unknown"
 msgstr "невідомо"
 
-msgid "int"
-msgstr "int"
-
-msgid "long int"
-msgstr "long int"
-
-msgid "long long int"
-msgstr "long long int"
-
-msgid "signed size_t"
-msgstr "signed size_t"
-
-msgid "unsigned int"
-msgstr "unsigned int"
-
-msgid "unsigned long int"
-msgstr "unsigned long int"
-
-msgid "unsigned long long int"
-msgstr "unsigned long long int"
-
-msgid "size_t"
-msgstr "size_t"
-
 msgid "pointer"
 msgstr "pointer"
 
 msgid "percent"
 msgstr "percent"
 
-msgid "char"
-msgstr "char"
-
 msgid "string"
 msgstr "string"
-
-msgid "float"
-msgstr "float"
 
 msgid "E766: Insufficient arguments for printf()"
 msgstr "E766: Недостатньо аргументів для printf()"
