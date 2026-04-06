@@ -3701,7 +3701,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	command line has no uppercase characters, the added character is
 	converted to lowercase.
 	CTRL-R CTRL-W can be used to add the word at the end of the current
-	match, excluding the characters that were already typed.
+	match, excluding the characters that were already typed (starting from
+	the beginning of the word).
 
 						*'indentexpr'* *'inde'*
 'indentexpr' 'inde'	string	(default "")

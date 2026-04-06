@@ -4704,7 +4704,8 @@ local options = {
         command line has no uppercase characters, the added character is
         converted to lowercase.
         CTRL-R CTRL-W can be used to add the word at the end of the current
-        match, excluding the characters that were already typed.
+        match, excluding the characters that were already typed (starting from
+        the beginning of the word).
       ]=],
       full_name = 'incsearch',
       scope = { 'global' },
