@@ -303,7 +303,8 @@ api.nvim_set_decoration_provider(document_color_ns, {
 local function get_hl_info_under_cursor(provider)
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
   cursor_row = cursor_row - 1 -- Convert to 0-based index
-  local cursor_pos = vim.pos(cursor_row, cursor_col)
+  local buf = api.nvim_get_current_buf()
+  local cursor_pos = vim.pos(buf, cursor_row, cursor_col)
 
   for client_id, state in pairs(provider.client_state) do
     for _, hl in ipairs(state.hl_info) do

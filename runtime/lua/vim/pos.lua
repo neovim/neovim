@@ -35,12 +35,7 @@ local validate = vim.validate
 ---@class vim.Pos
 ---@field row integer 0-based byte index.
 ---@field col integer 0-based byte index.
----
---- Optional buffer handle.
----
---- When specified, it indicates that this position belongs to a specific buffer.
---- This field is required when performing position conversions.
----@field buf? integer
+---@field buf integer buffer handle.
 ---@field private [1] integer underlying representation of row
 ---@field private [2] integer underlying representation of col
 ---@field private [3] integer underlying representation of buf
@@ -61,26 +56,20 @@ function Pos.__index(pos, key)
   return Pos[key]
 end
 
----@class vim.Pos.Optional
----@inlinedoc
----@field buf? integer
-
 ---@package
+---@param buf integer
 ---@param row integer
 ---@param col integer
----@param opts? vim.Pos.Optional
-function Pos.new(row, col, opts)
+function Pos.new(buf, row, col)
+  validate('buf', buf, 'number')
   validate('row', row, 'number')
   validate('col', col, 'number')
-  validate('opts', opts, 'table', true)
-
-  opts = opts or {}
 
   ---@type vim.Pos
   local self = setmetatable({
     row,
     col,
-    opts.buf,
+    buf,
   }, Pos)
 
   return self
@@ -134,9 +123,8 @@ end
 ---
 --- Example:
 --- ```lua
---- -- `buf` is required for conversion to LSP position.
 --- local buf = vim.api.nvim_get_current_buf()
---- local pos = vim.pos(3, 5, { buf = buf })
+--- local pos = vim.pos(buf, 3, 5)
 ---
 --- -- Convert to LSP position, you can call it in a method style.
 --- local lsp_pos = pos:lsp('utf-16')
@@ -147,8 +135,7 @@ function Pos.to_lsp(pos, position_encoding)
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
 
-  local buf = assert(pos.buf, 'position is not a buffer position')
-  local row, col = pos.row, pos.col
+  local buf, row, col = pos.buf, pos.row, pos.col
   -- When on the first character,
   -- we can ignore the difference between byte and character.
   if col > 0 then
@@ -169,7 +156,6 @@ end
 ---   character = 5
 --- }
 ---
---- -- `buf` is mandatory, as LSP positions are always associated with a buffer.
 --- local pos = vim.pos.lsp(buf, lsp_pos, 'utf-16')
 --- ```
 ---@param buf integer
@@ -189,7 +175,7 @@ function Pos.lsp(buf, pos, position_encoding)
     col = vim.str_byteindex(get_line(buf, row), position_encoding, col, false)
   end
 
-  return Pos.new(row, col, { buf = buf })
+  return Pos.new(buf, row, col)
 end
 
 --- Converts |vim.Pos| to cursor position (see |api-indexing|).
@@ -200,10 +186,10 @@ function Pos.to_cursor(pos)
 end
 
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
+---@param buf integer
 ---@param pos [integer, integer]
----@param opts vim.Pos.Optional|nil
-function Pos.cursor(pos, opts)
-  return Pos.new(pos[1] - 1, pos[2], opts)
+function Pos.cursor(buf, pos)
+  return Pos.new(buf, pos[1] - 1, pos[2])
 end
 
 --- Converts |vim.Pos| to extmark position (see |api-indexing|).
@@ -223,11 +209,11 @@ function Pos.to_extmark(pos)
 end
 
 --- Creates a new |vim.Pos| from extmark position (see |api-indexing|).
+---@param buf integer
 ---@param row integer
 ---@param col integer
----@param opts vim.Pos.Optional|nil
-function Pos.extmark(row, col, opts)
-  return Pos.new(row, col, opts)
+function Pos.extmark(buf, row, col)
+  return Pos.new(buf, row, col)
 end
 
 -- Overload `Range.new` to allow calling this module as a function.
@@ -236,6 +222,6 @@ setmetatable(Pos, {
     return Pos.new(...)
   end,
 })
----@cast Pos +fun(row: integer, col: integer, opts: vim.Pos.Optional?): vim.Pos
+---@cast Pos +fun(buf: integer, row: integer, col: integer): vim.Pos
 
 return Pos

@@ -223,7 +223,8 @@ function Completor:show(hint)
   if current.range then
     row, col = current.range:to_extmark()
   else
-    row, col = vim.pos.cursor(api.nvim_win_get_cursor(vim.fn.bufwinid(self.bufnr))):to_extmark()
+    row, col =
+      vim.pos.cursor(self.bufnr, api.nvim_win_get_cursor(vim.fn.bufwinid(self.bufnr))):to_extmark()
   end
 
   -- To ensure that virtual text remains visible continuously (without flickering)
@@ -245,7 +246,7 @@ function Completor:show(hint)
   -- At least, characters before the cursor should be skipped.
   if api.nvim_win_get_buf(winid) == self.bufnr then
     local cursor_row, cursor_col =
-      vim.pos.cursor(api.nvim_win_get_cursor(winid), { buf = self.bufnr }):to_extmark()
+      vim.pos.cursor(self.bufnr, api.nvim_win_get_cursor(winid)):to_extmark()
     if row == cursor_row then
       skip = math.max(skip, cursor_col - col + 1)
     end
