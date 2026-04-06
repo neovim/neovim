@@ -994,9 +994,9 @@ func Test_syn_sync_grouphere_shorter_next_line()
       bar
     fi
   END
-  let lines = ['a']->repeat(50) + lines + ['a']->repeat(28 + winheight(0))
+  let lines = ['a']->repeat(50) + lines + ['a']->repeat(48)
 
-  new
+  20new
   call setline(1, lines)
   syn region shIf transparent
         \ start="\<if\_s" skip=+-fi\>+ end="\<;\_s*then\>" end="\<fi\>"
