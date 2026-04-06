@@ -2409,6 +2409,20 @@ vim.filetype.get_option({filetype}, {option})
     Return: ~
         (`string|boolean|integer`) Option value
 
+vim.filetype.inspect()                                *vim.filetype.inspect()*
+    Inspect the current state of the filetype registry.
+
+    Returns a copy of the internal tables used for filetype detection by
+    extension, filename, or pattern. Note: Due to the dynamic nature of
+    filetype detection, this is only useful for checking whether a certain
+    extension, filename, or pattern has been registered so far. In addition,
+    the `pattern` table is in an internal format optimized for fast lookup.
+    Prefer |vim.filetype.match()| for checking the detected filetype for a
+    given pattern.
+
+    Return: ~
+        (`table<string, table<string, vim.filetype.mapping|table<string, vim.filetype.mapping>>>`)
+
 vim.filetype.match({args})                              *vim.filetype.match()*
     Perform filetype detection.
 

@@ -96,7 +96,8 @@ LSP
 
 LUA
 
-• todo
+• |vim.filetype.inspect()| returns a copy of the internal tables used for
+  filetype detection.
 
 OPTIONS
 

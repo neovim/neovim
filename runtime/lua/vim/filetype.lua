@@ -3296,4 +3296,20 @@ function M.get_option(filetype, option)
   return require('vim.filetype.options').get_option(filetype, option)
 end
 
+--- Inspect the current state of the filetype registry.
+---
+--- Returns a copy of the internal tables used for filetype detection by extension, filename, or
+--- pattern. Note: Due to the dynamic nature of filetype detection, this is only useful for checking
+--- whether a certain extension, filename, or pattern has been registered so far. In addition, the
+--- `pattern` table is in an internal format optimized for fast lookup. Prefer |vim.filetype.match()|
+--- for checking the detected filetype for a given pattern.
+---@return table<string, table<string, vim.filetype.mapping|table<string, vim.filetype.mapping>>>
+function M.inspect()
+  return {
+    extension = vim.deepcopy(extension),
+    filename = vim.deepcopy(filename),
+    pattern = vim.deepcopy(pattern),
+  }
+end
+
 return M
