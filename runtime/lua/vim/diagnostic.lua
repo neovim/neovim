@@ -2018,6 +2018,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
   local ElementType = { Space = 1, Diagnostic = 2, Overlap = 3, Blank = 4 } ---@enum ElementType
   ---@type table<integer, [ElementType, string|vim.diagnostic.Severity|vim.Diagnostic][]>
   local line_stacks = {}
+  local line_anchor = {} ---@type table<integer, integer>
   local prev_lnum = -1
   local prev_col = 0
   for _, diag in ipairs(diagnostics) do
@@ -2026,6 +2027,10 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
     end
 
     local stack = line_stacks[diag.lnum]
+    local end_lnum = diag.end_lnum or diag.lnum
+    if not line_anchor[diag.lnum] or end_lnum > line_anchor[diag.lnum] then
+      line_anchor[diag.lnum] = end_lnum
+    end
 
     if diag.lnum ~= prev_lnum then
       table.insert(stack, {
@@ -2152,7 +2157,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
       end
     end
 
-    api.nvim_buf_set_extmark(bufnr, namespace, lnum, 0, {
+    api.nvim_buf_set_extmark(bufnr, namespace, line_anchor[lnum] or lnum, 0, {
       virt_lines_overflow = 'scroll',
       virt_lines = virt_lines,
     })

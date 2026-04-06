@@ -2395,13 +2395,13 @@ describe('vim.diagnostic', function()
       eq(error_offset, result[1][1][1]:len())
     end)
 
-    it('highlights diagnostics in multiple lines by default', function()
+    it('highlights diagnostics in multiple lines by default #38685', function()
       local result = exec_lua(function()
         vim.diagnostic.config({ virtual_lines = true })
 
         vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
           _G.make_error('Error here!', 0, 0, 0, 0, 'foo_server'),
-          _G.make_error('Another error there!', 1, 0, 1, 0, 'foo_server'),
+          _G.make_error('Another error there!', 1, 0, 3, 0, 'foo_server'),
         })
 
         local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
@@ -2411,6 +2411,8 @@ describe('vim.diagnostic', function()
       eq(2, #result)
       eq('Error here!', result[1][4].virt_lines[1][3][1])
       eq('Another error there!', result[2][4].virt_lines[1][3][1])
+      eq(0, result[1][2])
+      eq(3, result[2][2])
     end)
 
     it('highlights multiple diagnostics in a single line by default', function()
