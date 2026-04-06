@@ -34,10 +34,17 @@ do
   })
 
   vim.api.nvim_create_user_command('Open', function(cmd)
-    vim.ui.open(assert(cmd.fargs[1]))
+    if #cmd.fargs == 0 then
+      local current_file = vim.fn.expand('%')
+      if current_file ~= '' then
+        vim.ui.open(current_file)
+      end
+    else
+      vim.ui.open(cmd.fargs[1])
+    end
   end, {
     desc = 'Open file with system default handler. See :help vim.ui.open()',
-    nargs = 1,
+    nargs = '?',
     complete = 'file',
   })
 end

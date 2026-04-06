@@ -253,14 +253,15 @@ local function git_cmd(cmd, cwd)
   return (stdout:gsub('\n+$', ''))
 end
 
-local git_version = vim.version.parse('1')
+--- @type vim.Version
+local git_version
 
 local function git_ensure_exec()
   local ok, sys = pcall(vim.system, { 'git', 'version' })
   if not ok then
     error('No `git` executable')
   end
-  git_version = vim.version.parse(sys:wait().stdout)
+  git_version = vim.version.parse(sys:wait().stdout) --[[@as vim.Version]]
 end
 
 --- @async
@@ -915,6 +916,7 @@ local function lock_sync(confirm, specs)
     table.sort(to_install, function(a, b)
       return a.spec.name < b.spec.name
     end)
+    git_ensure_exec()
     install_list(to_install, confirm)
     lock_write()
   end
@@ -1466,6 +1468,7 @@ function M.get(names, opts)
   end
 
   if opts.info then
+    git_ensure_exec()
     add_p_data_info(res)
   end
 

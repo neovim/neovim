@@ -8820,11 +8820,13 @@ local options = {
       desc = [=[
         Sets the |status-line|.
 
-        The option consists of printf style '%' items interspersed with
-        normal text.  Each status line item is of the form:
+        Contains printf-style "%" items interspersed with normal text, where
+        each item has the form: >
           %-0{minwid}.{maxwid}{item}
-        All fields except the {item} are optional.  A single percent sign can
-        be given as "%%".
+        <
+        All fields except {item} are optional.  Use "%%" to show a literal "%"
+        char.  Setting this option to empty (`:set statusline=`) sets its
+        value to the default.
 
         						*stl-%!*
         When the option starts with "%!" then it is used as an expression,

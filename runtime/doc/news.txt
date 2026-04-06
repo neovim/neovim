@@ -139,7 +139,7 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• todo
+• |:Open| with no arguments uses the current file.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
