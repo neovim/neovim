@@ -4218,6 +4218,8 @@ vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
                          body to.
                        • {outbuf}? (`integer`) Buffer to save the response
                          body to.
+                       • {headers}? (`table<string, string>`) Table of custom
+                         headers to send with the request.
       • {on_response}  (`fun(err: string?, response: vim.net.request.Response?)?`)
                        Callback invoked on request completion. The `body`
                        field in the response parameter contains the raw

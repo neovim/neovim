@@ -163,4 +163,48 @@ describe('vim.net.request', function()
     t.eq(false, rv.modified)
     t.eq(true, rv.zipfile)
   end)
+
+  it('accepts custom headers', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
+    local headers = exec_lua([[
+      local done = false
+      local result
+
+      vim.net.request("https://httpbingo.org/headers", {
+        headers = {
+          Authorization = "Bearer test-token",
+          ['X-Custom-Header'] = "custom-value",
+        },
+      }, function(err, res)
+        if err then
+          result = { error = err }
+        else
+          result = vim.json.decode(res.body).headers
+        end
+        done = true
+      end)
+
+      vim.wait(2000, function() return done end)
+      return result
+    ]])
+
+    assert.is_table(headers)
+    -- httpbingo.org/request returns each header as a list in the returned value
+    t.eq(headers.Authorization[1], 'Bearer test-token', 'Expected Authorization header')
+    t.eq(headers['X-Custom-Header'][1], 'custom-value', 'Expected X-Custom-Header')
+  end)
+
+  it('rejects non-table headers param', function()
+    local error = t.pcall_err(
+      exec_lua,
+      [[
+        return vim.net.request("https://httpbingo.org/headers", {
+          headers = 123,
+        }, function() end)
+      ]]
+    )
+
+    t.matches('opts.headers: expected table, got number', error)
+  end)
 end)
