@@ -33,6 +33,10 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
    also write to the file.  Currently, one may not make a new file in
    zip archives via the plugin.
 
+   The zip plugin tries to detect some common path traversal attack
+   patterns, but it may not catch all possible cases.  Please be very
+   careful when using this plugin with untrusted input.
+
    COMMANDS~
 								*zip-x*
    x : extract a listed file when the cursor is atop it
