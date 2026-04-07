@@ -51,7 +51,7 @@ local M = {}
 --- })
 --- job:close()
 ---
---- Add custom headers in the request
+--- -- Add custom headers in the request
 --- vim.net.request('https://neovim.io/charter/', {
 ---   headers = { Authorization = 'Bearer XYZ' },
 --- })
