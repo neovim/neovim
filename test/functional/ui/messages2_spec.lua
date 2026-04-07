@@ -389,6 +389,15 @@ describe('messages2', function()
     ]])
   end)
 
+  it('empty kind after message that does not flush immediately', function()
+    command('echon "foo" | echo')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      foo                                                  |
+    ]])
+  end)
+
   it("deleting buffer restores 'buftype'", function()
     feed(':%bdelete<CR>')
     screen:expect([[
