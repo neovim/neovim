@@ -711,10 +711,8 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       dir_name[dir_len] = NUL;
 
       // Remove trailing pathseps from directory name
-      char *p = &dir_name[dir_len - 1];
-      while (dir_len > 1 && vim_ispathsep(*p)) {
-        *p-- = NUL;
-        dir_len--;
+      while (dir_len > 1 && vim_ispathsep_nocolon(dir_name[dir_len - 1])) {
+        dir_name[--dir_len] = NUL;
       }
 
       bool has_directory = os_isdir(dir_name);
@@ -733,9 +731,9 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       if (has_directory) {
         if (munged_name.data == NULL) {
           munged_name = cbuf_to_string(ffname, ffname_len);
-          for (char *c = munged_name.data; *c != NUL; MB_PTR_ADV(c)) {
-            if (vim_ispathsep(*c)) {
-              *c = '%';
+          for (char *p = munged_name.data; *p != NUL; MB_PTR_ADV(p)) {
+            if (vim_ispathsep(*p)) {
+              *p = '%';
             }
           }
         }
