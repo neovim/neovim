@@ -195,7 +195,8 @@ describe('vim.net.request', function()
     t.eq(headers['X-Custom-Header'][1], 'custom-value', 'Expected X-Custom-Header')
   end)
 
-  it('rejects non-table headers param', function()
+  it('validation', function()
+    -- rejects non-table headers param
     local error = t.pcall_err(
       exec_lua,
       [[
