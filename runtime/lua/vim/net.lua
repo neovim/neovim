@@ -90,6 +90,14 @@ function M.request(url, opts, on_response)
   if opts.headers then
     vim.validate('opts.headers', opts.headers, 'table', true)
     for key, value in pairs(opts.headers) do
+      if type(key) ~= 'string' or type(value) ~= 'string' then
+        error('headers keys and values must be strings')
+      end
+
+      if key:match(':$') or key:match(';$') or value == '' or value:match('^@') then
+        error('header values must not start with @ or end with : and ;')
+      end
+
       vim.list_extend(args, { '-H', key .. ': ' .. value })
     end
   end

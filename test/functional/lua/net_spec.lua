@@ -197,15 +197,80 @@ describe('vim.net.request', function()
 
   it('validation', function()
     -- rejects non-table headers param
-    local error = t.pcall_err(
+    local err = t.pcall_err(
       exec_lua,
       [[
-        return vim.net.request("https://httpbingo.org/headers", {
+        return vim.net.request('https://example.com', {
           headers = 123,
         }, function() end)
       ]]
     )
+    t.matches('opts.headers: expected table, got number', err)
 
-    t.matches('opts.headers: expected table, got number', error)
+    -- rejects non-string header keys
+    err = t.pcall_err(
+      exec_lua,
+      [[
+        return vim.net.request('https://example.com', {
+          headers = { [123] = 'value' },
+        }, function() end)
+      ]]
+    )
+    t.matches('headers keys and values must be strings', err)
+
+    -- rejects non-string header values
+    err = t.pcall_err(
+      exec_lua,
+      [[
+        return vim.net.request('https://example.com', {
+          headers = { Key = 123 },
+        }, function() end)
+      ]]
+    )
+    t.matches('headers keys and values must be strings', err)
+
+    -- rejects header key ending with colon
+    err = t.pcall_err(
+      exec_lua,
+      [[
+        return vim.net.request('https://example.com', {
+          headers = { ['Header:'] = 'value' },
+        }, function() end)
+      ]]
+    )
+    t.matches('header values must not start', err)
+
+    -- rejects header key ending with semicolon
+    err = t.pcall_err(
+      exec_lua,
+      [[
+        return vim.net.request('https://example.com', {
+          headers = { ['Header;'] = 'value' },
+        }, function() end)
+      ]]
+    )
+    t.matches('header values must not start', err)
+
+    -- rejects header with empty value
+    err = t.pcall_err(
+      exec_lua,
+      [[
+        return vim.net.request('https://example.com', {
+          headers = { ['Header'] = '' },
+        }, function() end)
+      ]]
+    )
+    t.matches('header values must not start', err)
+
+    -- rejects header with @filename syntax
+    err = t.pcall_err(
+      exec_lua,
+      [[
+        return vim.net.request('https://example.com', {
+          headers = { ['@filename'] = '' },
+        }, function() end)
+      ]]
+    )
+    t.matches('header values must not start', err)
   end)
 end)
