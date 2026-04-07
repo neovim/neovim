@@ -75,6 +75,7 @@ return {
     InsertEnter = true, -- when entering Insert mode
     InsertLeave = true, -- just after leaving Insert mode
     InsertLeavePre = true, -- just before leaving Insert mode
+    IntroLeave = false, -- after closing the intro screen
     LspAttach = false, -- after an LSP client attaches to a buffer
     LspDetach = false, -- after an LSP client detaches from a buffer
     LspNotify = false, -- after an LSP notice has been sent to the server
@@ -159,6 +160,7 @@ return {
   nvim_specific = {
     BufModifiedSet = true,
     DiagnosticChanged = true,
+    IntroLeave = true,
     LspAttach = true,
     LspDetach = true,
     LspNotify = true,
