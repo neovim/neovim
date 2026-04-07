@@ -2227,8 +2227,8 @@ nvim_exec_autocmds({event}, {opts})                     *nvim_exec_autocmds()*
       • {opts}   (`vim.api.keyset.exec_autocmds`) Optional filters:
                  • group (`string|integer?`) Group name or id to match
                    against. |autocmd-groups|.
-                 • pattern (`string|array?`, default: "*") |autocmd-pattern|.
-                   Not allowed with {buffer}.
+                 • pattern (`string|array?`, default: current file name)
+                   |autocmd-pattern|. Not allowed with {buffer}.
                  • buffer (`integer?`) Buffer id |autocmd-buflocal|. Not
                    allowed with {pattern}.
                  • modeline (`boolean?`, default: true) Process the modeline
