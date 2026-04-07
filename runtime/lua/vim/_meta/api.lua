@@ -1224,7 +1224,7 @@ function vim.api.nvim_exec2(src, opts) end
 --- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) to execute.
 --- @param opts vim.api.keyset.exec_autocmds Optional filters:
 --- - group (`string|integer?`) Group name or id to match against. `autocmd-groups`.
---- - pattern (`string|array?`, default: "*") `autocmd-pattern`. Not allowed with {buffer}.
+--- - pattern (`string|array?`, default: current file name) `autocmd-pattern`. Not allowed with {buffer}.
 --- - buffer (`integer?`) Buffer id `autocmd-buflocal`. Not allowed with {pattern}.
 --- - modeline (`boolean?`, default: true) Process the modeline after the autocommands
 ---   [<nomodeline>].

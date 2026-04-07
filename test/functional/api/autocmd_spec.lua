@@ -1053,6 +1053,14 @@ describe('autocmd api', function()
 
       api.nvim_exec_autocmds('BufReadPre', { pattern = { 'foo', 'bar', 'baz', 'frederick' } })
       eq(22, api.nvim_get_var('autocmd_executed'))
+
+      eq('', api.nvim_buf_get_name(0))
+      api.nvim_exec_autocmds({ 'BufReadPre', 'BufReadPost' }, {})
+      eq(23, api.nvim_get_var('autocmd_executed'))
+
+      api.nvim_buf_set_name(0, 'bar')
+      api.nvim_exec_autocmds({ 'BufReadPre', 'BufReadPost' }, {})
+      eq(34, api.nvim_get_var('autocmd_executed'))
     end)
 
     it('can pass the buffer', function()

@@ -657,7 +657,7 @@ void nvim_del_augroup_by_name(String name, Error *err)
 /// @param event Event(s) to execute.
 /// @param opts Optional filters:
 ///        - group (`string|integer?`) Group name or id to match against. |autocmd-groups|.
-///        - pattern (`string|array?`, default: "*") |autocmd-pattern|. Not allowed with {buffer}.
+///        - pattern (`string|array?`, default: current file name) |autocmd-pattern|. Not allowed with {buffer}.
 ///        - buffer (`integer?`) Buffer id |autocmd-buflocal|. Not allowed with {pattern}.
 ///        - modeline (`boolean?`, default: true) Process the modeline after the autocommands
 ///          [<nomodeline>].
