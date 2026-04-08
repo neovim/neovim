@@ -37,7 +37,7 @@ LSP
 
 LUA
 
-• todo
+• Added `__eq` metamethod to |vim.VersionRange|.
 
 OPTIONS
 
@@ -98,6 +98,9 @@ LUA
 
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
+• Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
+the same range instances now compare equal.
+
 
 OPTIONS
 
