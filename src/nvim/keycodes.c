@@ -293,14 +293,6 @@ char *get_special_key_name(int c, int modifiers)
   // extract modifiers.
   if (c > 0
       && utf_char2len(c) == 1) {
-    if (table_idx < 0
-        && (!vim_isprintc(c) || (c & 0x7f) == ' ')
-        && (c & 0x80)) {
-      c &= 0x7f;
-      modifiers |= MOD_MASK_ALT;
-      // try again, to find the un-alted key in the special key table
-      table_idx = find_special_key_in_table(c);
-    }
     if (table_idx < 0 && !vim_isprintc(c) && c < ' ') {
       c += '@';
       modifiers |= MOD_MASK_CTRL;
