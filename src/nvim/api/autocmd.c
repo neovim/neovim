@@ -561,7 +561,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Arena *arena, Error *err)
   }
 
   // If we didn't pass any events, that means clear all events.
-  if (event_array.size == 0) {
+  if (opts->event.type == kObjectTypeNil) {
     FOR_ALL_AUEVENTS(event) {
       FOREACH_ITEM(patterns, pat_object, {
         char *pat = pat_object.data.string.data;
@@ -756,7 +756,8 @@ static Array unpack_string_or_array(Object v, char *k, bool required, Arena *are
     }
     return v.data.array;
   } else {
-    VALIDATE_EXP(!required, k, "Array or String", api_typename(v.type), {
+    VALIDATE_EXP(!required && v.type == kObjectTypeNil, k, "Array or String", api_typename(v.type),
+    {
       return (Array)ARRAY_DICT_INIT;
     });
   }
