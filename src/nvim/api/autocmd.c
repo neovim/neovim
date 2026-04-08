@@ -391,6 +391,9 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   if (ERROR_SET(err)) {
     goto cleanup;
   }
+  VALIDATE_R(event_array.size > 0, "event", {
+    goto cleanup;
+  });
 
   VALIDATE_CON((!HAS_KEY(opts, create_autocmd, callback) || !HAS_KEY(opts, create_autocmd,
                                                                      command)),
@@ -449,17 +452,10 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   if (ERROR_SET(err)) {
     goto cleanup;
   }
-  VALIDATE(patterns.size > 0, "%s", "No non-empty patterns specified", {
-    goto cleanup;
-  });
 
   if (HAS_KEY(opts, create_autocmd, desc)) {
     desc = opts->desc.data;
   }
-
-  VALIDATE_R((event_array.size > 0), "event", {
-    goto cleanup;
-  });
 
   autocmd_id = next_autocmd_id++;
   FOREACH_ITEM(event_array, event_str, {
@@ -540,6 +536,9 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Arena *arena, Error *err)
   if (ERROR_SET(err)) {
     return;
   }
+  VALIDATE(opts->event.type == kObjectTypeNil || event_array.size > 0, "%s", "Empty 'event'", {
+    return;
+  });
 
   bool has_buffer = HAS_KEY(opts, clear_autocmds, buffer);
 
@@ -680,6 +679,9 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, E
   if (ERROR_SET(err)) {
     return;
   }
+  VALIDATE_R(event_array.size > 0, "event", {
+    return;
+  });
 
   switch (opts->group.type) {
   case kObjectTypeNil:
@@ -837,6 +839,9 @@ static Array get_patterns_from_pattern_or_buf(Object pattern, bool has_buffer, B
   } else if (fallback) {
     kvi_push(patterns, CSTR_AS_OBJ(fallback));
   }
+  VALIDATE(patterns.size > 0, "%s", "No non-empty patterns specified", {
+    return (Array)ARRAY_DICT_INIT;
+  });
 
   return arena_take_arraybuilder(arena, &patterns);
 }
