@@ -9241,6 +9241,14 @@ describe('builtin popupmenu', function()
           ]])
         end
       end)
+      it('no crash with wide item and border #38840', function()
+        exec([[
+          set cot+=menuone
+          let g:list = [#{word: repeat('a', &columns - 2)}]
+        ]])
+        feed('S<C-x><C-o>')
+        assert_alive()
+      end)
     end)
     it("'pumborder' on mouse-menu displays completely within screen", function()
       screen:try_resize(40, 12)
