@@ -103,6 +103,41 @@ function M._nextnonblank(bufnr, start_lnum)
   return nil, nil
 end
 
+--- Gets a best-effort set of all "known" filetypes, discovered by:
+--- - `getcompletion()`
+--- - `vim.filetype` internal registry
+--- @return table<string,true>
+function M._get_known_filetypes()
+  local known = {} --- @type table<string,true>
+  for _, ft in ipairs(vim.fn.getcompletion('', 'filetype')) do
+    known[ft] = true
+  end
+  local registry = vim.filetype.inspect()
+
+  local function add_filetype(value)
+    local filetype = type(value) == 'table' and value[1] or value
+    if type(filetype) == 'string' then
+      known[filetype] = true
+    end
+  end
+
+  for _, value in pairs(registry.extension) do
+    add_filetype(value)
+  end
+
+  for _, value in pairs(registry.filename) do
+    add_filetype(value)
+  end
+
+  for _, mappings in pairs(registry.pattern) do
+    for _, value in pairs(mappings) do
+      add_filetype(value)
+    end
+  end
+
+  return known
+end
+
 do
   --- @type table<string,vim.regex>
   local regex_cache = {}
