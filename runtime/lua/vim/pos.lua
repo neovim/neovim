@@ -6,6 +6,8 @@
 --- Provides operations to compare, calculate, and convert positions represented by |vim.Pos|
 --- objects.
 
+local M = {}
+
 local api = vim.api
 local validate = vim.validate
 
@@ -41,7 +43,8 @@ local validate = vim.validate
 ---@field private [3] integer underlying representation of buf
 local Pos = {}
 
----@private
+M._Pos = Pos
+
 ---@param pos vim.Pos
 ---@param key any
 function Pos.__index(pos, key)
@@ -97,17 +100,14 @@ local function cmp_pos(p1, p2)
   return -1
 end
 
----@private
 function Pos.__lt(...)
   return cmp_pos(...) == -1
 end
 
----@private
 function Pos.__le(...)
   return cmp_pos(...) ~= 1
 end
 
----@private
 function Pos.__eq(...)
   return cmp_pos(...) == 0
 end
@@ -129,13 +129,11 @@ end
 --- -- Convert to LSP position, you can call it in a method style.
 --- local lsp_pos = pos:lsp('utf-16')
 --- ```
----@param pos vim.Pos
 ---@param position_encoding lsp.PositionEncodingKind
-function Pos.to_lsp(pos, position_encoding)
-  validate('pos', pos, 'table')
+function Pos:to_lsp(position_encoding)
   validate('position_encoding', position_encoding, 'string')
 
-  local buf, row, col = pos.buf, pos.row, pos.col
+  local buf, row, col = self.buf, self.row, self.col
   -- When on the first character,
   -- we can ignore the difference between byte and character.
   if col > 0 then
@@ -161,7 +159,8 @@ end
 ---@param buf integer
 ---@param pos lsp.Position
 ---@param position_encoding lsp.PositionEncodingKind
-function Pos.lsp(buf, pos, position_encoding)
+---@return vim.Pos
+function M.lsp(buf, pos, position_encoding)
   validate('buf', buf, 'number')
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
@@ -179,30 +178,29 @@ function Pos.lsp(buf, pos, position_encoding)
 end
 
 --- Converts |vim.Pos| to cursor position (see |api-indexing|).
----@param pos vim.Pos
 ---@return integer, integer
-function Pos.to_cursor(pos)
-  return pos.row + 1, pos.col
+function Pos:to_cursor()
+  return self.row + 1, self.col
 end
 
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 ---@param buf integer
 ---@param pos [integer, integer]
-function Pos.cursor(buf, pos)
+---@return vim.Pos
+function M.cursor(buf, pos)
   return Pos.new(buf, pos[1] - 1, pos[2])
 end
 
 --- Converts |vim.Pos| to extmark position (see |api-indexing|).
----@param pos vim.Pos
 ---@return integer, integer
-function Pos.to_extmark(pos)
-  local line_count = api.nvim_buf_line_count(pos.buf)
+function Pos:to_extmark()
+  local line_num = #api.nvim_buf_get_lines(self.buf, 0, -1, true)
 
-  local row = pos.row
-  local col = pos.col
-  if pos.col == 0 and pos.row == line_count then
+  local row = self.row
+  local col = self.col
+  if self.col == 0 and self.row == line_num then
     row = row - 1
-    col = #get_line(pos.buf, row)
+    col = #get_line(self.buf, row)
   end
 
   return row, col
@@ -212,16 +210,16 @@ end
 ---@param buf integer
 ---@param row integer
 ---@param col integer
-function Pos.extmark(buf, row, col)
+---@return vim.Pos
+function M.extmark(buf, row, col)
   return Pos.new(buf, row, col)
 end
 
--- Overload `Range.new` to allow calling this module as a function.
-setmetatable(Pos, {
+setmetatable(M, {
   __call = function(_, ...)
     return Pos.new(...)
   end,
 })
----@cast Pos +fun(buf: integer, row: integer, col: integer): vim.Pos
+---@cast M +fun(buf: integer, row: integer, col: integer): vim.Pos
 
-return Pos
+return M
