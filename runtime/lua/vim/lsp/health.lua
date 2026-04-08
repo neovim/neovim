@@ -212,10 +212,38 @@ local function check_position_encodings()
   end
 end
 
+local function get_known_filetypes()
+  local known = vim.fn.getcompletion('', 'filetype')
+  local registry = vim.filetype.inspect()
+
+  local function add_filetype(value)
+    local filetype = type(value) == 'table' and value[1] or value
+    if type(filetype) == 'string' and not vim.list_contains(known, filetype) then
+      known[#known + 1] = filetype
+    end
+  end
+
+  for _, value in pairs(registry.extension) do
+    add_filetype(value)
+  end
+
+  for _, value in pairs(registry.filename) do
+    add_filetype(value)
+  end
+
+  for _, mappings in pairs(registry.pattern) do
+    for _, value in pairs(mappings) do
+      add_filetype(value)
+    end
+  end
+
+  return known
+end
+
 local function check_enabled_configs()
   vim.health.start('vim.lsp: Enabled Configurations')
 
-  local valid_filetypes = vim.fn.getcompletion('', 'filetype')
+  local known_filetypes = get_known_filetypes()
 
   for name in vim.spairs(vim.lsp._enabled_configs) do
     local config = vim.lsp.config[name]
@@ -248,7 +276,7 @@ local function check_enabled_configs()
           for _, filetype in
             ipairs(v --[[@as string[] ]])
           do
-            if not vim.list_contains(valid_filetypes, filetype) then
+            if not vim.list_contains(known_filetypes, filetype) then
               report_warn(
                 ("Unknown filetype '%s' (Hint: filename extension != filetype)."):format(filetype)
               )

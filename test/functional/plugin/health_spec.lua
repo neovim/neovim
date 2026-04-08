@@ -107,6 +107,39 @@ describe(':checkhealth', function()
     command('checkhealth vim.provider')
     eq(nil, string.match(curbuf_contents(), 'WRONG!!!'))
   end)
+
+  it('vim.lsp warns about unknown filetypes', function()
+    clear()
+    exec_lua(function()
+      vim.filetype.add({ extension = { mdx = 'mdx' } })
+      vim.lsp.config('builtin_registry_ft', {
+        cmd = { 'true' },
+        filetypes = { 'beancount' },
+      })
+      vim.lsp.config('custom_ft', {
+        cmd = { 'true' },
+        filetypes = { 'mdx' },
+      })
+      vim.lsp.config('bad_ft', {
+        cmd = { 'true' },
+        filetypes = { 'hbs' },
+      })
+      vim.lsp.enable('builtin_registry_ft')
+      vim.lsp.enable('custom_ft')
+      vim.lsp.enable('bad_ft')
+    end)
+    command('checkhealth vim.lsp')
+    local report = curbuf_contents()
+    eq(nil, report:find("Unknown filetype 'beancount'", 1, true))
+    eq(nil, report:find("Unknown filetype 'mdx'", 1, true))
+    eq(
+      true,
+      report:find("Unknown filetype 'hbs' (Hint: filename extension != filetype).", 1, true) ~= nil
+    )
+    eq(true, report:find('- builtin_registry_ft:', 1, true) ~= nil)
+    eq(true, report:find('- custom_ft:', 1, true) ~= nil)
+    eq(true, report:find('- bad_ft:', 1, true) ~= nil)
+  end)
 end)
 
 describe('vim.health', function()
