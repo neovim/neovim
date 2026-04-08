@@ -753,7 +753,8 @@ static Array unpack_string_or_array(Object v, char *k, bool required, Arena *are
     }
     return v.data.array;
   } else {
-    VALIDATE_EXP(!required, k, "Array or String", api_typename(v.type), {
+    VALIDATE_EXP(!required && v.type == kObjectTypeNil, k, "Array or String", api_typename(v.type),
+    {
       return (Array)ARRAY_DICT_INIT;
     });
   }

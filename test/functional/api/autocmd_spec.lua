@@ -38,6 +38,12 @@ describe('autocmd api', function()
           command = 'ls',
         })
       )
+      matches(
+        "Invalid 'event': expected Array or String, got nil$",
+        pcall_err(exec_lua, function()
+          vim.api.nvim_create_autocmd(nil, {})
+        end)
+      )
       eq("Required: 'command' or 'callback'", pcall_err(api.nvim_create_autocmd, 'FileType', {}))
       eq(
         "Invalid 'desc': expected String, got Integer",
@@ -1020,6 +1026,12 @@ describe('autocmd api', function()
         "Invalid 'event' item: expected String, got Array",
         pcall_err(api.nvim_exec_autocmds, { 'FileType', {} }, {})
       )
+      matches(
+        "Invalid 'event': expected Array or String, got nil$",
+        pcall_err(exec_lua, function()
+          vim.api.nvim_exec_autocmds(nil, {})
+        end)
+      )
     end)
 
     it('can trigger builtin autocmds', function()
@@ -1553,6 +1565,16 @@ describe('autocmd api', function()
         pcall_err(api.nvim_clear_autocmds, {
           event = { 'FileType', {} },
         })
+      )
+      eq(
+        "Invalid 'event': expected Array or String, got Integer",
+        pcall_err(api.nvim_clear_autocmds, { event = 1337 })
+      )
+      matches(
+        "Invalid 'event': expected Array or String, got Function$",
+        pcall_err(exec_lua, function()
+          vim.api.nvim_clear_autocmds({ event = function() end })
+        end)
       )
       eq("Invalid 'group': 0", pcall_err(api.nvim_clear_autocmds, { group = 0 }))
     end)
