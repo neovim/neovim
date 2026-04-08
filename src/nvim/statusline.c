@@ -479,7 +479,7 @@ void redraw_ruler(void)
   int off = wp->w_status_height ? wp->w_wincol : 0;
   int width = wp->w_status_height ? wp->w_width : Columns;
   schar_T fillchar = part_of_status ? fillchar_status(&group, wp) : schar_from_ascii(' ');
-  int attr = win_hl_attr(wp, (int)group);
+  int attr = part_of_status ? win_hl_attr(wp, (int)group) : HL_ATTR(group);
 
   // In list mode virtcol needs to be recomputed
   colnr_T virtcol = wp->w_virtcol;
