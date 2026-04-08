@@ -70,8 +70,8 @@ function Range.__index(pos, key)
 end
 
 ---@package
----@overload fun(self: vim.Range, start: vim.Pos, end_: vim.Pos): vim.Range
----@overload fun(self: vim.Range, buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
+---@overload fun(start: vim.Pos, end_: vim.Pos): vim.Range
+---@overload fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
 function Range.new(...)
   ---@type integer, integer, integer, integer, integer|nil
   local start_row, start_col, end_row, end_col, buf
@@ -223,6 +223,10 @@ end
 ---@return vim.Range? range that is present inside both range and `r2`.
 ---                   `nil` if such range does not exist.
 function Range:intersect(r2)
+  if self.buf ~= r2.buf then
+    return nil
+  end
+
   local r1_inclusive_end_row, r1_inclusive_end_col =
     to_inclusive_pos(self.buf, self.end_row, self.end_col)
   local r2_inclusive_end_row, r2_inclusive_end_col =
@@ -237,7 +241,7 @@ function Range:intersect(r2)
 
   local rs = cmp_pos(self.start_row, self.start_col, r2.start_row, r2.start_col) ~= 1 and r2 or self
   local re = cmp_pos(self.end_row, self.end_col, r2.end_row, r2.end_col) ~= -1 and r2 or self
-  return Range.new(rs.start_row, rs.start_col, re.end_row, re.end_col)
+  return Range.new(self.buf, rs.start_row, rs.start_col, re.end_row, re.end_col)
 end
 
 --- Converts |vim.Range| to `lsp.Range`.
