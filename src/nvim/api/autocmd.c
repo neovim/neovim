@@ -73,7 +73,7 @@ static int64_t next_autocmd_id = 1;
 ///        - id: (`integer?`) Autocommand ID to match.
 ///        - pattern: (`string|table?`) Pattern(s) to match |autocmd-pattern|. Not allowed with {buf}.
 /// @return Array of matching autocommands, where each item has:
-///         - buffer (`integer?`): Buffer id (only for |autocmd-buffer-local|).
+///         - buf (`integer?`): Buffer id (only for |autocmd-buffer-local|).
 ///         - buflocal (`boolean?`): true if the autocommand is buffer-local |autocmd-buffer-local|.
 ///         - callback: (`function|string?`): Event handler: a Lua function or Vimscript function name.
 ///         - command: (`string`) Event handler: an Ex-command. Empty if a `callback` is set.
@@ -277,7 +277,7 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
         }
       }
 
-      Dict autocmd_info = arena_dict(arena, 11);
+      Dict autocmd_info = arena_dict(arena, 12);
 
       if (ap->group != AUGROUP_DEFAULT) {
         PUT_C(autocmd_info, "group", INTEGER_OBJ(ap->group));
@@ -319,6 +319,7 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
 
       if (ap->buflocal_nr) {
         PUT_C(autocmd_info, "buflocal", BOOLEAN_OBJ(true));
+        PUT_C(autocmd_info, "buf", INTEGER_OBJ(ap->buflocal_nr));
         PUT_C(autocmd_info, "buffer", INTEGER_OBJ(ap->buflocal_nr));
       } else {
         PUT_C(autocmd_info, "buflocal", BOOLEAN_OBJ(false));

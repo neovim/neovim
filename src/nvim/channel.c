@@ -999,7 +999,7 @@ Dict channel_info(uint64_t id, Arena *arena)
     return (Dict)ARRAY_DICT_INIT;
   }
 
-  Dict info = arena_dict(arena, 8);
+  Dict info = arena_dict(arena, 9);
   PUT_C(info, "id", INTEGER_OBJ((Integer)chan->id));
 
   const char *stream_desc, *mode_desc;
@@ -1048,6 +1048,7 @@ Dict channel_info(uint64_t id, Arena *arena)
     PUT_C(info, "client", DICT_OBJ(chan->rpc.info));
   } else if (chan->term) {
     mode_desc = "terminal";
+    PUT_C(info, "buf", BUFFER_OBJ(terminal_buf(chan->term)));
     PUT_C(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
     PUT_C(info, "exitcode", INTEGER_OBJ(chan->exit_status));
   } else {

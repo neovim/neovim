@@ -855,7 +855,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @param[out]  err   Error details, if any
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
-///          The "buffer" key holds the associated buffer id.
+///          The "buf" key holds the associated buffer id.
 ArrayOf(DictAs(get_keymap)) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena,
                                                 Error *err)
   FUNC_API_SINCE(3)

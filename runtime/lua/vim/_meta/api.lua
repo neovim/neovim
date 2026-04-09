@@ -459,7 +459,7 @@ function vim.api.nvim_buf_get_extmarks(buffer, ns_id, start, end_, opts) end
 --- @param buffer integer Buffer id, or 0 for current buffer
 --- @param mode string Mode short-name ("n", "i", "v", ...)
 --- @return vim.api.keyset.get_keymap[] # Array of |maparg()|-like dictionaries describing mappings.
---- The "buffer" key holds the associated buffer id.
+--- The "buf" key holds the associated buffer id.
 function vim.api.nvim_buf_get_keymap(buffer, mode) end
 
 --- Gets a line-range from the buffer.
@@ -1295,7 +1295,7 @@ function vim.api.nvim_get_all_options_info() end
 --- - id: (`integer?`) Autocommand ID to match.
 --- - pattern: (`string|table?`) Pattern(s) to match `autocmd-pattern`. Not allowed with {buf}.
 --- @return vim.api.keyset.get_autocmds.ret[] # Array of matching autocommands, where each item has:
---- - buffer (`integer?`): Buffer id (only for |autocmd-buffer-local|).
+--- - buf (`integer?`): Buffer id (only for |autocmd-buffer-local|).
 --- - buflocal (`boolean?`): true if the autocommand is buffer-local |autocmd-buffer-local|.
 --- - callback: (`function|string?`): Event handler: a Lua function or Vimscript function name.
 --- - command: (`string`) Event handler: an Ex-command. Empty if a `callback` is set.
@@ -1328,7 +1328,8 @@ function vim.api.nvim_get_autocmds(opts) end
 --- - "pty"      (optional) Name of pseudoterminal. On a POSIX system this is a device path like
 ---              "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ---              for conpty on Windows).
---- - "buffer"   (optional) Buffer connected to |terminal| instance.
+--- - "buf"      (optional) Buffer connected to |terminal| instance.
+--- - "buffer"   (optional) Deprecated alias for `buf`.
 --- - "client"   (optional) Info about the peer (client on the other end of the channel), as set
 ---              by |nvim_set_client_info()|.
 --- - "exitcode" (optional) Exit code of the |terminal| process.
@@ -1449,7 +1450,7 @@ function vim.api.nvim_get_hl_ns(opts) end
 ---
 --- @param mode string Mode short-name ("n", "i", "v", ...)
 --- @return vim.api.keyset.get_keymap[] # Array of |maparg()|-like dictionaries describing mappings.
---- The "buffer" key is always zero.
+--- The "buf" key is always zero.
 function vim.api.nvim_get_keymap(mode) end
 
 --- Returns a `(row, col, buffer, buffername)` tuple representing the position
