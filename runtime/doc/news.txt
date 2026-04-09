@@ -82,6 +82,8 @@ DIAGNOSTICS
 EDITOR
 
 • |:log| for opening log files
+• |<A-Leftmouse>| now anchors Visual Block mode selection at the initial click
+position, making block selection behave consistently with mouse drag.
 
 EVENTS
 

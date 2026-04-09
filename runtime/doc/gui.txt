@@ -132,12 +132,13 @@ Using the mouse                                         *mouse-using*
 Overview of what the mouse buttons do, when 'mousemodel' is "extend":
 
                *<S-LeftMouse>* *<A-RightMouse>* *<S-RightMouse>* *<RightDrag>*
-                                                 *<RightRelease>* *<LeftDrag>*
+                                   *<A-LeftMouse>* *<RightRelease>* *<LeftDrag>*
 Normal Mode: >
   event         position     selection        change  action
                  cursor                       window
   ---------------------------------------------------------------------------
   <LeftMouse>     yes          end              yes
+  <A-LeftMouse>   yes          end              yes
   <C-LeftMouse>   yes          end              yes    "CTRL-]" (2)
   <S-LeftMouse>   yes       no change           yes    "*" (2)
   <LeftDrag>      yes     start or extend (1)   no
@@ -156,6 +157,7 @@ Insert or Replace Mode: >
                  cursor                       window
   ---------------------------------------------------------------------------
   <LeftMouse>     yes     (cannot be active)    yes
+  <A-LeftMouse>   yes     (cannot be active)    yes
   <C-LeftMouse>   yes     (cannot be active)    yes    "CTRL-O^]" (2)
   <S-LeftMouse>   yes     (cannot be active)    yes    "CTRL-O*" (2)
   <LeftDrag>      yes     start or extend (1)   no     like CTRL-O (1)
@@ -174,13 +176,11 @@ In a help window: >
 
 When 'mousemodel' is "popup", these are different:
 
-                                                               *<A-LeftMouse>*
 Normal Mode: >
   event         position     selection        change  action
                  cursor                       window
   ---------------------------------------------------------------------------
   <S-LeftMouse>   yes     start or extend (1)   no
-  <A-LeftMouse>   yes     start/extend blockw   no
   <RightMouse>    no      popup menu            no
 
 Insert or Replace Mode: >
@@ -188,7 +188,6 @@ Insert or Replace Mode: >
                  cursor                       window
   ---------------------------------------------------------------------------
   <S-LeftMouse>   yes     start or extend (1)   no     like CTRL-O (1)
-  <A-LeftMouse>   yes     start/extend blockw   no
   <RightMouse>    no      popup menu            no
 
 (1) only if mouse pointer moved since press

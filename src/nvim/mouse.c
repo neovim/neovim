@@ -587,7 +587,6 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   // When 'mousemodel' is "popup" or "popup_setpos", translate mouse events:
   // right button up   -> pop-up menu
   // shift-left button -> right button
-  // alt-left button   -> alt-right button
   if (mouse_model_popup()) {
     m_pos_flag = get_fpos_of_mouse(&m_pos);
     if (!(m_pos_flag & (IN_STATUS_LINE|MOUSE_WINBAR|MOUSE_STATUSCOL))
@@ -601,7 +600,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
     // Only do this translation when mouse is over the buffer text
     if (!(m_pos_flag & (IN_STATUS_LINE|MOUSE_WINBAR|MOUSE_STATUSCOL))
-        && (which_button == MOUSE_LEFT && (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_ALT)))) {
+        && (which_button == MOUSE_LEFT && (mod_mask & MOD_MASK_SHIFT))) {
       which_button = MOUSE_RIGHT;
       mod_mask &= ~MOD_MASK_SHIFT;
     }

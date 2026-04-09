@@ -812,22 +812,47 @@ func Test_mouse_alt_leftclick()
   set mouse=a mousetime=200
   set mousemodel=popup
   new
-  call setline(1, 'one (two) three')
+  call setline(1, repeat([repeat('-', 7)], 7))
 
   for ttymouse_val in g:Ttymouse_values
     let msg = 'ttymouse=' .. ttymouse_val
     " exe 'set ttymouse=' .. ttymouse_val
 
-    " Left click with the Alt modifier key should extend the selection in
-    " blockwise visual mode.
-    let @" = ''
-    call MouseLeftClick(1, 3)
-    call MouseLeftRelease(1, 3)
-    call MouseAltLeftClick(1, 11)
-    call MouseLeftRelease(1, 11)
+    " Left click with the Alt modifier key should not start blockwise visual
+    " mode without dragging.
+    call MouseAltLeftClick(1, 1)
+    call MouseLeftRelease(1, 1)
+    call assert_equal("n", mode(), msg)
+
+    " Left click and drag with the Alt modifier key should enter blockwise
+    " visual mode and expand new selection.
+    call MouseAltLeftClick(2, 2)
+    call MouseAltLeftDrag(5, 5)
+    call MouseLeftRelease(5, 5)
+    norm! r1gv
     call assert_equal("\<C-V>", mode(), msg)
-    normal! y
-    call assert_equal('e (two) t', @")
+    call assert_equal(['-------',
+          \            '-1111--',
+          \            '-1111--',
+          \            '-1111--',
+          \            '-1111--',
+          \            '-------',
+          \            '-------'], getline(1, '$'), msg)
+
+    " Left click and drag with the Alt modifier key in a new location should
+    " reset the selection anchor and not expand the existing selection.
+    call MouseAltLeftClick(6, 6)
+    call MouseAltLeftDrag(3, 3)
+    call MouseLeftRelease(3, 3)
+    norm! r2gv
+    call assert_equal("\<C-V>", mode(), msg)
+    call assert_equal(['-------',
+          \            '-1111--',
+          \            '-12222-',
+          \            '-12222-',
+          \            '-12222-',
+          \            '--2222-',
+          \            '-------'], getline(1, '$'), msg)
   endfor
 
   let &mouse = save_mouse

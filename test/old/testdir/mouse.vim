@@ -70,6 +70,12 @@ func MouseLeftDrag(row, col)
   call feedkeys('', 'x!')
 endfunc
 
+func MouseAltLeftDrag(row, col)
+  call nvim_input_mouse('left', 'drag', 'A', 0, a:row - 1, a:col - 1)
+  call getchar(1)
+  call feedkeys('', 'x!')
+endfunc
+
 func MouseWheelUp(row, col)
   call nvim_input_mouse('wheel', 'up', '', 0, a:row - 1, a:col - 1)
   call getchar(1)
