@@ -184,7 +184,7 @@ describe('vim.net.request', function()
         headers = {
           Authorization = "Bearer test-token",
           ['X-Custom-Header'] = "custom-value",
-          ['Empty'] = '', 
+          ['Empty'] = '',
         },
       }, function(err, res)
         if err then
