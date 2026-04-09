@@ -15,6 +15,7 @@ compile_commands.json
 # Build/deps dir
 /.zig-cache/
 /zig-out/
+/zig-pkg/
 /.deps/
 /tmp/
 /.clangd/
