@@ -884,7 +884,24 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
                            .percent = opts->percent, .data = opts->data,
                            .source = opts->source };
 
+  const bool save_nwr = need_wait_return;
+  const int save_lines_left = lines_left;
+  const bool save_msg_didany = msg_didany;
+  // Similar truncation method to showmode().
+  if (opts->_truncate) {
+    no_wait_return++;
+    lines_left = 0;
+    msg_didany = true;
+    msg_no_more = true;
+  }
   id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data, &needs_clear);
+  if (opts->_truncate) {
+    msg_no_more = false;
+    msg_didany = save_msg_didany;
+    lines_left = save_lines_left;
+    no_wait_return--;
+    need_wait_return = save_nwr;
+  }
 
   if (opts->verbose) {
     verbose_leave();

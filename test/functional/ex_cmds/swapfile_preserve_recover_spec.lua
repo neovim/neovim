@@ -360,9 +360,36 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     set_session(nvim1)
     local screen = Screen.new(75, 18)
     exec(init)
-    feed(':edit Xfile1\n')
 
-    screen:expect({ any = ('W325: Ignoring swapfile from Nvim process %d'):format(nvimpid) })
+    feed(':edit Xfile1\n')
+    local msg_expected = ('W325: Ignoring swapfile from Nvim process %d'):format(nvimpid)
+    screen:expect({ any = vim.pesc(msg_expected) })
+    eq(msg_expected, n.exec_capture('messages'))
+    command('bwipe!')
+
+    -- With smaller screen, the message should be truncated, but only in display.
+    screen:try_resize(40, 18)
+    feed(':edit Xfile1\n')
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*16
+      {19:W325: Ignoring swapfile from Nvim proces}|
+    ]])
+    eq(('\n' .. msg_expected):rep(2):sub(2), n.exec_capture('messages'))
+    command('bwipe!')
+
+    -- Also test with 'ruler'.
+    screen:try_resize(60, 18)
+    command('set ruler')
+    feed(':edit Xfile1\n')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*16
+      {19:W325: Ignoring swapfile from Nvim process }0,0-1         All |
+    ]])
+    eq(('\n' .. msg_expected):rep(3):sub(2), n.exec_capture('messages'))
+    command('bwipe!')
+
     nvim1:close()
   end)
 

@@ -239,6 +239,7 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.echo_opts
 --- @field err? boolean
 --- @field verbose? boolean
+--- @field _truncate? boolean
 --- @field kind? string
 --- @field id? integer|string
 --- @field title? string

@@ -780,7 +780,8 @@ do
       vim.v.swapchoice = 'e' -- Choose "(E)dit".
       vim.notify(
         ('W325: Ignoring swapfile from Nvim process %d'):format(info.pid),
-        vim.log.levels.WARN
+        vim.log.levels.WARN,
+        { _truncate = true }
       )
     end,
   })
@@ -991,7 +992,8 @@ do
       then
         vim.notify(
           'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.',
-          vim.log.levels.WARN
+          vim.log.levels.WARN,
+          { _truncate = true }
         )
       end
     end
