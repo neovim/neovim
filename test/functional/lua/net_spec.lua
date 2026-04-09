@@ -11,6 +11,15 @@ local function assert_404_error(err)
   )
 end
 
+local function assert_wrong_headers(expected_err, header)
+  local err = t.pcall_err(exec_lua, [[
+    return vim.net.request('https://example.com', {
+      headers = ]] .. header .. [[,
+    }, function() end)
+  ]])
+  t.matches(expected_err, err)
+end
+
 describe('vim.net.request', function()
   before_each(function()
     n:clear()
@@ -175,6 +184,7 @@ describe('vim.net.request', function()
         headers = {
           Authorization = "Bearer test-token",
           ['X-Custom-Header'] = "custom-value",
+          ['Empty'] = '', 
         },
       }, function(err, res)
         if err then
@@ -193,84 +203,24 @@ describe('vim.net.request', function()
     -- httpbingo.org/request returns each header as a list in the returned value
     t.eq(headers.Authorization[1], 'Bearer test-token', 'Expected Authorization header')
     t.eq(headers['X-Custom-Header'][1], 'custom-value', 'Expected X-Custom-Header')
+    t.eq(headers['Empty'][1], '', 'Expected Empty header')
   end)
 
   it('validation', function()
-    -- rejects non-table headers param
-    local err = t.pcall_err(
-      exec_lua,
-      [[
-        return vim.net.request('https://example.com', {
-          headers = 123,
-        }, function() end)
-      ]]
+    assert_wrong_headers('opts.headers: expected table, got number', '123')
+    assert_wrong_headers('headers keys and values must be strings', "{ [123] = 'value' }")
+    assert_wrong_headers('headers keys and values must be strings', '{ Header = 123 }')
+    assert_wrong_headers(
+      'header values must not start with @ or end with : and ;',
+      "{ ['Header:'] = 'value' }"
     )
-    t.matches('opts.headers: expected table, got number', err)
-
-    -- rejects non-string header keys
-    err = t.pcall_err(
-      exec_lua,
-      [[
-        return vim.net.request('https://example.com', {
-          headers = { [123] = 'value' },
-        }, function() end)
-      ]]
+    assert_wrong_headers(
+      'header values must not start with @ or end with : and ;',
+      "{ ['Header;'] = 'value' }"
     )
-    t.matches('headers keys and values must be strings', err)
-
-    -- rejects non-string header values
-    err = t.pcall_err(
-      exec_lua,
-      [[
-        return vim.net.request('https://example.com', {
-          headers = { Key = 123 },
-        }, function() end)
-      ]]
+    assert_wrong_headers(
+      'header values must not start with @ or end with : and ;',
+      "{ ['@filename'] = '' }"
     )
-    t.matches('headers keys and values must be strings', err)
-
-    -- rejects header key ending with colon
-    err = t.pcall_err(
-      exec_lua,
-      [[
-        return vim.net.request('https://example.com', {
-          headers = { ['Header:'] = 'value' },
-        }, function() end)
-      ]]
-    )
-    t.matches('header values must not start', err)
-
-    -- rejects header key ending with semicolon
-    err = t.pcall_err(
-      exec_lua,
-      [[
-        return vim.net.request('https://example.com', {
-          headers = { ['Header;'] = 'value' },
-        }, function() end)
-      ]]
-    )
-    t.matches('header values must not start', err)
-
-    -- rejects header with empty value
-    err = t.pcall_err(
-      exec_lua,
-      [[
-        return vim.net.request('https://example.com', {
-          headers = { ['Header'] = '' },
-        }, function() end)
-      ]]
-    )
-    t.matches('header values must not start', err)
-
-    -- rejects header with @filename syntax
-    err = t.pcall_err(
-      exec_lua,
-      [[
-        return vim.net.request('https://example.com', {
-          headers = { ['@filename'] = '' },
-        }, function() end)
-      ]]
-    )
-    t.matches('header values must not start', err)
   end)
 end)
