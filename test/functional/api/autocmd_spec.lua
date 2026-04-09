@@ -25,11 +25,29 @@ describe('autocmd api', function()
         })
       )
       eq(
-        "Conflict: 'pattern' not allowed with 'buffer'",
+        "Conflict: 'pattern' not allowed with 'buf'",
+        pcall_err(api.nvim_create_autocmd, 'FileType', {
+          command = 'let g:called = g:called + 1',
+          buf = 0,
+          pattern = '*.py',
+        })
+      )
+      -- Deprecated `buffer` key still triggers the same conflict.
+      eq(
+        "Conflict: 'pattern' not allowed with 'buf'",
         pcall_err(api.nvim_create_autocmd, 'FileType', {
           command = 'let g:called = g:called + 1',
           buffer = 0,
           pattern = '*.py',
+        })
+      )
+      -- Passing both `buf` and `buffer` is rejected.
+      eq(
+        "Conflict: 'buf' not allowed with 'buffer'",
+        pcall_err(api.nvim_create_autocmd, 'FileType', {
+          command = 'ls',
+          buf = 0,
+          buffer = 1,
         })
       )
       eq(
@@ -108,28 +126,33 @@ describe('autocmd api', function()
       )
     end)
 
-    it('allows passing buffer by key', function()
-      api.nvim_set_var('called', 0)
+    it('allows passing buf by key', function()
+      for _, buf_key in ipairs({
+        'buf',
+        'buffer', -- deprecated name
+      }) do
+        api.nvim_set_var('called', 0)
 
-      api.nvim_create_autocmd('FileType', {
-        command = 'let g:called = g:called + 1',
-        buffer = 0,
-      })
+        api.nvim_create_autocmd('FileType', {
+          command = 'let g:called = g:called + 1',
+          [buf_key] = 0,
+        })
 
-      command 'set filetype=txt'
-      eq(1, api.nvim_get_var('called'))
+        command 'set filetype=txt'
+        eq(1, api.nvim_get_var('called'))
 
-      -- switch to a new buffer
-      command 'new'
-      command 'set filetype=python'
+        -- switch to a new buffer
+        command 'new'
+        command 'set filetype=python'
 
-      eq(1, api.nvim_get_var('called'))
+        eq(1, api.nvim_get_var('called'))
+      end
     end)
 
     it('does not allow passing invalid buffers', function()
       local ok, msg = pcall(api.nvim_create_autocmd, 'FileType', {
         command = 'let g:called = g:called + 1',
-        buffer = -1,
+        buf = -1,
       })
 
       eq(false, ok)
@@ -449,7 +472,22 @@ describe('autocmd api', function()
       eq(
         "Invalid 'buffer': expected Integer or Array, got Boolean",
         pcall_err(api.nvim_get_autocmds, {
+          buf = true,
+        })
+      )
+      -- Deprecated `buffer` key still validated.
+      eq(
+        "Invalid 'buffer': expected Integer or Array, got Boolean",
+        pcall_err(api.nvim_get_autocmds, {
           buffer = true,
+        })
+      )
+      -- Passing both `buf` and `buffer` is rejected.
+      eq(
+        "Conflict: 'buf' not allowed with 'buffer'",
+        pcall_err(api.nvim_get_autocmds, {
+          buf = 0,
+          buffer = 1,
         })
       )
       eq(
@@ -550,7 +588,7 @@ describe('autocmd api', function()
         command [[au InsertEnter <buffer=1> :echo "1"]]
         command [[au InsertEnter <buffer=2> :echo "2"]]
 
-        local aus = api.nvim_get_autocmds { event = 'InsertEnter', buffer = 0 }
+        local aus = api.nvim_get_autocmds { event = 'InsertEnter', buf = 0 }
         eq({
           {
             buffer = 2,
@@ -562,7 +600,7 @@ describe('autocmd api', function()
           },
         }, aus)
 
-        aus = api.nvim_get_autocmds { event = 'InsertEnter', buffer = 1 }
+        aus = api.nvim_get_autocmds { event = 'InsertEnter', buf = 1 }
         eq({
           {
             buffer = 1,
@@ -574,7 +612,7 @@ describe('autocmd api', function()
           },
         }, aus)
 
-        aus = api.nvim_get_autocmds { event = 'InsertEnter', buffer = { 1, 2 } }
+        aus = api.nvim_get_autocmds { event = 'InsertEnter', buf = { 1, 2 } }
         eq({
           {
             buffer = 1,
@@ -593,18 +631,24 @@ describe('autocmd api', function()
             pattern = '<buffer=2>',
           },
         }, aus)
+
+        -- Deprecated `buffer` key still works.
+        eq(
+          api.nvim_get_autocmds { event = 'InsertEnter', buf = { 1, 2 } },
+          api.nvim_get_autocmds { event = 'InsertEnter', buffer = { 1, 2 } }
+        )
 
         eq(
           "Invalid 'buffer': expected Integer or Array, got String",
-          pcall_err(api.nvim_get_autocmds, { event = 'InsertEnter', buffer = 'foo' })
+          pcall_err(api.nvim_get_autocmds, { event = 'InsertEnter', buf = 'foo' })
         )
         eq(
           "Invalid 'buffer': expected Integer, got String",
-          pcall_err(api.nvim_get_autocmds, { event = 'InsertEnter', buffer = { 'foo', 42 } })
+          pcall_err(api.nvim_get_autocmds, { event = 'InsertEnter', buf = { 'foo', 42 } })
         )
         eq(
           'Invalid buffer id: 42',
-          pcall_err(api.nvim_get_autocmds, { event = 'InsertEnter', buffer = { 42 } })
+          pcall_err(api.nvim_get_autocmds, { event = 'InsertEnter', buf = { 42 } })
         )
 
         local bufs = {}
@@ -614,7 +658,7 @@ describe('autocmd api', function()
 
         eq(
           'Too many buffers (maximum of 256)',
-          pcall_err(api.nvim_get_autocmds, { event = 'InsertEnter', buffer = bufs })
+          pcall_err(api.nvim_get_autocmds, { event = 'InsertEnter', buf = bufs })
         )
       end)
 
@@ -1017,9 +1061,24 @@ describe('autocmd api', function()
         })
       )
       eq(
+        "Invalid 'buf': expected Buffer, got Array",
+        pcall_err(api.nvim_exec_autocmds, 'FileType', {
+          buf = {},
+        })
+      )
+      -- Deprecated `buffer` key still validated.
+      eq(
         "Invalid 'buffer': expected Buffer, got Array",
         pcall_err(api.nvim_exec_autocmds, 'FileType', {
           buffer = {},
+        })
+      )
+      -- Passing both `buf` and `buffer` is rejected.
+      eq(
+        "Conflict: 'buf' not allowed with 'buffer'",
+        pcall_err(api.nvim_exec_autocmds, 'FileType', {
+          buf = 0,
+          buffer = 1,
         })
       )
       eq(
@@ -1085,9 +1144,13 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      api.nvim_exec_autocmds('CursorHold', { buffer = 1 })
+      api.nvim_exec_autocmds('CursorHold', { buf = 1 })
       eq(-1, api.nvim_get_var('buffer_executed'))
 
+      -- Deprecated `buffer` key still works.
+      api.nvim_exec_autocmds('BufLeave', { buf = 1 })
+      eq(1, api.nvim_get_var('buffer_executed'))
+      api.nvim_set_var('buffer_executed', -1)
       api.nvim_exec_autocmds('BufLeave', { buffer = 1 })
       eq(1, api.nvim_get_var('buffer_executed'))
     end)
@@ -1102,7 +1165,7 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      api.nvim_exec_autocmds('CursorHold', { buffer = 1 })
+      api.nvim_exec_autocmds('CursorHold', { buf = 1 })
       eq('none', api.nvim_get_var('filename_executed'))
 
       command('edit __init__.py')
@@ -1111,6 +1174,14 @@ describe('autocmd api', function()
 
     it('cannot pass buf and fname', function()
       local ok = pcall(
+        api.nvim_exec_autocmds,
+        'BufReadPre',
+        { pattern = 'literally_cannot_error.rs', buf = 1 }
+      )
+      eq(false, ok)
+
+      -- Same conflict via deprecated `buffer` key.
+      ok = pcall(
         api.nvim_exec_autocmds,
         'BufReadPre',
         { pattern = 'literally_cannot_error.rs', buffer = 1 }
@@ -1132,10 +1203,10 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      api.nvim_exec_autocmds('CursorHoldI', { buffer = 1 })
+      api.nvim_exec_autocmds('CursorHoldI', { buf = 1 })
       eq('none', api.nvim_get_var('filename_executed'))
 
-      api.nvim_exec_autocmds('CursorHoldI', { buffer = api.nvim_get_current_buf() })
+      api.nvim_exec_autocmds('CursorHoldI', { buf = api.nvim_get_current_buf() })
       eq('__init__.py', api.nvim_get_var('filename_executed'))
 
       -- Reset filename
@@ -1554,10 +1625,26 @@ describe('autocmd api', function()
   describe('nvim_clear_autocmds', function()
     it('validation', function()
       eq(
-        "Conflict: 'pattern' not allowed with 'buffer'",
+        "Conflict: 'pattern' not allowed with 'buf'",
+        pcall_err(api.nvim_clear_autocmds, {
+          pattern = '*',
+          buf = 42,
+        })
+      )
+      -- Deprecated `buffer` key still triggers the same conflict.
+      eq(
+        "Conflict: 'pattern' not allowed with 'buf'",
         pcall_err(api.nvim_clear_autocmds, {
           pattern = '*',
           buffer = 42,
+        })
+      )
+      -- Passing both `buf` and `buffer` is rejected.
+      eq(
+        "Conflict: 'buf' not allowed with 'buffer'",
+        pcall_err(api.nvim_clear_autocmds, {
+          buf = 0,
+          buffer = 1,
         })
       )
       eq(
@@ -1632,22 +1719,27 @@ describe('autocmd api', function()
       eq(2, #after_delete_events)
     end)
 
-    it('should allow clearing by buffer', function()
-      command('autocmd! InsertEnter')
-      command('autocmd InsertEnter <buffer> :echo "Enter Buffer"')
-      command('autocmd InsertEnter *.TestPat1 :echo "Enter Pattern"')
+    it('should allow clearing by buf', function()
+      for _, buf_key in ipairs({
+        'buf',
+        'buffer', -- deprecated name
+      }) do
+        command('autocmd! InsertEnter')
+        command('autocmd InsertEnter <buffer> :echo "Enter Buffer"')
+        command('autocmd InsertEnter *.TestPat1 :echo "Enter Pattern"')
 
-      local search = { event = 'InsertEnter' }
-      local before_delete = api.nvim_get_autocmds(search)
-      eq(2, #before_delete)
+        local search = { event = 'InsertEnter' }
+        local before_delete = api.nvim_get_autocmds(search)
+        eq(2, #before_delete)
 
-      api.nvim_clear_autocmds { buffer = 0 }
-      local after_delete = api.nvim_get_autocmds(search)
-      eq(1, #after_delete)
-      eq('*.TestPat1', after_delete[1].pattern)
+        api.nvim_clear_autocmds { [buf_key] = 0 }
+        local after_delete = api.nvim_get_autocmds(search)
+        eq(1, #after_delete)
+        eq('*.TestPat1', after_delete[1].pattern)
+      end
     end)
 
-    it('should allow clearing by buffer and group', function()
+    it('should allow clearing by buf and group', function()
       command('augroup TestNvimClearAutocmds')
       command('  au!')
       command('  autocmd InsertEnter <buffer> :echo "Enter Buffer"')
@@ -1659,12 +1751,12 @@ describe('autocmd api', function()
       eq(2, #before_delete)
 
       -- Doesn't clear without passing group.
-      api.nvim_clear_autocmds { buffer = 0 }
+      api.nvim_clear_autocmds { buf = 0 }
       local without_group = api.nvim_get_autocmds(search)
       eq(2, #without_group)
 
       -- Doesn't clear with passing group.
-      api.nvim_clear_autocmds { buffer = 0, group = search.group }
+      api.nvim_clear_autocmds { buf = 0, group = search.group }
       local with_group = api.nvim_get_autocmds(search)
       eq(1, #with_group)
     end)
