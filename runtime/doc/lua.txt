@@ -4225,9 +4225,9 @@ vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
                          body to.
                        • {headers}? (`table<string, string>`) Table of custom
                          headers to send with the request. Supports basic
-                         key/value header formats as supported by curl Does
-                         not support @filename style, internal header deletion
-                         (e.g: 'Header:') and empty headers 'Header;'
+                         key/value header formats and empty headers as
+                         supported by curl. Does not support @filename style,
+                         internal header deletion (e.g: 'Header:').
       • {on_response}  (`fun(err: string?, response: vim.net.request.Response?)?`)
                        Callback invoked on request completion. The `body`
                        field in the response parameter contains the raw

@@ -16,9 +16,8 @@ local M = {}
 ---@field outbuf? integer
 ---
 ---Table of custom headers to send with the request.
----Supports basic key/value header formats as supported by curl
----Does not support @filename style, internal header deletion (e.g: 'Header:')
----and empty headers 'Header;'
+---Supports basic key/value header formats and empty headers as supported by curl.
+---Does not support @filename style, internal header deletion (e.g: 'Header:').
 ---@field headers? table<string, string>
 
 ---@class vim.net.request.Response
