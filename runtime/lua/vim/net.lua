@@ -94,11 +94,15 @@ function M.request(url, opts, on_response)
         error('headers keys and values must be strings')
       end
 
-      if key:match(':$') or key:match(';$') or value == '' or value:match('^@') then
+      if key:match(':$') or key:match(';$') or key:match('^@') then
         error('header values must not start with @ or end with : and ;')
       end
 
-      vim.list_extend(args, { '-H', key .. ': ' .. value })
+      if value == '' then
+        vim.list_extend(args, { '-H', key .. ';' })
+      else
+        vim.list_extend(args, { '-H', key .. ': ' .. value })
+      end
     end
   end
 
