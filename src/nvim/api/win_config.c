@@ -86,7 +86,7 @@
 /// vim.api.nvim_open_win(0, false, { split = 'left', win = 0, })
 /// ```
 ///
-/// @param buffer Buffer to display, or 0 for current buffer
+/// @param buf Buffer to display, or 0 for current buffer
 /// @param enter  Enter the window (make it the current window)
 /// @param config Map defining the window configuration. Keys:
 ///   - anchor: Decides which corner of the float to place at (row,col):
@@ -202,14 +202,14 @@
 /// @param[out] err Error details, if any
 ///
 /// @return |window-ID|, or 0 on error
-Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Error *err)
+Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error *err)
   FUNC_API_SINCE(6) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!b) {
     return 0;
   }
-  if ((cmdwin_type != 0 && enter) || buf == cmdwin_buf) {
+  if ((cmdwin_type != 0 && enter) || b == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }
@@ -305,7 +305,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
   // event. In each case, `wp` should already be valid in `tp`, so switch_win should not fail.
   // Also, autocommands may free the `buf` to switch to, so store a bufref to check.
   bufref_T bufref;
-  set_bufref(&bufref, buf);
+  set_bufref(&bufref, b);
   if (!fconfig.noautocmd) {
     switchwin_T switchwin;
     const int result = switch_win_noblock(&switchwin, wp, tp, true);
@@ -320,7 +320,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     goto_tabpage_win(tp, wp);
     tp = win_find_tabpage(wp);
   }
-  if (tp && bufref_valid(&bufref) && buf != wp->w_buffer) {
+  if (tp && bufref_valid(&bufref) && b != wp->w_buffer) {
     // win_set_buf temporarily makes `wp` the curwin to set the buffer.
     // If not entering `wp`, block Enter and Leave events. (cringe)
     const bool au_no_enter_leave = curwin != wp && !fconfig.noautocmd;
@@ -328,7 +328,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       autocmd_no_enter++;
       autocmd_no_leave++;
     }
-    win_set_buf(wp, buf, err);
+    win_set_buf(wp, b, err);
     if (!fconfig.noautocmd) {
       tp = win_find_tabpage(wp);
     }
