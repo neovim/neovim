@@ -184,8 +184,9 @@ local function request_with_opts(name, params, opts)
 end
 
 ---@param method vim.lsp.protocol.Method.ClientToServer.Request
+---@param context? lsp.ReferenceContext
 ---@param opts? vim.lsp.ListOpts
-local function get_locations(method, opts)
+local function get_locations(method, context, opts)
   opts = opts or {}
   ---@diagnostic disable-next-line: undefined-field
   if opts.reuse_win then
@@ -210,7 +211,10 @@ local function get_locations(method, opts)
   local tagname = vim.fn.expand('<cword>')
 
   lsp.buf_request_all(bufnr, method, function(client)
-    return util.make_position_params(win, client.offset_encoding)
+    local params = util.make_position_params(win, client.offset_encoding)
+    ---@diagnostic disable-next-line: inject-field
+    params.context = context or { includeDeclaration = true }
+    return params
   end, function(results)
     ---@type vim.quickfix.entry[]
     local all_items = {}
@@ -225,25 +229,28 @@ local function get_locations(method, opts)
       vim.list_extend(all_items, items)
     end
 
+    local name = string.gsub(method:match('textDocument/(.*)'), '(%u)', ' %1'):lower()
     if vim.tbl_isempty(all_items) then
-      vim.notify('No locations found', vim.log.levels.INFO)
+      vim.notify(('No %s found'):format(name), vim.log.levels.INFO)
       return
     end
 
-    local title = 'LSP locations'
+    ---@type vim.fn.setqflist.what
+    local list = {
+      title = name:gsub('^%l', string.upper),
+      items = all_items,
+      context = { bufnr = bufnr, method = method },
+    }
     if opts.on_list then
       assert(vim.is_callable(opts.on_list), 'on_list is not a function')
-      opts.on_list({
-        title = title,
-        items = all_items,
-        context = { bufnr = bufnr, method = method },
-      })
+      ---@cast list vim.lsp.ListOpts.OnList
+      opts.on_list(list)
       return
     end
 
     if opts.loclist then
-      vim.fn.setloclist(0, {}, ' ', { title = title, items = all_items })
-      if #all_items == 1 then
+      vim.fn.setloclist(0, {}, ' ', list)
+      if method ~= 'textDocument/references' and #all_items == 1 then
         local tagstack = { { tagname = tagname, from = from } }
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
         vim.cmd('lfirst')
@@ -251,8 +258,8 @@ local function get_locations(method, opts)
         vim.cmd.lopen()
       end
     else
-      vim.fn.setqflist({}, ' ', { title = title, items = all_items })
-      if #all_items == 1 then
+      vim.fn.setqflist({}, ' ', list)
+      if method ~= 'textDocument/references' and #all_items == 1 then
         local tagstack = { { tagname = tagname, from = from } }
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
         vim.cmd('cfirst')
@@ -296,21 +303,21 @@ end
 --- @param opts? vim.lsp.ListOpts
 function M.declaration(opts)
   validate('opts', opts, 'table', true)
-  get_locations('textDocument/declaration', opts)
+  get_locations('textDocument/declaration', nil, opts)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
 --- @param opts? vim.lsp.ListOpts
 function M.definition(opts)
   validate('opts', opts, 'table', true)
-  get_locations('textDocument/definition', opts)
+  get_locations('textDocument/definition', nil, opts)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 --- @param opts? vim.lsp.ListOpts
 function M.type_definition(opts)
   validate('opts', opts, 'table', true)
-  get_locations('textDocument/typeDefinition', opts)
+  get_locations('textDocument/typeDefinition', nil, opts)
 end
 
 --- Lists all the implementations for the symbol under the cursor in the
@@ -318,7 +325,7 @@ end
 --- @param opts? vim.lsp.ListOpts
 function M.implementation(opts)
   validate('opts', opts, 'table', true)
-  get_locations('textDocument/implementation', opts)
+  get_locations('textDocument/implementation', nil, opts)
 end
 
 --- @param results table<integer,{err: lsp.ResponseError?, result: lsp.SignatureHelp?}>
@@ -828,49 +835,7 @@ end
 function M.references(context, opts)
   validate('context', context, 'table', true)
   validate('opts', opts, 'table', true)
-
-  local bufnr = api.nvim_get_current_buf()
-  local win = api.nvim_get_current_win()
-  opts = opts or {}
-
-  lsp.buf_request_all(bufnr, 'textDocument/references', function(client)
-    local params = util.make_position_params(win, client.offset_encoding)
-    ---@diagnostic disable-next-line: inject-field
-    params.context = context or { includeDeclaration = true }
-    return params
-  end, function(results)
-    local all_items = {}
-    local title = 'References'
-
-    for client_id, res in pairs(results) do
-      local client = assert(lsp.get_client_by_id(client_id))
-      local items = util.locations_to_items(res.result or {}, client.offset_encoding)
-      vim.list_extend(all_items, items)
-    end
-
-    if not next(all_items) then
-      vim.notify('No references found')
-    else
-      local list = {
-        title = title,
-        items = all_items,
-        context = {
-          method = 'textDocument/references',
-          bufnr = bufnr,
-        },
-      }
-      if opts.on_list then
-        assert(vim.is_callable(opts.on_list), 'on_list is not a function')
-        opts.on_list(list)
-      elseif opts.loclist then
-        vim.fn.setloclist(0, {}, ' ', list)
-        vim.cmd.lopen()
-      else
-        vim.fn.setqflist({}, ' ', list)
-        vim.cmd('botright copen')
-      end
-    end
-  end)
+  get_locations('textDocument/references', context, opts)
 end
 
 --- Lists all symbols in the current buffer in the |location-list|.
