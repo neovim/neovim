@@ -2162,6 +2162,10 @@ local function match_from_hashbang(contents, path, dispatch_extension)
     end
   end
 
+  if name == 'uv' and matchregex(first_line, [[\<uv run\>]]) then
+    return 'python'
+  end
+
   -- If nothing matched, check the extension table. For a hashbang like
   -- '#!/bin/env foo', this will set the filetype to 'fooscript' assuming
   -- the filetype for the 'foo' extension is 'fooscript' in the extension table.
