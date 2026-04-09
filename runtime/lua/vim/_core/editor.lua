@@ -547,7 +547,11 @@ end
 ---@diagnostic disable-next-line: unused-local
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   local chunks = { { msg, level == vim.log.levels.WARN and 'WarningMsg' or nil } }
-  vim.api.nvim_echo(chunks, true, { err = level == vim.log.levels.ERROR })
+  vim.api.nvim_echo(
+    chunks,
+    true,
+    { err = level == vim.log.levels.ERROR, _truncate = opts and opts._truncate }
+  )
 end
 
 do
@@ -1213,9 +1217,7 @@ end
 do
   local function truncated_echo(msg)
     -- Truncate message to avoid hit-enter-prompt
-    local max_width = vim.o.columns * math.max(vim.o.cmdheight - 1, 0) + vim.v.echospace
-    local msg_truncated = string.sub(msg, 1, max_width)
-    vim.api.nvim_echo({ { msg_truncated, 'WarningMsg' } }, true, {})
+    vim.api.nvim_echo({ { msg, 'WarningMsg' } }, true, { _truncate = true })
   end
 
   local notified = false

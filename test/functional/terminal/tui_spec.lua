@@ -3213,6 +3213,42 @@ describe('TUI', function()
     feed_data(':set columns=99|set stl=redrawn%m\n')
     screen:expect({ any = 'redrawn%[%+%]' })
   end)
+
+  it('missing DSR response does not lead to hit-enter prompt #38877', function()
+    local child_server = n.new_pipename()
+    exec_lua('vim.uv.os_unsetenv("NVIM_TEST")')
+    local job = fn.jobstart({ nvim_prog, '--clean', '--listen', child_server }, {
+      -- Use pty = true for a PTY without a terminal, so that there is no DSR response.
+      pty = true,
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+        COLORTERM = 'xterm-256color',
+        NVIM_LOG_FILE = testlog,
+      },
+    })
+    finally(function()
+      exec_lua(function()
+        vim.fn.jobstop(job)
+        vim.fn.jobwait({ job }, 5000)
+      end)
+      os.remove(testlog)
+    end)
+    retry(nil, nil, function()
+      t.neq(nil, vim.uv.fs_stat(child_server))
+    end)
+    local child_session = n.connect(child_server)
+    local expected_msg =
+      'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.'
+    retry(nil, 4000, function()
+      eq({ true, { mode = 'n', blocking = false } }, { child_session:request('nvim_get_mode') })
+      if not is_os('win') then -- ConPTY provides DSR response on Windows?
+        eq(
+          { true, { output = expected_msg } },
+          { child_session:request('nvim_exec2', 'messages', { output = true }) }
+        )
+      end
+    end)
+  end)
 end)
 
 describe('TUI UIEnter/UILeave', function()

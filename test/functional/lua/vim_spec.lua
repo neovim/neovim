@@ -134,18 +134,20 @@ describe('lua stdlib', function()
 
     describe(('vim.deprecate prerel=%s,'):format(prerel or 'nil'), function()
       local curver --- @type {major:number, minor:number}
+      local curstr --- @type string
+      local nextver --- @type string
 
       before_each(function()
         curver = exec_lua('return vim.version()')
+        -- "0.10" or "0.10-dev+xxx"
+        curstr = ('%s.%s%s'):format(curver.major, curver.minor, prerel or '')
+        -- "0.10" or "0.11"
+        nextver = ('%s.%s'):format(curver.major, curver.minor + (prerel and 0 or 1))
       end)
 
       it('plugin=nil, same message skipped', function()
-        -- "0.10" or "0.10-dev+xxx"
-        local curstr = ('%s.%s%s'):format(curver.major, curver.minor, prerel or '')
         eq(
-          ([[foo.bar() is deprecated. Run ":checkhealth vim.deprecated" for more information]]):format(
-            curstr
-          ),
+          [[foo.bar() is deprecated. Run ":checkhealth vim.deprecated" for more information]],
           exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', curstr)
         )
         -- Same message as above; skipped this time.
@@ -160,16 +162,23 @@ describe('lua stdlib', function()
       end)
 
       it('plugin=nil, show error if hard-deprecated', function()
-        -- "0.10" or "0.11"
-        local nextver = ('%s.%s'):format(curver.major, curver.minor + (prerel and 0 or 1))
-
-        local was_removed = prerel and 'was removed' or 'will be removed'
         eq(
-          dedent(
-            [[
-            foo.hard_dep() is deprecated. Run ":checkhealth vim.deprecated" for more information]]
-          ):format(was_removed, nextver),
+          [[foo.hard_dep() is deprecated. Run ":checkhealth vim.deprecated" for more information]],
           exec_lua('return vim.deprecate(...)', 'foo.hard_dep()', 'vim.new_api()', nextver)
+        )
+      end)
+
+      it('plugin=nil, message is only truncated in display #38841', function()
+        local screen = Screen.new(50, 10)
+        exec_lua('vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', curstr)
+        screen:expect([[
+          ^                                                  |
+          {1:~                                                 }|*8
+          {19:foo.bar() is deprecated. Run ":checkhealth vim.dep}|
+        ]])
+        eq(
+          [[foo.bar() is deprecated. Run ":checkhealth vim.deprecated" for more information]],
+          n.exec_capture('messages')
         )
       end)
 

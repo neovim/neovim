@@ -357,6 +357,7 @@ typedef struct {
   OptionalKeys is_set__echo_opts_;
   Boolean err;
   Boolean verbose;
+  Boolean _truncate;
   String kind;
   Union(Integer, String) id;
   String title;
