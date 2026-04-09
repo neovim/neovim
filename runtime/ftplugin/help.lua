@@ -29,14 +29,18 @@ local function colorize_hl_groups(patterns)
   vim.fn.setpos('.', save_cursor)
 end
 
+local function help_bufname_match(bufname, path)
+  return vim.endswith(bufname, path .. '.txt') or bufname:find(path .. '%.%a%ax$')
+end
+
 -- Add custom highlights for list in `:h highlight-groups`.
 local bufname = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
-if vim.endswith(bufname, '/doc/syntax.txt') then
+if help_bufname_match(bufname, '/doc/syntax') then
   colorize_hl_groups({
     { start = [[\*group-name\*]], stop = '^======', match = '^(%w+)\t' },
     { start = [[\*highlight-groups\*]], stop = '^======', match = '^(%w+)\t' },
   })
-elseif vim.endswith(bufname, '/doc/treesitter.txt') then
+elseif help_bufname_match(bufname, '/doc/treesitter') then
   colorize_hl_groups({
     {
       start = [[\*treesitter-highlight-groups\*]],
@@ -44,11 +48,11 @@ elseif vim.endswith(bufname, '/doc/treesitter.txt') then
       match = '^@[%w%p]+',
     },
   })
-elseif vim.endswith(bufname, '/doc/diagnostic.txt') then
+elseif help_bufname_match(bufname, '/doc/diagnostic') then
   colorize_hl_groups({
     { start = [[\*diagnostic-highlights\*]], stop = '^======', match = '^(%w+)' },
   })
-elseif vim.endswith(bufname, '/doc/lsp.txt') then
+elseif help_bufname_match(bufname, '/doc/lsp') then
   colorize_hl_groups({
     { start = [[\*lsp-highlight\*]], stop = '^------', match = '^(%w+)' },
     { start = [[\*lsp-semantic-highlight\*]], stop = '^======', match = '^@[%w%p]+' },

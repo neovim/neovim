@@ -611,7 +611,6 @@ One command, :DiffGitCached, is provided to show a diff of the current commit
 in the preview window.  It is equivalent to calling "git diff --cached" plus
 any arguments given to the command.
 
-
 The length of the first line of the commit message used for
 syntax highlighting can be configured via `g:gitcommit_summary_length`.
 The default is 50.  Example: >
