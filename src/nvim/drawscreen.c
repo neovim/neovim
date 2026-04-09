@@ -437,6 +437,12 @@ bool redrawing(void)
 /// and redraw_all_later() to mark parts of the screen as needing a redraw.
 int update_screen(void)
 {
+  if (intro_manual_active()) {
+    screenclear();
+    intro_message(true);
+    return OK;
+  }
+
   static bool still_may_intro = true;
   if (still_may_intro) {
     if (!may_show_intro()) {

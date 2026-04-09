@@ -29,12 +29,15 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/mouse.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
+#include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/ui_defs.h"
@@ -52,12 +55,33 @@
 char *Versions[] = { "8.1", "8.2", "9.0", "9.1", "9.2" };
 char *longVersion = NVIM_VERSION_LONG;
 char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
+static bool manual_intro_active = false;
 // Reproducible builds: omit compile info in Release builds. #15424
 #ifndef NDEBUG
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 #endif
 
 #include "version.c.generated.h"
+
+bool intro_manual_active(void)
+{
+  return manual_intro_active;
+}
+
+static int intro_state_execute(VimState *state, int key)
+{
+  if (key == K_EVENT || key == K_IGNORE || key == K_NOP) {
+    state_handle_k_event();
+    return -1;
+  }
+
+  manual_intro_active = false;
+  return 0;
+}
+
+static VimState intro_state = {
+  .execute = intro_state_execute,
+};
 
 // clang-format off
 static const int vim_versions[] = { 801, 802, 900, 901, 902 };
@@ -4404,9 +4428,19 @@ void intro_message(bool colon)
 /// @param eap
 void ex_intro(exarg_T *eap)
 {
+  int save_State = State;
+
   // TODO(bfredl): use msg_grid instead!
+  manual_intro_active = true;
+  State = MODE_INTRO;
+  setmouse();
   screenclear();
   intro_message(true);
-  plain_vgetc();
+
+  state_enter(&intro_state);
+
+  manual_intro_active = false;
+  State = save_State;
+  setmouse();
   apply_autocmds(EVENT_INTROLEAVE, NULL, NULL, false, curbuf);
 }
