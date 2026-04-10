@@ -2437,6 +2437,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
             char buf[MAXLINELEN];
 
             aff_entry->ae_cond = getroom_save(spin, items[4]);
+            // Note: this silently truncates the buffer, but this should
+            // not happen in practice
             snprintf(buf, sizeof(buf), *items[0] == 'P' ? "^%s" : "%s$", items[4]);
             aff_entry->ae_prog = vim_regcomp(buf, RE_MAGIC + RE_STRING + RE_STRICT);
             if (aff_entry->ae_prog == NULL) {
@@ -3391,7 +3393,9 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                   MB_PTR_ADV(p);
                 }
               }
-              strcat(newword, p);
+              // Note: this silently truncates the buffer, but this should
+              // not happen in practice
+              xstrlcat(newword, p, MAXWLEN);
             } else {
               // suffix: chop/add at the end of the word
               xstrlcpy(newword, word, MAXWLEN);
@@ -3405,7 +3409,9 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                 *p = NUL;
               }
               if (ae->ae_add != NULL) {
-                strcat(newword, ae->ae_add);
+                // Note: this silently truncates the buffer, but this should
+                // not happen in practice
+                xstrlcat(newword, ae->ae_add, MAXWLEN);
               }
             }
 
