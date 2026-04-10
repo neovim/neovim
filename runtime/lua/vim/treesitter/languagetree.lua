@@ -552,8 +552,9 @@ end
 --- @private
 --- @param range boolean|Range?
 --- @param on_parse fun(err?: string, trees?: table<integer, TSTree>)
+--- @param ignore_injections boolean?
 --- @return table<integer, TSTree>? trees the list of parsed trees, if parsing completed synchronously
-function LanguageTree:_async_parse(range, on_parse)
+function LanguageTree:_async_parse(range, on_parse, ignore_injections)
   self:_push_async_callback(range, on_parse)
 
   -- If we are already running an async parse, just queue the callback.
@@ -593,7 +594,7 @@ function LanguageTree:_async_parse(range, on_parse)
     end
 
     thread_state.timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ns or nil
-    local parse_time, trees, finished = tcall(parse, self, range, thread_state)
+    local parse_time, trees, finished = tcall(parse, self, range, thread_state, ignore_injections)
     total_parse_time = total_parse_time + parse_time
 
     if finished then
@@ -631,12 +632,14 @@ end
 ---
 ---     If parsing was still able to finish synchronously (within 3ms), `parse()` returns the list
 ---     of trees. Otherwise, it returns `nil`.
+--- @param ignore_injections boolean?: Don't parse injections, but still add them as child trees.
+---
 --- @return table<integer, TSTree>?
-function LanguageTree:parse(range, on_parse)
+function LanguageTree:parse(range, on_parse, ignore_injections)
   if on_parse then
-    return self:_async_parse(range, on_parse)
+    return self:_async_parse(range, on_parse, ignore_injections)
   end
-  local trees, _ = self:_parse(range, {})
+  local trees, _ = self:_parse(range, {}, ignore_injections)
   return trees
 end
 
@@ -652,9 +655,10 @@ end
 --- @private
 --- @param range? boolean|Range|Range[]
 --- @param thread_state ParserThreadState
+--- @param ignore_injections boolean?
 --- @return table<integer, TSTree> trees
 --- @return boolean finished
-function LanguageTree:_parse(range, thread_state)
+function LanguageTree:_parse(range, thread_state, ignore_injections)
   if self:is_valid(nil, type(range) == 'table' and range or nil) then
     self:_log('valid')
     return self._trees, true
@@ -700,8 +704,10 @@ function LanguageTree:_parse(range, thread_state)
     range = range,
   })
 
-  for _, child in pairs(self._children) do
-    child:_parse(range, thread_state)
+  if not ignore_injections then
+    for _, child in pairs(self._children) do
+      child:_parse(range, thread_state)
+    end
   end
 
   return self._trees, true
