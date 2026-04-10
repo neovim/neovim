@@ -169,10 +169,13 @@ function vim.fn.arglistid(winnr, tabnr) end
 --- the argument list.  Returns an empty List if the {winid}
 --- argument is invalid.
 ---
---- @param nr? integer
+--- @param nr integer
 --- @param winid? integer
---- @return string|string[]
+--- @return string
 function vim.fn.argv(nr, winid) end
+
+--- @return string[]
+function vim.fn.argv() end
 
 --- Return the arc sine of {expr} measured in radians, as a |Float|
 --- in the range of [-pi/2, pi/2].

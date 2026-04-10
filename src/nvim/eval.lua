@@ -234,7 +234,7 @@ M.funcs = {
     signature = 'arglistid([{winnr} [, {tabnr}]])',
   },
   argv = {
-    args = { 0, 2 },
+    args = { 1, 2 },
     desc = [=[
       The result is the {nr}th file in the argument list.  See
       |arglist|.  "argv(0)" is the first one.  Example: >vim
@@ -256,8 +256,14 @@ M.funcs = {
     ]=],
     name = 'argv',
     params = { { 'nr', 'integer' }, { 'winid', 'integer' } },
-    returns = 'string|string[]',
+    returns = 'string',
     signature = 'argv([{nr} [, {winid}]])',
+  },
+  argv__1 = {
+    args = { 0 },
+    name = 'argv',
+    params = {},
+    returns = 'string[]',
   },
   asin = {
     args = 1,
