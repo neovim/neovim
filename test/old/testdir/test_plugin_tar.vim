@@ -21,8 +21,8 @@ func Test_tar_basic()
   call assert_match('^" Browsing tarfile .*/X.tar', getline(2))
   call assert_match('^" Select a file with cursor and press ENTER, "x" to extract a file', getline(3))
   call assert_match('^$', getline(4))
-  call assert_match('testtar/', getline(5))
-  call assert_match('testtar/file1.txt', getline(6))
+  call assert_equal('testtar/', getline(5))
+  call assert_equal('testtar/file1.txt', getline(6))
 
   "## Check ENTER on header
   :1
@@ -80,7 +80,7 @@ func Test_tar_evil()
   call assert_match('^" Select a file with cursor and press ENTER, "x" to extract a file', getline(3))
   call assert_match('^" Note: Path Traversal Attack detected', getline(4))
   call assert_match('^$', getline(5))
-  call assert_match('/etc/ax-pwn', getline(6))
+  call assert_equal('/etc/ax-pwn', getline(6))
 
   "## Check ENTER on header
   :1
@@ -144,7 +144,7 @@ func Test_tar_path_traversal_with_nowrapscan()
   call assert_match('^" Select a file with cursor and press ENTER, "x" to extract a file', getline(3))
   call assert_match('^" Note: Path Traversal Attack detected', getline(4))
   call assert_match('^$', getline(5))
-  call assert_match('/etc/ax-pwn', getline(6))
+  call assert_equal('/etc/ax-pwn', getline(6))
 
   call assert_equal(1, b:leading_slash)
 
@@ -255,7 +255,7 @@ func Test_extraction()
 
     call delete('X.txt')
     execute 'edit ' .. dir .. '/' .. c.archive
-    call assert_match('X.txt', getline(5), 'line 5 wrong in archive: ' .. c.archive)
+    call assert_equal('X.txt', getline(5), 'line 5 wrong in archive: ' .. c.archive)
     :5
     normal x
     call assert_equal(0, v:shell_error, 'vshell error not 0')
@@ -284,7 +284,7 @@ func Test_extract_with_dotted_dir()
   defer delete(tarpath)
 
   execute 'e ' .. tarpath
-  call assert_match('X.txt', getline(5))
+  call assert_equal('X.txt', getline(5))
   :5
   normal x
   call assert_true(filereadable('X.txt'))
@@ -308,7 +308,7 @@ func Test_extract_with_dotted_filename()
   defer delete(tarpath)
 
   execute 'e ' .. tarpath
-  call assert_match('X.txt', getline(5))
+  call assert_equal('X.txt', getline(5))
   :5
   normal x
   call assert_true(filereadable('X.txt'))
