@@ -1491,7 +1491,12 @@ static void pum_select_mouse_pos(void)
     // Offset by 1 when border width is 2 (non-shadow border)
     int border_offset = pum_border_width() == 2 ? 1 : 0;
     int item = row - border_offset;
-    pum_selected = (item >= 0 && item < pum_height) ? item : -1;
+    if (item >= 0 && item < pum_height) {
+      int abs_idx = item + pum_first;
+      pum_selected = (*pum_array[abs_idx].pum_text != NUL) ? item : -1;
+    } else {
+      pum_selected = -1;
+    }
     return;
   }
 

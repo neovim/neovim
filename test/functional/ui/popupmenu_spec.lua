@@ -7460,6 +7460,23 @@ describe('builtin popupmenu', function()
           :popup PopUp                    |
         ]])
 
+        api.nvim_input_mouse('move', '', '', 0, 3, 12)
+        screen:expect([[
+          one two three four five         |
+          and one two {10:^X}three four five    |
+          one more tw{n: Undo             }   |
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Paste            }{1:   }|
+          {1:~          }{n:                  }{1:   }|
+          {1:~          }{n: Select Word      }{1:   }|
+          {1:~          }{n: Select Sentence  }{1:   }|
+          {1:~          }{n: Select Paragraph }{1:   }|
+          {1:~          }{n: Select Line      }{1:   }|
+          {1:~          }{n: Select Block     }{1:   }|
+          {1:~          }{n: Select All       }{1:   }|
+          {1:~                               }|*7
+          :popup PopUp                    |
+        ]])
         feed('<Esc>')
 
         command('set rightleft')
