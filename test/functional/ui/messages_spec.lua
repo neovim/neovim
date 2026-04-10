@@ -2200,6 +2200,26 @@ describe('ui/builtin messages', function()
     assert_alive()
   end)
 
+  it('supports dismissing manual :intro from lua', function()
+    screen:try_resize(40, 10)
+    exec_lua(function()
+      vim.g.intro_left = false
+      vim.api.nvim_create_autocmd('IntroLeave', {
+        once = true,
+        callback = function()
+          vim.g.intro_left = true
+        end,
+      })
+    end)
+
+    feed(':intro<CR>')
+    exec_lua(function()
+      require('vim._core.intro').dismiss()
+    end)
+    eq(true, exec_lua('return vim.g.intro_left'))
+    assert_alive()
+  end)
+
   it('shows an error when loading intro fails', function()
     screen:try_resize(40, 10)
     exec_lua(function()

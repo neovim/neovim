@@ -620,8 +620,7 @@ void ui_check_mouse(void)
   int checkfor = MOUSE_NORMAL;  // assume normal mode
   if (VIsual_active) {
     checkfor = MOUSE_VISUAL;
-  } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE
-             || State == MODE_INTRO) {
+  } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE) {
     checkfor = MOUSE_RETURN;
   } else if (State & MODE_INSERT) {
     checkfor = MOUSE_INSERT;

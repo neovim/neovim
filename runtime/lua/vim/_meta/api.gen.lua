@@ -39,6 +39,10 @@ function vim.api.nvim__complete_set(index, opts) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+function vim.api.nvim__dismiss_intro() end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @return string
 function vim.api.nvim__get_lib_dir() end
 

@@ -183,7 +183,6 @@ void get_mode(char *buf)
   int i = 0;
 
   if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE
-      || State == MODE_INTRO
       || ((State & MODE_CMDLINE) && get_cmdline_info()->one_key)) {
     buf[i++] = 'r';
     if (State == MODE_ASKMORE) {

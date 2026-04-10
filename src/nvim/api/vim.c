@@ -84,6 +84,7 @@
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
@@ -2558,4 +2559,11 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
   RedrawingDisabled = save_rd;
   p_lz = save_lz;
+}
+
+/// @nodoc
+void nvim__dismiss_intro(void)
+  FUNC_API_SINCE(12)
+{
+  intro_dismiss();
 }

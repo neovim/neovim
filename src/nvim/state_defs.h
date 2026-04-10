@@ -41,5 +41,4 @@ enum {
   MODE_SETWSIZE    = 0x4000,  ///< window size has changed
   MODE_EXTERNCMD   = 0x5000,  ///< executing an external command
   MODE_SHOWMATCH   = 0x6000 | MODE_INSERT,  ///< show matching paren
-  MODE_INTRO       = 0x7000 | MODE_NORMAL,  ///< showing manual :intro screen
 };

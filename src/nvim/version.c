@@ -34,7 +34,6 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/mouse.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
 #include "nvim/state.h"
@@ -56,6 +55,7 @@ char *Versions[] = { "8.1", "8.2", "9.0", "9.1", "9.2" };
 char *longVersion = NVIM_VERSION_LONG;
 char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
 static bool manual_intro_active = false;
+static bool intro_dismissed = false;
 // Reproducible builds: omit compile info in Release builds. #15424
 #ifndef NDEBUG
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
@@ -68,11 +68,21 @@ bool intro_manual_active(void)
   return manual_intro_active;
 }
 
+void intro_dismiss(void)
+{
+  intro_dismissed = true;
+  manual_intro_active = false;
+}
+
 static int intro_state_execute(VimState *state, int key)
 {
-  if (key == K_EVENT || key == K_IGNORE || key == K_NOP) {
+  if (key == K_EVENT) {
     state_handle_k_event();
-    return -1;
+    return manual_intro_active ? -1 : 0;
+  }
+
+  if (key == K_IGNORE || key == K_NOP) {
+    return manual_intro_active ? -1 : 0;
   }
 
   manual_intro_active = false;
@@ -4264,7 +4274,8 @@ void list_version(void)
 /// Whether it still is not too late to show an intro message
 bool may_show_intro(void)
 {
-  return (buf_is_empty(curbuf)
+  return (!intro_dismissed
+          && buf_is_empty(curbuf)
           && (curbuf->b_fname == NULL)
           && (curbuf->handle == 1)
           && (curwin->handle == LOWEST_WIN_ID)
@@ -4432,8 +4443,7 @@ void ex_intro(exarg_T *eap)
 
   // TODO(bfredl): use msg_grid instead!
   manual_intro_active = true;
-  State = MODE_INTRO;
-  setmouse();
+  State = MODE_NORMAL;
   screenclear();
   intro_message(true);
 
@@ -4441,6 +4451,5 @@ void ex_intro(exarg_T *eap)
 
   manual_intro_active = false;
   State = save_State;
-  setmouse();
   apply_autocmds(EVENT_INTROLEAVE, NULL, NULL, false, curbuf);
 }

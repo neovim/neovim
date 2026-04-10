@@ -102,4 +102,9 @@ M.display = function()
   })
 end
 
+function M.dismiss()
+  vim.api.nvim__dismiss_intro()
+  vim.api.nvim__redraw({ valid = false, flush = true })
+end
+
 return M
