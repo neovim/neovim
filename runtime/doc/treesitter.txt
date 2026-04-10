@@ -628,6 +628,12 @@ in                      Selects [count]th previous (or first) child node.
                                                                         *v_[n*
 [n                      Selects [count]th previous node.
 
+                                                                        *v_]N*
+]N                      Expands selection to [count]th next node.
+
+                                                                        *v_[N*
+[N                      Expands selection to [count]th previous node.
+
 ==============================================================================
 VIM.TREESITTER                                                *lua-treesitter*
 

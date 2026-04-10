@@ -130,7 +130,7 @@ TERMINAL
 
 TREESITTER
 
-• todo
+• |v_]N| |v_[N| expand selection to sibling treesitter node.
 
 TUI
 
