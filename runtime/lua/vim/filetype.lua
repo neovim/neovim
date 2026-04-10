@@ -1874,6 +1874,7 @@ local filename = {
   pinercex = 'pine',
   ['/etc/pinforc'] = 'pinfo',
   ['/.pinforc'] = 'pinfo',
+  PklProject = 'pkl',
   ['.povrayrc'] = 'povini',
   printcap = function(_path, _bufnr)
     return 'ptcap', function(b)
