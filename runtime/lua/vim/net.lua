@@ -94,7 +94,7 @@ function M.request(url, opts, on_response)
       end
 
       if key:match(':$') or key:match(';$') or key:match('^@') then
-        error('header values must not start with @ or end with : and ;')
+        error('header keys must not start with @ or end with : and ;')
       end
 
       if value == '' then

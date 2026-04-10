@@ -211,15 +211,15 @@ describe('vim.net.request', function()
     assert_wrong_headers('headers keys and values must be strings', "{ [123] = 'value' }")
     assert_wrong_headers('headers keys and values must be strings', '{ Header = 123 }')
     assert_wrong_headers(
-      'header values must not start with @ or end with : and ;',
+      'header keys must not start with @ or end with : and ;',
       "{ ['Header:'] = 'value' }"
     )
     assert_wrong_headers(
-      'header values must not start with @ or end with : and ;',
+      'header keys must not start with @ or end with : and ;',
       "{ ['Header;'] = 'value' }"
     )
     assert_wrong_headers(
-      'header values must not start with @ or end with : and ;',
+      'header keys must not start with @ or end with : and ;',
       "{ ['@filename'] = '' }"
     )
   end)
