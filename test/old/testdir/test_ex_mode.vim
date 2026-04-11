@@ -305,6 +305,7 @@ func Test_ex_mode_with_global()
   call assert_equal(1, RunVim([], [], '-e -s -S Xexmodescript'))
   call assert_equal(['done'], readfile('Xdidexmode'))
 
+  call delete('logfile')
   call delete('Xdidexmode')
   call delete('Xexmodescript')
 endfunc
