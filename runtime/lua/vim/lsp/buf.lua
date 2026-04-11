@@ -25,6 +25,32 @@ end
 local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 local rename_ns = api.nvim_create_namespace('nvim.lsp.rename_range')
 
+--- Returns false if the LSP response is stale and should be discarded.
+--- @param ctx lsp.HandlerContext
+--- @return boolean
+local function ctx_is_valid(ctx)
+  local bufnr = ctx.bufnr
+  if
+    not bufnr
+    or not api.nvim_buf_is_valid(bufnr)
+    or api.nvim_get_current_buf() ~= bufnr
+    or vim.lsp.util.buf_versions[bufnr] ~= ctx.version
+  then
+    return false
+  end
+  local p = ctx.params and ctx.params.position
+  if not p then
+    return true
+  end
+
+  local cur = api.nvim_win_get_cursor(0)
+  local c = lsp.get_client_by_id(ctx.client_id)
+  local enc = c and c.offset_encoding
+
+  return cur[1] - 1 == p.line and enc and cur[2] == util._get_line_byte_from_position(bufnr, p, enc)
+    or false
+end
+
 --- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
 
@@ -53,14 +79,14 @@ function M.hover(config)
   config.focus_id = 'textDocument/hover'
 
   lsp.buf_request_all(0, 'textDocument/hover', client_positional_params(), function(results, ctx)
-    local bufnr = assert(ctx.bufnr)
-    if api.nvim_get_current_buf() ~= bufnr then
-      -- Ignore result since buffer changed. This happens for slow language servers.
-      return
+    local bufnr = ctx.bufnr
+    if not bufnr or not ctx_is_valid(ctx) then
+      return -- Ignore result if context changed. Can happen for slow LS.
     end
 
     -- Filter errors from results
     local results1 = {} --- @type table<integer,lsp.Hover>
+    local nresults = 0
     local empty_response = false
 
     for client_id, resp in pairs(results) do
@@ -75,29 +101,29 @@ function M.hover(config)
         -- - MarkedString-pair: { language="c", value="doc" }
         -- - MarkedString[]-string: { "doc1", ... }
         -- - MarkedString[]-pair: { { language="c", value="doc1" }, ... }
-        if
-          (
-            type(result.contents) == 'table'
-            and #(
-                vim.tbl_get(result.contents, 'value') -- MarkupContent or MarkedString-pair
-                or vim.tbl_get(result.contents, 1, 'value') -- MarkedString[]-pair
-                or result.contents[1] -- MarkedString[]-string
-                or ''
-              )
-              > 0
+        local valid = false
+        if type(result.contents) == 'table' then
+          local value_len = #(
+            vim.tbl_get(result.contents, 'value') -- MarkupContent or MarkedString-pair
+            or vim.tbl_get(result.contents, 1, 'value') -- MarkedString[]-pair
+            or result.contents[1] -- MarkedString[]-string
+            or ''
           )
-          or (
-            type(result.contents) == 'string' and #result.contents > 0 -- MarkedString-string
-          )
-        then
+          valid = value_len > 0
+        elseif type(result.contents) == 'string' then
+          valid = #result.contents > 0
+        end
+
+        if valid then
           results1[client_id] = result
+          nresults = nresults + 1
         else
           empty_response = true
         end
       end
     end
 
-    if vim.tbl_isempty(results1) then
+    if nresults == 0 then
       if config.silent ~= true then
         if empty_response then
           vim.notify('Empty hover response', vim.log.levels.INFO)
@@ -109,10 +135,8 @@ function M.hover(config)
     end
 
     local contents = {} --- @type string[]
-
-    local nresults = #vim.tbl_keys(results1)
-
-    local format = 'markdown'
+    local MarkupKind = lsp.protocol.MarkupKind
+    local format = MarkupKind.Markdown
 
     for client_id, result in pairs(results1) do
       local client = assert(lsp.get_client_by_id(client_id))
@@ -120,12 +144,14 @@ function M.hover(config)
         -- Show client name if there are multiple clients
         contents[#contents + 1] = string.format('# %s', client.name)
       end
-      if type(result.contents) == 'table' and result.contents.kind == 'plaintext' then
-        if #results1 == 1 then
-          format = 'plaintext'
+
+      if type(result.contents) == 'table' and result.contents.kind == MarkupKind.PlainText then
+        if nresults == 1 then
+          -- Only one client: use PlainText format
+          format = MarkupKind.PlainText
           contents = vim.split(result.contents.value or '', '\n', { trimempty = true })
         else
-          -- Surround plaintext with ``` to get correct formatting
+          -- Multiple clients: surround plaintext with ``` to get correct formatting
           contents[#contents + 1] = '```'
           vim.list_extend(
             contents,
@@ -155,8 +181,10 @@ function M.hover(config)
       contents[#contents + 1] = '---'
     end
 
-    -- Remove last linebreak ('---')
-    contents[#contents] = nil
+    -- Remove last linebreak ('---') if contents is not empty
+    if #contents > 0 then
+      contents[#contents] = nil
+    end
 
     local _, winid = lsp.util.open_floating_preview(contents, format, config)
 
@@ -391,9 +419,8 @@ function M.signature_help(config)
   local user_title = config.title
 
   lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
-    if api.nvim_get_current_buf() ~= ctx.bufnr then
-      -- Ignore result since buffer changed. This happens for slow language servers.
-      return
+    if not ctx_is_valid(ctx) then
+      return -- Ignore result if context changed. Can happen for slow LS.
     end
 
     local signatures, active_signature = process_signature_help_results(results)
