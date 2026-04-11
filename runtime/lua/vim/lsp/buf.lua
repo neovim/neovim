@@ -81,7 +81,7 @@ function M.hover(config)
   lsp.buf_request_all(0, 'textDocument/hover', client_positional_params(), function(results, ctx)
     local bufnr = ctx.bufnr
     if not bufnr or not ctx_is_valid(ctx) then
-      return
+      return -- Ignore result if context changed. Can happen for slow LS.
     end
 
     -- Filter errors from results
