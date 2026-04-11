@@ -409,7 +409,7 @@ function M.signature_help(config)
 
   lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
     if not ctx_is_valid(ctx) then
-      return
+      return -- Ignore result if context changed. Can happen for slow LS.
     end
 
     local signatures, active_signature = process_signature_help_results(results)
