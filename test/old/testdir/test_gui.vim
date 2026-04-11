@@ -44,6 +44,16 @@ func Test_colorscheme()
   redraw!
 endfunc
 
+func Test_gui_recursive_mapping()
+  nmap ' <C-W>
+  nmap <C-W>a :let didit = 1<CR>
+  call feedkeys("'a", 'xt')
+  call assert_equal(1, didit)
+
+  nunmap '
+  nunmap <C-W>a
+endfunc
+
 " Test that Buffers menu generates the correct index for different buffer
 " names for sorting.
 func Test_Buffers_Menu()
