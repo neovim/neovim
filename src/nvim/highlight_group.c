@@ -919,6 +919,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
 
   HlGroup *g = &hl_table[idx];
   g->sg_cleared = false;
+  int old_link = g->sg_link;
 
   if (link_id > 0) {
     g->sg_link = link_id;
@@ -965,6 +966,13 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
       }
     } else if (!update) {
       *cattrs[j].dest = kColorIdxNone;
+    } else if (old_link > 0 && cattrs[j].val >= 0) {
+      // Copy color indices from the linked group so inherited colors remain visible in :hi output.
+      HlGroup *linked = &hl_table[old_link - 1];
+      int linked_idx = (j == 0) ? linked->sg_rgb_fg_idx
+                                : (j == 1) ? linked->sg_rgb_bg_idx
+                                           : linked->sg_rgb_sp_idx;
+      *cattrs[j].dest = (linked_idx != kColorIdxNone) ? linked_idx : kColorIdxHex;
     }
   }
 

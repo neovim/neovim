@@ -285,11 +285,21 @@ describe('API: set highlight', function()
     eq(tonumber('0x00ff00'), hl.fg)
     eq(true, hl.italic)
 
-    api.nvim_set_hl(0, 'LinkedGroup', { link = 'Normal' })
-    api.nvim_set_hl(0, 'LinkedGroup', { bold = true, update = true })
+    api.nvim_set_hl(0, 'NamedColor', { fg = 'red', bg = 'blue' })
+    api.nvim_set_hl(0, 'LinkedGroup', { link = 'NamedColor' })
+    api.nvim_set_hl(0, 'LinkedGroup', { bold = true, fg = 'green', update = true })
     hl = api.nvim_get_hl(0, { name = 'LinkedGroup' })
     eq(nil, hl.link)
     eq(true, hl.bold)
+    eq(
+      'LinkedGroup    xxx cterm=bold gui=bold guifg=Green guibg=Blue',
+      n.exec_capture('hi LinkedGroup')
+    )
+    api.nvim_set_hl(0, 'LinkedGroup', { bg = '#121314', update = true })
+    eq(
+      'LinkedGroup    xxx cterm=bold gui=bold guifg=Green guibg=#121314',
+      n.exec_capture('hi LinkedGroup')
+    )
 
     -- underline style flags: false must not corrupt other styles
     local unders = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
