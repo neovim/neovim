@@ -171,6 +171,7 @@ you never want any default mappings, call |:mapclear| early in your config.
 - Treesitter defaults |treesitter-defaults|
   - |v_an| |v_in|
   - |v_]n| |v_[n|
+- |ZR|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*

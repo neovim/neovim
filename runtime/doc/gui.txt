@@ -88,6 +88,9 @@ Restart Nvim
                 Note: If no attached UI implements the "restart" UI event,
                 this command will lead to a dangling server process.
 
+                Also see |ZR|.
+
+
 ------------------------------------------------------------------------------
 Connect UI to a different server
 

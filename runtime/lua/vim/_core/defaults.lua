@@ -288,17 +288,17 @@ do
     )
   end
 
+  --- Execute a command and print errors without a stacktrace.
+  --- @param opts vim.api.keyset.cmd Arguments to |nvim_cmd()|
+  local function cmd(opts)
+    local ok, err = pcall(vim.api.nvim_cmd, opts, {})
+    if not ok then
+      vim.api.nvim_echo({ { err:sub(#'Vim:' + 1) } }, true, { err = true })
+    end
+  end
+
   --- vim-unimpaired style mappings. See: https://github.com/tpope/vim-unimpaired
   do
-    --- Execute a command and print errors without a stacktrace.
-    --- @param opts table Arguments to |nvim_cmd()|
-    local function cmd(opts)
-      local ok, err = pcall(vim.api.nvim_cmd, opts, {})
-      if not ok then
-        vim.api.nvim_echo({ { err:sub(#'Vim:' + 1) } }, true, { err = true })
-      end
-    end
-
     -- Quickfix mappings
     vim.keymap.set('n', '[q', function()
       cmd({ cmd = 'cprevious', count = vim.v.count1 })
@@ -474,6 +474,14 @@ do
         vim.lsp.buf.selection_range(-vim.v.count1)
       end
     end, { desc = 'Select child (inner) node' })
+  end
+
+  -- Z layer mappings
+  do
+    vim.keymap.set('n', 'ZR', function()
+      local args = vim.v.count >= 1 and { '+qall!' } or nil
+      cmd({ cmd = 'restart', args = args })
+    end, { desc = ':help ZR' })
   end
 end
 

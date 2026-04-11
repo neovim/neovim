@@ -1208,6 +1208,11 @@ ZZ			Write current file, if modified, and close the current
 							*ZQ*
 ZQ			Quit without checking for changes (same as ":q!").
 
+							*ZR*
+[count]ZR		Mapped to |:restart|. |default-mappings|
+			If a [count] is given, restarts without checking for
+			changes (same as ":restart +qall!").
+
 MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 
 							*:qa* *:qall*
