@@ -50,7 +50,7 @@ void nvim_error_event(uint64_t channel_id, Integer type, String msg)
 ///
 /// @param channel_id
 void nvim_remote_wait_done_event(uint64_t channel_id)
-  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(15) FUNC_API_REMOTE_ONLY
 {
   if (remote_wait_buf_count > 0) {
     remote_wait_buf_count--;

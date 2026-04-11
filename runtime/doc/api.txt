@@ -558,7 +558,7 @@ nvim_remote_wait_done_event()                    *nvim_remote_wait_done_event*
 
     Attributes: ~
         |RPC| only
-        Since: 0.12.0
+        Since: 0.13.0
 
 nvim_ui_term_event({event}, {value})                      *nvim_ui_term_event*
     Emitted by the TUI client to signal when a host-terminal event occurred.
