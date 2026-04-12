@@ -3330,10 +3330,11 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
   if (kp_ex) {
     *buflen = 0;
     // 'keywordprg' is an ex command
+    *buflen = (size_t)snprintf(buf, bufsize, "%s ", kp);
     if (cap->count0 != 0) {  // Send the count to the ex command.
-      *buflen = (size_t)snprintf(buf, bufsize, "%" PRId64, (int64_t)(cap->count0));
+      *buflen += (size_t)snprintf(buf + *buflen, bufsize - *buflen,
+                                  "%" PRId64 " ", (int64_t)cap->count0);
     }
-    *buflen += (size_t)snprintf(buf + *buflen, bufsize - *buflen, "%s ", kp);
     return n;
   }
 

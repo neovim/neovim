@@ -3941,7 +3941,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  which is now deprecated.)
 	- ":help!" performs |:help!| (DWIM) on the |WORD| at cursor.
 	- If the value starts with ":", it is invoked as an Ex command
-	  prefixed with [count].
+	  and [count] is passed as the first argument, if present.
 	- If "man" or "man -s", [count] is the manpage section number.
 
 	See |option-backslash| about including spaces and backslashes.
