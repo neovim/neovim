@@ -1987,7 +1987,7 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
       text = "<Space>";
       str++;
     } else {
-      text = str2special(&str, from, false);
+      text = str2special(&str, from, false, NULL);
     }
     if (text[0] != NUL && text[1] == NUL) {
       // single-byte character or illegal byte
@@ -2023,7 +2023,7 @@ char *str2special_save(const char *const str, const bool replace_spaces, const b
 
   const char *p = str;
   while (*p != NUL) {
-    ga_concat(&ga, str2special(&p, replace_spaces, replace_lt));
+    ga_concat(&ga, str2special(&p, replace_spaces, replace_lt, NULL));
   }
   ga_append(&ga, NUL);
   return (char *)ga.ga_data;
@@ -2046,14 +2046,14 @@ char *str2special_arena(const char *str, bool replace_spaces, bool replace_lt, A
   const char *p = str;
   size_t len = 0;
   while (*p) {
-    len += strlen(str2special(&p, replace_spaces, replace_lt));
+    len += strlen(str2special(&p, replace_spaces, replace_lt, NULL));
   }
 
   char *buf = arena_alloc(arena, len + 1, false);
   size_t pos = 0;
   p = str;
   while (*p) {
-    const char *s = str2special(&p, replace_spaces, replace_lt);
+    const char *s = str2special(&p, replace_spaces, replace_lt, NULL);
     size_t s_len = strlen(s);
     memcpy(buf + pos, s, s_len);
     pos += s_len;
@@ -2073,8 +2073,9 @@ char *str2special_arena(const char *str, bool replace_spaces, bool replace_lt, A
 ///         same, so save converted string somewhere before running str2special
 ///         for the second time.
 ///         On illegal byte return a string with only that byte.
-const char *str2special(const char **const sp, const bool replace_spaces, const bool replace_lt)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+const char *str2special(const char **const sp, const bool replace_spaces, const bool replace_lt,
+                        struct keycode_data *data)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   static char buf[7];
 
@@ -2083,6 +2084,12 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
     // string if it is a multi-byte character.
     const char *const p = mb_unescape(sp);
     if (p != NULL) {
+      if (data) {
+        data->modifiers = 0;
+        data->key = (String){ (char *)p, strlen(p) };
+        data->key_orig = (String){ NULL, 0 };
+      }
+
       return p;
     }
   }
@@ -2128,8 +2135,22 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
       || c < ' '
       || (replace_spaces && c == ' ')
       || (replace_lt && c == '<')) {
-    return get_special_key_name(c, modifiers);
+    return get_special_key_name(c, modifiers, data);
   }
+
+  if (data) {
+    data->modifiers = 0;
+    if ('A' <= c && c <= 'Z') {
+      data->_key_mem = (char)c + 32;
+      data->key = (String){ &data->_key_mem, 1 };
+      data->modifiers |= MOD_MASK_SHIFT;
+      data->key_orig = (String){ buf, 1 };
+    } else {
+      data->key = (String){ buf, 1 };
+      data->key_orig = (String){ NULL, 0 };
+    }
+  }
+
   buf[0] = (char)c;
   buf[1] = NUL;
   return buf;
@@ -2144,7 +2165,7 @@ void str2specialbuf(const char *sp, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   while (*sp) {
-    const char *s = str2special(&sp, false, false);
+    const char *s = str2special(&sp, false, false, NULL);
     const size_t s_len = strlen(s);
     if (len <= s_len) {
       break;
