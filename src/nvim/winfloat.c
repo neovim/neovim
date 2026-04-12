@@ -182,12 +182,12 @@ void win_set_minimal_style(win_T *wp)
 
 int win_border_height(win_T *wp)
 {
-  return wp->w_border_adj[0] + wp->w_border_adj[2];
+  return wp->w_border_adj[kEdgeTop] + wp->w_border_adj[kEdgeBottom];
 }
 
 int win_border_width(win_T *wp)
 {
-  return wp->w_border_adj[1] + wp->w_border_adj[3];
+  return wp->w_border_adj[kEdgeRight] + wp->w_border_adj[kEdgeLeft];
 }
 
 void win_config_float(win_T *wp, WinConfig fconfig)

@@ -87,6 +87,8 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_TSNC] = "StatusLineTermNC",
   [HLF_PRE] = "PreInsert",
   [HLF_PBR] = "PmenuBorder",
+  [HLF_WPADDING] = "WinPadding",
+  [HLF_WPADDINGNC] = "WinPaddingNC",
 });
 
 EXTERN int highlight_attr[HLF_COUNT];     // Highl. attr for each context.
