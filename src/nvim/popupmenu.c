@@ -941,11 +941,16 @@ static void pum_preview_set_text(win_T *win, char *info, linenr_T *lnum, int *ma
       *next = NUL;  // Temporarily replace the newline with a string terminator
     }
     // Only skip if this is an empty line AND it's the last line
-    if (*curr == '\0' && !next) {
+    if (*curr == NUL && !next) {
       break;
     }
-
-    *max_width = MAX(*max_width, win_linetabsize(win, 0, curr, MAXCOL));
+    // Temporarily disable 'wrap' to avoid 'showbreak/linebreak'
+    // inflating the result when the window is narrow.
+    bool save_wrap = win->w_p_wrap;
+    win->w_p_wrap = false;
+    int line_width = win_linetabsize(win, 0, curr, MAXCOL);
+    win->w_p_wrap = save_wrap;
+    *max_width = MAX(*max_width, line_width);
     ADD(replacement, STRING_OBJ(cstr_to_string(curr)));
     (*lnum)++;
 
