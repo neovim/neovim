@@ -200,7 +200,7 @@ typedef struct {
   Union(Integer, String) special;
   Union(Integer, String) sp;
   HLGroupID link;
-  HLGroupID global_link;
+  HLGroupID link_global;
   Boolean fallback;
   Integer blend;
   Boolean fg_indexed;

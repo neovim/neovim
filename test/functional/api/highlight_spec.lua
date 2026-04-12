@@ -610,6 +610,22 @@ describe('API: get highlight', function()
     eq(hl, api.nvim_get_hl(0, { name = 'Foo', link = true }))
   end)
 
+  it('link_global resolves in global namespace', function()
+    local ns = api.nvim_create_namespace('hl_test')
+    api.nvim_set_hl(0, 'GlTarget', { fg = '#ff0000' })
+    api.nvim_set_hl(ns, 'GlSource', { link_global = fn.hlID('GlTarget') })
+    eq({ link = 'GlTarget' }, api.nvim_get_hl(ns, { name = 'GlSource' }))
+
+    -- when both link and link_global are given, link_global wins
+    api.nvim_set_hl(0, 'OtherTarget', { fg = '#00ff00' })
+    api.nvim_set_hl(
+      ns,
+      'GlSource',
+      { link = fn.hlID('OtherTarget'), link_global = fn.hlID('GlTarget') }
+    )
+    eq({ link = 'GlTarget' }, api.nvim_get_hl(ns, { name = 'GlSource' }))
+  end)
+
   it("doesn't contain unset groups", function()
     local id = api.nvim_get_hl_id_by_name '@foobar.hubbabubba'
     ok(id > 0)
