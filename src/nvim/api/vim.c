@@ -120,12 +120,8 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
   return ns_get_hl_defs((NS)ns_id, opts, arena, err);
 }
 
-/// Sets a highlight group.
-///
-/// @note Unlike the `:highlight` command which can update a highlight group,
-///       this function completely replaces the definition. For example:
-///       `nvim_set_hl(0, 'Visual', {})` will clear the highlight group
-///       'Visual'.
+/// Sets a highlight group. By default, replaces the entire definition (e.g. `nvim_set_hl(0, 'Visual', {})`
+/// will clear the "Visual" group), unless `update` is specified.
 ///
 /// @note The fg and bg keys also accept the string values `"fg"` or `"bg"`
 ///       which act as aliases to the corresponding foreground and background
@@ -154,17 +150,17 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///                - ctermfg: Sets foreground of cterm color |ctermfg|
 ///                - default: boolean Don't override existing definition |:hi-default|
 ///                - dim: boolean
-///                - fg: color name or "#RRGGBB", see note.
+///                - fg: Color name or "#RRGGBB", see note.
 ///                - fg_indexed: boolean (default false) If true, fg is a terminal palette index (0-255).
 ///                - font: GUI font name (string). Sets |highlight-font|. Use "NONE" to clear.
-///                - force: if true force update the highlight group when it exists.
+///                - force: boolean (default false) Update the highlight group even if it already exists.
 ///                - italic: boolean
 ///                - link: Name of highlight group to link to. |:hi-link|
-///                - link_global: Like "link", but always resolved in the global (ns=0) namespace.
+///                - link_global: Like "link", but always resolved in the global namespace (ns=0).
 ///                - nocombine: boolean
 ///                - overline: boolean
 ///                - reverse: boolean
-///                - sp: color name or "#RRGGBB"
+///                - sp: Color name or "#RRGGBB"
 ///                - standout: boolean
 ///                - strikethrough: boolean
 ///                - undercurl: boolean

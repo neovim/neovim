@@ -702,7 +702,7 @@ end
 --- See |vim.lsp.ClientConfig| for all available options. The most important are:
 ---
 --- - `name` arbitrary name for the LSP client. Should be unique per language server.
---- - `cmd` command string[] or function.
+--- - `cmd` command string[] or function. See also |lsp-server|.
 --- - `root_dir` path to the project root. By default this is used to decide if an existing client
 ---   should be re-used. The example above uses |vim.fs.root()| to detect the root by traversing
 ---   the file system upwards starting from the current directory until either a `pyproject.toml`

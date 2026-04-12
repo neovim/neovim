@@ -1548,7 +1548,7 @@ describe('vim.lsp.completion: integration', function()
     eq('hallo', n.api.nvim_get_current_line())
   end)
 
-  it('preselect completion item', function()
+  it('CompletionItem.preselect', function()
     local completion_list = {
       isIncomplete = false,
       items = {

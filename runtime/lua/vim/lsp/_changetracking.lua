@@ -165,9 +165,12 @@ function M.init(client, bufnr)
   end
 end
 
+--- Sends didOpen/didClose/didSave to all client groups.
+---
 --- @param bufnr integer
 function M._send_did_save(bufnr)
   local groups = {} ---@type table<string,vim.lsp.CTGroup>
+  -- Collect all client groups.
   for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
     local group = get_group(client)
     groups[group_key(group)] = group
@@ -176,6 +179,7 @@ function M._send_did_save(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = vim.func._memoize('concat', vim.lsp._buf_get_full_text)
 
+  -- Send didOpen/didClose/didSave to all client groups.
   for _, group in pairs(groups) do
     local name = api.nvim_buf_get_name(bufnr)
     local state = state_by_group[group]

@@ -51,10 +51,10 @@ local all_clients = {}
 ---
 --- Command `string[]` that launches the language server (treated as in |jobstart()|, must be
 --- absolute or on `$PATH`, shell constructs like "~" are not expanded), or function that creates an
---- RPC client. Function receives a `dispatchers` table and the resolved `config`, and must return
---- a table with member functions `request`, `notify`, `is_closing` and `terminate`.
---- See |vim.lsp.rpc.request()|, |vim.lsp.rpc.notify()|.
---- For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
+--- RPC client (or an in-process |lsp-server|). Function receives a `dispatchers` table and the
+--- resolved `config`, and must return an object in the form of |vim.lsp.rpc.Client|.
+--- - See |vim.lsp.rpc.request()| |vim.lsp.rpc.notify()|
+--- - For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 --- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
 ---
 --- Directory to launch the `cmd` process. Not related to `root_dir`.

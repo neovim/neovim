@@ -32,7 +32,6 @@ LSP
 
 LUA
 
-
 • vim.pos, vim.range always require the `buf` parameter.
 
 DIAGNOSTICS
@@ -106,8 +105,6 @@ The following new features were added.
 
 API
 
-• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
-  and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
 • |nvim_set_hl()| supports "font" key.
 
 BUILD
@@ -137,15 +134,11 @@ HIGHLIGHTS
 LSP
 
 • LSP capabilities:
-  • `textDocument/foo` …
-    https://microsoft.github.io/language-server-protocol/specification/#textDocument_foo
-  • `textDocument/bar` …
-    https://microsoft.github.io/language-server-protocol/specification/#textDocument_bar
+  • Completion supports `CompletionItem.preselect` if 'completeopt' has
+    "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
   and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
 • Support for nested snippets.
-• LSP completion now supports `CompletionItem.preselect`. Requires
-  'completeopt' to include "preselect".
 
 LUA
 

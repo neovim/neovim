@@ -1652,8 +1652,7 @@ local options = {
         	    "menu" or "menuone". No effect if "longest" is present.
 
            noselect Same as "noinsert", except that no menu item is
-        	    pre-selected.  If both "noinsert" and "noselect" are
-        	    present, "noselect" takes precedence.  This is enabled
+        	    pre-selected.  Takes precedence over "noinsert". Enabled
         	    automatically when 'autocomplete' is on, unless
         	    "preinsert" is also enabled.
 
@@ -1675,13 +1674,12 @@ local options = {
         	    'ignorecase' is set without 'infercase'.
         	    See also |preinserted()|.
 
+           preselect   Selects the first completion item whose "preselect"
+        	    field is set, if any. Takes precedence over "noselect".
+
            preview  Show extra information about the currently selected
         	    completion in the preview window.  Only works in
         	    combination with "menu" or "menuone".
-
-            preselect   Select the completion item that has the "preselect"
-        	    attribute set. If both "noselect" and "preselect" are present,
-        	    "preselect" takes precedence.
 
         Only "fuzzy", "longest", "popup", "preinsert", "preselect" and
         "preview" have an effect when 'autocomplete' is enabled.
@@ -3763,15 +3761,15 @@ local options = {
       abbreviation = 'fp',
       defaults = '',
       desc = [=[
-        The name of an external program that will be used to format the lines
-        selected with the |gq| operator.  The program must take the input on
-        stdin and produce the output on stdout.  The Unix program "fmt" is
-        such a program.
-        If the 'formatexpr' option is not empty it will be used instead.
-        Otherwise, if 'formatprg' option is an empty string, the internal
-        format function will be used |C-indenting|.
-        Environment variables are expanded |:set_env|.  See |option-backslash|
-        about including spaces and backslashes.
+        External program used to format lines with |gq|. Ignored if
+        'formatexpr' is set.
+
+        If empty, the internal |C-indenting| function will be used.
+
+        The program must take input on stdin and produce output on stdout. The
+        Unix program "fmt" is such a program. Environment variables are
+        expanded |:set_env|.  See |option-backslash| about including spaces
+        and backslashes.
       ]=],
       expand = true,
       full_name = 'formatprg',

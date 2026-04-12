@@ -1050,11 +1050,7 @@ function M.show_document(location, position_encoding, opts)
     if vim.api.nvim_get_mode().mode == 'i' then
       local line = api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1] or ''
       if col >= #line then
-        vim.api.nvim_feedkeys(
-          vim.api.nvim_replace_termcodes('<End>', true, false, true),
-          'n',
-          false
-        )
+        vim.api.nvim_feedkeys(vim.keycode('<End>'), 'n', false)
       end
     end
   end
