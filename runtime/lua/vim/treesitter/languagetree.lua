@@ -52,7 +52,7 @@ local default_parse_timeout_ns = 3 * 1000000
 local entire_document_range = {
   {
     0,
-    math.huge --[[@as integer]],
+    vim._maxint,
   },
 }
 
