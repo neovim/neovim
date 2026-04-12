@@ -635,11 +635,16 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
   return 0;         // Shouldn't get here
 }
 
-/// Replace any terminal code strings with the equivalent internal representation.
+/// Encode `<key>` notation into Nvim's internal key representation. (Does NOT process raw terminal
+/// escape sequences, despite the legacy "termcode" terminology.)
 ///
-/// Used for the "from" and "to" part of a mapping, and the "to" part of a menu command.
-/// Any strings like "<C-UP>" are also replaced, unless `special` is false.
-/// K_SPECIAL by itself is replaced by K_SPECIAL KS_SPECIAL KE_FILLER.
+/// Parses keycode notation like `<C-Up>`, `<CR>`, `<Esc>`, `<F1>`, `<Leader>`, `<SID>`, and emits
+/// the corresponding K_SPECIAL byte sequences. Used for the lhs/rhs of mappings, the rhs of menu
+/// commands, and feedkeys input. K_SPECIAL by itself is replaced by K_SPECIAL KS_SPECIAL KE_FILLER.
+///
+/// Also handles `<C-v>` / backslash literal escapes (per 'cpoptions'), `<Leader>`/`<LocalLeader>`
+/// expansion, `<SID>` script-id substitution, and (unless REPTERM_NO_SIMPLIFY) simplifications like
+/// `<C-H>` => 0x08.
 ///
 /// When "flags" has REPTERM_FROM_PART, trailing <C-v> is included, otherwise it is removed (to make
 /// ":map xx ^V" map xx to nothing). When cpo_val contains CPO_BSLASH, a backslash can be used in

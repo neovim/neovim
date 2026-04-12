@@ -1415,6 +1415,7 @@ Tag		Command		Action ~
 |:loadview|	:lo[adview]	load view for current window from a file
 |:lockmarks|	:loc[kmarks]	following command keeps marks where they are
 |:lockvar|	:lockv[ar]	lock variables
+|:log|		:log		view a log file
 |:lolder|	:lol[der]	go to older location list
 |:lopen|	:lop[en]	open location window
 |:lprevious|	:lp[revious]	go to previous location

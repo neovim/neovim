@@ -220,16 +220,16 @@ static bool set_pum_width_aligned_with_cursor(int width, int available_width)
 
 /// Calculate horizontal placement for popup menu. Sets pum_col and pum_width
 /// based on cursor position and available space.
-static void pum_compute_horizontal_placement(win_T *target_win, int cursor_col)
+static void pum_compute_horizontal_placement(win_T *target_win, int cursor_col, int border_width)
 {
   int max_col = MAX(Columns, target_win ? (target_win->w_wincol + target_win->w_view_width) : 0);
   int desired_width = pum_base_width + pum_kind_width + pum_extra_width;
   int available_width;
 
   if (pum_rl) {
-    available_width = cursor_col - pum_scrollbar + 1;
+    available_width = cursor_col - pum_scrollbar + 1 - border_width;
   } else {
-    available_width = max_col - cursor_col - pum_scrollbar;
+    available_width = max_col - cursor_col - pum_scrollbar - border_width;
   }
 
   // Align pum with "cursor_col"
@@ -246,7 +246,7 @@ static void pum_compute_horizontal_placement(win_T *target_win, int cursor_col)
 
   // Truncated pum is no longer aligned with "cursor_col"
   if (pum_rl) {
-    available_width = max_col - pum_scrollbar;
+    available_width = max_col - pum_scrollbar - border_width;
   } else {
     available_width += cursor_col;
   }
@@ -254,9 +254,9 @@ static void pum_compute_horizontal_placement(win_T *target_win, int cursor_col)
   if (available_width > p_pw) {
     pum_width = (int)p_pw + 1;  // Truncate beyond 'pum_width'
     if (pum_rl) {
-      pum_col = pum_width + pum_scrollbar;
+      pum_col = pum_width + pum_scrollbar + border_width;
     } else {
-      pum_col = max_col - pum_width - pum_scrollbar;
+      pum_col = max_col - pum_width - pum_scrollbar - border_width;
     }
     return;
   }
@@ -267,7 +267,7 @@ static void pum_compute_horizontal_placement(win_T *target_win, int cursor_col)
   } else {
     pum_col = 0;
   }
-  pum_width = max_col - pum_scrollbar;
+  pum_width = max_col - pum_scrollbar - border_width;
 }
 
 static inline int pum_border_width(void)
@@ -416,11 +416,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     pum_scrollbar = (pum_height < size) ? 1 : 0;
 
     // Figure out the horizontal size and position of the pum.
-    pum_compute_horizontal_placement(target_win, cursor_col);
-
-    if (pum_col + border_width + pum_width > Columns) {
-      pum_col -= border_width;
-    }
+    pum_compute_horizontal_placement(target_win, cursor_col, border_width);
 
     // Set selected item and redraw.  If the window size changed need to redo
     // the positioning.  Limit this to two times, when there is not much

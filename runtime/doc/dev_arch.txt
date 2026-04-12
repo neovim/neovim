@@ -69,9 +69,11 @@ Lua code lives in one of four places:
      - ❌ nvim.difftool
      - ❌ nvim.tohtml
      - ❌ nvim.undotree
-2. Runtime: `runtime/lua/vim/`. Lazy-loaded modules. Examples: `treesitter`, `lpeg`.
-3. Core: `runtime/lua/vim/_core/`. Compiled-into Nvim binary, may directly
-   interact with Nvim internals. Only available in the main thread. See
+2. Stdlib: `runtime/lua/vim/`. Modules on `vim.*`, lazy-loaded (as opposed to
+   "Core" modules, see below).
+   - Examples: `vim.treesitter`, `vim.lpeg`.
+3. Core: `runtime/lua/vim/_core/`. Internal-only, compiled-in modules. May
+   directly interact with Nvim internals. Only available in main thread. See
    |dev-lua-builtin| below.
 4. "Shared" core: `runtime/lua/vim/_core/shared.lua`. Pure Lua functions which
    always are available. Used in the test runner, and worker threads/processes

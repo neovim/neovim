@@ -23,7 +23,7 @@ func Test_zip_basic()
 
   "## Check header
   call assert_match('^" zip\.vim version v\d\+', getline(1))
-  call assert_match('^" Browsing zipfile .*/X.zip', getline(2))
+  call assert_match('^" Browsing zipfile .*/X\.zip', getline(2))
   call assert_match('^" Select a file with cursor and press ENTER', getline(3))
   call assert_match('^$', getline(4))
 
@@ -44,7 +44,7 @@ func Test_zip_basic()
   :1
   call search('file.txt')
   exe ":normal \<cr>"
-  call assert_match('zipfile://.*/X.zip::Xzip/file.txt', @%)
+  call assert_match('zipfile://.*/X\.zip::Xzip/file\.txt', @%)
   call assert_equal('one', getline(1))
 
   "## Check editing file
@@ -69,7 +69,7 @@ func Test_zip_basic()
   call assert_true(filereadable("Xzip/file.txt"))
 
   "## Check not overwriting existing file
-  call assert_match('<Xzip/file.txt> .* not overwriting!', execute("normal x"))
+  call assert_match('<Xzip/file\.txt> .* not overwriting!', execute("normal x"))
 
   call delete("Xzip", "rf")
 
@@ -119,7 +119,7 @@ func Test_zip_basic()
   "## Check when "zip" report failure
   if executable("false")
     let g:zip_zipcmd = "false"
-    call assert_match('sorry, unable to update .*/X.zip with Xzip/file.txt',
+    call assert_match('sorry, unable to update .*/X\.zip with Xzip/file\.txt',
                     \ execute("write"))
   endif
   bw!|bw
@@ -190,7 +190,7 @@ func Test_zip_glob_fname()
   let fname = 'a[a].txt'
   call search('\V' .. fname)
   exe ":normal \<cr>"
-  call assert_match('zipfile://.*/X.zip::zipglob/a\[a\].txt', @%)
+  call assert_match('zipfile://.*/X\.zip::zipglob/a\[a\]\.txt', @%)
   call assert_equal('a test file with []', getline(1))
   bw
 
@@ -199,7 +199,7 @@ func Test_zip_glob_fname()
   let fname = 'a*.txt'
   call search('\V' .. fname)
   exe ":normal \<cr>"
-  call assert_match('zipfile://.*/X.zip::zipglob/a\*.txt', @%)
+  call assert_match('zipfile://.*/X\.zip::zipglob/a\*\.txt', @%)
   call assert_equal('a test file with a*', getline(1))
   bw
 
@@ -208,7 +208,7 @@ func Test_zip_glob_fname()
   let fname = 'a?.txt'
   call search('\V' .. fname)
   exe ":normal \<cr>"
-  call assert_match('zipfile://.*/X.zip::zipglob/a?.txt', @%)
+  call assert_match('zipfile://.*/X\.zip::zipglob/a?\.txt', @%)
   call assert_equal('a test file with a?', getline(1))
   bw
 
@@ -217,7 +217,7 @@ func Test_zip_glob_fname()
   let fname = 'a\.txt'
   call search('\V' .. escape(fname, '\\'))
   exe ":normal \<cr>"
-  call assert_match('zipfile://.*/X.zip::zipglob/a\\.txt', @%)
+  call assert_match('zipfile://.*/X\.zip::zipglob/a\\\.txt', @%)
   call assert_equal('a test file with a\', getline(1))
   bw
 
@@ -226,7 +226,7 @@ func Test_zip_glob_fname()
   let fname = 'a\\.txt'
   call search('\V' .. escape(fname, '\\'))
   exe ":normal \<cr>"
-  call assert_match('zipfile://.*/X.zip::zipglob/a\\\\.txt', @%)
+  call assert_match('zipfile://.*/X\.zip::zipglob/a\\\\\.txt', @%)
   call assert_equal('a test file with a double \', getline(1))
   bw
 
@@ -258,6 +258,7 @@ func Test_zip_fname_evil_path()
   " needed for writing the zip file
   CheckExecutable zip
 
+  messages clear
   call s:CopyZipFile("evil.zip")
   defer delete("X.zip")
   e X.zip
@@ -274,4 +275,47 @@ func Test_zip_fname_evil_path()
   :w
   call assert_match('zipfile://.*::etc/ax-pwn', @%)
   bw
+endfunc
+
+func Test_zip_fname_evil_path2()
+  CheckNotMSWindows
+  " needed for writing the zip file
+  CheckExecutable zip
+
+  messages clear
+  call s:CopyZipFile("evil.zip")
+  defer delete("X.zip")
+  e X.zip
+
+  :1
+  let fname = 'foobar'
+  call search('\V' .. fname)
+  exe "normal \<cr>"
+  normal x
+  call assert_false(filereadable('/tmp/foobar'))
+  :w
+  let mess  = execute(':mess')
+  call assert_match('Path Traversal Attack', mess)
+  call assert_match('zipfile://.*::.*tmp/foobar', @%)
+  bw!
+endfunc
+
+func Test_zip_fname_evil_path3()
+  CheckNotMSWindows
+  " needed for writing the zip file
+  CheckExecutable zip
+
+  messages clear
+  call s:CopyZipFile("evil.zip")
+  defer delete("X.zip")
+  e X.zip
+
+  :1
+  let fname = 'payload.txt'
+  call search('\V' .. fname)
+  exe "normal \<cr>"
+  :w!
+  let mess  = execute(':mess')
+  call assert_match('Path Traversal Attack', mess)
+  bw!
 endfunc

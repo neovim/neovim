@@ -63,6 +63,7 @@ EXTERN const char e_nogroup[] INIT(= N_("E28: No such highlight group name: %s")
 EXTERN const char e_noinstext[] INIT(= N_("E29: No inserted text yet"));
 EXTERN const char e_nolastcmd[] INIT(= N_("E30: No previous command line"));
 EXTERN const char e_nomap[] INIT(= N_("E31: No such mapping"));
+EXTERN const char e_noident[] INIT(= N_("E349: No identifier under cursor"));
 EXTERN const char e_nomatch[] INIT(= N_("E479: No match"));
 EXTERN const char e_nomatch2[] INIT(= N_("E480: No match: %s"));
 EXTERN const char e_noname[] INIT(= N_("E32: No file name"));

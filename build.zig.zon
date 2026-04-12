@@ -1,7 +1,7 @@
 .{
     .name = .neovim,
     .fingerprint = 0x66eb090879307a38,
-    .version = "0.12.0",
+    .version = "0.13.0",
     .minimum_zig_version = "0.15.2",
 
     .dependencies = .{
@@ -25,8 +25,8 @@
             .lazy = true,
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.26.8#cd5b087cd9f45ca6d93ab1954f6b7c8534f324d2",
-            .hash = "tree_sitter-0.26.8-Tw2sR5G8CwBXz-azPqB8yigELAr2sj0SmNtoiK6-CP0B",
+            .url = "git+https://github.com/tree-sitter/tree-sitter#64698af1ac6abb97f5a548cfbaf6e88bca2d8782",
+            .hash = "tree_sitter-0.27.0-Tw2sR3PCCwChW63BNQ5OXb1i17eT58LSeWSdweWuZ6lF",
             .lazy = true,
         },
         .libuv = .{

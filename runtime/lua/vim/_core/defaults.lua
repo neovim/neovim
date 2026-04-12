@@ -34,10 +34,17 @@ do
   })
 
   vim.api.nvim_create_user_command('Open', function(cmd)
-    vim.ui.open(assert(cmd.fargs[1]))
+    if #cmd.fargs == 0 then
+      local current_file = vim.fn.expand('%')
+      if current_file ~= '' then
+        vim.ui.open(current_file)
+      end
+    else
+      vim.ui.open(cmd.fargs[1])
+    end
   end, {
     desc = 'Open file with system default handler. See :help vim.ui.open()',
-    nargs = 1,
+    nargs = '?',
     complete = 'file',
   })
 end
@@ -773,7 +780,8 @@ do
       vim.v.swapchoice = 'e' -- Choose "(E)dit".
       vim.notify(
         ('W325: Ignoring swapfile from Nvim process %d'):format(info.pid),
-        vim.log.levels.WARN
+        vim.log.levels.WARN,
+        { _truncate = true }
       )
     end,
   })
@@ -984,7 +992,8 @@ do
       then
         vim.notify(
           'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.',
-          vim.log.levels.WARN
+          vim.log.levels.WARN,
+          { _truncate = true }
         )
       end
     end

@@ -920,6 +920,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
 
   HlGroup *g = &hl_table[idx];
   g->sg_cleared = false;
+  int old_link = g->sg_link;
 
   if (link_id > 0) {
     g->sg_link = link_id;
@@ -966,6 +967,13 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
       }
     } else if (!update) {
       *cattrs[j].dest = kColorIdxNone;
+    } else if (old_link > 0 && cattrs[j].val >= 0) {
+      // Copy color indices from the linked group so inherited colors remain visible in :hi output.
+      HlGroup *linked = &hl_table[old_link - 1];
+      int linked_idx = (j == 0) ? linked->sg_rgb_fg_idx
+                                : (j == 1) ? linked->sg_rgb_bg_idx
+                                           : linked->sg_rgb_sp_idx;
+      *cattrs[j].dest = (linked_idx != kColorIdxNone) ? linked_idx : kColorIdxHex;
     }
   }
 
@@ -1646,7 +1654,8 @@ static void highlight_list_one(const int id)
 static bool hlgroup2dict(Dict *hl, NS ns_id, int hl_id, Arena *arena)
 {
   HlGroup *sgp = &hl_table[hl_id - 1];
-  int link = ns_id == 0 ? sgp->sg_link : ns_get_hl(&ns_id, hl_id, true, sgp->sg_set);
+  NS ns = ns_id;
+  int link = ns_id == 0 ? sgp->sg_link : ns_get_hl(&ns, hl_id, true, sgp->sg_set);
   if (link == -1) {
     return false;
   }
@@ -1654,8 +1663,9 @@ static bool hlgroup2dict(Dict *hl, NS ns_id, int hl_id, Arena *arena)
     // table entry was created but not ever set
     return false;
   }
-  HlAttrs attr =
-    syn_attr2entry(ns_id == 0 ? sgp->sg_attr : ns_get_hl(&ns_id, hl_id, false, sgp->sg_set));
+  ns = ns_id;
+  HlAttrs attr = syn_attr2entry(ns_id == 0 ? sgp->sg_attr : ns_get_hl(&ns, hl_id, false,
+                                                                      sgp->sg_set));
   *hl = arena_dict(arena, HLATTRS_DICT_SIZE + 1);
   if (attr.rgb_ae_attr & HL_DEFAULT) {
     PUT_C(*hl, "default", BOOLEAN_OBJ(true));

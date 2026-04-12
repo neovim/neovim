@@ -6,6 +6,32 @@ vim.g.loaded_nvim_net_plugin = true
 local augroup = vim.api.nvim_create_augroup('nvim.net.remotefile', {})
 local url_patterns = { 'http://*', 'https://*' }
 
+local archive_patterns = {
+  { suffix = '.tar.gz', kind = 'tar' },
+  { suffix = '.tar.bz2', kind = 'tar' },
+  { suffix = '.tar.xz', kind = 'tar' },
+  { suffix = '.txz', kind = 'tar' },
+  { suffix = '.tar', kind = 'tar' },
+  { suffix = '.zip', kind = 'zip' },
+}
+
+---@param url string
+---@return string
+local function url_path(url)
+  return (url:gsub('[?#].*$', ''))
+end
+
+---@param url string
+---@return 'zip'|'tar'?
+local function archive_type(url)
+  local path = url_path(url)
+  for _, pattern in ipairs(archive_patterns) do
+    if vim.endswith(path, pattern.suffix) then
+      return pattern.kind
+    end
+  end
+end
+
 vim.api.nvim_create_autocmd('BufReadCmd', {
   group = augroup,
   pattern = url_patterns,
@@ -17,7 +43,35 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
     end
 
     local url = ev.file
+    local archive_kind = archive_type(url)
+
     vim.notify(('Fetching %s …'):format(url), vim.log.levels.INFO)
+
+    if archive_kind then
+      -- XXX: zipPlugin.vim, tarPlugin.vim don't work with non-file buffers.
+      local tmpfile = vim.fn.tempname()
+
+      vim.net.request(
+        url,
+        { outpath = tmpfile },
+        vim.schedule_wrap(function(err)
+          if err then
+            vim.notify(('Failed to fetch %s: %s'):format(url, err), vim.log.levels.ERROR)
+            return
+          end
+
+          if archive_kind == 'zip' then
+            vim.fn['zip#Browse'](tmpfile)
+          else
+            vim.fn['tar#Browse'](tmpfile)
+          end
+
+          vim.bo[ev.buf].modified = false
+          vim.notify(('Loaded %s'):format(url), vim.log.levels.INFO)
+        end)
+      )
+      return
+    end
 
     vim.net.request(
       url,

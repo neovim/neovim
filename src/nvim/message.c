@@ -118,7 +118,7 @@ static int progress_msg_target = PROGRESS_TARGET_CMD;
 static FILE *verbose_fd = NULL;
 static bool verbose_did_open = false;
 
-bool keep_msg_more = false;    // keep_msg was set by msgmore()
+static bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
 // When writing messages to the screen, there are many different situations.
 // A number of variables is used to remember the current state:
@@ -283,7 +283,7 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
     if (check_int && got_int) {
       return;
     }
-    if (*s == '\n' || *s == TAB || *s == '\r') {
+    if (*s == '\n' || *s == TAB || *s == '\r' || *s == BELL) {
       // Print all chars before the delimiter
       msg_outtrans_len(chunk, (int)(s - chunk), hl_id, hist);
 
@@ -291,7 +291,11 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
         msg_clr_eos();
         *need_clear = false;
       }
-      msg_putchar_hl((uint8_t)(*s), hl_id);
+      if (*s == BELL) {
+        vim_beep(kOptBoFlagShell);
+      } else {
+        msg_putchar_hl((uint8_t)(*s), hl_id);
+      }
       chunk = s + 1;
     }
     s++;
@@ -2336,6 +2340,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   // Don't print anything when using ":silent cmd" or empty message.
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
+      msg_ext_ui_flush();  // ensure messages until now are emitted
       ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
                        INTEGER_OBJ(-1), (String)STRING_INIT);
       cmdline_was_last_drawn = false;

@@ -611,6 +611,12 @@ One command, :DiffGitCached, is provided to show a diff of the current commit
 in the preview window.  It is equivalent to calling "git diff --cached" plus
 any arguments given to the command.
 
+The length of the first line of the commit message used for
+syntax highlighting can be configured via `g:gitcommit_summary_length`.
+The default is 50.  Example: >
+
+        let g:gitcommit_summary_length = 70
+
 GIT REBASE						*ft-gitrebase-plugin*
 
 The gitrebase filetype defines the following buffer-local commands, to help
@@ -757,6 +763,14 @@ To enable the recognition of Markdown comments each time after removing
 "g:java_ignore_markdown" or "g:java_ignore_javadoc", remember to manually
 re-source "javaformat.vim" for Vim versions greater than `8.2.1397`: >
 	runtime autoload/javaformat.vim
+<
+JUJUTSU DESCRIPTION				*ft-jjdescription-plugin*
+
+The length of the first line of the commit message used for syntax
+highlighting can be configured via `g:jjcommit_summary_length`, and will
+fallback to `g:gitcommit_summary_length`.  The default is 50.  Example: >
+
+        let g:jjcommit_summary_length = 70
 <
 LUA							*ft-lua-plugin*
 

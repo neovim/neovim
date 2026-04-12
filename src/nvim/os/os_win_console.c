@@ -14,6 +14,16 @@ static HWND hWnd = NULL;
 static HICON hOrigIconSmall = NULL;
 static HICON hOrigIcon = NULL;
 
+/// Re-enable normal Ctrl-C processing after detached startup.
+///
+/// On Windows, UV_PROCESS_DETACHED implies CREATE_NEW_PROCESS_GROUP, which
+/// disables Ctrl-C handling for the new process. Restore the default behavior
+/// once the embedded server has a console so terminal jobs inherit it.
+void os_enable_ctrl_c(void)
+{
+  SetConsoleCtrlHandler(NULL, FALSE);
+}
+
 int os_open_conin_fd(void)
 {
   const HANDLE conin_handle = CreateFile("CONIN$",
@@ -54,6 +64,20 @@ void os_replace_stdout_and_stderr_to_conout(void)
   close(STDERR_FILENO);
   const int conerr_fd = _open_osfhandle((intptr_t)conout_handle, 0);
   assert(conerr_fd == STDERR_FILENO);
+}
+
+/// Detach from the current console and switch stdio to a hidden private one.
+///
+/// Used when an embedded server must outlive its parent console, while keeping
+/// CONIN$/CONOUT$ and ConPTY functional for :terminal and stdio writes.
+void os_swap_to_hidden_console(void)
+{
+  FreeConsole();
+  AllocConsole();
+  ShowWindow(GetConsoleWindow(), SW_HIDE);
+  os_enable_ctrl_c();
+  os_replace_stdin_to_conin();
+  os_replace_stdout_and_stderr_to_conout();
 }
 
 /// Resets Windows console icon if we got an original one on startup.

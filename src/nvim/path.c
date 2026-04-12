@@ -443,14 +443,16 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
 ///
 /// @return fname1
 static inline char *do_concat_fnames(char *fname1, const size_t len1, const char *fname2,
-                                     const size_t len2, const bool sep)
+                                     const size_t len2, const bool sep, size_t *len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   if (sep && *fname1 && !after_pathsep(fname1, fname1 + len1)) {
     fname1[len1] = PATHSEP;
     memmove(fname1 + len1 + 1, fname2, len2 + 1);
+    *len = len1 + 1 + len2;
   } else {
     memmove(fname1 + len1, fname2, len2 + 1);
+    *len = len1 + len2;
   }
 
   return fname1;
@@ -465,14 +467,14 @@ static inline char *do_concat_fnames(char *fname1, const size_t len1, const char
 /// @param sep    is a flag to indicate a path separator should be added
 ///               if necessary
 /// @return [allocated] Concatenation of fname1 and fname2.
-char *concat_fnames(const char *fname1, const char *fname2, bool sep)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+String concat_fnames(String fname1, String fname2, bool sep)
+  FUNC_ATTR_NONNULL_ALL
 {
-  const size_t len1 = strlen(fname1);
-  const size_t len2 = strlen(fname2);
-  char *dest = xmalloc(len1 + len2 + 3);
-  memmove(dest, fname1, len1 + 1);
-  return do_concat_fnames(dest, len1, fname2, len2, sep);
+  String ret;
+  ret.data = xmalloc(fname1.size + (sep ? 1 : 0) + fname2.size + 1);
+  memmove(ret.data, fname1.data, fname1.size + 1);
+  do_concat_fnames(ret.data, fname1.size, fname2.data, fname2.size, sep, &ret.size);
+  return ret;
 }
 
 /// Concatenate file names fname1 and fname2
@@ -491,8 +493,9 @@ char *concat_fnames_realloc(char *fname1, const char *fname2, bool sep)
 {
   const size_t len1 = strlen(fname1);
   const size_t len2 = strlen(fname2);
+  size_t len;
   return do_concat_fnames(xrealloc(fname1, len1 + len2 + 3), len1,
-                          fname2, len2, sep);
+                          fname2, len2, sep, &len);
 }
 
 /// Adds a path separator to a filename, unless it already ends in one.
@@ -502,13 +505,17 @@ char *concat_fnames_realloc(char *fname1, const char *fname2, bool sep)
 bool add_pathsep(char *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  const size_t len = strlen(p);
-  if (*p != NUL && !after_pathsep(p, p + len)) {
+  if (*p == NUL) {
+    return true;
+  }
+
+  const size_t plen = strlen(p);
+  if (!after_pathsep(p, p + plen)) {
     const size_t pathsep_len = sizeof(PATHSEPSTR);
-    if (len > MAXPATHL - pathsep_len) {
+    if (plen > MAXPATHL - pathsep_len) {
       return false;
     }
-    memcpy(p + len, PATHSEPSTR, pathsep_len);
+    memcpy(p + plen, PATHSEPSTR, pathsep_len);
   }
   return true;
 }

@@ -169,7 +169,7 @@ end
 ---
 --- See `cmd` in [vim.lsp.ClientConfig].
 --- See also `reuse_client` to dynamically decide (per-buffer) when `cmd` should be re-invoked.
---- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient
+--- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
 ---
 --- Filetypes the client will attach to, or `nil` for ALL filetypes. To match files by name,
 --- pattern, or contents, you can define a custom filetype using |vim.filetype.add()|:
@@ -883,42 +883,7 @@ end
 ---Buffer lifecycle handler for textDocument/didSave
 --- @param bufnr integer
 local function text_document_did_save_handler(bufnr)
-  bufnr = vim._resolve_bufnr(bufnr)
-  local uri = vim.uri_from_bufnr(bufnr)
-  local text = vim.func._memoize('concat', lsp._buf_get_full_text)
-  for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
-    local name = api.nvim_buf_get_name(bufnr)
-    local old_name = changetracking._get_and_set_name(client, bufnr, name)
-    if old_name and name ~= old_name then
-      client:notify('textDocument/didClose', {
-        textDocument = {
-          uri = vim.uri_from_fname(old_name),
-        },
-      })
-      client:notify('textDocument/didOpen', {
-        textDocument = {
-          version = 0,
-          uri = uri,
-          languageId = client.get_language_id(bufnr, vim.bo[bufnr].filetype),
-          text = lsp._buf_get_full_text(bufnr),
-        },
-      })
-      util.buf_versions[bufnr] = 0
-    end
-    local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
-    if save_capability then
-      local included_text --- @type string?
-      if type(save_capability) == 'table' and save_capability.includeText then
-        included_text = text(bufnr)
-      end
-      client:notify('textDocument/didSave', {
-        textDocument = {
-          uri = uri,
-        },
-        text = included_text,
-      })
-    end
-  end
+  changetracking._send_did_save(bufnr)
 end
 
 --- @type table<integer,true>
@@ -936,7 +901,7 @@ local function buf_attach(bufnr)
   local group = api.nvim_create_augroup(augroup, { clear = true })
   api.nvim_create_autocmd('BufWritePre', {
     group = group,
-    buffer = bufnr,
+    buf = bufnr,
     desc = 'vim.lsp: textDocument/willSave',
     callback = function(ctx)
       for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
@@ -963,7 +928,7 @@ local function buf_attach(bufnr)
   })
   api.nvim_create_autocmd('BufWritePost', {
     group = group,
-    buffer = bufnr,
+    buf = bufnr,
     desc = 'vim.lsp: textDocument/didSave handler',
     callback = function(ctx)
       text_document_did_save_handler(ctx.buf)

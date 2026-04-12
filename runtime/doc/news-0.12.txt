@@ -360,6 +360,7 @@ PLUGINS
   unrelated Python virtual environments are activated.
   |provider-python|
 • |:checkhealth| now checks for an available |vim.ui.open()| handler.
+• spellfile.vim : Replaced by |package-spellfile|.
 
 STARTUP
 
@@ -403,7 +404,7 @@ UI
   • Highlights the cmdline as you type.
   • Provides the |pager| as a buffer + window.
   • Currently experimental. To enable it: `require('vim._core.ui2').enable()`
-• |:restart| restarts Nvim and reattaches the current UI.
+• |:restart| restarts Nvim and reattaches all UIs.
 • |:connect| dynamically connects the current UI to the server at the given
   address.
 • |:checkhealth| shows a summary in the header for every healthcheck.

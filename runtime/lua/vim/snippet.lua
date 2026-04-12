@@ -305,7 +305,7 @@ function Session:set_gravity()
   end
 end
 
-local M = { session = nil }
+local M = { _sessions = {} }
 
 --- Displays the choices for the given tabstop as completion items.
 ---
@@ -390,7 +390,7 @@ local function setup_autocmds(bufnr)
   vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
     group = snippet_group,
     desc = 'Update snippet state when the cursor moves',
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       -- Just update the tabstop in insert and select modes.
       if not vim.fn.mode():match('^[isS]') then
@@ -434,7 +434,7 @@ local function setup_autocmds(bufnr)
   vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'TextChangedP' }, {
     group = snippet_group,
     desc = 'Update active tabstops when buffer text changes',
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       -- Check that the snippet hasn't been deleted.
       local snippet_range = get_extmark_range(M._session.bufnr, M._session.extmark_id)
@@ -463,7 +463,7 @@ local function setup_autocmds(bufnr)
   vim.api.nvim_create_autocmd('BufLeave', {
     group = snippet_group,
     desc = 'Stop the snippet session when leaving the buffer',
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       M.stop()
     end,
@@ -595,6 +595,7 @@ function M.expand(input)
     end_right_gravity = true,
   })
   M._session = Session.new(bufnr, snippet_extmark, tabstop_data)
+  table.insert(M._sessions, M._session)
 
   -- Jump to the first tabstop.
   M.jump(1)
@@ -635,7 +636,7 @@ function M.jump(direction)
   end
 
   -- Clear the autocommands so that we can move the cursor freely while selecting the tabstop.
-  vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
+  vim.api.nvim_clear_autocmds({ group = snippet_group, buf = M._session.bufnr })
 
   M._session.current_tabstop = dest
   M._session:set_gravity()
@@ -678,10 +679,13 @@ function M.stop()
     return
   end
 
-  vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
-  vim.api.nvim_buf_clear_namespace(M._session.bufnr, snippet_ns, 0, -1)
+  if #M._sessions == 1 then
+    vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
+    vim.api.nvim_buf_clear_namespace(M._session.bufnr, snippet_ns, 0, -1)
+  end
 
-  M._session = nil
+  table.remove(M._sessions)
+  M._session = #M._sessions > 0 and M._sessions[#M._sessions] or nil
 end
 
 return M

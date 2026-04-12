@@ -119,6 +119,7 @@ enum {
   EXPAND_CHECKHEALTH,
   EXPAND_LUA,
   EXPAND_LSP,
+  EXPAND_LOG,
 };
 
 /// Type used by ExpandGeneric()

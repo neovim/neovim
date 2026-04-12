@@ -194,24 +194,23 @@ local client_pull_namespaces = {}
 --- Get the diagnostic namespace associated with an LSP client |vim.diagnostic| for diagnostics
 ---
 ---@param client_id integer The id of the LSP client
----@param pull_id (boolean|string)? (default: nil) Pull diagnostics provider id
----               (indicates "pull" client), or `nil` for a "push" client.
-function M.get_namespace(client_id, pull_id)
+---@param is_pull boolean? Whether the namespace is for a pull or push client. Defaults to
+---                        `false` (push).
+---@param pull_id string? (default: nil) Optional identifier for pull diagnostic providers.
+---                       Only used if `is_pull` is `true`.
+function M.get_namespace(client_id, is_pull, pull_id)
   vim.validate('client_id', client_id, 'number')
-  vim.validate('pull_id', pull_id, { 'boolean', 'string' }, true)
-
-  if type(pull_id) == 'boolean' then
-    vim.deprecate('get_namespace(pull_id:boolean)', 'get_namespace(pull_id:string)', '0.14')
-  end
+  vim.validate('is_pull', is_pull, 'boolean', true)
+  vim.validate('pull_id', pull_id, 'string', true)
 
   local client = lsp.get_client_by_id(client_id)
-  if pull_id then
-    local provider_id = type(pull_id) == 'string' and pull_id or 'nil'
-    local key = ('%d:%s'):format(client_id, provider_id)
+  if is_pull then
+    pull_id = pull_id or 'nil'
+    local key = ('%d:%s'):format(client_id, pull_id)
     local name = ('nvim.lsp.%s.%d.%s'):format(
       client and client.name or 'unknown',
       client_id,
-      provider_id
+      pull_id
     )
     local ns = client_pull_namespaces[key]
     if not ns then
@@ -233,8 +232,9 @@ end
 --- @param uri string
 --- @param client_id? integer
 --- @param diagnostics lsp.Diagnostic[]
---- @param pull_id? boolean|string
-local function handle_diagnostics(uri, client_id, diagnostics, pull_id)
+--- @param is_pull? boolean
+--- @param pull_id? string
+local function handle_diagnostics(uri, client_id, diagnostics, is_pull, pull_id)
   local fname = vim.uri_to_fname(uri)
 
   if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
@@ -248,7 +248,7 @@ local function handle_diagnostics(uri, client_id, diagnostics, pull_id)
 
   client_id = client_id or DEFAULT_CLIENT_ID
 
-  local namespace = M.get_namespace(client_id, pull_id)
+  local namespace = M.get_namespace(client_id, is_pull, pull_id)
 
   vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
 end
@@ -299,11 +299,11 @@ function M.on_diagnostic(error, result, ctx)
     return
   end
 
-  handle_diagnostics(params.textDocument.uri, client_id, result.items, params.identifier or 'nil')
+  handle_diagnostics(params.textDocument.uri, client_id, result.items, true, params.identifier)
 
   for uri, related_result in pairs(result.relatedDocuments or {}) do
     if related_result.kind == 'full' then
-      handle_diagnostics(uri, client_id, related_result.items, params.identifier or 'nil')
+      handle_diagnostics(uri, client_id, related_result.items, true, params.identifier)
     end
 
     local related_bufnr = vim.uri_to_bufnr(uri)
@@ -448,7 +448,7 @@ function M._enable(bufnr)
   end
 
   api.nvim_create_autocmd('LspNotify', {
-    buffer = bufnr,
+    buf = bufnr,
     callback = function(opts)
       if
         opts.data.method ~= 'textDocument/didChange'
@@ -476,7 +476,7 @@ function M._enable(bufnr)
   })
 
   api.nvim_create_autocmd('LspDetach', {
-    buffer = bufnr,
+    buf = bufnr,
     callback = function(ev)
       local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/diagnostic' })
 
@@ -548,7 +548,7 @@ function M._workspace_diagnostics(opts)
         -- We favor document pull requests over workspace results, so only update the buffer
         -- state if we're not pulling document diagnostics for this buffer.
         if bufstates[bufnr].pull_kind == 'workspace' and report.kind == 'full' then
-          handle_diagnostics(report.uri, ctx.client_id, report.items, params.identifier or 'nil')
+          handle_diagnostics(report.uri, ctx.client_id, report.items, true, params.identifier)
           local key = result_id_key(ctx.client_id, params.identifier)
           bufstates[bufnr].client_result_id[key] = report.resultId
         end

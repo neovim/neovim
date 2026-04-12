@@ -447,7 +447,7 @@ do
       assert(bufnr > 0, 'Invalid buffer number')
       api.nvim_create_autocmd('BufWipeout', {
         group = group,
-        buffer = bufnr,
+        buf = bufnr,
         callback = function()
           rawset(t, bufnr, nil)
         end,
@@ -867,7 +867,7 @@ local function schedule_display(namespace, bufnr, args)
     local group = api.nvim_create_augroup(key, { clear = true })
     api.nvim_create_autocmd(insert_leave_auto_cmds, {
       group = group,
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         execute_scheduled_display(namespace, bufnr)
       end,
@@ -1352,8 +1352,8 @@ local function once_buf_loaded(bufnr, fn)
   if api.nvim_buf_is_loaded(bufnr) then
     fn()
   else
-    return api.nvim_create_autocmd('BufRead', {
-      buffer = bufnr,
+    api.nvim_create_autocmd('BufRead', {
+      buf = bufnr,
       once = true,
       callback = function()
         fn()
@@ -1455,7 +1455,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
 
   api.nvim_exec_autocmds('DiagnosticChanged', {
     modeline = false,
-    buffer = bufnr,
+    buf = bufnr,
     -- TODO(lewis6991): should this be deepcopy()'d like they are in vim.diagnostic.get()
     data = { diagnostics = diagnostics },
   })
@@ -1944,14 +1944,13 @@ M.handlers.virtual_text = {
           { clear = true }
         )
       end
-
-      api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
+      api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buf = bufnr })
 
       local line_diagnostics = diagnostic_lines(diagnostics, true)
 
       if opts.virtual_text.current_line ~= nil then
         api.nvim_create_autocmd('CursorMoved', {
-          buffer = bufnr,
+          buf = bufnr,
           group = ns.user_data.virt_text_augroup,
           callback = function()
             render_virtual_text(
@@ -1976,7 +1975,7 @@ M.handlers.virtual_text = {
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_text_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
         api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
-        api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
+        api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buf = bufnr })
       end
     end
   end,
@@ -2018,6 +2017,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
   local ElementType = { Space = 1, Diagnostic = 2, Overlap = 3, Blank = 4 } ---@enum ElementType
   ---@type table<integer, [ElementType, string|vim.diagnostic.Severity|vim.Diagnostic][]>
   local line_stacks = {}
+  local line_anchor = {} ---@type table<integer, integer>
   local prev_lnum = -1
   local prev_col = 0
   for _, diag in ipairs(diagnostics) do
@@ -2026,6 +2026,10 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
     end
 
     local stack = line_stacks[diag.lnum]
+    local end_lnum = diag.end_lnum or diag.lnum
+    if not line_anchor[diag.lnum] or end_lnum > line_anchor[diag.lnum] then
+      line_anchor[diag.lnum] = end_lnum
+    end
 
     if diag.lnum ~= prev_lnum then
       table.insert(stack, {
@@ -2152,7 +2156,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
       end
     end
 
-    api.nvim_buf_set_extmark(bufnr, namespace, lnum, 0, {
+    api.nvim_buf_set_extmark(bufnr, namespace, line_anchor[lnum] or lnum, 0, {
       virt_lines_overflow = 'scroll',
       virt_lines = virt_lines,
     })
@@ -2192,7 +2196,7 @@ M.handlers.virtual_lines = {
         )
       end
 
-      api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
+      api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buf = bufnr })
 
       diagnostics =
         reformat_diagnostics(opts.virtual_lines.format or format_virtual_lines, diagnostics)
@@ -2202,7 +2206,7 @@ M.handlers.virtual_lines = {
         -- diagnostics we need when the cursor line doesn't change.
         local line_diagnostics = diagnostic_lines(diagnostics, true)
         api.nvim_create_autocmd('CursorMoved', {
-          buffer = bufnr,
+          buf = bufnr,
           group = ns.user_data.virt_lines_augroup,
           callback = function()
             render_virtual_lines(
@@ -2232,7 +2236,7 @@ M.handlers.virtual_lines = {
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_lines_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
         api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_lines_ns, 0, -1)
-        api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
+        api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buf = bufnr })
       end
     end
   end,
@@ -2708,7 +2712,7 @@ function M.reset(namespace, bufnr)
     if api.nvim_buf_is_valid(iter_bufnr) then
       api.nvim_exec_autocmds('DiagnosticChanged', {
         modeline = false,
-        buffer = iter_bufnr,
+        buf = iter_bufnr,
         data = { diagnostics = {} },
       })
     else

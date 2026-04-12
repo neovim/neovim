@@ -1217,7 +1217,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           if (VIsual_mode == 'V') {       // linewise
             wlv.fromcol = 0;
           } else {
-            getvvcol(wp, top, (colnr_T *)&wlv.fromcol, NULL, NULL);
+            getvvcol(wp, top, &wlv.fromcol, NULL, NULL, 0);
             if (gchar_pos(top) == NUL) {
               wlv.tocol = wlv.fromcol + 1;
             }
@@ -1233,9 +1233,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           } else {
             pos_T pos = *bot;
             if (*p_sel == 'e') {
-              getvvcol(wp, &pos, (colnr_T *)&wlv.tocol, NULL, NULL);
+              getvvcol(wp, &pos, &wlv.tocol, NULL, NULL, 0);
             } else {
-              getvvcol(wp, &pos, NULL, NULL, (colnr_T *)&wlv.tocol);
+              getvvcol(wp, &pos, NULL, NULL, &wlv.tocol, 0);
               wlv.tocol++;
             }
           }
@@ -1260,8 +1260,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
                && lnum >= curwin->w_cursor.lnum
                && lnum <= curwin->w_cursor.lnum + search_match_lines) {
       if (lnum == curwin->w_cursor.lnum) {
-        getvcol(curwin, &(curwin->w_cursor),
-                (colnr_T *)&wlv.fromcol, NULL, NULL);
+        getvcol(curwin, &(curwin->w_cursor), &wlv.fromcol, NULL, NULL, 0);
       } else {
         wlv.fromcol = 0;
       }
@@ -1270,7 +1269,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           .lnum = lnum,
           .col = search_match_endcol,
         };
-        getvcol(curwin, &pos, (colnr_T *)&wlv.tocol, NULL, NULL);
+        getvcol(curwin, &pos, &wlv.tocol, NULL, NULL, 0);
       }
       // do at least one character; happens when past end of line
       if (wlv.fromcol == wlv.tocol && search_match_endcol) {
@@ -2331,6 +2330,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           CharsizeArg csarg;
           // lnum == 0, do not want virtual text to be counted here
           CSType cstype = init_charsize_arg(&csarg, wp, 0, line);
+          // TODO(zeertzjq): consider using CharSize.tail here
           wlv.n_extra = win_charsize(cstype, wlv.vcol, p, utf_ptr2CharInfo(p).value,
                                      &csarg).width - 1;
 

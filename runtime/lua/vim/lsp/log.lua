@@ -10,10 +10,8 @@
 ---
 --- Then try to run the language server, and open the log with:
 --- ```vim
---- :lua vim.cmd('tabnew ' .. vim.lsp.log.get_filename())
+--- :log lsp
 --- ```
----
---- (Or use `:LspLog` if you have nvim-lspconfig installed.)
 ---
 --- Note:
 --- - Remember to DISABLE verbose logging ("debug" or "trace" level), else you may encounter

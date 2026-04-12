@@ -14,6 +14,10 @@ local M = {}
 ---
 ---Buffer to save the response body to.
 ---@field outbuf? integer
+---
+---Custom headers to send with the request. Supports basic key/value headers and empty headers as
+---supported by curl. Does not support "@filename" style, internal header deletion ("Header:").
+---@field headers? table<string, string>
 
 ---@class vim.net.request.Response
 ---
@@ -25,12 +29,12 @@ local M = {}
 ---
 --- Examples:
 --- ```lua
---- -- Write response body to file
+--- -- Write response body to file.
 --- vim.net.request('https://neovim.io/charter/', {
 ---   outpath = 'vision.html',
 --- })
 ---
---- -- Process the response
+--- -- Process the response.
 --- vim.net.request(
 ---   'https://api.github.com/repos/neovim/neovim',
 ---   {},
@@ -41,12 +45,17 @@ local M = {}
 ---   end
 --- )
 ---
---- -- Write to both file and current buffer, but cancel it
+--- -- Write to both file and current buffer, but cancel it.
 --- local job = vim.net.request('https://neovim.io/charter/', {
 ---   outpath = 'vision.html',
 ---   outbuf = 0,
 --- })
 --- job:close()
+---
+--- -- Add custom headers in the request.
+--- vim.net.request('https://neovim.io/charter/', {
+---   headers = { Authorization = 'Bearer XYZ' },
+--- })
 --- ```
 ---
 --- @param url string The URL for the request.
@@ -54,7 +63,7 @@ local M = {}
 --- @param on_response? fun(err: string?, response: vim.net.request.Response?)
 --- Callback invoked on request completion. The `body` field in the response
 --- parameter contains the raw response data (text or binary).
---- @return { close: fun() } # Table with method to cancel, similar to [vim.SystemObj].
+--- @return { close: fun() } # Object with `close()` method which cancels the request.
 function M.request(url, opts, on_response)
   vim.validate('url', url, 'string')
   vim.validate('opts', opts, 'table', true)
@@ -76,6 +85,25 @@ function M.request(url, opts, on_response)
     vim.list_extend(args, { '--output', opts.outpath })
   end
 
+  if opts.headers then
+    vim.validate('opts.headers', opts.headers, 'table', true)
+    for key, value in pairs(opts.headers) do
+      if type(key) ~= 'string' or type(value) ~= 'string' then
+        error('headers keys and values must be strings')
+      end
+
+      if key:match(':$') or key:match(';$') or key:match('^@') then
+        error('header keys must not start with @ or end with : and ;')
+      end
+
+      if value == '' then
+        vim.list_extend(args, { '-H', key .. ';' })
+      else
+        vim.list_extend(args, { '-H', key .. ': ' .. value })
+      end
+    end
+  end
+
   table.insert(args, url)
 
   local job = vim.system(args, {}, function(res)
@@ -87,9 +115,7 @@ function M.request(url, opts, on_response)
       err = res.stderr ~= '' and res.stderr or ('Request failed with exit code %d'):format(res.code)
     else
       if on_response then
-        response = {
-          body = res.stdout --[[@as string]],
-        }
+        response = { body = res.stdout or '' }
       end
     end
 

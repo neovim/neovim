@@ -19,7 +19,8 @@ Downloads are available on the [Releases](https://github.com/neovim/neovim/relea
     * [macOS arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-arm64.tar.gz)
     * [Linux x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz)
     * [Linux arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.tar.gz)
-    * [Windows](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
+    * [Windows x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
+    * [Windows arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-win-arm64.msi)
 * Latest [development prerelease](https://github.com/neovim/neovim/releases/nightly)
 
 
@@ -53,6 +54,7 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 ### Pre-built archives
 
 0. If you are missing `VCRUNTIME170.dll`, install the [Visual Studio C++ redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (choose x86_64 or x86 depending on your system).
+    - Hint: if you have scoop, try: `scoop install vcredist`
 1. Choose a package (**nvim-winXX.zip**) from the [releases page](https://github.com/neovim/neovim/releases).
 2. Unzip the package. Any location is fine, administrator privileges are _not_ required.
     - `$VIMRUNTIME` will be set to that location automatically.

@@ -233,9 +233,9 @@ For other ways to count words, lines and other items, see |count-items|.
 ==============================================================================
 *12.6*	Find a man page					*find-manpage*
 
-While editing a shell script or C program, you are using a command or function
-that you want to find the man page for (this is on Unix).  Let's first use a
-simple way: Move the cursor to the word you want to find help on and press >
+While editing a C program, you are using a function that you want to find the
+man page for (this is on Unix).  Let's first use a simple way: Move the cursor
+to the word you want to find help on and press >
 
 	K
 

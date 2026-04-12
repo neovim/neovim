@@ -7,6 +7,7 @@
 
 #include "auto/config.h"
 #include "klib/kvec.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -867,6 +868,12 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   // environment variable $NoDefaultCurrentDirectoryInExePath
   char *oldval = os_getenv("NoDefaultCurrentDirectoryInExePath");
   os_setenv("NoDefaultCurrentDirectoryInExePath", "1", true);
+
+  UINT old_output_cp = GetConsoleOutputCP();
+  UINT old_input_cp = GetConsoleCP();
+  // Force console codepage to UTF-8 before spawning child process. #33480
+  SetConsoleOutputCP(CP_UTF8);
+  SetConsoleCP(CP_UTF8);
 #endif
 
   out_data_decide_throttle(0);  // Initialize throttle decider.
@@ -982,6 +989,8 @@ end:
 #ifdef MSWIN
   // Restore original value of NoDefaultCurrentDirectoryInExePath
   restore_env_var("NoDefaultCurrentDirectoryInExePath", oldval, true);
+  SetConsoleOutputCP(old_output_cp);
+  SetConsoleCP(old_input_cp);
 #endif
 
   return exitcode;
@@ -1111,6 +1120,17 @@ static void out_data_ring(const char *output, size_t size)
   }
 }
 
+static void out_data_event(void **argv)
+{
+  bool need_clear = true;
+  int hl = (int)(intptr_t)argv[2] == STDERR_FILENO ? HLF_SE : HLF_SO;
+  msg_ext_set_kind((int)(intptr_t)argv[2] == STDERR_FILENO ? "shell_err" : "shell_out");
+  msg_ext_append = true;
+  msg_multiline(cbuf_as_string((char *)argv[0], (size_t)argv[1]), hl, false, false, &need_clear);
+  xfree(argv[0]);
+  ui_flush();
+}
+
 /// Continue to append data to last screen line.
 ///
 /// @param output       Data to append to screen lines.
@@ -1121,33 +1141,29 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
 {
   const char *p = output;
   const char *end = output + *count;
-  msg_ext_set_kind(fd == STDERR_FILENO ? "shell_err" : "shell_out");
-  msg_ext_append = true;
+  // Note: this is not 100% precise:
+  // 1. we don't check if received continuation bytes are already invalid
+  //    and we thus do some buffering that could be avoided
+  // 2. we don't compose chars over buffer boundaries, even if we see an
+  //    incomplete UTF-8 sequence that could be composing with the last
+  //    complete sequence.
+  // This will be corrected when we switch to vterm based implementation
   while (p < end) {
-    if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
-      msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_SE : HLF_SO);
-      p++;
-    } else {
-      // Note: this is not 100% precise:
-      // 1. we don't check if received continuation bytes are already invalid
-      //    and we thus do some buffering that could be avoided
-      // 2. we don't compose chars over buffer boundaries, even if we see an
-      //    incomplete UTF-8 sequence that could be composing with the last
-      //    complete sequence.
-      // This will be corrected when we switch to vterm based implementation
-      int i = *p ? utfc_ptr2len_len(p, (int)(end - p)) : 1;
-      if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end - p)) {
-        *count = (size_t)(p - output);
-        goto end;
-      }
-
-      msg_outtrans_len(p, i, fd == STDERR_FILENO ? HLF_SE : HLF_SO, false);
-      p += i;
+    int i = *p ? utfc_ptr2len_len(p, (int)*count - (int)(p - output)) : 1;
+    if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end - p)) {
+      *count = (size_t)(p - output);
+      break;
     }
+    p += i;
   }
-
-end:
-  ui_flush();
+  // Process after uv_run() to avoid recursion in vim.ui_attach() msg_show callback #38664.
+  char *str = xmemdupz(output, *count);
+  if (ui_has(kUIMessages)) {
+    multiqueue_put(main_loop.fast_events, out_data_event,
+                   (void *)str, (void *)*count, (void *)(intptr_t)fd);
+  } else {
+    out_data_event((void *[]){ (void *)str, (void *)*count, (void *)(intptr_t)fd });
+  }
 }
 
 static size_t out_data_cb(RStream *stream, const char *ptr, size_t count, void *data, bool eof)

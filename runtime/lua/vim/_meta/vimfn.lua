@@ -3273,7 +3273,7 @@ function vim.fn.getfperm(fname) end
 --- @return integer
 function vim.fn.getfsize(fname) end
 
---- Returns the last modification time of the given file {fname}.
+--- Returns the last modification time ("mtime") of file {fname}.
 --- The value is measured as seconds since 1st Jan 1970, and may
 --- be passed to |strftime()|.  See also
 --- |localtime()| and |strftime()|.

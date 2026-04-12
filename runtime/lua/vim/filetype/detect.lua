@@ -68,7 +68,13 @@ end
 local function is_objectscript_routime(bufnr)
   local line1 = getline(bufnr, 1)
   line1 = fn.substitute(line1, [[^\ufeff]], '', '')
-  return matchregex(line1, [[\c^\s*routine\>\s\+[%A-Za-z][%A-Za-z0-9_.]*\%(\s*\[\|\s*;\|$\)]])
+  if matchregex(line1, [[\c^\s*routine\>]]) then
+    return true
+  end
+  if matchregex(line1, [[\c\<iris\>]]) then
+    return true
+  end
+  return table.concat(getlines(bufnr, 1, 3), ''):find('%%RO') ~= nil
 end
 
 -- This function checks for the kind of assembly that is wanted by the user, or
@@ -2154,6 +2160,10 @@ local function match_from_hashbang(contents, path, dispatch_extension)
     if opts.vim_regex and matchregex(name, k) or name:find(k) then
       return ft
     end
+  end
+
+  if name == 'uv' and matchregex(first_line, [[\<uv run\>]]) then
+    return 'python'
   end
 
   -- If nothing matched, check the extension table. For a hashbang like

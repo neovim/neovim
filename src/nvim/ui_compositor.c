@@ -590,7 +590,7 @@ void ui_comp_raw_line(Integer grid, Integer row, Integer startcol, Integer endco
     endcol = MIN(endcol, clearcol);
   }
 
-  bool covered = curgrid_covered_above((int)row);
+  bool covered = curgrid_covered_above((int)row, (int)row, (int)startcol, (int)clearcol);
   // TODO(bfredl): eventually should just fix compose_line to respect clearing
   // and optimize it for uncovered lines.
   if (flags & kLineFlagInvalid || covered || curgrid->blending) {
@@ -658,14 +658,24 @@ void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep
   msg_was_scrolled = scrolled;
 }
 
-/// check if curgrid is covered on row or above
-///
-/// TODO(bfredl): currently this only handles message row
-static bool curgrid_covered_above(int row)
+/// check if curgrid is covered by any other grid within the rectangle
+static bool curgrid_covered_above(int top, int bot, int left, int right)
 {
-  bool above_msg = (kv_A(layers, kv_size(layers) - 1) == &msg_grid
-                    && row < msg_current_row - (msg_was_scrolled ? 1 : 0));
-  return kv_size(layers) - (above_msg ? 1 : 0) > curgrid->comp_index + 1;
+  // check all layers above curgrid. if any intersect with the given rectangle, then consider the
+  // curgrid covered. account for the msg_sep_row if the msg_grid layer was scrolled.
+  for (size_t i = curgrid->comp_index + 1; i < kv_size(layers); i++) {
+    ScreenGrid *g = kv_A(layers, i);
+    int grid_top = g->comp_row - (g == &msg_grid && msg_was_scrolled ? 1 : 0);
+    int grid_bot = g->comp_row + g->comp_height - 1;
+    int grid_left = g->comp_col;
+    int grid_right = g->comp_col + g->comp_width - 1;
+
+    if (right >= grid_left && left <= grid_right && bot >= grid_top && top <= grid_bot) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer right,
@@ -678,7 +688,7 @@ void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, I
   bot += curgrid->comp_row;
   left += curgrid->comp_col;
   right += curgrid->comp_col;
-  bool covered = curgrid_covered_above((int)(bot - MAX(rows, 0)));
+  bool covered = curgrid_covered_above((int)top, (int)bot, (int)left, (int)right);
 
   if (covered || curgrid->blending) {
     // TODO(bfredl):

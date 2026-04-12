@@ -20,15 +20,14 @@ else
 endif
 
 # Tests using runtest.vim.
-NEW_TESTS_ALOT := test_alot_utf8 test_alot test_alot_latin
-NEW_TESTS_IN_ALOT := $(shell sed -n '/^source/ s/^source //; s/\.vim$$//p' $(addsuffix .vim,$(NEW_TESTS_ALOT)))
+NEW_TESTS_IN_ALOT := $(shell sed -n '/^source/ s/^source //; s/\.vim$$//p' test_alot.vim))
 # Ignored tests.
 # test_largefile: uses too much resources to run on CI.
 NEW_TESTS_IGNORE := \
   test_largefile \
 
 NEW_TESTS := $(sort $(basename $(notdir $(wildcard test_*.vim))))
-NEW_TESTS_RES := $(addsuffix .res,$(filter-out $(NEW_TESTS_ALOT) $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_IGNORE),$(NEW_TESTS)) $(NEW_TESTS_ALOT))
+NEW_TESTS_RES := $(addsuffix .res,$(filter-out test_alot $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_IGNORE),$(NEW_TESTS)) test_alot)
 
 
 ifdef VALGRIND_GDB
@@ -76,11 +75,10 @@ report:
 
 test1.out: $(NVIM_PRG)
 
-NO_PLUGINS = --noplugin --headless
 # In vim, if the -u command line option is specified, compatible is turned on
 # and viminfo is not read. Unlike vim, neovim reads viminfo and requires the
 # -i command line option.
-NO_INITS = -U NONE -i NONE $(NO_PLUGINS)
+NO_INITS = -u NONE -i NONE --noplugin --headless
 
 # TODO: find a way to avoid changing the distributed files.
 fixff:
@@ -146,7 +144,7 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim
+RUN_VIMTEST = $(TOOL) $(NVIM_PRG)
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
@@ -158,7 +156,7 @@ newtestssilent: $(NEW_TESTS_RES)
 GEN_OPT_DEPS = gen_opt_test.vim ../../../src/nvim/options.lua ../../../runtime/doc/options.txt
 
 opt_test.vim: $(GEN_OPT_DEPS)
-	$(NVIM_PRG) -e -s -u NONE $(NO_INITS) -S $(GEN_OPT_DEPS)
+	$(NVIM_PRG) -e -s $(NO_INITS) -S $(GEN_OPT_DEPS)
 	@if test -f gen_opt_test.log; then \
 		cat gen_opt_test.log; \
 		exit 1; \
@@ -171,4 +169,4 @@ test_options_all.res: opt_test.vim
 	@echo "[OLDTEST] Running" $*
 	@rm -rf $*.failed test.ok $(RM_ON_RUN)
 	@mkdir -p $(TMPDIR)
-	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) $(NO_INITS) -u NONE --cmd "set shortmess-=F" -S runtest.vim $*.vim
+	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) $(NO_INITS) --cmd "set shortmess-=F backupdir=. undodir=. viewdir=." -S runtest.vim $*.vim

@@ -26,7 +26,7 @@ jobs:
 
       - name: Create backport PR
         id: backport
-        uses: korthout/backport-action@4aaf0e03a94ff0a619c9a511b61aeb42adea5b02 # v4.2.0
+        uses: korthout/backport-action@3c06f323a58619da1e8522229ebc8d5de2633e46 # v4.3.0
         with:
           pull_title: "${pull_title}"
           label_pattern: "^ci:backport ([^ ]+)$"

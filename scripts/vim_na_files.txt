@@ -32,7 +32,9 @@ runtime/doc/os_risc.txt
 runtime/doc/os_unix.txt
 runtime/doc/os_vms.txt
 runtime/doc/pi_logipat.txt
+runtime/doc/print.txt
 runtime/doc/quotes.txt
+runtime/doc/test_urls.vim
 runtime/doc/testing.txt
 runtime/doc/todo.txt
 runtime/doc/usr_52.txt
@@ -96,6 +98,7 @@ src/testdir/test_crypt.vim
 src/testdir/test_cscope.vim
 src/testdir/test_glvs.vim
 src/testdir/test_hardcopy.vim
+src/testdir/test_function_lists.vim
 src/testdir/test_job_fails.vim
 src/testdir/test_json.vim
 src/testdir/test_listener.vim

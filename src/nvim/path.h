@@ -2,6 +2,7 @@
 
 #include <stddef.h>  // IWYU pragma: keep
 
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 

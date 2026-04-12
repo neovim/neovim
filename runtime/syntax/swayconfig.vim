@@ -2,8 +2,8 @@
 " Language: sway config file
 " Original Author: Josef Litos (litoj/i3config.vim)
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 1.2.7
-" Last Change: 2025-12-02
+" Version: 1.2.8
+" Last Change: 2026-04-01
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -28,7 +28,7 @@ syn cluster i3ConfigPopupFullscreenOpts remove=i3ConfigPopupFullscreenOptsExtra
 syn keyword i3ConfigActionKeyword opacity urgent shortcuts_inhibitor splitv splith splitt contained contained skipwhite nextgroup=i3ConfigOption
 syn keyword i3ConfigOption set plus minus allow deny csd v h t contained contained skipwhite nextgroup=i3ConfigOption,@i3ConfigValue
 
-syn keyword i3ConfigConditionProp app_id pid shell contained
+syn keyword i3ConfigConditionProp app_id pid shell sandbox_app_id sandbox_engine sandbox_instance_id tag contained
 
 syn keyword i3ConfigWorkspaceDir prev_on_output next_on_output contained
 
@@ -134,7 +134,7 @@ syn match swayConfigSeatIdent /[^ ,;]\+/ contained contains=@i3ConfigStrVar next
 syn keyword i3ConfigKeyword seat contained skipwhite nextgroup=swayConfigSeatIdent
 
 " Output monitors
-syn keyword swayConfigOutputOpts mode resolution res modeline position pos scale scale_filter subpixel transform disable enable toggle power dpms max_render_time adaptive_sync render_bit_depth color_profile allow_tearing contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue,swayConfigOutputMode
+syn keyword swayConfigOutputOpts mode resolution res modeline position pos scale scale_filter subpixel transform disable enable toggle power dpms max_render_time adaptive_sync render_bit_depth color_profile allow_tearing hdr contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue,swayConfigOutputMode
 syn keyword swayConfigOutputOptVals linear nearest smart rgb bgr vrgb vbgr none toggle srgb contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue
 syn keyword swayConfigOutputBgVals solid_color fill stretch fit center tile contained skipwhite nextgroup=@i3ConfigColVar
 syn match swayConfigOutputBg /[#$]\S\+ solid_color/ contained contains=@i3ConfigColVar,swayConfigOutputBgVals skipwhite nextgroup=swayConfigOutputOpts

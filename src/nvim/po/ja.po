@@ -6660,44 +6660,14 @@ msgstr "E1505: 無効なフォーマット指示子です: %s"
 msgid "unknown"
 msgstr "不明"
 
-msgid "int"
-msgstr "int"
-
-msgid "long int"
-msgstr "long int"
-
-msgid "long long int"
-msgstr "long long int"
-
-msgid "signed size_t"
-msgstr "signed size_t"
-
-msgid "unsigned int"
-msgstr "unsigned int"
-
-msgid "unsigned long int"
-msgstr "unsigned long int"
-
-msgid "unsigned long long int"
-msgstr "unsigned long long int"
-
-msgid "size_t"
-msgstr "size_t"
-
 msgid "pointer"
 msgstr "pointer"
 
 msgid "percent"
 msgstr "percent"
 
-msgid "char"
-msgstr "char"
-
 msgid "string"
 msgstr "string"
-
-msgid "float"
-msgstr "float"
 
 msgid "E766: Insufficient arguments for printf()"
 msgstr "E766: printf() の引数が不十分です"

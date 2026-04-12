@@ -985,5 +985,30 @@ func Test_WinEnter_synstack_synID()
   bw!
 endfunc
 
+" This was going beyond the end of the "foo" line
+func Test_syn_sync_grouphere_shorter_next_line()
+  let lines =<< trim END
+    if [[ "$var1" == 1 ]]; then
+      foo
+    else
+      bar
+    fi
+  END
+  let lines = ['a']->repeat(50) + lines + ['a']->repeat(48)
+
+  20new
+  call setline(1, lines)
+  syn region shIf transparent
+        \ start="\<if\_s" skip=+-fi\>+ end="\<;\_s*then\>" end="\<fi\>"
+  syn sync minlines=20 maxlines=40
+  syn sync match shIfSync grouphere shIf "\<if\>"
+  redraw!
+
+  normal! G
+  " Should not go beyond end of line
+  redraw!
+
+  bw!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

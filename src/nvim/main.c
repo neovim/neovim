@@ -1503,9 +1503,10 @@ scripterror:
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {
-        char *r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), true);
+        const char *tail = path_tail(alist_name(&GARGLIST[0]));
+        String ret = concat_fnames(cstr_as_string(p), cstr_as_string(tail), true);
         xfree(p);
-        p = r;
+        p = ret.data;
       }
 
 #ifdef CASE_INSENSITIVE_FILENAME

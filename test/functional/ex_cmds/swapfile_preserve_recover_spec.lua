@@ -16,6 +16,8 @@ local ok = t.ok
 local rmdir = n.rmdir
 local new_pipename = n.new_pipename
 local pesc = vim.pesc
+local is_os = t.is_os
+local skip = t.skip
 local set_session = n.set_session
 local async_meths = n.async_meths
 local expect_msg_seq = n.expect_msg_seq
@@ -116,6 +118,10 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   end)
 
   it('killing TUI process without :preserve #22096', function()
+    -- Windows(#38669): inner server could attach to the outer Nvim terminal's console
+    -- and die abruptly when the outer terminal job closed, leaving an unreadable swapfile
+    skip(is_os('win'), 'unreadable swapfile on Windows after TUI process exit')
+
     local screen0 = Screen.new()
     local child_server = new_pipename()
     fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
@@ -354,9 +360,36 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     set_session(nvim1)
     local screen = Screen.new(75, 18)
     exec(init)
-    feed(':edit Xfile1\n')
 
-    screen:expect({ any = ('W325: Ignoring swapfile from Nvim process %d'):format(nvimpid) })
+    feed(':edit Xfile1\n')
+    local msg_expected = ('W325: Ignoring swapfile from Nvim process %d'):format(nvimpid)
+    screen:expect({ any = vim.pesc(msg_expected) })
+    eq(msg_expected, n.exec_capture('messages'))
+    command('bwipe!')
+
+    -- With smaller screen, the message should be truncated, but only in display.
+    screen:try_resize(40, 18)
+    feed(':edit Xfile1\n')
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*16
+      {19:W325: Ignoring swapfile from Nvim proces}|
+    ]])
+    eq(('\n' .. msg_expected):rep(2):sub(2), n.exec_capture('messages'))
+    command('bwipe!')
+
+    -- Also test with 'ruler'.
+    screen:try_resize(60, 18)
+    command('set ruler')
+    feed(':edit Xfile1\n')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*16
+      {19:W325: Ignoring swapfile from Nvim process }0,0-1         All |
+    ]])
+    eq(('\n' .. msg_expected):rep(3):sub(2), n.exec_capture('messages'))
+    command('bwipe!')
+
     nvim1:close()
   end)
 

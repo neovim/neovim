@@ -219,7 +219,7 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/src/testdir/\<\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove testdir/test_*.vim files
-  local na_src_testdir='balloon.*\|behave\.vim\|channel.*\|crypt\.vim\|cscope\.vim\|gui.*\|hardcopy\.vim\|job_fails\.vim\|json\.vim\|listener\.vim\|mzscheme\.vim\|netbeans.*\|paste\.vim\|popupwin.*\|python2\.vim\|pyx2\.vim\|restricted\.vim\|shortpathname\.vim\|sound\.vim\|tcl\.vim\|terminal.*\|xxd\.vim'
+  local na_src_testdir='balloon.*\|behave\.vim\|channel.*\|crypt\.vim\|cscope\.vim\|hardcopy\.vim\|job_fails\.vim\|json\.vim\|listener\.vim\|mzscheme\.vim\|netbeans.*\|paste\.vim\|popupwin.*\|python2\.vim\|pyx2\.vim\|restricted\.vim\|shortpathname\.vim\|sound\.vim\|tcl\.vim\|terminal.*\|xxd\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove runtime/*/testdir/ files

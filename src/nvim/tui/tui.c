@@ -337,14 +337,20 @@ static void tui_reset_key_encoding(TUIData *tui)
   }
 }
 
+static void tui_query_bg_color_noflush(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  out(tui, S_LEN("\x1b]11;?\x07\x1b[5n"));
+}
+
 /// Write the OSC 11 + DSR sequence to the terminal emulator to query the current
-/// background color.
+/// background color, and flush the terminal.
 ///
 /// Response will be handled by the TermResponse handler in _core/defaults.lua.
 void tui_query_bg_color(TUIData *tui)
   FUNC_ATTR_NONNULL_ALL
 {
-  out(tui, S_LEN("\x1b]11;?\x07\x1b[5n"));
+  tui_query_bg_color_noflush(tui);
   flush_buf(tui);
 }
 
@@ -482,6 +488,11 @@ static void terminfo_start(TUIData *tui)
 
   // Query the terminal to see if it supports Kitty's keyboard protocol
   tui_query_kitty_keyboard(tui);
+
+  // Query the terminal's background color. We normally get it via continuous reporting (set via
+  // `kTermModeThemeUpdates` above), but if we were backgrounded while the light/dark mode changed,
+  // we won't have received the report, so we also query it on resume.
+  tui_query_bg_color_noflush(tui);
 
   int ret;
   uv_loop_init(&tui->write_loop);
@@ -1180,7 +1191,7 @@ static void clear_region(TUIData *tui, int top, int bot, int left, int right, in
       cursor_goto(tui, row, left);
       if (tui->can_clear_attr && right == tui->width) {
         terminfo_out(tui, kTerm_clr_eol);
-      } else if (tui->can_erase_chars && tui->can_clear_attr && width >= 5) {
+      } else if (tui->can_erase_chars && tui->can_clear_attr) {
         terminfo_print_num1(tui, kTerm_erase_chars, width);
       } else {
         print_spaces(tui, width);

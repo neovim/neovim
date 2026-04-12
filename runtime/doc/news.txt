@@ -11,13 +11,61 @@ For changes in the previous release, see |news-0.12|.
                                        Type |gO| to see the table of contents.
 
 ==============================================================================
+BREAKING CHANGES IN HEAD OR EXPERIMENTAL                    *news-breaking-dev*
+
+              ====== Remove this section before release. ======
+
+The following changes to UNRELEASED features were made during the development
+cycle (Nvim HEAD, the "master" branch).
+
+EVENTS
+
+• todo
+
+EXPERIMENTS
+
+• todo
+
+LSP
+
+• todo
+
+LUA
+
+
+• vim.pos, vim.range always require the `buf` parameter.
+
+DIAGNOSTICS
+
+• todo
+
+OPTIONS
+
+• todo
+
+TREESITTER
+
+• todo
+
+UI
+
+• todo
+
+VIMSCRIPT
+
+• todo
+
+
+==============================================================================
 BREAKING CHANGES                                                *news-breaking*
 
 These changes may require adaptations in your config or plugins.
 
 API
 
-• todo
+• |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
+  no longer treat an empty non-nil pattern as nil.
+• |nvim_clear_autocmds()| no longer treats an empty array event as nil.
 
 DIAGNOSTICS
 
@@ -25,7 +73,7 @@ DIAGNOSTICS
 
 EDITOR
 
-• todo
+• `stdpath("log")` moved to `stdpath("state")/logs`.
 
 EVENTS
 
@@ -37,7 +85,7 @@ LSP
 
 LUA
 
-• todo
+• Added `__eq` metamethod to |vim.VersionRange|.
 
 OPTIONS
 
@@ -60,7 +108,7 @@ API
 
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
   and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
-• |nvim_set_hl()| supports config font.
+• |nvim_set_hl()| supports "font" key.
 
 BUILD
 
@@ -76,7 +124,7 @@ DIAGNOSTICS
 
 EDITOR
 
-• todo
+• |:log| opens log files.
 
 EVENTS
 
@@ -90,14 +138,20 @@ LSP
 
 • LSP capabilities:
   • `textDocument/foo` …
-    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_codeLens
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_foo
   • `textDocument/bar` …
-    https://microsoft.github.io/language-server-protocol/specification/#textDocument_colorPresentation
-• todo
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_bar
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
+  and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
+• Support for nested snippets.
 
 LUA
 
-• todo
+• |vim.net.request()| can specify custom headers by passing `opts.headers`.
+• |vim.filetype.inspect()| returns a copy of the internal tables used for
+  filetype detection.
+• Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
+the same range instances now compare equal.
 
 OPTIONS
 
@@ -125,7 +179,8 @@ TREESITTER
 
 TUI
 
-• todo
+• The TUI will re-query the terminal's background color when resuming from
+  a suspended state, and Nvim will update 'background' accordingly.
 
 UI
 
@@ -140,7 +195,13 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• todo
+• |:Open| with no arguments uses the current file.
+• The "buffer" key was renamed to "buf" in these functions (but the old name
+  "buffer" is still accepted, for backwards compatibility):
+  • |nvim_clear_autocmds()|
+  • |nvim_create_autocmd()|
+  • |nvim_exec_autocmds()|
+  • |nvim_get_autocmds()|
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

@@ -103,6 +103,41 @@ function M._nextnonblank(bufnr, start_lnum)
   return nil, nil
 end
 
+--- Gets a best-effort set of all "known" filetypes, discovered by:
+--- - `getcompletion()`
+--- - `vim.filetype` internal registry
+--- @return table<string,true>
+function M._get_known_filetypes()
+  local known = {} --- @type table<string,true>
+  for _, ft in ipairs(vim.fn.getcompletion('', 'filetype')) do
+    known[ft] = true
+  end
+  local registry = vim.filetype.inspect()
+
+  local function add_filetype(value)
+    local filetype = type(value) == 'table' and value[1] or value
+    if type(filetype) == 'string' then
+      known[filetype] = true
+    end
+  end
+
+  for _, value in pairs(registry.extension) do
+    add_filetype(value)
+  end
+
+  for _, value in pairs(registry.filename) do
+    add_filetype(value)
+  end
+
+  for _, mappings in pairs(registry.pattern) do
+    for _, value in pairs(mappings) do
+      add_filetype(value)
+    end
+  end
+
+  return known
+end
+
 do
   --- @type table<string,vim.regex>
   local regex_cache = {}
@@ -905,6 +940,7 @@ local extension = {
   obj = 'obj',
   objdump = 'objdump',
   cppobjdump = 'objdump',
+  rtn = 'objectscript_routine',
   obl = 'obse',
   obse = 'obse',
   oblivion = 'obse',
@@ -1838,6 +1874,7 @@ local filename = {
   pinercex = 'pine',
   ['/etc/pinforc'] = 'pinfo',
   ['/.pinforc'] = 'pinfo',
+  PklProject = 'pkl',
   ['.povrayrc'] = 'povini',
   printcap = function(_path, _bufnr)
     return 'ptcap', function(b)
@@ -1999,6 +2036,7 @@ local filename = {
   ['.clangd'] = 'yaml',
   ['.clang-format'] = 'yaml',
   ['.clang-tidy'] = 'yaml',
+  ['buf.lock'] = 'yaml',
   ['pixi.lock'] = 'yaml',
   ['yarn.lock'] = 'yaml',
   matplotlibrc = 'yaml',
@@ -3293,6 +3331,22 @@ end
 --- @return string|boolean|integer: Option value
 function M.get_option(filetype, option)
   return require('vim.filetype.options').get_option(filetype, option)
+end
+
+--- Inspect the current state of the filetype registry.
+---
+--- Returns a copy of the internal tables used for filetype detection by extension, filename, or
+--- pattern. Note: Due to the dynamic nature of filetype detection, this is only useful for checking
+--- whether a certain extension, filename, or pattern has been registered so far. In addition, the
+--- `pattern` table is in an internal format optimized for fast lookup. Prefer |vim.filetype.match()|
+--- for checking the detected filetype for a given pattern.
+---@return table<string, table<string, vim.filetype.mapping|table<string, vim.filetype.mapping>>>
+function M.inspect()
+  return {
+    extension = vim.deepcopy(extension),
+    filename = vim.deepcopy(filename),
+    pattern = vim.deepcopy(pattern),
+  }
 end
 
 return M

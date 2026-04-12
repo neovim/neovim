@@ -25,6 +25,32 @@ end
 local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 local rename_ns = api.nvim_create_namespace('nvim.lsp.rename_range')
 
+--- Returns false if the LSP response is stale and should be discarded.
+--- @param ctx lsp.HandlerContext
+--- @return boolean
+local function ctx_is_valid(ctx)
+  local bufnr = ctx.bufnr
+  if
+    not bufnr
+    or not api.nvim_buf_is_valid(bufnr)
+    or api.nvim_get_current_buf() ~= bufnr
+    or vim.lsp.util.buf_versions[bufnr] ~= ctx.version
+  then
+    return false
+  end
+  local p = ctx.params and ctx.params.position
+  if not p then
+    return true
+  end
+
+  local cur = api.nvim_win_get_cursor(0)
+  local c = lsp.get_client_by_id(ctx.client_id)
+  local enc = c and c.offset_encoding
+
+  return cur[1] - 1 == p.line and enc and cur[2] == util._get_line_byte_from_position(bufnr, p, enc)
+    or false
+end
+
 --- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
 
@@ -53,14 +79,14 @@ function M.hover(config)
   config.focus_id = 'textDocument/hover'
 
   lsp.buf_request_all(0, 'textDocument/hover', client_positional_params(), function(results, ctx)
-    local bufnr = assert(ctx.bufnr)
-    if api.nvim_get_current_buf() ~= bufnr then
-      -- Ignore result since buffer changed. This happens for slow language servers.
-      return
+    local bufnr = ctx.bufnr
+    if not bufnr or not ctx_is_valid(ctx) then
+      return -- Ignore result if context changed. Can happen for slow LS.
     end
 
     -- Filter errors from results
     local results1 = {} --- @type table<integer,lsp.Hover>
+    local nresults = 0
     local empty_response = false
 
     for client_id, resp in pairs(results) do
@@ -75,29 +101,29 @@ function M.hover(config)
         -- - MarkedString-pair: { language="c", value="doc" }
         -- - MarkedString[]-string: { "doc1", ... }
         -- - MarkedString[]-pair: { { language="c", value="doc1" }, ... }
-        if
-          (
-            type(result.contents) == 'table'
-            and #(
-                vim.tbl_get(result.contents, 'value') -- MarkupContent or MarkedString-pair
-                or vim.tbl_get(result.contents, 1, 'value') -- MarkedString[]-pair
-                or result.contents[1] -- MarkedString[]-string
-                or ''
-              )
-              > 0
+        local valid = false
+        if type(result.contents) == 'table' then
+          local value_len = #(
+            vim.tbl_get(result.contents, 'value') -- MarkupContent or MarkedString-pair
+            or vim.tbl_get(result.contents, 1, 'value') -- MarkedString[]-pair
+            or result.contents[1] -- MarkedString[]-string
+            or ''
           )
-          or (
-            type(result.contents) == 'string' and #result.contents > 0 -- MarkedString-string
-          )
-        then
+          valid = value_len > 0
+        elseif type(result.contents) == 'string' then
+          valid = #result.contents > 0
+        end
+
+        if valid then
           results1[client_id] = result
+          nresults = nresults + 1
         else
           empty_response = true
         end
       end
     end
 
-    if vim.tbl_isempty(results1) then
+    if nresults == 0 then
       if config.silent ~= true then
         if empty_response then
           vim.notify('Empty hover response', vim.log.levels.INFO)
@@ -109,10 +135,8 @@ function M.hover(config)
     end
 
     local contents = {} --- @type string[]
-
-    local nresults = #vim.tbl_keys(results1)
-
-    local format = 'markdown'
+    local MarkupKind = lsp.protocol.MarkupKind
+    local format = MarkupKind.Markdown
 
     for client_id, result in pairs(results1) do
       local client = assert(lsp.get_client_by_id(client_id))
@@ -120,12 +144,14 @@ function M.hover(config)
         -- Show client name if there are multiple clients
         contents[#contents + 1] = string.format('# %s', client.name)
       end
-      if type(result.contents) == 'table' and result.contents.kind == 'plaintext' then
-        if #results1 == 1 then
-          format = 'plaintext'
+
+      if type(result.contents) == 'table' and result.contents.kind == MarkupKind.PlainText then
+        if nresults == 1 then
+          -- Only one client: use PlainText format
+          format = MarkupKind.PlainText
           contents = vim.split(result.contents.value or '', '\n', { trimempty = true })
         else
-          -- Surround plaintext with ``` to get correct formatting
+          -- Multiple clients: surround plaintext with ``` to get correct formatting
           contents[#contents + 1] = '```'
           vim.list_extend(
             contents,
@@ -155,8 +181,10 @@ function M.hover(config)
       contents[#contents + 1] = '---'
     end
 
-    -- Remove last linebreak ('---')
-    contents[#contents] = nil
+    -- Remove last linebreak ('---') if contents is not empty
+    if #contents > 0 then
+      contents[#contents] = nil
+    end
 
     local _, winid = lsp.util.open_floating_preview(contents, format, config)
 
@@ -184,8 +212,9 @@ local function request_with_opts(name, params, opts)
 end
 
 ---@param method vim.lsp.protocol.Method.ClientToServer.Request
+---@param context? lsp.ReferenceContext
 ---@param opts? vim.lsp.ListOpts
-local function get_locations(method, opts)
+local function get_locations(method, context, opts)
   opts = opts or {}
   ---@diagnostic disable-next-line: undefined-field
   if opts.reuse_win then
@@ -210,7 +239,10 @@ local function get_locations(method, opts)
   local tagname = vim.fn.expand('<cword>')
 
   lsp.buf_request_all(bufnr, method, function(client)
-    return util.make_position_params(win, client.offset_encoding)
+    local params = util.make_position_params(win, client.offset_encoding)
+    ---@diagnostic disable-next-line: inject-field
+    params.context = context or { includeDeclaration = true }
+    return params
   end, function(results)
     ---@type vim.quickfix.entry[]
     local all_items = {}
@@ -225,25 +257,28 @@ local function get_locations(method, opts)
       vim.list_extend(all_items, items)
     end
 
+    local name = string.gsub(method:match('textDocument/(.*)'), '(%u)', ' %1'):lower()
     if vim.tbl_isempty(all_items) then
-      vim.notify('No locations found', vim.log.levels.INFO)
+      vim.notify(('No %s found'):format(name), vim.log.levels.INFO)
       return
     end
 
-    local title = 'LSP locations'
+    ---@type vim.fn.setqflist.what
+    local list = {
+      title = name:gsub('^%l', string.upper),
+      items = all_items,
+      context = { bufnr = bufnr, method = method },
+    }
     if opts.on_list then
       assert(vim.is_callable(opts.on_list), 'on_list is not a function')
-      opts.on_list({
-        title = title,
-        items = all_items,
-        context = { bufnr = bufnr, method = method },
-      })
+      ---@cast list vim.lsp.ListOpts.OnList
+      opts.on_list(list)
       return
     end
 
     if opts.loclist then
-      vim.fn.setloclist(0, {}, ' ', { title = title, items = all_items })
-      if #all_items == 1 then
+      vim.fn.setloclist(0, {}, ' ', list)
+      if method ~= 'textDocument/references' and #all_items == 1 then
         local tagstack = { { tagname = tagname, from = from } }
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
         vim.cmd('lfirst')
@@ -251,8 +286,8 @@ local function get_locations(method, opts)
         vim.cmd.lopen()
       end
     else
-      vim.fn.setqflist({}, ' ', { title = title, items = all_items })
-      if #all_items == 1 then
+      vim.fn.setqflist({}, ' ', list)
+      if method ~= 'textDocument/references' and #all_items == 1 then
         local tagstack = { { tagname = tagname, from = from } }
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
         vim.cmd('cfirst')
@@ -296,21 +331,21 @@ end
 --- @param opts? vim.lsp.ListOpts
 function M.declaration(opts)
   validate('opts', opts, 'table', true)
-  get_locations('textDocument/declaration', opts)
+  get_locations('textDocument/declaration', nil, opts)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
 --- @param opts? vim.lsp.ListOpts
 function M.definition(opts)
   validate('opts', opts, 'table', true)
-  get_locations('textDocument/definition', opts)
+  get_locations('textDocument/definition', nil, opts)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 --- @param opts? vim.lsp.ListOpts
 function M.type_definition(opts)
   validate('opts', opts, 'table', true)
-  get_locations('textDocument/typeDefinition', opts)
+  get_locations('textDocument/typeDefinition', nil, opts)
 end
 
 --- Lists all the implementations for the symbol under the cursor in the
@@ -318,7 +353,7 @@ end
 --- @param opts? vim.lsp.ListOpts
 function M.implementation(opts)
   validate('opts', opts, 'table', true)
-  get_locations('textDocument/implementation', opts)
+  get_locations('textDocument/implementation', nil, opts)
 end
 
 --- @param results table<integer,{err: lsp.ResponseError?, result: lsp.SignatureHelp?}>
@@ -380,9 +415,8 @@ function M.signature_help(config)
   local user_title = config.title
 
   lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
-    if api.nvim_get_current_buf() ~= ctx.bufnr then
-      -- Ignore result since buffer changed. This happens for slow language servers.
-      return
+    if not ctx_is_valid(ctx) then
+      return -- Ignore result if context changed. Can happen for slow LS.
     end
 
     local signatures, active_signature = process_signature_help_results(results)
@@ -828,49 +862,7 @@ end
 function M.references(context, opts)
   validate('context', context, 'table', true)
   validate('opts', opts, 'table', true)
-
-  local bufnr = api.nvim_get_current_buf()
-  local win = api.nvim_get_current_win()
-  opts = opts or {}
-
-  lsp.buf_request_all(bufnr, 'textDocument/references', function(client)
-    local params = util.make_position_params(win, client.offset_encoding)
-    ---@diagnostic disable-next-line: inject-field
-    params.context = context or { includeDeclaration = true }
-    return params
-  end, function(results)
-    local all_items = {}
-    local title = 'References'
-
-    for client_id, res in pairs(results) do
-      local client = assert(lsp.get_client_by_id(client_id))
-      local items = util.locations_to_items(res.result or {}, client.offset_encoding)
-      vim.list_extend(all_items, items)
-    end
-
-    if not next(all_items) then
-      vim.notify('No references found')
-    else
-      local list = {
-        title = title,
-        items = all_items,
-        context = {
-          method = 'textDocument/references',
-          bufnr = bufnr,
-        },
-      }
-      if opts.on_list then
-        assert(vim.is_callable(opts.on_list), 'on_list is not a function')
-        opts.on_list(list)
-      elseif opts.loclist then
-        vim.fn.setloclist(0, {}, ' ', list)
-        vim.cmd.lopen()
-      else
-        vim.fn.setqflist({}, ' ', list)
-        vim.cmd('botright copen')
-      end
-    end
-  end)
+  get_locations('textDocument/references', context, opts)
 end
 
 --- Lists all symbols in the current buffer in the |location-list|.
@@ -1358,7 +1350,7 @@ function M.code_action(opts)
       local lnum = api.nvim_win_get_cursor(0)[1] - 1
 
       client:_provider_foreach('textDocument/diagnostic', function(cap)
-        local ns_pull = lsp.diagnostic.get_namespace(client.id, cap.identifier)
+        local ns_pull = lsp.diagnostic.get_namespace(client.id, true, cap.identifier)
         vim.list_extend(
           diagnostics,
           vim.diagnostic.get(bufnr, { namespace = ns_pull, lnum = lnum })
@@ -1460,7 +1452,8 @@ function M.selection_range(direction, timeout_ms)
   timeout_ms = timeout_ms or 1000
   local result, err = lsp.buf_request_sync(0, method, params, timeout_ms)
   if err then
-    lsp.log.error('selectionRange request failed: ' .. err)
+    local err_message = type(err) == 'table' and lsp.rpc.format_rpc_error(err) or err
+    lsp.log.error('selectionRange request failed: ' .. err_message)
     return
   end
   if not result or not result[client.id] or not result[client.id].result then

@@ -741,7 +741,7 @@ void ins_char_bytes(char *buf, size_t charlen)
       // be deleted to make room for the new character, counting screen
       // cells.  May result in adding spaces to fill a gap.
       colnr_T vcol;
-      getvcol(curwin, &curwin->w_cursor, NULL, &vcol, NULL);
+      getvcol(curwin, &curwin->w_cursor, NULL, &vcol, NULL, 0);
       colnr_T new_vcol = vcol + win_chartabsize(curwin, buf, vcol);
       while (oldp[col + oldlen] != NUL && vcol < new_vcol) {
         vcol += win_chartabsize(curwin, oldp + col + oldlen, vcol);

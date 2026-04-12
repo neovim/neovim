@@ -8,13 +8,13 @@ const tests = @import("test/run_tests.zig");
 
 const version = struct {
     const major = 0;
-    const minor = 12;
+    const minor = 13;
     const patch = 0;
     const prerelease = "-dev";
 
     const api_level = 14;
     const api_level_compat = 0;
-    const api_prerelease = true;
+    const api_prerelease = false;
 };
 
 pub const SystemIntegrationOptions = packed struct {

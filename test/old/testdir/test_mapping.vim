@@ -1118,7 +1118,11 @@ func Test_map_cmdkey()
   call setline(1, ['some short lines', 'of test text'])
   call feedkeys(":bar\<F2>x\<C-B>\"\r", 'xt')
   call assert_equal('"barx', @:)
-  unmap! <F2>
+
+  " test for chars with 0x80 or 0x9b bytes
+  map <F2> <Cmd>let x = '洛固四最倒倀'<CR>
+  call feedkeys("\<F2>", 'xt')
+  call assert_equal('洛固四最倒倀', x)
 
   " test for calling a <SID> function
   let lines =<< trim END
@@ -1127,12 +1131,14 @@ func Test_map_cmdkey()
       let g:x = 32
     endfunc
   END
-  call writefile(lines, 'Xscript')
+  call writefile(lines, 'Xscript', 'D')
   source Xscript
   call feedkeys("\<F2>", 'xt')
   call assert_equal(32, g:x)
-  call delete('Xscript')
+  unlet g:x
 
+  unmap <F2>
+  unmap! <F2>
   unmap <F3>
   unmap! <F3>
   %bw!

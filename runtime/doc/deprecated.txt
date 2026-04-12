@@ -15,7 +15,10 @@ Deprecated features
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.13					*deprecated-0.13*
 
-• todo
+API
+
+• "buffer" key in |nvim_create_autocmd()|, |nvim_get_autocmds()|,
+  |nvim_exec_autocmds()|, |nvim_clear_autocmds()|. Use "buf" instead.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*

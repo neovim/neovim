@@ -118,6 +118,18 @@ describe('version', function()
       end)
     end
 
+    it('__eq', function()
+      local range1 = vim.version.range('1.2.3 - 2.3.4')
+      local range2 = vim.version.range('1.2.3 - 2.3.4')
+      local range3 = vim.version.range('<=1.2.3')
+      local range4 = vim.version.range('1.2.3')
+      assert(range1 == range1)
+      assert(range1 == range2)
+      assert(range1 ~= range3)
+      assert(range1 ~= range4)
+      assert(range3 ~= range4)
+    end)
+
     it('handles prerelease', function()
       assert(not vim.version.range('1.2.3'):has('1.2.3-alpha'))
       assert(vim.version.range('1.2.3-alpha'):has('1.2.3-alpha'))

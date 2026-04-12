@@ -717,7 +717,7 @@ LspProgress                                                       *LspProgress*
         vim.api.nvim_create_autocmd('LspProgress', { buffer = buf, callback = function(ev)
             local value = ev.data.params.value
             vim.api.nvim_echo({ { value.message or 'done' } }, false, {
-              id = 'lsp.' .. ev.data.client_id,
+              id = 'lsp.' .. ev.data.params.token,
               kind = 'progress',
               source = 'vim.lsp',
               title = value.title,
@@ -798,7 +798,7 @@ Lua module: vim.lsp                                                 *lsp-core*
 
 
     Fields: ~
-      • {cmd}?           (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient`)
+      • {cmd}?           (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client`)
                          See `cmd` in |vim.lsp.ClientConfig|. See also
                          `reuse_client` to dynamically decide (per-buffer)
                          when `cmd` should be re-invoked.
@@ -1676,9 +1676,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 autocmds when replies are received from the
                                 server.
       • {root_dir}              (`string?`) See |vim.lsp.ClientConfig|.
-      • {rpc}                   (`vim.lsp.rpc.PublicClient`) RPC client
-                                object, for low level interaction with the
-                                client. See |vim.lsp.rpc.start()|.
+      • {rpc}                   (`vim.lsp.rpc.Client`) RPC client object, for
+                                low level interaction with the client. See
+                                |vim.lsp.rpc.start()|.
       • {server_capabilities}   (`lsp.ServerCapabilities?`) Response from the
                                 server sent on `initialize` describing the
                                 server's capabilities.
@@ -1724,6 +1724,16 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                where `params` is the parameters being sent to
                                the server and `config` is the config passed to
                                |vim.lsp.start()|.
+
+                               Hint: use |vim.tbl_deep_extend()| to set nested
+                               fields easily. >lua
+                                   before_init = function(_, config)
+                                     config.settings = vim.tbl_deep_extend('force',
+                                       config.settings,
+                                       { tailwindCSS = { experimental = { configFile = find_tailwind_global_css() } } }
+                                     )
+                                   end
+<
       • {capabilities}?        (`lsp.ClientCapabilities`) Map overriding the
                                default capabilities defined by
                                |vim.lsp.protocol.make_client_capabilities()|,
@@ -1734,7 +1744,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                • Note: To send an empty dictionary use
                                  |vim.empty_dict()|, else it will be encoded
                                  as an array.
-      • {cmd}                  (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient`)
+      • {cmd}                  (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client`)
                                Command `string[]` that launches the language
                                server (treated as in |jobstart()|, must be
                                absolute or on `$PATH`, shell constructs like
@@ -2147,15 +2157,16 @@ from({diagnostics})                                *vim.lsp.diagnostic.from()*
         (`lsp.Diagnostic[]`)
 
                                           *vim.lsp.diagnostic.get_namespace()*
-get_namespace({client_id}, {pull_id})
+get_namespace({client_id}, {is_pull}, {pull_id})
     Get the diagnostic namespace associated with an LSP client
     |vim.diagnostic| for diagnostics
 
     Parameters: ~
       • {client_id}  (`integer`) The id of the LSP client
-      • {pull_id}    (`(boolean|string)?`) (default: nil) Pull diagnostics
-                     provider id (indicates "pull" client), or `nil` for a
-                     "push" client.
+      • {is_pull}    (`boolean?`) Whether the namespace is for a pull or push
+                     client. Defaults to `false` (push).
+      • {pull_id}    (`string?`) (default: nil) Optional identifier for pull
+                     diagnostic providers. Only used if `is_pull` is `true`.
 
                                           *vim.lsp.diagnostic.on_diagnostic()*
 on_diagnostic({error}, {result}, {ctx})
@@ -2254,7 +2265,10 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
 
         local client = vim.lsp.get_client_by_id(hint.client_id)
         local resp = client:request_sync('inlayHint/resolve', hint.inlay_hint, 100, 0)
-        local resolved_hint = assert(resp and resp.result, resp.err)
+        local resolved_hint = assert(
+          resp and resp.result,
+          resp and resp.err and vim.lsp.rpc.format_rpc_error(resp.err) or 'request failed'
+        )
         vim.lsp.util.apply_text_edits(resolved_hint.textEdits, 0, client.encoding)
 
         location = resolved_hint.label[1].location
@@ -2458,10 +2472,8 @@ of the LSP client RPC events. Example: >lua
 <
 
 Then try to run the language server, and open the log with: >vim
-    :lua vim.cmd('tabnew ' .. vim.lsp.log.get_filename())
+    :log lsp
 <
-
-(Or use `:LspLog` if you have nvim-lspconfig installed.)
 
 Note:
 • Remember to DISABLE verbose logging ("debug" or "trace" level), else you may
@@ -2528,7 +2540,7 @@ enable({enable}, {filter})               *vim.lsp.on_type_formatting.enable()*
 ==============================================================================
 Lua module: vim.lsp.rpc                                              *lsp-rpc*
 
-*vim.lsp.rpc.PublicClient*
+*vim.lsp.rpc.Client*
     Client RPC object
 
     Fields: ~
@@ -2556,7 +2568,7 @@ connect({host_or_path}, {port})                        *vim.lsp.rpc.connect()*
                         first argument must be a pipe
 
     Return: ~
-        (`fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
+        (`fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.Client`)
 
 format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
     Constructs an error message from an LSP error object.
@@ -2638,7 +2650,7 @@ start({cmd}, {dispatchers}, {extra_spawn_params})        *vim.lsp.rpc.start()*
                                 See |vim.system()|
 
     Return: ~
-        (`vim.lsp.rpc.PublicClient`) See |vim.lsp.rpc.PublicClient|.
+        (`vim.lsp.rpc.Client`) See |vim.lsp.rpc.Client|.
 
 
 ==============================================================================

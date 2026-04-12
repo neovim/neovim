@@ -312,7 +312,6 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
-  vim.bo[bufnr].buflisted = true
 
   local marks = {} --- @type table<string,[integer,integer]>
   local has_eol_text_edit = false
@@ -710,7 +709,12 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
       elseif change.kind then --- @diagnostic disable-line:undefined-field
         error(string.format('Unsupported change: %q', vim.inspect(change)))
       else
+        local bufnr = vim.uri_to_bufnr(change.textDocument.uri)
         M.apply_text_document_edit(change, idx, position_encoding, workspace_edit.changeAnnotations)
+        -- avoid triggering OptionSet
+        if not vim.bo[bufnr].buflisted then
+          vim.bo[bufnr].buflisted = true
+        end
       end
     end
     return
@@ -724,6 +728,10 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
   for uri, changes in pairs(all_changes) do
     local bufnr = vim.uri_to_bufnr(uri)
     M.apply_text_edits(changes, bufnr, position_encoding, workspace_edit.changeAnnotations)
+    -- avoid triggering OptionSet
+    if not vim.bo[bufnr].buflisted then
+      vim.bo[bufnr].buflisted = true
+    end
   end
 end
 
@@ -1470,7 +1478,7 @@ local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
   -- the floating window buffer or the buffer that spawned it
   api.nvim_create_autocmd('BufLeave', {
     group = augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       vim.schedule(function()
         -- When jumping to the quickfix window from the preview window,
@@ -1485,7 +1493,7 @@ local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
   if #events > 0 then
     api.nvim_create_autocmd(events, {
       group = augroup,
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         close_preview_window(winnr)
       end,

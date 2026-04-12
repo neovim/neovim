@@ -9290,38 +9290,14 @@ msgstr "E1571: Måste ange minst ett återanrop för redraw_listener_add"
 msgid "--No lines in buffer--"
 msgstr "--Inga rader i buffert--"
 
-msgid "int"
-msgstr "int"
-
-msgid "long int"
-msgstr "long int"
-
-msgid "long long int"
-msgstr "long long int"
-
-msgid "unsigned int"
-msgstr "osignerad int"
-
-msgid "unsigned long int"
-msgstr "osignerad long int"
-
-msgid "unsigned long long int"
-msgstr "osignerad long long int"
-
 msgid "pointer"
 msgstr "pekare"
 
 msgid "percent"
 msgstr "procent"
 
-msgid "char"
-msgstr "tecken"
-
 msgid "string"
 msgstr "sträng"
-
-msgid "float"
-msgstr "float"
 
 #.
 #. * Some messages that can be shared are included here.

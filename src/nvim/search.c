@@ -2352,7 +2352,7 @@ void showmatch(int c)
   }
 
   if (!curwin->w_p_wrap) {
-    getvcol(curwin, lpos, NULL, &vcol, NULL);
+    getvcol(curwin, lpos, NULL, &vcol, NULL, 0);
   }
 
   bool col_visible = curwin->w_p_wrap

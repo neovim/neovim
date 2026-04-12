@@ -273,6 +273,9 @@ end
 
 local range_mt = {
   __index = VersionRange,
+  __eq = function(self, other)
+    return self.to == other.to and self.from == other.from
+  end,
   __tostring = function(self)
     if not self.to then
       return '>=' .. tostring(self.from)

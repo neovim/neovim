@@ -725,12 +725,12 @@ function vim.api.nvim_buf_set_extmark(buffer, ns_id, line, col, opts) end
 ---
 ---
 --- @see vim.api.nvim_set_keymap
---- @param buffer integer Buffer id, or 0 for current buffer
+--- @param buf integer Buffer id, or 0 for current buffer
 --- @param mode string
 --- @param lhs string
 --- @param rhs string
 --- @param opts vim.api.keyset.keymap
-function vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts) end
+function vim.api.nvim_buf_set_keymap(buf, mode, lhs, rhs, opts) end
 
 --- Sets (replaces) a line-range in the buffer.
 ---
@@ -867,10 +867,10 @@ function vim.api.nvim_chan_send(chan, data) end
 ---   - event: "pat1"
 ---   - event: { "pat1" }
 ---   - event: { "pat1", "pat2", "pat3" }
---- - pattern: (`string|table?`) Filter by patterns (exact match). Not allowed with {buffer}.
+--- - pattern: (`string|table?`) Filter by patterns (exact match). Not allowed with {buf}.
 ---   - Example: if you have `*.py` as that pattern for the autocmd, you must pass `*.py`
 ---     exactly to clear it. `test.py` will not match the pattern.
---- - buffer: (`integer?`) Select `autocmd-buflocal` autocommands. Not allowed with {pattern}.
+--- - buf: (`integer?`) Select `autocmd-buflocal` autocommands. Not allowed with {pattern}.
 --- - group: (`string|int?`) Group name or id.
 ---   - NOTE: If not given, matches autocmds *not* in any group.
 function vim.api.nvim_clear_autocmds(opts) end
@@ -973,7 +973,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- @see vim.api.nvim_del_autocmd
 --- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) that will trigger the handler (`callback` or `command`).
 --- @param opts vim.api.keyset.create_autocmd Options dict:
---- - buffer (`integer?`) Buffer id for buffer-local autocommands `autocmd-buflocal`.
+--- - buf (`integer?`) Buffer id for buffer-local autocommands `autocmd-buflocal`.
 ---   Not allowed with {pattern}.
 --- - callback (`function|string?`) Lua function (or Vimscript function name, if string)
 ---   called when the event(s) is triggered. Lua callback can return `lua-truthy` to delete
@@ -1224,8 +1224,8 @@ function vim.api.nvim_exec2(src, opts) end
 --- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) to execute.
 --- @param opts vim.api.keyset.exec_autocmds Optional filters:
 --- - group (`string|integer?`) Group name or id to match against. `autocmd-groups`.
---- - pattern (`string|array?`, default: "*") `autocmd-pattern`. Not allowed with {buffer}.
---- - buffer (`integer?`) Buffer id `autocmd-buflocal`. Not allowed with {pattern}.
+--- - pattern (`string|array?`, default: current file name) `autocmd-pattern`. Not allowed with {buf}.
+--- - buf (`integer?`) Buffer id `autocmd-buflocal`. Not allowed with {pattern}.
 --- - modeline (`boolean?`, default: true) Process the modeline after the autocommands
 ---   [<nomodeline>].
 --- - data (`any`): Arbitrary data passed to the callback. See `nvim_create_autocmd()`.
@@ -1288,12 +1288,12 @@ function vim.api.nvim_get_all_options_info() end
 --- ```
 ---
 --- @param opts vim.api.keyset.get_autocmds Dict with at least one of these keys:
---- - buffer: (`integer[]|integer?`) Buffer id or list of buffer ids, for buffer-local autocommands
+--- - buf: (`integer[]|integer?`) Buffer id or list of buffer ids, for buffer-local autocommands
 ---   `autocmd-buflocal`. Not allowed with {pattern}.
 --- - event: (`vim.api.keyset.events|vim.api.keyset.events[]?`) Event(s) to match `autocmd-events`.
 --- - group: (`string|table?`) Group name or id to match.
 --- - id: (`integer?`) Autocommand ID to match.
---- - pattern: (`string|table?`) Pattern(s) to match `autocmd-pattern`. Not allowed with {buffer}.
+--- - pattern: (`string|table?`) Pattern(s) to match `autocmd-pattern`. Not allowed with {buf}.
 --- @return vim.api.keyset.get_autocmds.ret[] # Array of matching autocommands, where each item has:
 --- - buffer (`integer?`): Buffer id (only for |autocmd-buffer-local|).
 --- - buflocal (`boolean?`): true if the autocommand is buffer-local |autocmd-buffer-local|.
@@ -2225,30 +2225,30 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- `nvim_set_hl_ns()` or `nvim_win_set_hl_ns()` to activate them.
 --- @param name string Highlight group name, e.g. "ErrorMsg"
 --- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
+--- - altfont: boolean
 --- - bg: color name or "#RRGGBB", see note.
 --- - bg_indexed: boolean (default false) If true, bg is a terminal palette index (0-255).
 --- - blend: integer between 0 and 100
+--- - blink: boolean
+--- - bold: boolean
+--- - conceal: boolean Concealment at the UI level (terminal SGR), unrelated to `:syn-conceal`.
 --- - cterm: cterm attribute map, like `highlight-args`. If not set, cterm attributes
 ---   will match those from the attribute map documented above.
 --- - ctermbg: Sets background of cterm color `ctermbg`
 --- - ctermfg: Sets foreground of cterm color `ctermfg`
 --- - default: boolean Don't override existing definition `:hi-default`
+--- - dim: boolean
 --- - fg: color name or "#RRGGBB", see note.
 --- - fg_indexed: boolean (default false) If true, fg is a terminal palette index (0-255).
 --- - font: GUI font name (string). Sets `highlight-font`. Use "NONE" to clear.
 --- - force: if true force update the highlight group when it exists.
---- - link: Name of highlight group to link to. `:hi-link`
---- - sp: color name or "#RRGGBB"
---- - update: boolean (default false) Update specified attributes only, leave others unchanged.
---- - altfont: boolean
---- - blink: boolean
---- - bold: boolean
---- - conceal: boolean Concealment at the UI level (terminal SGR), unrelated to `:syn-conceal`.
---- - dim: boolean
 --- - italic: boolean
+--- - link: Name of highlight group to link to. `:hi-link`
+--- - link_global: Like "link", but always resolved in the global (ns=0) namespace.
 --- - nocombine: boolean
 --- - overline: boolean
 --- - reverse: boolean
+--- - sp: color name or "#RRGGBB"
 --- - standout: boolean
 --- - strikethrough: boolean
 --- - undercurl: boolean
@@ -2256,6 +2256,7 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - underdotted: boolean
 --- - underdouble: boolean
 --- - underline: boolean
+--- - update: boolean (default false) Update specified attributes only, leave others unchanged.
 function vim.api.nvim_set_hl(ns_id, name, val) end
 
 --- Set active namespace for highlights defined with `nvim_set_hl()`. This can be set for

@@ -9,6 +9,7 @@
 #include <uv.h>
 
 #include "auto/config.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -826,11 +827,13 @@ static char *vim_runtime_dir(const char *vimdir)
   if (vimdir == NULL || *vimdir == NUL) {
     return NULL;
   }
-  char *p = concat_fnames(vimdir, RUNTIME_DIRNAME, true);
-  if (os_isdir(p)) {
-    return p;
+  size_t vimdir_len = strlen(vimdir);
+  String p = concat_fnames(cbuf_as_string((char *)vimdir, vimdir_len),
+                           STATIC_CSTR_AS_STRING(RUNTIME_DIRNAME), true);
+  if (os_isdir(p.data)) {
+    return p.data;
   }
-  xfree(p);
+  xfree(p.data);
   return NULL;
 }
 

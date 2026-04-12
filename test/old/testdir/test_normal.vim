@@ -1876,14 +1876,13 @@ func Test_normal23_K()
   set iskeyword-=%
   set iskeyword-=\|
 
-  " Currently doesn't work in Nvim, see #19436
   " Test for specifying a count to K
-  " 1
-  " com! -nargs=* Kprog let g:Kprog_Args = <q-args>
-  " set keywordprg=:Kprog
-  " norm! 3K
-  " call assert_equal('3 version8', g:Kprog_Args)
-  " delcom Kprog
+  1
+  com! -nargs=* Kprog let g:Kprog_Args = <q-args>
+  set keywordprg=:Kprog
+  norm! 3K
+  call assert_equal('3 helphelp', g:Kprog_Args)
+  delcom Kprog
 
   " Only expect "man" to work on Unix
   if !has("unix") || has('nvim')  " Nvim K uses :terminal. #15398

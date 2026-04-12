@@ -2307,8 +2307,8 @@ void copy_loclist_stack(win_T *from, win_T *to)
 /// Also sets the b_has_qf_entry flag.
 static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
 {
-  char *ptr = NULL;
-  char *bufname;
+  String ptr = STRING_INIT;
+  String bufname;
   buf_T *buf;
   if (fname == NULL || *fname == NUL) {         // no file name
     return 0;
@@ -2320,43 +2320,43 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
   }
   slash_adjust(fname);
 #endif
+  String fname_str = cstr_as_string(fname);
   if (directory != NULL && !vim_isAbsName(fname)) {
-    ptr = concat_fnames(directory, fname, true);
+    ptr = concat_fnames(cstr_as_string(directory), fname_str, true);
     // Here we check if the file really exists.
     // This should normally be true, but if make works without
     // "leaving directory"-messages we might have missed a
     // directory change.
-    if (!os_path_exists(ptr)) {
-      xfree(ptr);
+    if (!os_path_exists(ptr.data)) {
+      xfree(ptr.data);
       directory = qf_guess_filepath(qfl, fname);
       if (directory) {
-        ptr = concat_fnames(directory, fname, true);
+        ptr = concat_fnames(cstr_as_string(directory), fname_str, true);
       } else {
-        ptr = xstrdup(fname);
+        ptr = copy_string(fname_str, NULL);
       }
     }
     // Use concatenated directory name and file name.
     bufname = ptr;
   } else {
-    bufname = fname;
+    bufname = fname_str;
   }
 
-  if (qf_last_bufname != NULL
-      && strcmp(bufname, qf_last_bufname) == 0
+  if (qf_last_bufname != NULL && strcmp(bufname.data, qf_last_bufname) == 0
       && bufref_valid(&qf_last_bufref)) {
     buf = qf_last_bufref.br_buf;
-    xfree(ptr);
+    xfree(ptr.data);
   } else {
     xfree(qf_last_bufname);
-    buf = buflist_new(bufname, NULL, 0, BLN_NOOPT);
-    qf_last_bufname = (bufname == ptr) ? bufname : xstrdup(bufname);
+    buf = buflist_new(bufname.data, NULL, 0, BLN_NOOPT);
+    qf_last_bufname = (bufname.data == ptr.data)
+                      ? bufname.data : xmemdupz(bufname.data, bufname.size);
     set_bufref(&qf_last_bufref, buf);
   }
   if (buf == NULL) {
     return 0;
   }
-  buf->b_has_qf_entry =
-    IS_QF_LIST(qfl) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
+  buf->b_has_qf_entry = IS_QF_LIST(qfl) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
   return buf->b_fnum;
 }
 
@@ -2382,16 +2382,18 @@ static char *qf_push_dir(char *dirbuf, struct dir_stack_T **stackptr, bool is_fi
     // Okay we don't have an absolute path.
     // dirbuf must be a subdir of one of the directories on the stack.
     // Let's search...
+    size_t dirbuf_len = strlen(dirbuf);
     ds_new = (*stackptr)->next;
     (*stackptr)->dirname = NULL;
     while (ds_new) {
-      char *dirname = concat_fnames(ds_new->dirname, dirbuf, true);
-      if (os_isdir(dirname)) {
+      String dirname = concat_fnames(cstr_as_string(ds_new->dirname),
+                                     cbuf_as_string(dirbuf, dirbuf_len), true);
+      if (os_isdir(dirname.data)) {
         xfree((*stackptr)->dirname);
-        (*stackptr)->dirname = dirname;
+        (*stackptr)->dirname = dirname.data;
         break;
       }
-      xfree(dirname);
+      xfree(dirname.data);
       ds_new = ds_new->next;
     }
 
@@ -2406,7 +2408,7 @@ static char *qf_push_dir(char *dirbuf, struct dir_stack_T **stackptr, bool is_fi
     // Nothing found -> it must be on top level
     if (ds_new == NULL) {
       xfree((*stackptr)->dirname);
-      (*stackptr)->dirname = xstrdup(dirbuf);
+      (*stackptr)->dirname = xmemdupz(dirbuf, dirbuf_len);
     }
   }
 
@@ -2479,19 +2481,20 @@ static char *qf_guess_filepath(qf_list_T *qfl, char *filename)
   }
 
   struct dir_stack_T *ds_ptr = qfl->qf_dir_stack->next;
-  char *fullname = NULL;
+  String fullname = STRING_INIT;
+  String filename_str = cstr_as_string(filename);
   while (ds_ptr) {
-    xfree(fullname);
-    fullname = concat_fnames(ds_ptr->dirname, filename, true);
+    xfree(fullname.data);
+    fullname = concat_fnames(cstr_as_string(ds_ptr->dirname), filename_str, true);
 
-    if (os_path_exists(fullname)) {
+    if (os_path_exists(fullname.data)) {
       break;
     }
 
     ds_ptr = ds_ptr->next;
   }
 
-  xfree(fullname);
+  xfree(fullname.data);
 
   // clean up all dirs we already left
   while (qfl->qf_dir_stack->next != ds_ptr) {

@@ -30,6 +30,16 @@ local all_clients = {}
 --- Callback which can modify parameters before they are sent to the server. Invoked before LSP
 --- "initialize" phase (after `cmd` is invoked), where `params` is the parameters being sent to the
 --- server and `config` is the config passed to |vim.lsp.start()|.
+---
+--- Hint: use |vim.tbl_deep_extend()| to set nested fields easily.
+--- ```lua
+--- before_init = function(_, config)
+---   config.settings = vim.tbl_deep_extend('force',
+---     config.settings,
+---     { tailwindCSS = { experimental = { configFile = find_tailwind_global_css() } } }
+---   )
+--- end
+--- ```
 --- @field before_init? fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 ---
 --- Map overriding the default capabilities defined by |vim.lsp.protocol.make_client_capabilities()|,
@@ -45,7 +55,7 @@ local all_clients = {}
 --- a table with member functions `request`, `notify`, `is_closing` and `terminate`.
 --- See |vim.lsp.rpc.request()|, |vim.lsp.rpc.notify()|.
 --- For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
---- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient
+--- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
 ---
 --- Directory to launch the `cmd` process. Not related to `root_dir`.
 --- (default: cwd)
@@ -199,7 +209,7 @@ local all_clients = {}
 ---
 --- RPC client object, for low level interaction with the client.
 --- See |vim.lsp.rpc.start()|.
---- @field rpc vim.lsp.rpc.PublicClient
+--- @field rpc vim.lsp.rpc.Client
 ---
 --- Response from the server sent on `initialize` describing the server's capabilities.
 --- @field server_capabilities lsp.ServerCapabilities?
@@ -568,7 +578,9 @@ function Client:initialize()
   local rpc = self.rpc
 
   rpc.request('initialize', init_params, function(init_err, result)
-    assert(not init_err, tostring(init_err))
+    if init_err then
+      error(lsp.rpc.format_rpc_error(init_err))
+    end
     assert(result, 'server sent empty result')
     rpc.notify('initialized', vim.empty_dict())
     self.initialized = true
@@ -691,7 +703,7 @@ function Client:_process_request(id, req_type, bufnr, method)
   self.requests[id] = req_type ~= 'complete' and request or nil
 
   api.nvim_exec_autocmds('LspRequest', {
-    buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
+    buf = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
     modeline = false,
     data = { client_id = self.id, request_id = id, request = request },
   })
@@ -1140,7 +1152,7 @@ function Client:on_attach(bufnr)
   lsp._set_defaults(self, bufnr)
 
   api.nvim_exec_autocmds('LspAttach', {
-    buffer = bufnr,
+    buf = bufnr,
     modeline = false,
     data = { client_id = self.id },
   })
@@ -1323,7 +1335,7 @@ end
 function Client:_on_detach(bufnr)
   if self.attached_buffers[bufnr] and api.nvim_buf_is_valid(bufnr) then
     api.nvim_exec_autocmds('LspDetach', {
-      buffer = bufnr,
+      buf = bufnr,
       modeline = false,
       data = { client_id = self.id },
     })

@@ -10,19 +10,10 @@ local insert = n.insert
 describe('vim.pos', function()
   before_each(clear)
 
-  it('creates a position with or without optional fields', function()
-    local pos = exec_lua(function()
-      return vim.pos(3, 5)
-    end)
-    eq(3, pos[1])
-    eq(5, pos[2])
-    eq(nil, pos[3])
-
-    local buf = exec_lua(function()
-      return vim.api.nvim_create_buf(false, true)
-    end)
-    pos = exec_lua(function()
-      return vim.pos(3, 5, { buf = buf })
+  it('creates a position', function()
+    local pos, buf = exec_lua(function()
+      local buf = vim.api.nvim_create_buf(false, true)
+      return vim.pos(buf, 3, 5), buf
     end)
     eq(3, pos[1])
     eq(5, pos[2])
@@ -30,40 +21,43 @@ describe('vim.pos', function()
   end)
 
   it('comparisons by overloaded operators', function()
+    local buf = exec_lua(function()
+      return vim.api.nvim_create_buf(false, true)
+    end)
     eq(
       true,
       exec_lua(function()
-        return vim.pos(3, 5) < vim.pos(4, 5)
+        return vim.pos(buf, 3, 5) < vim.pos(buf, 4, 5)
       end)
     )
     eq(
       true,
       exec_lua(function()
-        return vim.pos(3, 5) <= vim.pos(3, 6)
+        return vim.pos(buf, 3, 5) <= vim.pos(buf, 3, 6)
       end)
     )
     eq(
       true,
       exec_lua(function()
-        return vim.pos(3, 5) > vim.pos(2, 5)
+        return vim.pos(buf, 3, 5) > vim.pos(buf, 2, 5)
       end)
     )
     eq(
       true,
       exec_lua(function()
-        return vim.pos(3, 5) >= vim.pos(3, 5)
+        return vim.pos(buf, 3, 5) >= vim.pos(buf, 3, 5)
       end)
     )
     eq(
       true,
       exec_lua(function()
-        return vim.pos(3, 5) == vim.pos(3, 5)
+        return vim.pos(buf, 3, 5) == vim.pos(buf, 3, 5)
       end)
     )
     eq(
       true,
       exec_lua(function()
-        return vim.pos(3, 5) ~= vim.pos(3, 6)
+        return vim.pos(buf, 3, 5) ~= vim.pos(buf, 3, 6)
       end)
     )
   end)
@@ -74,7 +68,7 @@ describe('vim.pos', function()
     end)
     insert('Neovim 是 Vim 的分支，专注于扩展性和可用性。')
     local lsp_pos = exec_lua(function()
-      local pos = vim.pos(0, 36, { buf = buf })
+      local pos = vim.pos(buf, 0, 36)
       return pos:to_lsp('utf-16')
     end)
     eq({ line = 0, character = 20 }, lsp_pos)
@@ -95,25 +89,25 @@ describe('vim.pos', function()
     insert('Some text')
     local extmark_pos = {
       exec_lua(function()
-        local pos = vim.pos(1, 0, { buf = buf })
+        local pos = vim.pos(buf, 1, 0)
         return pos:to_extmark()
       end),
     }
     eq({ 0, 9 }, extmark_pos)
     local pos = exec_lua(function()
-      return vim.pos.extmark(extmark_pos[1], extmark_pos[2], { buf = buf })
+      return vim.pos.extmark(buf, extmark_pos[1], extmark_pos[2])
     end)
     eq({ 0, 9, buf }, pos)
 
     local extmark_pos2 = {
       exec_lua(function()
-        local pos2 = vim.pos(0, 9, { buf = buf })
+        local pos2 = vim.pos(buf, 0, 9)
         return pos2:to_extmark()
       end),
     }
     eq({ 0, 9 }, extmark_pos2)
     local pos2 = exec_lua(function()
-      return vim.pos.extmark(extmark_pos2[1], extmark_pos2[2], { buf = buf })
+      return vim.pos.extmark(buf, extmark_pos2[1], extmark_pos2[2])
     end)
     eq({ 0, 9, buf }, pos2)
   end)

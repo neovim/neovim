@@ -2684,11 +2684,6 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
 {
   static bool recursive = false;
 
-#ifdef EXITFREE
-  if (entered_free_all_mem) {
-    return;
-  }
-#endif
   if (starting == NO_SCREEN) {
     return;  // user config hasn't been sourced yet
   }

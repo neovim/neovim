@@ -22,6 +22,17 @@ function M.space_below()
   add_blank()
 end
 
+--- Gets a buffer by name
+--- @param name string
+--- @return integer?
+function M.get_buf_by_name(name)
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_get_name(buf) == name then
+      return buf
+    end
+  end
+end
+
 --- Edit a file in a specific window
 --- @param winnr number
 --- @param file string
@@ -47,6 +58,23 @@ M.edit_in = function(winnr, file)
     vim.cmd.edit(vim.fn.fnameescape(file))
     return vim.api.nvim_get_current_buf()
   end)
+end
+
+--- :edit, but it respects commands like :hor, :vert, :tab, etc.
+--- @param file string
+--- @param mods_str string
+function M.wrapped_edit(file, mods_str)
+  local cmdline = table.concat({ mods_str, 'edit' }, ' ')
+  local mods = vim.api.nvim_parse_cmd(cmdline, {}).mods
+  --- @diagnostic disable-next-line: need-check-nil
+  if mods.tab > 0 or mods.split ~= '' or mods.horizontal or mods.vertical then
+    local buf = M.get_buf_by_name(file)
+    if buf == nil then
+      buf = vim.api.nvim_create_buf(true, false)
+    end
+    vim.cmd.sbuffer { buf, mods = mods }
+  end
+  vim.cmd.edit { file }
 end
 
 --- Read a chunk of data from a file

@@ -276,7 +276,7 @@ The global plugins will be discussed first, then the filetype ones
 |add-filetype-plugin|.
 
 
-GLOBAL PLUGINS						*standard-plugin*
+GLOBAL PLUGINS
 
 When you start Vim, it will automatically load a number of global plugins.
 You don't have to do anything for this.  They add functionality that most

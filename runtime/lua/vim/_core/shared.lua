@@ -628,12 +628,22 @@ function vim.tbl_extend(behavior, ...)
   return tbl_extend(behavior, false, ...)
 end
 
---- Merges recursively two or more tables.
+--- Merges two or more tables recursively.
 ---
---- Only values that are empty tables or tables that are not |lua-list|s (indexed by consecutive
---- integers starting from 1) are merged recursively. This is useful for merging nested tables
---- like default and user configurations where lists should be treated as literals (i.e., are
---- overwritten instead of merged).
+--- Only |lua-dict| tables are merged recursively; |lua-list| tables are treated as opaque values
+--- (overwritten instead of merged). That is convenient for merging default/user configurations
+--- where lists typically should not be merged together.
+---
+--- Example:
+--- ```lua
+--- -- Set `config.settings.…` without worrying about whether intermediate dicts exist.
+--- local config = { settings = { tailwindCSS = { foo = 'bar' } } }
+--- local merged = vim.tbl_deep_extend('force',
+---   config,
+---   { settings = { tailwindCSS = { experimental = { configFile = '/my/config.json' } } } }
+--- )
+--- vim.print(merged)
+--- ```
 ---
 ---@see |vim.tbl_extend()|
 ---
@@ -713,15 +723,21 @@ function vim.tbl_add_reverse_lookup(o)
   return o
 end
 
---- Gets a value from (nested) table `o` given by the sequence of keys `...`, or `nil` if not found.
+--- Gets a (nested) value from table `o` given by a sequence of keys `...`, or `nil` if not found.
 ---
---- Examples:
+--- Note: To _set_ deeply nested keys, see |vim.tbl_deep_extend()|.
 ---
+--- Example:
 --- ```lua
---- vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
---- vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
+--- local o = { a = { b = true } }
+--- -- Get `o.a.b`.
+--- vim.print(vim.tbl_get(o, 'a', 'b')) -- true
+--- o.a = {}
+--- vim.print(vim.tbl_get(o, 'a', 'b')) -- nil
 --- ```
+---
 ---@see |unpack()|
+---@see |vim.tbl_deep_extend()|
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table

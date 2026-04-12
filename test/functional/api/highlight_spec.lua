@@ -285,11 +285,21 @@ describe('API: set highlight', function()
     eq(tonumber('0x00ff00'), hl.fg)
     eq(true, hl.italic)
 
-    api.nvim_set_hl(0, 'LinkedGroup', { link = 'Normal' })
-    api.nvim_set_hl(0, 'LinkedGroup', { bold = true, update = true })
+    api.nvim_set_hl(0, 'NamedColor', { fg = 'red', bg = 'blue' })
+    api.nvim_set_hl(0, 'LinkedGroup', { link = 'NamedColor' })
+    api.nvim_set_hl(0, 'LinkedGroup', { bold = true, fg = 'green', update = true })
     hl = api.nvim_get_hl(0, { name = 'LinkedGroup' })
     eq(nil, hl.link)
     eq(true, hl.bold)
+    eq(
+      'LinkedGroup    xxx cterm=bold gui=bold guifg=Green guibg=Blue',
+      n.exec_capture('hi LinkedGroup')
+    )
+    api.nvim_set_hl(0, 'LinkedGroup', { bg = '#121314', update = true })
+    eq(
+      'LinkedGroup    xxx cterm=bold gui=bold guifg=Green guibg=#121314',
+      n.exec_capture('hi LinkedGroup')
+    )
 
     -- underline style flags: false must not corrupt other styles
     local unders = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
@@ -621,6 +631,22 @@ describe('API: get highlight', function()
     local hl = { link = 'Bar', fg = tonumber('00ff00', 16), bold = true, cterm = { bold = true } }
     api.nvim_set_hl(0, 'Foo', hl)
     eq(hl, api.nvim_get_hl(0, { name = 'Foo', link = true }))
+  end)
+
+  it('link_global resolves in global namespace', function()
+    local ns = api.nvim_create_namespace('hl_test')
+    api.nvim_set_hl(0, 'GlTarget', { fg = '#ff0000' })
+    api.nvim_set_hl(ns, 'GlSource', { link_global = fn.hlID('GlTarget') })
+    eq({ link = 'GlTarget' }, api.nvim_get_hl(ns, { name = 'GlSource' }))
+
+    -- when both link and link_global are given, link_global wins
+    api.nvim_set_hl(0, 'OtherTarget', { fg = '#00ff00' })
+    api.nvim_set_hl(
+      ns,
+      'GlSource',
+      { link = fn.hlID('OtherTarget'), link_global = fn.hlID('GlTarget') }
+    )
+    eq({ link = 'GlTarget' }, api.nvim_get_hl(ns, { name = 'GlSource' }))
   end)
 
   it("doesn't contain unset groups", function()

@@ -1585,16 +1585,16 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
 
     if (dir == FORWARD && c != NUL) {
       if (cur_ve_flags == kOptVeFlagAll) {
-        getvcol(curwin, &curwin->w_cursor, &col, NULL, &endcol2);
+        getvcol(curwin, &curwin->w_cursor, &col, NULL, &endcol2, 0);
       } else {
-        getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
+        getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col, 0);
       }
 
       // move to start of next multi-byte character
       curwin->w_cursor.col += utfc_ptr2len(get_cursor_pos_ptr());
       col++;
     } else {
-      getvcol(curwin, &curwin->w_cursor, &col, NULL, &endcol2);
+      getvcol(curwin, &curwin->w_cursor, &col, NULL, &endcol2, 0);
     }
 
     col += curwin->w_cursor.coladd;
@@ -1802,7 +1802,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
             .col = col,
             .coladd = 0,
           };
-          getvcol(curwin, &pos, NULL, &vcol, NULL);
+          getvcol(curwin, &pos, NULL, &vcol, NULL, 0);
         }
       }
 

@@ -215,7 +215,7 @@ end
 local function check_enabled_configs()
   vim.health.start('vim.lsp: Enabled Configurations')
 
-  local valid_filetypes = vim.fn.getcompletion('', 'filetype')
+  local known_filetypes = vim.filetype._get_known_filetypes()
 
   for name in vim.spairs(vim.lsp._enabled_configs) do
     local config = vim.lsp.config[name]
@@ -248,7 +248,7 @@ local function check_enabled_configs()
           for _, filetype in
             ipairs(v --[[@as string[] ]])
           do
-            if not vim.list_contains(valid_filetypes, filetype) then
+            if not known_filetypes[filetype] then
               report_warn(
                 ("Unknown filetype '%s' (Hint: filename extension != filetype)."):format(filetype)
               )

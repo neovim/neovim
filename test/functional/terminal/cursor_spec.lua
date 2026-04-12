@@ -425,29 +425,39 @@ describe(':terminal cursor', function()
       let chan2 = nvim_open_term(0, {})
     ]])
     feed('i')
-    screen:expect([[
+    local s0 = [[
       ^                         │                        |
                                │                        |*4
       {120:[Scratch] [-]             }{119:[Scratch] [-]           }|
       {5:-- TERMINAL --}                                    |
-    ]])
+    ]]
+    screen:expect(s0)
     eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
     eq(500, screen._mode_info[terminal_mode_idx].blinkon)
     eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
 
     -- Modify cursor in the non-current terminal; should not affect this cursor.
     command([[call chansend(chan1, "\e[4 q")]])
-    screen:expect_unchanged()
-    eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
-    eq(500, screen._mode_info[terminal_mode_idx].blinkon)
-    eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+    screen:expect({
+      grid = s0,
+      unchanged = true,
+      condition = function()
+        eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+      end,
+    })
 
     -- Modify cursor in the current terminal.
     command([[call chansend(chan2, "\e[6 q")]])
-    screen:expect_unchanged()
-    eq('vertical', screen._mode_info[terminal_mode_idx].cursor_shape)
-    eq(0, screen._mode_info[terminal_mode_idx].blinkon)
-    eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
+    screen:expect({
+      grid = s0,
+      condition = function()
+        eq('vertical', screen._mode_info[terminal_mode_idx].cursor_shape)
+        eq(0, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
+      end,
+    })
 
     -- Check the cursor in the other terminal reflects our changes from before.
     command('wincmd p')

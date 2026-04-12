@@ -397,6 +397,7 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		to the end.
 		The 'wildoptions' option can be set to "tagfile" to list the
 		file of matching tags.
+
 				*c_CTRL-I* *c_wildchar* *c_<Tab>* */_<Tab>*
 'wildchar' option
 		A match is done on the pattern in front of the cursor.  The
@@ -412,20 +413,25 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		literal <Tab> instead of triggering completion.
 
 		The behavior can be changed with the 'wildmode' option.
+
 							*c_<S-Tab>*
 <S-Tab>		Like 'wildchar' or <Tab>, but begin with the last match and
 		then go to the previous match.
+
 							*c_CTRL-N*
 CTRL-N		After using 'wildchar' which got multiple matches, go to next
 		match.  Otherwise recall more recent command-line from
 		history.
+
 							*c_CTRL-P*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
 		history.
+
 							*c_CTRL-A*
 CTRL-A		All names that match the pattern in front of the cursor are
 		inserted.
+
 							*c_CTRL-L*
 CTRL-L		A match is done on the pattern in front of the cursor.  If
 		there is one match, it is inserted in place of the pattern.
@@ -439,19 +445,22 @@ CTRL-L		A match is done on the pattern in front of the cursor.  If
 		'ignorecase' and 'smartcase' are set and the command line has
 		no uppercase characters, the added character is converted to
 		lowercase.
+
 	                                            *c_CTRL-G* */_CTRL-G*
-CTRL-G		When 'incsearch' is set, entering a search pattern for "/" or
-		"?" and the current match is displayed then CTRL-G will move
-		to the next match (does not take |search-offset| into account)
-		Use CTRL-T to move to the previous match.  Hint: on a regular
-		keyboard G is below T.
+CTRL-G		While the "/" or "?" 'incsearch' prompt is active, CTRL-G
+		moves to the next match (without changing the |jumplist|).
+		Does not take |search-offset| into account.
+
+		Use CTRL-T to move to the previous match.
+		Mnemonic: on a regular keyboard G is below T.
+
 	                                            *c_CTRL-T* */_CTRL-T*
-CTRL-T		When 'incsearch' is set, entering a search pattern for "/" or
-		"?" and the current match is displayed then CTRL-T will move
-		to the previous match (does not take |search-offset| into
-		account).
-		Use CTRL-G to move to the next match.  Hint: on a regular
-		keyboard T is above G.
+CTRL-T		While the "/" or "?" 'incsearch' prompt is active, CTRL-T
+		moves to the previous match (without changing the |jumplist|).
+		Does not take |search-offset| into account.
+
+		Use CTRL-G to move to the next match.
+		Mnemonic: on a regular keyboard T is above G.
 
 The 'wildchar' option defaults to <Tab> (CTRL-E when in Vi compatible mode; in
 a previous version <Esc> was used).  In the pattern standard |wildcards| are

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:         Generic log file
-" Maintainer:       Mao-Yining <https://github.com/mao-yining>
+" Maintainer:       Mao-Yining <mao.yining@outlook.com>
 " Former Maintainer:	MTDL9 <https://github.com/MTDL9>
 " Latest Revision:  2025-10-31
 
@@ -10,10 +10,9 @@ endif
 
 syntax case ignore
 
-" Operators
+" Symbols / special characters
 "---------------------------------------------------------------------------
-syn match logOperator    display '[;,\?\:\.\<=\>\~\/\@\!$\%&\+\-\|\^(){}\*#]'
-syn match logBrackets    display '[][]'
+syn match logSymbol      display '[!@#$%^&*;:?]'
 
 " For Visual Separator and Apache CLF
 "---------------------------------------------------------------------------
@@ -22,10 +21,10 @@ syn match logSeparator   display '- - '
 
 " Strings
 " ------------------------------
-syn region LogString     start=/"/  end=/"/  end=/$/  skip=/\\./ contains=logJavaError
-syn region LogString     start=/`/  end=/`/  end=/$/  skip=/\\./ contains=logJavaError
+syn region logString     start=/"/  end=/"/  end=/$/  skip=/\\./ contains=logJavaError
+syn region logString     start=/`/  end=/`/  end=/$/  skip=/\\./ contains=logJavaError
 " Quoted strings, but no match on quotes like `don't`, possessive `s'` and `'s`
-syn region LogString     start=/\(s\)\@<!'\(s \|t \)\@!/  end=/'/  end=/$/  skip=/\\./ contains=logJavaError
+syn region logString     start=/\(s\)\@<!'\(s \|t \)\@!/  end=/'/  end=/$/  skip=/\\./ contains=logJavaError
 
 " Numbers
 "---------------------------------------------------------------------------
@@ -40,7 +39,7 @@ syn match logNumberHex   display '\<0[xX]\x\+\>'
 syn match logNumberHex   display '\<\x\{4,}\>'
 
 " Numbers in Hardware Description Languages e.g. Verilog
-" These must be placed after LogString to ensure they take precedence
+" These must be placed after logString to ensure they take precedence
 syn match logNumber      display '\'d\d\+\>'
 syn match logNumberBin   display '\'b[01]\+\>'
 syn match logNumberOct   display '\'o\o\+\>'
@@ -68,9 +67,9 @@ syn match logDate        display '\<\d\{1,2}[- ]\a\{3}[- ]\d\{4}\>'
 " Weekday string
 syn keyword logDate      Mon Tue Wed Thu Fri Sat Sun
 " Matches 12:09:38 or 00:03:38.129Z or 01:32:12.102938 +0700 or 01:32:12.1234567890 or 21:14:18+11:00
-syn match logTime        display '\d\{2}:\d\{2}:\d\{2}\(\.\d\{2,9}\)\?\(\s\?[-+]\(\d\{1,2\}:\d\{2\}\|\d\{2,4}\)\|Z\)\?\>' nextgroup=logTimeZone,logSysColumns skipwhite
+syn match logTime        display '\d\{2}:\d\{2}:\d\{2}\(\.\d\{2,9}\)\?\(\s\?[-+]\(\d\{1,2\}:\d\{2\}\|\d\{2,4}\)\|Z\)\?\>' nextgroup=logTimeZone,logSysColumn skipwhite
 " Time zone e.g. Z, +08:00, PST
-syn match logTimeZone    display 'Z\|[+-]\d\{2}:\d\{2}\|\a\{3}\>'  contained  skipwhite  nextgroup=logSysColumns
+syn match logTimeZone    display 'Z\|[+-]\d\{2}:\d\{2}\|\a\{3}\>'  contained  skipwhite  nextgroup=logSysColumn
 " Matches time durations like 1ms or 1y 2d 23ns 3.14s 1.2e4s 3E+20h
 syn match logDuration    display '\(\(\(\d\+d\)\?\d\+h\)\?\d\+m\)\?\d\+\(\.\d\+\)\?[mun]\?s\>'
 
@@ -95,13 +94,13 @@ syn match logFilePath    display '\(^\|\s\|=\)\zs\\\\\f\+\ze'
 
 " Java Errors
 "---------------------------------------------------------------------------
-syn match logJavaError    '\%(\%(Error\|Exception\):\s*\)\zs\w.\{-}\ze\(\\n\|$\)' contained
+syn match logJavaError   '\%(\%(Error\|Exception\):\s*\)\zs\w.\{-}\ze\(\\n\|$\)' contained
 
 " Syslog Columns
 "---------------------------------------------------------------------------
 " Syslog hostname, program and process number columns
-syn match logSysColumns   '\w\(\w\|\.\|-\)\+ \(\w\|\.\|-\)\+\(\[\d\+\]\)\?:' contains=logOperator,@logLvs,LogSysProcess contained
-syn match logSysProcess   '\(\w\|\.\|-\)\+\(\[\d\+\]\)\?:' contains=logOperator,logNumber,logBrackets contained
+syn match logSysColumn   '\w\(\w\|\.\|-\)\+ \(\w\|\.\|-\)\+\(\[\d\+\]\)\?:' contained contains=@logLvs,logSysProcess
+syn match logSysProcess  '\(\w\|\.\|-\)\+\(\[\d\+\]\)\?:' contained contains=logNumber
 
 " XML Tags
 "---------------------------------------------------------------------------
@@ -109,47 +108,47 @@ syn match logSysProcess   '\(\w\|\.\|-\)\+\(\[\d\+\]\)\?:' contains=logOperator,
 syn match logXmlHeader    /<?\(\w\|-\)\+\(\s\+\w\+\(="[^"]*"\|='[^']*'\)\?\)*?>/ contains=logString,logXmlAttribute,logXmlNamespace
 syn match logXmlDoctype   /<!DOCTYPE[^>]*>/ contains=logString,logXmlAttribute,logXmlNamespace
 syn match logXmlTag       /<\/\?\(\(\w\|-\)\+:\)\?\(\w\|-\)\+\(\(\n\|\s\)\+\(\(\w\|-\)\+:\)\?\(\w\|-\)\+\(="[^"]*"\|='[^']*'\)\?\)*\s*\/\?>/ contains=logString,logXmlAttribute,logXmlNamespace
-syn match logXmlAttribute contained "\w\+=" contains=logOperator
-syn match logXmlAttribute contained "\(\n\|\s\)\(\(\w\|-\)\+:\)\?\(\w\|-\)\+\(=\)\?" contains=logXmlNamespace,logOperator
-syn match logXmlNamespace contained "\(\w\|-\)\+:" contains=logOperator
+syn match logXmlAttribute contained "\w\+="
+syn match logXmlAttribute contained "\(\n\|\s\)\(\(\w\|-\)\+:\)\?\(\w\|-\)\+\(=\)\?" contains=logXmlNamespace
+syn match logXmlNamespace contained "\(\w\|-\)\+:"
 syn region logXmlComment  start=/<!--/ end=/-->/
 syn match logXmlCData     /<!\[CDATA\[.*\]\]>/
 syn match logXmlEntity    /&#\?\w\+;/
 
 " Levels
 "---------------------------------------------------------------------------
-syn keyword logLvFatal      FATAL Fatal fatal
-syn keyword logLvEmergency  EMERG[ENCY] Emerg[ency] emerg[ency]
-syn keyword logLvAlert      ALERT Alert alert
-syn keyword logLvCritical   CRIT[ICAL] Crit[ical] crit[ical]
-syn keyword logLvError      E ERR[ORS] Err[ors] err[ors]
-syn keyword logLvFail       F FAIL[ED] Fail[ed] fail[ed] FAILURE Failure failure
-syn keyword logLvFault      FAULT Fault fault
-syn keyword logLvNack       NACK Nack nack NAK Nak nak
-syn keyword logLvWarning    W WARN[ING] Warn[ing] warn[ing]
-syn keyword logLvBad        BAD Bad bad
-syn keyword logLvNotice     NOTICE Notice notice
-syn keyword logLvInfo       I INFO Info info
-syn keyword logLvDebug      D DEBUG Debug debug DBG Dbg dbg
-syn keyword logLvTrace      TRACE Trace trace
-syn keyword logLvVerbose    V VERBOSE Verbose verbose
-syn keyword logLvPass       PASS[ED] Pass[ed] pass[ed]
-syn keyword logLvSuccess    SUCCEED[ED] Succeed[ed] succeed[ed] SUCCESS Success success
+syn keyword logLvFatal      FATAL
+syn keyword logLvEmergency  EMERG[ENCY]
+syn keyword logLvAlert      ALERT
+syn keyword logLvCritical   CRIT[ICAL]
+syn keyword logLvError      E ERR[ORS]
+syn keyword logLvFail       F FAIL[ED] FAILURE
+syn keyword logLvFault      FAULT
+syn keyword logLvNack       NACK NAK
+syn keyword logLvWarning    W WARN[ING]
+syn keyword logLvBad        BAD
+syn keyword logLvNotice     NOTICE
+syn keyword logLvInfo       I INFO
+syn keyword logLvDebug      D DEBUG
+syn keyword logLvTrace      TRACE Trace
+syn keyword logLvVerbose    V VERBOSE
+syn keyword logLvPass       PASS[ED]
+syn keyword logLvSuccess    SUCCEED[ED] SUCCESS
 
 " Composite log levels e.g. *_INFO
-syn match logLvFatal        display '\<\u\+_FATAL\>'
-syn match logLvEmergency    display '\<\u\+_EMERG\(ENCY\)\?\>'
-syn match logLvAlert        display '\<\u\+_ALERT\>'
-syn match logLvCritical     display '\<\u\+_CRIT\(ICAL\)\?\>'
-syn match logLvError        display '\<\u\+_ERR\(OR\)\?\>'
-syn match logLvFail         display '\<\u\+_FAIL\(URE\)\?\>'
-syn match logLvWarning      display '\<\u\+_WARN\(ING\)\?\>'
-syn match logLvNotice       display '\<\u\+_NOTICE\>'
-syn match logLvInfo         display '\<\u\+_INFO\>'
-syn match logLvDebug        display '\<\u\+_DEBUG\>'
-syn match logLvTrace        display '\<\u\+_TRACE\>'
+syn match logLvFatal     display '\<\u\+_FATAL\>'
+syn match logLvEmergency display '\<\u\+_EMERG\(ENCY\)\?\>'
+syn match logLvAlert     display '\<\u\+_ALERT\>'
+syn match logLvCritical  display '\<\u\+_CRIT\(ICAL\)\?\>'
+syn match logLvError     display '\<\u\+_ERR\(OR\)\?\>'
+syn match logLvFail      display '\<\u\+_FAIL\(URE\)\?\>'
+syn match logLvWarning   display '\<\u\+_WARN\(ING\)\?\>'
+syn match logLvNotice    display '\<\u\+_NOTICE\>'
+syn match logLvInfo      display '\<\u\+_INFO\>'
+syn match logLvDebug     display '\<\u\+_DEBUG\>'
+syn match logLvTrace     display '\<\u\+_TRACE\>'
 
-syn cluster logLvs contains=LogLvFatal,LogLvEmergency,LogLvAlert,LogLvCritical,LogLvError,LogLvFail,LogLvFault,LogLvNack,LogLvWarning,LogLvBad,LogLvNotice,LogLvInfo,LogLvDebug,LogLvTrace,LogLvVerbose,LogLvPass,LogLvSuccess
+syn cluster logLvs contains=logLvFatal,logLvEmergency,logLvAlert,logLvCritical,logLvError,logLvFail,logLvFault,logLvNack,logLvWarning,logLvBad,logLvNotice,logLvInfo,logLvDebug,logLvTrace,logLvVerbose,logLvPass,logLvSuccess
 
 " Highlight links
 "---------------------------------------------------------------------------
@@ -179,7 +178,7 @@ hi def link logFilePath     Structure
 
 hi def link logJavaError    ErrorMsg
 
-hi def link logSysColumns   Statement
+hi def link logSysColumn   Statement
 hi def link logSysProcess   Function
 
 hi def link logXmlHeader    Function
@@ -191,32 +190,31 @@ hi def link logXmlComment   Comment
 hi def link logXmlCData     String
 hi def link logXmlEntity    Special
 
-hi def link logOperator     Special
-hi def link logBrackets     Special
+hi def link logSymbol       Delimiter
 hi def link logSeparator    Comment
 
-hi def link LogLvFatal      ErrorMsg
-hi def link LogLvEmergency  ErrorMsg
-hi def link LogLvAlert      ErrorMsg
-hi def link LogLvCritical   ErrorMsg
-hi def link LogLvError      ErrorMsg
-hi def link LogLvFail       ErrorMsg
-hi def link LogLvFault      ErrorMsg
-hi def link LogLvNack       ErrorMsg
-hi def link LogLvWarning    WarningMsg
-hi def link LogLvBad        WarningMsg
-hi def link LogLvNotice     Exception
-hi def link LogLvInfo       LogBlue
-hi def link LogLvDebug      Debug
-hi def link LogLvTrace      Special
-hi def link LogLvVerbose    Special
-hi def link LogLvPass       LogGreen
-hi def link LogLvSuccess    LogGreen
+hi def link logLvFatal      ErrorMsg
+hi def link logLvEmergency  ErrorMsg
+hi def link logLvAlert      ErrorMsg
+hi def link logLvCritical   ErrorMsg
+hi def link logLvError      ErrorMsg
+hi def link logLvFail       ErrorMsg
+hi def link logLvFault      ErrorMsg
+hi def link logLvNack       ErrorMsg
+hi def link logLvWarning    WarningMsg
+hi def link logLvBad        WarningMsg
+hi def link logLvNotice     Exception
+hi def link logLvInfo       logBlue
+hi def link logLvDebug      Debug
+hi def link logLvTrace      Special
+hi def link logLvVerbose    Special
+hi def link logLvPass       logGreen
+hi def link logLvSuccess    logGreen
 
 " Custom highlight group
 " ------------------------------
-hi logGreen ctermfg=lightgreen guifg=#a4c672
-hi logBlue  ctermfg=lightblue guifg=#92bcfc
+hi logGreen ctermfg=LightGreen guifg=LightGreen
+hi logBlue  ctermfg=LightBlue guifg=LightBlue
 
 
 let b:current_syntax = 'log'

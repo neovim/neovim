@@ -1850,15 +1850,8 @@ static void win_update(win_T *wp)
       // First compute the actual start and end column.
       if (VIsual_mode == Ctrl_V) {
         colnr_T fromc, toc;
-        unsigned save_ve_flags = curwin->w_ve_flags;
-
-        if (curwin->w_p_lbr) {
-          curwin->w_ve_flags = kOptVeFlagAll;
-        }
-
-        getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
+        getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc, GETVCOL_END_EXCL_LBR);
         toc++;
-        curwin->w_ve_flags = save_ve_flags;
         // Highlight to the end of the line, unless 'virtualedit' has
         // "block".
         if (curwin->w_curswant == MAXCOL) {
@@ -1875,7 +1868,7 @@ static void win_update(win_T *wp)
               colnr_T t;
 
               pos.col = ml_get_buf_len(wp->w_buffer, pos.lnum);
-              getvvcol(wp, &pos, NULL, NULL, &t);
+              getvvcol(wp, &pos, NULL, NULL, &t, 0);
               toc = MAX(toc, t);
             }
             toc++;

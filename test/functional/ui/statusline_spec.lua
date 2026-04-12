@@ -808,7 +808,15 @@ describe('statusline', function()
   it('ruler is cleared when window without statusline is closed', function()
     local cfg = { relative = 'editor', row = 1, col = 1, height = 1, width = 1 }
     local win = api.nvim_open_win(0, true, cfg)
-    command('set ruler laststatus=2')
+    -- Last line ruler does not take on window-local highlights #38777
+    command('hi link MsgArea Normal | setlocal winhl=Normal:Statement | set ruler laststatus=2')
+    screen:expect([[
+                                              |
+      {1:~}{15:^ }{1:                                      }|
+      {1:~                                       }|*4
+      {2:[No Name]             0,0-1          All}|
+                            0,0-1         All |
+    ]])
     api.nvim_win_close(win, true)
     screen:expect([[
       ^                                        |

@@ -494,32 +494,31 @@ static void rpc_close_event(void **argv)
 
   channel_decref(channel);
 
+  // No more I/O can happen on this channel. Remove UI if there is one attached.
+  // Do this here instead of in rpc_free() which isn't always called on exit, so that
+  // UILeave events behave consistently.
+  remote_ui_disconnect(channel->id, NULL, false);
+
   bool is_ui_client = ui_client_channel_id && channel->id == ui_client_channel_id;
-  if (is_ui_client || channel->streamtype == kChannelStreamStdio) {
-    if (!is_ui_client) {
-      // Avoid hanging when there are no other UIs and a prompt is triggered on exit.
-      remote_ui_disconnect(channel->id, NULL, false);
-    } else {
-      ui_client_attach_to_restarted_server();
-      if (ui_client_channel_id != channel->id) {
-        // Attached to new server. Don't exit.
-        return;
-      }
+  if (is_ui_client) {
+    ui_client_attach_to_restarted_server();
+    if (ui_client_channel_id != channel->id) {
+      // Attached to new server. Don't exit.
+      return;
     }
-    if (!channel->detach) {
-      if (channel->streamtype == kChannelStreamProc && ui_client_error_exit < 0) {
-        // Wait for the embedded server to exit instead of exiting immediately,
-        // as it's necessary to get the server's exit code in on_proc_exit().
-      } else {
-        exit_on_closed_chan(0);
-      }
+    if (channel->streamtype == kChannelStreamProc && ui_client_error_exit < 0) {
+      // Wait for the embedded server to exit instead of exiting immediately,
+      // as it's necessary to get the server's exit code in on_proc_exit().
+      return;
     }
+    exit_on_closed_chan(0);
+  } else if (channel->streamtype == kChannelStreamStdio && !channel->detach) {
+    exit_on_closed_chan(0);
   }
 }
 
 void rpc_free(Channel *channel)
 {
-  remote_ui_disconnect(channel->id, NULL, false);
   unpacker_teardown(channel->rpc.unpacker);
   xfree(channel->rpc.unpacker);
 
