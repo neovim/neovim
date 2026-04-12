@@ -3574,6 +3574,13 @@ describe('LSP', function()
       local pos = show_document(location(0, 9, 0, 9), true, true)
       eq(1, pos.line)
       eq(10, pos.col)
+
+      -- expectation: Cursor is placed past EOL (append position) in insert mode
+      n.feed('I')
+      pos = show_document(location(0, 16, 0, 16), true, true)
+      eq(1, pos.line)
+      eq(17, pos.col)
+      eq('i', api.nvim_get_mode().mode)
     end)
 
     it('jumps to a Location if focus is true via handler', function()
