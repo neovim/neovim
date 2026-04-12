@@ -226,6 +226,8 @@ LUA
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
+• |vim.pos| and |vim.range| can now convert between mark positions.
+• |vim.keycode()| returns structured info as return value 2.
 
 OPTIONS
 
