@@ -127,14 +127,12 @@ it('chansend sends lines to terminal channel in proper order', function()
   local shells = is_os('win') and { 'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop' } or { 'sh' }
   for _, sh in ipairs(shells) do
     command([[let id = jobstart(']] .. sh .. [[', {'term':v:true})]])
-    -- On Windows this may fail if the shell hasn't fully started yet, so retry.
-    t.retry(is_os('win') and 3 or 1, 5000, function()
-      command([[call chansend(id, ['echo "hello"', 'echo "world"', ''])]])
-      -- With PowerShell the command may be highlighted, so specify attr_ids = {}.
-      screen:expect { any = [[echo "hello".*echo "world"]], attr_ids = {}, timeout = 2000 }
-    end)
+    screen:sleep(50) -- Wait some time for the shell to start.
+    command([[call chansend(id, ['echo "hello"', 'echo "world"', ''])]])
+    -- With PowerShell the command may be highlighted, so specify attr_ids = {}.
+    screen:expect({ any = [[echo "hello".*echo "world"]], attr_ids = {} })
     command('bdelete!')
-    screen:expect { any = '%[No Name%]' }
+    screen:expect({ any = '%[No Name%]' })
   end
 end)
 
