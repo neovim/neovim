@@ -899,6 +899,7 @@ Example: >lua
       status = 'running',
       percent = 10,
       title = 'term',
+      source = 'my-plugin',
     }
     progress.id = vim.api.nvim_echo({ { 'searching...' } }, true, progress)
     progress.percent = 50
