@@ -97,4 +97,5 @@ end
 if vim.api and not vim.is_thread() then
   require('vim._core.editor')
   require('vim._core.system')
+  require('vim._core.win')
 end

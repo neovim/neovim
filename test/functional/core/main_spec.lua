@@ -231,6 +231,7 @@ describe('vim._core', function()
       'vim._core.system',
       'vim._core.ui2',
       'vim._core.util',
+      'vim._core.win',
       'vim._init_packages',
       'vim.filetype',
       'vim.fs',
