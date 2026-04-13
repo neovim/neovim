@@ -146,6 +146,8 @@ LSP
 • Support for nested snippets.
 • LSP completion now supports `CompletionItem.preselect`. Requires
   'completeopt' to include "preselect".
+• |lsp-completion| supports `commitCharacters`.
+• todo
 
 LUA
 

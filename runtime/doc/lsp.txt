@@ -2054,6 +2054,23 @@ activate "auto-completion" when you type any of the server-defined
 `triggerCharacters`. Use CTRL-Y to select an item from the completion menu.
 |complete_CTRL-Y|
 
+If the server provides `commitCharacters` for a completion item, typing one of
+those characters while the item is selected will accept the completion and
+insert the character. To disable this, set `commitCharactersSupport` to
+`false` in the client capabilities: >lua
+    vim.lsp.config('ts_ls', {
+      capabilities = {
+        textDocument = {
+          completion = {
+            completionItem = {
+              commitCharactersSupport = false,
+            },
+          },
+        },
+      },
+    })
+<
+
 Example: activate LSP-driven auto-completion: >lua
     -- Works best if 'completeopt' has "noselect".
     -- Use CTRL-Y to select an item. |complete_CTRL-Y|

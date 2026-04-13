@@ -633,6 +633,12 @@ static int insert_execute(VimState *state, int key)
         ins_compl_delete(false);
       }
     }
+
+    // Accept the current match if the character is a commit character.
+    if (pum_visible() && ins_compl_commit_char(s->c) && stop_arrow() == OK) {
+      ins_compl_delete(false);
+      ins_compl_insert(false, false);
+    }
   }
 
   // Prepare for or stop CTRL-X mode. This doesn't do completion, but it does

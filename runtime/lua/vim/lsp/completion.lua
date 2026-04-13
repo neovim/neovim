@@ -4,6 +4,24 @@
 --- Specify `autotrigger=true` to activate "auto-completion" when you type any of the server-defined
 --- `triggerCharacters`. Use CTRL-Y to select an item from the completion menu. |complete_CTRL-Y|
 ---
+--- If the server provides `commitCharacters` for a completion item, typing one
+--- of those characters while the item is selected will accept the completion
+--- and insert the character. To disable this, set `commitCharactersSupport`
+--- to `false` in the client capabilities:
+--- ```lua
+--- vim.lsp.config('ts_ls', {
+---   capabilities = {
+---     textDocument = {
+---       completion = {
+---         completionItem = {
+---           commitCharactersSupport = false,
+---         },
+---       },
+---     },
+---   },
+--- })
+--- ```
+---
 --- Example: activate LSP-driven auto-completion:
 --- ```lua
 --- -- Works best if 'completeopt' has "noselect".
@@ -46,6 +64,7 @@ local ns_to_ms = 0.000001
 -- literal/anonymous types (see https://github.com/neovim/neovim/pull/27542/files#r1495259331).
 --- @nodoc
 --- @class lsp.ItemDefaults
+--- @field commitCharacters string[]?
 --- @field editRange lsp.Range | { insert: lsp.Range, replace: lsp.Range } | nil
 --- @field insertTextFormat lsp.InsertTextFormat?
 --- @field insertTextMode lsp.InsertTextMode?
@@ -227,6 +246,7 @@ local function apply_defaults(item, defaults)
     return
   end
 
+  item.commitCharacters = item.commitCharacters or defaults.commitCharacters
   item.insertTextFormat = item.insertTextFormat or defaults.insertTextFormat
   item.insertTextMode = item.insertTextMode or defaults.insertTextMode
   item.data = item.data or defaults.data
@@ -399,6 +419,13 @@ function M._lsp_to_complete_items(
   local bufnr = api.nvim_get_current_buf()
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
+  local all_commit_chars = client_id
+    and vim.tbl_get(
+      (lsp.get_client_by_id(client_id) or {}).server_capabilities or {},
+      'completionProvider',
+      'allCommitCharacters'
+    )
+  local all_commit_str = all_commit_chars and table.concat(all_commit_chars, '') or nil
   for _, item in ipairs(items) do
     local match, score = matches(item)
     if match then
@@ -447,6 +474,8 @@ function M._lsp_to_complete_items(
             lsp = {
               completion_item = item,
               client_id = client_id,
+              commit_characters = item.commitCharacters and table.concat(item.commitCharacters, '')
+                or all_commit_str,
             },
           },
         },
@@ -825,7 +854,7 @@ local function on_completechanged(group, bufnr)
 end
 
 local function on_complete_done()
-  local completed_item = api.nvim_get_vvar('completed_item')
+  local completed_item = vim.v.completed_item
   if not completed_item or not completed_item.user_data or not completed_item.user_data.nvim then
     Context:reset()
     return

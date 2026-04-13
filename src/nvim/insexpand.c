@@ -697,6 +697,33 @@ bool ins_compl_accept_char(int c)
   return vim_iswordc(c);
 }
 
+/// Check if "c" is a commit character for the current completion match.
+/// Reads from user_data.nvim.lsp.commit_characters.
+bool ins_compl_commit_char(int c)
+{
+  if (compl_shown_match == NULL || match_at_original_text(compl_shown_match)) {
+    return false;
+  }
+
+  typval_T *ud = &compl_shown_match->cp_user_data;
+  if (ud->v_type != VAR_DICT || ud->vval.v_dict == NULL) {
+    return false;
+  }
+
+  dictitem_T *di_nvim = tv_dict_find(ud->vval.v_dict, S_LEN("nvim"));
+  if (!di_nvim || di_nvim->di_tv.v_type != VAR_DICT || !di_nvim->di_tv.vval.v_dict) {
+    return false;
+  }
+
+  dictitem_T *di_lsp = tv_dict_find(di_nvim->di_tv.vval.v_dict, S_LEN("lsp"));
+  if (!di_lsp || di_lsp->di_tv.v_type != VAR_DICT || !di_lsp->di_tv.vval.v_dict) {
+    return false;
+  }
+
+  const char *chars = tv_dict_get_string(di_lsp->di_tv.vval.v_dict, "commit_characters", false);
+  return chars && strchr(chars, c) != NULL;
+}
+
 /// Get the completed text by inferring the case of the originally typed text.
 /// If the result is in allocated memory "tofree" is set to it.
 static char *ins_compl_infercase_gettext(const char *str, int char_len, int compl_char_len,
@@ -2648,14 +2675,18 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   }
 
   char *word = NULL;
+  bool is_commit = ins_compl_commit_char(c);
   // If the popup menu is displayed pressing CTRL-Y means accepting
   // the selection without inserting anything.  When
   // compl_enter_selects is set the Enter key does the same.
-  if ((c == Ctrl_Y || (compl_enter_selects
-                       && (c == CAR || c == K_KENTER || c == NL)))
+  // A commit character also accepts the match but does not consume the key.
+  if ((c == Ctrl_Y || is_commit || (compl_enter_selects
+                                    && (c == CAR || c == K_KENTER || c == NL)))
       && pum_visible()) {
     word = xstrdup(compl_shown_match->cp_str.data);
-    retval = true;
+    if (!is_commit) {
+      retval = true;
+    }
     // May need to remove ComplMatchIns highlight.
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
