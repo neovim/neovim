@@ -264,35 +264,39 @@ local function get_locations(method, context, opts)
     end
 
     ---@type vim.fn.setqflist.what
-    local list = {
+    local what = {
       title = name:gsub('^%l', string.upper),
       items = all_items,
       context = { bufnr = bufnr, method = method },
     }
     if opts.on_list then
-      assert(vim.is_callable(opts.on_list), 'on_list is not a function')
-      ---@cast list vim.lsp.ListOpts.OnList
-      opts.on_list(list)
-      return
-    end
-
-    if opts.loclist then
-      vim.fn.setloclist(0, {}, ' ', list)
-      if method ~= 'textDocument/references' and #all_items == 1 then
-        local tagstack = { { tagname = tagname, from = from } }
-        vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
-        vim.cmd('lfirst')
-      else
-        vim.cmd.lopen()
-      end
+      validate('opts.on_list', opts.on_list, 'function')
+      opts.on_list(what)
     else
-      vim.fn.setqflist({}, ' ', list)
-      if method ~= 'textDocument/references' and #all_items == 1 then
+      if opts.loclist then
+        vim.fn.setloclist(0, {}, ' ', what)
+      else
+        vim.fn.setqflist({}, ' ', what)
+      end
+
+      if
+        #all_items == 1
+        and method ~= 'textDocument/implementation'
+        and method ~= 'textDocument/references'
+      then
         local tagstack = { { tagname = tagname, from = from } }
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
-        vim.cmd('cfirst')
+        if opts.loclist then
+          vim.cmd('lfirst')
+        else
+          vim.cmd('cfirst')
+        end
       else
-        vim.cmd('botright copen')
+        if opts.loclist then
+          vim.cmd('botright lopen')
+        else
+          vim.cmd('botright copen')
+        end
       end
     end
   end)
@@ -302,17 +306,28 @@ end
 ---
 --- list-handler replacing the default handler.
 --- Called for any non-empty result.
---- This table can be used with |setqflist()| or |setloclist()|. E.g.:
+--- When `loclist == false` (the default), the default handler is as follows:
 --- ```lua
---- local function on_list(options)
----   vim.fn.setqflist({}, ' ', options)
----   vim.cmd.cfirst()
+--- local function on_list(what)
+---   vim.fn.setqflist({}, ' ', what)
+---   if
+---     #what.items == 1
+---     and what.context.method ~= 'textDocument/implementation'
+---     and what.context.method ~= 'textDocument/references'
+---   then
+---     local tagstack = { { tagname = tagname, from = from } }
+---     vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+---     vim.cmd('cfirst')
+---   else
+---     vim.cmd('botright copen')
+---   end
 --- end
 ---
 --- vim.lsp.buf.definition({ on_list = on_list })
 --- vim.lsp.buf.references(nil, { on_list = on_list })
 --- ```
---- @field on_list? fun(t: vim.lsp.ListOpts.OnList)
+--- See |setqflist-what| for the structure of the `what` parameter.
+--- @field on_list? fun(what: vim.fn.setqflist.what)
 ---
 --- Whether to use the |location-list| or the |quickfix| list in the default handler.
 --- ```lua
@@ -320,11 +335,6 @@ end
 --- vim.lsp.buf.references(nil, { loclist = false })
 --- ```
 --- @field loclist? boolean
-
---- @class vim.lsp.ListOpts.OnList
---- @field items vim.quickfix.entry[] See |setqflist-what|
---- @field title? string Title for the list.
---- @field context? { bufnr: integer, method: string } Subset of `ctx` from |lsp-handler|.
 
 --- Jumps to the declaration of the symbol under the cursor.
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
