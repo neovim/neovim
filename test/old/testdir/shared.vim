@@ -253,17 +253,21 @@ endfunc
 
 " Get $VIMPROG to run the Vim executable.
 " The Makefile writes it as the first line in the "vimcmd" file.
+" Falls back to the Vim executable in the src directory.
 " Nvim: uses $NVIM_TEST_ARG0.
 func GetVimProg()
-  if empty($NVIM_TEST_ARG0)
-    " Assume the script was sourced instead of running "make".
-    return v:progpath
+  if !empty($NVIM_TEST_ARG0)
+    if has('win32')
+      return substitute($NVIM_TEST_ARG0, '/', '\\', 'g')
+    else
+      return $NVIM_TEST_ARG0
+    endif
   endif
-  if has('win32')
-    return substitute($NVIM_TEST_ARG0, '/', '\\', 'g')
-  else
-    return $NVIM_TEST_ARG0
-  endif
+  " echo 'Cannot read the "vimcmd" file, falling back to ../vim.'
+
+  " Probably the script was sourced instead of running "make".
+  " We assume Vim was just build in the src directory then.
+  return v:progpath
 endfunc
 
 let g:valgrind_cnt = 1
