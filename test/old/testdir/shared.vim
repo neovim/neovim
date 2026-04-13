@@ -82,8 +82,8 @@ endfunc
 " Read the port number from the Xportnr file.
 func GetPort()
   let l = []
-  " with 200 it sometimes failed
-  for i in range(400)
+  " with 200 it sometimes failed, with 400 is rarily failed
+  for i in range(600)
     try
       let l = readfile("Xportnr")
     catch
