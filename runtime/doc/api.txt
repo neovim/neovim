@@ -848,7 +848,8 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
         • "pty" (optional) Name of pseudoterminal. On a POSIX system this is a
           device path like "/dev/pts/1". If unknown, the key will still be
           present if a pty is used (e.g. for conpty on Windows).
-        • "buffer" (optional) Buffer connected to |terminal| instance.
+        • "buf" (optional) Buffer connected to |terminal| instance.
+        • "buffer" (optional) Deprecated alias for `buf`.
         • "client" (optional) Info about the peer (client on the other end of
           the channel), as set by |nvim_set_client_info()|.
         • "exitcode" (optional) Exit code of the |terminal| process.
@@ -1001,7 +1002,7 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
 
     Return: ~
         (`vim.api.keyset.get_keymap[]`) Array of |maparg()|-like dictionaries
-        describing mappings. The "buffer" key is always zero.
+        describing mappings. The "buf" key is always zero.
 
 nvim_get_mark({name}, {opts})                                *nvim_get_mark()*
     Returns a `(row, col, buffer, buffername)` tuple representing the position
@@ -2280,7 +2281,7 @@ nvim_get_autocmds({opts})                                *nvim_get_autocmds()*
     Return: ~
         (`vim.api.keyset.get_autocmds.ret[]`) Array of matching autocommands,
         where each item has:
-        • buffer (`integer?`): Buffer id (only for |autocmd-buffer-local|).
+        • buf (`integer?`): Buffer id (only for |autocmd-buffer-local|).
         • buflocal (`boolean?`): true if the autocommand is buffer-local
           |autocmd-buffer-local|.
         • callback: (`function|string?`): Event handler: a Lua function or
@@ -2528,7 +2529,7 @@ nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
 
     Return: ~
         (`vim.api.keyset.get_keymap[]`) Array of |maparg()|-like dictionaries
-        describing mappings. The "buffer" key holds the associated buffer id.
+        describing mappings. The "buf" key holds the associated buffer id.
 
                                                         *nvim_buf_get_lines()*
 nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})

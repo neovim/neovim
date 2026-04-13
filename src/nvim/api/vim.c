@@ -1584,7 +1584,7 @@ DictAs(get_mode) nvim_get_mode(Arena *arena)
 ///
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
-///          The "buffer" key is always zero.
+///          The "buf" key is always zero.
 ArrayOf(DictAs(get_keymap)) nvim_get_keymap(String mode, Arena *arena)
   FUNC_API_SINCE(3)
 {
@@ -1780,7 +1780,8 @@ void nvim__chan_set_detach(uint64_t channel_id, Boolean detach, Error *err)
 ///    - "pty"      (optional) Name of pseudoterminal. On a POSIX system this is a device path like
 ///                 "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ///                 for conpty on Windows).
-///    - "buffer"   (optional) Buffer connected to |terminal| instance.
+///    - "buf"      (optional) Buffer connected to |terminal| instance.
+///    - "buffer"   (optional) Deprecated alias for `buf`.
 ///    - "client"   (optional) Info about the peer (client on the other end of the channel), as set
 ///                 by |nvim_set_client_info()|.
 ///    - "exitcode" (optional) Exit code of the |terminal| process.
