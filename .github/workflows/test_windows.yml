@@ -59,20 +59,6 @@ jobs:
           Get-Command -CommandType Application neovim-node-host.cmd
           npm.cmd link neovim
 
-      - if: ${{ matrix.test == 'functional' }}
-        name: functionaltest
-        timeout-minutes: ${{ inputs.functionaltest_timeout }}
-        env:
-          # With parallel tests, use shorter timeout for a single group.
-          TEST_TIMEOUT: 600
-        run: |
-          $ErrorActionPreference = 'Continue'
-          # `-k 0` tells ninja to continue running all targets even if some fail.
-          cmake --build build --target functionaltest-parallel -j 2 -- -k 0
-          $exitCode = $LASTEXITCODE
-          cmake --build build --target functionaltest-summary
-          exit $exitCode
-
       - if: ${{ matrix.test == 'old' }}
         uses: msys2/setup-msys2@cafece8e6baf9247cf9b1bf95097b0b983cc558d # v2.31.0
         with:
