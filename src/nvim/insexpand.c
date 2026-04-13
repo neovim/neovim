@@ -1635,7 +1635,7 @@ static int ins_compl_build_pum(void)
             shown_match_ok = true;
           }
         }
-        if (comp == compl_preselect_match) {
+        if ((get_cot_flags() & kOptCotFlagPreselect) && comp == compl_preselect_match) {
           cur = i;
           compl_shown_match = comp;
           shown_match_ok = true;
