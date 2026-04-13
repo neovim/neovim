@@ -764,14 +764,6 @@ To enable the recognition of Markdown comments each time after removing
 re-source "javaformat.vim" for Vim versions greater than `8.2.1397`: >
 	runtime autoload/javaformat.vim
 <
-JUJUTSU DESCRIPTION				*ft-jjdescription-plugin*
-
-The length of the first line of the commit message used for syntax
-highlighting can be configured via `g:jjcommit_summary_length`, and will
-fallback to `g:gitcommit_summary_length`.  The default is 50.  Example: >
-
-        let g:jjcommit_summary_length = 70
-<
 LUA							*ft-lua-plugin*
 
 					*g:lua_version* *g:lua_subversion*
