@@ -1194,6 +1194,7 @@ complete_add({expr})                                            *complete_add()*
 
                 Parameters: ~
                   • {expr} (`any`)
+                  • {startcol} (`integer?`)
 
                 Return: ~
                   (`0|1|2`)

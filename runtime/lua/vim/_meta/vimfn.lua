@@ -1045,8 +1045,9 @@ function vim.fn.complete(startcol, matches) end
 --- the same as one item in the list that 'omnifunc' would return.
 ---
 --- @param expr any
+--- @param startcol? integer
 --- @return 0|1|2
-function vim.fn.complete_add(expr) end
+function vim.fn.complete_add(expr, startcol) end
 
 --- Check for a key typed while looking for completion matches.
 --- This is to be used when looking for matches takes some time.
