@@ -405,8 +405,6 @@ vim.go.bkc = vim.go.backupcopy
 --- The use of `:set+=` and `:set-=` is preferred when adding or removing
 --- directories from the list.  This avoids problems when a future version
 --- uses another default.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.backupdir = ".,$XDG_STATE_HOME/nvim/backup//"
@@ -730,8 +728,6 @@ vim.go.cmp = vim.go.casemap
 --- When on, `:cd`, `:tcd` and `:lcd` without an argument changes the
 --- current working directory to the `$HOME` directory like in Unix.
 --- When off, those commands just print the current directory name.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type boolean
 vim.o.cdhome = true
@@ -755,8 +751,6 @@ vim.go.cdh = vim.go.cdhome
 ---   let &cdpath = ',' .. substitute(substitute($CDPATH, '[, ]', '\\\0', 'g'), ':', ',', 'g')
 --- ```
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 --- (parts of 'cdpath' can be passed to the shell to expand file names).
 ---
 --- @type string
@@ -836,9 +830,6 @@ vim.bo.channel = vim.o.channel
 --- ```
 --- Otherwise the expression is evaluated in the context of the script
 --- where the option was set, thus script-local items are available.
----
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.charconvert = ""
@@ -1124,8 +1115,6 @@ vim.bo.cpt = vim.bo.complete
 --- invoked and what it should return.  The value can be the name of a
 --- function, a `lambda` or a `Funcref`.  See `option-value-function` for
 --- more information.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.completefunc = ""
@@ -1786,8 +1775,6 @@ vim.go.dia = vim.go.diffanchors
 
 --- Expression which is evaluated to obtain a diff file (either ed-style
 --- or unified-style) from two versions of a file.  See `diff-diffexpr`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.diffexpr = ""
@@ -1990,9 +1977,6 @@ vim.go.dg = vim.go.digraph
 --- Use `:set+=` and `:set-=` when adding or removing directories from the
 --- list, this avoids problems if the Nvim default is changed.
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
----
 --- @type string
 vim.o.directory = "$XDG_STATE_HOME/nvim/swap//"
 vim.o.dir = vim.o.directory
@@ -2118,8 +2102,6 @@ vim.go.ea = vim.go.equalalways
 --- or 'indentexpr'.
 --- Environment variables are expanded `:set_env`.  See `option-backslash`
 --- about including spaces and backslashes.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.equalprg = ""
@@ -2147,8 +2129,6 @@ vim.go.eb = vim.go.errorbells
 --- NOT used for the ":make" command.  See 'makeef' for that.
 --- Environment variables are expanded `:set_env`.
 --- See `option-backslash` about including spaces and backslashes.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.errorfile = "errors.err"
@@ -2314,8 +2294,6 @@ vim.bo.et = vim.bo.expandtab
 ---     vim.cmd[[set runtimepath+=.nvim]]
 --- ```
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type boolean
 vim.o.exrc = false
@@ -2655,8 +2633,6 @@ vim.go.fcs = vim.go.fillchars
 --- It is not allowed to change text or jump to another window while
 --- executing the 'findfunc' `textlock`.
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- Examples:
 ---
@@ -2992,8 +2968,6 @@ vim.bo.fo = vim.bo.formatoptions
 --- format function will be used `C-indenting`.
 --- Environment variables are expanded `:set_env`.  See `option-backslash`
 --- about including spaces and backslashes.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.formatprg = ""
@@ -3017,8 +2991,6 @@ vim.go.fp = vim.go.formatprg
 ---
 --- This is a `global-local` option, so it can be set per buffer, for
 --- example when writing to a slow filesystem.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type boolean
 vim.o.fsync = true
@@ -3067,9 +3039,6 @@ vim.go.gfm = vim.go.grepformat
 --- You can make ripgrep match Vim's case handling using the
 --- -i/--ignore-case and -S/--smart-case options. Handle `OptionSet` to
 --- dynamically update 'grepprg' when e.g. 'ignorecase' is changed.
----
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.grepprg = "grep -HIn $* /dev/null"
@@ -3279,8 +3248,6 @@ vim.go.gfw = vim.go.guifontwide
 --- "$VIMRUNTIME/doc/help.txt".  If $VIMRUNTIME is not set, $VIM is also
 --- tried.  Also see `$VIMRUNTIME` and `option-backslash` about including
 --- spaces and backslashes.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.helpfile = "$VIMRUNTIME/doc/help.txt"
@@ -3867,8 +3834,6 @@ vim.go.km = vim.go.keymodel
 --- 	set keywordprg=:Man
 --- ```
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.keywordprg = ":Man"
@@ -3888,8 +3853,6 @@ vim.go.kp = vim.go.keywordprg
 --- mapped in Insert mode.
 --- Also consider setting 'langremap' to off, to prevent 'langmap' from
 --- applying to characters resulting from a mapping.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- Example (for Greek, in UTF-8):				*greek*
 ---
@@ -4285,8 +4248,6 @@ vim.go.lpl = vim.go.loadplugins
 --- NOT used for the ":cf" command.  See 'errorfile' for that.
 --- Environment variables are expanded `:set_env`.
 --- See `option-backslash` about including spaces and backslashes.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.makeef = ""
@@ -4336,8 +4297,7 @@ vim.go.menc = vim.go.makeencoding
 --- ```vim
 ---     set makeprg=latex\ \\\\nonstopmode\ \\\\input\\{$*}
 --- ```
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
+---
 ---
 --- @type string
 vim.o.makeprg = "make"
@@ -4520,8 +4480,6 @@ vim.go.mopt = vim.go.messagesopt
 --- If you have less than 512 Mbyte `:mkspell` may fail for some
 --- languages, no matter what you set 'mkspellmem' to.
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.mkspellmem = "460000,2000,500"
@@ -4542,8 +4500,6 @@ vim.bo.ml = vim.bo.modeline
 --- When on allow some options that are an expression to be set in the
 --- modeline.  Check the option for whether it is affected by
 --- 'modelineexpr'.  Also see `modeline`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type boolean
 vim.o.modelineexpr = false
@@ -4554,7 +4510,6 @@ vim.go.mle = vim.go.modelineexpr
 --- If 'modeline' is on 'modelines' gives the number of lines that is
 --- checked for set commands.  If 'modeline' is off or 'modelines' is zero
 --- no lines are checked.  See `modeline`.
----
 ---
 --- @type integer
 vim.o.modelines = 5
@@ -4883,8 +4838,6 @@ vim.wo.nuw = vim.wo.numberwidth
 --- more information.
 --- This option is usually set by a filetype plugin:
 --- `:filetype-plugin-on`
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.omnifunc = ""
@@ -4897,9 +4850,6 @@ vim.bo.ofu = vim.bo.omnifunc
 --- the name of a function, a `lambda` or a `Funcref`.  See
 --- `option-value-function` for more information.
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
----
 --- @type string
 vim.o.operatorfunc = ""
 vim.o.opfunc = vim.o.operatorfunc
@@ -4909,8 +4859,6 @@ vim.go.opfunc = vim.go.operatorfunc
 --- Directories used to find packages.
 --- See `packages` and `packages-runtimepath`.
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.packpath = "..."
@@ -4929,8 +4877,6 @@ vim.go.para = vim.go.paragraphs
 
 --- Expression which is evaluated to apply a patch to a file and generate
 --- the resulting new version of the file.  See `diff-patchexpr`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.patchexpr = ""
@@ -5154,9 +5100,6 @@ vim.go.pw = vim.go.pumwidth
 --- `python_x`.  As only Python 3 is supported, this always has the value
 --- `3`. Setting any other value is an error.
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
----
 --- @type integer
 vim.o.pyxversion = 3
 vim.o.pyx = vim.o.pyxversion
@@ -5174,9 +5117,6 @@ vim.go.pyx = vim.go.pyxversion
 ---
 --- It is not allowed to change text or jump to another window while
 --- evaluating 'qftf' `textlock`.
----
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.quickfixtextfunc = ""
@@ -5474,8 +5414,6 @@ vim.go.ruf = vim.go.rulerformat
 ---
 --- With `--clean` the home directory entries are not included.
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.runtimepath = "..."
@@ -5806,9 +5744,6 @@ vim.go.ssop = vim.go.sessionoptions
 --- When setting 'shada' from an empty value you can use `:rshada` to
 --- load the contents of the file, this is not done automatically.
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
----
 --- @type string
 vim.o.shada = "!,'100,<50,s10,h,r/tmp/,r/private/"
 vim.o.sd = vim.o.shada
@@ -5820,8 +5755,6 @@ vim.go.sd = vim.go.shada
 --- This option can be set with the `-i` command line flag.  The `--clean`
 --- command line flag sets it to "NONE".
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.shadafile = ""
@@ -5893,8 +5826,6 @@ vim.go.sdf = vim.go.shadafile
 ---    let $__SuppressAnsiEscapeSequences = 1
 --- ```
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.shell = "sh"
@@ -5911,8 +5842,6 @@ vim.go.sh = vim.go.shell
 --- See `option-backslash` about including spaces and backslashes.
 --- See `shell-unquoting` which talks about separating this option into
 --- multiple arguments.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.shellcmdflag = "-c"
@@ -5949,8 +5878,6 @@ vim.go.shcf = vim.go.shellcmdflag
 --- Note: When using a pipe like "| tee", you'll lose the exit code of the
 --- shell command.  This might be configurable by your shell, look for
 --- the pipefail option (for bash and zsh, use ":set -o pipefail").
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.shellpipe = "| tee"
@@ -5967,8 +5894,6 @@ vim.go.sp = vim.go.shellpipe
 --- or bash, where it should be "\"".  The default is adjusted according
 --- the value of 'shell', to reduce the need to set this option by the
 --- user.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.shellquote = ""
@@ -5995,8 +5920,6 @@ vim.go.shq = vim.go.shellquote
 --- explicitly set before.
 --- In the future pipes may be used for filtering and this option will
 --- become obsolete (at least for Unix).
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.shellredir = ">"
@@ -6046,8 +5969,6 @@ vim.go.stmp = vim.go.shelltemp
 --- When 'shellxquote' is set to "(" then the characters listed in this
 --- option will be escaped with a '^' character.  This makes it possible
 --- to execute most external commands with cmd.exe.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.shellxescape = ""
@@ -6062,8 +5983,6 @@ vim.go.sxe = vim.go.shellxescape
 --- When the value is '(' then ')' is appended.  When the value is '"('
 --- then ')"' is appended.
 --- When the value is '(' then also see 'shellxescape'.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.shellxquote = ""
@@ -6490,8 +6409,6 @@ vim.bo.spc = vim.bo.spellcapcheck
 --- 'spellfile' is set to it, for entries in 'spelllang' only files
 --- without region name will be found.
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.spellfile = ""
@@ -6627,8 +6544,6 @@ vim.bo.spo = vim.bo.spelloptions
 --- 	set sps=file:~/.config/nvim/sugg,best,expr:MySuggest()
 --- ```
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.spellsuggest = "best"
@@ -7294,8 +7209,6 @@ vim.go.tc = vim.go.tagcase
 --- function and an example.  The value can be the name of a function, a
 --- `lambda` or a `Funcref`.  See `option-value-function` for more
 --- information.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.tagfunc = ""
@@ -7465,9 +7378,6 @@ vim.go.tsr = vim.go.thesaurus
 --- The value can be the name of a function, a `lambda` or a `Funcref`.
 --- See `option-value-function` for more information.
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
----
 --- @type string
 vim.o.thesaurusfunc = ""
 vim.o.tsrfu = vim.o.thesaurusfunc
@@ -7541,8 +7451,6 @@ vim.go.titlelen = vim.o.titlelen
 
 --- If not empty, this option will be used to set the window title when
 --- exiting.  Only if 'title' is enabled.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.titleold = ""
@@ -7628,8 +7536,6 @@ vim.go.ttm = vim.go.ttimeoutlen
 --- given, no further entry is used.
 --- See `undo-persistence`.
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- Note that unlike 'directory' and 'backupdir', 'undodir' always acts as
 --- though the trailing slashes are present (see 'backupdir' for what this
@@ -7822,8 +7728,6 @@ vim.go.vbs = vim.go.verbose
 --- The difference with `:redir` is that verbose messages are not
 --- displayed when 'verbosefile' is set.
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.verbosefile = ""
@@ -7833,8 +7737,6 @@ vim.go.vfile = vim.go.verbosefile
 
 --- Name of the directory where to store files for `:mkview`.
 --- Environment variables are expanded `:set_env`.
---- This option cannot be set from a `modeline` or in the `sandbox`, for
---- security reasons.
 ---
 --- @type string
 vim.o.viewdir = "$XDG_STATE_HOME/nvim/view//"
