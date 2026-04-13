@@ -2863,8 +2863,7 @@ describe('API', function()
         id = id,
         argv = argv,
         mode = 'terminal',
-        buf = buffer,
-        buffer = buffer, -- deprecated
+        buffer = buffer,
         pty = '?',
         exitcode = -1,
       }
@@ -2884,8 +2883,7 @@ describe('API', function()
         neq(nil, string.match(info.pty, '^/dev/'))
       end
       eq({ info = info }, event)
-      info.buf = 1
-      info.buffer = 1 -- deprecated
+      info.buffer = 1
       eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
       eq(info, api.nvim_get_chan_info(3))
 

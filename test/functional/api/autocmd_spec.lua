@@ -626,8 +626,7 @@ describe('autocmd api', function()
         local aus = api.nvim_get_autocmds { event = 'InsertEnter', buf = 0 }
         eq({
           {
-            buf = 2,
-            buffer = 2, -- deprecated
+            buffer = 2,
             buflocal = true,
             command = ':echo "2"',
             event = 'InsertEnter',
@@ -639,8 +638,7 @@ describe('autocmd api', function()
         aus = api.nvim_get_autocmds { event = 'InsertEnter', buf = 1 }
         eq({
           {
-            buf = 1,
-            buffer = 1, -- deprecated
+            buffer = 1,
             buflocal = true,
             command = ':echo "1"',
             event = 'InsertEnter',
@@ -652,8 +650,7 @@ describe('autocmd api', function()
         aus = api.nvim_get_autocmds { event = 'InsertEnter', buf = { 1, 2 } }
         eq({
           {
-            buf = 1,
-            buffer = 1, -- deprecated
+            buffer = 1,
             buflocal = true,
             command = ':echo "1"',
             event = 'InsertEnter',
@@ -661,8 +658,7 @@ describe('autocmd api', function()
             pattern = '<buffer=1>',
           },
           {
-            buf = 2,
-            buffer = 2, -- deprecated
+            buffer = 2,
             buflocal = true,
             command = ':echo "2"',
             event = 'InsertEnter',
