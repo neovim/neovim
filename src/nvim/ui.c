@@ -685,7 +685,8 @@ void ui_cursor_shape(void)
 }
 
 /// Check if the cursor is behind a floating window (only in compositor mode).
-/// @return true if cursor is obscured by a float with higher zindex
+/// @return true if cursor is obscured by a float (when its zindex exceeds the
+/// zindex of the current window by 50).
 static bool ui_cursor_is_behind_floatwin(void)
 {
   if ((State & MODE_CMDLINE) || !ui_comp_should_draw()) {
@@ -697,7 +698,9 @@ static bool ui_cursor_is_behind_floatwin(void)
              + (curwin->w_p_rl ? curwin->w_view_width - curwin->w_wcol - 1 : curwin->w_wcol);
 
   ScreenGrid *top_grid = ui_comp_get_grid_at_coord(crow, ccol);
-  return top_grid != &curwin->w_grid_alloc && top_grid != &default_grid;
+  return top_grid != &curwin->w_grid_alloc
+         && top_grid != &default_grid
+         && top_grid->zindex >= curwin->w_grid_alloc.zindex + 50;
 }
 
 /// Returns true if the given UI extension is enabled.

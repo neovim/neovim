@@ -1887,7 +1887,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---     - 250: cmdline completion popupmenu (when wildoptions+=pum)
 ---   The default value for floats are 50.  In general, values below 100 are
 ---   recommended, unless there is a good reason to overshadow builtin
----   elements.
+---   elements. The cursor is dimmed if an unfocused float above the cursor
+---   exceeds the zindex of the current window by 50.
 --- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
 ---   popupmenu to this window, with an offset in screen cell width.
 --- @return integer # |window-ID|, or 0 on error

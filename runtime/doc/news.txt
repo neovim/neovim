@@ -106,6 +106,8 @@ The following new features were added.
 API
 
 • |nvim_set_hl()| supports "font" key.
+• |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor
+  shape when an unfocused float is on top of the cursor.
 
 BUILD
 
