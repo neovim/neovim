@@ -160,6 +160,17 @@ describe('file search', function()
     )
   end)
 
+  it('gf/<cfile> handles local file: paths', function()
+    local path = fn.fnamemodify(join_path(testdir, 'gf-target.txt'), ':p'):gsub('\\', '/')
+    local uri = 'file:' .. (is_os('win') and '/' or '') .. path
+    write_file(path, '')
+    insert(uri)
+    command('norm! 0')
+    eq(path, eval('expand("<cfile>")'))
+    feed('gf')
+    eq(path, fn.fnamemodify(eval('expand("%:p")'), ':p'):gsub('\\', '/'))
+  end)
+
   ---@param funcname 'finddir' | 'findfile'
   local function test_find_func(funcname, folder, item)
     local d = join_path(testdir, folder)

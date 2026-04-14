@@ -1759,6 +1759,13 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
     return NULL;
   }
 
+  if ((options & FNAME_HYP) && len > 6 && strncmp(ptr, "file:/",
+                                                  6) == 0 && !vim_ispathsep(ptr[6])) {
+    size_t off = path_has_drive_letter(ptr + 6, len - 6) ? 6 : 5;
+    ptr += off;
+    len -= off;
+  }
+
   if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
     tofree = eval_includeexpr(ptr, len);
     if (tofree != NULL) {
