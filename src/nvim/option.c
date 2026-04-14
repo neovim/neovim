@@ -1209,7 +1209,7 @@ static int validate_opt_idx(win_T *win, OptIndex opt_idx, int opt_flags, uint32_
 
   // Disallow changing some options from modelines.
   if (opt_flags & OPT_MODELINE) {
-    if (flags & (kOptFlagSecure | kOptFlagNoML)) {
+    if (flags & kOptFlagSecure) {
       *errmsg = e_not_allowed_in_modeline;
       return FAIL;
     }

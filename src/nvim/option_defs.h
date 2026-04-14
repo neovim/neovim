@@ -34,13 +34,12 @@ typedef enum {
   kOptFlagNFname    = 1 << 17,  ///< Only normal file name chars allowed.
   kOptFlagInsecure  = 1 << 18,  ///< Option was set from a modeline.
   kOptFlagPriMkrc   = 1 << 19,  ///< Priority for :mkvimrc (setting option has side effects).
-  kOptFlagNoML      = 1 << 20,  ///< Not allowed in modeline.
-  kOptFlagCurswant  = 1 << 21,  ///< Update curswant required; not needed when there is a redraw flag.
-  kOptFlagNDname    = 1 << 22,  ///< Only normal directory name chars allowed.
-  kOptFlagHLOnly    = 1 << 23,  ///< Option only changes highlight, not text.
-  kOptFlagMLE       = 1 << 24,  ///< Under control of 'modelineexpr'.
-  kOptFlagFunc      = 1 << 25,  ///< Accept a function reference or a lambda.
-  kOptFlagColon     = 1 << 26,  ///< Values use colons to create sublists.
+  kOptFlagCurswant  = 1 << 20,  ///< Update curswant required; not needed when there is a redraw flag.
+  kOptFlagNDname    = 1 << 21,  ///< Only normal directory name chars allowed.
+  kOptFlagHLOnly    = 1 << 22,  ///< Option only changes highlight, not text.
+  kOptFlagMLE       = 1 << 23,  ///< Under control of 'modelineexpr'.
+  kOptFlagFunc      = 1 << 24,  ///< Accept a function reference or a lambda.
+  kOptFlagColon     = 1 << 25,  ///< Values use colons to create sublists.
 } OptFlags;
 
 /// Option value type.

@@ -644,9 +644,10 @@ local function render_vvar_meta(_f, opt, write)
   end
 end
 
---- @param s string[]
+--- Generates vimdoc for option scope flags.
+--- @param o vim.option_meta
 --- @return string
-local function scope_to_doc(s)
+local function option_scope_doc(o)
   local m = {
     global = 'global',
     buf = 'local to buffer',
@@ -654,16 +655,14 @@ local function scope_to_doc(s)
     tab = 'local to tab page',
   }
 
-  if #s == 1 then
-    return m[s[1]]
+  local r --- @type string
+  if #o.scope == 1 then
+    r = m[o.scope[1]]
+  else
+    assert(o.scope[1] == 'global')
+    r = 'global or ' .. m[o.scope[2]] .. (o.scope[2] ~= 'tab' and ' |global-local|' or '')
   end
-  assert(s[1] == 'global')
-  return 'global or ' .. m[s[2]] .. (s[2] ~= 'tab' and ' |global-local|' or '')
-end
 
--- @param o vim.option_meta
--- @return string
-local function scope_more_doc(o)
   if
     vim.list_contains({
       'bufhidden',
@@ -678,10 +677,24 @@ local function scope_more_doc(o)
       'winfixwidth',
     }, o.full_name)
   then
-    return '  |local-noglobal|'
+    r = r .. '  |local-noglobal|'
   end
 
-  return ''
+  return r
+end
+
+--- Generates vimdoc for option "attributes" (e.g. modeline restriction).
+-- @param o vim.option_meta
+-- @return string?
+local function option_attrs_doc(o)
+  local attrs = {} --- @type string[]
+  if o.secure then
+    attrs[#attrs + 1] = 'Disallowed in |modeline|. |no-modeline-option|'
+  end
+  if #attrs == 0 then
+    return nil
+  end
+  return table.concat(attrs, '\n\t\t\t')
 end
 
 --- @param x string
@@ -802,7 +815,11 @@ local function render_option_doc(_f, opt, write)
     write(fmt('%s\t%s', name_str, otype))
   end
 
-  write('\t\t\t' .. scope_to_doc(opt.scope) .. scope_more_doc(opt))
+  write('\t\t\t' .. option_scope_doc(opt))
+  local attrs = option_attrs_doc(opt)
+  if attrs then
+    write('\t\t\t' .. attrs)
+  end
   for _, l in ipairs(split(opt.desc)) do
     if l == '<' or l:match('^<%s') then
       write(l)
