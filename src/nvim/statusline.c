@@ -1375,7 +1375,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         break;
       }
       fmt_p++;
-      if (reevaluate) {
+      if (reevaluate && out_p > out) {
         out_p[-1] = NUL;  // remove the % at the end of %{% expr %}
       } else {
         *out_p = NUL;

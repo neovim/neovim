@@ -731,4 +731,14 @@ func Test_statusline_singlebyte_negative()
   let [&columns, &ls, &stl, &enc] = [_columns, _ls, _stl, _enc]
 endfunc
 
+func Test_statusline_empty()
+  set laststatus=2 statusline=%!'%{}%'
+  try
+  redraw!
+  catch
+  endtry
+  set laststatus&
+  set statusline&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -232,4 +232,14 @@ func Test_tabline_truncated_double_width()
   call nvim_set_hl(0, 'TabLine', save_TabLine)
 endfunc
 
+func Test_tabline_empty()
+  set showtabline=2 tabline=%!'%{}%'
+  try
+    redraw!
+  catch
+  endtry
+  set showtabline&
+  set tabline&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
