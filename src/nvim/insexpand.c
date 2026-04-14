@@ -2629,7 +2629,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
       do_c_expr_indent();
       want_cindent = false;                 // don't do it again
     }
-  } else {
+  } else if (!compl_autocomplete || compl_used_match) {
     const int prev_col = curwin->w_cursor.col;
 
     // put the cursor on the last char, for 'tw' formatting
