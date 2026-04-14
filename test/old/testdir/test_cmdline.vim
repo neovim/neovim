@@ -5248,4 +5248,14 @@ func Test_breaklist_args_fails()
   call assert_fails(':breaklist extra', 'E488:')
 endfunc
 
+func Test_rulerformat_empty()
+  set ruler rulerformat=%!'%{}%'
+  try
+    redraw
+  catch
+  endtry
+  set ruler&
+  set rulerformat&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

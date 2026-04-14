@@ -863,9 +863,6 @@ func Test_set_option_errors()
   call assert_fails('set commentstring=x', 'E537:')
   call assert_fails('let &commentstring = "x"', 'E537:')
   call assert_fails('set complete=x', 'E539:')
-  call assert_fails('set rulerformat=%-', 'E539:')
-  call assert_fails('set rulerformat=%(', 'E542:')
-  call assert_fails('set rulerformat=%15(%%', 'E542:')
 
   " Test for 'statusline' errors
   call assert_fails('set statusline=%^', 'E539:')  " Nvim: supports %$
@@ -882,6 +879,11 @@ func Test_set_option_errors()
   call assert_fails('set tabline=%{%}', 'E539:')
   call assert_fails('set tabline=%(', 'E542:')
   call assert_fails('set tabline=%)', 'E542:')
+
+  " Test for 'rulerformat' errors
+  call assert_fails('set rulerformat=%-', 'E539:')
+  call assert_fails('set rulerformat=%(', 'E542:')
+  call assert_fails('set rulerformat=%15(%%', 'E542:')
 
   if has('cursorshape')
     " This invalid value for 'guicursor' used to cause Vim to crash.
