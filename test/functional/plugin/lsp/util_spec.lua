@@ -1238,6 +1238,9 @@ describe('vim.lsp.util', function()
         ' @see `nvim_buf_detach()`',
         ' @see `api-buffer-updates-lua`',
         '',
+        -- For each @param/@return: #30695
+        --  - Separate each by one empty line.
+        --  - Remove all other blank lines.
         '@*param* `buffer` — Buffer handle, or 0 for current buffer',
         '',
         '@*param* `send_buffer` — True if whole buffer.',
@@ -1300,7 +1303,7 @@ describe('vim.lsp.util', function()
 
       before_each(function()
         local _ = Screen.new(80, 80)
-        feed('79i<CR><Esc>')
+        feed('79i<CR><Esc>') -- fill screen with empty lines
       end)
 
       describe('when on the first line it places window below', function()
@@ -1393,26 +1396,25 @@ describe('vim.lsp.util', function()
     end)
 
     describe('open_floating_preview', function()
-      local curbuf
-
       before_each(function()
         Screen.new(10, 10)
         feed('9i<CR><Esc>G4k')
-        curbuf = api.nvim_get_current_buf()
       end)
 
       local var_name = 'lsp_floating_preview'
+      local curbuf = api.nvim_get_current_buf()
 
-      it('clean bufvar after fclose', function()
+      it('after fclose', function()
         exec_lua(function()
           vim.lsp.util.open_floating_preview({ 'test' }, '', { height = 5, width = 2 })
         end)
         eq(true, api.nvim_win_is_valid(api.nvim_buf_get_var(curbuf, var_name)))
         command('fclose')
+        -- b:lsp_floating_preview should be cleared.
         eq('Key not found: lsp_floating_preview', pcall_err(api.nvim_buf_get_var, curbuf, var_name))
       end)
 
-      it('clean bufvar after CursorMoved', function()
+      it('after CursorMoved', function()
         local result, winfixbuf = exec_lua(function()
           vim.lsp.util.open_floating_preview({ 'test' }, '', { height = 5, width = 2 })
           local winnr = vim.b[vim.api.nvim_get_current_buf()].lsp_floating_preview
@@ -1422,7 +1424,9 @@ describe('vim.lsp.util', function()
           return result, winfixbuf
         end)
         eq(true, result)
+        -- 'winfixbuf' should be set. #39058
         eq(true, winfixbuf)
+        -- b:lsp_floating_preview should be cleared.
         eq('Key not found: lsp_floating_preview', pcall_err(api.nvim_buf_get_var, curbuf, var_name))
       end)
     end)
@@ -1481,6 +1485,7 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+      -- Entering window keeps lines concealed and doesn't end up below inner window size.
       feed('<C-w>wG')
       screen:expect([[
                                                            |
@@ -1490,8 +1495,9 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+      -- Correct height when float inherits 'conceallevel' >= 2 #32639
       command('close | set conceallevel=2')
-      feed('<Ignore>')
+      feed('<Ignore>') -- Prevent CursorMoved closing the next float immediately
       exec_lua([[
       vim.lsp.util.open_floating_preview({ '```lua', 'local foo', '```' }, 'markdown', {
         border = 'single',
@@ -1506,6 +1512,7 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+      -- This tests the valid winline code path (why doesn't the above?).
       exec_lua([[
       vim.cmd.only()
       vim.lsp.util.open_floating_preview({ 'foo', '```lua', 'local bar', '```' }, 'markdown', {

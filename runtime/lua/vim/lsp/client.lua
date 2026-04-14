@@ -53,6 +53,19 @@ local all_clients = {}
 --- absolute or on `$PATH`, shell constructs like "~" are not expanded), or function that creates an
 --- RPC client (or an in-process |lsp-server|). Function receives a `dispatchers` table and the
 --- resolved `config`, and must return an object in the form of |vim.lsp.rpc.Client|.
+---
+--- Example (list):
+--- ```lua
+--- cmd = { 'flow', 'lsp' }
+--- ```
+--- Example (function):
+--- ```lua
+--- cmd = function(dispatchers, config)
+---   local cmd = vim.fn.executable('flow') == 1 and { 'flow', 'lsp' } or { 'npx', '--no-install', 'flow', 'lsp' }
+---   return vim.lsp.rpc.start(cmd, dispatchers)
+--- end
+--- ```
+---
 --- - See |vim.lsp.rpc.request()| |vim.lsp.rpc.notify()|
 --- - For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 --- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client

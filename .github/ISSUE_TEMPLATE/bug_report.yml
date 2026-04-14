@@ -7,16 +7,15 @@ body:
     attributes:
       value: |
         *Before reporting:*
-        - Confirm the problem is reproducible on [**master**](https://github.com/neovim/neovim/releases/nightly) or [**latest stable**](https://github.com/neovim/neovim/releases/stable) release
-        - Run `make distclean` when encountering build issues
+        - Confirm the problem is reproducible in the [latest **nightly** release](https://github.com/neovim/neovim/releases/nightly).
+        - Run `make distclean` when encountering build issues.
         - Search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue%20is%3Aopen%20type%3ABug) (including [closed](https://github.com/neovim/neovim/issues?q=is%3Aissue%20is%3Aclosed%20type%3ABug))
-        - Read the [FAQ](https://neovim.io/doc/user/faq.html) and ["Reporting Problems" in CONTRIBUTING.md](https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#reporting-problems).
-
-        Usage or "How to" questions belong on [stackoverflow](https://vi.stackexchange.com/) and will be closed.
+        - Read the [FAQ](https://neovim.io/doc/user/faq/) and ["Reporting Problems" in CONTRIBUTING.md](https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#reporting-problems).
+        - Usage or "How to" questions will be closed, use [Discussions](https://github.com/neovim/neovim/discussions) or [stackoverflow](https://vi.stackexchange.com/) instead.
   - type: textarea
     attributes:
       label: "Problem"
-      description: "Describe the current behavior. May include logs, images, or videos."
+      description: "Describe the problem concisely. May include logs, images, or videos."
     validations:
       required: true
   - type: textarea
@@ -24,10 +23,10 @@ body:
       label: "Steps to reproduce"
       description: |
         - For build failures: list the exact steps including CMake flags (if any).
-        - If the bug pertains to crashing (or segfault), please include a [stacktrace](https://neovim.io/doc/user/dev_tools.html#dev-tools-backtrace).
+        - If the bug is a crash/segfault, please include a [stacktrace](https://neovim.io/doc/user/dev_tools/#dev-tools-backtrace).
         - For startup or shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
         - Use the provided [minimal reproduction template](https://github.com/neovim/neovim/blob/master/contrib/minimal.lua) to create a minimal configuration. After you fill it out with necessary information, run with `nvim --clean -u minimal.lua`.
-        - Please do **not** include a package manager in the reproduction steps.
+          - Do **not** include a package manager in the reproduction steps.
       placeholder: |
         nvim --clean
         :edit foo

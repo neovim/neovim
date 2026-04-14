@@ -123,6 +123,7 @@ DIAGNOSTICS
 
 EDITOR
 
+• |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
 
 EVENTS

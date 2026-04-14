@@ -36,57 +36,54 @@ Windows 8+ is required. Windows 7 or older is not supported.
 ### [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/)
 
 - **Release:** `winget install Neovim.Neovim`
+- **Nightly:** [Not supported by winget](https://github.com/neovim/neovim/issues/38585)
 
 ### [Chocolatey](https://chocolatey.org)
 
-- **Latest Release:** `choco install neovim` (use -y for automatically skipping confirmation messages)
-- **Development (pre-release):** `choco install neovim --pre`
+- **Release:** `choco install neovim` (use -y for automatically skipping confirmation messages)
+- **Nightly:** `choco install neovim --pre`
 
 ### [Scoop](https://scoop.sh/)
+
 ```bash
 scoop bucket add main
 scoop install neovim
 ```
-- **Release:** `scoop install neovim`
 
 Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim](https://scoop.sh/#/apps?q=neovim)
 
-### Pre-built archives
+### MSI
 
-If you are missing `VCRUNTIME170.dll`, install the [Visual Studio C++ redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (choose x86_64 or x86 depending on your system).
-    - Hint: if you have scoop, try: `scoop install vcredist`
+> [!TIP]
+> If you are missing `VCRUNTIME170.dll`, install the [Visual Studio C++ redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (choose x86_64 or x86 depending on your system).
+> If you have scoop, try: `scoop install vcredist`.
 
-**MSI**
+You can use this powershell script to install the MSI from the [releases page](https://github.com/neovim/neovim/releases):
 
-For x86_64:
-```pwsh
-iwr -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.msi" -OutFile nvim-win64.msi
-msiexec /i nvim-win64.msi /passive
-rm nvim-win64.msi
-```
+- For x86_64:
+  ```pwsh
+  iwr -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.msi" -OutFile nvim-win64.msi
+  msiexec /i nvim-win64.msi /passive
+  rm nvim-win64.msi
+  ```
+- For arm64:
+  ```pwsh
+  iwr -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.msi" -OutFile nvim-win-arm64.msi
+  msiexec /i nvim-win-arm64.msi /passive
+  rm nvim-win-arm64.msi
+  ```
 
-For arm64:
-```pwsh
-iwr -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.msi" -OutFile nvim-win-arm64.msi
-msiexec /i nvim-win-arm64.msi /passive
-rm nvim-win-arm64.msi
-```
-
-**Zip**
+### Zip
 
 1. Choose a package (**nvim-winXX.zip**) from the [releases page](https://github.com/neovim/neovim/releases).
 2. Unzip the package. Any location is fine, administrator privileges are _not_ required.
     - `$VIMRUNTIME` will be set to that location automatically.
 3. Run `nvim.exe` from a terminal.
+4. (Optional) Add the `bin` folder (e.g. `C:/Program Files/nvim/bin`) to your PATH.
+   This makes it easy to run `nvim` from any directory.
 
-**Optional** steps:
+### Optional steps
 
-- If Installing from a zip package, add the `bin` folder (e.g. `C:\Program Files\nvim\bin`) to your PATH.
-    - This makes it easy to run `nvim` from anywhere.
-- If `:set spell` does not work, create the `%LOCALAPPDATA%/nvim-data/site/spell` folder.
-  You can then copy your spell files over (for English, located
-  [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.spl) and
-  [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.sug));
 - For Python plugins you need the `pynvim` module. Installation via uv
   (https://docs.astral.sh/uv/) is recommended; the `--upgrade` switch ensures
   installation of the latest version:
@@ -94,7 +91,7 @@ rm nvim-win-arm64.msi
     uv tool install --upgrade pynvim
     ```
     - Run `:checkhealth` and read `:help provider-python` for more details.
-- **init.vim ("vimrc"):** If you already have Vim installed you can copy `%userprofile%\_vimrc` to `%userprofile%\AppData\Local\nvim\init.vim` to use your Vim config with Neovim.
+- **init.vim ("vimrc"):** If you already have Vim installed you can copy `%userprofile%/_vimrc` to `%userprofile%/AppData/Local/nvim/init.vim` to use your Vim config with Neovim.
 
 
 ## macOS / OS X
@@ -473,7 +470,7 @@ make CMAKE_BUILD_TYPE=Release
 sudo make install
 ```
 
-For Unix-like systems this installs Neovim to `/usr/local`, while for Windows to `C:\Program Files`. Note, however, that this can complicate uninstallation. The following example avoids this by isolating an installation under `$HOME/neovim`:
+For Unix-like systems this installs Neovim to `/usr/local`, while for Windows to `C:/Program Files`. Note, however, that this can complicate uninstallation. The following example avoids this by isolating an installation under `$HOME/neovim`:
 ```bash
 rm -r build/  # clear the CMake cache
 make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$HOME/neovim"

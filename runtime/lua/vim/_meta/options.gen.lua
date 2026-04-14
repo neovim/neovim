@@ -1203,8 +1203,16 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    'ignorecase' is set without 'infercase'.
 --- 	    See also `preinserted()`.
 ---
----    preselect   Selects the first completion item whose "preselect"
---- 	    field is set, if any. Takes precedence over "noselect".
+---    preselect
+--- 	    When one of `complete-items` has its "preselect" field set
+--- 	    (e.g., as indicated by an LSP server), select the first
+--- 	    such item in the `popupmenu-completion`. Takes precedence
+--- 	    over "noselect".
+---
+--- 	    Unlike the implicit selection behavior (when "noselect" is
+--- 	    not set), this preserves the original sort order and
+--- 	    navigates to the preselect item rather than always
+--- 	    selecting the first item.
 ---
 ---    preview  Show extra information about the currently selected
 --- 	    completion in the preview window.  Only works in

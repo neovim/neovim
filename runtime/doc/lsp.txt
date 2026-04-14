@@ -689,8 +689,8 @@ EVENTS                                                            *lsp-events*
 
 LspAttach                                                          *LspAttach*
     After an LSP client performs "initialize" and attaches to a buffer. The
-    |autocmd-pattern| is the buffer name. The client ID is passed in the
-    Lua handler |event-data| argument. See `vim.event.lspattach.data`.
+    |autocmd-pattern| is the buffer name. The |event-data| (type:
+    `vim.event.lspattach.data`) has the client ID.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspAttach', {
@@ -722,8 +722,8 @@ LspAttach                                                          *LspAttach*
 
 LspDetach                                                          *LspDetach*
     Just before an LSP client detaches from a buffer. The |autocmd-pattern| is
-    the buffer name. The client ID is passed in the Lua handler |event-data|
-    argument. See `vim.event.lspdetach.data`.
+    the buffer name. The |event-data| (type: `vim.event.lspdetach.data`) has
+    the client ID.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspDetach', {
@@ -746,8 +746,8 @@ LspNotify                                                          *LspNotify*
     This event is triggered after each successful notification sent to an
     LSP server.
 
-    The client_id, LSP method, and parameters are sent in the Lua handler
-    |event-data| table argument. See `vim.event.lspnotify.data`.
+    The |event-data| (type: `vim.event.lspnotify.data`) has the client_id, LSP
+    method, and parameters.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspNotify', {
@@ -773,9 +773,9 @@ LspProgress                                                       *LspProgress*
     If the server sends a "work done progress", the `pattern` is set to `kind`
     (one of `begin`, `report` or `end`).
 
-    The Lua handler |event-data| argument has `client_id` and `params`
-    properties, where `params` is the request params sent by the server (see
-    `lsp.ProgressParams`). See `vim.event.lspprogress.data`.
+    The |event-data| (type: `vim.event.lspprogress.data`) has `client_id` and
+    `params` properties, where `params` is the request params sent by the
+    server (see `lsp.ProgressParams`).
 
     Examples:
 
@@ -810,11 +810,10 @@ LspRequest                                                        *LspRequest*
     is requested using `client.cancel_request(request_id)`, then this event
     will trigger with {type} == `cancel`.
 
-    The Lua handler |event-data| argument has the client ID, request ID, and
-    request (described at |vim.lsp.Client|, {requests} field). If the request
-    type is `complete`, the request will be deleted from the client's pending
-    requests table after processing the event handlers.
-    See `vim.event.lsprequest.data`.
+    The |event-data| (type: `vim.event.lsprequest.data`) has the client ID,
+    request ID, and request (described at |vim.lsp.Client|, {requests} field).
+    If the request type is `complete`, the request will be deleted from the
+    client's pending requests table after processing the event handlers.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspRequest', {
@@ -841,9 +840,9 @@ LspRequest                                                        *LspRequest*
 LspTokenUpdate                                                *LspTokenUpdate*
     When a visible semantic token is sent or updated by the LSP server, or
     when an existing token becomes visible for the first time. The
-    |autocmd-pattern| is the buffer name. The Lua handler |event-data|
-    argument has the client ID and token (see
-    |vim.lsp.semantic_tokens.get_at_pos()|). See `vim.event.lsptokenupdate.data`.
+    |autocmd-pattern| is the buffer name. The |event-data| (type:
+    `vim.event.lsptokenupdate.data`) has the client ID and token (see
+    |vim.lsp.semantic_tokens.get_at_pos()|).
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspTokenUpdate', {
@@ -1833,6 +1832,17 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                Function receives a `dispatchers` table and the
                                resolved `config`, and must return an object in
                                the form of |vim.lsp.rpc.Client|.
+
+                               Example (list): >lua
+                                   cmd = { 'flow', 'lsp' }
+<
+
+                               Example (function): >lua
+                                   cmd = function(dispatchers, config)
+                                     local cmd = vim.fn.executable('flow') == 1 and { 'flow', 'lsp' } or { 'npx', '--no-install', 'flow', 'lsp' }
+                                     return vim.lsp.rpc.start(cmd, dispatchers)
+                                   end
+<
                                • See |vim.lsp.rpc.request()|
                                  |vim.lsp.rpc.notify()|
                                • For TCP there is a builtin RPC client

@@ -1879,16 +1879,14 @@ function vim.api.nvim_open_term(buf, opts) end
 --- - win: `window-ID` target window. Can be in a different tab page. Determines the window to
 ---     split (negative values act like `:topleft`, `:botright`), the relative window for a
 ---     `relative="win"` float, or just the target tab page (inferred from the window) for others.
---- - zindex: Stacking order. floats with higher `zindex` go on top on
----             floats with lower indices. Must be larger than zero. The
----             following screen elements have hard-coded z-indices:
----     - 100: insert completion popupmenu
----     - 200: message scrollback
----     - 250: cmdline completion popupmenu (when wildoptions+=pum)
----   The default value for floats are 50.  In general, values below 100 are
----   recommended, unless there is a good reason to overshadow builtin
----   elements. The cursor is dimmed if an unfocused float above the cursor
----   exceeds the zindex of the current window by 50.
+--- - zindex: (positive integer, default: 50) Stacking order. Floats with higher `zindex` overlay
+---   floats with lower indices. Below 100 is recommended, unless there is a good reason to
+---   overshadow builtin elements. The cursor is dimmed if an unfocused float above the cursor
+---   exceeds the zindex of the current window by 50. These screen elements have hard-coded
+---   z-indices:
+---     - 100: `ins-completion-menu` popupmenu
+---     - 200: message scrollback (`pager`)
+---     - 250: `cmdline-completion` popupmenu (wildoptions=pum)
 --- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
 ---   popupmenu to this window, with an offset in screen cell width.
 --- @return integer # |window-ID|, or 0 on error

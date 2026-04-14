@@ -226,16 +226,17 @@ autocommands, this doesn't happen.
 You can use the 'eventignore' option to ignore a number of events or all
 events.
 
-Events that provide |event-data| have a matching `vim.event.<name>.data` type
-defined in `runtime/lua/vim/_meta/events.lua`. You can use @cast to narrow
-`ev.data` for type-checking and completion: >lua
+							*event-data-types*
+Events that provide |event-data| have a corresponding `vim.event.<name>.data`
+type defined in `runtime/lua/vim/_meta/events.lua`. If you have Lua LSP
+enabled, you can annotate your handler to get type-checking and completion: >lua
 
-	vim.api.nvim_create_autocmd('LspAttach', {
-	  callback = function(ev)
-	    ---@cast ev {data: vim.event.lspattach.data}
-	    local client = vim.lsp.get_client_by_id(ev.data.client_id)
-	  end,
-	})
+    vim.api.nvim_create_autocmd('LspAttach', {
+      ---@param ev {data: vim.event.lspattach.data}
+      callback = function(ev)
+        local client = vim.lsp.get_client_by_id(ev.data.client_id)
+      end,
+    })
 <
 							*events* *{event}*
 Nvim recognizes the following events.  Names are case-insensitive.
@@ -248,6 +249,7 @@ BufAdd				After adding a new buffer or existing unlisted
 				Before |BufEnter|.
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
+
 							*BufDelete*
 BufDelete			Before deleting a buffer from the buffer list.
 				The BufUnload may be called first (if the
@@ -257,6 +259,7 @@ BufDelete			Before deleting a buffer from the buffer list.
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
 				Do not change to another buffer.
+
 							*BufEnter*
 BufEnter			After entering (visiting, switching-to) a new
 				or existing buffer. Useful for setting
@@ -264,12 +267,15 @@ BufEnter			After entering (visiting, switching-to) a new
 				does not trigger for existing buffers.
 				After |BufAdd|.
 				After |BufReadPost|.
+
 							*BufFilePost*
 BufFilePost			After changing the name of the current buffer
 				with the ":file" or ":saveas" command.
+
 							*BufFilePre*
 BufFilePre			Before changing the name of the current buffer
 				with the ":file" or ":saveas" command.
+
 							*BufHidden*
 BufHidden			Before a buffer becomes hidden: when there are
 				no longer windows that show the buffer, but
@@ -278,15 +284,18 @@ BufHidden			Before a buffer becomes hidden: when there are
 				Not used for ":qa" or ":q" when exiting Vim.
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
+
 							*BufLeave*
 BufLeave			Before leaving to another buffer.  Also when
 				leaving or closing the current window and the
 				new current window is not for the same buffer.
 
 				Not used for ":qa" or ":q" when exiting Vim.
+
 							*BufModifiedSet*
 BufModifiedSet			After the `'modified'` value of a buffer has
 				been changed. Special-case of |OptionSet|.
+
 							*BufNew*
 BufNew				After creating a new buffer (except during
 				startup, see |VimEnter|) or renaming an
@@ -296,10 +305,12 @@ BufNew				After creating a new buffer (except during
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
 				See also |BufAdd|, |BufNewFile|.
+
 							*BufNewFile*
 BufNewFile			When starting to edit a file that doesn't
 				exist.  Can be used to read in a skeleton
 				file.
+
 						*BufRead* *BufReadPost*
 BufRead or BufReadPost		When starting to edit a new buffer, after
 				reading the file into the buffer, before
@@ -314,13 +325,16 @@ BufRead or BufReadPost		When starting to edit a new buffer, after
 				Not triggered:
 				- for the `:read file` command
 				- when the file doesn't exist
+
 							*BufReadCmd*
 BufReadCmd			Before starting to edit a new buffer.  Should
 				read the file into the buffer. |Cmd-event|
+
 						*BufReadPre* *E200* *E201*
 BufReadPre			When starting to edit a new buffer, before
 				reading the file into the buffer.  Not used
 				if the file doesn't exist.
+
 							*BufUnload*
 BufUnload			Before unloading a buffer, when the text in
 				the buffer is going to be freed.
@@ -334,6 +348,7 @@ BufUnload			Before unloading a buffer, when the text in
 				Do not switch buffers or windows!
 				Not triggered when exiting and v:dying is 2 or
 				more.
+
 							*BufWinEnter*
 BufWinEnter			After a buffer is displayed in a window.  This
 				may be when the buffer is loaded (after
@@ -345,6 +360,7 @@ BufWinEnter			After a buffer is displayed in a window.  This
 				with a file already open in a window.
 				Triggered for ":split" with the name of the
 				current buffer, since it reloads that buffer.
+
 							*BufWinLeave*
 BufWinLeave			Before a buffer is removed from a window.
 				Not when it's still visible in another window.
@@ -354,6 +370,7 @@ BufWinLeave			Before a buffer is removed from a window.
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
 				Not triggered when exiting and v:dying is 2 or
 				more.
+
 							*BufWipeout*
 BufWipeout			Before completely deleting a buffer.  The
 				BufUnload and BufDelete events may be called
@@ -364,8 +381,10 @@ BufWipeout			Before completely deleting a buffer.  The
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
 				Do not change to another buffer.
+
 						*BufWrite* *BufWritePre*
 BufWrite or BufWritePre		Before writing the whole buffer to a file.
+
 							*BufWriteCmd*
 BufWriteCmd			Before writing the whole buffer to a file.
 				Should do the writing of the file and reset
@@ -377,9 +396,11 @@ BufWriteCmd			Before writing the whole buffer to a file.
 				states as 'modified', like |:write| does.  Use
 				the |'[| and |']| marks for the range of lines.
 				|Cmd-event|
+
 							*BufWritePost*
 BufWritePost			After writing the whole buffer to a file
 				(should undo the commands for BufWritePre).
+
 							*ChanInfo*
 ChanInfo			State of channel changed, for instance the
 				client of a RPC channel described itself.
@@ -387,30 +408,21 @@ ChanInfo			State of channel changed, for instance the
 				autocommand defined without |autocmd-nested|.
 				Sets these |v:event| keys:
 				    info	as from |nvim_get_chan_info()|
+
 							*ChanOpen*
 ChanOpen			Just after a channel was opened.
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
 				Sets these |v:event| keys:
 				    info	as from |nvim_get_chan_info()|
-							*CmdUndefined*
-CmdUndefined			When a user command is used but it isn't
-				defined.  Useful for defining a command only
-				when it's used.  The pattern is matched
-				against the command name.  Both <amatch> and
-				<afile> expand to the command name.
-				This is triggered even when inside an
-				autocommand defined without |autocmd-nested|.
-				NOTE: Autocompletion won't work until the
-				command is defined.  An alternative is to
-				always define the user command and have it
-				invoke an autoloaded function.  See |autoload|.
+
 							*CmdlineChanged*
 CmdlineChanged			After EVERY change inside command line. Also
 				triggered during mappings! Use |<Cmd>| instead
 				of ":" in mappings, to avoid that.
 
 				<afile> expands to the |cmdline-char|.
+
 							*CmdlineEnter*
 CmdlineEnter			After entering the command-line (including
 				non-interactive use of ":" in a mapping: use
@@ -420,6 +432,7 @@ CmdlineEnter			After entering the command-line (including
 				Sets these |v:event| keys:
 				    cmdlevel
 				    cmdtype
+
 							*CmdlineLeave*
 CmdlineLeave			Before leaving the command-line (including
 				non-interactive use of ":" in a mapping: use
@@ -434,6 +447,7 @@ CmdlineLeave			Before leaving the command-line (including
 				Note: `abort` can only be changed from false
 				to true: cannot execute an already aborted
 				cmdline by changing it to false.
+
 							*CmdlineLeavePre*
 CmdlineLeavePre			Just before leaving the command line, and
 				before |CmdlineLeave|.  Useful for capturing
@@ -445,6 +459,20 @@ CmdlineLeavePre			Just before leaving the command line, and
 				abandoning the command line by typing CTRL-C
 				or <Esc>.  <afile> is set to |cmdline-char|.
 				Sets |v:char| as with |CmdlineLeave|.
+
+							*CmdUndefined*
+CmdUndefined			When a user command is used but it isn't
+				defined.  Useful for defining a command only
+				when it's used.  The pattern is matched
+				against the command name.  Both <amatch> and
+				<afile> expand to the command name.
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
+				NOTE: Autocompletion won't work until the
+				command is defined.  An alternative is to
+				always define the user command and have it
+				invoke an autoloaded function.  See |autoload|.
+
 							*CmdwinEnter*
 CmdwinEnter			After entering the command-line window.
 				Useful for setting options specifically for
@@ -452,6 +480,7 @@ CmdwinEnter			After entering the command-line window.
 				<afile> expands to a single character,
 				indicating the type of command-line.
 				|cmdwin-char|
+
 							*CmdwinLeave*
 CmdwinLeave			Before leaving the command-line window.
 				Useful to clean up any global setting done
@@ -459,6 +488,7 @@ CmdwinLeave			Before leaving the command-line window.
 				<afile> expands to a single character,
 				indicating the type of command-line.
 				|cmdwin-char|
+
 							*ColorScheme*
 ColorScheme			After loading a color scheme. |:colorscheme|
 				Not triggered if the color scheme is not
@@ -495,13 +525,6 @@ CompleteChanged						*CompleteChanged*
 				The size and position of the popup are also
 				available by calling |pum_getpos()|.
 
-							*CompleteDonePre*
-CompleteDonePre			After Insert mode completion is done.  Either
-				when something was completed or discarded.
-				|ins-completion|
-				|complete_info()| is valid during this event.
-				|v:completed_item| gives the completed item.
-
 							*CompleteDone*
 CompleteDone			After Insert mode completion is done.  Either
 				when something was completed or discarded.
@@ -525,6 +548,13 @@ CompleteDone			After Insert mode completion is done.  Either
 						  stopped by |complete_CTRL-E|.
 						- "discard": completion was
 						  abandoned for other reason.
+
+							*CompleteDonePre*
+CompleteDonePre			After Insert mode completion is done.  Either
+				when something was completed or discarded.
+				|ins-completion|
+				|complete_info()| is valid during this event.
+				|v:completed_item| gives the completed item.
 
 							*CursorHold*
 CursorHold			When there is no user input for 'updatetime'
@@ -561,20 +591,24 @@ CursorMoved			After the cursor was moved in Normal or Visual
 				Careful: This is triggered very often, don't
 				do anything that the user does not expect or
 				that is slow.
+
 							*CursorMovedC*
 CursorMovedC			After the cursor was moved in the command
 				line.  Be careful not to mess up the command
 				line, it may cause Vim to lock up.
 				<afile> expands to the |cmdline-char|.
+
 							*CursorMovedI*
 CursorMovedI			After the cursor was moved in Insert mode.
 				Not triggered when the popup menu is visible.
 				Otherwise the same as CursorMoved.
+
 							*DiffUpdated*
 DiffUpdated			After diffs have been updated.  Depending on
 				what kind of diff is being used (internal or
 				external) this can be triggered on every
 				change or when doing |:diffupdate|.
+
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.
 				The pattern can be:
@@ -589,6 +623,7 @@ DirChanged			After the |current-directory| was changed.
 				                    switching window (or tab)
 				<afile> is set to the new directory name.
 				Non-recursive (event cannot trigger itself).
+
 							*DirChangedPre*
 DirChangedPre			When the |current-directory| is going to be
 				changed, as with |DirChanged|.
@@ -600,6 +635,7 @@ DirChangedPre			When the |current-directory| is going to be
 				                    switching window (or tab)
 				<afile> is set to the new directory name.
 				Non-recursive (event cannot trigger itself).
+
 							*ExitPre*
 ExitPre				When using `:quit`, `:wq` in a way it makes
 				Vim exit, or using `:qall`, just after
@@ -609,15 +645,19 @@ ExitPre				When using `:quit`, `:wq` in a way it makes
 				isn't automatically saved, use |VimLeavePre|
 				for really exiting.
 				See also |QuitPre|, |WinClosed|.
+
 							*FileAppendCmd*
 FileAppendCmd			Before appending to a file.  Should do the
 				appending to the file.  Use the '[ and ']
 				marks for the range of lines. |Cmd-event|
+
 							*FileAppendPost*
 FileAppendPost			After appending to a file.
+
 							*FileAppendPre*
 FileAppendPre			Before appending to a file.  Use the '[ and ']
 				marks for the range of lines.
+
 							*FileChangedRO*
 FileChangedRO			Before making the first change to a read-only
 				file.  Can be used to checkout the file from
@@ -635,6 +675,7 @@ FileChangedRO			Before making the first change to a read-only
 							*E881*
 				If the number of lines changes saving for undo
 				may fail and the change will be aborted.
+
 							*FileChangedShell*
 FileChangedShell		When Vim notices that the modification time of
 				a file has changed since editing started.
@@ -657,19 +698,24 @@ FileChangedShell		When Vim notices that the modification time of
 							*E246* *E811*
 				Cannot switch, jump to or delete buffers.
 				Non-recursive (event cannot trigger itself).
+
 							*FileChangedShellPost*
 FileChangedShellPost		After handling a file that was changed outside
 				of Vim.  Can be used to update the statusline.
+
 							*FileReadCmd*
 FileReadCmd			Before reading a file with a ":read" command.
 				Should do the reading of the file. |Cmd-event|
+
 							*FileReadPost*
 FileReadPost			After reading a file with a ":read" command.
 				Note that Vim sets the '[ and '] marks to the
 				first and last line of the read.  This can be
 				used to operate on the lines just read.
+
 							*FileReadPre*
 FileReadPre			Before reading a file with a ":read" command.
+
 							*FileType*
 FileType			When the 'filetype' option has been set.  The
 				pattern is matched against the filetype.
@@ -678,24 +724,29 @@ FileType			When the 'filetype' option has been set.  The
 				'filetype'.
 				Cannot switch windows or buffers.
 				See |filetypes|.
+
 							*FileWriteCmd*
 FileWriteCmd			Before writing to a file, when not writing the
 				whole buffer.  Should do the writing to the
 				file.  Should not change the buffer.  Use the
 				|'[| and |']| marks for the range of lines.
 				|Cmd-event|
+
 							*FileWritePost*
 FileWritePost			After writing to a file, when not writing the
 				whole buffer.
+
 							*FileWritePre*
 FileWritePre			Before writing to a file, when not writing the
 				whole buffer.  Use the |'[| and |']| marks for the
 				range of lines.
+
 							*FilterReadPost*
 FilterReadPost			After reading a file from a filter command.
 				Vim checks the pattern against the name of
 				the current buffer as with FilterReadPre.
 				Not triggered when 'shelltemp' is off.
+
 							*FilterReadPre* *E135*
 FilterReadPre			Before reading a file from a filter command.
 				Vim checks the pattern against the name of
@@ -703,6 +754,7 @@ FilterReadPre			Before reading a file from a filter command.
 				temporary file that is the output of the
 				filter command.
 				Not triggered when 'shelltemp' is off.
+
 							*FilterWritePost*
 FilterWritePost			After writing a file for a filter command or
 				making a diff with an external diff (see
@@ -710,6 +762,7 @@ FilterWritePost			After writing a file for a filter command or
 				Vim checks the pattern against the name of
 				the current buffer as with FilterWritePre.
 				Not triggered when 'shelltemp' is off.
+
 							*FilterWritePre*
 FilterWritePre			Before writing a file for a filter command or
 				making a diff with an external diff.
@@ -718,11 +771,14 @@ FilterWritePre			Before writing a file for a filter command or
 				temporary file that is the output of the
 				filter command.
 				Not triggered when 'shelltemp' is off.
+
 							*FocusGained*
 FocusGained			Nvim got focus.
+
 							*FocusLost*
 FocusLost			Nvim lost focus.  Also (potentially) when
 				a GUI dialog pops up.
+
 							*FuncUndefined*
 FuncUndefined			When a user function is used but it isn't
 				defined.  Useful for defining a function only
@@ -734,22 +790,14 @@ FuncUndefined			When a user function is used but it isn't
 				NOTE: When writing Vim scripts a better
 				alternative is to use an autoloaded function.
 				See |autoload-functions|.
-							*UIEnter*
-UIEnter				After a UI connects via |nvim_ui_attach()|, or
-				after builtin TUI is started, after |VimEnter|.
-				Sets these |v:event| keys:
-				    chan: |channel-id| of the UI
-							*UILeave*
-UILeave				After a UI disconnects from Nvim, or after
-				builtin TUI is stopped, after |VimLeave|.
-				Sets these |v:event| keys:
-				    chan: |channel-id| of the UI
+
 							*InsertChange*
 InsertChange			When typing <Insert> while in Insert or
 				Replace mode.  The |v:insertmode| variable
 				indicates the new mode.
 				Be careful not to move the cursor or do
 				anything else that the user does not expect.
+
 							*InsertCharPre*
 InsertCharPre			When a character is typed in Insert mode,
 				before inserting the char.
@@ -760,6 +808,7 @@ InsertCharPre			When a character is typed in Insert mode,
 				inserted literally.
 
 				Cannot change the text. |textlock|
+
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The
@@ -769,20 +818,24 @@ InsertEnter			Just before starting Insert mode.  Also for
 				The cursor is restored afterwards.  If you do
 				not want that set |v:char| to a non-empty
 				string.
+
 							*InsertLeavePre*
 InsertLeavePre			Just before leaving Insert mode.  Also when
 				using CTRL-O |i_CTRL-O|.  Be careful not to
 				change mode or use `:normal`, it will likely
 				cause trouble.
+
 							*InsertLeave*
 InsertLeave			Just after leaving Insert mode.  Also when
 				using CTRL-O |i_CTRL-O|.  But not for |i_CTRL-C|.
+
 LspAttach			See |LspAttach|
 LspDetach			See |LspDetach|
 LspNotify			See |LspNotify|
 LspProgress			See |LspProgress|
 LspRequest			See |LspRequest|
 LspTokenUpdate			See |LspTokenUpdate|
+
 							*MarkSet*
 MarkSet				After a |mark| is set by |m|, |:mark|, and
 				|nvim_buf_set_mark()|. Supports `[a-zA-Z]`
@@ -795,7 +848,6 @@ MarkSet				After a |mark| is set by |m|, |:mark|, and
 				- name: Mark name (e.g. "a")
 				- line: Mark line.
 				- col: Mark column.
-				See `vim.event.markset.data`.
 
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
@@ -810,6 +862,7 @@ MenuPopup			Just before showing the popup menu (under the
 					i	Insert
 					c	Command line
 					tl	Terminal
+
 							*ModeChanged*
 ModeChanged			After changing the mode.  The pattern is
 				matched against `'old_mode:new_mode'`, for
@@ -826,37 +879,12 @@ ModeChanged			After changing the mode.  The pattern is
 				This will be triggered on every minor mode
 				change.
 				Usage example to use relative line numbers
-				when entering visual mode: >
+				when entering visual mode: >vim
 		:au ModeChanged [vV\x16]*:* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au ModeChanged *:[vV\x16]* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au WinEnter,WinLeave * let &l:rnu = mode() =~# '^[vV\x16]'
-Progress						*Progress*
-				After a |progress-message| is created or updated via
-				`nvim_echo`. The pattern is matched against
-				`source` of the message. The |event-data| contains:
-					id: id of the message
-					text: text of the message
-					title: title of the progress message
-					source: source of the progress message
-					status: status of the progress message
-					percent: how much progress has been
-						 made for this progress item
-					data: arbitaray data sent with
-					progress message
-				See `vim.event.progress.data`.
-				Usage example:
->lua
-		vim.api.nvim_create_autocmd('Progress', {
-		  pattern={'term'},
-		  callback = function(ev)
-		    print(string.format('event fired: %s', vim.inspect(ev)))
-		  end
-		})
-		local id = vim.api.nvim_echo({{'searching...'}}, true, {kind='progress', status='running', percent=10, title='term', source='search'})
-		vim.api.nvim_echo({{'searching'}}, true, {id = id, kind='progress', status='running', percent=50, title='term', source='search'})
-		vim.api.nvim_echo({{'done'}}, true, {id = id, kind='progress', status='success', percent=100, title='term', source='search'})
-
-<							*OptionSet*
+<
+							*OptionSet*
 OptionSet			After setting an option (except during
 				|startup|).  The |autocmd-pattern| is matched
 				against the long option name.  |<amatch>|
@@ -905,6 +933,36 @@ OptionSet			After setting an option (except during
 
 				Not triggered on startup.
 
+PackChangedPre			See |PackChangedPre|
+PackChanged			See |PackChanged|
+
+Progress						*Progress*
+				After a |progress-message| is created or updated via
+				`nvim_echo`. The pattern is matched against
+				`source` of the message.
+
+				The |event-data| has these keys (type: `vim.event.progress.data`):
+				- id: id of the message
+				- text: text of the message
+				- title: title of the progress message
+				- source: source of the progress message
+				- status: status of the progress message
+				- percent: how much progress has been made
+				- data: arbitrary data sent with the message
+
+				Usage example:
+>lua
+		vim.api.nvim_create_autocmd('Progress', {
+		  pattern={'term'},
+		  callback = function(ev)
+		    print(string.format('event fired: %s', vim.inspect(ev)))
+		  end
+		})
+		local id = vim.api.nvim_echo({{'searching...'}}, true, {kind='progress', status='running', percent=10, title='term', source='search'})
+		vim.api.nvim_echo({{'searching'}}, true, {id = id, kind='progress', status='running', percent=50, title='term', source='search'})
+		vim.api.nvim_echo({{'done'}}, true, {id = id, kind='progress', status='success', percent=100, title='term', source='search'})
+
+<
 							*QuickFixCmdPre*
 QuickFixCmdPre			Before a quickfix command is run (|:make|,
 				|:lmake|, |:grep|, |:lgrep|, |:grepadd|,
@@ -922,6 +980,7 @@ QuickFixCmdPre			Before a quickfix command is run (|:make|,
 				'makeprg' and 'grepprg' variables.
 				If this command causes an error, the quickfix
 				command is not executed.
+
 							*QuickFixCmdPost*
 QuickFixCmdPost			Like QuickFixCmdPre, but after a quickfix
 				command is run, before jumping to the first
@@ -929,6 +988,7 @@ QuickFixCmdPost			Like QuickFixCmdPre, but after a quickfix
 				it is run after the error file is read and
 				before moving to the first error.
 				See |QuickFixCmdPost-example|.
+
 							*QuitPre*
 QuitPre				When using `:quit`, `:wq` or `:qall`, before
 				deciding whether it closes the current window
@@ -937,25 +997,13 @@ QuitPre				When using `:quit`, `:wq` or `:qall`, before
 				close any non-essential window if the current
 				window is the last ordinary window.
 				See also |ExitPre|, |WinClosed|.
-							*RemoteReply*
-RemoteReply			When a reply from a Vim that functions as
-				server was received server2client().  The
-				pattern is matched against the {serverid}.
-				<amatch> is equal to the {serverid} from which
-				the reply was sent, and <afile> is the actual
-				reply string.
-				Note that even if an autocommand is defined,
-				the reply should be read with remote_read()
-				to consume it.
-							*SearchWrapped*
-SearchWrapped			After making a search with |n| or |N| if the
-				search wraps around the document back to
-				the start/finish respectively.
+
 							*RecordingEnter*
 RecordingEnter			When a macro starts recording.
 				The pattern is the current file name, and
 				|reg_recording()| is the current register that
 				is used.
+
 							*RecordingLeave*
 RecordingLeave			When a macro stops recording.
 				The pattern is the current file name, and
@@ -966,6 +1014,18 @@ RecordingLeave			When a macro stops recording.
 				Sets these |v:event| keys:
 				    regcontents
 				    regname
+
+							*RemoteReply*
+RemoteReply			When a reply from a Vim that functions as
+				server was received server2client().  The
+				pattern is matched against the {serverid}.
+				<amatch> is equal to the {serverid} from which
+				the reply was sent, and <afile> is the actual
+				reply string.
+				Note that even if an autocommand is defined,
+				the reply should be read with remote_read()
+				to consume it.
+
 							*SafeState*
 SafeState			When nothing is pending, going to wait for the
 				user to type a character.
@@ -987,21 +1047,35 @@ SafeState			When nothing is pending, going to wait for the
 				check more with `state()`, e.g. whether the
 				screen was scrolled for messages.
 
+							*SearchWrapped*
+SearchWrapped			After making a search with |n| or |N| if the
+				search wraps around the document back to
+				the start/finish respectively.
+
 							*SessionLoadPre*
 SessionLoadPre			Before loading the session file created using
 				the |:mksession| command.
+
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
+
 							*SessionWritePost*
 SessionWritePost		After writing a session file by calling
 				the |:mksession| command.
+
 							*ShellCmdPost*
 ShellCmdPost			After executing a shell command with |:!cmd|,
 				|:make| and |:grep|.  Can be used to check for
 				any changed files.
 				For non-blocking shell commands, see
 				|job-control|.
+
+							*ShellFilterPost*
+ShellFilterPost			After executing a shell command with
+				":{range}!cmd", ":w !cmd" or ":r !cmd".
+				Can be used to check for any changed files.
+
 							*Signal*
 Signal				After Nvim receives a signal. The pattern is
 				matched against the signal name. Only
@@ -1010,36 +1084,39 @@ Signal				After Nvim receives a signal. The pattern is
 				autocommand defined without |autocmd-nested|.
 				Example: >vim
 				    autocmd Signal SIGUSR1 call some#func()
-<							*ShellFilterPost*
-ShellFilterPost			After executing a shell command with
-				":{range}!cmd", ":w !cmd" or ":r !cmd".
-				Can be used to check for any changed files.
+
+<							*SourceCmd*
+SourceCmd			When sourcing a Vimscript/Lua file. |:source|
+				<afile> is the name of the file being sourced.
+				The autocommand must source that file.
+				|Cmd-event|
+
 							*SourcePre*
 SourcePre			Before sourcing a Vimscript/Lua file. |:source|
 				<afile> is the name of the file being sourced.
+
 							*SourcePost*
 SourcePost			After sourcing a Vimscript/Lua file. |:source|
 				<afile> is the name of the file being sourced.
 				Not triggered when sourcing was interrupted.
 				Also triggered after a SourceCmd autocommand
 				was triggered.
-							*SourceCmd*
-SourceCmd			When sourcing a Vimscript/Lua file. |:source|
-				<afile> is the name of the file being sourced.
-				The autocommand must source that file.
-				|Cmd-event|
+
 							*SpellFileMissing*
 SpellFileMissing		When trying to load a spell checking file and
 				it can't be found.  The pattern is matched
 				against the language.  <amatch> is the
 				language, 'encoding' also matters.  See
 				|spell-SpellFileMissing|.
+
 							*StdinReadPost*
 StdinReadPost			During startup, after reading from stdin into
 				the buffer, before executing modelines. |--|
+
 							*StdinReadPre*
 StdinReadPre			During startup, before reading from stdin into
 				the buffer. |--|
+
 							*SwapExists*
 SwapExists			Detected an existing swap file when starting
 				to edit a file.  Only when it is possible to
@@ -1063,6 +1140,7 @@ SwapExists			Detected an existing swap file when starting
 							*E812*
 				Cannot change to another buffer, change
 				the buffer name or change directory.
+
 							*Syntax*
 Syntax				When the 'syntax' option has been set.  The
 				pattern is matched against the syntax name.
@@ -1070,68 +1148,75 @@ Syntax				When the 'syntax' option has been set.  The
 				this option was set. <amatch> expands to the
 				new value of 'syntax'.
 				See |:syn-on|.
+
 							*TabClosed*
 TabClosed			After closing a tab page. <afile> expands to
 				the tab page number.
+
 							*TabClosedPre*
 TabClosedPre			Before closing a tab page.  The window layout
 				is locked, thus opening and closing of windows
 				is prohibited.
+
 							*TabEnter*
 TabEnter			Just after entering a tab page. |tab-page|
 				After WinEnter.
 				Before BufEnter.
+
 							*TabLeave*
 TabLeave			Just before leaving a tab page. |tab-page|
 				After WinLeave.
+
 							*TabNew*
 TabNew				When creating a new tab page. |tab-page|
 				After WinEnter.
 				Before TabEnter.
+
 							*TabNewEntered*
 TabNewEntered			After entering a new tab page. |tab-page|
 				After BufEnter.
+
+							*TermClose*
+TermClose			When a |terminal| job ends.
+				Sets these |v:event| keys:
+				    status	job exit status, or -1 if the
+						terminal buffer is deleted
+
+							*TermEnter*
+TermEnter			After entering |Terminal-mode|.
+				After TermOpen.
+
+							*TermLeave*
+TermLeave			After leaving |Terminal-mode|.
+				After TermClose.
+
 							*TermOpen*
 TermOpen			When a |terminal| job is starting.  Can be
 				used to configure the terminal buffer. To get
 				the terminal process details: >lua
 				    vim.print(vim.api.nvim_get_chan_info(vim.bo.channel))
 <
-							*TermEnter*
-TermEnter			After entering |Terminal-mode|.
-				After TermOpen.
-							*TermLeave*
-TermLeave			After leaving |Terminal-mode|.
-				After TermClose.
-							*TermClose*
-TermClose			When a |terminal| job ends.
-				Sets these |v:event| keys:
-				    status	job exit status, or -1 if the
-						terminal buffer is deleted
 							*TermRequest*
 TermRequest			When a |:terminal| child process emits an OSC,
-				DCS, or APC sequence. Sets |v:termrequest|. The
-				|event-data| is a table with the following
-				fields:
+				DCS, or APC sequence. Sets |v:termrequest|.
 
+				The |event-data| has these keys (type: `vim.event.termrequest.data`):
 				- sequence: the received sequence
 				- terminator: the received sequence terminator (i.e. BEL or ST)
 				- cursor: (1,0)-indexed, buffer-relative
 				  position of the cursor when the sequence was
 				  received (line number may be <= 0 if the
 				  position is no longer in the buffer)
-				See `vim.event.termrequest.data`.
 
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
 
 							*TermResponse*
 TermResponse			When Nvim receives a DA1, OSC, DCS, or APC response from
-				the host terminal. Sets |v:termresponse|. The
-				|event-data| is a table with the following fields:
+				the host terminal. Sets |v:termresponse|.
 
+				The |event-data| has these keys (type: `vim.event.termresponse.data`):
 				- sequence: the received sequence
-				See `vim.event.termresponse.data`.
 
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
@@ -1165,20 +1250,24 @@ TextChanged			After a change was made to the text in the
 				Careful: This is triggered very often, don't
 				do anything that the user does not expect or
 				that is slow.
+
 							*TextChangedI*
 TextChangedI			After a change was made to the text in the
 				current buffer in Insert mode.
 				Not triggered when the popup menu is visible.
 				Otherwise the same as TextChanged.
+
 							*TextChangedP*
 TextChangedP			After a change was made to the text in the
 				current buffer in Insert mode, only when the
 				popup menu is visible.  Otherwise the same as
 				TextChanged.
+
 							*TextChangedT*
 TextChangedT			After a change was made to the text in the
 				current buffer in |Terminal-mode|.  Otherwise
 				the same as TextChanged.
+
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
 				if the black hole register |quote_| is used nor
@@ -1196,15 +1285,30 @@ TextYankPost			Just after a |yank| or |deleting| command, but not
 
 				Non-recursive (event cannot trigger itself).
 				Cannot change the text. |textlock|
+
+							*UIEnter*
+UIEnter				After a UI connects via |nvim_ui_attach()|, or
+				after builtin TUI is started, after |VimEnter|.
+				Sets these |v:event| keys:
+				    chan: |channel-id| of the UI
+
+							*UILeave*
+UILeave				After a UI disconnects from Nvim, or after
+				builtin TUI is stopped, after |VimLeave|.
+				Sets these |v:event| keys:
+				    chan: |channel-id| of the UI
+
 							*User*
 User				Not executed automatically.  Use |:doautocmd|
 				to trigger this, typically for "custom events"
 				in a plugin.  Example: >
 				    :autocmd User MyPlugin echom 'got MyPlugin event'
 				    :doautocmd User MyPlugin
+
 <							*UserGettingBored*
 UserGettingBored		When the user presses the same key 42 times.
 				Just kidding! :-)
+
 							*VimEnter*
 VimEnter			After doing all the startup stuff, including
 				loading vimrc files, executing the "-c cmd"
@@ -1218,6 +1322,7 @@ VimEnter			After doing all the startup stuff, including
 				    else
 				      au VimEnter * call s:init()
 				    endif
+
 <							*VimLeave*
 VimLeave			Before exiting Vim, just after writing the
 				.shada file.  Executed only once, like
@@ -1225,6 +1330,7 @@ VimLeave			Before exiting Vim, just after writing the
 				Use |v:dying| to detect an abnormal exit.
 				Use |v:exiting| to get the exit code.
 				Not triggered if |v:dying| is 2 or more.
+
 							*VimLeavePre*
 VimLeavePre			Before exiting Vim, just before writing the
 				|shada| file.  Executed only once, if the
@@ -1234,14 +1340,18 @@ VimLeavePre			Before exiting Vim, just before writing the
 <				Use |v:dying| to detect an abnormal exit.
 				Use |v:exiting| to get the exit code.
 				Not triggered if |v:dying| is 2 or more.
+
 							*VimResized*
 VimResized			After the Vim window was resized, thus 'lines'
 				and/or 'columns' changed.  Not when starting
 				up though.
+
 							*VimResume*
 VimResume			After Nvim resumes from |suspend| state.
+
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
+
 							*WinClosed*
 WinClosed			When closing a window, just before it is
 				removed from the window layout.  The pattern
@@ -1250,6 +1360,7 @@ WinClosed			When closing a window, just before it is
 				After WinLeave.
 				Non-recursive (event cannot trigger itself).
 				See also |ExitPre|, |QuitPre|.
+
 							*WinEnter*
 WinEnter			After entering another window.  Not done for
 				the first window, when Vim has just started.
@@ -1268,6 +1379,7 @@ WinLeave			Before leaving a window.  If the window to be
 				WinLeave autocommands (but not for ":new").
 				Not used for ":qa" or ":q" when exiting Vim.
 				Before WinClosed.
+
 							*WinNewPre*
 WinNewPre			Before creating a new window.  Triggered
 				before commands that modify window layout by
@@ -1286,6 +1398,17 @@ WinNewPre			Before creating a new window.  Triggered
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
 				Before WinEnter.
+
+							*WinResized*
+WinResized			After a window in the current tab page changed
+				width or height.
+				See |win-scrolled-resized|.
+
+				|v:event| is set with information about size
+				changes. |WinResized-event|
+
+				Same behavior as |WinScrolled| for the
+				pattern, triggering and recursiveness.
 
 							*WinScrolled*
 WinScrolled			After any window in the current tab page
@@ -1319,18 +1442,6 @@ WinScrolled			After any window in the current tab page
 				event.  However, if the command causes a
 				window to scroll or change size, then another
 				WinScrolled event will be triggered later.
-
-
-							*WinResized*
-WinResized			After a window in the current tab page changed
-				width or height.
-				See |win-scrolled-resized|.
-
-				|v:event| is set with information about size
-				changes. |WinResized-event|
-
-				Same behavior as |WinScrolled| for the
-				pattern, triggering and recursiveness.
 
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{aupat}*
