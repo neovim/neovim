@@ -28,7 +28,7 @@ jobs:
         id: backport
         uses: korthout/backport-action@3c06f323a58619da1e8522229ebc8d5de2633e46 # v4.3.0
         with:
-          pull_title: "${pull_title}"
+          pull_title: "backport: ${pull_title}"
           label_pattern: "^ci:backport ([^ ]+)$"
           github_token: ${{ steps.app-token.outputs.token }}
 
