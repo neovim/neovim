@@ -994,7 +994,7 @@ do
         and os.getenv('NVIM_TEST') == nil
       then
         vim.notify(
-          'defaults.lua: Did not detect DSR response from terminal for `background` detection. This results in a slower startup time. To disable this and other `ttyfast` features during startup, set the environment variable `NVIM_NOTTYFAST`',
+          "defaults.lua: Did not detect DSR response from terminal for 'background' detection. This results in a slower startup time. To disable this and other 'ttyfast' features during startup, set the environment variable NVIM_NOTTYFAST",
           vim.log.levels.WARN,
           { _truncate = true }
         )
