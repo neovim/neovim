@@ -136,6 +136,8 @@ LSP
 • LSP capabilities:
   • Completion supports `CompletionItem.preselect` if 'completeopt' has
     "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
+  • `textDocument/foldingRange` |vim.lsp.foldtext()| highlights collapsed text.
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
   and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
 • Support for nested snippets.

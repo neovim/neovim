@@ -499,6 +499,29 @@ static int foldLevel(linenr_T lnum)
   ]],
       })
     end)
+
+    it('shows the foldtext by virt line', function()
+      command([[set filetype=c]])
+      eq(
+        {
+          { '  ' },
+          { 'if', { '@keyword.conditional.c' } },
+          { ' ' },
+          { '(', { '@punctuation.bracket.c' } },
+          { '!', { '@operator.c' } },
+          { 'hasAnyFolding', { '@variable.c', '@function.call.c' } },
+          { '(', { '@punctuation.bracket.c' } },
+          { 'curwin', { '@variable.c' } },
+          { ')', { '@punctuation.bracket.c' } },
+          { ')', { '@punctuation.bracket.c' } },
+          { ' ' },
+          { '{', { '@punctuation.bracket.c' } },
+        },
+        exec_lua(function()
+          return vim.lsp.foldtext(16)
+        end)
+      )
+    end)
   end)
 
   describe('foldclose()', function()

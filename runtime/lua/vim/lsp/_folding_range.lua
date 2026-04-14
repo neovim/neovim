@@ -20,6 +20,9 @@ local Capability = require('vim.lsp._capability')
 --- `TextDocument` version this `state` corresponds to.
 ---@field version? integer
 ---
+--- treesitter language of the buffer, used for foldtext highlights.
+---@field lang? string
+---
 --- Never use this directly, `evaluate()` the cached foldinfo
 --- then use on demand via `row_*` fields.
 ---
@@ -34,6 +37,9 @@ local Capability = require('vim.lsp._capability')
 ---
 --- Index in the form of start_row -> collapsed_text
 ---@field row_text table<integer, string?>
+---
+--- Index in the form of start_row -> [text, highlight[]?][]
+---@field row_virt_text table<integer, [string, string[]?][]>
 local State = {
   name = 'folding_range',
   method = 'textDocument/foldingRange',
@@ -86,6 +92,7 @@ function State:evaluate()
   self.row_level = row_level
   self.row_kinds = row_kinds
   self.row_text = row_text
+  self.row_virt_text = {}
 end
 
 --- Force `foldexpr()` to be re-evaluated, without opening folds.
@@ -182,9 +189,11 @@ function State:refresh(client)
 end
 
 function State:reset()
+  self.lang = vim.treesitter.language.get_lang(vim.bo[self.bufnr].filetype)
   self.row_level = {}
   self.row_kinds = {}
   self.row_text = {}
+  self.row_virt_text = {}
 end
 
 --- Initialize `state` and event hooks, then request folding ranges.
@@ -248,6 +257,13 @@ function State:new(bufnr)
       if vim.v.option_type == 'global' or api.nvim_get_current_buf() == bufnr then
         vim.lsp._capability.enable('folding_range', false, { bufnr = bufnr })
       end
+    end,
+  })
+  api.nvim_create_autocmd('FileType', {
+    group = self.augroup,
+    buffer = bufnr,
+    callback = function()
+      self:reset()
     end,
   })
 
@@ -321,16 +337,103 @@ function M.foldclose(kind, winid)
   end)
 end
 
----@return string
-function M.foldtext()
+--- Split `line` into highlighted virt_text chunks from `spans`.
+---
+---@param line string
+---@param spans [integer, integer, string][] [start_col, end_col, highlight]
+---@return [string, string[]?][] [text, highlight[]?][]
+local function spans_to_virt_text(line, spans)
+  local boundaries = { 0, #line }
+  for _, span in ipairs(spans) do
+    boundaries[#boundaries + 1] = span[1]
+    boundaries[#boundaries + 1] = span[2]
+  end
+  table.sort(boundaries)
+
+  local virt_text = {} ---@type [string, string[]][]
+  local last_b = -1
+  for _, b in ipairs(boundaries) do
+    if b > last_b then
+      if last_b >= 0 then
+        local start_col = last_b
+        local end_col = b
+        local text = line:sub(start_col + 1, end_col)
+        local highlight = {} ---@type string[]
+        for _, span in ipairs(spans) do
+          if span[1] <= start_col and end_col <= span[2] then
+            if highlight[#highlight] ~= span[3] then
+              highlight[#highlight + 1] = span[3]
+            end
+          end
+        end
+        if #highlight == 0 then
+          virt_text[#virt_text + 1] = { text }
+        else
+          virt_text[#virt_text + 1] = { text, highlight }
+        end
+      end
+      last_b = b
+    end
+  end
+
+  return virt_text
+end
+
+--- Return foldtext highlighted via treesitter, if available.
+---
+---@return string|[string, string[]?][]
+---@param lnum? integer
+function M.foldtext(lnum)
+  lnum = lnum or vim.v.foldstart
   local bufnr = api.nvim_get_current_buf()
-  local lnum = vim.v.foldstart
   local row = lnum - 1
   local state = State.active[bufnr]
-  if state and state.row_text[row] then
-    return state.row_text[row]
+  local lang = state and state.lang
+  local line = vim.fn.getline(lnum)
+  if not lang then
+    return line
+  end ---@cast state -nil
+
+  local virt_text = state.row_virt_text[row]
+  if virt_text then
+    return virt_text
   end
-  return vim.fn.getline(lnum)
+
+  line = state.row_text[row] or line
+  local ok, parser = pcall(function()
+    local parser = vim.treesitter.get_string_parser(line, lang)
+    parser:parse(true)
+    return parser
+  end)
+  if not ok then
+    return line
+  end
+
+  --- Collect treesitter highlight spans for the foldtext.
+  --- [start_col, end_col, highlight]
+  ---@type [integer, integer, string][]
+  local spans = {}
+  parser:for_each_tree(function(tstree, tree)
+    local query = vim.treesitter.query.get(tree:lang(), 'highlights')
+    if query then
+      for capture, node in query:iter_captures(tstree:root(), line) do
+        local name = query.captures[capture]
+        local _, start_col, _, end_col = node:range()
+        if name:match('^[^_]') then
+          spans[#spans + 1] = {
+            start_col,
+            end_col,
+            ('@%s.%s'):format(name, tree:lang()),
+          }
+        end
+      end
+    end
+  end)
+
+  virt_text = spans_to_virt_text(line, spans)
+  state.row_virt_text[row] = virt_text
+
+  return virt_text
 end
 
 ---@param lnum? integer
