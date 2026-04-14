@@ -22,6 +22,7 @@
 " 2026 Mar 08 by Vim Project: Make ZipUpdatePS() check for powershell
 " 2026 Apr 01 by Vim Project: Detect more path traversal attacks
 " 2026 Apr 05 by Vim Project: Detect more path traversal attacks
+" 2026 Apr 14 by Vim Project: Detect more path traversal attacks on Windows
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -405,7 +406,12 @@ fun! zip#Write(fname)
   else
     let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
     let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
-    " TODO: what to check on MS-Windows to avoid writing absolute paths?
+    " fname should not start with drive leter or a UNC path
+    if fname =~ '^\%(\%(\a:[\\/]\)\|[\\/]\{2}\)'
+      call s:Mess('Error', "***error*** (zip#Write) Path Traversal Attack detected, not writing!")
+      call s:ChgDir(curdir,s:WARNING,"(zip#Write) unable to return to ".curdir."!")
+      return
+    endif
   endif
   if fname =~ '^[.]\{1,2}/'
     let gnu_cmd = g:zip_zipcmd . ' -d ' . s:Escape(fnamemodify(zipfile,":p"),0) . ' ' . s:Escape(fname,0)
