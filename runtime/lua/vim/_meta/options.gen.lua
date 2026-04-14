@@ -7520,6 +7520,18 @@ vim.o.ttm = vim.o.ttimeoutlen
 vim.go.ttimeoutlen = vim.o.ttimeoutlen
 vim.go.ttm = vim.go.ttimeoutlen
 
+--- Assume that the underlying terminal can respond quickly to support
+--- features such as background detection. In slow scenarios like nvim over
+--- SSH with high latency, you may wish to disable this option during
+--- startup by setting the environment variable `NVIM_NOTTYFAST`. This
+--- allows it to take effect before executing your config.
+---
+--- @type boolean
+vim.o.ttyfast = true
+vim.o.tf = vim.o.ttyfast
+vim.go.ttyfast = vim.o.ttyfast
+vim.go.tf = vim.go.ttyfast
+
 --- List of directory names for undo files, separated with commas.
 --- See 'backupdir' for details of the format.
 --- "." means using the directory of the file.  The undo file name for

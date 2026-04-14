@@ -877,7 +877,6 @@ Options:
 - *'toolbar'* *'tb'*
 - *'toolbariconsize'* *'tbis'*
 - *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
-- *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 - *'ttymouse'* *'ttym'*
 - *'ttyscroll'* *'tsl'*
 - *'ttytype'* *'tty'*

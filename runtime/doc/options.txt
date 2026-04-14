@@ -6982,6 +6982,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
 	been typed.
 
+				*'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
+'ttyfast' 'tf'		boolean	(default on)
+			global
+	Assume that the underlying terminal can respond quickly to support
+	features such as background detection. In slow scenarios like nvim over
+	SSH with high latency, you may wish to disable this option during
+	startup by setting the environment variable `NVIM_NOTTYFAST`. This
+	allows it to take effect before executing your config.
+
 					*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_STATE_HOME/nvim/undo//")
 			global
