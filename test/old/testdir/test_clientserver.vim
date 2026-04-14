@@ -142,6 +142,7 @@ func Test_client_server()
 
     " Edit multiple files using --remote
     call system(cmd .. ' --remote Xclientfile1 Xclientfile2 Xclientfile3')
+    call WaitForAssert({-> assert_equal('3', remote_expr(name, 'argc()'))})
     call assert_match(".*Xclientfile1\n.*Xclientfile2\n.*Xclientfile3\n", remote_expr(name, 'argv()'))
     eval name->remote_send(":%bw!\<CR>")
 
