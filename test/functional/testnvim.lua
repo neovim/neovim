@@ -837,23 +837,29 @@ function M.assert_visible(bufnr, visible)
   end
 end
 
-local start_dir = uv.cwd()
+local start_dir = assert(uv.cwd())
 
 function M.rmdir(path)
   local ret, _ = pcall(vim.fs.rm, path, { recursive = true, force = true })
+  local did_cd = false
   if not ret and is_os('win') then
     -- Maybe "Permission denied"; try again after changing the nvim
     -- process to the top-level directory.
     ret, _ = pcall(function()
-      M.command([[exe 'cd '.fnameescape(']] .. start_dir .. "')")
+      M.fn.chdir(start_dir)
       vim.fs.rm(path, { recursive = true, force = true })
     end)
+    did_cd = true
   end
   -- During teardown, the nvim process may not exit quickly enough, then rmdir()
   -- will fail (on Windows).
   if not ret then -- Try again.
     sleep(1000)
     vim.fs.rm(path, { recursive = true, force = true })
+  end
+  if did_cd then
+    -- Try to restore CWD in case rmdir() is used within a test. Needs pcall: #38278
+    pcall(M.command, 'cd -')
   end
 end
 
