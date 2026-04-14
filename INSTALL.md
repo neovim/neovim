@@ -53,8 +53,27 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 
 ### Pre-built archives
 
-0. If you are missing `VCRUNTIME170.dll`, install the [Visual Studio C++ redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (choose x86_64 or x86 depending on your system).
+If you are missing `VCRUNTIME170.dll`, install the [Visual Studio C++ redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (choose x86_64 or x86 depending on your system).
     - Hint: if you have scoop, try: `scoop install vcredist`
+
+**MSI**
+
+For x86_64:
+```pwsh
+iwr -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.msi" -OutFile nvim-win64.msi
+msiexec /i nvim-win64.msi /passive
+rm nvim-win64.msi
+```
+
+For arm64:
+```pwsh
+iwr -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.msi" -OutFile nvim-win-arm64.msi
+msiexec /i nvim-win-arm64.msi /passive
+rm nvim-win-arm64.msi
+```
+
+**Zip**
+
 1. Choose a package (**nvim-winXX.zip**) from the [releases page](https://github.com/neovim/neovim/releases).
 2. Unzip the package. Any location is fine, administrator privileges are _not_ required.
     - `$VIMRUNTIME` will be set to that location automatically.
@@ -62,7 +81,7 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 
 **Optional** steps:
 
-- Add the `bin` folder (e.g. `C:\Program Files\nvim\bin`) to your PATH.
+- If Installing from a zip package, add the `bin` folder (e.g. `C:\Program Files\nvim\bin`) to your PATH.
     - This makes it easy to run `nvim` from anywhere.
 - If `:set spell` does not work, create the `%LOCALAPPDATA%/nvim-data/site/spell` folder.
   You can then copy your spell files over (for English, located
