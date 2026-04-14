@@ -413,14 +413,14 @@ describe('vim.pack', function()
   end)
 
   after_each(function()
-    vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
-    vim.fs.rm(get_lock_path(), { force = true })
+    n.rmdir(pack_get_dir())
+    pcall(vim.fs.rm, get_lock_path(), { force = true })
     local log_path = vim.fs.joinpath(fn.stdpath('log'), 'nvim-pack.log')
     pcall(vim.fs.rm, log_path, { force = true })
   end)
 
   teardown(function()
-    vim.fs.rm(repos_dir, { force = true, recursive = true })
+    n.rmdir(repos_dir)
   end)
 
   describe('add()', function()
@@ -478,7 +478,7 @@ describe('vim.pack', function()
       eq(true, pack_exists('basic'))
       eq('table', type(get_lock_tbl().plugins.basic))
 
-      vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
+      n.rmdir(pack_get_dir())
       n.clear()
       mock_confirm(2)
 
@@ -500,11 +500,10 @@ describe('vim.pack', function()
       eq(true, pack_exists('basic'))
 
       -- Should also respect `confirm` when installing during lockfile sync
-      vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
-      eq('table', type(get_lock_tbl().plugins.basic))
-
+      n.rmdir(pack_get_dir())
       n.clear()
       mock_confirm(1)
+      eq('table', type(get_lock_tbl().plugins.basic))
 
       vim_pack_add({}, { confirm = false })
       eq(0, exec_lua('return #_G.confirm_log'))
@@ -616,7 +615,7 @@ describe('vim.pack', function()
       vim_pack_add({ { src = repos_src.basic, version = 'feat-branch' }, repos_src.defbranch })
 
       -- Mock clean initial install, but with lockfile present
-      vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
+      n.rmdir(pack_get_dir())
       n.clear()
       watch_events({ 'PackChangedPre', 'PackChanged' })
 
@@ -668,7 +667,7 @@ describe('vim.pack', function()
       eq(ref_lockfile, get_lock_tbl())
 
       -- Improper or string spec input should not interfere with initial install
-      vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
+      n.rmdir(pack_get_dir())
       n.clear()
 
       mock_confirm(1)
@@ -866,7 +865,7 @@ describe('vim.pack', function()
       end)
 
       after_each(function()
-        vim.fs.rm(config_dir, { recursive = true, force = true })
+        n.rmdir(config_dir)
       end)
 
       local function assert_loaded()
@@ -1190,7 +1189,7 @@ describe('vim.pack', function()
     end)
 
     after_each(function()
-      pcall(vim.fs.rm, repo_get_path('fetch'), { force = true, recursive = true })
+      n.rmdir(repo_get_path('fetch'))
       local log_path = vim.fs.joinpath(fn.stdpath('log'), 'nvim-pack.log')
       pcall(vim.fs.rm, log_path, { force = true })
     end)
@@ -1919,7 +1918,7 @@ describe('vim.pack', function()
 
     it('works with out of sync lockfile', function()
       -- Should first autoinstall missing plugin (with confirmation)
-      vim.fs.rm(pack_get_plug_path('fetch'), { force = true, recursive = true })
+      n.rmdir(pack_get_plug_path('fetch'))
       n.clear()
       mock_confirm(1)
       exec_lua(function()
@@ -2092,7 +2091,7 @@ describe('vim.pack', function()
       eq(2, vim.tbl_count(get_lock_tbl().plugins))
 
       -- Should first autoinstall missing plugin (with confirmation)
-      vim.fs.rm(pack_get_plug_path('basic'), { force = true, recursive = true })
+      n.rmdir(pack_get_plug_path('basic'))
       n.clear()
       mock_confirm(1)
       eq(2, exec_lua('return #vim.pack.get()'))
@@ -2190,7 +2189,7 @@ describe('vim.pack', function()
       eq(3, vim.tbl_count(get_lock_tbl().plugins))
 
       -- Should first autoinstall missing plugin (with confirmation)
-      vim.fs.rm(pack_get_plug_path('basic'), { force = true, recursive = true })
+      n.rmdir(pack_get_plug_path('basic'))
       n.clear()
       mock_confirm(1)
       exec_lua('vim.pack.del({ "defbranch" })')
