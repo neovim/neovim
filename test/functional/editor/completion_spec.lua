@@ -328,6 +328,12 @@ describe('completion', function()
           {1:~                                                           }|*2
           {5:-- INSERT --}                                                |
         ]])
+
+        -- without "preselect" in completeopt, preselect attribute is ignored
+        feed('<Esc>S')
+        command('set completeopt-=preselect')
+        feed('<C-r>=TestComplete()<CR><C-N><C-Y>')
+        eq('aaa', api.nvim_get_current_line())
       end)
     end)
   end)
