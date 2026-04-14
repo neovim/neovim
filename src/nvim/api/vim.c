@@ -823,7 +823,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///            instead of creating a new message.
 ///          - kind (`string?`) Decides the |ui-messages| kind in the emitted message. Set "progress"
 ///            to emit a |progress-message|.
-///          - percent (`integer?`) |progress-message| percentage.
+///          - percent (`integer?`) |progress-message| percentage, or nil to signal "unknown progress".
 ///          - source (`string?`) |progress-message| source.
 ///          - status (`string?`) |progress-message| status:
 ///            - "success": Process completed successfully.
@@ -856,7 +856,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   bool needs_clear = !history;
 
   VALIDATE(is_progress
-           || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
+           || (opts->status.size == 0 && opts->title.size == 0 && !HAS_KEY(opts, echo_opts, percent)
                && opts->data.size == 0 && opts->source.size == 0),
            "Conflict: title/source/status/percent/data not allowed with kind='%s'", kind,
   {
@@ -871,7 +871,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     goto error;
   });
 
-  VALIDATE_RANGE(!is_progress || (opts->percent >= 0 && opts->percent <= 100),
+  VALIDATE_RANGE(!is_progress || !HAS_KEY(opts, echo_opts, percent)
+                 || (opts->percent >= 0 && opts->percent <= 100),
                  "percent", {
     goto error;
   });
@@ -887,8 +888,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   });
 
   MessageData msg_data = { .title = opts->title, .status = opts->status,
-                           .percent = opts->percent, .data = opts->data,
-                           .source = opts->source };
+                           .percent = HAS_KEY(opts, echo_opts, percent) ? opts->percent : -1,
+                           .data = opts->data, .source = opts->source };
 
   const bool save_nwr = need_wait_return;
   const int save_lines_left = lines_left;

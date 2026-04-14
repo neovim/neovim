@@ -1107,7 +1107,12 @@ do
       desc = 'Display native progress bars',
       callback = function(ev)
         if ev.data.status == 'running' then
-          vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', ev.data.percent))
+          if ev.data.percent ~= nil then
+            vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', ev.data.percent))
+          else
+            -- "Indeterminate" progress (unknown percent).
+            vim.api.nvim_ui_send(string.format('\027]9;4;3\027\\'))
+          end
         else
           vim.api.nvim_ui_send('\027]9;4;0;0\027\\')
         end

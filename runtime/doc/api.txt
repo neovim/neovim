@@ -695,7 +695,8 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                    • kind (`string?`) Decides the |ui-messages| kind in the
                      emitted message. Set "progress" to emit a
                      |progress-message|.
-                   • percent (`integer?`) |progress-message| percentage.
+                   • percent (`integer?`) |progress-message| percentage, or
+                     nil to signal "unknown progress".
                    • source (`string?`) |progress-message| source.
                    • status (`string?`) |progress-message| status:
                      • "success": Process completed successfully.

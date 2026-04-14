@@ -1139,7 +1139,7 @@ function vim.api.nvim_del_var(name) end
 ---   instead of creating a new message.
 --- - kind (`string?`) Decides the `ui-messages` kind in the emitted message. Set "progress"
 ---   to emit a `progress-message`.
---- - percent (`integer?`) `progress-message` percentage.
+--- - percent (`integer?`) `progress-message` percentage, or nil to signal "unknown progress".
 --- - source (`string?`) `progress-message` source.
 --- - status (`string?`) `progress-message` status:
 ---   - "success": Process completed successfully.
