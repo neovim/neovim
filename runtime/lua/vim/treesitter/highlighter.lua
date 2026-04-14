@@ -190,13 +190,10 @@ function TSHighlighter:destroy()
     vim.b[self.bufnr].ts_highlight = nil
     api.nvim_buf_clear_namespace(self.bufnr, ns, 0, -1)
     if vim.g.syntax_on == 1 then
-      -- FileType autocmds commonly assume curbuf is the target buffer, so nvim_buf_call.
-      api.nvim_buf_call(self.bufnr, function()
-        api.nvim_exec_autocmds(
-          'FileType',
-          { group = 'syntaxset', buf = self.bufnr, modeline = false }
-        )
-      end)
+      api.nvim_exec_autocmds(
+        'FileType',
+        { group = 'syntaxset', buf = self.bufnr, modeline = false }
+      )
     end
   end
 end

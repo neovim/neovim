@@ -1160,7 +1160,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
   // Loop over the events.
   while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
     if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true, group,
-                             curbuf, NULL, NULL)) {
+                             curbuf, NULL, NULL, false)) {
       nothing_done = false;
     }
   }
@@ -1551,7 +1551,7 @@ static void deferred_event(void **argv)
 
     aco_save_T aco = { 0 };
     aucmd_prepbuf(&aco, buf);
-    apply_autocmds_group(event, fname, fname_io, false, group, buf, eap, data);
+    apply_autocmds_group(event, fname, fname_io, false, group, buf, eap, data, false);
     aucmd_restbuf(&aco);
 
     restore_v_event(v_event, &save_v_event);
@@ -1606,7 +1606,7 @@ void aucmd_defer_modified(buf_T *buf, bool new_val)
 /// @return true if some commands were executed.
 bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_T *buf)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL, false);
 }
 
 /// Like apply_autocmds(), but with extra "eap" argument.  This takes care of
@@ -1623,7 +1623,7 @@ bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_
 bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
                           exarg_T *eap)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, eap, NULL);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, eap, NULL, false);
 }
 
 /// Like apply_autocmds(), but handles the caller's retval.  If the script
@@ -1646,7 +1646,8 @@ bool apply_autocmds_retval(event_T event, char *fname, char *fname_io, bool forc
     return false;
   }
 
-  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL);
+  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL,
+                                      false);
   if (did_cmd && aborting()) {
     *retval = FAIL;
   }
@@ -1691,10 +1692,11 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param group autocmd group ID or AUGROUP_ALL
 /// @param buf Buffer for <abuf>
 /// @param eap Ex command arguments
+/// @param with_buf Run callbacks with "buf" as the current buffer
 ///
 /// @return true if some commands were executed.
 bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force, int group,
-                          buf_T *buf, exarg_T *eap, Object *data)
+                          buf_T *buf, exarg_T *eap, Object *data, bool with_buf)
 {
   char *sfname = NULL;  // short file name
   bool retval = false;
@@ -1706,6 +1708,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   save_redo_T save_redo;
   const bool save_KeyTyped = KeyTyped;
   ESTACK_CHECK_DECLARATION;
+  aco_save_T aco = { 0 };
+  bool save_changed = false;
+  buf_T *old_curbuf = NULL;
 
   // Quickly return if there are no autocommands for this event or
   // autocommands are blocked.
@@ -1775,9 +1780,6 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   char *save_autocmd_match = autocmd_match;
   int save_autocmd_busy = autocmd_busy;
   int save_autocmd_nested = autocmd_nested;
-  bool save_changed = curbuf->b_changed;
-  buf_T *old_curbuf = curbuf;
-
   // Set the file name to be used for <afile>.
   // Make a copy to avoid that changing a buffer name or directory makes it
   // invalid.
@@ -1874,6 +1876,13 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     retval = false;
     goto BYPASS_AU;
   }
+
+  if (with_buf && buf != NULL && buf != curbuf) {
+    aucmd_prepbuf(&aco, buf);
+  }
+
+  save_changed = curbuf->b_changed;
+  old_curbuf = curbuf;
 
 #ifdef BACKSLASH_IN_FILENAME
   // Replace all backslashes with forward slashes. This makes the
@@ -2068,6 +2077,8 @@ BYPASS_AU:
     curbuf->b_au_did_filetype = true;
   }
 
+  aucmd_restbuf(&aco);
+
   return retval;
 }
 
@@ -2076,7 +2087,7 @@ void do_termresponse_autocmd(const String sequence)
   MAXSIZE_TEMP_DICT(data, 1);
   PUT_C(data, "sequence", STRING_OBJ(sequence));
   apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, NULL,
-                       &DICT_OBJ(data));
+                       &DICT_OBJ(data), false);
   termresponse_changed = true;
 }
 

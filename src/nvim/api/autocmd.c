@@ -23,6 +23,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/option.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
@@ -680,11 +681,11 @@ void nvim_del_augroup_by_name(String name, Error *err)
 /// Executes handlers for {event} that match the corresponding {opts} query. |autocmd-execute|
 /// @param event Event(s) to execute.
 /// @param opts Optional filters:
-///        - buf (`integer?`) Buffer id |autocmd-buflocal|. Not allowed with {pattern}.
+///        - buf (`integer?`) Buffer where the event is applied. |autocmd-buflocal| Not allowed with {pattern}.
 ///        - data (`any`): Arbitrary data passed to the callback. See |nvim_create_autocmd()|.
 ///        - group (`string|integer?`) Group name or id to match against. |autocmd-groups|.
 ///        - modeline (`boolean?`, default: true) Process the modeline after the autocommands
-///          [<nomodeline>].
+///          [<nomodeline>]. Ignored if `buf` is given.
 ///        - pattern (`string|array?`, default: current file name) |autocmd-pattern|. Not allowed with {buf}.
 /// @see |:doautocmd|
 void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, Error *err)
@@ -759,11 +760,12 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, E
 
     FOREACH_ITEM(patterns, pat, {
       char *fname = !has_buf ? pat.data.string.data : NULL;
-      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, b, NULL, data);
+      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, b, NULL, data,
+                                        has_buf);
     })
   })
 
-  if (did_aucmd && modeline) {
+  if (did_aucmd && modeline && !has_buf) {
     do_modelines(0);
   }
 }
