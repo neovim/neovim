@@ -38,4 +38,57 @@ function M.serverlist(opts, addrs)
   return addrs
 end
 
+-- (Windows only) Canonical --listen address persisted across restarts.
+M.restart_canonical_addr = nil ---@type string?
+
+--- (Windows only)
+--- Called on the new server via nvim_exec_lua RPC from the old server (:restart).
+--- Windows named pipes can't be rebound immediately, so the new server starts on a
+--- temporary bootstrap address and polls until the canonical address is reclaimable.
+--- @param canonical_addr string  The original --listen address to reclaim.
+--- @param bootstrap_addr string  Temporary address the new server started on.
+--- @param expected_uis   integer Number of UIs expected to reattach (0 = don't wait).
+function M.rebind_old_addr_after_restart(canonical_addr, bootstrap_addr, expected_uis)
+  M.restart_canonical_addr = canonical_addr
+  local poll_ms = 50
+  local max_wait_ms = 30000
+  local timer = assert(vim.uv.new_timer())
+
+  -- Poll until the canonical address can be reclaimed (or timeout).
+  local poll_elapsed = 0
+  timer:start(poll_ms, poll_ms, function()
+    vim.schedule(function()
+      poll_elapsed = poll_elapsed + poll_ms
+      if poll_elapsed >= max_wait_ms then
+        timer:stop()
+        timer:close()
+        return
+      end
+      if not vim.list_contains(vim.fn.serverlist(), canonical_addr) then
+        local ok = pcall(vim.fn.serverstart, canonical_addr)
+        if not ok then
+          return -- pipe still held by old server; retry next tick
+        end
+      end
+
+      -- Wait for UIs to reattach, then retire the bootstrap address.
+      local elapsed = 0
+      timer:stop()
+      timer:start(poll_ms, poll_ms, function()
+        vim.schedule(function()
+          elapsed = elapsed + poll_ms
+          local all_uis = expected_uis <= 0 or #vim.api.nvim_list_uis() >= expected_uis
+          if all_uis or elapsed >= max_wait_ms then
+            if canonical_addr ~= bootstrap_addr then
+              pcall(vim.fn.serverstop, bootstrap_addr)
+            end
+            timer:stop()
+            timer:close()
+          end
+        end)
+      end)
+    end)
+  end)
+end
+
 return M

@@ -254,11 +254,15 @@ describe('TUI :restart', function()
     local server_session = n.connect(server_pipe)
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
     local function assert_new_pid()
-      if is_os('win') then
-        return -- FIXME
-      end
       server_session:close()
-      server_session = n.connect(server_pipe)
+      -- On Windows, --listen address is restored async (after old server exits).
+      if is_os('win') then
+        retry(nil, 5000, function()
+          server_session = n.connect(server_pipe)
+        end)
+      else
+        server_session = n.connect(server_pipe)
+      end
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
       t.neq(server_pid, new_pid)
       server_pid = new_pid
@@ -368,11 +372,13 @@ describe('TUI :restart', function()
     assert_new_pid()
     assert_termguicolors_and_no_gui_running()
 
-    -- No --listen conflict when server exit is delayed.
-    feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
-    screen:expect(s0)
-    assert_new_pid()
-    assert_termguicolors_and_no_gui_running()
+    if not is_os('win') then
+      -- No --listen conflict when server exit is delayed.
+      feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
+      screen:expect(s0)
+      assert_new_pid()
+      assert_termguicolors_and_no_gui_running()
+    end
 
     screen:try_resize(60, 6)
     screen:expect([[
