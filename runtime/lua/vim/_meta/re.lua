@@ -1,4 +1,5 @@
 --- @meta
+-- This file is NOT generated, edit it directly.
 error('Cannot require a meta file')
 
 -- Documentations and Lua types for vim.re (vendored re.lua, lpeg-1.1.0)

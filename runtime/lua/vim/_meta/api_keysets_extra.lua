@@ -1,4 +1,5 @@
 --- @meta _
+-- This file is NOT generated, edit it directly. See also _meta/api_keysets.gen.lua.
 error('Cannot require a meta file')
 
 --- Extra types we can't generate keysets for
