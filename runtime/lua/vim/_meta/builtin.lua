@@ -1,4 +1,5 @@
 ---@meta
+-- This file is NOT generated, edit it directly.
 -- luacheck: no unused args
 
 error('Cannot require a meta file')

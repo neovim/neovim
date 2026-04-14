@@ -1,4 +1,5 @@
 --- @meta _
+-- This file is NOT generated, edit it directly. See also _meta/vvars.gen.lua.
 error('Cannot require a meta file')
 
 --- Extra types for vim.v dictionary fields

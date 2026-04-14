@@ -1,3 +1,7 @@
+--- @meta
+-- This file is NOT generated, edit it directly.
+error('Cannot require a meta file')
+
 --- @class vim.fn.sign
 --- @field group string
 --- @field id integer
