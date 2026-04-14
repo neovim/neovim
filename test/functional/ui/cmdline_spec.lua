@@ -822,12 +822,14 @@ local function test_cmdline(linegrid)
       cmdline = { { content = { { '' } }, firstc = ':', pos = 0 } },
       cmdline_block = { { { 'echo "foo"' } } },
     })
-    feed('vis<CR>')
+    -- Shouldn't crash for NULL cmdline_block event after <C-\><C-N> #39021.
+    feed('<C-\\><C-N>vis<CR>')
     screen:expect([[
       ^                         |
       {1:~                        }|*3
                                |
     ]])
+    assert_alive()
   end)
 
   it('works with :lua debug.debug()', function()

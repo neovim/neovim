@@ -1011,7 +1011,8 @@ theend:
   char *p = ccline.cmdbuff;
 
   if (ui_has(kUICmdline)) {
-    if (exmode_active) {
+    // Emit cmdline_block in Ex mode unless cmdbuff is NULL (happens with <C-\><C-N> #39021).
+    if (exmode_active && p != NULL) {
       ui_ext_cmdline_block_append(0, p);
     }
     ui_ext_cmdline_hide(s->gotesc);
