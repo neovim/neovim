@@ -277,7 +277,7 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
         }
       }
 
-      Dict autocmd_info = arena_dict(arena, 12);
+      Dict autocmd_info = arena_dict(arena, 14);
 
       if (ap->group != AUGROUP_DEFAULT) {
         PUT_C(autocmd_info, "group", INTEGER_OBJ(ap->group));
@@ -324,6 +324,9 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
       } else {
         PUT_C(autocmd_info, "buflocal", BOOLEAN_OBJ(false));
       }
+
+      PUT_C(autocmd_info, "sid", INTEGER_OBJ(ac->script_ctx.sc_sid));
+      PUT_C(autocmd_info, "lnum", INTEGER_OBJ(ac->script_ctx.sc_lnum));
 
       kvi_push(autocmd_list, DICT_OBJ(autocmd_info));
     }
