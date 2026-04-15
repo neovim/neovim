@@ -624,7 +624,7 @@ do
         -- TermClose may be queued before TermOpen if process exits before `terminal_open` is called.
         -- Don't display the msg now, let TermOpen display it.
         vim.api.nvim_create_autocmd('TermOpen', {
-          buffer = ev.buf,
+          buf = ev.buf,
           once = true,
           callback = function()
             set_terminal_exitmsg(ev.buf, msg, pos)

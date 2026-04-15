@@ -124,7 +124,7 @@ local function once_buf_loaded(bufnr, fn)
     fn()
   else
     return api.nvim_create_autocmd('BufRead', {
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function()
         fn()
@@ -431,13 +431,13 @@ function M.virtual_text.show(namespace, bufnr, diagnostics, opts)
       )
     end
 
-    api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
+    api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buf = bufnr })
 
     local line_diagnostics = diagnostic_shared.diagnostic_lines(diagnostics, true)
 
     if vopts.current_line ~= nil then
       api.nvim_create_autocmd('CursorMoved', {
-        buffer = bufnr,
+        buf = bufnr,
         group = ns.user_data.virt_text_augroup,
         callback = function()
           render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, vopts)
@@ -458,7 +458,7 @@ function M.virtual_text.hide(namespace, bufnr)
   if ns.user_data.virt_text_ns then
     clear_extmarks(bufnr, ns.user_data.virt_text_ns)
     if api.nvim_buf_is_valid(bufnr) then
-      api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
+      api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buf = bufnr })
     end
   end
 end
@@ -681,7 +681,7 @@ function M.virtual_lines.show(namespace, bufnr, diagnostics, opts)
       )
     end
 
-    api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
+    api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buf = bufnr })
 
     diagnostics =
       diagnostic_shared.reformat_diagnostics(vopts.format or format_virtual_lines, diagnostics)
@@ -691,7 +691,7 @@ function M.virtual_lines.show(namespace, bufnr, diagnostics, opts)
       -- diagnostics we need when the cursor line doesn't change.
       local line_diagnostics = diagnostic_shared.diagnostic_lines(diagnostics, true)
       api.nvim_create_autocmd('CursorMoved', {
-        buffer = bufnr,
+        buf = bufnr,
         group = ns.user_data.virt_lines_augroup,
         callback = function()
           render_virtual_lines(
@@ -724,7 +724,7 @@ function M.virtual_lines.hide(namespace, bufnr)
   if ns.user_data.virt_lines_ns then
     clear_extmarks(bufnr, ns.user_data.virt_lines_ns)
     if api.nvim_buf_is_valid(bufnr) then
-      api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
+      api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buf = bufnr })
     end
   end
 end

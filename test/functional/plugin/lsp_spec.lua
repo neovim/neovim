@@ -583,13 +583,13 @@ describe('LSP', function()
         local detach_called1 = false
         local detach_called2 = false
         vim.api.nvim_create_autocmd('LspDetach', {
-          buffer = bufnr1,
+          buf = bufnr1,
           callback = function()
             detach_called1 = true
           end,
         })
         vim.api.nvim_create_autocmd('LspDetach', {
-          buffer = bufnr2,
+          buf = bufnr2,
           callback = function()
             detach_called2 = true
           end,
@@ -806,7 +806,7 @@ describe('LSP', function()
             exec_lua(function()
               _G.BUFFER = vim.api.nvim_get_current_buf()
               vim.lsp.buf_attach_client(_G.BUFFER, _G.TEST_RPC_CLIENT_ID)
-              vim.api.nvim_exec_autocmds('BufWritePost', { buffer = _G.BUFFER, modeline = false })
+              vim.api.nvim_exec_autocmds('BufWritePost', { buf = _G.BUFFER, modeline = false })
             end)
           else
             client:stop()
@@ -856,7 +856,7 @@ describe('LSP', function()
         })
         local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
         local buf = vim.api.nvim_get_current_buf()
-        vim.api.nvim_exec_autocmds('BufWritePre', { buffer = buf, modeline = false })
+        vim.api.nvim_exec_autocmds('BufWritePre', { buf = buf, modeline = false })
         vim.lsp.get_client_by_id(client_id):stop()
         return server.messages
       end)
@@ -892,7 +892,7 @@ describe('LSP', function()
         })
         local buf = vim.api.nvim_get_current_buf()
         local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
-        vim.api.nvim_exec_autocmds('BufWritePre', { buffer = buf, modeline = false })
+        vim.api.nvim_exec_autocmds('BufWritePre', { buf = buf, modeline = false })
         vim.lsp.get_client_by_id(client_id):stop()
         return {
           messages = server.messages,
@@ -963,7 +963,7 @@ describe('LSP', function()
               _G.BUFFER = vim.api.nvim_get_current_buf()
               vim.api.nvim_buf_set_lines(_G.BUFFER, 0, -1, true, { 'help me' })
               vim.lsp.buf_attach_client(_G.BUFFER, _G.TEST_RPC_CLIENT_ID)
-              vim.api.nvim_exec_autocmds('BufWritePost', { buffer = _G.BUFFER, modeline = false })
+              vim.api.nvim_exec_autocmds('BufWritePost', { buf = _G.BUFFER, modeline = false })
             end)
           else
             client:stop()
@@ -6692,7 +6692,7 @@ describe('LSP', function()
 
         -- Exercise the codepath which had a regression:
         vim.lsp.enable('test_ls')
-        vim.api.nvim_exec_autocmds('FileType', { buffer = bufnr })
+        vim.api.nvim_exec_autocmds('FileType', { buf = bufnr })
 
         -- enable() does _not_ detach the client since it doesn't actually have a config.
         -- XXX: otoh, is it confusing to allow `enable("foo")` if there a "foo" _client_ without a "foo" _config_?

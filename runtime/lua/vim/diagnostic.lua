@@ -455,7 +455,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
 
   api.nvim_exec_autocmds('DiagnosticChanged', {
     modeline = false,
-    buffer = vim._resolve_bufnr(bufnr),
+    buf = vim._resolve_bufnr(bufnr),
     -- TODO(lewis6991): should this be deepcopy()'d like they are in vim.diagnostic.get()
     data = { diagnostics = diagnostics },
   })
@@ -766,7 +766,7 @@ function M.reset(namespace, bufnr)
     if api.nvim_buf_is_valid(iter_bufnr) then
       api.nvim_exec_autocmds('DiagnosticChanged', {
         modeline = false,
-        buffer = iter_bufnr,
+        buf = iter_bufnr,
         data = { diagnostics = {} },
       })
     else

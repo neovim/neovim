@@ -116,7 +116,7 @@ local function detach(client, bufnr)
   -- Remove the buf handle and its autocmds if we removed its last client.
   if not next(buf_handle) then
     buf_handles[bufnr] = nil
-    api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+    api.nvim_clear_autocmds({ group = augroup, buf = bufnr })
 
     -- Remove the on_key callback if we removed the last buf handle.
     if not next(buf_handles) then
@@ -156,9 +156,9 @@ local function attach(client, bufnr)
     trigger[client_id] = client
   end
 
-  api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+  api.nvim_clear_autocmds({ group = augroup, buf = bufnr })
   api.nvim_create_autocmd('LspDetach', {
-    buffer = bufnr,
+    buf = bufnr,
     desc = 'Detach on-type formatting module when the client detaches',
     group = augroup,
     callback = function(ev)

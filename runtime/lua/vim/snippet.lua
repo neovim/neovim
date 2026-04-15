@@ -680,7 +680,7 @@ function M.stop()
   end
 
   if #M._sessions == 1 then
-    vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
+    vim.api.nvim_clear_autocmds({ group = snippet_group, buf = M._session.bufnr })
     vim.api.nvim_buf_clear_namespace(M._session.bufnr, snippet_ns, 0, -1)
   end
 

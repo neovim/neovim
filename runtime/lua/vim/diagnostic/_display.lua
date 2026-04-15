@@ -64,7 +64,7 @@ local function schedule_display(namespace, bufnr, args)
     local group = api.nvim_create_augroup(key, { clear = true })
     api.nvim_create_autocmd(insert_leave_auto_cmds, {
       group = group,
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         execute_scheduled_display(namespace, bufnr)
       end,

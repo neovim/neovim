@@ -2771,7 +2771,7 @@ describe('TUI', function()
       local buf = vim.api.nvim_get_current_buf()
       _G.urls = {}
       vim.api.nvim_create_autocmd('TermRequest', {
-        buffer = buf,
+        buf = buf,
         callback = function(ev)
           local req = ev.data.sequence
           if not req then
@@ -2820,7 +2820,7 @@ describe('TUI', function()
         end,
       })
       vim.api.nvim_create_autocmd('InsertEnter', {
-        buffer = 0,
+        buf = 0,
         callback = function()
           _G.result = vim.wait(3000, function()
             local expected = '\027P1+r5463'

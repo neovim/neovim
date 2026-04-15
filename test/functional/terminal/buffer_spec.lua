@@ -728,14 +728,14 @@ describe(':terminal buffer', function()
       exec_lua([[
         local term = vim.api.nvim_open_term(0, {})
         vim.api.nvim_create_autocmd('TermRequest', {
-          buffer = 0,
+          buf = 0,
           callback = function(ev)
             _G.sequence = ev.data.sequence
             _G.v_termrequest = vim.v.termrequest
           end,
         })
         vim.api.nvim_create_autocmd('TermEnter', {
-          buffer = 0,
+          buf = 0,
           callback = function()
             vim.api.nvim_chan_send(term, '\027]11;?\027\\')
             _G.result = vim.wait(3000, function()

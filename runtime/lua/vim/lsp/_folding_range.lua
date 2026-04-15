@@ -261,7 +261,7 @@ function State:new(bufnr)
   })
   api.nvim_create_autocmd('FileType', {
     group = self.augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       self:reset()
     end,

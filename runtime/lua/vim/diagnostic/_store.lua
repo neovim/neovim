@@ -16,7 +16,7 @@ setmetatable(diagnostic_cache, {
     assert(bufnr > 0, 'Invalid buffer number')
     api.nvim_create_autocmd('BufWipeout', {
       group = group,
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         rawset(t, bufnr, nil)
       end,
@@ -51,7 +51,7 @@ local function once_buf_loaded(bufnr, fn)
     fn()
   else
     return api.nvim_create_autocmd('BufRead', {
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function()
         fn()
