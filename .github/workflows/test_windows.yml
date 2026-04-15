@@ -52,6 +52,9 @@ jobs:
           # Sanity check
           python -c "import pynvim; print(str(pynvim))"
 
+      - if: ${{ matrix.test == 'functional' }}
+        name: Install node deps
+        run: |
           node --version
           npm.cmd --version
 
