@@ -36,7 +36,6 @@
 
 #include "eval/window.c.generated.h"
 
-static const char *e_invalwindow = N_("E957: Invalid window number");
 static const char e_cannot_resize_window_in_another_tab_page[]
   = N_("E1308: Cannot resize a window in another tab page");
 

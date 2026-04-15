@@ -178,6 +178,7 @@ EXTERN const char e_cannot_change_value[] INIT(= N_("E742: Cannot change value")
 EXTERN const char e_cannot_change_value_of_str[] INIT(= N_("E742: Cannot change value of %.*s"));
 EXTERN const char e_cannot_set_variable_in_sandbox_str[] INIT(= N_("E794: Cannot set variable in the sandbox: \"%.*s\""));
 EXTERN const char e_cannot_delete_variable_str[] INIT(= N_("E795: Cannot delete variable %.*s"));
+EXTERN const char e_invalwindow[] INIT(= N_("E957: Invalid window number"));
 EXTERN const char e_problem_creating_internal_diff[] INIT(= N_("E960: Problem creating the internal diff"));
 
 EXTERN const char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
