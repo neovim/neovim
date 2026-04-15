@@ -191,7 +191,7 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 
 /// Opens a new tabpage.
 ///
-/// @param buffer Buffer to open in the first window of the new tabpage.
+/// @param buf Buffer to open in the first window of the new tabpage.
 ///               Use 0 for current buffer.
 /// @param enter  Enter the tabpage (make it the current tabpage).
 /// @param config Configuration for the new tabpage. Keys:
@@ -199,15 +199,15 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 ///            0 = first, N = after Nth.
 /// @param[out] err Error details, if any
 /// @return |tab-ID| of the new tabpage
-Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *config, Error *err)
+Tabpage nvim_open_tabpage(Buffer buf, Boolean enter, Dict(tabpage_config) *config, Error *err)
   FUNC_API_SINCE(14) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, tabpage_config, key)
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (buf == NULL) {
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (b == NULL) {
     return 0;
   }
-  if ((cmdwin_type != 0 && enter) || buf == cmdwin_buf) {
+  if ((cmdwin_type != 0 && enter) || b == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }
@@ -235,7 +235,7 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
   }
 
   // Set the buffer in the new window if different from current
-  if (tabpage_win_valid(tp, wp) && wp->w_buffer != buf) {
+  if (tabpage_win_valid(tp, wp) && wp->w_buffer != b) {
     // win_set_buf temporarily makes `wp` the curwin to set the buffer.
     // If not entering `wp`, block Enter and Leave events. (cringe)
     const bool au_no_enter_leave = curwin != wp;
@@ -243,7 +243,7 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(tabpage_config) *co
       autocmd_no_enter++;
       autocmd_no_leave++;
     }
-    win_set_buf(wp, buf, err);
+    win_set_buf(wp, b, err);
     if (au_no_enter_leave) {
       autocmd_no_enter--;
       autocmd_no_leave--;

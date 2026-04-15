@@ -49,23 +49,23 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 ///
 /// Note: As a side-effect, this executes |BufEnter| and |BufLeave| autocommands.
 /// @param window   |window-ID|, or 0 for current window
-/// @param buffer   Buffer id
+/// @param buf   Buffer id
 /// @param[out] err Error details, if any
-void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
+void nvim_win_set_buf(Window window, Buffer buf, Error *err)
   FUNC_API_SINCE(5)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
   win_T *win = find_window_by_handle(window, err);
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!win || !buf) {
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!win || !b) {
     return;
   }
 
-  if (win == cmdwin_win || win == cmdwin_old_curwin || buf == cmdwin_buf) {
+  if (win == cmdwin_win || win == cmdwin_old_curwin || b == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return;
   }
-  win_set_buf(win, buf, err);
+  win_set_buf(win, b, err);
 }
 
 /// Gets the (1,0)-indexed, buffer-relative cursor position for a given window

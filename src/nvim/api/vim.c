@@ -953,22 +953,22 @@ Buffer nvim_get_current_buf(void)
   return curbuf->handle;
 }
 
-/// Sets the current window's buffer to `buffer`.
+/// Sets the current window's buffer to `buf`.
 ///
-/// @param buffer   Buffer id
+/// @param buf   Buffer id
 /// @param[out] err Error details, if any
-void nvim_set_current_buf(Buffer buffer, Error *err)
+void nvim_set_current_buf(Buffer buf, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *b = find_buffer_by_handle(buf, err);
 
-  if (!buf) {
+  if (!b) {
     return;
   }
 
   TRY_WRAP(err, {
-    do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+    do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, b->b_fnum, 0);
   });
 }
 
@@ -1126,7 +1126,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// end, { desc = 'Highlights ANSI termcodes in curbuf' })
 /// ```
 ///
-/// @param buffer Buffer to use. Buffer contents (if any) will be written
+/// @param buf Buffer to use. Buffer contents (if any) will be written
 ///               to the PTY.
 /// @param opts   Optional parameters.
 ///          - on_input: Lua callback for input sent, i e keypresses in terminal
@@ -1138,28 +1138,28 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///          - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
-Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
+Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buf_T *buf = api_buf_ensure_loaded(buffer, err);
-  if (!buf) {
+  buf_T *b = api_buf_ensure_loaded(buf, err);
+  if (!b) {
     return 0;
   }
 
-  if (buf == cmdwin_buf) {
+  if (b == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }
 
   bool may_read_buffer = true;
-  if (buf->terminal) {
-    if (terminal_running(buf->terminal)) {
+  if (b->terminal) {
+    if (terminal_running(b->terminal)) {
       api_set_error(err, kErrorTypeException,
-                    "Terminal already connected to buffer %d", buf->handle);
+                    "Terminal already connected to buffer %d", b->handle);
       return 0;
     }
-    buf_close_terminal(buf);
+    buf_close_terminal(b);
     may_read_buffer = false;
   }
 
@@ -1189,12 +1189,12 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   // Read existing buffer contents (if any)
   StringBuilder contents = KV_INITIAL_VALUE;
   if (may_read_buffer) {
-    read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &contents);
+    read_buffer_into(b, 1, b->b_ml.ml_line_count, &contents);
   }
 
   channel_incref(chan);
-  chan->term = terminal_alloc(buf, topts);
-  terminal_open(&chan->term, buf);
+  chan->term = terminal_alloc(b, topts);
+  terminal_open(&chan->term, b);
   if (chan->term != NULL) {
     terminal_check_size(chan->term);
   }
