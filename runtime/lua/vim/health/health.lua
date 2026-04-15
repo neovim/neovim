@@ -693,7 +693,7 @@ local function check_sysinfo()
         '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@Click to Create Bug Report on GitHub%X%*'
 
       vim.api.nvim_create_autocmd('BufDelete', {
-        buffer = buf,
+        buf = buf,
         once = true,
         command = 'lua _G.nvim_health_bugreport_open = nil',
       })

@@ -80,14 +80,14 @@ function Completor:new(bufnr)
   self.client_state = {}
   api.nvim_create_autocmd({ 'InsertEnter', 'CursorMovedI', 'TextChangedP' }, {
     group = self.augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       self:automatic_request()
     end,
   })
   api.nvim_create_autocmd({ 'InsertLeave' }, {
     group = self.augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       self:abort()
     end,

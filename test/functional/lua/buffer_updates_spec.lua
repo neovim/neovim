@@ -1819,7 +1819,7 @@ describe('nvim_buf_attach on_detach', function()
       _G.events = {}
       vim.api.nvim_buf_attach(1, false, { on_detach = _G.on_detach })
       vim.api.nvim_create_autocmd('BufUnload', {
-        buffer = 1,
+        buf = 1,
         once = true,
         callback = function()
           vim.api.nvim_buf_attach(1, false, {
@@ -1892,7 +1892,7 @@ it('nvim_buf_attach from buf_freeall autocommands does not leak', function()
   exec_lua(function()
     local b = vim.api.nvim_create_buf(true, true)
     vim.api.nvim_create_autocmd('BufWipeout', {
-      buffer = b,
+      buf = b,
       once = true,
       callback = function()
         vim.api.nvim_buf_attach(b, false, {})

@@ -430,7 +430,7 @@ describe('channels', function()
         end,
       })
       vim.api.nvim_create_autocmd('InsertEnter', {
-        buffer = 0,
+        buf = 0,
         callback = function()
           local chan = vim.fn.jobstart({ 'cat' })
           _G.result = vim.wait(3000, function()
@@ -453,7 +453,7 @@ describe('channels', function()
         end,
       })
       vim.api.nvim_create_autocmd('InsertEnter', {
-        buffer = 0,
+        buf = 0,
         callback = function()
           local chan = vim.fn.jobstart({ 'cat' })
           _G.result = vim.wait(3000, function()
