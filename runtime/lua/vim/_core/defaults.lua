@@ -1012,7 +1012,7 @@ do
         -- The TUI was able to determine truecolor support or $COLORTERM explicitly indicates
         -- truecolor support
         setoption('termguicolors', true)
-      elseif colorterm == nil or colorterm == '' then
+      elseif (colorterm == nil or colorterm == '') and vim.o.ttyfast then
         -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
         -- terminal
         local caps = {} ---@type table<string, boolean>
