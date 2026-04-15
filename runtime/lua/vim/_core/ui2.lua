@@ -130,6 +130,8 @@ function M.check_targets()
           hl = 'Normal:MsgArea'
         elseif type == 'msg' then
           hl = search_hide
+        elseif type == 'cmd' then
+          api.nvim_set_option_value('winpinned', true, { scope = 'local' })
         end
         api.nvim_set_option_value('winhighlight', hl, { scope = 'local' })
       end)

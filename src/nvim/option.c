@@ -4859,6 +4859,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_wfh);
   case kOptWinfixwidth:
     return &(win->w_p_wfw);
+  case kOptWinpinned:
+    return &(win->w_p_wp);
   case kOptPreviewwindow:
     return &(win->w_p_pvw);
   case kOptLhistory:

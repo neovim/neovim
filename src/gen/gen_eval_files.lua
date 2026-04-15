@@ -667,6 +667,7 @@ local function option_scope_doc(o)
       'syntax',
       'winfixheight',
       'winfixwidth',
+      'winpinned',
     }, o.full_name)
   then
     r = r .. '  |local-noglobal|'

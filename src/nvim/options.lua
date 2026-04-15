@@ -10706,6 +10706,19 @@ local options = {
       varname = 'p_wmw',
     },
     {
+      abbreviation = 'wp',
+      defaults = false,
+      desc = [=[
+        If enabled, the window is pinned and will not be closed by |:only|
+        and |:fclose|. Only commands specifically targeting the window can
+        close it.
+      ]=],
+      full_name = 'winpinned',
+      scope = { 'win' },
+      short_desc = N_('prevent closing window with :only and :fclose'),
+      type = 'boolean',
+    },
+    {
       abbreviation = 'wiw',
       cb = 'did_set_winwidth',
       defaults = 20,

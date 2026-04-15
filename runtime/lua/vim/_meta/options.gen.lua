@@ -8316,6 +8316,16 @@ vim.o.wmw = vim.o.winminwidth
 vim.go.winminwidth = vim.o.winminwidth
 vim.go.wmw = vim.go.winminwidth
 
+--- If enabled, the window is pinned and will not be closed by `:only`
+--- and `:fclose`. Only commands specifically targeting the window can
+--- close it.
+---
+--- @type boolean
+vim.o.winpinned = false
+vim.o.wp = vim.o.winpinned
+vim.wo.winpinned = vim.o.winpinned
+vim.wo.wp = vim.wo.winpinned
+
 --- Minimal number of columns for the current window.  This is not a hard
 --- minimum, Vim will use fewer columns if there is not enough room.  If
 --- the current window is smaller, its size is increased, at the cost of

@@ -296,6 +296,7 @@ created, thus they behave slightly differently:
 	'winfixbuf'	specific to existing window
 	'winfixheight'	specific to existing window
 	'winfixwidth'	specific to existing window
+	'winpinned'	specific to existing window
 
 Special local buffer options
 
@@ -7617,6 +7618,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option is only checked when making a window smaller.  Don't use a
 	large number, it will cause errors when opening more than a few
 	windows.  A value of 0 to 12 is reasonable.
+
+				*'winpinned'* *'wp'* *'nowinpinned'* *'nowp'*
+'winpinned' 'wp'	boolean	(default off)
+			local to window  |local-noglobal|
+	If enabled, the window is pinned and will not be closed by |:only|
+	and |:fclose|. Only commands specifically targeting the window can
+	close it.
 
 						*'winwidth'* *'wiw'* *E592*
 'winwidth' 'wiw'	number	(default 20)

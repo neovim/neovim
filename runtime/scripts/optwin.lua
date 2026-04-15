@@ -128,6 +128,7 @@ local options_list = {
     { 'winfixwidth', N_ 'keep the width of the window' },
     { 'winwidth', N_ 'minimal number of columns used for the current window' },
     { 'winminwidth', N_ 'minimal number of columns used for any window' },
+    { 'winpinned', N_ 'prevent closing window with :only and :fclose' },
     { 'helpheight', N_ 'initial height of the help window' },
     { 'previewheight', N_ 'default height for the preview window' },
     { 'previewwindow', N_ 'identifies the preview window' },

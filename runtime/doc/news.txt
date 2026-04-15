@@ -154,7 +154,7 @@ the same range instances now compare equal.
 
 OPTIONS
 
-• todo
+• 'winpinned' prevents window from closing unless specifically targeted.
 
 PERFORMANCE
 
