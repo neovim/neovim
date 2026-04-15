@@ -1518,7 +1518,7 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
     Parameters: ~
       • {tabpage}  (`integer`) |tab-ID| to focus
 
-nvim_set_current_win({window})                        *nvim_set_current_win()*
+nvim_set_current_win({win})                           *nvim_set_current_win()*
     Navigates to the given window (and tabpage, implicitly).
 
     Attributes: ~
@@ -1526,7 +1526,7 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID| to focus
+      • {win}  (`integer`) |window-ID| to focus
 
 nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
     Sets a highlight group. By default, replaces the entire definition (e.g.
@@ -3994,7 +3994,7 @@ nvim_open_win({buf}, {enter}, {config})                      *nvim_open_win()*
     Return: ~
         (`integer`) |window-ID|, or 0 on error
 
-nvim_win_get_config({window})                          *nvim_win_get_config()*
+nvim_win_get_config({win})                             *nvim_win_get_config()*
     Gets window configuration in the form of a dict which can be passed as the
     `config` parameter of |nvim_open_win()|.
 
@@ -4004,13 +4004,13 @@ nvim_win_get_config({window})                          *nvim_win_get_config()*
         Since: 0.4.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`vim.api.keyset.win_config`) Map defining the window configuration,
         see |nvim_open_win()|
 
-nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
+nvim_win_set_config({win}, {config})                   *nvim_win_set_config()*
     Reconfigures the layout and properties of a window.
     • Updates only the given keys; unspecified (`nil`) keys will not be
       changed.
@@ -4028,7 +4028,7 @@ nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
         Since: 0.4.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}     (`integer`) |window-ID|, or 0 for current window
       • {config}  (`vim.api.keyset.win_config`) Map defining the window
                   configuration, see |nvim_open_win()|
 
@@ -4039,7 +4039,7 @@ nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
 ==============================================================================
 Window Functions                                                  *api-window*
 
-nvim_win_call({window}, {fun})                               *nvim_win_call()*
+nvim_win_call({win}, {fun})                                  *nvim_win_call()*
     Calls a function with window as temporary current window.
 
     Attributes: ~
@@ -4047,9 +4047,9 @@ nvim_win_call({window}, {fun})                               *nvim_win_call()*
         Since: 0.5.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {fun}     (`function`) Function to call inside the window (currently
-                  Lua callable only)
+      • {win}  (`integer`) |window-ID|, or 0 for current window
+      • {fun}  (`function`) Function to call inside the window (currently Lua
+               callable only)
 
     Return: ~
         (`any`) Return value of function.
@@ -4058,7 +4058,7 @@ nvim_win_call({window}, {fun})                               *nvim_win_call()*
       • |win_execute()|
       • |nvim_buf_call()|
 
-nvim_win_close({window}, {force})                           *nvim_win_close()*
+nvim_win_close({win}, {force})                              *nvim_win_close()*
     Closes the window (like |:close| with a |window-ID|).
 
     Attributes: ~
@@ -4066,34 +4066,34 @@ nvim_win_close({window}, {force})                           *nvim_win_close()*
         Since: 0.4.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {force}   (`boolean`) Behave like `:close!` The last window of a
-                  buffer with unwritten changes can be closed. The buffer will
-                  become hidden, even if 'hidden' is not set.
+      • {win}    (`integer`) |window-ID|, or 0 for current window
+      • {force}  (`boolean`) Behave like `:close!` The last window of a buffer
+                 with unwritten changes can be closed. The buffer will become
+                 hidden, even if 'hidden' is not set.
 
-nvim_win_del_var({window}, {name})                        *nvim_win_del_var()*
+nvim_win_del_var({win}, {name})                           *nvim_win_del_var()*
     Removes a window-scoped (w:) variable
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {name}    (`string`) Variable name
+      • {win}   (`integer`) |window-ID|, or 0 for current window
+      • {name}  (`string`) Variable name
 
-nvim_win_get_buf({window})                                *nvim_win_get_buf()*
+nvim_win_get_buf({win})                                   *nvim_win_get_buf()*
     Gets the current buffer in a window
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`integer`) Buffer id
 
-nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
+nvim_win_get_cursor({win})                             *nvim_win_get_cursor()*
     Gets the (1,0)-indexed, buffer-relative cursor position for a given window
     (different windows showing the same buffer have independent cursor
     positions). |api-indexing|
@@ -4102,7 +4102,7 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`[integer, integer]`) (row, col) tuple
@@ -4110,80 +4110,80 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
     See also: ~
       • |getcurpos()|
 
-nvim_win_get_height({window})                          *nvim_win_get_height()*
+nvim_win_get_height({win})                             *nvim_win_get_height()*
     Gets the window height
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`integer`) Height as a count of rows
 
-nvim_win_get_number({window})                          *nvim_win_get_number()*
+nvim_win_get_number({win})                             *nvim_win_get_number()*
     Gets the window number
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`integer`) Window number
 
-nvim_win_get_position({window})                      *nvim_win_get_position()*
+nvim_win_get_position({win})                         *nvim_win_get_position()*
     Gets the window position in display cells. First position is zero.
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`[integer, integer]`) (row, col) tuple with the window position
 
-nvim_win_get_tabpage({window})                        *nvim_win_get_tabpage()*
+nvim_win_get_tabpage({win})                           *nvim_win_get_tabpage()*
     Gets the window tabpage
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`integer`) Tabpage that contains the window
 
-nvim_win_get_var({window}, {name})                        *nvim_win_get_var()*
+nvim_win_get_var({win}, {name})                           *nvim_win_get_var()*
     Gets a window-scoped (w:) variable
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {name}    (`string`) Variable name
+      • {win}   (`integer`) |window-ID|, or 0 for current window
+      • {name}  (`string`) Variable name
 
     Return: ~
         (`any`) Variable value
 
-nvim_win_get_width({window})                            *nvim_win_get_width()*
+nvim_win_get_width({win})                               *nvim_win_get_width()*
     Gets the window width
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`integer`) Width as a count of columns
 
-nvim_win_hide({window})                                      *nvim_win_hide()*
+nvim_win_hide({win})                                         *nvim_win_hide()*
     Closes the window and hide the buffer it contains (like |:hide| with a
     |window-ID|).
 
@@ -4196,21 +4196,21 @@ nvim_win_hide({window})                                      *nvim_win_hide()*
         Since: 0.5.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
-nvim_win_is_valid({window})                              *nvim_win_is_valid()*
+nvim_win_is_valid({win})                                 *nvim_win_is_valid()*
     Checks if a window is valid
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}  (`integer`) |window-ID|, or 0 for current window
 
     Return: ~
         (`boolean`) true if the window is valid, false otherwise
 
-nvim_win_set_buf({window}, {buf})                         *nvim_win_set_buf()*
+nvim_win_set_buf({win}, {buf})                            *nvim_win_set_buf()*
     Sets the current buffer in a window.
 
     Note: As a side-effect, this executes |BufEnter| and |BufLeave|
@@ -4221,10 +4221,10 @@ nvim_win_set_buf({window}, {buf})                         *nvim_win_set_buf()*
         Since: 0.3.2
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {buf}     (`integer`) Buffer id
+      • {win}  (`integer`) |window-ID|, or 0 for current window
+      • {buf}  (`integer`) Buffer id
 
-nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
+nvim_win_set_cursor({win}, {pos})                      *nvim_win_set_cursor()*
     Sets the (1,0)-indexed cursor position (byte offset) in the window.
     |api-indexing| This scrolls the window even if it is not the current one.
 
@@ -4232,21 +4232,21 @@ nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {pos}     (`[integer, integer]`) (row, col) tuple representing the new
-                  position
+      • {win}  (`integer`) |window-ID|, or 0 for current window
+      • {pos}  (`[integer, integer]`) (row, col) tuple representing the new
+               position
 
-nvim_win_set_height({window}, {height})                *nvim_win_set_height()*
+nvim_win_set_height({win}, {height})                   *nvim_win_set_height()*
     Sets the window height.
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {win}     (`integer`) |window-ID|, or 0 for current window
       • {height}  (`integer`) Height as a count of rows
 
-nvim_win_set_hl_ns({window}, {ns_id})                   *nvim_win_set_hl_ns()*
+nvim_win_set_hl_ns({win}, {ns_id})                      *nvim_win_set_hl_ns()*
     Set highlight namespace for a window. This will use highlights defined
     with |nvim_set_hl()| for this namespace, but fall back to global
     highlights (ns=0) when missing.
@@ -4257,21 +4257,21 @@ nvim_win_set_hl_ns({window}, {ns_id})                   *nvim_win_set_hl_ns()*
         Since: 0.8.0
 
     Parameters: ~
-      • {window}  (`integer`)
-      • {ns_id}   (`integer`) the namespace to use
+      • {win}    (`integer`)
+      • {ns_id}  (`integer`) the namespace to use
 
-nvim_win_set_var({window}, {name}, {value})               *nvim_win_set_var()*
+nvim_win_set_var({win}, {name}, {value})                  *nvim_win_set_var()*
     Sets a window-scoped (w:) variable
 
     Attributes: ~
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {name}    (`string`) Variable name
-      • {value}   (`any`) Variable value
+      • {win}    (`integer`) |window-ID|, or 0 for current window
+      • {name}   (`string`) Variable name
+      • {value}  (`any`) Variable value
 
-nvim_win_set_width({window}, {width})                   *nvim_win_set_width()*
+nvim_win_set_width({win}, {width})                      *nvim_win_set_width()*
     Sets the window width. This will only succeed if the screen is split
     vertically.
 
@@ -4279,10 +4279,10 @@ nvim_win_set_width({window}, {width})                   *nvim_win_set_width()*
         Since: 0.1.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {width}   (`integer`) Width as a count of columns
+      • {win}    (`integer`) |window-ID|, or 0 for current window
+      • {width}  (`integer`) Width as a count of columns
 
-nvim_win_text_height({window}, {opts})                *nvim_win_text_height()*
+nvim_win_text_height({win}, {opts})                   *nvim_win_text_height()*
     Computes the number of screen lines occupied by a range of text in a given
     window. Works for off-screen text and takes folds into account.
 
@@ -4298,25 +4298,25 @@ nvim_win_text_height({window}, {opts})                *nvim_win_text_height()*
         Since: 0.10.0
 
     Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window.
-      • {opts}    (`vim.api.keyset.win_text_height`) Optional parameters:
-                  • start_row: Starting line index, 0-based inclusive. When
-                    omitted start at the very top.
-                  • end_row: Ending line index, 0-based inclusive. When
-                    omitted end at the very bottom.
-                  • start_vcol: Starting virtual column index on "start_row",
-                    0-based inclusive, rounded down to full screen lines. When
-                    omitted include the whole line.
-                  • end_vcol: Ending virtual column index on "end_row",
-                    0-based exclusive, rounded up to full screen lines. When 0
-                    only include diff filler and virtual lines above
-                    "end_row". When omitted include the whole line.
-                  • max_height: Don't add the height of lines below the row
-                    for which this height is reached. Useful to e.g. limit the
-                    height to the window height, avoiding unnecessary work. Or
-                    to find out how many buffer lines beyond "start_row" take
-                    up a certain number of logical lines (returned in
-                    "end_row" and "end_vcol").
+      • {win}   (`integer`) |window-ID|, or 0 for current window.
+      • {opts}  (`vim.api.keyset.win_text_height`) Optional parameters:
+                • start_row: Starting line index, 0-based inclusive. When
+                  omitted start at the very top.
+                • end_row: Ending line index, 0-based inclusive. When omitted
+                  end at the very bottom.
+                • start_vcol: Starting virtual column index on "start_row",
+                  0-based inclusive, rounded down to full screen lines. When
+                  omitted include the whole line.
+                • end_vcol: Ending virtual column index on "end_row", 0-based
+                  exclusive, rounded up to full screen lines. When 0 only
+                  include diff filler and virtual lines above "end_row". When
+                  omitted include the whole line.
+                • max_height: Don't add the height of lines below the row for
+                  which this height is reached. Useful to e.g. limit the
+                  height to the window height, avoiding unnecessary work. Or
+                  to find out how many buffer lines beyond "start_row" take up
+                  a certain number of logical lines (returned in "end_row" and
+                  "end_vcol").
 
     Return: ~
         (`vim.api.keyset.win_text_height_ret`) Dict containing text height

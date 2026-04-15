@@ -3046,12 +3046,12 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {position_encoding})
         (`{ textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }`)
 
                                          *vim.lsp.util.make_position_params()*
-make_position_params({window}, {position_encoding})
+make_position_params({win}, {position_encoding})
     Creates a `TextDocumentPositionParams` object for the current buffer and
     cursor position.
 
     Parameters: ~
-      • {window}             (`integer?`) |window-ID| or 0 for current,
+      • {win}                (`integer?`) |window-ID| or 0 for current,
                              defaults to current
       • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
@@ -3062,14 +3062,14 @@ make_position_params({window}, {position_encoding})
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 
                                             *vim.lsp.util.make_range_params()*
-make_range_params({window}, {position_encoding})
+make_range_params({win}, {position_encoding})
     Using the current position in the current buffer, creates an object that
     can be used as a building block for several LSP requests, such as
     `textDocument/codeAction`, `textDocument/colorPresentation`,
     `textDocument/rangeFormatting`.
 
     Parameters: ~
-      • {window}             (`integer?`) |window-ID| or 0 for current,
+      • {win}                (`integer?`) |window-ID| or 0 for current,
                              defaults to current
       • {position_encoding}  (`"utf-8"|"utf-16"|"utf-32"`)
 

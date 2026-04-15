@@ -2045,12 +2045,12 @@ function M.try_trim_markdown_code_blocks(lines)
   return 'markdown'
 end
 
----@param window integer?: |window-ID| or 0 for current, defaults to current
+---@param win integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
-local function make_position_param(window, position_encoding)
-  window = window or 0
-  local buf = api.nvim_win_get_buf(window)
-  local row, col = unpack(api.nvim_win_get_cursor(window))
+local function make_position_param(win, position_encoding)
+  win = win or 0
+  local buf = api.nvim_win_get_buf(win)
+  local row, col = unpack(api.nvim_win_get_cursor(win))
   row = row - 1
   local line = api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
   if not line then
@@ -2064,13 +2064,13 @@ end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
----@param window integer?: |window-ID| or 0 for current, defaults to current
+---@param win integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.TextDocumentPositionParams
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
-function M.make_position_params(window, position_encoding)
-  window = window or 0
-  local buf = api.nvim_win_get_buf(window)
+function M.make_position_params(win, position_encoding)
+  win = win or 0
+  local buf = api.nvim_win_get_buf(win)
   if position_encoding == nil then
     vim.notify_once(
       'position_encoding param is required in vim.lsp.util.make_position_params. Defaulting to position encoding of the first client.',
@@ -2081,7 +2081,7 @@ function M.make_position_params(window, position_encoding)
   end
   return {
     textDocument = M.make_text_document_params(buf),
-    position = make_position_param(window, position_encoding),
+    position = make_position_param(win, position_encoding),
   }
 end
 
@@ -2124,11 +2124,11 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
----@param window integer?: |window-ID| or 0 for current, defaults to current
+---@param win integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding "utf-8"|"utf-16"|"utf-32"
 ---@return { textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }
-function M.make_range_params(window, position_encoding)
-  local buf = api.nvim_win_get_buf(window or 0)
+function M.make_range_params(win, position_encoding)
+  local buf = api.nvim_win_get_buf(win or 0)
   if position_encoding == nil then
     vim.notify_once(
       'position_encoding param is required in vim.lsp.util.make_range_params. Defaulting to position encoding of the first client.',
@@ -2137,7 +2137,7 @@ function M.make_range_params(window, position_encoding)
     --- @diagnostic disable-next-line: deprecated
     position_encoding = M._get_offset_encoding(buf)
   end
-  local position = make_position_param(window, position_encoding)
+  local position = make_position_param(win, position_encoding)
   return {
     textDocument = M.make_text_document_params(buf),
     range = { start = position, ['end'] = position },

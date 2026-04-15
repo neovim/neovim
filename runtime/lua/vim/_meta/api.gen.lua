@@ -2134,8 +2134,8 @@ function vim.api.nvim_set_current_tabpage(tabpage) end
 
 --- Navigates to the given window (and tabpage, implicitly).
 ---
---- @param window integer `window-ID` to focus
-function vim.api.nvim_set_current_win(window) end
+--- @param win integer `window-ID` to focus
+function vim.api.nvim_set_current_win(win) end
 
 --- Set or change decoration provider for a `namespace`
 ---
@@ -2410,40 +2410,40 @@ function vim.api.nvim_ui_send(content) end
 ---
 --- @see `:help win_execute()`
 --- @see vim.api.nvim_buf_call
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param fun function Function to call inside the window (currently Lua callable
 --- only)
 --- @return any # Return value of function.
-function vim.api.nvim_win_call(window, fun) end
+function vim.api.nvim_win_call(win, fun) end
 
 --- Closes the window (like `:close` with a `window-ID`).
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param force boolean Behave like `:close!` The last window of a buffer with
 --- unwritten changes can be closed. The buffer will become
 --- hidden, even if 'hidden' is not set.
-function vim.api.nvim_win_close(window, force) end
+function vim.api.nvim_win_close(win, force) end
 
 --- Removes a window-scoped (w:) variable
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param name string Variable name
-function vim.api.nvim_win_del_var(window, name) end
+function vim.api.nvim_win_del_var(win, name) end
 
 --- Gets the current buffer in a window
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return integer # Buffer id
-function vim.api.nvim_win_get_buf(window) end
+function vim.api.nvim_win_get_buf(win) end
 
 --- Gets window configuration in the form of a dict which can be passed as the `config` parameter of
 --- `nvim_open_win()`.
 ---
 --- For non-floating windows, `relative` is empty.
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return vim.api.keyset.win_config_ret # Map defining the window configuration, see |nvim_open_win()|
-function vim.api.nvim_win_get_config(window) end
+function vim.api.nvim_win_get_config(win) end
 
 --- Gets the (1,0)-indexed, buffer-relative cursor position for a given window
 --- (different windows showing the same buffer have independent cursor
@@ -2451,21 +2451,21 @@ function vim.api.nvim_win_get_config(window) end
 ---
 ---
 --- @see `:help getcurpos()`
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return [integer, integer] # (row, col) tuple
-function vim.api.nvim_win_get_cursor(window) end
+function vim.api.nvim_win_get_cursor(win) end
 
 --- Gets the window height
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return integer # Height as a count of rows
-function vim.api.nvim_win_get_height(window) end
+function vim.api.nvim_win_get_height(win) end
 
 --- Gets the window number
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return integer # Window number
-function vim.api.nvim_win_get_number(window) end
+function vim.api.nvim_win_get_number(win) end
 
 --- @deprecated
 --- @param window integer
@@ -2475,28 +2475,28 @@ function vim.api.nvim_win_get_option(window, name) end
 
 --- Gets the window position in display cells. First position is zero.
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return [integer, integer] # (row, col) tuple with the window position
-function vim.api.nvim_win_get_position(window) end
+function vim.api.nvim_win_get_position(win) end
 
 --- Gets the window tabpage
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return integer # Tabpage that contains the window
-function vim.api.nvim_win_get_tabpage(window) end
+function vim.api.nvim_win_get_tabpage(win) end
 
 --- Gets a window-scoped (w:) variable
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param name string Variable name
 --- @return any # Variable value
-function vim.api.nvim_win_get_var(window, name) end
+function vim.api.nvim_win_get_var(win, name) end
 
 --- Gets the window width
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return integer # Width as a count of columns
-function vim.api.nvim_win_get_width(window) end
+function vim.api.nvim_win_get_width(win) end
 
 --- Closes the window and hide the buffer it contains (like `:hide` with a
 --- `window-ID`).
@@ -2505,21 +2505,21 @@ function vim.api.nvim_win_get_width(window) end
 --- or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to `:close` or
 --- `nvim_win_close()`, which will close the buffer.
 ---
---- @param window integer `window-ID`, or 0 for current window
-function vim.api.nvim_win_hide(window) end
+--- @param win integer `window-ID`, or 0 for current window
+function vim.api.nvim_win_hide(win) end
 
 --- Checks if a window is valid
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @return boolean # true if the window is valid, false otherwise
-function vim.api.nvim_win_is_valid(window) end
+function vim.api.nvim_win_is_valid(win) end
 
 --- Sets the current buffer in a window.
 ---
 --- Note: As a side-effect, this executes `BufEnter` and `BufLeave` autocommands.
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param buf integer Buffer id
-function vim.api.nvim_win_set_buf(window, buf) end
+function vim.api.nvim_win_set_buf(win, buf) end
 
 --- Reconfigures the layout and properties of a window.
 ---
@@ -2537,22 +2537,22 @@ function vim.api.nvim_win_set_buf(window, buf) end
 ---
 ---
 --- @see vim.api.nvim_open_win
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param config vim.api.keyset.win_config Map defining the window configuration, see [nvim_open_win()]
-function vim.api.nvim_win_set_config(window, config) end
+function vim.api.nvim_win_set_config(win, config) end
 
 --- Sets the (1,0)-indexed cursor position (byte offset) in the window. `api-indexing`
 --- This scrolls the window even if it is not the current one.
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param pos [integer, integer] (row, col) tuple representing the new position
-function vim.api.nvim_win_set_cursor(window, pos) end
+function vim.api.nvim_win_set_cursor(win, pos) end
 
 --- Sets the window height.
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param height integer Height as a count of rows
-function vim.api.nvim_win_set_height(window, height) end
+function vim.api.nvim_win_set_height(win, height) end
 
 --- Set highlight namespace for a window. This will use highlights defined with
 --- `nvim_set_hl()` for this namespace, but fall back to global highlights (ns=0) when
@@ -2560,9 +2560,9 @@ function vim.api.nvim_win_set_height(window, height) end
 ---
 --- This takes precedence over the 'winhighlight' option.
 ---
---- @param window integer
+--- @param win integer
 --- @param ns_id integer the namespace to use
-function vim.api.nvim_win_set_hl_ns(window, ns_id) end
+function vim.api.nvim_win_set_hl_ns(win, ns_id) end
 
 --- @deprecated
 --- @param window integer
@@ -2572,17 +2572,17 @@ function vim.api.nvim_win_set_option(window, name, value) end
 
 --- Sets a window-scoped (w:) variable
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param name string Variable name
 --- @param value any Variable value
-function vim.api.nvim_win_set_var(window, name, value) end
+function vim.api.nvim_win_set_var(win, name, value) end
 
 --- Sets the window width. This will only succeed if the screen is split
 --- vertically.
 ---
---- @param window integer `window-ID`, or 0 for current window
+--- @param win integer `window-ID`, or 0 for current window
 --- @param width integer Width as a count of columns
-function vim.api.nvim_win_set_width(window, width) end
+function vim.api.nvim_win_set_width(win, width) end
 
 --- Computes the number of screen lines occupied by a range of text in a given window.
 --- Works for off-screen text and takes folds into account.
@@ -2596,7 +2596,7 @@ function vim.api.nvim_win_set_width(window, width) end
 --- Line indexing is similar to `nvim_buf_get_text()`.
 ---
 --- @see `:help virtcol()` for text width.
---- @param window integer `window-ID`, or 0 for current window.
+--- @param win integer `window-ID`, or 0 for current window.
 --- @param opts vim.api.keyset.win_text_height Optional parameters:
 --- - start_row: Starting line index, 0-based inclusive.
 ---              When omitted start at the very top.
@@ -2623,4 +2623,4 @@ function vim.api.nvim_win_set_width(window, width) end
 --- - end_vcol: Ending virtual column in "end_row" where "max_height" or the returned
 ---   height is reached. 0 if "end_row" is a closed fold.
 ---
-function vim.api.nvim_win_text_height(window, opts) end
+function vim.api.nvim_win_text_height(win, opts) end
