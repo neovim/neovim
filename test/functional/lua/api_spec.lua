@@ -300,7 +300,7 @@ describe('luaeval(vim.api.…)', function()
     )
   end)
 
-  it('errors out correctly when working with API', function()
+  it('validation', function()
     -- Conversion errors
     eq(
       [[Vim(call):E5108: Lua: [string "luaeval()"]:1: Invalid 'obj': Cannot convert given Lua table]],
@@ -334,7 +334,7 @@ describe('luaeval(vim.api.…)', function()
       remove_trace(exc_exec([[call luaeval("vim.api.nvim_buf_get_lines(0, 1.5, 1, false)")]]))
     )
     eq(
-      [[Vim(call):E5108: Lua: [string "luaeval()"]:1: Invalid 'window': Expected Lua number]],
+      [[Vim(call):E5108: Lua: [string "luaeval()"]:1: Invalid 'win': Expected Lua number]],
       remove_trace(exc_exec([[call luaeval("vim.api.nvim_win_is_valid(nil)")]]))
     )
 

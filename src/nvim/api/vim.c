@@ -1004,23 +1004,23 @@ Window nvim_get_current_win(void)
 
 /// Navigates to the given window (and tabpage, implicitly).
 ///
-/// @param window |window-ID| to focus
+/// @param win |window-ID| to focus
 /// @param[out] err Error details, if any
-void nvim_set_current_win(Window window, Error *err)
+void nvim_set_current_win(Window win, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK
 {
-  win_T *win = find_window_by_handle(window, err);
+  win_T *w = find_window_by_handle(win, err);
 
-  if (!win) {
+  if (!w) {
     return;
   }
 
   TRY_WRAP(err, {
-    if (win->w_buffer != curbuf) {
+    if (w->w_buffer != curbuf) {
       reset_VIsual_and_resel();
     }
-    goto_tabpage_win(win_find_tabpage(win), win);
+    goto_tabpage_win(win_find_tabpage(w), w);
   });
 }
 
