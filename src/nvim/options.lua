@@ -9742,11 +9742,12 @@ local options = {
       abbreviation = 'tf',
       defaults = true,
       desc = [=[
-        Assume that the underlying terminal can respond quickly to support
-        features such as background detection. In slow scenarios like nvim over
-        SSH with high latency, you may wish to disable this option during
-        startup by setting the environment variable `NVIM_NOTTYFAST`. This
-        allows it to take effect before executing your config.
+        Assume that the underlying terminal can respond quickly to queries
+        required by features such as 'background' detection.
+        
+        Nvim issues terminal queries before reading the user's |config| file,
+        so disabling this option there will not work. Set $NVIM_NOTTYFAST
+        before starting Nvim to disable terminal queries.
       ]=],
       full_name = 'ttyfast',
       no_mkrc = true,
