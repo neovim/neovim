@@ -4688,6 +4688,7 @@ static int open_cmdwin(void)
   exmode_active = false;
 
   State = MODE_NORMAL;
+  check_cursor(curwin);
   setmouse();
   clear_showcmd();
 

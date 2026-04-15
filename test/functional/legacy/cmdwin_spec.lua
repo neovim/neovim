@@ -77,4 +77,21 @@ describe('cmdwin', function()
       ]])
     end
   end)
+
+  -- oldtest: Test_cmdwin_no_prefix_on_wrapped_line()
+  it('prefix char is not drawn on wrapped screen line', function()
+    local screen = Screen.new(40, 12)
+    local cmd = 'echo "' .. ('a'):rep(40 - 8) .. '"XYZ'
+    feed(':' .. cmd .. '<C-F>')
+    screen:expect([[
+                                              |
+      {1:~                                       }|
+      {2:[No Name]                               }|
+      {1::}echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"|
+       XY^Z                                    |
+      {1:~                                       }|*5
+      {3:[Command Line]                          }|
+                                              |
+    ]])
+  end)
 end)

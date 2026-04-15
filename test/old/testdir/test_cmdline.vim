@@ -2888,59 +2888,72 @@ func Test_wildmenu_pum()
   [CODE]
   call writefile(commands, 'Xtest', 'D')
 
-  let buf = RunVimInTerminal('-S Xtest', #{rows: 10})
+  let rows = 10
+  let buf = RunVimInTerminal('-S Xtest', #{rows: rows})
 
   call term_sendkeys(buf, ":sign \<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define') + 1)], g:test_timeout, ((rows - 1), '\<unplace\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_01', {})
 
   " going down the popup menu using <Down>
   call term_sendkeys(buf, "\<Down>\<Down>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign list') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_02', {})
 
   " going down the popup menu using <C-N>
   call term_sendkeys(buf, "\<C-N>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign place') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_03', {})
 
   " going up the popup menu using <C-P>
   call term_sendkeys(buf, "\<C-P>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign list') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_04', {})
 
   " going up the popup menu using <Up>
   call term_sendkeys(buf, "\<Up>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign jump') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_05', {})
 
   " pressing <C-E> should end completion and go back to the original match
   call term_sendkeys(buf, "\<C-E>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign ') + 1)], g:test_timeout, ((rows - 1), '\~\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_06', {})
 
   " pressing <C-Y> should select the current match and end completion
   call term_sendkeys(buf, "\<Tab>\<C-P>\<C-P>\<C-Y>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign unplace') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_07', {})
 
   " With 'wildmode' set to 'longest,full', completing a match should display
   " the longest match, the wildmenu should not be displayed.
   call term_sendkeys(buf, ":\<C-U>set wildmode=longest,full\<CR>")
-  call TermWait(buf)
   call term_sendkeys(buf, ":sign u\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign un') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_08', {})
 
   " pressing <Tab> should display the wildmenu
   call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign undefine') + 1)], g:test_timeout, ((rows - 1), '\<unplace\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_09', {})
 
   " pressing <Tab> second time should select the next entry in the menu
   call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign unplace') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_10', {})
 
   call term_sendkeys(buf, ":\<C-U>set wildmode=full\<CR>")
   " showing popup menu in different columns in the cmdline
   call term_sendkeys(buf, ":sign define \<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define culhl=') + 1)], g:test_timeout, ((rows - 1), '\<texthl=\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_11', {})
 
   call term_sendkeys(buf, " \<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define culhl= culhl=') + 1)], g:test_timeout, ((rows - 1), '\<texthl=\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_12', {})
 
   call term_sendkeys(buf, " \<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define culhl= culhl= culhl=') + 1)], g:test_timeout, ((rows - 1), '\<texthl=\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_13', {})
 
   " Directory name completion
@@ -2950,79 +2963,99 @@ func Test_wildmenu_pum()
   call writefile([], 'Xnamedir/XdirA/XdirB/XfileC')
 
   call term_sendkeys(buf, "\<C-U>e Xnamedi\<Tab>\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':e Xnamedir/XdirA/') + 1)], g:test_timeout, ((rows - 1), '\<XfileA\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_14', {})
 
   " Pressing <Right> on a directory name should go into that directory
   call term_sendkeys(buf, "\<Right>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':e Xnamedir/XdirA/XdirB/') + 1)], g:test_timeout, ((rows - 1), '\<XfileB\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_15', {})
 
   " Pressing <Left> on a directory name should go to the parent directory
   call term_sendkeys(buf, "\<Left>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':e Xnamedir/XdirA/') + 1)], g:test_timeout, ((rows - 1), '\<XfileA\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_16', {})
 
   " Pressing <C-A> when the popup menu is displayed should list all the
-  " matches but the popup menu should still remain
+  " matches but the popup menu should still remain (FIXME: the menu goes away)
   call term_sendkeys(buf, "\<C-U>sign \<Tab>\<C-A>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define jump list place undefine unplace') + 1)], g:test_timeout, ((rows - 1), '\~\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_17', {})
 
   " Pressing <C-D> when the popup menu is displayed should remove the popup
   " menu
   call term_sendkeys(buf, "\<C-U>sign \<Tab>\<C-D>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define') + 1)], g:test_timeout, ((rows - 1), '^define$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_18', {})
 
   " Pressing <S-Tab> should open the popup menu with the last entry selected
   call term_sendkeys(buf, "\<C-U>\<CR>:sign \<S-Tab>\<C-P>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign undefine') + 1)], g:test_timeout, ((rows - 1), '\<unplace\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_19', {})
 
   " Pressing <Esc> should close the popup menu and cancel the cmd line
   call term_sendkeys(buf, "\<C-U>\<CR>:sign \<Tab>\<Esc>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [1, 1], g:test_timeout, (rows, '^$'), ((rows - 1), '^\~\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_20', {})
 
   " Typing a character when the popup is open, should close the popup
   call term_sendkeys(buf, ":sign \<Tab>x")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign definex') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_21', {})
 
   " When the popup is open, entering the cmdline window should close the popup
   call term_sendkeys(buf, "\<C-U>sign \<Tab>\<C-F>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [6, strlen(':sign define')], g:test_timeout, (rows, '^You discovered the command-line window! You can close it with ":q"\.'))
+  call WaitFor({buf_ -> {-> term_scrape(buf, 6)->slice(1, 5)->filter({_, v -> v.fg == '#af5f00'})->len() == 4}}(buf), g:test_timeout)
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_22', {})
   call term_sendkeys(buf, ":q\<CR>")
 
   " After the last popup menu item, <C-N> should show the original string
   call term_sendkeys(buf, ":sign u\<Tab>\<C-N>\<C-N>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign u') + 1)], g:test_timeout, ((rows - 1), '\<unplace\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_23', {})
 
   " Use the popup menu for the command name
   call term_sendkeys(buf, "\<C-U>bu\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':bufdo') + 1)], g:test_timeout, ((rows - 1), '\<bunload\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_24', {})
 
   " Pressing the left arrow should remove the popup menu
   call term_sendkeys(buf, "\<Left>\<Left>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':bufdo') + 0)], g:test_timeout, ((rows - 1), '\~\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_25', {})
 
   " Pressing <BS> should remove the popup menu and erase the last character
   call term_sendkeys(buf, "\<C-E>\<C-U>sign \<Tab>\<BS>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign defin') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_26', {})
 
   " Pressing <C-W> should remove the popup menu and erase the previous word
   call term_sendkeys(buf, "\<C-E>\<C-U>sign \<Tab>\<C-W>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign ') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_27', {})
 
   " Pressing <C-U> should remove the popup menu and erase the entire line
   call term_sendkeys(buf, "\<C-E>\<C-U>sign \<Tab>\<C-U>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_28', {})
 
   " Using <C-E> to cancel the popup menu and then pressing <Up> should recall
   " the cmdline from history
   call term_sendkeys(buf, "sign xyz\<Esc>:sign \<Tab>\<C-E>\<Up>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign xyz') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_29', {})
 
   " Check that when "longest" produces no result, "list" works
   call term_sendkeys(buf, "\<C-U>set wildmode=longest,list\<CR>")
   call term_sendkeys(buf, ":cn\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':cn') + 1)], g:test_timeout, ((rows - 1), '\<cnoremenu$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_30', {})
+  " No-op?
   call term_sendkeys(buf, "\<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_30', {})
   call term_sendkeys(buf, "s")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':cns') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_31', {})
 
   " Tests a directory name contained full-width characters.
@@ -3033,35 +3066,41 @@ func Test_wildmenu_pum()
 
   call term_sendkeys(buf, "\<C-U>set wildmode&\<CR>")
   call term_sendkeys(buf, ":\<C-U>e Xnamedir/あいう/\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strwidth(':e Xnamedir/あいう/123') + 1)], g:test_timeout, ((rows - 1), '\<xyz\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_32', {})
 
   " Pressing <C-A> when the popup menu is displayed should list all the
   " matches and pressing a key after that should remove the popup menu
   call term_sendkeys(buf, "\<C-U>set wildmode=full\<CR>")
   call term_sendkeys(buf, ":sign \<Tab>\<C-A>x")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define jump list place undefine unplacex') + 1)], g:test_timeout, ((rows - 1), '\~\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_33', {})
 
   " Pressing <C-A> when the popup menu is displayed should list all the
   " matches and pressing <Left> after that should move the cursor
   call term_sendkeys(buf, "\<C-U>abc\<Esc>")
   call term_sendkeys(buf, ":sign \<Tab>\<C-A>\<Left>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define jump list place undefine unplace') + 0)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_34', {})
 
   " When <C-A> displays a lot of matches (screen scrolls), all the matches
   " should be displayed correctly on the screen.
   call term_sendkeys(buf, "\<End>\<C-U>Tcmd \<Tab>\<C-A>\<Left>\<Left>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(' aaa') + 0)], g:test_timeout, (rows, '^\saaaa$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_35', {})
 
   " After using <C-A> to expand all the filename matches, pressing <Up>
   " should not open the popup menu again.
   call term_sendkeys(buf, "\<C-E>\<C-U>:cd Xnamedir/XdirA\<CR>")
   call term_sendkeys(buf, ":e \<Tab>\<C-A>\<Up>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':e XdirB/ XfileB') + 1)], g:test_timeout, ((rows - 1), '\~\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_36', {})
   call term_sendkeys(buf, "\<C-E>\<C-U>:cd -\<CR>")
 
   " After using <C-A> to expand all the matches, pressing <S-Tab> used to
   " crash Vim
   call term_sendkeys(buf, ":sign \<Tab>\<C-A>\<S-Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define jump list place undefine unplace') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_37', {})
 
   " After removing the pum the command line is redrawn
@@ -3069,6 +3108,7 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, ":edit bar\<CR>")
   call term_sendkeys(buf, ":ls\<CR>")
   call term_sendkeys(buf, ":com\<Tab> ")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':comclear ') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_38', {})
   call term_sendkeys(buf, "\<C-U>\<CR>")
 
@@ -3076,50 +3116,65 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, ":call SetupStatusline()\<CR>")
   call term_sendkeys(buf, ":si\<Tab>")
   call term_sendkeys(buf, "\<Esc>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [1, 1], g:test_timeout, ((rows - 1), '^status\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_39', {})
 
   " Esc still works to abort the command when 'tabline' is set
   call term_sendkeys(buf, ":call SetupTabline()\<CR>")
   call term_sendkeys(buf, ":si\<Tab>")
   call term_sendkeys(buf, "\<Esc>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [2, 1], g:test_timeout, ((rows - 1), '^bar\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_40', {})
 
   " popup is cleared also when 'lazyredraw' is set
   call term_sendkeys(buf, ":set showtabline=1 laststatus=1 lazyredraw\<CR>")
   call term_sendkeys(buf, ":call DoFeedKeys()\<CR>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':abbreviate') + 1)], g:test_timeout, ((rows - 1), '\<abstract\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_41', {})
   call term_sendkeys(buf, "\<Esc>")
 
   " Pressing <PageDown> should scroll the menu downward
   call term_sendkeys(buf, ":sign \<Tab>\<PageDown>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign undefine') + 1)], g:test_timeout, ((rows - 1), '\<unplace\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_42', {})
   call term_sendkeys(buf, "\<PageDown>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign unplace') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_43', {})
   call term_sendkeys(buf, "\<PageDown>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign ') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_44', {})
   call term_sendkeys(buf, "\<PageDown>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_45', {})
   call term_sendkeys(buf, "\<C-U>sign \<Tab>\<Down>\<Down>\<PageDown>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign unplace') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_46', {})
 
   " Pressing <PageUp> should scroll the menu upward
   call term_sendkeys(buf, "\<C-U>sign \<Tab>\<PageUp>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign ') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_47', {})
   call term_sendkeys(buf, "\<PageUp>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign unplace') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_48', {})
   call term_sendkeys(buf, "\<PageUp>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign jump') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_49', {})
   call term_sendkeys(buf, "\<PageUp>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign define') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_50', {})
 
   " pressing <C-E> to end completion should work in middle of the line too
   call term_sendkeys(buf, "\<Esc>:set wildchazz\<Left>\<Left>\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':set wildcharzz') - 1)], g:test_timeout, ((rows - 1), '\<wildcharm\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_51', {})
   call term_sendkeys(buf, "\<C-E>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':set wildchazz') - 1)], g:test_timeout, ((rows - 1), '\~\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_52', {})
 
   " pressing <C-Y> should select the current match and end completion
   call term_sendkeys(buf, "\<Esc>:set wildchazz\<Left>\<Left>\<Tab>\<C-Y>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':set wildcharzz') - 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_53', {})
 
   call term_sendkeys(buf, "\<Esc>:set showtabline& laststatus& lazyredraw&\<CR>")
@@ -3127,58 +3182,66 @@ func Test_wildmenu_pum()
   " "longest:list" shows list whether it finds a candidate or not
   call term_sendkeys(buf, ":set wildmode=longest:list,full wildoptions&\<CR>")
   call term_sendkeys(buf, ":cn\<Tab>")
-  call TermWait(buf, 50)
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':cn') + 1)], g:test_timeout, ((rows - 1), '\<cnoremenu$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_55', {})
   call term_sendkeys(buf, "\<Tab>")
-  call TermWait(buf, 50)
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':cnewer') + 1)], g:test_timeout, ((rows - 1), '\<cnoremenu\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_56', {})
   call term_sendkeys(buf, "\<Esc>:sign u\<Tab>")
-  call TermWait(buf, 50)
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign un') + 1)], g:test_timeout, ((rows - 1), '\<unplace$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_57', {})
 
   " "longest:full" shows wildmenu whether it finds a candidate or not; item not selected
   call term_sendkeys(buf, "\<Esc>:set wildmode=longest:full,full\<CR>")
   call term_sendkeys(buf, ":sign u\<Tab>")
-  call TermWait(buf, 50)
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign un') + 1)], g:test_timeout, ((rows - 1), '\<unplace\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_58', {})
   call term_sendkeys(buf, "\<Tab>")
-  call TermWait(buf, 50)
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign undefine') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_59', {})
   call term_sendkeys(buf, "\<Esc>:cn\<Tab>")
-  call TermWait(buf, 50)
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':cn') + 1)], g:test_timeout, ((rows - 1), '\<cnoremenu\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_60', {})
   call term_sendkeys(buf, "\<Tab>")
-  call TermWait(buf, 50)
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':cnewer') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_61', {})
 
   " If "longest,full" finds a candidate, wildmenu is not shown
   call term_sendkeys(buf, "\<Esc>:set wildmode=longest,full\<CR>")
   call term_sendkeys(buf, ":sign u\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign un') + 1)], g:test_timeout, ((rows - 1), '\~\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_62', {})
   " Subsequent wildchar shows wildmenu
   call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign undefine') + 1)], g:test_timeout, ((rows - 1), '\<unplace\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_63', {})
 
   " 'longest' does not find candidate, and displays menu without selecting item
   call term_sendkeys(buf, "\<Esc>:set wildmode=longest,noselect\<CR>")
   call term_sendkeys(buf, ":cn\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':cn') + 1)], g:test_timeout, ((rows - 1), '\<cnoremenu\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_64', {})
 
   " If "longest" finds no candidate in "longest,full", "full" is used
   call term_sendkeys(buf, "\<Esc>:set wildmode=longest,full\<CR>")
   call term_sendkeys(buf, ":set wildoptions=pum\<CR>")
   call term_sendkeys(buf, ":sign un\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign undefine') + 1)], g:test_timeout, ((rows - 1), '\<unplace\s\+$'))
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_09', {})
   call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign unplace') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_10', {})
 
   " Similarly for "longest,noselect:full"
   call term_sendkeys(buf, "\<Esc>:set wildmode=longest,noselect:full\<CR>")
   call term_sendkeys(buf, ":sign un\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign un') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_65', {})
   call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign undefine') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_09', {})
   call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':sign unplace') + 1)])
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_10', {})
 
   call term_sendkeys(buf, "\<C-U>\<Esc>")

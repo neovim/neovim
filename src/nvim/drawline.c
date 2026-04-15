@@ -1700,7 +1700,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
       if (wp == cmdwin_win) {
         // Draw the cmdline character.
-        draw_col_fill(&wlv, schar_from_ascii(cmdwin_type), 1, win_hl_attr(wp, HLF_AT));
+        draw_col_fill(&wlv,
+                      schar_from_ascii(wlv.row == wlv.startrow ? cmdwin_type : ' '),
+                      1,
+                      wlv.row == wlv.startrow ? win_hl_attr(wp, HLF_AT) : 0);
       }
 
       if (wlv.filler_todo > 0) {
