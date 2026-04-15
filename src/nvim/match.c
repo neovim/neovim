@@ -39,8 +39,6 @@
 
 #include "match.c.generated.h"
 
-static const char *e_invalwindow = N_("E957: Invalid window number");
-
 #define SEARCH_HL_PRIORITY 0
 
 /// Add match to the match list of window "wp".
