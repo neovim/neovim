@@ -1230,7 +1230,7 @@ vim.wo[{winid}][{bufnr}]                                              *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
-vim.cmd({command})                                                 *vim.cmd()*
+vim.cmd({cmd})                                                     *vim.cmd()*
     Executes Vimscript (|Ex-command|s).
 
     Can be indexed with a command name to get a function, thus you can write
@@ -1267,11 +1267,11 @@ vim.cmd({command})                                                 *vim.cmd()*
 <
 
     Parameters: ~
-      • {command}  (`string|table`) Command(s) to execute.
-                   • The string form supports multiline Vimscript (alias to
-                     |nvim_exec2()|, behaves like |:source|).
-                   • The table form executes a single command (alias to
-                     |nvim_cmd()|).
+      • {cmd}  (`string|table`) Command(s) to execute.
+               • The string form supports multiline Vimscript (alias to
+                 |nvim_exec2()|, behaves like |:source|).
+               • The table form executes a single command (alias to
+                 |nvim_cmd()|).
 
     See also: ~
       • |ex-cmd-index|

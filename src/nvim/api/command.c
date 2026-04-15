@@ -978,7 +978,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// ```
 ///
 /// @param  name    Name of the new user command. Must begin with an uppercase letter.
-/// @param  command Replacement command to execute when this user command is executed. When called
+/// @param  cmd     Replacement command to execute when this user command is executed. When called
 ///                 from Lua, the command can also be a Lua function. The function is called with a
 ///                 single table argument that contains the following keys:
 ///                 - name: (string) Command name
@@ -1005,12 +1005,12 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// @param[out] err Error details, if any.
 void nvim_create_user_command(uint64_t channel_id,
                               String name,
-                              Union(String, LuaRefOf((DictAs(create_user_command__command_args) args))) command,
+                              Union(String, LuaRefOf((DictAs(create_user_command__command_args) args))) cmd,
                               Dict(user_command) *opts,
                               Error *err)
   FUNC_API_SINCE(9)
 {
-  create_user_command(channel_id, name, command, opts, 0, err);
+  create_user_command(channel_id, name, cmd, opts, 0, err);
 }
 
 // uncrustify:on
@@ -1030,7 +1030,7 @@ void nvim_del_user_command(String name, Error *err)
 /// @param  buf  Buffer id, or 0 for current buffer.
 /// @param[out] err Error details, if any.
 /// @see nvim_create_user_command
-void nvim_buf_create_user_command(uint64_t channel_id, Buffer buf, String name, Object command,
+void nvim_buf_create_user_command(uint64_t channel_id, Buffer buf, String name, Object cmd,
                                   Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
@@ -1041,7 +1041,7 @@ void nvim_buf_create_user_command(uint64_t channel_id, Buffer buf, String name, 
 
   buf_T *save_curbuf = curbuf;
   curbuf = target_buf;
-  create_user_command(channel_id, name, command, opts, UC_BUFFER, err);
+  create_user_command(channel_id, name, cmd, opts, UC_BUFFER, err);
   curbuf = save_curbuf;
 }
 
@@ -1085,7 +1085,7 @@ void nvim_buf_del_user_command(Buffer buf, String name, Error *err)
   api_set_error(err, kErrorTypeException, "Invalid command (not found): %s", name.data);
 }
 
-void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef) command,
+void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef) cmd,
                          Dict(user_command) *opts, int flags, Error *err)
 {
   uint32_t argt = 0;
@@ -1257,9 +1257,9 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     opts->preview.data.luaref = LUA_NOREF;
   }
 
-  switch (command.type) {
+  switch (cmd.type) {
   case kObjectTypeLuaRef:
-    luaref = api_new_luaref(command.data.luaref);
+    luaref = api_new_luaref(cmd.data.luaref);
     if (opts->desc.type == kObjectTypeString) {
       rep = opts->desc.data.string.data;
     } else {
@@ -1267,7 +1267,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     }
     break;
   case kObjectTypeString:
-    rep = command.data.string.data;
+    rep = cmd.data.string.data;
     break;
   default:
     VALIDATE_EXP(false, "command", "Function or String", NULL, {

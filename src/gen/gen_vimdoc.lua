@@ -22,6 +22,7 @@
 local luacats_parser = require('gen.luacats_parser')
 local cdoc_parser = require('gen.cdoc_parser')
 local util = require('gen.util')
+local lint = require('gen.lint')
 
 local fmt = string.format
 
@@ -1133,6 +1134,10 @@ local function gen_target(cfg)
 
   for f, r in vim.spairs(file_results) do
     local classes, funs, briefs = r[1], r[2], r[3]
+
+    if not f:find('ui_events%.in%.h$') then -- TODO(justinmk): also lint UI events.
+      lint.lint_names(f, funs, nil, classes)
+    end
 
     local mod_cls_nm = find_module_class(classes, 'M')
     if mod_cls_nm then

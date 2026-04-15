@@ -820,7 +820,7 @@ static int get_augroup_from_object(Object group, Error *err)
   }
 }
 
-static Array get_patterns_from_pattern_or_buf(Object pattern, bool has_buffer, Buffer buffer,
+static Array get_patterns_from_pattern_or_buf(Object pattern, bool has_buf, Buffer buf,
                                               char *fallback, Arena *arena, Error *err)
 {
   ArrayBuilder patterns = ARRAY_DICT_INIT;
@@ -853,13 +853,13 @@ static Array get_patterns_from_pattern_or_buf(Object pattern, bool has_buffer, B
         return (Array)ARRAY_DICT_INIT;
       });
     }
-  } else if (has_buffer) {
-    buf_T *buf = find_buffer_by_handle(buffer, err);
+  } else if (has_buf) {
+    buf_T *b = find_buffer_by_handle(buf, err);
     if (ERROR_SET(err)) {
       return (Array)ARRAY_DICT_INIT;
     }
 
-    kvi_push(patterns, STRING_OBJ(arena_printf(arena, "<buffer=%d>", (int)buf->handle)));
+    kvi_push(patterns, STRING_OBJ(arena_printf(arena, "<buffer=%d>", (int)b->handle)));
   } else if (fallback) {
     kvi_push(patterns, CSTR_AS_OBJ(fallback));
   }

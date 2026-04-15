@@ -342,23 +342,23 @@ local VIM_CMD_ARG_MAX = 20
 --- ```
 ---
 ---@diagnostic disable-next-line: undefined-doc-param
----@param command string|table Command(s) to execute.
+---@param cmd string|table Command(s) to execute.
 ---       - The string form supports multiline Vimscript (alias to |nvim_exec2()|, behaves
 ---         like |:source|).
 ---       - The table form executes a single command (alias to |nvim_cmd()|).
 ---@see |ex-cmd-index|
 vim.cmd = setmetatable({}, {
-  __call = function(_, command)
-    if type(command) == 'table' then
-      return vim.api.nvim_cmd(command, {})
+  __call = function(_, cmd)
+    if type(cmd) == 'table' then
+      return vim.api.nvim_cmd(cmd, {})
     else
-      vim.api.nvim_exec2(command, {})
+      vim.api.nvim_exec2(cmd, {})
       return ''
     end
   end,
   --- @param t table<string,function>
-  __index = function(t, command)
-    t[command] = function(...)
+  __index = function(t, cmd)
+    t[cmd] = function(...)
       local opts --- @type vim.api.keyset.cmd
       if select('#', ...) == 1 and type(select(1, ...)) == 'table' then
         --- @type vim.api.keyset.cmd
@@ -379,10 +379,10 @@ vim.cmd = setmetatable({}, {
       else
         opts = { args = { ... } }
       end
-      opts.cmd = command
+      opts.cmd = cmd
       return vim.api.nvim_cmd(opts, {})
     end
-    return t[command]
+    return t[cmd]
   end,
 })
 

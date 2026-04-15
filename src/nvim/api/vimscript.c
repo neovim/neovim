@@ -132,13 +132,13 @@ theend:
 /// Prefer |nvim_cmd()| or |nvim_exec2()| instead. To modify an Ex command in a structured way
 /// before executing it, modify the result of |nvim_parse_cmd()| then pass it to |nvim_cmd()|.
 ///
-/// @param command  Ex command string
+/// @param cmd  Ex command string
 /// @param[out] err Error details (Vim error), if any
-void nvim_command(String command, Error *err)
+void nvim_command(String cmd, Error *err)
   FUNC_API_SINCE(1)
 {
   TRY_WRAP(err, {
-    do_cmdline_cmd(command.data);
+    do_cmdline_cmd(cmd.data);
   });
 }
 
@@ -369,7 +369,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                    - "E" to parse like for `"<C-r>="`.
 ///                    - empty string for ":call".
 ///                    - "lm" to parse for ":let".
-/// @param[in]  highlight  If true, return value will also include "highlight"
+/// @param[in]  hl  If true, return value will also include "highlight"
 ///                        key containing array of 4-tuples (arrays) (Integer,
 ///                        Integer, Integer, String), where first three numbers
 ///                        define the highlighted region and represent line,
@@ -427,7 +427,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///        - "svalue": String, value for "SingleQuotedString" and
 ///                    "DoubleQuotedString" nodes.
 /// @param[out] err Error details, if any
-Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *arena, Error *err)
+Dict nvim_parse_expression(String expr, String flags, Boolean hl, Arena *arena, Error *err)
   FUNC_API_SINCE(4) FUNC_API_FAST
 {
   int pflags = 0;
@@ -460,14 +460,14 @@ Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *
   ParserLine *plines_p = parser_lines;
   ParserHighlight colors;
   kvi_init(colors);
-  ParserHighlight *const colors_p = (highlight ? &colors : NULL);
+  ParserHighlight *const colors_p = (hl ? &colors : NULL);
   ParserState pstate;
   viml_parser_init(&pstate, parser_simple_get_line, &plines_p, colors_p);
   ExprAST east = viml_pexpr_parse(&pstate, pflags);
 
   const size_t ret_size = (2  // "ast", "len"
                            + (size_t)(east.err.msg != NULL)  // "error"
-                           + (size_t)highlight  // "highlight"
+                           + (size_t)hl  // "highlight"
                            + 0);
 
   Dict ret = arena_dict(arena, ret_size);
@@ -480,8 +480,8 @@ Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *
     PUT_C(err_dict, "arg", CBUF_TO_ARENA_OBJ(arena, east.err.arg, (size_t)east.err.arg_len));
     PUT_C(ret, "error", DICT_OBJ(err_dict));
   }
-  if (highlight) {
-    Array hl = arena_array(arena, kv_size(colors));
+  if (hl) {
+    Array hl_arr = arena_array(arena, kv_size(colors));
     for (size_t i = 0; i < kv_size(colors); i++) {
       const ParserHighlightChunk chunk = kv_A(colors, i);
       Array chunk_arr = arena_array(arena, 4);
@@ -490,9 +490,9 @@ Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *
       ADD_C(chunk_arr, INTEGER_OBJ((Integer)chunk.end_col));
       ADD_C(chunk_arr, CSTR_AS_OBJ(chunk.group));
 
-      ADD_C(hl, ARRAY_OBJ(chunk_arr));
+      ADD_C(hl_arr, ARRAY_OBJ(chunk_arr));
     }
-    PUT_C(ret, "highlight", ARRAY_OBJ(hl));
+    PUT_C(ret, "highlight", ARRAY_OBJ(hl_arr));
   }
   kvi_destroy(colors);
 
