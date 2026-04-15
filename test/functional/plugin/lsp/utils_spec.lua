@@ -296,14 +296,16 @@ describe('vim.lsp.util', function()
     end)
 
     it('clean bufvar after CursorMoved', function()
-      local result = exec_lua(function()
+      local result, winfixbuf = exec_lua(function()
         vim.lsp.util.open_floating_preview({ 'test' }, '', { height = 5, width = 2 })
         local winnr = vim.b[vim.api.nvim_get_current_buf()].lsp_floating_preview
         local result = vim.api.nvim_win_is_valid(winnr)
+        local winfixbuf = vim.wo[winnr].winfixbuf
         vim.api.nvim_feedkeys(vim.keycode('G'), 'txn', false)
-        return result
+        return result, winfixbuf
       end)
       eq(true, result)
+      eq(true, winfixbuf)
       eq('Key not found: lsp_floating_preview', pcall_err(api.nvim_buf_get_var, curbuf, var_name))
     end)
   end)
