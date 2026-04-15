@@ -22,6 +22,7 @@
 "   2026 Apr 06 by Vim Project: fix bugs with lz4 support (#19925)
 "   2026 Apr 09 by Vim Project: fix bugs with zstd support (#19930)
 "   2026 Apr 09 by Vim Project: fix bug with dotted filename (#19930)
+"   2026 Apr 15 by Vim Project: fix more path traversal issues (#19981)
 "
 "	Contains many ideas from Michael Toren's <tar.vim>
 "
@@ -610,6 +611,24 @@ fun! tar#Extract()
   if fname =~ '^"'
    let &report= repkeep
    return
+  endif
+  if fname =~ '^[.]\?[.]/' || simplify(fname) =~ '\.\.[/\\]'
+   call s:Msg('tar#Extract', 'error', "Path Traversal Attack detected, not extracting!")
+   let &report= repkeep
+   return
+  endif
+  if has("unix")
+   if fname =~ '^/'
+    call s:Msg('tar#Extract', 'error', "Path Traversal Attack detected, not extracting!")
+    let &report= repkeep
+    return
+   endif
+  else
+   if fname =~ '^\%(\a:[\\/]\|[\\/]\)'
+    call s:Msg('tar#Extract', 'error', "Path Traversal Attack detected, not extracting!")
+    let &report= repkeep
+    return
+   endif
   endif
 
   let extractcmd= s:WinPath(g:tar_extractcmd)
