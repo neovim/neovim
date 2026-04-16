@@ -34,7 +34,7 @@ jobs:
 
       - name: Create failed backport label
         if: ${{ steps.backport.outputs.was_successful == 'false' }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             github.rest.issues.addLabels({
