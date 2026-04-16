@@ -74,7 +74,7 @@ languages.
 Lua has three fundamental mechanisms—one for "each major aspect of
 programming": tables, closures, and coroutines.
 https://www.lua.org/doc/cacm2018.pdf
-- Tables are the "object" or container datastructure: they represent both
+- Tables are the "object" or container data structures: they represent both
   lists and maps, you can extend them to represent your own datatypes and
   change their behavior using |metatable|s (like Python's "datamodel").
 - EVERY scope in Lua is a closure: a function is a closure, a module is
