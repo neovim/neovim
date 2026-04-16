@@ -3893,7 +3893,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	  clean         Remove unloaded buffers from the jumplist.
 
-						*'keymap'* *'kmp'*
+						*'keymap'* *'kmp'* *E544*
 'keymap' 'kmp'		string	(default "")
 			local to buffer
 	Name of a keyboard mapping.  See |mbyte-keymap|.

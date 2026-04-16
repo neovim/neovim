@@ -5007,6 +5007,7 @@ local options = {
       redraw = { 'statuslines', 'current_buffer' },
       scope = { 'buf' },
       short_desc = N_('name of a keyboard mapping'),
+      tags = { 'E544' },
       type = 'string',
       varname = 'p_keymap',
     },

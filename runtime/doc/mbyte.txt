@@ -353,7 +353,7 @@ conversion needs to be done.  These conversions are supported:
 	Try getting another iconv() implementation.
 
 ==============================================================================
-Input with a keymap				*mbyte-keymap* *E544*
+Input with a keymap					*mbyte-keymap*
 
 When the keyboard doesn't produce the characters you want to enter in your
 text, you can use the 'keymap' option.  This will translate one or more
