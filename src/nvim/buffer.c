@@ -895,8 +895,16 @@ bool buf_freeall(buf_T *buf, int flags)
     unblock_autocmds();
   }
 
+  linenr_T count = buf->b_ml.ml_line_count;
   ml_close(buf, true);              // close and delete the memline/memfile
   buf->b_ml.ml_line_count = 0;      // no lines in buffer
+
+  // Ensure marks are adjusted for cleared buffer in case buffer not on disk:
+  // if it is reloaded the buffer will be empty.
+  if (bt_nofilename(buf) && !exiting) {
+    mark_adjust_buf(buf, 1, count, MAXLNUM, -count, false, kMarkAdjustNormal, kExtmarkNoUndo);
+  }
+
   if ((flags & BFA_KEEP_UNDO) == 0) {
     // free the memory allocated for undo
     // and reset all undo information
