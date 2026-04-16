@@ -138,7 +138,9 @@
 ---- On secondary machine:
 ---     - Pull from the server.
 ---     - |:restart|. New plugins (not present locally, but present in the lockfile)
----       are installed at proper revision.
+---       are installed at proper revision. If some installation has failed but
+---       you know it should not (like due to bad Internet connection),
+---       revert |vim.pack-lockfile| and |:restart| again.
 ---     - `vim.pack.update(nil, { target = 'lockfile' })`. Read and confirm.
 ---     - Manually delete outdated plugins (present locally, but were not present
 ---       in the lockfile prior to restart) with `vim.pack.del( { 'plugin' })`.
