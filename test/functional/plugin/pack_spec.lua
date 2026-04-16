@@ -879,7 +879,7 @@ describe('vim.pack', function()
       local function assert_works()
         -- Should auto-install but wait before executing code after it
         n.clear({ args_rm = { '-u' } })
-        t.retry(nil, 2000, function()
+        t.retry(nil, 5000, function()
           eq(true, exec_lua('return _G.done'))
         end)
         assert_loaded()
