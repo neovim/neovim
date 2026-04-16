@@ -84,10 +84,17 @@ Copyright 2005-2017:					*tar-copyright*
 4. History						*tar-history*
 
 	unreleased:
+		Apr 16, 2026	* add missing g:tar_secure into tar#Extract
+		Apr 15, 2026	* add path traversal checks in tar#Extract()
+		Apr 09, 2026	* fix zstd support and dotted filename support
+		Apr 06, 2026	* fix lz4 support
+		Feb 07, 2026	* make path traversal detection more robust
+		Feb 06, 2026	* fix bug with nowrapscan
+		Jul 16, 2025	* update minimum required Vim version
 		Jul 13, 2025	* drop leading /
 		May 19, 2025	* restore working directory after read/write
 		Apr 16, 2025	* decouple from netrw by adding s:WinPath()
-				instead of shelling out to file(1)
+				  instead of shelling out to file(1)
 		Mar 02, 2025	* determine the compression using readblob()
 		Mar 02, 2025	* escape the filename before using :read
 		Mar 01, 2025	* fix syntax error in tar#Read()
