@@ -5290,71 +5290,99 @@ static void f_reltimestr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
+/// Repeat the list "l" "n" times and set "rettv" to the new list.
+static void repeat_list(list_T *l, varnumber_T n, typval_T *rettv)
+{
+  tv_list_alloc_ret(rettv, (n > 0) * n * tv_list_len(l));
+  while (n-- > 0) {
+    tv_list_extend(rettv->vval.v_list, l, NULL);
+  }
+}
+
+/// Repeat the blob "b" "n" times and set "rettv" to the new blob.
+static void repeat_blob(typval_T *blob_tv, varnumber_T n, typval_T *rettv)
+{
+  blob_T *const blob = blob_tv->vval.v_blob;
+
+  tv_blob_alloc_ret(rettv);
+  if (blob == NULL || n <= 0) {
+    return;
+  }
+
+  const int slen = blob->bv_ga.ga_len;
+  const int len = (int)(slen * n);
+  if (len <= 0) {
+    return;
+  }
+
+  ga_grow(&rettv->vval.v_blob->bv_ga, len);
+
+  rettv->vval.v_blob->bv_ga.ga_len = len;
+
+  int i;
+  for (i = 0; i < slen; i++) {
+    if (tv_blob_get(blob, i) != 0) {
+      break;
+    }
+  }
+
+  if (i == slen) {
+    // No need to copy since all bytes are already zero
+    return;
+  }
+
+  for (i = 0; i < n; i++) {
+    tv_blob_set_range(rettv->vval.v_blob, i * slen, (i + 1) * slen - 1, blob_tv);
+  }
+}
+
+/// Repeat the string "str" "n" times and set "rettv" to the new string.
+static void repeat_string(typval_T *str_tv, varnumber_T n, typval_T *rettv)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+  if (n <= 0) {
+    return;
+  }
+
+  const char *const p = tv_get_string(str_tv);
+
+  const size_t slen = strlen(p);
+  if (slen == 0) {
+    return;
+  }
+  const size_t len = slen * (size_t)n;
+  // Detect overflow.
+  if (len / (size_t)n != slen) {
+    return;
+  }
+
+  char *const r = xmallocz(len);
+
+  memmove(r, p, slen);
+  size_t done = slen;
+  while (done < len) {
+    size_t copy_len = done;
+    if (copy_len > len - done) {
+      copy_len = len - done;
+    }
+    memmove(r + done, r, copy_len);
+    done += copy_len;
+  }
+
+  rettv->vval.v_string = r;
+}
+
 /// "repeat()" function
 static void f_repeat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   varnumber_T n = tv_get_number(&argvars[1]);
   if (argvars[0].v_type == VAR_LIST) {
-    tv_list_alloc_ret(rettv, (n > 0) * n * tv_list_len(argvars[0].vval.v_list));
-    while (n-- > 0) {
-      tv_list_extend(rettv->vval.v_list, argvars[0].vval.v_list, NULL);
-    }
+    repeat_list(argvars[0].vval.v_list, n, rettv);
   } else if (argvars[0].v_type == VAR_BLOB) {
-    tv_blob_alloc_ret(rettv);
-    if (argvars[0].vval.v_blob == NULL || n <= 0) {
-      return;
-    }
-
-    const int slen = argvars[0].vval.v_blob->bv_ga.ga_len;
-    const int len = (int)(slen * n);
-    if (len <= 0) {
-      return;
-    }
-
-    ga_grow(&rettv->vval.v_blob->bv_ga, len);
-
-    rettv->vval.v_blob->bv_ga.ga_len = len;
-
-    int i;
-    for (i = 0; i < slen; i++) {
-      if (tv_blob_get(argvars[0].vval.v_blob, i) != 0) {
-        break;
-      }
-    }
-
-    if (i == slen) {
-      // No need to copy since all bytes are already zero
-      return;
-    }
-
-    for (i = 0; i < n; i++) {
-      tv_blob_set_range(rettv->vval.v_blob, i * slen, (i + 1) * slen - 1, argvars);
-    }
+    repeat_blob(&argvars[0], n, rettv);
   } else {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = NULL;
-    if (n <= 0) {
-      return;
-    }
-
-    const char *const p = tv_get_string(&argvars[0]);
-
-    const size_t slen = strlen(p);
-    if (slen == 0) {
-      return;
-    }
-    const size_t len = slen * (size_t)n;
-    // Detect overflow.
-    if (len / (size_t)n != slen) {
-      return;
-    }
-
-    char *const r = xmallocz(len);
-    for (varnumber_T i = 0; i < n; i++) {
-      memmove(r + (size_t)i * slen, p, slen);
-    }
-
-    rettv->vval.v_string = r;
+    repeat_string(&argvars[0], n, rettv);
   }
 }
 
