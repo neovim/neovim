@@ -90,6 +90,23 @@ describe('treesitter parser API', function()
     eq(true, exec_lua('return parser:parse()[1] == tree2'))
   end)
 
+  it('preserves full-document included ranges', function()
+    insert([[
+      local _ = 1
+    ]])
+
+    eq(
+      {
+        { 0, 0, 0, 4294967295, 4294967295, 4294967295 },
+      },
+      exec_lua(function()
+        local parser = vim.treesitter.get_parser(0, 'lua')
+        local tree = parser:parse()[1]
+        return tree:included_ranges(true)
+      end)
+    )
+  end)
+
   it('respects eol settings when parsing buffer', function()
     insert([[
       int main() {
