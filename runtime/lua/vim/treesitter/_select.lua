@@ -36,7 +36,7 @@ local M = {}
 --- @param node vim.treesitter.select.node
 --- @return string
 local function node_id(node)
-  return ('%s:%s'):format(table.concat({ unpack(node.top.region) }, ':'), node.node:id())
+  return table.concat({ unpack(node.top.region) }, ':') .. ':' .. node.node:id()
 end
 
 --- @param node vim.treesitter.select.node
