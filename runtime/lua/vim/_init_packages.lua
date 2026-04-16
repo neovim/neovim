@@ -94,7 +94,11 @@ function vim.empty_dict()
 end
 
 -- only on main thread: functions for interacting with editor state
-if vim.api and not vim.is_thread() then
-  require('vim._core.editor')
-  require('vim._core.system')
+if not vim.is_thread() then
+  if vim.api then
+    require('vim._core.editor')
+    require('vim._core.system')
+  end
+
+  require('vim._core.wait')
 end

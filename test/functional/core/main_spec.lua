@@ -14,6 +14,15 @@ local write_file = t.write_file
 local is_os = t.is_os
 local skip = t.skip
 
+local function run_ll(source)
+  local lua_fname = t.tmpname(false) .. '.lua'
+  write_file(lua_fname, source)
+  finally(function()
+    os.remove(lua_fname)
+  end)
+  return n.spawn_wait({ merge = false, args = { '-ll', lua_fname } })
+end
+
 describe('command-line option', function()
   describe('-s', function()
     local fname = 'Xtest-functional-core-main-s'
@@ -202,6 +211,40 @@ describe('command-line option', function()
       end)
     end
   end
+
+  describe('-ll', function()
+    it('provides vim.wait with the standalone luv loop', function()
+      local p = run_ll([[
+        local timer = assert(vim.uv.new_timer())
+        local ready = false
+
+        timer:start(20, 0, function()
+          ready = true
+          timer:close()
+        end)
+
+        local ok, value = vim.wait(1000, function()
+          return ready, 'done'
+        end, 10)
+
+        assert(ok)
+        assert(value == 'done')
+      ]])
+      eq(0, p.status)
+    end)
+
+    it('times out without a callback', function()
+      local p = run_ll([[
+        local start = vim.uv.hrtime()
+        local ok, reason = vim.wait(25)
+
+        assert(not ok)
+        assert(reason == -1)
+        assert(vim.uv.hrtime() - start > 10000000)
+      ]])
+      eq(0, p.status)
+    end)
+  end)
 end)
 
 describe('vim._core', function()
@@ -238,6 +281,7 @@ describe('vim._core', function()
       'vim._core.ui2',
       'vim._core.util',
       'vim._core.vimfn',
+      'vim._core.wait',
       'vim._init_packages',
       'vim.filetype',
       'vim.fs',

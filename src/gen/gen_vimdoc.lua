@@ -174,6 +174,7 @@ local config = {
       'builtin.lua',
       'options.lua',
       'editor.lua',
+      'wait.lua',
       '_inspector.lua',
       'shared.lua',
 
@@ -209,6 +210,7 @@ local config = {
     },
     files = {
       'runtime/lua/vim/_core/editor.lua',
+      'runtime/lua/vim/_core/wait.lua',
       'runtime/lua/vim/_core/options.lua',
       'runtime/lua/vim/_core/shared.lua',
       'runtime/lua/vim/_core/system.lua',
@@ -241,7 +243,12 @@ local config = {
       'runtime/lua/vim/version.lua',
     },
     fn_xform = function(fun)
-      if contains(fun.module, { 'vim.uri', 'vim._core.shared', 'vim._core.editor' }) then
+      if
+        contains(
+          fun.module,
+          { 'vim.uri', 'vim._core.shared', 'vim._core.editor', 'vim._core.wait' }
+        )
+      then
         fun.module = 'vim'
       end
 
@@ -300,6 +307,7 @@ local config = {
       return fn_helptag_fmt_common(fun)
     end,
     append_only = {
+      'wait.lua',
       'shared.lua',
     },
   },

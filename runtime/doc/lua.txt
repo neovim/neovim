@@ -1472,6 +1472,9 @@ vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
     Return: ~
         (`integer`)
 
+
+
+
 vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     Waits up to `time` milliseconds, until `callback` returns `true`
     (success). Executes `callback` immediately, then on user events, internal
@@ -1479,7 +1482,8 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     Returns `true` plus any remaining callback results on success.
 
     Nvim processes other events while waiting. Cannot be called during an
-    |api-fast| event.
+    |api-fast| event. In standalone `nvim -ll` mode this polls the standalone
+    luv loop, so `fast_only` has no effect and interrupts are not reported.
 
     Examples: >lua
         -- Wait for 100 ms, allowing other events to process.
