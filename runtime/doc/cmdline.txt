@@ -1184,7 +1184,7 @@ variable, it needs to be preceded by a backslash.  Therefore you need to use
 Also see |`=|.
 
 ==============================================================================
-7. Command-line window				*cmdline-window* *cmdwin*
+7. Command-line window			*cmdline-window* *cmdwin* *E1292*
 							*command-line-window*
 In the command-line window the command line can be edited just like editing
 text in any window.  It is a special kind of window, because you cannot leave

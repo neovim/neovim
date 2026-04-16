@@ -20,7 +20,7 @@ files matching `*.c`.  You can also use autocommands to implement advanced
 features, such as editing compressed files (see |gzip-example|).  The usual
 place to put autocommands is in your vimrc file.
 
-				*E203* *E204* *E143* *E855* *E937* *E952*
+				*E203* *E204* *E143* *E855* *E937* *E952* *E1312*
 WARNING: Using autocommands is very powerful, and may lead to unexpected side
 effects.  Be careful not to destroy your text.
 - It's a good idea to do some testing on an expendable copy of a file first.
@@ -201,7 +201,7 @@ was last defined.  Example: >
 See |:verbose-cmd| for more information.
 
 ==============================================================================
-5. Events					*autocmd-events* *E215* *E216*
+5. Events				*autocmd-events* *E215* *E216* *E1155*
 
 You can specify a comma-separated list of event names.  No white space can be
 used in this list.  The command applies to all the events in the list.
@@ -711,7 +711,7 @@ FocusGained			Nvim got focus.
 							*FocusLost*
 FocusLost			Nvim lost focus.  Also (potentially) when
 				a GUI dialog pops up.
-							*FuncUndefined*
+							*FuncUndefined* *E454*
 FuncUndefined			When a user function is used but it isn't
 				defined.  Useful for defining a function only
 				when it's used.  The pattern is matched
