@@ -1314,4 +1314,187 @@ vim.loop = vim.uv
 -- Deprecated. Remove at Nvim 2.0
 vim.highlight = vim._defer_deprecated_module('vim.highlight', 'vim.hl')
 
+--- @class vim.Debounced
+--- @field cancel fun() Cancel pending invocation and reset state.
+--- @field flush fun(): any Execute pending invocation immediately.
+--- @field close fun() Cancel and close the underlying timer handle.
+--- @field is_pending fun(): boolean
+--- @overload fun(...): any
+
+--- @class vim.debounce.Opts
+--- @inlnedoc
+--- @field leading? boolean Invoke on the leading edge of the timeout.
+--- @field trailing? boolean Invoke on the trailing edge of the timeout (default true).
+--- @field maxwait? integer Maximum time fn is allowed to be delayed before forced invocation.
+
+--- Creates a debounced function that delays invoking `fn` until after `wait`
+--- milliseconds have elapsed since the last time the debounced function was
+--- invoked.
+---
+--- ```lua
+--- local d = vim.debounce(my_fn, 200, { leading = false, trailing = true })
+--- d('arg1', 'arg2')
+--- d:flush()           -- force immediate invocation
+--- d:cancel()          -- abandon pending invocation
+--- d:close()           -- cancel and release the underlying timer handle
+--- ```
+---
+--- @param fn function Function to debounce.
+--- @param wait integer Delay in milliseconds.
+--- @param opts? vim.debounce.Opts
+--- @return vim.Debounced
+function vim.debounce(fn, wait, opts)
+  vim.validate('fn', fn, 'function')
+  vim.validate('wait', wait, 'number')
+
+  local last_args = nil --- @type any[]?
+  local last_nargs = nil --- @type integer?
+  local maxwait = 0 --- @type integer
+  local result = nil --- @type any
+  local timer = assert(vim.uv.new_timer())
+  local last_call_time = nil --- @type integer?
+  local last_invoke_time = 0
+  local pending_trailing = false
+
+  opts = opts or {}
+  local leading = opts.leading and true or false
+  local maxing = false
+  local trailing = true
+  if opts.maxwait ~= nil then
+    maxing = true
+    maxwait = math.max(opts.maxwait --[[@as integer]], wait)
+  end
+  if opts.trailing ~= nil then
+    trailing = opts.trailing and true or false
+  end
+
+  local function is_active()
+    return timer:is_active() or pending_trailing
+  end
+
+  local function invoke(time)
+    local args = last_args --[[@as any[] ]]
+    local nargs = last_nargs --[[@as integer]]
+    last_args, last_nargs = nil, nil
+    last_invoke_time = time
+    result = fn(unpack(args, 1, nargs)) --[[@as any]]
+    return result
+  end
+
+  local function should_invoke(time)
+    if last_call_time == nil then
+      return true
+    end
+    local since_call = time - last_call_time --- @type integer
+    local since_invoke = time - last_invoke_time --- @type integer
+    return since_call >= wait or since_call < 0 or (maxing and since_invoke >= maxwait)
+  end
+
+  --- @return integer
+  local function remaining_wait(time)
+    --- @cast last_call_time integer
+    local since_call = time - last_call_time --- @type integer
+    local since_invoke = time - last_invoke_time --- @type integer
+    local time_waiting = wait - since_call --- @type integer
+    return (maxing and math.min(time_waiting, maxwait - since_invoke) or time_waiting) --[[@as integer]]
+  end
+
+  local function trailing_edge(time)
+    timer:stop()
+    if trailing and last_args then
+      local ret = invoke(time) --- @type any
+      pending_trailing = false
+      return ret
+    end
+    pending_trailing = false
+    last_args, last_nargs = nil, nil
+    return result
+  end
+
+  local timer_expired --- @type fun()
+  timer_expired = function()
+    local time = vim.uv.now()
+    if should_invoke(time) then
+      pending_trailing = true
+      vim.schedule(function()
+        trailing_edge(time)
+      end)
+      return
+    end
+    timer:start(remaining_wait(time), 0, timer_expired)
+  end
+
+  local function leading_edge(time)
+    last_invoke_time = time
+    timer:start(wait, 0, timer_expired)
+    if leading then
+      return invoke(time)
+    end
+    return result
+  end
+
+  local function cancel()
+    if timer:is_active() then
+      timer:stop()
+    end
+    pending_trailing = false
+    last_invoke_time = 0
+    last_args, last_nargs = nil, nil
+    last_call_time = nil
+  end
+
+  --- If a trailing invocation is pending, executes it immediately.
+  --- @return any
+  local function flush()
+    if not is_active() then
+      return result
+    end
+    return trailing_edge(vim.uv.now())
+  end
+
+  local function close()
+    cancel()
+    if not timer:is_closing() then
+      timer:close()
+    end
+  end
+
+  local function call(...)
+    local time = vim.uv.now()
+    local invoking = should_invoke(time)
+
+    last_args = { ... }
+    last_nargs = select('#', ...)
+    last_call_time = time
+
+    if invoking then
+      if not is_active() then
+        return leading_edge(last_call_time)
+      end
+      if maxing then
+        timer:start(wait, 0, timer_expired)
+        return invoke(last_call_time)
+      end
+    end
+    if not is_active() then
+      timer:start(wait, 0, timer_expired)
+    end
+    return result
+  end
+
+  return setmetatable({
+    cancel = cancel,
+    flush = flush,
+    close = close,
+    --- @return boolean
+    is_pending = function()
+      return is_active()
+    end,
+  }, {
+    __call = function(_, ...)
+      return call(...)
+    end,
+  })
+end
+
 return vim

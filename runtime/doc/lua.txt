@@ -1230,6 +1230,24 @@ vim.wo[{winid}][{bufnr}]                                              *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
+*vim.Debounced*
+
+    Fields: ~
+      • {cancel}      (`fun()`) Cancel pending invocation and reset state.
+      • {flush}       (`fun(): any`) Execute pending invocation immediately.
+      • {close}       (`fun()`) Cancel and close the underlying timer handle.
+      • {is_pending}  (`fun(): boolean`)
+
+*vim.debounce.Opts*
+
+    Fields: ~
+      • {leading}?   (`boolean`) Invoke on the leading edge of the timeout.
+      • {trailing}?  (`boolean`) Invoke on the trailing edge of the timeout
+                     (default true).
+      • {maxwait}?   (`integer`) Maximum time fn is allowed to be delayed
+                     before forced invocation.
+
+
 vim.cmd({command})                                                 *vim.cmd()*
     Executes Vimscript (|Ex-command|s).
 
@@ -1275,6 +1293,25 @@ vim.cmd({command})                                                 *vim.cmd()*
 
     See also: ~
       • |ex-cmd-index|
+
+vim.debounce({fn}, {wait}, {opts})                            *vim.debounce()*
+    Creates a debounced function that delays invoking `fn` until after `wait`
+    milliseconds have elapsed since the last time the debounced function was
+    invoked. >lua
+        local d = vim.debounce(my_fn, 200, { leading = false, trailing = true })
+        d('arg1', 'arg2')
+        d:flush()           -- force immediate invocation
+        d:cancel()          -- abandon pending invocation
+        d:close()           -- cancel and release the underlying timer handle
+<
+
+    Parameters: ~
+      • {fn}    (`function`) Function to debounce.
+      • {wait}  (`integer`) Delay in milliseconds.
+      • {opts}  (`vim.debounce.Opts?`) See |vim.debounce.Opts|.
+
+    Return: ~
+        (`vim.Debounced`) See |vim.Debounced|.
 
 vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
     Defers calling {fn} until {timeout} ms passes.
