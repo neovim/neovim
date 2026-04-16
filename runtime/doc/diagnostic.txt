@@ -48,7 +48,8 @@ The "severity" key in a diagnostic is one of the values defined in
     vim.diagnostic.severity.HINT
 
 Functions that take a severity as an optional parameter (e.g.
-|vim.diagnostic.get()|) accept one of three forms:
+|vim.diagnostic.get()|) allow using severity names (like "ERROR") as well as
+values and accept one of three forms:
 
 1. A single |vim.diagnostic.severity| value: >lua
 
