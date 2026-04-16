@@ -1366,12 +1366,14 @@ int nlua_call(lua_State *lstate)
   funcexe.fe_firstline = curwin->w_cursor.lnum;
   funcexe.fe_lastline = curwin->w_cursor.lnum;
   funcexe.fe_evaluate = true;
+  const sctx_T save_current_sctx = api_set_sctx(LUA_INTERNAL_CALL);
 
   TRY_WRAP(&err, {
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (TRY_WRAP) to capture abort-causing non-exception errors.
     (void)call_func(name, (int)name_len, &rettv, nargs, vim_args, &funcexe);
   });
+  current_sctx = save_current_sctx;
 
   if (!ERROR_SET(&err)) {
     nlua_push_typval(lstate, &rettv, 0);
