@@ -27,5 +27,8 @@ jobs:
             git diff --color --exit-code
           fi
 
-      - name: Validate docs
+      - name: lintdoc
         run: make lintdoc
+
+      - name: linterrcodes
+        run: make linterrcodes

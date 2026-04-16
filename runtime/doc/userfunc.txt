@@ -37,7 +37,7 @@ instead of "s:" when the mapping is expanded outside of the script.
 There are only script-local functions, no buffer-local or window-local
 functions.
 
-					*:fu* *:function* *E128* *E129* *E123*
+			*:fu* *:function* *E128* *E129* *E123* *E1058* *E1068*
 :fu[nction]		List all functions and their arguments.
 
 :fu[nction][!] {name}	List function {name}, annotated with line numbers
@@ -206,7 +206,7 @@ See |:verbose-cmd| for more information.
 						*function-argument* *a:var*
 An argument can be defined by giving its name.  In the function this can then
 be used as "a:name" ("a:" for argument).
-					*a:0* *a:1* *a:000* *E740* *...*
+				*a:0* *a:1* *a:000* *E740* *E1132* *...*
 Up to 20 arguments can be given, separated by commas.  After the named
 arguments an argument "..." can be specified, which means that more arguments
 may optionally be following.  In the function the extra arguments can be used

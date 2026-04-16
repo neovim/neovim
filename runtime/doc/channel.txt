@@ -42,7 +42,7 @@ Channels opened by Vimscript functions operate with raw bytes by default. For
 a job channel using RPC, bytes can still be read over its stderr. Similarly,
 only bytes can be written to Nvim's own stderr.
 
-						*channel-callback*
+					*channel-callback* *E904* *E906* *E921* *E5407*
 - on_stdout({chan-id}, {data}, {name})		*on_stdout*
 - on_stderr({chan-id}, {data}, {name})		*on_stderr*
 - on_stdin({chan-id}, {data}, {name})		*on_stdin*
