@@ -13,6 +13,9 @@ local M = {}
 
 local _trace = false
 
+local allowed_types =
+  { 'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'vim-patch' }
+
 -- Print message
 local function p(s)
   vim.cmd('set verbose=1')
@@ -88,8 +91,6 @@ local function validate_commit(commit_message)
 
   -- Check if type is correct
   local type = vim.split(before_colon, '(', { plain = true })[1]
-  local allowed_types =
-    { 'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'vim-patch' }
   if not vim.tbl_contains(allowed_types, type) then
     return string.format(
       [[Invalid commit type "%s". Allowed types are:

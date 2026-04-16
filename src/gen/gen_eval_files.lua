@@ -3,6 +3,7 @@
 -- Generator for various vimdoc and Lua type files
 
 local util = require('gen.util')
+local lint = require('gen.lint')
 local api_type = require('gen.api_types')
 local fmt = string.format
 
@@ -323,6 +324,8 @@ local function get_api_keysets_meta()
   --- @type {name: string, keys: string[], types: table<string,string>}[]
   local keysets = metadata.keysets
   local event_type = 'vim.api.keyset.events|vim.api.keyset.events[]'
+
+  lint.lint_names('src/nvim/api/keysets_defs.h', nil, keysets)
 
   for _, k in ipairs(keysets) do
     local params = {}
