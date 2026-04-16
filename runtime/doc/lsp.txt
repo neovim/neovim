@@ -146,23 +146,33 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
     })
 <
 ==============================================================================
-COMMANDS                                                 *:lsp* *lsp-commands*
+COMMANDS                                        *:lsp* *lsp-commands* *E5800*
 
-:lsp enable [config_name]                                 *:lsp-enable*
+                                                *E5801*
+The following commands operate on |lsp-config|s:
+
+                                                *:lsp-enable* *E5802* *E5803*
+:lsp enable [config_name]
     Activates LSP for current and future buffers. See |vim.lsp.enable()|.
 
-:lsp disable [config_name]                                *:lsp-disable*
-    Disables LSP (and stops if running) for current and future buffers. See
-    |vim.lsp.enable()|.
+                                                *:lsp-disable* *E5804*
+:lsp disable [config_name]
+    Disables LSP (and stops if running) for current and future buffers.
+    See |vim.lsp.enable()|.
 
-:lsp restart [client_name]                                *:lsp-restart*
+                                                *E5805* *E5806*
+The following commands operate on running clients:
+
+                                                *:lsp-restart*
+:lsp restart [client_name]
     Restarts LSP clients and servers. If no client names are given, all active
     clients attached to the current buffer are restarted.
 
-:lsp stop [client_name]                                   *:lsp-stop*
+                                                *:lsp-stop*
+:lsp stop [client_name]
     Stops LSP clients and servers. If no client names are given, all active
-    clients attached to the current buffer are stopped. Use |Client:stop()|
-    for non-interactive use.
+    clients attached to the current buffer are stopped. Use |Client:stop()| for
+    non-interactive use.
 
 ==============================================================================
 CONFIG                                                  *lsp-config*

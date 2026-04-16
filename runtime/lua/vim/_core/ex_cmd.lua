@@ -1,6 +1,7 @@
 local api = vim.api
 local fs = vim.fs
 local util = require('vim._core.util')
+local N_ = vim.fn.gettext
 
 --- Parsed ex command arguments for builtin commands, passed from C via `nlua_call_excmd`.
 --- Inherits fields from user command args: args, bang, line1, line2, range, count, reg, smods.
@@ -51,7 +52,7 @@ local function checked_enable(names, enable)
     if name:find('*') == nil and vim.lsp.config[name] ~= nil then
       vim.lsp.enable(name, enable)
     else
-      echo_err(("No client config named '%s'"):format(name))
+      echo_err(N_('E5801: No client config named: %s'):format(name))
     end
   end
 end
@@ -69,9 +70,9 @@ local function ex_lsp_enable(config_names)
     end
     if #config_names == 0 then
       if filetype == '' then
-        echo_err('Current buffer has no filetype')
+        echo_err(N_('E5802: Current buffer has no filetype'))
       else
-        echo_err(("No configs for filetype '%s'"):format(filetype))
+        echo_err(N_('E5803: No configs for filetype: %s'):format(filetype))
       end
       return
     end
@@ -94,7 +95,7 @@ local function ex_lsp_disable(config_names)
       end)
       :totable()
     if #config_names == 0 then
-      echo_err('No configs with clients attached to current buffer')
+      echo_err(N_('E5804: No configs with clients attached to current buffer'))
       return
     end
   end
@@ -109,7 +110,7 @@ local function get_clients_from_names(client_names)
   if #client_names == 0 then
     local clients = vim.lsp.get_clients { bufnr = api.nvim_get_current_buf() }
     if #clients == 0 then
-      echo_err('No clients attached to current buffer')
+      echo_err(N_('E5805: No clients attached to current buffer'))
     end
     return clients
   else
@@ -118,7 +119,7 @@ local function get_clients_from_names(client_names)
       :map(function(name)
         local clients = vim.lsp.get_clients { name = name }
         if #clients == 0 then
-          echo_err(("No active clients named '%s'"):format(name))
+          echo_err(N_('E5806: No active clients matching name: %s'):format(name))
         end
         return clients
       end)
@@ -163,7 +164,7 @@ M.ex_lsp = function(eap)
   end
   local subcmd = fargs[1]
   if not vim.list_contains(available_subcmds, subcmd) then
-    echo_err(("Invalid subcommand '%s'"):format(subcmd))
+    echo_err(N_('E5800: Invalid :lsp subcommand: %s'):format(subcmd))
     return
   end
 
@@ -211,7 +212,7 @@ M.ex_log = function(eap)
       path = fs.joinpath(log_dir, filename .. '.log')
     end
     if not vim.uv.fs_stat(path) then
-      echo_err(("No such log file: '%s'"):format(path))
+      echo_err(N_('E5200: No such log file: %s'):format(path))
       return
     end
     util.wrapped_edit(path, eap.smods)
