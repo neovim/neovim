@@ -977,4 +977,22 @@ describe('messages2', function()
       foo                                                  |
     ]])
   end)
+
+  it('message survives after closing tabpage without error #39055', function()
+    set_msg_target_zero_ch()
+    command('tabnew')
+    command('echo "hello"')
+    screen:expect([[
+      {24: [No Name] }{5: [No Name] }{2:                              }{24:X}|
+      ^                                                     |
+      {1:~                                                    }|*11
+      {1:~                                               }{4:hello}|
+    ]])
+    command('quit!')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {1:~                                               }{4:hello}|
+    ]])
+  end)
 end)

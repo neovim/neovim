@@ -237,8 +237,12 @@ function M.enable(opts)
 
   api.nvim_create_autocmd({ 'VimResized', 'TabEnter' }, {
     group = M.augroup,
-    callback = function()
+    callback = function(ev)
       M.check_targets()
+      -- After a tabpage was closed unhide the msg window on the current tabpage.
+      if ev.event == 'TabEnter' and next(M.msg.msg.ids) ~= nil then
+        api.nvim_win_set_config(M.wins.msg, { hide = false, width = M.msg.msg.width })
+      end
       M.msg.set_pos()
     end,
     desc = 'Set cmdline and message window dimensions after shell resize or tabpage change.',
