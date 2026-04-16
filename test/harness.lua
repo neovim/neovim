@@ -1530,6 +1530,7 @@ end
 --- @return test.harness.IterationResult?, string?
 local function run_iteration(Reporter, opts, files, pre_helper_baseline, repeat_index)
   local reporter = Reporter.new({
+    paths = opts.paths,
     verbose = opts.verbose,
     summary_file = opts.summary_file,
   })

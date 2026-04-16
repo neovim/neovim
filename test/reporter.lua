@@ -14,6 +14,7 @@
 --- @field duration? number
 
 --- @class test.reporter.Options
+--- @field paths string[]
 --- @field verbose boolean
 --- @field summary_file string
 
@@ -436,15 +437,20 @@ function M:suite_end(duration, run_summary, failure_output)
   io.write(('%s Global test environment teardown.\n'):format(self:sect('--------')))
   io.flush()
 
+  local fpath = function(s)
+    return self:fpath(s)
+  end
+
   local summary_file = open_summary_file(self.opts.summary_file)
   summary_file:write('\n')
   summary_file:write(
-    ('%s %s %s from %s test %s ran. %s\n'):format(
+    ('%s %s %s from %s test %s of %s ran. %s\n'):format(
       self:sect('========'),
       self:nmbr(run_summary.test_count),
       tests,
       self:nmbr(run_summary.file_count),
       files,
+      vim.iter(self.opts.paths):map(fpath):join(';'),
       self:time(('(%.2f ms total)'):format(duration * 1000))
     )
   )

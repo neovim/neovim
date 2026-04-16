@@ -4,6 +4,8 @@ local t = require('test.testutil')
 local uv = vim.uv
 
 local eq = t.eq
+local matches = t.matches
+local not_matches = t.not_matches
 
 local root = t.paths.test_source_path
 local build_dir = t.paths.test_build_dir
@@ -131,7 +133,7 @@ end
 local function assert_harness_passes(suite_dir, extra_args)
   local code, output = run_harness(suite_dir, extra_args)
   eq(0, code)
-  eq(true, output:find('PASSED', 1, true) ~= nil)
+  matches('PASSED', output, true)
 end
 
 describe('test harness', function()
@@ -365,7 +367,7 @@ describe('test harness', function()
     })
 
     eq(1, code)
-    eq(true, not not output:find("attempt to call global 'before_each'", 1, true), output)
+    matches("attempt to call global 'before_each'", output, true)
   end)
 
   it('rejects helpers that define suites or tests', function()
@@ -387,7 +389,7 @@ describe('test harness', function()
     })
 
     eq(1, code)
-    eq(true, not not output:find("attempt to call global 'describe'", 1, true), output)
+    matches("attempt to call global 'describe'", output, true)
   end)
 
   it('deduplicates suite-end callbacks registered from the same module', function()
@@ -529,13 +531,13 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('[suite_end 1]', 1, true))
-    eq(true, not not output:find('suite_end', 1, true))
-    eq(true, not not output:find('boom from suite_end', 1, true))
-    eq(true, not not output:find('ERROR   ', 1, true))
-    eq(false, not not output:find('FAILED  ', 1, true))
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true))
-    eq(true, not not output:find('Global test environment teardown.', 1, true))
+    matches('[suite_end 1]', output, true)
+    matches('suite_end', output, true)
+    matches('boom from suite_end', output, true)
+    matches('ERROR   ', output, true)
+    not_matches('FAILED  ', output, true)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('Global test environment teardown.', output, true)
   end)
 
   it('reports wrapped suite-end callback failures at the callback definition line', function()
@@ -573,8 +575,8 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('cbmod.lua @ 4: [suite_end 1]', 1, true), output)
-    eq(false, not not output:find('wrapper.lua @ 4:', 1, true), output)
+    matches('cbmod.lua @ 4: [suite_end 1]', output, true)
+    not_matches('wrapper.lua @ 4:', output, true)
   end)
 
   it('reloads helper suite-end callbacks between repeats', function()
@@ -651,9 +653,9 @@ describe('test harness', function()
     })
 
     eq(0, code)
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true), output)
-    eq(true, not not output:find('one fast #fast', 1, true), output)
-    eq(false, not not output:find('two slow #slow', 1, true), output)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('one fast #fast', output, true)
+    not_matches('two slow #slow', output, true)
   end)
 
   it('filters tests by suite tags across files', function()
@@ -675,9 +677,9 @@ describe('test harness', function()
     })
 
     eq(0, code)
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true), output)
-    eq(true, not not output:find('one #fast works', 1, true), output)
-    eq(false, not not output:find('two #slow works', 1, true), output)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('one #fast works', output, true)
+    not_matches('two #slow works', output, true)
   end)
 
   it('filters tests by name across files', function()
@@ -699,9 +701,9 @@ describe('test harness', function()
     })
 
     eq(0, code)
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true), output)
-    eq(true, not not output:find('one chosen', 1, true), output)
-    eq(false, not not output:find('two skipped', 1, true), output)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('one chosen', output, true)
+    not_matches('two skipped', output, true)
   end)
 
   it('filters tests by suite name across files', function()
@@ -724,9 +726,9 @@ describe('test harness', function()
     })
 
     eq(0, code)
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true), output)
-    eq(true, not not output:find('chosen suite works', 1, true), output)
-    eq(false, not not output:find('skipped suite works', 1, true), output)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('chosen suite works', output, true)
+    not_matches('skipped suite works', output, true)
   end)
 
   it('does not keep suite-end callbacks from filtered-out files', function()
@@ -765,7 +767,7 @@ describe('test harness', function()
 
     eq(0, code)
     eq(nil, uv.fs_stat(marker))
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true), output)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
   end)
 
   it('filters tests out by name across files', function()
@@ -787,9 +789,9 @@ describe('test harness', function()
     })
 
     eq(0, code)
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true), output)
-    eq(true, not not output:find('one chosen', 1, true), output)
-    eq(false, not not output:find('two skipped', 1, true), output)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('one chosen', output, true)
+    not_matches('two skipped', output, true)
   end)
 
   it('filters tests out by suite name across files', function()
@@ -812,9 +814,9 @@ describe('test harness', function()
     })
 
     eq(0, code)
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true), output)
-    eq(true, not not output:find('chosen suite works', 1, true), output)
-    eq(false, not not output:find('skipped suite works', 1, true), output)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('chosen suite works', output, true)
+    not_matches('skipped suite works', output, true)
   end)
 
   it('reports when filters exclude all tests', function()
@@ -831,8 +833,8 @@ describe('test harness', function()
     })
 
     eq(1, code)
-    eq(true, not not output:find('No tests matched the current selection.', 1, true), output)
-    eq(false, not not output:find('Running tests from', 1, true), output)
+    matches('No tests matched the current selection.', output, true)
+    not_matches('Running tests from', output, true)
   end)
 
   it('reports malformed filter patterns clearly before selection runs', function()
@@ -851,10 +853,10 @@ describe('test harness', function()
       local code, output = run_harness(suite_dir, { case[1] })
 
       eq(1, code)
-      eq(true, not not output:find(case[2], 1, true), output)
-      eq(false, not not output:find('test_selected', 1, true), output)
-      eq(false, not not output:find('Running tests from', 1, true), output)
-      eq(false, not not output:find('test harness failed with exit code', 1, true), output)
+      matches(case[2], output, true)
+      not_matches('test_selected', output, true)
+      not_matches('Running tests from', output, true)
+      not_matches('test harness failed with exit code', output, true)
     end
   end)
 
@@ -892,10 +894,10 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(0, code)
-    eq(true, not not output:find('Running tests from', 1, true), output)
-    eq(true, not not output:find('one works', 1, true), output)
-    eq(false, not not output:find('two is hidden behind permissions', 1, true), output)
-    eq(true, not not output:find('1 test from 1 test file ran.', 1, true), output)
+    matches('Running tests from', output, true)
+    matches('one works', output, true)
+    not_matches('two is hidden behind permissions', output, true)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
   end)
 
   it('reports missing test paths clearly before loading suites', function()
@@ -911,10 +913,10 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir, { missing })
 
     eq(1, code)
-    eq(true, not not output:find('test path not found: ' .. missing, 1, true), output)
-    eq(false, not not output:find('collect_test_files', 1, true), output)
-    eq(false, not not output:find('Running tests from', 1, true), output)
-    eq(false, not not output:find('test harness failed with exit code', 1, true), output)
+    matches('test path not found: ' .. missing, output, true)
+    not_matches('collect_test_files', output, true)
+    not_matches('Running tests from', output, true)
+    not_matches('test harness failed with exit code', output, true)
   end)
 
   it('reports missing helpers clearly before running suites', function()
@@ -932,10 +934,10 @@ describe('test harness', function()
     })
 
     eq(1, code)
-    eq(true, not not output:find('cannot open ' .. missing, 1, true), output)
-    eq(false, not not output:find('load_helper', 1, true), output)
-    eq(false, not not output:find('Running tests from', 1, true), output)
-    eq(false, not not output:find('test harness failed with exit code', 1, true), output)
+    matches('cannot open ' .. missing, output, true)
+    not_matches('load_helper', output, true)
+    not_matches('Running tests from', output, true)
+    not_matches('test harness failed with exit code', output, true)
   end)
 
   it('reports empty value options before running suites', function()
@@ -956,10 +958,10 @@ describe('test harness', function()
       })
 
       eq(1, code)
-      eq(true, not not output:find(case[2], 1, true), output)
-      eq(false, not not output:find('open_summary_file', 1, true), output)
-      eq(false, not not output:find('Running tests from', 1, true), output)
-      eq(false, not not output:find('test harness failed with exit code', 1, true), output)
+      matches(case[2], output, true)
+      not_matches('open_summary_file', output, true)
+      not_matches('Running tests from', output, true)
+      not_matches('test harness failed with exit code', output, true)
     end
   end)
 
@@ -975,14 +977,14 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir, { '--filter', '--verbose' })
 
     eq(1, code)
-    eq(true, not not output:find('No tests matched the current selection.', 1, true), output)
-    eq(false, not not output:find('missing value for --filter', 1, true), output)
+    matches('No tests matched the current selection.', output, true)
+    not_matches('missing value for --filter', output, true)
 
     code, output = run_harness(suite_dir, { '--repeat', '-1' })
 
     eq(1, code)
-    eq(true, not not output:find('invalid value for --repeat: -1', 1, true), output)
-    eq(false, not not output:find('missing value for --repeat', 1, true), output)
+    matches('invalid value for --repeat: -1', output, true)
+    not_matches('missing value for --repeat', output, true)
   end)
 
   it('reports test-body errors as failures', function()
@@ -999,9 +1001,9 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('boom from test', 1, true))
-    eq(true, not not output:find('FAILED  ', 1, true))
-    eq(false, not not output:find('ERROR   ', 1, true))
+    matches('boom from test', output, true)
+    matches('FAILED  ', output, true)
+    not_matches('ERROR   ', output, true)
   end)
 
   it('reports test-body failures at the failing line', function()
@@ -1018,7 +1020,7 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 3: one fails', 1, true), output)
+    matches('one_spec.lua @ 3: one fails', output, true)
   end)
 
   it('ignores fake trace lines embedded in multiline error messages', function()
@@ -1035,8 +1037,8 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 3: one fake trace', 1, true), output)
-    eq(false, not not output:find('one_spec.lua @ 999: one fake trace', 1, true), output)
+    matches('one_spec.lua @ 3: one fake trace', output, true)
+    not_matches('one_spec.lua @ 999: one fake trace', output, true)
   end)
 
   it('reports wrapped assertion failures at the test definition line', function()
@@ -1053,8 +1055,8 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 2: one equal fail', 1, true), output)
-    eq(false, not not output:find(root .. '/test/assert.lua @', 1, true), output)
+    matches('one_spec.lua @ 2: one equal fail', output, true)
+    not_matches(root .. '/test/assert.lua @', output, true)
   end)
 
   it('reports local wrapper failures at the test definition line', function()
@@ -1082,8 +1084,8 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 4: one wrapper fail', 1, true), output)
-    eq(false, not not output:find('wrapper.lua @ 4:', 1, true), output)
+    matches('one_spec.lua @ 4: one wrapper fail', output, true)
+    not_matches('wrapper.lua @ 4:', output, true)
   end)
 
   it('reports failing finally cleanup at the cleanup line', function()
@@ -1103,7 +1105,7 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 4: one finfail', 1, true), output)
+    matches('one_spec.lua @ 4: one finfail', output, true)
   end)
 
   it('rejects finally in setup hooks', function()
@@ -1122,12 +1124,8 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 2: one [setup]', 1, true), output)
-    eq(
-      true,
-      not not output:find('finally() must be called while a test body is running', 1, true),
-      output
-    )
+    matches('one_spec.lua @ 2: one [setup]', output, true)
+    matches('finally() must be called while a test body is running', output, true)
   end)
 
   it('rejects finally in teardown hooks', function()
@@ -1146,12 +1144,8 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 2: one [teardown]', 1, true), output)
-    eq(
-      true,
-      not not output:find('finally() must be called while a test body is running', 1, true),
-      output
-    )
+    matches('one_spec.lua @ 2: one [teardown]', output, true)
+    matches('finally() must be called while a test body is running', output, true)
   end)
 
   it('reports failing after_each cleanup at the cleanup line', function()
@@ -1172,7 +1166,7 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 3: one afterfail', 1, true), output)
+    matches('one_spec.lua @ 3: one afterfail', output, true)
   end)
 
   it('reports cross-file after_each wrapper failures at the hook definition line', function()
@@ -1204,9 +1198,9 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 4: one afterwrap', 1, true), output)
-    eq(false, not not output:find('one_spec.lua @ 8: one afterwrap', 1, true), output)
-    eq(false, not not output:find('wrapper.lua @ 4:', 1, true), output)
+    matches('one_spec.lua @ 4: one afterwrap', output, true)
+    not_matches('one_spec.lua @ 8: one afterwrap', output, true)
+    not_matches('wrapper.lua @ 4:', output, true)
   end)
 
   it(
@@ -1240,9 +1234,9 @@ describe('test harness', function()
       local code, output = run_harness(suite_dir)
 
       eq(1, code)
-      eq(true, not not output:find('one_spec.lua @ 4: one afterwrap pending', 1, true), output)
-      eq(false, not not output:find('one_spec.lua @ 8: one afterwrap pending', 1, true), output)
-      eq(false, not not output:find('wrapper.lua @ 4:', 1, true), output)
+      matches('one_spec.lua @ 4: one afterwrap pending', output, true)
+      not_matches('one_spec.lua @ 8: one afterwrap pending', output, true)
+      not_matches('wrapper.lua @ 4:', output, true)
     end
   )
 
@@ -1273,9 +1267,9 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 5: one finwrap', 1, true), output)
-    eq(false, not not output:find('one_spec.lua @ 4: one finwrap', 1, true), output)
-    eq(false, not not output:find('wrapper.lua @ 4:', 1, true), output)
+    matches('one_spec.lua @ 5: one finwrap', output, true)
+    not_matches('one_spec.lua @ 4: one finwrap', output, true)
+    not_matches('wrapper.lua @ 4:', output, true)
   end)
 
   it('does not count synthetic hook failures as executed tests', function()
@@ -1294,8 +1288,8 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('0 tests from 1 test file ran.', 1, true))
-    eq(true, not not output:find('1 ERROR', 1, true))
+    matches('0 tests from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('1 ERROR', output, true)
   end)
 
   it('reports setup failures at the hook definition site', function()
@@ -1314,7 +1308,7 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, not not output:find('one_spec.lua @ 2: trace [setup]', 1, true), output)
+    matches('one_spec.lua @ 2: trace [setup]', output, true)
   end)
 
   it('does not keep suite-end callbacks from load-error files', function()
@@ -1340,7 +1334,7 @@ describe('test harness', function()
 
     eq(1, code)
     eq(nil, uv.fs_stat(marker))
-    eq(true, not not output:find('boom during load', 1, true), output)
+    matches('boom during load', output, true)
   end)
 
   it('reports load failures at the failing line', function()
@@ -1355,7 +1349,7 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, output:match('one_spec%.lua @ 3: .-one_spec%.lua %[load%]') ~= nil, output)
+    matches('one_spec%.lua @ 3: .-one_spec%.lua %[load%]', output)
   end)
 
   it('reports required-module syntax errors at the real module line', function()
@@ -1377,6 +1371,6 @@ describe('test harness', function()
     local code, output = run_harness(suite_dir)
 
     eq(1, code)
-    eq(true, output:match('broken%.lua @ 3: .-one_spec%.lua %[load%]') ~= nil, output)
+    matches('broken%.lua @ 3: .-one_spec%.lua %[load%]', output)
   end)
 end)

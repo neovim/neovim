@@ -202,7 +202,7 @@ was last defined.  Example: >
 See |:verbose-cmd| for more information.
 
 ==============================================================================
-5. Events				*autocmd-events* *E215* *E216*
+5. Events					*autocmd-events* *E215* *E216*
 
 You can specify a comma-separated list of event names.  No white space can be
 used in this list.  The command applies to all the events in the list.

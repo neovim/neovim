@@ -126,13 +126,27 @@ end
 
 --- @param pat string
 --- @param actual string
+--- @param plain boolean? (default: false)
 --- @return boolean
-function M.matches(pat, actual)
+function M.matches(pat, actual, plain)
   assert(pat and pat ~= '', 'pat must be a non-empty string')
-  if nil ~= string.match(actual, pat) then
+  assert(plain == nil or type(plain) == 'boolean', 'plain must be nil or boolean')
+  if nil ~= string.find(actual, pat, 1, plain) then
     return true
   end
-  error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
+  error(('Pattern does not match.\nPattern:\n%s\nActual:\n%s'):format(pat, actual))
+end
+
+--- @param pat string
+--- @param actual string
+--- @param plain boolean? (default: false)
+--- @return boolean
+function M.not_matches(pat, actual, plain)
+  assert(pat and pat ~= '', 'pat must be a non-empty string')
+  if nil == string.find(actual, pat, 1, plain) then
+    return true
+  end
+  error(('Pattern does match.\nPattern:\n%s\nActual:\n%s'):format(pat, actual))
 end
 
 --- Asserts that `pat` matches (or *not* if inverse=true) any text in the tail of `logfile`.

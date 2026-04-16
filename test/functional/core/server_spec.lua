@@ -287,7 +287,7 @@ describe('startup --listen', function()
     local cmd = vim.list_extend({ '--clean', '+qall!', '--headless' }, args)
     local r = run(cmd)
     eq(1, r.status)
-    matches(expected, r:output():gsub('\\n', ' '))
+    matches(expected, (r:output():gsub('\\n', ' ')))
 
     if is_os('win') then
       return -- On Windows, output without --headless is garbage.
@@ -296,7 +296,7 @@ describe('startup --listen', function()
     assert(not vim.tbl_contains(cmd, '--headless'))
     r = run(cmd)
     eq(1, r.status)
-    matches(expected, r:output():gsub('\\n', ' '))
+    matches(expected, (r:output():gsub('\\n', ' ')))
   end
 
   it('validates', function()
