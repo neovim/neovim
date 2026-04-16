@@ -1286,7 +1286,7 @@ function lsp.buf_request_all(bufnr, method, params, handler)
   local _, cancel = lsp.buf_request(bufnr, method, params, function(err, result, ctx, config)
     if not remaining then
       -- Calculate as late as possible in case a client is removed during the request
-      remaining = #lsp.get_clients({ bufnr = bufnr, method = method })
+      remaining = #lsp.get_clients({ bufnr = bufnr, method = method }) - 1
     end
 
     -- The error key is deprecated and will be removed in 0.13
