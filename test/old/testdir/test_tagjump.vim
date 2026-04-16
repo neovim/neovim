@@ -1729,4 +1729,26 @@ func Test_tag_excmd_with_nostartofline()
   set startofline&
 endfunc
 
+" Test that backtick expressions in tag filenames are not expanded.
+" This prevents command injection via malicious tags files.
+func Test_tag_backtick_filename_not_expanded()
+  let pwned_file = 'Xtags_pwnd'
+  call assert_false(filereadable(pwned_file))
+
+  let tagline = "main\t`touch " .. pwned_file .. "`\t/^int main/;\"\tf"
+  call writefile([tagline], 'Xbt_tags', 'D')
+  call writefile(['int main(int argc, char **argv) {', '}'], 'Xbt_main.c', 'D')
+
+  set tags=Xbt_tags
+  sp Xbt_main.c
+
+  " The :tag command should fail to find the file, but must NOT execute
+  " the backtick shell command.
+  call assert_fails('tag main', 'E429:')
+  call assert_false(filereadable(pwned_file))
+
+  set tags&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
