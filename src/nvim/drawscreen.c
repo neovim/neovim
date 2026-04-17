@@ -1466,6 +1466,10 @@ static void win_update(win_T *wp)
   }
   buf->b_signcols.last_max = buf->b_signcols.max;
 
+  // Validate w_virtcol here as it can change the redraw type.
+  validate_virtcol(wp);
+  type = wp->w_redr_type;
+
   init_search_hl(wp, &screen_search_hl);
 
   // Make sure skipcol is valid, it depends on various options and the window

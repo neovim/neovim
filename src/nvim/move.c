@@ -42,7 +42,6 @@
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/plines.h"
-#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -141,8 +140,11 @@ static void comp_botline(win_T *wp)
 static void redraw_for_cursorline(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
-      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
+  if (wp->w_valid & VALID_CROW) {
+    return;
+  }
+
+  if (wp->w_p_rnu || win_cursorline_standout(wp)) {
     // win_line() will redraw the number column and cursorline only.
     redraw_later(wp, UPD_VALID);
   }
@@ -161,7 +163,7 @@ static void redraw_for_cursorcolumn(win_T *wp)
     redrawWinline(wp, wp->w_cursor.lnum);
   }
 
-  if ((wp->w_valid & VALID_VIRTCOL) || pum_visible()) {
+  if (wp->w_valid & VALID_VIRTCOL) {
     return;
   }
 
