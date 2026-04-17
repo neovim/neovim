@@ -2204,12 +2204,9 @@ describe('ui/builtin messages', function()
     screen:try_resize(40, 10)
     exec_lua(function()
       vim.g.intro_left = false
-      vim.api.nvim_create_autocmd('IntroLeave', {
-        once = true,
-        callback = function()
-          vim.g.intro_left = true
-        end,
-      })
+      require('vim._core.intro').on_close = function()
+        vim.g.intro_left = true
+      end
     end)
 
     feed(':intro<CR>')
@@ -2233,14 +2230,12 @@ describe('ui/builtin messages', function()
     assert_alive()
   end)
 
-  it('triggers IntroLeave when :intro closes', function()
+  it('runs intro.on_close when :intro closes', function()
     exec_lua(function()
       vim.g.intro_left = 0
-      vim.api.nvim_create_autocmd('IntroLeave', {
-        callback = function()
-          vim.g.intro_left = vim.g.intro_left + 1
-        end,
-      })
+      require('vim._core.intro').on_close = function()
+        vim.g.intro_left = vim.g.intro_left + 1
+      end
     end)
     feed(':intro<CR>')
     feed('<CR>')

@@ -50,10 +50,9 @@ local M = {}
 --- |highlight-groups| for custom highlights, and |vim.version()| if the intro
 --- depends on the current Nvim version.
 ---
----[intro-events]()
----
----The intro lifecycle is defined by these events:
----- [IntroLeave]() - Triggers when the intro screen is dismissed
+--- Override `on_close()` to clean up intro-local state such as timers, keymaps,
+--- or cached data. It runs when either the startup intro or `:intro` is
+--- dismissed.
 
 ---@alias vim._core.intro.Chunk [string, string?]
 ---@alias vim._core.intro.Line vim._core.intro.Chunk[]
@@ -101,6 +100,8 @@ M.display = function()
     intro_command('help Kuwasha', '  for information '),
   })
 end
+
+M.on_close = function() end
 
 function M.dismiss()
   vim.api.nvim__dismiss_intro()

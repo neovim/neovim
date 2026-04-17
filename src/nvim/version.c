@@ -14,8 +14,6 @@
 #include "auto/versiondef_git.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
-#include "nvim/autocmd.h"
-#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -70,8 +68,16 @@ bool intro_manual_active(void)
 
 void intro_dismiss(void)
 {
+  Error err = ERROR_INIT;
+  Array args = ARRAY_DICT_INIT;
+
   intro_dismissed = true;
   manual_intro_active = false;
+
+  NLUA_EXEC_STATIC("require('vim._core.intro').on_close()", args, kRetNilBool, NULL, &err);
+  if (ERROR_SET(&err)) {
+    api_clear_error(&err);
+  }
 }
 
 static int intro_state_execute(VimState *state, int key)
@@ -85,7 +91,7 @@ static int intro_state_execute(VimState *state, int key)
     return manual_intro_active ? -1 : 0;
   }
 
-  manual_intro_active = false;
+  intro_dismiss();
   return 0;
 }
 
@@ -4379,8 +4385,8 @@ void intro_message(bool colon)
 
   Error err = ERROR_INIT;
   Array args = ARRAY_DICT_INIT;
-  Object spec = nlua_exec(STATIC_CSTR_AS_STRING("return require('vim._core.intro').display()"),
-                          NULL, args, kRetObject, NULL, &err);
+  Object spec = NLUA_EXEC_STATIC("return require('vim._core.intro').display()",
+                                 args, kRetObject, NULL, &err);
   if (ERROR_SET(&err) || spec.type != kObjectTypeArray) {
     api_clear_error(&err);
     if (!colon) {
@@ -4451,5 +4457,4 @@ void ex_intro(exarg_T *eap)
 
   manual_intro_active = false;
   State = save_State;
-  apply_autocmds(EVENT_INTROLEAVE, NULL, NULL, false, curbuf);
 }

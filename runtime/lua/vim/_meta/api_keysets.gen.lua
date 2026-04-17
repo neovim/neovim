@@ -156,7 +156,6 @@ error('Cannot require a meta file')
 --- |'InsertEnter'
 --- |'InsertLeave'
 --- |'InsertLeavePre'
---- |'IntroLeave'
 --- |'LspAttach'
 --- |'LspDetach'
 --- |'LspNotify'
