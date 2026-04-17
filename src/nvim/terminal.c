@@ -197,6 +197,7 @@ struct terminal {
     MultiQueue *events;   ///< Events waiting for refresh.
   } pending;
 
+  bool streamed_paste;  ///< Streamed pasting
   bool theme_updates;  ///< Send a theme update notification when 'bg' changes
   bool synchronized_output;  ///< Mode 2026: suppress redraws until end of synchronized update
   bool sync_flush_pending;   ///< Set when mode 2026 ends; triggers immediate buffer refresh
@@ -1282,12 +1283,27 @@ static bool is_filter_char(int c)
   return !!(tpf_flags & flag);
 }
 
+void terminal_set_streamed_paste(Terminal *term, bool streamed)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (term->streamed_paste != streamed) {
+    if (streamed) {
+      vterm_keyboard_start_paste(curbuf->terminal->vt);
+    } else {
+      vterm_keyboard_end_paste(curbuf->terminal->vt);
+    }
+  }
+  term->streamed_paste = streamed;
+}
+
 void terminal_paste(int count, String *y_array, size_t y_size)
 {
   if (y_size == 0) {
     return;
   }
-  vterm_keyboard_start_paste(curbuf->terminal->vt);
+  if (!curbuf->terminal->streamed_paste) {
+    vterm_keyboard_start_paste(curbuf->terminal->vt);
+  }
   size_t buff_len = y_array[0].size;
   char *buff = xmalloc(buff_len);
   for (int i = 0; i < count; i++) {
@@ -1321,7 +1337,9 @@ void terminal_paste(int count, String *y_array, size_t y_size)
     }
   }
   xfree(buff);
-  vterm_keyboard_end_paste(curbuf->terminal->vt);
+  if (!curbuf->terminal->streamed_paste) {
+    vterm_keyboard_end_paste(curbuf->terminal->vt);
+  }
 }
 
 static void terminal_send_key(Terminal *term, int c)
