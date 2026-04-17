@@ -674,9 +674,19 @@ static int nlua_module_preloader(lua_State *lstate)
   ModuleDef def = builtin_modules[i];
   char name[256];
   name[0] = '@';
-  size_t off = xstrlcpy(name + 1, def.name, (sizeof name) - 2);
-  strchrsub(name + 1, '.', '/');
-  xstrlcpy(name + 1 + off, ".lua", (sizeof name) - 2 - off);
+  size_t off = 1;
+  const char *vimruntime = os_getenv_noalloc("VIMRUNTIME");
+  if (vimruntime != NULL) {
+    off += xstrlcpy(name + off, vimruntime, sizeof(name) - off);
+    if (off < sizeof(name)) {
+      name[off++] = '/';
+    }
+    off += xstrlcpy(name + off, "lua/", sizeof(name) - off);
+  }
+  const size_t def_name_start = off;
+  off += xstrlcpy(name + off, def.name, sizeof(name) - off);
+  strchrsub(name + def_name_start, '.', '/');
+  xstrlcpy(name + off, ".lua", sizeof(name) - off);
 
   if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, name)) {
     return lua_error(lstate);
