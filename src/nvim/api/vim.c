@@ -1373,6 +1373,9 @@ Boolean nvim_paste(uint64_t channel_id, String data, Boolean crlf, Integer phase
   });
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
     cancelled = false;
+    if (curbuf->terminal) {
+      terminal_set_streamed_paste(curbuf->terminal, true);
+    }
   } else if (cancelled) {
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
@@ -1385,6 +1388,9 @@ Boolean nvim_paste(uint64_t channel_id, String data, Boolean crlf, Integer phase
   // vim.paste() decides if client should cancel.
   if (ERROR_SET(err) || (rv.type == kObjectTypeBoolean && !rv.data.boolean)) {
     cancelled = true;
+  }
+  if ((phase == -1 || phase == 3 || cancelled) && curbuf->terminal) {
+    terminal_set_streamed_paste(curbuf->terminal, false);
   }
   if (!cancelled && (phase == -1 || phase == 1)) {
     paste_store(channel_id, kFalse, NULL_STRING, crlf);

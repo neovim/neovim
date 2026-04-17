@@ -1228,6 +1228,67 @@ describe('API', function()
       end)
       run_streamed_paste_tests()
     end)
+    describe('stream: terminal buffer', function()
+      local eol = is_os('win') and '\r\n' or '\n'
+      before_each(function()
+        exec_lua(function()
+          _G.input = {}
+          _G.chan = vim.api.nvim_open_term(0, {
+            on_input = function(_, _, _, data)
+              if #data > 0 then
+                table.insert(_G.input, data)
+              end
+            end,
+            force_crlf = false,
+          })
+        end)
+      end)
+      local function run_terminal_streamed_paste_tests(check_dot_repeat)
+        it('without bracketed paste mode in terminal', function()
+          api.nvim_paste('AA\nBB\n', false, 1)
+          eq({ 'AA', eol, 'BB', eol }, exec_lua('return _G.input'))
+          api.nvim_paste('CC', false, 2)
+          eq({ 'AA', eol, 'BB', eol, 'CC' }, exec_lua('return _G.input'))
+          api.nvim_paste('\nDD', false, 3)
+          eq({ 'AA', eol, 'BB', eol, 'CC', eol, 'DD' }, exec_lua('return _G.input'))
+          if check_dot_repeat then
+            exec_lua('_G.input = {}')
+            feed('.')
+            eq({ 'AA', eol, 'BB', eol, 'CC', eol, 'DD' }, exec_lua('return _G.input'))
+          end
+        end)
+        it('with bracketed paste mode in terminal', function()
+          exec_lua([[vim.api.nvim_chan_send(_G.chan, '\027[?2004h')]])
+          api.nvim_paste('AA\nBB\n', false, 1)
+          eq({ '\027[200~', 'AA', eol, 'BB', eol }, exec_lua('return _G.input'))
+          api.nvim_paste('CC', false, 2)
+          eq({ '\027[200~', 'AA', eol, 'BB', eol, 'CC' }, exec_lua('return _G.input'))
+          api.nvim_paste('\nDD', false, 3)
+          eq(
+            { '\027[200~', 'AA', eol, 'BB', eol, 'CC', eol, 'DD', '\027[201~' },
+            exec_lua('return _G.input')
+          )
+          if check_dot_repeat then
+            exec_lua('_G.input = {}')
+            feed('.')
+            eq(
+              { '\027[200~', 'AA', eol, 'BB', eol, 'CC', eol, 'DD', '\027[201~' },
+              exec_lua('return _G.input')
+            )
+          end
+        end)
+      end
+      describe('in Normal mode', function()
+        run_terminal_streamed_paste_tests(true)
+      end)
+      describe('in Terminal mode', function()
+        before_each(function()
+          feed('i')
+          eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+        end)
+        run_terminal_streamed_paste_tests(false)
+      end)
+    end)
     it('non-streaming', function()
       -- With final "\n".
       api.nvim_paste('line 1\nline 2\nline 3\n', true, -1)
@@ -1947,7 +2008,6 @@ describe('API', function()
     it('getting current buffer option does not adjust cursor #19381', function()
       command('new')
       local buf = api.nvim_get_current_buf()
-      print(vim.inspect(api.nvim_get_current_buf()))
       local win = api.nvim_get_current_win()
       insert('some text')
       feed('0v$')
