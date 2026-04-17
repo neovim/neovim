@@ -112,6 +112,12 @@ Many of the editor concepts are defined as Lua data files:
 - Ex (cmdline) commands: src/nvim/ex_cmds.lua
 - Options: src/nvim/options.lua
 - Vimscript functions: src/nvim/eval.lua
+  - Functions can be implemented in C (`f_foo` in eval/funcs.c), or in Lua
+    (set `func_lua` in eval.lua, implement in _core/vimfn.lua). Lua impl is
+    preferred, for performance and maintainability.
+    - VimScript callers go through `lua_wrapper` (typval <=> Object conversion).
+    - Lua callers (`vim.fn.foo()`) take a fast path in `nlua_call()` that calls
+      the Lua function directly, avoiding any conversion.
 - v: variables: src/nvim/vvars.lua
 
 ==============================================================================

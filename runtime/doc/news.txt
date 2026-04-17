@@ -158,7 +158,10 @@ OPTIONS
 
 PERFORMANCE
 
-• todo
+• Nvim architecture allows pure-Lua implementations of some `vim.fn`
+  functions, which skips the Vimscript <=> Lua "bridge" (no data
+  conversion/marshalling) entirely, if the `vim.fn` function is called from
+  Lua.
 
 PLUGINS
 

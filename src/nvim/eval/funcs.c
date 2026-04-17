@@ -227,7 +227,7 @@ char *get_expr_name(expand_T *xp, int idx)
   return get_user_var_name(xp, ++intidx);
 }
 
-/// Find internal function in hash functions
+/// Gets a builtin (aka "vimfn", "eval") function from the generated hash table.
 ///
 /// @param[in]  name  Name of the function.
 ///
@@ -238,6 +238,17 @@ const EvalFuncDef *find_internal_func(const char *const name)
   size_t len = strlen(name);
   int index = find_internal_func_hash(name, len);
   return index >= 0 ? &functions[index] : NULL;
+}
+
+/// Gets the Lua name of a Lua-implemented "vimfn" function, or NULL if not found.
+const char *find_internal_func_lua(const char *const name)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
+{
+  const EvalFuncDef *const fdef = find_internal_func(name);
+  if (fdef && fdef->func == &lua_wrapper) {
+    return fdef->data.func_lua;
+  }
+  return NULL;
 }
 
 /// Check the argument count to use for internal function "fdef".
@@ -325,7 +336,7 @@ static bool non_zero_arg(typval_T *argvars)
               && *argvars[0].vval.v_string != NUL));
 }
 
-/// Apply a floating point C function on a typval with one float_T.
+/// Apply a floating point C function on a typval with one float_T (`func_float` in eval.lua).
 ///
 /// Some versions of glibc on i386 have an optimization that makes it harder to
 /// call math functions indirectly from inside an inlined function, causing
@@ -336,19 +347,23 @@ static void float_op_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fp
 
   rettv->v_type = VAR_FLOAT;
   if (tv_get_float_chk(argvars, &f)) {
-    rettv->vval.v_float = fptr.float_func(f);
+    rettv->vval.v_float = fptr.func_float(f);
   } else {
     rettv->vval.v_float = 0.0;
   }
 }
 
+/// Invokes an API (nvim_) function from Vimscript.
+///
+/// Converts `argvars` to API Objects, calls the API handler, and converts the result back.
+/// Used by `gen_eval.lua` for `eval=true` API functions.
 static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (check_secure()) {
     return;
   }
 
-  MsgpackRpcRequestHandler handler = *fptr.api_handler;
+  MsgpackRpcRequestHandler handler = *fptr.func_api;
 
   MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
   Arena arena = ARENA_EMPTY;
@@ -375,11 +390,43 @@ end:
   api_clear_error(&err);
 }
 
+/// Invokes a Lua-implemented vimfn/"f_xx" function from Vimscript (`func_lua` in eval.lua).
+///
+/// - Converts argvars to API Objects, calls the Lua function, converts the result back.
+/// - NOT used when called from Lua; `nlua_call()` calls the function directly.
+static void lua_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
+  Arena arena = ARENA_EMPTY;
+
+  for (typval_T *tv = argvars; tv->v_type != VAR_UNKNOWN; tv++) {
+    ADD_C(args, vim_to_object(tv, &arena, false));
+  }
+
+  // `func_lua` is the function name (e.g. "f_hostname") in `_core/vimfn.lua`.
+  char buf[256];
+  snprintf(buf, sizeof(buf), "return require('vim._core.vimfn').%s(...)", fptr.func_lua);
+
+  Error err = ERROR_INIT;
+  Object result = nlua_exec(cstr_as_string(buf), NULL, args, kRetObject, &arena, &err);
+
+  if (ERROR_SET(&err)) {
+    semsg_multiline("emsg", e_api_error, err.msg);
+    goto end;
+  }
+
+  object_to_vim_take_luaref(&result, rettv, true, &err);
+
+end:
+  arena_mem_free(arena_finish(&arena));
+  api_clear_error(&err);
+}
+
 /// "abs(expr)" function
 static void f_abs(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (argvars[0].v_type == VAR_FLOAT) {
-    float_op_wrapper(argvars, rettv, (EvalFuncData){ .float_func = &fabs });
+    float_op_wrapper(argvars, rettv, (EvalFuncData){ .func_float = &fabs });
   } else {
     bool error = false;
 
@@ -2899,16 +2946,6 @@ static void f_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_hlexists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = highlight_exists(tv_get_string(&argvars[0]));
-}
-
-/// "hostname()" function
-static void f_hostname(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  char hostname[256];
-
-  os_get_hostname(hostname, 256);
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xstrdup(hostname);
 }
 
 /// "index()" function
