@@ -1958,6 +1958,41 @@ func Test_executable_longname()
   call delete(fname)
 endfunc
 
+func Test_executable_single_character_dir()
+  call mkdir('Xpath', 'R')
+  call mkdir('Xpath/a')
+  call mkdir('Xpath/b')
+  call mkdir('Xpath/c')
+  if has('win32')
+    call writefile([], 'Xpath/a/Xcmd1.bat')
+    call writefile([], 'Xpath/b/Xcmd2.bat')
+    call writefile([], 'Xpath/c/Xcmd3.bat')
+    let sep = ';'
+  else
+    call writefile([], 'Xpath/a/Xcmd1')
+    call writefile([], 'Xpath/b/Xcmd2')
+    call writefile([], 'Xpath/c/Xcmd3')
+    call setfperm('Xpath/a/Xcmd1', 'rwxr-xr-x')
+    call setfperm('Xpath/b/Xcmd2', 'rwxr-xr-x')
+    call setfperm('Xpath/c/Xcmd3', 'rwxr-xr-x')
+    let sep = ':'
+  endif
+
+  let save_path = $PATH
+  " a: single character name without path seperator
+  " b: single character name with path seperator
+  " c: single character name without path seperator at last of PATH
+  let $PATH = [
+        \ fnamemodify('./Xpath/a', ':p:h'),
+        \ fnamemodify('./Xpath/b', ':p'),
+        \ fnamemodify('./Xpath/c', ':p:h')
+        \ ]->join(sep)
+  call assert_true(executable('Xcmd1'))
+  call assert_true(executable('Xcmd2'))
+  call assert_true(executable('Xcmd3'))
+  let $PATH = save_path
+endfunc
+
 func Test_hostname()
   let hostname_vim = hostname()
   if has('unix')
