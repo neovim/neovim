@@ -1184,7 +1184,7 @@ variable, it needs to be preceded by a backslash.  Therefore you need to use
 Also see |`=|.
 
 ==============================================================================
-7. Command-line window			*cmdline-window* *cmdwin* *E1292*
+7. Command-line window				*cmdline-window* *cmdwin*
 							*command-line-window*
 In the command-line window the command line can be edited just like editing
 text in any window.  It is a special kind of window, because you cannot leave
@@ -1206,6 +1206,8 @@ character that indicates the type of command-line being edited, see
 |cmdwin-char|.
 
 Vim will be in Normal mode when the editor is opened.
+								*E1292*
+Once a command-line window is open it is not possible to open another one.
 
 The height of the window is specified with 'cmdwinheight' (or smaller if there
 is no room).  The window is always full width and is positioned just above the

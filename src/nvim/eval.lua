@@ -8749,7 +8749,7 @@ M.funcs = {
       {func} is called for every item in {object}, which can be a
       |String|, |List| or a |Blob|.  {func} is called with two
       arguments: the result so far and current item.  After
-      processing all items the result is returned.
+      processing all items the result is returned. *E1132*
 
       {initial} is the initial result.  When omitted, the first item
       in {object} is used and {func} is first called for the second

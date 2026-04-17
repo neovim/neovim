@@ -48,6 +48,7 @@ Vimscript commands are described below.
 			Add {cmd} to the list of commands that Vim will
 			execute automatically on {event} for a file matching
 			{aupat} |autocmd-pattern|.
+			Here {event} cannot be "*".  *E1155*
 			Note: A quote character is seen as argument to the
 			:autocmd and won't start a comment.
 			Nvim always adds {cmd} after existing autocommands so
@@ -201,7 +202,7 @@ was last defined.  Example: >
 See |:verbose-cmd| for more information.
 
 ==============================================================================
-5. Events				*autocmd-events* *E215* *E216* *E1155*
+5. Events				*autocmd-events* *E215* *E216*
 
 You can specify a comma-separated list of event names.  No white space can be
 used in this list.  The command applies to all the events in the list.
@@ -711,7 +712,7 @@ FocusGained			Nvim got focus.
 							*FocusLost*
 FocusLost			Nvim lost focus.  Also (potentially) when
 				a GUI dialog pops up.
-							*FuncUndefined* *E454*
+							*FuncUndefined*
 FuncUndefined			When a user function is used but it isn't
 				defined.  Useful for defining a function only
 				when it's used.  The pattern is matched

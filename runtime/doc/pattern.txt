@@ -12,7 +12,7 @@ explanations are in chapter 27 |usr_27.txt|.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Search commands				*search-commands* *E654*
+1. Search commands				*search-commands*
 
 							*/*
 /{pattern}[/]<CR>	Search forward for the [count]'th occurrence of
@@ -401,7 +401,7 @@ prepend one of the following to the pattern:
 
 You can also use the 'regexpengine' option to change the default.
 
-		 *E864* *E868* *E874* *E875* *E876* *E877* *E878* *E1273* *E1279*
+			 *E864* *E868* *E874* *E875* *E876* *E877* *E878*
 If selecting the NFA engine and it runs into something that is not implemented
 the pattern will not match.  This is only useful when debugging Vim.
 
@@ -935,7 +935,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	becomes invalid.  Vim doesn't automatically update the matches.
 	Similar to moving the cursor for "\%#" |/\%#|.
 
-					*/\%l* */\%>l* */\%<l* *E951* *E1204*
+				*/\%l* */\%>l* */\%<l* *E951* *E1204* *E1273*
 \%23l	Matches in a specific line.
 \%<23l	Matches above a specific line (lower line number).
 \%>23l	Matches below a specific line (higher line number).

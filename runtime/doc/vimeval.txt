@@ -1465,7 +1465,7 @@ allowing the inclusion of Vim script expressions (see |expr1|).  Any
 expression returning a value can be enclosed between curly braces.  The value
 is converted to a string.  All the text and results of the expressions
 are concatenated to make a new string.
-								*E1278*
+							*E1278* *E1279*
 To include an opening brace '{' or closing brace '}' in the string content
 double it.  For double quoted strings using a backslash also works.  A single
 closing brace '}' will result in an error.
@@ -1578,7 +1578,7 @@ See below |internal-variables|.
 
 
 ------------------------------------------------------------------------------
-function call		*expr-function* *E116* *E118* *E119* *E120* *E130*
+function call		*expr-function* *E116* *E118* *E119* *E120*
 
 function(expr1, ...)	function call
 See below |functions|.
@@ -2417,7 +2417,8 @@ text...
 		try | sleep 100 | catch /^Vim:Interrupt$/ | endtry
 		try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
 <
-					*:cat* *:catch* *E603* *E604* *E605*
+					*:cat* *:catch*
+					*E603* *E604* *E605* *E654*
 :cat[ch] [/{pattern}/]	The following commands until the next `:catch`,
 			`:finally`, or `:endtry` that belongs to the same
 			`:try` as the `:catch` are executed when an exception
