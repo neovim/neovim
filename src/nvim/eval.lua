@@ -1,18 +1,12 @@
--- File containing table with all functions.
---
--- Keys:
+-- Defines all "vimfn" (builtin/"eval"/"Vimscript") functions.
 --
 --- @class vim.EvalFn
 --- @field name? string
---- @field args? integer|integer[] Number of arguments, list with maximum and minimum number of arguments
----       or list with a minimum number of arguments only. Defaults to zero
----       arguments.
---- @field base? integer For methods: the argument to use as the base argument (1-indexed):
----       base->method()
----       Defaults to BASE_NONE (function cannot be used as a method).
---- @field func? string Name of the C function which implements the Vimscript function. Defaults to
----       `f_{funcname}`.
---- @field float_func? string
+--- @field args? integer|integer[] (default: 0) Number of arguments, list with maximum and minimum number of arguments or list with a minimum number of arguments only.
+--- @field base? integer For methods: the argument to use as the base argument (1-indexed): base->method(). Defaults to BASE_NONE (function cannot be used as a method).
+--- @field func? string (default: "f_{funcname}") C function which implements the vimfn.
+--- @field func_float? string Floating-point C function. Sets func="float_op_wrapper".
+--- @field func_lua? string Function name in `vim._core.vimfn.*` (e.g. "f_hostname"). Sets func="lua_wrapper".
 --- @field fast? boolean Function can run in |api-fast| events. Defaults to false.
 --- @field deprecated? true
 --- @field returns? string|false
@@ -76,7 +70,7 @@ M.funcs = {
       <	2.094395
 
     ]=],
-    float_func = 'acos',
+    func_float = 'acos',
     name = 'acos',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -276,7 +270,7 @@ M.funcs = {
       <	-0.523599
 
     ]=],
-    float_func = 'asin',
+    func_float = 'asin',
     name = 'asin',
     params = { { 'expr', 'any' } },
     returns = 'number',
@@ -567,7 +561,7 @@ M.funcs = {
       <	-1.326405
 
     ]=],
-    float_func = 'atan',
+    func_float = 'atan',
     name = 'atan',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -1022,7 +1016,7 @@ M.funcs = {
       Returns 0.0 if {expr} is not a |Float| or a |Number|.
 
     ]=],
-    float_func = 'ceil',
+    func_float = 'ceil',
     name = 'ceil',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -1597,7 +1591,7 @@ M.funcs = {
       <	-0.646043
 
     ]=],
-    float_func = 'cos',
+    func_float = 'cos',
     name = 'cos',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -1618,7 +1612,7 @@ M.funcs = {
       <	-1.127626
 
     ]=],
-    float_func = 'cosh',
+    func_float = 'cosh',
     name = 'cosh',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -2357,7 +2351,7 @@ M.funcs = {
       <	0.367879
 
     ]=],
-    float_func = 'exp',
+    func_float = 'exp',
     name = 'exp',
     params = { { 'expr', 'number' } },
     signature = 'exp({expr})',
@@ -2882,7 +2876,7 @@ M.funcs = {
       <	4.0
 
     ]=],
-    float_func = 'floor',
+    func_float = 'floor',
     name = 'floor',
     params = { { 'expr', 'number' } },
     signature = 'floor({expr})',
@@ -5515,10 +5509,10 @@ M.funcs = {
   hostname = {
     desc = [=[
       Returns the hostname of the machine on which the Nvim server
-      (not the UI client) is currently running.  Names greater than
-      256 characters long are truncated.
+      (not the UI client) is currently running.
     ]=],
     fast = true,
+    func_lua = 'f_hostname',
     name = 'hostname',
     params = {},
     returns = 'string',
@@ -6576,7 +6570,7 @@ M.funcs = {
       <	5.0
 
     ]=],
-    float_func = 'log',
+    func_float = 'log',
     name = 'log',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -6596,7 +6590,7 @@ M.funcs = {
       <	-2.0
 
     ]=],
-    float_func = 'log10',
+    func_float = 'log10',
     name = 'log10',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -9058,7 +9052,7 @@ M.funcs = {
       <	-5.0
 
     ]=],
-    float_func = 'round',
+    func_float = 'round',
     name = 'round',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -11047,7 +11041,7 @@ M.funcs = {
       <	0.763301
 
     ]=],
-    float_func = 'sin',
+    func_float = 'sin',
     name = 'sin',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -11068,7 +11062,7 @@ M.funcs = {
       <	-1.026517
 
     ]=],
-    float_func = 'sinh',
+    func_float = 'sinh',
     name = 'sinh',
     params = { { 'expr', 'number' } },
     signature = 'sinh({expr})',
@@ -11335,7 +11329,7 @@ M.funcs = {
       NaN may be different, it depends on system libraries.
 
     ]=],
-    float_func = 'sqrt',
+    func_float = 'sqrt',
     name = 'sqrt',
     params = { { 'expr', 'number' } },
     signature = 'sqrt({expr})',
@@ -12517,7 +12511,7 @@ M.funcs = {
       <	-1.181502
 
     ]=],
-    float_func = 'tan',
+    func_float = 'tan',
     name = 'tan',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -12538,7 +12532,7 @@ M.funcs = {
       <	-0.761594
 
     ]=],
-    float_func = 'tanh',
+    func_float = 'tanh',
     name = 'tanh',
     params = { { 'expr', 'number' } },
     returns = 'number',
@@ -12798,7 +12792,7 @@ M.funcs = {
       <	4.0
 
     ]=],
-    float_func = 'trunc',
+    func_float = 'trunc',
     name = 'trunc',
     params = { { 'expr', 'number' } },
     returns = 'integer',

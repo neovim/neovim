@@ -4943,8 +4943,7 @@ hlexists({name})                                                    *hlexists()*
 
 hostname()                                                          *hostname()*
 		Returns the hostname of the machine on which the Nvim server
-		(not the UI client) is currently running.  Names greater than
-		256 characters long are truncated.
+		(not the UI client) is currently running.
 
                 Return: ~
                   (`string`)

@@ -4475,8 +4475,7 @@ function vim.fn.hlID(name) end
 function vim.fn.hlexists(name) end
 
 --- Returns the hostname of the machine on which the Nvim server
---- (not the UI client) is currently running.  Names greater than
---- 256 characters long are truncated.
+--- (not the UI client) is currently running.
 ---
 --- @return string
 function vim.fn.hostname() end

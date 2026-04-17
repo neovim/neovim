@@ -1207,6 +1207,7 @@ static bool viml_func_is_fast(const char *name)
   return false;
 }
 
+/// "vim.call()", aka "vim.fn".
 int nlua_call(lua_State *lstate)
 {
   Error err = ERROR_INIT;
@@ -1222,6 +1223,27 @@ int nlua_call(lua_State *lstate)
   int nargs = lua_gettop(lstate) - 1;
   if (nargs > MAX_FUNC_ARGS) {
     return luaL_error(lstate, "Function called with too many arguments");
+  }
+
+  // Fast path: if the vimfn is defined with `func_lua`, call the Lua function
+  // directly without Lua→typval→Object→Lua round-trip.
+  const char *func_lua = find_internal_func_lua(name);
+  if (func_lua) {
+    lua_getglobal(lstate, "require");
+    lua_pushliteral(lstate, "vim._core.vimfn");
+    if (lua_pcall(lstate, 1, 1, 0) != 0) {
+      return lua_error(lstate);
+    }
+    lua_getfield(lstate, -1, func_lua);
+    lua_remove(lstate, -2);  // remove module table
+    // Push args (still on the stack as Lua values).
+    for (int j = 0; j < nargs; j++) {
+      lua_pushvalue(lstate, j + 2);
+    }
+    if (lua_pcall(lstate, nargs, 1, 0) != 0) {
+      return lua_error(lstate);
+    }
+    return 1;
   }
 
   typval_T vim_args[MAX_FUNC_ARGS + 1];

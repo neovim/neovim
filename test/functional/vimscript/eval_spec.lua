@@ -215,10 +215,10 @@ describe('listing functions using :function', function()
     command('let A = {-> 1}')
     local num = exec_capture('echo A'):match("function%('<lambda>(%d+)'%)")
     eq(
-      ([[
-   function <lambda>%s(...)
-1  return 1
-   endfunction]]):format(num),
+      t.dedent([[
+           function <lambda>%s(...)
+        1  return 1
+           endfunction]]):format(num),
       exec_capture(('function <lambda>%s'):format(num))
     )
   end)
