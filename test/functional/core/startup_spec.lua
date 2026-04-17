@@ -181,7 +181,7 @@ describe('startup', function()
 
     it('Lua-error sets Nvim exitcode', function()
       local proc = n.spawn_wait('-l', 'test/functional/fixtures/startup-fail.lua')
-      matches('E5113: .* my pearls!!', proc:output())
+      matches('E5113: .* my pearls!!', (proc:output()))
       eq(0, proc.signal)
       eq(1, proc.status)
 
