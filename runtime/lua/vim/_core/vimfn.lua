@@ -11,4 +11,10 @@ function M.f_hostname()
   return vim.uv.os_gethostname()
 end
 
+--- Returns all environment variables as a dictionary.
+--- @return table<string, string>
+function M.f_environ()
+  return vim.uv.os_environ()
+end
+
 return M

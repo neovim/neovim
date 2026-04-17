@@ -1205,51 +1205,6 @@ static void f_empty(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = n;
 }
 
-/// "environ()" function
-static void f_environ(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  tv_dict_alloc_ret(rettv);
-
-  size_t env_size = os_get_fullenv_size();
-  char **env = xmalloc(sizeof(*env) * (env_size + 1));
-  env[env_size] = NULL;
-
-  os_copy_fullenv(env, env_size);
-
-  for (ssize_t i = (ssize_t)env_size - 1; i >= 0; i--) {
-    const char *str = env[i];
-    const char * const end = strchr(str + (str[0] == '=' ? 1 : 0),
-                                    '=');
-    assert(end != NULL);
-    ptrdiff_t len = end - str;
-    assert(len > 0);
-    const char *value = str + len + 1;
-
-    char c = env[i][len];
-    env[i][len] = NUL;
-
-#ifdef MSWIN
-    // Upper-case all the keys for Windows so we can detect duplicates
-    char *const key = strcase_save(str, true);
-#else
-    char *const key = xstrdup(str);
-#endif
-
-    env[i][len] = c;
-
-    if (tv_dict_find(rettv->vval.v_dict, key, len) != NULL) {
-      // Since we're traversing from the end of the env block to the front, any
-      // duplicate names encountered should be ignored.  This preserves the
-      // semantics of env vars defined later in the env block taking precedence.
-      xfree(key);
-      continue;
-    }
-    tv_dict_add_str(rettv->vval.v_dict, key, (size_t)len, value);
-    xfree(key);
-  }
-  os_free_fullenv(env);
-}
-
 /// "escape({string}, {chars})" function
 static void f_escape(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -3428,9 +3383,12 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
 
   if (!clear_env) {
     typval_T temp_env = TV_INITIAL_VALUE;
-    f_environ(NULL, &temp_env, (EvalFuncData){ .null = NULL });
-    tv_dict_extend(env, temp_env.vval.v_dict, "force");
-    tv_dict_free(temp_env.vval.v_dict);
+    typval_T no_args[] = { { .v_type = VAR_UNKNOWN } };
+    nlua_call_module_typval("vim._core.vimfn", "f_environ", no_args, &temp_env);
+    if (temp_env.v_type == VAR_DICT) {
+      tv_dict_extend(env, temp_env.vval.v_dict, "force");
+    }
+    tv_clear(&temp_env);
 
     if (pty) {
       // These env vars shouldn't propagate to the child process. #6764

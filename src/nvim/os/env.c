@@ -223,40 +223,6 @@ int os_unsetenv(const char *name)
   return r == 0 ? 0 : -1;
 }
 
-/// Returns number of variables in the current environment variables block
-size_t os_get_fullenv_size(void)
-{
-  size_t len = 0;
-#ifdef MSWIN
-  wchar_t *envstrings = GetEnvironmentStringsW();
-  wchar_t *p = envstrings;
-  size_t l;
-  if (!envstrings) {
-    return len;
-  }
-  // GetEnvironmentStringsW() result has this format:
-  //    var1=value1\0var2=value2\0...varN=valueN\0\0
-  while ((l = wcslen(p)) != 0) {
-    p += l + 1;
-    len++;
-  }
-
-  FreeEnvironmentStringsW(envstrings);
-#else
-# ifdef HAVE__NSGETENVIRON
-  char **environ = *_NSGetEnviron();
-# else
-  extern char **environ;
-# endif
-
-  while (environ[len] != NULL) {
-    len++;
-  }
-
-#endif
-  return len;
-}
-
 void os_free_fullenv(char **env)
 {
   if (!env) {
@@ -266,51 +232,6 @@ void os_free_fullenv(char **env)
     XFREE_CLEAR(*it);
   }
   xfree(env);
-}
-
-/// Copies the current environment variables into the given array, `env`.  Each
-/// array element is of the form "NAME=VALUE".
-/// Result must be freed by the caller.
-///
-/// @param[out]  env  array to populate with environment variables
-/// @param  env_size  size of `env`, @see os_fullenv_size
-void os_copy_fullenv(char **env, size_t env_size)
-{
-#ifdef MSWIN
-  wchar_t *envstrings = GetEnvironmentStringsW();
-  if (!envstrings) {
-    return;
-  }
-  wchar_t *p = envstrings;
-  size_t i = 0;
-  size_t l;
-  // GetEnvironmentStringsW() result has this format:
-  //    var1=value1\0var2=value2\0...varN=valueN\0\0
-  while ((l = wcslen(p)) != 0 && i < env_size) {
-    char *utf8_str;
-    int conversion_result = utf16_to_utf8(p, -1, &utf8_str);
-    if (conversion_result != 0) {
-      semsg("utf16_to_utf8 failed: %d", conversion_result);
-      break;
-    }
-    p += l + 1;
-
-    env[i] = utf8_str;
-    i++;
-  }
-
-  FreeEnvironmentStringsW(envstrings);
-#else
-# ifdef HAVE__NSGETENVIRON
-  char **environ = *_NSGetEnviron();
-# else
-  extern char **environ;
-# endif
-
-  for (size_t i = 0; i < env_size && environ[i] != NULL; i++) {
-    env[i] = xstrdup(environ[i]);
-  }
-#endif
 }
 
 /// Copy value of the environment variable at `index` in the current

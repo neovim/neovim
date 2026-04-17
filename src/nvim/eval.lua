@@ -2090,6 +2090,7 @@ M.funcs = {
       <
     ]=],
     fast = true,
+    func_lua = 'f_environ',
     name = 'environ',
     params = {},
     signature = 'environ()',
