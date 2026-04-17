@@ -1629,6 +1629,52 @@ Object nlua_exec(const String str, const char *chunkname, const Array args, LuaR
   return nlua_call_pop_retval(lstate, mode, arena, top, err);
 }
 
+/// Call require(module).func(argvars...), store result in rettv.
+///
+/// Converts argvars directly to Lua values (no Object intermediate), calls the
+/// Lua function, and converts the result directly back to typval_T.
+///
+/// @param module   Lua module name, e.g. "vim._core.server".
+/// @param func     Function name in the module, e.g. "serverlist".
+/// @param argvars  typval_T arguments (VAR_UNKNOWN-terminated).
+/// @param[out] rettv  Return value. Set to VAR_NIL on error.
+/// @return true on success, false on error (message already emitted).
+bool nlua_call_module_typval(const char *module, const char *func,
+                             typval_T *argvars, typval_T *rettv)
+{
+  lua_State *const lstate = global_lstate;
+
+  // require(module)
+  lua_getglobal(lstate, "require");
+  lua_pushstring(lstate, module);
+  if (lua_pcall(lstate, 1, 1, 0) != 0) {
+    semsg("E5108: %s", lua_tostring(lstate, -1));
+    lua_pop(lstate, 1);
+    return false;
+  }
+
+  // get module[func]
+  lua_getfield(lstate, -1, func);
+  lua_remove(lstate, -2);  // remove module table
+
+  // push args: typval_T → Lua directly (no Object intermediate)
+  int nargs = 0;
+  for (typval_T *tv = argvars; tv->v_type != VAR_UNKNOWN; tv++) {
+    nlua_push_typval(lstate, tv, 0);
+    nargs++;
+  }
+
+  if (nlua_pcall(lstate, nargs, 1)) {
+    semsg("E5108: %s", lua_tostring(lstate, -1));
+    lua_pop(lstate, 1);
+    return false;
+  }
+
+  // pop result: Lua → typval_T directly
+  nlua_pop_typval(lstate, rettv);
+  return true;
+}
+
 bool nlua_ref_is_function(LuaRef ref)
 {
   lua_State *const lstate = global_lstate;

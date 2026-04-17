@@ -403,7 +403,6 @@ static void lua_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     ADD_C(args, vim_to_object(tv, &arena, false));
   }
 
-  // `func_lua` is the function name (e.g. "f_hostname") in `_core/vimfn.lua`.
   char buf[256];
   snprintf(buf, sizeof(buf), "return require('vim._core.vimfn').%s(...)", fptr.func_lua);
 
@@ -6376,42 +6375,19 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   size_t n;
   char **addrs = server_address_list(&n);
 
-  Arena arena = ARENA_EMPTY;
-  // Passed to vim._core.server.serverlist() to avoid duplicates
-  Array addrs_arr = arena_array(&arena, n);
-
-  // Copy addrs into a linked list.
-  list_T *const l = tv_list_alloc_ret(rettv, (ptrdiff_t)n);
+  // Get the (internal) address list as a typval to pass to Lua.
+  typval_T addrs_tv;
+  tv_list_alloc_ret(&addrs_tv, (ptrdiff_t)n);
   for (size_t i = 0; i < n; i++) {
-    tv_list_append_allocated_string(l, addrs[i]);
-    ADD_C(addrs_arr, CSTR_AS_OBJ(addrs[i]));
+    tv_list_append_allocated_string(addrs_tv.vval.v_list, addrs[i]);
   }
-
-  if (!(argvars[0].v_type == VAR_DICT && tv_dict_get_bool(argvars[0].vval.v_dict, "peer", false))) {
-    goto cleanup;
-  }
-
-  MAXSIZE_TEMP_ARRAY(args, 1);
-  ADD_C(args, ARRAY_OBJ(addrs_arr));
-
-  Error err = ERROR_INIT;
-  Object rv = NLUA_EXEC_STATIC("return require('vim._core.server').serverlist(...)",
-                               args, kRetObject,
-                               &arena, &err);
-
-  if (ERROR_SET(&err)) {
-    ELOG("vim._core.serverlist failed: %s", err.msg);
-    goto cleanup;
-  }
-
-  for (size_t i = 0; i < rv.data.array.size; i++) {
-    char *curr_server = rv.data.array.items[i].data.string.data;
-    tv_list_append_string(l, curr_server, -1);
-  }
-
-cleanup:
   xfree(addrs);
-  arena_mem_free(arena_finish(&arena));
+
+  // Lua handles options (e.g. {peer=true}), peer discovery, and returns combined list.
+  typval_T opts = argvars[0].v_type != VAR_UNKNOWN ? argvars[0] : (typval_T){ .v_type = VAR_SPECIAL, .vval.v_special = kSpecialVarNull };
+  typval_T lua_args[] = { opts, addrs_tv, { .v_type = VAR_UNKNOWN } };
+  nlua_call_module_typval("vim._core.server", "serverlist", lua_args, rettv);
+  tv_clear(&addrs_tv);
 }
 
 /// "serverstart()" function
