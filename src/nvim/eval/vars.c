@@ -3204,12 +3204,13 @@ static OptVal tv_to_optval(typval_T *tv, OptIndex opt_idx, const char *option, b
     // So we need to check if it's actually a number.
     if (!err && tv->v_type == VAR_STRING && n == 0) {
       unsigned idx;
-      for (idx = 0; tv->vval.v_string[idx] == '0'; idx++) {}
-      if (tv->vval.v_string[idx] != NUL || idx == 0) {
+      for (idx = 0; tv->vval.v_string != NULL && tv->vval.v_string[idx] == '0'; idx++) {}
+      if (idx == 0 || tv->vval.v_string[idx] != NUL) {
         // There's another character after zeros or the string is empty.
         // In both cases, we are trying to set a num option using a string.
         err = true;
-        semsg(_("E521: Number required: &%s = '%s'"), option, tv->vval.v_string);
+        semsg(_("E521: Number required: &%s = '%s'"), option,
+              tv->vval.v_string == NULL ? "" : tv->vval.v_string);
       }
     }
     value = option_has_num ? NUMBER_OPTVAL((OptInt)n) : BOOLEAN_OPTVAL(TRISTATE_FROM_INT(n));
