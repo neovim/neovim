@@ -380,11 +380,13 @@ DiagnosticSignOk
 
                                                 *hl-DiagnosticDeprecated*
 DiagnosticDeprecated
-    Used for deprecated or obsolete code.
+    Used for deprecated or obsolete code. Applied by the "underline" handler;
+    disabled when `vim.diagnostic.config({ underline = false })`.
 
                                                 *hl-DiagnosticUnnecessary*
 DiagnosticUnnecessary
-    Used for unnecessary or unused code.
+    Used for unnecessary or unused code. Applied by the "underline" handler;
+    disabled when `vim.diagnostic.config({ underline = false })`.
 
 ==============================================================================
 SIGNS                                                   *diagnostic-signs*
@@ -536,7 +538,10 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 
     Fields: ~
       • {underline}?         (`boolean|vim.diagnostic.Opts.Underline|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Underline`, default: `true`)
-                             Use underline for diagnostics.
+                             Used to call attention to a diagnostic
+                             ("underline" is a misnomer). Controls the
+                             |hl-DiagnosticUnnecessary| and
+                             |hl-DiagnosticDeprecated| highlights.
       • {virtual_text}?      (`boolean|vim.diagnostic.Opts.VirtualText|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.VirtualText`, default: `false`)
                              Use virtual text for diagnostics. If multiple
                              diagnostics are set for a namespace, one prefix
