@@ -55,6 +55,7 @@ function Provider:new(bufnr)
     on_reload = function(_, buf)
       local provider = Provider.active[buf]
       if provider then
+        provider:clear()
         provider:automatic_request()
       end
     end,
@@ -92,6 +93,20 @@ function Provider:on_detach(client_id)
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
     self.client_state[client_id] = nil
   end
+end
+
+---@package
+function Provider:clear()
+  self:reset_timer()
+  self.version = nil
+  self.row_version = {}
+
+  for _, state in pairs(self.client_state) do
+    state.row_lenses = {}
+    api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
+  end
+
+  api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
 end
 
 --- `lsp.Handler` for `textDocument/codeLens`.
