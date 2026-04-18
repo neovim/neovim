@@ -500,8 +500,10 @@ function M.on_refresh(err, _, ctx)
         -- Do nothing if a request is already scheduled.
         if not provider.timer then
           provider:request(client_id, function()
-            provider.row_version = {}
-            vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+            if api.nvim_buf_is_valid(bufnr) then
+              provider.row_version = {}
+              vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+            end
           end)
         end
       end
