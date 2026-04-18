@@ -795,10 +795,8 @@ void f_prompt_setcallback(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
-    if (!callback_from_typval(&prompt_callback, &argvars[1])) {
-      return;
-    }
+  if (!callback_from_typval(&prompt_callback, &argvars[1])) {
+    return;
   }
 
   callback_free(&buf->b_prompt_callback);
@@ -818,10 +816,8 @@ void f_prompt_setinterrupt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     return;
   }
 
-  if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
-    if (!callback_from_typval(&interrupt_callback, &argvars[1])) {
-      return;
-    }
+  if (!callback_from_typval(&interrupt_callback, &argvars[1])) {
+    return;
   }
 
   callback_free(&buf->b_prompt_interrupt);

@@ -578,7 +578,7 @@ static void f_chanclose(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   ChannelPart part = kChannelPartAll;
   if (argvars[1].v_type == VAR_STRING) {
-    char *stream = argvars[1].vval.v_string;
+    const char *stream = tv_get_string(&argvars[1]);
     if (!strcmp(stream, "stdin")) {
       part = kChannelPartStdin;
     } else if (!strcmp(stream, "stdout")) {
