@@ -147,6 +147,39 @@ describe('vim.json.decode()', function()
     eq({ key = { 'val', 'val2' }, key2 = 1 }, exec_lua([[return vim.json.decode(...)]], str))
   end)
 
+  it('rejects truncated primitives', function()
+    for _, s in ipairs({ 'n', 'nu', 'nul', 't', 'tr', 'tru', 'f', 'fa', 'fal', 'fals' }) do
+      pcall_err(exec_lua, [[return vim.json.decode(...)]], s)
+    end
+  end)
+
+  it('rejects truncated strings', function()
+    for _, s in ipairs({
+      '"',
+      '"t',
+      '"abc',
+      '"abc\\',
+      '"abc\\u',
+      '"abc\\u0',
+      '"abc\\u00',
+      '"abc\\u000',
+    }) do
+      pcall_err(exec_lua, [[return vim.json.decode(...)]], s)
+    end
+  end)
+
+  it('rejects invalid syntax', function()
+    for _, s in ipairs({ ']', '[}', '{]', ',', ':', '{,}', '[,]', '-', '?', '', ' ' }) do
+      pcall_err(exec_lua, [[return vim.json.decode(...)]], s)
+    end
+  end)
+
+  it('rejects trailing content', function()
+    for _, s in ipairs({ '{}[]', '1 2' }) do
+      pcall_err(exec_lua, [[return vim.json.decode(...)]], s)
+    end
+  end)
+
   it('skip_comments', function()
     eq({}, exec_lua([[return vim.json.decode('{//comment\n}', { skip_comments = true })]]))
     eq({}, exec_lua([[return vim.json.decode('{//comment\r\n}', { skip_comments = true })]]))
