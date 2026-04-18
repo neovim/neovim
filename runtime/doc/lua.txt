@@ -1164,9 +1164,9 @@ Option:remove({value})                                      *vim.opt:remove()*
       • {value}  (`string`) Value to remove
 
 vim.bo[{bufnr}]                                                       *vim.bo*
-    Get or set buffer-scoped |options| for the buffer with number {bufnr}.
-    Like `:setlocal`. If {bufnr} is omitted then the current buffer is used.
-    Invalid {bufnr} or key is an error.
+    Gets or sets buffer-scoped |options| on buffer {bufnr} (or "current
+    buffer" if 0 or omitted). Like `:setlocal`. Invalid {bufnr} or key is an
+    error.
 
     Example: >lua
         local bufnr = vim.api.nvim_get_current_buf()
@@ -1176,9 +1176,9 @@ vim.bo[{bufnr}]                                                       *vim.bo*
 <
 
 vim.env                                                              *vim.env*
-    Environment variables defined in the editor session. See |expand-env| and
-    |:let-environment| for the Vimscript behavior. Invalid or unset key
-    returns `nil`.
+    Gets or sets environment variables in the current editor process. See
+    |expand-env| and |:let-environment| for the Vimscript behavior. Invalid or
+    unset key returns `nil`.
 
     Example: >lua
         vim.env.FOO = 'bar'
@@ -1186,11 +1186,10 @@ vim.env                                                              *vim.env*
 <
 
 vim.go                                                                *vim.go*
-    Get or set global |options|. Like `:setglobal`. Invalid key is an error.
+    Gets or sets global |options|. Like `:setglobal`. Invalid key is an error.
 
-    Note: this is different from |vim.o| because this accesses the global
-    option value and thus is mostly useful for use with |global-local|
-    options.
+    Note: unlike |vim.o|, this accesses the global option value and thus is
+    mostly useful with |global-local| options.
 
     Example: >lua
         vim.go.cmdheight = 4
@@ -1199,7 +1198,7 @@ vim.go                                                                *vim.go*
 <
 
 vim.o                                                                  *vim.o*
-    Get or set |options|. Works like `:set`, so buffer/window-scoped options
+    Gets or sets |options|. Works like `:set`, so buffer/window-scoped options
     target the current buffer/window. Invalid key is an error.
 
     Example: >lua
@@ -1209,14 +1208,12 @@ vim.o                                                                  *vim.o*
 <
 
 vim.wo[{winid}][{bufnr}]                                              *vim.wo*
-    Get or set window-scoped |options| for the window with handle {winid} and
-    buffer with number {bufnr}. Like `:setlocal` if setting a |global-local|
-    option or if {bufnr} is provided, like `:set` otherwise. If {winid} is
-    omitted then the current window is used. Invalid {winid}, {bufnr} or key
-    is an error.
+    Gets or sets window-scoped |options| on window {winid} (or "current
+    window" if 0 or omitted) and buffer {bufnr} (0 for current buffer). Like
+    `:setlocal` if setting a |global-local| option or if {bufnr} is specified,
+    like `:set` otherwise. Invalid {winid}, {bufnr}, or key is an error.
 
-    Note: only {bufnr} with value `0` (the current buffer in the window) is
-    supported.
+    Note: only bufnr=0 (current window-buffer) is supported, currently.
 
     Example: >lua
         local winid = vim.api.nvim_get_current_win()
@@ -2484,28 +2481,31 @@ vim.filetype.match({args})                              *vim.filetype.match()*
 ==============================================================================
 Lua module: vim.fs                                                    *vim.fs*
 
-
                                                                *vim.fs.copy()*
+
 Use |filecopy()| or |uv.fs_copyfile()| to performantly copy an existing file.
 
 Example: >lua
-  vim.fn.filecopy('foo.txt', 'bar.txt')
+    vim.fn.filecopy('foo.txt', 'bar.txt')
 <
 
                                                              *vim.fs.exists()*
+
 Use |uv.fs_stat()| to check a file's type, and whether it exists.
 
 Example: >lua
-  if vim.uv.fs_stat(file) then
-    vim.print('file exists')
-  end
+    if vim.uv.fs_stat(file) then
+      vim.print('file exists')
+    end
 <
 
                                                                *vim.fs.read()*
-You can use |readblob()| to get a file's contents without explicitly opening/closing it.
+
+You can use |readblob()| to get a file's contents without explicitly
+opening/closing it. Or use |io.lines()| to iterate lines in a text file.
 
 Example: >lua
-  vim.print(vim.fn.readblob('.git/config'))
+    vim.print(vim.fn.readblob('.git/config'))
 <
 
 

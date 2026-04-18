@@ -167,7 +167,7 @@
 ---- [PackChangedPre]() - before trying to change plugin's state.
 ---- [PackChanged]() - after plugin's state has changed.
 ---
----Each event populates the following |event-data| fields:
+---The |event-data| has these keys (type: `vim.event.packchanged.data`):
 ---- `active` - whether plugin was added via |vim.pack.add()| to current session.
 ---- `kind` - one of "install" (install on disk; before loading),
 ---  "update" (update already installed plugin; might be not loaded),

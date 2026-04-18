@@ -1,4 +1,7 @@
 --- @meta
+-- This file is NOT generated, edit it directly.
+--
+-- See also `vim.api.keyset.events` in `api_keysets.gen.lua`.
 error('Cannot require a meta file')
 
 --- @class vim.event.lspattach.data

@@ -134,9 +134,8 @@ local function get_options_info(name)
   return info
 end
 
---- Environment variables defined in the editor session.
---- See |expand-env| and |:let-environment| for the Vimscript behavior.
---- Invalid or unset key returns `nil`.
+--- Gets or sets environment variables in the current editor process. See |expand-env| and
+--- |:let-environment| for the Vimscript behavior. Invalid or unset key returns `nil`.
 ---
 --- Example:
 ---
@@ -229,7 +228,7 @@ end
 --- global value of a |global-local| option, see |:setglobal|.
 --- </pre>
 
---- Get or set |options|. Works like `:set`, so buffer/window-scoped options target the current
+--- Gets or sets |options|. Works like `:set`, so buffer/window-scoped options target the current
 --- buffer/window. Invalid key is an error.
 ---
 --- Example:
@@ -248,12 +247,10 @@ vim.o = setmetatable({}, {
   end,
 })
 
---- Get or set global |options|. Like `:setglobal`. Invalid key is
---- an error.
+--- Gets or sets global |options|. Like `:setglobal`. Invalid key is an error.
 ---
---- Note: this is different from |vim.o| because this accesses the global
---- option value and thus is mostly useful for use with |global-local|
---- options.
+--- Note: unlike |vim.o|, this accesses the global option value and thus is mostly useful
+--- with |global-local| options.
 ---
 --- Example:
 ---
@@ -271,9 +268,8 @@ vim.go = setmetatable({}, {
   end,
 })
 
---- Get or set buffer-scoped |options| for the buffer with number {bufnr}.
---- Like `:setlocal`. If {bufnr} is omitted then the current buffer is used.
---- Invalid {bufnr} or key is an error.
+--- Gets or sets buffer-scoped |options| on buffer {bufnr} (or "current buffer" if 0 or omitted). Like
+--- `:setlocal`. Invalid {bufnr} or key is an error.
 ---
 --- Example:
 ---
@@ -285,13 +281,11 @@ vim.go = setmetatable({}, {
 --- ```
 vim.bo = new_buf_opt_accessor()
 
---- Get or set window-scoped |options| for the window with handle {winid} and
---- buffer with number {bufnr}. Like `:setlocal` if setting a |global-local| option
---- or if {bufnr} is provided, like `:set` otherwise. If {winid} is omitted then
---- the current window is used. Invalid {winid}, {bufnr} or key is an error.
+--- Gets or sets window-scoped |options| on window {winid} (or "current window" if 0 or omitted) and
+--- buffer {bufnr} (0 for current buffer). Like `:setlocal` if setting a |global-local| option or if
+--- {bufnr} is specified, like `:set` otherwise. Invalid {winid}, {bufnr}, or key is an error.
 ---
---- Note: only {bufnr} with value `0` (the current buffer in the window) is
---- supported.
+--- Note: only bufnr=0 (current window-buffer) is supported, currently.
 ---
 --- Example:
 ---

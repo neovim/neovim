@@ -1238,6 +1238,9 @@ describe('vim.lsp.util', function()
         ' @see `nvim_buf_detach()`',
         ' @see `api-buffer-updates-lua`',
         '',
+        -- For each @param/@return: #30695
+        --  - Separate each by one empty line.
+        --  - Remove all other blank lines.
         '@*param* `buffer` — Buffer handle, or 0 for current buffer',
         '',
         '@*param* `send_buffer` — True if whole buffer.',
@@ -1300,7 +1303,7 @@ describe('vim.lsp.util', function()
 
       before_each(function()
         local _ = Screen.new(80, 80)
-        feed('79i<CR><Esc>')
+        feed('79i<CR><Esc>') -- fill screen with empty lines
       end)
 
       describe('when on the first line it places window below', function()
@@ -1479,6 +1482,7 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+      -- Entering window keeps lines concealed and doesn't end up below inner window size.
       feed('<C-w>wG')
       screen:expect([[
                                                            |
@@ -1488,8 +1492,9 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+      -- Correct height when float inherits 'conceallevel' >= 2 #32639
       command('close | set conceallevel=2')
-      feed('<Ignore>')
+      feed('<Ignore>') -- Prevent CursorMoved closing the next float immediately
       exec_lua([[
       vim.lsp.util.open_floating_preview({ '```lua', 'local foo', '```' }, 'markdown', {
         border = 'single',
@@ -1504,6 +1509,7 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+      -- This tests the valid winline code path (why doesn't the above?).
       exec_lua([[
       vim.cmd.only()
       vim.lsp.util.open_floating_preview({ 'foo', '```lua', 'local bar', '```' }, 'markdown', {
