@@ -86,6 +86,10 @@ tui:
   - changed-files:
     - any-glob-to-any-file: [ src/nvim/tui/tui.* ]
 
+ui2:
+  - changed-files:
+    - any-glob-to-any-file: [ "runtime/lua/vim/_core/ui2*" ]
+
 ux-visibility:
   - changed-files:
     - any-glob-to-any-file: [ "**/health.lua" ]

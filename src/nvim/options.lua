@@ -7922,8 +7922,9 @@ local options = {
       cb = 'did_set_shortmess',
       defaults = 'ltToOCF',
       desc = [=[
-        This option helps to avoid all the |hit-enter| prompts caused by file
-        messages, for example with CTRL-G, and to avoid some other messages.
+        Controls display of file messages (e.g. CTRL-G) and various other
+        messages.
+
         It is a list of flags:
          flag	meaning when present	~
           l	use "999L, 888B" instead of "999 lines, 888 bytes"	*shm-l*

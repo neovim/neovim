@@ -131,8 +131,7 @@ internal |event-loop|.)
 
 Where possible, new editor events should be implemented using `aucmd_defer()`
 (and where possible, old events migrate to this), so they are processed in
-a predictable manner, which avoids crashes and race conditions. See
-`do_markset_autocmd` for an example.
+a predictable manner, which avoids crashes. See |dev-new-event|.
 
 ==============================================================================
 UI events                                                      *dev-ui-events*
@@ -196,7 +195,7 @@ expression evaluation.
 Internal practices and patterns                          *dev-internals-howto*
 
 ------------------------------------------------------------------------------
-How to add a new Ex cmd or "vimfn" function ("f_xx"/"builtin"/"eval")
+Add a new excmd or vimfn ("f_xx")  function    *dev-new-excmd* *dev-new-vimfn*
 
 To implement an Ex cmd or f_xx function, choose from one of three ways (in
 order of preference):
@@ -216,6 +215,20 @@ order of preference):
    - `f_chansend`
    - `f_flatten`
    - `f_searchpos`
+
+------------------------------------------------------------------------------
+Add a new event (autocmd)                                      *dev-new-event*
+
+To add a new editor event (autocmd):
+
+1. Register the event name in `src/nvim/auevents.lua`. If the event is
+   Nvim-only (not in Vim), also update the `nvim_specific` table.
+2. Fire the event, by one of these approaches:
+   - From C, use `aucmd_defer()` to fire deferred (safe, predictable). See
+     `do_markset_autocmd` for example.
+   - From Lua, use `vim.api.nvim_exec_autocmds()`.
+3. Define the |event-data| type (if any) in `runtime/lua/vim/_meta/events.lua`.
+4. Document the event in `runtime/doc/autocmd.txt`.
 
 ==============================================================================
 The event-loop                                                    *event-loop*

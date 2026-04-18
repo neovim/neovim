@@ -69,7 +69,8 @@ local M = vim._defer_require('vim.diagnostic', {
 --- - `function`: Function with signature (namespace, bufnr) that returns any of the above.
 --- @class vim.diagnostic.Opts
 ---
---- Use underline for diagnostics.
+--- Used to call attention to a diagnostic ("underline" is a misnomer).
+--- Controls the |hl-DiagnosticUnnecessary| and |hl-DiagnosticDeprecated| highlights.
 --- (default: `true`)
 --- @field underline? boolean|vim.diagnostic.Opts.Underline|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Underline
 ---
