@@ -331,7 +331,7 @@ end
 
 --- @type vim.filetype.mapfn
 function M.conf(path, bufnr)
-  if fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
+  if fn.did_filetype() ~= 0 or (vim.g.ft_ignore_pat and path:find(vim.g.ft_ignore_pat)) then
     return
   end
   if path:find('%.conf$') then
@@ -1679,7 +1679,7 @@ end
 --- @return string?, fun(b: integer)?
 local function sh(path, contents, name)
   -- Path may be nil, do not fail in that case
-  if fn.did_filetype() ~= 0 or (path or ''):find(vim.g.ft_ignore_pat) then
+  if fn.did_filetype() ~= 0 or (vim.g.ft_ignore_pat and (path or ''):find(vim.g.ft_ignore_pat)) then
     -- Filetype was already detected or detection should be skipped
     return
   end
@@ -1744,7 +1744,7 @@ M.tcsh = sh_with('tcsh')
 --- @param name? string
 --- @return string?
 function M.shell(path, contents, name)
-  if fn.did_filetype() ~= 0 or matchregex(path, vim.g.ft_ignore_pat) then
+  if fn.did_filetype() ~= 0 or (vim.g.ft_ignore_pat and matchregex(path, vim.g.ft_ignore_pat)) then
     -- Filetype was already detected or detection should be skipped
     return
   end
