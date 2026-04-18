@@ -12,6 +12,12 @@ end
 --   -c   compile Lua bytecode
 local options = {}
 
+local ignorelist = {
+  'vim/_core/editor.lua',
+  'vim/_core/options.lua',
+  'vim/keymap.lua',
+}
+
 while true do
   local opt = string.match(arg[1], '^-(%w)')
   if not opt then
@@ -48,7 +54,15 @@ for argi = 2, #arg, 2 do
   local output = source:read('*a')
   source:close()
   if options.c then
-    output = string.dump(assert((loadstring or load)(output, source_file)), false)
+    local is_ignore
+    for _, ignore in ipairs(ignorelist) do
+      if source_file:sub(-#ignore) == ignore then
+        is_ignore = true
+        break
+      end
+    end
+    local prefix = is_ignore and '' or '@'
+    output = string.dump(assert((loadstring or load)(output, prefix .. source_file)), false)
   end
 
   local num_bytes = 0
