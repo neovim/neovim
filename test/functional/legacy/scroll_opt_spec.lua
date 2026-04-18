@@ -1127,6 +1127,24 @@ describe('smoothscroll', function()
     screen:expect(screen_l_top)
   end)
 
+  -- oldtest: Test_smoothscroll_textoff_showbreak()
+  it('does not crash when resizing to textoff with showbreak', function()
+    exec([[
+      set noswapfile scrolloff=0
+
+      call setline(1, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+      set number wrap smoothscroll showbreak=>
+      vsplit
+
+      let textoff = getwininfo(win_getid())[0].textoff
+      execute "normal! 0\<C-E>"
+      redraw
+      execute 'vertical resize' textoff
+      redraw
+    ]])
+    assert_alive()
+  end)
+
   it('works with virt_lines above and below', function()
     screen:try_resize(55, 7)
     exec([=[

@@ -1443,4 +1443,42 @@ func Test_smoothscroll_listchars_eol()
   bwipe!
 endfunc
 
+
+" Resizing to "textoff" after 'smoothscroll' skips part of a wrapped line must
+" not crash.
+func Test_smoothscroll_textoff_showbreak()
+  CheckOption smoothscroll
+
+  let donefile = 'XTest_crash_textoff_showbreak_done'
+  defer delete(donefile)
+  let lines =<< trim END
+    set noswapfile
+
+    set scrolloff=0
+    set lines=12 columns=40
+
+    call setline(1, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    set number wrap smoothscroll showbreak=>
+    vsplit
+
+    let textoff = getwininfo(win_getid())[0].textoff
+    execute "normal! 0\<C-E>"
+    redraw
+    execute 'vertical resize' textoff
+    redraw
+    call writefile(['done'], 'XTest_crash_textoff_showbreak_done')
+  END
+  call writefile(lines, 'XTest_crash_textoff_showbreak', 'D')
+
+  let buf = 0
+  let buf = term_start([GetVimProg(), '--clean'], #{term_rows: 24, term_cols: 80})
+  call TermWait(buf, 200)
+  call term_sendkeys(buf, ":source XTest_crash_textoff_showbreak\<CR>")
+  call WaitForAssert({-> assert_true(filereadable(donefile))})
+  let status = term_getstatus(buf)
+  call assert_equal('running', status)
+  call assert_true(filereadable(donefile))
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
