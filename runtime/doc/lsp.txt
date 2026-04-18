@@ -689,7 +689,7 @@ EVENTS                                                            *lsp-events*
 LspAttach                                                          *LspAttach*
     After an LSP client performs "initialize" and attaches to a buffer. The
     |autocmd-pattern| is the buffer name. The client ID is passed in the
-    Lua handler |event-data| argument.
+    Lua handler |event-data| argument. See `vim.event.lspattach.data`.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspAttach', {
@@ -722,7 +722,7 @@ LspAttach                                                          *LspAttach*
 LspDetach                                                          *LspDetach*
     Just before an LSP client detaches from a buffer. The |autocmd-pattern| is
     the buffer name. The client ID is passed in the Lua handler |event-data|
-    argument.
+    argument. See `vim.event.lspdetach.data`.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspDetach', {
@@ -746,7 +746,7 @@ LspNotify                                                          *LspNotify*
     LSP server.
 
     The client_id, LSP method, and parameters are sent in the Lua handler
-    |event-data| table argument.
+    |event-data| table argument. See `vim.event.lspnotify.data`.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspNotify', {
@@ -774,7 +774,7 @@ LspProgress                                                       *LspProgress*
 
     The Lua handler |event-data| argument has `client_id` and `params`
     properties, where `params` is the request params sent by the server (see
-    `lsp.ProgressParams`).
+    `lsp.ProgressParams`). See `vim.event.lspprogress.data`.
 
     Examples:
 
@@ -813,6 +813,7 @@ LspRequest                                                        *LspRequest*
     request (described at |vim.lsp.Client|, {requests} field). If the request
     type is `complete`, the request will be deleted from the client's pending
     requests table after processing the event handlers.
+    See `vim.event.lsprequest.data`.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspRequest', {
@@ -841,7 +842,7 @@ LspTokenUpdate                                                *LspTokenUpdate*
     when an existing token becomes visible for the first time. The
     |autocmd-pattern| is the buffer name. The Lua handler |event-data|
     argument has the client ID and token (see
-    |vim.lsp.semantic_tokens.get_at_pos()|).
+    |vim.lsp.semantic_tokens.get_at_pos()|). See `vim.event.lsptokenupdate.data`.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspTokenUpdate', {

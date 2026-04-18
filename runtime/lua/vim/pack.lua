@@ -175,6 +175,8 @@
 ---- `spec` - plugin's specification with defaults made explicit.
 ---- `path` - full path to plugin's directory.
 ---
+---See `vim.event.packchanged.data` and `vim.event.packchangedpre.data`.
+---
 --- These events can be used to execute plugin hooks. For example:
 ---```lua
 ---local hooks = function(ev)

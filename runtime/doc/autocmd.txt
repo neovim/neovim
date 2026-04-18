@@ -226,6 +226,17 @@ autocommands, this doesn't happen.
 You can use the 'eventignore' option to ignore a number of events or all
 events.
 
+Events that provide |event-data| have a matching `vim.event.<name>.data` type
+defined in `runtime/lua/vim/_meta/events.lua`. You can use @cast to narrow
+`ev.data` for type-checking and completion: >lua
+
+	vim.api.nvim_create_autocmd('LspAttach', {
+	  callback = function(ev)
+	    ---@cast ev {data: vim.event.lspattach.data}
+	    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+	  end,
+	})
+<
 							*events* *{event}*
 Nvim recognizes the following events.  Names are case-insensitive.
 
@@ -780,10 +791,11 @@ MarkSet				After a |mark| is set by |m|, |:mark|, and
 				mark name (e.g. `[ab]` matches `a` or `b`, `*`
 				matches all).
 
-				The |event-data| has these keys:
+				The |event-data| has these keys (type: `vim.event.markset.data`):
 				- name: Mark name (e.g. "a")
 				- line: Mark line.
 				- col: Mark column.
+				See `vim.event.markset.data`.
 
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
@@ -831,6 +843,7 @@ Progress						*Progress*
 						 made for this progress item
 					data: arbitaray data sent with
 					progress message
+				See `vim.event.progress.data`.
 				Usage example:
 >lua
 		vim.api.nvim_create_autocmd('Progress', {
@@ -1107,6 +1120,7 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				  position of the cursor when the sequence was
 				  received (line number may be <= 0 if the
 				  position is no longer in the buffer)
+				See `vim.event.termrequest.data`.
 
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
@@ -1117,6 +1131,7 @@ TermResponse			When Nvim receives a DA1, OSC, DCS, or APC response from
 				|event-data| is a table with the following fields:
 
 				- sequence: the received sequence
+				See `vim.event.termresponse.data`.
 
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
