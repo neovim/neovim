@@ -88,7 +88,7 @@ function M.check_targets()
 
     if not win or not floating then
       -- Open a new window when closed or no longer floating (e.g. wincmd J).
-      local cfg = { col = 0, row = 1, width = 10000, height = 1, mouse = false, noautocmd = true }
+      local cfg = { col = 0, row = 1, width = 10000, height = 1, noautocmd = true }
       cfg.focusable = false
       cfg.style = 'minimal'
       cfg.relative = 'laststatus'

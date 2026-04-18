@@ -55,6 +55,12 @@ function M.msg:start_timer(buf, id)
     self.ids[id].timer:stop()
   end
   self.ids[id].timer = vim.defer_fn(function()
+    -- Postpone message removal when user has entered the msg window.
+    if api.nvim_get_current_win() == ui.wins.msg then
+      M.msg:start_timer(buf, id)
+      return
+    end
+
     local extid = api.nvim_buf_is_valid(buf) and self.ids[id] and self.ids[id].extid
     local mark = extid and api.nvim_buf_get_extmark_by_id(buf, ui.ns, extid, { details = true })
     self.ids[id] = nil
@@ -509,17 +515,17 @@ end
 
 local typed_g = false
 local cmd_on_key = function(key, typed)
-  typed = typed and fn.keytrans(typed)
   -- Don't dismiss for non-typed keys and mouse movement. When 'g' is passed (typed
   -- or mapped), wait until the next key to avoid flickering when the pager is opened.
-  if not typed_g and (not typed or typed == '<MouseMove>' or typed == 'g' or key == 'g') then
+  if not typed_g and (typed == '' or typed == '<MouseMove>' or typed == 'g' or key == 'g') then
     typed_g = typed == 'g' or key == 'g'
     return
   end
   vim.on_key(nil, ui.ns)
-  if typed == ':' then
+  if typed == ':' or ui.cmd.level > 0 then
     return -- Keep expanded messages open until cmdline closes.
   end
+  typed = fn.keytrans(typed)
 
   -- Check if window was entered and reopen with original config.
   local mode = not api.nvim_get_mode().mode:match('[it]')
@@ -594,7 +600,7 @@ local function enter_pager()
   if was_cmdwin ~= '' then
     api.nvim_command('quit')
   elseif M.cmd_on_key then
-    api.nvim_feedkeys(vim.keycode('<Esc>'), 'n', false)
+    api.nvim_feedkeys(vim.keycode('<Esc>'), 't', false)
   end
   -- Cmdwin is closed one event iteration later so schedule in case it was open.
   vim.schedule(function()
@@ -647,7 +653,7 @@ function M.set_pos(tgt)
       cfg = { hide = false, relative = 'laststatus', col = 10000 } ---@type table
       cfg.row, cfg.height, cfg.border = win_row_height_border(t, texth.all)
       cfg.border = cfg.border and t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
-      cfg.mouse = tgt == 'cmd' or nil
+      cfg.mouse = tgt == 'cmd' or t == 'msg' or nil
       api.nvim_win_set_config(win, cfg)
 
       if tgt == 'cmd' then
