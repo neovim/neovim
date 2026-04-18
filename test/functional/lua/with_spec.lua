@@ -267,6 +267,12 @@ describe('vim._with', function()
         -- Current
         assert_buf(api.nvim_get_current_buf())
 
+        local buf = api.nvim_get_current_buf()
+        vim._with({ buf = 0 }, function()
+          assert(api.nvim_get_current_buf() == buf)
+        end)
+        assert(api.nvim_get_current_buf() == buf)
+
         -- Hidden listed
         local listed = api.nvim_create_buf(true, true)
         assert_buf(listed)
@@ -1160,6 +1166,14 @@ describe('vim._with', function()
 
         -- Current
         assert_win(api.nvim_get_current_win())
+
+        local win = api.nvim_get_current_win()
+        vim._with({ win = 0 }, function()
+          assert(api.nvim_get_current_win() == win)
+          -- Should restore context window if that changed
+          vim.cmd.tabnew()
+        end)
+        assert(api.nvim_get_current_win() == win)
 
         -- Not visible
         local other_win, cur_win = setup_windows()
