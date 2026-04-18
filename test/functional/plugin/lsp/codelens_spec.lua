@@ -383,6 +383,85 @@ describe('vim.lsp.codelens', function()
     eq('', api.nvim_get_vvar('errmsg'))
   end)
 
+  it('ignores refresh responses for deleted buffer', function()
+    clear_notrace()
+    exec_lua(create_server_definition)
+
+    insert('line1\n')
+
+    exec_lua(function()
+      local codelens_request_count = 0
+      _G.refresh_response_sent = false
+      _G.server = _G._create_server({
+        capabilities = {
+          codeLensProvider = {
+            resolveProvider = true,
+          },
+        },
+        handlers = {
+          ['textDocument/codeLens'] = function(_, _, callback)
+            codelens_request_count = codelens_request_count + 1
+
+            local lenses = {
+              {
+                command = {
+                  arguments = {},
+                  command = 'dummy.command',
+                  title = 'Lens',
+                },
+                range = {
+                  ['end'] = {
+                    character = 1,
+                    line = 0,
+                  },
+                  start = {
+                    character = 0,
+                    line = 0,
+                  },
+                },
+              },
+            }
+
+            if codelens_request_count == 1 then
+              callback(nil, lenses)
+            else
+              -- Delay the refresh response so the buffer is wiped before it arrives.
+              vim.schedule(function()
+                _G.refresh_response_sent = true
+                callback(nil, lenses)
+              end)
+            end
+          end,
+        },
+      })
+
+      local client_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+      vim.lsp.codelens.enable()
+
+      assert(
+        vim.wait(1000, function()
+          return #vim.lsp.codelens.get() > 0
+        end),
+        'timed out waiting for initial codelens response'
+      )
+
+      vim.lsp.codelens.on_refresh(nil, nil, {
+        method = 'workspace/codeLens/refresh',
+        client_id = client_id,
+      })
+      vim.cmd.bwipeout({ bang = true })
+
+      assert(
+        vim.wait(1000, function()
+          return _G.refresh_response_sent
+        end),
+        'timed out waiting for refresh response'
+      )
+    end)
+
+    eq('', api.nvim_get_vvar('errmsg'))
+  end)
+
   it('clears extmarks beyond the bottom of the buffer', function()
     feed('12G4dd')
     screen:expect([[
