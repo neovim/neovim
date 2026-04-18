@@ -1959,6 +1959,16 @@ describe('API/extmarks', function()
       },
     }
   end)
+
+  it('are invalidated when "nofile" buffer is unloaded', function()
+    local buf = api.nvim_create_buf(false, true)
+    api.nvim_buf_set_name(buf, 'foo')
+    api.nvim_buf_set_lines(buf, 0, 0, false, { 'foo', 'bar' })
+    local id = api.nvim_buf_set_extmark(buf, ns, 1, 0, { invalidate = true })
+    api.nvim_buf_delete(buf, { unload = true })
+    local mark = { 0, 0, { invalid = true, invalidate = true, ns_id = 3, right_gravity = true } }
+    eq(mark, api.nvim_buf_get_extmark_by_id(buf, ns, id, { details = true }))
+  end)
 end)
 
 describe('Extmarks buffer api with many marks', function()
