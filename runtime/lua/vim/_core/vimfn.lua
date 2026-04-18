@@ -25,4 +25,19 @@ function M.f_environ()
   return env
 end
 
+--- Decode a JSON string.
+--- @param expr any String or list of strings to decode.
+--- @return any
+function M.f_json_decode(expr)
+  local s = type(expr) == 'table' and table.concat(expr, '\n') or expr
+  return vim.json.decode(s)
+end
+
+--- Encode a value as a JSON string.
+--- @param expr any
+--- @return string
+function M.f_json_encode(expr)
+  return vim.json.encode(expr, { sort_keys = true })
+end
+
 return M
