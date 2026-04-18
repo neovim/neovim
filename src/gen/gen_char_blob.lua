@@ -31,7 +31,6 @@ target:write('#include <stdint.h>\n\n')
 
 local index_items = {}
 
-local warn_on_missing_compiler = true
 local modnames = {}
 for argi = 2, #arg, 2 do
   local source_file = arg[argi]
@@ -44,22 +43,12 @@ for argi = 2, #arg, 2 do
   local varname = string.gsub(modname, '%.', '_dot_') .. '_module'
   target:write(('static const uint8_t %s[] = {\n'):format(varname))
 
-  local output
+  local source = io.open(source_file, 'r')
+    or error(string.format("source_file %q doesn't exist", source_file))
+  local output = source:read('*a')
+  source:close()
   if options.c then
-    local luac = os.getenv('LUAC_PRG')
-    if luac and luac ~= '' then
-      output = io.popen(luac:format(source_file), 'r'):read('*a')
-    elseif warn_on_missing_compiler then
-      print('LUAC_PRG is missing, embedding raw source')
-      warn_on_missing_compiler = false
-    end
-  end
-
-  if not output then
-    local source = io.open(source_file, 'r')
-      or error(string.format("source_file %q doesn't exist", source_file))
-    output = source:read('*a')
-    source:close()
+    output = string.dump(assert((loadstring or load)(output, source_file)), false)
   end
 
   local num_bytes = 0

@@ -769,13 +769,7 @@ static int nlua_module_preloader(lua_State *lstate)
 {
   size_t i = (size_t)lua_tointeger(lstate, lua_upvalueindex(1));
   ModuleDef def = builtin_modules[i];
-  char name[256];
-  name[0] = '@';
-  size_t off = xstrlcpy(name + 1, def.name, (sizeof name) - 2);
-  strchrsub(name + 1, '.', '/');
-  xstrlcpy(name + 1 + off, ".lua", (sizeof name) - 2 - off);
-
-  if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, name)) {
+  if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, NULL)) {
     return lua_error(lstate);
   }
 
