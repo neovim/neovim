@@ -3076,6 +3076,14 @@ describe('LSP', function()
                 )
               end
             end
+          end, function()
+            if accepted and not accepted:is_closing() then
+              accepted:close()
+            end
+          end, function()
+            if accepted and not accepted:is_closing() then
+              accepted:close()
+            end
           end))
         end)
         local port = server:getsockname().port
@@ -3140,6 +3148,14 @@ describe('LSP', function()
                   table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg })
                 )
               end
+            end
+          end, function()
+            if accepted and not accepted:is_closing() then
+              accepted:close()
+            end
+          end, function()
+            if accepted and not accepted:is_closing() then
+              accepted:close()
             end
           end))
         end)
