@@ -3044,13 +3044,14 @@ describe('LSP', function()
     it('does not crash on error response with null id (JSON-RPC 2.0 parse error)', function()
       local result = exec_lua(function()
         local server = assert(vim.uv.new_tcp())
+        local accepted
         local messages = {}
         server:bind('127.0.0.1', 0)
         server:listen(127, function(err)
           assert(not err, err)
-          local socket = assert(vim.uv.new_tcp())
-          server:accept(socket)
-          socket:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
+          accepted = assert(vim.uv.new_tcp())
+          server:accept(accepted)
+          accepted:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
             local payload = vim.json.decode(body)
             if payload.method then
               table.insert(messages, payload.method)
@@ -3063,12 +3064,16 @@ describe('LSP', function()
                     capabilities = {},
                   },
                 })
-                socket:write(table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg }))
+                accepted:write(
+                  table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg })
+                )
               elseif payload.method == 'initialized' then
                 -- Then send an error response with null id (parse error per JSON-RPC 2.0 §5)
                 local msg =
                   '{"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"},"id":null}'
-                socket:write(table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg }))
+                accepted:write(
+                  table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg })
+                )
               end
             end
           end))
@@ -3087,6 +3092,9 @@ describe('LSP', function()
         vim.wait(1000, function()
           return #messages >= 2 and on_error_called
         end)
+        if accepted and not accepted:is_closing() then
+          accepted:close()
+        end
         server:close()
         server:shutdown()
         return {
@@ -3102,13 +3110,14 @@ describe('LSP', function()
     it('does not misclassify server request with null id as notification', function()
       local result = exec_lua(function()
         local server = assert(vim.uv.new_tcp())
+        local accepted
         local messages = {}
         server:bind('127.0.0.1', 0)
         server:listen(127, function(err)
           assert(not err, err)
-          local socket = assert(vim.uv.new_tcp())
-          server:accept(socket)
-          socket:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
+          accepted = assert(vim.uv.new_tcp())
+          server:accept(accepted)
+          accepted:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
             local payload = vim.json.decode(body)
             if payload.method then
               table.insert(messages, payload.method)
@@ -3120,12 +3129,16 @@ describe('LSP', function()
                     capabilities = {},
                   },
                 })
-                socket:write(table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg }))
+                accepted:write(
+                  table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg })
+                )
               elseif payload.method == 'initialized' then
                 -- Send a server request with null id (invalid per JSON-RPC 2.0)
                 local msg =
                   '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]},"id":null}'
-                socket:write(table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg }))
+                accepted:write(
+                  table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg })
+                )
               end
             end
           end))
@@ -3150,6 +3163,9 @@ describe('LSP', function()
         vim.wait(1000, function()
           return #messages >= 2 and (on_error_called or notification_received)
         end)
+        if accepted and not accepted:is_closing() then
+          accepted:close()
+        end
         server:close()
         server:shutdown()
         return {
