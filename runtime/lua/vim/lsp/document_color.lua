@@ -86,6 +86,10 @@ local function get_hl_group(hex_code, style)
   -- Limit number of created highlight groups to 10000 to not approach near
   -- a hard limit of 19999 highlight groups (`:h E849`)
   if n_color_cache > 10000 then
+    vim.notify_once(
+      'E849: The maximum number of highlight groups has been reached.',
+      vim.log.levels.WARN
+    )
     return nil
   end
 
