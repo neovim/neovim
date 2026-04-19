@@ -151,6 +151,8 @@ describe('MarkSet', function()
     command('tabclose')
 
     feed('mD')
+    -- delmarks should signal on the buf the mark is set on, not the current buf
+    command('delmarks A')
 
     poke_eventloop()
     eq({
@@ -184,6 +186,14 @@ describe('MarkSet', function()
           col = 0,
           line = 1,
           name = 'D',
+        },
+      },
+      {
+        buf = 1,
+        event = {
+          col = 0,
+          line = 0,
+          name = 'A',
         },
       },
     }, eval('g:markset_events'))
@@ -282,5 +292,58 @@ describe('MarkSet', function()
     eq({ 2, 0 }, api.nvim_buf_get_mark(second_bufnr, 'A'))
     eq({ 1, 1 }, api.nvim_buf_get_mark(third_bufnr, 'B'))
     eq({ 3, 0 }, api.nvim_buf_get_mark(first_bufnr, 'C'))
+  end)
+
+  it('emits when marks are deleted', function()
+    command([[
+      let g:mark_events = []
+      autocmd MarkSet * call add(g:mark_events, {'event': deepcopy(v:event)})
+    ]])
+
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      'line 1',
+      'line 2',
+    })
+
+    feed('ma')
+    feed('mb')
+    command('delmarks a')
+    -- deleting a second time should not trigger an event
+    command('delmarks a')
+    api.nvim_buf_del_mark(0, 'b')
+    api.nvim_buf_del_mark(0, 'b')
+
+    poke_eventloop()
+
+    eq({
+      {
+        event = {
+          col = 0,
+          line = 1,
+          name = 'a',
+        },
+      },
+      {
+        event = {
+          col = 0,
+          line = 1,
+          name = 'b',
+        },
+      },
+      {
+        event = {
+          col = 0,
+          line = 0,
+          name = 'a',
+        },
+      },
+      {
+        event = {
+          col = 0,
+          line = 0,
+          name = 'b',
+        },
+      },
+    }, eval('g:mark_events'))
   end)
 end)

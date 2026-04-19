@@ -81,7 +81,9 @@ void free_xfmark(xfmark_T fm)
   free_fmark(fm.fmark);
 }
 
-/// Free and clear fmark_T item
+/// Free and clear fmark_T item.
+///
+/// Does not trigger "MarkSet" event.
 void clear_fmark(fmark_T *const fm, const Timestamp timestamp)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -849,6 +851,8 @@ bool mark_check_line_bounds(buf_T *buf, fmark_T *fm, const char **errormsg)
 ///
 /// Used mainly when trashing the entire buffer during ":e" type commands.
 ///
+/// Does not trigger "MarkSet" event.
+///
 /// @param[out]  buf  Buffer to clear marks in.
 void clrallmarks(buf_T *const buf, const Timestamp timestamp)
   FUNC_ATTR_NONNULL_ALL
@@ -1010,9 +1014,30 @@ void ex_delmarks(exarg_T *eap)
 {
   int from, to;
   int n;
+  pos_T pos = { 0, 0, 0 };
 
   if (*eap->arg == NUL && eap->forceit) {
     // clear all marks
+    for (size_t i = 0; i < NMARKS; i++) {
+      if (curbuf->b_namedm[i].mark.lnum != 0) {
+        do_markset_autocmd((char)(i + 'a'), &pos, curbuf);
+      }
+    }
+    if (curbuf->b_last_cursor.mark.lnum != 0) {
+      do_markset_autocmd('"', &pos, curbuf);
+    }
+    if (curbuf->b_last_insert.mark.lnum != 0) {
+      do_markset_autocmd('^', &pos, curbuf);
+    }
+    if (curbuf->b_last_change.mark.lnum != 0) {
+      do_markset_autocmd('.', &pos, curbuf);
+    }
+    if (curbuf->b_op_start.lnum != 0) {
+      do_markset_autocmd('[', &pos, curbuf);
+    }
+    if (curbuf->b_op_end.lnum != 0) {
+      do_markset_autocmd(']', &pos, curbuf);
+    }
     clrallmarks(curbuf, os_time());
   } else if (eap->forceit) {
     emsg(_(e_invarg));
@@ -1044,6 +1069,9 @@ void ex_delmarks(exarg_T *eap)
 
         for (int i = from; i <= to; i++) {
           if (lower) {
+            if (curbuf->b_namedm[i - 'a'].mark.lnum != 0) {
+              do_markset_autocmd((char)i, &pos, curbuf);
+            }
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
             curbuf->b_namedm[i - 'a'].timestamp = timestamp;
           } else {
@@ -1051,6 +1079,13 @@ void ex_delmarks(exarg_T *eap)
               n = i - '0' + NMARKS;
             } else {
               n = i - 'A';
+            }
+            if (namedfm[n].fmark.mark.lnum != 0) {
+              buf_T *buf = buflist_findnr(namedfm[n].fmark.fnum);
+              if (buf == NULL) {
+                buf = curbuf;
+              }
+              do_markset_autocmd((char)i, &pos, buf);
             }
             namedfm[n].fmark.mark.lnum = 0;
             namedfm[n].fmark.fnum = 0;
@@ -1061,25 +1096,50 @@ void ex_delmarks(exarg_T *eap)
       } else {
         switch (*p) {
         case '"':
+          if (curbuf->b_last_cursor.mark.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
           clear_fmark(&curbuf->b_last_cursor, timestamp);
           break;
         case '^':
+          if (curbuf->b_last_insert.mark.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
           clear_fmark(&curbuf->b_last_insert, timestamp);
           break;
         case ':':
           // Readonly mark. No deletion allowed.
           break;
         case '.':
+          if (curbuf->b_last_change.mark.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
           clear_fmark(&curbuf->b_last_change, timestamp);
           break;
         case '[':
-          curbuf->b_op_start.lnum = 0; break;
+          if (curbuf->b_op_start.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
+          curbuf->b_op_start.lnum = 0;
+          break;
         case ']':
-          curbuf->b_op_end.lnum = 0; break;
+          if (curbuf->b_op_end.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
+          curbuf->b_op_end.lnum = 0;
+          break;
         case '<':
-          curbuf->b_visual.vi_start.lnum = 0; break;
+          if (curbuf->b_visual.vi_start.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
+          curbuf->b_visual.vi_start.lnum = 0;
+          break;
         case '>':
-          curbuf->b_visual.vi_end.lnum = 0; break;
+          if (curbuf->b_visual.vi_end.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
+          curbuf->b_visual.vi_end.lnum = 0;
+          break;
         case ' ':
           break;
         default:
