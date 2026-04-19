@@ -1004,6 +1004,7 @@ void op_reindent(oparg_T *oap, Indenter how)
       if (i > 1
           && (i % 50 == 0 || i == oap->line_count - 1)
           && oap->line_count > p_report) {
+        msg_ext_overwrite = true;
         smsg(0, _("%" PRId64 " lines to indent... "), (int64_t)i);
       }
 
@@ -1047,6 +1048,7 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   if (oap->line_count > p_report) {
     i = oap->line_count - (i + 1);
+    msg_ext_overwrite = true;
     smsg(0, NGETTEXT("%" PRId64 " line indented ", "%" PRId64 " lines indented ", i), (int64_t)i);
   }
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {

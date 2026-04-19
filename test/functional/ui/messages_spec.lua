@@ -1666,6 +1666,16 @@ stack traceback:
       messages = { { content = { { 'foo' } }, kind = 'echo', trigger = 'typed_cmd' } },
     })
   end)
+
+  it('final indent message overwrites previous messages #39212', function()
+    feed('iline1 \nline2\nline3<Esc>')
+    feed('gg=G')
+    screen:expect({
+      messages = {
+        { content = { { '3 lines indented ' } }, history = true, kind = '' },
+      },
+    })
+  end)
 end)
 
 describe('ui/builtin messages', function()
