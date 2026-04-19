@@ -199,6 +199,8 @@ EVENTS
 • |SessionLoadPre| is triggered before loading a |Session| file.
 • |TabClosedPre| is triggered before closing a |tabpage|.
 • |TermRequest| event gained a `terminator` parameter.
+• |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
+  as |nvim_buf_del_mark()|
 
 HIGHLIGHTS
 

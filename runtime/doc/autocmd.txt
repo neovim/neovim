@@ -785,11 +785,13 @@ LspRequest			See |LspRequest|
 LspTokenUpdate			See |LspTokenUpdate|
 							*MarkSet*
 MarkSet				After a |mark| is set by |m|, |:mark|, and
-				|nvim_buf_set_mark()|. Supports `[a-zA-Z]`
+				|nvim_buf_set_mark()|, or deleted by |:delmarks|
+				and |nvim_buf_del_mark()|. Supports `[a-zA-Z]`
 				marks (may support more in the future).
 				The |autocmd-pattern| is matched against the
 				mark name (e.g. `[ab]` matches `a` or `b`, `*`
-				matches all).
+				matches all). If line is 0, the mark has been
+				deleted.
 
 				The |event-data| has these keys (type: `vim.event.markset.data`):
 				- name: Mark name (e.g. "a")
