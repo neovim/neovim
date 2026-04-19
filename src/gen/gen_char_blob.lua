@@ -55,7 +55,8 @@ for argi = 2, #arg, 2 do
   source:close()
   if options.c then
     local prefix = ignorelist[modname] and '' or '@'
-    output = string.dump(assert((loadstring or load)(output, prefix .. source_file)), false)
+    local relpath = modname:gsub('%.', '/') .. '.lua'
+    output = string.dump(assert((loadstring or load)(output, prefix .. relpath)), false)
   end
 
   local num_bytes = 0
