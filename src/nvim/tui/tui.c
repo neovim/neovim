@@ -2182,6 +2182,10 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
+  }else {
+    // if we have no bugs then we still want title to work
+    terminfo_set_if_empty(tui, kTerm_to_status_line, "\x1b]0;");
+    terminfo_set_if_empty(tui, kTerm_from_status_line, "\x07");
   }
 
 // At this time (2017-07-12) it seems like all terminals that support 256
