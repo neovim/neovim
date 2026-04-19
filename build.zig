@@ -12,7 +12,7 @@ const version = struct {
     const patch = 0;
     const prerelease = "-dev";
 
-    const api_level = 14;
+    const api_level = 15;
     const api_level_compat = 0;
     const api_prerelease = false;
 };

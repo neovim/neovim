@@ -2070,105 +2070,6 @@ Object nvim__unpack(String str, Arena *arena, Error *err)
   return unpack(str.data, str.size, arena, err);
 }
 
-/// Deletes an uppercase/file named mark. See |mark-motions|.
-///
-/// @note Lowercase name (or other buffer-local mark) is an error.
-/// @param name       Mark name
-/// @return true if the mark was deleted, else false.
-/// @see |nvim_buf_del_mark()|
-/// @see |nvim_get_mark()|
-Boolean nvim_del_mark(String name, Error *err)
-  FUNC_API_SINCE(8)
-{
-  bool res = false;
-  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
-    return res;
-  });
-  // Only allow file/uppercase marks
-  // TODO(muniter): Refactor this ASCII_ISUPPER macro to a proper function
-  VALIDATE_S((ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)),
-             "mark name (must be file/uppercase)", name.data, {
-    return res;
-  });
-  res = set_mark(NULL, name, 0, 0, err);
-  return res;
-}
-
-/// Returns a `(row, col, buffer, buffername)` tuple representing the position
-/// of the uppercase/file named mark. "End of line" column position is returned
-/// as |v:maxcol| (big number). See |mark-motions|.
-///
-/// Marks are (1,0)-indexed. |api-indexing|
-///
-/// @note Lowercase name (or other buffer-local mark) is an error.
-/// @param name       Mark name
-/// @param opts       Optional parameters. Reserved for future use.
-/// @return 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
-/// not set.
-/// @see |nvim_buf_set_mark()|
-/// @see |nvim_del_mark()|
-Tuple(Integer, Integer, Buffer, String) nvim_get_mark(String name, Dict(empty) *opts, Arena *arena,
-                                                      Error *err)
-  FUNC_API_SINCE(8)
-{
-  Array rv = ARRAY_DICT_INIT;
-
-  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
-    return rv;
-  });
-  VALIDATE_S((ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)),
-             "mark name (must be file/uppercase)", name.data, {
-    return rv;
-  });
-
-  xfmark_T *mark = mark_get_global(false, *name.data);  // false avoids loading the mark buffer
-  pos_T pos = mark->fmark.mark;
-  bool allocated = false;
-  int bufnr;
-  char *filename;
-
-  // Marks are from an open buffer it fnum is non zero
-  if (mark->fmark.fnum != 0) {
-    bufnr = mark->fmark.fnum;
-    filename = buflist_nr2name(bufnr, true, true);
-    allocated = true;
-    // Marks comes from shada
-  } else {
-    filename = mark->fname;
-    bufnr = 0;
-  }
-
-  bool exists = filename != NULL;
-  Integer row;
-  Integer col;
-
-  if (!exists || pos.lnum <= 0) {
-    if (allocated) {
-      xfree(filename);
-      allocated = false;
-    }
-    filename = "";
-    bufnr = 0;
-    row = 0;
-    col = 0;
-  } else {
-    row = pos.lnum;
-    col = pos.col;
-  }
-
-  rv = arena_array(arena, 4);
-  ADD_C(rv, INTEGER_OBJ(row));
-  ADD_C(rv, INTEGER_OBJ(col));
-  ADD_C(rv, INTEGER_OBJ(bufnr));
-  ADD_C(rv, CSTR_TO_ARENA_OBJ(arena, filename));
-
-  if (allocated) {
-    xfree(filename);
-  }
-
-  return rv;
-}
-
 /// Evaluates statusline string.
 ///
 /// @param str Statusline string (see 'statusline').
@@ -2572,4 +2473,317 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
   RedrawingDisabled = save_rd;
   p_lz = save_lz;
+}
+
+/// Get a mark position.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// Mark types:
+/// - Window-local: ' and ` (use "win" option)
+/// - Buffer-local: a-z, ", `[`, `]`, <, > etc. (use "buf" option)
+/// - Global: A-Z, 0-9 (optionally use "buf" to check if mark is in specific buffer)
+///
+/// @see |mark-motions|
+///
+/// @param name  Mark name (single character string)
+/// @param opts  Optional parameters:
+///              - win: |window-ID|. Used for window-local marks. Defaults to current window.
+///              - buf: Buffer number. Used for buffer-local marks. Defaults to current buffer.
+///                     For global marks, restricts the result to marks in that buffer.
+///              - timestamp: Include mark creation timestamp if true
+/// @param[out] err  Error details, if any
+/// @return Dictionary with the following fields:
+///         - name: Mark name (single character)
+///         - line: Mark line (1-indexed), 0 if not set
+///         - col: Mark column (0-indexed). "End of line" column position
+///                is returned as |v:maxcol|.
+///         - buf: Buffer number (global marks only). 0 if the mark is not associated
+///                with a loaded buffer.
+///         - file: File name (global marks only). Empty string if unavailable.
+///         - timestamp: timestamp when mark was set (only if opts.timestamp is true).
+///                      Window-local marks ' and ` always return 0.
+DictAs(get_mark_info) nvim_mark_get(String name, Dict(marks) *opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(15)
+{
+  Dict rv = arena_dict(arena, 6);
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return rv;
+  });
+
+  char mark = *name.data;
+  fmark_T *fm = NULL;
+  bool timestamp = HAS_KEY(opts, marks, timestamp) && opts->timestamp;
+
+  PUT_C(rv, "name", CBUF_TO_ARENA_OBJ(arena, &mark, 1));
+
+  // Window-local marks: ' and `
+  if (mark == '\'' || mark == '`') {
+    VALIDATE(!HAS_KEY(opts, marks, buf), "%s",
+             "cannot use 'buf' for window-local marks", {
+      return rv;
+    });
+
+    win_T *win = find_window_by_handle(opts->win, err);
+    if (ERROR_SET(err)) {
+      return rv;
+    }
+
+    PUT_C(rv, "line", INTEGER_OBJ(win->w_pcmark.lnum));
+    PUT_C(rv, "col", INTEGER_OBJ(win->w_pcmark.col));
+    if (timestamp) {
+      PUT_C(rv, "timestamp", INTEGER_OBJ(0));  // w_pcmark doesn't have timestamp
+    }
+    return rv;
+  }
+
+  // Only window-local marks use 'win'
+  VALIDATE(!HAS_KEY(opts, marks, win), "%s",
+           "cannot use 'win' for non-window-local marks", {
+    return rv;
+  });
+
+  // Global marks: A-Z, 0-9
+  if (ASCII_ISUPPER(mark) || ascii_isdigit(mark)) {
+    xfmark_T *xfm = mark_get_global(false, mark);
+    fm = &xfm->fmark;
+
+    // If buf is specified, check if mark is in that buffer
+    if (HAS_KEY(opts, marks, buf)) {
+      buf_T *buf = find_buffer_by_handle(opts->buf, err);
+      if (ERROR_SET(err)) {
+        return rv;
+      }
+      if (xfm->fmark.fnum != buf->handle) {
+        PUT_C(rv, "line", INTEGER_OBJ(0));
+        PUT_C(rv, "col", INTEGER_OBJ(0));
+        PUT_C(rv, "buf", INTEGER_OBJ(0));
+        PUT_C(rv, "file", CSTR_AS_OBJ(""));
+      } else {
+        char *filename = buflist_nr2name(xfm->fmark.fnum, true, true);
+        PUT_C(rv, "line", INTEGER_OBJ(xfm->fmark.mark.lnum));
+        PUT_C(rv, "col", INTEGER_OBJ(xfm->fmark.mark.lnum == 0 ? 0 : xfm->fmark.mark.col));
+        PUT_C(rv, "buf", INTEGER_OBJ(xfm->fmark.fnum));
+        PUT_C(rv, "file", CSTR_TO_ARENA_OBJ(arena, filename != NULL ? filename : ""));
+        if (filename != NULL) {
+          xfree(filename);
+        }
+      }
+      if (HAS_KEY(opts, marks, timestamp) && opts->timestamp) {
+        PUT_C(rv, "timestamp", INTEGER_OBJ((Integer)fm->timestamp));
+      }
+      return rv;
+    }
+
+    // No buf specified: return full info
+    pos_T pos = fm->mark;
+    int bufnr;
+    char *filename;
+
+    if (fm->fnum != 0) {
+      bufnr = fm->fnum;
+      filename = buflist_nr2name(bufnr, true, true);
+    } else {
+      filename = xfm->fname;
+      bufnr = 0;
+    }
+
+    if (filename == NULL || pos.lnum <= 0) {
+      if (fm->fnum != 0) {
+        xfree(filename);
+      }
+      PUT_C(rv, "line", INTEGER_OBJ(0));
+      PUT_C(rv, "col", INTEGER_OBJ(0));
+      PUT_C(rv, "buf", INTEGER_OBJ(0));
+      PUT_C(rv, "file", CSTR_TO_ARENA_OBJ(arena, ""));
+    } else {
+      PUT_C(rv, "line", INTEGER_OBJ(pos.lnum));
+      PUT_C(rv, "col", INTEGER_OBJ(pos.col));
+      PUT_C(rv, "buf", INTEGER_OBJ(bufnr));
+      PUT_C(rv, "file", CSTR_TO_ARENA_OBJ(arena, filename));
+      if (fm->fnum != 0) {
+        xfree(filename);
+      }
+    }
+
+    if (timestamp) {
+      PUT_C(rv, "timestamp", pos.lnum <= 0 ? INTEGER_OBJ(0) : INTEGER_OBJ((Integer)fm->timestamp));
+    }
+    return rv;
+  }
+
+  // Buffer-local marks
+  buf_T *buf = find_buffer_by_handle(opts->buf, err);
+  if (ERROR_SET(err)) {
+    return rv;
+  }
+
+  fm = mark_get_local(buf, curwin, mark);
+  VALIDATE_S((fm != NULL), "mark name", name.data, {
+    return rv;
+  });
+
+  PUT_C(rv, "line", INTEGER_OBJ(fm->mark.lnum));
+  PUT_C(rv, "col", INTEGER_OBJ(fm->mark.col));
+
+  if (timestamp) {
+    PUT_C(rv, "timestamp", INTEGER_OBJ((Integer)fm->timestamp));
+  }
+  return rv;
+}
+
+/// Set a mark position.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// Mark types:
+/// - Window-local: ' and ` (use "win" option)
+/// - Buffer-local: a-z, ", `[`, `]`, <, > (use "buf" option)
+/// - Global: A-Z, 0-9 (optionally use "buf" to set mark in specific buffer)
+///
+/// Note: Marks ^, ., : are set automatically and cannot be set manually.
+///
+/// @see |mark-motions|
+///
+/// @param name  Mark name (single character string)
+/// @param line  Line number (1-indexed)
+/// @param col   Column number (0-indexed)
+/// @param opts  Optional parameters:
+///              - win: |window-ID|. Used for window-local marks. Defaults to current window.
+///              - buf: Buffer number. Used for buffer-local and global marks. Defaults to current buffer.
+/// @param[out] err  Error details, if any
+/// @return true if the mark was set successfully, false otherwise
+Boolean nvim_mark_set(String name, Integer line, Integer col, Dict(marks) *opts, Error *err)
+  FUNC_API_SINCE(15)
+{
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return false;
+  });
+
+  char mark = *name.data;
+
+  // Window-local marks: ' and `
+  if (mark == '\'' || mark == '`') {
+    VALIDATE(!HAS_KEY(opts, marks, buf), "%s",
+             "cannot use 'buf' for window-local marks", {
+      return false;
+    });
+
+    win_T *win = find_window_by_handle(opts->win, err);
+    if (ERROR_SET(err)) {
+      return false;
+    }
+
+    if (line != 0) {
+      VALIDATE_RANGE((col <= MAXCOL), "column", {
+        return false;
+      });
+      VALIDATE_RANGE((line >= 1 && line <= win->w_buffer->b_ml.ml_line_count), "line", {
+        return false;
+      });
+    } else {
+      col = 0;
+    }
+
+    win->w_pcmark.lnum = (linenr_T)line;
+    win->w_pcmark.col = (colnr_T)col;
+    win->w_pcmark.coladd = 0;
+    return true;
+  }
+
+  // Read-only marks
+  if (mark == '^' || mark == '.') {
+    api_set_error(err, kErrorTypeException, "Mark '%c' cannot be set manually", mark);
+    return false;
+  }
+
+  VALIDATE(!HAS_KEY(opts, marks, win), "%s",
+           "cannot use 'win' for non-window-local marks", {
+    return false;
+  });
+
+  buf_T *buf = api_buf_ensure_loaded(opts->buf, err);
+  if (ERROR_SET(err)) {
+    return false;
+  }
+
+  return set_mark(buf, name, line, col, err);
+}
+
+/// Delete a mark. Pass "buf" for buffer-local marks or to restrict deletion
+/// of a global mark to a specific buffer.
+///
+/// Window-local marks (' and `), motion marks ({, }, (, )), ^, ., and :
+/// cannot be deleted.
+///
+/// @param name  Mark name (single character)
+/// @param opts  Optional parameters:
+///              - buf: Buffer handle. For global marks, only deletes if the
+///                     mark is in that buffer.
+/// @param[out] err  Error details, if any
+/// @return true if the mark was deleted, false if it was not set
+Boolean nvim_mark_del(String name, Dict(marks) *opts, Error *err)
+  FUNC_API_SINCE(15)
+{
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return false;
+  });
+
+  char mark = *name.data;
+
+  // Window-local, motion, read-only, and : marks cannot be deleted
+  if (mark == '\'' || mark == '`' || mark == ':' || mark == '^' || mark == '.'
+      || mark == '{' || mark == '}' || mark == '(' || mark == ')') {
+    api_set_error(err, kErrorTypeValidation, "Mark '%c' cannot be deleted", mark);
+    return false;
+  }
+
+  // No mark type in del accepts 'win'
+  VALIDATE(!HAS_KEY(opts, marks, win), "%s",
+           "cannot use 'win' with nvim_mark_del", {
+    return false;
+  });
+
+  // Global marks: A-Z, 0-9
+  if (ASCII_ISUPPER(mark) || ascii_isdigit(mark)) {
+    xfmark_T *xfm = &namedfm[mark_global_index(mark)];
+
+    // Not set: nothing to delete
+    if (xfm->fmark.mark.lnum == 0) {
+      return false;
+    }
+
+    // If buf is specified, only delete if mark is in that buffer
+    if (HAS_KEY(opts, marks, buf)) {
+      buf_T *target = find_buffer_by_handle(opts->buf, err);
+      if (ERROR_SET(err)) {
+        return false;
+      }
+      if (xfm->fmark.fnum != target->handle) {
+        return false;  // Mark not in this buffer
+      }
+    }
+
+    // Route through set_mark() so the MarkSet autocmd fires (with line=0)
+    // and any future cleanup added to setmark_pos stays consistent.
+    return set_mark(NULL, name, 0, 0, err);
+  }
+
+  // Buffer-local marks
+  buf_T *buf = find_buffer_by_handle(opts->buf, err);
+  if (ERROR_SET(err)) {
+    return false;
+  }
+
+  fmark_T *fm = mark_get_local(buf, curwin, mark);
+  VALIDATE_S((fm != NULL), "mark name", name.data, {
+    return false;
+  });
+
+  // Not set: nothing to delete
+  if (fm->mark.lnum == 0) {
+    return false;
+  }
+
+  return set_mark(buf, name, 0, 0, err);
 }

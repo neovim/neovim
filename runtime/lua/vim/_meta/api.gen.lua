@@ -325,16 +325,17 @@ function vim.api.nvim_buf_del_keymap(buf, mode, lhs) end
 
 --- Deletes a named mark in the buffer. See `mark-motions`.
 ---
+---
 --- Note:
 --- only deletes marks set in the buffer, if the mark is not set
 --- in the buffer it will return false.
 ---
 --- @see vim.api.nvim_buf_set_mark
 --- @see vim.api.nvim_del_mark
---- @param buf integer Buffer to set the mark on
+--- @param buffer integer Buffer to set the mark on
 --- @param name string Mark name
 --- @return boolean # true if the mark was deleted, else false.
-function vim.api.nvim_buf_del_mark(buf, name) end
+function vim.api.nvim_buf_del_mark(buffer, name) end
 
 --- Delete a buffer-local user-defined command.
 ---
@@ -487,13 +488,14 @@ function vim.api.nvim_buf_get_lines(buf, start, end_, strict_indexing) end
 ---
 --- Marks are (1,0)-indexed. `api-indexing`
 ---
+---
 --- @see vim.api.nvim_buf_set_mark
 --- @see vim.api.nvim_buf_del_mark
---- @param buf integer Buffer id, or 0 for current buffer
+--- @param buffer integer Buffer id, or 0 for current buffer
 --- @param name string Mark name
 --- @return [integer, integer] # (row, col) tuple, (0, 0) if the mark is not set, or is an
 --- uppercase/file mark set in another buffer.
-function vim.api.nvim_buf_get_mark(buf, name) end
+function vim.api.nvim_buf_get_mark(buffer, name) end
 
 --- Gets the full file name for the buffer
 ---
@@ -754,24 +756,20 @@ function vim.api.nvim_buf_set_keymap(buf, mode, lhs, rhs, opts) end
 --- @param replacement string[] Array of lines to use as replacement
 function vim.api.nvim_buf_set_lines(buf, start, end_, strict_indexing, replacement) end
 
---- Sets a named mark in the given buffer, all marks are allowed
---- file/uppercase, visual, last change, etc. See `mark-motions`.
----
---- Marks are (1,0)-indexed. `api-indexing`
----
+--- @deprecated
 --- Note:
 --- Passing 0 as line deletes the mark
 ---
 ---
 --- @see vim.api.nvim_buf_del_mark
 --- @see vim.api.nvim_buf_get_mark
---- @param buf integer Buffer to set the mark on
---- @param name string Mark name
---- @param line integer Line number
---- @param col integer Column/row number
---- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
---- @return boolean # true if the mark was set, else false.
-function vim.api.nvim_buf_set_mark(buf, name, line, col, opts) end
+--- @param buffer integer
+--- @param name string
+--- @param line integer
+--- @param col integer
+--- @param opts vim.api.keyset.empty
+--- @return boolean
+function vim.api.nvim_buf_set_mark(buffer, name, line, col, opts) end
 
 --- Sets the full file name for a buffer, like `:file_f`
 ---
@@ -1095,6 +1093,7 @@ function vim.api.nvim_del_current_line() end
 function vim.api.nvim_del_keymap(mode, lhs) end
 
 --- Deletes an uppercase/file named mark. See `mark-motions`.
+---
 ---
 --- Note:
 --- Lowercase name (or other buffer-local mark) is an error.
@@ -1460,6 +1459,7 @@ function vim.api.nvim_get_keymap(mode) end
 ---
 --- Marks are (1,0)-indexed. `api-indexing`
 ---
+---
 --- Note:
 --- Lowercase name (or other buffer-local mark) is an error.
 ---
@@ -1682,6 +1682,70 @@ function vim.api.nvim_list_wins() end
 --- @param dict table<string,any> `Context` map.
 --- @return any
 function vim.api.nvim_load_context(dict) end
+
+--- Delete a mark. Pass "buf" for buffer-local marks or to restrict deletion
+--- of a global mark to a specific buffer.
+---
+--- Window-local marks (' and `), motion marks ({, }, (, )), ^, ., and :
+--- cannot be deleted.
+---
+--- @param name string Mark name (single character)
+--- @param opts vim.api.keyset.marks Optional parameters:
+--- - buf: Buffer handle. For global marks, only deletes if the
+---        mark is in that buffer.
+--- @return boolean # true if the mark was deleted, false if it was not set
+function vim.api.nvim_mark_del(name, opts) end
+
+--- Get a mark position.
+---
+--- Marks are (1,0)-indexed. `api-indexing`
+---
+--- Mark types:
+--- - Window-local: ' and ` (use "win" option)
+--- - Buffer-local: a-z, ", `[`, `]`, <, > etc. (use "buf" option)
+--- - Global: A-Z, 0-9 (optionally use "buf" to check if mark is in specific buffer)
+---
+---
+--- @see `:help mark-motions`
+--- @param name string Mark name (single character string)
+--- @param opts vim.api.keyset.marks Optional parameters:
+--- - win: `window-ID`. Used for window-local marks. Defaults to current window.
+--- - buf: Buffer number. Used for buffer-local marks. Defaults to current buffer.
+---        For global marks, restricts the result to marks in that buffer.
+--- - timestamp: Include mark creation timestamp if true
+--- @return vim.api.keyset.get_mark_info # Dictionary with the following fields:
+--- - name: Mark name (single character)
+--- - line: Mark line (1-indexed), 0 if not set
+--- - col: Mark column (0-indexed). "End of line" column position
+---        is returned as |v:maxcol|.
+--- - buf: Buffer number (global marks only). 0 if the mark is not associated
+---        with a loaded buffer.
+--- - file: File name (global marks only). Empty string if unavailable.
+--- - timestamp: timestamp when mark was set (only if opts.timestamp is true).
+---              Window-local marks ' and ` always return 0.
+function vim.api.nvim_mark_get(name, opts) end
+
+--- Set a mark position.
+---
+--- Marks are (1,0)-indexed. `api-indexing`
+---
+--- Mark types:
+--- - Window-local: ' and ` (use "win" option)
+--- - Buffer-local: a-z, ", `[`, `]`, <, > (use "buf" option)
+--- - Global: A-Z, 0-9 (optionally use "buf" to set mark in specific buffer)
+---
+--- Note: Marks ^, ., : are set automatically and cannot be set manually.
+---
+---
+--- @see `:help mark-motions`
+--- @param name string Mark name (single character string)
+--- @param line integer Line number (1-indexed)
+--- @param col integer Column number (0-indexed)
+--- @param opts vim.api.keyset.marks Optional parameters:
+--- - win: `window-ID`. Used for window-local marks. Defaults to current window.
+--- - buf: Buffer number. Used for buffer-local and global marks. Defaults to current buffer.
+--- @return boolean # true if the mark was set successfully, false otherwise
+function vim.api.nvim_mark_set(name, line, col, opts) end
 
 --- @deprecated
 --- @param msg string

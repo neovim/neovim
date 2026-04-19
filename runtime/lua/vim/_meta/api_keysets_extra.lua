@@ -271,3 +271,11 @@ error('Cannot require a meta file')
 --- @field style nil
 --- @field fixed nil
 --- @field vertical nil
+
+--- @class vim.api.keyset.get_mark_info
+--- @field name string
+--- @field line integer
+--- @field col integer
+--- @field buf? integer
+--- @field file? string
+--- @field timestamp? integer

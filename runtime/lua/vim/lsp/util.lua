@@ -475,7 +475,7 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
       -- make sure we don't go out of bounds
       pos[1] = math.min(pos[1], max)
       pos[2] = math.min(pos[2], #(get_line(bufnr, pos[1] - 1) or ''))
-      api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2], {})
+      api.nvim_mark_set(mark, pos[1], pos[2], { buf = bufnr or 0 })
     end
   end
 
@@ -2168,10 +2168,12 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, position_encoding)
     --- @diagnostic disable-next-line: deprecated
     position_encoding = M._get_offset_encoding(bufnr)
   end
+  local m = api.nvim_mark_get('<', { buf = bufnr })
   --- @type [integer, integer]
-  local A = { unpack(start_pos or api.nvim_buf_get_mark(bufnr, '<')) }
+  local A = { unpack(start_pos or { m.line, m.col }) }
+  m = api.nvim_mark_get('>', { buf = bufnr })
   --- @type [integer, integer]
-  local B = { unpack(end_pos or api.nvim_buf_get_mark(bufnr, '>')) }
+  local B = { unpack(end_pos or { m.line, m.col }) }
   -- convert to 0-index
   A[1] = A[1] - 1
   B[1] = B[1] - 1
