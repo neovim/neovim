@@ -2316,7 +2316,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
 
   // uncrustify:on
 
-  int help_save = curbuf->b_help;
+  const bool help_save = curbuf->b_help;
 
   findtags_state_init(&st, pat, flags, mincount);
 

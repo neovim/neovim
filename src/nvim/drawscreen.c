@@ -2443,7 +2443,7 @@ redr_statuscol:
       // New redraw either due to updated topline or reset skipcol.
       if (must_redraw != 0) {
         // Don't update for changes in buffer again.
-        int mod_set = curbuf->b_mod_set;
+        const bool mod_set = curbuf->b_mod_set;
         curbuf->b_mod_set = false;
         curs_columns(curwin, true);
         win_update(curwin);
