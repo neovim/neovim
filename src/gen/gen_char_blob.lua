@@ -13,9 +13,9 @@ end
 local options = {}
 
 local ignorelist = {
-  'vim/_core/editor.lua',
-  'vim/_core/options.lua',
-  'vim/keymap.lua',
+  ['vim._core.editor'] = true,
+  ['vim._core.options'] = true,
+  ['vim.keymap'] = true,
 }
 
 while true do
@@ -54,14 +54,7 @@ for argi = 2, #arg, 2 do
   local output = source:read('*a')
   source:close()
   if options.c then
-    local is_ignore
-    for _, ignore in ipairs(ignorelist) do
-      if source_file:sub(-#ignore) == ignore then
-        is_ignore = true
-        break
-      end
-    end
-    local prefix = is_ignore and '' or '@'
+    local prefix = ignorelist[modname] and '' or '@'
     output = string.dump(assert((loadstring or load)(output, prefix .. source_file)), false)
   end
 
