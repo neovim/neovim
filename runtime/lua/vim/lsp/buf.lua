@@ -306,7 +306,10 @@ end
 ---
 --- list-handler replacing the default handler.
 --- Called for any non-empty result.
---- When `loclist == false` (the default), the default handler is as follows:
+--- The default handler populates the quickfix (or location) list with the result.
+--- If there is a single result (and the method is not `implementation` or `references`),
+--- it pushes a tag onto the tagstack and jumps to the result.
+--- For example, when `loclist == false` (the default), the handler is equivalent to:
 --- ```lua
 --- local function on_list(what)
 ---   vim.fn.setqflist({}, ' ', what)
