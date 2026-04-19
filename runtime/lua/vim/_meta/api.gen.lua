@@ -2226,7 +2226,8 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
 --- - altfont: boolean
 --- - bg: color name or "#RRGGBB", see note.
---- - bg_indexed: boolean (default false) If true, bg is a terminal palette index (0-255).
+--- - bg_indexed: boolean. If true, `bg` is an RGB approximation of `ctermbg`
+---   (a palette index). UIs rendering cterm natively may prefer `ctermbg`.
 --- - blend: integer between 0 and 100
 --- - blink: boolean
 --- - bold: boolean
@@ -2238,7 +2239,7 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - default: boolean Don't override existing definition `:hi-default`
 --- - dim: boolean
 --- - fg: Color name or "#RRGGBB", see note.
---- - fg_indexed: boolean (default false) If true, fg is a terminal palette index (0-255).
+--- - fg_indexed: boolean. Same as `bg_indexed`, for `fg` and `ctermfg`.
 --- - font: GUI font name (string). Sets `highlight-font`. Use "NONE" to clear.
 --- - force: boolean (default false) Update the highlight group even if it already exists.
 --- - italic: boolean

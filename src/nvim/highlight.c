@@ -797,7 +797,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
       cattrs.rgb_sp_color = -1;
     }
 
-    cattrs.rgb_ae_attr &= ~HL_BG_INDEXED;
+    cattrs.rgb_ae_attr &= ~(HL_FG_INDEXED | HL_BG_INDEXED);
   }
 
   // Check if we should preserve background transparency
@@ -956,8 +956,8 @@ Dict hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *err)
 void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short_keys)
 {
   hl_attrs = hl_attrs ? hl_attrs : hl;
-  assert(hl->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
-  assert(hl_attrs->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
+  assert(hl->capacity >= HLATTRS_DICT_SIZE);  // at most 24 items
+  assert(hl_attrs->capacity >= HLATTRS_DICT_SIZE);  // at most 24 items
   int mask = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
 
   if (mask & HL_INVERSE) {
@@ -1039,14 +1039,12 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
       PUT_C(*hl, short_keys ? "sp" : "special", INTEGER_OBJ(ae.rgb_sp_color));
     }
 
-    if (!short_keys) {
-      if (mask & HL_FG_INDEXED) {
-        PUT_C(*hl, "fg_indexed", BOOLEAN_OBJ(true));
-      }
+    if (mask & HL_FG_INDEXED) {
+      PUT_C(*hl, "fg_indexed", BOOLEAN_OBJ(true));
+    }
 
-      if (mask & HL_BG_INDEXED) {
-        PUT_C(*hl, "bg_indexed", BOOLEAN_OBJ(true));
-      }
+    if (mask & HL_BG_INDEXED) {
+      PUT_C(*hl, "bg_indexed", BOOLEAN_OBJ(true));
     }
   } else {
     if (ae.cterm_fg_color != 0) {

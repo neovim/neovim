@@ -181,4 +181,4 @@ typedef struct {
 #define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, .version = -1, \
                                  .is_default = false, .link_global = false }
 
-enum { HLATTRS_DICT_SIZE = 20, };
+enum { HLATTRS_DICT_SIZE = 24, };
