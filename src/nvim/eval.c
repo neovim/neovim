@@ -26,6 +26,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/eval/gc.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
@@ -235,7 +236,7 @@ void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
     return;
   }
 
-  if (sourcing_a_script(eap)) {
+  if (sourcing_a_script(eap) || eap->ea_getline == get_list_line) {
     evalarg->eval_getline = eap->ea_getline;
     evalarg->eval_cookie = eap->cookie;
   }

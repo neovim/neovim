@@ -1261,7 +1261,7 @@ typedef struct {
   const listitem_T *li;
 } GetListLineCookie;
 
-static char *get_list_line(int c, void *cookie, int indent, bool do_concat)
+char *get_list_line(int c, void *cookie, int indent, bool do_concat)
 {
   GetListLineCookie *const p = (GetListLineCookie *)cookie;
 
