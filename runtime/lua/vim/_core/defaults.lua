@@ -468,11 +468,11 @@ do
 
     vim.keymap.set({ 'x' }, '[N', function()
       require 'vim.treesitter._select'.select_grow_prev(vim.v.count1)
-    end, { desc = 'Select expand previous node' })
+    end, { desc = 'Select previous sibling node' })
 
     vim.keymap.set({ 'x' }, ']N', function()
       require 'vim.treesitter._select'.select_grow_next(vim.v.count1)
-    end, { desc = 'Select expand next node' })
+    end, { desc = 'Select next sibling node' })
 
     vim.keymap.set({ 'x', 'o' }, 'an', function()
       if vim.treesitter.get_parser(nil, nil, { error = false }) then
@@ -1002,7 +1002,7 @@ do
         and os.getenv('NVIM_TEST') == nil
       then
         vim.notify(
-          "defaults.lua: Did not detect DSR response from terminal for 'background' detection. This results in a slower startup time. To disable this and other 'ttyfast' features during startup, set the environment variable NVIM_NOTTYFAST",
+          "E1568: Terminal did not respond to DSR request for 'background' color. Startup may be slower. :help 'ttyfast'",
           vim.log.levels.WARN,
           { _truncate = true }
         )

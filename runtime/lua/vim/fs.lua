@@ -30,6 +30,15 @@
 --- ```lua
 --- vim.print(vim.fn.readblob('.git/config'))
 --- ```
+---
+--- [vim.fs.write()]()
+---
+--- You can use |writefile()| to write a file without explicitly opening/closing it.
+---
+--- Example:
+--- ```lua
+--- vim.fn.writefile('foo\0bar', 'data.bin', 'b')
+--- ```
 
 local uv = vim.uv
 

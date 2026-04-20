@@ -22,8 +22,10 @@ local banned_verbs = {
   delete = 'del',
   disable = 'enable',
   exit = 'cancel', -- or "stop"
+  -- format = 'fmt',
   list = 'get',
   notify = 'print', -- or "echo"
+  pretty = 'fmt',
   remove = 'del',
   toggle = 'enable',
 }

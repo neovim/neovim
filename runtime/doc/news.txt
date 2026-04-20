@@ -157,6 +157,8 @@ LSP
 LUA
 
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
+• |writefile()| treats Lua strings as "blob", so it can be used to write
+  binary data.
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing

@@ -692,9 +692,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, E
 {
   int au_group = AUGROUP_ALL;
   bool modeline = true;
-
   buf_T *b = curbuf;
-
   Object *data = NULL;
 
   Array event_array = unpack_string_or_array(event, "event", true, arena, err);

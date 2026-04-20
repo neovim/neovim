@@ -7264,6 +7264,10 @@ local options = {
         For a window-local value, -1 means to use the global value.
         Values below -1 are invalid.
 
+        Example: >vim
+        	:set scrolloff=99 scrolloffpad=1
+        <
+
         After using the local value, go back the global value with one of
         these two: >vim
         	setlocal scrolloffpad<
@@ -9778,17 +9782,26 @@ local options = {
       abbreviation = 'tf',
       defaults = true,
       desc = [=[
-        Assume that the underlying terminal can respond quickly to queries
-        required by features such as 'background' detection.
-        
-        Nvim issues terminal queries before reading the user's |config| file,
-        so disabling this option there will not work. Set $NVIM_NOTTYFAST
-        before starting Nvim to disable terminal queries.
+        Enables Nvim |TUI| features which assume a fast (usually local) host
+        terminal. During startup, Nvim queries the terminal (for 'background'
+        detection, etc.) and must wait for a response (or timeout).
+
+        If your terminal environment is slow (e.g. remote SSH), or broken
+        (doesn't respond to queries), Nvim startup may be slower. Therefore
+        you can disable this option by setting the `$NVIM_NOTTYFAST`
+        environment variable before starting Nvim: >
+        	NVIM_NOTTYFAST=1 nvim
+        <
+
+        The queries are performed early, before |--cmd| and user |config|, so
+        `:set nottyfast` in your config happens too late.
       ]=],
       full_name = 'ttyfast',
       no_mkrc = true,
       scope = { 'global' },
       short_desc = N_('assume terminal responds quickly, enabling more features'),
+      -- Vim E1568: https://github.com/vim/vim/blob/0f9218851dc91a855c3d186ccd05f550907cf37e/src/errors.h#L3791
+      tags = { 'E1568', '$NVIM_NOTTYFAST' },
       type = 'boolean',
       varname = 'p_tf',
     },

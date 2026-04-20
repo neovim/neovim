@@ -1753,6 +1753,10 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
+  // XXX: this logic is bit weird because of how `decode_string` works: #39328
+  // - if decode_string finds NUL in the Lua string, it assigns VAR_BLOB
+  // - else it assigns VAR_STRING
+
   if (argvars[0].v_type == VAR_LIST) {
     TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
       if (!tv_check_str_or_nr(TV_LIST_ITEM_TV(li))) {
@@ -1760,9 +1764,9 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
     });
   } else if (argvars[0].v_type != VAR_BLOB
+             // Always treat Lua strings as "blob" data.
              && !(argvars[0].v_type == VAR_STRING && script_is_lua(current_sctx.sc_sid))) {
-    semsg(_(e_invarg2),
-          _("writefile() first argument must be a List or a Blob"));
+    semsg(_(e_invarg2), _("writefile() first argument must be a List or a Blob"));
     return;
   }
 

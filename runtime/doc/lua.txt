@@ -2508,6 +2508,15 @@ Example: >lua
     vim.print(vim.fn.readblob('.git/config'))
 <
 
+                                                              *vim.fs.write()*
+
+You can use |writefile()| to write a file without explicitly opening/closing
+it.
+
+Example: >lua
+    vim.fn.writefile('foo\0bar', 'data.bin', 'b')
+<
+
 
 vim.fs.abspath({path})                                      *vim.fs.abspath()*
     Converts `path` to an absolute path. Expands tilde (~) at the beginning of
