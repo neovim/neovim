@@ -17,6 +17,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
+#include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
@@ -108,32 +109,26 @@ void remote_ui_disconnect(uint64_t channel_id, Error *err, bool send_error_exit)
   remote_ui_destroy(ui);
 }
 
-/// Detaches all UIs except the one on `keep_channel_id`.
+/// Detaches the UI on channel `chan`.
 ///
-/// @return Number of UIs detached.
-size_t remote_ui_disconnect_others(uint64_t keep_channel_id)
+/// Sets the channel's detach flag (so the server doesn't exit on stdio UIs),
+/// sends an "error_exit" UI event, and closes the channel.
+///
+/// @param chan  UI channel to disconnect.
+/// @param[out] err Error details, if any.
+void nvim__ui_detach(Integer chan, Error *err)
+  FUNC_API_SINCE(14)
 {
-  // Collect channel IDs first: remote_ui_disconnect() mutates connected_uis.
-  kvec_t(uint64_t) others = KV_INITIAL_VALUE;
-  uint64_t chan_id;
-  map_foreach_key(&connected_uis, chan_id, {
-    if (chan_id != keep_channel_id) {
-      kv_push(others, chan_id);
-    }
+  Channel *c = find_channel((uint64_t)chan);
+  VALIDATE(c != NULL, "%s", e_invchan, {
+    return;
   });
-
-  size_t n = kv_size(others);
-  for (size_t i = 0; i < n; i++) {
-    uint64_t id = kv_A(others, i);
-    Channel *chan = find_channel(id);
-    if (chan) {
-      chan->detach = true;
-    }
-    remote_ui_disconnect(id, NULL, true);
-    channel_close(id, kChannelPartAll, NULL);
+  c->detach = true;
+  remote_ui_disconnect((uint64_t)chan, err, true);
+  if (ERROR_SET(err)) {
+    return;
   }
-  kv_destroy(others);
-  return n;
+  channel_close((uint64_t)chan, kChannelPartAll, NULL);
 }
 
 #ifdef EXITFREE

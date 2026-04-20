@@ -5971,7 +5971,16 @@ static void ex_detach(exarg_T *eap)
   }
 
   if (eap && eap->forceit) {
-    size_t n = remote_ui_disconnect_others(current_ui);
+    typval_T lua_args[] = {
+      { .v_type = VAR_NUMBER, .vval.v_number = (varnumber_T)current_ui },
+      { .v_type = VAR_UNKNOWN },
+    };
+    typval_T rv = TV_INITIAL_VALUE;
+    nlua_call_vimfn("vim._core.server", "detach_others", lua_args, &rv);
+    size_t n = (rv.v_type == VAR_NUMBER && rv.vval.v_number > 0)
+               ? (size_t)rv.vval.v_number : 0;
+    tv_clear(&rv);
+
     if (n == 0) {
       msg(_("No other UIs are attached"), 0);
     } else {
