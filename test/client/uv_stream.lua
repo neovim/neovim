@@ -122,7 +122,9 @@ function SocketStream:read_stop()
 end
 
 function SocketStream:close()
-  uv.close(self._socket)
+  if not self._socket:is_closing() then
+    uv.close(self._socket)
+  end
 end
 
 --- Stream over child process stdio.

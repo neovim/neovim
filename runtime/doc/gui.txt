@@ -69,7 +69,7 @@ Restart Nvim
 
                                                 *:restart*
 :restart [+cmd] [command]
-                Restarts Nvim.
+                Restarts Nvim. See also |ZR|.
 
                 1. Stops Nvim using `:qall` (or |+cmd|, if given).
                 2. Starts a new Nvim server using the same |v:argv| (except
@@ -87,9 +87,6 @@ Restart Nvim
                 Note: Only works if the UI and server are on the same system.
                 Note: If no attached UI implements the "restart" UI event,
                 this command will lead to a dangling server process.
-
-                Also see |ZR|.
-
 
 ------------------------------------------------------------------------------
 Connect UI to a different server

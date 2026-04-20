@@ -475,14 +475,6 @@ do
       end
     end, { desc = 'Select child (inner) node' })
   end
-
-  -- Z layer mappings
-  do
-    vim.keymap.set('n', 'ZR', function()
-      local args = vim.v.count >= 1 and { '+qall!' } or nil
-      cmd({ cmd = 'restart', args = args })
-    end, { desc = ':help ZR' })
-  end
 end
 
 --- Default menus

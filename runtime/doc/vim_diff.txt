@@ -171,7 +171,6 @@ you never want any default mappings, call |:mapclear| early in your config.
 - Treesitter defaults |treesitter-defaults|
   - |v_an| |v_in|
   - |v_]n| |v_[n|
-- |ZR|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*
@@ -388,6 +387,7 @@ Input/Mappings:
 Normal commands:
 - |gO| shows a filetype-defined "outline" of the current buffer.
 - |Q| replays the last recorded macro instead of switching to Ex mode (|gQ|).
+- |ZR| performs |:restart|
 
 Options:
 

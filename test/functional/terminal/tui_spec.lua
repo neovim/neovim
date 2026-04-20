@@ -10,7 +10,6 @@ local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
 local eq = t.eq
-local pcall_err = t.pcall_err
 local feed_data = tt.feed_data
 local clear = n.clear
 local command = n.command
@@ -208,8 +207,72 @@ describe('TUI :restart', function()
   before_each(n.clear)
   after_each(n.check_close)
 
+  ---@param exp boolean Restart expected
+  ---@param sess table Session
+  ---@param addr string
+  local function assert_restarted(exp, sess, addr)
+    local s = sess
+    retry(nil, 5000, function()
+      if exp then
+        s:close()
+        s = n.connect(addr)
+      end
+
+      -- Cheesy but reliable: :restart drops "-- [files…]", so empty v:argf means restart happened.
+      -- TODO(justinmk): add `v:startreason`, `v:starttime`
+      local _, argf = s:request('nvim_eval', 'v:argf')
+      ok(vim.tbl_count(argf) == (exp and 0 or 1), exp and 'empty v:argf' or 'nonempty v:argf', argf)
+    end)
+  end
+
   it('validation', function()
     eq('Vim(restart):E481: No range allowed: :1restart', t.pcall_err(n.command, ':1restart'))
+  end)
+
+  it('ZR', function()
+    -- Just exercise ZR, don't need to test all :restart functionality here.
+    t.skip(is_os('win'), 'FIXME: --listen not preserved by :restart on Windows #38539')
+    local server_pipe = new_pipename()
+    local server_session
+    finally(function()
+      if server_session and not server_session.closed then
+        server_session:close()
+      end
+    end)
+    local screen = tt.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--listen',
+      server_pipe,
+      '--cmd',
+      'set notermguicolors',
+      '--',
+      'file1.txt', -- XXX: see comment in assert_restarted()
+    }, {
+      env = vim.tbl_extend('force', env_notermguicolors, {
+        -- Ignore logs, because assert_restarted may log "connection refused" while it retries.
+        NVIM_LOG_FILE = testlog,
+      }),
+    })
+    finally(function()
+      os.remove(testlog)
+    end)
+    screen:expect({ any = 'file1%.txt' })
+
+    server_session = n.connect(server_pipe)
+    assert_restarted(false, server_session, server_pipe)
+
+    -- ZR on modified buffer fails with E37.
+    tt.feed_data('ifoo\027')
+    tt.feed_data('ZR')
+    screen:expect({ any = 'E37' })
+
+    -- [count]ZR discards unsaved changes.
+    tt.feed_data('1ZR')
+
+    assert_restarted(true, server_session, server_pipe)
   end)
 
   it('works', function()

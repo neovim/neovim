@@ -184,6 +184,7 @@ EDITOR
   codeblocks via treesitter and executes them as Lua instead of Vimscript.
   (Or use `:{range}lua` to skip the detection.)
 • |:wall| with |++p| auto-creates missing parent directories.
+• |ZR| restarts Nvim (|:restart|).
 
 EVENTS
 

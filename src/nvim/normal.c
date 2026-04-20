@@ -3298,6 +3298,15 @@ static void nv_Zet(cmdarg_T *cap)
     do_cmdline_cmd("q!");
     break;
 
+  // "ZR": restart. With count, restart without checking for changes.
+  case 'R':
+    if (cap->count0 >= 1) {
+      do_cmdline_cmd("restart +qall!");
+    } else {
+      do_cmdline_cmd("restart");
+    }
+    break;
+
   default:
     clearopbeep(cap->oap);
   }
