@@ -96,7 +96,7 @@ static int compl_match_arraysize;
 static int compl_startcol;
 static int compl_selected;
 /// cmdline before expansion
-static char *cmdline_orig = NULL;
+static String cmdline_orig = STRING_INIT;
 
 #define SHOW_MATCH(m) (showtail ? showmatches_gettail(matches[m], false) : matches[m])
 
@@ -341,8 +341,8 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   // Save cmdline before inserting selected item
   if (!wild_navigate && ccline->cmdbuff != NULL) {
-    xfree(cmdline_orig);
-    cmdline_orig = xstrnsave(ccline->cmdbuff, (size_t)ccline->cmdlen);
+    xfree(cmdline_orig.data);
+    cmdline_orig = cstrn_to_string(ccline->cmdbuff, (size_t)ccline->cmdlen);
   }
 
   if (p != NULL && !got_int && !(options & WILD_NOSELECT)) {
@@ -1030,7 +1030,7 @@ void ExpandCleanup(expand_T *xp)
 
 void clear_cmdline_orig(void)
 {
-  XFREE_CLEAR(cmdline_orig);
+  API_CLEAR_STRING(cmdline_orig);
 }
 
 /// Display one line of completion matches. Multiple matches are displayed in
@@ -4040,7 +4040,8 @@ void f_cmdcomplete_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   dict_T *retdict = rettv->vval.v_dict;
-  int ret = tv_dict_add_str(retdict, S_LEN("cmdline_orig"), cmdline_orig);
+  int ret = tv_dict_add_str_len(retdict, S_LEN("cmdline_orig"),
+                                cmdline_orig.data, (int)cmdline_orig.size);
   if (ret == OK) {
     ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
   }

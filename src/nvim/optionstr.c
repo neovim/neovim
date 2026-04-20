@@ -2223,7 +2223,7 @@ struct chars_tab {
 };
 
 #define CHARSTAB_ENTRY(cp, name, def, fallback) \
-  { (cp), { name, STRLEN_LITERAL(name) }, def, fallback }
+  { (cp), STATIC_CSTR_STRING_INIT(name), def, fallback }
 
 static fcs_chars_T fcs_chars;
 static const struct chars_tab fcs_tab[] = {

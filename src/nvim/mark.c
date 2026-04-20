@@ -1912,8 +1912,9 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
 }
 
 // Add information about mark 'mname' to list 'l'
-static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, const char *fname)
-  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
+static int add_mark(list_T *l, const char *mname, size_t mnamelen, const pos_T *pos, int bufnr,
+                    const char *fname)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   if (pos->lnum <= 0) {
     return OK;
@@ -1929,7 +1930,7 @@ static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, c
   tv_list_append_number(lpos, pos->col < MAXCOL ? pos->col + 1 : MAXCOL);
   tv_list_append_number(lpos, pos->coladd);
 
-  if (tv_dict_add_str(d, S_LEN("mark"), mname) == FAIL
+  if (tv_dict_add_str_len(d, S_LEN("mark"), mname, (int)mnamelen) == FAIL
       || tv_dict_add_list(d, S_LEN("pos"), lpos) == FAIL
       || (fname != NULL && tv_dict_add_str(d, S_LEN("file"), fname) == FAIL)) {
     return FAIL;
@@ -1946,23 +1947,24 @@ void get_buf_local_marks(const buf_T *buf, list_T *l)
   FUNC_ATTR_NONNULL_ALL
 {
   char mname[3] = "' ";
+  size_t mnamelen = STRLEN_LITERAL("' ");
 
   // Marks 'a' to 'z'
   for (int i = 0; i < NMARKS; i++) {
     mname[1] = (char)('a' + i);
-    add_mark(l, mname, &buf->b_namedm[i].mark, buf->b_fnum, NULL);
+    add_mark(l, mname, mnamelen, &buf->b_namedm[i].mark, buf->b_fnum, NULL);
   }
 
   // Mark '' is a window local mark and not a buffer local mark
-  add_mark(l, "''", &curwin->w_pcmark, curbuf->b_fnum, NULL);
+  add_mark(l, S_LEN("''"), &curwin->w_pcmark, curbuf->b_fnum, NULL);
 
-  add_mark(l, "'\"", &buf->b_last_cursor.mark, buf->b_fnum, NULL);
-  add_mark(l, "'[", &buf->b_op_start, buf->b_fnum, NULL);
-  add_mark(l, "']", &buf->b_op_end, buf->b_fnum, NULL);
-  add_mark(l, "'^", &buf->b_last_insert.mark, buf->b_fnum, NULL);
-  add_mark(l, "'.", &buf->b_last_change.mark, buf->b_fnum, NULL);
-  add_mark(l, "'<", &buf->b_visual.vi_start, buf->b_fnum, NULL);
-  add_mark(l, "'>", &buf->b_visual.vi_end, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'\""), &buf->b_last_cursor.mark, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'["), &buf->b_op_start, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("']"), &buf->b_op_end, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'^"), &buf->b_last_insert.mark, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'."), &buf->b_last_change.mark, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'<"), &buf->b_visual.vi_start, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'>"), &buf->b_visual.vi_end, buf->b_fnum, NULL);
 }
 
 /// Get a global mark
@@ -1982,6 +1984,7 @@ void get_global_marks(list_T *l)
   FUNC_ATTR_NONNULL_ALL
 {
   char mname[3] = "' ";
+  size_t mnamelen = STRLEN_LITERAL("' ");
   char *name;
 
   // Marks 'A' to 'Z' and '0' to '9'
@@ -1994,7 +1997,7 @@ void get_global_marks(list_T *l)
     if (name != NULL) {
       mname[1] = i >= NMARKS ? (char)(i - NMARKS + '0') : (char)(i + 'A');
 
-      add_mark(l, mname, &namedfm[i].fmark.mark, namedfm[i].fmark.fnum, name);
+      add_mark(l, mname, mnamelen, &namedfm[i].fmark.mark, namedfm[i].fmark.fnum, name);
       if (namedfm[i].fmark.fnum != 0) {
         xfree(name);
       }

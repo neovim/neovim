@@ -5140,28 +5140,32 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   char buf[NUMBUFLEN + 2];
-  buf[0] = NUL;
-  buf[1] = NUL;
+  size_t buflen;
   colnr_T reglen = 0;
   switch (get_reg_type(regname, &reglen)) {
   case kMTLineWise:
     buf[0] = 'V';
+    buf[1] = NUL;
+    buflen = 1;
     break;
   case kMTCharWise:
     buf[0] = 'v';
+    buf[1] = NUL;
+    buflen = 1;
     break;
   case kMTBlockWise:
-    vim_snprintf(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
+    buflen = vim_snprintf_safelen(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
     break;
   case kMTUnknown:
     abort();
   }
-  tv_dict_add_str(dict, S_LEN("regtype"), buf);
+  tv_dict_add_str_len(dict, S_LEN("regtype"), buf, (int)buflen);
 
   buf[0] = (char)get_register_name(get_unname_register());
   buf[1] = NUL;
+  buflen = buf[0] == NUL ? 0 : 1;
   if (regname == '"') {
-    tv_dict_add_str(dict, S_LEN("points_to"), buf);
+    tv_dict_add_str_len(dict, S_LEN("points_to"), buf, (int)buflen);
   } else {
     tv_dict_add_bool(dict, S_LEN("isunnamed"),
                      regname == buf[0] ? kBoolVarTrue : kBoolVarFalse);
@@ -5170,10 +5174,10 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 static void return_register(int regname, typval_T *rettv)
 {
-  char buf[2] = { (char)regname, 0 };
+  char buf[2] = { (char)regname, NUL };
 
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xstrdup(buf);
+  rettv->vval.v_string = xmemdupz(buf, buf[0] == NUL ? 0 : 1);
 }
 
 /// "reg_executing()" function

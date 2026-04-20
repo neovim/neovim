@@ -907,9 +907,9 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     if (cur->mit_conceal_char) {
       char buf[MB_MAXCHAR + 1];
-
-      buf[utf_char2bytes(cur->mit_conceal_char, buf)] = NUL;
-      tv_dict_add_str(dict, S_LEN("conceal"), buf);
+      int buflen = utf_char2bytes(cur->mit_conceal_char, buf);
+      buf[buflen] = NUL;
+      tv_dict_add_str_len(dict, S_LEN("conceal"), buf, buflen);
     }
 
     tv_list_append_dict(rettv->vval.v_list, dict);

@@ -6104,6 +6104,7 @@ static int get_qfline_items(qfline_T *qfp, list_T *list)
   char buf[2];
   buf[0] = qfp->qf_type;
   buf[1] = NUL;
+  size_t buflen = (buf[0] == NUL) ? 0 : 1;
   if (tv_dict_add_nr(dict, S_LEN("bufnr"), (varnumber_T)bufnum) == FAIL
       || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum) == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("end_lnum"), (varnumber_T)qfp->qf_end_lnum) == FAIL)
@@ -6116,7 +6117,7 @@ static int get_qfline_items(qfline_T *qfp, list_T *list)
       || (tv_dict_add_str(dict, S_LEN("pattern"), (qfp->qf_pattern == NULL ? "" : qfp->qf_pattern))
           == FAIL)
       || (tv_dict_add_str(dict, S_LEN("text"), (qfp->qf_text == NULL ? "" : qfp->qf_text)) == FAIL)
-      || (tv_dict_add_str(dict, S_LEN("type"), buf) == FAIL)
+      || (tv_dict_add_str_len(dict, S_LEN("type"), buf, (int)buflen) == FAIL)
       || (qfp->qf_user_data.v_type != VAR_UNKNOWN
           && tv_dict_add_tv(dict, S_LEN("user_data"), &qfp->qf_user_data) == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid) == FAIL)) {
@@ -6372,7 +6373,7 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, int locstack, dict_T *r
   int status = OK;
 
   if (flags & QF_GETLIST_TITLE) {
-    status = tv_dict_add_str(retdict, S_LEN("title"), "");
+    status = tv_dict_add_str_len(retdict, S_LEN("title"), "", 0);
   }
   if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
     list_T *l = tv_list_alloc(kListLenMayKnow);
@@ -6385,7 +6386,7 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, int locstack, dict_T *r
     status = tv_dict_add_nr(retdict, S_LEN("winid"), qf_winid(qi));
   }
   if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
-    status = tv_dict_add_str(retdict, S_LEN("context"), "");
+    status = tv_dict_add_str_len(retdict, S_LEN("context"), "", 0);
   }
   if ((status == OK) && (flags & QF_GETLIST_ID)) {
     status = tv_dict_add_nr(retdict, S_LEN("id"), 0);
@@ -6406,7 +6407,7 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, int locstack, dict_T *r
     status = qf_getprop_qfbufnr(qi, retdict);
   }
   if ((status == OK) && (flags & QF_GETLIST_QFTF)) {
-    status = tv_dict_add_str(retdict, S_LEN("quickfixtextfunc"), "");
+    status = tv_dict_add_str_len(retdict, S_LEN("quickfixtextfunc"), "", 0);
   }
 
   return status;
@@ -6460,7 +6461,7 @@ static int qf_getprop_ctx(qf_list_T *qfl, dict_T *retdict)
       tv_dict_item_free(di);
     }
   } else {
-    status = tv_dict_add_str(retdict, S_LEN("context"), "");
+    status = tv_dict_add_str_len(retdict, S_LEN("context"), "", 0);
   }
 
   return status;
@@ -6494,7 +6495,7 @@ static int qf_getprop_qftf(qf_list_T *qfl, dict_T *retdict)
     status = tv_dict_add_tv(retdict, S_LEN("quickfixtextfunc"), &tv);
     tv_clear(&tv);
   } else {
-    status = tv_dict_add_str(retdict, S_LEN("quickfixtextfunc"), "");
+    status = tv_dict_add_str_len(retdict, S_LEN("quickfixtextfunc"), "", 0);
   }
 
   return status;

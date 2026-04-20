@@ -916,7 +916,11 @@ static dict_T *sign_get_info_dict(sign_T *sp)
   for (int i = 0; i < 4; i++) {
     if (hl[i] > 0) {
       const char *p = get_highlight_name_ext(NULL, hl[i] - 1, false);
-      tv_dict_add_str(d, arg[i], strlen(arg[i]), p ? p : "NONE");
+      if (p == NULL) {
+        tv_dict_add_str_len(d, arg[i], strlen(arg[i]), S_LEN("NONE"));
+      } else {
+        tv_dict_add_str(d, arg[i], strlen(arg[i]), p);
+      }
     }
   }
   return d;

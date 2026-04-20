@@ -137,27 +137,27 @@ static char *ctrl_x_msgs[] = {
   N_(" Register completion (^N^P)"),
 };
 
-static char *ctrl_x_mode_names[] = {
-  "keyword",
-  "ctrl_x",
-  "scroll",
-  "whole_line",
-  "files",
-  "tags",
-  "path_patterns",
-  "path_defines",
-  "unknown",          // CTRL_X_FINISHED
-  "dictionary",
-  "thesaurus",
-  "cmdline",
-  "function",
-  "omni",
-  "spell",
-  NULL,               // CTRL_X_LOCAL_MSG only used in "ctrl_x_msgs"
-  "eval",
-  "cmdline",
-  NULL,               // CTRL_X_BUFNAME
-  "register",
+static String ctrl_x_mode_names[] = {
+  STATIC_CSTR_STRING_INIT("keyword"),
+  STATIC_CSTR_STRING_INIT("ctrl_x"),
+  STATIC_CSTR_STRING_INIT("scroll"),
+  STATIC_CSTR_STRING_INIT("whole_line"),
+  STATIC_CSTR_STRING_INIT("files"),
+  STATIC_CSTR_STRING_INIT("tags"),
+  STATIC_CSTR_STRING_INIT("path_patterns"),
+  STATIC_CSTR_STRING_INIT("path_defines"),
+  STATIC_CSTR_STRING_INIT("unknown"),  // CTRL_X_FINISHED
+  STATIC_CSTR_STRING_INIT("dictionary"),
+  STATIC_CSTR_STRING_INIT("thesaurus"),
+  STATIC_CSTR_STRING_INIT("cmdline"),
+  STATIC_CSTR_STRING_INIT("function"),
+  STATIC_CSTR_STRING_INIT("omni"),
+  STATIC_CSTR_STRING_INIT("spell"),
+  STRING_INIT,  // CTRL_X_LOCAL_MSG is only used in "ctrl_x_msgs"
+  STATIC_CSTR_STRING_INIT("eval"),
+  STATIC_CSTR_STRING_INIT("cmdline"),
+  STRING_INIT,  // CTRL_X_BUFNAME
+  STATIC_CSTR_STRING_INIT("register"),
 };
 
 /// Structure used to store one match for insert completion.
@@ -638,21 +638,25 @@ static bool is_first_match(const compl_T *const match)
   return match == compl_first_match;
 }
 
-static void do_autocmd_completedone(int c, int mode, char *word)
+static void do_autocmd_completedone(int c, int mode, String *word)
 {
   save_v_event_T save_v_event;
   dict_T *v_event = get_v_event(&save_v_event);
 
-  mode = mode & ~CTRL_X_WANT_IDENT;
-  char *mode_str = NULL;
-  if (ctrl_x_mode_names[mode]) {
-    mode_str = ctrl_x_mode_names[mode];
+  if (word == NULL || word->data == NULL) {
+    tv_dict_add_str_len(v_event, S_LEN("complete_word"), "", 0);
+  } else {
+    tv_dict_add_str_len(v_event, S_LEN("complete_word"), word->data, (int)word->size);
   }
-  tv_dict_add_str(v_event, S_LEN("complete_word"), word != NULL ? word : "");
-  tv_dict_add_str(v_event, S_LEN("complete_type"), mode_str != NULL ? mode_str : "");
+
+  String *mode_str = &ctrl_x_mode_names[mode & ~CTRL_X_WANT_IDENT];
+  tv_dict_add_str_len(v_event, S_LEN("complete_type"),
+                      mode_str->data == NULL ? "" : mode_str->data,
+                      (int)mode_str->size);
 
   tv_dict_add_str(v_event, S_LEN("reason"),
-                  (c == Ctrl_Y || word != NULL ? "accept" : (c == Ctrl_E ? "cancel" : "discard")));
+                  (c == Ctrl_Y || (word != NULL && word->data != NULL)
+                   ? "accept" : (c == Ctrl_E ? "cancel" : "discard")));
   tv_dict_set_keys_readonly(v_event);
 
   ins_apply_autocmds(EVENT_COMPLETEDONE);
@@ -1319,13 +1323,13 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc_lock(VAR_FIXED);
-  tv_dict_add_str(dict, S_LEN("word"), match->cp_str.data);
+  tv_dict_add_str_len(dict, S_LEN("word"), match->cp_str.data, (int)match->cp_str.size);
   tv_dict_add_str(dict, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
   tv_dict_add_str(dict, S_LEN("menu"), match->cp_text[CPT_MENU]);
   tv_dict_add_str(dict, S_LEN("kind"), match->cp_text[CPT_KIND]);
   tv_dict_add_str(dict, S_LEN("info"), match->cp_text[CPT_INFO]);
   if (match->cp_user_data.v_type == VAR_UNKNOWN) {
-    tv_dict_add_str(dict, S_LEN("user_data"), "");
+    tv_dict_add_str_len(dict, S_LEN("user_data"), "", 0);
   } else {
     tv_dict_add_tv(dict, S_LEN("user_data"), &match->cp_user_data);
   }
@@ -2648,14 +2652,14 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     }
   }
 
-  char *word = NULL;
+  String word = STRING_INIT;
   // If the popup menu is displayed pressing CTRL-Y means accepting
   // the selection without inserting anything.  When
   // compl_enter_selects is set the Enter key does the same.
   if ((c == Ctrl_Y || (compl_enter_selects
                        && (c == CAR || c == K_KENTER || c == NL)))
       && pum_visible()) {
-    word = xstrdup(compl_shown_match->cp_str.data);
+    word = copy_string(compl_shown_match->cp_str, NULL);
     retval = true;
     // May need to remove ComplMatchIns highlight.
     redrawWinline(curwin, curwin->w_cursor.lnum);
@@ -2665,10 +2669,10 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   // (eg: only one match with 'completeopt' "menu" without "menuone"),
   // the user had no opportunity to explicitly accept or dismiss it,
   // so treat this as an implicit accept (#38160).
-  if (word == NULL && c != Ctrl_E && compl_used_match && compl_match_array == NULL
+  if (word.data == NULL && c != Ctrl_E && compl_used_match && compl_match_array == NULL
       && compl_curr_match != NULL
       && compl_curr_match->cp_str.data != NULL) {
-    word = xstrdup(compl_curr_match->cp_str.data);
+    word = copy_string(compl_curr_match->cp_str, NULL);
   }
 
   // CTRL-E means completion is Ended, go back to the typed text.
@@ -2731,8 +2735,8 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   }
   // Trigger the CompleteDone event to give scripts a chance to act
   // upon the end of completion.
-  do_autocmd_completedone(c, prev_mode, word);
-  xfree(word);
+  do_autocmd_completedone(c, prev_mode, &word);
+  xfree(word.data);
 
   return retval;
 }
@@ -3517,12 +3521,13 @@ void f_complete_check(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// Return Insert completion mode name string
-static char *ins_compl_mode(void)
+static String ins_compl_mode(void)
 {
   if (ctrl_x_mode_not_defined_yet() || ctrl_x_mode_scroll() || compl_started) {
-    return ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];
+    String *mode = &ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];
+    return cbuf_as_string(mode->data == NULL ? "" : mode->data, mode->size);
   }
-  return "";
+  return cbuf_as_string("", 0);
 }
 
 /// Assign the sequence number to all the completion matches which don't have
@@ -3577,7 +3582,7 @@ static void ins_compl_update_sequence_numbers(void)
 /// Fill the dict of complete_info
 static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
 {
-  tv_dict_add_str(di, S_LEN("word"), match->cp_str.data);
+  tv_dict_add_str_len(di, S_LEN("word"), match->cp_str.data, (int)match->cp_str.size);
   tv_dict_add_str(di, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
   tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
   tv_dict_add_str(di, S_LEN("kind"), match->cp_text[CPT_KIND]);
@@ -3587,7 +3592,7 @@ static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
   }
   if (match->cp_user_data.v_type == VAR_UNKNOWN) {
     // Add an empty string for backwards compatibility
-    tv_dict_add_str(di, S_LEN("user_data"), "");
+    tv_dict_add_str_len(di, S_LEN("user_data"), "", 0);
   } else {
     tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
   }
@@ -3635,7 +3640,8 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 
   int ret = OK;
   if (what_flag & CI_WHAT_MODE) {
-    ret = tv_dict_add_str(retdict, S_LEN("mode"), ins_compl_mode());
+    String mode = ins_compl_mode();
+    ret = tv_dict_add_str_len(retdict, S_LEN("mode"), mode.data, (int)mode.size);
   }
 
   if (ret == OK && (what_flag & CI_WHAT_PUM_VISIBLE)) {
