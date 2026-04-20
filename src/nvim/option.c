@@ -6548,21 +6548,21 @@ dict_T *get_winbuf_options(const int bufopt)
 
 /// Return the effective 'scrolloff' value for the current window, using the
 /// global value when appropriate.
-int get_scrolloff_value(win_T *wp)
+int64_t get_scrolloff_value(win_T *wp)
 {
   // Disallow scrolloff in terminal-mode. #11915
   // Still allow 'scrolloff' for non-terminal buffers. #34447
   if ((State & MODE_TERMINAL) && wp->w_buffer->terminal) {
     return 0;
   }
-  return (int)(wp->w_p_so < 0 ? p_so : wp->w_p_so);
+  return wp->w_p_so < 0 ? p_so : wp->w_p_so;
 }
 
 /// Return the effective 'sidescrolloff' value for the current window, using the
 /// global value when appropriate.
-int get_sidescrolloff_value(win_T *wp)
+int64_t get_sidescrolloff_value(win_T *wp)
 {
-  return (int)(wp->w_p_siso < 0 ? p_siso : wp->w_p_siso);
+  return wp->w_p_siso < 0 ? p_siso : wp->w_p_siso;
 }
 
 Dict get_vimoption(String name, int opt_flags, buf_T *buf, win_T *win, Arena *arena, Error *err)
