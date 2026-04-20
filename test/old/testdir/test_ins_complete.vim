@@ -6418,4 +6418,24 @@ func Test_autocomplete_with_auto_format()
   call Ntest_override("char_avail", 0)
 endfunc
 
+func Test_completion_with_mapped_ctrl_r()
+  new
+  let b:n = 0
+  let @a = 'AABBCCDDEE'
+  " Ctrl-R mapping is triggered
+  inoremap <buffer> <C-R> <Cmd>let b:n += 1<CR>
+  inoremap <buffer> <F2> <Cmd>call complete(col('.'), [])<CR>
+  call feedkeys("i\<F2>\<*C-R>abcde\<Esc>", 'tx')
+  call assert_equal(1, b:n)
+  call assert_equal('abcde', getline('.'))
+
+  " Ctrl-X Ctrl-R still works with Ctrl-R mapped
+  call feedkeys("ccAAB\<*C-X>\<*C-R>\<*C-Y>\<Esc>", 'tx')
+  call assert_equal(1, b:n)
+  call assert_equal('AABBCCDDEE', getline('.'))
+
+  let @a = ''
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
