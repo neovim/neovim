@@ -128,7 +128,7 @@ iterator functions, tables implementing the |__call()| metamethod, and
                                                                *list-iterator*
 Iterators on |lua-list| tables have a "middle" and "end", whereas iterators in
 general may be logically infinite. Therefore some |vim.iter| operations (e.g.
-|Iter:rev()|) make sense only on list-like tables (which are finite by
+|IterArray:rev()|) make sense only on list-like tables (which are finite by
 definition).
 
                                                            *lua-function-call*
@@ -3028,7 +3028,7 @@ The iterator pipeline terminates when the underlying |iterable| is exhausted
 Note: `vim.iter()` scans table input to decide if it is a list or a dict; to
 avoid this cost you can wrap the table with an iterator e.g.
 `vim.iter(ipairs({…}))`, but that precludes the use of |list-iterator|
-operations such as |Iter:rev()|).
+operations such as |IterArray:rev()|).
 
 Examples: >lua
     local it = vim.iter({ 1, 2, 3, 4, 5 })
@@ -3077,9 +3077,9 @@ Iter:all({pred})                                                  *Iter:all()*
         Since: 0.10.0
 
     Parameters: ~
-      • {pred}  (`fun(...):boolean`) Predicate function. Takes all values
-                returned from the previous stage in the pipeline as arguments
-                and returns true if the predicate matches.
+      • {pred}  (`fun(v: V1, ...: V...): boolean`) Predicate function. Takes
+                all values returned from the previous stage in the pipeline as
+                arguments and returns true if the predicate matches.
 
 Iter:any({pred})                                                  *Iter:any()*
     Returns true if any of the items in the iterator match the given
@@ -3089,9 +3089,9 @@ Iter:any({pred})                                                  *Iter:any()*
         Since: 0.10.0
 
     Parameters: ~
-      • {pred}  (`fun(...):boolean`) Predicate function. Takes all values
-                returned from the previous stage in the pipeline as arguments
-                and returns true if the predicate matches.
+      • {pred}  (`fun(v: V1, ...: V...): boolean`) Predicate function. Takes
+                all values returned from the previous stage in the pipeline as
+                arguments and returns true if the predicate matches.
 
 Iter:each({f})                                                   *Iter:each()*
     Calls a function once for each item in the pipeline, draining the
@@ -3104,9 +3104,9 @@ Iter:each({f})                                                   *Iter:each()*
         Since: 0.10.0
 
     Parameters: ~
-      • {f}  (`fun(...)`) Function to execute for each item in the pipeline.
-             Takes all of the values returned by the previous stage in the
-             pipeline as arguments.
+      • {f}  (`fun(v: V1, ...: V...)`) Function to execute for each item in
+             the pipeline. Takes all of the values returned by the previous
+             stage in the pipeline as arguments.
 
 Iter:enumerate()                                            *Iter:enumerate()*
     Yields the item index (count) and value for each item of an iterator
@@ -3134,8 +3134,11 @@ Iter:enumerate()                                            *Iter:enumerate()*
     Attributes: ~
         Since: 0.10.0
 
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>): vim.IterArray<integer, V1, V...>`
+
     Return: ~
-        (`Iter`)
+        (`vim.Iter<integer, V1, V...>`)
 
 Iter:filter({f})                                               *Iter:filter()*
     Filters an iterator pipeline.
@@ -3145,12 +3148,15 @@ Iter:filter({f})                                               *Iter:filter()*
 <
 
     Parameters: ~
-      • {f}  (`fun(...):boolean`) Takes all values returned from the previous
-             stage in the pipeline and returns false or nil if the current
-             iterator element should be removed.
+      • {f}  (`fun(v: V1, ...: V...): boolean`) Takes all values returned from
+             the previous stage in the pipeline and returns false or nil if
+             the current iterator element should be removed.
+
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, f: fun(v: V1, ...: V...): boolean): vim.IterArray<V1, V...>`
 
     Return: ~
-        (`Iter`)
+        (`vim.Iter<V1, V...>`)
 
 Iter:find({f})                                                   *Iter:find()*
     Find the first value in the iterator that satisfies the given predicate.
@@ -3177,35 +3183,14 @@ Iter:find({f})                                                   *Iter:find()*
         Since: 0.10.0
 
     Parameters: ~
-      • {f}  (`any`)
+      • {f}  (`(fun(v: V1, ...: V...): boolean)|any`)
 
-    Return: ~
-        (`any`)
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, f: V1|fun(v: V1, ...: V...): boolean): V1?, V...`
 
-Iter:flatten({depth})                                         *Iter:flatten()*
-    Flattens a |list-iterator|, un-nesting nested values up to the given
-    {depth}. Errors if it attempts to flatten a dict-like value.
-
-    Examples: >lua
-        vim.iter({ 1, { 2 }, { { 3 } } }):flatten():totable()
-        -- { 1, 2, { 3 } }
-
-        vim.iter({1, { { a = 2 } }, { 3 } }):flatten():totable()
-        -- { 1, { a = 2 }, 3 }
-
-        vim.iter({ 1, { { a = 2 } }, { 3 } }):flatten(math.huge):totable()
-        -- error: attempt to flatten a dict-like table
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {depth}  (`number?`) Depth to which |list-iterator| should be
-                 flattened (defaults to 1)
-
-    Return: ~
-        (`Iter`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
 Iter:fold({init}, {f})                                           *Iter:fold()*
     Folds ("reduces") an iterator into a single value.         *Iter:reduce()*
@@ -3232,7 +3217,7 @@ Iter:fold({init}, {f})                                           *Iter:fold()*
 
     Parameters: ~
       • {init}  (`any`) Initial value of the accumulator.
-      • {f}     (`fun(acc:A, ...):A`) Accumulation function.
+      • {f}     (`fun(acc: A, v: V1, ...: V...): A`) Accumulation function.
 
     Return: ~
         (`any`)
@@ -3270,11 +3255,12 @@ Iter:last()                                                      *Iter:last()*
     Attributes: ~
         Since: 0.10.0
 
-    Return: ~
-        (`any`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
     See also: ~
-      • |Iter:rpeek()|
+      • |IterArray:rpeek()|
 
 Iter:map({f})                                                     *Iter:map()*
     Maps the items of an iterator pipeline to the values returned by `f`.
@@ -3295,13 +3281,17 @@ Iter:map({f})                                                     *Iter:map()*
         Since: 0.10.0
 
     Parameters: ~
-      • {f}  (`fun(...):...:any`) Mapping function. Takes all values returned
-             from the previous stage in the pipeline as arguments and returns
-             one or more new values, which are used in the next pipeline
-             stage. Nil return values are filtered from the output.
+      • {f}  (`fun(v: V1, ...: V...): K2, V2...`) Mapping function. Takes all
+             values returned from the previous stage in the pipeline as
+             arguments and returns one or more new values, which are used in
+             the next pipeline stage. Nil return values are filtered from the
+             output.
+
+    Overloads: ~
+      • `fun<V1, V..., K1, K...>(self: vim.IterArray<V1, V...>, f: fun(v: V1, ...: V...): K1, K...): vim.IterArray<K1, K...>`
 
     Return: ~
-        (`Iter`)
+        (`vim.Iter<K2, V2...>`)
 
 Iter:next()                                                      *Iter:next()*
     Gets the next value from the iterator.
@@ -3320,8 +3310,9 @@ Iter:next()                                                      *Iter:next()*
     Attributes: ~
         Since: 0.10.0
 
-    Return: ~
-        (`any`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
 Iter:nth({n})                                                     *Iter:nth()*
     Gets the nth value of an iterator (and advances to it).
@@ -3346,11 +3337,12 @@ Iter:nth({n})                                                     *Iter:nth()*
         Since: 0.10.0
 
     Parameters: ~
-      • {n}  (`number`) Index of the value to return. May be negative if the
+      • {n}  (`integer`) Index of the value to return. May be negative if the
              source is a |list-iterator|.
 
-    Return: ~
-        (`any`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
 Iter:peek()                                                      *Iter:peek()*
     Gets the next value from the iterator without consuming it.
@@ -3372,112 +3364,9 @@ Iter:peek()                                                      *Iter:peek()*
     Attributes: ~
         Since: 0.10.0
 
-    Return: ~
-        (`any`)
-
-Iter:pop()                                                        *Iter:pop()*
-    "Pops" a value from a |list-iterator| (gets the last value and decrements
-    the tail).
-
-    Example: >lua
-        local it = vim.iter({1, 2, 3, 4})
-        it:pop()
-        -- 4
-        it:pop()
-        -- 3
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Return: ~
-        (`any`)
-
-Iter:rev()                                                        *Iter:rev()*
-    Reverses a |list-iterator| pipeline.
-
-    Example: >lua
-
-        local it = vim.iter({ 3, 6, 9, 12 }):rev()
-        it:totable()
-        -- { 12, 9, 6, 3 }
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Return: ~
-        (`Iter`)
-
-Iter:rfind({f})                                                 *Iter:rfind()*
-    Gets the first value satisfying a predicate, from the end of a
-    |list-iterator|.
-
-    Advances the iterator. Returns nil and drains the iterator if no value is
-    found.
-
-    Examples: >lua
-
-        local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
-        it:rfind(1)
-        -- 5	1
-        it:rfind(1)
-        -- 1	1
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {f}  (`any`)
-
-    Return: ~
-        (`any`)
-
-    See also: ~
-      • |Iter:find()|
-
-Iter:rpeek()                                                    *Iter:rpeek()*
-    Gets the last value of a |list-iterator| without consuming it.
-
-    Example: >lua
-        local it = vim.iter({1, 2, 3, 4})
-        it:rpeek()
-        -- 4
-        it:rpeek()
-        -- 4
-        it:pop()
-        -- 4
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Return: ~
-        (`any`)
-
-    See also: ~
-      • |Iter:last()|
-
-Iter:rskip({n})                                                 *Iter:rskip()*
-    Discards `n` values from the end of a |list-iterator| pipeline.
-
-    Example: >lua
-        local it = vim.iter({ 1, 2, 3, 4, 5 }):rskip(2)
-        it:next()
-        -- 1
-        it:pop()
-        -- 3
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {n}  (`number`) Number of values to skip.
-
-    Return: ~
-        (`Iter`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
 Iter:skip({n})                                                   *Iter:skip()*
     Skips `n` values of an iterator pipeline, or skips values while a
@@ -3503,26 +3392,14 @@ Iter:skip({n})                                                   *Iter:skip()*
         Since: 0.10.0
 
     Parameters: ~
-      • {n}  (`integer|fun(...):boolean`) Number of values to skip or a
-             predicate.
+      • {n}  (`integer|fun(v: V1, ...: V...): boolean`) Number of values to
+             skip or a predicate.
+
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, n: integer|fun(v: V1, ...: V...): boolean): vim.IterArray<V1, V...>`
 
     Return: ~
-        (`Iter`)
-
-Iter:slice({first}, {last})                                     *Iter:slice()*
-    Sets the start and end of a |list-iterator| pipeline.
-
-    Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {first}  (`number`)
-      • {last}   (`number`)
-
-    Return: ~
-        (`Iter`)
+        (`vim.Iter<V1, V...>`)
 
 Iter:take({n})                                                   *Iter:take()*
     Transforms an iterator to yield only the first n values, or all values
@@ -3549,11 +3426,14 @@ Iter:take({n})                                                   *Iter:take()*
         Since: 0.10.0
 
     Parameters: ~
-      • {n}  (`integer|fun(...):boolean`) Number of values to take or a
-             predicate.
+      • {n}  (`integer|fun(v: V1, ...: V...): boolean`) Number of values to
+             take or a predicate.
+
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, n: integer|fun(v: V1, ...: V...): boolean): vim.IterArray<V1, V...>`
 
     Return: ~
-        (`Iter`)
+        (`vim.Iter<V1, V...>`)
 
 Iter:totable()                                                *Iter:totable()*
     Collect the iterator into a table.
@@ -3581,8 +3461,12 @@ Iter:totable()                                                *Iter:totable()*
     Attributes: ~
         Since: 0.10.0
 
+    Overloads: ~
+      • `fun<T>(self: vim.Iter<T>): T[]`
+      • `fun<V1, V2, V...>(self: vim.Iter<V1, V2, V...>): [V1, V2, V...][]`
+
     Return: ~
-        (`table`)
+        (`any[]`)
 
 Iter:unique({key})                                             *Iter:unique()*
     Removes duplicate values from an iterator pipeline.
@@ -3615,14 +3499,164 @@ Iter:unique({key})                                             *Iter:unique()*
         Since: 0.12.0
 
     Parameters: ~
-      • {key}  (`fun(...):any?`) Optional hash function to determine
-               uniqueness of values.
+      • {key}  (`fun(v: V1, ...: V...): any?`) Optional hash function to
+               determine uniqueness of values.
+
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, key: fun(v: V1, ...: V...): any?): vim.IterArray<V1, V...>`
 
     Return: ~
-        (`Iter`)
+        (`vim.Iter<V1, V...>`)
 
     See also: ~
       • |vim.list.unique()|
+
+IterArray:flatten({depth})                               *IterArray:flatten()*
+    Flattens a |list-iterator|, un-nesting nested values up to the given
+    {depth}. Errors if it attempts to flatten a dict-like value.
+
+    Examples: >lua
+        vim.iter({ 1, { 2 }, { { 3 } } }):flatten():totable()
+        -- { 1, 2, { 3 } }
+
+        vim.iter({1, { { a = 2 } }, { 3 } }):flatten():totable()
+        -- { 1, { a = 2 }, 3 }
+
+        vim.iter({ 1, { { a = 2 } }, { 3 } }):flatten(math.huge):totable()
+        -- error: attempt to flatten a dict-like table
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {depth}  (`integer?`) Depth to which |list-iterator| should be
+                 flattened (defaults to 1)
+
+    Return: ~
+        (`vim.IterArray<V1, V...>`)
+
+IterArray:pop()                                              *IterArray:pop()*
+    "Pops" a value from a |list-iterator| (gets the last value and decrements
+    the tail).
+
+    Example: >lua
+        local it = vim.iter({1, 2, 3, 4})
+        it:pop()
+        -- 4
+        it:pop()
+        -- 3
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
+
+IterArray:rev()                                              *IterArray:rev()*
+    Reverses a |list-iterator| pipeline.
+
+    Example: >lua
+
+        local it = vim.iter({ 3, 6, 9, 12 }):rev()
+        it:totable()
+        -- { 12, 9, 6, 3 }
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Return: ~
+        (`vim.IterArray<V1, V...>`)
+
+IterArray:rfind({f})                                       *IterArray:rfind()*
+    Gets the first value satisfying a predicate, from the end of a
+    |list-iterator|.
+
+    Advances the iterator. Returns nil and drains the iterator if no value is
+    found.
+
+    Examples: >lua
+
+        local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
+        it:rfind(1)
+        -- 5	1
+        it:rfind(1)
+        -- 1	1
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {f}  (`V1|fun(v: V1, ...: V...): boolean`)
+
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
+
+    See also: ~
+      • |Iter:find()|
+
+IterArray:rpeek()                                          *IterArray:rpeek()*
+    Gets the last value of a |list-iterator| without consuming it.
+
+    Example: >lua
+        local it = vim.iter({1, 2, 3, 4})
+        it:rpeek()
+        -- 4
+        it:rpeek()
+        -- 4
+        it:pop()
+        -- 4
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
+
+    See also: ~
+      • |Iter:last()|
+
+IterArray:rskip({n})                                       *IterArray:rskip()*
+    Discards `n` values from the end of a |list-iterator| pipeline.
+
+    Example: >lua
+        local it = vim.iter({ 1, 2, 3, 4, 5 }):rskip(2)
+        it:next()
+        -- 1
+        it:pop()
+        -- 3
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {n}  (`integer`)
+
+    Return: ~
+        (`vim.IterArray<V1, V...>`)
+
+IterArray:slice({first}, {last})                           *IterArray:slice()*
+    Sets the start and end of a |list-iterator| pipeline.
+
+    Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {first}  (`integer`)
+      • {last}   (`integer`)
+
+    Return: ~
+        (`vim.IterArray<V1, V...>`)
 
 
 ==============================================================================

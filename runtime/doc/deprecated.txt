@@ -180,7 +180,7 @@ LSP
 LUA
 • *vim.loop*				Use |vim.uv| instead.
 • *vim.tbl_add_reverse_lookup()*
-• *vim.tbl_flatten()*			Use |Iter:flatten()| instead.
+• *vim.tbl_flatten()*			Use |IterArray:flatten()| instead.
 • *vim.tbl_islist()*			Use |vim.islist()| instead.
 
 OPTIONS

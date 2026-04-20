@@ -88,7 +88,9 @@ local v = setmetatable({}, {
 --- @class nvim.luacats.Class
 --- @field kind 'class'
 --- @field name string
+--- @field generics? string[]
 --- @field parent? string
+--- @field parent_generics? string[]
 --- @field access? 'private'|'protected'|'package'
 
 --- @class nvim.luacats.Field
@@ -149,7 +151,7 @@ local typedef = P({
     + (v.types * opt_postfix)
     + (P(ty_ident) * P('...')) -- Generic vararg
     + v.types,
-  types = v.generics + v.kv_table + v.tuple + v.dict + v.table_literal + v.fun + ty_prims,
+  types = v.fun + v.generics + v.kv_table + v.tuple + v.dict + v.table_literal + ty_prims,
 
   tuple = Pf('[') * comma1(v.type) * Plf(']'),
   dict = Pf('{') * comma1(Pf('[') * v.type * Pf(']') * colon * v.type) * Plf('}'),
@@ -157,10 +159,18 @@ local typedef = P({
   table_literal = Pf('{') * comma1(opt_ident * Pf(':') * v.type) * Plf('}'),
   fun_param = (opt_ident + ellipsis) * opt(colon * v.type),
   fun_ret = v.type + (ellipsis * opt(colon * v.type)),
-  fun = opt(Pf('async')) * Pf('fun') * paren(comma(v.fun_param)) * opt(Pf(':') * comma1(v.fun_ret)),
+  generic_decl_list = Pf('<') * comma1(ty_ident * opt(ellipsis) * opt(colon * v.type)) * Plf('>'),
+  fun = opt(Pf('async') + Pf('sync')) * Pf('fun') * opt(v.generic_decl_list) * paren(
+    comma(v.fun_param)
+  ) * opt(Pf(':') * comma1(v.fun_ret)),
   generics = P(ty_ident) * Pf('<') * comma1(v.type) * Plf('>'),
 }) / function(match)
-  return vim.trim(match):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?')
+  return (vim.trim(match):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?'))
+end
+
+--- @param name string
+local function generic_opt(name)
+  return (Pf('<') * Cg(Ct(comma1(typedef)), name) * Plf('>')) + -Plf('<')
 end
 
 local access = P('private') + P('protected') + P('package')
@@ -170,7 +180,7 @@ local desc_delim = Sf '#:' + ws
 local desc = Cg(rep(any), 'desc')
 local opt_desc = opt(desc_delim * desc)
 local ty_name = Cg(ty_ident, 'name')
-local opt_parent = opt(colon * Cg(ty_ident, 'parent'))
+local opt_parent = opt(colon * Cg(ty_ident, 'parent') * generic_opt('parent_generics'))
 local lname = (ident + ellipsis) * opt(P('?'))
 
 -- stylua: ignore
@@ -182,7 +192,7 @@ local grammar = P {
     + annot('type', comma1(Ct(v.ctype)) * opt_desc)
     + annot('cast', ty_name * ws * opt(Sf('+-')) * v.ctype)
     + annot('generic', ty_name * opt(colon * v.ctype))
-    + annot('class', opt(paren(cattr)) * fill * ty_name * opt_parent)
+    + annot('class', opt(paren(cattr)) * fill * ty_name * generic_opt('generics') * opt_parent)
     + annot('field', opt(caccess * ws) * v.field_name * ws * v.ctype * opt_desc)
     + annot('operator', ty_name * opt(paren(Cg(v.ctype, 'argtype'))) * colon * v.ctype)
     + annot(access)
