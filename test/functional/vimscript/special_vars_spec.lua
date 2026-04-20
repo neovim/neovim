@@ -1,12 +1,12 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local exc_exec = n.exc_exec
 local command = n.command
 local fn = n.fn
 local clear = n.clear
 local eval = n.eval
 local eq = t.eq
+local pcall_err = t.pcall_err
 local api = n.api
 local NIL = vim.NIL
 
@@ -23,7 +23,7 @@ describe('Special values', function()
         endtry
       endfunction
     ]])
-    eq(0, exc_exec('call Test()'))
+    command('call Test()')
   end)
 
   it('work with empty()', function()
@@ -113,17 +113,17 @@ describe('Special values', function()
     api.nvim_set_var('false', false)
     command('let null = v:null')
 
-    eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let true  += 1'))
-    eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let false += 1'))
-    eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let null  += 1'))
+    eq('Vim(let):E734: Wrong variable type for +=', pcall_err(command, 'let true  += 1'))
+    eq('Vim(let):E734: Wrong variable type for +=', pcall_err(command, 'let false += 1'))
+    eq('Vim(let):E734: Wrong variable type for +=', pcall_err(command, 'let null  += 1'))
 
-    eq('Vim(let):E734: Wrong variable type for -=', exc_exec('let true  -= 1'))
-    eq('Vim(let):E734: Wrong variable type for -=', exc_exec('let false -= 1'))
-    eq('Vim(let):E734: Wrong variable type for -=', exc_exec('let null  -= 1'))
+    eq('Vim(let):E734: Wrong variable type for -=', pcall_err(command, 'let true  -= 1'))
+    eq('Vim(let):E734: Wrong variable type for -=', pcall_err(command, 'let false -= 1'))
+    eq('Vim(let):E734: Wrong variable type for -=', pcall_err(command, 'let null  -= 1'))
 
-    eq('Vim(let):E734: Wrong variable type for .=', exc_exec('let true  .= 1'))
-    eq('Vim(let):E734: Wrong variable type for .=', exc_exec('let false .= 1'))
-    eq('Vim(let):E734: Wrong variable type for .=', exc_exec('let null  .= 1'))
+    eq('Vim(let):E734: Wrong variable type for .=', pcall_err(command, 'let true  .= 1'))
+    eq('Vim(let):E734: Wrong variable type for .=', pcall_err(command, 'let false .= 1'))
+    eq('Vim(let):E734: Wrong variable type for .=', pcall_err(command, 'let null  .= 1'))
   end)
 
   it('work with . (concat) properly', function()
@@ -155,9 +155,9 @@ describe('Special values', function()
   end)
 
   it('fails in index', function()
-    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:true[0]'))
-    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:false[0]'))
-    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:null[0]'))
+    eq('Vim(echo):E909: Cannot index a special variable', pcall_err(command, 'echo v:true[0]'))
+    eq('Vim(echo):E909: Cannot index a special variable', pcall_err(command, 'echo v:false[0]'))
+    eq('Vim(echo):E909: Cannot index a special variable', pcall_err(command, 'echo v:null[0]'))
   end)
 
   it('is accepted by assert_true and assert_false', function()

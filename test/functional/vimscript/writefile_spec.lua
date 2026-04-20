@@ -6,7 +6,6 @@ local clear = n.clear
 local eq = t.eq
 local fn = n.fn
 local api = n.api
-local exc_exec = n.exc_exec
 local read_file = t.read_file
 local write_file = t.write_file
 local pcall_err = t.pcall_err
@@ -52,16 +51,16 @@ describe('writefile()', function()
   end)
 
   it('writes list with an empty string to a file', function()
-    eq(0, exc_exec(('call writefile([$XXX_NONEXISTENT_VAR_XXX], "%s", "b")'):format(fname)))
+    command(('call writefile([$XXX_NONEXISTENT_VAR_XXX], "%s", "b")'):format(fname))
     eq('', read_file(fname))
-    eq(0, exc_exec(('call writefile([$XXX_NONEXISTENT_VAR_XXX], "%s")'):format(fname)))
+    command(('call writefile([$XXX_NONEXISTENT_VAR_XXX], "%s")'):format(fname))
     eq('\n', read_file(fname))
   end)
 
   it('writes list with a null string to a file', function()
-    eq(0, exc_exec(('call writefile([v:_null_string], "%s", "b")'):format(fname)))
+    command(('call writefile([v:_null_string], "%s", "b")'):format(fname))
     eq('', read_file(fname))
-    eq(0, exc_exec(('call writefile([v:_null_string], "%s")'):format(fname)))
+    command(('call writefile([v:_null_string], "%s")'):format(fname))
     eq('\n', read_file(fname))
   end)
 

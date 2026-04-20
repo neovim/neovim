@@ -5,7 +5,6 @@ local assert_alive = n.assert_alive
 local clear = n.clear
 local command = n.command
 local eq = t.eq
-local exc_exec = n.exc_exec
 local expect = n.expect
 local feed = n.feed
 local feed_command = n.feed_command
@@ -121,13 +120,13 @@ describe('rubyeval()', function()
   end)
 
   it('errors out when given non-string', function()
-    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(10)'))
-    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:_null_dict)'))
-    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:_null_list)'))
-    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(0.0)'))
-    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(function("tr"))'))
-    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:true)'))
-    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:false)'))
-    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:null)'))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, 'call rubyeval(10)'))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, 'call rubyeval(v:_null_dict)'))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, 'call rubyeval(v:_null_list)'))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, 'call rubyeval(0.0)'))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, 'call rubyeval(function("tr"))'))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, 'call rubyeval(v:true)'))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, 'call rubyeval(v:false)'))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, 'call rubyeval(v:null)'))
   end)
 end)

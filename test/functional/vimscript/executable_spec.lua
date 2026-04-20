@@ -2,9 +2,9 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq, clear, call, write_file, command = t.eq, n.clear, n.call, t.write_file, n.command
-local exc_exec = n.exc_exec
 local eval = n.eval
 local is_os = t.is_os
+local pcall_err = t.pcall_err
 
 describe('executable()', function()
   before_each(clear)
@@ -55,14 +55,14 @@ describe('executable()', function()
     for _, input in ipairs({ 'v:null', 'v:true', 'v:false', '{}', '[]' }) do
       eq(
         'Vim(call):E1174: String required for argument 1',
-        exc_exec('call executable(' .. input .. ')')
+        pcall_err(command, 'call executable(' .. input .. ')')
       )
     end
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
     for _, input in ipairs({ 'v:null', 'v:true', 'v:false' }) do
       eq(
         'Vim(call):E1174: String required for argument 1',
-        exc_exec('call executable(' .. input .. ')')
+        pcall_err(command, 'call executable(' .. input .. ')')
       )
     end
   end)

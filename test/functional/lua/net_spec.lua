@@ -1,5 +1,6 @@
 local n = require('test.functional.testnvim')()
 local t = require('test.testutil')
+local pcall_err = t.pcall_err
 local skip_integ = os.getenv('NVIM_TEST_INTEG') ~= '1'
 
 local exec_lua = n.exec_lua

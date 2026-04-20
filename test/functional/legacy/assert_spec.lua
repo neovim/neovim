@@ -1,11 +1,12 @@
 local t = require('test.testutil')
+local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 
 local api, call = n.api, n.call
 local clear, eq = n.clear, t.eq
 local source, command = n.source, n.command
-local exc_exec = n.exc_exec
 local eval = n.eval
+local command = n.command
 
 local function expected_errors(errors)
   eq(errors, api.nvim_get_vvar('errors'))
@@ -70,9 +71,9 @@ describe('assert function:', function()
         call assert_equal(s:w, '')
       endfunction
       ]])
-      eq(
-        'Vim(call):E724: unable to correctly dump variable with self-referencing container',
-        exc_exec('call CheckAssert()')
+      t.matches(
+        'Vim%(call%):E724: unable to correctly dump variable with self%-referencing container',
+        pcall_err(command, 'call CheckAssert()')
       )
     end)
   end)

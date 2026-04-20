@@ -2,11 +2,12 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 local neq = t.neq
 local eval = n.eval
 local clear = n.clear
 local source = n.source
-local exc_exec = n.exc_exec
+local command = n.command
 
 describe('sort', function()
   before_each(clear)
@@ -53,6 +54,6 @@ describe('sort', function()
     eq({ '2', 'A', 'AA', 'a', 1, 3.3 }, eval([[sort([3.3, 1, "2", "A", "a", "AA"], '')]]))
     eq({ '2', 'A', 'AA', 'a', 1, 3.3 }, eval('sort([3.3, 1, "2", "A", "a", "AA"], 0)'))
     eq({ '2', 'A', 'a', 'AA', 1, 3.3 }, eval('sort([3.3, 1, "2", "A", "a", "AA"], 1)'))
-    neq(nil, exc_exec('call sort([3.3, 1, "2"], 3)'):find('E474:'))
+    neq(nil, pcall_err(command, 'call sort([3.3, 1, "2"], 3)'):find('E474:'))
   end)
 end)

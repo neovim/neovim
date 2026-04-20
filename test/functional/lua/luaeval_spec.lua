@@ -4,7 +4,6 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local pcall_err = t.pcall_err
-local exc_exec = n.exc_exec
 local remove_trace = t.remove_trace
 local exec_lua = n.exec_lua
 local command = n.command
@@ -198,11 +197,17 @@ describe('luaeval()', function()
   it('failure modes', function()
     eq(
       'Vim(call):E5100: Cannot convert given Lua table: table should contain either only integer keys or only string keys',
-      exc_exec('call luaeval("{1, foo=2}")')
+      pcall_err(command, 'call luaeval("{1, foo=2}")')
     )
 
-    startswith('Vim(call):E5107: Lua: [string "luaeval()"]:', exc_exec('call luaeval("1, 2, 3")'))
-    startswith('Vim(call):E5108: Lua: [string "luaeval()"]:', exc_exec('call luaeval("(nil)()")'))
+    startswith(
+      'Vim(call):E5107: Lua: [string "luaeval()"]:',
+      pcall_err(command, 'call luaeval("1, 2, 3")')
+    )
+    startswith(
+      'Vim(call):E5108: Lua: [string "luaeval()"]:',
+      pcall_err(command, 'call luaeval("(nil)()")')
+    )
   end)
 
   it('handles sending lua functions to viml', function()
@@ -482,21 +487,24 @@ describe('luaeval()', function()
   it('fails when doing incorrect things in lua', function()
     -- Conversion errors
     eq(
-      'Vim(call):E5108: Lua: [string "luaeval()"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
-      remove_trace(exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]]))
+      'Vim(call):E5108: Lua: [string "luaeval()"]:0: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
+      remove_trace(pcall_err(command, [[call luaeval("vim.xxx_nonexistent_key_xxx()")]]))
     )
     eq(
-      'Vim(call):E5108: Lua: [string "luaeval()"]:1: ERROR',
-      remove_trace(exc_exec([[call luaeval("error('ERROR')")]]))
+      'Vim(call):E5108: Lua: [string "luaeval()"]:0: ERROR',
+      remove_trace(pcall_err(command, [[call luaeval("error('ERROR')")]]))
     )
-    eq('Vim(call):E5108: Lua: [NULL]', remove_trace(exc_exec([[call luaeval("error(nil)")]])))
+    eq(
+      'Vim(call):E5108: Lua: [NULL]',
+      remove_trace(pcall_err(command, [[call luaeval("error(nil)")]]))
+    )
   end)
 
   it('does not leak memory when called with too long line', function()
     local s = ('x'):rep(65536)
     eq(
-      'Vim(call):E5107: Lua: [string "luaeval()"]:1: unexpected symbol near \')\'',
-      exc_exec([[call luaeval("(']] .. s .. [[' + )")]])
+      'Vim(call):E5107: Lua: [string "luaeval()"]:0: unexpected symbol near \')\'',
+      pcall_err(command, [[call luaeval("(']] .. s .. [[' + )")]])
     )
     eq(s, fn.luaeval('"' .. s .. '"'))
   end)

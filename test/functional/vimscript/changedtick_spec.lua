@@ -8,7 +8,6 @@ local clear = n.clear
 local fn = n.fn
 local api = n.api
 local command = n.command
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local exec_capture = n.exec_capture
 
@@ -34,7 +33,7 @@ describe('b:changedtick', function()
     eq(2, changedtick())
     fn.setline(1, 'hello')
     eq(3, changedtick())
-    eq(0, exc_exec('undo'))
+    command('undo')
     -- Somehow undo counts as two changes
     eq(5, changedtick())
   end)
@@ -55,7 +54,7 @@ describe('b:changedtick', function()
   it('fails to be changed by user', function()
     local ct = changedtick()
     local ctn = ct + 100500
-    eq(0, exc_exec('let d = b:'))
+    command('let d = b:')
     eq(
       'Vim(let):E46: Cannot change read-only variable "b:changedtick"',
       pcall_err(command, 'let b:changedtick = ' .. ctn)
@@ -116,7 +115,7 @@ describe('b:changedtick', function()
     eq('b:changedtick         #2', exec_capture(':let b:'))
   end)
   it('fails to unlock b:changedtick', function()
-    eq(0, exc_exec('let d = b:'))
+    command('let d = b:')
     eq(0, fn.islocked('b:changedtick'))
     eq(0, fn.islocked('d.changedtick'))
     eq(
