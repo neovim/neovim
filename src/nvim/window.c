@@ -6868,7 +6868,7 @@ static void win_fix_cursor(bool normal)
 
   wp->w_do_win_fix_cursor = false;
   // Determine valid cursor range.
-  int so = MIN(wp->w_view_height / 2, get_scrolloff_value(wp));
+  int so = (int)MIN(wp->w_view_height / 2, get_scrolloff_value(wp));
   linenr_T lnum = wp->w_cursor.lnum;
 
   wp->w_cursor.lnum = wp->w_topline;
