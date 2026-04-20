@@ -8,7 +8,6 @@ local clear = n.clear
 local api = n.api
 local fn = n.fn
 local command = n.command
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 
 setup(clear)
@@ -17,7 +16,7 @@ describe('sort()', function()
   it('errors out when sorting special values', function()
     eq(
       'Vim(call):E362: Using a boolean value as a Float',
-      exc_exec('call sort([v:true, v:false], "f")')
+      pcall_err(command, 'call sort([v:true, v:false], "f")')
     )
   end)
 

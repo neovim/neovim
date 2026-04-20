@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = n.clear, n.feed
 local eval = n.eval
 local eq = t.eq
+local pcall_err = t.pcall_err
 local neq = t.neq
 local command = n.command
 local set_method_error = n.set_method_error
@@ -14,7 +15,6 @@ local nvim_prog = n.nvim_prog
 local testprg = n.testprg
 local exec = n.exec
 local exec_capture = n.exec_capture
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
 local poke_eventloop = n.poke_eventloop
 local assert_alive = n.assert_alive
@@ -2517,7 +2517,7 @@ describe('ui/msg_puts_printf', function()
         cmd = 'chcp 932 > NUL & '
       end
     else
-      if exc_exec('lang ja_JP.UTF-8') ~= 0 then
+      if not pcall(n.command, 'lang ja_JP.UTF-8') then
         pending('Locale ja_JP.UTF-8 not supported', function() end)
         return
       end

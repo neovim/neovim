@@ -4,6 +4,7 @@ local n = require('test.functional.testnvim')()
 local command = n.command
 local insert = n.insert
 local eq = t.eq
+local pcall_err = t.pcall_err
 local clear = n.clear
 local api = n.api
 local fn = n.fn
@@ -12,7 +13,6 @@ local feed_command = n.feed_command
 local write_file = t.write_file
 local tmpname = t.tmpname
 local exec = n.exec
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
 local eval = n.eval
 local exec_capture = n.exec_capture
@@ -110,7 +110,7 @@ describe(':source', function()
     eq('0zBEEFCAFE', exec_capture('echo d'))
 
     exec('set cpoptions+=C')
-    eq("Vim(let):E723: Missing end of Dictionary '}': ", exc_exec('source'))
+    matches("Vim%(let%):E723: Missing end of Dictionary '%}'", pcall_err(command, 'source'))
   end)
 
   it('selection in current buffer', function()
@@ -134,7 +134,7 @@ describe(':source', function()
 
     -- Source last line only
     feed_command(':$source')
-    eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
+    matches('Vim%(echo%):E117: Unknown function: s:C', pcall_err(command, 'echo D()'))
 
     -- Source from 2nd line to end of file
     feed('ggjVG')
@@ -148,7 +148,7 @@ describe(':source', function()
     eq('<SNR>1_C()', exec_capture('echo D()'))
 
     exec('set cpoptions+=C')
-    eq("Vim(let):E723: Missing end of Dictionary '}': ", exc_exec("'<,'>source"))
+    matches("Vim%(let%):E723: Missing end of Dictionary '%}'", pcall_err(command, "'<,'>source"))
   end)
 
   it('does not break if current buffer is modified while sourced', function()

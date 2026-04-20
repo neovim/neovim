@@ -29,7 +29,6 @@ local next_msg = n.next_msg
 local tmpname = t.tmpname
 local write_file = t.write_file
 local exec_lua = n.exec_lua
-local exc_exec = n.exc_exec
 local insert = n.insert
 local skip = t.skip
 
@@ -3655,7 +3654,7 @@ describe('API', function()
 
       eq(
         'Vim(echo):E5555: API call: Vim:E220: Missing }.',
-        exc_exec("echo nvim_get_runtime_file('{', v:false)")
+        pcall_err(command, "echo nvim_get_runtime_file('{', v:false)")
       )
     end)
     it('preserves order of runtimepath', function()

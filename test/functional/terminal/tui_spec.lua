@@ -10,6 +10,7 @@ local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 local feed_data = tt.feed_data
 local clear = n.clear
 local command = n.command

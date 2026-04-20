@@ -4,7 +4,6 @@ local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
 
 local nvim_command, fn, eq = n.command, n.fn, t.eq
-local exc_exec = n.exc_exec
 local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
 local read_shada_file = t_shada.read_shada_file
 
@@ -26,7 +25,7 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with search pattern item with BOOL unknown (sX) key value', function()
     wshada('\002\001\011\130\162sX\194\162sp\196\001-')
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('wshada ' .. shada_fname)
     local found = false
@@ -37,7 +36,7 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('silent! /---/')
     nvim_command('wshada ' .. shada_fname)
@@ -58,7 +57,7 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with s/search pattern item with BOOL unknown (sX) key value', function()
     wshada('\002\001\015\131\162sX\194\162ss\195\162sp\196\001-')
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('wshada ' .. shada_fname)
     local found = false
@@ -69,7 +68,7 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('silent! s/--/---/ge')
     nvim_command('wshada ' .. shada_fname)
@@ -90,7 +89,7 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with replacement item with BOOL additional value in list', function()
     wshada('\003\000\005\146\196\001-\194')
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('wshada ' .. shada_fname)
     local found = false
@@ -102,7 +101,7 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('silent! s/--/---/ge')
     nvim_command('wshada ' .. shada_fname)
@@ -141,7 +140,7 @@ describe('ShaDa forward compatibility support code', function()
       eq('' .. mock_file_path .. 'c', fn.bufname('%'))
       fn.setline('.', { '1', '2', '3' })
       wshada(v.mpack)
-      eq(0, exc_exec(sdrcmd(true)))
+      nvim_command(sdrcmd(true))
       os.remove(shada_fname)
       nvim_command('wshada ' .. shada_fname)
       local found = false
@@ -153,7 +152,7 @@ describe('ShaDa forward compatibility support code', function()
         end
       end
       eq(true, found)
-      eq(0, exc_exec(sdrcmd()))
+      nvim_command(sdrcmd())
       nvim_command('bwipeout!')
       fn.setpos("'A", { 0, 1, 1, 0 })
       os.remove(shada_fname)
@@ -186,7 +185,7 @@ describe('ShaDa forward compatibility support code', function()
               :gsub('n.$', 'n\003')
               :gsub('' .. mock_file_path .. 'c', '' .. mock_file_path2 .. 'f')
         )
-        eq(0, exc_exec(sdrcmd(true)))
+        nvim_command(sdrcmd(true))
         nvim_command('wshada ' .. shada_fname)
         local found = 0
         for i, subv in ipairs(read_shada_file(shada_fname)) do
@@ -224,7 +223,7 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with register item with BOOL unknown (rX) key', function()
     wshada('\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('wshada ' .. shada_fname)
     local found = false
@@ -234,7 +233,7 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('let @a = "Test"')
     nvim_command('wshada ' .. shada_fname)
@@ -254,7 +253,7 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with register item with <C-a> name', function()
     wshada('\005\001\015\131\161n\001\162rX\194\162rc\145\196\001-')
-    eq(0, exc_exec(sdrcmd(true)))
+    nvim_command(sdrcmd(true))
     nvim_command('wshada ' .. shada_fname)
     local found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
@@ -290,7 +289,7 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with register item with type 10', function()
     wshada('\005\001\019\132\161na\162rX\194\162rc\145\196\001-\162rt\010')
-    eq(0, exc_exec(sdrcmd(true)))
+    nvim_command(sdrcmd(true))
     eq({}, fn.getreg('a', 1, 1))
     eq('', fn.getregtype('a'))
     nvim_command('wshada ' .. shada_fname)
@@ -329,7 +328,7 @@ describe('ShaDa forward compatibility support code', function()
   it('works with buffer list item with BOOL unknown (bX) key', function()
     nvim_command('set shada+=%')
     wshada('\009\000\016\145\130\161f\196\006' .. mock_file_path .. 'c\162bX\195')
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     eq(2, fn.bufnr('$'))
     eq('' .. mock_file_path .. 'c', fn.bufname(2))
     os.remove(shada_fname)
@@ -341,7 +340,7 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('buffer 2')
     nvim_command('edit!')
@@ -363,7 +362,7 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with history item with BOOL additional value in list', function()
     wshada('\004\000\006\147\000\196\001-\194')
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     nvim_command('wshada ' .. shada_fname)
     local found = false
@@ -375,7 +374,7 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     os.remove(shada_fname)
     fn.histadd(':', '--')
     fn.histadd(':', '-')
@@ -397,9 +396,9 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with history item with type 10', function()
     wshada('\004\000\006\147\010\196\001-\194')
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     nvim_command('wshada ' .. shada_fname)
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     local found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
@@ -434,9 +433,9 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with item with 100 type', function()
     wshada('\100\000\006\147\010\196\001-\194')
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     nvim_command('wshada ' .. shada_fname)
-    eq(0, exc_exec(sdrcmd()))
+    nvim_command(sdrcmd())
     local found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then

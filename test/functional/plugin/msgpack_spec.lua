@@ -4,9 +4,9 @@ local n = require('test.functional.testnvim')()
 local clear = n.clear
 local api = n.api
 local eq = t.eq
+local pcall_err = t.pcall_err
 local nvim_eval = n.eval
 local nvim_command = n.command
-local exc_exec = n.exc_exec
 local ok = t.ok
 local NIL = vim.NIL
 
@@ -674,39 +674,63 @@ describe('autoload/msgpack.vim', function()
     end)
 
     it('errors out when needed', function()
-      eq('empty:Parsed string is empty', exc_exec('call msgpack#eval("", {})'))
-      eq('unknown:Invalid non-space character: ^', exc_exec('call msgpack#eval("^", {})'))
-      eq(
-        "char-invalid:Invalid integer character literal format: ''",
-        exc_exec('call msgpack#eval("\'\'", {})')
+      t.matches(
+        'empty:Parsed string is empty',
+        pcall_err(nvim_command, 'call msgpack#eval("", {})')
       )
-      eq(
-        "char-invalid:Invalid integer character literal format: 'ab'",
-        exc_exec('call msgpack#eval("\'ab\'", {})')
+      t.matches(
+        'unknown:Invalid non%-space character: %^',
+        pcall_err(nvim_command, 'call msgpack#eval("^", {})')
       )
-      eq(
-        "char-invalid:Invalid integer character literal format: '",
-        exc_exec('call msgpack#eval("\'", {})')
+      t.matches(
+        "char%-invalid:Invalid integer character literal format: ''",
+        pcall_err(nvim_command, 'call msgpack#eval("\'\'", {})')
       )
-      eq('"-invalid:Invalid string: "', exc_exec('call msgpack#eval("\\"", {})'))
-      eq('"-invalid:Invalid string: ="', exc_exec('call msgpack#eval("=\\"", {})'))
-      eq('"-invalid:Invalid string: +(0)"', exc_exec('call msgpack#eval("+(0)\\"", {})'))
-      eq(
-        '0.-nodigits:Decimal dot must be followed by digit(s): .e1',
-        exc_exec('call msgpack#eval("0.e1", {})')
+      t.matches(
+        "char%-invalid:Invalid integer character literal format: 'ab'",
+        pcall_err(nvim_command, 'call msgpack#eval("\'ab\'", {})')
       )
-      eq(
-        '0x-long:Must have at most 16 hex digits: FEDCBA98765432100',
-        exc_exec('call msgpack#eval("0xFEDCBA98765432100", {})')
+      t.matches(
+        "char%-invalid:Invalid integer character literal format: '",
+        pcall_err(nvim_command, 'call msgpack#eval("\'", {})')
       )
-      eq('0x-empty:Must have number after 0x: ', exc_exec('call msgpack#eval("0x", {})'))
-      eq('name-unknown:Unknown name FOO: FOO', exc_exec('call msgpack#eval("FOO", {})'))
+      t.matches(
+        '"%-invalid:Invalid string: "',
+        pcall_err(nvim_command, 'call msgpack#eval("\\"", {})')
+      )
+      t.matches(
+        '"%-invalid:Invalid string: ="',
+        pcall_err(nvim_command, 'call msgpack#eval("=\\"", {})')
+      )
+      t.matches(
+        '"%-invalid:Invalid string: %+%(0%)"',
+        pcall_err(nvim_command, 'call msgpack#eval("+(0)\\"", {})')
+      )
+      t.matches(
+        '0%.%-nodigits:Decimal dot must be followed by digit%(s%): %.e1',
+        pcall_err(nvim_command, 'call msgpack#eval("0.e1", {})')
+      )
+      t.matches(
+        '0x%-long:Must have at most 16 hex digits: FEDCBA98765432100',
+        pcall_err(nvim_command, 'call msgpack#eval("0xFEDCBA98765432100", {})')
+      )
+      t.matches(
+        '0x%-empty:Must have number after 0x: ',
+        pcall_err(nvim_command, 'call msgpack#eval("0x", {})')
+      )
+      t.matches(
+        'name%-unknown:Unknown name FOO: FOO',
+        pcall_err(nvim_command, 'call msgpack#eval("FOO", {})')
+      )
 
-      eq(
-        'name-unknown:Unknown name py3: py3 print(sys.version_info)',
-        exc_exec('call msgpack#eval("py3 print(sys.version_info)", {})')
+      t.matches(
+        'name%-unknown:Unknown name py3: py3 print%(sys%.version_info%)',
+        pcall_err(nvim_command, 'call msgpack#eval("py3 print(sys.version_info)", {})')
       )
-      eq('name-unknown:Unknown name o: o', exc_exec('call msgpack#eval("-info", {})'))
+      t.matches(
+        'name%-unknown:Unknown name o: o',
+        pcall_err(nvim_command, 'call msgpack#eval("-info", {})')
+      )
     end)
   end)
 end)

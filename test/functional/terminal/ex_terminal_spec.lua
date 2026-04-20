@@ -11,6 +11,7 @@ local fn = n.fn
 local api = n.api
 local exec_lua = n.exec_lua
 local retry = t.retry
+local pcall_err = t.pcall_err
 local ok = t.ok
 local command = n.command
 local skip = t.skip

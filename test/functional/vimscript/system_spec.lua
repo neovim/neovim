@@ -11,7 +11,6 @@ local eq, call, clear, eval, feed_command, feed, api =
 local command = n.command
 local insert = n.insert
 local expect = n.expect
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local is_os = t.is_os
 
@@ -357,7 +356,7 @@ describe('system()', function()
     it('is treated as a buffer id', function()
       command("put ='text in buffer 1'")
       eq('\ntext in buffer 1\n', eval('system("cat", 1)'))
-      eq('Vim(echo):E86: Buffer 42 does not exist', exc_exec('echo system("cat", 42)'))
+      eq('Vim(echo):E86: Buffer 42 does not exist', pcall_err(command, 'echo system("cat", 42)'))
     end)
   end)
 

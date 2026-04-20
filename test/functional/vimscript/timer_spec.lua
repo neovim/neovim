@@ -5,10 +5,10 @@ local Screen = require('test.functional.ui.screen')
 local feed, eq, eval, ok = n.feed, t.eq, n.eval, t.ok
 local source, async_meths, run = n.source, n.async_meths, n.run
 local clear, command, fn = n.clear, n.command, n.fn
-local exc_exec = n.exc_exec
 local api = n.api
 local load_adjust = n.load_adjust
 local retry = t.retry
+local pcall_err = t.pcall_err
 
 describe('timers', function()
   before_each(function()
@@ -297,7 +297,10 @@ describe('timers', function()
         call execute('echo ''execute() should be disallowed''', '')
       endfunction
     ]]
-    eq('Vim(call):E48: Not allowed in sandbox', exc_exec("sandbox call timer_start(0, 'Scary')"))
+    eq(
+      'Vim(call):E48: Not allowed in sandbox',
+      pcall_err(command, "sandbox call timer_start(0, 'Scary')")
+    )
   end)
 
   it('can be triggered after an empty string <expr> mapping #17257', function()

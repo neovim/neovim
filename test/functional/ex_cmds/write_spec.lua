@@ -173,7 +173,7 @@ describe(':write', function()
       eq(true, os.remove(fname_bak))
     end
     write_file(fname_bak, 'TTYX')
-    skip(is_os('win'), [[FIXME: exc_exec('write!') outputs 0 in Windows]])
+    skip(is_os('win'), [[FIXME: pcall_err(command, 'write!') outputs 0 in Windows]])
     vim.uv.fs_symlink(fname_bak .. ('/xxxxx'):rep(20), fname)
     eq("Vim(write):E166: Can't open linked file for writing", pcall_err(command, 'write!'))
   end)

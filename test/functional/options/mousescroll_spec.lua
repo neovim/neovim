@@ -5,7 +5,7 @@ local command = n.command
 local clear = n.clear
 local eval = n.eval
 local eq = t.eq
-local exc_exec = n.exc_exec
+local pcall_err = t.pcall_err
 local feed = n.feed
 
 local scroll = function(direction)
@@ -25,11 +25,11 @@ describe("'mousescroll'", function()
   local digit_expected = 'Vim(set):E5080: Digit expected: mousescroll='
 
   local function should_fail(val, errorstr)
-    eq(errorstr .. val, exc_exec('set mousescroll=' .. val))
+    eq(errorstr .. val, pcall_err(command, 'set mousescroll=' .. val))
   end
 
   local function should_succeed(val)
-    eq(0, exc_exec('set mousescroll=' .. val))
+    command('set mousescroll=' .. val)
   end
 
   before_each(function()

@@ -4,10 +4,10 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 local call = n.call
 local clear = n.clear
 local command = n.command
-local exc_exec = n.exc_exec
 local pathsep = n.get_pathsep()
 local skip = t.skip
 local is_os = t.is_os
@@ -251,34 +251,34 @@ for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
     -- Test invalid argument types
     local err474 = 'Vim(call):E474: Invalid argument'
     it('fails on string', function()
-      eq(err474, exc_exec('call ' .. cmd .. '("some string")'))
+      eq(err474, pcall_err(command, 'call ' .. cmd .. '("some string")'))
     end)
     it('fails on float', function()
-      eq(err474, exc_exec('call ' .. cmd .. '(1.0)'))
+      eq(err474, pcall_err(command, 'call ' .. cmd .. '(1.0)'))
     end)
     it('fails on list', function()
-      eq(err474, exc_exec('call ' .. cmd .. '([1, 2])'))
+      eq(err474, pcall_err(command, 'call ' .. cmd .. '([1, 2])'))
     end)
     it('fails on dictionary', function()
-      eq(err474, exc_exec('call ' .. cmd .. '({"key": "value"})'))
+      eq(err474, pcall_err(command, 'call ' .. cmd .. '({"key": "value"})'))
     end)
     it('fails on funcref', function()
-      eq(err474, exc_exec('call ' .. cmd .. '(function("tr"))'))
+      eq(err474, pcall_err(command, 'call ' .. cmd .. '(function("tr"))'))
     end)
 
     -- Test invalid numbers
     it('fails on number less than -1', function()
-      eq(err474, exc_exec('call ' .. cmd .. '(-2)'))
+      eq(err474, pcall_err(command, 'call ' .. cmd .. '(-2)'))
     end)
     local err5001 = 'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.'
     it('fails on -1 if previous arg is >=0', function()
-      eq(err5001, exc_exec('call ' .. cmd .. '(0, -1)'))
+      eq(err5001, pcall_err(command, 'call ' .. cmd .. '(0, -1)'))
     end)
 
     -- Test wrong number of arguments
     local err118 = 'Vim(call):E118: Too many arguments for function: ' .. cmd
     it('fails to parse more than one argument', function()
-      eq(err118, exc_exec('call ' .. cmd .. '(0, 0, 0)'))
+      eq(err118, pcall_err(command, 'call ' .. cmd .. '(0, 0, 0)'))
     end)
   end)
 end

@@ -1,4 +1,5 @@
 local t = require('test.testutil')
+local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 
 local clear, eval, eq = n.clear, n.eval, t.eq

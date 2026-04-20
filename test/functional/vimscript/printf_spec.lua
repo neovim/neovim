@@ -3,10 +3,11 @@ local n = require('test.functional.testnvim')()
 
 local clear = n.clear
 local eq = t.eq
+local pcall_err = t.pcall_err
 local eval = n.eval
 local fn = n.fn
 local api = n.api
-local exc_exec = n.exc_exec
+local command = n.command
 
 describe('printf()', function()
   setup(clear)
@@ -56,10 +57,13 @@ describe('printf()', function()
     eq('0b00011   ', fn.printf("% '+#0-10.5b", 3))
   end)
   it('errors out when %b modifier is used for a list', function()
-    eq('Vim(call):E745: Using a List as a Number', exc_exec('call printf("%b", [])'))
+    eq('Vim(call):E745: Using a List as a Number', pcall_err(command, 'call printf("%b", [])'))
   end)
   it('errors out when %b modifier is used for a float', function()
-    eq('Vim(call):E805: Using a Float as a Number', exc_exec('call printf("%b", 3.1415926535)'))
+    eq(
+      'Vim(call):E805: Using a Float as a Number',
+      pcall_err(command, 'call printf("%b", 3.1415926535)')
+    )
   end)
   it('works with %p correctly', function()
     local null_ret = nil
@@ -68,8 +72,8 @@ describe('printf()', function()
     -- address after freeing unreferenced values.
     api.nvim_set_var('__args', {})
     local function check_printf(expr, is_null)
-      eq(0, exc_exec('call add(__args, ' .. expr .. ')'))
-      eq(0, exc_exec('let __result = printf("%p", __args[-1])'))
+      command('call add(__args, ' .. expr .. ')')
+      command('let __result = printf("%p", __args[-1])')
       local id_ret = eval('id(__args[-1])')
       eq(id_ret, api.nvim_get_var('__result'))
       if is_null then

@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 local matches = t.matches
 local feed = n.feed
 local eval = n.eval
