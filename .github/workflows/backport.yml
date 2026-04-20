@@ -32,18 +32,6 @@ jobs:
           label_pattern: "^ci:backport ([^ ]+)$"
           github_token: ${{ steps.app-token.outputs.token }}
 
-      - name: Create failed backport label
-        if: ${{ steps.backport.outputs.was_successful == 'false' }}
-        uses: actions/github-script@v9
-        with:
-          script: |
-            github.rest.issues.addLabels({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: ['needs:backport']
-            })
-
       - name: Enable automerge
         if: ${{ steps.backport.outputs.was_successful == 'true' }}
         env:
