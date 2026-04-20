@@ -55,7 +55,7 @@ for argi = 2, #arg, 2 do
   source:close()
   if options.c then
     local prefix = ignorelist[modname] and '' or '@'
-    local relpath = modname:gsub('%.', '/') .. '.lua'
+    local relpath = modname:gsub('%.', '/')
     output = string.dump(assert((loadstring or load)(output, prefix .. relpath)), false)
   end
 
