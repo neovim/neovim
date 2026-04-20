@@ -7472,7 +7472,7 @@ vim.go.titleold = vim.o.titleold
 --- The default (empty) behaviour is equivalent to:
 ---
 --- ```vim
----     set titlestring=%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim
+---     set titlestring=%t%(\ %M%)%(\ \(%{expand('%:p:~:h')}\)%)%a\ -\ Nvim
 --- ```
 ---
 --- Example:
