@@ -186,11 +186,37 @@ describe('u_write_undo', function()
   end)
 
   itp('does not overwrite an existing file that is not an undo file', function()
-    -- TODO: write test
+    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
+    local file_contents = 'not an undo file'
+
+    t.write_file(correct_name, file_contents, true, false)
+    u_write_undo(nil, false, file_buffer, buffer_hash)
+
+    eq(file_contents, t.read_file(correct_name))
+    local success, err = os.remove(correct_name)
+    if not success then
+      print(err) -- inform tester if undofile fails to delete
+    end
   end)
 
   itp('does not overwrite an existing file that has the wrong permissions', function()
-    -- TODO: write test
+    if t.is_os('win') then
+      pending('N/A: permission denied depends on POSIX chmod')
+    end
+
+    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
+    u_write_undo(nil, false, file_buffer, buffer_hash)
+    local undo_file_contents = t.read_file(correct_name)
+
+    assert(uv.fs_chmod(correct_name, 0))
+    u_write_undo(nil, false, file_buffer, buffer_hash)
+    assert(uv.fs_chmod(correct_name, 384))
+
+    eq(undo_file_contents, t.read_file(correct_name))
+    local success, err = os.remove(correct_name)
+    if not success then
+      print(err) -- inform tester if undofile fails to delete
+    end
   end)
 
   itp('does not write an undo file if there is no undo information for the buffer', function()
