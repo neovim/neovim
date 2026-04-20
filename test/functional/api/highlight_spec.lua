@@ -679,6 +679,29 @@ describe('API: get highlight', function()
     api.nvim_set_hl(0, 'Bar', { link = 'Foo', default = true, force = true })
     eq({ link = 'Foo', default = true }, api.nvim_get_hl(0, { name = 'Bar' }))
   end)
+
+  it('round-trips fg_indexed/bg_indexed through nvim_get_hl', function()
+    api.nvim_set_hl(0, 'Test_idx', {
+      fg = '#cc0000',
+      bg = '#0000cc',
+      ctermfg = 1,
+      ctermbg = 4,
+      fg_indexed = true,
+      bg_indexed = true,
+    })
+    local hl = api.nvim_get_hl(0, { name = 'Test_idx' })
+    eq(true, hl.fg_indexed)
+    eq(true, hl.bg_indexed)
+    eq(tonumber('0xcc0000'), hl.fg)
+    eq(tonumber('0x0000cc'), hl.bg)
+    eq(1, hl.ctermfg)
+    eq(4, hl.ctermbg)
+
+    api.nvim_set_hl(0, 'Test_idx', { fg_indexed = false, update = true })
+    eq(nil, api.nvim_get_hl(0, { name = 'Test_idx' }).fg_indexed)
+    eq(true, api.nvim_get_hl(0, { name = 'Test_idx' }).bg_indexed)
+    eq(tonumber('0xcc0000'), api.nvim_get_hl(0, { name = 'Test_idx' }).fg)
+  end)
 end)
 
 describe('API: set/get highlight namespace', function()

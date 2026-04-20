@@ -152,13 +152,15 @@ error('Cannot require a meta file')
 --- @field background? integer
 
 --- @class vim.api.keyset.get_hl_info : vim.api.keyset.hl_info.base
---- @field fg? integer
---- @field bg? integer
---- @field sp? integer
---- @field default? true
---- @field link? string
 --- @field blend? integer
+--- @field bg? integer
+--- @field bg_indexed? boolean
 --- @field cterm? vim.api.keyset.hl_info.cterm
+--- @field default? true
+--- @field fg? integer
+--- @field fg_indexed? boolean
+--- @field link? string
+--- @field sp? integer
 
 --- @class vim.api.keyset.set_hl_info : vim.api.keyset.hl_info.base
 --- @field fg? integer|string
