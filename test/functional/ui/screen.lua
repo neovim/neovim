@@ -1453,6 +1453,12 @@ function Screen:_handle_msg_show(kind, chunks, replace_last, history, append, id
   if not replace_last or pos == 0 then
     pos = pos + 1
   end
+  for i, msg in pairs(self.messages) do
+    if id ~= -1 and msg.id == id then
+      pos = i
+      break
+    end
+  end
   self.messages[pos] = {
     kind = kind,
     content = chunks,

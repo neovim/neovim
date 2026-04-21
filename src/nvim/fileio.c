@@ -131,9 +131,12 @@ void filemess(buf_T *buf, char *name, char *s)
   msg_scroll = msg_scroll_save;
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
-  msg_outtrans(msg_may_trunc(false, IObuff), 0, false);
+  if (*s == NUL) {
+    msg_progress(IObuff, "bufwrite", "running", 0, false, true);
+  } else {
+    msg_outtrans(msg_may_trunc(false, IObuff), 0, false);
+  }
   msg_clr_eos();
-  ui_flush();
   msg_scrolled_ign = false;
 }
 
