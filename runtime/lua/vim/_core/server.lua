@@ -58,6 +58,9 @@ function M.rebind_old_addr_after_restart(canonical_addr, bootstrap_addr, expecte
   local poll_elapsed = 0
   timer:start(poll_ms, poll_ms, function()
     vim.schedule(function()
+      if timer:is_closing() then
+        return
+      end
       poll_elapsed = poll_elapsed + poll_ms
       if poll_elapsed >= max_wait_ms then
         timer:stop()
@@ -65,7 +68,9 @@ function M.rebind_old_addr_after_restart(canonical_addr, bootstrap_addr, expecte
         return
       end
       if not vim.list_contains(vim.fn.serverlist(), canonical_addr) then
-        local ok = pcall(vim.fn.serverstart, canonical_addr)
+        local ok = vim._with({ log_level = 5 }, function()
+          return pcall(vim.fn.serverstart, canonical_addr)
+        end)
         if not ok then
           return -- pipe still held by old server; retry next tick
         end
@@ -76,11 +81,16 @@ function M.rebind_old_addr_after_restart(canonical_addr, bootstrap_addr, expecte
       timer:stop()
       timer:start(poll_ms, poll_ms, function()
         vim.schedule(function()
+          if timer:is_closing() then
+            return
+          end
           elapsed = elapsed + poll_ms
           local all_uis = expected_uis <= 0 or #vim.api.nvim_list_uis() >= expected_uis
           if all_uis or elapsed >= max_wait_ms then
             if canonical_addr ~= bootstrap_addr then
-              pcall(vim.fn.serverstop, bootstrap_addr)
+              vim._with({ log_level = 5 }, function()
+                pcall(vim.fn.serverstop, bootstrap_addr)
+              end)
             end
             timer:stop()
             timer:close()
