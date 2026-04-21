@@ -210,6 +210,7 @@ EXTERN const char e_not_allowed_to_change_window_layout_in_this_autocmd[]
 INIT(= N_("E1312: Not allowed to change the window layout in this autocmd"));
 
 EXTERN const char e_val_too_large[] INIT(= N_("E1510: Value too large: %s"));
+EXTERN const char e_val_too_large_len[] INIT(= N_("E1510: Value too large: %.*s"));
 
 EXTERN const char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
