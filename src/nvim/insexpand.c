@@ -2715,7 +2715,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   }
   compl_autocomplete = false;
   compl_from_nonkeyword = false;
-  compl_best_matches = 0;
+  compl_num_bests = 0;
   compl_ins_end_col = 0;
 
   if (c == Ctrl_C && cmdwin_type != 0) {
@@ -5074,7 +5074,8 @@ static char *find_common_prefix(size_t *prefix_len, bool curbuf_only)
       }
 
       if (!match_limit_exceeded
-          && (!curbuf_only || cpt_sources_array[cur_source].cs_flag == '.')) {
+          && (!curbuf_only || (cur_source != -1
+                               && cpt_sources_array[cur_source].cs_flag == '.'))) {
         if (first == NULL && strncmp(ins_compl_leader(), compl->cp_str.data,
                                      ins_compl_leader_len()) == 0) {
           first = compl->cp_str.data;
@@ -5307,8 +5308,7 @@ static int find_next_completion_match(bool allow_get_expansion, int todo, bool a
         if (compl_pending > 0 && compl_shown_match->cp_next != NULL) {
           compl_shown_match = compl_shown_match->cp_next;
           compl_pending--;
-        }
-        if (compl_pending < 0 && compl_shown_match->cp_prev != NULL) {
+        } else if (compl_pending < 0 && compl_shown_match->cp_prev != NULL) {
           compl_shown_match = compl_shown_match->cp_prev;
           compl_pending++;
         } else {
