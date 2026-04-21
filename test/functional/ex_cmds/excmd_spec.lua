@@ -41,6 +41,10 @@ describe('Ex cmds', function()
       'Vim(menu):E329: No menu "9999999999999999999999999999999999999999"',
       pcall_err(command, ':menu 9999999999999999999999999999999999999999')
     )
+    eq(
+      'Vim(substitute):E1510: Value too large: 9999999999999999999999999999999999999999',
+      pcall_err(command, ':%s/./b/9999999999999999999999999999999999999999')
+    )
     assert_alive()
   end)
 

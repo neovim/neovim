@@ -1053,10 +1053,7 @@ static void format_overflow_error(const char *pstart)
     p++;
   }
 
-  size_t arglen = (size_t)(p - pstart);
-  char *argcopy = xstrnsave(pstart, arglen);
-  semsg(_(e_val_too_large), argcopy);
-  xfree(argcopy);
+  semsg(_(e_val_too_large_len), (int)(p - pstart), pstart);
 }
 
 enum { MAX_ALLOWED_STRING_WIDTH = 1048576, };  // 1MiB
