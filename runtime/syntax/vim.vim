@@ -1855,10 +1855,11 @@ syn keyword	vimSynType		contained	include	skipwhite nextgroup=vimSynIncludeClust
 syn match	vimSynIncludeCluster	contained	"@[_a-zA-Z0-9]\+\>"
 
 " Syntax: keyword {{{2
-syn cluster	vimSynKeyGroup	contains=@vimContinue,vimSynCchar,vimSynNextgroup,vimSynKeyOpt,vimSynContainedin
+syn cluster	vimSynKeyGroup	contains=@vimContinue,vimSynCchar,vimSynNextgroup,vimSynKeyOpt,vimSynContainedin,vimSynKeyError
 syn keyword	vimSynType	contained	keyword	skipwhite nextgroup=vimSynKeyRegion
 syn region	vimSynKeyRegion	contained         keepend	matchgroup=vimGroupName start="\h\w*\>" skip=+\\\\\|\\|\|\n\s*\%(\\\|"\\ \)+ matchgroup=vimCmdSep end="|\|$" contains=@vimSynKeyGroup
 syn match	vimSynKeyOpt	contained	"\%#=1\<\%(conceal\|contained\|transparent\|skipempty\|skipwhite\|skipnl\)\>"
+syn match	vimSynKeyError	contained	"\<oneline\>"
 
 " Syntax: match {{{2
 syn cluster	vimSynMtchGroup	contains=@vimContinue,vimSynCchar,vimSynContains,vimSynContainedin,vimSynError,vimSynMtchOpt,vimSynNextgroup,vimSynRegPat,vimNotation,vimMtchComment
@@ -2429,6 +2430,7 @@ if !exists("skip_vim_syntax_inits")
   hi def link vimSyncError	vimError
   hi def link vimSynConcealError	vimError
   hi def link vimSynError	vimError
+  hi def link vimSynKeyError	vimError
   hi def link vimSynFoldlevelError	vimError
   hi def link vimSynIskeywordError	vimError
   hi def link vimSynSpellError	vimError
