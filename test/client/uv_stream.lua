@@ -97,7 +97,7 @@ function SocketStream:write(data)
   end
   uv.write(self._socket, data, function(err)
     if err then
-      error(self._stream_error or err)
+      self._stream_error = self._stream_error or err
     end
   end)
 end
@@ -108,7 +108,9 @@ function SocketStream:read_start(cb)
   end
   uv.read_start(self._socket, function(err, chunk)
     if err then
-      error(err)
+      self._stream_error = self._stream_error or err
+      cb(nil) -- Signal EOF so the session layer stops.
+      return
     end
     cb(chunk)
   end)

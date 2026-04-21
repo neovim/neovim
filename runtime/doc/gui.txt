@@ -59,17 +59,16 @@ Stop or detach the current UI
                 >vim
                     :echo v:servername
 <
-                Note: The server closes the UI RPC channel, so :detach
-                inherently "works" for all UIs. But if a UI isn't expecting
-                the channel to be closed, it may be (incorrectly) reported as
-                an error.
+                Note: The server closes the UI RPC channel, so :detach works
+                for any UI client. But if the client isn't expecting this, it
+                may (incorrectly) report an error.
 
 ------------------------------------------------------------------------------
 Restart Nvim
 
                                                 *:restart*
 :restart [+cmd] [command]
-                Restarts Nvim. See also |ZR|.
+                Restarts Nvim. Sets |v:exitreason|. See also |ZR|.
 
                 1. Stops Nvim using `:qall` (or |+cmd|, if given).
                 2. Starts a new Nvim server using the same |v:argv| (except
@@ -84,9 +83,12 @@ Restart Nvim
 <                Example: restart and update plugins: >
                     :restart lua vim.pack.update()
 <
-                Note: Only works if the UI and server are on the same system.
-                Note: If no attached UI implements the "restart" UI event,
-                this command will lead to a dangling server process.
+                Note:
+                • Only works if the UI and server are on the same system.
+                • Windows limitation: when +cmd is executed, |v:servername|
+                  refers to a temporary address.
+                • If no UI handles the "restart" event, this command will lead
+                  to a dangling server process.
 
 ------------------------------------------------------------------------------
 Connect UI to a different server

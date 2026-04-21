@@ -217,7 +217,7 @@ describe('vim._core', function()
 
     -- All `vim._core.*` modules are builtin.
     t.eq(
-      { 'rebind_old_addr_after_restart', 'serverlist' },
+      { 'rebind_after_restart', 'serverlist' },
       n.exec_lua([[local k = vim.tbl_keys(require('vim._core.server')); table.sort(k); return k]])
     )
     local expected = {

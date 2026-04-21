@@ -198,7 +198,8 @@ UI
 
 VIMSCRIPT
 
-• todo
+• |v:exitreason| is set before |QuitPre|.
+• |v:starttime| is the process start time (monotonic nanoseconds).
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
