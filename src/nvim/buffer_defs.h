@@ -1130,7 +1130,7 @@ struct window_S {
                                     ///< used to try to stay in the same column
                                     ///< for up/down cursor motions.
 
-  int w_set_curswant;               // If set, then update w_curswant the next
+  bool w_set_curswant;              // If set, then update w_curswant the next
                                     // time through cursupdate() to the
                                     // current virtual column
 
@@ -1160,7 +1160,7 @@ struct window_S {
   // displaying the buffer.
   linenr_T w_topline;               // buffer line number of the line at the
                                     // top of the window
-  char w_topline_was_set;           // flag set to true when topline is set,
+  bool w_topline_was_set;           // flag set to true when topline is set,
                                     // e.g. by winrestview()
   int w_topfill;                    // number of filler lines above w_topline
   int w_old_topfill;                // w_topfill at last redraw
@@ -1310,7 +1310,7 @@ struct window_S {
   alist_T *w_alist;             // pointer to arglist for this window
   int w_arg_idx;                    // current index in argument list (can be
                                     // out of range!)
-  int w_arg_idx_invalid;            // editing another file than w_arg_idx
+  bool w_arg_idx_invalid;           // editing another file than w_arg_idx
 
   char *w_localdir;            // absolute path of local directory or NULL
   char *w_prevdir;             // previous directory
