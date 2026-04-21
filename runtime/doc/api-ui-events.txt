@@ -846,7 +846,6 @@ must handle.
 		"empty"		Empty message (`:echo ""`), with empty `content`.
 				Should clear messages sharing the 'cmdheight'
 				area if it is the only message in a batch.
-		"bufwrite"	|:write| message
 		"confirm"	Message preceding a prompt (|:confirm|,
 				|confirm()|, |inputlist()|, |z=|, …)
 		"emsg"		Error (|errors|, internal error, |:throw|, …)

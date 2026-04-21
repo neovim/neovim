@@ -19,6 +19,8 @@ API
 
 • |nvim_get_commands()| returns `complete` as a Lua function, if it was
   defined as such.
+• |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
+  `msg_show.progress` events.
 
 DIAGNOSTICS
 

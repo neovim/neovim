@@ -1004,19 +1004,20 @@ void op_reindent(oparg_T *oap, Indenter how)
       if (i > 1
           && (i % 50 == 0 || i == oap->line_count - 1)
           && oap->line_count > p_report) {
-        smsg(0, _("%" PRId64 " lines to indent... "), (int64_t)i);
+        snprintf(IObuff, IOSIZE, _("%" PRId64 " lines to indent... "), (int64_t)i);
+        // Restore cursor to avoid redrawing curwin in msg_show callback.
+        linenr_T save_lnum = curwin->w_cursor.lnum;
+        curwin->w_cursor.lnum = start_lnum;
+        msg_progress(IObuff, "indent", "running", 0, true, false);
+        curwin->w_cursor.lnum = save_lnum;
       }
 
       // Be vi-compatible: For lisp indenting the first line is not
       // indented, unless there is only one line.
-      if (i != oap->line_count - 1 || oap->line_count == 1
-          || how != get_lisp_indent) {
+      if (i != oap->line_count - 1 || oap->line_count == 1 || how != get_lisp_indent) {
         char *l = skipwhite(get_cursor_line_ptr());
-        if (*l == NUL) {                      // empty or blank line
-          amount = 0;
-        } else {
-          amount = how();                     // get the indent for this line
-        }
+        // Get indent for this line unless it is blank.
+        amount = *l == NUL ? 0 : how();
         if (amount >= 0 && set_indent(amount, 0)) {
           // did change the indent, call changed_lines() later
           if (first_changed == 0) {
@@ -1047,7 +1048,9 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   if (oap->line_count > p_report) {
     i = oap->line_count - (i + 1);
-    smsg(0, NGETTEXT("%" PRId64 " line indented ", "%" PRId64 " lines indented ", i), (int64_t)i);
+    snprintf(IObuff, IOSIZE,
+             NGETTEXT("%" PRId64 " line indented ", "%" PRId64 " lines indented ", i), (int64_t)i);
+    msg_progress(IObuff, "indent", "success", 0, true, false);
   }
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // set '[ and '] marks

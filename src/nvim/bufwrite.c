@@ -1081,7 +1081,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     msg_scroll = true;              // don't overwrite previous file message
   }
   if (!filtering) {
-    msg_ext_set_kind("bufwrite");
     // show that we are busy
 #ifndef UNIX
     filemess(buf, sfname, "");
@@ -1708,10 +1707,7 @@ restore_backup:
         xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"), IOSIZE);
       }
     }
-
-    msg_ext_set_kind("bufwrite");
-    msg_ext_overwrite = true;
-    set_keep_msg(msg_trunc(IObuff, false, 0), 0);
+    set_keep_msg(msg_progress(IObuff, "bufwrite", "success", 0, true, true), 0);
   }
 
   // When written everything correctly: reset 'modified'.  Unless not
