@@ -1944,11 +1944,8 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
   for (int i = 0; i < count && !got_int && !ins_compl_interrupted(); i++) {
     FILE *fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
-      msg_hist_off = true;  // reset in msg_trunc()
-      msg_ext_set_kind("completion");
-      vim_snprintf(IObuff, IOSIZE,
-                   _("Scanning dictionary: %s"), files[i]);
-      msg_trunc(IObuff, true, HLF_R);
+      vim_snprintf(IObuff, IOSIZE, _("Scanning dictionary: %s"), files[i]);
+      msg_progress(IObuff, "completion", "running", HLF_R, false, true);
     }
 
     if (fp == NULL) {
@@ -3823,16 +3820,13 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       st->dict_f = DICT_EXACT;
     }
     if (!shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
-      msg_hist_off = true;  // reset in msg_trunc()
-      msg_ext_overwrite = true;
-      msg_ext_set_kind("completion");
       vim_snprintf(IObuff, IOSIZE, _("Scanning: %s"),
                    st->ins_buf->b_fname == NULL
                    ? buf_spname(st->ins_buf)
                    : st->ins_buf->b_sfname == NULL
                    ? st->ins_buf->b_fname
                    : st->ins_buf->b_sfname);
-      msg_trunc(IObuff, true, HLF_R);
+      msg_progress(IObuff, "completion", "running", HLF_R, false, true);
     }
   } else if (*st->e_cpt == NUL) {
     status = INS_COMPL_CPT_END;
@@ -3865,11 +3859,8 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
         compl_type = CTRL_X_TAGS;
         if (!shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
-          msg_ext_set_kind("completion");
-          msg_hist_off = true;  // reset in msg_trunc()
-          msg_ext_overwrite = true;
           vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
-          msg_trunc(IObuff, true, HLF_R);
+          msg_progress(IObuff, "completion", "running", HLF_R, false, true);
         }
       }
     }

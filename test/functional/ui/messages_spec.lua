@@ -95,7 +95,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       messages = {
-        { content = { { writemsg } }, history = true, kind = 'bufwrite' },
+        { content = { { writemsg } }, history = true, id = 'bufwrite', kind = 'progress' },
         {
           content = { { 'W10: Warning: Changing a readonly file', 19, 'WarningMsg' } },
           history = true,
@@ -575,6 +575,20 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       messages = { { content = { { '  foldclose=' } }, history = true, kind = 'list_cmd' } },
+    })
+
+    -- Indent message
+    feed('A2\nline 3<Esc>gg=G')
+    screen:expect({
+      grid = [[
+        ^line 1                   |
+        line 2                   |
+        line 3                   |
+        {1:~                        }|*2
+      ]],
+      messages = {
+        { content = { { '3 lines indented ' } }, history = true, id = 'indent', kind = 'progress' },
+      },
     })
   end)
 
@@ -1383,7 +1397,8 @@ stack traceback:
       messages = {
         {
           content = { { string.format('"%s" [New] 0L, 0B written', fname) } },
-          kind = 'bufwrite',
+          kind = 'progress',
+          id = 'bufwrite',
           history = true,
         },
       },
@@ -1629,7 +1644,8 @@ stack traceback:
       messages = {
         {
           content = { { 'Scanning tags.', 6, 'Question' } },
-          kind = 'completion',
+          kind = 'progress',
+          id = 'completion',
         },
       },
       showmode = {
