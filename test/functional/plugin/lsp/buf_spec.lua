@@ -113,9 +113,9 @@ describe('vim.lsp.buf', function()
       local expected = {
         {
           bufnr = 2,
-          col = 5,
+          col = 4,
           end_col = 0,
-          lnum = 4,
+          lnum = 1,
           end_lnum = 0,
           module = '',
           nr = 0,
@@ -128,6 +128,43 @@ describe('vim.lsp.buf', function()
       }
 
       eq(expected, qflist)
+    end)
+
+    it('uses callee selectionRange, not caller fromRanges', function()
+      local qflist = exec_lua(function()
+        local response = {
+          {
+            fromRanges = {
+              {
+                ['end'] = { character = 28, line = 76 },
+                start = { character = 12, line = 76 },
+              },
+            },
+            to = {
+              detail = 'fn makeCalleesFunc()',
+              kind = 12,
+              name = 'makeCalleesFunc',
+              range = {
+                ['end'] = { character = 20, line = 19 },
+                start = { character = 5, line = 19 },
+              },
+              selectionRange = {
+                ['end'] = { character = 20, line = 19 },
+                start = { character = 5, line = 19 },
+              },
+              uri = 'file:///src/initial.go',
+            },
+          },
+        }
+        local handler = require 'vim.lsp.handlers'['callHierarchy/outgoingCalls']
+        handler(nil, response, {})
+        return vim.fn.getqflist()
+      end)
+
+      eq(1, #qflist)
+      eq(20, qflist[1].lnum)
+      eq(6, qflist[1].col)
+      eq('makeCalleesFunc', qflist[1].text)
     end)
   end)
 

@@ -527,7 +527,8 @@ local function make_call_hierarchy_handler(direction)
     for _, call_hierarchy_call in pairs(result) do
       --- @type lsp.CallHierarchyItem
       local call_hierarchy_item = call_hierarchy_call[direction]
-      for _, range in pairs(call_hierarchy_call.fromRanges) do
+      local ranges = direction == 'from' and call_hierarchy_call.fromRanges or { call_hierarchy_item.selectionRange }
+      for _, range in pairs(ranges) do
         table.insert(items, {
           filename = assert(vim.uri_to_fname(call_hierarchy_item.uri)),
           text = call_hierarchy_item.name,
