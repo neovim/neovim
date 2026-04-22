@@ -95,7 +95,12 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       messages = {
-        { content = { { writemsg } }, history = true, id = 'bufwrite', kind = 'progress' },
+        {
+          content = { { writemsg } },
+          history = true,
+          id = 'nvim.bufwrite "Xtest_functional_ui_messages_spec"',
+          kind = 'progress',
+        },
         {
           content = { { 'W10: Warning: Changing a readonly file', 19, 'WarningMsg' } },
           history = true,
@@ -587,7 +592,12 @@ describe('ui/ext_messages', function()
         {1:~                        }|*2
       ]],
       messages = {
-        { content = { { '3 lines indented ' } }, history = true, id = 'indent', kind = 'progress' },
+        {
+          content = { { '3 lines indented ' } },
+          kind = 'progress',
+          id = 'nvim.indent',
+          history = true,
+        },
       },
     })
   end)
@@ -1398,7 +1408,7 @@ stack traceback:
         {
           content = { { string.format('"%s" [New] 0L, 0B written', fname) } },
           kind = 'progress',
-          id = 'bufwrite',
+          id = 'nvim.bufwrite "Xtest_functional_ui_messages_spec"',
           history = true,
         },
       },
@@ -1645,7 +1655,7 @@ stack traceback:
         {
           content = { { 'Scanning tags.', 6, 'Question' } },
           kind = 'progress',
-          id = 'completion',
+          id = 'nvim.completion',
         },
       },
       showmode = {

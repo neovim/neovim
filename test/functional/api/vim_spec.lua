@@ -3888,6 +3888,8 @@ describe('API', function()
       eq("Invalid 'id': -1", pcall_err(api.nvim_echo, { { 'foo' } }, false, { id = -1 }))
       -- String ids are always allowed (user-defined).
       eq('my.msg.id', api.nvim_echo({ { 'foo' } }, false, { id = 'my.msg.id' }))
+      local opts = { kind = 'progress', source = 'nvim', status = 'success' }
+      eq("Invalid 'source': 'nvim'", pcall_err(api.nvim_echo, { { '' } }, 1, opts))
     end)
 
     it('should clear cmdline message before echo', function()

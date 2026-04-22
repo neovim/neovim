@@ -132,7 +132,10 @@ void filemess(buf_T *buf, char *name, char *s)
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
   if (*s == NUL) {
-    msg_progress(IObuff, "bufwrite", "running", 0, false, true);
+    // Append the filename to the message ID.
+    char msg_id[IOSIZE + 14] = "nvim.bufwrite ";
+    strncat(msg_id + 14, IObuff, strlen(IObuff) - 1);
+    msg_progress(IObuff, msg_id, "running", 0, false, true);
   } else {
     msg_outtrans(msg_may_trunc(false, IObuff), 0, false);
   }

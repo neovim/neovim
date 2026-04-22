@@ -1945,7 +1945,7 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
     FILE *fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
       vim_snprintf(IObuff, IOSIZE, _("Scanning dictionary: %s"), files[i]);
-      msg_progress(IObuff, "completion", "running", HLF_R, false, true);
+      msg_progress(IObuff, "nvim.completion", "running", HLF_R, false, true);
     }
 
     if (fp == NULL) {
@@ -3834,7 +3834,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
                    : st->ins_buf->b_sfname == NULL
                    ? st->ins_buf->b_fname
                    : st->ins_buf->b_sfname);
-      msg_progress(IObuff, "completion", "running", HLF_R, false, true);
+      msg_progress(IObuff, "nvim.completion", "running", HLF_R, false, true);
     }
   } else if (*st->e_cpt == NUL) {
     status = INS_COMPL_CPT_END;
@@ -3868,7 +3868,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
         compl_type = CTRL_X_TAGS;
         if (!shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
           vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
-          msg_progress(IObuff, "completion", "running", HLF_R, false, true);
+          msg_progress(IObuff, "nvim.completion", "running", HLF_R, false, true);
         }
       }
     }

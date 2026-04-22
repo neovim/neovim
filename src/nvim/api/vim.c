@@ -864,10 +864,10 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     goto error;
   });
 
-  VALIDATE_EXP((!is_progress || strequal(opts->status.data, "success")
-                || strequal(opts->status.data, "failed")
-                || strequal(opts->status.data, "running")
-                || strequal(opts->status.data, "cancel")),
+  VALIDATE_EXP(!is_progress || strequal(opts->status.data, "success")
+               || strequal(opts->status.data, "failed")
+               || strequal(opts->status.data, "running")
+               || strequal(opts->status.data, "cancel"),
                "status", "success|failed|running|cancel", opts->status.data, {
     goto error;
   });
@@ -878,13 +878,16 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     goto error;
   });
 
-  VALIDATE_R((!is_progress || opts->source.size != 0), "opts.source", {
+  VALIDATE_R(!is_progress || opts->source.size != 0, "opts.source", {
+    goto error;
+  });
+  VALIDATE_S(!is_progress || !strequal(opts->source.data, "nvim"), "source", opts->source.data, {
     goto error;
   });
 
   // Message-id may be user-defined only if String, not Integer.
-  VALIDATE(opts->id.type != kObjectTypeInteger || msg_id_exists(opts->id.data.integer),
-           "Invalid 'id': %" PRId64, opts->id.data.integer, {
+  VALIDATE_INT(opts->id.type != kObjectTypeInteger || msg_id_exists(opts->id.data.integer),
+               "id", opts->id.data.integer, {
     goto error;
   });
 
@@ -915,10 +918,6 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   if (opts->verbose) {
     verbose_leave();
     verbose_stop();  // flush now
-  }
-
-  if (is_progress) {
-    do_autocmd_progress(id, hl_msg, &msg_data);
   }
 
   if (!needs_clear) {

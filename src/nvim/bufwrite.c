@@ -1669,6 +1669,9 @@ restore_backup:
 #endif
   if (!filtering) {
     add_quoted_fname(IObuff, IOSIZE, buf, fname);
+    // Append the filename to the message ID.
+    char msg_id[IOSIZE + 14] = "nvim.bufwrite ";
+    strncat(msg_id + 14, IObuff, strlen(IObuff) - 1);
     bool insert_space = false;
     if (write_info.bw_conv_error) {
       xstrlcat(IObuff, _(" CONVERSION ERROR"), IOSIZE);
@@ -1707,7 +1710,7 @@ restore_backup:
         xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"), IOSIZE);
       }
     }
-    set_keep_msg(msg_progress(IObuff, "bufwrite", "success", 0, true, true), 0);
+    set_keep_msg(msg_progress(IObuff, msg_id, "success", 0, true, true), 0);
   }
 
   // When written everything correctly: reset 'modified'.  Unless not
