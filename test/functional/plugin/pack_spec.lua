@@ -1463,6 +1463,9 @@ describe('vim.pack', function()
         -- textDocument/hover
         local confirm_winnr = api.nvim_get_current_win()
         local function assert_hover(pos, commit_msg)
+          -- Should not be affected by special environment variables
+          fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
+          fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
           api.nvim_win_set_cursor(0, pos)
           exec_lua(function()
             vim.lsp.buf.hover()
@@ -1482,6 +1485,9 @@ describe('vim.pack', function()
 
           local ref_pattern = 'Marvim <marvim@neovim%.io>\nDate:.*' .. vim.pesc(commit_msg)
           matches(ref_pattern, text)
+
+          exec_lua('vim.uv.os_unsetenv("GIT_WORK_TREE")')
+          exec_lua('vim.uv.os_unsetenv("GIT_DIR")')
         end
 
         assert_hover({ 14, 0 }, 'Commit from `main` to be removed')
@@ -1601,54 +1607,6 @@ describe('vim.pack', function()
         n.exec('write')
         eq('vim.pack: Nothing to update', n.exec_capture('1messages'))
         eq(api.nvim_get_option_value('filetype', {}), '')
-      end)
-
-      it('hover is not affected by special environment variables', function()
-        t.skip(not is_jit(), "Non LuaJIT reports errors differently due to 'coxpcall'")
-        track_nvim_echo()
-        vim_pack_add({
-          repos_src.fetch,
-          -- No `semver` to test with non-active plugins
-          { src = repos_src.defbranch, version = 'does-not-exist' },
-        })
-        exec_lua('vim.pack.update()')
-        local semver_path = pack_get_plug_path('semver')
-        fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
-        fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
-
-        -- textDocument/hover
-        local confirm_winnr = api.nvim_get_current_win()
-        local function assert_hover(pos, commit_msg)
-          api.nvim_win_set_cursor(0, pos)
-          exec_lua(function()
-            vim.lsp.buf.hover()
-            -- Default hover is async shown in floating window
-            vim.wait(1000, function()
-              return #vim.api.nvim_tabpage_list_wins(0) > 1
-            end)
-          end)
-
-          local all_wins = api.nvim_tabpage_list_wins(0)
-          eq(2, #all_wins)
-          local float_winnr = all_wins[1] == confirm_winnr and all_wins[2] or all_wins[1]
-          eq(true, api.nvim_win_get_config(float_winnr).relative ~= '')
-
-          local float_buf = api.nvim_win_get_buf(float_winnr)
-          local text = table.concat(api.nvim_buf_get_lines(float_buf, 0, -1, false), '\n')
-
-          local ref_pattern = 'Marvim <marvim@neovim%.io>\nDate:.*' .. vim.pesc(commit_msg)
-          matches(ref_pattern, text)
-        end
-
-        assert_hover({ 14, 0 }, 'Commit from `main` to be removed')
-        assert_hover({ 15, 0 }, 'Commit to be added 2')
-        assert_hover({ 18, 0 }, 'Commit from `main` to be removed')
-        assert_hover({ 19, 0 }, 'Commit to be added 2')
-        assert_hover({ 20, 0 }, 'Commit to be added 1')
-        assert_hover({ 27, 0 }, 'Add version v0.3.0')
-        assert_hover({ 30, 0 }, 'Add version v1.0.0')
-        assert_hover({ 31, 0 }, 'Add version v0.4')
-        assert_hover({ 32, 0 }, 'Add version 0.3.1')
       end)
 
       it('has buffer-local mappings', function()
