@@ -1,6 +1,8 @@
 local api = vim.api
 local fs = vim.fs
+local time = require('vim._core.time')
 local util = require('vim._core.util')
+local uv = vim.uv
 local N_ = vim.fn.gettext
 
 --- Parsed ex command arguments for builtin commands, passed from C via `nlua_call_excmd`.
@@ -157,7 +159,7 @@ local available_subcmds = vim.tbl_keys(actions)
 
 --- Implements command: `:lsp {subcmd} {name}?`.
 --- @param eap vim._core.ExCmdArgs
-M.ex_lsp = function(eap)
+function M.ex_lsp(eap)
   local fargs = api.nvim_parse_cmd('lsp ' .. eap.args, {}).args
   if not fargs then
     return
@@ -198,7 +200,7 @@ local log_dir = vim.fn.stdpath('log')
 
 --- Implements command: `:log {file}`.
 --- @param eap vim._core.ExCmdArgs
-M.ex_log = function(eap)
+function M.ex_log(eap)
   local filename = eap.args
   if filename == '' then
     util.wrapped_edit(log_dir, eap.smods)
@@ -236,7 +238,7 @@ end
 --- `:terminal [cmd]`
 --- @param eap vim._core.ExCmdArgs
 --- @param shell_argv? string[] Tokenized 'shell' from C (shell_build_argv), for the no-cmd case.
-M.ex_terminal = function(eap, shell_argv)
+function M.ex_terminal(eap, shell_argv)
   local smods = eap.smods
   local has_mods = (smods.tab or 0) > 0
     or (smods.split or '') ~= ''
@@ -254,6 +256,12 @@ M.ex_terminal = function(eap, shell_argv)
   else -- Run [cmd] in 'shell'.
     vim.fn.jobstart(eap.args, { term = true })
   end
+end
+
+function M.ex_uptime()
+  local uptime = math.floor((uv.hrtime() - vim.v.starttime) / 1e9)
+  local uptime_display = time.fmt_rtime(uptime)
+  api.nvim_echo({ { N_('Up %s'):format(uptime_display) } }, true, {})
 end
 
 return M

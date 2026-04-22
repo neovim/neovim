@@ -573,6 +573,10 @@ g==			Executes the current code block.
 
 			Works in |help| buffers.
 
+							*:upt* *:uptime*
+:upt[ime]		Shows Nvim's uptime.
+			See also |v:starttime|.
+
 ==============================================================================
 2. Using Vim like less or more					*less*
 

@@ -8311,6 +8311,12 @@ static void ex_lsp(exarg_T *eap)
   nlua_call_excmd("vim._core.ex_cmd", "ex_lsp", eap, &cmdmod, NULL);
 }
 
+/// ":uptime"
+static void ex_uptime(exarg_T *eap)
+{
+  nlua_call_excmd("vim._core.ex_cmd", "ex_uptime", eap, &cmdmod, NULL);
+}
+
 /// ":fclose"
 static void ex_fclose(exarg_T *eap)
 {
