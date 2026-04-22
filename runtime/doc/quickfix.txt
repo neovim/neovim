@@ -668,10 +668,7 @@ can go back to the unfiltered list using the |:colder|/|:lolder| command.
 :lbo[ttom]		Same as ":cbottom", except use the window showing the
 			location list for the current window.
 
-Normally the quickfix window is at the bottom of the screen.  If there are
-vertical splits, it's at the bottom of the rightmost column of windows.  To
-make it always occupy the full width: >
-	:botright cwindow
+Normally the quickfix window is at the bottom of the screen.
 You can move the window around with |window-moving| commands.
 For example, to move it to the top: CTRL-W K
 The 'winfixheight' option will be set, which means that the window will mostly
