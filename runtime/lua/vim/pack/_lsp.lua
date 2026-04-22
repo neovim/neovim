@@ -218,7 +218,7 @@ methods['textDocument/hover'] = function(params, callback)
     local res = { contents = { kind = vim.lsp.protocol.MarkupKind.Markdown, value = markdown } }
     callback(nil, res)
   end
-  
+
   -- temporarily clear GIT env vars
   local env = vim.fn.environ() --- @type table<string,string>
   env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
