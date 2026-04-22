@@ -2620,6 +2620,7 @@ describe('TUI', function()
       vim.o.ruler = false
       vim.o.showcmd = false
       vim.o.termsync = false
+      vim.o.titlestring = '%t%( %M%) - Nvim'
       vim.o.title = true
     ]])
     retry(nil, nil, function()
@@ -4522,6 +4523,7 @@ describe('TUI client', function()
       pending('N/A: missing LuaJIT FFI')
     end
 
+    server:request('nvim_set_option_value', 'titlestring', '%t%( %M%) - Nvim', {})
     local bufname = api.nvim_buf_get_name(0)
     local old_title = api.nvim_buf_get_var(0, 'term_title')
     if not is_os('win') then
