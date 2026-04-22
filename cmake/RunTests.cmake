@@ -28,12 +28,6 @@ file(CREATE_LINK ${ROOT_DIR}/src ${TEST_XDG_PREFIX}/src SYMBOLIC)
 file(CREATE_LINK ${ROOT_DIR}/test ${TEST_XDG_PREFIX}/test SYMBOLIC)
 file(CREATE_LINK ${ROOT_DIR}/README.md ${TEST_XDG_PREFIX}/README.md SYMBOLIC)
 
-# TODO(dundargoc): The CIRRUS_CI environment variable isn't passed to here from
-# the main CMakeLists.txt, so we have to manually pass it to this script and
-# re-set the environment variable. Investigate if we can avoid manually setting
-# it like with the GITHUB_CI environment variable.
-set(ENV{CIRRUS_CI} ${CIRRUS_CI})
-
 if(NOT DEFINED ENV{NVIM_LOG_FILE})
   set(ENV{NVIM_LOG_FILE} ${BUILD_DIR}/nvim.log)
 endif()
