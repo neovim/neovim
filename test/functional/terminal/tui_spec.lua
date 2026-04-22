@@ -267,11 +267,11 @@ describe('TUI :restart', function()
     -- ZR on modified buffer fails with E37.
     tt.feed_data('ifoo\027')
     tt.feed_data('ZR')
-    screen:expect({ any = 'E37' })
+    screen:expect({ any = 'E37:' })
 
     -- [count]ZR discards unsaved changes.
     tt.feed_data('1ZR')
-
+    screen:expect({ any = vim.pesc('[No Name]') })
     assert_restarted(true, server_session, server_pipe)
   end)
 
