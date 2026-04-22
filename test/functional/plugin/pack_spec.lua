@@ -1463,6 +1463,9 @@ describe('vim.pack', function()
         -- textDocument/hover
         local confirm_winnr = api.nvim_get_current_win()
         local function assert_hover(pos, commit_msg)
+          -- Should not be affected by special environment variables
+          fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
+          fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
           api.nvim_win_set_cursor(0, pos)
           exec_lua(function()
             vim.lsp.buf.hover()
@@ -1482,6 +1485,9 @@ describe('vim.pack', function()
 
           local ref_pattern = 'Marvim <marvim@neovim%.io>\nDate:.*' .. vim.pesc(commit_msg)
           matches(ref_pattern, text)
+
+          exec_lua('vim.uv.os_unsetenv("GIT_WORK_TREE")')
+          exec_lua('vim.uv.os_unsetenv("GIT_DIR")')
         end
 
         assert_hover({ 14, 0 }, 'Commit from `main` to be removed')

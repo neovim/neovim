@@ -218,7 +218,11 @@ methods['textDocument/hover'] = function(params, callback)
     local res = { contents = { kind = vim.lsp.protocol.MarkupKind.Markdown, value = markdown } }
     callback(nil, res)
   end
-  vim.system(cmd, { cwd = path }, vim.schedule_wrap(on_exit))
+
+  -- temporarily clear GIT env vars
+  local env = vim.fn.environ() --- @type table<string,string>
+  env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
+  vim.system(cmd, { cwd = path, env = env, clear_env = true }, vim.schedule_wrap(on_exit))
 end
 
 local dispatchers = {}
