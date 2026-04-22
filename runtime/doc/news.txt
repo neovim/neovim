@@ -440,6 +440,8 @@ VIMSCRIPT
 • |wildtrigger()| triggers command-line expansion.
 • |v:vim_did_init| is set after sourcing |init.vim| but before |load-plugins|.
 • |prompt_appendbuf()| appends text to prompt-buffer.
+• |v:exitreason| is set before |QuitPre|.
+• |v:starttime| is the process start time (monotonic nanoseconds).
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

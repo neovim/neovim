@@ -244,10 +244,28 @@ vim.v.exception = ...
 --- Example:
 ---
 --- ```vim
----   :au VimLeave * echo "Exit value is " .. v:exiting
+---   :au VimLeave * echo "Exit code is " .. v:exiting
 --- ```
 --- @type integer?
 vim.v.exiting = ...
+
+--- Reason for the current exit. Set before `QuitPre`. Reset if
+--- exit was canceled.
+---
+--- Possible values:
+--- - ""          Not exiting, or exit was canceled.
+--- - "quit"      `:quit`, `:qall`, `:wq`, `ZZ`, `ZQ`, etc.
+--- - "restart"   `:restart`, `ZR`.
+---
+--- Example:
+---
+--- ```vim
+---   autocmd ExitPre * if v:exitreason ==# 'restart' | echomsg 'restarting' | endif
+--- ```
+---
+--- Read-only.
+--- @type string
+vim.v.exitreason = ...
 
 --- Special value used to put "false" in JSON and msgpack.  See
 --- `json_encode()`.  This value is converted to "v:false" when used
@@ -281,12 +299,12 @@ vim.v.fcs_choice = ...
 --- The reason why the `FileChangedShell` event was triggered.
 --- Can be used in an autocommand to decide what to do and/or what
 --- to set v:fcs_choice to.  Possible values:
----   deleted   file no longer exists
----   conflict  file contents, mode or timestamp was
+--- - deleted   file no longer exists
+--- - conflict  file contents, mode or timestamp was
 ---             changed and buffer is modified
----   changed   file contents has changed
----   mode      mode of file changed
----   time      only file timestamp changed
+--- - changed   file contents has changed
+--- - mode      mode of file changed
+--- - time      only file timestamp changed
 --- @type string
 vim.v.fcs_reason = ...
 
@@ -648,6 +666,19 @@ vim.v.shell_error = ...
 --- `throw-variables`.
 --- @type table[]
 vim.v.stacktrace = ...
+
+--- Timestamp (monotonic nanoseconds) when the Nvim process
+--- started.
+---
+--- To see the current "uptime":
+---
+--- ```lua
+---   vim.print(('uptime: %d seconds'):format((vim.uv.hrtime() - vim.v.starttime) / 1e9))
+--- ```
+---
+--- Read-only.
+--- @type integer
+vim.v.starttime = ...
 
 --- Last given status message.
 --- Modifiable (can be set).
