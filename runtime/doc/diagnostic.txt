@@ -1024,6 +1024,11 @@ setloclist({opts})                               *vim.diagnostic.setloclist()*
                   string or nil. If the return value is nil, the diagnostic is
                   not displayed in the location list. Else the output text is
                   used to display the diagnostic.
+                • {sort}? (`boolean|fun(a: table, b: table): boolean`) Sort
+                  the location list items by buffer number, then line, then
+                  column. If `false`, the order of {diagnostics} is preserved.
+                  A function can also be passed to use as a custom comparator
+                  (see |table.sort()|). (default: true)
 
 setqflist({opts})                                 *vim.diagnostic.setqflist()*
     Add all diagnostics to the quickfix list.
@@ -1044,6 +1049,11 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
                   string or nil. If the return value is nil, the diagnostic is
                   not displayed in the quickfix list. Else the output text is
                   used to display the diagnostic.
+                • {sort}? (`boolean|fun(a: table, b: table): boolean`) Sort
+                  the quickfix items by buffer number, then line, then column.
+                  If `false`, the order of {diagnostics} is preserved. A
+                  function can also be passed to use as a custom comparator
+                  (see |table.sort()|). (default: true)
 
                                                        *vim.diagnostic.show()*
 show({namespace}, {bufnr}, {diagnostics}, {opts})

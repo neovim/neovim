@@ -798,6 +798,16 @@ local function get_qf_id_for_title(title)
   return nil
 end
 
+local function default_qf_sort(a, b)
+  if a.bufnr ~= b.bufnr then
+    return a.bufnr < b.bufnr
+  elseif a.lnum ~= b.lnum then
+    return a.lnum < b.lnum
+  else
+    return a.col < b.col
+  end
+end
+
 --- @param loclist boolean
 --- @param opts? vim.diagnostic.setqflist.Opts|vim.diagnostic.setloclist.Opts
 local function set_list(loclist, opts)
@@ -817,6 +827,13 @@ local function set_list(loclist, opts)
     diagnostics = require('vim.diagnostic._shared').reformat_diagnostics(opts.format, diagnostics)
   end
   local items = M.toqflist(diagnostics)
+  if opts.sort ~= false then
+    local cmp = opts.sort
+    if type(cmp) ~= 'function' then
+      cmp = default_qf_sort
+    end
+    table.sort(items, cmp)
+  end
   local qf_id = nil
   if loclist then
     vim.fn.setloclist(winnr, {}, 'u', { title = title, items = items })
@@ -868,6 +885,11 @@ end
 --- If the return value is nil, the diagnostic is not displayed in the quickfix list.
 --- Else the output text is used to display the diagnostic.
 --- @field format? fun(diagnostic:vim.Diagnostic): string?
+---
+--- Sort the quickfix items by buffer number, then line, then column. If
+--- `false`, the order of {diagnostics} is preserved. A function can also be
+--- passed to use as a custom comparator (see |table.sort()|). (default: true)
+--- @field sort? boolean|fun(a: table, b: table): boolean
 
 --- Add all diagnostics to the quickfix list.
 ---
@@ -901,6 +923,11 @@ end
 --- If the return value is nil, the diagnostic is not displayed in the location list.
 --- Else the output text is used to display the diagnostic.
 --- @field format? fun(diagnostic:vim.Diagnostic): string?
+---
+--- Sort the location list items by buffer number, then line, then column. If
+--- `false`, the order of {diagnostics} is preserved. A function can also be
+--- passed to use as a custom comparator (see |table.sort()|). (default: true)
+--- @field sort? boolean|fun(a: table, b: table): boolean
 
 --- Add buffer diagnostics to the location list.
 ---
@@ -1007,7 +1034,6 @@ end
 ---@return table[] : Quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
   vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
-
   local list = {} --- @type table[]
   for _, diagnostic in ipairs(diagnostics) do
     list[#list + 1] = {
@@ -1022,19 +1048,6 @@ function M.toqflist(diagnostics)
       valid = 1,
     }
   end
-
-  table.sort(list, function(a, b)
-    if a.bufnr == b.bufnr then
-      if a.lnum == b.lnum then
-        return a.col < b.col
-      end
-
-      return a.lnum < b.lnum
-    end
-
-    return a.bufnr < b.bufnr
-  end)
-
   return list
 end
 

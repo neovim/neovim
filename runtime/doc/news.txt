@@ -121,6 +121,10 @@ DEFAULTS
 
 DIAGNOSTICS
 
+• |vim.diagnostic.setqflist()| and |vim.diagnostic.setloclist()| now accept
+  `opts.sort`. Pass `false` to preserve diagnostic order, or a comparator
+  function for custom ordering.
+
 • todo
 
 EDITOR

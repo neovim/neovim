@@ -3996,6 +3996,39 @@ describe('vim.diagnostic', function()
       eq(1, #qf_list)
       eq('foo_ls: Error', qf_list[1].text)
     end)
+    it('respects opts.sort', function()
+      local result = exec_lua(function()
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error 1', 2, 0, 2, 1),
+          _G.make_error('Error 2', 0, 0, 0, 1),
+          _G.make_warning('Warning', 1, 0, 1, 1),
+        })
+        local lnums = function(list)
+          return vim.tbl_map(function(item)
+            return item.lnum
+          end, list)
+        end
+        vim.diagnostic.setqflist({ open = false, title = 'T1' })
+        local sorted = lnums(vim.fn.getqflist())
+        vim.diagnostic.setqflist({ open = false, sort = false, title = 'T2' })
+        local unsorted = lnums(vim.fn.getqflist())
+        vim.diagnostic.setqflist({
+          open = false,
+          title = 'T3',
+          sort = function(a, b)
+            if a.type ~= b.type then
+              return a.type < b.type
+            end
+            return a.lnum < b.lnum
+          end,
+        })
+        local custom = lnums(vim.fn.getqflist())
+        return { sorted, unsorted, custom }
+      end)
+      eq({ 1, 2, 3 }, result[1])
+      eq({ 3, 1, 2 }, result[2])
+      eq({ 1, 3, 2 }, result[3])
+    end)
   end)
 
   describe('match()', function()
