@@ -885,9 +885,8 @@ void curs_columns(win_T *wp, int may_scroll)
     // If scrolling is off, wp->w_leftcol is assumed to be 0
 
     // If Cursor is left of the screen, scroll rightwards.
-    // If Cursor is right of the screen, scroll leftwards
-    // If we get closer to the edge than 'sidescrolloff', scroll a little
-    // extra
+    // If Cursor is right of the screen, scroll leftwards.
+    // If we get closer to the edge than 'sidescrolloff', scroll a little extra.
     int64_t siso = get_sidescrolloff_value(wp);
     int64_t off_left = startcol - wp->w_leftcol - siso;
     int64_t off_right = endcol - wp->w_leftcol - (wp->w_view_width - siso) + 1;

@@ -2912,9 +2912,10 @@ static void nv_zet(cmdarg_T *cap)
       int n = curwin->w_view_width - win_col_off(curwin);
       if (col + siso < n) {
         col = 0;
-      } else {
-        // TODO(zeertzjq): check for overflow
+      } else if (siso - n < INT_MAX - col) {
         col = (int)(col + siso - n + 1);
+      } else {
+        col = INT_MAX;
       }
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
