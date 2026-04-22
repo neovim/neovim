@@ -263,6 +263,18 @@ describe('cmdline2', function()
     ]])
     t.eq({ CmdlineChanged = 1, CursorMovedC = 1 }, exec_lua('return _G.events'))
   end)
+
+  it("no 'incsearch' recursion with 'verbose' regex message", function()
+    exec('set verbose=1')
+    feed([[:%s/.\{//}]])
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      Switching to backtracking RE engine for pattern: .\{ |*2
+      {16::}%{15:s}{16:/.\{//}^ }                                          |
+    ]])
+  end)
 end)
 
 describe('cmdline2', function()

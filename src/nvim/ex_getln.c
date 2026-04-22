@@ -1291,7 +1291,7 @@ static int command_line_execute(VimState *state, int key)
     return -1;  // get another key
   }
 
-  disptick_T display_tick_saved = display_tick;
+  disptick_T display_tick_saved = curwin->w_display_tick;
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
 
@@ -1322,7 +1322,7 @@ static int command_line_execute(VimState *state, int key)
       init_incsearch_state(&s->is_state);
     }
     // Re-apply 'incsearch' highlighting in case it was cleared.
-    if (display_tick > display_tick_saved && s->is_state.did_incsearch) {
+    if (curwin->w_display_tick > display_tick_saved && s->is_state.did_incsearch) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
     // If f_setcmdline() changed the cmdline treat it as such.
