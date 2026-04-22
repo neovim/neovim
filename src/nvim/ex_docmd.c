@@ -4366,14 +4366,14 @@ int getargopt(exarg_T *eap)
   }
 
   // ":read ++edit file"
-  if (strncmp(arg, "edit", 4) == 0) {
+  if (strncmp(arg, "edit", 4) == 0 && !ASCII_ISALPHA(arg[4])) {
     eap->read_edit = true;
     eap->arg = skipwhite(arg + 4);
     return OK;
   }
 
   // ":write ++p foo/bar/file
-  if (strncmp(arg, "p", 1) == 0) {
+  if (arg[0] == 'p' && !ASCII_ISALPHA(arg[1])) {
     eap->mkdir_p = true;
     eap->arg = skipwhite(arg + 1);
     return OK;
