@@ -577,6 +577,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
 
   redraw_later(curwin, UPD_SOME_VALID);
   update_screen();
+  may_trigger_win_scrolled_resized();
   highlight_match = false;
   restore_last_search_pattern();
 
@@ -680,6 +681,7 @@ static void finish_incsearch_highlighting(bool gotesc, incsearch_state_T *s,
   redraw_all_later(UPD_SOME_VALID);
   if (call_update_screen) {
     update_screen();
+    may_trigger_win_scrolled_resized();
   }
 }
 

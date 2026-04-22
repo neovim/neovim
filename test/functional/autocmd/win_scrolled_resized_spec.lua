@@ -249,6 +249,29 @@ describe('WinScrolled', function()
     eq(2, eval('g:scrolled'))
   end)
 
+  it('is triggered by incsearch scrolling #21207', function()
+    local lines = {}
+    for i = 1, 100 do
+      lines[i] = 'line ' .. i
+    end
+    lines[60] = 'special target line'
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
+    exec([[
+      set incsearch scrolloff=0
+      let g:scrolled = 0
+      au WinScrolled * let g:scrolled += 1
+    ]])
+    eq(0, eval('g:scrolled'))
+
+    -- Typing the pattern scrolls to the match.
+    feed('/target')
+    eq(1, eval('g:scrolled'))
+
+    -- <C-c> restores the original view, which is another scroll.
+    feed('<C-c>')
+    eq(2, eval('g:scrolled'))
+  end)
+
   -- oldtest: Test_WinScrolled_close_curwin()
   it('closing window does not cause use-after-free #13265', function()
     exec([[
