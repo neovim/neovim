@@ -10,7 +10,6 @@ local fn = n.fn
 local api = n.api
 local skip = t.skip
 local is_os = t.is_os
-local is_ci = t.is_ci
 local read_file = t.read_file
 
 local fname = 'Xtest-functional-ex_cmds-write'
@@ -56,7 +55,6 @@ describe(':write', function()
   end)
 
   it('&backupcopy=no replaces symlink with new file', function()
-    skip(is_ci('cirrus'))
     command('set backupcopy=no')
     write_file('Xtest_bkc_file.txt', 'content0')
     if is_os('win') then
@@ -148,7 +146,6 @@ describe(':write', function()
   end)
 
   it('errors out correctly', function()
-    skip(is_ci('cirrus'))
     command('let $HOME=""')
     eq(fn.fnamemodify('.', ':p:h'), fn.fnamemodify('.', ':p:h:~'))
     -- Message from check_overwrite

@@ -790,7 +790,7 @@ function M.write_file(name, text, no_dedent, append)
   file:close()
 end
 
---- @param name? 'cirrus'|'github'
+--- @param name? 'github'
 --- @return boolean
 function M.is_ci(name)
   return harness.is_ci(name)

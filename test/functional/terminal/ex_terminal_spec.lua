@@ -16,7 +16,6 @@ local ok = t.ok
 local command = n.command
 local skip = t.skip
 local is_os = t.is_os
-local is_ci = t.is_ci
 
 describe(':terminal', function()
   local screen
@@ -52,7 +51,7 @@ describe(':terminal', function()
   end)
 
   it('reads output buffer on terminal reporting #4151', function()
-    skip(is_ci('cirrus') or is_os('win'))
+    skip(is_os('win'))
     if is_os('win') then
       command(
         [[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]]

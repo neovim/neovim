@@ -142,7 +142,7 @@ the VCS/git logs more valuable (try `make lintcommit`). The structure of a commi
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Actions].
+Each pull request must pass the automated builds on [GitHub Actions].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
@@ -153,7 +153,6 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
       Note that MSVC requires Release or RelWithDebInfo build type to work properly.
 - The [lint](#lint) build checks that the code is formatted correctly and
   passes various linter checks.
-- CI for FreeBSD runs on [Cirrus CI].
 - To see CI results faster in your PR, you can temporarily set `TEST_FILE` in
   [test.yml](https://github.com/neovim/neovim/blob/ad8e0cfc1dfd937c2577dc032e524c799a772693/.github/workflows/test.yml#L26).
 
@@ -353,7 +352,6 @@ as context, use the `-W` argument as well.
 [549]: https://github.com/neovim/neovim/issues/549
 [1820]: https://github.com/neovim/neovim/pull/1820
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
-[Cirrus CI]: https://cirrus-ci.com/github/neovim/neovim
 [GitHub Actions]: https://github.com/neovim/neovim/actions
 [Vim]: https://github.com/vim/vim
 [clangd]: https://clangd.llvm.org
