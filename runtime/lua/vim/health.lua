@@ -514,6 +514,17 @@ function M._check(eap)
         end
       end, { buf = bufnr, silent = true, noremap = true, nowait = true })
     end
+    if vim.tbl_get(vim.g, 'health', 'style') == 'float' then
+      vim.api.nvim_create_autocmd("BufLeave", {
+        buffer = bufnr,
+        once = true,
+        callback = function(_)
+          if not pcall(vim.cmd.close) then
+            vim.cmd.bdelete()
+          end
+        end
+      })
+    end
   end)
 
   -- Once we're done writing checks, set nomodifiable.
