@@ -408,9 +408,8 @@ void update_topline(win_T *wp)
         if ((wp->w_cursor.lnum >= wp->w_botline - *so_ptr || win_lines_concealed(wp))) {
           lineoff_T loff;
 
-          // Cursor is (a few lines) above botline, check if there are
-          // 'scrolloff' window lines below the cursor.  If not, need to
-          // scroll.
+          // Cursor is (a few lines) above botline, check if there are 'scrolloff'
+          // window lines below the cursor.  If not, need to scroll.
           int n = eof_pressure ? 0 : wp->w_empty_rows;
           loff.lnum = wp->w_cursor.lnum;
           // In a fold go to its last line.
