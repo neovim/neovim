@@ -64,6 +64,16 @@ describe('treesitter incremental-selection', function()
 
     treeselect('select_parent')
     eq('foo(1)\nbar(2)\n', get_selected())
+
+    set_lines('quux(1,foo,bar,baz,qux,2)')
+    feed('<esc>fbve')
+    eq('bar', get_selected())
+
+    treeselect('select_grow_next')
+    eq('bar,baz', get_selected())
+
+    treeselect('select_grow_prev')
+    eq('foo,bar,baz', get_selected())
   end)
 
   it('repeat', function()
@@ -89,6 +99,14 @@ describe('treesitter incremental-selection', function()
 
     treeselect('select_child', 2)
     eq('2', get_selected())
+
+    feed('<esc>F1')
+    treeselect('select_grow_next', 2)
+    eq('1,2,3', get_selected())
+
+    feed('<esc>f4v')
+    treeselect('select_grow_prev', 2)
+    eq('2,3,4', get_selected())
   end)
 
   it('history', function()
