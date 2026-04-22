@@ -1294,6 +1294,7 @@ struct window_S {
   bool w_redr_status;               // if true statusline/winbar must be redrawn
   bool w_redr_border;               // if true border must be redrawn
   bool w_redr_statuscol;            // if true 'statuscolumn' must be redrawn
+  disptick_T w_display_tick;        // when window was last drawn.
 
   // remember what is shown in the 'statusline'-format elements
   pos_T w_stl_cursor;                // cursor position when last redrawn

@@ -2321,6 +2321,8 @@ redr_statuscol:
 
   wp->w_lines_valid = MAX(wp->w_lines_valid, idx);
 
+  wp->w_display_tick = display_tick;
+
   // Let the syntax stuff know we stop parsing here.
   if (syntax_last_parsed != 0 && syntax_present(wp)) {
     syntax_end_parsing(wp, syntax_last_parsed + 1);
