@@ -917,9 +917,19 @@ function M.make_floating_popup_options(width, height, opts)
 
   local anchor = ''
 
-  local lines_above = opts.relative == 'mouse' and vim.fn.getmousepos().line - 1
-    or vim.fn.winline() - 1
-  local lines_below = vim.fn.winheight(0) - lines_above
+  local lines_above --- @type integer
+  local lines_below --- @type integer
+  if opts.relative == 'mouse' then
+    lines_above = vim.fn.getmousepos().line - 1
+    lines_below = vim.fn.winheight(0) - lines_above
+  elseif opts.relative == 'editor' then
+    -- No cursor to anchor against; treat the whole editor as space below.
+    lines_above = 0
+    lines_below = vim.o.lines
+  else
+    lines_above = vim.fn.winline() - 1
+    lines_below = vim.fn.winheight(0) - lines_above
+  end
 
   local anchor_bias = opts.anchor_bias or 'auto'
 
@@ -946,7 +956,14 @@ function M.make_floating_popup_options(width, height, opts)
     row = 0
   end
 
-  local wincol = opts.relative == 'mouse' and vim.fn.getmousepos().column or vim.fn.wincol()
+  local wincol --- @type integer
+  if opts.relative == 'mouse' then
+    wincol = vim.fn.getmousepos().column
+  elseif opts.relative == 'editor' then
+    wincol = 0
+  else
+    wincol = vim.fn.wincol()
+  end
 
   if wincol + width + (opts.offset_x or 0) <= vim.o.columns then
     anchor = anchor .. 'W'
