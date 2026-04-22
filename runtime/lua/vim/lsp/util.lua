@@ -947,8 +947,10 @@ function M.make_floating_popup_options(width, height, opts)
   end
 
   local wincol = opts.relative == 'mouse' and vim.fn.getmousepos().column or vim.fn.wincol()
+  local anchor_west = opts.relative == 'editor'
+    or wincol + width + (opts.offset_x or 0) <= vim.o.columns
 
-  if wincol + width + (opts.offset_x or 0) <= vim.o.columns then
+  if anchor_west then
     anchor = anchor .. 'W'
     col = 0
   else

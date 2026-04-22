@@ -275,16 +275,23 @@ describe('vim.lsp.util', function()
         eq('Title', opts.title)
       end)
     end)
+    it('anchor is W when relative=editor regardless of cursor column #39306', function()
+      local opts = exec_lua(function()
+        return vim.lsp.util.make_floating_popup_options(80, 10, { relative = 'editor' })
+      end)
+      eq('W', string.sub(opts.anchor, 2, 2))
+    end)
   end)
 
   describe('open_floating_preview', function()
+    local curbuf
     before_each(function()
       Screen.new(10, 10)
       feed('9i<CR><Esc>G4k')
+      curbuf = api.nvim_get_current_buf()
     end)
 
     local var_name = 'lsp_floating_preview'
-    local curbuf = api.nvim_get_current_buf()
 
     it('clean bufvar after fclose', function()
       exec_lua(function()

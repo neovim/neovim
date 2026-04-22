@@ -400,6 +400,7 @@ function M._check(mods, plugin_names)
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
 
   local bufnr ---@type integer
+  -- TODO(glepnir): replace with `:float` modifier
   if vim.tbl_get(vim.g, 'health', 'style') == 'float' then
     local available_lines = vim.o.lines - 12
     local max_height = math.min(math.floor(vim.o.lines * 0.8), available_lines)
@@ -414,6 +415,15 @@ function M._check(mods, plugin_names)
       close_events = {},
     })
     vim.api.nvim_set_current_win(float_winid)
+    vim.api.nvim_create_autocmd('WinLeave', {
+      once = true,
+      buffer = bufnr,
+      callback = function()
+        if vim.api.nvim_win_is_valid(float_winid) then
+          vim.api.nvim_win_close(float_winid, true)
+        end
+      end,
+    })
     vim.bo[bufnr].modifiable = true
     vim.wo[float_winid].list = false
   else
