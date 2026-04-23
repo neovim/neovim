@@ -3974,6 +3974,9 @@ static void fuzzy_longest_match(void)
     return;
   }
 
+  if ((size_t)compl_num_bests > SIZE_MAX / sizeof(compl_T *)) {
+    return;
+  }
   compl_best_matches = (compl_T **)xmalloc((size_t)compl_num_bests * sizeof(compl_T *));
 
   for (int i = 0; compl != NULL && i < compl_num_bests; i++) {
