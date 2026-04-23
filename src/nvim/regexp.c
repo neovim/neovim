@@ -8286,7 +8286,7 @@ static uint8_t *regprop(uint8_t *op)
     break;
   }
   if (p != NULL) {
-    STRCPY(buf + buflen, p);
+    xstrlcpy(buf + buflen, p, sizeof(buf) - buflen);
   }
   return (uint8_t *)buf;
 }
