@@ -220,7 +220,8 @@ is assumed that all plugins in the directory are managed exclusively by
 
 Uses Git to manage plugins and requires present `git` executable. Target
 plugins should be Git repositories with versions as named tags following
-semver convention `v<major>.<minor>.<patch>`.
+semver convention `v<major>.<minor>.<patch>` (with or without `v` prefix).
+Like `v1.2.0` or `1.2.0`, but not `1.2` or `v1`.
 
 The latest state of all managed plugins is stored inside a *vim.pack-lockfile*
 located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that

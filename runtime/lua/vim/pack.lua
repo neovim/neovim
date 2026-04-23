@@ -12,7 +12,8 @@
 ---
 ---Uses Git to manage plugins and requires present `git` executable.
 ---Target plugins should be Git repositories with versions as named tags
----following semver convention `v<major>.<minor>.<patch>`.
+---following semver convention `v<major>.<minor>.<patch>` (with or without `v` prefix).
+---Like `v1.2.0` or `1.2.0`, but not `1.2` or `v1`.
 ---
 ---The latest state of all managed plugins is stored inside a [vim.pack-lockfile]()
 ---located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
@@ -257,6 +258,10 @@ local function git_cmd(cmd, cwd)
   return (stdout:gsub('\n+$', ''))
 end
 
+local function parse_semver(x)
+  return vim.version.parse(x, { strict = true })
+end
+
 --- @type vim.Version
 local git_version
 
@@ -276,7 +281,7 @@ local function git_clone(url, path)
 
   if vim.startswith(url, 'file://') then
     cmd[#cmd + 1] = '--no-hardlinks'
-  elseif git_version >= vim.version.parse('2.27') then
+  elseif git_version >= parse_semver('2.27.0') then
     cmd[#cmd + 1] = '--filter=blob:none'
   end
 
@@ -345,7 +350,7 @@ end
 --- @param x string
 --- @return boolean
 local function is_semver(x)
-  return vim.version.parse(x) ~= nil
+  return parse_semver(x) ~= nil
 end
 
 local function is_nonempty_string(x)
@@ -587,7 +592,7 @@ end
 local function get_last_semver_tag(tags, version_range)
   local last_tag, last_ver_tag --- @type string, vim.Version
   for _, tag in ipairs(tags) do
-    local ver_tag = vim.version.parse(tag)
+    local ver_tag = parse_semver(tag)
     if ver_tag then
       if version_range:has(ver_tag) and (not last_ver_tag or ver_tag > last_ver_tag) then
         last_tag, last_ver_tag = tag, ver_tag
@@ -669,7 +674,7 @@ local function checkout(p, timestamp, skip_stash)
 
   if not skip_stash then
     local stash_cmd = { 'stash' }
-    if git_version > vim.version.parse('2.13') then
+    if git_version > parse_semver('2.13.0') then
       -- Use 'push' to avoid a 'stash -m' bug in versions prior to git v2.26
       stash_cmd[#stash_cmd + 1] = 'push'
       stash_cmd[#stash_cmd + 1] = '--message'
@@ -682,7 +687,7 @@ local function checkout(p, timestamp, skip_stash)
   git_cmd({ 'checkout', '--quiet', p.info.sha_target }, p.path)
 
   local submodule_cmd = { 'submodule', 'update', '--init', '--recursive' }
-  if git_version >= vim.version.parse('2.36') then
+  if git_version >= parse_semver('2.36.0') then
     submodule_cmd[#submodule_cmd + 1] = '--filter=blob:none'
   end
   git_cmd(submodule_cmd, p.path)
@@ -762,7 +767,7 @@ local function infer_update_details(p)
   end
 
   local older_tags = ''
-  if git_version >= vim.version.parse('2.13') then
+  if git_version >= parse_semver('2.13.0') then
     older_tags = git_cmd({ 'tag', '--list', '--no-contains', sha_head }, p.path)
   end
   local cur_tags = git_cmd({ 'tag', '--list', '--points-at', sha_head }, p.path)
