@@ -290,6 +290,7 @@ local extension = {
   bm = detect.bas,
   bc = 'bc',
   bdf = 'bdf',
+  bean = 'beancount',
   beancount = 'beancount',
   bib = 'bib',
   com = detect_seq(detect.bindzone, 'dcl'),

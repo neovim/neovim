@@ -139,7 +139,7 @@ func s:GetFilenameChecks() abort
     \ 'bass': ['file.bass'],
     \ 'bc': ['file.bc'],
     \ 'bdf': ['file.bdf'],
-    \ 'beancount': ['file.beancount'],
+    \ 'beancount': ['file.beancount', 'file.bean'],
     \ 'bib': ['file.bib'],
     \ 'bicep': ['file.bicep'],
     \ 'bicep-params': ['file.bicepparam'],
