@@ -6,7 +6,6 @@ local clear = n.clear
 local command = n.command
 local exec_capture = n.exec_capture
 local matches = t.matches
-local pathsep = n.get_pathsep()
 local is_os = t.is_os
 local fn = n.fn
 
@@ -16,7 +15,7 @@ describe(':trust', function()
   local empty_file = 'Xtest_functional_ex_cmds_trust_empty'
 
   before_each(function()
-    n.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+    n.mkdir_p(vim.fs.joinpath(xstate, is_os('win') and 'nvim-data' or 'nvim'))
     t.write_file(test_file, 'test')
     t.write_file(empty_file, '')
     clear { env = { XDG_STATE_HOME = xstate } }
@@ -33,10 +32,22 @@ describe(':trust', function()
     return s:format(test_file)
   end
 
+  --- Joins path components using the OS-native separator.
+  --- Unlike vim.fs.joinpath (which normalizes to "/"), this preserves "\" on Windows
+  --- to match paths stored in the trust database.
+  local function osjoin(...)
+    return (table.concat({ ... }, n.get_pathsep()))
+  end
+
+  local function assert_trust_entry(expected)
+    local trust = t.read_file(vim.fs.joinpath(fn.stdpath('state'), 'trust'))
+    eq(expected, vim.trim(trust))
+  end
+
   it('is not executed when inside false condition', function()
     command(fmt('edit %s'))
     eq('', exec_capture('if 0 | trust | endif'))
-    eq(nil, vim.uv.fs_stat(fn.stdpath('state') .. pathsep .. 'trust'))
+    eq(nil, vim.uv.fs_stat(vim.fs.joinpath(fn.stdpath('state'), 'trust')))
   end)
 
   it('trust then deny then remove a file using current buffer', function()
@@ -45,16 +56,13 @@ describe(':trust', function()
 
     command(fmt('edit %s'))
     matches(fmt('^Allowed in trust database%%: ".*%s"$'), exec_capture('trust'))
-    local trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format('%s %s', hash, cwd .. pathsep .. test_file), vim.trim(trust))
+    assert_trust_entry(('%s %s'):format(hash, osjoin(cwd, test_file)))
 
     matches(fmt('^Denied in trust database%%: ".*%s"$'), exec_capture('trust ++deny'))
-    trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format('! %s', cwd .. pathsep .. test_file), vim.trim(trust))
+    assert_trust_entry(('! %s'):format(osjoin(cwd, test_file)))
 
     matches(fmt('^Removed from trust database%%: ".*%s"$'), exec_capture('trust ++remove'))
-    trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format(''), vim.trim(trust))
+    assert_trust_entry('')
   end)
 
   it('trust an empty file using current buffer', function()
@@ -63,8 +71,7 @@ describe(':trust', function()
 
     command('edit ' .. empty_file)
     matches('^Allowed in trust database%: ".*' .. empty_file .. '"$', exec_capture('trust'))
-    local trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format('%s %s', hash, cwd .. pathsep .. empty_file), vim.trim(trust))
+    assert_trust_entry(('%s %s'):format(hash, osjoin(cwd, empty_file)))
   end)
 
   it('deny then trust then remove a file using current buffer', function()
@@ -73,27 +80,22 @@ describe(':trust', function()
 
     command(fmt('edit %s'))
     matches(fmt('^Denied in trust database%%: ".*%s"$'), exec_capture('trust ++deny'))
-    local trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format('! %s', cwd .. pathsep .. test_file), vim.trim(trust))
+    assert_trust_entry(('! %s'):format(osjoin(cwd, test_file)))
 
     matches(fmt('^Allowed in trust database%%: ".*%s"$'), exec_capture('trust'))
-    trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format('%s %s', hash, cwd .. pathsep .. test_file), vim.trim(trust))
+    assert_trust_entry(('%s %s'):format(hash, osjoin(cwd, test_file)))
 
     matches(fmt('^Removed from trust database%%: ".*%s"$'), exec_capture('trust ++remove'))
-    trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format(''), vim.trim(trust))
+    assert_trust_entry('')
   end)
 
   it('deny then remove a file using file path', function()
     local cwd = fn.getcwd()
 
     matches(fmt('^Denied in trust database%%: ".*%s"$'), exec_capture(fmt('trust ++deny %s')))
-    local trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format('! %s', cwd .. pathsep .. test_file), vim.trim(trust))
+    assert_trust_entry(('! %s'):format(osjoin(cwd, test_file)))
 
     matches(fmt('^Removed from trust database%%: ".*%s"$'), exec_capture(fmt('trust ++remove %s')))
-    trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
-    eq(string.format(''), vim.trim(trust))
+    assert_trust_entry('')
   end)
 end)
