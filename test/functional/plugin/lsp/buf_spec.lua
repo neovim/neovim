@@ -106,13 +106,14 @@ describe('vim.lsp.buf', function()
           },
         }
         local handler = require 'vim.lsp.handlers'['callHierarchy/outgoingCalls']
-        handler(nil, rust_analyzer_response, {})
+        local bufnr = vim.api.nvim_get_current_buf()
+        handler(nil, rust_analyzer_response, { bufnr = bufnr })
         return vim.fn.getqflist()
       end)
 
       local expected = {
         {
-          bufnr = 2,
+          bufnr = 1,
           col = 5,
           end_col = 0,
           lnum = 4,
