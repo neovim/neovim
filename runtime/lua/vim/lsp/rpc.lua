@@ -453,7 +453,9 @@ function Client:handle_body(body)
   log.debug('rpc.receive', decoded)
 
   -- Received a request.
-  if type(decoded.method) == 'string' and decoded.id then
+  if type(decoded.method) == 'string' and decoded.id and decoded.id ~= vim.NIL then
+    local id_type = type(decoded.id)
+    assert(id_type == 'number' or id_type == 'string', 'Request id must be a number or a string')
     -- Schedule here so that the users functions don't trigger an error and
     -- we can still use the result.
     vim.schedule(coroutine.wrap(function()
@@ -501,6 +503,7 @@ function Client:handle_body(body)
     -- * If 'error' is nil, then 'result' must be present.
     -- * If 'result' is nil, then 'error' must be present (and not vim.NIL).
     decoded.id
+    and decoded.id ~= vim.NIL
     and (
       (decoded.error == nil and decoded.result ~= nil)
       or (decoded.result == nil and decoded.error ~= nil and decoded.error ~= vim.NIL)
@@ -549,6 +552,9 @@ function Client:handle_body(body)
       self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
       log.error('No callback found for server response id ' .. result_id)
     end
+  elseif decoded.id == vim.NIL then
+    log.warn('Server sent response with null id', decoded.error)
+    self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
   elseif type(decoded.method) == 'string' then
     -- Received a notification.
     self:try_call(

@@ -466,6 +466,14 @@ do
       require 'vim.treesitter._select'.select_next(vim.v.count1)
     end, { desc = 'Select next node' })
 
+    vim.keymap.set({ 'x' }, '[N', function()
+      require 'vim.treesitter._select'.select_grow_prev(vim.v.count1)
+    end, { desc = 'Select expand previous node' })
+
+    vim.keymap.set({ 'x' }, ']N', function()
+      require 'vim.treesitter._select'.select_grow_next(vim.v.count1)
+    end, { desc = 'Select expand next node' })
+
     vim.keymap.set({ 'x', 'o' }, 'an', function()
       if vim.treesitter.get_parser(nil, nil, { error = false }) then
         require 'vim.treesitter._select'.select_parent(vim.v.count1)

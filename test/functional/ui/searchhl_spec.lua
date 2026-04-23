@@ -574,6 +574,16 @@ describe('search highlighting', function()
       {1:~                                       }|*4
       /mat/e                                  |
     ]])
+
+    command([[call setline(1, ['blah blah blah']) | 2,$delete_]])
+    feed('gg0/blah/e<C-g><cr>')
+    eq({ 0, 1, 9, 0 }, fn.getpos('.'))
+
+    feed('gg0/blah/e<C-g><C-g><cr>')
+    eq({ 0, 1, 14, 0 }, fn.getpos('.'))
+
+    feed('gg0/blah/e<C-g><C-g><C-t><cr>')
+    eq({ 0, 1, 9, 0 }, fn.getpos('.'))
   end)
 
   it('works with multiline regexps', function()

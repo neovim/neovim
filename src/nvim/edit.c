@@ -2206,6 +2206,9 @@ int stop_arrow(void)
     new_insert_skip = 2;
   } else if (ins_need_undo) {
     if (u_save_cursor() == OK) {
+      // A command or event may have moved the cursor after syncing undo.
+      Insstart = curwin->w_cursor;
+      Insstart_textlen = (colnr_T)linetabsize_str(get_cursor_line_ptr());
       ins_need_undo = false;
     }
   }

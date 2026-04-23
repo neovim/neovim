@@ -1291,7 +1291,7 @@ static int command_line_execute(VimState *state, int key)
     return -1;  // get another key
   }
 
-  disptick_T display_tick_saved = display_tick;
+  disptick_T display_tick_saved = curwin->w_display_tick;
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
 
@@ -1322,7 +1322,7 @@ static int command_line_execute(VimState *state, int key)
       init_incsearch_state(&s->is_state);
     }
     // Re-apply 'incsearch' highlighting in case it was cleared.
-    if (display_tick > display_tick_saved && s->is_state.did_incsearch) {
+    if (curwin->w_display_tick > display_tick_saved && s->is_state.did_incsearch) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
     // If f_setcmdline() changed the cmdline treat it as such.
@@ -1595,31 +1595,19 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
   ui_flush();
 
   pos_T t;
-  char *pat;
+  char *pat = ccline.cmdbuff + skiplen;
+  char *dircp = NULL;
+  char *searchstr = pat;
+  char *strcopy = NULL;
+  size_t searchstrlen = (size_t)patlen;
+  SearchOffset offset;
   int search_flags = SEARCH_NOOF;
+  size_t patlen_s = (size_t)(ccline.cmdlen - skiplen);
 
-  if (search_delim == ccline.cmdbuff[skiplen]) {
-    pat = last_search_pattern();
-    if (pat == NULL) {
-      restore_last_search_pattern();
-      return FAIL;
-    }
-    skiplen = 0;
-    patlen = (int)last_search_pattern_len();
-  } else {
-    pat = ccline.cmdbuff + skiplen;
-  }
-
-  bool bslsh = false;
   // do not search for the search end delimiter,
   // unless it is part of the pattern
-  if (patlen > 2 && firstc == pat[patlen - 1]) {
-    patlen--;
-    if (pat[patlen - 1] == '\\') {
-      pat[patlen - 1] = (char)(uint8_t)firstc;
-      bslsh = true;
-    }
-  }
+  parse_search_pattern_offset(&pat, &patlen_s, search_delim, SEARCH_OPT, &strcopy, &searchstr,
+                              &searchstrlen, &dircp, &offset);
 
   if (next_match) {
     t = s->match_end;
@@ -1636,20 +1624,39 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
     search_flags += SEARCH_KEEP;
   }
   emsg_off++;
-  char save = pat[patlen];
-  pat[patlen] = NUL;
   int found = searchit(curwin, curbuf, &t, NULL,
                        next_match ? FORWARD : BACKWARD,
-                       pat, (size_t)patlen, count, search_flags,
+                       searchstr, searchstrlen, count, search_flags,
                        RE_SEARCH, NULL);
   emsg_off--;
-  pat[patlen] = save;
-  if (bslsh) {
-    pat[patlen - 1] = '\\';
+  if (dircp != NULL) {
+    *dircp = (char)search_delim;
   }
   ui_busy_stop();
   if (found) {
-    s->search_start = s->match_start;
+    pos_T match_start = s->match_start;
+    pos_T match_end = s->match_end;
+    int64_t off = offset.off;
+
+    s->search_start = match_start;
+    if (!offset.line && (offset.end || off != 0)) {
+      if (offset.end) {
+        s->search_start = match_end;
+        decl(&s->search_start);
+      }
+      while (off > 0) {
+        if (incl(&s->search_start) == -1) {
+          break;
+        }
+        off--;
+      }
+      while (off < 0) {
+        if (decl(&s->search_start) == -1) {
+          break;
+        }
+        off++;
+      }
+    }
     s->match_end = t;
     s->match_start = t;
     if (!next_match && firstc != '?') {
@@ -1690,6 +1697,7 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
   } else {
     vim_beep(kOptBoFlagError);
   }
+  xfree(strcopy);
   restore_last_search_pattern();
   return FAIL;
 }

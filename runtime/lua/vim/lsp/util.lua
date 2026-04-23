@@ -291,7 +291,9 @@ local function get_line_byte_from_position(bufnr, position, position_encoding)
   return col
 end
 
---- Applies a list of text edits to a buffer.
+--- Applies a list of text edits to a buffer. Note: this mutates `text_edits` (sorts in-place and
+--- adds `_index` fields).
+---
 ---@param text_edits (lsp.TextEdit|lsp.AnnotatedTextEdit)[]
 ---@param bufnr integer Buffer id
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
@@ -320,7 +322,10 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
     -- Fix reversed range and indexing each text_edits
     for index, text_edit in ipairs(text_edits) do
       --- @cast text_edit lsp.TextEdit|{_index: integer}
-      text_edit._index = index
+      -- XXX: Preserve existing _index to avoid surprises if the same edit is reapplied. #39344
+      if text_edit._index == nil then
+        text_edit._index = index
+      end
 
       if
         text_edit.range.start.line > text_edit.range['end'].line

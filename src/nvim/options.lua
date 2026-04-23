@@ -7237,8 +7237,8 @@ local options = {
         Minimal number of screen lines to keep above and below the cursor.
         This will make some context visible around where you are working.  If
         you set it to a very large value (999) the cursor line will always be
-        in the middle of the window (except at the start or end of the file or
-        when long lines wrap).
+        in the middle of the window (except at the start or end of the file,
+        see 'scrolloffpad', or when long lines wrap).
         After using the local value, go back the global value with one of
         these two: >vim
         	setlocal scrolloff<
@@ -7250,6 +7250,31 @@ local options = {
       short_desc = N_('minimum nr. of lines above and below cursor'),
       type = 'number',
       varname = 'p_so',
+    },
+    {
+      abbreviation = 'sop',
+      defaults = 0,
+      desc = [=[
+        When 'scrolloff' and 'scrolloffpad' are greater than zero, allow
+        the cursor to remain centered when at the end of the file.
+        Normally, 'scrolloff' will not keep the cursor centered at the
+        end of the file.
+
+        A value of 0 disables this feature.  Any value above 0 enables it.
+        For a window-local value, -1 means to use the global value.
+        Values below -1 are invalid.
+
+        After using the local value, go back the global value with one of
+        these two: >vim
+        	setlocal scrolloffpad<
+        	setlocal scrolloffpad=-1
+        <
+      ]=],
+      full_name = 'scrolloffpad',
+      scope = { 'global', 'win' },
+      short_desc = N_('vertically center cursor even at end of file'),
+      type = 'number',
+      varname = 'p_sop',
     },
     {
       abbreviation = 'sbo',
@@ -9686,7 +9711,7 @@ local options = {
         error will be given.
 
         The default (empty) behaviour is equivalent to: >vim
-            set titlestring=%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim
+            set titlestring=%t%(\ %M%)%(\ \(%{expand('%:p:~:h')}\)%)%a\ -\ Nvim
         <
         Example: >vim
             auto BufEnter * let &titlestring = hostname() .. "/" .. expand("%:p")

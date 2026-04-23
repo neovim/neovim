@@ -2899,7 +2899,8 @@ apply_text_document_edit({text_document_edit}, {index}, {position_encoding},
                                              *vim.lsp.util.apply_text_edits()*
 apply_text_edits({text_edits}, {bufnr}, {position_encoding},
                  {change_annotations})
-    Applies a list of text edits to a buffer.
+    Applies a list of text edits to a buffer. Note: this mutates `text_edits`
+    (sorts in-place and adds `_index` fields).
 
     Parameters: ~
       • {text_edits}          (`(lsp.TextEdit|lsp.AnnotatedTextEdit)[]`)

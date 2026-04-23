@@ -1,5 +1,6 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
+local tableclear = require('vim._core.table').clear
 local api = vim.api
 
 ---@type table<lsp.FoldingRangeKind, true>
@@ -51,12 +52,13 @@ Capability.all[State.name] = State
 
 --- Re-evaluate the cached foldinfo in the buffer.
 function State:evaluate()
-  ---@type table<integer, [integer, ">" | "<"?]?>
-  local row_level = {}
-  ---@type table<integer, table<lsp.FoldingRangeKind, true?>?>>
-  local row_kinds = {}
-  ---@type table<integer, string?>
-  local row_text = {}
+  local row_level, row_kinds, row_text, row_virt_text =
+    self.row_level, self.row_kinds, self.row_text, self.row_virt_text
+
+  tableclear(row_level)
+  tableclear(row_kinds)
+  tableclear(row_text)
+  tableclear(row_virt_text)
 
   for client_id, ranges in pairs(self.client_state) do
     for _, range in ipairs(ranges) do
@@ -88,11 +90,6 @@ function State:evaluate()
       end
     end
   end
-
-  self.row_level = row_level
-  self.row_kinds = row_kinds
-  self.row_text = row_text
-  self.row_virt_text = {}
 end
 
 --- Force `foldexpr()` to be re-evaluated, without opening folds.
@@ -190,10 +187,10 @@ end
 
 function State:reset()
   self.lang = vim.treesitter.language.get_lang(vim.bo[self.bufnr].filetype)
-  self.row_level = {}
-  self.row_kinds = {}
-  self.row_text = {}
-  self.row_virt_text = {}
+  tableclear(self.row_level)
+  tableclear(self.row_kinds)
+  tableclear(self.row_text)
+  tableclear(self.row_virt_text)
 end
 
 --- Initialize `state` and event hooks, then request folding ranges.
@@ -201,7 +198,11 @@ end
 ---@return vim.lsp.folding_range.State
 function State:new(bufnr)
   self = Capability.new(self, bufnr)
-  self:reset()
+  self.lang = vim.treesitter.language.get_lang(vim.bo[self.bufnr].filetype)
+  self.row_level = {}
+  self.row_kinds = {}
+  self.row_text = {}
+  self.row_virt_text = {}
 
   api.nvim_buf_attach(bufnr, false, {
     -- Reset `bufstate` and request folding ranges.

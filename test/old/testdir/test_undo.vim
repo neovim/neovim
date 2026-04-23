@@ -923,5 +923,19 @@ func Test_restore_cursor_position_after_undo()
   bw!
 endfunc
 
+func Test_undo_line_backspace_after_insert_cmd_cursor_movement()
+  new
+  setlocal backspace=eol undolevels=100
+  call setline(1, ['', '', 'abc', 'def'])
+  call cursor(4, 1)
+
+  let v:errmsg = ''
+  call feedkeys("i\<Cmd>setlocal undolevels=101 | call cursor(3, 1)\<CR>"
+        \ .. "\<BS>\<BS>\<Esc>u", 'xt')
+
+  call assert_equal('', v:errmsg)
+  call assert_equal(['', '', 'abc', 'def'], getline(1, '$'))
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

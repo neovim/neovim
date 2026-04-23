@@ -20,8 +20,7 @@ local sleep = uv.sleep
 --- Functions executing in the current nvim session/process being tested.
 local M = {}
 
-local lib_path = t.paths.test_build_dir .. (t.is_zig_build() and '/lib' or '/lib/nvim')
-M.runtime_set = 'set runtimepath^=' .. lib_path
+M.runtime_set = 'set runtimepath^=' .. t.paths.test_build_dir .. '/lib/nvim'
 
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.

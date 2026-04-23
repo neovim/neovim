@@ -14,6 +14,7 @@
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -387,7 +388,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_clr_eos();
   bool need_clear = false;
   bool hl_msg_updated = false;
-  msg_ext_history = history;
   if (kind != NULL) {
     msg_ext_set_kind(kind);
   }
@@ -1096,6 +1096,31 @@ char *msg_may_trunc(bool force, char *s)
     s += n;
     *s = '<';
   }
+  return s;
+}
+
+char *msg_progress(char *s, char *id, char *status, int hl_id, bool hist, bool trunc)
+{
+  Error err = ERROR_INIT;
+  Dict(echo_opts) opts = {
+    .kind = cstr_as_string("progress"),
+    .source = cstr_as_string("nvim"),
+    .status = cstr_as_string(status),
+    .id = CSTR_AS_OBJ(id),
+  };
+  if (hist && (!trunc || ui_has(kUIMessages))) {
+    msg_hist_add(s, -1, 0);
+  }
+  if (trunc) {
+    s = msg_may_trunc(false, s);
+  }
+  MAXSIZE_TEMP_ARRAY(chunk, 2);
+  MAXSIZE_TEMP_ARRAY(chunks, 1);
+  ADD_C(chunk, CSTR_AS_OBJ(s));
+  ADD_C(chunk, INTEGER_OBJ(hl_id));
+  ADD_C(chunks, ARRAY_OBJ(chunk));
+  nvim_echo(chunks, false, &opts, &err);
+  ui_flush();
   return s;
 }
 

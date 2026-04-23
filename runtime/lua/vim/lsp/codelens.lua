@@ -1,5 +1,6 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
+local tableclear = require('vim._core.table').clear
 local api = vim.api
 local M = {}
 
@@ -99,10 +100,10 @@ end
 function Provider:clear()
   self:reset_timer()
   self.version = nil
-  self.row_version = {}
+  tableclear(self.row_version)
 
   for _, state in pairs(self.client_state) do
-    state.row_lenses = {}
+    tableclear(state.row_lenses)
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
   end
 
@@ -130,8 +131,8 @@ function Provider:handler(err, result, ctx)
     return
   end
 
-  ---@type table<integer, lsp.CodeLens[]>
-  local row_lenses = {}
+  local row_lenses = state.row_lenses
+  tableclear(row_lenses)
 
   -- Code lenses should only span a single line.
   for _, lens in ipairs(result or {}) do
@@ -140,8 +141,6 @@ function Provider:handler(err, result, ctx)
     table.insert(lenses, lens)
     row_lenses[row] = lenses
   end
-
-  state.row_lenses = row_lenses
   self.version = ctx.version
 
   api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
@@ -516,7 +515,7 @@ function M.on_refresh(err, _, ctx)
         if not provider.timer then
           provider:request(client_id, function()
             if api.nvim_buf_is_valid(bufnr) then
-              provider.row_version = {}
+              tableclear(provider.row_version)
               vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
             end
           end)

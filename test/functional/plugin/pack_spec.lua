@@ -225,8 +225,8 @@ function repos_setup.semver()
   add_tag('v0.3.0')
   repo_write_file('semver', 'lua/semver.lua', 'return "semver middle-commit')
   git_add_commit('Add middle commit', 'semver')
-  add_tag('0.3.1')
-  add_tag('v0.4')
+  add_tag('0.3.1') -- Semver even without `v` prefix
+  add_tag('v0.4') -- Not semver since it requires all three version numbers
   add_tag('non-semver')
   add_tag('v0.2.1') -- Intentionally add version not in order
   add_tag('v1.0.0')
@@ -946,7 +946,7 @@ describe('vim.pack', function()
 
       eq('basic some-tag', exec_lua('return require("basic")'))
       eq('defbranch main', exec_lua('return require("defbranch")'))
-      eq('semver v0.4', exec_lua('return require("semver")'))
+      eq('semver 0.3.1', exec_lua('return require("semver")'))
     end)
 
     it('respects plugin/ and after/plugin/ scripts', function()
@@ -1063,7 +1063,7 @@ describe('vim.pack', function()
         'Available:\nTags: some%-tag\nBranches: main, feat%-branch',
         -- Should report available branches and versions if no constraint match
         '`semver`',
-        'Available:\nVersions: v1%.0%.0, v0%.4, 0%.3%.1, v0%.3%.0.*\nBranches: main\n',
+        'Available:\nVersions: v1%.0%.0, 0%.3%.1, v0%.3%.0.*\nBranches: main\n',
         '`pluginerr`:\n',
         'Wow, an error',
       }
@@ -1260,7 +1260,7 @@ describe('vim.pack', function()
         -- This requires computing target hashes on each test run because they
         -- change due to source repos being cleanly created on each file test.
         local screen
-        screen = Screen.new(85, 35)
+        screen = Screen.new(85, 34)
 
         hashes.fetch_new = git_get_hash('main', 'fetch')
         short_hashes.fetch_new = git_get_short_hash('main', 'fetch')
@@ -1301,7 +1301,6 @@ describe('vim.pack', function()
                                                                                                |
           Available newer versions:                                                            |
           • {102:v1.0.0}                                                                             |
-          • {102:v0.4}                                                                               |
           • {102:0.3.1}                                                                              |
           {1:~                                                                                    }|
                                                                                                |
@@ -1453,8 +1452,8 @@ describe('vim.pack', function()
           { lnum = 3, col = 1, end_lnum = 9, end_col = 1, text = '[Module] defbranch' },
           { lnum = 9, col = 1, end_lnum = 22, end_col = 1, text = '[Namespace] Update' },
           { lnum = 11, col = 1, end_lnum = 22, end_col = 1, text = '[Module] fetch' },
-          { lnum = 22, col = 1, end_lnum = 32, end_col = 1, text = '[Namespace] Same' },
-          { lnum = 24, col = 1, end_lnum = 32, end_col = 1, text = '[Module] semver (not active)' },
+          { lnum = 22, col = 1, end_lnum = 31, end_col = 1, text = '[Namespace] Same' },
+          { lnum = 24, col = 1, end_lnum = 31, end_col = 1, text = '[Module] semver (not active)' },
         }
         eq(ref_loclist, loclist)
 
@@ -1463,6 +1462,9 @@ describe('vim.pack', function()
         -- textDocument/hover
         local confirm_winnr = api.nvim_get_current_win()
         local function assert_hover(pos, commit_msg)
+          -- Should not be affected by special environment variables
+          fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
+          fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
           api.nvim_win_set_cursor(0, pos)
           exec_lua(function()
             vim.lsp.buf.hover()
@@ -1482,6 +1484,9 @@ describe('vim.pack', function()
 
           local ref_pattern = 'Marvim <marvim@neovim%.io>\nDate:.*' .. vim.pesc(commit_msg)
           matches(ref_pattern, text)
+
+          exec_lua('vim.uv.os_unsetenv("GIT_WORK_TREE")')
+          exec_lua('vim.uv.os_unsetenv("GIT_DIR")')
         end
 
         assert_hover({ 14, 0 }, 'Commit from `main` to be removed')
@@ -1491,8 +1496,7 @@ describe('vim.pack', function()
         assert_hover({ 20, 0 }, 'Commit to be added 1')
         assert_hover({ 27, 0 }, 'Add version v0.3.0')
         assert_hover({ 30, 0 }, 'Add version v1.0.0')
-        assert_hover({ 31, 0 }, 'Add version v0.4')
-        assert_hover({ 32, 0 }, 'Add version 0.3.1')
+        assert_hover({ 31, 0 }, 'Add version 0.3.1')
 
         -- textDocument/codeAction
         n.exec_lua(function()
@@ -1554,7 +1558,7 @@ describe('vim.pack', function()
         -- - Only deletion should be available for not active plugins
         assert_action({ 24, 0 }, { 'Delete `semver`' }, 0)
         assert_action({ 28, 0 }, { 'Delete `semver`' }, 0)
-        assert_action({ 32, 0 }, { 'Delete `semver`' }, 0)
+        assert_action({ 31, 0 }, { 'Delete `semver`' }, 0)
 
         -- - Should correctly perform action and remove plugin's lines
         local function line_match(lnum, pattern)
@@ -1627,7 +1631,7 @@ describe('vim.pack', function()
         -- - Should not wrap around the edge
         assert(']]', { 24, 0 })
 
-        api.nvim_win_set_cursor(0, { 32, 1 })
+        api.nvim_win_set_cursor(0, { 31, 1 })
         assert('[[', { 24, 0 })
         assert('[[', { 11, 0 })
         assert('[[', { 3, 0 })
@@ -1646,7 +1650,7 @@ describe('vim.pack', function()
         -- Should correctly infer that 0.3.0 is the latest version and suggest
         -- versions greater than that
         local confirm_text = table.concat(api.nvim_buf_get_lines(0, 0, -1, false), '\n')
-        matches('Available newer versions:\n• v1%.0%.0\n• v0%.4\n• 0%.3%.1$', confirm_text)
+        matches('Available newer versions:\n• v1%.0%.0\n• 0%.3%.1$', confirm_text)
       end)
 
       it('updates lockfile', function()

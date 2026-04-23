@@ -8,6 +8,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/log.h"
 #ifdef NVIM_VENDOR_BIT
 # include "bit.h"
 #endif
@@ -581,6 +582,7 @@ static int nlua_with(lua_State *L)
   int flags = 0;
   buf_T *buf = NULL;
   win_T *win = NULL;
+  int log_level = -1;
 
 #define APPLY_FLAG(key, flag) \
   if (strequal((key), k) && (v)) { \
@@ -594,10 +596,12 @@ static int nlua_with(lua_State *L)
     if (lua_type(L, -2) == LUA_TSTRING) {
       const char *k = lua_tostring(L, -2);
       bool v = lua_toboolean(L, -1);
-      if (strequal("buf", k)) { \
+      if (strequal("buf", k)) {
         buf = handle_get_buffer((int)luaL_checkinteger(L, -1));
-      } else if (strequal("win", k)) { \
+      } else if (strequal("win", k)) {
         win = handle_get_window((int)luaL_checkinteger(L, -1));
+      } else if (strequal("log_level", k)) {
+        log_level = (int)luaL_checkinteger(L, -1);
       } else {
         APPLY_FLAG("sandbox", CMOD_SANDBOX);
         APPLY_FLAG("silent", CMOD_SILENT);
@@ -618,6 +622,10 @@ static int nlua_with(lua_State *L)
   int status = 0;
   int rets = 0;
 
+  const int save_min_log_level = g_min_log_level;
+  if (log_level >= 0) {
+    g_min_log_level = log_level;
+  }
   cmdmod_T save_cmdmod = cmdmod;
   CLEAR_FIELD(cmdmod);
   cmdmod.cmod_flags = flags;
@@ -652,6 +660,9 @@ static int nlua_with(lua_State *L)
 
   undo_cmdmod(&cmdmod);
   cmdmod = save_cmdmod;
+  if (log_level >= 0) {
+    g_min_log_level = save_min_log_level;
+  }
 
   if (status) {
     return lua_error(L);

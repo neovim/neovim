@@ -449,7 +449,8 @@ CTRL-L		A match is done on the pattern in front of the cursor.  If
 	                                            *c_CTRL-G* */_CTRL-G*
 CTRL-G		While the "/" or "?" 'incsearch' prompt is active, CTRL-G
 		moves to the next match (without changing the |jumplist|).
-		Does not take |search-offset| into account.
+		The |search-offset| is applied when <CR> is pressed, but does
+		not affect the match highlighting.
 
 		Use CTRL-T to move to the previous match.
 		Mnemonic: on a regular keyboard G is below T.
@@ -457,7 +458,8 @@ CTRL-G		While the "/" or "?" 'incsearch' prompt is active, CTRL-G
 	                                            *c_CTRL-T* */_CTRL-T*
 CTRL-T		While the "/" or "?" 'incsearch' prompt is active, CTRL-T
 		moves to the previous match (without changing the |jumplist|).
-		Does not take |search-offset| into account.
+		The |search-offset| is applied when <CR> is pressed, but does
+		not affect the match highlighting.
 
 		Use CTRL-G to move to the next match.
 		Mnemonic: on a regular keyboard T is above G.

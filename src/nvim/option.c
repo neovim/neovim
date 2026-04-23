@@ -3111,6 +3111,12 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
       return e_positive;
     }
     break;
+  case kOptScrolloffpad:
+    // if (value < 0 && full_screen) {
+    if (value < 0) {
+      return e_invarg;
+    }
+    break;
   case kOptSidescrolloff:
     if (value < 0 && full_screen) {
       return e_positive;
@@ -3600,6 +3606,7 @@ static OptVal get_option_unset_value(OptIndex opt_idx)
     case kOptFsync:
       return BOOLEAN_OPTVAL(kNone);
     case kOptScrolloff:
+    case kOptScrolloffpad:
     case kOptSidescrolloff:
       return NUMBER_OPTVAL(-1);
     case kOptUndolevels:
@@ -4673,6 +4680,8 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
       return &(win->w_p_siso);
     case kOptScrolloff:
       return &(win->w_p_so);
+    case kOptScrolloffpad:
+      return &(win->w_p_sop);
     case kOptDefine:
       return &(buf->b_p_def);
     case kOptInclude:
@@ -4760,6 +4769,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return win->w_p_siso >= 0 ? &(win->w_p_siso) : p->var;
   case kOptScrolloff:
     return win->w_p_so >= 0 ? &(win->w_p_so) : p->var;
+  case kOptScrolloffpad:
+    return win->w_p_sop >= 0 ? &(win->w_p_sop) : p->var;
   case kOptBackupcopy:
     return *buf->b_p_bkc != NUL ? &(buf->b_p_bkc) : p->var;
   case kOptDefine:
@@ -5121,6 +5132,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_crb_save = from->wo_crb_save;
   to->wo_siso = from->wo_siso;
   to->wo_so = from->wo_so;
+  to->wo_sop = from->wo_sop;
   to->wo_spell = from->wo_spell;
   to->wo_cuc = from->wo_cuc;
   to->wo_cul = from->wo_cul;
@@ -6558,6 +6570,13 @@ int64_t get_scrolloff_value(win_T *wp)
     return 0;
   }
   return wp->w_p_so < 0 ? p_so : wp->w_p_so;
+}
+
+/// Return the effective 'scrolloffpad' value for the current window, using the
+/// global value when appropriate.
+int64_t get_scrolloffpad_value(win_T *wp)
+{
+  return wp->w_p_sop == -1 ? p_sop : curwin->w_p_sop;
 }
 
 /// Return the effective 'sidescrolloff' value for the current window, using the

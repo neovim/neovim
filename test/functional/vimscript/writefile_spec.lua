@@ -6,6 +6,7 @@ local clear = n.clear
 local eq = t.eq
 local fn = n.fn
 local api = n.api
+local exec_lua = n.exec_lua
 local read_file = t.read_file
 local write_file = t.write_file
 local pcall_err = t.pcall_err
@@ -97,6 +98,11 @@ describe('writefile()', function()
     eq('\0a\0b\0', read_file(fname))
     eq(0, fn.writefile({ 'a\n' }, fname, 'b'))
     eq('a\0', read_file(fname))
+  end)
+
+  it('writes Lua strings to a file', function()
+    eq(0, exec_lua([[return vim.fn.writefile('foo\0bar', ..., 'b')]], fname))
+    eq('foo\0bar', read_file(fname))
   end)
 
   it('shows correct file name when supplied numbers', function()

@@ -769,13 +769,7 @@ static int nlua_module_preloader(lua_State *lstate)
 {
   size_t i = (size_t)lua_tointeger(lstate, lua_upvalueindex(1));
   ModuleDef def = builtin_modules[i];
-  char name[256];
-  name[0] = '@';
-  size_t off = xstrlcpy(name + 1, def.name, (sizeof name) - 2);
-  strchrsub(name + 1, '.', '/');
-  xstrlcpy(name + 1 + off, ".lua", (sizeof name) - 2 - off);
-
-  if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, name)) {
+  if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, NULL)) {
     return lua_error(lstate);
   }
 
@@ -1366,12 +1360,14 @@ int nlua_call(lua_State *lstate)
   funcexe.fe_firstline = curwin->w_cursor.lnum;
   funcexe.fe_lastline = curwin->w_cursor.lnum;
   funcexe.fe_evaluate = true;
+  const sctx_T save_current_sctx = api_set_sctx(LUA_INTERNAL_CALL);
 
   TRY_WRAP(&err, {
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (TRY_WRAP) to capture abort-causing non-exception errors.
     (void)call_func(name, (int)name_len, &rettv, nargs, vim_args, &funcexe);
   });
+  current_sctx = save_current_sctx;
 
   if (!ERROR_SET(&err)) {
     nlua_push_typval(lstate, &rettv, 0);
@@ -2370,15 +2366,6 @@ void nlua_set_sctx(sctx_T *current)
   lua_State *const lstate = active_lstate;
   lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
 
-  // Files where internal wrappers are defined so we can ignore them
-  // like vim.o/opt etc are defined in _options.lua
-  char *ignorelist[] = {
-    "vim/_core/editor.lua",
-    "vim/_core/options.lua",
-    "vim/keymap.lua",
-  };
-  int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
-
   for (int level = 1; true; level++) {
     if (lua_getstack(lstate, level, info) != 1) {
       goto cleanup;
@@ -2386,19 +2373,7 @@ void nlua_set_sctx(sctx_T *current)
     if (lua_getinfo(lstate, "nSl", info) == 0) {
       goto cleanup;
     }
-
-    bool is_ignored = false;
     if (info->what[0] == 'C' || info->source[0] != '@') {
-      is_ignored = true;
-    } else {
-      for (int i = 0; i < ignorelist_size; i++) {
-        if (strncmp(ignorelist[i], info->source + 1, strlen(ignorelist[i])) == 0) {
-          is_ignored = true;
-          break;
-        }
-      }
-    }
-    if (is_ignored) {
       continue;
     }
     break;

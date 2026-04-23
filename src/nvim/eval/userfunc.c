@@ -3520,7 +3520,7 @@ static void handle_defer_one(funccall_T *funccal)
   ga_clear(&funccal->fc_defer);
 }
 
-/// Called when exiting: call all defer functions.
+/// When exiting: call all ":defer" functions.
 void invoke_all_defer(void)
 {
   for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->fc_caller) {

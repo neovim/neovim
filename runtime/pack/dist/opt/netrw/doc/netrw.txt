@@ -2851,10 +2851,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				such as listing, file removal, etc.
 				 default: ssh
 
-  *g:netrw_tmpfile_escape*	=' &;'
-				escape() is applied to all temporary files
-				to escape these characters.
-
   *g:netrw_timefmt*		specify format string to vim's strftime().
 				The default, "%c", is "the preferred date
 				and time representation for the current

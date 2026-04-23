@@ -131,7 +131,7 @@ local uv = vim.uv
 
 --- Public test harness module surface.
 --- @class test.harness
---- @field is_ci fun(name?: 'cirrus'|'github'): boolean
+--- @field is_ci fun(name?: 'github'): boolean
 --- @field on_suite_end fun(callback: fun()): fun()
 --- @field read_nvim_log fun(logfile?: string, ci_rename?: boolean): string?
 local M = {}
@@ -151,14 +151,13 @@ local function now_seconds()
 end
 
 --- Check whether the harness is running in CI, optionally for one provider.
---- @param name? 'cirrus'|'github'
+--- @param name? 'github'
 --- @return boolean
 function M.is_ci(name)
   local any_provider = (name == nil)
-  assert(any_provider or name == 'github' or name == 'cirrus')
+  assert(any_provider or name == 'github')
   local github_actions = ((any_provider or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
-  local cirrus_ci = ((any_provider or name == 'cirrus') and nil ~= os.getenv('CIRRUS_CI'))
-  return github_actions or cirrus_ci
+  return github_actions
 end
 
 --- Read the last `keep` lines from a file.

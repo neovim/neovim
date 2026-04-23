@@ -1991,8 +1991,8 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
 static inline bool ignore_buf(const buf_T *const buf, Set(ptr_t) *const removable_bufs)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
-  return (buf == NULL || buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
-          || bt_terminal(buf) || set_has(ptr_t, removable_bufs, (ptr_t)buf));
+  return (buf == NULL || buf->b_ffname == NULL || (!buf->b_p_bl && buf->b_p_initialized)
+          || bt_quickfix(buf) || bt_terminal(buf) || set_has(ptr_t, removable_bufs, (ptr_t)buf));
 }
 
 /// Get list of buffers to write to the shada file
@@ -2006,7 +2006,7 @@ static inline ShadaEntry shada_get_buflist(Set(ptr_t) *const removable_bufs)
   int max_bufs = get_shada_parameter('%');
   size_t buf_count = 0;
   FOR_ALL_BUFFERS(buf) {
-    if (!ignore_buf(buf, removable_bufs)
+    if (!ignore_buf(buf, removable_bufs) && buf->b_p_bl
         && (max_bufs < 0 || buf_count < (size_t)max_bufs)) {
       buf_count++;
     }
@@ -2025,7 +2025,7 @@ static inline ShadaEntry shada_get_buflist(Set(ptr_t) *const removable_bufs)
   };
   size_t i = 0;
   FOR_ALL_BUFFERS(buf) {
-    if (ignore_buf(buf, removable_bufs)) {
+    if (ignore_buf(buf, removable_bufs) || !buf->b_p_bl) {
       continue;
     }
     if (i >= buf_count) {
