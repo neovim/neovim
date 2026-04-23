@@ -968,6 +968,109 @@ describe('vim.lsp.buf', function()
       }
     end)
 
+    it('uses diagnostics at cursor position', function()
+      exec_lua(create_server_definition)
+      local severity = exec_lua(function()
+        return vim.diagnostic.severity.ERROR
+      end)
+      local messages = exec_lua(function(severity_)
+        local server = _G._create_server({
+          capabilities = {
+            codeActionProvider = true,
+          },
+          handlers = {
+            ['textDocument/codeAction'] = function(_, _, callback)
+              callback(nil, {})
+            end,
+          },
+        })
+
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'local first, second = 1, 2' })
+
+        local client_id = assert(vim.lsp.start({
+          name = 'dummy',
+          cmd = server.cmd,
+        }))
+
+        local expected_messages = 2 -- initialize, initialized
+        local function wait_for_messages()
+          assert(
+            vim.wait(200, function()
+              return #server.messages == expected_messages
+            end),
+            'Timed out waiting for expected number of messages. Current messages seen so far: '
+              .. vim.inspect(server.messages)
+          )
+        end
+
+        wait_for_messages()
+
+        vim.api.nvim_win_set_cursor(0, { 1, 15 })
+
+        local ns = vim.lsp.diagnostic.get_namespace(client_id)
+        vim.diagnostic.set(ns, bufnr, {
+          {
+            lnum = 0,
+            col = 6,
+            end_lnum = 0,
+            end_col = 11,
+            message = 'first',
+            severity = severity_,
+            user_data = {
+              lsp = {
+                range = {
+                  start = { line = 0, character = 6 },
+                  ['end'] = { line = 0, character = 11 },
+                },
+                message = 'first',
+                severity = severity_,
+              },
+            },
+          },
+          {
+            lnum = 0,
+            col = 13,
+            end_lnum = 0,
+            end_col = 19,
+            message = 'second',
+            severity = severity_,
+            user_data = {
+              lsp = {
+                range = {
+                  start = { line = 0, character = 13 },
+                  ['end'] = { line = 0, character = 19 },
+                },
+                message = 'second',
+                severity = severity_,
+              },
+            },
+          },
+        })
+
+        vim.lsp.buf.code_action()
+
+        expected_messages = expected_messages + 1
+        wait_for_messages()
+
+        vim.lsp.get_client_by_id(client_id):stop()
+
+        return server.messages
+      end, severity)
+
+      eq('textDocument/codeAction', messages[3].method)
+      eq({
+        {
+          range = {
+            start = { line = 0, character = 13 },
+            ['end'] = { line = 0, character = 19 },
+          },
+          message = 'second',
+          severity = severity,
+        },
+      }, messages[3].params.context.diagnostics)
+    end)
+
     it('fallback to command execution on resolve error', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
