@@ -2203,6 +2203,62 @@ describe('LSP', function()
       }, buf_lines(1))
     end)
 
+    it('can apply the same text_edits multiple times without modifying them', function()
+      eq(
+        {
+          lines1 = {
+            'First line of text,',
+            'Second line of text',
+            'foo',
+            'bar',
+            'baz',
+            'Last line of text',
+          },
+          lines2 = {
+            'First line of text,',
+            'Second line of text',
+            'foo',
+            'bar',
+            'baz',
+            'Last line of text',
+          },
+          edits_unchanged = true,
+        },
+        exec_lua(function()
+          local function text_edit(start_line, start_col, end_line, end_col, new_text)
+            return {
+              range = {
+                start = { line = start_line, character = start_col },
+                ['end'] = { line = end_line, character = end_col },
+              },
+              newText = new_text,
+            }
+          end
+
+          local edits = {
+            text_edit(0, #'First line of text', 0, #'First line of text', ','),
+            text_edit(0, #'First line of text', 0, #'First line of text', '\nSecond line of text'),
+            text_edit(1, 4, 1, 0, 'foo\r\nbar\rbaz'),
+          }
+          local original_edits = vim.deepcopy(edits)
+          local bufnr1 = vim.api.nvim_create_buf(false, true)
+          local bufnr2 = vim.api.nvim_create_buf(false, true)
+          local lines = { 'First line of text', 'xxxx', 'Last line of text' }
+          vim.api.nvim_buf_set_lines(bufnr1, 0, -1, false, lines)
+          vim.api.nvim_buf_set_lines(bufnr2, 0, -1, false, lines)
+
+          vim.lsp.util.apply_text_edits(edits, bufnr1, 'utf-16')
+          vim.lsp.util.apply_text_edits(edits, bufnr2, 'utf-16')
+
+          return {
+            lines1 = vim.api.nvim_buf_get_lines(bufnr1, 0, -1, false),
+            lines2 = vim.api.nvim_buf_get_lines(bufnr2, 0, -1, false),
+            edits_unchanged = vim.deep_equal(edits, original_edits),
+          }
+        end)
+      )
+    end)
+
     it('applies non-ASCII characters edits', function()
       apply_text_edits({
         { 4, 3, 4, 4, { 'ä' } },

@@ -317,29 +317,36 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
   local has_eol_text_edit = false
 
   local function apply_text_edits()
-    -- Fix reversed range and indexing each text_edits
+    local normalized_edits = {} --- @type (lsp.TextEdit|{_index: integer})[]
+
+    -- Fix reversed ranges, normalize line endings.
     for index, text_edit in ipairs(text_edits) do
-      --- @cast text_edit lsp.TextEdit|{_index: integer}
-      text_edit._index = index
+      local start = text_edit.range.start
+      local finish = text_edit.range['end']
 
       if
-        text_edit.range.start.line > text_edit.range['end'].line
-        or text_edit.range.start.line == text_edit.range['end'].line
-          and text_edit.range.start.character > text_edit.range['end'].character
+        start.line > finish.line
+        or start.line == finish.line and start.character > finish.character
       then
-        local start = text_edit.range.start
-        text_edit.range.start = text_edit.range['end']
-        text_edit.range['end'] = start
+        start, finish = finish, start ---@type lsp.Position, lsp.Position
       end
+
+      local new_text = string.gsub(text_edit.newText, '\r\n?', '\n')
+      normalized_edits[index] = {
+        _index = index,
+        range = {
+          start = start,
+          ['end'] = finish,
+        },
+        newText = new_text,
+      }
     end
 
-    --- @cast text_edits (lsp.TextEdit|lsp.AnnotatedTextEdit|{_index: integer})[]
-
-    -- Sort text_edits
-    ---@param a (lsp.TextEdit|lsp.AnnotatedTextEdit|{_index: integer})
-    ---@param b (lsp.TextEdit|lsp.AnnotatedTextEdit|{_index: integer})
+    -- Sort text edits from the end of the document to the start.
+    ---@param a lsp.TextEdit|{_index: integer}
+    ---@param b lsp.TextEdit|{_index: integer}
     ---@return boolean
-    table.sort(text_edits, function(a, b)
+    table.sort(normalized_edits, function(a, b)
       if a.range.start.line ~= b.range.start.line then
         return a.range.start.line > b.range.start.line
       end
@@ -356,10 +363,7 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
       end
     end
 
-    for _, text_edit in ipairs(text_edits) do
-      -- Normalize line ending
-      text_edit.newText, _ = string.gsub(text_edit.newText, '\r\n?', '\n')
-
+    for _, text_edit in ipairs(normalized_edits) do
       -- Convert from LSP style ranges to Neovim style ranges.
       local start_row = text_edit.range.start.line
       local start_col = get_line_byte_from_position(bufnr, text_edit.range.start, position_encoding)
