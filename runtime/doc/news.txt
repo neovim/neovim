@@ -74,6 +74,8 @@ DIAGNOSTICS
 
 EDITOR
 
+• On Windows, the |trust| db now stores paths with "/" slashes. This means the
+  trust store will be reset.
 • `stdpath("log")` moved to `stdpath("state")/logs`.
 
 EVENTS

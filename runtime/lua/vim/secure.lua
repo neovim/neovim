@@ -110,6 +110,7 @@ function M.read(path)
   if not fullpath then
     return nil
   end
+  fullpath = vim.fs.normalize(fullpath) -- Ensure "/" slashes, even on Windows.
 
   local trust = read_trust()
 
@@ -218,6 +219,7 @@ function M.trust(opts)
   if not fullpath then
     return false, string.format('invalid path: %s', path)
   end
+  fullpath = vim.fs.normalize(fullpath) -- Ensure "/" slashes, even on Windows.
 
   local trust = read_trust()
 

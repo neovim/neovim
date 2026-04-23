@@ -1476,11 +1476,11 @@ describe('user config init', function()
 
       -- trust .exrc
       feed(':trust<CR>')
-      screen:expect({ any = 'Allowed in trust database: ".*' .. pathsep .. '%.exrc"' })
+      screen:expect({ any = 'Allowed in trust database: ".*/%.exrc"' })
       feed(':q<CR>')
       -- trust .nvim.lua
       feed(':trust<CR>')
-      screen:expect({ any = 'Allowed in trust database: ".*' .. pathsep .. '%.nvim%.lua"' })
+      screen:expect({ any = 'Allowed in trust database: ".*/%.nvim%.lua"' })
       feed(':q<CR>')
       -- no exrc file is executed
       feed(':echo g:exrc_count<CR>')

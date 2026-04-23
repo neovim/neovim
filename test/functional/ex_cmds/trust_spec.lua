@@ -32,13 +32,6 @@ describe(':trust', function()
     return s:format(test_file)
   end
 
-  --- Joins path components using the OS-native separator.
-  --- Unlike vim.fs.joinpath (which normalizes to "/"), this preserves "\" on Windows
-  --- to match paths stored in the trust database.
-  local function osjoin(...)
-    return (table.concat({ ... }, n.get_pathsep()))
-  end
-
   local function assert_trust_entry(expected)
     local trust = t.read_file(vim.fs.joinpath(fn.stdpath('state'), 'trust'))
     eq(expected, vim.trim(trust))
@@ -56,10 +49,10 @@ describe(':trust', function()
 
     command(fmt('edit %s'))
     matches(fmt('^Allowed in trust database%%: ".*%s"$'), exec_capture('trust'))
-    assert_trust_entry(('%s %s'):format(hash, osjoin(cwd, test_file)))
+    assert_trust_entry(('%s %s'):format(hash, vim.fs.joinpath(cwd, test_file)))
 
     matches(fmt('^Denied in trust database%%: ".*%s"$'), exec_capture('trust ++deny'))
-    assert_trust_entry(('! %s'):format(osjoin(cwd, test_file)))
+    assert_trust_entry(('! %s'):format(vim.fs.joinpath(cwd, test_file)))
 
     matches(fmt('^Removed from trust database%%: ".*%s"$'), exec_capture('trust ++remove'))
     assert_trust_entry('')
@@ -71,7 +64,7 @@ describe(':trust', function()
 
     command('edit ' .. empty_file)
     matches('^Allowed in trust database%: ".*' .. empty_file .. '"$', exec_capture('trust'))
-    assert_trust_entry(('%s %s'):format(hash, osjoin(cwd, empty_file)))
+    assert_trust_entry(('%s %s'):format(hash, vim.fs.joinpath(cwd, empty_file)))
   end)
 
   it('deny then trust then remove a file using current buffer', function()
@@ -80,10 +73,10 @@ describe(':trust', function()
 
     command(fmt('edit %s'))
     matches(fmt('^Denied in trust database%%: ".*%s"$'), exec_capture('trust ++deny'))
-    assert_trust_entry(('! %s'):format(osjoin(cwd, test_file)))
+    assert_trust_entry(('! %s'):format(vim.fs.joinpath(cwd, test_file)))
 
     matches(fmt('^Allowed in trust database%%: ".*%s"$'), exec_capture('trust'))
-    assert_trust_entry(('%s %s'):format(hash, osjoin(cwd, test_file)))
+    assert_trust_entry(('%s %s'):format(hash, vim.fs.joinpath(cwd, test_file)))
 
     matches(fmt('^Removed from trust database%%: ".*%s"$'), exec_capture('trust ++remove'))
     assert_trust_entry('')
@@ -93,7 +86,7 @@ describe(':trust', function()
     local cwd = fn.getcwd()
 
     matches(fmt('^Denied in trust database%%: ".*%s"$'), exec_capture(fmt('trust ++deny %s')))
-    assert_trust_entry(('! %s'):format(osjoin(cwd, test_file)))
+    assert_trust_entry(('! %s'):format(vim.fs.joinpath(cwd, test_file)))
 
     matches(fmt('^Removed from trust database%%: ".*%s"$'), exec_capture(fmt('trust ++remove %s')))
     assert_trust_entry('')
