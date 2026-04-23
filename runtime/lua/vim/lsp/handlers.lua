@@ -519,7 +519,8 @@ end
 --- @overload fun(direction:'to'): fun(_, result: lsp.CallHierarchyOutgoingCall[]?)
 local function make_call_hierarchy_handler(direction)
   --- @param result lsp.CallHierarchyIncomingCall[]|lsp.CallHierarchyOutgoingCall[]
-  return function(_, result)
+  --- @param ctx lsp.HandlerContext
+  return function(_, result, ctx)
     if not result then
       return
     end
@@ -527,9 +528,17 @@ local function make_call_hierarchy_handler(direction)
     for _, call_hierarchy_call in pairs(result) do
       --- @type lsp.CallHierarchyItem
       local call_hierarchy_item = call_hierarchy_call[direction]
+      local filename = nil
+      local bufnr = nil
+      if direction == 'from' then
+        filename = assert(vim.uri_to_fname(call_hierarchy_item.uri))
+      else
+        bufnr = ctx.bufnr
+      end
       for _, range in pairs(call_hierarchy_call.fromRanges) do
         table.insert(items, {
-          filename = assert(vim.uri_to_fname(call_hierarchy_item.uri)),
+          filename = filename,
+          bufnr = bufnr,
           text = call_hierarchy_item.name,
           lnum = range.start.line + 1,
           col = range.start.character + 1,
