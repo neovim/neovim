@@ -454,8 +454,16 @@ function Client:handle_body(body)
 
   -- Received a request.
   if type(decoded.method) == 'string' and decoded.id and decoded.id ~= vim.NIL then
-    local id_type = type(decoded.id)
-    assert(id_type == 'number' or id_type == 'string', 'Request id must be a number or a string')
+    if type(decoded.id) ~= 'number' and type(decoded.id) ~= 'string' then
+      log.error(
+        'Server request id must be a number or string, got ' .. type(decoded.id),
+        decoded.method,
+        decoded.id
+      )
+      self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+      return
+    end
+
     -- Schedule here so that the users functions don't trigger an error and
     -- we can still use the result.
     vim.schedule(coroutine.wrap(function()
@@ -553,7 +561,7 @@ function Client:handle_body(body)
       log.error('No callback found for server response id ' .. result_id)
     end
   elseif decoded.id == vim.NIL then
-    log.warn('Server sent response with null id', decoded.error)
+    log.warn('Server sent response with null id', decoded.method, decoded.error)
     self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
   elseif type(decoded.method) == 'string' then
     -- Received a notification.
