@@ -247,6 +247,8 @@ static void emit_termrequest(void **argv)
   buf_T *buf = handle_get_buffer(buf_handle);
   if (!buf || buf->terminal == NULL) {  // Terminal already closed.
     xfree(sequence);
+    kv_destroy(*pending_send);
+    xfree(pending_send);
     return;
   }
   Terminal *term = buf->terminal;
@@ -1232,7 +1234,6 @@ void terminal_destroy(Terminal **termpp)
     kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
-    xfree(term->pending.send);
     multiqueue_free(term->pending.events);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
