@@ -99,28 +99,6 @@ describe(':checkhealth', function()
     eq('qf', api.nvim_get_option_value('filetype', { buf = 0 }))
   end)
 
-  it('float position is consistent across current buffer/cursor #39306', function()
-    clear({
-      args_rm = { '-u' },
-      args = { '--clean' },
-    })
-    command("let g:health = {'style':'float'}")
-
-    command('checkhealth vim.lsp')
-    local cfg_a = api.nvim_win_get_config(0)
-    command('close')
-
-    command("help 'comments'")
-    command('checkhealth vim.lsp')
-    local cfg_b = api.nvim_win_get_config(0)
-
-    eq(cfg_a.anchor, cfg_b.anchor)
-    eq(cfg_a.row, cfg_b.row)
-    eq(cfg_a.col, cfg_b.col)
-    eq(cfg_a.width, cfg_b.width)
-    eq(cfg_a.height, cfg_b.height)
-  end)
-
   it("vim.provider works with a misconfigured 'shell'", function()
     clear()
     command([[set shell=echo\ WRONG!!!]])

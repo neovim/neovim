@@ -1393,6 +1393,29 @@ describe('vim.lsp.util', function()
           eq('Title', opts.title)
         end)
       end)
+
+      describe('with relative = "editor" #39306', function()
+        local function editor_anchor()
+          return exec_lua(function()
+            return vim.lsp.util.make_floating_popup_options(30, 10, { relative = 'editor' }).anchor
+          end)
+        end
+
+        it('is NW on first line', function()
+          feed('gg')
+          eq('NW', editor_anchor())
+        end)
+
+        it('is NW on last line', function()
+          feed('G')
+          eq('NW', editor_anchor())
+        end)
+
+        it('is NW mid-screen', function()
+          feed('gg40j')
+          eq('NW', editor_anchor())
+        end)
+      end)
     end)
 
     describe('open_floating_preview', function()
