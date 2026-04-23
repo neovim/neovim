@@ -126,6 +126,7 @@ EDITOR
 • |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
 • |ZR| restarts Nvim (|:restart|).
+• |:restart!| saves and restores the session on restart.
 
 EVENTS
 

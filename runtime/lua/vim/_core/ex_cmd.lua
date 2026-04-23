@@ -256,4 +256,18 @@ M.ex_terminal = function(eap, shell_argv)
   end
 end
 
+--- `:restart!`
+M.ex_restart = function()
+  local session_path = vim.v.this_session
+  if session_path == '' then
+    session_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'restart_session.vim')
+  end
+  local ok = pcall(vim.cmd.mksession, { args = { session_path }, bang = true })
+  if not ok then
+    echo_err(N_('E5807: Failed to save session for :restart!'))
+    return
+  end
+  pcall(vim.cmd, 'confirm restart source ' .. vim.fn.fnameescape(session_path))
+end
+
 return M

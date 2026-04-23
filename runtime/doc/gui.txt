@@ -88,6 +88,16 @@ Restart Nvim
                 Note: If no attached UI implements the "restart" UI event,
                 this command will lead to a dangling server process.
 
+                                                *:restart!*
+:restart!       Saves the current session and restarts, then restores the
+                session. Equivalent to: >
+                    :mksession! {file} | restart source {file}
+<                Uses |v:this_session| as the session file if set, otherwise
+                saves to `{stdpath('state')}/restart_session.vim`.
+                Session save failure is reported as an error and the restart
+                is aborted. Unsaved buffers cause a prompt (same as
+                |:confirm|).
+
 ------------------------------------------------------------------------------
 Connect UI to a different server
 

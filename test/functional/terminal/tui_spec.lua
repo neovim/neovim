@@ -636,6 +636,78 @@ describe('TUI :restart', function()
     feed_data(':qall!\r')
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
+
+  it(':restart! uses fallback session path when no session is loaded', function()
+    t.skip(is_os('win'), 'FIXME: --listen not preserved by :restart on Windows #38539')
+    local server_pipe = new_pipename()
+    local server_session
+    finally(function()
+      if server_session and not server_session.closed then
+        server_session:close()
+      end
+    end)
+    local screen = tt.setup_child_nvim({
+      '-u', 'NONE', '-i', 'NONE',
+      '--listen', server_pipe,
+      '--cmd', 'set notermguicolors noswapfile',
+    }, { env = env_notermguicolors })
+    screen:expect({ any = '%[No Name%]' })
+    server_session = n.connect(server_pipe)
+
+    -- Get the fallback path from inside the child's environment.
+    local _, state_dir = server_session:request('nvim_call_function', 'stdpath', { 'state' })
+    local expected_session = state_dir .. '/restart_session.vim'
+
+    feed_data(':restart!\r')
+    -- Verify :restart! wrote the session file to the fallback path.
+    retry(nil, 5000, function()
+      ok(vim.uv.fs_stat(expected_session) ~= nil)
+    end)
+    server_session:close()
+    retry(nil, 5000, function()
+      server_session = n.connect(server_pipe)
+    end)
+
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
+
+  it(':restart! uses v:this_session when set', function()
+    t.skip(is_os('win'), 'FIXME: --listen not preserved by :restart on Windows #38539')
+    local server_pipe = new_pipename()
+    local session_file = 'Xtest_restart_bang_session.vim'
+    local server_session
+    finally(function()
+      if server_session and not server_session.closed then
+        server_session:close()
+      end
+      os.remove(session_file)
+    end)
+    local screen = tt.setup_child_nvim({
+      '-u', 'NONE', '-i', 'NONE',
+      '--listen', server_pipe,
+      '--cmd', 'set notermguicolors noswapfile',
+    }, { env = env_notermguicolors })
+    screen:expect({ any = '%[No Name%]' })
+    server_session = n.connect(server_pipe)
+
+    -- Point v:this_session at a known path so :restart! uses it.
+    local abs_session = vim.uv.cwd() .. '/' .. session_file
+    server_session:request('nvim_command', 'let v:this_session = ' .. vim.inspect(abs_session))
+
+    feed_data(':restart!\r')
+    -- Verify :restart! wrote the session file to the path from v:this_session.
+    retry(nil, 5000, function()
+      ok(vim.uv.fs_stat(abs_session) ~= nil)
+    end)
+    server_session:close()
+    retry(nil, 5000, function()
+      server_session = n.connect(server_pipe)
+    end)
+
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
 end)
 
 describe('TUI :connect', function()
