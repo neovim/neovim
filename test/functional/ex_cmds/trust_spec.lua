@@ -13,15 +13,18 @@ local fn = n.fn
 describe(':trust', function()
   local xstate = 'Xstate_ex_trust'
   local test_file = 'Xtest_functional_ex_cmds_trust'
+  local empty_file = 'Xtest_functional_ex_cmds_trust_empty'
 
   before_each(function()
     n.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
     t.write_file(test_file, 'test')
+    t.write_file(empty_file, '')
     clear { env = { XDG_STATE_HOME = xstate } }
   end)
 
   after_each(function()
     os.remove(test_file)
+    os.remove(empty_file)
     n.rmdir(xstate)
   end)
 
@@ -52,6 +55,16 @@ describe(':trust', function()
     matches(fmt('^Removed from trust database%%: ".*%s"$'), exec_capture('trust ++remove'))
     trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
     eq(string.format(''), vim.trim(trust))
+  end)
+
+  it('trust an empty file using current buffer', function()
+    local cwd = fn.getcwd()
+    local hash = fn.sha256(assert(t.read_file(empty_file)))
+
+    command('edit ' .. empty_file)
+    matches('^Allowed in trust database%: ".*' .. empty_file .. '"$', exec_capture('trust'))
+    local trust = t.read_file(fn.stdpath('state') .. pathsep .. 'trust')
+    eq(string.format('%s %s', hash, cwd .. pathsep .. empty_file), vim.trim(trust))
   end)
 
   it('deny then trust then remove a file using current buffer', function()

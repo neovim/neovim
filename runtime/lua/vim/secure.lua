@@ -39,11 +39,18 @@ local function compute_hash(fullpath, bufnr)
   end
 
   if bufnr then
-    local newline = vim.bo[bufnr].fileformat == 'unix' and '\n' or '\r\n'
-    contents =
-      table.concat(vim.api.nvim_buf_get_lines(bufnr --[[@as integer]], 0, -1, false), newline)
-    if vim.bo[bufnr].endofline then
-      contents = contents .. newline
+    local is_unchanged_empty = vim.api.nvim_buf_call(bufnr, function()
+      return not vim.bo[bufnr].modified and vim.fn.line2byte(1) == -1
+    end)
+    if is_unchanged_empty then
+      contents = ''
+    else
+      local newline = vim.bo[bufnr].fileformat == 'unix' and '\n' or '\r\n'
+      contents =
+        table.concat(vim.api.nvim_buf_get_lines(bufnr --[[@as integer]], 0, -1, false), newline)
+      if vim.bo[bufnr].endofline then
+        contents = contents .. newline
+      end
     end
   else
     do
