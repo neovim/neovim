@@ -840,7 +840,10 @@ do
     --- ignored in the calculations.
     ---
     --- [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-    do
+    ---
+    --- In slow environments (e.g. SSH with high latency), this will increase
+    --- startup time and produce a warning, so users may want to disable it.
+    if vim.o.ttyfast then
       --- Parse a string of hex characters as a color.
       ---
       --- The string can contain 1 to 4 hex characters. The returned value is
@@ -992,7 +995,7 @@ do
         and os.getenv('NVIM_TEST') == nil
       then
         vim.notify(
-          'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.',
+          "defaults.lua: Did not detect DSR response from terminal for 'background' detection. This results in a slower startup time. To disable this and other 'ttyfast' features during startup, set the environment variable NVIM_NOTTYFAST",
           vim.log.levels.WARN,
           { _truncate = true }
         )
@@ -1010,7 +1013,7 @@ do
         -- The TUI was able to determine truecolor support or $COLORTERM explicitly indicates
         -- truecolor support
         setoption('termguicolors', true)
-      elseif colorterm == nil or colorterm == '' then
+      elseif (colorterm == nil or colorterm == '') and vim.o.ttyfast then
         -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
         -- terminal
         local caps = {} ---@type table<string, boolean>

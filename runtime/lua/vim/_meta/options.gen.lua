@@ -7514,6 +7514,19 @@ vim.o.ttm = vim.o.ttimeoutlen
 vim.go.ttimeoutlen = vim.o.ttimeoutlen
 vim.go.ttm = vim.go.ttimeoutlen
 
+--- Assume that the underlying terminal can respond quickly to queries
+--- required by features such as 'background' detection.
+---
+--- Nvim issues terminal queries before reading the user's `config` file,
+--- so disabling this option there will not work. Set $NVIM_NOTTYFAST
+--- before starting Nvim to disable terminal queries.
+---
+--- @type boolean
+vim.o.ttyfast = true
+vim.o.tf = vim.o.ttyfast
+vim.go.ttyfast = vim.o.ttyfast
+vim.go.tf = vim.go.ttyfast
+
 --- List of directory names for undo files, separated with commas.
 --- See 'backupdir' for details of the format.
 --- "." means using the directory of the file.  The undo file name for
