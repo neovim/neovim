@@ -710,6 +710,7 @@ static ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
                                        item->path, pat_item.data.string.data);
         if (size < buf_len) {
           if (os_file_is_readable(buf)) {
+            TO_SLASH(buf);
             ADD_C(rv, CSTR_TO_ARENA_OBJ(arena, buf));
             if (!all) {
               goto done;
@@ -1843,10 +1844,11 @@ char *runtimepath_default(bool clean_arg)
   char *const config_home = clean_arg
                             ? NULL
                             : stdpaths_get_xdg_var(kXDGConfigHome);
-  char *const vimruntime = vim_getenv("VIMRUNTIME");
   char *const libdir = get_lib_dir();
   char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
+  char *vimruntime = vim_getenv("VIMRUNTIME");
+  TO_SLASH(vimruntime);
 #define SITE_SIZE (sizeof("site") - 1)
 #define AFTER_SIZE (sizeof("after") - 1)
   size_t data_len = 0;
@@ -2537,6 +2539,7 @@ void ex_scriptnames(exarg_T *eap)
       } else {
         expand_env(eap->arg, NameBuff, MAXPATHL);
         eap->arg = NameBuff;
+        TO_SLASH(eap->arg);
       }
       do_exedit(eap, NULL);
     }

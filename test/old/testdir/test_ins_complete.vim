@@ -940,9 +940,10 @@ func Test_ins_completeslash()
   %bw!
   call delete('Xdir', 'rf')
 
+  " globpath() should always return forward slash separator
   set noshellslash
-  set completeslash=slash
-  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') != -1)
+  set completeslash=backslash
+  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') == -1)
 
   let &shellslash = orig_shellslash
   set completeslash=
@@ -1553,13 +1554,10 @@ endfunc
 func Test_issue_7021()
   CheckMSWindows
 
-  let orig_shellslash = &shellslash
-  set noshellslash
+  " Test that 'completeslash' doesn't affect the result of expand()
+  set completeslash=backslash
+  call assert_false(expand('~') =~ '\\')
 
-  set completeslash=slash
-  call assert_false(expand('~') =~ '/')
-
-  let &shellslash = orig_shellslash
   set completeslash=
 endfunc
 

@@ -365,7 +365,7 @@ void set_init_1(bool clean_arg)
   memmove(backupdir + 2, backupdir, backupdir_len + 1);
   memmove(backupdir, ".,", 2);
   set_string_default(kOptBackupdir, backupdir, true);
-  set_string_default(kOptViewdir, stdpaths_user_state_subpath("view", 2, true),
+  set_string_default(kOptViewdir, stdpaths_user_state_subpath("view", 2, false),
                      true);
   set_string_default(kOptDirectory, stdpaths_user_state_subpath("swap", 2, true),
                      true);
@@ -2650,6 +2650,8 @@ static const char *did_set_scrollbind(optset_T *args)
 
 #ifdef BACKSLASH_IN_FILENAME
 /// Process the updated 'shellslash' option value.
+/// TODO(ntdiary): Remove this once we're confident that the `shellslash`
+/// option is no longer needed.
 static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (p_ssl) {
@@ -2662,10 +2664,11 @@ static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
     pseps[0] = '\\';
   }
 
+  // TODO(ntdiary): Remove these in the follow PR.
   // need to adjust the file name arguments and buffer names.
-  buflist_slash_adjust();
-  alist_slash_adjust();
-  scriptnames_slash_adjust();
+  // buflist_slash_adjust();
+  // alist_slash_adjust();
+  // scriptnames_slash_adjust();
   return NULL;
 }
 #endif
@@ -3902,6 +3905,29 @@ static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flag
       return errmsg;
     }
   }
+
+#ifdef BACKSLASH_IN_FILENAME
+  // Ensure "/" slashes in various options.
+  uint32_t flags = options[opt_idx].flags;
+  if ((flags & kOptFlagExpand)
+      && opt_idx != kOptEqualprg
+      && opt_idx != kOptFormatprg
+      && opt_idx != kOptGrepprg
+      && opt_idx != kOptKeywordprg
+      && opt_idx != kOptMakeprg
+      && opt_idx != kOptShell) {
+    bool allow_comma = flags & kOptFlagComma;
+    bool allow_space = (opt_idx == kOptCdpath || opt_idx == kOptPath || opt_idx == kOptTags);
+    for (char *p = value.data.string.data; *p; p++) {
+      if (*p != '\\'
+          || (p[1] == ',' && allow_comma)
+          || (p[1] == ' ' && allow_space)) {
+        continue;
+      }
+      *p = '/';
+    }
+  }
+#endif
 
   vimoption_T *opt = &options[opt_idx];
   const bool scope_local = opt_flags & OPT_LOCAL;

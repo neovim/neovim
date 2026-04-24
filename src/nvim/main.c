@@ -256,6 +256,7 @@ int main(int argc, char **argv)
 #endif
 {
   argv0 = argv[0];
+  TO_SLASH(argv0);
 
   if (!appname_is_valid()) {
     fprintf(stderr, "$NVIM_APPNAME must be a name or relative path.\n");
@@ -1461,6 +1462,7 @@ scripterror:
           break;
         case 'u':    // "-u {vimrc}" vim inits file
           parmp->use_vimrc = argv[0];
+          TO_SLASH(argv[0]);
           break;
         case 'U':    // "-U {gvimrc}" gvim inits file
           break;
@@ -1505,6 +1507,7 @@ scripterror:
         xfree(p);
         p = tilde_expanded;
       }
+      TO_SLASH(p);
 #endif
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0

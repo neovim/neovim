@@ -618,6 +618,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
 #endif
         *var = NUL;
         var = vim_getenv(dst);
+        TO_SLASH(var);
         mustfree = true;
 #ifdef UNIX
       }
@@ -660,21 +661,6 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
         tail = "";  // for gcc
 #endif  // UNIX
       }
-
-#ifdef BACKSLASH_IN_FILENAME
-      // If 'shellslash' is set change backslashes to forward slashes.
-      // Can't use slash_adjust(), p_ssl may be set temporarily.
-      if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
-        char *p = xstrdup(var);
-
-        if (mustfree) {
-          xfree(var);
-        }
-        var = p;
-        mustfree = true;
-        forward_slash(var);
-      }
-#endif
 
       // If "var" contains white space, escape it with a backslash.
       // Required for ":e ~/tt" when $HOME includes a space.
@@ -1034,6 +1020,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     homedir_env = os_getenv("USERPROFILE");
   }
 #endif
+  TO_SLASH(homedir_env);
   char *homedir_env_mod = homedir_env;
   bool must_free = false;
 

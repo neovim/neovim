@@ -537,7 +537,7 @@ char *FullName_save(const char *fname, bool force)
   char *buf = xmalloc(MAXPATHL);
   if (vim_FullName(fname, buf, MAXPATHL, force) == FAIL) {
     xfree(buf);
-    return xstrdup(fname);
+    return TO_SLASH_SAVE(fname);
   }
   return buf;
 }
@@ -551,7 +551,7 @@ char *save_abs_path(const char *name)
   if (!path_is_absolute(name)) {
     return FullName_save(name, true);
   }
-  return xstrdup(name);
+  return TO_SLASH_SAVE(name);
 }
 
 /// Checks if a path has a wildcard character including '~', unless at the end.
@@ -1516,6 +1516,30 @@ void slash_adjust(char *p)
 }
 #endif
 
+/// Convert all slashes to backslashes in-place.
+char *path_to_backslash(char *p)
+{
+  if (p != NULL) {
+    strchrsub(p, PATHSEP, '\\');
+  }
+  return p;
+}
+
+/// Convert all backslashes to forward slashes in-place.
+char *path_to_slash(char *p)
+{
+  if (p != NULL) {
+    strchrsub(p, '\\', PATHSEP);
+  }
+  return p;
+}
+
+/// Get an allocated copy of path to convert backslashes.
+char *path_to_slash_save(const char *p)
+{
+  return p == NULL ? NULL : path_to_slash(xstrdup(p));
+}
+
 /// Add a file to a file list.  Accepted flags:
 /// EW_DIR      add directories
 /// EW_FILE     add files
@@ -1561,9 +1585,7 @@ void addfile(garray_T *gap, char *f, int flags)
   char *p = xmalloc(strlen(f) + 1 + isdir);
 
   STRCPY(p, f);
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(p);
-#endif
+  TO_SLASH(p);
   // Append a slash or backslash after directory names if none is present.
   if (isdir && (flags & EW_ADDSLASH)) {
     add_pathsep(p);
@@ -1849,9 +1871,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
 
   if (strlen(fname) > (len - 1)) {
     xstrlcpy(buf, fname, len);  // truncate
-#ifdef MSWIN
-    slash_adjust(buf);
-#endif
+    TO_SLASH(buf);
     return FAIL;
   }
 
@@ -1864,9 +1884,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
-#ifdef MSWIN
-  slash_adjust(buf);
-#endif
+  TO_SLASH(buf);
   return rv;
 }
 
@@ -1899,7 +1917,7 @@ char *fix_fname(const char *fname)
     return FullName_save(fname, false);
   }
 
-  fname = xstrdup(fname);
+  fname = TO_SLASH_SAVE(fname);
 
 # ifdef CASE_INSENSITIVE_FILENAME
   path_fix_case((char *)fname);  // set correct case for file name
@@ -2476,6 +2494,7 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
       xstrlcat(NameBuff, argv0, sizeof(NameBuff));
       if (os_can_exe(NameBuff, NULL, false)) {
         xstrlcpy(buf, NameBuff, bufsize);
+        TO_SLASH(buf);
         return;
       }
     } while (iter != NULL);

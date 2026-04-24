@@ -5395,7 +5395,7 @@ describe('API', function()
         end, { nargs = 1 })
       ]])
       eq(
-        uv.cwd(),
+        t.fix_slashes(assert(uv.cwd())),
         api.nvim_cmd(
           { cmd = 'Foo', args = { '%:p:h' }, magic = { file = true } },
           { output = true }

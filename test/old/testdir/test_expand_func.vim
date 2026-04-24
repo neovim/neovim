@@ -72,12 +72,12 @@ func Test_expand_sfile_and_stack()
       let g:stack3 = expand('<stack>')
     END
     call writefile(lines, 'Xshellslash/Xstack')
-    " Test that changing 'shellslash' always affects the result of expand()
+    " Test that changing 'shellslash' doesn't affect the result of expand()
     " when sourcing a script multiple times.
     for i in range(2)
       source Xshellslash/Xstack
       call assert_match('\<Xshellslash/Xstack\[1\]$', g:stack1)
-      call assert_match('\<Xshellslash\\Xstack\[3\]$', g:stack2)
+      call assert_match('\<Xshellslash/Xstack\[3\]$', g:stack2)
       call assert_match('\<Xshellslash/Xstack\[5\]$', g:stack3)
       unlet g:stack1
       unlet g:stack2

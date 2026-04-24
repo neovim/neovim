@@ -462,12 +462,6 @@ void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   os_can_exe(tv_get_string(&argvars[0]), &path, true);
 
-#ifdef BACKSLASH_IN_FILENAME
-  if (path != NULL) {
-    slash_adjust(path);
-  }
-#endif
-
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = path;
 }
@@ -878,7 +872,7 @@ void f_glob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "globpath()" function
 void f_globpath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int flags = WILD_IGNORE_COMPLETESLASH;  // Flags for globpath.
+  int flags = 0;  // Flags for globpath.
   bool error = false;
 
   // Return a string, or a list if the optional third argument is non-zero.
