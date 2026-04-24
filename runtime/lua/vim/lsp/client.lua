@@ -1219,7 +1219,12 @@ function Client:supports_method(method, bufnr)
     bufnr = bufnr.bufnr
   end
   local required_capability = lsp.protocol._request_name_to_server_capability[method]
-  if required_capability and vim.tbl_get(self.server_capabilities, unpack(required_capability)) then
+  local has_related_server_capability = required_capability
+    and not (#required_capability == 1 and required_capability[1] == method)
+  if
+    has_related_server_capability
+    and vim.tbl_get(self.server_capabilities, unpack(required_capability))
+  then
     return true
   end
 
