@@ -1341,10 +1341,14 @@ function M.code_action(opts)
   if opts.diagnostics or opts.only then
     opts = { options = opts }
   end
-  local context = opts.context and vim.deepcopy(opts.context) or {}
-  if not context.triggerKind then
-    context.triggerKind = lsp.protocol.CodeActionTriggerKind.Invoked
-  end
+local context = opts.context and vim.deepcopy(opts.context) or {}
+  
+-- ensure diagnostics is always present (matches docs behavior)
+context.diagnostics = context.diagnostics or {}
+
+if not context.triggerKind then
+  context.triggerKind = lsp.protocol.CodeActionTriggerKind.Invoked
+end
   local mode = api.nvim_get_mode().mode
   local bufnr = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
@@ -1376,7 +1380,7 @@ function M.code_action(opts)
 
     --- @cast params lsp.CodeActionParams
 
-    if context.diagnostics then
+    if context.diagnostics and #context.diagnostics > 0 then
       params.context = context
     else
       local ns_push = lsp.diagnostic.get_namespace(client.id)
