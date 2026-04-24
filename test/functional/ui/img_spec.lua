@@ -6,7 +6,7 @@ local eq = t.eq
 local clear = n.clear
 local exec_lua = n.exec_lua
 
----4x4 PNG image that can be written to disk.
+---4x4 PNG image bytes.
 ---@type string
 -- stylua: ignore
 local PNG_IMG_BYTES = string.char(unpack({
@@ -41,292 +41,233 @@ local function base64_encode(s)
   end)
 end
 
----Sets up the experimental image API to capture output data.
+---Mock nvim_ui_send to capture escape sequence output.
 local function setup_img_api()
   exec_lua(function()
     _G.data = {}
-
-    -- Mock nvim_chan_send to capture the output
     local original_ui_send = vim.api.nvim_ui_send
-    vim.api.nvim_ui_send = function(data)
-      table.insert(_G.data, data)
+    vim.api.nvim_ui_send = function(d)
+      table.insert(_G.data, d)
     end
-
-    -- Store original for restoration if needed
     _G._original_ui_send = original_ui_send
   end)
 end
 
-describe('ui/img', function()
-  ---@type string
-  local img_file
+---@param esc string
+---@param opts? {strict?:boolean}
+---@return {i:integer, j:integer, control:table<string, string>, data:string|nil}
+local function parse_kitty_seq(esc, opts)
+  opts = opts or {}
+  local i, j, c, d = string.find(esc, '\027_G([^;\027]+)([^\027]*)\027\\')
+  assert(c, 'invalid kitty escape sequence: ' .. escape_ansi(esc))
 
+  if opts.strict then
+    assert(i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc))
+  end
+
+  ---@type table<string, string>
+  local control = {}
+  local idx = 0
+  while true do
+    local k, v, _
+    idx, _, k, v = string.find(c, '(%a+)=([^,]+),?', idx + 1)
+    if idx == nil then
+      break
+    end
+    if k and v then
+      control[k] = v
+    end
+  end
+
+  ---@type string|nil
+  local payload
+  if d and d ~= '' then
+    payload = string.sub(d, 2)
+  end
+
+  return { i = i, j = j, control = control, data = payload }
+end
+
+describe('vim.ui.img', function()
   before_each(function()
     clear()
-
-    -- Create the image on disk in a temporary location
-    img_file = t.tmpname(true)
-    t.write_file(img_file, PNG_IMG_BYTES, true, false)
+    setup_img_api()
   end)
 
-  it('should be able to load an image from disk', function()
-    local image_id = exec_lua(function()
-      return vim.ui.img.load(img_file)
+  it('can set an image', function()
+    local esc_codes = exec_lua(function()
+      _G.data = {}
+      vim.ui.img.set(PNG_IMG_BYTES, {
+        col = 1,
+        row = 2,
+        width = 3,
+        height = 4,
+        zindex = 123,
+      })
+      return table.concat(_G.data)
     end)
 
-    ---@type vim.ui.img.ImgOpts
-    local info = exec_lua(function()
-      return vim.ui.img.get(image_id)
-    end)
+    -- Transmit image bytes
+    local seq = parse_kitty_seq(esc_codes, { strict = true })
+    local image_id = seq.control.i
+    eq({
+      f = '100',
+      a = 't',
+      t = 'd',
+      i = image_id,
+      q = '2',
+      m = '0',
+    }, seq.control, 'transmit image control data')
+    eq(base64_encode(PNG_IMG_BYTES), seq.data)
+    esc_codes = string.sub(esc_codes, seq.j + 1)
 
-    eq(img_file, info.filename)
+    -- Cursor save
+    eq(escape_ansi('\0277'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor save')
+    esc_codes = string.sub(esc_codes, 3)
+
+    -- Cursor hide
+    eq(escape_ansi('\027[?25l'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor hide')
+    esc_codes = string.sub(esc_codes, 7)
+
+    -- Cursor move
+    eq(escape_ansi('\027[2;1H'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor movement')
+    esc_codes = string.sub(esc_codes, 7)
+
+    -- Place image
+    seq = parse_kitty_seq(esc_codes, { strict = true })
+    eq({
+      a = 'p',
+      i = image_id,
+      p = seq.control.p,
+      C = '1',
+      q = '2',
+      c = '3',
+      r = '4',
+      z = '123',
+    }, seq.control, 'display image control data')
+    esc_codes = string.sub(esc_codes, seq.j + 1)
+
+    -- Cursor restore
+    eq(escape_ansi('\0278'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor restore')
+    esc_codes = string.sub(esc_codes, 3)
+
+    -- Cursor show
+    eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
   end)
 
-  describe('provider', function()
-    it('defaults to kitty', function()
-      local provider = exec_lua(function()
-        return vim.ui.img.provider
-      end)
-      eq('kitty', provider)
+  it('can get image info', function()
+    local result = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, {
+        row = 5,
+        col = 10,
+        width = 20,
+        height = 15,
+        zindex = 42,
+      })
+
+      return {
+        info = vim.ui.img.get(id),
+        missing = vim.ui.img.get(999999),
+      }
     end)
 
-    it('works with builtin alias', function()
-      setup_img_api()
-      local image_id = exec_lua(function()
-        vim.ui.img.provider = 'kitty'
-        return vim.ui.img.load(img_file)
-      end)
-
-      local info = exec_lua(function()
-        return vim.ui.img.get(image_id)
-      end)
-      eq(img_file, info.filename)
-    end)
-
-    it('errors on invalid provider', function()
-      local ok, err = exec_lua(function()
-        vim.ui.img.provider = 'nonexistent'
-        return pcall(vim.ui.img.load, img_file)
-      end)
-      eq(false, ok)
-      assert(
-        err:find('nonexistent'),
-        'expected error to mention module name, got: ' .. tostring(err)
-      )
-    end)
+    eq({ row = 5, col = 10, width = 20, height = 15, zindex = 42 }, result.info)
+    eq(nil, result.missing)
   end)
 
-  describe('kitty protocol', function()
-    before_each(function()
-      setup_img_api()
+  it('can update an image', function()
+    local result = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, {
+        row = 1,
+        col = 1,
+        width = 10,
+        height = 20,
+        zindex = 99,
+      })
+
+      _G.data = {}
+      vim.ui.img.set(id, {
+        col = 5,
+        row = 6,
+        width = 7,
+        height = 8,
+        zindex = 9,
+      })
+      local esc_codes = table.concat(_G.data)
+
+      -- Partial update: only change row, other fields preserved
+      vim.ui.img.set(id, { row = 50 })
+      local info = vim.ui.img.get(id)
+
+      return { esc_codes = esc_codes, info = info }
     end)
 
-    ---@param esc string actual escape sequence
-    ---@param opts? {strict?:boolean}
-    ---@return {i:integer, j:integer, control:table<string, string>, data:string|nil}
-    local function parse_kitty_seq(esc, opts)
-      opts = opts or {}
-      local i, j, c, d = string.find(esc, '\027_G([^;\027]+)([^\027]*)\027\\')
-      assert(c, 'invalid kitty escape sequence: ' .. escape_ansi(esc))
+    -- Verify partial update merged opts
+    eq({ row = 50, col = 5, width = 7, height = 8, zindex = 9 }, result.info)
 
-      if opts.strict then
-        assert(i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc))
-      end
+    local esc_codes = result.esc_codes
 
-      ---@type table<string, string>, integer|nil
-      local control, idx = {}, 0
-      while true do
-        local k, v, _
-        idx, _, k, v = string.find(c, '(%a+)=([^,]+),?', idx + 1)
-        if idx == nil then
-          break
-        end
-        if k and v then
-          control[k] = v
-        end
-      end
+    -- Cursor save
+    eq(escape_ansi('\0277'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor save')
+    esc_codes = string.sub(esc_codes, 3)
 
-      -- Strip leading ; if we got data
-      ---@type string|nil
-      local payload
-      if d and d ~= '' then
-        payload = string.sub(d, 2)
-      end
+    -- Cursor hide
+    eq(escape_ansi('\027[?25l'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor hide')
+    esc_codes = string.sub(esc_codes, 7)
 
-      return { i = i, j = j, control = control, data = payload }
-    end
+    -- Cursor move to new position
+    eq(escape_ansi('\027[6;5H'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor movement')
+    esc_codes = string.sub(esc_codes, 7)
 
-    it('can display an image in neovim', function()
-      local esc_codes = exec_lua(function()
-        _G.data = {} -- Reset our data to make sure we start clean
+    -- Place command reuses same placement ID (flicker-free update)
+    local seq = parse_kitty_seq(esc_codes, { strict = true })
+    eq({
+      a = 'p',
+      i = seq.control.i,
+      p = seq.control.p,
+      C = '1',
+      q = '2',
+      c = '7',
+      r = '8',
+      z = '9',
+    }, seq.control, 'update image control data')
+    esc_codes = string.sub(esc_codes, seq.j + 1)
 
-        -- Preload our image and place it somewhere
-        local id = vim.ui.img.load(img_file)
-        vim.ui.img.place(id, {
-          col = 1,
-          row = 2,
-          width = 3,
-          height = 4,
-          z = 123,
-        })
+    -- Cursor restore
+    eq(escape_ansi('\0278'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor restore')
+    esc_codes = string.sub(esc_codes, 3)
 
-        -- Return esc codes sent
-        return table.concat(_G.data)
-      end)
+    -- Cursor show
+    eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
+  end)
 
-      -- First, we upload an image and assign it an id
-      local seq = parse_kitty_seq(esc_codes, { strict = true })
-      local image_id = seq.control.i
-      eq({
-        f = '100',
-        a = 't',
-        t = 'f',
-        i = image_id,
-        q = '2',
-      }, seq.control, 'transmit image control data')
-      eq(base64_encode(img_file), seq.data)
-      esc_codes = string.sub(esc_codes, seq.j + 1)
+  it('can delete an image', function()
+    local result = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
 
-      -- Second, we save the current cursor position to restore it later
-      eq(escape_ansi('\0277'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor save')
-      esc_codes = string.sub(esc_codes, 3)
+      _G.data = {}
+      local found = vim.ui.img.del(id)
+      local after = vim.ui.img.get(id)
+      local not_found = vim.ui.img.del(id)
 
-      -- Third, we hide the cursor so it doesn't jump around on screeen
-      eq(escape_ansi('\027[?25l'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor hide')
-      esc_codes = string.sub(esc_codes, 7)
-
-      -- Fourth, we move the cursor to the top-left of image position
-      eq(escape_ansi('\027[2;1H'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor movement')
-      esc_codes = string.sub(esc_codes, 7)
-
-      -- Fifth, we display the image using its id and a image id
-      seq = parse_kitty_seq(esc_codes, { strict = true })
-      local img_image_id = seq.control.p
-      eq({
-        a = 'p',
-        i = image_id,
-        p = img_image_id,
-        C = '1',
-        q = '2',
-        c = '3',
-        r = '4',
-        z = '123',
-      }, seq.control, 'display image control data')
-      esc_codes = string.sub(esc_codes, seq.j + 1)
-
-      -- Sixth, we restore the cursor position to where it was before displaying images
-      eq(escape_ansi('\0278'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor restore')
-      esc_codes = string.sub(esc_codes, 3)
-
-      -- Seventh, we show the cursor again
-      eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
+      return {
+        esc_codes = table.concat(_G.data),
+        found = found,
+        after = after,
+        not_found = not_found,
+      }
     end)
 
-    it('can hide an image in neovim', function()
-      local esc_codes = exec_lua(function()
-        -- Preload our image and place it somewhere
-        local id = vim.ui.img.load(img_file)
-        vim.ui.img.place(id)
+    local seq = parse_kitty_seq(result.esc_codes, { strict = true })
+    eq({
+      a = 'd',
+      d = 'i',
+      i = seq.control.i,
+      q = '2',
+    }, seq.control, 'delete image')
 
-        _G.data = {} -- Reset our data to make sure we start clean
-
-        -- Hide the placement
-        vim.ui.img.hide(id)
-
-        -- Return esc codes sent
-        return table.concat(_G.data)
-      end)
-
-      local seq = parse_kitty_seq(esc_codes, { strict = true })
-      -- stylua: ignore
-      eq({
-        a = 'd',           -- Perform a deletion
-        d = 'i',           -- Target an image or image
-        i = seq.control.i, -- Specific kitty image to delete
-        q = '2',           -- Suppress all responses
-      }, seq.control, 'delete image (and all placements)')
-    end)
-
-    it('can hide a placement in neovim', function()
-      local esc_codes = exec_lua(function()
-        -- Preload our image and place it somewhere
-        local id = vim.ui.img.load(img_file)
-        local placement_id = vim.ui.img.place(id)
-
-        _G.data = {} -- Reset our data to make sure we start clean
-
-        -- Hide the placement
-        vim.ui.img.hide(placement_id)
-
-        -- Return esc codes sent
-        return table.concat(_G.data)
-      end)
-
-      local seq = parse_kitty_seq(esc_codes, { strict = true })
-      -- stylua: ignore
-      eq({
-        a = 'd',           -- Perform a deletion
-        d = 'i',           -- Target an image or placement
-        i = seq.control.i, -- Specific kitty image to hide
-        p = seq.control.p, -- Specific kitty placement to hide
-        q = '2',           -- Suppress all responses
-      }, seq.control, 'delete placement')
-    end)
-
-    it('can update a placement in neovim', function()
-      local esc_codes = exec_lua(function()
-        -- Preload our image and place it somewhere
-        local id = vim.ui.img.load(img_file)
-        local placement_id = vim.ui.img.place(id)
-
-        _G.data = {} -- Reset our data to make sure we start clean
-
-        -- Perform the update of the placement
-        vim.ui.img.place(placement_id, {
-          col = 5,
-          row = 6,
-          width = 7,
-          height = 8,
-          z = 9,
-        })
-
-        -- Return esc codes sent
-        return table.concat(_G.data)
-      end)
-
-      -- First, we save the current cursor position to restore it later
-      eq(escape_ansi('\0277'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor save')
-      esc_codes = string.sub(esc_codes, 3)
-
-      -- Second, we hide the cursor so it doesn't jump around on screeen
-      eq(escape_ansi('\027[?25l'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor hide')
-      esc_codes = string.sub(esc_codes, 7)
-
-      -- Third, we move the cursor to the top-left of image position
-      eq(escape_ansi('\027[6;5H'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor movement')
-      esc_codes = string.sub(esc_codes, 7)
-
-      -- Fourth, we display the image using its id and a image id,
-      -- which for kitty will result in a flicker-free visual update
-      local seq = parse_kitty_seq(esc_codes, { strict = true })
-      eq({
-        a = 'p',
-        i = seq.control.i,
-        p = seq.control.p,
-        C = '1',
-        q = '2',
-        c = '7',
-        r = '8',
-        z = '9',
-      }, seq.control, 'display image control data')
-      esc_codes = string.sub(esc_codes, seq.j + 1)
-
-      -- Fifth, we restore the cursor position to where it was before displaying images
-      eq(escape_ansi('\0278'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor restore')
-      esc_codes = string.sub(esc_codes, 3)
-
-      -- Sixth, we show the cursor again
-      eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
-    end)
+    eq(true, result.found)
+    eq(nil, result.after)
+    eq(false, result.not_found)
   end)
 end)

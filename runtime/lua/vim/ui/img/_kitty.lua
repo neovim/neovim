@@ -1,141 +1,57 @@
----Implementation of neovim's image provider using kitty.
----@class vim.ui.img._kitty: vim.ui.img.Provider
+---Kitty graphics protocol implementation for vim.ui.img.
 local M = {}
 
----@type table<integer, {img_id:integer, opts:vim.ui.img.PlacementOpts}>
-local placements = {}
+local generate_id = (function()
+  local bit = require('bit')
+  local NVIM_PID_BITS = 10
 
----Load an image into kitty terminal without displaying it.
----@param opts vim.ui.img.ImgOpts
----@return integer id
-function M.load(opts)
-  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
-  local id = util.generate_id()
+  local nvim_pid = 0
+  local cnt = 30
 
-  if util.is_remote() then
-    vim.validate('opts.data', opts.data, 'string', false, 'image data required when remote')
-    M._transmit_direct(id, opts.data)
-  else
-    vim.validate('opts.filename', opts.filename, 'string', false, 'image filename required')
-    M._transmit_file(id, opts.filename)
-  end
-
-  return id
-end
-
----Place an image somewhere in neovim.
----@param id integer image id
----@param opts? vim.ui.img.PlacementOpts
----@return integer placement_id
-function M.place(id, opts)
-  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
-  opts = opts or {}
-
-  local img_id = id
-  local placement_id = util.generate_id()
-
-  -- If id is an existing placement, resolve the real img_id and reuse placement_id
-  if placements[id] then
-    img_id = placements[id].img_id
-    placement_id = id
-  end
-
-  placements[placement_id] = { img_id = img_id, opts = opts }
-
-  -- Cursor management sequence
-  local cursor_save = '\0277' -- Save cursor position
-  local cursor_hide = '\027[?25l' -- Hide cursor
-  local cursor_move = string.format('\027[%d;%dH', opts.row or 1, opts.col or 1) -- Move cursor
-  local cursor_restore = '\0278' -- Restore cursor position
-  local cursor_show = '\027[?25h' -- Show cursor
-
-  -- Display image control
-  ---@type table<string, string|number>
-  local control = {
-    a = 'p', -- Place/display
-    i = img_id, -- Image ID
-    p = placement_id, -- Placement ID
-    C = '1', -- Don't move cursor after image
-    q = '2', -- Suppress responses
-  }
-
-  if opts.width then
-    control.c = opts.width
-  end
-  if opts.height then
-    control.r = opts.height
-  end
-  if opts.z then
-    control.z = opts.z
-  end
-
-  -- Send complete sequence
-  util.term_send(
-    cursor_save .. cursor_hide .. cursor_move .. M._seq(control) .. cursor_restore .. cursor_show
-  )
-
-  return placement_id
-end
-
----Hide (aka delete) an image and all placements,
----or if the placement id is included then just that placement.
----@param id integer
----@param placement_id? integer
-function M.hide(id, placement_id)
-  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
-
-  if placement_id then
-    placements[placement_id] = nil
-  else
-    for pid, p in pairs(placements) do
-      if p.img_id == id then
-        placements[pid] = nil
-      end
+  ---@return integer
+  return function()
+    if nvim_pid == 0 then
+      local pid = vim.fn.getpid()
+      nvim_pid = bit.band(bit.bxor(pid, bit.rshift(pid, 5), bit.rshift(pid, NVIM_PID_BITS)), 0x3FF)
     end
+    cnt = cnt + 1
+    return bit.bor(bit.lshift(nvim_pid, 24 - NVIM_PID_BITS), cnt)
+  end
+end)()
+
+---Build a Kitty graphics protocol escape sequence.
+---@param control table<string, string|number>
+---@param payload? string
+---@return string
+local function seq(control, payload)
+  local parts = { '\027_G' }
+
+  local tmp = {}
+  for k, v in pairs(control) do
+    table.insert(tmp, k .. '=' .. v)
+  end
+  if #tmp > 0 then
+    table.insert(parts, table.concat(tmp, ','))
   end
 
-  ---@type table<string, string|number>
-  local control = {
-    a = 'd', -- Delete
-    d = 'i', -- Delete image/placement
-    i = id, -- Image ID
-    q = '2', -- Suppress responses
-  }
-
-  if placement_id then
-    control.p = placement_id
+  if payload and payload ~= '' then
+    table.insert(parts, ';')
+    table.insert(parts, payload)
   end
 
-  util.term_send(M._seq(control))
+  table.insert(parts, '\027\\')
+  return table.concat(parts)
 end
 
----@private
----Transmit image via file path (local)
----@param id integer id to associate with image in kitty
----@param filename string path to image file
-function M._transmit_file(id, filename)
-  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
-
-  local control = {
-    f = '100', -- PNG format
-    a = 't', -- Transmit without displaying
-    t = 'f', -- File transmission
-    i = id,
-    q = '2', -- Suppress responses
-  }
-
-  local payload = vim.base64.encode(filename)
-  util.term_send(M._seq(control, payload))
-end
-
----@private
----Transmit image via direct data (remote)
----@param id integer id to associate with image in kitty
----@param data string
-function M._transmit_direct(id, data)
-  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
+---Transmit image bytes to kitty in base64 chunks using direct transmission.
+---
+---Large images may cause the terminal to hang or the escape sequence to get
+---interrupted mid-write. A future filepath option (t=f) could let the
+---terminal read the file directly, avoiding this issue for local sessions.
+---@param id integer kitty image id
+---@param data string raw image bytes
+local function transmit(id, data)
   local chunk_size = 4096
-
   local base64_data = vim.base64.encode(data)
   local pos = 1
   local len = #base64_data
@@ -147,7 +63,6 @@ function M._transmit_direct(id, data)
 
     local control = {}
 
-    -- First chunk gets control info
     if pos == 1 then
       control.f = '100' -- PNG format
       control.a = 't' -- Transmit without displaying
@@ -156,38 +71,80 @@ function M._transmit_direct(id, data)
       control.q = '2' -- Suppress responses
     end
 
-    control.m = is_last and '0' or '1' -- More data flag
+    control.m = is_last and '0' or '1'
 
-    util.term_send(M._seq(control, chunk))
+    vim.api.nvim_ui_send(seq(control, chunk))
     pos = end_pos + 1
   end
 end
 
----@private
----Create Kitty graphics protocol sequence.
----@param control table<string, string|number>
----@param payload? string
----@return string
-function M._seq(control, payload)
-  local data = { '\027_G' }
+---Send a kitty place/display command with cursor management.
+---@param img_id integer kitty image id
+---@param placement_id integer kitty placement id
+---@param opts vim.ui.img.Opts
+local function place(img_id, placement_id, opts)
+  local cursor_save = '\0277'
+  local cursor_hide = '\027[?25l'
+  local cursor_move = string.format('\027[%d;%dH', opts.row or 1, opts.col or 1)
+  local cursor_restore = '\0278'
+  local cursor_show = '\027[?25h'
 
-  if control then
-    local tmp = {}
-    for k, v in pairs(control) do
-      table.insert(tmp, k .. '=' .. v)
-    end
-    if #tmp > 0 then
-      table.insert(data, table.concat(tmp, ','))
-    end
+  ---@type table<string, string|number>
+  local control = {
+    a = 'p',
+    i = img_id,
+    p = placement_id,
+    C = '1', -- Don't move the cursor at all
+    q = '2', -- Suppress responses
+  }
+
+  if opts.width then
+    control.c = opts.width
+  end
+  if opts.height then
+    control.r = opts.height
+  end
+  if opts.zindex then
+    control.z = opts.zindex
   end
 
-  if payload and payload ~= '' then
-    table.insert(data, ';')
-    table.insert(data, payload)
-  end
+  vim.api.nvim_ui_send(
+    cursor_save .. cursor_hide .. cursor_move .. seq(control) .. cursor_restore .. cursor_show
+  )
+end
 
-  table.insert(data, '\027\\')
-  return table.concat(data)
+---Transmit image bytes and place the image. Returns both IDs.
+---@param data string raw image bytes
+---@param opts vim.ui.img.Opts
+---@return integer img_id
+---@return integer placement_id
+function M.set(data, opts)
+  local img_id = generate_id()
+  local placement_id = generate_id()
+
+  transmit(img_id, data)
+  place(img_id, placement_id, opts)
+
+  return img_id, placement_id
+end
+
+---Update an existing placement (flicker-free, reuses same IDs).
+---@param img_id integer
+---@param placement_id integer
+---@param opts vim.ui.img.Opts
+function M.update(img_id, placement_id, opts)
+  place(img_id, placement_id, opts)
+end
+
+---Delete an image and all its placements from the terminal.
+---@param img_id integer
+function M.delete(img_id)
+  vim.api.nvim_ui_send(seq({
+    a = 'd',
+    d = 'i',
+    i = img_id,
+    q = '2', -- Suppress responses
+  }))
 end
 
 return M
