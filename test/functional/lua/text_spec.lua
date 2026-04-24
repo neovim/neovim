@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 
 describe('vim.text', function()
   describe('indent()', function()

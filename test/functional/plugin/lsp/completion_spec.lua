@@ -1401,7 +1401,8 @@ describe('vim.lsp.completion: integration', function()
     local dummy_client_id = create_server('dummy', completion_list, {
       resolve_result = {
         {
-          detail = 'function',
+          -- detail not in documentation, should be prepended as code block
+          detail = '(method) nvim__id_array(arr: any[]): any[]',
           documentation = {
             kind = 'markdown',
             value = [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]],
@@ -1420,7 +1421,8 @@ describe('vim.lsp.completion: integration', function()
           sortText = '0003',
         },
         {
-          detail = 'function',
+          -- detail is in documentation, should not be duplicated
+          detail = '_assert_integer',
           documentation = {
             kind = 'markdown',
             value = [[```lua\nmore doc for vim._assert_integer\n```]],
@@ -1436,24 +1438,30 @@ describe('vim.lsp.completion: integration', function()
 
     feed('S<C-X><C-O>')
     retry(nil, nil, function()
-      eq(
-        { true, true, [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]] },
-        exec_lua(function()
-          local data = vim.fn.complete_info({ 'selected' })
-          return {
-            vim.api.nvim_win_is_valid(data.preview_winid),
-            vim.api.nvim_buf_is_valid(data.preview_bufnr),
-            vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false)[1],
-          }
-        end)
-      )
+      local info = exec_lua(function()
+        local data = vim.fn.complete_info({ 'selected' })
+        if
+          not data.preview_winid
+          or not vim.api.nvim_win_is_valid(data.preview_winid)
+          or not data.preview_bufnr
+          or not vim.api.nvim_buf_is_valid(data.preview_bufnr)
+        then
+          error('preview not ready')
+        end
+        return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n')
+      end)
+      -- item 1: detail is not in documentation, should be prepended
+      neq(nil, info:find('(method) nvim__id_array(arr: any[]): any[]', 1, true))
+      neq(nil, info:find('function vim.api.nvim__id_array', 1, true))
     end)
     screen:expect([[
       nvim__id_array^                                    |
-      {12:nvim__id_array  Function }{100:lua\nfunction vim.api}{4:   }{1: }|
-      {4:for i = ..      Snippet  }{100:.nvim__id_array(arr: any}{1: }|
-      {4:_assert_integer Function }{100:[])\n  -> any[]\n}{4:       }{1: }|
-      {1:~                                                 }|*15
+      {12:nvim__id_array  Function }{100:(method) nvim__id_array(}{1: }|
+      {4:for i = ..      Snippet  }{100:arr: any[]): any[]}{4:      }{1: }|
+      {4:_assert_integer Function }{100:lua\nfunction vim.api}{4:   }{1: }|
+      {1:~                        }{100:.nvim__id_array(arr: any}{1: }|
+      {1:~                        }{100:[])\n  -> any[]\n}{4:       }{1: }|
+      {1:~                                                 }|*13
       {5:-- INSERT --}                                      |
     ]])
     feed('<C-N>')
@@ -1466,6 +1474,19 @@ describe('vim.lsp.completion: integration', function()
       {5:-- INSERT --}                                      |
     ]])
     feed('<C-N>')
+    retry(nil, nil, function()
+      local info = exec_lua(function()
+        local data = vim.fn.complete_info({ 'selected' })
+        if not data.preview_bufnr or not vim.api.nvim_buf_is_valid(data.preview_bufnr) then
+          error('preview not ready')
+        end
+        return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n')
+      end)
+      neq(nil, info:find('more doc for vim._assert_integer', 1, true))
+      local _, count = info:gsub('_assert_integer', '')
+      -- item 3: detail '_assert_integer' is in documentation, should not be duplicated
+      eq(1, count)
+    end)
     screen:expect([[
       _assert_integer(x, base)^                          |
       {4:nvim__id_array  Function }{100:lua\nmore doc for vim}{4:   }{1: }|

@@ -1203,8 +1203,16 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    'ignorecase' is set without 'infercase'.
 --- 	    See also `preinserted()`.
 ---
----    preselect   Selects the first completion item whose "preselect"
---- 	    field is set, if any. Takes precedence over "noselect".
+---    preselect
+--- 	    When one of `complete-items` has its "preselect" field set
+--- 	    (e.g., as indicated by an LSP server), select the first
+--- 	    such item in the `popupmenu-completion`. Takes precedence
+--- 	    over "noselect".
+---
+--- 	    Unlike the implicit selection behavior (when "noselect" is
+--- 	    not set), this preserves the original sort order and
+--- 	    navigates to the preselect item rather than always
+--- 	    selecting the first item.
 ---
 ---    preview  Show extra information about the currently selected
 --- 	    completion in the preview window.  Only works in
@@ -5480,8 +5488,8 @@ vim.go.sj = vim.go.scrolljump
 --- Minimal number of screen lines to keep above and below the cursor.
 --- This will make some context visible around where you are working.  If
 --- you set it to a very large value (999) the cursor line will always be
---- in the middle of the window (except at the start or end of the file or
---- when long lines wrap).
+--- in the middle of the window (except at the start or end of the file,
+--- see 'scrolloffpad', or when long lines wrap).
 --- After using the local value, go back the global value with one of
 --- these two:
 ---
@@ -5498,6 +5506,32 @@ vim.wo.scrolloff = vim.o.scrolloff
 vim.wo.so = vim.wo.scrolloff
 vim.go.scrolloff = vim.o.scrolloff
 vim.go.so = vim.go.scrolloff
+
+--- When 'scrolloff' and 'scrolloffpad' are greater than zero, allow
+--- the cursor to remain centered when at the end of the file.
+--- Normally, 'scrolloff' will not keep the cursor centered at the
+--- end of the file.
+---
+--- A value of 0 disables this feature.  Any value above 0 enables it.
+--- For a window-local value, -1 means to use the global value.
+--- Values below -1 are invalid.
+---
+--- After using the local value, go back the global value with one of
+--- these two:
+---
+--- ```vim
+--- 	setlocal scrolloffpad<
+--- 	setlocal scrolloffpad=-1
+--- ```
+---
+---
+--- @type integer
+vim.o.scrolloffpad = 0
+vim.o.sop = vim.o.scrolloffpad
+vim.wo.scrolloffpad = vim.o.scrolloffpad
+vim.wo.sop = vim.wo.scrolloffpad
+vim.go.scrolloffpad = vim.o.scrolloffpad
+vim.go.sop = vim.go.scrolloffpad
 
 --- This is a comma-separated list of words that specifies how
 --- 'scrollbind' windows should behave.  'sbo' stands for ScrollBind
@@ -6010,8 +6044,9 @@ vim.o.sw = vim.o.shiftwidth
 vim.bo.shiftwidth = vim.o.shiftwidth
 vim.bo.sw = vim.bo.shiftwidth
 
---- This option helps to avoid all the `hit-enter` prompts caused by file
---- messages, for example with CTRL-G, and to avoid some other messages.
+--- Controls display of file messages (e.g. CTRL-G) and various other
+--- messages.
+---
 --- It is a list of flags:
 ---  flag	meaning when present	~
 ---   l	use "999L, 888B" instead of "999 lines, 888 bytes"	*shm-l*
@@ -7464,7 +7499,7 @@ vim.go.titleold = vim.o.titleold
 --- The default (empty) behaviour is equivalent to:
 ---
 --- ```vim
----     set titlestring=%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim
+---     set titlestring=%t%(\ %M%)%(\ \(%{expand('%:p:~:h')}\)%)%a\ -\ Nvim
 --- ```
 ---
 --- Example:
@@ -8328,6 +8363,16 @@ vim.o.winminwidth = 1
 vim.o.wmw = vim.o.winminwidth
 vim.go.winminwidth = vim.o.winminwidth
 vim.go.wmw = vim.go.winminwidth
+
+--- If enabled, the window is pinned and will not be closed by `:only`
+--- and `:fclose`. Only commands specifically targeting the window can
+--- close it.
+---
+--- @type boolean
+vim.o.winpinned = false
+vim.o.wp = vim.o.winpinned
+vim.wo.winpinned = vim.o.winpinned
+vim.wo.wp = vim.wo.winpinned
 
 --- Minimal number of columns for the current window.  This is not a hard
 --- minimum, Vim will use fewer columns if there is not enough room.  If

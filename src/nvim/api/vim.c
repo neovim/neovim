@@ -92,10 +92,15 @@
 /// Gets a highlight group by name
 ///
 /// similar to |hlID()|, but allocates a new ID if not present.
-Integer nvim_get_hl_id_by_name(String name)
+/// @param[out] err Error details, if any
+Integer nvim_get_hl_id_by_name(String name, Error *err)
   FUNC_API_SINCE(7)
 {
-  return syn_check_group(name.data, name.size);
+  int ret;
+  TRY_WRAP(err, {
+    ret = syn_check_group(name.data, name.size);
+  });
+  return ret;
 }
 
 /// Gets all or specific highlight groups in a namespace.
@@ -139,7 +144,8 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 /// @param val   Highlight definition map, accepts the following keys:
 ///                - altfont: boolean
 ///                - bg: color name or "#RRGGBB", see note.
-///                - bg_indexed: boolean (default false) If true, bg is a terminal palette index (0-255).
+///                - bg_indexed: boolean. If true, `bg` is an RGB approximation of `ctermbg`
+///                  (a palette index). UIs rendering cterm natively may prefer `ctermbg`.
 ///                - blend: integer between 0 and 100
 ///                - blink: boolean
 ///                - bold: boolean
@@ -151,7 +157,7 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///                - default: boolean Don't override existing definition |:hi-default|
 ///                - dim: boolean
 ///                - fg: Color name or "#RRGGBB", see note.
-///                - fg_indexed: boolean (default false) If true, fg is a terminal palette index (0-255).
+///                - fg_indexed: boolean. Same as `bg_indexed`, for `fg` and `ctermfg`.
 ///                - font: GUI font name (string). Sets |highlight-font|. Use "NONE" to clear.
 ///                - force: boolean (default false) Update the highlight group even if it already exists.
 ///                - italic: boolean
@@ -173,10 +179,13 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
-  int hl_id = syn_check_group(name.data, name.size);
-  VALIDATE_S((hl_id != 0), "highlight name", name.data, {
-    return;
+  int hl_id;
+  TRY_WRAP(err, {
+    hl_id = syn_check_group(name.data, name.size);
   });
+  if (ERROR_SET(err) || hl_id == 0) {
+    return;
+  }
   int link_id = -1;
 
   // Setting URLs directly through highlight attributes is not supported
@@ -815,7 +824,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///            instead of creating a new message.
 ///          - kind (`string?`) Decides the |ui-messages| kind in the emitted message. Set "progress"
 ///            to emit a |progress-message|.
-///          - percent (`integer?`) |progress-message| percentage.
+///          - percent (`integer?`) |progress-message| percentage, or nil to signal "unknown progress".
 ///          - source (`string?`) |progress-message| source.
 ///          - status (`string?`) |progress-message| status:
 ///            - "success": Process completed successfully.
@@ -848,7 +857,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   bool needs_clear = !history;
 
   VALIDATE(is_progress
-           || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
+           || (opts->status.size == 0 && opts->title.size == 0 && !HAS_KEY(opts, echo_opts, percent)
                && opts->data.size == 0 && opts->source.size == 0),
            "Conflict: title/source/status/percent/data not allowed with kind='%s'", kind,
   {
@@ -863,7 +872,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     goto error;
   });
 
-  VALIDATE_RANGE(!is_progress || (opts->percent >= 0 && opts->percent <= 100),
+  VALIDATE_RANGE(!is_progress || !HAS_KEY(opts, echo_opts, percent)
+                 || (opts->percent >= 0 && opts->percent <= 100),
                  "percent", {
     goto error;
   });
@@ -879,8 +889,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   });
 
   MessageData msg_data = { .title = opts->title, .status = opts->status,
-                           .percent = opts->percent, .data = opts->data,
-                           .source = opts->source };
+                           .percent = HAS_KEY(opts, echo_opts, percent) ? opts->percent : -1,
+                           .data = opts->data, .source = opts->source };
 
   const bool save_nwr = need_wait_return;
   const int save_lines_left = lines_left;
@@ -1373,6 +1383,9 @@ Boolean nvim_paste(uint64_t channel_id, String data, Boolean crlf, Integer phase
   });
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
     cancelled = false;
+    if (curbuf->terminal) {
+      terminal_set_streamed_paste(curbuf->terminal, true);
+    }
   } else if (cancelled) {
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
@@ -1385,6 +1398,9 @@ Boolean nvim_paste(uint64_t channel_id, String data, Boolean crlf, Integer phase
   // vim.paste() decides if client should cancel.
   if (ERROR_SET(err) || (rv.type == kObjectTypeBoolean && !rv.data.boolean)) {
     cancelled = true;
+  }
+  if ((phase == -1 || phase == 3 || cancelled) && curbuf->terminal) {
+    terminal_set_streamed_paste(curbuf->terminal, false);
   }
   if (!cancelled && (phase == -1 || phase == 1)) {
     paste_store(channel_id, kFalse, NULL_STRING, crlf);

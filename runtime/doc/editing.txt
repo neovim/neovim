@@ -1208,6 +1208,10 @@ ZZ			Write current file, if modified, and close the current
 							*ZQ*
 ZQ			Quit without checking for changes (same as ":q!").
 
+							*ZR*
+[count]ZR		Performs |:restart|. If a [count] is given, restarts
+			without checking for changes (":restart +qall!").
+
 MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 
 							*:qa* *:qall*
@@ -1739,7 +1743,7 @@ mark a file as trusted or untrusted using the |:trust| command or the
 Nvim keeps log files in `stdpath("log")`. See |standard-path| for where that
 location is on your system.
 
-							*:log*
+							*:log* *E5200*
 :log [logname]
 			Open a log file that exists in `stdpath("log")`.
 			`[logname]` is the name of the file with the extension

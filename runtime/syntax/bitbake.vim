@@ -7,6 +7,7 @@
 " Last Change:  2022 Jul 25
 " 2025 Oct 13 by Vim project: update multiline function syntax #18565
 " 2026 Apr 07 by Vim project: update syntax script #19931
+" 2026 Apr 15 by Vim project: allow forward-slashes in bitbake varflags #19983
 "
 " This file is licensed under the MIT license, see COPYING.MIT in
 " this source distribution for the terms.
@@ -59,7 +60,7 @@ syn match bbVarValue            ".*$" contained contains=bbString,bbVarDeref,bbV
 syn region bbVarPyValue         start=+${@+ skip=+\\$+ end=+}+ contained contains=@python
 
 " Vars metadata flags
-syn match bbVarFlagDef          "^\([a-zA-Z0-9\-_\.]\+\)\(\[[a-zA-Z0-9\-_\.+]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
+syn match bbVarFlagDef          "^\([a-zA-Z0-9\-_\.+/]\+\)\(\[[a-zA-Z0-9\-_\.+/]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
 syn region bbVarFlagFlag        matchgroup=bbArrayBrackets start="\[" end="\]\s*\(:=\|=\|.=\|=.|+=\|=+\|?=\)\@=" contained contains=bbIdentifier nextgroup=bbVarEq
 
 " Includes and requires

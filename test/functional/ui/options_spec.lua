@@ -172,6 +172,33 @@ describe('UI receives option updates', function()
     end)
   end)
 
+  it("restores statusline and tabline after 'set all&'", function()
+    reset()
+    command('tabnew | tabnew')
+    command('set laststatus=0 showtabline=0')
+    screen:expect({
+      unchanged = true,
+      condition = function()
+        local function row_text(row)
+          local chunks = {}
+          for _, cell in ipairs(screen._grid.rows[row]) do
+            table.insert(chunks, cell.text)
+          end
+          return table.concat(chunks)
+        end
+
+        eq(nil, row_text(1):find('%[No Name%]'))
+        eq(nil, row_text(screen._grid.height - 1):find('All', 1, true))
+      end,
+    })
+
+    command('set all&')
+    screen:expect({
+      unchanged = true,
+      any = { '[No Name]', 'All' },
+    })
+  end)
+
   it('with UI extensions', function()
     local expected = reset({ ext_cmdline = true, ext_wildmenu = true })
 

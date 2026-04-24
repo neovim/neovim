@@ -3671,15 +3671,14 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
   // check for a trailing count
   cmd = skipwhite(cmd);
   if (ascii_isdigit(*cmd)) {
-    i = getdigits_int(&cmd, true, INT_MAX);
+    const char *const count_arg = cmd;
+    i = getdigits_int(&cmd, false, INT_MAX);
     if (i <= 0 && !eap->skip && subflags.do_error) {
       emsg(_(e_zerocount));
       xfree(sub);
       return 0;
     } else if (i >= INT_MAX) {
-      char buf[20];
-      vim_snprintf(buf, sizeof(buf), "%d", i);
-      semsg(_(e_val_too_large), buf);
+      semsg(_(e_val_too_large_len), (int)(cmd - count_arg), count_arg);
       xfree(sub);
       return 0;
     }

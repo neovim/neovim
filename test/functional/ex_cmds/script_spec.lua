@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 local neq = t.neq
 local command = n.command
 local exec_capture = n.exec_capture
@@ -9,7 +10,6 @@ local write_file = t.write_file
 local api = n.api
 local clear = n.clear
 local dedent = t.dedent
-local exc_exec = n.exc_exec
 local missing_provider = n.missing_provider
 
 local tmpfile = 'X_ex_cmds_script'
@@ -46,9 +46,12 @@ describe('script_get-based command', function()
         if check_neq then
           neq(
             0,
-            exc_exec(dedent([[
+            pcall_err(
+              command,
+              dedent([[
             %s %s
-          ]])):format(cmd, garbage)
+          ]])
+            ):format(cmd, garbage)
           )
         end
       end)

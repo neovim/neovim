@@ -1,7 +1,7 @@
 return {
   --- @type table<string,boolean>
   --- Keys are events names.
-  --- Values are boolean indicating whether the event is window-local.
+  --- Value is true if the event is window-local, else false.
   events = {
     BufAdd = true, -- after adding a buffer to the buffer list
     BufDelete = true, -- deleting a buffer from the buffer list

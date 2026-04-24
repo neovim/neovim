@@ -264,35 +264,39 @@ local function get_locations(method, context, opts)
     end
 
     ---@type vim.fn.setqflist.what
-    local list = {
+    local what = {
       title = name:gsub('^%l', string.upper),
       items = all_items,
       context = { bufnr = bufnr, method = method },
     }
     if opts.on_list then
-      assert(vim.is_callable(opts.on_list), 'on_list is not a function')
-      ---@cast list vim.lsp.ListOpts.OnList
-      opts.on_list(list)
-      return
-    end
-
-    if opts.loclist then
-      vim.fn.setloclist(0, {}, ' ', list)
-      if method ~= 'textDocument/references' and #all_items == 1 then
-        local tagstack = { { tagname = tagname, from = from } }
-        vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
-        vim.cmd('lfirst')
-      else
-        vim.cmd.lopen()
-      end
+      validate('opts.on_list', opts.on_list, 'function')
+      opts.on_list(what)
     else
-      vim.fn.setqflist({}, ' ', list)
-      if method ~= 'textDocument/references' and #all_items == 1 then
+      if opts.loclist then
+        vim.fn.setloclist(0, {}, ' ', what)
+      else
+        vim.fn.setqflist({}, ' ', what)
+      end
+
+      if
+        #all_items == 1
+        and method ~= 'textDocument/implementation'
+        and method ~= 'textDocument/references'
+      then
         local tagstack = { { tagname = tagname, from = from } }
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
-        vim.cmd('cfirst')
+        if opts.loclist then
+          vim.cmd('lfirst')
+        else
+          vim.cmd('cfirst')
+        end
       else
-        vim.cmd('botright copen')
+        if opts.loclist then
+          vim.cmd('botright lopen')
+        else
+          vim.cmd('botright copen')
+        end
       end
     end
   end)
@@ -302,17 +306,31 @@ end
 ---
 --- list-handler replacing the default handler.
 --- Called for any non-empty result.
---- This table can be used with |setqflist()| or |setloclist()|. E.g.:
+--- The default handler populates the quickfix (or location) list with the result.
+--- If there is a single result (and the method is not `implementation` or `references`),
+--- it pushes a tag onto the tagstack and jumps to the result.
+--- For example, when `loclist == false` (the default), the handler is equivalent to:
 --- ```lua
---- local function on_list(options)
----   vim.fn.setqflist({}, ' ', options)
----   vim.cmd.cfirst()
+--- local function on_list(what)
+---   vim.fn.setqflist({}, ' ', what)
+---   if
+---     #what.items == 1
+---     and what.context.method ~= 'textDocument/implementation'
+---     and what.context.method ~= 'textDocument/references'
+---   then
+---     local tagstack = { { tagname = tagname, from = from } }
+---     vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+---     vim.cmd('cfirst')
+---   else
+---     vim.cmd('botright copen')
+---   end
 --- end
 ---
 --- vim.lsp.buf.definition({ on_list = on_list })
 --- vim.lsp.buf.references(nil, { on_list = on_list })
 --- ```
---- @field on_list? fun(t: vim.lsp.ListOpts.OnList)
+--- See |setqflist-what| for the structure of the `what` parameter.
+--- @field on_list? fun(what: vim.fn.setqflist.what)
 ---
 --- Whether to use the |location-list| or the |quickfix| list in the default handler.
 --- ```lua
@@ -320,11 +338,6 @@ end
 --- vim.lsp.buf.references(nil, { loclist = false })
 --- ```
 --- @field loclist? boolean
-
---- @class vim.lsp.ListOpts.OnList
---- @field items vim.quickfix.entry[] See |setqflist-what|
---- @field title? string Title for the list.
---- @field context? { bufnr: integer, method: string } Subset of `ctx` from |lsp-handler|.
 
 --- Jumps to the declaration of the symbol under the cursor.
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
@@ -1296,6 +1309,24 @@ local function on_code_action_results(results, opts)
   vim.ui.select(actions, select_opts, on_user_choice)
 end
 
+---@param diagnostic vim.Diagnostic
+---@param bufnr integer
+---@param lnum integer
+---@param col integer
+---@return boolean
+local function diagnostic_contains_cursor(diagnostic, bufnr, lnum, col)
+  local start = vim.pos(bufnr, diagnostic.lnum, diagnostic.col)
+  local finish =
+    vim.pos(bufnr, diagnostic.end_lnum or diagnostic.lnum, diagnostic.end_col or diagnostic.col)
+  local cursor = vim.pos(bufnr, lnum, col)
+
+  if start == finish then
+    return cursor == start
+  end
+
+  return start <= cursor and cursor < finish
+end
+
 --- Selects a code action (LSP: "textDocument/codeAction" request) available at cursor position.
 ---
 ---@param opts? vim.lsp.buf.code_action.Opts
@@ -1317,6 +1348,13 @@ function M.code_action(opts)
   local mode = api.nvim_get_mode().mode
   local bufnr = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
+  local range = opts.range
+  if range == nil and (mode == 'v' or mode == 'V') then
+    range = range_from_selection(bufnr, mode)
+  end
+  local cursor = api.nvim_win_get_cursor(win)
+  local lnum = cursor[1] - 1
+  local col = cursor[2]
   local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/codeAction' })
   if not next(clients) then
     vim.notify(lsp._unsupported_method('textDocument/codeAction'), vim.log.levels.WARN)
@@ -1327,15 +1365,11 @@ function M.code_action(opts)
     ---@type lsp.CodeActionParams
     local params
 
-    if opts.range then
-      assert(type(opts.range) == 'table', 'code_action range must be a table')
-      local start = assert(opts.range.start, 'range must have a `start` property')
-      local end_ = assert(opts.range['end'], 'range must have a `end` property')
+    if range then
+      assert(type(range) == 'table', 'code_action range must be a table')
+      local start = assert(range.start, 'range must have a `start` property')
+      local end_ = assert(range['end'], 'range must have a `end` property')
       params = util.make_given_range_params(start, end_, bufnr, client.offset_encoding)
-    elseif mode == 'v' or mode == 'V' then
-      local range = range_from_selection(bufnr, mode)
-      params =
-        util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
     else
       params = util.make_range_params(win, client.offset_encoding)
     end
@@ -1347,7 +1381,6 @@ function M.code_action(opts)
     else
       local ns_push = lsp.diagnostic.get_namespace(client.id)
       local diagnostics = {}
-      local lnum = api.nvim_win_get_cursor(0)[1] - 1
 
       client:_provider_foreach('textDocument/diagnostic', function(cap)
         local ns_pull = lsp.diagnostic.get_namespace(client.id, true, cap.identifier)
@@ -1358,6 +1391,11 @@ function M.code_action(opts)
       end)
 
       vim.list_extend(diagnostics, vim.diagnostic.get(bufnr, { namespace = ns_push, lnum = lnum }))
+      if range == nil then
+        diagnostics = vim.tbl_filter(function(diagnostic)
+          return diagnostic_contains_cursor(diagnostic, bufnr, lnum, col)
+        end, diagnostics)
+      end
       params.context = vim.tbl_extend('force', context, {
         ---@diagnostic disable-next-line: no-unknown
         diagnostics = vim.tbl_map(function(d)

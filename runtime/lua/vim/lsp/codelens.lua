@@ -1,5 +1,6 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
+local tableclear = require('vim._core.table').clear
 local api = vim.api
 local M = {}
 
@@ -55,6 +56,7 @@ function Provider:new(bufnr)
     on_reload = function(_, buf)
       local provider = Provider.active[buf]
       if provider then
+        provider:clear()
         provider:automatic_request()
       end
     end,
@@ -94,6 +96,20 @@ function Provider:on_detach(client_id)
   end
 end
 
+---@package
+function Provider:clear()
+  self:reset_timer()
+  self.version = nil
+  tableclear(self.row_version)
+
+  for _, state in pairs(self.client_state) do
+    tableclear(state.row_lenses)
+    api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
+  end
+
+  api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
+end
+
 --- `lsp.Handler` for `textDocument/codeLens`.
 ---
 ---@package
@@ -115,8 +131,8 @@ function Provider:handler(err, result, ctx)
     return
   end
 
-  ---@type table<integer, lsp.CodeLens[]>
-  local row_lenses = {}
+  local row_lenses = state.row_lenses
+  tableclear(row_lenses)
 
   -- Code lenses should only span a single line.
   for _, lens in ipairs(result or {}) do
@@ -125,8 +141,6 @@ function Provider:handler(err, result, ctx)
     table.insert(lenses, lens)
     row_lenses[row] = lenses
   end
-
-  state.row_lenses = row_lenses
   self.version = ctx.version
 
   api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
@@ -500,8 +514,10 @@ function M.on_refresh(err, _, ctx)
         -- Do nothing if a request is already scheduled.
         if not provider.timer then
           provider:request(client_id, function()
-            provider.row_version = {}
-            vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+            if api.nvim_buf_is_valid(bufnr) then
+              tableclear(provider.row_version)
+              vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+            end
           end)
         end
       end

@@ -841,6 +841,7 @@ Short explanation of each option:		*option-list*
 'scrollbind'	  'scb'     scroll in window as other windows scroll
 'scrolljump'	  'sj'	    minimum number of lines to scroll
 'scrolloff'	  'so'	    minimum nr. of lines above and below cursor
+'scrolloffpad'	  'sop'	    vertically center cursor at end of file
 'scrollopt'	  'sbo'     how 'scrollbind' should behave
 'sections'	  'sect'    nroff macros that separate sections
 'secure'		    secure mode for reading .vimrc in current dir

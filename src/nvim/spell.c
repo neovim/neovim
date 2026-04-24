@@ -2650,7 +2650,7 @@ void ex_spellrepall(exarg_T *eap)
   }
   const size_t repl_from_len = strlen(repl_from);
   const size_t repl_to_len = strlen(repl_to);
-  const int addlen = (int)(repl_to_len - repl_from_len);
+  const int64_t addlen = (int64_t)repl_to_len - (int64_t)repl_from_len;
 
   const size_t frompatsize = repl_from_len + 7;
   char *frompat = xmalloc(frompatsize);
@@ -2671,7 +2671,7 @@ void ex_spellrepall(exarg_T *eap)
     char *line = get_cursor_line_ptr();
     if (addlen <= 0
         || strncmp(line + curwin->w_cursor.col, repl_to, repl_to_len) != 0) {
-      char *p = xmalloc((size_t)get_cursor_line_len() + (size_t)addlen + 1);
+      char *p = xmalloc((size_t)(get_cursor_line_len() + addlen) + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       strcat(p, line + curwin->w_cursor.col + repl_from_len);

@@ -36,7 +36,7 @@ enum {
   WILD_ESCAPE               = 0x80,
   WILD_ICASE                = 0x100,
   WILD_ALLLINKS             = 0x200,
-  WILD_IGNORE_COMPLETESLASH = 0x400,
+  WILD_USE_COMPLETESLASH    = 0x400,
   WILD_NOERROR              = 0x800,  ///< sets EW_NOERROR
   WILD_BUFLASTUSED          = 0x1000,
   BUF_DIFF_FILTER           = 0x2000,

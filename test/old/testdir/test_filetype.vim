@@ -139,7 +139,7 @@ func s:GetFilenameChecks() abort
     \ 'bass': ['file.bass'],
     \ 'bc': ['file.bc'],
     \ 'bdf': ['file.bdf'],
-    \ 'beancount': ['file.beancount'],
+    \ 'beancount': ['file.beancount', 'file.bean'],
     \ 'bib': ['file.bib'],
     \ 'bicep': ['file.bicep'],
     \ 'bicep-params': ['file.bicepparam'],
@@ -327,6 +327,9 @@ func s:GetFilenameChecks() abort
     \ 'gedcom': ['file.ged', 'lltxxxxx.txt', '/tmp/lltmp', '/tmp/lltmp-file', 'any/tmp/lltmp', 'any/tmp/lltmp-file'],
     \ 'gel': ['file.gel'],
     \ 'gemtext': ['file.gmi', 'file.gemini'],
+    \ 'ghostty': ['ghostty/config', 'ghostty/keymaps.ghostty', '/.config/ghostty/config', '/.config/ghostty/keymaps.ghostty',
+    \             '~/Library/Application Support/com.mitchellh.ghostty/config.ghostty', '~/Library/Application Support/com.mitchellh.ghostty/config',
+    \             '~/.config/ghostty/themes/Custom Theme', '/usr/share/ghostty/themes/Builtin Theme'],
     \ 'gift': ['file.gift'],
     \ 'gitattributes': ['file.git/info/attributes', '.gitattributes', '/.config/git/attributes', '/etc/gitattributes', '/usr/local/etc/gitattributes', 'some.git/info/attributes'] + s:WhenConfigHome('$XDG_CONFIG_HOME/git/attributes'),
     \ 'gitcommit': ['COMMIT_EDITMSG', 'MERGE_MSG', 'TAG_EDITMSG', 'NOTES_EDITMSG', 'EDIT_DESCRIPTION'],
@@ -2835,6 +2838,16 @@ func Test_inc_file()
   bwipe!
 
   call writefile(['PREFERRED_PROVIDER_virtual/kernel = "linux-yocto"'], 'Xfile.inc')
+  split Xfile.inc
+  call assert_equal('bitbake', &filetype)
+  bwipe!
+
+  call writefile(['FOO_BAR[baz] = "foobar"'], 'Xfile.inc')
+  split Xfile.inc
+  call assert_equal('bitbake', &filetype)
+  bwipe!
+
+  call writefile(['FOO_BAR_foo/bar[baz/bazzer] = "foobar"'], 'Xfile.inc')
   split Xfile.inc
   call assert_equal('bitbake', &filetype)
   bwipe!

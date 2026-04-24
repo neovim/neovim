@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = n.clear, n.feed
 local eval = n.eval
 local eq = t.eq
+local pcall_err = t.pcall_err
 local neq = t.neq
 local command = n.command
 local set_method_error = n.set_method_error
@@ -14,7 +15,6 @@ local nvim_prog = n.nvim_prog
 local testprg = n.testprg
 local exec = n.exec
 local exec_capture = n.exec_capture
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
 local poke_eventloop = n.poke_eventloop
 local assert_alive = n.assert_alive
@@ -95,7 +95,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       messages = {
-        { content = { { writemsg } }, history = true, kind = 'bufwrite' },
+        { content = { { writemsg } }, history = true, id = 'bufwrite', kind = 'progress' },
         {
           content = { { 'W10: Warning: Changing a readonly file', 19, 'WarningMsg' } },
           history = true,
@@ -575,6 +575,20 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       messages = { { content = { { '  foldclose=' } }, history = true, kind = 'list_cmd' } },
+    })
+
+    -- Indent message
+    feed('A2\nline 3<Esc>gg=G')
+    screen:expect({
+      grid = [[
+        ^line 1                   |
+        line 2                   |
+        line 3                   |
+        {1:~                        }|*2
+      ]],
+      messages = {
+        { content = { { '3 lines indented ' } }, history = true, id = 'indent', kind = 'progress' },
+      },
     })
   end)
 
@@ -1383,7 +1397,8 @@ stack traceback:
       messages = {
         {
           content = { { string.format('"%s" [New] 0L, 0B written', fname) } },
-          kind = 'bufwrite',
+          kind = 'progress',
+          id = 'bufwrite',
           history = true,
         },
       },
@@ -1629,7 +1644,8 @@ stack traceback:
       messages = {
         {
           content = { { 'Scanning tags.', 6, 'Question' } },
-          kind = 'completion',
+          kind = 'progress',
+          id = 'completion',
         },
       },
       showmode = {
@@ -2517,7 +2533,7 @@ describe('ui/msg_puts_printf', function()
         cmd = 'chcp 932 > NUL & '
       end
     else
-      if exc_exec('lang ja_JP.UTF-8') ~= 0 then
+      if not pcall(n.command, 'lang ja_JP.UTF-8') then
         pending('Locale ja_JP.UTF-8 not supported', function() end)
         return
       end
@@ -3597,7 +3613,7 @@ describe('progress-message', function()
 
     eq(
       "Conflict: title/source/status/percent/data not allowed with kind='echo'",
-      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { percent = 10 })
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { percent = 0 })
     )
 
     eq(

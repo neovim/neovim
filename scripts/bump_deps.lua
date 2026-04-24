@@ -30,9 +30,9 @@ local zig_mode = {
   luajit = false,
   uncrustify = false,
   wasmtime = false,
+  libuv = false,
   unibilium = 'nested',
   utf8proc = 'nested',
-  libuv = 'nested',
 }
 
 local dependency_table = {} --- @type table<string, string>

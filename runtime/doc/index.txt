@@ -1678,6 +1678,7 @@ Tag		Command		Action ~
 |:unmenu|	:unme[nu]	remove menu
 |:unsilent|	:uns[ilent]	run a command not silently
 |:update|	:up[date]	write buffer if modified
+|:uptime|	:upt[ime]	show Nvim's uptime
 |:vglobal|	:v[global]	execute commands for not matching lines
 |:version|	:ve[rsion]	print version number and other info
 |:verbose|	:verb[ose]	execute command with 'verbose' set

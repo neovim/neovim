@@ -1,6 +1,13 @@
 local api = vim.api
 local fs = vim.fs
+local time = require('vim._core.time')
 local util = require('vim._core.util')
+local uv = vim.uv
+local N_ = vim.fn.gettext
+
+--- Parsed ex command arguments for builtin commands, passed from C via `nlua_call_excmd`.
+--- Inherits fields from user command args: args, bang, line1, line2, range, count, reg, smods.
+--- @class vim._core.ExCmdArgs : vim.api.keyset.create_user_command.command_args
 
 local M = {}
 
@@ -47,7 +54,7 @@ local function checked_enable(names, enable)
     if name:find('*') == nil and vim.lsp.config[name] ~= nil then
       vim.lsp.enable(name, enable)
     else
-      echo_err(("No client config named '%s'"):format(name))
+      echo_err(N_('E5801: No client config named: %s'):format(name))
     end
   end
 end
@@ -65,9 +72,9 @@ local function ex_lsp_enable(config_names)
     end
     if #config_names == 0 then
       if filetype == '' then
-        echo_err('Current buffer has no filetype')
+        echo_err(N_('E5802: Current buffer has no filetype'))
       else
-        echo_err(("No configs for filetype '%s'"):format(filetype))
+        echo_err(N_('E5803: No configs for filetype: %s'):format(filetype))
       end
       return
     end
@@ -90,7 +97,7 @@ local function ex_lsp_disable(config_names)
       end)
       :totable()
     if #config_names == 0 then
-      echo_err('No configs with clients attached to current buffer')
+      echo_err(N_('E5804: No configs with clients attached to current buffer'))
       return
     end
   end
@@ -105,7 +112,7 @@ local function get_clients_from_names(client_names)
   if #client_names == 0 then
     local clients = vim.lsp.get_clients { bufnr = api.nvim_get_current_buf() }
     if #clients == 0 then
-      echo_err('No clients attached to current buffer')
+      echo_err(N_('E5805: No clients attached to current buffer'))
     end
     return clients
   else
@@ -114,7 +121,7 @@ local function get_clients_from_names(client_names)
       :map(function(name)
         local clients = vim.lsp.get_clients { name = name }
         if #clients == 0 then
-          echo_err(("No active clients named '%s'"):format(name))
+          echo_err(N_('E5806: No active clients matching name: %s'):format(name))
         end
         return clients
       end)
@@ -151,15 +158,15 @@ local actions = {
 local available_subcmds = vim.tbl_keys(actions)
 
 --- Implements command: `:lsp {subcmd} {name}?`.
---- @param args string
-M.ex_lsp = function(args)
-  local fargs = api.nvim_parse_cmd('lsp ' .. args, {}).args
+--- @param eap vim._core.ExCmdArgs
+function M.ex_lsp(eap)
+  local fargs = api.nvim_parse_cmd('lsp ' .. eap.args, {}).args
   if not fargs then
     return
   end
   local subcmd = fargs[1]
   if not vim.list_contains(available_subcmds, subcmd) then
-    echo_err(("Invalid subcommand '%s'"):format(subcmd))
+    echo_err(N_('E5800: Invalid :lsp subcommand: %s'):format(subcmd))
     return
   end
 
@@ -192,11 +199,11 @@ end
 local log_dir = vim.fn.stdpath('log')
 
 --- Implements command: `:log {file}`.
---- @param filename string
---- @param mods string
-M.ex_log = function(filename, mods)
+--- @param eap vim._core.ExCmdArgs
+function M.ex_log(eap)
+  local filename = eap.args
   if filename == '' then
-    util.wrapped_edit(log_dir, mods)
+    util.wrapped_edit(log_dir, eap.smods)
   else
     local path --- @type string
     -- Special case for NVIM_LOG_FILE
@@ -207,10 +214,10 @@ M.ex_log = function(filename, mods)
       path = fs.joinpath(log_dir, filename .. '.log')
     end
     if not vim.uv.fs_stat(path) then
-      echo_err(("No such log file: '%s'"):format(path))
+      echo_err(N_('E5200: No such log file: %s'):format(path))
       return
     end
-    util.wrapped_edit(path, mods)
+    util.wrapped_edit(path, eap.smods)
     vim.cmd.normal { 'G', bang = true }
   end
 end
@@ -226,6 +233,35 @@ function M.log_complete()
     end
   end
   return names
+end
+
+--- `:terminal [cmd]`
+--- @param eap vim._core.ExCmdArgs
+--- @param shell_argv? string[] Tokenized 'shell' from C (shell_build_argv), for the no-cmd case.
+function M.ex_terminal(eap, shell_argv)
+  local smods = eap.smods
+  local has_mods = (smods.tab or 0) > 0
+    or (smods.split or '') ~= ''
+    or smods.horizontal
+    or smods.vertical
+
+  if has_mods then
+    vim.cmd.new { mods = smods }
+  else
+    vim.cmd.enew { bang = eap.bang }
+  end
+
+  if shell_argv then -- No `cmd`, run 'shell'.
+    vim.fn.jobstart(shell_argv, { term = true })
+  else -- Run [cmd] in 'shell'.
+    vim.fn.jobstart(eap.args, { term = true })
+  end
+end
+
+function M.ex_uptime()
+  local uptime = math.floor((uv.hrtime() - vim.v.starttime) / 1e9)
+  local uptime_display = time.fmt_rtime(uptime)
+  api.nvim_echo({ { N_('Up %s'):format(uptime_display) } }, true, {})
 end
 
 return M

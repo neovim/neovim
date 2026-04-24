@@ -37,7 +37,7 @@ instead of "s:" when the mapping is expanded outside of the script.
 There are only script-local functions, no buffer-local or window-local
 functions.
 
-					*:fu* *:function* *E128* *E129* *E123*
+			*:fu* *:function* *E128* *E129* *E123* *E454* *E1058* *E1068*
 :fu[nction]		List all functions and their arguments.
 
 :fu[nction][!] {name}	List function {name}, annotated with line numbers
@@ -167,7 +167,7 @@ See |:verbose-cmd| for more information.
 			command, use line breaks instead of |:bar|: >
 				:exe "func Foo()\necho 'foo'\nendfunc"
 <
-				*:delf* *:delfunction* *E131* *E933*
+				*:delf* *:delfunction* *E130* *E131* *E933*
 :delf[unction][!] {name}
 			Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a

@@ -3,10 +3,14 @@ local health = require('vim.health')
 
 ---Run a system command and return ok and its stdout and stderr combined.
 ---@param cmd string[]
+---@param timeout? integer Timeout in ms (default: no timeout).
 ---@return boolean
 ---@return string
-local function system(cmd)
-  local result = vim.system(cmd, { text = true }):wait()
+local function system(cmd, timeout)
+  local result = vim.system(cmd, { text = true, timeout = timeout }):wait()
+  if not result then -- Workaround https://github.com/neovim/neovim/issues/37922
+    return false, 'command failed'
+  end
   return result.code == 0, vim.trim(('%s\n%s'):format(result.stdout, result.stderr))
 end
 
@@ -551,21 +555,15 @@ end
 
 ---@param nvim_version string
 local function check_stable_version(nvim_version)
-  local result = vim
-    .system(
-      { 'git', 'ls-remote', '--tags', 'https://github.com/neovim/neovim' },
-      { text = true, timeout = 5000 }
-    )
-    :wait()
-  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+  local ok, output =
+    system({ 'git', 'ls-remote', '--tags', 'https://github.com/neovim/neovim' }, 5000)
+  if not ok or output == '' then
     return
   end
   local stable_sha = assert(
-    result.stdout:match('(%x+)%s+refs/tags/stable%^{}')
-      or result.stdout:match('(%x+)%s+refs/tags/stable\n')
+    output:match('(%x+)%s+refs/tags/stable%^{}') or output:match('(%x+)%s+refs/tags/stable\n')
   )
-  local latest_version =
-    assert(result.stdout:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}'))
+  local latest_version = assert(output:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}'))
   local current_version = assert(nvim_version:match('v?(%d+%.%d+%.%d+)'))
   local current = vim.version.parse(current_version)
   local latest = vim.version.parse(latest_version)
@@ -578,18 +576,16 @@ end
 
 ---@param commit string
 local function check_head_hash(commit)
-  local result = vim
-    .system(
-      { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD', 'refs/tags/nightly' },
-      { text = true, timeout = 5000 }
-    )
-    :wait()
-  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+  local ok, output = system(
+    { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD', 'refs/tags/nightly' },
+    5000
+  )
+  if not ok or output == '' then
     return
   end
 
   local refs = {} ---@type table<string, string>
-  for line in result.stdout:gmatch('[^\n]+') do
+  for line in output:gmatch('[^\n]+') do
     local sha, ref = line:match('^(%x+)%s+(%S+)$')
     if sha and ref then
       refs[ref] = sha

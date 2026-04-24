@@ -11,6 +11,7 @@ local expect = n.expect
 local poke_eventloop = n.poke_eventloop
 local api = n.api
 local eq = t.eq
+local pcall_err = t.pcall_err
 local neq = t.neq
 local exec_lua = n.exec_lua
 

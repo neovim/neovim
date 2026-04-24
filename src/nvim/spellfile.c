@@ -1670,7 +1670,7 @@ static int spell_read_tree(FILE *fd, uint8_t **bytsp, int *bytsp_len, idx_T **id
   if (len < 0) {
     return SP_TRUNCERROR;
   }
-  if ((size_t)len >= SIZE_MAX / sizeof(int)) {
+  if ((size_t)len > SIZE_MAX / sizeof(int)) {
     // Invalid length, multiply with sizeof(int) would overflow.
     return SP_FORMERROR;
   }

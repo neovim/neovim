@@ -148,6 +148,8 @@ typedef struct {
 #define w_p_wfh w_onebuf_opt.wo_wfh    // 'winfixheight'
   int wo_wfw;
 #define w_p_wfw w_onebuf_opt.wo_wfw    // 'winfixwidth'
+  int wo_wp;
+#define w_p_wp w_onebuf_opt.wo_wp    // 'winpinned'
   int wo_pvw;
 #define w_p_pvw w_onebuf_opt.wo_pvw    // 'previewwindow'
   OptInt wo_lhi;
@@ -202,6 +204,8 @@ typedef struct {
 #define w_p_siso w_onebuf_opt.wo_siso  // 'sidescrolloff' local value
   OptInt wo_so;
 #define w_p_so w_onebuf_opt.wo_so      // 'scrolloff' local value
+  OptInt wo_sop;
+#define w_p_sop w_onebuf_opt.wo_sop    // 'scrolloffpad' local value
   char *wo_winhl;
 #define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
   char *wo_lcs;
@@ -1128,7 +1132,7 @@ struct window_S {
                                     ///< used to try to stay in the same column
                                     ///< for up/down cursor motions.
 
-  int w_set_curswant;               // If set, then update w_curswant the next
+  bool w_set_curswant;              // If set, then update w_curswant the next
                                     // time through cursupdate() to the
                                     // current virtual column
 
@@ -1158,7 +1162,7 @@ struct window_S {
   // displaying the buffer.
   linenr_T w_topline;               // buffer line number of the line at the
                                     // top of the window
-  char w_topline_was_set;           // flag set to true when topline is set,
+  bool w_topline_was_set;           // flag set to true when topline is set,
                                     // e.g. by winrestview()
   int w_topfill;                    // number of filler lines above w_topline
   int w_old_topfill;                // w_topfill at last redraw
@@ -1290,6 +1294,7 @@ struct window_S {
   bool w_redr_status;               // if true statusline/winbar must be redrawn
   bool w_redr_border;               // if true border must be redrawn
   bool w_redr_statuscol;            // if true 'statuscolumn' must be redrawn
+  disptick_T w_display_tick;        // when window was last drawn.
 
   // remember what is shown in the 'statusline'-format elements
   pos_T w_stl_cursor;                // cursor position when last redrawn
@@ -1308,7 +1313,7 @@ struct window_S {
   alist_T *w_alist;             // pointer to arglist for this window
   int w_arg_idx;                    // current index in argument list (can be
                                     // out of range!)
-  int w_arg_idx_invalid;            // editing another file than w_arg_idx
+  bool w_arg_idx_invalid;           // editing another file than w_arg_idx
 
   char *w_localdir;            // absolute path of local directory or NULL
   char *w_prevdir;             // previous directory

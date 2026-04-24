@@ -24,6 +24,7 @@
 "		2026 Feb 15 improve comment handling #19414
 "		2026 Mar 23 improve matching of function definitions #19638
 "		2026 Apr 02 improve matching of function definitions #19849
+"		2026 Apr 19 improve detection of special variables #20016
 " }}}
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
@@ -751,13 +752,15 @@ endif
 if exists("b:is_bash")
     syn region shDeref	matchgroup=PreProc start="\${!" end="\*\=}"	contains=@shDerefList,shDerefOffset
     syn match  shDerefVar	contained	"{\@<=!\h\w*"		nextgroup=@shDerefVarList
+    syn match  shDerefSpecial	contained	"\({!\)\@<=[[:alnum:]*#@_]\+"	nextgroup=@shDerefVarList,shDerefOp
 endif
 if (exists("b:is_kornshell") && !exists("b:is_ksh88"))
     syn match  shDerefVar	contained	"{\@<=!\h\w*[[:alnum:]_.]*"	nextgroup=@shDerefVarList
+    syn match  shDerefSpecial	contained	"\({!\)\@<=[[:alnum:]*#@_]\+"	nextgroup=@shDerefVarList,shDerefOp
 endif
 
 syn match  shDerefSpecial	contained	"{\@<=[-*@?0]"		nextgroup=shDerefOp,shDerefOffset,shDerefOpError
-syn match  shDerefSpecial	contained	"\({[#!]\)\@<=[[:alnum:]*@_]\+"	nextgroup=@shDerefVarList,shDerefOp
+syn match  shDerefSpecial	contained	"\({[#]\)\@<=[[:alnum:]*@_]\+"	nextgroup=@shDerefVarList,shDerefOp
 syn match  shDerefVar	contained	"{\@<=\h\w*"		nextgroup=@shDerefVarList
 syn match  shDerefVar	contained	'\d'                            nextgroup=@shDerefVarList
 if exists("b:is_kornshell") || exists("b:is_posix")

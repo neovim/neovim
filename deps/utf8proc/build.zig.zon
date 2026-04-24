@@ -1,5 +1,6 @@
 .{
-    .name = "utf8proc",
+    .name = .utf8proc,
+    .fingerprint = 0xdcddf08dbb8954c4,
     .version = "2.10.0",
     .paths = .{""},
 

@@ -409,6 +409,11 @@ If both, the global `plugin_exec` and the `<filetype>_exec` specific variable
 are set, the filetype specific variable should have precedent.
 
 
+ADA
+
+Documentation for this plugin is here: |ft_ada.txt|.
+
+
 ASCIIDOC						*ft-asciidoc-plugin*
 
 To enable |folding| use this: >
@@ -905,6 +910,11 @@ To disable this behavior, set the following variable in your vimrc: >
 
 	let g:python_recommended_style = 0
 
+POWERSHELL
+
+Documentation for this plugin is here: |ft_ps1.txt|.
+
+
 QUERY					                *ft-query-plugin*
 
 
@@ -965,6 +975,11 @@ The 'formatexpr' option is set dynamically with different values for R code
 and for LaTeX code.  If you prefer that 'formatexpr' is not set, add to your
 |vimrc|: >
 	let rnw_dynamic_comments = 0
+
+
+RAKU
+
+Documentation for this plugin is here: |ft_raku.txt|.
 
 
 RPM SPEC						*ft-spec-plugin*

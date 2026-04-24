@@ -65,6 +65,8 @@ API
 • |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
   no longer treat an empty non-nil pattern as nil.
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
+• |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
+  `msg_show.progress` events.
 
 DIAGNOSTICS
 
@@ -72,6 +74,8 @@ DIAGNOSTICS
 
 EDITOR
 
+• On Windows, the |trust| db now stores paths with "/" slashes. This means the
+  trust store will be reset.
 • `stdpath("log")` moved to `stdpath("state")/logs`.
 
 EVENTS
@@ -108,10 +112,12 @@ API
 • |nvim_set_hl()| supports "font" key.
 • |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor
   shape when an unfocused float is on top of the cursor.
+• |nvim_echo()| distinguishes zero percent from omitted percent for Progress
+  events.
 
 BUILD
 
-• todo
+• Building using "zig build" requires zig 0.16.x.
 
 DEFAULTS
 
@@ -123,11 +129,15 @@ DIAGNOSTICS
 
 EDITOR
 
+• |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
+• |ZR| restarts Nvim (|:restart|).
+• |:uptime| displays uptime.
 
 EVENTS
 
-• todo
+• |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
+  as |nvim_buf_del_mark()|
 
 HIGHLIGHTS
 
@@ -154,12 +164,19 @@ the same range instances now compare equal.
 
 OPTIONS
 
-• `ttyfast` can be disabled during startup by setting the environment variable
+• 'ttyfast' can be disabled during startup by setting the environment variable
   `NVIM_NOTTYFAST` to disable automatic background detection.
+• 'scrolloffpad' allows vertically centering cursor at the end of file.
+• 'winpinned' prevents window from closing unless specifically targeted.
 
 PERFORMANCE
 
-• todo
+• Nvim architecture allows pure-Lua implementations of some `vim.fn`
+  functions, which skips the Vimscript <=> Lua "bridge" (no data
+  conversion/marshalling) entirely, if the `vim.fn` function is called from
+  Lua.
+• The table holding LSP data is now cleared using `table.clear`,
+  thus reducing GC and memory reallocation during each data reset.
 
 PLUGINS
 
@@ -175,7 +192,7 @@ TERMINAL
 
 TREESITTER
 
-• todo
+• |v_]N| |v_[N| expand selection to sibling treesitter node.
 
 TUI
 
@@ -188,7 +205,8 @@ UI
 
 VIMSCRIPT
 
-• todo
+• |v:exitreason| is set before |QuitPre|.
+• |v:starttime| is the process start time (monotonic nanoseconds).
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

@@ -33,8 +33,8 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
     try env.put("TMPDIR", b.fmt("{s}/Xtest_tmpdir", .{b.install_path}));
     try env.put("NVIM_LOG_FILE", b.fmt("{s}/Xtest_nvimlog", .{b.install_path}));
 
-    env.remove("NVIM");
-    env.remove("XDG_DATA_DIRS");
+    _ = env.swapRemove("NVIM");
+    _ = env.swapRemove("XDG_DATA_DIRS");
     return test_step;
 }
 

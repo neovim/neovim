@@ -197,6 +197,7 @@ void early_init(mparm_T *paramp)
   estack_init();
   cmdline_init();
   eval_init();          // init global variables
+  set_vim_var_nr(VV_STARTTIME, (varnumber_T)os_hrtime());
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
   runtime_init();
@@ -255,6 +256,7 @@ int main(int argc, char **argv)
 #endif
 {
   argv0 = argv[0];
+  TO_SLASH(argv0);
 
   if (!appname_is_valid()) {
     fprintf(stderr, "$NVIM_APPNAME must be a name or relative path.\n");
@@ -763,7 +765,12 @@ void getout(int exitval)
   set_vim_var_type(VV_EXITING, VAR_NUMBER);
   set_vim_var_nr(VV_EXITING, exitval);
 
-  // Invoked all deferred functions in the function stack.
+  // Set v:exitreason if not already set (e.g. by :restart).
+  if (*get_vim_var_str(VV_EXITREASON) == NUL) {
+    set_vim_var_string(VV_EXITREASON, S_LEN("quit"));
+  }
+
+  // Invoked all ":defer" functions in the function stack.
   invoke_all_defer();
 
   // Optionally print hashtable efficiency.
@@ -1455,6 +1462,7 @@ scripterror:
           break;
         case 'u':    // "-u {vimrc}" vim inits file
           parmp->use_vimrc = argv[0];
+          TO_SLASH(argv[0]);
           break;
         case 'U':    // "-U {gvimrc}" gvim inits file
           break;
@@ -1499,6 +1507,7 @@ scripterror:
         xfree(p);
         p = tilde_expanded;
       }
+      TO_SLASH(p);
 #endif
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0

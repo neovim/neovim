@@ -45,9 +45,8 @@ msgid "E165: Cannot go beyond last file"
 msgstr "E165: 无法切换，已是最后一个文件"
 
 #: ../arglist.c:782
-#, fuzzy
 msgid "E610: No argument to delete"
-msgstr "E144: :z 不接受非数字的参数"
+msgstr "E610: 没有可删除的参数"
 
 #: ../arglist.c:980
 msgid "E249: window layout changed unexpectedly"
@@ -69,9 +68,8 @@ msgid "E367: No such group: \"%s\""
 msgstr "E367: 无此组: \"%s\""
 
 #: ../autocmd.c:505
-#, fuzzy
 msgid "E936: Cannot delete the current group"
-msgstr "E351: 不能在当前的 'foldmethod' 下删除折叠"
+msgstr "E936: 不能删除当前组"
 
 #: ../autocmd.c:513
 msgid "W19: Deleting augroup that is still in use"
@@ -164,19 +162,19 @@ msgid "E517: No buffers were wiped out"
 msgstr "E517: 没有清除任何缓冲区"
 
 #: ../buffer.c:1079
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer unloaded"
 msgid_plural "%d buffers unloaded"
 msgstr[0] "释放了 %d 个缓冲区"
 
 #: ../buffer.c:1082
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer deleted"
 msgid_plural "%d buffers deleted"
 msgstr[0] "删除了 %d 个缓冲区"
 
 #: ../buffer.c:1085
-#, fuzzy, c-format
+#, c-format
 msgid "%d buffer wiped out"
 msgid_plural "%d buffers wiped out"
 msgstr[0] "清除了 %d 个缓冲区"
@@ -279,7 +277,7 @@ msgid "[readonly]"
 msgstr "[只读]"
 
 #: ../buffer.c:3136
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line --%d%%--"
 msgid_plural "%<PRId64> lines --%d%%--"
 msgstr[0] "%<PRId64> 行 --%d%%--"
@@ -408,9 +406,8 @@ msgid "cmd: %s"
 msgstr "命令: %s"
 
 #: ../debugger.c:347
-#, fuzzy
 msgid "frame is zero"
-msgstr "E726: 步长为零"
+msgstr "帧级别为零"
 
 #: ../debugger.c:354
 #, c-format
@@ -685,14 +682,12 @@ msgid "E708: [:] must come last"
 msgstr "E708: [:] 必须在最后"
 
 #: ../eval.c:1376
-#, fuzzy
 msgid "E713: Cannot use empty key after ."
-msgstr "E713: Dictionary 的键不能为空"
+msgstr "E713: '.' 后面的键不能为空"
 
 #: ../eval.c:1412
-#, fuzzy
 msgid "E709: [:] requires a List or Blob value"
-msgstr "E709: [:] 需要一个 List 值"
+msgstr "E709: [:] 需要一个列表或 Blob 值"
 
 #: ../eval.c:1665
 msgid "E972: Blob value does not have the right number of bytes"
@@ -735,9 +730,8 @@ msgid "E110: Missing ')'"
 msgstr "E110: 缺少 ')'"
 
 #: ../eval.c:3372
-#, fuzzy
 msgid "E260: Missing name after ->"
-msgstr "E526: <%s> 后面缺少数字"
+msgstr "E260: -> 后面缺少名称"
 
 #: ../eval.c:3431
 msgid "E695: Cannot index a Funcref"
@@ -1010,19 +1004,19 @@ msgid "E474: Expected value after colon: %.*s"
 msgstr "E474: 冒号后应有值：%.*s"
 
 #: ../eval/decode.c:701
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected value: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr "E474: 期望值：%.*s"
 
 #: ../eval/decode.c:720
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Comma not inside container: %.*s"
-msgstr "E242: %s 为不能识别的颜色名称"
+msgstr "E474: 逗号不在容器内：%.*s"
 
 #: ../eval/decode.c:725
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate comma: %.*s"
-msgstr "E721: Dictionary 中出现重复的键: \"%s\""
+msgstr "E474: 重复的逗号：%.*s"
 
 #: ../eval/decode.c:728
 #, c-format
@@ -1040,9 +1034,9 @@ msgid "E474: Leading comma: %.*s"
 msgstr "E474: 前导逗号：%.*s"
 
 #: ../eval/decode.c:748
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Colon not inside container: %.*s"
-msgstr "E242: %s 为不能识别的颜色名称"
+msgstr "E474: 冒号不在容器内：%.*s"
 
 #: ../eval/decode.c:753
 #, c-format
@@ -1050,9 +1044,9 @@ msgid "E474: Using colon not in dictionary: %.*s"
 msgstr "E474: 在字典之外使用冒号：%.*s"
 
 #: ../eval/decode.c:756
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected colon: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr "E474: 不该有的冒号：%.*s"
 
 #: ../eval/decode.c:759
 #, c-format
@@ -1065,29 +1059,29 @@ msgid "E474: Duplicate colon: %.*s"
 msgstr "E474: 重复的冒号：%.*s"
 
 #: ../eval/decode.c:775
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected null: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr "E474: 期望 null：%.*s"
 
 #: ../eval/decode.c:787
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected true: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr "E474: 期望 true：%.*s"
 
 #: ../eval/decode.c:799
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected false: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr "E474: 期望 false：%.*s"
 
 #: ../eval/decode.c:879
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unidentified byte: %.*s"
-msgstr "E121: 未定义的变量: %s"
+msgstr "E474: 无法识别的字节：%.*s"
 
 #: ../eval/decode.c:898
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing characters: %.*s"
-msgstr "E488: 多余的尾部字符"
+msgstr "E474: 多余的尾随字符：%.*s"
 
 #: ../eval/decode.c:906
 #, c-format
@@ -1163,9 +1157,8 @@ msgid "E474: Error while dumping %s, %s: attempt to dump function reference"
 msgstr ""
 
 #: ../eval/encode.c:797
-#, fuzzy
 msgid "E474: Invalid key in special dictionary"
-msgstr "E736: 对 Dictionary 无效的操作"
+msgstr "E474: 特殊字典中的键无效"
 
 #: ../eval/encode.c:853
 msgid "encode_tv2string() argument"
@@ -1351,9 +1344,9 @@ msgid "connection failed: %s"
 msgstr "连接失败：%s"
 
 #: ../eval/funcs.c:8328
-#, fuzzy, c-format
+#, c-format
 msgid "E6100: \"%s\" is not a valid stdpath"
-msgstr "E236: 字体 \"%s\" 不是等宽字体"
+msgstr "E6100: \"%s\" 不是有效的 stdpath"
 
 #: ../eval/funcs.c:8420 ../os/time.c:189
 msgid "(Invalid)"
@@ -1999,28 +1992,28 @@ msgid "(Interrupted) "
 msgstr "(已中断) "
 
 #: ../ex_cmds.c:4468
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> match on %<PRId64> line"
 msgid_plural "%<PRId64> matches on %<PRId64> line"
-msgstr[0] "共 %<PRId64> 行"
+msgstr[0] "%<PRId64> 个匹配，位于 %<PRId64> 行"
 
 #: ../ex_cmds.c:4470
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> substitution on %<PRId64> line"
 msgid_plural "%<PRId64> substitutions on %<PRId64> line"
-msgstr[0] "%<PRId64> 次替换，"
+msgstr[0] "%<PRId64> 次替换，位于 %<PRId64> 行"
 
 #: ../ex_cmds.c:4473
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> match on %<PRId64> lines"
 msgid_plural "%<PRId64> matches on %<PRId64> lines"
-msgstr[0] "共 %<PRId64> 行"
+msgstr[0] "%<PRId64> 个匹配，位于 %<PRId64> 行"
 
 #: ../ex_cmds.c:4475
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> substitution on %<PRId64> lines"
 msgid_plural "%<PRId64> substitutions on %<PRId64> lines"
-msgstr[0] "%<PRId64> 次替换，"
+msgstr[0] "%<PRId64> 次替换，位于 %<PRId64> 行"
 
 #. will increment global_busy to break out of the loop
 #: ../ex_cmds.c:4536
@@ -2155,7 +2148,7 @@ msgid "E319: The command is not available in this version"
 msgstr "E319: 抱歉，命令在此版本中不可用"
 
 #: ../ex_docmd.c:4388
-#, fuzzy, c-format
+#, c-format
 msgid "%d more file to edit.  Quit anyway?"
 msgid_plural "%d more files to edit.  Quit anyway?"
 msgstr[0] "还有 %d 个文件未编辑。确实要退出吗？"
@@ -2252,7 +2245,7 @@ msgid "E961: no line number to use for \"<sflnum>\""
 msgstr "E961: 没有用于替换 \"<sflnum>\" 的行号"
 
 #: ../ex_docmd.c:6942
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "E499: Empty file name for '%' or '#', only works with \":p:h\""
 msgstr "E499: '%' 或 '#' 为空文件名，只能用于 \":p:h\""
 
@@ -2670,9 +2663,9 @@ msgid " CONVERSION ERROR"
 msgstr " 转换错误"
 
 #: ../fileio.c:3423
-#, fuzzy, c-format
+#, c-format
 msgid " in line %<PRId64>;"
-msgstr "第 %<PRId64> 行"
+msgstr " 位于第 %<PRId64> 行；"
 
 #: ../fileio.c:3434
 msgid "[Device]"
@@ -3853,29 +3846,29 @@ msgid "E5114: Error while converting print argument #%i: %.*s"
 msgstr ""
 
 #: ../lua/executor.c:1066
-#, fuzzy, c-format
+#, c-format
 msgid "E5115: Error while loading debug string: %.*s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr "E5115: 加载调试字符串时出错：%.*s"
 
 #: ../lua/executor.c:1068
-#, fuzzy, c-format
+#, c-format
 msgid "E5116: Error while calling debug string: %.*s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr "E5116: 调用调试字符串时出错：%.*s"
 
 #: ../lua/executor.c:1370
-#, fuzzy, c-format
+#, c-format
 msgid "E5108: Error executing Lua function: %.*s"
-msgstr "E208: 写入文件 \"%s\" 出错"
+msgstr "E5108: 执行 Lua 函数时出错：%.*s"
 
 #: ../lua/executor.c:1390
-#, fuzzy, c-format
+#, c-format
 msgid "E5107: Error loading lua %.*s"
-msgstr "E210: 读取文件 \"%s\" 出错"
+msgstr "E5107: 加载 Lua %.*s 时出错"
 
 #: ../lua/executor.c:1397
-#, fuzzy, c-format
+#, c-format
 msgid "E5108: Error executing lua %.*s"
-msgstr "E208: 写入文件 \"%s\" 出错"
+msgstr "E5108: 执行 Lua %.*s 时出错"
 
 #: ../lua/executor.c:1539
 #, c-format
@@ -3887,30 +3880,30 @@ msgid "cannot save undo information"
 msgstr "无法保存撤销信息"
 
 #: ../lua/executor.c:1631
-#, fuzzy, c-format
+#, c-format
 msgid "E5109: Error loading lua: %.*s"
-msgstr "E209: 关闭文件 \"%s\" 出错"
+msgstr "E5109: 加载 Lua 时出错：%.*s"
 
 #: ../lua/executor.c:1641
-#, fuzzy, c-format
+#, c-format
 msgid "E5110: Error executing lua: %.*s"
-msgstr "E210: 读取文件 \"%s\" 出错"
+msgstr "E5110: 执行 Lua 时出错：%.*s"
 
 #: ../lua/executor.c:1653 ../lua/executor.c:1705
-#, fuzzy, c-format
+#, c-format
 msgid "E5111: Error calling lua: %.*s"
-msgstr "E209: 关闭文件 \"%s\" 出错"
+msgstr "E5111: 调用 Lua 时出错：%.*s"
 
 #. 1
 #: ../lua/executor.c:1715
-#, fuzzy, c-format
+#, c-format
 msgid "E5112: Error while creating lua chunk: %.*s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr "E5112: 创建 Lua chunk 时出错：%.*s"
 
 #: ../lua/executor.c:1726
-#, fuzzy, c-format
+#, c-format
 msgid "E5113: Error while calling lua chunk: %.*s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr "E5113: 调用 Lua chunk 时出错：%.*s"
 
 #: ../lua/executor.c:1791
 #, c-format
@@ -3987,13 +3980,12 @@ msgid "E282: Cannot read from \"%s\""
 msgstr "E282: 无法读取 \"%s\""
 
 #: ../main.c:2071
-#, fuzzy
 msgid ""
 "\n"
 "More info with \""
 msgstr ""
 "\n"
-"更多信息请见: \"vim -h\"\n"
+"更多信息请用 \""
 
 #. kill us with CTRL-C here, if you like
 #: ../main.c:2094
@@ -4077,10 +4069,8 @@ msgid "  -o[N]                 Open N windows (default: one per file)\n"
 msgstr "  -o[N]                 打开 N 个窗口（默认：每个文件一个）\n"
 
 #: ../main.c:2114
-#, fuzzy
-msgid ""
-"  -O[N]                 Open N vertical windows (default: one per file)\n"
-msgstr "-o[N]\t\t打开 N 个窗口 (默认值: 每个文件一个)"
+msgid "  -O[N]                 Open N vertical windows (default: one per file)\n"
+msgstr "  -O[N]                 打开 N 个垂直窗口（默认：每个文件一个）\n"
 
 #: ../main.c:2115
 msgid "  -p[N]                 Open N tab pages (default: one per file)\n"
@@ -4676,9 +4666,9 @@ msgid "E315: ml_get: invalid lnum: %<PRId64>"
 msgstr "E315: ml_get: 无效的 lnum: %<PRId64>"
 
 #: ../memline.c:1777
-#, fuzzy, c-format
+#, c-format
 msgid "E316: ml_get: cannot find line %<PRId64> in buffer %d %s"
-msgstr "E316: ml_get: 找不到第 %<PRId64> 行"
+msgstr "E316: ml_get: 找不到第 %<PRId64> 行（缓冲区 %d %s）"
 
 #: ../memline.c:2128
 msgid "E317: pointer block id wrong 3"
@@ -4749,9 +4739,8 @@ msgid "While opening file \""
 msgstr "正在打开文件 \""
 
 #: ../memline.c:3082
-#, fuzzy
 msgid "      CANNOT BE FOUND"
-msgstr "  找不到"
+msgstr "      找！不！到！"
 
 #: ../memline.c:3089
 msgid "      NEWER than swap file!\n"
@@ -5054,13 +5043,13 @@ msgid "Type  :qa  and press <Enter> to exit Nvim"
 msgstr "输入  :qa  并按 <Enter> 退出 Nvim"
 
 #: ../ops.c:263
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line %sed %d time"
 msgid_plural "%<PRId64> line %sed %d times"
 msgstr[0] "%<PRId64> 行 %s 了 %d 次"
 
 #: ../ops.c:265
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines %sed %d time"
 msgid_plural "%<PRId64> lines %sed %d times"
 msgstr[0] "%<PRId64> 行 %s 了 %d 次"
@@ -5092,13 +5081,13 @@ msgid " into \"%c"
 msgstr "进 \"%c "
 
 #: ../ops.c:2795
-#, fuzzy, c-format
+#, c-format
 msgid "block of %<PRId64> line yanked%s"
 msgid_plural "block of %<PRId64> lines yanked%s"
 msgstr[0] "复制了 %<PRId64> 行的块"
 
 #: ../ops.c:2799
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line yanked%s"
 msgid_plural "%<PRId64> lines yanked%s"
 msgstr[0] "复制了 %<PRId64> 行"

@@ -20,6 +20,7 @@ end
 -- Map of api_level:version, by inspection of:
 --    :lua= vim.mpack.decode(vim.fn.readfile('test/functional/fixtures/api_level_9.mpack','B')).version
 M.version_level = {
+  [15] = '0.13.0',
   [14] = '0.12.0',
   [13] = '0.11.0',
   [12] = '0.10.0',

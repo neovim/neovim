@@ -378,6 +378,22 @@ describe('ui/cursor', function()
     end)
   end)
 
+  it("'set all&' reapplies 'guicursor'", function()
+    command('set guicursor=n:ver25')
+    screen:expect(function()
+      eq('vertical', screen._mode_info[1].cursor_shape)
+      eq(25, screen._mode_info[1].cell_percentage)
+    end)
+
+    command('set all&')
+    screen:expect(function()
+      eq('block', screen._mode_info[1].cursor_shape)
+      eq(0, screen._mode_info[1].blinkon)
+      eq(0, screen._mode_info[1].blinkoff)
+      eq(true, screen._cursor_style_enabled)
+    end)
+  end)
+
   it(':sleep does not hide cursor when sleeping', function()
     n.feed(':sleep 300m | echo 42')
     screen:expect([[

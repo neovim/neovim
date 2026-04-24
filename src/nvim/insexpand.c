@@ -137,27 +137,27 @@ static char *ctrl_x_msgs[] = {
   N_(" Register completion (^N^P)"),
 };
 
-static char *ctrl_x_mode_names[] = {
-  "keyword",
-  "ctrl_x",
-  "scroll",
-  "whole_line",
-  "files",
-  "tags",
-  "path_patterns",
-  "path_defines",
-  "unknown",          // CTRL_X_FINISHED
-  "dictionary",
-  "thesaurus",
-  "cmdline",
-  "function",
-  "omni",
-  "spell",
-  NULL,               // CTRL_X_LOCAL_MSG only used in "ctrl_x_msgs"
-  "eval",
-  "cmdline",
-  NULL,               // CTRL_X_BUFNAME
-  "register",
+static String ctrl_x_mode_names[] = {
+  STATIC_CSTR_STRING_INIT("keyword"),
+  STATIC_CSTR_STRING_INIT("ctrl_x"),
+  STATIC_CSTR_STRING_INIT("scroll"),
+  STATIC_CSTR_STRING_INIT("whole_line"),
+  STATIC_CSTR_STRING_INIT("files"),
+  STATIC_CSTR_STRING_INIT("tags"),
+  STATIC_CSTR_STRING_INIT("path_patterns"),
+  STATIC_CSTR_STRING_INIT("path_defines"),
+  STATIC_CSTR_STRING_INIT("unknown"),  // CTRL_X_FINISHED
+  STATIC_CSTR_STRING_INIT("dictionary"),
+  STATIC_CSTR_STRING_INIT("thesaurus"),
+  STATIC_CSTR_STRING_INIT("cmdline"),
+  STATIC_CSTR_STRING_INIT("function"),
+  STATIC_CSTR_STRING_INIT("omni"),
+  STATIC_CSTR_STRING_INIT("spell"),
+  STRING_INIT,  // CTRL_X_LOCAL_MSG is only used in "ctrl_x_msgs"
+  STATIC_CSTR_STRING_INIT("eval"),
+  STATIC_CSTR_STRING_INIT("cmdline"),
+  STRING_INIT,  // CTRL_X_BUFNAME
+  STATIC_CSTR_STRING_INIT("register"),
 };
 
 /// Structure used to store one match for insert completion.
@@ -568,11 +568,6 @@ bool check_compl_option(bool dict_opt)
 bool vim_is_ctrl_x_key(int c)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  // Always allow ^R - let its results then be checked
-  if (c == Ctrl_R && ctrl_x_mode != CTRL_X_REGISTER) {
-    return true;
-  }
-
   // Accept <PageUp> and <PageDown> if the popup menu is visible.
   if (ins_compl_pum_key(c)) {
     return true;
@@ -638,21 +633,25 @@ static bool is_first_match(const compl_T *const match)
   return match == compl_first_match;
 }
 
-static void do_autocmd_completedone(int c, int mode, char *word)
+static void do_autocmd_completedone(int c, int mode, String *word)
 {
   save_v_event_T save_v_event;
   dict_T *v_event = get_v_event(&save_v_event);
 
-  mode = mode & ~CTRL_X_WANT_IDENT;
-  char *mode_str = NULL;
-  if (ctrl_x_mode_names[mode]) {
-    mode_str = ctrl_x_mode_names[mode];
+  if (word == NULL || word->data == NULL) {
+    tv_dict_add_str_len(v_event, S_LEN("complete_word"), "", 0);
+  } else {
+    tv_dict_add_str_len(v_event, S_LEN("complete_word"), word->data, (int)word->size);
   }
-  tv_dict_add_str(v_event, S_LEN("complete_word"), word != NULL ? word : "");
-  tv_dict_add_str(v_event, S_LEN("complete_type"), mode_str != NULL ? mode_str : "");
+
+  String *mode_str = &ctrl_x_mode_names[mode & ~CTRL_X_WANT_IDENT];
+  tv_dict_add_str_len(v_event, S_LEN("complete_type"),
+                      mode_str->data == NULL ? "" : mode_str->data,
+                      (int)mode_str->size);
 
   tv_dict_add_str(v_event, S_LEN("reason"),
-                  (c == Ctrl_Y || word != NULL ? "accept" : (c == Ctrl_E ? "cancel" : "discard")));
+                  (c == Ctrl_Y || (word != NULL && word->data != NULL)
+                   ? "accept" : (c == Ctrl_E ? "cancel" : "discard")));
   tv_dict_set_keys_readonly(v_event);
 
   ins_apply_autocmds(EVENT_COMPLETEDONE);
@@ -1319,13 +1318,13 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc_lock(VAR_FIXED);
-  tv_dict_add_str(dict, S_LEN("word"), match->cp_str.data);
+  tv_dict_add_str_len(dict, S_LEN("word"), match->cp_str.data, (int)match->cp_str.size);
   tv_dict_add_str(dict, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
   tv_dict_add_str(dict, S_LEN("menu"), match->cp_text[CPT_MENU]);
   tv_dict_add_str(dict, S_LEN("kind"), match->cp_text[CPT_KIND]);
   tv_dict_add_str(dict, S_LEN("info"), match->cp_text[CPT_INFO]);
   if (match->cp_user_data.v_type == VAR_UNKNOWN) {
-    tv_dict_add_str(dict, S_LEN("user_data"), "");
+    tv_dict_add_str_len(dict, S_LEN("user_data"), "", 0);
   } else {
     tv_dict_add_tv(dict, S_LEN("user_data"), &match->cp_user_data);
   }
@@ -1945,11 +1944,8 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
   for (int i = 0; i < count && !got_int && !ins_compl_interrupted(); i++) {
     FILE *fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
-      msg_hist_off = true;  // reset in msg_trunc()
-      msg_ext_set_kind("completion");
-      vim_snprintf(IObuff, IOSIZE,
-                   _("Scanning dictionary: %s"), files[i]);
-      msg_trunc(IObuff, true, HLF_R);
+      vim_snprintf(IObuff, IOSIZE, _("Scanning dictionary: %s"), files[i]);
+      msg_progress(IObuff, "completion", "running", HLF_R, false, true);
     }
 
     if (fp == NULL) {
@@ -2648,14 +2644,14 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     }
   }
 
-  char *word = NULL;
+  String word = STRING_INIT;
   // If the popup menu is displayed pressing CTRL-Y means accepting
   // the selection without inserting anything.  When
   // compl_enter_selects is set the Enter key does the same.
   if ((c == Ctrl_Y || (compl_enter_selects
                        && (c == CAR || c == K_KENTER || c == NL)))
       && pum_visible()) {
-    word = xstrdup(compl_shown_match->cp_str.data);
+    word = copy_string(compl_shown_match->cp_str, NULL);
     retval = true;
     // May need to remove ComplMatchIns highlight.
     redrawWinline(curwin, curwin->w_cursor.lnum);
@@ -2665,10 +2661,10 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   // (eg: only one match with 'completeopt' "menu" without "menuone"),
   // the user had no opportunity to explicitly accept or dismiss it,
   // so treat this as an implicit accept (#38160).
-  if (word == NULL && c != Ctrl_E && compl_used_match && compl_match_array == NULL
+  if (word.data == NULL && c != Ctrl_E && compl_used_match && compl_match_array == NULL
       && compl_curr_match != NULL
       && compl_curr_match->cp_str.data != NULL) {
-    word = xstrdup(compl_curr_match->cp_str.data);
+    word = copy_string(compl_curr_match->cp_str, NULL);
   }
 
   // CTRL-E means completion is Ended, go back to the typed text.
@@ -2716,7 +2712,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   }
   compl_autocomplete = false;
   compl_from_nonkeyword = false;
-  compl_best_matches = 0;
+  compl_num_bests = 0;
   compl_ins_end_col = 0;
 
   if (c == Ctrl_C && cmdwin_type != 0) {
@@ -2731,8 +2727,8 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   }
   // Trigger the CompleteDone event to give scripts a chance to act
   // upon the end of completion.
-  do_autocmd_completedone(c, prev_mode, word);
-  xfree(word);
+  do_autocmd_completedone(c, prev_mode, &word);
+  xfree(word.data);
 
   return retval;
 }
@@ -2800,7 +2796,7 @@ bool ins_compl_prep(int c)
     retval = set_ctrl_x_mode(c);
   } else if (ctrl_x_mode_not_default()) {
     // We're already in CTRL-X mode, do we stay in it?
-    if (!vim_is_ctrl_x_key(c)) {
+    if (c != Ctrl_R && !vim_is_ctrl_x_key(c)) {
       ctrl_x_mode = ctrl_x_mode_scroll() ? CTRL_X_NORMAL : CTRL_X_FINISHED;
       edit_submode = NULL;
     }
@@ -2830,7 +2826,7 @@ bool ins_compl_prep(int c)
 
   // reset continue_* if we left expansion-mode, if we stay they'll be
   // (re)set properly in ins_complete()
-  if (!vim_is_ctrl_x_key(c)) {
+  if (c != Ctrl_R && !vim_is_ctrl_x_key(c)) {
     compl_cont_status = 0;
     compl_cont_mode = 0;
   }
@@ -3517,12 +3513,13 @@ void f_complete_check(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// Return Insert completion mode name string
-static char *ins_compl_mode(void)
+static String ins_compl_mode(void)
 {
   if (ctrl_x_mode_not_defined_yet() || ctrl_x_mode_scroll() || compl_started) {
-    return ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];
+    String *mode = &ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];
+    return cbuf_as_string(mode->data == NULL ? "" : mode->data, mode->size);
   }
-  return "";
+  return cbuf_as_string("", 0);
 }
 
 /// Assign the sequence number to all the completion matches which don't have
@@ -3577,7 +3574,7 @@ static void ins_compl_update_sequence_numbers(void)
 /// Fill the dict of complete_info
 static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
 {
-  tv_dict_add_str(di, S_LEN("word"), match->cp_str.data);
+  tv_dict_add_str_len(di, S_LEN("word"), match->cp_str.data, (int)match->cp_str.size);
   tv_dict_add_str(di, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
   tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
   tv_dict_add_str(di, S_LEN("kind"), match->cp_text[CPT_KIND]);
@@ -3587,7 +3584,7 @@ static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
   }
   if (match->cp_user_data.v_type == VAR_UNKNOWN) {
     // Add an empty string for backwards compatibility
-    tv_dict_add_str(di, S_LEN("user_data"), "");
+    tv_dict_add_str_len(di, S_LEN("user_data"), "", 0);
   } else {
     tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
   }
@@ -3635,7 +3632,8 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 
   int ret = OK;
   if (what_flag & CI_WHAT_MODE) {
-    ret = tv_dict_add_str(retdict, S_LEN("mode"), ins_compl_mode());
+    String mode = ins_compl_mode();
+    ret = tv_dict_add_str_len(retdict, S_LEN("mode"), mode.data, (int)mode.size);
   }
 
   if (ret == OK && (what_flag & CI_WHAT_PUM_VISIBLE)) {
@@ -3822,16 +3820,13 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       st->dict_f = DICT_EXACT;
     }
     if (!shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
-      msg_hist_off = true;  // reset in msg_trunc()
-      msg_ext_overwrite = true;
-      msg_ext_set_kind("completion");
       vim_snprintf(IObuff, IOSIZE, _("Scanning: %s"),
                    st->ins_buf->b_fname == NULL
                    ? buf_spname(st->ins_buf)
                    : st->ins_buf->b_sfname == NULL
                    ? st->ins_buf->b_fname
                    : st->ins_buf->b_sfname);
-      msg_trunc(IObuff, true, HLF_R);
+      msg_progress(IObuff, "completion", "running", HLF_R, false, true);
     }
   } else if (*st->e_cpt == NUL) {
     status = INS_COMPL_CPT_END;
@@ -3864,11 +3859,8 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
         compl_type = CTRL_X_TAGS;
         if (!shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
-          msg_ext_set_kind("completion");
-          msg_hist_off = true;  // reset in msg_trunc()
-          msg_ext_overwrite = true;
           vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
-          msg_trunc(IObuff, true, HLF_R);
+          msg_progress(IObuff, "completion", "running", HLF_R, false, true);
         }
       }
     }
@@ -3982,6 +3974,9 @@ static void fuzzy_longest_match(void)
     return;
   }
 
+  if ((size_t)compl_num_bests > SIZE_MAX / sizeof(compl_T *)) {
+    return;
+  }
   compl_best_matches = (compl_T **)xmalloc((size_t)compl_num_bests * sizeof(compl_T *));
 
   for (int i = 0; compl != NULL && i < compl_num_bests; i++) {
@@ -4043,30 +4038,9 @@ static void get_next_filename_completion(void)
   int max_score = 0;
   Direction dir = compl_direction;
 
-#ifdef BACKSLASH_IN_FILENAME
-  char pathsep = (curbuf->b_p_csl[0] == 's')
-                 ? '/' : (curbuf->b_p_csl[0] == 'b') ? '\\' : PATHSEP;
-#else
-  char pathsep = PATHSEP;
-#endif
-
   if (in_fuzzy_collect) {
-#ifdef BACKSLASH_IN_FILENAME
-    if (curbuf->b_p_csl[0] == 's') {
-      for (size_t i = 0; i < leader_len; i++) {
-        if (leader[i] == '\\') {
-          leader[i] = '/';
-        }
-      }
-    } else if (curbuf->b_p_csl[0] == 'b') {
-      for (size_t i = 0; i < leader_len; i++) {
-        if (leader[i] == '/') {
-          leader[i] = '\\';
-        }
-      }
-    }
-#endif
-    char *last_sep = strrchr(leader, pathsep);
+    TO_SLASH(leader);
+    char *last_sep = strrchr(leader, PATHSEP);
     if (last_sep == NULL) {
       // No path separator or separator is the last character,
       // fuzzy match the whole leader
@@ -4098,16 +4072,12 @@ static void get_next_filename_completion(void)
   // May change home directory back to "~".
   tilde_replace(compl_pattern.data, num_matches, matches);
 #ifdef BACKSLASH_IN_FILENAME
-  if (curbuf->b_p_csl[0] != NUL) {
+  if ((curbuf->b_p_csl[0] == NUL && !p_ssl) || curbuf->b_p_csl[0] == 'b') {
     for (int i = 0; i < num_matches; i++) {
-      char *ptr = matches[i];
-      while (*ptr != NUL) {
-        if (curbuf->b_p_csl[0] == 's' && *ptr == '\\') {
-          *ptr = '/';
-        } else if (curbuf->b_p_csl[0] == 'b' && *ptr == '/') {
+      for (char *ptr = matches[i]; *ptr; ptr++) {
+        if (*ptr == '/') {
           *ptr = '\\';
         }
-        ptr += utfc_ptr2len(ptr);
       }
     }
   }
@@ -5073,7 +5043,8 @@ static char *find_common_prefix(size_t *prefix_len, bool curbuf_only)
       }
 
       if (!match_limit_exceeded
-          && (!curbuf_only || cpt_sources_array[cur_source].cs_flag == '.')) {
+          && (!curbuf_only || (cur_source != -1
+                               && cpt_sources_array[cur_source].cs_flag == '.'))) {
         if (first == NULL && strncmp(ins_compl_leader(), compl->cp_str.data,
                                      ins_compl_leader_len()) == 0) {
           first = compl->cp_str.data;
@@ -5306,8 +5277,7 @@ static int find_next_completion_match(bool allow_get_expansion, int todo, bool a
         if (compl_pending > 0 && compl_shown_match->cp_next != NULL) {
           compl_shown_match = compl_shown_match->cp_next;
           compl_pending--;
-        }
-        if (compl_pending < 0 && compl_shown_match->cp_prev != NULL) {
+        } else if (compl_pending < 0 && compl_shown_match->cp_prev != NULL) {
           compl_shown_match = compl_shown_match->cp_prev;
           compl_pending++;
         } else {

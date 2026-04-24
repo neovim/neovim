@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: check issue title
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const title = context.payload.issue.title;
             const titleSplit = title.split(/\b/).map(e => e.toLowerCase());
-            const keywords = ['api', 'treesitter', 'ui', 'lsp'];
+            const keywords = ['api', 'treesitter', 'ui', 'ui2', 'lsp'];
             var match = new Set();
             for (const keyword of keywords) {
               if (titleSplit.includes(keyword)) {

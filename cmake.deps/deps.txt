@@ -31,8 +31,8 @@ LIBICONV_SHA256 8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
 UTF8PROC_URL https://github.com/juliastrings/utf8proc/archive/v2.11.3.tar.gz
 UTF8PROC_SHA256 abfed50b6d4da51345713661370290f4f4747263ee73dc90356299dfc7990c78
 
-TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.1.tar.gz
-TREESITTER_C_SHA256 25dd4bb3dec770769a407e0fc803f424ce02c494a56ce95fedc525316dcf9b48
+TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.2.tar.gz
+TREESITTER_C_SHA256 2eeb4db31f8fa0865e45488503d13403923bcb485a1bdb637abff8c42dd97364
 TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.5.0.tar.gz
 TREESITTER_LUA_SHA256 cf01b93f4b61b96a6d27942cf28eeda4cbce7d503c3bef773a8930b3d778a2d9
 TREESITTER_VIM_URL https://github.com/tree-sitter-grammars/tree-sitter-vim/archive/v0.8.1.tar.gz
@@ -43,8 +43,8 @@ TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/a
 TREESITTER_QUERY_SHA256 c2b23b9a54cffcc999ded4a5d3949daf338bebb7945dece229f832332e6e6a7d
 TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.3.tar.gz
 TREESITTER_MARKDOWN_SHA256 df845b1ab7c7c163ec57d7fa17170c92b04be199bddab02523636efec5224ab6
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/64698af1ac6abb97f5a548cfbaf6e88bca2d8782.tar.gz
-TREESITTER_SHA256 3ad608d1e30321615e2d6bb3907fbfe65c0c58cf74e8041813ca8a7d8dcf6714
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/aff9b9d92e628bdb159189b7066baa00e8f7535e.tar.gz
+TREESITTER_SHA256 9518f74b873ce1f521257130ddcb8008cbb1b2a5febe7f56271027147c43ee1c
 
 WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.6.tar.gz
 WASMTIME_SHA256 c4a3c596a07c02ba6adce503154a2095fd98037a1e50d56add9773f0269ec9b7

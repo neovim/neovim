@@ -62,12 +62,14 @@ end
 
 --- :edit, but it respects commands like :hor, :vert, :tab, etc.
 --- @param file string
---- @param mods_str string
-function M.wrapped_edit(file, mods_str)
-  local cmdline = table.concat({ mods_str, 'edit' }, ' ')
-  local mods = vim.api.nvim_parse_cmd(cmdline, {}).mods
-  --- @diagnostic disable-next-line: need-check-nil
-  if mods.tab > 0 or mods.split ~= '' or mods.horizontal or mods.vertical then
+--- @param mods string|vim.api.keyset.cmd_mods Modifier string ("vertical") or structured mods table.
+function M.wrapped_edit(file, mods)
+  assert(mods)
+  if type(mods) == 'string' then
+    mods = vim.api.nvim_parse_cmd(mods .. ' edit', {}).mods --[[@as vim.api.keyset.cmd_mods]]
+  end
+  --- @cast mods vim.api.keyset.cmd_mods
+  if (mods.tab or 0) > 0 or (mods.split or '') ~= '' or mods.horizontal or mods.vertical then
     local buf = M.get_buf_by_name(file)
     if buf == nil then
       buf = vim.api.nvim_create_buf(true, false)

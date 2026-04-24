@@ -96,7 +96,7 @@ static int compl_match_arraysize;
 static int compl_startcol;
 static int compl_selected;
 /// cmdline before expansion
-static char *cmdline_orig = NULL;
+static String cmdline_orig = STRING_INIT;
 
 #define SHOW_MATCH(m) (showtail ? showmatches_gettail(matches[m], false) : matches[m])
 
@@ -316,6 +316,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     }
     // Translate string into pattern and expand it.
     const int use_options = (options
+                             | WILD_USE_COMPLETESLASH
                              | WILD_HOME_REPLACE
                              | WILD_ADD_SLASH
                              | WILD_SILENT
@@ -341,8 +342,8 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   // Save cmdline before inserting selected item
   if (!wild_navigate && ccline->cmdbuff != NULL) {
-    xfree(cmdline_orig);
-    cmdline_orig = xstrnsave(ccline->cmdbuff, (size_t)ccline->cmdlen);
+    xfree(cmdline_orig.data);
+    cmdline_orig = cstrn_to_string(ccline->cmdbuff, (size_t)ccline->cmdlen);
   }
 
   if (p != NULL && !got_int && !(options & WILD_NOSELECT)) {
@@ -1030,7 +1031,7 @@ void ExpandCleanup(expand_T *xp)
 
 void clear_cmdline_orig(void)
 {
-  XFREE_CLEAR(cmdline_orig);
+  API_CLEAR_STRING(cmdline_orig);
 }
 
 /// Display one line of completion matches. Multiple matches are displayed in
@@ -2725,16 +2726,13 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
     xfree(pat);
   }
 #ifdef BACKSLASH_IN_FILENAME
-  if (p_csl[0] != NUL && (options & WILD_IGNORE_COMPLETESLASH) == 0) {
+  if ((options & WILD_USE_COMPLETESLASH) && ((p_csl[0] == NUL && !p_ssl) || p_csl[0] == 'b')) {
     for (int j = 0; j < *numMatches; j++) {
       char *ptr = (*matches)[j];
-      while (*ptr != NUL) {
-        if (p_csl[0] == 's' && *ptr == '\\') {
-          *ptr = '/';
-        } else if (p_csl[0] == 'b' && *ptr == '/') {
+      for (; *ptr; ptr++) {
+        if (*ptr == '/') {
           *ptr = '\\';
         }
-        ptr += utfc_ptr2len(ptr);
       }
     }
   }
@@ -2863,19 +2861,18 @@ static char *get_healthcheck_names(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   return NULL;
 }
 
-/// Completion for |:log| command.
+/// Completes arg1 via Lua.
 ///
-/// Given to ExpandGeneric() to obtain `:log` completion.
-/// @param[in] idx  Index of the item.
-/// @param[in] xp  Not used.
-static char *get_log_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+/// @param[in] lua Lua script.
+/// @param[in] xp  Expandy thing 🤷
+/// @param[in] idx Index of the item.
+static char *get_arg1_from_lua(char *lua, expand_T *xp, int idx)
 {
   static Object names = OBJECT_INIT;
   static char *last_xp_line = NULL;
   static unsigned last_gen = 0;
 
-  if (last_xp_line == NULL || strcmp(last_xp_line,
-                                     xp->xp_line) != 0
+  if (last_xp_line == NULL || strcmp(last_xp_line, xp->xp_line) != 0
       || last_gen != get_cmdline_last_prompt_id()) {
     xfree(last_xp_line);
     last_xp_line = xstrdup(xp->xp_line);
@@ -2884,9 +2881,7 @@ static char *get_log_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 
     ADD_C(args, CSTR_AS_OBJ(xp->xp_line));
     // Build the current command line as a Lua string argument
-    Object res = NLUA_EXEC_STATIC("return require'vim._core.ex_cmd'.log_complete(...)", args,
-                                  kRetObject, NULL,
-                                  &err);
+    Object res = nlua_exec(cstr_as_string(lua), NULL, args, kRetObject, NULL, &err);
     api_clear_error(&err);
     api_free_object(names);
     names = res;
@@ -2900,41 +2895,24 @@ static char *get_log_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   return NULL;
 }
 
+/// Completion for |:log| command.
+///
+/// Given to ExpandGeneric() to obtain `:log` completion.
+/// @param[in] xp  Expandy thing 🤷
+/// @param[in] idx  Index of the item.
+static char *get_log_arg(expand_T *xp, int idx)
+{
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.log_complete(...)", xp, idx);
+}
+
 /// Completion for |:lsp| command.
 ///
 /// Given to ExpandGeneric() to obtain `:lsp` completion.
+/// @param[in] xp  Expandy thing 🤷
 /// @param[in] idx  Index of the item.
-/// @param[in] xp  Not used.
-static char *get_lsp_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+static char *get_lsp_arg(expand_T *xp, int idx)
 {
-  static Object names = OBJECT_INIT;
-  static char *last_xp_line = NULL;
-  static unsigned last_gen = 0;
-
-  if (last_xp_line == NULL || strcmp(last_xp_line,
-                                     xp->xp_line) != 0
-      || last_gen != get_cmdline_last_prompt_id()) {
-    xfree(last_xp_line);
-    last_xp_line = xstrdup(xp->xp_line);
-    MAXSIZE_TEMP_ARRAY(args, 1);
-    Error err = ERROR_INIT;
-
-    ADD_C(args, CSTR_AS_OBJ(xp->xp_line));
-    // Build the current command line as a Lua string argument
-    Object res = NLUA_EXEC_STATIC("return require'vim._core.ex_cmd'.lsp_complete(...)", args,
-                                  kRetObject, NULL,
-                                  &err);
-    api_clear_error(&err);
-    api_free_object(names);
-    names = res;
-    last_gen = get_cmdline_last_prompt_id();
-  }
-
-  if (names.type == kObjectTypeArray && idx < (int)names.data.array.size
-      && names.data.array.items[idx].type == kObjectTypeString) {
-    return names.data.array.items[idx].data.string.data;
-  }
-  return NULL;
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.lsp_complete(...)", xp, idx);
 }
 
 /// Do the expansion based on xp->xp_context and "rmp".
@@ -4060,7 +4038,8 @@ void f_cmdcomplete_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   dict_T *retdict = rettv->vval.v_dict;
-  int ret = tv_dict_add_str(retdict, S_LEN("cmdline_orig"), cmdline_orig);
+  int ret = tv_dict_add_str_len(retdict, S_LEN("cmdline_orig"),
+                                cmdline_orig.data, (int)cmdline_orig.size);
   if (ret == OK) {
     ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
   }

@@ -1674,8 +1674,16 @@ local options = {
         	    'ignorecase' is set without 'infercase'.
         	    See also |preinserted()|.
 
-           preselect   Selects the first completion item whose "preselect"
-        	    field is set, if any. Takes precedence over "noselect".
+           preselect
+        	    When one of |complete-items| has its "preselect" field set
+        	    (e.g., as indicated by an LSP server), select the first
+        	    such item in the |popupmenu-completion|. Takes precedence
+        	    over "noselect".
+
+        	    Unlike the implicit selection behavior (when "noselect" is
+        	    not set), this preserves the original sort order and
+        	    navigates to the preselect item rather than always
+        	    selecting the first item.
 
            preview  Show extra information about the currently selected
         	    completion in the preview window.  Only works in
@@ -5007,6 +5015,7 @@ local options = {
       redraw = { 'statuslines', 'current_buffer' },
       scope = { 'buf' },
       short_desc = N_('name of a keyboard mapping'),
+      tags = { 'E544' },
       type = 'string',
       varname = 'p_keymap',
     },
@@ -7228,8 +7237,8 @@ local options = {
         Minimal number of screen lines to keep above and below the cursor.
         This will make some context visible around where you are working.  If
         you set it to a very large value (999) the cursor line will always be
-        in the middle of the window (except at the start or end of the file or
-        when long lines wrap).
+        in the middle of the window (except at the start or end of the file,
+        see 'scrolloffpad', or when long lines wrap).
         After using the local value, go back the global value with one of
         these two: >vim
         	setlocal scrolloff<
@@ -7241,6 +7250,31 @@ local options = {
       short_desc = N_('minimum nr. of lines above and below cursor'),
       type = 'number',
       varname = 'p_so',
+    },
+    {
+      abbreviation = 'sop',
+      defaults = 0,
+      desc = [=[
+        When 'scrolloff' and 'scrolloffpad' are greater than zero, allow
+        the cursor to remain centered when at the end of the file.
+        Normally, 'scrolloff' will not keep the cursor centered at the
+        end of the file.
+
+        A value of 0 disables this feature.  Any value above 0 enables it.
+        For a window-local value, -1 means to use the global value.
+        Values below -1 are invalid.
+
+        After using the local value, go back the global value with one of
+        these two: >vim
+        	setlocal scrolloffpad<
+        	setlocal scrolloffpad=-1
+        <
+      ]=],
+      full_name = 'scrolloffpad',
+      scope = { 'global', 'win' },
+      short_desc = N_('vertically center cursor even at end of file'),
+      type = 'number',
+      varname = 'p_sop',
     },
     {
       abbreviation = 'sbo',
@@ -7913,8 +7947,9 @@ local options = {
       cb = 'did_set_shortmess',
       defaults = 'ltToOCF',
       desc = [=[
-        This option helps to avoid all the |hit-enter| prompts caused by file
-        messages, for example with CTRL-G, and to avoid some other messages.
+        Controls display of file messages (e.g. CTRL-G) and various other
+        messages.
+
         It is a list of flags:
          flag	meaning when present	~
           l	use "999L, 888B" instead of "999 lines, 888 bytes"	*shm-l*
@@ -8575,6 +8610,7 @@ local options = {
       scope = { 'global' },
       secure = true,
       short_desc = N_('method(s) used to suggest spelling corrections'),
+      tags = { 'E5700' },
       type = 'string',
       varname = 'p_sps',
     },
@@ -9675,7 +9711,7 @@ local options = {
         error will be given.
 
         The default (empty) behaviour is equivalent to: >vim
-            set titlestring=%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim
+            set titlestring=%t%(\ %M%)%(\ \(%{expand('%:p:~:h')}\)%)%a\ -\ Nvim
         <
         Example: >vim
             auto BufEnter * let &titlestring = hostname() .. "/" .. expand("%:p")
@@ -10710,6 +10746,19 @@ local options = {
       short_desc = N_('minimal number of columns for any window'),
       type = 'number',
       varname = 'p_wmw',
+    },
+    {
+      abbreviation = 'wp',
+      defaults = false,
+      desc = [=[
+        If enabled, the window is pinned and will not be closed by |:only|
+        and |:fclose|. Only commands specifically targeting the window can
+        close it.
+      ]=],
+      full_name = 'winpinned',
+      scope = { 'win' },
+      short_desc = N_('prevent closing window with :only and :fclose'),
+      type = 'boolean',
     },
     {
       abbreviation = 'wiw',

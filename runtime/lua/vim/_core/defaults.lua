@@ -295,17 +295,17 @@ do
     )
   end
 
+  --- Execute a command and print errors without a stacktrace.
+  --- @param opts vim.api.keyset.cmd Arguments to |nvim_cmd()|
+  local function cmd(opts)
+    local ok, err = pcall(vim.api.nvim_cmd, opts, {})
+    if not ok then
+      vim.api.nvim_echo({ { err:sub(#'Vim:' + 1) } }, true, { err = true })
+    end
+  end
+
   --- vim-unimpaired style mappings. See: https://github.com/tpope/vim-unimpaired
   do
-    --- Execute a command and print errors without a stacktrace.
-    --- @param opts table Arguments to |nvim_cmd()|
-    local function cmd(opts)
-      local ok, err = pcall(vim.api.nvim_cmd, opts, {})
-      if not ok then
-        vim.api.nvim_echo({ { err:sub(#'Vim:' + 1) } }, true, { err = true })
-      end
-    end
-
     -- Quickfix mappings
     vim.keymap.set('n', '[q', function()
       cmd({ cmd = 'cprevious', count = vim.v.count1 })
@@ -465,6 +465,14 @@ do
     vim.keymap.set({ 'x' }, ']n', function()
       require 'vim.treesitter._select'.select_next(vim.v.count1)
     end, { desc = 'Select next node' })
+
+    vim.keymap.set({ 'x' }, '[N', function()
+      require 'vim.treesitter._select'.select_grow_prev(vim.v.count1)
+    end, { desc = 'Select expand previous node' })
+
+    vim.keymap.set({ 'x' }, ']N', function()
+      require 'vim.treesitter._select'.select_grow_next(vim.v.count1)
+    end, { desc = 'Select expand next node' })
 
     vim.keymap.set({ 'x', 'o' }, 'an', function()
       if vim.treesitter.get_parser(nil, nil, { error = false }) then
@@ -1110,7 +1118,12 @@ do
       desc = 'Display native progress bars',
       callback = function(ev)
         if ev.data.status == 'running' then
-          vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', ev.data.percent))
+          if ev.data.percent ~= nil then
+            vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', ev.data.percent))
+          else
+            -- "Indeterminate" progress (unknown percent).
+            vim.api.nvim_ui_send(string.format('\027]9;4;3\027\\'))
+          end
         else
           vim.api.nvim_ui_send('\027]9;4;0;0\027\\')
         end

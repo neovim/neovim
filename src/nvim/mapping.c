@@ -302,6 +302,7 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
                                const LuaRef rhs_lua, const char *const cpo_val,
                                MapArguments *const mapargs)
 {
+  mapargs->rhs_lua = rhs_lua;
   char lhs_buf[128];
 
   // If mapping has been given as ^V<C_UP> say, then replace the term codes

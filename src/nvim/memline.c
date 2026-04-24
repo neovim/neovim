@@ -913,6 +913,7 @@ void ml_recover(bool checkext)
 
   // If .swp file name given directly, use name from swapfile for buffer.
   if (directly) {
+    TO_SLASH(b0p->b0_fname);
     expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
     if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
       goto theend;
@@ -1496,9 +1497,9 @@ void swapfile_dict(const char *fname, dict_T *d)
   if ((fd = os_open(fname, O_RDONLY, 0)) >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
       if (ml_check_b0_id(&b0) == FAIL) {
-        tv_dict_add_str(d, S_LEN("error"), "Not a swap file");
+        tv_dict_add_str_len(d, S_LEN("error"), S_LEN("Not a swap file"));
       } else if (b0_magic_wrong(&b0)) {
-        tv_dict_add_str(d, S_LEN("error"), "Magic number mismatch");
+        tv_dict_add_str_len(d, S_LEN("error"), S_LEN("Magic number mismatch"));
       } else {
         // We have swap information.
         tv_dict_add_str_len(d, S_LEN("version"), b0.b0_version, 10);
@@ -1515,11 +1516,11 @@ void swapfile_dict(const char *fname, dict_T *d)
         tv_dict_add_nr(d, S_LEN("inode"), char_to_long(b0.b0_ino));
       }
     } else {
-      tv_dict_add_str(d, S_LEN("error"), "Cannot read file");
+      tv_dict_add_str_len(d, S_LEN("error"), S_LEN("Cannot read file"));
     }
     close(fd);
   } else {
-    tv_dict_add_str(d, S_LEN("error"), "Cannot open file");
+    tv_dict_add_str_len(d, S_LEN("error"), S_LEN("Cannot open file"));
   }
 }
 
@@ -3510,6 +3511,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         fd = os_open(fname, O_RDONLY, 0);
         if (fd >= 0) {
           if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
+            TO_SLASH(b0.b0_fname);
             proc_running = swapfile_proc_running(&b0, fname);
 
             // If the swapfile has the same directory as the

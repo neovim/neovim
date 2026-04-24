@@ -20,7 +20,7 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			|:nohlsearch| and updates diffs |:diffupdate|.
 			|default-mappings|
 
-							*:mod* *:mode*
+							*:mod* *:mode* *E359*
 :mod[e]			Clears and redraws the screen.
 			See also |nvim__redraw()|.
 
@@ -572,6 +572,10 @@ gO			Show a filetype-specific, navigable "outline" of the
 g==			Executes the current code block.
 
 			Works in |help| buffers.
+
+							*:upt* *:uptime*
+:upt[ime]		Shows Nvim's uptime.
+			See also |v:starttime|.
 
 ==============================================================================
 2. Using Vim like less or more					*less*

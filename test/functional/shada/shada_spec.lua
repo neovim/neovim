@@ -4,9 +4,10 @@ local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
 local uv = vim.uv
 local paths = t.paths
+local pcall_err = t.pcall_err
 
 local api, nvim_command, fn, eq = n.api, n.command, n.fn, t.eq
-local write_file, set_session, exc_exec = t.write_file, n.set_session, n.exc_exec
+local write_file, set_session = t.write_file, n.set_session
 local is_os = t.is_os
 local skip = t.skip
 
@@ -33,7 +34,7 @@ describe('ShaDa support code', function()
         .. '\100\000\207\000\000\000\000\000\000\004\001\218\003\254'
         .. ('-'):rep(1025 - 3)
     )
-    eq(0, exc_exec('wshada ' .. shada_fname))
+    n.command('wshada ' .. shada_fname)
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == 100 then
@@ -41,8 +42,8 @@ describe('ShaDa support code', function()
       end
     end
     eq(2, found)
-    eq(0, exc_exec('set shada-=s10 shada+=s1'))
-    eq(0, exc_exec('wshada ' .. shada_fname))
+    n.command('set shada-=s10 shada+=s1')
+    n.command('wshada ' .. shada_fname)
     found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == 100 then
@@ -58,7 +59,7 @@ describe('ShaDa support code', function()
     nvim_command('set shada-=s10 shada+=s1')
     fn.histadd(':', hist1)
     fn.histadd(':', hist2)
-    eq(0, exc_exec('wshada ' .. shada_fname))
+    n.command('wshada ' .. shada_fname)
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == 4 then
@@ -73,7 +74,7 @@ describe('ShaDa support code', function()
     wshada('Some text file')
     eq(
       'Vim(wshada):E576: Error while reading ShaDa file: last entry specified that it occupies 109 bytes, but file ended earlier',
-      exc_exec('wshada ' .. shada_fname)
+      t.pcall_err(n.command, 'wshada ' .. shada_fname)
     )
     eq(1, read_shada_file(shada_fname .. '.tmp.a')[1].type)
   end)
@@ -82,7 +83,7 @@ describe('ShaDa support code', function()
     'does not leave .tmp.a in-place when there is error in original ShaDa, but writing with bang',
     function()
       wshada('Some text file')
-      eq(0, exc_exec('wshada! ' .. shada_fname))
+      n.command('wshada! ' .. shada_fname)
       eq(1, read_shada_file(shada_fname)[1].type)
       eq(nil, uv.fs_stat(shada_fname .. '.tmp.a'))
     end
@@ -92,11 +93,11 @@ describe('ShaDa support code', function()
     wshada('Some text file')
     eq(
       'Vim(wshada):E576: Error while reading ShaDa file: last entry specified that it occupies 109 bytes, but file ended earlier',
-      exc_exec('wshada ' .. shada_fname)
+      t.pcall_err(n.command, 'wshada ' .. shada_fname)
     )
     eq(
       'Vim(wshada):E576: Error while reading ShaDa file: last entry specified that it occupies 109 bytes, but file ended earlier',
-      exc_exec('wshada ' .. shada_fname)
+      t.pcall_err(n.command, 'wshada ' .. shada_fname)
     )
     eq(1, read_shada_file(shada_fname .. '.tmp.a')[1].type)
     eq(1, read_shada_file(shada_fname .. '.tmp.b')[1].type)
@@ -113,7 +114,7 @@ describe('ShaDa support code', function()
       end
       eq(
         'Vim(wshada):E576: Error while reading ShaDa file: last entry specified that it occupies 109 bytes, but file ended earlier',
-        exc_exec('wshada ' .. shada_fname)
+        t.pcall_err(n.command, 'wshada ' .. shada_fname)
       )
       eq(1, read_shada_file(shada_fname .. '.tmp.z')[1].type)
     end
@@ -128,7 +129,7 @@ describe('ShaDa support code', function()
     end
     eq(
       'Vim(wshada):E138: All Xtest-functional-shada-shada.shada.tmp.X files exist, cannot write ShaDa file!',
-      exc_exec('wshada ' .. shada_fname)
+      t.pcall_err(n.command, 'wshada ' .. shada_fname)
     )
   end)
 
@@ -143,7 +144,7 @@ describe('ShaDa support code', function()
     local s = '\100'
     local e = '\001\192'
     wshada(s .. table.concat(msgpack, e .. s) .. e)
-    eq(0, exc_exec('wshada ' .. shada_fname))
+    n.command('wshada ' .. shada_fname)
     local found = 0
     local typ = vim.mpack.decode(s)
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -255,11 +256,14 @@ describe('ShaDa support code', function()
   end)
 
   it('setting &shada gives proper error message on missing number', function()
-    eq([[Vim(set):E526: Missing number after <">: shada="]], exc_exec([[set shada=\"]]))
+    eq(
+      [[Vim(set):E526: Missing number after <">: shada="]],
+      t.pcall_err(n.command, [[set shada=\"]])
+    )
     for _, c in ipairs({ "'", '/', ':', '<', '@', 's' }) do
       eq(
         ([[Vim(set):E526: Missing number after <%s>: shada=%s]]):format(c, c),
-        exc_exec(([[set shada=%s]]):format(c))
+        t.pcall_err(n.command, ([[set shada=%s]]):format(c))
       )
     end
   end)
@@ -293,7 +297,7 @@ describe('ShaDa support code', function()
       'Vim(wshada):E886: System error while opening ShaDa file '
         .. 'Xtest-functional-shada-shada.d/main.shada for reading to merge '
         .. 'before writing it: permission denied',
-      exc_exec('wshada')
+      t.pcall_err(n.command, 'wshada')
     )
     api.nvim_set_option_value('shada', '', {})
   end)

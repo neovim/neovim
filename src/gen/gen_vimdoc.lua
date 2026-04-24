@@ -22,6 +22,7 @@
 local luacats_parser = require('gen.luacats_parser')
 local cdoc_parser = require('gen.cdoc_parser')
 local util = require('gen.util')
+local lint = require('gen.lint')
 
 local fmt = string.format
 
@@ -67,6 +68,17 @@ local function contains(t, xs)
   return vim.tbl_contains(xs, t)
 end
 
+--- True if the `.` class member should render like a module function.
+--- @param fun nvim.gen_vimdoc.HelptagTarget
+--- @return boolean
+local function is_module_fun(fun)
+  return fun.classvar ~= nil
+    and fun.member_sep == '.'
+    and fun.modvar ~= nil
+    and fun.module ~= nil
+    and fun.classvar == fun.modvar
+end
+
 --- @type {level:integer, prerelease:boolean}?
 local nvim_api_info_
 
@@ -99,6 +111,9 @@ end
 --- @return string
 local function fn_helptag_fmt_common(fun)
   local fn_sfx = fun.table and '' or '()'
+  if is_module_fun(fun) then
+    return fmt('%s.%s%s', fun.module, fun.name, fn_sfx)
+  end
   if fun.classvar then
     return fmt('%s:%s%s', fun.classvar, fun.name, fn_sfx)
   end
@@ -663,8 +678,9 @@ end
 
 --- @param class nvim.luacats.parser.class
 --- @param classes table<string,nvim.luacats.parser.class>
+--- @param hidden_fields? table<string,table<string,true>>
 --- @param cfg nvim.gen_vimdoc.Config
-local function render_class(class, classes, cfg)
+local function render_class(class, classes, hidden_fields, cfg)
   if class.access or class.nodoc or class.inlinedoc then
     return
   end
@@ -683,7 +699,15 @@ local function render_class(class, classes, cfg)
     table.insert(ret, md_to_vimdoc(class.desc, INDENTATION, INDENTATION, TEXT_WIDTH))
   end
 
-  local fields_txt = render_fields_or_params(class.fields, nil, classes, cfg)
+  local class_hidden = hidden_fields and hidden_fields[class.name]
+  local fields = class.fields
+  if class_hidden then
+    fields = vim.tbl_filter(function(field)
+      return not class_hidden[field.name]
+    end, fields)
+  end
+
+  local fields_txt = render_fields_or_params(fields, nil, classes, cfg)
   if not fields_txt:match('^%s*$') then
     table.insert(ret, '\n    Fields: ~\n')
     table.insert(ret, fields_txt)
@@ -694,12 +718,22 @@ local function render_class(class, classes, cfg)
 end
 
 --- @param classes table<string,nvim.luacats.parser.class>
+--- @param funs nvim.luacats.parser.fun[]
 --- @param cfg nvim.gen_vimdoc.Config
-local function render_classes(classes, cfg)
+local function render_classes(classes, funs, cfg)
   local ret = {} --- @type string[]
+  -- Hide `.` members of returned class-modules from class Fields;
+  -- they render as module functions.
+  local hidden_fields = {} --- @type table<string,table<string,true>>
+  for _, fun in ipairs(funs) do
+    if is_module_fun(fun) and fun.class then
+      hidden_fields[fun.class] = hidden_fields[fun.class] or {}
+      hidden_fields[fun.class][fun.name] = true
+    end
+  end
 
   for _, class in vim.spairs(classes) do
-    ret[#ret + 1] = render_class(class, classes, cfg)
+    ret[#ret + 1] = render_class(class, classes, hidden_fields, cfg)
   end
 
   return table.concat(ret)
@@ -718,7 +752,7 @@ local function render_fun_header(fun, cfg)
   end
 
   local nm = fun.name
-  if fun.classvar then
+  if fun.classvar and not is_module_fun(fun) then
     nm = fmt('%s:%s', fun.classvar, nm)
   end
   if nm == 'vim.bo' then
@@ -735,8 +769,12 @@ local function render_fun_header(fun, cfg)
   if #proto + #tag > TEXT_WIDTH - 8 then
     table.insert(ret, fmt('%78s\n', tag))
     local name, pargs = proto:match('([^(]+%()(.*)')
-    table.insert(ret, name)
-    table.insert(ret, wrap(pargs, 0, #name, TEXT_WIDTH))
+    if name then
+      table.insert(ret, name)
+      table.insert(ret, wrap(pargs, 0, #name, TEXT_WIDTH))
+    else
+      table.insert(ret, proto)
+    end
   else
     local pad = TEXT_WIDTH - #proto - #tag
     table.insert(ret, proto .. string.rep(' ', pad) .. tag)
@@ -1097,6 +1135,10 @@ local function gen_target(cfg)
   for f, r in vim.spairs(file_results) do
     local classes, funs, briefs = r[1], r[2], r[3]
 
+    if not f:find('ui_events%.in%.h$') then -- TODO(justinmk): also lint UI events.
+      lint.lint_names(f, funs, nil, classes)
+    end
+
     local mod_cls_nm = find_module_class(classes, 'M')
     if mod_cls_nm then
       local mod_cls = classes[mod_cls_nm]
@@ -1115,7 +1157,7 @@ local function gen_target(cfg)
       cfg,
       briefs,
       render_funs(funs, all_classes, cfg),
-      render_classes(classes, cfg)
+      render_classes(classes, funs, cfg)
     )
   end
 

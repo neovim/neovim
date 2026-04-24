@@ -9,6 +9,7 @@
 " 2025 Oct 25 by Vim project: update makeTargetinDefine highlighting (#18570)
 " 2025 Dec 23 by Vim project: fix too greedy match (#18938)
 " 2025 Dec 23 by Vim project: wrong highlight with paranthesis inside quotes (#18818)
+" 2026 Apr 17 by Vim project: wrong highlight $ inside quotes (#19986)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -41,7 +42,7 @@ endif
 syn match makeIdent	"\$\$\w*"
 syn match makeIdent	"\$\$\$\$\w*" containedin=makeDefine
 syn match makeIdent	"\$[^({]"
-syn match makeIdent	"\$\$[^({]" containedin=makeDefine
+syn match makeIdent	"\$\$[^({\"']" containedin=makeDefine
 if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
   syn region makeIdent	start="\$(" end=")" contains=makeStatement,makeIdent,makeDString,makeSString
   syn region makeIdent	start="\${" end="}" contains=makeStatement,makeIdent,makeDString,makeSString

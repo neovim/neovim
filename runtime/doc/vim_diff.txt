@@ -323,6 +323,7 @@ Commands:
 - User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
 - |:update| command writes new file buffers even when unmodified.
+- |:uptime|
 
 Editor:
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
@@ -390,6 +391,7 @@ Input/Mappings:
 Normal commands:
 - |gO| shows a filetype-defined "outline" of the current buffer.
 - |Q| replays the last recorded macro instead of switching to Ex mode (|gQ|).
+- |ZR| performs |:restart|
 
 Options:
 

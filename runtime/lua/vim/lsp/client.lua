@@ -53,6 +53,19 @@ local all_clients = {}
 --- absolute or on `$PATH`, shell constructs like "~" are not expanded), or function that creates an
 --- RPC client (or an in-process |lsp-server|). Function receives a `dispatchers` table and the
 --- resolved `config`, and must return an object in the form of |vim.lsp.rpc.Client|.
+---
+--- Example (list):
+--- ```lua
+--- cmd = { 'flow', 'lsp' }
+--- ```
+--- Example (function):
+--- ```lua
+--- cmd = function(dispatchers, config)
+---   local cmd = vim.fn.executable('flow') == 1 and { 'flow', 'lsp' } or { 'npx', '--no-install', 'flow', 'lsp' }
+---   return vim.lsp.rpc.start(cmd, dispatchers)
+--- end
+--- ```
+---
 --- - See |vim.lsp.rpc.request()| |vim.lsp.rpc.notify()|
 --- - For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 --- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
@@ -1073,17 +1086,17 @@ end
 --- Execute a lsp command, either via client command function (if available)
 --- or via workspace/executeCommand (if supported by the server)
 ---
---- @param command lsp.Command
+--- @param cmd lsp.Command
 --- @param context? {bufnr?: integer}
 --- @param handler? lsp.Handler only called if a server command
-function Client:exec_cmd(command, context, handler)
+function Client:exec_cmd(cmd, context, handler)
   context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
   context.bufnr = vim._resolve_bufnr(context.bufnr)
   context.client_id = self.id
-  local cmdname = command.command
+  local cmdname = cmd.command
   local fn = self.commands[cmdname] or lsp.commands[cmdname]
   if fn then
-    fn(command, context)
+    fn(cmd, context)
     return
   end
 
@@ -1101,12 +1114,12 @@ function Client:exec_cmd(command, context, handler)
     )
     return
   end
-  -- Not using command directly to exclude extra properties,
+  -- Not using cmd directly to exclude extra properties,
   -- see https://github.com/python-lsp/python-lsp-server/issues/146
   --- @type lsp.ExecuteCommandParams
   local params = {
     command = cmdname,
-    arguments = command.arguments,
+    arguments = cmd.arguments,
   }
   self:request('workspace/executeCommand', params, handler, context.bufnr)
 end

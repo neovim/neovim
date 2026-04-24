@@ -302,9 +302,9 @@ function vim.api.nvim_buf_clear_namespace(buf, ns_id, line_start, line_end) end
 --- @see vim.api.nvim_create_user_command
 --- @param buf integer Buffer id, or 0 for current buffer.
 --- @param name string
---- @param command any
+--- @param cmd any
 --- @param opts vim.api.keyset.user_command
-function vim.api.nvim_buf_create_user_command(buf, name, command, opts) end
+function vim.api.nvim_buf_create_user_command(buf, name, cmd, opts) end
 
 --- Removes an `extmark`.
 ---
@@ -914,8 +914,8 @@ function vim.api.nvim_cmd(cmd, opts) end
 --- Prefer `nvim_cmd()` or `nvim_exec2()` instead. To modify an Ex command in a structured way
 --- before executing it, modify the result of `nvim_parse_cmd()` then pass it to `nvim_cmd()`.
 ---
---- @param command string Ex command string
-function vim.api.nvim_command(command) end
+--- @param cmd string Ex command string
+function vim.api.nvim_command(cmd) end
 
 --- @deprecated
 --- @see vim.api.nvim_exec2
@@ -1031,7 +1031,7 @@ function vim.api.nvim_create_namespace(name) end
 --- ```
 ---
 --- @param name string Name of the new user command. Must begin with an uppercase letter.
---- @param command string|fun(args: vim.api.keyset.create_user_command.command_args) Replacement command to execute when this user command is executed. When called
+--- @param cmd string|fun(args: vim.api.keyset.create_user_command.command_args) Replacement command to execute when this user command is executed. When called
 --- from Lua, the command can also be a Lua function. The function is called with a
 --- single table argument that contains the following keys:
 --- - name: (string) Command name
@@ -1055,7 +1055,7 @@ function vim.api.nvim_create_namespace(name) end
 --- - `preview` (function) Preview handler for 'inccommand' `:command-preview`
 --- - Set boolean `command-attributes` such as `:command-bang` or `:command-bar` to
 ---   true (but not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
-function vim.api.nvim_create_user_command(name, command, opts) end
+function vim.api.nvim_create_user_command(name, cmd, opts) end
 
 --- Delete an autocommand group by id.
 ---
@@ -1139,7 +1139,7 @@ function vim.api.nvim_del_var(name) end
 ---   instead of creating a new message.
 --- - kind (`string?`) Decides the `ui-messages` kind in the emitted message. Set "progress"
 ---   to emit a `progress-message`.
---- - percent (`integer?`) `progress-message` percentage.
+--- - percent (`integer?`) `progress-message` percentage, or nil to signal "unknown progress".
 --- - source (`string?`) `progress-message` source.
 --- - status (`string?`) `progress-message` status:
 ---   - "success": Process completed successfully.
@@ -1879,16 +1879,14 @@ function vim.api.nvim_open_term(buf, opts) end
 --- - win: `window-ID` target window. Can be in a different tab page. Determines the window to
 ---     split (negative values act like `:topleft`, `:botright`), the relative window for a
 ---     `relative="win"` float, or just the target tab page (inferred from the window) for others.
---- - zindex: Stacking order. floats with higher `zindex` go on top on
----             floats with lower indices. Must be larger than zero. The
----             following screen elements have hard-coded z-indices:
----     - 100: insert completion popupmenu
----     - 200: message scrollback
----     - 250: cmdline completion popupmenu (when wildoptions+=pum)
----   The default value for floats are 50.  In general, values below 100 are
----   recommended, unless there is a good reason to overshadow builtin
----   elements. The cursor is dimmed if an unfocused float above the cursor
----   exceeds the zindex of the current window by 50.
+--- - zindex: (positive integer, default: 50) Stacking order. Floats with higher `zindex` overlay
+---   floats with lower indices. Below 100 is recommended, unless there is a good reason to
+---   overshadow builtin elements. The cursor is dimmed if an unfocused float above the cursor
+---   exceeds the zindex of the current window by 50. These screen elements have hard-coded
+---   z-indices:
+---     - 100: `ins-completion-menu` popupmenu
+---     - 200: message scrollback (`pager`)
+---     - 250: `cmdline-completion` popupmenu (wildoptions=pum)
 --- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
 ---   popupmenu to this window, with an offset in screen cell width.
 --- @return integer # |window-ID|, or 0 on error
@@ -1972,7 +1970,7 @@ function vim.api.nvim_parse_cmd(str, opts) end
 --- - "E" to parse like for `"<C-r>="`.
 --- - empty string for ":call".
 --- - "lm" to parse for ":let".
---- @param highlight boolean If true, return value will also include "highlight"
+--- @param hl boolean If true, return value will also include "highlight"
 --- key containing array of 4-tuples (arrays) (Integer,
 --- Integer, Integer, String), where first three numbers
 --- define the highlighted region and represent line,
@@ -2028,7 +2026,7 @@ function vim.api.nvim_parse_cmd(str, opts) end
 ---   - "fvalue": Float, floating-point value for "Float" nodes.
 ---   - "svalue": String, value for "SingleQuotedString" and
 ---               "DoubleQuotedString" nodes.
-function vim.api.nvim_parse_expression(expr, flags, highlight) end
+function vim.api.nvim_parse_expression(expr, flags, hl) end
 
 --- Pastes at cursor (in any mode), and sets "redo" so dot (`.`) will repeat the input. UIs call
 --- this to implement "paste", but it's also intended for use by scripts to input large,
@@ -2226,7 +2224,8 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
 --- - altfont: boolean
 --- - bg: color name or "#RRGGBB", see note.
---- - bg_indexed: boolean (default false) If true, bg is a terminal palette index (0-255).
+--- - bg_indexed: boolean. If true, `bg` is an RGB approximation of `ctermbg`
+---   (a palette index). UIs rendering cterm natively may prefer `ctermbg`.
 --- - blend: integer between 0 and 100
 --- - blink: boolean
 --- - bold: boolean
@@ -2238,7 +2237,7 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - default: boolean Don't override existing definition `:hi-default`
 --- - dim: boolean
 --- - fg: Color name or "#RRGGBB", see note.
---- - fg_indexed: boolean (default false) If true, fg is a terminal palette index (0-255).
+--- - fg_indexed: boolean. Same as `bg_indexed`, for `fg` and `ctermfg`.
 --- - font: GUI font name (string). Sets `highlight-font`. Use "NONE" to clear.
 --- - force: boolean (default false) Update the highlight group even if it already exists.
 --- - italic: boolean

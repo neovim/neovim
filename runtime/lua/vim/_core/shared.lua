@@ -1609,6 +1609,7 @@ function vim._with(context, f)
     if not vim.api.nvim_buf_is_valid(context.buf) then
       error('Invalid buffer id: ' .. context.buf)
     end
+    context.buf = context.buf == 0 and vim.api.nvim_get_current_buf() or context.buf
   end
 
   -- Check window exists
@@ -1620,6 +1621,7 @@ function vim._with(context, f)
     if context.buf and vim.api.nvim_win_get_buf(context.win) ~= context.buf then
       error('Can not set both `buf` and `win` context.')
     end
+    context.win = context.win == 0 and vim.api.nvim_get_current_win() or context.win
   end
 
   -- Decorate so that save-set-restore options is done in correct window-buffer

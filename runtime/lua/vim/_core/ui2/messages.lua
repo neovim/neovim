@@ -55,6 +55,12 @@ function M.msg:start_timer(buf, id)
     self.ids[id].timer:stop()
   end
   self.ids[id].timer = vim.defer_fn(function()
+    -- Postpone message removal when user has entered the msg window.
+    if api.nvim_get_current_win() == ui.wins.msg then
+      M.msg:start_timer(buf, id)
+      return
+    end
+
     local extid = api.nvim_buf_is_valid(buf) and self.ids[id] and self.ids[id].extid
     local mark = extid and api.nvim_buf_get_extmark_by_id(buf, ui.ns, extid, { details = true })
     self.ids[id] = nil
@@ -509,17 +515,17 @@ end
 
 local typed_g = false
 local cmd_on_key = function(key, typed)
-  typed = typed and fn.keytrans(typed)
   -- Don't dismiss for non-typed keys and mouse movement. When 'g' is passed (typed
   -- or mapped), wait until the next key to avoid flickering when the pager is opened.
-  if not typed_g and (not typed or typed == '<MouseMove>' or typed == 'g' or key == 'g') then
+  if not typed_g and (typed == '' or typed == '<MouseMove>' or typed == 'g' or key == 'g') then
     typed_g = typed == 'g' or key == 'g'
     return
   end
   vim.on_key(nil, ui.ns)
-  if typed == ':' then
+  if typed == ':' or ui.cmd.level > 0 then
     return -- Keep expanded messages open until cmdline closes.
   end
+  typed = fn.keytrans(typed)
 
   -- Check if window was entered and reopen with original config.
   local mode = not api.nvim_get_mode().mode:match('[it]')
@@ -527,6 +533,7 @@ local cmd_on_key = function(key, typed)
     or (typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd)
   if entered then
     M.expand_msg('cmd', 'pager')
+    api.nvim_win_set_cursor(ui.wins.pager, { 1, 0 })
   end
   pcall(api.nvim_win_close, ui.wins.cmd, true)
   ui.check_targets()
@@ -554,28 +561,19 @@ local dialog_on_key = function(_, typed)
   typed = typed and fn.keytrans(typed)
   if not typed then
     return
-  elseif typed == '<Esc>' then
-    -- Stop paging, redraw empty title to reflect paging is no longer active.
-    api.nvim_win_set_config(ui.wins.dialog, { title = '' })
-    api.nvim__redraw({ flush = true })
-    vim.on_key(nil, M.dialog_on_key)
-    M.dialog_on_key = nil
-    return ''
   end
 
-  local page_keys = {
-    g = 'gg',
-    G = 'G',
-    j = 'Lj',
-    k = 'Hk',
-    d = [[\<C-D>]],
-    u = [[\<C-U>]],
-    f = [[\<C-F>]],
-    b = [[\<C-B>]],
-  }
-  local info = page_keys[typed] and fn.getwininfo(ui.wins.dialog)[1]
-  if info and (typed ~= 'f' or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
-    fn.win_execute(ui.wins.dialog, ('exe "norm! %s"'):format(page_keys[typed]))
+  -- TODO: no hint anymore, so should at least be documented at some point.
+  local map, eob = {}, typed:match('PageDown')
+  map['<Home>'], map['<End>'] = 'gg', 'G'
+  map['<Up>'], map['<C-Y>'] = 'Hk', 'Hk'
+  map['<Down>'], map['<C-E>'] = 'Lj', 'Lj'
+  map['<PageUp>'], map['<S-PageUp>'] = [[\<C-B>]], [[\<C-B>]]
+  map['<PageDown>'], map['<S-PageDown>'] = [[\<C-F>]], [[\<C-F>]]
+
+  local info = map[typed] and fn.getwininfo(ui.wins.dialog)[1]
+  if info and (not eob or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
+    fn.win_execute(ui.wins.dialog, ('exe "norm! %s"'):format(map[typed]))
     set_top_bot_spill()
     return fn.getwininfo(ui.wins.dialog)[1].topline ~= info.topline and '' or nil
   end
@@ -583,16 +581,17 @@ end
 
 local was_cmdwin = ''
 ---@param min integer Minimum window height.
-local function win_row_height(tgt, min)
+local function win_row_height_border(tgt, min)
   local cfgmin = ui.cfg.msg[tgt].height --[[@as number]]
-  cfgmin = cfgmin > 1 and cfgmin or math.ceil(o.lines * cfgmin)
+  min = math.min(min, cfgmin > 1 and cfgmin or math.ceil(o.lines * cfgmin))
   if tgt ~= 'pager' then
-    return (tgt == 'msg' and 0 or 1) - ui.cmd.wmnumode, math.min(min, cfgmin)
+    return (tgt == 'msg' and 0 or 1) - ui.cmd.wmnumode, min, min < o.lines - ui.cmdheight
   end
   local cmdwin = fn.getcmdwintype() ~= was_cmdwin and api.nvim_win_get_height(0) or 0
   local global_stl = (cmdwin > 0 or o.laststatus == 3) and 1 or 0
   local row = 1 - cmdwin - global_stl
-  return row, math.min(math.min(cfgmin, min), o.lines - 1 - ui.cmdheight - global_stl - cmdwin)
+  local top = min < o.lines - ui.cmdheight - global_stl - cmdwin
+  return row, math.min(min, o.lines - (top and 1 or 0) - ui.cmdheight - global_stl - cmdwin), top
 end
 
 local function enter_pager()
@@ -601,7 +600,7 @@ local function enter_pager()
   if was_cmdwin ~= '' then
     api.nvim_command('quit')
   elseif M.cmd_on_key then
-    api.nvim_feedkeys(vim.keycode('<Esc>'), 'n', false)
+    api.nvim_feedkeys(vim.keycode('<Esc>'), 't', false)
   end
   -- Cmdwin is closed one event iteration later so schedule in case it was open.
   vim.schedule(function()
@@ -624,7 +623,7 @@ local function enter_pager()
         in_pager = in_pager and api.nvim_win_is_valid(ui.wins.pager)
         local cfg = in_pager and { relative = 'laststatus', col = 0 } or { hide = true }
         if in_pager then
-          cfg.row, cfg.height = win_row_height('pager', height)
+          cfg.row, cfg.height, cfg.border = win_row_height_border('pager', height)
         else
           pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
           api.nvim_del_autocmd(id)
@@ -651,14 +650,10 @@ function M.set_pos(tgt)
     if cfg and (tgt or not cfg.hide) then
       local texth = api.nvim_win_text_height(win, {})
       local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
-      local hint = 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging'
       cfg = { hide = false, relative = 'laststatus', col = 10000 } ---@type table
-      cfg.row, cfg.height = win_row_height(t, texth.all)
-      cfg.border = t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
-      cfg.mouse = tgt == 'cmd' or nil
-      cfg.title = tgt == 'dialog'
-          and { { ui.cmd.expand == 0 and cfg.height < texth.all and hint or '', 'MsgMore' } }
-        or nil
+      cfg.row, cfg.height, cfg.border = win_row_height_border(t, texth.all)
+      cfg.border = cfg.border and t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
+      cfg.mouse = tgt == 'cmd' or t == 'msg' or nil
       api.nvim_win_set_config(win, cfg)
 
       if tgt == 'cmd' then
@@ -668,7 +663,7 @@ function M.set_pos(tgt)
         set_virttext('msg', 'cmd')
         M.virt.msg[M.virt.idx.spill][1] = { 0, (' [+%d]'):format(texth.all - ui.cmdheight) }
         M.cmd_on_key = vim.on_key(cmd_on_key, ui.ns)
-      elseif tgt == 'dialog' and set_top_bot_spill() and #cfg.title[1][1] > 0 then
+      elseif tgt == 'dialog' and set_top_bot_spill() then
         M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)
       elseif tgt == 'msg' then
         -- Ensure last line is visible and first line is at top of window.

@@ -81,7 +81,9 @@ void free_xfmark(xfmark_T fm)
   free_fmark(fm.fmark);
 }
 
-/// Free and clear fmark_T item
+/// Free and clear fmark_T item.
+///
+/// Does not trigger "MarkSet" event.
 void clear_fmark(fmark_T *const fm, const Timestamp timestamp)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -849,6 +851,8 @@ bool mark_check_line_bounds(buf_T *buf, fmark_T *fm, const char **errormsg)
 ///
 /// Used mainly when trashing the entire buffer during ":e" type commands.
 ///
+/// Does not trigger "MarkSet" event.
+///
 /// @param[out]  buf  Buffer to clear marks in.
 void clrallmarks(buf_T *const buf, const Timestamp timestamp)
   FUNC_ATTR_NONNULL_ALL
@@ -1010,9 +1014,30 @@ void ex_delmarks(exarg_T *eap)
 {
   int from, to;
   int n;
+  pos_T pos = { 0, 0, 0 };
 
   if (*eap->arg == NUL && eap->forceit) {
     // clear all marks
+    for (size_t i = 0; i < NMARKS; i++) {
+      if (curbuf->b_namedm[i].mark.lnum != 0) {
+        do_markset_autocmd((char)(i + 'a'), &pos, curbuf);
+      }
+    }
+    if (curbuf->b_last_cursor.mark.lnum != 0) {
+      do_markset_autocmd('"', &pos, curbuf);
+    }
+    if (curbuf->b_last_insert.mark.lnum != 0) {
+      do_markset_autocmd('^', &pos, curbuf);
+    }
+    if (curbuf->b_last_change.mark.lnum != 0) {
+      do_markset_autocmd('.', &pos, curbuf);
+    }
+    if (curbuf->b_op_start.lnum != 0) {
+      do_markset_autocmd('[', &pos, curbuf);
+    }
+    if (curbuf->b_op_end.lnum != 0) {
+      do_markset_autocmd(']', &pos, curbuf);
+    }
     clrallmarks(curbuf, os_time());
   } else if (eap->forceit) {
     emsg(_(e_invarg));
@@ -1044,6 +1069,9 @@ void ex_delmarks(exarg_T *eap)
 
         for (int i = from; i <= to; i++) {
           if (lower) {
+            if (curbuf->b_namedm[i - 'a'].mark.lnum != 0) {
+              do_markset_autocmd((char)i, &pos, curbuf);
+            }
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
             curbuf->b_namedm[i - 'a'].timestamp = timestamp;
           } else {
@@ -1051,6 +1079,13 @@ void ex_delmarks(exarg_T *eap)
               n = i - '0' + NMARKS;
             } else {
               n = i - 'A';
+            }
+            if (namedfm[n].fmark.mark.lnum != 0) {
+              buf_T *buf = buflist_findnr(namedfm[n].fmark.fnum);
+              if (buf == NULL) {
+                buf = curbuf;
+              }
+              do_markset_autocmd((char)i, &pos, buf);
             }
             namedfm[n].fmark.mark.lnum = 0;
             namedfm[n].fmark.fnum = 0;
@@ -1061,25 +1096,50 @@ void ex_delmarks(exarg_T *eap)
       } else {
         switch (*p) {
         case '"':
+          if (curbuf->b_last_cursor.mark.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
           clear_fmark(&curbuf->b_last_cursor, timestamp);
           break;
         case '^':
+          if (curbuf->b_last_insert.mark.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
           clear_fmark(&curbuf->b_last_insert, timestamp);
           break;
         case ':':
           // Readonly mark. No deletion allowed.
           break;
         case '.':
+          if (curbuf->b_last_change.mark.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
           clear_fmark(&curbuf->b_last_change, timestamp);
           break;
         case '[':
-          curbuf->b_op_start.lnum = 0; break;
+          if (curbuf->b_op_start.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
+          curbuf->b_op_start.lnum = 0;
+          break;
         case ']':
-          curbuf->b_op_end.lnum = 0; break;
+          if (curbuf->b_op_end.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
+          curbuf->b_op_end.lnum = 0;
+          break;
         case '<':
-          curbuf->b_visual.vi_start.lnum = 0; break;
+          if (curbuf->b_visual.vi_start.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
+          curbuf->b_visual.vi_start.lnum = 0;
+          break;
         case '>':
-          curbuf->b_visual.vi_end.lnum = 0; break;
+          if (curbuf->b_visual.vi_end.lnum != 0) {
+            do_markset_autocmd(*p, &pos, curbuf);
+          }
+          curbuf->b_visual.vi_end.lnum = 0;
+          break;
         case ' ':
           break;
         default:
@@ -1852,8 +1912,9 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
 }
 
 // Add information about mark 'mname' to list 'l'
-static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, const char *fname)
-  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
+static int add_mark(list_T *l, const char *mname, size_t mnamelen, const pos_T *pos, int bufnr,
+                    const char *fname)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   if (pos->lnum <= 0) {
     return OK;
@@ -1869,7 +1930,7 @@ static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, c
   tv_list_append_number(lpos, pos->col < MAXCOL ? pos->col + 1 : MAXCOL);
   tv_list_append_number(lpos, pos->coladd);
 
-  if (tv_dict_add_str(d, S_LEN("mark"), mname) == FAIL
+  if (tv_dict_add_str_len(d, S_LEN("mark"), mname, (int)mnamelen) == FAIL
       || tv_dict_add_list(d, S_LEN("pos"), lpos) == FAIL
       || (fname != NULL && tv_dict_add_str(d, S_LEN("file"), fname) == FAIL)) {
     return FAIL;
@@ -1886,23 +1947,24 @@ void get_buf_local_marks(const buf_T *buf, list_T *l)
   FUNC_ATTR_NONNULL_ALL
 {
   char mname[3] = "' ";
+  size_t mnamelen = STRLEN_LITERAL("' ");
 
   // Marks 'a' to 'z'
   for (int i = 0; i < NMARKS; i++) {
     mname[1] = (char)('a' + i);
-    add_mark(l, mname, &buf->b_namedm[i].mark, buf->b_fnum, NULL);
+    add_mark(l, mname, mnamelen, &buf->b_namedm[i].mark, buf->b_fnum, NULL);
   }
 
   // Mark '' is a window local mark and not a buffer local mark
-  add_mark(l, "''", &curwin->w_pcmark, curbuf->b_fnum, NULL);
+  add_mark(l, S_LEN("''"), &curwin->w_pcmark, curbuf->b_fnum, NULL);
 
-  add_mark(l, "'\"", &buf->b_last_cursor.mark, buf->b_fnum, NULL);
-  add_mark(l, "'[", &buf->b_op_start, buf->b_fnum, NULL);
-  add_mark(l, "']", &buf->b_op_end, buf->b_fnum, NULL);
-  add_mark(l, "'^", &buf->b_last_insert.mark, buf->b_fnum, NULL);
-  add_mark(l, "'.", &buf->b_last_change.mark, buf->b_fnum, NULL);
-  add_mark(l, "'<", &buf->b_visual.vi_start, buf->b_fnum, NULL);
-  add_mark(l, "'>", &buf->b_visual.vi_end, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'\""), &buf->b_last_cursor.mark, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'["), &buf->b_op_start, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("']"), &buf->b_op_end, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'^"), &buf->b_last_insert.mark, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'."), &buf->b_last_change.mark, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'<"), &buf->b_visual.vi_start, buf->b_fnum, NULL);
+  add_mark(l, S_LEN("'>"), &buf->b_visual.vi_end, buf->b_fnum, NULL);
 }
 
 /// Get a global mark
@@ -1922,6 +1984,7 @@ void get_global_marks(list_T *l)
   FUNC_ATTR_NONNULL_ALL
 {
   char mname[3] = "' ";
+  size_t mnamelen = STRLEN_LITERAL("' ");
   char *name;
 
   // Marks 'A' to 'Z' and '0' to '9'
@@ -1934,7 +1997,7 @@ void get_global_marks(list_T *l)
     if (name != NULL) {
       mname[1] = i >= NMARKS ? (char)(i - NMARKS + '0') : (char)(i + 'A');
 
-      add_mark(l, mname, &namedfm[i].fmark.mark, namedfm[i].fmark.fnum, name);
+      add_mark(l, mname, mnamelen, &namedfm[i].fmark.mark, namedfm[i].fmark.fnum, name);
       if (namedfm[i].fmark.fnum != 0) {
         xfree(name);
       }

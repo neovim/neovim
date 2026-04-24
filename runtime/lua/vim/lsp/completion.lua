@@ -748,9 +748,21 @@ function CompletionResolver:request(bufnr, param, selected_word)
         return
       end
 
-      local value = vim.tbl_get(result, 'documentation', 'value')
+      local value = vim.tbl_get(result, 'documentation', 'value') --[[@as string?]]
       local kind = vim.tbl_get(result, 'documentation', 'kind')
       local text_format = vim.tbl_get(result, 'insertTextFormat')
+
+      if result.detail and result.detail ~= '' then
+        if not value then
+          value = ('```%s\n%s\n```'):format(vim.bo.filetype, result.detail)
+          kind = kind or lsp.protocol.MarkupKind.Markdown
+        elseif not value:find(result.detail, 1, true) then
+          local detail_block = ('```%s\n%s\n```'):format(vim.bo.filetype, result.detail)
+          value = detail_block .. '\n' .. value
+          kind = kind or lsp.protocol.MarkupKind.Markdown
+        end
+      end
+
       if not value then
         if text_format ~= protocol.InsertTextFormat.Snippet then
           return

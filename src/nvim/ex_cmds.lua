@@ -3078,6 +3078,12 @@ M.cmds = {
     func = 'ex_update',
   },
   {
+    command = 'uptime',
+    flags = bit.bor(CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_uptime',
+  },
+  {
     command = 'vglobal',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, DFLALL, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_LINES',

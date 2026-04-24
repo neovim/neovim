@@ -42,7 +42,6 @@
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/plines.h"
-#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -141,8 +140,11 @@ static void comp_botline(win_T *wp)
 static void redraw_for_cursorline(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
-      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
+  if (wp->w_valid & VALID_CROW) {
+    return;
+  }
+
+  if (wp->w_p_rnu || win_cursorline_standout(wp)) {
     // win_line() will redraw the number column and cursorline only.
     redraw_later(wp, UPD_VALID);
   }
@@ -161,7 +163,7 @@ static void redraw_for_cursorcolumn(win_T *wp)
     redrawWinline(wp, wp->w_cursor.lnum);
   }
 
-  if ((wp->w_valid & VALID_VIRTCOL) || pum_visible()) {
+  if (wp->w_valid & VALID_VIRTCOL) {
     return;
   }
 
@@ -244,6 +246,26 @@ static void reset_skipcol(win_T *wp)
   redraw_later(wp, UPD_SOME_VALID);
 }
 
+/// Return true when 'scrolloffpad' may augment 'scrolloff'.
+/// This only applies to automatic cursor visibility correction.
+/// For now 'scrolloffpad' is treated as boolean: 0 disables, > 0 enables.
+static bool use_scrolloffpad(win_T *wp)
+{
+  return get_scrolloff_value(wp) > 0 && get_scrolloffpad_value(wp) > 0;
+}
+
+/// Return true when there are not enough real buffer lines below "lnum" to
+/// satisfy the requested "so" context.
+static bool scrolloffpad_eof_pressure(win_T *wp, linenr_T lnum, OptInt so)
+{
+  if (!use_scrolloffpad(wp) || so <= 0) {
+    return false;
+  }
+
+  // Use subtraction to avoid signed overflow in "lnum + so".
+  return lnum > wp->w_buffer->b_ml.ml_line_count - so;
+}
+
 // Update wp->w_topline to move the cursor onto the screen.
 void update_topline(win_T *wp)
 {
@@ -276,6 +298,7 @@ void update_topline(win_T *wp)
   if (mouse_dragging > 0) {
     *so_ptr = mouse_dragging - 1;
   }
+  bool eof_pressure = scrolloffpad_eof_pressure(wp, wp->w_cursor.lnum, *so_ptr);
 
   linenr_T old_topline = wp->w_topline;
   int old_topfill = wp->w_topfill;
@@ -348,10 +371,18 @@ void update_topline(win_T *wp)
       // cursor in the middle of the window.  Otherwise put the cursor
       // near the top of the window.
       if (n >= halfheight) {
-        scroll_cursor_halfway(wp, false, false);
+        if (eof_pressure) {
+          scroll_cursor_halfway(wp, true, true);
+        } else {
+          scroll_cursor_halfway(wp, false, false);
+        }
       } else {
-        scroll_cursor_top(wp, scrolljump_value(wp), false);
-        check_botline = true;
+        if (eof_pressure) {
+          scroll_cursor_halfway(wp, true, true);
+        } else {
+          scroll_cursor_top(wp, scrolljump_value(wp), false);
+          check_botline = true;
+        }
       }
     } else {
       // Make sure topline is the first line of a fold.
@@ -372,15 +403,14 @@ void update_topline(win_T *wp)
     }
 
     assert(wp->w_buffer != 0);
-    if (wp->w_botline <= wp->w_buffer->b_ml.ml_line_count) {
+    if (wp->w_botline <= wp->w_buffer->b_ml.ml_line_count || use_scrolloffpad(wp)) {
       if (wp->w_cursor.lnum < wp->w_botline) {
         if ((wp->w_cursor.lnum >= wp->w_botline - *so_ptr || win_lines_concealed(wp))) {
           lineoff_T loff;
 
-          // Cursor is (a few lines) above botline, check if there are
-          // 'scrolloff' window lines below the cursor.  If not, need to
-          // scroll.
-          int n = wp->w_empty_rows;
+          // Cursor is (a few lines) above botline, check if there are 'scrolloff'
+          // window lines below the cursor.  If not, need to scroll.
+          int n = eof_pressure ? 0 : wp->w_empty_rows;
           loff.lnum = wp->w_cursor.lnum;
           // In a fold go to its last line.
           hasFolding(wp, loff.lnum, NULL, &loff.lnum);
@@ -395,7 +425,7 @@ void update_topline(win_T *wp)
             }
             botline_forw(wp, &loff);
           }
-          if (n >= *so_ptr) {
+          if (n >= *so_ptr && !eof_pressure) {
             // sufficient context, no need to scroll
             check_botline = false;
           }
@@ -405,7 +435,7 @@ void update_topline(win_T *wp)
         }
       }
       if (check_botline) {
-        int n = 0;
+        int64_t n = 0;
         if (win_lines_concealed(wp)) {
           // Count the number of logical lines between the cursor and
           // botline - p_so (approximation of how much will be
@@ -419,12 +449,16 @@ void update_topline(win_T *wp)
             hasFolding(wp, lnum, &lnum, NULL);
           }
         } else {
-          n = wp->w_cursor.lnum - wp->w_botline + 1 + (int)(*so_ptr);
+          n = wp->w_cursor.lnum - wp->w_botline + 1 + *so_ptr;
         }
         if (n <= wp->w_view_height + 1) {
-          scroll_cursor_bot(wp, scrolljump_value(wp), false);
+          if (eof_pressure) {
+            scroll_cursor_halfway(wp, true, true);
+          } else {
+            scroll_cursor_bot(wp, scrolljump_value(wp), false);
+          }
         } else {
-          scroll_cursor_halfway(wp, false, false);
+          scroll_cursor_halfway(wp, eof_pressure, eof_pressure);
         }
       }
     }
@@ -467,7 +501,7 @@ static int scrolljump_value(win_T *wp)
 /// Return true when there are not 'scrolloff' lines above the cursor for window "wp".
 static bool check_top_offset(win_T *wp)
 {
-  int so = get_scrolloff_value(wp);
+  int64_t so = get_scrolloff_value(wp);
   if (wp->w_cursor.lnum < wp->w_topline + so || win_lines_concealed(wp)) {
     lineoff_T loff;
     loff.lnum = wp->w_cursor.lnum;
@@ -883,14 +917,13 @@ void curs_columns(win_T *wp, int may_scroll)
     // If scrolling is off, wp->w_leftcol is assumed to be 0
 
     // If Cursor is left of the screen, scroll rightwards.
-    // If Cursor is right of the screen, scroll leftwards
-    // If we get closer to the edge than 'sidescrolloff', scroll a little
-    // extra
-    int siso = get_sidescrolloff_value(wp);
-    int off_left = startcol - wp->w_leftcol - siso;
-    int off_right = endcol - wp->w_leftcol - wp->w_view_width + siso + 1;
+    // If Cursor is right of the screen, scroll leftwards.
+    // If we get closer to the edge than 'sidescrolloff', scroll a little extra.
+    int64_t siso = get_sidescrolloff_value(wp);
+    int64_t off_left = startcol - wp->w_leftcol - siso;
+    int64_t off_right = endcol - wp->w_leftcol - (wp->w_view_width - siso) + 1;
     if (off_left < 0 || off_right > 0) {
-      int diff = (off_left < 0) ? -off_left : off_right;
+      int64_t diff = (off_left < 0) ? -off_left : off_right;
 
       // When far off or not enough room on either side, put cursor in
       // middle of window.
@@ -900,12 +933,12 @@ void curs_columns(win_T *wp, int may_scroll)
       } else {
         if (diff < p_ss) {
           assert(p_ss <= INT_MAX);
-          diff = (int)p_ss;
+          diff = p_ss;
         }
         if (off_left < 0) {
-          new_leftcol = wp->w_leftcol - diff;
+          new_leftcol = wp->w_leftcol - (int)diff;
         } else {
-          new_leftcol = wp->w_leftcol + diff;
+          new_leftcol = wp->w_leftcol + (int)diff;
         }
       }
       new_leftcol = MAX(new_leftcol, 0);
@@ -932,7 +965,7 @@ void curs_columns(win_T *wp, int may_scroll)
   }
 
   int plines = 0;
-  int so = get_scrolloff_value(wp);
+  int64_t so = get_scrolloff_value(wp);
   colnr_T prev_skipcol = wp->w_skipcol;
   if ((wp->w_wrow >= wp->w_view_height
        || ((prev_skipcol > 0
@@ -960,8 +993,8 @@ void curs_columns(win_T *wp, int may_scroll)
     }
     plines--;
     if (plines > wp->w_wrow + so) {
-      assert(so <= INT_MAX);
-      n = wp->w_wrow + so;
+      assert(wp->w_wrow + so <= INT_MAX);
+      n = (int)(wp->w_wrow + so);
     } else {
       n = plines;
     }
@@ -986,7 +1019,8 @@ void curs_columns(win_T *wp, int may_scroll)
     } else if (extra == 1) {
       // less than 'scrolloff' lines above, decrease skipcol
       assert(so <= INT_MAX);
-      extra = (wp->w_skipcol + so * width2 - wp->w_virtcol + width2 - 1) / width2;
+      extra = (int)((wp->w_skipcol + so * width2 - wp->w_virtcol
+                     + width2 - 1) / width2);
       if (extra > 0) {
         if ((colnr_T)(extra * width2) > wp->w_skipcol) {
           extra = wp->w_skipcol / width2;
@@ -1210,10 +1244,10 @@ static void cursor_correct_sms(win_T *wp)
     return;
   }
 
-  int so = get_scrolloff_value(wp);
+  int64_t so = get_scrolloff_value(wp);
   int width1 = wp->w_view_width - win_col_off(wp);
   int width2 = width1 + win_col_off2(wp);
-  int so_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
+  int64_t so_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
   int space_cols = (wp->w_view_height - 1) * width2;
   int size = so == 0 ? 0 : linetabsize_eol(wp, wp->w_topline);
 
@@ -1234,8 +1268,8 @@ static void cursor_correct_sms(win_T *wp)
   int overlap = wp->w_skipcol == 0
                 ? 0 : sms_marker_overlap(wp, wp->w_view_width - width2);
   // If we have non-zero scrolloff, ignore marker overlap.
-  int top = wp->w_skipcol + (so_cols != 0 ? so_cols : overlap);
-  int bot = wp->w_skipcol + width1 + (wp->w_view_height - 1) * width2 - so_cols;
+  int64_t top = wp->w_skipcol + (so_cols != 0 ? so_cols : overlap);
+  int64_t bot = wp->w_skipcol + width1 + (wp->w_view_height - 1) * width2 - so_cols;
 
   validate_virtcol(wp);
   colnr_T col = wp->w_virtcol;
@@ -1562,8 +1596,8 @@ void adjust_skipcol(void)
     return;  // no text will be displayed
   }
   int width2 = width1 + win_col_off2(curwin);
-  int so = get_scrolloff_value(curwin);
-  colnr_T scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
+  int64_t so = get_scrolloff_value(curwin);
+  int64_t scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
   bool scrolled = false;
 
   validate_cheight(curwin);
@@ -1594,7 +1628,7 @@ void adjust_skipcol(void)
     return;  // don't scroll in the other direction now
   }
   int row = 0;
-  colnr_T col = curwin->w_virtcol + scrolloff_cols;
+  int64_t col = curwin->w_virtcol + scrolloff_cols;
 
   // Avoid adjusting for 'scrolloff' beyond the text line height.
   if (scrolloff_cols > 0) {
@@ -1611,7 +1645,7 @@ void adjust_skipcol(void)
     row++;
   }
   if (col > width2) {
-    row += (int)col / width2;
+    row += (int)(col / width2);
   }
   if (row >= curwin->w_view_height) {
     if (curwin->w_skipcol == 0) {
@@ -1783,7 +1817,7 @@ void scroll_cursor_top(win_T *wp, int min_scroll, int always)
   linenr_T old_topline = wp->w_topline;
   int old_skipcol = wp->w_skipcol;
   linenr_T old_topfill = wp->w_topfill;
-  int off = get_scrolloff_value(wp);
+  int64_t off = get_scrolloff_value(wp);
 
   if (mouse_dragging > 0) {
     off = mouse_dragging - 1;
@@ -1859,7 +1893,7 @@ void scroll_cursor_top(win_T *wp, int min_scroll, int always)
     wp->w_topline = MIN(wp->w_topline, wp->w_cursor.lnum);
     wp->w_topfill = win_get_fill(wp, wp->w_topline);
     if (wp->w_topfill > 0 && extra > off) {
-      wp->w_topfill -= extra - off;
+      wp->w_topfill -= extra - (int)off;
       wp->w_topfill = MAX(wp->w_topfill, 0);
     }
     check_topfill(wp, false);
@@ -2025,7 +2059,7 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
   int fill_below_window = win_get_fill(wp, wp->w_botline) - wp->w_filler_rows;
 
   int extra = 0;
-  int so = get_scrolloff_value(wp);
+  int64_t so = get_scrolloff_value(wp);
   while (loff.lnum > 1) {
     // Stop when scrolled nothing or at least "min_scroll", found "extra"
     // context for 'scrolloff' and counted all lines below the window.
@@ -2109,8 +2143,9 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
 
   // Scroll up if the cursor is off the bottom of the screen a bit.
   // Otherwise put it at 1/2 of the screen.
+  bool eof_pressure = scrolloffpad_eof_pressure(wp, cln, so);
   if (line_count >= wp->w_view_height && line_count > min_scroll) {
-    scroll_cursor_halfway(wp, false, true);
+    scroll_cursor_halfway(wp, eof_pressure, true);
   } else if (line_count > 0) {
     if (do_sms) {
       scrollup(wp, scrolled, true);  // TODO(vim):
@@ -2273,8 +2308,8 @@ void cursor_correct(win_T *wp)
 {
   // How many lines we would like to have above/below the cursor depends on
   // whether the first/last line of the file is on screen.
-  int above_wanted = get_scrolloff_value(wp);
-  int below_wanted = get_scrolloff_value(wp);
+  int64_t above_wanted = get_scrolloff_value(wp);
+  int64_t below_wanted = get_scrolloff_value(wp);
   if (mouse_dragging > 0) {
     above_wanted = mouse_dragging - 1;
     below_wanted = mouse_dragging - 1;
@@ -2287,7 +2322,9 @@ void cursor_correct(win_T *wp)
   validate_botline_win(wp);
   if (wp->w_botline == wp->w_buffer->b_ml.ml_line_count + 1
       && mouse_dragging == 0) {
-    below_wanted = 0;
+    if (!use_scrolloffpad(wp)) {
+      below_wanted = 0;
+    }
     int max_off = (wp->w_view_height - 1) / 2;
     above_wanted = MIN(above_wanted, max_off);
   }

@@ -1,32 +1,35 @@
---- @brief <pre>help
---- *vim.fs.copy()*
+--- @brief
+--- [vim.fs.copy()]()
+---
 --- Use |filecopy()| or |uv.fs_copyfile()| to performantly copy an existing file.
 ---
 --- Example:
 ---
---- >lua
----   vim.fn.filecopy('foo.txt', 'bar.txt')
---- <
+--- ```lua
+--- vim.fn.filecopy('foo.txt', 'bar.txt')
+--- ```
 ---
---- *vim.fs.exists()*
+--- [vim.fs.exists()]()
+---
 --- Use |uv.fs_stat()| to check a file's type, and whether it exists.
 ---
 --- Example:
 ---
---- >lua
----   if vim.uv.fs_stat(file) then
----     vim.print('file exists')
----   end
---- <
+--- ```lua
+--- if vim.uv.fs_stat(file) then
+---   vim.print('file exists')
+--- end
+--- ```
 ---
---- *vim.fs.read()*
+--- [vim.fs.read()]()
+---
 --- You can use |readblob()| to get a file's contents without explicitly opening/closing it.
+--- Or use |io.lines()| to iterate lines in a text file.
 ---
 --- Example:
----
---- >lua
----   vim.print(vim.fn.readblob('.git/config'))
---- <
+--- ```lua
+--- vim.print(vim.fn.readblob('.git/config'))
+--- ```
 
 local uv = vim.uv
 

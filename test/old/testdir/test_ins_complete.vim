@@ -940,9 +940,10 @@ func Test_ins_completeslash()
   %bw!
   call delete('Xdir', 'rf')
 
+  " globpath() should always return forward slash separator
   set noshellslash
-  set completeslash=slash
-  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') != -1)
+  set completeslash=backslash
+  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') == -1)
 
   let &shellslash = orig_shellslash
   set completeslash=
@@ -1553,13 +1554,10 @@ endfunc
 func Test_issue_7021()
   CheckMSWindows
 
-  let orig_shellslash = &shellslash
-  set noshellslash
+  " Test that 'completeslash' doesn't affect the result of expand()
+  set completeslash=backslash
+  call assert_false(expand('~') =~ '\\')
 
-  set completeslash=slash
-  call assert_false(expand('~') =~ '/')
-
-  let &shellslash = orig_shellslash
   set completeslash=
 endfunc
 
@@ -6416,6 +6414,26 @@ func Test_autocomplete_with_auto_format()
 
   bw!
   call Ntest_override("char_avail", 0)
+endfunc
+
+func Test_completion_with_mapped_ctrl_r()
+  new
+  let b:n = 0
+  let @a = 'AABBCCDDEE'
+  " Ctrl-R mapping is triggered
+  inoremap <buffer> <C-R> <Cmd>let b:n += 1<CR>
+  inoremap <buffer> <F2> <Cmd>call complete(col('.'), [])<CR>
+  call feedkeys("i\<F2>\<*C-R>abcde\<Esc>", 'tx')
+  call assert_equal(1, b:n)
+  call assert_equal('abcde', getline('.'))
+
+  " Ctrl-X Ctrl-R still works with Ctrl-R mapped
+  call feedkeys("ccAAB\<*C-X>\<*C-R>\<*C-Y>\<Esc>", 'tx')
+  call assert_equal(1, b:n)
+  call assert_equal('AABBCCDDEE', getline('.'))
+
+  let @a = ''
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

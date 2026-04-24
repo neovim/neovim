@@ -11,11 +11,11 @@ local fn = n.fn
 local api = n.api
 local exec_lua = n.exec_lua
 local retry = t.retry
+local pcall_err = t.pcall_err
 local ok = t.ok
 local command = n.command
 local skip = t.skip
 local is_os = t.is_os
-local is_ci = t.is_ci
 
 describe(':terminal', function()
   local screen
@@ -51,7 +51,7 @@ describe(':terminal', function()
   end)
 
   it('reads output buffer on terminal reporting #4151', function()
-    skip(is_ci('cirrus') or is_os('win'))
+    skip(is_os('win'))
     if is_os('win') then
       command(
         [[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]]
@@ -314,11 +314,7 @@ local function test_terminal_with_fake_shell(backslash)
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[<C-\><C-N>]])
     command([[find */Xuniquefile]])
-    if is_os('win') then
-      eq('Xsomedir\\Xuniquefile', eval('bufname("%")'))
-    else
-      eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
-    end
+    eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
   end)
 
   it('works with gf', function()

@@ -2769,7 +2769,7 @@ static void nv_zet(cmdarg_T *cap)
   int old_fdl = (int)curwin->w_p_fdl;
   int old_fen = curwin->w_p_fen;
 
-  int siso = get_sidescrolloff_value(curwin);
+  int64_t siso = get_sidescrolloff_value(curwin);
 
   if (ascii_isdigit(nchar) && !nv_z_get_count(cap, &nchar)) {
     return;
@@ -2890,7 +2890,7 @@ static void nv_zet(cmdarg_T *cap)
         getvcol(curwin, &curwin->w_cursor, &col, NULL, NULL, 0);
       }
       if (col > siso) {
-        col -= siso;
+        col -= (int)siso;
       } else {
         col = 0;
       }
@@ -2912,8 +2912,10 @@ static void nv_zet(cmdarg_T *cap)
       int n = curwin->w_view_width - win_col_off(curwin);
       if (col + siso < n) {
         col = 0;
+      } else if (siso - n < INT_MAX - col) {
+        col = (int)(col + siso - n + 1);
       } else {
-        col = col + siso - n + 1;
+        col = INT_MAX;
       }
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
@@ -3296,6 +3298,15 @@ static void nv_Zet(cmdarg_T *cap)
   // "ZQ": equivalent to ":q!" (Elvis compatible).
   case 'Q':
     do_cmdline_cmd("q!");
+    break;
+
+  // "ZR": restart. With count, restart without checking for changes.
+  case 'R':
+    if (cap->count0 >= 1) {
+      do_cmdline_cmd("restart +qall!");
+    } else {
+      do_cmdline_cmd("restart");
+    }
     break;
 
   default:

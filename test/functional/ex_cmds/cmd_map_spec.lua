@@ -5,12 +5,12 @@ local Screen = require('test.functional.ui.screen')
 local clear = n.clear
 local feed = n.feed
 local eq = t.eq
+local pcall_err = t.pcall_err
 local expect = n.expect
 local eval = n.eval
 local fn = n.fn
 local insert = n.insert
 local write_file = t.write_file
-local exc_exec = n.exc_exec
 local command = n.command
 
 describe('mappings with <Cmd>', function()
@@ -285,9 +285,9 @@ describe('mappings with <Cmd>', function()
       :normal ,x                                                       |
     ]])
 
-    eq('Vim:E492: Not an editor command: nosuchcommand', exc_exec('normal ,f'))
-    eq('very error', exc_exec('normal ,e'))
-    eq('Vim(echoerr):The message.', exc_exec('normal ,m'))
+    eq('Vim:E492: Not an editor command: nosuchcommand', pcall_err(command, 'normal ,f'))
+    eq('very error', pcall_err(command, 'normal ,e'))
+    eq('Vim(echoerr):The message.', pcall_err(command, 'normal ,m'))
     feed('w')
     screen:expect([[
       some ^short lines                                                 |
@@ -299,7 +299,7 @@ describe('mappings with <Cmd>', function()
     ]])
 
     command(':%d')
-    eq('Vim(echoerr):Err', exc_exec('normal ,w'))
+    eq('Vim(echoerr):Err', pcall_err(command, 'normal ,w'))
     screen:expect([[
       ^                                                                 |
       0                                                                |

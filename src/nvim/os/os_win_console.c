@@ -21,7 +21,7 @@ static HICON hOrigIcon = NULL;
 /// once the embedded server has a console so terminal jobs inherit it.
 void os_enable_ctrl_c(void)
 {
-  SetConsoleCtrlHandler(NULL, FALSE);
+  SetConsoleCtrlHandler(NULL, false);
 }
 
 int os_open_conin_fd(void)

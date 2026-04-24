@@ -4,6 +4,7 @@ local n = require('test.functional.testnvim')()
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
+local pcall_err = t.pcall_err
 
 local function system_sync(cmd, opts)
   return exec_lua(function()

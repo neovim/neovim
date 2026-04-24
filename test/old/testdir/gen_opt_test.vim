@@ -24,6 +24,7 @@ while search("^'[^']*'.*\\n.*|global-local", 'W')
 endwhile
 call extend(global_locals, #{
       \ scrolloff: -1,
+      \ scrolloffpad: -1,
       \ sidescrolloff: -1,
       \ undolevels: -123456,
       \})
@@ -127,6 +128,7 @@ let test_values = {
       \ 'scroll': [[0, 1, 2, 15], [-1, 999]],
       \ 'scrolljump': [[-100, -1, 0, 1, 2, 15], [-101, 999]],
       \ 'scrolloff': [[0, 1, 8, 999], [-1]],
+      \ 'scrolloffpad': [[0, 1, 2, 3], [-1]],
       \ 'shiftwidth': [[0, 1, 8, 999], [-1]],
       \ 'sidescroll': [[0, 1, 8, 999], [-1]],
       \ 'sidescrolloff': [[0, 1, 8, 999], [-1]],

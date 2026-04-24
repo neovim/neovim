@@ -14,6 +14,7 @@
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -336,7 +337,7 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
             ((HlMessageChunk){ .text = copy_string(msg_data->title, NULL), .hl_id = hl_id }));
     kv_push(updated_msg, ((HlMessageChunk){ .text = cstr_to_string(": "), .hl_id = 0 }));
   }
-  if (msg_data->percent > 0) {
+  if (msg_data->percent >= 0) {
     char percent_buf[10];
     vim_snprintf(percent_buf, sizeof(percent_buf), "%3ld%% ", (long)msg_data->percent);
     String percent = cstr_to_string(percent_buf);
@@ -387,7 +388,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_clr_eos();
   bool need_clear = false;
   bool hl_msg_updated = false;
-  msg_ext_history = history;
   if (kind != NULL) {
     msg_ext_set_kind(kind);
   }
@@ -1099,6 +1099,31 @@ char *msg_may_trunc(bool force, char *s)
   return s;
 }
 
+char *msg_progress(char *s, char *id, char *status, int hl_id, bool hist, bool trunc)
+{
+  Error err = ERROR_INIT;
+  Dict(echo_opts) opts = {
+    .kind = cstr_as_string("progress"),
+    .source = cstr_as_string("nvim"),
+    .status = cstr_as_string(status),
+    .id = CSTR_AS_OBJ(id),
+  };
+  if (hist && (!trunc || ui_has(kUIMessages))) {
+    msg_hist_add(s, -1, 0);
+  }
+  if (trunc) {
+    s = msg_may_trunc(false, s);
+  }
+  MAXSIZE_TEMP_ARRAY(chunk, 2);
+  MAXSIZE_TEMP_ARRAY(chunks, 1);
+  ADD_C(chunk, CSTR_AS_OBJ(s));
+  ADD_C(chunk, INTEGER_OBJ(hl_id));
+  ADD_C(chunks, ARRAY_OBJ(chunk));
+  nvim_echo(chunks, false, &opts, &err);
+  ui_flush();
+  return s;
+}
+
 void hl_msg_free(HlMessage hl_msg)
 {
   for (size_t i = 0; i < kv_size(hl_msg); i++) {
@@ -1148,7 +1173,10 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
   PUT_C(data, "id", OBJECT_OBJ(msg_id));
   PUT_C(data, "text", ARRAY_OBJ(messages));
   if (msg_data != NULL) {
-    PUT_C(data, "percent", INTEGER_OBJ(msg_data->percent));
+    if (msg_data->percent >= 0) {
+      // If percent=nil we omit it, it means "indeterminate progress". #39029
+      PUT_C(data, "percent", INTEGER_OBJ(msg_data->percent));
+    }
     PUT_C(data, "source", STRING_OBJ(msg_data->source));
     PUT_C(data, "status", STRING_OBJ(msg_data->status));
     PUT_C(data, "title", STRING_OBJ(msg_data->title));

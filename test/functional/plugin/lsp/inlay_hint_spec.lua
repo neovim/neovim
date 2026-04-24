@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 local dedent = t.dedent
 local exec_lua = n.exec_lua
 local insert = n.insert

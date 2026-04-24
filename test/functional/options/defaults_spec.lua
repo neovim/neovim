@@ -10,10 +10,10 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = n.assert_alive
 local assert_log = t.assert_log
+local pcall_err = t.pcall_err
 local api = n.api
 local command = n.command
 local clear = n.clear
-local exc_exec = n.exc_exec
 local eval = n.eval
 local eq = t.eq
 local ok = t.ok
@@ -291,10 +291,8 @@ describe('XDG defaults', function()
     clear()
     local rtp = eval('split(&runtimepath, ",")')
     local rv = {}
-    local expected = (
-      is_os('win') and { [[\nvim-data\site]], [[\nvim-data\site\after]] }
-      or { '/nvim/site', '/nvim/site/after' }
-    )
+    local data_dir = is_os('win') and '/nvim-data' or '/nvim'
+    local expected = { data_dir .. '/site', data_dir .. '/site/after' }
 
     for _, v in ipairs(rtp) do
       local m = string.match(v, [=[[/\]nvim[^/\]*[/\]site.*$]=])
@@ -695,7 +693,7 @@ describe('XDG defaults', function()
 
     it('are escaped properly', function()
       local vimruntime, libdir = vimruntime_and_libdir()
-      local path_sep = is_os('win') and '\\' or '/'
+      local path_sep = '/'
       eq(
         (
           '\\, \\, \\,'
@@ -869,17 +867,7 @@ describe('XDG defaults', function()
           .. (path_sep):rep(2),
         api.nvim_get_option_value('undodir', {})
       )
-      eq(
-        '\\,=\\,=\\,'
-          .. path_sep
-          .. ''
-          .. state_dir
-          .. ''
-          .. path_sep
-          .. 'view'
-          .. (path_sep):rep(2),
-        api.nvim_get_option_value('viewdir', {})
-      )
+      eq(',=,=,/' .. state_dir .. '/view//', api.nvim_get_option_value('viewdir', {}))
     end)
   end)
 end)
@@ -916,11 +904,17 @@ describe('stdpath()', function()
 
   it('failure modes', function()
     clear()
-    eq('Vim(call):E6100: "capybara" is not a valid stdpath', exc_exec('call stdpath("capybara")'))
-    eq('Vim(call):E6100: "" is not a valid stdpath', exc_exec('call stdpath("")'))
-    eq('Vim(call):E6100: "23" is not a valid stdpath', exc_exec('call stdpath(23)'))
-    eq('Vim(call):E731: Using a Dictionary as a String', exc_exec('call stdpath({"eris": 23})'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call stdpath([23])'))
+    eq(
+      'Vim(call):E6100: "capybara" is not a valid stdpath',
+      pcall_err(command, 'call stdpath("capybara")')
+    )
+    eq('Vim(call):E6100: "" is not a valid stdpath', pcall_err(command, 'call stdpath("")'))
+    eq('Vim(call):E6100: "23" is not a valid stdpath', pcall_err(command, 'call stdpath(23)'))
+    eq(
+      'Vim(call):E731: Using a Dictionary as a String',
+      pcall_err(command, 'call stdpath({"eris": 23})')
+    )
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call stdpath([23])'))
   end)
 
   it('$NVIM_APPNAME', function()

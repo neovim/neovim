@@ -58,6 +58,11 @@ func CheckDefExecAndScriptFailure(lines, error, lnum = -3)
   return
 endfunc
 
+" As CheckDefExecAndScriptFailure() but with two different expected errors.
+func CheckDefExecAndScriptFailure2(lines, errorDef, errorScript, lnum = -3)
+  return
+endfunc
+
 " Check that "lines" inside a legacy function has no error.
 func CheckLegacySuccess(lines)
   let cwd = getcwd()

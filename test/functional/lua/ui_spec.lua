@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 local ok = t.ok
 local exec_lua = n.exec_lua
 local clear = n.clear

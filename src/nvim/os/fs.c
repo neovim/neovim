@@ -113,6 +113,7 @@ int os_dirname(char *buf, size_t len)
     xstrlcpy(buf, uv_strerror(error_number), len);
     return FAIL;
   }
+  TO_SLASH(buf);
   return OK;
 }
 
@@ -224,7 +225,9 @@ int os_nodetype(const char *name)
 int os_exepath(char *buffer, size_t *size)
   FUNC_ATTR_NONNULL_ALL
 {
-  return uv_exepath(buffer, size);
+  int r = uv_exepath(buffer, size);
+  TO_SLASH(buffer);
+  return r;
 }
 
 /// Checks if the file `name` is executable.
@@ -1112,6 +1115,7 @@ int os_mkdtemp(const char *templ, char *path)
   int result = uv_fs_mkdtemp(NULL, &request, templ, NULL);
   if (result == kLibuvSuccess) {
     xstrlcpy(path, request.path, TEMP_FILE_PATH_MAXLEN);
+    TO_SLASH(path);
   }
   uv_fs_req_cleanup(&request);
   return result;
@@ -1345,6 +1349,7 @@ char *os_realpath(const char *name, char *buf, size_t len)
       buf = xmalloc(len);
     }
     xstrlcpy(buf, request.ptr, len);
+    TO_SLASH(buf);
   }
   uv_fs_req_cleanup(&request);
   return result == kLibuvSuccess ? buf : NULL;
@@ -1430,6 +1435,7 @@ shortcut_end:
   }
 
   CoUninitialize();
+  TO_SLASH(rfname);
   return rfname;
 }
 

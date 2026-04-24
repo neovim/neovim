@@ -4,6 +4,7 @@ local n = require('test.functional.testnvim')()
 local clear = n.clear
 local command = n.command
 local eq = t.eq
+local pcall_err = t.pcall_err
 local eval = n.eval
 local request = n.request
 local is_os = t.is_os

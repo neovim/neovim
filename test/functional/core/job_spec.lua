@@ -6,7 +6,6 @@ local tt = require('test.functional.testterm')
 local clear = n.clear
 local eq = t.eq
 local eval = n.eval
-local exc_exec = n.exc_exec
 local feed_command = n.feed_command
 local feed = n.feed
 local insert = n.insert
@@ -1328,7 +1327,7 @@ describe('jobs', function()
       -- Can't wait for the next message in case this test fails, if it fails
       -- there won't be any more messages, and the test would hang.
       vim.uv.sleep(100)
-      local err = exc_exec('call jobpid(j)')
+      local err = pcall_err(command, 'call jobpid(j)')
       eq('Vim(call):E900: Invalid channel id', err)
 
       -- cleanup

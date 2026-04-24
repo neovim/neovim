@@ -2978,6 +2978,29 @@ describe('folded lines', function()
     with_ext_multigrid(false)
   end)
 
+  it('does not hang drawing diff filler above a folded line', function()
+    Screen.new(80, 24)
+    exec([[
+      call setline(1, ['fold', 'body'])
+      vnew
+      call setline(1, ['inserted', 'fold', 'body'])
+
+      windo diffthis
+      wincmd l
+      setlocal foldmethod=manual
+      1,2fold
+      normal! zM
+
+      wincmd h
+      normal! 1Gzt
+      redraw
+
+      let g:diff_filler_fold_done = 1
+    ]])
+    eq(1, api.nvim_get_var('diff_filler_fold_done'))
+    assert_alive()
+  end)
+
   it("do not interfere with corrected cursor position for 'scrolloff'", function()
     local screen = Screen.new(40, 7)
     exec([[

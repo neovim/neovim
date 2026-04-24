@@ -90,7 +90,7 @@ jobs:
       pull-requests: write
     steps:
     - if: startsWith(github.base_ref, 'release')
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       with:
         script: |
           github.rest.issues.addLabels({

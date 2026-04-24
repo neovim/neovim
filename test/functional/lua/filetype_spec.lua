@@ -59,7 +59,6 @@ describe('vim.filetype', function()
     eq(
       'sh',
       exec_lua(function()
-        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
         return vim.filetype.match({ filename = 'main.sh' })
       end)
     )
@@ -69,8 +68,18 @@ describe('vim.filetype', function()
     eq(
       'text',
       exec_lua(function()
-        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
         return vim.filetype.match({ filename = 'main.txt' })
+      end)
+    )
+  end)
+
+  it('works without defined g:ft_ignore_pat', function()
+    local match_opts = { filename = 'unknown-ft', buf = api.nvim_create_buf(false, true) }
+    eq(
+      nil,
+      exec_lua(function()
+        vim.g.ft_ignore_pat = nil
+        return vim.filetype.match(match_opts)
       end)
     )
   end)
@@ -141,8 +150,6 @@ describe('vim.filetype', function()
     eq(
       'sh',
       exec_lua(function()
-        -- Needs to be set so detect#sh doesn't fail
-        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
         return (vim.filetype.match({ contents = { '#!/usr/bin/env bash' } }))
       end)
     )
@@ -220,9 +227,6 @@ describe('vim.filetype', function()
           '# foo',
         }
         vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-
-        -- Needs to be set so detect.conf() doesn't fail
-        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
 
         local ft, _, fallback = vim.filetype.match({ buf = bufnr })
         return { ft, fallback }

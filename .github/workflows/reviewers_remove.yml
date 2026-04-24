@@ -16,7 +16,7 @@ jobs:
           persist-credentials: false
 
       - name: 'Remove reviewers'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const script = require('./.github/scripts/reviewers_remove.js')

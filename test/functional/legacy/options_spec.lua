@@ -5,8 +5,8 @@ local Screen = require('test.functional.ui.screen')
 
 local command, clear = n.command, n.clear
 local source, expect = n.source, n.expect
-local exc_exec = n.exc_exec
 local matches = t.matches
+local pcall_err = t.pcall_err
 
 describe('options', function()
   setup(clear)
@@ -40,7 +40,7 @@ describe('set', function()
       below sp | wincmd _
       below sp
     ]])
-    matches('E36: Not enough room', exc_exec('set wmh=1'))
+    matches('E36: Not enough room', pcall_err(command, 'set wmh=1'))
   end)
 
   it('winminheight works with tabline', function()
@@ -53,7 +53,7 @@ describe('set', function()
       split
       tabnew
     ]])
-    matches('E36: Not enough room', exc_exec('set wmh=1'))
+    matches('E36: Not enough room', pcall_err(command, 'set wmh=1'))
   end)
 
   it('scroll works', function()
@@ -74,7 +74,7 @@ describe('set', function()
   end)
 
   it('foldcolumn and signcolumn to empty string is disallowed', function()
-    matches('E474: Invalid argument: fdc=', exc_exec('set fdc='))
-    matches('E474: Invalid argument: scl=', exc_exec('set scl='))
+    matches('E474: Invalid argument: fdc=', pcall_err(command, 'set fdc='))
+    matches('E474: Invalid argument: scl=', pcall_err(command, 'set scl='))
   end)
 end)

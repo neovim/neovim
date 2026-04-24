@@ -8,7 +8,6 @@ local clear = n.clear
 local command = n.command
 local eval = n.eval
 local eq = t.eq
-local exc_exec = n.exc_exec
 
 describe('setpos() function', function()
   before_each(function()
@@ -28,8 +27,7 @@ describe('setpos() function', function()
     eq({ 0, 2, 1, 0 }, getpos('.'))
     setpos('.', { 2, 1, 1, 0 })
     eq({ 0, 1, 1, 0 }, getpos('.'))
-    local ret = exc_exec('call setpos(".", [1, 1, 1, 0])')
-    eq(0, ret)
+    command('call setpos(".", [1, 1, 1, 0])')
   end)
   it('can set lowercase marks in the current buffer', function()
     setpos("'d", { 0, 2, 1, 0 })

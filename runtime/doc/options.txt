@@ -261,12 +261,12 @@ that was last closed are used again.  If this buffer has been edited in this
 window, the values from back then are used.  Otherwise the values from the
 last closed window where the buffer was edited last are used.
 
-It's possible to set a local window option specifically for a type of buffer.
-When you edit another buffer in the same window, you don't want to keep
-using these local window options.  Therefore Vim keeps a global value of the
-local window options, which is used when editing another buffer.  Each window
-has its own copy of these values.  Thus these are local to the window, but
-global to all buffers in the window.  With this you can do: >
+":setlocal" can be used to set a local window option specifically for a type
+of buffer.  When you edit another buffer in the same window, you don't want to
+keep using these local window options.  Meanwhile ":set" also sets a global
+value of a local window option, which is used when editing another buffer.
+Each window has its own copy of these global values, making them local to the
+window, but global to all buffers in the window.  With this you can do: >
 	:e one
 	:set list
 	:e two
@@ -296,6 +296,7 @@ created, thus they behave slightly differently:
 	'winfixbuf'	specific to existing window
 	'winfixheight'	specific to existing window
 	'winfixwidth'	specific to existing window
+	'winpinned'	specific to existing window
 
 Special local buffer options
 
@@ -1687,8 +1688,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    'ignorecase' is set without 'infercase'.
 		    See also |preinserted()|.
 
-	   preselect   Selects the first completion item whose "preselect"
-		    field is set, if any. Takes precedence over "noselect".
+	   preselect
+		    When one of |complete-items| has its "preselect" field set
+		    (e.g., as indicated by an LSP server), select the first
+		    such item in the |popupmenu-completion|. Takes precedence
+		    over "noselect".
+
+		    Unlike the implicit selection behavior (when "noselect" is
+		    not set), this preserves the original sort order and
+		    navigates to the preselect item rather than always
+		    selecting the first item.
 
 	   preview  Show extra information about the currently selected
 		    completion in the preview window.  Only works in
@@ -3893,7 +3902,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	  clean         Remove unloaded buffers from the jumplist.
 
-						*'keymap'* *'kmp'*
+						*'keymap'* *'kmp'* *E544*
 'keymap' 'kmp'		string	(default "")
 			local to buffer
 	Name of a keyboard mapping.  See |mbyte-keymap|.
@@ -5269,13 +5278,31 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Minimal number of screen lines to keep above and below the cursor.
 	This will make some context visible around where you are working.  If
 	you set it to a very large value (999) the cursor line will always be
-	in the middle of the window (except at the start or end of the file or
-	when long lines wrap).
+	in the middle of the window (except at the start or end of the file,
+	see 'scrolloffpad', or when long lines wrap).
 	After using the local value, go back the global value with one of
 	these two: >vim
 		setlocal scrolloff<
 		setlocal scrolloff=-1
 <	For scrolling horizontally see 'sidescrolloff'.
+
+						*'scrolloffpad'* *'sop'*
+'scrolloffpad' 'sop'	number	(default 0)
+			global or local to window |global-local|
+	When 'scrolloff' and 'scrolloffpad' are greater than zero, allow
+	the cursor to remain centered when at the end of the file.
+	Normally, 'scrolloff' will not keep the cursor centered at the
+	end of the file.
+
+	A value of 0 disables this feature.  Any value above 0 enables it.
+	For a window-local value, -1 means to use the global value.
+	Values below -1 are invalid.
+
+	After using the local value, go back the global value with one of
+	these two: >vim
+		setlocal scrolloffpad<
+		setlocal scrolloffpad=-1
+<
 
 						*'scrollopt'* *'sbo'*
 'scrollopt' 'sbo'	string	(default "ver,jump")
@@ -5729,8 +5756,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'shortmess'* *'shm'* *E1336*
 'shortmess' 'shm'	string	(default "ltToOCF")
 			global
-	This option helps to avoid all the |hit-enter| prompts caused by file
-	messages, for example with CTRL-G, and to avoid some other messages.
+	Controls display of file messages (e.g. CTRL-G) and various other
+	messages.
+
 	It is a list of flags:
 	 flag	meaning when present	~
 	  l	use "999L, 888B" instead of "999 lines, 888 bytes"	*shm-l*
@@ -6115,7 +6143,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			designated regions of the buffer are spellchecked in
 			this case.
 
-						*'spellsuggest'* *'sps'*
+					*'spellsuggest'* *'sps'* *E5700*
 'spellsuggest' 'sps'	string	(default "best")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
@@ -6941,7 +6969,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	error will be given.
 
 	The default (empty) behaviour is equivalent to: >vim
-	    set titlestring=%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim
+	    set titlestring=%t%(\ %M%)%(\ \(%{expand('%:p:~:h')}\)%)%a\ -\ Nvim
 <
 	Example: >vim
 	    auto BufEnter * let &titlestring = hostname() .. "/" .. expand("%:p")
@@ -7627,6 +7655,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option is only checked when making a window smaller.  Don't use a
 	large number, it will cause errors when opening more than a few
 	windows.  A value of 0 to 12 is reasonable.
+
+				*'winpinned'* *'wp'* *'nowinpinned'* *'nowp'*
+'winpinned' 'wp'	boolean	(default off)
+			local to window  |local-noglobal|
+	If enabled, the window is pinned and will not be closed by |:only|
+	and |:fclose|. Only commands specifically targeting the window can
+	close it.
 
 						*'winwidth'* *'wiw'* *E592*
 'winwidth' 'wiw'	number	(default 20)

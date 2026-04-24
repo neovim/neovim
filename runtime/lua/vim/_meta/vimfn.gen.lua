@@ -4475,8 +4475,7 @@ function vim.fn.hlID(name) end
 function vim.fn.hlexists(name) end
 
 --- Returns the hostname of the machine on which the Nvim server
---- (not the UI client) is currently running.  Names greater than
---- 256 characters long are truncated.
+--- (not the UI client) is currently running.
 ---
 --- @return string
 function vim.fn.hostname() end
@@ -7202,7 +7201,7 @@ function vim.fn.readfile(fname, type, max) end
 --- {func} is called for every item in {object}, which can be a
 --- |String|, |List| or a |Blob|.  {func} is called with two
 --- arguments: the result so far and current item.  After
---- processing all items the result is returned.
+--- processing all items the result is returned. *E1132*
 ---
 --- {initial} is the initial result.  When omitted, the first item
 --- in {object} is used and {func} is first called for the second

@@ -29,21 +29,20 @@ describe('fnamemodify()', function()
   end)
 
   it('handles the root path', function()
-    local root = n.pathroot()
+    local root = assert(t.fix_slashes(n.pathroot()))
     eq(root, fnamemodify([[/]], ':p:h'))
     eq(root, fnamemodify([[/]], ':p'))
     if is_os('win') then
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       command('set shellslash')
-      root = string.sub(root, 1, -2) .. '/'
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       eq(root, fnamemodify([[/]], ':p:h'))
       eq(root, fnamemodify([[/]], ':p'))
 
       local letter_colon = root:sub(1, 2)
-      local old_dir = getcwd() .. '/'
+      local old_dir = t.fix_slashes(getcwd()) .. '/'
       local foo_dir = old_dir .. 'foo/'
       eq(old_dir, fnamemodify(letter_colon, ':p'))
       eq(old_dir, fnamemodify(letter_colon .. '.', ':p'))

@@ -4,9 +4,9 @@ local Screen = require('test.functional.ui.screen')
 local t_shada = require('test.functional.shada.testutil')
 
 local clear = n.clear
-local eq, api, nvim_eval, nvim_command, exc_exec, fn, nvim_feed =
-  t.eq, n.api, n.eval, n.command, n.exc_exec, n.fn, n.feed
+local eq, api, nvim_eval, nvim_command, fn, nvim_feed = t.eq, n.api, n.eval, n.command, n.fn, n.feed
 local neq = t.neq
+local pcall_err = t.pcall_err
 local read_file = t.read_file
 
 local get_shada_rw = t_shada.get_shada_rw
@@ -92,25 +92,28 @@ describe('autoload/shada.vim', function()
         { type = 1, timestamp = 5, length = 1, data = 7 },
         { type = 1, timestamp = 10, length = 1, data = 5 },
       }, nvim_eval(mpack2sd('[1, 5, 1, 7, 1, 10, 1, 5]')))
-      eq(
-        'zero-uint:Entry 1 has type element which is zero',
-        exc_exec('call ' .. mpack2sd('[0, 5, 1, 7]'))
+      t.matches(
+        'zero%-uint:Entry 1 has type element which is zero',
+        pcall_err(nvim_command, 'call ' .. mpack2sd('[0, 5, 1, 7]'))
       )
-      eq(
-        'zero-uint:Entry 1 has type element which is zero',
-        exc_exec('call ' .. mpack2sd(('[%s, 5, 1, 7]'):format(sp('integer', '[1, 0, 0, 0]'))))
+      t.matches(
+        'zero%-uint:Entry 1 has type element which is zero',
+        pcall_err(
+          nvim_command,
+          'call ' .. mpack2sd(('[%s, 5, 1, 7]'):format(sp('integer', '[1, 0, 0, 0]')))
+        )
       )
-      eq(
-        'not-uint:Entry 1 has timestamp element which is not an unsigned integer',
-        exc_exec('call ' .. mpack2sd('[1, -1, 1, 7]'))
+      t.matches(
+        'not%-uint:Entry 1 has timestamp element which is not an unsigned integer',
+        pcall_err(nvim_command, 'call ' .. mpack2sd('[1, -1, 1, 7]'))
       )
-      eq(
-        'not-uint:Entry 1 has length element which is not an unsigned integer',
-        exc_exec('call ' .. mpack2sd('[1, 1, -1, 7]'))
+      t.matches(
+        'not%-uint:Entry 1 has length element which is not an unsigned integer',
+        pcall_err(nvim_command, 'call ' .. mpack2sd('[1, 1, -1, 7]'))
       )
-      eq(
-        'not-uint:Entry 1 has type element which is not an unsigned integer',
-        exc_exec('call ' .. mpack2sd('["", 1, -1, 7]'))
+      t.matches(
+        'not%-uint:Entry 1 has type element which is not an unsigned integer',
+        pcall_err(nvim_command, 'call ' .. mpack2sd('["", 1, -1, 7]'))
       )
     end)
   end)
@@ -2941,8 +2944,8 @@ describe('plugin/shada.vim', function()
     end)
     wshada('\004\000\006\146\000\196\002ab')
     wshada_tmp('\004\001\006\146\000\196\002bc')
-    eq(0, exc_exec('source ' .. fname))
-    eq(0, exc_exec('source ' .. fname_tmp))
+    nvim_command('source ' .. fname)
+    nvim_command('source ' .. fname_tmp)
     eq('bc', fn.histget(':', -1))
     eq('ab', fn.histget(':', -2))
   end)

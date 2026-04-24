@@ -22,7 +22,7 @@ extern "c" fn luaopen_lpeg(ptr: *anyopaque) c_int;
 extern "c" fn luaopen_bit(ptr: *anyopaque) c_int;
 extern "c" fn luaopen_luv(ptr: *anyopaque) c_int;
 
-fn init() !*Lua {
+fn init_lua() !*Lua {
     // Initialize the Lua vm
     var lua = try Lua.init(std.heap.c_allocator);
     lua.openLibs();
@@ -69,26 +69,34 @@ fn init() !*Lua {
     return lua;
 }
 
-pub fn main() !void {
-    const argv = std.os.argv;
+pub fn main(init: std.process.Init) !void {
+    const args = init.minimal.args;
 
-    const lua = try init();
+    const lua = try init_lua();
     defer lua.deinit();
 
-    if (argv.len < 2) {
+    if (args.vector.len < 2) {
         std.debug.print("USAGE: nlua0 script.lua args...\n\n", .{});
         return;
     }
-    lua.createTable(@intCast(argv.len - 2), 1);
-    for (0.., argv[1..]) |i, arg| {
-        _ = lua.pushString(std.mem.span(arg));
+    lua.createTable(@intCast(args.vector.len - 2), 1);
+
+    var iter = try init.minimal.args.iterateAllocator(init.arena.allocator());
+    _ = iter.skip();
+    var i: u32 = 0;
+    var firstarg: [:0]const u8 = undefined;
+    while (iter.next()) |val| : (i += 1) {
+        _ = lua.pushString(val);
+        if (i == 0) {
+            firstarg = try lua.toString(-1); // preserved on lua heap..
+        }
         lua.rawSetIndex(-2, @intCast(i));
     }
     lua.setGlobal("arg");
 
     _ = try lua.getGlobal("debug");
     _ = lua.getField(-1, "traceback");
-    try lua.loadFile(std.mem.span(argv[1]));
+    try lua.loadFile(firstarg);
     lua.protectedCall(.{ .msg_handler = -2 }) catch |e| {
         if (e == error.LuaRuntime) {
             const msg = try lua.toString(-1);
@@ -104,7 +112,7 @@ fn do_ret1(lua: *Lua, str: [:0]const u8) !void {
 }
 
 test "simple test" {
-    const lua = try init();
+    const lua = try init_lua();
     defer lua.deinit();
 
     try do_ret1(lua, "return vim.isarray({2,3})");

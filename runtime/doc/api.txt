@@ -408,7 +408,7 @@ after adding them, the returned |extmark| id can be used. >lua
 See also |vim.hl.range()|.
 
 ==============================================================================
-Floating windows                                *api-floatwin* *floating-windows*
+Floating windows        *api-floatwin* *floating-windows* *E5601* *E5602*
 
 Floating windows ("floats") are displayed on top of normal windows.  This is
 useful to implement simple widgets, such as tooltips displayed next to the
@@ -695,7 +695,8 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                    • kind (`string?`) Decides the |ui-messages| kind in the
                      emitted message. Set "progress" to emit a
                      |progress-message|.
-                   • percent (`integer?`) |progress-message| percentage.
+                   • percent (`integer?`) |progress-message| percentage, or
+                     nil to signal "unknown progress".
                    • source (`string?`) |progress-message| source.
                    • status (`string?`) |progress-message| status:
                      • "success": Process completed successfully.
@@ -1555,8 +1556,9 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                  accepts the following keys:
                  • altfont: boolean
                  • bg: color name or "#RRGGBB", see note.
-                 • bg_indexed: boolean (default false) If true, bg is a
-                   terminal palette index (0-255).
+                 • bg_indexed: boolean. If true, `bg` is an RGB approximation
+                   of `ctermbg` (a palette index). UIs rendering cterm
+                   natively may prefer `ctermbg`.
                  • blend: integer between 0 and 100
                  • blink: boolean
                  • bold: boolean
@@ -1571,8 +1573,8 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                    |:hi-default|
                  • dim: boolean
                  • fg: Color name or "#RRGGBB", see note.
-                 • fg_indexed: boolean (default false) If true, fg is a
-                   terminal palette index (0-255).
+                 • fg_indexed: boolean. Same as `bg_indexed`, for `fg` and
+                   `ctermfg`.
                  • font: GUI font name (string). Sets |highlight-font|. Use
                    "NONE" to clear.
                  • force: boolean (default false) Update the highlight group
@@ -1913,7 +1915,7 @@ nvim_call_function({fn}, {args})                        *nvim_call_function()*
     Return: ~
         (`any`) Result of the function call
 
-nvim_command({command})                                       *nvim_command()*
+nvim_command({cmd})                                           *nvim_command()*
     Executes an Ex command.
 
     On execution error: fails with Vimscript error, updates v:errmsg.
@@ -1926,7 +1928,7 @@ nvim_command({command})                                       *nvim_command()*
         Since: 0.1.0
 
     Parameters: ~
-      • {command}  (`string`) Ex command string
+      • {cmd}  (`string`) Ex command string
 
 nvim_eval({expr})                                                *nvim_eval()*
     Evaluates a Vimscript |expression|. Dicts and Lists are recursively
@@ -1971,8 +1973,7 @@ nvim_exec2({src}, {opts})                                       *nvim_exec2()*
       • |nvim_command()|
       • |nvim_cmd()|
 
-                                                     *nvim_parse_expression()*
-nvim_parse_expression({expr}, {flags}, {highlight})
+nvim_parse_expression({expr}, {flags}, {hl})         *nvim_parse_expression()*
     Parse a Vimscript expression.
 
     Attributes: ~
@@ -1980,26 +1981,26 @@ nvim_parse_expression({expr}, {flags}, {highlight})
         Since: 0.3.0
 
     Parameters: ~
-      • {expr}       (`string`) Expression to parse. Always treated as a
-                     single line.
-      • {flags}      (`string`) Flags:
-                     • "m" if multiple expressions in a row are allowed (only
-                       the first one will be parsed),
-                     • "E" if EOC tokens are not allowed (determines whether
-                       they will stop parsing process or be recognized as an
-                       operator/space, though also yielding an error).
-                     • "l" when needing to start parsing with lvalues for
-                       ":let" or ":for". Common flag sets:
-                     • "m" to parse like for `":echo"`.
-                     • "E" to parse like for `"<C-r>="`.
-                     • empty string for ":call".
-                     • "lm" to parse for ":let".
-      • {highlight}  (`boolean`) If true, return value will also include
-                     "highlight" key containing array of 4-tuples (arrays)
-                     (Integer, Integer, Integer, String), where first three
-                     numbers define the highlighted region and represent line,
-                     starting column and ending column (latter exclusive: one
-                     should highlight region [start_col, end_col)).
+      • {expr}   (`string`) Expression to parse. Always treated as a single
+                 line.
+      • {flags}  (`string`) Flags:
+                 • "m" if multiple expressions in a row are allowed (only the
+                   first one will be parsed),
+                 • "E" if EOC tokens are not allowed (determines whether they
+                   will stop parsing process or be recognized as an
+                   operator/space, though also yielding an error).
+                 • "l" when needing to start parsing with lvalues for ":let"
+                   or ":for". Common flag sets:
+                 • "m" to parse like for `":echo"`.
+                 • "E" to parse like for `"<C-r>="`.
+                 • empty string for ":call".
+                 • "lm" to parse for ":let".
+      • {hl}     (`boolean`) If true, return value will also include
+                 "highlight" key containing array of 4-tuples (arrays)
+                 (Integer, Integer, Integer, String), where first three
+                 numbers define the highlighted region and represent line,
+                 starting column and ending column (latter exclusive: one
+                 should highlight region [start_col, end_col)).
 
     Return: ~
         (`table<string,any>`)
@@ -2828,17 +2829,17 @@ nvim_buf_set_var({buf}, {name}, {value})                  *nvim_buf_set_var()*
 Command Functions                                                *api-command*
 
                                               *nvim_buf_create_user_command()*
-nvim_buf_create_user_command({buf}, {name}, {command}, {opts})
+nvim_buf_create_user_command({buf}, {name}, {cmd}, {opts})
     Creates a buffer-local command |user-commands|.
 
     Attributes: ~
         Since: 0.7.0
 
     Parameters: ~
-      • {buf}      (`integer`) Buffer id, or 0 for current buffer.
-      • {name}     (`string`)
-      • {command}  (`any`)
-      • {opts}     (`vim.api.keyset.user_command`)
+      • {buf}   (`integer`) Buffer id, or 0 for current buffer.
+      • {name}  (`string`)
+      • {cmd}   (`any`)
+      • {opts}  (`vim.api.keyset.user_command`)
 
     See also: ~
       • nvim_create_user_command
@@ -2911,7 +2912,7 @@ nvim_cmd({cmd}, {opts})                                           *nvim_cmd()*
       • |nvim_parse_cmd()|
 
                                                   *nvim_create_user_command()*
-nvim_create_user_command({name}, {command}, {opts})
+nvim_create_user_command({name}, {cmd}, {opts})
     Creates a global |user-commands| command.
 
     For Lua usage see |lua-guide-commands-create|.
@@ -2926,44 +2927,41 @@ nvim_create_user_command({name}, {command}, {opts})
         Since: 0.7.0
 
     Parameters: ~
-      • {name}     (`string`) Name of the new user command. Must begin with an
-                   uppercase letter.
-      • {command}  (`string|fun(args: vim.api.keyset.create_user_command.command_args)`)
-                   Replacement command to execute when this user command is
-                   executed. When called from Lua, the command can also be a
-                   Lua function. The function is called with a single table
-                   argument that contains the following keys:
-                   • name: (string) Command name
-                   • args: (string) The args passed to the command, if any
-                     <args>
-                   • fargs: (table) The args split by unescaped whitespace
-                     (when more than one argument is allowed), if any <f-args>
-                   • nargs: (string) Number of arguments |:command-nargs|
-                   • bang: (boolean) "true" if the command was executed with a
-                     ! modifier <bang>
-                   • line1: (number) The starting line of the command range
-                     <line1>
-                   • line2: (number) The final line of the command range
-                     <line2>
-                   • range: (number) The number of items in the command range:
-                     0, 1, or 2 <range>
-                   • count: (number) Any count supplied <count>
-                   • reg: (string) The optional register, if specified <reg>
-                   • mods: (string) Command modifiers, if any <mods>
-                   • smods: (table) Command modifiers in a structured format.
-                     Has the same structure as the "mods" key of
-                     |nvim_parse_cmd()|.
-      • {opts}     (`vim.api.keyset.user_command`) Optional flags
-                   • `desc` (string) Command description.
-                   • `force` (boolean, default true) Override any previous
-                     definition.
-                   • `complete` |:command-complete| command or function like
-                     |:command-completion-customlist|.
-                   • `preview` (function) Preview handler for 'inccommand'
-                     |:command-preview|
-                   • Set boolean |command-attributes| such as |:command-bang|
-                     or |:command-bar| to true (but not |:command-buffer|, use
-                     |nvim_buf_create_user_command()| instead).
+      • {name}  (`string`) Name of the new user command. Must begin with an
+                uppercase letter.
+      • {cmd}   (`string|fun(args: vim.api.keyset.create_user_command.command_args)`)
+                Replacement command to execute when this user command is
+                executed. When called from Lua, the command can also be a Lua
+                function. The function is called with a single table argument
+                that contains the following keys:
+                • name: (string) Command name
+                • args: (string) The args passed to the command, if any <args>
+                • fargs: (table) The args split by unescaped whitespace (when
+                  more than one argument is allowed), if any <f-args>
+                • nargs: (string) Number of arguments |:command-nargs|
+                • bang: (boolean) "true" if the command was executed with a !
+                  modifier <bang>
+                • line1: (number) The starting line of the command range
+                  <line1>
+                • line2: (number) The final line of the command range <line2>
+                • range: (number) The number of items in the command range: 0,
+                  1, or 2 <range>
+                • count: (number) Any count supplied <count>
+                • reg: (string) The optional register, if specified <reg>
+                • mods: (string) Command modifiers, if any <mods>
+                • smods: (table) Command modifiers in a structured format. Has
+                  the same structure as the "mods" key of |nvim_parse_cmd()|.
+      • {opts}  (`vim.api.keyset.user_command`) Optional flags
+                • `desc` (string) Command description.
+                • `force` (boolean, default true) Override any previous
+                  definition.
+                • `complete` |:command-complete| command or function like
+                  |:command-completion-customlist|.
+                • `preview` (function) Preview handler for 'inccommand'
+                  |:command-preview|
+                • Set boolean |command-attributes| such as |:command-bang| or
+                  |:command-bar| to true (but not |:command-buffer|, use
+                  |nvim_buf_create_user_command()| instead).
 
 nvim_del_user_command({name})                        *nvim_del_user_command()*
     Delete a user-defined command.
@@ -3975,18 +3973,16 @@ nvim_open_win({buf}, {enter}, {config})                      *nvim_open_win()*
                     like |:topleft|, |:botright|), the relative window for a
                     `relative="win"` float, or just the target tab page
                     (inferred from the window) for others.
-                  • zindex: Stacking order. floats with higher `zindex` go on
-                    top on floats with lower indices. Must be larger than
-                    zero. The following screen elements have hard-coded
-                    z-indices:
-                    • 100: insert completion popupmenu
-                    • 200: message scrollback
-                    • 250: cmdline completion popupmenu (when
-                      wildoptions+=pum) The default value for floats are 50.
-                      In general, values below 100 are recommended, unless
-                      there is a good reason to overshadow builtin elements.
-                      The cursor is dimmed if an unfocused float above the
-                      cursor exceeds the zindex of the current window by 50.
+                  • zindex: (positive integer, default: 50) Stacking order.
+                    Floats with higher `zindex` overlay floats with lower
+                    indices. Below 100 is recommended, unless there is a good
+                    reason to overshadow builtin elements. The cursor is
+                    dimmed if an unfocused float above the cursor exceeds the
+                    zindex of the current window by 50. These screen elements
+                    have hard-coded z-indices:
+                    • 100: |ins-completion-menu| popupmenu
+                    • 200: message scrollback (|pager|)
+                    • 250: |cmdline-completion| popupmenu (wildoptions=pum)
                   • _cmdline_offset: (EXPERIMENTAL) When provided, anchor the
                     |cmdline-completion| popupmenu to this window, with an
                     offset in screen cell width.

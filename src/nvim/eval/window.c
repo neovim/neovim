@@ -869,10 +869,10 @@ void f_winrestcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         continue;
       }
       size_t buflen = vim_snprintf_safelen(buf, sizeof(buf),
-                                           "%dresize %d|", winnr, wp->w_height);
+                                           ":%dresize %d|", winnr, wp->w_height);
       ga_concat_len(&ga, buf, buflen);
       buflen = vim_snprintf_safelen(buf, sizeof(buf),
-                                    "vert %dresize %d|", winnr, wp->w_width);
+                                    "vert :%dresize %d|", winnr, wp->w_width);
       ga_concat_len(&ga, buf, buflen);
       winnr++;
     }

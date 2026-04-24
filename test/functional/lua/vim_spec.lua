@@ -1391,6 +1391,15 @@ describe('lua stdlib', function()
     )
   end)
 
+  it('vim.fn `func_lua` (fast path for Lua-implemented builtins)', function()
+    -- hostname() is implemented via func_lua, calling Lua directly when invoked from Lua.
+    local lua_result = exec_lua([[return vim.fn.hostname()]])
+    eq(type(lua_result), 'string')
+    assert(#lua_result > 0, 'hostname() should return a non-empty string')
+    -- VimScript path (lua_wrapper) should return the same result.
+    eq(lua_result, eval('hostname()'))
+  end)
+
   it('vim.call fails in fast context', function()
     local screen = Screen.new(120, 10)
     exec_lua([[
@@ -2003,14 +2012,14 @@ describe('lua stdlib', function()
 
       local errmsg = api.nvim_get_vvar('errmsg')
       matches(
-        [[
-^vim%.on%_key%(%) callbacks:.*
-With ns%_id %d+: .*: Dumb Error
-stack traceback:
-.*: in function 'error'
-.*: in function 'ErrF2'
-.*: in function 'ErrF1'
-.*]],
+        t.dedent [[
+          ^vim%.on%_key%(%) callbacks:.*
+          With ns%_id %d+: .*: Dumb Error
+          stack traceback:
+          .*: in function 'error'
+          .*: in function 'ErrF2'
+          .*: in function 'ErrF1'
+          .*]],
         errmsg
       )
     end)
@@ -3268,8 +3277,8 @@ describe('vim.keymap', function()
   end)
 end)
 
-describe('Vimscript function exists()', function()
-  it('can check a lua function', function()
+describe('vim.fn.exists()', function()
+  it('can check a Lua function', function()
     eq(
       1,
       exec_lua [[

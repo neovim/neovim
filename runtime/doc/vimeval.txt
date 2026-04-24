@@ -14,7 +14,12 @@ Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 1. Variables						*variables*
 
 1.1 Variable types ~
-						*E712* *E896* *E897* *E899*
+						*E712* *E896* *E897* *E899* *E908* *E909*
+					*E928* *E964* *E966* *E1023* *E1098* *E1174* *E1175*
+					*E1203* *E1206* *E1210* *E1211* *E1212* *E1219* *E1220*
+					*E1222* *E1225* *E1226* *E1238* *E1250* *E1252* *E1256*
+					*E1265* *E1297* *E5010* *E5050* *E5060* *E5070* *E5071*
+					*E5299* *E5300* *E5401* *E5420* *E6000*
 There are seven types of variables:
 
 							*Number* *Integer*
@@ -1460,7 +1465,7 @@ allowing the inclusion of Vim script expressions (see |expr1|).  Any
 expression returning a value can be enclosed between curly braces.  The value
 is converted to a string.  All the text and results of the expressions
 are concatenated to make a new string.
-								*E1278*
+							*E1278* *E1279*
 To include an opening brace '{' or closing brace '}' in the string content
 double it.  For double quoted strings using a backslash also works.  A single
 closing brace '}' will result in an error.
@@ -2412,7 +2417,8 @@ text...
 		try | sleep 100 | catch /^Vim:Interrupt$/ | endtry
 		try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
 <
-					*:cat* *:catch* *E603* *E604* *E605*
+					*:cat* *:catch*
+					*E603* *E604* *E605* *E654*
 :cat[ch] [/{pattern}/]	The following commands until the next `:catch`,
 			`:finally`, or `:endtry` that belongs to the same
 			`:try` as the `:catch` are executed when an exception
@@ -3733,7 +3739,7 @@ the output of `scriptnames` this code can be used: >
     unlet scriptnames_output
 
 ==============================================================================
-The sandbox					*eval-sandbox* *sandbox*
+The sandbox				*eval-sandbox* *sandbox* *E523*
 
 The 'foldexpr', 'formatexpr', 'includeexpr', 'indentexpr', 'statusline' and
 'foldtext' options may be evaluated in a sandbox.  This means that you are

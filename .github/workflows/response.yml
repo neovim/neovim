@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         with:
           script: |
             const script = require('./.github/scripts/close_unresponsive.js')
@@ -36,7 +36,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         with:
           script: |
             const script = require('./.github/scripts/remove_response_label.js')

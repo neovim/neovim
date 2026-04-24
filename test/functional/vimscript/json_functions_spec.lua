@@ -5,9 +5,9 @@ local clear = n.clear
 local fn = n.fn
 local api = n.api
 local eq = t.eq
+local matches = t.matches
 local eval = n.eval
 local command = n.command
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local NIL = vim.NIL
 local source = n.source
@@ -92,21 +92,30 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse incomplete null, true, false', function()
-    eq('Vim(call):E474: Expected null: n', exc_exec('call json_decode("n")'))
-    eq('Vim(call):E474: Expected null: nu', exc_exec('call json_decode("nu")'))
-    eq('Vim(call):E474: Expected null: nul', exc_exec('call json_decode("nul")'))
-    eq('Vim(call):E474: Expected null: nul\n\t', exc_exec('call json_decode("nul\\n\\t")'))
+    eq('Vim(call):E474: Expected null: n', pcall_err(command, 'call json_decode("n")'))
+    eq('Vim(call):E474: Expected null: nu', pcall_err(command, 'call json_decode("nu")'))
+    eq('Vim(call):E474: Expected null: nul', pcall_err(command, 'call json_decode("nul")'))
+    matches(
+      'Vim%(call%):E474: Expected null: nul',
+      pcall_err(command, 'call json_decode("nul\\n\\t")')
+    )
 
-    eq('Vim(call):E474: Expected true: t', exc_exec('call json_decode("t")'))
-    eq('Vim(call):E474: Expected true: tr', exc_exec('call json_decode("tr")'))
-    eq('Vim(call):E474: Expected true: tru', exc_exec('call json_decode("tru")'))
-    eq('Vim(call):E474: Expected true: tru\t\n', exc_exec('call json_decode("tru\\t\\n")'))
+    eq('Vim(call):E474: Expected true: t', pcall_err(command, 'call json_decode("t")'))
+    eq('Vim(call):E474: Expected true: tr', pcall_err(command, 'call json_decode("tr")'))
+    eq('Vim(call):E474: Expected true: tru', pcall_err(command, 'call json_decode("tru")'))
+    matches(
+      'Vim%(call%):E474: Expected true: tru',
+      pcall_err(command, 'call json_decode("tru\\t\\n")')
+    )
 
-    eq('Vim(call):E474: Expected false: f', exc_exec('call json_decode("f")'))
-    eq('Vim(call):E474: Expected false: fa', exc_exec('call json_decode("fa")'))
-    eq('Vim(call):E474: Expected false: fal', exc_exec('call json_decode("fal")'))
-    eq('Vim(call):E474: Expected false: fal   <', exc_exec('call json_decode("   fal   <")'))
-    eq('Vim(call):E474: Expected false: fals', exc_exec('call json_decode("fals")'))
+    eq('Vim(call):E474: Expected false: f', pcall_err(command, 'call json_decode("f")'))
+    eq('Vim(call):E474: Expected false: fa', pcall_err(command, 'call json_decode("fa")'))
+    eq('Vim(call):E474: Expected false: fal', pcall_err(command, 'call json_decode("fal")'))
+    eq(
+      'Vim(call):E474: Expected false: fal   <',
+      pcall_err(command, 'call json_decode("   fal   <")')
+    )
+    eq('Vim(call):E474: Expected false: fals', pcall_err(command, 'call json_decode("fals")'))
   end)
 
   it('parses integer numbers', function()
@@ -119,40 +128,61 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse +numbers and .number', function()
-    eq('Vim(call):E474: Unidentified byte: +1000', exc_exec('call json_decode("+1000")'))
-    eq('Vim(call):E474: Unidentified byte: .1000', exc_exec('call json_decode(".1000")'))
+    eq('Vim(call):E474: Unidentified byte: +1000', pcall_err(command, 'call json_decode("+1000")'))
+    eq('Vim(call):E474: Unidentified byte: .1000', pcall_err(command, 'call json_decode(".1000")'))
   end)
 
   it('fails to parse numbers with leading zeroes', function()
-    eq('Vim(call):E474: Leading zeroes are not allowed: 00.1', exc_exec('call json_decode("00.1")'))
-    eq('Vim(call):E474: Leading zeroes are not allowed: 01', exc_exec('call json_decode("01")'))
-    eq('Vim(call):E474: Leading zeroes are not allowed: -01', exc_exec('call json_decode("-01")'))
+    eq(
+      'Vim(call):E474: Leading zeroes are not allowed: 00.1',
+      pcall_err(command, 'call json_decode("00.1")')
+    )
+    eq(
+      'Vim(call):E474: Leading zeroes are not allowed: 01',
+      pcall_err(command, 'call json_decode("01")')
+    )
+    eq(
+      'Vim(call):E474: Leading zeroes are not allowed: -01',
+      pcall_err(command, 'call json_decode("-01")')
+    )
     eq(
       'Vim(call):E474: Leading zeroes are not allowed: -001.0',
-      exc_exec('call json_decode("-001.0")')
+      pcall_err(command, 'call json_decode("-001.0")')
     )
   end)
 
   it('fails to parse incomplete numbers', function()
-    eq('Vim(call):E474: Missing number after minus sign: -.1', exc_exec('call json_decode("-.1")'))
-    eq('Vim(call):E474: Missing number after minus sign: -', exc_exec('call json_decode("-")'))
-    eq('Vim(call):E474: Missing number after decimal dot: -1.', exc_exec('call json_decode("-1.")'))
-    eq('Vim(call):E474: Missing number after decimal dot: 0.', exc_exec('call json_decode("0.")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e', exc_exec('call json_decode("0.0e")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e+', exc_exec('call json_decode("0.0e+")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e-', exc_exec('call json_decode("0.0e-")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e-', exc_exec('call json_decode("0.0e-")'))
+    eq(
+      'Vim(call):E474: Missing number after minus sign: -.1',
+      pcall_err(command, 'call json_decode("-.1")')
+    )
+    eq(
+      'Vim(call):E474: Missing number after minus sign: -',
+      pcall_err(command, 'call json_decode("-")')
+    )
+    eq(
+      'Vim(call):E474: Missing number after decimal dot: -1.',
+      pcall_err(command, 'call json_decode("-1.")')
+    )
+    eq(
+      'Vim(call):E474: Missing number after decimal dot: 0.',
+      pcall_err(command, 'call json_decode("0.")')
+    )
+    eq('Vim(call):E474: Missing exponent: 0.0e', pcall_err(command, 'call json_decode("0.0e")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e+', pcall_err(command, 'call json_decode("0.0e+")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e-', pcall_err(command, 'call json_decode("0.0e-")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e-', pcall_err(command, 'call json_decode("0.0e-")'))
     eq(
       'Vim(call):E474: Missing number after decimal dot: 1.e5',
-      exc_exec('call json_decode("1.e5")')
+      pcall_err(command, 'call json_decode("1.e5")')
     )
     eq(
       'Vim(call):E474: Missing number after decimal dot: 1.e+5',
-      exc_exec('call json_decode("1.e+5")')
+      pcall_err(command, 'call json_decode("1.e+5")')
     )
     eq(
       'Vim(call):E474: Missing number after decimal dot: 1.e+',
-      exc_exec('call json_decode("1.e+")')
+      pcall_err(command, 'call json_decode("1.e+")')
     )
   end)
 
@@ -193,21 +223,36 @@ describe('json_decode() function', function()
   it('fails to parse numbers with spaces inside', function()
     eq(
       'Vim(call):E474: Missing number after minus sign: - 1000',
-      exc_exec('call json_decode("- 1000")')
+      pcall_err(command, 'call json_decode("- 1000")')
     )
-    eq('Vim(call):E474: Missing number after decimal dot: 0. ', exc_exec('call json_decode("0. ")'))
+    eq(
+      'Vim(call):E474: Missing number after decimal dot: 0. ',
+      pcall_err(command, 'call json_decode("0. ")')
+    )
     eq(
       'Vim(call):E474: Missing number after decimal dot: 0. 0',
-      exc_exec('call json_decode("0. 0")')
+      pcall_err(command, 'call json_decode("0. 0")')
     )
-    eq('Vim(call):E474: Missing exponent: 0.0e 1', exc_exec('call json_decode("0.0e 1")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e+ 1', exc_exec('call json_decode("0.0e+ 1")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e- 1', exc_exec('call json_decode("0.0e- 1")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e 1', pcall_err(command, 'call json_decode("0.0e 1")'))
+    eq(
+      'Vim(call):E474: Missing exponent: 0.0e+ 1',
+      pcall_err(command, 'call json_decode("0.0e+ 1")')
+    )
+    eq(
+      'Vim(call):E474: Missing exponent: 0.0e- 1',
+      pcall_err(command, 'call json_decode("0.0e- 1")')
+    )
   end)
 
   it('fails to parse "," and ":"', function()
-    eq('Vim(call):E474: Comma not inside container: ,  ', exc_exec('call json_decode("  ,  ")'))
-    eq('Vim(call):E474: Colon not inside container: :  ', exc_exec('call json_decode("  :  ")'))
+    eq(
+      'Vim(call):E474: Comma not inside container: ,  ',
+      pcall_err(command, 'call json_decode("  ,  ")')
+    )
+    eq(
+      'Vim(call):E474: Colon not inside container: :  ',
+      pcall_err(command, 'call json_decode("  :  ")')
+    )
   end)
 
   it('parses empty containers', function()
@@ -216,89 +261,101 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse "[" and "{"', function()
-    eq('Vim(call):E474: Unexpected end of input: {', exc_exec('call json_decode("{")'))
-    eq('Vim(call):E474: Unexpected end of input: [', exc_exec('call json_decode("[")'))
+    eq('Vim(call):E474: Unexpected end of input: {', pcall_err(command, 'call json_decode("{")'))
+    eq('Vim(call):E474: Unexpected end of input: [', pcall_err(command, 'call json_decode("[")'))
   end)
 
   it('fails to parse "}" and "]"', function()
-    eq('Vim(call):E474: No container to close: ]', exc_exec('call json_decode("]")'))
-    eq('Vim(call):E474: No container to close: }', exc_exec('call json_decode("}")'))
+    eq('Vim(call):E474: No container to close: ]', pcall_err(command, 'call json_decode("]")'))
+    eq('Vim(call):E474: No container to close: }', pcall_err(command, 'call json_decode("}")'))
   end)
 
   it('fails to parse containers which are closed by different brackets', function()
     eq(
       'Vim(call):E474: Closing dictionary with square bracket: ]',
-      exc_exec('call json_decode("{]")')
+      pcall_err(command, 'call json_decode("{]")')
     )
-    eq('Vim(call):E474: Closing list with curly bracket: }', exc_exec('call json_decode("[}")'))
+    eq(
+      'Vim(call):E474: Closing list with curly bracket: }',
+      pcall_err(command, 'call json_decode("[}")')
+    )
   end)
 
   it('fails to parse concat inside container', function()
     eq(
       'Vim(call):E474: Expected comma before list item: []]',
-      exc_exec('call json_decode("[[][]]")')
+      pcall_err(command, 'call json_decode("[[][]]")')
     )
     eq(
       'Vim(call):E474: Expected comma before list item: {}]',
-      exc_exec('call json_decode("[{}{}]")')
+      pcall_err(command, 'call json_decode("[{}{}]")')
     )
-    eq('Vim(call):E474: Expected comma before list item: ]', exc_exec('call json_decode("[1 2]")'))
+    eq(
+      'Vim(call):E474: Expected comma before list item: ]',
+      pcall_err(command, 'call json_decode("[1 2]")')
+    )
     eq(
       'Vim(call):E474: Expected comma before dictionary key: ": 4}',
-      exc_exec('call json_decode("{\\"1\\": 2 \\"3\\": 4}")')
+      pcall_err(command, 'call json_decode("{\\"1\\": 2 \\"3\\": 4}")')
     )
     eq(
       'Vim(call):E474: Expected colon before dictionary value: , "3" 4}',
-      exc_exec('call json_decode("{\\"1\\" 2, \\"3\\" 4}")')
+      pcall_err(command, 'call json_decode("{\\"1\\" 2, \\"3\\" 4}")')
     )
   end)
 
   it('fails to parse containers with leading comma or colon', function()
-    eq('Vim(call):E474: Leading comma: ,}', exc_exec('call json_decode("{,}")'))
-    eq('Vim(call):E474: Leading comma: ,]', exc_exec('call json_decode("[,]")'))
-    eq('Vim(call):E474: Using colon not in dictionary: :]', exc_exec('call json_decode("[:]")'))
-    eq('Vim(call):E474: Unexpected colon: :}', exc_exec('call json_decode("{:}")'))
+    eq('Vim(call):E474: Leading comma: ,}', pcall_err(command, 'call json_decode("{,}")'))
+    eq('Vim(call):E474: Leading comma: ,]', pcall_err(command, 'call json_decode("[,]")'))
+    eq(
+      'Vim(call):E474: Using colon not in dictionary: :]',
+      pcall_err(command, 'call json_decode("[:]")')
+    )
+    eq('Vim(call):E474: Unexpected colon: :}', pcall_err(command, 'call json_decode("{:}")'))
   end)
 
   it('fails to parse containers with trailing comma', function()
-    eq('Vim(call):E474: Trailing comma: ]', exc_exec('call json_decode("[1,]")'))
-    eq('Vim(call):E474: Trailing comma: }', exc_exec('call json_decode("{\\"1\\": 2,}")'))
+    eq('Vim(call):E474: Trailing comma: ]', pcall_err(command, 'call json_decode("[1,]")'))
+    eq('Vim(call):E474: Trailing comma: }', pcall_err(command, 'call json_decode("{\\"1\\": 2,}")'))
   end)
 
   it('fails to parse dictionaries with missing value', function()
-    eq('Vim(call):E474: Expected value after colon: }', exc_exec('call json_decode("{\\"1\\":}")'))
-    eq('Vim(call):E474: Expected value: }', exc_exec('call json_decode("{\\"1\\"}")'))
+    eq(
+      'Vim(call):E474: Expected value after colon: }',
+      pcall_err(command, 'call json_decode("{\\"1\\":}")')
+    )
+    eq('Vim(call):E474: Expected value: }', pcall_err(command, 'call json_decode("{\\"1\\"}")'))
   end)
 
   it('fails to parse containers with two commas or colons', function()
     eq(
       'Vim(call):E474: Duplicate comma: , "2": 2}',
-      exc_exec('call json_decode("{\\"1\\": 1,, \\"2\\": 2}")')
+      pcall_err(command, 'call json_decode("{\\"1\\": 1,, \\"2\\": 2}")')
     )
     eq(
       'Vim(call):E474: Duplicate comma: , "2", 2]',
-      exc_exec('call json_decode("[\\"1\\", 1,, \\"2\\", 2]")')
+      pcall_err(command, 'call json_decode("[\\"1\\", 1,, \\"2\\", 2]")')
     )
     eq(
       'Vim(call):E474: Duplicate colon: : 2}',
-      exc_exec('call json_decode("{\\"1\\": 1, \\"2\\":: 2}")')
+      pcall_err(command, 'call json_decode("{\\"1\\": 1, \\"2\\":: 2}")')
     )
     eq(
       'Vim(call):E474: Comma after colon: , 2}',
-      exc_exec('call json_decode("{\\"1\\": 1, \\"2\\":, 2}")')
+      pcall_err(command, 'call json_decode("{\\"1\\": 1, \\"2\\":, 2}")')
     )
     eq(
       'Vim(call):E474: Unexpected colon: : "2": 2}',
-      exc_exec('call json_decode("{\\"1\\": 1,: \\"2\\": 2}")')
+      pcall_err(command, 'call json_decode("{\\"1\\": 1,: \\"2\\": 2}")')
     )
     eq(
       'Vim(call):E474: Unexpected colon: :, "2": 2}',
-      exc_exec('call json_decode("{\\"1\\": 1:, \\"2\\": 2}")')
+      pcall_err(command, 'call json_decode("{\\"1\\": 1:, \\"2\\": 2}")')
     )
   end)
 
   it('fails to parse concat of two values', function()
-    eq('Vim(call):E474: Trailing characters: []', exc_exec('call json_decode("{}[]")'))
+    eq('Vim(call):E474: Trailing characters: []', pcall_err(command, 'call json_decode("{}[]")'))
   end)
 
   it('parses containers', function()
@@ -312,54 +369,60 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse incomplete strings', function()
-    eq('Vim(call):E474: Expected string end: \t"', exc_exec('call json_decode("\\t\\"")'))
-    eq('Vim(call):E474: Expected string end: \t"abc', exc_exec('call json_decode("\\t\\"abc")'))
-    eq(
-      'Vim(call):E474: Unfinished escape sequence: \t"abc\\',
-      exc_exec('call json_decode("\\t\\"abc\\\\")')
+    matches(
+      'Vim%(call%):E474: Expected string end:',
+      pcall_err(command, 'call json_decode("\\t\\"")')
     )
-    eq(
-      'Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u',
-      exc_exec('call json_decode("\\t\\"abc\\\\u")')
+    matches(
+      'Vim%(call%):E474: Expected string end:',
+      pcall_err(command, 'call json_decode("\\t\\"abc")')
     )
-    eq(
-      'Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u0',
-      exc_exec('call json_decode("\\t\\"abc\\\\u0")')
+    matches(
+      'Vim%(call%):E474: Unfinished escape sequence:',
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\")')
     )
-    eq(
-      'Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u00',
-      exc_exec('call json_decode("\\t\\"abc\\\\u00")')
+    matches(
+      'Vim%(call%):E474: Unfinished unicode escape sequence:',
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u")')
     )
-    eq(
-      'Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u000',
-      exc_exec('call json_decode("\\t\\"abc\\\\u000")')
+    matches(
+      'Vim%(call%):E474: Unfinished unicode escape sequence:',
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u0")')
+    )
+    matches(
+      'Vim%(call%):E474: Unfinished unicode escape sequence:',
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u00")')
+    )
+    matches(
+      'Vim%(call%):E474: Unfinished unicode escape sequence:',
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u000")')
     )
     eq(
       'Vim(call):E474: Expected four hex digits after \\u: \\u"    ',
-      exc_exec('call json_decode("\\t\\"abc\\\\u\\"    ")')
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u\\"    ")')
     )
     eq(
       'Vim(call):E474: Expected four hex digits after \\u: \\u0"    ',
-      exc_exec('call json_decode("\\t\\"abc\\\\u0\\"    ")')
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u0\\"    ")')
     )
     eq(
       'Vim(call):E474: Expected four hex digits after \\u: \\u00"    ',
-      exc_exec('call json_decode("\\t\\"abc\\\\u00\\"    ")')
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u00\\"    ")')
     )
     eq(
       'Vim(call):E474: Expected four hex digits after \\u: \\u000"    ',
-      exc_exec('call json_decode("\\t\\"abc\\\\u000\\"    ")')
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u000\\"    ")')
     )
-    eq(
-      'Vim(call):E474: Expected string end: \t"abc\\u0000',
-      exc_exec('call json_decode("\\t\\"abc\\\\u0000")')
+    matches(
+      'Vim%(call%):E474: Expected string end:',
+      pcall_err(command, 'call json_decode("\\t\\"abc\\\\u0000")')
     )
   end)
 
   it('fails to parse unknown escape sequences', function()
     eq(
       'Vim(call):E474: Unknown escape sequence: \\a"',
-      exc_exec('call json_decode("\\t\\"\\\\a\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\\\a\\"")')
     )
   end)
 
@@ -388,85 +451,85 @@ describe('json_decode() function', function()
   it('fails on strings with invalid bytes', function()
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \255"',
-      exc_exec('call json_decode("\\t\\"\\xFF\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xFF\\"")')
     )
     eq(
       'Vim(call):E474: ASCII control characters cannot be present inside string: ',
-      exc_exec('call json_decode(["\\"\\n\\""])')
+      pcall_err(command, 'call json_decode(["\\"\\n\\""])')
     )
     -- 0xC2 starts 2-byte unicode character
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \194"',
-      exc_exec('call json_decode("\\t\\"\\xC2\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xC2\\"")')
     )
     -- 0xE0 0xAA starts 3-byte unicode character
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \224"',
-      exc_exec('call json_decode("\\t\\"\\xE0\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xE0\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \224\170"',
-      exc_exec('call json_decode("\\t\\"\\xE0\\xAA\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xE0\\xAA\\"")')
     )
     -- 0xF0 0x90 0x80 starts 4-byte unicode character
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \240"',
-      exc_exec('call json_decode("\\t\\"\\xF0\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xF0\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \240\144"',
-      exc_exec('call json_decode("\\t\\"\\xF0\\x90\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xF0\\x90\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \240\144\128"',
-      exc_exec('call json_decode("\\t\\"\\xF0\\x90\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xF0\\x90\\x80\\"")')
     )
     -- 0xF9 0x80 0x80 0x80 starts 5-byte unicode character
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \249"',
-      exc_exec('call json_decode("\\t\\"\\xF9\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xF9\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \249\128"',
-      exc_exec('call json_decode("\\t\\"\\xF9\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xF9\\x80\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \249\128\128"',
-      exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xF9\\x80\\x80\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \249\128\128\128"',
-      exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\"")')
     )
     -- 0xFC 0x90 0x80 0x80 0x80 starts 6-byte unicode character
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \252"',
-      exc_exec('call json_decode("\\t\\"\\xFC\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xFC\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \252\144"',
-      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xFC\\x90\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \252\144\128"',
-      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xFC\\x90\\x80\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \252\144\128\128"',
-      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 strings allowed: \252\144\128\128\128"',
-      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\"")')
     )
     -- Specification does not allow unquoted characters above 0x10FFFF
     eq(
       'Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \249\128\128\128\128"',
-      exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\x80\\"")')
     )
     eq(
       'Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"',
-      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\x80\\"")')
+      pcall_err(command, 'call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\x80\\"")')
     )
     -- '"\249\128\128\128\128"',
     -- '"\252\144\128\128\128\128"',
@@ -598,15 +661,33 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse empty string', function()
-    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode("")'))
-    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode([])'))
-    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode([""])'))
-    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode(" ")'))
-    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode("\\t")'))
-    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode("\\n")'))
     eq(
       'Vim(call):E474: Attempt to decode a blank string',
-      exc_exec('call json_decode(" \\t\\n \\n\\t\\t \\n\\t\\n \\n \\t\\n\\t ")')
+      pcall_err(command, 'call json_decode("")')
+    )
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      pcall_err(command, 'call json_decode([])')
+    )
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      pcall_err(command, 'call json_decode([""])')
+    )
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      pcall_err(command, 'call json_decode(" ")')
+    )
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      pcall_err(command, 'call json_decode("\\t")')
+    )
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      pcall_err(command, 'call json_decode("\\n")')
+    )
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      pcall_err(command, 'call json_decode(" \\t\\n \\n\\t\\t \\n\\t\\n \\n \\t\\n\\t ")')
     )
   end)
 
@@ -663,15 +744,15 @@ describe('json_encode() function', function()
   it('fails to dump NaN and infinite values', function()
     eq(
       'Vim(call):E474: Unable to represent NaN value in JSON',
-      exc_exec('call json_encode(str2float("nan"))')
+      pcall_err(command, 'call json_encode(str2float("nan"))')
     )
     eq(
       'Vim(call):E474: Unable to represent infinity in JSON',
-      exc_exec('call json_encode(str2float("inf"))')
+      pcall_err(command, 'call json_encode(str2float("inf"))')
     )
     eq(
       'Vim(call):E474: Unable to represent infinity in JSON',
-      exc_exec('call json_encode(-str2float("inf"))')
+      pcall_err(command, 'call json_encode(-str2float("inf"))')
     )
   end)
 
@@ -694,32 +775,47 @@ describe('json_encode() function', function()
     command('let todumpv1 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('let todumpv2 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('call add(todump._VAL, [todumpv1, todumpv2])')
-    eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E474: Invalid key in special dictionary',
+      pcall_err(command, 'call json_encode(todump)')
+    )
   end)
 
   it('cannot dump generic mapping with ext key', function()
     command('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
-    eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E474: Invalid key in special dictionary',
+      pcall_err(command, 'call json_encode(todump)')
+    )
   end)
 
   it('cannot dump generic mapping with array key', function()
     command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": [5, [""]]}')
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
-    eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E474: Invalid key in special dictionary',
+      pcall_err(command, 'call json_encode(todump)')
+    )
   end)
 
   it('cannot dump generic mapping with UINT64_MAX key', function()
     command('let todump = {"_TYPE": v:msgpack_types.integer}')
     command('let todump._VAL = [1, 3, 0x7FFFFFFF, 0x7FFFFFFF]')
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
-    eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E474: Invalid key in special dictionary',
+      pcall_err(command, 'call json_encode(todump)')
+    )
   end)
 
   it('cannot dump generic mapping with floating-point key', function()
     command('let todump = {"_TYPE": v:msgpack_types.float, "_VAL": 0.125}')
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
-    eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E474: Invalid key in special dictionary',
+      pcall_err(command, 'call json_encode(todump)')
+    )
   end)
 
   it('can dump generic mapping with STR special key and NUL', function()
@@ -735,7 +831,10 @@ describe('json_encode() function', function()
 
   it('cannot dump special ext mapping', function()
     command('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
-    eq('Vim(call):E474: Unable to convert EXT string to JSON', exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E474: Unable to convert EXT string to JSON',
+      pcall_err(command, 'call json_encode(todump)')
+    )
   end)
 
   it('can dump special array mapping', function()
@@ -773,7 +872,7 @@ describe('json_encode() function', function()
   it('fails to dump a function reference', function()
     eq(
       'Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
-      exc_exec('call json_encode(function("tr"))')
+      pcall_err(command, 'call json_encode(function("tr"))')
     )
   end)
 
@@ -781,14 +880,14 @@ describe('json_encode() function', function()
     command('function T() dict\nendfunction')
     eq(
       'Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
-      exc_exec('call json_encode(function("T", [1, 2], {}))')
+      pcall_err(command, 'call json_encode(function("T", [1, 2], {}))')
     )
   end)
 
   it('fails to dump a function reference in a list', function()
     eq(
       'Vim(call):E474: Error while dumping encode_tv2json() argument, index 0: attempt to dump function reference',
-      exc_exec('call json_encode([function("tr")])')
+      pcall_err(command, 'call json_encode([function("tr")])')
     )
   end)
 
@@ -797,7 +896,7 @@ describe('json_encode() function', function()
     command('call add(todump[0][0], todump)')
     eq(
       'Vim(call):E724: unable to correctly dump variable with self-referencing container',
-      exc_exec('call json_encode(todump)')
+      pcall_err(command, 'call json_encode(todump)')
     )
   end)
 
@@ -806,7 +905,7 @@ describe('json_encode() function', function()
     command('call extend(todump.d.d, {"d": todump})')
     eq(
       'Vim(call):E724: unable to correctly dump variable with self-referencing container',
-      exc_exec('call json_encode([todump])')
+      pcall_err(command, 'call json_encode([todump])')
     )
   end)
 
@@ -827,7 +926,7 @@ describe('json_encode() function', function()
     command('call add(todump._VAL, todump)')
     eq(
       'Vim(call):E724: unable to correctly dump variable with self-referencing container',
-      exc_exec('call json_encode(todump)')
+      pcall_err(command, 'call json_encode(todump)')
     )
   end)
 
@@ -836,7 +935,7 @@ describe('json_encode() function', function()
     command('call add(todump._VAL, ["", todump])')
     eq(
       'Vim(call):E724: unable to correctly dump variable with self-referencing container',
-      exc_exec('call json_encode([todump])')
+      pcall_err(command, 'call json_encode([todump])')
     )
   end)
 
@@ -845,7 +944,7 @@ describe('json_encode() function', function()
     command('call add(todump._VAL[0][1], todump._VAL)')
     eq(
       'Vim(call):E724: unable to correctly dump variable with self-referencing container',
-      exc_exec('call json_encode(todump)')
+      pcall_err(command, 'call json_encode(todump)')
     )
   end)
 
@@ -854,21 +953,21 @@ describe('json_encode() function', function()
     command('call add(todump._VAL, ["", todump._VAL])')
     eq(
       'Vim(call):E724: unable to correctly dump variable with self-referencing container',
-      exc_exec('call json_encode(todump)')
+      pcall_err(command, 'call json_encode(todump)')
     )
   end)
 
   it('fails when called with no arguments', function()
     eq(
       'Vim(call):E119: Not enough arguments for function: json_encode',
-      exc_exec('call json_encode()')
+      pcall_err(command, 'call json_encode()')
     )
   end)
 
   it('fails when called with two arguments', function()
     eq(
       'Vim(call):E118: Too many arguments for function: json_encode',
-      exc_exec('call json_encode(["", ""], 1)')
+      pcall_err(command, 'call json_encode(["", ""], 1)')
     )
   end)
 
@@ -881,11 +980,11 @@ describe('json_encode() function', function()
   it('fails when using surrogate character in a UTF-8 string', function()
     eq(
       'Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\160\128',
-      exc_exec('call json_encode("\237\160\128")')
+      pcall_err(command, 'call json_encode("\237\160\128")')
     )
     eq(
       'Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\175\191',
-      exc_exec('call json_encode("\237\175\191")')
+      pcall_err(command, 'call json_encode("\237\175\191")')
     )
   end)
 
@@ -917,11 +1016,11 @@ describe('json_encode() function', function()
   it('fails to parse NULL strings and lists', function()
     eq(
       'Vim(call):E474: Attempt to decode a blank string',
-      exc_exec('call json_decode($XXX_UNEXISTENT_VAR_XXX)')
+      pcall_err(command, 'call json_decode($XXX_UNEXISTENT_VAR_XXX)')
     )
     eq(
       'Vim(call):E474: Attempt to decode a blank string',
-      exc_exec('call json_decode(v:_null_list)')
+      pcall_err(command, 'call json_decode(v:_null_list)')
     )
   end)
 end)

@@ -146,23 +146,33 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
     })
 <
 ==============================================================================
-COMMANDS                                                 *:lsp* *lsp-commands*
+COMMANDS                                        *:lsp* *lsp-commands* *E5800*
 
-:lsp enable [config_name]                                 *:lsp-enable*
+                                                *E5801*
+The following commands operate on |lsp-config|s:
+
+                                                *:lsp-enable* *E5802* *E5803*
+:lsp enable [config_name]
     Activates LSP for current and future buffers. See |vim.lsp.enable()|.
 
-:lsp disable [config_name]                                *:lsp-disable*
-    Disables LSP (and stops if running) for current and future buffers. See
-    |vim.lsp.enable()|.
+                                                *:lsp-disable* *E5804*
+:lsp disable [config_name]
+    Disables LSP (and stops if running) for current and future buffers.
+    See |vim.lsp.enable()|.
 
-:lsp restart [client_name]                                *:lsp-restart*
+                                                *E5805* *E5806*
+The following commands operate on running clients:
+
+                                                *:lsp-restart*
+:lsp restart [client_name]
     Restarts LSP clients and servers. If no client names are given, all active
     clients attached to the current buffer are restarted.
 
-:lsp stop [client_name]                                   *:lsp-stop*
+                                                *:lsp-stop*
+:lsp stop [client_name]
     Stops LSP clients and servers. If no client names are given, all active
-    clients attached to the current buffer are stopped. Use |Client:stop()|
-    for non-interactive use.
+    clients attached to the current buffer are stopped. Use |Client:stop()| for
+    non-interactive use.
 
 ==============================================================================
 CONFIG                                                  *lsp-config*
@@ -689,8 +699,8 @@ EVENTS                                                            *lsp-events*
 
 LspAttach                                                          *LspAttach*
     After an LSP client performs "initialize" and attaches to a buffer. The
-    |autocmd-pattern| is the buffer name. The client ID is passed in the
-    Lua handler |event-data| argument.
+    |autocmd-pattern| is the buffer name. The |event-data| (type:
+    `vim.event.lspattach.data`) has the client ID.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspAttach', {
@@ -722,8 +732,8 @@ LspAttach                                                          *LspAttach*
 
 LspDetach                                                          *LspDetach*
     Just before an LSP client detaches from a buffer. The |autocmd-pattern| is
-    the buffer name. The client ID is passed in the Lua handler |event-data|
-    argument.
+    the buffer name. The |event-data| (type: `vim.event.lspdetach.data`) has
+    the client ID.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspDetach', {
@@ -746,8 +756,8 @@ LspNotify                                                          *LspNotify*
     This event is triggered after each successful notification sent to an
     LSP server.
 
-    The client_id, LSP method, and parameters are sent in the Lua handler
-    |event-data| table argument.
+    The |event-data| (type: `vim.event.lspnotify.data`) has the client_id, LSP
+    method, and parameters.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspNotify', {
@@ -773,9 +783,9 @@ LspProgress                                                       *LspProgress*
     If the server sends a "work done progress", the `pattern` is set to `kind`
     (one of `begin`, `report` or `end`).
 
-    The Lua handler |event-data| argument has `client_id` and `params`
-    properties, where `params` is the request params sent by the server (see
-    `lsp.ProgressParams`).
+    The |event-data| (type: `vim.event.lspprogress.data`) has `client_id` and
+    `params` properties, where `params` is the request params sent by the
+    server (see `lsp.ProgressParams`).
 
     Examples:
 
@@ -810,10 +820,10 @@ LspRequest                                                        *LspRequest*
     is requested using `client.cancel_request(request_id)`, then this event
     will trigger with {type} == `cancel`.
 
-    The Lua handler |event-data| argument has the client ID, request ID, and
-    request (described at |vim.lsp.Client|, {requests} field). If the request
-    type is `complete`, the request will be deleted from the client's pending
-    requests table after processing the event handlers.
+    The |event-data| (type: `vim.event.lsprequest.data`) has the client ID,
+    request ID, and request (described at |vim.lsp.Client|, {requests} field).
+    If the request type is `complete`, the request will be deleted from the
+    client's pending requests table after processing the event handlers.
 
     Example: >lua
     vim.api.nvim_create_autocmd('LspRequest', {
@@ -840,8 +850,8 @@ LspRequest                                                        *LspRequest*
 LspTokenUpdate                                                *LspTokenUpdate*
     When a visible semantic token is sent or updated by the LSP server, or
     when an existing token becomes visible for the first time. The
-    |autocmd-pattern| is the buffer name. The Lua handler |event-data|
-    argument has the client ID and token (see
+    |autocmd-pattern| is the buffer name. The |event-data| (type:
+    `vim.event.lsptokenupdate.data`) has the client ID and token (see
     |vim.lsp.semantic_tokens.get_at_pos()|).
 
     Example: >lua
@@ -1403,31 +1413,40 @@ the current buffer.
 *vim.lsp.ListOpts*
 
     Fields: ~
-      • {on_list}?  (`fun(t: vim.lsp.ListOpts.OnList)`) list-handler replacing
-                    the default handler. Called for any non-empty result. This
-                    table can be used with |setqflist()| or |setloclist()|.
-                    E.g.: >lua
-                        local function on_list(options)
-                          vim.fn.setqflist({}, ' ', options)
-                          vim.cmd.cfirst()
+      • {on_list}?  (`fun(what: vim.fn.setqflist.what)`) list-handler
+                    replacing the default handler. Called for any non-empty
+                    result. The default handler populates the quickfix (or
+                    location) list with the result. If there is a single
+                    result (and the method is not `implementation` or
+                    `references`), it pushes a tag onto the tagstack and jumps
+                    to the result. For example, when `loclist == false` (the
+                    default), the handler is equivalent to: >lua
+                        local function on_list(what)
+                          vim.fn.setqflist({}, ' ', what)
+                          if
+                            #what.items == 1
+                            and what.context.method ~= 'textDocument/implementation'
+                            and what.context.method ~= 'textDocument/references'
+                          then
+                            local tagstack = { { tagname = tagname, from = from } }
+                            vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+                            vim.cmd('cfirst')
+                          else
+                            vim.cmd('botright copen')
+                          end
                         end
 
                         vim.lsp.buf.definition({ on_list = on_list })
                         vim.lsp.buf.references(nil, { on_list = on_list })
 <
+
+                    See |setqflist-what| for the structure of the `what`
+                    parameter.
       • {loclist}?  (`boolean`) Whether to use the |location-list| or the
                     |quickfix| list in the default handler. >lua
                         vim.lsp.buf.definition({ loclist = true })
                         vim.lsp.buf.references(nil, { loclist = false })
 <
-
-*vim.lsp.ListOpts.OnList*
-
-    Fields: ~
-      • {items}     (`vim.quickfix.entry[]`) See |setqflist-what|
-      • {title}?    (`string`) Title for the list.
-      • {context}?  (`{ bufnr: integer, method: string }`) Subset of `ctx`
-                    from |lsp-handler|.
 
 *vim.lsp.buf.hover.Opts*
     Extends: |vim.lsp.util.open_floating_preview.Opts|
@@ -1774,7 +1793,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 See |Client:stop()|.
       • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
                                 |Client:is_stopped()|.
-      • {exec_cmd}              (`fun(self: vim.lsp.Client, command: lsp.Command, context: {bufnr?: integer}?, handler: lsp.Handler?)`)
+      • {exec_cmd}              (`fun(self: vim.lsp.Client, cmd: lsp.Command, context: {bufnr?: integer}?, handler: lsp.Handler?)`)
                                 See |Client:exec_cmd()|.
       • {on_attach}             (`fun(self: vim.lsp.Client, bufnr: integer)`)
                                 See |Client:on_attach()|.
@@ -1827,6 +1846,17 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                Function receives a `dispatchers` table and the
                                resolved `config`, and must return an object in
                                the form of |vim.lsp.rpc.Client|.
+
+                               Example (list): >lua
+                                   cmd = { 'flow', 'lsp' }
+<
+
+                               Example (function): >lua
+                                   cmd = function(dispatchers, config)
+                                     local cmd = vim.fn.executable('flow') == 1 and { 'flow', 'lsp' } or { 'npx', '--no-install', 'flow', 'lsp' }
+                                     return vim.lsp.rpc.start(cmd, dispatchers)
+                                   end
+<
                                • See |vim.lsp.rpc.request()|
                                  |vim.lsp.rpc.notify()|
                                • For TCP there is a builtin RPC client
@@ -1946,12 +1976,12 @@ Client:cancel_request({id})                          *Client:cancel_request()*
     See also: ~
       • |Client:notify()|
 
-Client:exec_cmd({command}, {context}, {handler})           *Client:exec_cmd()*
+Client:exec_cmd({cmd}, {context}, {handler})               *Client:exec_cmd()*
     Execute a lsp command, either via client command function (if available)
     or via workspace/executeCommand (if supported by the server)
 
     Parameters: ~
-      • {command}  (`lsp.Command`)
+      • {cmd}      (`lsp.Command`)
       • {context}  (`{bufnr?: integer}?`)
       • {handler}  (`lsp.Handler?`) only called if a server command
 
@@ -2869,7 +2899,8 @@ apply_text_document_edit({text_document_edit}, {index}, {position_encoding},
                                              *vim.lsp.util.apply_text_edits()*
 apply_text_edits({text_edits}, {bufnr}, {position_encoding},
                  {change_annotations})
-    Applies a list of text edits to a buffer.
+    Applies a list of text edits to a buffer. Note: this mutates `text_edits`
+    (sorts in-place and adds `_index` fields).
 
     Parameters: ~
       • {text_edits}          (`(lsp.TextEdit|lsp.AnnotatedTextEdit)[]`)

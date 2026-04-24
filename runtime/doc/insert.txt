@@ -1336,7 +1336,7 @@ The same, but now pretending searching for matches is slow: >
 
 INSERT COMPLETION POPUP MENU				*ins-completion-menu*
 							*popupmenu-completion*
-Vim can display the matches in a simplistic popup menu.
+Vim can display the matches in a popup menu.
 
 The menu is used when:
 - The 'completeopt' option contains "menu" or "menuone".

@@ -182,25 +182,22 @@ describe('messages2', function()
     -- Do enter the pager in normal mode.
     feed('<CR>')
     screen:expect([[
-      {3:                                                     }|
       ^foo                                                  |
-      foo                                                  |*11
+      foo                                                  |*12
                                           1,1           Top|
     ]])
     -- Changing 'laststatus' reveals the global statusline with a pager height
     -- exceeding the available lines: #38008.
     command('set laststatus=3')
     screen:expect([[
-      {3:                                                     }|
       ^foo                                                  |
-      foo                                                  |*10
+      foo                                                  |*11
       {3:[Pager]                            1,1            Top}|
                                                            |
     ]])
     feed(':<C-F>')
     screen:expect([[
-      {3:                                                     }|
-      foo                                                  |*4
+      foo                                                  |*5
       {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
       {1::}^                                                    |
       {1:~                                                    }|*5
@@ -209,8 +206,7 @@ describe('messages2', function()
     ]])
     command('wincmd +')
     screen:expect([[
-      {3:                                                     }|
-      foo                                                  |*3
+      foo                                                  |*4
       {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
       {1::}^                                                    |
       {1:~                                                    }|*6
@@ -219,8 +215,7 @@ describe('messages2', function()
     ]])
     command('echo "foo"')
     screen:expect([[
-      {3:                                                     }|
-      foo                                                  |*3
+      foo                                                  |*4
       {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
       {1::}^                                                    |
       {1:~                                                    }|*6
@@ -229,8 +224,7 @@ describe('messages2', function()
     ]])
     feed('<C-C>')
     screen:expect([[
-      {3:                                                     }|
-      foo                                                  |*11
+      foo                                                  |*12
       {3:[Pager]                            1,1            Top}|
       {16::}^                                                    |
     ]])
@@ -248,9 +242,8 @@ describe('messages2', function()
     ]])
     feed(':messages<CR>')
     screen:expect([[
-      {3:                                                     }|
       ^foo                                                  |
-      foo                                                  |*10
+      foo                                                  |*11
       {3:[Pager]                            1,1            Top}|
                                                            |
     ]])
@@ -439,7 +432,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-                                                           |
+      foo [+1]                                             |
     ]])
   end)
 
@@ -505,6 +498,20 @@ describe('messages2', function()
       ^typed append                                         |
       {9:E35: No previous regular expression}                  |
     ]])
+    -- Non-typed key doesn't dismiss expanded cmdline #39221
+    command('nnoremap b :ls!<cr>:b<space>')
+    feed('qb')
+    screen:expect([[
+      foo                                                  |
+      {1:~                                                    }|*6
+      {3:                                                     }|
+        1 %a + "[No Name]"                    line 1       |
+        2u a   "[Cmd]"                        line 0       |
+        3u a   "[Dialog]"                     line 0       |
+        4u a   "[Msg]"                        line 0       |
+        5u a   "[Pager]"                      line 0       |
+      {16::}{15:b} ^                                                  |
+    ]])
   end)
 
   it('paging prompt dialog #35191', function()
@@ -527,7 +534,7 @@ describe('messages2', function()
     local top = [[
                                                                              |
       {1:~                                                                      }|*4
-      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
+      {3:                                                                       }|
       0                                                                      |
       1                                                                      |
       2                                                                      |
@@ -539,11 +546,11 @@ describe('messages2', function()
     ]]
     feed(':call inputlist(range(100))<CR>')
     screen:expect(top)
-    feed('j')
+    feed('<Down>')
     screen:expect([[
                                                                              |
       {1:~                                                                      }|*4
-      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
+      {3:                                                                       }|
       1 [+1]                                                                 |
       2                                                                      |
       3                                                                      |
@@ -553,29 +560,13 @@ describe('messages2', function()
       7 [+92]                                                                |
       Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
     ]])
-    feed('k')
+    feed('<Up>')
     screen:expect(top)
-    feed('d')
+    feed('<PageDown>')
     screen:expect([[
                                                                              |
       {1:~                                                                      }|*4
-      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
-      3 [+3]                                                                 |
-      4                                                                      |
-      5                                                                      |
-      6                                                                      |
-      7                                                                      |
-      8                                                                      |
-      9 [+90]                                                                |
-      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
-    ]])
-    feed('u')
-    screen:expect(top)
-    feed('f')
-    screen:expect([[
-                                                                             |
-      {1:~                                                                      }|*4
-      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
+      {3:                                                                       }|
       5 [+5]                                                                 |
       6                                                                      |
       7                                                                      |
@@ -585,13 +576,13 @@ describe('messages2', function()
       11 [+88]                                                               |
       Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
     ]])
-    feed('b')
+    feed('<PageUp>')
     screen:expect(top)
-    feed('G')
+    feed('<End>')
     screen:expect([[
                                                                              |
       {1:~                                                                      }|*4
-      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
+      {3:                                                                       }|
       93 [+93]                                                               |
       94                                                                     |
       95                                                                     |
@@ -602,38 +593,10 @@ describe('messages2', function()
       Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
     ]])
     -- No scrolling beyond end of buffer #36114
-    feed('f')
-    screen:expect([[
-                                                                             |
-      {1:~                                                                      }|*3
-      {3: }f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging{3:           }|
-      93 [+93]                                                               |
-      94                                                                     |
-      95                                                                     |
-      96                                                                     |
-      97                                                                     |
-      98                                                                     |
-      99                                                                     |
-      Type number and <Enter> or click with the mouse (q or empty cancels): f|
-      ^                                                                       |
-    ]])
-    feed('<Backspace>g')
+    feed('<PageDown>')
+    screen:expect_unchanged()
+    feed('<Home>')
     screen:expect(top)
-    feed('<Esc>f')
-    screen:expect([[
-                                                                             |
-      {1:~                                                                      }|*3
-      {3:                                                                       }|
-      0                                                                      |
-      1                                                                      |
-      2                                                                      |
-      3                                                                      |
-      4                                                                      |
-      5                                                                      |
-      6 [+93]                                                                |
-      Type number and <Enter> or click with the mouse (q or empty cancels): f|
-      ^                                                                       |
-    ]])
   end)
 
   it('FileType is fired after default options are set', function()
@@ -1012,6 +975,24 @@ describe('messages2', function()
       VisualNC       xxx cleared                           |
       ^VisualNC       xxx cleared                        {4:bar}|
       foo                                                  |
+    ]])
+  end)
+
+  it('message survives after closing tabpage without error #39055', function()
+    set_msg_target_zero_ch()
+    command('tabnew')
+    command('echo "hello"')
+    screen:expect([[
+      {24: [No Name] }{5: [No Name] }{2:                              }{24:X}|
+      ^                                                     |
+      {1:~                                                    }|*11
+      {1:~                                               }{4:hello}|
+    ]])
+    command('quit!')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {1:~                                               }{4:hello}|
     ]])
   end)
 end)

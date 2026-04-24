@@ -674,8 +674,8 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 
   if (menu->mnemonic) {
     char buf[MB_MAXCHAR + 1] = { 0 };  // > max value of utf8_char2bytes
-    utf_char2bytes(menu->mnemonic, buf);
-    tv_dict_add_str(dict, S_LEN("shortcut"), buf);
+    int buflen = utf_char2bytes(menu->mnemonic, buf);
+    tv_dict_add_str_len(dict, S_LEN("shortcut"), buf, buflen);
   }
 
   if (menu->actext) {
@@ -1864,8 +1864,9 @@ static void menuitem_getinfo(const char *menu_name, const vimmenu_T *menu, int m
   tv_dict_add_str(dict, S_LEN("modes"), get_menu_mode_str(menu->modes));
 
   char buf[NUMBUFLEN];
-  buf[utf_char2bytes(menu->mnemonic, buf)] = NUL;
-  tv_dict_add_str(dict, S_LEN("shortcut"), buf);
+  int buflen = utf_char2bytes(menu->mnemonic, buf);
+  buf[buflen] = NUL;
+  tv_dict_add_str_len(dict, S_LEN("shortcut"), buf, buflen);
 
   if (menu->children == NULL) {  // leaf menu
     int bit;
@@ -1877,7 +1878,7 @@ static void menuitem_getinfo(const char *menu_name, const vimmenu_T *menu, int m
       if (menu->strings[bit] != NULL) {
         tv_dict_add_allocated_str(dict, S_LEN("rhs"),
                                   *menu->strings[bit] == NUL
-                                  ? xstrdup("<Nop>")
+                                  ? xmemdupz(S_LEN("<Nop>"))
                                   : str2special_save(menu->strings[bit], false, false));
       }
       tv_dict_add_bool(dict, S_LEN("noremenu"), menu->noremap[bit] == REMAP_NONE);

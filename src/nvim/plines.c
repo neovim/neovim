@@ -269,7 +269,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
 
         if (max_head_vcol == 0 || vcol + size + added < max_head_vcol) {
           head += cnt * head_mid;
-        } else if (max_head_vcol > vcol + head_prev + prev_rem) {
+        } else if (width2 > 0 && max_head_vcol > vcol + head_prev + prev_rem) {
           head += (max_head_vcol - (vcol + head_prev + prev_rem)
                    + width2 - 1) / width2 * head_mid;
         } else if (max_head_vcol < 0) {

@@ -1466,6 +1466,10 @@ static void win_update(win_T *wp)
   }
   buf->b_signcols.last_max = buf->b_signcols.max;
 
+  // Validate w_virtcol here as it can change the redraw type.
+  validate_virtcol(wp);
+  type = wp->w_redr_type;
+
   init_search_hl(wp, &screen_search_hl);
 
   // Make sure skipcol is valid, it depends on various options and the window
@@ -2317,6 +2321,8 @@ redr_statuscol:
 
   wp->w_lines_valid = MAX(wp->w_lines_valid, idx);
 
+  wp->w_display_tick = display_tick;
+
   // Let the syntax stuff know we stop parsing here.
   if (syntax_last_parsed != 0 && syntax_present(wp)) {
     syntax_end_parsing(wp, syntax_last_parsed + 1);
@@ -2439,7 +2445,7 @@ redr_statuscol:
       // New redraw either due to updated topline or reset skipcol.
       if (must_redraw != 0) {
         // Don't update for changes in buffer again.
-        int mod_set = curbuf->b_mod_set;
+        const bool mod_set = curbuf->b_mod_set;
         curbuf->b_mod_set = false;
         curs_columns(curwin, true);
         win_update(curwin);

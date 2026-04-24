@@ -4,10 +4,10 @@ local Screen = require('test.functional.ui.screen')
 
 local feed = n.feed
 local eq = t.eq
+local pcall_err = t.pcall_err
 local clear = n.clear
 local fn = n.fn
 local command = n.command
-local exc_exec = n.exc_exec
 local write_file = t.write_file
 local api = n.api
 local source = n.source
@@ -83,7 +83,7 @@ for _, c in ipairs({ 'l', 'c' }) do
       api.nvim_buf_set_lines(0, 1, 1, true, { 'Quickfix' })
       eq(
         ('Vim(%s):E37: No write since last change (add ! to override)'):format(filecmd),
-        exc_exec(('%s %s'):format(filecmd, file))
+        pcall_err(command, ('%s %s'):format(filecmd, file))
       )
 
       write_file(
@@ -218,7 +218,7 @@ end)
 it(':vimgrep can specify Unicode pattern without delimiters', function()
   eq(
     'Vim(vimgrep):E480: No match: →',
-    exc_exec('vimgrep → test/functional/fixtures/tty-test.c')
+    pcall_err(command, 'vimgrep → test/functional/fixtures/tty-test.c')
   )
   local screen = Screen.new(40, 6)
   screen:set_default_attr_ids({

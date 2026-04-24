@@ -30,6 +30,7 @@ local luacats_grammar = require('gen.luacats_grammar')
 --- @field module? string
 --- @field modvar? string
 --- @field classvar? string
+--- @field member_sep? '.'|':'
 --- @field deprecated? true
 --- @field async? true
 --- @field since? string
@@ -324,6 +325,7 @@ local function process_lua_line(line, state, classes, classvars, has_indent)
         cur_obj.name = fun_or_meth_nm
         cur_obj.class = class
         cur_obj.classvar = parent_tbl
+        cur_obj.member_sep = sep
         -- Add self param to methods
         if sep == ':' then
           cur_obj.params = cur_obj.params or {}
@@ -333,7 +335,6 @@ local function process_lua_line(line, state, classes, classvars, has_indent)
           })
         end
 
-        -- Add method as the field to the class
         table.insert(classes[class].fields, fun2field(cur_obj))
         return
       end

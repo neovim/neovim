@@ -181,7 +181,7 @@ describe('startup', function()
 
     it('Lua-error sets Nvim exitcode', function()
       local proc = n.spawn_wait('-l', 'test/functional/fixtures/startup-fail.lua')
-      matches('E5113: .* my pearls!!', proc:output())
+      matches('E5113: .* my pearls!!', (proc:output()))
       eq(0, proc.signal)
       eq(1, proc.status)
 
@@ -1476,11 +1476,11 @@ describe('user config init', function()
 
       -- trust .exrc
       feed(':trust<CR>')
-      screen:expect({ any = 'Allowed in trust database: ".*' .. pathsep .. '%.exrc"' })
+      screen:expect({ any = 'Allowed in trust database: ".*/%.exrc"' })
       feed(':q<CR>')
       -- trust .nvim.lua
       feed(':trust<CR>')
-      screen:expect({ any = 'Allowed in trust database: ".*' .. pathsep .. '%.nvim%.lua"' })
+      screen:expect({ any = 'Allowed in trust database: ".*/%.nvim%.lua"' })
       feed(':q<CR>')
       -- no exrc file is executed
       feed(':echo g:exrc_count<CR>')
@@ -1628,7 +1628,7 @@ end)
 
 describe('runtime:', function()
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
+  local pathsep = '/'
   local xconfig = xhome .. pathsep .. 'Xconfig'
   local xdata = xhome .. pathsep .. 'Xdata'
   local xenv = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata }

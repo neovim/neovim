@@ -255,7 +255,7 @@ jobs:
 
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.15.2
+          version: 0.16.0
       - run: sudo apt-get install -y inotify-tools
 
       - run: zig build $OPTS test_nlua0
@@ -278,7 +278,7 @@ jobs:
 
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.15.2
+          version: 0.16.0
 
       - run: zig build test_nlua0 -Dluajit=false
       - run: zig build nvim_bin -Dluajit=false && ./zig-out/bin/nvim --version
@@ -295,7 +295,7 @@ jobs:
 
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.15.2
+          version: 0.16.0
 
       - run: zig build test_nlua0
       - run: zig build nvim_bin

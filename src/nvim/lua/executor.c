@@ -111,6 +111,103 @@ typedef struct {
     } \
   }
 
+/// Pushes cmdmod_T as a table (Lua type: `vim.api.keyset.cmd_mods`) onto the stack.
+static void nlua_push_cmdmod(lua_State *lstate, const cmdmod_T *cmod)
+{
+  lua_newtable(lstate);
+
+  lua_pushinteger(lstate, cmod->cmod_tab - 1);
+  lua_setfield(lstate, -2, "tab");
+
+  lua_pushinteger(lstate, cmod->cmod_verbose - 1);
+  lua_setfield(lstate, -2, "verbose");
+
+  if (cmod->cmod_split & WSP_ABOVE) {
+    lua_pushstring(lstate, "aboveleft");
+  } else if (cmod->cmod_split & WSP_BELOW) {
+    lua_pushstring(lstate, "belowright");
+  } else if (cmod->cmod_split & WSP_TOP) {
+    lua_pushstring(lstate, "topleft");
+  } else if (cmod->cmod_split & WSP_BOT) {
+    lua_pushstring(lstate, "botright");
+  } else {
+    lua_pushstring(lstate, "");
+  }
+  lua_setfield(lstate, -2, "split");
+
+  lua_pushboolean(lstate, cmod->cmod_split & WSP_VERT);
+  lua_setfield(lstate, -2, "vertical");
+  lua_pushboolean(lstate, cmod->cmod_split & WSP_HOR);
+  lua_setfield(lstate, -2, "horizontal");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_SILENT);
+  lua_setfield(lstate, -2, "silent");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_ERRSILENT);
+  lua_setfield(lstate, -2, "emsg_silent");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_UNSILENT);
+  lua_setfield(lstate, -2, "unsilent");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_SANDBOX);
+  lua_setfield(lstate, -2, "sandbox");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_NOAUTOCMD);
+  lua_setfield(lstate, -2, "noautocmd");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_BROWSE);
+  lua_setfield(lstate, -2, "browse");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_CONFIRM);
+  lua_setfield(lstate, -2, "confirm");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_HIDE);
+  lua_setfield(lstate, -2, "hide");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_KEEPALT);
+  lua_setfield(lstate, -2, "keepalt");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_KEEPJUMPS);
+  lua_setfield(lstate, -2, "keepjumps");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_KEEPMARKS);
+  lua_setfield(lstate, -2, "keepmarks");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_KEEPPATTERNS);
+  lua_setfield(lstate, -2, "keeppatterns");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_LOCKMARKS);
+  lua_setfield(lstate, -2, "lockmarks");
+  lua_pushboolean(lstate, cmod->cmod_flags & CMOD_NOSWAPFILE);
+  lua_setfield(lstate, -2, "noswapfile");
+}
+
+/// Pushes common exarg_T fields (bang, line1, line2, …) onto a table at the top of the stack.
+static void nlua_push_eap(lua_State *lstate, exarg_T *eap, const cmdmod_T *cmod)
+{
+  lua_pushstring(lstate, eap->arg);
+  lua_setfield(lstate, -2, "args");
+
+  lua_pushboolean(lstate, eap->forceit);
+  lua_setfield(lstate, -2, "bang");
+
+  lua_pushinteger(lstate, eap->line1);
+  lua_setfield(lstate, -2, "line1");
+
+  lua_pushinteger(lstate, eap->line2);
+  lua_setfield(lstate, -2, "line2");
+
+  lua_pushinteger(lstate, eap->addr_count);
+  lua_setfield(lstate, -2, "range");
+
+  lua_pushinteger(lstate, eap->line2);
+  lua_setfield(lstate, -2, "count");
+
+  char reg[2] = { (char)eap->regname, NUL };
+  lua_pushstring(lstate, reg);
+  lua_setfield(lstate, -2, "reg");
+
+  // Push pre-split args as "fargs" list, if available (set by the command-line parser).
+  if (eap->args != NULL && eap->argc > 0) {
+    lua_createtable(lstate, (int)eap->argc, 0);
+    for (size_t i = 0; i < eap->argc; i++) {
+      lua_pushlstring(lstate, eap->args[i], eap->arglens[i]);
+      lua_rawseti(lstate, -2, (int)i + 1);
+    }
+    lua_setfield(lstate, -2, "fargs");
+  }
+
+  nlua_push_cmdmod(lstate, cmod);
+  lua_setfield(lstate, -2, "smods");
+}
+
 #if __has_feature(address_sanitizer)
 static bool nlua_track_refs = false;
 # define NLUA_TRACK_REFS
@@ -672,13 +769,7 @@ static int nlua_module_preloader(lua_State *lstate)
 {
   size_t i = (size_t)lua_tointeger(lstate, lua_upvalueindex(1));
   ModuleDef def = builtin_modules[i];
-  char name[256];
-  name[0] = '@';
-  size_t off = xstrlcpy(name + 1, def.name, (sizeof name) - 2);
-  strchrsub(name + 1, '.', '/');
-  xstrlcpy(name + 1 + off, ".lua", (sizeof name) - 2 - off);
-
-  if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, name)) {
+  if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, NULL)) {
     return lua_error(lstate);
   }
 
@@ -1191,6 +1282,7 @@ static int nlua_debug(lua_State *lstate)
   return 0;
 }
 
+/// "vim.in_fast_event()" function.
 int nlua_in_fast_event(lua_State *lstate)
 {
   lua_pushboolean(lstate, in_fast_callback > 0);
@@ -1207,6 +1299,7 @@ static bool viml_func_is_fast(const char *name)
   return false;
 }
 
+/// "vim.call()", aka "vim.fn".
 int nlua_call(lua_State *lstate)
 {
   Error err = ERROR_INIT;
@@ -1222,6 +1315,27 @@ int nlua_call(lua_State *lstate)
   int nargs = lua_gettop(lstate) - 1;
   if (nargs > MAX_FUNC_ARGS) {
     return luaL_error(lstate, "Function called with too many arguments");
+  }
+
+  // Fast path: if the vimfn is defined with `func_lua`, call the Lua function
+  // directly without Lua→typval→Object→Lua round-trip.
+  const char *func_lua = find_internal_func_lua(name);
+  if (func_lua) {
+    lua_getglobal(lstate, "require");
+    lua_pushliteral(lstate, "vim._core.vimfn");
+    if (lua_pcall(lstate, 1, 1, 0) != 0) {
+      return lua_error(lstate);
+    }
+    lua_getfield(lstate, -1, func_lua);
+    lua_remove(lstate, -2);  // remove module table
+    // Push args (still on the stack as Lua values).
+    for (int j = 0; j < nargs; j++) {
+      lua_pushvalue(lstate, j + 2);
+    }
+    if (lua_pcall(lstate, nargs, 1, 0) != 0) {
+      return lua_error(lstate);
+    }
+    return 1;
   }
 
   typval_T vim_args[MAX_FUNC_ARGS + 1];
@@ -1246,12 +1360,14 @@ int nlua_call(lua_State *lstate)
   funcexe.fe_firstline = curwin->w_cursor.lnum;
   funcexe.fe_lastline = curwin->w_cursor.lnum;
   funcexe.fe_evaluate = true;
+  const sctx_T save_current_sctx = api_set_sctx(LUA_INTERNAL_CALL);
 
   TRY_WRAP(&err, {
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (TRY_WRAP) to capture abort-causing non-exception errors.
     (void)call_func(name, (int)name_len, &rettv, nargs, vim_args, &funcexe);
   });
+  current_sctx = save_current_sctx;
 
   if (!ERROR_SET(&err)) {
     nlua_push_typval(lstate, &rettv, 0);
@@ -1457,7 +1573,17 @@ void nlua_typval_eval(const String str, typval_T *const arg, typval_T *const ret
   }
 }
 
-void nlua_typval_call(const char *str, size_t len, typval_T *const args, int argcount,
+/// Calls a Lua function by name with typval args. Used by v:lua.func().
+///
+/// Builds "return func(...)" and executes it via luaL_loadbuffer.
+/// Converts args via nlua_push_typval, result via nlua_pop_typval.
+///
+/// @param str       Lua expression (function name), e.g. "my_func" or "mod.func".
+/// @param len       Length of str.
+/// @param args      typval_T arguments.
+/// @param argcount  Number of arguments.
+/// @param ret_tv    Return value (always set).
+void nlua_call_typval(const char *str, size_t len, typval_T *const args, int argcount,
                       typval_T *ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1484,6 +1610,7 @@ void nlua_typval_call(const char *str, size_t len, typval_T *const args, int arg
   }
 }
 
+/// Calls a Lua completion function (stored as LuaRef) for cmdline expansion.
 void nlua_call_user_expand_func(expand_T *xp, typval_T *ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1502,6 +1629,7 @@ void nlua_call_user_expand_func(expand_T *xp, typval_T *ret_tv)
   nlua_pop_typval(lstate, ret_tv);
 }
 
+/// Executes a Lua chunk with typval arguments and optional typval return.
 static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name,
                              typval_T *const args, int argcount, bool special, typval_T *ret_tv)
 {
@@ -1515,13 +1643,19 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
 
   lua_State *const lstate = global_lstate;
 
+  // 1. Compile lcmd into a Lua chunk (function), push it on the stack.
+  //
+  // TODO(justinmk): Cache the chunk in LUA_REGISTRYINDEX? But one-off callers (:lua, luaeval) may
+  // bloat the cache. Could add a `cache:boolean` param.
   if (luaL_loadbuffer(lstate, lcmd, lcmd_len, name)) {
     nlua_error(lstate, _("E5107: Lua: %.*s"));
     return;
   }
 
+  // 2. Push typval args as Lua values. Stack: [chunk, arg1, ..., argN].
   PUSH_ALL_TYPVALS(lstate, args, argcount, special);
 
+  // 3. Call: chunk(arg1, ..., argN). Essentially loadstring().
   if (nlua_pcall(lstate, argcount, ret_tv ? 1 : 0)) {
     nlua_error(lstate, _("E5108: Lua: %.*s"));
     return;
@@ -1532,6 +1666,7 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
   }
 }
 
+/// Execute Lua code from a growarray of lines. Used by ":lua << EOF".
 void nlua_exec_ga(garray_T *ga, char *name)
 {
   char *code = ga_concat_strings(ga, "\n");
@@ -1607,6 +1742,70 @@ Object nlua_exec(const String str, const char *chunkname, const Array args, LuaR
   return nlua_call_pop_retval(lstate, mode, arena, top, err);
 }
 
+/// Calls Lua to implement a "vimfn" ("f_xx"/"eval"/"builtin") function.
+///
+/// Converts argvars directly to Lua values (no Object intermediate), calls the Lua function, and
+/// converts the result back to typval_T.
+///
+/// @param module   Lua module name, e.g. "vim._core.server".
+/// @param func     Function name in the module, e.g. "serverlist".
+/// @param argvars  typval args (VAR_UNKNOWN-terminated).
+/// @param rettv    Return value (caller must tv_clear), or NULL to discard.
+void nlua_call_vimfn(const char *module, const char *func, typval_T *argvars, typval_T *rettv)
+{
+  int argcount = 0;
+  for (typval_T *tv = argvars; tv->v_type != VAR_UNKNOWN; tv++) {
+    argcount++;
+  }
+
+  char buf[256];
+  snprintf(buf, sizeof(buf), "return require('%s').%s(...)", module, func);
+
+  nlua_typval_exec(buf, strlen(buf), module, argvars, argcount, false, rettv);
+}
+
+/// Calls Lua to implement an excmd. Passes `eap` + `cmdmod` to Lua as a dict arg, which is arranged
+/// to match the Lua type `vim.api.keyset.create_user_command.command_args`.
+///
+/// @param module  Lua module name, e.g. "vim._core.ex_cmd".
+/// @param func    Function name in the module, e.g. "ex_log".
+/// @param eap     Excmd info, passed as Lua arg1.
+/// @param cmod    Excmd mods, included in Lua arg1.
+/// @param extra   (Optional) Passed as Lua arg2.
+/// @return true on success, false on error (message already emitted).
+bool nlua_call_excmd(const char *module, const char *func, exarg_T *eap, const cmdmod_T *cmod,
+                     typval_T *extra)
+{
+  lua_State *const lstate = global_lstate;
+
+  lua_getglobal(lstate, "require");
+  lua_pushstring(lstate, module);
+  if (lua_pcall(lstate, 1, 1, 0) != 0) {
+    nlua_error(lstate, "E5108: %s");
+    return false;
+  }
+  lua_getfield(lstate, -1, func);
+  lua_remove(lstate, -2);
+
+  lua_newtable(lstate);
+  nlua_push_eap(lstate, eap, cmod);
+
+  int nargs = 1;
+  if (extra) {
+    nlua_push_typval(lstate, extra, 0);
+    nargs = 2;
+  }
+
+  if (nlua_pcall(lstate, nargs, 0)) {
+    // Not "E5108" because this is a logical/application error, not a "Lua error".
+    emsg(lua_tostring(lstate, -1));
+    lua_pop(lstate, 1);
+    return false;
+  }
+  return true;
+}
+
+/// Checks if a LuaRef refers to a function.
 bool nlua_ref_is_function(LuaRef ref)
 {
   lua_State *const lstate = global_lstate;
@@ -1640,6 +1839,7 @@ static int mode_ret(LuaRetMode mode)
   return mode == kRetMulti ? LUA_MULTRET : 1;
 }
 
+/// Like nlua_call_ref, but with an option to run in fast (api-fast) context.
 Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, LuaRetMode mode,
                          Arena *arena, Error *err)
 {
@@ -2032,6 +2232,7 @@ static int nlua_is_thread(lua_State *lstate)
   return 1;
 }
 
+/// Check if a typval dict/list originated from Lua (has a LuaRef).
 bool nlua_is_table_from_lua(const typval_T *const arg)
 {
   if (arg->v_type == VAR_DICT) {
@@ -2165,15 +2366,6 @@ void nlua_set_sctx(sctx_T *current)
   lua_State *const lstate = active_lstate;
   lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
 
-  // Files where internal wrappers are defined so we can ignore them
-  // like vim.o/opt etc are defined in _options.lua
-  char *ignorelist[] = {
-    "vim/_core/editor.lua",
-    "vim/_core/options.lua",
-    "vim/keymap.lua",
-  };
-  int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
-
   for (int level = 1; true; level++) {
     if (lua_getstack(lstate, level, info) != 1) {
       goto cleanup;
@@ -2181,19 +2373,7 @@ void nlua_set_sctx(sctx_T *current)
     if (lua_getinfo(lstate, "nSl", info) == 0) {
       goto cleanup;
     }
-
-    bool is_ignored = false;
     if (info->what[0] == 'C' || info->source[0] != '@') {
-      is_ignored = true;
-    } else {
-      for (int i = 0; i < ignorelist_size; i++) {
-        if (strncmp(ignorelist[i], info->source + 1, strlen(ignorelist[i])) == 0) {
-          is_ignored = true;
-          break;
-        }
-      }
-    }
-    if (is_ignored) {
       continue;
     }
     break;
@@ -2222,35 +2402,30 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   nlua_pushref(lstate, preview ? cmd->uc_preview_luaref : cmd->uc_luaref);
 
   lua_newtable(lstate);
+  nlua_push_eap(lstate, eap, &cmdmod);
+
   lua_pushstring(lstate, cmd->uc_name);
   lua_setfield(lstate, -2, "name");
 
-  lua_pushboolean(lstate, eap->forceit == 1);
-  lua_setfield(lstate, -2, "bang");
+  // Override count with uc_def fallback for user commands.
+  if (eap->addr_count == 0) {
+    lua_pushinteger(lstate, cmd->uc_def);
+    lua_setfield(lstate, -2, "count");
+  }
 
-  lua_pushinteger(lstate, eap->line1);
-  lua_setfield(lstate, -2, "line1");
-
-  lua_pushinteger(lstate, eap->line2);
-  lua_setfield(lstate, -2, "line2");
-
-  lua_newtable(lstate);  // f-args table
-  lua_pushstring(lstate, eap->arg);
-  lua_pushvalue(lstate, -1);  // Reference for potential use on f-args
-  lua_setfield(lstate, -4, "args");
-
-  // Split args by unescaped whitespace |<f-args>| (nargs dependent)
+  // Override fargs for user command-specific splitting (nlua_push_eap already set it
+  // for the eap->args!=NULL case, but user commands need special handling for nargs).
   if (cmd->uc_argt & EX_NOSPC) {
-    if ((cmd->uc_argt & EX_NEEDARG) || strlen(eap->arg)) {
-      // For commands where nargs is 1 or "?" and argument is passed, fargs = { args }
+    // nargs=1 or "?": fargs is the whole arg as a single element, or empty.
+    lua_createtable(lstate, 1, 0);
+    if ((cmd->uc_argt & EX_NEEDARG) || *eap->arg != NUL) {
+      lua_pushstring(lstate, eap->arg);
       lua_rawseti(lstate, -2, 1);
-    } else {
-      // if nargs = "?" and no argument is passed, fargs = {}
-      lua_pop(lstate, 1);  // Pop the reference of opts.args
     }
+    lua_setfield(lstate, -2, "fargs");
   } else if (eap->args == NULL) {
-    // For commands with more than one possible argument, split if argument list isn't available.
-    lua_pop(lstate, 1);  // Pop the reference of opts.args
+    // Pre-split args not available: tokenize eap->arg by unescaped whitespace.
+    lua_newtable(lstate);
     size_t length = strlen(eap->arg);
     size_t end = 0;
     size_t len = 0;
@@ -2266,29 +2441,9 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
       }
     }
     xfree(buf);
-  } else {
-    // If argument list is available, just use it.
-    lua_pop(lstate, 1);
-    for (size_t i = 0; i < eap->argc; i++) {
-      lua_pushlstring(lstate, eap->args[i], eap->arglens[i]);
-      lua_rawseti(lstate, -2, (int)i + 1);
-    }
+    lua_setfield(lstate, -2, "fargs");
   }
-  lua_setfield(lstate, -2, "fargs");
-
-  char reg[2] = { (char)eap->regname, NUL };
-  lua_pushstring(lstate, reg);
-  lua_setfield(lstate, -2, "reg");
-
-  lua_pushinteger(lstate, eap->addr_count);
-  lua_setfield(lstate, -2, "range");
-
-  if (eap->addr_count > 0) {
-    lua_pushinteger(lstate, eap->line2);
-  } else {
-    lua_pushinteger(lstate, cmd->uc_def);
-  }
-  lua_setfield(lstate, -2, "count");
+  // else: eap->args was available, nlua_push_eap already set fargs.
 
   char nargs[2];
   if (cmd->uc_argt & EX_EXTRA) {
@@ -2310,6 +2465,8 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   lua_pushstring(lstate, nargs);
   lua_setfield(lstate, -2, "nargs");
 
+  // User commands also get a string "mods" field (in addition to "smods" from nlua_push_eap).
+  //
   // The size of this buffer is chosen empirically to be large enough to hold
   // every possible modifier (with room to spare). If the list of possible
   // modifiers grows this may need to be updated.
@@ -2317,66 +2474,6 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   uc_mods(buf, &cmdmod, false);
   lua_pushstring(lstate, buf);
   lua_setfield(lstate, -2, "mods");
-
-  lua_newtable(lstate);  // smods table
-
-  lua_pushinteger(lstate, cmdmod.cmod_tab - 1);
-  lua_setfield(lstate, -2, "tab");
-
-  lua_pushinteger(lstate, cmdmod.cmod_verbose - 1);
-  lua_setfield(lstate, -2, "verbose");
-
-  if (cmdmod.cmod_split & WSP_ABOVE) {
-    lua_pushstring(lstate, "aboveleft");
-  } else if (cmdmod.cmod_split & WSP_BELOW) {
-    lua_pushstring(lstate, "belowright");
-  } else if (cmdmod.cmod_split & WSP_TOP) {
-    lua_pushstring(lstate, "topleft");
-  } else if (cmdmod.cmod_split & WSP_BOT) {
-    lua_pushstring(lstate, "botright");
-  } else {
-    lua_pushstring(lstate, "");
-  }
-  lua_setfield(lstate, -2, "split");
-
-  lua_pushboolean(lstate, cmdmod.cmod_split & WSP_VERT);
-  lua_setfield(lstate, -2, "vertical");
-  lua_pushboolean(lstate, cmdmod.cmod_split & WSP_HOR);
-  lua_setfield(lstate, -2, "horizontal");
-  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_SILENT);
-  lua_setfield(lstate, -2, "silent");
-  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_ERRSILENT);
-  lua_setfield(lstate, -2, "emsg_silent");
-  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_UNSILENT);
-  lua_setfield(lstate, -2, "unsilent");
-  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_SANDBOX);
-  lua_setfield(lstate, -2, "sandbox");
-  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_NOAUTOCMD);
-  lua_setfield(lstate, -2, "noautocmd");
-
-  typedef struct {
-    int flag;
-    char *name;
-  } mod_entry_T;
-  static mod_entry_T mod_entries[] = {
-    { CMOD_BROWSE, "browse" },
-    { CMOD_CONFIRM, "confirm" },
-    { CMOD_HIDE, "hide" },
-    { CMOD_KEEPALT, "keepalt" },
-    { CMOD_KEEPJUMPS, "keepjumps" },
-    { CMOD_KEEPMARKS, "keepmarks" },
-    { CMOD_KEEPPATTERNS, "keeppatterns" },
-    { CMOD_LOCKMARKS, "lockmarks" },
-    { CMOD_NOSWAPFILE, "noswapfile" }
-  };
-
-  // The modifiers that are simple flags
-  for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
-    lua_pushboolean(lstate, cmdmod.cmod_flags & mod_entries[i].flag);
-    lua_setfield(lstate, -2, mod_entries[i].name);
-  }
-
-  lua_setfield(lstate, -2, "smods");
 
   if (preview) {
     lua_pushinteger(lstate, cmdpreview_get_ns());

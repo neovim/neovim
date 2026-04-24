@@ -14,6 +14,7 @@
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/errors.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -105,16 +106,14 @@ void ex_help(exarg_T *eap)
   // ":help!" (bang, no args): DWIM help, resolve best tag at cursor via Lua.
   char *allocated_arg = NULL;
   if (helpbang) {
-    Error err = ERROR_INIT;
-    Object res = NLUA_EXEC_STATIC("return require'vim._core.help'.resolve_tag()",
-                                  (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
-    if (!ERROR_SET(&err) && res.type == kObjectTypeString && res.data.string.size > 0) {
-      allocated_arg = xstrdup(res.data.string.data);
+    typval_T no_args[] = { { .v_type = VAR_UNKNOWN } };
+    typval_T rettv;
+    nlua_call_vimfn("vim._core.help", "resolve_tag", no_args, &rettv);
+    if (rettv.v_type == VAR_STRING && rettv.vval.v_string != NULL && *rettv.vval.v_string != NUL) {
+      allocated_arg = rettv.vval.v_string;  // takes ownership
       arg = allocated_arg;
-    }
-    api_free_object(res);
-    api_clear_error(&err);
-    if (allocated_arg == NULL) {
+    } else {
+      tv_clear(&rettv);
       emsg(_(e_noident));
       return;
     }
@@ -335,24 +334,18 @@ static int help_compare(const void *s1, const void *s2)
 /// When "keep_lang" is true try keeping the language of the current buffer.
 int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep_lang)
 {
-  Error err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(args, 1);
-
-  ADD_C(args, CSTR_AS_OBJ(arg));
-
-  Object res = NLUA_EXEC_STATIC("return require'vim._core.help'.escape_subject(...)",
-                                args, kRetObject, NULL, &err);
-
-  if (ERROR_SET(&err)) {
-    emsg_multiline(err.msg, "lua_error", HLF_E, true);
-    api_clear_error(&err);
+  typval_T tv_args[] = {
+    { .v_type = VAR_STRING, .vval.v_string = (char *)arg },
+    { .v_type = VAR_UNKNOWN },
+  };
+  typval_T rettv;
+  nlua_call_vimfn("vim._core.help", "escape_subject", tv_args, &rettv);
+  if (rettv.v_type != VAR_STRING || rettv.vval.v_string == NULL) {
+    tv_clear(&rettv);
     return FAIL;
   }
-  api_clear_error(&err);
-
-  assert(res.type == kObjectTypeString);
-  xstrlcpy(IObuff, res.data.string.data, sizeof(IObuff));
-  api_free_object(res);
+  xstrlcpy(IObuff, rettv.vval.v_string, sizeof(IObuff));
+  tv_clear(&rettv);
 
   *matches = NULL;
   *num_matches = 0;
@@ -467,14 +460,8 @@ void prepare_help_buffer(void)
 /// Populate *local-additions* in help.txt
 void get_local_additions(void)
 {
-  Error err = ERROR_INIT;
-  Object res = NLUA_EXEC_STATIC("return require'vim._core.help'.local_additions()",
-                                (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
-  if (ERROR_SET(&err)) {
-    emsg_multiline(err.msg, "lua_error", HLF_E, true);
-  }
-  api_free_object(res);
-  api_clear_error(&err);
+  typval_T no_args[] = { { .v_type = VAR_UNKNOWN } };
+  nlua_call_vimfn("vim._core.help", "local_additions", no_args, NULL);
 }
 
 /// ":exusage"

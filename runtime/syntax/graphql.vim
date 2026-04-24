@@ -4,7 +4,7 @@
 " Filenames:	*.graphql *.graphqls *.gql
 " URL:		https://github.com/jparise/vim-graphql
 " License:	MIT <https://opensource.org/license/mit>
-" Last Change:	2024 Dec 21
+" Last Change:	2026 Apr 21
 
 if !exists('main_syntax')
   if exists('b:current_syntax')
@@ -26,8 +26,13 @@ syn match graphqlOperator   "\M..." display
 syn keyword graphqlBoolean  true false
 syn keyword graphqlNull     null
 syn match   graphqlNumber   "-\=\<\%(0\|[1-9]\d*\)\%(\.\d\+\)\=\%([eE][-+]\=\d\+\)\=\>" display
-syn region  graphqlString   start=+"+  skip=+\\\\\|\\"+  end=+"\|$+
-syn region  graphqlString   start=+"""+ skip=+\\"""+ end=+"""+
+syn region  graphqlString   start=+"+  skip=+\\\\\|\\"+  end=+"\|$+  contains=graphqlEscape
+syn region  graphqlString   start=+"""+ skip=+\\"""+ end=+"""+  contains=graphqlEscape
+
+syn match   graphqlEscape   +\\["\\/bfnrt]+ contained display
+syn match   graphqlEscape   +\\u\x\{4}+     contained display
+syn match   graphqlEscape   +\\u{\x\+}+     contained display
+syn match   graphqlEscape   +\\""\"+        contained display
 
 syn keyword graphqlKeyword repeatable nextgroup=graphqlKeyword skipwhite
 syn keyword graphqlKeyword on nextgroup=graphqlType,graphqlDirectiveLocation skipwhite
@@ -45,11 +50,11 @@ syn match graphqlVariable   "\<\$\h\w*\>"  display
 syn match graphqlName       "\<\h\w*\>"    display
 syn match graphqlType       "\<_*\u\w*\>"  display
 
-" https://spec.graphql.org/October2021/#ExecutableDirectiveLocation
+" https://spec.graphql.org/September2025/#ExecutableDirectiveLocation
 syn keyword graphqlDirectiveLocation QUERY MUTATION SUBSCRIPTION FIELD
 syn keyword graphqlDirectiveLocation FRAGMENT_DEFINITION FRAGMENT_SPREAD
 syn keyword graphqlDirectiveLocation INLINE_FRAGMENT VARIABLE_DEFINITION
-" https://spec.graphql.org/October2021/#TypeSystemDirectiveLocation
+" https://spec.graphql.org/September2025/#TypeSystemDirectiveLocation
 syn keyword graphqlDirectiveLocation SCHEMA SCALAR OBJECT FIELD_DEFINITION
 syn keyword graphqlDirectiveLocation ARGUMENT_DEFINITION INTERFACE UNION
 syn keyword graphqlDirectiveLocation ENUM ENUM_VALUE INPUT_OBJECT
@@ -73,6 +78,7 @@ hi def link graphqlBoolean          Boolean
 hi def link graphqlNull             Keyword
 hi def link graphqlNumber           Number
 hi def link graphqlString           String
+hi def link graphqlEscape           Special
 
 hi def link graphqlDirective        PreProc
 hi def link graphqlDirectiveLocation Special

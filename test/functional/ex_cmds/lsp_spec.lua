@@ -4,6 +4,7 @@ local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local clear = n.clear
 local eq = t.eq
+local pcall_err = t.pcall_err
 local exec_lua = n.exec_lua
 
 local create_server_definition = t_lsp.create_server_definition
@@ -29,7 +30,7 @@ describe(':lsp', function()
       env = { VIMRUNTIME = 'non-existent' },
     }
     t.matches(
-      [[Vim%(lsp%):Lua: .*module 'vim%.lsp' not found:]],
+      [[.*module 'vim%.lsp' not found:]],
       vim.split(t.pcall_err(n.command, 'lsp enable dummy'), '\n')[1]
     )
   end)

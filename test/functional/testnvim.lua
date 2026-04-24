@@ -9,6 +9,7 @@ local SocketStream = uv_stream.SocketStream
 local ProcStream = uv_stream.ProcStream
 
 local check_cores = t.check_cores
+local pcall_err = t.pcall_err
 local check_logs = t.check_logs
 local dedent = t.dedent
 local eq = t.eq
@@ -19,8 +20,7 @@ local sleep = uv.sleep
 --- Functions executing in the current nvim session/process being tested.
 local M = {}
 
-local lib_path = t.paths.test_build_dir .. (t.is_zig_build() and '/lib' or '/lib/nvim')
-M.runtime_set = 'set runtimepath^=' .. lib_path
+M.runtime_set = 'set runtimepath^=' .. t.paths.test_build_dir .. '/lib/nvim'
 
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
@@ -862,20 +862,6 @@ function M.rmdir(path)
     -- Try to restore CWD in case rmdir() is used within a test. Needs pcall: #38278
     pcall(M.command, 'cd -')
   end
-end
-
---- @deprecated Use `t.pcall_err()` to check failure, or `n.command()` to check success.
-function M.exc_exec(cmd)
-  M.command(([[
-    try
-      execute "%s"
-    catch
-      let g:__exception = v:exception
-    endtry
-  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
-  local ret = M.eval('get(g:, "__exception", 0)')
-  M.command('unlet! g:__exception')
-  return ret
 end
 
 function M.exec(code)

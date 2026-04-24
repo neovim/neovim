@@ -23,7 +23,7 @@ ${NVIM_VERSION}
 2. Run the MSI
 3. Run `nvim.exe` in your terminal
 
-Note: On Windows "Server" you may need to [install vcruntime140.dll](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170).
+Note: On Windows "Server" you may need to [install `vcruntime*.dll`](https://neovim.io/doc/install/#windows).
 
 ### macOS (x86_64)
 
