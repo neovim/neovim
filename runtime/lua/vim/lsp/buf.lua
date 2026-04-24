@@ -1376,7 +1376,7 @@ function M.code_action(opts)
 
     --- @cast params lsp.CodeActionParams
 
-    if context.diagnostics then
+    if context.diagnostics and #context.diagnostics > 0 then
       params.context = context
     else
       local ns_push = lsp.diagnostic.get_namespace(client.id)
