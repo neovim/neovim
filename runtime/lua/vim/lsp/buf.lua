@@ -1135,7 +1135,12 @@ end
 ---     Most language servers support values like `refactor`
 ---     or `quickfix`.
 ---   - {triggerKind}? (`integer`) The reason why code actions were requested.
---- @field context? lsp.CodeActionContext
+--- @field context? vim.lsp.buf.code_action.context
+
+--- @class vim.lsp.buf.code_action.context
+--- @field diagnostics? lsp.Diagnostic[] Inferred from the current position if not provided.
+--- @field only? string[]|lsp.CodeActionKind[] List of LSP `CodeActionKind`s used to filter the code actions.
+--- @field triggerKind? lsp.CodeActionTriggerKind The reason why code actions were requested.
 ---
 --- Predicate taking a code action or command and the provider's ID.
 --- If it returns false, the action is filtered out.
