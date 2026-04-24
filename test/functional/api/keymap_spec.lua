@@ -617,6 +617,23 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('LHS exceeds maximum map length: ' .. lhs, pcall_err(api.nvim_del_keymap, '', lhs))
   end)
 
+  it('does not leak callback LuaRef on too-long LHS #39351', function()
+    eq(
+      0,
+      exec_lua(function()
+        local weak = setmetatable({}, { __mode = 'v' })
+        for i = 1, 2 do
+          local cb = function() end
+          weak[i] = cb
+          local ok = pcall(vim.api.nvim_set_keymap, 'n', ('a'):rep(66), '', { callback = cb })
+          assert(not ok)
+        end
+        collectgarbage('collect')
+        return vim.tbl_count(weak)
+      end)
+    )
+  end)
+
   it('does not throw errors when rhs is longer than MAXMAPLEN', function()
     local MAXMAPLEN = 50
     local rhs = ''
