@@ -801,7 +801,9 @@ void ml_recover(bool checkext)
     } else {  // several swapfiles found, choose
       // list the names of the swapfiles
       recover_names(fname, true, NULL, 0, NULL);
-      msg_putchar('\n');
+      if (!ui_has(kUIMessages)) {
+        msg_putchar('\n');
+      }
       i = prompt_for_input(_("Enter number of swap file to use (0 to quit): "), 0, false, NULL);
       if (i < 1 || i > len) {
         goto theend;
@@ -849,6 +851,7 @@ void ml_recover(bool checkext)
   mfp->mf_page_size = MIN_SWAP_PAGE_SIZE;
 
   int hl_id = HLF_E;
+  msg_ext_set_kind("emsg");
   // try to read block 0
   if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();
@@ -920,6 +923,8 @@ void ml_recover(bool checkext)
     }
   }
 
+  msg_ext_set_kind("wmsg");
+  msg_ext_skip_flush = true;
   home_replace(NULL, mfp->mf_fname, NameBuff, MAXPATHL, true);
   smsg(0, _("Using swap file \"%s\""), NameBuff);
 
@@ -928,8 +933,10 @@ void ml_recover(bool checkext)
   } else {
     home_replace(NULL, curbuf->b_ffname, NameBuff, MAXPATHL, true);
   }
+  msg_putchar('\n');
   smsg(0, _("Original file \"%s\""), NameBuff);
   msg_putchar('\n');
+  msg_ext_skip_flush = false;
 
   // check date of swapfile and original file
   FileInfo org_file_info;
@@ -1209,17 +1216,21 @@ void ml_recover(bool checkext)
   curbuf->b_flags |= BF_RECOVERED;
   check_cursor(curwin);
 
+  msg_ext_skip_flush = !got_int;
   recoverymode = false;
   if (got_int) {
     emsg(_("E311: Recovery Interrupted"));
   } else if (error) {
     no_wait_return++;
-    msg(">>>>>>>>>>>>>", 0);
+    msg_ext_set_kind("emsg");
+    msg(">>>>>>>>>>>>>\n", 0);
     emsg(_("E312: Errors detected while recovering; look for lines starting with ???"));
     no_wait_return--;
+    msg_putchar('\n');
     msg(_("See \":help E312\" for more information."), 0);
-    msg(">>>>>>>>>>>>>", 0);
+    msg("\n>>>>>>>>>>>>>", 0);
   } else {
+    msg_ext_set_kind("wmsg");
     if (curbuf->b_changed) {
       msg(_("Recovery completed. You should check if everything is OK."), 0);
       msg_puts(_("\n(You might want to write out this file under another name\n"));
@@ -1234,12 +1245,15 @@ void ml_recover(bool checkext)
       msg_puts(_("\nNote: process STILL RUNNING: "));
       msg_outnum((int)char_to_long(b0p->b0_pid));
     }
-    msg_puts("\n\n");
+    if (!ui_has(kUIMessages)) {
+      msg_puts("\n\n");
+    }
     cmdline_row = msg_row;
   }
   redraw_curbuf_later(UPD_NOT_VALID);
 
 theend:
+  msg_ext_skip_flush = false;
   xfree(fname_used);
   recoverymode = false;
   if (mfp != NULL) {
@@ -1298,8 +1312,10 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 #endif
   }
 
+  msg_ext_skip_flush = true;
   if (do_list) {
     // use msg() to start the scrolling properly
+    msg_ext_set_kind("list_cmd");
     msg(_("Swap files found:"), 0);
     msg_putchar('\n');
   }
@@ -1448,6 +1464,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
       FreeWild(num_files, files);
     }
   }
+  msg_ext_skip_flush = false;
   xfree(dir_name.data);
   return file_count;
 }
@@ -1548,7 +1565,7 @@ static time_t swapfile_info(char *fname, StringBuilder *msg)
       kv_printf(*msg, _("             dated: "));
     }
 #else
-    msg_puts(_("             dated: "));
+    kv_printf(*msg, _("             dated: "));
 #endif
     x = file_info.stat.st_mtim.tv_sec;
     char ctime_buf[100];  // hopefully enough for every language
@@ -3604,6 +3621,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
               msg_reset_scroll();
             } else {
               bool need_clear = false;
+              msg_ext_set_kind("wmsg");
               msg_multiline(cbuf_as_string(msg.items, msg.size), 0, false, false, &need_clear);
             }
             no_wait_return--;
