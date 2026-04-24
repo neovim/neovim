@@ -1279,7 +1279,8 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
                        compl_luaref, preview_luaref, addr_type_arg, luaref, force) != OK) {
       api_set_error(err, kErrorTypeException, "Failed to create user command");
-      // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
+      // Do not goto err, since uc_add_command now owns luaref, compl_luaref, preview_luaref,
+      // and compl_arg
     }
   });
 
@@ -1288,6 +1289,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
 err:
   NLUA_CLEAR_REF(luaref);
   NLUA_CLEAR_REF(compl_luaref);
+  NLUA_CLEAR_REF(preview_luaref);
   xfree(compl_arg);
 }
 /// Gets a map of global (non-buffer-local) Ex commands.
