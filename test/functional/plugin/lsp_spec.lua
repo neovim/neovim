@@ -998,6 +998,10 @@ describe('LSP', function()
           eq(true, client:supports_method('textDocument/hover'))
           eq(false, client:supports_method('textDocument/definition'))
 
+          -- Self-mapped methods do not have a related server capability and should be assumed
+          -- to be supported.
+          eq(true, client:supports_method('shutdown'))
+
           -- unknown methods are assumed to be supported.
           eq(true, client:supports_method('unknown-method'))
         end,

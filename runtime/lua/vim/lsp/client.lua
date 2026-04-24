@@ -1204,7 +1204,15 @@ function Client:supports_method(method, bufnr)
     bufnr = bufnr.bufnr
   end
   local required_capability = lsp.protocol._request_name_to_server_capability[method]
-  if required_capability and vim.tbl_get(self.server_capabilities, unpack(required_capability)) then
+  local is_self_mapping = required_capability
+    and #required_capability == 1
+    and required_capability[1] == method
+
+  if
+    not is_self_mapping
+    and required_capability
+    and vim.tbl_get(self.server_capabilities, unpack(required_capability))
+  then
     return true
   end
 
@@ -1229,9 +1237,10 @@ function Client:supports_method(method, bufnr)
     return false
   end
 
-  -- if we don't know about the method, assume that the client supports it.
-  -- This needs to be at the end, so that dynamic_capabilities are checked first
-  return required_capability == nil
+  -- If we don't know about the method, or if it is a self-mapping(method=required_capability)
+  -- assume that the client supports it.
+  -- This needs to be at the end, so that dynamic_capabilities are checked first.
+  return required_capability == nil or is_self_mapping
 end
 
 --- Executes callback fn for all registrations for a given LSP method.
