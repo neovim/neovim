@@ -111,6 +111,7 @@ src/testdir/test_plugin_osc52.vim
 src/testdir/test_plugin_vimball.vim
 src/testdir/test_python2.vim
 src/testdir/test_pyx2.vim
+src/testdir/test_remote.vim
 src/testdir/test_restricted.vim
 src/testdir/test_shortpathname.vim
 src/testdir/test_tcl.vim
