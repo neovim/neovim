@@ -505,6 +505,27 @@ describe('channels', function()
       )
     end)
   end)
+
+  it('no stack-buffer-overflow with Nvim exit during connection #39387', function()
+    local nvim0 = n.get_session()
+    -- Need a valid pipe so that connecting to it doesn't fail immediately.
+    local server = fn.serverstart()
+    finally(function()
+      nvim0:close()
+    end)
+
+    n.set_session(n.new_session(true))
+    exec_lua(function()
+      vim.defer_fn(function()
+        vim.uv.sleep(50) -- Block the uv event loop.
+        vim.fn.sockconnect('pipe', server)
+      end, 10)
+    end)
+    vim.uv.sleep(20)
+    -- The server uv event loop is currently blocked, so the channel close will
+    -- be processed when sockconnect() polls.
+    n.check_close()
+  end)
 end)
 
 describe('loopback', function()
