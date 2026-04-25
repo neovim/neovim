@@ -1463,15 +1463,15 @@ code_action({opts})                                *vim.lsp.buf.code_action()*
 
     Parameters: ~
       • {opts}  (`table?`) A table with the following fields:
-                • {context}? (`lsp.CodeActionContext`) Corresponds to
-                  `CodeActionContext` of the LSP specification:
-                  • {diagnostics}? (`table`) LSP `Diagnostic[]`. Inferred from
-                    the current position if not provided.
-                  • {only}? (`table`) List of LSP `CodeActionKind`s used to
-                    filter the code actions. Most language servers support
-                    values like `refactor` or `quickfix`.
-                  • {triggerKind}? (`integer`) The reason why code actions
-                    were requested.
+                • {context}? (`table`) Corresponds to `lsp.CodeActionContext`,
+                  but all fields are optional:
+                  • {diagnostics}? (`lsp.Diagnostic[]`) Inferred from the
+                    current position if not provided.
+                  • {only}? (`lsp.CodeActionKind[]`) `CodeActionKind`s used to
+                    filter the code actions. Most servers support values like
+                    "refactor" or "quickfix".
+                  • {triggerKind}? (`lsp.CodeActionTriggerKind`) Why code
+                    actions were requested.
                 • {filter}?
                   (`fun(x: lsp.CodeAction|lsp.Command, client_id: integer):boolean`)
                   Predicate taking a code action or command and the provider's

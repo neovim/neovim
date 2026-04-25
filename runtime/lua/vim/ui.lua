@@ -3,11 +3,12 @@ local M = {}
 ---@class vim.ui.select.Opts
 ---@inlinedoc
 ---
---- Text of the prompt. Defaults to `Select one of:`
+--- Text of the prompt.
+--- (default: `Select one of:`)
 ---@field prompt? string
 ---
---- Function to format an
---- individual item from `items`. Defaults to `tostring`.
+--- Formats an individual item from `items`.
+--- (default: `tostring`)
 ---@field format_item? fun(item: any):string
 ---
 --- Function to preview an individual item from `items`.
