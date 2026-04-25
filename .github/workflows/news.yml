@@ -11,7 +11,13 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:skip-news')
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'ci:skip-news') &&
+      (
+        (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
+        github.event.label.name == 'ci:skip-news'
+      )
     steps:
       - uses: actions/checkout@v6
         with:
