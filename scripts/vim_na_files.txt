@@ -91,7 +91,7 @@ src/testdir/Make_dos.mak
 src/testdir/crash/heap_overflow3
 src/testdir/keycode_check.vim
 src/testdir/lsan-suppress.txt
-src/testdir/samples/crypt_sodium_invalid.txt
+src/testdir/samples/uncrypt_utf8_test.txt
 src/testdir/test_behave.vim
 src/testdir/test_clientserver.vim
 src/testdir/test_codestyle.vim
