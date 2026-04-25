@@ -1341,11 +1341,9 @@ function M.code_action(opts)
   if opts.diagnostics or opts.only then
     opts = { options = opts }
   end
+  
 local context = opts.context and vim.deepcopy(opts.context) or {}
   
--- ensure diagnostics is always present (matches docs behavior)
-context.diagnostics = context.diagnostics or {}
-
 if not context.triggerKind then
   context.triggerKind = lsp.protocol.CodeActionTriggerKind.Invoked
 end
@@ -1380,7 +1378,7 @@ end
 
     --- @cast params lsp.CodeActionParams
 
-    if context.diagnostics and #context.diagnostics > 0 then
+    if context.diagnostics then
       params.context = context
     else
       local ns_push = lsp.diagnostic.get_namespace(client.id)
