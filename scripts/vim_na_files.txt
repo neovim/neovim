@@ -97,10 +97,10 @@ src/testdir/test_clientserver.vim
 src/testdir/test_codestyle.vim
 src/testdir/test_crypt.vim
 src/testdir/test_cscope.vim
+src/testdir/test_function_lists.vim
 src/testdir/test_glvs.vim
 src/testdir/test_gui_init.vim
 src/testdir/test_hardcopy.vim
-src/testdir/test_function_lists.vim
 src/testdir/test_job_fails.vim
 src/testdir/test_json.vim
 src/testdir/test_listener.vim
@@ -108,6 +108,7 @@ src/testdir/test_mzscheme.vim
 src/testdir/test_plugin_comment.vim
 src/testdir/test_plugin_glvs.vim
 src/testdir/test_plugin_osc52.vim
+src/testdir/test_plugin_vimball.vim
 src/testdir/test_python2.vim
 src/testdir/test_pyx2.vim
 src/testdir/test_restricted.vim
