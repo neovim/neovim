@@ -17,18 +17,25 @@ jobs:
           script: |
             const title = context.payload.issue.title;
             const titleSplit = title.split(/\b/).map(e => e.toLowerCase());
-            const keywords = ['api', 'treesitter', 'ui', 'ui2', 'lsp'];
-            var match = new Set();
+            const keywords = ['api', 'lsp', 'treesitter', 'ui', 'ui2'];
+            var labels = new Set();
+
             for (const keyword of keywords) {
               if (titleSplit.includes(keyword)) {
-                match.add(keyword)
+                labels.add(keyword)
               }
             }
-            if (match.size !== 0) {
+
+            // Special cases.
+            if (titleSplit.includes('vim.pack')) {
+              labels.add('packages')
+            }
+
+            if (labels.size !== 0) {
               github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                labels: Array.from(match)
+                labels: Array.from(labels)
               })
             }

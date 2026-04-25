@@ -163,6 +163,18 @@ Other references:
 - https://github.com/neovim/neovim/pull/18375
 - https://github.com/neovim/neovim/pull/21605
 
+==============================================================================
+Filesystem                                                    *dev-filesystem*
+
+https://github.com/neovim/neovim/issues/36112 Path handling, especially
+separator chars ("/" vs "\"), is designed as follows: "/" separators are used
+every except at the "edges", i.e. the separator chars are coverted
+just-in-time, and only when absolutely needed. This is similar to how UTF-8
+encoding is used internally for all text, but buffers can read/write various
+encodings.
+
+P.S. Windows handles "/" separators just fine, except in rare cases. It'll be
+fine, don't worry. Just use "/", for god's sake!
 
 ==============================================================================
 API

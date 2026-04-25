@@ -11274,15 +11274,18 @@ function vim.fn.winwidth(nr) end
 --- @return any
 function vim.fn.wordcount() end
 
---- When {object} is a |List| write it to file {fname}.  Each list
---- item is separated with a NL.  Each list item must be a String
---- or Number.
---- All NL characters are replaced with a NUL character.
---- Inserting CR characters needs to be done before passing {list}
---- to writefile().
+--- Writes {data} to file {fname}.
 ---
---- When {object} is a |Blob| write the bytes to file {fname}
---- unmodified, also when binary mode is not specified.
+--- - When {data} is a |Blob| its bytes are written unmodified
+---   (even if binary mode "b" is not specified).
+--- - When {data} is a Lua string, it is treated as a blob.
+--- - When {data} is a |List|, each list item is treated as a text
+---   line (terminated with a newline). Each list item must be
+---   a String or Number.
+---   - Any NL (newline) chars in the line are treated as a NUL
+---     character. (This is a workaround to allow Vimscript to
+---     write binary data, and is irrelevant for Lua, which should
+---     just pass a string instead.)
 ---
 --- {flags} must be a String.  These characters are recognized:
 ---
@@ -11320,11 +11323,11 @@ function vim.fn.wordcount() end
 ---   call writefile(fl, "foocopy", "b")
 --- <
 ---
---- @param object any
+--- @param data any
 --- @param fname string
 --- @param flags? string
 --- @return any
-function vim.fn.writefile(object, fname, flags) end
+function vim.fn.writefile(data, fname, flags) end
 
 --- Bitwise XOR on the two arguments.  The arguments are converted
 --- to a number.  A List, Dict or Float argument causes an error.

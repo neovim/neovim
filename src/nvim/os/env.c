@@ -193,7 +193,7 @@ int os_setenv(const char *name, const char *value, int overwrite)
 #endif
   int r;
 #ifdef MSWIN
-  // libintl uses getenv() for LC_ALL/LANG/etc., so we must use _putenv_s().
+  // Call _putenv_s() so libintl can see LC_ALL/LANG/etc. libuv only calls SetEnvironmentVariableW.
   if (striequal(name, "LC_ALL") || striequal(name, "LANGUAGE")
       || striequal(name, "LANG") || striequal(name, "LC_MESSAGES")) {
     r = _putenv_s(name, value);  // NOLINT
