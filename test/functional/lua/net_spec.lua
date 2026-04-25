@@ -1,6 +1,5 @@
 local n = require('test.functional.testnvim')()
 local t = require('test.testutil')
-local pcall_err = t.pcall_err
 local skip_integ = os.getenv('NVIM_TEST_INTEG') ~= '1'
 
 local exec_lua = n.exec_lua
@@ -19,6 +18,22 @@ local function assert_wrong_headers(expected_err, header)
     }, function() end)
   ]])
   t.matches(expected_err, err)
+end
+
+local function assert_wrong_body(expected_err, body)
+  local err = t.pcall_err(exec_lua, [[
+    return vim.net.request('POST', 'https://example.com', {
+      body = ]] .. body .. [[,
+    }, function() end)
+  ]])
+  t.matches(expected_err, err)
+end
+
+local function assert_invalid_method(method)
+  local err = t.pcall_err(exec_lua, [[
+    return vim.net.request(']] .. method .. [[', 'https://example.com', {}, function() end)
+  ]])
+  t.matches('invalid HTTP method', err)
 end
 
 describe('vim.net.request', function()
@@ -223,5 +238,12 @@ describe('vim.net.request', function()
       'header keys must not start with @ or end with : and ;',
       "{ ['@filename'] = '' }"
     )
+
+    assert_wrong_body('opts.body: expected string, got number', '123')
+    assert_wrong_body('opts.body: expected string, got table', '{}')
+
+    assert_invalid_method('OPTIONS')
+    assert_invalid_method('options')
+    assert_invalid_method('FOO')
   end)
 end)

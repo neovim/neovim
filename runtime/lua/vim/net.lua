@@ -9,6 +9,9 @@ local M = {}
 ---Number of retries on transient failures (default: 3).
 ---@field retry? integer
 ---
+---Request body for POST/PUT/PATCH requests.
+---@field body? string
+---
 ---File path to save the response body to.
 ---@field outpath? string
 ---
@@ -24,7 +27,7 @@ local M = {}
 ---The HTTP body of the request
 ---@field body string
 
---- Makes an HTTP GET request to the given URL, asynchronously passing the result to the specified
+--- Makes an HTTP request to the given URL, asynchronously passing the result to the specified
 --- `on_response`, `outpath` or `outbuf`.
 ---
 --- Examples:
@@ -56,20 +59,61 @@ local M = {}
 --- vim.net.request('https://neovim.io/charter/', {
 ---   headers = { Authorization = 'Bearer XYZ' },
 --- })
+---
+--- -- POST request with body.
+--- vim.net.request('POST', 'https://example.com/api', {
+---   body = '{"key": "value"}',
+--- })
 --- ```
 ---
---- @param url string The URL for the request.
+--- @param method string The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE) or URL for GET request.
+--- @param url string The URL for the request or opts table.
 --- @param opts? vim.net.request.Opts
 --- @param on_response? fun(err: string?, response: vim.net.request.Response?)
 --- Callback invoked on request completion. The `body` field in the response
 --- parameter contains the raw response data (text or binary).
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
-function M.request(url, opts, on_response)
-  vim.validate('url', url, 'string')
-  vim.validate('opts', opts, 'table', true)
-  vim.validate('on_response', on_response, 'function', true)
+function M.request(method, url, opts, on_response)
+  local http_methods = {
+    GET = true,
+    POST = true,
+    PUT = true,
+    PATCH = true,
+    HEAD = true,
+    DELETE = true,
+  }
 
-  opts = opts or {}
+  if on_response == nil then
+    -- old behavior
+    vim.validate('url', method, 'string')
+    vim.validate('opts', url, 'table', true)
+    vim.validate('on_response', opts, 'function', true)
+
+    local original_opts = url
+    local original_on_resp = opts
+    url = method
+    method = 'GET'
+    opts = original_opts or {}
+    on_response = original_on_resp
+  else
+    -- new behavior
+    vim.validate('method', method, 'string')
+    vim.validate('url', url, 'string')
+    vim.validate('opts', opts, 'table', true)
+    vim.validate('on_response', on_response, 'function', true)
+
+    opts = opts or {}
+    method = method:upper()
+
+    if not http_methods[method:upper()] then
+      error(
+        'invalid HTTP method: '
+          .. method
+          .. '. Supported methods: GET, POST, PUT, PATCH, HEAD, DELETE'
+      )
+    end
+  end
+
   local retry = opts.retry or 3
 
   -- Build curl command
@@ -83,6 +127,15 @@ function M.request(url, opts, on_response)
 
   if opts.outpath then
     vim.list_extend(args, { '--output', opts.outpath })
+  end
+
+  if method == 'HEAD' then
+    table.insert(args, '-I')
+  elseif vim.tbl_contains({ 'POST', 'PUT', 'PATCH' }, method) then
+    if opts.body ~= nil then
+      vim.validate('opts.body', opts.body, 'string')
+      vim.list_extend(args, { '-d', opts.body })
+    end
   end
 
   if opts.headers then
