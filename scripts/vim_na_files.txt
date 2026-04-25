@@ -91,8 +91,8 @@ src/testdir/Make_dos.mak
 src/testdir/crash/heap_overflow3
 src/testdir/keycode_check.vim
 src/testdir/lsan-suppress.txt
-src/testdir/samples/uncrypt_utf8_test.txt
 src/testdir/samples/terminal_max_combining_chars.txt
+src/testdir/samples/uncrypt_utf8_test.txt
 src/testdir/test_behave.vim
 src/testdir/test_clientserver.vim
 src/testdir/test_codestyle.vim
@@ -120,8 +120,10 @@ src/testdir/test_tcl.vim
 src/testdir/test_termencoding.vim
 src/testdir/test_xdg.vim
 src/testdir/test_xxd.vim
+src/testdir/thread_util.py
 src/testdir/util/amiga.vim
 src/testdir/util/dos.vim
+src/testdir/util/socketserver.vim
 src/testdir/util/vms.vim
 src/typemap
 src/uninstall.c
