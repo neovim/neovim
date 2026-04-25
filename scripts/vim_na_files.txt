@@ -98,6 +98,7 @@ src/testdir/test_codestyle.vim
 src/testdir/test_crypt.vim
 src/testdir/test_cscope.vim
 src/testdir/test_glvs.vim
+src/testdir/test_gui_init.vim
 src/testdir/test_hardcopy.vim
 src/testdir/test_function_lists.vim
 src/testdir/test_job_fails.vim
