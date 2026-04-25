@@ -402,7 +402,7 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 /// @param opts  Optional parameters.
 ///               - id : id of the extmark to edit.
 ///               - end_row : ending line of the mark, 0-based inclusive.
-///               - end_col : ending col of the mark, 0-based exclusive, or -1 to extend the range to end of line.
+///               - end_col : ending col of the mark, 0-based exclusive, or -1 to extend the range to end of line (if strict=false).
 ///               - hl_group : highlight group used for the text range. This and below
 ///                   highlight groups can be supplied either as a string or as an integer,
 ///                   the latter of which can be obtained using |nvim_get_hl_id_by_name()|.
