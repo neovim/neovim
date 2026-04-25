@@ -1125,6 +1125,9 @@ end
 ---@field result? (lsp.Command|lsp.CodeAction)[]
 ---@field context lsp.HandlerContext
 
+---@class vim.lsp.buf.code_action.context : lsp.CodeActionContext
+---@field diagnostics? lsp.Diagnostic[] Inferred from the current position if not provided.
+
 --- @class vim.lsp.buf.code_action.Opts
 --- @inlinedoc
 ---
@@ -1135,10 +1138,7 @@ end
 ---     Most language servers support values like `refactor`
 ---     or `quickfix`.
 ---   - {triggerKind}? (`integer`) The reason why code actions were requested.
---- @field context? vim.lsp.buf.code_action.context
-
---- @class vim.lsp.buf.code_action.context : lsp.CodeActionContext
---- @field diagnostics? lsp.Diagnostic[] Inferred from the current position if not provided.
+---@field context? vim.lsp.buf.code_action.context
 ---
 --- Predicate taking a code action or command and the provider's ID.
 --- If it returns false, the action is filtered out.
