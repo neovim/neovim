@@ -214,7 +214,7 @@ describe('linebreak', function()
 
   -- oldtest: Test_visual_ends_before_showbreak()
   it("Visual area is correct when it ends before multibyte 'showbreak'", function()
-    local screen = Screen.new(60, 8)
+    local screen = Screen.new(60, 6)
     exec([[
       let &wrap = v:true
       let &linebreak = v:true
@@ -226,8 +226,84 @@ describe('linebreak', function()
       xxxxx                                                       |
       {1:↪ }{17:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy}^ {17:   }|
       {1:↪ }zzzz                                                      |
-      {1:~                                                           }|*4
+      {1:~                                                           }|*2
       {5:-- VISUAL --}                                                |
     ]])
+  end)
+
+  it("Visual block highlight is correct with 'linebreak'", function()
+    local screen = Screen.new(60, 6)
+    exec('set laststatus=0 showcmd ruler')
+
+    -- 'linebreak' after end char (initially fixed by patch 7.4.467)
+    exec([[
+      20vnew
+      setlocal linebreak
+      call setline(1, ['foo ' .. repeat('x', 10), 'foo ' .. repeat('x', 20)])
+      exe "normal! gg0\<C-V>3lj"
+    ]])
+    screen:expect([[
+      {17:foo }xxxxxxxxxx      │                                       |
+      {17:foo}^                 │{1:~                                      }|
+      xxxxxxxxxxxxxxxxxxxx│{1:~                                      }|
+      {1:~                   }│{1:~                                      }|*2
+      {5:-- VISUAL BLOCK --}              2x4       2,4           All |
+    ]])
+
+    -- TAB as end char: 'linebreak' shouldn't break Visual block hl
+    exec([[
+      bwipe!
+      setlocal nolinebreak
+      call setline(1, ["foo\tbar", 'foo12345bar', "foo\tbar"])
+      exe "normal! gg03l\<C-V>2j2h"
+    ]])
+    screen:expect([[
+      f{17:oo     }bar                                                 |
+      f{17:oo12345}bar                                                 |
+      f^o{17:o     }bar                                                 |
+      {1:~                                                           }|*2
+      {5:-- VISUAL BLOCK --}              3x7       3,2           All |
+    ]])
+    feed('<Esc>:setlocal linebreak<CR>gv')
+    screen:expect_unchanged(true)
+
+    -- Unprintable end char: 'linebreak' shouldn't break Visual block hl
+    exec([[
+      bwipe!
+      setlocal nolinebreak
+      call setline(1, ["foo\uffffbar", 'foo123456bar', "foo\uffffbar"])
+      exe "normal! gg03l\<C-V>2j2h"
+    ]])
+    screen:expect([[
+      f{17:oo<ffff>}bar                                                |
+      f{17:oo123456}bar                                                |
+      f^o{17:o<ffff>}bar                                                |
+      {1:~                                                           }|*2
+      {5:-- VISUAL BLOCK --}              3x8       3,2           All |
+    ]])
+    feed('<Esc>:setlocal linebreak<CR>gv')
+    screen:expect_unchanged(true)
+
+    -- Virtual text before end char: 'linebreak' shouldn't break Visual block hl
+    exec([=[
+      bwipe!
+      setlocal nolinebreak
+      call setline(1, [repeat('x', 15), repeat('x', 10), repeat('x', 10)])
+      let s:ns = nvim_create_namespace('test')
+      call nvim_buf_set_extmark(0, s:ns, 1, 4, #{virt_text: [['foo: ']],
+                                               \ virt_text_pos: 'inline'})
+      call nvim_buf_set_extmark(0, s:ns, 2, 4, #{virt_text: [['bar: ']],
+                                               \ virt_text_pos: 'inline'})
+      exe "normal! gg02l\<C-V>2j2l"
+    ]=])
+    screen:expect([[
+      xx{17:xxxxxxxx}xxxxx                                             |
+      xx{17:xx}foo: {17:x}xxxxx                                             |
+      xx{17:xx}bar: ^xxxxxx                                             |
+      {1:~                                                           }|*2
+      {5:-- VISUAL BLOCK --}              3x8       3,5-10        All |
+    ]])
+    feed('<Esc>:setlocal linebreak<CR>gv')
+    screen:expect_unchanged(true)
   end)
 end)

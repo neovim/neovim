@@ -2,7 +2,7 @@
 "
 " Language:        unison
 " Maintainer:      Anton Parkhomenko <anton@chuwy.me>
-" Last Change:     Aug 7, 2023
+" Last Change:     Oct 25, 2025
 " Original Author: John Williams, Paul Chiusano and Rúnar Bjarnason
 
 if exists("b:current_syntax")
@@ -23,7 +23,7 @@ syn match   unisonSpecialCharError	contained "\\&\|'''\+"
 syn region  unisonString		start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=unisonSpecialChar
 syn match   unisonCharacter		"[^a-zA-Z0-9_']'\([^\\]\|\\[^']\+\|\\'\)'"lc=1 contains=unisonSpecialChar,unisonSpecialCharError
 syn match   unisonCharacter		"^'\([^\\]\|\\[^']\+\|\\'\)'" contains=unisonSpecialChar,unisonSpecialCharError
-syn match   unisonNumber		"\<[0-9]\+\>\|\<0[xX][0-9a-fA-F]\+\>\|\<0[oO][0-7]\+\>"
+syn match   unisonNumber		"\<[0-9]\+\>\|\<0[xX][0-9a-fA-F]\+\>\|\<0[oO][0-7]\+\>\|\<0[bB][01]\+\>"
 syn match   unisonFloat		"\<[0-9]\+\.[0-9]\+\([eE][-+]\=[0-9]\+\)\=\>"
 
 " Keyword definitions. These must be patterns instead of keywords
@@ -38,7 +38,8 @@ syn match unisonConditional		"\<\(if\|else\|then\)\>"
 syn match unisonBoolean "\<\(true\|false\)\>"
 
 syn match unisonType "\<\C[A-Z][0-9A-Za-z_'!]*\>"
-syn match unisonName "\<\C[a-z_][0-9A-Za-z_'!]*\>"
+syn match unisonName "\<\C[a-z_][0-9A-Za-z_'!]*\>" contains=ALL
+syn match unisonDef "^\C[A-Za-z_][0-9A-Za-z_'!]*:"
 
 " Comments
 syn match   unisonLineComment      "---*\([^-!#$%&\*\+./<=>\?@\\^|~].*\)\?$"
@@ -57,7 +58,7 @@ syn region  unisonDocDirective     contained matchgroup=unisonDocDirective start
 
 syn match unisonDebug "\<\(todo\|bug\|Debug.trace\|Debug.evalToText\)\>"
 
-" things like 
+" things like
 "    > my_func 1 3
 "    test> Function.tap.tests.t1 = check let
 "      use Nat == +
@@ -88,6 +89,7 @@ hi def link       unisonImport                          Include
 hi def link       unisonLineComment                     Comment
 hi def link       unisonLink                            Type
 hi def link       unisonName                            Identifier
+hi def link       unisonDef                             Typedef
 hi def link       unisonNumber                          Number
 hi def link       unisonOperator                        Operator
 hi def link       unisonSpecialChar                     SpecialChar

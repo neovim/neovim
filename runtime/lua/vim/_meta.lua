@@ -1,4 +1,6 @@
 --- @meta
+-- This file is NOT generated, edit it directly.
+error('Cannot require a meta file')
 
 --- @alias elem_or_list<T> T|T[]
 
@@ -20,6 +22,10 @@ vim.iter = require('vim.iter')
 vim.keymap = require('vim.keymap')
 vim.loader = require('vim.loader')
 vim.lsp = require('vim.lsp')
+vim.net = require('vim.net')
+vim.pack = require('vim.pack')
+vim.pos = require('vim.pos')
+vim.range = require('vim.range')
 vim.re = require('vim.re')
 vim.secure = require('vim.secure')
 vim.snippet = require('vim.snippet')

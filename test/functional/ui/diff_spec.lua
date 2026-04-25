@@ -1249,6 +1249,7 @@ end)
 it('diff updates line numbers below filler lines', function()
   local screen = Screen.new(40, 14)
   exec([[
+    set diffopt=internal,filler
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
     call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
@@ -1384,6 +1385,7 @@ end)
 
 it("'relativenumber' doesn't draw beyond end of window in diff mode #29403", function()
   local screen = Screen.new(60, 12)
+  command('set diffopt=internal,filler,closeoff')
   command('set relativenumber')
   feed('10aa<CR><Esc>gg')
   command('vnew')
@@ -2314,7 +2316,7 @@ it('diff mode inline highlighting', function()
 
   command('set diffopt=internal,filler diffopt+=inline:word')
   screen:expect([[
-    {7:  }{27:^abcdef}{4: }{27:ghi}{4: }{27:jk}{4: n }│{7:  }{27:aBcef}{4: }{27:gHi}{4: }{27:lm}{4: n  }|
+    {7:  }{27:^abcdef ghi jk}{4: n }│{7:  }{27:aBcef gHi lm}{4: n  }|
     {7:  }{22:x               }│{7:  }{23:----------------}|
     {7:  }y               │{7:  }y               |
     {7:  }{23:----------------}│{7:  }{22:z               }|
@@ -2495,7 +2497,7 @@ it('diff mode inline highlighting', function()
   )
   command('set diffopt=internal,filler diffopt+=inline:word')
   screen:expect([[
-    {7:  }{4:^🚀}{27:⛵️}{4:一二}{27:三}{4:ひら}{100:が}{4:な}{27:Δέλτα}{4: }{27:Δelta}{4: fooba}│{7:  }{4:🚀}{27:🛸}{4:一二}{27:四}{4:ひらな}{27:δέλτα}{4: }{27:δelta}{4: foobar }|
+    {7:  }{4:^🚀}{27:⛵️}{4:一二}{27:三}{4:ひら}{27:がなΔέλτα Δelta}{4: fooba}│{7:  }{4:🚀}{27:🛸}{4:一二}{27:四}{4:ひら}{27:なδέλτα δelta}{4: foobar }|
     {1:~                                    }│{1:~                                    }|*17
     {3:Xdifile1                              }{2:Xdifile2                             }|
                                                                                |
@@ -2571,9 +2573,9 @@ it('diff mode inline highlighting', function()
   ]])
   command('set diffopt=internal,filler diffopt+=inline:word,iwhite')
   screen:expect([[
-    {7:  }{4:^this   is             }│{7:  }{4:this is }{27:some}{4: }{27:test}{4:     }|
-    {7:  }{27:sometest}{4: }{27:text}{4: }{27:foo}{4:     }│{7:  }{27:texts}{4:                 }|
-    {7:  }{27:baz}{4: }{27:abc}{4: }{27:def}{4:           }│{7:  }{27:foo}{4: }{27:bar}{4: }{27:abX}{4: }{27:Yef}{4:       }|
+    {7:  }{4:^this   is             }│{7:  }{4:this is }{27:some test}{4:     }|
+    {7:  }{27:sometest text foo}{4:     }│{7:  }{27:texts}{4:                 }|
+    {7:  }{27:baz abc def}{4:           }│{7:  }{27:foo bar abX}{4: }{27:Yef}{4:       }|
     {7:  }{27:one}{4:                   }│{7:  }{27:oneword}{4: another word  }|
     {7:  }{27:word}{4: another word     }│{7:  }{23:----------------------}|
     {7:  }{22:additional line       }│{7:  }{23:----------------------}|
@@ -2595,9 +2597,9 @@ it('diff mode inline highlighting', function()
   ]])
   command('set diffopt=internal,filler diffopt+=inline:word,iwhiteeol')
   screen:expect([[
-    {7:  }{4:^this }{100:  }{4:is             }│{7:  }{4:this is }{27:some}{4: }{27:test}{4:     }|
-    {7:  }{27:sometest}{4: }{27:text}{4: foo     }│{7:  }{27:texts}{4:                 }|
-    {7:  }{27:baz}{4: }{27:abc}{4: }{27:def}{4:           }│{7:  }{4:foo }{27:bar}{4: }{27:abX}{4: }{27:Yef}{4:       }|
+    {7:  }{4:^this }{100:  }{4:is             }│{7:  }{4:this is }{27:some test}{4:     }|
+    {7:  }{27:sometest text}{4: foo     }│{7:  }{27:texts}{4:                 }|
+    {7:  }{27:baz abc def}{4:           }│{7:  }{4:foo }{27:bar abX Yef}{4:       }|
     {7:  }{27:one}{4:                   }│{7:  }{27:oneword}{4: another word  }|
     {7:  }{27:word}{4: another word     }│{7:  }{23:----------------------}|
     {7:  }{22:additional line       }│{7:  }{23:----------------------}|
@@ -2763,7 +2765,7 @@ it('diff mode inline highlighting with 3 buffers', function()
   command('set iskeyword+=+ | 2wincmd w | set iskeyword+=- | 1wincmd w')
   command('set diffopt=internal,filler diffopt+=inline:word')
   local s4 = [[
-    {7:  }{27:^This+is}{4:=}{27:a}{4:-setence      }│{7:  }{27:This+is}{4:=}{27:another}{4:-setenc}│{7:  }{27:That+is}{4:=}{27:a}{4:-setence     }|
+    {7:  }{27:^This+is=a}{4:-setence      }│{7:  }{27:This+is=another}{4:-setenc}│{7:  }{27:That+is=a}{4:-setence     }|
     {1:~                        }│{1:~                       }│{1:~                       }|*17
     {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
                                                                                |
@@ -2801,6 +2803,32 @@ it('diff mode inline highlighting with 3 buffers', function()
   screen:expect(s6)
 end)
 
+-- oldtest: Test_diff_inline_multibuffer_empty_block()
+it('diff mode inline highlighting with multi-buffer and empty block', function()
+  write_file('Xdifile1', 'anchor1\n1234567890abcde\nanchor2')
+  write_file('Xdifile2', 'anchor1\n1234567--0abc-e\nanchor2')
+  write_file('Xdifile3', 'anchor1\nanchor2')
+  write_file('Xdifile4', 'anchor1\n1???????90abcd?\nanchor2')
+  finally(function()
+    os.remove('Xdifile1')
+    os.remove('Xdifile2')
+    os.remove('Xdifile3')
+    os.remove('Xdifile4')
+  end)
+  local screen = Screen.new(83, 20)
+  command('args Xdifile1 Xdifile2 Xdifile3 Xdifile4 | vert all | windo diffthis')
+  command('1wincmd w | set diffopt=filler,internal,inline:char')
+  screen:expect([[
+    {7:  }^anchor1           │{7:  }anchor1           │{7:  }anchor1           │{7:  }anchor1           |
+    {7:  }{4:1}{27:23456789}{4:0abc}{27:de}{4:   }│{7:  }{4:1}{27:234567--}{4:0abc}{27:-e}{4:   }│{7:  }{23:------------------}│{7:  }{4:1}{27:???????9}{4:0abc}{27:d?}{4:   }|
+    {7:  }anchor2           │{7:  }anchor2           │{7:  }anchor2           │{7:  }anchor2           |
+    {1:~                   }│{1:~                   }│{1:~                   }│{1:~                   }|*15
+    {3:Xdifile1             }{2:Xdifile2             Xdifile3             Xdifile4            }|
+                                                                                       |
+  ]])
+  n.assert_alive()
+end)
+
 it('diff mode algorithm:histogram and inline:char with long lines #34329', function()
   local screen = Screen.new(55, 20)
   exec([[
@@ -2834,5 +2862,567 @@ it('diff mode algorithm:histogram and inline:char with long lines #34329', funct
     {1:~                          }│{1:~                          }|*6
     {3:inline_char_file1           }{2:inline_char_file2          }|
                                                            |
+  ]])
+end)
+
+-- oldtest: Test_linematch_diff()
+it([["linematch" in 'diffopt' implies "filler"]], function()
+  local screen = Screen.new(55, 20)
+  command('set diffopt=internal,filler,closeoff,inline:simple,linematch:30')
+
+  write_file('Xdifile1', '')
+  write_file('Xdifile2', '')
+  finally(function()
+    os.remove('Xdifile1')
+    os.remove('Xdifile2')
+  end)
+
+  WriteDiffFiles('// d?\n// d?', '!\nabc d!\nd!')
+  command('args Xdifile1 Xdifile2 | vert all | windo diffthis | 1wincmd w')
+  screen:expect([[
+    {7:  }{23:-------------------------}│{7:  }{22:!                        }|
+    {7:  }{27:^// d?}{4:                    }│{7:  }{27:abc d!}{4:                   }|
+    {7:  }{27:// d?}{4:                    }│{7:  }{27:d!}{4:                       }|
+    {1:~                          }│{1:~                          }|*15
+    {3:Xdifile1                    }{2:Xdifile2                   }|
+                                                           |
+  ]])
+
+  -- test that filler is always implicitly set by linematch
+  command('set diffopt-=filler')
+  screen:expect_unchanged()
+end)
+
+describe("'diffanchors'", function()
+  local screen
+
+  before_each(function()
+    screen = Screen.new(32, 20)
+    command('set winwidth=10 nohlsearch shortmess+=s')
+  end)
+
+  after_each(function()
+    os.remove('Xdifile1')
+    os.remove('Xdifile2')
+    os.remove('Xdifile3')
+  end)
+
+  it('works', function()
+    WriteDiffFiles3(
+      'anchorA1\n1\n2\n3\n100\n101\n102\nanchorB\n103\n104\n105',
+      '100\n101\n102\nanchorB\n103\n104\n105\nanchorA2\n1\n2\n3',
+      '100\nanchorB\n103\nanchorA3\n1\n2\n3'
+    )
+    command('args Xdifile1 Xdifile2 Xdifile3 | vert all | windo diffthis | 1wincmd w')
+
+    -- Simple diff without any anchors
+    command('set diffopt=filler,internal')
+    local s0 = [[
+      {7:  }{22:^anchorA1}│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:1       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:2       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:3       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }100     │{7:  }100     │{7:  }100     |
+      {7:  }{22:101     }│{7:  }{22:101     }│{7:  }{23:--------}|
+      {7:  }{22:102     }│{7:  }{22:102     }│{7:  }{23:--------}|
+      {7:  }anchorB │{7:  }anchorB │{7:  }anchorB |
+      {7:  }103     │{7:  }103     │{7:  }103     |
+      {7:  }{27:104}{4:     }│{7:  }{27:104}{4:     }│{7:  }{27:anchorA3}|
+      {7:  }{4:1}{27:05}{4:     }│{7:  }{4:1}{27:05}{4:     }│{7:  }{4:1       }|
+      {7:  }{23:--------}│{7:  }{27:anchorA}{4:2}│{7:  }{4:2       }|
+      {7:  }{23:--------}│{7:  }{27:1}{4:       }│{7:  }{27:3}{4:       }|
+      {7:  }{23:--------}│{7:  }{22:2       }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:3       }│{7:  }{23:--------}|
+      {1:~         }│{1:~         }│{1:~         }|*3
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]]
+    screen:expect(s0)
+
+    -- Setting diffopt+=anchor or diffanchors without the other won't do anything
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect_unchanged()
+    command('set diffopt=filler,internal dia=1/anchorA/')
+    screen:expect_unchanged()
+
+    -- Use a single anchor by specifying a pattern. Test both internal and
+    -- external diff to make sure both paths work.
+    command('set diffopt=filler dia=1/anchorA/ diffopt+=anchor')
+    local s1 = [[
+      {7:  }{23:--------}│{7:  }{4:100     }│{7:  }{4:100     }|
+      {7:  }{23:--------}│{7:  }{27:101}{4:     }│{7:  }{27:anchorB}{4: }|
+      {7:  }{23:--------}│{7:  }{4:10}{27:2}{4:     }│{7:  }{4:10}{27:3}{4:     }|
+      {7:  }{23:--------}│{7:  }{22:anchorB }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:103     }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:104     }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:105     }│{7:  }{23:--------}|
+      {7:  }{4:^anchorA}{27:1}│{7:  }{4:anchorA}{27:2}│{7:  }{4:anchorA}{27:3}|
+      {7:  }1       │{7:  }1       │{7:  }1       |
+      {7:  }2       │{7:  }2       │{7:  }2       |
+      {7:  }3       │{7:  }3       │{7:  }3       |
+      {7:  }{22:100     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:101     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:102     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:anchorB }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:103     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:104     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:105     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]]
+    screen:expect(s1)
+    command('set diffopt+=internal')
+    screen:expect_unchanged()
+
+    -- Use 2 anchors. They should be sorted by line number, so in file 2/3
+    -- anchorB is used before anchorA.
+    command('set diffopt=filler dia=1/anchorA/,1/anchorB/ diffopt+=anchor')
+    local s2 = [[
+      {7:  }{23:--------}│{7:  }{4:100     }│{7:  }{4:100     }|
+      {7:  }{23:--------}│{7:  }{22:101     }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:102     }│{7:  }{23:--------}|
+      {7:  }{4:^anchor}{27:A1}│{7:  }{4:anchor}{27:B}{4: }│{7:  }{4:anchor}{27:B}{4: }|
+      {7:  }{4:1       }│{7:  }{4:1}{27:03}{4:     }│{7:  }{4:1}{27:03}{4:     }|
+      {7:  }{27:2}{4:       }│{7:  }{27:104}{4:     }│{7:  }{23:--------}|
+      {7:  }{27:3}{4:       }│{7:  }{27:105}{4:     }│{7:  }{23:--------}|
+      {7:  }{22:100     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:101     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:102     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{4:anchor}{27:B}{4: }│{7:  }{4:anchor}{27:A2}│{7:  }{4:anchor}{27:A3}|
+      {7:  }{4:1}{27:03}{4:     }│{7:  }{4:1       }│{7:  }{4:1       }|
+      {7:  }{27:104}{4:     }│{7:  }{27:2}{4:       }│{7:  }{27:2}{4:       }|
+      {7:  }{27:105}{4:     }│{7:  }{27:3}{4:       }│{7:  }{27:3}{4:       }|
+      {1:~         }│{1:~         }│{1:~         }|*4
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]]
+    screen:expect(s2)
+    command('set diffopt+=internal')
+    screen:expect_unchanged()
+
+    -- Set marks and specify addresses using marks and repeat the test
+    command('2wincmd w | 1/anchorA/mark a')
+    command('1/anchorB/mark b')
+    command('3wincmd w | 1/anchorA/mark a')
+    command('1/anchorB/mark b')
+    command('1wincmd w | 1/anchorA/mark a')
+    command('1/anchorB/mark b')
+
+    command("set diffopt=filler,internal dia='a diffopt+=anchor")
+    screen:expect(s1)
+    command("set diffopt=filler,internal dia='a,'b diffopt+=anchor")
+    screen:expect(s2)
+
+    -- Update marks to point somewhere else. When we first set the mark the diff
+    -- won't be updated until we manually invoke :diffupdate.
+    command("set diffopt=filler,internal dia='a diffopt+=anchor")
+    screen:expect(s1)
+    command('1wincmd w | 1/anchorB/mark a')
+    screen:expect_unchanged()
+    command('diffupdate')
+    screen:expect([[
+      {7:  }{22:^anchorA1}│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:1       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:2       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:3       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }100     │{7:  }100     │{7:  }100     |
+      {7:  }{27:101}{4:     }│{7:  }{27:101}{4:     }│{7:  }{27:anchorB}{4: }|
+      {7:  }{4:10}{27:2}{4:     }│{7:  }{4:10}{27:2}{4:     }│{7:  }{4:10}{27:3}{4:     }|
+      {7:  }{23:--------}│{7:  }{22:anchorB }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:103     }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:104     }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:105     }│{7:  }{23:--------}|
+      {7:  }{4:anchor}{27:B}{4: }│{7:  }{4:anchor}{27:A2}│{7:  }{4:anchor}{27:A3}|
+      {7:  }{4:1}{27:03}{4:     }│{7:  }{4:1       }│{7:  }{4:1       }|
+      {7:  }{27:104}{4:     }│{7:  }{27:2}{4:       }│{7:  }{27:2}{4:       }|
+      {7:  }{27:105}{4:     }│{7:  }{27:3}{4:       }│{7:  }{27:3}{4:       }|
+      {1:~         }│{1:~         }│{1:~         }|*3
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]])
+
+    -- Use local diff anchors with line numbers, and repeat the same test
+    command('2wincmd w | setlocal dia=8')
+    command('3wincmd w | setlocal dia=4')
+    command('1wincmd w | setlocal dia=1')
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect(s1)
+    command('2wincmd w | setlocal dia=8,4')
+    command('3wincmd w | setlocal dia=4,2')
+    command('1wincmd w | setlocal dia=1,8')
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect(s2)
+
+    -- Test multiple diff anchors on the same line in file 1.
+    command('1wincmd w | setlocal dia=1,1')
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect([[
+      {7:  }{23:--------}│{7:  }{4:100     }│{7:  }{4:100     }|
+      {7:  }{23:--------}│{7:  }{22:101     }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:102     }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{4:anchorB }│{7:  }{4:anchorB }|
+      {7:  }{23:--------}│{7:  }{4:103     }│{7:  }{4:103     }|
+      {7:  }{23:--------}│{7:  }{22:104     }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:105     }│{7:  }{23:--------}|
+      {7:  }{4:^anchorA}{27:1}│{7:  }{4:anchorA}{27:2}│{7:  }{4:anchorA}{27:3}|
+      {7:  }1       │{7:  }1       │{7:  }1       |
+      {7:  }2       │{7:  }2       │{7:  }2       |
+      {7:  }3       │{7:  }3       │{7:  }3       |
+      {7:  }{22:100     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:101     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:102     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:anchorB }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:103     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:104     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:105     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]])
+
+    -- Test that if one file has fewer diff anchors than others. Vim should only
+    -- use the minimum in this case.
+    command('1wincmd w | setlocal dia=8')
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect([[
+      {7:  }{22:^anchorA1}│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:1       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:2       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:3       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }100     │{7:  }100     │{7:  }100     |
+      {7:  }{22:101     }│{7:  }{22:101     }│{7:  }{23:--------}|
+      {7:  }{22:102     }│{7:  }{22:102     }│{7:  }{23:--------}|
+      {7:  }anchorB │{7:  }anchorB │{7:  }anchorB |
+      {7:  }103     │{7:  }103     │{7:  }103     |
+      {7:  }{27:104}{4:     }│{7:  }{27:104}{4:     }│{7:  }{27:anchorA3}|
+      {7:  }{4:1}{27:05}{4:     }│{7:  }{4:1}{27:05}{4:     }│{7:  }{4:1       }|
+      {7:  }{23:--------}│{7:  }{27:anchorA}{4:2}│{7:  }{4:2       }|
+      {7:  }{23:--------}│{7:  }{27:1}{4:       }│{7:  }{27:3}{4:       }|
+      {7:  }{23:--------}│{7:  }{22:2       }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:3       }│{7:  }{23:--------}|
+      {1:~         }│{1:~         }│{1:~         }|*3
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]])
+
+    -- $+1 should anchor everything past the last line
+    command('1wincmd w | setlocal dia=$+1')
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect([[
+      {7:  }{22:^anchorA1}│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:1       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:2       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:3       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }100     │{7:  }100     │{7:  }100     |
+      {7:  }{4:101     }│{7:  }{4:101     }│{7:  }{23:--------}|
+      {7:  }{4:102     }│{7:  }{4:102     }│{7:  }{23:--------}|
+      {7:  }{22:anchorB }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:103     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:104     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:105     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{4:anchorB }│{7:  }{4:anchorB }|
+      {7:  }{23:--------}│{7:  }{4:103     }│{7:  }{4:103     }|
+      {7:  }{23:--------}│{7:  }{27:104}{4:     }│{7:  }{27:anchorA3}|
+      {7:  }{23:--------}│{7:  }{4:1}{27:05}{4:     }│{7:  }{4:1       }|
+      {7:  }{23:--------}│{7:  }{27:anchorA}{4:2}│{7:  }{4:2       }|
+      {7:  }{23:--------}│{7:  }{27:1}{4:       }│{7:  }{27:3}{4:       }|
+      {7:  }{23:--------}│{7:  }{22:2       }│{7:  }{23:--------}|
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]])
+
+    -- Sorting of diff anchors should work with multiple anchors
+    command('1wincmd w | setlocal dia=1,10,8,2')
+    command('2wincmd w | setlocal dia=1,2,3,4')
+    command('3wincmd w | setlocal dia=4,3,2,1')
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect([[
+      {7:  }{27:anchorA1}│{7:  }{27:100}{4:     }│{7:  }{27:^100}{4:     }|
+      {7:  }{27:1}{4:       }│{7:  }{27:101}{4:     }│{7:  }{27:anchorB}{4: }|
+      {7:  }{22:2       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:3       }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:100     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:101     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{22:102     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{27:anchorB}{4: }│{7:  }{27:102}{4:     }│{7:  }{27:103}{4:     }|
+      {7:  }{22:103     }│{7:  }{23:--------}│{7:  }{23:--------}|
+      {7:  }{27:104}{4:     }│{7:  }{27:anchorB}{4: }│{7:  }{27:anchorA3}|
+      {7:  }{4:1}{27:05}{4:     }│{7:  }{4:1}{27:03}{4:     }│{7:  }{4:1       }|
+      {7:  }{23:--------}│{7:  }{27:104}{4:     }│{7:  }{27:2}{4:       }|
+      {7:  }{23:--------}│{7:  }{27:105}{4:     }│{7:  }{27:3}{4:       }|
+      {7:  }{23:--------}│{7:  }{22:anchorA2}│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:1       }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:2       }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{22:3       }│{7:  }{23:--------}|
+      {1:~         }│{1:~         }│{1:~         }|
+      {2:Xdifile1   Xdifile2   }{3:Xdifile3  }|
+                                      |
+    ]])
+
+    -- Intentionally set an invalid anchor with wrong line number. Should fall
+    -- back to treat it as if no anchors are used at all.
+    command('1wincmd w | setlocal dia=1,10,8,2,1000 | silent! diffupdate')
+    screen:expect(s0)
+  end)
+
+  -- oldtest: Test_diffanchors_scrollbind_topline()
+  it('scrollbind works with adjacent diff blocks', function()
+    WriteDiffFiles('anchor1\ndiff1a\nanchor2', 'anchor1\ndiff2a\nanchor2')
+    command('args Xdifile1 Xdifile2 | vert all | windo diffthis | 1wincmd w')
+
+    command('1wincmd w | setlocal dia=2')
+    command('2wincmd w | setlocal dia=3')
+
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect([[
+      {7:  }anchor1      │{7:  }^anchor1       |
+      {7:  }{23:-------------}│{7:  }{22:diff2a        }|
+      {7:  }{22:diff1a       }│{7:  }{23:--------------}|
+      {7:  }anchor2      │{7:  }anchor2       |
+      {1:~              }│{1:~               }|*14
+      {2:Xdifile1        }{3:Xdifile2        }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{23:-------------}│{7:  }{22:^diff2a        }|
+      {7:  }{22:diff1a       }│{7:  }{23:--------------}|
+      {7:  }anchor2      │{7:  }anchor2       |
+      {1:~              }│{1:~               }|*15
+      {2:Xdifile1        }{3:Xdifile2        }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{22:diff1a       }│{7:  }{23:--------------}|
+      {7:  }anchor2      │{7:  }^anchor2       |
+      {1:~              }│{1:~               }|*16
+      {2:Xdifile1        }{3:Xdifile2        }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }anchor2      │{7:  }^anchor2       |
+      {1:~              }│{1:~               }|*17
+      {2:Xdifile1        }{3:Xdifile2        }|
+                                      |
+    ]])
+
+    -- Also test no-filler
+    feed('gg')
+    command('set diffopt=filler,internal diffopt+=anchor diffopt-=filler')
+    screen:expect([[
+      {7:  }anchor1      │{7:  }^anchor1       |
+      {7:  }{22:diff1a       }│{7:  }{22:diff2a        }|
+      {7:  }anchor2      │{7:  }anchor2       |
+      {1:~              }│{1:~               }|*15
+      {2:Xdifile1        }{3:Xdifile2        }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{22:diff1a       }│{7:  }{22:^diff2a        }|
+      {7:  }anchor2      │{7:  }anchor2       |
+      {1:~              }│{1:~               }|*16
+      {2:Xdifile1        }{3:Xdifile2        }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }anchor2      │{7:  }^anchor2       |
+      {1:~              }│{1:~               }|*17
+      {2:Xdifile1        }{3:Xdifile2        }|
+                                      |
+    ]])
+  end)
+
+  -- oldtest: Test_diffanchors_scrollbind_topline2()
+  it('scrollbind works with 3 files and overlapping diff blocks', function()
+    WriteDiffFiles3(
+      'anchor1',
+      'diff2a\ndiff2b\ndiff2c\ndiff2d\nanchor2',
+      'diff3a\ndiff3c\ndiff3d\nanchor3\ndiff3e'
+    )
+    command('args Xdifile1 Xdifile2 Xdifile3 | vert all | windo diffthis | 1wincmd w')
+
+    command('1wincmd w | setlocal dia=1,1,2')
+    command('2wincmd w | setlocal dia=3,5,6')
+    command('3wincmd w | setlocal dia=2,4,5')
+
+    command('set diffopt=filler,internal diffopt+=anchor')
+    screen:expect([[
+      {7:  }{23:--------}│{7:  }{4:diff}{27:2}{4:a  }│{7:  }{4:^diff}{27:3}{4:a  }|
+      {7:  }{23:--------}│{7:  }{22:diff2b  }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{4:diff}{27:2}{4:c  }│{7:  }{4:diff}{27:3}{4:c  }|
+      {7:  }{23:--------}│{7:  }{4:diff}{27:2}{4:d  }│{7:  }{4:diff}{27:3}{4:d  }|
+      {7:  }{4:anchor}{27:1}{4: }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{4:anchor}{27:3}{4: }|
+      {7:  }{23:--------}│{7:  }{23:--------}│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*12
+      {2:Xdifile1   Xdifile2   }{3:Xdifile3  }|
+                                      |
+    ]])
+    command('1wincmd w')
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{23:--------}│{7:  }{22:diff2b  }│{7:  }{23:--------}|
+      {7:  }{23:--------}│{7:  }{4:diff}{27:2}{4:c  }│{7:  }{4:diff}{27:3}{4:c  }|
+      {7:  }{23:--------}│{7:  }{4:diff}{27:2}{4:d  }│{7:  }{4:diff}{27:3}{4:d  }|
+      {7:  }{4:^anchor}{27:1}{4: }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{4:anchor}{27:3}{4: }|
+      {7:  }{23:--------}│{7:  }{23:--------}│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*13
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{23:--------}│{7:  }{4:diff}{27:2}{4:c  }│{7:  }{4:diff}{27:3}{4:c  }|
+      {7:  }{23:--------}│{7:  }{4:diff}{27:2}{4:d  }│{7:  }{4:diff}{27:3}{4:d  }|
+      {7:  }{4:^anchor}{27:1}{4: }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{4:anchor}{27:3}{4: }|
+      {7:  }{23:--------}│{7:  }{23:--------}│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*14
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{23:--------}│{7:  }{4:diff}{27:2}{4:d  }│{7:  }{4:diff}{27:3}{4:d  }|
+      {7:  }{4:^anchor}{27:1}{4: }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{4:anchor}{27:3}{4: }|
+      {7:  }{23:--------}│{7:  }{23:--------}│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*15
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{4:^anchor}{27:1}{4: }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{4:anchor}{27:3}{4: }|
+      {7:  }{23:--------}│{7:  }{23:--------}│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*16
+      {3:Xdifile1   }{2:Xdifile2   Xdifile3  }|
+                                      |
+    ]])
+
+    -- Also test no-filler
+    command('3wincmd w')
+    feed('gg')
+    command('set diffopt=filler,internal diffopt+=anchor diffopt-=filler')
+    screen:expect([[
+      {7:  }{4:anchor}{27:1}{4: }│{7:  }{4:diff}{27:2}{4:a  }│{7:  }{4:^diff}{27:3}{4:a  }|
+      {1:~         }│{7:  }{22:diff2b  }│{7:  }{4:diff}{27:3}{4:c  }|
+      {1:~         }│{7:  }{4:diff}{27:2}{4:c  }│{7:  }{4:diff}{27:3}{4:d  }|
+      {1:~         }│{7:  }{4:diff}{27:2}{4:d  }│{7:  }{4:anchor}{27:3}{4: }|
+      {1:~         }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*13
+      {2:Xdifile1   Xdifile2   }{3:Xdifile3  }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{4:anchor}{27:1}{4: }│{7:  }{4:diff}{27:2}{4:c  }│{7:  }{4:^diff}{27:3}{4:c  }|
+      {1:~         }│{7:  }{4:diff}{27:2}{4:d  }│{7:  }{4:diff}{27:3}{4:d  }|
+      {1:~         }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{4:anchor}{27:3}{4: }|
+      {1:~         }│{1:~         }│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*14
+      {2:Xdifile1   Xdifile2   }{3:Xdifile3  }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{4:anchor}{27:1}{4: }│{7:  }{4:diff}{27:2}{4:d  }│{7:  }{4:^diff}{27:3}{4:d  }|
+      {1:~         }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{4:anchor}{27:3}{4: }|
+      {1:~         }│{1:~         }│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*15
+      {2:Xdifile1   Xdifile2   }{3:Xdifile3  }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{4:anchor}{27:1}{4: }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{4:^anchor}{27:3}{4: }|
+      {1:~         }│{1:~         }│{7:  }{22:diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*16
+      {2:Xdifile1   Xdifile2   }{3:Xdifile3  }|
+                                      |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {7:  }{4:anchor}{27:1}{4: }│{7:  }{4:anchor}{27:2}{4: }│{7:  }{22:^diff3e  }|
+      {1:~         }│{1:~         }│{1:~         }|*17
+      {2:Xdifile1   Xdifile2   }{3:Xdifile3  }|
+                                      |
+    ]])
+  end)
+end)
+
+-- oldtest: Test_diffexpr_wipe_buffers()
+it(':%bwipe does not crash when using diffexpr', function()
+  local screen = Screen.new(70, 20)
+  exec([[
+    func DiffFuncExpr()
+      let in = readblob(v:fname_in)
+      let new = readblob(v:fname_new)
+      let out = v:lua.vim.text.diff(in, new)
+      call writefile(split(out, "\n"), v:fname_out)
+    endfunc
+
+    new
+    vnew
+    set diffexpr=DiffFuncExpr()
+    wincmd l
+    new
+    call setline(1,range(20))
+    windo diffthis
+    wincmd w
+    hide
+    %bw!
+  ]])
+  screen:expect([[
+    ^                                                                      |
+    {1:~                                                                     }|*18
+    4 buffers wiped out                                                   |
+  ]])
+end)
+
+-- oldtest: Test_diffput_to_empty_buf()
+it(':diffput to empty buffer redraws properly', function()
+  local screen = Screen.new(75, 20)
+  exec([[
+    set ruler
+    call setline(1, ['foo', 'bar', 'baz'])
+    rightbelow vnew
+    windo diffthis
+    windo set cursorline nofoldenable
+    wincmd t
+  ]])
+  screen:add_extra_attr_ids({
+    [100] = { underline = true, background = Screen.colors.LightBlue },
+  })
+  screen:expect([[
+    {7:  }{100:^foo                                }│{7:  }{23:-----------------------------------}|
+    {7:  }{22:bar                                }│{7:  }{23:-----------------------------------}|
+    {7:  }{22:baz                                }│{7:  }{23:-----------------------------------}|
+    {1:~                                    }│{7:  }{21:                                   }|
+    {1:~                                    }│{1:~                                    }|*14
+    {3:[No Name] [+]      1,1            All }{2:[No Name]          0,0-1          All}|
+                                                                               |
+  ]])
+  feed('0') -- Trigger an initial 'cursorbind' check.
+  screen:expect_unchanged()
+  command('diffput')
+  screen:expect([[
+    {7:  }{21:^foo                                }│{7:  }foo                                |
+    {7:  }bar                                │{7:  }bar                                |
+    {7:  }baz                                │{7:  }{21:baz                                }|
+    {1:~                                    }│{1:~                                    }|*15
+    {3:[No Name] [+]      1,1            All }{2:[No Name] [+]      3,1            All}|
+                                                                               |
+  ]])
+  command(':redraw!')
+  screen:expect_unchanged()
+  feed('j')
+  screen:expect([[
+    {7:  }foo                                │{7:  }foo                                |
+    {7:  }{21:^bar                                }│{7:  }{21:bar                                }|
+    {7:  }baz                                │{7:  }baz                                |
+    {1:~                                    }│{1:~                                    }|*15
+    {3:[No Name] [+]      2,1            All }{2:[No Name] [+]      2,1            All}|
+                                                                               |
   ]])
 end)

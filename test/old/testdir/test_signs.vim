@@ -62,7 +62,7 @@ func Test_sign()
   " Check placed signs
   let a=execute('sign place')
   call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
-		\ "    line=3  id=41  name=Sign1  priority=10\n", a)
+		\ "    line=3  id=41  name=Sign1  priority=10", a)
 
   " Unplace the sign and try jumping to it again should fail.
   sign unplace 41
@@ -75,7 +75,7 @@ func Test_sign()
   4
   sign unplace
   let a=execute('sign place')
-  call assert_equal("\n--- Signs ---\n", a)
+  call assert_equal("\n--- Signs ---", a)
 
   " Try again to unplace sign on current line, it should fail this time.
   call assert_fails('sign unplace', 'E159:')
@@ -84,14 +84,14 @@ func Test_sign()
   exe 'sign place 41 line=3 name=Sign1 buffer=' . bufnr('%')
   sign unplace *
   let a=execute('sign place')
-  call assert_equal("\n--- Signs ---\n", a)
+  call assert_equal("\n--- Signs ---", a)
 
   " Place a sign without specifying the filename or buffer
   sign place 77 line=9 name=Sign2
   let a=execute('sign place')
   " Nvim: sign line clamped to buffer length
   call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
-		\ "    line=4  id=77  name=Sign2  priority=10\n", a)
+		\ "    line=4  id=77  name=Sign2  priority=10", a)
   sign unplace *
 
   " Check :jump with file=...
@@ -167,7 +167,9 @@ func Test_sign()
 
   sign define Sign5 text=X\  linehl=Comment
   sign undefine Sign5
-  sign define Sign5 linehl=Comment text=X\ 
+  " The use of :execute in the next line is just to ensure the space for
+  " the text value is obvious and does not get accidentally deleted.
+  execute "sign define Sign5 linehl=Comment text=X\ "
   sign undefine Sign5
 
   " define sign with backslash
@@ -184,7 +186,7 @@ func Test_sign()
   exe 'sign place 20 line=3 name=004 buffer=' . bufnr('')
   let a = execute('sign place')
   call assert_equal("\n--- Signs ---\nSigns for foo:\n" .
-		\ "    line=3  id=20  name=4  priority=10\n", a)
+		\ "    line=3  id=20  name=4  priority=10", a)
   exe 'sign unplace 20 buffer=' . bufnr('')
   sign undefine 004
   call assert_fails('sign list 4', 'E155:')
@@ -231,11 +233,11 @@ func Test_sign_undefine_still_placed()
   " Listing placed sign should show that sign is deleted.
   let a=execute('sign place')
   call assert_equal("\n--- Signs ---\nSigns for foobar:\n" .
-		\ "    line=1  id=41  name=[Deleted]  priority=10\n", a)
+		\ "    line=1  id=41  name=[Deleted]  priority=10", a)
 
   sign unplace 41
   let a=execute('sign place')
-  call assert_equal("\n--- Signs ---\n", a)
+  call assert_equal("\n--- Signs ---", a)
 endfunc
 
 func Test_sign_completion()
@@ -742,23 +744,23 @@ func Test_sign_group()
   " :sign place file={fname}
   let a = execute('sign place file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  name=sign1  priority=10", a)
 
   " :sign place group={group} file={fname}
   let a = execute('sign place group=g2 file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  group=g2  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  group=g2  name=sign1  priority=10", a)
 
   " :sign place group=* file={fname}
   let a = execute('sign place group=* file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  group=g2  name=sign1  priority=10\n" .
 	      \ "    line=10  id=5  group=g1  name=sign1  priority=10\n" .
-	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  name=sign1  priority=10", a)
 
   " Error case: non-existing group
   let a = execute('sign place group=xyz file=Xsign')
-  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n", a)
+  call assert_equal("\n--- Signs ---\nSigns for Xsign:", a)
 
   call sign_unplace('*')
   let bnum = bufnr('Xsign')
@@ -769,28 +771,28 @@ func Test_sign_group()
   " :sign place buffer={fname}
   let a = execute('sign place buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  name=sign1  priority=10", a)
 
   " :sign place group={group} buffer={fname}
   let a = execute('sign place group=g2 buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=12  id=5  group=g2  name=sign1  priority=10\n", a)
+	      \ "    line=12  id=5  group=g2  name=sign1  priority=10", a)
 
   " :sign place group=* buffer={fname}
   let a = execute('sign place group=* buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=10\n" .
 	      \ "    line=11  id=5  group=g1  name=sign1  priority=10\n" .
-	      \ "    line=12  id=5  group=g2  name=sign1  priority=10\n", a)
+	      \ "    line=12  id=5  group=g2  name=sign1  priority=10", a)
 
   " Error case: non-existing group
   let a = execute('sign place group=xyz buffer=' . bnum)
-  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n", a)
+  call assert_equal("\n--- Signs ---\nSigns for Xsign:", a)
 
   " :sign place
   let a = execute('sign place')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  name=sign1  priority=10", a)
 
   " Place signs in more than one buffer and list the signs
   split foo
@@ -801,21 +803,21 @@ func Test_sign_group()
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=10\n" .
 	      \ "Signs for foo:\n" .
-	      \ "    line=1  id=25  name=sign1  priority=99\n", a)
+	      \ "    line=1  id=25  name=sign1  priority=99", a)
   close
   bwipe foo
 
   " :sign place group={group}
   let a = execute('sign place group=g1')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=11  id=5  group=g1  name=sign1  priority=10\n", a)
+	      \ "    line=11  id=5  group=g1  name=sign1  priority=10", a)
 
   " :sign place group=*
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=10\n" .
 	      \ "    line=11  id=5  group=g1  name=sign1  priority=10\n" .
-	      \ "    line=12  id=5  group=g2  name=sign1  priority=10\n", a)
+	      \ "    line=12  id=5  group=g2  name=sign1  priority=10", a)
 
   " Test for ':sign jump' command with groups
   sign jump 5 group=g1 file=Xsign
@@ -1582,12 +1584,12 @@ func Test_sign_priority()
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=30\n" .
 	      \ "    line=10  id=5  group=g2  name=sign1  priority=25\n" .
-	      \ "    line=10  id=5  group=g1  name=sign1  priority=20\n", a)
+	      \ "    line=10  id=5  group=g1  name=sign1  priority=20", a)
 
   " Test for :sign place group={group}
   let a = execute('sign place group=g1')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  group=g1  name=sign1  priority=20\n", a)
+	      \ "    line=10  id=5  group=g1  name=sign1  priority=20", a)
 
   call sign_unplace('*')
 
@@ -1606,7 +1608,7 @@ func Test_sign_priority()
   let a = execute('sign place group=g1')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=3  id=1  group=g1  name=sign4  priority=60\n" .
-	      \ "    line=5  id=2  group=g1  name=sign4  priority=60\n", a)
+	      \ "    line=5  id=2  group=g1  name=sign4  priority=60", a)
 
   call sign_unplace('*')
   call sign_undefine()
@@ -1803,6 +1805,7 @@ endfunc
 
 " Test for correct cursor position after the sign column appears or disappears.
 func Test_sign_cursor_position()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
@@ -2090,6 +2093,46 @@ func Test_sign_number_without_signtext()
   call VerifyScreenDump(buf, 'Test_sign_number_without_signtext', {})
 
   call StopVimInTerminal(buf)
+endfunc
+
+func Test_sign_signcolumn_change_no_clear()
+  " In the GUI, sign icons need UPD_CLEAR to redraw properly,
+  " so this optimization only applies to non-GUI mode.
+  CheckNotGui
+  new
+  call setline(1, ['a', 'b', 'c'])
+  set number signcolumn=auto
+  sign define SignA text=>> texthl=Search
+  exe 'sign place 1 line=1 name=SignA buffer=' .. bufnr()
+  redraw!
+
+  " Put a marker on the command line
+  echon 'SIGNTEST'
+  " Change signcolumn - with P_RWIN this should NOT trigger UPD_CLEAR,
+  " so the command line should retain the marker text.
+  " With P_RCLR, UPD_CLEAR would blank the entire screen including
+  " the command line, causing the marker to disappear.
+  set signcolumn=number
+  redraw
+
+  " Verify sign and number column are correctly displayed after the change.
+  " Line 1 has sign '>>' shown in the number column.
+  " Line 2 has no sign, so line number '2' is shown.
+  call assert_equal(' >> a', s:ScreenLine(1, 1, 5))
+  call assert_equal('  2 b', s:ScreenLine(2, 1, 5))
+
+  " Verify the command line was NOT cleared (P_RWIN does not trigger
+  " UPD_CLEAR, unlike P_RCLR).
+  let cmdline = ''
+  for i in range(1, 8)
+    let cmdline ..= screenstring(&lines, i)
+  endfor
+  call assert_equal('SIGNTEST', cmdline)
+
+  sign unplace * group=*
+  sign undefine SignA
+  set signcolumn& number&
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

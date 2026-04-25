@@ -1,13 +1,15 @@
 local t = require('test.testutil')
+local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local eq, command = t.eq, n.command
 local clear = n.clear
-local eval, exc_exec = n.eval, n.exc_exec
+local eval = n.eval
 local exec = n.exec
 local fn = n.fn
 local api = n.api
+local command = n.command
 
 describe(':highlight', function()
   before_each(function()
@@ -18,16 +20,16 @@ describe(':highlight', function()
   it('invalid color name', function()
     eq(
       'Vim(highlight):E421: Color name or number not recognized: ctermfg=#181818',
-      exc_exec('highlight normal ctermfg=#181818')
+      pcall_err(command, 'highlight normal ctermfg=#181818')
     )
     eq(
       'Vim(highlight):E421: Color name or number not recognized: ctermbg=#181818',
-      exc_exec('highlight normal ctermbg=#181818')
+      pcall_err(command, 'highlight normal ctermbg=#181818')
     )
   end)
 
   it('invalid group name', function()
-    eq('Vim(highlight):E411: Highlight group not found: foo', exc_exec('highlight foo'))
+    eq('Vim(highlight):E411: Highlight group not found: foo', pcall_err(command, 'highlight foo'))
   end)
 
   it('"Normal" foreground with red', function()

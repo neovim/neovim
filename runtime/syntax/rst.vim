@@ -2,8 +2,9 @@
 " Language: reStructuredText documentation format
 " Maintainer: Marshall Ward <marshall.ward@gmail.com>
 " Previous Maintainer: Nikolai Weibull <now@bitwi.se>
+" Reference: https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html
 " Website: https://github.com/marshallward/vim-restructuredtext
-" Latest Revision: 2020-03-31
+" Latest Revision: 2025-10-13
 
 if exists("b:current_syntax")
   finish
@@ -12,13 +13,15 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-syn case ignore
+" reStructuredText is case-insensitive
+syntax case ignore
 
 syn match   rstTransition  /^[=`:.'"~^_*+#-]\{4,}\s*$/
 
 syn cluster rstCruft                contains=rstEmphasis,rstStrongEmphasis,
-      \ rstInterpretedText,rstInlineLiteral,rstSubstitutionReference,
-      \ rstInlineInternalTargets,rstFootnoteReference,rstHyperlinkReference
+      \ rstInterpretedTextOrHyperlinkReference,rstInlineLiteral,
+      \ rstSubstitutionReference,rstInlineInternalTargets,rstFootnoteReference,
+      \ rstHyperlinkReference
 
 syn region  rstLiteralBlock         matchgroup=rstDelimiter
       \ start='\(^\z(\s*\).*\)\@<=::\n\s*\n' skip='^\s*$' end='^\(\z1\s\+\)\@!'
@@ -28,8 +31,11 @@ syn region  rstQuotedLiteralBlock   matchgroup=rstDelimiter
       \ start="::\_s*\n\ze\z([!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]\)"
       \ end='^\z1\@!' contains=@NoSpell
 
-syn region  rstDoctestBlock         oneline display matchgroup=rstDelimiter
+syn region  rstDoctestBlock         matchgroup=rstDoctestBlockPrompt
       \ start='^>>>\s' end='^$'
+      \ contains=rstDoctestBlockPrompt
+
+syn match   rstDoctestBlockPrompt   contained '^>>>\s'
 
 syn region  rstTable                transparent start='^\n\s*+[-=+]\+' end='^$'
       \ contains=rstTableLines,@rstCruft
@@ -48,7 +54,8 @@ syn cluster rstDirectives           contains=rstFootnote,rstCitation,
       \ rstHyperlinkTarget,rstExDirective
 
 syn match   rstExplicitMarkup       '^\s*\.\.\_s'
-      \ nextgroup=@rstDirectives,rstComment,rstSubstitutionDefinition
+      \ nextgroup=@rstDirectives,rstSubstitutionDefinition
+      \ contains=rstComment
 
 " "Simple reference names are single words consisting of alphanumerics plus
 " isolated (no two adjacent) internal hyphens, underscores, periods, colons
@@ -57,20 +64,23 @@ let s:ReferenceName = '[[:alnum:]]\%([-_.:+]\?[[:alnum:]]\+\)*'
 
 syn keyword     rstTodo             contained FIXME TODO XXX NOTE
 
-execute 'syn region rstComment contained' .
-      \ ' start=/.*/'
+syn region rstComment
+      \ start='\v^\z(\s*)\.\.(\_s+[\[|_]|\_s+.*::)@!' skip=+^$+ end=/^\(\z1   \)\@!/
+      \ contains=@Spell,rstTodo
+
+" Note: Order matters for rstCitation and rstFootnote as the regex for
+" citations also matches numeric only patterns, e.g. [1], which are footnotes.
+" Since we define rstFootnote after rstCitation, it takes precedence, see
+" |:syn-define|.
+execute 'syn region rstCitation contained matchgroup=rstDirective' .
+      \ ' start=+\[' . s:ReferenceName . '\]\_s+' .
       \ ' skip=+^$+' .
-      \ ' end=/^\s\@!/ contains=rstTodo'
+      \ ' end=+^\s\@!+ contains=@Spell,@rstCruft'
 
 execute 'syn region rstFootnote contained matchgroup=rstDirective' .
       \ ' start=+\[\%(\d\+\|#\%(' . s:ReferenceName . '\)\=\|\*\)\]\_s+' .
       \ ' skip=+^$+' .
-      \ ' end=+^\s\@!+ contains=@rstCruft,@NoSpell'
-
-execute 'syn region rstCitation contained matchgroup=rstDirective' .
-      \ ' start=+\[' . s:ReferenceName . '\]\_s+' .
-      \ ' skip=+^$+' .
-      \ ' end=+^\s\@!+ contains=@rstCruft,@NoSpell'
+      \ ' end=+^\s\@!+ contains=@Spell,@rstCruft'
 
 syn region rstHyperlinkTarget contained matchgroup=rstDirective
       \ start='_\%(_\|[^:\\]*\%(\\.[^:\\]*\)*\):\_s' skip=+^$+ end=+^\s\@!+
@@ -84,10 +94,13 @@ syn region rstHyperlinkTarget matchgroup=rstDirective
 execute 'syn region rstExDirective contained matchgroup=rstDirective' .
       \ ' start=+' . s:ReferenceName . '::\_s+' .
       \ ' skip=+^$+' .
-      \ ' end=+^\s\@!+ contains=@rstCruft,rstLiteralBlock'
+      \ ' end=+^\s\@!+ contains=@Spell,@rstCruft,rstLiteralBlock,rstExplicitMarkup'
 
 execute 'syn match rstSubstitutionDefinition contained' .
       \ ' /|.*|\_s\+/ nextgroup=@rstDirectives'
+
+
+"" Inline Markup ""
 
 function! s:DefineOneInlineMarkup(name, start, middle, end, char_left, char_right)
   " Only escape the first char of a multichar delimiter (e.g. \* inside **)
@@ -97,23 +110,33 @@ function! s:DefineOneInlineMarkup(name, start, middle, end, char_left, char_righ
     let first = a:start[0]
   endif
 
-  execute 'syn match rstEscape'.a:name.' +\\\\\|\\'.first.'+'.' contained'
+  if a:start != '``'
+    let rst_contains=' contains=@Spell,rstEscape' . a:name
+    execute 'syn match rstEscape'.a:name.' +\\\\\|\\'.first.'+'.' contained'
+  else
+    let rst_contains=' contains=@Spell'
+  endif
 
   execute 'syn region rst' . a:name .
         \ ' start=+' . a:char_left . '\zs' . a:start .
         \ '\ze[^[:space:]' . a:char_right . a:start[strlen(a:start) - 1] . ']+' .
         \ a:middle .
         \ ' end=+' . a:end . '\ze\%($\|\s\|[''"’)\]}>/:.,;!?\\-]\)+' .
-        \ ' contains=rstEscape' . a:name
+        \ rst_contains
 
-  execute 'hi def link rstEscape'.a:name.' Special'
+  if a:start != '``'
+    execute 'hi def link rstEscape'.a:name.' Special'
+  endif
 endfunction
 
 function! s:DefineInlineMarkup(name, start, middle, end)
-  let middle = a:middle != "" ?
-        \ (' skip=+\\\\\|\\' . a:middle . '\|\s' . a:middle . '+') :
-        \ ""
+  if a:middle == '`'
+    let middle = ' skip=+\s'.a:middle.'+'
+  else
+    let middle = ' skip=+\\\\\|\\' . a:middle . '\|\s' . a:middle . '+'
+  endif
 
+  " Some characters may precede or follow an inline token
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, "'", "'")
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '"', '"')
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '(', ')')
@@ -121,8 +144,8 @@ function! s:DefineInlineMarkup(name, start, middle, end)
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '{', '}')
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '<', '>')
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '’', '’')
-  " TODO: Additional Unicode Pd, Po, Pi, Pf, Ps characters
 
+  " TODO: Additional whitespace Unicode characters: Pd, Po, Pi, Pf, Ps
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '\%(^\|\s\|\%ua0\|[/:]\)', '')
 
   execute 'syn match rst' . a:name .
@@ -136,7 +159,7 @@ endfunction
 call s:DefineInlineMarkup('Emphasis', '\*', '\*', '\*')
 call s:DefineInlineMarkup('StrongEmphasis', '\*\*', '\*', '\*\*')
 call s:DefineInlineMarkup('InterpretedTextOrHyperlinkReference', '`', '`', '`_\{0,2}')
-call s:DefineInlineMarkup('InlineLiteral', '``', "", '``')
+call s:DefineInlineMarkup('InlineLiteral', '``', '`', '``')
 call s:DefineInlineMarkup('SubstitutionReference', '|', '|', '|_\{0,2}')
 call s:DefineInlineMarkup('InlineInternalTargets', '_`', '`', '`')
 
@@ -172,6 +195,8 @@ execute 'syn match rstHyperlinkReference' .
 syn match   rstStandaloneHyperlink  contains=@NoSpell
       \ "\<\%(\%(\%(https\=\|file\|ftp\|gopher\)://\|\%(mailto\|news\):\)[^[:space:]'\"<>]\+\|www[[:alnum:]_-]*\.[[:alnum:]_-]\+\.[^[:space:]'\"<>]\+\)[[:alnum:]/]"
 
+" `code` is the standard reST directive for source code.
+" `code-block` and `sourcecode` are nearly identical directives in Sphinx.
 syn region rstCodeBlock contained matchgroup=rstDirective
       \ start=+\%(sourcecode\|code\%(-block\)\=\)::\s*\(\S*\)\?\s*\n\%(\s*:.*:\s*.*\s*\n\)*\n\ze\z(\s\+\)+
       \ skip=+^$+
@@ -243,11 +268,11 @@ for s:filetype in keys(g:rst_syntax_code_list)
     unlet! prior_isk
 endfor
 
+
 " Enable top level spell checking
 syntax spell toplevel
 
-" TODO: Use better syncing.
-syn sync minlines=50 linebreaks=2
+exe "syn sync minlines=" . get(g:, 'rst_minlines', 50) . " linebreaks=2"
 
 hi def link rstTodo                         Todo
 hi def link rstComment                      Comment
@@ -256,6 +281,7 @@ hi def link rstTransition                   rstSections
 hi def link rstLiteralBlock                 String
 hi def link rstQuotedLiteralBlock           String
 hi def link rstDoctestBlock                 PreProc
+hi def link rstDoctestBlockPrompt           rstDelimiter
 hi def link rstTableLines                   rstDelimiter
 hi def link rstSimpleTableLines             rstTableLines
 hi def link rstExplicitMarkup               rstDirective

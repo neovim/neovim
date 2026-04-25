@@ -62,6 +62,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/file_search.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -186,9 +187,7 @@ typedef struct {
 
 // locally needed functions
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "file_search.c.generated.h"
-#endif
+#include "file_search.c.generated.h"
 
 static const char e_path_too_long_for_completion[]
   = N_("E854: Path too long for completion");
@@ -332,17 +331,6 @@ void *vim_findfile_init(char *path, char *filename, size_t filenamelen, char *st
     ff_expand_buffer.size = strlen(ff_expand_buffer.data);
 
     search_ctx->ffsc_start_dir = copy_string(ff_expand_buffer, NULL);
-
-#ifdef BACKSLASH_IN_FILENAME
-    // A path that starts with "/dir" is relative to the drive, not to the
-    // directory (but not for "//machine/dir").  Only use the drive name.
-    if ((*path == '/' || *path == '\\')
-        && path[1] != path[0]
-        && search_ctx->ffsc_start_dir.data[1] == ':') {
-      search_ctx->ffsc_start_dir.data[2] = NUL;
-      search_ctx->ffsc_start_dir.size = 2;
-    }
-#endif
   }
 
   // If stopdirs are given, split them into an array of pointers.
@@ -1031,7 +1019,7 @@ fail:
 
 /// Free the list of lists of visited files and directories
 /// Can handle it if the passed search_context is NULL;
-void vim_findfile_free_visited(void *search_ctx_arg)
+static void vim_findfile_free_visited(void *search_ctx_arg)
 {
   if (search_ctx_arg == NULL) {
     return;
@@ -1387,7 +1375,7 @@ char *find_file_in_path(char *ptr, size_t len, int options, int first, char *rel
                                   file_to_find, search_ctx);
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_findfile(void)
 {
   API_CLEAR_STRING(ff_expand_buffer);
@@ -1475,7 +1463,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
   if (vim_isAbsName(*file_to_find)
       // "..", "../path", "." and "./path": don't use the path_option
       || rel_to_curdir
-#if defined(MSWIN)
+#ifdef MSWIN
       // handle "\tmp" as absolute path
       || vim_ispathsep((*file_to_find)[0])
       // handle "c:name" as absolute path
@@ -1605,6 +1593,7 @@ theend:
 char *grab_file_name(int count, linenr_T *file_lnum)
 {
   int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
+  char *fname;
   if (VIsual_active) {
     size_t len;
     char *ptr;
@@ -1617,9 +1606,12 @@ char *grab_file_name(int count, linenr_T *file_lnum)
 
       *file_lnum = getdigits_int32(&p, false, 0);
     }
-    return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
+    fname = find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
+  } else {
+    fname = file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
   }
-  return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
+  TO_SLASH(fname);
+  return fname;
 }
 
 /// Return the file name under or after the cursor.
@@ -1680,7 +1672,8 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
 
   // Search forward for the last char of the file name.
   // Also allow ":/" when ':' is not in 'isfname'.
-  len = path_has_drive_letter(ptr) ? 2 : 0;
+  // TODO(justinmk): Check for driveletter "x:/" at start, regardless of 'isfname'.
+  len = path_has_drive_letter(ptr, strlen(ptr)) ? 2 : 0;
   while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
          || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
@@ -1768,6 +1761,13 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
 
   if (len == 0) {
     return NULL;
+  }
+
+  if ((options & FNAME_HYP) && len > 6 && strncmp(ptr, "file:/",
+                                                  6) == 0 && !vim_ispathsep(ptr[6])) {
+    size_t off = path_has_drive_letter(ptr + 6, len - 6) ? 6 : 5;
+    ptr += off;
+    len -= off;
   }
 
   if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {

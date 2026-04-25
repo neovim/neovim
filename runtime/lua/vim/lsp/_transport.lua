@@ -1,74 +1,76 @@
 local uv = vim.uv
 local log = require('vim.lsp.log')
 
-local is_win = vim.fn.has('win32') == 1
-
---- Checks whether a given path exists and is a directory.
----@param filename string path to check
----@return boolean
-local function is_dir(filename)
-  local stat = uv.fs_stat(filename)
-  return stat and stat.type == 'directory' or false
-end
-
+--- Interface for transport implementations.
+---
 --- @class (private) vim.lsp.rpc.Transport
+--- @field listen fun(self: vim.lsp.rpc.Transport, on_read: fun(err: any, data: string), on_exit: fun(code: integer, signal: integer))
 --- @field write fun(self: vim.lsp.rpc.Transport, msg: string)
 --- @field is_closing fun(self: vim.lsp.rpc.Transport): boolean
 --- @field terminate fun(self: vim.lsp.rpc.Transport)
 
---- @class (private,exact) vim.lsp.rpc.Transport.Run : vim.lsp.rpc.Transport
---- @field new fun(): vim.lsp.rpc.Transport.Run
+--- Transport backed by newly spawned process using `vim.system()`.
+---
+--- @class (private) vim.lsp.rpc.Transport.Run : vim.lsp.rpc.Transport
+--- @field cmd string[] Command to start the LSP server.
+--- @field extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
 --- @field sysobj? vim.SystemObj
 local TransportRun = {}
 
---- @return vim.lsp.rpc.Transport.Run
-function TransportRun.new()
-  return setmetatable({}, { __index = TransportRun })
-end
-
 --- @param cmd string[] Command to start the LSP server.
 --- @param extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
+--- @return vim.lsp.rpc.Transport.Run
+function TransportRun.new(cmd, extra_spawn_params)
+  return setmetatable({
+    cmd = cmd,
+    extra_spawn_params = extra_spawn_params,
+  }, { __index = TransportRun })
+end
+
 --- @param on_read fun(err: any, data: string)
 --- @param on_exit fun(code: integer, signal: integer)
-function TransportRun:run(cmd, extra_spawn_params, on_read, on_exit)
+function TransportRun:listen(on_read, on_exit)
   local function on_stderr(_, chunk)
     if chunk then
-      log.error('rpc', cmd[1], 'stderr', chunk)
+      log.error('rpc', self.cmd[1], 'stderr', chunk)
     end
   end
 
-  extra_spawn_params = extra_spawn_params or {}
+  self.extra_spawn_params = self.extra_spawn_params or {}
 
-  if extra_spawn_params.cwd then
-    assert(is_dir(extra_spawn_params.cwd), 'cwd must be a directory')
+  if self.extra_spawn_params.cwd then
+    local stat = uv.fs_stat(self.extra_spawn_params.cwd)
+    assert(stat and stat.type == 'directory' or false, 'cwd must be a directory')
   end
 
-  local detached = not is_win
-  if extra_spawn_params.detached ~= nil then
-    detached = extra_spawn_params.detached
+  -- Default to non-detached on Windows.
+  local detached = vim.fn.has('win32') ~= 1
+  if self.extra_spawn_params.detached ~= nil then
+    detached = self.extra_spawn_params.detached
   end
 
-  local ok, sysobj_or_err = pcall(vim.system, cmd, {
+  ---@type boolean, vim.SystemObj|string
+  local ok, sysobj_or_err = pcall(vim.system, self.cmd, {
     stdin = true,
     stdout = on_read,
     stderr = on_stderr,
-    cwd = extra_spawn_params.cwd,
-    env = extra_spawn_params.env,
+    cwd = self.extra_spawn_params.cwd,
+    env = self.extra_spawn_params.env,
     detach = detached,
   }, function(obj)
     on_exit(obj.code, obj.signal)
   end)
 
-  if not ok then
-    local err = sysobj_or_err --[[@as string]]
+  if not ok then ---@cast sysobj_or_err string
+    local err = sysobj_or_err
     local sfx = err:match('ENOENT')
         and '. The language server is either not installed, missing from PATH, or not executable.'
       or string.format(' with error message: %s', err)
 
-    error(('Spawning language server with cmd: `%s` failed%s'):format(vim.inspect(cmd), sfx))
-  end
+    error(('Spawning language server with cmd: `%s` failed%s'):format(vim.inspect(self.cmd), sfx))
+  end ---@cast sysobj_or_err vim.SystemObj
 
-  self.sysobj = sysobj_or_err --[[@as vim.SystemObj]]
+  self.sysobj = sysobj_or_err
 end
 
 function TransportRun:write(msg)
@@ -80,24 +82,35 @@ function TransportRun:is_closing()
 end
 
 function TransportRun:terminate()
-  assert(self.sysobj):kill(15)
+  local sysobj = assert(self.sysobj)
+  if sysobj:is_closing() then
+    return
+  end
+  sysobj:kill(15)
 end
 
---- @class (private,exact) vim.lsp.rpc.Transport.Connect : vim.lsp.rpc.Transport
---- @field new fun(): vim.lsp.rpc.Transport.Connect
+--- Transport backed by an existing `uv.uv_pipe_t` or `uv.uv_tcp_t` connection.
+---
+--- @class (private) vim.lsp.rpc.Transport.Connect : vim.lsp.rpc.Transport
+--- @field host_or_path string
+--- @field port? integer
 --- @field handle? uv.uv_pipe_t|uv.uv_tcp_t
 --- Connect returns a PublicClient synchronously so the caller
---- can immediately send messages before the connection is established
---- -> Need to buffer them until that happens
+--- can immediately send messages before the connection is established.
+--- These messages are buffered in `msgbuf`.
 --- @field connected boolean
 --- @field closing boolean
 --- @field msgbuf vim.Ringbuf
 --- @field on_exit? fun(code: integer, signal: integer)
 local TransportConnect = {}
 
+--- @param host_or_path string
+--- @param port? integer
 --- @return vim.lsp.rpc.Transport.Connect
-function TransportConnect.new()
+function TransportConnect.new(host_or_path, port)
   return setmetatable({
+    host_or_path = host_or_path,
+    port = port,
     connected = false,
     -- size should be enough because the client can't really do anything until initialization is done
     -- which required a response from the server - implying the connection got established
@@ -106,20 +119,18 @@ function TransportConnect.new()
   }, { __index = TransportConnect })
 end
 
---- @param host_or_path string
---- @param port? integer
 --- @param on_read fun(err: any, data: string)
 --- @param on_exit? fun(code: integer, signal: integer)
-function TransportConnect:connect(host_or_path, port, on_read, on_exit)
+function TransportConnect:listen(on_read, on_exit)
   self.on_exit = on_exit
   self.handle = (
-    port and assert(uv.new_tcp(), 'Could not create new TCP socket')
+    self.port and assert(uv.new_tcp(), 'Could not create new TCP socket')
     or assert(uv.new_pipe(false), 'Pipe could not be opened.')
   )
 
   local function on_connect(err)
     if err then
-      local address = not port and host_or_path or (host_or_path .. ':' .. port)
+      local address = not self.port and self.host_or_path or (self.host_or_path .. ':' .. self.port)
       vim.schedule(function()
         vim.notify(
           string.format('Could not connect to %s, reason: %s', address, vim.inspect(err)),
@@ -135,15 +146,14 @@ function TransportConnect:connect(host_or_path, port, on_read, on_exit)
     end
   end
 
-  if not port then
-    self.handle:connect(host_or_path, on_connect)
+  if not self.port then
+    self.handle:connect(self.host_or_path, on_connect)
     return
   end
 
-  --- @diagnostic disable-next-line:param-type-mismatch bad UV typing
-  local info = uv.getaddrinfo(host_or_path, nil)
-  local resolved_host = info and info[1] and info[1].addr or host_or_path
-  self.handle:connect(resolved_host, port, on_connect)
+  local info = uv.getaddrinfo(self.host_or_path, nil)
+  local resolved_host = info and info[1] and info[1].addr or self.host_or_path
+  self.handle:connect(resolved_host, self.port, on_connect)
 end
 
 function TransportConnect:write(msg)

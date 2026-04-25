@@ -577,6 +577,13 @@ func Test_source_buffer_vim9()
   call assert_equal(#{pi: 3.12, e: 2.71828}, g:Math)
   call assert_equal(['vim', 'nano'], g:Editors)
 
+  " '<,'> range before the cmd modifier works
+  unlet g:Math
+  unlet g:Editors
+  exe "normal 6GV4j:vim9cmd source\<CR>"
+  call assert_equal(['vim', 'nano'], g:Editors)
+  unlet g:Editors
+
   " test for using try/catch
   %d _
   let lines =<< trim END

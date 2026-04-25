@@ -2,9 +2,9 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq = t.eq
+local pcall_err = t.pcall_err
 local clear = n.clear
 local api = n.api
-local exc_exec = n.exc_exec
 local fn = n.fn
 local rmdir = n.rmdir
 local write_file = t.write_file
@@ -38,7 +38,7 @@ describe('spellfile', function()
     --             │       │   ┌ Condition regex (missing!)
                .. '\000\001\001')
     api.nvim_set_option_value('spelllang', 'en', {})
-    eq('Vim(set):E758: Truncated spell file', exc_exec('set spell'))
+    t.matches('Vim%(set%):E758: Truncated spell file', pcall_err(n.command, 'set spell'))
   end)
   it('errors out when prefcond regexp contains NUL byte', function()
     api.nvim_set_option_value('runtimepath', testdir, {})
@@ -58,7 +58,7 @@ describe('spellfile', function()
     --             │               │               ┌ PREFIXTREE tree length
                .. '\000\000\000\000\000\000\000\000\000\000\000\000')
     api.nvim_set_option_value('spelllang', 'en', {})
-    eq('Vim(set):E759: Format error in spell file', exc_exec('set spell'))
+    t.matches('Vim%(set%):E759: Format error in spell file', pcall_err(n.command, 'set spell'))
   end)
   it('errors out when region contains NUL byte', function()
     api.nvim_set_option_value('runtimepath', testdir, {})
@@ -75,7 +75,7 @@ describe('spellfile', function()
     --             │               │               ┌ PREFIXTREE tree length
                .. '\000\000\000\000\000\000\000\000\000\000\000\000')
     api.nvim_set_option_value('spelllang', 'en', {})
-    eq('Vim(set):E759: Format error in spell file', exc_exec('set spell'))
+    t.matches('Vim%(set%):E759: Format error in spell file', pcall_err(n.command, 'set spell'))
   end)
   it('errors out when SAL section contains NUL byte', function()
     api.nvim_set_option_value('runtimepath', testdir, {})
@@ -99,13 +99,16 @@ describe('spellfile', function()
     --             │               │               ┌ PREFIXTREE tree length
                .. '\000\000\000\000\000\000\000\000\000\000\000\000')
     api.nvim_set_option_value('spelllang', 'en', {})
-    eq('Vim(set):E759: Format error in spell file', exc_exec('set spell'))
+    t.matches('Vim%(set%):E759: Format error in spell file', pcall_err(n.command, 'set spell'))
   end)
   it('errors out when spell header contains NUL bytes', function()
     api.nvim_set_option_value('runtimepath', testdir, {})
     write_file(testdir .. '/spell/en.ascii.spl', spellheader:sub(1, -3) .. '\000\000')
     api.nvim_set_option_value('spelllang', 'en', {})
-    eq('Vim(set):E757: This does not look like a spell file', exc_exec('set spell'))
+    t.matches(
+      'Vim%(set%):E757: This does not look like a spell file',
+      pcall_err(n.command, 'set spell')
+    )
   end)
 
   it('can be set to a relative path', function()
@@ -133,13 +136,42 @@ describe('spellfile', function()
       n.command('set spell')
       fn.writefile({ '' }, testdir .. '/xdg_data')
       n.insert('abc')
-      eq("Vim(normal):E764: Option 'spellfile' is not set", exc_exec('normal! zg'))
+      eq("Vim(normal):E764: Option 'spellfile' is not set", pcall_err(n.command, 'normal! zg'))
     end)
 
     it("is not set if 'spelllang' is not set", function()
       n.command('set spell spelllang=')
       n.insert('abc')
-      eq("Vim(normal):E764: Option 'spellfile' is not set", exc_exec('normal! zg'))
+      eq("Vim(normal):E764: Option 'spellfile' is not set", pcall_err(n.command, 'normal! zg'))
+    end)
+
+    it('accepts overwrites on midword and syllable section, errors on memory leak', function()
+      api.nvim_set_option_value('runtimepath', testdir, {})
+      -- stylua: ignore
+
+      -- Set SN_MIDWORD and SN_SYLLABLE twice so the loader overwrites lp->sl_midword. Should
+      -- not leak memory.
+      write_file(testdir .. '/spell/en.ascii.spl',
+                 spellheader
+    --            ┌ Section identifier (#SN_MIDWORD)
+    --            │   ┌ Section flags (#SNF_REQUIRED or zero)
+    --            │   │   ┌ Section length (4 bytes, MSB first)
+              .. '\002\001\000\000\000\003abc'  -- SN_MIDWORD (midword = "abc")
+              .. '\002\001\000\000\000\003def'  -- Overwrites SN_MIDWORD (midword = "def")
+    --            ┌ Section identifier (#SN_SYLLABLE)
+    --            │   ┌ Section flags (#SNF_REQUIRED or zero)
+    --            │   │   ┌ Section length (4 bytes, MSB first)
+              .. '\009\001\000\000\000\003ghi'  -- SN_SYLLABLE (syllable = "ghi")
+              .. '\009\001\000\000\000\003jib'  -- Overwrites SN_SYLLABLE (syllable = "jib")
+              .. '\255'                         -- End of sections marker
+              .. '\000\000\000\000'             -- LWORDTREE len
+              .. '\000\000\000\000'             -- KWORDTREE len
+              .. '\000\000\000\000'             -- PREFIXTREE len
+      )
+
+      api.nvim_set_option_value('spelllang', 'en', {})
+      n.command('set spell') -- Should not error
+      eq(true, api.nvim_get_option_value('spell', {}))
     end)
   end)
 end)

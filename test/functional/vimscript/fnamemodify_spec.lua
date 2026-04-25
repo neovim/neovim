@@ -8,6 +8,7 @@ local getcwd = n.fn.getcwd
 local command = n.command
 local write_file = t.write_file
 local is_os = t.is_os
+local chdir = n.fn.chdir
 
 local function eq_slashconvert(expected, got)
   eq(t.fix_slashes(expected), t.fix_slashes(got))
@@ -16,27 +17,42 @@ end
 describe('fnamemodify()', function()
   setup(function()
     write_file('Xtest-fnamemodify.txt', [[foobar]])
+    t.mkdir('foo')
+    write_file('foo/bar', [[bar]])
   end)
 
   before_each(clear)
 
   teardown(function()
     os.remove('Xtest-fnamemodify.txt')
+    n.rmdir('foo')
   end)
 
   it('handles the root path', function()
-    local root = n.pathroot()
+    local root = assert(t.fix_slashes(n.pathroot()))
     eq(root, fnamemodify([[/]], ':p:h'))
     eq(root, fnamemodify([[/]], ':p'))
     if is_os('win') then
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       command('set shellslash')
-      root = string.sub(root, 1, -2) .. '/'
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       eq(root, fnamemodify([[/]], ':p:h'))
       eq(root, fnamemodify([[/]], ':p'))
+
+      local letter_colon = root:sub(1, 2)
+      local old_dir = t.fix_slashes(getcwd()) .. '/'
+      local foo_dir = old_dir .. 'foo/'
+      eq(old_dir, fnamemodify(letter_colon, ':p'))
+      eq(old_dir, fnamemodify(letter_colon .. '.', ':p'))
+      eq(old_dir, fnamemodify(letter_colon .. './', ':p'))
+      eq(foo_dir, fnamemodify(letter_colon .. './foo', ':p'))
+      eq(foo_dir, fnamemodify(letter_colon .. 'foo', ':p'))
+      chdir('foo')
+      eq(old_dir, fnamemodify(letter_colon .. '..', ':p'))
+      eq(old_dir, fnamemodify(letter_colon .. '../', ':p'))
+      eq(foo_dir .. 'bar', fnamemodify(letter_colon .. 'bar', ':p'))
     end
   end)
 
@@ -45,6 +61,9 @@ describe('fnamemodify()', function()
   end)
 
   it('handles examples from ":help filename-modifiers"', function()
+    -- src/ cannot be a symlink in this test.
+    n.api.nvim_set_current_dir(t.paths.test_source_path)
+
     local filename = 'src/version.c'
     local cwd = getcwd()
 

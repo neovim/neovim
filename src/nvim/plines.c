@@ -31,9 +31,7 @@
 #include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "plines.c.generated.h"
-#endif
+#include "plines.c.generated.h"
 
 /// Functions calculating horizontal size of text, when displayed in a window.
 
@@ -271,7 +269,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
 
         if (max_head_vcol == 0 || vcol + size + added < max_head_vcol) {
           head += cnt * head_mid;
-        } else if (max_head_vcol > vcol + head_prev + prev_rem) {
+        } else if (width2 > 0 && max_head_vcol > vcol + head_prev + prev_rem) {
           head += (max_head_vcol - (vcol + head_prev + prev_rem)
                    + width2 - 1) / width2 * head_mid;
         } else if (max_head_vcol < 0) {
@@ -290,6 +288,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     size += added;
   }
 
+  int size_before_lbr = size;
   bool need_lbr = false;
   // If 'linebreak' set check at a blank before a non-blank if the line
   // needs a break here.
@@ -335,7 +334,9 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     }
   }
 
-  return (CharSize){ .width = size, .head = head };
+  int tail = size - size_before_lbr;
+
+  return (CharSize){ .width = size, .head = head, .tail = tail };
 }
 
 /// Like charsize_regular(), except it doesn't handle inline virtual text,
@@ -458,8 +459,8 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
 
   // Check for inline virtual text after the end of the line.
   if (len == MAXCOL && csarg->virt_row >= 0 && *ci.ptr == NUL) {
-    (void)charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value);
-    vcol += csarg->cur_text_width_left + csarg->cur_text_width_right;
+    int head = charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value).head;
+    vcol += csarg->cur_text_width_left + csarg->cur_text_width_right + head;
     vcol_arg = vcol > MAXCOL ? MAXCOL : (int)vcol;
   }
 
@@ -514,6 +515,10 @@ static int virt_text_cursor_off(const CharsizeArg *csarg, bool on_NUL)
 /// cursor: where the cursor is on this character (first char, except for TAB)
 ///    end: on the last position of this character (TAB, ctrl)
 ///
+/// When 'linebreak' follows this character, "end" is set to the position before
+/// 'linebreak' if "flags" contains GETVCOL_END_EXCL_LBR, otherwise it's set to
+/// the end of 'linebreak'.
+///
 /// This is used very often, keep it fast!
 ///
 /// @param wp
@@ -521,7 +526,8 @@ static int virt_text_cursor_off(const CharsizeArg *csarg, bool on_NUL)
 /// @param start
 /// @param cursor
 /// @param end
-void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
+/// @param flags
+void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end, int flags)
 {
   char *const line = ml_get_buf(wp->w_buffer, pos->lnum);  // start of the line
   colnr_T const end_col = pos->col;
@@ -553,9 +559,10 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   } else {
     while (true) {
       char_size = charsize_regular(&csarg, ci.ptr, vcol, ci.chr.value);
+      // make sure we don't go past the end of the line
       if (*ci.ptr == NUL) {
-        // if cursor is at NUL, it is treated like 1 cell char unless there is virtual text
-        char_size.width = MAX(1, csarg.cur_text_width_left + csarg.cur_text_width_right);
+        // NUL at end of line only takes one column unless there is virtual text
+        char_size.width = 1 + csarg.cur_text_width_left + csarg.cur_text_width_right;
         on_NUL = true;
         break;
       }
@@ -572,29 +579,27 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
     pos->col = (colnr_T)(ci.ptr - line);
   }
 
-  int head = char_size.head;
   int incr = char_size.width;
+  int head = char_size.head;
+  int tail = char_size.tail;
 
   if (start != NULL) {
     *start = vcol + head;
   }
-
   if (end != NULL) {
-    *end = vcol + incr - 1;
+    *end = vcol + incr - (flags & GETVCOL_END_EXCL_LBR ? tail : 0) - 1;
   }
-
   if (cursor != NULL) {
     if (ci.chr.value == TAB
         && (State & MODE_NORMAL)
         && !wp->w_p_list
         && !virtual_active(wp)
         && !(VIsual_active && ((*p_sel == 'e') || ltoreq(*pos, VIsual)))) {
-      // cursor at end
-      *cursor = vcol + incr - 1;
+      // TODO(zeertzjq): subtracting "tail" may lead to better cursor position
+      *cursor = vcol + incr - 1;  // cursor at end
     } else {
       vcol += virt_text_cursor_off(&csarg, on_NUL);
-      // cursor at start
-      *cursor = vcol + head;
+      *cursor = vcol + head;  // cursor at start
     }
   }
 }
@@ -611,9 +616,9 @@ colnr_T getvcol_nolist(pos_T *posp)
 
   curwin->w_p_list = false;
   if (posp->coladd) {
-    getvvcol(curwin, posp, NULL, &vcol, NULL);
+    getvvcol(curwin, posp, NULL, &vcol, NULL, 0);
   } else {
-    getvcol(curwin, posp, NULL, &vcol, NULL);
+    getvcol(curwin, posp, NULL, &vcol, NULL, 0);
   }
   curwin->w_p_list = list_save;
   return vcol;
@@ -626,13 +631,14 @@ colnr_T getvcol_nolist(pos_T *posp)
 /// @param start
 /// @param cursor
 /// @param end
-void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
+/// @param flags
+void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end, int flags)
 {
   colnr_T col;
 
   if (virtual_active(wp)) {
     // For virtual mode, only want one value
-    getvcol(wp, pos, &col, NULL, NULL);
+    getvcol(wp, pos, &col, NULL, NULL, flags);
 
     colnr_T coladd = pos->coladd;
     colnr_T endadd = 0;
@@ -645,8 +651,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
       if ((c != TAB) && vim_isprintc(c)) {
         endadd = (colnr_T)(ptr2cells(ptr + pos->col) - 1);
         if (coladd > endadd) {
-          // past end of line
-          endadd = 0;
+          endadd = 0;  // past end of line
         } else {
           coladd = 0;
         }
@@ -657,16 +662,14 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
     if (start != NULL) {
       *start = col;
     }
-
     if (cursor != NULL) {
       *cursor = col;
     }
-
     if (end != NULL) {
       *end = col + endadd;
     }
   } else {
-    getvcol(wp, pos, start, cursor, end);
+    getvcol(wp, pos, start, cursor, end, flags);
   }
 }
 
@@ -678,7 +681,8 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
 /// @param pos2
 /// @param left
 /// @param right
-void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right)
+/// @param flags
+void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right, int flags)
 {
   colnr_T from1;
   colnr_T from2;
@@ -686,11 +690,11 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right
   colnr_T to2;
 
   if (lt(*pos1, *pos2)) {
-    getvvcol(wp, pos1, &from1, NULL, &to1);
-    getvvcol(wp, pos2, &from2, NULL, &to2);
+    getvvcol(wp, pos1, &from1, NULL, &to1, flags);
+    getvvcol(wp, pos2, &from2, NULL, &to2, flags);
   } else {
-    getvvcol(wp, pos2, &from1, NULL, &to1);
-    getvvcol(wp, pos1, &from2, NULL, &to2);
+    getvvcol(wp, pos2, &from1, NULL, &to1, flags);
+    getvvcol(wp, pos1, &from2, NULL, &to2, flags);
   }
 
   if (from2 < from1) {
@@ -732,7 +736,7 @@ int win_get_fill(win_T *wp, linenr_T lnum)
 
   // be quick when there are no filler lines
   if (diffopt_filler()) {
-    int n = diff_check(wp, lnum);
+    int n = diff_check_fill(wp, lnum);
 
     if (n > 0) {
       return virt_lines + n;
@@ -932,8 +936,9 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, int max)
   return MIN(max, count);
 }
 
-/// Return number of window lines a physical line range will occupy.
-/// Only considers real and filler lines.
+/// Return total number of physical and filler lines in a physical line range.
+/// Doesn't treat a fold as a single line or consider a wrapped line multiple lines,
+/// unlike plines_m_win() or win_text_height().
 ///
 /// Mainly used for calculating scrolling offsets.
 int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
@@ -942,8 +947,8 @@ int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
 
   if (diffopt_filler()) {
     for (int lnum = first; lnum <= last; lnum++) {
-      // Note: this also considers folds.
-      int n = diff_check(wp, lnum);
+      // Note: this also considers folds (no filler lines inside folds).
+      int n = diff_check_fill(wp, lnum);
       count += MAX(n, 0);
     }
   }

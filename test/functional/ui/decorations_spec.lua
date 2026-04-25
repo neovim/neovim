@@ -28,11 +28,35 @@ local function setup_provider(code)
   ]]) .. [[
     api.nvim_set_decoration_provider(_G.ns1, {
       on_start = on_do; on_buf = on_do;
-      on_win = on_do; on_line = on_do;
+      on_win = on_do; on_line = on_do; on_range = on_do;
       on_end = on_do; _on_spell_nav = on_do;
     })
     return _G.ns1
   ]])
+end
+
+local function setup_screen(screen)
+  screen:set_default_attr_ids {
+    [1] = { bold = true, foreground = Screen.colors.Blue },
+    [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+    [3] = { foreground = Screen.colors.Brown },
+    [4] = { foreground = Screen.colors.Blue1 },
+    [5] = { foreground = Screen.colors.Magenta },
+    [6] = { bold = true, foreground = Screen.colors.Brown },
+    [7] = { background = Screen.colors.Gray90 },
+    [8] = { bold = true, reverse = true },
+    [9] = { reverse = true },
+    [10] = { italic = true, background = Screen.colors.Magenta },
+    [11] = { foreground = Screen.colors.Red, background = tonumber('0x005028') },
+    [12] = { foreground = tonumber('0x990000') },
+    [13] = { background = Screen.colors.LightBlue },
+    [14] = { background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue },
+    [15] = { special = Screen.colors.Blue, undercurl = true },
+    [16] = { special = Screen.colors.Red, undercurl = true },
+    [17] = { foreground = Screen.colors.Red },
+    [18] = { bold = true, foreground = Screen.colors.SeaGreen },
+    [19] = { bold = true },
+  }
 end
 
 describe('decorations providers', function()
@@ -40,27 +64,7 @@ describe('decorations providers', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 8)
-    screen:set_default_attr_ids {
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = { foreground = Screen.colors.Brown },
-      [4] = { foreground = Screen.colors.Blue1 },
-      [5] = { foreground = Screen.colors.Magenta },
-      [6] = { bold = true, foreground = Screen.colors.Brown },
-      [7] = { background = Screen.colors.Gray90 },
-      [8] = { bold = true, reverse = true },
-      [9] = { reverse = true },
-      [10] = { italic = true, background = Screen.colors.Magenta },
-      [11] = { foreground = Screen.colors.Red, background = tonumber('0x005028') },
-      [12] = { foreground = tonumber('0x990000') },
-      [13] = { background = Screen.colors.LightBlue },
-      [14] = { background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue },
-      [15] = { special = Screen.colors.Blue, undercurl = true },
-      [16] = { special = Screen.colors.Red, undercurl = true },
-      [17] = { foreground = Screen.colors.Red },
-      [18] = { bold = true, foreground = Screen.colors.SeaGreen },
-      [19] = { bold = true },
-    }
+    setup_screen(screen)
   end)
 
   local mulholland = [[
@@ -110,12 +114,19 @@ describe('decorations providers', function()
       { 'start', 4 },
       { 'win', 1000, 1, 0, 6 },
       { 'line', 1000, 1, 0 },
+      { 'range', 1000, 1, 0, 0, 1, 0 },
       { 'line', 1000, 1, 1 },
+      { 'range', 1000, 1, 1, 0, 2, 0 },
       { 'line', 1000, 1, 2 },
+      { 'range', 1000, 1, 2, 0, 3, 0 },
       { 'line', 1000, 1, 3 },
+      { 'range', 1000, 1, 3, 0, 4, 0 },
       { 'line', 1000, 1, 4 },
+      { 'range', 1000, 1, 4, 0, 5, 0 },
       { 'line', 1000, 1, 5 },
+      { 'range', 1000, 1, 5, 0, 6, 0 },
       { 'line', 1000, 1, 6 },
+      { 'range', 1000, 1, 6, 0, 7, 0 },
       { 'end', 4 },
     }
 
@@ -137,6 +148,7 @@ describe('decorations providers', function()
       { 'buf', 1, 5 },
       { 'win', 1000, 1, 0, 6 },
       { 'line', 1000, 1, 6 },
+      { 'range', 1000, 1, 6, 0, 7, 0 },
       { 'end', 5 },
     }
   end)
@@ -206,9 +218,13 @@ describe('decorations providers', function()
       { 'start', 5 },
       { 'win', 1000, 1, 0, 3 },
       { 'line', 1000, 1, 0 },
+      { 'range', 1000, 1, 0, 0, 1, 0 },
       { 'line', 1000, 1, 1 },
+      { 'range', 1000, 1, 1, 0, 2, 0 },
       { 'line', 1000, 1, 2 },
+      { 'range', 1000, 1, 2, 0, 3, 0 },
       { 'line', 1000, 1, 3 },
+      { 'range', 1000, 1, 3, 0, 4, 0 },
       { 'end', 5 },
     }
 
@@ -615,6 +631,38 @@ describe('decorations providers', function()
     }
   end)
 
+  it('eol_right_align: second text much longer than first', function()
+    insert('short')
+    setup_provider [[
+      local test_ns = api.nvim_create_namespace "test_length_diff"
+      function on_do(event, ...)
+        if event == "line" then
+          local win, buf, line = ...
+
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'AA', 'Comment'}};
+            virt_text_pos = 'eol_right_align';
+            priority = 100;
+            ephemeral = true;
+          })
+
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'BBBBBBBBBBBBBBBBBBBB', 'ErrorMsg'}};
+            virt_text_pos = 'eol_right_align';
+            priority = 200;
+            ephemeral = true;
+          })
+        end
+      end
+    ]]
+
+    screen:expect([[
+      shor^t            {4:AA} {2:BBBBBBBBBBBBBBBBBBBB}|
+      {1:~                                       }|*6
+                                              |
+    ]])
+  end)
+
   it('virtual text works with wrapped lines', function()
     insert(mulholland)
     feed('ggJj3JjJ')
@@ -804,6 +852,126 @@ describe('decorations providers', function()
     exec_lua([[
       assert(out_of_bound == false)
     ]])
+  end)
+
+  it('on_range is invoked on all visible characters', function()
+    clear()
+    screen = Screen.new(20, 4)
+    setup_screen(screen)
+
+    local function record()
+      exec_lua(function()
+        _G.p_min = { math.huge, math.huge }
+        _G.p_max = { -math.huge, -math.huge }
+        function _G.pos_gt(a, b)
+          return a[1] > b[1] or (a[1] == b[1] and a[2] > b[2])
+        end
+        function _G.pos_lt(a, b)
+          return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
+        end
+      end)
+      setup_provider [[
+        local function on_do(kind, _, bufnr, br, bc, er, ec)
+          if kind == 'range' then
+            local b = { br, bc }
+            local e = { er, ec }
+            if _G.pos_gt(_G.p_min, b) then
+              _G.p_min = b
+            end
+            if _G.pos_lt(_G.p_max, e) then
+              _G.p_max = e
+            end
+          end
+        end
+      ]]
+    end
+    local function check(min, max)
+      local p_min = exec_lua('return _G.p_min')
+      assert(
+        p_min[1] < min[1] or (p_min[1] == min[1] and p_min[2] <= min[2]),
+        'minimum position ' .. vim.inspect(p_min) .. ' should be before the first char'
+      )
+      local p_max = exec_lua('return _G.p_max')
+      assert(
+        p_max[1] > max[1] or (p_max[1] == max[1] and p_max[2] >= max[2]),
+        'maximum position ' .. vim.inspect(p_max) .. ' should be on or after the last char'
+      )
+    end
+
+    -- Multiple lines.
+    exec_lua([[
+      local lines = { ('a'):rep(40), ('b'):rep(40), ('c'):rep(40) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 2, 0 })
+    ]])
+    record()
+    screen:expect([[
+      ^bbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbb|
+      ccccccccccccccccc{1:@@@}|
+                          |
+    ]])
+    check({ 1, 0 }, { 2, 21 })
+
+    -- One long line.
+    exec_lua([[
+      local lines = { ('a'):rep(100) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 70 })
+    ]])
+    record()
+    screen:expect([[
+      {1:<<<}aaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa^aaaaaaaaaa|
+                          |
+    ]])
+    check({ 0, 20 }, { 0, 81 })
+
+    -- Multibyte characters.
+    exec_lua([[
+      local lines = { ('\195\162'):rep(100) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 70 * 2 })
+    ]])
+    record()
+    screen:expect([[
+      {1:<<<}âââââââââââââââââ|
+      ââââââââââââââââââââ|
+      ââââââââââ^ââââââââââ|
+                          |
+    ]])
+    check({ 0, 20 * 2 }, { 0, 81 * 2 })
+
+    -- Tabs.
+    exec_lua([[
+      local lines = { 'a' .. ('\t'):rep(100) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 39 })
+    ]])
+    record()
+    screen:expect([[
+      {1:<<<}                 |
+                          |
+                 ^         |
+                          |
+    ]])
+    check({ 0, 33 }, { 0, 94 })
+
+    -- One long line without wrapping.
+    command('set nowrap')
+    exec_lua([[
+      local lines = { ('a'):rep(50) .. ('b'):rep(50) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 50 })
+    ]])
+    record()
+    screen:expect([[
+      aaaaaaaaaa^bbbbbbbbbb|
+      {1:~                   }|*2
+                          |
+    ]])
+    check({ 0, 40 }, { 0, 60 })
   end)
 
   it('can add new providers during redraw #26652', function()
@@ -2007,7 +2175,7 @@ describe('extmark decorations', function()
     command('set conceallevel=1')
     screen:expect_unchanged()
 
-    eq('conceal char has to be printable', pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_col = 0, end_row = 2, conceal = '\255' }))
+    eq('conceal char must be printable', pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_col = 0, end_row = 2, conceal = '\255' }))
   end)
 
   it('conceal with composed conceal char', function()
@@ -2297,7 +2465,7 @@ describe('extmark decorations', function()
     ]])
 
     eq(
-      'Invalid hl_group: hl_group item',
+      "Invalid 'hl_group': 'hl_group item'",
       pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_row = 1, hl_group = { 'Group1', 'Group2', { 'fail' } }, hl_eol = true })
     )
   end)
@@ -2887,8 +3055,7 @@ describe('extmark decorations', function()
               colpos = colpos+1                         |
           end                                           |
       en^d                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]])
   end)
@@ -3388,6 +3555,17 @@ describe('extmark decorations', function()
     eq(5, n.fn.line('w0'))
   end)
 
+  it('conceal_lines not checking on invalid row #36057', function()
+    exec_lua(function()
+      vim.fn.setline(1, { 'foo', 'bar', 'baz' })
+      vim.api.nvim_command('set conceallevel=3 scrolloff=3')
+      vim.api.nvim_open_win(0, true, { width = 1, height = 1, relative = 'editor', row = 0, col = 0 })
+      vim.api.nvim_buf_set_extmark(0, ns, 1, 0, { conceal_lines = '' })
+      vim.api.nvim__redraw({ flush = true })
+    end)
+    n.assert_alive()
+  end)
+
   it('redraws the line from which a left gravity mark has moved #27369', function()
     fn.setline(1, { 'aaa', 'bbb', 'ccc', 'ddd' })
     api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_text = { { 'foo' } }, right_gravity = false })
@@ -3403,7 +3581,7 @@ describe('extmark decorations', function()
     ]])
   end)
 
-  it('redraws extmark that starts and ends outisde the screen', function()
+  it('redraws extmark that starts and ends outside the screen', function()
     local lines = vim.split(('1'):rep(20), '', { plain = true })
     api.nvim_buf_set_lines(0, 0, -1, true, lines)
     api.nvim_buf_set_extmark(0, ns, 0, 0, { hl_group = 'ErrorMsg', end_row = 19, end_col = 0 })
@@ -3423,6 +3601,42 @@ describe('extmark decorations', function()
                                                           |
       ]],
     })
+  end)
+
+  it('line("w$", win) considers conceal_lines', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'line 1', 'line 2', 'line 3' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { conceal_lines = '' }) -- conceal line 1
+
+    local win = exec_lua(function()
+      local provider_ns = vim.api.nvim_create_namespace('test_f_line')
+      _G.line_w_dollar = {}
+      vim.api.nvim_set_decoration_provider(provider_ns, {
+        on_start = function()
+          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            table.insert(_G.line_w_dollar, { win, vim.fn.line('w$', win) })
+          end
+        end,
+      })
+
+      local win = vim.api.nvim_open_win(0, false, {
+        relative = 'editor',
+        width = 20,
+        height = 1,
+        row = 0,
+        col = 0,
+        border = 'single',
+      })
+      vim.api.nvim_set_option_value('conceallevel', 2, { scope = 'local', win = win })
+
+      return win
+    end)
+
+    local line_w_dollar = exec_lua('return _G.line_w_dollar')
+    for _, win_line in ipairs(line_w_dollar) do
+      if win_line[1] == win then
+        eq(2, win_line[2])
+      end
+    end
   end)
 end)
 
@@ -3454,6 +3668,8 @@ describe('decorations: inline virtual text', function()
       [19] = { background = Screen.colors.Yellow, foreground = Screen.colors.SlateBlue },
       [20] = { background = Screen.colors.LightGrey, foreground = Screen.colors.SlateBlue },
       [21] = { reverse = true, foreground = Screen.colors.SlateBlue },
+      [22] = { background = Screen.colors.Gray90 },
+      [23] = { background = Screen.colors.Gray90, foreground = Screen.colors.Blue, bold = true },
     }
 
     ns = api.nvim_create_namespace 'test'
@@ -5522,6 +5738,217 @@ describe('decorations: inline virtual text', function()
       {1:~                                                 }|*6
                                                         |
     ]])
+  end)
+
+  it('line size is correct with inline virt text at EOL and showbreak', function()
+    screen:try_resize(50, 8)
+    insert(('0123456789'):rep(5) .. '\nfoo\nbar')
+    api.nvim_buf_set_extmark(0, ns, 0, 50, { virt_text = { { ('x'):rep(145), 'ErrorMsg' } }, virt_text_pos = 'inline' })
+
+    command([[set cursorline scrolloff=0 showbreak=>\  smoothscroll]])
+    screen:expect([[
+      01234567890123456789012345678901234567890123456789|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*3
+      {1:> }{4:x}                                               |
+      foo                                               |
+      {22:ba^r                                               }|
+                                                        |
+    ]])
+    eq(5, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*3
+      {1:> }{4:x}                                               |
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*2
+      {1:> }{4:x}                                               |
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*2
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|
+      {1:> }{4:x}                                               |
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:x}                                               |
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+
+    feed('gg$xG$')
+    screen:expect([[
+      0123456789012345678901234567890123456789012345678{4:x}|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*3
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    eq(4, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*3
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*2
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*2
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+
+    feed('zb')
+    command('set list listchars=eol:$')
+    screen:expect([[
+      0123456789012345678901234567890123456789012345678{4:x}|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*3
+      {1:> $}                                               |
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+                                                        |
+    ]])
+    eq(5, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*3
+      {1:> $}                                               |
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*2
+      {1:> $}                                               |
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*2
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|
+      {1:> $}                                               |
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> $}                                               |
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+
+    feed('gg$xG$')
+    screen:expect([[
+      012345678901234567890123456789012345678901234567{4:xx}|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*2
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}{1:$}|
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    eq(4, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|*2
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}{1:$}|
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*2
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}{1:$}|
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}{1:$}|
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+  end)
+
+  it("virtcol('$') is correct with inline virt text at EOL", function()
+    insert(('1234567890\n'):rep(6))
+    for _, v in ipairs({ { 2, 'a' }, { 3, 'ab' }, { 4, 'abc' }, { 5, 'abcd' }, { 6, 'αβγ口' } }) do
+      local ln, tx = unpack(v)
+      local co = fn.col({ ln, '$' })
+      eq(11, fn.virtcol({ ln, '$' }))
+      api.nvim_buf_set_extmark(0, ns, ln - 1, co - 1, { virt_text = { { tx } }, virt_text_pos = 'inline' })
+      eq(11 + fn.strwidth(tx), fn.virtcol({ ln, '$' }))
+    end
   end)
 end)
 

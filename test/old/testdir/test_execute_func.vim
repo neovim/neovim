@@ -45,7 +45,7 @@ func Test_execute_string()
   if has('float')
     call assert_fails('call execute(3.4)', 'E492:')
     call assert_equal("\nx", execute("echo \"x\"", 3.4))
-    call CheckDefExecAndScriptFailure(['execute("echo \"x\"", 3.4)'], 'E806:')
+    call CheckDefExecAndScriptFailure2(['execute("echo \"x\"", 3.4)'], 'E1013: Argument 2: type mismatch, expected string but got float', 'E806:')
   endif
 endfunc
 
@@ -99,7 +99,7 @@ func Test_win_execute()
   let line = win_execute(134343, 'echo getline(1)')
   call assert_equal('', line)
 
-  if has('textprop')
+  if has('popupwin')
     let popupwin = popup_create('the popup win', {'line': 2, 'col': 3})
     redraw
     let line = 'echo getline(1)'->win_execute(popupwin)

@@ -350,7 +350,7 @@ describe('named marks view', function()
   end)
 
   it('is restored in normal mode but not op-pending mode', function()
-    local screen = Screen.new(5, 8)
+    local screen = Screen.new(12, 8)
     command('edit ' .. file1)
     feed('<C-e>jWma')
     feed("G'a")
@@ -363,7 +363,7 @@ describe('named marks view', function()
       7 line      |
       8 line      |
                   |
-      ]]
+    ]]
     screen:expect({ grid = expected })
     feed('G`a')
     screen:expect([[
@@ -375,7 +375,7 @@ describe('named marks view', function()
       7 line      |
       8 line      |
                   |
-      ]])
+    ]])
     -- not in op-pending mode #20886
     feed('ggj=`a')
     screen:expect([[
@@ -387,35 +387,35 @@ describe('named marks view', function()
       6 line      |
       7 line      |
                   |
-      ]])
+    ]])
   end)
 
   it('is restored across files', function()
-    local screen = Screen.new(5, 5)
+    local screen = Screen.new(12, 5)
     command('args ' .. file1 .. ' ' .. file2)
     feed('<C-e>mA')
     local mark_view = [[
-    ^2 line      |
-    3 line      |
-    4 line      |
-    5 line      |
-                |
+      ^2 line      |
+      3 line      |
+      4 line      |
+      5 line      |
+                  |
     ]]
     screen:expect(mark_view)
     command('next')
     screen:expect([[
-    ^1 line      |
-    2 line      |
-    3 line      |
-    4 line      |
-                |
+      ^1 line      |
+      2 line      |
+      3 line      |
+      4 line      |
+                  |
     ]])
     feed("'A")
     screen:expect(mark_view)
   end)
 
   it("fallback to standard behavior when view can't be recovered", function()
-    local screen = Screen.new(10, 10)
+    local screen = Screen.new(12, 10)
     command('edit ' .. file1)
     feed('7GzbmaG') -- Seven lines from the top
     command('new') -- Screen size for window is now half the height can't be restored
@@ -429,11 +429,11 @@ describe('named marks view', function()
       8 line      |
       {3:<itor-marks }|
                   |
-      ]])
+    ]])
   end)
 
   it('fallback to standard behavior when mark is loaded from shada', function()
-    local screen = Screen.new(10, 6)
+    local screen = Screen.new(12, 6)
     command('edit ' .. file1)
     feed('G')
     feed('mA')

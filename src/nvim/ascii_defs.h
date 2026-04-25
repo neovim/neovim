@@ -4,9 +4,7 @@
 
 #include "nvim/os/os_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ascii_defs.h.inline.generated.h"
-#endif
+#include "ascii_defs.h.inline.generated.h"
 
 // Definitions of various common control characters.
 
@@ -77,13 +75,8 @@
 #define Ctrl__          31
 
 // Character that separates dir names in a path.
-#ifdef BACKSLASH_IN_FILENAME
-# define PATHSEP        psepc
-# define PATHSEPSTR     pseps
-#else
-# define PATHSEP        '/'
-# define PATHSEPSTR     "/"
-#endif
+#define PATHSEP        '/'
+#define PATHSEPSTR     "/"
 
 /// Checks if `c` is a space or tab character.
 ///

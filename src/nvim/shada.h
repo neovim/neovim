@@ -11,6 +11,4 @@ typedef enum {
   kShaDaMissingError = 16,  ///< Error out when os_open returns -ENOENT.
 } ShaDaReadFileFlags;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "shada.h.generated.h"
-#endif
+#include "shada.h.generated.h"

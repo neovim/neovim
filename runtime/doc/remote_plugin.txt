@@ -1,7 +1,7 @@
 *remote_plugin.txt*    Nvim
 
 
-		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+		 NVIM REFERENCE MANUAL	  by Thiago de Arruda
 
 
 Nvim support for remote plugins			  *remote-plugin*

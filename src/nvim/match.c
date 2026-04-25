@@ -37,18 +37,14 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "match.c.generated.h"
-#endif
-
-static const char *e_invalwindow = N_("E957: Invalid window number");
+#include "match.c.generated.h"
 
 #define SEARCH_HL_PRIORITY 0
 
 /// Add match to the match list of window "wp".
 /// If "pat" is not NULL the pattern will be highlighted with the group "grp"
 /// with priority "prio".
-/// If "pos_list" is not NULL the list of posisions defines the highlights.
+/// If "pos_list" is not NULL the list of positions defines the highlights.
 /// Optionally, a desired ID "id" can be specified (greater than or equal to 1).
 /// If no particular ID is desired, -1 must be specified for "id".
 ///
@@ -216,6 +212,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   return id;
 
 fail:
+  vim_regfree(regprog);
   xfree(m->mit_pattern);
   xfree(m->mit_pos_array);
   xfree(m);
@@ -910,9 +907,9 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     if (cur->mit_conceal_char) {
       char buf[MB_MAXCHAR + 1];
-
-      buf[utf_char2bytes(cur->mit_conceal_char, buf)] = NUL;
-      tv_dict_add_str(dict, S_LEN("conceal"), buf);
+      int buflen = utf_char2bytes(cur->mit_conceal_char, buf);
+      buf[buflen] = NUL;
+      tv_dict_add_str_len(dict, S_LEN("conceal"), buf, buflen);
     }
 
     tv_list_append_dict(rettv->vval.v_list, dict);
@@ -1058,7 +1055,7 @@ void f_matchadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
   if (id >= 1 && id <= 3) {
-    semsg(_("E798: ID is reserved for \":match\": %" PRId64), (int64_t)id);
+    semsg(_("E798: ID is reserved for \":match\": %d"), id);
     return;
   }
 
@@ -1109,7 +1106,7 @@ void f_matchaddpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // id == 3 is ok because matchaddpos() is supposed to substitute :3match
   if (id == 1 || id == 2) {
-    semsg(_("E798: ID is reserved for \"match\": %" PRId64), (int64_t)id);
+    semsg(_("E798: ID is reserved for \"match\": %d"), id);
     return;
   }
 

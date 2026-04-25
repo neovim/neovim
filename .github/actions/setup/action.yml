@@ -10,7 +10,7 @@ runs:
   steps:
     - name: Set $BIN_DIR
       shell: bash
-      run: echo "$BIN_DIR" >> $GITHUB_PATH
+      run: echo "$BIN_DIR" >> $GITHUB_PATH # zizmor: ignore[github-env]
 
     - if: ${{ runner.os != 'Windows' }}
       name: Set ulimit
@@ -22,7 +22,9 @@ runs:
       shell: pwsh
 
     - name: Install dependencies
-      run: ./.github/scripts/install_deps.sh ${{ inputs.install_flags }}
+      env:
+        INSTALL_FLAGS: ${{ inputs.install_flags }}
+      run: ./.github/scripts/install_deps.sh ${INSTALL_FLAGS}
       shell: bash
 
     - name: Cache

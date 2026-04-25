@@ -8,6 +8,27 @@ CheckUnix
 CheckExecutable gdb
 CheckExecutable gcc
 
+func s:TryAssert(assert)
+  let res = 1
+  try
+    let res = a:assert()
+  catch
+    let res = assert_report(v:exception)
+  endtry
+  return res
+endfunc
+
+" Override WaitForAssert() to turn exceptions into test failures, preventing
+" them from aborting a test.
+let s:SaveWaitForAssert = funcref('WaitForAssert')
+func! WaitForAssert(assert, ...)
+  let Assert = a:assert
+  if type(a:assert) == v:t_func
+    let Assert = function('s:TryAssert', [a:assert])
+  endif
+  call call(s:SaveWaitForAssert, [Assert] + a:000)
+endfunc
+
 let g:GDB = exepath('gdb')
 if g:GDB->empty()
   throw 'Skipped: gdb is not found in $PATH'
@@ -56,13 +77,105 @@ endfunction
 
 packadd termdebug
 
+func s:GetTermdebugFunction(name)
+  for line in execute('scriptnames')->split("\n")
+    if line =~# 'termdebug/plugin/termdebug\.vim$'
+      let sid = matchstr(line, '^\s*\zs\d\+')
+      return function('<SNR>' .. sid .. '_' .. a:name)
+    endif
+  endfor
+  throw 'termdebug script not found'
+endfunc
+
+func Test_termdebug_break_command_builder()
+  let bin_name = 'XTD_break_cmd'
+  let src_name = bin_name .. '.c'
+  let BuildBreakpointCommand = s:GetTermdebugFunction('BuildBreakpointCommand')
+  call s:generate_files(bin_name)
+
+  execute 'edit ' .. src_name
+  call cursor(22, 1)
+  let here = '"' .. fnamemodify(src_name, ':p') .. ':22"'
+
+  call assert_equal('-break-insert ' .. here, BuildBreakpointCommand('', v:false))
+  call assert_equal('-break-insert -t ' .. here, BuildBreakpointCommand('', v:true))
+  call assert_equal('-break-insert -c "argc == 1" ' .. here,
+        \ BuildBreakpointCommand('if argc == 1', v:false))
+  call assert_equal('-break-insert -p 2 ' .. here,
+        \ BuildBreakpointCommand('thread 2', v:false))
+  call assert_equal('-break-insert -p 2 -c "argc == 1" ' .. here,
+        \ BuildBreakpointCommand('thread 2 if argc == 1', v:false))
+  call assert_equal('-break-insert -p 2 -c "argc == 1" 22',
+        \ BuildBreakpointCommand('22 thread 2 if argc == 1', v:false))
+  call assert_equal('-break-insert -c "argc == 1" 22',
+        \ BuildBreakpointCommand('22 if argc == 1', v:false))
+  call assert_equal('-break-insert -c "é == 1" 断点',
+        \ BuildBreakpointCommand('断点 if é == 1', v:false))
+  call assert_equal('-break-insert -p 2 断点',
+        \ BuildBreakpointCommand('断点 thread 2', v:false))
+  call assert_equal('-break-insert 断点 if',
+        \ BuildBreakpointCommand('断点 if', v:false))
+  call assert_equal('-break-insert 断点 thread 2 if',
+        \ BuildBreakpointCommand('断点 thread 2 if', v:false))
+  call assert_equal('-break-insert foo\ if\ bar',
+        \ BuildBreakpointCommand('foo\ if\ bar', v:false))
+
+  call s:cleanup_files(bin_name)
+  %bw!
+endfunc
+
+func Test_termdebug_break_with_default_location_and_condition()
+  let g:test_is_flaky = 1
+  let bin_name = 'XTD_break_if'
+  let src_name = bin_name .. '.c'
+  call s:generate_files(bin_name)
+
+  execute 'edit ' .. src_name
+  execute 'Termdebug ./' .. bin_name
+  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
+  let gdb_buf = winbufnr(1)
+  wincmd b
+
+  call cursor(22, 1)
+  Break if argc == 1
+  call Nterm_wait(gdb_buf)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': 22, 'id': 1014, 'name': 'debugBreakpoint1.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+
+  Run
+  call Nterm_wait(gdb_buf, 400)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': 22, 'id': 12, 'name': 'debugPC', 'priority': 110,
+        \  'group': 'TermDebug'},
+        \ {'lnum': 22, 'id': 1014, 'name': 'debugBreakpoint1.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
+
+  Continue
+  call Nterm_wait(gdb_buf)
+  wincmd t
+  quit!
+  redraw!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
+
+  call s:cleanup_files(bin_name)
+  %bw!
+endfunc
+
 func Test_termdebug_basic()
+  let g:test_is_flaky = 1
   let bin_name = 'XTD_basic'
   let src_name = bin_name .. '.c'
   call s:generate_files(bin_name)
 
   edit XTD_basic.c
   Termdebug ./XTD_basic
+  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   let gdb_buf = winbufnr(1)
   wincmd b
@@ -81,7 +194,6 @@ func Test_termdebug_basic()
         \  'group': 'TermDebug'},
         \ {'lnum': 9, 'id': 1014, 'name': 'debugBreakpoint1.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        "\ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
         \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
   Finish
   call Nterm_wait(gdb_buf)
@@ -95,15 +207,46 @@ func Test_termdebug_basic()
   Continue
   call Nterm_wait(gdb_buf)
 
+  let g:termdebug_config = {}
+  let g:termdebug_config['signs'] = ['>1', '>2', '>3']
+  let g:termdebug_config['sign'] = '>>'
+  let g:termdebug_config['sign_decimal'] = 1
+
   let i = 2
   while i <= 258
     Break
     call Nterm_wait(gdb_buf)
     if i == 2
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint2.0')[0].text, '02')})
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint2.0')[0].text, '>2')})
+    endif
+    if i == 3
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint3.0')[0].text, '>3')})
+    endif
+    if i == 4
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint4.0')[0].text, '>>')})
+    endif
+    if i == 5
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint5.0')[0].text, '>>')})
+      unlet g:termdebug_config['sign']
+    endif
+    if i == 6
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint6.0')[0].text, '06')})
     endif
     if i == 10
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint10.0')[0].text, '0A')})
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint10.0')[0].text, '10')})
+    endif
+    if i == 99
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint99.0')[0].text, '99')})
+    endif
+    if i == 100
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint100.0')[0].text, '9+')})
+    endif
+    if i == 110
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint110.0')[0].text, '9+')})
+      unlet g:termdebug_config
+    endif
+    if i == 128
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint128.0')[0].text, '80')})
     endif
     if i == 168
       call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint168.0')[0].text, 'A8')})
@@ -165,6 +308,7 @@ func Test_termdebug_basic()
     let g:termdebug_config = {}
     let g:termdebug_config['use_prompt'] = use_prompt
     TermdebugCommand ./XTD_basic arg args
+    call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
     call WaitForAssert({-> assert_equal(3, winnr('$'))})
     wincmd t
     quit!
@@ -187,6 +331,7 @@ func Test_termdebug_tbreak()
   execute 'edit ' .. src_name
   execute 'Termdebug ./' .. bin_name
 
+  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   let gdb_buf = winbufnr(1)
   wincmd b
@@ -229,7 +374,6 @@ func Test_termdebug_tbreak()
         \  'group': 'TermDebug'},
         \ {'lnum': bp_line, 'id': 2014, 'name': 'debugBreakpoint2.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        "\ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
         \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
 
   wincmd t
@@ -248,6 +392,7 @@ func Test_termdebug_mapping()
   call assert_true(maparg('-', 'n', 0, 1)->empty())
   call assert_true(maparg('+', 'n', 0, 1)->empty())
   Termdebug
+  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   wincmd b
   call assert_false(maparg('K', 'n', 0, 1)->empty())
@@ -270,6 +415,7 @@ func Test_termdebug_mapping()
   nnoremap - :echom "-"<cr>
   nnoremap + :echom "+"<cr>
   Termdebug
+  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   wincmd b
   call assert_false(maparg('K', 'n', 0, 1)->empty())
@@ -307,6 +453,7 @@ func Test_termdebug_mapping()
   " Start termdebug from foo
   buffer foo
   Termdebug
+  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   wincmd b
   call assert_true(maparg('K', 'n', 0, 1).buffer)
@@ -409,6 +556,7 @@ function Test_termdebug_save_restore_variables()
   let g:termdebug_config['map_K'] = 1
 
   Termdebug
+  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   call WaitForAssert({-> assert_match(&mousemodel, 'popup_setpos')})
   wincmd t

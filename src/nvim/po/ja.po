@@ -4112,16 +4112,16 @@ msgid "E478: Don't panic!"
 msgstr "E478: 慌てないでください!"
 
 #, c-format
-msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: 残念ですが '%s' のヘルプが %s にはありません"
+msgid "E661: No '%s' help for %s"
+msgstr "E661: '%s' のヘルプが %s にはありません"
 
 #, c-format
-msgid "E149: Sorry, no help for %s"
-msgstr "E149: 残念ですが %s にはヘルプがありません"
+msgid "E149: No help for %s"
+msgstr "E149: %s にはヘルプがありません"
 
 #, c-format
-msgid "Sorry, help file \"%s\" not found"
-msgstr "残念ですがヘルプファイル \"%s\" が見つかりません"
+msgid "Help file \"%s\" not found"
+msgstr "ヘルプファイル \"%s\" が見つかりません"
 
 #, c-format
 msgid "E151: No match: %s"
@@ -5563,12 +5563,8 @@ msgstr "現在の %s言語: \"%s\""
 msgid "E197: Cannot set language to \"%s\""
 msgstr "E197: 言語を \"%s\" に設定できません"
 
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"シェルが値を返しました "
+msgid "shell returned "
+msgstr "シェルが値を返しました "
 
 msgid ""
 "\n"
@@ -6611,12 +6607,12 @@ msgstr "単語 '%.*s' が %s へ追加されました"
 msgid "E763: Word characters differ between spell files"
 msgstr "E763: 単語の文字がスペルファイルと異なります"
 
-msgid "Sorry, no suggestions"
-msgstr "残念ですが、修正候補はありません"
+msgid "No suggestions"
+msgstr "修正候補はありません"
 
 #, c-format
-msgid "Sorry, only %<PRId64> suggestions"
-msgstr "残念ですが、修正候補は %<PRId64> 個しかありません"
+msgid "Only %<PRId64> suggestions"
+msgstr "修正候補は %<PRId64> 個しかありません"
 
 #, c-format
 msgid "Change \"%.*s\" to:"
@@ -6664,44 +6660,14 @@ msgstr "E1505: 無効なフォーマット指示子です: %s"
 msgid "unknown"
 msgstr "不明"
 
-msgid "int"
-msgstr "int"
-
-msgid "long int"
-msgstr "long int"
-
-msgid "long long int"
-msgstr "long long int"
-
-msgid "signed size_t"
-msgstr "signed size_t"
-
-msgid "unsigned int"
-msgstr "unsigned int"
-
-msgid "unsigned long int"
-msgstr "unsigned long int"
-
-msgid "unsigned long long int"
-msgstr "unsigned long long int"
-
-msgid "size_t"
-msgstr "size_t"
-
 msgid "pointer"
 msgstr "pointer"
 
 msgid "percent"
 msgstr "percent"
 
-msgid "char"
-msgstr "char"
-
 msgid "string"
 msgstr "string"
-
-msgid "float"
-msgstr "float"
 
 msgid "E766: Insufficient arguments for printf()"
 msgstr "E766: printf() の引数が不十分です"

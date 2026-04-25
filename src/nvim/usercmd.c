@@ -36,9 +36,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "usercmd.c.generated.h"
-#endif
+#include "usercmd.c.generated.h"
 
 garray_T ucmds = { 0, 0, sizeof(ucmd_T), 4, NULL };
 
@@ -90,6 +88,7 @@ static const char *command_complete[] = {
   [EXPAND_SYNTIME] = "syntime",
   [EXPAND_SETTINGS] = "option",
   [EXPAND_PACKADD] = "packadd",
+  [EXPAND_RETAB] = "retab",
   [EXPAND_RUNTIME] = "runtime",
   [EXPAND_SHELLCMD] = "shellcmd",
   [EXPAND_SHELLCMDLINE] = "shellcmdline",
@@ -403,7 +402,7 @@ char *get_user_cmd_nargs(expand_T *xp, int idx)
 
 static char *get_command_complete(int arg)
 {
-  if (arg >= (int)(ARRAY_SIZE(command_complete))) {
+  if (arg < 0 || arg >= (int)(ARRAY_SIZE(command_complete))) {
     return NULL;
   }
   return (char *)command_complete[arg];
@@ -420,6 +419,26 @@ char *get_user_cmd_complete(expand_T *xp, int idx)
     return "";
   }
   return cmd_compl;
+}
+
+/// Get the name of completion type "expand" as an allocated string.
+/// "compl_arg" is the function name for "custom" and "customlist" types.
+/// Returns NULL if no completion is available.
+char *cmdcomplete_type_to_str(int expand, const char *compl_arg)
+{
+  char *cmd_compl = get_command_complete(expand);
+  if (cmd_compl == NULL || expand == EXPAND_USER_LUA) {
+    return NULL;
+  }
+
+  if (expand == EXPAND_USER_LIST || expand == EXPAND_USER_DEFINED) {
+    size_t buflen = strlen(cmd_compl) + strlen(compl_arg) + 2;
+    char *buffer = xmalloc(buflen);
+    snprintf(buffer, buflen, "%s,%s", cmd_compl, compl_arg);
+    return buffer;
+  }
+
+  return xstrdup(cmd_compl);
 }
 
 int cmdcomplete_str_to_type(const char *complete_str)
@@ -1034,7 +1053,9 @@ theend:
 void ex_comclear(exarg_T *eap)
 {
   uc_clear(&ucmds);
-  uc_clear(&curbuf->b_ucmds);
+  if (curbuf != NULL) {
+    uc_clear(&curbuf->b_ucmds);
+  }
 }
 
 void free_ucmd(ucmd_T *cmd)
@@ -1756,7 +1777,7 @@ Dict commands_array(buf_T *buf, Arena *arena)
   Dict rv = arena_dict(arena, (size_t)gap->ga_len);
   for (int i = 0; i < gap->ga_len; i++) {
     char arg[2] = { 0, 0 };
-    Dict d = arena_dict(arena, 14);
+    Dict d = arena_dict(arena, 16);
     ucmd_T *cmd = USER_CMD_GA(gap, i);
 
     PUT_C(d, "name", CSTR_AS_OBJ(cmd->uc_name));
@@ -1766,7 +1787,14 @@ Dict commands_array(buf_T *buf, Arena *arena)
     PUT_C(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
     PUT_C(d, "register", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_REGSTR)));
     PUT_C(d, "keepscript", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_KEEPSCRIPT)));
-    PUT_C(d, "preview", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_PREVIEW)));
+
+    if (cmd->uc_preview_luaref != LUA_NOREF) {
+      PUT_C(d, "preview", LUAREF_OBJ(api_new_luaref(cmd->uc_preview_luaref)));
+    }
+
+    if (cmd->uc_luaref != LUA_NOREF) {
+      PUT_C(d, "callback", LUAREF_OBJ(api_new_luaref(cmd->uc_luaref)));
+    }
 
     switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
     case 0:
@@ -1782,9 +1810,12 @@ Dict commands_array(buf_T *buf, Arena *arena)
     }
     PUT_C(d, "nargs", CSTR_TO_ARENA_OBJ(arena, arg));
 
-    char *cmd_compl = get_command_complete(cmd->uc_compl);
-    PUT_C(d, "complete", (cmd_compl == NULL
-                          ? NIL : CSTR_AS_OBJ(cmd_compl)));
+    if (cmd->uc_compl_luaref != LUA_NOREF) {
+      PUT_C(d, "complete", LUAREF_OBJ(api_new_luaref(cmd->uc_compl_luaref)));
+    } else {
+      char *cmd_compl = get_command_complete(cmd->uc_compl);
+      PUT_C(d, "complete", (cmd_compl == NULL ? NIL : CSTR_AS_OBJ(cmd_compl)));
+    }
     PUT_C(d, "complete_arg", cmd->uc_compl_arg == NULL
           ? NIL : CSTR_AS_OBJ(cmd->uc_compl_arg));
 

@@ -44,9 +44,7 @@ static bool blocking = false;
 static int cursorhold_time = 0;  ///< time waiting for CursorHold event
 static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/input.c.generated.h"
-#endif
+#include "os/input.c.generated.h"
 
 void input_start(void)
 {
@@ -174,7 +172,7 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     return push_event_key(buf, maxlen);
   }
 
-  if (result == kNone) {
+  if (result == kNone && ms != 0) {
     read_error_exit();
   }
 

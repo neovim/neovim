@@ -50,6 +50,4 @@ enum {
   MSCR_RIGHT = -2,
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mouse.h.generated.h"
-#endif
+#include "mouse.h.generated.h"

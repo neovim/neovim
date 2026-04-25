@@ -28,9 +28,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "decoration.c.generated.h"
-#endif
+#include "decoration.c.generated.h"
 
 uint32_t decor_freelist = UINT32_MAX;
 
@@ -121,7 +119,7 @@ void decor_redraw(buf_T *buf, int row1, int row2, int col1, DecorInline decor)
 void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
 {
   if (sh.hl_id || (sh.url != NULL)
-      || (sh.flags & (kSHIsSign | kSHSpellOn | kSHSpellOff | kSHConceal))) {
+      || (sh.flags & (kSHIsSign | kSHSpellOn | kSHSpellOff | kSHConceal | kSHConcealOff))) {
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
@@ -515,7 +513,7 @@ static void decor_state_pack(DecorState *state)
   state->future_begin = fut_beg;
 }
 
-bool decor_redraw_line(win_T *wp, int row, DecorState *state)
+void decor_redraw_line(win_T *wp, int row, DecorState *state)
 {
   decor_state_pack(state);
 
@@ -527,9 +525,13 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
   }
 
   state->row = row;
-  state->col_until = -1;
+  state->col_last = -1;
   state->eol_col = -1;
+}
 
+// Checks if there are (likely) more decorations on the current line.
+bool decor_has_more_decorations(DecorState *state, int row)
+{
   if (state->current_end != 0 || state->future_begin != (int)kv_size(state->ranges_i)) {
     return true;
   }
@@ -551,12 +553,12 @@ static void decor_range_add_from_inline(DecorState *state, int start_row, int st
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id);
+      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id, 0);
       idx = sh->next;
     }
   } else {
     DecorSignHighlight sh = decor_sh_from_inline(decor.data.hl);
-    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id);
+    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id, 0);
   }
 }
 
@@ -617,14 +619,15 @@ void decor_range_add_virt(DecorState *state, int start_row, int start_col, int e
     .data.vt = vt,
     .attr_id = 0,
     .owned = owned,
-    .priority = vt->priority,
+    .priority_internal = ((DecorPriorityInternal)vt->priority << 16),
     .draw_col = -10,
   };
   decor_range_insert(state, &range);
 }
 
 void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id)
+                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id,
+                        DecorPriority subpriority)
 {
   if (sh->flags & kSHIsSign) {
     return;
@@ -636,12 +639,12 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .data.sh = *sh,
     .attr_id = 0,
     .owned = owned,
-    .priority = sh->priority,
+    .priority_internal = ((DecorPriorityInternal)sh->priority << 16) + subpriority,
     .draw_col = -10,
   };
 
   if (sh->hl_id || (sh->url != NULL)
-      || (sh->flags & (kSHConceal | kSHSpellOn | kSHSpellOff))) {
+      || (sh->flags & (kSHConcealOff | kSHConceal | kSHSpellOn | kSHSpellOff))) {
     if (sh->hl_id) {
       range.attr_id = syn_id2attr(sh->hl_id);
     }
@@ -685,11 +688,12 @@ void decor_recheck_draw_col(int win_col, bool hidden, DecorState *state)
   }
 }
 
-int decor_redraw_col_impl(win_T *wp, int col, int win_col, bool hidden, DecorState *state)
+int decor_redraw_col_impl(win_T *wp, int col, int win_col, bool hidden, DecorState *state,
+                          int max_col_last)
 {
   buf_T *const buf = wp->w_buffer;
   int const row = state->row;
-  int col_until = MAXCOL;
+  int col_last = max_col_last;
 
   while (true) {
     // TODO(bfredl): check duplicate entry in "intersection"
@@ -698,7 +702,7 @@ int decor_redraw_col_impl(win_T *wp, int col, int win_col, bool hidden, DecorSta
     if (mark.pos.row < 0 || mark.pos.row > row) {
       break;
     } else if (mark.pos.row == row && mark.pos.col > col) {
-      col_until = mark.pos.col - 1;
+      col_last = MIN(col_last, mark.pos.col - 1);
       break;
     }
 
@@ -729,7 +733,7 @@ next_mark:
       break;
     }
     int const ordering = r->ordering;
-    DecorPriority const priority = r->priority;
+    DecorPriorityInternal const priority = r->priority_internal;
 
     int begin = 0;
     int end = cur_end;
@@ -737,7 +741,8 @@ next_mark:
       int mid = begin + ((end - begin) >> 1);
       int mi = indices[mid];
       DecorRange *mr = &slots[mi].range;
-      if (mr->priority < priority || (mr->priority == priority && mr->ordering < ordering)) {
+      if (mr->priority_internal < priority
+          || (mr->priority_internal == priority && mr->ordering < ordering)) {
         begin = mid + 1;
       } else {
         end = mid;
@@ -753,7 +758,7 @@ next_mark:
   if (fut_beg < count) {
     DecorRange *r = &slots[indices[fut_beg]].range;
     if (r->start_row == row) {
-      col_until = MIN(col_until, r->start_col - 1);
+      col_last = MIN(col_last, r->start_col - 1);
     }
   }
 
@@ -777,7 +782,7 @@ next_mark:
       keep = true;
 
       if (r->end_row == row && r->end_col > col) {
-        col_until = MIN(col_until, r->end_col - 1);
+        col_last = MIN(col_last, r->end_col - 1);
       }
 
       if (r->attr_id > 0) {
@@ -790,9 +795,13 @@ next_mark:
           DecorSignHighlight *sh = &r->data.sh;
           conceal = 2;
           conceal_char = sh->text[0];
-          col_until = MIN(col_until, r->start_col);
+          col_last = MIN(col_last, r->start_col);
           conceal_attr = r->attr_id;
         }
+      }
+
+      if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHConcealOff)) {
+        conceal = 0;
       }
 
       if (r->kind == kDecorKindHighlight) {
@@ -838,7 +847,7 @@ next_mark:
   kv_size(state->ranges_i) = (size_t)count;
   state->future_begin = fut_beg;
   state->current_end = cur_end;
-  state->col_until = col_until;
+  state->col_last = col_last;
 
   state->current = attr;
   state->conceal = conceal;
@@ -861,7 +870,7 @@ static const uint32_t conceal_filter[kMTMetaCount] = {[kMTMetaConcealLines] = kM
 /// @return whether "row" is concealed
 bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
 {
-  if (wp->w_p_cole < 2
+  if (row < 0 || wp->w_p_cole < 2
       || (!check_cursor && wp == curwin && row + 1 == wp->w_cursor.lnum
           && !conceal_cursor_line(wp))) {
     return false;
@@ -1092,7 +1101,7 @@ void decor_redraw_end(DecorState *state)
 
 bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 {
-  decor_redraw_col(wp, MAXCOL, MAXCOL, false, state);
+  decor_redraw_col(wp, MAXCOL, MAXCOL, false, state, MAXCOL);
   state->eol_col = eol_col;
 
   int const count = state->current_end;
@@ -1208,7 +1217,9 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
     priority = sh_hl.priority;
   }
 
-  if (sh_hl.flags & kSHConceal) {
+  if (sh_hl.flags & kSHConcealOff) {
+    PUT_C(*dict, "conceal", BOOLEAN_OBJ(false));
+  } else if (sh_hl.flags & kSHConceal) {
     char buf[MAX_SCHAR_SIZE];
     schar_get(buf, sh_hl.text[0]);
     PUT_C(*dict, "conceal", CSTR_TO_ARENA_OBJ(arena, buf));

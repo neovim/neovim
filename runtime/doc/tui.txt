@@ -61,11 +61,13 @@ unlike most other environment variables.
 >
   For this terminal           Set $TERM to                  |builtin-terms|
   -------------------------------------------------------------------------
-  anything libvte-based       vte, vte-256color                   Y
-   (e.g. GNOME Terminal)      (aliases: gnome, gnome-256color)
+  ansi                        (unknown)                           Y
+  Ghostty                     ghostty, xterm-ghostty              Y
   iTerm (original)            iterm, iTerm.app                    N
   iTerm2 (new capabilities)   iterm2, iTerm2.app                  Y
   Konsole                     konsole-256color                    N
+  libvte-based                vte, vte-256color                   Y
+   (e.g. GNOME Terminal)      (aliases: gnome, gnome-256color)
   Linux virtual terminal      linux, linux-256color               Y
   PuTTY                       putty, putty-256color               Y
   rxvt                        rxvt, rxvt-256color                 Y
@@ -76,21 +78,25 @@ unlike most other environment variables.
   Windows/ConEmu              conemu                              Y
   Windows/Cygwin-built Nvim   cygwin                              Y
   Windows/Interix             interix                             Y
-  Windows/VTP console         vtpcon                              Y
   Windows/legacy console      win32con                            Y
+  Windows/VTP console         vtpcon                              Y
   xterm or compatible         xterm, xterm-256color               Y
 <
 
 					*builtin-terms* *builtin_terms*
-If a |terminfo| database is not available or there is no entry for the current
-terminal, Nvim will map |$TERM| to a builtin entry according to the above
-table, or "ansi" if there is no match. For example "TERM=putty-256color" will
-be mapped to the builtin "putty" entry. See also |tui-colors|.
+Nvim will map |$TERM| to a builtin entry according to the above table if:
+
+- a |terminfo| database is not available on the system
+- no terminfo entry found for the current detected terminal
+- Nvim was built without terminfo support (`has('terminfo')==0`)
 
 The builtin terminfo is not combined with any external terminfo database, nor
 can it be used in preference to one.  You can thus entirely override any
 omissions or out-of-date information in the builtin terminfo database by
 supplying an external one with entries for the terminal type.
+
+For example "TERM=putty-256color" will be mapped to the builtin "putty" entry.
+See also |tui-colors|.
 
 Settings depending on terminal			*term-dependent-settings*
 

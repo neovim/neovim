@@ -8,7 +8,7 @@
 local function get_commentstring(ref_position)
   local buf_cs = vim.bo.commentstring
 
-  local ts_parser = vim.treesitter.get_parser(0, '', { error = false })
+  local ts_parser = vim.treesitter.get_parser(0, '')
   if not ts_parser then
     return buf_cs
   end
@@ -148,7 +148,7 @@ end
 ---@return fun(line: string): string
 local function make_comment_function(parts, indent)
   local prefix, nonindent_start, suffix = indent .. parts.left, indent:len() + 1, parts.right
-  local blank_comment = indent .. vim.trim(parts.left) .. vim.trim(parts.right)
+  local blank_comment = indent .. vim.trim(parts.left) .. vim.trim(suffix)
 
   return function(line)
     if is_blank(line) then

@@ -1,9 +1,7 @@
 #pragma once
 
 // This file is not compiled, just parsed for definitions
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# error "don't include this file, include nvim/ui.h"
-#endif
+#error "don't include this file, include nvim/ui.h"
 
 #include "nvim/api/private/defs.h"
 #include "nvim/func_attr.h"
@@ -29,8 +27,10 @@ void visual_bell(void)
   FUNC_API_SINCE(3);
 void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
-void restart(String progpath, Array argv)
+void connect(String server_addr)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
+void restart(String listen_addr)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;
 void suspend(void)
   FUNC_API_SINCE(3);
 void set_title(String title)
@@ -46,6 +46,8 @@ void chdir(String path)
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;
+void ui_send(String content)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_IMPL;
 
 // First revision of the grid protocol, used by default
 void update_fg(Integer fg)
@@ -162,8 +164,9 @@ void wildmenu_select(Integer selected)
 void wildmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
-void msg_show(String kind, Array content, Boolean replace_last, Boolean history, Boolean append)
-  FUNC_API_SINCE(6) FUNC_API_FAST FUNC_API_REMOTE_ONLY;
+void msg_show(String kind, Array content, Boolean replace_last, Boolean history, Boolean append,
+              Object id, String trigger)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_clear(void)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_showcmd(Array content)
@@ -172,7 +175,7 @@ void msg_showmode(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_ruler(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void msg_history_show(Array entries)
+void msg_history_show(Array entries, Boolean prev_cmd)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 
 // This UI event is currently undocumented.

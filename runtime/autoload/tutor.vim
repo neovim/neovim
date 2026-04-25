@@ -14,7 +14,8 @@ endfunction
 
 " Loads metadata file, if available
 function! tutor#LoadMetadata()
-    let b:tutor_metadata = json_decode(join(readfile(expand('%').'.json'), "\n"))
+    let l:metadata_file = exists('b:tutor_file') ?  b:tutor_file : expand('%')
+    let b:tutor_metadata = json_decode(readfile(l:metadata_file .. '.json'))
 endfunction
 
 " Mappings: {{{1
@@ -74,46 +75,6 @@ function! tutor#TutorFolds()
         return ">". len(matchstr(getline(v:lnum), '^#\{1,6}'))
     else
         return "="
-    endif
-endfunction
-
-" Marks: {{{1
-
-function! tutor#ApplyMarks()
-    hi! link tutorExpect Special
-    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
-        let b:tutor_sign_id = 1
-        for expct in keys(b:tutor_metadata['expect'])
-            let lnum = eval(expct)
-            call matchaddpos('tutorExpect', [lnum])
-            call tutor#CheckLine(lnum)
-        endfor
-    endif
-endfunction
-
-function! tutor#ApplyMarksOnChanged()
-    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
-        let lnum = line('.')
-        if index(keys(b:tutor_metadata['expect']), string(lnum)) > -1
-            call tutor#CheckLine(lnum)
-        endif
-    endif
-endfunction
-
-function! tutor#CheckLine(line)
-    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
-        let bufn = bufnr('%')
-        let ctext = getline(a:line)
-        let signs = sign_getplaced(bufn, {'lnum': a:line})[0].signs
-        if !empty(signs)
-            call sign_unplace('', {'id': signs[0].id})
-        endif
-        if b:tutor_metadata['expect'][string(a:line)] == -1 || ctext ==# b:tutor_metadata['expect'][string(a:line)]
-            exe "sign place ".b:tutor_sign_id." line=".a:line." name=tutorok buffer=".bufn
-        else
-            exe "sign place ".b:tutor_sign_id." line=".a:line." name=tutorbad buffer=".bufn
-        endif
-        let b:tutor_sign_id+=1
     endif
 endfunction
 
@@ -224,8 +185,14 @@ function! tutor#TutorCmd(tutor_name)
         let l:to_open = l:tutors[l:tutor_to_open-1]
     endif
 
+    let l:tutor_file_og = l:to_open
+    let l:tutor_file_tmp = tempname() .. '.' .. fnamemodify(l:tutor_file_og, ':t')
+    call filecopy(l:tutor_file_og, l:tutor_file_tmp)
+
     call tutor#SetupVim()
-    exe "edit ".l:to_open
+    exe "drop" fnameescape(l:tutor_file_tmp)
+    let b:tutor_file = l:tutor_file_og
+    call tutor#LoadMetadata()
     call tutor#EnableInteractive(v:true)
     call tutor#ApplyTransform()
 endfunction
@@ -240,12 +207,12 @@ endfunction
 function! tutor#EnableInteractive(enable)
     let enable = a:enable
     if enable
-        setlocal buftype=nofile
+        setlocal buftype=nowrite
         setlocal concealcursor+=inv
         setlocal conceallevel=2
-        call tutor#ApplyMarks()
+        lua require('nvim.tutor').apply_marks()
         augroup tutor_interactive
-            autocmd! TextChanged,TextChangedI <buffer> call tutor#ApplyMarksOnChanged()
+            autocmd! TextChanged,TextChangedI <buffer> lua require('nvim.tutor').apply_marks_on_changed()
         augroup END
     else
         setlocal buftype<

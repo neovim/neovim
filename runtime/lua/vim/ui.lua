@@ -10,6 +10,16 @@ local M = {}
 --- individual item from `items`. Defaults to `tostring`.
 ---@field format_item? fun(item: any):string
 ---
+--- Function to preview an individual item from `items`.
+--- If missing, no special preview is used.
+--- Should ensure a buffer with contents (text, highlighting) providing details about an item.
+--- Should return a table with information that `vim.ui.select` implementations may
+--- use to show the preview buffer in the way they see fit:
+---     - {buf}? (`integer`) - buffer id with preview. If missing, no preview should be shown.
+---     - {pos}? (`[integer, integer]`) - (1,0)-indexed tuple of where to position cursor
+---       in the preview buffer. If missing, should be treated as `{ 1, 0 }`.
+---@field preview_item? fun(item: any):table
+---
 --- Arbitrary hint string indicating the item shape.
 --- Plugins reimplementing `vim.ui.select` may wish to
 --- use this to infer the structure or semantics of
@@ -23,16 +33,20 @@ local M = {}
 ---
 --- ```lua
 --- vim.ui.select({ 'tabs', 'spaces' }, {
----     prompt = 'Select tabs or spaces:',
----     format_item = function(item)
----         return "I'd like to choose " .. item
----     end,
+---   prompt = 'Select tabs or spaces:',
+---   format_item = function(item)
+---     return ('I choose %s!'):format(item)
+---   end,
+---   preview_item = function(item)
+---     local lines = { 'This is ' .. vim.inspect(item) }
+---     local buf = vim.api.nvim_create_buf(false, true)
+---     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+---     vim.bo[buf].bufhidden = 'wipe'
+---     return { buf = buf }
+---   end,
 --- }, function(choice)
----     if choice == 'spaces' then
----         vim.o.expandtab = true
----     else
----         vim.o.expandtab = false
----     end
+---   vim.o.expandtab = choice == 'spaces'
+---   vim.print(('Selected "%s" => expandtab=%s'):format(choice, vim.o.expandtab))
 --- end)
 --- ```
 ---
@@ -166,29 +180,79 @@ function M.open(path, opt)
 
   if opt.cmd then
     cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { path })
-  elseif vim.fn.has('mac') == 1 then
-    cmd = { 'open', path }
-  elseif vim.fn.has('win32') == 1 then
-    if vim.fn.executable('rundll32') == 1 then
-      cmd = { 'rundll32', 'url.dll,FileProtocolHandler', path }
-    else
-      return nil, 'vim.ui.open: rundll32 not found'
-    end
-  elseif vim.fn.executable('xdg-open') == 1 then
-    cmd = { 'xdg-open', path }
-    job_opt.stdout = false
-    job_opt.stderr = false
-  elseif vim.fn.executable('wslview') == 1 then
-    cmd = { 'wslview', path }
-  elseif vim.fn.executable('explorer.exe') == 1 then
-    cmd = { 'explorer.exe', path }
-  elseif vim.fn.executable('lemonade') == 1 then
-    cmd = { 'lemonade', 'open', path }
   else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+    local open_cmd, err = M._get_open_cmd()
+    if err then
+      return nil, err
+    end
+    ---@cast open_cmd string[]
+    if open_cmd[1] == 'xdg-open' then
+      job_opt.stdout = false
+      job_opt.stderr = false
+    end
+    cmd = vim.list_extend(open_cmd, { path })
   end
 
   return vim.system(cmd, job_opt), nil
+end
+
+--- Get an available command used to open the path or URL.
+---
+--- @return string[]|nil # Command, or nil if not found.
+--- @return nil|string # Error message on failure, or nil on success.
+function M._get_open_cmd()
+  if vim.fn.has('mac') == 1 then
+    return { 'open' }, nil
+  elseif vim.fn.has('win32') == 1 then
+    return { 'cmd.exe', '/c', 'start', '' }, nil
+  elseif vim.fn.executable('xdg-open') == 1 then
+    return { 'xdg-open' }, nil
+  elseif vim.fn.executable('wslview') == 1 then
+    return { 'wslview' }, nil
+  elseif vim.fn.executable('explorer.exe') == 1 then
+    return { 'explorer.exe' }, nil
+  elseif vim.fn.executable('lemonade') == 1 then
+    return { 'lemonade', 'open' }, nil
+  else
+    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+  end
+end
+
+--- @param bufnr integer
+local get_lsp_urls = function(bufnr)
+  local has_lsp_support = false
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+    has_lsp_support = has_lsp_support or client:supports_method('textDocument/documentLink', bufnr)
+  end
+  if not has_lsp_support then
+    return {}
+  end
+  local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
+  local results = vim.lsp.buf_request_sync(bufnr, 'textDocument/documentLink', params)
+
+  local urls = {}
+  for client_id, result in pairs(results or {}) do
+    if result.error then
+      vim.lsp.log.error(result.error)
+    else
+      local client = assert(vim.lsp.get_client_by_id(client_id))
+      local lsp_position = vim.lsp.util.make_position_params(0, client.offset_encoding).position
+      local position = vim.pos.lsp(bufnr, lsp_position, client.offset_encoding)
+
+      local document_links = result.result or {} ---@type lsp.DocumentLink[]
+      for _, document_link in ipairs(document_links) do
+        local range = vim.range.lsp(bufnr, document_link.range, client.offset_encoding)
+        if document_link.target and range:has(position) then
+          local target = document_link.target ---@type string
+          if vim.startswith(target, 'file://') then
+            target = vim.uri_to_fname(target)
+          end
+          table.insert(urls, target)
+        end
+      end
+    end
+  end
+  return urls
 end
 
 --- Returns all URLs at cursor, if any.
@@ -200,6 +264,9 @@ function M._get_urls()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
   local col = cursor[2]
+
+  urls = vim.list_extend(urls, get_lsp_urls(bufnr))
+
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, { row, col }, { row, col }, {
     details = true,
     type = 'highlight',
@@ -251,6 +318,75 @@ function M._get_urls()
   end
 
   return urls
+end
+
+do
+  --- Cache of active progress messages, keyed by msg_id
+  --- TODO(justinmk): visibility of "stale" (never-finished) Progress. https://github.com/neovim/neovim/pull/35428#discussion_r2942696157
+  ---@type table<integer, vim.event.progress.data>
+  local progress = {}
+
+  -- store progress events
+  local progress_group, progress_autocmd = nil, nil
+
+  --- Initialize Progress handlers.
+  local function progress_init()
+    progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
+    progress_autocmd = vim.api.nvim_create_autocmd('Progress', {
+      group = progress_group,
+      desc = 'Tracks progress messages for vim.ui.progress_status()',
+      ---@param ev {data: vim.event.progress.data}
+      callback = function(ev)
+        if not ev.data or not ev.data.id then
+          return
+        end
+        ev.data.percent = ev.data.percent or 0
+        progress[ev.data.id] = ev.data
+
+        -- Clear finished items
+        if
+          ev.data.status == 'success'
+          or ev.data.percent == 100
+          or ev.data.status == 'failed'
+          or ev.data.status == 'cancel'
+        then
+          progress[ev.data.id] = nil
+        end
+      end,
+    })
+  end
+
+  --- Gets a status description summarizing currently running progress messages.
+  --- - If none: returns empty string
+  --- - If N item running: "AVG%(N)"
+  ---@param running vim.event.progress.data[]
+  ---@return string
+  local function progress_status_fmt(running)
+    local count = #running
+    if count == 0 then
+      return '' -- nothing to show
+    else
+      local sum = 0 ---@type integer
+      for _, progress_item in ipairs(running) do
+        sum = sum + (progress_item.percent or 0)
+      end
+      local avg = math.floor(sum / count)
+      return string.format('%d%%%%(%d) ', avg, count)
+    end
+  end
+
+  --- Gets a status description summarizing currently running progress messages.
+  --- Convenient for inclusion in 'statusline'.
+  ---
+  ---@return string # Progress status
+  function M.progress_status()
+    if progress_autocmd == nil then
+      progress_init()
+    end
+
+    local running = vim.tbl_values(progress)
+    return progress_status_fmt(running) or ''
+  end
 end
 
 return M

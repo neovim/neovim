@@ -3,6 +3,10 @@ Checks: >
   Enable all warnings by default. This ensures we don't miss new and useful
   warnings when a new version of clang-tidy is dropped.
 
+  To list all available checks:
+
+      clang-tidy --list-checks --checks="*"
+
   IMPORTANT
   clang-tidy doesn't support comments but we can simulate comments by just
   writing text directly here. These are then interpreted as warnings and will
@@ -34,10 +38,13 @@ Checks: >
   -hicpp-signed-bitwise,
   -misc-unused-parameters,
   -modernize-macro-to-enum,
+  -readability-avoid-const-params-in-decls, Cosmetic: our generated declarations inherit const from definitions,
   -readability-avoid-nested-conditional-operator,
+  -readability-avoid-unconditional-preprocessor-if, False positive in generated config.h,
   -readability-else-after-return,
   -readability-enum-initial-value,
   -readability-function-size,
+  -readability-implicit-bool-conversion,
   -readability-isolate-declaration,
 
   Warnings that are rarely useful,
@@ -45,6 +52,7 @@ Checks: >
   -android-*,
   -bugprone-easily-swappable-parameters,
   -bugprone-inc-dec-in-conditions,
+  -bugprone-reserved-identifier, We use underscore prefix to indicate private names (e.g. "_shada_mark"),
   -bugprone-swapped-arguments,
   -clang-analyzer-*, Already covered by the cmake target "clang-analyzer",
   -cppcoreguidelines-avoid-non-const-global-variables,
@@ -55,12 +63,14 @@ Checks: >
   -misc-misplaced-const,
   -misc-no-recursion,
   -performance-no-int-to-ptr,
+  -portability-avoid-pragma-once,
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-magic-numbers,
   -readability-math-missing-parentheses,
   -readability-redundant-declaration, Conflicts with our header generation scripts,
   -readability-suspicious-call-argument,
+  -readability-use-concise-preprocessor-directives,
 
   Aliases. These are just duplicates of other warnings and should always be ignored,
   -bugprone-narrowing-conversions,

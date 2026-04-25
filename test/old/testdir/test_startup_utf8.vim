@@ -62,6 +62,8 @@ endfunc
 
 func Test_detect_fifo()
   CheckUnix
+  " On OpenBSD /dev/fd/n files are character special, not FIFO
+  CheckNotOpenBSD
   " Using bash/zsh's process substitution.
   if executable('bash')
     set shell=bash

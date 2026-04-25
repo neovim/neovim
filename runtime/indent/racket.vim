@@ -3,7 +3,7 @@
 " Maintainer:           D. Ben Knoble <ben.knoble+github@gmail.com>
 " Previous Maintainer:  Will Langstroth <will@langstroth.com>
 " URL:                  https://github.com/benknoble/vim-racket
-" Last Change:          2024 Nov 12
+" Last Change:          2025 Aug 09
 
 if exists("b:did_indent")
    finish
@@ -16,6 +16,7 @@ if has('vim9script')
 endif
 
 setlocal lispwords+=module,module*,module+,parameterize,parameterize*,let-values,let*-values,letrec-values,local
+setlocal lispwords+=splicing-let,splicing-letrec,splicing-let-values,splicing-letrec-values,splicing-local,splicing-parameterize
 setlocal lispwords+=define/contract
 setlocal lispwords+=λ
 setlocal lispwords+=with-handlers
@@ -50,7 +51,7 @@ setlocal lispwords+=fresh,run,run*,project,conde,condu
 
 " loops
 setlocal lispwords+=for,for/list,for/fold,for*,for*/list,for*/fold,for/or,for/and,for*/or,for*/and
-setlocal lispwords+=for/hash,for/hasheq,for/hasheqv,for/sum,for/flvector,for*/flvector,for/vector,for*/vector,for*/sum,for*/hash,for*/hasheq,for*/hasheqv
+setlocal lispwords+=for/hash,for/hasheq,for/hasheqv,for/sum,for/flvector,for*/flvector,for/vector,for*/vector,for/fxvector,for*/fxvector,for*/sum,for*/hash,for*/hasheq,for*/hasheqv
 setlocal lispwords+=for/async
 setlocal lispwords+=for/set,for*/set
 setlocal lispwords+=for/first,for*/first

@@ -15,9 +15,7 @@
 #include "nvim/message.h"
 #include "nvim/spell.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/spell.c.generated.h"  // IWYU pragma: keep
-#endif
+#include "lua/spell.c.generated.h"  // IWYU pragma: keep
 
 int nlua_spell_check(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL

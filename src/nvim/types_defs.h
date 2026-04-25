@@ -31,9 +31,11 @@ typedef double float_T;
 
 typedef struct MsgpackRpcRequestHandler MsgpackRpcRequestHandler;
 
+/// vimfn metatdata defined in `src/nvim/eval.lua`.
 typedef union {
-  float_T (*float_func)(float_T);
-  const MsgpackRpcRequestHandler *api_handler;
+  float_T (*func_float)(float_T);
+  const MsgpackRpcRequestHandler *func_api;  // Vimscript bridge to API fn (eval=true in eval.lua).
+  const char *func_lua;  ///< Lua-implemented vimfn.
   void *null;
 } EvalFuncData;
 
@@ -62,11 +64,25 @@ typedef struct regprog regprog_T;
 typedef struct syn_state synstate_T;
 typedef struct terminal Terminal;
 typedef struct window_S win_T;
+typedef struct mtnode_s MTNode;
 
 typedef struct {
   uint32_t nitems;
   uint32_t nbytes;
   char data[];
 } AdditionalData;
+
+// Used by marktree.c `marktree_splice`. Need to keep track of marks which moved
+// in order to repair intersections.
+typedef struct {
+  MTNode *old, *new;
+  int old_i, new_i;
+} MTDamage;
+typedef struct {
+  MTDamage start;
+  MTDamage end;
+} MTDamagePair;
+#define MTDAMAGE_INIT { .old = NULL, .new = NULL, .old_i = 0, .new_i = 0 }
+#define MTDAMAGE_PAIR_INIT { .start = MTDAMAGE_INIT, .end = MTDAMAGE_INIT }
 
 typedef kvec_t(char) StringBuilder;

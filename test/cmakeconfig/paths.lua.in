@@ -1,6 +1,6 @@
 local M = {}
 
-M.include_paths = {}
+M.include_paths = {} --- @type string[]
 for p in ("${TEST_INCLUDE_DIRS}" .. ";"):gmatch("[^;]+") do
   table.insert(M.include_paths, p)
 end

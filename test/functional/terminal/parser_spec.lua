@@ -1,11 +1,13 @@
 local n = require('test.functional.testnvim')()
 
-local clear = n.clear
 local api = n.api
 local assert_alive = n.assert_alive
+local clear = n.clear
+local exec_lua = n.exec_lua
 
 local OSC_PREFIX = string.char(0x1b, 0x5d)
 local BEL = string.char(0x07)
+local ST = string.char(0x1b, 0x5c)
 local NUL = string.char(0x00)
 
 describe(':terminal', function()
@@ -58,6 +60,49 @@ describe(':terminal', function()
     end
     input = input .. NUL .. NUL
     api.nvim_chan_send(chan, input)
+    assert_alive()
+  end)
+
+  it('uses terminator matching query for OSC TermRequest #37018', function()
+    local chan = api.nvim_open_term(0, {})
+    exec_lua([[
+      vim.api.nvim_create_autocmd("TermRequest", {
+        callback = function(ev)
+          _G.osc10_response = {sequence = ev.data.sequence, terminator = ev.data.terminator }
+        end
+      })
+    ]])
+
+    local function send_osc_with_terminator(terminator)
+      local input = OSC_PREFIX .. '10;?' .. terminator
+      api.nvim_chan_send(chan, input)
+    end
+
+    send_osc_with_terminator(BEL)
+    --- @type string
+    assert.eq(
+      { sequence = OSC_PREFIX .. '10;?', terminator = BEL },
+      exec_lua([[return _G.osc10_response]])
+    )
+
+    send_osc_with_terminator(ST)
+    --- @type string
+    assert.eq(
+      { sequence = OSC_PREFIX .. '10;?', terminator = ST },
+      exec_lua([[return _G.osc10_response]])
+    )
+  end)
+
+  it('does not leak pending TermRequest on buffer destroy #39332', function()
+    -- Send all OSC sequences in one exec_lua so that the event loop does not drain between the sends.
+    exec_lua(function(prefix, st)
+      local buf = vim.api.nvim_create_buf(false, true)
+      local chan = vim.api.nvim_open_term(buf, {})
+      vim.api.nvim_create_autocmd('TermRequest', { buffer = buf, callback = function() end })
+      vim.api.nvim_chan_send(chan, prefix .. '7;file:///a' .. st)
+      vim.api.nvim_chan_send(chan, prefix .. '7;file:///b' .. st)
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end, OSC_PREFIX, ST)
     assert_alive()
   end)
 end)

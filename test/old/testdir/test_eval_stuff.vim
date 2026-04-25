@@ -272,6 +272,17 @@ func Test_string_concat_scriptversion1()
   endif
 endfunc
 
+" scriptversion 2
+func Test_vvar_scriptversion2()
+  call assert_true(exists('version'))
+  echo version
+  call assert_fails('let version = 1', 'E46:')
+  call assert_equal(v:version, version)
+
+  call assert_equal(v:version, v:versionlong / 10000)
+  call assert_true(v:versionlong > 8011525)
+endfunc
+
 " scriptversion 1
 func Test_vvar_scriptversion1()
   call assert_equal(15, 017)

@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = n.clear
 local insert = n.insert
 local exec_lua = n.exec_lua
+local eval = n.eval
 local feed = n.feed
 local command = n.command
 local api = n.api
@@ -197,6 +198,14 @@ describe('treesitter highlighting (C)', function()
     end)
     -- legacy syntax highlighting is used
     screen:expect(hl_grid_legacy_c)
+
+    exec_lua(function()
+      vim.cmd 'new | wincmd p'
+      vim.treesitter.start()
+      vim.cmd 'bdelete!'
+    end)
+    -- Does not change &syntax of the other, unrelated buffer.
+    eq('', eval('&syntax'))
   end)
 
   it('is updated with edits', function()
@@ -550,24 +559,13 @@ describe('treesitter highlighting (C)', function()
     screen:expect([=[
       {18:-- }{25:print}{16:(}{26:[[}                                                      |
       {18:--}{26: some}                                                          |
-      {18:-- random}                                                        |
-      {18:-- text}                                                          |
-      {18:-- here]])}                                                       |
+      {18:--}{26: random}                                                        |
+      {18:--}{26: text}                                                          |
+      {18:--}{26: here]]}{16:)}                                                       |
       ^                                                                 |
       {1:~                                                                }|*11
                                                                        |
     ]=])
-    -- NOTE: Once #31777 is fixed, this test case should be updated to the following:
-    -- screen:expect([=[
-    --   {18:-- }{25:print}{16:(}{26:[[}                                                      |
-    --   {18:--}{26: some}                                                          |
-    --   {18:--}{26: random}                                                        |
-    --   {18:--}{26: text}                                                          |
-    --   {18:--}{26: here]]}{16:)}                                                       |
-    --   ^                                                                   |
-    --   {1:~                                                                }|*11
-    --                                                                    |
-    -- ]=])
   end)
 
   it('supports complicated combined injections', function()
@@ -866,6 +864,37 @@ describe('treesitter highlighting (C)', function()
     })
   end)
 
+  it('supports @noconceal', function()
+    insert([[
+      int foo = bar;
+    ]])
+
+    exec_lua(function()
+      vim.opt.cole = 2
+      local parser = vim.treesitter.get_parser(0, 'c')
+      vim.treesitter.highlighter.new(parser, {
+        queries = {
+          c = [[
+        ((identifier) @conceal
+         (#set! conceal "X"))
+
+        ((identifier) @noconceal
+         (#eq? @noconceal "bar"))
+      ]],
+        },
+      })
+    end)
+
+    screen:expect({
+      grid = [[
+        int {14:X} = bar;                                                     |
+        ^                                                                 |
+        {1:~                                                                }|*15
+                                                                         |
+      ]],
+    })
+  end)
+
   it('@foo.bar groups has the correct fallback behavior', function()
     local get_hl = function(name)
       return api.nvim_get_hl_by_name(name, 1).foreground
@@ -979,6 +1008,26 @@ describe('treesitter highlighting (C)', function()
                                                                          |
       ]],
     })
+  end)
+
+  it('#35575', function()
+    -- Window size is 14x14, and first string literal ends at byte 14
+    -- See: https://github.com/neovim/neovim/pull/35587
+    screen:try_resize(14, 15)
+
+    exec_lua(function()
+      local line = 'A a="\240\157\158\140\240\157\158\140" "aaaaaaaaaaaaaaaaaaaaaaaa";'
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, { line })
+      vim.cmd('set nowrap')
+      vim.treesitter.query.set('c', 'highlights', hl_query_c)
+      vim.treesitter.start(0, 'c')
+    end)
+
+    screen:expect([[
+      {6:^A} a={26:"𝞌𝞌"} {26:"aaaa}|
+      {1:~             }|*13
+                    |
+    ]])
   end)
 end)
 
@@ -1445,7 +1494,7 @@ end)
 
 it('no nil index for missing highlight query', function()
   clear()
-  local cqueries = vim.uv.cwd() .. '/runtime/queries/c/'
+  local cqueries = t.paths.test_source_path .. '/runtime/queries/c/'
   os.rename(cqueries .. 'highlights.scm', cqueries .. '_highlights.scm')
   finally(function()
     os.rename(cqueries .. '_highlights.scm', cqueries .. 'highlights.scm')
@@ -1454,4 +1503,24 @@ it('no nil index for missing highlight query', function()
     local parser = vim.treesitter.get_parser(0, 'c')
     vim.treesitter.highlighter.new(parser)
   ]])
+end)
+
+it('spell navigation correctly wraps back to the first line (Row 0) #36970', function()
+  clear()
+  insert([[
+mispelledone
+mispelledtwo]])
+
+  command('set spell')
+  command('set wrapscan')
+  exec_lua(function()
+    vim.treesitter.start(0, 'markdown')
+  end)
+
+  api.nvim_win_set_cursor(0, { 2, 0 })
+
+  feed(']s')
+
+  local pos = api.nvim_win_get_cursor(0)
+  eq(1, pos[1], 'Should have wrapped back to Line 1')
 end)

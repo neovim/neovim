@@ -1170,5 +1170,32 @@ func Test_mkspell_empty_dic()
   call delete('XtestEmpty.spl')
 endfunc
 
+" This used to cause a buffer overflow
+func Test_mkspell_no_buffer_overflow()
+  CheckNotMSWindows
+
+  let aff_lines = ['SET ISO8859-1', 'SFX A Y 1',
+        \ 'SFX A 0 s ' .. repeat(nr2char(0xff), 491)]
+  call writefile(aff_lines, 'Xbof.aff', 'D')
+  call writefile(['1', 'word/A'], 'Xbof.dic', 'D')
+  " Must not crash; ignore any conversion/regex errors.
+  try
+    mkspell! Xbof.spl Xbof
+  catch
+  endtry
+  defer delete('Xbof.spl')
+
+  let long = repeat(nr2char(0xff), 200)
+  let aff2_lines = ['SET ISO8859-1', 'SFX A Y 1',
+        \ 'SFX A 0 ' .. long .. ' .']
+  call writefile(aff2_lines, 'Xbof2.aff', 'D')
+  call writefile(['1', long .. '/A'], 'Xbof2.dic', 'D')
+  try
+    mkspell! Xbof2.spl Xbof2
+  catch
+  endtry
+  defer delete('Xbof2.spl')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

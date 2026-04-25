@@ -11,7 +11,6 @@ local eq, call, clear, eval, feed_command, feed, api =
 local command = n.command
 local insert = n.insert
 local expect = n.expect
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local is_os = t.is_os
 
@@ -131,11 +130,16 @@ describe('system()', function()
 
     before_each(function()
       screen = Screen.new()
+      t.write_file('Xmorefile', ('line1\nline2\nline3\n'):rep(10))
+    end)
+
+    after_each(function()
+      os.remove('Xmorefile')
     end)
 
     if is_os('win') then
       local function test_more()
-        eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
+        eq('line1', eval([[get(split(system('"more" "Xmorefile"'), "\n"), 0, '')]]))
       end
       local function test_shell_unquoting()
         eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
@@ -159,6 +163,11 @@ describe('system()', function()
         eval([[system('cd "C:\Program Files"')]])
         eq(0, eval('v:shell_error'))
         test_shell_unquoting()
+      end)
+
+      it('spawns child process with UTF-8 codepage', function()
+        command('set shell=cmd.exe')
+        eq('тест\n', eval([[system('echo тест')]]))
       end)
 
       it('with shell=cmd', function()
@@ -196,10 +205,10 @@ describe('system()', function()
       n.set_shell_powershell()
       eq('ああ\n', eval([[system('Write-Output "ああ"')]]))
       -- Sanity test w/ default encoding
-      -- * on Windows, expected to default to Western European enc
+      -- * on Windows, UTF-8 still works.
       -- * on Linux, expected to default to UTF8
       command([[let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ']])
-      eq(is_os('win') and '??\n' or 'ああ\n', eval([[system('Write-Output "ああ"')]]))
+      eq('ああ\n', eval([[system('Write-Output "ああ"')]]))
     end)
 
     it('`echo` and waits for its return', function()
@@ -347,7 +356,7 @@ describe('system()', function()
     it('is treated as a buffer id', function()
       command("put ='text in buffer 1'")
       eq('\ntext in buffer 1\n', eval('system("cat", 1)'))
-      eq('Vim(echo):E86: Buffer 42 does not exist', exc_exec('echo system("cat", 42)'))
+      eq('Vim(echo):E86: Buffer 42 does not exist', pcall_err(command, 'echo system("cat", 42)'))
     end)
   end)
 
@@ -548,10 +557,10 @@ describe('systemlist()', function()
     n.set_shell_powershell()
     eq({ is_os('win') and 'あ\r' or 'あ' }, eval([[systemlist('Write-Output あ')]]))
     -- Sanity test w/ default encoding
-    -- * on Windows, expected to default to Western European enc
+    -- * on Windows, UTF-8 still works.
     -- * on Linux, expected to default to UTF8
     command([[let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ']])
-    eq({ is_os('win') and '?\r' or 'あ' }, eval([[systemlist('Write-Output あ')]]))
+    eq({ is_os('win') and 'あ\r' or 'あ' }, eval([[systemlist('Write-Output あ')]]))
   end)
 end)
 

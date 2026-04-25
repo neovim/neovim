@@ -2,7 +2,6 @@
 " Language:		eRuby
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
-" Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
 " Last Change:		2019 Jan 06
 
 if exists("b:did_indent")

@@ -1,9 +1,24 @@
 --- @brief
---- Nvim supports EditorConfig. When a file is opened, after running |ftplugin|s
---- and |FileType| autocommands, Nvim searches all parent directories of that file
---- for ".editorconfig" files, parses them, and applies any properties that match
---- the opened file. Think of it like 'modeline' for an entire (recursive)
---- directory. For more information see https://editorconfig.org/.
+--- EditorConfig is like 'modeline' for an entire (recursive) directory. When a file is opened,
+--- after running |ftplugin|s and |FileType| autocommands, the EditorConfig feature searches all
+--- parent directories of that file for `.editorconfig` files, parses them, and applies their
+--- properties. For more information see https://editorconfig.org/.
+---
+--- Example `.editorconfig` file:
+--- ```ini
+--- root = true
+---
+--- [*]
+--- charset = utf-8
+--- end_of_line = lf
+--- indent_size = 4
+--- indent_style = space
+--- max_line_length = 42
+--- trim_trailing_whitespace = true
+---
+--- [*.{diff,md}]
+--- trim_trailing_whitespace = false
+--- ```
 
 --- @brief [g:editorconfig]() [b:editorconfig]()
 ---
@@ -115,7 +130,7 @@ function properties.indent_size(bufnr, val, opts)
     vim.bo[bufnr].shiftwidth = 0
     vim.bo[bufnr].softtabstop = 0
   else
-    local n = assert(tonumber(val), 'indent_size must be a number')
+    local n = assert(vim._tointeger(val), 'indent_size must be an integer')
     vim.bo[bufnr].shiftwidth = n
     vim.bo[bufnr].softtabstop = -1
     if not opts.tab_width then
@@ -126,17 +141,17 @@ end
 
 --- The display size of a single tab character. Sets the 'tabstop' option.
 function properties.tab_width(bufnr, val)
-  vim.bo[bufnr].tabstop = assert(tonumber(val), 'tab_width must be a number')
+  vim.bo[bufnr].tabstop = assert(vim._tointeger(val), 'tab_width must be an integer')
 end
 
 --- A number indicating the maximum length of a single
 --- line. Sets the 'textwidth' option.
 function properties.max_line_length(bufnr, val)
-  local n = tonumber(val)
+  local n = vim._tointeger(val)
   if n then
     vim.bo[bufnr].textwidth = n
   else
-    assert(val == 'off', 'max_line_length must be a number or "off"')
+    assert(val == 'off', 'max_line_length must be an integer or "off"')
     vim.bo[bufnr].textwidth = 0
   end
 end
@@ -150,7 +165,7 @@ function properties.trim_trailing_whitespace(bufnr, val)
   if val == 'true' then
     vim.api.nvim_create_autocmd('BufWritePre', {
       group = 'nvim.editorconfig',
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         local view = vim.fn.winsaveview()
         vim.api.nvim_command('silent! undojoin')
@@ -162,7 +177,7 @@ function properties.trim_trailing_whitespace(bufnr, val)
     vim.api.nvim_clear_autocmds({
       event = 'BufWritePre',
       group = 'nvim.editorconfig',
-      buffer = bufnr,
+      buf = bufnr,
     })
   end
 end
@@ -179,7 +194,7 @@ function properties.insert_final_newline(bufnr, val)
   if vim.bo[bufnr].endofline ~= endofline then
     vim.api.nvim_create_autocmd('BufWritePre', {
       group = 'nvim.editorconfig',
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function()
         vim.bo[bufnr].endofline = endofline

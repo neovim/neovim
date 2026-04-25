@@ -160,8 +160,8 @@ local typedef = P({
   fun = opt(Pf('async')) * Pf('fun') * paren(comma(v.fun_param)) * opt(Pf(':') * comma1(v.fun_ret)),
   generics = P(ty_ident) * Pf('<') * comma1(v.type) * Plf('>'),
 }) / function(match)
-    return vim.trim(match):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?')
-  end
+  return vim.trim(match):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?')
+end
 
 local access = P('private') + P('protected') + P('package')
 local caccess = Cg(access, 'access')

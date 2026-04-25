@@ -105,8 +105,8 @@ function RpcStream:read_stop()
   self._stream:read_stop()
 end
 
-function RpcStream:close(signal)
-  self._stream:close(signal)
+function RpcStream:close(signal, noblock)
+  self._stream:close(signal, noblock)
 end
 
 return RpcStream

@@ -12,7 +12,7 @@ describe('deprecated lua code', function()
     it('returns nil for versions >= 0.12', function()
       local result = exec_lua(function()
         if vim.version.ge(vim.version(), '0.12') then
-          return vim.treesitter.get_parser(0, 'borklang')
+          return (vim.treesitter.get_parser(0, 'borklang'))
         end
         return nil
       end)

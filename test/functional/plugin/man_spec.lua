@@ -12,8 +12,6 @@ local matches = t.matches
 local tmpname = t.tmpname
 local eq = t.eq
 local pesc = vim.pesc
-local skip = t.skip
-local is_ci = t.is_ci
 
 -- Collects all names passed to find_path() after attempting ":Man foo".
 local function get_search_history(name)
@@ -247,16 +245,62 @@ describe(':Man', function()
   end)
 
   it('reports non-existent man pages for absolute paths', function()
-    skip(is_ci('cirrus'))
     local actual_file = tmpname()
     -- actual_file must be an absolute path to an existent file for us to test against it
     matches('^/.+', actual_file)
     local args = { nvim_prog, '--headless', '+:Man ' .. actual_file, '+q' }
     matches(
-      ('Error in command line:\r\n' .. 'man.lua: no manual entry for %s'):format(pesc(actual_file)),
+      ('Error in command line:\n' .. 'man.lua: no manual entry for %s'):format(pesc(actual_file)),
       fn.system(args, { '' })
     )
     os.remove(actual_file)
+  end)
+
+  -- if man -w returns multiple results, :Man should select the correct one.
+  it('matches correct manpage section and name', function()
+    -- mock the system function to return the results we want to test.
+    local function _test(results, name, sect)
+      return exec_lua(function()
+        local man = require 'man'
+        return man._match_manpage_path(results, name, sect)
+      end)
+    end
+
+    eq(
+      '/usr/share/man/man3/strcpy.3',
+      _test({
+        '/usr/share/man/man3/strcpy.3',
+        '/usr/share/man/man3/string.3',
+      }, 'strcpy')
+    )
+
+    eq(
+      '/usr/share/man/man3/strcpy.3',
+      _test({
+        '/usr/share/man/man3/string.3',
+        '/usr/share/man/man3/strcpy.3',
+      }, 'strcpy')
+    )
+
+    eq(
+      '/usr/share/man/man3/strcpy.3',
+      _test({
+        '/usr/share/man/man3p/strcpy.3p',
+        '/usr/share/man/man3/strcpy.3',
+        '/usr/share/man/man3/string.3',
+        '/usr/share/man/man7/string_copying.7',
+      }, 'strcpy', '3')
+    )
+
+    eq(
+      '/usr/share/man/man3/strcpy.3.gz',
+      _test({
+        '/usr/share/man/man3p/strcpy.3p.gz',
+        '/usr/share/man/man3/strcpy.3.gz',
+        '/usr/share/man/man3/string.3.gz',
+        '/usr/share/man/man7/string_copying.7.gz',
+      }, 'strcpy', '3')
+    )
   end)
 
   it('tries variants with spaces, underscores #22503', function()

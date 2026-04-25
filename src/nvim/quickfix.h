@@ -14,6 +14,4 @@ enum {
   VGR_FUZZY  = 4,
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "quickfix.h.generated.h"
-#endif
+#include "quickfix.h.generated.h"

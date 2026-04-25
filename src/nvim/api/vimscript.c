@@ -10,6 +10,7 @@
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
@@ -29,9 +30,7 @@
 #include "nvim/viml/parser/parser.h"
 #include "nvim/viml/parser/parser_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/vimscript.c.generated.h"
-#endif
+#include "api/vimscript.c.generated.h"
 
 /// Executes Vimscript (multiline block of Ex commands), like anonymous
 /// |:source|.
@@ -72,6 +71,7 @@ Dict nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *e
 String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
 {
   const int save_msg_silent = msg_silent;
+  const bool save_redir_off = redir_off;
   garray_T *const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
   garray_T capture_local;
@@ -83,6 +83,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
   TRY_WRAP(err, {
     if (opts->output) {
       msg_silent++;
+      redir_off = false;
       msg_col = 0;  // prevent leading spaces
     }
 
@@ -92,6 +93,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
     if (opts->output) {
       capture_ga = save_capture_ga;
       msg_silent = save_msg_silent;
+      redir_off = save_redir_off;
       // Put msg_col back where it was, since nothing should have been written.
       msg_col = save_msg_col;
     }
@@ -130,13 +132,13 @@ theend:
 /// Prefer |nvim_cmd()| or |nvim_exec2()| instead. To modify an Ex command in a structured way
 /// before executing it, modify the result of |nvim_parse_cmd()| then pass it to |nvim_cmd()|.
 ///
-/// @param command  Ex command string
+/// @param cmd  Ex command string
 /// @param[out] err Error details (Vim error), if any
-void nvim_command(String command, Error *err)
+void nvim_command(String cmd, Error *err)
   FUNC_API_SINCE(1)
 {
   TRY_WRAP(err, {
-    do_cmdline_cmd(command.data);
+    do_cmdline_cmd(cmd.data);
   });
 }
 
@@ -302,8 +304,9 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
     object_to_vim(dict, &rettv, err);
     break;
   default:
-    api_set_error(err, kErrorTypeValidation, "dict argument type must be String or Dict");
-    return rv;
+    VALIDATE_EXP(false, "dict argument", "String or Dict", NULL, {
+      return rv;
+    });
   }
   dict_T *self_dict = rettv.vval.v_dict;
   if (rettv.v_type != VAR_DICT || !self_dict) {
@@ -313,29 +316,26 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
 
   if (fn.data && fn.size > 0 && dict.type != kObjectTypeDict) {
     dictitem_T *const di = tv_dict_find(self_dict, fn.data, (ptrdiff_t)fn.size);
-    if (di == NULL) {
-      api_set_error(err, kErrorTypeValidation, "Not found: %s", fn.data);
+    VALIDATE(di != NULL, "Not found: %s", fn.data, {
       goto end;
-    }
+    });
     if (di->di_tv.v_type == VAR_PARTIAL) {
       api_set_error(err, kErrorTypeValidation,
                     "partial function not supported");
       goto end;
     }
-    if (di->di_tv.v_type != VAR_FUNC) {
-      api_set_error(err, kErrorTypeValidation, "Not a function: %s", fn.data);
+    VALIDATE((di->di_tv.v_type == VAR_FUNC), "Not a function: %s", fn.data, {
       goto end;
-    }
+    });
     fn = (String) {
       .data = di->di_tv.vval.v_string,
       .size = strlen(di->di_tv.vval.v_string),
     };
   }
 
-  if (!fn.data || fn.size < 1) {
-    api_set_error(err, kErrorTypeValidation, "Invalid (empty) function name");
+  VALIDATE((fn.data && fn.size >= 1), "Invalid function name: %s", "(empty)", {
     goto end;
-  }
+  });
 
   rv = _call_function(fn, args, self_dict, arena, err);
 end:
@@ -369,7 +369,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                    - "E" to parse like for `"<C-r>="`.
 ///                    - empty string for ":call".
 ///                    - "lm" to parse for ":let".
-/// @param[in]  highlight  If true, return value will also include "highlight"
+/// @param[in]  hl  If true, return value will also include "highlight"
 ///                        key containing array of 4-tuples (arrays) (Integer,
 ///                        Integer, Integer, String), where first three numbers
 ///                        define the highlighted region and represent line,
@@ -381,7 +381,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///        - "error": Dict with error, present only if parser saw some
 ///                 error. Contains the following keys:
 ///          - "message": String, error message in printf format, translated.
-///                       Must contain exactly one "%.*s".
+///                       Must contain exactly one `%.*s`.
 ///          - "arg": String, error message argument.
 ///        - "len": Amount of bytes successfully parsed. With flags equal to ""
 ///                 that should be equal to the length of expr string.
@@ -427,7 +427,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///        - "svalue": String, value for "SingleQuotedString" and
 ///                    "DoubleQuotedString" nodes.
 /// @param[out] err Error details, if any
-Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *arena, Error *err)
+Dict nvim_parse_expression(String expr, String flags, Boolean hl, Arena *arena, Error *err)
   FUNC_API_SINCE(4) FUNC_API_FAST
 {
   int pflags = 0;
@@ -460,14 +460,14 @@ Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *
   ParserLine *plines_p = parser_lines;
   ParserHighlight colors;
   kvi_init(colors);
-  ParserHighlight *const colors_p = (highlight ? &colors : NULL);
+  ParserHighlight *const colors_p = (hl ? &colors : NULL);
   ParserState pstate;
   viml_parser_init(&pstate, parser_simple_get_line, &plines_p, colors_p);
   ExprAST east = viml_pexpr_parse(&pstate, pflags);
 
   const size_t ret_size = (2  // "ast", "len"
                            + (size_t)(east.err.msg != NULL)  // "error"
-                           + (size_t)highlight  // "highlight"
+                           + (size_t)hl  // "highlight"
                            + 0);
 
   Dict ret = arena_dict(arena, ret_size);
@@ -480,8 +480,8 @@ Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *
     PUT_C(err_dict, "arg", CBUF_TO_ARENA_OBJ(arena, east.err.arg, (size_t)east.err.arg_len));
     PUT_C(ret, "error", DICT_OBJ(err_dict));
   }
-  if (highlight) {
-    Array hl = arena_array(arena, kv_size(colors));
+  if (hl) {
+    Array hl_arr = arena_array(arena, kv_size(colors));
     for (size_t i = 0; i < kv_size(colors); i++) {
       const ParserHighlightChunk chunk = kv_A(colors, i);
       Array chunk_arr = arena_array(arena, 4);
@@ -490,9 +490,9 @@ Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *
       ADD_C(chunk_arr, INTEGER_OBJ((Integer)chunk.end_col));
       ADD_C(chunk_arr, CSTR_AS_OBJ(chunk.group));
 
-      ADD_C(hl, ARRAY_OBJ(chunk_arr));
+      ADD_C(hl_arr, ARRAY_OBJ(chunk_arr));
     }
-    PUT_C(ret, "highlight", ARRAY_OBJ(hl));
+    PUT_C(ret, "highlight", ARRAY_OBJ(hl_arr));
   }
   kvi_destroy(colors);
 
@@ -545,6 +545,9 @@ Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *
           .ret_node_p = &children_array.items[0],
         }));
       } else if (node->next != NULL) {
+        // ret_node_p + 1 is valid: we're in a children_array (root node never
+        // has "next"). kv_size > 1 confirms we're not at root.
+        assert(kv_size(ast_conv_stack) > 1);
         kvi_push(ast_conv_stack, ((ExprASTConvStackItem) {
           .node_p = &node->next,
           .ret_node_p = cur_item.ret_node_p + 1,

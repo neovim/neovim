@@ -82,8 +82,8 @@ endfunc
 " Read the port number from the Xportnr file.
 func GetPort()
   let l = []
-  " with 200 it sometimes failed
-  for i in range(400)
+  " with 200 it sometimes failed, with 400 is rarily failed
+  for i in range(600)
     try
       let l = readfile("Xportnr")
     catch
@@ -211,11 +211,11 @@ func s:WaitForCommon(expr, assert, timeout)
       call remove(v:errors, -1)
     endif
 
-    sleep 10m
+    sleep 1m
     if exists('*reltimefloat')
       let slept = float2nr(reltimefloat(reltime(start)) * 1000)
     else
-      let slept += 10
+      let slept += 1
     endif
   endwhile
 
@@ -253,17 +253,21 @@ endfunc
 
 " Get $VIMPROG to run the Vim executable.
 " The Makefile writes it as the first line in the "vimcmd" file.
+" Falls back to the Vim executable in the src directory.
 " Nvim: uses $NVIM_TEST_ARG0.
 func GetVimProg()
-  if empty($NVIM_TEST_ARG0)
-    " Assume the script was sourced instead of running "make".
-    return v:progpath
+  if !empty($NVIM_TEST_ARG0)
+    if has('win32')
+      return substitute($NVIM_TEST_ARG0, '/', '\\', 'g')
+    else
+      return $NVIM_TEST_ARG0
+    endif
   endif
-  if has('win32')
-    return substitute($NVIM_TEST_ARG0, '/', '\\', 'g')
-  else
-    return $NVIM_TEST_ARG0
-  endif
+  " echo 'Cannot read the "vimcmd" file, falling back to ../vim.'
+
+  " Probably the script was sourced instead of running "make".
+  " We assume Vim was just build in the src directory then.
+  return v:progpath
 endfunc
 
 let g:valgrind_cnt = 1

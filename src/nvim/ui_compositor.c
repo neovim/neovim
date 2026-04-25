@@ -30,9 +30,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_compositor.c.generated.h"
-#endif
+#include "ui_compositor.c.generated.h"
 
 static int composed_uis = 0;
 kvec_t(ScreenGrid *) layers = KV_INITIAL_VALUE;
@@ -145,8 +143,6 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
   bool moved;
   grid->pending_comp_index_update = true;
 
-  grid->comp_height = height;
-  grid->comp_width = width;
   if (grid->comp_index != 0) {
     moved = (row != grid->comp_row) || (col != grid->comp_col);
     if (ui_comp_should_draw()) {
@@ -155,19 +151,19 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
       // use it.
       grid->comp_disabled = true;
       compose_area(grid->comp_row, row,
-                   grid->comp_col, grid->comp_col + grid->cols);
+                   grid->comp_col, grid->comp_col + grid->comp_width);
       if (grid->comp_col < col) {
         compose_area(MAX(row, grid->comp_row),
-                     MIN(row + height, grid->comp_row + grid->rows),
+                     MIN(row + height, grid->comp_row + grid->comp_height),
                      grid->comp_col, col);
       }
-      if (col + width < grid->comp_col + grid->cols) {
+      if (col + width < grid->comp_col + grid->comp_width) {
         compose_area(MAX(row, grid->comp_row),
-                     MIN(row + height, grid->comp_row + grid->rows),
-                     col + width, grid->comp_col + grid->cols);
+                     MIN(row + height, grid->comp_row + grid->comp_height),
+                     col + width, grid->comp_col + grid->comp_width);
       }
-      compose_area(row + height, grid->comp_row + grid->rows,
-                   grid->comp_col, grid->comp_col + grid->cols);
+      compose_area(row + height, grid->comp_row + grid->comp_height,
+                   grid->comp_col, grid->comp_col + grid->comp_width);
       grid->comp_disabled = false;
     }
     grid->comp_row = row;
@@ -206,6 +202,9 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     grid->comp_index = insert_at;
     grid->pending_comp_index_update = true;
   }
+
+  grid->comp_height = height;
+  grid->comp_width = width;
   if (moved && valid && ui_comp_should_draw()) {
     compose_area(grid->comp_row, grid->comp_row + grid->rows,
                  grid->comp_col, grid->comp_col + grid->cols);
@@ -320,6 +319,15 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
       return grid;
     }
   }
+  if (ui_has(kUIMultigrid)) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      ScreenGrid *grid = &wp->w_grid_alloc;
+      if (grid->mouse_enabled && row >= wp->w_winrow && row < wp->w_winrow + grid->rows
+          && col >= wp->w_wincol && col < wp->w_wincol + grid->cols) {
+        return grid;
+      }
+    }
+  }
   return NULL;
 }
 
@@ -337,7 +345,8 @@ ScreenGrid *ui_comp_get_grid_at_coord(int row, int col)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     ScreenGrid *grid = &wp->w_grid_alloc;
     if (row >= grid->comp_row && row < grid->comp_row + grid->rows
-        && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
+        && col >= grid->comp_col && col < grid->comp_col + grid->cols
+        && !wp->w_config.hide) {
       return grid;
     }
   }
@@ -581,7 +590,7 @@ void ui_comp_raw_line(Integer grid, Integer row, Integer startcol, Integer endco
     endcol = MIN(endcol, clearcol);
   }
 
-  bool covered = curgrid_covered_above((int)row);
+  bool covered = curgrid_covered_above((int)row, (int)row, (int)startcol, (int)clearcol);
   // TODO(bfredl): eventually should just fix compose_line to respect clearing
   // and optimize it for uncovered lines.
   if (flags & kLineFlagInvalid || covered || curgrid->blending) {
@@ -649,14 +658,24 @@ void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep
   msg_was_scrolled = scrolled;
 }
 
-/// check if curgrid is covered on row or above
-///
-/// TODO(bfredl): currently this only handles message row
-static bool curgrid_covered_above(int row)
+/// check if curgrid is covered by any other grid within the rectangle
+static bool curgrid_covered_above(int top, int bot, int left, int right)
 {
-  bool above_msg = (kv_A(layers, kv_size(layers) - 1) == &msg_grid
-                    && row < msg_current_row - (msg_was_scrolled ? 1 : 0));
-  return kv_size(layers) - (above_msg ? 1 : 0) > curgrid->comp_index + 1;
+  // check all layers above curgrid. if any intersect with the given rectangle, then consider the
+  // curgrid covered. account for the msg_sep_row if the msg_grid layer was scrolled.
+  for (size_t i = curgrid->comp_index + 1; i < kv_size(layers); i++) {
+    ScreenGrid *g = kv_A(layers, i);
+    int grid_top = g->comp_row - (g == &msg_grid && msg_was_scrolled ? 1 : 0);
+    int grid_bot = g->comp_row + g->comp_height - 1;
+    int grid_left = g->comp_col;
+    int grid_right = g->comp_col + g->comp_width - 1;
+
+    if (right >= grid_left && left <= grid_right && bot >= grid_top && top <= grid_bot) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer right,
@@ -669,7 +688,7 @@ void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, I
   bot += curgrid->comp_row;
   left += curgrid->comp_col;
   right += curgrid->comp_col;
-  bool covered = curgrid_covered_above((int)(bot - MAX(rows, 0)));
+  bool covered = curgrid_covered_above((int)top, (int)bot, (int)left, (int)right);
 
   if (covered || curgrid->blending) {
     // TODO(bfredl):

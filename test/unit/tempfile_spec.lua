@@ -46,7 +46,7 @@ describe('tempfile related functions', function()
 
     itp('generate name of non-existing file', function()
       local file = vim_tempname()
-      assert.truthy(file)
+      assert(file)
       assert.False(lib.os_path_exists(file))
     end)
 

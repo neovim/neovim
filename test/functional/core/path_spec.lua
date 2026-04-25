@@ -14,8 +14,7 @@ local rmdir = n.rmdir
 local write_file = t.write_file
 
 local function join_path(...)
-  local pathsep = (is_os('win') and '\\' or '/')
-  return table.concat({ ... }, pathsep)
+  return table.concat({ ... }, '/')
 end
 
 describe('path collapse', function()
@@ -115,6 +114,7 @@ describe('file search', function()
       eq(expected, eval('expand("<cfile>")'))
     end
 
+    -- test_cfile([[c:/d:/e:/foo/bar.txt]], 'c:/d:/e') -- TODO(justinmk): should return "d:/foo/bar.txt" ?
     test_cfile([[c:/d:/foo/bar.txt]]) -- TODO(justinmk): should return "d:/foo/bar.txt" ?
     test_cfile([[//share/c:/foo/bar/]])
     test_cfile([[file://c:/foo/bar]])
@@ -157,6 +157,17 @@ describe('file search', function()
       [[127.0.0.1]],
       [[\\127.0.0.1\c$\temp\test-file.txt]]
     )
+  end)
+
+  it('gf/<cfile> handles local file: paths', function()
+    local path = fn.fnamemodify(join_path(testdir, 'gf-target.txt'), ':p'):gsub('\\', '/')
+    local uri = 'file:' .. (is_os('win') and '/' or '') .. path
+    write_file(path, '')
+    insert(uri)
+    command('norm! 0')
+    eq(path, eval('expand("<cfile>")'))
+    feed('gf')
+    eq(path, fn.fnamemodify(eval('expand("%:p")'), ':p'):gsub('\\', '/'))
   end)
 
   ---@param funcname 'finddir' | 'findfile'

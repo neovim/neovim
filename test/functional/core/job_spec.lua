@@ -6,7 +6,6 @@ local tt = require('test.functional.testterm')
 local clear = n.clear
 local eq = t.eq
 local eval = n.eval
-local exc_exec = n.exc_exec
 local feed_command = n.feed_command
 local feed = n.feed
 local insert = n.insert
@@ -48,12 +47,16 @@ describe('jobs', function()
     function! Normalize(data) abort
       " Windows: remove ^M and term escape sequences
       return type([]) == type(a:data)
-        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+        \ ? mapnew(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
         \ : a:data
     endfunction
     function! OnEvent(id, data, event) dict
       let userdata = get(self, 'user')
       let data     = Normalize(a:data)
+      " If Normalize() made non-empty data empty, doesn't send a notification.
+      if type([]) == type(data) && len(data) == 1 && !empty(a:data[0]) && empty(data[0])
+        return
+      endif
       call rpcnotify(g:channel, a:event, userdata, data)
     endfunction
     let g:job_opts = {
@@ -95,6 +98,28 @@ describe('jobs', function()
     command('set nomodified')
     command("call jobstart(['cat', '-'], { 'term': v:true })")
     command("call jobstart(['cat', '-'], { 'term': v:false })")
+  end)
+
+  it('jobstart(term=true) accepts width/height (#33904)', function()
+    local buf = api.nvim_create_buf(false, true)
+    exec_lua(function()
+      vim.api.nvim_buf_call(buf, function()
+        vim.fn.jobstart({
+          vim.v.progpath,
+          '--clean',
+          '--headless',
+          '+lua tty = vim.uv.new_tty(1, false) print(tty:get_winsize()) tty:close()',
+        }, {
+          term = true,
+          width = 11,
+          height = 12,
+          env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
+        })
+      end)
+    end)
+    retry(nil, nil, function()
+      eq({ '11 12' }, api.nvim_buf_get_lines(buf, 0, 1, false))
+    end)
   end)
 
   it('must specify env option as a dict', function()
@@ -224,9 +249,12 @@ describe('jobs', function()
     eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
   end)
 
-  it('changes to given `cwd` directory', function()
+  local function test_job_cwd()
     local dir = eval('resolve(tempname())'):gsub('/', get_pathsep())
     mkdir(dir)
+    finally(function()
+      rmdir(dir)
+    end)
     command("let g:job_opts.cwd = '" .. dir .. "'")
     if is_os('win') then
       command("let j = jobstart('cd', g:job_opts)")
@@ -247,7 +275,15 @@ describe('jobs', function()
         { 'notification', 'exit', { 0, 0 } },
       }
     )
-    rmdir(dir)
+  end
+
+  it('changes to given `cwd` directory', function()
+    test_job_cwd()
+  end)
+
+  it('changes to given `cwd` directory with pty', function()
+    command('let g:job_opts.pty = v:true')
+    test_job_cwd()
   end)
 
   it('fails to change to invalid `cwd`', function()
@@ -264,16 +300,42 @@ describe('jobs', function()
   end)
 
   it('error on non-executable `cwd`', function()
-    skip(is_os('win'), 'Not applicable for Windows')
+    skip(is_os('win'), 'N/A for Windows')
 
     local dir = 'Xtest_not_executable_dir'
     mkdir(dir)
+    finally(function()
+      rmdir(dir)
+    end)
     fn.setfperm(dir, 'rw-------')
+
     matches(
       '^Vim%(call%):E903: Process failed to start: permission denied: .*',
-      pcall_err(command, "call jobstart(['pwd'], {'cwd': '" .. dir .. "'})")
+      pcall_err(command, ("call jobstart(['pwd'], {'cwd': '%s'})"):format(dir))
     )
-    rmdir(dir)
+  end)
+
+  it('error log and exit status 122 on non-executable `cwd`', function()
+    skip(is_os('win'), 'N/A for Windows')
+
+    local logfile = 'Xchdir_fail_log'
+    clear({ env = { NVIM_LOG_FILE = logfile } })
+
+    local dir = 'Xtest_not_executable_dir'
+    mkdir(dir)
+    finally(function()
+      rmdir(dir)
+      n.check_close()
+      os.remove(logfile)
+    end)
+    fn.setfperm(dir, 'rw-------')
+
+    n.exec(([[
+      let s:chan = jobstart(['pwd'], {'cwd': '%s', 'pty': v:true})
+      let g:status = jobwait([s:chan], 1000)[0]
+    ]]):format(dir))
+    eq(122, eval('g:status'))
+    t.assert_log(('chdir%%(%s%%) failed: permission denied'):format(dir), logfile, 100)
   end)
 
   it('returns 0 when it fails to start', function()
@@ -660,7 +722,7 @@ describe('jobs', function()
     source([[
     function PrintArgs(a1, a2, id, data, event)
       " Windows: remove ^M
-      let normalized = map(a:data, 'substitute(v:val, "\r", "", "g")')
+      let normalized = mapnew(a:data, 'substitute(v:val, "\r", "", "g")')
       call rpcnotify(g:channel, '1', a:a1,  a:a2, normalized, a:event)
     endfunction
     let Callback = function('PrintArgs', ["foo", "bar"])
@@ -710,6 +772,50 @@ describe('jobs', function()
         { 'notification', '1', { 'foo', 'bar', { '', '' }, 'stdout' } },
       }
     )
+  end)
+
+  it('lists passed to callbacks are freed if not stored #25891', function()
+    if not exec_lua('return pcall(require, "ffi")') then
+      pending('N/A: missing LuaJIT FFI')
+    end
+
+    source([[
+      let g:stdout = ''
+      func AppendStrOnEvent(id, data, event)
+        let g:stdout ..= join(a:data, "\n")
+      endfunc
+      let g:job_opts = {'on_stdout': function('AppendStrOnEvent')}
+    ]])
+    local job = eval([[jobstart(['cat', '-'], g:job_opts)]])
+
+    exec_lua(function()
+      local ffi = require('ffi')
+      ffi.cdef([[
+        typedef struct listvar_S list_T;
+        list_T *gc_first_list;
+        list_T *tv_list_alloc(ptrdiff_t len);
+        void tv_list_free(list_T *const l);
+      ]])
+      _G.L = ffi.C.tv_list_alloc(1)
+      _G.L_val = ffi.cast('uintptr_t', _G.L)
+      assert(ffi.cast('uintptr_t', ffi.C.gc_first_list) == _G.L_val)
+    end)
+
+    local str_all = ''
+    for _, str in ipairs({ 'LINE1\nLINE2\nLINE3\n', 'LINE4\n', 'LINE5\nLINE6\n' }) do
+      str_all = str_all .. str
+      api.nvim_chan_send(job, str)
+      retry(nil, 1000, function()
+        eq(str_all, api.nvim_get_var('stdout'))
+      end)
+    end
+
+    exec_lua(function()
+      local ffi = require('ffi')
+      assert(ffi.cast('uintptr_t', ffi.C.gc_first_list) == _G.L_val)
+      ffi.C.tv_list_free(_G.L)
+      assert(ffi.cast('uintptr_t', ffi.C.gc_first_list) ~= _G.L_val)
+    end)
   end)
 
   it('jobstart() environment: $NVIM, $NVIM_LISTEN_ADDRESS #11009', function()
@@ -961,16 +1067,14 @@ describe('jobs', function()
       ]],
         timeout = 100,
       }
-      screen:expect {
-        grid = [[
+      screen:expect([[
                                                           |
         {3:                                                  }|
         aaa                                               |
         bbb                                               |
         ccc                                               |
         {6:Press ENTER or type command to continue}^           |
-      ]],
-      }
+      ]])
       feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
     end)
@@ -993,16 +1097,14 @@ describe('jobs', function()
         endfunc
       ]])
       feed_command('call PrintAndPoll()')
-      screen:expect {
-        grid = [[
+      screen:expect([[
                                                           |
         {3:                                                  }|
         aaa                                               |
         bbb                                               |
         ccc                                               |
         {6:Press ENTER or type command to continue}^           |
-      ]],
-      }
+      ]])
       feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
       eq(0, busy)
@@ -1225,7 +1327,7 @@ describe('jobs', function()
       -- Can't wait for the next message in case this test fails, if it fails
       -- there won't be any more messages, and the test would hang.
       vim.uv.sleep(100)
-      local err = exc_exec('call jobpid(j)')
+      local err = pcall_err(command, 'call jobpid(j)')
       eq('Vim(call):E900: Invalid channel id', err)
 
       -- cleanup
@@ -1260,22 +1362,43 @@ describe('jobs', function()
     screen:expect([[
       ^                                                  |
       ~                                                 |*3
-      {1:[No Name]                       0,0-1          All}|
+      {2:[No Name]                       0,0-1          All}|
                                                         |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
 
     feed(':q<CR>')
-    if is_os('freebsd') then
-      screen:expect { any = vim.pesc('[Process exited 0]') }
-    else
-      screen:expect([[
-                                                          |
-        [Process exited 0]^                                |
-                                                          |*4
-        {3:-- TERMINAL --}                                    |
-      ]])
+    screen:expect([[
+      ^                                                  |
+      [Process exited 0]                                |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('uses real pipes for stdin/stdout #35984', function()
+    if is_os('win') then
+      return -- Not applicable for Windows.
     end
+
+    -- this fails on linux if we used socketpair() for stdin and stdout,
+    -- which libuv does if you ask to create stdio streams for you
+    local val = exec_lua(function()
+      local output
+      local job = vim.fn.jobstart('wc /dev/stdin > /dev/stdout', {
+        stdout_buffered = true,
+        on_stdout = function(_, data, _)
+          output = data
+        end,
+      })
+      vim.fn.chansend(job, 'foo\nbar baz\n')
+      vim.fn.chanclose(job, 'stdin')
+      vim.fn.jobwait({ job })
+      return output
+    end)
+    eq(2, #val, val)
+    eq({ '2', '3', '12', '/dev/stdin' }, vim.split(val[1], '%s+', { trimempty = true }))
+    eq('', val[2])
   end)
 end)
 

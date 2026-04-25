@@ -1,7 +1,8 @@
 local t = require('test.unit.testutil')
 local cimport = t.cimport
 local itp = t.gen_itp(it)
-local lib = cimport('./src/nvim/msgpack_rpc/unpacker.h', './src/nvim/memory.h')
+local lib =
+  cimport('./src/nvim/msgpack_rpc/unpacker.h', './src/nvim/memory.h', './src/mpack/conv.h')
 local ffi = t.ffi
 local eq = t.eq
 local to_cstr = t.to_cstr
@@ -14,7 +15,7 @@ local to_cstr = t.to_cstr
 --- @return Unpacker* unpacker `unpacker[0]` to dereference
 local function make_unpacker()
   return ffi.gc(ffi.cast('Unpacker*', lib.xcalloc(1, ffi.sizeof('Unpacker'))), function(unpacker)
-    lib.unpacker_teardown(unpacker, nil, nil)
+    lib.unpacker_teardown(unpacker)
     lib.xfree(unpacker)
   end)
 end
@@ -74,6 +75,34 @@ describe('msgpack', function()
       )
       local finished = unpacker_advance(unpacker)
       eq(true, finished)
+    end)
+  end)
+end)
+
+describe('libmpack', function()
+  describe('mpack_pack_number', function()
+    itp('token length at negative integer boundaries #37202', function()
+      -- tok.length is the byte count for the integer value (not including the msgpack type prefix byte).
+
+      -- int8 min: -128 → 1 byte
+      local tok = lib.mpack_pack_number(-128)
+      eq(lib.MPACK_TOKEN_SINT, tok.type)
+      eq(1, tok.length)
+
+      -- one past int8: -129 → 2 bytes (int16)
+      tok = lib.mpack_pack_number(-129)
+      eq(lib.MPACK_TOKEN_SINT, tok.type)
+      eq(2, tok.length)
+
+      -- int16 min: -32768 → 2 bytes
+      tok = lib.mpack_pack_number(-32768)
+      eq(lib.MPACK_TOKEN_SINT, tok.type)
+      eq(2, tok.length)
+
+      -- one past int16: -32769 → 4 bytes (int32)
+      tok = lib.mpack_pack_number(-32769)
+      eq(lib.MPACK_TOKEN_SINT, tok.type)
+      eq(4, tok.length)
     end)
   end)
 end)

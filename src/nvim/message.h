@@ -37,6 +37,8 @@ EXTERN bool msg_ext_skip_flush INIT( = false);
 EXTERN bool msg_ext_append INIT( = false);
 /// Set to true when previous message should be overwritten.
 EXTERN bool msg_ext_overwrite INIT( = false);
+/// Set to true to avoid setting "verbose" kind for "last set" messages.
+EXTERN bool msg_ext_skip_verbose INIT( = false);
 
 /// allocated grid for messages. Used unless ext_messages is active.
 /// See also the description at msg_scroll_flush()
@@ -58,9 +60,7 @@ EXTERN int msg_grid_scroll_discount INIT( = 0);
 
 EXTERN int msg_listdo_overwrite INIT( = 0);
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "message.h.generated.h"
-#endif
+#include "message.h.generated.h"
 
 // Prefer using semsg(), because perror() may send the output to the wrong
 // destination and mess up the screen.

@@ -7,9 +7,7 @@
 #include "nvim/event/signal.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/signal.c.generated.h"
-#endif
+#include "event/signal.c.generated.h"
 
 void signal_watcher_init(Loop *loop, SignalWatcher *watcher, void *data)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)

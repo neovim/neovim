@@ -3,13 +3,14 @@
 " Homepage:            https://github.com/cespare/vim-toml
 " Maintainer:          Aman Verma
 " Previous Maintainer: Caleb Spare <cespare@gmail.com>
-" Last Change:         Oct 8, 2021
+" Last Change:         Mar 10, 2026
 
 if exists('b:current_syntax')
   finish
 endif
 
-syn match tomlEscape /\\[btnfr"/\\]/ display contained
+syn match tomlEscape /\\[betnfr"/\\]/ display contained
+syn match tomlEscape /\\x\x\{2}/ contained
 syn match tomlEscape /\\u\x\{4}/ contained
 syn match tomlEscape /\\U\x\{8}/ contained
 syn match tomlLineEscape /\\$/ contained
@@ -23,22 +24,22 @@ syn region tomlString oneline start=/'/ end=/'/
 " Multi-line literal strings
 syn region tomlString start=/'''/ end=/'''/
 
-syn match tomlInteger /[+-]\=\<[1-9]\(_\=\d\)*\>/ display
-syn match tomlInteger /[+-]\=\<0\>/ display
-syn match tomlInteger /[+-]\=\<0x[[:xdigit:]]\(_\=[[:xdigit:]]\)*\>/ display
-syn match tomlInteger /[+-]\=\<0o[0-7]\(_\=[0-7]\)*\>/ display
-syn match tomlInteger /[+-]\=\<0b[01]\(_\=[01]\)*\>/ display
-syn match tomlInteger /[+-]\=\<\(inf\|nan\)\>/ display
+syn match tomlInteger /[+-]\=[1-9]\(_\=\d\)*/ display
+syn match tomlInteger /[+-]\=0/ display
+syn match tomlInteger /[+-]\=0x[[:xdigit:]]\(_\=[[:xdigit:]]\)*/ display
+syn match tomlInteger /[+-]\=0o[0-7]\(_\=[0-7]\)*/ display
+syn match tomlInteger /[+-]\=0b[01]\(_\=[01]\)*/ display
+syn match tomlInteger /[+-]\=\(inf\|nan\)/ display
 
-syn match tomlFloat /[+-]\=\<\d\(_\=\d\)*\.\d\+\>/ display
-syn match tomlFloat /[+-]\=\<\d\(_\=\d\)*\(\.\d\(_\=\d\)*\)\=[eE][+-]\=\d\(_\=\d\)*\>/ display
+syn match tomlFloat /[+-]\=\d\(_\=\d\)*\.\d\+/ display
+syn match tomlFloat /[+-]\=\d\(_\=\d\)*\(\.\d\(_\=\d\)*\)\=[eE][+-]\=\d\(_\=\d\)*/ display
 
 syn match tomlBoolean /\<\%(true\|false\)\>/ display
 
 " https://tools.ietf.org/html/rfc3339
 syn match tomlDate /\d\{4\}-\d\{2\}-\d\{2\}/ display
-syn match tomlDate /\d\{2\}:\d\{2\}:\d\{2\}\%(\.\d\+\)\?/ display
-syn match tomlDate /\d\{4\}-\d\{2\}-\d\{2\}[T ]\d\{2\}:\d\{2\}:\d\{2\}\%(\.\d\+\)\?\%(Z\|[+-]\d\{2\}:\d\{2\}\)\?/ display
+syn match tomlDate /\d\{2\}:\d\{2\}\%(:\d\{2\}\%(\.\d\+\)\?\)\?/ display
+syn match tomlDate /\d\{4\}-\d\{2\}-\d\{2\}[Tt ]\d\{2\}:\d\{2\}\%(:\d\{2\}\%(\.\d\+\)\?\)\?\%([Zz]\|[+-]\d\{2\}:\d\{2\}\)\?/ display
 
 syn match tomlDotInKey /\v[^.]+\zs\./ contained display
 syn match tomlKey /\v(^|[{,])\s*\zs[[:alnum:]._-]+\ze\s*\=/ contains=tomlDotInKey display

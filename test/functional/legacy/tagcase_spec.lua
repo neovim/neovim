@@ -3,8 +3,8 @@ local n = require('test.functional.testnvim')()
 
 local clear = n.clear
 local eq = t.eq
+local pcall_err = t.pcall_err
 local eval = n.eval
-local exc_exec = n.exc_exec
 local expect = n.expect
 local insert = n.insert
 local source = n.source
@@ -49,9 +49,9 @@ describe("'tagcase' option", function()
     -- Verify that the local setting accepts <empty> but that the global setting
     -- does not.  The first of these (setting the local value to <empty>) should
     -- succeed; the other two should fail.
-    eq(0, exc_exec('setl tc='))
-    eq('Vim(setglobal):E474: Invalid argument: tc=', exc_exec('setg tc='))
-    eq('Vim(set):E474: Invalid argument: tc=', exc_exec('set tc='))
+    n.command('setl tc=')
+    eq('Vim(setglobal):E474: Invalid argument: tc=', pcall_err(n.command, 'setg tc='))
+    eq('Vim(set):E474: Invalid argument: tc=', pcall_err(n.command, 'set tc='))
   end)
 
   it("should work with 'ignorecase' correctly in all combinations", function()

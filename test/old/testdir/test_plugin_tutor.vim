@@ -11,7 +11,7 @@ endfunc
 
 func Test_auto_enable_interactive()
   Tutor
-  call assert_equal('nofile', &buftype)
+  call assert_equal('nowrite', &buftype)
   call assert_match('tutor#EnableInteractive', b:undo_ftplugin)
 
   edit Xtutor/Xtest.tutor

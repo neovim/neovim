@@ -10,7 +10,9 @@ local exec = n.exec
 local feed = n.feed
 local api = n.api
 local request = n.request
+local poke_eventloop = n.poke_eventloop
 local pcall_err = t.pcall_err
+local uv = vim.uv
 
 describe('nvim_ui_attach()', function()
   before_each(function()
@@ -24,7 +26,7 @@ describe('nvim_ui_attach()', function()
   end)
 
   it('validation', function()
-    eq('No such UI option: foo', pcall_err(api.nvim_ui_attach, 80, 24, { foo = { 'foo' } }))
+    eq("Invalid UI option: 'foo'", pcall_err(api.nvim_ui_attach, 80, 24, { foo = { 'foo' } }))
 
     eq(
       "Invalid 'ext_linegrid': expected Boolean, got Array",
@@ -69,6 +71,88 @@ describe('nvim_ui_attach()', function()
       pcall_err(request, 'nvim_ui_attach', 40, 10, { rgb = false })
     )
   end)
+
+  it('does not crash if maximum UI count is reached', function()
+    local server = api.nvim_get_vvar('servername')
+    local screens = {} --- @type test.functional.ui.screen[]
+    for i = 1, 16 do
+      screens[i] = Screen.new(nil, nil, nil, n.connect(server))
+    end
+    eq(
+      -- 0 is kErrorTypeException
+      { false, { 0, 'Maximum UI count reached' } },
+      { n.connect(server):request('nvim_ui_attach', 80, 24, {}) }
+    )
+    for i = 1, 16 do
+      screens[i]:detach()
+    end
+  end)
+end)
+
+describe('nvim_ui_send', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('works with stdout_tty', function()
+    local fds = assert(uv.pipe())
+
+    local read_pipe = assert(uv.new_pipe())
+    read_pipe:open(fds.read)
+
+    local read_data = {}
+    read_pipe:read_start(function(err, data)
+      assert(not err, err)
+      if data then
+        table.insert(read_data, data)
+      end
+    end)
+
+    local screen = Screen.new(50, 10, { stdout_tty = true })
+    screen:set_stdout(fds.write)
+
+    api.nvim_ui_send('Hello world')
+
+    poke_eventloop()
+
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+
+    eq('Hello world', table.concat(read_data))
+  end)
+
+  it('ignores ui_send event for UIs without stdout_tty', function()
+    local fds = assert(uv.pipe())
+
+    local read_pipe = assert(uv.new_pipe())
+    read_pipe:open(fds.read)
+
+    local read_data = {}
+    read_pipe:read_start(function(err, data)
+      assert(not err, err)
+      if data then
+        table.insert(read_data, data)
+      end
+    end)
+
+    local screen = Screen.new(50, 10)
+    screen:set_stdout(fds.write)
+
+    api.nvim_ui_send('Hello world')
+
+    poke_eventloop()
+
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+
+    eq('', table.concat(read_data))
+  end)
 end)
 
 it('autocmds UIEnter/UILeave', function()
@@ -78,16 +162,65 @@ it('autocmds UIEnter/UILeave', function()
     autocmd UIEnter * call add(g:evs, "UIEnter") | let g:uienter_ev = deepcopy(v:event)
     autocmd UILeave * call add(g:evs, "UILeave") | let g:uileave_ev = deepcopy(v:event)
     autocmd VimEnter * call add(g:evs, "VimEnter")
+    autocmd VimLeave * call add(g:evs, "VimLeave")
   ]])
+
   local screen = Screen.new()
   eq({ chan = 1 }, eval('g:uienter_ev'))
+  eq({ 'VimEnter', 'UIEnter' }, eval('g:evs'))
+
   screen:detach()
   eq({ chan = 1 }, eval('g:uileave_ev'))
-  eq({
-    'VimEnter',
-    'UIEnter',
-    'UILeave',
-  }, eval('g:evs'))
+  eq({ 'VimEnter', 'UIEnter', 'UILeave' }, eval('g:evs'))
+
+  local servername = api.nvim_get_vvar('servername')
+
+  local session2 = n.connect(servername)
+  local status2, chan2 = session2:request('nvim_get_chan_info', 0)
+  t.ok(status2)
+
+  local session3 = n.connect(servername)
+  local status3, chan3 = session3:request('nvim_get_chan_info', 0)
+  t.ok(status3)
+
+  local screen2 = Screen.new(nil, nil, nil, session2)
+  eq({ chan = chan2.id }, eval('g:uienter_ev'))
+  eq({ 'VimEnter', 'UIEnter', 'UILeave', 'UIEnter' }, eval('g:evs'))
+
+  screen2:detach()
+  eq({ chan = chan2.id }, eval('g:uileave_ev'))
+  eq({ 'VimEnter', 'UIEnter', 'UILeave', 'UIEnter', 'UILeave' }, eval('g:evs'))
+
+  command('let g:evs = ["…"]')
+
+  screen2:attach(session2)
+  eq({ chan = chan2.id }, eval('g:uienter_ev'))
+  eq({ '…', 'UIEnter' }, eval('g:evs'))
+
+  Screen.new(nil, nil, nil, session3)
+  eq({ chan = chan3.id }, eval('g:uienter_ev'))
+  eq({ '…', 'UIEnter', 'UIEnter' }, eval('g:evs'))
+
+  screen:attach(n.get_session())
+  eq({ chan = 1 }, eval('g:uienter_ev'))
+  eq({ '…', 'UIEnter', 'UIEnter', 'UIEnter' }, eval('g:evs'))
+
+  session3:close()
+  t.retry(nil, 1000, function()
+    eq({}, api.nvim_get_chan_info(chan3.id))
+  end)
+  eq({ chan = chan3.id }, eval('g:uileave_ev'))
+  eq({ '…', 'UIEnter', 'UIEnter', 'UIEnter', 'UILeave' }, eval('g:evs'))
+
+  command('let g:evs = ["…"]')
+  command('autocmd UILeave * call writefile(g:evs, "Xevents.log")')
+  finally(function()
+    os.remove('Xevents.log')
+  end)
+  n.expect_exit(command, 'qall!')
+  n.check_close() -- Wait for process exit.
+  -- UILeave should have been triggered for both remaining UIs.
+  eq('…\nVimLeave\nUILeave\nUILeave\n', t.read_file('Xevents.log'))
 end)
 
 it('autocmds VimSuspend/VimResume #22041', function()

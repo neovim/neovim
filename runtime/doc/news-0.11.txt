@@ -197,9 +197,9 @@ DEFAULTS
   • |[D-default| and |]D-default| jump to the first and last diagnostic in the
     current buffer, respectively.
   • Mappings inspired by Tim Pope's vim-unimpaired:
-    • |[q|, |]q|, |[Q|, |]Q|, |[CTRL-Q|, |]CTRL-Q| navigate through the |quickfix| list
-    • |[l|, |]l|, |[L|, |]L|, |[CTRL-L|, |]CTRL-L| navigate through the |location-list|
-    • |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T| navigate through the |tag-matchlist|
+    • |[q|, |]q|, |[Q|, |]Q|, |[_CTRL-Q|, |]_CTRL-Q| navigate through the |quickfix| list
+    • |[l|, |]l|, |[L|, |]L|, |[_CTRL-L|, |]_CTRL-L| navigate through the |location-list|
+    • |[t|, |]t|, |[T|, |]T|, |[_CTRL-T|, |]_CTRL-T| navigate through the |tag-matchlist|
     • |[a|, |]a|, |[A|, |]A| navigate through the |argument-list|
     • |[b|, |]b|, |[B|, |]B| navigate through the |buffer-list|
     • |[<Space>|, |]<Space>| add an empty line above and below the cursor

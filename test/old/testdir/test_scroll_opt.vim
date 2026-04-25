@@ -237,7 +237,7 @@ func Test_smoothscroll_number()
   call term_sendkeys(buf, "\<C-Y>")
   call VerifyScreenDump(buf, 'Test_smooth_number_6', {})
 
-  call term_sendkeys(buf, ":botright split\<CR>gg")
+  call term_sendkeys(buf, ":botright split\<CR>\<C-L>gg")
   call VerifyScreenDump(buf, 'Test_smooth_number_7', {})
   call term_sendkeys(buf, "\<C-E>")
   call VerifyScreenDump(buf, 'Test_smooth_number_8', {})
@@ -278,6 +278,7 @@ endfunc
 
 func Test_smoothscroll_diff_mode()
   CheckScreendump
+  CheckFeature diff
 
   let lines =<< trim END
       vim9script
@@ -302,11 +303,45 @@ func Test_smoothscroll_diff_mode()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_diff_change_line_default()
+  CheckScreendump
+  CheckFeature diff
+
+  " Uses the new diffopt default with indent-heuristic and inline:char
+  let lines =<< trim END
+    set diffopt=internal,filler,closeoff,indent-heuristic,inline:char,followwrap smoothscroll
+    call setline(1, repeat(' abc', &columns))
+    call setline(2, 'bar')
+    call setline(3, repeat(' abc', &columns))
+    vnew
+    call setline(1, repeat(' abc', &columns))
+    call setline(2, 'foo')
+    call setline(3, 'bar')
+    call setline(4, repeat(' abc', &columns))
+    windo exe "normal! 2gg5\<C-E>"
+    windo diffthis
+  END
+  call writefile(lines, 'XSmoothDiffChangeLine', 'D')
+  let buf = RunVimInTerminal('-S XSmoothDiffChangeLine', #{rows: 20, columns: 55})
+
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_1', {})
+  call term_sendkeys(buf, "Abar")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_2', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_3a', {})
+  call term_sendkeys(buf, "yyp")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_4', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_smoothscroll_diff_change_line()
   CheckScreendump
+  CheckFeature diff
 
+  " Uses the old diffopt default
   let lines =<< trim END
-    set diffopt+=followwrap smoothscroll
+    set diffopt=internal,filler,closeoff,followwrap,inline:simple smoothscroll
     call setline(1, repeat(' abc', &columns))
     call setline(2, 'bar')
     call setline(3, repeat(' abc', &columns))
@@ -483,7 +518,8 @@ func Test_smoothscroll_long_line_showbreak()
       vim9script
       # a line that spans four screen lines
       setline(1, 'with lots of text in one line '->repeat(6))
-      set smoothscroll scrolloff=0 showbreak=+++\ 
+      set smoothscroll scrolloff=0
+      &showbreak = '+++ '
   END
   call writefile(lines, 'XSmoothLongShowbreak', 'D')
   let buf = RunVimInTerminal('-S XSmoothLongShowbreak', #{rows: 6, cols: 40})
@@ -922,10 +958,11 @@ func Test_smoothscroll_multi_skipcol()
 endfunc
 
 " this was dividing by zero bug in scroll_cursor_bot
-func Test_smoothscroll_zero_width_scroll_cursor_bot()
+func Test_smoothscroll_zero_width_scroll_cursor_bot_noruler()
   CheckScreendump
 
   let lines =<< trim END
+      set noruler
       silent normal yy
       silent normal 19p
       set cpoptions+=n
@@ -943,12 +980,34 @@ func Test_smoothscroll_zero_width_scroll_cursor_bot()
   call StopVimInTerminal(buf)
 endfunc
 
-" scroll_cursor_top() should reset skipcol when it changes topline
-func Test_smoothscroll_cursor_top()
+func Test_smoothscroll_zero_width_scroll_cursor_bot_ruler()
   CheckScreendump
 
   let lines =<< trim END
-      set smoothscroll scrolloff=2
+      set ruler
+      silent normal yy
+      silent normal 19p
+      set cpoptions+=n
+      vsplit
+      vertical resize 0
+      set foldcolumn=1
+      set number
+      set smoothscroll
+      silent normal 20G
+  END
+  call writefile(lines, 'XSmoothScrollZeroBot', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollZeroBot', #{rows: 19})
+  call VerifyScreenDump(buf, 'Test_smoothscroll_zero_bot_ruler', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" scroll_cursor_top() should reset skipcol when it changes topline
+func Test_smoothscroll_cursor_top_noruler()
+  CheckScreendump
+
+  let lines =<< trim END
+      set smoothscroll scrolloff=2 noruler
       new | 11resize | wincmd j
       call setline(1, ['line1', 'line2', 'line3'->repeat(20), 'line4'])
       exe "norm G3\<C-E>k"
@@ -956,6 +1015,22 @@ func Test_smoothscroll_cursor_top()
   call writefile(lines, 'XSmoothScrollCursorTop', 'D')
   let buf = RunVimInTerminal('-u NONE -S XSmoothScrollCursorTop', #{rows: 12, cols: 40})
   call VerifyScreenDump(buf, 'Test_smoothscroll_cursor_top', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_smoothscroll_cursor_top_ruler()
+  CheckScreendump
+
+  let lines =<< trim END
+      set smoothscroll scrolloff=2 ruler
+      new | 11resize | wincmd j
+      call setline(1, ['line1', 'line2', 'line3'->repeat(20), 'line4'])
+      exe "norm G3\<C-E>k"
+  END
+  call writefile(lines, 'XSmoothScrollCursorTop', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollCursorTop', #{rows: 12, cols: 40})
+  call VerifyScreenDump(buf, 'Test_smoothscroll_cursor_ru_top', {})
 
   call StopVimInTerminal(buf)
 endfunc
@@ -979,12 +1054,12 @@ func Test_smoothscroll_crash()
   call StopVimInTerminal(buf)
 endfunc
 
-func Test_smoothscroll_insert_bottom()
+func Test_smoothscroll_insert_bottom_noruler()
   CheckScreendump
 
   let lines =<< trim END
     call setline(1, repeat([repeat('A very long line ...', 10)], 5))
-    set wrap smoothscroll scrolloff=0
+    set wrap smoothscroll scrolloff=0 noruler
   END
   call writefile(lines, 'XSmoothScrollInsertBottom', 'D')
   let buf = RunVimInTerminal('-u NONE -S XSmoothScrollInsertBottom', #{rows: 9, cols: 40})
@@ -994,12 +1069,27 @@ func Test_smoothscroll_insert_bottom()
   call StopVimInTerminal(buf)
 endfunc
 
-func Test_smoothscroll_in_qf_window()
+func Test_smoothscroll_insert_bottom_ruler()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, repeat([repeat('A very long line ...', 10)], 5))
+    set wrap smoothscroll scrolloff=0 ruler
+  END
+  call writefile(lines, 'XSmoothScrollInsertBottom', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollInsertBottom', #{rows: 9, cols: 40})
+  call term_sendkeys(buf, "Go123456789\<CR>")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_insert_bottom_ruler', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_smoothscroll_in_qf_window_noruler()
   CheckFeature quickfix
   CheckScreendump
 
   let lines =<< trim END
-    set nocompatible display=lastline
+    set nocompatible display=lastline noruler
     copen 5
     setlocal number smoothscroll
     let g:l = [{'text': 'foo'}] + repeat([{'text': join(range(30))}], 10)
@@ -1035,6 +1125,51 @@ func Test_smoothscroll_in_qf_window()
 
   call term_sendkeys(buf, ":call setqflist(g:l, 'r')\<CR>")
   call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_3', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_smoothscroll_in_qf_window_ruler()
+  CheckFeature quickfix
+  CheckScreendump
+
+  let lines =<< trim END
+    set nocompatible display=lastline ruler
+    copen 5
+    setlocal number smoothscroll
+    let g:l = [{'text': 'foo'}] + repeat([{'text': join(range(30))}], 10)
+    call setqflist(g:l, 'r')
+    normal! G
+    wincmd t
+    let g:l1 = [{'text': join(range(1000))}]
+  END
+  call writefile(lines, 'XSmoothScrollInQfWindow', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollInQfWindow', #{rows: 20, cols: 60})
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_1', {})
+
+  call term_sendkeys(buf, ":call setqflist([], 'r')\<CR>")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_2', {})
+
+  call term_sendkeys(buf, ":call setqflist(g:l, 'r')\<CR>")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_3', {})
+
+  call term_sendkeys(buf, ":call setqflist(g:l1, 'r')\<CR>")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_4', {})
+
+  call term_sendkeys(buf, "\<C-W>b$\<C-W>t")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_5', {})
+
+  call term_sendkeys(buf, ":call setqflist([], 'r')\<CR>")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_2', {})
+
+  call term_sendkeys(buf, ":call setqflist(g:l1, 'r')\<CR>")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_4', {})
+
+  call term_sendkeys(buf, "\<C-W>b$\<C-W>t")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_5', {})
+
+  call term_sendkeys(buf, ":call setqflist(g:l, 'r')\<CR>")
+  call VerifyScreenDump(buf, 'Test_smoothscroll_in_qf_window_ru_3', {})
 
   call StopVimInTerminal(buf)
 endfunc
@@ -1186,11 +1321,12 @@ func Test_smoothscroll_long_line_zb()
   bwipe!
 endfunc
 
-func Test_smooth_long_scrolloff()
+func Test_smooth_long_scrolloff_noruler()
   CheckScreendump
 
   let lines =<< trim END
     set smoothscroll scrolloff=3
+    set noruler
     call setline(1, ['one', 'two long '->repeat(100), 'three', 'four', 'five', 'six'])
   END
   call writefile(lines, 'XSmoothLongScrolloff', 'D')
@@ -1215,6 +1351,39 @@ func Test_smooth_long_scrolloff()
 
   call term_sendkeys(buf, "gk")
   call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_7', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_smooth_long_scrolloff_ruler()
+  CheckScreendump
+
+  let lines =<< trim END
+    set smoothscroll scrolloff=3 ruler
+    call setline(1, ['one', 'two long '->repeat(100), 'three', 'four', 'five', 'six'])
+  END
+  call writefile(lines, 'XSmoothLongScrolloff', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothLongScrolloff', #{rows: 8, cols: 40})
+  call term_sendkeys(buf, ":norm j721|\<CR>")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_ru_1', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_ru_2', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_ru_3', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_ru_4', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_ru_5', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_ru_6', {})
+
+  call term_sendkeys(buf, "gk")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_ru_7', {})
 
   call StopVimInTerminal(buf)
 endfunc
@@ -1272,6 +1441,696 @@ func Test_smoothscroll_listchars_eol()
 
   set virtualedit&
   bwipe!
+endfunc
+
+" scrolloffpad contract:
+" - augment scrolloff only under EOF pressure (insufficient real lines below);
+" - do not change explicit "z" viewport placement command semantics;
+" - current scope is EOF-only, so BOF behavior remains unchanged.
+func Test_scrolloffpad_zb_keeps_bottom_command_semantics()
+  new
+  resize 12
+  setlocal scrolloff=10
+  call setline(1, map(range(1, 300), 'printf("line %d", v:val)'))
+
+  setlocal scrolloffpad=0
+  normal! gg150Gzb
+  let baseline = [line('.'), line('w$'), winline()]
+
+  setlocal scrolloffpad=1
+  normal! gg150Gzb
+  call assert_equal(baseline, [line('.'), line('w$'), winline()])
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_zminus_keeps_bottom_beginline_semantics()
+  new
+  resize 12
+  setlocal scrolloff=10
+  call setline(1, map(range(1, 300), 'printf("    line %d", v:val)'))
+
+  setlocal scrolloffpad=0
+  normal! gg150Gz-
+  let baseline = [line('.'), line('w$'), winline(), col('.')]
+  call assert_equal(match(getline('.'), '\S') + 1, col('.'))
+
+  setlocal scrolloffpad=1
+  normal! gg150Gz-
+  call assert_equal(baseline, [line('.'), line('w$'), winline(), col('.')])
+  call assert_equal(match(getline('.'), '\S') + 1, col('.'))
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_zb_is_one_shot_then_scrolloff_reapplies()
+  new
+  resize 12
+  setlocal scrolloff=10
+  call setline(1, map(range(1, 300), 'printf("line %d", v:val)'))
+
+  let after_zb = {}
+  let after_j = {}
+  for sop in [0, 1]
+    let &l:scrolloffpad = sop
+    normal! gg150Gzb
+    let after_zb[sop] = [line('.'), line('w$'), winline(), winsaveview().topline]
+
+    normal! j
+    let after_j[sop] = [line('.'), line('w$'), winline(), winsaveview().topline]
+    call assert_notequal(after_zb[sop][3], after_j[sop][3])
+    call assert_true(line('.') < line('w$'))
+  endfor
+  call assert_equal(after_zb[0], after_zb[1])
+  call assert_equal(after_j[0], after_j[1])
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_has_no_mid_buffer_effect()
+  new
+  resize 12
+  setlocal scrolloff=10 scrolloffpad=0
+  call setline(1, map(range(1, 500), 'printf("line %d", v:val)'))
+
+  normal! gg150G
+  let topline_without_pad = winsaveview().topline
+
+  setlocal scrolloffpad=1
+  normal! gg150G
+  let topline_with_pad = winsaveview().topline
+
+  call assert_equal(topline_without_pad, topline_with_pad)
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_changes_eof_pressure_only()
+  new
+  resize 12
+  setlocal scrolloff=10 scrolloffpad=0
+  call setline(1, map(range(1, 200), 'printf("line %d", v:val)'))
+
+  normal! ggG
+  let view_without_pad = winsaveview()
+  let cursor_without_pad = line('.')
+  let row_without_pad = winline()
+
+  setlocal scrolloffpad=1
+  normal! ggG
+  let view_with_pad = winsaveview()
+  let row_with_pad = winline()
+
+  call assert_equal(line('$'), line('.'))
+  call assert_equal(cursor_without_pad, line('.'))
+  call assert_notequal(view_without_pad.topline, view_with_pad.topline)
+  call assert_true(row_with_pad < row_without_pad)
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_large_scrolloff_no_overflow()
+  new
+  resize 12
+  call setline(1, map(range(1, 200), 'printf("line %d", v:val)'))
+  setlocal scrolloff=2147483647 scrolloffpad=0
+
+  normal! ggG
+  let view_without_pad = winsaveview()
+  let row_without_pad = winline()
+
+  setlocal scrolloffpad=1
+  normal! ggG
+  let view_with_pad = winsaveview()
+  let row_with_pad = winline()
+
+  call assert_equal(line('$'), line('.'))
+  call assert_notequal(view_without_pad.topline, view_with_pad.topline)
+  call assert_true(row_with_pad < row_without_pad)
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_boolean_gate_values()
+  new
+  resize 12
+  setlocal scrolloff=10
+  call setline(1, map(range(1, 200), 'printf("line %d", v:val)'))
+
+  let views = {}
+  let rows = {}
+  for sop in [0, 1, 2]
+    let &l:scrolloffpad = sop
+    normal! ggG
+    let views[sop] = winsaveview()
+    let rows[sop] = winline()
+    call assert_equal(line('$'), line('.'))
+  endfor
+
+  call assert_equal(views[1].topline, views[2].topline)
+  call assert_equal(rows[1], rows[2])
+  call assert_notequal(views[0].topline, views[1].topline)
+  call assert_true(rows[1] < rows[0])
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_requires_scrolloff_nonzero()
+  new
+  resize 12
+  call setline(1, map(range(1, 200), 'printf("line %d", v:val)'))
+
+  let states = {}
+  for so in [0, 10]
+    let states[so] = {}
+    for sop in [0, 1]
+      let &l:scrolloff = so
+      let &l:scrolloffpad = sop
+      normal! ggG
+      let states[so][sop] = [line('.'), line('w0'), line('w$'), winline()]
+      call assert_equal(line('$'), line('.'))
+    endfor
+  endfor
+
+  call assert_equal(states[0][0], states[0][1])
+  call assert_notequal(states[10][0], states[10][1])
+  call assert_true(states[10][1][3] < states[10][0][3])
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_search_to_eof()
+  new
+  resize 12
+  setlocal scrolloff=10
+  call setline(1, map(range(1, 200), 'printf("line %d", v:val)'))
+  call setline(line('$'), 'EOF TARGET')
+
+  let states = {}
+  for sop in [0, 1]
+    let &l:scrolloffpad = sop
+    normal! gg
+    call assert_true(search('EOF TARGET') > 0)
+    let states[sop] = [line('.'), line('w0'), line('w$'), winline()]
+    call assert_equal(line('$'), line('.'))
+  endfor
+
+  call assert_notequal(states[0], states[1])
+  call assert_true(states[1][3] < states[0][3])
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_paging_to_eof()
+  new
+  resize 12
+  setlocal scrolloff=10
+  call setline(1, map(range(1, 240), 'printf("line %d", v:val)'))
+
+  let states = {}
+  for sop in [0, 1]
+    let &l:scrolloffpad = sop
+    normal! gg
+
+    let prev = -1
+    for _ in range(1, 200)
+      execute "normal! \<C-D>"
+      if line('.') == prev
+	break
+      endif
+      let prev = line('.')
+    endfor
+
+    let states[sop] = [line('.'), line('w0'), line('w$'), winline()]
+    call assert_equal(line('$'), line('w$'))
+  endfor
+
+  call assert_notequal(states[0], states[1])
+  call assert_true(states[1][3] < states[0][3])
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_autocmd_append_at_eof()
+  let states = {}
+  for sop in [0, 1]
+    new
+    resize 12
+    setlocal scrolloff=10
+    let &l:scrolloffpad = sop
+    call setline(1, map(range(1, 120), 'printf("line %d", v:val)'))
+
+    let b:scrolloffpad_appended = 0
+    augroup ScrolloffpadAppendAtEof
+      autocmd!
+      autocmd CursorMoved <buffer> if b:scrolloffpad_appended == 0 && line('.') == line('$') | call append('$', 'appended') | let b:scrolloffpad_appended = 1 | endif
+    augroup END
+
+    normal! ggG
+    doautocmd <nomodeline> CursorMoved
+    let states[sop] = [
+	  \ line('.'),
+	  \ line('$'),
+	  \ line('w0'),
+	  \ line('w$'),
+	  \ winline(),
+	  \ b:scrolloffpad_appended,
+	  \ ]
+
+    call assert_equal(1, b:scrolloffpad_appended)
+    call assert_equal(states[sop][1] - 1, states[sop][0])
+
+    augroup ScrolloffpadAppendAtEof
+      autocmd!
+    augroup END
+    bwipe!
+  endfor
+
+  call assert_notequal(states[0], states[1])
+  call assert_true(states[1][4] < states[0][4])
+
+endfunc
+
+func Test_scrolloffpad_eof_no_reverse_scroll_on_j()
+  new
+  resize 20
+  setlocal scrolloff=20 scrolloffpad=1
+  call setline(1, map(range(1, 80), 'printf("line %d", v:val)'))
+
+  normal! gg
+  let prev_topline = winsaveview().topline
+  for lnum in range(2, line('$'))
+    normal! j
+    let cur_topline = winsaveview().topline
+    call assert_true(
+	  \ cur_topline >= prev_topline,
+	  \ printf('topline moved backwards at line %d: %d -> %d',
+	  \ lnum, prev_topline, cur_topline))
+    let prev_topline = cur_topline
+  endfor
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_bof_unchanged()
+  new
+  resize 12
+  setlocal scrolloff=10 scrolloffpad=0
+  call setline(1, map(range(1, 200), 'printf("line %d", v:val)'))
+
+  normal! Ggg
+  let view_without_pad = winsaveview()
+  let w0_without_pad = line('w0')
+
+  setlocal scrolloffpad=1
+  normal! Ggg
+  let view_with_pad = winsaveview()
+  let w0_with_pad = line('w0')
+
+  call assert_equal(1, w0_without_pad)
+  call assert_equal(1, w0_with_pad)
+  call assert_equal(view_without_pad.topline, view_with_pad.topline)
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_mouse_drag_uses_drag_scrolloff()
+  CheckFeature mouse
+
+  let save_mouse = &mouse
+  set mouse=a
+
+  new
+  resize 20
+  call setline(1, map(range(1, 240), 'printf("line %d", v:val)'))
+  setlocal scrolloff=50
+
+  let after_drag = {}
+  for sop in [0, 1]
+    let &l:scrolloffpad = sop
+    normal! gg160Gzt
+    normal! v
+    call Ntest_setmouse(2, 1)
+    call feedkeys("\<LeftMouse>", 'xt')
+    call Ntest_setmouse(3, 1)
+    call feedkeys("\<LeftDrag>", 'xt')
+    let after_drag[sop] = [winsaveview().topline, line('.'), winline()]
+    call feedkeys("\<Esc>", 'xt')
+  endfor
+
+  call assert_equal(after_drag[0], after_drag[1])
+
+  bwipe!
+  let &mouse = save_mouse
+endfunc
+
+func Test_scrolloffpad_basic()
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let save_termwinsize = &termwinsize
+  set termwinsize=
+
+  let lines =<< trim END
+      set scrolloff=10
+      set scrolloffpad=5
+      enew!
+      call setline(1, map(range(1, 100), 'printf("line %d", v:val)'))
+      normal! gg
+  END
+  call writefile(lines, 'XScrolloffpadBasic', 'D')
+
+  let buf = RunVimInTerminal('-S XScrolloffpadBasic', {'rows': 20, 'cols': 78})
+
+  " Enabled: scrolloffpad > 0, expect EOF centering/padding
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! G\<CR>")
+  call term_sendkeys(buf, "\<C-L>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_scrolloffpad_basic_1', {})
+
+  " Beginning-of-file is unchanged (Top)
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! gg\<CR>")
+  call term_sendkeys(buf, "\<C-L>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_scrolloffpad_basic_2', {})
+
+  " Gating: disable scrolloffpad, then go to EOF again
+  " Expect normal EOF behavior (no extra centering/padding)
+  call term_sendkeys(buf, "\<Esc>:\<C-U>set scrolloffpad=0\<CR>")
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! G\<CR>")
+  call term_sendkeys(buf, "\<C-L>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_scrolloffpad_basic_3', {})
+
+  call StopVimInTerminal(buf)
+  let &termwinsize = save_termwinsize
+endfunc
+
+func Test_scrolloffpad_smoothscroll()
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let save_termwinsize = &termwinsize
+  set termwinsize=
+
+  let lines =<< trim END
+      set smoothscroll scrolloff=10 scrolloffpad=1
+      enew!
+      call setline(1, map(range(1, 100), 'printf("line %d", v:val)'))
+      normal! gg
+  END
+  call writefile(lines, 'XScrolloffpadSmoothscroll', 'D')
+
+  let buf = RunVimInTerminal('-S XScrolloffpadSmoothscroll', #{rows: 20, cols: 78})
+
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! G\<CR>")
+  call term_sendkeys(buf, "\<C-L>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_scrolloffpad_smoothscroll_1', {})
+
+  call term_sendkeys(buf, "\<Esc>:\<C-U>call setline(line('$'), repeat('LONG ', 30))\<CR>")
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! 41|\<CR>")
+  call term_sendkeys(buf, "\<C-L>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_scrolloffpad_smoothscroll_2', {})
+
+  call StopVimInTerminal(buf)
+  let &termwinsize = save_termwinsize
+endfunc
+
+func Test_scrolloffpad_insert_eof()
+  let save_so = &scrolloff
+  let save_sop = &scrolloffpad
+
+  set scrolloff=10 scrolloffpad=1
+  enew!
+  call setline(1, map(range(1, 200), 'printf("line %d", v:val)'))
+  normal! G
+
+  let topline_before = winsaveview().topline
+  call feedkeys("i\<Esc>", 'xt')
+  call assert_equal(topline_before, winsaveview().topline)
+
+  exe "normal! \<C-E>"
+  let topline_after = winsaveview().topline
+  call feedkeys("i\<Esc>", 'xt')
+  call assert_equal(topline_after, winsaveview().topline)
+
+  let &scrolloff = save_so
+  let &scrolloffpad = save_sop
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_in_diff_mode()
+  CheckFeature diff
+
+  let save_so = &scrolloff
+  let save_sop = &scrolloffpad
+  let save_splitright = &splitright
+
+  set nosplitright
+  set scrolloff=10
+  set scrolloffpad=0
+
+  enew
+  call setline(1, map(range(1, 100), {_, v -> 'line ' .. v}))
+  diffthis
+
+  vnew
+  call setline(1, map(range(1, 100), {_, v -> 'line ' .. v}))
+  " Make buffers minimally different to avoid diff folding everything.
+  call setline(50, 'DIFF LINE 50')
+  diffthis
+
+  windo normal! zR
+  windo normal! gg
+  wincmd =
+
+  let rows_without = []
+  let rows_with = []
+  let near_states = []
+  let eof_states = []
+  for sop in [0, 1]
+    let &scrolloffpad = sop
+
+    " Near EOF with real text visible in both windows.
+    windo normal! 99G
+    for w in range(1, winnr('$'))
+      execute w .. 'wincmd w'
+      let state = [line('.'), line('w0'), line('w$'), winline()]
+      call assert_equal(99, state[0])
+      call assert_equal(100, state[2])
+      if sop == 0
+	call add(near_states, state)
+      endif
+    endfor
+    call assert_equal(near_states[0], near_states[1])
+
+    " EOF in both windows: scrolloffpad should raise the cursor row.
+    windo normal! G
+    for w in range(1, winnr('$'))
+      execute w .. 'wincmd w'
+      let state = [line('.'), line('w0'), line('w$'), winline()]
+      call assert_equal(line('$'), state[0])
+      if sop == 0
+	call add(eof_states, state)
+	call add(rows_without, state[3])
+      else
+	call add(rows_with, state[3])
+      endif
+    endfor
+    call assert_equal(eof_states[0], eof_states[1])
+  endfor
+
+  call assert_true(rows_with[0] < rows_without[0])
+  call assert_true(rows_with[1] < rows_without[1])
+
+  windo diffoff
+  %bwipe!
+  let &scrolloff = save_so
+  let &scrolloffpad = save_sop
+  let &splitright = save_splitright
+endfunc
+
+func Test_scrolloffpad_diff_eof_filler_behavior()
+  CheckFeature diff
+
+  let save_so = &scrolloff
+  let save_sop = &scrolloffpad
+  let save_diffopt = &diffopt
+  let save_splitright = &splitright
+
+  set diffopt+=filler
+  set scrolloff=10
+  set scrolloffpad=0
+  set nosplitright
+
+  20new
+  call setline(1, map(range(1, 100), {_, v -> 'left ' .. v}))
+  diffthis
+  let short_wid = win_getid()
+
+  vnew
+  call setline(1, map(range(1, 120), {_, v -> 'right ' .. v}))
+  diffthis
+  let long_wid = win_getid()
+
+  call assert_true(win_gotoid(short_wid))
+  let short_height = winheight(0)
+  call assert_true(win_gotoid(long_wid))
+  let long_height = winheight(0)
+  call assert_equal(short_height, long_height)
+  call assert_equal(20, short_height)
+
+  let ordered_diff_wids = [long_wid, short_wid]
+  let states = {}
+  for sop in [0, 1]
+    execute 'set scrolloffpad=' .. sop
+    for wid in ordered_diff_wids
+      call assert_true(win_gotoid(wid))
+      normal! gg
+    endfor
+    for wid in ordered_diff_wids
+      call assert_true(win_gotoid(wid))
+      normal! G
+    endfor
+
+    call assert_true(win_gotoid(short_wid))
+    let short_view = winsaveview()
+    let short_state = [
+          \ line('.'),
+          \ line('$'),
+          \ winline(),
+          \ short_view.topline,
+          \ short_view.topfill,
+          \ diff_filler(line('$') + 1),
+          \ ]
+    call assert_equal(short_state[1], short_state[0])
+    call assert_true(short_state[5] > 0)
+
+    call assert_true(win_gotoid(long_wid))
+    let long_view = winsaveview()
+    let long_state = [
+          \ line('.'),
+          \ line('$'),
+          \ winline(),
+          \ long_view.topline,
+          \ long_view.topfill,
+          \ ]
+    call assert_true(long_state[0] > 0 && long_state[0] <= long_state[1])
+    call assert_equal(short_state[0], long_state[0])
+
+    let states[sop] = [short_state, long_state]
+  endfor
+
+  let short_without = states[0][0]
+  let short_with = states[1][0]
+  " Environment/layout can shift direction of movement; require only that
+  " scrolloffpad changes the short-window viewport state under EOF filler.
+  call assert_true(short_with[2] != short_without[2]
+	\ || short_with[3] != short_without[3]
+	\ || short_with[4] != short_without[4])
+
+  windo diffoff
+  call assert_true(win_gotoid(short_wid))
+  only!
+  %bwipe!
+  let &scrolloff = save_so
+  let &scrolloffpad = save_sop
+  let &diffopt = save_diffopt
+  let &splitright = save_splitright
+endfunc
+
+func Test_scrolloffpad_with_folds()
+  CheckScreendump
+  CheckRunVimInTerminal
+  CheckFeature folding
+
+  let save_termwinsize = &termwinsize
+  set termwinsize=
+
+  let lines =<< trim END
+      set scrolloff=10
+      set scrolloffpad=1
+
+      enew
+      call setline(1, map(range(1, 120), {_, v -> 'line ' . v}))
+
+      " Create a large fold near the end of the file.
+      " Fold lines 60-110, leaving 111-120 visible after the fold.
+      set foldmethod=manual
+      set foldenable
+      normal! gg
+      normal! 60G
+      normal! zf50j
+      normal! gg
+  END
+  call writefile(lines, 'XScrolloffpadFolds', 'D')
+
+  let buf = RunVimInTerminal('-S XScrolloffpadFolds', #{rows: 20, cols: 78})
+
+  " Case 1: Jump to end-of-file
+  " With folds present, scrolloffpad should still
+  " keep the cursor positioned with padding below EOF
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! G\<CR>")
+  call term_sendkeys(buf, "\<C-L>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_scrolloffpad_folds_1', {})
+
+  " Case 2: Move to the folded line to ensure the fold is actually in view
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! 60G\<CR>")
+  call term_sendkeys(buf, "\<C-L>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_scrolloffpad_folds_2', {})
+
+  " Case 3: Close the fold explicitly and go to EOF again
+  " Behavior should remain stable with closed folds
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! zc\<CR>")
+  call term_sendkeys(buf, "\<Esc>:\<C-U>normal! G\<CR>")
+  call term_sendkeys(buf, "\<C-L>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_scrolloffpad_folds_3', {})
+
+  call StopVimInTerminal(buf)
+  let &termwinsize = save_termwinsize
+endfunc
+
+" Resizing to "textoff" after 'smoothscroll' skips part of a wrapped line must
+" not crash.
+func Test_smoothscroll_textoff_showbreak()
+  CheckOption smoothscroll
+  CheckRunVimInTerminal
+
+  let donefile = 'XTest_crash_textoff_showbreak_done'
+  defer delete(donefile)
+  let lines =<< trim END
+    set noswapfile
+
+    set scrolloff=0
+    set lines=12 columns=40
+
+    call setline(1, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    set number wrap smoothscroll showbreak=>
+    vsplit
+
+    let textoff = getwininfo(win_getid())[0].textoff
+    execute "normal! 0\<C-E>"
+    redraw
+    execute 'vertical resize' textoff
+    redraw
+    call writefile(['done'], 'XTest_crash_textoff_showbreak_done')
+  END
+  call writefile(lines, 'XTest_crash_textoff_showbreak', 'D')
+
+  let buf = 0
+  let buf = term_start([GetVimProg(), '--clean'], #{term_rows: 24, term_cols: 80})
+  call TermWait(buf, 200)
+  call term_sendkeys(buf, ":source XTest_crash_textoff_showbreak\<CR>")
+  call WaitForAssert({-> assert_true(filereadable(donefile))})
+  let status = term_getstatus(buf)
+  call assert_equal('running', status)
+  call assert_true(filereadable(donefile))
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1,6 +1,6 @@
 " Vim autoload file for editing compressed files.
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2024 Nov 25
+" Last Change:	2026 Apr 26
 " Former Maintainer: Bram Moolenaar <Bram@vim.org>
 
 " These functions are used by the gzip plugin.
@@ -82,13 +82,8 @@ fun gzip#read(cmd)
   let empty = line("'[") == 1 && line("']") == line("$")
   let tmp = tempname()
   let tmpe = tmp . "." . expand("<afile>:e")
-  if exists('*fnameescape')
-    let tmp_esc = fnameescape(tmp)
-    let tmpe_esc = fnameescape(tmpe)
-  else
-    let tmp_esc = escape(tmp, ' ')
-    let tmpe_esc = escape(tmpe, ' ')
-  endif
+  let tmp_esc = fnameescape(tmp)
+  let tmpe_esc = fnameescape(tmpe)
   " write the just read lines to a temp file "'[,']w tmp.gz"
   execute "silent '[,']w " . tmpe_esc
   " uncompress the temp file: call system("gzip -dn tmp.gz")
@@ -101,22 +96,14 @@ fun gzip#read(cmd)
     let ok = 1
     " delete the compressed lines; remember the line number
     let l = line("'[") - 1
-    if exists(":lockmarks")
-      lockmarks '[,']d _
-    else
-      '[,']d _
-    endif
+    lockmarks '[,']d _
     " read in the uncompressed lines "'[-1r tmp"
     " Use ++edit if the buffer was empty, keep the 'ff' and 'fenc' options.
     setlocal nobin
-    if exists(":lockmarks")
-      if empty
-	execute "silent lockmarks " . l . "r ++edit " . tmp_esc
-      else
-	execute "silent lockmarks " . l . "r " . tmp_esc
-      endif
+    if empty
+      execute "silent lockmarks " . l . "r ++edit " . tmp_esc
     else
-      execute "silent " . l . "r " . tmp_esc
+      execute "silent lockmarks " . l . "r " . tmp_esc
     endif
 
     " if buffer became empty, delete trailing blank line
@@ -143,11 +130,7 @@ fun gzip#read(cmd)
 
   " When uncompressed the whole buffer, do autocommands
   if ok && empty
-    if exists('*fnameescape')
-      let fname = fnameescape(expand("%:r"))
-    else
-      let fname = escape(expand("%:r"), " \t\n*?[{`$\\%#'\"|!<")
-    endif
+    let fname = fnameescape(expand("%:r"))
     if filereadable(undofile(expand("%")))
       exe "sil rundo " . fnameescape(undofile(expand("%")))
     endif
@@ -191,8 +174,9 @@ fun gzip#appre(cmd)
       call s:set_compression(readfile(nm, "b", 1)[0])
     endif
 
-    " Rename to a weird name to avoid the risk of overwriting another file
-    let nmt = expand("<afile>:p:h") . "/X~=@l9q5"
+    " Rename to a unique name to avoid the risk of overwriting another file
+    " or being targeted by a symlink in a shared directory.
+    let nmt = s:samedir_tempname(nm)
     let nmte = nmt . "." . expand("<afile>:e")
     if rename(nm, nmte) == 0
       if &patchmode != "" && getfsize(nm . &patchmode) == -1
@@ -208,22 +192,27 @@ fun gzip#appre(cmd)
 endfun
 
 " find a file name for the file to be compressed.  Use "name" without an
-" extension if possible.  Otherwise use a weird name to avoid overwriting an
-" existing file.
+" extension if possible.  Otherwise use a unique name to avoid overwriting an
+" existing file or following a symlink set up by another user.
 fun s:tempname(name)
   let fn = fnamemodify(a:name, ":r")
   if !filereadable(fn) && !isdirectory(fn)
     return fn
   endif
-  return fnamemodify(a:name, ":p:h") . "/X~=@l9q5"
+  return s:samedir_tempname(a:name)
+endfun
+
+" Generate an unpredictable file name in the same directory as "name", using
+" the random component of tempname() to avoid symlink attacks in shared
+" directories (e.g. /tmp).
+fun s:samedir_tempname(name)
+  let tmp = tempname()
+  return fnamemodify(a:name, ":p:h") . "/" . fnamemodify(tmp, ":h:t") . fnamemodify(tmp, ":t")
 endfun
 
 fun s:escape(name)
   " shellescape() was added by patch 7.0.111
-  if exists("*shellescape")
-    return shellescape(a:name)
-  endif
-  return "'" . a:name . "'"
+  return shellescape(a:name)
 endfun
 
 " vim: set sw=2 :

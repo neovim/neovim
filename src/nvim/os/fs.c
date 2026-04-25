@@ -13,6 +13,7 @@
 #include <uv.h>
 
 #ifdef MSWIN
+# include <io.h>
 # include <shlobj.h>
 #endif
 
@@ -20,7 +21,7 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 
-#if defined(HAVE_ACL)
+#ifdef HAVE_ACL
 # ifdef HAVE_SYS_ACL_H
 #  include <sys/acl.h>
 # endif
@@ -60,9 +61,7 @@
 # include "nvim/strings.h"
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/fs.c.generated.h"
-#endif
+#include "os/fs.c.generated.h"
 
 #ifdef HAVE_XATTR
 static const char e_xattr_erange[]
@@ -114,6 +113,7 @@ int os_dirname(char *buf, size_t len)
     xstrlcpy(buf, uv_strerror(error_number), len);
     return FAIL;
   }
+  TO_SLASH(buf);
   return OK;
 }
 
@@ -225,7 +225,9 @@ int os_nodetype(const char *name)
 int os_exepath(char *buffer, size_t *size)
   FUNC_ATTR_NONNULL_ALL
 {
-  return uv_exepath(buffer, size);
+  int r = uv_exepath(buffer, size);
+  TO_SLASH(buffer);
+  return r;
 }
 
 /// Checks if the file `name` is executable.
@@ -245,14 +247,12 @@ bool os_can_exe(const char *name, char **abspath, bool use_path)
 {
   if (!use_path || gettail_dir(name) != name) {
 #ifdef MSWIN
-    if (is_executable_ext(name, abspath)) {
+    return is_executable_ext(name, abspath);
 #else
     // Must have path separator, cannot execute files in the current directory.
-    if ((use_path || gettail_dir(name) != name)
-        && is_executable(name, abspath)) {
+    return ((use_path || gettail_dir(name) != name)
+            && is_executable(name, abspath));
 #endif
-      return true;
-    }
     return false;
   }
 
@@ -339,6 +339,8 @@ static bool is_executable_ext(const char *name, char **abspath)
   }
   return false;
 }
+#else
+# define is_executable_ext is_executable
 #endif
 
 /// Checks if a file is in `$PATH` and is executable.
@@ -357,7 +359,8 @@ static bool is_executable_in_path(const char *name, char **abspath)
 
 #ifdef MSWIN
   char *path = NULL;
-  if (!os_env_exists("NoDefaultCurrentDirectoryInExePath", false)) {
+  if (!os_env_exists("NoDefaultCurrentDirectoryInExePath", false)
+      && strstr(path_tail(p_sh), "cmd.exe") != NULL) {
     // Prepend ".;" to $PATH.
     size_t pathlen = strlen(path_env);
     path = xmallocz(pathlen + 2);
@@ -384,11 +387,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
     xmemcpyz(buf, p, (size_t)(e - p));
     (void)append_path(buf, name, bufsize);
 
-#ifdef MSWIN
     if (is_executable_ext(buf, abspath)) {
-#else
-    if (is_executable(buf, abspath)) {
-#endif
       rv = true;
       goto end;
     }
@@ -488,9 +487,9 @@ FILE *os_fopen(const char *path, const char *flags)
   return fdopen(fd, flags);
 }
 
-/// Sets file descriptor `fd` to close-on-exec.
-//
-// @return -1 if failed to set, 0 otherwise.
+/// Sets file descriptor `fd` to close-on-exec (Unix) or non-inheritable (Windows).
+///
+/// @return -1 if failed to set, 0 otherwise.
 int os_set_cloexec(const int fd)
 {
 #ifdef HAVE_FD_CLOEXEC
@@ -510,11 +509,16 @@ int os_set_cloexec(const int fd)
     return -1;
   }
   return 0;
-#endif
-
-  // No FD_CLOEXEC flag. On Windows, the file should have been opened with
-  // O_NOINHERIT anyway.
+#elif defined(MSWIN)
+  HANDLE h = (HANDLE)_get_osfhandle(fd);
+  if (h == INVALID_HANDLE_VALUE
+      || !SetHandleInformation(h, HANDLE_FLAG_INHERIT, 0)) {
+    return -1;
+  }
+  return 0;
+#else
   return -1;
+#endif
 }
 
 /// Close a file
@@ -568,7 +572,7 @@ int os_open_stdin_fd(void)
 
 /// Read from a file
 ///
-/// Handles EINTR and ENOMEM, but not other errors.
+/// Handles EINTR, but not other errors.
 ///
 /// @param[in]  fd  File descriptor to read from.
 /// @param[out]  ret_eof  Is set to true if EOF was encountered, otherwise set
@@ -1111,6 +1115,7 @@ int os_mkdtemp(const char *templ, char *path)
   int result = uv_fs_mkdtemp(NULL, &request, templ, NULL);
   if (result == kLibuvSuccess) {
     xstrlcpy(path, request.path, TEMP_FILE_PATH_MAXLEN);
+    TO_SLASH(path);
   }
   uv_fs_req_cleanup(&request);
   return result;
@@ -1344,6 +1349,7 @@ char *os_realpath(const char *name, char *buf, size_t len)
       buf = xmalloc(len);
     }
     xstrlcpy(buf, request.ptr, len);
+    TO_SLASH(buf);
   }
   uv_fs_req_cleanup(&request);
   return result == kLibuvSuccess ? buf : NULL;
@@ -1429,6 +1435,7 @@ shortcut_end:
   }
 
   CoUninitialize();
+  TO_SLASH(rfname);
   return rfname;
 }
 

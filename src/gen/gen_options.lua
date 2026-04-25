@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 local options_input_file = arg[5]
 
 --- @module 'nvim.options'
@@ -82,7 +83,6 @@ local function get_flags(o)
     { 'normal_fname_chars', 'NFname' },
     { 'normal_dname_chars', 'NDname' },
     { 'pri_mkrc', 'PriMkrc' },
-    { 'deny_in_modelines', 'NoML' },
     { 'deny_duplicates', 'NoDup' },
     { 'modelineexpr', 'MLE' },
     { 'func' },

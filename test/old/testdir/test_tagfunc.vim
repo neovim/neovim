@@ -257,13 +257,38 @@ func Test_tagfunc_callback()
     call assert_fails("set tagfunc=funcref('abc')", "E700:")
 
     #" set 'tagfunc' to a non-existing function
-    LET &tagfunc = function('g:TagFunc2', [21])
+    LET &tagfunc = function('g:TagFunc2')
     LET g:TagFunc2Args = []
     call assert_fails("set tagfunc=function('NonExistingFunc')", 'E700:')
     call assert_fails("LET &tagfunc = function('NonExistingFunc')", 'E700:')
-    call assert_fails("tag axb123", 'E426:')
-    call assert_equal([], g:TagFunc2Args)
+    call assert_fails("tag axb123", 'E433:')
+    call assert_equal(['axb123', '', {}], g:TagFunc2Args)
     bw!
+
+    #" :setlocal and :setglobal
+    set tagfunc&
+    setlocal tagfunc=function('g:TagFunc1',\ [22])
+    LET g:TagFunc1Args = []
+    call assert_fails("tag a22", 'E433:')
+    call assert_equal([22, 'a22', '', {}], g:TagFunc1Args)
+    new
+    LET g:TagFunc1Args = []
+    call assert_fails("tag a22", 'E433:')
+    call assert_equal([], g:TagFunc1Args)
+    bw!
+    setglobal tagfunc=function('g:TagFunc1',\ [23])
+    LET g:TagFunc1Args = []
+    call assert_fails("tag a22", 'E433:')
+    call assert_equal([22, 'a22', '', {}], g:TagFunc1Args)
+    setlocal tagfunc&
+    LET g:TagFunc1Args = []
+    call assert_fails("tag a23", 'E433:')
+    call assert_equal([], g:TagFunc1Args)
+    new
+    LET g:TagFunc1Args = []
+    call assert_fails("tag a23", 'E433:')
+    call assert_equal([23, 'a23', '', {}], g:TagFunc1Args)
+    :%bw!
   END
   call CheckLegacyAndVim9Success(lines)
 

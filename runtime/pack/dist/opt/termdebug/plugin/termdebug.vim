@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2023 Nov 02
+" Last Change: 2026 Mar 11
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -68,6 +68,9 @@ set cpo&vim
 " To end type "quit" in the gdb window.
 command -nargs=* -complete=file -bang Termdebug call s:StartDebug(<bang>0, <f-args>)
 command -nargs=+ -complete=file -bang TermdebugCommand call s:StartDebugCommand(<bang>0, <f-args>)
+
+" Keep track of whether Termdebug is running for tests and users.
+let g:termdebug_is_running = v:false
 
 let s:pc_id = 12
 let s:asm_id = 13
@@ -137,7 +140,7 @@ func s:StartDebugCommand(bang, ...)
 endfunc
 
 func s:StartDebug_internal(dict)
-  if exists('s:gdbwin')
+  if get(g:, 'termdebug_is_running', v:false) || exists('s:gdbwin')
     call s:Echoerr('Terminal debugger already running, cannot run two')
     return
   endif
@@ -223,16 +226,21 @@ func s:StartDebug_internal(dict)
   if exists('#User#TermdebugStartPost')
     doauto <nomodeline> User TermdebugStartPost
   endif
+  let g:termdebug_is_running = v:true
 endfunc
 
 " Use when debugger didn't start or ended.
 func s:CloseBuffers()
-  exe $'bwipe! {s:ptybufnr}'
-  if s:asmbufnr > 0 && bufexists(s:asmbufnr)
-    exe $'bwipe! {s:asmbufnr}'
-  endif
-  if s:varbufnr > 0 && bufexists(s:varbufnr)
-    exe $'bwipe! {s:varbufnr}'
+  for bufnr in [get(s:, 'promptbufnr', 0), get(s:, 'ptybufnr', 0), get(s:, 'asmbufnr', 0), get(s:, 'varbufnr', 0)]
+    if bufnr > 0 && bufexists(bufnr)
+      execute $'bwipe! {bufnr}'
+    endif
+  endfor
+  if exists('s:comm_job_id')
+    let commbufnr = get(nvim_get_chan_info(s:comm_job_id), 'buffer', 0)
+    if commbufnr > 0 && bufexists(commbufnr)
+      execute $'bwipe! {commbufnr}'
+    endif
   endif
   let s:running = v:false
   unlet! s:gdbwin
@@ -426,8 +434,8 @@ func s:StartDebug_prompt(dict)
     new
   endif
   let s:gdbwin = win_getid()
-  let s:promptbuf = bufnr('')
-  call prompt_setprompt(s:promptbuf, 'gdb> ')
+  let s:promptbufnr = bufnr('')
+  call prompt_setprompt(s:promptbufnr, 'gdb> ')
   set buftype=prompt
 
   if empty(glob('gdb'))
@@ -440,8 +448,8 @@ func s:StartDebug_prompt(dict)
           \ Please exit and rename them because Termdebug may not work as expected.")
   endif
 
-  call prompt_setcallback(s:promptbuf, function('s:PromptCallback'))
-  call prompt_setinterrupt(s:promptbuf, function('s:PromptInterrupt'))
+  call prompt_setcallback(s:promptbufnr, function('s:PromptCallback'))
+  call prompt_setinterrupt(s:promptbufnr, function('s:PromptInterrupt'))
 
   if s:vertical
     " Assuming the source code window will get a signcolumn, use two more
@@ -474,14 +482,16 @@ func s:StartDebug_prompt(dict)
         \ })
   if s:gdbjob == 0
     call s:Echoerr('Invalid argument (or job table is full) while starting gdb job')
-    exe $'bwipe! {s:ptybufnr}'
+    if s:promptbufnr > 0 && bufexists(s:promptbufnr)
+      exe $'bwipe! {s:promptbufnr}'
+    endif
     return
   elseif s:gdbjob == -1
     call s:Echoerr('Failed to start the gdb job')
     call s:CloseBuffers()
     return
   endif
-  exe $'au BufUnload <buffer={s:promptbuf}> ++once call jobstop(s:gdbjob)'
+  exe $'au BufUnload <buffer={s:promptbufnr}> ++once call jobstop(s:gdbjob)'
 
   let s:ptybufnr = 0
   if has('win32')
@@ -692,7 +702,9 @@ func s:GdbOutCallback(job_id, msgs, event)
 
   " Add the output above the current prompt.
   for line in lines
-    call append(line('$') - 1, line)
+    " Nvim supports multi-line input in prompt-buffer, so the prompt line is
+    " not always the last line.
+    call append(line("':") - 1, line)
   endfor
   if !empty(lines)
     set modified
@@ -777,17 +789,7 @@ endfunc
 
 func s:EndDebugCommon()
   let curwinid = win_getid()
-
-  if exists('s:ptybufnr') && s:ptybufnr
-    exe $'bwipe! {s:ptybufnr}'
-  endif
-  if s:asmbufnr > 0 && bufexists(s:asmbufnr)
-    exe $'bwipe! {s:asmbufnr}'
-  endif
-  if s:varbufnr > 0 && bufexists(s:varbufnr)
-    exe $'bwipe! {s:varbufnr}'
-  endif
-  let s:running = v:false
+  call s:CloseBuffers()
 
   " Restore 'signcolumn' in all buffers for which it was set.
   call win_gotoid(s:sourcewin)
@@ -818,6 +820,7 @@ func s:EndDebugCommon()
   endif
 
   au! TermDebug
+  let g:termdebug_is_running = v:false
 endfunc
 
 func s:EndPromptDebug(job_id, exit_code, event)
@@ -825,12 +828,8 @@ func s:EndPromptDebug(job_id, exit_code, event)
     doauto <nomodeline> User TermdebugStopPre
   endif
 
-  if bufexists(s:promptbuf)
-    exe $'bwipe! {s:promptbuf}'
-  endif
-
   call s:EndDebugCommon()
-  unlet s:gdbwin
+  unlet! s:gdbwin
   "call ch_log("Returning from EndPromptDebug()")
 endfunc
 
@@ -1187,6 +1186,86 @@ func s:QuoteArg(x)
   return printf('"%s"', a:x->substitute('[\\"]', '\\&', 'g'))
 endfunc
 
+func s:DefaultBreakpointLocation()
+  " Use the fname:lnum format, older gdb can't handle --source.
+  return s:QuoteArg($"{expand('%:p')}:{line('.')}")
+endfunc
+
+func s:TokenizeBreakpointArguments(args)
+  let tokens = []
+  let start = -1
+  let escaped = v:false
+  let in_quotes = v:false
+
+  let i = 0
+  for ch in a:args
+    if start < 0 && ch !~# '\s'
+      let start = i
+    endif
+    if start >= 0
+      if escaped
+        let escaped = v:false
+      elseif ch ==# '\'
+        let escaped = v:true
+      elseif ch ==# '"'
+        let in_quotes = !in_quotes
+      elseif !in_quotes && ch =~# '\s'
+        eval tokens->add(#{text: a:args->slice(start, i), start: start, end: i - 1})
+        let start = -1
+      endif
+    endif
+    let i += 1
+  endfor
+
+  if start >= 0
+    eval tokens->add(#{text: a:args->slice(start), start: start, end: i - 1})
+  endif
+  return tokens
+endfunc
+
+func s:BuildBreakpointCommand(at, tbreak)
+  let args = trim(a:at)
+  let cmd = '-break-insert'
+  if a:tbreak
+    let cmd ..= ' -t'
+  endif
+
+  if empty(args)
+    return $'{cmd} {s:DefaultBreakpointLocation()}'
+  endif
+
+  let condition = ''
+  let prefix = args
+  for token in s:TokenizeBreakpointArguments(args)
+    if token.text ==# 'if' && token.end < strchars(args) - 1
+      let condition = trim(args->slice(token.end + 1))
+      let prefix = token.start > 0 ? trim(args->slice(0, token.start)) : ''
+      break
+    endif
+  endfor
+
+  let prefix_tokens = s:TokenizeBreakpointArguments(prefix)
+  let location = prefix
+  let thread = ''
+  if len(prefix_tokens) >= 2
+        \ && prefix_tokens[-2].text ==# 'thread'
+        \ && prefix_tokens[-1].text =~# '^\d\+$'
+    let thread = prefix_tokens[-1].text
+    let location = join(prefix_tokens[: -3]->mapnew('v:val.text'), ' ')
+  endif
+
+  if empty(trim(location))
+    let location = s:DefaultBreakpointLocation()
+  endif
+  if !empty(thread)
+    let cmd ..= $' -p {thread}'
+  endif
+  if !empty(condition)
+    let cmd ..= $' -c {s:QuoteArg(condition)}'
+  endif
+  return $'{cmd} {trim(location)}'
+endfunc
+
 " :Until - Execute until past a specified position or current line
 func s:Until(at)
   if s:stopped
@@ -1212,13 +1291,7 @@ func s:SetBreakpoint(at, tbreak=v:false)
     sleep 10m
   endif
 
-  " Use the fname:lnum format, older gdb can't handle --source.
-  let at = empty(a:at) ? s:QuoteArg($"{expand('%:p')}:{line('.')}") : a:at
-  if a:tbreak
-    let cmd = $'-break-insert -t {at}'
-  else
-    let cmd = $'-break-insert {at}'
-  endif
+  let cmd = s:BuildBreakpointCommand(a:at, a:tbreak)
   call s:SendCommand(cmd)
   if do_continue
     Continue
@@ -1336,7 +1409,6 @@ func s:GetEvaluationExpression(range, arg)
   if a:arg != ''
     " user supplied evaluation
     let expr = s:CleanupExpr(a:arg)
-    " DSW: replace "likely copy + paste" assignment
     let expr = substitute(expr, '"\([^"]*\)": *', '\1=', 'g')
   elseif a:range == 2
     let pos = getcurpos()
@@ -1688,14 +1760,21 @@ func s:CreateBreakpoint(id, subid, enabled)
       let hiName = "debugBreakpoint"
     endif
     let label = ''
-    if exists('g:termdebug_config') && has_key(g:termdebug_config, 'sign')
-      let label = g:termdebug_config['sign']
-    elseif exists('g:termdebug_config') && has_key(g:termdebug_config, 'sign_decimal')
-      let label = printf('%02d', a:id)
-      if a:id > 99
-        let label = '9+'
+    if exists('g:termdebug_config')
+      if has_key(g:termdebug_config, 'signs')
+        let label = get(g:termdebug_config.signs, a:id - 1, '')
       endif
-    else
+      if label == '' && has_key(g:termdebug_config, 'sign')
+        let label = g:termdebug_config['sign']
+      endif
+      if label == '' && has_key(g:termdebug_config, 'sign_decimal')
+        let label = printf('%02d', a:id)
+        if a:id > 99
+          let label = '9+'
+        endif
+      endif
+    endif
+    if label == ''
       let label = printf('%02X', a:id)
       if a:id > 255
         let label = 'F+'

@@ -222,6 +222,16 @@ func Test_mapnew_dict()
 
   const dconst = #{one: 1, two: 2, three: 3}
   call assert_equal(#{one: 2, two: 3, three: 4}, mapnew(dconst, {_, v -> v + 1}))
+
+  " return value of mapnew() can be modified
+  let dout = mapnew(dconst, {k, v -> $'{k}={v}'})
+  let dout.one ..= '!'
+  call assert_equal(#{one: 'one=1!', two: 'two=2', three: 'three=3'}, dout)
+  unlet dout.three
+  call assert_equal(#{one: 'one=1!', two: 'two=2'}, dout)
+  " original Dict is still locked
+  call assert_fails('unlet dconst.three', 'E741:')
+  call assert_fails('let dconst.one += 1', 'E741:')
 endfunc
 
 func Test_mapnew_list()
@@ -232,6 +242,16 @@ func Test_mapnew_list()
 
   const lconst = [1, 2, 3]
   call assert_equal([2, 3, 4], mapnew(lconst, {_, v -> v + 1}))
+
+  " return value of mapnew() can be modified
+  let lout = mapnew(lconst, {k, v -> $'{k}={v}'})
+  let lout[0] ..= '!'
+  call assert_equal(['0=1!', '1=2', '2=3'], lout)
+  unlet lout[2]
+  call assert_equal(['0=1!', '1=2'], lout)
+  " original List is still locked
+  call assert_fails('unlet lconst[2]', 'E741:')
+  call assert_fails('let lconst[0] += 1', 'E741:')
 endfunc
 
 func Test_mapnew_blob()

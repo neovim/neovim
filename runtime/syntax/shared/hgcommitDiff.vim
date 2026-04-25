@@ -3,6 +3,7 @@
 " Maintainer:	Max Coplan <mchcopl@gmail.com>
 "               Translations by Jakson Alves de Aquino.
 " Last Change:	2022-12-08
+" 2025-08-16 by Vim project, update zh_CN translations, #18011
 " Copied from:	runtime/syntax/diff.vim
 
 " Quit when a (custom) syntax file was already loaded
@@ -312,9 +313,9 @@ syn match hgDiffCommon		"^\%(SL\|HG\): Thư mục con chung: .* và .*"
 
 " zh_CN
 syn match hgDiffOnly		"^\%(SL\|HG\): 只在 .* 存在：.*"
-syn match hgDiffIdentical	"^\%(SL\|HG\): 檔案 .* 和 .* 相同$"
+syn match hgDiffIdentical	"^\%(SL\|HG\): 文件 .* 和 .* 相同$"
 syn match hgDiffDiffer		"^\%(SL\|HG\): 文件 .* 和 .* 不同$"
-syn match hgDiffBDiffer		"^\%(SL\|HG\): 文件 .* 和 .* 不同$"
+syn match hgDiffBDiffer		"^\%(SL\|HG\): 二进制文件 .* 和 .* 不同$"
 syn match hgDiffIsA		"^\%(SL\|HG\): 文件 .* 是.*而文件 .* 是.*"
 syn match hgDiffNoEOL		"^\%(SL\|HG\): \\ 文件尾没有 newline 字符"
 syn match hgDiffCommon		"^\%(SL\|HG\): .* 和 .* 有共同的子目录$"

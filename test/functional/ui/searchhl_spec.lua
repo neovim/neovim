@@ -574,6 +574,16 @@ describe('search highlighting', function()
       {1:~                                       }|*4
       /mat/e                                  |
     ]])
+
+    command([[call setline(1, ['blah blah blah']) | 2,$delete_]])
+    feed('gg0/blah/e<C-g><cr>')
+    eq({ 0, 1, 9, 0 }, fn.getpos('.'))
+
+    feed('gg0/blah/e<C-g><C-g><cr>')
+    eq({ 0, 1, 14, 0 }, fn.getpos('.'))
+
+    feed('gg0/blah/e<C-g><C-g><C-t><cr>')
+    eq({ 0, 1, 9, 0 }, fn.getpos('.'))
   end)
 
   it('works with multiline regexps', function()
@@ -680,6 +690,32 @@ describe('search highlighting', function()
     command('redraw!')
     -- There is an intermediate state where :redraw! removes 'incsearch' highlight.
     screen:expect_unchanged(true)
+  end)
+
+  it('no ml_get error with incsearch and <Cmd> mapping that opens window', function()
+    command('cnoremap <F3> <Cmd>vnew<Bar>redraw!<CR>')
+    fn.setline(1, { 'foo', 'bar', 'baz' })
+    feed('G/z')
+    screen:expect([[
+      foo                                     |
+      bar                                     |
+      ba{2:z}                                     |
+      {1:~                                       }|*3
+      /z^                                      |
+    ]])
+    feed('<F3>')
+    screen:expect([[
+                          │foo                |
+      {1:~                   }│bar                |
+      {1:~                   }│baz                |
+      {1:~                   }│{1:~                  }|*2
+      {3:[No Name]            }{2:[No Name] [+]      }|
+      /z^                                      |
+    ]])
+    eq('', n.api.nvim_get_vvar('errmsg'))
+    feed('<C-G>')
+    screen:expect_unchanged(true)
+    eq('', n.api.nvim_get_vvar('errmsg'))
   end)
 
   it('highlight is not after redraw during substitute confirm prompt', function()

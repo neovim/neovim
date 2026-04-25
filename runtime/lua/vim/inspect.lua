@@ -47,6 +47,40 @@ local char = string.char
 local gsub = string.gsub
 local fmt = string.format
 
+local sbavailable, stringbuffer = pcall(require, 'string.buffer')
+local buffnew
+local puts
+local render
+
+if sbavailable then
+  buffnew = stringbuffer.new
+  puts = function(buf, str)
+    buf:put(str)
+  end
+  render = function(buf)
+    return buf:get()
+  end
+else
+  buffnew = function()
+    return { n = 0 }
+  end
+  puts = function(buf, str)
+    buf.n = buf.n + 1
+    buf[buf.n] = str
+  end
+  render = function(buf)
+    return table.concat(buf)
+  end
+end
+
+local _rawget
+if rawget then
+  _rawget = rawget
+else
+  _rawget = function(t, k)
+    return t[k]
+  end
+end
 local function rawpairs(t)
   return next, t, nil
 end
@@ -90,31 +124,14 @@ local function escape(str)
   )
 end
 
--- List of lua keywords
-local luaKeywords = {
-  ['and'] = true,
-  ['break'] = true,
-  ['do'] = true,
-  ['else'] = true,
-  ['elseif'] = true,
-  ['end'] = true,
-  ['false'] = true,
-  ['for'] = true,
-  ['function'] = true,
-  ['goto'] = true,
-  ['if'] = true,
-  ['in'] = true,
-  ['local'] = true,
-  ['nil'] = true,
-  ['not'] = true,
-  ['or'] = true,
-  ['repeat'] = true,
-  ['return'] = true,
-  ['then'] = true,
-  ['true'] = true,
-  ['until'] = true,
-  ['while'] = true,
-}
+local luaKeywords = {}
+for k in
+  ([[ and break do else elseif end false for function goto if
+             in local nil not or repeat return then true until while
+]]):gmatch('%w+')
+do
+  luaKeywords[k] = true
+end
 
 local function isIdentifier(str)
   return type(str) == 'string'
@@ -157,7 +174,7 @@ end
 
 local function getKeys(t)
   local seqLen = 1
-  while rawget(t, seqLen) ~= nil do
+  while _rawget(t, seqLen) ~= nil do
     seqLen = seqLen + 1
   end
   seqLen = seqLen - 1
@@ -173,17 +190,19 @@ local function getKeys(t)
   return keys, keysLen, seqLen
 end
 
-local function countCycles(x, cycles)
+local function countCycles(x, cycles, depth)
   if type(x) == 'table' then
     if cycles[x] then
       cycles[x] = cycles[x] + 1
     else
       cycles[x] = 1
-      for k, v in rawpairs(x) do
-        countCycles(k, cycles)
-        countCycles(v, cycles)
+      if depth > 0 then
+        for k, v in rawpairs(x) do
+          countCycles(k, cycles, depth - 1)
+          countCycles(v, cycles, depth - 1)
+        end
+        countCycles(getmetatable(x), cycles, depth - 1)
       end
-      countCycles(getmetatable(x), cycles)
     end
   end
 end
@@ -232,11 +251,6 @@ local function processRecursive(process, item, path, visited)
     processed = processedCopy
   end
   return processed
-end
-
-local function puts(buf, str)
-  buf.n = buf.n + 1
-  buf[buf.n] = str
 end
 
 local Inspector = {}
@@ -354,10 +368,10 @@ function inspect.inspect(root, options)
   end
 
   local cycles = {}
-  countCycles(root, cycles)
+  countCycles(root, cycles, depth)
 
   local inspector = setmetatable({
-    buf = { n = 0 },
+    buf = buffnew(),
     ids = {},
     cycles = cycles,
     depth = depth,
@@ -368,7 +382,7 @@ function inspect.inspect(root, options)
 
   inspector:putValue(root)
 
-  return table.concat(inspector.buf)
+  return render(inspector.buf)
 end
 
 setmetatable(inspect, {

@@ -13,9 +13,7 @@
 #include "nvim/msgpack_rpc/packer.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/packer.c.generated.h"
-#endif
+#include "msgpack_rpc/packer.c.generated.h"
 
 void mpack_check_buffer(PackerBuffer *packer)
 {
@@ -78,7 +76,7 @@ void mpack_float8(char **ptr, double i)
 void mpack_str(String str, PackerBuffer *packer)
 {
   const size_t len = str.size;
-  if (len < 20) {
+  if (len < 32) {
     mpack_w(&packer->ptr, 0xa0 | len);
   } else if (len < 0xff) {
     mpack_w(&packer->ptr, 0xd9);

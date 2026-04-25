@@ -9,7 +9,6 @@ local exec_lua = n.exec_lua
 
 describe('vim.lsp._snippet_grammar', function()
   before_each(n.clear)
-  after_each(n.clear)
 
   local parse = function(...)
     local res = exec_lua('return require("vim.lsp._snippet_grammar").parse(...)', ...)

@@ -1,6 +1,8 @@
 *usr_42.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			      Add new menus
 

@@ -8,6 +8,4 @@
 #include "nvim/os/fs_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/fs.h.generated.h"
-#endif
+#include "os/fs.h.generated.h"

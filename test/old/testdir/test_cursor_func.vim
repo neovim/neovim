@@ -90,6 +90,10 @@ func Test_curswant_with_cursorline()
 endfunc
 
 func Test_screenpos()
+  if has('gui_running')
+    set lines=25
+    set columns=78
+  endif
   rightbelow new
   rightbelow 20vsplit
   call setline(1, ["\tsome text", "long wrapping line here", "next line"])
@@ -120,7 +124,8 @@ func Test_screenpos()
   setlocal nonumber display=lastline so=0
   exe "normal G\<C-Y>\<C-Y>"
   redraw
-  call assert_equal({'row': winrow + wininfo.height - 1,
+  let winbar_height = get(wininfo, 'winbar', 0)
+  call assert_equal({'row': winrow + wininfo.height - 1 + winbar_height,
 	\ 'col': wincol + 7,
 	\ 'curscol': wincol + 7,
 	\ 'endcol': wincol + 7}, winid->screenpos(line('$'), 8))

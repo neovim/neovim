@@ -1,5 +1,3 @@
-local luaassert = require('luassert')
-
 local M = {}
 
 local SUBTBL = {
@@ -124,7 +122,7 @@ function M.format_luav(v, indent, opts)
   else
     print(type(v))
     -- Not implemented yet
-    luaassert(false)
+    assert(false)
   end
   return ret
 end

@@ -13,6 +13,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
@@ -41,9 +42,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "textformat.c.generated.h"
-#endif
+#include "textformat.c.generated.h"
 
 static bool did_add_space = false;  ///< auto_format() added an extra space
                                     ///< under the cursor
@@ -645,6 +644,22 @@ void auto_format(bool trailblank, bool prev_line)
       return;
     }
     curwin->w_cursor = pos;
+  }
+
+  // Also skip formatting when the user just typed whitespace in the
+  // middle of the line.  Reformatting would join all paragraph lines and
+  // re-wrap, consuming the space at the line break point via
+  // OPENLINE_DELSPACES.  By deferring, the next non-whitespace character
+  // will be inserted adjacent to the space, keeping it protected from
+  // being consumed at a line break.  auto_format() will then reformat
+  // properly on the next keystroke.
+  if (*old != NUL && !trailblank && !wasatend && pos.col > 0
+      && (State & MODE_INSERT)) {
+    char *line = get_cursor_line_ptr();
+    if (WHITECHAR(line[pos.col - 1])) {
+      curwin->w_cursor = pos;
+      return;
+    }
   }
 
   // With the 'c' flag in 'formatoptions' and 't' missing: only format

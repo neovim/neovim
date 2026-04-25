@@ -37,7 +37,7 @@ instead of "s:" when the mapping is expanded outside of the script.
 There are only script-local functions, no buffer-local or window-local
 functions.
 
-					*:fu* *:function* *E128* *E129* *E123*
+			*:fu* *:function* *E128* *E129* *E123* *E454* *E1058* *E1068*
 :fu[nction]		List all functions and their arguments.
 
 :fu[nction][!] {name}	List function {name}, annotated with line numbers
@@ -58,7 +58,7 @@ functions.
 <
 							*:function-verbose*
 When 'verbose' is non-zero, listing a function will also display where it was
-last defined. Example: >
+last defined.  Example: >
 
     :verbose function SetFileTypeSH
 	function SetFileTypeSH(name)
@@ -73,11 +73,11 @@ See |:verbose-cmd| for more information.
 			matching |:endfunction|.
 
 			The name must be made of alphanumeric characters and
-			'_', and must start with a capital or "s:" (see
-			above).  Note that using "b:" or "g:" is not allowed.
-			(since patch 7.4.260 E884 is given if the function
-			name has a colon in the name, e.g. for "foo:bar()".
-			Before that patch no error was given).
+			'_' and must start with a capital or "s:" (see above).
+			Note that using "b:", "l:", etc. is not allowed (since
+			patch 7.4.260 E884 is given if the function name has a
+			colon, e.g. for "foo:bar()"), while a leading "g:" is
+			skipped and still requires a following capital letter.
 
 			{name} may be a |Dictionary| |Funcref| entry: >
 				:function dict.init(arg)
@@ -167,7 +167,7 @@ See |:verbose-cmd| for more information.
 			command, use line breaks instead of |:bar|: >
 				:exe "func Foo()\necho 'foo'\nendfunc"
 <
-				*:delf* *:delfunction* *E131* *E933*
+				*:delf* *:delfunction* *E130* *E131* *E933*
 :delf[unction][!] {name}
 			Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a
@@ -179,9 +179,9 @@ See |:verbose-cmd| for more information.
 			With the ! there is no error if the function does not
 			exist.
 							*:retu* *:return* *E133*
-:retu[rn] [expr]	Return from a function.  When "[expr]" is given, it is
+:retu[rn] [expr]	Return from a function.  When [expr] is given, it is
 			evaluated and returned as the result of the function.
-			If "[expr]" is not given, the number 0 is returned.
+			If [expr] is not given, the number 0 is returned.
 			When a function ends without an explicit ":return",
 			the number 0 is returned.
 			Note that there is no check for unreachable lines,
@@ -345,7 +345,7 @@ This function can then be called with: >
 <		Here GetDict() gets the range but method() does not.
 
 								*E132*
-The recursiveness of user functions is restricted with the |'maxfuncdepth'|
+The recursiveness of user functions is restricted with the 'maxfuncdepth'
 option.
 
 It is also possible to use `:eval`.  It does not support a range, but does
@@ -360,8 +360,8 @@ is used as a method: >
 ==============================================================================
 
 3. Cleaning up in a function ~
-							*:defer*
-:defer {func}({args})	Call {func} when the current function is done.
+							*:defe* *:defer*
+:defe[r] {func}({args})	Call {func} when the current function is done.
 			{args} are evaluated here.
 
 Quite often a command in a function has a global effect, which must be undone

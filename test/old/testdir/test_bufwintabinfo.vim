@@ -112,6 +112,7 @@ func Test_getbufwintabinfo()
   call assert_true(winlist[2].quickfix)
   call assert_false(winlist[2].loclist)
   wincmd t | only
+  %bw!
 endfunc
 
 function Test_get_wininfo_leftcol()
@@ -197,6 +198,28 @@ func Test_getwininfo_au()
 
   unlet g:info
   augroup! T1
+  bwipe!
+endfunc
+
+func Test_getwininfo_status_height()
+  set laststatus=0
+  vsplit
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(0, info.status_height)
+
+  set laststatus=2
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(1, info.status_height)
+
+  set laststatus=1
+  only
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(0, info.status_height)
+  vsplit
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(1, info.status_height)
+
+  set laststatus&vim
   bwipe!
 endfunc
 

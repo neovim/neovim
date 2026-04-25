@@ -1,6 +1,20 @@
 " Test :recover
 
-source check.vim
+func SetUp()
+  edit XSetUp
+  preserve
+  let sn = swapname('')
+  let b = readblob(sn)
+  bw!
+
+  " Not all fields are written in a system-independent manner.  Detect whether
+  " the test is running on a little or big-endian system.
+  " The B0_MAGIC_LONG field may be 32-bit or 64-bit, depending on the system,
+  " even though the value stored is only 32-bits.  Therefore, need to check
+  " both the high and low 32-bits to compute these values.
+  let s:little_endian = (b[1008:1011] == 0z33323130) || (b[1012:1015] == 0z33323130)
+  let s:system_64bit = s:little_endian ? (b[1012:1015] == 0z00000000) : (b[1008:1011] == 0z00000000)
+endfunc
 
 func Test_recover_root_dir()
   " This used to access invalid memory.
@@ -206,17 +220,8 @@ func Test_recover_corrupted_swap_file()
   let save_b = copy(b)
   bw!
 
-  " Not all fields are written in a system-independent manner.  Detect whether
-  " the test is running on a little or big-endian system, so the correct
-  " corruption values can be set.
-  " The B0_MAGIC_LONG field may be 32-bit or 64-bit, depending on the system,
-  " even though the value stored is only 32-bits.  Therefore, need to check
-  " both the high and low 32-bits to compute these values.
-  let little_endian = (b[1008:1011] == 0z33323130) || (b[1012:1015] == 0z33323130)
-  let system_64bit = little_endian ? (b[1012:1015] == 0z00000000) : (b[1008:1011] == 0z00000000)
-
   " clear the B0_MAGIC_LONG field
-  if system_64bit
+  if s:system_64bit
     let b[1008:1015] = 0z00000000.00000000
   else
     let b[1008:1011] = 0z00000000
@@ -267,9 +272,9 @@ func Test_recover_corrupted_swap_file()
   " set the block number in a pointer entry to a negative number
   let b = copy(save_b)
   if v:true  " Nvim changed this field from a long to an int64_t
-    let b[4104:4111] = little_endian ? 0z00000000.00000080 : 0z80000000.00000000
+    let b[4104:4111] = s:little_endian ? 0z00000000.00000080 : 0z80000000.00000000
   else
-    let b[4104:4107] = little_endian ? 0z00000080 : 0z80000000
+    let b[4104:4107] = s:little_endian ? 0z00000080 : 0z80000000
   endif
   call writefile(b, sn)
   call assert_fails('recover Xfile1', 'E312:')
@@ -288,7 +293,7 @@ func Test_recover_corrupted_swap_file()
 
   " set the number of lines in the data block to zero
   let b = copy(save_b)
-  if system_64bit
+  if s:system_64bit
     let b[8208:8215] = 0z00000000.00000000
   else
     let b[8208:8211] = 0z00000000
@@ -302,7 +307,7 @@ func Test_recover_corrupted_swap_file()
 
   " set the number of lines in the data block to a large value
   let b = copy(save_b)
-  if system_64bit
+  if s:system_64bit
     let b[8208:8215] = 0z00FFFFFF.FFFFFF00
   else
     let b[8208:8211] = 0z00FFFF00
@@ -317,7 +322,7 @@ func Test_recover_corrupted_swap_file()
 
   " use an invalid text start for the lines in a data block
   let b = copy(save_b)
-  if system_64bit
+  if s:system_64bit
     let b[8216:8219] = 0z00000000
   else
     let b[8212:8215] = 0z00000000
@@ -330,7 +335,7 @@ func Test_recover_corrupted_swap_file()
 
   " use an incorrect text end (db_txt_end) for the data block
   let b = copy(save_b)
-  let b[8204:8207] = little_endian ? 0z80000000 : 0z00000080
+  let b[8204:8207] = s:little_endian ? 0z80000000 : 0z00000080
   call writefile(b, sn)
   call assert_fails('recover Xfile1', 'E312:')
   call assert_equal('Xfile1', @%)
@@ -476,6 +481,43 @@ func Test_noname_buffer()
   call writefile(b, sn, 'D')
   exe "recover " .. sn
   call assert_equal(['one', 'two'], getline(1, '$'))
+endfunc
+
+" Test for recovering a corrupted swap file, those caused a crash
+func Test_recover_corrupted_swap_file1()
+  CheckUnix
+  " only works correctly on 64bit Unix systems:
+  if !(s:system_64bit && s:little_endian && has('unix'))
+    throw 'Skipped: Corrupt Swap file sample requires a little-endian 64bit Unix build'
+  endif
+  " Test 1: Heap buffer-overflow
+  new
+  let sample = 'samples/recover-crash1.swp'
+  let target = '.Xpoc1.swp'  " Xpoc1.swp (non-hidden) doesn't work in Nvim
+  call filecopy(sample, target)
+  try
+    sil recover! Xpoc1
+  catch /^Vim\%((\S\+)\)\=:E1364:/
+  endtry
+  let content = getline(1, '$')->join()
+  call assert_match('???ILLEGAL BLOCK NUMBER', content)
+  call delete(target)
+  bw!
+"
+"  " Test 2: Segfault
+  new
+  let sample = 'samples/recover-crash2.swp'
+  let target = '.Xpoc2.swp'  " Xpoc1.swp (non-hidden) doesn't work in Nvim
+  call filecopy(sample, target)
+  try
+    sil recover! Xpoc2
+  catch /^Vim\%((\S\+)\)\=:E1364:/
+  endtry
+  let content = getline(1, '$')->join()
+  call assert_match('???ILLEGAL BLOCK NUMBER', content)
+  call assert_match('???LINES MISSING', content)
+  call delete(target)
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

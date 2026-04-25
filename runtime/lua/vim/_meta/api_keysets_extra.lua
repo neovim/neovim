@@ -1,7 +1,9 @@
 --- @meta _
+-- This file is NOT generated, edit it directly. See also _meta/api_keysets.gen.lua.
+
 error('Cannot require a meta file')
 
---- Extra types we can't generate keysets for
+--- Extra types we don't define keysets for.
 
 --- @class vim.api.keyset.extmark_details
 --- @field ns_id integer
@@ -20,7 +22,7 @@ error('Cannot require a meta file')
 --- @field hl_group? string
 --- @field hl_eol? boolean
 ---
---- @field conceal? string
+--- @field conceal? string|false
 --- @field spell? boolean
 --- @field ui_watched? boolean
 --- @field url? string
@@ -65,7 +67,7 @@ error('Cannot require a meta file')
 --- @field once? boolean
 --- @field pattern? string
 --- @field buflocal? boolean
---- @field buffer? integer
+--- @field buf? integer
 
 --- @class vim.api.keyset.create_autocmd.callback_args
 --- @field id integer autocommand id
@@ -74,7 +76,7 @@ error('Cannot require a meta file')
 --- @field match string expanded value of <amatch>
 --- @field buf integer expanded value of <abuf>
 --- @field file string expanded value of <afile>
---- @field data? any arbitrary data passed from |nvim_exec_autocmds()|                       *event-data*
+--- @field data? any arbitrary data passed from |nvim_exec_autocmds()|
 
 --- @class vim.api.keyset.create_user_command.command_args
 --- @field name string Command name
@@ -110,7 +112,7 @@ error('Cannot require a meta file')
 ---
 --- Command modifiers in a structured format. Has the same structure as the
 --- "mods" key of |nvim_parse_cmd()|.
---- @field smods table
+--- @field smods vim.api.keyset.cmd_mods
 
 --- @class vim.api.keyset.command_info
 --- @field name string
@@ -120,13 +122,14 @@ error('Cannot require a meta file')
 --- @field bar boolean
 --- @field register boolean
 --- @field keepscript boolean
---- @field preview boolean
+--- @field preview? function
 --- @field nargs string
---- @field complete? string
+--- @field complete? string|function
 --- @field complete_arg? string
 --- @field count? string
 --- @field range? string
 --- @field addr? string
+--- @field callback? function
 
 --- @class vim.api.keyset.hl_info.base
 --- @field reverse? true
@@ -149,13 +152,15 @@ error('Cannot require a meta file')
 --- @field background? integer
 
 --- @class vim.api.keyset.get_hl_info : vim.api.keyset.hl_info.base
---- @field fg? integer
---- @field bg? integer
---- @field sp? integer
---- @field default? true
---- @field link? string
 --- @field blend? integer
+--- @field bg? integer
+--- @field bg_indexed? boolean
 --- @field cterm? vim.api.keyset.hl_info.cterm
+--- @field default? true
+--- @field fg? integer
+--- @field fg_indexed? boolean
+--- @field link? string
+--- @field sp? integer
 
 --- @class vim.api.keyset.set_hl_info : vim.api.keyset.hl_info.base
 --- @field fg? integer|string
@@ -169,7 +174,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.get_keymap
 --- @field abbr? 0|1
---- @field buffer? 0|1
+--- @field buf? 0|1
 --- @field callback? function
 --- @field desc? string
 --- @field expr? 0|1
@@ -207,26 +212,26 @@ error('Cannot require a meta file')
 --- @field allows_duplicates boolean
 
 --- @class vim.api.keyset.cmd.mods
---- @field filter { force: boolean, pattern: string }
---- @field silent boolean
---- @field emsg_silent boolean
---- @field unsilent boolean
---- @field sandbox boolean
---- @field noautocmd boolean
---- @field tab integer
---- @field verbose integer
---- @field browse boolean
---- @field confirm boolean
---- @field hide boolean
---- @field keepalt boolean
---- @field keepjumps boolean
---- @field keepmarks boolean
---- @field keeppatterns boolean
---- @field lockmarks boolean
---- @field noswapfile boolean
---- @field vertical boolean
---- @field horizontal boolean
---- @field split ''|'botright'|'topleft'|'belowright'|'aboveleft'
+--- @field filter? { force: boolean, pattern: string }
+--- @field silent? boolean
+--- @field emsg_silent? boolean
+--- @field unsilent? boolean
+--- @field sandbox? boolean
+--- @field noautocmd? boolean
+--- @field tab? integer
+--- @field verbose? integer
+--- @field browse? boolean
+--- @field confirm? boolean
+--- @field hide? boolean
+--- @field keepalt? boolean
+--- @field keepjumps? boolean
+--- @field keepmarks? boolean
+--- @field keeppatterns? boolean
+--- @field lockmarks? boolean
+--- @field noswapfile? boolean
+--- @field vertical? boolean
+--- @field horizontal? boolean
+--- @field split? ''|'botright'|'topleft'|'belowright'|'aboveleft'
 
 --- @class vim.api.keyset.cmd.magic
 --- @field bar boolean
@@ -247,3 +252,24 @@ error('Cannot require a meta file')
 --- @field fill integer
 --- @field end_row integer
 --- @field end_vcol integer
+
+-- Inherit from vim.api.keyset.win_config so this type can be passed to nvim_open_win().
+-- Because of this we only need to define the fields with different types (nil or non-nil).
+
+--- @class vim.api.keyset.win_config_ret : vim.api.keyset.win_config
+--- @field focusable boolean
+--- @field external boolean
+--- @field hide boolean
+--- @field mouse boolean
+--- @field width integer
+--- @field height integer
+--- @field relative 'cursor'|'editor'|'laststatus'|'mouse'|'tabline'|'win'
+---
+--- @field noautocmd nil
+--- @field title nil
+--- @field title_pos nil
+--- @field footer nil
+--- @field footer_pos nil
+--- @field style nil
+--- @field fixed nil
+--- @field vertical nil

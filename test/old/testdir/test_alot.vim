@@ -27,3 +27,13 @@ source test_tagfunc.vim
 source test_unlet.vim
 source test_version.vim
 source test_wnext.vim
+
+" encoding=utf-8 tests, previously in test_alot_utf8.vim
+source test_charsearch_utf8.vim
+source test_expr_utf8.vim
+source test_mksession_utf8.vim
+source test_regexp_utf8.vim
+source test_source_utf8.vim
+source test_startup_utf8.vim
+source test_utf8.vim
+source test_utf8_comparisons.vim

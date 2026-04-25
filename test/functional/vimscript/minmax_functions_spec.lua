@@ -8,7 +8,7 @@ local clear = n.clear
 local fn = n.fn
 local pcall_err = t.pcall_err
 
-before_each(clear)
+setup(clear)
 for _, func in ipairs({ 'min', 'max' }) do
   describe(func .. '()', function()
     it('gives a single error message when multiple values failed conversions', function()

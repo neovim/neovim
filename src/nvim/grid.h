@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>  // IWYU pragma: keep
 
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
@@ -45,6 +46,4 @@ enum {
 # define schar_from_ascii(x) ((schar_T)(x))
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "grid.h.generated.h"
-#endif
+#include "grid.h.generated.h"

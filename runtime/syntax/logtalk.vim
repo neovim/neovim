@@ -2,7 +2,7 @@
 "
 " Language:	Logtalk
 " Maintainer:   Paulo Moura <pmoura@logtalk.org>
-" Last Change:  December 16, 2023
+" Last Change:  October 6, 2025
 
 
 
@@ -37,7 +37,7 @@ syn region	logtalkAtom		start=+'+	skip=+\\'+	end=+'+		contains=logtalkEscapeSequ
 syn match	logtalkEscapeSequence	contained	"\\\([\\abfnrtv\"\']\|\(x[a-fA-F0-9]\+\|[0-7]\+\)\\\)"
 
 
-" Logtalk message sending operators
+" Logtalk message-sending operators
 
 syn match	logtalkOperator		"::"
 syn match	logtalkOperator		"\(0'\)\@<!:"
@@ -85,6 +85,7 @@ syn region	logtalkDir		matchgroup=logtalkDirTag	start=":- encoding("		matchgroup
 syn region	logtalkDir		matchgroup=logtalkDirTag	start=":- initialization("	matchgroup=logtalkDirTag	end=")\."	contains=ALL
 syn region	logtalkDir		matchgroup=logtalkDirTag	start=":- info("		matchgroup=logtalkDirTag	end=")\."	contains=ALL
 syn region	logtalkDir		matchgroup=logtalkDirTag	start=":- mode("		matchgroup=logtalkDirTag	end=")\."	contains=logtalkOperator, logtalkAtom
+syn region	logtalkDir		matchgroup=logtalkDirTag	start=":- mode_non_terminal("		matchgroup=logtalkDirTag	end=")\."	contains=logtalkOperator, logtalkAtom
 syn region	logtalkDir		matchgroup=logtalkDirTag	start=":- dynamic("		matchgroup=logtalkDirTag	end=")\."	contains=ALL
 syn match	logtalkDirTag		":- built_in\."
 syn match	logtalkDirTag		":- dynamic\."
@@ -189,7 +190,7 @@ syn match	logtalkOperator		"-->"
 syn match	logtalkOperator		"->"
 syn match	logtalkKeyword		"\<throw\ze("
 syn match	logtalkKeyword		"\<\(instantiation\|system\)_error\>"
-syn match	logtalkKeyword		"\<\(uninstantiation\|type\|domain\|existence\|permission\|representation\|evaluation\|resource\|syntax\)_error\ze("
+syn match	logtalkKeyword		"\<\(uninstantiation\|type\|domain\|consistency\|existence\|permission\|representation\|evaluation\|resource\|syntax\)_error\ze("
 
 
 " Term unification

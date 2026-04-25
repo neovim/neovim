@@ -14,8 +14,6 @@ local poke_eventloop = n.poke_eventloop
 before_each(clear)
 
 describe('treesitter foldexpr', function()
-  clear()
-
   before_each(function()
     -- open folds to avoid deleting entire folded region
     exec_lua([[vim.opt.foldlevel = 9]])
@@ -689,12 +687,6 @@ t3]])
   end)
 
   it("doesn't open folds that are not touched", function()
-    -- test is known to be flaky
-    -- https://github.com/neovim/neovim/issues/33910
-    if t.skip_fragile(pending) then
-      return
-    end
-
     local screen = Screen.new(40, 8)
     screen:set_default_attr_ids({
       [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray },
@@ -715,38 +707,24 @@ t2]])
     )
 
     feed('ggzojo')
-    poke_eventloop()
-
-    screen:expect {
-      grid = [[
+    screen:expect([[
       {1:-}# h1                                   |
       {1:│}t1                                     |
       {1:-}^                                       |
       {1:+}{2:+--  2 lines: # h2·····················}|
       {3:~                                       }|*3
       {4:-- INSERT --}                            |
-    ]],
-    }
+    ]])
 
-    feed('<Esc>u')
     -- TODO(tomtomjhj): `u` spuriously opens the fold (#26499).
-    feed('zMggzo')
-
-    feed('dd')
-    poke_eventloop()
-
-    if t.skip_fragile(pending, t.is_ci('cirrus')) then
-      return
-    end
-    screen:expect {
-      grid = [[
+    feed('<Esc>uzMggzodd')
+    screen:expect([[
       {1:-}^t1                                     |
       {1:-}# h2                                   |
       {1:│}t2                                     |
       {3:~                                       }|*4
       1 line less; before #2  {MATCH:.*}|
-    ]],
-    }
+    ]])
   end)
 
   it("doesn't call get_parser too often when parser is not available", function()
@@ -832,5 +810,17 @@ t2]])
 
     command('set ft=c')
     eq(foldlevels, get_fold_levels())
+  end)
+
+  it('no error when deleting lines at end of buffer with fml=0', function()
+    local screen = Screen.new(40, 2)
+    insert('hello')
+    parse('markdown')
+    command('set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldminlines=0')
+    feed('o<Esc>dd')
+    screen:expect([[
+      ^hello                                   |
+                                              |
+    ]])
   end)
 end)

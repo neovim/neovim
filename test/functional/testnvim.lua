@@ -1,5 +1,7 @@
 local uv = vim.uv
 local t = require('test.testutil')
+---@type test.harness
+local harness = require('test.harness')
 
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
@@ -7,6 +9,7 @@ local SocketStream = uv_stream.SocketStream
 local ProcStream = uv_stream.ProcStream
 
 local check_cores = t.check_cores
+local pcall_err = t.pcall_err
 local check_logs = t.check_logs
 local dedent = t.dedent
 local eq = t.eq
@@ -17,15 +20,14 @@ local sleep = uv.sleep
 --- Functions executing in the current nvim session/process being tested.
 local M = {}
 
-local lib_path = t.is_zig_build() and './zig-out/lib' or './build/lib/nvim/'
-M.runtime_set = 'set runtimepath^=' .. lib_path
+M.runtime_set = 'set runtimepath^=' .. t.paths.test_build_dir .. '/lib/nvim'
 
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 M.nvim_set = (
   'set shortmess+=IS background=light noswapfile noautoindent startofline'
   .. ' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-  .. ' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid'
+  .. " belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid shada=!,'100,<50,s10,h"
   .. [[ statusline=%<%f\ %{%nvim_eval_statusline('%h%w%m%r',\ {'maxwidth':\ 30}).width\ >\ 0\ ?\ '%h%w%m%r\ '\ :\ ''%}%=%{%\ &showcmdloc\ ==\ 'statusline'\ ?\ '%-10.S\ '\ :\ ''\ %}%{%\ exists('b:keymap_name')\ ?\ '<'..b:keymap_name..'>\ '\ :\ ''\ %}%{%\ &ruler\ ?\ (\ &rulerformat\ ==\ ''\ ?\ '%-14.(%l,%c%V%)\ %P'\ :\ &rulerformat\ )\ :\ ''\ %}]]
 )
 M.nvim_argv = {
@@ -129,6 +131,7 @@ end
 --- @return any
 function M.request(method, ...)
   assert(session, 'no Nvim session')
+  assert(not session.eof_err, 'sending request after EOF from Nvim')
   local status, rv = session:request(method, ...)
   if not status then
     if loop_running then
@@ -318,7 +321,9 @@ function M.run(request_cb, notification_cb, setup_cb, timeout)
 end
 
 function M.stop()
-  assert(session):stop()
+  if loop_running then
+    assert(session):stop()
+  end
 end
 
 -- Use for commands which expect nvim to quit.
@@ -326,10 +331,10 @@ end
 function M.expect_exit(fn_or_timeout, ...)
   local eof_err_msg = 'EOF was received from Nvim. Likely the Nvim process crashed.'
   if type(fn_or_timeout) == 'function' then
-    t.matches(eof_err_msg, t.pcall_err(fn_or_timeout, ...))
+    t.matches(vim.pesc(eof_err_msg), t.pcall_err(fn_or_timeout, ...))
   else
     t.matches(
-      eof_err_msg,
+      vim.pesc(eof_err_msg),
       t.pcall_err(function(timeout, fn, ...)
         fn(...)
         assert(session)
@@ -437,24 +442,12 @@ local function remove_args(args, args_rm)
   return new_args
 end
 
-function M.check_close()
+function M.check_close(noblock)
   if not session then
     return
   end
-  local start_time = uv.now()
-  session:close()
-  uv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
-  local end_time = uv.now()
-  local delta = end_time - start_time
-  if delta > 500 then
-    print(
-      'nvim took '
-        .. delta
-        .. ' milliseconds to exit after last test\n'
-        .. 'This indicates a likely problem with the test even if it passed!\n'
-    )
-    io.stdout:flush()
-  end
+
+  session:close(nil, noblock)
   session = nil
 end
 
@@ -468,7 +461,9 @@ end
 
 --- Starts a new, global Nvim session and clears the current one.
 ---
---- Note: Use `new_session()` to start a session without replacing the current one.
+--- Note:
+--- - Use `new_session()` to start a session without replacing the current one.
+--- - Use `spawn_wait()` to start Nvim without connecting a RPC session.
 ---
 --- Parameters are interpreted as startup args, OR a map with these keys:
 --- - args:       List: Args appended to the default `nvim_argv` set.
@@ -491,24 +486,65 @@ function M.clear(...)
   return M.get_session()
 end
 
+local n_processes = 0
+
 --- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
 ---
 --- Does not replace the current global session, unlike `clear()`.
 ---
 --- @param keep boolean (default: false) Don't close the current global session.
---- @param ... string Nvim CLI args (or see overload)
+--- @param ... string Nvim CLI args
 --- @return test.Session
 --- @overload fun(keep: boolean, opts: test.session.Opts): test.Session
 function M.new_session(keep, ...)
-  if not keep then
-    M.check_close()
+  local test_id = _G._nvim_test_id
+  if not keep and session ~= nil then
+    -- Don't block for the previous session's exit if it's from a different test.
+    session:close(nil, session.data and session.data.test_id ~= test_id)
+    session = nil
   end
 
   local argv, env, io_extra = M._new_argv(...)
 
-  local proc = ProcStream.spawn(argv, env, io_extra)
-  return Session.new(proc)
+  local proc = ProcStream.spawn(argv, env, io_extra, function(closed)
+    n_processes = n_processes - 1
+    local delta = 0
+    if closed then
+      uv.update_time() -- Update cached value of uv.now() (libuv: uv_now()).
+      delta = uv.now() - closed
+    end
+    if delta > 500 then
+      print(
+        ('\nNvim session %s took %d milliseconds to exit\n'):format(test_id, delta)
+          .. 'This indicates a likely problem with the test even if it passed!'
+      )
+      io.stdout:flush()
+    end
+  end, true)
+  n_processes = n_processes + 1
+
+  local new_session = Session.new(proc)
+  -- Make it possible to check whether two sessions are from the same test.
+  new_session.data = { test_id = test_id }
+  return new_session
 end
+
+harness.on_suite_end(function()
+  M.check_close(true)
+  local timed_out = false
+  local timer = assert(vim.uv.new_timer())
+  timer:start(10000, 0, function()
+    timed_out = true
+  end)
+  while n_processes > 0 and not timed_out do
+    uv.run('once')
+  end
+  timer:close()
+  if timed_out then
+    print(('warning: %d dangling Nvim processes'):format(n_processes))
+    io.stdout:flush()
+  end
+end)
 
 --- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.
 ---
@@ -579,21 +615,22 @@ function M._new_argv(...)
         assert(type(v) == 'string')
         env_opt[k] = v
       end
+      -- Set these from the environment unless the caller defined them.
       for _, k in ipairs({
-        'HOME',
         'ASAN_OPTIONS',
-        'TSAN_OPTIONS',
-        'MSAN_OPTIONS',
+        'GCOV_ERROR_FILE',
+        'HOME',
         'LD_LIBRARY_PATH',
-        'PATH',
+        'MSAN_OPTIONS',
+        'NVIM_TEST',
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
-        'GCOV_ERROR_FILE',
-        'XDG_DATA_DIRS',
+        'PATH',
         'TMPDIR',
+        'TSAN_OPTIONS',
         'VIMRUNTIME',
+        'XDG_DATA_DIRS',
       }) do
-        -- Set these from the environment unless the caller defined them.
         if not env_opt[k] then
           env_opt[k] = os.getenv(k)
         end
@@ -650,8 +687,7 @@ end
 
 --- Sets Nvim shell to powershell.
 ---
---- @param fake (boolean) If true, a fake will be used if powershell is not
----             found on the system.
+--- @param fake boolean? Use a fake if powershell is not found on the system.
 --- @returns true if powershell was found on the system, else false.
 function M.set_shell_powershell(fake)
   local found = M.has_powershell()
@@ -699,7 +735,9 @@ end
 --- @param method string
 --- @param ... any
 function M.nvim_async(method, ...)
-  assert(session):notify(method, ...)
+  assert(session, 'no Nvim session')
+  assert(not session.eof_err, 'sending notification after EOF from Nvim')
+  session:notify(method, ...)
 end
 
 --- Executes a Vimscript function via RPC.
@@ -800,15 +838,19 @@ function M.assert_visible(bufnr, visible)
   end
 end
 
-local start_dir = uv.cwd()
+local start_dir = assert(uv.cwd())
 
 function M.rmdir(path)
   local ret, _ = pcall(vim.fs.rm, path, { recursive = true, force = true })
+  local did_cd = false
   if not ret and is_os('win') then
     -- Maybe "Permission denied"; try again after changing the nvim
     -- process to the top-level directory.
-    M.command([[exe 'cd '.fnameescape(']] .. start_dir .. "')")
-    ret, _ = pcall(vim.fs.rm, path, { recursive = true, force = true })
+    ret, _ = pcall(function()
+      M.fn.chdir(start_dir)
+      vim.fs.rm(path, { recursive = true, force = true })
+    end)
+    did_cd = true
   end
   -- During teardown, the nvim process may not exit quickly enough, then rmdir()
   -- will fail (on Windows).
@@ -816,20 +858,10 @@ function M.rmdir(path)
     sleep(1000)
     vim.fs.rm(path, { recursive = true, force = true })
   end
-end
-
---- @deprecated Use `t.pcall_err()` to check failure, or `n.command()` to check success.
-function M.exc_exec(cmd)
-  M.command(([[
-    try
-      execute "%s"
-    catch
-      let g:__exception = v:exception
-    endtry
-  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
-  local ret = M.eval('get(g:, "__exception", 0)')
-  M.command('unlet! g:__exception')
-  return ret
+  if did_cd then
+    -- Try to restore CWD in case rmdir() is used within a test. Needs pcall: #38278
+    pcall(M.command, 'cd -')
+  end
 end
 
 function M.exec(code)
@@ -981,10 +1013,15 @@ function M.add_builddir_to_rtp()
 end
 
 --- Create folder with non existing parents
+---
+--- TODO(justinmk): lift this and `t.mkdir()` into vim.fs.
+---
 --- @param path string
 --- @return boolean?
 function M.mkdir_p(path)
-  return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
+  return os.execute(
+    (is_os('win') and 'mkdir ' .. string.gsub(path, '/', '\\') or 'mkdir -p ' .. path)
+  )
 end
 
 local testid = (function()
@@ -1012,6 +1049,11 @@ return function()
 
   if after_each then
     after_each(function()
+      if not vim.endswith(_G._nvim_test_id, 'x') then
+        -- Use a different test ID for skipped tests as well as Nvim instances spawned
+        -- between this after_each() and the next before_each() (e.g. in setup()).
+        _G._nvim_test_id = _G._nvim_test_id .. 'x'
+      end
       check_logs()
       check_cores('build/bin/nvim')
       if session then
@@ -1024,5 +1066,6 @@ return function()
       end
     end)
   end
+
   return M
 end

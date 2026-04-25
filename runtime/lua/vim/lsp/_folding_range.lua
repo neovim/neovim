@@ -1,6 +1,6 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
-local ms = require('vim.lsp.protocol').Methods
+local tableclear = require('vim._core.table').clear
 local api = vim.api
 
 ---@type table<lsp.FoldingRangeKind, true>
@@ -12,18 +12,23 @@ local supported_fold_kinds = {
 
 local M = {}
 
----@class (private) vim.lsp.folding_range.State
+local Capability = require('vim.lsp._capability')
+
+---@class (private) vim.lsp.folding_range.State : vim.lsp.Capability
 ---
 ---@field active table<integer, vim.lsp.folding_range.State?>
----@field bufnr integer
----@field augroup integer
+---
+--- `TextDocument` version this `state` corresponds to.
 ---@field version? integer
 ---
---- Never use this directly, `renew()` the cached foldinfo
+--- treesitter language of the buffer, used for foldtext highlights.
+---@field lang? string
+---
+--- Never use this directly, `evaluate()` the cached foldinfo
 --- then use on demand via `row_*` fields.
 ---
 --- Index In the form of client_id -> ranges
----@field client_ranges table<integer, lsp.FoldingRange[]?>
+---@field client_state table<integer, lsp.FoldingRange[]?>
 ---
 --- Index in the form of row -> [foldlevel, mark]
 ---@field row_level table<integer, [integer, ">" | "<"?]?>
@@ -33,23 +38,34 @@ local M = {}
 ---
 --- Index in the form of start_row -> collapsed_text
 ---@field row_text table<integer, string?>
-local State = { active = {} }
+---
+--- Index in the form of start_row -> [text, highlight[]?][]
+---@field row_virt_text table<integer, [string, string[]?][]>
+local State = {
+  name = 'folding_range',
+  method = 'textDocument/foldingRange',
+  active = {},
+}
+State.__index = State
+setmetatable(State, Capability)
+Capability.all[State.name] = State
 
---- Renew the cached foldinfo in the buffer.
-function State:renew()
-  ---@type table<integer, [integer, ">" | "<"?]?>
-  local row_level = {}
-  ---@type table<integer, table<lsp.FoldingRangeKind, true?>?>>
-  local row_kinds = {}
-  ---@type table<integer, string?>
-  local row_text = {}
+--- Re-evaluate the cached foldinfo in the buffer.
+function State:evaluate()
+  local row_level, row_kinds, row_text, row_virt_text =
+    self.row_level, self.row_kinds, self.row_text, self.row_virt_text
 
-  for client_id, ranges in pairs(self.client_ranges) do
+  tableclear(row_level)
+  tableclear(row_kinds)
+  tableclear(row_text)
+  tableclear(row_virt_text)
+
+  for client_id, ranges in pairs(self.client_state) do
     for _, range in ipairs(ranges) do
       local start_row = range.startLine
       local end_row = range.endLine
-      -- Adding folds within a single line is not supported by Nvim.
-      if start_row ~= end_row then
+      -- Ignore zero-length or invalid folds
+      if start_row < end_row then
         row_text[start_row] = range.collapsedText
 
         local kind = range.kind
@@ -74,10 +90,6 @@ function State:renew()
       end
     end
   end
-
-  self.row_level = row_level
-  self.row_kinds = row_kinds
-  self.row_text = row_text
 end
 
 --- Force `foldexpr()` to be re-evaluated, without opening folds.
@@ -105,7 +117,7 @@ local function schedule_foldupdate(bufnr)
   if not scheduled_foldupdate[bufnr] then
     scheduled_foldupdate[bufnr] = true
     api.nvim_create_autocmd('InsertLeave', {
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function()
         foldupdate(bufnr)
@@ -125,14 +137,14 @@ function State:multi_handler(results, ctx)
 
   for client_id, result in pairs(results) do
     if result.err then
-      log.error(result.err)
+      log.error('folding_range', result.err)
     else
-      self.client_ranges[client_id] = result.result
+      self.client_state[client_id] = result.result
     end
   end
   self.version = ctx.version
 
-  self:renew()
+  self:evaluate()
   if api.nvim_get_mode().mode:match('^i') then
     -- `foldUpdate()` is guarded in insert mode.
     schedule_foldupdate(self.bufnr)
@@ -151,66 +163,54 @@ end
 --- Request `textDocument/foldingRange` from the server.
 --- `foldupdate()` is scheduled once after the request is completed.
 ---@param client? vim.lsp.Client The client whose server supports `foldingRange`.
-function State:request(client)
+function State:refresh(client)
   ---@type lsp.FoldingRangeParams
   local params = { textDocument = util.make_text_document_params(self.bufnr) }
 
   if client then
-    client:request(ms.textDocument_foldingRange, params, function(...)
+    client:request('textDocument/foldingRange', params, function(...)
       self:handler(...)
     end, self.bufnr)
     return
   end
 
   if
-    not next(vim.lsp.get_clients({ bufnr = self.bufnr, method = ms.textDocument_foldingRange }))
+    not next(vim.lsp.get_clients({ bufnr = self.bufnr, method = 'textDocument/foldingRange' }))
   then
     return
   end
 
-  vim.lsp.buf_request_all(self.bufnr, ms.textDocument_foldingRange, params, function(...)
+  vim.lsp.buf_request_all(self.bufnr, 'textDocument/foldingRange', params, function(...)
     self:multi_handler(...)
   end)
 end
 
 function State:reset()
-  self.client_ranges = {}
-  self.row_level = {}
-  self.row_kinds = {}
-  self.row_text = {}
+  self.lang = vim.treesitter.language.get_lang(vim.bo[self.bufnr].filetype)
+  tableclear(self.row_level)
+  tableclear(self.row_kinds)
+  tableclear(self.row_text)
+  tableclear(self.row_virt_text)
 end
 
 --- Initialize `state` and event hooks, then request folding ranges.
 ---@param bufnr integer
 ---@return vim.lsp.folding_range.State
-function State.new(bufnr)
-  local self = setmetatable({}, { __index = State })
-  self.bufnr = bufnr
-  self.augroup = api.nvim_create_augroup('nvim.lsp.folding_range:' .. bufnr, { clear = true })
-  self:reset()
-
-  State.active[bufnr] = self
+function State:new(bufnr)
+  self = Capability.new(self, bufnr)
+  self.lang = vim.treesitter.language.get_lang(vim.bo[self.bufnr].filetype)
+  self.row_level = {}
+  self.row_kinds = {}
+  self.row_text = {}
+  self.row_virt_text = {}
 
   api.nvim_buf_attach(bufnr, false, {
-    -- `on_detach` also runs on buffer reload (`:e`).
-    -- Ensure `state` and hooks are cleared to avoid duplication or leftover states.
-    on_detach = function()
-      util._cancel_requests({
-        bufnr = bufnr,
-        method = ms.textDocument_foldingRange,
-        type = 'pending',
-      })
-      local state = State.active[bufnr]
-      if state then
-        state:destroy()
-      end
-    end,
     -- Reset `bufstate` and request folding ranges.
     on_reload = function()
       local state = State.active[bufnr]
       if state then
         state:reset()
-        state:request()
+        state:refresh()
       end
     end,
     --- Sync changed rows with their previous foldlevels before applying new ones.
@@ -238,58 +238,33 @@ function State.new(bufnr)
       end
     end,
   })
-  api.nvim_create_autocmd('LspDetach', {
-    group = self.augroup,
-    buffer = bufnr,
-    callback = function(args)
-      if not api.nvim_buf_is_loaded(bufnr) then
-        return
-      end
-
-      ---@type integer
-      local client_id = args.data.client_id
-      self.client_ranges[client_id] = nil
-
-      ---@type vim.lsp.Client[]
-      local clients = vim
-        .iter(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange }))
-        ---@param client vim.lsp.Client
-        :filter(function(client)
-          return client.id ~= client_id
-        end)
-        :totable()
-      if #clients == 0 then
-        self:reset()
-      end
-
-      self:renew()
-      foldupdate(bufnr)
-    end,
-  })
-  api.nvim_create_autocmd('LspAttach', {
-    group = self.augroup,
-    buffer = bufnr,
-    callback = function(args)
-      local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_foldingRange, bufnr) then
-        self:request(client)
-      end
-    end,
-  })
   api.nvim_create_autocmd('LspNotify', {
     group = self.augroup,
-    buffer = bufnr,
-    callback = function(args)
-      local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
+    buf = bufnr,
+    callback = function(ev)
+      local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
       if
-        client:supports_method(ms.textDocument_foldingRange, bufnr)
-        and (
-          args.data.method == ms.textDocument_didChange
-          or args.data.method == ms.textDocument_didOpen
-        )
+        client:supports_method('textDocument/foldingRange', bufnr)
+        and (ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen')
       then
-        self:request(client)
+        self:refresh(client)
       end
+    end,
+  })
+  api.nvim_create_autocmd('OptionSet', {
+    group = self.augroup,
+    pattern = 'foldexpr',
+    callback = function()
+      if vim.v.option_type == 'global' or api.nvim_get_current_buf() == bufnr then
+        vim.lsp._capability.enable('folding_range', false, { bufnr = bufnr })
+      end
+    end,
+  })
+  api.nvim_create_autocmd('FileType', {
+    group = self.augroup,
+    buf = bufnr,
+    callback = function()
+      self:reset()
     end,
   })
 
@@ -301,18 +276,17 @@ function State:destroy()
   State.active[self.bufnr] = nil
 end
 
-local function setup(bufnr)
-  if not api.nvim_buf_is_loaded(bufnr) then
-    return
-  end
+---@param client_id integer
+function State:on_attach(client_id)
+  self.client_state[client_id] = {}
+  self:refresh(vim.lsp.get_client_by_id(client_id))
+end
 
-  local state = State.active[bufnr]
-  if not state then
-    state = State.new(bufnr)
-  end
-
-  state:request()
-  return state
+---@params client_id integer
+function State:on_detach(client_id)
+  self.client_state[client_id] = nil
+  self:evaluate()
+  foldupdate(self.bufnr)
 end
 
 ---@param kind lsp.FoldingRangeKind
@@ -344,47 +318,143 @@ function M.foldclose(kind, winid)
     return
   end
 
+  -- Schedule `foldclose()` if the buffer is not up-to-date.
   if state.version == util.buf_versions[bufnr] then
     state:foldclose(kind, winid)
     return
   end
-  -- Schedule `foldclose()` if the buffer is not up-to-date.
 
-  if not next(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange })) then
+  if not next(vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/foldingRange' })) then
     return
   end
   ---@type lsp.FoldingRangeParams
   local params = { textDocument = util.make_text_document_params(bufnr) }
-  vim.lsp.buf_request_all(bufnr, ms.textDocument_foldingRange, params, function(...)
+  vim.lsp.buf_request_all(bufnr, 'textDocument/foldingRange', params, function(...)
     state:multi_handler(...)
-    -- Ensure this buffer stays as the current buffer after the async request
-    if api.nvim_win_get_buf(winid) == bufnr then
+    -- Ensure this window is still valid and buffer stays as the current buffer
+    -- after the async request.
+    if api.nvim_win_is_valid(winid) and api.nvim_win_get_buf(winid) == bufnr then
       state:foldclose(kind, winid)
     end
   end)
 end
 
----@return string
-function M.foldtext()
+--- Split `line` into highlighted virt_text chunks from `spans`.
+---
+---@param line string
+---@param spans [integer, integer, string][] [start_col, end_col, highlight]
+---@return [string, string[]?][] [text, highlight[]?][]
+local function spans_to_virt_text(line, spans)
+  local boundaries = { 0, #line }
+  for _, span in ipairs(spans) do
+    boundaries[#boundaries + 1] = span[1]
+    boundaries[#boundaries + 1] = span[2]
+  end
+  table.sort(boundaries)
+
+  local virt_text = {} ---@type [string, string[]][]
+  local last_b = -1
+  for _, b in ipairs(boundaries) do
+    if b > last_b then
+      if last_b >= 0 then
+        local start_col = last_b
+        local end_col = b
+        local text = line:sub(start_col + 1, end_col)
+        local highlight = {} ---@type string[]
+        for _, span in ipairs(spans) do
+          if span[1] <= start_col and end_col <= span[2] then
+            if highlight[#highlight] ~= span[3] then
+              highlight[#highlight + 1] = span[3]
+            end
+          end
+        end
+        if #highlight == 0 then
+          virt_text[#virt_text + 1] = { text }
+        else
+          virt_text[#virt_text + 1] = { text, highlight }
+        end
+      end
+      last_b = b
+    end
+  end
+
+  return virt_text
+end
+
+--- Return foldtext highlighted via treesitter, if available.
+---
+---@return string|[string, string[]?][]
+---@param lnum? integer
+function M.foldtext(lnum)
+  lnum = lnum or vim.v.foldstart
   local bufnr = api.nvim_get_current_buf()
-  local lnum = vim.v.foldstart
   local row = lnum - 1
   local state = State.active[bufnr]
-  if state and state.row_text[row] then
-    return state.row_text[row]
+  local lang = state and state.lang
+  local line = vim.fn.getline(lnum)
+  if not lang then
+    return line
+  end ---@cast state -nil
+
+  local virt_text = state.row_virt_text[row]
+  if virt_text then
+    return virt_text
   end
-  return vim.fn.getline(lnum)
+
+  line = state.row_text[row] or line
+  local ok, parser = pcall(function()
+    local parser = vim.treesitter.get_string_parser(line, lang)
+    parser:parse(true)
+    return parser
+  end)
+  if not ok then
+    return line
+  end
+
+  --- Collect treesitter highlight spans for the foldtext.
+  --- [start_col, end_col, highlight]
+  ---@type [integer, integer, string][]
+  local spans = {}
+  parser:for_each_tree(function(tstree, tree)
+    local query = vim.treesitter.query.get(tree:lang(), 'highlights')
+    if query then
+      for capture, node in query:iter_captures(tstree:root(), line) do
+        local name = query.captures[capture]
+        local _, start_col, _, end_col = node:range()
+        if name:match('^[^_]') then
+          spans[#spans + 1] = {
+            start_col,
+            end_col,
+            ('@%s.%s'):format(name, tree:lang()),
+          }
+        end
+      end
+    end
+  end)
+
+  virt_text = spans_to_virt_text(line, spans)
+  state.row_virt_text[row] = virt_text
+
+  return virt_text
 end
 
 ---@param lnum? integer
 ---@return string level
 function M.foldexpr(lnum)
   local bufnr = api.nvim_get_current_buf()
-  local state = State.active[bufnr] or setup(bufnr)
+  if not vim.lsp._capability.is_enabled('folding_range', { bufnr = bufnr }) then
+    -- `foldexpr` lead to a textlock, so any further operations need to be scheduled.
+    vim.schedule(function()
+      if api.nvim_buf_is_valid(bufnr) then
+        vim.lsp._capability.enable('folding_range', true, { bufnr = bufnr })
+      end
+    end)
+  end
+
+  local state = State.active[bufnr]
   if not state then
     return '0'
   end
-
   local row = (lnum or vim.v.lnum) - 1
   local level = state.row_level[row]
   return level and (level[2] or '') .. (level[1] or '0') or '0'

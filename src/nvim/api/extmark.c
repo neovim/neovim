@@ -32,9 +32,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/extmark.c.generated.h"
-#endif
+#include "api/extmark.c.generated.h"
 
 void api_extmark_free_all_mem(void)
 {
@@ -192,25 +190,30 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 
 /// Gets the position (0-indexed) of an |extmark|.
 ///
-/// @param buffer  Buffer id, or 0 for current buffer
+/// @param buf  Buffer id, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param id  Extmark id
 /// @param opts  Optional parameters. Keys:
 ///          - details: Whether to include the details dict
 ///          - hl_name: Whether to include highlight group name instead of id, true if omitted
 /// @param[out] err   Error details, if any
-/// @return 0-indexed (row, col) tuple or empty list () if extmark id was
-/// absent
+/// @return 0-indexed (row, col, details?) tuple or empty list () if extmark id was absent.  The
+/// optional `details` dictionary contains the same keys as `opts` in |nvim_buf_set_extmark()|,
+/// except for `id`, `conceal_lines` and `ephemeral`. It also contains the following keys:
+///
+/// - ns_id: |namespace| id
+/// - invalid: boolean that indicates whether the mark is hidden because the entirety of
+/// text span range is deleted. See also the key `invalidate` in |nvim_buf_set_extmark()|.
 Tuple(Integer, Integer, *DictAs(extmark_details))
-nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dict(get_extmark) * opts,
+nvim_buf_get_extmark_by_id(Buffer buf, Integer ns_id, Integer id, Dict(get_extmark) * opts,
                            Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
 
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *b = find_buffer_by_handle(buf, err);
 
-  if (!buf) {
+  if (!b) {
     return rv;
   }
 
@@ -222,7 +225,7 @@ nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dict(get_ex
 
   bool hl_name = GET_BOOL_OR_TRUE(opts, get_extmark, hl_name);
 
-  MTPair extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
+  MTPair extmark = extmark_from_id(b, (uint32_t)ns_id, (uint32_t)id);
   if (extmark.start.pos.row < 0) {
     return rv;
   }
@@ -272,7 +275,7 @@ nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dict(get_ex
 /// vim.print(ms)
 /// ```
 ///
-/// @param buffer  Buffer id, or 0 for current buffer
+/// @param buf  Buffer id, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()| or -1 for all namespaces
 /// @param start  Start of range: a 0-indexed (row, col) or valid extmark id
 /// (whose position defines the bound). |api-indexing|
@@ -286,8 +289,9 @@ nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dict(get_ex
 ///                     their start position is less than `start`
 ///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
-/// @return List of `[extmark_id, row, col]` tuples in "traversal order".
-ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
+/// @return List of `[extmark_id, row, col, details?]` tuples in "traversal order". For the
+/// `details` dictionary, see |nvim_buf_get_extmark_by_id()|.
+ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_id, Object start,
                                                         Object end,
                                                         Dict(get_extmarks) *opts, Arena *arena,
                                                         Error *err)
@@ -295,8 +299,8 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
 {
   Array rv = ARRAY_DICT_INIT;
 
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!b) {
     return rv;
   }
 
@@ -334,13 +338,13 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
 
   int l_row;
   colnr_T l_col;
-  if (!extmark_get_index_from_obj(buf, ns_id, start, &l_row, &l_col, err)) {
+  if (!extmark_get_index_from_obj(b, ns_id, start, &l_row, &l_col, err)) {
     return rv;
   }
 
   int u_row;
   colnr_T u_col;
-  if (!extmark_get_index_from_obj(buf, ns_id, end, &u_row, &u_col, err)) {
+  if (!extmark_get_index_from_obj(b, ns_id, end, &u_row, &u_col, err)) {
     return rv;
   }
 
@@ -357,7 +361,7 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
   }
 
   // note: ns_id=-1 allowed, represented as UINT32_MAX
-  ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col, u_row,
+  ExtmarkInfoArray marks = extmark_get(b, (uint32_t)ns_id, l_row, l_col, u_row,
                                        u_col, (int64_t)limit, type, opts->overlap);
 
   rv = arena_array(arena, MIN(kv_size(marks), rv_limit));
@@ -391,14 +395,14 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
 /// An earlier end position is not an error, but then it behaves like an empty
 /// range (no highlighting).
 ///
-/// @param buffer  Buffer id, or 0 for current buffer
+/// @param buf  Buffer id, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param line  Line where to place the mark, 0-based. |api-indexing|
 /// @param col  Column where to place the mark, 0-based. |api-indexing|
 /// @param opts  Optional parameters.
 ///               - id : id of the extmark to edit.
 ///               - end_row : ending line of the mark, 0-based inclusive.
-///               - end_col : ending col of the mark, 0-based exclusive.
+///               - end_col : ending col of the mark, 0-based exclusive, or -1 to extend the range to end of line.
 ///               - hl_group : highlight group used for the text range. This and below
 ///                   highlight groups can be supplied either as a string or as an integer,
 ///                   the latter of which can be obtained using |nvim_get_hl_id_by_name()|.
@@ -503,11 +507,14 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
 ///               - cursorline_hl_group: highlight group used for the sign
 ///                   column text when the cursor is on the same line as the
 ///                   mark and 'cursorline' is enabled.
-///               - conceal: string which should be either empty or a single
-///                   character. Enable concealing similar to |:syn-conceal|.
-///                   When a character is supplied it is used as |:syn-cchar|.
-///                   "hl_group" is used as highlight for the cchar if provided,
-///                   otherwise it defaults to |hl-Conceal|.
+///               - conceal: either a boolean or a string.
+///                   - when a string is given, it should be either empty or a single
+///                     character. Enable concealing similar to |:syn-conceal|.
+///                     When a character is supplied it is used as |:syn-cchar|.
+///                     "hl_group" is used as highlight for the cchar if provided,
+///                     otherwise it defaults to |hl-Conceal|.
+///                   - when a boolean is given, true is equivalent to "" and false
+///                     overrides any existing conceal to remove it.
 ///               - conceal_lines: string which should be empty. When
 ///                   provided, lines in the range are not drawn at all
 ///                   (according to 'conceallevel'); the next unconcealed line
@@ -523,7 +530,7 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
-Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer col,
+Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer col,
                              Dict(set_extmark) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
@@ -537,8 +544,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   bool has_hl = false;
   bool has_hl_multiple = false;
 
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!b) {
     goto error;
   }
 
@@ -573,7 +580,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   if (HAS_KEY(opts, set_extmark, end_row) || did_end_line) {
     Integer val = opts->end_row;
-    VALIDATE_RANGE((val >= 0 && !(val > buf->b_ml.ml_line_count && strict)), "end_row", {
+    VALIDATE_RANGE((val >= 0 && !(val > b->b_ml.ml_line_count && strict)), "end_row", {
       goto error;
     });
     line2 = (int)val;
@@ -582,9 +589,13 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   colnr_T col2 = -1;
   if (HAS_KEY(opts, set_extmark, end_col)) {
     Integer val = opts->end_col;
-    VALIDATE_RANGE((val >= 0 && val <= MAXCOL), "end_col", {
+    VALIDATE_RANGE((val >= -1 && val <= MAXCOL), "end_col", {
       goto error;
     });
+    if (val == -1) {
+      val = MAXCOL;
+    }
+
     col2 = (int)val;
   }
 
@@ -625,14 +636,25 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (HAS_KEY(opts, set_extmark, conceal)) {
-    hl.flags |= kSHConceal;
+    VALIDATE_EXP((opts->conceal.type == kObjectTypeBoolean
+                  || opts->conceal.type == kObjectTypeString),
+                 "conceal", "String or Boolean", api_typename(opts->conceal.type), {
+      goto error;
+    });
+
     has_hl = true;
-    if (opts->conceal.size > 0) {
-      int ch;
-      hl.conceal_char = utfc_ptr2schar(opts->conceal.data, &ch);
-      VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char has to be printable", {
-        goto error;
-      });
+    if (opts->conceal.type == kObjectTypeBoolean) {
+      hl.flags |= opts->conceal.data.boolean ? kSHConceal : kSHConcealOff;
+    } else {
+      String conceal_str = opts->conceal.data.string;
+      hl.flags |= kSHConceal;
+      if (conceal_str.size > 0) {
+        int ch;
+        hl.conceal_char = utfc_ptr2schar(conceal_str.data, &ch);
+        VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char must be printable", {
+          goto error;
+        });
+      }
     }
   }
 
@@ -782,13 +804,13 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   });
 
-  if (line > buf->b_ml.ml_line_count) {
+  if (line > b->b_ml.ml_line_count) {
     VALIDATE_RANGE(!strict, "line", {
       goto error;
     });
-    line = buf->b_ml.ml_line_count;
-  } else if (line < buf->b_ml.ml_line_count) {
-    len = opts->ephemeral ? MAXCOL : ml_get_buf_len(buf, (linenr_T)line + 1);
+    line = b->b_ml.ml_line_count;
+  } else if (line < b->b_ml.ml_line_count) {
+    len = opts->ephemeral ? MAXCOL : ml_get_buf_len(b, (linenr_T)line + 1);
   }
 
   if (col == -1) {
@@ -805,9 +827,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (col2 >= 0) {
-    if (line2 >= 0 && line2 < buf->b_ml.ml_line_count) {
-      len = opts->ephemeral ? MAXCOL : ml_get_buf_len(buf, (linenr_T)line2 + 1);
-    } else if (line2 == buf->b_ml.ml_line_count) {
+    if (line2 >= 0 && line2 < b->b_ml.ml_line_count) {
+      len = opts->ephemeral ? MAXCOL : ml_get_buf_len(b, (linenr_T)line2 + 1);
+    } else if (line2 == b->b_ml.ml_line_count) {
       // We are trying to add an extmark past final newline
       len = 0;
     } else {
@@ -824,12 +846,21 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     col2 = 0;
   }
 
-  if (opts->ephemeral && decor_state.win && decor_state.win->w_buffer == buf) {
+  if (opts->ephemeral && decor_state.win && decor_state.win->w_buffer == b) {
     int r = (int)line;
     int c = (int)col;
     if (line2 == -1) {
       line2 = r;
       col2 = c;
+    }
+
+    DecorPriority subpriority = 0;
+    if (HAS_KEY(opts, set_extmark, _subpriority)) {
+      VALIDATE_RANGE((opts->_subpriority >= 0 && opts->_subpriority <= UINT16_MAX),
+                     "_subpriority", {
+        goto error;
+      });
+      subpriority = (DecorPriority)opts->_subpriority;
     }
 
     if (kv_size(virt_text.data.virt_text)) {
@@ -841,7 +872,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     if (has_hl) {
       DecorSignHighlight sh = decor_sh_from_inline(hl);
       sh.url = url;
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
+      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id,
+                         subpriority);
     }
   } else {
     if (opts->ephemeral) {
@@ -915,7 +947,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       decor_flags |= MT_FLAG_DECOR_HL;
     }
 
-    extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
+    extmark_set(b, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
                 decor, decor_flags, right_gravity, opts->end_right_gravity,
                 !GET_BOOL_OR_TRUE(opts, set_extmark, undo_restore),
                 opts->invalidate, err);
@@ -939,24 +971,24 @@ error:
 
 /// Removes an |extmark|.
 ///
-/// @param buffer Buffer id, or 0 for current buffer
+/// @param buf Buffer id, or 0 for current buffer
 /// @param ns_id Namespace id from |nvim_create_namespace()|
 /// @param id Extmark id
 /// @param[out] err   Error details, if any
 /// @return true if the extmark was found, else false
-Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *err)
+Boolean nvim_buf_del_extmark(Buffer buf, Integer ns_id, Integer id, Error *err)
   FUNC_API_SINCE(7)
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *b = find_buffer_by_handle(buf, err);
 
-  if (!buf) {
+  if (!b) {
     return false;
   }
   VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
     return false;
   });
 
-  return extmark_del_id(buf, (uint32_t)ns_id, (uint32_t)id);
+  return extmark_del_id(b, (uint32_t)ns_id, (uint32_t)id);
 }
 
 /// Clears |namespace|d objects (highlights, |extmarks|, virtual text) from
@@ -965,18 +997,18 @@ Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *er
 /// Lines are 0-indexed. |api-indexing|  To clear the namespace in the entire
 /// buffer, specify line_start=0 and line_end=-1.
 ///
-/// @param buffer     Buffer id, or 0 for current buffer
+/// @param buf     Buffer id, or 0 for current buffer
 /// @param ns_id      Namespace to clear, or -1 to clear all namespaces.
 /// @param line_start Start of range of lines to clear
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
 ///                   to end of buffer.
 /// @param[out] err   Error details, if any
-void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, Integer line_end,
+void nvim_buf_clear_namespace(Buffer buf, Integer ns_id, Integer line_start, Integer line_end,
                               Error *err)
   FUNC_API_SINCE(5)
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!b) {
     return;
   }
 
@@ -987,7 +1019,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
   if (line_end < 0 || line_end > MAXLNUM) {
     line_end = MAXLNUM;
   }
-  extmark_clear(buf, (ns_id < 0 ? 0 : (uint32_t)ns_id),
+  extmark_clear(b, (ns_id < 0 ? 0 : (uint32_t)ns_id),
                 (int)line_start, 0,
                 (int)line_end - 1, MAXCOL);
 }
@@ -1006,7 +1038,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// Note: this function should not be called often. Rather, the callbacks
 /// themselves can be used to throttle unneeded callbacks. the `on_start`
 /// callback can return `false` to disable the provider until the next redraw.
-/// Similarly, return `false` in `on_win` will skip the `on_line` calls
+/// Similarly, return `false` in `on_win` will skip the `on_line` and `on_range` calls
 /// for that window (but any extmarks set in `on_win` will still be used).
 /// A plugin managing multiple sources of decoration should ideally only set
 /// one provider, and merge the sources internally. You can use multiple `ns_id`
@@ -1018,7 +1050,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// Doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
 /// for the moment.
 ///
-/// Note: It is not allowed to remove or update extmarks in `on_line` callbacks.
+/// Note: It is not allowed to remove or update extmarks in `on_line` or `on_range` callbacks.
 ///
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:
@@ -1035,11 +1067,25 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///               ```
 ///                 ["win", winid, bufnr, toprow, botrow]
 ///               ```
-///             - on_line: called for each buffer line being redrawn.
-///                 (The interaction with fold lines is subject to change)
+///             - on_line: (deprecated, use on_range instead)
 ///               ```
 ///                 ["line", winid, bufnr, row]
 ///               ```
+///             - on_range: called for each buffer range being redrawn.
+///               Range is end-exclusive and may span multiple lines. Range
+///               bounds point to the first byte of a character. An end position
+///               of the form (lnum, 0), including (number of lines, 0), is valid
+///               and indicates that EOL of the preceding line is included.
+///               ```
+///                 ["range", winid, bufnr, begin_row, begin_col, end_row, end_col]
+///               ```
+///
+///               In addition to returning a boolean, it is also allowed to
+///               return a `skip_row, skip_col` pair of integers. This implies
+///               that this function does not need to be called until a range
+///               which continues beyond the skipped position. A single integer
+///               return value `skip_row` is short for `skip_row, 0`
+///
 ///             - on_end: called at the end of a redraw cycle
 ///               ```
 ///                 ["end", tick]
@@ -1063,6 +1109,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     { "on_buf", &opts->on_buf, &p->redraw_buf },
     { "on_win", &opts->on_win, &p->redraw_win },
     { "on_line", &opts->on_line, &p->redraw_line },
+    { "on_range", &opts->on_range, &p->redraw_range },
     { "on_end", &opts->on_end, &p->redraw_end },
     { "_on_hl_def", &opts->_on_hl_def, &p->hl_def },
     { "_on_spell_nav", &opts->_on_spell_nav, &p->spell_nav },
@@ -1200,19 +1247,17 @@ free_exit:
 }
 
 /// @nodoc
-String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error *err)
+String nvim__buf_debug_extmarks(Buffer buf, Boolean keys, Boolean dot, Error *err)
   FUNC_API_SINCE(7) FUNC_API_RET_ALLOC
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!b) {
     return NULL_STRING;
   }
 
-  return mt_inspect(buf->b_marktree, keys, dot);
+  return mt_inspect(b->b_marktree, keys, dot);
 }
 
-/// EXPERIMENTAL: this API will change in the future.
-///
 /// Set some properties for namespace
 ///
 /// @param ns_id Namespace
@@ -1288,8 +1333,6 @@ void nvim__ns_set(Integer ns_id, Dict(ns_opts) *opts, Error *err)
   }
 }
 
-/// EXPERIMENTAL: this API will change in the future.
-///
 /// Get the properties for namespace
 ///
 /// @param ns_id Namespace

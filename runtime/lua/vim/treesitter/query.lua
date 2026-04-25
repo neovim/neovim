@@ -4,6 +4,7 @@
 local api = vim.api
 local language = require('vim.treesitter.language')
 local memoize = vim.func._memoize
+local cmp_ge = require('vim.treesitter._range').cmp_pos.ge
 
 local MODELINE_FORMAT = '^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$'
 local EXTENDS_FORMAT = '^;+%s*extends%s*$'
@@ -267,8 +268,8 @@ local explicit_queries = setmetatable({}, {
 ---   'c',
 ---   'highlights',
 ---   [[;inherits c
----   (identifier) @spell]])
---- ]])
+---   (identifier) @spell]]
+--- )
 --- ```
 ---
 ---@param lang string Language to use for the query
@@ -608,7 +609,7 @@ predicate_handlers['any-vim-match?'] = predicate_handlers['any-match?']
 ---@class vim.treesitter.query.TSMetadata
 ---@field range? Range
 ---@field offset? Range4
----@field conceal? string
+---@field conceal? string|boolean
 ---@field bo.commentstring? string
 ---@field [integer]? vim.treesitter.query.TSMetadata
 ---@field [string]? integer|string
@@ -652,14 +653,10 @@ local directive_handlers = {
     end
 
     metadata[capture_id].offset = {
-      pred[3] --[[@as integer]]
-        or 0,
-      pred[4] --[[@as integer]]
-        or 0,
-      pred[5] --[[@as integer]]
-        or 0,
-      pred[6] --[[@as integer]]
-        or 0,
+      pred[3] --[[@as integer]] or 0,
+      pred[4] --[[@as integer]] or 0,
+      pred[5] --[[@as integer]] or 0,
+      pred[6] --[[@as integer]] or 0,
     }
   end,
   -- Transform the content of the node
@@ -762,11 +759,6 @@ local directive_handlers = {
 ---
 --- Override an existing predicate of the same name
 --- @field force? boolean
----
---- Use the correct implementation of the match table where capture IDs map to
---- a list of nodes instead of a single node. Defaults to true. This option will
---- be removed in a future release.
---- @field all? boolean
 
 --- Adds a new predicate to be used in queries
 ---
@@ -786,21 +778,7 @@ function M.add_predicate(name, handler, opts)
     error(string.format('Overriding existing predicate %s', name))
   end
 
-  if opts.all ~= false then
-    predicate_handlers[name] = handler
-  else
-    --- @param match table<integer, TSNode[]>
-    local function wrapper(match, ...)
-      local m = {} ---@type table<integer, TSNode>
-      for k, v in pairs(match) do
-        if type(k) == 'number' then
-          m[k] = v[#v]
-        end
-      end
-      return handler(m, ...)
-    end
-    predicate_handlers[name] = wrapper
-  end
+  predicate_handlers[name] = handler
 end
 
 --- Adds a new directive to be used in queries
@@ -829,19 +807,7 @@ function M.add_directive(name, handler, opts)
     error(string.format('Overriding existing directive %s', name))
   end
 
-  if opts.all then
-    directive_handlers[name] = handler
-  else
-    --- @param match table<integer, TSNode[]>
-    local function wrapper(match, ...)
-      local m = {} ---@type table<integer, TSNode>
-      for k, v in pairs(match) do
-        m[k] = v[#v]
-      end
-      handler(m, ...)
-    end
-    directive_handlers[name] = wrapper
-  end
+  directive_handlers[name] = handler
 end
 
 --- Lists the currently available directives to use in queries.
@@ -951,18 +917,20 @@ end
 ---
 ---@param node TSNode under which the search will occur
 ---@param source (integer|string) Source buffer or string to extract text from
----@param start? integer Starting line for the search. Defaults to `node:start()`.
----@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
+---@param start_row? integer Starting line for the search. Defaults to `node:start()`.
+---@param end_row? integer Stopping line for the search (end-inclusive, unless `stop_col` is provided). Defaults to `node:end_()`.
 ---@param opts? table Optional keyword arguments:
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
 ---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
+---   - start_col (integer) Starting column for the search.
+---   - end_col (integer) Stopping column for the search (end-exclusive).
 ---
----@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree):
+---@return (fun(end_line: integer|nil, end_col: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree):
 ---        capture id, capture node, metadata, match, tree
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
-function Query:iter_captures(node, source, start, stop, opts)
+function Query:iter_captures(node, source, start_row, end_row, opts)
   opts = opts or {}
   opts.match_limit = opts.match_limit or 256
 
@@ -970,17 +938,24 @@ function Query:iter_captures(node, source, start, stop, opts)
     source = api.nvim_get_current_buf()
   end
 
-  start, stop = value_or_node_range(start, stop, node)
+  start_row, end_row = value_or_node_range(start_row, end_row, node)
 
   local tree = node:tree()
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
+  local cursor = vim._create_ts_querycursor(node, self.query, {
+    start_row = start_row,
+    start_col = opts.start_col or 0,
+    end_row = end_row,
+    end_col = opts.end_col or 0,
+    max_start_depth = opts.max_start_depth,
+    match_limit = opts.match_limit or 256,
+  })
 
   -- For faster checks that a match is not in the cache.
   local highest_cached_match_id = -1
   ---@type table<integer, vim.treesitter.query.TSMetadata>
   local match_cache = {}
 
-  local function iter(end_line)
+  local function iter(end_line, end_col)
     local capture, captured_node, match = cursor:next_capture()
 
     if not capture then
@@ -1005,9 +980,22 @@ function Query:iter_captures(node, source, start, stop, opts)
         local predicates = processed_pattern.predicates
         if not self:_match_predicates(predicates, pattern_i, captures, source) then
           cursor:remove_match(match_id)
-          if end_line and captured_node:range() > end_line then
+
+          local row, col = captured_node:range()
+
+          local outside = false
+          if end_line then
+            if end_col then
+              outside = cmp_ge(row, col, end_line, end_col)
+            else
+              outside = row > end_line
+            end
+          end
+
+          if outside then
             return nil, captured_node, nil, nil
           end
+
           return iter(end_line) -- tail call: try next match
         end
 
@@ -1056,9 +1044,6 @@ end
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
 ---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
----   - all (boolean) When `false` (default `true`), the returned table maps capture IDs to a single
----     (last) node instead of the full list of matching nodes. This option is only for backward
----     compatibility and will be removed in a future release.
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree): pattern id, match, metadata, tree
 function Query:iter_matches(node, source, start, stop, opts)
@@ -1072,7 +1057,14 @@ function Query:iter_matches(node, source, start, stop, opts)
   start, stop = value_or_node_range(start, stop, node)
 
   local tree = node:tree()
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
+  local cursor = vim._create_ts_querycursor(node, self.query, {
+    start_row = start,
+    start_col = 0,
+    end_row = stop,
+    end_col = 0,
+    max_start_depth = opts.max_start_depth,
+    match_limit = opts.match_limit or 256,
+  })
 
   local function iter()
     local match = cursor:next_match()
@@ -1095,17 +1087,6 @@ function Query:iter_matches(node, source, start, stop, opts)
       end
       local directives = processed_pattern.directives
       metadata = self:_apply_directives(directives, pattern_i, captures, source)
-    end
-
-    if opts.all == false then
-      -- Convert the match table into the old buggy version for backward
-      -- compatibility. This is slow, but we only do it when the caller explicitly opted into it by
-      -- setting `all` to `false`.
-      local old_match = {} ---@type table<integer, TSNode>
-      for k, v in pairs(captures or {}) do
-        old_match[k] = v[#v]
-      end
-      return pattern_i, old_match, metadata
     end
 
     -- TODO(lewis6991): create a new function that returns {match, metadata}
@@ -1163,11 +1144,12 @@ end
 
 --- Opens a live editor to query the buffer you started from.
 ---
---- Can also be shown with [:EditQuery]().
+--- Can also be shown with the [:EditQuery]() command. `:EditQuery <tab>` completes available
+--- parsers.
 ---
---- If you move the cursor to a capture name ("@foo"), text matching the capture is highlighted in
---- the source buffer. The query editor is a scratch buffer, use `:write` to save it. You can find
---- example queries at `$VIMRUNTIME/queries/`.
+--- If you move the cursor to a capture name ("@foo"), text matching the capture is highlighted
+--- with |hl-DiagnosticVirtualTextHint| in the source buffer. The query editor is a scratch buffer,
+--- use `:write` to save it. You can find example queries at `$VIMRUNTIME/queries/`.
 ---
 --- @param lang? string language to open the query editor for. If omitted, inferred from the current buffer's filetype.
 function M.edit(lang)

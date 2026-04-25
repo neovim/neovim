@@ -99,10 +99,20 @@ func Test_chdir_func()
   call assert_equal('y', fnamemodify(getcwd(3, 2), ':t'))
   call assert_equal('testdir', fnamemodify(getcwd(1, 1), ':t'))
 
+  " Forcing scope
+  call chdir('.', 'global')
+  call assert_match('^\[global\]', trim(execute('verbose pwd')))
+  call chdir('.', 'tabpage')
+  call assert_match('^\[tabpage\]', trim(execute('verbose pwd')))
+  call chdir('.', 'window')
+  call assert_match('^\[window\]', trim(execute('verbose pwd')))
+
   " Error case
   call assert_fails("call chdir('dir-abcd')", 'E344:')
   silent! let d = chdir("dir_abcd")
   call assert_equal("", d)
+  call assert_fails("call chdir('.', v:_null_string)", 'E475:')
+  call assert_fails("call chdir('.', [])", 'E730:')
   " Should not crash
   call chdir(d)
   call assert_equal('', chdir([]))
@@ -182,6 +192,28 @@ func Test_lcd_split()
   quit!
 endfunc
 
+" Test that a temporary override of 'autochdir' via :lcd isn't clobbered by win_execute() in a split window.
+func Test_lcd_win_execute()
+  CheckFunction test_autochdir
+  CheckOption autochdir
+
+  let startdir = getcwd()
+  call mkdir('Xsubdir', 'R')
+  call test_autochdir()
+  set autochdir
+  edit Xsubdir/file
+  call assert_match('testdir.Xsubdir.file$', expand('%:p'))
+  split
+  lcd ..
+  call assert_match('testdir.Xsubdir.file$', expand('%:p'))
+  call win_execute(win_getid(2), "")
+  call assert_match('testdir.Xsubdir.file$', expand('%:p'))
+
+  set noautochdir
+  bwipe!
+  call chdir(startdir)
+endfunc
+
 func Test_cd_from_non_existing_dir()
   CheckNotMSWindows
 
@@ -214,6 +246,72 @@ func Test_cd_completion()
     call assert_equal('"' .. cmd .. ' XComplDir1/ XComplDir2/ XComplDir3/', @:)
   endfor
   set cdpath&
+
+  if has('win32')
+    " Test Windows absolute path completion
+    let saved_cwd = getcwd()
+
+    " Retrieve a suitable dir in the current drive
+    for d in readdir('/', 'isdirectory("/" .. v:val) && len(v:val) > 2')
+      " Paths containing '$' such as "$RECYCLE.BIN" are skipped because
+      " they are considered environment variables and completion does not
+      " work.
+      if d =~ '\V$'
+        continue
+      endif
+      " Skip directories that we don't have permission to "cd" into by
+      " actually "cd"ing into them and making sure they don't fail.
+      " Directory "System Volume Information" is an example of this.
+      try
+        call chdir('/' .. d)
+        let dir = d
+        " Yay! We found a suitable dir!
+        break
+      catch /:E472:/
+        " Just skip directories where "cd" fails
+        continue
+      finally
+        call chdir(saved_cwd)
+      endtry
+    endfor
+    if !exists('dir')
+      throw 'Skipped: no testable directories found in the current drive root'
+    endif
+
+    " Get partial path
+    let partial = dir[0:-2]
+    " Get the current drive letter and full path of the target dir
+    call chdir('/' .. dir)
+    let full = getcwd()
+    let drive = full[0]
+    call chdir(saved_cwd)
+
+    " Spaces are escaped in command line completion. Next, in assert_match(),
+    " the backslash added by the first escape also needs to be escaped
+    " separately, so the escape is doubled.
+    let want_full = escape(escape(full, ' '), '\')
+    let want_dir = escape(escape(dir, ' '), '\')
+
+    for cmd in ['cd', 'chdir', 'lcd', 'lchdir', 'tcd', 'tchdir']
+      for sep in [ '/', '\']
+
+        " Explicit drive letter
+        call feedkeys(':' .. cmd .. ' ' .. drive .. ':' .. sep ..
+                     \  partial .. "\<C-A>\<C-B>\"\<CR>", 'tx')
+        call assert_match(want_full, @:)
+
+        " Implicit drive letter
+        call feedkeys(':' .. cmd .. ' ' .. sep .. partial .. "\<C-A>\<C-B>\"\<CR>", 'tx')
+        call assert_match('/' .. want_dir .. '/', @:)
+
+        " UNC path
+        call feedkeys(':' .. cmd .. ' ' .. sep .. sep .. $COMPUTERNAME .. sep ..
+                     \ drive .. '$' .. sep .. partial .."\<C-A>\<C-B>\"\<CR>", 'tx')
+        call assert_match('//' .. $COMPUTERNAME .. '/' .. drive .. '$/' .. want_dir .. '/' , @:)
+
+      endfor
+    endfor
+  endif
 endfunc
 
 func Test_cd_unknown_dir()
@@ -251,6 +349,80 @@ func Test_getcwd_actual_dir()
   set noautochdir
   bwipe!
   call chdir(startdir)
+endfunc
+
+func Test_cd_preserve_symlinks()
+  " Test new behavior: preserve symlinks when cpo-=~
+  set cpoptions+=~
+
+  let savedir = getcwd()
+  call mkdir('Xsource', 'R')
+  call writefile(['abc'], 'Xsource/foo.txt', 'D')
+
+  if has("win32")
+    silent !mklink /D Xdest Xsource
+  else
+    silent !ln -s Xsource Xdest
+  endif
+  if v:shell_error
+    call delete('Xsource', 'rf')
+    throw 'Skipped: cannot create symlinks'
+  endif
+
+  edit Xdest/foo.txt
+  let path_before = expand('%')
+  call assert_match('Xdest[/\\]foo\.txt$', path_before)
+
+  cd .
+  let path_after = expand('%')
+  call assert_equal(path_before, path_after)
+  call assert_match('Xdest[/\\]foo\.txt$', path_after)
+
+  bwipe!
+  set cpoptions&
+  call delete('Xdest', 'rf')
+  call delete('Xsource', 'rf')
+  call chdir(savedir)
+endfunc
+
+func Test_cd_symlinks()
+  CheckNotMSWindows
+
+  let savedir = getcwd()
+  call mkdir('Xsource', 'R')
+  call writefile(['abc'], 'Xsource/foo.txt', 'D')
+
+  silent !ln -s Xsource Xdest
+  if v:shell_error
+    call delete('Xsource', 'rf')
+    throw 'Skipped: cannot create symlinks'
+  endif
+
+  edit Xdest/foo.txt
+  let path_before = expand('%')
+  call assert_match('Xdest[/\\]foo\.txt$', path_before)
+
+  cd .
+  let path_after = expand('%')
+  call assert_match('Xsource[/\\]foo\.txt$', path_after)
+  call assert_notequal(path_before, path_after)
+
+  bwipe!
+  set cpoptions&
+  call delete('Xdest', 'rf')
+  call delete('Xsource', 'rf')
+  call chdir(savedir)
+endfunc
+
+func Test_cd_shorten_bufname_with_duplicate_slashes()
+  let savedir = getcwd()
+  call mkdir('Xexistingdir', 'R')
+  new Xexistingdir//foo/bar
+  cd Xexistingdir
+  call assert_equal('foo/bar', bufname('%'))
+
+  call chdir(savedir)
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

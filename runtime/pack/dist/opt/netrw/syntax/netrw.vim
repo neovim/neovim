@@ -1,7 +1,8 @@
-" Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
-" Former Maintainer: Charles E Campbell
-" Upstream: <https://github.com/saccarosium/netrw.vim>
+" Creator: Charles E Campbell
+" Previous Maintainer:  Luca Saccarola <github.e41mv@aleeas.com>
+" Maintainer: This runtime file is looking for a new maintainer.
 " Language: Netrw Listing Syntax
+
 
 if exists("b:current_syntax")
     finish

@@ -6,7 +6,6 @@ local eq = t.eq
 local eval = n.eval
 local clear = n.clear
 local source = n.source
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local fn = n.fn
 local command = n.command
@@ -89,19 +88,19 @@ describe('execute()', function()
 
   it('returns empty string if the argument list is empty', function()
     eq('', fn.execute({}))
-    eq(0, exc_exec('let g:ret = execute(v:_null_list)'))
+    command('let g:ret = execute(v:_null_list)')
     eq('', eval('g:ret'))
   end)
 
   it('captures errors', function()
     local ret
-    ret = exc_exec('call execute(v:_null_dict)')
+    ret = pcall_err(command, 'call execute(v:_null_dict)')
     eq('Vim(call):E731: Using a Dictionary as a String', ret)
-    ret = exc_exec('call execute(function("tr"))')
+    ret = pcall_err(command, 'call execute(function("tr"))')
     eq('Vim(call):E729: Using a Funcref as a String', ret)
-    ret = exc_exec('call execute(["echo 42", v:_null_dict, "echo 44"])')
+    ret = pcall_err(command, 'call execute(["echo 42", v:_null_dict, "echo 44"])')
     eq('Vim:E731: Using a Dictionary as a String', ret)
-    ret = exc_exec('call execute(["echo 42", function("tr"), "echo 44"])')
+    ret = pcall_err(command, 'call execute(["echo 42", function("tr"), "echo 44"])')
     eq('Vim:E729: Using a Funcref as a String', ret)
   end)
 
@@ -305,31 +304,31 @@ describe('execute()', function()
     end)
 
     it('suppresses errors for "silent!"', function()
-      eq(0, exc_exec('let g:mes = execute(0.0, "silent!")'))
+      command('let g:mes = execute(0.0, "silent!")')
       eq('', eval('g:mes'))
 
-      eq(0, exc_exec('let g:mes = execute("echon add(1, 1)", "silent!")'))
+      command('let g:mes = execute("echon add(1, 1)", "silent!")')
       eq('1', eval('g:mes'))
 
-      eq(0, exc_exec('let g:mes = execute(["echon 42", "echon add(1, 1)"], "silent!")'))
+      command('let g:mes = execute(["echon 42", "echon add(1, 1)"], "silent!")')
       eq('421', eval('g:mes'))
     end)
 
     it('propagates errors for "" and "silent"', function()
       local ret
-      ret = exc_exec('call execute(v:_null_dict, "silent")')
+      ret = pcall_err(command, 'call execute(v:_null_dict, "silent")')
       eq('Vim(call):E731: Using a Dictionary as a String', ret)
 
-      ret = exc_exec('call execute("echo add(1, 1)", "")')
+      ret = pcall_err(command, 'call execute("echo add(1, 1)", "")')
       eq('Vim(echo):E897: List or Blob required', ret)
 
-      ret = exc_exec('call execute(["echon 42", "echo add(1, 1)"], "")')
+      ret = pcall_err(command, 'call execute(["echon 42", "echo add(1, 1)"], "")')
       eq('Vim(echo):E897: List or Blob required', ret)
 
-      ret = exc_exec('call execute("echo add(1, 1)", "silent")')
+      ret = pcall_err(command, 'call execute("echo add(1, 1)", "silent")')
       eq('Vim(echo):E897: List or Blob required', ret)
 
-      ret = exc_exec('call execute(["echon 42", "echo add(1, 1)"], "silent")')
+      ret = pcall_err(command, 'call execute(["echon 42", "echo add(1, 1)"], "silent")')
       eq('Vim(echo):E897: List or Blob required', ret)
     end)
   end)

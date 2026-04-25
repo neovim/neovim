@@ -16,7 +16,7 @@ print('Running lintdoc ...')
 vim.cmd [[ packadd netrw ]]
 vim.cmd [[ helptags ALL ]]
 
-require('src.gen.gen_help_html').run_validate()
+require('src.gen.gen_help_html').run_validate(nil, _G.arg[1] ~= nil)
 require('src.gen.gen_help_html').test_gen()
 
 print('lintdoc PASSED.')

@@ -42,9 +42,7 @@ const char *const encode_special_var_names[] = {
   [kSpecialVarNull] = "v:null",
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/encode.c.generated.h"
-#endif
+#include "eval/encode.c.generated.h"
 
 /// Msgpack callback for writing to a Blob
 int encode_blob_write(void *const data, const char *const buf, const size_t len)
@@ -126,7 +124,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
   const char *const partial_self_msg = _("partial self dictionary");
   for (size_t i = 0; i < kv_size(*mpstack); i++) {
     if (i != 0) {
-      ga_concat(&msg_ga, ", ");
+      GA_CONCAT_LITERAL(&msg_ga, ", ");
     }
     MPConvStackVal v = kv_A(*mpstack, i);
     switch (v.type) {
@@ -297,8 +295,8 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
   do { \
     const char *const buf_ = (buf); \
-    if ((buf) == NULL) { \
-      ga_concat(gap, "''"); \
+    if (buf_ == NULL) { \
+      GA_CONCAT_LITERAL(gap, "''"); \
     } else { \
       const size_t len_ = (len); \
       ga_grow(gap, (int)(2 + len_ + memcnt(buf_, '\'', len_))); \
@@ -323,21 +321,21 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     const blob_T *const blob_ = (blob); \
     const int len_ = (len); \
     if (len_ == 0) { \
-      ga_concat(gap, "0z"); \
+      GA_CONCAT_LITERAL(gap, "0z"); \
     } else { \
       /* Allocate space for "0z", the two hex chars per byte, and a */ \
       /* "." separator after every eight hex chars. */ \
       /* Example: "0z00112233.44556677.8899" */ \
       ga_grow(gap, 2 + 2 * len_ + (len_ - 1) / 4); \
-      ga_concat(gap, "0z"); \
+      GA_CONCAT_LITERAL(gap, "0z"); \
       char numbuf[NUMBUFLEN]; \
       for (int i_ = 0; i_ < len_; i_++) { \
         if (i_ > 0 && (i_ & 3) == 0) { \
           ga_append(gap, '.'); \
         } \
-        vim_snprintf((char *)numbuf, ARRAY_SIZE(numbuf), "%02X", \
-                     (int)tv_blob_get(blob_, i_)); \
-        ga_concat(gap, numbuf); \
+        size_t numbuflen = vim_snprintf_safelen(numbuf, ARRAY_SIZE(numbuf), "%02X", \
+                                                (int)tv_blob_get(blob_, i_)); \
+        ga_concat_len(gap, numbuf, numbuflen); \
       } \
     } \
   } while (0)
@@ -345,8 +343,9 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
   do { \
     char numbuf[NUMBUFLEN]; \
-    vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%" PRId64, (int64_t)(num)); \
-    ga_concat(gap, numbuf); \
+    size_t numbuflen = vim_snprintf_safelen(numbuf, ARRAY_SIZE(numbuf), \
+                                            "%" PRId64, (int64_t)(num)); \
+    ga_concat_len(gap, numbuf, numbuflen); \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
@@ -354,47 +353,54 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     const float_T flt_ = (flt); \
     switch (xfpclassify(flt_)) { \
     case FP_NAN: { \
-        ga_concat(gap, "str2float('nan')"); \
+        GA_CONCAT_LITERAL(gap, "str2float('nan')"); \
         break; \
     } \
     case FP_INFINITE: { \
         if (flt_ < 0) { \
           ga_append(gap, '-'); \
         } \
-        ga_concat(gap, "str2float('inf')"); \
+        GA_CONCAT_LITERAL(gap, "str2float('inf')"); \
         break; \
     } \
     default: { \
         char numbuf[NUMBUFLEN]; \
-        vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
-        ga_concat(gap, numbuf); \
+        size_t numbuflen = vim_snprintf_safelen(numbuf, ARRAY_SIZE(numbuf), \
+                                                "%g", flt_); \
+        ga_concat_len(gap, numbuf, numbuflen); \
     } \
     } \
   } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   do { \
     const char *const fun_ = (fun); \
     if (fun_ == NULL) { \
       internal_error("string(): NULL function name"); \
-      ga_concat(gap, "function(NULL"); \
+      GA_CONCAT_LITERAL(gap, "function(NULL"); \
     } else { \
-      ga_concat(gap, "function("); \
+      const char *const prefix_ = (prefix); \
+      GA_CONCAT_LITERAL(gap, "function("); \
+      const int name_off = gap->ga_len; \
+      ga_concat(gap, prefix_); \
       TYPVAL_ENCODE_CONV_STRING(tv, fun_, strlen(fun_)); \
+      /* <prefix>'<fun>' -> '<prefix><fun>'. */ \
+      ((char *)gap->ga_data)[name_off] = '\''; \
+      memcpy((char *)gap->ga_data + name_off + 1, prefix_, strlen(prefix_)); \
     } \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len) \
   do { \
     if ((len) != 0) { \
-      ga_concat(gap, ", "); \
+      GA_CONCAT_LITERAL(gap, ", "); \
     } \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len) \
   do { \
     if ((ptrdiff_t)(len) != -1) { \
-      ga_concat(gap, ", "); \
+      GA_CONCAT_LITERAL(gap, ", "); \
     } \
   } while (0)
 
@@ -402,7 +408,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
   ga_append(gap, ')')
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
-  ga_concat(gap, "[]")
+  GA_CONCAT_LITERAL(gap, "[]")
 
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
   ga_append(gap, '[')
@@ -410,15 +416,21 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 #define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-  ga_concat(gap, "{}")
+  GA_CONCAT_LITERAL(gap, "{}")
 
 #define TYPVAL_ENCODE_CHECK_BEFORE
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
-  ga_concat(gap, "v:null")
+  GA_CONCAT_LITERAL(gap, "v:null")
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-  ga_concat(gap, ((num) ? "v:true" : "v:false"))
+  do { \
+    if (num) { \
+      GA_CONCAT_LITERAL(gap, "v:true"); \
+    } else { \
+      GA_CONCAT_LITERAL(gap, "v:false"); \
+    } \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num)
 
@@ -431,10 +443,10 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
   ga_append(gap, '}')
 
 #define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict) \
-  ga_concat(gap, ": ")
+  GA_CONCAT_LITERAL(gap, ": ")
 
 #define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
-  ga_concat(gap, ", ")
+  GA_CONCAT_LITERAL(gap, ", ")
 
 #define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key)
 
@@ -542,18 +554,25 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 
 #undef TYPVAL_ENCODE_CONV_NIL
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
-  ga_concat(gap, "null")
+  GA_CONCAT_LITERAL(gap, "null")
 
 #undef TYPVAL_ENCODE_CONV_BOOL
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-  ga_concat(gap, ((num) ? "true" : "false"))
+  do { \
+    if (num) { \
+      GA_CONCAT_LITERAL(gap, "true"); \
+    } else { \
+      GA_CONCAT_LITERAL(gap, "false"); \
+    } \
+  } while (0)
 
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num) \
   do { \
     char numbuf[NUMBUFLEN]; \
-    vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%" PRIu64, (num)); \
-    ga_concat(gap, numbuf); \
+    size_t numbuflen = vim_snprintf_safelen(numbuf, ARRAY_SIZE(numbuf), \
+                                            "%" PRIu64, (num)); \
+    ga_concat_len(gap, numbuf, numbuflen); \
   } while (0)
 
 #undef TYPVAL_ENCODE_CONV_FLOAT
@@ -571,8 +590,9 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     } \
     default: { \
         char numbuf[NUMBUFLEN]; \
-        vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
-        ga_concat(gap, numbuf); \
+        size_t numbuflen = vim_snprintf_safelen(numbuf, ARRAY_SIZE(numbuf), \
+                                                "%g", flt_); \
+        ga_concat_len(gap, numbuf, numbuflen); \
         break; \
     } \
     } \
@@ -604,7 +624,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
 {
   const char *utf_buf = buf;
   if (utf_buf == NULL) {
-    ga_concat(gap, "\"\"");
+    GA_CONCAT_LITERAL(gap, "\"\"");
   } else {
     size_t utf_len = len;
     char *tofree = NULL;
@@ -733,24 +753,24 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
     const blob_T *const blob_ = (blob); \
     const int len_ = (len); \
     if (len_ == 0) { \
-      ga_concat(gap, "[]"); \
+      GA_CONCAT_LITERAL(gap, "[]"); \
     } else { \
       ga_append(gap, '['); \
       char numbuf[NUMBUFLEN]; \
       for (int i_ = 0; i_ < len_; i_++) { \
         if (i_ > 0) { \
-          ga_concat(gap, ", "); \
+          GA_CONCAT_LITERAL(gap, ", "); \
         } \
-        vim_snprintf((char *)numbuf, ARRAY_SIZE(numbuf), "%d", \
-                     (int)tv_blob_get(blob_, i_)); \
-        ga_concat(gap, numbuf); \
+        size_t numbuflen = vim_snprintf_safelen(numbuf, ARRAY_SIZE(numbuf), \
+                                                "%d", (int)tv_blob_get(blob_, i_)); \
+        ga_concat_len(gap, numbuf, numbuflen); \
       } \
       ga_append(gap, ']'); \
     } \
   } while (0)
 
 #undef TYPVAL_ENCODE_CONV_FUNC_START
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   return conv_error(_("E474: Error while dumping %s, %s: " \
                       "attempt to dump function reference"), \
                     mpstack, objname)
@@ -934,7 +954,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
   mpack_float8(&packer->ptr, (double)(flt))
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   return conv_error(_("E5004: Error while dumping %s, %s: " \
                       "attempt to dump function reference"), \
                     mpstack, objname)

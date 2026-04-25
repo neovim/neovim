@@ -4,7 +4,7 @@ local n = require('test.functional.testnvim')()
 local clear = n.clear
 local command = n.command
 local eq = t.eq
-local exc_exec = n.exc_exec
+local pcall_err = t.pcall_err
 local get_win_var = n.api.nvim_win_get_var
 
 describe('setqflist()', function()
@@ -13,15 +13,15 @@ describe('setqflist()', function()
   before_each(clear)
 
   it('requires a list for {list}', function()
-    eq('Vim(call):E714: List required', exc_exec('call setqflist("foo")'))
-    eq('Vim(call):E714: List required', exc_exec('call setqflist(5)'))
-    eq('Vim(call):E714: List required', exc_exec('call setqflist({})'))
+    eq('Vim(call):E714: List required', pcall_err(command, 'call setqflist("foo")'))
+    eq('Vim(call):E714: List required', pcall_err(command, 'call setqflist(5)'))
+    eq('Vim(call):E714: List required', pcall_err(command, 'call setqflist({})'))
   end)
 
   it('requires a string for {action}', function()
-    eq('Vim(call):E928: String required', exc_exec('call setqflist([], 5)'))
-    eq('Vim(call):E928: String required', exc_exec('call setqflist([], [])'))
-    eq('Vim(call):E928: String required', exc_exec('call setqflist([], {})'))
+    eq('Vim(call):E928: String required', pcall_err(command, 'call setqflist([], 5)'))
+    eq('Vim(call):E928: String required', pcall_err(command, 'call setqflist([], [])'))
+    eq('Vim(call):E928: String required', pcall_err(command, 'call setqflist([], {})'))
   end)
 
   it('sets w:quickfix_title', function()
@@ -41,7 +41,7 @@ describe('setqflist()', function()
   it('requires a dict for {what}', function()
     eq(
       'Vim(call):E715: Dictionary required',
-      exc_exec('call setqflist([], "r", function("function"))')
+      pcall_err(command, 'call setqflist([], "r", function("function"))')
     )
   end)
 end)
@@ -52,15 +52,15 @@ describe('setloclist()', function()
   before_each(clear)
 
   it('requires a list for {list}', function()
-    eq('Vim(call):E714: List required', exc_exec('call setloclist(0, "foo")'))
-    eq('Vim(call):E714: List required', exc_exec('call setloclist(0, 5)'))
-    eq('Vim(call):E714: List required', exc_exec('call setloclist(0, {})'))
+    eq('Vim(call):E714: List required', pcall_err(command, 'call setloclist(0, "foo")'))
+    eq('Vim(call):E714: List required', pcall_err(command, 'call setloclist(0, 5)'))
+    eq('Vim(call):E714: List required', pcall_err(command, 'call setloclist(0, {})'))
   end)
 
   it('requires a string for {action}', function()
-    eq('Vim(call):E928: String required', exc_exec('call setloclist(0, [], 5)'))
-    eq('Vim(call):E928: String required', exc_exec('call setloclist(0, [], [])'))
-    eq('Vim(call):E928: String required', exc_exec('call setloclist(0, [], {})'))
+    eq('Vim(call):E928: String required', pcall_err(command, 'call setloclist(0, [], 5)'))
+    eq('Vim(call):E928: String required', pcall_err(command, 'call setloclist(0, [], [])'))
+    eq('Vim(call):E928: String required', pcall_err(command, 'call setloclist(0, [], {})'))
   end)
 
   it('sets w:quickfix_title for the correct window', function()

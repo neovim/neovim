@@ -4,7 +4,6 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local pcall_err = t.pcall_err
-local exc_exec = n.exc_exec
 local remove_trace = t.remove_trace
 local exec_lua = n.exec_lua
 local command = n.command
@@ -16,6 +15,7 @@ local feed = n.feed
 local assert_alive = n.assert_alive
 local NIL = vim.NIL
 local eq = t.eq
+local matches = t.matches
 
 before_each(clear)
 
@@ -92,7 +92,7 @@ describe('luaeval()', function()
   -- Not checked: funcrefs converted to NIL. To be altered to something more
   -- meaningful later.
 
-  it('correctly evaluates scalars', function()
+  it('scalars', function()
     -- Also test method call (->) syntax
     eq(1, fn.luaeval('1'))
     eq(0, eval('"1"->luaeval()->type()'))
@@ -113,7 +113,7 @@ describe('luaeval()', function()
     eq(NIL, fn.luaeval('nil'))
   end)
 
-  it('correctly evaluates containers', function()
+  it('containers', function()
     eq({}, fn.luaeval('{}'))
     eq(3, eval('type(luaeval("{}"))'))
 
@@ -144,7 +144,7 @@ describe('luaeval()', function()
     )
   end)
 
-  it('correctly passes scalars as argument', function()
+  it('passes scalars as argument', function()
     eq(1, fn.luaeval('_A', 1))
     eq(1.5, fn.luaeval('_A', 1.5))
     eq('', fn.luaeval('_A', ''))
@@ -154,7 +154,7 @@ describe('luaeval()', function()
     eq(false, fn.luaeval('_A', false))
   end)
 
-  it('correctly passes containers as argument', function()
+  it('passes containers as argument', function()
     eq({}, fn.luaeval('_A', {}))
     eq({ test = 1 }, fn.luaeval('_A', { test = 1 }))
     eq({ 4, 2 }, fn.luaeval('_A', { 4, 2 }))
@@ -186,7 +186,7 @@ describe('luaeval()', function()
     ]=]):format(expr or '"_A"', argexpr):gsub('\n', '')))
   end
 
-  it('correctly passes special dictionaries', function()
+  it('passes special dictionaries', function()
     eq({ 0, '\000\n\000' }, luaevalarg(sp('string', '["\\n", "\\n"]')))
     eq({ 0, true }, luaevalarg(sp('boolean', 1)))
     eq({ 0, false }, luaevalarg(sp('boolean', 0)))
@@ -194,17 +194,23 @@ describe('luaeval()', function()
     eq({ 0, { [''] = '' } }, luaevalarg(mapsp(sp('string', '[""]'), '""')))
   end)
 
-  it('issues an error in some cases', function()
+  it('failure modes', function()
     eq(
       'Vim(call):E5100: Cannot convert given Lua table: table should contain either only integer keys or only string keys',
-      exc_exec('call luaeval("{1, foo=2}")')
+      pcall_err(command, 'call luaeval("{1, foo=2}")')
     )
 
-    startswith('Vim(call):E5107: Lua: [string "luaeval()"]:', exc_exec('call luaeval("1, 2, 3")'))
-    startswith('Vim(call):E5108: Lua: [string "luaeval()"]:', exc_exec('call luaeval("(nil)()")'))
+    startswith(
+      'Vim(call):E5107: Lua: [string "luaeval()"]:',
+      pcall_err(command, 'call luaeval("1, 2, 3")')
+    )
+    startswith(
+      'Vim(call):E5108: Lua: [string "luaeval()"]:',
+      pcall_err(command, 'call luaeval("(nil)()")')
+    )
   end)
 
-  it('should handle sending lua functions to viml', function()
+  it('handles sending lua functions to viml', function()
     eq(
       true,
       exec_lua [[
@@ -289,9 +295,11 @@ describe('luaeval()', function()
       return true
     ]]
     )
+    -- v:errmsg is set properly #35554
+    matches(': dead function\n', api.nvim_get_vvar('errmsg'))
   end)
 
-  it('should handle passing functions around', function()
+  it('can pass functions around', function()
     command [[
       function VimCanCallLuaCallbacks(Concat, Cb)
         let message = a:Concat("Hello Vim", "I'm Lua")
@@ -314,7 +322,7 @@ describe('luaeval()', function()
     )
   end)
 
-  it('should handle funcrefs', function()
+  it('handles funcrefs', function()
     command [[
       function VimCanCallLuaCallbacks(Concat, Cb)
         let message = a:Concat("Hello Vim", "I'm Lua")
@@ -337,7 +345,7 @@ describe('luaeval()', function()
     )
   end)
 
-  it('should work with metatables using __call', function()
+  it('works with metatables using __call', function()
     eq(
       1,
       exec_lua [[
@@ -359,7 +367,7 @@ describe('luaeval()', function()
     )
   end)
 
-  it('should handle being called from a timer once.', function()
+  it('handles being called from a timer once.', function()
     eq(
       3,
       exec_lua [[
@@ -378,7 +386,7 @@ describe('luaeval()', function()
     )
   end)
 
-  it('should call functions once with __call metamethod', function()
+  it('calls functions once with __call metamethod', function()
     eq(
       true,
       exec_lua [[
@@ -395,7 +403,7 @@ describe('luaeval()', function()
     )
   end)
 
-  it('should work with lists using __call', function()
+  it('works with lists using __call', function()
     eq(
       3,
       exec_lua [[
@@ -426,7 +434,7 @@ describe('luaeval()', function()
     )
   end)
 
-  it('should not work with tables not using __call', function()
+  it('fails with tables not using __call', function()
     eq(
       { false, 'Vim:E921: Invalid callback argument' },
       exec_lua [[
@@ -438,7 +446,7 @@ describe('luaeval()', function()
     )
   end)
 
-  it('correctly converts containers with type_idx', function()
+  it('converts containers with type_idx', function()
     eq(5, eval('type(luaeval("{[vim.type_idx]=vim.types.float, [vim.val_idx]=0}"))'))
     eq(4, eval([[type(luaeval('{[vim.type_idx]=vim.types.dictionary}'))]]))
     eq(3, eval([[type(luaeval('{[vim.type_idx]=vim.types.array}'))]]))
@@ -460,7 +468,7 @@ describe('luaeval()', function()
     eq({}, fn.luaeval('{[vim.type_idx]=vim.types.dictionary}'))
   end)
 
-  it('correctly converts self-containing containers', function()
+  it('converts self-containing containers', function()
     api.nvim_set_var('l', {})
     eval('add(l, l)')
     eq(true, eval('luaeval("_A == _A[1]", l)'))
@@ -476,24 +484,27 @@ describe('luaeval()', function()
     eq(true, eval('luaeval("_A ~= _A.d", {"d": d})'))
   end)
 
-  it('errors out correctly when doing incorrect things in lua', function()
+  it('fails when doing incorrect things in lua', function()
     -- Conversion errors
     eq(
-      'Vim(call):E5108: Lua: [string "luaeval()"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
-      remove_trace(exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]]))
+      'Vim(call):E5108: Lua: [string "luaeval()"]:0: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
+      remove_trace(pcall_err(command, [[call luaeval("vim.xxx_nonexistent_key_xxx()")]]))
     )
     eq(
-      'Vim(call):E5108: Lua: [string "luaeval()"]:1: ERROR',
-      remove_trace(exc_exec([[call luaeval("error('ERROR')")]]))
+      'Vim(call):E5108: Lua: [string "luaeval()"]:0: ERROR',
+      remove_trace(pcall_err(command, [[call luaeval("error('ERROR')")]]))
     )
-    eq('Vim(call):E5108: Lua: [NULL]', remove_trace(exc_exec([[call luaeval("error(nil)")]])))
+    eq(
+      'Vim(call):E5108: Lua: [NULL]',
+      remove_trace(pcall_err(command, [[call luaeval("error(nil)")]]))
+    )
   end)
 
   it('does not leak memory when called with too long line', function()
     local s = ('x'):rep(65536)
     eq(
-      'Vim(call):E5107: Lua: [string "luaeval()"]:1: unexpected symbol near \')\'',
-      exc_exec([[call luaeval("(']] .. s .. [[' + )")]])
+      'Vim(call):E5107: Lua: [string "luaeval()"]:0: unexpected symbol near \')\'',
+      pcall_err(command, [[call luaeval("(']] .. s .. [[' + )")]])
     )
     eq(s, fn.luaeval('"' .. s .. '"'))
   end)
@@ -528,7 +539,7 @@ describe('v:lua', function()
     ]])
   end)
 
-  it('works in expressions', function()
+  it('in expressions', function()
     eq(7, eval('v:lua.foo(3,4,v:null)'))
     eq(true, exec_lua([[return _G.val == vim.NIL]]))
     eq(NIL, eval('v:lua.mymod.noisy("eval")'))
@@ -542,7 +553,7 @@ describe('v:lua', function()
     )
   end)
 
-  it('works when called as a method', function()
+  it('when called as a method', function()
     eq(123, eval('110->v:lua.foo(13)'))
     eq(true, exec_lua([[return _G.val == nil]]))
 
@@ -559,7 +570,7 @@ describe('v:lua', function()
     )
   end)
 
-  it('works in :call', function()
+  it('in :call', function()
     command(":call v:lua.mymod.noisy('command')")
     eq('hey command', api.nvim_get_current_line())
     eq(
@@ -568,7 +579,7 @@ describe('v:lua', function()
     )
   end)
 
-  it('works in func options', function()
+  it('in func options', function()
     local screen = Screen.new(60, 8)
     api.nvim_set_option_value('omnifunc', 'v:lua.mymod.omni', {})
     feed('isome st<c-x><c-o>')
@@ -596,7 +607,7 @@ describe('v:lua', function()
     eq(9004, eval("0 ? v:lua.require'bar'.doit() : v:lua.require'baz-quux'.doit()"))
   end)
 
-  it('throw errors for invalid use', function()
+  it('fails for invalid usage', function()
     eq(
       [[Vim(let):E15: Invalid expression: "v:lua.func"]],
       pcall_err(command, 'let g:Func = v:lua.func')
@@ -636,7 +647,7 @@ describe('v:lua', function()
     eq([[Vim:E15: Invalid expression: "v:lua.()"]], pcall_err(eval, 'v:lua.()'))
   end)
 
-  describe('invalid use in fold text', function()
+  describe('invalid usage in fold text', function()
     before_each(function()
       feed('ifoo<CR>bar<Esc>')
       command('1,2fold')

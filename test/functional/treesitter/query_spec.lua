@@ -523,36 +523,6 @@ void ui_refresh(void)
       eq({ { 0, 4, 0, 8 } }, res)
     end
 
-    -- Once with the old API. Remove this whole 'do' block in 0.12
-    do
-      local res = exec_lua(function()
-        local query = vim.treesitter.query
-
-        local function is_main(match, _pattern, bufnr, predicate)
-          local node = match[predicate[2]]
-
-          return vim.treesitter.get_node_text(node, bufnr) == 'main'
-        end
-
-        local parser = vim.treesitter.get_parser(0, 'c')
-
-        query.add_predicate('is-main?', is_main, { all = false, force = true })
-
-        local query0 = query.parse('c', custom_query)
-
-        local nodes = {}
-        for _, node in query0:iter_captures(parser:parse()[1]:root(), 0) do
-          table.insert(nodes, { node:range() })
-        end
-
-        return nodes
-      end)
-
-      -- Remove this 'do' block in 0.12
-      -- eq(0, n.fn.has('nvim-0.12'))
-      eq({ { 0, 4, 0, 8 } }, res)
-    end
-
     do
       local res = exec_lua(function()
         local query = vim.treesitter.query
@@ -680,50 +650,6 @@ void ui_refresh(void)
     }, result)
   end)
 
-  it('supports the old broken version of iter_matches #24738', function()
-    -- Delete this test in 0.12 when iter_matches is removed
-    -- eq(0, n.fn.has('nvim-0.12'))
-
-    insert(test_text)
-    local res = exec_lua(function()
-      local cquery = vim.treesitter.query.parse('c', test_query)
-      local parser = vim.treesitter.get_parser(0, 'c')
-      local tree = parser:parse()[1]
-      local res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = false }) do
-        local mrepr = {}
-        for cid, node in pairs(match) do
-          table.insert(mrepr, { '@' .. cquery.captures[cid], node:type(), node:range() })
-        end
-        table.insert(res, { pattern, mrepr })
-      end
-      return res
-    end)
-
-    eq({
-      { 3, { { '@type', 'primitive_type', 8, 2, 8, 6 } } },
-      { 2, { { '@keyword', 'for', 9, 2, 9, 5 } } },
-      { 3, { { '@type', 'primitive_type', 9, 7, 9, 13 } } },
-      { 4, { { '@fieldarg', 'identifier', 11, 16, 11, 18 } } },
-      {
-        1,
-        {
-          { '@minfunc', 'identifier', 11, 12, 11, 15 },
-          { '@min_id', 'identifier', 11, 27, 11, 32 },
-        },
-      },
-      { 4, { { '@fieldarg', 'identifier', 12, 17, 12, 19 } } },
-      {
-        1,
-        {
-          { '@minfunc', 'identifier', 12, 13, 12, 16 },
-          { '@min_id', 'identifier', 12, 29, 12, 35 },
-        },
-      },
-      { 4, { { '@fieldarg', 'identifier', 13, 14, 13, 16 } } },
-    }, res)
-  end)
-
   it('should use node range when omitted', function()
     local txt = [[
       int foo = 42;
@@ -745,6 +671,47 @@ void ui_refresh(void)
     end)
 
     eq({ { 1, 10, 1, 13 } }, ret)
+  end)
+
+  it('iter_captures supports columns', function()
+    local txt = table.concat({
+      'int aaa = 1, bbb = 2;',
+      'int foo = 1, bar = 2;',
+      'int baz = 3, qux = 4;',
+      'int ccc = 1, ddd = 2;',
+    }, '\n')
+
+    local function test(opts)
+      local parser = vim.treesitter.get_string_parser(txt, 'c')
+
+      local nodes = {}
+      local query = vim.treesitter.query.parse('c', '((identifier) @foo)')
+      local root = assert(parser:parse()[1]:root())
+      local iter = query:iter_captures(root, txt, 1, 2, opts)
+
+      while true do
+        local capture, node = iter()
+        if not capture then
+          break
+        end
+        table.insert(nodes, { node:range() })
+      end
+
+      return nodes
+    end
+
+    local ret
+    ret = exec_lua(test, { start_col = 7, end_col = 13 })
+    eq({ { 1, 13, 1, 16 }, { 2, 4, 2, 7 } }, ret)
+
+    ret = exec_lua(test, { start_col = 7 })
+    eq({ { 1, 13, 1, 16 } }, ret)
+
+    ret = exec_lua(test, { end_col = 13 })
+    eq({ { 1, 4, 1, 7 }, { 1, 13, 1, 16 }, { 2, 4, 2, 7 } }, ret)
+
+    ret = exec_lua(test, {})
+    eq({ { 1, 4, 1, 7 }, { 1, 13, 1, 16 } }, ret)
   end)
 
   it('fails to load queries', function()

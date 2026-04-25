@@ -31,9 +31,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "charset.c.generated.h"
-#endif
+#include "charset.c.generated.h"
 
 static bool chartab_initialized = false;
 

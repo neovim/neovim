@@ -48,7 +48,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'complete' excludes "i"
 - 'completeopt' defaults to "menu,popup"
 - 'define' defaults to "". The C ftplugin sets it to "^\\s*#\\s*define"
-- 'diffopt' defaults to "internal,filler,closeoff,inline:simple,linematch:40"
+- 'diffopt' includes "linematch:40"
 - 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
@@ -69,14 +69,14 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
+- 'maxsearchcount' defaults to 999
 - 'mouse' defaults to "nvi", see |default-mouse| for details
 - 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"
 - 'path' defaults to ".,,". The C ftplugin adds "/usr/include" if it exists.
-- 'ruler' is enabled
 - 'sessionoptions' includes "unix,slash", excludes "options"
+- 'shelltemp' is disabled
 - 'shortmess' includes "CF", excludes "S"
-- 'showcmd' is enabled
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
 - 'spellfile' defaults to `stdpath("data").."/site/spell/"`
@@ -88,7 +88,9 @@ Defaults                                            *defaults* *nvim-defaults*
   host terminal
 - 'ttimeout' is enabled
 - 'ttimeoutlen' defaults to 50
-- 'ttyfast' is always set
+- 'ttyfast' is set by default, but it can be unset during startup by setting
+  the environment variable `NVIM_NOTTYFAST` to adjust the startup sequence for
+  slow environments (such as ssh).
 - 'undodir' defaults to ~/.local/state/nvim/undo// (|xdg|), auto-created
 - 'viewoptions' includes "unix,slash", excludes "options"
 - 'viminfo' includes "!"
@@ -98,6 +100,8 @@ Defaults                                            *defaults* *nvim-defaults*
 - |man.lua| plugin is enabled, so |:Man| is available by default.
 - |matchit| plugin is enabled. To disable it in your config: >vim
     :let loaded_matchit = 1
+- |package-spellfile| plugin is enabled, spellfiles are installed by default
+  if missing.
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
@@ -149,27 +153,26 @@ you never want any default mappings, call |:mapclear| early in your config.
 - * |v_star-default|
 - gc |gc-default| |v_gc-default| |o_gc-default|
 - gcc |gcc-default|
-- gr prefix |gr-default|
-  - |grn|
-  - |grr|
-  - |gra|
-  - |gri|
-  - |grt|
-  - |gO|
-- <C-S> |i_CTRL-S|
+- |gO|
 - ]d |]d-default|
 - [d |[d-default|
 - [D |[D-default|
 - ]D |]D-default|
 - <C-W>d |CTRL-W_d-default|
-- |[q|, |]q|, |[Q|, |]Q|, |[CTRL-Q|, |]CTRL-Q|
-- |[l|, |]l|, |[L|, |]L|, |[CTRL-L|, |]CTRL-L|
-- |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T|
-- |[a|, |]a|, |[A|, |]A|
-- |[b|, |]b|, |[B|, |]B|
-- |[<Space>|, |]<Space>|
-- Nvim LSP client defaults |lsp-defaults|
+- |[q| |]q| |[Q| |]Q| |[_CTRL-Q| |]_CTRL-Q|
+- |[l| |]l| |[L| |]L| |[_CTRL-L| |]_CTRL-L|
+- |[t| |]t| |[T| |]T| |[_CTRL-T| |]_CTRL-T|
+- |[a| |]a| |[A| |]A|
+- |[b| |]b| |[B| |]B|
+- |[<Space>| |]<Space>|
+- LSP defaults |lsp-defaults|
   - K |K-lsp-default|
+  - gr prefix |gr-default|
+    - |gra| |gri| |grn| |grr| |grt|
+  - <C-S> |i_CTRL-S|
+- Treesitter defaults |treesitter-defaults|
+  - |v_an| |v_in|
+  - |v_]n| |v_[n|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*
@@ -180,6 +183,7 @@ nvim.terminal:
 - BufReadCmd: Treats "term://" buffers as |terminal| buffers. |terminal-start|
 - TermClose: A |terminal| buffer started with no arguments (which thus uses
   'shell') and which exits with no error is closed automatically.
+- TermClose: Displays the "[Process exited]" virtual text.
 - TermRequest: The terminal emulator responds to OSC background and foreground
   requests, indicating (1) a black background and white foreground when Nvim
   option 'background' is "dark" or (2) a white background and black foreground
@@ -204,16 +208,20 @@ nvim.terminal:
     - |[[| and |]]| to navigate between shell prompts
 
 nvim.cmdwin:
-- CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
+- |CmdwinEnter|: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
 nvim.swapfile:
-- SwapExists: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
+- |SwapExists|: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
   swapfile…" message.
 
 nvim.exrc:
-- VimEnter: Extend 'exrc' to also search for project-local configuration files
+- |VimEnter|: Extend 'exrc' to also search for project-local configuration files
   in all parent directories.
+
+nvim.progress:
+- |Progress|: Display native progress bars in the TUI using the OSC 9;4 escape
+  sequence.
 
 ==============================================================================
 New Features                                                   *nvim-features*
@@ -225,6 +233,7 @@ MAJOR COMPONENTS
 - LSP framework                   |lsp|
 - Lua scripting                   |lua|
 - Parsing engine                  |treesitter|
+- Plugin manager                  |vim.pack|
 - Providers
   - Clipboard                     |provider-clipboard|
   - Node.js plugins               |provider-nodejs|
@@ -298,19 +307,35 @@ Command-line:
 
 Commands:
 - |:checkhealth|
+- |:connect|
+- |:detach|
 - |:drop| is always available
+- |:EditQuery|
+- |:Inspect|
+- |:InspectTree|
+- |:log|
+- |:lsp|
 - |:Man| is available by default, with many improvements such as completion
 - |:match| can be invoked before highlight group is defined
+- |:restart|
 - |:source| works with Lua
+- |:trust|
 - User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
+- |:update| command writes new file buffers even when unmodified.
+- |:uptime|
 
 Editor:
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
   commands.
+- |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
+  pasting instead of like user input. Improves performance, avoids broken
+  formatting. To get the old behavior you can use `<C-R>=@x`.
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
+- |BufModifiedSet|
+- |Progress|
 - |RecordingEnter|
 - |RecordingLeave|
 - |SearchWrapped|
@@ -318,8 +343,9 @@ Events (autocommands):
 - |TabNewEntered|
 - |TermClose|
 - |TermOpen|
-- |TermResponse| is fired for any OSC sequence received from the terminal,
-  instead of the Primary Device Attributes response. |v:termresponse|
+- |TermRequest|
+- |TermResponse| is fired for DCS, OSC, and APC sequences received from the terminal,
+  in addition to the Primary Device Attributes response. |v:termresponse|
 - |UIEnter|
 - |UILeave|
 
@@ -333,8 +359,8 @@ Functions:
 - |matchadd()| can be called before highlight group is defined
 - |tempname()| tries to recover if the Nvim |tempdir| disappears.
 - |writefile()| with "p" flag creates parent directories.
-- |searchcount()|'s maximal value is raised from 99 to 999.
 - |prompt_getinput()|
+- |prompt_appendbuf()|
 
 Highlight groups:
 - |highlight-blend| controls blend level for a highlight group
@@ -346,6 +372,9 @@ Highlight groups:
 - |hl-NormalNC| highlights non-current windows
 - |hl-MsgArea| highlights messages/cmdline area
 - |hl-MsgSeparator| highlights separator for scrolled messages
+- |hl-OkMsg|
+- |hl-StderrMsg|
+- |hl-StdoutMsg|
 - |hl-Substitute|
 - |hl-TermCursor|
 - |hl-WinSeparator| highlights window separators
@@ -362,6 +391,7 @@ Input/Mappings:
 Normal commands:
 - |gO| shows a filetype-defined "outline" of the current buffer.
 - |Q| replays the last recorded macro instead of switching to Ex mode (|gQ|).
+- |ZR| performs |:restart|
 
 Options:
 
@@ -370,6 +400,8 @@ Options:
 - 'ambiwidth'   cannot be set to empty.
 - 'autoread'    works in the terminal (if it supports "focus" events)
 - 'background'  cannot be set to empty.
+- 'completeopt' flag "preselect" selects first completion item that has the
+                "preselect" attribute set.
 - 'cpoptions'   flags: |cpo-_|
 - 'eadirection' cannot be set to empty.
 - 'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
@@ -404,6 +436,9 @@ Options:
 - 'ttimeout', 'ttimeoutlen' behavior was simplified
 - 'winblend'    pseudo-transparency in floating windows |api-floatwin|
 - 'winhighlight' window-local highlights
+- 'busy' busy status for buffers
+- 'messagesopt' added progress:c to control if progress messages are shown in
+  cmdline
 
 Performance:
 - Signs are implemented using Nvim's internal "marktree" (btree) structure.
@@ -455,8 +490,9 @@ TUI:
   - Note: If you want to detect when Nvim is running in a terminal, use
     `has('gui_running')` |has()| or see |nvim_list_uis()| for an example of
     how to inspect the UI channel.
-- "builtin_x" means one of the |builtin-terms| was chosen, because the expected
-  terminfo file was not found on the system.
+- Nvim might optionally be compiled with unibilium, in which case the terminfo
+  database will be used. Otherwise, or if the terminal was not found in
+  the database, a table of builtin terminal definitions will be used.
 - Nvim will use 256-colour capability on Linux virtual terminals.  Vim uses
   only 8 colours plus bright foreground on Linux VTs.
 - Vim combines what is in its |builtin-terms| with what it reads from terminfo,
@@ -722,6 +758,7 @@ Editor:
 - *cscope* support was removed in favour of plugin-based solutions such as:
   https://github.com/dhananjaylatkar/cscope_maps.nvim
 - *popup-window* : Use |floating-windows| instead.
+- *spellfile.vim* : Replaced by |package-spellfile|.
 - *textprop* : Use |extmarks| instead.
 
 Eval:
@@ -730,6 +767,8 @@ Eval:
 - *err_teapot()*
 - *js_encode()*
 - *js_decode()*
+- *listener_add()* , etc: use |api-buffer-updates-lua| instead.
+- *redraw_listener_add()* , etc:  use |nvim_set_decoration_provider()| instead.
 - *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
 - *v:sizeofint*
 - *v:sizeoflong*
@@ -840,7 +879,6 @@ Options:
 - *'toolbar'* *'tb'*
 - *'toolbariconsize'* *'tbis'*
 - *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
-- *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 - *'ttymouse'* *'ttym'*
 - *'ttyscroll'* *'tsl'*
 - *'ttytype'* *'tty'*
@@ -850,9 +888,10 @@ Plugins:
 - logiPat
 - rrhelper
 - *vimball*
+- shellmenu
 - macmap.vim
 - tools/check_colors.vim
-- macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
+- macros/{justify,matchit,swapmous}.vim: use `packadd! justify` etc.
   directly
 - HelpToc: Use |gO| instead.
 
@@ -872,9 +911,8 @@ Startup:
 Test functions:
 - test_alloc_fail()
 - test_autochdir()
-- test_disable_char_avail()
 - test_feedinput()
-- test_garbagecollect_soon
+- test_garbagecollect_soon()
 - test_getvalue()
 - test_ignore_error()
 - test_null_blob()
@@ -892,6 +930,8 @@ Test functions:
 - test_setmouse()
 - test_settime()
 - test_srand_seed()
+- test_unknown()
+- test_void()
 
 TUI:
                           *t_xx* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*

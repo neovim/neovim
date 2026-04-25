@@ -4,9 +4,9 @@
                             NVIM REFERENCE MANUAL
 
 
-Notable changes since Nvim 0.11                                 *news*
+Notable changes since Nvim 0.12                                 *news*
 
-For changes in the previous release, see |news-0.11|.
+For changes in the previous release, see |news-0.12|.
 
                                        Type |gO| to see the table of contents.
 
@@ -20,7 +20,7 @@ cycle (Nvim HEAD, the "master" branch).
 
 EVENTS
 
-• Renamed "nvim.find_exrc" |default-autocmds| group to "nvim.exrc".
+• todo
 
 EXPERIMENTS
 
@@ -28,8 +28,15 @@ EXPERIMENTS
 
 LSP
 
-• |vim.lsp.buf.selection_range()| now accepts an integer which specifies its
-  direction, rather than a string `'outer'` or `'inner'`.
+• todo
+
+LUA
+
+• vim.pos, vim.range always require the `buf` parameter.
+
+DIAGNOSTICS
+
+• todo
 
 OPTIONS
 
@@ -38,6 +45,15 @@ OPTIONS
 TREESITTER
 
 • todo
+
+UI
+
+• todo
+
+VIMSCRIPT
+
+• todo
+
 
 ==============================================================================
 BREAKING CHANGES                                                *news-breaking*
@@ -46,69 +62,43 @@ These changes may require adaptations in your config or plugins.
 
 API
 
-• todo
-
-BUILD
-
-• todo
+• |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
+  no longer treat an empty non-nil pattern as nil.
+• |nvim_clear_autocmds()| no longer treats an empty array event as nil.
+• |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
+  `msg_show.progress` events.
 
 DIAGNOSTICS
 
-• |diagnostic-signs| can no longer be configured with |:sign-define| or
-  |sign_define()| (deprecated in Nvim 0.10 |deprecated-0.10|).
-• |vim.diagnostic.disable()| and |vim.diagnostic.is_disabled()| (deprecated in
-  Nvim 0.10 |deprecated-0.10|) are removed.
-• The legacy signature of |vim.diagnostic.enable()| (deprecated in Nvim 0.10
-  |deprecated-0.10|) is no longer supported.
+• todo
 
 EDITOR
 
-• todo
+• On Windows, the |trust| db now stores paths with "/" slashes. This means the
+  trust store will be reset.
+• `stdpath("log")` moved to `stdpath("state")/logs`.
 
 EVENTS
-
-• |ui-messages| no longer emits the `msg_show.return_prompt`, and
-  `msg_history_clear` events. The `msg_clear` event was repurposed and is now
-  emitted after the screen is cleared. These events arbitrarily assumed a
-  message UI that mimicks the legacy message grid. Benefit: reduced UI event
-  traffic and more flexibility for UIs.
-• A new `empty` message kind is emitted for an empty (e.g. `:echo ""`) message.
-
-HIGHLIGHTS
 
 • todo
 
 LSP
 
-• `root_markers` in |vim.lsp.Config| can now be ordered by priority.
-• The function set with |vim.lsp.log.set_format_func()| is now given all
-  arguments corresponding to a log entry instead of the individual arguments.
+• todo
 
 LUA
 
-• todo
+• Added `__eq` metamethod to |vim.VersionRange|.
 
 OPTIONS
 
-• 'shelltemp' defaults to "false".
+• todo
 
 PLUGINS
 
 • todo
 
 TREESITTER
-
-• |treesitter-directive-offset!| can now be applied to quantified captures. It
-  no longer sets `metadata[capture_id].range`; it instead sets
-  `metadata[capture_id].offset`. The offset will be applied in
-  |vim.treesitter.get_range()|, which should be preferred over reading
-  metadata directly for retrieving node ranges.
-
-TUI
-
-• todo
-
-VIMSCRIPT
 
 • todo
 
@@ -119,119 +109,82 @@ The following new features were added.
 
 API
 
-• |nvim_win_text_height()| can limit the lines checked when a certain
-  `max_height` is reached, and returns the `end_row` and `end_vcol` for which
-  `max_height` or the calculated height is reached.
-• |vim.secure.read()| now returns `true` for trusted directories. Previously
-  it would return `nil`, which made it impossible to tell if the directory was
-  actually trusted.
-• Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
-  by |vim.lsp.enable()|.
-• |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
+• |nvim_set_hl()| supports "font" key.
+• |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor
+  shape when an unfocused float is on top of the cursor.
+• |nvim_echo()| distinguishes zero percent from omitted percent for Progress
+  events.
 
 BUILD
 
-• A Zig-based build system has been added as an alternative to CMake. It is
-  currently limited in functionality, and CMake remains the recommended option
-  for the time being.
+• Building using "zig build" requires zig 0.16.x.
 
 DEFAULTS
 
-• 'statusline' default is exposed as a statusline expression (previously it
-  was implemented as an internal C routine).
-• Project-local configuration ('exrc') is also loaded from parent directories.
-  Unset 'exrc' to stop further search.
-• Mappings:
-  • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
+• todo
 
 DIAGNOSTICS
 
-• |vim.diagnostic.setloclist()| and |vim.diagnostic.setqflist()| now support a
-  `format` function to modify (or filter) diagnostics before being set in the
-  location/quickfix list.
-• |vim.diagnostic.get()| now accepts an `enabled` filter to only return
-  enabled or disabled diagnostics.
+• todo
 
 EDITOR
 
-• |:iput| works like |:put| but adjusts indent.
-• |omnicompletion| in `help` buffer. |ft-help-omni|
-• Setting "'0" in 'shada' prevents storing the jumplist in the shada file.
-• 'shada' now correctly respects "/0" and "f0".
-• |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
-  commands.
+• |gf| and |<cfile>| support `file://…` URIs.
+• |:log| opens log files.
+• |ZR| restarts Nvim (|:restart|).
+• |:uptime| displays uptime.
 
 EVENTS
 
-• |CmdlineLeavePre| triggered before preparing to leave the command line.
-• New `append` paremeter for |ui-messages| `msg_show` event.
+• |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
+  as |nvim_buf_del_mark()|
 
 HIGHLIGHTS
 
-• |hl-DiffTextAdd| highlights added text within a changed line.
-• |hl-StderrMsg| |hl-StdoutMsg|
+• todo
 
 LSP
 
-• |vim.lsp.ClientConfig| gained `workspace_required`.
-• You can control priority of |vim.lsp.Config| `root_markers`.
-• Support for `textDocument/documentColor`: |lsp-document_color|
-  https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
-• The `textDocument/diagnostic` request now includes the previous id in its
-  parameters.
-• |vim.lsp.enable()| start/stops clients as necessary. And detaches
-  non-applicable LSP clients.
-• |vim.lsp.is_enabled()| checks if a LSP config is enabled (without
-  "resolving" it).
-• Support for `workspace/diagnostic`: |vim.lsp.buf.workspace_diagnostics()|
-  https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
-• Incremental selection is now supported via `textDocument/selectionRange`.
-  `an` selects outwards and `in` selects inwards.
-• Support for multiline semantic tokens.
-• Support for the `disabled` field on code actions.
-• The function form of `cmd` in a vim.lsp.Config or vim.lsp.ClientConfig
-  receives the resolved config as the second arg: `cmd(dispatchers, config)`.
-• Support for annotated text edits.
+• LSP capabilities:
+  • Completion supports `CompletionItem.preselect` if 'completeopt' has
+    "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
+  • `textDocument/foldingRange` |vim.lsp.foldtext()| highlights collapsed text.
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
+  and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
+• Support for nested snippets.
 
 LUA
 
-• Lua type annotations for `vim.uv`.
-• |vim.hl.range()| now allows multiple timed highlights.
-• |vim.tbl_extend()| and |vim.tbl_deep_extend()| now accept a function behavior argument.
-• |vim.fs.root()| can define "equal priority" via nested lists.
-• |vim.version.range()| output can be converted to human-readable string with |tostring()|.
-• |vim.version.intersect()| computes intersection of two version ranges.
+• |vim.net.request()| can specify custom headers by passing `opts.headers`.
+• |writefile()| treats Lua strings as "blob", so it can be used to write
+  binary data.
+• |vim.filetype.inspect()| returns a copy of the internal tables used for
+  filetype detection.
+• Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
+the same range instances now compare equal.
 
 OPTIONS
 
-• 'autowriteall' writes all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
-• 'chistory' and 'lhistory' set size of the |quickfix-stack|.
-• 'completefuzzycollect' enables fuzzy collection of candidates for (some)
-  |ins-completion| modes.
-• 'complete' new flags:
-  • "F{func}"   complete using given function
-  • "F"         complete using 'completefunc'
-  • "o"         complete using 'omnifunc'
-• 'complete' allows limiting matches for sources using "{flag}^<limit>".
-• 'completeopt' flag "nearset" sorts completion results by distance to cursor.
-• 'diffopt' `inline:` configures diff highlighting for changes within a line.
-• 'grepformat' is now a |global-local| option.
-• 'pummaxwidth' sets maximum width for the completion popup menu.
-• 'winborder' "bold" style.
-• |g:clipboard| accepts a string name to force any builtin clipboard tool.
+• 'ttyfast' can be disabled during startup by setting the environment variable
+  `NVIM_NOTTYFAST` to disable automatic background detection.
+• 'scrolloffpad' allows vertically centering cursor at the end of file.
+• 'winpinned' prevents window from closing unless specifically targeted.
 
 PERFORMANCE
 
-• |vim.glob.to_lpeg()| uses a new LPeg-based implementation (Peglob) that
-  provides ~50% speedup for complex patterns. The implementation restores
-  support for nested braces and follows LSP 3.17 specification with
-  additional constraints for improved correctness and resistance to
-  backtracking edge cases.
+• Nvim architecture allows pure-Lua implementations of some `vim.fn`
+  functions, which skips the Vimscript <=> Lua "bridge" (no data
+  conversion/marshalling) entirely, if the `vim.fn` function is called from
+  Lua.
+• The table holding LSP data is now cleared using `table.clear`,
+  thus reducing GC and memory reallocation during each data reset.
+• When parsing the received Content-Length messages,
+  the RPC client will no longer allocate extra strings.
 
 PLUGINS
 
-• Customize :checkhealth by handling a `FileType checkhealth` event.
-  |health-usage|
+• provider: add bun support for Node.js plugins
 
 STARTUP
 
@@ -239,55 +192,52 @@ STARTUP
 
 TERMINAL
 
-• |nvim_open_term()| can be called with a non-empty buffer. The buffer
-  contents are piped to the PTY and displayed as terminal output.
+• todo
 
 TREESITTER
 
-• todo
+• |v_]N| |v_[N| expand selection to sibling treesitter node.
+• |treesitter-highlight-conceal| can be removed by adding a `@noconceal`
+  capture.
 
 TUI
 
-• |TermResponse| now supports APC query responses.
+• The TUI will re-query the terminal's background color when resuming from
+  a suspended state, and Nvim will update 'background' accordingly.
 
 UI
 
-• |:restart| restarts Nvim and reattaches the current UI.
-• |:checkhealth| shows a summary in the header for every healthcheck.
-• |ui-multigrid| provides composition information and absolute coordinates.
-• `vim._extui` provides an experimental commandline and message UI intended to
-  replace the message grid in the TUI.
-• Error messages are more concise:
-  • "Error detected while processing:" changed to "Error in:".
-  • "Error executing Lua:" changed to "Lua:".
+• todo
 
 VIMSCRIPT
 
-• |cmdcomplete_info()| gets current cmdline completion info.
-• |prompt_getinput()| gets current user-input in prompt-buffer.
+• |v:exitreason| is set before |QuitPre|.
+• |v:starttime| is the process start time (monotonic nanoseconds).
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• |gv| works in operator pending mode and does not abort.
-• 'smartcase' applies to completion filtering.
-• 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
-  the first writable directory in 'runtimepath'.
-• |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
-• |searchcount()|'s maximal value is raised from 99 to 999.
+• |:Open| with no arguments uses the current file.
+• The "buffer" key was renamed to "buf" in these functions (but the old name
+  "buffer" is still accepted, for backwards compatibility):
+  • |nvim_clear_autocmds()|
+  • |nvim_create_autocmd()|
+  • |nvim_exec_autocmds()|
+  • |nvim_get_autocmds()|
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
 These deprecated features were removed.
 
-• todo
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
+  and |vim.lsp.buf.implementation()| no longer accept the `reuse_win` option.
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 
-See |deprecated-0.12|.
+See |deprecated-0.13|.
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

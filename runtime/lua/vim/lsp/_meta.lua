@@ -5,8 +5,9 @@ error('Cannot require a meta file')
 ---@alias lsp.MultiHandler fun(results: table<integer,{err: lsp.ResponseError?, result: any, context: lsp.HandlerContext}>, context: lsp.HandlerContext, config?: table): ...any
 
 ---@class lsp.HandlerContext
----@field method string
+---@field method vim.lsp.protocol.Method
 ---@field client_id integer
+---@field request_id? integer
 ---@field bufnr? integer
 ---@field params? any
 ---@field version? integer

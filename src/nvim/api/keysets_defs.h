@@ -18,6 +18,8 @@ typedef struct {
   LuaRefOf(("win" _, Integer winid, Integer bufnr, Integer toprow, Integer botrow),
            *Boolean) on_win;
   LuaRefOf(("line" _, Integer winid, Integer bufnr, Integer row), *Boolean) on_line;
+  LuaRefOf(("range" _, Integer winid, Integer bufnr, Integer start_row, Integer start_col,
+            Integer end_row, Integer end_col), *Boolean) on_range;
   LuaRefOf(("end" _, Integer tick)) on_end;
   LuaRefOf(("hl_def" _)) _on_hl_def;
   LuaRefOf(("spell_nav" _)) _on_spell_nav;
@@ -32,12 +34,12 @@ typedef struct {
   Integer end_col;
   Object hl_group;
   Array virt_text;
-  String virt_text_pos;
+  Enum("eol", "eol_right_align", "overlay", "right_align", "inline") virt_text_pos;
   Integer virt_text_win_col;
   Boolean virt_text_hide;
   Boolean virt_text_repeat_linebreak;
   Boolean hl_eol;
-  String hl_mode;
+  Enum("replace", "combine", "blend") hl_mode;
   Boolean invalidate;
   Boolean ephemeral;
   Integer priority;
@@ -46,20 +48,22 @@ typedef struct {
   Array virt_lines;
   Boolean virt_lines_above;
   Boolean virt_lines_leftcol;
-  String virt_lines_overflow;
+  Enum("trunc", "scroll") virt_lines_overflow;
   Boolean strict;
   String sign_text;
   HLGroupID sign_hl_group;
   HLGroupID number_hl_group;
   HLGroupID line_hl_group;
   HLGroupID cursorline_hl_group;
-  String conceal;
+  Union(String, Boolean) conceal;
   String conceal_lines;
   Boolean spell;
   Boolean ui_watched;
   Boolean undo_restore;
   String url;
   Boolean scoped;
+
+  Integer _subpriority;
 } Dict(set_extmark);
 
 typedef struct {
@@ -112,31 +116,36 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__win_config_;
-  Float row;
-  Float col;
-  Integer width;
-  Integer height;
-  Enum("NW", "NE", "SW", "SE") anchor;
-  Enum("cursor", "editor", "laststatus", "mouse", "tabline", "win") relative;
-  Enum("left", "right", "above", "below") split;
-  Window win;
-  ArrayOf(Integer) bufpos;
   Boolean external;
+  Boolean fixed;
   Boolean focusable;
-  Boolean mouse;
-  Boolean vertical;
-  Integer zindex;
-  Union(ArrayOf(String), Enum("none", "single", "double", "rounded", "solid", "shadow")) border;
-  Object title;
-  Enum("center", "left", "right") title_pos;
   Object footer;
   Enum("center", "left", "right") footer_pos;
-  Enum("minimal") style;
-  Boolean noautocmd;
-  Boolean fixed;
   Boolean hide;
+  Integer height;
+  Boolean mouse;
+  Enum("cursor", "editor", "laststatus", "mouse", "tabline", "win") relative;
+  Float row;
+  Enum("", "minimal") style;
+  Boolean noautocmd;
+  Boolean vertical;
+  Window win;
+  Integer width;
+  Integer zindex;
+  Enum("NW", "NE", "SW", "SE") anchor;
+  Union(Array, Enum("none", "single", "double", "rounded", "solid", "shadow")) border;
+  ArrayOf(Integer) bufpos;
+  Float col;
+  Enum("left", "right", "above", "below") split;
+  Object title;
+  Enum("center", "left", "right") title_pos;
   Integer _cmdline_offset;
 } Dict(win_config);
+
+typedef struct {
+  OptionalKeys is_set__tabpage_config_;
+  Integer after;
+} Dict(tabpage_config);
 
 typedef struct {
   Boolean is_lua;
@@ -164,20 +173,24 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__highlight_;
+  Boolean altfont;
+  Boolean blink;
   Boolean bold;
+  Boolean conceal;
+  Boolean dim;
+  Boolean italic;
+  Boolean nocombine;
+  Boolean overline;
+  Boolean reverse;
   Boolean standout;
   Boolean strikethrough;
-  Boolean underline;
   Boolean undercurl;
-  Boolean underdouble;
-  Boolean underdotted;
   Boolean underdashed;
-  Boolean italic;
-  Boolean reverse;
-  Boolean altfont;
-  Boolean nocombine;
+  Boolean underdotted;
+  Boolean underdouble;
+  Boolean underline;
   Boolean default_ DictKey(default);
-  Union(Integer, String) cterm;
+  DictAs(highlight_cterm) cterm;
   Union(Integer, String) foreground;
   Union(Integer, String) fg;
   Union(Integer, String) background;
@@ -187,13 +200,15 @@ typedef struct {
   Union(Integer, String) special;
   Union(Integer, String) sp;
   HLGroupID link;
-  HLGroupID global_link;
+  HLGroupID link_global;
   Boolean fallback;
   Integer blend;
   Boolean fg_indexed;
   Boolean bg_indexed;
   Boolean force;
+  Boolean update;
   String url;
+  String font;
 } Dict(highlight);
 
 typedef struct {
@@ -208,6 +223,10 @@ typedef struct {
   Boolean italic;
   Boolean reverse;
   Boolean altfont;
+  Boolean dim;
+  Boolean blink;
+  Boolean conceal;
+  Boolean overline;
   Boolean nocombine;
 } Dict(highlight_cterm);
 
@@ -235,7 +254,8 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__clear_autocmds_;
-  Buffer buffer;
+  Buffer buffer;  // deprecated - use buf
+  Buffer buf;
   Union(String, ArrayOf(String)) event;
   Union(Integer, String) group;
   Union(String, ArrayOf(String)) pattern;
@@ -243,7 +263,8 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__create_autocmd_;
-  Buffer buffer;
+  Buffer buffer;  // deprecated - use buf
+  Buffer buf;
   Union(String, LuaRefOf((DictAs(create_autocmd__callback_args) args), *Boolean)) callback;
   String command;
   String desc;
@@ -255,7 +276,8 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__exec_autocmds_;
-  Buffer buffer;
+  Buffer buffer;  // deprecated - use buf
+  Buffer buf;
   Union(Integer, String) group;
   Boolean modeline;
   Union(String, ArrayOf(String)) pattern;
@@ -267,7 +289,8 @@ typedef struct {
   Union(String, ArrayOf(String)) event;
   Union(Integer, String) group;
   Union(String, ArrayOf(String)) pattern;
-  Union(Integer, ArrayOf(Integer)) buffer;
+  Union(Integer, ArrayOf(Integer)) buffer;  // deprecated - use buf
+  Union(Integer, ArrayOf(Integer)) buf;
   Integer id;
 } Dict(get_autocmds);
 
@@ -335,7 +358,14 @@ typedef struct {
   OptionalKeys is_set__echo_opts_;
   Boolean err;
   Boolean verbose;
+  Boolean _truncate;
   String kind;
+  Union(Integer, String) id;
+  String title;
+  String status;
+  Integer percent;
+  String source;
+  DictOf(Object) data;
 } Dict(echo_opts);
 
 typedef struct {

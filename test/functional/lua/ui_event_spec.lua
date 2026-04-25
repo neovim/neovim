@@ -140,6 +140,7 @@ describe('vim.ui_attach', function()
           { 'lua_print', { { 0, 'message2', 0 } }, false },
           { 'echomsg', { { 0, 'message3', 0 } }, false },
         },
+        false,
       },
     }, actual, vim.inspect(actual))
   end)
@@ -190,11 +191,7 @@ describe('vim.ui_attach', function()
         ^1                                       |
         {1:~                                       }|*4
       ]],
-      cmdline = { {
-        content = { { '' } },
-        firstc = ':',
-        pos = 0,
-      } },
+      cmdline = { { content = { { '' } }, firstc = ':', pos = 0 } },
     })
     feed('version<CR>')
     screen:expect({
@@ -202,7 +199,6 @@ describe('vim.ui_attach', function()
         ^2                                       |
         {1:~                                       }|*4
       ]],
-      cmdline = { { abort = false } },
       condition = function()
         eq('list_cmd', screen.messages[1].kind)
         screen.messages = {} -- Ignore the build dependent :version content
@@ -215,28 +211,12 @@ describe('vim.ui_attach', function()
         {1:~                                       }|*4
       ]],
       cmdline = {
-        {
-          content = { { '' } },
-          hl_id = 10,
-          pos = 0,
-          prompt = '[Y]es, (N)o, (C)ancel: ',
-        },
+        { content = { { '' } }, hl = 'MoreMsg', pos = 0, prompt = '[Y]es, (N)o, (C)ancel: ' },
       },
-      messages = {
-        {
-          content = { { '\nSave changes?\n', 6, 10 } },
-          kind = 'confirm',
-        },
-      },
+      messages = { { content = { { 'Save changes?', 6, 'MoreMsg' } }, kind = 'confirm' } },
     })
     feed('n')
-    screen:expect({
-      grid = [[
-        ^4                                       |
-        {1:~                                       }|*4
-      ]],
-      cmdline = { { abort = false } },
-    })
+    screen:expect_unchanged()
   end)
 
   it("preserved 'incsearch/command' screen state after :redraw from ext_cmdline", function()
@@ -256,37 +236,31 @@ describe('vim.ui_attach', function()
     ]])
     -- Updates a cmdline window
     feed(':cmdline')
-    screen:expect({
-      grid = [[
-        cmdline                                 |
-        {2:cmdline [+]                             }|
-        fooba^r                                  |
-        {3:[No Name] [+]                           }|
-                                                |
-      ]],
-    })
+    screen:expect([[
+      cmdline                                 |
+      {2:cmdline [+]                             }|
+      fooba^r                                  |
+      {3:[No Name] [+]                           }|
+                                              |
+    ]])
     -- Does not clear 'incsearch' highlighting
     feed('<Esc>/foo')
-    screen:expect({
-      grid = [[
-        foo                                     |
-        {2:cmdline [+]                             }|
-        {2:foo}ba^r                                  |
-        {3:[No Name] [+]                           }|
-                                                |
-      ]],
-    })
+    screen:expect([[
+      foo                                     |
+      {2:cmdline [+]                             }|
+      {2:foo}ba^r                                  |
+      {3:[No Name] [+]                           }|
+                                              |
+    ]])
     -- Shows new cmdline state during 'inccommand'
     feed('<Esc>:%s/bar/baz')
-    screen:expect({
-      grid = [[
-        %s/bar/baz                              |
-        {2:cmdline [+]                             }|
-        foo{10:ba^z}                                  |
-        {3:[No Name] [+]                           }|
-                                                |
-      ]],
-    })
+    screen:expect([[
+      %s/bar/baz                              |
+      {2:cmdline [+]                             }|
+      foo{10:ba^z}                                  |
+      {3:[No Name] [+]                           }|
+                                              |
+    ]])
   end)
 
   it('msg_show in fast context', function()
@@ -313,10 +287,9 @@ describe('vim.ui_attach', function()
         lled in a fast event context            |
         {1:~                                       }|
       ]],
-      cmdline = { { abort = false } },
       messages = {
         {
-          content = { { 'E122: Function Foo already exists, add ! to replace it', 9, 6 } },
+          content = { { 'E122: Function Foo already exists, add ! to replace it', 9, 'ErrorMsg' } },
           history = true,
           kind = 'emsg',
         },
@@ -360,11 +333,11 @@ describe('vim.ui_attach', function()
       2                                       |
       3                                       |
       4  :call bufadd^(                        |
-      5       {12: bufadd(         }{100: }              |
-      6        bufexists(      {100: }              |
-      7        buffer_exists(  {12: }              |
-      8        buffer_name(    {12: }              |
-      9        buffer_number(  {12: }              |
+      5       {12: bufadd(        }{100: }               |
+      6        bufexists(     {100: }               |
+      7        buffer_exists( {12: }               |
+      8        buffer_name(   {12: }               |
+      9        buffer_number( {12: }               |
                                               |
     ]])
     exec_lua([[
@@ -382,41 +355,66 @@ describe('vim.ui_attach', function()
       2                                       |
       3                                       |
       4                                       |
-      5       {12: bufadd(         }{100: }              |
-      6        bufexists(      {100: }              |
-      7        buffer_exists(  {12: }              |
-      8        buffer_name(    {12: }              |
-      9        buffer_number(  {12: }              |
+      5       {12: bufadd(        }{100: }               |
+      6        bufexists(     {100: }               |
+      7        buffer_exists( {12: }               |
+      8        buffer_name(   {12: }               |
+      9        buffer_number( {12: }               |
       :call bufadd^(                           |
     ]])
     feed('<tab>')
     screen:expect([[
-      1     bufadd(         {100: }                 |
-      2    {12: bufexists(      }{100: }                 |
-      3     buffer_exists(  {100: }                 |
-      4     buffer_name(    {100: }                 |
-      5     buffer_number(  {100: }                 |
-      6     buflisted(      {100: }                 |
-      7     bufload(        {12: }                 |
-      8     bufloaded(      {12: }                 |
-      9     bufname(        {12: }                 |
+      1     bufadd(        {100: }                  |
+      2    {12: bufexists(     }{100: }                  |
+      3     buffer_exists( {100: }                  |
+      4     buffer_name(   {100: }                  |
+      5     buffer_number( {100: }                  |
+      6     buflisted(     {100: }                  |
+      7     bufload(       {12: }                  |
+      8     bufloaded(     {12: }                  |
+      9     bufname(       {12: }                  |
       :call bufexists^(                        |
     ]])
     -- Test different offset (e.g. for custom prompt)
     exec_lua('vim.api.nvim_win_set_config(_G.win, { _cmdline_offset = 9 })')
     feed('<Esc>:call buf<Tab>')
     screen:expect([[
-      1             {12: bufadd(         }{100: }        |
-      2              bufexists(      {100: }        |
-      3              buffer_exists(  {100: }        |
-      4              buffer_name(    {100: }        |
-      5              buffer_number(  {100: }        |
-      6              buflisted(      {100: }        |
-      7              bufload(        {12: }        |
-      8              bufloaded(      {12: }        |
-      9              bufname(        {12: }        |
+      1             {12: bufadd(        }{100: }         |
+      2              bufexists(     {100: }         |
+      3              buffer_exists( {100: }         |
+      4              buffer_name(   {100: }         |
+      5              buffer_number( {100: }         |
+      6              buflisted(     {100: }         |
+      7              bufload(       {12: }         |
+      8              bufloaded(     {12: }         |
+      9              bufname(       {12: }         |
       Excommand:call bufadd^(                  |
     ]])
+    -- _cmdline_offset remains set after being turned into a split.
+    exec_lua(function()
+      vim.fn.win_execute(_G.win, 'wincmd J')
+    end)
+    feed('<Tab>') -- Was a signed int overflow; offset was INT_MAX despite cmdline_win being set.
+    eq(9, exec_lua('return vim.api.nvim_win_get_config(_G.win)._cmdline_offset'))
+    -- No crash after _cmdline_offset window is closed #35584.
+    exec_lua(function()
+      vim.ui_detach(_G.ns)
+      vim.api.nvim_win_close(_G.win, true)
+    end)
+    feed('<Esc>:<Tab>')
+    n.assert_alive()
+  end)
+
+  it("does not crash with :norm 'showcmd' from shell message callback #38233", function()
+    exec_lua(function()
+      vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(event)
+        if event == 'msg_show' then
+          vim.api.nvim_command('norm! G')
+        end
+      end)
+    end)
+    n.command('set showcmd | !echo "foo"')
+    n.assert_alive()
   end)
 end)
 
@@ -449,7 +447,7 @@ describe('vim.ui_attach', function()
     exec_lua([[
       vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(ev)
         if ev == 'msg_show' then
-          vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] })
+          error('foo')
         end
       end)
     ]])
@@ -457,10 +455,13 @@ describe('vim.ui_attach', function()
     screen:expect({
       grid = [[
                                                                           |
-        {1:~                                                                 }|*5
+        {1:~                                                                 }|*2
         {3:                                                                  }|
         {9:Error in "msg_show" UI event handler (ns=(UNKNOWN PLUGIN)):}       |
-        {9:fast context failure}                                              |
+        {9:Lua: [string "<nvim>"]:3: foo}                                     |
+        {9:stack traceback:}                                                  |
+        {9:        [C]: in function 'error'}                                  |
+        {9:        [string "<nvim>"]:3: in function <[string "<nvim>"]:1>}    |
         {100:Press ENTER or type command to continue}^                           |
       ]],
       condition = function()
@@ -468,17 +469,12 @@ describe('vim.ui_attach', function()
       end,
     })
     feed('<Esc>')
-    screen:expect([[
-      ^                                                                  |
-      {1:~                                                                 }|*8
-                                                                        |
-    ]])
 
     -- Also when scheduled
     exec_lua([[
       vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(ev)
         if ev == 'msg_show' then
-          vim.schedule(function() vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] }) end)
+          vim.schedule(function() error('foo') end)
         end
       end)
     ]])

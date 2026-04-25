@@ -10,9 +10,7 @@
 #include "nvim/os/time.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/loop.c.generated.h"
-#endif
+#include "event/loop.c.generated.h"
 
 void loop_init(Loop *loop, void *data)
 {
@@ -126,10 +124,14 @@ void loop_on_put(MultiQueue *queue, void *data)
   // of the queues, the event would only be processed after the poll
   // returns (user hits a key for example). To avoid this scenario, we call
   // uv_stop when a event is enqueued.
-  uv_stop(&loop->uv);
+  // Only call uv_stop() when the loop is actually running, otherwise it will
+  // instead make the next uv_run() stop immediately.
+  if (loop->recursive) {
+    uv_stop(&loop->uv);
+  }
 }
 
-#if !defined(EXITFREE)
+#ifndef EXITFREE
 static void loop_walk_cb(uv_handle_t *handle, void *arg)
 {
   if (!uv_is_closing(handle)) {
@@ -171,7 +173,7 @@ bool loop_close(Loop *loop, bool wait)
       log_uv_handles(&loop->uv);
       break;
     }
-#if defined(EXITFREE)
+#ifdef EXITFREE
     (void)didstop;
 #else
     if (!didstop) {

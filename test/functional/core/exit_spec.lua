@@ -12,7 +12,7 @@ local pcall_err = t.pcall_err
 local exec_capture = n.exec_capture
 local poke_eventloop = n.poke_eventloop
 
-describe('v:exiting', function()
+describe('exit:', function()
   local cid
 
   before_each(function()
@@ -20,44 +20,57 @@ describe('v:exiting', function()
     cid = n.api.nvim_get_chan_info(0).id
   end)
 
-  it('defaults to v:null', function()
+  it('v:exiting defaults to v:null', function()
     eq(1, eval('v:exiting is v:null'))
+    eq('', eval('v:exitreason'))
   end)
 
   local function test_exiting(setup_fn)
     local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest(' .. cid .. ', "exit", "VimLeavePre")')
-      command('autocmd VimLeave    * call rpcrequest(' .. cid .. ', "exit", "VimLeave")')
+      command(('autocmd QuitPre     * call rpcrequest(%d, "exit", "QuitPre")'):format(cid))
+      command(('autocmd ExitPre     * call rpcrequest(%d, "exit", "ExitPre")'):format(cid))
+      command(('autocmd VimLeavePre * call rpcrequest(%d, "exit", "VimLeavePre")'):format(cid))
+      command(('autocmd VimLeave    * call rpcrequest(%d, "exit", "VimLeave")'):format(cid))
       setup_fn()
     end
-    local requests_args = {}
+    local received = {}
     local function on_request(name, args)
       eq('exit', name)
-      table.insert(requests_args, args)
-      eq(0, eval('v:exiting'))
+      table.insert(received, args)
+      eq('quit', eval('v:exitreason'))
+      if args[1] == 'VimLeavePre' or args[1] == 'VimLeave' then
+        eq(0, eval('v:exiting'))
+      end
       return ''
     end
     run(on_request, nil, on_setup)
-    eq({ { 'VimLeavePre' }, { 'VimLeave' } }, requests_args)
+    eq({ { 'QuitPre' }, { 'ExitPre' }, { 'VimLeavePre' }, { 'VimLeave' } }, received)
   end
 
-  it('is 0 on normal exit', function()
+  it('v:exiting=0, v:exitreason=quit on normal exit', function()
     test_exiting(function()
       command('quit')
     end)
   end)
 
-  it('is 0 on exit from Ex mode involving try-catch vim-patch:8.0.0184', function()
+  it('v:exiting=0, v:exitreason=quit on exit from Ex mode try-catch vim-patch:8.0.0184', function()
     test_exiting(function()
       feed('gQ')
       feed_command('try', 'call NoFunction()', 'catch', 'echo "bye"', 'endtry', 'quit')
     end)
+  end)
+
+  it('resets v:exitreason if quit is cancelled', function()
+    n.api.nvim_buf_set_lines(0, 0, -1, true, { 'modified' })
+    pcall_err(command, 'quit')
+    eq('', eval('v:exitreason'))
   end)
 end)
 
 describe(':cquit', function()
   local function test_cq(cmdline, exit_code, redir_msg)
     if redir_msg then
+      n.clear()
       eq(
         redir_msg,
         pcall_err(function()
@@ -66,15 +79,12 @@ describe(':cquit', function()
       )
       poke_eventloop()
       assert_alive()
+      n.check_close()
     else
       local p = n.spawn_wait('--cmd', cmdline)
       eq(exit_code, p.status)
     end
   end
-
-  before_each(function()
-    n.clear()
-  end)
 
   it('exits with non-zero after :cquit', function()
     test_cq('cquit', 1, nil)
@@ -118,5 +128,44 @@ describe(':cquit', function()
       nil,
       'nvim_exec2(), line 1: Vim(cquit):E488: Trailing characters: -1: cquit -1'
     )
+  end)
+end)
+
+describe('when piping to stdin, no crash during exit', function()
+  before_each(function()
+    n.clear()
+  end)
+
+  it('after :quit non-last window in vim.schedule() callback #14379', function()
+    n.fn.system({
+      n.nvim_prog,
+      '-es',
+      '--cmd',
+      "lua vim.schedule(function() vim.cmd('vsplit | quit') end)",
+      '+quit',
+    }, '')
+    eq(0, n.api.nvim_get_vvar('shell_error'))
+  end)
+
+  it('after :quit non-last window in vim.defer_fn() callback #14379', function()
+    n.fn.system({
+      n.nvim_prog,
+      '-es',
+      '--cmd',
+      "lua vim.defer_fn(function() vim.cmd('vsplit | quit') end, 0)",
+      '+quit',
+    }, '')
+    eq(0, n.api.nvim_get_vvar('shell_error'))
+  end)
+
+  it('after closing v:stderr channel', function()
+    n.fn.system({
+      n.nvim_prog,
+      '-es',
+      '--cmd',
+      'call chanclose(v:stderr)',
+      '+quit',
+    }, '')
+    eq(0, n.api.nvim_get_vvar('shell_error'))
   end)
 end)

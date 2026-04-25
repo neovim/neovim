@@ -4,21 +4,26 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const upstream = b.dependency("utf8proc", .{});
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "utf8proc",
-        .target = target,
-        .optimize = optimize,
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
-    lib.addIncludePath(upstream.path(""));
-    lib.installHeader(upstream.path("utf8proc.h"), "utf8proc.h");
+    if (b.lazyDependency("utf8proc", .{})) |upstream| {
+        var root_module = lib.root_module;
+        root_module.addIncludePath(upstream.path(""));
+        lib.installHeader(upstream.path("utf8proc.h"), "utf8proc.h");
 
-    lib.linkLibC();
+        root_module.link_libc = true;
 
-    lib.addCSourceFiles(.{ .root = upstream.path(""), .files = &.{
-        "utf8proc.c",
-    } });
+        root_module.addCSourceFiles(.{ .root = upstream.path(""), .files = &.{
+            "utf8proc.c",
+        }, .flags = &.{"-DUTF8PROC_STATIC"} });
+    }
 
     b.installArtifact(lib);
 }

@@ -8,6 +8,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/log.h"
 #ifdef NVIM_VENDOR_BIT
 # include "bit.h"
 #endif
@@ -47,9 +48,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/stdlib.c.generated.h"
-#endif
+#include "lua/stdlib.c.generated.h"
 
 static int regex_match(lua_State *lstate, regprog_T **prog, char *str)
 {
@@ -329,9 +328,9 @@ static dict_T *nlua_get_var_scope(lua_State *lstate)
   dict_T *dict = NULL;
   Error err = ERROR_INIT;
   if (strequal(scope, "g")) {
-    dict = &globvardict;
+    dict = get_globvar_dict();
   } else if (strequal(scope, "v")) {
-    dict = &vimvardict;
+    dict = get_vimvar_dict();
   } else if (strequal(scope, "b")) {
     buf_T *buf = find_buffer_by_handle(handle, &err);
     if (buf) {
@@ -412,7 +411,7 @@ int nlua_setvar(lua_State *lstate)
       tv_dict_add(dict, di);
     } else {
       bool type_error = false;
-      if (dict == &vimvardict
+      if (dict == get_vimvar_dict()
           && !before_set_vvar(key.data, di, &tv, true, watched, &type_error)) {
         tv_clear(&tv);
         if (type_error) {
@@ -450,7 +449,7 @@ int nlua_getvar(lua_State *lstate)
   const char *name = luaL_checklstring(lstate, 3, &len);
 
   dictitem_T *di = tv_dict_find(dict, name, (ptrdiff_t)len);
-  if (di == NULL && dict == &globvardict) {  // try to autoload script
+  if (di == NULL && dict == get_globvar_dict()) {  // try to autoload script
     if (!script_autoload(name, len, false) || aborting()) {
       return 0;  // nil
     }
@@ -476,8 +475,8 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   size_t s2_len;
   const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
   const char *s2 = luaL_checklstring(lstate, 2, &s2_len);
-  char *nul1;
-  char *nul2;
+  const char *nul1;
+  const char *nul2;
   int ret = 0;
   assert(s1[s1_len] == NUL);
   assert(s2[s2_len] == NUL);
@@ -565,7 +564,7 @@ static int nlua_foldupdate(lua_State *lstate)
   }
   // input is zero-based end-exclusive range
   linenr_T top = (linenr_T)luaL_checkinteger(lstate, 2) + 1;
-  if (top < 1 || top > win->w_buffer->b_ml.ml_line_count) {
+  if (top < 1) {
     return luaL_error(lstate, "invalid top");
   }
   linenr_T bot = (linenr_T)luaL_checkinteger(lstate, 3);
@@ -583,6 +582,7 @@ static int nlua_with(lua_State *L)
   int flags = 0;
   buf_T *buf = NULL;
   win_T *win = NULL;
+  int log_level = -1;
 
 #define APPLY_FLAG(key, flag) \
   if (strequal((key), k) && (v)) { \
@@ -596,10 +596,12 @@ static int nlua_with(lua_State *L)
     if (lua_type(L, -2) == LUA_TSTRING) {
       const char *k = lua_tostring(L, -2);
       bool v = lua_toboolean(L, -1);
-      if (strequal("buf", k)) { \
+      if (strequal("buf", k)) {
         buf = handle_get_buffer((int)luaL_checkinteger(L, -1));
-      } else if (strequal("win", k)) { \
+      } else if (strequal("win", k)) {
         win = handle_get_window((int)luaL_checkinteger(L, -1));
+      } else if (strequal("log_level", k)) {
+        log_level = (int)luaL_checkinteger(L, -1);
       } else {
         APPLY_FLAG("sandbox", CMOD_SANDBOX);
         APPLY_FLAG("silent", CMOD_SILENT);
@@ -626,6 +628,10 @@ static int nlua_with(lua_State *L)
     flags |= CMOD_SILENT;
   }
 
+  const int save_min_log_level = g_min_log_level;
+  if (log_level >= 0) {
+    g_min_log_level = log_level;
+  }
   cmdmod_T save_cmdmod = cmdmod;
   CLEAR_FIELD(cmdmod);
   cmdmod.cmod_flags = flags;
@@ -660,6 +666,9 @@ static int nlua_with(lua_State *L)
 
   undo_cmdmod(&cmdmod);
   cmdmod = save_cmdmod;
+  if (log_level >= 0) {
+    g_min_log_level = save_min_log_level;
+  }
 
   if (status) {
     return lua_error(L);
@@ -767,8 +776,9 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   lua_setfield(lstate, -2, "lpeg");
   lua_pop(lstate, 4);
 
-  // vim.diff
+  // vim.text.diff
   lua_pushcfunction(lstate, &nlua_xdl_diff);
+  // TODO(justinmk): set vim.text.diff here, or rename this to "_diff". goddamnit.
   lua_setfield(lstate, -2, "diff");
 
   // vim.json

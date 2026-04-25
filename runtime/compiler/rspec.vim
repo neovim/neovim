@@ -2,7 +2,6 @@
 " Language:		RSpec
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
-" Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
 " Last Change:		2018 Aug 07
 "			2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 

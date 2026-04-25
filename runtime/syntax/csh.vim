@@ -1,10 +1,8 @@
 " Vim syntax file
-" Language:	C-shell (csh)
-" Maintainer:	This runtime file is looking for a new maintainer.
-" Former Maintainer: Charles E. Campbell
-" Last Change:	Aug 31, 2016
-" Version:	14
-" Former URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_CSH
+" Language:		C-shell (csh)
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Former Maintainer:	Charles E. Campbell
+" Last Change:		2026 Jan 16
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -40,7 +38,7 @@ syn region  cshDblQuote	start=+^"+ skip=+\\\\\|\\"+ end=+"+		contains=cshSpecial
 syn region  cshSnglQuote	start=+^'+ skip=+\\\\\|\\'+ end=+'+		contains=cshNoEndlineSQ,@Spell
 syn region  cshBckQuote	start=+^`+ skip=+\\\\\|\\`+ end=+`+		contains=cshNoEndlineBQ,@Spell
 syn cluster cshCommentGroup	contains=cshTodo,@Spell
-syn match   cshComment	"#.*$" contains=@cshCommentGroup
+syn match   cshComment	"#.*" contains=@cshCommentGroup
 
 " A bunch of useful csh keywords
 syn keyword cshStatement	alias	end	history	onintr	setenv	unalias

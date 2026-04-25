@@ -23,9 +23,8 @@ typedef struct {
   char cwd[MAXPATHL];
   int cwd_status;
   bool apply_acd;
+  char *save_sfname;
   switchwin_T switchwin;
 } win_execute_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/window.h.generated.h"
-#endif
+#include "eval/window.h.generated.h"

@@ -2,8 +2,8 @@
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
 " URL: https://raw.github.com/rid9/vim-fstab/master/syntax/fstab.vim
-" Last Change: 2024 Jul 11
-" Version: 1.6.4
+" Last Change: 2026 Feb 14
+" Version: 1.7.1
 "
 " Credits:
 "   David Necas (Yeti) <yeti@physics.muni.cz>
@@ -18,6 +18,10 @@
 "
 "   let fstab_unknown_device_errors = 0
 "     do not highlight unknown devices as errors
+"
+" Changelog:
+" - 2025 Aug 21 added support for mtab
+" - 2026 Feb 14 added cgroup2 to device types
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -35,7 +39,7 @@ syn match fsOperator /[,=:#]/
 " Device
 syn cluster fsDeviceCluster contains=fsOperator,fsDeviceKeyword,fsDeviceError
 syn match fsDeviceError /\%([^a-zA-Z0-9_\/#@:\.-]\|^\w\{-}\ze\W\)/ contained
-syn keyword fsDeviceKeyword contained none proc linproc tmpfs devpts devtmpfs sysfs usbfs tracefs overlay
+syn keyword fsDeviceKeyword contained none proc linproc tmpfs devpts devtmpfs sysfs usbfs tracefs overlay cgroup2
 syn keyword fsDeviceKeyword contained LABEL nextgroup=fsDeviceLabel
 syn keyword fsDeviceKeyword contained UUID nextgroup=fsDeviceUUID
 syn keyword fsDeviceKeyword contained PARTLABEL nextgroup=fsDevicePARTLABEL
@@ -401,6 +405,28 @@ syn match fsFreqPass /\s\+.\{-}$/ contains=@fsFreqPassCluster,@fsGeneralCluster 
 
 " Whole line comments
 syn match fsCommentLine /^#.*$/ contains=@Spell
+
+if exists('b:fstab_enable_mtab') && b:fstab_enable_mtab == 1
+  " mtab
+  " ----
+  syn keyword fsDeviceKeyword contained binfmt_misc bpf cgroup2 configfs debugfs efivarfs fusectl hugetlbfs mqueue portal pstore securityfs udev ramfs
+  syn match fsDeviceKeyword contained /^systemd-1/
+  syn match fsDeviceKeyword contained /^\/dev\S\+/
+
+  " devpts
+  syn match fsOptionsKeywords contained /\<ptmxmode=/ nextgroup=fsOptionsNumber
+
+  " cgroup2
+  syn keyword fsTypeKeyword contained cgroup2
+  syn keyword fsOptionsKeywords contained nsdelegate memory_recursiveprot
+
+  " hugetlbfs
+  syn match fsOptionsKeywords contained /\<pagesize=/ nextgroup=fsOptionsString
+
+  " systemd
+  syn match fsOptionsKeywords contained /\<\%(pgrp\|timeout\|minproto\|maxproto\|pipe_ino\)=/ nextgroup=fsOptionsNumber
+  syn keyword fsOptionsKeywords contained direct
+endif
 
 hi def link fsOperator Operator
 hi def link fsComment Comment

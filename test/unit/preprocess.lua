@@ -123,7 +123,6 @@ function Gcc:init_defines()
   self:define('EXTERN', nil, 'extern')
   self:define('INIT', { '...' }, '')
   self:define('_GNU_SOURCE')
-  self:define('INCLUDE_GENERATED_DECLARATIONS')
   self:define('UNIT_TESTING')
   self:define('UNIT_TESTING_LUA_PREPROCESSING')
   -- Needed for FreeBSD
@@ -164,8 +163,7 @@ end
 --- @param hdr string
 --- @return string[]?
 function Gcc:dependencies(hdr)
-  --- @type string
-  local cmd = argss_to_cmd(self.path, { '-M', hdr }) .. ' 2>&1'
+  local cmd = table.concat(argss_to_cmd(self.path, { '-M', hdr }), ' ') .. ' 2>&1'
   local out = assert(io.popen(cmd))
   local deps = out:read('*a')
   out:close()

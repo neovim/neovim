@@ -8,7 +8,20 @@ local fn = n.fn
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
 
-describe('Ex cmds', function()
+describe('nlua_call_excmd excmds', function()
+  -- Exercise nlua_call_excmd by testing commands implemented with it (:log, :lsp).
+
+  before_each(function()
+    clear()
+  end)
+
+  it('error propagation, formatting', function()
+    t.eq('Vim(lsp):E5800: Invalid :lsp subcommand: bogus', pcall_err(command, 'lsp bogus'))
+    t.matches('Vim%(log%):E5200: No such log.*', pcall_err(command, 'log bogus'))
+  end)
+end)
+
+describe('excmds', function()
   before_each(function()
     clear()
   end)
@@ -41,6 +54,10 @@ describe('Ex cmds', function()
       'Vim(menu):E329: No menu "9999999999999999999999999999999999999999"',
       pcall_err(command, ':menu 9999999999999999999999999999999999999999')
     )
+    eq(
+      'Vim(substitute):E1510: Value too large: 9999999999999999999999999999999999999999',
+      pcall_err(command, ':%s/./b/9999999999999999999999999999999999999999')
+    )
     assert_alive()
   end)
 
@@ -61,5 +78,18 @@ describe('Ex cmds', function()
     eq('defer', fn.fullcommand('defe'))
     eq(2, fn.exists(':defer'))
     eq('defer', fn.fullcommand('defer'))
+  end)
+
+  it('various command abbreviations', function()
+    -- :connect needs at least :conn
+    eq('change', fn.fullcommand('c'))
+    eq('copy', fn.fullcommand('co'))
+    eq('continue', fn.fullcommand('con'))
+    eq('connect', fn.fullcommand('conn'))
+    -- :restart needs at least :rest
+    eq('read', fn.fullcommand('r'))
+    eq('read', fn.fullcommand('re'))
+    eq('resize', fn.fullcommand('res'))
+    eq('restart', fn.fullcommand('rest'))
   end)
 end)

@@ -9,7 +9,7 @@
 " 			Chris Ruprecht		<chrisSPAXY@ruprecht.org>
 "			Mikhail Kuperblum	<mikhailSPAXY@whasup.com>
 "			John Florian		<jflorianSPAXY@voyager.net>
-" Last Change:		Jul 23 2024
+" Last Change:		Feb 18 2026
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -22,7 +22,7 @@ set cpo&vim
 setlocal iskeyword=@,48-57,_,-,!,#,$,%
 
 " The Progress editor doesn't cope with tabs very well.
-set expandtab
+setlocal expandtab
 
 syn case ignore
 

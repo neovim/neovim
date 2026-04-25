@@ -7,12 +7,13 @@
 
 #include "auto/config.h"
 #include "klib/kvec.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/libuv_proc.h"
 #include "nvim/event/loop.h"
@@ -33,6 +34,7 @@
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
@@ -50,11 +52,9 @@
 #define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
-#define SHELL_SPECIAL "\t \"&'$;<>()\\|"
+#define SHELL_SPECIAL "\t \"&'$;<>()\\|\n"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/shell.c.generated.h"
-#endif
+#include "os/shell.c.generated.h"
 
 static void save_patterns(int num_pat, char **pat, int *num_file, char ***file)
 {
@@ -137,7 +137,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     "[[ ${BASH_VERSINFO[0]} -ge 4 ]] && shopt -s globstar; ";
 
   bool is_fish_shell =
-#if defined(UNIX)
+#ifdef UNIX
     strncmp(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;
@@ -416,7 +416,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   os_remove(tempname);
   if (readlen != len) {
     // unexpected read error
-    semsg(_(e_notread), tempname);
+    semsg(_(e_cant_read_file_str), tempname);
     xfree(tempname);
     xfree(buffer);
     return FAIL;
@@ -701,9 +701,11 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
     msg_ext_set_kind("shell_ret");
-    msg_puts(_("\nshell returned "));
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
+    msg_puts(_("shell returned "));
     msg_outnum(exitcode);
-    msg_putchar('\n');
   }
 
   State = current_state;
@@ -791,21 +793,26 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   // read the names from the file into memory
   FILE *fd = os_fopen(tempname, READBIN);
 
-  if (fd == NULL) {
-    semsg(_(e_notopen), tempname);
+  // Not being able to seek means we can't read the file.
+  long len_l;
+  if (fd == NULL
+      || fseek(fd, 0L, SEEK_END) == -1
+      || (len_l = ftell(fd)) == -1         // get size of temp file
+      || fseek(fd, 0L, SEEK_SET) == -1) {  // back to the start
+    semsg(_(e_cannot_read_from_str_2), tempname);
+    if (fd != NULL) {
+      fclose(fd);
+    }
     goto done;
   }
 
-  fseek(fd, 0, SEEK_END);
-  size_t len = (size_t)ftell(fd);  // get size of temp file
-  fseek(fd, 0, SEEK_SET);
-
+  size_t len = (size_t)len_l;
   buffer = xmalloc(len + 1);
   size_t i = fread(buffer, 1, len, fd);
   fclose(fd);
   os_remove(tempname);
   if (i != len) {
-    semsg(_(e_notread), tempname);
+    semsg(_(e_cant_read_file_str), tempname);
     XFREE_CLEAR(buffer);
   } else if (ret_len == NULL) {
     // Change NUL into SOH, otherwise the string is truncated.
@@ -854,6 +861,21 @@ int os_system(char **argv, const char *input, size_t len, char **output,
 static int do_os_system(char **argv, const char *input, size_t len, char **output, size_t *nread,
                         bool silent, bool forward_output)
 {
+  int exitcode = -1;
+
+#ifdef MSWIN
+  // do not execute anything from the current directory by setting the
+  // environment variable $NoDefaultCurrentDirectoryInExePath
+  char *oldval = os_getenv("NoDefaultCurrentDirectoryInExePath");
+  os_setenv("NoDefaultCurrentDirectoryInExePath", "1", true);
+
+  UINT old_output_cp = GetConsoleOutputCP();
+  UINT old_input_cp = GetConsoleCP();
+  // Force console codepage to UTF-8 before spawning child process. #33480
+  SetConsoleOutputCP(CP_UTF8);
+  SetConsoleCP(CP_UTF8);
+#endif
+
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
   bool has_input = (input != NULL && len > 0);
@@ -891,8 +913,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
       msg_outtrans(prog, 0, false);
       msg_putchar('\n');
     }
-    multiqueue_free(events);
-    return -1;
+    goto end;
   }
 
   // Note: unlike process events, stream events are not queued, as we want to
@@ -911,10 +932,10 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   if (has_input) {
     WBuffer *input_buffer = wstream_new_buffer((char *)input, len, 1, NULL);
 
-    if (!wstream_write(&proc->in, input_buffer)) {
+    if (wstream_write(&proc->in, input_buffer) != 0) {
       // couldn't write, stop the process and tell the user about it
       proc_stop(proc);
-      return -1;
+      goto end;
     }
     // close the input stream after everything is written
     wstream_set_write_cb(&proc->in, shell_write_cb, NULL);
@@ -930,7 +951,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     msg_no_more = true;
     lines_left = -1;
   }
-  int exitcode = proc_wait(proc, -1, NULL);
+  exitcode = proc_wait(proc, -1, NULL);
   if (!got_int && out_data_decide_throttle(0)) {
     // Last chunk of output was skipped; display it now.
     out_data_ring(NULL, SIZE_MAX);
@@ -962,7 +983,15 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   }
 
   assert(multiqueue_empty(events));
+end:
   multiqueue_free(events);
+
+#ifdef MSWIN
+  // Restore original value of NoDefaultCurrentDirectoryInExePath
+  restore_env_var("NoDefaultCurrentDirectoryInExePath", oldval, true);
+  SetConsoleOutputCP(old_output_cp);
+  SetConsoleCP(old_input_cp);
+#endif
 
   return exitcode;
 }
@@ -1091,6 +1120,17 @@ static void out_data_ring(const char *output, size_t size)
   }
 }
 
+static void out_data_event(void **argv)
+{
+  bool need_clear = true;
+  int hl = (int)(intptr_t)argv[2] == STDERR_FILENO ? HLF_SE : HLF_SO;
+  msg_ext_set_kind((int)(intptr_t)argv[2] == STDERR_FILENO ? "shell_err" : "shell_out");
+  msg_ext_append = true;
+  msg_multiline(cbuf_as_string((char *)argv[0], (size_t)argv[1]), hl, false, false, &need_clear);
+  xfree(argv[0]);
+  ui_flush();
+}
+
 /// Continue to append data to last screen line.
 ///
 /// @param output       Data to append to screen lines.
@@ -1101,32 +1141,29 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
 {
   const char *p = output;
   const char *end = output + *count;
-  msg_ext_set_kind(fd == STDERR_FILENO ? "shell_err" : "shell_out");
+  // Note: this is not 100% precise:
+  // 1. we don't check if received continuation bytes are already invalid
+  //    and we thus do some buffering that could be avoided
+  // 2. we don't compose chars over buffer boundaries, even if we see an
+  //    incomplete UTF-8 sequence that could be composing with the last
+  //    complete sequence.
+  // This will be corrected when we switch to vterm based implementation
   while (p < end) {
-    if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
-      msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_SE : HLF_SO);
-      p++;
-    } else {
-      // Note: this is not 100% precise:
-      // 1. we don't check if received continuation bytes are already invalid
-      //    and we thus do some buffering that could be avoided
-      // 2. we don't compose chars over buffer boundaries, even if we see an
-      //    incomplete UTF-8 sequence that could be composing with the last
-      //    complete sequence.
-      // This will be corrected when we switch to vterm based implementation
-      int i = *p ? utfc_ptr2len_len(p, (int)(end - p)) : 1;
-      if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end - p)) {
-        *count = (size_t)(p - output);
-        goto end;
-      }
-
-      msg_outtrans_len(p, i, fd == STDERR_FILENO ? HLF_SE : HLF_SO, false);
-      p += i;
+    int i = *p ? utfc_ptr2len_len(p, (int)*count - (int)(p - output)) : 1;
+    if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end - p)) {
+      *count = (size_t)(p - output);
+      break;
     }
+    p += i;
   }
-
-end:
-  ui_flush();
+  // Process after uv_run() to avoid recursion in vim.ui_attach() msg_show callback #38664.
+  char *str = xmemdupz(output, *count);
+  if (ui_has(kUIMessages)) {
+    multiqueue_put(main_loop.fast_events, out_data_event,
+                   (void *)str, (void *)*count, (void *)(intptr_t)fd);
+  } else {
+    out_data_event((void *[]){ (void *)str, (void *)*count, (void *)(intptr_t)fd });
+  }
 }
 
 static size_t out_data_cb(RStream *stream, const char *ptr, size_t count, void *data, bool eof)
@@ -1268,7 +1305,7 @@ static void shell_write_cb(Stream *stream, void *data, int status)
     msg_schedule_semsg(_("E5677: Error writing input to shell-command: %s"),
                        uv_err_name(status));
   }
-  stream_may_close(stream, false);
+  stream_may_close(stream);
 }
 
 /// Applies 'shellxescape' (p_sxe) and 'shellxquote' (p_sxq) to a command.

@@ -286,26 +286,28 @@ describe('nlua_expand_pat', function()
   describe('completes', function()
     -- for { vim.o, vim.go, vim.opt, vim.opt_local, vim.opt_global }
     local test_opt = function(accessor)
-      do
-        local actual = get_completions(accessor .. '.file')
-        local expected = {
-          'fileencoding',
-          'fileencodings',
-          'fileformat',
-          'fileformats',
-          'fileignorecase',
-          'filetype',
-        }
-        eq({ expected, #accessor + 1 }, actual, accessor .. '.file')
-      end
-      do
-        local actual = get_completions(accessor .. '.winh')
-        local expected = {
-          'winheight',
-          'winhighlight',
-        }
-        eq({ expected, #accessor + 1 }, actual, accessor .. '.winh')
-      end
+      it(accessor, function()
+        do
+          local actual = get_completions(accessor .. '.file')
+          local expected = {
+            'fileencoding',
+            'fileencodings',
+            'fileformat',
+            'fileformats',
+            'fileignorecase',
+            'filetype',
+          }
+          eq({ expected, #accessor + 1 }, actual, accessor .. '.file')
+        end
+        do
+          local actual = get_completions(accessor .. '.winh')
+          local expected = {
+            'winheight',
+            'winhighlight',
+          }
+          eq({ expected, #accessor + 1 }, actual, accessor .. '.winh')
+        end
+      end)
     end
 
     test_opt('vim.o')

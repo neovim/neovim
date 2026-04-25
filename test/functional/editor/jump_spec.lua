@@ -55,44 +55,39 @@ describe('jumplist', function()
     write_file(fname1, ('foobar\n'):rep(100))
     write_file(fname2, 'baz')
 
-    local screen = Screen.new(5, 25)
+    local screen = Screen.new(12, 25)
     command('set number')
     command('edit ' .. fname1)
     feed('35gg')
     command('edit ' .. fname2)
     feed('<C-O>')
-    screen:expect {
-      grid = [[
-      {1: 24 }foobar  |
-      {1: 25 }foobar  |
-      {1: 26 }foobar  |
-      {1: 27 }foobar  |
-      {1: 28 }foobar  |
-      {1: 29 }foobar  |
-      {1: 30 }foobar  |
-      {1: 31 }foobar  |
-      {1: 32 }foobar  |
-      {1: 33 }foobar  |
-      {1: 34 }foobar  |
-      {1: 35 }^foobar  |
-      {1: 36 }foobar  |
-      {1: 37 }foobar  |
-      {1: 38 }foobar  |
-      {1: 39 }foobar  |
-      {1: 40 }foobar  |
-      {1: 41 }foobar  |
-      {1: 42 }foobar  |
-      {1: 43 }foobar  |
-      {1: 44 }foobar  |
-      {1: 45 }foobar  |
-      {1: 46 }foobar  |
-      {1: 47 }foobar  |
+    screen:expect([[
+      {8: 24 }foobar  |
+      {8: 25 }foobar  |
+      {8: 26 }foobar  |
+      {8: 27 }foobar  |
+      {8: 28 }foobar  |
+      {8: 29 }foobar  |
+      {8: 30 }foobar  |
+      {8: 31 }foobar  |
+      {8: 32 }foobar  |
+      {8: 33 }foobar  |
+      {8: 34 }foobar  |
+      {8: 35 }^foobar  |
+      {8: 36 }foobar  |
+      {8: 37 }foobar  |
+      {8: 38 }foobar  |
+      {8: 39 }foobar  |
+      {8: 40 }foobar  |
+      {8: 41 }foobar  |
+      {8: 42 }foobar  |
+      {8: 43 }foobar  |
+      {8: 44 }foobar  |
+      {8: 45 }foobar  |
+      {8: 46 }foobar  |
+      {8: 47 }foobar  |
                   |
-    ]],
-      attr_ids = {
-        [1] = { foreground = Screen.colors.Brown },
-      },
-    }
+    ]])
   end)
 end)
 
@@ -384,70 +379,148 @@ describe('jumpoptions=view', function()
   end)
 
   it('restores the view', function()
-    local screen = Screen.new(5, 8)
+    local screen = Screen.new(12, 8)
     command('edit ' .. file1)
     feed('12Gztj')
     feed('gg<C-o>')
     screen:expect([[
-    12 line     |
-    ^13 line     |
-    14 line     |
-    15 line     |
-    16 line     |
-    17 line     |
-    18 line     |
-                |
+      12 line     |
+      ^13 line     |
+      14 line     |
+      15 line     |
+      16 line     |
+      17 line     |
+      18 line     |
+                  |
+    ]])
+  end)
+
+  it("restores the view with 'smoothscroll'", function()
+    local screen = Screen.new(12, 8)
+    command('edit ' .. file1)
+    command('setlocal smoothscroll')
+    command([[call setline(24, repeat('a', 55))]])
+    feed('12Gzz')
+    local s1 = [[
+      9 line      |
+      10 line     |
+      11 line     |
+      ^12 line     |
+      13 line     |
+      14 line     |
+      15 line     |
+                  |
+    ]]
+    screen:expect(s1)
+    feed('G')
+    local s2 = [[
+      {1:<<<}aaaa     |
+      25 line     |
+      26 line     |
+      27 line     |
+      28 line     |
+      29 line     |
+      ^30 line     |
+                  |
+    ]]
+    screen:expect(s2)
+    feed('<C-o>')
+    screen:expect(s1)
+    feed('<C-i>')
+    screen:expect(s2)
+    feed('<C-o>')
+    screen:expect(s1)
+    command([[call setline(10, repeat('a', 55))]])
+    feed('zz')
+    local s3 = [[
+      {1:<<<}aaaaaaaaa|
+      aaaaaaa     |
+      11 line     |
+      ^12 line     |
+      13 line     |
+      14 line     |
+      15 line     |
+                  |
+    ]]
+    screen:expect(s3)
+    feed('G')
+    screen:expect(s2)
+    feed('<C-o>')
+    screen:expect(s3)
+    feed('<C-i>')
+    screen:expect(s2)
+    command([[call setline(10, '10 line')]])
+    feed('<C-o>')
+    -- Topline should still be line 10, but skipcol should be reset.
+    screen:expect([[
+      10 line     |
+      11 line     |
+      ^12 line     |
+      13 line     |
+      14 line     |
+      15 line     |
+      16 line     |
+                  |
     ]])
   end)
 
   it('restores the view across files', function()
-    local screen = Screen.new(5, 5)
+    local screen = Screen.new(12, 5)
     command('args ' .. file1 .. ' ' .. file2)
     feed('12Gzt')
     command('next')
     feed('G')
     screen:expect([[
-    27 line     |
-    28 line     |
-    29 line     |
-    ^30 line     |
-                |
+      27 line     |
+      28 line     |
+      29 line     |
+      ^30 line     |
+                  |
     ]])
     feed('<C-o><C-o>')
     screen:expect([[
-    ^12 line     |
-    13 line     |
-    14 line     |
-    15 line     |
-                |
+      ^12 line     |
+      13 line     |
+      14 line     |
+      15 line     |
+                  |
     ]])
   end)
 
-  it('restores the view across files with <C-^>', function()
-    local screen = Screen.new(5, 5)
+  it('restores the view across files with <C-^>/:bprevious/:bnext', function()
+    local screen = Screen.new(12, 5)
     command('args ' .. file1 .. ' ' .. file2)
     feed('12Gzt')
+    local s1 = [[
+      ^12 line     |
+      13 line     |
+      14 line     |
+      15 line     |
+                  |
+    ]]
+    screen:expect(s1)
     command('next')
     feed('G')
-    screen:expect([[
-    27 line     |
-    28 line     |
-    29 line     |
-    ^30 line     |
-                |
-    ]])
+    local s2 = [[
+      27 line     |
+      28 line     |
+      29 line     |
+      ^30 line     |
+                  |
+    ]]
+    screen:expect(s2)
     feed('<C-^>')
-    screen:expect([[
-    ^12 line     |
-    13 line     |
-    14 line     |
-    15 line     |
-                |
-    ]])
+    screen:expect(s1)
+    feed('<C-^>')
+    screen:expect(s2)
+    command('bprevious')
+    screen:expect(s1)
+    command('bnext')
+    screen:expect(s2)
   end)
 
   it("falls back to standard behavior when view can't be recovered", function()
-    local screen = Screen.new(5, 8)
+    local screen = Screen.new(12, 8)
     command('edit ' .. file1)
     feed('7GzbG')
     api.nvim_buf_set_lines(0, 0, 2, true, {})
@@ -459,19 +532,19 @@ describe('jumpoptions=view', function()
     -- Therefore falls back to standard behavior which is centering the view/line.
     feed('<C-o>')
     screen:expect([[
-    4 line      |
-    5 line      |
-    6 line      |
-    ^7 line      |
-    8 line      |
-    9 line      |
-    10 line     |
-                |
+      4 line      |
+      5 line      |
+      6 line      |
+      ^7 line      |
+      8 line      |
+      9 line      |
+      10 line     |
+                  |
     ]])
   end)
 
   it('falls back to standard behavior for a mark without a view', function()
-    local screen = Screen.new(5, 8)
+    local screen = Screen.new(12, 8)
     command('edit ' .. file1)
     feed('10ggzzvwy')
     screen:expect([[
@@ -495,5 +568,99 @@ describe('jumpoptions=view', function()
       13 line     |
                   |
     ]])
+  end)
+
+  describe('tagstack popping', function()
+    local tags_file = 'Xtestfile-functional-editor-jumps-tags'
+    before_each(function()
+      write_file(
+        tags_file,
+        '!_TAG_FILE_ENCODING\tutf-8\t//\n'
+          .. ('10\t%s\t2\n'):format(file1)
+          .. ('30\t%s\t20\n'):format(file2),
+        false,
+        false
+      )
+      command('set tags=' .. tags_file)
+    end)
+    after_each(function()
+      os.remove(tags_file)
+    end)
+
+    it('restores the view', function()
+      local screen = Screen.new(12, 6)
+      command('set laststatus=2 | set statusline=%f | edit ' .. file1)
+      feed('10Gzb<C-]>30Gzt<C-]>')
+      screen:expect([[
+        19 line     |
+        ^20 line     |
+        21 line     |
+        22 line     |
+        {3:<tor-jumps-2}|
+                    |
+      ]])
+      feed('<C-T>')
+      screen:expect([[
+        ^30 line     |
+        {1:~           }|*3
+        {3:<ditor-jumps}|
+                    |
+      ]])
+      feed('<C-T>')
+      screen:expect([[
+        7 line      |
+        8 line      |
+        9 line      |
+        ^10 line     |
+        {3:<ditor-jumps}|
+                    |
+      ]])
+
+      local tagstack = '  # TO tag         FROM line  in file/text\n'
+        .. '> 1  1 10                 10  \n'
+        .. '  2  1 30                 30  '
+      eq(tagstack, exec_capture('tags'))
+      -- Un-pop via `:tag`; like `:tag 10` it should go to L2. (restoring cursor/view doesn't apply)
+      -- However, after a `:pop`, it should restore the view from after the single `<C-E>` below.
+      feed('<C-E>')
+      command('tag')
+      screen:expect([[
+        1 line      |
+        ^2 line      |
+        3 line      |
+        4 line      |
+        {3:<ditor-jumps}|
+                    |
+      ]])
+      command('pop')
+      screen:expect([[
+        8 line      |
+        9 line      |
+        ^10 line     |
+        11 line     |
+        {3:<ditor-jumps}|
+                    |
+      ]])
+      eq(tagstack, exec_capture('tags'))
+
+      -- No view information associated with tags set via settagstack().
+      -- (specifically, replacing tag "10" shouldn't continue to use it's now unrelated view)
+      fn.settagstack(fn.win_getid(), {
+        items = { { from = { fn.bufnr(), 11, 1, 0, 1 }, tagname = 'settagstack!!!' } },
+      }, 'r')
+      tagstack = '  # TO tag         FROM line  in file/text\n'
+        .. '  1  1 settagstack!!!     11  \n'
+        .. '>'
+      eq(tagstack, exec_capture('tags'))
+      feed('G<C-T>')
+      screen:expect([[
+        10 line     |
+        ^11 line     |
+        12 line     |
+        13 line     |
+        {3:<ditor-jumps}|
+                    |
+      ]])
+    end)
   end)
 end)

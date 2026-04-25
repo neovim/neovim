@@ -28,6 +28,4 @@ typedef enum {
   SMT_RARE,     ///< Move to "rare" words only
 } smt_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spell.h.generated.h"
-#endif
+#include "spell.h.generated.h"

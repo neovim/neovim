@@ -28,18 +28,16 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
-#include "nvim/ops.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
+#include "nvim/register.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/usercmd.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/command.c.generated.h"
-#endif
+#include "api/command.c.generated.h"
 
 /// Parse arguments for :map/:abbrev commands, preserving whitespace in RHS.
 /// @param arg_str  The argument string to parse
@@ -134,7 +132,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
 
-  if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
+  if (!parse_cmdline(&cmdline, &ea, &cmdinfo, &errormsg)) {
     if (errormsg != NULL) {
       api_set_error(err, kErrorTypeException, "Parsing command-line: %s", errormsg);
     } else {
@@ -150,7 +148,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   // Check if this is a mapping command that needs special handling
   // like mapping commands need special argument parsing to preserve whitespace in RHS:
   // "map a b  c" => { args=["a", "b  c"], ... }
-  if (is_map_cmd(ea.cmdidx) && *ea.arg != NUL) {
+  if (ea.cmdidx != CMD_SIZE && is_map_cmd(ea.cmdidx) && *ea.arg != NUL) {
     // For mapping commands, split differently to preserve whitespace
     args = parse_map_cmd(ea.arg, arena);
   } else if (ea.argt & EX_NOSPC) {
@@ -183,7 +181,10 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
     cmd = USER_CMD_GA(&curbuf->b_ucmds, ea.useridx);
   }
 
-  char *name = (cmd != NULL ? cmd->uc_name : get_command_name(NULL, ea.cmdidx));
+  // For range-only (:1) or modifier-only (:aboveleft) commands, cmd is empty string.
+  char *name = ea.cmdidx == CMD_SIZE
+               ? "" : (cmd != NULL ? cmd->uc_name : get_command_name(NULL, ea.cmdidx));
+
   PUT_KEY(result, cmd, cmd, cstr_as_string(name));
 
   if ((ea.argt & EX_RANGE) && ea.addr_count > 0) {
@@ -318,25 +319,32 @@ end:
   return result;
 }
 
-/// Executes an Ex command.
+/// Executes an Ex command `cmd`, specified as a Dict with the same structure as returned by
+/// |nvim_parse_cmd()|.
 ///
-/// Unlike |nvim_command()| this command takes a structured Dict instead of a String. This
-/// allows for easier construction and manipulation of an Ex command. This also allows for things
-/// such as having spaces inside a command argument, expanding filenames in a command that otherwise
-/// doesn't expand filenames, etc. Command arguments may also be Number, Boolean or String.
+/// Use `magic={…=false}` to disable special chars:
+/// ```lua
+/// vim.api.nvim_cmd({
+///     cmd = 'edit',
+///     args = { '%foo"|bar#baz"' },
+///     magic = { file = false, bar = false }
+///   },
+///   {}
+/// )
+/// ```
 ///
-/// The first argument may also be used instead of count for commands that support it in order to
-/// make their usage simpler with |vim.cmd()|. For example, instead of
-/// `vim.cmd.bdelete{ count = 2 }`, you may do `vim.cmd.bdelete(2)`.
+/// - See |nvim_parse_cmd()| to parse a cmdline string (which can then be passed to `nvim_cmd`).
+/// - See |nvim_command()| to execute a cmdline string.
 ///
 /// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
-/// @see |nvim_exec2()|
 /// @see |nvim_command()|
+/// @see |nvim_exec2()|
+/// @see |nvim_parse_cmd()|
 ///
-/// @param cmd       Command to execute. Must be a Dict that can contain the same values as
-///                  the return value of |nvim_parse_cmd()| except "addr", "nargs" and "nextcmd"
-///                  which are ignored if provided. All values except for "cmd" are optional.
+/// @param cmd       Command to execute, a Dict with the same structure as the return value of
+///                  |nvim_parse_cmd()| (except "addr", "nargs" and "nextcmd" are ignored).
+///                  All keys except "cmd" are optional.
 /// @param opts      Optional parameters.
 ///                  - output: (boolean, default false) Whether to return command output.
 /// @param[out] err  Error details, if any.
@@ -375,9 +383,13 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   VALIDATE_R(HAS_KEY(cmd, cmd, cmd), "cmd", {
     goto end;
   });
-  VALIDATE_EXP((cmd->cmd.data[0] != NUL), "cmd", "non-empty String", NULL, {
-    goto end;
-  });
+
+  if (cmd->cmd.data[0] == NUL) {
+    VALIDATE_EXP((HAS_KEY(cmd, cmd, range) && cmd->range.size > 0) || HAS_KEY(cmd, cmd, mods),
+                 "cmd", "non-empty String", NULL, {
+      goto end;
+    });
+  }
 
   cmdname = arena_string(arena, cmd->cmd).data;
   ea.cmd = cmdname;
@@ -395,22 +407,41 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     p = (ret && !aborting()) ? find_ex_command(&ea, NULL) : ea.cmd;
   }
 
-  VALIDATE((p != NULL && ea.cmdidx != CMD_SIZE), "Command not found: %s", cmdname, {
+  // Commands such as ":1" are "range only" commands.
+  bool range_only = ea.cmdidx == CMD_SIZE && cmd->cmd.data[0] == NUL
+                    && HAS_KEY(cmd, cmd, range) && cmd->range.size > 0;
+
+  // modifier only
+  if (ea.cmdidx == CMD_SIZE && cmd->cmd.data[0] == NUL
+      && (!HAS_KEY(cmd, cmd, range) || cmd->range.size == 0)
+      && HAS_KEY(cmd, cmd, mods)) {
     goto end;
-  });
-  VALIDATE(!is_cmd_ni(ea.cmdidx), "Command not implemented: %s", cmdname, {
-    goto end;
-  });
-  const char *fullname = IS_USER_CMDIDX(ea.cmdidx)
-                         ? get_user_command_name(ea.useridx, ea.cmdidx)
-                         : get_command_name(NULL, ea.cmdidx);
-  VALIDATE(strncmp(fullname, cmdname, strlen(cmdname)) == 0, "Invalid command: \"%s\"", cmdname, {
+  }
+  // Allow CMD_SIZE only for range-only commands (empty cmd with range)
+  VALIDATE((p != NULL && ea.cmdidx != CMD_SIZE) || range_only,
+           "Command not found: %s", cmdname, {
     goto end;
   });
 
-  // Get the command flags so that we can know what type of arguments the command uses.
-  // Not required for a user command since `find_ex_command` already deals with it in that case.
-  if (!IS_USER_CMDIDX(ea.cmdidx)) {
+  VALIDATE(range_only || !is_cmd_ni(ea.cmdidx), "Command not implemented: %s", cmdname, {
+    goto end;
+  });
+
+  if (!range_only) {
+    const char *fullname = IS_USER_CMDIDX(ea.cmdidx)
+                           ? get_user_command_name(ea.useridx, ea.cmdidx)
+                           : get_command_name(NULL, ea.cmdidx);
+    VALIDATE(strncmp(fullname, cmdname, strlen(cmdname)) == 0,
+             "Invalid command: \"%s\"", cmdname, {
+      goto end;
+    });
+  }
+
+  if (range_only) {
+    ea.argt = EX_RANGE | EX_SBOXOK;
+  } else if (!IS_USER_CMDIDX(ea.cmdidx)) {
+    // Get the command flags so that we can know what type of arguments the command uses.
+    // Not required for a user command since `find_ex_command` already deals with it in that case.
     ea.argt = get_cmd_argt(ea.cmdidx);
   }
 
@@ -512,9 +543,11 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     }
   }
 
-  // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
-  // since it only ever checks the first argument.
-  set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
+  if (!range_only) {
+    // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
+    // since it only ever checks the first argument.
+    set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
+  }
 
   if (HAS_KEY(cmd, cmd, range)) {
     VALIDATE_MOD((ea.argt & EX_RANGE), "range", cmd->cmd.data);
@@ -726,6 +759,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
   garray_T capture_local;
   const int save_msg_silent = msg_silent;
+  const bool save_redir_off = redir_off;
   garray_T * const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
 
@@ -737,6 +771,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   TRY_WRAP(err, {
     if (opts->output) {
       msg_silent++;
+      redir_off = false;
       msg_col = 0;  // prevent leading spaces
     }
 
@@ -747,6 +782,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     if (opts->output) {
       capture_ga = save_capture_ga;
       msg_silent = save_msg_silent;
+      redir_off = save_redir_off;
       // Put msg_col back where it was, since nothing should have been written.
       msg_col = save_msg_col;
     }
@@ -942,7 +978,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// ```
 ///
 /// @param  name    Name of the new user command. Must begin with an uppercase letter.
-/// @param  command Replacement command to execute when this user command is executed. When called
+/// @param  cmd     Replacement command to execute when this user command is executed. When called
 ///                 from Lua, the command can also be a Lua function. The function is called with a
 ///                 single table argument that contains the following keys:
 ///                 - name: (string) Command name
@@ -959,25 +995,22 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - mods: (string) Command modifiers, if any [<mods>]
 ///                 - smods: (table) Command modifiers in a structured format. Has the same
 ///                 structure as the "mods" key of |nvim_parse_cmd()|.
-/// @param  opts    Optional |command-attributes|.
-///                 - Set boolean attributes such as |:command-bang| or |:command-bar| to true (but
-///                   not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
-///                 - "complete" |:command-complete| also accepts a Lua function which works like
-///                   |:command-completion-customlist|.
-///                 - Other parameters:
-///                   - desc: (string) Used for listing the command when a Lua function is used for
-///                                    {command}.
-///                   - force: (boolean, default true) Override any previous definition.
-///                   - preview: (function) Preview callback for 'inccommand' |:command-preview|
+/// @param  opts    Optional flags
+///                 - `desc` (string) Command description.
+///                 - `force` (boolean, default true) Override any previous definition.
+///                 - `complete` |:command-complete| command or function like |:command-completion-customlist|.
+///                 - `preview` (function) Preview handler for 'inccommand' |:command-preview|
+///                 - Set boolean |command-attributes| such as |:command-bang| or |:command-bar| to
+///                   true (but not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
 /// @param[out] err Error details, if any.
 void nvim_create_user_command(uint64_t channel_id,
                               String name,
-                              Union(String, LuaRefOf((DictAs(create_user_command__command_args) args))) command,
+                              Union(String, LuaRefOf((DictAs(create_user_command__command_args) args))) cmd,
                               Dict(user_command) *opts,
                               Error *err)
   FUNC_API_SINCE(9)
 {
-  create_user_command(channel_id, name, command, opts, 0, err);
+  create_user_command(channel_id, name, cmd, opts, 0, err);
 }
 
 // uncrustify:on
@@ -994,21 +1027,21 @@ void nvim_del_user_command(String name, Error *err)
 
 /// Creates a buffer-local command |user-commands|.
 ///
-/// @param  buffer  Buffer id, or 0 for current buffer.
+/// @param  buf  Buffer id, or 0 for current buffer.
 /// @param[out] err Error details, if any.
 /// @see nvim_create_user_command
-void nvim_buf_create_user_command(uint64_t channel_id, Buffer buffer, String name, Object command,
+void nvim_buf_create_user_command(uint64_t channel_id, Buffer buf, String name, Object cmd,
                                   Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
-  buf_T *target_buf = find_buffer_by_handle(buffer, err);
+  buf_T *target_buf = find_buffer_by_handle(buf, err);
   if (ERROR_SET(err)) {
     return;
   }
 
   buf_T *save_curbuf = curbuf;
   curbuf = target_buf;
-  create_user_command(channel_id, name, command, opts, UC_BUFFER, err);
+  create_user_command(channel_id, name, cmd, opts, UC_BUFFER, err);
   curbuf = save_curbuf;
 }
 
@@ -1017,21 +1050,21 @@ void nvim_buf_create_user_command(uint64_t channel_id, Buffer buffer, String nam
 /// Only commands created with |:command-buffer| or
 /// |nvim_buf_create_user_command()| can be deleted with this function.
 ///
-/// @param  buffer  Buffer id, or 0 for current buffer.
+/// @param  buf  Buffer id, or 0 for current buffer.
 /// @param  name    Name of the command to delete.
 /// @param[out] err Error details, if any.
-void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
+void nvim_buf_del_user_command(Buffer buf, String name, Error *err)
   FUNC_API_SINCE(9)
 {
   garray_T *gap;
-  if (buffer == -1) {
+  if (buf == -1) {
     gap = &ucmds;
   } else {
-    buf_T *buf = find_buffer_by_handle(buffer, err);
+    buf_T *b = find_buffer_by_handle(buf, err);
     if (ERROR_SET(err)) {
       return;
     }
-    gap = &buf->b_ucmds;
+    gap = &b->b_ucmds;
   }
 
   for (int i = 0; i < gap->ga_len; i++) {
@@ -1052,7 +1085,7 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
   api_set_error(err, kErrorTypeException, "Invalid command (not found): %s", name.data);
 }
 
-void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef) command,
+void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef) cmd,
                          Dict(user_command) *opts, int flags, Error *err)
 {
   uint32_t argt = 0;
@@ -1170,6 +1203,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
       goto err;
     });
 
+    argt |= EX_RANGE;
     if (addr_type_arg != ADDR_LINES) {
       argt |= EX_ZEROR;
     }
@@ -1223,9 +1257,9 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     opts->preview.data.luaref = LUA_NOREF;
   }
 
-  switch (command.type) {
+  switch (cmd.type) {
   case kObjectTypeLuaRef:
-    luaref = api_new_luaref(command.data.luaref);
+    luaref = api_new_luaref(cmd.data.luaref);
     if (opts->desc.type == kObjectTypeString) {
       rep = opts->desc.data.string.data;
     } else {
@@ -1233,7 +1267,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     }
     break;
   case kObjectTypeString:
-    rep = command.data.string.data;
+    rep = cmd.data.string.data;
     break;
   default:
     VALIDATE_EXP(false, "command", "Function or String", NULL, {
@@ -1245,7 +1279,8 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
                        compl_luaref, preview_luaref, addr_type_arg, luaref, force) != OK) {
       api_set_error(err, kErrorTypeException, "Failed to create user command");
-      // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
+      // Do not goto err, since uc_add_command now owns luaref, compl_luaref, preview_luaref,
+      // and compl_arg
     }
   });
 
@@ -1254,6 +1289,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
 err:
   NLUA_CLEAR_REF(luaref);
   NLUA_CLEAR_REF(compl_luaref);
+  NLUA_CLEAR_REF(preview_luaref);
   xfree(compl_arg);
 }
 /// Gets a map of global (non-buffer-local) Ex commands.
@@ -1275,16 +1311,16 @@ DictOf(DictAs(command_info)) nvim_get_commands(Dict(get_commands) *opts, Arena *
 
 /// Gets a map of buffer-local |user-commands|.
 ///
-/// @param  buffer  Buffer id, or 0 for current buffer
+/// @param  buf  Buffer id, or 0 for current buffer
 /// @param  opts  Optional parameters. Currently not used.
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-DictAs(command_info) nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Arena *arena,
+DictAs(command_info) nvim_buf_get_commands(Buffer buf, Dict(get_commands) *opts, Arena *arena,
                                            Error *err)
   FUNC_API_SINCE(4)
 {
-  bool global = (buffer == -1);
+  bool global = (buf == -1);
   if (ERROR_SET(err)) {
     return (Dict)ARRAY_DICT_INIT;
   }
@@ -1297,9 +1333,9 @@ DictAs(command_info) nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *op
     return commands_array(NULL, arena);
   }
 
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (opts->builtin || !buf) {
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (opts->builtin || !b) {
     return (Dict)ARRAY_DICT_INIT;
   }
-  return commands_array(buf, arena);
+  return commands_array(b, arena);
 }

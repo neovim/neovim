@@ -13,7 +13,6 @@ typedef struct pty_process {
   conpty_t *conpty;
   HANDLE finish_wait;
   HANDLE proc_handle;
-  uv_timer_t wait_eof_timer;
 } PtyProc;
 
 // Structure used by build_cmd_line()
@@ -22,6 +21,4 @@ typedef struct arg_node {
   QUEUE node;  // QUEUE structure.
 } ArgNode;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_proc_win.h.generated.h"
-#endif
+#include "os/pty_proc_win.h.generated.h"

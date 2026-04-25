@@ -38,6 +38,4 @@ static inline size_t file_space(FileDescriptor *fp)
   return (size_t)((fp->buffer + ARENA_BLOCK_SIZE) - fp->write_pos);
 }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/fileio.h.generated.h"
-#endif
+#include "os/fileio.h.generated.h"

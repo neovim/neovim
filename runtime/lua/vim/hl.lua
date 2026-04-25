@@ -72,7 +72,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
       0,
     }
 
-  local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
+  local buf_line_count = api.nvim_buf_line_count(bufnr)
   pos1[2] = math.min(pos1[2], buf_line_count)
   pos2[2] = math.min(pos2[2], buf_line_count)
 
@@ -182,8 +182,8 @@ function M.on_yank(opts)
 
   local higroup = opts.higroup or 'IncSearch'
 
-  local bufnr = vim.api.nvim_get_current_buf()
-  local winid = vim.api.nvim_get_current_win()
+  local bufnr = api.nvim_get_current_buf()
+  local winid = api.nvim_get_current_win()
 
   if yank_timer and not yank_timer:is_closing() then
     yank_timer:close()
@@ -191,7 +191,7 @@ function M.on_yank(opts)
     yank_hl_clear()
   end
 
-  vim.api.nvim__ns_set(yank_ns, { wins = { winid } })
+  api.nvim__ns_set(yank_ns, { wins = { winid } })
   yank_timer, yank_hl_clear = M.range(bufnr, yank_ns, higroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = true,

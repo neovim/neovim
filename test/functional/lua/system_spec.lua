@@ -4,6 +4,7 @@ local n = require('test.functional.testnvim')()
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
+local pcall_err = t.pcall_err
 
 local function system_sync(cmd, opts)
   return exec_lua(function()
@@ -74,21 +75,31 @@ describe('vim.system', function()
       end)
 
       it('can set environment', function()
-        eq(
-          'TESTVAL',
-          system(
-            { n.testprg('printenv-test'), 'TEST' },
-            { env = { TEST = 'TESTVAL' }, text = true }
-          ).stdout
-        )
+        local function test_env(opt)
+          eq('TESTVAL', system({ n.testprg('printenv-test'), 'TEST' }, opt).stdout)
+        end
+
+        test_env({ env = { TEST = 'TESTVAL' }, text = true })
+        test_env({ clear_env = true, env = { TEST = 'TESTVAL' }, text = true })
       end)
 
-      it('can set environment with clear_env = true', function()
+      it('can set environment with clear_env = true and env = nil', function()
+        exec_lua(function()
+          vim.env.TEST = 'TESTVAL'
+        end)
+
+        -- Not passing env with clear_env should not clear the environment
         eq(
           'TESTVAL',
+          system({ n.testprg('printenv-test'), 'TEST' }, { clear_env = true, text = true }).stdout
+        )
+
+        -- Passing env = {} with clear_env should clear the environment
+        eq(
+          '',
           system(
             { n.testprg('printenv-test'), 'TEST' },
-            { clear_env = true, env = { TEST = 'TESTVAL' }, text = true }
+            { env = {}, clear_env = true, text = true }
           ).stdout
         )
       end)

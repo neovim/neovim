@@ -13,20 +13,32 @@ They should not be used in new scripts, and old scripts should be updated.
 Deprecated features
 
 ------------------------------------------------------------------------------
+DEPRECATED IN 0.13					*deprecated-0.13*
+
+API
+
+• The "buffer" key accepted and/or returned by these functions, was renamed to
+  "buf":
+  • |nvim_create_autocmd()|
+  • |nvim_get_autocmds()|
+  • |nvim_exec_autocmds()|
+  • |nvim_clear_autocmds()|
+
+------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*
 
 API
 
-• todo
+• nvim_set_decoration_provider `on_line`	Use `on_range` instead.
 
 DIAGNOSTICS
 
-• "float" in |vim.diagnostic.JumpOpts|.		Use "on_jump" instead.
-• "float" in |vim.diagnostic.Opts.Jump|.	Use "on_jump" instead.
+• "float" in |vim.diagnostic.JumpOpts|.		Use `on_jump` instead.
+• "float" in |vim.diagnostic.Opts.Jump|.	Use `on_jump` instead.
 
 HIGHLIGHTS
 
-• todo
+• *:ownsyntax* *w:current_syntax*	Use 'winhighlight' instead.
 
 LSP
 
@@ -35,14 +47,28 @@ LSP
 					`vim.wo.conceallevel = 2`.
 • *vim.lsp.log.should_log()*		Use |vim.lsp.log.set_format_func()| instead
 					and return `nil` to omit entries from the logfile.
+• *vim.lsp.semantic_tokens.start()*	Use `vim.lsp.semantic_tokens.enable(true)` instead
+• *vim.lsp.semantic_tokens.stop()*	Use `vim.lsp.semantic_tokens.enable(false)` instead
+• *vim.lsp.set_log_level()*		Use `vim.lsp.log.set_level()` instead
+• *vim.lsp.get_log_path()*		Use `vim.lsp.log.get_filename()` instead
+• *vim.lsp.get_buffers_by_client_id()*	Use `vim.lsp.get_client_by_id(id).attached_buffers`
+					instead
+• *vim.lsp.stop_client()*		Use |Client:stop()| instead
+• *vim.lsp.codelens.refresh()*		Use `vim.lsp.codelens.enable(true)` instead
+• *vim.lsp.codelens.clear()*		Use `vim.lsp.codelens.enable(false)` instead
+• *vim.lsp.codelens.display()*
+• *vim.lsp.codelens.save()*
+• *vim.lsp.codelens.on_codelens()*
 
 LUA
 
-• todo
+• *vim.diff()*				Renamed to |vim.text.diff()|
+• "buffer" in `vim.keymap.set.Opts` and `vim.keymap.del.Opts`	Renamed to "buf"
 
-VIMSCRIPT
+UI
 
-• todo
+• *hit-enter* *hit-enter-prompt*	With |ui2|, the legacy "Press ENTER"
+  *press-enter				prompt is never triggered.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.11					*deprecated-0.11*
@@ -251,7 +277,6 @@ For each of the functions below, use the corresponding function in
 • *vim.lsp.diagnostic.goto_next()*
 • *vim.lsp.diagnostic.goto_prev()*
 • *vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
-• *vim.lsp.diagnostic.reset()*
 • *vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
 • *vim.lsp.diagnostic.set_loclist()*	Use |vim.diagnostic.setloclist()| instead.
 • *vim.lsp.diagnostic.set_qflist()*	Use |vim.diagnostic.setqflist()| instead.
@@ -298,13 +323,20 @@ OPTIONS
 • *cpo-<* *:menu-<special>* *:menu-special* *:map-<special>* *:map-special*
   `<>` notation is always enabled.
 • *'fe'*		'fenc'+'enc' before Vim 6.0; no longer used.
+• *'gdefault'*		boolean	(default off) Enables the :substitute "/g"
+			flag by default. See |complex-change|.
+				command	 'gdefault' on	'gdefault' off	~
+				:s///	  subst. all	  subst. one
+				:s///g	  subst. one	  subst. all
+				:s///gg	  subst. all	  subst. one
+			WARNING: Setting this breaks plugins, because "/g"
+			will have the opposite effect. |:s_g|
 • *'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
 • *'langnoremap'*	Deprecated alias to 'nolangremap'.
-• 'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
-• *'vi'*
-• 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
-• *'viminfo'*		Deprecated alias to 'shada' option.
-• *'viminfofile'*	Deprecated alias to 'shadafile' option.
+• *'magic'* *'nomagic'*	boolean	(default on) Changes the special characters in
+			search |pattern|s.
+			WARNING: Disabling this breaks plugins, because most
+			patterns assume it's on. See also |/\M|.
 • *'paste'* *'nopaste'*	Just Paste It.™  The 'paste' option is obsolete:
 			|paste| is handled automatically when you paste text
 			using your terminal's or GUI's paste feature
@@ -320,6 +352,11 @@ OPTIONS
 			    • 'cindent'
 			    • 'indentexpr'
 			    • 'lisp'
+• 'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
+• *'vi'*
+• 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
+• *'viminfo'*		Deprecated alias to 'shada' option.
+• *'viminfofile'*	Deprecated alias to 'shadafile' option.
 
 UI EXTENSIONS
 • *ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled

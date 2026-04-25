@@ -47,6 +47,9 @@ typedef struct {
   bool had_stdin_file;                  // explicit - as a file to edit
 } mparm_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "main.h.generated.h"
+#if defined(MSWIN) && !defined(ENABLE_ASAN_UBSAN)
+# define __asan_default_options vim__asan_default_options
+# define __ubsan_default_options vim__ubsan_default_options
 #endif
+
+#include "main.h.generated.h"

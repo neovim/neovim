@@ -1,9 +1,7 @@
 #include "nvim/vterm/encoding.h"
 #include "nvim/vterm/vterm_internal_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "vterm/encoding.c.generated.h"
-#endif
+#include "vterm/encoding.c.generated.h"
 
 #define UNICODE_INVALID 0xFFFD
 

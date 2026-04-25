@@ -1,6 +1,11 @@
 --- @meta
+-- This file is NOT generated, edit it directly.
+error('Cannot require a meta file')
 
 -- luacheck: no unused args
+
+---@nodoc
+vim.mpack = {}
 
 --- @brief
 ---

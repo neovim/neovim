@@ -2,7 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local set_session, clear = n.set_session, n.clear
+local set_session, clear, assert_alive = n.set_session, n.clear, n.assert_alive
 local feed, command = n.feed, n.command
 local exec = n.exec
 local insert = n.insert
@@ -62,6 +62,12 @@ local function screen_tests(linegrid)
       [6] = { bold = true, foreground = Screen.colors.Fuchsia },
       [7] = { bold = true, foreground = Screen.colors.SeaGreen },
       [8] = { foreground = Screen.colors.White, background = Screen.colors.Red },
+      [9] = { background = Screen.colors.LightMagenta },
+      [10] = {
+        background = Screen.colors.LightMagenta,
+        foreground = Screen.colors.Blue1,
+        bold = true,
+      },
     })
   end)
 
@@ -560,6 +566,93 @@ local function screen_tests(linegrid)
                                                              |
       ]])
     end)
+
+    it('recomposes lines when floating window is positioned over scroll region', function()
+      local scroll_events = 0
+      local original = screen._handle_grid_scroll
+      screen._handle_grid_scroll = function(...)
+        scroll_events = scroll_events + 1
+        return original(...)
+      end
+
+      local buf = api.nvim_create_buf(false, false)
+      api.nvim_open_win(
+        buf,
+        false,
+        { relative = 'editor', width = 10, height = 2, row = 3, col = 0 }
+      )
+
+      screen:expect([[
+        and                 │and             │and            |
+        clearing            │clearing        │clearing       |
+        in                  │in              │in             |
+        {9:          }          │split           │split          |
+        {10:~         }          │windows         │windows        |
+        ^                    │                │               |
+        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+        clearing                                             |
+        in                                                   |
+        split                                                |
+        windows                                              |
+                                                             |
+        {3:[No Name] [+]                                        }|
+                                                             |
+      ]])
+      feed('gg')
+      screen:expect([[
+        ^Inserting           │and             │and            |
+        text                │clearing        │clearing       |
+        with                │in              │in             |
+        {9:          }          │split           │split          |
+        {10:~         }          │windows         │windows        |
+        to                  │                │               |
+        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+        clearing                                             |
+        in                                                   |
+        split                                                |
+        windows                                              |
+                                                             |
+        {3:[No Name] [+]                                        }|
+                                                             |
+      ]])
+      eq(0, scroll_events)
+      feed('<c-f>')
+      screen:expect([[
+        ^lines               │and             │and            |
+        to                  │clearing        │clearing       |
+        test                │in              │in             |
+        {9:          }          │split           │split          |
+        {10:~         }          │windows         │windows        |
+        clearing            │                │               |
+        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+        clearing                                             |
+        in                                                   |
+        split                                                |
+        windows                                              |
+                                                             |
+        {3:[No Name] [+]                                        }|
+                                                             |
+      ]])
+      eq(0, scroll_events)
+      feed('<c-w>jHk')
+      screen:expect([[
+        lines               │and             │and            |
+        to                  │clearing        │clearing       |
+        test                │in              │in             |
+        {9:          }          │split           │split          |
+        {10:~         }          │windows         │windows        |
+        clearing            │                │               |
+        {3:[No Name] [+]        [No Name] [+]    [No Name] [+]  }|
+        ^and                                                  |
+        clearing                                             |
+        in                                                   |
+        split                                                |
+        windows                                              |
+        {1:[No Name] [+]                                        }|
+                                                             |
+      ]])
+      eq(1, scroll_events)
+    end)
   end)
 
   describe('resize', function()
@@ -644,6 +737,20 @@ local function screen_tests(linegrid)
         {0:~                   }|*12
                             |
       ]])
+    end)
+
+    it('does not crash when windows fill the screen #33883', function()
+      screen:try_resize(80, 20)
+      while true do
+        local ok = pcall(command, 'wincmd v')
+        if not ok then
+          break
+        end
+      end
+
+      screen:try_resize(60, 20)
+
+      assert_alive()
     end)
 
     it('clamps &cmdheight for current tabpage', function()

@@ -2,8 +2,9 @@ local names_file = arg[1]
 local keycodes_file = arg[2]
 
 local hashy = require('gen.hashy')
-local keycodes = loadfile(keycodes_file)()
 
+---@type {names: [string, string][]}
+local keycodes = assert(loadfile(keycodes_file))()
 local keycode_names = keycodes.names
 
 local hashorder = {} --- @type string[]

@@ -1,7 +1,7 @@
 " Vim completion script
 " Language:	C
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Nov 14
+" Last Change:	2026 Feb 18
+" Former Maintainer:   Bram Moolenaar <Bram@vim.org>
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -15,34 +15,34 @@ func ccomplete#Complete(findstart, base)
     let lastword = -1
     while start > 0
       if line[start - 1] =~ '\w'
-	let start -= 1
+        let start -= 1
       elseif line[start - 1] =~ '\.'
-	if lastword == -1
-	  let lastword = start
-	endif
-	let start -= 1
+        if lastword == -1
+          let lastword = start
+        endif
+        let start -= 1
       elseif start > 1 && line[start - 2] == '-' && line[start - 1] == '>'
-	if lastword == -1
-	  let lastword = start
-	endif
-	let start -= 2
+        if lastword == -1
+          let lastword = start
+        endif
+        let start -= 2
       elseif line[start - 1] == ']'
-	" Skip over [...].
-	let n = 0
-	let start -= 1
-	while start > 0
-	  let start -= 1
-	  if line[start] == '['
-	    if n == 0
-	      break
-	    endif
-	    let n -= 1
-	  elseif line[start] == ']'  " nested []
-	    let n += 1
-	  endif
-	endwhile
+        " Skip over [...].
+        let n = 0
+        let start -= 1
+        while start > 0
+          let start -= 1
+          if line[start] == '['
+            if n == 0
+              break
+            endif
+            let n -= 1
+          elseif line[start] == ']'  " nested []
+            let n += 1
+          endif
+        endwhile
       else
-	break
+        break
       endif
     endwhile
 
@@ -80,7 +80,7 @@ func ccomplete#Complete(findstart, base)
     let e = match(base, '\.\|->\|\[', s)
     if e < 0
       if s == 0 || base[s - 1] != ']'
-	call add(items, strpart(base, s))
+        call add(items, strpart(base, s))
       endif
       break
     endif
@@ -97,15 +97,15 @@ func ccomplete#Complete(findstart, base)
       let s = e
       let e += 1
       while e < len(base)
-	if base[e] == ']'
-	  if n == 0
-	    break
-	  endif
-	  let n -= 1
-	elseif base[e] == '['  " nested [...]
-	  let n += 1
-	endif
-	let e += 1
+        if base[e] == ']'
+          if n == 0
+            break
+          endif
+          let n -= 1
+        elseif base[e] == '['  " nested [...]
+          let n += 1
+        endif
+        let e += 1
       endwhile
       let e += 1
       call add(items, strpart(base, s, e - s))
@@ -113,6 +113,11 @@ func ccomplete#Complete(findstart, base)
       let s = e
     endif
   endwhile
+
+  if complete_check()
+      " return v:none
+      return []
+  endif
 
   " Find the variable items[0].
   " 1. in current function (like with "gd")
@@ -128,7 +133,10 @@ func ccomplete#Complete(findstart, base)
       " Handle multiple declarations on the same line.
       let col2 = col - 1
       while line[col2] != ';'
-	let col2 -= 1
+        if complete_check()
+            return res
+        endif
+        let col2 -= 1
       endwhile
       let line = strpart(line, col2 + 1)
       let col -= col2
@@ -138,11 +146,14 @@ func ccomplete#Complete(findstart, base)
       " declaration.
       let col2 = col - 1
       while line[col2] != ','
-	let col2 -= 1
+        if complete_check()
+            return res
+        endif
+        let col2 -= 1
       endwhile
       if strpart(line, col2 + 1, col - col2 - 1) =~ ' *[^ ][^ ]*  *[^ ]'
-	let line = strpart(line, col2 + 1)
-	let col -= col2
+        let line = strpart(line, col2 + 1)
+        let col -= col2
       endif
     endif
     if len(items) == 1
@@ -151,17 +162,17 @@ func ccomplete#Complete(findstart, base)
       let match = items[0]
       let kind = 'v'
       if match(line, '\<' . match . '\s*\[') > 0
-	let match .= '['
+        let match .= '['
       else
-	let res = s:Nextitem(strpart(line, 0, col), [''], 0, 1)
-	if len(res) > 0
-	  " There are members, thus add "." or "->".
-	  if match(line, '\*[ \t(]*' . match . '\>') > 0
-	    let match .= '->'
-	  else
-	    let match .= '.'
-	  endif
-	endif
+        let res = s:Nextitem(strpart(line, 0, col), [''], 0, 1)
+        if len(res) > 0
+          " There are members, thus add "." or "->".
+          if match(line, '\*[ \t(]*' . match . '\>') > 0
+            let match .= '->'
+          else
+            let match .= '.'
+          endif
+        endif
       endif
       let res = [{'match': match, 'tagline' : '', 'kind' : kind, 'info' : line}]
     elseif len(items) == arrays + 1
@@ -203,21 +214,24 @@ func ccomplete#Complete(findstart, base)
 
     let res = []
     for i in range(len(diclist))
+      if complete_check()
+          return res
+      endif
       " New ctags has the "typeref" field.  Patched version has "typename".
       if has_key(diclist[i], 'typename')
-	call extend(res, s:StructMembers(diclist[i]['typename'], items[1:], 1))
+        call extend(res, s:StructMembers(diclist[i]['typename'], items[1:], 1))
       elseif has_key(diclist[i], 'typeref')
-	call extend(res, s:StructMembers(diclist[i]['typeref'], items[1:], 1))
+        call extend(res, s:StructMembers(diclist[i]['typeref'], items[1:], 1))
       endif
 
       " For a variable use the command, which must be a search pattern that
       " shows the declaration of the variable.
       if diclist[i]['kind'] == 'v'
-	let line = diclist[i]['cmd']
-	if line[0] == '/' && line[1] == '^'
-	  let col = match(line, '\<' . items[0] . '\>')
-	  call extend(res, s:Nextitem(strpart(line, 2, col - 2), items[1:], 0, 1))
-	endif
+        let line = diclist[i]['cmd']
+        if line[0] == '/' && line[1] == '^'
+          let col = match(line, '\<' . items[0] . '\>')
+          call extend(res, s:Nextitem(strpart(line, 2, col - 2), items[1:], 0, 1))
+        endif
       endif
     endfor
   endif
@@ -234,6 +248,9 @@ func ccomplete#Complete(findstart, base)
   let last = len(items) - 1
   let brackets = ''
   while last >= 0
+    if complete_check()
+        return res
+    endif
     if items[last][0] != '['
       break
     endif
@@ -295,6 +312,9 @@ endfunc
 func s:Dict2info(dict)
   let info = ''
   for k in sort(keys(a:dict))
+    if complete_check()
+        return info
+    endif
     let info  .= k . repeat(' ', 10 - len(k))
     if k == 'cmd'
       let info .= substitute(matchstr(a:dict['cmd'], '/^\s*\zs.*\ze$/'), '\\\(.\)', '\1', 'g')
@@ -318,17 +338,20 @@ func s:ParseTagline(line)
     if l[2] =~ '^/'
       " Find end of cmd, it may contain Tabs.
       while n < len(l) && l[n] !~ '/;"$'
-	let n += 1
-	let d['cmd'] .= "  " . l[n]
+        let n += 1
+        let d['cmd'] .= "  " . l[n]
       endwhile
     endif
     for i in range(n + 1, len(l) - 1)
+      if complete_check()
+        return d
+      endif
       if l[i] == 'file:'
-	let d['static'] = 1
+        let d['static'] = 1
       elseif l[i] !~ ':'
-	let d['kind'] = l[i]
+        let d['kind'] = l[i]
       else
-	let d[matchstr(l[i], '[^:]*')] = matchstr(l[i], ':\zs.*')
+        let d[matchstr(l[i], '[^:]*')] = matchstr(l[i], ':\zs.*')
       endif
     endfor
   endif
@@ -409,6 +432,9 @@ func s:Nextitem(lead, items, depth, all)
   " Try to recognize the type of the variable.  This is rough guessing...
   let res = []
   for tidx in range(len(tokens))
+    if complete_check()
+        return res
+    endif
 
     " Skip tokens starting with a non-ID character.
     if tokens[tidx] !~ '^\h'
@@ -428,29 +454,41 @@ func s:Nextitem(lead, items, depth, all)
       continue
     endif
 
-    " Use the tags file to find out if this is a typedef.
+    " Use the tags file to find out if this is a typedef or struct
     let diclist = taglist('^' . tokens[tidx] . '$')
     for tagidx in range(len(diclist))
+
+      if complete_check()
+        return res
+      endif
+
       let item = diclist[tagidx]
 
       " New ctags has the "typeref" field.  Patched version has "typename".
       if has_key(item, 'typeref')
-	call extend(res, s:StructMembers(item['typeref'], a:items, a:all))
-	continue
+        call extend(res, s:StructMembers(item['typeref'], a:items, a:all))
+        continue
       endif
       if has_key(item, 'typename')
-	call extend(res, s:StructMembers(item['typename'], a:items, a:all))
-	continue
+        call extend(res, s:StructMembers(item['typename'], a:items, a:all))
+        continue
       endif
+
+      " handle struct
+      if item['kind'] == 's'
+        let res = s:StructMembers('struct:' .. tokens[tidx], a:items, a:all)
+        break
+      endif
+
 
       " Only handle typedefs here.
       if item['kind'] != 't'
-	continue
+        continue
       endif
 
       " Skip matches local to another file.
       if has_key(item, 'static') && item['static'] && bufnr('%') != bufnr(item['filename'])
-	continue
+        continue
       endif
 
       " For old ctags we recognize "typedef struct aaa" and
@@ -458,25 +496,25 @@ func s:Nextitem(lead, items, depth, all)
       let cmd = item['cmd']
       let ei = matchend(cmd, 'typedef\s\+')
       if ei > 1
-	let cmdtokens = split(strpart(cmd, ei), '\s\+\|\<')
-	if len(cmdtokens) > 1
-	  if cmdtokens[0] == 'struct' || cmdtokens[0] == 'union' || cmdtokens[0] == 'class'
-	    let name = ''
-	    " Use the first identifier after the "struct" or "union"
-	    for ti in range(len(cmdtokens) - 1)
-	      if cmdtokens[ti] =~ '^\w'
-		let name = cmdtokens[ti]
-		break
-	      endif
-	    endfor
-	    if name != ''
-	      call extend(res, s:StructMembers(cmdtokens[0] . ':' . name, a:items, a:all))
-	    endif
-	  elseif a:depth < 10
-	    " Could be "typedef other_T some_T".
-	    call extend(res, s:Nextitem(cmdtokens[0], a:items, a:depth + 1, a:all))
-	  endif
-	endif
+        let cmdtokens = split(strpart(cmd, ei), '\s\+\|\<')
+        if len(cmdtokens) > 1
+          if cmdtokens[0] == 'struct' || cmdtokens[0] == 'union' || cmdtokens[0] == 'class'
+            let name = ''
+            " Use the first identifier after the "struct" or "union"
+            for ti in range(len(cmdtokens) - 1)
+              if cmdtokens[ti] =~ '^\w'
+                let name = cmdtokens[ti]
+                break
+              endif
+            endfor
+            if name != ''
+              call extend(res, s:StructMembers(cmdtokens[0] . ':' . name, a:items, a:all))
+            endif
+          elseif a:depth < 10
+            " Could be "typedef other_T some_T".
+            call extend(res, s:Nextitem(cmdtokens[0], a:items, a:depth + 1, a:all))
+          endif
+        endif
       endif
     endfor
     if len(res) > 0
@@ -504,7 +542,7 @@ func s:StructMembers(typename, items, all)
   let qflist = []
   let cached = 0
   if a:all == 0
-    let n = '1'	" stop at first found match
+    let n = '1'  " stop at first found match
     if has_key(s:grepCache, a:typename)
       let qflist = s:grepCache[a:typename]
       let cached = 1
@@ -514,11 +552,14 @@ func s:StructMembers(typename, items, all)
   endif
   if !cached
     while 1
+      if complete_check()
+        return []
+      endif
       exe 'silent! keepj noautocmd ' . n . 'vimgrep /\t' . typename . '\(\t\|$\)/j ' . fnames
 
       let qflist = getqflist()
       if len(qflist) > 0 || match(typename, "::") < 0
-	break
+        break
       endif
       " No match for "struct:context::name", remove "context::" and try again.
       let typename = substitute(typename, ':[^:]*::', ':', '')
@@ -533,8 +574,11 @@ func s:StructMembers(typename, items, all)
   " Skip over [...] items
   let idx = 0
   while 1
+    if complete_check()
+        return []
+    endif
     if idx >= len(a:items)
-      let target = ''		" No further items, matching all members
+      let target = ''  " No further items, matching all members
       break
     endif
     if a:items[idx][0] != '['
@@ -550,18 +594,18 @@ func s:StructMembers(typename, items, all)
     if memb =~ '^' . target
       " Skip matches local to another file.
       if match(l['text'], "\tfile:") < 0 || bufnr('%') == bufnr(matchstr(l['text'], '\t\zs[^\t]*'))
-	let item = {'match': memb, 'tagline': l['text']}
+        let item = {'match': memb, 'tagline': l['text']}
 
-	" Add the kind of item.
-	let s = matchstr(l['text'], '\t\(kind:\)\=\zs\S\ze\(\t\|$\)')
-	if s != ''
-	  let item['kind'] = s
-	  if s == 'f'
-	    let item['match'] = memb . '('
-	  endif
-	endif
+        " Add the kind of item.
+        let s = matchstr(l['text'], '\t\(kind:\)\=\zs\S\ze\(\t\|$\)')
+        if s != ''
+          let item['kind'] = s
+          if s == 'f'
+            let item['match'] = memb . '('
+          endif
+        endif
 
-	call add(matches, item)
+        call add(matches, item)
       endif
     endif
   endfor
@@ -570,11 +614,14 @@ func s:StructMembers(typename, items, all)
     " Skip over next [...] items
     let idx += 1
     while 1
+      if complete_check()
+        return matches
+      endif
       if idx >= len(a:items)
-	return matches		" No further items, return the result.
+        return matches  " No further items, return the result.
       endif
       if a:items[idx][0] != '['
-	break
+        break
       endif
       let idx += 1
     endwhile
@@ -594,23 +641,26 @@ endfunc
 func s:SearchMembers(matches, items, all)
   let res = []
   for i in range(len(a:matches))
+    if complete_check()
+        return res
+    endif
     let typename = ''
     if has_key(a:matches[i], 'dict')
       if has_key(a:matches[i].dict, 'typename')
-	let typename = a:matches[i].dict['typename']
+        let typename = a:matches[i].dict['typename']
       elseif has_key(a:matches[i].dict, 'typeref')
-	let typename = a:matches[i].dict['typeref']
+        let typename = a:matches[i].dict['typeref']
       endif
       let line = "\t" . a:matches[i].dict['cmd']
     else
       let line = a:matches[i]['tagline']
       let e = matchend(line, '\ttypename:')
       if e < 0
-	let e = matchend(line, '\ttyperef:')
+        let e = matchend(line, '\ttyperef:')
       endif
       if e > 0
-	" Use typename field
-	let typename = matchstr(line, '[^\t]*', e)
+        " Use typename field
+        let typename = matchstr(line, '[^\t]*', e)
       endif
     endif
 
@@ -620,10 +670,10 @@ func s:SearchMembers(matches, items, all)
       " Use the search command (the declaration itself).
       let s = match(line, '\t\zs/^')
       if s > 0
-	let e = match(line, '\<' . a:matches[i]['match'] . '\>', s)
-	if e > 0
-	  call extend(res, s:Nextitem(strpart(line, s, e - s), a:items, 0, a:all))
-	endif
+        let e = match(line, '\<' . a:matches[i]['match'] . '\>', s)
+        if e > 0
+          call extend(res, s:Nextitem(strpart(line, s, e - s), a:items, 0, a:all))
+        endif
       endif
     endif
     if a:all == 0 && len(res) > 0
@@ -636,4 +686,4 @@ endfunc
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
-" vim: noet sw=2 sts=2
+" vim: et sw=2 sts=2

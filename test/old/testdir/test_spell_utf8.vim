@@ -809,13 +809,14 @@ endfunc
 
 func Test_check_empty_line()
   " This was using freed memory
+  set spell
   enew
   spellgood! ﬂ
   norm z=
   norm yy
   sil! norm P]svc
   norm P]s
-
+  set spell&
   bwipe!
 endfunc
 

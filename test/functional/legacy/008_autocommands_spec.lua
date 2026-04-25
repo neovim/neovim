@@ -77,7 +77,7 @@ describe('autocommands that delete and unload buffers:', function()
     command('set nohidden')
     command('silent! edit Xxx2')
     command('silent! edit Xxx1')
-    command('silent! edit Makefile') -- an existing file
+    command('silent! edit README.md') -- an existing file
     command('silent! split new2')
     expect_exit(command, 'silent! quit')
     eq('VimLeave done', string.match(read_file(test_file), '^%s*(.-)%s*$'))

@@ -93,6 +93,20 @@ func Test_exiting()
     call assert_equal(['QuitPre', 'ExitPre'], readfile('Xtestout'))
   endif
   call delete('Xtestout')
+
+  " Test using :quit in BufWritePost during :wqall
+  let after =<< trim [CODE]
+    botright new Xwritebuf
+    call setline(1, 'SHOULD BE WRITTEN')
+    autocmd BufWritePost Xwritebuf 1quit
+    wqall
+    call setline(1, 'NOT REACHED') | write | qall
+  [CODE]
+
+  if RunVim([], after, '')
+    call assert_equal(['SHOULD BE WRITTEN'], readfile('Xwritebuf'))
+  endif
+  call delete('Xwritebuf')
 endfunc
 
 " Test for getting the Vim exit code from v:exiting

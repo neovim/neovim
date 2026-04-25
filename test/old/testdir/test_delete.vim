@@ -111,6 +111,7 @@ endfunc
 
 " This should no longer trigger ml_get errors
 func Test_delete_ml_get_errors()
+  CheckScreendump
   CheckRunVimInTerminal
   let lines =<< trim END
     set noshowcmd noruler scrolloff=0

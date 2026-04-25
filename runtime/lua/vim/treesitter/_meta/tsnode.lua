@@ -3,8 +3,8 @@
 error('Cannot require a meta file')
 
 --- @brief A "treesitter node" represents one specific element of the parsed contents of a buffer,
---- which can be captured by a |Query| for, e.g., highlighting. It is a |userdata| reference to an
---- object held by the treesitter library.
+--- which can be captured by a |treesitter-query| for, e.g., highlighting. It is a |userdata|
+--- reference to an object held by the treesitter library.
 ---
 --- An instance `TSNode` of a treesitter node supports the following methods.
 

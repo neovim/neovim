@@ -77,7 +77,7 @@ end
 function M.get_option(filetype, option)
   update_ft_option_cache(filetype)
 
-  if not ft_option_cache[filetype] or not ft_option_cache[filetype][option] then
+  if not ft_option_cache[filetype] or ft_option_cache[filetype][option] == nil then
     ft_option_cache[filetype] = ft_option_cache[filetype] or {}
     ft_option_cache[filetype][option] = api.nvim_get_option_value(option, { filetype = filetype })
   end

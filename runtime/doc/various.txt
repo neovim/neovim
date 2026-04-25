@@ -1,7 +1,7 @@
 *various.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Various commands					*various*
@@ -20,7 +20,7 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			|:nohlsearch| and updates diffs |:diffupdate|.
 			|default-mappings|
 
-							*:mod* *:mode*
+							*:mod* *:mode* *E359*
 :mod[e]			Clears and redraws the screen.
 			See also |nvim__redraw()|.
 
@@ -29,7 +29,7 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			screen if "!" is included.  To CLEAR the screen use
 			|:mode| or |CTRL-L|.
 			It can be used to redraw the screen in a script
-			or function (or a mapping if |'lazyredraw'| is set).
+			or function (or a mapping if 'lazyredraw' is set).
 			See also |nvim__redraw()|.
 
 						*:redraws* *:redrawstatus*
@@ -101,9 +101,14 @@ g8			Print the hex values of the bytes used in the
 			command won't move the cursor.
 
 							*gx*
-gx			Opens the current filepath or URL (decided by
-			|<cfile>|, 'isfname') at cursor using the system
-			default handler. Mapped to |vim.ui.open()|.
+gx			Opens the current filepath, URL (decided by
+			|<cfile>|, 'isfname'), or |LSP| "documentLink" at
+			cursor using the system default handler.
+
+			In |help| files, gx treats help tags as
+			https://neovim.io/doc/user/ URLs.
+
+			Mapped to |vim.ui.open()|.
 
 							*v_gx*
 {Visual}gx		Opens the selected text using the system default
@@ -248,10 +253,15 @@ gx			Opens the current filepath or URL (decided by
 :sh[ell]		Removed. |vim-differences|
 
 						  *:terminal* *:te*
-:te[rminal][!] [{cmd}]	Run {cmd} in a non-interactive 'shell' in a new
-			|terminal-emulator| buffer. Without {cmd}, start an
+:te[rminal][!] [cmd]	Run [cmd] in a non-interactive 'shell' in a new
+			|terminal-emulator| buffer. Without [cmd], start an
 			interactive 'shell'.
 
+			By default the current window is used. To open in
+			a split window, use |:horizontal| or |:vertical|: >
+				:hor te
+				:vert te
+<
 			Type |i| to enter |Terminal-mode|, then keys are sent to
 			the job running in the terminal. Type <C-\><C-N> to
 			leave Terminal-mode. |CTRL-\_CTRL-N|. Type <C-\><C-O>
@@ -260,7 +270,7 @@ gx			Opens the current filepath or URL (decided by
 			Fails if changes have been made to the current buffer,
 			unless 'hidden' is set.
 
-			If {cmd} is omitted, and the 'shell' job exits with no
+			If [cmd] is omitted, and the 'shell' job exits with no
 			error, the buffer is closed automatically
 			|default-autocmds|.
 
@@ -363,13 +373,13 @@ gx			Opens the current filepath or URL (decided by
 :redi[r] @{a-z}>>	Append messages to register {a-z}.
 
 :redi[r] @*>
-:redi[r] @+>		Redirect messages to the selection or clipboard. For
+:redi[r] @+>		Redirect messages to the selection or clipboard.  For
 			backward compatibility, the ">" after the register
-			name can be omitted. See |quotestar| and |quoteplus|.
+			name can be omitted.  See |quotestar| and |quoteplus|.
 :redi[r] @*>>
 :redi[r] @+>>		Append messages to the selection or clipboard.
 
-:redi[r] @">		Redirect messages to the unnamed register. For
+:redi[r] @">		Redirect messages to the unnamed register.  For
 			backward compatibility, the ">" after the register
 			name can be omitted.
 :redi[r] @">>		Append messages to the unnamed register.
@@ -403,16 +413,17 @@ gx			Opens the current filepath or URL (decided by
 <			If the [!] is given, restrict the output of {command}
 			to lines that do NOT match {pattern}.
 
-			{pattern} is a Vim search pattern.  Instead of enclosing
-			it in / any non-ID character (see |'isident'|) can be
-			used, so long as it does not appear in {pattern}.
+			{pattern} is a Vim search pattern.  Instead of
+			enclosing it in / any non-ID character (see 'isident')
+			can be used, so long as it does not appear in
+			{pattern}.
 			Without the enclosing character the pattern cannot
-			include the bar character. 'ignorecase' is not used.
+			include the bar character.  'ignorecase' is not used.
 
 			The pattern is matched against the relevant part of
-			the output, not necessarily the whole line. Only some
+			the output, not necessarily the whole line.  Only some
 			commands support filtering, try it out to check if it
-			works. Some of the commands that support filtering:
+			works.  Some of the commands that support filtering:
 			   |:#|          - filter whole line
 			   |:clist|      - filter by file name or module name
 			   |:command|    - filter by command name
@@ -476,7 +487,7 @@ gx			Opens the current filepath or URL (decided by
 						*:verb* *:verbose*
 :[count]verb[ose] {command}
 			Execute {command} with 'verbose' set to [count].  If
-			[count] is omitted one is used. ":0verbose" can be
+			[count] is omitted one is used.  ":0verbose" can be
 			used to set 'verbose' to zero.
 			The additional use of ":silent" makes messages
 			generated but not displayed.
@@ -512,7 +523,8 @@ user command or autocommand, the script in which it was defined is reported.
 				:tabnew | terminal {program} {keyword}
 <			Special cases:
 			- If 'keywordprg' begins with ":" it is invoked as
-			  a Vim command with [count].
+			  a Vim command and [count] is passed as the first
+			  argument, if present.
 			- If 'keywordprg' is empty, |:help| is used.
 			- When 'keywordprg' is equal to "man", a [count]
 			  before "K" is inserted after the "man" command and
@@ -560,6 +572,10 @@ gO			Show a filetype-specific, navigable "outline" of the
 g==			Executes the current code block.
 
 			Works in |help| buffers.
+
+							*:upt* *:uptime*
+:upt[ime]		Shows Nvim's uptime.
+			See also |v:starttime|.
 
 ==============================================================================
 2. Using Vim like less or more					*less*

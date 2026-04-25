@@ -7,9 +7,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mark_defs.h.inline.generated.h"
-#endif
+#include "mark_defs.h.inline.generated.h"
 
 // marks: positions in a file
 // (a normal mark is a lnum/col pair, the same as a file position)
@@ -41,6 +39,13 @@ typedef enum {
   kMarkAllNoResolve,  ///< Return all types of marks but don't resolve fnum (global marks).
 } MarkGet;
 
+/// Options when adjusting marks
+typedef enum {
+  kMarkAdjustNormal,  ///< Normal mode commands, etc.
+  kMarkAdjustApi,     ///< Changing lines from the API
+  kMarkAdjustTerm,    ///< Terminal scrollback
+} MarkAdjustMode;
+
 /// Number of possible numbered global marks
 #define EXTRA_MARKS     ('9' - '0' + 1)
 
@@ -69,9 +74,10 @@ typedef enum {
 typedef struct {
   linenr_T topline_offset;  ///< Amount of lines from the mark lnum to the top of the window.
                             ///< Use MAXLNUM to indicate that the mark does not have a view.
+  colnr_T skipcol;
 } fmarkv_T;
 
-#define INIT_FMARKV { MAXLNUM }
+#define INIT_FMARKV { MAXLNUM, 0 }
 
 /// Structure defining single local mark
 typedef struct {

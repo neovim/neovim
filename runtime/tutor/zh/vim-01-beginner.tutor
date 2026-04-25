@@ -1,0 +1,967 @@
+# 欢迎来到 Neovim 教程
+
+# 第 1 章
+
+Neovim 是一个功能非常强大的编辑器，它的命令多到无法在这篇教程里一一讲解。本教程
+旨在介绍足够多的基本命令，让你能轻松地将 Neovim 作为通用编辑器来使用。
+
+请务必记住，本教程是为“在实践中学习”而设计的。这意味着你需要亲手完成这些练习才能
+真正掌握它们。如果你只看不练，很快就会忘记最重要的内容！
+
+现在，请确保你的大写锁定键（Caps-Lock）是关闭状态，然后多次按下 `j`{normal} 键，
+直到光标移动到第 0 课完全充满屏幕为止。
+
+# 第 0 课
+
+NOTE: 课程中的命令会修改本文，但这些更改不会被保存。不用担心会搞乱什么；只要记住
+按 [<Esc>](<Esc>) 键，再按 [u](u) 键，就可以撤销最近的更改。
+
+本教程是交互式的，有几件事你需要知道。
+- 在 [这样的](holy-grail    ) 链接上按 [<Enter>](<Enter>) 键可以打开链接的帮助文档。
+- 或者，你也可以在任意单词上按 [K](K) 键来查找它的文档！
+- 你可以用 `:q`{vim} `<Enter>`{normal} 来关闭这个帮助窗口。
+
+当左边出现 ✗ 标志时，你需要去修改文本。当你正确地完成修改后，左边的 ✗ 标志就会变
+成 ✓。我想你已经能体会到 Neovim 的强大之处了。
+
+其他时候，你会被提示运行一个命令（稍后会对此进行解释）：
+
+    `:help`{vim} `<Enter>`{normal}
+
+或者按下一系列按键：
+~~~ normal
+    <Esc>0f<Space>d3wP$P
+~~~
+尖括号（<>）里的文本（如 `<Enter>`{normal}）代表你需要按下的键，而不是要输入的文本。
+
+现在，移动到下一课（使用 `j`{normal} 键向下滚动）。
+
+# 第 1.1 课：移动光标
+
+** 按 `h`、`j`、`k`、`l` 键来移动光标，如下所示。 **
+
+          ↑
+          k         提示：`h`{normal} 键在左边，向左移动。
+     ← h    l →           `l`{normal} 键在右边，向右移动。
+         j                `j`{normal} 键看起来像一个向下的箭头。
+         ↓
+
+ 1. 在屏幕上四处移动光标，直到你习惯这种操作。
+
+ 2. 按住向下键（`j`{normal}）直到光标开始连续向下移动。
+    现在你知道如何移动到下一课了。
+
+ 3. 使用下移键，移动到第 1.2 课。
+
+NOTE: 如果你不确定自己输入了什么，随时可以按 <Esc> 键回到普通模式（Normal mode）。
+      然后重新输入你想要的命令。
+
+NOTE: 键盘上的方向键通常也能用。但一旦你习惯了，使用 hjkl 可以让你移动得更快。
+
+# 第 1.2 课：退出 Neovim
+
+!! NOTE: 在执行以下任何步骤之前，请先阅读完本课的全部内容 !!
+
+ 1. 按下 <Esc> 键（确保你处于普通模式）。
+
+ 2. 输入：
+
+    `:q!`{vim} `<Enter>`{normal}
+
+    这个命令会退出编辑器，并“丢弃”你所做的所有更改。
+
+ 3. 重新打开 Neovim，并通过执行带你进入本教程的命令回到这里。这个命令也许是：
+
+    `:Tutor`{vim} `<Enter>`{normal}
+
+ 4. 如果你已经记住了这些步骤并充满信心，请执行第 1 到 3 步来退出并重新进入编辑器。
+
+NOTE: [:q!](:q) `<Enter>`{normal} 会丢弃你做的任何更改。在接下来的几课中，你将学习如何
+      将更改保存到文件中。
+
+ 5. 向下移动光标到第 1.3 课。
+
+# 第 1.3 课：文本编辑——删除（Deletion）
+
+** 按 `x`{normal} 键可以删除光标下的单个字符。 **
+
+ 1. 将光标移动到下面标有 ✗ 的那一行。
+
+ 2. 为了修正错误，请将光标移动到需要被删除的字符上。
+
+ 3. 按下 [x 键](x) 来删除那个多余的字符。
+
+ 4. 重复第 2 到 4 步，直到句子正确为止。
+
+The ccow jumpedd ovverr thhe mooon.
+The cow jumped over the moon.
+
+ 5. 现在句子已经正确了，请继续学习第 1.4 课。
+
+NOTE: 在学习本教程时，不必试图记住所有内容，你的 Neovim 词汇量会随着使用而增长。
+      可以考虑定期回到本教程进行复习。
+
+# 第 1.4 课：文本编辑——插入（Insertion）
+
+** 按 `i`{normal} 键可以插入文本。 **
+
+ 1. 将光标移动到下面标有 ✗ 的第一行。
+
+ 2. 为了让第一行和第二行变得一样，请将光标移动到需要插入文本位置“之后”的那个字符上。
+
+ 3. 按下 `i`{normal} 键，然后输入需要补充的内容。
+
+ 4. 每个错误修正后，按 `<Esc>`{normal} 键回到普通模式。
+    重复第 2 到 4 步来修正整个句子。
+
+There is text misng this .
+There is some text missing from this line.
+
+ 5. 当你熟练掌握插入文本后，请继续学习第 1.5 课。
+
+# 第 1.5 课：文本编辑——追加（Appending）
+
+** 按 `A`{normal} 键可以在行末追加文本。 **
+
+ 1. 将光标移动到下面标有 ✗ 的第一行。
+    光标在该行的哪个字符上并不重要。
+
+ 2. 按下 [A](A) 键，然后输入需要补充的内容。
+
+ 3. 文本追加完成后，按 `<Esc>`{normal} 键回到普通模式。
+
+ 4. 将光标移动到标有 ✗ 的第二行，并重复第 2 和第 3 步来修正这个句子。
+
+There is some text missing from th
+There is some text missing from this line.
+There is also some text miss
+There is also some text missing here.
+
+ 5. 当你熟练掌握追加文本后，请继续学习第 1.6 课。
+
+# 第 1.6 课：编辑文件
+
+** 使用 `:wq`{vim} 来写入（保存）文件并退出。 **
+
+!! NOTE: 在执行以下任何步骤之前，请先阅读完本课的全部内容 !!
+
+ 1. 像第 1.2 课那样退出本教程：`:q!`{vim}
+    或者，如果你能打开另一个终端，就在那个终端里执行以下操作。
+
+ 2. 在 shell 提示符下输入这个命令：
+~~~ sh
+    $ nvim tutor
+~~~
+    'nvim' 是启动 Neovim 编辑器的命令，'tutor' 是你希望编辑的文件名。
+    请使用一个可以被修改的文件。
+
+ 3. 像在前面课程中学到的那样，插入和删除一些文本。
+
+ 4. 保存更改并退出 Neovim：
+~~~ cmd
+    :wq
+~~~
+    注意，你需要按 `<Enter>` 键来执行该命令。
+
+ 5. 如果你在第 1 步退出了本教程，请重启教程并移动到下面的总结部分。
+
+ 6. 在阅读并理解了以上步骤后，亲手操作一遍。
+
+# 第 1 课总结
+
+ 1. 移动光标可以使用方向键，也可以使用 hjkl 键。
+     h (左)      j (下)      k (上)      l (右)
+
+ 2. 从 shell 提示符启动 Neovim，输入：
+~~~ sh
+    $ nvim 文件名
+~~~
+ 3. 退出 Neovim，输入：`<Esc>`{normal} `:q!`{vim} `<Enter>`{normal} 放弃所有更改。
+             或者输入：`<Esc>`{normal} `:wq`{vim} `<Enter>`{normal} 保存所有更改。
+
+ 4. 删除光标下的字符，输入：`x`{normal}
+
+ 5. 插入或追加文本，输入：
+    `i`{normal} 插入文本 `<Esc>`{normal}     在光标前插入。
+    `A`{normal} 追加文本 `<Esc>`{normal}     在当前行末尾追加。
+
+NOTE: 按 `<Esc>`{normal} 键会让你进入普通模式，或者取消一个不想继续输入的、未完成的命令。
+
+现在，请继续学习第 2 课。
+
+# 第 2.1 课：删除类命令（Deletion）
+
+** 输入 `dw`{normal} 来删除一个单词（word）。 **
+
+ 1. 按 `<Esc>`{normal} 键确保你处于普通模式。
+
+ 2. 将光标移动到下面标有 ✗ 的那一行。
+
+ 3. 将光标移动到需要被删除的单词的开头。
+
+ 4. 输入 [d](d)[w](w) 让这个单词消失。
+
+There are a some words fun that don't belong paper in this sentence.
+There are some words that don't belong in this sentence.
+
+ 5. 重复第 3 和第 4 步，直到句子正确，然后继续学习第 2.2 课。
+
+# 第 2.2 课：更多删除类命令
+
+** 输入 `d$`{normal} 来删除从光标到行尾的内容。 **
+
+ 1. 按 `<Esc>`{normal} 键确保你处于普通模式。
+
+ 2. 将光标移动到下面标有 ✗ 的那一行。
+
+ 3. 将光标移动到正确句子的末尾（在第一个 . 之后）。
+
+ 4. 输入 `d$`{normal} 来删除到行尾的所有内容。
+
+Somebody typed the end of this line twice. end of this line twice.
+
+ 5. 继续学习第 2.3 课，来理解这背后的原理。
+
+# 第 2.3 课：关于操作符（operator）和移动（motion）
+
+许多修改文本的命令都由一个 [操作符](operator) 和一个 [移动](navigation) 组成。
+使用 [d](d) 删除操作符的命令格式如下：
+
+    d   移动
+
+  其中：
+    d       - 是删除操作符。
+    移动    - 是操作符将要作用的范围（如下所列）。
+
+  一些常用的移动：
+    [w](w) - 到下一个单词的开头，但不包括其第一个字符。
+    [e](e) - 到当前单词的末尾，并包括最后一个字符。
+    [$]($) - 到当前行的末尾，并包括最后一个字符。
+
+  因此，输入 `de`{normal} 将会删除从光标到当前单词末尾的内容。
+
+NOTE: 在普通模式下，不带操作符、只按下移动键，将会像预期的那样移动光标。
+
+# 第 2.4 课：为移动增加计数
+
+** 在移动命令前输入一个数字，可以将其重复执行那么多次。 **
+
+ 1. 将光标移动到下面标有 ✓ 的那行的开头。
+
+ 2. 输入 `2w`{normal}，光标会向前移动两个单词。
+
+ 3. 输入 `3e`{normal}，光标会移动到前方第三个单词的末尾。
+
+ 4. 输入 `0`{normal}（[零](0)）可以移动到行首。
+
+ 5. 用不同的数字重复第 2 和第 3 步。
+
+This is just a line with words you can move around in.
+
+ 6. 继续学习第 2.5 课。
+
+# 第 2.5 课：使用计数删除更多内容
+
+** 在操作符和移动之间加上一个数字，可以将其重复执行那么多次。 **
+
+在前面提到的“删除操作符 + 移动”组合中，你可以在移动前插入一个计数来删除更多内容：
+     d   数字   移动
+
+ 1. 将光标移动到下面标有 ✗ 的那一行中第一个全大写单词上。
+
+ 2. 输入 `d2w`{normal} 来删除两个全大写单词。
+
+ 3. 重复第 1 和第 2 步，但使用不同的计数，用一个命令删除剩余连续的全大写单词。
+
+This ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up.
+
+# 第 2.6 课：行操作
+
+** 输入 `dd`{normal} 来删除一整行。 **
+
+由于删除整行的操作非常频繁，Vi 的设计者们决定，输入两个 d 来删除一行会更方便。
+
+ 1. 将光标移动到下面短语的第 2 行。
+
+ 2. 输入 [dd](dd) 来删除该行。
+
+ 3. 现在移动到第 4 行。
+
+ 4. 输入 `2dd`{normal} 来删除两行。
+
+1)  Roses are red,
+2)  Mud is fun,
+3)  Violets are blue,
+4)  I have a car,
+5)  Clocks tell time,
+6)  Sugar is sweet
+7)  And so are you.
+
+# 第 2.7 课：撤销命令（Undo）
+
+** 按 `u`{normal} 撤销上一个命令，按 `U`{normal} 恢复一整行。 **
+
+ 1. 将光标移动到下面标有 ✗ 的那一行，并把它放在第一个错误上。
+
+ 2. 输入 `x`{normal} 来删除第一个多余的字符。
+
+ 3. 现在输入 `u`{normal} 来撤销上一次执行的命令。
+
+ 4. 这次，使用 `x`{normal} 命令修正该行所有的错误。
+
+ 5. 现在输入大写的 `U`{normal}，将该行恢复到它最初始的状态。
+
+ 6. 现在多次输入 `u`{normal}，来撤销 `U`{normal} 以及之前的命令。
+
+ 7. 现在多次输入 `<C-r>`{normal}（Ctrl + R），来重做（redo）那些被撤销的命令。
+
+Fiix the errors oon thhis line and reeplace them witth undo.
+Fix the errors on this line and replace them with undo.
+
+ 8. 这些都是非常有用的命令。现在请继续学习第 2 课的总结。
+
+# 第 2 课总结
+
+ 1. 删除从光标到下一个单词开头的内容，输入：   `dw`{normal}
+
+ 2. 删除从光标到行尾的内容，输入：             `d$`{normal}
+
+ 3. 删除一整行，输入：                         `dd`{normal}
+
+ 4. 重复一个移动，在它前面加上数字：           `2w`{normal}
+
+ 5. 修改类命令的格式是：
+
+        操作符   [数字]   移动
+
+    其中：
+
+        操作符 -   是要做什么，比如 [d](d) 代表删除。
+        [数字] -   是一个可选的计数，用来重复移动。
+        移动   -   定义了操作符要作用的文本范围，例如：
+                      [w](w)（单词）,
+                      [$]($)（到行尾），等等。
+
+ 6. 移动到行首，使用零：[0](0)
+
+ 7. 撤销之前的操作，输入：           `u`{normal}（小写 u）
+    撤销对一整行的所有更改，输入：   `U`{normal}（大写 U）
+    重做被撤销的操作，输入：         `<C-r>`{normal}
+
+# 第 3.1 课：粘贴命令（Put）
+
+** 输入 `p`{normal} 可以将之前删除的文本粘贴到光标之后。 **
+
+ 1. 将光标移动到下面第一个标有 `--->` 的行。
+
+ 2. 输入 `dd`{normal} 来删除该行，并将其存入 Neovim 的一个寄存器中。
+
+ 3. 将光标移动到 c) 行，也就是被删除那一行的“上一行”。
+
+ 4. 输入 `p`{normal}，将之前删除的行粘贴到光标下方。
+
+ 5. 重复第 2 到 4 步，将所有行按正确的顺序（abcd）排列。
+
+---> d) Can you learn too?
+---> b) Violets are blue,
+---> c) Intelligence is learned,
+---> a) Roses are red,
+
+NOTE: 你也可以用 `P`{normal}（大写 P）将文本粘贴到光标之前。
+
+# 第 3.2 课：替换命令（Replace）
+
+** 输入 `rx`{normal} 可以将光标下的字符替换为 x。 **
+
+ 1. 将光标移动到下面标有 ✗ 的第一行。
+
+ 2. 将光标移动到第一个错误字符上。
+
+ 3. 输入 `r`{normal}，然后输入正确的字符。
+
+ 4. 重复第 2 和第 3 步，直到第一行和第二行完全一样。
+
+Whan this lime was tuoed in, someone presswd some wrojg keys!
+When this line was typed in, someone pressed some wrong keys!
+
+ 5. 现在请继续学习第 3.3 课。
+
+NOTE: 请记住，你应该通过实践来学习，而不是死记硬背。
+
+# 第 3.3 课：更改操作符（Change）
+
+** 要更改到单词末尾，输入 `ce`{normal}。 **
+
+ 1. 将光标移动到下面标有 ✗ 的第一行。
+
+ 2. 将光标放在 "lubw" 的 "u" 上。
+
+ 3. 输入 `ce`{normal}，然后输入正确的单词（在这种情况是输入 "ine"）。
+
+ 4. 按下 `<Esc>`{normal}，然后移动到下一个需要修改的字符。
+
+ 5. 重复第 3 和第 4 步，直到第一句和第二句完全一样。
+
+This lubw has a few wptfd that mrrf changing usf the change operator.
+This line has a few words that need changing using the change operator.
+
+请注意，[c](c)e 会删除单词并让你进入插入模式（Insert mode）。
+
+# 第 3.4 课：使用 `c`{normal} 进行更多更改
+
+** 更改操作符可以和删除操作符使用相同的移动。 **
+
+ 1. 更改操作符的工作方式和删除操作符一样。格式是：
+
+        c    [数字]   移动
+
+ 2. 移动也是一样的，比如 `w`{normal}（单词）和 `$`{normal}（到行尾）。
+
+ 3. 移动到下面标有 ✗ 的第一行。
+
+ 4. 将光标移动到第一个错误处。
+
+ 5. 输入 `c$`{normal}，然后输入该行余下正确的内容（参照第二行），最后按 `<Esc>`{normal}。
+
+The end of this line needs some help to make it like the second.
+The end of this line needs to be corrected using the c$ command.
+
+NOTE: 在输入时，你可以使用退格键（Backspace）来修正错误。
+
+# 第 3 课总结
+
+ 1. 要粘贴刚刚删除的文本，输入 [p](p)。这会把删除的文本放在光标“之后”
+    （如果删除的是一整行，它会被粘贴到光标所在行的下一行）。
+
+ 2. 要替换光标下的单个字符，输入 [r](r) 然后输入你想要的那个字符。
+
+ 3. [更改操作符](c) 允许你更改从光标开始到一个移动命令结束位置的文本。
+    输入 `ce`{normal} 来更改到单词末尾，`c$`{normal} 来更改到行尾，等等。
+
+ 4. 更改命令的格式是：
+
+        c   [数字]   移动
+
+现在请继续学习下一课。
+
+# 第 4.1 课：光标位置和文件状态
+
+** 输入 `<C-g>`{normal} 来显示你在文件中的位置和文件状态。
+ 输入 `{count}G`{normal} 来移动到文件中的第 {count} 行。 **
+
+NOTE: 在执行任何步骤之前，请先阅读完本课的全部内容！！
+
+ 1. 按住 `<Ctrl>`{normal} 键并按下 `g`{normal}。我们称这个操作为 `<C-g>`{normal}。
+    屏幕底部会出现一条消息，包含文件名和你在文件中的位置。
+    请记住行号，第 3 步会用到。
+
+NOTE: 你可能会在屏幕右下角看到光标位置。这是因为设置了 ['ruler']('ruler') 选项。
+
+ 2. 按 [G](G) 移动到文件的末尾。
+    输入 [gg](gg) 移动到文件的开头。
+
+ 3. 输入你之前记住的行号，然后按 `G`{normal}。这会让你回到你第一次按 `<C-g>`{normal} 时所在的行。
+
+ 4. 如果你觉得没问题，就执行第 1 到 3 步。
+
+# 第 4.2 课：搜索命令
+
+** 输入 `/`{normal} 后面跟一个短语，来搜索这个短语。 **
+
+ 1. 在普通模式下，输入 `/`{normal} 字符。注意它和光标会出现在屏幕底部，
+    就像 `:`{normal} 命令一样。
+
+ 2. 现在输入 errroor `<Enter>`{normal}。这是你想要搜索的词。
+
+ 3. 要再次搜索同一个短语，只需输入 [n](n)。
+    要反向搜索同一个短语，输入 [N](N)。
+
+ 4. 要反向搜索一个短语，使用 [?](?) 而不是 `/`{normal}。
+
+ 5. 要回到你之前的位置，按 `<C-o>`{normal}。（按住 `<Ctrl>`{normal} 键的同时按字母 `o`{normal}）。
+    重复按可以回到更早的位置。`<C-i>`{normal} 则会前进。
+
+"errroor" is not the way to spell error; errroor is an error.
+
+NOTE: 当搜索到达文件末尾时，它会从头开始继续搜索，除非 ['wrapscan']('wrapscan') 选项被关闭了。
+
+# 第 4.3 课：括号匹配搜索
+
+** 输入 `%`{normal} 来查找匹配的 ), ], }。 **
+
+ 1. 将光标放在下面标有 ✓ 的那一行中的任意一个 (, [, { 上。
+
+ 2. 现在输入 [%](%) 字符。
+
+ 3. 光标会移动到与之匹配的括号上。
+
+ 4. 再次输入 `%`{normal}，光标会移回另一半匹配的括号。
+
+ 5. 将光标移动到另一个 (, ), [, ], {, } 上，看看 `%`{normal} 的效果。
+
+This ( is a test line with ('s, ['s, ] and {'s } in it. ))
+
+NOTE: 这在调试程序中不匹配的括号时非常有用！
+
+# 第 4.4 课：替换命令（Substitute）
+
+** 输入 `:s/old/new/g` 来用 "new" 替换 "old"。 **
+
+ 1. 将光标移动到下面标有 ✗ 的那一行。
+
+ 2. 输入
+~~~ cmd
+        :s/thee/the/
+~~~
+    NOTE: [:s](:s) 命令只改变了行中第一个匹配的 "thee"。
+
+ 3. 现在输入
+~~~ cmd
+        :s/thee/the/g
+~~~
+    加上 g [标志](:s_flags) 意味着在行内进行全局替换，也就是改变该行中所有出现的 "thee"。
+
+Usually thee best time to see thee flowers is in thee spring.
+
+ 4. 要在两行之间替换一个字符串的所有出现，输入
+~~~ cmd
+        :#,#s/old/new/g
+~~~
+    其中 # 是要进行替换的行号范围（例如，`1,3` 表示从第 1 行到第 3 行，包含这两行）。
+
+    输入
+~~~ cmd
+        :%s/old/new/g
+~~~
+    可以在整个文件中进行替换。
+
+    输入
+~~~ cmd
+        :%s/old/new/gc
+~~~
+    可以在整个文件中查找所有出现，并对每一次替换进行确认。
+
+NOTE: 你也可以先用可视模式（Visual mode）选中你想替换的行。这在后面的课程中会详细解释。
+
+# 第 4 课总结
+
+ 1. `<C-g>`{normal}    显示你的位置和文件状态。
+    `G`{normal}        移动到文件末尾。
+    数字 `G`{normal}   移动到指定的行号。
+    `gg`{normal}       移动到第一行。
+
+ 2. 输入 `/`{normal} 后跟一个短语，会“向前”搜索该短语。
+    输入 `?`{normal} 后跟一个短语，会“向后”搜索该短语。
+    搜索后，输入 `n`{normal} 查找下一个（同方向），或 `N`{normal} 查找下一个（反方向）。
+    `<C-o>`{normal} 带你回到旧的光标位置，`<C-i>`{normal} 则去往新的位置。
+
+ 3. 当光标在 (, ), [, ], {, } 上时，输入 `%`{normal} 会跳转到其匹配的另一半。
+
+ 4. 将行内第一个 old 替换为 new，输入
+~~~ cmd
+        :s/old/new
+~~~
+    将行内所有 old 替换为 new，输入
+~~~ cmd
+        :s/old/new/g
+~~~
+    在两行 # 之间进行替换，输入
+~~~ cmd
+        :#,#s/old/new/g
+~~~
+    在整个文件中进行替换，输入
+~~~ cmd
+        :%s/old/new/g
+~~~
+    每次替换前进行确认，添加 'c' 标志
+~~~ cmd
+        :%s/old/new/gc
+~~~
+
+# 第 5.1 课：如何执行外部命令
+
+** 输入 `:!`{vim} 后面跟一个外部命令，来执行该命令。 **
+
+ 1. 输入你熟悉的命令 `:`{normal}，让光标定位到屏幕底部。这允许你输入一个
+    命令行命令。
+
+ 2. 现在输入 [!](!cmd)（感叹号）字符。这允许你执行任何外部的 shell 命令。
+
+ 3. 举个例子，在 "!" 后面输入 "ls"，然后按 `<Enter>`{normal}。
+    这会显示你的目录列表，就像你在 shell 提示符下一样。
+
+NOTE: 你可以用这种方式执行任何外部命令，并且可以带参数。
+
+NOTE: 所有 `:`{vim} 命令都在你按下 `<Enter>`{normal} 后执行。
+
+# 第 5.2 课：更多关于写入文件的知识
+
+** 要保存对文本的更改，输入 `:w`{vim} 文件名。 **
+
+ 1. 输入 `:!{unix:(ls),win:(dir)}`{vim} 来获取你的目录列表。
+    你已经知道在这之后必须按 `<Enter>`{normal}。
+
+ 2. 选择一个还不存在的文件名，比如 TEST。
+
+ 3. 现在输入：
+~~~ cmd
+        :w TEST
+~~~
+    （这里的 TEST 是你选择的文件名。）
+
+ 4. 这会将当前文件以 TEST 的名字保存。
+    要验证这一点，再次输入 `:!{unix:(ls),win:(dir)}`{vim} 来查看你的目录。
+
+NOTE: 如果你退出 Neovim，然后用 `nvim TEST` 再次启动它，这个文件将会是你保存时教程
+      内容的一个精确副本。
+
+ 5. 现在通过输入以下命令来删除该文件：
+~~~ cmd
+        :!{unix:(rm),win:(del)} TEST
+~~~
+
+# 第 5.3 课：选择要写入的文本
+
+** 要保存文件的一部分，输入 `v`{normal} 移动 `:w 文件名`{vim}。 **
+
+ 1. 将光标移动到这一行。
+
+ 2. 按下 [v](v) 并将光标移动到下面的第五项。注意文本被高亮了。
+
+ 3. 按下 `:`{normal} 字符。在屏幕底部会出现：
+
+        `:'<,'>`{vim}
+
+ 4. 输入
+
+        `w TEST`{vim}
+
+    这里的 TEST 是一个还不存在的文件名。在按 `<Enter>`{normal} 之前，
+    确认你看到的是：
+
+        `:'<,'>w TEST`{vim}
+
+ 5. Neovim 会将被选中的行写入文件 TEST。使用 `:!{unix:(ls),win:(dir)}`{vim} 来查看它。
+    先不要删除它！我们将在下一课用到它。
+
+NOTE: 按下 [v](v) 会启动 [可视选择（Visual selection）](visual-mode)。你可以移动光标来扩大或缩小选择范围。
+      然后你可以使用一个操作符来对选中的文本
+      做些什么。例如，`d`{normal} 会删除选中的文本。
+
+# 第 5.4 课：读取和合并文件
+
+** 要读取一个文件的内容，输入 `:r 文件名`{vim}。 **
+
+ 1. 将光标放在这一行的正上方。
+
+NOTE: 执行第 2 步后，你会看到第 5.3 课的文本。然后向下移动
+      才能再次看到本课内容。完成后按 `u`{normal} 撤销。
+
+ 2. 现在使用以下命令读取你的 TEST 文件：
+
+        `:r TEST`{vim}
+
+    这里的 TEST 是你之前使用的文件名。
+    你读取的文件内容会被放在光标所在行的下方。
+
+ 3. 要验证文件是否被读取，向上移动光标，你会注意到现在有两份第 5.3 课的内容，
+    一份是原始的，一份是读取进来的。
+
+NOTE: 你也可以读取一个外部命令的输出。例如：
+
+        `:r !{unix:(ls),win:(dir)}`{vim}
+
+      会读取 `ls` 命令的输出，并将其放在光标下方。
+
+# 第 5 课总结
+
+ 1. [:!command](:!cmd) 执行一个外部命令。
+
+     一些有用的例子：
+     `:!{unix:(ls ),win:(dir)}`{vim}                 - 显示目录列表
+     `:!{unix:(rm ),win:(del)} 文件`{vim}            - 删除文件
+
+ 2. [:w](:w) 文件名              将当前 Neovim 文件以“文件名”这个名字写入磁盘。
+
+ 3. [v](v)  移动  :w 文件名     将可视模式选中的行保存到文件“文件名”中。
+
+ 4. [:r](:r) 文件名              读取磁盘文件“文件名”的内容，并将其放在光标位置的下方。
+
+ 5. {unix:([:r !ls](:r!) ),win:([:r !dir](:r!))}                读取 {unix:(ls),win:(dir)} 命令的输出，并将其放在光标位置的下方。
+
+# 第 6.1 课：开启新行命令（Open）
+
+** 输入 `o`{normal} 可以在光标下方开启一个新行，并进入插入模式。 **
+
+ 1. 将光标移动到下面标有 ✓ 的那一行。
+
+ 2. 输入小写字母 `o`{normal}，在光标“下方”[开启](o)一个新行，并让你进入插入模式。
+
+ 3. 现在输入一些文本，然后按 `<Esc>`{normal} 退出插入模式。完成后请删除你开启的行。
+
+After typing `o`{normal} the cursor is placed on the open line in Insert mode.
+
+ 4. 要在光标“上方”开启一个新行，只需输入[大写 O](O)，而不是小写 `o`{normal}。
+    在下面这行上试试。完成后请删除你开启的行。
+
+Open up a line above this by typing O while the cursor is on this line.
+
+# 第 6.2 课：追加命令（Append）
+
+** 输入 `a`{normal} 可以在光标“之后”插入文本。 **
+
+ 1. 将光标移动到下面标有 ✗ 的那行的开头。
+
+ 2. 按 `e`{normal} 直到光标移动到 "li" 的末尾。
+
+ 3. 输入小写字母 `a`{normal}，在光标“之后”[追加](a)文本。
+
+ 4. 参照下一行，补全这个单词。按 `<Esc>`{normal} 退出插入模式。
+
+ 5. 使用 `e`{normal} 移动到下一个不完整的单词，并重复第 3 和第 4 步。
+
+This li will allow you to pract appendi text to a line.
+This line will allow you to practice appending text to a line.
+
+NOTE: [a](a)、[i](i) 和 [A](A) 都会进入同一个插入模式，唯一的区别是字符被插入的位置不同。
+
+# 第 6.3 课：另一种替换方式
+
+** 输入大写 `R`{normal} 可以替换多个字符。 **
+
+ 1. 将光标移动到下面标有 ✗ 的第一行。将光标移动到第一个 "xxx" 的开头。
+
+ 2. 现在按下 `R`{normal}（[大写 R](R)）并输入第二行中对应的数字，用它来替换 "xxx"。
+
+ 3. 按下 `<Esc>`{normal} 离开[替换模式（Replace mode）](mode-replace)。注意该行余下的部分保持不变。
+
+ 4. 重复以上步骤来替换剩下的 "xxx"。
+
+Adding 123 to xxx gives you xxx.
+Adding 123 to 456 gives you 579.
+
+NOTE: 替换模式很像插入模式，但你输入的每个字符都会替换掉一个已有的字符。
+
+# 第 6.4 课：复制和粘贴文本
+
+** 使用 `y`{normal} 操作符来复制（yank）文本，用 `p`{normal} 来粘贴（put）它。 **
+
+ 1. 去到下面标有 ✓ 的那一行，并将光标放在 "a)" 之后。
+
+ 2. 用 `v`{normal} 启动可视模式，并将光标移动到 "first" 之前。
+
+ 3. 输入 `y`{normal} 来 [复制（yank）](yank) 高亮的文本。
+
+ 4. 将光标移动到下一行的末尾：`j$`{normal}
+
+ 5. 输入 `p`{normal} 来 [粘贴（put）](put) 文本。
+
+ 6. 按下 `a`{normal} 然后输入 "second"。按 `<Esc>`{normal} 离开
+    插入模式。
+
+ 7. 使用可视模式选中 "item."，用 `y`{normal} 复制它，用 `j$`{normal} 移动到
+    下一行的末尾，然后用 `p`{normal} 在那里粘贴文本。
+
+a) This is the first item.
+b)
+
+NOTE: 你可以把 `y`{normal} 当作一个操作符来使用：`yw`{normal} 会复制一个单词。
+
+NOTE: 你可以用 `P`{normal} 在光标前粘贴，而不是在光标后。
+
+# 第 6.5 课：设置选项（Set）
+
+** 设置一个选项，让搜索和替换命令忽略大小写。 **
+
+Neovim 中有许多设置，你可以配置它们来满足你的需求。
+
+ 1. 通过输入 `/ignore` 来搜索 'ignore'。
+    多按几次 `n`{normal} 来重复搜索。
+
+ 2. 通过输入以下命令来设置 'ic'（Ignore case，即忽略大小写） 选项：
+~~~ cmd
+        :set ic
+~~~
+ 3. 现在再次按 `n`{normal} 搜索 'ignore'。
+    注意 Ignore 和 IGNORE 现在也能被找到了。
+
+ 4. 设置 'hlsearch' 和 'incsearch' 选项：
+~~~ cmd
+        :set hls is
+~~~
+ 5. 现在再次输入搜索命令，看看会发生什么：/ignore <Enter>
+
+ 6. 要禁用忽略大小写，输入：
+~~~ cmd
+        :set noic
+~~~
+ 7. 要反转一个设置的值，在它前面加上 "inv"：
+~~~ cmd
+        :set invic
+~~~
+NOTE: 要移除匹配项的高亮，输入：
+~~~ cmd
+        :nohlsearch
+~~~
+NOTE: 如果你只想在某一次搜索命令中忽略大小写，在短语中使用 [\c](/\c)：
+      /ignore\c <Enter>
+
+# 第 6 课总结
+
+ 1. 输入 `o`{normal} 在光标“下方”开启一个新行并进入插入模式。
+    输入 `O`{normal} 在光标“上方”开启一个新行。
+
+ 2. 输入 `a`{normal} 在光标“之后”插入文本。
+    输入 `A`{normal} 在行尾之后插入文本。
+
+ 3. `e`{normal} 命令移动到一个单词的末尾。
+
+ 4. `y`{normal} 操作符复制文本，`p`{normal} 粘贴它。
+
+ 5. 输入大写 `R`{normal} 会进入替换模式，直到按下 `<Esc>`{normal}。
+
+ 6. 输入 "[:set](:set) xxx" 可以设置选项 "xxx"。一些有用的选项是：
+
+        'ic' 'ignorecase'   搜索时忽略大小写
+        'is' 'incsearch'    实时显示搜索短语的部分匹配
+        'hls' 'hlsearch'    高亮所有匹配的短语
+
+    你可以使用长选项名或短选项名。
+
+ 7. 在选项前加上 "no" 来关闭一个选项：
+~~~ cmd
+        :set noic
+~~~
+ 8. 在选项前加上 "inv" 来反转一个选项的值：
+~~~ cmd
+        :set invic
+~~~
+# 第 7.1 课：获取帮助
+
+** 使用在线帮助系统。 **
+
+Neovim 有一个全面的在线帮助系统。
+
+要开始使用，试试下面两种方法之一：
+
+  - 按下 `<F1>`{normal} 键（如果你有的话）
+  - 输入 `:help`{vim}
+
+阅读帮助窗口中的文本，了解帮助系统是如何工作的。
+输入 `<C-w><C-w>`{normal} 可以在窗口之间跳转。
+输入 `:q`{vim} 关闭帮助窗口。
+
+你几乎可以找到任何主题的帮助，只需给 ":help" 命令传递一个参数。
+试试这些（别忘了按 <Enter>）:
+~~~ cmd
+    :help w
+    :help c_CTRL-D
+    :help insert-index
+    :help user-manual
+~~~
+
+# 第 7.2 课：补全功能
+
+** 使用 `<C-d>`{normal} 和 `<Tab>`{normal} 进行命令行补全。 **
+
+ 1. 列出当前目录的内容：`:!{unix:(ls),win:(dir)}`{vim}
+
+ 2. 输入一个命令的开头：`:e`{vim}
+
+ 3. 按下 `<C-d>`{normal}，Neovim 会显示一个以 "e" 开头的命令列表。
+
+ 4. 按下 `<Tab>`{normal}，Neovim 会显示一个包含可能补全项的菜单
+    （或者如果输入的命令是唯一的，则直接补全，例如 ":ed`<Tab>`{normal}" 会被补全为 ":edit"）。
+
+ 5. 使用 `<Tab>`{normal} 或 `<C-n>`{normal} 移动到下一个匹配项。或者
+    使用 `<S-Tab>`{normal} 或 `<C-p>`{normal} 移动到上一个匹配项。
+
+ 6. 选择 `edit`{vim} 条目。现在你可以看到 `edit`{vim} 这个词已经被自动插入到命令行了。
+
+ 7. 现在加上一个空格和一个已存在文件名的开头：`:edit FIL`{vim}
+
+ 8. 按下 `<Tab>`{normal}。Vim 会显示一个补全菜单，列出以 `FIL` 开头的文件名。
+
+NOTE: 补全功能对许多命令都有效。它对 `:help`{vim} 命令尤其有用。
+
+# 第 7.3 课：配置 NVIM
+
+Neovim 是一个高度可配置的编辑器。你可以根据自己的需求进行定制。要开始使用更多功能，
+可以创建一个 vimrc 文件，如果你想用 Lua，文件名可以是 "init.lua"，如果你想用
+Vimscript，文件名可以是 "init.vim"。在本课中，我们将使用 "init.lua"。
+
+ 1. 开始编辑 "init.lua" 文件。
+
+    `:exe 'edit' stdpath('config')..'/init.lua'`{vim}
+
+ 2. 将 Lua 的示例配置复制到你的 "init.lua" 文件中。
+
+    `:read $VIMRUNTIME/example_init.lua`{vim}
+
+ 3. 写入文件（这也会创建任何缺失的父目录）：
+
+    `:w ++p`{vim}
+
+ 4. 下次你启动 Neovim 时，可以用以下命令快速打开这个 vimrc 文件：
+
+    `:e $MYVIMRC`{vim}
+
+# 第 7 课总结
+
+ 1. 输入 `:help`{vim}
+    或按下 `<F1>`{normal} 或 `<Help>`{normal} 来打开一个帮助窗口。
+
+ 2. 输入 `:help 主题`{vim} 来查找关于“主题”的帮助。
+
+ 3. 输入 `<C-w><C-w>`{normal} 来跳转到另一个窗口。
+
+ 4. 输入 `:q`{vim} 来关闭帮助窗口。
+
+ 5. 在命令模式下，按 `<C-d>`{normal} 查看可能的补全。按 `<Tab>`{normal} 使用补全菜单并选择一个匹配项。
+
+ 6. 创建你的配置文件来保存你的偏好设置。你可以用 `:e $MYVIMRC`{vim} 再次访问它。
+
+# 接下来呢？
+
+运行 `:help nvim-quickstart`{vim} 获取更多关于扩展 Nvim 的信息。
+
+# 结语
+
+这就是 Vim 教程第一章的全部内容。你可以继续学习[第二章](@tutor:vim-02-beginner)。
+
+本教程旨在简要介绍 Neovim 编辑器，内容刚好足够让你能比较轻松地使用它。它远非完
+整，因为 Neovim 还有许许多多其他的命令。请经常查阅帮助文档。网上也有无数优秀的
+教程和视频可供学习。这里有一些推荐：
+
+- *Learn Vim Progressively*:
+  https://yannesposito.com/Scratch/en/blog/Learn-Vim-Progressively/
+- *Learning Vim in 2014*:
+  https://benmccormick.org/learning-vim-in-2014/
+- *Vimcasts*:
+  http://vimcasts.org/
+- *Vim Video-Tutorials by Derek Wyatt*:
+  http://derekwyatt.org/vim/tutorials/
+- *Learn Vimscript the Hard Way*:
+  https://learnvimscriptthehardway.stevelosh.com/
+- *7 Habits of Effective Text Editing*:
+  https://www.moolenaar.net/habits.html
+- *vim-galore*:
+  https://github.com/mhinz/vim-galore
+
+如果你更喜欢书籍，Drew Neil 的 *Practical Vim* 经常被推荐
+（其续作 *Modern Vim* 包含了 Neovim 的特有内容）。
+
+本教程由 Michael C. Pierce 和 Robert K. Ware（科罗拉多矿业大学）编写，采用了
+Charles Smith（科罗拉多州立大学）提供的想法。电子邮件: bware@mines.colorado.edu。
+
+由 Bram Moolenaar 为 Vim 修改。
+由 Felipe Morales 为 vim-tutor-mode 修改。
+由 Rory Nesbitt 为 Neovim 修改。
+
+Neovim Tutor 简体中文翻译版由 PilgrimLyieu <pilgrimlyieu@outlook.com> 译制并校对。
+
+变更记录：
+- 2025-07-06 PilgrimLyieu <pilgrimlyieu@outlook.com>
+    译制并校对
+
+// vim: nowrap

@@ -296,9 +296,17 @@ func Test_cursorline_screenline_update()
   CheckScreendump
 
   let lines =<< trim END
+      func TestRetab()
+        let w = winwidth(0)
+        call cursor([1, w + 1, 0, w + 1])
+        call line('w0')
+        retab 8
+      endfunc
+
       call setline(1, repeat('xyz ', 30))
-      set cursorline cursorlineopt=screenline
+      set cursorline cursorlineopt=screenline tabstop=8
       inoremap <F2> <Cmd>call cursor(1, 1)<CR>
+      inoremap <F3> <Cmd>call TestRetab()<CR>
   END
   call writefile(lines, 'Xcul_screenline', 'D')
 
@@ -307,6 +315,8 @@ func Test_cursorline_screenline_update()
   call VerifyScreenDump(buf, 'Test_cursorline_screenline_1', {})
   call term_sendkeys(buf, "\<F2>")
   call VerifyScreenDump(buf, 'Test_cursorline_screenline_2', {})
+  call term_sendkeys(buf, "\<F3>")
+  call VerifyScreenDump(buf, 'Test_cursorline_screenline_3', {})
   call term_sendkeys(buf, "\<Esc>")
 
   call StopVimInTerminal(buf)

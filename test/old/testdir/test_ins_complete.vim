@@ -124,10 +124,9 @@ endfunc
 func Test_omni_dash()
   func Omni(findstart, base)
     if a:findstart
-        return 5
+      return 5
     else
-        echom a:base
-	return ['-help', '-v']
+      return ['-help', '-v']
     endif
   endfunc
   set omnifunc=Omni
@@ -137,8 +136,7 @@ func Test_omni_dash()
   %d
   set complete=o
   exe "normal Gofind -\<C-n>"
-  " 'complete' inserts at 'iskeyword' boundary (so you get --help)
-  call assert_equal("find --help", getline('$'))
+  call assert_equal("find -help", getline('$'))
 
   bwipe!
   delfunc Omni
@@ -177,6 +175,38 @@ func Test_omni_throw()
   delfunc Omni
   unlet g:CallCount
   set omnifunc= complete&
+endfunc
+
+func Test_omni_autoload()
+  let save_rtp = &rtp
+  set rtp=Xruntime/some
+  let dir = 'Xruntime/some/autoload'
+  call mkdir(dir, 'pR')
+
+  let lines =<< trim END
+      func omni#Func(findstart, base)
+          if a:findstart
+              return 1
+          else
+              return ['match']
+          endif
+      endfunc
+
+      eval 1 + 2
+  END
+  call writefile(lines, dir .. '/omni.vim')
+
+  new
+  setlocal omnifunc=omni#Func
+  call feedkeys("i\<C-X>\<C-O>\<Esc>", 'xt')
+
+  setlocal complete=.,Fomni#Func
+  call feedkeys("S\<C-N>\<Esc>", 'xt')
+  setlocal complete&
+
+  bwipe!
+  set omnifunc=
+  let &rtp = save_rtp
 endfunc
 
 func Test_completefunc_args()
@@ -356,8 +386,8 @@ func Test_CompleteDone_vevent_keys()
   call assert_equal('foo_test', g:complete_word)
   call assert_equal('files', g:complete_type)
 
-  call writefile(['hello help'], 'test_case.txt', 'D')
-  set dictionary=test_case.txt
+  call writefile(['hello help'], 'Xtest_case.txt', 'D')
+  set dictionary=Xtest_case.txt
   call feedkeys("ggdGSh\<C-X>\<C-K>\<C-Y>\<Esc>", 'tx')
   call assert_equal('hello', g:complete_word)
   call assert_equal('dictionary', g:complete_type)
@@ -368,7 +398,7 @@ func Test_CompleteDone_vevent_keys()
   call assert_equal('spell', g:complete_type)
 
   bwipe!
-  set completeopt& omnifunc& completefunc& spell& spelllang& dictionary&
+  set completeopt& omnifunc& completefunc& spell& spelllang& dictionary& complete&
   autocmd! CompleteDone
   delfunc OnDone
   delfunc CompleteFunc
@@ -546,48 +576,63 @@ func Test_completefunc_info()
   new
   set completeopt=menuone
   set completefunc=CompleteTest
+    " Can be called outside of ins-completion
+  call feedkeys("i\<C-X>\<C-U>\<C-Y>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
+  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 0, 'mode': '', 'selected': -1, 'items': []}", getline(1))
+  %d
   call feedkeys("i\<C-X>\<C-U>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
-  call assert_equal("matched{'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
   %d
   set complete=.,FCompleteTest
   call feedkeys("i\<C-N>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
-  call assert_equal("matched{'pum_visible': 1, 'mode': 'keyword', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'keyword', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
   %d
   set complete=.,F
   call feedkeys("i\<C-N>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
-  call assert_equal("matched{'pum_visible': 1, 'mode': 'keyword', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'keyword', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
   set completeopt&
   set complete&
   set completefunc&
 endfunc
 
-func Test_cpt_func_cursorcol()
+" For ^N completion, `completefunc` receives the same leader string in both the
+" 'info' and 'expansion' phases (the leader is not removed before expansion).
+" This avoids flicker when `completefunc` (e.g. an LSP client) is slow and calls
+" 'sleep', which triggers out_flush().
+func Test_completefunc_leader()
   func CptColTest(findstart, query)
     if a:findstart
-      call assert_equal("foo bar", getline(1))
-      call assert_equal(8, col('.'))
+      call assert_equal(b:compl_line, getline(1))
+      call assert_equal(b:cursor_col, col('.'))
       return col('.')
     endif
-    call assert_equal("foo ", getline(1))
-    call assert_equal(5, col('.'))
+    call assert_equal(b:compl_line, getline(1))
+    call assert_equal(b:cursor_col, col('.'))
     " return v:none
+    return []
   endfunc
 
   set complete=FCptColTest
   new
-  call feedkeys("ifoo bar\<C-N>", "tx")
-  bwipe!
-  new
+
+  " Replace mode
+  let b:compl_line = "foo barxyz"
+  let b:cursor_col = 10
+  call feedkeys("ifoo barbaz\<Esc>2hRxy\<C-N>", "tx")
+
+  " Insert mode
+  let b:compl_line = "foo bar"
+  let b:cursor_col = 8
+  call feedkeys("Sfoo bar\<C-N>", "tx")
+
   set completeopt=longest
-  call feedkeys("ifoo bar\<C-N>", "tx")
-  bwipe!
-  new
+  call feedkeys("Sfoo bar\<C-N>", "tx")
+
   set completeopt=menuone
-  call feedkeys("ifoo bar\<C-N>", "tx")
-  bwipe!
-  new
+  call feedkeys("Sfoo bar\<C-N>", "tx")
+
   set completeopt=menuone,preinsert
-  call feedkeys("ifoo bar\<C-N>", "tx")
+  call feedkeys("Sfoo bar\<C-N>", "tx")
   bwipe!
   set complete& completeopt&
   delfunc CptColTest
@@ -664,17 +709,17 @@ func CompleteInfoTestUserDefinedFn(mvmt, idx, noselect)
   set completefunc=CompleteInfoUserDefinedFn
   call feedkeys("i\<C-X>\<C-U>" . a:mvmt . "\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
   let completed = a:idx != -1 ? ['foo', 'bar', 'baz', 'qux']->get(a:idx) : ''
-  call assert_equal(completed. "{'pum_visible': 1, 'mode': 'function', 'selected': " . a:idx . ", 'items': " . items . "}", getline(1))
+  call assert_equal(completed. "{'preinserted_text': '', 'pum_visible': 1, 'mode': 'function', 'selected': " . a:idx . ", 'items': " . items . "}", getline(1))
   %d
   set complete=.,FCompleteInfoUserDefinedFn
   call feedkeys("i\<C-N>" . a:mvmt . "\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
   let completed = a:idx != -1 ? ['foo', 'bar', 'baz', 'qux']->get(a:idx) : ''
-  call assert_equal(completed. "{'pum_visible': 1, 'mode': 'keyword', 'selected': " . a:idx . ", 'items': " . items . "}", getline(1))
+  call assert_equal(completed. "{'preinserted_text': '', 'pum_visible': 1, 'mode': 'keyword', 'selected': " . a:idx . ", 'items': " . items . "}", getline(1))
   %d
   set complete=.,F
   call feedkeys("i\<C-N>" . a:mvmt . "\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
   let completed = a:idx != -1 ? ['foo', 'bar', 'baz', 'qux']->get(a:idx) : ''
-  call assert_equal(completed. "{'pum_visible': 1, 'mode': 'keyword', 'selected': " . a:idx . ", 'items': " . items . "}", getline(1))
+  call assert_equal(completed. "{'preinserted_text': '', 'pum_visible': 1, 'mode': 'keyword', 'selected': " . a:idx . ", 'items': " . items . "}", getline(1))
   bwipe!
   set completeopt& completefunc& complete&
 endfunc
@@ -895,9 +940,10 @@ func Test_ins_completeslash()
   %bw!
   call delete('Xdir', 'rf')
 
+  " globpath() should always return forward slash separator
   set noshellslash
-  set completeslash=slash
-  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') != -1)
+  set completeslash=backslash
+  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') == -1)
 
   let &shellslash = orig_shellslash
   set completeslash=
@@ -1082,13 +1128,13 @@ func Test_completefunc_error()
   %d
   set complete=F
   call assert_fails('exe "normal a\<C-N>"', 'E565:')
-  close!
+  bw!
 
   set completefunc& complete&
   delfunc CompleteFunc
   delfunc CompleteFunc2
   delfunc CompleteFunc3
-  close!
+  bw!
 endfunc
 
 " Test for returning non-string values from 'completefunc'
@@ -1112,6 +1158,7 @@ func Test_completefunc_invalid_data()
   exe "normal i\<C-N>"
   call assert_equal('moon', getline(1))
   set completefunc& complete&
+  delfunc! CompleteFunc
   bw!
 endfunc
 
@@ -1286,7 +1333,7 @@ func Test_complete_wrapscan()
   setlocal complete=w
   call feedkeys("itw\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>", 'xt')
   call assert_equal('two three four', getline(1))
-  close!
+  bw!
   " complete words from the current buffer
   setlocal complete=.
   %d
@@ -1294,7 +1341,7 @@ func Test_complete_wrapscan()
   call cursor(2, 1)
   call feedkeys("ion\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>", 'xt')
   call assert_equal('one two one two', getline(2))
-  close!
+  bw!
 endfunc
 
 " Test for completing special characters
@@ -1303,7 +1350,7 @@ func Test_complete_special_chars()
   call setline(1, 'int .*[-\^$ func float')
   call feedkeys("oin\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>", 'xt')
   call assert_equal('int .*[-\^$ func float', getline(2))
-  close!
+  bw!
 endfunc
 
 " Test for completion when text is wrapped across lines.
@@ -1313,7 +1360,7 @@ func Test_complete_across_line()
   setlocal textwidth=20
   exe "normal 2G$a re\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>"
   call assert_equal(['one two three red', 'green blue one'], getline(2, '$'))
-  close!
+  bw!
 endfunc
 
 " Test for completing words with a '.' at the end of a word.
@@ -1344,7 +1391,7 @@ func Test_complete_add_onechar()
   exe "normal aWOR\<C-P>\<bs>\<bs>\<bs>\<bs>\<bs>\<bs>\<C-L>\<C-L>\<C-L>"
   call assert_equal('workh', getline(3))
   set ignorecase& backspace&
-  close!
+  bw!
 endfunc
 
 " Test for using CTRL-X CTRL-L to complete whole lines lines
@@ -1380,6 +1427,23 @@ func Test_complete_wholeline()
   bw!
 endfunc
 
+" Test for using CTRL-X CTRL-S to complete spell suggestions
+func Test_complete_spell()
+  new
+  setlocal spell
+  " without fuzzy
+  call setline(1, 'The rigth thing')
+  exe "normal! A\<C-X>\<C-S>"
+  call assert_equal('The right thing', getline(1))
+  %d
+  " with fuzzy
+  setlocal completeopt+=fuzzy
+  call setline(1, 'The rigth thing')
+  exe "normal! A\<C-X>\<C-S>"
+  call assert_equal('The right thing', getline(1))
+  bw!
+endfunc
+
 " Test insert completion with 'cindent' (adjust the indent)
 func Test_complete_with_cindent()
   new
@@ -1393,7 +1457,7 @@ func Test_complete_with_cindent()
   setlocal cinkeys+==while
   exe "normal Giwh\<C-P> "
   call assert_equal("\twhile ", getline('$'))
-  close!
+  bw!
 endfunc
 
 " Test for <CTRL-X> <CTRL-V> completion. Complete commands and functions
@@ -1416,7 +1480,7 @@ func Test_complete_cmdline()
   call delete('TestCommand2Test')
   delcom TestCommand1
   delcom TestCommand2
-  close!
+  bw!
 endfunc
 
 " Test for <CTRL-X> <CTRL-Z> stopping completion without changing the match
@@ -1465,7 +1529,7 @@ func Test_complete_stop()
   iunmap <F2>
   delfunc Save_mode1
   delfunc Save_mode2
-  close!
+  bw!
 endfunc
 
 " Test for typing CTRL-R in insert completion mode to insert a register
@@ -1480,7 +1544,7 @@ func Test_complete_reginsert()
   exe "normal Goa\<C-P>\<C-R>=\"\\<C-P>\"\<CR>"
   call assert_equal('a123', getline(5))
   let @r = "\<C-P>\<C-P>"
-  exe "normal GCa\<C-P>\<C-R>r"
+  exe "normal GCa\<C-P>\<C-R>=@r\<CR>"
   call assert_equal('a12', getline(5))
   exe "normal GCa\<C-P>\<C-R>=\"x\"\<CR>"
   call assert_equal('a1234x', getline(5))
@@ -1490,13 +1554,10 @@ endfunc
 func Test_issue_7021()
   CheckMSWindows
 
-  let orig_shellslash = &shellslash
-  set noshellslash
+  " Test that 'completeslash' doesn't affect the result of expand()
+  set completeslash=backslash
+  call assert_false(expand('~') =~ '\\')
 
-  set completeslash=slash
-  call assert_false(expand('~') =~ '/')
-
-  let &shellslash = orig_shellslash
   set completeslash=
 endfunc
 
@@ -2472,6 +2533,52 @@ func Test_completefunc_callback()
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
     call assert_equal([[1, ''], [0, 'five']], g:CompleteFunc2Args)
     bw!
+
+    #" :setlocal and :setglobal
+    set complete=F completefunc&
+    setlocal completefunc=function('g:CompleteFunc1',\ [22])
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:CompleteFunc1Args)
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:CompleteFunc1Args)
+    new
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E764:')
+    call assert_equal([], g:CompleteFunc1Args)
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([], g:CompleteFunc1Args)
+    bw!
+    setglobal completefunc=function('g:CompleteFunc1',\ [23])
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:CompleteFunc1Args)
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:CompleteFunc1Args)
+    setlocal completefunc&
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E764:')
+    call assert_equal([], g:CompleteFunc1Args)
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([], g:CompleteFunc1Args)
+    new
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    call assert_equal([[23, 1, ''], [23, 0, 'sun']], g:CompleteFunc1Args)
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([[23, 1, ''], [23, 0, 'sun']], g:CompleteFunc1Args)
+    set complete& completefunc&
+    :%bw!
   END
   call CheckLegacyAndVim9Success(lines)
 
@@ -2746,6 +2853,52 @@ func Test_omnifunc_callback()
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
     call assert_equal([[1, ''], [0, 'nine']], g:OmniFunc2Args)
     bw!
+
+    #" :setlocal and :setglobal
+    set complete=o omnifunc&
+    setlocal omnifunc=function('g:OmniFunc1',\ [22])
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:OmniFunc1Args)
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:OmniFunc1Args)
+    new
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E764:')
+    call assert_equal([], g:OmniFunc1Args)
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([], g:OmniFunc1Args)
+    bw!
+    setglobal omnifunc=function('g:OmniFunc1',\ [23])
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:OmniFunc1Args)
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:OmniFunc1Args)
+    setlocal omnifunc&
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E764:')
+    call assert_equal([], g:OmniFunc1Args)
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([], g:OmniFunc1Args)
+    new
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    call assert_equal([[23, 1, ''], [23, 0, 'sun']], g:OmniFunc1Args)
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-N>\<Esc>", 'x')
+    call assert_equal([[23, 1, ''], [23, 0, 'sun']], g:OmniFunc1Args)
+    set complete& omnifunc&
+    :%bw!
   END
   call CheckLegacyAndVim9Success(lines)
 
@@ -2761,6 +2914,15 @@ func Test_omnifunc_callback()
   call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
   call assert_equal([[1, ''], [0, 'script1']], g:OmniFunc3Args)
   bw!
+
+  set complete=Fs:OmniFunc3
+  new
+  call setline(1, 'script1')
+  let g:OmniFunc3Args = []
+  call feedkeys("A\<C-N>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:OmniFunc3Args)
+  bw!
+  set complete&
 
   let &omnifunc = 's:OmniFunc3'
   new
@@ -3257,7 +3419,9 @@ endfunc
 func Test_ins_complete_end_of_line()
   " this was reading past the end of the line
   new
-  norm 8oý 
+  " Note that the 'space' at the end of the expression below is a non-breaking
+  " space, U+00a0.
+  execute "norm 8oý "
   sil! norm o
 
   bwipe!
@@ -3275,6 +3439,35 @@ func Test_tagfunc_wipes_out_buffer()
   set complete=.,t,w,b,u,i
   se tagfunc=s:Tagfunc
   sil norm i
+
+  bwipe!
+endfunc
+
+func s:TagfuncComplete(t,f,o)
+  call complete(1, ['ddd', 'eee', 'fff'])
+  return []
+endfunc
+
+" 'tagfunc' calling complete() should not cause hang or E684.
+func Test_tagfunc_calls_complete()
+  new
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  setlocal tagfunc=s:TagfuncComplete
+  setlocal completeopt=menu,noselect
+
+  let v:errmsg = ''
+
+  " This used to hang.
+  setlocal complete=.,t
+  call feedkeys("Go\<C-N>\<C-E>\<Esc>", 'tx')
+  call assert_equal('', getline('.'))
+  call assert_equal('', v:errmsg)
+
+  " This used to cause E684.
+  setlocal complete=t,.
+  call feedkeys("cc\<C-N>\<C-E>\<Esc>", 'tx')
+  call assert_equal('', getline('.'))
+  call assert_equal('', v:errmsg)
 
   bwipe!
 endfunc
@@ -3549,7 +3742,7 @@ func Test_complete_opt_fuzzy()
   set cot+=noinsert
   call feedkeys("i\<C-R>=CompAnother()\<CR>f", 'tx')
   call assert_equal("for", g:abbr)
-  call assert_equal(0, g:selected)
+  call assert_equal(2, g:selected)
 
   set cot=menu,menuone,noselect,fuzzy
   call feedkeys("i\<C-R>=CompAnother()\<CR>\<C-N>\<C-N>\<C-N>\<C-N>", 'tx')
@@ -3559,11 +3752,12 @@ func Test_complete_opt_fuzzy()
   call feedkeys("i\<C-R>=CompAnother()\<CR>\<C-P>\<C-P>", 'tx')
   call assert_equal("for", g:abbr)
 
+  %d
   set cot=menu,fuzzy
   call feedkeys("Sblue\<CR>bar\<CR>b\<C-X>\<C-P>\<C-Y>\<ESC>", 'tx')
-  call assert_equal('bar', getline('.'))
-  call feedkeys("Sb\<C-X>\<C-N>\<C-Y>\<ESC>", 'tx')
   call assert_equal('blue', getline('.'))
+  call feedkeys("Sb\<C-X>\<C-N>\<C-Y>\<ESC>", 'tx')
+  call assert_equal('bar', getline('.'))
   call feedkeys("Sb\<C-X>\<C-P>\<C-N>\<C-Y>\<ESC>", 'tx')
   call assert_equal('b', getline('.'))
 
@@ -3588,6 +3782,28 @@ func Test_complete_opt_fuzzy()
   call feedkeys("S\<C-X>\<C-O>c\<C-Y>", 'tx')
   call assert_equal('cp_str', getline('.'))
 
+  " Issue 18488: sort after collection when "fuzzy" (unless "nosort")
+  %d
+  set completeopt&
+  set completeopt+=fuzzy,noselect
+  func! PrintMenuWords()
+    let info = complete_info(["items"])
+    call map(info.items, {_, v -> v.word})
+    return info
+  endfunc
+  call setline(1, ['func1', 'xfunc', 'func2'])
+  call feedkeys("Gof\<C-N>\<C-R>=PrintMenuWords()\<CR>\<Esc>0", 'tx')
+  call assert_equal('f{''items'': [''func1'', ''func2'', ''xfunc'']}', getline('.'))
+
+  " Issue #18802: Reset selected item after fuzzy sort
+  %d
+  call setline(1, ['aa', 'aaa', 'aaaa'])
+  set completeopt=menuone,noinsert,fuzzy
+  call feedkeys("Goa\<C-N>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('aa', getline('.'))
+  call feedkeys("Goa\<C-P>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('aaaa', getline('.'))
+
   " clean up
   set omnifunc=
   bw!
@@ -3597,6 +3813,7 @@ func Test_complete_opt_fuzzy()
   delfunc OnPumChange
   delfunc Omni_test
   delfunc Comp
+  delfunc PrintMenuWords
   unlet g:item
   unlet g:word
   unlet g:abbr
@@ -3605,7 +3822,7 @@ endfunc
 func Test_complete_fuzzy_collect()
   new
   redraw  " need this to prevent NULL dereference in Nvim
-  set completefuzzycollect=keyword,files,whole_line
+  set completeopt+=fuzzy
   call setline(1, ['hello help hero h'])
   " Use "!" flag of feedkeys() so that ex_normal_busy is not set and
   " ins_compl_check_keys() is not skipped.
@@ -3636,6 +3853,14 @@ func Test_complete_fuzzy_collect()
   call setline(1, ['你的 我的 的'])
   call feedkeys("A\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
   call assert_equal('你的 我的 我的', getline('.'))
+
+  " check that "adding" expansion works
+  call setline(1, ['hello world foo bar'])
+  call feedkeys("Ohlo\<C-X>\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('hello world foo bar', getline('.'))
+  call feedkeys("Swld\<C-X>\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('world foo bar', getline('.'))
+  %delete
 
   " fuzzy on file
   call writefile([''], 'fobar', 'D')
@@ -3675,7 +3900,7 @@ func Test_complete_fuzzy_collect()
   call assert_equal('no one can save me but you', getline('.'))
 
   " issue #15526
-  set completeopt=menuone,menu,noselect
+  set completeopt=menuone,menu,noselect,fuzzy
   call setline(1, ['Text', 'ToText', ''])
   call cursor(3, 1)
   call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
@@ -3687,9 +3912,9 @@ func Test_complete_fuzzy_collect()
   call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
   call assert_equal('completefuzzycollect', getline(line('.') - 1))
 
-  " keywords in 'dictonary'
-  call writefile(['hello', 'think'], 'test_dict.txt', 'D')
-  set dict=test_dict.txt
+  " keywords in 'dictionary'
+  call writefile(['hello', 'think'], 'Xtest_dict.txt', 'D')
+  set dict=Xtest_dict.txt
   call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<CR>\<Esc>0", 'tx!')
   call assert_equal('hello', getline(line('.') - 1))
   call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
@@ -3704,15 +3929,65 @@ func Test_complete_fuzzy_collect()
   call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-Y>\<Esc>0", 'tx!')
   call assert_equal('fuzzycollect', getline('.'))
 
+  " when 'fuzzy' is not set, and 'infercase' and 'ignorecase' are set, then
+  " uppercase completes from lowercase words in dictionary
+  set completeopt&
+  set infercase ignorecase
+  call writefile(['hello'], 'Xtest_case.txt', 'D')
+  set dictionary=Xtest_case.txt
+  call feedkeys("ggdGSH\<C-X>\<C-K>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('Hello', getline('.'))
+  call feedkeys("ggdGSHE\<C-X>\<C-K>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('HELLO', getline('.'))
+
   bw!
   bw!
   set dict&
-  set completeopt& cfc& cpt&
+  set completeopt& cpt& ignorecase& infercase&
+endfunc
+
+" Issue #19434
+" Fuzzy whole-line completion should not loop infinitely when the cursor is in
+" the middle of the line (non-zero column).
+func Test_complete_fuzzy_wholeline_no_hang()
+  new
+  set completeopt=preview,fuzzy,noinsert,menuone
+  call setline(1, [
+        \ '<!DOCTYPE html>',
+        \ '<html lang="en-US">',
+        \ '  <head>',
+        \ '  </head>',
+        \ '  <body>',
+        \ '    <div class="page-landscape">',
+        \ '    </div>',
+        \ '  </body>',
+        \ '</html>',
+        \ ])
+  call cursor(6, 1)
+  call feedkeys("faC\<C-X>\<C-L>\<Esc>0", 'tx!')
+  call assert_equal('    <div cl', getline(6))
+
+  bw!
+  set completeopt&
+endfunc
+
+" Issue #18752
+func Test_complete_fuzzy_collect_multiwin()
+  new
+  set completeopt=fuzzy
+
+  vnew
+  call setline(1, ["completeness,", "compatibility", "Composite", "Omnipotent"])
+  wincmd p
+  call feedkeys("Somp\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('Omnipotent', getline('.'))
+
+  bw!
+  set completeopt&
 endfunc
 
 func Test_cfc_with_longest()
   new
-  set completefuzzycollect=keyword,files,whole_line
   set completeopt=menu,menuone,longest,fuzzy
 
   " keyword
@@ -3725,7 +4000,7 @@ func Test_cfc_with_longest()
   exe "normal ggdGShello helio heo\<C-X>\<C-N>\<ESC>"
   call assert_equal("hello helio heo", getline('.'))
 
-  " kdcit
+  " dict
   call writefile(['help'], 'test_keyword.txt', 'D')
   set complete=ktest_keyword.txt
   exe "normal ggdGSh\<C-N>\<ESC>"
@@ -3796,7 +4071,6 @@ func Test_cfc_with_longest()
 
   bw!
   set completeopt&
-  set completefuzzycollect&
 endfunc
 
 func Test_completefuzzycollect_with_completeslash()
@@ -3806,7 +4080,7 @@ func Test_completefuzzycollect_with_completeslash()
   let orig_shellslash = &shellslash
   set cpt&
   new
-  set completefuzzycollect=files
+  set completeopt+=fuzzy
   set noshellslash
 
   " Test with completeslash unset
@@ -3828,7 +4102,6 @@ func Test_completefuzzycollect_with_completeslash()
   " Reset and clean up
   let &shellslash = orig_shellslash
   set completeslash=
-  set completefuzzycollect&
   %bw!
 endfunc
 
@@ -3934,6 +4207,27 @@ func Test_complete_info_completed()
   set cot&
 endfunc
 
+func Test_complete_info_selected()
+  set completeopt=menuone,noselect
+  new
+  call setline(1, ["ward", "werd", "wurd", "wxrd"])
+
+  exe "normal! Gow\<c-n>u\<c-n>\<c-r>=complete_info().selected\<cr>"
+  call assert_equal('wurd2', getline(5))
+
+  exe "normal! Sw\<c-n>u\<c-n>\<c-r>=complete_info(['selected']).selected\<cr>"
+  call assert_equal('wurd2', getline(5))
+
+  exe "normal! Sw\<c-n>u\<c-n>\<c-r>=complete_info(['items', 'selected']).selected\<cr>"
+  call assert_equal('wurd2', getline(5))
+
+  exe "normal! Sw\<c-n>u\<c-n>\<c-r>=complete_info(['matches', 'selected']).selected\<cr>"
+  call assert_equal('wurd0', getline(5))
+
+  bw!
+  set cot&
+endfunc
+
 func Test_completeopt_preinsert()
   func Omni_test(findstart, base)
     if a:findstart
@@ -3954,7 +4248,7 @@ func Test_completeopt_preinsert()
   call assert_equal("fobar", g:line)
   call assert_equal(2, g:col)
 
-  call feedkeys("S\<C-X>\<C-O>foo\<F5><ESC>", 'tx')
+  call feedkeys("S\<C-X>\<C-O>foo\<F5>\<ESC>", 'tx')
   call assert_equal("foobar", g:line)
 
   call feedkeys("S\<C-X>\<C-O>foo\<BS>\<BS>\<BS>", 'tx')
@@ -4119,6 +4413,144 @@ func Test_completeopt_preinsert()
   set cot&
   set omnifunc&
   delfunc Omni_test
+endfunc
+
+func Test_autocomplete_completeopt_preinsert()
+  func Omni_test(findstart, base)
+    if a:findstart
+      return col(".") - 1
+    endif
+    return [#{word: "fobar"}, #{word: "foobar"}]
+  endfunc
+  set omnifunc=Omni_test complete+=o
+  set completeopt=preinsert autocomplete
+  func GetLine()
+    let g:line = getline('.')
+    let g:col = col('.')
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  inoremap <buffer><F5> <C-R>=GetLine()<CR>
+  call feedkeys("Sfo\<F5>\<ESC>", 'tx')
+  call assert_equal("fobar", g:line)
+  call assert_equal(3, g:col)
+
+  call feedkeys("Sfoo\<F5>\<ESC>", 'tx')
+  call assert_equal("foobar", g:line)
+
+  call feedkeys("Sfoo\<BS>\<BS>\<BS>", 'tx')
+  call assert_equal("", getline('.'))
+
+  " delete a character
+  call feedkeys("Sfoo\<BS>b\<F5>\<ESC>", 'tx')
+  call assert_equal("fobar", g:line)
+  call assert_equal(4, g:col)
+
+  set complete&
+  %d
+  call setline(1, ['fobar', 'foobar'])
+
+  call feedkeys("Gofoo\<BS>\<BS>\<F5>\<ESC>", 'tx')
+  call assert_equal("fobar", g:line)
+  call assert_equal(2, g:col)
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>f\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  fobar wo", g:line)
+  call assert_equal(9, g:col)
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>f\<BS>\<F5>\<ESC>", 'tx')
+  call assert_equal("hello   wo", g:line)
+  call assert_equal(8, g:col)
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>foo\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  foobar wo", g:line)
+  call assert_equal(11, g:col)
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>foo\<BS>b\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  fobar wo", g:line)
+  call assert_equal(11, g:col)
+
+  " confirm
+  call feedkeys("Sf\<C-Y>", 'tx')
+  call assert_equal("fobar", getline('.'))
+  call assert_equal(5, col('.'))
+
+  " cancel
+  call feedkeys("Sfo\<C-E>", 'tx')
+  call assert_equal("fo", getline('.'))
+  call assert_equal(2, col('.'))
+
+  " delete preinsert part
+  call feedkeys("Sfo ", 'tx')
+  call assert_equal("fo ", getline('.'))
+  call assert_equal(3, col('.'))
+
+  " can not work with fuzzy
+  set cot+=fuzzy
+  call feedkeys("Sf", 'tx')
+  call assert_equal("f", getline('.'))
+  set cot-=fuzzy
+
+  " does not work with 'ignorecase' unless 'infercase' is also enabled
+  %d
+  call setline(1, ['FIX', 'fobar', 'foobar'])
+  set ignorecase
+  call feedkeys("Gof\<F5>\<ESC>", 'tx')
+  call assert_equal("f", g:line)  " should not produce 'FIX'
+  set infercase
+  call feedkeys("Gof\<F5>\<ESC>", 'tx')
+  call assert_equal("fix", g:line)
+  set ignorecase& infercase&
+
+  %delete _
+  let &l:undolevels = &l:undolevels
+  normal! ifoo
+  let &l:undolevels = &l:undolevels
+  normal! obar
+  let &l:undolevels = &l:undolevels
+  normal! obaz
+  let &l:undolevels = &l:undolevels
+
+  func CheckUndo()
+    let g:errmsg = ''
+    call assert_equal(['foo', 'bar', 'baz'], getline(1, '$'))
+    undo
+    call assert_equal(['foo', 'bar'], getline(1, '$'))
+    undo
+    call assert_equal(['foo'], getline(1, '$'))
+    undo
+    call assert_equal([''], getline(1, '$'))
+    later 3
+    call assert_equal(['foo', 'bar', 'baz'], getline(1, '$'))
+    call assert_equal('', v:errmsg)
+  endfunc
+
+  " Check that switching buffer with "preinsert" doesn't corrupt undo.
+  new
+  setlocal bufhidden=wipe
+  inoremap <buffer> <F2> <Cmd>enew!<CR>
+  call feedkeys("if\<F2>\<Esc>", 'tx')
+  bwipe!
+  call CheckUndo()
+
+  " Check that closing window with "preinsert" doesn't corrupt undo.
+  new
+  setlocal bufhidden=wipe
+  inoremap <buffer> <F2> <Cmd>close!<CR>
+  call feedkeys("if\<F2>\<Esc>", 'tx')
+  call CheckUndo()
+
+  %delete _
+  delfunc CheckUndo
+
+  bw!
+  set cot&
+  set omnifunc&
+  set autocomplete&
+  call Ntest_override("char_avail", 0)
+  delfunc Omni_test
+  delfunc GetLine
 endfunc
 
 " Check that mark positions are correct after triggering multiline completion.
@@ -4598,115 +5030,10 @@ func Test_nearest_cpt_option()
   call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
   exe "normal! 2jof\<c-p>\<c-r>=PrintMenuWords()\<cr>"
   call assert_equal('fo{''matches'': [''foobarbaz'', ''foobar'', ''foo'', ''fo''], ''selected'': -1}', getline(4))
-
-  " No effect if 'fuzzy' is present
-  set completeopt&
-  set completeopt+=fuzzy,nearest
-  %d
-  call setline(1, ["foo", "fo", "foobarbaz", "foobar"])
-  exe "normal! of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
-  call assert_equal('fo{''matches'': [''fo'', ''foobarbaz'', ''foobar'', ''foo''], ''selected'': 0}', getline(2))
-  %d
-  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
-  exe "normal! 2jof\<c-p>\<c-r>=PrintMenuWords()\<cr>"
-  call assert_equal('foobar{''matches'': [''foobarbaz'', ''fo'', ''foo'', ''foobar''], ''selected'': 3}', getline(4))
   bw!
 
   set completeopt&
   delfunc PrintMenuWords
-endfunc
-
-func Test_complete_match()
-  set isexpand=.,/,->,abc,/*,_
-  func TestComplete()
-    let res = complete_match()
-    if res->len() == 0
-      return
-    endif
-    let [startcol, expandchar] = res[0]
-
-    if startcol >= 0
-      let line = getline('.')
-
-      let items = []
-      if expandchar == '/*'
-        let items = ['/** */']
-      elseif expandchar =~ '^/'
-        let items = ['/*! */', '// TODO:', '// fixme:']
-      elseif expandchar =~ '^\.' && startcol < 4
-        let items = ['length()', 'push()', 'pop()', 'slice()']
-      elseif expandchar =~ '^\.' && startcol > 4
-        let items = ['map()', 'filter()', 'reduce()']
-      elseif expandchar =~ '^\abc'
-        let items = ['def', 'ghk']
-      elseif expandchar =~ '^\->'
-        let items = ['free()', 'xfree()']
-      else
-        let items = ['test1', 'test2', 'test3']
-      endif
-
-      call complete(expandchar =~ '^/' ? startcol : startcol + strlen(expandchar), items)
-    endif
-  endfunc
-
-  new
-  inoremap <buffer> <F5> <cmd>call TestComplete()<CR>
-
-  call feedkeys("S/*\<F5>\<C-Y>", 'tx')
-  call assert_equal('/** */', getline('.'))
-
-  call feedkeys("S/\<F5>\<C-N>\<C-Y>", 'tx')
-  call assert_equal('// TODO:', getline('.'))
-
-  call feedkeys("Swp.\<F5>\<C-N>\<C-Y>", 'tx')
-  call assert_equal('wp.push()', getline('.'))
-
-  call feedkeys("Swp.property.\<F5>\<C-N>\<C-Y>", 'tx')
-  call assert_equal('wp.property.filter()', getline('.'))
-
-  call feedkeys("Sp->\<F5>\<C-N>\<C-Y>", 'tx')
-  call assert_equal('p->xfree()', getline('.'))
-
-  call feedkeys("Swp->property.\<F5>\<C-Y>", 'tx')
-  call assert_equal('wp->property.map()', getline('.'))
-
-  call feedkeys("Sabc\<F5>\<C-Y>", 'tx')
-  call assert_equal('abcdef', getline('.'))
-
-  call feedkeys("S_\<F5>\<C-Y>", 'tx')
-  call assert_equal('_test1', getline('.'))
-
-  set ise&
-  call feedkeys("Sabc \<ESC>:let g:result=complete_match()\<CR>", 'tx')
-  call assert_equal([[1, 'abc']], g:result)
-
-  call assert_fails('call complete_match(99, 0)', 'E966:')
-  call assert_fails('call complete_match(1, 99)', 'E964:')
-  call assert_fails('call complete_match(1)', 'E474:')
-
-  set ise=你好,好
-  call feedkeys("S你好 \<ESC>:let g:result=complete_match()\<CR>", 'tx')
-  call assert_equal([[1, '你好'], [4, '好']], g:result)
-
-  set ise=\\,,->
-  call feedkeys("Sabc, \<ESC>:let g:result=complete_match()\<CR>", 'tx')
-  call assert_equal([[4, ',']], g:result)
-
-  set ise=\ ,=
-  call feedkeys("Sif true  \<ESC>:let g:result=complete_match()\<CR>", 'tx')
-  call assert_equal([[8, ' ']], g:result)
-  call feedkeys("Slet a = \<ESC>:let g:result=complete_match()\<CR>", 'tx')
-  call assert_equal([[7, '=']], g:result)
-  set ise={,\ ,=
-  call feedkeys("Sif true  \<ESC>:let g:result=complete_match()\<CR>", 'tx')
-  call assert_equal([[8, ' ']], g:result)
-  call feedkeys("S{ \<ESC>:let g:result=complete_match()\<CR>", 'tx')
-  call assert_equal([[1, '{']], g:result)
-
-  bw!
-  unlet g:result
-  set isexpand&
-  delfunc TestComplete
 endfunc
 
 func Test_register_completion()
@@ -4941,6 +5268,1172 @@ func Test_complete_fuzzy_omnifunc_backspace()
   bwipe!
   delfunc Omni_test
   unlet g:do_complete
+endfunc
+
+" Test that option shortmess=c turns off completion messages
+func Test_shortmess()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['hello', 'hullo', 'heee'])
+  END
+
+  call writefile(lines, 'Xpumscript', 'D')
+  let buf = RunVimInTerminal('-S Xpumscript', #{rows: 12})
+  call term_sendkeys(buf, "Goh\<C-N>")
+  call TermWait(buf, 200)
+  call VerifyScreenDump(buf, 'Test_shortmess_complmsg_1', {})
+  call term_sendkeys(buf, "\<ESC>:set shm+=c\<CR>")
+  call term_sendkeys(buf, "Sh\<C-N>")
+  call TermWait(buf, 200)
+  call VerifyScreenDump(buf, 'Test_shortmess_complmsg_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test 'complete' containing F{func} that complete from nonkeyword
+func Test_nonkeyword_trigger()
+
+  " Trigger expansion even when another char is waiting in the typehead
+  call Ntest_override("char_avail", 1)
+
+  let g:CallCount = 0
+  func! NonKeywordComplete(findstart, base)
+    let line = getline('.')->strpart(0, col('.') - 1)
+    let nonkeyword2 = len(line) > 1 && match(line[-2:-2], '\k') != 0
+    if a:findstart
+      return nonkeyword2 ? col('.') - 3 : (col('.') - 2)
+    else
+      let g:CallCount += 1
+      return [$"{a:base}foo", $"{a:base}bar"]
+    endif
+  endfunc
+
+  new
+  inoremap <buffer> <F2> <Cmd>let b:matches = complete_info(["matches"]).matches<CR>
+  inoremap <buffer> <F3> <Cmd>let b:selected = complete_info(["selected"]).selected<CR>
+  call setline(1, ['abc', 'abcd', 'fo', 'b', ''])
+
+  " Test 1a: Nonkeyword before cursor lists words with at least two letters
+  call feedkeys("GS=\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd', 'fo'], b:matches->mapnew('v:val.word'))
+  call assert_equal('=abc', getline('.'))
+
+  " Test 1b: With F{func} nonkeyword collects matches
+  set complete=.,FNonKeywordComplete
+  for noselect in range(2)
+    if noselect
+      set completeopt+=noselect
+    endif
+    let g:CallCount = 0
+    call feedkeys("S=\<C-N>\<F2>\<Esc>0", 'tx!')
+    call assert_equal(['abc', 'abcd', 'fo', '=foo', '=bar'], b:matches->mapnew('v:val.word'))
+    call assert_equal(1, g:CallCount)
+    call assert_equal(noselect ? '=' : '=abc', getline('.'))
+    let g:CallCount = 0
+    call feedkeys("S->\<C-N>\<F2>\<Esc>0", 'tx!')
+    call assert_equal(['abc', 'abcd', 'fo', '->foo', '->bar'], b:matches->mapnew('v:val.word'))
+    call assert_equal(1, g:CallCount)
+    call assert_equal(noselect ? '->' : '->abc', getline('.'))
+    set completeopt&
+  endfor
+
+  " Test 1c: Keyword collects from {func}
+  let g:CallCount = 0
+  call feedkeys("Sa\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd', 'afoo', 'abar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+  call assert_equal('abc', getline('.'))
+
+  set completeopt+=noselect
+  let g:CallCount = 0
+  call feedkeys("Sa\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd', 'afoo', 'abar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+  call assert_equal('a', getline('.'))
+
+  " Test 1d: Nonkeyword after keyword collects items again
+  let g:CallCount = 0
+  call feedkeys("Sa\<C-N>#\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd', 'fo', '#foo', '#bar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(2, g:CallCount)
+  call assert_equal('a#', getline('.'))
+  set completeopt&
+
+  " Test 2: Filter nonkeyword and keyword matches with different startpos
+  set completeopt+=menuone,noselect
+  call feedkeys("S#a\<C-N>b\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd', '#abar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(-1, b:selected)
+  call assert_equal('#ab', getline('.'))
+
+  set completeopt+=fuzzy
+  call feedkeys("S#a\<C-N>b\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['#abar', 'abc', 'abcd'], b:matches->mapnew('v:val.word'))
+  call assert_equal(-1, b:selected)
+  call assert_equal('#ab', getline('.'))
+  set completeopt&
+
+  " Test 3: Navigate menu containing nonkeyword and keyword items
+  call feedkeys("S->\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd', 'fo', '->foo', '->bar'], b:matches->mapnew('v:val.word'))
+  call assert_equal('->abc', getline('.'))
+  call feedkeys("S->" . repeat("\<C-N>", 3) . "\<Esc>0", 'tx!')
+  call assert_equal('->fo', getline('.'))
+  call feedkeys("S->" . repeat("\<C-N>", 4) . "\<Esc>0", 'tx!')
+  call assert_equal('->foo', getline('.'))
+  call feedkeys("S->" . repeat("\<C-N>", 4) . "\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('->fo', getline('.'))
+  call feedkeys("S->" . repeat("\<C-N>", 5) . "\<Esc>0", 'tx!')
+  call assert_equal('->bar', getline('.'))
+  call feedkeys("S->" . repeat("\<C-N>", 5) . "\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('->foo', getline('.'))
+  call feedkeys("S->" . repeat("\<C-N>", 6) . "\<Esc>0", 'tx!')
+  call assert_equal('->', getline('.'))
+  call feedkeys("S->" . repeat("\<C-N>", 7) . "\<Esc>0", 'tx!')
+  call assert_equal('->abc', getline('.'))
+  call feedkeys("S->" . repeat("\<C-P>", 7) . "\<Esc>0", 'tx!')
+  call assert_equal('->fo', getline('.'))
+  " Replace
+  call feedkeys("S# x y z\<Esc>0lR\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('#abcy z', getline('.'))
+  call feedkeys("S# x y z\<Esc>0lR" . repeat("\<C-P>", 4) . "\<Esc>0", 'tx!')
+  call assert_equal('#bary z', getline('.'))
+
+  bw!
+  call Ntest_override("char_avail", 0)
+  delfunc NonKeywordComplete
+  set complete&
+  unlet g:CallCount
+endfunc
+
+func Test_autocomplete_trigger()
+  " Trigger expansion even when another char is waiting in the typehead
+  call Ntest_override("char_avail", 1)
+
+  let g:CallCount = 0
+  func! NonKeywordComplete(findstart, base)
+    let line = getline('.')->strpart(0, col('.') - 1)
+    let nonkeyword2 = len(line) > 1 && match(line[-2:-2], '\k') != 0
+    if a:findstart
+      return nonkeyword2 ? col('.') - 3 : (col('.') - 2)
+    else
+      let g:CallCount += 1
+      return [$"{a:base}foo", $"{a:base}bar"]
+    endif
+  endfunc
+
+  new
+  inoremap <buffer> <F2> <Cmd>let b:matches = complete_info(["matches"]).matches<CR>
+  inoremap <buffer> <F3> <Cmd>let b:selected = complete_info(["matches", "selected"]).selected<CR>
+
+  call setline(1, ['abc', 'abcd', 'fo', 'b', ''])
+  set autocomplete
+
+  " Test 1a: Nonkeyword doesn't open menu without F{func} when autocomplete
+  call feedkeys("GS=\<F2>\<Esc>0", 'tx!')
+  call assert_equal([], b:matches)
+  call assert_equal('=', getline('.'))
+  " ^N opens menu of keywords (of len > 1)
+  call feedkeys("S=\<C-E>\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd', 'fo'], b:matches->mapnew('v:val.word'))
+  call assert_equal('=abc', getline('.'))
+
+  " Test 1b: With F{func} nonkeyword collects matches
+  set complete=.,FNonKeywordComplete
+  let g:CallCount = 0
+  call feedkeys("S=\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['=foo', '=bar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+  call assert_equal('=', getline('.'))
+  let g:CallCount = 0
+  call feedkeys("S->\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['->foo', '->bar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(2, g:CallCount)
+  call assert_equal('->', getline('.'))
+
+  " Test 1c: Keyword after nonkeyword can collect both types of items
+  let g:CallCount = 0
+  call feedkeys("S#a\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abcd', 'abc', '#afoo', '#abar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(2, g:CallCount)
+  call assert_equal('#a', getline('.'))
+  let g:CallCount = 0
+  call feedkeys("S#a.\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['.foo', '.bar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(3, g:CallCount)
+  call assert_equal('#a.', getline('.'))
+  let g:CallCount = 0
+  call feedkeys("S#a.a\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abcd', 'abc', '.afoo', '.abar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(4, g:CallCount)
+  call assert_equal('#a.a', getline('.'))
+
+  " Test 1d: Nonkeyword after keyword collects items again
+  let g:CallCount = 0
+  call feedkeys("Sa\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abcd', 'abc', 'afoo', 'abar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+  call assert_equal('a', getline('.'))
+  let g:CallCount = 0
+  call feedkeys("Sa#\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['#foo', '#bar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(2, g:CallCount)
+  call assert_equal('a#', getline('.'))
+
+  " Test 2: Filter nonkeyword and keyword matches with different startpos
+  for fuzzy in range(2)
+    if fuzzy
+      set completeopt+=fuzzy
+    endif
+    call feedkeys("S#ab\<F2>\<F3>\<Esc>0", 'tx!')
+    if fuzzy
+      call assert_equal(['#abar', 'abc', 'abcd'], b:matches->mapnew('v:val.word'))
+    else " Ordering of items is by 'nearest' to cursor by default
+      call assert_equal(['abcd', 'abc', '#abar'], b:matches->mapnew('v:val.word'))
+    endif
+    call assert_equal(-1, b:selected)
+    call assert_equal('#ab', getline('.'))
+    call feedkeys("S#ab" . repeat("\<C-N>", 3) . "\<F3>\<Esc>0", 'tx!')
+    call assert_equal(fuzzy ? '#abcd' : '#abar', getline('.'))
+    call assert_equal(2, b:selected)
+
+    let g:CallCount = 0
+    call feedkeys("GS#aba\<F2>\<Esc>0", 'tx!')
+    call assert_equal(['#abar'], b:matches->mapnew('v:val.word'))
+    call assert_equal(2, g:CallCount)
+    call assert_equal('#aba', getline('.'))
+
+    let g:CallCount = 0
+    call feedkeys("S#abc\<F2>\<Esc>0", 'tx!')
+    if fuzzy
+      call assert_equal(['abc', 'abcd'], b:matches->mapnew('v:val.word'))
+    else
+      call assert_equal(['abcd', 'abc'], b:matches->mapnew('v:val.word'))
+    endif
+    call assert_equal(2, g:CallCount)
+    set completeopt&
+  endfor
+
+  " Test 3: Navigate menu containing nonkeyword and keyword items
+  call feedkeys("S#a\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abcd', 'abc', '#afoo', '#abar'], b:matches->mapnew('v:val.word'))
+  call feedkeys("S#a" . repeat("\<C-N>", 3) . "\<Esc>0", 'tx!')
+  call assert_equal('#afoo', getline('.'))
+  call feedkeys("S#a" . repeat("\<C-N>", 3) . "\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('#abc', getline('.'))
+
+  call feedkeys("S#a.a\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abcd', 'abc', '.afoo', '.abar'], b:matches->mapnew('v:val.word'))
+  call feedkeys("S#a.a" . repeat("\<C-N>", 2) . "\<Esc>0", 'tx!')
+  call assert_equal('#a.abc', getline('.'))
+  call feedkeys("S#a.a" . repeat("\<C-N>", 3) . "\<Esc>0", 'tx!')
+  call assert_equal('#a.afoo', getline('.'))
+  call feedkeys("S#a.a" . repeat("\<C-N>", 3) . "\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('#a.abc', getline('.'))
+  call feedkeys("S#a.a" . repeat("\<C-P>", 6) . "\<Esc>0", 'tx!')
+  call assert_equal('#a.abar', getline('.'))
+
+  " Test 4a: When autocomplete menu is active, ^X^N completes buffer keywords
+  let g:CallCount = 0
+  call feedkeys("S#a\<C-E>\<C-X>\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd'], b:matches->mapnew('v:val.word'))
+  call assert_equal(2, g:CallCount)
+
+  " Test 4b: When autocomplete menu is active, ^X^O completes omnifunc
+  let g:CallCount = 0
+  set omnifunc=NonKeywordComplete
+  call feedkeys("S#a\<C-X>\<C-O>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['#afoo', '#abar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(3, g:CallCount)
+
+  " Test 4c: When autocomplete menu is active, ^E^N completes keyword
+  call feedkeys("Sa\<C-E>\<F2>\<Esc>0", 'tx!')
+  call assert_equal([], b:matches->mapnew('v:val.word'))
+  let g:CallCount = 0
+  call feedkeys("Sa\<C-E>\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abcd', 'afoo', 'abar'], b:matches->mapnew('v:val.word'))
+  call assert_equal(2, g:CallCount)
+
+  " Test 4d: When autocomplete menu is active, ^X^L completes lines
+  %d
+  let g:CallCount = 0
+  call setline(1, ["afoo bar", "barbar foo", "foo bar", "and"])
+  call feedkeys("Goa\<C-X>\<C-L>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['afoo bar', 'and'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+
+  " Issue #18044
+  %d
+  call setline(1, ["first line", "second line"])
+  call feedkeys("Gof\<C-X>\<C-L>\<Esc>", 'tx!')
+  call assert_equal("first line", getline(3))
+  call feedkeys("Sf\<C-X>\<C-L>\<C-X>\<C-L>\<Esc>", 'tx!')
+  call assert_equal("second line", getline(4))
+
+  " Test 5: When invalid prefix stops completion, backspace should restart it
+  %d
+  set complete&
+  call setline(1, ["afoo bar", "barbar foo", "foo bar", "and"])
+  call feedkeys("Goabc\<F2>\<Esc>0", 'tx!')
+  call assert_equal([], b:matches->mapnew('v:val.word'))
+  call feedkeys("Sabc\<BS>\<BS>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['and', 'afoo'], b:matches->mapnew('v:val.word'))
+  call feedkeys("Szx\<BS>\<F2>\<Esc>0", 'tx!')
+  call assert_equal([], b:matches->mapnew('v:val.word'))
+  call feedkeys("Sazx\<Left>\<BS>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['and', 'afoo'], b:matches->mapnew('v:val.word'))
+
+  " Test 6: <BS> should clear the selected item (PR #18265)
+  %d
+  call setline(1, ["foobarfoo", "foobar", "foobarbaz"])
+  call feedkeys("Gofo\<C-N>\<C-N>\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['foobarbaz', 'foobar', 'foobarfoo'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, b:selected)
+  call feedkeys("Sfo\<C-N>\<C-N>\<BS>\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['foobarbaz', 'foobar', 'foobarfoo'], b:matches->mapnew('v:val.word'))
+  call assert_equal(-1, b:selected)
+  call assert_equal('fooba', getline(4))
+  call feedkeys("Sfo\<C-N>\<C-N>\<BS>\<C-N>\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['foobarbaz', 'foobar', 'foobarfoo'], b:matches->mapnew('v:val.word'))
+  call assert_equal(0, b:selected)
+  call assert_equal('foobarbaz', getline(4))
+
+  " Test 7: Remove selection when menu contents change (PR #18265)
+  %d
+  call setline(1, ["foobar", "fodxyz", "fodabc"])
+  call feedkeys("Gofoo\<C-N>\<BS>\<BS>\<BS>\<BS>d\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['fodabc', 'fodxyz'], b:matches->mapnew('v:val.word'))
+  call assert_equal(-1, b:selected)
+
+  " Test 8: Ctrl_W / Ctrl_U (delete word/line) should restart autocompletion
+  func! TestComplete(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['fooze', 'faberge']
+  endfunc
+  set omnifunc=TestComplete
+  set complete+=o
+  call feedkeys("Sprefix->fo\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['fodabc', 'fodxyz', 'foobar', 'fooze'], b:matches->mapnew('v:val.word'))
+  call feedkeys("Sprefix->fo\<C-W>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['fooze', 'faberge'], b:matches->mapnew('v:val.word'))
+  call feedkeys("Sprefix->\<Esc>afo\<C-U>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['fooze', 'faberge'], b:matches->mapnew('v:val.word'))
+
+  " Test 9: Trigger autocomplete immediately upon entering Insert mode
+  " 'faberge' is filtered out because it doesn't start with the current prefix
+  " 'foo'; non-prefix omnifunc matches are excluded from the PUM when leader
+  " is NULL (compl_orig_text is used as a fallback filter).
+  call feedkeys("Sprefix->foo\<Esc>a\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['foobar', 'fooze'], b:matches->mapnew('v:val.word'))
+  call feedkeys("Sprefix->fooxx\<Esc>hcw\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['foobar', 'fooze'], b:matches->mapnew('v:val.word'))
+
+  bw!
+  call Ntest_override("char_avail", 0)
+  delfunc NonKeywordComplete
+  delfunc TestComplete
+  set autocomplete& omnifunc& complete&
+  unlet g:CallCount
+endfunc
+
+" Test autocomplete timing
+func Test_autocomplete_timer()
+
+  let g:CallCount = 0
+  func! TestComplete(delay, check, refresh, findstart, base)
+    if a:findstart
+      return col('.') - 1
+    else
+      let g:CallCount += 1
+      if a:delay
+        sleep 310m  " Exceed timeout
+      endif
+      if a:check
+        while !complete_check()
+          sleep 2m
+        endwhile
+        " return v:none  " This should trigger after interrupted by timeout
+        return []
+      endif
+      let res = [["ab", "ac", "ad"], ["abb", "abc", "abd"], ["acb", "cc", "cd"]]
+      if a:refresh
+        return #{words: res[g:CallCount - 1], refresh: 'always'}
+      endif
+      return res[g:CallCount - 1]
+    endif
+  endfunc
+
+  " Trigger expansion even when another char is waiting in the typehead
+  call Ntest_override("char_avail", 1)
+
+  new
+  inoremap <buffer> <F2> <Cmd>let b:matches = complete_info(["matches"]).matches<CR>
+  inoremap <buffer> <F3> <Cmd>let b:selected = complete_info(["selected"]).selected<CR>
+  set autocomplete
+
+  call setline(1, ['abc', 'bcd', 'cde'])
+
+  " Test 1: When matches are found before timeout expires, it exits
+  " 'collection' mode and transitions to 'filter' mode.
+  set complete=.,Ffunction('TestComplete'\\,\ [0\\,\ 0\\,\ 0])
+  let g:CallCount = 0
+  call feedkeys("Goa\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'ab', 'ac', 'ad'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+
+  let g:CallCount = 0
+  call feedkeys("Sab\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'ab'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+
+  " Test 2: When timeout expires before all matches are found, it returns
+  " with partial list but still transitions to 'filter' mode.
+  set complete=.,Ffunction('TestComplete'\\,\ [1\\,\ 0\\,\ 0])
+  let g:CallCount = 0
+  call feedkeys("Sab\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'ab'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+
+  " Test 3: When interrupted by ^N before timeout expires, it remains in
+  " 'collection' mode without transitioning.
+  set complete=.,Ffunction('TestComplete'\\,\ [0\\,\ 1\\,\ 0])
+  let g:CallCount = 0
+  call feedkeys("Sa\<C-N>b\<F2>\<Esc>0", 'tx!')
+  call assert_equal(2, g:CallCount)
+
+  let g:CallCount = 0
+  call feedkeys("Sa\<C-N>b\<C-N>c\<F2>\<Esc>0", 'tx!')
+  call assert_equal(3, g:CallCount)
+
+  " Test 4: Simulate long running func that is stuck in complete_check()
+  let g:CallCount = 0
+  set complete=.,Ffunction('TestComplete'\\,\ [0\\,\ 1\\,\ 0])
+  call feedkeys("Sa\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+
+  let g:CallCount = 0
+  call feedkeys("Sab\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+
+  " Test 5: refresh:always stays in 'collection' mode
+  set complete=.,Ffunction('TestComplete'\\,\ [0\\,\ 0\\,\ 1])
+  let g:CallCount = 0
+  call feedkeys("Sa\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'ab', 'ac', 'ad'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+
+  let g:CallCount = 0
+  call feedkeys("Sab\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'abb', 'abd'], b:matches->mapnew('v:val.word'))
+  call assert_equal(2, g:CallCount)
+
+  " Test 6: <c-n> and <c-p> navigate menu
+  set complete=.,Ffunction('TestComplete'\\,\ [0\\,\ 0\\,\ 0])
+  let g:CallCount = 0
+  call feedkeys("Sab\<c-n>\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'ab'], b:matches->mapnew('v:val.word'))
+  call assert_equal(0, b:selected)
+  call assert_equal(1, g:CallCount)
+  call feedkeys("Sab\<c-n>\<c-n>\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(1, b:selected)
+  call feedkeys("Sab\<c-n>\<c-p>\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(-1, b:selected)
+
+  " Test 7: Following 'cot' option values have no effect
+  set completeopt=menu,menuone,noselect,noinsert,longest
+  set complete=.,Ffunction('TestComplete'\\,\ [0\\,\ 0\\,\ 0])
+  let g:CallCount = 0
+  call feedkeys("Sab\<c-n>\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['abc', 'ab'], b:matches->mapnew('v:val.word'))
+  call assert_equal(0, b:selected)
+  call assert_equal(1, g:CallCount)
+  call assert_equal('abc', getline(4))
+  set completeopt&
+
+  " Test 8: {func} completes after space, but not '.'
+  set complete=.,Ffunction('TestComplete'\\,\ [0\\,\ 0\\,\ 0])
+  let g:CallCount = 0
+  call feedkeys("S \<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['ab', 'ac', 'ad'], b:matches->mapnew('v:val.word'))
+  call assert_equal(1, g:CallCount)
+  set complete=.
+  call feedkeys("S \<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal([], b:matches->mapnew('v:val.word'))
+
+  " Test 9: Matches nearest to the cursor are prioritized (by default)
+  %d
+  let g:CallCount = 0
+  set complete=.
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  call feedkeys("jof\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['foo', 'foobar', 'fo', 'foobarbaz'], b:matches->mapnew('v:val.word'))
+
+  bw!
+  call Ntest_override("char_avail", 0)
+  delfunc TestComplete
+  set autocomplete& complete&
+  unlet g:CallCount
+endfunc
+
+func s:TestCompleteScriptLocal(findstart, base)
+  if a:findstart
+    return 1
+  else
+    return ['foo', 'foobar']
+  endif
+endfunc
+
+" Issue 17869
+func Test_scriptlocal_autoload_func()
+  let save_rtp = &rtp
+  set rtp=Xruntime/some
+  let dir = 'Xruntime/some/autoload'
+  call mkdir(dir, 'pR')
+
+  let lines =<< trim END
+      func compl#Func(findstart, base)
+          if a:findstart
+              return 1
+          else
+              return ['match', 'matchfoo']
+          endif
+      endfunc
+  END
+  call writefile(lines, dir .. '/compl.vim')
+
+  call Ntest_override("char_avail", 1)
+  new
+  inoremap <buffer> <F2> <Cmd>let b:matches = complete_info(["matches"]).matches<CR>
+  setlocal autocomplete
+
+  setlocal complete=.,Fcompl#Func
+  call feedkeys("im\<F2>\<Esc>0", 'xt!')
+  call assert_equal(['match', 'matchfoo'], b:matches->mapnew('v:val.word'))
+
+  setlocal complete=.,F<SID>TestCompleteScriptLocal
+  call feedkeys("Sf\<F2>\<Esc>0", 'xt!')
+  call assert_equal(['foo', 'foobar'], b:matches->mapnew('v:val.word'))
+
+  setlocal complete&
+  bwipe!
+  call Ntest_override("char_avail", 0)
+  let &rtp = save_rtp
+endfunc
+
+" Issue #17907
+func Test_omni_start_invalid_col()
+  func OmniFunc(startcol, findstart, base)
+    if a:findstart
+      return a:startcol
+    else
+      return ['foo', 'foobar']
+    endif
+  endfunc
+
+  new
+  redraw  " need this to prevent NULL dereference in Nvim
+  set complete=o
+  set omnifunc=funcref('OmniFunc',\ [-1])
+  call setline(1, ['baz '])
+  call feedkeys("A\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('baz foo', getline(1))
+
+  set omnifunc=funcref('OmniFunc',\ [1000])
+  call setline(1, ['bar '])
+  call feedkeys("A\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('bar foo', getline(1))
+  bw!
+
+  delfunc OmniFunc
+  set omnifunc& complete&
+endfunc
+
+func Test_completetimeout_autocompletetimeout()
+  func OmniFunc(findstart, base)
+    if a:findstart
+      return 1
+    else
+      return ['fooOmni']
+    endif
+  endfunc
+
+  set omnifunc=OmniFunc
+  call Ntest_override("char_avail", 1)
+  inoremap <F2> <Cmd>let b:matches = complete_info(["matches"]).matches<CR>
+
+  call setline(1, ['foobar', 'foobarbaz'])
+  new
+  call setline(1, ['foo', 'foobaz', ''])
+  set complete=.,o,w
+  call feedkeys("G", 'xt!')
+
+  set autocomplete
+  for tt in [1, 80, 1000, -1, 0]
+    exec $'set autocompletetimeout={tt}'
+    call feedkeys("\<Esc>Sf\<F2>\<Esc>0", 'xt!')
+    call assert_equal(['foobaz', 'foo', 'fooOmni', 'foobar', 'foobarbaz'], b:matches->mapnew('v:val.word'))
+  endfor
+  set autocomplete&
+
+  for tt in [80, 1000, -1, 0]
+    exec $'set completetimeout={tt}'
+    call feedkeys("\<Esc>Sf\<C-N>\<F2>\<Esc>0", 'xt!')
+    call assert_equal(['foo', 'foobaz', 'fooOmni', 'foobar', 'foobarbaz'], b:matches->mapnew('v:val.word'))
+  endfor
+
+  " Clock does not have fine granularity, so checking 'elapsed time' is only
+  " approximate. We can only test that some type of timeout is enforced.
+  call setline(1, map(range(60000), '"foo" . v:val'))
+  set completetimeout=1
+  call feedkeys("Gof\<C-N>\<F2>\<Esc>0", 'xt!')
+  let match_count = len(b:matches->mapnew('v:val.word'))
+  call assert_true(match_count < 4000)
+
+  set completetimeout=1000
+  call feedkeys("\<Esc>Sf\<C-N>\<F2>\<Esc>0", 'xt!')
+  let match_count = len(b:matches->mapnew('v:val.word'))
+  call assert_true(match_count > 2000)
+
+  set autocomplete
+  set autocompletetimeout=81
+  call feedkeys("\<Esc>Sf\<F2>\<Esc>0", 'xt!')
+  let match_count = len(b:matches->mapnew('v:val.word'))
+  call assert_true(match_count < 50000)
+
+  set complete& omnifunc& autocomplete& autocompletetimeout& completetimeout&
+  bwipe!
+  %d
+  call Ntest_override("char_avail", 0)
+  iunmap <F2>
+  delfunc OmniFunc
+endfunc
+
+func Test_autocompletedelay()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    call setline(1, ['foo', 'foobar', 'foobarbaz'])
+    setlocal autocomplete
+  [SCRIPT]
+  call writefile(lines, 'XTest_autocomplete_delay', 'D')
+  let buf = RunVimInTerminal('-S XTest_autocomplete_delay', {'rows': 10})
+
+  call term_sendkeys(buf, "Gof")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_1', {})
+
+  call term_sendkeys(buf, "\<Esc>:set autocompletedelay=500\<CR>")
+  call term_sendkeys(buf, "Sf")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_2', {})
+  call term_sendkeys(buf, "o")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_3', {})
+  sleep 500m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_4', {})
+  call term_sendkeys(buf, "\<BS>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_5', {})
+  sleep 500m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_6', {})
+
+  " During delay wait, user can open menu using CTRL_N completion
+  call term_sendkeys(buf, "\<Esc>:set completeopt=menuone\<CR>")
+  call term_sendkeys(buf, "Sf\<C-N>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_7', {})
+
+  " After the menu is open, ^N/^P and Up/Down should not delay
+  call term_sendkeys(buf, "\<Esc>:set completeopt=menu noruler\<CR>")
+  call term_sendkeys(buf, "\<Esc>Sf")
+  sleep 500ms
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_8', {})
+  call term_sendkeys(buf, "\<Down>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_9', {})
+
+  " When menu is not open Up/Down moves cursor to different line
+  call term_sendkeys(buf, "\<Esc>Sf")
+  call term_sendkeys(buf, "\<Up>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_10', {})
+  call term_sendkeys(buf, "\<Down>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_11', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" Preinsert longest prefix when autocomplete
+func Test_autocomplete_longest()
+  func GetLine()
+    let g:line = getline('.')
+    let g:col = col('.')
+    let g:preinserted = preinserted()
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  inoremap <buffer><F5> <C-R>=GetLine()<CR>
+  set completeopt+=longest autocomplete
+  call setline(1, ["foobar", "foozbar"])
+  call feedkeys("Go\<ESC>", 'tx')
+
+  func DoTest(typed, line, col)
+    call feedkeys($"S{a:typed}\<F5>\<ESC>", 'tx')
+    call assert_equal(a:line, g:line)
+    call assert_equal(a:col, g:col)
+  endfunc
+
+  call DoTest("f", 'foo', 2)
+  call DoTest("fo", 'foo', 3)
+  call DoTest("foo", 'foo', 4)
+  call DoTest("foob", 'foobar', 5)
+  call DoTest("foob\<BS>", 'foo', 4)
+  call DoTest("foob\<BS>\<BS>", 'foo', 3)
+  call DoTest("foo\<BS>", 'foo', 3)
+  call DoTest("foo\<BS>\<BS>", 'foo', 2)
+  call DoTest("foo\<BS>\<BS>\<BS>", '', 1)
+
+  call DoTest("foo \<BS>", 'foo', 4)
+  call DoTest("foo \<BS>\<BS>", 'foo', 3)
+
+  call DoTest("f\<C-N>", 'foozbar', 8)
+  call DoTest("f\<C-N>\<C-N>", 'foobar', 7)
+  call DoTest("f\<C-N>\<C-N>\<C-N>", 'foo', 2)
+  call DoTest("f\<C-N>\<C-N>\<C-N>\<C-N>", 'foozbar', 8)
+  call DoTest("f\<C-N>\<C-N>\<C-N>\<C-N>\<C-P>", 'foo', 2)
+  call DoTest("f\<C-N>\<C-N>\<C-N>\<C-N>\<C-P>\<C-P>", 'foobar', 7)
+  call DoTest("f\<C-P>", 'foobar', 7)
+  call DoTest("fo\<BS>\<C-P>", 'foobar', 7)
+
+  " <C-Y> to accept preinserted text
+  inoremap <buffer><F6> <C-R>=pumvisible()<CR>
+  call DoTest("zar\<C-O>0f", 'foozar', 2)
+  call DoTest("zar\<C-O>0f\<C-Y>", 'foozar', 4)
+  call DoTest("zar\<C-O>0f\<C-Y>\<F6>", 'foo1zar', 5)
+  call DoTest("zar\<C-O>0f\<C-Y>\<BS>", 'foozar', 3)
+  call DoTest("zar\<C-O>0f\<C-Y>\<BS>\<F6>", 'fo1zar', 4)
+
+  " Select items in menu
+  call DoTest("zar\<C-O>0f\<C-N>", 'foozbarzar', 8)
+  call DoTest("zar\<C-O>0f\<C-N>\<C-N>", 'foobarzar', 7)
+  call DoTest("zar\<C-O>0f\<C-N>\<C-N>\<C-N>", 'foozar', 2)
+  call DoTest("zar\<C-O>0f\<C-N>\<C-N>\<C-N>\<C-N>", 'foozbarzar', 8)
+  call DoTest("zar\<C-O>0f\<C-N>\<C-N>\<C-N>\<C-N>\<C-P>", 'foozar', 2)
+  call DoTest("zar\<C-O>0f\<C-N>\<C-N>\<C-N>\<C-N>\<C-P>\<C-P>", 'foobarzar', 7)
+  call DoTest("zar\<C-O>0f\<C-P>", 'foobarzar', 7)
+
+  " Should not work with fuzzy
+  set cot+=fuzzy
+  call DoTest("f", 'f', 2)
+  set cot-=fuzzy
+
+  " preinserted()
+  call DoTest("f", 'foo', 2)
+  call assert_equal(1, g:preinserted)
+  call assert_equal(0, preinserted())
+  call DoTest("f\<BS>", '', 1)
+  call assert_equal(0, g:preinserted)
+  call DoTest("f ", 'f ', 3)
+  call assert_equal(0, g:preinserted)
+  call DoTest("foob", 'foobar', 5)
+  call assert_equal(1, g:preinserted)
+  call DoTest("foob\<BS>\<BS>x", 'fox', 4)
+  call assert_equal(0, g:preinserted)
+
+  " Complete non-keyword
+  func Omni(findstart, base)
+    if a:findstart
+        return 5
+    else
+	return ['xyz:']
+    endif
+  endfunc
+  set omnifunc=Omni
+  set cpt+=o
+  call DoTest("xyz:", "xyz:xyz:", 5)
+  call DoTest("xyz:\<BS>\<BS>", "xyz:", 3)
+  set omnifunc& cpt&
+  delfunc Omni
+
+  " leader should match prefix of inserted word
+  %delete
+  set smartcase ignorecase
+  call setline(1, ["FOO"])
+  call feedkeys($"Gof\<F5>\<Esc>", 'tx')
+  call assert_equal('f', g:line)
+  call feedkeys($"SF\<F5>\<Esc>", 'tx')
+  call assert_equal('FOO', g:line)
+  set smartcase& ignorecase&
+
+  " avoid repeating text that is already present after the cursor
+  %delete
+  call setline(1, ["foobarbaz", ""])
+  call feedkeys($"G", 'tx')
+  call DoTest("baz\<C-O>0f", "foobarbaz", 2)
+  call feedkeys($"Sxfoozar\<CR>\<Esc>", 'tx')
+  call DoTest("baz\<C-O>0f", "foobarbaz", 2)
+  call feedkeys($"Sfoozar\<CR>\<Esc>", 'tx')
+  call DoTest("baz\<C-O>0f", "foobaz", 2)
+
+  " Verify that redo (dot) works
+  %delete
+  call setline(1, ["foobar", "foozbar", "foobaz", "changed", "change"])
+  call feedkeys($"/foo\<CR>", 'tx')
+  call feedkeys($"cwch\<C-N>\<Esc>n.n.", 'tx')
+  call assert_equal(repeat(['changed'], 3), getline(1, 3))
+
+  " Select a match and delete up to text equal to another match
+  %delete
+  call setline(1, ["foobar", "foo"])
+  call feedkeys("Go\<ESC>", 'tx')
+  call DoTest("f\<C-N>\<C-N>\<BS>\<BS>\<BS>\<BS>", 'foo', 3)
+
+  " Issue #18410: When both "preinsert" and "longest" are set, "preinsert"
+  " takes precedence
+  %delete
+  set autocomplete completeopt+=longest,preinsert
+  call setline(1, ['foobar', 'foofoo', 'foobaz', ''])
+  call feedkeys("G", 'tx')
+  call DoTest("f", 'foobar', 2)
+  call assert_equal(1, g:preinserted)
+
+  " complete_info()
+  %delete
+  func GetPreinsert()
+    let g:cinfo = complete_info(['preinserted_text'])
+    return ""
+  endfunc
+  inoremap <buffer><F6> <C-R>=GetPreinsert()<CR>
+  call setline(1, ["foo_bar_xyz", "foo__xyz"])
+
+  set completeopt& completeopt+=preinsert
+  call feedkeys("G4li\<F6>\<C-Y>", 'tx')
+  call assert_equal("bar_xyz", g:cinfo.preinserted_text)
+
+  set completeopt& completeopt+=longest
+  call feedkeys("Gof\<F6>\<ESC>", 'tx')
+  call assert_equal("oo_bar_xyz", g:cinfo.preinserted_text)
+  unlet g:cinfo
+  delfunc GetPreinsert
+  set completeopt&
+
+  " Undo
+  %delete _
+  let &l:undolevels = &l:undolevels
+  normal! ifoo
+  let &l:undolevels = &l:undolevels
+  normal! ofoobar
+  let &l:undolevels = &l:undolevels
+  normal! ofoobaz
+  let &l:undolevels = &l:undolevels
+
+  func CheckUndo()
+    let g:errmsg = ''
+    call assert_equal(['foo', 'foobar', 'foobaz'], getline(1, '$'))
+    undo
+    call assert_equal(['foo', 'foobar'], getline(1, '$'))
+    undo
+    call assert_equal(['foo'], getline(1, '$'))
+    undo
+    call assert_equal([''], getline(1, '$'))
+    later 3
+    call assert_equal(['foo', 'foobar', 'foobaz'], getline(1, '$'))
+    call assert_equal('', v:errmsg)
+  endfunc
+
+  " Check that switching buffer with "longest" doesn't corrupt undo.
+  new
+  setlocal bufhidden=wipe
+  inoremap <buffer> <F2> <Cmd>enew!<CR>
+  call feedkeys("if\<F2>\<Esc>", 'tx')
+  bwipe!
+  call CheckUndo()
+
+  " Check that closing window with "longest" doesn't corrupt undo.
+  new
+  setlocal bufhidden=wipe
+  inoremap <buffer> <F2> <Cmd>close!<CR>
+  call feedkeys("if\<F2>\<Esc>", 'tx')
+  call CheckUndo()
+
+  %delete _
+  delfunc CheckUndo
+
+  " Check that behavior of "longest" in manual completion is unchanged.
+  for ac in [v:false, v:true]
+    let &ac = ac
+    set completeopt=menuone,longest
+    call feedkeys("Ssign u\<C-X>\<C-V>", 'tx')
+    call assert_equal('sign un', getline('.'))
+    call feedkeys("Ssign u\<C-X>\<C-V>\<C-V>", 'tx')
+    call assert_equal('sign undefine', getline('.'))
+    call feedkeys("Ssign u\<C-X>\<C-V>\<C-V>\<C-V>", 'tx')
+    call assert_equal('sign unplace', getline('.'))
+    call feedkeys("Ssign u\<C-X>\<C-V>\<C-V>\<C-V>\<C-V>", 'tx')
+    call assert_equal('sign u', getline('.'))
+    %delete
+  endfor
+
+  bw!
+  set cot& autocomplete&
+  delfunc GetLine
+  delfunc DoTest
+  call Ntest_override("char_avail", 0)
+endfunc
+
+" Issue #18326
+func Test_fuzzy_select_item_when_acl()
+  CheckScreendump
+  let lines =<< trim [SCRIPT]
+    call setline(1, ["v", "vi", "vim"])
+    set autocomplete completeopt=menuone,noinsert,fuzzy autocompletedelay=300
+  [SCRIPT]
+  call writefile(lines, 'XTest_autocomplete_delay', 'D')
+  let buf = RunVimInTerminal('-S XTest_autocomplete_delay', {'rows': 10})
+
+  call term_sendkeys(buf, "Govi")
+  call VerifyScreenDump(buf, 'Test_fuzzy_autocompletedelay_1', {})
+
+  call term_sendkeys(buf, "\<Esc>Sv")
+  call VerifyScreenDump(buf, 'Test_fuzzy_autocompletedelay_2', {})
+  sleep 500m
+  call term_sendkeys(buf, "i")
+  call VerifyScreenDump(buf, 'Test_fuzzy_autocompletedelay_3', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" Issue #18378: crash when fuzzy reorders items during refresh:always
+func Test_refresh_always_with_fuzzy()
+  func ComplFunc1(findstart, base)
+    if a:findstart
+      return 1
+    else
+      return ['foo', 'foobar']
+    endif
+  endfunc
+  func ComplFunc2(findstart, base)
+    if a:findstart
+      return 1
+    else
+      return #{words: ['foo'], refresh: 'always'}
+    endif
+  endfunc
+  set complete=.,FComplFunc1,FComplFunc2
+  set autocomplete
+  call Ntest_override("char_avail", 1)
+  new
+  call setline(1, ['fox'])
+  exe "normal! Gofo"
+  bw!
+  delfunc ComplFunc1
+  delfunc ComplFunc2
+  set complete& autocomplete&
+  call Ntest_override("char_avail", 0)
+endfunc
+
+func Test_autocompletedelay_longest_preinsert()
+  CheckScreendump
+  let lines =<< trim [SCRIPT]
+    call setline(1, ['autocomplete', 'autocomxxx'])
+    set autocomplete completeopt+=longest autocompletedelay=500
+  [SCRIPT]
+  call writefile(lines, 'XTest_autocompletedelay', 'D')
+  let buf = RunVimInTerminal('-S XTest_autocompletedelay', {'rows': 10})
+
+  " No spurious characters when autocompletedelay is in effect
+  call term_sendkeys(buf, "Goau")
+  sleep 10m
+  call term_sendkeys(buf, "toc")
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_longest_1', {})
+  sleep 500m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_longest_2', {})
+
+  " Deleting a char should still show longest text
+  call term_sendkeys(buf, "\<Esc>Saut")
+  sleep 10m
+  call term_sendkeys(buf, "\<BS>")
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_longest_3', {})
+  sleep 500m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_longest_4', {})
+
+  " Preinsert
+  call term_sendkeys(buf, "\<Esc>:set completeopt& completeopt+=preinsert\<CR>")
+
+  " Show preinserted text right away but display popup later
+  call term_sendkeys(buf, "\<Esc>Sau")
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_preinsert_1', {})
+  sleep 500m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_preinsert_2', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" Issue 18493
+func Test_longest_preinsert_accept()
+  call Ntest_override("char_avail", 1)
+  new
+  call setline(1, ['func1', 'xfunc', 'func2'])
+  set completeopt+=noselect
+
+  call feedkeys("Gof\<C-N>\<Down>\<C-Y>", 'tx')
+  call assert_equal('func1', getline('.'))
+
+  set completeopt+=longest autocomplete
+  call feedkeys("Sf\<Down>\<C-Y>", 'tx')
+  call assert_equal('func2', getline('.'))
+  call feedkeys("Sf\<C-Y>", 'tx')
+  call assert_equal('func', getline('.'))
+
+  set completeopt& autocomplete&
+  bw!
+  call Ntest_override("char_avail", 0)
+endfunc
+
+" Issue 19114
+func Test_fuzzy_filenames_compl_autocompl()
+  CheckScreendump
+  let dir = 'Xtempdir'
+  call mkdir(dir, 'pR')
+  call writefile([], dir .. '/.name')
+  call writefile([], dir .. '/name')
+  call writefile([], dir .. '/test.vim')
+
+  let buf = RunVimInTerminal('', {'rows': 10})
+  call term_sendkeys(buf, ':call test_override("char_avail", 1)')
+  call term_sendkeys(buf, "\<CR>")
+  call term_sendkeys(buf, "iset ac cot=fuzzy,longest\<ESC>")
+  call term_sendkeys(buf, ":source\<CR>")
+  call term_sendkeys(buf, "o.na\<C-X>\<C-F>")  " this used to cause segfault
+  call TermWait(buf, 200)
+  call VerifyScreenDump(buf, 'Test_fuzzy_filenames_compl_autocompl', {})
+  call StopVimInTerminal(buf)
+endfunc
+
+" Issue 19130
+func Test_helptags_autocomplete_timeout()
+  func! TestComplete(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    else
+      sleep 310m  " Exceed timeout
+      return ["foo"]
+    endif
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  set autocomplete completeopt=fuzzy complete=.,FTestComplete
+  call feedkeys("Goa\<Esc>0", 'tx!')
+  call feedkeys(":h\<CR>", 'tx')  " used to throw E149 exception
+  call Ntest_override("char_avail", 0)
+  set autocomplete& completeopt& complete&
+  bw!
+endfunc
+
+func Test_autocomplete_preinsert_null_leader()
+  " Test that non-prefix matches from omnifunc are filtered when leader is NULL.
+  " When autocomplete first fires, compl_leader is NULL.  Previously the prefix
+  " filter was bypassed, allowing non-prefix fuzzy matches to be incorrectly
+  " shown in the PUM and preinserted.
+  func NonPrefixOmni(findstart, base)
+    if a:findstart
+      return col(".") - 1
+    endif
+    " Return "key" (doesn't start with 'y') and "yellow" (starts with 'y').
+    " Simulates what a fuzzy omnifunc returns (e.g. vimcomplete#Complete with
+    " wildoptions=fuzzy).
+    return ["key", "yellow"]
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  set omnifunc=NonPrefixOmni complete=o
+  set completeopt=preinsert autocomplete
+
+  func GetState()
+    let g:line = getline('.')
+    let g:col = col('.')
+    let g:matches = complete_info(['matches']).matches->mapnew('v:val.word')
+  endfunc
+  inoremap <buffer> <F5> <C-R>=GetState()<CR>
+
+  " Type 'y': "key" should be filtered out (doesn't start with 'y'),
+  " "yellow" should be the only PUM entry and preinserted with cursor after 'y'.
+  call feedkeys("iy\<F5>\<C-E>\<Esc>", 'tx')
+  call assert_equal("yellow", g:line)
+  call assert_equal(2, g:col)
+  call assert_equal(['yellow'], g:matches)
+
+  bw!
+  set omnifunc& complete& completeopt& autocomplete&
+  call Ntest_override("char_avail", 0)
+  delfunc NonPrefixOmni
+  delfunc GetState
+endfunc
+
+" Issue #19329: When register contents are inserted, remove preinserted text
+func Test_ins_register_preinsert_autocomplete()
+  func TestOmni(findstart, base)
+    if a:findstart
+      return col(".") - 1
+    endif
+    return ["foo", "foobar"]
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  set omnifunc=TestOmni complete^=o
+  set completeopt=preinsert autocomplete
+
+  call feedkeys("ifoo \<C-R>\<C-P>=\"xyz\"\<CR>\<Esc>", 'tx')
+  call assert_equal("foo xyz", getline('.'))
+  bw!
+  set omnifunc& complete& completeopt& autocomplete&
+  call Ntest_override("char_avail", 0)
+  delfunc TestOmni
+endfunc
+
+func Test_autocomplete_with_auto_format()
+  call Ntest_override("char_avail", 1)
+  new
+  setlocal formatoptions=tcq textwidth=9 autocomplete noautoindent
+  call feedkeys("ia b c d\<Esc>ie f g\<Esc>", 'tx')
+  call assert_equal(['a b c e f', 'gd'], getline(1, '$'))
+
+  %delete
+  setlocal autoindent
+  call feedkeys("ia b c d\<Esc>ie f g\<Esc>", 'tx')
+  call assert_equal(['a b c e f', 'gd'], getline(1, '$'))
+
+  bw!
+  call Ntest_override("char_avail", 0)
+endfunc
+
+func Test_completion_with_mapped_ctrl_r()
+  new
+  let b:n = 0
+  let @a = 'AABBCCDDEE'
+  " Ctrl-R mapping is triggered
+  inoremap <buffer> <C-R> <Cmd>let b:n += 1<CR>
+  inoremap <buffer> <F2> <Cmd>call complete(col('.'), [])<CR>
+  call feedkeys("i\<F2>\<*C-R>abcde\<Esc>", 'tx')
+  call assert_equal(1, b:n)
+  call assert_equal('abcde', getline('.'))
+
+  " Ctrl-X Ctrl-R still works with Ctrl-R mapped
+  call feedkeys("ccAAB\<*C-X>\<*C-R>\<*C-Y>\<Esc>", 'tx')
+  call assert_equal(1, b:n)
+  call assert_equal('AABBCCDDEE', getline('.'))
+
+  let @a = ''
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

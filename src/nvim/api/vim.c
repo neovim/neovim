@@ -31,9 +31,9 @@
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
@@ -65,7 +65,7 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
-#include "nvim/ops.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -75,6 +75,7 @@
 #include "nvim/os/proc.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/sign_defs.h"
 #include "nvim/state.h"
@@ -86,17 +87,20 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/vim.c.generated.h"
-#endif
+#include "api/vim.c.generated.h"
 
 /// Gets a highlight group by name
 ///
 /// similar to |hlID()|, but allocates a new ID if not present.
-Integer nvim_get_hl_id_by_name(String name)
+/// @param[out] err Error details, if any
+Integer nvim_get_hl_id_by_name(String name, Error *err)
   FUNC_API_SINCE(7)
 {
-  return syn_check_group(name.data, name.size);
+  int ret;
+  TRY_WRAP(err, {
+    ret = syn_check_group(name.data, name.size);
+  });
+  return ret;
 }
 
 /// Gets all or specific highlight groups in a namespace.
@@ -121,18 +125,13 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
   return ns_get_hl_defs((NS)ns_id, opts, arena, err);
 }
 
-/// Sets a highlight group.
-///
-/// @note Unlike the `:highlight` command which can update a highlight group,
-///       this function completely replaces the definition. For example:
-///       `nvim_set_hl(0, 'Visual', {})` will clear the highlight group
-///       'Visual'.
+/// Sets a highlight group. By default, replaces the entire definition (e.g. `nvim_set_hl(0, 'Visual', {})`
+/// will clear the "Visual" group), unless `update` is specified.
 ///
 /// @note The fg and bg keys also accept the string values `"fg"` or `"bg"`
 ///       which act as aliases to the corresponding foreground and background
 ///       values of the Normal group. If the Normal group has not been defined,
 ///       using these values results in an error.
-///
 ///
 /// @note If `link` is used in combination with other attributes; only the
 ///       `link` will take effect (see |:hi-link|).
@@ -143,48 +142,66 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///              |nvim_set_hl_ns()| or |nvim_win_set_hl_ns()| to activate them.
 /// @param name  Highlight group name, e.g. "ErrorMsg"
 /// @param val   Highlight definition map, accepts the following keys:
-///                - fg: color name or "#RRGGBB", see note.
+///                - altfont: boolean
 ///                - bg: color name or "#RRGGBB", see note.
-///                - sp: color name or "#RRGGBB"
+///                - bg_indexed: boolean. If true, `bg` is an RGB approximation of `ctermbg`
+///                  (a palette index). UIs rendering cterm natively may prefer `ctermbg`.
 ///                - blend: integer between 0 and 100
+///                - blink: boolean
 ///                - bold: boolean
-///                - standout: boolean
-///                - underline: boolean
-///                - undercurl: boolean
-///                - underdouble: boolean
-///                - underdotted: boolean
-///                - underdashed: boolean
-///                - strikethrough: boolean
-///                - italic: boolean
-///                - reverse: boolean
-///                - nocombine: boolean
-///                - link: name of another highlight group to link to, see |:hi-link|.
-///                - default: Don't override existing definition |:hi-default|
-///                - ctermfg: Sets foreground of cterm color |ctermfg|
+///                - conceal: boolean Concealment at the UI level (terminal SGR), unrelated to |:syn-conceal|.
+///                - cterm: cterm attribute map, like |highlight-args|. If not set, cterm attributes
+///                  will match those from the attribute map documented above.
 ///                - ctermbg: Sets background of cterm color |ctermbg|
-///                - cterm: cterm attribute map, like |highlight-args|. If not set,
-///                         cterm attributes will match those from the attribute map
-///                         documented above.
-///                - force: if true force update the highlight group when it exists.
+///                - ctermfg: Sets foreground of cterm color |ctermfg|
+///                - default: boolean Don't override existing definition |:hi-default|
+///                - dim: boolean
+///                - fg: Color name or "#RRGGBB", see note.
+///                - fg_indexed: boolean. Same as `bg_indexed`, for `fg` and `ctermfg`.
+///                - font: GUI font name (string). Sets |highlight-font|. Use "NONE" to clear.
+///                - force: boolean (default false) Update the highlight group even if it already exists.
+///                - italic: boolean
+///                - link: Name of highlight group to link to. |:hi-link|
+///                - link_global: Like "link", but always resolved in the global namespace (ns=0).
+///                - nocombine: boolean
+///                - overline: boolean
+///                - reverse: boolean
+///                - sp: Color name or "#RRGGBB"
+///                - standout: boolean
+///                - strikethrough: boolean
+///                - undercurl: boolean
+///                - underdashed: boolean
+///                - underdotted: boolean
+///                - underdouble: boolean
+///                - underline: boolean
+///                - update: boolean (default false) Update specified attributes only, leave others unchanged.
 /// @param[out] err Error details, if any
-///
-// TODO(bfredl): val should take update vs reset flag
 void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
-  int hl_id = syn_check_group(name.data, name.size);
-  VALIDATE_S((hl_id != 0), "highlight name", name.data, {
-    return;
+  int hl_id;
+  TRY_WRAP(err, {
+    hl_id = syn_check_group(name.data, name.size);
   });
+  if (ERROR_SET(err) || hl_id == 0) {
+    return;
+  }
   int link_id = -1;
 
   // Setting URLs directly through highlight attributes is not supported
   if (HAS_KEY(val, highlight, url)) {
-    api_free_string(val->url);
-    val->url = NULL_STRING;
+    api_set_error(err, kErrorTypeValidation, "Invalid key: 'url'");
+    return;
   }
 
-  HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
+  bool update = HAS_KEY(val, highlight, update) && val->update;
+  HlAttrs *base = NULL;
+  HlAttrs base_attrs;
+  if (update && hl_ns_get_attrs((int)ns_id, hl_id, NULL, &base_attrs)) {
+    base = &base_attrs;
+  }
+
+  HlAttrs attrs = dict2hlattrs(val, true, &link_id, base, err);
   if (!ERROR_SET(err)) {
     WITH_SCRIPT_CONTEXT(channel_id, {
       ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
@@ -234,7 +251,7 @@ void nvim_set_hl_ns(Integer ns_id, Error *err)
 
 /// Set active namespace for highlights defined with |nvim_set_hl()| while redrawing.
 ///
-/// This function meant to be called while redrawing, primarily from
+/// This function is meant to be called while redrawing, primarily from
 /// |nvim_set_decoration_provider()| on_win and on_line callbacks, which
 /// are allowed to change the namespace during a redraw cycle.
 ///
@@ -334,7 +351,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
     if (!dangerous) {
       ex_normal_busy++;
     }
-    exec_normal(true);
+    exec_normal(true, lowlevel);
     if (!dangerous) {
       ex_normal_busy--;
     }
@@ -384,7 +401,8 @@ Integer nvim_input(uint64_t channel_id, String keys)
 ///                 The same specifiers are used as for a key press, except
 ///                 that the "-" separator is optional, so "C-A-", "c-a"
 ///                 and "CA" can all be used to specify Ctrl+Alt+click.
-/// @param grid Grid number if the client uses |ui-multigrid|, else 0.
+/// @param grid Grid number (used by |ui-multigrid| client), or 0 to let Nvim decide positioning of
+///             windows. For more information, see [dev-ui-multigrid]
 /// @param row Mouse row-position (zero-based, like redraw events)
 /// @param col Mouse column-position (zero-based, like redraw events)
 /// @param[out] err Error details, if any
@@ -466,12 +484,14 @@ error:
 /// Replaces terminal codes and |keycodes| ([<CR>], [<Esc>], ...) in a string with
 /// the internal representation.
 ///
+/// @note Lua can use |vim.keycode()| instead.
+/// @see replace_termcodes
+/// @see cpoptions
+///
 /// @param str        String to be converted.
 /// @param from_part  Legacy Vim parameter. Usually true.
 /// @param do_lt      Also translate [<lt>]. Ignored if `special` is false.
 /// @param special    Replace |keycodes|, e.g. [<CR>] becomes a "\r" char.
-/// @see replace_termcodes
-/// @see cpoptions
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Boolean special)
   FUNC_API_SINCE(1) FUNC_API_RET_ALLOC
 {
@@ -496,6 +516,39 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
   return cstr_as_string(ptr);
 }
 
+/// Executes Lua code. Arguments are available as `...` inside the chunk. The chunk can return
+/// a value.
+///
+/// Only statements are executed. To evaluate an expression, prefix it with "return": `return
+/// my_function(...)`
+///
+/// Example:
+/// ```lua
+/// local peer = vim.fn.jobstart({ vim.v.progpath, '--clean', '--embed' }, { rpc=true })
+/// vim.print(vim.rpcrequest(peer, 'nvim_exec_lua', [[
+///       local a, b = ...
+///       return ('result: %s'):format(a + b)
+///     ]],
+///     { 1, 3 }
+///   )
+/// )
+/// ```
+///
+/// @param code       Lua code to execute.
+/// @param args       Arguments to the Lua code.
+/// @param[out] err   Lua error raised while parsing or executing the Lua code.
+///
+/// @return           Value returned by the Lua code (if any), or NIL.
+Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_REMOTE_ONLY
+{
+  // TODO(bfredl): convert directly from msgpack to lua and then back again
+  return nlua_exec(code, NULL, args, kRetObject, arena, err);
+}
+
+/// Like |nvim_exec_lua()|, but can be called during |api-fast| contexts.
+///
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
 /// chunk. The chunk can return a value.
 ///
@@ -508,12 +561,12 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
 ///                   or executing the Lua code.
 ///
 /// @return           Return value of Lua code if present or NIL.
-Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
-  FUNC_API_SINCE(7)
+Object nvim__exec_lua_fast(String code, Array args, Arena *arena, Error *err)
+  FUNC_API_SINCE(14)
   FUNC_API_REMOTE_ONLY
+  FUNC_API_FAST
 {
-  // TODO(bfredl): convert directly from msgpack to lua and then back again
-  return nlua_exec(code, NULL, args, kRetObject, arena, err);
+  return nvim_exec_lua(code, args, arena, err);
 }
 
 /// Calculates the number of display cells occupied by `text`.
@@ -690,13 +743,13 @@ void nvim_del_current_line(Arena *arena, Error *err)
 Object nvim_get_var(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
+  dictitem_T *di = tv_dict_find(get_globvar_dict(), name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
     bool found = script_autoload(name.data, name.size, false) && !aborting();
     VALIDATE(found, "Key not found: %s", name.data, {
       return (Object)OBJECT_INIT;
     });
-    di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
+    di = tv_dict_find(get_globvar_dict(), name.data, (ptrdiff_t)name.size);
   }
   VALIDATE((di != NULL), "Key not found: %s", name.data, {
     return (Object)OBJECT_INIT;
@@ -712,7 +765,7 @@ Object nvim_get_var(String name, Arena *arena, Error *err)
 void nvim_set_var(String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
-  dict_set_var(&globvardict, name, value, false, false, NULL, err);
+  dict_set_var(get_globvar_dict(), name, value, false, false, NULL, err);
 }
 
 /// Removes a global (g:) variable.
@@ -722,7 +775,7 @@ void nvim_set_var(String name, Object value, Error *err)
 void nvim_del_var(String name, Error *err)
   FUNC_API_SINCE(1)
 {
-  dict_set_var(&globvardict, name, NIL, true, false, NULL, err);
+  dict_set_var(get_globvar_dict(), name, NIL, true, false, NULL, err);
 }
 
 /// Gets a v: variable.
@@ -733,7 +786,7 @@ void nvim_del_var(String name, Error *err)
 Object nvim_get_vvar(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return dict_get_value(&vimvardict, name, arena, err);
+  return dict_get_value(get_vimvar_dict(), name, arena, err);
 }
 
 /// Sets a v: variable, if it is not readonly.
@@ -744,10 +797,16 @@ Object nvim_get_vvar(String name, Arena *arena, Error *err)
 void nvim_set_vvar(String name, Object value, Error *err)
   FUNC_API_SINCE(6)
 {
-  dict_set_var(&vimvardict, name, value, false, false, NULL, err);
+  dict_set_var(get_vimvar_dict(), name, value, false, false, NULL, err);
 }
 
-/// Prints a message given by a list of `[text, hl_group]` "chunks".
+/// Prints a message given by a list of `[text, hl_group]` "chunks". Emits a |Progress| event if
+/// `kind='progress'`.
+///
+/// Returns a message-id, which can be given in later calls to update an existing message. The
+/// message-id is an autogenerated integer, or a user-defined string. The id "address space" is
+/// global, so plugins specifying a string id should use qualified names such as "my.msg.id" to
+/// avoid unintentional conflicts.
 ///
 /// Example:
 /// ```lua
@@ -758,14 +817,30 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///               the (optional) name or ID `hl_group`.
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
-///          - err: Treat the message like `:echoerr`. Sets `hl_group` to |hl-ErrorMsg| by default.
-///          - kind: Set the |ui-messages| kind with which this message will be emitted.
-///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
-///            will write the message to the "log" file instead of standard output.
-void nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
-               Error *err)
+///          - data (`table?`) Dict of arbitrary data, available in |Progress| |event-data|.
+///          - err (`boolean?`)  Treat the message like `:echoerr`. Sets `hl_group` to |hl-ErrorMsg| by default.
+///          - id (`integer|string?`) Message-id returned by a previous `nvim_echo` call, or
+///            a user-defined id (string). If existing message has this id, it will be updated
+///            instead of creating a new message.
+///          - kind (`string?`) Decides the |ui-messages| kind in the emitted message. Set "progress"
+///            to emit a |progress-message|.
+///          - percent (`integer?`) |progress-message| percentage, or nil to signal "unknown progress".
+///          - source (`string?`) |progress-message| source.
+///          - status (`string?`) |progress-message| status:
+///            - "success": Process completed successfully.
+///            - "running": Process is ongoing.
+///            - "failed": Process failed.
+///            - "cancel": Process should be cancelled. Progress owner must handle the |Progress|
+///              event to perform the cancellation.
+///          - title (`string?`) Message title. Only for |progress-message| currently.
+///          - verbose (`boolean?`) Message is controlled by the 'verbose' option. `nvim -V3log` will write the
+///            message to the "log" file instead of standard output.
+/// @return Message-id, or -1 if message wasn't shown.
+Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history,
+                                 Dict(echo_opts) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
+  MsgID id = INTEGER_OBJ(-1);
   HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
   if (ERROR_SET(err)) {
     goto error;
@@ -778,20 +853,82 @@ void nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(
     kind = opts->err ? "echoerr" : history ? "echomsg" : "echo";
   }
 
-  msg_multihl(hl_msg, kind, history, opts->err);
+  bool is_progress = strequal(kind, "progress");
+  bool needs_clear = !history;
+
+  VALIDATE(is_progress
+           || (opts->status.size == 0 && opts->title.size == 0 && !HAS_KEY(opts, echo_opts, percent)
+               && opts->data.size == 0 && opts->source.size == 0),
+           "Conflict: title/source/status/percent/data not allowed with kind='%s'", kind,
+  {
+    goto error;
+  });
+
+  VALIDATE_EXP((!is_progress || strequal(opts->status.data, "success")
+                || strequal(opts->status.data, "failed")
+                || strequal(opts->status.data, "running")
+                || strequal(opts->status.data, "cancel")),
+               "status", "success|failed|running|cancel", opts->status.data, {
+    goto error;
+  });
+
+  VALIDATE_RANGE(!is_progress || !HAS_KEY(opts, echo_opts, percent)
+                 || (opts->percent >= 0 && opts->percent <= 100),
+                 "percent", {
+    goto error;
+  });
+
+  VALIDATE_R((!is_progress || opts->source.size != 0), "opts.source", {
+    goto error;
+  });
+
+  // Message-id may be user-defined only if String, not Integer.
+  VALIDATE(opts->id.type != kObjectTypeInteger || msg_id_exists(opts->id.data.integer),
+           "Invalid 'id': %" PRId64, opts->id.data.integer, {
+    goto error;
+  });
+
+  MessageData msg_data = { .title = opts->title, .status = opts->status,
+                           .percent = HAS_KEY(opts, echo_opts, percent) ? opts->percent : -1,
+                           .data = opts->data, .source = opts->source };
+
+  const bool save_nwr = need_wait_return;
+  const int save_lines_left = lines_left;
+  const bool save_msg_didany = msg_didany;
+  // Similar truncation method to showmode().
+  // TODO(justinmk): drop _truncate feature after ui2 graduates?
+  if (opts->_truncate) {
+    no_wait_return++;
+    lines_left = 0;
+    msg_didany = true;
+    msg_no_more = true;
+  }
+  id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data, &needs_clear);
+  if (opts->_truncate) {
+    msg_no_more = false;
+    msg_didany = save_msg_didany;
+    lines_left = save_lines_left;
+    no_wait_return--;
+    need_wait_return = save_nwr;
+  }
 
   if (opts->verbose) {
     verbose_leave();
     verbose_stop();  // flush now
   }
 
-  if (history) {
-    // history takes ownership
-    return;
+  if (is_progress) {
+    do_autocmd_progress(id, hl_msg, &msg_data);
+  }
+
+  if (!needs_clear) {
+    // history takes ownership of `hl_msg`
+    return id;
   }
 
 error:
   hl_msg_free(hl_msg);
+  return id;
 }
 
 /// Gets the current list of buffers.
@@ -827,22 +964,22 @@ Buffer nvim_get_current_buf(void)
   return curbuf->handle;
 }
 
-/// Sets the current window's buffer to `buffer`.
+/// Sets the current window's buffer to `buf`.
 ///
-/// @param buffer   Buffer id
+/// @param buf   Buffer id
 /// @param[out] err Error details, if any
-void nvim_set_current_buf(Buffer buffer, Error *err)
+void nvim_set_current_buf(Buffer buf, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *b = find_buffer_by_handle(buf, err);
 
-  if (!buf) {
+  if (!b) {
     return;
   }
 
   TRY_WRAP(err, {
-    do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+    do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, b->b_fnum, 0);
   });
 }
 
@@ -876,22 +1013,25 @@ Window nvim_get_current_win(void)
   return curwin->handle;
 }
 
-/// Sets the current window (and tabpage, implicitly).
+/// Navigates to the given window (and tabpage, implicitly).
 ///
-/// @param window |window-ID| to focus
+/// @param win |window-ID| to focus
 /// @param[out] err Error details, if any
-void nvim_set_current_win(Window window, Error *err)
+void nvim_set_current_win(Window win, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK
 {
-  win_T *win = find_window_by_handle(window, err);
+  win_T *w = find_window_by_handle(win, err);
 
-  if (!win) {
+  if (!w) {
     return;
   }
 
   TRY_WRAP(err, {
-    goto_tabpage_win(win_find_tabpage(win), win);
+    if (w->w_buffer != curbuf) {
+      reset_VIsual_and_resel();
+    }
+    goto_tabpage_win(win_find_tabpage(w), w);
   });
 }
 
@@ -997,7 +1137,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// end, { desc = 'Highlights ANSI termcodes in curbuf' })
 /// ```
 ///
-/// @param buffer Buffer to use. Buffer contents (if any) will be written
+/// @param buf Buffer to use. Buffer contents (if any) will be written
 ///               to the PTY.
 /// @param opts   Optional parameters.
 ///          - on_input: Lua callback for input sent, i e keypresses in terminal
@@ -1009,18 +1149,29 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///          - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
-Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
+Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
+  buf_T *b = api_buf_ensure_loaded(buf, err);
+  if (!b) {
     return 0;
   }
 
-  if (buf == cmdwin_buf) {
+  if (b == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
+  }
+
+  bool may_read_buffer = true;
+  if (b->terminal) {
+    if (terminal_running(b->terminal)) {
+      api_set_error(err, kErrorTypeException,
+                    "Terminal already connected to buffer %d", b->handle);
+      return 0;
+    }
+    buf_close_terminal(b);
+    may_read_buffer = false;
   }
 
   LuaRef cb = LUA_NOREF;
@@ -1038,18 +1189,23 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     // displaying the buffer
     .width = (uint16_t)MAX(curwin->w_view_width - win_col_off(curwin), 0),
     .height = (uint16_t)curwin->w_view_height,
+    .read_pause_cb = term_read_pause,
     .write_cb = term_write,
     .resize_cb = term_resize,
+    .resume_cb = term_resume,
     .close_cb = term_close,
     .force_crlf = GET_BOOL_OR_TRUE(opts, open_term, force_crlf),
   };
 
   // Read existing buffer contents (if any)
   StringBuilder contents = KV_INITIAL_VALUE;
-  read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &contents);
+  if (may_read_buffer) {
+    read_buffer_into(b, 1, b->b_ml.ml_line_count, &contents);
+  }
 
   channel_incref(chan);
-  terminal_open(&chan->term, buf, topts);
+  chan->term = terminal_alloc(b, topts);
+  terminal_open(&chan->term, b);
   if (chan->term != NULL) {
     terminal_check_size(chan->term);
   }
@@ -1064,6 +1220,11 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   }
 
   return (Integer)chan->id;
+}
+
+static void term_read_pause(bool pause, void *data)
+{
+  // Not currently needed as sending to channel isn't allowed during buffer updates.
 }
 
 static void term_write(const char *buf, size_t size, void *data)
@@ -1087,6 +1248,10 @@ static void term_resize(uint16_t width, uint16_t height, void *data)
   // TODO(bfredl): Lua callback
 }
 
+static void term_resume(void *data)
+{
+}
+
 static void term_close(void *data)
 {
   Channel *chan = data;
@@ -1096,18 +1261,18 @@ static void term_close(void *data)
   channel_decref(chan);
 }
 
-/// Send data to channel `id`. For a job, it writes it to the
-/// stdin of the process. For the stdio channel |channel-stdio|,
-/// it writes to Nvim's stdout.  For an internal terminal instance
-/// (|nvim_open_term()|) it writes directly to terminal output.
-/// See |channel-bytes| for more information.
+/// Sends raw data to channel `chan`. |channel-bytes|
+/// - For a job, it writes it to the stdin of the process.
+/// - For the stdio channel |channel-stdio|, it writes to Nvim's stdout.
+/// - For an internal terminal instance (|nvim_open_term()|) it writes directly to terminal output.
 ///
-/// This function writes raw data, not RPC messages.  If the channel
-/// was created with `rpc=true` then the channel expects RPC
-/// messages, use |vim.rpcnotify()| and |vim.rpcrequest()| instead.
+/// This function writes raw data, not RPC messages. Use |vim.rpcrequest()| and |vim.rpcnotify()| if
+/// the channel expects RPC messages (i.e. it was created with `rpc=true`).
 ///
-/// @param chan id of the channel
-/// @param data data to write. 8-bit clean: can contain NUL bytes.
+/// To write data to the |TUI| host terminal, see |nvim_ui_send()|.
+///
+/// @param chan Channel id
+/// @param data Data to write. 8-bit clean: may contain NUL bytes.
 /// @param[out] err Error details, if any
 void nvim_chan_send(Integer chan, String data, Error *err)
   FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY FUNC_API_LUA_ONLY
@@ -1191,7 +1356,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 ///     line2
 ///     line3
 ///   ]], false, -1)
-/// end, { buffer = true })
+/// end, { buf = 0 })
 /// ```
 ///
 /// @param data  Multiline input. Lines break at LF ("\n"). May be binary (containing NUL bytes).
@@ -1218,6 +1383,9 @@ Boolean nvim_paste(uint64_t channel_id, String data, Boolean crlf, Integer phase
   });
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
     cancelled = false;
+    if (curbuf->terminal) {
+      terminal_set_streamed_paste(curbuf->terminal, true);
+    }
   } else if (cancelled) {
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
@@ -1230,6 +1398,9 @@ Boolean nvim_paste(uint64_t channel_id, String data, Boolean crlf, Integer phase
   // vim.paste() decides if client should cancel.
   if (ERROR_SET(err) || (rv.type == kObjectTypeBoolean && !rv.data.boolean)) {
     cancelled = true;
+  }
+  if ((phase == -1 || phase == 3 || cancelled) && curbuf->terminal) {
+    terminal_set_streamed_paste(curbuf->terminal, false);
   }
   if (!cancelled && (phase == -1 || phase == 1)) {
     paste_store(channel_id, kFalse, NULL_STRING, crlf);
@@ -1426,7 +1597,7 @@ DictAs(get_mode) nvim_get_mode(Arena *arena)
 ///
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
-///          The "buffer" key is always zero.
+///          The "buf" key is always zero.
 ArrayOf(DictAs(get_keymap)) nvim_get_keymap(String mode, Arena *arena)
   FUNC_API_SINCE(3)
 {
@@ -1452,7 +1623,7 @@ ArrayOf(DictAs(get_keymap)) nvim_get_keymap(String mode, Arena *arena)
 /// nmap <nowait> <Space><NL> <Nop>
 /// ```
 ///
-/// @param channel_id
+/// @param channel_id Channel id (implicit dispatcher arg)
 /// @param  mode  Mode short-name (map command prefix: "n", "i", "v", "x", …)
 ///               or "!" for |:map!|, or empty string for |:map|.
 ///               "ia", "ca" or "!a" for abbreviation in Insert mode, Cmdline mode, or both, respectively
@@ -1508,10 +1679,10 @@ ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
 /// orchestration. (Note: Something is better than nothing! Fields are optional, but at least set
 /// `name`.)
 ///
-/// Can be called more than once; the caller should merge old info if appropriate. Example: library
+/// Can be called more than once; caller should merge old info if appropriate. Example: a library
 /// first identifies the channel, then a plugin using that library later identifies itself.
 ///
-/// @param channel_id
+/// @param channel_id Channel id (implicit dispatcher arg)
 /// @param name Client short-name. Sets the `client.name` field of |nvim_get_chan_info()|.
 /// @param version  Dict describing the version, with these
 ///     (optional) keys:
@@ -1584,6 +1755,24 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
   rpc_set_client_info(channel_id, copy_dict(info, NULL));
 }
 
+/// Sets the detach flag for the channel.
+///
+/// Detached channels do not trigger self-exit when they are closed.
+///
+/// @param channel_id
+/// @param detach   New detach value for the channel.
+/// @param[out] err Error details, if any.
+void nvim__chan_set_detach(uint64_t channel_id, Boolean detach, Error *err)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY
+{
+  Channel *chan = find_channel(channel_id);
+  VALIDATE(chan != NULL, "%s", e_invchan, {
+    return;
+  });
+
+  chan->detach = (bool)detach;
+}
+
 /// Gets information about a channel.
 ///
 /// See |nvim_list_uis()| for an example of how to get channel info.
@@ -1597,16 +1786,18 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 ///         - "stderr"     stderr of this Nvim instance
 ///         - "socket"     TCP/IP socket or named pipe
 ///         - "job"        Job with communication over its stdio.
-///    -  "mode"    How data received on the channel is interpreted.
+///    - "mode"     How data received on the channel is interpreted.
 ///         - "bytes"      Send and receive raw bytes.
 ///         - "terminal"   |terminal| instance interprets ASCII sequences.
 ///         - "rpc"        |RPC| communication on the channel is active.
-///    -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this is a device path like
+///    - "pty"      (optional) Name of pseudoterminal. On a POSIX system this is a device path like
 ///                 "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ///                 for conpty on Windows).
-///    -  "buffer"  (optional) Buffer connected to |terminal| instance.
-///    -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
+///    - "buf"      (optional) Buffer connected to |terminal| instance.
+///    - "buffer"   (optional) Deprecated alias for `buf`.
+///    - "client"   (optional) Info about the peer (client on the other end of the channel), as set
 ///                 by |nvim_set_client_info()|.
+///    - "exitcode" (optional) Exit code of the |terminal| process.
 ///
 Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
@@ -2091,8 +2282,8 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
     if (opts->use_winbar) {
       fillchar = wp->w_p_fcs_chars.wbr;
     } else {
-      int attr;
-      fillchar = fillchar_status(&attr, wp);
+      hlf_T group;
+      fillchar = fillchar_status(&group, wp);
     }
   }
 
@@ -2149,7 +2340,7 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
         grpname = syn_id2name(-sp->userhl);
       } else {
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
-        grpname = arena_memdupz(arena, user_group, strlen(user_group));
+        grpname = arena_strdup(arena, user_group);
       }
 
       const char *combine = sp->item == STL_SIGNCOL ? syn_id2name(scl_hl_id)
@@ -2172,17 +2363,6 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
   return result;
 }
 
-/// @nodoc
-void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
-  FUNC_API_REMOTE_ONLY
-{
-  // TODO(bfredl): consider printing message to user, as will be relevant
-  // if we fork nvim processes as async workers
-  ELOG("async error on channel %" PRId64 ": %s", channel_id, data.size ? data.data : "");
-}
-
-/// EXPERIMENTAL: this API may change in the future.
-///
 /// Sets info for the completion item at the given index. If the info text was shown in a window,
 /// returns the window and buffer ids, or empty dict if not shown.
 ///
@@ -2240,8 +2420,6 @@ static void redraw_status(win_T *wp, Dict(redraw) *opts, bool *flush)
   }
 }
 
-/// EXPERIMENTAL: this API may change in the future.
-///
 /// Instruct Nvim to redraw various components.
 ///
 /// @see |:redraw|

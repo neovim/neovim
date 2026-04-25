@@ -12,9 +12,7 @@
 #include "nvim/math.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "math.c.generated.h"
-#endif
+#include "math.c.generated.h"
 
 int xfpclassify(double d)
   FUNC_ATTR_CONST
@@ -81,7 +79,7 @@ int xctz(uint64_t x)
 unsigned xpopcount(uint64_t x)
 {
   // Use compiler builtin if possible.
-#if defined(__NetBSD__)
+#ifdef __NetBSD__
   return popcount64(x);
 #elif defined(__clang__) || defined(__GNUC__)
   return (unsigned)__builtin_popcountll(x);

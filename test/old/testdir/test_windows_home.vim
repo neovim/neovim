@@ -38,7 +38,7 @@ endfunc
 
 func CheckHome(exp, ...)
   call assert_equal(a:exp, $HOME)
-  call assert_equal(a:exp, expand('~', ':p'))
+  call assert_equal(substitute(a:exp, '\\', '/', 'g'), expand('~', ':p'))
   if !a:0
     call CheckHomeIsMissingFromSubprocessEnvironment()
   else

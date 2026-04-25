@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		C
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2025 Jan 18
+" Last Change:		2026 Jan 13
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -326,7 +326,10 @@ if !exists("c_no_c11")
   syn keyword	cOperator	_Alignof alignof
   syn keyword	cStorageClass	_Atomic
   syn keyword	cOperator	_Generic
-  syn keyword	cStorageClass	_Noreturn noreturn
+  syn keyword	cStorageClass	_Noreturn
+  if !s:in_cpp_family
+    syn keyword	cStorageClass	noreturn
+  endif
   syn keyword	cOperator	_Static_assert static_assert
   syn keyword	cStorageClass	_Thread_local thread_local
   syn keyword   cType		char16_t char32_t
@@ -421,8 +424,10 @@ if !exists("c_no_ansi") || exists("c_ansi_constants") || exists("c_gnu")
   syn keyword cConstant NDEBUG
   " POSIX 2001
   syn keyword cConstant SIGBUS SIGPOLL SIGPROF SIGSYS SIGURG SIGVTALRM SIGXCPU SIGXFSZ
+  " POSIX Issue 8 (post 2017)
+  syn keyword cConstant SIGWINCH
   " non-POSIX signals
-  syn keyword cConstant SIGWINCH SIGINFO
+  syn keyword cConstant SIGINFO SIGIO
   " Add POSIX errors as well.  List comes from:
   " http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/errno.h.html
   syn keyword cConstant E2BIG EACCES EADDRINUSE EADDRNOTAVAIL EAFNOSUPPORT EAGAIN EALREADY EBADF

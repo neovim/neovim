@@ -1,12 +1,12 @@
 " Vim syntax file
 " Language: lf file manager configuration file (lfrc)
-" Maintainer: Andis Sprinkis <andis@sprinkis.com>
+" Maintainer: Andis Sprinkis <andis@sprinkis.com>, @CatsDeservePets
 " Former Maintainer: Cameron Wright
 " URL: https://github.com/andis-sprinkis/lf-vim
-" Last Change: 10 May 2025
+" Last Change: 4 Feb 2026
 "
 " The shell syntax highlighting is configurable. See $VIMRUNTIME/doc/syntax.txt
-" lf version: 34
+" lf version: 41
 
 if exists("b:current_syntax") | finish | endif
 
@@ -25,11 +25,12 @@ syn match lfString '".*"' contains=lfSpecial
 "}}}
 
 "{{{ Keywords
-syn keyword lfKeyword set setlocal cmd map cmap skipwhite
+syn keyword lfKeyword set setlocal cmd map cmap nmap vmap skipwhite
 "}}}
 
 "{{{ Options Keywords
 syn keyword lfOptions
+  \ addcustominfo
   \ anchorfind
   \ autoquit
   \ borderfmt
@@ -55,12 +56,14 @@ syn keyword lfOptions
   \ cmd-history-next
   \ cmd-history-prev
   \ cmd-home
+  \ cmd-insert
   \ cmd-interrupt
   \ cmd-left
   \ cmd-lowercase-word
   \ cmd-menu-accept
   \ cmd-menu-complete
   \ cmd-menu-complete-back
+  \ cmd-menu-discard
   \ cmd-right
   \ cmd-transpose
   \ cmd-transpose-word
@@ -77,12 +80,10 @@ syn keyword lfOptions
   \ cut
   \ cutfmt
   \ delete
-  \ dircache
   \ dircounts
   \ dirfirst
   \ dironly
   \ dirpreviews
-  \ doc
   \ down
   \ draw
   \ drawbox
@@ -93,6 +94,7 @@ syn keyword lfOptions
   \ errorfmt
   \ filesep
   \ filter
+  \ filtermethod
   \ find
   \ find-back
   \ find-next
@@ -100,10 +102,9 @@ syn keyword lfOptions
   \ findlen
   \ glob-select
   \ glob-unselect
-  \ globfilter
-  \ globsearch
   \ half-down
   \ half-up
+  \ help
   \ hidden
   \ hiddenfiles
   \ high
@@ -118,24 +119,28 @@ syn keyword lfOptions
   \ infotimefmtnew
   \ infotimefmtold
   \ invert
-  \ invert-below
   \ jump-next
   \ jump-prev
   \ load
-  \ locale
   \ low
   \ maps
   \ mark-load
   \ mark-remove
   \ mark-save
+  \ menufmt
+  \ menuheaderfmt
+  \ menuselectfmt
+  \ mergeindicators
   \ middle
   \ mouse
+  \ nmaps
   \ number
   \ numberfmt
   \ on-cd
   \ on-focus-gained
   \ on-focus-lost
   \ on-init
+  \ on-load
   \ on-quit
   \ on-redraw
   \ on-select
@@ -145,6 +150,7 @@ syn keyword lfOptions
   \ paste
   \ period
   \ pre-cd
+  \ preload
   \ preserve
   \ preview
   \ previewer
@@ -159,6 +165,7 @@ syn keyword lfOptions
   \ rename
   \ reverse
   \ roundbox
+  \ rulerfile
   \ rulerfmt
   \ scroll-down
   \ scroll-up
@@ -167,6 +174,7 @@ syn keyword lfOptions
   \ search-back
   \ search-next
   \ search-prev
+  \ searchmethod
   \ select
   \ selectfmt
   \ selmode
@@ -178,7 +186,7 @@ syn keyword lfOptions
   \ shellflag
   \ shellopts
   \ showbinds
-  \ sixel
+  \ sizeunits
   \ smartcase
   \ smartdia
   \ sortby
@@ -195,9 +203,17 @@ syn keyword lfOptions
   \ top
   \ truncatechar
   \ truncatepct
+  \ tty-write
   \ unselect
   \ up
   \ updir
+  \ visual
+  \ visual-accept
+  \ visual-change
+  \ visual-discard
+  \ visual-unselect
+  \ visualfmt
+  \ vmaps
   \ waitmsg
   \ watch
   \ wrapscan

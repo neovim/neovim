@@ -529,9 +529,7 @@ typedef struct {
   int si_newcompID;             // current value for compound ID
 } spellinfo_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spellfile.c.generated.h"
-#endif
+#include "spellfile.c.generated.h"
 
 /// Read n bytes from fd to buf, returning on errors
 ///
@@ -610,6 +608,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
   slang_T *lp = NULL;
   int res;
   bool did_estack_push = false;
+  ESTACK_CHECK_DECLARATION;
 
   FILE *fd = os_fopen(fname, "r");
   if (fd == NULL) {
@@ -642,6 +641,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
 
   // Set sourcing_name, so that error messages mention the file name.
   estack_push(ETYPE_SPELL, fname, 0);
+  ESTACK_CHECK_SETUP;
   did_estack_push = true;
 
   // <HEADER>: <fileID>
@@ -683,6 +683,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
     res = 0;
     switch (n) {
     case SN_INFO:
+      XFREE_CLEAR(lp->sl_info);
       lp->sl_info = read_string(fd, (size_t)len);  // <infotext>
       if (lp->sl_info == NULL) {
         goto endFAIL;
@@ -698,6 +699,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
       break;
 
     case SN_MIDWORD:
+      XFREE_CLEAR(lp->sl_midword);
       lp->sl_midword = read_string(fd, (size_t)len);  // <midword>
       if (lp->sl_midword == NULL) {
         goto endFAIL;
@@ -758,6 +760,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
       break;
 
     case SN_SYLLABLE:
+      XFREE_CLEAR(lp->sl_syllable);
       lp->sl_syllable = read_string(fd, (size_t)len);  // <syllable>
       if (lp->sl_syllable == NULL) {
         goto endFAIL;
@@ -839,6 +842,7 @@ endOK:
     fclose(fd);
   }
   if (did_estack_push) {
+    ESTACK_CHECK_NOW;
     estack_pop();
   }
 
@@ -1666,7 +1670,7 @@ static int spell_read_tree(FILE *fd, uint8_t **bytsp, int *bytsp_len, idx_T **id
   if (len < 0) {
     return SP_TRUNCERROR;
   }
-  if ((size_t)len >= SIZE_MAX / sizeof(int)) {
+  if ((size_t)len > SIZE_MAX / sizeof(int)) {
     // Invalid length, multiply with sizeof(int) would overflow.
     return SP_FORMERROR;
   }
@@ -2433,6 +2437,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
             char buf[MAXLINELEN];
 
             aff_entry->ae_cond = getroom_save(spin, items[4]);
+            // Note: this silently truncates the buffer, but this should
+            // not happen in practice
             snprintf(buf, sizeof(buf), *items[0] == 'P' ? "^%s" : "%s$", items[4]);
             aff_entry->ae_prog = vim_regcomp(buf, RE_MAGIC + RE_STRING + RE_STRICT);
             if (aff_entry->ae_prog == NULL) {
@@ -3387,7 +3393,9 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                   MB_PTR_ADV(p);
                 }
               }
-              strcat(newword, p);
+              // Note: this silently truncates the buffer, but this should
+              // not happen in practice
+              xstrlcat(newword, p, MAXWLEN);
             } else {
               // suffix: chop/add at the end of the word
               xstrlcpy(newword, word, MAXWLEN);
@@ -3401,7 +3409,9 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                 *p = NUL;
               }
               if (ae->ae_add != NULL) {
-                strcat(newword, ae->ae_add);
+                // Note: this silently truncates the buffer, but this should
+                // not happen in practice
+                xstrlcat(newword, ae->ae_add, MAXWLEN);
               }
             }
 
@@ -5432,7 +5442,7 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
         break;
       }
       if (*spf == NUL) {
-        semsg(_("E765: 'spellfile' does not have %" PRId64 " entries"), (int64_t)idx);
+        semsg(_("E765: 'spellfile' does not have %d entries"), idx);
         xfree(fnamebuf);
         return;
       }

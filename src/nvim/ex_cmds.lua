@@ -264,7 +264,7 @@ M.cmds = {
   },
   {
     command = 'breaklist',
-    flags = bit.bor(EXTRA, TRLBAR, CMDWIN, LOCK_OK),
+    flags = bit.bor(TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
     func = 'ex_breaklist',
   },
@@ -629,6 +629,12 @@ M.cmds = {
     flags = bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
     func = 'ex_wrongmodifier',
+  },
+  {
+    command = 'connect',
+    flags = bit.bor(BANG, FILE1, NOTRLCOM, NEEDARG),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_connect',
   },
   {
     command = 'const',
@@ -1100,8 +1106,8 @@ M.cmds = {
   },
   {
     command = 'helpclose',
-    flags = bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    flags = TRLBAR,
+    addr_type = 'ADDR_NONE',
     func = 'ex_helpclose',
   },
   {
@@ -1581,6 +1587,12 @@ M.cmds = {
     func = 'ex_lockvar',
   },
   {
+    command = 'log',
+    flags = bit.bor(EXTRA, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_log',
+  },
+  {
     command = 'lolder',
     flags = bit.bor(RANGE, COUNT, TRLBAR),
     addr_type = 'ADDR_UNSIGNED',
@@ -1663,6 +1675,12 @@ M.cmds = {
     flags = bit.bor(BANG, EXTRA, TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
     func = 'buflist_list',
+  },
+  {
+    command = 'lsp',
+    flags = bit.bor(NEEDARG, EXTRA),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_lsp',
   },
   {
     command = 'move',
@@ -2184,13 +2202,13 @@ M.cmds = {
     command = 'quitall',
     flags = bit.bor(BANG, TRLBAR),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_quitall',
   },
   {
     command = 'qall',
     flags = bit.bor(BANG, TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_quitall',
   },
   {
     command = 'read',
@@ -2248,9 +2266,9 @@ M.cmds = {
   },
   {
     command = 'restart',
-    flags = bit.bor(BANG, TRLBAR),
+    flags = bit.bor(CMDARG, EXTRA, NOTRLCOM),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_restart',
   },
   {
     command = 'retab',
@@ -2755,8 +2773,8 @@ M.cmds = {
   },
   {
     command = 'tab',
-    flags = bit.bor(NEEDARG, EXTRA, NOTRLCOM),
-    addr_type = 'ADDR_NONE',
+    flags = bit.bor(RANGE, ZEROR, NEEDARG, EXTRA, NOTRLCOM),
+    addr_type = 'ADDR_TABS',
     func = 'ex_wrongmodifier',
   },
   {
@@ -2905,8 +2923,8 @@ M.cmds = {
   },
   {
     command = 'tlunmenu',
-    flags = bit.bor(RANGE, ZEROR, EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN, LOCK_OK),
-    addr_type = 'ADDR_OTHER',
+    flags = bit.bor(EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
     func = 'ex_menu',
   },
   {
@@ -3018,6 +3036,12 @@ M.cmds = {
     func = 'ex_buffer_all',
   },
   {
+    command = 'uniq',
+    flags = bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, EXTRA, NOTRLCOM, MODIFY),
+    addr_type = 'ADDR_LINES',
+    func = 'ex_uniq',
+  },
+  {
     command = 'unlet',
     flags = bit.bor(BANG, EXTRA, NEEDARG, SBOXOK, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
@@ -3052,6 +3076,12 @@ M.cmds = {
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, FILE1, ARGOPT, DFLALL, TRLBAR),
     addr_type = 'ADDR_LINES',
     func = 'ex_update',
+  },
+  {
+    command = 'uptime',
+    flags = bit.bor(CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_uptime',
   },
   {
     command = 'vglobal',
@@ -3175,7 +3205,7 @@ M.cmds = {
   },
   {
     command = 'wall',
-    flags = bit.bor(BANG, TRLBAR, CMDWIN, LOCK_OK),
+    flags = bit.bor(BANG, TRLBAR, CMDWIN, LOCK_OK, ARGOPT),
     addr_type = 'ADDR_NONE',
     func = 'do_wqall',
   },

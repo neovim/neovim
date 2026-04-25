@@ -14,8 +14,7 @@ function M.copy(reg)
   return function(lines)
     local s = table.concat(lines, '\n')
     -- The data to be written here can be quite long.
-    -- Use nvim_chan_send() as io.stdout:write() doesn't handle EAGAIN. #26688
-    vim.api.nvim_chan_send(2, osc52(clipboard, vim.base64.encode(s)))
+    vim.api.nvim_ui_send(osc52(clipboard, vim.base64.encode(s)))
   end
 end
 
@@ -24,8 +23,8 @@ function M.paste(reg)
   return function()
     local contents = nil --- @type string?
     local id = vim.api.nvim_create_autocmd('TermResponse', {
-      callback = function(args)
-        local resp = args.data.sequence ---@type string
+      callback = function(ev)
+        local resp = ev.data.sequence ---@type string
         local encoded = resp:match('\027%]52;%w?;([A-Za-z0-9+/=]*)')
         if encoded then
           contents = vim.base64.decode(encoded)
@@ -34,7 +33,7 @@ function M.paste(reg)
       end,
     })
 
-    io.stdout:write(osc52(clipboard, '?'))
+    vim.api.nvim_ui_send(osc52(clipboard, '?'))
 
     local ok, res
 

@@ -1,4 +1,4 @@
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
   set(CMAKE_SYSTEM_PROCESSOR arm64)
 endif()
 
@@ -27,9 +27,13 @@ set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README.md)
 
 
 if(WIN32)
-  set(CPACK_PACKAGE_FILE_NAME "nvim-win64")
+  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+    set(CPACK_PACKAGE_FILE_NAME "nvim-win-arm64")
+  else()
+    set(CPACK_PACKAGE_FILE_NAME "nvim-win64")
+  endif()
+  
   set(CPACK_GENERATOR ZIP WIX)
-
   # WIX
   # CPACK_WIX_UPGRADE_GUID should be set, but should never change.
   # CPACK_WIX_PRODUCT_GUID should not be set (leave as default to auto-generate).
@@ -66,6 +70,11 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # Unfortunately, you "just need to know" that this has a hidden
   # dependency on dpkg-shlibdeps whilst using a debian based host.
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS TRUE)
+
+  # Include postinst and prerm scripts for update-alternatives
+  set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+    "${CMAKE_CURRENT_LIST_DIR}/postinst"
+    "${CMAKE_CURRENT_LIST_DIR}/prerm")
 else()
   set(CPACK_GENERATOR TGZ)
 endif()

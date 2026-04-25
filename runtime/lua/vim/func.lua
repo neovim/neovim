@@ -24,13 +24,10 @@ local M = {}
 --- @generic F: function
 --- @param hash integer|string|function Hash function to create a hash to use as a key to
 ---     store results. Possible values:
----     - When integer, refers to the index of an argument of {fn} to hash.
----     This argument can have any type.
+---     - When integer, refers to the index of a {fn} argument (of any type) to hash.
 ---     - When function, is evaluated using the same arguments passed to {fn}.
----     - When `concat`, the hash is determined by string concatenating all the
----     arguments passed to {fn}.
----     - When `concat-n`, the hash is determined by string concatenating the
----     first n arguments passed to {fn}.
+---     - When "concat", hash is determined by string-concatenating all {fn} arguments.
+---     - When "concat-n", hash is determined by string-concatenating the first n {fn} arguments.
 ---
 --- @param fn F Function to memoize.
 --- @param weak? boolean Use a weak table (default `true`)

@@ -1,12 +1,30 @@
 local M = {}
 
 M.vars = {
+  argf = {
+    type = 'string[]',
+    desc = [=[
+      File arguments (expanded to absolute paths) given at startup.
+
+      Unlike |v:argv|, this does not include option arguments
+      such as `-u`, `--cmd`, or `+cmd`. Unlike |argv()|, it is not
+      affected by later |:args|, |:argadd|, or plugin modifications.
+
+      Example: >
+        nvim file1.txt +ls -- file2.txt
+        :echo v:argf
+        " ['/path/to/cwd/file1.txt', '/path/to/cwd/file2.txt']
+      <
+    ]=],
+  },
   argv = {
     type = 'string[]',
     desc = [=[
-      The command line arguments Vim was invoked with.  This is a
-      list of strings.  The first item is the Vim command.
-      See |v:progpath| for the command with full path.
+      Command line arguments (`-u`, `--cmd`, `+cmd`, …) Nvim was
+      invoked with.  The first item is the Nvim command.
+
+      See |v:progpath| to get the full path to Nvim.
+      See |v:argf| to get only file args, without other options.
     ]=],
   },
   char = {
@@ -14,7 +32,8 @@ M.vars = {
     desc = [=[
       Argument for evaluating 'formatexpr' and used for the typed
       character when using <expr> in an abbreviation |:map-<expr>|.
-      It is also used by the |InsertCharPre| and |InsertEnter| events.
+      It is also used by the |InsertCharPre|, |InsertEnter|,
+      |CmdlineLeave| and |CmdlineLeavePre| events.
     ]=],
   },
   charconvert_from = {
@@ -125,7 +144,9 @@ M.vars = {
     type = 'integer',
     desc = [=[
       Number of screen cells that can be used for an `:echo` message
-      in the last screen line before causing the |hit-enter-prompt|.
+      in the last screen line before causing the |hit-enter| prompt
+      (or "overflow" with |ui2|).
+
       Depends on 'showcmd', 'ruler' and 'columns'.  You need to
       check 'cmdheight' for whether there are full-width lines
       available above the last line.
@@ -134,7 +155,7 @@ M.vars = {
   errmsg = {
     type = 'string',
     desc = [=[
-      Last given error message.
+      Last error message that occurred (not necessarily displayed).
       Modifiable (can be set).
       Example: >vim
         let v:errmsg = ""
@@ -238,7 +259,7 @@ M.vars = {
       |json_encode()|.  This value is converted to "v:false" when used
       as a String (e.g. in |expr5| with string concatenation
       operator) and to zero when used as a Number (e.g. in |expr5|
-      or |expr7| when used with numeric operators). Read-only.
+      or |expr7| when used with numeric operators).  Read-only.
     ]=],
   },
   exiting = {
@@ -247,8 +268,25 @@ M.vars = {
       Exit code, or |v:null| before invoking the |VimLeavePre|
       and |VimLeave| autocmds.  See |:q|, |:x| and |:cquit|.
       Example: >vim
-        :au VimLeave * echo "Exit value is " .. v:exiting
+        :au VimLeave * echo "Exit code is " .. v:exiting
       <
+    ]=],
+  },
+  exitreason = {
+    type = 'string',
+    desc = [=[
+      Reason for the current exit. Set before |QuitPre|. Reset if
+      exit was canceled.
+
+      Possible values:
+      - ""          Not exiting, or exit was canceled.
+      - "quit"      |:quit|, |:qall|, |:wq|, |ZZ|, |ZQ|, etc.
+      - "restart"   |:restart|, |ZR|.
+
+      Example: >vim
+        autocmd ExitPre * if v:exitreason ==# 'restart' | echomsg 'restarting' | endif
+      <
+      Read-only.
     ]=],
   },
   fcs_choice = {
@@ -280,12 +318,12 @@ M.vars = {
       The reason why the |FileChangedShell| event was triggered.
       Can be used in an autocommand to decide what to do and/or what
       to set v:fcs_choice to.  Possible values:
-        deleted   file no longer exists
-        conflict  file contents, mode or timestamp was
+      - deleted   file no longer exists
+      - conflict  file contents, mode or timestamp was
                   changed and buffer is modified
-        changed   file contents has changed
-        mode      mode of file changed
-        time      only file timestamp changed
+      - changed   file contents has changed
+      - mode      mode of file changed
+      - time      only file timestamp changed
     ]=],
   },
   fname = {
@@ -368,7 +406,7 @@ M.vars = {
     type = 'integer',
     desc = [=[
       Variable that indicates whether search highlighting is on.
-      Setting it makes sense only if 'hlsearch' is enabled. Setting
+      Setting it makes sense only if 'hlsearch' is enabled.  Setting
       this variable to zero acts like the |:nohlsearch| command,
       setting it to one acts like >vim
         let &hlsearch = &hlsearch
@@ -490,7 +528,7 @@ M.vars = {
       See |json_encode()|.  This value is converted to "v:null" when
       used as a String (e.g. in |expr5| with string concatenation
       operator) and to zero when used as a Number (e.g. in |expr5|
-      or |expr7| when used with numeric operators). Read-only.
+      or |expr7| when used with numeric operators).  Read-only.
       In some places `v:null` can be used for a List, Dict, etc.
       that is not set.  That is slightly different than an empty
       List, Dict, etc.
@@ -545,7 +583,7 @@ M.vars = {
   option_command = {
     type = 'string',
     desc = [=[
-      Command used to set the option. Valid while executing an
+      Command used to set the option.  Valid while executing an
       |OptionSet| autocommand.
         value        option was set via ~
         "setlocal"   |:setlocal| or `:let l:xxx`
@@ -556,35 +594,35 @@ M.vars = {
   },
   option_new = {
     desc = [=[
-      New value of the option. Valid while executing an |OptionSet|
+      New value of the option.  Valid while executing an |OptionSet|
       autocommand.
     ]=],
   },
   option_old = {
     desc = [=[
-      Old value of the option. Valid while executing an |OptionSet|
-      autocommand. Depending on the command used for setting and the
-      kind of option this is either the local old value or the
+      Old value of the option.  Valid while executing an |OptionSet|
+      autocommand.  Depending on the command used for setting and
+      the kind of option this is either the local old value or the
       global old value.
     ]=],
   },
   option_oldglobal = {
     desc = [=[
-      Old global value of the option. Valid while executing an
+      Old global value of the option.  Valid while executing an
       |OptionSet| autocommand.
     ]=],
   },
   option_oldlocal = {
     desc = [=[
-      Old local value of the option. Valid while executing an
+      Old local value of the option.  Valid while executing an
       |OptionSet| autocommand.
     ]=],
   },
   option_type = {
     type = 'string',
     desc = [=[
-      Scope of the set command. Valid while executing an
-      |OptionSet| autocommand. Can be either "global" or "local"
+      Scope of the set command.  Valid while executing an
+      |OptionSet| autocommand.  Can be either "global" or "local"
     ]=],
   },
   prevcount = {
@@ -647,8 +685,6 @@ M.vars = {
       screen to scroll up.  It's only set when it is empty, thus the
       first reason is remembered.  It is set to "Unknown" for a
       typed command.
-      This can be used to find out why your script causes the
-      hit-enter prompt.
     ]=],
   },
   searchforward = {
@@ -715,6 +751,18 @@ M.vars = {
       not finished.  Refer to |getstacktrace()| for the structure of
       stack trace.  See also |v:exception|, |v:throwpoint|, and
       |throw-variables|.
+    ]=],
+  },
+  starttime = {
+    type = 'integer',
+    desc = [=[
+      Timestamp (monotonic nanoseconds) when the Nvim process
+      started.
+
+      To see the current "uptime": >lua
+        vim.print(('uptime: %d seconds'):format((vim.uv.hrtime() - vim.v.starttime) / 1e9))
+      <
+      Read-only.
     ]=],
   },
   statusmsg = {
@@ -857,7 +905,7 @@ M.vars = {
       |json_encode()|.  This value is converted to "v:true" when used
       as a String (e.g. in |expr5| with string concatenation
       operator) and to one when used as a Number (e.g. in |expr5| or
-      |expr7| when used with numeric operators). Read-only.
+      |expr7| when used with numeric operators).  Read-only.
     ]=],
   },
   val = {
@@ -878,10 +926,35 @@ M.vars = {
       <
     ]=],
   },
+  versionlong = {
+    type = 'integer',
+    desc = [=[
+      Like v:version, but also including the patchlevel in the last
+      four digits.  Version 8.1 with patch 123 has value 8010123.
+      This can be used like this: >
+        if v:versionlong >= 8010123
+      <
+      However, if there are gaps in the list of patches included
+      this will not work well.  This can happen if a recent patch
+      was included into an older version, e.g. for a security fix.
+      Use the has() function to make sure the patch is actually
+      included.
+    ]=],
+  },
   vim_did_enter = {
     type = 'integer',
     desc = [=[
       0 during startup, 1 just before |VimEnter|.
+      See also |v:vim_did_init|, which is set earlier.
+      Read-only.
+    ]=],
+  },
+  vim_did_init = {
+    type = 'integer',
+    desc = [=[
+      0 during initialization, 1 after sourcing the user |vimrc|,
+      just before |load-plugins|.
+      See also |v:vim_did_enter|, which is set later.
       Read-only.
     ]=],
   },

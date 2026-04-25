@@ -18,9 +18,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/time.c.generated.h"
-#endif
+#include "os/time.c.generated.h"
 
 /// Gets a high-resolution (nanosecond), monotonically-increasing time relative
 /// to an arbitrary time in the past.

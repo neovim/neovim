@@ -77,6 +77,4 @@ struct undo_object {
   } data;
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "extmark.h.generated.h"
-#endif
+#include "extmark.h.generated.h"

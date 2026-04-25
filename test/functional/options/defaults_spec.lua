@@ -10,10 +10,10 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = n.assert_alive
 local assert_log = t.assert_log
+local pcall_err = t.pcall_err
 local api = n.api
 local command = n.command
 local clear = n.clear
-local exc_exec = n.exc_exec
 local eval = n.eval
 local eq = t.eq
 local ok = t.ok
@@ -30,6 +30,11 @@ local is_os = t.is_os
 local testlog = 'Xtest-defaults-log'
 
 describe('startup defaults', function()
+  it("NVIM_NOTTYFAST=1 unsets 'ttyfast'", function()
+    clear { env = { NVIM_NOTTYFAST = '1' } }
+    eq(0, n.eval('&ttyfast'))
+  end)
+
   describe(':filetype', function()
     local function expect_filetype(expected)
       local screen = Screen.new(50, 4)
@@ -195,7 +200,7 @@ describe('startup defaults', function()
       os.remove('Xtest-foo')
     end)
 
-    clear { args = {}, args_rm = { '-i' }, env = env }
+    clear { args = {}, args_rm = { '-i', '--cmd' }, env = env }
     -- Default 'shadafile' is empty.
     -- This means use the default location. :help shada-file-name
     eq('', api.nvim_get_option_value('shadafile', {}))
@@ -203,16 +208,18 @@ describe('startup defaults', function()
     -- Handles viminfo/viminfofile as alias for shada/shadafile.
     eq('\n  shadafile=', eval('execute("set shadafile?")'))
     eq('\n  shadafile=', eval('execute("set viminfofile?")'))
-    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set shada?")'))
-    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set viminfo?")'))
+    eq("\n  shada=!,'100,<50,s10,h,r/tmp/,r/private/", eval('execute("set shada?")'))
+    eq("\n  shada=!,'100,<50,s10,h,r/tmp/,r/private/", eval('execute("set viminfo?")'))
 
+    -- Remove /tmp/ exclusion so test works when run in temp directories.
+    command("set shada=!,'100,<50,s10,h")
     -- Check that shada data (such as v:oldfiles) is saved/restored.
     command('edit Xtest-foo')
     command('write')
     local f = eval('fnamemodify(@%,":p")')
     assert(string.len(f) > 3)
     expect_exit(command, 'qall')
-    clear { args = {}, args_rm = { '-i' }, env = env }
+    clear { args = {}, args_rm = { '-i', '--cmd' }, env = env }
     eq({ f }, eval('v:oldfiles'))
   end)
 
@@ -250,7 +257,7 @@ describe('startup defaults', function()
       eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
     end)
 
-    it('defaults to stdpath("log")/log if empty', function()
+    it('defaults to stdpath("log")/nvim.log if empty', function()
       eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({
         env = {
@@ -258,10 +265,10 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '', -- Empty is invalid.
         },
       })
-      eq(xdgstatedir .. '/log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
+      eq(xdgstatedir .. '/logs/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
     end)
 
-    it('defaults to stdpath("log")/log if invalid', function()
+    it('defaults to stdpath("log")/nvim.log if invalid', function()
       eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({
         env = {
@@ -269,7 +276,7 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '.', -- Any directory is invalid.
         },
       })
-      eq(xdgstatedir .. '/log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
+      eq(xdgstatedir .. '/logs/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
       -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
       expect_exit(command, 'qall!')
     end)
@@ -289,10 +296,8 @@ describe('XDG defaults', function()
     clear()
     local rtp = eval('split(&runtimepath, ",")')
     local rv = {}
-    local expected = (
-      is_os('win') and { [[\nvim-data\site]], [[\nvim-data\site\after]] }
-      or { '/nvim/site', '/nvim/site/after' }
-    )
+    local data_dir = is_os('win') and '/nvim-data' or '/nvim'
+    local expected = { data_dir .. '/site', data_dir .. '/site/after' }
 
     for _, v in ipairs(rtp) do
       local m = string.match(v, [=[[/\]nvim[^/\]*[/\]site.*$]=])
@@ -693,7 +698,7 @@ describe('XDG defaults', function()
 
     it('are escaped properly', function()
       local vimruntime, libdir = vimruntime_and_libdir()
-      local path_sep = is_os('win') and '\\' or '/'
+      local path_sep = '/'
       eq(
         (
           '\\, \\, \\,'
@@ -867,17 +872,7 @@ describe('XDG defaults', function()
           .. (path_sep):rep(2),
         api.nvim_get_option_value('undodir', {})
       )
-      eq(
-        '\\,=\\,=\\,'
-          .. path_sep
-          .. ''
-          .. state_dir
-          .. ''
-          .. path_sep
-          .. 'view'
-          .. (path_sep):rep(2),
-        api.nvim_get_option_value('viewdir', {})
-      )
+      eq(',=,=,/' .. state_dir .. '/view//', api.nvim_get_option_value('viewdir', {}))
     end)
   end)
 end)
@@ -914,11 +909,17 @@ describe('stdpath()', function()
 
   it('failure modes', function()
     clear()
-    eq('Vim(call):E6100: "capybara" is not a valid stdpath', exc_exec('call stdpath("capybara")'))
-    eq('Vim(call):E6100: "" is not a valid stdpath', exc_exec('call stdpath("")'))
-    eq('Vim(call):E6100: "23" is not a valid stdpath', exc_exec('call stdpath(23)'))
-    eq('Vim(call):E731: Using a Dictionary as a String', exc_exec('call stdpath({"eris": 23})'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call stdpath([23])'))
+    eq(
+      'Vim(call):E6100: "capybara" is not a valid stdpath',
+      pcall_err(command, 'call stdpath("capybara")')
+    )
+    eq('Vim(call):E6100: "" is not a valid stdpath', pcall_err(command, 'call stdpath("")'))
+    eq('Vim(call):E6100: "23" is not a valid stdpath', pcall_err(command, 'call stdpath(23)'))
+    eq(
+      'Vim(call):E731: Using a Dictionary as a String',
+      pcall_err(command, 'call stdpath({"eris": 23})')
+    )
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call stdpath([23])'))
   end)
 
   it('$NVIM_APPNAME', function()
@@ -926,7 +927,7 @@ describe('stdpath()', function()
     clear({ env = { NVIM_APPNAME = appname, NVIM_LOG_FILE = testlog } })
     eq(appname, fn.fnamemodify(fn.stdpath('config'), ':t'))
     eq(appname, fn.fnamemodify(fn.stdpath('cache'), ':t'))
-    eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('log'), ':t'))
+    eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('log'), ':h:t'))
     eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('data'), ':t'))
     eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('state'), ':t'))
     -- config_dirs and data_dirs are empty on windows, so don't check them on

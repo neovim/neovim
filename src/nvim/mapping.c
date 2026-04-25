@@ -25,8 +25,11 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_session.h"
+#include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
@@ -50,7 +53,6 @@
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
-#include "nvim/search.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -117,9 +119,7 @@ typedef struct map_arguments MapArguments;
 #define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, false, \
                              { 0 }, 0, { 0 }, 0, NULL, 0, LUA_NOREF, false, NULL, 0, NULL }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mapping.c.generated.h"
-#endif
+#include "mapping.c.generated.h"
 
 static const char e_global_abbreviation_already_exists_for_str[]
   = N_("E224: Global abbreviation already exists for %s");
@@ -215,8 +215,7 @@ static void showmap(mapblock_T *mp, bool local)
     return;
   }
 
-  // When ext_messages is active, msg_didout is never set.
-  if (msg_didout || msg_silent != 0 || ui_has(kUIMessages)) {
+  if (msg_col > 0 || msg_silent != 0) {
     msg_putchar('\n');
     if (got_int) {          // 'q' typed at MORE prompt
       return;
@@ -303,6 +302,7 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
                                const LuaRef rhs_lua, const char *const cpo_val,
                                MapArguments *const mapargs)
 {
+  mapargs->rhs_lua = rhs_lua;
   char lhs_buf[128];
 
   // If mapping has been given as ^V<C_UP> say, then replace the term codes
@@ -1340,7 +1340,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
       match = vim_regexec(regmatch, p, 0);
     } else {
       score = fuzzy_match_str(p, pat);
-      match = (score != 0);
+      match = (score != FUZZY_SCORE_NONE);
     }
 
     if (!match) {
@@ -1386,7 +1386,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
         match = vim_regexec(regmatch, p, 0);
       } else {
         score = fuzzy_match_str(p, pat);
-        match = (score != 0);
+        match = (score != FUZZY_SCORE_NONE);
       }
 
       if (!match) {
@@ -2087,7 +2087,7 @@ static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt
                                Arena *arena)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  Dict dict = arena_dict(arena, 19);
+  Dict dict = arena_dict(arena, 20);
   char *const lhs = str2special_arena(mp->m_keys, compatible, !compatible, arena);
   char *mapmode = arena_alloc(arena, 7, false);
   map_mode_to_chars(mp->m_mode, mapmode);
@@ -2128,10 +2128,11 @@ static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt
   PUT_C(dict, "scriptversion", INTEGER_OBJ(1));
   PUT_C(dict, "lnum", INTEGER_OBJ(mp->m_script_ctx.sc_lnum));
   PUT_C(dict, "buffer", INTEGER_OBJ(buffer_value));
-  PUT_C(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
-  if (mp->m_replace_keycodes) {
-    PUT_C(dict, "replace_keycodes", INTEGER_OBJ(1));
+  if (!compatible) {
+    PUT_C(dict, "buf", INTEGER_OBJ(buffer_value));
   }
+  PUT_C(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
+  PUT_C(dict, "replace_keycodes", INTEGER_OBJ(mp->m_replace_keycodes ? 1 : 0));
   PUT_C(dict, "mode", CSTR_AS_OBJ(mapmode));
   PUT_C(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
   PUT_C(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));
@@ -2281,6 +2282,10 @@ static int get_map_mode_string(const char *const mode_string, const bool abbr)
 /// "mapset()" function
 void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  if (check_secure()) {
+    return;
+  }
+
   const char *which;
   char buf[NUMBUFLEN];
   int is_abbr;
@@ -2578,21 +2583,23 @@ const char *did_set_langmap(optset_T *args)
         p++;
       }
       int from = utf_ptr2char(p);
+      const char *const from_ptr = p;
       int to = NUL;
+      const char *to_ptr = "";
       if (p2 == NULL) {
         MB_PTR_ADV(p);
         if (p[0] != ',') {
           if (p[0] == '\\') {
             p++;
           }
-          to = utf_ptr2char(p);
+          to = utf_ptr2char(to_ptr = p);
         }
       } else {
         if (p2[0] != ',') {
           if (p2[0] == '\\') {
             p2++;
           }
-          to = utf_ptr2char(p2);
+          to = utf_ptr2char(to_ptr = p2);
         }
       }
       if (to == NUL) {
@@ -2605,7 +2612,10 @@ const char *did_set_langmap(optset_T *args)
       if (from >= 256) {
         langmap_set_entry(from, to);
       } else {
-        assert(to <= UCHAR_MAX);
+        if (to > UCHAR_MAX) {
+          swmsg(true, "'langmap': Mapping from %.*s to %.*s will not work properly",
+                utf_ptr2len(from_ptr), from_ptr, utf_ptr2len(to_ptr), to_ptr);
+        }
         langmap_mapchar[from & 255] = (uint8_t)to;
       }
 
@@ -2894,7 +2904,10 @@ ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
       }
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
-        kvi_push(mappings, DICT_OBJ(mapblock_fill_dict(current_maphash, NULL, buffer_value,
+        kvi_push(mappings, DICT_OBJ(mapblock_fill_dict(current_maphash,
+                                                       current_maphash->m_alt
+                                                       ? current_maphash->m_alt->m_keys : NULL,
+                                                       buffer_value,
                                                        is_abbrev, false, arena)));
       }
     }

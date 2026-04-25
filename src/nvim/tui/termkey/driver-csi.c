@@ -7,9 +7,7 @@
 #include "nvim/tui/termkey/termkey-internal.h"
 #include "nvim/tui/termkey/termkey_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/termkey/driver-csi.c.generated.h"
-#endif
+#include "tui/termkey/driver-csi.c.generated.h"
 
 // There are 64 codes 0x40 - 0x7F
 static int keyinfo_initialised = 0;
@@ -685,7 +683,7 @@ static int register_keys(void)
   return 1;
 }
 
-void *new_driver_csi(TermKey *tk, const char *term)
+void *new_driver_csi(TermKey *tk, TerminfoEntry *term)
 {
   if (!keyinfo_initialised) {
     if (!register_keys()) {
@@ -869,7 +867,7 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
   }
 
 #ifdef DEBUG
-  fprintf(stderr, "Found a control string: %*s",
+  fprintf(stderr, "Found a control string: %.*s",
           str_end - introlen, tk->buffer + tk->buffstart + introlen);
 #endif
 

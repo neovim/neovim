@@ -3,9 +3,7 @@
 #include "nvim/memory.h"
 #include "nvim/viml/parser/parser.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/parser/parser.c.generated.h"  // IWYU pragma: export
-#endif
+#include "viml/parser/parser.c.generated.h"  // IWYU pragma: export
 
 void parser_simple_get_line(void *cookie, ParserLine *ret_pline)
   FUNC_ATTR_NONNULL_ALL

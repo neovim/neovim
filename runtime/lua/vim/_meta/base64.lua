@@ -1,4 +1,6 @@
 --- @meta
+-- This file is NOT generated, edit it directly.
+error('Cannot require a meta file')
 
 vim.base64 = {}
 

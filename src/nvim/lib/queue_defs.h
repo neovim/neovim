@@ -26,9 +26,7 @@ typedef struct queue {
   struct queue *prev;
 } QUEUE;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lib/queue_defs.h.inline.generated.h"
-#endif
+#include "lib/queue_defs.h.inline.generated.h"
 
 // Public macros.
 #define QUEUE_DATA(ptr, type, field) \

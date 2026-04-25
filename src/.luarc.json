@@ -12,8 +12,8 @@
   },
   "diagnostics": {
     "groupFileStatus": {
-      "strict": "Opened",
-      "strong": "Opened"
+      "strict": "Any",
+      "strong": "Any"
     },
     "groupSeverity": {
       "strong": "Warning",

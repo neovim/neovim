@@ -15,6 +15,7 @@
 /// Stack of execution contexts.  Each entry is an estack_T.
 /// Current context is at ga_len - 1.
 extern garray_T exestack;
+#define HAVE_SOURCING_INFO  (exestack.ga_data != NULL && exestack.ga_len > 0)
 /// name of error message source
 #define SOURCING_NAME (((estack_T *)exestack.ga_data)[exestack.ga_len - 1].es_name)
 /// line number in the message source or zero
@@ -44,6 +45,19 @@ enum {
   DIP_DIRFILE = 0x200,  ///< find both files and directories
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "runtime.h.generated.h"
+#ifdef ABORT_ON_INTERNAL_ERROR
+# define ESTACK_CHECK_DECLARATION int estack_len_before
+# define ESTACK_CHECK_SETUP do { estack_len_before = exestack.ga_len; } while (0)
+# define ESTACK_CHECK_NOW \
+  do { \
+    if (estack_len_before != exestack.ga_len) { \
+      siemsg("Exestack length expected: %d, actual: %d", estack_len_before, exestack.ga_len); \
+    } \
+  } while (0)
+#else
+# define ESTACK_CHECK_DECLARATION do {} while (0)
+# define ESTACK_CHECK_SETUP do {} while (0)
+# define ESTACK_CHECK_NOW do {} while (0)
 #endif
+
+#include "runtime.h.generated.h"

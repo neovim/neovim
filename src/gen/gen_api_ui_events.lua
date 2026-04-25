@@ -1,11 +1,12 @@
+---@diagnostic disable: no-unknown
 local mpack = vim.mpack
 
 assert(#arg == 5)
-local input = io.open(arg[1], 'rb')
-local call_output = io.open(arg[2], 'wb')
-local remote_output = io.open(arg[3], 'wb')
-local metadata_output = io.open(arg[4], 'wb')
-local client_output = io.open(arg[5], 'wb')
+local input = assert(io.open(arg[1], 'rb'))
+local call_output = assert(io.open(arg[2], 'wb'))
+local remote_output = assert(io.open(arg[3], 'wb'))
+local metadata_output = assert(io.open(arg[4], 'wb'))
+local client_output = assert(io.open(arg[5], 'wb'))
 
 local c_grammar = require('gen.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
@@ -136,7 +137,7 @@ for i = 1, #events do
       call_output:write('  }\n')
       call_output:write('  entered = true;\n')
       write_arglist(call_output, ev)
-      call_output:write(('  ui_call_event("%s", %s, %s)'):format(ev.name, tostring(ev.fast), args))
+      call_output:write(('  ui_call_event("%s", %s)'):format(ev.name, args))
       call_output:write(';\n  entered = false;\n')
     elseif ev.compositor_impl then
       call_output:write('  ui_comp_' .. ev.name)

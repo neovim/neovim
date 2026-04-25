@@ -36,9 +36,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "grid.c.generated.h"
-#endif
+#include "grid.c.generated.h"
 
 // temporary buffer for rendering a single screenline, so it can be
 // compared with previous contents to calculate smallest delta.
@@ -354,6 +352,7 @@ static int grid_line_maxcol = 0;
 static int grid_line_first = INT_MAX;
 static int grid_line_last = 0;
 static int grid_line_clear_to = 0;
+static int grid_line_bg_attr = 0;
 static int grid_line_clear_attr = 0;
 static int grid_line_flags = 0;
 
@@ -379,6 +378,7 @@ void screengrid_line_start(ScreenGrid *grid, int row, int col)
   grid_line_maxcol = MIN(grid_line_maxcol, grid->cols - grid_line_coloff);
   grid_line_last = 0;
   grid_line_clear_to = 0;
+  grid_line_bg_attr = 0;
   grid_line_clear_attr = 0;
   grid_line_flags = 0;
 
@@ -519,14 +519,17 @@ int grid_line_fill(int start_col, int end_col, schar_T sc, int attr)
   return end_col;
 }
 
-void grid_line_clear_end(int start_col, int end_col, int attr)
+/// @param bg_attr     applies to both the buffered line and the columns to clear
+/// @param clear_attr  applies only to the columns to clear
+void grid_line_clear_end(int start_col, int end_col, int bg_attr, int clear_attr)
 {
   if (grid_line_first > start_col) {
     grid_line_first = start_col;
     grid_line_last = start_col;
   }
   grid_line_clear_to = end_col;
-  grid_line_clear_attr = attr;
+  grid_line_bg_attr = bg_attr;
+  grid_line_clear_attr = clear_attr;
 }
 
 /// move the cursor to a position in a currently rendered line.
@@ -595,7 +598,8 @@ void grid_line_flush(void)
   }
 
   grid_put_linebuf(grid, grid_line_row, grid_line_coloff, grid_line_first, grid_line_last,
-                   grid_line_clear_to, grid_line_clear_attr, -1, grid_line_flags);
+                   grid_line_clear_to, grid_line_bg_attr, grid_line_clear_attr, -1,
+                   grid_line_flags);
 }
 
 /// flush grid line but only if on a valid row
@@ -623,7 +627,7 @@ void grid_clear(GridView *grid, int start_row, int end_row, int start_col, int e
       grid_line_grid = NULL;  // TODO(bfredl): make callers behave instead
       return;
     }
-    grid_line_clear_end(start_col, end_col, attr);
+    grid_line_clear_end(start_col, end_col, attr, 0);
     grid_line_flush();
   }
 }
@@ -650,6 +654,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
 /// @param coloff  gives the first column on the grid for this line.
 /// @param endcol  gives the columns where valid characters are.
 /// @param clear_width  see SLF_RIGHTLEFT.
+/// @param clear_attr   combined with "bg_attr" for the columns to clear.
 /// @param flags  can have bits:
 /// - SLF_RIGHTLEFT  rightleft text, like a window with 'rightleft' option set:
 ///   - When false, clear columns "endcol" to "clear_width".
@@ -660,7 +665,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
 ///   - When true, use an increasing sequence starting from "last_vcol + 1" for
 ///     grid->vcols[] of the columns to clear.
 void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol, int clear_width,
-                      int bg_attr, colnr_T last_vcol, int flags)
+                      int bg_attr, int clear_attr, colnr_T last_vcol, int flags)
 {
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
@@ -780,15 +785,16 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       grid->vcols[off] = (flags & SLF_INC_VCOL) ? ++last_vcol : last_vcol;
     }
   }
+  clear_attr = hl_combine_attr(bg_attr, clear_attr);
   // blank out the rest of the line
   // TODO(bfredl): we could cache winline widths
   for (col = clear_start; col < clear_width; col++) {
     size_t off = off_to + (size_t)col;
     if (grid->chars[off] != schar_from_ascii(' ')
-        || grid->attrs[off] != bg_attr
+        || grid->attrs[off] != clear_attr
         || rdb_flags & kOptRdbFlagNodelta) {
       grid->chars[off] = schar_from_ascii(' ');
-      grid->attrs[off] = bg_attr;
+      grid->attrs[off] = clear_attr;
       if (clear_dirty_start == -1) {
         clear_dirty_start = col;
       }
@@ -805,7 +811,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       start_dirty = clear_dirty_start;
     } else {
       ui_line(grid, row, invalid_row, coloff + clear_dirty_start, coloff + clear_dirty_start,
-              coloff + clear_end, bg_attr, flags & SLF_WRAP);
+              coloff + clear_end, clear_attr, flags & SLF_WRAP);
     }
     clear_end = end_dirty;
   } else {
@@ -822,7 +828,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   if (clear_end > start_dirty) {
     if (!grid->throttled) {
       ui_line(grid, row, invalid_row, coloff + start_dirty, coloff + end_dirty, coloff + clear_end,
-              bg_attr, flags & SLF_WRAP);
+              clear_attr, flags & SLF_WRAP);
     } else if (grid->dirty_col) {
       // TODO(bfredl): really get rid of the extra pseudo terminal in message.c
       // by using a linebuf_char copy for "throttled message line"
@@ -1075,6 +1081,138 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
   if (!grid->throttled) {
     ui_call_grid_scroll(grid->handle, row, end, col, col + width, line_count, 0);
+  }
+}
+
+/// @param overflow Number of cells to skip.
+static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_attr,
+                                 BorderTextType bt, int overflow)
+{
+  int default_attr = hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
+  if (overflow > 0) {
+    grid_line_puts(1, "<", -1,  hl_apply_winblend(winbl, default_attr));
+    col += 1;
+    overflow += 1;
+  }
+
+  for (size_t i = 0; i < kv_size(vt);) {
+    int attr = -1;
+    char *text = next_virt_text_chunk(vt, &i, &attr);
+    if (text == NULL) {
+      break;
+    }
+    if (attr == -1) {  // No highlight specified.
+      attr = default_attr;
+    }
+    // Skip characters from the beginning when title overflows available width.
+    if (overflow > 0) {
+      int cells = (int)mb_string2cells(text);
+      // Skip entire chunk if overflow is larger than chunk width.
+      if (overflow >= cells) {
+        overflow -= cells;
+        continue;
+      }
+      // Skip partial characters within the chunk.
+      char *p = text;
+      while (*p && overflow > 0) {
+        overflow -= utf_ptr2cells(p);
+        p += utfc_ptr2len(p);
+      }
+      text = p;
+    }
+    attr = hl_apply_winblend(winbl, attr);
+    col += grid_line_puts(col, text, -1, attr);
+  }
+}
+
+static int get_bordertext_col(int total_col, int text_width, AlignTextPos align)
+{
+  switch (align) {
+  case kAlignLeft:
+    return 1;
+  case kAlignCenter:
+    return MAX((total_col - text_width) / 2 + 1, 1);
+  case kAlignRight:
+    return MAX(total_col - text_width + 1, 1);
+  }
+  UNREACHABLE;
+}
+
+/// draw border on floating window grid
+void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, int *hl_attr)
+{
+  int *attrs = config->border_attr;
+  int default_adj[4] = { 1, 1, 1, 1 };
+  if (adj == NULL) {
+    adj = default_adj;
+  }
+  schar_T chars[8];
+  if (!hl_attr) {
+    hl_attr = hl_attr_active;
+  }
+
+  for (int i = 0; i < 8; i++) {
+    chars[i] = schar_from_str(config->border_chars[i]);
+  }
+
+  int irow = grid->rows - adj[0] - adj[2];
+  int icol = grid->cols - adj[1] - adj[3];
+
+  if (adj[0]) {
+    screengrid_line_start(grid, 0, 0);
+    if (adj[3]) {
+      grid_line_put_schar(0, chars[0], attrs[0]);
+    }
+
+    for (int i = 0; i < icol; i++) {
+      grid_line_put_schar(i + adj[3], chars[1], attrs[1]);
+    }
+
+    if (config->title) {
+      int title_col = get_bordertext_col(icol, config->title_width, config->title_pos);
+      grid_draw_bordertext(config->title_chunks, title_col, winbl, hl_attr, kBorderTextTitle,
+                           config->title_width - icol);
+    }
+    if (adj[1]) {
+      grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
+    }
+    grid_line_flush();
+  }
+
+  for (int i = 0; i < irow; i++) {
+    if (adj[3]) {
+      screengrid_line_start(grid, i + adj[0], 0);
+      grid_line_put_schar(0, chars[7], attrs[7]);
+      grid_line_flush();
+    }
+    if (adj[1]) {
+      int ic = (i == 0 && !adj[0] && chars[2]) ? 2 : 3;
+      screengrid_line_start(grid, i + adj[0], 0);
+      grid_line_put_schar(icol + adj[3], chars[ic], attrs[ic]);
+      grid_line_flush();
+    }
+  }
+
+  if (adj[2]) {
+    screengrid_line_start(grid, irow + adj[0], 0);
+    if (adj[3]) {
+      grid_line_put_schar(0, chars[6], attrs[6]);
+    }
+
+    for (int i = 0; i < icol; i++) {
+      int ic = (i == 0 && !adj[3] && chars[6]) ? 6 : 5;
+      grid_line_put_schar(i + adj[3], chars[ic], attrs[ic]);
+    }
+
+    if (config->footer) {
+      int footer_col = get_bordertext_col(icol, config->footer_width, config->footer_pos);
+      grid_draw_bordertext(config->footer_chunks, footer_col, winbl, hl_attr, kBorderTextFooter,
+                           config->footer_width - icol);
+    }
+    if (adj[1]) {
+      grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
+    }
+    grid_line_flush();
   }
 }
 

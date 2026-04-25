@@ -282,9 +282,9 @@ describe('Buffer highlighting', function()
       screen:expect {
         grid = [[
         a {5:longer} example                        |
-        ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
-        {9:from }{8:diff}{7:erent} sources                  |
+        {9:from }{8:diff}{7:erent} source^s                  |
         {1:~                                       }|*3
         1 change; before #2  {MATCH:.*}|
       ]],

@@ -75,6 +75,8 @@ local M = {}
 
 ---@nodoc
 ---@class Iter
+---@field _peeked any
+---@field _next fun():... The underlying function that returns the next value(s) from the source.
 local Iter = {}
 Iter.__index = Iter
 Iter.__call = function(self)
@@ -213,6 +215,58 @@ function ArrayIter:filter(f)
   return self
 end
 
+--- Removes duplicate values from an iterator pipeline.
+---
+--- Only the first occurrence of each value is kept.
+---
+--- Accepts an optional `key` argument, which if provided is called for each
+--- value in the iterator to compute a hash key for uniqueness comparison. This is
+--- useful for deduplicating table values or complex objects.
+--- If `key` returns `nil` for a value, that value will be considered unique,
+--- even if multiple values return `nil`.
+---
+--- If a function-based iterator returns multiple arguments, uniqueness is
+--- checked based on the first return value. To change this behavior, specify
+--- `key`.
+---
+--- Examples:
+---
+--- ```lua
+--- vim.iter({ 1, 2, 2, 3, 2 }):unique():totable()
+--- -- { 1, 2, 3 }
+---
+--- vim.iter({ {id=1}, {id=2}, {id=1} })
+---   :unique(function(x)
+---     return x.id
+---   end)
+---   :totable()
+--- -- { {id=1}, {id=2} }
+--- ```
+---
+---@since 14
+---@param key? fun(...):any Optional hash function to determine uniqueness of values.
+---@return Iter
+---@see |vim.list.unique()|
+function Iter:unique(key)
+  local seen = {} --- @type table<any,boolean>
+
+  key = key or function(a)
+    return a
+  end
+
+  return self:filter(function(...)
+    local hash = key(...)
+    if hash == nil then
+      return true
+    elseif not seen[hash] then
+      seen[hash] = true
+      return true
+    else
+      return false
+    end
+  end)
+end
+
 --- Flattens a |list-iterator|, un-nesting nested values up to the given {depth}.
 --- Errors if it attempts to flatten a dict-like value.
 ---
@@ -229,6 +283,7 @@ end
 --- -- error: attempt to flatten a dict-like table
 --- ```
 ---
+---@since 12
 ---@param depth? number Depth to which |list-iterator| should be flattened
 ---                        (defaults to 1)
 ---@return Iter
@@ -278,6 +333,7 @@ end
 --- -- { 6, 12 }
 --- ```
 ---
+---@since 12
 ---@param f fun(...):...:any Mapping function. Takes all values returned from
 ---                      the previous stage in the pipeline as arguments
 ---                      and returns one or more new values, which are used
@@ -346,6 +402,7 @@ end
 ---
 --- For functions with side effects. To modify the values in the iterator, use |Iter:map()|.
 ---
+---@since 12
 ---@param f fun(...) Function to execute for each item in the pipeline.
 ---                  Takes all of the values returned by the previous stage
 ---                  in the pipeline as arguments.
@@ -393,6 +450,7 @@ end
 --- To create a map-like table with arbitrary keys, use |Iter:fold()|.
 ---
 ---
+---@since 12
 ---@return table
 function Iter:totable()
   local t = {}
@@ -445,6 +503,7 @@ end
 ---
 --- Consumes the iterator.
 ---
+--- @since 12
 --- @param delim string Delimiter
 --- @return string
 function Iter:join(delim)
@@ -474,6 +533,7 @@ end
 ---
 ---@generic A
 ---
+---@since 12
 ---@param init A Initial value of the accumulator.
 ---@param f fun(acc:A, ...):A Accumulation function.
 ---@return A
@@ -519,10 +579,17 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@return any
 function Iter:next()
-  -- This function is provided by the source iterator in Iter.new. This definition exists only for
-  -- the docstring
+  if self._peeked then
+    local v = self._peeked
+    self._peeked = nil
+
+    return unpack(v)
+  end
+
+  return self._next()
 end
 
 ---@private
@@ -547,6 +614,7 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@return Iter
 function Iter:rev()
   error('rev() requires an array-like table')
@@ -559,7 +627,10 @@ function ArrayIter:rev()
   return self
 end
 
---- Gets the next value in a |list-iterator| without consuming it.
+--- Gets the next value from the iterator without consuming it.
+---
+--- The value returned by |Iter:peek()| will be returned again by the next call
+--- to |Iter:next()|.
 ---
 --- Example:
 ---
@@ -575,9 +646,14 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@return any
 function Iter:peek()
-  error('peek() requires an array-like table')
+  if not self._peeked then
+    self._peeked = pack(self:next())
+  end
+
+  return unpack(self._peeked)
 end
 
 ---@private
@@ -608,6 +684,7 @@ end
 --- -- 12
 ---
 --- ```
+---@since 12
 ---@param f any
 ---@return any
 function Iter:find(f)
@@ -654,6 +731,7 @@ end
 ---
 ---@see |Iter:find()|
 ---
+---@since 12
 ---@param f any
 ---@return any
 ---@diagnostic disable-next-line: unused-local
@@ -681,7 +759,8 @@ function ArrayIter:rfind(f)
   self._head = self._tail
 end
 
---- Transforms an iterator to yield only the first n values.
+--- Transforms an iterator to yield only the first n values, or all values
+--- satisfying a predicate.
 ---
 --- Example:
 ---
@@ -693,24 +772,57 @@ end
 --- -- 2
 --- it:next()
 --- -- nil
+---
+--- local function pred(x) return x < 2 end
+--- local it2 = vim.iter({ 1, 2, 3, 4 }):take(pred)
+--- it2:next()
+--- -- 1
+--- it2:next()
+--- -- nil
 --- ```
 ---
----@param n integer
+---@since 12
+---@param n integer|fun(...):boolean Number of values to take or a predicate.
 ---@return Iter
 function Iter:take(n)
-  local next = self.next
   local i = 0
-  self.next = function()
-    if i < n then
-      i = i + 1
-      return next(self)
+  local f = n
+  if type(n) ~= 'function' then
+    f = function()
+      return i < n
     end
+  end
+
+  local stop = false
+  local function fn(...)
+    if not stop and select(1, ...) ~= nil and f(...) then
+      i = i + 1
+      return ...
+    else
+      stop = true
+    end
+  end
+
+  local next = self.next
+  self.next = function()
+    return fn(next(self))
   end
   return self
 end
 
 ---@private
 function ArrayIter:take(n)
+  if type(n) == 'function' then
+    local inc = self._head < self._tail and 1 or -1
+    for i = self._head, self._tail, inc do
+      if not n(unpack(self._table[i])) then
+        self._tail = i
+        break
+      end
+    end
+    return self
+  end
+
   local inc = self._head < self._tail and n or -n
   local cmp = self._head < self._tail and math.min or math.max
   self._tail = cmp(self._tail, self._head + inc)
@@ -729,6 +841,7 @@ end
 --- -- 3
 --- ```
 ---
+---@since 12
 ---@return any
 function Iter:pop()
   error('pop() requires an array-like table')
@@ -759,6 +872,7 @@ end
 ---
 ---@see |Iter:last()|
 ---
+---@since 12
 ---@return any
 function Iter:rpeek()
   error('rpeek() requires an array-like table')
@@ -772,7 +886,11 @@ function ArrayIter:rpeek()
   end
 end
 
---- Skips `n` values of an iterator pipeline.
+--- Skips `n` values of an iterator pipeline, or skips values while a predicate returns |lua-truthy|.
+---
+--- When a predicate is used, skipping stops at the first value for which the
+--- predicate returns non-truthy. That value is not consumed and will be returned
+--- by the next call to |Iter:next()|
 ---
 --- Example:
 ---
@@ -782,19 +900,58 @@ end
 --- it:next()
 --- -- 9
 ---
+--- local function pred(x) return x < 10 end
+--- local it2 = vim.iter({ 3, 6, 9, 12 }):skip(pred)
+--- it2:next()
+--- -- 12
 --- ```
 ---
----@param n number Number of values to skip.
+---@since 12
+---@param n integer|fun(...):boolean Number of values to skip or a predicate.
 ---@return Iter
 function Iter:skip(n)
-  for _ = 1, n do
-    local _ = self:next()
+  if type(n) == 'number' then
+    for _ = 1, n do
+      self._peeked = nil
+      local _ = self:next()
+    end
+  elseif type(n) == 'function' then
+    local next = self.next
+
+    self.next = function()
+      while true do
+        local peeked = self._peeked or pack(next(self))
+
+        if not peeked then
+          return nil
+        end
+
+        if not n(unpack(peeked)) then
+          self._peeked = nil
+          return unpack(peeked)
+        end
+
+        self._peeked = nil
+      end
+    end
   end
   return self
 end
 
 ---@private
 function ArrayIter:skip(n)
+  if type(n) == 'function' then
+    while self._head ~= self._tail do
+      local v = self._table[self._head]
+      if not n(unpack(v)) then
+        break
+      end
+
+      self._head = self._head + (self._head < self._tail and 1 or -1)
+    end
+    return self
+  end
+
   local inc = self._head < self._tail and n or -n
   self._head = self._head + inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -815,6 +972,7 @@ end
 --- -- 3
 --- ```
 ---
+---@since 12
 ---@param n number Number of values to skip.
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
@@ -852,6 +1010,7 @@ end
 --- -- 3
 --- ```
 ---
+---@since 12
 ---@param n number Index of the value to return. May be negative if the source is a |list-iterator|.
 ---@return any
 function Iter:nth(n)
@@ -866,6 +1025,7 @@ end
 ---
 --- Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
 ---
+---@since 12
 ---@param first number
 ---@param last number
 ---@return Iter
@@ -881,6 +1041,7 @@ end
 
 --- Returns true if any of the items in the iterator match the given predicate.
 ---
+---@since 12
 ---@param pred fun(...):boolean Predicate function. Takes all values returned from the previous
 ---                          stage in the pipeline as arguments and returns true if the
 ---                          predicate matches.
@@ -905,6 +1066,7 @@ end
 
 --- Returns true if all items in the iterator match the given predicate.
 ---
+---@since 12
 ---@param pred fun(...):boolean Predicate function. Takes all values returned from the previous
 ---                          stage in the pipeline as arguments and returns true if the
 ---                          predicate matches.
@@ -942,6 +1104,7 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@see |Iter:rpeek()|
 ---
 ---@return any
@@ -957,6 +1120,9 @@ end
 
 ---@private
 function ArrayIter:last()
+  if self._head >= self._tail then
+    return nil
+  end
   local inc = self._head < self._tail and 1 or -1
   local v = self._table[self._tail - inc]
   self._head = self._tail
@@ -991,6 +1157,7 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@return Iter
 function Iter:enumerate()
   local i = 0
@@ -1021,7 +1188,7 @@ function Iter.new(src, ...)
     local mt = getmetatable(src)
     if mt and type(mt.__call) == 'function' then
       ---@private
-      function it.next()
+      it._next = function()
         return src()
       end
 
@@ -1055,7 +1222,7 @@ function Iter.new(src, ...)
     end
 
     ---@private
-    function it.next()
+    it._next = function()
       return fn(src(s, var))
     end
 

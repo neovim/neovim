@@ -4,6 +4,7 @@ local n = require('test.functional.testnvim')()
 local command = n.command
 local insert = n.insert
 local eq = t.eq
+local pcall_err = t.pcall_err
 local clear = n.clear
 local api = n.api
 local fn = n.fn
@@ -12,7 +13,6 @@ local feed_command = n.feed_command
 local write_file = t.write_file
 local tmpname = t.tmpname
 local exec = n.exec
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
 local eval = n.eval
 local exec_capture = n.exec_capture
@@ -47,11 +47,9 @@ describe(':source', function()
     os.remove(test_file)
   end)
 
-  it("changing 'shellslash' changes the result of expand()", function()
-    if not is_os('win') then
-      pending("'shellslash' only works on Windows")
-      return
-    end
+  it("changing 'shellslash' doesn't affect the result of expand()", function()
+    t.skip(not is_os('win'), "N/A: 'shellslash' only works on Windows")
+
     api.nvim_set_option_value('shellslash', false, {})
     mkdir('Xshellslash')
 
@@ -68,9 +66,9 @@ describe(':source', function()
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.vim]])
-      matches([[Xshellslash\Xstack%.vim]], api.nvim_get_var('stack1'))
+      matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack1'))
       matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack2'))
-      matches([[Xshellslash\Xstack%.vim]], api.nvim_get_var('stack3'))
+      matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack3'))
     end
 
     write_file(
@@ -86,9 +84,9 @@ describe(':source', function()
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.lua]])
-      matches([[Xshellslash\Xstack%.lua]], api.nvim_get_var('stack1'))
+      matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack1'))
       matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack2'))
-      matches([[Xshellslash\Xstack%.lua]], api.nvim_get_var('stack3'))
+      matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack3'))
     end
 
     rmdir('Xshellslash')
@@ -112,7 +110,7 @@ describe(':source', function()
     eq('0zBEEFCAFE', exec_capture('echo d'))
 
     exec('set cpoptions+=C')
-    eq("Vim(let):E723: Missing end of Dictionary '}': ", exc_exec('source'))
+    matches("Vim%(let%):E723: Missing end of Dictionary '%}'", pcall_err(command, 'source'))
   end)
 
   it('selection in current buffer', function()
@@ -136,7 +134,7 @@ describe(':source', function()
 
     -- Source last line only
     feed_command(':$source')
-    eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
+    matches('Vim%(echo%):E117: Unknown function: s:C', pcall_err(command, 'echo D()'))
 
     -- Source from 2nd line to end of file
     feed('ggjVG')
@@ -150,7 +148,7 @@ describe(':source', function()
     eq('<SNR>1_C()', exec_capture('echo D()'))
 
     exec('set cpoptions+=C')
-    eq("Vim(let):E723: Missing end of Dictionary '}': ", exc_exec("'<,'>source"))
+    matches("Vim%(let%):E723: Missing end of Dictionary '%}'", pcall_err(command, "'<,'>source"))
   end)
 
   it('does not break if current buffer is modified while sourced', function()
@@ -247,12 +245,15 @@ describe(':source', function()
         feed('dd')
 
         feed_command(':source')
-
+        local filepath = fn.expand('%:p')
+        if filepath == '' then
+          filepath = ':source buffer=1'
+        end
         eq(12, eval('g:c'))
         eq('  \\ 1\n "\\ 2', exec_lua('return _G.a'))
-        eq(':source buffer=1', api.nvim_get_var('sfile_value'))
-        eq(':source buffer=1', api.nvim_get_var('stack_value'))
-        eq(':source buffer=1', api.nvim_get_var('script_value'))
+        eq(filepath, api.nvim_get_var('sfile_value'))
+        eq(filepath, api.nvim_get_var('stack_value'))
+        eq(filepath, api.nvim_get_var('script_value'))
       end)
     end
 
@@ -293,17 +294,45 @@ describe(':source', function()
     eq(nil, result:find('E484'))
     os.remove(test_file)
   end)
+
+  it('sources Lua/Vimscript codeblocks based on treesitter injection', function()
+    insert([[
+      *test.txt*  Test help file
+
+      Lua example: >lua
+        vim.g.test_lua = 42
+      <
+
+      Vim example: >vim
+        let g:test_vim = 99
+      <]])
+    command('setlocal filetype=help')
+
+    -- Source Lua codeblock (line 4 contains the Lua code)
+    command(':4source')
+    eq(42, eval('g:test_lua'))
+
+    -- Source Vimscript codeblock (line 8 contains the Vim code)
+    command(':8source')
+    eq(99, eval('g:test_vim'))
+
+    -- Test fallback without treesitter
+    command('enew')
+    insert([[let g:test_no_ts = 123]])
+    command('setlocal filetype=')
+    command('source')
+    eq(123, eval('g:test_no_ts'))
+  end)
 end)
 
 it('$HOME is not shortened in filepath in v:stacktrace from sourced file', function()
-  local sep = n.get_pathsep()
-  local xhome = table.concat({ vim.uv.cwd(), 'Xhome' }, sep)
+  local xhome = t.fix_slashes(assert(vim.uv.cwd())) .. '/Xhome'
   mkdir(xhome)
   clear({ env = { HOME = xhome } })
   finally(function()
     rmdir(xhome)
   end)
-  local filepath = table.concat({ xhome, 'Xstacktrace.vim' }, sep)
+  local filepath = xhome .. '/Xstacktrace.vim'
   local script = [[
     func Xfunc()
       throw 'Exception from Xfunc'

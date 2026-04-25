@@ -45,9 +45,11 @@ describe('nvim_get_keymap', function()
     silent = 0,
     rhs = 'bar',
     expr = 0,
+    replace_keycodes = 0,
     sid = 0,
     scriptversion = 1,
-    buffer = 0,
+    buf = 0,
+    buffer = 0, -- deprecated
     nowait = 0,
     mode = 'n',
     mode_bits = 0x01,
@@ -62,12 +64,12 @@ describe('nvim_get_keymap', function()
 
   it('returns list of all applicable mappings', function()
     command(foo_bar_string)
-    -- Only one mapping available
-    -- Should be the same as the dictionary we supplied earlier
-    -- and the dictionary you would get from maparg
-    -- since this is a global map, and not script local
+    -- Only one mapping available. Should be the same as `foo_bar_map_table`, and maparg() result
+    -- (plus "buf"), since this is a global map.
     eq({ foo_bar_map_table }, api.nvim_get_keymap('n'))
-    eq({ fn.maparg('foo', 'n', false, true) }, api.nvim_get_keymap('n'))
+    -- Add "buf" key to maparg() result.
+    local maparg_rv = vim.tbl_deep_extend('force', fn.maparg('foo', 'n', false, true), { buf = 0 })
+    eq({ maparg_rv }, api.nvim_get_keymap('n'))
 
     -- Add another mapping
     command('nnoremap foo_longer bar_longer')
@@ -106,7 +108,8 @@ describe('nvim_get_keymap', function()
     foolong_bar_map_table['rhs'] = 'bar_longer'
 
     local buffer_table = shallowcopy(foo_bar_map_table)
-    buffer_table['buffer'] = 1
+    buffer_table['buf'] = 1
+    buffer_table['buffer'] = 1 -- deprecated
 
     command('nnoremap <buffer> foo bar')
 
@@ -119,7 +122,8 @@ describe('nvim_get_keymap', function()
     command('nnoremap foo bar')
 
     local buffer_table = shallowcopy(foo_bar_map_table)
-    buffer_table['buffer'] = 1
+    buffer_table['buf'] = 1
+    buffer_table['buffer'] = 1 -- deprecated
 
     command('nnoremap <buffer> foo bar')
 
@@ -142,7 +146,8 @@ describe('nvim_get_keymap', function()
     command('nnoremap <buffer> foo bar')
     -- Final buffer will have buffer mappings
     local buffer_table = shallowcopy(foo_bar_map_table)
-    buffer_table['buffer'] = final_buffer
+    buffer_table['buf'] = final_buffer
+    buffer_table['buffer'] = final_buffer -- deprecated
     eq({ buffer_table }, api.nvim_buf_get_keymap(final_buffer, 'n'))
     eq({ buffer_table }, api.nvim_buf_get_keymap(0, 'n'))
 
@@ -301,14 +306,16 @@ describe('nvim_get_keymap', function()
     eq(':let g:maparg_test_var = 1<CR>', api.nvim_get_keymap('n')[1]['rhs'])
   end)
 
-  it('works correctly despite various &cpo settings', function()
+  it("works correctly despite 'cpoptions'", function()
     local cpo_table = {
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = 0,
       scriptversion = 1,
-      buffer = 0,
+      buf = 0,
+      buffer = 0, -- deprecated
       nowait = 0,
       abbr = 0,
       noremap = 1,
@@ -316,7 +323,11 @@ describe('nvim_get_keymap', function()
     }
     local function cpomap(lhs, rhs, mode)
       local ret = shallowcopy(cpo_table)
+      local lhsraw = api.nvim_eval(('"%s"'):format(lhs:gsub('\\', '\\\\'):gsub('<', '\\<*')))
+      local lhsrawalt = api.nvim_eval(('"%s"'):format(lhs:gsub('\\', '\\\\'):gsub('<', '\\<')))
       ret.lhs = lhs
+      ret.lhsraw = lhsraw
+      ret.lhsrawalt = lhsrawalt ~= lhsraw and lhsrawalt or nil
       ret.rhs = rhs
       ret.mode = mode
       ret.mode_bits = mode_bits_map[mode]
@@ -339,16 +350,6 @@ describe('nvim_get_keymap', function()
     command('onoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
     command('onoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
 
-    -- wrapper around get_keymap() that drops "lhsraw" and "lhsrawalt" which are hard to check
-    local function get_keymap_noraw(...)
-      local ret = api.nvim_get_keymap(...)
-      for _, item in ipairs(ret) do
-        item.lhsraw = nil
-        item.lhsrawalt = nil
-      end
-      return ret
-    end
-
     for _, cmd in ipairs({
       'set cpo-=B',
       'set cpo+=B',
@@ -357,19 +358,19 @@ describe('nvim_get_keymap', function()
       eq({
         cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'n'),
         cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'n'),
-      }, get_keymap_noraw('n'))
+      }, api.nvim_get_keymap('n'))
       eq({
         cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'x'),
         cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'x'),
-      }, get_keymap_noraw('x'))
+      }, api.nvim_get_keymap('x'))
       eq({
         cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 's'),
         cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 's'),
-      }, get_keymap_noraw('s'))
+      }, api.nvim_get_keymap('s'))
       eq({
         cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 'o'),
         cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 'o'),
-      }, get_keymap_noraw('o'))
+      }, api.nvim_get_keymap('o'))
     end
   end)
 
@@ -384,9 +385,11 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = 0,
       scriptversion = 1,
-      buffer = 0,
+      buf = 0,
+      buffer = 0, -- deprecated
       nowait = 0,
       noremap = 1,
       lnum = 0,
@@ -431,9 +434,11 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = sid_lua,
       scriptversion = 1,
-      buffer = 0,
+      buf = 0,
+      buffer = 0, -- deprecated
       nowait = 0,
       mode = 'n',
       mode_bits = 0x01,
@@ -452,9 +457,11 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = sid_api_client,
       scriptversion = 1,
-      buffer = 0,
+      buf = 0,
+      buffer = 0, -- deprecated
       nowait = 0,
       mode = 'n',
       mode_bits = 0x01,
@@ -471,8 +478,10 @@ describe('nvim_get_keymap', function()
 
     local mapargs_i = {
       abbr = 1,
-      buffer = 0,
+      buf = 0,
+      buffer = 0, -- deprecated
       expr = 0,
+      replace_keycodes = 0,
       lhs = 'foo',
       lhsraw = 'foo',
       lnum = 0,
@@ -488,8 +497,10 @@ describe('nvim_get_keymap', function()
     }
     local mapargs_c = {
       abbr = 1,
-      buffer = 1,
+      buf = 1,
+      buffer = 1, -- deprecated
       expr = 0,
+      replace_keycodes = 0,
       lhs = 'foo',
       lhsraw = 'foo',
       lnum = 0,
@@ -555,8 +566,10 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     to_return.silent = not opts.silent and 0 or 1
     to_return.nowait = not opts.nowait and 0 or 1
     to_return.expr = not opts.expr and 0 or 1
+    to_return.replace_keycodes = not opts.replace_keycodes and 0 or 1
     to_return.sid = not opts.sid and sid_api_client or opts.sid
     to_return.scriptversion = 1
+    -- to_return.buf = not opts.buffer and 0 or opts.buffer
     to_return.buffer = not opts.buffer and 0 or opts.buffer
     to_return.lnum = not opts.lnum and 0 or opts.lnum
     to_return.desc = opts.desc
@@ -604,6 +617,23 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('LHS exceeds maximum map length: ' .. lhs, pcall_err(api.nvim_del_keymap, '', lhs))
   end)
 
+  it('does not leak callback LuaRef on too-long LHS #39351', function()
+    eq(
+      0,
+      exec_lua(function()
+        local weak = setmetatable({}, { __mode = 'v' })
+        for i = 1, 2 do
+          local cb = function() end
+          weak[i] = cb
+          local ok = pcall(vim.api.nvim_set_keymap, 'n', ('a'):rep(66), '', { callback = cb })
+          assert(not ok)
+        end
+        collectgarbage('collect')
+        return vim.tbl_count(weak)
+      end)
+    )
+  end)
+
   it('does not throw errors when rhs is longer than MAXMAPLEN', function()
     local MAXMAPLEN = 50
     local rhs = ''
@@ -647,7 +677,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('Invalid mode shortname: "xnoremap"', pcall_err(api.nvim_del_keymap, 'xnoremap', 'lhs'))
   end)
 
-  it('error on invalid optnames', function()
+  it('validation', function()
     eq(
       "Invalid key: 'silentt'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { silentt = true })
@@ -657,16 +687,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       "Invalid key: 'nowaiT'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { nowaiT = false })
     )
-  end)
 
-  it('error on <buffer> option key', function()
+    -- <buffer> option key
     eq(
       "Invalid key: 'buffer'",
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { buffer = true })
     )
-  end)
 
-  it('error when "replace_keycodes" is used without "expr"', function()
     eq(
       '"replace_keycodes" requires "expr"',
       pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', { replace_keycodes = true })
@@ -679,7 +706,10 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     it('throws an error when given non-boolean value for ' .. opt, function()
       local opts = {}
       opts[opt] = 'fooo'
-      eq(opt .. ' is not a boolean', pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', opts))
+      eq(
+        ("Invalid '%s': expected boolean"):format(opt),
+        pcall_err(api.nvim_set_keymap, 'n', 'lhs', 'rhs', opts)
+      )
     end)
   end
 

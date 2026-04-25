@@ -15,7 +15,7 @@
 # include <tlhelp32.h>
 #endif
 
-#if defined(__FreeBSD__)
+#ifdef __FreeBSD__
 # include <string.h>
 # include <sys/types.h>
 # include <sys/user.h>
@@ -25,13 +25,15 @@
 # include <sys/param.h>
 #endif
 
-#if defined(__APPLE__) || defined(BSD)
+// Exclude GNU Hurd since glibc defines BSD but lacks sysctl.h
+#if defined(__APPLE__) || (defined(BSD) && !defined(__gnu_hurd__))
 # include <sys/sysctl.h>
 
 # include "nvim/macros_defs.h"
 #endif
 
-#if defined(__linux__)
+// Group Hurd with Linux, as both use glibc and standard POSIX interfaces here
+#if defined(__linux__) || defined(__gnu_hurd__)
 # include <stdio.h>
 #endif
 
@@ -43,12 +45,10 @@
 # include "nvim/api/private/helpers.h"
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/proc.c.generated.h"
-#endif
+#include "os/proc.c.generated.h"
 
 #ifdef MSWIN
-static bool os_proc_tree_kill_rec(HANDLE proc, int sig)
+static bool os_proc_tree_kill_rec(void *proc, int sig)
 {
   if (proc == NULL) {
     return false;
@@ -149,7 +149,7 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   } while (Process32Next(h, &pe));
   CloseHandle(h);
 
-#elif defined(__APPLE__) || defined(BSD)
+#elif defined(__APPLE__) || (defined(BSD) && !defined(__gnu_hurd__))
 # if defined(__APPLE__)
 #  define KP_PID(o) o.kp_proc.p_pid
 #  define KP_PPID(o) o.kp_eproc.e_ppid
@@ -203,7 +203,7 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
     return 1;  // Process not found.
   }
 
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__gnu_hurd__)
   char proc_p[256] = { 0 };
   // Collect processes whose parent matches `ppid`.
   // Rationale: children are defined in thread with same ID of process.

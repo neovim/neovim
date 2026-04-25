@@ -45,6 +45,7 @@ describe('UI receives option updates', function()
     table.insert(clear_opts.args_rm or {}, '--cmd')
     clear(clear_opts)
     screen = Screen.new(20, 5, screen_opts)
+    defaults.guifont = eval('&guifont')
     -- NB: UI test suite can be run in both "linegrid" and legacy grid mode.
     -- In both cases check that the received value is the one requested.
     defaults.ext_linegrid = screen._options.ext_linegrid or false
@@ -171,6 +172,33 @@ describe('UI receives option updates', function()
     end)
   end)
 
+  it("restores statusline and tabline after 'set all&'", function()
+    reset()
+    command('tabnew | tabnew')
+    command('set laststatus=0 showtabline=0')
+    screen:expect({
+      unchanged = true,
+      condition = function()
+        local function row_text(row)
+          local chunks = {}
+          for _, cell in ipairs(screen._grid.rows[row]) do
+            table.insert(chunks, cell.text)
+          end
+          return table.concat(chunks)
+        end
+
+        eq(nil, row_text(1):find('%[No Name%]'))
+        eq(nil, row_text(screen._grid.height - 1):find('All', 1, true))
+      end,
+    })
+
+    command('set all&')
+    screen:expect({
+      unchanged = true,
+      any = { '[No Name]', 'All' },
+    })
+  end)
+
   it('with UI extensions', function()
     local expected = reset({ ext_cmdline = true, ext_wildmenu = true })
 
@@ -228,7 +256,12 @@ describe('UI can set terminal option', function()
   it('term_colors', function()
     eq('256', eval '&t_Co')
 
-    local _ = Screen.new(20, 5, { term_colors = 8 })
+    local screen = Screen.new(20, 5, { term_colors = 8 })
     eq('8', eval '&t_Co')
+    screen:detach()
+
+    screen = Screen.new(20, 5, { term_colors = 16777216 })
+    eq('16777216', eval '&t_Co')
+    screen:detach()
   end)
 end)

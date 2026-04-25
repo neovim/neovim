@@ -16,7 +16,6 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
@@ -157,9 +156,7 @@ typedef struct {
   char *pattern;
 } time_entry_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "syntax.c.generated.h"
-#endif
+#include "syntax.c.generated.h"
 
 static char *(spo_name_tab[SPO_COUNT]) =
 { "ms=", "me=", "hs=", "he=", "rs=", "re=", "lc=" };
@@ -231,9 +228,8 @@ static int running_syn_inc_tag = 0;
 // KE2HIKEY() converts a var pointer to a hashitem key pointer.
 // HIKEY2KE() converts a hashitem key pointer to a var pointer.
 // HI2KE() converts a hashitem pointer to a var pointer.
-static keyentry_T dumkey;
 #define KE2HIKEY(kp)  ((kp)->keyword)
-#define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char *)&dumkey)))
+#define HIKEY2KE(p)   ((keyentry_T *)((p) - offsetof(keyentry_T, keyword)))
 #define HI2KE(hi)      HIKEY2KE((hi)->hi_key)
 
 // To reduce the time spent in keepend(), remember at which level in the state
@@ -682,6 +678,8 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
         // the next line.
         // For "groupthere" the parsing starts at start_lnum.
         if (found_flags & HL_SYNC_HERE) {
+          current_lnum = found_m_endpos.lnum;
+          current_col = found_m_endpos.col;
           if (!GA_EMPTY(&current_state)) {
             cur_si = &CUR_STATE(current_state.ga_len - 1);
             cur_si->si_h_startpos.lnum = found_current_lnum;
@@ -689,8 +687,6 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
             update_si_end(cur_si, (int)current_col, true);
             check_keepend();
           }
-          current_col = found_m_endpos.col;
-          current_lnum = found_m_endpos.lnum;
           syn_finish_line(false);
           current_lnum++;
         } else {
@@ -3215,6 +3211,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
     return;
   }
 
+  msg_ext_set_kind("list_cmd");
   if (!syntax_present(curwin)) {
     msg(_(msg_no_items), 0);
     return;
@@ -3988,6 +3985,8 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
       }
       return;
     }
+  } else {
+    TO_SLASH(eap->arg);
   }
 
   // Save and restore the existing top-level grouplist id and ":syn
@@ -5252,6 +5251,7 @@ void ex_syntax(exarg_T *eap)
   }
 }
 
+/// @deprecated
 void ex_ownsyntax(exarg_T *eap)
 {
   if (curwin->w_s == &curwin->w_buffer->b_s) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/normal_defs.h"
 #include "nvim/pos_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
@@ -14,6 +15,6 @@ enum {
   SIN_NOMARK  = 8,  ///< don't adjust extmarks
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "indent.h.generated.h"
-#endif
+typedef int (*Indenter)(void);
+
+#include "indent.h.generated.h"

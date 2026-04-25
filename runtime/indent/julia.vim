@@ -4,6 +4,7 @@
 " Homepage:	https://github.com/JuliaEditorSupport/julia-vim
 " Last Change:	2022 Jun 14
 "		2023 Aug 28 by Vim Project (undo_indent)
+"		2025 Dec 08 by Vim Project (update indent script from upstream #18894)
 " Notes:        originally based on Bram Moolenaar's indent file for vim
 
 " Only load this indent file when no other was loaded.
@@ -22,7 +23,7 @@ setlocal indentkeys-=0{
 setlocal indentkeys-=0}
 setlocal nosmartindent
 
-let b:undo_indent = "setl ai< inde< indk< si<"
+let b:undo_indent = "setlocal autoindent< indentexpr< indentkeys< smartindent<"
 
 " Only define the function once.
 if exists("*GetJuliaIndent")
@@ -96,7 +97,7 @@ function GetJuliaNestingStruct(lnum, ...)
       let i = JuliaMatch(a:lnum, line, '\<else\>', s)
       if i >= 0 && i == fb
         let s = i+1
-        if len(blocks_stack) > 0 && blocks_stack[-1] =~# '\<\%(else\)\=if\>'
+        if len(blocks_stack) > 0 && blocks_stack[-1] =~# '\<\%(\%(else\)\=if\|catch\)\>'
           let blocks_stack[-1] = 'else'
         else
           call add(blocks_stack, 'else')
@@ -114,7 +115,7 @@ function GetJuliaNestingStruct(lnum, ...)
       let i = JuliaMatch(a:lnum, line, '\<catch\>', s)
       if i >= 0 && i == fb
         let s = i+1
-        if len(blocks_stack) > 0 && blocks_stack[-1] == 'try'
+        if len(blocks_stack) > 0 && blocks_stack[-1] =~# '\<\%(try\|finally\)\>'
           let blocks_stack[-1] = 'catch'
         else
           call add(blocks_stack, 'catch')
@@ -125,7 +126,7 @@ function GetJuliaNestingStruct(lnum, ...)
       let i = JuliaMatch(a:lnum, line, '\<finally\>', s)
       if i >= 0 && i == fb
         let s = i+1
-        if len(blocks_stack) > 0 && (blocks_stack[-1] == 'try' || blocks_stack[-1] == 'catch')
+        if len(blocks_stack) > 0 && blocks_stack[-1] =~# '\<\%(try\|catch\|else\)\>'
           let blocks_stack[-1] = 'finally'
         else
           call add(blocks_stack, 'finally')
@@ -298,7 +299,7 @@ function IsInContinuationImportLine(lnum)
   if len(stack) == 0
     return 0
   endif
-  return JuliaMatch(a:lnum, getline(a:lnum), '\<\%(import\|using\|export\)\>', indent(a:lnum)) == -1
+  return JuliaMatch(a:lnum, getline(a:lnum), '\<\%(import\|using\|export\|public\)\>', indent(a:lnum)) == -1
 endfunction
 
 function IsFunctionArgPar(lnum, c)
@@ -314,7 +315,7 @@ function JumpToMatch(lnum, last_closed_bracket)
   " otherwise resorts to vim's default, which is buggy but better than
   " nothing)
   call cursor(a:lnum, a:last_closed_bracket)
-  let percmap = maparg("%", "n") 
+  let percmap = maparg("%", "n")
   if exists("g:loaded_matchit") && percmap =~# 'Match\%(it\|_wrapper\)'
     normal %
   else
@@ -448,10 +449,10 @@ function GetJuliaIndent()
   " Decrease indentation for each closed block in the current line
   let ind -= shiftwidth() * num_closed_blocks
 
-  " Additional special case: multiline import/using/export statements
+  " Additional special case: multiline import/using/export/public statements
 
   let prevline = getline(lnum)
-  " Are we in a multiline import/using/export statement, right below the
+  " Are we in a multiline import/using/export/public statement, right below the
   " opening line?
   if IsInContinuationImportLine(v:lnum) && !IsInContinuationImportLine(lnum)
     if get(g:, 'julia_indent_align_import', 1)
@@ -465,9 +466,9 @@ function GetJuliaIndent()
           return cind + 2
         endif
       else
-        " if the opening line is not a naked import/using/export statement, use
+        " if the opening line is not a naked import/using/export/public statement, use
         " it as reference
-        let iind = JuliaMatch(lnum, prevline, '\<import\|using\|export\>', indent(lnum), lim)
+        let iind = JuliaMatch(lnum, prevline, '\<import\|using\|export\|public\>', indent(lnum), lim)
         if iind >= 0
           " assuming whitespace after using... so no `using(XYZ)` please!
           let nonwhiteind = JuliaMatch(lnum, prevline, '\S', iind+6, -1, 'basic')
@@ -479,7 +480,7 @@ function GetJuliaIndent()
     endif
     let ind += shiftwidth()
 
-  " Or did we just close a multiline import/using/export statement?
+  " Or did we just close a multiline import/using/export/public statement?
   elseif !IsInContinuationImportLine(v:lnum) && IsInContinuationImportLine(lnum)
     " find the starting line of the statement
     let ilnum = 0

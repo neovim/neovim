@@ -5,7 +5,6 @@
 #include <uv.h>
 
 #include "klib/kvec.h"
-#include "nvim/channel.h"
 #include "nvim/event/libuv_proc.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -23,9 +22,7 @@
 #include "nvim/os/time.h"
 #include "nvim/ui_client.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/proc.c.generated.h"
-#endif
+#include "event/proc.c.generated.h"
 
 // Time for a process to exit cleanly before we send KILL.
 // For PTY processes SIGTERM is sent first (in case SIGHUP was not enough).
@@ -152,7 +149,7 @@ void proc_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 
 void proc_close_streams(Proc *proc) FUNC_ATTR_NONNULL_ALL
 {
-  wstream_may_close(&proc->in);
+  stream_may_close(&proc->in);
   rstream_may_close(&proc->out);
   rstream_may_close(&proc->err);
 }
@@ -224,14 +221,15 @@ void proc_stop(Proc *proc) FUNC_ATTR_NONNULL_ALL
     return;
   }
   proc->stopped_time = os_hrtime();
-  proc->exit_signal = SIGTERM;
 
   switch (proc->type) {
   case kProcTypeUv:
+    proc->exit_signal = SIGTERM;
     os_proc_tree_kill(proc->pid, SIGTERM);
     break;
   case kProcTypePty:
     // close all streams for pty processes to send SIGHUP to the process
+    proc->exit_signal = SIGHUP;
     proc_close_streams(proc);
     pty_proc_close_master((PtyProc *)proc);
     break;
@@ -350,25 +348,35 @@ static void flush_stream(Proc *proc, RStream *stream)
     return;
   }
 
-  // Maximal remaining data size of terminated process is system
-  // buffer size.
-  // Also helps with a child process that keeps the output streams open. If it
-  // keeps sending data, we only accept as much data as the system buffer size.
-  // Otherwise this would block cleanup/teardown.
-  int system_buffer_size = 0;
-  int err = uv_recv_buffer_size((uv_handle_t *)&stream->s.uv.pipe,
-                                &system_buffer_size);
-  if (err) {
-    system_buffer_size = ARENA_BLOCK_SIZE;
+  size_t max_bytes = SIZE_MAX;
+#ifdef MSWIN
+  if (true) {
+#else
+  // Don't limit remaining data size of PTY master unless when tearing down, as it may
+  // have more remaining data than system buffer size (at least on Linux). #3030
+  if (proc->type != kProcTypePty || proc_is_tearing_down) {
+#endif
+    // Maximal remaining data size of terminated process is system buffer size.
+    // Also helps with a child process that keeps the output streams open. If it
+    // keeps sending data, we only accept as much data as the system buffer size.
+    // Otherwise this would block cleanup/teardown.
+    int system_buffer_size = 0;
+    // All members of the stream->s.uv union share the same address.
+    int err = uv_recv_buffer_size((uv_handle_t *)&stream->s.uv, &system_buffer_size);
+    if (err != 0) {
+      system_buffer_size = ARENA_BLOCK_SIZE;
+    }
+    max_bytes = stream->num_bytes + (size_t)system_buffer_size;
   }
-
-  size_t max_bytes = stream->num_bytes + (size_t)system_buffer_size;
 
   // Read remaining data.
   while (!stream->s.closed && stream->num_bytes < max_bytes) {
-    // Remember number of bytes before polling
+    // Remember number of bytes before polling.
     size_t num_bytes = stream->num_bytes;
 
+    if (proc->type == kProcTypePty && !stream->did_eof) {
+      pty_proc_flush_master((PtyProc *)proc);
+    }
     // Poll for data and process the generated events.
     loop_poll_events(proc->loop, 0);
     if (stream->s.events) {
@@ -437,26 +445,6 @@ static void on_proc_exit(Proc *proc)
 {
   Loop *loop = proc->loop;
   ILOG("child exited: pid=%d status=%d" PRIu64, proc->pid, proc->status);
-
-  // TODO(justinmk): figure out why rpc_close sometimes(??) isn't called.
-  // Theories:
-  // - EOF not received in receive_msgpack, then doesn't call chan_close_on_err().
-  // - proc_close_handles not tickled by ui_client.c's LOOP_PROCESS_EVENTS?
-  if (ui_client_channel_id) {
-    uint64_t server_chan_id = ui_client_channel_id;
-    Channel *server_chan = find_channel(server_chan_id);
-    if (server_chan != NULL && server_chan->streamtype == kChannelStreamProc
-        && proc == &server_chan->stream.proc) {
-      // Need to call ui_client_may_restart_server() here as well, as sometimes
-      // rpc_close_event() hasn't been called yet (also see comments above).
-      ui_client_may_restart_server();
-      if (ui_client_channel_id == server_chan_id) {
-        // If the current embedded server has exited and no new server is started,
-        // the client should exit with the same status.
-        exit_on_closed_chan(proc->status);
-      }
-    }
-  }
 
   // Process has terminated, but there could still be data to be read from the
   // OS. We are still in the libuv loop, so we cannot call code that polls for

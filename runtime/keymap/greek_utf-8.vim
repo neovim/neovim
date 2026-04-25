@@ -557,8 +557,8 @@ v|	<char-0x1FF3>  " GREEK SMALL LETTER OMEGA WITH YPOGEGRAMMENI
 "
 "
 " Greek Quotes if your keyboard supports them
-´	<char-0x201C>    " QUOTEDBLLEFT
-ª	<char-0x201D>    " QUOTEDBLRIGHT
+Â´	<char-0x201C>    " QUOTEDBLLEFT
+Âª	<char-0x201D>    " QUOTEDBLRIGHT
 "
 "
 "

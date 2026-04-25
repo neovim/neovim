@@ -1,6 +1,8 @@
 *usr_07.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			  Editing more than one file
 

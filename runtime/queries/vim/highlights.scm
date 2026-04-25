@@ -110,6 +110,7 @@
   "cnext"
   "cprevious"
   "cNext"
+  "tab"
   "vertical"
   "leftabove"
   "aboveleft"
@@ -251,6 +252,9 @@
   (body) @string)
 
 (heredoc
+  (parameter) @keyword)
+
+(script
   (parameter) @keyword)
 
 [

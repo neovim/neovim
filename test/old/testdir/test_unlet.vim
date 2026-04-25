@@ -64,4 +64,16 @@ func Test_unlet_complete()
   call assert_true(!exists('$FOOBAR') || empty($FOOBAR))
 endfunc
 
+func Test_unlet_nonexisting_key()
+  let g:base = {}
+  call assert_fails(':unlet g:base["foobar"]', 'E716:')
+
+  try
+    unlet! g:base["foobar"]
+  catch
+    call assert_report("error when unletting non-existing dict key")
+  endtry
+  unlet g:base
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

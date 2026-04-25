@@ -17,12 +17,12 @@ vim.opt_local.iskeyword:append('.')
 
 -- query linter
 local buf = vim.api.nvim_get_current_buf()
-local query_lint_on = vim.g.query_lint_on or { 'BufEnter', 'BufWrite' }
+local query_lint_on = vim.g.query_lint_on or {}
 
 if not vim.b.disable_query_linter and #query_lint_on > 0 then
   vim.api.nvim_create_autocmd(query_lint_on, {
     group = vim.api.nvim_create_augroup('nvim.querylint', { clear = false }),
-    buffer = buf,
+    buf = buf,
     callback = function()
       vim.treesitter.query.lint(buf)
     end,

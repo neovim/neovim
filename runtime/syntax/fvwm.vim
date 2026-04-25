@@ -3,6 +3,7 @@
 " Maintainer:		Gautam Iyer <gi1242@users.sourceforge.net>
 " Previous Maintainer:	Haakon Riiser <hakonrk@fys.uio.no>
 " Last Change:		Sat 29 Sep 2007 11:08:34 AM PDT
+" 2025 Dec 14: Update fvwm2 keywords #18924
 "
 " Thanks to David Necas (Yeti) for adding Fvwm 2.4 support.
 "
@@ -157,7 +158,7 @@ else
 				\ PrintInfo Repeat Schedule State WindowFont
 				\ XSync XSynchronize AnimatedMove
 				\ HideGeometryWindow Layer Lower Move
-				\ MoveToDesk MoveThreshold MoveToPage
+				\ MoveToDesk MoveThreshold MoveToPage Resize
 				\ MoveToScreen OpaqueMoveSize PlaceAgain Raise
 				\ RaiseLower ResizeMaximize ResizeMove
 				\ ResizeMoveMaximize RestackTransients
@@ -166,7 +167,7 @@ else
 				\ FlipFocus Focus WarpToWindow Close Delete
 				\ Destroy Iconify Recapture RecaptureWindow
 				\ Refresh RefreshWindow Stick StickAcrossPages
-				\ StickAcrossDesks WindowShade
+				\ StickAcrossDesks WindowShade Maximize GotoDesk
 				\ WindowShadeAnimate IgnoreModifiers
 				\ EdgeCommand EdgeLeaveCommand GnomeButton
 				\ Stroke StrokeFunc FocusStyle DestroyStyle
@@ -186,6 +187,7 @@ else
 				\ QuitSession Restart SaveSession
 				\ SaveQuitSession KeepRc NoWindow Break
 				\ CleanupColorsets EchoFuncDefinition
+				\ InfoStoreAdd DesktopConfiguration
 
     " Conditional commands
     syn keyword fvwmKeyword	nextgroup=fvwmCondition skipwhite
@@ -276,7 +278,7 @@ else
 				\ BackColor Colorset HilightFore HilightBack
 				\ HilightColorset BorderColorset
 				\ HilightBorderColorset IconTitleColorset
-				\ HilightIconTitleColorset
+				\ HilightIconTitleColorset IconTitleFormat
 				\ IconBackgroundColorset IconTitleRelief
 				\ IconBackgroundRelief IconBackgroundPadding
 				\ Font IconFont StartsOnDesk StartsOnPage
@@ -382,6 +384,7 @@ else
 				\ MinOverlapPlacementPenalties
 				\ MinOverlapPercentPlacementPenalties
 				\ MinWindowSize StartShaded
+				\ EdgeMoveDelay EdgeMoveResistance
 
     " Cursor styles
     syn keyword fvwmKeyword	nextgroup=fvwmCursorStyle skipwhite
@@ -441,7 +444,8 @@ else
     syn keyword	fvwmBStyleNames	contained
 				\ Simple Default Solid Colorset Vector Pixmap
 				\ AdjustedPixmap ShrunkPixmap StretchedPixmap
-				\ TiledPixmap MiniIcon
+				\ TiledPixmap MiniIcon MwmDecorMenu MwmDecorMin
+				\ MwmDecorMax MwmDecorShade MwmDecorStick MwmDecorLayer
     syn keyword fvwmBStyleFlags	contained
 				\ Raised Sunk Flat UseTitleStyle
 				\ UseBorderStyle

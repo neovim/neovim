@@ -3,7 +3,9 @@
 " Maintainer:           D. Ben Knoble <ben.knoble+github@gmail.com>
 " Previous Maintainer:  Will Langstroth <will@langstroth.com>
 " URL:                  https://github.com/benknoble/vim-racket
-" Last Change:          2024 Jun 01
+" Last Change:          2025 Aug 09
+" 2026 Mar 31 by Vim project: use shellescape for the K mapping
+" 2026 Apr 01 by Vim project: make K mapping more robust for shell injection
 
 if exists("b:did_ftplugin")
   finish
@@ -39,7 +41,7 @@ if !exists("no_plugin_maps") && !exists("no_racket_maps")
   "    "press ENTER or type a command to continue"
   " We avoid the annoyance of having to hit enter by remapping K directly.
   function s:RacketDoc(word) abort
-    execute 'silent !raco docs --' shellescape(a:word)
+    execute 'silent !raco docs --' shellescape(a:word, v:true)
     redraw!
   endfunction
   nnoremap <buffer> <Plug>RacketDoc :call <SID>RacketDoc(expand('<cword>'))<CR>
@@ -51,7 +53,7 @@ if !exists("no_plugin_maps") && !exists("no_racket_maps")
     try
       let l:old_a = @a
       normal! gv"ay
-      call system("raco docs '". @a . "'")
+      call system("raco docs -- ". string(shellescape(@a)))
       redraw!
       return @a
     finally

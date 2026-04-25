@@ -39,6 +39,11 @@ local function get_border_size(opts)
     border = 'none'
   end
 
+  -- Convert winborder string option with custom characters into a table
+  if type(border) == 'string' and border:find(',') then
+    border = vim.split(border, ',')
+  end
+
   if type(border) == 'string' then
     if not border_size[border] then
       border_error(border)
@@ -123,7 +128,7 @@ end
 ---@param new_lines string[] list of strings to replace the original
 ---@return string[] The modified {lines} object
 function M.set_lines(lines, A, B, new_lines)
-  vim.deprecate('vim.lsp.util.set_lines()', 'nil', '0.12')
+  vim.deprecate('vim.lsp.util.set_lines()', nil, '0.12')
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
   -- If it extends past the end, truncate it to the end. This is because the
@@ -286,7 +291,9 @@ local function get_line_byte_from_position(bufnr, position, position_encoding)
   return col
 end
 
---- Applies a list of text edits to a buffer.
+--- Applies a list of text edits to a buffer. Note: this mutates `text_edits` (sorts in-place and
+--- adds `_index` fields).
+---
 ---@param text_edits (lsp.TextEdit|lsp.AnnotatedTextEdit)[]
 ---@param bufnr integer Buffer id
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
@@ -307,7 +314,6 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
-  vim.bo[bufnr].buflisted = true
 
   local marks = {} --- @type table<string,[integer,integer]>
   local has_eol_text_edit = false
@@ -316,7 +322,10 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
     -- Fix reversed range and indexing each text_edits
     for index, text_edit in ipairs(text_edits) do
       --- @cast text_edit lsp.TextEdit|{_index: integer}
-      text_edit._index = index
+      -- XXX: Preserve existing _index to avoid surprises if the same edit is reapplied. #39344
+      if text_edit._index == nil then
+        text_edit._index = index
+      end
 
       if
         text_edit.range.start.line > text_edit.range['end'].line
@@ -515,7 +524,7 @@ function M.apply_text_document_edit(
     -- do not check the version after the first edit.
     not (index and index > 1)
     and (
-      text_document.version
+      text_document.version ~= vim.NIL
       and text_document.version > 0
       and M.buf_versions[bufnr] > text_document.version
     )
@@ -590,7 +599,7 @@ function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
   local skip = not opts.overwrite or opts.ignoreIfExists
 
-  local old_fname_full = vim.uv.fs_realpath(vim.fs.normalize(old_fname, { expand_env = false }))
+  local old_fname_full = uv.fs_realpath(vim.fs.normalize(old_fname, { expand_env = false }))
   if not old_fname_full then
     vim.notify('Invalid path: ' .. old_fname, vim.log.levels.ERROR)
     return
@@ -631,8 +640,7 @@ function M.rename(old_fname, new_fname, opts)
   local newdir = vim.fs.dirname(new_fname)
   vim.fn.mkdir(newdir, 'p')
 
-  local ok, err = os.rename(old_fname_full, new_fname)
-  assert(ok, err)
+  assert(os.rename(old_fname_full, new_fname))
 
   local old_undofile = vim.fn.undofile(old_fname_full)
   if uv.fs_stat(old_undofile) ~= nil then
@@ -706,7 +714,12 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
       elseif change.kind then --- @diagnostic disable-line:undefined-field
         error(string.format('Unsupported change: %q', vim.inspect(change)))
       else
+        local bufnr = vim.uri_to_bufnr(change.textDocument.uri)
         M.apply_text_document_edit(change, idx, position_encoding, workspace_edit.changeAnnotations)
+        -- avoid triggering OptionSet
+        if not vim.bo[bufnr].buflisted then
+          vim.bo[bufnr].buflisted = true
+        end
       end
     end
     return
@@ -720,6 +733,10 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
   for uri, changes in pairs(all_changes) do
     local bufnr = vim.uri_to_bufnr(uri)
     M.apply_text_edits(changes, bufnr, position_encoding, workspace_edit.changeAnnotations)
+    -- avoid triggering OptionSet
+    if not vim.bo[bufnr].buflisted then
+      vim.bo[bufnr].buflisted = true
+    end
   end
 end
 
@@ -817,17 +834,28 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     if type(doc) == 'string' then
       signature.documentation = { kind = 'plaintext', value = doc }
     end
+    -- Add delimiter if there is documentation to display
+    if signature.documentation.value ~= '' then
+      contents[#contents + 1] = '---'
+    end
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
-    -- First check if the signature has an activeParameter. If it doesn't check if the response
-    -- had that property instead. Else just default to 0.
-    local active_parameter =
-      math.max(signature.activeParameter or signature_help.activeParameter or 0, 0)
+    local active_parameter = signature.activeParameter or signature_help.activeParameter
 
-    -- If the activeParameter is > #parameters, then set it to the last
-    -- NOTE: this is not fully according to the spec, but a client-side interpretation
-    active_parameter = math.min(active_parameter, #signature.parameters - 1)
+    -- NOTE: We intentionally violate the LSP spec, which states that if `activeParameter`
+    -- is not provided or is out-of-bounds, it should default to 0.
+    -- Instead, we default to `nil`, as most clients do. In practice, 'no active parameter'
+    -- is better default than 'first parameter' and aligns better with user expectations.
+    -- Related discussion: https://github.com/microsoft/language-server-protocol/issues/1271
+    if
+      not active_parameter
+      or active_parameter == vim.NIL
+      or active_parameter < 0
+      or active_parameter >= #signature.parameters
+    then
+      return contents, nil
+    end
 
     local parameter = signature.parameters[active_parameter + 1]
     local parameter_label = parameter.label
@@ -853,7 +881,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
           active_offset = { offset - 1, offset + #parameter_label - 1 }
           break
         end
-        offset = offset + #param.label + 1
+        offset = offset + #plabel + 1
       end
     end
     if parameter.documentation then
@@ -933,7 +961,7 @@ function M.make_floating_popup_options(width, height, opts)
     col = 1
   end
 
-  local title = (opts.border and opts.title) and opts.title or nil
+  local title = ((opts.border or vim.o.winborder ~= '') and opts.title) and opts.title or nil
   local title_pos --- @type 'left'|'center'|'right'?
 
   if title then
@@ -1021,6 +1049,15 @@ function M.show_document(location, position_encoding, opts)
       -- Open folds under the cursor
       vim.cmd('normal! zv')
     end)
+
+    -- nvim_win_set_cursor clamps to last char at EOL. In insert mode the cursor
+    -- should be past the last char (append position).
+    if vim.api.nvim_get_mode().mode == 'i' then
+      local line = api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1] or ''
+      if col >= #line then
+        vim.api.nvim_feedkeys(vim.keycode('<End>'), 'n', false)
+      end
+    end
   end
 
   return true
@@ -1088,10 +1125,39 @@ local function is_blank_line(line)
 end
 
 ---Returns true if the line corresponds to a Markdown thematic break.
+---@see https://github.github.com/gfm/#thematic-break
 ---@param line string
 ---@return boolean
 local function is_separator_line(line)
-  return line and line:match('^ ? ? ?%-%-%-+%s*$')
+  local i = 1
+  -- 1. Skip up to 3 leading spaces
+  local leading_spaces = 3
+  while i <= #line and line:byte(i) == string.byte(' ') and leading_spaces > 0 do
+    i = i + 1
+    leading_spaces = leading_spaces - 1
+  end
+  -- 2. Determine the delimiter character
+  local delimiter = line:byte(i) -- nil if i > #line
+  if
+    delimiter ~= string.byte('-')
+    and delimiter ~= string.byte('_')
+    and delimiter ~= string.byte('*')
+  then
+    return false
+  end
+  local ndelimiters = 1
+  i = i + 1
+  -- 3. Iterate until found non-whitespace or other than expected delimiter
+  while i <= #line do
+    local char = line:byte(i)
+    if char == delimiter then
+      ndelimiters = ndelimiters + 1
+    elseif not (char == string.byte(' ') or char == string.byte('\t')) then
+      return false
+    end
+    i = i + 1
+  end
+  return ndelimiters >= 3
 end
 
 ---Replaces separator lines by the given divider and removing surrounding blank lines.
@@ -1362,7 +1428,7 @@ end
 --- Normalizes Markdown input to a canonical form.
 ---
 --- The returned Markdown adheres to the GitHub Flavored Markdown (GFM)
---- specification.
+--- specification, as required by the LSP.
 ---
 --- The following transformations are made:
 ---
@@ -1373,6 +1439,7 @@ end
 ---@param contents string[]
 ---@param opts? vim.lsp.util._normalize_markdown.Opts
 ---@return string[] table of lines containing normalized Markdown
+---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#markupContent
 ---@see https://github.github.com/gfm
 function M._normalize_markdown(contents, opts)
   validate('contents', contents, 'table')
@@ -1413,26 +1480,34 @@ end
 ---
 ---@param events table list of events
 ---@param winnr integer window id of preview window
----@param bufnrs table list of buffers where the preview window will remain visible
+---@param floating_bufnr integer floating preview buffer
+---@param bufnr integer buffer that opened the floating preview buffer
 ---@see autocmd-events
-local function close_preview_autocmd(events, winnr, bufnrs)
+local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
   local augroup = api.nvim_create_augroup('nvim.preview_window_' .. winnr, {
     clear = true,
   })
 
   -- close the preview window when entered a buffer that is not
   -- the floating window buffer or the buffer that spawned it
-  api.nvim_create_autocmd('BufEnter', {
+  api.nvim_create_autocmd('BufLeave', {
     group = augroup,
+    buf = bufnr,
     callback = function()
-      close_preview_window(winnr, bufnrs)
+      vim.schedule(function()
+        -- When jumping to the quickfix window from the preview window,
+        -- do not close the preview window.
+        if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
+          close_preview_window(winnr, { floating_bufnr, bufnr })
+        end
+      end)
     end,
   })
 
   if #events > 0 then
     api.nvim_create_autocmd(events, {
       group = augroup,
-      buffer = bufnrs[2],
+      buf = bufnr,
       callback = function()
         close_preview_window(winnr)
       end,
@@ -1678,7 +1753,7 @@ function M.open_floating_preview(contents, syntax, opts)
       '<cmd>bdelete<cr>',
       { silent = true, noremap = true, nowait = true }
     )
-    close_preview_autocmd(opts.close_events, floating_winnr, { floating_bufnr, bufnr })
+    close_preview_autocmd(opts.close_events, floating_winnr, floating_bufnr, bufnr)
 
     -- save focus_id
     if opts.focus_id then
@@ -1691,10 +1766,10 @@ function M.open_floating_preview(contents, syntax, opts)
   api.nvim_create_autocmd('WinClosed', {
     group = api.nvim_create_augroup('nvim.closing_floating_preview', { clear = true }),
     callback = function(args)
-      local winid = tonumber(args.match)
-      local ok, preview_bufnr = pcall(api.nvim_win_get_var, winid, 'lsp_floating_bufnr')
+      local winid = vim._tointeger(args.match)
+      local preview_bufnr = vim.w[winid].lsp_floating_bufnr
       if
-        ok
+        preview_bufnr
         and api.nvim_buf_is_valid(preview_bufnr)
         and winid == vim.b[preview_bufnr].lsp_floating_preview
       then
@@ -1706,15 +1781,17 @@ function M.open_floating_preview(contents, syntax, opts)
 
   vim.wo[floating_winnr].foldenable = false -- Disable folding.
   vim.wo[floating_winnr].wrap = opts.wrap -- Soft wrapping.
+  vim.wo[floating_winnr].linebreak = true -- Break lines a bit nicer
   vim.wo[floating_winnr].breakindent = true -- Slightly better list presentation.
   vim.wo[floating_winnr].smoothscroll = true -- Scroll by screen-line instead of buffer-line.
+  vim.wo[floating_winnr].winfixbuf = true -- Disable buffer switching.
 
   vim.bo[floating_bufnr].modifiable = false
   vim.bo[floating_bufnr].bufhidden = 'wipe'
 
   if do_stylize then
     vim.wo[floating_winnr].conceallevel = 2
-    vim.wo[floating_winnr].concealcursor = 'n'
+    vim.wo[floating_winnr].concealcursor = ''
     vim.bo[floating_bufnr].filetype = 'markdown'
     vim.treesitter.start(floating_bufnr)
     if not opts.height then
@@ -1854,7 +1931,7 @@ end
 
 --- Converts symbols to quickfix list items.
 ---
----@param symbols lsp.DocumentSymbol[]|lsp.SymbolInformation[] list of symbols
+---@param symbols lsp.DocumentSymbol[]|lsp.SymbolInformation[]|lsp.WorkspaceSymbol[] list of symbols
 ---@param bufnr? integer buffer handle or 0 for current, defaults to current
 ---@param position_encoding? 'utf-8'|'utf-16'|'utf-32'
 ---                         default to first client of buffer
@@ -1892,6 +1969,16 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
       local end_lnum = range['end'].line + 1
       local end_col = get_line_byte_from_position(bufnr, range['end'], position_encoding) + 1
 
+      local is_deprecated = symbol.deprecated
+        or (symbol.tags and vim.tbl_contains(symbol.tags, protocol.SymbolTag.Deprecated))
+      local text = string.format(
+        '[%s] %s%s%s',
+        kind,
+        symbol.name,
+        symbol.containerName and ' in ' .. symbol.containerName or '',
+        is_deprecated and ' (deprecated)' or ''
+      )
+
       items[#items + 1] = {
         filename = filename,
         lnum = lnum,
@@ -1899,7 +1986,7 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
         end_lnum = end_lnum,
         end_col = end_col,
         kind = kind,
-        text = '[' .. kind .. '] ' .. symbol.name,
+        text = text,
       }
     end
 
@@ -1943,7 +2030,7 @@ end
 ---@param lines string[] list of lines
 ---@return string filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
-  vim.deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', 'nil', '0.12')
+  vim.deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', nil, '0.12')
   local language_id = assert(lines[1]):match('^```(.*)')
   if language_id then
     local has_inner_code_fence = false
@@ -1964,12 +2051,12 @@ function M.try_trim_markdown_code_blocks(lines)
   return 'markdown'
 end
 
----@param window integer?: |window-ID| or 0 for current, defaults to current
+---@param win integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
-local function make_position_param(window, position_encoding)
-  window = window or 0
-  local buf = api.nvim_win_get_buf(window)
-  local row, col = unpack(api.nvim_win_get_cursor(window))
+local function make_position_param(win, position_encoding)
+  win = win or 0
+  local buf = api.nvim_win_get_buf(win)
+  local row, col = unpack(api.nvim_win_get_cursor(win))
   row = row - 1
   local line = api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
   if not line then
@@ -1983,13 +2070,13 @@ end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
----@param window integer?: |window-ID| or 0 for current, defaults to current
+---@param win integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.TextDocumentPositionParams
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
-function M.make_position_params(window, position_encoding)
-  window = window or 0
-  local buf = api.nvim_win_get_buf(window)
+function M.make_position_params(win, position_encoding)
+  win = win or 0
+  local buf = api.nvim_win_get_buf(win)
   if position_encoding == nil then
     vim.notify_once(
       'position_encoding param is required in vim.lsp.util.make_position_params. Defaulting to position encoding of the first client.',
@@ -2000,7 +2087,7 @@ function M.make_position_params(window, position_encoding)
   end
   return {
     textDocument = M.make_text_document_params(buf),
-    position = make_position_param(window, position_encoding),
+    position = make_position_param(win, position_encoding),
   }
 end
 
@@ -2043,11 +2130,11 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
----@param window integer?: |window-ID| or 0 for current, defaults to current
+---@param win integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding "utf-8"|"utf-16"|"utf-32"
 ---@return { textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }
-function M.make_range_params(window, position_encoding)
-  local buf = api.nvim_win_get_buf(window or 0)
+function M.make_range_params(win, position_encoding)
+  local buf = api.nvim_win_get_buf(win or 0)
   if position_encoding == nil then
     vim.notify_once(
       'position_encoding param is required in vim.lsp.util.make_range_params. Defaulting to position encoding of the first client.',
@@ -2056,7 +2143,7 @@ function M.make_range_params(window, position_encoding)
     --- @diagnostic disable-next-line: deprecated
     position_encoding = M._get_offset_encoding(buf)
   end
-  local position = make_position_param(window, position_encoding)
+  local position = make_position_param(win, position_encoding)
   return {
     textDocument = M.make_text_document_params(buf),
     range = { start = position, ['end'] = position },
@@ -2207,7 +2294,7 @@ end
 ---@param end_line integer
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.Range
-local function make_line_range_params(bufnr, start_line, end_line, position_encoding)
+function M._make_line_range_params(bufnr, start_line, end_line, position_encoding)
   local last_line = api.nvim_buf_line_count(bufnr) - 1
 
   ---@type lsp.Position
@@ -2263,62 +2350,6 @@ function M._cancel_requests(filter)
       then
         client:cancel_request(id)
       end
-    end
-  end
-end
-
----@class (private) vim.lsp.util._refresh.Opts
----@field bufnr integer? Buffer to refresh (default: 0)
----@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
----@field client_id? integer Client ID to refresh (default: all clients)
----@field handler? lsp.Handler
-
---- Request updated LSP information for a buffer.
----
----@param method vim.lsp.protocol.Method.ClientToServer.Request LSP method to call
----@param opts? vim.lsp.util._refresh.Opts Options table
-function M._refresh(method, opts)
-  opts = opts or {}
-  local bufnr = vim._resolve_bufnr(opts.bufnr)
-
-  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = method, id = opts.client_id })
-
-  if #clients == 0 then
-    return
-  end
-
-  local textDocument = M.make_text_document_params(bufnr)
-
-  if opts.only_visible then
-    for _, window in ipairs(api.nvim_list_wins()) do
-      if api.nvim_win_get_buf(window) == bufnr then
-        local first = vim.fn.line('w0', window)
-        local last = vim.fn.line('w$', window)
-        M._cancel_requests({
-          bufnr = bufnr,
-          clients = clients,
-          method = method,
-          type = 'pending',
-        })
-        for _, client in ipairs(clients) do
-          client:request(method, {
-            textDocument = textDocument,
-            range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
-          }, opts.handler, bufnr)
-        end
-      end
-    end
-  else
-    for _, client in ipairs(clients) do
-      client:request(method, {
-        textDocument = textDocument,
-        range = make_line_range_params(
-          bufnr,
-          0,
-          api.nvim_buf_line_count(bufnr) - 1,
-          client.offset_encoding
-        ),
-      }, opts.handler, bufnr)
     end
   end
 end

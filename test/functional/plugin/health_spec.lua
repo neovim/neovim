@@ -67,8 +67,19 @@ describe(':checkhealth', function()
     assert_alive()
   end)
 
-  it('vim.g.health', function()
+  it('cmdline completion works with multiple args #35054', function()
     clear()
+    n.feed(':checkhealth vim.ls<Tab>')
+    eq('checkhealth vim.lsp', fn.getcmdline())
+    n.feed(' vim.prov<Tab>')
+    eq('checkhealth vim.lsp vim.provider', fn.getcmdline())
+  end)
+
+  it('vim.g.health', function()
+    clear {
+      args_rm = { '-u' },
+      args = { '--clean', '+set runtimepath+=test/functional/fixtures' },
+    }
     command("let g:health = {'style':'float'}")
     command('checkhealth lsp')
     eq(
@@ -77,6 +88,15 @@ describe(':checkhealth', function()
       return vim.api.nvim_win_get_config(0).relative
     ]])
     )
+    matches('health%.lua:%d+>$', fn.maparg('q', 'n', false, false))
+
+    -- gO should not close the :checkhealth floating window. #34784
+    command('checkhealth full_render')
+    local win = api.nvim_get_current_win()
+    api.nvim_win_set_cursor(win, { 5, 1 })
+    n.feed('gO')
+    eq(true, api.nvim_win_is_valid(win))
+    eq('qf', api.nvim_get_option_value('filetype', { buf = 0 }))
   end)
 
   it("vim.provider works with a misconfigured 'shell'", function()
@@ -86,6 +106,39 @@ describe(':checkhealth', function()
     command('let g:loaded_python3_provider = 0')
     command('checkhealth vim.provider')
     eq(nil, string.match(curbuf_contents(), 'WRONG!!!'))
+  end)
+
+  it('vim.lsp warns about unknown filetypes', function()
+    clear()
+    exec_lua(function()
+      vim.filetype.add({ extension = { mdx = 'mdx' } })
+      vim.lsp.config('builtin_registry_ft', {
+        cmd = { 'true' },
+        filetypes = { 'beancount' },
+      })
+      vim.lsp.config('custom_ft', {
+        cmd = { 'true' },
+        filetypes = { 'mdx' },
+      })
+      vim.lsp.config('bad_ft', {
+        cmd = { 'true' },
+        filetypes = { 'hbs' },
+      })
+      vim.lsp.enable('builtin_registry_ft')
+      vim.lsp.enable('custom_ft')
+      vim.lsp.enable('bad_ft')
+    end)
+    command('checkhealth vim.lsp')
+    local report = curbuf_contents()
+    eq(nil, report:find("Unknown filetype 'beancount'", 1, true))
+    eq(nil, report:find("Unknown filetype 'mdx'", 1, true))
+    eq(
+      true,
+      report:find("Unknown filetype 'hbs' (Hint: filename extension != filetype).", 1, true) ~= nil
+    )
+    eq(true, report:find('- builtin_registry_ft:', 1, true) ~= nil)
+    eq(true, report:find('- custom_ft:', 1, true) ~= nil)
+    eq(true, report:find('- bad_ft:', 1, true) ~= nil)
   end)
 end)
 
@@ -208,6 +261,7 @@ describe('vim.health', function()
         h2 = { foreground = tonumber('0x6a0dad') },
         Ok = { foreground = Screen.colors.LightGreen },
         Error = { foreground = Screen.colors.Red },
+        Done = { foreground = Screen.colors.NvimDarkGreen },
         Bar = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGrey },
       })
       command('checkhealth foo success1')
@@ -225,7 +279,7 @@ describe('vim.health', function()
                                                           |
         {h2:report 1}                                          |
         - ✅ {Ok:OK} everything is fine                        |
-                                                          |
+        {Done:checkhealth}: checks done                          |
       ]],
       }
     end)
@@ -292,6 +346,7 @@ describe(':checkhealth window', function()
     screen:set_default_attr_ids {
       h1 = { reverse = true },
       h2 = { foreground = tonumber('0x6a0dad') },
+      Done = { foreground = Screen.colors.NvimDarkGreen },
       [1] = { foreground = Screen.colors.Blue, bold = true },
       [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
       [32] = { foreground = Screen.colors.PaleGreen2 },
@@ -315,7 +370,7 @@ describe(':checkhealth window', function()
                                                         |
       {h2:report 2}                                          |
     ## grid 3
-                                                        |
+      {Done:checkhealth}: checks done                          |
     ]],
     }
   end)
@@ -325,6 +380,7 @@ describe(':checkhealth window', function()
     screen:set_default_attr_ids {
       h1 = { reverse = true },
       h2 = { foreground = tonumber('0x6a0dad') },
+      Done = { foreground = Screen.colors.NvimDarkGreen },
       [1] = { foreground = Screen.colors.Blue, bold = true },
       [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
       [32] = { foreground = Screen.colors.PaleGreen2 },
@@ -342,7 +398,7 @@ describe(':checkhealth window', function()
       %s                   |
       {1:~                       }|*18
     ## grid 3
-                                                        |
+      {Done:checkhealth}: checks done                          |
     ## grid 4
       ^                         |
       {14:                         }|*3
@@ -403,11 +459,10 @@ describe(':checkhealth window', function()
       %s                                             |
       ~                                                 |*10
     ## grid 3
-                                                        |
+      checkhealth: checks done                          |
     ## grid 4
       ^                                                  |
-                                                        |
-                                                        |
+                                                        |*2
       test_plug.                                        |
       success1:                                         |
                       ✅                                |

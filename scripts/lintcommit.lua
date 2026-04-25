@@ -13,6 +13,9 @@ local M = {}
 
 local _trace = false
 
+local allowed_types =
+  { 'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'vim-patch' }
+
 -- Print message
 local function p(s)
   vim.cmd('set verbose=1')
@@ -27,8 +30,9 @@ local function run(cmd, or_die)
   if _trace then
     p('run: ' .. vim.inspect(cmd))
   end
-  local rv = vim.trim(vim.fn.system(cmd)) or ''
-  if vim.v.shell_error ~= 0 then
+  local res = vim.system(cmd):wait()
+  local rv = vim.trim(res.stdout)
+  if res.code ~= 0 then
     if or_die then
       p(rv)
       os.exit(1)
@@ -45,6 +49,11 @@ local function validate_commit(commit_message)
   -- Return nil if the type is vim-patch since most of the normal rules don't
   -- apply.
   if commit_split[1] == 'vim-patch' then
+    return nil
+  end
+
+  -- Skip release commits.
+  if commit_message:match('^NVIM v%d+%.%d+%.%d+') then
     return nil
   end
 
@@ -82,8 +91,6 @@ local function validate_commit(commit_message)
 
   -- Check if type is correct
   local type = vim.split(before_colon, '(', { plain = true })[1]
-  local allowed_types =
-    { 'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'vim-patch' }
   if not vim.tbl_contains(allowed_types, type) then
     return string.format(
       [[Invalid commit type "%s". Allowed types are:
@@ -211,6 +218,7 @@ function M._test()
   local test_cases = {
     ['ci: normal message'] = true,
     ['build: normal message'] = true,
+    ['build: version bump'] = true,
     ['docs: normal message'] = true,
     ['feat: normal message'] = true,
     ['fix: normal message'] = true,
@@ -223,6 +231,7 @@ function M._test()
     ['ci(tui)!: message with scope and breaking change'] = true,
     ['vim-patch:8.2.3374: Pyret files are not recognized (#15642)'] = true,
     ['vim-patch:8.1.1195,8.2.{3417,3419}'] = true,
+    ['NVIM v0.12.0'] = true,
     ['revert: "ci: use continue-on-error instead of "|| true""'] = true,
     ['fixup'] = false,
     ['fixup: commit message'] = false,

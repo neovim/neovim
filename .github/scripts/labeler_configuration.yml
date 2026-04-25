@@ -2,10 +2,6 @@ build:
   - changed-files:
     - any-glob-to-any-file: [ CMakeLists.txt, "**/CMakeLists.txt", "**/Makefile", "**/*.cmake", cmake.deps/**/* ]
 
-checkhealth:
-  - changed-files:
-    - any-glob-to-any-file: [ "**/health.lua" ]
-
 ci:
   - changed-files:
     - any-glob-to-any-file: [ .github/actions/**, .github/workflows/**, .github/scripts/** ]
@@ -24,7 +20,7 @@ comment:
 
 defaults:
   - changed-files:
-    - any-glob-to-any-file: [ runtime/lua/vim/_defaults.lua ]
+    - any-glob-to-any-file: [ runtime/lua/vim/_core/defaults.lua ]
 
 diagnostic:
   - changed-files:
@@ -37,10 +33,6 @@ diff:
 documentation:
   - changed-files:
     - any-glob-to-all-files: [ runtime/doc/*, "**/*.md" ]
-
-editorconfig:
-  - changed-files:
-    - any-glob-to-any-file: [ .editorconfig, runtime/lua/editorconfig.lua, runtime/plugin/editorconfig.lua ]
 
 filetype:
   - changed-files:
@@ -66,6 +58,10 @@ netrw:
   - changed-files:
     - any-glob-to-any-file: [ runtime/autoload/netrw.vim, runtime/plugin/netrwPlugin.vim ]
 
+plugin-editorconfig:
+  - changed-files:
+    - any-glob-to-any-file: [ .editorconfig, runtime/lua/editorconfig.lua, runtime/plugin/editorconfig.lua ]
+
 snippet:
   - changed-files:
     - any-glob-to-any-file: [ runtime/lua/vim/snippet.lua ]
@@ -89,3 +85,11 @@ treesitter:
 tui:
   - changed-files:
     - any-glob-to-any-file: [ src/nvim/tui/tui.* ]
+
+ui2:
+  - changed-files:
+    - any-glob-to-any-file: [ "runtime/lua/vim/_core/ui2*" ]
+
+ux-visibility:
+  - changed-files:
+    - any-glob-to-any-file: [ "**/health.lua" ]

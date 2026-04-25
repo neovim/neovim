@@ -2,23 +2,28 @@
 ${NVIM_VERSION}
 ```
 
+## Release notes
+
+- [Changelog](https://github.com/neovim/neovim/commit/${NVIM_COMMIT}) (fixes + features)
+- [News](./runtime/doc/news.txt) (`:help news` in Nvim)
+
 ## Install
 
 ### Windows
 
 #### Zip
 
-1. Download **nvim-win64.zip**
+1. Download **nvim-win64.zip** (or **nvim-win-arm64.zip** for ARM)
 2. Extract the zip
-3. Run `nvim.exe` on your CLI of choice
+3. Run `nvim.exe` in your terminal
 
 #### MSI
 
-1. Download **nvim-win64.msi**
+1. Download **nvim-win64.msi** (or **nvim-win-arm64.msi** for ARM)
 2. Run the MSI
-3. Run `nvim.exe` on your CLI of choice
+3. Run `nvim.exe` in your terminal
 
-Note: On Windows "Server" you may need to [install vcruntime140.dll](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170).
+Note: On Windows "Server" you may need to [install `vcruntime*.dll`](https://neovim.io/doc/install/#windows).
 
 ### macOS (x86_64)
 
@@ -43,7 +48,7 @@ If your system does not have the required glibc version, try the (unsupported) [
 1. Download **nvim-linux-x86_64.appimage**
 2. Run `chmod u+x nvim-linux-x86_64.appimage && ./nvim-linux-x86_64.appimage`
    - If your system does not have FUSE you can [extract the appimage](https://github.com/AppImage/AppImageKit/wiki/FUSE#type-2-appimage):
-     ```
+     ```bash
      ./nvim-linux-x86_64.appimage --appimage-extract
      ./squashfs-root/usr/bin/nvim
      ```
@@ -54,14 +59,14 @@ If your system does not have the required glibc version, try the (unsupported) [
 2. Extract: `tar xzvf nvim-linux-x86_64.tar.gz`
 3. Run `./nvim-linux-x86_64/bin/nvim`
 
-### Linux (arm64) - Untested
+### Linux (arm64)
 
 #### AppImage
 
 1. Download **nvim-linux-arm64.appimage**
 2. Run `chmod u+x nvim-linux-arm64.appimage && ./nvim-linux-arm64.appimage`
    - If your system does not have FUSE you can [extract the appimage](https://github.com/AppImage/AppImageKit/wiki/FUSE#type-2-appimage):
-     ```
+     ```bash
      ./nvim-linux-arm64.appimage --appimage-extract
      ./squashfs-root/usr/bin/nvim
      ```

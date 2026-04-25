@@ -1,0 +1,27 @@
+package main
+
+import "fmt"
+
+func compressString(str string) string {
+	return str
+}
+
+func removeDuplicate(str string) string {
+	return str
+}
+
+func reverseAndDouble(str string) string {
+	return str
+}
+
+func printCharacters(str string) string {
+	return str
+}
+
+func main() {
+	fmt.PrintLn(compressString("aaaabbccgh"))
+	fmt.PrintLn(compressString("golang"))
+	fmt.PrintLn(removeDuplicate("aabccchbbccaaa"))
+	fmt.PrintLn(reverseAndDouble("abcdfgh"))
+	fmt.PrintLn(printCharacters("golang"))
+}

@@ -13,9 +13,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/rstream.c.generated.h"
-#endif
+#include "event/rstream.c.generated.h"
 
 void rstream_init_fd(Loop *loop, RStream *stream, int fd)
   FUNC_ATTR_NONNULL_ARG(1, 2)
@@ -38,6 +36,8 @@ void rstream_init(RStream *stream)
   stream->num_bytes = 0;
   stream->buffer = alloc_block();
   stream->read_pos = stream->write_pos = stream->buffer;
+  stream->s.close_cb = rstream_close_cb;
+  stream->s.close_cb_data = stream;
 }
 
 void rstream_start_inner(RStream *stream)
@@ -185,7 +185,7 @@ static void read_event(void **argv)
   stream->s.pending_reqs--;
   if (stream->s.closed && !stream->s.pending_reqs) {
     // Last pending read; free the stream.
-    stream_close_handle(&stream->s, true);
+    stream_close_handle(&stream->s);
   }
 }
 
@@ -233,7 +233,16 @@ static void invoke_read_cb(RStream *stream, bool eof)
   CREATE_EVENT(stream->s.events, read_event, stream);
 }
 
+static void rstream_close_cb(Stream *s, void *data)
+{
+  RStream *stream = data;
+  assert(stream && s == &stream->s);
+  if (stream->buffer) {
+    free_block(stream->buffer);
+  }
+}
+
 void rstream_may_close(RStream *stream)
 {
-  stream_may_close(&stream->s, true);
+  stream_may_close(&stream->s);
 }

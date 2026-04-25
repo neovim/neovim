@@ -44,6 +44,4 @@ typedef struct {
   tasave_T tabuf;
 } save_state_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_docmd.h.generated.h"
-#endif
+#include "ex_docmd.h.generated.h"

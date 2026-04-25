@@ -7,14 +7,22 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_win_console.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/os_win_console.c.generated.h"
-#endif
+#include "os/os_win_console.c.generated.h"
 
 static char origTitle[256] = { 0 };
 static HWND hWnd = NULL;
 static HICON hOrigIconSmall = NULL;
 static HICON hOrigIcon = NULL;
+
+/// Re-enable normal Ctrl-C processing after detached startup.
+///
+/// On Windows, UV_PROCESS_DETACHED implies CREATE_NEW_PROCESS_GROUP, which
+/// disables Ctrl-C handling for the new process. Restore the default behavior
+/// once the embedded server has a console so terminal jobs inherit it.
+void os_enable_ctrl_c(void)
+{
+  SetConsoleCtrlHandler(NULL, false);
+}
 
 int os_open_conin_fd(void)
 {
@@ -29,7 +37,7 @@ int os_open_conin_fd(void)
   return conin_fd;
 }
 
-void os_clear_hwnd(void) 
+void os_clear_hwnd(void)
 {
   hWnd = NULL;
 }
@@ -58,8 +66,23 @@ void os_replace_stdout_and_stderr_to_conout(void)
   assert(conerr_fd == STDERR_FILENO);
 }
 
+/// Detach from the current console and switch stdio to a hidden private one.
+///
+/// Used when an embedded server must outlive its parent console, while keeping
+/// CONIN$/CONOUT$ and ConPTY functional for :terminal and stdio writes.
+void os_swap_to_hidden_console(void)
+{
+  FreeConsole();
+  AllocConsole();
+  ShowWindow(GetConsoleWindow(), SW_HIDE);
+  os_enable_ctrl_c();
+  os_replace_stdin_to_conin();
+  os_replace_stdout_and_stderr_to_conout();
+}
+
 /// Resets Windows console icon if we got an original one on startup.
-void os_icon_reset(void) {
+void os_icon_reset(void)
+{
   if (hWnd == NULL) {
     return;
   }

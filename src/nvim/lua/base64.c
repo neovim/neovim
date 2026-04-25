@@ -7,9 +7,7 @@
 #include "nvim/lua/base64.h"
 #include "nvim/memory.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/base64.c.generated.h"
-#endif
+#include "lua/base64.c.generated.h"
 
 static int nlua_base64_encode(lua_State *L)
 {

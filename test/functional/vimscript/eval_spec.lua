@@ -5,7 +5,7 @@
 --    null_spec.lua
 --    operators_spec.lua
 --
--- Tests for the Vimscript |builtin-functions| library should live in:
+-- Tests for the Vimscript |vimscript-functions| library should live in:
 --    test/functional/vimscript/<funcname>_spec.lua
 --    test/functional/vimscript/functions_spec.lua
 
@@ -14,16 +14,17 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local mkdir = t.mkdir
+local pcall_err = t.pcall_err
 local clear = n.clear
 local eq = t.eq
 local exec = n.exec
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
 local exec_capture = n.exec_capture
 local eval = n.eval
 local command = n.command
 local write_file = t.write_file
 local api = n.api
+local fn = n.fn
 local sleep = vim.uv.sleep
 local assert_alive = n.assert_alive
 local poke_eventloop = n.poke_eventloop
@@ -41,7 +42,8 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
     local rep = n.fn['repeat']
     local expected = '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'
     eq(expected, printf(rep('%d,', max_func_args - 1), unpack(range(2, max_func_args))))
-    local ret = exc_exec('call printf("", 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
+    local ret =
+      pcall_err(command, 'call printf("", 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
     eq('Vim(call):E740: Too many arguments for function printf', ret)
   end)
 
@@ -49,7 +51,10 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
     local rpcnotify = n.fn.rpcnotify
     local ret = rpcnotify(0, 'foo', unpack(range(3, max_func_args)))
     eq(1, ret)
-    ret = exc_exec('call rpcnotify(0, "foo", 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
+    ret = pcall_err(
+      command,
+      'call rpcnotify(0, "foo", 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)'
+    )
     eq('Vim(call):E740: Too many arguments for function rpcnotify', ret)
   end)
 end)
@@ -80,7 +85,7 @@ describe('backtick expansion', function()
     eq({ 'file2' }, eval('argv()'))
     if t.is_os('win') then
       command(':silent args `dir /s/b *4`')
-      eq({ 'subdir\\file4' }, eval('map(argv(), \'fnamemodify(v:val, ":.")\')'))
+      eq({ 'subdir/file4' }, eval('map(argv(), \'fnamemodify(v:val, ":.")\')'))
     else
       command(':silent args `echo */*4`')
       eq({ 'subdir/file4' }, eval('argv()'))
@@ -88,10 +93,8 @@ describe('backtick expansion', function()
   end)
 
   it('with shell=fish', function()
-    if eval("executable('fish')") == 0 then
-      pending('missing "fish" command')
-      return
-    end
+    t.skip(fn.executable('fish') == 0, 'missing "fish" command')
+
     command('set shell=fish')
     command(':silent args `echo ***2`')
     eq({ 'file2' }, eval('argv()'))
@@ -159,7 +162,7 @@ describe('uncaught exception', function()
 
   it('is not forgotten #13490', function()
     command('autocmd BufWinEnter * throw "i am error"')
-    eq('i am error', exc_exec('try | new | endtry'))
+    t.matches('i am error', pcall_err(command, 'try | new | endtry'))
 
     -- Like Vim, throwing here aborts the processing of the script, but does not stop :runtime!
     -- from processing the others.
@@ -181,7 +184,7 @@ describe('uncaught exception', function()
     end)
 
     command('set runtimepath+=. | let result = ""')
-    eq('throw1', exc_exec('try | runtime! throw*.vim | endtry'))
+    t.matches('throw1', pcall_err(command, 'try | runtime! throw*.vim | endtry'))
     eq('123', eval('result'))
   end)
 
@@ -216,10 +219,10 @@ describe('listing functions using :function', function()
     command('let A = {-> 1}')
     local num = exec_capture('echo A'):match("function%('<lambda>(%d+)'%)")
     eq(
-      ([[
-   function <lambda>%s(...)
-1  return 1
-   endfunction]]):format(num),
+      t.dedent([[
+           function <lambda>%s(...)
+        1  return 1
+           endfunction]]):format(num),
       exec_capture(('function <lambda>%s'):format(num))
     )
   end)

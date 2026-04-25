@@ -258,11 +258,11 @@ describe('ui/cursor', function()
         end
       end
       if m.hl_id then
-        m.hl_id = 66
+        m.hl_id = 67
         m.attr = { background = Screen.colors.DarkGray }
       end
       if m.id_lm then
-        m.id_lm = 75
+        m.id_lm = 78
         m.attr_lm = {}
       end
     end
@@ -375,6 +375,22 @@ describe('ui/cursor', function()
           eq(0, m.id_lm)
         end
       end
+    end)
+  end)
+
+  it("'set all&' reapplies 'guicursor'", function()
+    command('set guicursor=n:ver25')
+    screen:expect(function()
+      eq('vertical', screen._mode_info[1].cursor_shape)
+      eq(25, screen._mode_info[1].cell_percentage)
+    end)
+
+    command('set all&')
+    screen:expect(function()
+      eq('block', screen._mode_info[1].cursor_shape)
+      eq(0, screen._mode_info[1].blinkon)
+      eq(0, screen._mode_info[1].blinkoff)
+      eq(true, screen._cursor_style_enabled)
     end)
   end)
 

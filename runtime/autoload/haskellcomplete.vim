@@ -3,9 +3,8 @@
 " Maintainer:      Daniel Campoverde <alx@sillybytes.net>
 " URL:             https://github.com/alx741/haskellcomplete.vim
 " Last Change:     2019 May 14
-
+" 2026 Feb 04 by Vim project: fix undefined buffer variable: #19259
 " Usage:           setlocal omnifunc=haskellcomplete#Complete
-
 
 " Language extensions from:
 "   https://hackage.haskell.org/package/Cabal-2.2.0.1/docs/Language-Haskell-Extension.html
@@ -14,12 +13,6 @@
 "   https://downloads.haskell.org/~ghc/7.0.4/docs/html/users_guide/flag-reference.html
 "   https://downloads.haskell.org/~ghc/8.4.3/docs/html/users_guide/flags.html
 
-
-
-" Available completions
-let b:completingLangExtension = 0
-let b:completingOptionsGHC    = 0
-let b:completingModule        = 0
 
 function! haskellcomplete#Complete(findstart, base)
     if a:findstart
@@ -52,7 +45,7 @@ function! haskellcomplete#Complete(findstart, base)
         return start
     endif
 
-    if b:completingLangExtension
+    if get(b:, 'completingLangExtension', 0)
         if a:base ==? ""
             " Return all possible Lang extensions
             return s:langExtensions
@@ -68,7 +61,7 @@ function! haskellcomplete#Complete(findstart, base)
         endif
 
 
-    elseif b:completingOptionsGHC
+    elseif get(b:, 'completingOptionsGHC', 0)
         if a:base ==? ""
             " Return all possible GHC options
             return s:optionsGHC
@@ -84,7 +77,7 @@ function! haskellcomplete#Complete(findstart, base)
         endif
 
 
-    elseif b:completingModule
+    elseif get(b:, 'completingModule', 0)
         if a:base ==? ""
             " Return all possible modules
             return s:commonModules

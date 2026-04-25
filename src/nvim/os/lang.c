@@ -16,7 +16,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
@@ -32,9 +32,7 @@
 #include "nvim/profile.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/lang.c.generated.h"
-#endif
+#include "os/lang.c.generated.h"
 
 static char *get_locale_val(int what)
 {
@@ -57,7 +55,7 @@ char *get_mess_lang(void)
 {
   char *p;
 
-#if defined(LC_MESSAGES)
+#ifdef LC_MESSAGES
   p = get_locale_val(LC_MESSAGES);
 #else
   // This is necessary for Win32, where LC_MESSAGES is not defined and $LANG
@@ -290,7 +288,7 @@ static void init_locales(void)
 #endif
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_locales(void)
 {
   if (locales == NULL) {

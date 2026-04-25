@@ -1,16 +1,10 @@
 local t = require('test.testutil')
-local n = require('test.functional.testnvim')()
 
 local eq = t.eq
 
 describe('glob', function()
-  before_each(n.clear)
-  after_each(n.clear)
-
   local match = function(pattern, str)
-    return n.exec_lua(function()
-      return require('vim.glob').to_lpeg(pattern):match(str) ~= nil
-    end)
+    return require('vim.glob').to_lpeg(pattern):match(str) ~= nil
   end
 
   describe('glob matching', function()
@@ -73,6 +67,9 @@ describe('glob', function()
       eq(true, match('a*b*[cy]*d*e*', 'axbxcxdxexxx'))
       eq(true, match('a*b*[cy]*d*e*', 'axbxyxdxexxx'))
       eq(true, match('a*b*[cy]*d*e*', 'axbxxxyxdxexxx'))
+      eq(true, match('.ps*1', '.ps1'))
+      eq(true, match('.ps*1', '.psaa1'))
+      eq(false, match('.ps*1', '.ps1a'))
     end)
 
     it('should match ? wildcards', function()

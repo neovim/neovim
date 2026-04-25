@@ -2,7 +2,6 @@
 " Language:		Ruby
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " URL:			https://github.com/vim-ruby/vim-ruby
-" Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
 " Last Change:		2023 Mar 16
 " ----------------------------------------------------------------------------
 "

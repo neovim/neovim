@@ -2,7 +2,8 @@
 "  Description: Perform Ada specific completion & tagging.
 "     Language: Ada (2005)
 "	   $Id: ada.vim 887 2008-07-08 14:29:01Z krischik $
-"   Maintainer: Martin Krischik <krischik@users.sourceforge.net>
+"   Maintainer: This runtime file is looking for a new maintainer.
+"   Previous Maintainer: Martin Krischik <krischik@users.sourceforge.net>
 "		Taylor Venable <taylor@metasyntax.net>
 "		Neil Bird <neil@fnxweb.com>
 "      $Author: krischik $
@@ -19,6 +20,10 @@
 "                             autoload
 "		05.11.2006 MK Bram suggested to save on spaces
 "		08.07.2007 TV fix default compiler problems.
+"		05.09.2025    do not globally set 'ignorecase'/'smartcase' option
+"			      set undo_ftplugin
+"			      mark as unmaintained
+"			      use buffer-local abbreviation
 "    Help Page: ft-ada-plugin
 "------------------------------------------------------------------------------
 " Provides mapping overrides for tag jumping that figure out the current
@@ -48,8 +53,8 @@ setlocal complete=.,w,b,u,t,i
 
 " Section: case	     {{{1
 "
-setlocal nosmartcase
-setlocal ignorecase
+" setlocal nosmartcase
+" setlocal ignorecase
 
 " Section: formatoptions {{{1
 "
@@ -115,7 +120,6 @@ if !exists ("b:match_words")  &&
       \ s:notend . '\<record\>:\<end\>\s\+\<record\>'
 endif
 
-
 " Section: Compiler {{{1
 "
 if ! exists("g:ada_default_compiler")
@@ -148,10 +152,10 @@ endif
 " Section: Abbrev {{{1
 "
 if exists("g:ada_abbrev")
-   iabbrev ret	return
-   iabbrev proc procedure
-   iabbrev pack package
-   iabbrev func function
+   iabbrev <buffer> ret	return
+   iabbrev <buffer> proc procedure
+   iabbrev <buffer> pack package
+   iabbrev <buffer> func function
 endif
 
 " Section: Commands, Mapping, Menus {{{1
@@ -190,6 +194,12 @@ if !exists(':AdaTagFile')
      \ ':AdaTypes',
      \'call ada#Switch_Syntax_Option (''standard_types'')')
 endif
+"
+" Section: b:undo_ftplugin {{{1
+let b:undo_ftplugin = "setl fo< comments< tw< commentstring< complete< "
+	\ . "| setl completefunc< omnifunc< ts< sts< sw< fdm< fde< fdi< "
+	\ . "| setl fdm< fde< fdi< fdn< "
+	\ . "| unlet! b:match_words "
 
 " 1}}}
 " Reset cpoptions

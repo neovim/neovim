@@ -44,6 +44,9 @@ func Test_has()
   " Will we ever have patch 9999?
   let ver = 'patch-' .. v:version / 100 .. '.' .. v:version % 100 .. '.9999'
   call assert_equal(0, has(ver))
+
+  " There actually isn't a patch 9.0.0, but this is more consistent.
+  call assert_equal(1, has('patch-9.0.0'))
 endfunc
 
 func Test_empty()
@@ -844,18 +847,6 @@ func Test_mode()
   execute "normal! gR\<C-o>g@l\<Esc>"
   call assert_equal('n-niV', g:current_modes)
 
-  " Test statusline updates for overstrike mode
-  if CanRunVimInTerminal()
-    let buf = RunVimInTerminal('', {'rows': 12})
-    call term_sendkeys(buf, ":set laststatus=2 statusline=%!mode(1)\<CR>")
-    call term_sendkeys(buf, ":")
-    call TermWait(buf)
-    call VerifyScreenDump(buf, 'Test_mode_1', {})
-    call term_sendkeys(buf, "\<Insert>")
-    call TermWait(buf)
-    call VerifyScreenDump(buf, 'Test_mode_2', {})
-    call StopVimInTerminal(buf)
-  endif
 
   if has('terminal')
     term
@@ -871,6 +862,22 @@ func Test_mode()
   set complete&
   set operatorfunc&
   delfunction OperatorFunc
+endfunc
+
+" Test for the mode() function using Screendump feature
+func Test_mode_screendump()
+  CheckScreendump
+
+  " Test statusline updates for overstrike mode
+  let buf = RunVimInTerminal('', {'rows': 12})
+  call term_sendkeys(buf, ":set laststatus=2 statusline=%!mode(1)\<CR>")
+  call term_sendkeys(buf, ":")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_1', {})
+  call term_sendkeys(buf, "\<Insert>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_2', {})
+  call StopVimInTerminal(buf)
 endfunc
 
 " Test for append()
@@ -911,7 +918,7 @@ func Test_setline()
   call setline(3, v:_null_list)
   call setline(2, ["baz"])
   call assert_equal(['bar', 'baz'], getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 func Test_getbufvar()
@@ -1934,14 +1941,56 @@ func Test_Executable()
 endfunc
 
 func Test_executable_longname()
-  if !has('win32')
-    return
+  CheckMSWindows
+
+  " Create a temporary .bat file with 205 characters in the name.
+  " Maximum length of a filename (including the path) on MS-Windows is 259
+  " characters.
+  " See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+  let len = 259 - getcwd()->len() - 6
+  if len > 200
+    let len = 200
   endif
 
-  let fname = 'X' . repeat('あ', 200) . '.bat'
+  let fname = 'X' . repeat('あ', len) . '.bat'
   call writefile([], fname)
   call assert_equal(1, executable(fname))
   call delete(fname)
+endfunc
+
+func Test_executable_single_character_dir()
+  call mkdir('Xpath', 'R')
+  call mkdir('Xpath/a')
+  call mkdir('Xpath/b')
+  call mkdir('Xpath/c')
+  if has('win32')
+    call writefile([], 'Xpath/a/Xcmd1.bat')
+    call writefile([], 'Xpath/b/Xcmd2.bat')
+    call writefile([], 'Xpath/c/Xcmd3.bat')
+    let sep = ';'
+  else
+    call writefile([], 'Xpath/a/Xcmd1')
+    call writefile([], 'Xpath/b/Xcmd2')
+    call writefile([], 'Xpath/c/Xcmd3')
+    call setfperm('Xpath/a/Xcmd1', 'rwxr-xr-x')
+    call setfperm('Xpath/b/Xcmd2', 'rwxr-xr-x')
+    call setfperm('Xpath/c/Xcmd3', 'rwxr-xr-x')
+    let sep = ':'
+  endif
+
+  let save_path = $PATH
+  " a: single character name without path seperator
+  " b: single character name with path seperator
+  " c: single character name without path seperator at last of PATH
+  let $PATH = [
+        \ fnamemodify('./Xpath/a', ':p:h'),
+        \ fnamemodify('./Xpath/b', ':p'),
+        \ fnamemodify('./Xpath/c', ':p:h')
+        \ ]->join(sep)
+  call assert_true(executable('Xcmd1'))
+  call assert_true(executable('Xcmd2'))
+  call assert_true(executable('Xcmd3'))
+  let $PATH = save_path
 endfunc
 
 func Test_hostname()
@@ -3622,9 +3671,10 @@ func Test_glob2()
     call assert_equal([], (glob('abc[glob]def\*', 0, 1)))
     call assert_equal([], (glob('\[XglobDir]\*', 0, 1)))
     call assert_equal([], (glob('abc\[glob]def\*', 0, 1)))
+    " Test that changing 'shellslash' doesn't affect the result of glob()
     set noshellslash
-    call assert_equal(['[XglobDir]\Xglob'], (glob('[[]XglobDir]/*', 0, 1)))
-    call assert_equal(['abc[glob]def\Xglob'], (glob('abc[[]glob]def/*', 0, 1)))
+    call assert_equal(['[XglobDir]/Xglob'], (glob('[[]XglobDir]/*', 0, 1)))
+    call assert_equal(['abc[glob]def/Xglob'], (glob('abc[[]glob]def/*', 0, 1)))
     set shellslash
     call assert_equal(['[XglobDir]/Xglob'], (glob('[[]XglobDir]/*', 0, 1)))
     call assert_equal(['abc[glob]def/Xglob'], (glob('abc[[]glob]def/*', 0, 1)))
@@ -3716,6 +3766,11 @@ func Test_builtin_check()
   unlet bar
 endfunc
 
+func Test_funcref_to_string()
+  let Fn = funcref('g:Test_funcref_to_string')
+  call assert_equal("function('g:Test_funcref_to_string')", string(Fn))
+endfunc
+
 " Test for isabsolutepath()
 func Test_isabsolutepath()
   call assert_false(isabsolutepath(''))
@@ -3727,7 +3782,8 @@ func Test_isabsolutepath()
     call assert_true(isabsolutepath('A:\Foo'))
     call assert_true(isabsolutepath('A:/Foo'))
     call assert_false(isabsolutepath('A:Foo'))
-    call assert_false(isabsolutepath('\Windows'))
+    call assert_true(isabsolutepath('\Windows'))
+    call assert_true(isabsolutepath('/Windows'))
     call assert_true(isabsolutepath('\\Server2\Share\Test\Foo.txt'))
   else
     call assert_true(isabsolutepath('/'))

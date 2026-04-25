@@ -4,7 +4,6 @@ local n = require('test.functional.testnvim')()
 local clear, insert, eq = n.clear, n.insert, t.eq
 local command, expect = n.command, n.expect
 local feed, eval = n.feed, n.eval
-local exc_exec = n.exc_exec
 
 describe('gu and gU', function()
   before_each(clear)
@@ -21,8 +20,7 @@ describe('gu and gU', function()
   describe('works in Turkish locale', function()
     clear()
 
-    local err = exc_exec('lang ctype tr_TR.UTF-8')
-    if err ~= 0 then
+    if not pcall(n.command, 'lang ctype tr_TR.UTF-8') then
       pending('Locale tr_TR.UTF-8 not supported', function() end)
       return
     end

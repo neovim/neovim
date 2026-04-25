@@ -44,7 +44,9 @@ endif()
 # User settings
 #-------------------------------------------------------------------------------
 
-set(DEPS_IGNORE_SHA FALSE)
+if(NOT DEPS_IGNORE_SHA)
+  set(DEPS_IGNORE_SHA FALSE)
+endif()
 
 #-------------------------------------------------------------------------------
 # Variables
@@ -130,6 +132,7 @@ else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
 option(ENABLE_LIBINTL "enable libintl" ON)
+option(ENABLE_UNIBILIUM "enable unibilium" ON)
 option(ENABLE_WASMTIME "enable wasmtime" OFF)
 
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
@@ -145,14 +148,14 @@ endif()
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 12)
+set(NVIM_VERSION_MINOR 13)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 14)        # Bump this after any API/stdlib change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE true)
+set(NVIM_API_PRERELEASE false)
 
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
@@ -205,26 +208,6 @@ mark_as_advanced(LUA_GEN_PRG)
 message(STATUS "Using Lua interpreter for code generation: ${LUA_GEN_PRG}")
 
 option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" ON)
-if(COMPILE_LUA AND NOT WIN32)
-  if(PREFER_LUA)
-    foreach(CURRENT_LUAC_PRG luac5.1 luac)
-      find_program(_CHECK_LUAC_PRG ${CURRENT_LUAC_PRG})
-      if(_CHECK_LUAC_PRG)
-        set(LUAC_PRG "${_CHECK_LUAC_PRG} -s -o - %s" CACHE STRING "Format for compiling to Lua bytecode")
-        break()
-      endif()
-    endforeach()
-  elseif(LUA_PRG MATCHES "luajit")
-    check_lua_module(${LUA_PRG} "jit.bcsave" LUAJIT_HAS_JIT_BCSAVE)
-    if(LUAJIT_HAS_JIT_BCSAVE)
-      set(LUAC_PRG "${LUA_PRG} -b -s %s -" CACHE STRING "Format for compiling to Lua bytecode")
-    endif()
-  endif()
-endif()
-mark_as_advanced(LUAC_PRG)
-if(LUAC_PRG)
-  message(STATUS "Using Lua compiler: ${LUAC_PRG}")
-endif()
 
 # Lint
 option(CI_LINT "Abort if lint programs not found" OFF)
@@ -235,17 +218,10 @@ find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
 mark_as_advanced(SHELLCHECK_PRG)
 find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
 mark_as_advanced(STYLUA_PRG)
+find_program(TS_QUERY_LS_PRG ts_query_ls ${LINT_REQUIRED})
+mark_as_advanced(TS_QUERY_LS_PRG)
 
 set(STYLUA_DIRS runtime scripts src test contrib)
-
-add_glob_target(
-  TARGET lintlua-luacheck
-  COMMAND $<TARGET_FILE:nvim_bin>
-  FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr/share/lua/5.1 luacheck -q
-  GLOB_DIRS runtime scripts src test
-  GLOB_PAT *.lua
-  TOUCH_STRATEGY PER_DIR)
-add_dependencies(lintlua-luacheck lua_dev_deps)
 
 add_glob_target(
   TARGET lintlua-stylua
@@ -266,7 +242,7 @@ add_custom_target(lintlua-stylua2
 add_dependencies(lintlua-stylua lintlua-stylua2)
 
 add_custom_target(lintlua)
-add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
+add_dependencies(lintlua lintlua-stylua)
 
 add_glob_target(
   TARGET lintsh
@@ -276,12 +252,29 @@ add_glob_target(
   GLOB_PAT *.sh
   TOUCH_STRATEGY PER_DIR)
 
+add_custom_target(lintquery-compilation
+  COMMAND ${TS_QUERY_LS_PRG}
+  check ${PROJECT_SOURCE_DIR}/runtime/queries --config
+  '{"parser_install_directories": ["${DEPS_PREFIX}/lib/nvim/parser"]}')
+
+add_custom_target(lintquery-format
+  COMMAND ${TS_QUERY_LS_PRG}
+  format ${PROJECT_SOURCE_DIR}/runtime/queries --check)
+
+add_custom_target(lintquery)
+add_dependencies(lintquery lintquery-compilation lintquery-format)
+
 add_custom_target(lintcommit
-  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
+  COMMAND $<TARGET_FILE:nvim_bin> --clean -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
 add_dependencies(lintcommit nvim_bin)
 
+add_custom_target(linterrcodes
+  COMMAND $<TARGET_FILE:nvim_bin> --clean -l ${PROJECT_SOURCE_DIR}/scripts/linterrcodes.lua
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+add_dependencies(linterrcodes nvim_bin)
+
 add_custom_target(lint)
-add_dependencies(lint lintc lintlua lintsh)
+add_dependencies(lint lintc lintlua lintsh lintquery)
 
 # Format
 add_glob_target(
@@ -300,8 +293,13 @@ add_custom_target(formatlua2
     "${PROJECT_SOURCE_DIR}/test/functional/ui/multigrid_spec.lua"
 )
 add_dependencies(formatlua formatlua2)
+
+add_custom_target(formatquery
+  COMMAND ${TS_QUERY_LS_PRG}
+  format ${PROJECT_SOURCE_DIR}/runtime/queries)
+
 add_custom_target(format)
-add_dependencies(format formatc formatlua)
+add_dependencies(format formatc formatlua formatquery)
 
 install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
@@ -311,6 +309,8 @@ add_custom_target(nvim ALL)
 add_dependencies(nvim nvim_bin nvim_runtime_deps nvim_runtime)
 
 add_subdirectory(src/nvim)
+add_subdirectory(src/tee)
+add_subdirectory(src/xxd)
 add_subdirectory(cmake.config)
 add_subdirectory(runtime)
 add_subdirectory(test)
@@ -331,22 +331,7 @@ ExternalProject_Add(uncrustify
   EXCLUDE_FROM_ALL TRUE
   ${EXTERNALPROJECT_OPTIONS})
 
-option(USE_BUNDLED_BUSTED "Use bundled busted" ON)
-if(USE_BUNDLED_BUSTED)
-  get_externalproject_options(lua_dev_deps ${DEPS_IGNORE_SHA})
-  ExternalProject_Add(lua_dev_deps
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua_dev_deps
-    SOURCE_DIR ${DEPS_SHARE_DIR}
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    EXCLUDE_FROM_ALL TRUE
-    ${EXTERNALPROJECT_OPTIONS})
-else()
-  add_custom_target(lua_dev_deps)
-endif()
-
-if (CMAKE_SYSTEM_PROCESSOR MATCHES arm64)
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch")
   set(LUALS_ARCH arm64)
 else()
   set(LUALS_ARCH x64)

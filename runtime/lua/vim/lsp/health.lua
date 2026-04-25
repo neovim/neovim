@@ -18,7 +18,7 @@ local function check_log()
     )
   end
 
-  local log_path = vim.lsp.get_log_path()
+  local log_path = log.get_filename()
   report_info(string.format('Log path: %s', log_path))
 
   local log_file = vim.uv.fs_stat(log_path)
@@ -26,6 +26,38 @@ local function check_log()
 
   local report_fn = (log_size / 1000000 > 100 and report_warn or report_info)
   report_fn(string.format('Log size: %d KB', log_size / 1000))
+end
+
+local function check_active_features()
+  vim.health.start('vim.lsp: Active Features')
+  for _, Capability in pairs(vim.lsp._capability.all) do
+    ---@type string[]
+    local buf_infos = {}
+    for bufnr, instance in pairs(Capability.active) do
+      local client_info = vim
+        .iter(pairs(instance.client_state))
+        :map(function(client_id)
+          local client = vim.lsp.get_client_by_id(client_id)
+          if client then
+            return string.format('%s (id: %d)', client.name, client.id)
+          else
+            return string.format('unknow (id: %d)', client_id)
+          end
+        end)
+        :join(', ')
+      if client_info == '' then
+        client_info = 'No supported client attached'
+      end
+
+      buf_infos[#buf_infos + 1] = string.format('    [%d]: %s', bufnr, client_info)
+    end
+
+    report_info(table.concat({
+      Capability.name,
+      '- Active buffers:',
+      string.format(table.concat(buf_infos, '\n')),
+    }, '\n'))
+  end
 end
 
 --- @param f function
@@ -59,6 +91,7 @@ local function check_active_clients()
       else
         dirs_info = string.format(
           '- Root directory: %s',
+          -- vim.fs.relpath does not prepend '~/' while fnamemodify does
           client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~')
         ) or nil
       end
@@ -94,7 +127,7 @@ local function check_watcher()
         'dynamicRegistration'
       )
       local has_dynamic_capability =
-        client.dynamic_capabilities:get(vim.lsp.protocol.Methods.workspace_didChangeWatchedFiles)
+        client.dynamic_capabilities:get('workspace/didChangeWatchedFiles')
       return has_capability == nil
         or has_dynamic_capability == nil
         or client.workspace_folders == nil
@@ -104,8 +137,7 @@ local function check_watcher()
     return
   end
 
-  local watchfunc = vim.lsp._watchfiles._watchfunc
-  assert(watchfunc)
+  local watchfunc = assert(vim.lsp._watchfiles._watchfunc)
   local watchfunc_name --- @type string
   if watchfunc == vim._watch.watch then
     watchfunc_name = 'libuv-watch'
@@ -183,6 +215,8 @@ end
 local function check_enabled_configs()
   vim.health.start('vim.lsp: Enabled Configurations')
 
+  local known_filetypes = vim.filetype._get_known_filetypes()
+
   for name in vim.spairs(vim.lsp._enabled_configs) do
     local config = vim.lsp.config[name]
     local text = {} --- @type string[]
@@ -210,6 +244,18 @@ local function check_enabled_configs()
           report_warn(("'%s' is not executable. Configuration will not be used."):format(v[1]))
         end
 
+        if k == 'filetypes' and type(v) == 'table' then
+          for _, filetype in
+            ipairs(v --[[@as string[] ]])
+          do
+            if not known_filetypes[filetype] then
+              report_warn(
+                ("Unknown filetype '%s' (Hint: filename extension != filetype)."):format(filetype)
+              )
+            end
+          end
+        end
+
         if v_str then
           text[#text + 1] = ('- %s: %s'):format(k, v_str)
         end
@@ -223,6 +269,7 @@ end
 --- Performs a healthcheck for LSP
 function M.check()
   check_log()
+  check_active_features()
   check_active_clients()
   check_enabled_configs()
   check_watcher()

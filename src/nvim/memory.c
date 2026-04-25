@@ -54,9 +54,7 @@ MemCalloc mem_calloc = &calloc;
 MemRealloc mem_realloc = &realloc;
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memory.c.generated.h"
-#endif
+#include "memory.c.generated.h"
 
 #ifdef EXITFREE
 bool entered_free_all_mem = false;
@@ -275,8 +273,8 @@ size_t xstrnlen(const char *s, size_t n)
 char *xstrchrnul(const char *str, char c)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  char *p = strchr(str, c);
-  return p ? p : (char *)(str + strlen(str));
+  const char *p = strchr(str, c);
+  return p ? (char *)p : (char *)(str + strlen(str));
 }
 
 /// A version of memchr() that returns a pointer one past the end
@@ -290,8 +288,8 @@ char *xstrchrnul(const char *str, char c)
 void *xmemscan(const void *addr, char c, size_t size)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  char *p = memchr(addr, c, size);
-  return p ? p : (char *)addr + size;
+  const char *p = memchr(addr, c, size);
+  return p ? (char *)p : (char *)addr + size;
 }
 
 /// Replaces every instance of `c` with `x`.
@@ -526,7 +524,7 @@ char *xstrndup(const char *str, size_t len)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
   FUNC_ATTR_NONNULL_ALL
 {
-  char *p = memchr(str, NUL, len);
+  const char *p = memchr(str, NUL, len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);
 }
 
@@ -815,13 +813,20 @@ char *arena_allocz(Arena *arena, size_t size)
 }
 
 char *arena_memdupz(Arena *arena, const char *buf, size_t size)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   char *mem = arena_allocz(arena, size);
   memcpy(mem, buf, size);
   return mem;
 }
 
-#if defined(EXITFREE)
+char *arena_strdup(Arena *arena, const char *str)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  return arena_memdupz(arena, str, strlen(str));
+}
+
+#ifdef EXITFREE
 
 # include "nvim/autocmd.h"
 # include "nvim/buffer.h"
@@ -835,11 +840,11 @@ char *arena_memdupz(Arena *arena, const char *buf, size_t size)
 # include "nvim/grid.h"
 # include "nvim/mark.h"
 # include "nvim/msgpack_rpc/channel.h"
-# include "nvim/ops.h"
 # include "nvim/option.h"
 # include "nvim/os/os.h"
 # include "nvim/quickfix.h"
 # include "nvim/regexp.h"
+# include "nvim/register.h"
 # include "nvim/search.h"
 # include "nvim/spell.h"
 # include "nvim/tag.h"
@@ -865,7 +870,7 @@ void free_all_mem(void)
 
   // Close all tabs and windows.  Reset 'equalalways' to avoid redraws.
   p_ea = false;
-  if (first_tabpage->tp_next != NULL) {
+  if (first_tabpage != NULL && first_tabpage->tp_next != NULL) {
     do_cmdline_cmd("tabonly!");
   }
 
@@ -875,18 +880,20 @@ void free_all_mem(void)
   // Clear user commands (before deleting buffers).
   ex_comclear(NULL);
 
-  // Clear menus.
-  do_cmdline_cmd("aunmenu *");
-  do_cmdline_cmd("tlunmenu *");
-  do_cmdline_cmd("menutranslate clear");
+  if (curbuf != NULL) {
+    // Clear menus.
+    do_cmdline_cmd("aunmenu *");
+    do_cmdline_cmd("tlunmenu *");
+    do_cmdline_cmd("menutranslate clear");
 
-  // Clear mappings, abbreviations, breakpoints.
-  // NB: curbuf not used with local=false arg
-  map_clear_mode(curbuf, MAP_ALL_MODES, false, false);
-  map_clear_mode(curbuf, MAP_ALL_MODES, false, true);
-  do_cmdline_cmd("breakdel *");
-  do_cmdline_cmd("profdel *");
-  do_cmdline_cmd("set keymap=");
+    // Clear mappings, abbreviations, breakpoints.
+    // NB: curbuf not used with local=false arg
+    map_clear_mode(curbuf, MAP_ALL_MODES, false, false);
+    map_clear_mode(curbuf, MAP_ALL_MODES, false, true);
+    do_cmdline_cmd("breakdel *");
+    do_cmdline_cmd("profdel *");
+    do_cmdline_cmd("set keymap=");
+  }
 
   free_titles();
   free_findfile();
@@ -907,7 +914,9 @@ void free_all_mem(void)
   free_cd_dir();
   free_signs();
   set_expr_line(NULL);
-  diff_clear(curtab);
+  if (curtab != NULL) {
+    diff_clear(curtab);
+  }
   clear_sb_text(true);            // free any scrollback text
 
   // Free some global vars.
@@ -924,8 +933,10 @@ void free_all_mem(void)
   // Close all script inputs.
   close_all_scripts();
 
-  // Destroy all windows.  Must come before freeing buffers.
-  win_free_all();
+  if (curwin != NULL) {
+    // Destroy all windows.  Must come before freeing buffers.
+    win_free_all();
+  }
 
   // Free all option values.  Must come after closing windows.
   free_all_options();
@@ -939,12 +950,14 @@ void free_all_mem(void)
     bufref_T bufref;
     set_bufref(&bufref, buf);
     nextbuf = buf->b_next;
+    // All windows were freed.  Reset b_nwindows so buffers can be wiped.
+    buf->b_nwindows = 0;
 
     // Since options (in addition to other stuff) have been freed above we need to ensure no
     // callbacks are called, so free them before closing the buffer.
     buf_free_callbacks(buf);
 
-    close_buffer(NULL, buf, DOBUF_WIPE, false, false);
+    close_buffer(NULL, buf, DOBUF_WIPE, false, false, false);
     // Didn't work, try next one.
     buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
   }
@@ -959,8 +972,10 @@ void free_all_mem(void)
 
   reset_last_sourcing();
 
-  free_tabpage(first_tabpage);
-  first_tabpage = NULL;
+  if (first_tabpage != NULL) {
+    free_tabpage(first_tabpage);
+    first_tabpage = NULL;
+  }
 
   // message history
   msg_hist_clear(0);
@@ -995,6 +1010,7 @@ void free_all_mem(void)
   ui_comp_free_all_mem();
   nlua_free_all_mem();
   rpc_free_all_mem();
+  autocmd_free_all_mem();
 
   // should be last, in case earlier free functions deallocates arenas
   arena_free_reuse_blks();

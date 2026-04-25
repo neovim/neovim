@@ -6,10 +6,11 @@ local clear, source = n.clear, n.source
 local api = n.api
 local insert = n.insert
 local eq, next_msg = t.eq, n.next_msg
-local exc_exec = n.exc_exec
+local matches = t.matches
 local exec_lua = n.exec_lua
 local command = n.command
 local eval = n.eval
+local pcall_err = t.pcall_err
 
 describe('Vimscript dictionary notifications', function()
   local channel
@@ -319,7 +320,7 @@ describe('Vimscript dictionary notifications', function()
     ]])
     eq(
       'Vim(call):E46: Cannot change read-only variable "dictwatcheradd() argument"',
-      exc_exec('call dictwatcheradd(v:_null_dict, "x", "g:Watcher1")')
+      pcall_err(command, 'call dictwatcheradd(v:_null_dict, "x", "g:Watcher1")')
     )
   end)
 
@@ -339,14 +340,14 @@ describe('Vimscript dictionary notifications', function()
     it('fails to remove if no watcher with matching callback is found', function()
       eq(
         "Vim(call):Couldn't find a watcher matching key and callback",
-        exc_exec('call dictwatcherdel(g:, "key", "g:Watcher1")')
+        pcall_err(command, 'call dictwatcherdel(g:, "key", "g:Watcher1")')
       )
     end)
 
     it('fails to remove if no watcher with matching key is found', function()
       eq(
         "Vim(call):Couldn't find a watcher matching key and callback",
-        exc_exec('call dictwatcherdel(g:, "invalid_key", "g:Watcher2")')
+        pcall_err(command, 'call dictwatcherdel(g:, "invalid_key", "g:Watcher2")')
       )
     end)
 
@@ -358,16 +359,16 @@ describe('Vimscript dictionary notifications', function()
     it('fails to remove watcher from v:_null_dict', function()
       eq(
         "Vim(call):Couldn't find a watcher matching key and callback",
-        exc_exec('call dictwatcherdel(v:_null_dict, "x", "g:Watcher2")')
+        pcall_err(command, 'call dictwatcherdel(v:_null_dict, "x", "g:Watcher2")')
       )
     end)
 
     --[[
        [ it("fails to add/remove if the callback doesn't exist", function()
        [   eq("Vim(call):Function g:InvalidCb doesn't exist",
-       [     exc_exec('call dictwatcheradd(g:, "key", "g:InvalidCb")'))
+       [     pcall_err(command, 'call dictwatcheradd(g:, "key", "g:InvalidCb")'))
        [   eq("Vim(call):Function g:InvalidCb doesn't exist",
-       [     exc_exec('call dictwatcherdel(g:, "key", "g:InvalidCb")'))
+       [     pcall_err(command, 'call dictwatcherdel(g:, "key", "g:InvalidCb")'))
        [ end)
        ]]
 
@@ -428,6 +429,18 @@ describe('Vimscript dictionary notifications', function()
     command([[call dictwatcherdel(b:, 'changedtick', 'OnTickChanged')]])
     insert('t')
     assert_alive()
+
+    command([[call dictwatcheradd(b:, 'changedtick', {-> execute('bwipe!')})]])
+    insert('t')
+    eq('E937: Attempt to delete a buffer that is in use: [No Name]', api.nvim_get_vvar('errmsg'))
+    assert_alive()
+
+    command([[enew | set modified | call dictwatcheradd(b:, 'changedtick', {-> execute('split')})]])
+    -- Used to instead leave a window open to a NULL buffer.
+    matches(
+      'E565: Not allowed to change text or change window: split$',
+      pcall_err(command, 'bdelete!')
+    )
   end)
 
   it('does not cause use-after-free when unletting from callback', function()
@@ -517,5 +530,52 @@ describe('Vimscript dictionary notifications', function()
     ]])
     eq(123, eval('g:d.foo'))
     eq({ 'W1', 'W2', 'W2', 'W1' }, eval('g:calls'))
+  end)
+end)
+describe('tabpagebuflist() with dict watcher during buffer close/wipe', function()
+  before_each(function()
+    clear()
+  end)
+
+  it(
+    'does not segfault when called from dict watcher on b:changedtick (bufhidden=unload)',
+    function()
+      command([[
+    new
+    set bufhidden=unload
+    call dictwatcheradd(b:, 'changedtick', {-> tabpagebuflist()})
+    close
+    ]])
+
+      assert_alive()
+    end
+  )
+
+  it('does not segfault when wiping buffer with dict watcher', function()
+    command([[
+    new
+    call setline(1, 'test')
+    call dictwatcheradd(b:, 'changedtick', {-> tabpagebuflist()})
+    bwipeout!
+    ]])
+
+    assert_alive()
+  end)
+
+  it('does not segfault with multiple windows in the tabpage', function()
+    command([[
+    " create two windows in the current tab
+    edit foo
+    vnew
+    call setline(1, 'bar')
+
+    " attach watcher to the current buffer in the split
+    call dictwatcheradd(b:, 'changedtick', {-> tabpagebuflist()})
+
+    " close the split window (triggers close_buffer on this buffer)
+    close
+    ]])
+
+    assert_alive()
   end)
 end)

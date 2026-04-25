@@ -6,14 +6,13 @@ local eq = t.eq
 local command = n.command
 local api = n.api
 local eval = n.eval
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local fn = n.fn
 local NIL = vim.NIL
 local source = n.source
 
 describe('string() function', function()
-  before_each(clear)
+  setup(clear)
 
   describe('used to represent floating-point values', function()
     it('dumps NaN values', function()
@@ -103,7 +102,7 @@ describe('string() function', function()
   end)
 
   describe('used to represent funcrefs', function()
-    before_each(function()
+    setup(function()
       source([[
         function Test1()
         endfunction
@@ -192,7 +191,7 @@ describe('string() function', function()
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
-      -- test/unit/api/private_t_spec.lua.
+      -- test/unit/api/private_helpers_spec.lua.
       eval('add(l, function("Test1", l))')
       eq(
         [=[Vim(echo):E724: unable to correctly dump variable with self-referencing container]=],
@@ -237,7 +236,7 @@ describe('string() function', function()
       eval('add(l, l)')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
-        exc_exec('echo string(l)')
+        pcall_err(command, 'echo string(l)')
       )
     end)
 
@@ -276,7 +275,7 @@ describe('string() function', function()
       eval('extend(d, {"d": d})')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
-        exc_exec('echo string(d)')
+        pcall_err(command, 'echo string(d)')
       )
     end)
 

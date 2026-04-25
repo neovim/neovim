@@ -163,6 +163,11 @@ describe('ui mode_change event', function()
     local matchtime = 0
     command('set showmatch')
     retry(nil, nil, function()
+      if matchtime > 0 then
+        feed([[<c-\><c-n>]])
+        command("call setline(1, 'word')")
+      end
+
       matchtime = matchtime + 1
       local screen_timeout = 1000 * matchtime -- fail faster for retry.
 

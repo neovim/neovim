@@ -4,9 +4,9 @@ local Screen = require('test.functional.ui.screen')
 local t_shada = require('test.functional.shada.testutil')
 
 local clear = n.clear
-local eq, api, nvim_eval, nvim_command, exc_exec, fn, nvim_feed =
-  t.eq, n.api, n.eval, n.command, n.exc_exec, n.fn, n.feed
+local eq, api, nvim_eval, nvim_command, fn, nvim_feed = t.eq, n.api, n.eval, n.command, n.fn, n.feed
 local neq = t.neq
+local pcall_err = t.pcall_err
 local read_file = t.read_file
 
 local get_shada_rw = t_shada.get_shada_rw
@@ -47,7 +47,7 @@ local wshada_tmp, _, fname_tmp = get_shada_rw('Xtest-functional-plugin-shada.sha
 
 describe('autoload/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
-  before_each(function()
+  setup(function()
     reset()
     nvim_command([[
     function ModifyVal(val)
@@ -92,25 +92,28 @@ describe('autoload/shada.vim', function()
         { type = 1, timestamp = 5, length = 1, data = 7 },
         { type = 1, timestamp = 10, length = 1, data = 5 },
       }, nvim_eval(mpack2sd('[1, 5, 1, 7, 1, 10, 1, 5]')))
-      eq(
-        'zero-uint:Entry 1 has type element which is zero',
-        exc_exec('call ' .. mpack2sd('[0, 5, 1, 7]'))
+      t.matches(
+        'zero%-uint:Entry 1 has type element which is zero',
+        pcall_err(nvim_command, 'call ' .. mpack2sd('[0, 5, 1, 7]'))
       )
-      eq(
-        'zero-uint:Entry 1 has type element which is zero',
-        exc_exec('call ' .. mpack2sd(('[%s, 5, 1, 7]'):format(sp('integer', '[1, 0, 0, 0]'))))
+      t.matches(
+        'zero%-uint:Entry 1 has type element which is zero',
+        pcall_err(
+          nvim_command,
+          'call ' .. mpack2sd(('[%s, 5, 1, 7]'):format(sp('integer', '[1, 0, 0, 0]')))
+        )
       )
-      eq(
-        'not-uint:Entry 1 has timestamp element which is not an unsigned integer',
-        exc_exec('call ' .. mpack2sd('[1, -1, 1, 7]'))
+      t.matches(
+        'not%-uint:Entry 1 has timestamp element which is not an unsigned integer',
+        pcall_err(nvim_command, 'call ' .. mpack2sd('[1, -1, 1, 7]'))
       )
-      eq(
-        'not-uint:Entry 1 has length element which is not an unsigned integer',
-        exc_exec('call ' .. mpack2sd('[1, 1, -1, 7]'))
+      t.matches(
+        'not%-uint:Entry 1 has length element which is not an unsigned integer',
+        pcall_err(nvim_command, 'call ' .. mpack2sd('[1, 1, -1, 7]'))
       )
-      eq(
-        'not-uint:Entry 1 has type element which is not an unsigned integer',
-        exc_exec('call ' .. mpack2sd('["", 1, -1, 7]'))
+      t.matches(
+        'not%-uint:Entry 1 has type element which is not an unsigned integer',
+        pcall_err(nvim_command, 'call ' .. mpack2sd('["", 1, -1, 7]'))
       )
     end)
   end)
@@ -2664,7 +2667,12 @@ describe('plugin/shada.vim', function()
     }, nvim_eval('getline(1, "$")'))
     eq(false, api.nvim_get_option_value('modified', {}))
     eq('shada', api.nvim_get_option_value('filetype', {}))
-    eq('++opt not supported', exc_exec('edit ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('edit ++enc=latin1 ' .. fname)
+      end)
+    )
     neq({
       'History entry with timestamp ' .. epoch .. ':',
       '  @ Description_  Value',
@@ -2707,7 +2715,12 @@ describe('plugin/shada.vim', function()
     eq(true, api.nvim_get_option_value('modified', {}))
     neq('shada', api.nvim_get_option_value('filetype', {}))
     api.nvim_set_option_value('modified', false, {})
-    eq('++opt not supported', exc_exec('$read ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('$read ++enc=latin1 ' .. fname)
+      end)
+    )
     eq({
       '',
       'History entry with timestamp ' .. epoch .. ':',
@@ -2744,7 +2757,12 @@ describe('plugin/shada.vim', function()
     nvim_command('w ' .. fname .. '.tst')
     nvim_command('w ' .. fname)
     nvim_command('w ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('w! ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('w! ++enc=latin1 ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
@@ -2805,7 +2823,12 @@ describe('plugin/shada.vim', function()
     nvim_command('1,3w ' .. fname .. '.tst')
     nvim_command('1,3w ' .. fname)
     nvim_command('1,3w ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('1,3w! ++enc=latin1 ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
@@ -2855,7 +2878,12 @@ describe('plugin/shada.vim', function()
     nvim_command('w >> ' .. fname .. '.tst')
     nvim_command('w >> ' .. fname)
     nvim_command('w >> ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 >> ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('1,3w! ++enc=latin1 >> ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
@@ -2916,8 +2944,8 @@ describe('plugin/shada.vim', function()
     end)
     wshada('\004\000\006\146\000\196\002ab')
     wshada_tmp('\004\001\006\146\000\196\002bc')
-    eq(0, exc_exec('source ' .. fname))
-    eq(0, exc_exec('source ' .. fname_tmp))
+    nvim_command('source ' .. fname)
+    nvim_command('source ' .. fname_tmp)
     eq('bc', fn.histget(':', -1))
     eq('ab', fn.histget(':', -2))
   end)
@@ -3165,9 +3193,9 @@ describe('syntax/shada.vim', function()
       return { { 'ShaDaEntryHeader', 'ShaDaEntryTimestamp' }, s }
     end
     local synepoch = {
-      year = htsnum(os.date('%Y', 0)),
-      month = htsnum(os.date('%m', 0)),
-      day = htsnum(os.date('%d', 0)),
+      year = htsnum(os.date('!%Y', 0)),
+      month = htsnum(os.date('!%m', 0)),
+      day = htsnum(os.date('!%d', 0)),
       hour = htsnum(os.date('!%H', 0)),
       minute = htsnum(os.date('!%M', 0)),
       second = htsnum(os.date('!%S', 0)),

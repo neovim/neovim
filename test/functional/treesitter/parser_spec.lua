@@ -7,7 +7,6 @@ local dedent = t.dedent
 local eq = t.eq
 local insert = n.insert
 local exec_lua = n.exec_lua
-local pcall_err = t.pcall_err
 local feed = n.feed
 local run_query = ts_t.run_query
 local assert_alive = n.assert_alive
@@ -89,6 +88,77 @@ describe('treesitter parser API', function()
 
     -- unchanged buffer: return the same tree
     eq(true, exec_lua('return parser:parse()[1] == tree2'))
+  end)
+
+  it('preserves full-document included ranges', function()
+    insert([[
+      local _ = 1
+    ]])
+
+    eq(
+      {
+        { 0, 0, 0, 4294967295, 4294967295, 4294967295 },
+      },
+      exec_lua(function()
+        local parser = vim.treesitter.get_parser(0, 'lua')
+        local tree = parser:parse()[1]
+        return tree:included_ranges(true)
+      end)
+    )
+  end)
+
+  it('respects eol settings when parsing buffer', function()
+    insert([[
+      int main() {
+        int x = 3;
+      } // :D]])
+
+    exec_lua(function()
+      vim.bo.eol = false
+      vim.bo.fixeol = false
+      _G.parser = vim.treesitter.get_parser(0, 'c')
+      _G.tree = _G.parser:parse()[1]
+      _G.root = _G.tree:root()
+      _G.lang = vim.treesitter.language.inspect('c')
+    end)
+
+    eq(
+      '<node translation_unit>',
+      exec_lua(function()
+        return tostring(_G.root)
+      end)
+    )
+    eq(
+      { 0, 0, 0, 2, 7, 33 },
+      exec_lua(function()
+        return { _G.root:range(true) }
+      end)
+    )
+
+    -- NOTE: Changing these settings marks the buffer as `modified` but does not fire `on_bytes`,
+    -- meaning this test case does not pass... is this intended?
+    -- exec_lua(function()
+    --   vim.bo.eol = true
+    --   vim.bo.fixeol = true
+    --   vim.cmd.update()
+    --   _G.parser = vim.treesitter.get_parser(0, 'c')
+    --   _G.tree = _G.parser:parse()[1]
+    --   _G.root = _G.tree:root()
+    --   _G.lang = vim.treesitter.language.inspect('c')
+    -- end)
+    --
+    -- eq(
+    --   '<node translation_unit>',
+    --   exec_lua(function()
+    --     return tostring(root)
+    --   end)
+    -- )
+    -- eq(
+    --   { 0, 0, 0, 3, 0, 34 },
+    --   exec_lua(function()
+    --     return { root:range(true) }
+    --   end)
+    -- )
   end)
 
   it('parses buffer asynchronously', function()
@@ -283,25 +353,25 @@ describe('treesitter parser API', function()
   end)
 
   local test_text = [[
-void ui_refresh(void)
-{
-  int width = INT_MAX, height = INT_MAX;
-  bool ext_widgets[kUIExtCount];
-  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
-    ext_widgets[i] = true;
-  }
+    void ui_refresh(void)
+    {
+      int width = INT_MAX, height = INT_MAX;
+      bool ext_widgets[kUIExtCount];
+      for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
+        ext_widgets[i] = true;
+      }
 
-  bool inclusive = ui_override();
-  for (size_t i = 0; i < ui_count; i++) {
-    UI *ui = uis[i];
-    width = MIN(ui->width, width);
-    height = MIN(ui->height, height);
-    foo = BAR(ui->bazaar, bazaar);
-    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
-      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);
-    }
-  }
-}]]
+      bool inclusive = ui_override();
+      for (size_t i = 0; i < ui_count; i++) {
+        UI *ui = uis[i];
+        width = MIN(ui->width, width);
+        height = MIN(ui->height, height);
+        foo = BAR(ui->bazaar, bazaar);
+        for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
+          ext_widgets[j] &= (ui->ui_ext[j] || inclusive);
+        }
+      }
+    }]]
 
   it('can iterate over nodes children', function()
     insert(test_text)
@@ -328,10 +398,11 @@ void ui_refresh(void)
   it('does not get parser for empty filetype', function()
     insert(test_text)
 
-    eq(
-      '.../treesitter.lua:0: Parser not found for buffer 1: language could not be determined',
-      pcall_err(exec_lua, 'vim.treesitter.get_parser(0)')
-    )
+    local parser, error = exec_lua(function()
+      return vim.treesitter.get_parser(0)
+    end)
+    eq(vim.NIL, parser)
+    eq('Parser not found for buffer 1: language could not be determined', error)
 
     -- Must provide language for buffers with an empty filetype
     exec_lua("vim.treesitter.get_parser(0, 'c')")
@@ -370,7 +441,7 @@ void ui_refresh(void)
       local tree = parser:parse()[1]
       return vim.treesitter.get_node_text(tree:root(), 0)
     end)
-    eq(test_text, res)
+    eq(t.dedent(test_text), res)
 
     local res2 = exec_lua(function()
       local parser = vim.treesitter.get_parser(0, 'c')
@@ -382,9 +453,9 @@ void ui_refresh(void)
 
   it('can get text where start of node is one past EOF', function()
     local text = [[
-def run
-  a = <<~E
-end]]
+      def run
+        a = <<~E
+      end]]
     insert(text)
     eq(
       '',
@@ -409,9 +480,10 @@ end]]
 
   it('can get empty text if node range is zero-width', function()
     local text = [[
-```lua
-{}
-```]]
+      ```lua
+      {}
+      ```
+    ]]
     insert(text)
     local result = exec_lua(function()
       local fake_node = {}
@@ -548,12 +620,12 @@ end]]
 
     before_each(function()
       insert([[
-int x = INT_MAX;
-#define READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-#define READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
-#define VALUE 123
-#define VALUE1 123
-#define VALUE2 123
+        int x = INT_MAX;
+        #define READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+        #define READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
+        #define VALUE 123
+        #define VALUE1 123
+        #define VALUE2 123
       ]])
     end)
 
@@ -884,6 +956,23 @@ int x = INT_MAX;
         eq({ 'gsub!', 'offset!', 'set!', 'trim!' }, res_list)
       end)
     end)
+
+    it('normalizes hyphens to underscores in injection.language', function()
+      exec_lua(function()
+        -- register "c" as the parser for "shell_session" (normalized form of "shell-session")
+        vim.treesitter.language.register('c', 'shell_session')
+        _G.parser = vim.treesitter.get_parser(0, 'c', {
+          injections = {
+            c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "shell-session"))',
+          },
+        })
+        _G.parser:parse(true)
+      end)
+
+      -- injection.language "shell-session" should normalize to "shell_session",
+      -- which resolves via the registered alias to the "c" parser
+      eq('table', exec_lua('return type(parser:children().c)'))
+    end)
   end)
 
   it('clips nested injections #34098', function()
@@ -918,8 +1007,8 @@ int x = INT_MAX;
   describe('when getting the language for a range', function()
     before_each(function()
       insert([[
-int x = INT_MAX;
-#define VALUE 123456789
+        int x = INT_MAX;
+        #define VALUE 123456789
       ]])
     end)
 
@@ -944,7 +1033,7 @@ int x = INT_MAX;
   describe('when setting the node for an injection', function()
     before_each(function()
       insert([[
-print()
+        print()
       ]])
     end)
 

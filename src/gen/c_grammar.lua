@@ -50,11 +50,15 @@
 --- @class nvim.c_grammar.Empty
 --- @field [1] 'empty'
 
+--- @class nvim.c_grammar.Comment
+--- @field comment string
+
 --- @alias nvim.c_grammar.result
 --- | nvim.c_grammar.Proto
 --- | nvim.c_grammar.Preproc
 --- | nvim.c_grammar.Empty
 --- | nvim.c_grammar.Keyset
+--- | nvim.c_grammar.Comment
 
 --- @class nvim.c_grammar
 --- @field match fun(self, input: string): nvim.c_grammar.result[]
@@ -160,6 +164,8 @@ local typed_container = P({
         )
     + Cg(opt(P('*')) * P('Dict')) * paren(C(id))
     + Cg(opt(P('*')) * P('DictAs')) * paren(C(id))
+    + Cg(opt(P('*')) * P('Set')) * paren(C(id))
+    + Cg(opt(P('*')) * P('PMap')) * paren(C(id))
   ),
   -- Remove captures here (with / 0 ) as api_types will recursively run parse the type.
   TY = Cg(V('S') / 0 + V('ID')),

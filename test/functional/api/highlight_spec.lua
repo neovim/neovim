@@ -1,9 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
-local Screen = require('test.functional.ui.screen')
 
-local clear = n.clear
-local eq, eval = t.eq, n.eval
+local clear, eq, neq = n.clear, t.eq, t.neq
 local command = n.command
 local exec_capture = n.exec_capture
 local api = n.api
@@ -11,172 +9,6 @@ local fn = n.fn
 local pcall_err = t.pcall_err
 local ok = t.ok
 local assert_alive = n.assert_alive
-
-describe('API: highlight', function()
-  clear()
-  Screen.new() -- initialize Screen.colors
-
-  local expected_rgb = {
-    background = Screen.colors.Yellow,
-    foreground = Screen.colors.Red,
-    special = Screen.colors.Blue,
-    bold = true,
-  }
-  local expected_cterm = {
-    background = 10,
-    underline = true,
-  }
-  local expected_rgb2 = {
-    background = Screen.colors.Yellow,
-    foreground = Screen.colors.Red,
-    special = Screen.colors.Blue,
-    bold = true,
-    italic = true,
-    reverse = true,
-    underline = true,
-    strikethrough = true,
-    altfont = true,
-    nocombine = true,
-  }
-  local expected_undercurl = {
-    background = Screen.colors.Yellow,
-    foreground = Screen.colors.Red,
-    special = Screen.colors.Blue,
-    undercurl = true,
-  }
-
-  before_each(function()
-    clear()
-    command(
-      'hi NewHighlight cterm=underline ctermbg=green guifg=red guibg=yellow guisp=blue gui=bold'
-    )
-  end)
-
-  it('nvim_get_hl_by_id', function()
-    local hl_id = eval("hlID('NewHighlight')")
-    eq(expected_cterm, api.nvim_get_hl_by_id(hl_id, false))
-
-    hl_id = eval("hlID('NewHighlight')")
-    -- Test valid id.
-    eq(expected_rgb, api.nvim_get_hl_by_id(hl_id, true))
-
-    -- Test invalid id.
-    eq('Invalid highlight id: 30000', pcall_err(api.nvim_get_hl_by_id, 30000, false))
-
-    -- Test all highlight properties.
-    command('hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,altfont,nocombine')
-    eq(expected_rgb2, api.nvim_get_hl_by_id(hl_id, true))
-
-    -- Test undercurl
-    command('hi NewHighlight gui=undercurl')
-    eq(expected_undercurl, api.nvim_get_hl_by_id(hl_id, true))
-
-    -- Test nil argument.
-    eq(
-      'Wrong type for argument 1 when calling nvim_get_hl_by_id, expecting Integer',
-      pcall_err(api.nvim_get_hl_by_id, { nil }, false)
-    )
-
-    -- Test 0 argument.
-    eq('Invalid highlight id: 0', pcall_err(api.nvim_get_hl_by_id, 0, false))
-
-    -- Test -1 argument.
-    eq('Invalid highlight id: -1', pcall_err(api.nvim_get_hl_by_id, -1, false))
-
-    -- Test highlight group without ctermbg value.
-    command('hi Normal ctermfg=red ctermbg=yellow')
-    command('hi NewConstant ctermfg=green guifg=white guibg=blue')
-    hl_id = eval("hlID('NewConstant')")
-    eq({ foreground = 10 }, api.nvim_get_hl_by_id(hl_id, false))
-
-    -- Test highlight group without ctermfg value.
-    command('hi clear NewConstant')
-    command('hi NewConstant ctermbg=Magenta guifg=white guibg=blue')
-    eq({ background = 13 }, api.nvim_get_hl_by_id(hl_id, false))
-
-    -- Test highlight group with ctermfg and ctermbg values.
-    command('hi clear NewConstant')
-    command('hi NewConstant ctermfg=green ctermbg=Magenta guifg=white guibg=blue')
-    eq({ foreground = 10, background = 13 }, api.nvim_get_hl_by_id(hl_id, false))
-  end)
-
-  it('nvim_get_hl_by_name', function()
-    local expected_normal = { background = Screen.colors.Yellow, foreground = Screen.colors.Red }
-
-    -- Test `Normal` default values.
-    eq({}, api.nvim_get_hl_by_name('Normal', true))
-
-    eq(expected_cterm, api.nvim_get_hl_by_name('NewHighlight', false))
-    eq(expected_rgb, api.nvim_get_hl_by_name('NewHighlight', true))
-
-    -- Test `Normal` modified values.
-    command('hi Normal guifg=red guibg=yellow')
-    eq(expected_normal, api.nvim_get_hl_by_name('Normal', true))
-
-    -- Test invalid name.
-    eq(
-      "Invalid highlight name: 'unknown_highlight'",
-      pcall_err(api.nvim_get_hl_by_name, 'unknown_highlight', false)
-    )
-
-    -- Test nil argument.
-    eq(
-      'Wrong type for argument 1 when calling nvim_get_hl_by_name, expecting String',
-      pcall_err(api.nvim_get_hl_by_name, { nil }, false)
-    )
-
-    -- Test empty string argument.
-    eq('Invalid highlight name', pcall_err(api.nvim_get_hl_by_name, '', false))
-
-    -- Test "standout" attribute. #8054
-    eq({ underline = true }, api.nvim_get_hl_by_name('cursorline', 0))
-    command('hi CursorLine cterm=standout,underline term=standout,underline gui=standout,underline')
-    command('set cursorline')
-    eq({ underline = true, standout = true }, api.nvim_get_hl_by_name('cursorline', 0))
-
-    -- Test cterm & Normal values. #18024 (tail) & #18980
-    -- Ensure Normal, and groups that match Normal return their fg & bg cterm values
-    api.nvim_set_hl(0, 'Normal', { ctermfg = 17, ctermbg = 213 })
-    api.nvim_set_hl(0, 'NotNormal', { ctermfg = 17, ctermbg = 213, nocombine = true })
-    -- Note colors are "cterm" values, not rgb-as-ints
-    eq({ foreground = 17, background = 213 }, api.nvim_get_hl_by_name('Normal', false))
-    eq(
-      { foreground = 17, background = 213, nocombine = true },
-      api.nvim_get_hl_by_name('NotNormal', false)
-    )
-  end)
-
-  it('nvim_get_hl_id_by_name', function()
-    -- precondition: use a hl group that does not yet exist
-    eq("Invalid highlight name: 'Shrubbery'", pcall_err(api.nvim_get_hl_by_name, 'Shrubbery', true))
-    eq(0, fn.hlID('Shrubbery'))
-
-    local hl_id = api.nvim_get_hl_id_by_name('Shrubbery')
-    ok(hl_id > 0)
-    eq(hl_id, fn.hlID('Shrubbery'))
-
-    command('hi Shrubbery guifg=#888888 guibg=#888888')
-    eq(
-      { foreground = tonumber('0x888888'), background = tonumber('0x888888') },
-      api.nvim_get_hl_by_id(hl_id, true)
-    )
-    eq(
-      { foreground = tonumber('0x888888'), background = tonumber('0x888888') },
-      api.nvim_get_hl_by_name('Shrubbery', true)
-    )
-  end)
-
-  it("nvim_buf_add_highlight to other buffer doesn't crash if undo is disabled #12873", function()
-    command('vsplit file')
-    local err, _ = pcall(api.nvim_set_option_value, 'undofile', false, { buf = 1 })
-    eq(true, err)
-    err, _ = pcall(api.nvim_set_option_value, 'undolevels', -1, { buf = 1 })
-    eq(true, err)
-    err, _ = pcall(api.nvim_buf_add_highlight, 1, -1, 'Question', 0, 0, -1)
-    eq(true, err)
-    assert_alive()
-  end)
-end)
 
 describe('API: set highlight', function()
   local highlight_color = {
@@ -186,8 +18,8 @@ describe('API: set highlight', function()
     ctermbg = 15,
   }
   local highlight1 = {
-    background = highlight_color.bg,
-    foreground = highlight_color.fg,
+    bg = highlight_color.bg,
+    fg = highlight_color.fg,
     bold = true,
     italic = true,
   }
@@ -198,14 +30,14 @@ describe('API: set highlight', function()
     reverse = true,
   }
   local highlight2_result = {
-    background = highlight_color.ctermbg,
-    foreground = highlight_color.ctermfg,
+    ctermbg = highlight_color.ctermbg,
+    ctermfg = highlight_color.ctermfg,
     underline = true,
     reverse = true,
   }
   local highlight3_config = {
-    background = highlight_color.bg,
-    foreground = highlight_color.fg,
+    bg = highlight_color.bg,
+    fg = highlight_color.fg,
     ctermbg = highlight_color.ctermbg,
     ctermfg = highlight_color.ctermfg,
     bold = true,
@@ -214,31 +46,47 @@ describe('API: set highlight', function()
     underdashed = true,
     strikethrough = true,
     altfont = true,
+    dim = true,
+    blink = true,
+    conceal = true,
+    overline = true,
     cterm = {
       italic = true,
       reverse = true,
       strikethrough = true,
       altfont = true,
+      dim = true,
+      blink = true,
+      conceal = true,
+      overline = true,
       nocombine = true,
     },
   }
   local highlight3_result_gui = {
-    background = highlight_color.bg,
-    foreground = highlight_color.fg,
+    bg = highlight_color.bg,
+    fg = highlight_color.fg,
     bold = true,
     italic = true,
     reverse = true,
     underdashed = true,
     strikethrough = true,
     altfont = true,
+    dim = true,
+    blink = true,
+    conceal = true,
+    overline = true,
   }
   local highlight3_result_cterm = {
-    background = highlight_color.ctermbg,
-    foreground = highlight_color.ctermfg,
+    ctermbg = highlight_color.ctermbg,
+    ctermfg = highlight_color.ctermfg,
     italic = true,
     reverse = true,
     strikethrough = true,
     altfont = true,
+    dim = true,
+    blink = true,
+    conceal = true,
+    overline = true,
     nocombine = true,
   }
 
@@ -246,6 +94,15 @@ describe('API: set highlight', function()
     local ns = api.nvim_create_namespace('Test_set_hl')
     api.nvim_set_hl_ns(ns)
     return ns
+  end
+
+  ---@param expect table<string, any>
+  ---@param result table<string, any>
+  ---@param cterm? boolean
+  local function match(expect, result, cterm)
+    for k, v in pairs(expect) do
+      eq(v, cterm and result.cterm[k] or result[k])
+    end
   end
 
   before_each(clear)
@@ -259,40 +116,43 @@ describe('API: set highlight', function()
       "Invalid 'blend': expected Integer, got Array",
       pcall_err(api.nvim_set_hl, 0, 'Test_hl3', { fg = '#FF00FF', blend = {} })
     )
+    -- 'url' is rejected. #38162
+    eq("Invalid key: 'url'", pcall_err(api.nvim_set_hl, 0, 'Test', { url = 'https://example.com' }))
+    assert_alive()
   end)
 
   it('can set gui highlight', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', highlight1)
-    eq(highlight1, api.nvim_get_hl_by_name('Test_hl', true))
+    match(highlight1, api.nvim_get_hl(ns, { name = 'Test_hl' }))
   end)
 
   it('can set cterm highlight', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', highlight2_config)
-    eq(highlight2_result, api.nvim_get_hl_by_name('Test_hl', false))
+    match(highlight2_result, api.nvim_get_hl(ns, { name = 'Test_hl' }))
   end)
 
   it('can set empty cterm attr', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', { cterm = {} })
-    eq({}, api.nvim_get_hl_by_name('Test_hl', false))
+    eq({}, api.nvim_get_hl(ns, { name = 'Test_hl' }))
   end)
 
   it('cterm attr defaults to gui attr', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', highlight1)
-    eq({
+    match({
       bold = true,
       italic = true,
-    }, api.nvim_get_hl_by_name('Test_hl', false))
+    }, api.nvim_get_hl(ns, { name = 'Test_hl' }))
   end)
 
-  it('can overwrite attr for cterm', function()
+  it('can overwrite attr for cterm #test', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', highlight3_config)
-    eq(highlight3_result_gui, api.nvim_get_hl_by_name('Test_hl', true))
-    eq(highlight3_result_cterm, api.nvim_get_hl_by_name('Test_hl', false))
+    match(highlight3_result_gui, api.nvim_get_hl(ns, { name = 'Test_hl' }))
+    match(highlight3_result_cterm, api.nvim_get_hl(ns, { name = 'Test_hl' }), true)
   end)
 
   it('only allows one underline attribute #22371', function()
@@ -305,8 +165,9 @@ describe('API: set highlight', function()
         undercurl = true,
       },
     })
-    eq({ undercurl = true }, api.nvim_get_hl_by_name('Test_hl', false))
-    eq({ underdotted = true }, api.nvim_get_hl_by_name('Test_hl', true))
+    local result = api.nvim_get_hl(ns, { name = 'Test_hl' })
+    match({ undercurl = true }, result, true)
+    match({ underdotted = true }, result)
   end)
 
   it('can set all underline cterm attributes #31385', function()
@@ -314,7 +175,7 @@ describe('API: set highlight', function()
     local attrs = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
     for _, attr in ipairs(attrs) do
       api.nvim_set_hl(ns, 'Test_' .. attr, { cterm = { [attr] = true } })
-      eq({ [attr] = true }, api.nvim_get_hl_by_name('Test_' .. attr, false))
+      match({ [attr] = true }, api.nvim_get_hl(ns, { name = 'Test_' .. attr }), true)
     end
   end)
 
@@ -330,7 +191,7 @@ describe('API: set highlight', function()
 
     api.nvim_set_hl(0, 'Test_hl2', highlight3_config)
     eq(
-      'Test_hl2       xxx cterm=italic,reverse,strikethrough,altfont,nocombine ctermfg=8 ctermbg=15 gui=bold,underdashed,italic,reverse,strikethrough,altfont guifg=#ff0000 guibg=#0032aa',
+      'Test_hl2       xxx cterm=italic,reverse,strikethrough,altfont,dim,blink,conceal,overline,nocombine ctermfg=8 ctermbg=15 gui=bold,underdashed,italic,reverse,strikethrough,altfont,dim,blink,conceal,overline guifg=#ff0000 guibg=#0032aa',
       exec_capture('highlight Test_hl2')
     )
 
@@ -386,15 +247,128 @@ describe('API: set highlight', function()
   it("correctly sets 'Normal' internal properties", function()
     -- Normal has some special handling internally. #18024
     api.nvim_set_hl(0, 'Normal', { fg = '#000083', bg = '#0000F3' })
-    eq({ foreground = 131, background = 243 }, api.nvim_get_hl_by_name('Normal', true))
+    eq({ fg = 131, bg = 243 }, api.nvim_get_hl(0, { name = 'Normal' }))
   end)
 
   it('does not segfault on invalid group name #20009', function()
     eq(
-      "Invalid highlight name: 'foo bar'",
+      'Vim:E5248: Invalid character in group name',
       pcall_err(api.nvim_set_hl, 0, 'foo bar', { bold = true })
     )
     assert_alive()
+  end)
+
+  it('can be silenced if there are too many groups #38930', function()
+    local n_groups = vim.tbl_count(api.nvim_get_hl(0, {}))
+    local has_fail = false
+    for i = n_groups + 1, 20000 do
+      local _, msg = pcall(api.nvim_set_hl, 0, 'New_' .. i, { fg = '#000000' })
+      local is_fail = type(msg) == 'string'
+        and msg:find('Too many highlight and syntax groups$') ~= nil
+      has_fail = has_fail or is_fail
+    end
+    eq('', exec_capture('messages'))
+    eq(true, has_fail)
+  end)
+
+  it('update=true sets only specified keys', function()
+    api.nvim_set_hl(0, 'TestGroup', { fg = '#ff0000', bg = '#0000ff', bold = true })
+    api.nvim_set_hl(0, 'TestGroup', { bg = '#00ff00', update = true })
+    local hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(tonumber('0xff0000'), hl.fg)
+    eq(tonumber('0x00ff00'), hl.bg)
+    eq(true, hl.bold)
+
+    api.nvim_set_hl(0, 'TestGroup', { bold = false, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(nil, hl.bold)
+    eq(tonumber('0xff0000'), hl.fg)
+
+    api.nvim_set_hl(0, 'TestGroup', { italic = true })
+
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(nil, hl.fg)
+    eq(nil, hl.bg)
+    eq(true, hl.italic)
+
+    local ns = api.nvim_create_namespace('test')
+    api.nvim_set_hl(ns, 'TestGroup', { fg = '#ff0000', italic = true })
+    api.nvim_set_hl(ns, 'TestGroup', { fg = '#00ff00', update = true })
+    hl = api.nvim_get_hl(ns, { name = 'TestGroup' })
+    eq(tonumber('0x00ff00'), hl.fg)
+    eq(true, hl.italic)
+
+    api.nvim_set_hl(0, 'NamedColor', { fg = 'red', bg = 'blue' })
+    api.nvim_set_hl(0, 'LinkedGroup', { link = 'NamedColor' })
+    api.nvim_set_hl(0, 'LinkedGroup', { bold = true, fg = 'green', update = true })
+    hl = api.nvim_get_hl(0, { name = 'LinkedGroup' })
+    eq(nil, hl.link)
+    eq(true, hl.bold)
+    eq(
+      'LinkedGroup    xxx cterm=bold gui=bold guifg=Green guibg=Blue',
+      n.exec_capture('hi LinkedGroup')
+    )
+    api.nvim_set_hl(0, 'LinkedGroup', { bg = '#121314', update = true })
+    eq(
+      'LinkedGroup    xxx cterm=bold gui=bold guifg=Green guibg=#121314',
+      n.exec_capture('hi LinkedGroup')
+    )
+
+    -- underline style flags: false must not corrupt other styles
+    local unders = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
+    for _, a in ipairs(unders) do
+      for _, b in ipairs(unders) do
+        if a ~= b then
+          api.nvim_set_hl(0, 'TestGroup', { [a] = true, [b] = false })
+          hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+          eq(true, hl[a])
+          eq(nil, hl[b])
+        end
+      end
+    end
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = true, fg = '#ff0000', bold = true })
+    api.nvim_set_hl(0, 'TestGroup', { fg = '#00ff00', update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdouble)
+    eq(true, hl.bold)
+    eq(65280, hl.fg)
+
+    api.nvim_set_hl(0, 'TestGroup', { underdashed = true, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdashed)
+    eq(nil, hl.underdouble)
+
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = true, bold = true })
+    api.nvim_set_hl(0, 'TestGroup', { underdashed = false, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(true, hl.underdouble)
+    api.nvim_set_hl(0, 'TestGroup', { underdouble = false, update = true })
+    hl = api.nvim_get_hl(0, { name = 'TestGroup' })
+    eq(nil, hl.underdouble)
+    eq(true, hl.bold)
+  end)
+
+  it('can set font', function()
+    local ns = api.nvim_create_namespace('test_font')
+    api.nvim_set_hl(ns, 'TestFont', { fg = '#ff0000', font = 'Courier New 10' })
+    local hl = api.nvim_get_hl(ns, { name = 'TestFont' })
+    eq('Courier New 10', hl.font)
+    eq(16711680, hl.fg)
+
+    api.nvim_set_hl(ns, 'TestFont', { font = 'Monaco' })
+    hl = api.nvim_get_hl(ns, { name = 'TestFont' })
+    eq('Monaco', hl.font)
+
+    -- Clear font with "NONE"
+    api.nvim_set_hl(ns, 'TestFont', { font = 'NONE' })
+    hl = api.nvim_get_hl(ns, { name = 'TestFont' })
+    eq(nil, hl.font)
+
+    -- global namespace
+    api.nvim_set_hl(0, 'TestFontGlobal', { bg = '#00ff00', font = 'JetBrains Mono' })
+    hl = api.nvim_get_hl(0, { name = 'TestFontGlobal' })
+    eq('JetBrains Mono', hl.font)
+    eq(65280, hl.bg)
   end)
 end)
 
@@ -430,11 +404,19 @@ describe('API: get highlight', function()
     underdashed = true,
     strikethrough = true,
     altfont = true,
+    dim = true,
+    blink = true,
+    conceal = true,
+    overline = true,
     cterm = {
       italic = true,
       reverse = true,
       strikethrough = true,
       altfont = true,
+      dim = true,
+      blink = true,
+      conceal = true,
+      overline = true,
       nocombine = true,
     },
   }
@@ -449,12 +431,20 @@ describe('API: get highlight', function()
     underdashed = true,
     strikethrough = true,
     altfont = true,
+    dim = true,
+    blink = true,
+    conceal = true,
+    overline = true,
     cterm = {
       italic = true,
       nocombine = true,
       reverse = true,
       strikethrough = true,
       altfont = true,
+      dim = true,
+      blink = true,
+      conceal = true,
+      overline = true,
     },
   }
 
@@ -596,15 +586,21 @@ describe('API: get highlight', function()
     )
 
     -- Test all highlight properties.
-    command('hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,altfont,nocombine')
+    command(
+      'hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,altfont,dim,blink,conceal,overline,nocombine'
+    )
     eq({
       fg = 16711680,
       bg = 16776960,
       sp = 255,
       altfont = true,
+      blink = true,
       bold = true,
+      conceal = true,
+      dim = true,
       italic = true,
       nocombine = true,
+      overline = true,
       reverse = true,
       strikethrough = true,
       underline = true,
@@ -648,6 +644,22 @@ describe('API: get highlight', function()
     local hl = { link = 'Bar', fg = tonumber('00ff00', 16), bold = true, cterm = { bold = true } }
     api.nvim_set_hl(0, 'Foo', hl)
     eq(hl, api.nvim_get_hl(0, { name = 'Foo', link = true }))
+  end)
+
+  it('link_global resolves in global namespace', function()
+    local ns = api.nvim_create_namespace('hl_test')
+    api.nvim_set_hl(0, 'GlTarget', { fg = '#ff0000' })
+    api.nvim_set_hl(ns, 'GlSource', { link_global = fn.hlID('GlTarget') })
+    eq({ link = 'GlTarget' }, api.nvim_get_hl(ns, { name = 'GlSource' }))
+
+    -- when both link and link_global are given, link_global wins
+    api.nvim_set_hl(0, 'OtherTarget', { fg = '#00ff00' })
+    api.nvim_set_hl(
+      ns,
+      'GlSource',
+      { link = fn.hlID('OtherTarget'), link_global = fn.hlID('GlTarget') }
+    )
+    eq({ link = 'GlTarget' }, api.nvim_get_hl(ns, { name = 'GlSource' }))
   end)
 
   it("doesn't contain unset groups", function()
@@ -703,9 +715,34 @@ describe('API: get highlight', function()
     api.nvim_set_hl(0, 'Bar', { link = 'Foo', default = true, force = true })
     eq({ link = 'Foo', default = true }, api.nvim_get_hl(0, { name = 'Bar' }))
   end)
+
+  it('round-trips fg_indexed/bg_indexed through nvim_get_hl', function()
+    api.nvim_set_hl(0, 'Test_idx', {
+      fg = '#cc0000',
+      bg = '#0000cc',
+      ctermfg = 1,
+      ctermbg = 4,
+      fg_indexed = true,
+      bg_indexed = true,
+    })
+    local hl = api.nvim_get_hl(0, { name = 'Test_idx' })
+    eq(true, hl.fg_indexed)
+    eq(true, hl.bg_indexed)
+    eq(tonumber('0xcc0000'), hl.fg)
+    eq(tonumber('0x0000cc'), hl.bg)
+    eq(1, hl.ctermfg)
+    eq(4, hl.ctermbg)
+
+    api.nvim_set_hl(0, 'Test_idx', { fg_indexed = false, update = true })
+    eq(nil, api.nvim_get_hl(0, { name = 'Test_idx' }).fg_indexed)
+    eq(true, api.nvim_get_hl(0, { name = 'Test_idx' }).bg_indexed)
+    eq(tonumber('0xcc0000'), api.nvim_get_hl(0, { name = 'Test_idx' }).fg)
+  end)
 end)
 
 describe('API: set/get highlight namespace', function()
+  before_each(clear)
+
   it('set/get highlight namespace', function()
     eq(0, api.nvim_get_hl_ns({}))
     local ns = api.nvim_create_namespace('')
@@ -721,16 +758,38 @@ describe('API: set/get highlight namespace', function()
   end)
 
   it('setting namespace takes priority over &winhighlight', function()
+    local win = api.nvim_get_current_win()
+    eq(-1, api.nvim_get_hl_ns({ winid = win }))
     command('set winhighlight=Visual:Search')
+    local winhl_ns = api.nvim_get_hl_ns({ winid = win })
+    neq(0, winhl_ns)
+    eq('Search', api.nvim_get_hl(winhl_ns, { name = 'Visual' }).link)
     n.insert('foobar')
     local ns = api.nvim_create_namespace('')
-    api.nvim_win_set_hl_ns(0, ns)
-    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
-    command('enew') -- switching buffer keeps namespace #30904
-    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
+    neq(winhl_ns, ns)
+    api.nvim_win_set_hl_ns(win, ns)
+    eq(ns, api.nvim_get_hl_ns({ winid = win }))
+    command('enew') -- Switching buffer keeps namespace. #30904
+    eq(ns, api.nvim_get_hl_ns({ winid = win }))
     command('set winhighlight=')
-    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
-    command('set winhighlight=Visual:Search')
-    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
+    eq(ns, api.nvim_get_hl_ns({ winid = win }))
+    -- Setting 'winhighlight' changes its namespace even when not using it.
+    command('set winhighlight=Visual:IncSearch')
+    eq('IncSearch', api.nvim_get_hl(winhl_ns, { name = 'Visual' }).link)
+    eq(ns, api.nvim_get_hl_ns({ winid = win }))
+    -- Setting 'winhighlight' works with global namespace. #37865
+    api.nvim_win_set_hl_ns(win, 0)
+    eq(0, api.nvim_get_hl_ns({ winid = win }))
+    command('set winhighlight=Visual:IncSearch')
+    eq('IncSearch', api.nvim_get_hl(winhl_ns, { name = 'Visual' }).link)
+    eq(winhl_ns, api.nvim_get_hl_ns({ winid = win }))
+    command('set winhighlight=')
+    eq(0, api.nvim_get_hl_ns({ winid = win }))
+    -- 'winhighlight' keeps the same namespace.
+    api.nvim_win_set_hl_ns(win, winhl_ns)
+    eq(winhl_ns, api.nvim_get_hl_ns({ winid = win }))
+    command('set winhighlight=Visual:Substitute')
+    eq('Substitute', api.nvim_get_hl(winhl_ns, { name = 'Visual' }).link)
+    eq(winhl_ns, api.nvim_get_hl_ns({ winid = win }))
   end)
 end)

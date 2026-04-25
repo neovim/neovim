@@ -1,3 +1,7 @@
+--- @meta
+-- This file is NOT generated, edit it directly.
+error('Cannot require a meta file')
+
 --- @class vim.fn.sign
 --- @field group string
 --- @field id integer
@@ -60,6 +64,7 @@
 --- @field botline integer
 --- @field bufnr integer
 --- @field height integer
+--- @field leftcol integer
 --- @field loclist integer
 --- @field quickfix integer
 --- @field tabnr integer
@@ -153,14 +158,14 @@
 --- list number in the quickfix stack; zero
 --- means the current quickfix list and "$" means
 --- the last quickfix list.
---- @field nr? integer
+--- @field nr? integer|'$'
 ---
 --- function to get the text to display in the
 --- quickfix window. The value can be the name of
 --- a function or a funcref or a lambda. Refer
 --- to |quickfix-window-function| for an explanation
 --- of how to write the function and an example.
---- @field quickfixtextfunc? function
+--- @field quickfixtextfunc? string|function
 ---
 --- quickfix list title text. See |quickfix-title|
 --- @field title? string

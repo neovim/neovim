@@ -7,7 +7,8 @@
 # define VAL_NAME(x) quasiquote(x, ptr_t)
 #endif
 
-#define MAP_NAME(x) VAL_NAME(KEY_NAME(x))
+#define after_underscore(x) quasiquote(x, _)
+#define MAP_NAME(x) VAL_NAME(after_underscore(KEY_NAME(x)))
 #define MAP_TYPE MAP_NAME(Map_)
 #define KEY_TYPE KEY_NAME()
 #define VALUE_TYPE VAL_NAME()

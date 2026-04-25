@@ -121,40 +121,32 @@ static const struct kitty_key_map_entry {
 
 static PMap(int) kitty_key_map = MAP_INIT;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/input.c.generated.h"
-#endif
+#include "tui/input.c.generated.h"
 
-void tinput_init(TermInput *input, Loop *loop)
+void tinput_init(TermInput *input, Loop *loop, TerminfoEntry *ti)
 {
+  assert(input->loop == NULL);
   input->loop = loop;
   input->paste = 0;
   input->in_fd = STDIN_FILENO;
-  input->key_encoding = kKeyEncodingLegacy;
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
+
+  // setup input handle
+  rstream_init_fd(loop, &input->read_stream, input->in_fd);
 
   for (size_t i = 0; i < ARRAY_SIZE(kitty_key_map_entry); i++) {
     pmap_put(int)(&kitty_key_map, kitty_key_map_entry[i].key, (ptr_t)kitty_key_map_entry[i].name);
   }
 
-  const char *term = os_getenv_noalloc("TERM");
-
-  if (!term) {
-    term = "";  // termkey_new_abstract assumes non-null (#2745)
-  }
-
-  input->tk = termkey_new_abstract(term, (TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART
-                                          | TERMKEY_FLAG_KEEPC0));
+  input->tk = termkey_new_abstract(ti, (TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART
+                                        | TERMKEY_FLAG_KEEPC0));
   termkey_set_buffer_size(input->tk, INPUT_BUFFER_SIZE);
   termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, input);
   termkey_start(input->tk);
 
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
-
-  // setup input handle
-  rstream_init_fd(loop, &input->read_stream, input->in_fd);
 
   // initialize a timer handle for handling ESC with libtermkey
   uv_timer_init(&loop->uv, &input->timer_handle);
@@ -171,6 +163,7 @@ void tinput_destroy(TermInput *input)
   uv_close((uv_handle_t *)&input->bg_query_timer, NULL);
   rstream_may_close(&input->read_stream);
   termkey_destroy(input->tk);
+  input->loop = NULL;
 }
 
 void tinput_start(TermInput *input)
@@ -577,7 +570,7 @@ static size_t handle_bracketed_paste(TermInput *input, const char *ptr, size_t s
   return 0;
 }
 
-/// Handle an OSC or DCS response sequence from the terminal.
+/// Handle an OSC, DCS, or APC response sequence from the terminal.
 static void handle_term_response(TermInput *input, const TermKeyKey *key)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -620,6 +613,47 @@ static void handle_term_response(TermInput *input, const TermKeyKey *key)
     rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
     kv_destroy(response);
   }
+}
+
+/// Handle a Primary Device Attributes (DA1) response from the terminal.
+static void handle_primary_device_attr(TermInput *input, TermKeyCsiParam *params, size_t nparams)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (input->callbacks.primary_device_attr) {
+    void (*cb_save)(TUIData *) = input->callbacks.primary_device_attr;
+    // Clear the callback before invoking it, as it may set a new callback. #34031
+    input->callbacks.primary_device_attr = NULL;
+    cb_save(input->tui_data);
+  }
+
+  if (nparams == 0) {
+    return;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 2);
+  ADD_C(args, STATIC_CSTR_AS_OBJ("termresponse"));
+
+  StringBuilder response = KV_INITIAL_VALUE;
+  kv_concat(response, "\x1b[?");
+
+  for (size_t i = 0; i < nparams; i++) {
+    int arg;
+    if (termkey_interpret_csi_param(params[i], &arg, NULL, NULL) != TERMKEY_RES_KEY) {
+      goto out;
+    }
+
+    kv_printf(response, "%d", arg);
+    if (i < nparams - 1) {
+      kv_push(response, ';');
+    }
+  }
+
+  kv_push(response, 'c');
+
+  ADD_C(args, STRING_OBJ(cbuf_as_string(response.items, response.size)));
+  rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
+out:
+  kv_destroy(response);
 }
 
 /// Handle a mode report (DECRPM) sequence from the terminal.
@@ -668,13 +702,7 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
     switch (initial) {
     case '?':
       // Primary Device Attributes (DA1) response
-      if (input->callbacks.primary_device_attr) {
-        void (*cb_save)(TUIData *) = input->callbacks.primary_device_attr;
-        // Clear the callback before invoking it, as it may set a new callback. #34031
-        input->callbacks.primary_device_attr = NULL;
-        cb_save(input->tui_data);
-      }
-
+      handle_primary_device_attr(input, params, nparams);
       break;
     }
     break;
@@ -693,13 +721,36 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
         int height_chars = args[1];
         int width_chars = args[2];
         tui_set_size(input->tui_data, width_chars, height_chars);
-        ui_client_set_size(width_chars, height_chars);
       }
     }
     break;
   case 'n':
     // Device Status Report (DSR)
-    if (nparams == 2) {
+    if (nparams == 1) {
+      // ECMA-48 DSR
+      // https://ecma-international.org/wp-content/uploads/ECMA-48_5th_edition_june_1991.pdf
+      int arg;
+      if (termkey_interpret_csi_param(params[0], &arg, NULL, NULL) != TERMKEY_RES_KEY) {
+        return;
+      }
+
+      MAXSIZE_TEMP_ARRAY(args, 2);
+      ADD_C(args, STATIC_CSTR_AS_OBJ("termresponse"));
+
+      StringBuilder response = KV_INITIAL_VALUE;
+      kv_printf(response, "\x1b[%dn", arg);
+      ADD_C(args, STRING_OBJ(cbuf_as_string(response.items, response.size)));
+
+      rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
+      kv_destroy(response);
+    } else if (nparams == 2) {
+      // Hard to find comprehensive docs on these responses. Some can be found at https://www.xfree86.org/current/ctlseqs.html
+      // under "Device Status Report (DSR, DEC-specific)"
+      // - Report Printer status
+      // - Report User Defined Key status
+      // - Report Locator status
+      // When the first parameter is 997, it's a theme update response based on
+      // contour terminal VT extensions, as described below.
       int args[2];
       for (size_t i = 0; i < ARRAY_SIZE(args); i++) {
         if (termkey_interpret_csi_param(params[i], &args[i], NULL, NULL) != TERMKEY_RES_KEY) {
@@ -713,7 +764,7 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
         // The second argument tells us whether the OS theme is set to light
         // mode or dark mode, but all we care about is the background color of
         // the terminal emulator. We query for that with OSC 11 and the response
-        // is handled by the autocommand created in _defaults.lua. The terminal
+        // is handled by the autocommand created in _core/defaults.lua. The terminal
         // may send us multiple notifications all at once so we use a timer to
         // coalesce the queries.
         if (uv_timer_get_due_in(&input->bg_query_timer) > 0) {

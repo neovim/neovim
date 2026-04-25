@@ -55,6 +55,35 @@ describe('vim.filetype', function()
     )
   end)
 
+  it('works with filenames that call _getlines() internally #36272', function()
+    eq(
+      'sh',
+      exec_lua(function()
+        return vim.filetype.match({ filename = 'main.sh' })
+      end)
+    )
+  end)
+
+  it('works with filenames that call _getline() internally #36272', function()
+    eq(
+      'text',
+      exec_lua(function()
+        return vim.filetype.match({ filename = 'main.txt' })
+      end)
+    )
+  end)
+
+  it('works without defined g:ft_ignore_pat', function()
+    local match_opts = { filename = 'unknown-ft', buf = api.nvim_create_buf(false, true) }
+    eq(
+      nil,
+      exec_lua(function()
+        vim.g.ft_ignore_pat = nil
+        return vim.filetype.match(match_opts)
+      end)
+    )
+  end)
+
   it('works with filenames', function()
     eq(
       'nim',
@@ -121,8 +150,6 @@ describe('vim.filetype', function()
     eq(
       'sh',
       exec_lua(function()
-        -- Needs to be set so detect#sh doesn't fail
-        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
         return (vim.filetype.match({ contents = { '#!/usr/bin/env bash' } }))
       end)
     )
@@ -189,6 +216,22 @@ describe('vim.filetype', function()
       end)
     )
     rmdir('Xfiletype')
+  end)
+
+  it('fallback to conf if any of the first five lines start with a #', function()
+    eq(
+      { 'conf', true },
+      exec_lua(function()
+        local bufnr = vim.api.nvim_create_buf(true, false)
+        local lines = {
+          '# foo',
+        }
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+
+        local ft, _, fallback = vim.filetype.match({ buf = bufnr })
+        return { ft, fallback }
+      end)
+    )
   end)
 end)
 
