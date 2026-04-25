@@ -313,9 +313,9 @@ func Test_write_file_mtime()
   call writefile(["Line1", "Line2"], 'Xfile')
   let old_ftime = getftime('Xfile')
   let buf = RunVimInTerminal('Xfile', #{rows : 10})
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, ":set noswapfile\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
 
   " Modify the file directly.  Make sure the file modification time is
   " different. Note that on Linux/Unix, the file is considered modified
@@ -331,17 +331,17 @@ func Test_write_file_mtime()
 
   " Try to overwrite the file and check for the prompt
   call term_sendkeys(buf, ":w\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_equal("WARNING: The file has been changed since reading it!!!", term_getline(buf, 9))})
   call assert_equal("Do you really want to write to it (y/n)?",
         \ term_getline(buf, 10))
   call term_sendkeys(buf, "n\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call assert_equal(new_ftime, getftime('Xfile'))
   call term_sendkeys(buf, ":w\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "y\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_equal('Line2', readfile('Xfile')[1])})
 
   " clean up
