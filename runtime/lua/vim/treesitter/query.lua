@@ -706,10 +706,6 @@ local directive_handlers = {
     local start_row, start_col, end_row, end_col = node:range()
 
     local node_text = vim.split(vim.treesitter.get_node_text(node, bufnr), '\n')
-    if end_col == 0 then
-      -- get_node_text() will ignore the last line if the node ends at column 0
-      node_text[#node_text + 1] = ''
-    end
 
     local end_idx = #node_text
     local start_idx = 1
