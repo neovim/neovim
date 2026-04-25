@@ -23,3 +23,6 @@ function after_each(fn) end
 
 --- @param fn fun()
 function teardown(fn) end
+
+--- @param fn fun()
+function finally(fn) end
