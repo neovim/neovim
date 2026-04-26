@@ -111,6 +111,63 @@ describe('ui/mouse/input', function()
       })
     end)
 
+    it('double left click stays in normal mode if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      screen:expect({
+        any = {
+          '%^testing',
+          'mouse',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+    end)
+
+    it('triple left click stays in normal mode if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      screen:expect({
+        any = {
+          '%^testing',
+          'mouse',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+    end)
+
+    it('quadruple left click stays in normal mode if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      screen:expect({
+        any = {
+          '%^testing',
+          'mouse',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+    end)
+
     describe('tab drag', function()
       it('in tabline on filler space moves tab to the end', function()
         feed_command('%delete')
@@ -576,6 +633,104 @@ describe('ui/mouse/input', function()
           'support and selection',
           'VISUAL',
         },
+      })
+    end)
+
+    it('left drag moves cursor if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      -- drag events must be preceded by a click
+      feed('<LeftMouse><2,1>')
+      screen:expect({
+        any = {
+          'testing',
+          'mo%^use',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+      feed('<LeftDrag><4,1>')
+      screen:expect({
+        any = {
+          'testing',
+          'mous%^e',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+      feed('<LeftDrag><2,2>')
+      screen:expect({
+        any = {
+          'testing',
+          'mouse',
+          'su%^pport and selection',
+        },
+        mode = 'normal',
+      })
+      feed('<LeftDrag><0,0>')
+      screen:expect({
+        any = {
+          '%^testing',
+          'mouse',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+    end)
+
+    it('left drag does not adjust existing visual selection if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      feed('gg^vlj')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+      })
+
+      -- drag events must be preceded by a click
+      feed('<LeftMouse><2,1>')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+        unchanged = true,
+      })
+      feed('<LeftDrag><4,1>')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+        unchanged = true,
+      })
+      feed('<LeftDrag><2,2>')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+        unchanged = true,
+      })
+      feed('<LeftRelease>')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+        unchanged = true,
       })
     end)
 

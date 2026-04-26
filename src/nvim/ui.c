@@ -630,32 +630,44 @@ void ui_check_mouse(void)
     checkfor = ' ';  // don't use mouse for ":!cmd"
   }
 
-  // mouse should be active if at least one of the following is true:
-  // - "c" is in 'mouse', or
-  // - 'a' is in 'mouse' and "c" is in MOUSE_A, or
-  // - the current buffer is a help file and 'h' is in 'mouse' and we are in a
-  //   normal editing mode (not at hit-return message).
+  if (ui_mouse_has(checkfor)) {
+    has_mouse = true;
+  }
+}
+
+// check if 'mouse' is active for the given mode
+//
+// mouse should be active if at least one of the following is true:
+// - "mode" is in 'mouse', or
+// - 'a' is in 'mouse' and "mode" is in MOUSE_A, or
+// - the current buffer is a help file and 'h' is in 'mouse' and we are in a
+//   normal editing mode (not at hit-return message).
+bool ui_mouse_has(int mode)
+{
   for (char *p = p_mouse; *p; p++) {
     switch (*p) {
     case 'a':
-      if (vim_strchr(MOUSE_A, checkfor) != NULL) {
-        has_mouse = true;
-        return;
+      if (vim_strchr(MOUSE_A, mode) != NULL) {
+        return true;
       }
+
       break;
     case MOUSE_HELP:
-      if (checkfor != MOUSE_RETURN && curbuf->b_help) {
-        has_mouse = true;
-        return;
+      if (mode != MOUSE_RETURN && curbuf->b_help) {
+        return true;
       }
+
       break;
     default:
-      if (checkfor == *p) {
-        has_mouse = true;
-        return;
+      if (mode == *p) {
+        return true;
       }
+
+      break;
     }
   }
+
+  return false;
 }
 
 /// Check if current mode has changed.
