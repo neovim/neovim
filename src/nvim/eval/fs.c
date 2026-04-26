@@ -1739,13 +1739,13 @@ write_blob_error:
 }
 
 static bool write_blob(FileDescriptor *const fp, const blob_T *const blob)
-  FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ALL
 {
   return write_data(fp, blob->bv_ga.ga_data, (size_t)tv_blob_len(blob));
 }
 
 static bool write_string(FileDescriptor *const fp, const char *const data)
-  FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ALL
 {
   return write_data(fp, data, strlen(data));
 }
@@ -1839,7 +1839,7 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     bool write_ok;
     if (argvars[0].v_type == VAR_BLOB) {
-      write_ok = write_blob(&fp, argvars[0].vval.v_blob);
+      write_ok = argvars[0].vval.v_blob == NULL || write_blob(&fp, argvars[0].vval.v_blob);
     } else if (argvars[0].v_type == VAR_STRING) {
       write_ok = write_string(&fp, argvars[0].vval.v_string);
     } else {
