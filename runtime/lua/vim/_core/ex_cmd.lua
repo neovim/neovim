@@ -259,7 +259,9 @@ function M.ex_terminal(eap, shell_argv)
 end
 
 function M.ex_uptime()
-  local uptime = math.floor((uv.hrtime() - vim.v.starttime) / 1e9)
+  -- os.time() might lead to uptime == -1 when this is called too quickly after startup
+  local now = assert(uv.clock_gettime('realtime'))
+  local uptime = math.floor((now.sec * 1e9 + now.nsec - vim.v.starttime) / 1e9)
   local uptime_display = time.fmt_rtime(uptime)
   api.nvim_echo({ { N_('Up %s'):format(uptime_display) } }, true, {})
 end

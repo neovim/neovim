@@ -667,13 +667,13 @@ vim.v.shell_error = ...
 --- @type table[]
 vim.v.stacktrace = ...
 
---- Timestamp (monotonic nanoseconds) when the Nvim process
+--- Timestamp (nanoseconds from UNIX epoch) when the Nvim process
 --- started.
 ---
 --- To see the current "uptime":
 ---
 --- ```lua
----   vim.print(('uptime: %d seconds'):format((vim.uv.hrtime() - vim.v.starttime) / 1e9))
+---   vim.print(('uptime: %d seconds'):format(os.time() - (vim.v.starttime / 1e9)))
 --- ```
 ---
 --- Read-only.
