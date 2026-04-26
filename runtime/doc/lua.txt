@@ -4280,8 +4280,8 @@ by |vim.Pos| objects.
     To create a new |vim.Pos| object, call `vim.pos()`.
 
     Example: >lua
-        local pos1 = vim.pos(vim.api.nvim_get_current_buf(), 3, 5)
-        local pos2 = vim.pos(vim.api.nvim_get_current_buf(), 4, 0)
+        local pos1 = vim.pos(0, 3, 5)
+        local pos2 = vim.pos(0, 4, 0)
 
         -- Operators are overloaded for comparing two `vim.Pos` objects.
         if pos1 < pos2 then
@@ -4321,13 +4321,12 @@ lsp({buf}, {pos}, {position_encoding})                         *vim.pos.lsp()*
     Creates a new |vim.Pos| from `lsp.Position`.
 
     Example: >lua
-        local buf = vim.api.nvim_get_current_buf()
         local lsp_pos = {
           line = 3,
           character = 5
         }
 
-        local pos = vim.pos.lsp(buf, lsp_pos, 'utf-16')
+        local pos = vim.pos.lsp(0, lsp_pos, 'utf-16')
 <
 
     Parameters: ~
@@ -4359,8 +4358,7 @@ to_lsp({pos}, {position_encoding})                          *vim.pos.to_lsp()*
     Converts |vim.Pos| to `lsp.Position`.
 
     Example: >lua
-        local buf = vim.api.nvim_get_current_buf()
-        local pos = vim.pos(buf, 3, 5)
+        local pos = vim.pos(0, 3, 5)
 
         -- Convert to LSP position, you can call it in a method style.
         local lsp_pos = pos:to_lsp('utf-16')
@@ -4392,13 +4390,13 @@ Provides operations to compare, calculate, and convert ranges represented by
     format conversions.
 
     Example: >lua
-        local pos1 = vim.pos(vim.api.nvim_get_current_buf(), 3, 5)
-        local pos2 = vim.pos(vim.api.nvim_get_current_buf(), 4, 0)
+        local pos1 = vim.pos(0, 3, 5)
+        local pos2 = vim.pos(0, 4, 0)
 
         -- Create a range from two positions.
         local range1 = vim.range(pos1, pos2)
         -- Or create a range from four integers representing start and end positions.
-        local range2 = vim.range(vim.api.nvim_get_current_buf(), 3, 5, 4, 0)
+        local range2 = vim.range(0, 3, 5, 4, 0)
 
         -- Because `vim.Range` is end exclusive, `range1` and `range2` both represent
         -- a range starting at the row 3, column 5 and ending at where the row 3 ends
@@ -4422,12 +4420,11 @@ cursor({buf}, {start_pos}, {end_pos})                     *vim.range.cursor()*
     Creates a new |vim.Range| from mark-like range (see |api-indexing|).
 
     Example: >lua
-        local buf = vim.api.nvim_get_current_buf()
         local start = vim.api.nvim_win_get_cursor(0)
         -- move the cursor
         local end_ = vim.api.nvim_win_get_cursor(0)
 
-        local range = vim.range.cursor(buf, start, end_)
+        local range = vim.range.cursor(0, start, end_)
 <
 
     Parameters: ~
@@ -4440,9 +4437,7 @@ extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
     Creates a new |vim.Range| from extmark range (see |api-indexing|).
 
     Example: >lua
-        local buf = vim.api.nvim_get_current_buf()
-
-        local range = vim.range.extmark(buf, 3, 5, 4, 0)
+        local range = vim.range.extmark(0, 3, 5, 4, 0)
 <
 
     Parameters: ~
@@ -4487,13 +4482,12 @@ lsp({buf}, {range}, {position_encoding})                     *vim.range.lsp()*
     Creates a new |vim.Range| from `lsp.Range`.
 
     Example: >lua
-        local buf = vim.api.nvim_get_current_buf()
         local lsp_range = {
           ['start'] = { line = 3, character = 5 },
           ['end'] = { line = 4, character = 0 }
         }
 
-        local range = vim.range.lsp(buf, lsp_range, 'utf-16')
+        local range = vim.range.lsp(0, lsp_range, 'utf-16')
 <
 
     Parameters: ~
@@ -4505,8 +4499,7 @@ to_cursor({range})                                     *vim.range.to_cursor()*
     Converts |vim.Range| to mark-like range (see |api-indexing|).
 
     Example: >lua
-        local buf = vim.api.nvim_get_current_buf()
-        local range = vim.range(buf, 3, 5, 4, 0)
+        local range = vim.range(0, 3, 5, 4, 0)
 
         -- Convert to cursor range, you can call it in a method style.
         local cursor_range = range:to_cursor()
@@ -4519,8 +4512,7 @@ to_extmark({range})                                   *vim.range.to_extmark()*
     Converts |vim.Range| to extmark range (see |api-indexing|).
 
     Example: >lua
-        local buf = vim.api.nvim_get_current_buf()
-        local range = vim.range(buf, 3, 5, 4, 0)
+        local range = vim.range(0, 3, 5, 4, 0)
 
         -- Convert to extmark range, you can call it in a method style.
         local extmark_range = range:to_extmark()
@@ -4533,8 +4525,7 @@ to_lsp({range}, {position_encoding})                      *vim.range.to_lsp()*
     Converts |vim.Range| to `lsp.Range`.
 
     Example: >lua
-        local buf = vim.api.nvim_get_current_buf()
-        local range = vim.range(buf, 3, 5, 4, 0)
+        local range = vim.range(0, 3, 5, 4, 0)
 
         -- Convert to LSP range, you can call it in a method style.
         local lsp_range = range:to_lsp('utf-16')

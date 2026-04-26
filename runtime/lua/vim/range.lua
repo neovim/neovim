@@ -18,13 +18,13 @@ local api = vim.api
 ---
 --- Example:
 --- ```lua
---- local pos1 = vim.pos(vim.api.nvim_get_current_buf(), 3, 5)
---- local pos2 = vim.pos(vim.api.nvim_get_current_buf(), 4, 0)
+--- local pos1 = vim.pos(0, 3, 5)
+--- local pos2 = vim.pos(0, 4, 0)
 ---
 --- -- Create a range from two positions.
 --- local range1 = vim.range(pos1, pos2)
 --- -- Or create a range from four integers representing start and end positions.
---- local range2 = vim.range(vim.api.nvim_get_current_buf(), 3, 5, 4, 0)
+--- local range2 = vim.range(0, 3, 5, 4, 0)
 ---
 --- -- Because `vim.Range` is end exclusive, `range1` and `range2` both represent
 --- -- a range starting at the row 3, column 5 and ending at where the row 3 ends
@@ -92,6 +92,10 @@ function M.new(...)
     buf, start_row, start_col, end_row, end_col = ...
   else
     error('invalid parameters')
+  end
+
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
   end
 
   ---@type vim.Range
@@ -253,8 +257,7 @@ end
 ---
 --- Example:
 --- ```lua
---- local buf = vim.api.nvim_get_current_buf()
---- local range = vim.range(buf, 3, 5, 4, 0)
+--- local range = vim.range(0, 3, 5, 4, 0)
 ---
 --- -- Convert to LSP range, you can call it in a method style.
 --- local lsp_range = range:to_lsp('utf-16')
@@ -277,13 +280,12 @@ end
 ---
 --- Example:
 --- ```lua
---- local buf = vim.api.nvim_get_current_buf()
 --- local lsp_range = {
 ---   ['start'] = { line = 3, character = 5 },
 ---   ['end'] = { line = 4, character = 0 }
 --- }
 ---
---- local range = vim.range.lsp(buf, lsp_range, 'utf-16')
+--- local range = vim.range.lsp(0, lsp_range, 'utf-16')
 --- ```
 ---@param buf integer
 ---@param range lsp.Range
@@ -292,6 +294,10 @@ function M.lsp(buf, range, position_encoding)
   validate('buf', buf, 'number')
   validate('range', range, 'table')
   validate('position_encoding', position_encoding, 'string')
+
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
 
   -- TODO(ofseed): avoid using `Pos:lsp()` here,
   -- as they need reading files separately if buffer is unloaded.
@@ -305,8 +311,7 @@ end
 ---
 --- Example:
 --- ```lua
---- local buf = vim.api.nvim_get_current_buf()
---- local range = vim.range(buf, 3, 5, 4, 0)
+--- local range = vim.range(0, 3, 5, 4, 0)
 ---
 --- -- Convert to extmark range, you can call it in a method style.
 --- local extmark_range = range:to_extmark()
@@ -324,9 +329,7 @@ end
 ---
 --- Example:
 --- ```lua
---- local buf = vim.api.nvim_get_current_buf()
----
---- local range = vim.range.extmark(buf, 3, 5, 4, 0)
+--- local range = vim.range.extmark(0, 3, 5, 4, 0)
 --- ```
 ---@param buf integer
 ---@param start_row integer
@@ -340,6 +343,10 @@ function M.extmark(buf, start_row, start_col, end_row, end_col)
   validate('end_row', end_row, 'number')
   validate('end_col', end_col, 'number')
 
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
+
   local start = vim.pos.extmark(buf, start_row, start_col)
   local end_ = vim.pos.extmark(buf, end_row, end_col)
 
@@ -350,8 +357,7 @@ end
 ---
 --- Example:
 --- ```lua
---- local buf = vim.api.nvim_get_current_buf()
---- local range = vim.range(buf, 3, 5, 4, 0)
+--- local range = vim.range(0, 3, 5, 4, 0)
 ---
 --- -- Convert to cursor range, you can call it in a method style.
 --- local cursor_range = range:to_cursor()
@@ -369,12 +375,11 @@ end
 ---
 --- Example:
 --- ```lua
---- local buf = vim.api.nvim_get_current_buf()
 --- local start = vim.api.nvim_win_get_cursor(0)
 --- -- move the cursor
 --- local end_ = vim.api.nvim_win_get_cursor(0)
 ---
---- local range = vim.range.cursor(buf, start, end_)
+--- local range = vim.range.cursor(0, start, end_)
 --- ```
 ---@param buf integer
 ---@param start_pos [integer, integer]
@@ -383,6 +388,10 @@ function M.cursor(buf, start_pos, end_pos)
   validate('buf', buf, 'number')
   validate('range', start_pos, 'table')
   validate('range', end_pos, 'table')
+
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
 
   local start = vim.pos.cursor(buf, start_pos)
   local end_ = vim.pos.cursor(buf, end_pos)
