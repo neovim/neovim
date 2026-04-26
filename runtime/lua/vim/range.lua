@@ -90,6 +90,11 @@ function M.new(...)
   elseif nargs == 5 then
     ---@type integer, integer, integer, integer, integer
     buf, start_row, start_col, end_row, end_col = ...
+    validate('buf', buf, 'number')
+    validate('start_row', start_row, 'number')
+    validate('start_col', start_col, 'number')
+    validate('end_row', end_row, 'number')
+    validate('end_col', end_col, 'number')
   else
     error('invalid parameters')
   end
