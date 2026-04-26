@@ -69,24 +69,20 @@ end
 
 --- Create a new treesitter view.
 ---
----@param bufnr integer Source buffer number
+---@param buf integer Source buffer number
 ---@param lang string|nil Language of source buffer
 ---
 ---@return vim.treesitter.dev.TSTreeView|nil
 ---@return string|nil Error message, if any
 ---
 ---@package
-function TSTreeView:new(bufnr, lang)
-  bufnr = bufnr or 0
-  lang = lang or vim.treesitter.language.get_lang(vim.bo[bufnr].filetype)
-  local parser = vim.treesitter.get_parser(bufnr, lang)
+function TSTreeView:new(buf, lang)
+  buf = buf or 0
+  lang = lang or vim.treesitter.language.get_lang(vim.bo[buf].filetype)
+  local parser = vim.treesitter.get_parser(buf, lang)
   if not parser then
     return nil,
-      string.format(
-        'Failed to create TSTreeView for buffer %s: no parser for lang "%s"',
-        bufnr,
-        lang
-      )
+      string.format('Failed to create TSTreeView for buffer %s: no parser for lang "%s"', buf, lang)
   end
 
   -- For each child tree (injected language), find the root of the tree and locate the node within
@@ -232,10 +228,10 @@ end
 ---
 --- Calling this function computes the text that is displayed for each node.
 ---
----@param bufnr integer Buffer number to write into.
+---@param buf integer Buffer number to write into.
 ---@package
-function TSTreeView:draw(bufnr)
-  vim.bo[bufnr].modifiable = true
+function TSTreeView:draw(buf)
+  vim.bo[buf].modifiable = true
   local lines = {} ---@type string[]
   local lang_hl_marks = {} ---@type table[]
 
@@ -284,18 +280,18 @@ function TSTreeView:draw(bufnr)
     lines[i] = line
   end
 
-  api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+  api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
-  api.nvim_buf_clear_namespace(bufnr, decor_ns, 0, -1)
+  api.nvim_buf_clear_namespace(buf, decor_ns, 0, -1)
 
   for i, m in ipairs(lang_hl_marks) do
-    api.nvim_buf_set_extmark(bufnr, decor_ns, i - 1, m.col, {
+    api.nvim_buf_set_extmark(buf, decor_ns, i - 1, m.col, {
       hl_group = 'Title',
       end_col = m.end_col,
     })
   end
 
-  vim.bo[bufnr].modifiable = false
+  vim.bo[buf].modifiable = false
 end
 
 --- Get node {i} from this View.

@@ -25,6 +25,8 @@ local banned_verbs = {
   disable = 'enable',
   exit = 'cancel', -- or "stop"
   -- format = 'fmt',
+  -- hide = '?',
+  -- show = '?',
   list = 'get',
   notify = 'print', -- or "echo"
   pretty = 'fmt',
@@ -57,39 +59,9 @@ local legacy_names = {
     nvim_list_uis = true,
     nvim_list_wins = true,
   },
-  ['runtime/lua/vim/diagnostic.lua'] = {
-    count = true,
-    get = true,
-    hide = true,
-    reset = true,
-    set = true,
-    show = true,
-    status = true,
-  },
-  ['runtime/lua/editorconfig.lua'] = {
-    config = true,
-  },
   ['runtime/lua/vim/uri.lua'] = {
     uri_from_bufnr = true,
     uri_to_bufnr = true,
-  },
-  ['runtime/lua/vim/snippet.lua'] = {
-    new = true,
-  },
-  ['runtime/lua/vim/hl.lua'] = {
-    range = true,
-  },
-  ['runtime/lua/vim/filetype.lua'] = {
-    _getline = true,
-    _getlines = true,
-    _nextnonblank = true,
-  },
-  ['runtime/lua/vim/_meta/regex.lua'] = {
-    match_line = true,
-  },
-  ['runtime/lua/vim/_inspector.lua'] = {
-    ['vim.inspect_pos'] = true,
-    ['vim.show_pos'] = true,
   },
   ['runtime/lua/vim/_core/shared.lua'] = {
     _ensure_list = true,
@@ -100,97 +72,23 @@ local legacy_names = {
     tbl_contains = true,
   },
   ['runtime/lua/vim/lsp.lua'] = {
-    _buf_get_full_text = true,
-    _buf_get_line_ending = true,
-    _set_defaults = true,
-    buf_attach_client = true,
-    buf_detach_client = true,
-    buf_is_attached = true,
     buf_notify = true,
-    buf_request = true,
-    buf_request_all = true,
-    buf_request_sync = true,
-  },
-  ['runtime/lua/vim/lsp/_folding_range.lua'] = {
-    new = true,
-  },
-  ['runtime/lua/vim/lsp/_changetracking.lua'] = {
-    _send_did_save = true,
-    flush = true,
-    init = true,
-    reset_buf = true,
-    send_changes = true,
-  },
-  ['runtime/lua/vim/lsp/_capability.lua'] = {
-    new = true,
-  },
-  ['runtime/lua/vim/lsp/semantic_tokens.lua'] = {
-    _start = true,
-    force_refresh = true,
-    get_at_pos = true,
-    highlight_token = true,
-    new = true,
-  },
-  ['runtime/lua/vim/lsp/document_color.lua'] = {
-    new = true,
-  },
-  ['runtime/lua/vim/lsp/diagnostic.lua'] = {
-    _enable = true,
-    _refresh = true,
-    get_line_diagnostics = true,
-  },
-  ['runtime/lua/vim/lsp/completion.lua'] = {
-    enable = true,
-    request = true,
-  },
-  ['runtime/lua/vim/lsp/codelens.lua'] = {
-    new = true,
   },
   ['runtime/lua/vim/lsp/client.lua'] = {
-    _get_registrations = true,
-    _on_detach = true,
     _on_exit = true,
     _process_request = true,
     _process_static_registrations = true,
     _remove_workspace_folder = true,
-    _text_document_did_open_handler = true,
-    on_attach = true,
-    request = true,
-    request_sync = true,
-    supports_method = true,
   },
   ['runtime/lua/vim/lsp/util.lua'] = {
-    _make_line_range_params = true,
-    apply_text_edits = true,
-    buf_clear_references = true,
     buf_highlight_references = true,
-    get_effective_tabstop = true,
-    make_given_range_params = true,
     make_position_params = true,
-    make_text_document_params = true,
-    symbols_to_items = true,
   },
   ['runtime/lua/vim/lsp/rpc.lua'] = {
     _notify = true,
   },
   ['runtime/lua/vim/treesitter.lua'] = {
-    _create_parser = true,
-    get_captures_at_cursor = true,
-    get_captures_at_pos = true,
-    get_parser = true,
     node_contains = true,
-    start = true,
-    stop = true,
-  },
-  ['runtime/lua/vim/treesitter/languagetree.lua'] = {
-    _on_bytes = true,
-  },
-  ['runtime/lua/vim/treesitter/dev.lua'] = {
-    draw = true,
-    new = true,
-  },
-  ['runtime/lua/vim/treesitter/_fold.lua'] = {
-    new = true,
   },
   ['runtime/lua/vim/treesitter/highlighter.lua'] = {
     for_each_highlight_state = true,
@@ -232,7 +130,7 @@ local legacy_fields = {
     bufnr = true,
   },
   ['TS.Heading'] = {
-    bufnr = true,
+    bufnr = true, -- Passed to setloclist().
   },
   ['vim.treesitter.get_node.Opts'] = {
     bufnr = true,
@@ -282,14 +180,13 @@ function M.lint_names(source, api_funs, keysets, classes)
     local src_legacy = legacy_names[source] or {}
     for _, fun in ipairs(api_funs) do
       if fun.name and fun.params and not fun.deprecated and not fun.deprecated_since then
-        -- Positional parameter names.
-        if not src_legacy[fun.name] then
-          for _, p in ipairs(fun.params) do
-            local want_name = banned_nouns[p.name]
-            if want_name then
-              local msg = '%s: %s(): param "%s" should be renamed to "%s"'
-              errors[#errors + 1] = fmt(msg, source, fun.name, p.name, want_name)
-            end
+        -- Positional parameter names: always checked (no legacy allowed).
+        -- Exception: "bufnr" is allowed as a param name.
+        for _, p in ipairs(fun.params) do
+          local want_name = banned_nouns[p.name]
+          if want_name and p.name ~= 'bufnr' then
+            local msg = '%s: %s(): param "%s" should be renamed to "%s"'
+            errors[#errors + 1] = fmt(msg, source, fun.name, p.name, want_name)
           end
         end
 

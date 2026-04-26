@@ -806,13 +806,13 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
         (`vim.diagnostic.Opts?`) Current diagnostic config if {opts} is
         omitted. See |vim.diagnostic.Opts|.
 
-count({bufnr}, {opts})                                *vim.diagnostic.count()*
+count({buf}, {opts})                                  *vim.diagnostic.count()*
     Get current diagnostics count.
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer number to get diagnostics from. Use 0 for
-                 current buffer or nil for all buffers.
-      • {opts}   (`vim.diagnostic.GetOpts?`) See |vim.diagnostic.GetOpts|.
+      • {buf}   (`integer?`) Buffer number to get diagnostics from. Use 0 for
+                current buffer or nil for all buffers.
+      • {opts}  (`vim.diagnostic.GetOpts?`) See |vim.diagnostic.GetOpts|.
 
     Return: ~
         (`table<integer, integer>`) Table with actually present severity
@@ -848,19 +848,19 @@ fromqflist({list}, {opts})                       *vim.diagnostic.fromqflist()*
     Return: ~
         (`vim.Diagnostic[]`) See |vim.Diagnostic|.
 
-get({bufnr}, {opts})                                    *vim.diagnostic.get()*
+get({buf}, {opts})                                      *vim.diagnostic.get()*
     Get current diagnostics.
 
     Modifying diagnostics in the returned table has no effect. To set
     diagnostics in a buffer, use |vim.diagnostic.set()|.
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer number to get diagnostics from. Use 0 for
-                 current buffer or nil for all buffers.
-      • {opts}   (`vim.diagnostic.GetOpts?`) See |vim.diagnostic.GetOpts|.
+      • {buf}   (`integer?`) Buffer number to get diagnostics from. Use 0 for
+                current buffer or nil for all buffers.
+      • {opts}  (`vim.diagnostic.GetOpts?`) See |vim.diagnostic.GetOpts|.
 
     Return: ~
-        (`vim.Diagnostic[]`) Fields `bufnr`, `end_lnum`, `end_col`, and
+        (`vim.Diagnostic[]`) Fields `buf`, `end_lnum`, `end_col`, and
         `severity` are guaranteed to be present. See |vim.Diagnostic|.
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
@@ -897,7 +897,7 @@ get_prev({opts})                                   *vim.diagnostic.get_prev()*
     Return: ~
         (`vim.Diagnostic?`) Previous diagnostic. See |vim.Diagnostic|.
 
-hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
+hide({namespace}, {buf})                               *vim.diagnostic.hide()*
     Hide currently displayed diagnostics.
 
     This only clears the decorations displayed in the buffer. Diagnostics can
@@ -910,7 +910,7 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
     Parameters: ~
       • {namespace}  (`integer?`) Diagnostic namespace. When omitted, hide
                      diagnostics from all namespaces.
-      • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer. When
+      • {buf}        (`integer?`) Buffer number, or 0 for current buffer. When
                      omitted, hide diagnostics in all buffers.
 
 is_enabled({filter})                             *vim.diagnostic.is_enabled()*
@@ -980,7 +980,7 @@ open_float({opts})                               *vim.diagnostic.open_float()*
         (`integer?`) float_bufnr
         (`integer?`) winid
 
-reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
+reset({namespace}, {buf})                             *vim.diagnostic.reset()*
     Remove all diagnostics from the given namespace.
 
     Unlike |vim.diagnostic.hide()|, this function removes all saved
@@ -991,15 +991,15 @@ reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     Parameters: ~
       • {namespace}  (`integer?`) Diagnostic namespace. When omitted, remove
                      diagnostics from all namespaces.
-      • {bufnr}      (`integer?`) Remove diagnostics for the given buffer.
+      • {buf}        (`integer?`) Remove diagnostics for the given buffer.
                      When omitted, diagnostics are removed for all buffers.
 
-set({namespace}, {bufnr}, {diagnostics}, {opts})        *vim.diagnostic.set()*
+set({namespace}, {buf}, {diagnostics}, {opts})          *vim.diagnostic.set()*
     Set diagnostics for the given namespace and buffer.
 
     Parameters: ~
       • {namespace}    (`integer`) The diagnostic namespace
-      • {bufnr}        (`integer`) Buffer number
+      • {buf}          (`integer`) Buffer number
       • {diagnostics}  (`vim.Diagnostic.Set[]`) See |vim.Diagnostic.Set|.
       • {opts}         (`vim.diagnostic.Opts?`) Display options to pass to
                        |vim.diagnostic.show()|. See |vim.diagnostic.Opts|.
@@ -1045,33 +1045,32 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
                   "Diagnostics". If there's already a quickfix list with this
                   title, it's updated. If not, a new quickfix list is created.
 
-                                                       *vim.diagnostic.show()*
-show({namespace}, {bufnr}, {diagnostics}, {opts})
+show({namespace}, {buf}, {diagnostics}, {opts})        *vim.diagnostic.show()*
     Display diagnostics for the given namespace and buffer.
 
     Parameters: ~
       • {namespace}    (`integer?`) Diagnostic namespace. When omitted, show
                        diagnostics from all namespaces.
-      • {bufnr}        (`integer?`) Buffer number, or 0 for current buffer.
+      • {buf}          (`integer?`) Buffer number, or 0 for current buffer.
                        When omitted, show diagnostics in all buffers.
       • {diagnostics}  (`vim.Diagnostic[]?`) The diagnostics to display. When
                        omitted, use the saved diagnostics for the given
                        namespace and buffer. This can be used to display a
                        list of diagnostics without saving them or to display
                        only a subset of diagnostics. May not be used when
-                       {namespace} or {bufnr} is nil. See |vim.Diagnostic|.
+                       {namespace} or {buf} is nil. See |vim.Diagnostic|.
       • {opts}         (`vim.diagnostic.Opts?`) Display options. See
                        |vim.diagnostic.Opts|.
 
-status({bufnr})                                      *vim.diagnostic.status()*
+status({buf})                                        *vim.diagnostic.status()*
     Returns formatted string with diagnostics for the current buffer. The
     severities with 0 diagnostics are left out. Example `E:2 W:3 I:4 H:5`
 
     To customise appearance, see |vim.diagnostic.Opts.Status|.
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer number to get diagnostics from. Defaults
-                 to 0 for the current buffer
+      • {buf}  (`integer?`) Buffer number to get diagnostics from. Defaults to
+               0 for the current buffer
 
     Return: ~
         (`string`)

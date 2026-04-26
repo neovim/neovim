@@ -30,7 +30,7 @@ local defaults = {
 ---Can also be pretty-printed with `:Inspect!`. [:Inspect!]()
 ---
 ---@since 11
----@param bufnr? integer defaults to the current buffer
+---@param buf? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
 ---@param filter? vim._inspector.Filter Table with key-value pairs to filter the items
@@ -42,27 +42,27 @@ local defaults = {
 ---               - buffer: the buffer used to get the items
 ---               - row: the row used to get the items
 ---               - col: the col used to get the items
-function vim.inspect_pos(bufnr, row, col, filter)
+function vim.inspect_pos(buf, row, col, filter)
   filter = vim.tbl_deep_extend('force', defaults, filter or {})
 
-  bufnr = bufnr or 0
+  buf = buf or 0
   if row == nil or col == nil then
     -- get the row/col from the first window displaying the buffer
-    local win = bufnr == 0 and vim.api.nvim_get_current_win() or vim.fn.bufwinid(bufnr)
+    local win = buf == 0 and vim.api.nvim_get_current_win() or vim.fn.bufwinid(buf)
     if win == -1 then
       error('row/col is required for buffers not visible in a window')
     end
     local cursor = vim.api.nvim_win_get_cursor(win)
     row, col = cursor[1] - 1, cursor[2]
   end
-  bufnr = vim._resolve_bufnr(bufnr)
+  buf = vim._resolve_bufnr(buf)
 
   local results = {
     treesitter = {}, --- @type table[]
     syntax = {}, --- @type table[]
     extmarks = {},
     semantic_tokens = {},
-    buffer = bufnr,
+    buffer = buf,
     row = row,
     col = col,
   }
@@ -79,7 +79,7 @@ function vim.inspect_pos(bufnr, row, col, filter)
 
   -- treesitter
   if filter.treesitter then
-    for _, capture in pairs(vim.treesitter.get_captures_at_pos(bufnr, row, col)) do
+    for _, capture in pairs(vim.treesitter.get_captures_at_pos(buf, row, col)) do
       --- @diagnostic disable-next-line: inject-field
       capture.hl_group = '@' .. capture.capture .. '.' .. capture.lang
       results.treesitter[#results.treesitter + 1] = resolve_hl(capture)
@@ -87,8 +87,8 @@ function vim.inspect_pos(bufnr, row, col, filter)
   end
 
   -- syntax
-  if filter.syntax and vim.api.nvim_buf_is_valid(bufnr) then
-    vim._with({ buf = bufnr }, function()
+  if filter.syntax and vim.api.nvim_buf_is_valid(buf) then
+    vim._with({ buf = buf }, function()
       for _, i1 in ipairs(vim.fn.synstack(row + 1, col + 1)) do
         results.syntax[#results.syntax + 1] =
           resolve_hl({ hl_group = vim.fn.synIDattr(i1, 'name') })
@@ -124,7 +124,7 @@ function vim.inspect_pos(bufnr, row, col, filter)
   end
 
   -- All overlapping extmarks at this position:
-  local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, { row, col }, { row, col }, {
+  local extmarks = vim.api.nvim_buf_get_extmarks(buf, -1, { row, col }, { row, col }, {
     details = true,
     overlap = true,
   })
@@ -159,12 +159,12 @@ end
 ---```
 ---
 ---@since 11
----@param bufnr? integer defaults to the current buffer
+---@param buf? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
 ---@param filter? vim._inspector.Filter
-function vim.show_pos(bufnr, row, col, filter)
-  local items = vim.inspect_pos(bufnr, row, col, filter)
+function vim.show_pos(buf, row, col, filter)
+  local items = vim.inspect_pos(buf, row, col, filter)
 
   local lines = { {} }
 
