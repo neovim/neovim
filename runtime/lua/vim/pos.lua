@@ -196,16 +196,7 @@ end
 ---@param pos vim.Pos
 ---@return integer, integer
 function M.to_extmark(pos)
-  local line_count = api.nvim_buf_line_count(pos.buf)
-
-  local row = pos.row
-  local col = pos.col
-  if pos.col == 0 and pos.row == line_count then
-    row = row - 1
-    col = #get_line(pos.buf, row)
-  end
-
-  return row, col
+  return pos.row, pos.col
 end
 
 --- Creates a new |vim.Pos| from extmark position (see |api-indexing|).

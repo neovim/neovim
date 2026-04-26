@@ -315,8 +315,13 @@ end
 function M.to_extmark(range)
   validate('range', range, 'table')
 
-  local srow, scol = vim.pos(range.buf, range.start_row, range.start_col):to_extmark()
-  local erow, ecol = vim.pos(range.buf, range.end_row, range.end_col):to_extmark()
+  local srow, scol = range.start_row, range.start_col
+  local erow, ecol = range.end_row, range.end_col
+  if range.end_col == 0 then
+    erow = erow - 1
+    ecol = #get_line(range.buf, erow)
+  end
+
   return srow, scol, erow, ecol
 end
 
@@ -340,10 +345,12 @@ function M.extmark(buf, start_row, start_col, end_row, end_col)
   validate('end_row', end_row, 'number')
   validate('end_col', end_col, 'number')
 
-  local start = vim.pos.extmark(buf, start_row, start_col)
-  local end_ = vim.pos.extmark(buf, end_row, end_col)
+  if end_col == #get_line(buf, end_row) then
+    end_row = end_row + 1
+    end_col = 0
+  end
 
-  return M.new(start, end_)
+  return M.new(buf, start_row, start_col, end_row, end_col)
 end
 
 --- Converts |vim.Range| to mark-like range (see |api-indexing|).
