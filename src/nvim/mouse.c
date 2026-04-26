@@ -609,9 +609,10 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
 
   pos_T end_visual = { 0 };
   pos_T start_visual = { 0 };
+  bool mouse_can_visual = ui_mouse_has(MOUSE_VISUAL);
   if ((State & (MODE_NORMAL | MODE_INSERT))
       && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
-    if (which_button == MOUSE_LEFT) {
+    if (which_button == MOUSE_LEFT && mouse_can_visual) {
       if (is_click) {
         // stop Visual mode for a left click in a window, but not when on a status line
         if (VIsual_active) {
@@ -620,7 +621,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       } else {
         jump_flags |= MOUSE_MAY_VIS;
       }
-    } else if (which_button == MOUSE_RIGHT) {
+    } else if (which_button == MOUSE_RIGHT && mouse_can_visual) {
       if (is_click && VIsual_active) {
         // Remember the start and end of visual before moving the cursor.
         if (lt(curwin->w_cursor, VIsual)) {
@@ -631,8 +632,10 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
           end_visual = curwin->w_cursor;
         }
       }
-      jump_flags |= MOUSE_FOCUS;
       jump_flags |= MOUSE_MAY_VIS;
+      jump_flags |= MOUSE_FOCUS;
+    } else if (which_button == MOUSE_RIGHT) {
+      jump_flags |= MOUSE_FOCUS;
     }
   }
 
@@ -650,7 +653,12 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   // JUMP!
   int old_active = VIsual_active;
   pos_T save_cursor = curwin->w_cursor;
-  jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
+
+  // Even though we gate *_VIS flags above, we want to make sure the cursor doesn't move
+  // in visual mode unless it is set as a mouse option
+  if (!VIsual_active || mouse_can_visual) {
+    jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
+  }
 
   bool moved = (jump_flags & CURSOR_MOVED);
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
@@ -891,7 +899,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   } else if (in_status_line || in_sep_line) {
     // Do nothing if on status line or vertical separator
     // Handle double clicks otherwise
-  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))) {
+  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))
+             && mouse_can_visual) {
     if (is_click || !VIsual_active) {
       if (VIsual_active) {
         orig_cursor = VIsual;
