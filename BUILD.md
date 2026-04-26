@@ -366,7 +366,7 @@ podman run \
   -v "$PWD:/workdir" \
   -w /workdir \
   alpine:latest \
-  sh -c 'apk add build-base cmake coreutils curl gettext-tiny-dev git && make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"'
+  sh -c 'apk add build-base cmake coreutils curl gettext-tiny-dev git linux-headers && make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"'
 ```
 
 The resulting binary in `build/bin/nvim` will have all the dependencies statically linked:
