@@ -163,6 +163,7 @@ LUA
   filetype detection.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
 the same range instances now compare equal.
+• |vim.fs.find()| can skip matching directories using `opts.skip`.
 
 OPTIONS
 

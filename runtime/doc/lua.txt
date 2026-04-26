@@ -2661,6 +2661,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                    many matches. Use `math.huge` for "unlimited".
                  • {follow}? (`boolean`, default: `false`) Follow symbolic
                    links.
+                 • {skip}? (`fun(dir: string): boolean`) Predicate to control
+                   directory traversal. Return true to skip (not descend into)
+                   the given directory.
 
     Return: ~
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
