@@ -334,8 +334,8 @@ Editor:
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
-- |OptionSet| is now fired for 'modified' when writing a file,
-  undoing changes, or using |:set| modified.
+- |OptionSet| is triggered for 'modified' when writing a file, undoing changes,
+  or using |:set| modified.
 - |Progress|
 - |RecordingEnter|
 - |RecordingLeave|

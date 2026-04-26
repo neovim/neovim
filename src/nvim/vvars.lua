@@ -756,7 +756,7 @@ M.vars = {
   starttime = {
     type = 'integer',
     desc = [=[
-      Timestamp (nanoseconds from UNIX epoch) when the Nvim process
+      Timestamp (nanoseconds since UNIX epoch) when the Nvim process
       started.
 
       To see the current "uptime": >lua

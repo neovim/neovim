@@ -922,9 +922,8 @@ OptionSet			After setting an option (except during
 				always use |:noautocmd| to prevent triggering
 				OptionSet.
 
-				Note: The 'modified' option triggers
-				|OptionSet| deferred to the next event-loop
-				tick, even when set via |:set|.
+				Note: OptionSet is |deferred| when triggered by
+				'modified', even when set via |:set|.
 
 				Non-recursive: |:set| in the autocommand does
 				not trigger OptionSet again.

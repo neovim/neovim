@@ -154,7 +154,7 @@ indices, end-inclusive):
 - |nvim_buf_get_extmarks()|
 - |nvim_buf_set_extmark()|
 
-                                                        *api-fast* *schedule*
+						*api-fast* *deferred* *schedule*
 Most API functions are deferred: they are queued ("scheduled") on the main
 loop and processed sequentially with normal input. If the editor is waiting
 for user input in a "modal" fashion (e.g. an |input()| prompt), a deferred

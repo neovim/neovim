@@ -2060,7 +2060,7 @@ void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
   }
 }
 
-/// Fire OptionSet autocmd directly (called from deferred context, bypasses defer logic).
+/// Execute OptionSet autocmd now (not deferred).
 void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, OptVal oldval, OptVal oldval_g,
                                  OptVal oldval_l, OptVal newval, const char *errmsg)
 {

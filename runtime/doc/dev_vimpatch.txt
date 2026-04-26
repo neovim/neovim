@@ -6,15 +6,13 @@ Merging patches from Vim                                    *dev-vimpatch*
 
 
 Nvim was forked from Vim 7.4.160; it is kept up-to-date with relevant Vim
-patches in order to avoid duplicate work. Run `vim-patch.sh`
-https://github.com/neovim/neovim/blob/master/scripts/vim-patch.sh to see the
-status of Vim patches:
->bash
+patches in order to avoid duplicate work. Run `vim-patch.sh` to see the status
+of Vim patches: >bash
     ./scripts/vim-patch.sh -l
 <
-Everyone is welcome to |dev-vimpatch-pull-requests| for relevant Vim
-patches, but some types of patches are |dev-vimpatch-not-applicable|.
-See |dev-vimpatch-quickstart| to get started immediately.
+Everyone is welcome to |dev-vimpatch-pull-requests| for relevant Vim patches,
+but some types of patches are |dev-vimpatch-not-applicable|. See
+|dev-vimpatch-quickstart| to get started immediately.
 
 
                                          Type |gO| to see the table of contents.

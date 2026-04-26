@@ -667,7 +667,7 @@ vim.v.shell_error = ...
 --- @type table[]
 vim.v.stacktrace = ...
 
---- Timestamp (nanoseconds from UNIX epoch) when the Nvim process
+--- Timestamp (nanoseconds since UNIX epoch) when the Nvim process
 --- started.
 ---
 --- To see the current "uptime":

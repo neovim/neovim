@@ -17,7 +17,14 @@ jobs:
           script: |
             const title = context.payload.issue.title;
             const titleSplit = title.split(/\b/).map(e => e.toLowerCase());
-            const keywords = ['api', 'lsp', 'treesitter', 'ui', 'ui2'];
+            const keywords = [
+              'api',
+              'image',
+              'lsp',
+              'treesitter',
+              'ui',
+              'ui2'
+            ];
             var labels = new Set();
 
             for (const keyword of keywords) {

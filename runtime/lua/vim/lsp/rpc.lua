@@ -191,7 +191,7 @@ local default_dispatchers = {
 }
 
 --- @async
-local function parse_content_length()
+local function message_decoder()
   local strbuf = strbuffer.new()
   while true do
     local header_len ---@type integer?
@@ -226,7 +226,7 @@ end
 function M.create_read_loop(handle_body, on_exit, on_error)
   on_exit = on_exit or function() end
   on_error = on_error or function() end
-  local co = coroutine.create(parse_content_length)
+  local co = coroutine.create(message_decoder)
   coroutine.resume(co)
   return function(err, chunk)
     if err then
