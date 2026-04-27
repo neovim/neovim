@@ -227,6 +227,34 @@ describe('treesitter node API', function()
     eq({ 0, 0, 2, 3 }, lua_eval('range'))
   end)
 
+  it('get_node_text: buffer and string sources agree when node ends at col 0', function()
+    -- A node ending at col 0 of the next line includes a trailing newline in its
+    -- byte range. The string source was incorrectly including that newline while
+    -- the buffer source (which stores lines without newlines) did not. #28677
+    insert('foo\nbar\n')
+    exec_lua(function()
+      -- fake node spanning (0,0)..(1,0): end_col=0, covers "foo\n" in the source
+      local fake = {}
+      function fake:start()
+        return 0, 0, 0
+      end
+      function fake:end_()
+        return 1, 0, 4
+      end
+      function fake:range(bytes)
+        if bytes then
+          return 0, 0, 0, 1, 0, 4
+        end
+        return 0, 0, 1, 0
+      end
+      _G.text_str = vim.treesitter.get_node_text(fake, 'foo\nbar\n')
+      _G.text_buf = vim.treesitter.get_node_text(fake, 0)
+    end)
+
+    eq('foo', lua_eval('text_str'))
+    eq('foo', lua_eval('text_buf'))
+  end)
+
   it('tree:root() is idempotent', function()
     insert([[
       function x()

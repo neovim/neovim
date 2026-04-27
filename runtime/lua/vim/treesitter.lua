@@ -233,7 +233,15 @@ function M.get_node_text(node, source, opts)
   end
 
   ---@cast source string
-  return source:sub(select(3, node:start()) + 1, select(3, node:end_()))
+  local start_byte = select(3, node:start())
+  local _, end_col, end_byte = node:end_() ---@type integer, integer, integer
+  -- strip the trailing newline that the string byte offset includes when a node
+  -- ends at the start of the next line (end_col==0), so string source matches
+  -- buffer source which never stores the newline character itself
+  if end_col == 0 then
+    end_byte = end_byte - 1
+  end
+  return source:sub(start_byte + 1, end_byte)
 end
 
 --- Determines whether (line, col) position is in node range
