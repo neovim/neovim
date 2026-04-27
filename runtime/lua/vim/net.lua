@@ -108,7 +108,11 @@ function M.request(method, url, opts, on_response)
     method = method:upper()
 
     if not http_methods[method:upper()] then
-      error('invalid HTTP method: ' .. method .. '. Supported methods: GET, POST, PUT, PATCH, HEAD, DELETE')
+      error(
+        'invalid HTTP method: '
+          .. method
+          .. '. Supported methods: GET, POST, PUT, PATCH, HEAD, DELETE'
+      )
     end
   end
 
