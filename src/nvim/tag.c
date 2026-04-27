@@ -2734,7 +2734,7 @@ static int parse_match(char *lbuf, tagptrs_T *tagp)
 
 // Find out the actual file name of a tag.  Concatenate the tags file name
 // with the matching tag file name.
-// Returns an allocated string.
+// Returns an allocated string, or NULL on failure.
 static char *tag_full_fname(tagptrs_T *tagp)
 {
   char c = *tagp->fname_end;
@@ -2806,6 +2806,9 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
   // Expand file name, when needed (for environment variables).
   // If 'tagrelative' option set, may change file name.
   fname = expand_tag_fname(fname, tagp.tag_fname, true);
+  if (fname == NULL) {
+    goto erret;
+  }
   tofree_fname = fname;         // free() it later
 
   // Check if the file with the tag exists before abandoning the current
@@ -3057,12 +3060,20 @@ erret:
 /// If 'tagrelative' option set, change fname (name of file containing tag)
 /// according to tag_fname (name of tag file containing fname).
 ///
-/// @return  a pointer to allocated memory.
+/// @return  a pointer to allocated memory, or NULL on failure.
 static char *expand_tag_fname(char *fname, char *const tag_fname, const bool expand)
 {
   char *p;
   char *expanded_fname = NULL;
   expand_T xpc;
+
+  // Refuse to follow URLs from tag files.  Tag entries are expected
+  // to reference local source files; a URL would otherwise be passed
+  // to netrw and trigger a network request.
+  if (path_with_url(fname)) {
+    emsg(_(e_tag_file_entry_must_not_be_url));
+    return NULL;
+  }
 
   fname = TO_SLASH_SAVE(fname);
 
@@ -3114,8 +3125,10 @@ static int test_for_current(char *fname, char *fname_end, char *tag_fname, char 
       *fname_end = NUL;
     }
     char *fullname = expand_tag_fname(fname, tag_fname, true);
-    retval = (path_full_compare(fullname, buf_ffname, true, true) & kEqualFiles);
-    xfree(fullname);
+    if (fullname != NULL) {
+      retval = (path_full_compare(fullname, buf_ffname, true, true) & kEqualFiles);
+      xfree(fullname);
+    }
     *fname_end = c;
   }
 

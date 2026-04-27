@@ -1751,4 +1751,15 @@ func Test_tag_backtick_filename_not_expanded()
   bwipe!
 endfunc
 
+func Test_tagjump_refuse_url()
+  call writefile([
+        \ "XTagURL\thttp://127.0.0.1:1/$XTAG_SECRET/file.c\t/^int main"
+        \ ], 'Xtags', 'D')
+  let save_tags = &tags
+  set tags=Xtags
+
+  call assert_fails('tag XTagURL', 'E1576:')
+  let &tags = save_tags
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
