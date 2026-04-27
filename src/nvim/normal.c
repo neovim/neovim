@@ -5178,7 +5178,7 @@ static void nv_suspend(cmdarg_T *cap)
   if (VIsual_active) {
     end_visual_mode();                  // stop Visual mode
   }
-  do_cmdline_cmd("st");
+  do_cmdline_cmd("stop");
 }
 
 /// "gv": Reselect the previous Visual area.  If Visual already active,

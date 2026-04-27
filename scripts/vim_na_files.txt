@@ -116,6 +116,7 @@ src/testdir/test_remote.vim
 src/testdir/test_restricted.vim
 src/testdir/test_short_sleep.py
 src/testdir/test_shortpathname.vim
+src/testdir/test_suspend.vim
 src/testdir/test_tcl.vim
 src/testdir/test_termencoding.vim
 src/testdir/test_xdg.vim
