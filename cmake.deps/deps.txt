@@ -43,8 +43,8 @@ TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/a
 TREESITTER_QUERY_SHA256 c2b23b9a54cffcc999ded4a5d3949daf338bebb7945dece229f832332e6e6a7d
 TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.3.tar.gz
 TREESITTER_MARKDOWN_SHA256 df845b1ab7c7c163ec57d7fa17170c92b04be199bddab02523636efec5224ab6
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/aff9b9d92e628bdb159189b7066baa00e8f7535e.tar.gz
-TREESITTER_SHA256 9518f74b873ce1f521257130ddcb8008cbb1b2a5febe7f56271027147c43ee1c
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/fb348c34939dd3cd5b0a67839b11e316d3333376.tar.gz
+TREESITTER_SHA256 02cfb3d3d8fa82758b7e90e13f239bcd5b81fc72294c535c81303eafa2ce11b3
 
 WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.6.tar.gz
 WASMTIME_SHA256 c4a3c596a07c02ba6adce503154a2095fd98037a1e50d56add9773f0269ec9b7
