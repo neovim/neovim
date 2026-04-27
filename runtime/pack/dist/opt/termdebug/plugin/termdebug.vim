@@ -1487,7 +1487,7 @@ func s:HandleEvaluate(msg)
     "   itself and the other for the value in that address. So with the stock
     "   focus option, the second message will focus the window containing the
     "   first message.
-    let s:eval_float_win_id = luaeval('select(2, vim.lsp.util.open_floating_preview(_A))', [s:evalFromBalloonExprResult])
+    let s:eval_float_win_id = luaeval('select(2, vim.lsp.util.open_floating_preview(_A))', split(s:evalFromBalloonExprResult, '\\n'))
   else
     echomsg $'"{s:evalexpr}": {value}'
   endif
