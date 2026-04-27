@@ -200,8 +200,8 @@ local config = {
       'system.lua',
       'text.lua',
       'ui.lua',
-      'uri.lua',
       'img.lua', -- ui/img.lua
+      'uri.lua',
       'version.lua',
 
       -- Sections at the end, in a specific order:

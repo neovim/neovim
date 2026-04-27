@@ -5227,66 +5227,6 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
 
 
 ==============================================================================
-Lua module: vim.uri                                                  *vim.uri*
-
-vim.uri_decode({str})                                       *vim.uri_decode()*
-    URI-decodes a string containing percent escapes.
-
-    Parameters: ~
-      • {str}  (`string`) string to decode
-
-    Return: ~
-        (`string`) decoded string
-
-vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
-    URI-encodes a string using percent escapes.
-
-    Parameters: ~
-      • {str}  (`string`) string to encode
-      • {rfc}  (`"rfc2396"|"rfc2732"|"rfc3986"?`)
-
-    Return: ~
-        (`string`) encoded string
-
-vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
-    Gets a URI from a bufnr.
-
-    Parameters: ~
-      • {bufnr}  (`integer`)
-
-    Return: ~
-        (`string`) URI
-
-vim.uri_from_fname({path})                              *vim.uri_from_fname()*
-    Gets a URI from a file path.
-
-    Parameters: ~
-      • {path}  (`string`) Path to file
-
-    Return: ~
-        (`string`) URI
-
-vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
-    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
-    the uri already exists.
-
-    Parameters: ~
-      • {uri}  (`string`)
-
-    Return: ~
-        (`integer`) bufnr
-
-vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
-    Gets a filename from a URI.
-
-    Parameters: ~
-      • {uri}  (`string`)
-
-    Return: ~
-        (`string`) filename or unchanged URI for non-file URIs
-
-
-==============================================================================
 Lua module: vim.ui.img                                            *vim.ui.img*
 
 EXPERIMENTAL: This API may change in the future. Its semantics are not yet
@@ -5360,6 +5300,66 @@ vim.ui.img.set({data_or_id}, {opts})                        *vim.ui.img.set()*
 
     Return: ~
         (`integer`) id
+
+
+==============================================================================
+Lua module: vim.uri                                                  *vim.uri*
+
+vim.uri_decode({str})                                       *vim.uri_decode()*
+    URI-decodes a string containing percent escapes.
+
+    Parameters: ~
+      • {str}  (`string`) string to decode
+
+    Return: ~
+        (`string`) decoded string
+
+vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
+    URI-encodes a string using percent escapes.
+
+    Parameters: ~
+      • {str}  (`string`) string to encode
+      • {rfc}  (`"rfc2396"|"rfc2732"|"rfc3986"?`)
+
+    Return: ~
+        (`string`) encoded string
+
+vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
+    Gets a URI from a bufnr.
+
+    Parameters: ~
+      • {bufnr}  (`integer`)
+
+    Return: ~
+        (`string`) URI
+
+vim.uri_from_fname({path})                              *vim.uri_from_fname()*
+    Gets a URI from a file path.
+
+    Parameters: ~
+      • {path}  (`string`) Path to file
+
+    Return: ~
+        (`string`) URI
+
+vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
+    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
+    the uri already exists.
+
+    Parameters: ~
+      • {uri}  (`string`)
+
+    Return: ~
+        (`integer`) bufnr
+
+vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
+    Gets a filename from a URI.
+
+    Parameters: ~
+      • {uri}  (`string`)
+
+    Return: ~
+        (`string`) filename or unchanged URI for non-file URIs
 
 
 ==============================================================================
