@@ -95,7 +95,7 @@ describe('vim.ui.img', function()
     setup_img_api()
   end)
 
-  it('can set an image', function()
+  it('can set an image relative to the terminal ui', function()
     local esc_codes = exec_lua(function()
       _G.data = {}
       vim.ui.img.set(PNG_IMG_BYTES, {
@@ -156,27 +156,103 @@ describe('vim.ui.img', function()
     eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
   end)
 
-  it('can get image info', function()
+  it('can set an image relative to the editor', function()
     local result = exec_lua(function()
-      local id = vim.ui.img.set(PNG_IMG_BYTES, {
-        row = 5,
-        col = 10,
-        width = 20,
-        height = 15,
-        zindex = 42,
+      _G.data = {}
+      vim.ui.img.set(PNG_IMG_BYTES, {
+        row = 2,
+        col = 1,
+        width = 3,
+        height = 4,
+        zindex = 123,
+        relative = 'editor',
       })
-
-      return {
-        info = vim.ui.img.get(id),
-        missing = vim.ui.img.get(999999),
-      }
+      local cfg = nil
+      for _, w in ipairs(vim.api.nvim_list_wins()) do
+        local c = vim.api.nvim_win_get_config(w)
+        if c.relative ~= '' then
+          cfg = c
+        end
+      end
+      return { esc_codes = table.concat(_G.data), cfg = cfg }
     end)
 
-    eq({ row = 5, col = 10, width = 20, height = 15, zindex = 42 }, result.info)
-    eq(nil, result.missing)
+    -- Transmit image bytes
+    local esc = result.esc_codes
+    local seq = parse_kitty_seq(esc, { strict = true })
+    local image_id = seq.control.i
+    eq(
+      { f = '100', a = 't', t = 'd', i = image_id, q = '2', m = '0' },
+      seq.control,
+      'transmit control'
+    )
+    eq(base64_encode(PNG_IMG_BYTES), seq.data, 'transmit payload')
+    esc = string.sub(esc, seq.j + 1)
+
+    -- Virtual placement (no cursor management sequences)
+    seq = parse_kitty_seq(esc, { strict = true })
+    eq(
+      { a = 'p', U = '1', i = image_id, p = seq.control.p, c = '3', r = '4', q = '2' },
+      seq.control,
+      'virtual placement'
+    )
+    esc = string.sub(esc, seq.j + 1)
+    eq('', esc, 'no cursor management sequences')
+
+    -- Floating window at the correct editor-relative position (0-indexed)
+    assert(result.cfg ~= nil, 'floating window was created')
+    eq('editor', result.cfg.relative)
+    eq(1, result.cfg.row) -- row=2 (1-indexed) → 1 (0-indexed)
+    eq(0, result.cfg.col) -- col=1 (1-indexed) → 0 (0-indexed)
+    eq(3, result.cfg.width)
+    eq(4, result.cfg.height)
+    eq(123, result.cfg.zindex)
   end)
 
-  it('can update an image', function()
+  it('can set an image relative to a buffer', function()
+    local result = exec_lua(function()
+      _G.data = {}
+      vim.ui.img.set(PNG_IMG_BYTES, { buf = 0, row = 2, col = 1, width = 4, height = 3 })
+      local ns_id = vim.api.nvim_get_namespaces()['vim.ui.img.kitty']
+      local marks = vim.api.nvim_buf_get_extmarks(0, ns_id, 0, -1, { details = true })
+      return { esc_codes = table.concat(_G.data), mark = marks[1] }
+    end)
+
+    -- Transmit image bytes
+    local esc = result.esc_codes
+    local seq = parse_kitty_seq(esc, { strict = true })
+    local image_id = seq.control.i
+    eq(
+      { f = '100', a = 't', t = 'd', i = image_id, q = '2', m = '0' },
+      seq.control,
+      'transmit control'
+    )
+    eq(base64_encode(PNG_IMG_BYTES), seq.data)
+    esc = string.sub(esc, seq.j + 1)
+
+    -- Virtual placement (no cursor management sequences)
+    seq = parse_kitty_seq(esc, { strict = true })
+    eq(
+      { a = 'p', U = '1', i = image_id, p = seq.control.p, c = '4', r = '3', q = '2' },
+      seq.control,
+      'virtual placement'
+    )
+    esc = string.sub(esc, seq.j + 1)
+    eq('', esc, 'no cursor management')
+
+    -- Extmark created at the correct buffer position (0-indexed)
+    eq(1, result.mark[2]) -- row=2 (1-indexed) → 1 (0-indexed)
+    eq(0, result.mark[3]) -- col=1 (1-indexed) → 0 (0-indexed)
+    eq(3, #result.mark[4].virt_lines) -- height=3 lines
+
+    for _, line in ipairs(result.mark[4].virt_lines) do
+      local last = line[#line]
+      eq(2, #last)
+      assert(last[2]:find('NvimImgPlaceholder_'), 'placeholder highlight on last chunk')
+    end
+  end)
+
+  it('can update an image relative to the terminal ui', function()
     local result = exec_lua(function()
       local id = vim.ui.img.set(PNG_IMG_BYTES, {
         row = 1,
@@ -242,6 +318,224 @@ describe('vim.ui.img', function()
     eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
   end)
 
+  it('can update an image relative to the editor', function()
+    local result = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, {
+        row = 1,
+        col = 1,
+        width = 10,
+        height = 20,
+        zindex = 99,
+        relative = 'editor',
+      })
+
+      vim.ui.img.set(id, { col = 5, row = 6, width = 7, height = 8, zindex = 9 })
+
+      -- Partial update: only change row
+      vim.ui.img.set(id, { row = 50 })
+      local info = vim.ui.img.get(id)
+
+      local cfg = nil
+      for _, w in ipairs(vim.api.nvim_list_wins()) do
+        local c = vim.api.nvim_win_get_config(w)
+        if c.relative ~= '' then
+          cfg = c
+        end
+      end
+
+      return { info = info, cfg = cfg }
+    end)
+
+    -- Verify partial update merged opts
+    eq({ row = 50, col = 5, width = 7, height = 8, zindex = 9, relative = 'editor' }, result.info)
+
+    -- Floating window reflects final merged state (0-indexed)
+    eq(49, result.cfg.row) -- row=50 (1-indexed) → 49 (0-indexed)
+    eq(4, result.cfg.col) -- col=5  (1-indexed) → 4  (0-indexed)
+    eq(7, result.cfg.width)
+    eq(8, result.cfg.height)
+    eq(9, result.cfg.zindex)
+  end)
+
+  it('can update an image relative to a buffer', function()
+    local result = exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, vim.fn['repeat']({ '' }, 10))
+      local id = vim.ui.img.set(PNG_IMG_BYTES, { buf = 0, row = 1, col = 1, width = 4, height = 3 })
+
+      _G.data = {}
+      vim.ui.img.set(id, { row = 2, col = 1, width = 6, height = 5 })
+      local esc_codes = table.concat(_G.data)
+
+      -- Partial update: only change row, other fields preserved
+      vim.ui.img.set(id, { row = 10 })
+      local info = vim.ui.img.get(id)
+
+      local ns_id = vim.api.nvim_get_namespaces()['vim.ui.img.kitty']
+      local marks = vim.api.nvim_buf_get_extmarks(0, ns_id, 0, -1, { details = true })
+
+      return { esc_codes = esc_codes, info = info, mark = marks[1] }
+    end)
+
+    -- Verify partial update merged opts
+    eq({ buf = 0, row = 10, col = 1, width = 6, height = 5 }, result.info)
+
+    -- Virtual placement updated with new dimensions (no cursor management)
+    local esc = result.esc_codes
+    local seq = parse_kitty_seq(esc, { strict = true })
+    eq(
+      { a = 'p', U = '1', i = seq.control.i, p = seq.control.p, c = '6', r = '5', q = '2' },
+      seq.control,
+      'virtual placement'
+    )
+    esc = string.sub(esc, seq.j + 1)
+    eq('', esc, 'no cursor management')
+
+    -- Extmark reflects final merged position (0-indexed)
+    eq(9, result.mark[2]) -- row=10 (1-indexed) → 9 (0-indexed)
+    eq(0, result.mark[3]) -- col=1  (1-indexed) → 0 (0-indexed)
+  end)
+
+  it('can get image info relative to the terminal ui', function()
+    local result = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, {
+        row = 5,
+        col = 10,
+        width = 20,
+        height = 15,
+        zindex = 42,
+      })
+
+      return {
+        info = vim.ui.img.get(id),
+        missing = vim.ui.img.get(999999),
+      }
+    end)
+
+    eq({ row = 5, col = 10, width = 20, height = 15, zindex = 42 }, result.info)
+    eq(nil, result.missing)
+  end)
+
+  it('can get image info relative to the editor', function()
+    local info = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, {
+        row = 5,
+        col = 10,
+        width = 20,
+        height = 15,
+        zindex = 42,
+        relative = 'editor',
+      })
+      return vim.ui.img.get(id)
+    end)
+
+    eq({ row = 5, col = 10, width = 20, height = 15, zindex = 42, relative = 'editor' }, info)
+  end)
+
+  it('can get image info relative to a buffer', function()
+    local info = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, {
+        buf = 0,
+        row = 1,
+        col = 1,
+        width = 20,
+        height = 15,
+      })
+      return vim.ui.img.get(id)
+    end)
+
+    eq({ buf = 0, row = 1, col = 1, width = 20, height = 15 }, info)
+  end)
+
+  it('can delete an image relative to the terminal ui', function()
+    local result = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1, width = 2, height = 2 })
+
+      _G.data = {}
+      local found = vim.ui.img.del(id)
+      local after = vim.ui.img.get(id)
+      local not_found = vim.ui.img.del(id)
+
+      return {
+        esc_codes = table.concat(_G.data),
+        found = found,
+        after = after,
+        not_found = not_found,
+      }
+    end)
+
+    local seq = parse_kitty_seq(result.esc_codes, { strict = true })
+    eq({ a = 'd', d = 'i', i = seq.control.i, q = '2' }, seq.control, 'delete sequence')
+
+    eq(true, result.found)
+    eq(nil, result.after)
+    eq(false, result.not_found)
+  end)
+
+  it('can delete an image relative to the editor', function()
+    local result = exec_lua(function()
+      local wins_start = #vim.api.nvim_list_wins()
+      local id = vim.ui.img.set(
+        PNG_IMG_BYTES,
+        { row = 1, col = 1, width = 2, height = 2, relative = 'editor' }
+      )
+      local wins_after_set = #vim.api.nvim_list_wins()
+
+      _G.data = {}
+      local found = vim.ui.img.del(id)
+      local after = vim.ui.img.get(id)
+      local not_found = vim.ui.img.del(id)
+      local wins_after_del = #vim.api.nvim_list_wins()
+
+      return {
+        esc_codes = table.concat(_G.data),
+        found = found,
+        after = after,
+        not_found = not_found,
+        wins_start = wins_start,
+        wins_after_set = wins_after_set,
+        wins_after_del = wins_after_del,
+      }
+    end)
+
+    local seq = parse_kitty_seq(result.esc_codes, { strict = true })
+    eq({ a = 'd', d = 'i', i = seq.control.i, q = '2' }, seq.control, 'delete sequence')
+
+    eq(true, result.found)
+    eq(nil, result.after)
+    eq(false, result.not_found)
+    eq(result.wins_start + 1, result.wins_after_set, 'floating window created')
+    eq(result.wins_start, result.wins_after_del, 'floating window closed')
+  end)
+
+  it('can delete an image relative to a buffer', function()
+    local result = exec_lua(function()
+      local id = vim.ui.img.set(PNG_IMG_BYTES, { buf = 0, row = 1, col = 1, width = 4, height = 2 })
+
+      _G.data = {}
+      local found = vim.ui.img.del(id)
+      local after = vim.ui.img.get(id)
+      local not_found = vim.ui.img.del(id)
+      local ns_id = vim.api.nvim_get_namespaces()['vim.ui.img.kitty']
+      local marks = vim.api.nvim_buf_get_extmarks(0, ns_id, 0, -1, {})
+
+      return {
+        esc_codes = table.concat(_G.data),
+        found = found,
+        after = after,
+        not_found = not_found,
+        marks = marks,
+      }
+    end)
+
+    local seq = parse_kitty_seq(result.esc_codes, { strict = true })
+    eq({ a = 'd', d = 'i', i = seq.control.i, q = '2' }, seq.control, 'delete sequence')
+
+    eq(true, result.found)
+    eq(nil, result.after)
+    eq(false, result.not_found)
+    eq({}, result.marks, 'extmark removed')
+  end)
+
   it('can delete all images', function()
     local result = exec_lua(function()
       local id1 = vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
@@ -267,33 +561,83 @@ describe('vim.ui.img', function()
     eq(false, result.not_deleted)
   end)
 
-  it('can delete an image', function()
+  it('extmark is hidden when its anchor line is deleted', function()
     local result = exec_lua(function()
-      local id = vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'line 1', 'line 2', 'line 3' })
+      vim.ui.img.set(PNG_IMG_BYTES, { buf = 0, row = 2, col = 1, width = 4, height = 3 })
+      local ns_id = vim.api.nvim_get_namespaces()['vim.ui.img.kitty']
+      local before = vim.api.nvim_buf_get_extmarks(0, ns_id, 0, -1, { details = true })
 
-      _G.data = {}
-      local found = vim.ui.img.del(id)
-      local after = vim.ui.img.get(id)
-      local not_found = vim.ui.img.del(id)
+      -- Simulate dd: delete the anchor line (row 2 = 0-indexed row 1)
+      vim.api.nvim_buf_set_lines(0, 1, 2, false, {})
 
-      return {
-        esc_codes = table.concat(_G.data),
-        found = found,
-        after = after,
-        not_found = not_found,
-      }
+      local after = vim.api.nvim_buf_get_extmarks(0, ns_id, 0, -1, { details = true })
+      return { before = before, after = after }
     end)
 
-    local seq = parse_kitty_seq(result.esc_codes, { strict = true })
-    eq({
-      a = 'd',
-      d = 'i',
-      i = seq.control.i,
-      q = '2',
-    }, seq.control, 'delete image')
+    -- Before: mark exists with invalidate flag set
+    eq(1, #result.before, 'extmark exists before deletion')
+    eq(true, result.before[1][4].invalidate, 'extmark has invalidate flag')
 
-    eq(true, result.found)
-    eq(nil, result.after)
-    eq(false, result.not_found)
+    -- After: mark is hidden (invalid=true), not rendered, but retained for undo
+    eq(1, #result.after, 'extmark still exists after deletion')
+    eq(true, result.after[1][4].invalid, 'extmark hidden after anchor line deleted')
+  end)
+
+  it('fails to set an image when dimensions cannot be derived', function()
+    -- Non-PNG data has no IHDR to read; with no explicit width/height this must fail.
+    local ok, err = exec_lua(function()
+      return pcall(vim.ui.img.set, 'not a png', { buf = 0 })
+    end)
+    eq(false, ok)
+    assert(err:find('width and height required'), err)
+  end)
+
+  it('fails to set an oversized editor placement', function()
+    local ok, err = exec_lua(function()
+      return pcall(vim.ui.img.set, PNG_IMG_BYTES, {
+        relative = 'editor',
+        row = 1,
+        col = 1,
+        width = 298,
+        height = 4,
+      })
+    end)
+    eq(false, ok)
+    assert(err:find('width exceeds kitty placeholder limit'), err)
+    assert(err:find('width=298'), err)
+    assert(err:find('max=297'), err)
+  end)
+
+  it('fails to set an oversized buffer placement', function()
+    local ok, err = exec_lua(function()
+      return pcall(vim.ui.img.set, PNG_IMG_BYTES, {
+        buf = 0,
+        row = 1,
+        col = 1,
+        width = 4,
+        height = 298,
+      })
+    end)
+    eq(false, ok)
+    assert(err:find('height exceeds kitty placeholder limit'), err)
+    assert(err:find('height=298'), err)
+    assert(err:find('max=297'), err)
+  end)
+
+  it('can set an image relative to a buffer with padding', function()
+    local virt_lines = exec_lua(function()
+      vim.ui.img.set(PNG_IMG_BYTES, { buf = 0, row = 1, col = 1, width = 2, height = 2, pad = 3 })
+      local ns_id = vim.api.nvim_get_namespaces()['vim.ui.img.kitty']
+      local marks = vim.api.nvim_buf_get_extmarks(0, ns_id, 0, -1, { details = true })
+      return marks[1][4].virt_lines
+    end)
+
+    eq(2, #virt_lines)
+    for _, line in ipairs(virt_lines) do
+      eq('   ', line[1][1], 'leading pad spaces')
+      eq('Normal', line[1][2], 'pad highlight group')
+      assert(line[2][2]:find('NvimImgPlaceholder_'), 'placeholder highlight on second chunk')
+    end
   end)
 end)
