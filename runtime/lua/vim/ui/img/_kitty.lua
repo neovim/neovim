@@ -147,4 +147,50 @@ function M.delete(img_id)
   }))
 end
 
+--- Query whether this terminal supports the kitty graphics protocol.
+--- Blocks until the terminal responds or times out.
+---
+---@param opts? {timeout?: integer} timeout in milliseconds (default: 1000)
+---@return boolean supported
+---@return string? msg error detail if terminal responded but not with OK
+function M.supported(opts)
+  local timeout = opts and opts.timeout or 1000
+
+  -- Do not use APC on terminals that echo unknown sequences
+  if vim.env.TERM_PROGRAM == 'Apple_Terminal' then
+    return false
+  end
+
+  local query_id = generate_id()
+
+  ---@type boolean?
+  local result
+  ---@type string?
+  local msg
+
+  require('vim.tty').query_apc(
+    seq({ a = 'q', i = query_id, s = 1, v = 1 }),
+    { timeout = timeout },
+    function(resp)
+      -- kitty APC response: \027_G[<fields>,]i=<id>[,<fields>];<status>
+      -- status is "OK" or an error code+message like "ENODATA:Missing image data"
+      local id = resp:match('^\027_G[^;]*i=(%d+)')
+      local status = resp:match(';(.-)%s*$')
+      if id and tonumber(id) == query_id and status then
+        result = true
+        msg = status ~= 'OK' and status or nil
+        return true
+      end
+    end
+  )
+
+  -- Wait in a blocking fashion for the response, checking
+  -- at least every 200ms, or faster if the timeout is small
+  vim.wait(timeout + 100, function()
+    return result ~= nil
+  end, math.max(math.min(math.ceil(timeout / 10), 200), 1))
+
+  return result == true, msg
+end
+
 return M

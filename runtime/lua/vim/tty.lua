@@ -91,4 +91,52 @@ function M.query(caps, cb)
   end)
 end
 
+--- Send an APC sequence to the terminal and call {cb} for each APC response received.
+--- Cleans up after {timeout} milliseconds if no response is received.
+---
+--- {cb} receives the full APC sequence including the `\027_` prefix.
+--- Return `true` from {cb} to stop listening.
+---
+---@param payload string APC sequence to send (full escape sequence including prefix/suffix)
+---@param opts {timeout?:integer} Options table (timeout in milliseconds, default 1000)
+---@param cb fun(resp:string):boolean? Callback invoked for each APC TermResponse
+---@overload fun(payload:string, cb:fun(resp:string):boolean?)
+function M.query_apc(payload, opts, cb)
+  if type(opts) == 'function' then
+    cb = opts
+    opts = {}
+  end
+
+  vim.validate('payload', payload, 'string')
+  vim.validate('opts', opts, 'table')
+  vim.validate('cb', cb, 'function')
+
+  local timeout = opts and opts.timeout or 1000
+  local timer = assert(vim.uv.new_timer())
+
+  local id = vim.api.nvim_create_autocmd('TermResponse', {
+    nested = true,
+    callback = function(ev)
+      local resp = ev.data.sequence ---@type string
+      if resp:match('^\027_') then
+        if not timer:is_closing() then
+          timer:close()
+        end
+        return cb(resp)
+      end
+    end,
+  })
+
+  vim.api.nvim_ui_send(payload)
+
+  timer:start(timeout, 0, function()
+    vim.schedule(function()
+      pcall(vim.api.nvim_del_autocmd, id)
+    end)
+    if not timer:is_closing() then
+      timer:close()
+    end
+  end)
+end
+
 return M

@@ -113,6 +113,17 @@ function M.del(id)
   return true
 end
 
+---@private
+--- Query whether the host terminal supports displaying images.
+--- Blocks until the terminal responds or times out.
+---
+---@param opts? {timeout?: integer} timeout in milliseconds (default: 1000)
+---@return boolean supported true if the terminal supports image display
+---@return string? msg error detail if the terminal responded but not with OK
+function M._supported(opts)
+  return require('vim.ui.img._kitty').supported(opts)
+end
+
 vim.api.nvim_create_autocmd('VimLeavePre', {
   callback = function()
     ---@type integer[]
