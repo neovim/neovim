@@ -1,5 +1,8 @@
 local M = {}
 
+---@alias vim.net.request.ResponseFunc fun(err: string?, response: vim.net.request.Response?)
+---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PACH" | "HEAD"| "DELETE
+
 ---@class vim.net.request.Opts
 ---@inlinedoc
 ---
@@ -66,10 +69,12 @@ local M = {}
 --- })
 --- ```
 ---
---- @param method string The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE) or URL for GET request.
---- @param url string The URL for the request or opts table.
+--- @param method string (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
+--- @param url string The URL for the request.
 --- @param opts? vim.net.request.Opts
---- @param on_response? fun(err: string?, response: vim.net.request.Response?)
+--- @param on_response? vim.net.request.ResponseFunc
+--- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
+--- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- Callback invoked on request completion. The `body` field in the response
 --- parameter contains the raw response data (text or binary).
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
