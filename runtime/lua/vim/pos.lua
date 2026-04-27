@@ -86,15 +86,15 @@ end
 --- 0: a == b
 --- -1: a < b
 local function cmp_pos(p1, p2)
-  if p1.row == p2.row then
-    if p1.col > p2.col then
+  if p1[1] == p2[1] then
+    if p1[2] > p2[2] then
       return 1
-    elseif p1.col < p2.col then
+    elseif p1[2] < p2[2] then
       return -1
     else
       return 0
     end
-  elseif p1.row > p2.row then
+  elseif p1[1] > p2[1] then
     return 1
   end
 
@@ -138,7 +138,7 @@ function M.to_lsp(pos, position_encoding)
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
 
-  local buf, row, col = pos.buf, pos.row, pos.col
+  local buf, row, col = pos.buf, pos[1], pos[2]
   -- When on the first character,
   -- we can ignore the difference between byte and character.
   if col > 0 then
@@ -188,7 +188,7 @@ end
 ---@param pos vim.Pos
 ---@return integer, integer
 function M.to_cursor(pos)
-  return pos.row + 1, pos.col
+  return pos[1] + 1, pos[2]
 end
 
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
@@ -204,9 +204,8 @@ end
 function M.to_extmark(pos)
   local line_count = api.nvim_buf_line_count(pos.buf)
 
-  local row = pos.row
-  local col = pos.col
-  if pos.col == 0 and pos.row == line_count then
+  local row, col = pos[1], pos[2]
+  if col == 0 and row == line_count then
     row = row - 1
     col = #get_line(pos.buf, row)
   end
