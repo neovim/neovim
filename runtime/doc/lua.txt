@@ -4244,9 +4244,6 @@ vim.net.request({method}, {url}, {opts}, {on_response})
         })
 <
 
-    Callback invoked on request completion. The `body` field in the response
-    parameter contains the raw response data (text or binary).
-
     Parameters: ~
       • {method}       (`string`) (default: GET) The HTTP method (GET, POST,
                        PUT, PATCH, HEAD, DELETE).
@@ -4259,7 +4256,6 @@ vim.net.request({method}, {url}, {opts}, {on_response})
                          headers and empty headers as supported by curl. Does
                          not support "@filename" style, internal header
                          deletion ("Header:").
-<<<<<<< HEAD
                        • {outbuf}? (`integer`) Buffer to save the response
                          body to.
                        • {outpath}? (`string`) File path to save the response
@@ -4267,22 +4263,14 @@ vim.net.request({method}, {url}, {opts}, {on_response})
                        • {retry}? (`integer`) Number of retries on transient
                          failures (default: 3).
                        • {verbose}? (`boolean`) Enables verbose output.
-      • {on_response}  (`fun(err: string?, response: vim.net.request.Response?)?`)
-                       Callback invoked on request completion. The `body`
-                       field in the response parameter contains the raw
-                       response data (text or binary).
-||||||| parent of 67c80149e7 (docs(vim.net): changing docs and adding aliases)
-      • {on_response}  (`fun(err: string?, response: vim.net.request.Response?)?`)
-                       Callback invoked on request completion. The `body`
-                       field in the response parameter contains the raw
-                       response data (text or binary).
-=======
-      • {on_response}  (`vim.net.request.ResponseFunc?`)
+      • {on_response}  (`vim.net.request.ResponseFunc?`) Callback invoked on
+                       request completion. The `body` field in the response
+                       parameter contains the raw response data (text or
+                       binary).
 
     Overloads: ~
       • `fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)`
       • `fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)`
->>>>>>> 67c80149e7 (docs(vim.net): changing docs and adding aliases)
 
     Return: ~
         (`{ close: fun() }`) Object with `close()` method which cancels the

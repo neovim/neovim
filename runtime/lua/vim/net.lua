@@ -73,10 +73,10 @@ local M = {}
 --- @param url string The URL for the request.
 --- @param opts? vim.net.request.Opts
 --- @param on_response? vim.net.request.ResponseFunc
---- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
---- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- Callback invoked on request completion. The `body` field in the response
 --- parameter contains the raw response data (text or binary).
+--- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
+--- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
 function M.request(method, url, opts, on_response)
   local http_methods = {
@@ -90,16 +90,11 @@ function M.request(method, url, opts, on_response)
 
   if on_response == nil then
     -- old behavior
-    vim.validate('url', method, 'string')
-    vim.validate('opts', url, 'table', true)
-    vim.validate('on_response', opts, 'function', true)
-
-    local original_opts = url
-    local original_on_resp = opts
+    local on_resp = opts
+    opts = url
     url = method
     method = 'GET'
-    opts = original_opts or {}
-    on_response = original_on_resp
+    on_response = on_resp
   else
     -- new behavior
     vim.validate('method', method, 'string')
