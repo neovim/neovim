@@ -241,6 +241,31 @@ describe('vim.ui.img', function()
     eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
   end)
 
+  it('can delete all images', function()
+    local result = exec_lua(function()
+      local id1 = vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
+      local id2 = vim.ui.img.set(PNG_IMG_BYTES, { row = 2, col = 2 })
+
+      _G.data = {}
+      local deleted = vim.ui.img.del(math.huge)
+      return {
+        esc_codes = table.concat(_G.data),
+        deleted = deleted,
+        after_id1 = vim.ui.img.get(id1),
+        after_id2 = vim.ui.img.get(id2),
+        not_deleted = vim.ui.img.del(math.huge), -- nothing to delete
+      }
+    end)
+
+    local seq = parse_kitty_seq(result.esc_codes, { strict = true })
+    eq({ a = 'd', d = 'A', q = '2' }, seq.control, 'delete all control data')
+
+    eq(true, result.deleted)
+    eq(nil, result.after_id1)
+    eq(nil, result.after_id2)
+    eq(false, result.not_deleted)
+  end)
+
   it('can delete an image', function()
     local result = exec_lua(function()
       local id = vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })

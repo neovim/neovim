@@ -5254,17 +5254,20 @@ Examples: >lua
 
     -- Remove the image
     vim.ui.img.del(id)
+
+    -- Remove all images
+    vim.ui.img.del(math.huge)
 <
 
 
 vim.ui.img.del({id})                                        *vim.ui.img.del()*
-    Delete an image, removing it from display.
+    Delete an image, or all images if `math.huge` is given as the id.
 
     Parameters: ~
-      • {id}  (`integer`)
+      • {id}  (`integer`) image id, or `math.huge` to delete all images
 
     Return: ~
-        (`boolean`) found true if the image existed
+        (`boolean`) found true if any image existed
 
 vim.ui.img.get({id})                                        *vim.ui.img.get()*
     Get the opts for an image.

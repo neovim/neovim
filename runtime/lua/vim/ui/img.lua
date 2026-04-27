@@ -27,6 +27,9 @@ local M = {}
 ---
 ----- Remove the image
 ---vim.ui.img.del(id)
+---
+----- Remove all images
+---vim.ui.img.del(math.huge)
 ---```
 
 ---@class vim.ui.img.Opts
@@ -94,12 +97,27 @@ function M.get(id)
   return vim.deepcopy(entry.opts)
 end
 
----Delete an image, removing it from display.
+---Delete an image, or all images if `math.huge` is given as the id.
 ---
----@param id integer
----@return boolean found true if the image existed
+---@param id integer image id, or `math.huge` to delete all images
+---@return boolean found true if any image existed
 function M.del(id)
   vim.validate('id', id, 'number')
+
+  -- Check if we have images to delete, and clear them out of our memory
+  -- being tracked here and also send a request to delete them all from
+  -- the terminal
+  if id == math.huge then
+    local has_ids = next(state) ~= nil
+    state = {}
+
+    if has_ids then
+      local kitty = require('vim.ui.img._kitty')
+      kitty.delete(math.huge)
+    end
+
+    return has_ids
+  end
 
   -- Skip performing the deletion if we don't have an active image with the id
   local entry = state[id]
@@ -126,12 +144,7 @@ end
 
 vim.api.nvim_create_autocmd('VimLeavePre', {
   callback = function()
-    ---@type integer[]
-    local ids = vim.tbl_keys(state)
-
-    for _, id in ipairs(ids) do
-      M.del(id)
-    end
+    M.del(math.huge)
   end,
 })
 

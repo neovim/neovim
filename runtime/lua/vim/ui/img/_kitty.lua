@@ -137,14 +137,24 @@ function M.update(img_id, placement_id, opts)
 end
 
 ---Delete an image and all its placements from the terminal.
+---When {img_id} is `math.huge`, deletes all images.
 ---@param img_id integer
 function M.delete(img_id)
-  vim.api.nvim_ui_send(seq({
-    a = 'd',
-    d = 'i',
-    i = img_id,
-    q = '2', -- Suppress responses
-  }))
+  if img_id == math.huge then
+    -- delete all placements and free stored image data (if not referenced elsewhere, e.g. scrollback)
+    vim.api.nvim_ui_send(seq({
+      a = 'd',
+      d = 'A',
+      q = '2',
+    }))
+  else
+    vim.api.nvim_ui_send(seq({
+      a = 'd',
+      d = 'i',
+      i = img_id,
+      q = '2', -- Suppress responses
+    }))
+  end
 end
 
 --- Query whether this terminal supports the kitty graphics protocol.

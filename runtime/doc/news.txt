@@ -51,6 +51,7 @@ UI
 • todo
 • `vim.ui.img` experimental module added to display images within neovim.
 • `:checkhealth vim.ui.img` reports terminal graphics protocol support.
+• `vim.ui.img.del(math.huge)` clears all images.
 
 VIMSCRIPT
 
