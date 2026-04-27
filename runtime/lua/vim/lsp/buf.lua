@@ -225,23 +225,29 @@ local function get_locations(method, context, opts)
     )
   end
 
-  local bufnr = api.nvim_get_current_buf()
-  local win = api.nvim_get_current_win()
+  local pos = opts.pos or vim.pos.cursor(0, api.nvim_win_get_cursor(0))
+  local buf = pos.buf
 
-  local clients = lsp.get_clients({ method = method, bufnr = bufnr })
+  local clients = lsp.get_clients({ method = method, bufnr = buf })
   if not next(clients) then
     vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
     return
   end
 
   local from = vim.fn.getpos('.')
-  from[1] = bufnr
+  from[1] = buf
   local tagname = vim.fn.expand('<cword>')
 
-  lsp.buf_request_all(bufnr, method, function(client)
-    local params = util.make_position_params(win, client.offset_encoding)
-    ---@diagnostic disable-next-line: inject-field
-    params.context = context or { includeDeclaration = true }
+  lsp.buf_request_all(buf, method, function(client)
+    ---@type lsp.TextDocumentPositionParams
+    local params = {
+      textDocument = util.make_text_document_params(buf),
+      position = pos:to_lsp(client.offset_encoding),
+    }
+    if method == 'textDocument/references' then
+      ---@cast params lsp.ReferenceParams
+      params.context = context or { includeDeclaration = true }
+    end
     return params
   end, function(results)
     ---@type vim.quickfix.entry[]
@@ -267,7 +273,7 @@ local function get_locations(method, context, opts)
     local what = {
       title = name:gsub('^%l', string.upper),
       items = all_items,
-      context = { bufnr = bufnr, method = method },
+      context = { bufnr = buf, method = method },
     }
     if opts.on_list then
       validate('opts.on_list', opts.on_list, 'function')
@@ -285,7 +291,7 @@ local function get_locations(method, context, opts)
         and method ~= 'textDocument/references'
       then
         local tagstack = { { tagname = tagname, from = from } }
-        vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+        vim.fn.settagstack(vim.fn.bufwinid(buf), { items = tagstack }, 't')
         if opts.loclist then
           vim.cmd('lfirst')
         else
@@ -338,6 +344,10 @@ end
 --- vim.lsp.buf.references(nil, { loclist = false })
 --- ```
 --- @field loclist? boolean
+---
+--- Position on a buffer to request.
+--- (default: cursor position)
+--- @field pos vim.Pos
 
 --- Jumps to the declaration of the symbol under the cursor.
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.

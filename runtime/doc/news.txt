@@ -156,8 +156,12 @@ LSP
     "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
   • `textDocument/foldingRange` |vim.lsp.foldtext()| highlights collapsed text.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
-• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
-  and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
+  |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
+  now follows 'switchbuf'.
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
+  |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
+  now supports passing arbitrary positions.
 • Support for nested snippets.
 
 LUA
@@ -263,8 +267,9 @@ REMOVED FEATURES                                                 *news-removed*
 
 These deprecated features were removed.
 
-• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
-  and |vim.lsp.buf.implementation()| no longer accept the `reuse_win` option.
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
+  |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
+  no longer accept the `reuse_win` option.
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
