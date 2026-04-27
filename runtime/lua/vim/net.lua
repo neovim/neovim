@@ -91,9 +91,11 @@ function M.request(method, url, opts, on_response)
   if on_response == nil then
     -- old behavior
     local on_resp = opts
+    ---@diagnostic disable-next-line: cast-local-type
     opts = url
     url = method
     method = 'GET'
+    ---@diagnostic disable-next-line: cast-local-type
     on_response = on_resp
   else
     -- new behavior
@@ -106,11 +108,7 @@ function M.request(method, url, opts, on_response)
     method = method:upper()
 
     if not http_methods[method:upper()] then
-      error(
-        'invalid HTTP method: '
-          .. method
-          .. '. Supported methods: GET, POST, PUT, PATCH, HEAD, DELETE'
-      )
+      error('invalid HTTP method: ' .. method .. '. Supported methods: GET, POST, PUT, PATCH, HEAD, DELETE')
     end
   end
 
