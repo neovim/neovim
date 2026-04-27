@@ -665,6 +665,34 @@ describe('treesitter parser API', function()
           { 6, 15, 6, 18 }, -- VALUE2 123
         }, get_ranges())
       end)
+
+      it('notifies changedtree callbacks when replacing injection regions', function()
+        exec_lua(function()
+          _G.parser = vim.treesitter._create_parser(0, 'c', {
+            injections = {
+              c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "c"))',
+            },
+          })
+          _G.parser:parse(true)
+
+          local child = _G.parser:children().c
+          vim.api.nvim_buf_set_lines(0, 3, 4, false, { '#define VALUE changed' })
+
+          _G.changedtree = 0
+          _G.precise_changedtree = true
+          child:register_cbs({
+            on_changedtree = function(changes, tree)
+              _G.changedtree = _G.changedtree + 1
+              _G.precise_changedtree = _G.precise_changedtree
+                and vim.deep_equal(changes, tree:included_ranges(true))
+            end,
+          })
+
+          _G.parser:parse({ 3, 4 })
+        end)
+
+        eq(true, exec_lua('return _G.changedtree > 0 and _G.precise_changedtree'))
+      end)
     end)
 
     describe('when parsing regions combined', function()

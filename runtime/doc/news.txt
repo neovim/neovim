@@ -178,6 +178,9 @@ OPTIONS
 
 PERFORMANCE
 
+• |treesitter-highlight| performance on large injection-heavy files improves
+  by 50% to 100% by reusing edited child-tree ranges.
+
 • Nvim architecture allows pure-Lua implementations of some `vim.fn`
   functions, which skips the Vimscript <=> Lua "bridge" (no data
   conversion/marshalling) entirely, if the `vim.fn` function is called from
