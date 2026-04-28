@@ -96,6 +96,15 @@ local function setup_img_api()
 
       return _G.with_override(vim.tty, 'query_apc', query_fn)
     end
+
+    ---Wraps `vim.api.nvim_list_uis` to report the given fake {uis}.
+    ---@param uis table[]
+    ---@return fun(fn:function):...
+    function _G.with_fake_uis(uis)
+      return _G.with_override(vim.api, 'nvim_list_uis', function()
+        return uis
+      end)
+    end
   end)
 end
 
@@ -1314,6 +1323,55 @@ describe('vim.ui.img', function()
     end)
     eq(nil, result.after1)
     eq(nil, result.after2)
+  end)
+
+  it('should not query the terminal cell size without a tty ui', function()
+    local esc_codes = exec_lua(function()
+      _G.data = {}
+      -- Without explicit dimensions, they are derived from the image and cell size
+      vim.ui.img.set(PNG_IMG_BYTES, { relative = 'editor' })
+      return table.concat(_G.data)
+    end)
+
+    matches('\027_G', esc_codes) -- kitty escapes are still emitted
+    eq(nil, esc_codes:find('\027%[16t')) -- but no cell size query
+  end)
+
+  it('should query the terminal cell size with a tty ui', function()
+    local result = exec_lua(function()
+      ---@type string?
+      local query
+
+      ---@param payload string
+      ---@param _ table
+      ---@param on_resp fun(resp:string):boolean?
+      local function request_fn(payload, _, on_resp)
+        query = payload
+        -- Report a cell size of 2x2 pixels
+        on_resp('\027[6;2;2t')
+      end
+
+      -- Pretend the attached UI is hosted in a terminal
+      local esc_codes = _G.with_fake_uis({ { stdout_tty = true, width = 80, height = 24 } })(
+        function()
+          return _G.with_override(vim.tty, 'request', request_fn)(function()
+            _G.data = {}
+            vim.ui.img.set(PNG_IMG_BYTES, { relative = 'editor' })
+            return table.concat(_G.data)
+          end)
+        end
+      )
+
+      return { query = query, esc_codes = esc_codes }
+    end)
+
+    eq('\027[16t', result.query)
+
+    -- The 4x4 pixel image spans 2x2 cells given the reported cell size
+    local seq = parse_kitty_seq(result.esc_codes, { strict = true })
+    seq = parse_kitty_seq(string.sub(result.esc_codes, seq.j + 1), { strict = true })
+    eq('2', seq.control.c, 'derived width in cells')
+    eq('2', seq.control.r, 'derived height in cells')
   end)
 end)
 
