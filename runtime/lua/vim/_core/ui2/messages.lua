@@ -600,7 +600,7 @@ local function enter_pager()
   if was_cmdwin ~= '' then
     api.nvim_command('quit')
   elseif M.cmd_on_key then
-    api.nvim_feedkeys(vim.keycode('<Esc>'), 't', false)
+    api.nvim_feedkeys(vim.keycode('<Esc>'), 'tn', false)
   end
   -- Cmdwin is closed one event iteration later so schedule in case it was open.
   vim.schedule(function()

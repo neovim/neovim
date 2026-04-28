@@ -180,6 +180,7 @@ describe('messages2', function()
       foo [+9]                                             |
     ]])
     -- Do enter the pager in normal mode.
+    command('nmap <Esc> <Cmd>fclose<CR>')
     feed('<CR>')
     screen:expect([[
       ^foo                                                  |
