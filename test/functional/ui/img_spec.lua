@@ -1456,3 +1456,302 @@ describe('vim.ui.img._placement', function()
     eq(true, result.same)
   end)
 end)
+
+describe('vim.ui.img (ext_images)', function()
+  local Screen = require('test.functional.ui.screen')
+
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(80, 24, { ext_images = true })
+  end)
+
+  ---Waits until the images known to the UI satisfy {predicate}, returning
+  ---the latest state. Images are keyed by their protocol id, which is
+  ---internal to vim.ui.img and distinct from the id its set() returns.
+  ---@param predicate fun(images:table<integer,table>):boolean?
+  ---@return table<integer,table> images
+  local function wait_for_images(predicate)
+    screen:expect(function()
+      assert(predicate(screen.images), 'image state not reached')
+    end)
+    return screen.images
+  end
+
+  ---Returns the single image in {images} along with its protocol id.
+  ---@param images table<integer,table>
+  ---@return table img
+  ---@return integer id
+  local function single_image(images)
+    local id, img = next(images)
+    assert(id, 'no image received')
+    eq(nil, next(images, id), 'expected exactly one image')
+    return img, id
+  end
+
+  ---True if every image in {images} has been placed, and there are {total} images.
+  ---@param total integer
+  ---@return fun(images:table<integer,table>):boolean
+  local function placed(total)
+    return function(images)
+      local count = 0
+      for _, img in pairs(images) do
+        if not img.placement then
+          return false
+        end
+        count = count + 1
+      end
+      return count == total
+    end
+  end
+
+  it('should transmit data and directly place an image relative to the terminal ui', function()
+    exec_lua(function()
+      vim.ui.img.set(PNG_IMG_BYTES, {
+        row = 3,
+        col = 5,
+        width = 20,
+        height = 10,
+        zindex = 42,
+      })
+    end)
+
+    local img = single_image(wait_for_images(placed(1)))
+    eq(PNG_IMG_BYTES, img.data)
+    -- The UI protocol is 0-indexed, unlike the 1-indexed Lua interface
+    eq({ row = 2, col = 4, width = 20, height = 10, zindex = 42 }, img.placement)
+  end)
+
+  it('should place an image relative to the editor as a virtual placement', function()
+    exec_lua(function()
+      vim.ui.img.set(PNG_IMG_BYTES, { relative = 'editor', width = 4, height = 2 })
+    end)
+
+    local img = single_image(wait_for_images(placed(1)))
+    eq(PNG_IMG_BYTES, img.data)
+    eq({ virtual = true, width = 4, height = 2 }, img.placement)
+  end)
+
+  it('should place an image relative to a buffer as a virtual placement', function()
+    exec_lua(function()
+      vim.ui.img.set(PNG_IMG_BYTES, { buf = 0, row = 1, col = 1, width = 4, height = 2 })
+    end)
+
+    local img = single_image(wait_for_images(placed(1)))
+    eq(PNG_IMG_BYTES, img.data)
+    eq({ virtual = true, width = 4, height = 2 }, img.placement)
+  end)
+
+  it('should not retransmit image data when updating an image', function()
+    local id = exec_lua(function()
+      return vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1, width = 10, height = 5 })
+    end)
+
+    local _, protocol_id = single_image(wait_for_images(placed(1)))
+
+    exec_lua(function()
+      vim.ui.img.set(id, { row = 5, col = 9 })
+    end)
+
+    local images = wait_for_images(function(images)
+      local img = images[protocol_id]
+      return img ~= nil and img.placement ~= nil and img.placement.row == 4
+    end)
+
+    local img = images[protocol_id]
+    -- Update opts merge with those from creation, converted to 0-indexed
+    eq({ row = 4, col = 8, width = 10, height = 5 }, img.placement)
+    eq(1, img.data_events)
+  end)
+
+  it('should re-place a virtual placement when resizing it', function()
+    local id = exec_lua(function()
+      return vim.ui.img.set(PNG_IMG_BYTES, { relative = 'editor', width = 4, height = 2 })
+    end)
+
+    local _, protocol_id = single_image(wait_for_images(placed(1)))
+
+    exec_lua(function()
+      vim.ui.img.set(id, { width = 6, height = 3 })
+    end)
+
+    local images = wait_for_images(function(images)
+      local img = images[protocol_id]
+      return img ~= nil and img.placement ~= nil and img.placement.width == 6
+    end)
+
+    eq({ virtual = true, width = 6, height = 3 }, images[protocol_id].placement)
+    eq(1, images[protocol_id].data_events)
+  end)
+
+  it('should transition an image from a direct to a virtual placement', function()
+    local id = exec_lua(function()
+      return vim.ui.img.set(PNG_IMG_BYTES, { row = 2, col = 2 })
+    end)
+
+    local _, protocol_id = single_image(wait_for_images(placed(1)))
+
+    exec_lua(function()
+      vim.ui.img.set(id, { relative = 'editor', width = 4, height = 2 })
+    end)
+
+    local images = wait_for_images(function(images)
+      local img = images[protocol_id]
+      return img ~= nil and img.placement ~= nil and img.placement.virtual == true
+    end)
+
+    eq({ virtual = true, width = 4, height = 2 }, images[protocol_id].placement)
+    eq(1, images[protocol_id].data_events)
+  end)
+
+  it('should support deleting an image', function()
+    local id = exec_lua(function()
+      return vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
+    end)
+
+    wait_for_images(placed(1))
+
+    local result = exec_lua(function()
+      return { found = vim.ui.img.del(id), not_found = vim.ui.img.del(id) }
+    end)
+
+    eq(true, result.found)
+    eq(false, result.not_found)
+    wait_for_images(placed(0))
+  end)
+
+  it('should delete each image when deleting all images', function()
+    exec_lua(function()
+      vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
+      vim.ui.img.set(PNG_IMG_BYTES, { relative = 'editor', width = 2, height = 2 })
+    end)
+
+    wait_for_images(placed(2))
+
+    exec_lua(function()
+      vim.ui.img.del(math.huge)
+    end)
+
+    wait_for_images(placed(0))
+  end)
+
+  it('should not emit kitty termcodes', function()
+    exec_lua(function()
+      _G.data = {}
+      --- @diagnostic disable-next-line: duplicate-set-field
+      vim.api.nvim_ui_send = function(d)
+        table.insert(_G.data, d)
+      end
+      vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
+    end)
+
+    wait_for_images(placed(1))
+    eq({}, exec_lua('return _G.data'))
+  end)
+
+  it('should derive placement extent without querying the terminal', function()
+    exec_lua(function()
+      _G.data = {}
+      --- @diagnostic disable-next-line: duplicate-set-field
+      vim.api.nvim_ui_send = function(d)
+        table.insert(_G.data, d)
+      end
+      -- No width/height given: derived from the PNG dimensions and cell size
+      vim.ui.img.set(PNG_IMG_BYTES, { relative = 'editor' })
+    end)
+
+    local img = single_image(wait_for_images(placed(1)))
+    -- The 4x4 pixel PNG covers a single cell with the default cell size
+    eq({ virtual = true, width = 1, height = 1 }, img.placement)
+    -- No UI has a tty, so no cell size query (or any other termcode) is sent
+    eq({}, exec_lua('return _G.data'))
+  end)
+
+  it('should report image support without querying the terminal', function()
+    eq(true, exec_lua('return vim.ui.img._supported({ timeout = 0 })'))
+  end)
+end)
+
+describe('ext_images per-UI filtering', function()
+  it('should not send img events to UIs without ext_images', function()
+    clear()
+    local Screen = require('test.functional.ui.screen')
+    local screen = Screen.new(40, 6)
+
+    exec_lua(function()
+      vim.api.nvim__ui_img_data(99, 'png-bytes', {})
+      vim.api.nvim__ui_img_set(99, { row = 0, col = 0 })
+    end)
+
+    -- Wrongly broadcast img events would have been flushed before this
+    -- grid update, since UI events are delivered in order
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'sync' })
+    end)
+    screen:expect({ any = 'sync' })
+
+    eq({}, screen.images)
+  end)
+end)
+
+describe('vim.ui.img backend selection', function()
+  before_each(function()
+    clear()
+    setup_img_api()
+  end)
+
+  it('should keep using the backend that created an image', function()
+    local result = exec_lua(function()
+      -- Created without any ext_images UI, so the image uses the kitty backend
+      local id = vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
+      local kitty_calls = #_G.data
+
+      -- Pretend a UI with ext_images attached afterwards
+      --- @diagnostic disable-next-line: duplicate-set-field
+      vim.api.nvim_list_uis = function()
+        return { { ext_images = true, width = 80, height = 24 } }
+      end
+
+      -- Updates and deletion still go to the kitty backend that owns the image
+      vim.ui.img.set(id, { row = 5, col = 5 })
+      local update_calls = #_G.data
+      vim.ui.img.del(id)
+
+      return {
+        kitty_calls = kitty_calls,
+        update_calls = update_calls,
+        del_calls = #_G.data,
+      }
+    end)
+
+    assert(result.kitty_calls > 0, 'expected kitty termcodes for creation')
+    assert(result.update_calls > result.kitty_calls, 'expected kitty termcodes for update')
+    assert(result.del_calls > result.update_calls, 'expected kitty termcodes for delete')
+  end)
+
+  it('should use UI events for new images when an ext_images UI is attached', function()
+    local result = exec_lua(function()
+      --- @diagnostic disable-next-line: duplicate-set-field
+      vim.api.nvim_list_uis = function()
+        return { { ext_images = true, width = 80, height = 24 } }
+      end
+
+      local events = {} ---@type string[]
+      for _, name in ipairs({ 'nvim__ui_img_data', 'nvim__ui_img_set', 'nvim__ui_img_del' }) do
+        --- @diagnostic disable-next-line: no-unknown
+        vim.api[name] = function()
+          table.insert(events, name)
+        end
+      end
+
+      local id = vim.ui.img.set(PNG_IMG_BYTES, { row = 1, col = 1 })
+      vim.ui.img.del(id)
+
+      return { events = events, termcodes = #_G.data }
+    end)
+
+    eq({ 'nvim__ui_img_data', 'nvim__ui_img_set', 'nvim__ui_img_del' }, result.events)
+    eq(0, result.termcodes)
+  end)
+end)

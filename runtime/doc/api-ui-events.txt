@@ -43,6 +43,8 @@ with these (optional) keys:
 - `ext_cmdline`		Externalize the cmdline. |ui-cmdline|
 - `ext_hlstate`		Detailed highlight state. |ui-hlstate|
 			Sets `ext_linegrid` implicitly.
+- `ext_images`		Image display events. |ui-images|
+			Sets `ext_linegrid` implicitly.
 - `ext_linegrid`	Line-based grid events. |ui-linegrid|
 			Deactivates |ui-grid-old| implicitly.
 - `ext_messages`	Externalize messages. |ui-messages|
@@ -942,5 +944,71 @@ must handle.
 
 	prev_cmd
 	    True when sent with |g<| command, false with |:messages|.
+
+==============================================================================
+Image Events							    *ui-images*
+
+Activated by the `ext_images` |ui-option|. Sets `ext_linegrid` implicitly.
+
+EXPERIMENTAL: this UI extension may change in the future. Its semantics are
+not yet finalized.
+
+Emitted by |vim.ui.img| instead of terminal (kitty graphics protocol)
+termcodes, when an attached UI activated this extension. Image data is
+transmitted once per image ("img_data"), then referenced by id when the image
+is placed, moved or resized ("img_set") and deleted ("img_del").
+
+An image has at most one placement: either a direct placement at cells on the
+global layout, or a "virtual" placement rendered at placeholder cells in the
+grid.
+
+["img_data", id, data, opts] ~
+	Transmits the data of image `id`, without displaying it. `data` is
+	the raw image payload (PNG). `opts` is reserved for future use.
+
+	Always precedes the first "img_set" for `id`. Sent again with the
+	same `id`, it replaces that image's data.
+
+["img_set", id, opts] ~
+	Places image `id`, replacing its previous placement (if any). UIs
+	must ignore this event for an unknown `id` (e.g. when attached after
+	the image data was transmitted). `opts` describes the placement, a
+	map with these keys:
+
+	virtual
+	    If true, the image is displayed at placeholder cells (see below)
+	    instead of a direct position, and `row`, `col` and `zindex` are
+	    not set.
+	row/col
+	    Position as 0-based cells on the global layout. Only set for
+	    direct placements.
+	width/height
+	    Extent in cells. Optional for direct placements: if absent, the
+	    UI derives the extent from the intrinsic image size.
+	zindex
+	    Stacking order; an image with a higher `zindex` is drawn on top
+	    of images with a lower one. Treated as 0 when omitted. Only for
+	    direct placements.
+
+	A direct placement is drawn over the grid at the given cells, scaled
+	to the given extent. It is not anchored to any buffer or window, so
+	it does not move when text scrolls.
+
+	A virtual placement is drawn at placeholder cells: grid cells whose
+	text is U+10EEEE followed by two combining diacritics, with the image
+	id encoded in the foreground color of the cell, as specified by the
+	kitty graphics protocol "Unicode placeholders":
+	https://sw.kovidgoyal.net/kitty/graphics-protocol/#unicode-placeholders
+	The image is scaled to the `width`x`height` cell extent, and each
+	placeholder cell displays the tile at the (0-based) image row and
+	column encoded by its diacritics. Nvim manages placeholder cells as
+	ordinary grid text (in floating windows and as virtual lines of
+	|extmarks|), so such images scroll, clip and stack like the text they
+	are anchored to, and may be visible in multiple windows at once.
+
+["img_del", id] ~
+	Deletes image `id`: removes its placement and frees its transmitted
+	data. UIs must ignore this event for an unknown `id`. The id may be
+	reused by a later "img_data" event.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

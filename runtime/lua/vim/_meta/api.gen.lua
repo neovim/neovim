@@ -188,6 +188,30 @@ function vim.api.nvim__stats() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- EXPERIMENTAL: emits the "img_data" UI event, see `ui-images`. Used by `vim.ui.img`.
+---
+--- @param id integer Image identifier
+--- @param data string Raw PNG image bytes
+--- @param opts table<string,any> Reserved for future use
+function vim.api.nvim__ui_img_data(id, data, opts) end
+
+--- WARNING: This feature is experimental/unstable.
+---
+--- EXPERIMENTAL: emits the "img_del" UI event, see `ui-images`. Used by `vim.ui.img`.
+---
+--- @param id integer Image identifier previously passed to nvim__ui_img_data()
+function vim.api.nvim__ui_img_del(id) end
+
+--- WARNING: This feature is experimental/unstable.
+---
+--- EXPERIMENTAL: emits the "img_set" UI event, see `ui-images`. Used by `vim.ui.img`.
+---
+--- @param id integer Image identifier previously passed to nvim__ui_img_data()
+--- @param opts table<string,any> Placement, see `ui-images`
+function vim.api.nvim__ui_img_set(id, opts) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end
