@@ -5,7 +5,9 @@ local M = {}
 ---EXPERIMENTAL: This API may change in the future. Its semantics are not yet finalized.
 ---
 ---This provides a functional API for displaying images in Nvim.
----Currently supports PNG images via the Kitty graphics protocol.
+---Currently supports PNG images, displayed via UI events when any attached UI
+---activated the "ext_images" capability (|ui-images|), otherwise via the
+---Kitty graphics protocol.
 ---
 ---To override the image backend, replace `vim.ui.img` with your own
 ---implementation providing set/get/del.
@@ -58,14 +60,23 @@ local M = {}
 ---@class vim.ui.img._Entry
 ---@field handle integer backend image id
 ---@field placement vim.ui.img._Placement
+---@field backend vim.ui.img._Backend backend displaying this image
 
 ---Maps user-facing ID to internal tracking info.
 ---@type table<integer, vim.ui.img._Entry>
 local state = {}
 
----Retrieve the active backend, which is currently always kitty.
+---Retrieve the active backend: UI protocol events when any attached UI
+---activated the "ext_images" capability, otherwise kitty termcodes.
+---
+---Each image keeps the backend that created it, so an image is not
+---retransmitted when another kind of UI attaches later.
 ---@return vim.ui.img._Backend
-local function backend()
+local function active_backend()
+  local events = require('vim.ui.img._events')
+  if events.available() then
+    return events
+  end
   return require('vim.ui.img._kitty')
 end
 
@@ -86,7 +97,7 @@ end
 local function apply(entry)
   local handle, placement = entry.handle, entry.placement
   placement:set(render_for(handle))
-  backend().set(handle, placement:opts())
+  entry.backend.set(handle, placement:opts())
 end
 
 ---@param handle integer
@@ -111,7 +122,7 @@ local function delete(id)
   end
 
   clear_hl(entry.handle)
-  backend().del(entry.handle)
+  entry.backend.del(entry.handle)
   entry.placement:del()
   return true
 end
@@ -153,9 +164,11 @@ function M.set(data_or_id, opts)
 
     -- Construct our entry, which involves creating the placement and transferring
     -- our image data to the backend immediately
+    local backend = active_backend()
     local entry = {
       placement = Placement.new(opts),
-      handle = backend().set(data_or_id),
+      handle = backend.set(data_or_id),
+      backend = backend,
     }
 
     -- The backend id doubles as the user-facing image id
@@ -180,7 +193,8 @@ function M.set(data_or_id, opts)
   local placement = entry.placement
 
   local next_placement, reused = placement:with(opts)
-  local ok, err = pcall(apply, { handle = entry.handle, placement = next_placement })
+  local ok, err =
+    pcall(apply, { handle = entry.handle, placement = next_placement, backend = entry.backend })
   if not ok then
     -- A reused placement shares its artifacts with the old one, which stays on display
     if not reused then
@@ -238,14 +252,14 @@ function M.del(id)
 end
 
 ---@private
----Query whether the host terminal supports displaying images.
----Blocks until the terminal responds or times out.
+---Query whether the active backend supports displaying images. For the
+---kitty backend this blocks until the terminal responds or times out.
 ---
 ---@param opts? {timeout?: integer, chan?: integer} timeout in milliseconds (default: 1000)
----@return boolean supported true if the terminal supports image display
+---@return boolean supported true if images can be displayed
 ---@return string? msg error detail if the terminal responded but not with OK
 function M._supported(opts)
-  return backend().supported(opts)
+  return active_backend().supported(opts)
 end
 
 local augroup = vim.api.nvim_create_augroup('vim.ui.img', {})

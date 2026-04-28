@@ -441,6 +441,9 @@ TUI
 
 UI
 
+• The `ext_images` |ui-option| activates UI events for image display
+  (|ui-images|), used by |vim.ui.img| so that GUIs can display images without
+  terminal (kitty graphics protocol) termcodes.
 • |:checkhealth| shows filewatcher info in the Performance section.
 • Floating window border highlights (|hl-FloatBorder|, |hl-FloatTitle|,
   |hl-FloatFooter|) combine with the window-local |hl-Normal| background
