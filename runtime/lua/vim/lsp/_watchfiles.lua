@@ -34,10 +34,9 @@ local to_lsp_change_type = {
 }
 
 --- Default excludes the same as VSCode's `files.watcherExclude` setting.
---- https://github.com/microsoft/vscode/blob/eef30e7165e19b33daa1e15e92fa34ff4a5df0d3/src/vs/workbench/contrib/files/browser/files.contribution.ts#L261
+--- https://github.com/microsoft/vscode/blob/e78dfbd537bc7d1252146b628d865acd09685ec9/src/vs/workbench/contrib/files/browser/files.contribution.ts#L293
 ---@type vim.lpeg.Pattern parsed Lpeg pattern
 M._poll_exclude_pattern = glob.to_lpeg('**/.git/{objects,subtree-cache}/**')
-  + glob.to_lpeg('**/node_modules/*/**')
   + glob.to_lpeg('**/.hg/store/**')
 
 --- Registers the workspace/didChangeWatchedFiles capability dynamically.
