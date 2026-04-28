@@ -735,7 +735,7 @@ int update_screen(void)
 /// Prepare for 'hlsearch' highlighting.
 void start_search_hl(void)
 {
-  if (!p_hls || no_hlsearch) {
+  if (!p_hls || search_state.no_hlsearch) {
     return;
   }
 

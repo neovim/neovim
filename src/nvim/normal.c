@@ -3458,7 +3458,7 @@ static void nv_ident(cmdarg_T *cap)
       STRCPY(buf, "\\<");
       buflen = STRLEN_LITERAL("\\<");
     }
-    no_smartcase = true;                // don't use 'smartcase' now
+    search_state.no_smartcase = true;                // don't use 'smartcase' now
     break;
 
   case 'K':
@@ -4001,7 +4001,7 @@ static void nv_next(cmdarg_T *cap)
   }
 
   // Redraw the window to refresh the highlighted matches.
-  if (i > 0 && p_hls && !no_hlsearch
+  if (i > 0 && p_hls && !search_state.no_hlsearch
       && win_hl_attr(curwin, HLF_LC) != win_hl_attr(curwin, HLF_L)) {
     redraw_later(curwin, UPD_SOME_VALID);
   }
@@ -4041,7 +4041,7 @@ static int normal_search(cmdarg_T *cap, int dir, char *pat, size_t patlen, int o
     }
   }
   // Redraw the window to refresh the highlighted matches.
-  if (!equalpos(curwin->w_cursor, prev_cursor) && p_hls && !no_hlsearch
+  if (!equalpos(curwin->w_cursor, prev_cursor) && p_hls && !search_state.no_hlsearch
       && win_hl_attr(curwin, HLF_LC) != win_hl_attr(curwin, HLF_L)) {
     redraw_later(curwin, UPD_SOME_VALID);
   }
