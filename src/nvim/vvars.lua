@@ -453,7 +453,7 @@ M.vars = {
       Unix timestamp (seconds since epoch) of the most recent user
       input. Updated when a key is received from a UI (TUI keystrokes
       or RPC |nvim_input()|), throttled to second granularity.
-      Initialized to the process start time.
+      Initialized to 0 (no user activity since startup).
 
       Useful with |serverlist()| `info=true` to render a "last active"
       column in pickers like |:connect|.

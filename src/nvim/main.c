@@ -198,7 +198,6 @@ void early_init(mparm_T *paramp)
   cmdline_init();
   eval_init();          // init global variables
   set_vim_var_nr(VV_STARTTIME, (varnumber_T)os_realtime());
-  set_vim_var_nr(VV_LASTACTIVITY, (varnumber_T)os_time());
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
   runtime_init();
