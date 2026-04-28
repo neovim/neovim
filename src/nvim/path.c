@@ -1804,6 +1804,19 @@ int path_is_url(const char *p)
   return 0;
 }
 
+/// Check if "fname" starts with "man://".
+///
+/// @param  fname         is the filename to test
+/// @return URL_SLASH for "man://", zero otherwise.
+int path_is_man_url(const char *fname)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (strncmp(fname, "man://", 6) == 0) {
+    return URL_SLASH;
+  }
+  return 0;
+}
+
 /// Check if "fname" starts with "name:/" or "name:\".
 ///
 /// @param  fname         is the filename to test

@@ -3070,7 +3070,7 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
   // Refuse to follow URLs from tag files.  Tag entries are expected
   // to reference local source files; a URL would otherwise be passed
   // to netrw and trigger a network request.
-  if (path_with_url(fname)) {
+  if (path_with_url(fname) && path_is_man_url(fname) == 0) {
     emsg(_(e_tag_file_entry_must_not_be_url));
     return NULL;
   }
