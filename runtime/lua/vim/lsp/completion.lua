@@ -1003,7 +1003,13 @@ local function trigger(bufnr, clients, ctx)
       end
 
       local result = response.result
-      if result and #(result.items or result) > 0 then
+      if type(result) == 'table' and result.items == vim.NIL then
+        error(
+          ('%s: completion response has items=null, expected CompletionItem[]'):format(
+            client and client.name or 'UNKNOWN'
+          )
+        )
+      elseif result and result ~= vim.NIL and #(result.items or result) > 0 then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
         local encoding = client and client.offset_encoding or 'utf-16'
         local client_matches, tmp_server_start_boundary
