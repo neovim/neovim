@@ -6162,6 +6162,7 @@ void ex_echo(exarg_T *eap)
     if (!eap->skip) {
       if (atstart) {
         atstart = false;
+        msg_ext_set_append(eap->cmdidx == CMD_echon);
         msg_ext_set_kind("echo");
         // Call msg_start() after eval1(), evaluating the expression
         // may cause a message to appear.
@@ -6178,7 +6179,6 @@ void ex_echo(exarg_T *eap)
         msg_puts_hl(" ", echo_hl_id, false);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
-      msg_ext_append = eap->cmdidx == CMD_echon;
       msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false, &need_clear);
       xfree(tofree);
     }
@@ -6187,6 +6187,7 @@ void ex_echo(exarg_T *eap)
   }
   eap->nextcmd = check_nextcmd(arg);
   clear_evalarg(&evalarg, eap);
+  msg_ext_set_append(false);
 
   if (eap->skip) {
     emsg_skip--;

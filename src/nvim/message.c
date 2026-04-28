@@ -165,6 +165,7 @@ static sattr_T msg_ext_last_attr = -1;
 static int msg_ext_last_hl_id;
 
 static bool msg_ext_history = false;  ///< message was added to history
+static bool msg_ext_append = false;  ///< message appended to previous message line
 
 static int msg_grid_pos_at_flush = 0;
 
@@ -1706,9 +1707,14 @@ void msg_ext_set_kind(const char *msg_kind)
   redir_col = msg_ext_append ? redir_col : 0;
 }
 
+void msg_ext_set_append(bool append)
+{
+  msg_ext_ui_flush();
+  msg_ext_append = append;
+}
+
 void msg_ext_set_trigger(const char *trigger)
 {
-  // Don't change the trigger of an existing batch:
   msg_ext_ui_flush();
   msg_ext_trigger = trigger;
 }

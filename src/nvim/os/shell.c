@@ -1125,7 +1125,7 @@ static void out_data_event(void **argv)
   bool need_clear = true;
   int hl = (int)(intptr_t)argv[2] == STDERR_FILENO ? HLF_SE : HLF_SO;
   msg_ext_set_kind((int)(intptr_t)argv[2] == STDERR_FILENO ? "shell_err" : "shell_out");
-  msg_ext_append = true;
+  msg_ext_set_append(true);
   msg_multiline(cbuf_as_string((char *)argv[0], (size_t)argv[1]), hl, false, false, &need_clear);
   xfree(argv[0]);
   ui_flush();

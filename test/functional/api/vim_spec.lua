@@ -442,6 +442,8 @@ describe('API', function()
       exec_lua('vim.ui_attach(1, { ext_messages = true }, function() end)')
       api.nvim_exec2('hi VisualNC', { output = true })
       eq('VisualNC       xxx cleared', api.nvim_exec2('hi VisualNC', { output = true }).output)
+      api.nvim_exec2('echon 1234567', { output = true })
+      eq('VisualNC       xxx cleared', api.nvim_exec2('hi VisualNC', { output = true }).output)
     end)
 
     it('captures multi-chunk err nvim_echo() #36883', function()
