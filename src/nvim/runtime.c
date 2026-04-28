@@ -1847,8 +1847,7 @@ char *runtimepath_default(bool clean_arg)
   char *const libdir = get_lib_dir();
   char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
-  char *vimruntime = vim_getenv("VIMRUNTIME");
-  TO_SLASH(vimruntime);
+  char *const vimruntime = vim_getenv("VIMRUNTIME");
 #define SITE_SIZE (sizeof("site") - 1)
 #define AFTER_SIZE (sizeof("after") - 1)
   size_t data_len = 0;

@@ -35,7 +35,7 @@ describe('vim.fn.environ()', function()
         local env = vim.fn.environ()
         assert(vim.tbl_count(env) > 10, 'environ() should have some env vars!')
         for k, v in pairs(env) do
-          if v ~= '' and vim.fn.getenv(k) ~= v then
+          if v ~= '' and vim.fn.getenv(k) ~= v and vim.fn.getenv(k) ~= v:gsub('\\', '/') then
             error(('environ()[%q] = %q, but vim.fn.getenv(%q) = %q'):format(k, v, k, vim.fn.getenv(k)))
           end
         end

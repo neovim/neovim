@@ -8,6 +8,7 @@
 #include "nvim/log.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/os/fs.h"
 #include "nvim/os/os.h"
 #include "nvim/os/pty_conpty_win.h"
 #include "nvim/os/pty_proc_win.h"
@@ -61,6 +62,7 @@ int pty_proc_spawn(PtyProc *ptyproc)
   HANDLE proc_handle = NULL;
   uv_connect_t *in_req = NULL;
   uv_connect_t *out_req = NULL;
+  wchar_t *file = NULL;
   wchar_t *cmd_line = NULL;
   wchar_t *cwd = NULL;
   wchar_t *env = NULL;
@@ -99,8 +101,28 @@ int pty_proc_spawn(PtyProc *ptyproc)
     }
   }
 
-  status = build_cmd_line(proc->argv, &cmd_line,
-                          os_shell_is_cmdexe(proc->argv[0]));
+  // cmd.exe can’t recognize forward slash in argv[0] during
+  // initialization, so we keep only cmd.exe in the cmd_line
+  // and pass fullpath via lpApplicationName to avoid hijacking.
+  // See https://www.microsoft.com/en-us/msrc/blog/2014/04/ms14-019-fixing-a-binary-hijacking-via-cmd-or-bat-file
+  bool is_cmdexe = os_shell_is_cmdexe(proc->argv[0]);
+  if (is_cmdexe) {
+    char *path = NULL;
+    // TODO(ntdiary): Could put the search logic in one place.
+    // See https://github.com/neovim/neovim/issues/36818#issuecomment-3977147445
+    if (!os_can_exe(proc->argv[0], &path, true)) {
+      status = UV_ENOENT;
+      emsg = "executable not found";
+      goto cleanup;
+    }
+    status = utf8_to_utf16(path, -1, &file);
+    if (status != 0) {
+      emsg = "utf8_to_utf16(proc->argv[0]) failed";
+      goto cleanup;
+    }
+    xfree(path);
+  }
+  status = build_cmd_line(proc->argv, &cmd_line, is_cmdexe);
   if (status != 0) {
     emsg = "build_cmd_line failed";
     goto cleanup;
@@ -117,7 +139,7 @@ int pty_proc_spawn(PtyProc *ptyproc)
 
   if (!os_conpty_spawn(conpty_object,
                        &proc_handle,
-                       NULL,
+                       file,
                        cmd_line,
                        cwd,
                        env)) {
@@ -163,6 +185,7 @@ cleanup:
   }
   xfree(in_req);
   xfree(out_req);
+  xfree(file);
   xfree(cmd_line);
   xfree(env);
   xfree(cwd);
@@ -261,10 +284,7 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
     ArgNode *arg_node = xmalloc(sizeof(*arg_node));
     arg_node->arg = xmalloc(buf_len);
     if (is_cmdexe) {
-      xstrlcpy(arg_node->arg, *argv, buf_len);
-      if (argc == 0) {
-        TO_BACKSLASH(arg_node->arg);
-      }
+      xstrlcpy(arg_node->arg, argc == 0 ? "cmd.exe" : *argv, buf_len);
     } else {
       quote_cmd_arg(arg_node->arg, buf_len, *argv);
     }

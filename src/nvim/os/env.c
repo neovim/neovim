@@ -618,7 +618,6 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
 #endif
         *var = NUL;
         var = vim_getenv(dst);
-        TO_SLASH(var);
         mustfree = true;
 #ifdef UNIX
       }
@@ -872,6 +871,18 @@ char *vim_getenv(const char *name)
 #endif
 
   char *kos_env_path = os_getenv(name);
+#ifdef BACKSLASH_IN_FILENAME
+  if (striequal(name, "VIMRUNTIME")
+      || striequal(name, "PATH")
+      || striequal(name, "CDPATH")
+      || striequal(name, "TMPDIR")
+      || striequal(name, "TMP")
+      || striequal(name, "TEMP")
+      || striequal(name, "VIM")
+      || striequal(name, "MYVIMRC")) {
+    TO_SLASH(kos_env_path);
+  }
+#endif
   if (kos_env_path != NULL) {
     return kos_env_path;
   }
