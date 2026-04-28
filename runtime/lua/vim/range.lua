@@ -164,6 +164,10 @@ end
 ---@param r1 vim.Range
 ---@param r2 vim.Range
 function M.__lt(r1, r2)
+  if r1:is_empty() then
+    return cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1
+  end
+
   local r1_inclusive_end_row, r1_inclusive_end_col = to_inclusive_pos(r1.buf, r1[3], r1[4])
   return cmp_pos(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2]) == -1
 end
@@ -172,6 +176,10 @@ end
 ---@param r1 vim.Range
 ---@param r2 vim.Range
 function M.__le(r1, r2)
+  if r1:is_empty() then
+    return cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1
+  end
+
   local r1_inclusive_end_row, r1_inclusive_end_col = to_inclusive_pos(r1.buf, r1[3], r1[4])
   return cmp_pos(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2]) ~= 1
 end
@@ -188,9 +196,7 @@ end
 ---@param range vim.Range
 ---@return boolean `true` if the given range is empty.
 function M.is_empty(range)
-  local inclusive_end_row, inclusive_end_col = to_inclusive_pos(range.buf, range[3], range[4])
-
-  return cmp_pos(range[1], range[2], inclusive_end_row, inclusive_end_col) ~= -1
+  return cmp_pos(range[1], range[2], range[3], range[4]) ~= -1
 end
 
 --- Checks whether {outer} range contains {inner} range or position.
@@ -206,17 +212,23 @@ function M.has(outer, inner)
   end
   ---@cast inner -vim.Pos
 
-  local outer_inclusive_end_row, outer_inclusive_end_col =
-    to_inclusive_pos(outer.buf, outer[3], outer[4])
-  local inner_inclusive_end_row, inner_inclusive_end_col =
-    to_inclusive_pos(inner.buf, inner[3], inner[4])
+  if outer:is_empty() then
+    return false
+  end
+
+  -- accounts for empty ranges at the start/end of `outer` that per Neovim API and LSP logic insert
+  -- the text outside `outer`
+  if
+    (
+      cmp_pos(outer[1], outer[2], inner[3], inner[4]) ~= -1
+      or cmp_pos(outer[3], outer[4], inner[1], inner[2]) ~= 1
+    ) and inner:is_empty()
+  then
+    return false
+  end
 
   return cmp_pos(outer[1], outer[2], inner[1], inner[2]) ~= 1
     and cmp_pos(outer[3], outer[4], inner[3], inner[4]) ~= -1
-    -- accounts for empty ranges at the start/end of `outer` that per Neovim API and LSP logic
-    -- insert the text outside `outer`
-    and cmp_pos(outer[1], outer[2], inner_inclusive_end_row, inner_inclusive_end_col) == -1
-    and cmp_pos(outer_inclusive_end_row, outer_inclusive_end_col, inner[1], inner[2]) == 1
 end
 
 --- Computes the common range shared by the given ranges.
@@ -227,6 +239,9 @@ end
 ---                   `nil` if such range does not exist.
 function M.intersect(r1, r2)
   if r1.buf ~= r2.buf then
+    return nil
+  end
+  if r1:is_empty() or r2:is_empty() then
     return nil
   end
 
