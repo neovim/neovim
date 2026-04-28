@@ -99,4 +99,11 @@ function M.term_exitcode()
   return ''
 end
 
+--- Check if value is `nil` or `vim.NIL`
+---
+--- @return boolean
+function M.isnil(value)
+  return value == nil or value == vim.NIL
+end
+
 return M
