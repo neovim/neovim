@@ -384,6 +384,17 @@ v:lang
 		in a different language than what is used for character
 		encoding.  See |multi-lang|.
 
+				*v:lastactivity* *lastactivity-variable*
+v:lastactivity
+		Unix timestamp (seconds since epoch) of the most recent user
+		input. Updated when a key is received from a UI (TUI keystrokes
+		or RPC |nvim_input()|), throttled to second granularity.
+		Initialized to the process start time.
+
+		Useful with |serverlist()| `info=true` to render a "last active"
+		column in pickers like |:connect|.
+		Read-only.
+
 					*v:lc_time* *lc_time-variable*
 v:lc_time
 		The current locale setting for time messages of the runtime

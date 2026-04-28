@@ -8,6 +8,8 @@ local M = {}
 ---@field addr string Server address (socket path, named pipe, or TCP host:port).
 ---@field pid integer? PID of the Nvim process owning this server (nil if unreachable).
 ---@field own boolean True if this server belongs to the current Nvim instance.
+---@field last_activity integer? Unix timestamp (seconds) of last user input on the
+---                              server (|v:lastactivity|). Nil if peer is unreachable.
 
 --- @param opts? table Options:
 ---              - opts.peer (boolean): If true, also discover peer servers.
@@ -42,6 +44,7 @@ function M.serverlist(opts, addrs)
   end, { path = root, type = 'socket', limit = math.huge })
 
   local peer_pids = {} ---@type table<string, integer>
+  local peer_last_activity = {} ---@type table<string, integer>
 
   for _, socket in ipairs(socket_paths) do
     if not own_set[socket] and not vim.list_contains(addrs, socket) then
@@ -57,6 +60,10 @@ function M.serverlist(opts, addrs)
             if ok_pid and type(pid) == 'number' then
               peer_pids[socket] = pid
             end
+            local ok_la, la = pcall(vim.fn.rpcrequest, chan, 'nvim_get_vvar', 'lastactivity')
+            if ok_la and type(la) == 'number' then
+              peer_last_activity[socket] = la
+            end
           end
         end
         pcall(vim.fn.chanclose, chan)
@@ -69,6 +76,7 @@ function M.serverlist(opts, addrs)
   end
 
   local self_pid = vim.fn.getpid()
+  local self_last_activity = vim.v.lastactivity
   local result = {} ---@type vim.ServerInfo[]
   for _, addr in ipairs(addrs) do
     local own = own_set[addr] == true
@@ -76,6 +84,7 @@ function M.serverlist(opts, addrs)
       addr = addr,
       pid = own and self_pid or peer_pids[addr],
       own = own,
+      last_activity = own and self_last_activity or peer_last_activity[addr],
     })
   end
   return result

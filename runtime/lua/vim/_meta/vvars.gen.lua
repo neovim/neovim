@@ -406,6 +406,17 @@ vim.v.key = ...
 --- @type string
 vim.v.lang = ...
 
+--- Unix timestamp (seconds since epoch) of the most recent user
+--- input. Updated when a key is received from a UI (TUI keystrokes
+--- or RPC `nvim_input()`), throttled to second granularity.
+--- Initialized to the process start time.
+---
+--- Useful with `serverlist()` `info=true` to render a "last active"
+--- column in pickers like `:connect`.
+--- Read-only.
+--- @type integer
+vim.v.lastactivity = ...
+
 --- The current locale setting for time messages of the runtime
 --- environment.  This allows Vim scripts to be aware of the
 --- current language.  Technical: it's the value of LC_TIME.

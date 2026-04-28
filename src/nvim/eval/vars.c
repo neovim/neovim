@@ -217,6 +217,7 @@ static struct vimvar {
   VV(VV_VIRTNUM,          "virtnum",          VAR_NUMBER, VV_RO),
   VV(VV_STARTTIME,        "starttime",        VAR_NUMBER, VV_RO),
   VV(VV_EXITREASON,       "exitreason",       VAR_STRING, VV_RO),
+  VV(VV_LASTACTIVITY,     "lastactivity",     VAR_NUMBER, VV_RO),
 };
 #undef VV
 

@@ -11,6 +11,10 @@
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/eval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
+#include "nvim/eval_defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
@@ -275,6 +279,17 @@ void input_enqueue_raw(const char *data, size_t size)
 size_t input_enqueue(uint64_t chan_id, String keys)
 {
   current_ui = chan_id;
+
+  // Update v:lastactivity. All keys arriving here originate from a UI
+  // (TUI keystrokes or RPC nvim_input)
+  if (keys.size > 0) {
+    static Timestamp last_activity = 0;
+    Timestamp now = os_time();
+    if (now != last_activity) {
+      last_activity = now;
+      set_vim_var_nr(VV_LASTACTIVITY, (varnumber_T)now);
+    }
+  }
 
   const char *ptr = keys.data;
   const char *end = ptr + keys.size;
