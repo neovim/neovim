@@ -400,7 +400,8 @@ describe('ui/ext_messages', function()
         {
           content = { { '' } },
           pos = 0,
-          prompt = 'Type number and <Enter> (q or empty cancels): ',
+          -- Default vim.ui.select uses this prompt.
+          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
         },
       },
       -- Message depends on runtimepath, only test the static text...
@@ -408,13 +409,12 @@ describe('ui/ext_messages', function()
         for _, msg in ipairs(screen.messages) do
           eq(false, msg.history)
           eq('confirm', msg.kind)
-          eq('  # pri kind tag', msg.content[1][2])
-          eq('\n                        ', msg.content[2][2])
-          eq('file\n', msg.content[3][2])
-          eq('> 1 F        ', msg.content[4][2])
-          eq('help.txt', msg.content[5][2])
-          eq(' \n                        ', msg.content[6][2])
-          eq('\n               *help.txt*', msg.content[#msg.content][2])
+          local text = '' -- Concatenate all chunks.
+          for _, chunk in ipairs(msg.content) do
+            text = text .. (#chunk >= 2 and chunk[2] or chunk[1])
+          end
+          t.matches('^Type number and <Enter> %(q or empty cancels%):\n', text)
+          t.matches('1: > F%s+help%.txt%s+', text)
         end
         screen.messages = {}
       end,
@@ -1286,7 +1286,7 @@ stack traceback:
       },
       messages = {
         {
-          content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"' } },
+          content = { { 'Change "helllo" to:\n1: "Hello"\n2: "Hallo"\n3: "Hullo"' } },
           kind = 'confirm',
         },
       },

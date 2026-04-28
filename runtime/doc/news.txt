@@ -216,7 +216,10 @@ TUI
 
 UI
 
-• todo
+• |:tselect| delegates to |vim.ui.select()| instead of a bespoke internal
+  selection routine.
+• |z=| (spell suggest) delegates to |vim.ui.select()| instead of a bespoke
+  internal selection routine.
 
 VIMSCRIPT
 

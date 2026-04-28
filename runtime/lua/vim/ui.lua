@@ -26,11 +26,11 @@ local M = vim._defer_require('vim.ui', {
 ---@field kind? string
 
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
---- work until `on_choice`.
+--- work until `on_choice`. This is the standard "picker" interface, used by |z=|, |:tselect|, etc.
 ---
---- Plugins may override `vim.ui.select` to provide a custom "picker" interface; they are expected
---- to call the `format_item` and `preview_item` handlers (if any) provided by the caller. They may
---- also use the `kind` hint (if provided by the caller) to decide how to handle some items.
+--- Plugins may override `vim.ui.select` to provide a custom picker; they are expected to call the
+--- `format_item` and `preview_item` handlers (if any) provided by the caller. They may also use the
+--- `kind` hint (if provided by the caller) to decide how to handle some items.
 ---
 --- Note: the default `vim.ui.select` currently doesn't support preview.
 ---

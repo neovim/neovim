@@ -4,7 +4,6 @@ local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
 
 local eq = t.eq
-local pcall_err = t.pcall_err
 local matches = t.matches
 local feed = n.feed
 local eval = n.eval
@@ -231,10 +230,13 @@ describe('vim._core', function()
       'vim._core.options',
       'vim._core.server',
       'vim._core.shared',
+      'vim._core.spell',
       'vim._core.stringbuffer',
       'vim._core.system',
       'vim._core.table',
+      'vim._core.tag',
       'vim._core.time',
+      'vim._core.ui',
       'vim._core.ui2',
       'vim._core.util',
       'vim._core.vimfn',
