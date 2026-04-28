@@ -629,7 +629,7 @@ describe('vim.lsp.util', function()
           filename = '/test_b',
           kind = 'Module',
           lnum = 4,
-          text = '[Module] TestB in TestBContainer (deprecated)',
+          text = '[Module] TestB (deprecated)',
         },
       }
       eq(
@@ -672,7 +672,7 @@ describe('vim.lsp.util', function()
                 },
                 uri = 'file:///test_b',
               },
-              containerName = 'TestBContainer',
+              containerName = vim.NIL,
             },
           }
           return vim.lsp.util.symbols_to_items(sym_info, nil, 'utf-16')

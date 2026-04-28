@@ -166,4 +166,11 @@ function M.get_forge_url(repo, target, target_type)
   return ('%s/%s/%s'):format(repo, middle, target)
 end
 
+--- Check if value is `nil` or `vim.NIL`
+---
+--- @return boolean
+function M.isnil(value)
+  return value == nil or value == vim.NIL
+end
+
 return M
