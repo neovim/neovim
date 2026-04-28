@@ -1314,6 +1314,18 @@ describe('vim.ui.img', function()
     eq(nil, result.after1)
     eq(nil, result.after2)
   end)
+
+  it('should not query the terminal cell size without a tty ui', function()
+    local esc_codes = exec_lua(function()
+      _G.data = {}
+      -- Without explicit dimensions, they are derived from the image and cell size
+      vim.ui.img.set(PNG_IMG_BYTES, { relative = 'editor' })
+      return table.concat(_G.data)
+    end)
+
+    matches('\027_G', esc_codes) -- kitty escapes are still emitted
+    eq(nil, esc_codes:find('\027%[16t')) -- but no cell size query
+  end)
 end)
 
 describe('vim.ui.img._diacritic', function()
