@@ -577,9 +577,6 @@ ctags).
 		have an absolute or relative path.  It may contain environment
 		variables and wildcards (although the use of wildcards is
 		doubtful).  It cannot contain a <Tab>.
-								*E1576*
-		Using a remote file via network protocol (e.g. using
-		http://remote/file.txt) is not allowed.
 {tagaddress}	The Ex command that positions the cursor on the tag.  It can
 		be any Ex command, although restrictions apply (see
 		|tag-security|).  Posix only allows line numbers and search

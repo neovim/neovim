@@ -132,7 +132,6 @@ local exclude_invalid_urls = {
   ['http://wiki.services.openoffice.org/wiki/Dictionaries'] = 'spell.txt',
   ['http://www.adapower.com'] = 'ft_ada.txt',
   ['http://www.jclark.com/'] = 'quickfix.txt',
-  ['http://remote/file.txt'] = 'tagsrch.txt',
 
   -- Can't be accessed by GitHub runners:
   ['https://cacm.acm.org/research/a-look-at-the-design-of-lua/'] = 'faq.txt',
