@@ -53,6 +53,18 @@ vim.api.nvim_create_autocmd({ 'VimResized', 'UIEnter' }, {
   end,
 })
 
+---Returns true if any attached UI is hosted in a terminal that could
+---answer a tty query.
+---@return boolean
+local function has_tty_ui()
+  for _, ui in ipairs(vim.api.nvim_list_uis()) do
+    if ui.stdout_tty then
+      return true
+    end
+  end
+  return false
+end
+
 ---Returns the size of a cell in the terminal in pixels.
 ---
 ---This is performed by querying the terminal via CSI 16t.
@@ -67,29 +79,34 @@ function M.cell_as_pixel_size()
   -- this terminal doesn't support retrieving the size via
   -- terminal queries
   local result = vim.deepcopy(DEFAULT_CELL_SIZE)
-  local done = false
 
-  require('vim.tty').request('\027[16t', {
-    timeout = CELL_SIZE_QUERY_TIMEOUT,
-  }, function(resp)
-    ---@type string|nil, string|nil
-    local h, w = resp:match('^\027%[6;(%d+);(%d+)t')
+  -- Only a UI hosted in a terminal can answer the query; without one
+  -- (e.g. only a GUI is attached) don't emit it or block on a reply
+  if has_tty_ui() then
+    local done = false
 
-    local width = tonumber(w)
-    local height = tonumber(h)
+    require('vim.tty').request('\027[16t', {
+      timeout = CELL_SIZE_QUERY_TIMEOUT,
+    }, function(resp)
+      ---@type string|nil, string|nil
+      local h, w = resp:match('^\027%[6;(%d+);(%d+)t')
 
-    if width and height then
-      result = { width = width, height = height }
-      done = true
-      return true
-    end
-  end)
+      local width = tonumber(w)
+      local height = tonumber(h)
 
-  -- Wait for the query to finish, and make sure to wait a little longer than our max timeout
-  -- in case we get a response close to the end of the timeout range itself
-  vim.wait(CELL_SIZE_QUERY_TIMEOUT + 100, function()
-    return done
-  end)
+      if width and height then
+        result = { width = width, height = height }
+        done = true
+        return true
+      end
+    end)
+
+    -- Wait for the query to finish, and make sure to wait a little longer than our max timeout
+    -- in case we get a response close to the end of the timeout range itself
+    vim.wait(CELL_SIZE_QUERY_TIMEOUT + 100, function()
+      return done
+    end)
+  end
 
   -- Cache our latest value from the query (or our defaults)
   cached_cell_size = vim.deepcopy(result)
