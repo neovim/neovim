@@ -57,7 +57,6 @@ char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 
 #include "version.c.generated.h"
 
-// clang-format off
 static const int vim_versions[] = { 801, 802, 900, 901, 902 };
 
 static const int num_patches[] = { 2331, 3825, 1582, 1630, 221 };
@@ -3962,7 +3961,6 @@ static const int *included_patchsets[] = {
     // 0
   },
 };
-// clang-format on
 
 /// Compares a version string to the current Nvim version.
 ///

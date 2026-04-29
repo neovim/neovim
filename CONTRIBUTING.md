@@ -214,13 +214,6 @@ make lint  # or lintc, lintlua, lintquery, lintdoc
     setlocal formatprg=uncrustify\ -q\ -l\ C\ -c\ src/uncrustify.cfg\ --no-backup
   endif
   ```
-- There is also `.clang-format` which is "mostly" aligned with uncrustify.
-  To use the Nvim `gq` command with `clang-format`:
-  ```vim
-  if !empty(findfile('.clang-format', ';'))
-    setlocal formatprg=clang-format\ -style=file
-  endif
-  ```
 
 ### Navigate
 
