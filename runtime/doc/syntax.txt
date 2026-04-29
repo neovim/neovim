@@ -234,6 +234,7 @@ SpecialComment	special things inside a comment
 Debug		debugging statements
 
 Underlined	text that stands out, HTML links
+Dimmed		text that is de-emphasized
 
 Ignore		left blank, hidden  |hl-Ignore|
 

@@ -147,7 +147,7 @@ EVENTS
 
 HIGHLIGHTS
 
-• todo
+• `Dimmed` for text that should be de-emphasized.
 
 LSP
 

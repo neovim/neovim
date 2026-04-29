@@ -186,7 +186,7 @@ function vim.show_pos(buf, row, col, filter)
       append('   ')
     end
     if comment then
-      append(comment, 'Comment')
+      append(comment, 'Dimmed')
     end
     nl()
   end
@@ -244,7 +244,7 @@ function vim.show_pos(buf, row, col, filter)
         item(extmark.opts, extmark.ns)
       else
         append('  - ')
-        append(extmark.ns, 'Comment')
+        append(extmark.ns, 'Dimmed')
         nl()
       end
     end

@@ -218,6 +218,7 @@ static const char *highlight_init_both[] = {
   "default link Debug          Special",
   // Used by HLF_8 (very common). None of the HLF_* things use the other Special* groups.
   "default link SpecialKey     Special",
+  "default link Dimmed         Comment",
   "default link Ignore         Normal",
 
   // Built-in LSP
