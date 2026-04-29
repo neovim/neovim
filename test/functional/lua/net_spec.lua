@@ -239,11 +239,15 @@ describe('vim.net.request', function()
       "{ ['@filename'] = '' }"
     )
 
-    assert_wrong_body('opts.body: expected string, got number', '123')
-    assert_wrong_body('opts.body: expected string, got table', '{}')
+    assert_wrong_body('opts.body: expected body should be string and not start with @', '123')
+    assert_wrong_body('opts.body: expected body should be string and not start with @', '{}')
+    assert_wrong_body('opts.body: expected body should be string and not start with @', "'@test'")
 
+    -- OPTIONS is not accepted
     assert_invalid_method('OPTIONS')
+
+    -- lowercase methods are not accepted as well
     assert_invalid_method('options')
-    assert_invalid_method('FOO')
+    assert_invalid_method('get')
   end)
 end)

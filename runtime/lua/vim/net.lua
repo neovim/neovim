@@ -73,8 +73,9 @@ local M = {}
 --- @param url string The URL for the request.
 --- @param opts? vim.net.request.Opts
 --- @param on_response? vim.net.request.ResponseFunc
---- Callback invoked on request completion. The `body` field in the response
---- parameter contains the raw response data (text or binary).
+--- Callback invoked on request completion. Contains two parameters:
+--- - The response callback `error` string, if any.
+--- - The `body` field in the response with the raw response data (text or binary).
 --- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
@@ -88,33 +89,26 @@ function M.request(method, url, opts, on_response)
     DELETE = true,
   }
 
-  if on_response == nil then
-    -- old behavior
-    local on_resp = opts
+  if type(url) ~= 'string' then
     ---@diagnostic disable-next-line: cast-local-type
+    on_response = opts
+    ---@diagnostic disable-next-line: no-unknown
     opts = url
     url = method
     method = 'GET'
-    ---@diagnostic disable-next-line: cast-local-type
-    on_response = on_resp
-  else
-    -- new behavior
-    vim.validate('method', method, 'string')
-    vim.validate('url', url, 'string')
-    vim.validate('opts', opts, 'table', true)
-    vim.validate('on_response', on_response, 'function', true)
-
-    opts = opts or {}
-    method = method:upper()
-
-    if not http_methods[method:upper()] then
-      error(
-        'invalid HTTP method: '
-          .. method
-          .. '. Supported methods: GET, POST, PUT, PATCH, HEAD, DELETE'
-      )
-    end
   end
+  opts = opts or {}
+
+  vim.validate('method', method, function(m)
+    return http_methods[m] == true, ('invalid HTTP method: %s'):format(m)
+  end)
+  vim.validate('url', url, 'string')
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('opts.headers', opts.headers, 'table', true)
+  vim.validate('opts.body', opts.body, function(b)
+    return (b == nil and true) or (type(b) == 'string' and not b:match('^@'))
+  end, true, 'body should be string and not start with @')
+  vim.validate('on_response', on_response, 'function', true)
 
   local retry = opts.retry or 3
 
@@ -131,17 +125,16 @@ function M.request(method, url, opts, on_response)
     vim.list_extend(args, { '--output', opts.outpath })
   end
 
-  if method == 'HEAD' then
-    table.insert(args, '-I')
-  elseif vim.tbl_contains({ 'POST', 'PUT', 'PATCH' }, method) then
-    if opts.body ~= nil then
-      vim.validate('opts.body', opts.body, 'string')
-      vim.list_extend(args, { '-d', opts.body })
+  -- curl -X HEAD does not work and advises to use --head instead
+  vim.list_extend(args, method == 'HEAD' and { '--head' } or { '--request', method })
+
+  if vim.tbl_contains({ 'POST', 'PUT', 'PATCH' }, method) then
+    if opts.body then
+      vim.list_extend(args, { '--data-binary', opts.body })
     end
   end
 
   if opts.headers then
-    vim.validate('opts.headers', opts.headers, 'table', true)
     for key, value in pairs(opts.headers) do
       if type(key) ~= 'string' or type(value) ~= 'string' then
         error('headers keys and values must be strings')
@@ -152,9 +145,9 @@ function M.request(method, url, opts, on_response)
       end
 
       if value == '' then
-        vim.list_extend(args, { '-H', key .. ';' })
+        vim.list_extend(args, { '--header', key .. ';' })
       else
-        vim.list_extend(args, { '-H', key .. ': ' .. value })
+        vim.list_extend(args, { '--header', key .. ': ' .. value })
       end
     end
   end
