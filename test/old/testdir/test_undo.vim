@@ -938,4 +938,32 @@ func Test_undo_line_backspace_after_insert_cmd_cursor_movement()
   bwipe!
 endfunc
 
+func Test_undo_line_backspace_after_insert_func_edit()
+  new
+  setlocal backspace=eol undolevels=100
+
+  let v:errmsg = ''
+  call feedkeys("i\<CR>"
+        \ .. "\<Cmd>call setline(2, 'abc')\<CR>"
+        \ .. "\<BS>\<Esc>u", 'xt')
+
+  call assert_equal('', v:errmsg)
+  call assert_equal([''], getline(1, '$'))
+  bwipe!
+endfunc
+
+func Test_undo_line_backspace_after_insert_cmd_edit()
+  new
+  setlocal backspace=eol undolevels=100
+
+  let v:errmsg = ''
+  call feedkeys("i\<CR>"
+        \ .. "\<Cmd>s/.*/abc/\<CR>"
+        \ .. "\<BS>\<Esc>u", 'xt')
+
+  call assert_equal('', v:errmsg)
+  call assert_equal([''], getline(1, '$'))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
