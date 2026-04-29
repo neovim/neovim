@@ -1,3 +1,4 @@
+AGENTS.md
 CONTRIBUTING.md
 Filelist
 LICENSE
