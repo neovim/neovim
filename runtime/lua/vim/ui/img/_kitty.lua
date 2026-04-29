@@ -178,7 +178,7 @@ function M.supported(opts)
   ---@type string?
   local msg
 
-  require('vim.tty').query_apc(
+  vim.tty.query_apc(
     seq({ a = 'q', i = query_id, s = 1, v = 1 }),
     { timeout = timeout },
     function(resp)

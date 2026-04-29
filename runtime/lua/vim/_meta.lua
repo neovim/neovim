@@ -31,6 +31,7 @@ vim.secure = require('vim.secure')
 vim.snippet = require('vim.snippet')
 vim.text = require('vim.text')
 vim.treesitter = require('vim.treesitter')
+vim.tty = require('vim.tty')
 vim.ui = require('vim.ui')
 vim.version = require('vim.version')
 

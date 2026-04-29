@@ -247,6 +247,7 @@ describe('vim._core', function()
       'vim.keymap',
       'vim.loader',
       'vim.text',
+      'vim.tty',
     }
     if n.exec_lua [[return not not _G.jit]] then
       expected = vim.list_extend({
