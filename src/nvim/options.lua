@@ -8633,6 +8633,7 @@ local options = {
     },
     {
       abbreviation = 'spk',
+      cb = 'did_set_splitkeep',
       defaults = 'cursor',
       values = { 'cursor', 'screen', 'topline' },
       desc = [=[

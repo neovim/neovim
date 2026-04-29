@@ -1944,6 +1944,16 @@ func Test_splitkeep_screen_cursor_pos()
   set splitkeep&
 endfunc
 
+func Test_splitkeep_cmdheight()
+  set splitkeep=screen
+  call setline(1, range(&lines))
+  norm! G
+  set cmdheight=2
+  call assert_equal(&lines - 1, line('.'))
+  %bwipeout!
+  set splitkeep& cmdheight&
+endfunc
+
 func Test_splitkeep_cursor()
   CheckScreendump
   let lines =<< trim END

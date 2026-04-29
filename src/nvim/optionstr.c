@@ -1831,6 +1831,14 @@ const char *did_set_spellsuggest(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+const char *did_set_splitkeep(optset_T *args FUNC_ATTR_UNUSED)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    wp->w_prev_height = wp->w_height;
+  }
+  return did_set_str_generic(args);
+}
+
 /// The 'statuscolumn' option is changed.
 const char *did_set_statuscolumn(optset_T *args)
 {
