@@ -1723,7 +1723,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
 *vim.lsp.Client*
 
     Fields: ~
-      • {attached_buffers}      (`table<integer,true>`)
+      • {attached_buffers}      (`table<integer,string>`) Each buffer's last
+                                used `languageId`.
       • {cancel_request}        (`fun(self: vim.lsp.Client, id: integer): boolean`)
                                 See |Client:cancel_request()|.
       • {capabilities}          (`lsp.ClientCapabilities`) Capabilities
