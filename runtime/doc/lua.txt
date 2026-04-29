@@ -1768,6 +1768,18 @@ vim.islist({t})                                                 *vim.islist()*
     See also: ~
       • |vim.isarray()|
 
+vim.isnil({t})                                                   *vim.isnil()*
+    Tests if `t` is `nil` or |vim.NIL|.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {t}  (`any?`)
+
+    Return: ~
+        (`boolean`) `true` if `nil` or |vim.NIL|, else `false`.
+
 vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
     Search for a position in a sorted |lua-list| {t} where {val} can be
     inserted while keeping the list sorted.
@@ -1905,6 +1917,42 @@ vim.list_slice({list}, {start}, {finish})                   *vim.list_slice()*
 
     Return: ~
         (`any[]`) Copy of table sliced from start to finish (inclusive)
+
+vim.nonnil({...})                                               *vim.nonnil()*
+    Returns the first argument which is not nil.
+
+    If all arguments are nil, returns nil.
+
+    Example: >lua
+        local a = nil
+        local b = nil
+        local c = 42
+        local d = true
+        assert(vim.nonnil(a, b, c, d) == 42)
+<
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {...}  (`any`)
+
+    Return: ~
+        (`any`)
+
+vim.npcall({fn}, {...})                                         *vim.npcall()*
+    Calls the function `fn` in `protected mode` like |pcall()|, but returns
+    `nil` on error.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {fn}   (`fun(...):T`)
+      • {...}  (`any?`)
+
+    Return: ~
+        (`any`) ...
 
 vim.pesc({s})                                                     *vim.pesc()*
     Escapes magic chars in |lua-pattern|s.

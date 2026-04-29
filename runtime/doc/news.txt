@@ -174,6 +174,10 @@ LUA
   available.
 • |vim.list.unique()| and |vim.list.bisect()| now support passing a string
   as a shorthand of a `key`
+• |vim.isnil()| tests if a value is `nil` or |vim.NIL|.
+• |vim.nonnil()| returns the first argument which is not nil.
+• |vim.npcall()| calls the function `fn` in protected-mode like |pcall()|,
+  but returns `nil` on error.
 
 OPTIONS
 

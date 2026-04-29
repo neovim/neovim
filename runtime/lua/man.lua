@@ -498,8 +498,8 @@ local function get_paths(name, sect)
   -- - does not work on MacOS 14 and later.
   -- - only returns '/usr/bin/man' on MacOS 13 and earlier.
   --- @type string?
-  local mandirs_raw = vim.F.npcall(system, { 'manpath', '-q' })
-    or vim.F.npcall(system, { 'man', '-w' })
+  local mandirs_raw = vim.npcall(system, { 'manpath', '-q' })
+    or vim.npcall(system, { 'man', '-w' })
     or vim.env.MANPATH
 
   if not mandirs_raw then

@@ -1415,7 +1415,7 @@ end
 ---@return TSTree?
 function LanguageTree:tree_for_range(range, opts)
   opts = opts or {}
-  local ignore = vim.F.if_nil(opts.ignore_injections, true)
+  local ignore = vim.nonnil(opts.ignore_injections, true)
 
   if not ignore then
     for _, child in pairs(self._children) do

@@ -14,22 +14,19 @@ local F = {}
 --- assert(vim.F.if_nil(a, b, c, d) == 42)
 --- ```
 ---
----@generic T
----@param ... T
----@return T
+--- @deprecated
+--- @generic T
+--- @param ... T
+--- @return T
 function F.if_nil(...)
-  local nargs = select('#', ...)
-  for i = 1, nargs do
-    local v = select(i, ...)
-    if v ~= nil then
-      return v
-    end
-  end
-  return nil
+  vim.deprecate('vim.F.if_nil', 'vim.nonnil', '0.14')
+  return vim.nonnil(...)
 end
 
 -- Use in combination with pcall
+--- @deprecated
 function F.ok_or_nil(status, ...)
+  vim.deprecate('vim.F.ok_or_nil', 'actual error handling', '0.14')
   if not status then
     return
   end
@@ -37,20 +34,26 @@ function F.ok_or_nil(status, ...)
 end
 
 -- Nil pcall.
+--- @deprecated
 --- @generic T
 --- @param fn  fun(...):T
 --- @param ... T?
 --- @return T
 function F.npcall(fn, ...)
-  return F.ok_or_nil(pcall(fn, ...))
+  vim.deprecate('vim.F.npcall', 'vim.npcall', '0.14')
+  return vim.npcall(fn, ...)
 end
 
 --- Wrap a function to return nil if it fails, otherwise the value
+--- @deprecated
 function F.nil_wrap(fn)
+  vim.deprecate('vim.F.nil_wrap', 'vim.npcall', '0.14')
   return function(...)
-    return F.npcall(fn, ...)
+    return vim.npcall(fn, ...)
   end
 end
+
+-- TODO: deprecate `F.pack_len` and `F.unpack_len`
 
 --- like {...} except preserve the length explicitly
 function F.pack_len(...)

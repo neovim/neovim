@@ -208,8 +208,8 @@ function M.is_enabled(name, filter)
   -- As a fallback when not explicitly enabled or disabled:
   -- Clients are treated as "enabled" since their capabilities can control behavior.
   -- Buffers are treated as "disabled" to allow users to enable them as needed.
-  return vim.F.if_nil(client and client._enabled_capabilities[name], vim.g[var], true)
-    and vim.F.if_nil(bufnr and vim.b[bufnr][var], vim.g[var], false)
+  return vim.nonnil(client and client._enabled_capabilities[name], vim.g[var], true)
+    and vim.nonnil(bufnr and vim.b[bufnr][var], vim.g[var], false)
 end
 
 M.all = all_capabilities

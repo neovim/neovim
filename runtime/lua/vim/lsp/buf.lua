@@ -5,7 +5,7 @@ local api = vim.api
 local lsp = vim.lsp
 local validate = vim.validate
 local util = require('vim.lsp.util')
-local npcall = vim.F.npcall
+local npcall = vim.npcall
 
 local M = {}
 

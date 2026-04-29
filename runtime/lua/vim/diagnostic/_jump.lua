@@ -1,4 +1,4 @@
-local api, if_nil = vim.api, vim.F.if_nil
+local api, nonnil = vim.api, vim.nonnil
 local shared = require('vim.diagnostic._shared')
 local store = require('vim.diagnostic._store')
 
@@ -60,7 +60,7 @@ local function next_diagnostic(search_forward, opts, use_logical_pos)
   -- Adjust row to be 0-indexed
   position[1] = position[1] - 1
 
-  local wrap = if_nil(opts.wrap, true)
+  local wrap = nonnil(opts.wrap, true)
   local diagnostics = store.get_diagnostics(bufnr, opts, true)
 
   if opts._highest then
@@ -197,7 +197,7 @@ end
 function M.goto_prev(opts)
   vim.deprecate('vim.diagnostic.goto_prev()', 'vim.diagnostic.jump()', '0.13')
   opts = opts or {}
-  opts.float = if_nil(opts.float, true) --- @diagnostic disable-line
+  opts.float = nonnil(opts.float, true) --- @diagnostic disable-line
   goto_diagnostic(M.get_prev(opts), opts)
 end
 
@@ -282,7 +282,7 @@ end
 function M.goto_next(opts)
   vim.deprecate('vim.diagnostic.goto_next()', 'vim.diagnostic.jump()', '0.13')
   opts = opts or {}
-  opts.float = if_nil(opts.float, true) --- @diagnostic disable-line
+  opts.float = nonnil(opts.float, true) --- @diagnostic disable-line
   goto_diagnostic(M.get_next(opts), opts)
 end
 

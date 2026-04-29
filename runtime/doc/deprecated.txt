@@ -27,6 +27,13 @@ API
 EVENTS
 • *BufModifiedSet*	Use |OptionSet| with pattern "modified" instead.
 
+LUA
+
+• vim.F.if_nil()			Renamed to |vim.nonnil()|
+• vim.F.ok_or_nil()
+• vim.F.npcall()			Renamed to |vim.npcall()|
+• vim.F.nil_wrap()			Use |vim.npcall()| instead
+
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*
 

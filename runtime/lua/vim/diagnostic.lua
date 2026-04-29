@@ -802,7 +802,7 @@ end
 --- @param opts? vim.diagnostic.setqflist.Opts|vim.diagnostic.setloclist.Opts
 local function set_list(loclist, opts)
   opts = opts or {}
-  local open = vim.F.if_nil(opts.open, true)
+  local open = vim.nonnil(opts.open, true)
   local title = opts.title or 'Diagnostics'
   local winnr = opts.winnr or 0
   local bufnr --- @type integer?

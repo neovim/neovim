@@ -3,7 +3,6 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 local uv = vim.uv
-local isnil = require('vim._core.util').isnil
 
 local M = {}
 
@@ -1030,7 +1029,7 @@ function M.show_document(location, position_encoding, opts)
   local bufnr = vim.uri_to_bufnr(uri)
 
   opts = opts or {}
-  local focus = vim.F.if_nil(opts.focus, true)
+  local focus = vim.nonnil(opts.focus, true)
   if focus then
     -- Save position in jumplist
     vim.cmd("normal! m'")
@@ -1982,13 +1981,16 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
       local end_lnum = range['end'].line + 1
       local end_col = get_line_byte_from_position(bufnr, range['end'], position_encoding) + 1
 
-      local is_deprecated = not isnil(symbol.deprecated or nil)
-        or (not isnil(symbol.tags) and vim.tbl_contains(symbol.tags, protocol.SymbolTag.Deprecated))
+      local is_deprecated = not vim.isnil(symbol.deprecated or nil)
+        or (
+          not vim.isnil(symbol.tags)
+          and vim.tbl_contains(symbol.tags, protocol.SymbolTag.Deprecated)
+        )
       local text = string.format(
         '[%s] %s%s%s',
         kind,
         symbol.name,
-        not isnil(symbol.containerName) and ' in ' .. symbol.containerName or '',
+        not vim.isnil(symbol.containerName) and ' in ' .. symbol.containerName or '',
         is_deprecated and ' (deprecated)' or ''
       )
 

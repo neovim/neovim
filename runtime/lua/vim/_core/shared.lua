@@ -1006,6 +1006,15 @@ function vim.islist(t)
   return true
 end
 
+--- Tests if `t` is `nil` or |vim.NIL|.
+---
+--- @since 15
+--- @param t? any
+--- @return boolean `true` if `nil` or |vim.NIL|, else `false`.
+function vim.isnil(t)
+  return t == nil or t == vim.NIL
+end
+
 --- Counts the number of non-nil values in table `t`.
 ---
 --- ```lua
@@ -1582,7 +1591,7 @@ local get_context_state = function(context)
 
       -- Do not override already set state and fall back to `vim.NIL` for
       -- state `nil` values (which still needs restoring later)
-      res[sc][name] = vim.F.if_nil(res[sc][name], vim[sc][name], vim.NIL)
+      res[sc][name] = vim.nonnil(res[sc][name], vim[sc][name], vim.NIL)
 
       -- Always track global option value to properly restore later.
       -- This matters for at least `o` and `wo` (which might set either/both
@@ -1757,5 +1766,50 @@ end
 
 -- Use max 32-bit signed int value to avoid overflow on 32-bit systems. #31633
 vim._maxint = 2 ^ 32 - 1
+
+--- Returns the first argument which is not nil.
+---
+--- If all arguments are nil, returns nil.
+---
+--- Example:
+---
+--- ```lua
+--- local a = nil
+--- local b = nil
+--- local c = 42
+--- local d = true
+--- assert(vim.nonnil(a, b, c, d) == 42)
+--- ```
+---
+--- @since 15
+--- @generic T
+--- @param ... T
+--- @return T
+function vim.nonnil(...)
+  local nargs = select('#', ...)
+  for i = 1, nargs do
+    local v = select(i, ...)
+    if v ~= nil then
+      return v
+    end
+  end
+  return nil
+end
+
+--- Calls the function `fn` in `protected mode` like |pcall()|, but returns
+--- `nil` on error.
+---
+--- @since 15
+--- @generic T
+--- @param fn fun(...):T
+--- @param ... any?
+--- @return T ...
+function vim.npcall(fn, ...)
+  return (function(success, ...)
+    if success then
+      return ...
+    end
+  end)(pcall(fn, ...))
+end
 
 return vim
