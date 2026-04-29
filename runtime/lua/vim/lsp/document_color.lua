@@ -45,7 +45,7 @@ local function get_contrast_color(color)
   -- Source: https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
   -- Using power 2.2 is a close approximation to full piecewise transform
   local R, G, B = (r / 255) ^ 2.2, (g / 255) ^ 2.2, (b / 255) ^ 2.2
-  local is_bright = (0.2126 * R + 0.7152 * G + 0.0722 * B) > 0.5
+  local is_bright = (0.2126 * R + 0.7152 * G + 0.0722 * B) > 0.179
   return is_bright and '#000000' or '#ffffff'
 end
 
