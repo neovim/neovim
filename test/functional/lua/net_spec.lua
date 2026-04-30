@@ -36,6 +36,25 @@ local function assert_invalid_method(method)
   t.matches('invalid HTTP method', err)
 end
 
+local function request(method, opts)
+  return exec_lua([[
+      local done = false
+      local result
+
+      vim.net.request("]] .. method .. [[", "https://httpbingo.org/anything", ]] .. opts .. [[, function(err, res)
+        if err then
+          result = { error = err }
+        else
+          result = vim.json.decode(res.body)
+        end
+        done = true
+      end)
+
+      vim.wait(2000, function() return done end)
+      return result
+    ]])
+end
+
 describe('vim.net.request', function()
   before_each(function()
     n:clear()
@@ -43,6 +62,7 @@ describe('vim.net.request', function()
 
   it('fetches a URL into memory (async success)', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
     local content = exec_lua([[
       local done = false
       local result
@@ -220,6 +240,22 @@ describe('vim.net.request', function()
     t.eq(headers.Authorization[1], 'Bearer test-token', 'Expected Authorization header')
     t.eq(headers['X-Custom-Header'][1], 'custom-value', 'Expected X-Custom-Header')
     t.eq(headers['Empty'][1], '', 'Expected Empty header')
+  end)
+
+  it('accepts multiple HTTP methods', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
+    t.eq(request('GET', '{}').method, 'GET')
+    t.eq(request('PUT', '{}').method, 'PUT')
+    t.eq(request('PATCH', '{}').method, 'PATCH')
+    t.eq(request('DELETE', '{}').method, 'DELETE')
+
+    ---@diagnostic disable-next-line: no-unknown
+    local post =
+      request('POST', "{body='{\"a\": 1}', headers={['Content-Type'] = 'application/json'}}")
+    t.eq(post.method, 'POST')
+    t.eq(post.headers['Content-Type'][1], 'application/json')
+    t.eq(post.json.a, 1)
   end)
 
   it('validation', function()

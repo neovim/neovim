@@ -4241,12 +4241,13 @@ vim.net.request({method}, {url}, {opts}, {on_response})
         -- POST request with body.
         vim.net.request('POST', 'https://example.com/api', {
           body = '{"key": "value"}',
+          headers = {['Content-Type'] = 'application/json' }
         })
 <
 
     Parameters: ~
-      • {method}       (`string`) (default: GET) The HTTP method (GET, POST,
-                       PUT, PATCH, HEAD, DELETE).
+      • {method}       (`vim.net.HttpMethod`) (default: GET) The HTTP method
+                       (GET, POST, PUT, PATCH, HEAD, DELETE).
       • {url}          (`string`) The URL for the request.
       • {opts}         (`table?`) A table with the following fields:
                        • {body}? (`string`) Request body for POST/PUT/PATCH
@@ -4264,10 +4265,7 @@ vim.net.request({method}, {url}, {opts}, {on_response})
                          failures (default: 3).
                        • {verbose}? (`boolean`) Enables verbose output.
       • {on_response}  (`vim.net.request.ResponseFunc?`) Callback invoked on
-                       request completion. Contains two parameters:
-                       • The response callback `error` string, if any.
-                       • The `body` field in the response with the raw
-                         response data (text or binary).
+                       request completion.
 
     Overloads: ~
       • `fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)`

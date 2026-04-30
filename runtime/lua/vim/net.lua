@@ -1,5 +1,14 @@
 local M = {}
 
+local http_methods = {
+  GET = true,
+  POST = true,
+  PUT = true,
+  PATCH = true,
+  HEAD = true,
+  DELETE = true,
+}
+
 ---@alias vim.net.request.ResponseFunc fun(err: string?, response: vim.net.request.Response?)
 ---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PACH" | "HEAD"| "DELETE
 
@@ -66,29 +75,18 @@ local M = {}
 --- -- POST request with body.
 --- vim.net.request('POST', 'https://example.com/api', {
 ---   body = '{"key": "value"}',
+---   headers = {['Content-Type'] = 'application/json' }
 --- })
 --- ```
 ---
---- @param method string (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
+--- @param method vim.net.HttpMethod (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
 --- @param url string The URL for the request.
 --- @param opts? vim.net.request.Opts
---- @param on_response? vim.net.request.ResponseFunc
---- Callback invoked on request completion. Contains two parameters:
---- - The response callback `error` string, if any.
---- - The `body` field in the response with the raw response data (text or binary).
+--- @param on_response? vim.net.request.ResponseFunc Callback invoked on request completion.
 --- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
 function M.request(method, url, opts, on_response)
-  local http_methods = {
-    GET = true,
-    POST = true,
-    PUT = true,
-    PATCH = true,
-    HEAD = true,
-    DELETE = true,
-  }
-
   if type(url) ~= 'string' then
     ---@diagnostic disable-next-line: cast-local-type
     on_response = opts
@@ -128,10 +126,8 @@ function M.request(method, url, opts, on_response)
   -- curl -X HEAD does not work and advises to use --head instead
   vim.list_extend(args, method == 'HEAD' and { '--head' } or { '--request', method })
 
-  if vim.tbl_contains({ 'POST', 'PUT', 'PATCH' }, method) then
-    if opts.body then
-      vim.list_extend(args, { '--data-binary', opts.body })
-    end
+  if vim.list_contains({ 'POST', 'PUT', 'PATCH' }, method) and opts.body then
+    vim.list_extend(args, { '--data-binary', '@-' })
   end
 
   if opts.headers then
@@ -154,7 +150,8 @@ function M.request(method, url, opts, on_response)
 
   table.insert(args, url)
 
-  local job = vim.system(args, {}, function(res)
+  local system_opts = opts.body and { stdin = opts.body } or {}
+  local job = vim.system(args, system_opts, function(res)
     ---@type string?, vim.net.request.Response?
     local err, response = nil, nil
     if res.signal ~= 0 then
