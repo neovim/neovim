@@ -6,9 +6,7 @@
 // and feed VTerm instances, which will invoke user callbacks with screen
 // update instructions that must be mirrored to the real display.
 //
-// Keys are sent to VTerm instances by calling
-// vterm_keyboard_key/vterm_keyboard_unichar, which generates byte streams that
-// must be fed back to the master fd.
+// Keys are encoded into byte streams that must be fed back to the master fd.
 //
 // Nvim buffers are used as the display mechanism for both the visible screen
 // and the scrollback buffer.
@@ -96,8 +94,6 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
-#include "nvim/vterm/keyboard.h"
-#include "nvim/vterm/mouse.h"
 #include "nvim/vterm/parser.h"
 #include "nvim/vterm/pen.h"
 #include "nvim/vterm/screen.h"
@@ -148,6 +144,8 @@ struct terminal {
   VTerm *vt;
   VTermScreen *vts;
   GhosttyTerminal ghostty;
+  GhosttyKeyEncoder ghostty_key_encoder;
+  GhosttyKeyEvent ghostty_key_event;
   GhosttyMouseEncoder ghostty_mouse_encoder;
   GhosttyMouseEvent ghostty_mouse_event;
   unsigned ghostty_mouse_buttons;
@@ -670,6 +668,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
     .max_scrollback = (size_t)MAX(buf->b_p_scbk, 0),
   };
   assert_ghostty_success(ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts));
+  assert_ghostty_success(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
+  assert_ghostty_success(ghostty_key_event_new(NULL, &term->ghostty_key_event));
   assert_ghostty_success(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
   assert_ghostty_success(ghostty_mouse_event_new(NULL, &term->ghostty_mouse_event));
   terminal_mouse_encoder_set_size(term, ghostty_cols, ghostty_rows);
@@ -1270,6 +1270,7 @@ static int terminal_execute(VimState *state, int key)
 
   // Check for certain control keys like Ctrl-C and Ctrl-\. We still send the
   // unmerged key and modifiers to the terminal.
+  const int key_modifiers = mod_mask;
   int tmp_mod_mask = mod_mask;
   int mod_key = merge_modifiers(key, &tmp_mod_mask);
 
@@ -1364,7 +1365,7 @@ static int terminal_execute(VimState *state, int key)
     }
 
     s->got_bsl = false;
-    terminal_send_key(s->term, key);
+    terminal_send_key(s->term, key, key_modifiers);
   }
 
   return 1;
@@ -1402,6 +1403,8 @@ void terminal_destroy(Terminal **termpp)
     multiqueue_free(term->pending.events);
     ghostty_mouse_event_free(term->ghostty_mouse_event);
     ghostty_mouse_encoder_free(term->ghostty_mouse_encoder);
+    ghostty_key_event_free(term->ghostty_key_event);
+    ghostty_key_encoder_free(term->ghostty_key_encoder);
     ghostty_terminal_free(term->ghostty);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -1519,22 +1522,188 @@ void terminal_paste(int count, String *y_array, size_t y_size)
   }
 }
 
-static void terminal_send_key(Terminal *term, int c)
+static void terminal_key_encoder_sync_config(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
 {
-  VTermModifier mod = VTERM_MOD_NONE;
+  ghostty_key_encoder_setopt_from_terminal(term->ghostty_key_encoder, term->ghostty);
 
+  // MOD_MASK_ALT is already terminal Alt, so always encode option as Alt.
+  GhosttyOptionAsAlt option_as_alt = GHOSTTY_OPTION_AS_ALT_TRUE;
+  ghostty_key_encoder_setopt(term->ghostty_key_encoder,
+                             GHOSTTY_KEY_ENCODER_OPT_MACOS_OPTION_AS_ALT,
+                             &option_as_alt);
+}
+
+/// Returns a known unshifted codepoint for a key event.
+///
+/// @param mods Ghostty modifiers for the key event.
+/// @param utf8 Produced UTF-8 text for the key event.
+/// @param utf8_len Length of `utf8` in bytes.
+/// @return Unshifted codepoint, or 0 if unknown.
+static uint32_t terminal_key_known_unshifted_codepoint(GhosttyMods mods, const char *utf8,
+                                                       size_t utf8_len)
+{
+  if (!(mods & GHOSTTY_MODS_CTRL) || utf8_len != 1) {
+    return 0;
+  }
+
+  uint8_t c = (uint8_t)utf8[0];
+  if (c >= 'A' && c <= 'Z') {
+    return (uint32_t)(c + ('a' - 'A'));
+  }
+  if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '[' || c == ']'
+      || c == '\\' || c == '/') {
+    return c;
+  }
+  return 0;
+}
+
+/// Returns the UTF-8 text produced by a keypad keycode.
+///
+/// @param c Neovim keycode for a keypad key.
+/// @param len Set to the returned text length in bytes, or 0 if `c` is not handled.
+/// @return Static UTF-8 text for the keypad key, or NULL if `c` is not handled.
+static const char *terminal_keypad_generated_utf8(int c, size_t *len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  *len = 1;
+  switch (c) {
+  case K_K0:
+    FALLTHROUGH;
+  case K_KINS:
+    return "0";
+  case K_K1:
+    FALLTHROUGH;
+  case K_KEND:
+    return "1";
+  case K_K2:
+    FALLTHROUGH;
+  case K_KDOWN:
+    return "2";
+  case K_K3:
+    FALLTHROUGH;
+  case K_KPAGEDOWN:
+    return "3";
+  case K_K4:
+    FALLTHROUGH;
+  case K_KLEFT:
+    return "4";
+  case K_K5:
+    FALLTHROUGH;
+  case K_KORIGIN:
+    return "5";
+  case K_K6:
+    FALLTHROUGH;
+  case K_KRIGHT:
+    return "6";
+  case K_K7:
+    FALLTHROUGH;
+  case K_KHOME:
+    return "7";
+  case K_K8:
+    FALLTHROUGH;
+  case K_KUP:
+    return "8";
+  case K_K9:
+    FALLTHROUGH;
+  case K_KPAGEUP:
+    return "9";
+  case K_KDEL:
+    FALLTHROUGH;
+  case K_KPOINT:
+    return ".";
+  case K_KPLUS:
+    return "+";
+  case K_KMINUS:
+    return "-";
+  case K_KMULTIPLY:
+    return "*";
+  case K_KDIVIDE:
+    return "/";
+  case K_KCOMMA:
+    return ",";
+  case K_KEQUAL:
+    return "=";
+  default:
+    *len = 0;
+    return NULL;
+  }
+}
+
+static void terminal_key_encode_event(Terminal *term, GhosttyKey key, GhosttyMods mods,
+                                      const char *utf8, size_t utf8_len)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  terminal_key_encoder_sync_config(term);
+
+  ghostty_key_event_set_action(term->ghostty_key_event, GHOSTTY_KEY_ACTION_PRESS);
+  ghostty_key_event_set_key(term->ghostty_key_event, key);
+  ghostty_key_event_set_mods(term->ghostty_key_event, mods);
+  ghostty_key_event_set_utf8(term->ghostty_key_event, utf8, utf8_len);
+  uint32_t unshifted_codepoint = terminal_key_known_unshifted_codepoint(mods, utf8, utf8_len);
+  ghostty_key_event_set_unshifted_codepoint(term->ghostty_key_event, unshifted_codepoint);
+
+  // Try encoding to a stack-allocated buffer first.
+  char buf[128];
+  size_t len = 0;
+  GhosttyResult res = ghostty_key_encoder_encode(term->ghostty_key_encoder,
+                                                 term->ghostty_key_event,
+                                                 buf,
+                                                 sizeof(buf),
+                                                 &len);
+
+  // If that was too small, allocate on the heap.
+  if (res == GHOSTTY_OUT_OF_SPACE) {
+    char *big_buf = xmalloc(len);
+    assert_ghostty_success(ghostty_key_encoder_encode(term->ghostty_key_encoder,
+                                                      term->ghostty_key_event,
+                                                      big_buf,
+                                                      len,
+                                                      &len));
+    terminal_send(term, big_buf, len);
+    xfree(big_buf);
+    return;
+  }
+
+  assert_ghostty_success(res);
+  if (len > 0) {
+    terminal_send(term, buf, len);
+  }
+}
+
+static void terminal_send_key(Terminal *term, int c, int modifiers)
+{
   // Convert K_ZERO back to ASCII
   if (c == K_ZERO) {
     c = Ctrl_AT;
   }
 
-  VTermKey key = convert_key(&c, &mod);
-
-  if (key != VTERM_KEY_NONE) {
-    vterm_keyboard_key(term->vt, key, mod);
-  } else if (!IS_SPECIAL(c)) {
-    vterm_keyboard_unichar(term->vt, (uint32_t)c, mod);
+  GhosttyMods mods = convert_key_modifiers(c, modifiers);
+  if ((mods & GHOSTTY_MODS_CTRL) && !(mods & GHOSTTY_MODS_SHIFT) && c >= 'A' && c <= 'Z') {
+    c += ('a' - 'A');
   }
+
+  GhosttyKey key = convert_key(c);
+  if (key != GHOSTTY_KEY_UNIDENTIFIED) {
+    size_t utf8_len = 0;
+    const char *utf8 = terminal_keypad_generated_utf8(c, &utf8_len);
+    terminal_key_encode_event(term, key, mods, utf8, utf8_len);
+    return;
+  }
+
+  if (IS_SPECIAL(c)) {
+    return;
+  }
+
+  if (c < 0x20 || c == DEL) {
+    char ctrl = (char)c;
+    terminal_send(term, &ctrl, 1);
+    return;
+  }
+
+  char utf8[MB_MAXBYTES];
+  int utf8_len = utf_char2bytes(c, utf8);
+  terminal_key_encode_event(term, GHOSTTY_KEY_UNIDENTIFIED, mods, utf8, (size_t)utf8_len);
 }
 
 /// Callback scheduled on the main loop when a synchronized update ends.
@@ -2067,23 +2236,11 @@ static GhosttyMods convert_mouse_modifiers(int modifiers)
   return mods;
 }
 
-static void convert_modifiers(int *key, VTermModifier *statep)
+static GhosttyMods convert_key_modifiers(int key, int modifiers)
 {
-  if (mod_mask & MOD_MASK_SHIFT) {
-    *statep |= VTERM_MOD_SHIFT;
-  }
-  if (mod_mask & MOD_MASK_CTRL) {
-    *statep |= VTERM_MOD_CTRL;
-    if (!(mod_mask & MOD_MASK_SHIFT) && *key >= 'A' && *key <= 'Z') {
-      // vterm interprets CTRL+A as SHIFT+CTRL, change to CTRL+a
-      *key += ('a' - 'A');
-    }
-  }
-  if (mod_mask & MOD_MASK_ALT) {
-    *statep |= VTERM_MOD_ALT;
-  }
+  GhosttyMods mods = convert_mouse_modifiers(modifiers);
 
-  switch (*key) {
+  switch (key) {
   case K_S_TAB:
   case K_S_UP:
   case K_S_DOWN:
@@ -2103,285 +2260,212 @@ static void convert_modifiers(int *key, VTermModifier *statep)
   case K_S_F10:
   case K_S_F11:
   case K_S_F12:
-    *statep |= VTERM_MOD_SHIFT;
+    mods |= GHOSTTY_MODS_SHIFT;
     break;
 
   case K_C_LEFT:
   case K_C_RIGHT:
   case K_C_HOME:
   case K_C_END:
-    *statep |= VTERM_MOD_CTRL;
+    mods |= GHOSTTY_MODS_CTRL;
     break;
   }
+
+  return mods;
 }
 
-static VTermKey convert_key(int *key, VTermModifier *statep)
+static GhosttyKey convert_key(int key)
 {
-  convert_modifiers(key, statep);
-
-  switch (*key) {
+  switch (key) {
   case K_BS:
-    return VTERM_KEY_BACKSPACE;
+    return GHOSTTY_KEY_BACKSPACE;
   case K_S_TAB:
     FALLTHROUGH;
   case TAB:
-    return VTERM_KEY_TAB;
+    return GHOSTTY_KEY_TAB;
   case Ctrl_M:
-    return VTERM_KEY_ENTER;
+    return GHOSTTY_KEY_ENTER;
   case ESC:
-    return VTERM_KEY_ESCAPE;
+    return GHOSTTY_KEY_ESCAPE;
 
   case K_S_UP:
     FALLTHROUGH;
   case K_UP:
-    return VTERM_KEY_UP;
+    return GHOSTTY_KEY_ARROW_UP;
   case K_S_DOWN:
     FALLTHROUGH;
   case K_DOWN:
-    return VTERM_KEY_DOWN;
+    return GHOSTTY_KEY_ARROW_DOWN;
   case K_S_LEFT:
     FALLTHROUGH;
   case K_C_LEFT:
     FALLTHROUGH;
   case K_LEFT:
-    return VTERM_KEY_LEFT;
+    return GHOSTTY_KEY_ARROW_LEFT;
   case K_S_RIGHT:
     FALLTHROUGH;
   case K_C_RIGHT:
     FALLTHROUGH;
   case K_RIGHT:
-    return VTERM_KEY_RIGHT;
+    return GHOSTTY_KEY_ARROW_RIGHT;
 
   case K_INS:
-    return VTERM_KEY_INS;
+    return GHOSTTY_KEY_INSERT;
   case K_DEL:
-    return VTERM_KEY_DEL;
+    return GHOSTTY_KEY_DELETE;
   case K_S_HOME:
     FALLTHROUGH;
   case K_C_HOME:
     FALLTHROUGH;
   case K_HOME:
-    return VTERM_KEY_HOME;
+    return GHOSTTY_KEY_HOME;
   case K_S_END:
     FALLTHROUGH;
   case K_C_END:
     FALLTHROUGH;
   case K_END:
-    return VTERM_KEY_END;
+    return GHOSTTY_KEY_END;
   case K_PAGEUP:
-    return VTERM_KEY_PAGEUP;
+    return GHOSTTY_KEY_PAGE_UP;
   case K_PAGEDOWN:
-    return VTERM_KEY_PAGEDOWN;
+    return GHOSTTY_KEY_PAGE_DOWN;
 
   case K_K0:
     FALLTHROUGH;
   case K_KINS:
-    return VTERM_KEY_KP_0;
+    return GHOSTTY_KEY_NUMPAD_0;
   case K_K1:
     FALLTHROUGH;
   case K_KEND:
-    return VTERM_KEY_KP_1;
+    return GHOSTTY_KEY_NUMPAD_1;
   case K_K2:
     FALLTHROUGH;
   case K_KDOWN:
-    return VTERM_KEY_KP_2;
+    return GHOSTTY_KEY_NUMPAD_2;
   case K_K3:
     FALLTHROUGH;
   case K_KPAGEDOWN:
-    return VTERM_KEY_KP_3;
+    return GHOSTTY_KEY_NUMPAD_3;
   case K_K4:
     FALLTHROUGH;
   case K_KLEFT:
-    return VTERM_KEY_KP_4;
+    return GHOSTTY_KEY_NUMPAD_4;
   case K_K5:
     FALLTHROUGH;
   case K_KORIGIN:
-    return VTERM_KEY_KP_5;
+    return GHOSTTY_KEY_NUMPAD_5;
   case K_K6:
     FALLTHROUGH;
   case K_KRIGHT:
-    return VTERM_KEY_KP_6;
+    return GHOSTTY_KEY_NUMPAD_6;
   case K_K7:
     FALLTHROUGH;
   case K_KHOME:
-    return VTERM_KEY_KP_7;
+    return GHOSTTY_KEY_NUMPAD_7;
   case K_K8:
     FALLTHROUGH;
   case K_KUP:
-    return VTERM_KEY_KP_8;
+    return GHOSTTY_KEY_NUMPAD_8;
   case K_K9:
     FALLTHROUGH;
   case K_KPAGEUP:
-    return VTERM_KEY_KP_9;
+    return GHOSTTY_KEY_NUMPAD_9;
   case K_KDEL:
     FALLTHROUGH;
   case K_KPOINT:
-    return VTERM_KEY_KP_PERIOD;
+    return GHOSTTY_KEY_NUMPAD_DECIMAL;
   case K_KENTER:
-    return VTERM_KEY_KP_ENTER;
+    return GHOSTTY_KEY_NUMPAD_ENTER;
   case K_KPLUS:
-    return VTERM_KEY_KP_PLUS;
+    return GHOSTTY_KEY_NUMPAD_ADD;
   case K_KMINUS:
-    return VTERM_KEY_KP_MINUS;
+    return GHOSTTY_KEY_NUMPAD_SUBTRACT;
   case K_KMULTIPLY:
-    return VTERM_KEY_KP_MULT;
+    return GHOSTTY_KEY_NUMPAD_MULTIPLY;
   case K_KDIVIDE:
-    return VTERM_KEY_KP_DIVIDE;
+    return GHOSTTY_KEY_NUMPAD_DIVIDE;
+  case K_KCOMMA:
+    return GHOSTTY_KEY_NUMPAD_COMMA;
+  case K_KEQUAL:
+    return GHOSTTY_KEY_NUMPAD_EQUAL;
 
   case K_S_F1:
     FALLTHROUGH;
   case K_F1:
-    return VTERM_KEY_FUNCTION(1);
+    return GHOSTTY_KEY_F1;
   case K_S_F2:
     FALLTHROUGH;
   case K_F2:
-    return VTERM_KEY_FUNCTION(2);
+    return GHOSTTY_KEY_F2;
   case K_S_F3:
     FALLTHROUGH;
   case K_F3:
-    return VTERM_KEY_FUNCTION(3);
+    return GHOSTTY_KEY_F3;
   case K_S_F4:
     FALLTHROUGH;
   case K_F4:
-    return VTERM_KEY_FUNCTION(4);
+    return GHOSTTY_KEY_F4;
   case K_S_F5:
     FALLTHROUGH;
   case K_F5:
-    return VTERM_KEY_FUNCTION(5);
+    return GHOSTTY_KEY_F5;
   case K_S_F6:
     FALLTHROUGH;
   case K_F6:
-    return VTERM_KEY_FUNCTION(6);
+    return GHOSTTY_KEY_F6;
   case K_S_F7:
     FALLTHROUGH;
   case K_F7:
-    return VTERM_KEY_FUNCTION(7);
+    return GHOSTTY_KEY_F7;
   case K_S_F8:
     FALLTHROUGH;
   case K_F8:
-    return VTERM_KEY_FUNCTION(8);
+    return GHOSTTY_KEY_F8;
   case K_S_F9:
     FALLTHROUGH;
   case K_F9:
-    return VTERM_KEY_FUNCTION(9);
+    return GHOSTTY_KEY_F9;
   case K_S_F10:
     FALLTHROUGH;
   case K_F10:
-    return VTERM_KEY_FUNCTION(10);
+    return GHOSTTY_KEY_F10;
   case K_S_F11:
     FALLTHROUGH;
   case K_F11:
-    return VTERM_KEY_FUNCTION(11);
+    return GHOSTTY_KEY_F11;
   case K_S_F12:
     FALLTHROUGH;
   case K_F12:
-    return VTERM_KEY_FUNCTION(12);
-
+    return GHOSTTY_KEY_F12;
   case K_F13:
-    return VTERM_KEY_FUNCTION(13);
+    return GHOSTTY_KEY_F13;
   case K_F14:
-    return VTERM_KEY_FUNCTION(14);
+    return GHOSTTY_KEY_F14;
   case K_F15:
-    return VTERM_KEY_FUNCTION(15);
+    return GHOSTTY_KEY_F15;
   case K_F16:
-    return VTERM_KEY_FUNCTION(16);
+    return GHOSTTY_KEY_F16;
   case K_F17:
-    return VTERM_KEY_FUNCTION(17);
+    return GHOSTTY_KEY_F17;
   case K_F18:
-    return VTERM_KEY_FUNCTION(18);
+    return GHOSTTY_KEY_F18;
   case K_F19:
-    return VTERM_KEY_FUNCTION(19);
+    return GHOSTTY_KEY_F19;
   case K_F20:
-    return VTERM_KEY_FUNCTION(20);
+    return GHOSTTY_KEY_F20;
   case K_F21:
-    return VTERM_KEY_FUNCTION(21);
+    return GHOSTTY_KEY_F21;
   case K_F22:
-    return VTERM_KEY_FUNCTION(22);
+    return GHOSTTY_KEY_F22;
   case K_F23:
-    return VTERM_KEY_FUNCTION(23);
+    return GHOSTTY_KEY_F23;
   case K_F24:
-    return VTERM_KEY_FUNCTION(24);
+    return GHOSTTY_KEY_F24;
   case K_F25:
-    return VTERM_KEY_FUNCTION(25);
-  case K_F26:
-    return VTERM_KEY_FUNCTION(26);
-  case K_F27:
-    return VTERM_KEY_FUNCTION(27);
-  case K_F28:
-    return VTERM_KEY_FUNCTION(28);
-  case K_F29:
-    return VTERM_KEY_FUNCTION(29);
-  case K_F30:
-    return VTERM_KEY_FUNCTION(30);
-  case K_F31:
-    return VTERM_KEY_FUNCTION(31);
-  case K_F32:
-    return VTERM_KEY_FUNCTION(32);
-  case K_F33:
-    return VTERM_KEY_FUNCTION(33);
-  case K_F34:
-    return VTERM_KEY_FUNCTION(34);
-  case K_F35:
-    return VTERM_KEY_FUNCTION(35);
-  case K_F36:
-    return VTERM_KEY_FUNCTION(36);
-  case K_F37:
-    return VTERM_KEY_FUNCTION(37);
-  case K_F38:
-    return VTERM_KEY_FUNCTION(38);
-  case K_F39:
-    return VTERM_KEY_FUNCTION(39);
-  case K_F40:
-    return VTERM_KEY_FUNCTION(40);
-  case K_F41:
-    return VTERM_KEY_FUNCTION(41);
-  case K_F42:
-    return VTERM_KEY_FUNCTION(42);
-  case K_F43:
-    return VTERM_KEY_FUNCTION(43);
-  case K_F44:
-    return VTERM_KEY_FUNCTION(44);
-  case K_F45:
-    return VTERM_KEY_FUNCTION(45);
-  case K_F46:
-    return VTERM_KEY_FUNCTION(46);
-  case K_F47:
-    return VTERM_KEY_FUNCTION(47);
-  case K_F48:
-    return VTERM_KEY_FUNCTION(48);
-  case K_F49:
-    return VTERM_KEY_FUNCTION(49);
-  case K_F50:
-    return VTERM_KEY_FUNCTION(50);
-  case K_F51:
-    return VTERM_KEY_FUNCTION(51);
-  case K_F52:
-    return VTERM_KEY_FUNCTION(52);
-  case K_F53:
-    return VTERM_KEY_FUNCTION(53);
-  case K_F54:
-    return VTERM_KEY_FUNCTION(54);
-  case K_F55:
-    return VTERM_KEY_FUNCTION(55);
-  case K_F56:
-    return VTERM_KEY_FUNCTION(56);
-  case K_F57:
-    return VTERM_KEY_FUNCTION(57);
-  case K_F58:
-    return VTERM_KEY_FUNCTION(58);
-  case K_F59:
-    return VTERM_KEY_FUNCTION(59);
-  case K_F60:
-    return VTERM_KEY_FUNCTION(60);
-  case K_F61:
-    return VTERM_KEY_FUNCTION(61);
-  case K_F62:
-    return VTERM_KEY_FUNCTION(62);
-  case K_F63:
-    return VTERM_KEY_FUNCTION(63);
+    return GHOSTTY_KEY_F25;
 
   default:
-    return VTERM_KEY_NONE;
+    return GHOSTTY_KEY_UNIDENTIFIED;
   }
 }
 

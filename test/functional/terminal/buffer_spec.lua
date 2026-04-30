@@ -1527,6 +1527,12 @@ describe('terminal input', function()
     eq('aaa\0bbb', exec_lua([[return _G.input_data]]))
   end)
 
+  it('sends normal-mode keypad keys as generated text', function()
+    feed('<KP0><KP1><KP3><KP5><KP7><KP9>')
+    feed('<KPPeriod><KPDiv><KPMult><KPMinus><KPPlus><KPComma><KPEquals>')
+    eq('013579./*-+,=', exec_lua([[return _G.input_data]]))
+  end)
+
   it('unknown special keys are not sent', function()
     feed('aaa<Help>bbb')
     eq('aaabbb', exec_lua([[return _G.input_data]]))
