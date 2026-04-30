@@ -2182,6 +2182,12 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
+  } else if (terminfo_is_term_family(term, "vtpcon")
+             || terminfo_is_term_family(term, "conemu")) {
+    // Their Se inherits "\e[2 q" (steady block) from xterm-new, which
+    // overrides the user's configured Windows console cursor on exit.
+    // Use DECSCUSR 0 to restore the terminal default instead.
+    terminfo_set_str(tui, kTerm_reset_cursor_style, "\x1b[ q");
   }
 
 // At this time (2017-07-12) it seems like all terminals that support 256
