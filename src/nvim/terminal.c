@@ -1300,15 +1300,23 @@ static bool is_filter_char(int c)
   return !!(tpf_flags & flag);
 }
 
+static void terminal_send_bracketed_paste(Terminal *term, bool start)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool bracketed_paste = false;
+  assert_ghostty_success(ghostty_terminal_mode_get(term->ghostty,
+                                                   GHOSTTY_MODE_BRACKETED_PASTE,
+                                                   &bracketed_paste));
+  if (bracketed_paste) {
+    terminal_send(term, start ? "\x1b[200~" : "\x1b[201~", 6);
+  }
+}
+
 void terminal_set_streamed_paste(Terminal *term, bool streamed)
   FUNC_ATTR_NONNULL_ALL
 {
   if (term->streamed_paste != streamed) {
-    if (streamed) {
-      vterm_keyboard_start_paste(curbuf->terminal->vt);
-    } else {
-      vterm_keyboard_end_paste(curbuf->terminal->vt);
-    }
+    terminal_send_bracketed_paste(term, streamed);
   }
   term->streamed_paste = streamed;
 }
@@ -1319,7 +1327,7 @@ void terminal_paste(int count, String *y_array, size_t y_size)
     return;
   }
   if (!curbuf->terminal->streamed_paste) {
-    vterm_keyboard_start_paste(curbuf->terminal->vt);
+    terminal_send_bracketed_paste(curbuf->terminal, true);
   }
   size_t buff_len = y_array[0].size;
   char *buff = xmalloc(buff_len);
@@ -1355,7 +1363,7 @@ void terminal_paste(int count, String *y_array, size_t y_size)
   }
   xfree(buff);
   if (!curbuf->terminal->streamed_paste) {
-    vterm_keyboard_end_paste(curbuf->terminal->vt);
+    terminal_send_bracketed_paste(curbuf->terminal, false);
   }
 }
 
