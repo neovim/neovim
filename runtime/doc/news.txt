@@ -88,7 +88,7 @@ EVENTS
 
 LSP
 
-• todo
+• `client.attached_buffers[buf]` now stores `languageId` string (was boolean).
 
 LUA
 
