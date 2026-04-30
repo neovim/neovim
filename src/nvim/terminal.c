@@ -175,10 +175,6 @@ struct terminal {
   /// Lines in the terminal buffer belonging to the screen instead of the scrollback.
   int old_height;
 
-  char *title;     // VTermStringFragment buffer
-  size_t title_len;
-  size_t title_size;
-
   // buf_T instance that acts as a "drawing surface" for libvterm
   // we can't store a direct reference to the buffer because the
   // refresh_timer_cb may be called after the buffer was freed, and there's
@@ -502,17 +498,6 @@ static bool terminal_dedup_ghostty_response(Terminal *term, const uint8_t *data,
   return false;
 }
 
-static void term_ghostty_write_pty_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
-                                            void *user_data, const uint8_t *data, size_t len)
-{
-  Terminal *term = (Terminal *)user_data;
-  if (terminal_dedup_ghostty_response(term, data, len)) {
-    return;
-  }
-
-  terminal_send(term, (const char *)data, len);
-}
-
 /// Allocates a terminal's scrollback buffer if it hasn't been allocated yet.
 /// Does nothing if it's already allocated, unlike adjust_scrollback().
 ///
@@ -712,6 +697,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                               (const void *)term_ghostty_write_pty_callback));
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_BELL,
                                               (const void *)term_ghostty_bell_callback));
+  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
+                                              (const void *)term_ghostty_title_changed_callback));
   assert_ghostty_success(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
   assert_ghostty_success(ghostty_key_event_new(NULL, &term->ghostty_key_event));
   assert_ghostty_success(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
@@ -1439,7 +1426,6 @@ void terminal_destroy(Terminal **termpp)
       xfree(term->sb_buffer[i]);
     }
     xfree(term->sb_buffer);
-    xfree(term->title);
     xfree(term->selection_buffer);
     kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
@@ -1961,7 +1947,36 @@ static void terminal_focus(Terminal *term, bool focus)
 }
 
 // }}}
-// libvterm and libghostty callbacks {{{
+// libghostty and libvterm callbacks {{{
+
+/// Called when Ghostty needs to write the response for a terminal query.
+static void term_ghostty_write_pty_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
+                                            void *user_data, const uint8_t *data, size_t len)
+{
+  Terminal *term = (Terminal *)user_data;
+  if (terminal_dedup_ghostty_response(term, data, len)) {
+    return;
+  }
+  terminal_send(term, (const char *)data, len);
+}
+
+/// Called when the terminal wants to set the title.
+static void term_ghostty_title_changed_callback(GhosttyTerminal ghostty, void *user_data)
+{
+  Terminal *term = (Terminal *)user_data;
+  GhosttyString title = { 0 };
+  assert_ghostty_success(ghostty_terminal_get(ghostty, GHOSTTY_TERMINAL_DATA_TITLE, &title));
+
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+  buf_set_term_title(buf, title.ptr == NULL ? "" : (const char *)title.ptr, title.len);
+}
+
+/// Called when the terminal wants to ring the system bell.
+static void term_ghostty_bell_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
+                                       void *user_data FUNC_ATTR_UNUSED)
+{
+  vim_beep(kOptBoFlagTerm);
+}
 
 static int term_damage(VTermRect rect, void *data)
 {
@@ -2019,34 +2034,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     invalidate_terminal(term, -1, -1);
     break;
 
-  case VTERM_PROP_TITLE: {
-    buf_T *buf = handle_get_buffer(term->buf_handle);  // May be NULL
-    VTermStringFragment frag = val->string;
-
-    if (frag.initial && frag.final) {
-      buf_set_term_title(buf, frag.str, frag.len);
-      break;
-    }
-
-    if (frag.initial) {
-      term->title_len = 0;
-      term->title_size = MAX(frag.len, 1024);
-      term->title = xmalloc(sizeof(char *) * term->title_size);
-    } else if (term->title_len + frag.len > term->title_size) {
-      term->title_size *= 2;
-      term->title = xrealloc(term->title, sizeof(char *) * term->title_size);
-    }
-
-    memcpy(term->title + term->title_len, frag.str, frag.len);
-    term->title_len += frag.len;
-
-    if (frag.final) {
-      buf_set_term_title(buf, term->title, term->title_len);
-      xfree(term->title);
-      term->title = NULL;
-    }
+  case VTERM_PROP_TITLE:
     break;
-  }
 
   case VTERM_PROP_MOUSE:
     break;
@@ -2081,13 +2070,6 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
   }
 
   return 1;
-}
-
-/// Called when the terminal wants to ring the system bell.
-static void term_ghostty_bell_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
-                                       void *user_data FUNC_ATTR_UNUSED)
-{
-  vim_beep(kOptBoFlagTerm);
 }
 
 /// Called when the terminal wants to query the system theme.
