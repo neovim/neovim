@@ -791,7 +791,7 @@ describe('nvim_create_user_command', function()
     assert_alive()
   end)
 
-  it('does not allow invalid command names', function()
+  it('validation', function()
     eq(
       "Invalid command name (must start with uppercase): 'test'",
       pcall_err(

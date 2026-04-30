@@ -1493,7 +1493,9 @@ local function is_empty(range)
   return range.start.line == range['end'].line and range.start.character == range['end'].character
 end
 
---- Perform an incremental selection at the cursor position based on ranges given by the LSP. The
+--- [lsp-incremental-selection]()
+---
+--- Expands or contracts a |Visual| selection at cursor, based on ranges given by LSP. The
 --- `direction` parameter specifies the number of times to expand the selection. Negative values
 --- will shrink the selection.
 ---

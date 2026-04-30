@@ -30,7 +30,7 @@ By default an internal diff library will be used.  When 'diffopt' or
 'diffexpr' has been set an external "diff" command will be used.  This only
 works when such a diff program is available.
 
-Diffs are local to the current tab page |tab-page|.  You can't see diffs with
+Diffs are local to the current tab page |tabpage|.  You can't see diffs with
 a window in another tab page.  This does make it possible to have several
 diffs at the same time, each in their own tab page.
 

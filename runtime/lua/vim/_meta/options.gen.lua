@@ -950,8 +950,8 @@ vim.go.cb = vim.go.clipboard
 
 --- Number of screen lines to use for the command-line.  Helps avoiding
 --- `hit-enter` prompts.
---- The value of this option is stored with the tab page, so that each tab
---- page can have a different value.
+--- The value of this option is stored with the tabpage, so that each
+--- tabpage can have a different value.
 ---
 --- When 'cmdheight' is zero, there is no command-line unless it is being
 --- used.  The command-line will cover the last line of the screen when
@@ -1797,7 +1797,7 @@ vim.go.dex = vim.go.diffexpr
 ---
 --- 	closeoff	When a window is closed where 'diff' is set
 --- 			and there is only one window remaining in the
---- 			same tab page with 'diff' set, execute
+--- 			same tabpage with 'diff' set, execute
 --- 			`:diffoff` in that window.  This undoes a
 --- 			`:diffsplit` command.
 ---
@@ -5608,9 +5608,9 @@ vim.go.slm = vim.go.selectmode
 --- 		will become the current directory (useful with
 --- 		projects accessed over a network from different
 --- 		systems)
----    tabpages	all tab pages; without this only the current tab page
+---    tabpages	all tabpages; without this only the current tabpage
 --- 		is restored, so that you can make a session for each
---- 		tab page separately
+--- 		tabpage separately
 ---    terminal	include terminal windows where the command can be
 --- 		restored
 ---    winpos	position of the whole Vim window
@@ -6185,14 +6185,10 @@ vim.o.smd = vim.o.showmode
 vim.go.showmode = vim.o.showmode
 vim.go.smd = vim.go.showmode
 
---- The value of this option specifies when the line with tab page labels
---- will be displayed:
+--- Specifies when the `tabpage` labels will be displayed:
 --- 	0: never
---- 	1: only if there are at least two tab pages
+--- 	1: only if there are at least two tabpages
 --- 	2: always
---- This is both for the GUI and non-GUI implementation of the tab pages
---- line.
---- See `tab-page` for more information about tab pages.
 ---
 --- @type integer
 vim.o.showtabline = 1
@@ -6776,14 +6772,14 @@ vim.wo.stc = vim.wo.statuscolumn
 --- ( -   Start of item group.  Can be used for setting the width and
 ---       alignment of a section.  Must be followed by %) somewhere.
 --- ) -   End of item group.  No width fields allowed.
---- T N   For 'tabline': start of tab page N label.  Use %T or %X to end
+--- T N   For 'tabline': start of tabpage N label.  Use %T or %X to end
 ---       the label.  Clicking this label with left mouse button switches
----       to the specified tab page, while clicking it with middle mouse
----       button closes the specified tab page.
+---       to the specified tabpage, while clicking it with middle mouse
+---       button closes the specified tabpage.
 --- X N   For 'tabline': start of close tab N label.  Use %X or %T to end
 ---       the label, e.g.: %3Xclose%X.  Use %999X for a "close current
 ---       tab" label.  Clicking this label with left mouse button closes
----       the specified tab page.
+---       the specified tabpage.
 --- @ N   Start of execute function label. Use %X or %T to end the label,
 ---       e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this label runs the
 ---       specified function: in the example when clicking once using left
@@ -6986,18 +6982,18 @@ vim.bo.swf = vim.bo.swapfile
 ---   `:sbnext`, or `:sbrewind`).
 --- Possible values (comma-separated list):
 ---    useopen	If included, jump to the first open window in the
---- 		current tab page that contains the specified buffer
+--- 		current tabpage that contains the specified buffer
 --- 		(if there is one).  Otherwise: Do not examine other
 --- 		windows.
----    usetab	Like "useopen", but also consider windows in other tab
---- 		pages.
+---    usetab	Like "useopen", but also consider windows in other
+--- 		tabpages.
 ---    split	If included, split the current window before loading
 --- 		a buffer for a `quickfix` command that display errors.
 --- 		Otherwise: do not split, use current window (when used
 --- 		in the quickfix window: the previously used window or
 --- 		split if there is no other window).
 ---    vsplit	Just like "split" but split vertically.
----    newtab	Like "split", but open a new tab page.  Overrules
+---    newtab	Like "split", but open a new tabpage.  Overrules
 --- 		"split" when both are present.
 ---    uselast	If included, jump to the previously used window when
 --- 		jumping to errors with `quickfix` commands.
@@ -7061,13 +7057,13 @@ vim.o.syn = vim.o.syntax
 vim.bo.syntax = vim.o.syntax
 vim.bo.syn = vim.bo.syntax
 
---- This option controls the behavior when closing tab pages (e.g., using
---- `:tabclose`).  When empty Vim goes to the next (right) tab page.
+--- This option controls the behavior when closing tabpages (e.g., using
+--- `:tabclose`).  When empty Vim goes to the next (right) tabpage.
 ---
 --- Possible values (comma-separated list):
----    left		If included, go to the previous tab page instead of
+---    left		If included, go to the previous tabpage instead of
 --- 		the next one.
----    uselast	If included, go to the previously used tab page if
+---    uselast	If included, go to the previously used tabpage if
 --- 		possible.  This option takes precedence over the
 --- 		others.
 ---
@@ -7077,14 +7073,14 @@ vim.o.tcl = vim.o.tabclose
 vim.go.tabclose = vim.o.tabclose
 vim.go.tcl = vim.go.tabclose
 
---- When non-empty, this option determines the content of the tab pages
+--- When non-empty, this option determines the content of the tabpages
 --- line at the top of the Vim window.  When empty Vim will use a default
---- tab pages line.  See `setting-tabline` for more info.
+--- tabpages line.  See `setting-tabline` for more info.
 ---
---- The tab pages line only appears as specified with the 'showtabline'
+--- The tabpages line only appears as specified with the 'showtabline'
 --- option and only when there is no GUI tab line.  When 'e' is in
 --- 'guioptions' and the GUI supports a tab line 'guitablabel' is used
---- instead.  Note that the two tab pages lines are very different.
+--- instead.  Note that the two tabpages lines are very different.
 ---
 --- The value is evaluated like with 'statusline'.  You can use
 --- `tabpagenr()`, `tabpagewinnr()` and `tabpagebuflist()` to figure out
@@ -7095,7 +7091,7 @@ vim.go.tcl = vim.go.tabclose
 --- trigger it to be updated, use `:redrawtabline`.
 --- This option cannot be set in a modeline when 'modelineexpr' is off.
 ---
---- Keep in mind that only one of the tab pages is the current one, others
+--- Keep in mind that only one of the tabpages is the current one, others
 --- are invisible and you can't jump to their windows.
 ---
 --- @type string
@@ -7104,7 +7100,7 @@ vim.o.tal = vim.o.tabline
 vim.go.tabline = vim.o.tabline
 vim.go.tal = vim.go.tabline
 
---- Maximum number of tab pages to be opened by the `-p` command line
+--- Maximum number of tabpages to be opened by the `-p` command line
 --- argument or the ":tab all" command. `tabpage`
 ---
 --- @type integer

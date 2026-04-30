@@ -190,37 +190,33 @@ end
 
 --- @class vim.diagnostic.Opts.Status
 ---
---- Either:
---- - a table mapping |diagnostic-severity| to the text to use for each
----   existing severity section.
---- - a function that accepts a mapping of |diagnostic-severity| to the
----   number of diagnostics of the corresponding severity (only those
----   severity levels that have at least 1 diagnostic) and returns
----   a 'statusline' component. In this case highlights must be applied
----   by the user in the `format` function. Example:
----   ```lua
----   local signs = {
----     [vim.diagnostic.severity.ERROR] = "A",
----     -- ...
----   }
----   local hl_map = {
----     [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
----     -- ...
----   }
----   vim.diagnostic.config({
----     status = {
----       format = function(counts)
----         local items = {}
----         for level, _ in ipairs(vim.diagnostic.severity) do
----           local count = counts[level] or 0
----           table.insert(items, ("%%#%s#%s %s"):format(hl_map[level], signs[level], count))
----         end
----         return table.concat(items, " ")
+--- Function that accepts a mapping of |diagnostic-severity| to the number of diagnostics of the
+--- corresponding severity (only those having at least 1 diagnostic) and returns a 'statusline'
+--- component. Highlights must be applied by the `format` function.
+--- Example:
+--- ```lua
+--- local signs = {
+---   [vim.diagnostic.severity.ERROR] = "A",
+---   -- ...
+--- }
+--- local hl_map = {
+---   [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+---   -- ...
+--- }
+--- vim.diagnostic.config({
+---   status = {
+---     format = function(severity_counts)
+---       local items = {}
+---       for severity in ipairs(vim.diagnostic.severity) do
+---         local count = severity_counts[severity] or 0
+---         table.insert(items, ("%%#%s#%s %s"):format(hl_map[severity], signs[severity], count))
 ---       end
----     }
----   })
----   ```
---- @field format? table<vim.diagnostic.Severity,string>|(fun(counts:table<vim.diagnostic.Severity,integer>): string)
+---       return table.concat(items, " ")
+---     end
+---   }
+--- })
+--- ```
+--- @field format? (fun(counts:table<vim.diagnostic.Severity,integer>): string)
 
 --- @class vim.diagnostic.Opts.Underline
 ---
@@ -3026,8 +3022,8 @@ local default_status_signs = {
 function M.status(bufnr)
   vim.validate('bufnr', bufnr, 'number', true)
   bufnr = bufnr or 0
-  local config = assert(M.config()).status or {}
-  vim.validate('config.format', config.format, { 'table', 'function' }, true)
+  local config = assert(M.config()).status or {} --- @type vim.diagnostic.Opts.Status
+  vim.validate('config.format', config.format, 'function', true)
 
   local counts = M.count(bufnr)
   local format = config.format
@@ -3035,13 +3031,8 @@ function M.status(bufnr)
   if type(format) == 'function' then
     result_str = format(counts)
   else
-    local signs ---@type table<vim.diagnostic.Severity, string>
-    if type(format) == 'table' then
-      signs = format
-    else
-      local signs_config = assert(vim.diagnostic.config()).signs
-      signs = type(signs_config) == 'table' and signs_config.text or default_status_signs
-    end
+    local signs_config = assert(vim.diagnostic.config()).signs
+    local signs = type(signs_config) == 'table' and signs_config.text or default_status_signs
     result_str = vim
       .iter(pairs(counts))
       :map(function(severity, count)
@@ -3049,9 +3040,11 @@ function M.status(bufnr)
       end)
       :join(' ')
   end
+
   if result_str:len() > 0 then
     result_str = result_str .. '%##'
   end
+
   return result_str
 end
 

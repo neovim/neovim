@@ -1339,8 +1339,8 @@ local options = {
       desc = [=[
         Number of screen lines to use for the command-line.  Helps avoiding
         |hit-enter| prompts.
-        The value of this option is stored with the tab page, so that each tab
-        page can have a different value.
+        The value of this option is stored with the tabpage, so that each
+        tabpage can have a different value.
 
         When 'cmdheight' is zero, there is no command-line unless it is being
         used.  The command-line will cover the last line of the screen when
@@ -2382,7 +2382,7 @@ local options = {
 
         	closeoff	When a window is closed where 'diff' is set
         			and there is only one window remaining in the
-        			same tab page with 'diff' set, execute
+        			same tabpage with 'diff' set, execute
         			`:diffoff` in that window.  This undoes a
         			`:diffsplit` command.
 
@@ -4122,9 +4122,9 @@ local options = {
         							*'go-d'*
           'd'	Use dark theme variant if available.
         							*'go-e'*
-          'e'	Add tab pages when indicated with 'showtabline'.
+          'e'	Add tabpages when indicated with 'showtabline'.
         	'guitablabel' can be used to change the text in the labels.
-        	When 'e' is missing a non-GUI tab pages line may be used.
+        	When 'e' is missing a non-GUI tabpages line may be used.
         	The GUI tabs are only supported on some systems, currently
         	Mac OS/X and MS-Windows.
         							*'go-i'*
@@ -4192,9 +4192,9 @@ local options = {
       abbreviation = 'gtl',
       defaults = '',
       desc = [=[
-        When non-empty describes the text to use in a label of the GUI tab
-        pages line.  When empty and when the result is empty Vim will use a
-        default label.  See |setting-guitablabel| for more info.
+        When non-empty describes the text to use in a label of the GUI
+        tabpages line.  When empty and when the result is empty Vim will use
+        a default label.  See |setting-guitablabel| for more info.
 
         The format of this option is like that of 'statusline'.
         'guitabtooltip' is used for the tooltip, see below.
@@ -4202,15 +4202,15 @@ local options = {
         modeline, see |sandbox-option|.
         This option cannot be set in a modeline when 'modelineexpr' is off.
 
-        Only used when the GUI tab pages line is displayed.  'e' must be
-        present in 'guioptions'.  For the non-GUI tab pages line 'tabline' is
+        Only used when the GUI tabpages line is displayed.  'e' must be
+        present in 'guioptions'.  For the non-GUI tabpages line 'tabline' is
         used.
       ]=],
       full_name = 'guitablabel',
       modelineexpr = true,
       redraw = { 'current_window' },
       scope = { 'global' },
-      short_desc = N_('GUI: custom label for a tab page'),
+      short_desc = N_('GUI: custom label for a tabpage'),
       type = 'string',
       immutable = true,
     },
@@ -4218,8 +4218,8 @@ local options = {
       abbreviation = 'gtt',
       defaults = '',
       desc = [=[
-        When non-empty describes the text to use in a tooltip for the GUI tab
-        pages line.  When empty Vim will use a default tooltip.
+        When non-empty describes the text to use in a tooltip for the GUI
+        tabpages line.  When empty Vim will use a default tooltip.
         This option is otherwise just like 'guitablabel' above.
         You can include a line break.  Simplest method is to use |:let|: >vim
         	let &guitabtooltip = "line one\nline two"
@@ -4230,7 +4230,7 @@ local options = {
       modelineexpr = true,
       redraw = { 'current_window' },
       scope = { 'global' },
-      short_desc = N_('GUI: custom tooltip for a tab page'),
+      short_desc = N_('GUI: custom tooltip for a tabpage'),
       type = 'string',
       immutable = true,
     },
@@ -7412,9 +7412,9 @@ local options = {
         		will become the current directory (useful with
         		projects accessed over a network from different
         		systems)
-           tabpages	all tab pages; without this only the current tab page
+           tabpages	all tabpages; without this only the current tabpage
         		is restored, so that you can make a session for each
-        		tab page separately
+        		tabpage separately
            terminal	include terminal windows where the command can be
         		restored
            winpos	position of the whole Vim window
@@ -8117,19 +8117,15 @@ local options = {
       cb = 'did_set_showtabline',
       defaults = 1,
       desc = [=[
-        The value of this option specifies when the line with tab page labels
-        will be displayed:
+        Specifies when the |tabpage| labels will be displayed:
         	0: never
-        	1: only if there are at least two tab pages
+        	1: only if there are at least two tabpages
         	2: always
-        This is both for the GUI and non-GUI implementation of the tab pages
-        line.
-        See |tab-page| for more information about tab pages.
       ]=],
       full_name = 'showtabline',
       redraw = { 'all_windows', 'ui_option' },
       scope = { 'global' },
-      short_desc = N_('tells when the tab pages line is displayed'),
+      short_desc = N_('tells when the tabpages line is displayed'),
       type = 'number',
       varname = 'p_stal',
     },
@@ -8838,14 +8834,14 @@ local options = {
         ( -   Start of item group.  Can be used for setting the width and
               alignment of a section.  Must be followed by %) somewhere.
         ) -   End of item group.  No width fields allowed.
-        T N   For 'tabline': start of tab page N label.  Use %T or %X to end
+        T N   For 'tabline': start of tabpage N label.  Use %T or %X to end
               the label.  Clicking this label with left mouse button switches
-              to the specified tab page, while clicking it with middle mouse
-              button closes the specified tab page.
+              to the specified tabpage, while clicking it with middle mouse
+              button closes the specified tabpage.
         X N   For 'tabline': start of close tab N label.  Use %X or %T to end
               the label, e.g.: %3Xclose%X.  Use %999X for a "close current
               tab" label.  Clicking this label with left mouse button closes
-              the specified tab page.
+              the specified tabpage.
         @ N   Start of execute function label. Use %X or %T to end the label,
               e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this label runs the
               specified function: in the example when clicking once using left
@@ -9047,18 +9043,18 @@ local options = {
           |:sbnext|, or |:sbrewind|).
         Possible values (comma-separated list):
            useopen	If included, jump to the first open window in the
-        		current tab page that contains the specified buffer
+        		current tabpage that contains the specified buffer
         		(if there is one).  Otherwise: Do not examine other
         		windows.
-           usetab	Like "useopen", but also consider windows in other tab
-        		pages.
+           usetab	Like "useopen", but also consider windows in other
+        		tabpages.
            split	If included, split the current window before loading
         		a buffer for a |quickfix| command that display errors.
         		Otherwise: do not split, use current window (when used
         		in the quickfix window: the previously used window or
         		split if there is no other window).
            vsplit	Just like "split" but split vertically.
-           newtab	Like "split", but open a new tab page.  Overrules
+           newtab	Like "split", but open a new tabpage.  Overrules
         		"split" when both are present.
            uselast	If included, jump to the previously used window when
         		jumping to errors with |quickfix| commands.
@@ -9135,20 +9131,20 @@ local options = {
       flags = true,
       deny_duplicates = true,
       desc = [=[
-        This option controls the behavior when closing tab pages (e.g., using
-        |:tabclose|).  When empty Vim goes to the next (right) tab page.
+        This option controls the behavior when closing tabpages (e.g., using
+        |:tabclose|).  When empty Vim goes to the next (right) tabpage.
 
         Possible values (comma-separated list):
-           left		If included, go to the previous tab page instead of
+           left		If included, go to the previous tabpage instead of
         		the next one.
-           uselast	If included, go to the previously used tab page if
+           uselast	If included, go to the previously used tabpage if
         		possible.  This option takes precedence over the
         		others.
       ]=],
       full_name = 'tabclose',
       list = 'onecomma',
       scope = { 'global' },
-      short_desc = N_('which tab page to focus when closing a tab'),
+      short_desc = N_('which tabpage to focus when closing a tab'),
       type = 'string',
       varname = 'p_tcl',
       flags_varname = 'tcl_flags',
@@ -9158,14 +9154,14 @@ local options = {
       cb = 'did_set_tabline',
       defaults = '',
       desc = [=[
-        When non-empty, this option determines the content of the tab pages
+        When non-empty, this option determines the content of the tabpages
         line at the top of the Vim window.  When empty Vim will use a default
-        tab pages line.  See |setting-tabline| for more info.
+        tabpages line.  See |setting-tabline| for more info.
 
-        The tab pages line only appears as specified with the 'showtabline'
+        The tabpages line only appears as specified with the 'showtabline'
         option and only when there is no GUI tab line.  When 'e' is in
         'guioptions' and the GUI supports a tab line 'guitablabel' is used
-        instead.  Note that the two tab pages lines are very different.
+        instead.  Note that the two tabpages lines are very different.
 
         The value is evaluated like with 'statusline'.  You can use
         |tabpagenr()|, |tabpagewinnr()| and |tabpagebuflist()| to figure out
@@ -9176,14 +9172,14 @@ local options = {
         trigger it to be updated, use |:redrawtabline|.
         This option cannot be set in a modeline when 'modelineexpr' is off.
 
-        Keep in mind that only one of the tab pages is the current one, others
+        Keep in mind that only one of the tabpages is the current one, others
         are invisible and you can't jump to their windows.
       ]=],
       full_name = 'tabline',
       modelineexpr = true,
       redraw = { 'tabline' },
       scope = { 'global' },
-      short_desc = N_('custom format for the console tab pages line'),
+      short_desc = N_('custom format for the console tabpages line'),
       type = 'string',
       varname = 'p_tal',
     },
@@ -9191,12 +9187,12 @@ local options = {
       abbreviation = 'tpm',
       defaults = 50,
       desc = [=[
-        Maximum number of tab pages to be opened by the |-p| command line
+        Maximum number of tabpages to be opened by the |-p| command line
         argument or the ":tab all" command. |tabpage|
       ]=],
       full_name = 'tabpagemax',
       scope = { 'global' },
-      short_desc = N_('maximum number of tab pages for |-p| and "tab all"'),
+      short_desc = N_('maximum number of tabpages for |-p| and "tab all"'),
       type = 'number',
       varname = 'p_tpm',
     },

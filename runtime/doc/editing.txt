@@ -1147,7 +1147,7 @@ The names can be in upper- or lowercase.
 			edited.
 			If there are other tab pages and quitting the last
 			window in the current tab page the current tab page is
-			closed |tab-page|.
+			closed |tabpage|.
 			Triggers the |QuitPre| autocommand event.
 			See |CTRL-W_q| for quitting another window.
 

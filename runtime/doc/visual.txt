@@ -7,7 +7,7 @@
 Visual mode				*Visual* *Visual-mode* *visual-mode*
 
 Visual mode is a flexible and easy way to select a piece of text for an
-operator.  It is the only way to select a block of text.
+operator.  It is the only way to select a block of text (|visual-block|).
 
 This is introduced in section |04.4| of the user manual.
 

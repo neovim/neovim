@@ -61,8 +61,8 @@ empty buffer is created and it is not modified, the buffer will be re-used
 when loading another file into that buffer.  This also means the buffer number
 will not change.
 
-The main Vim window can hold several split windows.  There are also tab pages
-|tab-page|, each of which can hold multiple windows.
+The main Vim window can hold several split windows.  There are also
+|tabpage|s, each of which can hold multiple windows.
 
 							*focusable*
 If a window is focusable, it is part of the "navigation stack", that is,
@@ -352,9 +352,8 @@ CTRL-W c					*CTRL-W_c* *:clo* *:close*
 		[!] is used, the buffer becomes hidden (unless there is another
 		window editing it).
 
-		When there is only one |edit-window| in the current tab page
-		and there is another tab page, this closes the current tab
-		page.  |tab-page|.
+		When there is only one |edit-window| in the current |tabpage|
+		and there is another tabpage, this closes the current tabpage.
 
 		This command fails when:			*E444*
 		- There is only one window on the screen.
@@ -377,8 +376,8 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 
 		The buffer becomes hidden (unless there is another window
 		editing it or 'bufhidden' is `unload`, `delete` or `wipe`).
-		If the window is the last one in the current tab page the tab
-		page is closed. |tab-page|
+		If the window is the last one in the current |tabpage| the
+		tabpage is closed.
 
 		The value of 'hidden' is irrelevant for this command.
 		Changes to the buffer are not written and won't get lost, so
@@ -544,13 +543,13 @@ CTRL-W L	Move the current window to be at the far right, using the full
 		is created.
 
 						*CTRL-W_T*
-CTRL-W T	Move the current window to a new tab page.  This fails if
-		there is only one window in the current tab page.
+CTRL-W T	Move the current window to a new tabpage.  This fails if
+		there is only one window in the current tabpage.
 		This works like `:tab split`, except the previous window is
 		closed.
-		When a count is specified the new tab page will be opened
-		before the tab page with this index.  Otherwise it comes after
-		the current tab page.
+		When a count is specified the new tabpage will be opened
+		before the tabpage with this index.  Otherwise it comes after
+		the current tabpage.
 
 ==============================================================================
 6. Window resizing					*window-resize*

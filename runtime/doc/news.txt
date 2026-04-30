@@ -399,6 +399,8 @@ TREESITTER
 • |LanguageTree:parse()| now accepts a list of ranges.
 • |v_an| |v_in| |v_]n| |v_[n| incremental selection of treesitter nodes.
 • |v_]N| |v_[N| expand selection to sibling treesitter node.
+• |vim.treesitter.select()| starts or adjusts a visual selection at cursor,
+  based on tree nodes.
 
 TUI
 

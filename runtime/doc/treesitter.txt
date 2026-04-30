@@ -1002,15 +1002,15 @@ get_node({opts})                                   *vim.treesitter.get_node()*
       • {opts}  (`table?`) Optional keyword arguments:
                 • {bufnr} (`integer?`) Buffer number (nil or 0 for current
                   buffer)
-                • {ignore_injections} (`boolean?`) Ignore injected languages
-                  (default true)
-                • {include_anonymous} (`boolean?`) Include anonymous nodes
-                  (default false)
-                • {lang} (`string?`) Parser language. (default: from buffer
-                  filetype)
-                • {pos} (`[integer, integer]?`) 0-indexed (row, col) tuple.
-                  Defaults to cursor position in the current window. Required
-                  if {bufnr} is not the current buffer
+                • {ignore_injections} (`boolean?`, default: true) Ignore
+                  injected languages
+                • {include_anonymous} (`boolean?`, default: false) Include
+                  anonymous nodes
+                • {lang} (`string?`, default: from 'filetype') Parser
+                  language.
+                • {pos} (`[integer, integer]?`, default: window-local cursor)
+                  0-indexed (row, col) tuple. Required if {bufnr} is not the
+                  current buffer
 
     Return: ~
         (`TSNode?`) Node at the given position
@@ -1154,6 +1154,17 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
 
     Return: ~
         (`boolean`) True if the {node} contains the {range}
+
+select({target}, {opts})                             *vim.treesitter.select()*
+    Starts or adjusts a |Visual| selection at cursor, based on tree nodes. The
+    `target` parameter decides the selection behavior.
+
+    Parameters: ~
+      • {target}  (`'parent'|'child'|'next'|'prev'|'extend_next'|'extend_prev'`)
+                  Decides the selection behavior.
+      • {opts}    (`table?`) A table with the following fields:
+                  • {count} (`integer?`, default: 1) Expand or adjust the
+                    selection this many times.
 
 start({buf}, {lang})                                  *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer

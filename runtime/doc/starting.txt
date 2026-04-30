@@ -840,7 +840,7 @@ An example mapping: >
 This saves the current Session, and starts off the command to load another.
 
 A session includes all tab pages, unless "tabpages" was removed from
-'sessionoptions'. |tab-page|
+'sessionoptions'. |tabpage|
 
 The |SessionLoadPre| autocmd event is triggered before a session file is
 loaded/sourced and |SessionLoadPost| autocmd event is triggered after.

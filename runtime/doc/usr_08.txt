@@ -596,7 +596,7 @@ A few more things you can do with tab pages:
 	Closes all tab pages except the current one.  Unless there are unsaved
 	changes in other tab pages.
 
-For more information about tab pages see |tab-page|.
+For more information about tabpages see |tabpage|.
 
 ==============================================================================
 

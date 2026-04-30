@@ -47,7 +47,7 @@ static void help(void)
   puts("  shell-test INTERACT");
   puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
   puts("  shell-test HOLD");
-  puts("    Prints \"holding $ \" to stderr, and waits indefinitely.");
+  puts("    Prints \"holding $ \" to stderr, and waits indefinitely (without reading stdin, unlike INTERACT).");
   puts("  shell-test EXIT {code}");
   puts("    Exits immediately with exit code \"{code}\".");
 }
