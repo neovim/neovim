@@ -5321,4 +5321,94 @@ func Test_rulerformat_empty()
   set rulerformat&
 endfunc
 
+func Test_wildmode_noinsert()
+  command! -nargs=1 -complete=custom,T MyCmd echo
+  func T(a, c, p)
+    return "oneA\noneB\noneC"
+  endfunc
+
+  set wildmenu wildoptions=pum wildmode=noinsert,full wildchar=<Tab>
+  call feedkeys(":MyCmd o\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneB', @:)
+  call feedkeys(":MyCmd o\<Tab>\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneC', @:)
+
+  call feedkeys(":MyCmd o\<Tab>\<C-Y>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+
+  " CTRL-P from highlighted first item returns to original text
+  call feedkeys(":MyCmd o\<Tab>\<C-P>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  " Another CTRL-P wraps to the last match
+  call feedkeys(":MyCmd o\<Tab>\<C-P>\<C-P>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneC', @:)
+
+  set wildoptions=
+  call feedkeys(":MyCmd o\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneB', @:)
+
+  call feedkeys(":MyCmd o\<Tab>\<C-Y>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+  call feedkeys(":MyCmd o\<Tab>\<C-E>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+
+  " 'nowildmenu' should make 'noinsert' ineffective
+  set nowildmenu
+  call feedkeys(":MyCmd o\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+
+  " 'noselect' takes precedence over 'noinsert'
+  set wildmenu wildoptions=pum wildmode=noselect:noinsert,full
+  call feedkeys(":MyCmd o\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+  call feedkeys(":MyCmd o\<Tab>\<C-Y>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+
+  set wildmode=noinsert
+  call feedkeys(":MyCmd o\<Tab>\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+
+  set wildmode=noinsert,full
+  call feedkeys(":MyCmd o\<Tab>\<C-N>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneB', @:)
+  call feedkeys(":MyCmd o\<Tab>\<C-E>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+
+  " 'longest' takes precedence over 'noinsert'
+  set wildmode=noinsert:longest
+  call feedkeys(":MyCmd o\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd one', @:)
+
+  set wildmode&
+  call feedkeys(":set wildmode=noi\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set wildmode=noinsert', @:)
+
+  set wildmode=noinsert:lastused,full
+  call assert_equal('noinsert:lastused,full', &wildmode)
+  call assert_fails('set wildmode=noinser', 'E474:')
+
+  " Single match with 'noinsert': item shown highlighted, C-Y commits
+  command! -nargs=1 -complete=custom,T1 MyCmd1 echo
+  func T1(a, c, p)
+    return "oneA"
+  endfunc
+  set wildmenu wildoptions=pum wildmode=noinsert,full
+  call feedkeys(":MyCmd1 o\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd1 o', @:)
+  call feedkeys(":MyCmd1 o\<Tab>\<C-Y>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd1 oneA', @:)
+  delcommand MyCmd1
+  delfunc T1
+
+  set wildmenu& wildoptions& wildmode& wildchar&
+  delcommand MyCmd
+  delfunc T
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

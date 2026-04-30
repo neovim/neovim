@@ -346,7 +346,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     cmdline_orig = cstrn_to_string(ccline->cmdbuff, (size_t)ccline->cmdlen);
   }
 
-  if (p != NULL && !got_int && !(options & WILD_NOSELECT)) {
+  if (p != NULL && !got_int && !(options & (WILD_NOSELECT | WILD_NOINSERT))) {
     size_t plen = strlen(p);
     int difflen = (int)plen - (int)(xp->xp_pattern_len);
     if (ccline->cmdlen + difflen + 4 > ccline->cmdbufflen) {
@@ -373,7 +373,8 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (xp->xp_numfiles <= 0 && p == NULL) {
     beep_flush();
-  } else if (xp->xp_numfiles == 1 && !(options & WILD_NOSELECT) && !wild_navigate) {
+  } else if (xp->xp_numfiles == 1 && !(options & (WILD_NOSELECT | WILD_NOINSERT))
+             && !wild_navigate) {
     // free expanded pattern
     ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }
@@ -385,7 +386,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
 /// Create completion popup menu with items from "matches".
 static void cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
-                               bool showtail, bool noselect)
+                               bool showtail, bool cmdline_unchanged)
 {
   assert(numMatches >= 0);
   // Add all the completion matches
@@ -403,7 +404,7 @@ static void cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches
   }
 
   // Compute the popup menu starting column
-  char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, noselect) : xp->xp_pattern;
+  char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, cmdline_unchanged) : xp->xp_pattern;
   if (ui_has(kUICmdline) && cmdline_win == NULL) {
     compl_startcol = (int)(endpos - ccline->cmdbuff);
   } else {
@@ -1103,7 +1104,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
 /// Display completion matches.
 /// Returns EXPAND_NOTHING when the character that triggered expansion should be
 ///   inserted as a normal character.
-int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, bool noselect)
+int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, int wim_flags_arg)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
   int numMatches;
@@ -1112,6 +1113,9 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, bool nos
   int lines;
   int columns;
   bool showtail;
+  bool noselect = (wim_flags_arg & kOptWimFlagNoselect);
+  bool noinsert = (wim_flags_arg & kOptWimFlagNoinsert);
+  bool cmdline_unchanged = noselect || noinsert;
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
@@ -1131,7 +1135,7 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, bool nos
   }
 
   if (cmdline_compl_use_pum(display_wildmenu && !display_list)) {
-    cmdline_pum_create(ccline, xp, matches, numMatches, showtail, noselect);
+    cmdline_pum_create(ccline, xp, matches, numMatches, showtail, cmdline_unchanged);
     compl_selected = noselect ? -1 : 0;
     pum_clear();
     cmdline_pum_display(true);
