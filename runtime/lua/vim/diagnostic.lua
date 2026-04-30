@@ -300,8 +300,8 @@ local M = vim._defer_require('vim.diagnostic', {
 --- @field priority? integer
 ---
 --- A table mapping |diagnostic-severity| to the sign text to display in the
---- sign column. The default is to use `"E"`, `"W"`, `"I"`, and `"H"` for errors,
---- warnings, information, and hints, respectively. Example:
+--- sign column and statusline. The default is to use `"E"`, `"W"`, `"I"`, and `"H"`
+--- for errors, warnings, information, and hints, respectively. Example:
 --- ```lua
 --- vim.diagnostic.config({
 ---   signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
@@ -1121,18 +1121,24 @@ function M.status(buf)
   vim.validate('config.format', config.format, { 'table', 'function' }, true)
 
   local counts = M.count(buf)
-  local format = config.format or default_status_signs
+  local format = config.format
   local result_str --- @type string
-  if type(format) == 'table' then
-    local signs = vim.tbl_extend('keep', format, default_status_signs)
+  if type(format) == 'function' then
+    result_str = format(counts)
+  else
+    local signs ---@type table<vim.diagnostic.Severity, string>
+    if type(format) == 'table' then
+      signs = format
+    else
+      signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs.text
+        or default_status_signs
+    end
     result_str = vim
       .iter(pairs(counts))
       :map(function(level, value)
         return ('%%#%s#%s:%s'):format(status_hl_map[level], signs[level], value)
       end)
       :join(' ')
-  else
-    result_str = format(counts)
   end
 
   if result_str:len() > 0 then

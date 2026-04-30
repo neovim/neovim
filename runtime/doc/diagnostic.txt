@@ -661,9 +661,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                      |diagnostic-severity|
       • {text}?      (`table<vim.diagnostic.Severity,string>`) A table mapping
                      |diagnostic-severity| to the sign text to display in the
-                     sign column. The default is to use `"E"`, `"W"`, `"I"`,
-                     and `"H"` for errors, warnings, information, and hints,
-                     respectively. Example: >lua
+                     sign column and statusline. The default is to use `"E"`,
+                     `"W"`, `"I"`, and `"H"` for errors, warnings,
+                     information, and hints, respectively. Example: >lua
                          vim.diagnostic.config({
                            signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
                          })
