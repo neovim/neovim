@@ -1586,7 +1586,9 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
       in_quote = !in_quote;
       // An argument can contain just about everything, except
       // characters that end the command and white space.
-    } else if (c == '|' || c == '\n' || c == '"' || ascii_iswhite(c)) {
+    } else if (c == '|' || c == '\n' || c == '"'
+               || (ascii_iswhite(c) && (!(eap != NULL && (eap->argt & EX_NOSPC))
+                                        || usefilter))) {
       len = 0;  // avoid getting stuck when space is in 'isfname'
       while (*p != NUL) {
         c = utf_ptr2char(p);
