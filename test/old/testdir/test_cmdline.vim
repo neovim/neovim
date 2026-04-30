@@ -5411,4 +5411,31 @@ func Test_wildmode_noinsert()
   delfunc T
 endfunc
 
+func Test_cmdline_compl_env_var_wildcard()
+  CheckUnix
+
+  let d = tempname()
+  call mkdir(d .. '/[x]', 'pR')
+  call writefile(['hello'], d .. '/[x]/file.txt')
+  let $XWILD = d .. '/[x]'
+
+  call feedkeys(":e $XWILD/fi\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_match('\[x\]/file\.txt$', @:)
+  call assert_equal([d .. '/[x]/file.txt'], glob('$XWILD/*', 0, 1))
+
+  edit $XWILD/file.txt
+  call assert_equal('hello', getline(1))
+  bwipe!
+
+  if has('profile')
+    let prof = d .. '/[x]/prof.out'
+    profile start $XWILD/prof.out
+    profile stop
+    call assert_true(filereadable(prof))
+    call delete(prof)
+  endif
+
+  unlet $XWILD
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -51,4 +51,10 @@ typedef enum file_comparison {
 # define TO_BACKSLASH(...)
 #endif
 
+#ifdef MSWIN
+# define PATH_ESC_WILDCARDS "*?["
+#else
+# define PATH_ESC_WILDCARDS "*?[{"
+#endif
+
 #include "path.h.generated.h"

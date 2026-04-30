@@ -1785,7 +1785,7 @@ static char *option_expand(OptIndex opt_idx, const char *val)
   // For 'spellsuggest' expand after "file:".
   char **var = (char **)options[opt_idx].var;
   bool esc = var == &p_tags || var == &p_path;
-  expand_env_esc(val, NameBuff, MAXPATHL, esc, false,
+  expand_env_esc(val, NameBuff, MAXPATHL, esc ? (char *)" \t" : NULL, false,
                  (char **)options[opt_idx].var == &p_sps ? "file:" : NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;

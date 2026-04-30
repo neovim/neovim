@@ -1328,7 +1328,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     } else {
       // First expand environment variables, "~/" and "~user/".
       if ((has_env_var(p) && !(flags & EW_NOTENV)) || *p == '~') {
-        p = expand_env_save_opt(p, true);
+        p = expand_env_save_opt(p, true, (char *)PATH_ESC_WILDCARDS);
         if (p == NULL) {
           p = pat[i];
         } else {

@@ -510,18 +510,19 @@ void free_homedir(void)
 /// @see {expand_env}
 char *expand_env_save(char *src)
 {
-  return expand_env_save_opt(src, false);
+  return expand_env_save_opt(src, false, NULL);
 }
 
 /// Similar to expand_env_save() but when "one" is `true` handle the string as
 /// one file name, i.e. only expand "~" at the start.
 /// @param src String containing environment variables to expand
 /// @param one Should treat as only one file name
+/// @param esc_chars chars to escape in expanded vars
 /// @see {expand_env}
-char *expand_env_save_opt(char *src, bool one)
+char *expand_env_save_opt(char *src, bool one, char *esc_chars)
 {
   char *p = xmalloc(MAXPATHL);
-  expand_env_esc(src, p, MAXPATHL, false, one, NULL);
+  expand_env_esc(src, p, MAXPATHL, esc_chars, one, NULL);
   return p;
 }
 
@@ -535,7 +536,7 @@ char *expand_env_save_opt(char *src, bool one)
 /// @param dstlen     Maximum length of the result
 size_t expand_env(char *src, char *dst, int dstlen)
 {
-  return expand_env_esc(src, dst, dstlen, false, false, NULL);
+  return expand_env_esc(src, dst, dstlen, NULL, false, NULL);
 }
 
 /// Expand environment variable with path name and escaping.
@@ -544,11 +545,11 @@ size_t expand_env(char *src, char *dst, int dstlen)
 /// @param srcp       Input string e.g. "$HOME/vim.hlp"
 /// @param dst[out]   Where to put the result
 /// @param dstlen     Maximum length of the result
-/// @param esc        Escape spaces in expanded variables
+/// @param esc_chars  chars to escape in expanded vars
 /// @param one        `srcp` is a single filename
 /// @param prefix     Start again after this (can be NULL)
-size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
-                      char *prefix)
+size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, char *esc_chars,
+                      bool one, char *prefix)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   char *tail;
@@ -661,10 +662,11 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
 #endif  // UNIX
       }
 
-      // If "var" contains white space, escape it with a backslash.
-      // Required for ":e ~/tt" when $HOME includes a space.
-      if (esc && var != NULL && strpbrk(var, " \t") != NULL) {
-        char *p = vim_strsave_escaped(var, " \t");
+      // If "var" contains any character from "esc_chars", escape it
+      // with a backslash.  The historical use is escaping spaces so
+      // that ":e ~/tt" works when $HOME contains a space.
+      if (esc_chars != NULL && var != NULL && strpbrk(var, esc_chars) != NULL) {
+        char *p = vim_strsave_escaped(var, esc_chars);
 
         if (mustfree) {
           xfree(var);
