@@ -531,9 +531,20 @@ local function lsp_enable_callback(bufnr)
       lsp.is_enabled(client.name)
       -- Check that the client is managed by vim.lsp.config before deciding to detach it!
       and lsp.config[client.name]
-      and not can_start(bufnr, lsp.config[client.name], false)
     then
-      lsp.buf_detach_client(bufnr, client.id)
+      if can_start(bufnr, lsp.config[client.name], false) then
+        -- When switch between lsp supported filetype (e.g. json to jsonc like #39498),
+        -- client should send `textDocument/didClose` + `textDocument/didOpen` with new language id
+        local new_language_id = client.get_language_id(bufnr, vim.bo[bufnr].filetype)
+        local old_language_id = client.attached_buffers[bufnr] ---@type string?
+        if old_language_id and old_language_id ~= new_language_id then
+          client:_text_document_did_close_handler(bufnr)
+          client.attached_buffers[bufnr] = new_language_id
+          client:_text_document_did_open_handler(bufnr)
+        end
+      else
+        lsp.buf_detach_client(bufnr, client.id)
+      end
     end
   end
 
@@ -1002,7 +1013,7 @@ function lsp.buf_attach_client(bufnr, client_id)
     return true
   end
 
-  client.attached_buffers[bufnr] = true
+  client.attached_buffers[bufnr] = client.get_language_id(bufnr, vim.bo[bufnr].filetype)
 
   -- This is our first time attaching this client to this buffer.
   -- Send didOpen for the client if it is initialized. If it isn't initialized

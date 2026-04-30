@@ -61,6 +61,7 @@ LSP
     • Values < 0 are now treated as `nil` instead of 0.
     • Values outside the range of `signatures[activeSignature].parameters`
       are now treated as `nil` instead of `#signatures[activeSignature].parameters`
+• `client.attached_buffers[buf]` now stores `languageId` string (was boolean).
 
 LUA
 
