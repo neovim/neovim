@@ -41,34 +41,34 @@ local function starsetf(ft, priority)
 end
 
 --- Get a line range from the buffer.
----@param bufnr integer The buffer to get the lines from
+---@param buf integer The buffer to get the lines from
 ---@param start_lnum integer|nil The line number of the first line (inclusive, 1-based)
 ---@param end_lnum integer|nil The line number of the last line (inclusive, 1-based)
 ---@return string[] # Array of lines
-function M._getlines(bufnr, start_lnum, end_lnum)
-  if not bufnr or bufnr < 0 then
+function M._getlines(buf, start_lnum, end_lnum)
+  if not buf or buf < 0 then
     return {}
   end
 
   if start_lnum then
-    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum or start_lnum, false)
+    return api.nvim_buf_get_lines(buf, start_lnum - 1, end_lnum or start_lnum, false)
   end
 
   -- Return all lines
-  return api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  return api.nvim_buf_get_lines(buf, 0, -1, false)
 end
 
 --- Get a single line from the buffer.
----@param bufnr integer The buffer to get the lines from
+---@param buf integer The buffer to get the lines from
 ---@param start_lnum integer The line number of the first line (inclusive, 1-based)
 ---@return string
-function M._getline(bufnr, start_lnum)
-  if not bufnr or bufnr < 0 then
+function M._getline(buf, start_lnum)
+  if not buf or buf < 0 then
     return ''
   end
 
   -- Return a single line
-  return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
+  return api.nvim_buf_get_lines(buf, start_lnum - 1, start_lnum, false)[1] or ''
 end
 
 --- Check whether a string matches any of the given Lua patterns.
@@ -90,12 +90,12 @@ end
 
 --- Get the next non-whitespace line in the buffer.
 ---
----@param bufnr integer The buffer to get the line from
+---@param buf integer The buffer to get the line from
 ---@param start_lnum integer The line number of the first line to start from (inclusive, 1-based)
 ---@return string|nil line The first non-blank line if found or `nil` otherwise
 ---@return integer|nil lnum The line number of the first non-blank line or `nil`
-function M._nextnonblank(bufnr, start_lnum)
-  for off, line in ipairs(M._getlines(bufnr, start_lnum, -1)) do
+function M._nextnonblank(buf, start_lnum)
+  for off, line in ipairs(M._getlines(buf, start_lnum, -1)) do
     if not line:find('^%s*$') then
       return line, start_lnum + off - 1
     end

@@ -38,7 +38,7 @@ M.priorities = {
 
 --- Apply highlight group to range of text.
 ---
----@param bufnr integer Buffer number to apply highlighting to
+---@param buf integer Buffer number to apply highlighting to
 ---@param ns integer Namespace to add highlight to
 ---@param higroup string Highlight group to use for highlighting
 ---@param start [integer,integer]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
@@ -48,7 +48,7 @@ M.priorities = {
 --- highlight has left
 --- @return fun()? range_clear A function which allows clearing the highlight manually.
 --- nil is returned if timeout is not specified
-function M.range(bufnr, ns, higroup, start, finish, opts)
+function M.range(buf, ns, higroup, start, finish, opts)
   opts = opts or {}
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
@@ -59,20 +59,20 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
 
   local pos1 = type(start) == 'string' and vim.fn.getpos(start)
     or {
-      bufnr,
+      buf,
       start[1] + 1,
       start[2] ~= -1 and start[2] ~= v_maxcol and start[2] + 1 or v_maxcol,
       0,
     }
   local pos2 = type(finish) == 'string' and vim.fn.getpos(finish)
     or {
-      bufnr,
+      buf,
       finish[1] + 1,
       finish[2] ~= -1 and start[2] ~= v_maxcol and finish[2] + 1 or v_maxcol,
       0,
     }
 
-  local buf_line_count = api.nvim_buf_line_count(bufnr)
+  local buf_line_count = api.nvim_buf_line_count(buf)
   pos1[2] = math.min(pos1[2], buf_line_count)
   pos2[2] = math.min(pos2[2], buf_line_count)
 
@@ -80,7 +80,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
     return
   end
 
-  vim._with({ buf = bufnr }, function()
+  vim._with({ buf = buf }, function()
     if pos1[3] ~= v_maxcol then
       local max_col1 = vim.fn.col({ pos1[2], '$' })
       pos1[3] = math.min(pos1[3], max_col1)
@@ -119,7 +119,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
     local end_col = res[2][3]
     table.insert(
       extmarks,
-      api.nvim_buf_set_extmark(bufnr, ns, start_row, start_col, {
+      api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
         hl_group = higroup,
         end_row = end_row,
         end_col = end_col,
@@ -130,11 +130,11 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   end
 
   local range_hl_clear = function()
-    if not api.nvim_buf_is_valid(bufnr) then
+    if not api.nvim_buf_is_valid(buf) then
       return
     end
     for _, mark in ipairs(extmarks) do
-      api.nvim_buf_del_extmark(bufnr, ns, mark)
+      api.nvim_buf_del_extmark(buf, ns, mark)
     end
   end
 

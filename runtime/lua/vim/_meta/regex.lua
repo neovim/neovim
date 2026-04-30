@@ -27,13 +27,13 @@ local regex = {} -- luacheck: no unused
 --- @return integer? # match end (byte index), or `nil` if no match
 function regex:match_str(str) end
 
---- Matches line at `line_idx` (zero-based) in buffer `bufnr`. Match is restricted to byte index
+--- Matches line at `line_idx` (zero-based) in buffer `buf`. Match is restricted to byte index
 --- range `start` and `end_` if given, otherwise see |regex:match_str()|. Returned byte indices are
 --- relative to `start` if given.
---- @param bufnr integer
+--- @param buf integer
 --- @param line_idx integer
 --- @param start? integer
 --- @param end_? integer
 --- @return integer? # match start (byte index) relative to `start`, or `nil` if no match
 --- @return integer? # match end (byte index) relative to `start`, or `nil` if no match
-function regex:match_line(bufnr, line_idx, start, end_) end
+function regex:match_line(buf, line_idx, start, end_) end

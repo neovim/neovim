@@ -114,13 +114,13 @@ local Tabstop = {}
 ---
 --- @package
 --- @param index integer
---- @param bufnr integer
+--- @param buf integer
 --- @param placement integer
 --- @param range Range4
 --- @param choices? string[]
 --- @return vim.snippet.Tabstop
-function Tabstop.new(index, bufnr, placement, range, choices)
-  local extmark_id = vim.api.nvim_buf_set_extmark(bufnr, snippet_ns, range[1], range[2], {
+function Tabstop.new(index, buf, placement, range, choices)
+  local extmark_id = vim.api.nvim_buf_set_extmark(buf, snippet_ns, range[1], range[2], {
     right_gravity = true,
     end_right_gravity = false,
     end_line = range[3],
@@ -130,7 +130,7 @@ function Tabstop.new(index, bufnr, placement, range, choices)
 
   local self = setmetatable({
     extmark_id = extmark_id,
-    bufnr = bufnr,
+    bufnr = buf,
     index = index,
     placement = placement,
     choices = choices,
@@ -216,17 +216,17 @@ local Session = {}
 --- Creates a new snippet session in the current buffer.
 ---
 --- @package
---- @param bufnr integer
+--- @param buf integer
 --- @param snippet_extmark integer
 --- @param tabstop_data table<integer, { placement: integer, range: Range4, choices?: string[] }[]>
 --- @return vim.snippet.Session
-function Session.new(bufnr, snippet_extmark, tabstop_data)
+function Session.new(buf, snippet_extmark, tabstop_data)
   local self = setmetatable({
-    bufnr = bufnr,
+    bufnr = buf,
     extmark_id = snippet_extmark,
     tabstops = {},
     tabstop_placements = {},
-    current_tabstop = Tabstop.new(0, bufnr, 0, { 0, 0, 0, 0 }),
+    current_tabstop = Tabstop.new(0, buf, 0, { 0, 0, 0, 0 }),
     tab_keymaps = { i = nil, s = nil },
     shift_tab_keymaps = { i = nil, s = nil },
   }, { __index = Session })

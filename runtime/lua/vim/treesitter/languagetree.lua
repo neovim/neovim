@@ -1231,7 +1231,7 @@ function LanguageTree:_edit(
   end
 end
 
----@param bufnr integer
+---@param buf integer
 ---@param changed_tick integer
 ---@param start_row integer
 ---@param start_col integer
@@ -1243,7 +1243,7 @@ end
 ---@param new_col integer
 ---@param new_byte integer
 function LanguageTree:_on_bytes(
-  bufnr,
+  buf,
   changed_tick,
   start_row,
   start_col,
@@ -1260,7 +1260,7 @@ function LanguageTree:_on_bytes(
 
   self:_log(
     'on_bytes',
-    bufnr,
+    buf,
     changed_tick,
     start_row,
     start_col,
@@ -1288,7 +1288,7 @@ function LanguageTree:_on_bytes(
 
   self:_do_callback(
     'bytes',
-    bufnr,
+    buf,
     changed_tick,
     start_row,
     start_col,
