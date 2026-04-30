@@ -492,6 +492,11 @@ static bool term_may_alloc_scrollback(Terminal *term, buf_T *buf)
   return true;
 }
 
+static void assert_ghostty_success(GhosttyResult res)
+{
+  assert(res == GHOSTTY_SUCCESS);
+}
+
 // public API {{{
 
 /// Allocates a terminal instance and initializes terminal properties.
@@ -522,8 +527,7 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
     .rows = MAX(opts.height, 1),
     .max_scrollback = (size_t)MAX(buf->b_p_scbk, 0),
   };
-  GhosttyResult ghostty_result = ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts);
-  assert(ghostty_result == GHOSTTY_SUCCESS);
+  assert_ghostty_success(ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts));
   // Setup state
   VTermState *state = vterm_obtain_state(term->vt);
   // Set up screen
@@ -1555,15 +1559,29 @@ void terminal_notify_theme(Terminal *term, bool dark)
   terminal_send(term, buf, (size_t)ret);
 }
 
-static void terminal_focus(const Terminal *term, bool focus)
+static void terminal_focus(Terminal *term, bool focus)
   FUNC_ATTR_NONNULL_ALL
 {
-  VTermState *state = vterm_obtain_state(term->vt);
-  if (focus) {
-    vterm_state_focus_in(state);
-  } else {
-    vterm_state_focus_out(state);
+  bool report_focus = false;
+
+  assert_ghostty_success(ghostty_terminal_mode_get(term->ghostty,
+                                                   GHOSTTY_MODE_FOCUS_EVENT,
+                                                   &report_focus));
+
+  // Return early if focus reporting is not enabled.
+  if (!report_focus) {
+    return;
   }
+
+  enum { FOCUS_BUF_SIZE = 3, };
+  char buf[FOCUS_BUF_SIZE];
+  size_t len = 0;
+  assert_ghostty_success(ghostty_focus_encode(focus ? GHOSTTY_FOCUS_GAINED : GHOSTTY_FOCUS_LOST,
+                                              buf,
+                                              FOCUS_BUF_SIZE,
+                                              &len));
+
+  terminal_send(term, buf, len);
 }
 
 // }}}
