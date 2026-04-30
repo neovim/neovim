@@ -4023,10 +4023,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
                 ml_replace(lnum, new_line, false);
               }
 
-              search_state.search_match_lines = regmatch.endpos[0].lnum
-                                   - regmatch.startpos[0].lnum;
-              search_state.search_match_endcol = regmatch.endpos[0].col
-                                    + len_change;
+              search_state.search_match_lines = regmatch.endpos[0].lnum - regmatch.startpos[0].lnum;
+              search_state.search_match_endcol = regmatch.endpos[0].col + len_change;
               if (search_state.search_match_lines == 0 && search_state.search_match_endcol == 0) {
                 // highlight at least one character for /^/
                 search_state.search_match_endcol = 1;

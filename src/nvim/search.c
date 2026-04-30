@@ -1218,9 +1218,10 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
     }
 
     if (pat != NULL && *pat != NUL) {   // look for (new) offset
-      search_state.searchcmdlen += parse_search_pattern_offset(&pat, &patlen, search_delim, options,
-                                                  &strcopy, &searchstr, &searchstrlen, &dircp,
-                                                  &spats[0].off);
+      search_state.searchcmdlen += parse_search_pattern_offset(&pat, &patlen, search_delim,
+                                                               options, &strcopy, &searchstr,
+                                                               &searchstrlen, &dircp,
+                                                               &spats[0].off);
     }
 
     bool show_search_stats = false;
