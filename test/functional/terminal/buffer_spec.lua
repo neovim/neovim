@@ -926,6 +926,27 @@ describe(':terminal buffer', function()
     end)
   end)
 
+  it('reports color scheme queries', function()
+    local function assert_color_scheme(background, response)
+      command('enew!')
+      command('set background=' .. background)
+      local term = exec_lua(function()
+        _G.input_data = ''
+        return vim.api.nvim_open_term(0, {
+          on_input = function(_, _, _, data)
+            _G.input_data = _G.input_data .. data
+          end,
+        })
+      end)
+
+      api.nvim_chan_send(term, '\027[?996n')
+      eq(response, exec_lua('return _G.input_data'))
+    end
+
+    assert_color_scheme('dark', '\027[?997;1n')
+    assert_color_scheme('light', '\027[?997;2n')
+  end)
+
   it('no heap-buffer-overflow when using jobstart("echo",{term=true}) #3161', function()
     local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
     write_file(testfilename, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa')

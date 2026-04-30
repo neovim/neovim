@@ -231,7 +231,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .movecursor = term_movecursor,
   .settermprop = term_settermprop,
   .bell = NULL,
-  .theme = term_theme,
+  .theme = NULL,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
   .sb_popline = term_sb_pop,
   .sb_clear = term_sb_clear,
@@ -699,6 +699,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                               (const void *)term_ghostty_bell_callback));
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
                                               (const void *)term_ghostty_title_changed_callback));
+  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_SCHEME,
+                                              (const void *)term_ghostty_color_scheme_callback));
   assert_ghostty_success(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
   assert_ghostty_success(ghostty_key_event_new(NULL, &term->ghostty_key_event));
   assert_ghostty_success(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
@@ -2073,11 +2075,12 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 }
 
 /// Called when the terminal wants to query the system theme.
-static int term_theme(bool *dark, void *data)
-  FUNC_ATTR_NONNULL_ALL
+static bool term_ghostty_color_scheme_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
+                                               void *user_data FUNC_ATTR_UNUSED,
+                                               GhosttyColorScheme *out_scheme)
 {
-  *dark = (*p_bg == 'd');
-  return 1;
+  *out_scheme = (*p_bg == 'd') ? GHOSTTY_COLOR_SCHEME_DARK : GHOSTTY_COLOR_SCHEME_LIGHT;
+  return true;
 }
 
 /// Scrollback push handler: called just before a line goes offscreen (and libvterm will forget it),
