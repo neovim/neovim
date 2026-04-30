@@ -1127,12 +1127,12 @@ end
 
 --- Default handler for the 'textDocument/didClose' LSP notification.
 ---
---- @param bufnr integer Number of the buffer, or 0 for current
-function Client:_text_document_did_close_handler(bufnr)
+--- @param buf integer Number of the buffer, or 0 for current
+function Client:_text_document_did_close_handler(buf)
   if not self:supports_method('textDocument/didClose') then
     return
   end
-  local uri = vim.uri_from_bufnr(bufnr)
+  local uri = vim.uri_from_bufnr(buf)
   local params = { textDocument = { uri = uri } }
   self:notify('textDocument/didClose', params)
 end
