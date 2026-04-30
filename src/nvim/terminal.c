@@ -702,6 +702,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                               (const void *)term_ghostty_title_changed_callback));
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_SCHEME,
                                               (const void *)term_ghostty_color_scheme_callback));
+  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_DEVICE_ATTRIBUTES,
+                                              (const void *)term_ghostty_device_attributes_callback));
   assert_ghostty_success(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
   assert_ghostty_success(ghostty_key_event_new(NULL, &term->ghostty_key_event));
   assert_ghostty_success(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
@@ -1963,7 +1965,7 @@ static void term_ghostty_write_pty_callback(GhosttyTerminal ghostty FUNC_ATTR_UN
   terminal_send(term, (const char *)data, len);
 }
 
-/// Called when the terminal wants to set the title.
+/// Called when the terminal program wants to set the title.
 static void term_ghostty_title_changed_callback(GhosttyTerminal ghostty, void *user_data)
 {
   Terminal *term = (Terminal *)user_data;
@@ -1974,11 +1976,36 @@ static void term_ghostty_title_changed_callback(GhosttyTerminal ghostty, void *u
   buf_set_term_title(buf, title.ptr == NULL ? "" : (const char *)title.ptr, title.len);
 }
 
-/// Called when the terminal wants to ring the system bell.
+/// Called when the terminal program wants to ring the system bell.
 static void term_ghostty_bell_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
                                        void *user_data FUNC_ATTR_UNUSED)
 {
   vim_beep(kOptBoFlagTerm);
+}
+
+/// Called when the terminal program wants to know the terminal device attributes.
+static bool term_ghostty_device_attributes_callback(GhosttyTerminal ghostty, void *user_data,
+                                                    GhosttyDeviceAttributes *out_attrs)
+{
+  (void)ghostty;
+  (void)user_data;
+
+  *out_attrs = (GhosttyDeviceAttributes) {
+    .primary = {
+      .conformance_level = GHOSTTY_DA_CONFORMANCE_VT220,
+      .features = { GHOSTTY_DA_FEATURE_ANSI_COLOR, GHOSTTY_DA_FEATURE_CLIPBOARD },
+      .num_features = 2,
+    },
+    .secondary = {
+      .device_type = GHOSTTY_DA_DEVICE_TYPE_VT220,
+      .firmware_version = 10,
+      .rom_cartridge = 0,
+    },
+    .tertiary = {
+      .unit_id = 0,
+    },
+  };
+  return true;
 }
 
 static int term_damage(VTermRect rect, void *data)
@@ -2075,7 +2102,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
   return 1;
 }
 
-/// Called when the terminal wants to query the system theme.
+/// Called when the terminal program wants to query the system theme.
 static bool term_ghostty_color_scheme_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
                                                void *user_data FUNC_ATTR_UNUSED,
                                                GhosttyColorScheme *out_scheme)
