@@ -149,6 +149,19 @@ struct terminal {
   VTerm *vt;
   VTermScreen *vts;
   GhosttyTerminal ghostty;
+  GhosttyMouseEncoder ghostty_mouse_encoder;
+  GhosttyMouseEvent ghostty_mouse_event;
+  unsigned ghostty_mouse_buttons;
+  struct {
+    bool x10;
+    bool normal;
+    bool button;
+    bool any;
+    bool utf8;
+    bool sgr;
+    bool urxvt;
+    bool sgr_pixels;
+  } ghostty_mouse_modes;
   // buffer used to:
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
@@ -183,7 +196,6 @@ struct terminal {
   bool destroy;
 
   // some vterm properties
-  bool forward_mouse;
   int invalid_start, invalid_end;   // invalid rows in libvterm screen
   struct {
     int row, col;
@@ -498,6 +510,134 @@ static void assert_ghostty_success(GhosttyResult res)
   assert(res == GHOSTTY_SUCCESS);
 }
 
+static bool terminal_ghostty_mode_get(Terminal *term, GhosttyMode mode)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool enabled = false;
+  assert_ghostty_success(ghostty_terminal_mode_get(term->ghostty, mode, &enabled));
+  return enabled;
+}
+
+static bool terminal_mouse_tracking_enabled(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool enabled = false;
+  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
+                                              GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING,
+                                              &enabled));
+  return enabled;
+}
+
+static void terminal_mouse_encoder_set_size(Terminal *term, uint16_t width, uint16_t height)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyMouseEncoderSize size = {
+    .size = sizeof(GhosttyMouseEncoderSize),
+    .screen_width = MAX((uint32_t)width, 1U),
+    .screen_height = MAX((uint32_t)height, 1U),
+    .cell_width = 1,
+    .cell_height = 1,
+    .padding_top = 0,
+    .padding_bottom = 0,
+    .padding_right = 0,
+    .padding_left = 0,
+  };
+  ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_SIZE,
+                               &size);
+}
+
+static void terminal_mouse_encoder_sync_config(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool x10 = terminal_ghostty_mode_get(term, GHOSTTY_MODE_X10_MOUSE);
+  bool normal = terminal_ghostty_mode_get(term, GHOSTTY_MODE_NORMAL_MOUSE);
+  bool button = terminal_ghostty_mode_get(term, GHOSTTY_MODE_BUTTON_MOUSE);
+  bool any = terminal_ghostty_mode_get(term, GHOSTTY_MODE_ANY_MOUSE);
+  bool utf8 = terminal_ghostty_mode_get(term, GHOSTTY_MODE_UTF8_MOUSE);
+  bool sgr = terminal_ghostty_mode_get(term, GHOSTTY_MODE_SGR_MOUSE);
+  bool urxvt = terminal_ghostty_mode_get(term, GHOSTTY_MODE_URXVT_MOUSE);
+  bool sgr_pixels = terminal_ghostty_mode_get(term, GHOSTTY_MODE_SGR_PIXELS_MOUSE);
+
+  if (x10 == term->ghostty_mouse_modes.x10
+      && normal == term->ghostty_mouse_modes.normal
+      && button == term->ghostty_mouse_modes.button
+      && any == term->ghostty_mouse_modes.any
+      && utf8 == term->ghostty_mouse_modes.utf8
+      && sgr == term->ghostty_mouse_modes.sgr
+      && urxvt == term->ghostty_mouse_modes.urxvt
+      && sgr_pixels == term->ghostty_mouse_modes.sgr_pixels) {
+    return;
+  }
+
+  term->ghostty_mouse_modes.x10 = x10;
+  term->ghostty_mouse_modes.normal = normal;
+  term->ghostty_mouse_modes.button = button;
+  term->ghostty_mouse_modes.any = any;
+  term->ghostty_mouse_modes.utf8 = utf8;
+  term->ghostty_mouse_modes.sgr = sgr;
+  term->ghostty_mouse_modes.urxvt = urxvt;
+  term->ghostty_mouse_modes.sgr_pixels = sgr_pixels;
+
+  // This resets motion deduplication, so call it only when mouse modes changed.
+  ghostty_mouse_encoder_setopt_from_terminal(term->ghostty_mouse_encoder, term->ghostty);
+}
+
+static unsigned terminal_mouse_button_number(GhosttyMouseButton button)
+{
+  static const unsigned button_numbers[] = {
+    [GHOSTTY_MOUSE_BUTTON_LEFT] = 1,
+    [GHOSTTY_MOUSE_BUTTON_RIGHT] = 3,
+    [GHOSTTY_MOUSE_BUTTON_MIDDLE] = 2,
+    [GHOSTTY_MOUSE_BUTTON_FOUR] = 4,
+    [GHOSTTY_MOUSE_BUTTON_FIVE] = 5,
+    [GHOSTTY_MOUSE_BUTTON_SIX] = 6,
+    [GHOSTTY_MOUSE_BUTTON_SEVEN] = 7,
+    [GHOSTTY_MOUSE_BUTTON_EIGHT] = 8,
+    [GHOSTTY_MOUSE_BUTTON_NINE] = 9,
+    [GHOSTTY_MOUSE_BUTTON_TEN] = 10,
+    [GHOSTTY_MOUSE_BUTTON_ELEVEN] = 11,
+  };
+  unsigned index = (unsigned)button;
+  return index < ARRAY_SIZE(button_numbers) ? button_numbers[index] : 0;
+}
+
+static GhosttyMouseButton terminal_mouse_button_from_number(unsigned button)
+{
+  static const GhosttyMouseButton buttons[] = {
+    GHOSTTY_MOUSE_BUTTON_UNKNOWN,
+    GHOSTTY_MOUSE_BUTTON_LEFT,
+    GHOSTTY_MOUSE_BUTTON_MIDDLE,
+    GHOSTTY_MOUSE_BUTTON_RIGHT,
+    GHOSTTY_MOUSE_BUTTON_FOUR,
+    GHOSTTY_MOUSE_BUTTON_FIVE,
+    GHOSTTY_MOUSE_BUTTON_SIX,
+    GHOSTTY_MOUSE_BUTTON_SEVEN,
+    GHOSTTY_MOUSE_BUTTON_EIGHT,
+    GHOSTTY_MOUSE_BUTTON_NINE,
+    GHOSTTY_MOUSE_BUTTON_TEN,
+    GHOSTTY_MOUSE_BUTTON_ELEVEN,
+  };
+  return button < ARRAY_SIZE(buttons) ? buttons[button] : GHOSTTY_MOUSE_BUTTON_UNKNOWN;
+}
+
+static bool terminal_mouse_button_is_stateful(GhosttyMouseButton button)
+{
+  unsigned number = terminal_mouse_button_number(button);
+  return (number >= 1 && number <= 3) || (number >= 8 && number <= 11);
+}
+
+static bool terminal_mouse_get_pressed_button(Terminal *term, GhosttyMouseButton *button)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (unsigned number = 1; number <= 11; number++) {
+    if (term->ghostty_mouse_buttons & (1U << (number - 1))) {
+      *button = terminal_mouse_button_from_number(number);
+      return *button != GHOSTTY_MOUSE_BUTTON_UNKNOWN;
+    }
+  }
+  return false;
+}
+
 // public API {{{
 
 /// Allocates a terminal instance and initializes terminal properties.
@@ -523,12 +663,21 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   term->vt = vterm_new(opts.height, opts.width);
   vterm_set_utf8(term->vt, 1);
   // Create Ghostty
+  uint16_t ghostty_cols = MAX(opts.width, 1);
+  uint16_t ghostty_rows = MAX(opts.height, 1);
   GhosttyTerminalOptions ghostty_opts = {
-    .cols = MAX(opts.width, 1),
-    .rows = MAX(opts.height, 1),
+    .cols = ghostty_cols,
+    .rows = ghostty_rows,
     .max_scrollback = (size_t)MAX(buf->b_p_scbk, 0),
   };
   assert_ghostty_success(ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts));
+  assert_ghostty_success(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
+  assert_ghostty_success(ghostty_mouse_event_new(NULL, &term->ghostty_mouse_event));
+  terminal_mouse_encoder_set_size(term, ghostty_cols, ghostty_rows);
+  bool track_last_cell = true;
+  ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder,
+                               GHOSTTY_MOUSE_ENCODER_OPT_TRACK_LAST_CELL,
+                               &track_last_cell);
   // Setup state
   VTermState *state = vterm_obtain_state(term->vt);
   // Set up screen
@@ -817,7 +966,8 @@ void terminal_check_size(Terminal *term)
 
   vterm_set_size(term->vt, height, width);
   vterm_screen_flush_damage(term->vts);
-  ghostty_terminal_resize(term->ghostty, width, height, 0, 0);
+  assert_ghostty_success(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
+  terminal_mouse_encoder_set_size(term, width, height);
   term->pending.resize = true;
   invalidate_terminal(term, -1, -1);
 }
@@ -1145,7 +1295,7 @@ static int terminal_execute(VimState *state, int key)
   case K_MOUSELEFT:
   case K_MOUSERIGHT:
   case K_MOUSEMOVE:
-    if (send_mouse_event(s->term, key)) {
+    if (send_mouse_event(s->term, mod_key, tmp_mod_mask)) {
       return 0;
     }
     break;
@@ -1251,6 +1401,8 @@ void terminal_destroy(Terminal **termpp)
     kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
     multiqueue_free(term->pending.events);
+    ghostty_mouse_event_free(term->ghostty_mouse_event);
+    ghostty_mouse_encoder_free(term->ghostty_mouse_encoder);
     ghostty_terminal_free(term->ghostty);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -1682,7 +1834,6 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
   }
 
   case VTERM_PROP_MOUSE:
-    term->forward_mouse = (bool)val->number;
     break;
 
   case VTERM_PROP_CURSORBLINK:
@@ -1901,6 +2052,21 @@ static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag,
 
 // }}}
 // input handling {{{
+
+static GhosttyMods convert_mouse_modifiers(int modifiers)
+{
+  GhosttyMods mods = 0;
+  if (modifiers & MOD_MASK_SHIFT) {
+    mods |= GHOSTTY_MODS_SHIFT;
+  }
+  if (modifiers & MOD_MASK_CTRL) {
+    mods |= GHOSTTY_MODS_CTRL;
+  }
+  if (modifiers & MOD_MASK_ALT) {
+    mods |= GHOSTTY_MODS_ALT;
+  }
+  return mods;
+}
 
 static void convert_modifiers(int *key, VTermModifier *statep)
 {
@@ -2220,18 +2386,97 @@ static VTermKey convert_key(int *key, VTermModifier *statep)
   }
 }
 
-static void mouse_action(Terminal *term, int button, int row, int col, bool pressed,
-                         VTermModifier mod)
+static void terminal_mouse_encode_event(Terminal *term, GhosttyMouseAction action, bool has_button,
+                                        GhosttyMouseButton button, int row, int col,
+                                        GhosttyMods mods, bool any_button_pressed)
+  FUNC_ATTR_NONNULL_ALL
 {
-  vterm_mouse_move(term->vt, row, col, mod);
-  if (button) {
-    vterm_mouse_button(term->vt, button, pressed, mod);
+  ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder,
+                               GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED,
+                               &any_button_pressed);
+  ghostty_mouse_event_set_action(term->ghostty_mouse_event, action);
+  ghostty_mouse_event_set_mods(term->ghostty_mouse_event, mods);
+  ghostty_mouse_event_set_position(term->ghostty_mouse_event, (GhosttyMousePosition) {
+    .x = (float)col,
+    .y = (float)row,
+  });
+
+  if (has_button) {
+    ghostty_mouse_event_set_button(term->ghostty_mouse_event, button);
+  } else {
+    ghostty_mouse_event_clear_button(term->ghostty_mouse_event);
   }
+
+  // Try encoding to a stack-allocated buffer first.
+  char buf[128];
+  size_t len = 0;
+  GhosttyResult res = ghostty_mouse_encoder_encode(term->ghostty_mouse_encoder,
+                                                   term->ghostty_mouse_event,
+                                                   buf,
+                                                   sizeof(buf),
+                                                   &len);
+
+  // If that was too small, allocate on the heap.
+  if (res == GHOSTTY_OUT_OF_SPACE) {
+    char *big_buf = xmalloc(len);
+    assert_ghostty_success(ghostty_mouse_encoder_encode(term->ghostty_mouse_encoder,
+                                                        term->ghostty_mouse_event,
+                                                        big_buf,
+                                                        len,
+                                                        &len));
+    terminal_send(term, big_buf, len);
+    xfree(big_buf);
+    return;
+  }
+
+  assert_ghostty_success(res);
+  if (len > 0) {
+    terminal_send(term, buf, len);
+  }
+}
+
+static void mouse_action(Terminal *term, bool has_button, GhosttyMouseButton button, int row,
+                         int col, bool pressed, GhosttyMods mods)
+{
+  terminal_mouse_encoder_sync_config(term);
+
+  GhosttyMouseButton motion_button = GHOSTTY_MOUSE_BUTTON_UNKNOWN;
+  bool any_button_pressed = terminal_mouse_get_pressed_button(term, &motion_button);
+  terminal_mouse_encode_event(term, GHOSTTY_MOUSE_ACTION_MOTION, any_button_pressed,
+                              motion_button, row, col, mods, any_button_pressed);
+
+  if (!has_button) {
+    return;
+  }
+
+  unsigned button_number = terminal_mouse_button_number(button);
+  if (button_number == 0) {
+    return;
+  }
+
+  unsigned old_buttons = term->ghostty_mouse_buttons;
+  if (terminal_mouse_button_is_stateful(button)) {
+    unsigned mask = 1U << (button_number - 1);
+    if (pressed) {
+      term->ghostty_mouse_buttons |= mask;
+    } else {
+      term->ghostty_mouse_buttons &= ~mask;
+    }
+  }
+
+  if (term->ghostty_mouse_buttons == old_buttons && (button_number < 4 || button_number > 7)) {
+    return;
+  }
+
+  any_button_pressed = term->ghostty_mouse_buttons != 0 || pressed;
+  terminal_mouse_encode_event(term,
+                              pressed ? GHOSTTY_MOUSE_ACTION_PRESS : GHOSTTY_MOUSE_ACTION_RELEASE,
+                              true, button, row, col, mods, any_button_pressed);
 }
 
 // process a mouse event while the terminal is focused. return true if the
 // terminal should lose focus
-static bool send_mouse_event(Terminal *term, int c)
+static bool send_mouse_event(Terminal *term, int c, int modifiers)
 {
   int row = mouse_row;
   int col = mouse_col;
@@ -2243,13 +2488,14 @@ static bool send_mouse_event(Terminal *term, int c)
 
   int offset;
   if (!term->suspended && !term->closed
-      && term->forward_mouse && mouse_win->w_buffer->terminal == term && row >= 0
+      && terminal_mouse_tracking_enabled(term) && mouse_win->w_buffer->terminal == term && row >= 0
       && (grid > 1 || row + mouse_win->w_winbar_height < mouse_win->w_height)
       && col >= (offset = win_col_off(mouse_win))
       && (grid > 1 || col < mouse_win->w_width)) {
     // event in the terminal window and mouse events was enabled by the
     // program. translate and forward the event
-    int button;
+    GhosttyMouseButton button = GHOSTTY_MOUSE_BUTTON_UNKNOWN;
+    bool has_button = true;
     bool pressed = false;
 
     switch (c) {
@@ -2257,44 +2503,57 @@ static bool send_mouse_event(Terminal *term, int c)
     case K_LEFTMOUSE:
       pressed = true; FALLTHROUGH;
     case K_LEFTRELEASE:
-      button = 1; break;
+      button = GHOSTTY_MOUSE_BUTTON_LEFT;
+      break;
     case K_MIDDLEDRAG:
     case K_MIDDLEMOUSE:
       pressed = true; FALLTHROUGH;
     case K_MIDDLERELEASE:
-      button = 2; break;
+      button = GHOSTTY_MOUSE_BUTTON_MIDDLE;
+      break;
     case K_RIGHTDRAG:
     case K_RIGHTMOUSE:
       pressed = true; FALLTHROUGH;
     case K_RIGHTRELEASE:
-      button = 3; break;
+      button = GHOSTTY_MOUSE_BUTTON_RIGHT;
+      break;
     case K_X1DRAG:
     case K_X1MOUSE:
       pressed = true; FALLTHROUGH;
     case K_X1RELEASE:
-      button = 8; break;
+      button = GHOSTTY_MOUSE_BUTTON_EIGHT;
+      break;
     case K_X2DRAG:
     case K_X2MOUSE:
       pressed = true; FALLTHROUGH;
     case K_X2RELEASE:
-      button = 9; break;
+      button = GHOSTTY_MOUSE_BUTTON_NINE;
+      break;
     case K_MOUSEDOWN:
-      pressed = true; button = 4; break;
+      pressed = true;
+      button = GHOSTTY_MOUSE_BUTTON_FOUR;
+      break;
     case K_MOUSEUP:
-      pressed = true; button = 5; break;
-    case K_MOUSELEFT:
-      pressed = true; button = 7; break;
+      pressed = true;
+      button = GHOSTTY_MOUSE_BUTTON_FIVE;
+      break;
     case K_MOUSERIGHT:
-      pressed = true; button = 6; break;
+      pressed = true;
+      button = GHOSTTY_MOUSE_BUTTON_SIX;
+      break;
+    case K_MOUSELEFT:
+      pressed = true;
+      button = GHOSTTY_MOUSE_BUTTON_SEVEN;
+      break;
     case K_MOUSEMOVE:
-      button = 0; break;
+      has_button = false;
+      break;
     default:
       return false;
     }
 
-    VTermModifier mod = VTERM_MOD_NONE;
-    convert_modifiers(&c, &mod);
-    mouse_action(term, button, row, col - offset, pressed, mod);
+    GhosttyMods mods = convert_mouse_modifiers(modifiers);
+    mouse_action(term, has_button, button, row, col - offset, pressed, mods);
     return false;
   }
 
