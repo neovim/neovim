@@ -174,19 +174,13 @@ local available_subcmds = vim.tbl_keys(actions)
 --- Implements command: `:lsp {subcmd} {name}?`.
 --- @param eap vim._core.ExCmdArgs
 function M.ex_lsp(eap)
-  local fargs = api.nvim_parse_cmd('lsp ' .. eap.args, {}).args
-  if not fargs then
-    return
-  end
-  local subcmd = fargs[1]
+  local subcmd = eap.fargs[1]
   if not vim.list_contains(available_subcmds, subcmd) then
     echo_err(N_('E5800: Invalid :lsp subcommand: %s'):format(subcmd))
     return
   end
 
-  local clients = { unpack(fargs, 2) }
-
-  actions[subcmd](clients)
+  actions[subcmd]({ unpack(eap.fargs, 2) })
 end
 
 --- Completion logic for `:lsp` command

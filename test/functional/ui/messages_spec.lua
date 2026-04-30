@@ -413,7 +413,7 @@ describe('ui/ext_messages', function()
           for _, chunk in ipairs(msg.content) do
             text = text .. (#chunk >= 2 and chunk[2] or chunk[1])
           end
-          t.matches('^Type number and <Enter> %(q or empty cancels%):\n', text)
+          t.matches('^Select a tag:\n', text)
           t.matches('1: > F%s+help%.txt%s+', text)
         end
         screen.messages = {}

@@ -223,11 +223,33 @@ static void nlua_push_eap(lua_State *lstate, exarg_T *eap, const cmdmod_T *cmod)
   lua_setfield(lstate, -2, "reg");
 
   // Push pre-split args as "fargs" list, if available (set by the command-line parser).
-  if (eap->args != NULL && eap->argc > 0) {
+  // - Or fall back to splitting `eap->arg` on unescaped whitespace.
+  // - Usercmds with nargs=1/? need different splitting, handled by `nlua_do_ucmd`.
+  if (eap->args != NULL) {
     lua_createtable(lstate, (int)eap->argc, 0);
     for (size_t i = 0; i < eap->argc; i++) {
       lua_pushlstring(lstate, eap->args[i], eap->arglens[i]);
       lua_rawseti(lstate, -2, (int)i + 1);
+    }
+    lua_setfield(lstate, -2, "fargs");
+  } else {
+    lua_newtable(lstate);
+    size_t length = strlen(eap->arg);
+    if (length > 0) {
+      size_t end = 0;
+      size_t len = 0;
+      int i = 1;
+      char *buf = xcalloc(length, sizeof(char));
+      bool done = false;
+      while (!done) {
+        done = uc_split_args_iter(eap->arg, length, &end, buf, &len);
+        if (len > 0) {
+          lua_pushlstring(lstate, buf, len);
+          lua_rawseti(lstate, -2, i);
+          i++;
+        }
+      }
+      xfree(buf);
     }
     lua_setfield(lstate, -2, "fargs");
   }
@@ -2336,37 +2358,16 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
     lua_setfield(lstate, -2, "count");
   }
 
-  // Override fargs for user command-specific splitting (nlua_push_eap already set it
-  // for the eap->args!=NULL case, but user commands need special handling for nargs).
+  // Override fargs for nargs=1/? (EX_NOSPC): the whole arg as one element (or empty).
+  // Other cases are handled by `nlua_push_eap`.
   if (cmd->uc_argt & EX_NOSPC) {
-    // nargs=1 or "?": fargs is the whole arg as a single element, or empty.
     lua_createtable(lstate, 1, 0);
     if ((cmd->uc_argt & EX_NEEDARG) || *eap->arg != NUL) {
       lua_pushstring(lstate, eap->arg);
       lua_rawseti(lstate, -2, 1);
     }
     lua_setfield(lstate, -2, "fargs");
-  } else if (eap->args == NULL) {
-    // Pre-split args not available: tokenize eap->arg by unescaped whitespace.
-    lua_newtable(lstate);
-    size_t length = strlen(eap->arg);
-    size_t end = 0;
-    size_t len = 0;
-    int i = 1;
-    char *buf = xcalloc(length, sizeof(char));
-    bool done = false;
-    while (!done) {
-      done = uc_split_args_iter(eap->arg, length, &end, buf, &len);
-      if (len > 0) {
-        lua_pushlstring(lstate, buf, len);
-        lua_rawseti(lstate, -2, i);
-        i++;
-      }
-    }
-    xfree(buf);
-    lua_setfield(lstate, -2, "fargs");
   }
-  // else: eap->args was available, nlua_push_eap already set fargs.
 
   char nargs[2];
   if (cmd->uc_argt & EX_EXTRA) {

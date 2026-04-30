@@ -4,7 +4,6 @@ local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local clear = n.clear
 local eq = t.eq
-local pcall_err = t.pcall_err
 local exec_lua = n.exec_lua
 
 local create_server_definition = t_lsp.create_server_definition

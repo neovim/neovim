@@ -1241,7 +1241,7 @@ func Test_tselect_listing()
   let l = split(execute("tselect first"), "\n")
   " Nvim: :tselect goes through vim.ui.select().
   let expected =<< [DATA]
-Type number and <Enter> (q or empty cancels):
+Select a tag:
 1:   FS  v    first              Xfoo
 2:   FS  v    first              Xfoo
 [DATA]

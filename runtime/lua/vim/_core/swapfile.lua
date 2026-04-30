@@ -52,7 +52,7 @@ end
 --- @param items string[] List of swapfile paths.
 function M.select_swap(items)
   vim.ui.select(items, {
-    prompt = N_('Enter number of swap file to use (q or empty cancels):'),
+    prompt = N_('Select a swapfile:'),
     kind = 'swap',
     format_item = format_swap,
   }, function(_, idx)
