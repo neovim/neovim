@@ -800,7 +800,7 @@ static int theme(bool *dark, void *user)
     return (*screen->callbacks->theme)(dark, screen->cbdata);
   }
 
-  return 1;
+  return 0;
 }
 
 static int setlineinfo(int row, const VTermLineInfo *newinfo, const VTermLineInfo *oldinfo,
