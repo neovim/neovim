@@ -3386,7 +3386,16 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
     int envcount;
     if (uv_os_environ(&envitems, &envcount) == 0) {
       for (int i = 0; i < envcount; i++) {
-        tv_dict_add_str(env, envitems[i].name, strlen(envitems[i].name), envitems[i].value);
+        const char *name = envitems[i].name;
+        size_t namelen = strlen(name);
+#ifdef MSWIN
+        // Force uppercase keys on Windows (for dedup, below). #39443
+        if (namelen < MAXPATHL / MB_MAXBYTES) {
+          namelen = mb_strup_buf(name, NameBuff);
+          name = NameBuff;
+        }
+#endif
+        tv_dict_add_str(env, name, namelen, envitems[i].value);
       }
       uv_os_free_environ(envitems, envcount);
     }
@@ -3434,15 +3443,18 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
   if (job_env) {
 #ifdef MSWIN
     TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {
-      // Always use upper-case keys for Windows so we detect duplicate keys
-      char *const key = strcase_save(var->di_key, true);
-      size_t len = strlen(key);
-      dictitem_T *dv = tv_dict_find(env, key, len);
+      // Force uppercase keys on Windows (dedup).
+      const char *name = var->di_key;
+      size_t namelen = strlen(name);
+      if (namelen < MAXPATHL / MB_MAXBYTES) {
+        namelen = mb_strup_buf(name, NameBuff);
+        name = NameBuff;
+      }
+      dictitem_T *dv = tv_dict_find(env, name, (ptrdiff_t)namelen);
       if (dv) {
         tv_dict_item_remove(env, dv);
       }
-      tv_dict_add_str(env, key, len, tv_get_string(&var->di_tv));
-      xfree(key);
+      tv_dict_add_str(env, name, namelen, tv_get_string(&var->di_tv));
     });
 #else
     tv_dict_extend(env, job_env->di_tv.vval.v_dict, "force");
