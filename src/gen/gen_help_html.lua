@@ -30,6 +30,10 @@
 --   * visit_validate() is the core function used by validate().
 --   * Files in `new_layout` will be generated with a "flow" layout instead of preformatted/fixed-width layout.
 --
+-- TODO:
+--   * Conjoin listitem "blocks" (blank-separated). Example: starting.txt
+--   * All Nvim-owned files should migrate to "flow" layout.
+
 local pending_urls = 0
 local tagmap = nil ---@type table<string, string>
 local helpfiles = nil ---@type string[]
@@ -66,6 +70,7 @@ local M = {}
 
 -- These files are generated with "flow" layout (non fixed-width, wrapped text paragraphs).
 -- All other files are "legacy" files which require fixed-width layout.
+-- All Nvim-owned files should migrate to "flow" layout.
 local new_layout = {
   ['api.txt'] = true,
   ['channel.txt'] = true,
@@ -368,7 +373,7 @@ local function ignore_parse_error(fname, s)
   end
   -- Ignore parse errors for unclosed tag.
   -- This is common in vimdocs and is treated as plaintext by :help.
-  return s:find("^[`'|*]")
+  return s:find('^``') or s:find("^['|]")
 end
 
 ---@param node TSNode
@@ -735,11 +740,20 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s
-  elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
+  elseif vim.list_contains({ 'codespan', 'keycode', 'optional' }, node_name) then
     if root:has_error() then
       return text
     end
-    local s = ('%s<code>%s</code>'):format(ws(), trimmed)
+    local class = node_name == 'optional' and ' class="optional"' or ''
+    if node_name == 'optional' then
+      return ('%s<code%s>%s</code>'):format(ws(), class, trimmed)
+    end
+    local s = (
+      node_name == 'keycode'
+        -- TODO: use <kbd>. Currently has a layout issue, example: ":help _".
+        and ('%s<code>%s</code>'):format(ws(), trimmed)
+      or ('%s<code%s>%s</code>'):format(ws(), class, trimmed)
+    )
     if opt.old and node_name == 'codespan' then
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
