@@ -539,19 +539,19 @@ static int put_in_typebuf(char *s, bool esc, bool colon, int silent)
 /// used only after other typeahead has been processed.
 static void put_reedit_in_typebuf(int silent)
 {
-  uint8_t buf[3];
-
   if (restart_edit == NUL) {
     return;
   }
 
-  if (restart_edit == 'V') {
-    buf[0] = 'g';
-    buf[1] = 'R';
-    buf[2] = NUL;
-  } else {
-    buf[0] = (uint8_t)(restart_edit == 'I' ? 'i' : restart_edit);
-    buf[1] = NUL;
+  uint8_t buf[] = { K_SPECIAL, KS_EXTRA, KE_COMMAND,
+                    // :startinsert
+                    's', 't', 'a', 'r', 't', 'i', CAR, NUL };
+  if (restart_edit == 'R') {
+    buf[8] = 'r';  // :startreplace
+  } else if (restart_edit == 'V') {
+    buf[8] = 'g';  // :startgreplace
+  } else if (restart_edit == 'A') {
+    buf[8] = '!';  // :startinsert!
   }
   if (ins_typebuf((char *)buf, REMAP_NONE, 0, true, silent) == OK) {
     restart_edit = NUL;
