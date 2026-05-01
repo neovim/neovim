@@ -76,6 +76,9 @@ DIAGNOSTICS
 
 • `vim.diagnostic.Opts.Status.format` no longer accepts the table mapping
   from severity to text. Use `vim.diagnostic.Opts.Signs.text` instead.
+• `current_line` property of |vim.diagnostic.Opts.VirtualLines| and
+  |vim.diagnostic.Opts.VirtualText| is now applied on |CursorHold| event.
+  Make sure your 'updatetime' is reasonable.
 
 EDITOR
 

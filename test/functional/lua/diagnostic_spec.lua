@@ -2350,7 +2350,7 @@ describe('vim.diagnostic', function()
       eq(' Another error there!', result[1][4].virt_text[3][1])
     end)
 
-    it('only renders virtual_line diagnostics within buffer length', function()
+    it('only renders virtual_text diagnostics within buffer length', function()
       local result = exec_lua(function()
         vim.api.nvim_win_set_cursor(0, { 1, 0 })
 
@@ -2366,7 +2366,7 @@ describe('vim.diagnostic', function()
         })
 
         vim.api.nvim_buf_set_lines(_G.diagnostic_bufnr, 2, 5, false, {})
-        vim.api.nvim_exec_autocmds('CursorMoved', { buf = _G.diagnostic_bufnr })
+        vim.api.nvim_exec_autocmds('CursorHold', { buf = _G.diagnostic_bufnr })
         return _G.get_virt_text_extmarks(_G.diagnostic_ns)
       end)
 
@@ -2545,6 +2545,7 @@ describe('vim.diagnostic', function()
           _G.make_error('Another error there!', 1, 0, 1, 0, 'foo_server'),
         })
 
+        vim.api.nvim_exec_autocmds('CursorHold', { buf = _G.diagnostic_bufnr })
         local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
         return extmarks
       end)
@@ -2586,6 +2587,7 @@ describe('vim.diagnostic', function()
         vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics, {})
         vim.diagnostic.show(_G.diagnostic_ns, _G.diagnostic_bufnr)
         vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        vim.api.nvim_exec_autocmds('CursorHold', { buf = _G.diagnostic_bufnr })
         local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
         local result = {}
         for _, d in ipairs(extmarks[1][4].virt_lines) do
