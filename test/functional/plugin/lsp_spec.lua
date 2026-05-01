@@ -3381,10 +3381,42 @@ describe('LSP', function()
         }, { client_id = client_id })
         check('workspace/didChangeConfiguration', nil, 'section')
 
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'unknown-method-id',
+              method = 'unknown-method',
+              registerOptions = {
+                some_opt = 'unknown-dummy-opt',
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('unknown-method', nil, 'some_opt')
+
+        check('unknown-method-2')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'unknown-method-2-id',
+              method = 'unknown-method-2',
+              registerOptions = {
+                documentSelector = {
+                  {
+                    pattern = root_dir .. '/*.foo',
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('unknown-method-2')
+        check('unknown-method-2', tmpfile)
+
         return result
       end)
 
-      eq(21, #result)
+      eq(25, #result)
       eq({ method = 'textDocument/formatting', supported = false }, result[1])
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
@@ -3419,6 +3451,14 @@ describe('LSP', function()
         { method = 'workspace/didChangeConfiguration', supported = true, cap = { 'dummy-section' } },
         result[21]
       )
+      eq({
+        method = 'unknown-method',
+        supported = true,
+        cap = { 'unknown-dummy-opt' },
+      }, result[22])
+      eq({ method = 'unknown-method-2', supported = true }, result[23])
+      eq({ method = 'unknown-method-2', supported = false }, result[24])
+      eq({ method = 'unknown-method-2', supported = true, fname = tmpfile }, result[25])
     end)
 
     it('identifies client dynamic registration capability', function()
