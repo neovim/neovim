@@ -990,7 +990,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - line2: (number) The final line of the command range [<line2>]
 ///                 - mods: (string) Command modifiers, if any [<mods>]
 ///                 - name: (string) Command name
-///                 - nargs: (string) Number of arguments |:command-nargs|
+///                 - nargs: (string) Number of arguments allowed for the command
 ///                 - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
 ///                 - reg: (string) The optional register, if specified [<reg>]
 ///                 - smods: (table) Command modifiers in a structured format. Has the same
@@ -999,7 +999,11 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - `desc` (string) Command description.
 ///                 - `force` (boolean, default true) Override any previous definition.
 ///                 - `complete` |:command-complete| command or function like |:command-completion-customlist|.
+///                 - `nargs` Number of arguments allowed for the command |:command-nargs|
 ///                 - `preview` (function) Preview handler for 'inccommand' |:command-preview|
+///                 - `range` see |:command-range|
+///                 - `count` see |:command-count|
+///                 - `addr` see |:command-addr|
 ///                 - Set boolean |command-attributes| such as |:command-bang| or |:command-bar| to
 ///                   true (but not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
 /// @param[out] err Error details, if any.
