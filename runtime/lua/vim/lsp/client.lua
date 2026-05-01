@@ -948,6 +948,10 @@ function Client:_supports_registration(method)
   end
   local provider = self:_registration_provider(method)
   local capability_path = lsp.protocol._provider_to_client_registration[provider]
+  if not capability_path then
+    -- If we don't know about the method, assume the client supports dynamic registration for it.
+    return true
+  end
   local capability = vim.tbl_get(self.capabilities, unpack(capability_path))
   return type(capability) == 'table' and capability.dynamicRegistration
 end
@@ -956,7 +960,7 @@ end
 --- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 function Client:_registration_provider(method)
   local capability_path = lsp.protocol._request_name_to_server_capability[method]
-  return capability_path and capability_path[1]
+  return capability_path and capability_path[1] or method
 end
 
 --- @private
@@ -1250,6 +1254,10 @@ function Client:supports_method(method, bufnr)
     return false
   end
 
+  if required_capability == nil and next(self.registrations[method] or {}) ~= nil then
+    return false
+  end
+
   -- If we don't know about the method, or if it is a self-mapping(method=required_capability)
   -- assume that the client supports it.
   -- This needs to be at the end, so that dynamic_capabilities are checked first.
@@ -1280,9 +1288,7 @@ function Client:_provider_foreach(method, fn)
   local required_capability = lsp.protocol._request_name_to_server_capability[method]
   local dynamic_regs = self:_get_registrations(provider)
   local has_subcap = required_capability and #required_capability > 1
-  if not provider then
-    return
-  elseif not dynamic_regs then
+  if not dynamic_regs then
     -- First check static capabilities
     local static_reg = vim.tbl_get(self.server_capabilities, provider)
     if static_reg then
