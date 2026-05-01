@@ -1,4 +1,3 @@
-local select_blocking = require('vim._core.ui').select_blocking
 local N_ = vim.fn.gettext
 
 local M = {}
@@ -10,14 +9,15 @@ local M = {}
 --- @field altscore? integer Secondary score (only set when 'spellsuggest' contains "double" or "best").
 --- @field salscore? boolean True if the score came from sound-alike comparison (only set alongside `altscore`).
 
---- Called from `spell_suggest()` (`z=`) to let the user pick from `items` via
---- |vim.ui.select()|.
+--- Implements `spell_suggest()` (`z=`) via vim.ui.select().
+---
+--- async: returns immediately, the chosen suggestion is applied later
+--- by re-running `:normal! [idx]z=` from `on_choice`.
 ---
 --- @param items vim._core.spell.Suggestion[]
 --- @param bad string The misspelled word being replaced.
---- @return integer? # 1-based index of the chosen suggestion, or nil if cancelled.
-function M.suggest_select(items, bad)
-  return select_blocking(items, {
+function M.select_suggest(items, bad)
+  vim.ui.select(items, {
     prompt = N_('Change "%s" to:'):format(bad),
     kind = 'spell',
     format_item = function(s)
@@ -30,7 +30,14 @@ function M.suggest_select(items, bad)
       end
       return ('"%s"%s%s'):format(s.word, extra, score)
     end,
-  })
+  }, function(_, idx)
+    if not idx then
+      return
+    end
+    -- Queue ":normal! [idx]z=" as user input, so the recursive spell_suggest runs via the normal
+    -- input-dispatch loop. Using vim.schedule + vim.cmd can hang bc of "Press ENTER".
+    vim.fn.feedkeys(vim.keycode(('<Cmd>normal! %dz=<CR>'):format(idx)), 'in')
+  end)
 end
 
 return M

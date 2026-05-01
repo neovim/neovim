@@ -212,7 +212,7 @@ void ex_help(exarg_T *eap)
   // It is needed for do_tag top open folds under the cursor.
   KeyTyped = old_KeyTyped;
 
-  do_tag(tag, DT_HELP, 1, false, true);
+  do_tag(NULL, tag, DT_HELP, 1, false, true);
 
   // Delete the empty buffer if we're not using it.  Careful: autocommands
   // may have jumped to another window, check that the buffer is not in a

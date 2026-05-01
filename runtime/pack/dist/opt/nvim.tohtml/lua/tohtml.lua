@@ -197,32 +197,22 @@ local len = vim.api.nvim_strwidth
 --- @param color "background"|"foreground"|integer
 --- @return string?
 local function try_query_terminal_color(color)
-  local parameter = 4
-  if color == 'foreground' then
-    parameter = 10
-  elseif color == 'background' then
-    parameter = 11
-  end
+  local parameter = (color == 'foreground' and 10) or (color == 'background' and 11) or 4
+  local payload = type(color) == 'number' and ('\027]%s;%s;?\027\\'):format(parameter, color)
+    or ('\027]%s;?\027\\'):format(parameter)
+
   --- @type string?
   local hex = nil
-  local au = vim.api.nvim_create_autocmd('TermResponse', {
-    once = true,
-    callback = function(ev)
-      hex = '#'
-        .. table.concat({
-          ev.data.sequence:match('\027%]%d+;%d*;?rgb:(%w%w)%w%w/(%w%w)%w%w/(%w%w)%w%w'),
-        })
-    end,
-  })
-  if type(color) == 'number' then
-    vim.api.nvim_ui_send(('\027]%s;%s;?\027\\'):format(parameter, color))
-  else
-    vim.api.nvim_ui_send(('\027]%s;?\027\\'):format(parameter))
-  end
-  vim.wait(100, function()
-    return hex and true or false
+  vim.tty.request(payload, { timeout = 100 }, function(resp)
+    local r, g, b = resp:match('\027%]%d+;%d*;?rgb:(%w%w)%w%w/(%w%w)%w%w/(%w%w)%w%w') ---@type string?, string?, string?
+    if r and g and b then
+      hex = '#' .. r .. g .. b
+      return true
+    end
   end)
-  pcall(vim.api.nvim_del_autocmd, au)
+  vim.wait(100, function()
+    return hex ~= nil
+  end)
   return hex
 end
 

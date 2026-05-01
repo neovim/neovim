@@ -1153,6 +1153,7 @@ static int command_line_wildchar_complete(CommandLineState *s)
   bool escape = s->firstc != '@';
   bool redraw_if_menu_empty = s->c == K_WILD;
   bool wim_noselect = p_wmnu && (wim_flags[0] & kOptWimFlagNoselect) != 0;
+  bool wim_noinsert = p_wmnu && (wim_flags[0] & kOptWimFlagNoinsert) != 0;
 
   if (wim_flags[s->wim_index] & kOptWimFlagLastused) {
     options |= WILD_BUFLASTUSED;
@@ -1162,7 +1163,7 @@ static int command_line_wildchar_complete(CommandLineState *s)
     if (s->xpc.xp_numfiles > 1
         && !s->did_wild_list
         && (wim_flags[s->wim_index] & kOptWimFlagList)) {
-      showmatches(&s->xpc, false, true, wim_noselect);
+      showmatches(&s->xpc, false, true, p_wmnu ? wim_flags[s->wim_index] : 0);
       redrawcmd();
       s->did_wild_list = true;
     }
@@ -1196,6 +1197,9 @@ static int command_line_wildchar_complete(CommandLineState *s)
       if (wim_noselect || wim_list) {
         options |= WILD_NOSELECT;
       }
+      if (wim_noinsert) {
+        options |= WILD_NOINSERT;
+      }
       res = nextwild(&s->xpc, WILD_EXPAND_KEEP, options, escape);
     }
 
@@ -1214,20 +1218,22 @@ static int command_line_wildchar_complete(CommandLineState *s)
     }
 
     // Display matches
-    if (res == OK && s->xpc.xp_numfiles > (wim_noselect ? 0 : 1)) {
+    if (res == OK && s->xpc.xp_numfiles > ((wim_noselect || wim_noinsert) ? 0 : 1)) {
       if (wim_longest) {
         bool found_longest_prefix = (ccline.cmdpos != cmdpos_before);
         if (wim_list || (p_wmnu && wim_full)) {
-          showmatches(&s->xpc, p_wmnu, wim_list, true);
+          showmatches(&s->xpc, p_wmnu, wim_list, kOptWimFlagNoselect);
         } else if (!found_longest_prefix) {
           bool wim_list_next = (wim_flags[1] & kOptWimFlagList);
           bool wim_full_next = (wim_flags[1] & kOptWimFlagFull);
           bool wim_noselect_next = (wim_flags[1] & kOptWimFlagNoselect);
-          if (wim_list_next || (p_wmnu && (wim_full_next || wim_noselect_next))) {
-            if (wim_full_next && !wim_noselect_next) {
+          bool wim_noinsert_next = (wim_flags[1] & kOptWimFlagNoinsert);
+          if (wim_list_next
+              || (p_wmnu && (wim_full_next || wim_noselect_next || wim_noinsert_next))) {
+            if (wim_full_next && !wim_noselect_next && !wim_noinsert_next) {
               nextwild(&s->xpc, WILD_NEXT, options, escape);
             } else {
-              showmatches(&s->xpc, p_wmnu, wim_list_next, wim_noselect_next);
+              showmatches(&s->xpc, p_wmnu, wim_list_next, p_wmnu ? wim_flags[1] : 0);
             }
             if (wim_list_next) {
               s->did_wild_list = true;
@@ -1235,8 +1241,8 @@ static int command_line_wildchar_complete(CommandLineState *s)
           }
         }
       } else {
-        if (wim_list || (p_wmnu && (wim_full || wim_noselect))) {
-          showmatches(&s->xpc, p_wmnu, wim_list, wim_noselect);
+        if (wim_list || (p_wmnu && (wim_full || wim_noselect || wim_noinsert))) {
+          showmatches(&s->xpc, p_wmnu, wim_list, p_wmnu ? wim_flags[0] : 0);
         } else {
           vim_beep(kOptBoFlagWildmode);
         }
@@ -1538,7 +1544,7 @@ static int command_line_execute(VimState *state, int key)
           && ((!s->did_wild_list && (wim_flags[s->wim_index] & kOptWimFlagList)) || p_wmnu)) {
         // Trigger the popup menu when wildoptions=pum
         showmatches(&s->xpc, p_wmnu, wim_flags[s->wim_index] & kOptWimFlagList,
-                    wim_flags[0] & kOptWimFlagNoselect);
+                    p_wmnu ? wim_flags[0] : 0);
       }
       nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
       nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
@@ -2113,7 +2119,7 @@ static int command_line_handle_key(CommandLineState *s)
     }
 
   case Ctrl_D:
-    if (showmatches(&s->xpc, false, true, wim_flags[0] & kOptWimFlagNoselect)
+    if (showmatches(&s->xpc, false, true, p_wmnu ? wim_flags[0] : 0)
         == EXPAND_NOTHING) {
       break;                  // Use ^D as normal char instead
     }
@@ -3060,6 +3066,8 @@ int check_opt_wim(void)
       new_wim_flags[idx] |= kOptWimFlagLastused;
     } else if (i == 8 && strncmp(p, "noselect", 8) == 0) {
       new_wim_flags[idx] |= kOptWimFlagNoselect;
+    } else if (i == 8 && strncmp(p, "noinsert", 8) == 0) {
+      new_wim_flags[idx] |= kOptWimFlagNoinsert;
     } else {
       return FAIL;
     }

@@ -5,6 +5,8 @@
 " Previous Maintainer:	Vincent Berthoux <twinside@gmail.com>
 " File Types:   .cabal
 " Last Change:  22 Oct 2022
+"
+" 2026 Apr 29 by Léana: add missing haskell language editions
 " 2026 Apr 20 by Vim project: remove wrong oneline keyword #20018
 "
 " v1.6: Added support for foreign-libraries
@@ -193,7 +195,9 @@ syn match cabalVersionRegionB
 	\ contains=cabalStatementRegion,cabalVersionOperator,cabalVersion
 	\ /^\s*\%(cabal-\)\?version\s*:.*$/
 
-syn keyword cabalLanguage Haskell98 Haskell2010
+" See the following link for all Haskell language editions supported by Cabal.
+" https://cabal.readthedocs.io/en/stable/cabal-package-description-file.html#pkg-field-default-language
+syn keyword cabalLanguage Haskell98 Haskell2010 GHC2021 GHC2024
 
 " title region
 syn match cabalName contained /:\@<=.*/

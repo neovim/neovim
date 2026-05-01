@@ -7639,8 +7639,7 @@ static void ex_tag_cmd(exarg_T *eap, const char *name)
     cmd = DT_LTAG;
   }
 
-  do_tag(eap->arg, cmd, eap->addr_count > 0 ? (int)eap->line2 : 1,
-         eap->forceit, true);
+  do_tag(eap, eap->arg, cmd, eap->addr_count > 0 ? (int)eap->line2 : 1, eap->forceit, true);
 }
 
 enum {

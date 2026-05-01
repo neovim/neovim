@@ -34,6 +34,7 @@
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
@@ -167,11 +168,38 @@ static void nlua_push_cmdmod(lua_State *lstate, const cmdmod_T *cmod)
   lua_setfield(lstate, -2, "lockmarks");
   lua_pushboolean(lstate, cmod->cmod_flags & CMOD_NOSWAPFILE);
   lua_setfield(lstate, -2, "noswapfile");
+
+  // ":filter[!] /pattern/" modifier (same shape as `nvim_parse_cmd().mods.filter`).
+  lua_newtable(lstate);
+  lua_pushstring(lstate, cmod->cmod_filter_pat ? cmod->cmod_filter_pat : "");
+  lua_setfield(lstate, -2, "pattern");
+  lua_pushboolean(lstate, cmod->cmod_filter_force);
+  lua_setfield(lstate, -2, "force");
+  lua_setfield(lstate, -2, "filter");
 }
 
 /// Pushes common exarg_T fields (bang, line1, line2, …) onto a table at the top of the stack.
 static void nlua_push_eap(lua_State *lstate, exarg_T *eap, const cmdmod_T *cmod)
 {
+  // Canonical name (for builtin cmds); for usercmds `nlua_do_ucmd` sets "name" to the user-defined name.
+  if (!IS_USER_CMDIDX(eap->cmdidx) && eap->cmdidx < CMD_SIZE) {
+    lua_pushstring(lstate, get_command_name(NULL, eap->cmdidx));
+    lua_setfield(lstate, -2, "name");
+  }
+
+  // Modifier string (e.g. ":vert silent"). Same content as `nvim_parse_cmd().mods`.
+  // Useful when forwarding the command verbatim, e.g. `feedkeys('<Cmd>'..eap.mods..' …<CR>')`.
+  //
+  // The size is chosen empirically to hold every modifier with room to spare; bump if more are added.
+  char mods_buf[200] = { 0 };
+  uc_mods(mods_buf, cmod, false);
+  lua_pushstring(lstate, mods_buf);
+  lua_setfield(lstate, -2, "mods");
+
+  // Structured form of `mods`.
+  nlua_push_cmdmod(lstate, cmod);
+  lua_setfield(lstate, -2, "smods");
+
   lua_pushstring(lstate, eap->arg);
   lua_setfield(lstate, -2, "args");
 
@@ -203,9 +231,6 @@ static void nlua_push_eap(lua_State *lstate, exarg_T *eap, const cmdmod_T *cmod)
     }
     lua_setfield(lstate, -2, "fargs");
   }
-
-  nlua_push_cmdmod(lstate, cmod);
-  lua_setfield(lstate, -2, "smods");
 }
 
 #if __has_feature(address_sanitizer)
@@ -2362,16 +2387,6 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   nargs[1] = NUL;
   lua_pushstring(lstate, nargs);
   lua_setfield(lstate, -2, "nargs");
-
-  // User commands also get a string "mods" field (in addition to "smods" from nlua_push_eap).
-  //
-  // The size of this buffer is chosen empirically to be large enough to hold
-  // every possible modifier (with room to spare). If the list of possible
-  // modifiers grows this may need to be updated.
-  char buf[200] = { 0 };
-  uc_mods(buf, &cmdmod, false);
-  lua_pushstring(lstate, buf);
-  lua_setfield(lstate, -2, "mods");
 
   if (preview) {
     lua_pushinteger(lstate, cmdpreview_get_ns());

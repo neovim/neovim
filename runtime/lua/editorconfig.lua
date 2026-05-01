@@ -308,15 +308,15 @@ M.properties = properties
 
 --- @private
 --- Configure the given buffer with options from an `.editorconfig` file
---- @param bufnr integer Buffer number to configure
-function M.config(bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if not vim.api.nvim_buf_is_valid(bufnr) then
+--- @param buf integer Buffer number to configure
+function M.config(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(buf) then
     return
   end
 
-  local path = vim.fs.normalize(vim.api.nvim_buf_get_name(bufnr))
-  if vim.bo[bufnr].buftype ~= '' or not vim.bo[bufnr].modifiable or path == '' then
+  local path = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
+  if vim.bo[buf].buftype ~= '' or not vim.bo[buf].modifiable or path == '' then
     return
   end
 
@@ -339,7 +339,7 @@ function M.config(bufnr)
       local func = M.properties[opt]
       if func then
         --- @type boolean, string?
-        local ok, err = pcall(func, bufnr, val, opts)
+        local ok, err = pcall(func, buf, val, opts)
         if ok then
           applied[opt] = val
         else
@@ -349,7 +349,7 @@ function M.config(bufnr)
     end
   end
 
-  vim.b[bufnr].editorconfig = applied
+  vim.b[buf].editorconfig = applied
 end
 
 return M

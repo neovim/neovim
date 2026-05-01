@@ -433,10 +433,8 @@ int spell_check_sps(void)
   return OK;
 }
 
-/// Let the user pick a spell suggestion. Delegates to `vim.ui.select()`.
-///
-/// @return 1-based index of the chosen suggestion, or 0 if cancelled.
-static int select_spell_suggestion(suginfo_T *sug)
+/// Let the user pick a spell suggestion. Delegates to (async) `vim.ui.select()`.
+static void select_spell_suggestion(suginfo_T *sug)
 {
   typval_T items_tv;
   tv_list_alloc_ret(&items_tv, sug->su_ga.ga_len);
@@ -481,18 +479,10 @@ static int select_spell_suggestion(suginfo_T *sug)
   typval_T bad_tv = { .v_type = VAR_STRING,
                       .vval.v_string = xstrnsave(sug->su_badptr, (size_t)sug->su_badlen) };
   typval_T lua_args[] = { items_tv, bad_tv, { .v_type = VAR_UNKNOWN } };
-  typval_T rettv = TV_INITIAL_VALUE;
-  nlua_call_vimfn("vim._core.spell", "suggest_select", lua_args, &rettv);
-
-  int idx = 0;
-  if (rettv.v_type == VAR_NUMBER) {
-    idx = (int)rettv.vval.v_number;
-  }
+  nlua_call_vimfn("vim._core.spell", "select_suggest", lua_args, NULL);
 
   tv_clear(&items_tv);
   tv_clear(&bad_tv);
-  tv_clear(&rettv);
-  return idx;
 }
 
 /// "z=": Find badly spelled word under or after the cursor.
@@ -583,8 +573,8 @@ void spell_suggest(int count)
       smsg(0, _("Only %" PRId64 " suggestions"), (int64_t)sug.su_ga.ga_len);
     }
   } else {
-    // Ask the user (via vim.ui.select) to pick a suggestion.
-    selected = select_spell_suggestion(&sug);
+    // Hand off to (async) vim.ui.select().
+    select_spell_suggestion(&sug);
 
     lines_left = Rows;                  // avoid more prompt
     // don't delay for 'smd' in normal_cmd()

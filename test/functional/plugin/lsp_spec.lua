@@ -4488,6 +4488,52 @@ describe('LSP', function()
       eq({ 0, 'foo', 1, 'bar' }, count_clients())
     end)
 
+    it('sends didClose and didOpen when languageId changes', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+
+      exec_lua(function()
+        _G.server = _G._create_server({
+          handlers = {
+            initialize = function(_, _, callback)
+              callback(nil, { capabilities = { textDocumentSync = { openClose = true } } })
+            end,
+          },
+        })
+        vim.lsp.config('foo', { cmd = _G.server.cmd, filetypes = { 'foo', 'bar' } })
+        vim.lsp.enable('foo')
+        vim.cmd.edit(tmp1)
+      end)
+
+      local function test_messages()
+        local opens = 0
+        local closes = 0
+        local msgs = exec_lua([[ return _G.server.messages ]])
+        local num_clients = exec_lua([[ return #vim.lsp.get_clients() ]])
+        for _, msg in ipairs(msgs) do
+          opens = opens + (msg.method == 'textDocument/didOpen' and 1 or 0)
+          closes = closes + (msg.method == 'textDocument/didClose' and 1 or 0)
+        end
+        return { opens, 'did_open', closes, 'did_close', num_clients, 'clients' }
+      end
+
+      -- No filetype on the buffer yet.
+      eq({ 0, 'did_open', 0, 'did_close', 0, 'clients' }, test_messages())
+
+      -- Set the filetype to 'foo', confirm didOpen is sent.
+      exec_lua([[vim.bo.filetype = 'foo']])
+      retry(nil, 1000, function()
+        eq({ 1, 'did_open', 0, 'did_close', 1, 'clients' }, test_messages())
+      end)
+
+      -- Set to anohter lsp-supported filetype 'bar', confirm didClose and didOpen are sent.
+      exec_lua([[vim.bo.filetype = 'bar']])
+      retry(nil, 1000, function()
+        eq({ 2, 'did_open', 1, 'did_close', 1, 'clients' }, test_messages())
+      end)
+    end)
+
     it('validates config on attach', function()
       local tmp1 = t.tmpname(true)
       exec_lua(function()

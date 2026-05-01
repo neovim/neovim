@@ -1524,7 +1524,7 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
 ==============================================================================
 Lua module: vim.inspector                                      *vim.inspector*
 
-vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
+vim.inspect_pos({buf}, {row}, {col}, {filter})             *vim.inspect_pos()*
     Get all the items at a given buffer position.
 
     Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
@@ -1533,7 +1533,7 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
         Since: 0.9.0
 
     Parameters: ~
-      • {bufnr}   (`integer?`) defaults to the current buffer
+      • {buf}     (`integer?`) defaults to the current buffer
       • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
                   the current cursor
       • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
@@ -1560,7 +1560,7 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
         • row: the row used to get the items
         • col: the col used to get the items
 
-vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
+vim.show_pos({buf}, {row}, {col}, {filter})                   *vim.show_pos()*
     Show all the items at a given buffer position.
 
     Can also be shown with `:Inspect`.                              *:Inspect*
@@ -1574,7 +1574,7 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
         Since: 0.9.0
 
     Parameters: ~
-      • {bufnr}   (`integer?`) defaults to the current buffer
+      • {buf}     (`integer?`) defaults to the current buffer
       • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
                   the current cursor
       • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
@@ -2924,11 +2924,11 @@ vim.hl.priorities                                          *vim.hl.priorities*
       symbols or `on_yank` autocommands
 
                                                               *vim.hl.range()*
-vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
+vim.hl.range({buf}, {ns}, {higroup}, {start}, {finish}, {opts})
     Apply highlight group to range of text.
 
     Parameters: ~
-      • {bufnr}    (`integer`) Buffer number to apply highlighting to
+      • {buf}      (`integer`) Buffer number to apply highlighting to
       • {ns}       (`integer`) Namespace to add highlight to
       • {higroup}  (`string`) Highlight group to use for highlighting
       • {start}    (`[integer,integer]|string`) Start of region as a (line,
@@ -4620,14 +4620,14 @@ within a single line.
 
 
                                                           *regex:match_line()*
-regex:match_line({bufnr}, {line_idx}, {start}, {end_})
-    Matches line at `line_idx` (zero-based) in buffer `bufnr`. Match is
+regex:match_line({buf}, {line_idx}, {start}, {end_})
+    Matches line at `line_idx` (zero-based) in buffer `buf`. Match is
     restricted to byte index range `start` and `end_` if given, otherwise see
     |regex:match_str()|. Returned byte indices are relative to `start` if
     given.
 
     Parameters: ~
-      • {bufnr}     (`integer`)
+      • {buf}       (`integer`)
       • {line_idx}  (`integer`)
       • {start}     (`integer?`)
       • {end_}      (`integer?`)
@@ -5328,11 +5328,11 @@ vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
     Return: ~
         (`string`) encoded string
 
-vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
+vim.uri_from_bufnr({buf})                               *vim.uri_from_bufnr()*
     Gets a URI from a bufnr.
 
     Parameters: ~
-      • {bufnr}  (`integer`)
+      • {buf}  (`integer`)
 
     Return: ~
         (`string`) URI

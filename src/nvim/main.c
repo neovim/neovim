@@ -511,10 +511,14 @@ int main(int argc, char **argv)
   // Decide about window layout for diff mode after reading vimrc.
   set_window_layout(&params);
 
-  // Recovery mode without a file name: List swap files.
-  // Uses the 'dir' option, therefore it must be after the initializations.
+  // "nvim -r" (recovery mode) without a file name: List swap files.
   if (recoverymode && fname == NULL) {
-    recover_names(NULL, true, NULL, 0, NULL);
+    typval_T items_tv;
+    tv_list_alloc_ret(&items_tv, 0);
+    recover_names(NULL, false, items_tv.vval.v_list);
+    typval_T lua_args[] = { items_tv, { .v_type = VAR_UNKNOWN } };
+    nlua_call_vimfn("vim._core.swapfile", "list_swaps", lua_args, NULL);
+    tv_clear(&items_tv);
     os_exit(0);
   }
 

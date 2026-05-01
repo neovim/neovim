@@ -74,6 +74,17 @@ describe('vim.system', function()
         eq('hellocat', system({ 'cat' }, { stdin = 'hellocat', text = true }).stdout)
       end)
 
+      it('uses real pipes for stdin/stdout #35984', function()
+        if t.is_os('win') then
+          return -- Not applicable for Windows.
+        end
+        local res = system(
+          { 'bash', '-c', 'wc /dev/stdin > /dev/stdout' },
+          { stdin = 'pipe\npipy text\n' }
+        )
+        eq({ '2', '3', '15', '/dev/stdin' }, vim.split(res.stdout, '%s+', { trimempty = true }))
+      end)
+
       it('can set environment', function()
         local function test_env(opt)
           eq('TESTVAL', system({ n.testprg('printenv-test'), 'TEST' }, opt).stdout)

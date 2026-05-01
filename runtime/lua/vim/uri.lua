@@ -77,10 +77,10 @@ function M.uri_from_fname(path)
 end
 
 ---Gets a URI from a bufnr.
----@param bufnr integer
+---@param buf integer
 ---@return string URI
-function M.uri_from_bufnr(bufnr)
-  local fname = vim.api.nvim_buf_get_name(bufnr)
+function M.uri_from_bufnr(buf)
+  local fname = vim.api.nvim_buf_get_name(buf)
   local volume_path = fname:match('^([a-zA-Z]:).*')
   local is_windows = volume_path ~= nil
   local scheme ---@type string?

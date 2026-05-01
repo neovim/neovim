@@ -88,7 +88,7 @@ EVENTS
 
 LSP
 
-• todo
+• `client.attached_buffers[buf]` now stores `languageId` string (was boolean).
 
 LUA
 
@@ -216,10 +216,11 @@ TUI
 
 UI
 
-• |:tselect| delegates to |vim.ui.select()| instead of a bespoke internal
-  selection routine.
-• |z=| (spell suggest) delegates to |vim.ui.select()| instead of a bespoke
-  internal selection routine.
+• These builtin "picker" menus delegate to |vim.ui.select()|:
+  • :browse oldfiles
+  • |:recover|
+  • |:tselect|
+  • |z=| (spell suggest)
 
 VIMSCRIPT
 

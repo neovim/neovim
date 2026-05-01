@@ -283,10 +283,11 @@ void set_buflocal_tfu_callback(buf_T *buf)
 /// type == DT_LTAG:     use location list for displaying tag matches
 /// type == DT_FREE:     free cached matches
 ///
+/// @param eap  excmd args (forwarded to Lua); may be NULL when the caller is not an excmd (e.g. `<C-T>`).
 /// @param tag  tag (pattern) to jump to
 /// @param forceit  :ta with !
 /// @param verbose  print "tag not found" message
-void do_tag(char *tag, int type, int count, int forceit, bool verbose)
+void do_tag(exarg_T *eap, char *tag, int type, int count, int forceit, bool verbose)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
@@ -657,17 +658,13 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         // jump to count'th matching tag.
         cur_match = count > 0 ? count - 1 : 0;
       } else if (type == DT_SELECT || (type == DT_JUMP && num_matches > 1)) {
-        // Ask the user (via vim.ui.select) to pick a tag.
-        int i = select_tag_match(new_tag, use_tagstack, num_matches, matches);
-        if (i <= 0 || i > num_matches || got_int) {
-          // no valid choice: don't change anything
-          if (use_tagstack) {
-            tagstack[tagstackidx].fmark = saved_fmark;
-            tagstackidx = prevtagstackidx;
-          }
-          break;
+        // Hand off to (async) vim.ui.select(). Roll back any pending tagstack changes.
+        select_tag_match(eap, new_tag, use_tagstack, num_matches, matches, name);
+        if (use_tagstack) {
+          tagstack[tagstackidx].fmark = saved_fmark;
+          tagstackidx = prevtagstackidx;
         }
-        cur_match = i - 1;
+        break;
       } else if (type == DT_LTAG) {
         if (add_llist_tags(tag, num_matches, matches) == FAIL) {
           goto end_do_tag;
@@ -791,10 +788,9 @@ end_do_tag:
   xfree(tofree);
 }
 
-/// Let the user pick from `matches`. Delegates to `vim.ui.select()`.
-///
-/// @return 1-based index of the chosen tag, or 0 if cancelled.
-static int select_tag_match(bool new_tag, bool use_tagstack, int num_matches, char **matches)
+/// Let the user pick from `matches`. Delegates to (async) `vim.ui.select()`.
+static void select_tag_match(exarg_T *eap, bool new_tag, bool use_tagstack, int num_matches,
+                             char **matches, const char *name)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
@@ -806,7 +802,7 @@ static int select_tag_match(bool new_tag, bool use_tagstack, int num_matches, ch
     os_breakcheck();
     if (got_int) {
       tv_clear(&items_tv);
-      return 0;
+      return;
     }
     tagptrs_T tagp;
     parse_match(matches[i], &tagp);
@@ -830,18 +826,18 @@ static int select_tag_match(bool new_tag, bool use_tagstack, int num_matches, ch
     tv_list_append_tv(items_tv.vval.v_list, &item);
   }
 
-  typval_T lua_args[] = { items_tv, { .v_type = VAR_UNKNOWN } };
-  typval_T rettv = TV_INITIAL_VALUE;
-  nlua_call_vimfn("vim._core.tag", "select", lua_args, &rettv);
+  // Pass items + tag name as a dict via the `extra` slot of nlua_call_excmd. Lua decides whether
+  // to use `:tag` or `:stag` from `eap.name` (e.g. "tselect" vs "stselect").
+  dict_T *extra_d = tv_dict_alloc();
+  tv_dict_add_list(extra_d, S_LEN("items"), items_tv.vval.v_list);
+  items_tv.vval.v_list->lv_refcount++;  // dict keeps a ref
+  tv_dict_add_str(extra_d, S_LEN("tagname"), name);
+  typval_T extra_tv = { .v_type = VAR_DICT, .vval.v_dict = extra_d };
 
-  int idx = 0;
-  if (rettv.v_type == VAR_NUMBER) {
-    idx = (int)rettv.vval.v_number;
-  }
+  nlua_call_excmd("vim._core.tag", "select_tag", eap, &cmdmod, &extra_tv);
 
   tv_clear(&items_tv);
-  tv_clear(&rettv);
-  return idx;
+  tv_clear(&extra_tv);
 }
 
 /// Add the matching tags to the location list for the current
@@ -2321,7 +2317,7 @@ void free_tag_stuff(void)
 {
   ga_clear_strings(&tag_fnames);
   if (curwin != NULL) {
-    do_tag(NULL, DT_FREE, 0, 0, 0);
+    do_tag(NULL, NULL, DT_FREE, 0, 0, 0);
   }
   tag_freematch();
 

@@ -160,24 +160,34 @@ describe("preserve and (R)ecover with custom 'directory'", function()
             {
               content = { { '' } },
               pos = 0,
-              prompt = 'Enter number of swap file to use (0 to quit): ',
+              -- Default vim.ui.select prompt.
+              prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
             },
           },
           condition = function()
             msg = msg or screen.messages[1]
-            eq(true, msg.content[1][2]:match('Swap.*none --') ~= nil)
-            eq('list_cmd', msg.kind)
+            -- Concatenate all chunks (each chunk is { 'text' } or { hl_id, 'text', 'group' }).
+            local text = ''
+            for _, chunk in ipairs(msg.content) do
+              text = text .. (#chunk >= 2 and chunk[2] or chunk[1])
+            end
+            -- New ui.select-driven prompt; rich info from format_item.
+            eq(true, text:match('Enter number of swap file to use') ~= nil)
+            eq(true, text:match('%.swo') ~= nil)
+            eq(true, text:match('%.swp') ~= nil)
+            eq(true, text:match('host name:') ~= nil)
+            eq('confirm', msg.kind)
             screen.messages = {}
           end,
         })
       else
         screen:expect({
           any = {
-            '\nSwap files found:',
-            '\n   In directory ',
-            vim.pesc('\n1.    '),
-            vim.pesc('\n2.    '),
-            vim.pesc('\nEnter number of swap file to use (0 to quit): ^'),
+            vim.pesc('Enter number of swap file to use (q or empty cancels):'),
+            '\n1:.*%.swo',
+            '\n2:.*%.swp',
+            'host name:',
+            vim.pesc('Type number and <Enter> or click with the mouse (q or empty cancels): ^'),
           },
           none = vim.pesc('{18:^@}'),
         })

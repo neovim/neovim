@@ -167,7 +167,8 @@ local all_clients = {}
 
 --- @class vim.lsp.Client
 ---
---- @field attached_buffers table<integer,true>
+--- Each buffer's last used `languageId`.
+--- @field attached_buffers table<integer,string>
 ---
 --- Capabilities provided by the client (editor or tool), at startup.
 --- @field capabilities lsp.ClientCapabilities
@@ -1124,6 +1125,18 @@ function Client:exec_cmd(cmd, context, handler)
   self:request('workspace/executeCommand', params, handler, context.bufnr)
 end
 
+--- Default handler for the 'textDocument/didClose' LSP notification.
+---
+--- @param buf integer Number of the buffer, or 0 for current
+function Client:_text_document_did_close_handler(buf)
+  if not self:supports_method('textDocument/didClose') then
+    return
+  end
+  local uri = vim.uri_from_bufnr(buf)
+  local params = { textDocument = { uri = uri } }
+  self:notify('textDocument/didClose', params)
+end
+
 --- Default handler for the 'textDocument/didOpen' LSP notification.
 ---
 --- @param bufnr integer Number of the buffer, or 0 for current
@@ -1192,7 +1205,7 @@ function Client:on_attach(bufnr)
     end
   end)
 
-  self.attached_buffers[bufnr] = true
+  self.attached_buffers[bufnr] = self:_get_language_id(bufnr)
 end
 
 --- @private
@@ -1383,11 +1396,7 @@ function Client:_on_detach(bufnr)
 
   changetracking.reset_buf(self, bufnr)
 
-  if self:supports_method('textDocument/didClose') then
-    local uri = vim.uri_from_bufnr(bufnr)
-    local params = { textDocument = { uri = uri } }
-    self:notify('textDocument/didClose', params)
-  end
+  self:_text_document_did_close_handler(bufnr)
 
   self.attached_buffers[bufnr] = nil
 

@@ -8059,8 +8059,12 @@ vim.go.wmnu = vim.go.wildmenu
 --- 		applies to buffer name completion.
 --- "noselect"	If 'wildmenu' is enabled, show the menu but do not
 --- 		preselect the first item.
---- If only one match exists, it is completed fully, unless "noselect" is
---- specified.
+--- "noinsert"	If 'wildmenu' is enabled, show the menu and preselect
+--- 		the first match, but do not insert it in the
+--- 		command line.  If both "noinsert" and "noselect" are
+--- 		present, "noselect" takes precedence.
+--- If only one match exists, it is completed fully, unless "noselect" or
+--- "noinsert" is specified.
 ---
 --- Some useful combinations of colon-separated values:
 --- "longest:full"		Start with the longest common string and show

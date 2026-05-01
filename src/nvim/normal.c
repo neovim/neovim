@@ -3622,7 +3622,7 @@ bool get_visual_text(cmdarg_T *cap, char **pp, size_t *lenp)
 static void nv_tagpop(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)) {
-    do_tag("", DT_POP, cap->count1, false, true);
+    do_tag(NULL, "", DT_POP, cap->count1, false, true);
   }
 }
 

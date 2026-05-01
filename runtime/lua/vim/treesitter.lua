@@ -26,23 +26,23 @@ M.minimum_language_version = vim._ts_get_minimum_language_version()
 ---
 --- It is not recommended to use this; use |get_parser()| instead.
 ---
----@param bufnr integer Buffer the parser will be tied to (0 for current buffer)
+---@param buf integer Buffer the parser will be tied to (0 for current buffer)
 ---@param lang string Language of the parser
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
 ---@return vim.treesitter.LanguageTree object to use for parsing
-function M._create_parser(bufnr, lang, opts)
-  bufnr = vim._resolve_bufnr(bufnr)
+function M._create_parser(buf, lang, opts)
+  buf = vim._resolve_bufnr(buf)
 
-  local self = LanguageTree.new(bufnr, lang, opts)
+  local self = LanguageTree.new(buf, lang, opts)
 
   local function bytes_cb(_, ...)
     self:_on_bytes(...)
   end
 
   local function detach_cb(_, ...)
-    if parsers[bufnr] == self then
-      parsers[bufnr] = nil
+    if parsers[buf] == self then
+      parsers[buf] = nil
     end
     self:_on_detach(...)
   end
@@ -72,41 +72,41 @@ end
 ---
 --- If no parser can be created, nil (and an error message) is returned.
 ---
----@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
+---@param buf (integer|nil) Buffer the parser should be tied to (default: current buffer)
 ---@param lang (string|nil) Language of this parser (default: from buffer filetype)
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
 ---@return vim.treesitter.LanguageTree? object to use for parsing
 ---@return string? error message, if applicable
-function M.get_parser(bufnr, lang, opts)
+function M.get_parser(buf, lang, opts)
   opts = opts or {}
 
-  bufnr = vim._resolve_bufnr(bufnr)
+  buf = vim._resolve_bufnr(buf)
 
   if not valid_lang(lang) then
-    lang = M.language.get_lang(vim.bo[bufnr].filetype)
+    lang = M.language.get_lang(vim.bo[buf].filetype)
   end
 
   if not valid_lang(lang) then
-    if not parsers[bufnr] then
+    if not parsers[buf] then
       return nil,
-        string.format('Parser not found for buffer %s: language could not be determined', bufnr)
+        string.format('Parser not found for buffer %s: language could not be determined', buf)
     end
-  elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
-    if not api.nvim_buf_is_loaded(bufnr) then
-      return nil, string.format('Buffer %s must be loaded to create parser', bufnr)
+  elseif parsers[buf] == nil or parsers[buf]:lang() ~= lang then
+    if not api.nvim_buf_is_loaded(buf) then
+      return nil, string.format('Buffer %s must be loaded to create parser', buf)
     end
-    local parser = vim.F.npcall(M._create_parser, bufnr, lang, opts)
+    local parser = vim.F.npcall(M._create_parser, buf, lang, opts)
     if not parser then
       return nil,
-        string.format('Parser could not be created for buffer %s and language "%s"', bufnr, lang)
+        string.format('Parser could not be created for buffer %s and language "%s"', buf, lang)
     end
-    parsers[bufnr] = parser
+    parsers[buf] = parser
   end
 
-  parsers[bufnr]:register_cbs(opts.buf_attach_cbs)
+  parsers[buf]:register_cbs(opts.buf_attach_cbs)
 
-  return parsers[bufnr]
+  return parsers[buf]
 end
 
 --- Returns a string parser
@@ -268,14 +268,14 @@ end
 --- language, a table of metadata (`priority`, `conceal`, ...; empty if none are defined), and the
 --- id of the capture.
 ---
----@param bufnr integer Buffer number (0 for current buffer)
+---@param buf integer Buffer number (0 for current buffer)
 ---@param row integer Position row
 ---@param col integer Position column
 ---
 ---@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer}[]
-function M.get_captures_at_pos(bufnr, row, col)
-  bufnr = vim._resolve_bufnr(bufnr)
-  local buf_highlighter = M.highlighter.active[bufnr]
+function M.get_captures_at_pos(buf, row, col)
+  buf = vim._resolve_bufnr(buf)
+  local buf_highlighter = M.highlighter.active[buf]
 
   if not buf_highlighter then
     return {}
@@ -328,13 +328,13 @@ end
 
 --- Returns a list of highlight capture names under the cursor
 ---
----@param winnr (integer|nil): |window-ID| or 0 for current window (default)
+---@param win (integer|nil): |window-ID| or 0 for current window (default)
 ---
 ---@return string[] List of capture names
-function M.get_captures_at_cursor(winnr)
-  winnr = winnr or 0
-  local bufnr = api.nvim_win_get_buf(winnr)
-  local cursor = api.nvim_win_get_cursor(winnr)
+function M.get_captures_at_cursor(win)
+  win = win or 0
+  local bufnr = api.nvim_win_get_buf(win)
+  local cursor = api.nvim_win_get_cursor(win)
 
   local data = M.get_captures_at_pos(bufnr, cursor[1] - 1, cursor[2])
 
@@ -434,30 +434,30 @@ end
 --- })
 --- ```
 ---
----@param bufnr integer? Buffer to be highlighted (default: current buffer)
+---@param buf integer? Buffer to be highlighted (default: current buffer)
 ---@param lang string? Language of the parser (default: from buffer filetype)
-function M.start(bufnr, lang)
-  bufnr = vim._resolve_bufnr(bufnr)
+function M.start(buf, lang)
+  buf = vim._resolve_bufnr(buf)
   -- Ensure buffer is loaded. `:edit` over `bufload()` to show swapfile prompt.
-  if not api.nvim_buf_is_loaded(bufnr) then
-    if api.nvim_buf_get_name(bufnr) ~= '' then
-      pcall(api.nvim_buf_call, bufnr, vim.cmd.edit)
+  if not api.nvim_buf_is_loaded(buf) then
+    if api.nvim_buf_get_name(buf) ~= '' then
+      pcall(api.nvim_buf_call, buf, vim.cmd.edit)
     else
-      vim.fn.bufload(bufnr)
+      vim.fn.bufload(buf)
     end
   end
-  local parser = assert(M.get_parser(bufnr, lang))
+  local parser = assert(M.get_parser(buf, lang))
   M.highlighter.new(parser)
 end
 
 --- Stops treesitter highlighting for a buffer
 ---
----@param bufnr (integer|nil) Buffer to stop highlighting (default: current buffer)
-function M.stop(bufnr)
-  bufnr = vim._resolve_bufnr(bufnr)
+---@param buf (integer|nil) Buffer to stop highlighting (default: current buffer)
+function M.stop(buf)
+  buf = vim._resolve_bufnr(buf)
 
-  if M.highlighter.active[bufnr] then
-    M.highlighter.active[bufnr]:destroy()
+  if M.highlighter.active[buf] then
+    M.highlighter.active[buf]:destroy()
   end
 end
 
