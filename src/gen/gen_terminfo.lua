@@ -37,6 +37,7 @@ local entries = {
   { 'vtpcon', 'vtpcon_terminfo' },
 }
 
+-- IMPORTANT: if you change any of these fields, be sure to update |$NVIM_TERMINFO|
 local wanted_numbers = { 'max_colors', 'lines', 'columns' }
 local wanted_strings = {
   'carriage_return',
@@ -224,8 +225,8 @@ for _, entry in ipairs(entries) do
 
   f_defs:write('\nstatic const TerminfoEntry ' .. target .. ' = {\n')
   f_defs:write('  .bce = ' .. tostring(bools.back_color_erase or false) .. ',\n')
-  local has_Tc_or_RGB = (bools.Tc or bools.RGB) or false
-  f_defs:write('  .has_Tc_or_RGB = ' .. tostring(has_Tc_or_RGB or false) .. ',\n')
+  f_defs:write('  .Tc = ' .. tostring(bools.Tc or false) .. ',\n')
+  f_defs:write('  .RGB = ' .. tostring(bools.RGB or false) .. ',\n')
   f_defs:write('  .Su = ' .. tostring(bools.Su or false) .. ',\n')
 
   for _, name in ipairs(wanted_numbers) do

@@ -8,7 +8,8 @@
 typedef struct {
   bool bce;
   // these extended booleans indicate likely 24-color support
-  bool has_Tc_or_RGB;
+  bool Tc;
+  bool RGB;
   bool Su;
 
   int max_colors;

@@ -3917,8 +3917,11 @@ describe('TUI', function()
   local screen --[[@type test.functional.ui.screen]]
 
   -- Runs (child) `nvim` in a TTY (:terminal), to start the builtin TUI.
-  local function nvim_tui(extra_args)
+  local function nvim_tui(extra_args, extra_env)
     clear()
+    extra_env = extra_env or {}
+    local env = vim.tbl_extend('force', { LANG = 'C' }, extra_env)
+
     screen = tt.setup_child_nvim({
       '--clean',
       '--cmd',
@@ -3927,9 +3930,7 @@ describe('TUI', function()
       nvim_set .. ' notermguicolors',
       extra_args,
     }, {
-      env = {
-        LANG = 'C',
-      },
+      env = env,
     })
   end
 
@@ -3953,6 +3954,45 @@ describe('TUI', function()
       local log = read_file(logfile) or ''
       eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n')) -- }}}
       ok(#log > 50)
+    end)
+  end)
+
+  it('uses $NVIM_TERMINFO to override terminfo', function()
+    local logfile = 'Xtest_terminfo_override_verbose_log'
+    finally(function()
+      os.remove(logfile)
+    end)
+
+    local terminfo = {
+      reset_cursor_style = '\027[0 q',
+      key_npage = 'npage',
+      key_home = { base = 'A', shift = 'B' },
+      key_f1 = 'C',
+      Su = true,
+      max_colors = 999,
+    }
+
+    nvim_tui('-V3' .. logfile, { NVIM_TERMINFO = vim.json.encode(terminfo) })
+
+    retry(nil, 3000, function() -- Wait for log file to be flushed.
+      assert_log(
+        'reset_cursor_style[^\n]*= ' .. vim.pesc(terminfo.reset_cursor_style:gsub('\027', '^[')),
+        logfile,
+        9999
+      )
+      assert_log(string.format('key_npage%%s*= %s', terminfo.key_npage), logfile, 9999)
+      assert_log(
+        string.format(
+          'key_home%%s*= %s, key_shome = %s',
+          terminfo.key_home.base,
+          terminfo.key_home.shift
+        ),
+        logfile,
+        9999
+      )
+      assert_log('key_f1%s*= ' .. terminfo.key_f1, logfile, 9999)
+      assert_log('extended underline[^\n]*: true', logfile, 9999)
+      assert_log(string.format('max_colors: %d', terminfo.max_colors), logfile, 9999)
     end)
   end)
 

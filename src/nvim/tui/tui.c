@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <lua.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -20,10 +21,12 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/log.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
@@ -36,6 +39,8 @@
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
+#include "nvim/tui/terminfo_builtin.h"
+#include "nvim/tui/terminfo_enum_defs.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/ugrid.h"
 #include "nvim/types_defs.h"
@@ -354,6 +359,135 @@ void tui_query_bg_color(TUIData *tui)
   flush_buf(tui);
 }
 
+typedef struct {
+  char *name;
+  int idx;
+} TerminfoCapMap;
+
+typedef struct {
+  char *name;
+  int idx;
+  bool shift;  // Only used for keys that have a shift variant
+} TerminfoKeyMap;
+
+static const TerminfoCapMap ti_defs[] = {
+#define X(n) { .name = #n, .idx = kTerm_##n },
+  XLIST_TERMINFO_BUILTIN
+#undef X
+#define X(n, code) { .name = #n, .idx = kTerm_##n },
+  XLIST_TERMINFO_EXT
+#undef X
+};
+
+static const TerminfoKeyMap ti_keys[] = {
+#define X(n) { .name = "key_" #n, .idx = kTermKey_##n, .shift = false },
+#define Y(n) { .name = "key_" #n, .idx = kTermKey_##n, .shift = true },
+  XYLIST_TERMINFO_KEYS
+#undef X
+#undef Y
+};
+
+static const char *ti_fkey_names[] = {
+#define X(n) "key_" #n,
+  XLIST_TERMINFO_FKEYS
+#undef X
+};
+
+#define LUA_FIELD_OVERRIDE_STR(tui, field, dst) \
+  do { \
+    lua_getfield(L, -1, field); \
+    if (lua_isstring(L, -1)) { \
+      dst = arena_strdup(&tui->ti_arena, lua_tostring(L, -1)); \
+    } \
+    lua_pop(L, 1); \
+  } while (0)
+
+#define LUA_FIELD_OVERRIDE_BOOL(field, dst) \
+  do { \
+    lua_getfield(L, -1, field); \
+    if (lua_isboolean(L, -1)) { \
+      dst = lua_toboolean(L, -1); \
+    } \
+    lua_pop(L, 1); \
+  } while (0)
+
+#define LUA_FIELD_OVERRIDE_INT(field, dst) \
+  do { \
+    lua_getfield(L, -1, field); \
+    if (lua_isnumber(L, -1)) { \
+      dst = (int)lua_tointeger(L, -1); \
+    } \
+    lua_pop(L, 1); \
+  } while (0)
+
+/// Use $NVIM_TERMINFO to apply user overrides to terminfo.
+///
+/// This is necessary for Windows, where terminfo files are broken in Unibilium. #37274
+/// If/when terminfo is removed, this will also be useful for anyone who wants to override
+/// the built-in definitions.
+static void apply_terminfo_overrides(TUIData *tui)
+{
+  lua_State *const L = get_global_lstate();
+  assert(L);
+
+  int top = lua_gettop(L);
+  TerminfoEntry *ti = &tui->ti;
+
+  char *overrides = os_getenv("NVIM_TERMINFO");
+  if (overrides == NULL) {
+    return;
+  }
+
+  lua_getglobal(L, "vim");
+  lua_getfield(L, -1, "json");
+  lua_getfield(L, -1, "decode");
+  lua_pushstring(L, overrides);
+  if (lua_pcall(L, 1, 1, 0)) {
+    nlua_error(L, _("failed to decode $NVIM_TERMINFO: %.*s"));
+    lua_settop(L, top);
+    return;
+  }
+
+  for (size_t i = 0; i < ARRAY_SIZE(ti_defs); i++) {
+    LUA_FIELD_OVERRIDE_STR(tui, ti_defs[i].name, ti->defs[ti_defs[i].idx]);
+  }
+
+  for (size_t i = 0; i < ARRAY_SIZE(ti_keys); i++) {
+    if (ti_keys[i].shift) {
+      // keys with shift variant are tables
+      lua_getfield(L, -1, ti_keys[i].name);
+
+      if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        continue;
+      }
+
+      LUA_FIELD_OVERRIDE_STR(tui, "base", ti->keys[ti_keys[i].idx][0]);
+      LUA_FIELD_OVERRIDE_STR(tui, "shift", ti->keys[ti_keys[i].idx][1]);
+
+      lua_pop(L, 1);
+    } else {
+      // normal keys are strings
+      LUA_FIELD_OVERRIDE_STR(tui, ti_keys[i].name, ti->keys[ti_keys[i].idx][0]);
+    }
+  }
+
+  for (size_t i = 0; i < ARRAY_SIZE(ti_fkey_names); i++) {
+    LUA_FIELD_OVERRIDE_STR(tui, ti_fkey_names[i], ti->f_keys[i]);
+  }
+
+  LUA_FIELD_OVERRIDE_BOOL("back_color_erase", ti->bce);
+  LUA_FIELD_OVERRIDE_BOOL("Tc", ti->Tc);
+  LUA_FIELD_OVERRIDE_BOOL("RGB", ti->RGB);
+  LUA_FIELD_OVERRIDE_BOOL("Su", ti->Su);
+  LUA_FIELD_OVERRIDE_INT("max_colors", ti->max_colors);
+  LUA_FIELD_OVERRIDE_INT("lines", ti->lines);
+  LUA_FIELD_OVERRIDE_INT("columns", ti->columns);
+
+  lua_settop(L, top);
+  xfree(overrides);
+}
+
 /// Enable the alternate screen and emit other control sequences to start the TUI.
 ///
 /// This is also called when the TUI is resumed after being suspended. We reinitialize all state
@@ -436,6 +570,7 @@ static void terminfo_start(TUIData *tui)
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   augment_terminfo(tui, term, vtev, konsolev, weztermv, iterm_env, nsterm);
+  apply_terminfo_overrides(tui);
 
 #define TI_HAS(name) (tui->ti.defs[name] != NULL)
   tui->can_change_scroll_region = TI_HAS(kTerm_change_scroll_region);
@@ -2033,7 +2168,7 @@ static bool term_has_truecolor(TUIData *tui, const char *colorterm)
     return true;
   }
 
-  if (tui->ti.has_Tc_or_RGB) {
+  if (tui->ti.Tc || tui->ti.RGB) {
     // terminfo had one of "Tc" or "RGB" extended boolean capabilities
     return true;
   }
