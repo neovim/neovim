@@ -27,12 +27,14 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
+#include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/ui_defs.h"
@@ -50,12 +52,52 @@
 char *Versions[] = { "8.1", "8.2", "9.0", "9.1", "9.2" };
 char *longVersion = NVIM_VERSION_LONG;
 char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
+static bool manual_intro_active = false;
+static bool intro_dismissed = false;
 // Reproducible builds: omit compile info in Release builds. #15424
 #ifndef NDEBUG
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 #endif
 
 #include "version.c.generated.h"
+
+bool intro_manual_active(void)
+{
+  return manual_intro_active;
+}
+
+void intro_dismiss(void)
+{
+  Error err = ERROR_INIT;
+  Array args = ARRAY_DICT_INIT;
+
+  intro_dismissed = true;
+  manual_intro_active = false;
+
+  NLUA_EXEC_STATIC("require('vim._core.intro').on_close()", args, kRetNilBool, NULL, &err);
+  if (ERROR_SET(&err)) {
+    api_clear_error(&err);
+  }
+}
+
+static int intro_state_execute(VimState *state, int key)
+{
+  if (key == K_EVENT) {
+    state_handle_k_event();
+    return manual_intro_active ? -1 : 0;
+  }
+
+  if (key == K_IGNORE || key == K_NOP) {
+    return manual_intro_active ? -1 : 0;
+  }
+
+  intro_dismiss();
+  return 0;
+}
+
+static VimState intro_state = {
+  .execute = intro_state_execute,
+};
 
 // clang-format off
 static const int vim_versions[] = { 801, 802, 900, 901, 902 };
@@ -4245,7 +4287,8 @@ void list_version(void)
 /// Whether it still is not too late to show an intro message
 bool may_show_intro(void)
 {
-  return (buf_is_empty(curbuf)
+  return (!intro_dismissed
+          && buf_is_empty(curbuf)
           && (curbuf->b_fname == NULL)
           && (curbuf->handle == 1)
           && (curwin->handle == LOWEST_WIN_ID)
@@ -4253,39 +4296,120 @@ bool may_show_intro(void)
           && (vim_strchr(p_shm, SHM_INTRO) == NULL));
 }
 
-/// Give an introductory message about Vim.
-/// Only used when starting Vim on an empty file, without a file name.
-/// Or with the ":intro" command (for Sven :-).
-///
-/// @param colon true for ":intro"
+static int intro_chunk_attr(Object chunk_obj)
+{
+  if (chunk_obj.type != kObjectTypeArray) {
+    return -1;
+  }
+
+  Array chunk = chunk_obj.data.array;
+  if (chunk.size < 1 || chunk.size > 2 || chunk.items[0].type != kObjectTypeString) {
+    return -1;
+  }
+
+  if (chunk.size == 1) {
+    return 0;
+  }
+
+  if (chunk.items[1].type != kObjectTypeString) {
+    return -1;
+  }
+
+  String hl = chunk.items[1].data.string;
+  return syn_id2attr(syn_name2id_len(hl.data, hl.size));
+}
+
+static int intro_line_width(Object line_obj)
+{
+  if (line_obj.type != kObjectTypeArray) {
+    return -1;
+  }
+
+  int width = 0;
+  Array line = line_obj.data.array;
+  for (size_t i = 0; i < line.size; i++) {
+    Object chunk_obj = line.items[i];
+    int attr = intro_chunk_attr(chunk_obj);
+    if (attr < 0) {
+      return -1;
+    }
+
+    String text = chunk_obj.data.array.items[0].data.string;
+    size_t chunk_width = mb_string2cells_len(text.data, text.size);
+    if (chunk_width > INT_MAX || width > INT_MAX - (int)chunk_width) {
+      return -1;
+    }
+    width += (int)chunk_width;
+  }
+
+  return width;
+}
+
+static void intro_draw_line(int row, Object line_obj, bool colon, int width)
+{
+  int col = (Columns - width) / 2;
+  if (col < 0) {
+    col = 0;
+  }
+
+  grid_line_start((!colon && ui_has(kUIMultigrid)) ? &firstwin->w_grid : &default_gridview, row);
+
+  Array line = line_obj.data.array;
+  for (size_t i = 0; i < line.size; i++) {
+    Array chunk = line.items[i].data.array;
+    String text = chunk.items[0].data.string;
+    int attr = intro_chunk_attr(line.items[i]);
+    if (text.size > 0) {
+      col += grid_line_puts(col, text.data, (int)text.size, attr);
+    }
+  }
+
+  grid_line_flush();
+}
+
+static void intro_draw_plain_line(int row, const char *text, bool colon)
+{
+  int width = (int)mb_string2cells(text);
+  int col = (Columns - width) / 2;
+  if (col < 0) {
+    col = 0;
+  }
+
+  grid_line_start((!colon && ui_has(kUIMultigrid)) ? &firstwin->w_grid : &default_gridview, row);
+  grid_line_puts(col, text, -1, syn_id2attr(syn_name2id("ErrorMsg")));
+  grid_line_flush();
+}
+
+static bool intro_validate_line(Object line_obj, int *width)
+{
+  *width = intro_line_width(line_obj);
+  return *width >= 0;
+}
+
 void intro_message(bool colon)
 {
-  static char *(lines[]) = {
-    "│ ╲ ││",
-    "││╲╲││",
-    "││ ╲ │",
-    "",
-    N_(NVIM_VERSION_LONG),
-    "────────────────────────────────────────────",
-    N_("Nvim is open source and freely distributable"),
-    "https://neovim.io/#chat",
-    "────────────────────────────────────────────",
-    N_("type  :help nvim<Enter>     if you are new! "),
-    N_("type  :checkhealth<Enter>   to optimize Nvim"),
-    N_("type  :q<Enter>             to exit         "),
-    N_("type  :help<Enter>          for help        "),
-    "────────────────────────────────────────────",
-    N_("type  :help news<Enter>     for v%s.%s notes "),
-    "────────────────────────────────────────────",
-    N_("Help poor children in Uganda!"),
-    N_("type  :help Kuwasha<Enter>  for information "),
-  };
+  static const char *error_line = N_("Loading intro failed");
 
-  // blanklines = screen height - # message lines
-  size_t lines_size = ARRAY_SIZE(lines);
-  assert(lines_size <= LONG_MAX);
+  Error err = ERROR_INIT;
+  Array args = ARRAY_DICT_INIT;
+  Object spec = NLUA_EXEC_STATIC("return require('vim._core.intro').display()",
+                                 args, kRetObject, NULL, &err);
+  if (ERROR_SET(&err) || spec.type != kObjectTypeArray) {
+    api_clear_error(&err);
+    if (!colon) {
+      api_free_object(spec);
+      return;
+    }
+    intro_draw_plain_line(Rows / 2, _(error_line), colon);
+    api_free_object(spec);
+    return;
+  }
 
-  int blanklines = Rows - ((int)lines_size - 1);
+  Array lines = spec.data.array;
+  assert(lines.size <= LONG_MAX);
+  int *line_widths = xmalloc(sizeof(*line_widths) * lines.size);
+
+  int blanklines = Rows - ((int)lines.size - 1);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
@@ -4296,131 +4420,31 @@ void intro_message(bool colon)
     blanklines = 0;
   }
 
-  // start displaying the message lines after half of the blank lines
   int row = blanklines / 2;
 
-  if (((row >= 2) && (Columns >= 50)) || colon) {
-    for (int i = 0; i < (int)ARRAY_SIZE(lines); i++) {
-      char *p = lines[i];
-      char *mesg = NULL;
-      int mesg_size = 0;
-
-      if (strstr(p, "news") != NULL) {
-        p = _(p);
-        mesg_size = snprintf(NULL, 0, p,
-                             STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
-        assert(mesg_size > 0);
-        mesg = xmallocz((size_t)mesg_size);
-        snprintf(mesg, (size_t)mesg_size + 1, p,
-                 STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
-      }
-
-      if (mesg == NULL) {
-        if (*p != NUL) {
-          mesg = _(p);
-        } else {
-          mesg = "";
-        }
-      }
-
-      if (*mesg != NUL && row < Rows - 1) {
-        do_intro_line(row, mesg, colon, i < 3);
-      }
-      row++;
-
-      if (mesg_size > 0) {
-        XFREE_CLEAR(mesg);
-      }
-    }
-  }
-}
-
-/// Adds extra highlighting.
-static void do_intro_line(int row, char *mesg, bool colon, bool is_logo)
-{
-  int l;
-  // Center the message horizontally.
-  int col = vim_strsize(mesg);
-  col = (Columns - col) / 2;
-  if (col < 0) {
-    col = 0;
-  }
-
-  grid_line_start((!colon && ui_has(kUIMultigrid)) ? &firstwin->w_grid : &default_gridview, row);
-
-  // Compute special highlighting attributes
-  int id_attr = syn_id2attr(syn_name2id("Identifier"));
-  int nontext_attr = syn_id2attr(syn_name2id("NonText"));
-  int special_attr = syn_id2attr(syn_name2id("Special"));
-  int string_attr = syn_id2attr(syn_name2id("String"));
-
-  // Handle logo lines
-  if (is_logo) {
-    bool seen_diagonal = false;
-
-    for (char *p = mesg; *p != NUL;) {
-      int clen = utfc_ptr2len(p);
-      int attr = 0;
-      // Multi-byte (box-drawing) character.
-      if ((uint8_t)(*p) >= 0x80) {
-        // Found "╲" diagonal logo part.
-        seen_diagonal = seen_diagonal || (clen == 3 && utf_ptr2char(p) == 0x2572);
-        attr = seen_diagonal ? string_attr : special_attr;
-      }
-      col += grid_line_puts(col, p, clen, attr);
-      p += clen;
-    }
-
-    grid_line_flush();
+  if (!(((row >= 2) && (Columns >= 50)) || colon)) {
+    xfree(line_widths);
+    api_free_object(spec);
     return;
   }
 
-  // Try highlighting full line:
-  // - Version starts with "NVIM".
-  // - Separator line consists from ─ (UTF-8: E2 94 80).
-  bool is_version = mesg[0] == 'N' && mesg[1] == 'V' && mesg[2] == 'I' && mesg[3] == 'M';
-  bool is_sep = utfc_ptr2len(mesg) == 3 && utf_ptr2char(mesg) == 0x2500;
-  if (is_version || is_sep) {
-    int clen = is_sep ? 3 : 1;
-    int attr = is_sep ? nontext_attr : string_attr;
-
-    for (char *p = mesg; *p != NUL;) {
-      col += grid_line_puts(col, p, clen, attr);
-      p += clen;
-    }
-    grid_line_flush();
-    return;
-  }
-
-  // Highlight `:...<Enter>` differently.
-  for (char *p = mesg; *p != NUL; p += l) {
-    for (l = 0;
-         p[l] != NUL && (l == 0 || (p[l] != '<' && p[l - 1] != '>'));
-         l++) {
-      l += utfc_ptr2len(p + l) - 1;
-    }
-    assert(row <= INT_MAX && col <= INT_MAX);
-
-    if (*p == '<') {
-      col += grid_line_puts(col, p, l, HL_ATTR(HLF_8));
-    } else {
-      // Check for ":command" pattern before a <key> segment.
-      char *colon_pos = memchr(p, ':', (size_t)l);
-      if (colon_pos != NULL && p[l] == '<') {
-        // No highlight for "type  ".
-        int prefix_len = (int)(colon_pos - p);
-        col += grid_line_puts(col, p, prefix_len, 0);
-        // Highlight ":".
-        col += grid_line_puts(col, colon_pos, 1, HL_ATTR(HLF_8));
-        // Highlight "command" (after the ":").
-        int cmd_len = l - prefix_len - 1;
-        col += grid_line_puts(col, colon_pos + 1, cmd_len, id_attr);
-      } else {
-        col += grid_line_puts(col, p, l, 0);
-      }
+  for (size_t i = 0; i < lines.size; i++) {
+    if (!intro_validate_line(lines.items[i], &line_widths[i])) {
+      intro_draw_plain_line(row, _(error_line), colon);
+      xfree(line_widths);
+      api_free_object(spec);
+      return;
     }
   }
-  grid_line_flush();
+
+  for (size_t i = 0; i < lines.size && row < Rows - 1; i++, row++) {
+    if (line_widths[i] > 0) {
+      intro_draw_line(row, lines.items[i], colon, line_widths[i]);
+    }
+  }
+
+  xfree(line_widths);
+  api_free_object(spec);
 }
 
 /// ":intro": clear screen, display intro screen and wait for return.
@@ -4428,8 +4452,16 @@ static void do_intro_line(int row, char *mesg, bool colon, bool is_logo)
 /// @param eap
 void ex_intro(exarg_T *eap)
 {
+  int save_State = State;
+
   // TODO(bfredl): use msg_grid instead!
+  manual_intro_active = true;
+  State = MODE_NORMAL;
   screenclear();
   intro_message(true);
-  plain_vgetc();
+
+  state_enter(&intro_state);
+
+  manual_intro_active = false;
+  State = save_State;
 }

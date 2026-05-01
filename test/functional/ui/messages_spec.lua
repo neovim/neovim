@@ -2201,6 +2201,68 @@ describe('ui/builtin messages', function()
     assert_alive()
   end)
 
+  it('supports overriding the intro from lua', function()
+    screen:try_resize(40, 10)
+    exec_lua(function()
+      require('vim._core.intro').display = function()
+        return {
+          { { 'Lua intro', 'String' } },
+        }
+      end
+    end)
+    feed(':intro<CR>')
+    screen:expect({ any = '{26:Lua intro}' })
+    feed('<CR>')
+    assert_alive()
+  end)
+
+  it('supports dismissing manual :intro from lua', function()
+    screen:try_resize(40, 10)
+    exec_lua(function()
+      vim.g.intro_left = false
+      require('vim._core.intro').on_close = function()
+        vim.g.intro_left = true
+      end
+    end)
+
+    feed(':intro<CR>')
+    exec_lua(function()
+      require('vim._core.intro').dismiss()
+    end)
+    eq(true, exec_lua('return vim.g.intro_left'))
+    assert_alive()
+  end)
+
+  it('shows an error when loading intro fails', function()
+    screen:try_resize(40, 10)
+    exec_lua(function()
+      require('vim._core.intro').display = function()
+        error('boom')
+      end
+    end)
+    feed(':intro<CR>')
+    screen:expect({ any = 'Loading intro failed' })
+    feed('<CR>')
+    assert_alive()
+  end)
+
+  it('runs intro.on_close when :intro closes', function()
+    exec_lua(function()
+      vim.g.intro_left = 0
+      require('vim._core.intro').on_close = function()
+        vim.g.intro_left = vim.g.intro_left + 1
+      end
+    end)
+    feed(':intro<CR>')
+    feed('<CR>')
+    eq(
+      1,
+      exec_lua(function()
+        return vim.g.intro_left
+      end)
+    )
+  end)
+
   it('no wait return before delayed exception error message', function()
     screen:try_resize(70, 7)
     feed('ia<esc>:lua vim.cmd.quit()<CR>')

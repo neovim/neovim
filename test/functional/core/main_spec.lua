@@ -226,6 +226,7 @@ describe('vim._core', function()
       'vim._core.ex_cmd',
       'vim._core.exrc',
       'vim._core.help',
+      'vim._core.intro',
       'vim._core.log',
       'vim._core.options',
       'vim._core.server',
