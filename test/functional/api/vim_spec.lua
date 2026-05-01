@@ -2877,7 +2877,7 @@ describe('API', function()
 
     it('stream=job channel', function()
       eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
-      local catpath = eval('exepath("cat")')
+      local catpath = vim.fs.normalize(eval('exepath("cat")'))
       local info = {
         stream = 'job',
         id = 3,
@@ -2936,7 +2936,7 @@ describe('API', function()
       eq(1, api.nvim_get_current_buf())
       eq(3, api.nvim_get_option_value('channel', { buf = 1 }))
 
-      local info = term_channel_info(3, 1, { eval('exepath(&shell)') })
+      local info = term_channel_info(3, 1, { vim.fs.normalize(eval('exepath(&shell)')) })
       local event = api.nvim_get_var('opened_event')
       if not is_os('win') then
         info.pty = event.info.pty
