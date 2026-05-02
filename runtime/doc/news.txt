@@ -170,6 +170,7 @@ LUA
   the same range instances now compare equal.
 • Documentation for |vim.fn| now points to preferred Lua alternatives when
   available.
+• |vim.pos| and |vim.range| can now store any additional data.
 
 OPTIONS
 

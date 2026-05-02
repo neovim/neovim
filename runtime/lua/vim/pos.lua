@@ -32,13 +32,16 @@ local validate = vim.validate
 --- It may include optional fields that enable additional capabilities,
 --- such as format conversions.
 ---
----@class vim.Pos
+---@generic T
+---@class vim.Pos<T>
 ---@field row integer 0-based byte index.
 ---@field col integer 0-based byte index.
 ---@field buf integer buffer handle.
+---@field data T optional field to store any additional data.
 ---@field private [1] integer underlying representation of row
 ---@field private [2] integer underlying representation of col
 ---@field private [3] integer underlying representation of buf
+---@field private [4] T underlying representation of data
 local M = {}
 
 ---@private
@@ -51,16 +54,21 @@ function M.__index(pos, key)
     return pos[2]
   elseif key == 'buf' then
     return pos[3]
+  elseif key == 'data' then
+    return pos[4]
   end
 
   return M[key]
 end
 
 ---@package
+---@generic T
 ---@param buf integer
 ---@param row integer
 ---@param col integer
-function M.new(buf, row, col)
+---@param data? T
+---@return vim.Pos<T>
+function M.new(buf, row, col, data)
   validate('buf', buf, 'number')
   validate('row', row, 'number')
   validate('col', col, 'number')
@@ -74,6 +82,7 @@ function M.new(buf, row, col)
     row,
     col,
     buf,
+    data,
   }, M)
 
   return self
@@ -160,10 +169,13 @@ end
 ---
 --- local pos = vim.pos.lsp(0, lsp_pos, 'utf-16')
 --- ```
+---@generic T
 ---@param buf integer
 ---@param pos lsp.Position
 ---@param position_encoding lsp.PositionEncodingKind
-function M.lsp(buf, pos, position_encoding)
+---@param data? T optional field to store any additional data.
+---@return vim.Pos<T>
+function M.lsp(buf, pos, position_encoding, data)
   validate('buf', buf, 'number')
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
@@ -181,7 +193,7 @@ function M.lsp(buf, pos, position_encoding)
     col = vim.str_byteindex(get_line(buf, row), position_encoding, col, false)
   end
 
-  return M.new(buf, row, col)
+  return M.new(buf, row, col, data)
 end
 
 --- Converts |vim.Pos| to cursor position (see |api-indexing|).
@@ -192,10 +204,13 @@ function M.to_cursor(pos)
 end
 
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
+---@generic T
 ---@param buf integer
 ---@param pos [integer, integer]
-function M.cursor(buf, pos)
-  return M.new(buf, pos[1] - 1, pos[2])
+---@param data? T optional field to store any additional data.
+---@return vim.Pos<T>
+function M.cursor(buf, pos, data)
+  return M.new(buf, pos[1] - 1, pos[2], data)
 end
 
 --- Converts |vim.Pos| to extmark position (see |api-indexing|).
@@ -214,15 +229,17 @@ function M.to_extmark(pos)
 end
 
 --- Creates a new |vim.Pos| from extmark position (see |api-indexing|).
+---@generic T
 ---@param buf integer
 ---@param row integer
 ---@param col integer
-function M.extmark(buf, row, col)
+---@param data? T optional field to store any additional data.
+function M.extmark(buf, row, col, data)
   if buf == 0 then
     buf = api.nvim_get_current_buf()
   end
 
-  return M.new(buf, row, col)
+  return M.new(buf, row, col, data)
 end
 
 -- Overload `Range.new` to allow calling this module as a function.
@@ -231,6 +248,5 @@ setmetatable(M, {
     return M.new(...)
   end,
 })
----@cast M +fun(buf: integer, row: integer, col: integer): vim.Pos
 
 return M
