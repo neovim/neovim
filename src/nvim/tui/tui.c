@@ -40,7 +40,6 @@
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_builtin.h"
-#include "nvim/tui/terminfo_enum_defs.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/ugrid.h"
 #include "nvim/types_defs.h"
@@ -393,6 +392,25 @@ static const char *ti_fkey_names[] = {
 #undef X
 };
 
+/// Use $NVIM_TERMINFO to apply user overrides to terminfo.
+///
+/// This is necessary for Windows, where terminfo files are broken in Unibilium. #37274
+/// If/when terminfo is removed, this will also be useful for anyone who wants to override
+/// the built-in definitions.
+static void apply_terminfo_overrides(TUIData *tui)
+{
+  TerminfoEntry *ti = &tui->ti;
+
+  // We allow empty values just to provide the user with a warning
+  if (!os_env_exists("NVIM_TERMINFO", false)) {
+    return;
+  }
+
+  Error lua_err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  MAXSIZE_TEMP_ARRAY(fields, 2);
+  Object rv;
+
 #define LUA_FIELD_OVERRIDE_STR(field, dst) \
   do { \
     ADD_C(fields, CSTR_AS_OBJ(field)); \
@@ -438,25 +456,6 @@ static const char *ti_fkey_names[] = {
     api_clear_error(&lua_err); \
   } while (0)
 
-/// Use $NVIM_TERMINFO to apply user overrides to terminfo.
-///
-/// This is necessary for Windows, where terminfo files are broken in Unibilium. #37274
-/// If/when terminfo is removed, this will also be useful for anyone who wants to override
-/// the built-in definitions.
-static void apply_terminfo_overrides(TUIData *tui)
-{
-  TerminfoEntry *ti = &tui->ti;
-
-  // We allow empty values just to provide the user with a warning
-  if (!os_env_exists("NVIM_TERMINFO", false)) {
-    return;
-  }
-
-  Error lua_err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(args, 1);
-  MAXSIZE_TEMP_ARRAY(fields, 2);
-  Object rv;
-
   for (size_t i = 0; i < ARRAY_SIZE(ti_defs); i++) {
     LUA_FIELD_OVERRIDE_STR(ti_defs[i].name, ti->defs[ti_defs[i].idx]);
   }
@@ -487,6 +486,10 @@ static void apply_terminfo_overrides(TUIData *tui)
   LUA_FIELD_OVERRIDE_INT("max_colors", ti->max_colors);
   LUA_FIELD_OVERRIDE_INT("lines", ti->lines);
   LUA_FIELD_OVERRIDE_INT("columns", ti->columns);
+
+#undef LUA_FIELD_OVERRIDE_STR
+#undef LUA_FIELD_OVERRIDE_BOOL
+#undef LUA_FIELD_OVERRIDE_INT
 }
 
 /// Enable the alternate screen and emit other control sequences to start the TUI.

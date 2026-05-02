@@ -183,7 +183,7 @@ end
 --- Returns nil if the field is empty.
 ---
 ---@param fields string[]
----@return string | table | nil
+---@return any
 function M.get_terminfo_override(fields)
   vim.validate('fields', fields, 'table')
   if type(terminfo_overrides) ~= 'table' then
