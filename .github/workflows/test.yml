@@ -320,7 +320,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo add-apt-repository ppa:neovim-ppa/stable
           sudo apt-get install -y \
             libluajit-5.1-dev \
             libunibilium-dev \
