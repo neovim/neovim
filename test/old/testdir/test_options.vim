@@ -1400,7 +1400,7 @@ func Test_shortmess_F3()
   if has('nanotime')
     sleep 10m
   else
-    sleep 2
+    sleep 3
   endif
   call writefile(['bar'], 'X_dummy')
   bprev
@@ -1410,7 +1410,7 @@ func Test_shortmess_F3()
   if has('nanotime')
     sleep 10m
   else
-    sleep 2
+    sleep 3
   endif
   call writefile(['baz'], 'X_dummy')
   checktime
