@@ -3,7 +3,7 @@
 " Version:		0.4
 " Maintainer:		Janis Papanagnou
 " Previous Maintainer:	NevilleD.ALGOL_68@sgr-a.net
-" Last Change:		2026 Apr 23
+" Last Change:		2026 May 02
 
 if exists("b:current_syntax")
   finish
@@ -71,6 +71,7 @@ if exists("algol68_symbolic_operators")
   syn match   algol68SymbolOperator	"\%([-+*%/]\|%\*\):="
   syn match   algol68SymbolOperator	"+=:"
   syn match   algol68SymbolOperator	"*\*\|&"
+  syn match   algol68SymbolOperator	":/\==:"
 endif
 
 syn match  algol68Number	"\<\d\+\%(\s\+\d\+\)*\>"
