@@ -907,7 +907,7 @@ endfunc
 
 " skipcol should not reset when doing incremental search on the same word
 func Test_smoothscroll_incsearch()
-  CheckScreendump
+  CheckRunVimInTerminal
 
   let lines =<< trim END
       set smoothscroll number scrolloff=0 incsearch
@@ -917,15 +917,24 @@ func Test_smoothscroll_incsearch()
   END
   call writefile(lines, 'XSmoothIncsearch', 'D')
   let buf = RunVimInTerminal('-S XSmoothIncsearch', #{rows: 8, cols: 40})
+  let g:test_is_flaky = 1
 
   call term_sendkeys(buf, "/b")
-  call VerifyScreenDump(buf, 'Test_smooth_incsearch_1', {})
+  call WaitForAssert({-> assert_match('^/b\s*$', term_getline(buf, 8))}, 1000)
+  let view1 = map(range(1, 7), {_, i -> term_getline(buf, i)})
+
   call term_sendkeys(buf, "b")
-  call VerifyScreenDump(buf, 'Test_smooth_incsearch_2', {})
+  call WaitForAssert({-> assert_match('^/bb\s*$', term_getline(buf, 8))}, 1000)
+  call assert_equal(view1, map(range(1, 7), {_, i -> term_getline(buf, i)}))
+
   call term_sendkeys(buf, "b")
-  call VerifyScreenDump(buf, 'Test_smooth_incsearch_3', {})
+  call WaitForAssert({-> assert_match('^/bbb\s*$', term_getline(buf, 8))}, 1000)
+  call assert_equal(view1, map(range(1, 7), {_, i -> term_getline(buf, i)}))
+
   call term_sendkeys(buf, "b")
-  call VerifyScreenDump(buf, 'Test_smooth_incsearch_4', {})
+  call WaitForAssert({-> assert_match('^/bbbb\s*$', term_getline(buf, 8))}, 1000)
+  call assert_equal(view1, map(range(1, 7), {_, i -> term_getline(buf, i)}))
+
   call term_sendkeys(buf, "\<CR>")
 
   call StopVimInTerminal(buf)
