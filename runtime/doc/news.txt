@@ -192,6 +192,8 @@ PERFORMANCE
   thus reducing GC and memory reallocation during each data reset.
 • When parsing the received Content-Length messages,
   the RPC client will no longer allocate extra strings.
+• |vim.list.unique()| and |vim.list.bisect()| now memoize key function results,
+  which can speed up calls with expensive key functions.
 
 PLUGINS
 

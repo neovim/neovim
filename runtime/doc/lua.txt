@@ -1817,7 +1817,8 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
                 • {hi}? (`integer`, default: `#t + 1`) End index of the list,
                   exclusive.
                 • {key}? (`fun(val: any): any`) Optional, compare the return
-                  value instead of the {val} itself if provided.
+                  value instead of the {val} itself if provided. Key results
+                  are memoized per call.
                 • {lo}? (`integer`, default: `1`) Start index of the list.
 
     Return: ~
@@ -1831,10 +1832,10 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
     performed in-place and the input table is modified.
 
     Accepts an optional `key` argument, which if provided is called for each
-    value in the list to compute a hash key for uniqueness comparison. This is
-    useful for deduplicating table values or complex objects. If `key` returns
-    `nil` for a value, that value will be considered unique, even if multiple
-    values return `nil`.
+    value in the list to compute a hash key for uniqueness comparison. Key
+    results are memoized per call. This is useful for deduplicating table
+    values or complex objects. If `key` returns `nil` for a value, that value
+    will be considered unique, even if multiple values return `nil`.
 
     Example: >lua
 
