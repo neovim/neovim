@@ -103,7 +103,12 @@ end
 ---
 --- @param signal integer|string Signal to send to the process. See |luv-constants|.
 function SystemObj:kill(signal)
-  self._state.handle:kill(signal)
+  local pid = self._state.pid --[[@as integer]]
+  if vim.fn.has('win32') == 0 then
+    uv.kill(-pid, signal)
+  else
+    self._state.handle:kill(signal)
+  end
 end
 
 --- @package
@@ -452,7 +457,7 @@ local function run(cmd, opts, on_exit)
     cwd = opts.cwd,
     --- @diagnostic disable-next-line:assign-type-mismatch
     env = setup_env(opts.env, opts.clear_env),
-    detached = opts.detach,
+    detached = vim.fn.has('win32') == 1 and opts.detach or true,
     hide = true,
   }, function(code, signal)
     _on_exit(state, code, signal, on_exit)
