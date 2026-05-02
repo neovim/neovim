@@ -182,7 +182,62 @@ function TransportConnect:terminate()
   end
 end
 
+--- Create a message stream from a coroutine decoder.
+---
+--- The decoder receives transport data from `coroutine.yield()`
+--- and may yield a message body when a full message is available.
+--- A nil yield means it needs more transport data.
+--- Decoder errors are reported through `on_error`.
+---
+---@class (private, exact) vim.MessageStream
+---@field private co thread
+---@field private decode fun()
+---@field private on_read fun(err: string?, data: string?)
+---@field private on_error fun(err: any)
+---@field feed fun(self: vim.MessageStream, err: string?, data: string?)
+---@field encode fun(msg: string): string
+---@field new fun(decode: fun(), encode: (fun(msg: string): string), on_read: fun(err: string?, data: string?), on_error: fun(err: any)): vim.MessageStream
+local MessageStream = {}
+
+function MessageStream.new(decode, encode, on_read, on_error)
+  local self = setmetatable({
+    co = coroutine.create(decode),
+    decode = decode,
+    on_read = on_read,
+    on_error = on_error,
+    encode = encode,
+  }, { __index = MessageStream })
+
+  coroutine.resume(self.co)
+  return self
+end
+
+---@param err string?
+---@param data string?
+function MessageStream:feed(err, data)
+  if err then
+    self.on_read(err, nil)
+    return
+  elseif data == nil then
+    self.on_read(nil, nil)
+    return
+  end
+
+  while true do
+    local ok, body = coroutine.resume(self.co, data)
+    if not ok then
+      self.on_error(body)
+      return
+    elseif body == nil then
+      break
+    end
+    self.on_read(nil, body)
+    data = ''
+  end
+end
+
 return {
   TransportRun = TransportRun,
   TransportConnect = TransportConnect,
+  MessageStream = MessageStream,
 }
