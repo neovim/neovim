@@ -58,7 +58,7 @@ terminfo files. When this is set, terminfo files are not used, but builtin
 terminfo entries are. Any values in this variable will override the builtin
 definitions. It should be a JSON object with any of the following keys. Be
 careful when putting escape sequences in strings, as JSON uses unicode escapes
-like `\u001b. 
+like `\u001b.
 >
   Key                        Type
   ------------------------------------------------------------
