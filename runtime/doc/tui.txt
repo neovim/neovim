@@ -54,9 +54,11 @@ own terminfo is usually as simple as running this:
                                                        *$NVIM_TERMINFO*
 To override terminfo entries without modifying terminfo files, use
 $NVIM_TERMINFO. This may be useful on Windows, where Unibilium can't read
-terminfo files. This variable should be a json object with any of the
-following keys. Be careful when putting escape sequences in strings, as json
-uses unicode escapes like `\u001b.
+terminfo files. When this is set, terminfo files are not used, but builtin
+terminfo entries are. Any values in this variable will override the builtin
+definitions. It should be a JSON object with any of the following keys. Be
+careful when putting escape sequences in strings, as JSON uses unicode escapes
+like `\u001b. 
 >
   Key                        Type
   ------------------------------------------------------------

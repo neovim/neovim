@@ -393,31 +393,49 @@ static const char *ti_fkey_names[] = {
 #undef X
 };
 
-#define LUA_FIELD_OVERRIDE_STR(tui, field, dst) \
+#define LUA_FIELD_OVERRIDE_STR(field, dst) \
   do { \
-    lua_getfield(L, -1, field); \
-    if (lua_isstring(L, -1)) { \
-      dst = arena_strdup(&tui->ti_arena, lua_tostring(L, -1)); \
+    ADD_C(fields, CSTR_AS_OBJ(field)); \
+    ADD_C(args, ARRAY_OBJ(fields)); \
+    rv = NLUA_EXEC_STATIC("return require('vim.tty').get_terminfo_override(...)", \
+                          args, kRetObject, NULL, &lua_err); \
+    if (!ERROR_SET(&lua_err) && rv.type == kObjectTypeString) { \
+      dst = arena_strdup(&tui->ti_arena, rv.data.string.data); \
     } \
-    lua_pop(L, 1); \
+    fields.size--; \
+    args.size--; \
+    api_free_object(rv); \
+    api_clear_error(&lua_err); \
   } while (0)
 
 #define LUA_FIELD_OVERRIDE_BOOL(field, dst) \
   do { \
-    lua_getfield(L, -1, field); \
-    if (lua_isboolean(L, -1)) { \
-      dst = lua_toboolean(L, -1); \
+    ADD_C(fields, CSTR_AS_OBJ(field)); \
+    ADD_C(args, ARRAY_OBJ(fields)); \
+    rv = NLUA_EXEC_STATIC("return require('vim.tty').get_terminfo_override(...)", \
+                          args, kRetObject, NULL, &lua_err); \
+    if (!ERROR_SET(&lua_err) && rv.type == kObjectTypeBoolean) { \
+      dst = rv.data.boolean; \
     } \
-    lua_pop(L, 1); \
+    fields.size--; \
+    args.size--; \
+    api_free_object(rv); \
+    api_clear_error(&lua_err); \
   } while (0)
 
 #define LUA_FIELD_OVERRIDE_INT(field, dst) \
   do { \
-    lua_getfield(L, -1, field); \
-    if (lua_isnumber(L, -1)) { \
-      dst = (int)lua_tointeger(L, -1); \
+    ADD_C(fields, CSTR_AS_OBJ(field)); \
+    ADD_C(args, ARRAY_OBJ(fields)); \
+    rv = NLUA_EXEC_STATIC("return require('vim.tty').get_terminfo_override(...)", \
+                          args, kRetObject, NULL, &lua_err); \
+    if (!ERROR_SET(&lua_err) && rv.type == kObjectTypeInteger) { \
+      dst = (int)rv.data.integer; \
     } \
-    lua_pop(L, 1); \
+    fields.size--; \
+    args.size--; \
+    api_free_object(rv); \
+    api_clear_error(&lua_err); \
   } while (0)
 
 /// Use $NVIM_TERMINFO to apply user overrides to terminfo.
@@ -427,53 +445,39 @@ static const char *ti_fkey_names[] = {
 /// the built-in definitions.
 static void apply_terminfo_overrides(TUIData *tui)
 {
-  lua_State *const L = get_global_lstate();
-  assert(L);
-
-  int top = lua_gettop(L);
   TerminfoEntry *ti = &tui->ti;
 
-  char *overrides = os_getenv("NVIM_TERMINFO");
-  if (overrides == NULL) {
+  // We allow empty values just to provide the user with a warning
+  if (!os_env_exists("NVIM_TERMINFO", false)) {
     return;
   }
 
-  lua_getglobal(L, "vim");
-  lua_getfield(L, -1, "json");
-  lua_getfield(L, -1, "decode");
-  lua_pushstring(L, overrides);
-  if (lua_pcall(L, 1, 1, 0)) {
-    nlua_error(L, _("failed to decode $NVIM_TERMINFO: %.*s"));
-    lua_settop(L, top);
-    return;
-  }
+  Error lua_err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  MAXSIZE_TEMP_ARRAY(fields, 2);
+  Object rv;
 
   for (size_t i = 0; i < ARRAY_SIZE(ti_defs); i++) {
-    LUA_FIELD_OVERRIDE_STR(tui, ti_defs[i].name, ti->defs[ti_defs[i].idx]);
+    LUA_FIELD_OVERRIDE_STR(ti_defs[i].name, ti->defs[ti_defs[i].idx]);
   }
 
   for (size_t i = 0; i < ARRAY_SIZE(ti_keys); i++) {
     if (ti_keys[i].shift) {
       // keys with shift variant are tables
-      lua_getfield(L, -1, ti_keys[i].name);
+      ADD_C(fields, CSTR_AS_OBJ(ti_keys[i].name));
 
-      if (!lua_istable(L, -1)) {
-        lua_pop(L, 1);
-        continue;
-      }
+      LUA_FIELD_OVERRIDE_STR("base", ti->keys[ti_keys[i].idx][0]);
+      LUA_FIELD_OVERRIDE_STR("shift", ti->keys[ti_keys[i].idx][1]);
 
-      LUA_FIELD_OVERRIDE_STR(tui, "base", ti->keys[ti_keys[i].idx][0]);
-      LUA_FIELD_OVERRIDE_STR(tui, "shift", ti->keys[ti_keys[i].idx][1]);
-
-      lua_pop(L, 1);
+      fields.size--;
     } else {
       // normal keys are strings
-      LUA_FIELD_OVERRIDE_STR(tui, ti_keys[i].name, ti->keys[ti_keys[i].idx][0]);
+      LUA_FIELD_OVERRIDE_STR(ti_keys[i].name, ti->keys[ti_keys[i].idx][0]);
     }
   }
 
   for (size_t i = 0; i < ARRAY_SIZE(ti_fkey_names); i++) {
-    LUA_FIELD_OVERRIDE_STR(tui, ti_fkey_names[i], ti->f_keys[i]);
+    LUA_FIELD_OVERRIDE_STR(ti_fkey_names[i], ti->f_keys[i]);
   }
 
   LUA_FIELD_OVERRIDE_BOOL("back_color_erase", ti->bce);
@@ -483,9 +487,6 @@ static void apply_terminfo_overrides(TUIData *tui)
   LUA_FIELD_OVERRIDE_INT("max_colors", ti->max_colors);
   LUA_FIELD_OVERRIDE_INT("lines", ti->lines);
   LUA_FIELD_OVERRIDE_INT("columns", ti->columns);
-
-  lua_settop(L, top);
-  xfree(overrides);
 }
 
 /// Enable the alternate screen and emit other control sequences to start the TUI.
@@ -530,7 +531,7 @@ static void terminfo_start(TUIData *tui)
 
   // Set up terminfo.
   tui->terminfo_found_in_db = false;
-  if (term) {
+  if (term && !os_env_exists("NVIM_TERMINFO", false)) {
     if (terminfo_from_database(&tui->ti, term, &tui->ti_arena)) {
       tui->term = arena_strdup(&tui->ti_arena, term);
       tui->terminfo_found_in_db = true;

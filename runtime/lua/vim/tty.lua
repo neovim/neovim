@@ -158,4 +158,47 @@ function M.query_apc(payload, opts, on_response)
   end)
 end
 
+local terminfo_overrides ---@type table | nil
+local terminfo_overrides_raw = os.getenv('NVIM_TERMINFO')
+if terminfo_overrides_raw ~= nil then
+  local ok, overrides_or_err = pcall(vim.json.decode, terminfo_overrides_raw)
+  if ok then
+    terminfo_overrides = overrides_or_err
+  elseif #vim.api.nvim_list_uis() > 0 then
+    -- This file is sourced during the TUI startup, but we only want to notify
+    -- when it fails on the server
+    vim.notify(
+      'error decoding $NVIM_TERMINFO: ' .. vim.inspect(overrides_or_err),
+      vim.log.levels.ERROR
+    )
+  end
+end
+
+--- Get terminfo capabilities stored in $NVIM_TERMINFO. `fields` is
+--- an array used to access nested fields within the JSON. For example, if
+--- fields is `{'key_home', 'base'}`, it accesses
+--- `terminfo_overrides.key_home.base`. Pass an empty list to get the whole
+--- object.
+---
+--- Returns nil if the field is empty.
+---
+---@param fields string[]
+---@return string | table | nil
+function M.get_terminfo_override(fields)
+  vim.validate('fields', fields, 'table')
+  if type(terminfo_overrides) ~= 'table' then
+    return
+  end
+
+  local res = terminfo_overrides
+  for _, field in ipairs(fields) do
+    if type(field) ~= 'string' or type(res) ~= 'table' then
+      return
+    end
+    res = res[field] ---@type any
+  end
+
+  return res
+end
+
 return M
