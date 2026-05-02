@@ -4064,6 +4064,8 @@ void redrawcmd(void)
 
   sb_text_restart_cmdline();
   msg_start();
+  // Reset lines_left so a wrapped cmdline isn't truncated by msg_no_more.
+  msg_starthere();
   redrawcmdprompt();
 
   // Don't use more prompt, truncate the cmdline if it doesn't fit.
