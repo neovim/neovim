@@ -177,7 +177,8 @@ enum {
   SHM_COMPLETIONSCAN = 'C',  ///< Completion scanning messages.
   SHM_RECORDING      = 'q',  ///< No recording message.
   SHM_FILEINFO       = 'F',  ///< No file info messages.
-  SHM_SEARCHCOUNT    = 'S',  ///< No search stats: '[1/10]'
+  SHM_SEARCHCOUNT    = 'S',  ///< No search stats: '[1/10]'.
+  SHM_UNDO           = 'u',  ///< No undo messages.
 };
 /// Represented by 'a' flag.
 #define SHM_ALL_ABBREVIATIONS ((char[]) { \

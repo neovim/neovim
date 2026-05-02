@@ -6099,6 +6099,9 @@ vim.bo.sw = vim.bo.shiftwidth
 --- 	search count statistics.  The maximum limit can be set with
 --- 	the 'maxsearchcount' option, see also `searchcount()`
 --- 	function.
+---   u	don't give undo and redo messages like			*shm-u*
+--- 	"1 line less; before #1  1 second ago", "Already at oldest
+--- 	change" or "Already at newest change"
 ---
 --- This gives you the opportunity to avoid that a change between buffers
 --- requires you to hit <Enter>, but still gives as useful a message as

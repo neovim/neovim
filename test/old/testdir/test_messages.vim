@@ -780,4 +780,69 @@ func Test_fileinfo_after_last_bd()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_undo_messages()
+  new
+
+  " Normal undo/redo messages
+  redir => result
+  call setline(1, 'foo')
+  undo
+  undo
+  redo
+  redo
+  redir END
+  let msg_list = split(result, "\n")
+  call assert_match("^1 line less; before #1", msg_list[0])
+  call assert_equal("Already at oldest change", msg_list[1])
+  call assert_match("^1 more line; after #1", msg_list[2])
+  call assert_equal("Already at newest change", msg_list[3])
+
+  " Ignore undo/redo messages
+  redir => result
+  set shortmess+=u
+  call setline(1, 'foo')
+  undo
+  undo
+  redo
+  redo
+  redir END
+  let msg_list = split(result, "\n")
+  call assert_equal([], msg_list)
+  set shortmess&
+
+  " undo_time() path: :earlier and :later go through a separate
+  " message site than u_doit(); make sure SHM_UNDO suppresses it too.
+  enew!
+  call setline(1, 'a')
+  call setline(1, 'b')
+  call setline(1, 'c')
+
+  redir => result
+  earlier 1
+  earlier 999
+  earlier 999
+  later 1
+  later 999
+  redir END
+  let msg_list = split(result, "\n")
+  call assert_match('^1 line less; before #', msg_list[0])
+  call assert_match('^1 changes; before #', msg_list[1])
+  call assert_match('^1 changes; before #', msg_list[2])
+  call assert_match('^1 more line; after #', msg_list[3])
+  call assert_equal('Already at newest change', msg_list[4])
+
+  set shortmess+=u
+  redir => result
+  earlier 1
+  earlier 999
+  later 1
+  later 999
+  later 999
+  redir END
+  call assert_equal([], split(result, "\n"))
+
+  set shortmess&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
