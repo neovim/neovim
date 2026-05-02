@@ -373,15 +373,14 @@ end
 
 ---Emit progress messages
 ---@param len integer
----@return fun(status: 'success'|'running', idx: integer, fmt: string, ...: any): nil
+---@return fun(status: 'success'|'running', idx: integer?, fmt: string, ...: any): nil
 local function progress_report(len)
   local progress = { kind = 'progress', source = 'vim.health', title = 'checkhealth' }
 
   return function(status, idx, fmt, ...)
     progress.status = status
-    progress.percent = status == 'success' and nil or math.floor(idx / len * 100)
-    -- percent=0 omits the reporting of percentage, so use 1% instead
-    -- progress.percent = progress.percent == 0 and 1 or progress.percent
+    local progress_percent = idx and math.floor(idx / len * 100) or nil
+    progress.percent = status == 'success' and nil or progress_percent
     progress.id = vim.api.nvim_echo({ { fmt:format(...) } }, false, progress)
     vim.cmd.redraw()
   end
@@ -500,7 +499,7 @@ function M._check(eap)
     vim.fn.append(vim.fn.line('$'), s_output)
   end
 
-  progress_msg('success', 0, 'checks done')
+  progress_msg('success', nil, 'checks done')
 
   -- Quit with 'q' inside healthcheck buffers.
   vim._with({ buf = bufnr }, function()

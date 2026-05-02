@@ -177,7 +177,8 @@ enum {
   SHM_COMPLETIONSCAN = 'C',  ///< Completion scanning messages.
   SHM_RECORDING      = 'q',  ///< No recording message.
   SHM_FILEINFO       = 'F',  ///< No file info messages.
-  SHM_SEARCHCOUNT    = 'S',  ///< No search stats: '[1/10]'
+  SHM_SEARCHCOUNT    = 'S',  ///< No search stats: '[1/10]'.
+  SHM_UNDO           = 'u',  ///< No undo messages.
 };
 /// Represented by 'a' flag.
 #define SHM_ALL_ABBREVIATIONS ((char[]) { \
@@ -553,6 +554,7 @@ EXTERN char *p_tsr;             ///< 'thesaurus'
 EXTERN int p_tgc;               ///< 'termguicolors'
 EXTERN int p_ttimeout;          ///< 'ttimeout'
 EXTERN OptInt p_ttm;            ///< 'ttimeoutlen'
+EXTERN int p_tf;                ///< 'ttyfast'
 EXTERN char *p_udir;            ///< 'undodir'
 EXTERN int p_udf;               ///< 'undofile'
 EXTERN OptInt p_ul;             ///< 'undolevels'

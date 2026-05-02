@@ -191,22 +191,30 @@ local default_dispatchers = {
 }
 
 --- @async
-local function request_parser_loop()
-  local buf = strbuffer.new()
+local function message_decoder()
+  local strbuf = strbuffer.new()
   while true do
-    local msg = buf:tostring()
-    local header_end = msg:find('\r\n\r\n', 1, true)
-    if header_end then
-      local header = buf:get(header_end + 1)
-      buf:skip(2) -- skip past header boundary
-      local content_length = get_content_length(header)
-      while strbuffer.len(buf) < content_length do
-        buf:put(coroutine.yield())
+    local header_len ---@type integer?
+    local ptr, len = strbuf:ref()
+    for i = 0, len - 4 do
+      -- Find the header boundary "\r\n\r\n"
+      -- (compare bytes instead of string.find(), to avoid a string alloc).
+      if ptr[i] == 13 and ptr[i + 1] == 10 and ptr[i + 2] == 13 and ptr[i + 3] == 10 then
+        header_len = i + 2
+        break
       end
-      local body = buf:get(content_length)
-      buf:put(coroutine.yield(body))
+    end
+    if header_len then
+      local header = strbuf:get(header_len)
+      strbuf:skip(2) -- skip past header boundary
+      local content_length = get_content_length(header)
+      while strbuffer.len(strbuf) < content_length do
+        strbuf:put(coroutine.yield())
+      end
+      local body = strbuf:get(content_length)
+      strbuf:put(coroutine.yield(body))
     else
-      buf:put(coroutine.yield())
+      strbuf:put(coroutine.yield())
     end
   end
 end
@@ -218,7 +226,7 @@ end
 function M.create_read_loop(handle_body, on_exit, on_error)
   on_exit = on_exit or function() end
   on_error = on_error or function() end
-  local co = coroutine.create(request_parser_loop)
+  local co = coroutine.create(message_decoder)
   coroutine.resume(co)
   return function(err, chunk)
     if err then

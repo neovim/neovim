@@ -6,15 +6,13 @@ Merging patches from Vim                                    *dev-vimpatch*
 
 
 Nvim was forked from Vim 7.4.160; it is kept up-to-date with relevant Vim
-patches in order to avoid duplicate work. Run `vim-patch.sh`
-https://github.com/neovim/neovim/blob/master/scripts/vim-patch.sh to see the
-status of Vim patches:
->bash
+patches in order to avoid duplicate work. Run `vim-patch.sh` to see the status
+of Vim patches: >bash
     ./scripts/vim-patch.sh -l
 <
-Everyone is welcome to |dev-vimpatch-pull-requests| for relevant Vim
-patches, but some types of patches are |dev-vimpatch-not-applicable|.
-See |dev-vimpatch-quickstart| to get started immediately.
+Everyone is welcome to |dev-vimpatch-pull-requests| for relevant Vim patches,
+but some types of patches are |dev-vimpatch-not-applicable|. See
+|dev-vimpatch-quickstart| to get started immediately.
 
 
                                          Type |gO| to see the table of contents.
@@ -99,6 +97,9 @@ https://github.com/neovim/neovim/commit/00f60c2ce78fc1280e93d5a36bc7b2267d5f4ac6
 
 TYPES OF "NOT APPLICABLE" VIM PATCHES ~
 
+- Unwanted features:
+  - "modelinestrict" https://github.com/neovim/neovim/issues/38985
+  - "tabpanel"
 - Vim9script features, and anything related to `:scriptversion`. (Nvim
   supports Vimscript version 1 only.) Be aware that patches labelled `Vim9:`
   may still contain applicable fixes to other parts of the codebase, so these
@@ -352,4 +353,4 @@ Pattern matching has several differences:
   When modifying an existing regular pattern, make sure that it still fits its
   group.
 
-vim:tw=78:ts=8:noet:ft=help:norl:
+vim:tw=78:ts=8:et:ft=help:norl:

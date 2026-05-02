@@ -1880,7 +1880,9 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
         curbuf->b_u_curhead = curbuf->b_u_oldhead;
         beep_flush();
         if (count == startcount - 1) {
-          msg(_("Already at oldest change"), 0);
+          if (!shortmess(SHM_UNDO)) {
+            msg(_("Already at oldest change"), 0);
+          }
           return;
         }
         break;
@@ -1891,7 +1893,9 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
       if (curbuf->b_u_curhead == NULL || get_undolevel(curbuf) <= 0) {
         beep_flush();  // nothing to redo
         if (count == startcount - 1) {
-          msg(_("Already at newest change"), 0);
+          if (!shortmess(SHM_UNDO)) {
+            msg(_("Already at newest change"), 0);
+          }
           return;
         }
         break;
@@ -2112,10 +2116,12 @@ void undo_time(int step, bool sec, bool file, bool absolute)
     }
 
     if (closest == closest_start) {
-      if (step < 0) {
-        msg(_("Already at oldest change"), 0);
-      } else {
-        msg(_("Already at newest change"), 0);
+      if (!shortmess(SHM_UNDO)) {
+        if (step < 0) {
+          msg(_("Already at oldest change"), 0);
+        } else {
+          msg(_("Already at newest change"), 0);
+        }
       }
       return;
     }
@@ -2545,7 +2551,8 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
 
   if (quiet
       || global_busy        // no messages until global is finished
-      || !messaging()) {    // 'lazyredraw' set, don't do messages now
+      || !messaging()       // 'lazyredraw' set, don't do messages now
+      || shortmess(SHM_UNDO)) {
     return;
   }
 

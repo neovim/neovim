@@ -4294,7 +4294,8 @@ int expand_filename(exarg_T *eap, char **cmdlinep, const char **errormsgp)
       // if there are still wildcards present.
       if (vim_strchr(eap->arg, '$') != NULL
           || vim_strchr(eap->arg, '~') != NULL) {
-        expand_env_esc(eap->arg, NameBuff, MAXPATHL, true, true, NULL);
+        expand_env_esc(eap->arg, NameBuff, MAXPATHL, (char *)(" \t" PATH_ESC_WILDCARDS), true,
+                       NULL);
         has_wildcards = path_has_wildcard(NameBuff);
         p = NameBuff;
       } else {
@@ -4331,6 +4332,8 @@ int expand_filename(exarg_T *eap, char **cmdlinep, const char **errormsgp)
       }
       repl_cmdline(eap, eap->arg, strlen(eap->arg), p, cmdlinep);
       xfree(p);
+    } else {
+      TO_SLASH(eap->arg);
     }
   }
   return OK;
@@ -5859,7 +5862,7 @@ int expand_findfunc(char *pat, char ***files, int *numMatches)
   int idx = 0;
   TV_LIST_ITER_CONST(l, li, {
     if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
-      (*files)[idx] = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
+      (*files)[idx] = TO_SLASH_SAVE(TV_LIST_ITEM_TV(li)->vval.v_string);
       idx++;
     }
   });
@@ -5890,7 +5893,7 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
     } else {
       listitem_T *li = tv_list_find(fname_list, count - 1);
       if (li != NULL && TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
-        ret_fname = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
+        ret_fname = TO_SLASH_SAVE(TV_LIST_ITEM_TV(li)->vval.v_string);
       }
     }
   }
@@ -7835,8 +7838,7 @@ static void ex_tag_cmd(exarg_T *eap, const char *name)
     cmd = DT_LTAG;
   }
 
-  do_tag(eap->arg, cmd, eap->addr_count > 0 ? (int)eap->line2 : 1,
-         eap->forceit, true);
+  do_tag(eap, eap->arg, cmd, eap->addr_count > 0 ? (int)eap->line2 : 1, eap->forceit, true);
 }
 
 enum {

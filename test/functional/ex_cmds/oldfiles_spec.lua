@@ -85,6 +85,15 @@ describe(':oldfiles', function()
 
     oldfiles = get_oldfiles('filter! file_ oldfiles')
     eq({ another }, oldfiles)
+
+    -- The original v:oldfiles index is preserved in the output (matches `message_filtered()` behavior).
+    local v_oldfiles = api.nvim_get_vvar('oldfiles')
+    local raw = eval([[split(execute('filter file_ oldfiles'), "\n")]])
+    for _, line in ipairs(raw) do
+      local idx, path = line:match('^(%d+):%s+(.+)$')
+      ok(idx ~= nil, 'numbered', line)
+      eq(path, v_oldfiles[tonumber(idx)])
+    end
   end)
 end)
 

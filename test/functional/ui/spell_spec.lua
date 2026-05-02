@@ -455,4 +455,125 @@ describe("'spell'", function()
                                                  |
     ]])
   end)
+
+  local function test_spell_false_nav(ephemeral)
+    screen:try_resize(50, 8)
+    insert('Splel\nSplle\nSepll\nSpele\nSpeel')
+    feed('gg0')
+    exec('set shortmess+=s spell spelloptions=noplainbuffer')
+
+    n.exec_lua(function()
+      local ns = vim.api.nvim_create_namespace('spell')
+      if ephemeral then
+        local decors = {} --- @type [integer,integer,vim.api.keyset.set_extmark][]
+        local function on_do()
+          for _, decor in ipairs(decors) do
+            vim.api.nvim_buf_set_extmark(
+              0,
+              ns,
+              decor[1],
+              decor[2],
+              vim.tbl_deep_extend('error', decor[3], { ephemeral = true })
+            )
+          end
+        end
+        vim.api.nvim_set_decoration_provider(ns, {
+          on_win = on_do,
+          _on_spell_nav = on_do,
+        })
+        function _G.Update(new_decors)
+          decors = new_decors
+          vim.cmd('redraw!')
+        end
+      else
+        --- @param decors [integer,integer,vim.api.keyset.set_extmark][]
+        function _G.Update(decors)
+          vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+          for _, decor in ipairs(decors) do
+            vim.api.nvim_buf_set_extmark(0, ns, decor[1], decor[2], decor[3])
+          end
+          vim.cmd('redraw!')
+        end
+      end
+    end)
+
+    n.exec_lua(function()
+      _G.Update({
+        { 0, 0, { end_row = 5, spell = true, priority = 0 } },
+        { 2, 0, { end_row = 3, spell = false, priority = 1 } },
+      })
+    end)
+    screen:expect([[
+      {1:^Splel}                                             |
+      {1:Splle}                                             |
+      Sepll                                             |
+      {1:Spele}                                             |
+      {1:Speel}                                             |
+      {0:~                                                 }|*2
+                                                        |
+    ]])
+
+    t.eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+    feed(']s')
+    t.eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+    feed(']s')
+    t.eq({ 4, 0 }, api.nvim_win_get_cursor(0))
+    feed(']s')
+    t.eq({ 5, 0 }, api.nvim_win_get_cursor(0))
+    feed(']s')
+    t.eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+    feed('[s')
+    t.eq({ 5, 0 }, api.nvim_win_get_cursor(0))
+    feed('[s')
+    t.eq({ 4, 0 }, api.nvim_win_get_cursor(0))
+    feed('[s')
+    t.eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+    feed('[s')
+    t.eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+
+    n.exec_lua(function()
+      _G.Update({
+        { 0, 0, { end_row = 5, spell = true, priority = 0 } },
+        { 3, 0, { end_row = 5, spell = false, priority = 1 } },
+        { 3, 0, { end_row = 4, spell = true, priority = 2 } },
+      })
+    end)
+    screen:expect([[
+      {1:^Splel}                                             |
+      {1:Splle}                                             |
+      {1:Sepll}                                             |
+      {1:Spele}                                             |
+      Speel                                             |
+      {0:~                                                 }|*2
+                                                        |
+    ]])
+
+    t.eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+    feed(']s')
+    t.eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+    feed(']s')
+    t.eq({ 3, 0 }, api.nvim_win_get_cursor(0))
+    feed(']s')
+    t.eq({ 4, 0 }, api.nvim_win_get_cursor(0))
+    feed(']s')
+    t.eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+    feed('[s')
+    t.eq({ 4, 0 }, api.nvim_win_get_cursor(0))
+    feed('[s')
+    t.eq({ 3, 0 }, api.nvim_win_get_cursor(0))
+    feed('[s')
+    t.eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+    feed('[s')
+    t.eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+  end
+
+  describe('spell=false decoration on line with spelling mistake #39441', function()
+    it('using ephemeral decorations', function()
+      test_spell_false_nav(true)
+    end)
+
+    it('using non-ephemeral extmarks', function()
+      test_spell_false_nav(false)
+    end)
+  end)
 end)

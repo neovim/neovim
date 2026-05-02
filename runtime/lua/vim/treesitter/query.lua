@@ -609,7 +609,7 @@ predicate_handlers['any-vim-match?'] = predicate_handlers['any-match?']
 ---@class vim.treesitter.query.TSMetadata
 ---@field range? Range
 ---@field offset? Range4
----@field conceal? string
+---@field conceal? string|boolean
 ---@field bo.commentstring? string
 ---@field [integer]? vim.treesitter.query.TSMetadata
 ---@field [string]? integer|string
@@ -920,11 +920,11 @@ end
 ---@param start_row? integer Starting line for the search. Defaults to `node:start()`.
 ---@param end_row? integer Stopping line for the search (end-inclusive, unless `stop_col` is provided). Defaults to `node:end_()`.
 ---@param opts? table Optional keyword arguments:
+---   - end_col (integer) Stopping column for the search (end-exclusive).
+---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
----   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
 ---   - start_col (integer) Starting column for the search.
----   - end_col (integer) Stopping column for the search (end-exclusive).
 ---
 ---@return (fun(end_line: integer|nil, end_col: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree):
 ---        capture id, capture node, metadata, match, tree
@@ -1041,9 +1041,9 @@ end
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
 ---@param opts? table Optional keyword arguments:
+---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
----   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree): pattern id, match, metadata, tree
 function Query:iter_matches(node, source, start, stop, opts)

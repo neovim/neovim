@@ -1628,7 +1628,7 @@ end)
 
 describe('runtime:', function()
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
+  local pathsep = '/'
   local xconfig = xhome .. pathsep .. 'Xconfig'
   local xdata = xhome .. pathsep .. 'Xdata'
   local xenv = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata }

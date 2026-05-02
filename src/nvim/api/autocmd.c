@@ -530,17 +530,17 @@ void nvim_del_autocmd(Integer id, Error *err)
 /// Clears all autocommands matching the {opts} query. To delete autocmds see |nvim_del_autocmd()|.
 ///
 /// @param opts Optional parameters:
+///        - buf: (`integer?`) Select |autocmd-buflocal| autocommands. Not allowed with {pattern}.
 ///        - event: (`vim.api.keyset.events|vim.api.keyset.events[]?`)
 ///          Examples:
 ///          - event: "pat1"
 ///          - event: { "pat1" }
 ///          - event: { "pat1", "pat2", "pat3" }
+///        - group: (`string|int?`) Group name or id.
+///          - NOTE: If not given, matches autocmds *not* in any group.
 ///        - pattern: (`string|table?`) Filter by patterns (exact match). Not allowed with {buf}.
 ///          - Example: if you have `*.py` as that pattern for the autocmd, you must pass `*.py`
 ///            exactly to clear it. `test.py` will not match the pattern.
-///        - buf: (`integer?`) Select |autocmd-buflocal| autocommands. Not allowed with {pattern}.
-///        - group: (`string|int?`) Group name or id.
-///          - NOTE: If not given, matches autocmds *not* in any group.
 ///
 void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(9)
@@ -680,21 +680,19 @@ void nvim_del_augroup_by_name(String name, Error *err)
 /// Executes handlers for {event} that match the corresponding {opts} query. |autocmd-execute|
 /// @param event Event(s) to execute.
 /// @param opts Optional filters:
-///        - group (`string|integer?`) Group name or id to match against. |autocmd-groups|.
-///        - pattern (`string|array?`, default: current file name) |autocmd-pattern|. Not allowed with {buf}.
 ///        - buf (`integer?`) Buffer id |autocmd-buflocal|. Not allowed with {pattern}.
+///        - data (`any`): Arbitrary data passed to the callback. See |nvim_create_autocmd()|.
+///        - group (`string|integer?`) Group name or id to match against. |autocmd-groups|.
 ///        - modeline (`boolean?`, default: true) Process the modeline after the autocommands
 ///          [<nomodeline>].
-///        - data (`any`): Arbitrary data passed to the callback. See |nvim_create_autocmd()|.
+///        - pattern (`string|array?`, default: current file name) |autocmd-pattern|. Not allowed with {buf}.
 /// @see |:doautocmd|
 void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(9)
 {
   int au_group = AUGROUP_ALL;
   bool modeline = true;
-
   buf_T *b = curbuf;
-
   Object *data = NULL;
 
   Array event_array = unpack_string_or_array(event, "event", true, arena, err);

@@ -325,45 +325,73 @@ function M.glob(initial_path, re, exc_re)
   return ret
 end
 
+--- Reads sanitizer/valgrind log file lines, filtering out useless warnings.
+--- Waits briefly for the ASAN "SUMMARY" line so we don't read a truncated report
+--- (the crashing process may still be writing when we check).
+local function read_sanitizer_log(file)
+  local lines = {} --- @type string[]
+  local has_summary = false
+  -- Poll for up to 2 seconds for the log to be complete.
+  for _ = 1, 20 do
+    lines = {}
+    local warning_line = 0
+    local fd = assert(io.open(file))
+    for line in fd:lines() do
+      local cur_warning_line = check_logs_useless_lines[line]
+      if cur_warning_line == warning_line + 1 then
+        warning_line = cur_warning_line
+      else
+        lines[#lines + 1] = line
+      end
+      if line:find('SUMMARY') then
+        has_summary = true
+      end
+    end
+    fd:close()
+    if has_summary or #lines == 0 then
+      break
+    end
+    uv.sleep(100)
+  end
+  if not has_summary and #lines > 0 then
+    lines[#lines + 1] = '(WARNING: sanitizer log may be truncated, no SUMMARY line found)'
+  end
+  return lines
+end
+
 function M.check_logs()
   local log_dir = os.getenv('LOG_DIR')
-  local runtime_errors = {}
+  local runtime_errors = {} --- @type string[]
+  local runtime_errors_detail = {} --- @type string[]
   if log_dir and M.isdir(log_dir) then
     for tail in vim.fs.dir(log_dir) do
       if tail:sub(1, 30) == 'valgrind-' or tail:find('san%.') then
-        local file = log_dir .. '/' .. tail
-        local fd = assert(io.open(file))
-        local start_msg = ('='):rep(20) .. ' File ' .. file .. ' ' .. ('='):rep(20)
-        local lines = {} --- @type string[]
-        local warning_line = 0
-        for line in fd:lines() do
-          local cur_warning_line = check_logs_useless_lines[line]
-          if cur_warning_line == warning_line + 1 then
-            warning_line = cur_warning_line
-          else
-            lines[#lines + 1] = line
-          end
-        end
-        fd:close()
+        local file = ('%s/%s'):format(log_dir, tail)
+        local lines = read_sanitizer_log(file)
         if #lines > 0 then
+          local start_msg = ('%s File %s %s'):format(('='):rep(20), file, ('='):rep(20))
+          local end_msg = select(1, start_msg:gsub('.', '='))
+          local lines_str = ('= %s'):format(table.concat(lines, '\n= '))
+          local detail = ('%s\n%s\n%s'):format(start_msg, lines_str, end_msg)
           --- @type boolean?, file*?
           local status, f
-          local out = io.stdout
           if os.getenv('SYMBOLIZER') then
             status, f = pcall(M.repeated_read_cmd, os.getenv('SYMBOLIZER'), '-l', file)
           end
+          local out = io.stdout
           out:write(start_msg .. '\n')
           if status then
             assert(f)
             for line in f:lines() do
-              out:write('= ' .. line .. '\n')
+              out:write(('= %s\n'):format(line))
             end
             f:close()
           else
-            out:write('= ' .. table.concat(lines, '\n= ') .. '\n')
+            out:write(lines_str .. '\n')
           end
-          out:write(select(1, start_msg:gsub('.', '=')) .. '\n')
+          out:write(end_msg .. '\n')
           table.insert(runtime_errors, file)
+          table.insert(runtime_errors_detail, detail)
         end
         os.remove(file)
       end
@@ -371,7 +399,10 @@ function M.check_logs()
   end
   test_assert(
     0 == #runtime_errors,
-    string.format('Found runtime errors in logfile(s): %s', table.concat(runtime_errors, ', '))
+    string.format(
+      'Found runtime errors in logfile(s):\n%s',
+      table.concat(runtime_errors_detail, '\n')
+    )
   )
 end
 

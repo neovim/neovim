@@ -191,43 +191,42 @@ end
 ---Construct a new LinkedEditor for the buffer.
 ---
 ---@private
----@param bufnr integer
+---@param buf integer
 ---@return vim.lsp.linked_editing_range.LinkedEditor
-function LinkedEditor.new(bufnr)
+function LinkedEditor.new(buf)
   local self = setmetatable({}, { __index = LinkedEditor })
 
-  self.bufnr = bufnr
-  local augroup =
-    api.nvim_create_augroup('nvim.lsp.linked_editing_range:' .. bufnr, { clear = true })
+  self.bufnr = buf
+  local augroup = api.nvim_create_augroup('nvim.lsp.linked_editing_range:' .. buf, { clear = true })
   self.augroup = augroup
   self.client_states = {}
 
   api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
-    buf = bufnr,
+    buf = buf,
     group = augroup,
     callback = function()
       for _, client_state in pairs(self.client_states) do
-        update_ranges(bufnr, client_state)
+        update_ranges(buf, client_state)
       end
       self:refresh()
     end,
   })
   api.nvim_create_autocmd('CursorMoved', {
     group = augroup,
-    buf = bufnr,
+    buf = buf,
     callback = function()
       self:refresh()
     end,
   })
   api.nvim_create_autocmd('LspDetach', {
     group = augroup,
-    buf = bufnr,
+    buf = buf,
     callback = function(ev)
       self:detach(ev.data.client_id)
     end,
   })
 
-  LinkedEditor.active[bufnr] = self
+  LinkedEditor.active[buf] = self
   return self
 end
 

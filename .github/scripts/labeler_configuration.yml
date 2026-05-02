@@ -46,6 +46,10 @@ folds:
   - changed-files:
     - any-glob-to-any-file: [ src/nvim/fold* ]
 
+image:
+  - changed-files:
+    - any-glob-to-any-file: [ '**/ui/img*' ]
+
 lsp:
   - changed-files:
     - any-glob-to-any-file: [ runtime/lua/vim/lsp.lua, runtime/lua/vim/lsp/* ]

@@ -88,7 +88,9 @@ Defaults                                            *defaults* *nvim-defaults*
   host terminal
 - 'ttimeout' is enabled
 - 'ttimeoutlen' defaults to 50
-- 'ttyfast' is always set
+- 'ttyfast' is set by default, but it can be unset during startup by setting
+  the environment variable `NVIM_NOTTYFAST` to adjust the startup sequence for
+  slow environments (such as ssh).
 - 'undodir' defaults to ~/.local/state/nvim/undo// (|xdg|), auto-created
 - 'viewoptions' includes "unix,slash", excludes "options"
 - 'viminfo' includes "!"
@@ -332,7 +334,8 @@ Editor:
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
-- |BufModifiedSet|
+- |OptionSet| is triggered for 'modified' when writing a file, undoing changes,
+  or using |:set| modified.
 - |Progress|
 - |RecordingEnter|
 - |RecordingLeave|
@@ -877,7 +880,6 @@ Options:
 - *'toolbar'* *'tb'*
 - *'toolbariconsize'* *'tbis'*
 - *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
-- *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 - *'ttymouse'* *'ttym'*
 - *'ttyscroll'* *'tsl'*
 - *'ttytype'* *'tty'*

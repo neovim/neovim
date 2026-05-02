@@ -60,6 +60,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
       -D ${CMAKE_CURRENT_SOURCE_DIR} -D ${CMAKE_CURRENT_BINARY_DIR}
       ${NVIM_RELATIVE_SOURCES} ${PROJECT_SOURCE_DIR}/runtime/scripts/optwin.lua
       ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_core/ex_cmd.lua
+      ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_core/time.lua
     VERBATIM
     DEPENDS ${NVIM_SOURCES} nvim_bin nvim_runtime_deps)
 

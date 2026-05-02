@@ -522,6 +522,11 @@ character will be used: >query
     ; identifiers will be concealed with 'f'.
     ((identifier) @conceal (#set! conceal "foo"))
 <
+To remove a conceal highlight, you can use the `@noconceal` capture to
+override any existing conceal highlight set for the range. >query
+
+    ((identifier) @noconceal)
+<
 
                                                *treesitter-highlight-priority*
 Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default
@@ -964,18 +969,17 @@ foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
     Return: ~
         (`string`)
 
-                                     *vim.treesitter.get_captures_at_cursor()*
-get_captures_at_cursor({winnr})
+get_captures_at_cursor({win})        *vim.treesitter.get_captures_at_cursor()*
     Returns a list of highlight capture names under the cursor
 
     Parameters: ~
-      • {winnr}  (`integer?`) |window-ID| or 0 for current window (default)
+      • {win}  (`integer?`) |window-ID| or 0 for current window (default)
 
     Return: ~
         (`string[]`) List of capture names
 
                                         *vim.treesitter.get_captures_at_pos()*
-get_captures_at_pos({bufnr}, {row}, {col})
+get_captures_at_pos({buf}, {row}, {col})
     Returns a list of highlight captures at the given position
 
     Each capture is represented by a table containing the capture name as a
@@ -983,9 +987,9 @@ get_captures_at_pos({bufnr}, {row}, {col})
     `conceal`, ...; empty if none are defined), and the id of the capture.
 
     Parameters: ~
-      • {bufnr}  (`integer`) Buffer number (0 for current buffer)
-      • {row}    (`integer`) Position row
-      • {col}    (`integer`) Position column
+      • {buf}  (`integer`) Buffer number (0 for current buffer)
+      • {row}  (`integer`) Position row
+      • {col}  (`integer`) Position column
 
     Return: ~
         (`{capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer}[]`)
@@ -1003,15 +1007,15 @@ get_node({opts})                                   *vim.treesitter.get_node()*
       • {opts}  (`table?`) Optional keyword arguments:
                 • {bufnr} (`integer?`) Buffer number (nil or 0 for current
                   buffer)
-                • {pos} (`[integer, integer]?`) 0-indexed (row, col) tuple.
-                  Defaults to cursor position in the current window. Required
-                  if {bufnr} is not the current buffer
-                • {lang} (`string?`) Parser language. (default: from buffer
-                  filetype)
                 • {ignore_injections} (`boolean?`) Ignore injected languages
                   (default true)
                 • {include_anonymous} (`boolean?`) Include anonymous nodes
                   (default false)
+                • {lang} (`string?`) Parser language. (default: from buffer
+                  filetype)
+                • {pos} (`[integer, integer]?`) 0-indexed (row, col) tuple.
+                  Defaults to cursor position in the current window. Required
+                  if {bufnr} is not the current buffer
 
     Return: ~
         (`TSNode?`) Node at the given position
@@ -1044,7 +1048,7 @@ get_node_text({node}, {source}, {opts})
     Return: ~
         (`string`)
 
-get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
+get_parser({buf}, {lang}, {opts})                *vim.treesitter.get_parser()*
     Returns the parser for a specific buffer and attaches it to the buffer
 
     If needed, this will create the parser.
@@ -1052,11 +1056,11 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
     If no parser can be created, nil (and an error message) is returned.
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer the parser should be tied to (default:
-                 current buffer)
-      • {lang}   (`string?`) Language of this parser (default: from buffer
-                 filetype)
-      • {opts}   (`table?`) Options to pass to the created language tree
+      • {buf}   (`integer?`) Buffer the parser should be tied to (default:
+                current buffer)
+      • {lang}  (`string?`) Language of this parser (default: from buffer
+                filetype)
+      • {opts}  (`table?`) Options to pass to the created language tree
 
     Return (multiple): ~
         (`vim.treesitter.LanguageTree?`) object to use for parsing
@@ -1110,19 +1114,19 @@ inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
     Parameters: ~
       • {opts}  (`table?`) Optional options table with the following possible
                 keys:
-                • lang (string|nil): The language of the source buffer. If
-                  omitted, detect from the filetype of the source buffer.
                 • bufnr (integer|nil): Buffer to draw the tree into. If
                   omitted, a new buffer is created.
-                • winid (integer|nil): Window id to display the tree buffer
-                  in. If omitted, a new window is created with {command}.
                 • command (string|nil): Vimscript command to create the
                   window. Default value is "60vnew". Only used when {winid} is
                   nil.
+                • lang (string|nil): The language of the source buffer. If
+                  omitted, detect from the filetype of the source buffer.
                 • title (string|fun(bufnr:integer):string|nil): Title of the
                   window. If a function, it accepts the buffer number of the
                   source buffer as its only argument and should return a
                   string.
+                • winid (integer|nil): Window id to display the tree buffer
+                  in. If omitted, a new window is created with {command}.
 
 is_ancestor({dest}, {source})                   *vim.treesitter.is_ancestor()*
     Determines whether a node is the ancestor of another
@@ -1156,7 +1160,7 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
     Return: ~
         (`boolean`) True if the {node} contains the {range}
 
-start({bufnr}, {lang})                                *vim.treesitter.start()*
+start({buf}, {lang})                                  *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
 
     Can be used in an ftplugin or FileType autocommand.
@@ -1178,17 +1182,17 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
 <
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer to be highlighted (default: current
-                 buffer)
-      • {lang}   (`string?`) Language of the parser (default: from buffer
-                 filetype)
+      • {buf}   (`integer?`) Buffer to be highlighted (default: current
+                buffer)
+      • {lang}  (`string?`) Language of the parser (default: from buffer
+                filetype)
 
-stop({bufnr})                                          *vim.treesitter.stop()*
+stop({buf})                                            *vim.treesitter.stop()*
     Stops treesitter highlighting for a buffer
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer to stop highlighting (default: current
-                 buffer)
+      • {buf}  (`integer?`) Buffer to stop highlighting (default: current
+               buffer)
 
 
 ==============================================================================
@@ -1540,20 +1544,20 @@ them to parse text. See |vim.treesitter.query.parse()| for a working example.
     Parsed query, see |vim.treesitter.query.parse()|
 
     Fields: ~
-      • {lang}                     (`string`) parser language name
       • {captures}                 (`string[]`) list of (unique) capture names
                                    defined in query
-      • {info}                     (`vim.treesitter.QueryInfo`) query context
-                                   (e.g. captures, predicates, directives)
-      • {has_conceal_line}         (`boolean`) whether the query sets
-                                   conceal_lines metadata
       • {has_combined_injections}  (`boolean`) whether the query contains
                                    combined injections
-      • {query}                    (`TSQuery`) userdata query object
+      • {has_conceal_line}         (`boolean`) whether the query sets
+                                   conceal_lines metadata
+      • {info}                     (`vim.treesitter.QueryInfo`) query context
+                                   (e.g. captures, predicates, directives)
       • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start_row: integer?, end_row: integer?, opts: table?): fun(end_line: integer?, end_col: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
                                    See |Query:iter_captures()|.
       • {iter_matches}             (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
                                    See |Query:iter_matches()|.
+      • {lang}                     (`string`) parser language name
+      • {query}                    (`TSQuery`) userdata query object
 
 
                                         *vim.treesitter.query.add_directive()*
@@ -1650,10 +1654,10 @@ lint({buf}, {opts})                              *vim.treesitter.query.lint()*
     Parameters: ~
       • {buf}   (`integer`) Buffer handle
       • {opts}  (`table?`) Optional keyword arguments:
+                • {clear} (`boolean`) Just clear current lint errors
                 • {langs}? (`string|string[]`) Language(s) to use for checking
                   the query. If multiple languages are specified, queries are
                   validated for all of them
-                • {clear} (`boolean`) Just clear current lint errors
 
 list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
@@ -1757,14 +1761,14 @@ Query:iter_captures({node}, {source}, {start_row}, {end_row}, {opts})
                      unless `stop_col` is provided). Defaults to
                      `node:end_()`.
       • {opts}       (`table?`) Optional keyword arguments:
+                     • end_col (integer) Stopping column for the search
+                       (end-exclusive).
+                     • match_limit (integer) Set the maximum number of
+                       in-progress matches (Default: 256).
                      • max_start_depth (integer) if non-zero, sets the maximum
                        start depth for each match. This is used to prevent
                        traversing too deep into a tree.
-                     • match_limit (integer) Set the maximum number of
-                       in-progress matches (Default: 256).
                      • start_col (integer) Starting column for the search.
-                     • end_col (integer) Stopping column for the search
-                       (end-exclusive).
 
     Return: ~
         (`fun(end_line: integer?, end_col: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
@@ -1802,11 +1806,11 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
       • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
                   Defaults to `node:end_()`.
       • {opts}    (`table?`) Optional keyword arguments:
+                  • match_limit (integer) Set the maximum number of
+                    in-progress matches (Default: 256).
                   • max_start_depth (integer) if non-zero, sets the maximum
                     start depth for each match. This is used to prevent
                     traversing too deep into a tree.
-                  • match_limit (integer) Set the maximum number of
-                    in-progress matches (Default: 256).
 
     Return: ~
         (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)

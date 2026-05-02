@@ -130,6 +130,7 @@ describe(':help', function()
     check_tag('help <>', '*<>*')
     check_tag([[help i^x^y]], '*i_CTRL-X_CTRL-Y*')
     check_tag([[help CTRL-\_CTRL-N]], [[*CTRL-\_CTRL-N*]])
+    check_tag([[help i_CTRL-U-default]], [[*i_CTRL-U-default*]])
 
     check_tag([[exe "help i\<C-\>\<C-G>"]], [[*i_CTRL-\_CTRL-G*]])
     check_tag([[exe "help \<C-V>"]], '*CTRL-V*')

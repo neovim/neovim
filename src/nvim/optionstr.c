@@ -81,7 +81,7 @@ static char SHM_ALL[] = { SHM_RO, SHM_MOD, SHM_LINES,
                           SHM_WRI, SHM_ABBREVIATIONS, SHM_WRITE, SHM_TRUNC, SHM_TRUNCALL,
                           SHM_OVER, SHM_OVERALL, SHM_SEARCH, SHM_ATTENTION, SHM_INTRO,
                           SHM_COMPLETIONMENU, SHM_COMPLETIONSCAN, SHM_RECORDING, SHM_FILEINFO,
-                          SHM_SEARCHCOUNT, 'n', 'f', 'x', 'i', 0, };
+                          SHM_SEARCHCOUNT, SHM_UNDO, 'n', 'f', 'x', 'i', 0, };
 
 /// After setting various option values: recompute variables that depend on
 /// option values.
@@ -1829,6 +1829,14 @@ const char *did_set_spellsuggest(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   return NULL;
+}
+
+const char *did_set_splitkeep(optset_T *args FUNC_ATTR_UNUSED)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    wp->w_prev_height = wp->w_height;
+  }
+  return did_set_str_generic(args);
 }
 
 /// The 'statuscolumn' option is changed.

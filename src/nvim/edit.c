@@ -947,32 +947,34 @@ static int insert_handle_key(InsertState *s)
     break;
 
   case K_PASTE_START:
-    paste_repeat(1);
-    goto check_pum;
-
   case K_EVENT:       // some event
-    state_handle_k_event();
-    // If CTRL-G U was used apply it to the next typed key.
-    if (dont_sync_undo == kTrue) {
-      dont_sync_undo = kNone;
-    }
-    goto check_pum;
-
   case K_COMMAND:     // <Cmd>command<CR>
-    ea = (exarg_T) {
-      .cmd = NULL,
-      .line1 = 1,
-      .line2 = 1,
-      .ea_getline = getcmdkeycmd,
-      .cookie = NULL
-    };
-    do_cmdline(&ea, 0);
-    goto check_pum;
+  case K_LUA: {
+    bufref_T save_curbuf;
+    const varnumber_T tick = buf_get_changedtick(curbuf);
+    set_bufref(&save_curbuf, curbuf);
 
-  case K_LUA:
-    map_execute_lua(false, false);
+    if (s->c == K_PASTE_START) {
+      paste_repeat(1);
+    } else if (s->c == K_EVENT) {
+      state_handle_k_event();
+      // If CTRL-G U was used apply it to the next typed key.
+      if (dont_sync_undo == kTrue) {
+        dont_sync_undo = kNone;
+      }
+    } else if (s->c == K_COMMAND) {
+      ea = (exarg_T) {
+        .cmd = NULL,
+        .line1 = 1,
+        .line2 = 1,
+        .ea_getline = getcmdkeycmd,
+        .cookie = NULL
+      };
+      do_cmdline(&ea, 0);
+    } else {
+      map_execute_lua(false, false);
+    }
 
-check_pum:
     // nvim_select_popupmenu_item() can be called from the handling of
     // K_EVENT, K_COMMAND, or K_LUA.
     // TODO(bfredl): Not entirely sure this indirection is necessary
@@ -991,12 +993,16 @@ check_pum:
       pum_want.active = false;
     }
 
-    if (curbuf->b_u_synced) {
-      // The K_EVENT, K_COMMAND, or K_LUA caused undo to be synced.
-      // Need to save the line for undo before inserting the next char.
+    if (curbuf->b_u_synced
+        || (bufref_valid(&save_curbuf)
+            && curbuf == save_curbuf.br_buf
+            && tick != buf_get_changedtick(curbuf))) {
+      // The K_EVENT, K_COMMAND, or K_LUA synced undo or changed this buffer.
+      // Save the cursor line before the next typed edit.
       ins_need_undo = true;
     }
     break;
+  }
 
   case K_HOME:        // <Home>
   case K_KHOME:
@@ -1464,18 +1470,8 @@ void ins_redraw(bool ready)
     may_trigger_win_scrolled_resized();
   }
 
-  // Trigger BufModified if b_changed_invalid is set.
-  if (ready && has_event(EVENT_BUFMODIFIEDSET)
-      && curbuf->b_changed_invalid == true
-      && !pum_visible()) {
-    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
-    curbuf->b_changed_invalid = false;
-  }
-
   // Trigger SafeState if nothing is pending.
-  may_trigger_safestate(ready
-                        && !ins_compl_active()
-                        && !pum_visible());
+  may_trigger_safestate(ready && !ins_compl_active() && !pum_visible());
 
   pum_check_clear();
   show_cursor_info_later(false);
@@ -2215,7 +2211,9 @@ int stop_arrow(void)
     new_insert_skip = 2;
   } else if (ins_need_undo) {
     if (u_save_cursor() == OK) {
-      // A command or event may have moved the cursor after syncing undo.
+      // A command or event may have moved the cursor or edited the
+      // buffer. Update Insstart so that later edits can properly decide
+      // whether an extra undo entry is needed.
       Insstart = curwin->w_cursor;
       Insstart_textlen = (colnr_T)linetabsize_str(get_cursor_line_ptr());
       ins_need_undo = false;

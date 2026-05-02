@@ -1247,6 +1247,9 @@ end
 --- - |]]| and |[[| to navigate through plugin sections.
 ---
 --- Some features are provided via LSP:
+--- - 'textDocument/documentLink' - compute links for plugin paths, sources,
+---   commits, and tags. Makes a best effort educated guess about a link structure.
+---   Use |gx| to open a link to an object at cursor.
 --- - 'textDocument/documentSymbol' (`gO` via |lsp-defaults| or |vim.lsp.buf.document_symbol()|) -
 ---   show structure of the buffer.
 --- - 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) - show more

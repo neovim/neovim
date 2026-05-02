@@ -65,6 +65,8 @@
 ^src/proto
 ^src/testdir/dumps/
 ^src/testdir/python
+^src/testdir/samples/crypt_
+^src/testdir/util/gui_
 ^src/testdir/test_balloon
 ^src/testdir/test_channel
 ^src/testdir/test_terminal

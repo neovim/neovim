@@ -1436,7 +1436,74 @@ describe('vim.pack', function()
 
         eq(1, exec_lua('return #vim.lsp.get_clients({ bufnr = 0 })'))
 
+        -- textDocument/documentLink
+        --- @param ref ([number, number, number, number, string])[]
+        local assert_links = function(ref)
+          --- @type table[]
+          local out_links = exec_lua(function()
+            local params = { textDocument = vim.lsp.util.make_text_document_params(0) }
+            local response = vim.lsp.buf_request_sync(0, 'textDocument/documentLink', params)
+            return response[1].result
+          end)
+
+          --- @type table[]
+          local ref_links = {}
+          for i, r in ipairs(ref) do
+            local start = { line = r[1], character = r[2] }
+            local end_ = { line = r[3], character = r[4] }
+            ref_links[i] = { range = { start = start, ['end'] = end_ }, target = r[5] }
+          end
+
+          eq(ref_links, out_links)
+        end
+
+        local fetch_src = repos_src.fetch
+        local fetch_path = pack_get_plug_path('fetch')
+        local fetch_path_uri = vim.uri_from_fname(fetch_path)
+        local semver_src = repos_src.semver
+        local semver_path = pack_get_plug_path('semver')
+        local semver_path_uri = vim.uri_from_fname(semver_path)
+
+        -- With `file://` sources it can only return "Path:" and "Source:" links
+        local ref_file_links = {
+          { 11, 17, 11, 17 + fetch_path:len() - 1, fetch_path_uri }, -- Path: ...
+          { 12, 17, 12, 17 + fetch_src:len() - 1, fetch_src }, -- Source: ...
+          { 24, 10, 24, 10 + semver_path:len() - 1, semver_path_uri }, -- Path: ...
+          { 25, 10, 25, 10 + semver_src:len() - 1, semver_src }, -- Source: ...
+        }
+        assert_links(ref_file_links)
+
+        -- Mock using common sources which should provide all links
+        local fetch_github = 'https://github.com/user/fetch'
+        local semver_codeberg = 'https://codeberg.org/user/semver'
+        local lines = api.nvim_buf_get_lines(0, 0, -1, false)
+        lines[13] = lines[13]:gsub('^(Source: +)(.+)$', '%1' .. fetch_github)
+        lines[26] = lines[26]:gsub('^(Source: +)(.+)$', '%1' .. semver_codeberg)
+        api.nvim_set_option_value('modifiable', true, { buf = 0 })
+        api.nvim_buf_set_lines(0, 0, -1, false, lines)
+        api.nvim_set_option_value('modifiable', false, { buf = 0 })
+
+        local ref_github_links = {
+          { 11, 17, 11, 17 + fetch_path:len() - 1, fetch_path_uri }, -- Path: ...
+          { 12, 17, 12, 45, fetch_github }, -- Source: ...
+          { 13, 17, 13, 56, fetch_github .. '/commit/' .. lines[14]:match('%S+$') }, -- Revision before: ...
+          { 14, 17, 14, 56, fetch_github .. '/commit/' .. lines[15]:match('(%S+) %b()$') }, -- Revision before: ...
+          { 17, 2, 17, 8, fetch_github .. '/commit/' .. lines[18]:match('^< (%S+)') },
+          { 18, 2, 18, 8, fetch_github .. '/commit/' .. lines[19]:match('^> (%S+)') },
+          { 19, 2, 19, 8, fetch_github .. '/commit/' .. lines[20]:match('^> (%S+)') },
+          { 24, 10, 24, 10 + semver_path:len() - 1, semver_path_uri }, -- Path: ...
+          { 25, 10, 25, 41, semver_codeberg }, -- Source: ...
+          { 26, 10, 26, 49, semver_codeberg .. '/commit/' .. lines[27]:match('(%S+) %b()$') }, -- Revision: ...
+          -- Should use UTF index
+          { 29, 2, 29, 7, semver_codeberg .. '/src/tag/v1.0.0' },
+          { 30, 2, 30, 6, semver_codeberg .. '/src/tag/0.3.1' },
+        }
+        assert_links(ref_github_links)
+
+        n.exec('quit')
+
         -- textDocument/documentSymbol
+        exec_lua('vim.pack.update()')
         exec_lua('vim.lsp.buf.document_symbol()')
         local loclist = vim.tbl_map(function(x) --- @param x table
           return {

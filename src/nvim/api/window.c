@@ -467,13 +467,8 @@ void nvim_win_set_hl_ns(Window win, Integer ns_id, Error *err)
 ///
 /// @param win  |window-ID|, or 0 for current window.
 /// @param opts    Optional parameters:
-///                - start_row: Starting line index, 0-based inclusive.
-///                             When omitted start at the very top.
 ///                - end_row: Ending line index, 0-based inclusive.
 ///                           When omitted end at the very bottom.
-///                - start_vcol: Starting virtual column index on "start_row",
-///                              0-based inclusive, rounded down to full screen lines.
-///                              When omitted include the whole line.
 ///                - end_vcol: Ending virtual column index on "end_row",
 ///                            0-based exclusive, rounded up to full screen lines.
 ///                            When 0 only include diff filler and virtual lines above
@@ -484,6 +479,11 @@ void nvim_win_set_hl_ns(Window win, Integer ns_id, Error *err)
 ///                              to find out how many buffer lines beyond "start_row" take
 ///                              up a certain number of logical lines (returned in
 ///                              "end_row" and "end_vcol").
+///                - start_row: Starting line index, 0-based inclusive.
+///                             When omitted start at the very top.
+///                - start_vcol: Starting virtual column index on "start_row",
+///                              0-based inclusive, rounded down to full screen lines.
+///                              When omitted include the whole line.
 /// @return  Dict containing text height information, with these keys:
 ///          - all: The total number of screen lines occupied by the range.
 ///          - fill: The number of diff filler or virtual lines among them.

@@ -455,6 +455,7 @@ local options_list = {
     { 'busy', N_ 'buffer is busy' },
     { 'termpastefilter', N_ 'characters removed when pasting into terminal window' },
     { 'scrollback', N_ 'number of lines kept beyond the visible screen in terminal buffer' },
+    { 'ttyfast', N_ 'assume terminal responds quickly, enabling more features' },
   },
 }
 

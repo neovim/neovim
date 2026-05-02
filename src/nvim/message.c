@@ -337,7 +337,7 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
             ((HlMessageChunk){ .text = copy_string(msg_data->title, NULL), .hl_id = hl_id }));
     kv_push(updated_msg, ((HlMessageChunk){ .text = cstr_to_string(": "), .hl_id = 0 }));
   }
-  if (msg_data->percent > 0) {
+  if (msg_data->percent >= 0) {
     char percent_buf[10];
     vim_snprintf(percent_buf, sizeof(percent_buf), "%3ld%% ", (long)msg_data->percent);
     String percent = cstr_to_string(percent_buf);
@@ -1173,7 +1173,10 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
   PUT_C(data, "id", OBJECT_OBJ(msg_id));
   PUT_C(data, "text", ARRAY_OBJ(messages));
   if (msg_data != NULL) {
-    PUT_C(data, "percent", INTEGER_OBJ(msg_data->percent));
+    if (msg_data->percent >= 0) {
+      // If percent=nil we omit it, it means "indeterminate progress". #39029
+      PUT_C(data, "percent", INTEGER_OBJ(msg_data->percent));
+    }
     PUT_C(data, "source", STRING_OBJ(msg_data->source));
     PUT_C(data, "status", STRING_OBJ(msg_data->status));
     PUT_C(data, "title", STRING_OBJ(msg_data->title));

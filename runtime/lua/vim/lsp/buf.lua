@@ -1125,17 +1125,23 @@ end
 ---@field result? (lsp.Command|lsp.CodeAction)[]
 ---@field context lsp.HandlerContext
 
+--- Corresponds to `lsp.CodeActionContext`, but all fields are optional:
+--- @class vim.lsp.buf.code_action.context : lsp.CodeActionContext
+--- @inlinedoc
+---
+--- Inferred from the current position if not provided.
+--- @field diagnostics? lsp.Diagnostic[]
+---
+--- `CodeActionKind`s used to filter the code actions. Most servers support values like "refactor" or "quickfix".
+--- @field only? lsp.CodeActionKind[]
+---
+--- Why code actions were requested.
+--- @field triggerKind? lsp.CodeActionTriggerKind
+
 --- @class vim.lsp.buf.code_action.Opts
 --- @inlinedoc
 ---
---- Corresponds to `CodeActionContext` of the LSP specification:
----   - {diagnostics}? (`table`) LSP `Diagnostic[]`. Inferred from the current
----     position if not provided.
----   - {only}? (`table`) List of LSP `CodeActionKind`s used to filter the code actions.
----     Most language servers support values like `refactor`
----     or `quickfix`.
----   - {triggerKind}? (`integer`) The reason why code actions were requested.
---- @field context? lsp.CodeActionContext
+--- @field context? vim.lsp.buf.code_action.context
 ---
 --- Predicate taking a code action or command and the provider's ID.
 --- If it returns false, the action is filtered out.

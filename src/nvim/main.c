@@ -197,7 +197,7 @@ void early_init(mparm_T *paramp)
   estack_init();
   cmdline_init();
   eval_init();          // init global variables
-  set_vim_var_nr(VV_STARTTIME, (varnumber_T)os_hrtime());
+  set_vim_var_nr(VV_STARTTIME, (varnumber_T)os_realtime());
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
   runtime_init();
@@ -256,6 +256,7 @@ int main(int argc, char **argv)
 #endif
 {
   argv0 = argv[0];
+  TO_SLASH(argv0);
 
   if (!appname_is_valid()) {
     fprintf(stderr, "$NVIM_APPNAME must be a name or relative path.\n");
@@ -510,10 +511,14 @@ int main(int argc, char **argv)
   // Decide about window layout for diff mode after reading vimrc.
   set_window_layout(&params);
 
-  // Recovery mode without a file name: List swap files.
-  // Uses the 'dir' option, therefore it must be after the initializations.
+  // "nvim -r" (recovery mode) without a file name: List swap files.
   if (recoverymode && fname == NULL) {
-    recover_names(NULL, true, NULL, 0, NULL);
+    typval_T items_tv;
+    tv_list_alloc_ret(&items_tv, 0);
+    recover_names(NULL, false, items_tv.vval.v_list);
+    typval_T lua_args[] = { items_tv, { .v_type = VAR_UNKNOWN } };
+    nlua_call_vimfn("vim._core.swapfile", "list_swaps", lua_args, NULL);
+    tv_clear(&items_tv);
     os_exit(0);
   }
 
@@ -1461,6 +1466,7 @@ scripterror:
           break;
         case 'u':    // "-u {vimrc}" vim inits file
           parmp->use_vimrc = argv[0];
+          TO_SLASH(argv[0]);
           break;
         case 'U':    // "-U {gvimrc}" gvim inits file
           break;
@@ -1505,6 +1511,7 @@ scripterror:
         xfree(p);
         p = tilde_expanded;
       }
+      TO_SLASH(p);
 #endif
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0

@@ -60,7 +60,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
           end
 
           -- Fallback to XTGETTCAP
-          require('vim.tty').query('Ms', function(cap, found, seq)
+          vim.tty.query('Ms', function(cap, found, seq)
             if not found then
               return
             end

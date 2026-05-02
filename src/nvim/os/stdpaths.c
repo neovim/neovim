@@ -43,10 +43,10 @@ static const char *const xdg_defaults_env_vars[] = {
 /// Used in case environment variables contain nothing. Need to be expanded.
 static const char *const xdg_defaults[] = {
 #ifdef MSWIN
-  [kXDGConfigHome] = "~\\AppData\\Local",
-  [kXDGDataHome] = "~\\AppData\\Local",
-  [kXDGCacheHome] = "~\\AppData\\Local\\Temp",
-  [kXDGStateHome] = "~\\AppData\\Local",
+  [kXDGConfigHome] = "~/AppData/Local",
+  [kXDGDataHome] = "~/AppData/Local",
+  [kXDGCacheHome] = "~/AppData/Local/Temp",
+  [kXDGStateHome] = "~/AppData/Local",
   [kXDGRuntimeDir] = NULL,  // Decided by vim_mktempdir().
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
@@ -166,6 +166,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     env_val = xstrdup("");
   }
 #endif
+  TO_SLASH(env_val);
 
   char *ret = NULL;
   if (env_val != NULL) {
@@ -213,10 +214,6 @@ char *get_xdg_home(const XDGVarType idx)
     }
 #endif
     dir = concat_fnames_realloc(dir, IObuff, true);
-
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(dir);
-#endif
   }
   return dir;
 }
@@ -266,21 +263,22 @@ char *stdpaths_user_state_subpath(const char *fname, const size_t trailing_paths
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char *ret = concat_fnames_realloc(get_xdg_home(kXDGStateHome), fname, true);
-  const size_t len = strlen(ret);
+  size_t len = strlen(ret);
   const size_t numcommas = (escape_commas ? memcnt(ret, ',', len) : 0);
   if (numcommas || trailing_pathseps) {
-    ret = xrealloc(ret, len + trailing_pathseps + numcommas + 1);
-    for (size_t i = 0; i < len + numcommas; i++) {
-      if (ret[i] == ',') {
-        memmove(ret + i + 1, ret + i, len - i + numcommas);
-        ret[i] = '\\';
-        i++;
+    size_t newlen = len + numcommas + trailing_pathseps;
+    ret = xrealloc(ret, newlen + 1);
+    ret[newlen] = NUL;
+
+    memset(ret + len + numcommas, PATHSEP, trailing_pathseps);
+    newlen -= trailing_pathseps;
+
+    while (numcommas && len > 0) {
+      ret[--newlen] = ret[--len];
+      if (ret[newlen] == ',') {
+        ret[--newlen] = '\\';
       }
     }
-    if (trailing_pathseps) {
-      memset(ret + len + numcommas, PATHSEP, trailing_pathseps);
-    }
-    ret[len + trailing_pathseps + numcommas] = NUL;
   }
   return ret;
 }

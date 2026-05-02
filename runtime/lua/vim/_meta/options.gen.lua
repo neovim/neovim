@@ -5516,6 +5516,12 @@ vim.go.so = vim.go.scrolloff
 --- For a window-local value, -1 means to use the global value.
 --- Values below -1 are invalid.
 ---
+--- Example:
+---
+--- ```vim
+--- 	:set scrolloff=99 scrolloffpad=1
+--- ```
+---
 --- After using the local value, go back the global value with one of
 --- these two:
 ---
@@ -6093,6 +6099,9 @@ vim.bo.sw = vim.bo.shiftwidth
 --- 	search count statistics.  The maximum limit can be set with
 --- 	the 'maxsearchcount' option, see also `searchcount()`
 --- 	function.
+---   u	don't give undo and redo messages like			*shm-u*
+--- 	"1 line less; before #1  1 second ago", "Already at oldest
+--- 	change" or "Already at newest change"
 ---
 --- This gives you the opportunity to avoid that a change between buffers
 --- requires you to hit <Enter>, but still gives as useful a message as
@@ -7555,6 +7564,27 @@ vim.o.ttm = vim.o.ttimeoutlen
 vim.go.ttimeoutlen = vim.o.ttimeoutlen
 vim.go.ttm = vim.go.ttimeoutlen
 
+--- Enables Nvim `TUI` features which assume a fast (usually local) host
+--- terminal. During startup, Nvim queries the terminal (for 'background'
+--- detection, etc.) and must wait for a response (or timeout).
+---
+--- If your terminal environment is slow (e.g. remote SSH), or broken
+--- (doesn't respond to queries), Nvim startup may be slower. Therefore
+--- you can disable this option by setting the `$NVIM_NOTTYFAST`
+--- environment variable before starting Nvim:
+--- ```
+--- 	NVIM_NOTTYFAST=1 nvim
+--- ```
+---
+--- The queries are performed early, before `--cmd` and user `config`, so
+--- `:set nottyfast` in your config happens too late.
+---
+--- @type boolean
+vim.o.ttyfast = true
+vim.o.tf = vim.o.ttyfast
+vim.go.ttyfast = vim.o.ttyfast
+vim.go.tf = vim.go.ttyfast
+
 --- List of directory names for undo files, separated with commas.
 --- See 'backupdir' for details of the format.
 --- "." means using the directory of the file.  The undo file name for
@@ -8032,8 +8062,12 @@ vim.go.wmnu = vim.go.wildmenu
 --- 		applies to buffer name completion.
 --- "noselect"	If 'wildmenu' is enabled, show the menu but do not
 --- 		preselect the first item.
---- If only one match exists, it is completed fully, unless "noselect" is
---- specified.
+--- "noinsert"	If 'wildmenu' is enabled, show the menu and preselect
+--- 		the first match, but do not insert it in the
+--- 		command line.  If both "noinsert" and "noselect" are
+--- 		present, "noselect" takes precedence.
+--- If only one match exists, it is completed fully, unless "noselect" or
+--- "noinsert" is specified.
 ---
 --- Some useful combinations of colon-separated values:
 --- "longest:full"		Start with the longest common string and show

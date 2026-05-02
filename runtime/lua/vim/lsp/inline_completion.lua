@@ -73,21 +73,21 @@ setmetatable(Completor, Capability)
 Capability.all[Completor.name] = Completor
 
 ---@package
----@param bufnr integer
+---@param buf integer
 ---@return vim.lsp.inline_completion.Completor
-function Completor:new(bufnr)
-  self = Capability.new(self, bufnr)
+function Completor:new(buf)
+  self = Capability.new(self, buf)
   self.client_state = {}
   api.nvim_create_autocmd({ 'InsertEnter', 'CursorMovedI', 'TextChangedP' }, {
     group = self.augroup,
-    buf = bufnr,
+    buf = buf,
     callback = function()
       self:automatic_request()
     end,
   })
   api.nvim_create_autocmd({ 'InsertLeave' }, {
     group = self.augroup,
-    buf = bufnr,
+    buf = buf,
     callback = function()
       self:abort()
     end,

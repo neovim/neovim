@@ -3203,6 +3203,7 @@ static void expand_by_function(int type, char *base, Callback *cb)
   assert(curbuf != NULL);
 
   const bool is_cpt_function = (cb != NULL);
+  const bool use_sandbox = is_cpt_function && was_set_insecurely(curwin, kOptComplete, OPT_LOCAL);
   if (!is_cpt_function) {
     char *funcname = get_complete_funcname(type);
     if (*funcname == NUL) {
@@ -3224,9 +3225,16 @@ static void expand_by_function(int type, char *base, Callback *cb)
   // switching to another window, it should not be needed and may end up in
   // Insert mode in another buffer.
   textlock++;
+  if (use_sandbox) {
+    sandbox++;
+  }
 
   // Call a function, which returns a list or dict.
-  if (callback_call(cb, 2, args, &rettv)) {
+  const bool called = callback_call(cb, 2, args, &rettv);
+  if (use_sandbox) {
+    sandbox--;
+  }
+  if (called) {
     switch (rettv.v_type) {
     case VAR_LIST:
       matchlist = rettv.vval.v_list;
@@ -4038,30 +4046,9 @@ static void get_next_filename_completion(void)
   int max_score = 0;
   Direction dir = compl_direction;
 
-#ifdef BACKSLASH_IN_FILENAME
-  char pathsep = (curbuf->b_p_csl[0] == 's')
-                 ? '/' : (curbuf->b_p_csl[0] == 'b') ? '\\' : PATHSEP;
-#else
-  char pathsep = PATHSEP;
-#endif
-
   if (in_fuzzy_collect) {
-#ifdef BACKSLASH_IN_FILENAME
-    if (curbuf->b_p_csl[0] == 's') {
-      for (size_t i = 0; i < leader_len; i++) {
-        if (leader[i] == '\\') {
-          leader[i] = '/';
-        }
-      }
-    } else if (curbuf->b_p_csl[0] == 'b') {
-      for (size_t i = 0; i < leader_len; i++) {
-        if (leader[i] == '/') {
-          leader[i] = '\\';
-        }
-      }
-    }
-#endif
-    char *last_sep = strrchr(leader, pathsep);
+    TO_SLASH(leader);
+    char *last_sep = strrchr(leader, PATHSEP);
     if (last_sep == NULL) {
       // No path separator or separator is the last character,
       // fuzzy match the whole leader
@@ -4093,16 +4080,12 @@ static void get_next_filename_completion(void)
   // May change home directory back to "~".
   tilde_replace(compl_pattern.data, num_matches, matches);
 #ifdef BACKSLASH_IN_FILENAME
-  if (curbuf->b_p_csl[0] != NUL) {
+  if ((curbuf->b_p_csl[0] == NUL && !p_ssl) || curbuf->b_p_csl[0] == 'b') {
     for (int i = 0; i < num_matches; i++) {
-      char *ptr = matches[i];
-      while (*ptr != NUL) {
-        if (curbuf->b_p_csl[0] == 's' && *ptr == '\\') {
-          *ptr = '/';
-        } else if (curbuf->b_p_csl[0] == 'b' && *ptr == '/') {
+      for (char *ptr = matches[i]; *ptr; ptr++) {
+        if (*ptr == '/') {
           *ptr = '\\';
         }
-        ptr += utfc_ptr2len(ptr);
       }
     }
   }
@@ -5821,6 +5804,7 @@ static int get_userdefined_compl_info(colnr_T curs_col, Callback *cb, int *start
   const int save_State = State;
 
   const bool is_cpt_function = (cb != NULL);
+  const bool use_sandbox = is_cpt_function && was_set_insecurely(curwin, kOptComplete, OPT_LOCAL);
   if (!is_cpt_function) {
     // Call 'completefunc' or 'omnifunc' or 'thesaurusfunc' and get pattern
     // length as a string
@@ -5841,7 +5825,13 @@ static int get_userdefined_compl_info(colnr_T curs_col, Callback *cb, int *start
 
   pos_T pos = curwin->w_cursor;
   textlock++;
+  if (use_sandbox) {
+    sandbox++;
+  }
   colnr_T col = (colnr_T)callback_call_retnr(cb, 2, args);
+  if (use_sandbox) {
+    sandbox--;
+  }
   textlock--;
 
   State = save_State;

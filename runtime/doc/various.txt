@@ -62,10 +62,9 @@ ga			Print the ascii value of the character under the
 			but printable according to the 'isprint' option, the
 			non-printable version is also given.
 
-			When the character is larger than 127, the <M-x> form
-			is also printed.  For example:
-				<~A>  <M-^A>  129,  Hex 81,  Octal 201 ~
-				<p>  <|~>  <M-~>  254,  Hex fe,  Octal 376 ~
+			When the character is larger than 127:
+				<<81>>  129,  Hex 0081,  Octal 201 ~
+				 <p>    254,  Hex 00fe,  Octal 376 ~
 			(where <p> is a special character)
 
 			The <Nul> character in a file is stored internally as
@@ -186,6 +185,9 @@ gx			Opens the current filepath, URL (decided by
 			Specifying no mark at all is the same as "+".
 			If the mark is "=", a line of dashes is printed
 			around the current line.
+
+			If the 'number' option is set, absolute line numbers
+			will be included in the output.
 
 							*:z!*
 :[range]z![+-^.=][count]

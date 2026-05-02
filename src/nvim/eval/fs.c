@@ -462,12 +462,6 @@ void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   os_can_exe(tv_get_string(&argvars[0]), &path, true);
 
-#ifdef BACKSLASH_IN_FILENAME
-  if (path != NULL) {
-    slash_adjust(path);
-  }
-#endif
-
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = path;
 }
@@ -878,7 +872,7 @@ void f_glob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "globpath()" function
 void f_globpath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int flags = WILD_IGNORE_COMPLETESLASH;  // Flags for globpath.
+  int flags = 0;  // Flags for globpath.
   bool error = false;
 
   // Return a string, or a list if the optional third argument is non-zero.
@@ -1739,13 +1733,13 @@ write_blob_error:
 }
 
 static bool write_blob(FileDescriptor *const fp, const blob_T *const blob)
-  FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ALL
 {
   return write_data(fp, blob->bv_ga.ga_data, (size_t)tv_blob_len(blob));
 }
 
 static bool write_string(FileDescriptor *const fp, const char *const data)
-  FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ALL
 {
   return write_data(fp, data, strlen(data));
 }
@@ -1759,6 +1753,10 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
+  // XXX: this logic is bit weird because of how `decode_string` works: #39328
+  // - if decode_string finds NUL in the Lua string, it assigns VAR_BLOB
+  // - else it assigns VAR_STRING
+
   if (argvars[0].v_type == VAR_LIST) {
     TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
       if (!tv_check_str_or_nr(TV_LIST_ITEM_TV(li))) {
@@ -1766,9 +1764,9 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
     });
   } else if (argvars[0].v_type != VAR_BLOB
+             // Always treat Lua strings as "blob" data.
              && !(argvars[0].v_type == VAR_STRING && script_is_lua(current_sctx.sc_sid))) {
-    semsg(_(e_invarg2),
-          _("writefile() first argument must be a List or a Blob"));
+    semsg(_(e_invarg2), _("writefile() first argument must be a List or a Blob"));
     return;
   }
 
@@ -1835,7 +1833,7 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     bool write_ok;
     if (argvars[0].v_type == VAR_BLOB) {
-      write_ok = write_blob(&fp, argvars[0].vval.v_blob);
+      write_ok = argvars[0].vval.v_blob == NULL || write_blob(&fp, argvars[0].vval.v_blob);
     } else if (argvars[0].v_type == VAR_STRING) {
       write_ok = write_string(&fp, argvars[0].vval.v_string);
     } else {

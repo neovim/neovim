@@ -998,6 +998,10 @@ describe('LSP', function()
           eq(true, client:supports_method('textDocument/hover'))
           eq(false, client:supports_method('textDocument/definition'))
 
+          -- Self-mapped methods do not have a related server capability and should be assumed
+          -- to be supported.
+          eq(true, client:supports_method('shutdown'))
+
           -- unknown methods are assumed to be supported.
           eq(true, client:supports_method('unknown-method'))
         end,
@@ -3377,10 +3381,42 @@ describe('LSP', function()
         }, { client_id = client_id })
         check('workspace/didChangeConfiguration', nil, 'section')
 
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'unknown-method-id',
+              method = 'unknown-method',
+              registerOptions = {
+                some_opt = 'unknown-dummy-opt',
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('unknown-method', nil, 'some_opt')
+
+        check('unknown-method-2')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'unknown-method-2-id',
+              method = 'unknown-method-2',
+              registerOptions = {
+                documentSelector = {
+                  {
+                    pattern = root_dir .. '/*.foo',
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('unknown-method-2')
+        check('unknown-method-2', tmpfile)
+
         return result
       end)
 
-      eq(21, #result)
+      eq(25, #result)
       eq({ method = 'textDocument/formatting', supported = false }, result[1])
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
@@ -3415,6 +3451,14 @@ describe('LSP', function()
         { method = 'workspace/didChangeConfiguration', supported = true, cap = { 'dummy-section' } },
         result[21]
       )
+      eq({
+        method = 'unknown-method',
+        supported = true,
+        cap = { 'unknown-dummy-opt' },
+      }, result[22])
+      eq({ method = 'unknown-method-2', supported = true }, result[23])
+      eq({ method = 'unknown-method-2', supported = false }, result[24])
+      eq({ method = 'unknown-method-2', supported = true, fname = tmpfile }, result[25])
     end)
 
     it('identifies client dynamic registration capability', function()
@@ -4482,6 +4526,52 @@ describe('LSP', function()
       -- Set the filetype to 'bar', confirm a new LSP starts, and the old one goes away.
       exec_lua([[vim.bo.filetype = 'bar']])
       eq({ 0, 'foo', 1, 'bar' }, count_clients())
+    end)
+
+    it('sends didClose and didOpen when languageId changes', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+
+      exec_lua(function()
+        _G.server = _G._create_server({
+          handlers = {
+            initialize = function(_, _, callback)
+              callback(nil, { capabilities = { textDocumentSync = { openClose = true } } })
+            end,
+          },
+        })
+        vim.lsp.config('foo', { cmd = _G.server.cmd, filetypes = { 'foo', 'bar' } })
+        vim.lsp.enable('foo')
+        vim.cmd.edit(tmp1)
+      end)
+
+      local function test_messages()
+        local opens = 0
+        local closes = 0
+        local msgs = exec_lua([[ return _G.server.messages ]])
+        local num_clients = exec_lua([[ return #vim.lsp.get_clients() ]])
+        for _, msg in ipairs(msgs) do
+          opens = opens + (msg.method == 'textDocument/didOpen' and 1 or 0)
+          closes = closes + (msg.method == 'textDocument/didClose' and 1 or 0)
+        end
+        return { opens, 'did_open', closes, 'did_close', num_clients, 'clients' }
+      end
+
+      -- No filetype on the buffer yet.
+      eq({ 0, 'did_open', 0, 'did_close', 0, 'clients' }, test_messages())
+
+      -- Set the filetype to 'foo', confirm didOpen is sent.
+      exec_lua([[vim.bo.filetype = 'foo']])
+      retry(nil, 1000, function()
+        eq({ 1, 'did_open', 0, 'did_close', 1, 'clients' }, test_messages())
+      end)
+
+      -- Set to anohter lsp-supported filetype 'bar', confirm didClose and didOpen are sent.
+      exec_lua([[vim.bo.filetype = 'bar']])
+      retry(nil, 1000, function()
+        eq({ 2, 'did_open', 1, 'did_close', 1, 'clients' }, test_messages())
+      end)
     end)
 
     it('validates config on attach', function()

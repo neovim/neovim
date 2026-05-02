@@ -1,5 +1,17 @@
 local M = {}
 
+local http_methods = {
+  GET = true,
+  POST = true,
+  PUT = true,
+  PATCH = true,
+  HEAD = true,
+  DELETE = true,
+}
+
+---@alias vim.net.request.ResponseFunc fun(err: string?, response: vim.net.request.Response?)
+---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PACH" | "HEAD"| "DELETE
+
 ---@class vim.net.request.Opts
 ---@inlinedoc
 ---
@@ -8,6 +20,9 @@ local M = {}
 ---
 ---Number of retries on transient failures (default: 3).
 ---@field retry? integer
+---
+---Request body for POST/PUT/PATCH requests.
+---@field body? string
 ---
 ---File path to save the response body to.
 ---@field outpath? string
@@ -24,7 +39,7 @@ local M = {}
 ---The HTTP body of the request
 ---@field body string
 
---- Makes an HTTP GET request to the given URL, asynchronously passing the result to the specified
+--- Makes an HTTP request to the given URL, asynchronously passing the result to the specified
 --- `on_response`, `outpath` or `outbuf`.
 ---
 --- Examples:
@@ -56,20 +71,43 @@ local M = {}
 --- vim.net.request('https://neovim.io/charter/', {
 ---   headers = { Authorization = 'Bearer XYZ' },
 --- })
+---
+--- -- POST request with body.
+--- vim.net.request('POST', 'https://example.com/api', {
+---   body = '{"key": "value"}',
+---   headers = {['Content-Type'] = 'application/json' }
+--- })
 --- ```
 ---
+--- @param method vim.net.HttpMethod (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
 --- @param url string The URL for the request.
 --- @param opts? vim.net.request.Opts
---- @param on_response? fun(err: string?, response: vim.net.request.Response?)
---- Callback invoked on request completion. The `body` field in the response
---- parameter contains the raw response data (text or binary).
+--- @param on_response? vim.net.request.ResponseFunc Callback invoked on request completion.
+--- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
+--- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
-function M.request(url, opts, on_response)
+function M.request(method, url, opts, on_response)
+  if type(url) ~= 'string' then
+    ---@diagnostic disable-next-line: cast-local-type
+    on_response = opts
+    ---@diagnostic disable-next-line: no-unknown
+    opts = url
+    url = method
+    method = 'GET'
+  end
+  opts = opts or {}
+
+  vim.validate('method', method, function(m)
+    return http_methods[m] == true, ('invalid HTTP method: %s'):format(m)
+  end)
   vim.validate('url', url, 'string')
   vim.validate('opts', opts, 'table', true)
+  vim.validate('opts.headers', opts.headers, 'table', true)
+  vim.validate('opts.body', opts.body, function(b)
+    return (b == nil and true) or (type(b) == 'string' and not b:match('^@'))
+  end, true, 'body should be string and not start with @')
   vim.validate('on_response', on_response, 'function', true)
 
-  opts = opts or {}
   local retry = opts.retry or 3
 
   -- Build curl command
@@ -85,8 +123,14 @@ function M.request(url, opts, on_response)
     vim.list_extend(args, { '--output', opts.outpath })
   end
 
+  -- curl -X HEAD does not work and advises to use --head instead
+  vim.list_extend(args, method == 'HEAD' and { '--head' } or { '--request', method })
+
+  if vim.list_contains({ 'POST', 'PUT', 'PATCH' }, method) and opts.body then
+    vim.list_extend(args, { '--data-binary', '@-' })
+  end
+
   if opts.headers then
-    vim.validate('opts.headers', opts.headers, 'table', true)
     for key, value in pairs(opts.headers) do
       if type(key) ~= 'string' or type(value) ~= 'string' then
         error('headers keys and values must be strings')
@@ -97,16 +141,17 @@ function M.request(url, opts, on_response)
       end
 
       if value == '' then
-        vim.list_extend(args, { '-H', key .. ';' })
+        vim.list_extend(args, { '--header', key .. ';' })
       else
-        vim.list_extend(args, { '-H', key .. ': ' .. value })
+        vim.list_extend(args, { '--header', key .. ': ' .. value })
       end
     end
   end
 
   table.insert(args, url)
 
-  local job = vim.system(args, {}, function(res)
+  local system_opts = opts.body and { stdin = opts.body } or {}
+  local job = vim.system(args, system_opts, function(res)
     ---@type string?, vim.net.request.Response?
     local err, response = nil, nil
     if res.signal ~= 0 then

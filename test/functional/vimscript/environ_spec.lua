@@ -27,6 +27,15 @@ describe('vim.fn.environ()', function()
     eq(vim.NIL, n.exec_lua('return vim.env.DOES_NOT_EXIST'))
   end)
 
+  it('forces uppercase keys on Windows #39443', function()
+    if not t.is_os('win') then
+      return
+    end
+    clear({ env = { mixed_Case_Var = 'val' } })
+    eq('val', environ()['MIXED_CASE_VAR'])
+    eq(nil, environ()['mixed_Case_Var'])
+  end)
+
   it('results match getenv()', function()
     clear()
     eq(
@@ -35,7 +44,7 @@ describe('vim.fn.environ()', function()
         local env = vim.fn.environ()
         assert(vim.tbl_count(env) > 10, 'environ() should have some env vars!')
         for k, v in pairs(env) do
-          if v ~= '' and vim.fn.getenv(k) ~= v then
+          if v ~= '' and vim.fn.getenv(k) ~= v and vim.fn.getenv(k) ~= v:gsub('\\', '/') then
             error(('environ()[%q] = %q, but vim.fn.getenv(%q) = %q'):format(k, v, k, vim.fn.getenv(k)))
           end
         end

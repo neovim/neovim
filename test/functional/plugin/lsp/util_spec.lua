@@ -629,7 +629,7 @@ describe('vim.lsp.util', function()
           filename = '/test_b',
           kind = 'Module',
           lnum = 4,
-          text = '[Module] TestB in TestBContainer (deprecated)',
+          text = '[Module] TestB (deprecated)',
         },
       }
       eq(
@@ -672,7 +672,7 @@ describe('vim.lsp.util', function()
                 },
                 uri = 'file:///test_b',
               },
-              containerName = 'TestBContainer',
+              containerName = vim.NIL,
             },
           }
           return vim.lsp.util.symbols_to_items(sym_info, nil, 'utf-16')
@@ -1392,6 +1392,14 @@ describe('vim.lsp.util', function()
           end)
           eq('Title', opts.title)
         end)
+      end)
+
+      it('anchor is NW for relative = "editor" regardless of cursor #39306', function()
+        feed('G') -- without the fix, cursor on the last line picks an 'S*' anchor
+        local opts = exec_lua(function()
+          return vim.lsp.util.make_floating_popup_options(30, 10, { relative = 'editor' })
+        end)
+        eq('NW', opts.anchor)
       end)
     end)
 

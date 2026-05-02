@@ -119,7 +119,7 @@ void decor_redraw(buf_T *buf, int row1, int row2, int col1, DecorInline decor)
 void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
 {
   if (sh.hl_id || (sh.url != NULL)
-      || (sh.flags & (kSHIsSign | kSHSpellOn | kSHSpellOff | kSHConceal))) {
+      || (sh.flags & (kSHIsSign | kSHSpellOn | kSHSpellOff | kSHConceal | kSHConcealOff))) {
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
@@ -644,7 +644,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
   };
 
   if (sh->hl_id || (sh->url != NULL)
-      || (sh->flags & (kSHConceal | kSHSpellOn | kSHSpellOff))) {
+      || (sh->flags & (kSHConcealOff | kSHConceal | kSHSpellOn | kSHSpellOff))) {
     if (sh->hl_id) {
       range.attr_id = syn_id2attr(sh->hl_id);
     }
@@ -798,6 +798,10 @@ next_mark:
           col_last = MIN(col_last, r->start_col);
           conceal_attr = r->attr_id;
         }
+      }
+
+      if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHConcealOff)) {
+        conceal = 0;
       }
 
       if (r->kind == kDecorKindHighlight) {
@@ -1213,7 +1217,9 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
     priority = sh_hl.priority;
   }
 
-  if (sh_hl.flags & kSHConceal) {
+  if (sh_hl.flags & kSHConcealOff) {
+    PUT_C(*dict, "conceal", BOOLEAN_OBJ(false));
+  } else if (sh_hl.flags & kSHConceal) {
     char buf[MAX_SCHAR_SIZE];
     schar_get(buf, sh_hl.text[0]);
     PUT_C(*dict, "conceal", CSTR_TO_ARENA_OBJ(arena, buf));

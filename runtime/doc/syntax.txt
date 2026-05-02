@@ -370,6 +370,20 @@ ADA
 See |ft-ada-syntax|
 
 
+ALGOL 68					*algol68* *ft-algol68-syntax*
+
+This syntax file currently targets the Algol 68 Genie project using the
+default UPPER stropping regime.  It should also be usuable in other
+environments using the UPPER stropping regime, though somewhat less complete.
+
+Highlighting can be further configured with the following variables.
+
+Variable			Highlight ~
+*algol68_no_preludes*		no prelude identifiers, procedures or
+				bold word operators
+*algol68_symbolic_operators*	all prelude symbolic operators
+
+
 ANT							*ft-ant-syntax*
 
 The ant syntax file provides syntax highlighting for javascript and python

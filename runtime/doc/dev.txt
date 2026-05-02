@@ -306,8 +306,8 @@ To choose a new "EXX" error code (e.g. |E5555|), just print a message with
 a new EXX number: >
     emsg(_("E996: Invalid thing"));
 <
-To see existing error codes: >
-    :new | put =filter(getcompletion('h E', 'cmdline'), 'v:val =~# ''E\d\d''')
+To see existing error codes: >vim
+    :exe 'help' | let g:errtags=sort(map(taglist('E\d\d\d\?\d\?'), 'v:val.name'), 'N') | new | put =g:errtags
 
 The `linterrcodes` build target checks that all "EXX" codes are unique and
 have help tags. It runs in CI, but you can also run it locally: >

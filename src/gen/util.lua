@@ -404,4 +404,17 @@ function M.md_to_vimdoc(text, start_indent, indent, text_width, is_list)
   return s
 end
 
+--- Sorts a list in-place, with underscore-prefixed names last (e.g. "_cmdline_offset").
+--- If `key` is given, sorts by `item[key]`; otherwise sorts by value.
+---
+--- @param t any[]
+--- @param key? string
+function M.sort_by_key(t, key)
+  table.sort(t, function(a, b)
+    local a_val = key and a[key] or a
+    local b_val = key and b[key] or b
+    return a_val:gsub('^_', '~') < b_val:gsub('^_', '~')
+  end)
+end
+
 return M

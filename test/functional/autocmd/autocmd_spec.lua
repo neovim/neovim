@@ -20,6 +20,7 @@ local command = n.command
 local exec_lua = n.exec_lua
 local retry = t.retry
 local source = n.source
+local request = n.request
 
 describe('autocmd', function()
   before_each(clear)

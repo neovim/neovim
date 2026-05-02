@@ -295,7 +295,7 @@ void ex_profile(exarg_T *eap)
 
   if (len == 5 && strncmp(eap->arg, "start", 5) == 0 && *e != NUL) {
     xfree(profile_fname);
-    profile_fname = expand_env_save_opt(e, true);
+    profile_fname = expand_env_save_opt(e, true, NULL);
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
     set_vim_var_nr(VV_PROFILING, 1);

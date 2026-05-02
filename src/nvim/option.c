@@ -365,7 +365,7 @@ void set_init_1(bool clean_arg)
   memmove(backupdir + 2, backupdir, backupdir_len + 1);
   memmove(backupdir, ".,", 2);
   set_string_default(kOptBackupdir, backupdir, true);
-  set_string_default(kOptViewdir, stdpaths_user_state_subpath("view", 2, true),
+  set_string_default(kOptViewdir, stdpaths_user_state_subpath("view", 2, false),
                      true);
   set_string_default(kOptDirectory, stdpaths_user_state_subpath("swap", 2, true),
                      true);
@@ -406,6 +406,12 @@ void set_init_1(bool clean_arg)
 
   // Expand environment variables and things like "~" for the defaults.
   set_init_expand_env();
+
+  // Allow disabling ttyfast during startup to disable features such as
+  // automatic background detection over slow connections.
+  if (os_env_exists("NVIM_NOTTYFAST", false)) {
+    set_option_value_give_err(kOptTtyfast, BOOLEAN_OPTVAL(false), 0);
+  }
 
   save_file_ff(curbuf);         // Buffer is unchanged
 
@@ -1779,7 +1785,7 @@ static char *option_expand(OptIndex opt_idx, const char *val)
   // For 'spellsuggest' expand after "file:".
   char **var = (char **)options[opt_idx].var;
   bool esc = var == &p_tags || var == &p_path;
-  expand_env_esc(val, NameBuff, MAXPATHL, esc, false,
+  expand_env_esc(val, NameBuff, MAXPATHL, esc ? (char *)" \t" : NULL, false,
                  (char **)options[opt_idx].var == &p_sps ? "file:" : NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;
@@ -2054,9 +2060,9 @@ void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
   }
 }
 
-/// Apply the OptionSet autocommand.
-static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, OptVal oldval, OptVal oldval_g,
-                                    OptVal oldval_l, OptVal newval, const char *errmsg)
+/// Execute OptionSet autocmd now (not deferred).
+void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, OptVal oldval, OptVal oldval_g,
+                                 OptVal oldval_l, OptVal newval, const char *errmsg)
 {
   // Don't do this while starting up, failure or recursively.
   if (starting || errmsg != NULL || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
@@ -2093,6 +2099,20 @@ static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, OptVal oldv
   }
   apply_autocmds(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, NULL);
   reset_v_option_vars();
+}
+
+/// For 'modified', the event is deferred.
+static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, OptVal oldval, OptVal oldval_g,
+                                    OptVal oldval_l, OptVal newval, const char *errmsg)
+{
+  if (starting || errmsg != NULL) {
+    return;
+  }
+  if (opt_idx == kOptModified) {
+    aucmd_defer_modified(curbuf, newval.data.boolean);
+    return;
+  }
+  apply_optionset_autocmd_now(opt_idx, opt_flags, oldval, oldval_g, oldval_l, newval, errmsg);
 }
 
 /// Process the updated 'arabic' option value.
@@ -2650,6 +2670,8 @@ static const char *did_set_scrollbind(optset_T *args)
 
 #ifdef BACKSLASH_IN_FILENAME
 /// Process the updated 'shellslash' option value.
+/// TODO(ntdiary): Remove this once we're confident that the `shellslash`
+/// option is no longer needed.
 static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (p_ssl) {
@@ -2662,10 +2684,11 @@ static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
     pseps[0] = '\\';
   }
 
+  // TODO(ntdiary): Remove these in the follow PR.
   // need to adjust the file name arguments and buffer names.
-  buflist_slash_adjust();
-  alist_slash_adjust();
-  scriptnames_slash_adjust();
+  // buflist_slash_adjust();
+  // alist_slash_adjust();
+  // scriptnames_slash_adjust();
   return NULL;
 }
 #endif
@@ -3902,6 +3925,29 @@ static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flag
       return errmsg;
     }
   }
+
+#ifdef BACKSLASH_IN_FILENAME
+  // Ensure "/" slashes in various options.
+  uint32_t flags = options[opt_idx].flags;
+  if ((flags & kOptFlagExpand)
+      && opt_idx != kOptEqualprg
+      && opt_idx != kOptFormatprg
+      && opt_idx != kOptGrepprg
+      && opt_idx != kOptKeywordprg
+      && opt_idx != kOptMakeprg
+      && opt_idx != kOptShell) {
+    bool allow_comma = flags & kOptFlagComma;
+    bool allow_space = (opt_idx == kOptCdpath || opt_idx == kOptPath || opt_idx == kOptTags);
+    for (char *p = value.data.string.data; *p; p++) {
+      if (*p != '\\'
+          || (p[1] == ',' && allow_comma)
+          || (p[1] == ' ' && allow_space)) {
+        continue;
+      }
+      *p = '/';
+    }
+  }
+#endif
 
   vimoption_T *opt = &options[opt_idx];
   const bool scope_local = opt_flags & OPT_LOCAL;

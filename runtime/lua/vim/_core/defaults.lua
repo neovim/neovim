@@ -468,11 +468,11 @@ do
 
     vim.keymap.set({ 'x' }, '[N', function()
       require 'vim.treesitter._select'.select_grow_prev(vim.v.count1)
-    end, { desc = 'Select expand previous node' })
+    end, { desc = 'Select previous sibling node' })
 
     vim.keymap.set({ 'x' }, ']N', function()
       require 'vim.treesitter._select'.select_grow_next(vim.v.count1)
-    end, { desc = 'Select expand next node' })
+    end, { desc = 'Select next sibling node' })
 
     vim.keymap.set({ 'x', 'o' }, 'an', function()
       if vim.treesitter.get_parser(nil, nil, { error = false }) then
@@ -847,7 +847,10 @@ do
     --- ignored in the calculations.
     ---
     --- [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-    do
+    ---
+    --- In slow environments (e.g. SSH with high latency), this will increase
+    --- startup time and produce a warning, so users may want to disable it.
+    if vim.o.ttyfast then
       --- Parse a string of hex characters as a color.
       ---
       --- The string can contain 1 to 4 hex characters. The returned value is
@@ -911,57 +914,55 @@ do
         return nil, nil, nil
       end
 
-      -- This autocommand updates the value of 'background' anytime we receive
-      -- an OSC 11 response from the terminal emulator. If the user has set
-      -- 'background' explicitly then we will delete this autocommand,
-      -- effectively disabling automatic background setting.
+      -- Send OSC 11 query along with DSR sequence to determine whether terminal supports the query.
+      -- If the DSR response comes first, the terminal most likely doesn't support the bg color
+      -- query, and we don't have to keep waiting for a bg color response. #32109
+      local osc11 = '\027]11;?\007'
+      local dsr = '\027[5n'
+
+      -- This handler updates the value of 'background' anytime we receive an OSC 11 response from
+      -- the terminal emulator. If the user has set 'background' explicitly then we will delete the
+      -- autocommand below, effectively disabling automatic background setting.
       local did_dsr_response = false
-      local id = vim.api.nvim_create_autocmd('TermResponse', {
-        group = group,
-        nested = true,
-        desc = "Update the value of 'background' automatically based on the terminal emulator's background color",
-        callback = function(ev)
-          local resp = ev.data.sequence ---@type string
+      -- VimEnter handles cleanup; no built-in timeout.
+      local id = vim.tty.request(osc11 .. dsr, { group = group, timeout = 0 }, function(resp)
+        -- DSR response that should come after the OSC 11 response if the
+        -- terminal supports it.
+        if string.match(resp, '^\027%[0n$') then
+          did_dsr_response = true
+          -- Don't stop listening: the bg response may come after the DSR response if the terminal
+          -- handles requests out of sequence. In that case, the bg will simply be set later in the
+          -- startup sequence.
+          return
+        end
 
-          -- DSR response that should come after the OSC 11 response if the
-          -- terminal supports it.
-          if string.match(resp, '^\027%[0n$') then
-            did_dsr_response = true
-            -- Don't delete the autocmd because the bg response may come
-            -- after the DSR response if the terminal handles requests out
-            -- of sequence. In that case, the background will simply be set
-            -- later in the startup sequence.
-            return false
-          end
+        local r, g, b = parseosc11(resp)
+        if r and g and b then
+          local rr = parsecolor(r)
+          local gg = parsecolor(g)
+          local bb = parsecolor(b)
 
-          local r, g, b = parseosc11(resp)
-          if r and g and b then
-            local rr = parsecolor(r)
-            local gg = parsecolor(g)
-            local bb = parsecolor(b)
+          if rr and gg and bb then
+            local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
+            local bg = luminance < 0.5 and 'dark' or 'light'
+            vim.api.nvim_set_option_value('background', bg, {})
 
-            if rr and gg and bb then
-              local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
-              local bg = luminance < 0.5 and 'dark' or 'light'
-              vim.api.nvim_set_option_value('background', bg, {})
-
-              -- Ensure OptionSet still triggers when we set the background during startup
-              if vim.v.vim_did_enter == 0 then
-                vim.api.nvim_create_autocmd('VimEnter', {
-                  group = group,
-                  once = true,
-                  nested = true,
-                  callback = function()
-                    vim.api.nvim_exec_autocmds('OptionSet', {
-                      pattern = 'background',
-                    })
-                  end,
-                })
-              end
+            -- Ensure OptionSet still triggers when we set the background during startup
+            if vim.v.vim_did_enter == 0 then
+              vim.api.nvim_create_autocmd('VimEnter', {
+                group = group,
+                once = true,
+                nested = true,
+                callback = function()
+                  vim.api.nvim_exec_autocmds('OptionSet', {
+                    pattern = 'background',
+                  })
+                end,
+              })
             end
           end
-        end,
-      })
+        end
+      end)
 
       vim.api.nvim_create_autocmd('VimEnter', {
         group = group,
@@ -980,15 +981,6 @@ do
         end,
       })
 
-      -- Send OSC 11 query along with DSR sequence to determine whether
-      -- terminal supports the query. If the DSR response comes first,
-      -- the terminal most likely doesn't support the bg color query,
-      -- and we don't have to keep waiting for a bg color response.
-      -- #32109
-      local osc11 = '\027]11;?\007'
-      local dsr = '\027[5n'
-      vim.api.nvim_ui_send(osc11 .. dsr)
-
       -- Wait until detection of OSC 11 capabilities is complete to
       -- ensure background is automatically set before user config.
       if
@@ -999,7 +991,7 @@ do
         and os.getenv('NVIM_TEST') == nil
       then
         vim.notify(
-          'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.',
+          "E1568: Terminal did not respond to DSR request for 'background' color. Startup may be slower. :help 'ttyfast'",
           vim.log.levels.WARN,
           { _truncate = true }
         )
@@ -1017,11 +1009,11 @@ do
         -- The TUI was able to determine truecolor support or $COLORTERM explicitly indicates
         -- truecolor support
         setoption('termguicolors', true)
-      elseif colorterm == nil or colorterm == '' then
+      elseif (colorterm == nil or colorterm == '') and vim.o.ttyfast then
         -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
         -- terminal
         local caps = {} ---@type table<string, boolean>
-        require('vim.tty').query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
+        vim.tty.query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
           if not found then
             return
           end
@@ -1032,77 +1024,57 @@ do
           end
         end)
 
-        local timer = assert(vim.uv.new_timer())
-
         -- Arbitrary colors to set in the SGR sequence
         local r = 1
         local g = 2
         local b = 3
 
-        local id = vim.api.nvim_create_autocmd('TermResponse', {
-          group = group,
-          nested = true,
-          callback = function(ev)
-            local resp = ev.data.sequence ---@type string
-            local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
-
-            if decrqss then
-              -- The DECRQSS SGR response first contains attributes separated by
-              -- semicolons, followed by the SGR itself with parameters separated
-              -- by colons. Some terminals include "0" in the attribute list
-              -- unconditionally; others do not. Our SGR sequence did not set any
-              -- attributes, so there should be no attributes in the list.
-              local attrs = vim.split(decrqss, ';')
-              if #attrs ~= 1 and (#attrs ~= 2 or attrs[1] ~= '0') then
-                return false
-              end
-
-              -- The returned SGR sequence should begin with 48:2
-              local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
-              if not sgr then
-                return false
-              end
-
-              -- The remaining elements of the SGR sequence should be the 3 colors
-              -- we set. Some terminals also include an additional parameter
-              -- (which can even be empty!), so handle those cases as well
-              local params = vim.split(sgr, ':')
-              if #params ~= 3 and (#params ~= 4 or (params[1] ~= '' and params[1] ~= '1')) then
-                return true
-              end
-
-              if
-                vim._tointeger(params[#params - 2]) == r
-                and vim._tointeger(params[#params - 1]) == g
-                and vim._tointeger(params[#params]) == b
-              then
-                setoption('termguicolors', true)
-              end
-
-              return true
-            end
-          end,
-        })
-
         -- Write SGR followed by DECRQSS. This sets the background color then
         -- immediately asks the terminal what the background color is. If the
         -- terminal responds to the DECRQSS with the same SGR sequence that we
         -- sent then the terminal supports truecolor.
-        local decrqss = '\027P$qm\027\\'
-
+        --
         -- Reset attributes first, as other code may have set attributes.
-        vim.api.nvim_ui_send(string.format('\027[0m\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
+        local payload = ('\027[0m\027[48;2;%d;%d;%dm%s'):format(r, g, b, '\027P$qm\027\\')
 
-        timer:start(1000, 0, function()
-          -- Delete the autocommand if no response was received
-          vim.schedule(function()
-            -- Suppress error if autocommand has already been deleted
-            pcall(vim.api.nvim_del_autocmd, id)
-          end)
-
-          if not timer:is_closing() then
-            timer:close()
+        vim.tty.request(payload, { group = group }, function(resp)
+          local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
+          if not decrqss then
+            return
           end
+
+          -- The DECRQSS SGR response first contains attributes separated by semicolons, followed by
+          -- the SGR itself with parameters separated by colons. Some terminals include "0" in the
+          -- attribute list unconditionally; others do not. Our SGR sequence did not set any
+          -- attributes, so there should be no attributes in the list.
+          local attrs = vim.split(decrqss, ';')
+          if #attrs ~= 1 and (#attrs ~= 2 or attrs[1] ~= '0') then
+            return
+          end
+
+          -- The returned SGR sequence should begin with 48:2
+          local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
+          if not sgr then
+            return
+          end
+
+          -- The remaining elements of the SGR sequence should be the 3 colors we set. Some
+          -- terminals also include an additional parameter (which can even be empty!), so handle
+          -- those cases as well
+          local params = vim.split(sgr, ':')
+          if #params ~= 3 and (#params ~= 4 or (params[1] ~= '' and params[1] ~= '1')) then
+            return true
+          end
+
+          if
+            vim._tointeger(params[#params - 2]) == r
+            and vim._tointeger(params[#params - 1]) == g
+            and vim._tointeger(params[#params]) == b
+          then
+            setoption('termguicolors', true)
+          end
+
+          return true
         end)
       end
     end
@@ -1115,7 +1087,12 @@ do
       desc = 'Display native progress bars',
       callback = function(ev)
         if ev.data.status == 'running' then
-          vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', ev.data.percent))
+          if ev.data.percent ~= nil then
+            vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', ev.data.percent))
+          else
+            -- "Indeterminate" progress (unknown percent).
+            vim.api.nvim_ui_send(string.format('\027]9;4;3\027\\'))
+          end
         else
           vim.api.nvim_ui_send('\027]9;4;0;0\027\\')
         end

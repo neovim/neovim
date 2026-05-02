@@ -1255,15 +1255,10 @@ bool no_spell_checking(win_T *wp)
   return false;
 }
 
-static void decor_spell_nav_start(win_T *wp)
-{
-  decor_state = (DecorState){ 0 };
-  decor_redraw_reset(wp, &decor_state);
-}
-
 static TriState decor_spell_nav_col(win_T *wp, linenr_T lnum, linenr_T *decor_lnum, int col)
 {
   if (*decor_lnum != lnum) {
+    decor_redraw_reset(wp, &decor_state);
     decor_providers_invoke_spell(wp, lnum - 1, col, lnum - 1, -1);
     decor_redraw_line(wp, lnum - 1, &decor_state);
     *decor_lnum = lnum;
@@ -1331,7 +1326,7 @@ size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *a
   // temporary DecorState.
   DecorState saved_decor_start = decor_state;
   linenr_T decor_lnum = -1;
-  decor_spell_nav_start(wp);
+  decor_state = (DecorState){ 0 };
 
   while (!got_int) {
     char *line = ml_get_buf(wp->w_buffer, lnum);

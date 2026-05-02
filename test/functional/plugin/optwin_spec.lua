@@ -80,7 +80,6 @@ describe('optwin.lua', function()
       'pastetoggle',
       'langnoremap',
       'opendevice',
-      'ttyfast',
       'remap',
       'hkmap',
       'hkmapp',

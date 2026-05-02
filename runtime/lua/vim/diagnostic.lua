@@ -446,17 +446,17 @@ end
 --- Set diagnostics for the given namespace and buffer.
 ---
 ---@param namespace integer The diagnostic namespace
----@param bufnr integer Buffer number
+---@param buf integer Buffer number
 ---@param diagnostics vim.Diagnostic.Set[]
 ---@param opts? vim.diagnostic.Opts Display options to pass to |vim.diagnostic.show()|
-function M.set(namespace, bufnr, diagnostics, opts)
+function M.set(namespace, buf, diagnostics, opts)
   vim.validate('opts', opts, 'table', true)
-  M._store.set(namespace, bufnr, diagnostics)
-  M.show(namespace, bufnr, nil, opts)
+  M._store.set(namespace, buf, diagnostics)
+  M.show(namespace, buf, nil, opts)
 
   api.nvim_exec_autocmds('DiagnosticChanged', {
     modeline = false,
-    buf = vim._resolve_bufnr(bufnr),
+    buf = vim._resolve_bufnr(buf),
     -- TODO(lewis6991): should this be deepcopy()'d like they are in vim.diagnostic.get()
     data = { diagnostics = diagnostics },
   })
@@ -502,24 +502,24 @@ end
 --- Modifying diagnostics in the returned table has no effect.
 --- To set diagnostics in a buffer, use |vim.diagnostic.set()|.
 ---
----@param bufnr integer? Buffer number to get diagnostics from. Use 0 for
+---@param buf integer? Buffer number to get diagnostics from. Use 0 for
 ---                      current buffer or nil for all buffers.
 ---@param opts? vim.diagnostic.GetOpts
----@return vim.Diagnostic[] : Fields `bufnr`, `end_lnum`, `end_col`, and `severity`
+---@return vim.Diagnostic[] : Fields `buf`, `end_lnum`, `end_col`, and `severity`
 ---                           are guaranteed to be present.
-function M.get(bufnr, opts)
-  return M._store.get(bufnr, opts)
+function M.get(buf, opts)
+  return M._store.get(buf, opts)
 end
 
 --- Get current diagnostics count.
 ---
----@param bufnr? integer Buffer number to get diagnostics from. Use 0 for
+---@param buf? integer Buffer number to get diagnostics from. Use 0 for
 ---                      current buffer or nil for all buffers.
 ---@param opts? vim.diagnostic.GetOpts
 ---@return table<integer, integer> : Table with actually present severity values as keys
 ---                (see |diagnostic-severity|) and integer counts as values.
-function M.count(bufnr, opts)
-  return M._store.count(bufnr, opts)
+function M.count(buf, opts)
+  return M._store.count(buf, opts)
 end
 
 --- Get the previous diagnostic closest to the cursor position.
@@ -687,10 +687,10 @@ M.handlers.virtual_lines = {
 ---
 ---@param namespace integer? Diagnostic namespace. When omitted, hide
 ---                          diagnostics from all namespaces.
----@param bufnr integer? Buffer number, or 0 for current buffer. When
+---@param buf integer? Buffer number, or 0 for current buffer. When
 ---                      omitted, hide diagnostics in all buffers.
-function M.hide(namespace, bufnr)
-  return M._display.hide(namespace, bufnr)
+function M.hide(namespace, buf)
+  return M._display.hide(namespace, buf)
 end
 
 --- Check whether diagnostics are enabled.
@@ -719,17 +719,17 @@ end
 ---
 ---@param namespace integer? Diagnostic namespace. When omitted, show
 ---                          diagnostics from all namespaces.
----@param bufnr integer? Buffer number, or 0 for current buffer. When omitted, show
+---@param buf integer? Buffer number, or 0 for current buffer. When omitted, show
 ---                      diagnostics in all buffers.
 ---@param diagnostics vim.Diagnostic[]? The diagnostics to display. When omitted, use the
 ---                             saved diagnostics for the given namespace and
 ---                             buffer. This can be used to display a list of diagnostics
 ---                             without saving them or to display only a subset of
 ---                             diagnostics. May not be used when {namespace}
----                             or {bufnr} is nil.
+---                             or {buf} is nil.
 ---@param opts? vim.diagnostic.Opts Display options.
-function M.show(namespace, bufnr, diagnostics, opts)
-  return M._display.show(namespace, bufnr, diagnostics, opts)
+function M.show(namespace, buf, diagnostics, opts)
+  return M._display.show(namespace, buf, diagnostics, opts)
 end
 
 --- Show diagnostics in a floating window.
@@ -750,13 +750,13 @@ end
 ---
 ---@param namespace integer? Diagnostic namespace. When omitted, remove
 ---                          diagnostics from all namespaces.
----@param bufnr integer? Remove diagnostics for the given buffer. When omitted,
+---@param buf integer? Remove diagnostics for the given buffer. When omitted,
 ---                     diagnostics are removed for all buffers.
-function M.reset(namespace, bufnr)
+function M.reset(namespace, buf)
   vim.validate('namespace', namespace, 'number', true)
-  vim.validate('bufnr', bufnr, 'number', true)
+  vim.validate('buf', buf, 'number', true)
 
-  local buffers = bufnr and { vim._resolve_bufnr(bufnr) } or M._store.get_bufnrs()
+  local buffers = buf and { vim._resolve_bufnr(buf) } or M._store.get_bufnrs()
   for _, iter_bufnr in ipairs(buffers) do
     local namespaces = namespace and { namespace } or M._store.get_buf_namespaces(iter_bufnr)
     for _, iter_namespace in ipairs(namespaces) do
@@ -1110,17 +1110,17 @@ local default_status_signs = {
 ---
 --- To customise appearance, see |vim.diagnostic.Opts.Status|.
 ---
----@param bufnr? integer Buffer number to get diagnostics from.
+---@param buf? integer Buffer number to get diagnostics from.
 ---                      Defaults to 0 for the current buffer
 ---
 ---@return string
-function M.status(bufnr)
-  vim.validate('bufnr', bufnr, 'number', true)
-  bufnr = bufnr or 0
+function M.status(buf)
+  vim.validate('buf', buf, 'number', true)
+  buf = buf or 0
   local config = assert(vim.diagnostic.config()).status or {} --- @type vim.diagnostic.Opts.Status
   vim.validate('config.format', config.format, { 'table', 'function' }, true)
 
-  local counts = M.count(bufnr)
+  local counts = M.count(buf)
   local format = config.format or default_status_signs
   local result_str --- @type string
   if type(format) == 'table' then

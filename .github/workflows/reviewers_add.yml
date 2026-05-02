@@ -6,6 +6,10 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   request-reviewer:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && !endsWith(github.actor, '[bot]')

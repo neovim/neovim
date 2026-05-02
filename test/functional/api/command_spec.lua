@@ -274,6 +274,25 @@ describe('nvim_create_user_command', function()
     eq(42, api.nvim_eval('g:command_fired'))
   end)
 
+  it('does not leak `preview` LuaRef on invalid `cmd`', function()
+    local released = exec_lua(function()
+      local weak = setmetatable({}, { __mode = 'v' })
+      for i = 1, 10 do
+        local cb = function() end
+        weak[i] = cb
+        pcall(vim.api.nvim_create_user_command, 'Bogus' .. i, {}, { preview = cb })
+      end
+      collectgarbage('collect')
+      collectgarbage('collect')
+      local n = 0
+      for _ in pairs(weak) do
+        n = n + 1
+      end
+      return n
+    end)
+    eq(0, released)
+  end)
+
   it('works with Lua functions', function()
     exec_lua [[
       result = {}
@@ -300,6 +319,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,
@@ -341,6 +361,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,
@@ -382,6 +403,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,
@@ -423,6 +445,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = true,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = true,
           keepalt = false,
@@ -464,6 +487,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,
@@ -505,6 +529,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,
@@ -558,6 +583,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,
@@ -600,6 +626,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,
@@ -653,6 +680,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,
@@ -694,6 +722,7 @@ describe('nvim_create_user_command', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = { force = false, pattern = '' },
           hide = false,
           horizontal = false,
           keepalt = false,

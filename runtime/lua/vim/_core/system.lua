@@ -210,6 +210,7 @@ end
 --- @param output? fun(err: string?, data: string?)|false
 --- @param text? boolean
 --- @return uv.uv_stream_t? pipe
+--- @return integer? child_fd
 --- @return fun(err: string?, data: string?)? handler
 --- @return string[]? data
 local function setup_output(output, text)
@@ -236,7 +237,9 @@ local function setup_output(output, text)
     end
   end
 
+  local pipe_fd = assert(uv.pipe({ nonblock = true }, {}))
   local pipe = assert(uv.new_pipe(false))
+  pipe:open(pipe_fd.read)
 
   --- @param err? string
   --- @param data? string
@@ -248,11 +251,12 @@ local function setup_output(output, text)
     end
   end
 
-  return pipe, handler_with_close, bucket
+  return pipe, pipe_fd.write, handler_with_close, bucket
 end
 
 --- @param input? string|string[]|boolean
 --- @return uv.uv_stream_t?
+--- @return integer? child_fd
 --- @return string|string[]?
 local function setup_input(input)
   if not input then
@@ -264,7 +268,11 @@ local function setup_input(input)
     towrite = input
   end
 
-  return assert(uv.new_pipe(false)), towrite
+  local pipe_fd = assert(uv.pipe({}, { nonblock = true }))
+  local pipe = assert(uv.new_pipe(false))
+  pipe:open(pipe_fd.write)
+
+  return pipe, pipe_fd.read, towrite
 end
 
 --- @return table<string,string>
@@ -316,6 +324,14 @@ local function spawn(cmd, opts, on_exit, on_error)
   end
 
   local handle, pid_or_err = uv.spawn(cmd, opts, on_exit)
+  -- close child stdio fd:s regardless of error
+  for i = 1, 3 do
+    if type(opts.stdio[i]) == 'number' then
+      --- @diagnostic disable-next-line:param-type-mismatch
+      uv.fs_close(opts.stdio[i])
+    end
+  end
+
   if not handle then
     on_error()
     if opts.cwd and not uv.fs_stat(opts.cwd) then
@@ -412,9 +428,9 @@ local function run(cmd, opts, on_exit)
 
   opts = opts or {}
 
-  local stdout, stdout_handler, stdout_data = setup_output(opts.stdout, opts.text)
-  local stderr, stderr_handler, stderr_data = setup_output(opts.stderr, opts.text)
-  local stdin, towrite = setup_input(opts.stdin)
+  local stdout, stdout_child_fd, stdout_handler, stdout_data = setup_output(opts.stdout, opts.text)
+  local stderr, stderr_child_fd, stderr_handler, stderr_data = setup_output(opts.stderr, opts.text)
+  local stdin, stdin_child_fd, towrite = setup_input(opts.stdin)
 
   --- @type vim.SystemState
   local state = {
@@ -431,7 +447,8 @@ local function run(cmd, opts, on_exit)
   --- @diagnostic disable-next-line:missing-fields
   state.handle, state.pid = spawn(cmd[1], {
     args = vim.list_slice(cmd, 2),
-    stdio = { stdin, stdout, stderr },
+    -- local function spawn() will close these
+    stdio = { stdin_child_fd, stdout_child_fd, stderr_child_fd },
     cwd = opts.cwd,
     --- @diagnostic disable-next-line:assign-type-mismatch
     env = setup_env(opts.env, opts.clear_env),

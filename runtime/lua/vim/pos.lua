@@ -16,8 +16,8 @@ local validate = vim.validate
 ---
 --- Example:
 --- ```lua
---- local pos1 = vim.pos(vim.api.nvim_get_current_buf(), 3, 5)
---- local pos2 = vim.pos(vim.api.nvim_get_current_buf(), 4, 0)
+--- local pos1 = vim.pos(0, 3, 5)
+--- local pos2 = vim.pos(0, 4, 0)
 ---
 --- -- Operators are overloaded for comparing two `vim.Pos` objects.
 --- if pos1 < pos2 then
@@ -65,6 +65,10 @@ function M.new(buf, row, col)
   validate('row', row, 'number')
   validate('col', col, 'number')
 
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
+
   ---@type vim.Pos
   local self = setmetatable({
     row,
@@ -82,15 +86,15 @@ end
 --- 0: a == b
 --- -1: a < b
 local function cmp_pos(p1, p2)
-  if p1.row == p2.row then
-    if p1.col > p2.col then
+  if p1[1] == p2[1] then
+    if p1[2] > p2[2] then
       return 1
-    elseif p1.col < p2.col then
+    elseif p1[2] < p2[2] then
       return -1
     else
       return 0
     end
-  elseif p1.row > p2.row then
+  elseif p1[1] > p2[1] then
     return 1
   end
 
@@ -123,8 +127,7 @@ end
 ---
 --- Example:
 --- ```lua
---- local buf = vim.api.nvim_get_current_buf()
---- local pos = vim.pos(buf, 3, 5)
+--- local pos = vim.pos(0, 3, 5)
 ---
 --- -- Convert to LSP position, you can call it in a method style.
 --- local lsp_pos = pos:to_lsp('utf-16')
@@ -135,7 +138,7 @@ function M.to_lsp(pos, position_encoding)
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
 
-  local buf, row, col = pos.buf, pos.row, pos.col
+  local buf, row, col = pos.buf, pos[1], pos[2]
   -- When on the first character,
   -- we can ignore the difference between byte and character.
   if col > 0 then
@@ -150,13 +153,12 @@ end
 ---
 --- Example:
 --- ```lua
---- local buf = vim.api.nvim_get_current_buf()
 --- local lsp_pos = {
 ---   line = 3,
 ---   character = 5
 --- }
 ---
---- local pos = vim.pos.lsp(buf, lsp_pos, 'utf-16')
+--- local pos = vim.pos.lsp(0, lsp_pos, 'utf-16')
 --- ```
 ---@param buf integer
 ---@param pos lsp.Position
@@ -165,6 +167,10 @@ function M.lsp(buf, pos, position_encoding)
   validate('buf', buf, 'number')
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
+
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
 
   local row, col = pos.line, pos.character
   -- When on the first character,
@@ -182,7 +188,7 @@ end
 ---@param pos vim.Pos
 ---@return integer, integer
 function M.to_cursor(pos)
-  return pos.row + 1, pos.col
+  return pos[1] + 1, pos[2]
 end
 
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
@@ -198,9 +204,8 @@ end
 function M.to_extmark(pos)
   local line_count = api.nvim_buf_line_count(pos.buf)
 
-  local row = pos.row
-  local col = pos.col
-  if pos.col == 0 and pos.row == line_count then
+  local row, col = pos[1], pos[2]
+  if col == 0 and row == line_count then
     row = row - 1
     col = #get_line(pos.buf, row)
   end
@@ -213,6 +218,10 @@ end
 ---@param row integer
 ---@param col integer
 function M.extmark(buf, row, col)
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
+
   return M.new(buf, row, col)
 end
 

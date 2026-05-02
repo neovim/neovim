@@ -75,10 +75,10 @@ open({left}, {right}, {opt})                                 *difftool.open()*
                    similarity for rename detection (0 to 1)
                  • {rename.chunk_size} (`number`, default: `4096`) Maximum
                    chunk size to read from files for similarity calculation
-                 • {method} (`'auto'|'builtin'|'diffr'`, default: `auto`) Diff
-                   method to use
                  • {ignore} (`string[]`, default: `{}`) List of file patterns
                    to ignore (for example: `'.git', '*.log'`)
+                 • {method} (`'auto'|'builtin'|'diffr'`, default: `auto`) Diff
+                   method to use
                  • {rename} (`table`) Controls rename detection
 
 
@@ -196,13 +196,13 @@ The plugin can be disabled by setting `g:loaded_spellfile_plugin = 1`.
     A table with the following fields:
 
     Fields: ~
+      • {confirm}     (`boolean`, default: `true`) Whether to ask user to
+                      confirm download.
+      • {timeout_ms}  (`integer`, default: 15000) Number of milliseconds after
+                      which the |vim.net.request()| times out.
       • {url}         (`string`) The base URL from where the spellfiles are
                       downloaded. Uses `g:spellfile_URL` if it's set,
                       otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
-      • {timeout_ms}  (`integer`, default: 15000) Number of milliseconds after
-                      which the |vim.net.request()| times out.
-      • {confirm}     (`boolean`, default: `true`) Whether to ask user to
-                      confirm download.
 
 
 config({opts})                                            *spellfile.config()*
@@ -225,11 +225,11 @@ get({lang})                                                  *spellfile.get()*
 
     Return: ~
         (`table?`) A table with the following fields:
+        • {dir} (`string`)
+        • {encoding} (`string`)
         • {files} (`string[]`)
         • {key} (`string`)
         • {lang} (`string`)
-        • {encoding} (`string`)
-        • {dir} (`string`)
 
 
 ==============================================================================
@@ -253,17 +253,17 @@ tohtml({winid}, {opt})                                       *tohtml.tohtml()*
     Parameters: ~
       • {winid}  (`integer?`) Window to convert (defaults to current window)
       • {opt}    (`table?`) Optional parameters.
-                 • {title}? (`string|false`, default: buffer name) Title tag
-                   to set in the generated HTML code.
-                 • {number_lines}? (`boolean`, default: `false`) Show line
-                   numbers.
                  • {font}? (`string[]|string`, default: `guifont`) Fonts to
                    use.
+                 • {number_lines}? (`boolean`, default: `false`) Show line
+                   numbers.
+                 • {range}? (`integer[]`, default: entire buffer) Range of
+                   rows to use.
+                 • {title}? (`string|false`, default: buffer name) Title tag
+                   to set in the generated HTML code.
                  • {width}? (`integer`, default: 'textwidth' if non-zero or
                    window width otherwise) Width used for items which are
                    either right aligned or repeat a character infinitely.
-                 • {range}? (`integer[]`, default: entire buffer) Range of
-                   rows to use.
 
     Return: ~
         (`string[]`)
@@ -287,8 +287,6 @@ open({opts})                                                 *undotree.open()*
       • {opts}  (`table?`) A table with the following fields:
                 • {bufnr} (`integer?`) Buffer to draw the tree into. If
                   omitted, a new buffer is created.
-                • {winid} (`integer?`) Window id to display the tree buffer
-                  in. If omitted, a new window is created with {command}.
                 • {command} (`string?`) Vimscript command to create the
                   window. Default value is "30vnew". Only used when {winid} is
                   nil.
@@ -296,6 +294,8 @@ open({opts})                                                 *undotree.open()*
                   the window. If a function, it accepts the buffer number of
                   the source buffer as its only argument and should return a
                   string.
+                • {winid} (`integer?`) Window id to display the tree buffer
+                  in. If omitted, a new window is created with {command}.
 
     Return: ~
         (`boolean?`) Returns true if the window was already open, nil

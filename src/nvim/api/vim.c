@@ -111,10 +111,10 @@ Integer nvim_get_hl_id_by_name(String name, Error *err)
 /// @param ns_id Get highlight groups for namespace ns_id |nvim_get_namespaces()|.
 ///              Use 0 to get global highlight groups |:highlight|.
 /// @param opts  Options dict:
-///                 - name: (string) Get a highlight definition by name.
+///                 - create: (boolean, default true) When highlight group doesn't exist create it.
 ///                 - id: (integer) Get a highlight definition by id.
 ///                 - link: (boolean, default true) Show linked group name instead of effective definition |:hi-link|.
-///                 - create: (boolean, default true) When highlight group doesn't exist create it.
+///                 - name: (string) Get a highlight definition by name.
 ///
 /// @param[out] err Error details, if any.
 /// @return Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
@@ -824,7 +824,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///            instead of creating a new message.
 ///          - kind (`string?`) Decides the |ui-messages| kind in the emitted message. Set "progress"
 ///            to emit a |progress-message|.
-///          - percent (`integer?`) |progress-message| percentage.
+///          - percent (`integer?`) |progress-message| percentage, or nil to signal "unknown progress".
 ///          - source (`string?`) |progress-message| source.
 ///          - status (`string?`) |progress-message| status:
 ///            - "success": Process completed successfully.
@@ -857,7 +857,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   bool needs_clear = !history;
 
   VALIDATE(is_progress
-           || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
+           || (opts->status.size == 0 && opts->title.size == 0 && !HAS_KEY(opts, echo_opts, percent)
                && opts->data.size == 0 && opts->source.size == 0),
            "Conflict: title/source/status/percent/data not allowed with kind='%s'", kind,
   {
@@ -872,7 +872,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     goto error;
   });
 
-  VALIDATE_RANGE(!is_progress || (opts->percent >= 0 && opts->percent <= 100),
+  VALIDATE_RANGE(!is_progress || !HAS_KEY(opts, echo_opts, percent)
+                 || (opts->percent >= 0 && opts->percent <= 100),
                  "percent", {
     goto error;
   });
@@ -888,8 +889,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   });
 
   MessageData msg_data = { .title = opts->title, .status = opts->status,
-                           .percent = opts->percent, .data = opts->data,
-                           .source = opts->source };
+                           .percent = HAS_KEY(opts, echo_opts, percent) ? opts->percent : -1,
+                           .data = opts->data, .source = opts->source };
 
   const bool save_nwr = need_wait_return;
   const int save_lines_left = lines_left;
@@ -1139,13 +1140,13 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// @param buf Buffer to use. Buffer contents (if any) will be written
 ///               to the PTY.
 /// @param opts   Optional parameters.
+///          - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 ///          - on_input: Lua callback for input sent, i e keypresses in terminal
 ///            mode. Note: keypresses are sent raw as they would be to the pty
 ///            master end. For instance, a carriage return is sent
 ///            as a "\r", not as a "\n". |textlock| applies. It is possible
 ///            to call |nvim_chan_send()| directly in the callback however.
 ///                 `["input", term, bufnr, data]`
-///          - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
 Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
@@ -2176,15 +2177,15 @@ Tuple(Integer, Integer, Buffer, String) nvim_get_mark(String name, Dict(empty) *
 ///
 /// @param str Statusline string (see 'statusline').
 /// @param opts Optional parameters.
-///           - winid: (number) |window-ID| of the window to use as context for statusline.
-///           - maxwidth: (number) Maximum width of statusline.
 ///           - fillchar: (string) Character to fill blank spaces in the statusline (see
 ///                                'fillchars'). Treated as single-width even if it isn't.
 ///           - highlights: (boolean) Return highlight information.
-///           - use_winbar: (boolean) Evaluate winbar instead of statusline.
+///           - maxwidth: (number) Maximum width of statusline.
+///           - use_statuscol_lnum: (number) Evaluate statuscolumn for this line number instead of statusline.
 ///           - use_tabline: (boolean) Evaluate tabline instead of statusline. When true, {winid}
 ///                                    is ignored. Mutually exclusive with {use_winbar}.
-///           - use_statuscol_lnum: (number) Evaluate statuscolumn for this line number instead of statusline.
+///           - use_winbar: (boolean) Evaluate winbar instead of statusline.
+///           - winid: (number) |window-ID| of the window to use as context for statusline.
 ///
 /// @param[out] err Error details, if any.
 /// @return Dict containing statusline information, with these keys:
@@ -2426,24 +2427,24 @@ static void redraw_status(win_T *wp, Dict(redraw) *opts, bool *flush)
 /// @see |:redraw|
 ///
 /// @param opts  Optional parameters.
-///               - win: Target a specific |window-ID| as described below.
 ///               - buf: Target a specific buffer number as described below.
+///               - cursor: Immediately update cursor position on the screen in
+///                 `win` or the current window.
 ///               - flush: Update the screen with pending updates.
-///               - valid: When present mark `win`, `buf`, or all windows for
-///                 redraw. When `true`, only redraw changed lines (useful for
-///                 decoration providers). When `false`, forcefully redraw.
 ///               - range: Redraw a range in `buf`, the buffer in `win` or the
 ///                 current buffer (useful for decoration providers). Expects a
 ///                 tuple `[first, last]` with the first and last line number
 ///                 of the range, 0-based end-exclusive |api-indexing|.
-///               - cursor: Immediately update cursor position on the screen in
-///                 `win` or the current window.
 ///               - statuscolumn: Redraw the 'statuscolumn' in `buf`, `win` or
 ///                 all windows.
 ///               - statusline: Redraw the 'statusline' in `buf`, `win` or all
 ///                 windows.
-///               - winbar: Redraw the 'winbar' in `buf`, `win` or all windows.
 ///               - tabline: Redraw the 'tabline'.
+///               - valid: When present mark `win`, `buf`, or all windows for
+///                 redraw. When `true`, only redraw changed lines (useful for
+///                 decoration providers). When `false`, forcefully redraw.
+///               - win: Target a specific |window-ID| as described below.
+///               - winbar: Redraw the 'winbar' in `buf`, `win` or all windows.
 void nvim__redraw(Dict(redraw) *opts, Error *err)
   FUNC_API_SINCE(12)
 {

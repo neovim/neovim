@@ -36,6 +36,7 @@ local M = {}
 local api = vim.api
 local lsp = vim.lsp
 local protocol = lsp.protocol
+local isnil = require('vim._core.util').isnil
 
 local rtt_ms = 50.0
 local ns_to_ms = 0.000001
@@ -1004,7 +1005,13 @@ local function trigger(bufnr, clients, ctx)
       end
 
       local result = response.result
-      if result and #(result.items or result) > 0 then
+      if type(result) == 'table' and result.items == vim.NIL then
+        error(
+          ('%s: completion response has items=null, expected CompletionItem[]'):format(
+            client and client.name or 'UNKNOWN'
+          )
+        )
+      elseif not isnil(result) and #(result.items or result) > 0 then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
         local encoding = client and client.offset_encoding or 'utf-16'
         local client_matches, tmp_server_start_boundary

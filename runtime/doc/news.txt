@@ -49,6 +49,9 @@ TREESITTER
 UI
 
 • todo
+• `vim.ui.img` experimental module added to display images within neovim.
+• `:checkhealth vim.ui.img` reports terminal graphics protocol support.
+• `vim.ui.img.del(math.huge)` clears all images.
 
 VIMSCRIPT
 
@@ -80,15 +83,16 @@ EDITOR
 
 EVENTS
 
-• todo
+• |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
+  "modified" instead.
 
 LSP
 
-• todo
+• `client.attached_buffers[buf]` now stores `languageId` string (was boolean).
 
 LUA
 
-• Added `__eq` metamethod to |vim.VersionRange|.
+• todo
 
 OPTIONS
 
@@ -112,6 +116,8 @@ API
 • |nvim_set_hl()| supports "font" key.
 • |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor
   shape when an unfocused float is on top of the cursor.
+• |nvim_echo()| distinguishes zero percent from omitted percent for Progress
+  events.
 
 BUILD
 
@@ -155,17 +161,28 @@ LSP
 LUA
 
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
+• |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
+• |writefile()| treats Lua strings as "blob", so it can be used to write
+  binary data.
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
-the same range instances now compare equal.
+  the same range instances now compare equal.
+• Documentation for |vim.fn| now points to preferred Lua alternatives when
+  available.
 
 OPTIONS
 
+• 'ttyfast' can be disabled during startup by setting the environment variable
+  `NVIM_NOTTYFAST` to disable automatic background detection.
 • 'scrolloffpad' allows vertically centering cursor at the end of file.
+• 'shortmess' flag |shm-u| silences undo/redo messages.
 • 'winpinned' prevents window from closing unless specifically targeted.
 
 PERFORMANCE
+
+• |treesitter-highlight| performance on large injection-heavy files improves
+  by 50% to 100% by reusing edited child-tree ranges.
 
 • Nvim architecture allows pure-Lua implementations of some `vim.fn`
   functions, which skips the Vimscript <=> Lua "bridge" (no data
@@ -173,6 +190,8 @@ PERFORMANCE
   Lua.
 • The table holding LSP data is now cleared using `table.clear`,
   thus reducing GC and memory reallocation during each data reset.
+• When parsing the received Content-Length messages,
+  the RPC client will no longer allocate extra strings.
 
 PLUGINS
 
@@ -189,6 +208,8 @@ TERMINAL
 TREESITTER
 
 • |v_]N| |v_[N| expand selection to sibling treesitter node.
+• |treesitter-highlight-conceal| can be removed by adding a `@noconceal`
+  capture.
 
 TUI
 
@@ -197,12 +218,16 @@ TUI
 
 UI
 
-• todo
+• These builtin "picker" menus delegate to |vim.ui.select()|:
+  • :browse oldfiles
+  • |:recover|
+  • |:tselect|
+  • |z=| (spell suggest)
 
 VIMSCRIPT
 
 • |v:exitreason| is set before |QuitPre|.
-• |v:starttime| is the process start time (monotonic nanoseconds).
+• |v:starttime| is the process start time (nanoseconds since UNIX epoch).
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

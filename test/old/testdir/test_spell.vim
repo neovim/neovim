@@ -466,13 +466,12 @@ func Test_spellsuggest_option_number()
   call assert_equal('A baord', getline(1))
 
   let a = execute('norm $z=')
+  " Nvim: z= goes through vim.ui.select().
   call assert_equal(
   \    "\n"
   \ .. "Change \"baord\" to:\n"
-  \ .. " 1 \"board\"\n"
-  \ .. " 2 \"bard\"\n"
-  "\ Nvim: Prompt message is sent to cmdline prompt.
-  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ .. "1: \"board\"\n"
+  \ .. "2: \"bard\"\n"
   \ , a)
 
   set spell spellsuggest=0
@@ -505,14 +504,13 @@ func Test_spellsuggest_option_expr()
   new
   call setline(1, 'baord')
   let a = execute('norm z=')
+  " Nvim: z= goes through vim.ui.select().
   call assert_equal(
   \    "\n"
   \ .. "Change \"baord\" to:\n"
-  \ .. " 1 \"BARD\"\n"
-  \ .. " 2 \"BOARD\"\n"
-  \ .. " 3 \"BROAD\"\n"
-  "\ Nvim: Prompt message is sent to cmdline prompt.
-  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ .. "1: \"BARD\"\n"
+  \ .. "2: \"BOARD\"\n"
+  \ .. "3: \"BROAD\"\n"
   \ , a)
 
   " With verbose, z= should show the score i.e. word length with
@@ -522,11 +520,9 @@ func Test_spellsuggest_option_expr()
   call assert_equal(
   \    "\n"
   \ .. "Change \"baord\" to:\n"
-  \ .. " 1 \"BARD\"                      (4 - 0)\n"
-  \ .. " 2 \"BOARD\"                     (5 - 0)\n"
-  \ .. " 3 \"BROAD\"                     (5 - 0)\n"
-  "\ Nvim: Prompt message is sent to cmdline prompt.
-  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ .. "1: \"BARD\" (4 - 0)\n"
+  \ .. "2: \"BOARD\" (5 - 0)\n"
+  \ .. "3: \"BROAD\" (5 - 0)\n"
   \ , a)
 
   set spell& spellsuggest& verbose&

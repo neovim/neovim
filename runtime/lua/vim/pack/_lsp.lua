@@ -1,7 +1,16 @@
 local M = {}
 
+local git_cmd = function(cmd, cwd, on_exit)
+  cmd = vim.list_extend({ 'git', '-c', 'gc.auto=0' }, cmd)
+  local env = vim.fn.environ() --- @type table<string,string>
+  env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
+  local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
+  vim.system(cmd, sys_opts, vim.schedule_wrap(on_exit))
+end
+
 local capabilities = {
   codeActionProvider = true,
+  documentLinkProvider = { resolveProvider = false },
   documentSymbolProvider = true,
   executeCommandProvider = { commands = { 'delete_plugin', 'update_plugin', 'skip_update_plugin' } },
   hoverProvider = true,
@@ -64,6 +73,69 @@ end
 
 --- @alias vim.pack.lsp.Position { line: integer, character: integer }
 --- @alias vim.pack.lsp.Range { start: vim.pack.lsp.Position, end: vim.pack.lsp.Position }
+--- @alias vim.pack.lsp.DocumentLink { range: vim.pack.lsp.Range, target: string }
+
+--- Finds a line range to be linked and computes the LSP style link
+--- @param line string Buffer line to find a link in
+--- @param pattern string Pattern matching link location and contents, like `'^Path: +()(.+)()$'`
+--- @param link_type "commit"|"path"|"src"|"tag"
+--- @param lnum number Line number in a buffer
+--- @param src string Plugin source
+--- @return vim.pack.lsp.DocumentLink? # A link structure according to the LSP specification
+local function match_link(line, pattern, link_type, lnum, src)
+  --- @type number?, string?, number?
+  local from, match, to = line:match(pattern)
+  if not (from and match and to) then
+    return nil
+  end
+
+  -- Convert to UTF index used in LSP positions
+  from = vim.str_utfindex(line, 'utf-16', from - 1, false)
+  to = vim.str_utfindex(line, 'utf-16', to - 2, false)
+
+  --- @type string?
+  local target = match
+  if link_type == 'commit' or link_type == 'tag' then
+    ---@diagnostic disable-next-line: param-type-mismatch
+    target = require('vim._core.util').get_forge_url(src, match, link_type)
+  elseif link_type == 'path' then
+    target = vim.uri_from_fname(match)
+  end
+
+  if target == nil then
+    return nil
+  end
+
+  local start = { line = lnum - 1, character = from }
+  local end_ = { line = lnum - 1, character = to }
+  return { range = { start = start, ['end'] = end_ }, target = target }
+end
+
+--- @param params { textDocument: { uri: string } }
+--- @param callback function
+methods['textDocument/documentLink'] = function(params, callback)
+  local bufnr = get_confirm_bufnr(params.textDocument.uri)
+  if bufnr == nil then
+    return callback(nil, {})
+  end
+
+  --- @type vim.pack.lsp.DocumentLink[]
+  local links = {}
+  local cur_src = ''
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  for i, l in ipairs(lines) do
+    cur_src = l:match('^Source: +(.+)$') or cur_src
+
+    links[#links + 1] = match_link(l, '^Path: +()(.+)()$', 'path', i, cur_src)
+    links[#links + 1] = match_link(l, '^Source: +()(.+)()$', 'src', i, cur_src)
+    links[#links + 1] = match_link(l, '^Revision[^:]*: +()(%S+)()', 'commit', i, cur_src)
+    -- NOTE: Assume that short revision works in the link
+    links[#links + 1] = match_link(l, '^[><] ()(%S+)()', 'commit', i, cur_src)
+    links[#links + 1] = match_link(l, '^• ()(.+)()$', 'tag', i, cur_src)
+  end
+
+  return callback(nil, links)
+end
 
 --- @param params { textDocument: { uri: string } }
 --- @param callback function
@@ -211,18 +283,13 @@ methods['textDocument/hover'] = function(params, callback)
     return
   end
 
-  local cmd = { 'git', 'show', '--no-color', commit or tag }
   --- @param sys_out vim.SystemCompleted
   local on_exit = function(sys_out)
     local markdown = '```diff\n' .. sys_out.stdout .. '\n```'
     local res = { contents = { kind = vim.lsp.protocol.MarkupKind.Markdown, value = markdown } }
     callback(nil, res)
   end
-
-  -- temporarily clear GIT env vars
-  local env = vim.fn.environ() --- @type table<string,string>
-  env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
-  vim.system(cmd, { cwd = path, env = env, clear_env = true }, vim.schedule_wrap(on_exit))
+  git_cmd({ 'show', '--no-color', commit or tag }, path, on_exit)
 end
 
 local dispatchers = {}

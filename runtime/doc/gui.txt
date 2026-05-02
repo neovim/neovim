@@ -47,6 +47,15 @@ can connect to any Nvim instance).
 Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
         :autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
 <
+								*ui-lifecycle*
+Nvim's |clientserver| architecture allows you to |:restart|, |:detach| (Nvim
+continues in the background), or |:connect| to another instance.
+
+Use cases:
+- keep the session running on remote machines after (unexpected) SSH disconnect
+- open files in an existing session from your OS file explorer
+- run Nvim as a background process (daemon/service), atttach/detach as needed
+
 ------------------------------------------------------------------------------
 Stop or detach the current UI
 

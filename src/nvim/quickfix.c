@@ -2314,12 +2314,6 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
     return 0;
   }
 
-#ifdef BACKSLASH_IN_FILENAME
-  if (directory != NULL) {
-    slash_adjust(directory);
-  }
-  slash_adjust(fname);
-#endif
   String fname_str = cstr_as_string(fname);
   if (directory != NULL && !vim_isAbsName(fname)) {
     ptr = concat_fnames(cstr_as_string(directory), fname_str, true);
@@ -2341,6 +2335,7 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
   } else {
     bufname = fname_str;
   }
+  TO_SLASH(bufname.data);
 
   if (qf_last_bufname != NULL && strcmp(bufname.data, qf_last_bufname) == 0
       && bufref_valid(&qf_last_bufref)) {

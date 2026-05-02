@@ -1,23 +1,38 @@
-local M = {}
+local M = vim._defer_require('vim.ui', {
+  img = ..., --- @module 'vim.ui.img'
+})
 
 ---@class vim.ui.select.Opts
 ---@inlinedoc
 ---
---- Text of the prompt. Defaults to `Select one of:`
+--- Prompt text.
+--- (default: `"Select one of:"`)
 ---@field prompt? string
 ---
---- Function to format an
---- individual item from `items`. Defaults to `tostring`.
+--- Decides how to format items when displayed in the picker.
+--- (default: `tostring`)
 ---@field format_item? fun(item: any):string
 ---
---- Arbitrary hint string indicating the item shape.
---- Plugins reimplementing `vim.ui.select` may wish to
---- use this to infer the structure or semantics of
---- `items`, or the context in which select() was called.
+--- Decides how to preview an item by preparing a scratch buffer with the item details (including text, highlighting, etc.).
+--- When the picker decides to "preview" an item, it should call this function.
+--- Must return a table with these keys:
+---     - {buf}? (`integer`) Buffer containing the previewed item details, or nil if no preview should be shown.
+---     - {pos}? (`[integer, integer]`) Specifies the (1,0)-indexed cursor position in the preview buffer. If nil, should be treated as `{ 1, 0 }`.
+---     - {pos_end}? (`[integer, integer]`) Specifies the (1,0)-indexed (end-exclusive) end position of the preview range. If nil, no range is intended for a preview.
+---@field preview_item? fun(item: any):{buf?:integer, pos?:[integer,integer], pos_end?:[integer,integer]}
+---
+--- Arbitrary hint string indicating the item shape. The picker may wish to use this to infer the
+--- structure or semantics of `items`, or the context in which select() was called.
 ---@field kind? string
 
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
---- work until `on_choice`.
+--- work until `on_choice`. This is the standard "picker" interface, used by |z=|, |:tselect|, etc.
+---
+--- Plugins may override `vim.ui.select` to provide a custom picker; they are expected to call the
+--- `format_item` and `preview_item` handlers (if any) provided by the caller. They may also use the
+--- `kind` hint (if provided by the caller) to decide how to handle some items.
+---
+--- Note: the default `vim.ui.select` currently doesn't support preview.
 ---
 --- Example:
 ---
@@ -27,6 +42,13 @@ local M = {}
 ---   format_item = function(item)
 ---     return ('I choose %s!'):format(item)
 ---   end,
+---   preview_item = function(item)
+---     local lines = { 'This is ' .. vim.inspect(item) }
+---     local buf = vim.api.nvim_create_buf(false, true)
+---     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+---     vim.bo[buf].bufhidden = 'wipe'
+---     return { buf = buf }
+---   end,
 --- }, function(choice)
 ---   vim.o.expandtab = choice == 'spaces'
 ---   vim.print(('Selected "%s" => expandtab=%s'):format(choice, vim.o.expandtab))
@@ -35,11 +57,9 @@ local M = {}
 ---
 ---@generic T
 ---@param items T[] Arbitrary items
----@param opts vim.ui.select.Opts Additional options
----@param on_choice fun(item: T|nil, idx: integer|nil)
----               Called once the user made a choice.
----               `idx` is the 1-based index of `item` within `items`.
----               `nil` if the user aborted the dialog.
+---@param opts vim.ui.select.Opts Options
+---@param on_choice fun(item: T|nil, idx: integer|nil) Called once the user made a choice.
+--- `idx` is the 1-based index of `item` within `items`, or `nil` if the user aborted the dialog.
 function M.select(items, opts, on_choice)
   vim.validate('items', items, 'table')
   vim.validate('on_choice', on_choice, 'function')

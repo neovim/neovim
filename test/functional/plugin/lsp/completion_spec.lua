@@ -1182,6 +1182,24 @@ describe('vim.lsp.completion: protocol', function()
       eq({ triggerKind = 2, triggerCharacter = 'h' }, exec_lua('return _G.params.context'))
     end)
   end)
+
+  it('errors on invalid items=null in completion response #39400', function()
+    create_server('dummy', {
+      isIncomplete = false,
+      items = vim.NIL,
+    })
+    feed('ih')
+    local err = t.pcall_err(function()
+      exec_lua(function()
+        vim.api.nvim_win_set_cursor(0, { 1, 1 })
+        vim.lsp.completion.get()
+        vim.wait(1000, function()
+          return false
+        end)
+      end)
+    end)
+    t.matches('items=null', err)
+  end)
 end)
 
 describe('vim.lsp.completion: integration', function()

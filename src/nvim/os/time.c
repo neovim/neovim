@@ -32,6 +32,25 @@ uint64_t os_hrtime(void)
   return uv_hrtime();
 }
 
+/// Obtain the current system time from a high-resolution
+/// real-time clock source.
+///
+/// The real-time clock counts from the UNIX epoch (1970-01-01)
+/// and is subject to time adjustments; it can jump back in time.
+///
+/// @return Nanoseconds since epoch or 0
+int64_t os_realtime(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  uv_timespec64_t ts = { 0 };
+  int error_number;
+  if ((error_number = uv_clock_gettime(UV_CLOCK_REALTIME, &ts)) != 0) {
+    ELOG("uv_clock_gettime failed: %d %s", error_number, uv_err_name(error_number));
+    return 0;
+  }
+  return ts.tv_sec * 1000000000L + ts.tv_nsec;
+}
+
 /// Gets a millisecond-resolution, monotonically-increasing time relative to an
 /// arbitrary time in the past.
 ///

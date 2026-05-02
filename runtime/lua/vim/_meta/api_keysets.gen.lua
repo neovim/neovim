@@ -5,51 +5,48 @@
 error('Cannot require a meta file')
 
 --- @class vim.api.keyset.buf_attach
---- @field on_lines? fun(_: "lines", bufnr: integer, changedtick: integer, first: integer, last_old: integer, last_new: integer, byte_count: integer, deleted_codepoints?: integer, deleted_codeunits?: integer): boolean?
 --- @field on_bytes? fun(_: "bytes", bufnr: integer, changedtick: integer, start_row: integer, start_col: integer, start_byte: integer, old_end_row: integer, old_end_col: integer, old_end_byte: integer, new_end_row: integer, new_end_col: integer, new_end_byte: integer): boolean?
 --- @field on_changedtick? fun(_: "changedtick", bufnr: integer, changedtick: integer)
 --- @field on_detach? fun(_: "detach", bufnr: integer)
+--- @field on_lines? fun(_: "lines", bufnr: integer, changedtick: integer, first: integer, last_old: integer, last_new: integer, byte_count: integer, deleted_codepoints?: integer, deleted_codeunits?: integer): boolean?
 --- @field on_reload? fun(_: "reload", bufnr: integer)
---- @field utf_sizes? boolean
 --- @field preview? boolean
+--- @field utf_sizes? boolean
 
 --- @class vim.api.keyset.buf_delete
 --- @field force? boolean
 --- @field unload? boolean
 
 --- @class vim.api.keyset.clear_autocmds
---- @field buffer? integer
 --- @field buf? integer
+--- @field buffer? integer
 --- @field event? vim.api.keyset.events|vim.api.keyset.events[]
 --- @field group? integer|string
 --- @field pattern? string|string[]
 
 --- @class vim.api.keyset.cmd
---- @field cmd? string
---- @field range? integer[]
---- @field count? integer
---- @field reg? string
---- @field bang? boolean
+--- @field addr? "line"|"arg"|"buf"|"load"|"win"|"tab"|"qf"|"none"|"?"
 --- @field args? string[]
+--- @field bang? boolean
+--- @field cmd? string
+--- @field count? integer
 --- @field magic? vim.api.keyset.cmd.magic
 --- @field mods? vim.api.keyset.cmd.mods
 --- @field nargs? integer|"?"|"+"|"*"
 --- @field addr? "line"|"char"|"arg"|"buf"|"load"|"win"|"tab"|"qf"|"none"|"?"
 --- @field nextcmd? string
+--- @field range? integer[]
+--- @field reg? string
 
 --- @class vim.api.keyset.cmd_magic
---- @field file? boolean
 --- @field bar? boolean
+--- @field file? boolean
 
 --- @class vim.api.keyset.cmd_mods
---- @field silent? boolean
---- @field emsg_silent? boolean
---- @field unsilent? boolean
---- @field filter? table<string,any>
---- @field sandbox? boolean
---- @field noautocmd? boolean
 --- @field browse? boolean
 --- @field confirm? boolean
+--- @field emsg_silent? boolean
+--- @field filter? table<string,any>
 --- @field hide? boolean
 --- @field horizontal? boolean
 --- @field keepalt? boolean
@@ -57,15 +54,19 @@ error('Cannot require a meta file')
 --- @field keepmarks? boolean
 --- @field keeppatterns? boolean
 --- @field lockmarks? boolean
+--- @field noautocmd? boolean
 --- @field noswapfile? boolean
+--- @field sandbox? boolean
+--- @field silent? boolean
+--- @field split? string
 --- @field tab? integer
+--- @field unsilent? boolean
 --- @field verbose? integer
 --- @field vertical? boolean
---- @field split? string
 
 --- @class vim.api.keyset.cmd_mods_filter
---- @field pattern? string
 --- @field force? boolean
+--- @field pattern? string
 
 --- @class vim.api.keyset.cmd_opts
 --- @field output? boolean
@@ -88,7 +89,6 @@ error('Cannot require a meta file')
 --- |'BufFilePre'
 --- |'BufHidden'
 --- |'BufLeave'
---- |'BufModifiedSet'
 --- |'BufNew'
 --- |'BufNewFile'
 --- |'BufRead'
@@ -227,8 +227,8 @@ error('Cannot require a meta file')
 --- |'WinScrolled'
 
 --- @class vim.api.keyset.create_autocmd
---- @field buffer? integer
 --- @field buf? integer
+--- @field buffer? integer
 --- @field callback? string|fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?
 --- @field command? string
 --- @field desc? string
@@ -238,46 +238,46 @@ error('Cannot require a meta file')
 --- @field pattern? string|string[]
 
 --- @class vim.api.keyset.echo_opts
+--- @field data? table<string,any>
 --- @field err? boolean
---- @field verbose? boolean
---- @field _truncate? boolean
---- @field kind? string
 --- @field id? integer|string
---- @field title? string
---- @field status? string
+--- @field kind? string
 --- @field percent? integer
 --- @field source? string
---- @field data? table<string,any>
+--- @field status? string
+--- @field title? string
+--- @field verbose? boolean
+--- @field _truncate? boolean
 
 --- @class vim.api.keyset.empty
 
 --- @class vim.api.keyset.eval_statusline
---- @field winid? integer
---- @field maxwidth? integer
 --- @field fillchar? string
 --- @field highlights? boolean
---- @field use_winbar? boolean
---- @field use_tabline? boolean
+--- @field maxwidth? integer
 --- @field use_statuscol_lnum? integer
+--- @field use_tabline? boolean
+--- @field use_winbar? boolean
+--- @field winid? integer
 
 --- @class vim.api.keyset.exec_autocmds
---- @field buffer? integer
 --- @field buf? integer
+--- @field buffer? integer
+--- @field data? any
 --- @field group? integer|string
 --- @field modeline? boolean
 --- @field pattern? string|string[]
---- @field data? any
 
 --- @class vim.api.keyset.exec_opts
 --- @field output? boolean
 
 --- @class vim.api.keyset.get_autocmds
+--- @field buf? integer|integer[]
+--- @field buffer? integer|integer[]
 --- @field event? vim.api.keyset.events|vim.api.keyset.events[]
 --- @field group? integer|string
---- @field pattern? string|string[]
---- @field buffer? integer|integer[]
---- @field buf? integer|integer[]
 --- @field id? integer
+--- @field pattern? string|string[]
 
 --- @class vim.api.keyset.get_commands
 --- @field builtin? boolean
@@ -287,163 +287,163 @@ error('Cannot require a meta file')
 --- @field hl_name? boolean
 
 --- @class vim.api.keyset.get_extmarks
---- @field limit? integer
 --- @field details? boolean
 --- @field hl_name? boolean
+--- @field limit? integer
 --- @field overlap? boolean
 --- @field type? string
 
 --- @class vim.api.keyset.get_highlight
---- @field id? integer
---- @field name? string
---- @field link? boolean
 --- @field create? boolean
+--- @field id? integer
+--- @field link? boolean
+--- @field name? string
 
 --- @class vim.api.keyset.get_ns
 --- @field winid? integer
 
 --- @class vim.api.keyset.highlight
 --- @field altfont? boolean
---- @field blink? boolean
---- @field bold? boolean
---- @field conceal? boolean
---- @field dim? boolean
---- @field italic? boolean
---- @field nocombine? boolean
---- @field overline? boolean
---- @field reverse? boolean
---- @field standout? boolean
---- @field strikethrough? boolean
---- @field undercurl? boolean
---- @field underdashed? boolean
---- @field underdotted? boolean
---- @field underdouble? boolean
---- @field underline? boolean
---- @field default? boolean
---- @field cterm? vim.api.keyset.highlight_cterm
---- @field foreground? integer|string
---- @field fg? integer|string
 --- @field background? integer|string
 --- @field bg? integer|string
---- @field ctermfg? integer|string
+--- @field bg_indexed? boolean
+--- @field blend? integer
+--- @field blink? boolean
+--- @field bold? boolean
+--- @field conceal? boolean
+--- @field cterm? vim.api.keyset.highlight_cterm
 --- @field ctermbg? integer|string
---- @field special? integer|string
---- @field sp? integer|string
+--- @field ctermfg? integer|string
+--- @field default? boolean
+--- @field dim? boolean
+--- @field fallback? boolean
+--- @field fg? integer|string
+--- @field fg_indexed? boolean
+--- @field font? string
+--- @field force? boolean
+--- @field foreground? integer|string
+--- @field italic? boolean
 --- @field link? integer|string
 --- @field link_global? integer|string
---- @field fallback? boolean
---- @field blend? integer
---- @field fg_indexed? boolean
---- @field bg_indexed? boolean
---- @field force? boolean
---- @field update? boolean
---- @field url? string
---- @field font? string
-
---- @class vim.api.keyset.highlight_cterm
---- @field bold? boolean
+--- @field nocombine? boolean
+--- @field overline? boolean
+--- @field reverse? boolean
+--- @field sp? integer|string
+--- @field special? integer|string
 --- @field standout? boolean
 --- @field strikethrough? boolean
---- @field underline? boolean
 --- @field undercurl? boolean
---- @field underdouble? boolean
---- @field underdotted? boolean
 --- @field underdashed? boolean
---- @field italic? boolean
---- @field reverse? boolean
+--- @field underdotted? boolean
+--- @field underdouble? boolean
+--- @field underline? boolean
+--- @field update? boolean
+--- @field url? string
+
+--- @class vim.api.keyset.highlight_cterm
 --- @field altfont? boolean
---- @field dim? boolean
 --- @field blink? boolean
+--- @field bold? boolean
 --- @field conceal? boolean
---- @field overline? boolean
+--- @field dim? boolean
+--- @field italic? boolean
 --- @field nocombine? boolean
+--- @field overline? boolean
+--- @field reverse? boolean
+--- @field standout? boolean
+--- @field strikethrough? boolean
+--- @field undercurl? boolean
+--- @field underdashed? boolean
+--- @field underdotted? boolean
+--- @field underdouble? boolean
+--- @field underline? boolean
 
 --- @class vim.api.keyset.keymap
---- @field noremap? boolean
---- @field nowait? boolean
---- @field silent? boolean
---- @field script? boolean
---- @field expr? boolean
---- @field unique? boolean
 --- @field callback? function
 --- @field desc? string
+--- @field expr? boolean
+--- @field noremap? boolean
+--- @field nowait? boolean
 --- @field replace_keycodes? boolean
+--- @field script? boolean
+--- @field silent? boolean
+--- @field unique? boolean
 
 --- @class vim.api.keyset.ns_opts
 --- @field wins? any[]
 
 --- @class vim.api.keyset.open_term
---- @field on_input? fun(_: "input", term: integer, bufnr: integer, data: any)
 --- @field force_crlf? boolean
+--- @field on_input? fun(_: "input", term: integer, bufnr: integer, data: any)
 
 --- @class vim.api.keyset.option
---- @field scope? string
---- @field win? integer
 --- @field buf? integer
 --- @field filetype? string
+--- @field scope? string
+--- @field win? integer
 
 --- @class vim.api.keyset.redraw
---- @field flush? boolean
+--- @field buf? integer
 --- @field cursor? boolean
---- @field valid? boolean
+--- @field flush? boolean
+--- @field range? any[]
 --- @field statuscolumn? boolean
 --- @field statusline? boolean
 --- @field tabline? boolean
---- @field winbar? boolean
---- @field range? any[]
+--- @field valid? boolean
 --- @field win? integer
---- @field buf? integer
+--- @field winbar? boolean
 
 --- @class vim.api.keyset.runtime
---- @field is_lua? boolean
 --- @field do_source? boolean
+--- @field is_lua? boolean
 
 --- @class vim.api.keyset.set_decoration_provider
---- @field on_start? fun(_: "start", tick: integer): boolean?
 --- @field on_buf? fun(_: "buf", bufnr: integer, tick: integer)
---- @field on_win? fun(_: "win", winid: integer, bufnr: integer, toprow: integer, botrow: integer): boolean?
+--- @field on_end? fun(_: "end", tick: integer)
 --- @field on_line? fun(_: "line", winid: integer, bufnr: integer, row: integer): boolean?
 --- @field on_range? fun(_: "range", winid: integer, bufnr: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): boolean?
---- @field on_end? fun(_: "end", tick: integer)
+--- @field on_start? fun(_: "start", tick: integer): boolean?
+--- @field on_win? fun(_: "win", winid: integer, bufnr: integer, toprow: integer, botrow: integer): boolean?
+--- @field _on_conceal_line? fun(_: "conceal_line")
 --- @field _on_hl_def? fun(_: "hl_def")
 --- @field _on_spell_nav? fun(_: "spell_nav")
---- @field _on_conceal_line? fun(_: "conceal_line")
 
 --- @class vim.api.keyset.set_extmark
---- @field id? integer
---- @field end_line? integer
---- @field end_row? integer
+--- @field conceal? string|boolean
+--- @field conceal_lines? string
+--- @field cursorline_hl_group? integer|string
 --- @field end_col? integer
---- @field hl_group? any
---- @field virt_text? any[]
---- @field virt_text_pos? "eol"|"eol_right_align"|"overlay"|"right_align"|"inline"
---- @field virt_text_win_col? integer
---- @field virt_text_hide? boolean
---- @field virt_text_repeat_linebreak? boolean
---- @field hl_eol? boolean
---- @field hl_mode? "replace"|"combine"|"blend"
---- @field invalidate? boolean
+--- @field end_line? integer
+--- @field end_right_gravity? boolean
+--- @field end_row? integer
 --- @field ephemeral? boolean
+--- @field hl_eol? boolean
+--- @field hl_group? any
+--- @field hl_mode? "replace"|"combine"|"blend"
+--- @field id? integer
+--- @field invalidate? boolean
+--- @field line_hl_group? integer|string
+--- @field number_hl_group? integer|string
 --- @field priority? integer
 --- @field right_gravity? boolean
---- @field end_right_gravity? boolean
+--- @field scoped? boolean
+--- @field sign_hl_group? integer|string
+--- @field sign_text? string
+--- @field spell? boolean
+--- @field strict? boolean
+--- @field ui_watched? boolean
+--- @field undo_restore? boolean
+--- @field url? string
 --- @field virt_lines? any[]
 --- @field virt_lines_above? boolean
 --- @field virt_lines_leftcol? boolean
 --- @field virt_lines_overflow? "trunc"|"scroll"
---- @field strict? boolean
---- @field sign_text? string
---- @field sign_hl_group? integer|string
---- @field number_hl_group? integer|string
---- @field line_hl_group? integer|string
---- @field cursorline_hl_group? integer|string
---- @field conceal? string
---- @field conceal_lines? string
---- @field spell? boolean
---- @field ui_watched? boolean
---- @field undo_restore? boolean
---- @field url? string
---- @field scoped? boolean
+--- @field virt_text? any[]
+--- @field virt_text_hide? boolean
+--- @field virt_text_pos? "eol"|"eol_right_align"|"overlay"|"right_align"|"inline"
+--- @field virt_text_repeat_linebreak? boolean
+--- @field virt_text_win_col? integer
 --- @field _subpriority? integer
 
 --- @class vim.api.keyset.tabpage_config
@@ -464,48 +464,48 @@ error('Cannot require a meta file')
 --- @field register? boolean
 
 --- @class vim.api.keyset.win_config
+--- @field anchor? "NW"|"NE"|"SW"|"SE"
+--- @field border? any[]|"none"|"single"|"double"|"rounded"|"solid"|"shadow"
+--- @field bufpos? integer[]
+--- @field col? number
 --- @field external? boolean
 --- @field fixed? boolean
 --- @field focusable? boolean
 --- @field footer? any
 --- @field footer_pos? "center"|"left"|"right"
---- @field hide? boolean
 --- @field height? integer
+--- @field hide? boolean
 --- @field mouse? boolean
+--- @field noautocmd? boolean
 --- @field relative? "cursor"|"editor"|"laststatus"|"mouse"|"tabline"|"win"
 --- @field row? number
---- @field style? ""|"minimal"
---- @field noautocmd? boolean
---- @field vertical? boolean
---- @field win? integer
---- @field width? integer
---- @field zindex? integer
---- @field anchor? "NW"|"NE"|"SW"|"SE"
---- @field border? any[]|"none"|"single"|"double"|"rounded"|"solid"|"shadow"
---- @field bufpos? integer[]
---- @field col? number
 --- @field split? "left"|"right"|"above"|"below"
+--- @field style? ""|"minimal"
 --- @field title? any
 --- @field title_pos? "center"|"left"|"right"
+--- @field vertical? boolean
+--- @field width? integer
+--- @field win? integer
+--- @field zindex? integer
 --- @field _cmdline_offset? integer
 
 --- @class vim.api.keyset.win_text_height
---- @field start_row? integer
 --- @field end_row? integer
---- @field start_vcol? integer
 --- @field end_vcol? integer
 --- @field max_height? integer
+--- @field start_row? integer
+--- @field start_vcol? integer
 
 --- @class vim.api.keyset.xdl_diff
---- @field on_hunk? fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?
---- @field result_type? string
 --- @field algorithm? string
 --- @field ctxlen? integer
---- @field interhunkctxlen? integer
---- @field linematch? boolean|integer
+--- @field ignore_blank_lines? boolean
+--- @field ignore_cr_at_eol? boolean
 --- @field ignore_whitespace? boolean
 --- @field ignore_whitespace_change? boolean
 --- @field ignore_whitespace_change_at_eol? boolean
---- @field ignore_cr_at_eol? boolean
---- @field ignore_blank_lines? boolean
 --- @field indent_heuristic? boolean
+--- @field interhunkctxlen? integer
+--- @field linematch? boolean|integer
+--- @field on_hunk? fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?
+--- @field result_type? string

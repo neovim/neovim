@@ -1,6 +1,5 @@
 local n = require('test.functional.testnvim')()
 local t = require('test.testutil')
-local pcall_err = t.pcall_err
 local skip_integ = os.getenv('NVIM_TEST_INTEG') ~= '1'
 
 local exec_lua = n.exec_lua
@@ -21,6 +20,41 @@ local function assert_wrong_headers(expected_err, header)
   t.matches(expected_err, err)
 end
 
+local function assert_wrong_body(expected_err, body)
+  local err = t.pcall_err(exec_lua, [[
+    return vim.net.request('POST', 'https://example.com', {
+      body = ]] .. body .. [[,
+    }, function() end)
+  ]])
+  t.matches(expected_err, err)
+end
+
+local function assert_invalid_method(method)
+  local err = t.pcall_err(exec_lua, [[
+    return vim.net.request(']] .. method .. [[', 'https://example.com', {}, function() end)
+  ]])
+  t.matches('invalid HTTP method', err)
+end
+
+local function request(method, opts)
+  return exec_lua([[
+      local done = false
+      local result
+
+      vim.net.request("]] .. method .. [[", "https://httpbingo.org/anything", ]] .. opts .. [[, function(err, res)
+        if err then
+          result = { error = err }
+        else
+          result = vim.json.decode(res.body)
+        end
+        done = true
+      end)
+
+      vim.wait(2000, function() return done end)
+      return result
+    ]])
+end
+
 describe('vim.net.request', function()
   before_each(function()
     n:clear()
@@ -28,6 +62,7 @@ describe('vim.net.request', function()
 
   it('fetches a URL into memory (async success)', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
     local content = exec_lua([[
       local done = false
       local result
@@ -207,6 +242,22 @@ describe('vim.net.request', function()
     t.eq(headers['Empty'][1], '', 'Expected Empty header')
   end)
 
+  it('accepts multiple HTTP methods', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
+    t.eq(request('GET', '{}').method, 'GET')
+    t.eq(request('PUT', '{}').method, 'PUT')
+    t.eq(request('PATCH', '{}').method, 'PATCH')
+    t.eq(request('DELETE', '{}').method, 'DELETE')
+
+    ---@diagnostic disable-next-line: no-unknown
+    local post =
+      request('POST', "{body='{\"a\": 1}', headers={['Content-Type'] = 'application/json'}}")
+    t.eq(post.method, 'POST')
+    t.eq(post.headers['Content-Type'][1], 'application/json')
+    t.eq(post.json.a, 1)
+  end)
+
   it('validation', function()
     assert_wrong_headers('opts.headers: expected table, got number', '123')
     assert_wrong_headers('headers keys and values must be strings', "{ [123] = 'value' }")
@@ -223,5 +274,16 @@ describe('vim.net.request', function()
       'header keys must not start with @ or end with : and ;',
       "{ ['@filename'] = '' }"
     )
+
+    assert_wrong_body('opts.body: expected body should be string and not start with @', '123')
+    assert_wrong_body('opts.body: expected body should be string and not start with @', '{}')
+    assert_wrong_body('opts.body: expected body should be string and not start with @', "'@test'")
+
+    -- OPTIONS is not accepted
+    assert_invalid_method('OPTIONS')
+
+    -- lowercase methods are not accepted as well
+    assert_invalid_method('options')
+    assert_invalid_method('get')
   end)
 end)

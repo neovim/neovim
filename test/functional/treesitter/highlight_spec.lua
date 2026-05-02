@@ -864,6 +864,37 @@ describe('treesitter highlighting (C)', function()
     })
   end)
 
+  it('supports @noconceal', function()
+    insert([[
+      int foo = bar;
+    ]])
+
+    exec_lua(function()
+      vim.opt.cole = 2
+      local parser = vim.treesitter.get_parser(0, 'c')
+      vim.treesitter.highlighter.new(parser, {
+        queries = {
+          c = [[
+        ((identifier) @conceal
+         (#set! conceal "X"))
+
+        ((identifier) @noconceal
+         (#eq? @noconceal "bar"))
+      ]],
+        },
+      })
+    end)
+
+    screen:expect({
+      grid = [[
+        int {14:X} = bar;                                                     |
+        ^                                                                 |
+        {1:~                                                                }|*15
+                                                                         |
+      ]],
+    })
+  end)
+
   it('@foo.bar groups has the correct fallback behavior', function()
     local get_hl = function(name)
       return api.nvim_get_hl_by_name(name, 1).foreground

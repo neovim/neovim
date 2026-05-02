@@ -282,9 +282,9 @@ nvim_buf_get_extmark_by_id(Buffer buf, Integer ns_id, Integer id, Dict(get_extma
 /// @param end  End of range (inclusive): a 0-indexed (row, col) or valid
 /// extmark id (whose position defines the bound). |api-indexing|
 /// @param opts  Optional parameters. Keys:
-///          - limit:  Maximum number of marks to return
 ///          - details: Whether to include the details dict
 ///          - hl_name: Whether to include highlight group name instead of id, true if omitted
+///          - limit:  Maximum number of marks to return
 ///          - overlap: Also include marks which overlap the range, even if
 ///                     their start position is less than `start`
 ///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
@@ -400,51 +400,40 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 /// @param line  Line where to place the mark, 0-based. |api-indexing|
 /// @param col  Column where to place the mark, 0-based. |api-indexing|
 /// @param opts  Optional parameters.
-///               - id : id of the extmark to edit.
+///               - conceal: either a boolean or a string.
+///                   - when a string is given, it should be either empty or a single
+///                     character. Enable concealing similar to |:syn-conceal|.
+///                     When a character is supplied it is used as |:syn-cchar|.
+///                     "hl_group" is used as highlight for the cchar if provided,
+///                     otherwise it defaults to |hl-Conceal|.
+///                   - when a boolean is given, true is equivalent to "" and false
+///                     overrides any existing conceal to remove it.
+///               - conceal_lines: string which should be empty. When
+///                   provided, lines in the range are not drawn at all
+///                   (according to 'conceallevel'); the next unconcealed line
+///                   is drawn instead.
+///               - cursorline_hl_group: highlight group used for the sign
+///                   column text when the cursor is on the same line as the
+///                   mark and 'cursorline' is enabled.
+///               - end_col : ending col of the mark, 0-based exclusive, or -1 to extend the range to end of line (if strict=false).
+///               - end_right_gravity : boolean that indicates the direction
+///                   the extmark end position (if it exists) will be shifted
+///                   in when new text is inserted (true for right, false
+///                   for left). Defaults to false.
 ///               - end_row : ending line of the mark, 0-based inclusive.
-///               - end_col : ending col of the mark, 0-based exclusive, or -1 to extend the range to end of line.
+///               - ephemeral : for use with |nvim_set_decoration_provider()|
+///                   callbacks. The mark will only be used for the current
+///                   redraw cycle, and not be permanently stored in the buffer.
+///               - hl_eol : when true, for a multiline highlight covering the
+///                          EOL of a line, continue the highlight for the rest
+///                          of the screen line (just like for diff and
+///                          cursorline highlight).
 ///               - hl_group : highlight group used for the text range. This and below
 ///                   highlight groups can be supplied either as a string or as an integer,
 ///                   the latter of which can be obtained using |nvim_get_hl_id_by_name()|.
 ///
 ///                   Multiple highlight groups can be stacked by passing an array (highest
 ///                   priority last).
-///               - hl_eol : when true, for a multiline highlight covering the
-///                          EOL of a line, continue the highlight for the rest
-///                          of the screen line (just like for diff and
-///                          cursorline highlight).
-///               - virt_text : [](virtual-text) to link to this mark.
-///                   A list of `[text, highlight]` tuples, each representing a
-///                   text chunk with specified highlight. `highlight` element
-///                   can either be a single highlight group, or an array of
-///                   multiple highlight groups that will be stacked
-///                   (highest priority last).
-///               - virt_text_pos : position of virtual text. Possible values:
-///                 - "eol": right after eol character (default).
-///                 - "eol_right_align": display right aligned in the window
-///                                      unless the virtual text is longer than
-///                                      the space available. If the virtual
-///                                      text is too long, it is truncated to
-///                                      fit in the window after the EOL
-///                                      character. If the line is wrapped, the
-///                                      virtual text is shown after the end of
-///                                      the line rather than the previous
-///                                      screen line.
-///                 - "overlay": display over the specified column, without
-///                              shifting the underlying text.
-///                 - "right_align": display right aligned in the window.
-///                 - "inline": display at the specified column, and
-///                             shift the buffer text to the right as needed.
-///               - virt_text_win_col : position the virtual text at a fixed
-///                                     window column (starting from the first
-///                                     text column of the screen line) instead
-///                                     of "virt_text_pos".
-///               - virt_text_hide : hide the virtual text when the background
-///                                  text is selected or hidden because of
-///                                  scrolling with 'nowrap' or 'smoothscroll'.
-///                                  Currently only affects "overlay" virt_text.
-///               - virt_text_repeat_linebreak : repeat the virtual text on
-///                                              wrapped lines.
 ///               - hl_mode : control how highlights are combined with the
 ///                           highlights of the text. Currently only affects
 ///                           virt_text highlights, but might affect `hl_group`
@@ -454,6 +443,38 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 ///                 - "blend": blend with background text color.
 ///                            Not supported for "inline" virt_text.
 ///
+///               - id : id of the extmark to edit.
+///               - invalidate : boolean that indicates whether to hide the
+///                   extmark if the entirety of its range is deleted. For
+///                   hidden marks, an "invalid" key is added to the "details"
+///                   array of |nvim_buf_get_extmarks()| and family. If
+///                   "undo_restore" is false, the extmark is deleted instead.
+///               - line_hl_group: highlight group used for the whole line.
+///               - number_hl_group: highlight group used for the number column.
+///               - priority: a priority value for the highlight group, sign
+///                   attribute or virtual text. For virtual text, item with
+///                   highest priority is drawn last. For example treesitter
+///                   highlighting uses a value of 100.
+///               - right_gravity : boolean that indicates the direction
+///                   the extmark will be shifted in when new text is inserted
+///                   (true for right, false for left). Defaults to true.
+///               - sign_hl_group: highlight group used for the sign column text.
+///               - sign_text: string of length 1-2 used to display in the
+///                   sign column.
+///               - spell: boolean indicating that spell checking should be
+///                   performed within this extmark
+///               - strict: boolean that indicates extmark should not be placed
+///                   if the line or column value is past the end of the
+///                   buffer or end of the line respectively. Defaults to true.
+///               - ui_watched: boolean that indicates the mark should be drawn
+///                   by a UI. When set, the UI will receive win_extmark events.
+///                   Note: the mark is positioned by virt_text attributes. Can be
+///                   used together with virt_text.
+///               - undo_restore : Restore the exact position of the mark
+///                   if text around the mark was deleted and then restored by undo.
+///                   Defaults to true.
+///               - url: A URL to associate with this extmark. In the TUI, the OSC 8 control
+///                   sequence is used to generate a clickable hyperlink to this URL.
 ///               - virt_lines : virtual lines to add next to this mark
 ///                   This should be an array over lines, where each line in
 ///                   turn is an array over `[text, highlight]` tuples. In
@@ -474,56 +495,38 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 ///                 - "trunc": truncate virtual lines on the right (default).
 ///                 - "scroll": virtual lines can scroll horizontally with 'nowrap',
 ///                    otherwise the same as "trunc".
-///               - ephemeral : for use with |nvim_set_decoration_provider()|
-///                   callbacks. The mark will only be used for the current
-///                   redraw cycle, and not be permanently stored in the buffer.
-///               - right_gravity : boolean that indicates the direction
-///                   the extmark will be shifted in when new text is inserted
-///                   (true for right, false for left). Defaults to true.
-///               - end_right_gravity : boolean that indicates the direction
-///                   the extmark end position (if it exists) will be shifted
-///                   in when new text is inserted (true for right, false
-///                   for left). Defaults to false.
-///               - undo_restore : Restore the exact position of the mark
-///                   if text around the mark was deleted and then restored by undo.
-///                   Defaults to true.
-///               - invalidate : boolean that indicates whether to hide the
-///                   extmark if the entirety of its range is deleted. For
-///                   hidden marks, an "invalid" key is added to the "details"
-///                   array of |nvim_buf_get_extmarks()| and family. If
-///                   "undo_restore" is false, the extmark is deleted instead.
-///               - priority: a priority value for the highlight group, sign
-///                   attribute or virtual text. For virtual text, item with
-///                   highest priority is drawn last. For example treesitter
-///                   highlighting uses a value of 100.
-///               - strict: boolean that indicates extmark should not be placed
-///                   if the line or column value is past the end of the
-///                   buffer or end of the line respectively. Defaults to true.
-///               - sign_text: string of length 1-2 used to display in the
-///                   sign column.
-///               - sign_hl_group: highlight group used for the sign column text.
-///               - number_hl_group: highlight group used for the number column.
-///               - line_hl_group: highlight group used for the whole line.
-///               - cursorline_hl_group: highlight group used for the sign
-///                   column text when the cursor is on the same line as the
-///                   mark and 'cursorline' is enabled.
-///               - conceal: string which should be either empty or a single
-///                   character. Enable concealing similar to |:syn-conceal|.
-///                   When a character is supplied it is used as |:syn-cchar|.
-///                   "hl_group" is used as highlight for the cchar if provided,
-///                   otherwise it defaults to |hl-Conceal|.
-///               - conceal_lines: string which should be empty. When
-///                   provided, lines in the range are not drawn at all
-///                   (according to 'conceallevel'); the next unconcealed line
-///                   is drawn instead.
-///               - spell: boolean indicating that spell checking should be
-///                   performed within this extmark
-///               - ui_watched: boolean that indicates the mark should be drawn
-///                   by a UI. When set, the UI will receive win_extmark events.
-///                   Note: the mark is positioned by virt_text attributes. Can be
-///                   used together with virt_text.
-///               - url: A URL to associate with this extmark. In the TUI, the OSC 8 control
-///                   sequence is used to generate a clickable hyperlink to this URL.
+///               - virt_text : [](virtual-text) to link to this mark.
+///                   A list of `[text, highlight]` tuples, each representing a
+///                   text chunk with specified highlight. `highlight` element
+///                   can either be a single highlight group, or an array of
+///                   multiple highlight groups that will be stacked
+///                   (highest priority last).
+///               - virt_text_hide : hide the virtual text when the background
+///                                  text is selected or hidden because of
+///                                  scrolling with 'nowrap' or 'smoothscroll'.
+///                                  Currently only affects "overlay" virt_text.
+///               - virt_text_pos : position of virtual text. Possible values:
+///                 - "eol": right after eol character (default).
+///                 - "eol_right_align": display right aligned in the window
+///                                      unless the virtual text is longer than
+///                                      the space available. If the virtual
+///                                      text is too long, it is truncated to
+///                                      fit in the window after the EOL
+///                                      character. If the line is wrapped, the
+///                                      virtual text is shown after the end of
+///                                      the line rather than the previous
+///                                      screen line.
+///                 - "overlay": display over the specified column, without
+///                              shifting the underlying text.
+///                 - "right_align": display right aligned in the window.
+///                 - "inline": display at the specified column, and
+///                             shift the buffer text to the right as needed.
+///               - virt_text_repeat_linebreak : repeat the virtual text on
+///                                              wrapped lines.
+///               - virt_text_win_col : position the virtual text at a fixed
+///                                     window column (starting from the first
+///                                     text column of the screen line) instead
+///                                     of "virt_text_pos".
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -633,14 +636,25 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
   }
 
   if (HAS_KEY(opts, set_extmark, conceal)) {
-    hl.flags |= kSHConceal;
+    VALIDATE_EXP((opts->conceal.type == kObjectTypeBoolean
+                  || opts->conceal.type == kObjectTypeString),
+                 "conceal", "String or Boolean", api_typename(opts->conceal.type), {
+      goto error;
+    });
+
     has_hl = true;
-    if (opts->conceal.size > 0) {
-      int ch;
-      hl.conceal_char = utfc_ptr2schar(opts->conceal.data, &ch);
-      VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char has to be printable", {
-        goto error;
-      });
+    if (opts->conceal.type == kObjectTypeBoolean) {
+      hl.flags |= opts->conceal.data.boolean ? kSHConceal : kSHConcealOff;
+    } else {
+      String conceal_str = opts->conceal.data.string;
+      hl.flags |= kSHConceal;
+      if (conceal_str.size > 0) {
+        int ch;
+        hl.conceal_char = utfc_ptr2schar(conceal_str.data, &ch);
+        VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char must be printable", {
+          goto error;
+        });
+      }
     }
   }
 
@@ -1040,18 +1054,14 @@ void nvim_buf_clear_namespace(Buffer buf, Integer ns_id, Integer line_start, Int
 ///
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:
-///             - on_start: called first on each screen redraw
-///               ```
-///                 ["start", tick]
-///               ```
 ///             - on_buf: called for each buffer being redrawn (once per edit,
 ///               before window callbacks)
 ///               ```
 ///                 ["buf", bufnr, tick]
 ///               ```
-///             - on_win: called when starting to redraw a specific window.
+///             - on_end: called at the end of a redraw cycle
 ///               ```
-///                 ["win", winid, bufnr, toprow, botrow]
+///                 ["end", tick]
 ///               ```
 ///             - on_line: (deprecated, use on_range instead)
 ///               ```
@@ -1072,9 +1082,13 @@ void nvim_buf_clear_namespace(Buffer buf, Integer ns_id, Integer line_start, Int
 ///               which continues beyond the skipped position. A single integer
 ///               return value `skip_row` is short for `skip_row, 0`
 ///
-///             - on_end: called at the end of a redraw cycle
+///             - on_start: called first on each screen redraw
 ///               ```
-///                 ["end", tick]
+///                 ["start", tick]
+///               ```
+///             - on_win: called when starting to redraw a specific window.
+///               ```
+///                 ["win", winid, bufnr, toprow, botrow]
 ///               ```
 void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *opts, Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY

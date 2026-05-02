@@ -154,7 +154,7 @@ indices, end-inclusive):
 - |nvim_buf_get_extmarks()|
 - |nvim_buf_set_extmark()|
 
-                                                        *api-fast* *schedule*
+						*api-fast* *deferred* *schedule*
 Most API functions are deferred: they are queued ("scheduled") on the main
 loop and processed sequentially with normal input. If the editor is waiting
 for user input in a "modal" fashion (e.g. an |input()| prompt), a deferred
@@ -695,7 +695,8 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                    • kind (`string?`) Decides the |ui-messages| kind in the
                      emitted message. Set "progress" to emit a
                      |progress-message|.
-                   • percent (`integer?`) |progress-message| percentage.
+                   • percent (`integer?`) |progress-message| percentage, or
+                     nil to signal "unknown progress".
                    • source (`string?`) |progress-message| source.
                    • status (`string?`) |progress-message| status:
                      • "success": Process completed successfully.
@@ -723,19 +724,19 @@ nvim_eval_statusline({str}, {opts})                   *nvim_eval_statusline()*
     Parameters: ~
       • {str}   (`string`) Statusline string (see 'statusline').
       • {opts}  (`vim.api.keyset.eval_statusline`) Optional parameters.
-                • winid: (number) |window-ID| of the window to use as context
-                  for statusline.
-                • maxwidth: (number) Maximum width of statusline.
                 • fillchar: (string) Character to fill blank spaces in the
                   statusline (see 'fillchars'). Treated as single-width even
                   if it isn't.
                 • highlights: (boolean) Return highlight information.
-                • use_winbar: (boolean) Evaluate winbar instead of statusline.
+                • maxwidth: (number) Maximum width of statusline.
+                • use_statuscol_lnum: (number) Evaluate statuscolumn for this
+                  line number instead of statusline.
                 • use_tabline: (boolean) Evaluate tabline instead of
                   statusline. When true, {winid} is ignored. Mutually
                   exclusive with {use_winbar}.
-                • use_statuscol_lnum: (number) Evaluate statuscolumn for this
-                  line number instead of statusline.
+                • use_winbar: (boolean) Evaluate winbar instead of statusline.
+                • winid: (number) |window-ID| of the window to use as context
+                  for statusline.
 
     Return: ~
         (`vim.api.keyset.eval_statusline_ret`) Dict containing statusline
@@ -949,12 +950,12 @@ nvim_get_hl({ns_id}, {opts})                                   *nvim_get_hl()*
                  |nvim_get_namespaces()|. Use 0 to get global highlight groups
                  |:highlight|.
       • {opts}   (`vim.api.keyset.get_highlight`) Options dict:
-                 • name: (string) Get a highlight definition by name.
+                 • create: (boolean, default true) When highlight group
+                   doesn't exist create it.
                  • id: (integer) Get a highlight definition by id.
                  • link: (boolean, default true) Show linked group name
                    instead of effective definition |:hi-link|.
-                 • create: (boolean, default true) When highlight group
-                   doesn't exist create it.
+                 • name: (string) Get a highlight definition by name.
 
     Return: ~
         (`vim.api.keyset.get_hl_info`) Highlight groups as a map from group
@@ -1288,13 +1289,13 @@ nvim_open_term({buf}, {opts})                               *nvim_open_term()*
       • {buf}   (`integer`) Buffer to use. Buffer contents (if any) will be
                 written to the PTY.
       • {opts}  (`vim.api.keyset.open_term`) Optional parameters.
+                • force_crlf: (boolean, default true) Convert "\n" to "\r\n".
                 • on_input: Lua callback for input sent, i e keypresses in
                   terminal mode. Note: keypresses are sent raw as they would
                   be to the pty master end. For instance, a carriage return is
                   sent as a "\r", not as a "\n". |textlock| applies. It is
                   possible to call |nvim_chan_send()| directly in the callback
                   however. `["input", term, bufnr, data]`
-                • force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 
     Return: ~
         (`integer`) Channel id, or 0 on error
@@ -1848,24 +1849,24 @@ nvim__redraw({opts})                                          *nvim__redraw()*
 
     Parameters: ~
       • {opts}  (`vim.api.keyset.redraw`) Optional parameters.
-                • win: Target a specific |window-ID| as described below.
                 • buf: Target a specific buffer number as described below.
+                • cursor: Immediately update cursor position on the screen in
+                  `win` or the current window.
                 • flush: Update the screen with pending updates.
-                • valid: When present mark `win`, `buf`, or all windows for
-                  redraw. When `true`, only redraw changed lines (useful for
-                  decoration providers). When `false`, forcefully redraw.
                 • range: Redraw a range in `buf`, the buffer in `win` or the
                   current buffer (useful for decoration providers). Expects a
                   tuple `[first, last]` with the first and last line number of
                   the range, 0-based end-exclusive |api-indexing|.
-                • cursor: Immediately update cursor position on the screen in
-                  `win` or the current window.
                 • statuscolumn: Redraw the 'statuscolumn' in `buf`, `win` or
                   all windows.
                 • statusline: Redraw the 'statusline' in `buf`, `win` or all
                   windows.
-                • winbar: Redraw the 'winbar' in `buf`, `win` or all windows.
                 • tabline: Redraw the 'tabline'.
+                • valid: When present mark `win`, `buf`, or all windows for
+                  redraw. When `true`, only redraw changed lines (useful for
+                  decoration providers). When `false`, forcefully redraw.
+                • win: Target a specific |window-ID| as described below.
+                • winbar: Redraw the 'winbar' in `buf`, `win` or all windows.
 
     See also: ~
       • |:redraw|
@@ -2064,20 +2065,20 @@ nvim_clear_autocmds({opts})                            *nvim_clear_autocmds()*
 
     Parameters: ~
       • {opts}  (`vim.api.keyset.clear_autocmds`) Optional parameters:
+                • buf: (`integer?`) Select |autocmd-buflocal| autocommands.
+                  Not allowed with {pattern}.
                 • event: (`vim.api.keyset.events|vim.api.keyset.events[]?`)
                   Examples:
                   • event: "pat1"
                   • event: { "pat1" }
                   • event: { "pat1", "pat2", "pat3" }
+                • group: (`string|int?`) Group name or id.
+                  • NOTE: If not given, matches autocmds not in any group.
                 • pattern: (`string|table?`) Filter by patterns (exact match).
                   Not allowed with {buf}.
                   • Example: if you have `*.py` as that pattern for the
                     autocmd, you must pass `*.py` exactly to clear it.
                     `test.py` will not match the pattern.
-                • buf: (`integer?`) Select |autocmd-buflocal| autocommands.
-                  Not allowed with {pattern}.
-                • group: (`string|int?`) Group name or id.
-                  • NOTE: If not given, matches autocmds not in any group.
 
 nvim_create_augroup({name}, {opts})                    *nvim_create_augroup()*
     Create or get an autocommand group |autocmd-groups|.
@@ -2227,16 +2228,16 @@ nvim_exec_autocmds({event}, {opts})                     *nvim_exec_autocmds()*
       • {event}  (`vim.api.keyset.events|vim.api.keyset.events[]`) Event(s) to
                  execute.
       • {opts}   (`vim.api.keyset.exec_autocmds`) Optional filters:
-                 • group (`string|integer?`) Group name or id to match
-                   against. |autocmd-groups|.
-                 • pattern (`string|array?`, default: current file name)
-                   |autocmd-pattern|. Not allowed with {buf}.
                  • buf (`integer?`) Buffer id |autocmd-buflocal|. Not allowed
                    with {pattern}.
-                 • modeline (`boolean?`, default: true) Process the modeline
-                   after the autocommands <nomodeline>.
                  • data (`any`): Arbitrary data passed to the callback. See
                    |nvim_create_autocmd()|.
+                 • group (`string|integer?`) Group name or id to match
+                   against. |autocmd-groups|.
+                 • modeline (`boolean?`, default: true) Process the modeline
+                   after the autocommands <nomodeline>.
+                 • pattern (`string|array?`, default: current file name)
+                   |autocmd-pattern|. Not allowed with {buf}.
 
     See also: ~
       • |:doautocmd|
@@ -2338,19 +2339,6 @@ nvim_buf_attach({buf}, {send_buffer}, {opts})              *nvim_buf_attach()*
                        will be `nvim_buf_changedtick_event`. Not for Lua
                        callbacks.
       • {opts}         (`vim.api.keyset.buf_attach`) Optional parameters.
-                       • on_lines: Called on linewise changes. Not called on
-                         buffer reload (`:checktime`, `:edit`, …), see
-                         `on_reload:`. Return a |lua-truthy| value to detach.
-                         Args:
-                         • the string "lines"
-                         • buffer id
-                         • b:changedtick
-                         • first line that changed (zero-indexed)
-                         • last line that was changed
-                         • last line in the updated range
-                         • byte count of previous contents
-                         • deleted_codepoints (if `utf_sizes` is true)
-                         • deleted_codeunits (if `utf_sizes` is true)
                        • on_bytes: Called on granular changes (compared to
                          on_lines). Not called on buffer reload (`:checktime`,
                          `:edit`, …), see `on_reload:`. Return a
@@ -2380,15 +2368,28 @@ nvim_buf_attach({buf}, {send_buffer}, {opts})              *nvim_buf_attach()*
                        • on_detach: Called on detach. Args:
                          • the string "detach"
                          • buffer id
+                       • on_lines: Called on linewise changes. Not called on
+                         buffer reload (`:checktime`, `:edit`, …), see
+                         `on_reload:`. Return a |lua-truthy| value to detach.
+                         Args:
+                         • the string "lines"
+                         • buffer id
+                         • b:changedtick
+                         • first line that changed (zero-indexed)
+                         • last line that was changed
+                         • last line in the updated range
+                         • byte count of previous contents
+                         • deleted_codepoints (if `utf_sizes` is true)
+                         • deleted_codeunits (if `utf_sizes` is true)
                        • on_reload: Called on whole-buffer load (`:checktime`,
                          `:edit`, …). Clients should typically re-fetch the
                          entire buffer contents. Args:
                          • the string "reload"
                          • buffer id
-                       • utf_sizes: include UTF-32 and UTF-16 size of the
-                         replaced region, as args to `on_lines`.
                        • preview: also attach to command preview (i.e.
                          'inccommand') events.
+                       • utf_sizes: include UTF-32 and UTF-16 size of the
+                         replaced region, as args to `on_lines`.
 
     Return: ~
         (`boolean`) False if attach failed (invalid parameter, or buffer isn't
@@ -2933,21 +2934,21 @@ nvim_create_user_command({name}, {cmd}, {opts})
                 executed. When called from Lua, the command can also be a Lua
                 function. The function is called with a single table argument
                 that contains the following keys:
-                • name: (string) Command name
                 • args: (string) The args passed to the command, if any <args>
-                • fargs: (table) The args split by unescaped whitespace (when
-                  more than one argument is allowed), if any <f-args>
-                • nargs: (string) Number of arguments |:command-nargs|
                 • bang: (boolean) "true" if the command was executed with a !
                   modifier <bang>
+                • count: (number) Any count supplied <count>
+                • fargs: (table) The args split by unescaped whitespace (when
+                  more than one argument is allowed), if any <f-args>
                 • line1: (number) The starting line of the command range
                   <line1>
                 • line2: (number) The final line of the command range <line2>
+                • mods: (string) Command modifiers, if any <mods>
+                • name: (string) Command name
+                • nargs: (string) Number of arguments |:command-nargs|
                 • range: (number) The number of items in the command range: 0,
                   1, or 2 <range>
-                • count: (number) Any count supplied <count>
                 • reg: (string) The optional register, if specified <reg>
-                • mods: (string) Command modifiers, if any <mods>
                 • smods: (table) Command modifiers in a structured format. Has
                   the same structure as the "mods" key of |nvim_parse_cmd()|.
       • {opts}  (`vim.api.keyset.user_command`) Optional flags
@@ -3179,10 +3180,10 @@ nvim_buf_get_extmarks({buf}, {ns_id}, {start}, {end}, {opts})
                  valid extmark id (whose position defines the bound).
                  |api-indexing|
       • {opts}   (`vim.api.keyset.get_extmarks`) Optional parameters. Keys:
-                 • limit: Maximum number of marks to return
                  • details: Whether to include the details dict
                  • hl_name: Whether to include highlight group name instead of
                    id, true if omitted
+                 • limit: Maximum number of marks to return
                  • overlap: Also include marks which overlap the range, even
                    if their start position is less than `start`
                  • type: Filter marks by type: "highlight", "sign",
@@ -3222,46 +3223,40 @@ nvim_buf_set_extmark({buf}, {ns_id}, {line}, {col}, {opts})
       • {col}    (`integer`) Column where to place the mark, 0-based.
                  |api-indexing|
       • {opts}   (`vim.api.keyset.set_extmark`) Optional parameters.
-                 • id : id of the extmark to edit.
-                 • end_row : ending line of the mark, 0-based inclusive.
+                 • conceal: either a boolean or a string.
+                   • when a string is given, it should be either empty or a
+                     single character. Enable concealing similar to
+                     |:syn-conceal|. When a character is supplied it is used
+                     as |:syn-cchar|. "hl_group" is used as highlight for the
+                     cchar if provided, otherwise it defaults to |hl-Conceal|.
+                   • when a boolean is given, true is equivalent to "" and
+                     false overrides any existing conceal to remove it.
+                 • conceal_lines: string which should be empty. When provided,
+                   lines in the range are not drawn at all (according to
+                   'conceallevel'); the next unconcealed line is drawn
+                   instead.
+                 • cursorline_hl_group: highlight group used for the sign
+                   column text when the cursor is on the same line as the mark
+                   and 'cursorline' is enabled.
                  • end_col : ending col of the mark, 0-based exclusive, or -1
-                   to extend the range to end of line.
+                   to extend the range to end of line (if strict=false).
+                 • end_right_gravity : boolean that indicates the direction
+                   the extmark end position (if it exists) will be shifted in
+                   when new text is inserted (true for right, false for left).
+                   Defaults to false.
+                 • end_row : ending line of the mark, 0-based inclusive.
+                 • ephemeral : for use with |nvim_set_decoration_provider()|
+                   callbacks. The mark will only be used for the current
+                   redraw cycle, and not be permanently stored in the buffer.
+                 • hl_eol : when true, for a multiline highlight covering the
+                   EOL of a line, continue the highlight for the rest of the
+                   screen line (just like for diff and cursorline highlight).
                  • hl_group : highlight group used for the text range. This
                    and below highlight groups can be supplied either as a
                    string or as an integer, the latter of which can be
                    obtained using |nvim_get_hl_id_by_name()|.
                    Multiple highlight groups can be stacked by passing an
                    array (highest priority last).
-                 • hl_eol : when true, for a multiline highlight covering the
-                   EOL of a line, continue the highlight for the rest of the
-                   screen line (just like for diff and cursorline highlight).
-                 • virt_text : *virtual-text* to link to this mark. A list of
-                   `[text, highlight]` tuples, each representing a text chunk
-                   with specified highlight. `highlight` element can either be
-                   a single highlight group, or an array of multiple highlight
-                   groups that will be stacked (highest priority last).
-                 • virt_text_pos : position of virtual text. Possible values:
-                   • "eol": right after eol character (default).
-                   • "eol_right_align": display right aligned in the window
-                     unless the virtual text is longer than the space
-                     available. If the virtual text is too long, it is
-                     truncated to fit in the window after the EOL character.
-                     If the line is wrapped, the virtual text is shown after
-                     the end of the line rather than the previous screen line.
-                   • "overlay": display over the specified column, without
-                     shifting the underlying text.
-                   • "right_align": display right aligned in the window.
-                   • "inline": display at the specified column, and shift the
-                     buffer text to the right as needed.
-                 • virt_text_win_col : position the virtual text at a fixed
-                   window column (starting from the first text column of the
-                   screen line) instead of "virt_text_pos".
-                 • virt_text_hide : hide the virtual text when the background
-                   text is selected or hidden because of scrolling with
-                   'nowrap' or 'smoothscroll'. Currently only affects
-                   "overlay" virt_text.
-                 • virt_text_repeat_linebreak : repeat the virtual text on
-                   wrapped lines.
                  • hl_mode : control how highlights are combined with the
                    highlights of the text. Currently only affects virt_text
                    highlights, but might affect `hl_group` in later versions.
@@ -3270,6 +3265,41 @@ nvim_buf_set_extmark({buf}, {ns_id}, {line}, {col}, {opts})
                    • "combine": combine with background text color.
                    • "blend": blend with background text color. Not supported
                      for "inline" virt_text.
+                 • id : id of the extmark to edit.
+                 • invalidate : boolean that indicates whether to hide the
+                   extmark if the entirety of its range is deleted. For hidden
+                   marks, an "invalid" key is added to the "details" array of
+                   |nvim_buf_get_extmarks()| and family. If "undo_restore" is
+                   false, the extmark is deleted instead.
+                 • line_hl_group: highlight group used for the whole line.
+                 • number_hl_group: highlight group used for the number
+                   column.
+                 • priority: a priority value for the highlight group, sign
+                   attribute or virtual text. For virtual text, item with
+                   highest priority is drawn last. For example treesitter
+                   highlighting uses a value of 100.
+                 • right_gravity : boolean that indicates the direction the
+                   extmark will be shifted in when new text is inserted (true
+                   for right, false for left). Defaults to true.
+                 • sign_hl_group: highlight group used for the sign column
+                   text.
+                 • sign_text: string of length 1-2 used to display in the sign
+                   column.
+                 • spell: boolean indicating that spell checking should be
+                   performed within this extmark
+                 • strict: boolean that indicates extmark should not be placed
+                   if the line or column value is past the end of the buffer
+                   or end of the line respectively. Defaults to true.
+                 • ui_watched: boolean that indicates the mark should be drawn
+                   by a UI. When set, the UI will receive win_extmark events.
+                   Note: the mark is positioned by virt_text attributes. Can
+                   be used together with virt_text.
+                 • undo_restore : Restore the exact position of the mark if
+                   text around the mark was deleted and then restored by undo.
+                   Defaults to true.
+                 • url: A URL to associate with this extmark. In the TUI, the
+                   OSC 8 control sequence is used to generate a clickable
+                   hyperlink to this URL.
                  • virt_lines : virtual lines to add next to this mark This
                    should be an array over lines, where each line in turn is
                    an array over `[text, highlight]` tuples. In general,
@@ -3288,59 +3318,33 @@ nvim_buf_set_extmark({buf}, {ns_id}, {line}, {col}, {opts})
                    • "trunc": truncate virtual lines on the right (default).
                    • "scroll": virtual lines can scroll horizontally with
                      'nowrap', otherwise the same as "trunc".
-                 • ephemeral : for use with |nvim_set_decoration_provider()|
-                   callbacks. The mark will only be used for the current
-                   redraw cycle, and not be permanently stored in the buffer.
-                 • right_gravity : boolean that indicates the direction the
-                   extmark will be shifted in when new text is inserted (true
-                   for right, false for left). Defaults to true.
-                 • end_right_gravity : boolean that indicates the direction
-                   the extmark end position (if it exists) will be shifted in
-                   when new text is inserted (true for right, false for left).
-                   Defaults to false.
-                 • undo_restore : Restore the exact position of the mark if
-                   text around the mark was deleted and then restored by undo.
-                   Defaults to true.
-                 • invalidate : boolean that indicates whether to hide the
-                   extmark if the entirety of its range is deleted. For hidden
-                   marks, an "invalid" key is added to the "details" array of
-                   |nvim_buf_get_extmarks()| and family. If "undo_restore" is
-                   false, the extmark is deleted instead.
-                 • priority: a priority value for the highlight group, sign
-                   attribute or virtual text. For virtual text, item with
-                   highest priority is drawn last. For example treesitter
-                   highlighting uses a value of 100.
-                 • strict: boolean that indicates extmark should not be placed
-                   if the line or column value is past the end of the buffer
-                   or end of the line respectively. Defaults to true.
-                 • sign_text: string of length 1-2 used to display in the sign
-                   column.
-                 • sign_hl_group: highlight group used for the sign column
-                   text.
-                 • number_hl_group: highlight group used for the number
-                   column.
-                 • line_hl_group: highlight group used for the whole line.
-                 • cursorline_hl_group: highlight group used for the sign
-                   column text when the cursor is on the same line as the mark
-                   and 'cursorline' is enabled.
-                 • conceal: string which should be either empty or a single
-                   character. Enable concealing similar to |:syn-conceal|.
-                   When a character is supplied it is used as |:syn-cchar|.
-                   "hl_group" is used as highlight for the cchar if provided,
-                   otherwise it defaults to |hl-Conceal|.
-                 • conceal_lines: string which should be empty. When provided,
-                   lines in the range are not drawn at all (according to
-                   'conceallevel'); the next unconcealed line is drawn
-                   instead.
-                 • spell: boolean indicating that spell checking should be
-                   performed within this extmark
-                 • ui_watched: boolean that indicates the mark should be drawn
-                   by a UI. When set, the UI will receive win_extmark events.
-                   Note: the mark is positioned by virt_text attributes. Can
-                   be used together with virt_text.
-                 • url: A URL to associate with this extmark. In the TUI, the
-                   OSC 8 control sequence is used to generate a clickable
-                   hyperlink to this URL.
+                 • virt_text : *virtual-text* to link to this mark. A list of
+                   `[text, highlight]` tuples, each representing a text chunk
+                   with specified highlight. `highlight` element can either be
+                   a single highlight group, or an array of multiple highlight
+                   groups that will be stacked (highest priority last).
+                 • virt_text_hide : hide the virtual text when the background
+                   text is selected or hidden because of scrolling with
+                   'nowrap' or 'smoothscroll'. Currently only affects
+                   "overlay" virt_text.
+                 • virt_text_pos : position of virtual text. Possible values:
+                   • "eol": right after eol character (default).
+                   • "eol_right_align": display right aligned in the window
+                     unless the virtual text is longer than the space
+                     available. If the virtual text is too long, it is
+                     truncated to fit in the window after the EOL character.
+                     If the line is wrapped, the virtual text is shown after
+                     the end of the line rather than the previous screen line.
+                   • "overlay": display over the specified column, without
+                     shifting the underlying text.
+                   • "right_align": display right aligned in the window.
+                   • "inline": display at the specified column, and shift the
+                     buffer text to the right as needed.
+                 • virt_text_repeat_linebreak : repeat the virtual text on
+                   wrapped lines.
+                 • virt_text_win_col : position the virtual text at a fixed
+                   window column (starting from the first text column of the
+                   screen line) instead of "virt_text_pos".
 
     Return: ~
         (`integer`) Id of the created/updated extmark
@@ -3413,15 +3417,12 @@ nvim_set_decoration_provider({ns_id}, {opts})
       • {ns_id}  (`integer`) Namespace id from |nvim_create_namespace()|
       • {opts}   (`vim.api.keyset.set_decoration_provider`) Table of
                  callbacks:
-                 • on_start: called first on each screen redraw >
-                    ["start", tick]
-<
                  • on_buf: called for each buffer being redrawn (once per
                    edit, before window callbacks) >
                     ["buf", bufnr, tick]
 <
-                 • on_win: called when starting to redraw a specific window. >
-                    ["win", winid, bufnr, toprow, botrow]
+                 • on_end: called at the end of a redraw cycle >
+                    ["end", tick]
 <
                  • on_line: (deprecated, use on_range instead) >
                     ["line", winid, bufnr, row]
@@ -3440,8 +3441,11 @@ nvim_set_decoration_provider({ns_id}, {opts})
                    a range which continues beyond the skipped position. A
                    single integer return value `skip_row` is short for
                    `skip_row, 0`
-                 • on_end: called at the end of a redraw cycle >
-                    ["end", tick]
+                 • on_start: called first on each screen redraw >
+                    ["start", tick]
+<
+                 • on_win: called when starting to redraw a specific window. >
+                    ["win", winid, bufnr, toprow, botrow]
 <
 
 nvim__ns_get({ns_id})                                         *nvim__ns_get()*
@@ -3513,11 +3517,11 @@ nvim_get_option_info2({name}, {opts})                *nvim_get_option_info2()*
     Parameters: ~
       • {name}  (`string`) Option name
       • {opts}  (`vim.api.keyset.option`) Optional parameters
+                • buf: Buffer number. Used for getting buffer local options.
+                  Implies {scope} is "local".
                 • scope: One of "global" or "local". Analogous to |:setglobal|
                   and |:setlocal|, respectively.
                 • win: |window-ID|. Used for getting window local options.
-                • buf: Buffer number. Used for getting buffer local options.
-                  Implies {scope} is "local".
 
     Return: ~
         (`vim.api.keyset.get_option_info`) Option Information
@@ -3534,15 +3538,15 @@ nvim_get_option_value({name}, {opts})                *nvim_get_option_value()*
     Parameters: ~
       • {name}  (`string`) Option name
       • {opts}  (`vim.api.keyset.option`) Optional parameters
-                • scope: One of "global" or "local". Analogous to |:setglobal|
-                  and |:setlocal|, respectively.
-                • win: |window-ID|. Used for getting window local options.
                 • buf: Buffer number. Used for getting buffer local options.
                   Implies {scope} is "local".
                 • filetype: |filetype|. Used to get the default option for a
                   specific filetype. Cannot be used with any other option.
                   Note: this will trigger |ftplugin| and all |FileType|
                   autocommands for the corresponding filetype.
+                • scope: One of "global" or "local". Analogous to |:setglobal|
+                  and |:setlocal|, respectively.
+                • win: |window-ID|. Used for getting window local options.
 
     Return: ~
         (`any`) Option value
@@ -3562,10 +3566,10 @@ nvim_set_option_value({name}, {value}, {opts})
       • {name}   (`string`) Option name
       • {value}  (`any`) New option value
       • {opts}   (`vim.api.keyset.option`) Optional parameters
+                 • buf: Buffer number. Used for setting buffer local option.
                  • scope: One of "global" or "local". Analogous to
                    |:setglobal| and |:setlocal|, respectively.
                  • win: |window-ID|. Used for setting window local option.
-                 • buf: Buffer number. Used for setting buffer local option.
 
 
 ==============================================================================
@@ -4295,13 +4299,8 @@ nvim_win_text_height({win}, {opts})                   *nvim_win_text_height()*
     Parameters: ~
       • {win}   (`integer`) |window-ID|, or 0 for current window.
       • {opts}  (`vim.api.keyset.win_text_height`) Optional parameters:
-                • start_row: Starting line index, 0-based inclusive. When
-                  omitted start at the very top.
                 • end_row: Ending line index, 0-based inclusive. When omitted
                   end at the very bottom.
-                • start_vcol: Starting virtual column index on "start_row",
-                  0-based inclusive, rounded down to full screen lines. When
-                  omitted include the whole line.
                 • end_vcol: Ending virtual column index on "end_row", 0-based
                   exclusive, rounded up to full screen lines. When 0 only
                   include diff filler and virtual lines above "end_row". When
@@ -4312,6 +4311,11 @@ nvim_win_text_height({win}, {opts})                   *nvim_win_text_height()*
                   to find out how many buffer lines beyond "start_row" take up
                   a certain number of logical lines (returned in "end_row" and
                   "end_vcol").
+                • start_row: Starting line index, 0-based inclusive. When
+                  omitted start at the very top.
+                • start_vcol: Starting virtual column index on "start_row",
+                  0-based inclusive, rounded down to full screen lines. When
+                  omitted include the whole line.
 
     Return: ~
         (`vim.api.keyset.win_text_height_ret`) Dict containing text height

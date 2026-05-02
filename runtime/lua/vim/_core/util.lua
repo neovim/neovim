@@ -129,4 +129,48 @@ function M.term_exitcode()
   return ''
 end
 
+--- Compute a link to a target on a forge host
+--- @param repo string URL of repo, usually "https://<domain>/<user>/<name>"
+--- @param target string Identifier of a target, like commit hash or tag name
+--- @param target_type "commit"|"tag"
+--- @return string? # Example: <repo>/releases/tag/<target>
+function M.get_forge_url(repo, target, target_type)
+  -- The structure <host>/<middle>/<target> works for most forges. Like:
+  -- - https://github.com/neovim/nvim-lspconfig/commit/e146efa
+  -- - https://github.com/neovim/nvim-lspconfig/releases/tag/v2.8.0
+  local ref_middles = {
+    { pattern = '^https://github%.com/', commit = 'commit', tag = 'releases/tag' },
+    { pattern = '^https://gitlab%.com/', commit = '-/commit', tag = '-/tags' },
+    { pattern = '^https://git%.sr%.ht/', commit = 'commit', tag = 'refs' },
+    { pattern = '^https://tangled%.org/', commit = 'commit', tag = 'tags' },
+    { pattern = '^https://bitbucket%.org/', commit = 'commits', tag = 'src' },
+
+    -- Fall back to Forgejo style since there is no fixed host
+    { pattern = '^https://', commit = 'commit', tag = 'src/tag' },
+  }
+
+  local middle = ''
+  for _, mid in ipairs(ref_middles) do
+    if repo:match(mid.pattern) then
+      middle = mid[target_type]
+      if middle ~= '' then
+        break
+      end
+    end
+  end
+
+  if middle == '' then
+    return nil
+  end
+  repo = repo:gsub('/+$', '')
+  return ('%s/%s/%s'):format(repo, middle, target)
+end
+
+--- Check if value is `nil` or `vim.NIL`
+---
+--- @return boolean
+function M.isnil(value)
+  return value == nil or value == vim.NIL
+end
+
 return M

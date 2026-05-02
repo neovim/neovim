@@ -401,10 +401,11 @@ These events can be used to execute plugin hooks. For example: >lua
 *vim.pack.Spec*
 
     Fields: ~
-      • {src}       (`string`) URI from which to install and pull updates. Any
-                    format supported by `git clone` is allowed.
+      • {data}?     (`any`) Arbitrary data associated with a plugin.
       • {name}?     (`string`) Name of plugin. Will be used as directory name.
                     Default: `src` repository name.
+      • {src}       (`string`) URI from which to install and pull updates. Any
+                    format supported by `git clone` is allowed.
       • {version}?  (`string|vim.VersionRange`) Version to use for install and
                     updates. Can be:
                     • `nil` (no value, default) to use repository's default
@@ -412,7 +413,6 @@ These events can be used to execute plugin hooks. For example: >lua
                     • String to use specific branch, tag, or commit hash.
                     • Output of |vim.version.range()| to install the
                       greatest/last semver tag inside the version constraint.
-      • {data}?     (`any`) Arbitrary data associated with a plugin.
 
 
 add({specs}, {opts})                                          *vim.pack.add()*
@@ -442,14 +442,14 @@ add({specs}, {opts})                                          *vim.pack.add()*
       • {specs}  (`(string|vim.pack.Spec)[]`) List of plugin specifications.
                  String item is treated as `src`.
       • {opts}   (`table?`) A table with the following fields:
+                 • {confirm}? (`boolean`) Whether to ask user to confirm
+                   initial install. Default `true`.
                  • {load}?
                    (`boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})`)
                    Load `plugin/` files and `ftdetect/` scripts. If `false`,
                    works like `:packadd!`. If function, called with plugin
                    data and is fully responsible for loading plugin. Default
                    `false` during |init.lua| sourcing and `true` afterwards.
-                 • {confirm}? (`boolean`) Whether to ask user to confirm
-                   initial install. Default `true`.
 
 del({names}, {opts})                                          *vim.pack.del()*
     Remove plugins from disk
@@ -510,6 +510,9 @@ update({names}, {opts})                                    *vim.pack.update()*
     • |]]| and |[[| to navigate through plugin sections.
 
     Some features are provided via LSP:
+    • 'textDocument/documentLink' - compute links for plugin paths, sources,
+      commits, and tags. Makes a best effort educated guess about a link
+      structure. Use |gx| to open a link to an object at cursor.
     • 'textDocument/documentSymbol' (`gO` via |lsp-defaults| or
       |vim.lsp.buf.document_symbol()|) - show structure of the buffer.
     • 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) -

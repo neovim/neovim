@@ -38,6 +38,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/input.h"
 #include "nvim/insexpand.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
@@ -282,10 +283,11 @@ void set_buflocal_tfu_callback(buf_T *buf)
 /// type == DT_LTAG:     use location list for displaying tag matches
 /// type == DT_FREE:     free cached matches
 ///
+/// @param eap  excmd args (forwarded to Lua); may be NULL when the caller is not an excmd (e.g. `<C-T>`).
 /// @param tag  tag (pattern) to jump to
 /// @param forceit  :ta with !
 /// @param verbose  print "tag not found" message
-void do_tag(char *tag, int type, int count, int forceit, bool verbose)
+void do_tag(exarg_T *eap, char *tag, int type, int count, int forceit, bool verbose)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
@@ -651,35 +653,24 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
       }
       g_do_tagpreview = 0;
     } else {
-      bool ask_for_selection = false;
-
       if (type == DT_TAG && *tag != NUL) {
         // If a count is supplied to the ":tag <name>" command, then
         // jump to count'th matching tag.
         cur_match = count > 0 ? count - 1 : 0;
       } else if (type == DT_SELECT || (type == DT_JUMP && num_matches > 1)) {
-        print_tag_list(new_tag, use_tagstack, num_matches, matches);
-        ask_for_selection = true;
+        // Hand off to (async) vim.ui.select(). Roll back any pending tagstack changes.
+        select_tag_match(eap, new_tag, use_tagstack, num_matches, matches, name);
+        if (use_tagstack) {
+          tagstack[tagstackidx].fmark = saved_fmark;
+          tagstackidx = prevtagstackidx;
+        }
+        break;
       } else if (type == DT_LTAG) {
         if (add_llist_tags(tag, num_matches, matches) == FAIL) {
           goto end_do_tag;
         }
 
         cur_match = 0;                  // Jump to the first tag
-      }
-
-      if (ask_for_selection) {
-        // Ask to select a tag from the list.
-        int i = prompt_for_input(NULL, 0, false, NULL);
-        if (i <= 0 || i > num_matches || got_int) {
-          // no valid choice: don't change anything
-          if (use_tagstack) {
-            tagstack[tagstackidx].fmark = saved_fmark;
-            tagstackidx = prevtagstackidx;
-          }
-          break;
-        }
-        cur_match = i - 1;
       }
 
       if (cur_match >= num_matches) {
@@ -797,179 +788,56 @@ end_do_tag:
   xfree(tofree);
 }
 
-// List all the matching tags.
-static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, char **matches)
+/// Let the user pick from `matches`. Delegates to (async) `vim.ui.select()`.
+static void select_tag_match(exarg_T *eap, bool new_tag, bool use_tagstack, int num_matches,
+                             char **matches, const char *name)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
-  tagptrs_T tagp;
 
-  // Assume that the first match indicates how long the tags can
-  // be, and align the file names to that.
-  parse_match(matches[0], &tagp);
-  int taglen = MAX((int)(tagp.tagname_end - tagp.tagname + 2), 18);
-  if (taglen > Columns - 25) {
-    taglen = MAXCOL;
-  }
-  if (msg_col == 0) {
-    msg_didout = false;     // overwrite previous message
-  }
-  msg_ext_set_kind("confirm");
-  msg_start();
-  msg_puts_hl(_("  # pri kind tag"), HLF_T, false);
-  msg_clr_eos();
-  taglen_advance(taglen);
-  msg_puts_hl(_("file\n"), HLF_T, false);
+  typval_T items_tv;
+  tv_list_alloc_ret(&items_tv, num_matches);
 
-  for (int i = 0; i < num_matches && !got_int; i++) {
-    parse_match(matches[i], &tagp);
-    if (!new_tag && (
-                     (g_do_tagpreview != 0
-                      && i == ptag_entry.cur_match)
-                     || (use_tagstack
-                         && i == tagstack[tagstackidx].cur_match))) {
-      *IObuff = '>';
-    } else {
-      *IObuff = ' ';
-    }
-    vim_snprintf(IObuff + 1, IOSIZE - 1,
-                 "%2d %s ", i + 1,
-                 mt_names[matches[i][0] & MT_MASK]);
-    msg_puts(IObuff);
-    if (tagp.tagkind != NULL) {
-      msg_outtrans_len(tagp.tagkind, (int)(tagp.tagkind_end - tagp.tagkind), 0, false);
-    }
-    msg_advance(13);
-    msg_outtrans_len(tagp.tagname, (int)(tagp.tagname_end - tagp.tagname), HLF_T, false);
-    msg_putchar(' ');
-    taglen_advance(taglen);
-
-    // Find out the actual file name. If it is long, truncate
-    // it and put "..." in the middle
-    const char *p = tag_full_fname(&tagp);
-    if (p != NULL) {
-      msg_outtrans(p, HLF_D, false);
-      XFREE_CLEAR(p);
-    }
-    if (msg_col > 0) {
-      msg_putchar('\n');
-    }
-    if (got_int) {
-      break;
-    }
-    msg_advance(15);
-
-    // print any extra fields
-    const char *command_end = tagp.command_end;
-    if (command_end != NULL) {
-      p = command_end + 3;
-      while (*p && *p != '\r' && *p != '\n') {
-        while (*p == TAB) {
-          p++;
-        }
-
-        // skip "file:" without a value (static tag)
-        if (strncmp(p, "file:", 5) == 0 && ascii_isspace(p[5])) {
-          p += 5;
-          continue;
-        }
-        // skip "kind:<kind>" and "<kind>"
-        if (p == tagp.tagkind
-            || (p + 5 == tagp.tagkind
-                && strncmp(p, "kind:", 5) == 0)) {
-          p = tagp.tagkind_end;
-          continue;
-        }
-        // print all other extra fields
-        int hl_id = HLF_CM;
-        while (*p && *p != '\r' && *p != '\n') {
-          if (msg_col + ptr2cells(p) >= Columns) {
-            msg_putchar('\n');
-            if (got_int) {
-              break;
-            }
-            msg_advance(15);
-          }
-          p = msg_outtrans_one(p, hl_id, false);
-          if (*p == TAB) {
-            msg_puts_hl(" ", hl_id, false);
-            break;
-          }
-          if (*p == ':') {
-            hl_id = 0;
-          }
-        }
-      }
-      if (msg_col > 15) {
-        msg_putchar('\n');
-        if (got_int) {
-          break;
-        }
-        msg_advance(15);
-      }
-    } else {
-      for (p = tagp.command;
-           *p && *p != '\r' && *p != '\n';
-           p++) {}
-      command_end = p;
-    }
-
-    // Put the info (in several lines) at column 15.
-    // Don't display "/^" and "?^".
-    p = tagp.command;
-    if (*p == '/' || *p == '?') {
-      p++;
-      if (*p == '^') {
-        p++;
-      }
-    }
-    // Remove leading whitespace from pattern
-    while (p != command_end && ascii_isspace(*p)) {
-      p++;
-    }
-
-    while (p != command_end) {
-      if (msg_col + (*p == TAB ? 1 : ptr2cells(p)) > Columns) {
-        msg_putchar('\n');
-      }
-      if (got_int) {
-        break;
-      }
-      msg_advance(15);
-
-      // skip backslash used for escaping a command char or
-      // a backslash
-      if (*p == '\\' && (*(p + 1) == *tagp.command
-                         || *(p + 1) == '\\')) {
-        p++;
-      }
-
-      if (*p == TAB) {
-        msg_putchar(' ');
-        p++;
-      } else {
-        p = msg_outtrans_one(p, 0, false);
-      }
-
-      // don't display the "$/;\"" and "$?;\""
-      if (p == command_end - 2 && *p == '$'
-          && *(p + 1) == *tagp.command) {
-        break;
-      }
-      // don't display matching '/' or '?'
-      if (p == command_end - 1 && *p == *tagp.command
-          && (*p == '/' || *p == '?')) {
-        break;
-      }
-    }
-    if (msg_col && (!ui_has(kUIMessages) || i < num_matches - 1)) {
-      msg_putchar('\n');
-    }
+  for (int i = 0; i < num_matches; i++) {
     os_breakcheck();
+    if (got_int) {
+      tv_clear(&items_tv);
+      return;
+    }
+    tagptrs_T tagp;
+    parse_match(matches[i], &tagp);
+
+    bool cur = !new_tag
+               && ((g_do_tagpreview != 0 && i == ptag_entry.cur_match)
+                   || (use_tagstack && i == tagstack[tagstackidx].cur_match));
+
+    dict_T *d = tv_dict_alloc();
+    tv_dict_add_str_len(d, S_LEN("tag"), tagp.tagname, (int)(tagp.tagname_end - tagp.tagname));
+    tv_dict_add_str(d, S_LEN("pri"), mt_names[matches[i][0] & MT_MASK]);
+    if (tagp.tagkind != NULL) {
+      tv_dict_add_str_len(d, S_LEN("kind"), tagp.tagkind, (int)(tagp.tagkind_end - tagp.tagkind));
+    }
+    char *fname = tag_full_fname(&tagp);
+    tv_dict_add_str(d, S_LEN("file"), fname != NULL ? fname : "");
+    xfree(fname);
+    tv_dict_add_bool(d, S_LEN("cur"), cur ? kBoolVarTrue : kBoolVarFalse);
+
+    typval_T item = { .v_type = VAR_DICT, .vval.v_dict = d };
+    tv_list_append_tv(items_tv.vval.v_list, &item);
   }
-  if (got_int) {
-    got_int = false;        // only stop the listing
-  }
+
+  // Pass items + tag name as a dict via the `extra` slot of nlua_call_excmd. Lua decides whether
+  // to use `:tag` or `:stag` from `eap.name` (e.g. "tselect" vs "stselect").
+  dict_T *extra_d = tv_dict_alloc();
+  tv_dict_add_list(extra_d, S_LEN("items"), items_tv.vval.v_list);
+  items_tv.vval.v_list->lv_refcount++;  // dict keeps a ref
+  tv_dict_add_str(extra_d, S_LEN("tagname"), name);
+  typval_T extra_tv = { .v_type = VAR_DICT, .vval.v_dict = extra_d };
+
+  nlua_call_excmd("vim._core.tag", "select_tag", eap, &cmdmod, &extra_tv);
+
+  tv_clear(&items_tv);
+  tv_clear(&extra_tv);
 }
 
 /// Add the matching tags to the location list for the current
@@ -2017,11 +1885,6 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     char *p = mfp;
     p[0] = (char)(mtt + 1);
     STRCPY(p + 1, st->tag_fname);
-#ifdef BACKSLASH_IN_FILENAME
-    // Ignore differences in slashes, avoid adding
-    // both path/file and path\file.
-    slash_adjust(p + 1);
-#endif
     p[tag_fname_len + 1] = TAG_SEP;
     char *s = p + 1 + tag_fname_len + 1;
     STRCPY(s, st->lbuf);
@@ -2438,9 +2301,6 @@ static bool found_tagfile_cb(int num_fnames, char **fnames, bool all, void *cook
   for (int i = 0; i < num_fnames; i++) {
     char *const tag_fname = xstrdup(fnames[i]);
 
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(tag_fname);
-#endif
     simplify_filename(tag_fname);
     GA_APPEND(char *, &tag_fnames, tag_fname);
 
@@ -2457,7 +2317,7 @@ void free_tag_stuff(void)
 {
   ga_clear_strings(&tag_fnames);
   if (curwin != NULL) {
-    do_tag(NULL, DT_FREE, 0, 0, 0);
+    do_tag(NULL, NULL, DT_FREE, 0, 0, 0);
   }
   tag_freematch();
 
@@ -2502,9 +2362,6 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
       tnp->tn_hf_idx++;
       xstrlcpy(buf, p_hf, MAXPATHL - STRLEN_LITERAL("tags"));
       STRCPY(path_tail(buf), "tags");
-#ifdef BACKSLASH_IN_FILENAME
-      slash_adjust(buf);
-#endif
       simplify_filename(buf);
 
       for (int i = 0; i < tag_fnames.ga_len; i++) {
@@ -3070,10 +2927,13 @@ erret:
 ///
 /// @return  a pointer to allocated memory.
 static char *expand_tag_fname(char *fname, char *const tag_fname, const bool expand)
+  FUNC_ATTR_NONNULL_RET
 {
   char *p;
   char *expanded_fname = NULL;
   expand_T xpc;
+
+  fname = TO_SLASH_SAVE(fname);
 
   // Expand file name (for environment variables) when needed.
   // Disallow backticks, they could execute arbitrary shell
@@ -3084,6 +2944,7 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
     expanded_fname = ExpandOne(&xpc, fname, NULL,
                                WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
     if (expanded_fname != NULL) {
+      xfree(fname);
       fname = expanded_fname;
     }
   }
@@ -3101,7 +2962,7 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
     retval = xstrdup(fname);
   }
 
-  xfree(expanded_fname);
+  xfree(fname);
 
   return retval;
 }

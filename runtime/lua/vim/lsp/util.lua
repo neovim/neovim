@@ -3,6 +3,7 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 local uv = vim.uv
+local isnil = require('vim._core.util').isnil
 
 local M = {}
 
@@ -922,9 +923,16 @@ function M.make_floating_popup_options(width, height, opts)
 
   local anchor = ''
 
-  local lines_above = opts.relative == 'mouse' and vim.fn.getmousepos().line - 1
-    or vim.fn.winline() - 1
+  local lines_above = vim.fn.winline() - 1
   local lines_below = vim.fn.winheight(0) - lines_above
+  if opts.relative == 'mouse' then
+    lines_above = vim.fn.getmousepos().line - 1
+    lines_below = vim.fn.winheight(0) - lines_above
+  elseif opts.relative == 'editor' then
+    -- No cursor to anchor against; treat the whole editor as space below.
+    lines_above = 0
+    lines_below = vim.o.lines
+  end
 
   local anchor_bias = opts.anchor_bias or 'auto'
 
@@ -951,7 +959,12 @@ function M.make_floating_popup_options(width, height, opts)
     row = 0
   end
 
-  local wincol = opts.relative == 'mouse' and vim.fn.getmousepos().column or vim.fn.wincol()
+  local wincol = vim.fn.wincol()
+  if opts.relative == 'mouse' then
+    wincol = vim.fn.getmousepos().column
+  elseif opts.relative == 'editor' then
+    wincol = 0
+  end
 
   if wincol + width + (opts.offset_x or 0) <= vim.o.columns then
     anchor = anchor .. 'W'
@@ -1232,11 +1245,11 @@ end
 ---@param contents string[] of lines to show in window
 ---@param opts? table with optional fields
 ---  - height    of floating window
+---  - max_height maximal height of floating window
+---  - max_width  maximal width of floating window
+---  - separator insert separator after code block
 ---  - width     of floating window
 ---  - wrap_at   character to wrap at for computing height
----  - max_width  maximal width of floating window
----  - max_height maximal height of floating window
----  - separator insert separator after code block
 ---@return table stripped content
 function M.stylize_markdown(bufnr, contents, opts)
   vim.deprecate('vim.lsp.util.stylize_markdown', nil, '0.14')
@@ -1969,13 +1982,13 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
       local end_lnum = range['end'].line + 1
       local end_col = get_line_byte_from_position(bufnr, range['end'], position_encoding) + 1
 
-      local is_deprecated = symbol.deprecated
-        or (symbol.tags and vim.tbl_contains(symbol.tags, protocol.SymbolTag.Deprecated))
+      local is_deprecated = not isnil(symbol.deprecated or nil)
+        or (not isnil(symbol.tags) and vim.tbl_contains(symbol.tags, protocol.SymbolTag.Deprecated))
       local text = string.format(
         '[%s] %s%s%s',
         kind,
         symbol.name,
-        symbol.containerName and ' in ' .. symbol.containerName or '',
+        not isnil(symbol.containerName) and ' in ' .. symbol.containerName or '',
         is_deprecated and ' (deprecated)' or ''
       )
 

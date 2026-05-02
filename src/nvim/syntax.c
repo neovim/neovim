@@ -3986,6 +3986,8 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
       }
       return;
     }
+  } else {
+    TO_SLASH(eap->arg);
   }
 
   // Save and restore the existing top-level grouplist id and ":syn

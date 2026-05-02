@@ -200,6 +200,7 @@ local config = {
       'system.lua',
       'text.lua',
       'ui.lua',
+      'img.lua', -- ui/img.lua
       'uri.lua',
       'version.lua',
 
@@ -235,6 +236,7 @@ local config = {
       'runtime/lua/vim/snippet.lua',
       'runtime/lua/vim/text.lua',
       'runtime/lua/vim/ui.lua',
+      'runtime/lua/vim/ui/img.lua',
       'runtime/lua/vim/uri.lua',
       'runtime/lua/vim/version.lua',
     },
@@ -255,6 +257,7 @@ local config = {
     end,
     section_name = {
       ['_inspector.lua'] = 'inspector',
+      ['img.lua'] = 'ui.img',
       ['ui2.lua'] = 'ui2',
     },
     section_fmt = function(name)
@@ -556,6 +559,9 @@ local function get_class(ty, classes)
   return classes[cty]
 end
 
+--- Recursively resolves `@inlinedoc` classes: replaces the type with "table" and expands class
+--- fields into the object's description.
+---
 --- @param obj nvim.luacats.parser.param|nvim.luacats.parser.return|nvim.luacats.parser.field
 --- @param classes? table<string,nvim.luacats.parser.class>
 local function inline_type(obj, classes)
@@ -607,10 +613,17 @@ local function inline_type(obj, classes)
     end
   end
 
+  util.sort_by_key(cls.fields, 'name')
+
   local desc_append = {}
   for _, f in ipairs(cls.fields) do
     if not f.access then
+      inline_type(f, classes)
       local fdesc, default = get_default(f.desc)
+      if fdesc then
+        -- Indent nested list items from recursive inlining.
+        fdesc = fdesc:gsub('\n(%- {)', '\n  %1')
+      end
       local fty = render_type(f.type, nil, default)
       local fnm = fmt_field_name(f.name)
       table.insert(desc_append, table.concat({ '-', fnm, fty, fdesc }, ' '))
@@ -706,6 +719,8 @@ local function render_class(class, classes, hidden_fields, cfg)
       return not class_hidden[field.name]
     end, fields)
   end
+
+  util.sort_by_key(fields, 'name')
 
   local fields_txt = render_fields_or_params(fields, nil, classes, cfg)
   if not fields_txt:match('^%s*$') then
@@ -1137,6 +1152,7 @@ local function gen_target(cfg)
 
     if not f:find('ui_events%.in%.h$') then -- TODO(justinmk): also lint UI events.
       lint.lint_names(f, funs, nil, classes)
+      lint.lint_quasi_keysets(f, funs)
     end
 
     local mod_cls_nm = find_module_class(classes, 'M')

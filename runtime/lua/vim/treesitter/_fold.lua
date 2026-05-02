@@ -26,12 +26,12 @@ local FoldInfo = {}
 FoldInfo.__index = FoldInfo
 
 ---@private
----@param bufnr integer
-function FoldInfo.new(bufnr)
+---@param buf integer
+function FoldInfo.new(buf)
   return setmetatable({
     levels0 = {},
     levels = {},
-    parser = ts.get_parser(bufnr, nil),
+    parser = ts.get_parser(buf, nil),
   }, FoldInfo)
 end
 

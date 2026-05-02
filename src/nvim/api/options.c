@@ -186,15 +186,15 @@ static void wipe_ft_buf(buf_T *buf)
 ///
 /// @param name      Option name
 /// @param opts      Optional parameters
-///                  - scope: One of "global" or "local". Analogous to
-///                  |:setglobal| and |:setlocal|, respectively.
-///                  - win: |window-ID|. Used for getting window local options.
 ///                  - buf: Buffer number. Used for getting buffer local options.
 ///                         Implies {scope} is "local".
 ///                  - filetype: |filetype|. Used to get the default option for a
 ///                    specific filetype. Cannot be used with any other option.
 ///                    Note: this will trigger |ftplugin| and all |FileType|
 ///                    autocommands for the corresponding filetype.
+///                  - scope: One of "global" or "local". Analogous to
+///                  |:setglobal| and |:setlocal|, respectively.
+///                  - win: |window-ID|. Used for getting window local options.
 /// @param[out] err  Error details, if any
 /// @return          Option value
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
@@ -264,10 +264,10 @@ err:
 /// @param name      Option name
 /// @param value     New option value
 /// @param opts      Optional parameters
+///                  - buf: Buffer number. Used for setting buffer local option.
 ///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
 ///                  - win: |window-ID|. Used for setting window local option.
-///                  - buf: Buffer number. Used for setting buffer local option.
 /// @param[out] err  Error details, if any
 void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
                            Error *err)
@@ -350,11 +350,11 @@ Dict nvim_get_all_options_info(Arena *arena, Error *err)
 ///
 /// @param name      Option name
 /// @param opts      Optional parameters
+///                  - buf: Buffer number. Used for getting buffer local options.
+///                         Implies {scope} is "local".
 ///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
 ///                  - win: |window-ID|. Used for getting window local options.
-///                  - buf: Buffer number. Used for getting buffer local options.
-///                         Implies {scope} is "local".
 /// @param[out] err Error details, if any
 /// @return         Option Information
 DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena,

@@ -756,11 +756,11 @@ M.vars = {
   starttime = {
     type = 'integer',
     desc = [=[
-      Timestamp (monotonic nanoseconds) when the Nvim process
+      Timestamp (nanoseconds since UNIX epoch) when the Nvim process
       started.
 
       To see the current "uptime": >lua
-        vim.print(('uptime: %d seconds'):format((vim.uv.hrtime() - vim.v.starttime) / 1e9))
+        vim.print(('uptime: %d seconds'):format(os.time() - (vim.v.starttime / 1e9)))
       <
       Read-only.
     ]=],

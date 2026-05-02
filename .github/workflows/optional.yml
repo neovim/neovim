@@ -7,10 +7,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 env:
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   # Double test timeout since it's running via qemu
@@ -20,7 +16,15 @@ env:
 
 jobs:
   s390x:
-    if: contains(github.event.pull_request.labels.*.name, 'ci:s390x') || github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        contains(github.event.pull_request.labels.*.name, 'ci:s390x') &&
+        (github.event.action != 'labeled' || github.event.label.name == 'ci:s390x')
+      )
+    concurrency:
+      group: ${{ github.workflow }}-s390x-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
@@ -51,7 +55,15 @@ jobs:
             "
 
   windows-asan:
-    if: contains(github.event.pull_request.labels.*.name, 'ci:windows-asan') || github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        contains(github.event.pull_request.labels.*.name, 'ci:windows-asan') &&
+        (github.event.action != 'labeled' || github.event.label.name == 'ci:windows-asan')
+      )
+    concurrency:
+      group: ${{ github.workflow }}-windows-asan-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     uses: ./.github/workflows/test_windows.yml
     with:
       build_flags: "-D ENABLE_ASAN_UBSAN=ON"

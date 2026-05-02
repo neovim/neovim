@@ -1326,16 +1326,6 @@ static void normal_check_text_changed(NormalState *s)
   }
 }
 
-static void normal_check_buffer_modified(NormalState *s)
-{
-  // Trigger BufModified if 'modified' changed.
-  if (!finish_op && has_event(EVENT_BUFMODIFIEDSET)
-      && curbuf->b_changed_invalid == true) {
-    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
-    curbuf->b_changed_invalid = false;
-  }
-}
-
 /// If nothing is pending and we are going to wait for the user to
 /// type a character, trigger SafeState.
 static void normal_check_safe_state(NormalState *s)
@@ -1451,7 +1441,6 @@ static int normal_check(VimState *state)
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
     normal_check_window_scrolled(s);
-    normal_check_buffer_modified(s);
     normal_check_safe_state(s);
 
     // Updating diffs from changed() does not always work properly,
@@ -3640,7 +3629,7 @@ bool get_visual_text(cmdarg_T *cap, char **pp, size_t *lenp)
 static void nv_tagpop(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)) {
-    do_tag("", DT_POP, cap->count1, false, true);
+    do_tag(NULL, "", DT_POP, cap->count1, false, true);
   }
 }
 
@@ -5185,7 +5174,7 @@ static void nv_suspend(cmdarg_T *cap)
   if (VIsual_active) {
     end_visual_mode();                  // stop Visual mode
   }
-  do_cmdline_cmd("st");
+  do_cmdline_cmd("stop");
 }
 
 /// "gv": Reselect the previous Visual area.  If Visual already active,

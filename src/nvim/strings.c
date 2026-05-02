@@ -358,6 +358,24 @@ void vim_memcpy_up(char *restrict dst, const char *restrict src, size_t n)
   }
 }
 
+/// Multi-byte uppercase `src` into `dst`. `dst` must have room for the result.
+/// In the worst case, the uppercased form needs `strlen(src) * MB_MAXBYTES` bytes plus NUL.
+///
+/// @return number of bytes written to `dst`, not including the NUL terminator.
+size_t mb_strup_buf(const char *src, char *dst)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t i = 0;
+  for (const char *p = src; *p != NUL;) {
+    CharInfo ci = utf_ptr2CharInfo(p);
+    int c = ci.value < 0 ? (uint8_t)(*p) : ci.value;
+    i += (size_t)utf_char2bytes(mb_toupper(c), dst + i);
+    p += ci.len;
+  }
+  dst[i] = NUL;
+  return i;
+}
+
 /// Make given string all upper-case or all lower-case
 ///
 /// Handles multi-byte characters as good as possible.

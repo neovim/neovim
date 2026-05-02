@@ -241,7 +241,7 @@ func Test_display_scroll_at_topline()
 
   let buf = RunVimInTerminal('', #{cols: 20})
   call term_sendkeys(buf, ":call setline(1, repeat('a', 21))\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "O\<Esc>")
   call VerifyScreenDump(buf, 'Test_display_scroll_at_topline', #{rows: 4})
 
