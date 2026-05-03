@@ -998,6 +998,8 @@ describe('LSP', function()
           eq(true, client:supports_method('textDocument/hover'))
           eq(false, client:supports_method('textDocument/definition'))
 
+          eq(false, client:supports_method('workspace/didCreateFiles'))
+
           -- Self-mapped methods do not have a related server capability and should be assumed
           -- to be supported.
           eq(true, client:supports_method('shutdown'))
@@ -3198,6 +3200,14 @@ describe('LSP', function()
               didChangeConfiguration = {
                 dynamicRegistration = true,
               },
+              fileOperations = {
+                didCreate = {
+                  dynamicRegistration = true,
+                },
+              },
+              textDocumentContent = {
+                dynamicRegistration = true,
+              },
             },
           },
         }))
@@ -3381,6 +3391,42 @@ describe('LSP', function()
         }, { client_id = client_id })
         check('workspace/didChangeConfiguration', nil, 'section')
 
+        check('workspace/didCreateFiles')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'didCreateFiles-id',
+              method = 'workspace/didCreateFiles',
+              registerOptions = {
+                label = 'did-create-files',
+                filters = {
+                  {
+                    scheme = 'file',
+                    pattern = {
+                      glob = '**/*.foo',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('workspace/didCreateFiles', nil, 'label')
+
+        check('workspace/textDocumentContent')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'textDocumentContent-id',
+              method = 'workspace/textDocumentContent',
+              registerOptions = {
+                schemes = { 'git', 'untitled' },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('workspace/textDocumentContent', nil, 'schemes')
+
         vim.lsp.handlers['client/registerCapability'](nil, {
           registrations = {
             {
@@ -3416,7 +3462,7 @@ describe('LSP', function()
         return result
       end)
 
-      eq(25, #result)
+      eq(29, #result)
       eq({ method = 'textDocument/formatting', supported = false }, result[1])
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
@@ -3451,14 +3497,25 @@ describe('LSP', function()
         { method = 'workspace/didChangeConfiguration', supported = true, cap = { 'dummy-section' } },
         result[21]
       )
+      eq({ method = 'workspace/didCreateFiles', supported = false }, result[22])
+      eq(
+        { method = 'workspace/didCreateFiles', supported = true, cap = { 'did-create-files' } },
+        result[23]
+      )
+      eq({ method = 'workspace/textDocumentContent', supported = false }, result[24])
+      eq({
+        method = 'workspace/textDocumentContent',
+        supported = true,
+        cap = { { 'git', 'untitled' } },
+      }, result[25])
       eq({
         method = 'unknown-method',
         supported = true,
         cap = { 'unknown-dummy-opt' },
-      }, result[22])
-      eq({ method = 'unknown-method-2', supported = true }, result[23])
-      eq({ method = 'unknown-method-2', supported = false }, result[24])
-      eq({ method = 'unknown-method-2', supported = true, fname = tmpfile }, result[25])
+      }, result[26])
+      eq({ method = 'unknown-method-2', supported = true }, result[27])
+      eq({ method = 'unknown-method-2', supported = false }, result[28])
+      eq({ method = 'unknown-method-2', supported = true, fname = tmpfile }, result[29])
     end)
 
     it('identifies client dynamic registration capability', function()
@@ -3523,6 +3580,12 @@ describe('LSP', function()
               identifier = 'diag-ident-static',
               workspaceDiagnostics = true,
             },
+            workspace = {
+              textDocumentContent = {
+                id = 'text-document-content-registration',
+                schemes = { 'git', 'untitled' },
+              },
+            },
           },
         })
 
@@ -3581,6 +3644,35 @@ describe('LSP', function()
           local result = {}
           client:_provider_foreach('textDocument/diagnostic', function(cap)
             table.insert(result, cap.identifier)
+          end)
+          return result
+        end)
+      )
+
+      eq(
+        {
+          {
+            id = 'text-document-content-registration',
+            method = 'workspace/textDocumentContent',
+            registerOptions = {
+              id = 'text-document-content-registration',
+              schemes = { 'git', 'untitled' },
+            },
+          },
+        },
+        sort_method(exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          return client.dynamic_capabilities:get('workspace.textDocumentContent')
+        end))
+      )
+
+      eq(
+        { { 'git', 'untitled' } },
+        exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          local result = {}
+          client:_provider_foreach('workspace/textDocumentContent', function(cap)
+            table.insert(result, cap.schemes)
           end)
           return result
         end)

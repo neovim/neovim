@@ -9,6 +9,12 @@ local validate = vim.validate
 ---@type table<integer,vim.lsp.Client>
 local all_clients = {}
 
+---@param provider string
+---@param capability string[]?
+local function is_nested_server_capability_provider(provider, capability)
+  return capability ~= nil and #capability > 1 and provider == table.concat(capability, '.')
+end
+
 --- @alias vim.lsp.client.on_init_cb fun(client: vim.lsp.Client, init_result: lsp.InitializeResult)
 --- @alias vim.lsp.client.on_attach_cb fun(client: vim.lsp.Client, bufnr: integer)
 --- @alias vim.lsp.client.on_exit_cb fun(code: integer, signal: integer, client_id: integer)
@@ -644,11 +650,11 @@ function Client:_process_static_registrations()
 
   for method in pairs(lsp.protocol._method_supports_static_registration) do
     local capability = lsp.protocol._request_name_to_server_capability[method]
-    if
-      vim.tbl_get(self.server_capabilities, capability[1], 'id')
-      and self:_supports_registration(method)
-    then
-      local cap = vim.tbl_get(self.server_capabilities, capability[1])
+    local provider = self:_registration_provider(method)
+    local cap = is_nested_server_capability_provider(provider, capability)
+        and vim.tbl_get(self.server_capabilities, unpack(capability))
+      or vim.tbl_get(self.server_capabilities, capability[1])
+    if type(cap) == 'table' and cap.id then
       static_registrations[#static_registrations + 1] = {
         id = cap.id,
         method = method,
@@ -974,8 +980,7 @@ end
 --- Get provider for a method to be registered dynamically.
 --- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 function Client:_registration_provider(method)
-  local capability_path = lsp.protocol._request_name_to_server_capability[method]
-  return capability_path and capability_path[1] or method
+  return lsp.protocol._request_name_to_registration_provider[method] or method
 end
 
 --- @private
@@ -1236,6 +1241,7 @@ function Client:supports_method(method, bufnr)
     bufnr = bufnr.bufnr
   end
   local required_capability = lsp.protocol._request_name_to_server_capability[method]
+  local has_subcap = required_capability and #required_capability > 1
   local is_self_mapping = required_capability
     and #required_capability == 1
     and required_capability[1] == method
@@ -1249,13 +1255,21 @@ function Client:supports_method(method, bufnr)
   end
 
   local provider = self:_registration_provider(method)
+  local has_subprovider = is_nested_server_capability_provider(provider, required_capability)
   local regs = self:_get_registrations(provider, bufnr)
   if lsp.protocol._method_supports_dynamic_registration[method] and not regs then
     return false
   end
   if regs then
     for _, reg in ipairs(regs or {}) do
-      if required_capability and #required_capability > 1 then
+      if has_subprovider then
+        if
+          vim.tbl_get(reg, 'registerOptions')
+          or lsp.protocol._methods_with_no_registration_options[method]
+        then
+          return self:_supports_registration(reg.method)
+        end
+      elseif has_subcap then
         if vim.tbl_get(reg, 'registerOptions', unpack(required_capability, 2)) then
           return self:_supports_registration(reg.method)
         end
@@ -1303,18 +1317,33 @@ function Client:_provider_foreach(method, fn)
   local required_capability = lsp.protocol._request_name_to_server_capability[method]
   local dynamic_regs = self:_get_registrations(provider)
   local has_subcap = required_capability and #required_capability > 1
+  local has_subprovider = is_nested_server_capability_provider(provider, required_capability)
   if not dynamic_regs then
     -- First check static capabilities
-    local static_reg = vim.tbl_get(self.server_capabilities, provider)
+    local static_reg = has_subprovider
+        and vim.tbl_get(self.server_capabilities, unpack(required_capability))
+      or vim.tbl_get(self.server_capabilities, provider)
     if static_reg then
-      if not has_subcap or vim.tbl_get(static_reg, unpack(required_capability, 2)) then
+      if
+        has_subprovider
+        or not has_subcap
+        or vim.tbl_get(static_reg, unpack(required_capability, 2))
+      then
         fn(static_reg)
       end
     end
   else
     for _, reg in ipairs(dynamic_regs) do
-      if not has_subcap or vim.tbl_get(reg, 'registerOptions', unpack(required_capability, 2)) then
-        fn(vim.tbl_get(reg, 'registerOptions') or {})
+      local regoptions = vim.tbl_get(reg, 'registerOptions')
+      if
+        (
+          has_subprovider
+          and (regoptions or lsp.protocol._methods_with_no_registration_options[method])
+        )
+        or not has_subcap
+        or vim.tbl_get(regoptions, unpack(required_capability, 2))
+      then
+        fn(regoptions or {})
       end
     end
   end
