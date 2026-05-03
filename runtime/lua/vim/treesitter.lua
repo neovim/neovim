@@ -213,7 +213,6 @@ local function buf_range_get_text(buf, range)
   end
 
   local lines = api.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
-
   if append_newline then
     table.insert(lines, '')
   end
