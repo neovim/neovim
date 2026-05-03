@@ -830,31 +830,46 @@ void terminal_open(Terminal **termpp, buf_T *buf)
     abort();
   }
 
+  GhosttyColorRgb palette[256];
+  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
+                                              GHOSTTY_TERMINAL_DATA_COLOR_PALETTE_DEFAULT,
+                                              palette));
+
   VTermState *state = vterm_obtain_state(term->vt);
+
   // Configure the color palette. Try to get the color from:
   //
   // - b:terminal_color_{NUM}
   // - g:terminal_color_{NUM}
-  // - the VTerm instance
   for (int i = 0; i < 16; i++) {
     char var[64];
     snprintf(var, sizeof(var), "terminal_color_%d", i);
     char *name = get_config_string(buf, var);
-    if (name) {
-      int dummy;
-      RgbValue color_val = name_to_color(name, &dummy);
-
-      if (color_val != -1) {
-        VTermColor color;
-        vterm_color_rgb(&color,
-                        (uint8_t)((color_val >> 16) & 0xFF),
-                        (uint8_t)((color_val >> 8) & 0xFF),
-                        (uint8_t)((color_val >> 0) & 0xFF));
-        vterm_state_set_palette_color(state, i, &color);
-        term->color_set[i] = true;
-      }
+    if (!name) {
+      continue;
     }
+    int dummy;
+    RgbValue color_val = name_to_color(name, &dummy);
+    if (color_val == -1) {
+      continue;
+    }
+    palette[i] = (GhosttyColorRgb){
+      .r = (uint8_t)((color_val >> 16) & 0xFF),
+      .g = (uint8_t)((color_val >> 8) & 0xFF),
+      .b = (uint8_t)((color_val >> 0) & 0xFF),
+    };
+    VTermColor color;
+    vterm_color_rgb(&color,
+                    (uint8_t)((color_val >> 16) & 0xFF),
+                    (uint8_t)((color_val >> 8) & 0xFF),
+                    (uint8_t)((color_val >> 0) & 0xFF));
+    vterm_state_set_palette_color(state, i, &color);
+    term->color_set[i] = true;
   }
+
+  assert_ghostty_success(ghostty_terminal_set(term->ghostty,
+                                              GHOSTTY_TERMINAL_OPT_COLOR_PALETTE,
+                                              palette));
 }
 
 /// Closes the Terminal buffer.
