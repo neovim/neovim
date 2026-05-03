@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-LSP client/framework                                     *lsp* *LSP*
+LSP client/framework                                     *lsp* *LSP* *vim.lsp*
 
 Nvim supports the Language Server Protocol (LSP), which means it acts as
 a client to LSP servers and includes a Lua framework `vim.lsp` for building

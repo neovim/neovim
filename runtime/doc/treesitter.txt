@@ -640,7 +640,7 @@ in                      Selects [count]th previous (or first) child node.
 [N                      Expands selection to [count]th previous node.
 
 ==============================================================================
-VIM.TREESITTER                                                *lua-treesitter*
+VIM.TREESITTER                              *lua-treesitter* *vim.treesitter*
 
 The remainder of this document is a reference manual for the `vim.treesitter`
 Lua module, which is the main interface for Nvim's treesitter integration.
