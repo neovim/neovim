@@ -227,6 +227,32 @@ describe('treesitter node API', function()
     eq({ 0, 0, 2, 3 }, lua_eval('range'))
   end)
 
+  it(
+    'get_node_text() includes trailing newline for buffer source when node end_col == 0',
+    function()
+      insert('local x = 1')
+
+      exec_lua(function()
+        _G.node = vim.treesitter.get_parser(0, 'lua'):parse()[1]:root()
+      end)
+
+      eq('local x = 1\n', lua_eval('vim.treesitter.get_node_text(_G.node, 0)'))
+    end
+  )
+
+  it(
+    'get_node_text() includes trailing newline for string source when node end_col == 0',
+    function()
+      exec_lua(function()
+        local source = 'local x = 1\n'
+        _G.source = source
+        _G.node = vim.treesitter.get_string_parser(source, 'lua'):parse()[1]:root()
+      end)
+
+      eq('local x = 1\n', lua_eval('vim.treesitter.get_node_text(_G.node, _G.source)'))
+    end
+  )
+
   it('tree:root() is idempotent', function()
     insert([[
       function x()

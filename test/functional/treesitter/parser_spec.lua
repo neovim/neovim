@@ -441,7 +441,7 @@ describe('treesitter parser API', function()
       local tree = parser:parse()[1]
       return vim.treesitter.get_node_text(tree:root(), 0)
     end)
-    eq(t.dedent(test_text), res)
+    eq(t.dedent(test_text) .. '\n', res)
 
     local res2 = exec_lua(function()
       local parser = vim.treesitter.get_parser(0, 'c')
