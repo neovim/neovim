@@ -66,7 +66,7 @@ describe('shell command :!', function()
   it('throttles shell-command output greater than ~10KB', function()
     skip(is_os('openbsd'), 'FIXME #10804')
     skip(is_os('win'))
-    tt.feed_data((':!%s REP 30001 foo\n'):format(testprg('shell-test')))
+    tt.feed_data((':!%s REP 150001 foo\n'):format(testprg('shell-test')))
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
@@ -74,15 +74,18 @@ describe('shell command :!', function()
 
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
-    screen:expect([[
-      29997: foo                                        |
-      29998: foo                                        |
-      29999: foo                                        |
-      30000: foo                                        |
-                                                        |
-      {123:Press ENTER or type command to continue}^           |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    screen:expect {
+      grid = [[
+        149997: foo                                       |
+        149998: foo                                       |
+        149999: foo                                       |
+        150000: foo                                       |
+                                                          |
+        {123:Press ENTER or type command to continue}^           |
+        {5:-- TERMINAL --}                                    |
+      ]],
+      timeout = 20000,
+    }
   end)
 end)
 
