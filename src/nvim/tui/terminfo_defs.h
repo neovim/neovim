@@ -6,7 +6,7 @@
 #include "nvim/tui/terminfo_enum_defs.h"
 
 typedef struct {
-  bool bce;
+  bool back_color_erase;
   // these extended booleans indicate likely 24-color support
   bool Tc;
   bool RGB;

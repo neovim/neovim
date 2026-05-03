@@ -133,7 +133,7 @@ bool terminfo_from_database(TerminfoEntry *ti, char *termname, Arena *arena)
     return false;
   }
 
-  ti->bce = unibi_get_bool(ut, unibi_back_color_erase);
+  ti->back_color_erase = unibi_get_bool(ut, unibi_back_color_erase);
   ti->max_colors = unibi_get_num(ut, unibi_max_colors);
   ti->lines = unibi_get_num(ut, unibi_lines);
   ti->columns = unibi_get_num(ut, unibi_columns);
@@ -203,7 +203,7 @@ bool terminfo_from_database(TerminfoEntry *ti, char *termname, Arena *arena)
   }
 
   static const enum unibi_string uni_fkeys[] = {
-# define X(name) unibi_key_##name,
+# define X(name, idx) unibi_key_##name,
     XLIST_TERMINFO_FKEYS
 # undef X
   };
@@ -242,7 +242,7 @@ String terminfo_info_msg(const TerminfoEntry *ti, const char *termname, bool fro
   kv_printf(data, "\n");
 
   kv_printf(data, "Boolean capabilities:\n");
-  kv_printf(data, "  back_color_erase: %s\n", fmt(ti->bce));
+  kv_printf(data, "  back_color_erase: %s\n", fmt(ti->back_color_erase));
   kv_printf(data, "  truecolor ('Tc'): %s\n", fmt(ti->Tc));
   kv_printf(data, "  RGB: %s\n", fmt(ti->RGB));
   kv_printf(data, "  extended underline ('Su'): %s\n", fmt(ti->Su));
@@ -298,7 +298,7 @@ String terminfo_info_msg(const TerminfoEntry *ti, const char *termname, bool fro
   }
 
   static const char *fkey_names[] = {
-#define X(name) #name,
+#define X(name, idx) #name,
     XLIST_TERMINFO_FKEYS
 #undef X
   };

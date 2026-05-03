@@ -7,7 +7,7 @@
 #include "nvim/tui/terminfo_defs.h"
 
 static const TerminfoEntry ansi_terminfo = {
-  .bce = false,
+  .back_color_erase = false,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -89,7 +89,7 @@ static const TerminfoEntry ansi_terminfo = {
 };
 
 static const TerminfoEntry ghostty_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -234,7 +234,7 @@ static const TerminfoEntry ghostty_terminfo = {
 };
 
 static const TerminfoEntry interix_8colour_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -376,7 +376,7 @@ static const TerminfoEntry interix_8colour_terminfo = {
 };
 
 static const TerminfoEntry iterm_256colour_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -482,7 +482,7 @@ static const TerminfoEntry iterm_256colour_terminfo = {
 };
 
 static const TerminfoEntry linux_16colour_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -584,7 +584,7 @@ static const TerminfoEntry linux_16colour_terminfo = {
 };
 
 static const TerminfoEntry putty_256colour_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -686,7 +686,7 @@ static const TerminfoEntry putty_256colour_terminfo = {
 };
 
 static const TerminfoEntry rxvt_256colour_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -812,7 +812,7 @@ static const TerminfoEntry rxvt_256colour_terminfo = {
 };
 
 static const TerminfoEntry screen_256colour_terminfo = {
-  .bce = false,
+  .back_color_erase = false,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -906,7 +906,7 @@ static const TerminfoEntry screen_256colour_terminfo = {
 };
 
 static const TerminfoEntry st_256colour_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -1051,7 +1051,7 @@ static const TerminfoEntry st_256colour_terminfo = {
 };
 
 static const TerminfoEntry tmux_256colour_terminfo = {
-  .bce = false,
+  .back_color_erase = false,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -1196,7 +1196,7 @@ static const TerminfoEntry tmux_256colour_terminfo = {
 };
 
 static const TerminfoEntry vte_256colour_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -1341,7 +1341,7 @@ static const TerminfoEntry vte_256colour_terminfo = {
 };
 
 static const TerminfoEntry xterm_256colour_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -1486,7 +1486,7 @@ static const TerminfoEntry xterm_256colour_terminfo = {
 };
 
 static const TerminfoEntry cygwin_terminfo = {
-  .bce = false,
+  .back_color_erase = false,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -1588,7 +1588,7 @@ static const TerminfoEntry cygwin_terminfo = {
 };
 
 static const TerminfoEntry win32con_terminfo = {
-  .bce = false,
+  .back_color_erase = false,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -1714,7 +1714,7 @@ static const TerminfoEntry win32con_terminfo = {
 };
 
 static const TerminfoEntry conemu_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -1841,7 +1841,7 @@ static const TerminfoEntry conemu_terminfo = {
 };
 
 static const TerminfoEntry vtpcon_terminfo = {
-  .bce = true,
+  .back_color_erase = true,
   .Tc = false,
   .RGB = false,
   .Su = false,
@@ -2042,67 +2042,67 @@ static const TerminfoEntry vtpcon_terminfo = {
 // end of list
 
 #define XLIST_TERMINFO_FKEYS \
-  X(f1) \
-  X(f2) \
-  X(f3) \
-  X(f4) \
-  X(f5) \
-  X(f6) \
-  X(f7) \
-  X(f8) \
-  X(f9) \
-  X(f10) \
-  X(f11) \
-  X(f12) \
-  X(f13) \
-  X(f14) \
-  X(f15) \
-  X(f16) \
-  X(f17) \
-  X(f18) \
-  X(f19) \
-  X(f20) \
-  X(f21) \
-  X(f22) \
-  X(f23) \
-  X(f24) \
-  X(f25) \
-  X(f26) \
-  X(f27) \
-  X(f28) \
-  X(f29) \
-  X(f30) \
-  X(f31) \
-  X(f32) \
-  X(f33) \
-  X(f34) \
-  X(f35) \
-  X(f36) \
-  X(f37) \
-  X(f38) \
-  X(f39) \
-  X(f40) \
-  X(f41) \
-  X(f42) \
-  X(f43) \
-  X(f44) \
-  X(f45) \
-  X(f46) \
-  X(f47) \
-  X(f48) \
-  X(f49) \
-  X(f50) \
-  X(f51) \
-  X(f52) \
-  X(f53) \
-  X(f54) \
-  X(f55) \
-  X(f56) \
-  X(f57) \
-  X(f58) \
-  X(f59) \
-  X(f60) \
-  X(f61) \
-  X(f62) \
-  X(f63) \
+  X(f1, 0) \
+  X(f2, 1) \
+  X(f3, 2) \
+  X(f4, 3) \
+  X(f5, 4) \
+  X(f6, 5) \
+  X(f7, 6) \
+  X(f8, 7) \
+  X(f9, 8) \
+  X(f10, 9) \
+  X(f11, 10) \
+  X(f12, 11) \
+  X(f13, 12) \
+  X(f14, 13) \
+  X(f15, 14) \
+  X(f16, 15) \
+  X(f17, 16) \
+  X(f18, 17) \
+  X(f19, 18) \
+  X(f20, 19) \
+  X(f21, 20) \
+  X(f22, 21) \
+  X(f23, 22) \
+  X(f24, 23) \
+  X(f25, 24) \
+  X(f26, 25) \
+  X(f27, 26) \
+  X(f28, 27) \
+  X(f29, 28) \
+  X(f30, 29) \
+  X(f31, 30) \
+  X(f32, 31) \
+  X(f33, 32) \
+  X(f34, 33) \
+  X(f35, 34) \
+  X(f36, 35) \
+  X(f37, 36) \
+  X(f38, 37) \
+  X(f39, 38) \
+  X(f40, 39) \
+  X(f41, 40) \
+  X(f42, 41) \
+  X(f43, 42) \
+  X(f44, 43) \
+  X(f45, 44) \
+  X(f46, 45) \
+  X(f47, 46) \
+  X(f48, 47) \
+  X(f49, 48) \
+  X(f50, 49) \
+  X(f51, 50) \
+  X(f52, 51) \
+  X(f53, 52) \
+  X(f54, 53) \
+  X(f55, 54) \
+  X(f56, 55) \
+  X(f57, 56) \
+  X(f58, 57) \
+  X(f59, 58) \
+  X(f60, 59) \
+  X(f61, 60) \
+  X(f62, 61) \
+  X(f63, 62) \
 // end of list

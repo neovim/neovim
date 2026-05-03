@@ -360,136 +360,126 @@ void tui_query_bg_color(TUIData *tui)
 
 typedef struct {
   char *name;
-  int idx;
-} TerminfoCapMap;
+  ObjectType type;
+  size_t offset;  // offset into TerminfoEntry
+} TerminfoField;
 
-typedef struct {
-  char *name;
-  int idx;
-  bool shift;  // Only used for keys that have a shift variant
-} TerminfoKeyMap;
-
-static const TerminfoCapMap ti_defs[] = {
-#define X(n) { .name = #n, .idx = kTerm_##n },
+// uncrustify:off
+static const TerminfoField terminfo_fields[] = {
+#define FIELD(n, t) { .name = #n, .type = kObjectType##t, \
+                      .offset = offsetof(TerminfoEntry, n) },
+  FIELD(back_color_erase, Boolean)
+  FIELD(Su, Boolean)
+  FIELD(Tc, Boolean)
+  FIELD(RGB, Boolean)
+  FIELD(max_colors, Integer)
+  FIELD(lines, Integer)
+  FIELD(columns, Integer)
+#undef FIELD
+#define X(n) { .name = #n, .type = kObjectTypeString, \
+               .offset = offsetof(TerminfoEntry, defs) + kTerm_##n * sizeof(char *) },
   XLIST_TERMINFO_BUILTIN
 #undef X
-#define X(n, code) { .name = #n, .idx = kTerm_##n },
+#define X(n, code) { .name = #n, .type = kObjectTypeString, \
+                     .offset = offsetof(TerminfoEntry, defs) + kTerm_##n * sizeof(char *) },
   XLIST_TERMINFO_EXT
 #undef X
-};
-
-static const TerminfoKeyMap ti_keys[] = {
-#define X(n) { .name = "key_" #n, .idx = kTermKey_##n, .shift = false },
-#define Y(n) { .name = "key_" #n, .idx = kTermKey_##n, .shift = true },
+  // The 2 * in offset is because each key is an array size 2
+#define X(n) { .name = "key_" #n, .type = kObjectTypeString, \
+               .offset = offsetof(TerminfoEntry, keys) + 2 * kTermKey_##n * sizeof(char *) },
+#define Y(n) { .name = "key_" #n, .type = kObjectTypeArray, \
+               .offset = offsetof(TerminfoEntry, keys) + 2 * kTermKey_##n * sizeof(char *) },
   XYLIST_TERMINFO_KEYS
 #undef X
 #undef Y
-};
-
-static const char *ti_fkey_names[] = {
-#define X(n) "key_" #n,
+#define X(n, idx) { "key_" #n, kObjectTypeString, \
+                    offsetof(TerminfoEntry, f_keys) + idx * sizeof(char *) },
   XLIST_TERMINFO_FKEYS
 #undef X
 };
+// uncrustify:on
 
-/// Use $NVIM_TERMINFO to apply user overrides to terminfo.
+static PMap(cstr_t) termdefs = MAP_INIT;
+static void init_termdefs(void)
+{
+  for (size_t i = 0; i < ARRAY_SIZE(terminfo_fields); i++) {
+    pmap_put(cstr_t)(&termdefs, terminfo_fields[i].name, (TerminfoField *)&terminfo_fields[i]);
+  }
+}
+
+static void apply_terminfo_field(TUIData *tui, void *ti_field, KeyValuePair *kv)
+{
+  Object val = kv->value;
+  char *dst = (char *)&tui->ti + ((TerminfoField *)(ti_field))->offset;
+
+  switch (val.type) {
+  case kObjectTypeBoolean:
+    *(bool *)dst = val.data.boolean;
+    break;
+  case kObjectTypeInteger:
+    *(int *)dst = (int)val.data.integer;
+    break;
+  case kObjectTypeString:
+    *(const char **)dst = arena_strdup(&tui->ti_arena,
+                                       val.data.string.data);
+    break;
+  case kObjectTypeArray:
+    if (val.data.array.size > 2) {
+      WLOG(
+          "skipping invalid key definition in $NVIM_TERMDEFS for %s: array should have at most two entries for unshifted and shifted key variants.",
+          kv->key.data);
+      return;
+    }
+    *(const char **)dst = NULL;
+    *(const char **)(dst + sizeof(char *)) = NULL;
+
+    for (size_t key_map_idx = 0; key_map_idx < val.data.array.size;
+         key_map_idx++) {
+      Object key_mapping = val.data.array.items[key_map_idx];
+      if (key_mapping.type != kObjectTypeString) {
+        WLOG("skipping invalid key definition in $NVIM_TERMDEFS for %s[%zu]: expected 'string'",
+             kv->key.data, key_map_idx);
+        continue;
+      }
+      size_t offset = key_map_idx * sizeof(char *);
+      *(const char **)(dst + offset) = arena_strdup(&tui->ti_arena, key_mapping.data.string.data);
+    }
+    break;
+  default:
+    break;
+  }
+}
+
+/// Use $NVIM_TERMDEFS to apply user overrides to terminfo.
 ///
 /// This is necessary for Windows, where terminfo files are broken in Unibilium. #37274
 /// If/when terminfo is removed, this will also be useful for anyone who wants to override
 /// the built-in definitions.
 static void apply_terminfo_overrides(TUIData *tui)
 {
-  TerminfoEntry *ti = &tui->ti;
-
   // We allow empty values just to provide the user with a warning
-  if (!os_env_exists("NVIM_TERMINFO", false)) {
+  if (!os_env_exists("NVIM_TERMDEFS", false)) {
     return;
   }
 
   Error lua_err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(args, 1);
-  MAXSIZE_TEMP_ARRAY(fields, 2);
-  Object rv;
-
-#define LUA_FIELD_OVERRIDE_STR(field, dst) \
-  do { \
-    ADD_C(fields, CSTR_AS_OBJ(field)); \
-    ADD_C(args, ARRAY_OBJ(fields)); \
-    rv = NLUA_EXEC_STATIC("return require('vim.tty').get_terminfo_override(...)", \
-                          args, kRetObject, NULL, &lua_err); \
-    if (!ERROR_SET(&lua_err) && rv.type == kObjectTypeString) { \
-      dst = arena_strdup(&tui->ti_arena, rv.data.string.data); \
-    } \
-    fields.size--; \
-    args.size--; \
-    api_free_object(rv); \
-    api_clear_error(&lua_err); \
-  } while (0)
-
-#define LUA_FIELD_OVERRIDE_BOOL(field, dst) \
-  do { \
-    ADD_C(fields, CSTR_AS_OBJ(field)); \
-    ADD_C(args, ARRAY_OBJ(fields)); \
-    rv = NLUA_EXEC_STATIC("return require('vim.tty').get_terminfo_override(...)", \
-                          args, kRetObject, NULL, &lua_err); \
-    if (!ERROR_SET(&lua_err) && rv.type == kObjectTypeBoolean) { \
-      dst = rv.data.boolean; \
-    } \
-    fields.size--; \
-    args.size--; \
-    api_free_object(rv); \
-    api_clear_error(&lua_err); \
-  } while (0)
-
-#define LUA_FIELD_OVERRIDE_INT(field, dst) \
-  do { \
-    ADD_C(fields, CSTR_AS_OBJ(field)); \
-    ADD_C(args, ARRAY_OBJ(fields)); \
-    rv = NLUA_EXEC_STATIC("return require('vim.tty').get_terminfo_override(...)", \
-                          args, kRetObject, NULL, &lua_err); \
-    if (!ERROR_SET(&lua_err) && rv.type == kObjectTypeInteger) { \
-      dst = (int)rv.data.integer; \
-    } \
-    fields.size--; \
-    args.size--; \
-    api_free_object(rv); \
-    api_clear_error(&lua_err); \
-  } while (0)
-
-  for (size_t i = 0; i < ARRAY_SIZE(ti_defs); i++) {
-    LUA_FIELD_OVERRIDE_STR(ti_defs[i].name, ti->defs[ti_defs[i].idx]);
+  Object rv = NLUA_EXEC_STATIC("return require('vim.tty').termdefs",
+                               (Array)ARRAY_DICT_INIT, kRetObject, NULL, &lua_err);
+  if (rv.type != kObjectTypeDict) {
+    return;
   }
 
-  for (size_t i = 0; i < ARRAY_SIZE(ti_keys); i++) {
-    if (ti_keys[i].shift) {
-      // keys with shift variant are tables
-      ADD_C(fields, CSTR_AS_OBJ(ti_keys[i].name));
+  init_termdefs();
 
-      LUA_FIELD_OVERRIDE_STR("base", ti->keys[ti_keys[i].idx][0]);
-      LUA_FIELD_OVERRIDE_STR("shift", ti->keys[ti_keys[i].idx][1]);
-
-      fields.size--;
-    } else {
-      // normal keys are strings
-      LUA_FIELD_OVERRIDE_STR(ti_keys[i].name, ti->keys[ti_keys[i].idx][0]);
+  for (size_t i = 0; i < rv.data.dict.size; i++) {
+    KeyValuePair kv = rv.data.dict.items[i];
+    TerminfoField *ti_field = pmap_get(cstr_t)(&termdefs, kv.key.data);
+    if (!ti_field || kv.value.type != ti_field->type) {
+      WLOG("skipping invalid key in $NVIM_TERMDEFS: '%s'", kv.key.data);
+      continue;
     }
+    apply_terminfo_field(tui, ti_field, &kv);
   }
-
-  for (size_t i = 0; i < ARRAY_SIZE(ti_fkey_names); i++) {
-    LUA_FIELD_OVERRIDE_STR(ti_fkey_names[i], ti->f_keys[i]);
-  }
-
-  LUA_FIELD_OVERRIDE_BOOL("back_color_erase", ti->bce);
-  LUA_FIELD_OVERRIDE_BOOL("Tc", ti->Tc);
-  LUA_FIELD_OVERRIDE_BOOL("RGB", ti->RGB);
-  LUA_FIELD_OVERRIDE_BOOL("Su", ti->Su);
-  LUA_FIELD_OVERRIDE_INT("max_colors", ti->max_colors);
-  LUA_FIELD_OVERRIDE_INT("lines", ti->lines);
-  LUA_FIELD_OVERRIDE_INT("columns", ti->columns);
-
-#undef LUA_FIELD_OVERRIDE_STR
-#undef LUA_FIELD_OVERRIDE_BOOL
-#undef LUA_FIELD_OVERRIDE_INT
 }
 
 /// Enable the alternate screen and emit other control sequences to start the TUI.
@@ -534,7 +524,7 @@ static void terminfo_start(TUIData *tui)
 
   // Set up terminfo.
   tui->terminfo_found_in_db = false;
-  if (term && !os_env_exists("NVIM_TERMINFO", false)) {
+  if (term && !os_env_exists("NVIM_TERMDEFS", false)) {
     if (terminfo_from_database(&tui->ti, term, &tui->ti_arena)) {
       tui->term = arena_strdup(&tui->ti_arena, term);
       tui->terminfo_found_in_db = true;
@@ -591,7 +581,7 @@ static void terminfo_start(TUIData *tui)
     || terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "win32con")
     || terminfo_is_term_family(term, "interix");
-  tui->bce = tui->ti.bce;
+  tui->bce = tui->ti.back_color_erase;
   // Set 't_Co' from the result of terminfo & fix_terminfo.
   t_colors = tui->ti.max_colors;
   // Enter alternate screen, save title, and clear.
@@ -2260,7 +2250,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
 
   if (tmux || screen || kitty) {
     // Disable BCE in some cases we know it is not working. #8806
-    tui->ti.bce = false;
+    tui->ti.back_color_erase = false;
   }
 
   if (xterm || hterm) {

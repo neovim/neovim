@@ -158,47 +158,33 @@ function M.query_apc(payload, opts, on_response)
   end)
 end
 
-local terminfo_overrides ---@type table | nil
-local terminfo_overrides_raw = os.getenv('NVIM_TERMINFO')
-if terminfo_overrides_raw ~= nil then
-  local ok, overrides_or_err = pcall(vim.json.decode, terminfo_overrides_raw)
-  if ok then
-    terminfo_overrides = overrides_or_err
-  elseif #vim.api.nvim_list_uis() > 0 then
-    -- This file is sourced during the TUI startup, but we only want to notify
-    -- when it fails on the server
-    vim.notify(
-      'error decoding $NVIM_TERMINFO: ' .. vim.inspect(overrides_or_err),
-      vim.log.levels.ERROR
-    )
-  end
+---@param msg string
+local function deferred_error(msg)
+  vim.api.nvim_create_autocmd('VimEnter', {
+    once = true,
+    callback = function()
+      error(msg)
+    end,
+  })
 end
 
---- Get terminfo capabilities stored in $NVIM_TERMINFO. `fields` is
---- an array used to access nested fields within the JSON. For example, if
---- fields is `{'key_home', 'base'}`, it accesses
---- `terminfo_overrides.key_home.base`. Pass an empty list to get the whole
---- object.
----
---- Returns nil if the field is empty.
----
----@param fields string[]
----@return any
-function M.get_terminfo_override(fields)
-  vim.validate('fields', fields, 'table')
-  if type(terminfo_overrides) ~= 'table' then
-    return
-  end
-
-  local res = terminfo_overrides
-  for _, field in ipairs(fields) do
-    if type(field) ~= 'string' or type(res) ~= 'table' then
+--- Get user overrides for terminfo entries as a table. See |$NVIM_TERMDEFS|
+local function get_termdefs()
+  local termdefs_raw = os.getenv('NVIM_TERMDEFS')
+  if termdefs_raw ~= nil then
+    local ok, termdefs_or_err = pcall(vim.json.decode, termdefs_raw)
+    if not ok then
+      -- Can't error right away because then it's never displayed to the user.
+      deferred_error('E557: Failed to parse $NVIM_TERMDEFS: ' .. vim.inspect(termdefs_or_err))
+      return
+    elseif type(termdefs_or_err) ~= 'table' or vim.isarray(termdefs_or_err) then
+      deferred_error('E557: expected $NVIM_TERMDEFS to be table. :help $NVIM_TERMDEFS')
       return
     end
-    res = res[field] ---@type any
+    return termdefs_or_err
   end
-
-  return res
 end
+
+M.termdefs = get_termdefs()
 
 return M

@@ -37,7 +37,7 @@ local entries = {
   { 'vtpcon', 'vtpcon_terminfo' },
 }
 
--- IMPORTANT: if you change any of these fields, be sure to update |$NVIM_TERMINFO|
+-- IMPORTANT: if you change any of these fields, be sure to update |$NVIM_TERMDEFS|
 local wanted_numbers = { 'max_colors', 'lines', 'columns' }
 local wanted_strings = {
   'carriage_return',
@@ -224,7 +224,7 @@ for _, entry in ipairs(entries) do
   end
 
   f_defs:write('\nstatic const TerminfoEntry ' .. target .. ' = {\n')
-  f_defs:write('  .bce = ' .. tostring(bools.back_color_erase or false) .. ',\n')
+  f_defs:write('  .back_color_erase = ' .. tostring(bools.back_color_erase or false) .. ',\n')
   f_defs:write('  .Tc = ' .. tostring(bools.Tc or false) .. ',\n')
   f_defs:write('  .RGB = ' .. tostring(bools.RGB or false) .. ',\n')
   f_defs:write('  .Su = ' .. tostring(bools.Su or false) .. ',\n')
@@ -287,7 +287,7 @@ end
 f_defs:write('// end of list\n\n')
 f_defs:write('#define XLIST_TERMINFO_FKEYS \\\n')
 for i = 1, func_key_max do
-  f_defs:write('  X(f' .. i .. ') \\\n')
+  f_defs:write('  X(f' .. i .. ', ' .. i - 1 .. ') \\\n')
 end
 f_defs:write('// end of list\n')
 f_defs:close()

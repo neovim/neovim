@@ -3957,7 +3957,7 @@ describe('TUI', function()
     end)
   end)
 
-  it('uses $NVIM_TERMINFO to override terminfo', function()
+  it('uses $NVIM_TERMDEFS to override terminfo', function()
     local logfile = 'Xtest_terminfo_override_verbose_log'
     finally(function()
       os.remove(logfile)
@@ -3965,14 +3965,16 @@ describe('TUI', function()
 
     local terminfo = {
       reset_cursor_style = '\027[0 q',
+      key_home = { 'ABC', 'DEF' },
       key_npage = 'npage',
-      key_home = { base = 'A', shift = 'B' },
-      key_f1 = 'C',
+      key_end = { 'GHI' },
+      key_f1 = 'JKL',
+      key_f63 = 'MNO',
       Su = true,
       max_colors = 999,
     }
 
-    nvim_tui('-V3' .. logfile, { NVIM_TERMINFO = vim.json.encode(terminfo) })
+    nvim_tui('-V3' .. logfile, { NVIM_TERMDEFS = vim.json.encode(terminfo) })
 
     retry(nil, 3000, function() -- Wait for log file to be flushed.
       assert_log(
@@ -3980,18 +3982,20 @@ describe('TUI', function()
         logfile,
         9999
       )
-      assert_log(string.format('key_npage%%s*= %s', terminfo.key_npage), logfile, 9999)
       assert_log(
         string.format(
           'key_home%%s*= %s, key_shome = %s',
-          terminfo.key_home.base,
-          terminfo.key_home.shift
+          terminfo.key_home[1],
+          terminfo.key_home[2]
         ),
         logfile,
         9999
       )
+      assert_log('key_npage%s*= ' .. terminfo.key_npage, logfile, 9999)
+      assert_log('key_end%s*= ' .. terminfo.key_end[1] .. '\n', logfile, 9999)
       assert_log('key_f1%s*= ' .. terminfo.key_f1, logfile, 9999)
-      assert_log('extended underline[^\n]*: true', logfile, 9999)
+      assert_log('key_f63%s*= ' .. terminfo.key_f63, logfile, 9999)
+      assert_log('extended underline[^\n]*: ' .. tostring(terminfo.Su), logfile, 9999)
       assert_log(string.format('max_colors: %d', terminfo.max_colors), logfile, 9999)
     end)
   end)

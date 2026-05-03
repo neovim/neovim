@@ -51,14 +51,15 @@ own terminfo is usually as simple as running this:
   tic -x terminfo.src
 <
 
-                                                       *$NVIM_TERMINFO*
+                                                       *$NVIM_TERMDEFS*
 To override terminfo entries without modifying terminfo files, use
-$NVIM_TERMINFO. This may be useful on Windows, where Unibilium can't read
+$NVIM_TERMDEFS. This may be useful on Windows, where Unibilium can't read
 terminfo files. When this is set, terminfo files are not used, but builtin
 terminfo entries are. Any values in this variable will override the builtin
 definitions. It should be a JSON object with any of the following keys. Be
 careful when putting escape sequences in strings, as JSON uses unicode escapes
-like `\u001b.
+like `\u001b`. For keys of type `string[]`, the first entry is the unshifted
+variant of the key, and the second entry is the shifted variant.
 >
   Key                        Type
   ------------------------------------------------------------
@@ -120,16 +121,16 @@ like `\u001b.
   key_ppage                  string
   key_select                 string
 
-  key_beg                    {"base": string, "shift": string}
-  key_dc                     {"base": string, "shift": string}
-  key_end                    {"base": string, "shift": string}
-  key_find                   {"base": string, "shift": string}
-  key_home                   {"base": string, "shift": string}
-  key_ic                     {"base": string, "shift": string}
-  key_left                   {"base": string, "shift": string}
-  key_right                  {"base": string, "shift": string}
-  key_suspend                {"base": string, "shift": string}
-  key_undo                   {"base": string, "shift": string}
+  key_beg                    string[]
+  key_dc                     string[]
+  key_end                    string[]
+  key_find                   string[]
+  key_home                   string[]
+  key_ic                     string[]
+  key_left                   string[]
+  key_right                  string[]
+  key_suspend                string[]
+  key_undo                   string[]
 
   key_f1                     string
   ...
