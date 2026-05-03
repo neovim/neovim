@@ -2977,9 +2977,10 @@ describe('API', function()
 
       -- :terminal with args + stopped process (shell-test).
       command('enew')
-      argv = { n.testprg('shell-test'), 'INTERACT' }
+      -- Use a process that doesn't read stdin, so PTY EOF can't race SIGHUP.
+      argv = { n.testprg('shell-test'), 'HOLD' }
       fn.jobstart(argv, { term = true })
-      screen:expect({ any = { vim.pesc('interact $') } })
+      screen:expect({ any = { vim.pesc('holding $') } })
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)') -- Wait.
       local expected3 = term_channel_info(5, 3, argv)
