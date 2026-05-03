@@ -1019,6 +1019,13 @@ restofline:
       // global file names
       status = qf_parse_file_pfx(idx, fields, qfl, tail);
       if (status == QF_MULTISCAN) {
+        char *s = skipwhite(tail);
+        size_t new_linelen = strlen(s);
+        if (new_linelen >= linelen) {
+          return QF_IGNORE_LINE;
+        }
+        linebuf = s;
+        linelen = new_linelen;
         goto restofline;
       }
     }
@@ -1665,7 +1672,7 @@ static int qf_parse_dir_pfx(int idx, qffields_T *fields, qf_list_T *qfl)
 }
 
 /// Parse global file name error format prefixes (%O, %P and %Q).
-static int qf_parse_file_pfx(int idx, qffields_T *fields, qf_list_T *qfl, char *tail)
+static int qf_parse_file_pfx(int idx, qffields_T *fields, qf_list_T *qfl, const char *tail)
 {
   fields->valid = false;
   if (*fields->namebuf == NUL || os_path_exists(fields->namebuf)) {
@@ -1676,7 +1683,6 @@ static int qf_parse_file_pfx(int idx, qffields_T *fields, qf_list_T *qfl, char *
     }
     *fields->namebuf = NUL;
     if (tail && *tail) {
-      STRMOVE(IObuff, skipwhite(tail));
       qfl->qf_multiscan = true;
       return QF_MULTISCAN;
     }
