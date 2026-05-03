@@ -1816,9 +1816,10 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
                     keeps the list sorted..
                 • {hi}? (`integer`, default: `#t + 1`) End index of the list,
                   exclusive.
-                • {key}? (`fun(val: any): any`) Optional, compare the return
-                  value instead of the {val} itself if provided. Key results
-                  are memoized per call.
+                • {key}? (`string|fun(val: any): any`) Optional, compare the
+                  return value instead of the {val} itself if provided. If a
+                  string, index each value by this field name. Key results are
+                  memoized per call.
                 • {lo}? (`integer`, default: `1`) Start index of the list.
 
     Return: ~
@@ -1832,7 +1833,8 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
     performed in-place and the input table is modified.
 
     Accepts an optional `key` argument, which if provided is called for each
-    value in the list to compute a hash key for uniqueness comparison. Key
+    value in the list to compute a hash key for uniqueness comparison. If
+    `key` is a string, it is used as the field name to index each value. Key
     results are memoized per call. This is useful for deduplicating table
     values or complex objects. If `key` returns `nil` for a value, that value
     will be considered unique, even if multiple values return `nil`.
@@ -1844,7 +1846,7 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
         -- t is now {1, 2, 3}
 
         local t = { {id=1}, {id=2}, {id=1} }
-        vim.list.unique(t, function(x) return x.id end)
+        vim.list.unique(t, 'id')
         -- t is now { {id=1}, {id=2} }
 <
 
@@ -1853,8 +1855,8 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
 
     Parameters: ~
       • {t}    (`any[]`)
-      • {key}  (`fun(x: T): any?`) Optional hash function to determine
-               uniqueness of values
+      • {key}  (`string|fun(x: T): any?`) Optional field name or hash function
+               to determine uniqueness of values
 
     Return: ~
         (`any[]`) The deduplicated list

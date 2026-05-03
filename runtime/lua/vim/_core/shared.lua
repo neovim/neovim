@@ -376,15 +376,24 @@ end
 
 vim.list = {}
 
----TODO(ofseed): string value support, type alias.
 --- Returns a `key` function with per-call memoization.
 ---@generic T
----@param key? fun(v: T): any
+---@param key? string|fun(val: T): any
 ---@return fun(v: T): any
 local function make_key_fn(key)
+  vim.validate('key', key, { 'string', 'function' }, true)
+
   if not key then
     return function(v)
       return v
+    end
+  end
+
+  if type(key) == 'string' then
+    local field = key
+    ---@param v any
+    key = function(v)
+      return v and v[field] or nil
     end
   end
 
@@ -415,6 +424,7 @@ end
 ---
 --- Accepts an optional `key` argument, which if provided is called for each
 --- value in the list to compute a hash key for uniqueness comparison.
+--- If `key` is a string, it is used as the field name to index each value.
 --- Key results are memoized per call.
 --- This is useful for deduplicating table values or complex objects.
 --- If `key` returns `nil` for a value, that value will be considered unique,
@@ -428,14 +438,14 @@ end
 --- -- t is now {1, 2, 3}
 ---
 --- local t = { {id=1}, {id=2}, {id=1} }
---- vim.list.unique(t, function(x) return x.id end)
+--- vim.list.unique(t, 'id')
 --- -- t is now { {id=1}, {id=2} }
 --- ```
 ---
 --- @since 14
 --- @generic T
 --- @param t T[]
---- @param key? fun(x: T): any Optional hash function to determine uniqueness of values
+--- @param key? string|fun(x: T): any Optional field name or hash function to determine uniqueness of values
 --- @return T[] : The deduplicated list
 --- @see |Iter:unique()|
 function vim.list.unique(t, key)
@@ -477,8 +487,9 @@ end
 ---@field hi? integer
 ---
 --- Optional, compare the return value instead of the {val} itself if provided.
+--- If a string, index each value by this field name.
 --- Key results are memoized per call.
----@field key? fun(val: any): any
+---@field key? string|fun(val: any): any
 ---
 --- Specifies the search variant.
 ---   - "lower": returns the first position

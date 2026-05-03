@@ -170,6 +170,8 @@ LUA
   the same range instances now compare equal.
 • Documentation for |vim.fn| now points to preferred Lua alternatives when
   available.
+• |vim.list.unique()| and |vim.list.bisect()| now support passing a string
+  as a shorthand of a `key`
 
 OPTIONS
 
