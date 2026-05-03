@@ -7028,4 +7028,26 @@ func Test_quickfix_longline_noeol()
   call assert_equal(['okay'], readfile("XDONE"))
 endfunc
 
+func Test_efm_overlongline()
+  let save_efm = &efm
+  " %r captures the tail.
+  set efm=%+O(%.%#)%r,%f:%l:%m
+
+  " First line is longer than IOSIZE (1025) so the parser puts it in
+  " growbuf; the %r tail then far exceeds IObuff.
+  let lines = ['(short)' .. repeat('x', 4000), 'Xfile:10:msg']
+  call writefile(lines, 'Xqferrlong', 'D')
+
+  " Must complete without hanging or crashing.
+  cgetfile Xqferrlong
+
+  " The well-formed line that follows is still parsed.
+  let well_formed = filter(getqflist(), 'v:val.lnum == 10')
+  call assert_equal(1, len(well_formed))
+  call assert_equal('msg', well_formed[0].text)
+
+  let &efm = save_efm
+  call setqflist([], 'f')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
