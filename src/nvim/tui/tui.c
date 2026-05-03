@@ -480,6 +480,9 @@ static void apply_terminfo_overrides(TUIData *tui)
     }
     apply_terminfo_field(tui, ti_field, &kv);
   }
+
+  api_free_object(rv);
+  api_clear_error(&lua_err);
 }
 
 /// Enable the alternate screen and emit other control sequences to start the TUI.
