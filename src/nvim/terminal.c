@@ -145,6 +145,8 @@ struct terminal {
   VTerm *vt;
   VTermScreen *vts;
   GhosttyTerminal ghostty;
+  GhosttyRenderState ghostty_render_state;
+  GhosttyRenderStateRowIterator ghostty_render_row_iterator;
   GhosttyKeyEncoder ghostty_key_encoder;
   GhosttyKeyEvent ghostty_key_event;
   GhosttyMouseEncoder ghostty_mouse_encoder;
@@ -227,8 +229,8 @@ struct terminal {
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
-  .damage = term_damage,
-  .moverect = term_moverect,
+  .damage = NULL,
+  .moverect = NULL,
   .movecursor = term_movecursor,
   .settermprop = term_settermprop,
   .bell = NULL,
@@ -693,6 +695,9 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
     .max_scrollback = (size_t)MAX(buf->b_p_scbk, 0),
   };
   assert_ghostty_success(ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts));
+  assert_ghostty_success(ghostty_render_state_new(NULL, &term->ghostty_render_state));
+  assert_ghostty_success(ghostty_render_state_row_iterator_new(NULL,
+                                                               &term->ghostty_render_row_iterator));
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_USERDATA, term));
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_WRITE_PTY,
                                               (const void *)term_ghostty_write_pty_callback));
@@ -1002,6 +1007,7 @@ void terminal_check_size(Terminal *term)
   vterm_set_size(term->vt, height, width);
   vterm_screen_flush_damage(term->vts);
   assert_ghostty_success(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
+  terminal_ghostty_render_state_update(term);
   terminal_mouse_encoder_set_size(term, width, height);
   term->pending.resize = true;
   invalidate_terminal(term, -1, -1);
@@ -1441,6 +1447,8 @@ void terminal_destroy(Terminal **termpp)
     ghostty_mouse_encoder_free(term->ghostty_mouse_encoder);
     ghostty_key_event_free(term->ghostty_key_event);
     ghostty_key_encoder_free(term->ghostty_key_encoder);
+    ghostty_render_state_row_iterator_free(term->ghostty_render_row_iterator);
+    ghostty_render_state_free(term->ghostty_render_state);
     ghostty_terminal_free(term->ghostty);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -1777,11 +1785,13 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
 
     vterm_input_write(term->vt, crlf_data.items, kv_size(crlf_data));
     ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)crlf_data.items, kv_size(crlf_data));
+    terminal_ghostty_render_state_update(term);
     kv_size(term->vterm_response_buffer) = 0;
     kv_destroy(crlf_data);
   } else {
     vterm_input_write(term->vt, data, len);
     ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
+    terminal_ghostty_render_state_update(term);
     kv_size(term->vterm_response_buffer) = 0;
   }
   vterm_screen_flush_damage(term->vts);
@@ -2006,19 +2016,6 @@ static bool term_ghostty_device_attributes_callback(GhosttyTerminal ghostty, voi
     },
   };
   return true;
-}
-
-static int term_damage(VTermRect rect, void *data)
-{
-  invalidate_terminal(data, rect.start_row, rect.end_row);
-  return 1;
-}
-
-static int term_moverect(VTermRect dest, VTermRect src, void *data)
-{
-  invalidate_terminal(data, MIN(dest.start_row, src.start_row),
-                      MAX(dest.end_row, src.end_row));
-  return 1;
 }
 
 static int term_movecursor(VTermPos new_pos, VTermPos old_pos, int visible, void *data)
@@ -2818,6 +2815,73 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
     time_watcher_start(&refresh_timer, refresh_timer_cb, REFRESH_DELAY, 0);
     refresh_pending = true;
   }
+}
+
+/// Invalidates the terminal rows Ghostty reports as dirty.
+///
+/// We're currently handling invalid terminal rows as a single range, so partial Ghostty damage is
+/// collapsed to the smallest range covering every dirty row. After this returns, Ghostty's render
+/// state has been fully reset to not dirty.
+static void terminal_ghostty_render_state_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert_ghostty_success(ghostty_render_state_update(term->ghostty_render_state,
+                                                     term->ghostty));
+
+  GhosttyRenderStateDirty dirty_state = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
+  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_DATA_DIRTY,
+                                                  &dirty_state));
+  // Nothing to re-render, so we're done.
+  if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_FALSE) {
+    return;
+  }
+
+  int dirty_start = INT_MAX;
+  int dirty_end = -1;
+
+  // The whole screen is dirty, so the dirty range spans the full height.
+  if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_FULL) {
+    uint16_t rows = 0;
+    assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                    GHOSTTY_RENDER_STATE_DATA_ROWS,
+                                                    &rows));
+    dirty_start = 0;
+    dirty_end = rows;
+  }
+
+  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
+                                                  &term->ghostty_render_row_iterator));
+
+  int row_idx = 0;
+
+  while (ghostty_render_state_row_iterator_next(term->ghostty_render_row_iterator)) {
+    if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_PARTIAL) {
+      bool row_dirty = false;
+      assert_ghostty_success(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
+                                                          GHOSTTY_RENDER_STATE_ROW_DATA_DIRTY,
+                                                          &row_dirty));
+      if (row_dirty) {
+        dirty_start = MIN(dirty_start, row_idx);
+        dirty_end = row_idx + 1;
+      }
+    }
+
+    // Mark the row as clean.
+    bool dirty = false;
+    assert_ghostty_success(ghostty_render_state_row_set(term->ghostty_render_row_iterator,
+                                                        GHOSTTY_RENDER_STATE_ROW_OPTION_DIRTY,
+                                                        &dirty));
+    row_idx++;
+  }
+
+  invalidate_terminal(term, dirty_start, dirty_end);
+
+  dirty_state = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
+  assert_ghostty_success(ghostty_render_state_set(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_OPTION_DIRTY,
+                                                  &dirty_state));
 }
 
 /// Normally refresh_timer_cb() is called when processing main_loop.events, but with
