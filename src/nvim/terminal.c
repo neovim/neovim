@@ -688,10 +688,13 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // Create Ghostty
   uint16_t ghostty_cols = MAX(opts.width, 1);
   uint16_t ghostty_rows = MAX(opts.height, 1);
+  size_t ghostty_max_scrollback = buf->b_p_scbk < 1 ? SB_MAX : (size_t)buf->b_p_scbk;
   GhosttyTerminalOptions ghostty_opts = {
     .cols = ghostty_cols,
     .rows = ghostty_rows,
-    .max_scrollback = (size_t)MAX(buf->b_p_scbk, 0),
+    // Ghostty needs history to reflow active rows during resize. Neovim still
+    // owns the buffer scrollback and must not render scrollback rows from here.
+    .max_scrollback = ghostty_max_scrollback,
   };
   assert_ghostty_success(ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts));
   assert_ghostty_success(ghostty_render_state_new(NULL, &term->ghostty_render_state));
