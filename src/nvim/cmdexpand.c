@@ -394,10 +394,11 @@ static void cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches
   compl_match_arraysize = numMatches;
   for (int i = 0; i < numMatches; i++) {
     compl_match_array[i] = (pumitem_T){
-      .pum_text = SHOW_MATCH(i),
-      .pum_info = NULL,
-      .pum_extra = NULL,
-      .pum_kind = NULL,
+      .pum_text = (xp->xp_files_abbr != NULL && xp->xp_files_abbr[i] != NULL)
+                  ? xp->xp_files_abbr[i] : SHOW_MATCH(i),
+      .pum_info = xp->xp_files_info != NULL ? xp->xp_files_info[i] : NULL,
+      .pum_extra = xp->xp_files_menu != NULL ? xp->xp_files_menu[i] : NULL,
+      .pum_kind = xp->xp_files_kind != NULL ? xp->xp_files_kind[i] : NULL,
       .pum_user_abbr_hlattr = -1,
       .pum_user_kind_hlattr = -1,
     };
@@ -872,6 +873,26 @@ static char *find_longest_match(expand_T *xp, int options)
   return xmemdupz(xp->xp_files[0], len);
 }
 
+static void free_xp_files_extra(expand_T *xp, int numfiles)
+{
+  if (xp->xp_files_abbr != NULL) {
+    FreeWild(numfiles, xp->xp_files_abbr);
+    xp->xp_files_abbr = NULL;
+  }
+  if (xp->xp_files_kind != NULL) {
+    FreeWild(numfiles, xp->xp_files_kind);
+    xp->xp_files_kind = NULL;
+  }
+  if (xp->xp_files_menu != NULL) {
+    FreeWild(numfiles, xp->xp_files_menu);
+    xp->xp_files_menu = NULL;
+  }
+  if (xp->xp_files_info != NULL) {
+    FreeWild(numfiles, xp->xp_files_info);
+    xp->xp_files_info = NULL;
+  }
+}
+
 /// Do wildcard expansion on the string "str".
 /// Chars that should not be expanded must be preceded with a backslash.
 /// Return a pointer to allocated memory containing the new string.
@@ -934,6 +955,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   // free old names
   if (xp->xp_numfiles != -1 && mode != WILD_ALL && mode != WILD_LONGEST) {
     FreeWild(xp->xp_numfiles, xp->xp_files);
+    free_xp_files_extra(xp, xp->xp_numfiles);
     xp->xp_numfiles = -1;
     XFREE_CLEAR(xp->xp_orig);
 
@@ -1024,6 +1046,7 @@ void ExpandInit(expand_T *xp)
 void ExpandCleanup(expand_T *xp)
 {
   if (xp->xp_numfiles >= 0) {
+    free_xp_files_extra(xp, xp->xp_numfiles);
     FreeWild(xp->xp_numfiles, xp->xp_files);
     xp->xp_numfiles = -1;
   }
@@ -1211,6 +1234,7 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, int wim_
 
   if (xp->xp_numfiles == -1) {
     FreeWild(numMatches, matches);
+    free_xp_files_extra(xp, numMatches);
   }
 
   return EXPAND_OK;
@@ -3536,24 +3560,86 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
   return OK;
 }
 
-static void process_user_list(list_T *retlist, char ***matches, int *numMatches)
+static void process_user_list(list_T *retlist, char ***matches, int *numMatches, expand_T *xp)
 {
   garray_T ga;
-  ga_init(&ga, (int)sizeof(char *), 3);
+  garray_T ga_abbr;
+  garray_T ga_kind;
+  garray_T ga_menu;
+  garray_T ga_info;
+  bool have_extra = false;
+  ga_init(&ga, sizeof(char *), 3);
+  ga_init(&ga_abbr, sizeof(char *), 3);
+  ga_init(&ga_kind, sizeof(char *), 3);
+  ga_init(&ga_menu, sizeof(char *), 3);
+  ga_init(&ga_info, sizeof(char *), 3);
   // Loop over the items in the list.
   TV_LIST_ITER_CONST(retlist, li, {
-    if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING
-        || TV_LIST_ITEM_TV(li)->vval.v_string == NULL) {
-      continue;  // Skip non-string items and empty strings.
+    char *p = NULL;
+    char *abbr = NULL;
+    char *kind = NULL;
+    char *menu = NULL;
+    char *info = NULL;
+
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
+      if (TV_LIST_ITEM_TV(li)->vval.v_string == NULL) {
+        continue;  // Skip empty strings
+      }
+      p = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
+    } else if (TV_LIST_ITEM_TV(li)->v_type == VAR_DICT
+               && TV_LIST_ITEM_TV(li)->vval.v_dict != NULL) {
+      dict_T *d = TV_LIST_ITEM_TV(li)->vval.v_dict;
+      char *word = tv_dict_get_string(d, "word", false);
+
+      if (word == NULL) {
+        continue;  // "word" is required
+      }
+      p = xstrdup(word);
+      abbr = tv_dict_get_string(d, "abbr", true);
+      kind = tv_dict_get_string(d, "kind", true);
+      menu = tv_dict_get_string(d, "menu", true);
+      info = tv_dict_get_string(d, "info", true);
+      if (abbr != NULL || kind != NULL || menu != NULL || info != NULL) {
+        have_extra = true;
+      }
+    } else {
+      continue;  // Skip other types
     }
-    char *p = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
 
     GA_APPEND(char *, &ga, p);
+    GA_APPEND(char *, &ga_abbr, abbr);
+    GA_APPEND(char *, &ga_kind, kind);
+    GA_APPEND(char *, &ga_menu, menu);
+    GA_APPEND(char *, &ga_info, info);
   });
   tv_list_unref(retlist);
 
   *matches = ga.ga_data;
   *numMatches = ga.ga_len;
+  if (have_extra && ga.ga_len > 0) {
+    xp->xp_files_abbr = (char **)ga_abbr.ga_data;
+    xp->xp_files_kind = (char **)ga_kind.ga_data;
+    xp->xp_files_menu = (char **)ga_menu.ga_data;
+    xp->xp_files_info = (char **)ga_info.ga_data;
+  } else {
+    // No extra info collected; free the placeholder NULL entries.
+    for (int i = 0; i < ga_abbr.ga_len; i++) {
+      xfree(((char **)ga_abbr.ga_data)[i]);
+    }
+    xfree(ga_abbr.ga_data);
+    for (int i = 0; i < ga_kind.ga_len; i++) {
+      xfree(((char **)ga_kind.ga_data)[i]);
+    }
+    xfree(ga_kind.ga_data);
+    for (int i = 0; i < ga_menu.ga_len; i++) {
+      xfree(((char **)ga_menu.ga_data)[i]);
+    }
+    xfree(ga_menu.ga_data);
+    for (int i = 0; i < ga_info.ga_len; i++) {
+      xfree(((char **)ga_info.ga_data)[i]);
+    }
+    xfree(ga_info.ga_data);
+  }
 }
 
 /// Expand names with a list returned by a function defined by the user.
@@ -3566,7 +3652,7 @@ static int ExpandUserList(expand_T *xp, char ***matches, int *numMatches)
     return FAIL;
   }
 
-  process_user_list(retlist, matches, numMatches);
+  process_user_list(retlist, matches, numMatches, xp);
   return OK;
 }
 
@@ -3581,7 +3667,7 @@ static int ExpandUserLua(expand_T *xp, int *numMatches, char ***matches)
 
   list_T *const retlist = rettv.vval.v_list;
 
-  process_user_list(retlist, matches, numMatches);
+  process_user_list(retlist, matches, numMatches, xp);
   return OK;
 }
 

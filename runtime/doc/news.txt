@@ -133,6 +133,8 @@ DIAGNOSTICS
 
 EDITOR
 
+• |:command-completion-customlist| can return a list of dictionaries with
+  kind/menu/info/abbr for the popup menu.
 • |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
 • |ZR| restarts Nvim (|:restart|).

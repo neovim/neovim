@@ -1448,7 +1448,20 @@ For the "custom" argument, the function should return the completion
 candidates one per line in a newline separated string.
 
 For the "customlist" argument, the function should return the completion
-candidates as a Vim List.  Non-string items in the list are ignored.
+candidates as a Vim List.  Each item may be either a string or a |Dictionary|.
+A Dictionary item may have the following keys:
+	word	(required) the text inserted into the command line when the
+		item is selected
+	abbr	alternative text shown in the popup menu in place of "word",
+		when 'wildoptions' contains "pum"; useful when the inserted
+		text and the displayed text should differ
+	kind	short kind text (one or two characters), shown in the popup
+		menu when 'wildoptions' contains "pum"
+	menu	extra text shown after the match in the popup menu
+	info	long description shown in the info popup
+Items that are neither a string nor a Dictionary, and Dictionary items without
+a "word" key, are ignored.  When 'wildoptions' does not contain "pum", only
+"word" is shown.
 
 The function arguments are:
 	ArgLead		the leading portion of the argument currently being

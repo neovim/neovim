@@ -4577,6 +4577,53 @@ func Test_custom_completion()
   delfunc Check_customlist_completion
 endfunc
 
+" Test that 'customlist' completion accepts dict items with extra info
+" (kind/menu/info) for display in the popup menu, and that string items still
+" work in the same list.
+func Test_customlist_dict_completion()
+  func DictComp(A, L, P)
+    return [
+          \ {'word': 'apple',  'kind': 'f', 'menu': 'fruit',     'info': 'A red fruit'},
+          \ {'word': 'banana', 'kind': 'f', 'menu': 'fruit',     'info': 'A yellow fruit'},
+          \ {'word': 'carrot', 'kind': 'v', 'menu': 'vegetable', 'info': 'An orange vegetable'},
+          \ 'plain',
+          \ ]
+  endfunc
+  command -nargs=1 -complete=customlist,DictComp DictCmd echo <q-args>
+
+  " getcompletion() returns only the "word" of each item; string items pass
+  " through unchanged.
+  call assert_equal(['apple', 'banana', 'carrot', 'plain'],
+        \ getcompletion('', 'customlist,DictComp'))
+
+  " Items missing a "word" key are silently skipped.
+  func DictCompMissingWord(A, L, P)
+    return [{'kind': 'x'}, {'word': 'ok'}]
+  endfunc
+  call assert_equal(['ok'],
+        \ getcompletion('', 'customlist,DictCompMissingWord'))
+
+  " Tab completion still selects the word.
+  call feedkeys(":DictCmd a\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"DictCmd apple', @:)
+
+  " "abbr" overrides display only; "word" is what gets inserted.
+  func DictCompAbbr(A, L, P)
+    return [{'word': 'apple', 'abbr': 'APPLE🍎'}]
+  endfunc
+  call assert_equal(['apple'],
+        \ getcompletion('', 'customlist,DictCompAbbr'))
+  command -nargs=1 -complete=customlist,DictCompAbbr DictAbbrCmd echo <q-args>
+  call feedkeys(":DictAbbrCmd \<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"DictAbbrCmd apple', @:)
+
+  delcommand DictAbbrCmd
+  delcommand DictCmd
+  delfunc DictComp
+  delfunc DictCompMissingWord
+  delfunc DictCompAbbr
+endfunc
+
 func Test_custom_completion_with_glob()
   func TestGlobComplete(A, L, P)
     return split(glob('Xglob*'), "\n")

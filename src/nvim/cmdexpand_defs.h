@@ -35,6 +35,17 @@ typedef struct {
   int xp_selected;              ///< selected index in completion
   char *xp_orig;                ///< originally expanded string
   char **xp_files;              ///< list of files
+  char **xp_files_abbr;         ///< optional parallel array of display
+                                ///< strings (override xp_files for the
+                                ///< pum text); NULL if unused
+  char **xp_files_kind;         ///< optional parallel array of "kind"
+                                ///< strings; NULL if unused
+  char **xp_files_menu;         ///< optional parallel array of "menu"
+                                ///< strings (shown after the match);
+                                ///< NULL if unused
+  char **xp_files_info;         ///< optional parallel array of "info"
+                                ///< strings (shown in info popup);
+                                ///< NULL if unused
   char *xp_line;                ///< text being completed
   char xp_buf[EXPAND_BUF_LEN];  ///< buffer for returned match
   Direction xp_search_dir;      ///< Direction of search
