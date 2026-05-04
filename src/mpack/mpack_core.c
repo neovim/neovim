@@ -120,6 +120,7 @@ MPACK_API int mpack_write(mpack_tokbuf_t *tokbuf, char **buf, size_t *buflen,
     size_t written, pending, count;
     if (!tokbuf->plen) tokbuf->ppos = 0;
     written = tokbuf->ppos;
+    if (written > tok.length) return MPACK_ERROR;
     pending = tok.length - written;
     count = MIN(pending, *buflen);
     memcpy(*buf, tok.data.chunk_ptr + written, count);
