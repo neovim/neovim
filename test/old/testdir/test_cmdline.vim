@@ -4624,6 +4624,49 @@ func Test_customlist_dict_completion()
   delfunc DictCompAbbr
 endfunc
 
+func Test_customlist_dict_completion_info_popup()
+  CheckScreendump
+
+  let lines =<< trim END
+    func DictComp(A, L, P)
+      return [
+            \ {'word': 'apple',  'kind': 'f', 'menu': 'fruit',     'info': 'A red fruit'},
+            \ {'word': 'banana', 'kind': 'f', 'menu': 'fruit',     'info': 'A yellow fruit'},
+            \ {'word': 'carrot', 'kind': 'v', 'menu': 'vegetable', 'info': 'An orange vegetable'},
+            \ 'plain',
+            \ ]
+    endfunc
+    command -nargs=1 -complete=customlist,DictComp DictCmd echo <q-args>
+    set wildmenu wildoptions=pum completeopt=menu,popup
+  END
+  call writefile(lines, 'XTest_customlist_info_popup', 'D')
+  let rows = 12
+  let buf = RunVimInTerminal('-S XTest_customlist_info_popup', {'rows': rows})
+
+  call term_sendkeys(buf, ":DictCmd \<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd apple') + 1)], g:test_timeout, ((rows - 4), 'A red fruit'))
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_1', {})
+
+  call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd banana') + 1)], g:test_timeout, ((rows - 3), 'A yellow fruit'))
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_2', {})
+
+  call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd carrot') + 1)], g:test_timeout, ((rows - 2), 'An orange vegetable'))
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_3', {})
+
+  call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd plain') + 1)], g:test_timeout, ((rows - 1), '^\~\s\+plain\s\+$'))
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_4', {})
+
+  call term_sendkeys(buf, "\<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd ') + 1)], g:test_timeout)
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_5', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_custom_completion_with_glob()
   func TestGlobComplete(A, L, P)
     return split(glob('Xglob*'), "\n")
