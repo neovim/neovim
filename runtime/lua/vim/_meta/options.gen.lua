@@ -8063,9 +8063,9 @@ vim.go.wmnu = vim.go.wildmenu
 --- "noselect"	If 'wildmenu' is enabled, show the menu but do not
 --- 		preselect the first item.
 --- "noinsert"	If 'wildmenu' is enabled, show the menu and preselect
---- 		the first match, but do not insert it in the
---- 		command line.  If both "noinsert" and "noselect" are
---- 		present, "noselect" takes precedence.
+--- 		the first match, but do not insert it in the command
+--- 		line.  If both "noinsert" and "noselect" are present,
+--- 		"noselect" takes precedence.
 --- If only one match exists, it is completed fully, unless "noselect" or
 --- "noinsert" is specified.
 ---
