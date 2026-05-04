@@ -37,7 +37,8 @@ local function assert_invalid_method(method)
 end
 
 local function request(method, opts)
-  return exec_lua([[
+  opts = opts or '{}'
+  local ok, result = t.pcall(exec_lua, [[
       local done = false
       local result
 
@@ -45,7 +46,7 @@ local function request(method, opts)
         if err then
           result = { error = err }
         else
-          result = vim.json.decode(res.body)
+          result = { error = nil, response = vim.json.decode(res.body) }
         end
         done = true
       end)
@@ -53,6 +54,9 @@ local function request(method, opts)
       vim.wait(2000, function() return done end)
       return result
     ]])
+
+  t.eq(true, ok)
+  return result
 end
 
 describe('vim.net.request', function()
@@ -63,24 +67,11 @@ describe('vim.net.request', function()
   it('fetches a URL into memory (async success)', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
 
-    local content = exec_lua([[
-      local done = false
-      local result
+    ---@type table
+    local result = request('GET')
 
-      vim.net.request("https://httpbingo.org/anything", { retry = 3 }, function(err, body)
-        assert(not err, err)
-        result = body.body
-        done = true
-      end)
-
-      vim.wait(2000, function() return done end)
-      return result
-    ]])
-
-    assert(
-      content and content:find('"url"%s*:%s*"https://httpbingo.org/anything"'),
-      'Expected response body to contain the correct URL'
-    )
+    t.eq(nil, result.error, ('Should not raise error on GET request: %s'):format(result.error))
+    t.eq('https://httpbingo.org/anything', result.response.url)
   end)
 
   it("detects filetype, sets 'nomodified'", function()
@@ -212,50 +203,56 @@ describe('vim.net.request', function()
   it('accepts custom headers', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
 
-    local headers = exec_lua([[
-      local done = false
-      local result
+    ---@type table
+    local result = request(
+      'GET',
+      '{headers = { Authorization = "Bearer test-token", ["X-Custom-Header"] = "custom-value", ["Empty"] = ""}}'
+    )
 
-      vim.net.request("https://httpbingo.org/headers", {
-        headers = {
-          Authorization = "Bearer test-token",
-          ['X-Custom-Header'] = "custom-value",
-          ['Empty'] = '',
-        },
-      }, function(err, res)
-        if err then
-          result = { error = err }
-        else
-          result = vim.json.decode(res.body).headers
-        end
-        done = true
-      end)
+    t.eq(
+      nil,
+      result.error,
+      ('Should not raise error on GET request with headers: %s'):format(result.error)
+    )
+    t.eq('table', type(result.response.headers), 'Expected result.response.headers to be a table')
 
-      vim.wait(2000, function() return done end)
-      return result
-    ]])
-
-    t.eq('table', type(headers), 'Expected headers to be a table')
     -- httpbingo.org/request returns each header as a list in the returned value
-    t.eq(headers.Authorization[1], 'Bearer test-token', 'Expected Authorization header')
-    t.eq(headers['X-Custom-Header'][1], 'custom-value', 'Expected X-Custom-Header')
-    t.eq(headers['Empty'][1], '', 'Expected Empty header')
+    t.eq(
+      'Bearer test-token',
+      result.response.headers.Authorization[1],
+      'Expected Authorization header'
+    )
+    t.eq('custom-value', result.response.headers['X-Custom-Header'][1], 'Expected X-Custom-Header')
+    t.eq('', result.response.headers['Empty'][1], 'Expected Empty header')
   end)
 
   it('accepts multiple HTTP methods', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
 
-    t.eq(request('GET', '{}').method, 'GET')
-    t.eq(request('PUT', '{}').method, 'PUT')
-    t.eq(request('PATCH', '{}').method, 'PATCH')
-    t.eq(request('DELETE', '{}').method, 'DELETE')
+    local function assert_accept_method(method, opts)
+      ---@type table
+      local result = request(method, opts)
+      t.eq(
+        nil,
+        result.error,
+        ('Should not raise error on %s request: %s'):format(method, result.error)
+      )
+      t.eq(method, result.response.method)
+    end
 
-    ---@diagnostic disable-next-line: no-unknown
-    local post =
+    assert_accept_method('GET')
+    assert_accept_method('PUT')
+    assert_accept_method('PATCH')
+    assert_accept_method('DELETE')
+
+    -- testing body payload
+    ---@type table
+    local result =
       request('POST', "{body='{\"a\": 1}', headers={['Content-Type'] = 'application/json'}}")
-    t.eq(post.method, 'POST')
-    t.eq(post.headers['Content-Type'][1], 'application/json')
-    t.eq(post.json.a, 1)
+    t.eq(nil, result.error, ('Should not raise error on POST, %s'):format(result.error))
+    t.eq('POST', result.response.method)
+    t.eq('application/json', result.response.headers['Content-Type'][1])
+    t.eq(1, result.response.json.a)
   end)
 
   it('validation', function()

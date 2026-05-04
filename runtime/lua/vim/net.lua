@@ -10,7 +10,7 @@ local http_methods = {
 }
 
 ---@alias vim.net.request.ResponseFunc fun(err: string?, response: vim.net.request.Response?)
----@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PACH" | "HEAD"| "DELETE
+---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PATCH" | "HEAD" | "DELETE"
 
 ---@class vim.net.request.Opts
 ---@inlinedoc
