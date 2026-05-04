@@ -10,6 +10,7 @@ local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
 local eq = t.eq
+local eq_paths = t.eq_paths
 local feed_data = tt.feed_data
 local clear = n.clear
 local command = n.command
@@ -492,14 +493,105 @@ describe('TUI :restart', function()
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
-  it('drops "-" and "-- [files…]" from v:argv #34417', function()
-    t.skip(is_os('win'), 'stdin behavior differs on Windows')
+  it('drops "-" "-- [files…]" "[file]" from v:argv #34417', function()
     local server_session
+    local empty_script
     finally(function()
       if server_session then
         server_session:close()
       end
+      if empty_script then
+        os.remove(empty_script)
+      end
     end)
+    local server_pipe = new_pipename()
+    --In Windows, stdin behavior differs so feed '-s' with file
+    empty_script = fn.writefile({ '' }, t.tmpname(false))
+    local screen
+    if is_os('win') then
+      screen = tt.setup_child_nvim({
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        'Xtest-start-file',
+        '--listen',
+        server_pipe,
+        'Xtest-mid-file',
+        '--cmd',
+        'set notermguicolors',
+        'Xtest-end-file',
+        '--',
+        'Xtest-last-file1',
+        'Xtest-last-file2',
+      }, { env = env_notermguicolors })
+    else
+      screen = tt.setup_child_nvim({
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        'Xtest-start-file',
+        '--listen',
+        server_pipe,
+        'Xtest-mid-file',
+        '--cmd',
+        'set notermguicolors',
+        '-s',
+        '-',
+        '-',
+        'Xtest-end-file',
+        '--',
+        'Xtest-last-file1',
+        'Xtest-last-file2',
+      }, { env = env_notermguicolors })
+    end
+
+    screen:expect { any = '{2:Xtest%-start%-file.*0,0%-1.*All}' }
+    retry(nil, 5000, function()
+      server_session = n.connect(server_pipe)
+    end)
+
+    local _, starttime = server_session:request('nvim_eval', 'v:starttime')
+    local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
+    local has_s = 'index(v:argv, "-s") >= 0 ? v:true : v:false'
+    local havs_file_args =
+      'index(v:argv,"Xtest-start-file") >= 0 && index(v:argv,"Xtest-mid-file") >= 0 && index(v:argv,"Xtest-end-file") >= 0 && index(v:argv,"Xtest-last-file1") >= 0 && index(v:argv,"Xtest-last-file2") >= 0 ? v:true : v:false'
+    eq({ true, true }, { server_session:request('nvim_eval', expr) })
+    if not is_os('win') then
+      eq({ true, true }, { server_session:request('nvim_eval', has_s) })
+    end
+    eq({ true, true }, { server_session:request('nvim_eval', havs_file_args) })
+
+    tt.feed_data(":restart put='foo'\013")
+
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
+
+    eq({ true, false }, { server_session:request('nvim_eval', expr) })
+    if not is_os('win') then
+      eq({ true, false }, { server_session:request('nvim_eval', has_s) })
+    end
+    eq({ true, false }, { server_session:request('nvim_eval', havs_file_args) })
+
+    -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
+    -- eq(13, #argv)
+    -- eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
+
+    -- The server is now detached and needs to be quit explicitly.
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
+
+  it('use initial directory', function()
+    local server_session
+    local tmpdir = t.tmpname(false)
+    finally(function()
+      if server_session then
+        server_session:close()
+      end
+      vim.uv.fs_rmdir(tmpdir)
+    end)
+
     local server_pipe = new_pipename()
     local screen = tt.setup_child_nvim({
       '-u',
@@ -510,46 +602,32 @@ describe('TUI :restart', function()
       server_pipe,
       '--cmd',
       'set notermguicolors',
-      '-s',
-      '-',
-      '-',
-      '--',
-      'Xtest-file1',
-      'Xtest-file2',
     }, { env = env_notermguicolors })
-    screen:expect([[
-      ^                                                  |
-      ~                                                 |*3
-      {2:Xtest-file1                     0,0-1          All}|
-                                                        |
-      {5:-- TERMINAL --}                                    |
-    ]])
-    server_session = n.connect(server_pipe)
-    local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
-    local has_s = 'index(v:argv, "-s") >= 0 ? v:true : v:false'
-    eq({ true, true }, { server_session:request('nvim_eval', expr) })
-    eq({ true, true }, { server_session:request('nvim_eval', has_s) })
 
-    tt.feed_data(":restart put='foo'\013")
-    screen:expect([[
-                                                        |
-      ^foo                                               |
-      ~                                                 |*2
-      {2:[No Name] [+]                   2,1            All}|
-                                                        |
-      {5:-- TERMINAL --}                                    |
-    ]])
-    server_session:close()
-    server_session = n.connect(server_pipe)
+    screen:expect({ any = 'TERMINAL' })
 
-    eq({ true, false }, { server_session:request('nvim_eval', expr) })
-    eq({ true, false }, { server_session:request('nvim_eval', has_s) })
+    retry(nil, 5000, function()
+      server_session = n.connect(server_pipe)
+    end)
 
-    -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
-    -- eq(13, #argv)
-    -- eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
+    local _, init_cwd = server_session:request('nvim_call_function', 'getcwd', {})
+    local _, starttime = server_session:request('nvim_eval', 'v:starttime')
+    server_session:request('nvim_call_function', 'mkdir', { tmpdir, 'p' })
+    server_session:request('nvim_command', 'cd ' .. tmpdir)
+    local _, after_cd = server_session:request('nvim_call_function', 'getcwd', {})
+    eq_paths(tmpdir, after_cd)
 
-    -- The server is now detached and needs to be quit explicitly.
+    local _, old_pid = server_session:request('nvim_call_function', 'getpid', {})
+    local _, dir_exists = server_session:request('nvim_call_function', 'isdirectory', { init_cwd })
+    eq(1, dir_exists)
+
+    feed_data(':restart\n')
+
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
+
+    local _, restart_cwd = server_session:request('nvim_call_function', 'getcwd', {})
+    eq_paths(init_cwd, restart_cwd)
+
     feed_data(':qall!\r')
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
