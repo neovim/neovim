@@ -326,6 +326,7 @@ local config = {
       'rpc.lua',
       'semantic_tokens.lua',
       'tagfunc.lua',
+      'text_document_content.lua',
 
       -- Sections at the end, in a specific order:
       'util.lua',

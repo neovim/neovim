@@ -97,6 +97,7 @@ These GLOBAL keymaps are created unconditionally when Nvim starts:
 <
 These LSP features are enabled by default:
 
+-`workspace/textDocumentContent` and `workspace/textDocumentContent/refresh`
 - Diagnostics |lsp-diagnostic|. See |vim.diagnostic.config()| to customize.
 - `workspace/didChangeWatchedFiles` (except on Linux). If you see poor
   performance in big workspaces, run `:checkhealth vim.lsp` and look for "file
@@ -2838,6 +2839,16 @@ is_enabled({filter})                    *vim.lsp.semantic_tokens.is_enabled()*
                   • {client_id}? (`integer`, default: all) Client ID, or nil
                     for all.
 
+
+==============================================================================
+Lua module: vim.lsp.text_document_content          *lsp-text_document_content*
+
+This module provides the LSP `workspace/textDocumentContent` feature, for
+loading virtual documents whose content is provided by an attached language
+server.
+
+LSP spec:
+https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#workspace_textDocumentContent
 
 ==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
