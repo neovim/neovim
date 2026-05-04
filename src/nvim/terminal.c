@@ -183,6 +183,7 @@ struct terminal {
   // no way to know if the memory was reused.
   handle_T buf_handle;
   bool in_altscreen;
+  bool vterm_screen_render_pending;
   // program suspended
   bool suspended;
   // program exited
@@ -549,6 +550,22 @@ static bool terminal_mouse_tracking_enabled(Terminal *term)
                                               GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING,
                                               &enabled));
   return enabled;
+}
+
+// TODO(noib3): Remove when libvterm no longer owns render state for the X10
+// mouse report / CSI M ambiguity, or when upstream gives us a safer signal.
+static bool terminal_input_has_x10_mouse_report(const char *data, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (size_t i = 0; i < len; i++) {
+    if (i + 1 < len && (uint8_t)data[i] == 0x9b && data[i + 1] == 'M') {
+      return true;
+    }
+    if (i + 2 < len && data[i] == ESC && data[i + 1] == '[' && data[i + 2] == 'M') {
+      return true;
+    }
+  }
+  return false;
 }
 
 static void terminal_mouse_encoder_set_size(Terminal *term, uint16_t width, uint16_t height)
@@ -1789,6 +1806,11 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
   if (!data) {
     return;
   }
+  // X10 mouse reports echo back as CSI M, which is also DL.  Cursor/screen state
+  // is still libvterm-owned in this phase, so render that update from vterm.
+  if (terminal_input_has_x10_mouse_report(data, len)) {
+    term->vterm_screen_render_pending = true;
+  }
 
   if (term->opts.force_crlf) {
     StringBuilder crlf_data = KV_INITIAL_VALUE;
@@ -1828,6 +1850,32 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     multiqueue_put(main_loop.events, on_sync_flush,
                    (void *)(intptr_t)term->buf_handle);
   }
+}
+
+static bool terminal_ghostty_screen_ref(Terminal *term, int row, int col, GhosttyGridRef *ref)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (row < 0 || col < 0 || col > UINT16_MAX) {
+    return false;
+  }
+
+  *ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+  GhosttyPoint point = {
+    .tag = GHOSTTY_POINT_TAG_ACTIVE,
+    .value = {
+      .coordinate = {
+        .x = (uint16_t)col,
+        .y = (uint32_t)row,
+      },
+    },
+  };
+
+  GhosttyResult result = ghostty_terminal_grid_ref(term->ghostty, point, ref);
+  if (result == GHOSTTY_INVALID_VALUE || result == GHOSTTY_NO_VALUE) {
+    return false;
+  }
+  assert_ghostty_success(result);
+  return true;
 }
 
 static int get_rgb(VTermState *state, VTermColor color)
@@ -2070,6 +2118,14 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
   switch (prop) {
   case VTERM_PROP_ALTSCREEN:
+    if (term->in_altscreen != val->boolean) {
+      int height;
+      vterm_get_size(term->vt, &height, NULL);
+      term->invalid_start = 0;
+      term->invalid_end = height;
+      term->vterm_screen_render_pending = true;
+      invalidate_terminal(term, -1, -1);
+    }
     term->in_altscreen = val->boolean;
     break;
 
@@ -2773,7 +2829,90 @@ end:
 // }}}
 // terminal buffer refresh & misc {{{
 
-static void fetch_row(Terminal *term, int row, int end_col)
+static bool terminal_ghostty_append_codepoint(Terminal *term, char **ptr, size_t *cell_len,
+                                              uint32_t codepoint)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (*cell_len >= MAX_SCHAR_SIZE - 4
+      || (size_t)(*ptr - term->textbuf) + MB_MAXBYTES >= TEXTBUF_SIZE) {
+    return false;
+  }
+
+  char *cell_start = *ptr;
+  *ptr += utf_char2bytes((int)codepoint, *ptr);
+  *cell_len += (size_t)(*ptr - cell_start);
+  return true;
+}
+
+static void terminal_ghostty_append_cell_text(Terminal *term, const GhosttyGridRef *ref,
+                                              GhosttyCell cell, char **ptr, size_t *line_len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t grapheme_len = 0;
+  GhosttyResult result = ghostty_grid_ref_graphemes(ref, NULL, 0, &grapheme_len);
+  if (grapheme_len == 0) {
+    if ((size_t)(*ptr - term->textbuf) < TEXTBUF_SIZE - 1) {
+      *(*ptr)++ = ' ';
+    }
+    bool has_styling = false;
+    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_HAS_STYLING, &has_styling));
+    if (has_styling) {
+      *line_len = (size_t)(*ptr - term->textbuf);
+    }
+    return;
+  }
+  if (result != GHOSTTY_OUT_OF_SPACE) {
+    assert_ghostty_success(result);
+  }
+
+  uint32_t stack[16];
+  uint32_t *graphemes = stack;
+  if (grapheme_len > ARRAY_SIZE(stack)) {
+    graphemes = xmalloc(sizeof(*graphemes) * grapheme_len);
+  }
+
+  assert_ghostty_success(ghostty_grid_ref_graphemes(ref, graphemes, grapheme_len,
+                                                    &grapheme_len));
+  size_t cell_len = 0;
+  for (size_t i = 0; i < grapheme_len; i++) {
+    if (!terminal_ghostty_append_codepoint(term, ptr, &cell_len, graphemes[i])) {
+      break;
+    }
+  }
+  *line_len = (size_t)(*ptr - term->textbuf);
+
+  if (graphemes != stack) {
+    xfree(graphemes);
+  }
+}
+
+static size_t fetch_ghostty_row(Terminal *term, int row, int end_col)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int col = 0;
+  size_t line_len = 0;
+  char *ptr = term->textbuf;
+
+  while (col < end_col) {
+    GhosttyGridRef ref = { 0 };
+    if (!terminal_ghostty_screen_ref(term, row, col, &ref)) {
+      break;
+    }
+    GhosttyCell cell = 0;
+    assert_ghostty_success(ghostty_grid_ref_cell(&ref, &cell));
+    terminal_ghostty_append_cell_text(term, &ref, cell, &ptr, &line_len);
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
+    col += wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
+  }
+
+  term->textbuf[line_len] = NUL;
+  return line_len;
+}
+
+// TODO(noib3): Remove once scrollback text and vterm-owned transition
+// rendering no longer need libvterm.
+static size_t fetch_vterm_row(Terminal *term, int row, int end_col)
 {
   int col = 0;
   size_t line_len = 0;
@@ -2791,8 +2930,22 @@ static void fetch_row(Terminal *term, int row, int end_col)
     col += cell.width;
   }
 
-  // end of line
   term->textbuf[line_len] = NUL;
+  return line_len;
+}
+
+static void fetch_row(Terminal *term, int row, int end_col)
+{
+  if (row >= 0 && !term->vterm_screen_render_pending) {
+    if (fetch_ghostty_row(term, row, end_col) > 0) {
+      return;
+    }
+
+    term->textbuf[0] = NUL;
+    return;
+  }
+
+  fetch_vterm_row(term, row, end_col);
 }
 
 static bool fetch_cell(Terminal *term, int row, int col, VTermScreenCell *cell)
@@ -2801,19 +2954,17 @@ static bool fetch_cell(Terminal *term, int row, int col, VTermScreenCell *cell)
     ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
     if ((size_t)col < sbrow->cols) {
       *cell = sbrow->cells[col];
-    } else {
-      // fill the pointer with an empty cell
-      *cell = (VTermScreenCell) {
-        .schar = 0,
-        .width = 1,
-      };
-      return false;
+      return true;
     }
-  } else {
-    vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col },
-                          cell);
+
+    *cell = (VTermScreenCell) {
+      .schar = 0,
+      .width = 1,
+    };
+    return false;
   }
-  return true;
+
+  return vterm_screen_get_cell(term->vts, (VTermPos) { row, col }, cell) != 0;
 }
 
 // queue a terminal instance for refresh
@@ -3163,6 +3314,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   int change_end = change_start + changed;
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
+  term->vterm_screen_render_pending = false;
   // Call this after resetting the invalid region, as buffer update callbacks may
   // poll for terminal output and lead to new invalidations.
   changed_lines(buf, change_start, 0, change_end, added, true);
