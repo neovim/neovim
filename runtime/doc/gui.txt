@@ -95,7 +95,8 @@ Restart Nvim
 
                                                 *:restart* *:restart!* *E5201*
 :restart[!] [+cmd] [command]
-                Restarts Nvim. Saves and restores the current session, unless
+                Restarts Nvim based on the directory Nvim started in.
+                Saves and restores the current session, unless
                 [!] is given. Sets |v:exitreason|. See also |ZR|.
 
                 1. Saves the current session (unless [!] was given).

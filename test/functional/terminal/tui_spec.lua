@@ -12,6 +12,7 @@ local tt = require('test.functional.testterm')
 local describe, it, before_each, after_each, pending, finally =
   t.describe, t.it, t.before_each, t.after_each, t.pending, t.finally
 local eq = t.eq
+local eq_paths = t.eq_paths
 local feed_data = tt.feed_data
 local clear = n.clear
 local command = n.command
@@ -838,6 +839,56 @@ describe('TUI :restart', function()
     -- eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
 
     -- The server is now detached and needs to be quit explicitly.
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
+
+  it('use initial directory', function()
+    local server_session
+    local tmpdir = t.tmpname(false)
+    finally(function()
+      if server_session then
+        server_session:close()
+      end
+      vim.uv.fs_rmdir(tmpdir)
+    end)
+
+    local server_pipe = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--listen',
+      server_pipe,
+      '--cmd',
+      'set notermguicolors',
+    }, { env = env_notermguicolors })
+
+    screen:expect({ any = 'TERMINAL' })
+
+    retry(nil, 5000, function()
+      server_session = n.connect(server_pipe)
+    end)
+
+    local _, init_cwd = server_session:request('nvim_call_function', 'getcwd', {})
+    local _, starttime = server_session:request('nvim_eval', 'v:starttime')
+    server_session:request('nvim_call_function', 'mkdir', { tmpdir, 'p' })
+    server_session:request('nvim_command', 'cd ' .. tmpdir)
+    local _, after_cd = server_session:request('nvim_call_function', 'getcwd', {})
+    eq_paths(tmpdir, after_cd)
+
+    local _, old_pid = server_session:request('nvim_call_function', 'getpid', {})
+    local _, dir_exists = server_session:request('nvim_call_function', 'isdirectory', { init_cwd })
+    eq(1, dir_exists)
+
+    feed_data(':restart!\n')
+
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
+
+    local _, restart_cwd = server_session:request('nvim_call_function', 'getcwd', {})
+    eq_paths(init_cwd, restart_cwd)
+
     feed_data(':qall!\r')
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
