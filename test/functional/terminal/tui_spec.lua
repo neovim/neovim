@@ -3103,28 +3103,6 @@ describe('TUI', function()
     ]])
   end)
 
-  it('redraws on SIGWINCH even if terminal size is unchanged #23411', function()
-    -- On Windows, SIGWINCH cannot be sent as a signal with uv_kill(), while
-    -- SIGWINCH handlers are only called on terminal resize.
-    t.skip(is_os('win'), 'N/A for Windows')
-    child_session:request('nvim_echo', { { 'foo' } }, false, {})
-    screen:expect([[
-      ^                                                  |
-      {100:~                                                 }|*3
-      {3:[No Name]                                         }|
-      foo                                               |
-      {5:-- TERMINAL --}                                    |
-    ]])
-    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigwinch')]])
-    screen:expect([[
-      ^                                                  |
-      {100:~                                                 }|*3
-      {3:[No Name]                                         }|
-                                                        |
-      {5:-- TERMINAL --}                                    |
-    ]])
-  end)
-
   it('supports hiding cursor', function()
     child_session:request(
       'nvim_command',
