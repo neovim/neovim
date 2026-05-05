@@ -43,3 +43,16 @@ vim.uri_to_fname = uri.uri_to_fname
 vim.uri_to_bufnr = uri.uri_to_bufnr
 
 vim.provider = require('vim.provider')
+
+---@generic T
+---@param buf integer
+---@param row integer
+---@param col integer
+---@param data? T
+---@return vim.Pos<T>
+function vim.pos(buf, row, col, data) end
+
+---@generic T
+---@overload fun(start: vim.Pos, end_: vim.Pos, data?: T): vim.Range<T>
+---@overload fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer, data?: T): vim.Range<T>
+function vim.range(...) end

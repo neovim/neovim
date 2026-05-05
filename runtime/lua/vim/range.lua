@@ -36,12 +36,14 @@ local api = vim.api
 --- end
 --- ```
 ---
----@class vim.Range
+---@generic T
+---@class vim.Range<T>
 ---@field start_row integer 0-based byte index.
 ---@field start_col integer 0-based byte index.
 ---@field end_row integer 0-based byte index.
 ---@field end_col integer 0-based byte index.
 ---@field buf integer Optional buffer handle.
+---@field data T optional field to store any additional data.
 ---@field private [1] integer underlying representation of start_row
 ---@field private [2] integer underlying representation of start_col
 ---@field private [3] integer underlying representation of end_row
@@ -69,16 +71,18 @@ function M.__index(pos, key)
 end
 
 ---@package
----@overload fun(start: vim.Pos, end_: vim.Pos): vim.Range
----@overload fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
+---@generic T
+---@overload fun(start: vim.Pos, end_: vim.Pos, data?: T): vim.Range<T>
+---@overload fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer, data?: T): vim.Range<T>
 function M.new(...)
-  ---@type integer, integer, integer, integer, integer|nil
-  local start_row, start_col, end_row, end_col, buf
+  ---@type integer, integer, integer, integer, integer|nil, any
+  local start_row, start_col, end_row, end_col, buf, data
 
   local nargs = select('#', ...)
-  if nargs == 2 then
-    ---@type vim.Pos, vim.Pos
-    local start, end_ = ...
+  if nargs == 2 or nargs == 3 then
+    local start, end_
+    ---@type vim.Pos, vim.Pos, any
+    start, end_, data = ...
     validate('start', start, 'table')
     validate('end_', end_, 'table')
 
@@ -86,9 +90,9 @@ function M.new(...)
       error('start and end positions must belong to the same buffer')
     end
     start_row, start_col, end_row, end_col, buf = start[1], start[2], end_[1], end_[2], start.buf
-  elseif nargs == 5 then
-    ---@type integer, integer, integer, integer, integer
-    buf, start_row, start_col, end_row, end_col = ...
+  elseif nargs == 5 or nargs == 6 then
+    ---@type integer, integer, integer, integer, integer, any
+    buf, start_row, start_col, end_row, end_col, data = ...
     validate('buf', buf, 'number')
     validate('start_row', start_row, 'number')
     validate('start_col', start_col, 'number')
@@ -109,6 +113,7 @@ function M.new(...)
     end_row,
     end_col,
     buf,
+    data,
   }, M)
 
   return self
@@ -279,10 +284,13 @@ end
 ---
 --- local range = vim.range.lsp(0, lsp_range, 'utf-16')
 --- ```
+---@generic T
 ---@param buf integer
 ---@param range lsp.Range
 ---@param position_encoding lsp.PositionEncodingKind
-function M.lsp(buf, range, position_encoding)
+---@param data? T optional field to store any additional data.
+---@return vim.Range<T>
+function M.lsp(buf, range, position_encoding, data)
   validate('buf', buf, 'number')
   validate('range', range, 'table')
   validate('position_encoding', position_encoding, 'string')
@@ -296,7 +304,7 @@ function M.lsp(buf, range, position_encoding)
   local start = vim.pos.lsp(buf, range['start'], position_encoding)
   local end_ = vim.pos.lsp(buf, range['end'], position_encoding)
 
-  return M.new(start, end_)
+  return M.new(start, end_, data)
 end
 
 --- Converts |vim.Range| to extmark range (see |api-indexing|).
@@ -323,12 +331,15 @@ end
 --- ```lua
 --- local range = vim.range.extmark(0, 3, 5, 4, 0)
 --- ```
+---@generic T
 ---@param buf integer
 ---@param start_row integer
 ---@param start_col integer
 ---@param end_row integer
 ---@param end_col integer
-function M.extmark(buf, start_row, start_col, end_row, end_col)
+---@param data? T optional field to store any additional data.
+---@return vim.Range<T>
+function M.extmark(buf, start_row, start_col, end_row, end_col, data)
   validate('buf', buf, 'number')
   validate('start_row', start_row, 'number')
   validate('start_col', start_col, 'number')
@@ -342,7 +353,7 @@ function M.extmark(buf, start_row, start_col, end_row, end_col)
   local start = vim.pos.extmark(buf, start_row, start_col)
   local end_ = vim.pos.extmark(buf, end_row, end_col)
 
-  return M.new(start, end_)
+  return M.new(start, end_, data)
 end
 
 --- Converts |vim.Range| to mark-like range (see |api-indexing|).
@@ -373,10 +384,13 @@ end
 ---
 --- local range = vim.range.cursor(0, start, end_)
 --- ```
+---@generic T
 ---@param buf integer
 ---@param start_pos [integer, integer]
 ---@param end_pos [integer, integer]
-function M.cursor(buf, start_pos, end_pos)
+---@param data? T optional field to store any additional data.
+---@return vim.Range<T>
+function M.cursor(buf, start_pos, end_pos, data)
   validate('buf', buf, 'number')
   validate('range', start_pos, 'table')
   validate('range', end_pos, 'table')
@@ -388,7 +402,7 @@ function M.cursor(buf, start_pos, end_pos)
   local start = vim.pos.cursor(buf, start_pos)
   local end_ = vim.pos.cursor(buf, end_pos)
 
-  return M.new(start, end_)
+  return M.new(start, end_, data)
 end
 
 -- Overload `Range.new` to allow calling this module as a function.
