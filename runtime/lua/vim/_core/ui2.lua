@@ -84,7 +84,11 @@ function M.check_targets()
     local win = api.nvim_win_is_valid(M.wins[type]) and M.wins[type]
     local floating = win and api.nvim_win_get_config(win).zindex
     local setopt = not buf or not win or not floating
-    M.bufs[type] = buf or api.nvim_create_buf(false, false)
+    M.bufs[type] = buf
+      or (function(b)
+        vim.bo[b].modeline = false
+        return b
+      end)(api.nvim_create_buf(false, false))
 
     if not win or not floating then
       -- Open a new window when closed or no longer floating (e.g. wincmd J).
