@@ -4645,25 +4645,46 @@ func Test_customlist_dict_completion_info_popup()
 
   call term_sendkeys(buf, ":DictCmd \<Tab>")
   call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd apple') + 1)], g:test_timeout, ((rows - 4), 'A red fruit'))
-  call VerifyScreenDump(buf, 'Test_customlist_info_popup_1', {})
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_01', {})
 
   call term_sendkeys(buf, "\<Tab>")
   call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd banana') + 1)], g:test_timeout, ((rows - 3), 'A yellow fruit'))
-  call VerifyScreenDump(buf, 'Test_customlist_info_popup_2', {})
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_02', {})
 
   call term_sendkeys(buf, "\<Tab>")
   call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd carrot') + 1)], g:test_timeout, ((rows - 2), 'An orange vegetable'))
-  call VerifyScreenDump(buf, 'Test_customlist_info_popup_3', {})
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_03', {})
 
   call term_sendkeys(buf, "\<Tab>")
   call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd plain') + 1)], g:test_timeout, ((rows - 1), '^\~\s\+plain\s\+$'))
-  call VerifyScreenDump(buf, 'Test_customlist_info_popup_4', {})
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_04', {})
 
   call term_sendkeys(buf, "\<Tab>")
   call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':DictCmd ') + 1)], g:test_timeout)
-  call VerifyScreenDump(buf, 'Test_customlist_info_popup_5', {})
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_05', {})
 
   call term_sendkeys(buf, "\<Esc>")
+
+  " Tests for Insert mode i_CTRL-X_CTRL-V
+  call term_sendkeys(buf, "iDictCmd \<C-X>\<C-V>")
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_06', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_07', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_08', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_09', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_10', {})
+
+  " Starting another i_CTRL-X_CTRL-V completion should not leak memory
+  call term_sendkeys(buf, "\<C-U>sign un\<C-X>\<C-V>")
+  call VerifyScreenDump(buf, 'Test_customlist_info_popup_11', {})
+
   call StopVimInTerminal(buf)
 endfunc
 

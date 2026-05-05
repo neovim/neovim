@@ -5469,6 +5469,225 @@ describe('builtin popupmenu', function()
           :DictCmd ^                                              |
         ]])
       end
+
+      feed('<Esc>')
+
+      -- Tests for Insert mode i_CTRL-X_CTRL-V
+      feed('iDictCmd <C-X><C-V>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+          DictCmd apple^                                          |
+          {1:~                                                      }|*10
+        ## grid 3
+          {5:-- Command-line completion (^V^N^P) }{6:match 1 of 4}       |
+        ## grid 5
+          {12: apple  f fruit     }|
+          {n: banana f fruit     }|
+          {n: carrot v vegetable }|
+          {n: plain              }|
+        ## grid 6
+          {n:A red fruit}|
+        ]],
+          float_pos = {
+            [5] = { -1, 'NW', 2, 1, 7, false, 100, 2, 1, 7 },
+            [6] = { 1002, 'NW', 1, 1, 27, true, 50, 1, 1, 27 },
+          },
+        })
+      else
+        screen:expect([[
+          DictCmd apple^                                          |
+          {1:~      }{12: apple  f fruit     }{n:A red fruit}{1:                 }|
+          {1:~      }{n: banana f fruit     }{1:                            }|
+          {1:~      }{n: carrot v vegetable }{1:                            }|
+          {1:~      }{n: plain              }{1:                            }|
+          {1:~                                                      }|*6
+          {5:-- Command-line completion (^V^N^P) }{6:match 1 of 4}       |
+        ]])
+      end
+
+      feed('<C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+          DictCmd banana^                                         |
+          {1:~                                                      }|*10
+        ## grid 3
+          {5:-- Command-line completion (^V^N^P) }{6:match 2 of 4}       |
+        ## grid 5
+          {n: apple  f fruit     }|
+          {12: banana f fruit     }|
+          {n: carrot v vegetable }|
+          {n: plain              }|
+        ## grid 6
+          {n:A yellow fruit}|
+        ]],
+          float_pos = {
+            [5] = { -1, 'NW', 2, 1, 7, false, 100, 2, 1, 7 },
+            [6] = { 1002, 'NW', 1, 1, 27, true, 50, 1, 1, 27 },
+          },
+        })
+      else
+        screen:expect([[
+          DictCmd banana^                                         |
+          {1:~      }{n: apple  f fruit     A yellow fruit}{1:              }|
+          {1:~      }{12: banana f fruit     }{1:                            }|
+          {1:~      }{n: carrot v vegetable }{1:                            }|
+          {1:~      }{n: plain              }{1:                            }|
+          {1:~                                                      }|*6
+          {5:-- Command-line completion (^V^N^P) }{6:match 2 of 4}       |
+        ]])
+      end
+
+      feed('<C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+          DictCmd carrot^                                         |
+          {1:~                                                      }|*10
+        ## grid 3
+          {5:-- Command-line completion (^V^N^P) }{6:match 3 of 4}       |
+        ## grid 5
+          {n: apple  f fruit     }|
+          {n: banana f fruit     }|
+          {12: carrot v vegetable }|
+          {n: plain              }|
+        ## grid 6
+          {n:An orange vegetable}|
+        ]],
+          float_pos = {
+            [5] = { -1, 'NW', 2, 1, 7, false, 100, 2, 1, 7 },
+            [6] = { 1002, 'NW', 1, 1, 27, true, 50, 1, 1, 27 },
+          },
+        })
+      else
+        screen:expect([[
+          DictCmd carrot^                                         |
+          {1:~      }{n: apple  f fruit     An orange vegetable}{1:         }|
+          {1:~      }{n: banana f fruit     }{1:                            }|
+          {1:~      }{12: carrot v vegetable }{1:                            }|
+          {1:~      }{n: plain              }{1:                            }|
+          {1:~                                                      }|*6
+          {5:-- Command-line completion (^V^N^P) }{6:match 3 of 4}       |
+        ]])
+      end
+
+      feed('<C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+          DictCmd plain^                                          |
+          {1:~                                                      }|*10
+        ## grid 3
+          {5:-- Command-line completion (^V^N^P) }{6:match 4 of 4}       |
+        ## grid 5
+          {n: apple  f fruit     }|
+          {n: banana f fruit     }|
+          {n: carrot v vegetable }|
+          {12: plain              }|
+        ## grid 6 (hidden)
+          {n:An orange vegetable}|
+        ]],
+          float_pos = {
+            [5] = { -1, 'NW', 2, 1, 7, false, 100, 1, 1, 7 },
+          },
+        })
+      else
+        screen:expect([[
+          DictCmd plain^                                          |
+          {1:~      }{n: apple  f fruit     }{1:                            }|
+          {1:~      }{n: banana f fruit     }{1:                            }|
+          {1:~      }{n: carrot v vegetable }{1:                            }|
+          {1:~      }{12: plain              }{1:                            }|
+          {1:~                                                      }|*6
+          {5:-- Command-line completion (^V^N^P) }{6:match 4 of 4}       |
+        ]])
+      end
+
+      feed('<C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+          DictCmd ^                                               |
+          {1:~                                                      }|*10
+        ## grid 3
+          {5:-- Command-line completion (^V^N^P) }{19:Back at original}   |
+        ## grid 5
+          {n: apple  f fruit     }|
+          {n: banana f fruit     }|
+          {n: carrot v vegetable }|
+          {n: plain              }|
+        ## grid 6 (hidden)
+          {n:An orange vegetable}|
+        ]],
+          float_pos = {
+            [5] = { -1, 'NW', 2, 1, 7, false, 100, 1, 1, 7 },
+          },
+        })
+      else
+        screen:expect([[
+          DictCmd ^                                               |
+          {1:~      }{n: apple  f fruit     }{1:                            }|
+          {1:~      }{n: banana f fruit     }{1:                            }|
+          {1:~      }{n: carrot v vegetable }{1:                            }|
+          {1:~      }{n: plain              }{1:                            }|
+          {1:~                                                      }|*6
+          {5:-- Command-line completion (^V^N^P) }{19:Back at original}   |
+        ]])
+      end
+
+      -- Starting another i_CTRL-X_CTRL-V completion should not leak memory
+      feed('<C-U>')
+      poke_eventloop() -- Allow pum_check_clear() to remove the info popup.
+      feed('sign un<C-X><C-V>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+          sign undefine^                                          |
+          {1:~                                                      }|*10
+        ## grid 3
+          {5:-- Command-line completion (^V^N^P) }{6:match 1 of 2}       |
+        ## grid 5
+          {12: undefine       }|
+          {n: unplace        }|
+        ]],
+          float_pos = {
+            [5] = { -1, 'NW', 2, 1, 4, false, 100, 1, 1, 4 },
+          },
+        })
+      else
+        screen:expect([[
+          sign undefine^                                          |
+          {1:~   }{12: undefine       }{1:                                   }|
+          {1:~   }{n: unplace        }{1:                                   }|
+          {1:~                                                      }|*8
+          {5:-- Command-line completion (^V^N^P) }{6:match 1 of 2}       |
+        ]])
+      end
     end)
 
     it("'pumheight'", function()

@@ -873,7 +873,7 @@ static char *find_longest_match(expand_T *xp, int options)
   return xmemdupz(xp->xp_files[0], len);
 }
 
-static void free_xp_files_extra(expand_T *xp, int numfiles)
+void free_xp_files_extra(expand_T *xp, int numfiles)
 {
   if (xp->xp_files_abbr != NULL) {
     FreeWild(numfiles, xp->xp_files_abbr);

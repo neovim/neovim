@@ -4154,7 +4154,34 @@ static void get_next_cmdline_completion(void)
   int num_matches;
   if (expand_cmdline(&compl_xp, compl_pattern.data,
                      (int)compl_pattern.size, &num_matches, &matches) == EXPAND_OK) {
-    ins_compl_add_matches(num_matches, matches, false);
+    int add_r = OK;
+    Direction dir = compl_direction;
+
+    for (int i = 0; i < num_matches && add_r != FAIL; i++) {
+      char *(cptext[CPT_COUNT]) = { NULL, NULL, NULL, NULL };
+
+      if (compl_xp.xp_files_abbr != NULL) {
+        cptext[CPT_ABBR] = compl_xp.xp_files_abbr[i];
+      }
+      if (compl_xp.xp_files_kind != NULL) {
+        cptext[CPT_KIND] = compl_xp.xp_files_kind[i];
+      }
+      if (compl_xp.xp_files_menu != NULL) {
+        cptext[CPT_MENU] = compl_xp.xp_files_menu[i];
+      }
+      if (compl_xp.xp_files_info != NULL) {
+        cptext[CPT_INFO] = compl_xp.xp_files_info[i];
+      }
+
+      add_r = ins_compl_add(matches[i], -1, NULL, cptext, false, NULL, dir,
+                            CP_FAST, false, NULL, FUZZY_SCORE_NONE, false);
+      if (add_r == OK) {
+        // if dir was BACKWARD then honor it just once
+        dir = FORWARD;
+      }
+    }
+    FreeWild(num_matches, matches);
+    free_xp_files_extra(&compl_xp, num_matches);
   }
 }
 
