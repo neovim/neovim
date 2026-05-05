@@ -1128,6 +1128,77 @@ describe('pending scrollback line handling', function()
   end)
 end)
 
+describe('wrapped lines in scrollback are reflown on resize', function()
+  local screen --- @type test.functional.ui.screen
+  local buf --- @type integer
+  local chan --- @type integer
+
+  local long_line = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX'
+  local narrow_lines = {
+    'abcdefghijklmnopqrst',
+    'uvwxyzABCDEFGHIJKLMN',
+    'OPQRSTUVWX',
+    'line1',
+    'line2',
+    'line3',
+    'line4',
+    'line5',
+    'line6',
+    'line7',
+    'line8',
+    '',
+  }
+  local wide_lines = {
+    'abcdefghijklmnopqrstuvwxyzABCD',
+    'EFGHIJKLMNOPQRSTUVWX',
+    'line1',
+    'line2',
+    'line3',
+    'line4',
+    'line5',
+    'line6',
+    'line7',
+    'line8',
+    '',
+  }
+
+  local function expect_buffer_lines(lines)
+    retry(nil, 1000, function()
+      eq(lines, api.nvim_buf_get_lines(buf, 0, -1, true))
+    end)
+  end
+
+  before_each(function()
+    clear()
+    screen = Screen.new(20, 6)
+    buf = api.nvim_get_current_buf()
+    chan = exec_lua(function()
+      local chan_id = vim.api.nvim_open_term(0, {})
+      vim.bo.scrollback = 50
+      return chan_id
+    end)
+
+    local data = long_line .. '\n'
+    for i = 1, 8 do
+      data = data .. ('line%d\n'):format(i)
+    end
+    api.nvim_chan_send(chan, data)
+    expect_buffer_lines(narrow_lines)
+  end)
+
+  it('reflows scrollback when the terminal grows wider', function()
+    screen:try_resize(30, screen._height)
+    expect_buffer_lines(wide_lines)
+  end)
+
+  it('reflows scrollback back to the previous wrapping when narrowed again', function()
+    screen:try_resize(30, screen._height)
+    expect_buffer_lines(wide_lines)
+    screen:try_resize(20, screen._height)
+    expect_buffer_lines(narrow_lines)
+  end)
+end)
+
 describe('scrollback is correct', function()
   local screen --- @type test.functional.ui.screen
   local buf --- @type integer
