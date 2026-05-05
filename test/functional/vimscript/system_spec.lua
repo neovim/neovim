@@ -570,7 +570,7 @@ end)
 describe('shell :!', function()
   before_each(clear)
 
-  it('write in binary mode should not remove CR #39424', function()
+  it('preserves newlines (including CR) in binary-mode buffer #39424', function()
     local fname = 'Xbinaryfile'
     os.remove(fname)
     eq(0, fn.writefile({ '\r\n' }, fname, 'b'))
