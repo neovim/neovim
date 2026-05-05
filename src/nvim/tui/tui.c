@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <inttypes.h>
-#include <lua.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -21,7 +20,6 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"
-#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight_defs.h"
@@ -39,7 +37,7 @@
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
-#include "nvim/tui/terminfo_builtin.h"
+#include "nvim/tui/terminfo_field_defs.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/ugrid.h"
 #include "nvim/types_defs.h"
@@ -358,59 +356,10 @@ void tui_query_bg_color(TUIData *tui)
   flush_buf(tui);
 }
 
-typedef struct {
-  char *name;
-  ObjectType type;
-  size_t offset;  // offset into TerminfoEntry
-} TerminfoField;
-
-// uncrustify:off
-static const TerminfoField terminfo_fields[] = {
-#define FIELD(n, t) { .name = #n, .type = kObjectType##t, \
-                      .offset = offsetof(TerminfoEntry, n) },
-  FIELD(back_color_erase, Boolean)
-  FIELD(Su, Boolean)
-  FIELD(Tc, Boolean)
-  FIELD(RGB, Boolean)
-  FIELD(max_colors, Integer)
-  FIELD(lines, Integer)
-  FIELD(columns, Integer)
-#undef FIELD
-#define X(n) { .name = #n, .type = kObjectTypeString, \
-               .offset = offsetof(TerminfoEntry, defs) + kTerm_##n * sizeof(char *) },
-  XLIST_TERMINFO_BUILTIN
-#undef X
-#define X(n, code) { .name = #n, .type = kObjectTypeString, \
-                     .offset = offsetof(TerminfoEntry, defs) + kTerm_##n * sizeof(char *) },
-  XLIST_TERMINFO_EXT
-#undef X
-  // The 2 * in offset is because each key is an array size 2
-#define X(n) { .name = "key_" #n, .type = kObjectTypeString, \
-               .offset = offsetof(TerminfoEntry, keys) + 2 * kTermKey_##n * sizeof(char *) },
-#define Y(n) { .name = "key_" #n, .type = kObjectTypeArray, \
-               .offset = offsetof(TerminfoEntry, keys) + 2 * kTermKey_##n * sizeof(char *) },
-  XYLIST_TERMINFO_KEYS
-#undef X
-#undef Y
-#define X(n, idx) { "key_" #n, kObjectTypeString, \
-                    offsetof(TerminfoEntry, f_keys) + idx * sizeof(char *) },
-  XLIST_TERMINFO_FKEYS
-#undef X
-};
-// uncrustify:on
-
-static PMap(cstr_t) termdefs = MAP_INIT;
-static void init_termdefs(void)
-{
-  for (size_t i = 0; i < ARRAY_SIZE(terminfo_fields); i++) {
-    pmap_put(cstr_t)(&termdefs, terminfo_fields[i].name, (TerminfoField *)&terminfo_fields[i]);
-  }
-}
-
-static void apply_terminfo_field(TUIData *tui, void *ti_field, KeyValuePair *kv)
+static void apply_terminfo_field(TUIData *tui, TerminfoField *ti_field, KeyValuePair *kv)
 {
   Object val = kv->value;
-  char *dst = (char *)&tui->ti + ((TerminfoField *)(ti_field))->offset;
+  char *dst = (char *)&tui->ti + ti_field->offset;
 
   switch (val.type) {
   case kObjectTypeBoolean:
@@ -469,11 +418,11 @@ static void apply_terminfo_overrides(TUIData *tui)
     return;
   }
 
-  init_termdefs();
+  init_terminfo_fields();
 
   for (size_t i = 0; i < rv.data.dict.size; i++) {
     KeyValuePair kv = rv.data.dict.items[i];
-    TerminfoField *ti_field = pmap_get(cstr_t)(&termdefs, kv.key.data);
+    TerminfoField *ti_field = pmap_get(cstr_t)(&terminfo_fields, kv.key.data);
     if (!ti_field || kv.value.type != ti_field->type) {
       WLOG("skipping invalid key in $NVIM_TERMDEFS: '%s'", kv.key.data);
       continue;
