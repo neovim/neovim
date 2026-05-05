@@ -96,7 +96,6 @@
 #include "nvim/vterm/screen.h"
 #include "nvim/vterm/state.h"
 #include "nvim/vterm/vterm.h"
-#include "nvim/vterm/vterm_keycodes_defs.h"
 #include "nvim/window.h"
 
 typedef struct {
@@ -181,11 +180,11 @@ struct terminal {
   // when true, the terminal's destruction is already enqueued.
   bool destroy;
 
-  // some vterm properties
-  int invalid_start, invalid_end;   // invalid rows in libvterm screen
+  // some terminal properties
+  int invalid_start, invalid_end;   // invalid rows in Ghostty screen
   struct {
     int row, col;
-    int shape;
+    GhosttyRenderStateCursorVisualStyle shape;
     bool visible;  ///< Terminal wants to show cursor.
                    ///< `TerminalState.cursor_visible` indicates whether it is actually shown.
     bool blink;
@@ -217,7 +216,7 @@ struct terminal {
 static VTermScreenCallbacks vterm_screen_callbacks = {
   .damage = NULL,
   .moverect = NULL,
-  .movecursor = term_movecursor,
+  .movecursor = NULL,
   .settermprop = term_settermprop,
   .bell = NULL,
   .theme = NULL,
@@ -297,6 +296,7 @@ static void schedule_termrequest(Terminal *term)
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
 
+  terminal_ghostty_cursor_position_update(term);
   int line = row_to_linenr(term, term->cursor.row);
   multiqueue_put(main_loop.events, emit_termrequest, (void *)(intptr_t)term->buf_handle,
                  xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size),
@@ -492,6 +492,113 @@ static void terminal_ghostty_size_get(Terminal *term, int *height, int *width)
   if (width != NULL) {
     *width = (int)cols;
   }
+}
+
+static void terminal_ghostty_cursor_position_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint16_t col = 0;
+  uint16_t row = 0;
+  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
+                                              GHOSTTY_TERMINAL_DATA_CURSOR_X,
+                                              &col));
+  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
+                                              GHOSTTY_TERMINAL_DATA_CURSOR_Y,
+                                              &row));
+  term->cursor.col = (int)col;
+  term->cursor.row = (int)row;
+}
+
+static void terminal_ghostty_cursor_viewport_position_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool has_viewport_cursor = false;
+  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE,
+                                                  &has_viewport_cursor));
+  if (!has_viewport_cursor) {
+    terminal_ghostty_cursor_position_update(term);
+    return;
+  }
+
+  uint16_t col = 0;
+  uint16_t row = 0;
+  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X,
+                                                  &col));
+  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y,
+                                                  &row));
+  term->cursor.col = (int)col;
+  term->cursor.row = (int)row;
+}
+
+static void terminal_ghostty_cursor_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int old_row = term->cursor.row;
+  int old_col = term->cursor.col;
+  terminal_ghostty_cursor_viewport_position_update(term);
+  bool position_changed = term->cursor.row != old_row || term->cursor.col != old_col;
+
+  bool visible = false;
+  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VISIBLE,
+                                                  &visible));
+
+  bool blink = false;
+  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_BLINKING,
+                                                  &blink));
+
+  GhosttyRenderStateCursorVisualStyle shape = GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK;
+  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
+                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE,
+                                                  &shape));
+
+  bool visibility_changed = term->cursor.visible != visible;
+  bool style_changed = term->cursor.blink != blink || term->cursor.shape != shape;
+  term->cursor.visible = visible;
+  term->cursor.blink = blink;
+  term->cursor.shape = shape;
+
+  if (style_changed) {
+    term->pending.cursor = true;
+  }
+  if (position_changed || visibility_changed || style_changed) {
+    invalidate_terminal(term, -1, -1);
+  }
+}
+
+static int terminal_default_decsusr_cursor_style(void)
+{
+  int style = 1;
+  bool blink = shape_table[SHAPE_IDX_TERM].blinkon != 0
+               && shape_table[SHAPE_IDX_TERM].blinkoff != 0;
+
+  switch (shape_table[SHAPE_IDX_TERM].shape) {
+  case SHAPE_BLOCK:
+    style = blink ? 1 : 2;
+    break;
+  case SHAPE_HOR:
+    style = blink ? 3 : 4;
+    break;
+  case SHAPE_VER:
+    style = blink ? 5 : 6;
+    break;
+  }
+  return style;
+}
+
+static void terminal_ghostty_init_cursor_style(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int style = terminal_default_decsusr_cursor_style();
+
+  char buf[8];
+  int len = snprintf(buf, sizeof(buf), "\x1b[%d q", style);
+  assert(len > 0 && (size_t)len < sizeof(buf));
+  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)buf, (size_t)len);
 }
 
 static size_t terminal_ghostty_scrollback_rows_get(Terminal *term)
@@ -694,6 +801,9 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder,
                                GHOSTTY_MOUSE_ENCODER_OPT_TRACK_LAST_CELL,
                                &track_last_cell);
+  terminal_ghostty_init_cursor_style(term);
+  terminal_ghostty_render_state_update(term);
+
   // Setup state
   VTermState *state = vterm_obtain_state(term->vt);
   // Set up screen
@@ -708,28 +818,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   term->selection_buffer = xcalloc(SELECTIONBUF_SIZE, 1);
   vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
                                       term->selection_buffer, SELECTIONBUF_SIZE);
-
-  VTermValue cursor_shape;
-  switch (shape_table[SHAPE_IDX_TERM].shape) {
-  case SHAPE_BLOCK:
-    cursor_shape.number = VTERM_PROP_CURSORSHAPE_BLOCK;
-    break;
-  case SHAPE_HOR:
-    cursor_shape.number = VTERM_PROP_CURSORSHAPE_UNDERLINE;
-    break;
-  case SHAPE_VER:
-    cursor_shape.number = VTERM_PROP_CURSORSHAPE_BAR_LEFT;
-    break;
-  }
-  vterm_state_set_termprop(state, VTERM_PROP_CURSORSHAPE, &cursor_shape);
-
-  VTermValue cursor_blink;
-  if (shape_table[SHAPE_IDX_TERM].blinkon != 0 && shape_table[SHAPE_IDX_TERM].blinkoff != 0) {
-    cursor_blink.boolean = true;
-  } else {
-    cursor_blink.boolean = false;
-  }
-  vterm_state_set_termprop(state, VTERM_PROP_CURSORBLINK, &cursor_blink);
 
   // Force an initial refresh so the buffer starts with one line per screen row.
   term->invalid_start = 0;
@@ -2134,15 +2222,6 @@ static bool term_ghostty_device_attributes_callback(GhosttyTerminal ghostty, voi
   return true;
 }
 
-static int term_movecursor(VTermPos new_pos, VTermPos old_pos, int visible, void *data)
-{
-  Terminal *term = data;
-  term->cursor.row = new_pos.row;
-  term->cursor.col = new_pos.col;
-  invalidate_terminal(term, -1, -1);
-  return 1;
-}
-
 static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
 {
   if (!buf) {
@@ -2179,27 +2258,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     term->in_altscreen = val->boolean;
     break;
 
-  case VTERM_PROP_CURSORVISIBLE:
-    term->cursor.visible = val->boolean;
-    invalidate_terminal(term, -1, -1);
-    break;
-
   case VTERM_PROP_TITLE:
-    break;
-
   case VTERM_PROP_MOUSE:
-    break;
-
-  case VTERM_PROP_CURSORBLINK:
-    term->cursor.blink = val->boolean;
-    term->pending.cursor = true;
-    invalidate_terminal(term, -1, -1);
-    break;
-
-  case VTERM_PROP_CURSORSHAPE:
-    term->cursor.shape = val->number;
-    term->pending.cursor = true;
-    invalidate_terminal(term, -1, -1);
     break;
 
   case VTERM_PROP_THEMEUPDATES:
@@ -2886,6 +2946,7 @@ static void terminal_ghostty_render_state_update(Terminal *term)
 {
   assert_ghostty_success(ghostty_render_state_update(term->ghostty_render_state,
                                                      term->ghostty));
+  terminal_ghostty_cursor_update(term);
 
   GhosttyRenderStateDirty dirty_state = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
   assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
@@ -3014,17 +3075,20 @@ static void refresh_cursor(Terminal *term, bool *cursor_visible)
   }
 
   switch (term->cursor.shape) {
-  case VTERM_PROP_CURSORSHAPE_BLOCK:
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK:
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK_HOLLOW:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_BLOCK;
     break;
-  case VTERM_PROP_CURSORSHAPE_UNDERLINE:
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_UNDERLINE:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_HOR;
     shape_table[SHAPE_IDX_TERM].percentage = 20;
     break;
-  case VTERM_PROP_CURSORSHAPE_BAR_LEFT:
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BAR:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_VER;
     shape_table[SHAPE_IDX_TERM].percentage = 25;
     break;
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_MAX_VALUE:
+    abort();
   }
 
   ui_mode_info_set();
