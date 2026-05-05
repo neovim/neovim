@@ -46,6 +46,8 @@ static void help(void)
   puts("    Like REP, but print as fast as possible and then exit immediately.");
   puts("  shell-test INTERACT");
   puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
+  puts("  shell-test HOLD");
+  puts("    Prints \"holding $ \" to stderr, and waits indefinitely.");
   puts("  shell-test EXIT {code}");
   puts("    Exits immediately with exit code \"{code}\".");
 }
@@ -150,6 +152,16 @@ int main(int argc, char **argv)
         } else {
           fprintf(stderr, "command not found: %s\n", cmd);
         }
+      }
+    } else if (strcmp(argv[1], "HOLD") == 0) {
+      fprintf(stderr, "holding $ ");
+      fflush(NULL);
+      while (true) {
+#ifdef MSWIN
+        Sleep(1000);
+#else
+        pause();
+#endif
       }
     } else if (strcmp(argv[1], "EXIT") == 0) {
       int code = 1;
