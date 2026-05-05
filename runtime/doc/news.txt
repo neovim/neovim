@@ -73,7 +73,8 @@ API
 
 DIAGNOSTICS
 
-• todo
+• `vim.diagnostic.Opts.Status.format` no longer accepts the table mapping
+  from severity to text. Use `vim.diagnostic.Opts.Signs.text` instead.
 
 EDITOR
 
