@@ -960,7 +960,7 @@ function vim.islist(t)
   for _ in
     pairs(t--[[@as table<any,any>]])
   do
-    if t[j] == nil then
+    if rawget(t, j) == nil then
       return false
     end
     j = j + 1
