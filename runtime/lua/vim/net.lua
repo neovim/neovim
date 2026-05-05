@@ -98,8 +98,8 @@ function M.request(method, url, opts, on_response)
   opts = opts or {}
 
   vim.validate('method', method, function(m)
-    return http_methods[m] == true, ('invalid HTTP method: %s'):format(m)
-  end)
+    return http_methods[m] == true
+  end, 'method should be one of GET, POST, PUT, PATCH, HEAD, DELETE')
   vim.validate('url', url, 'string')
   vim.validate('opts', opts, 'table', true)
   vim.validate('opts.headers', opts.headers, 'table', true)
