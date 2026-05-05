@@ -158,6 +158,8 @@ DIAGNOSTICS
   enabled or disabled diagnostics.
 • |vim.diagnostic.status()| returns a status description of current buffer
   diagnostics.
+  • It uses the severity names defined by the `signs` field of
+    |vim.diagnostic.config()|, if any.
 • |vim.diagnostic.fromqflist()| accepts `opts.merge_lines` to merge multiline
   compiler messages.
 
