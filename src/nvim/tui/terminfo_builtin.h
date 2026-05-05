@@ -1967,6 +1967,19 @@ static const TerminfoEntry vtpcon_terminfo = {
   },
 };
 
+#define XLIST_TERMINFO_BOOLS \
+  X(back_color_erase) \
+  X(Tc) \
+  X(RGB) \
+  X(Su) \
+// end of list
+
+#define XLIST_TERMINFO_INTS \
+  X(max_colors) \
+  X(lines) \
+  X(columns) \
+// end of list
+
 #define XLIST_TERMINFO_BUILTIN \
   X(carriage_return) \
   X(change_scroll_region) \

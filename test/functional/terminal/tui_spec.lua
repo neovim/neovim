@@ -3964,6 +3964,7 @@ describe('TUI', function()
     end)
 
     local terminfo = {
+      enter_ca_mode = 'ENTER_CA_MODE',
       reset_cursor_style = '\027[0 q',
       key_home = { 'ABC', 'DEF' },
       key_npage = 'npage',
@@ -3977,6 +3978,7 @@ describe('TUI', function()
     nvim_tui('-V3' .. logfile, { NVIM_TERMDEFS = vim.json.encode(terminfo) })
 
     retry(nil, 3000, function() -- Wait for log file to be flushed.
+      assert_log('enter_ca_mode[^\n]*= ' .. terminfo.enter_ca_mode, logfile, 9999)
       assert_log(
         'reset_cursor_style[^\n]*= ' .. vim.pesc(terminfo.reset_cursor_style:gsub('\027', '^[')),
         logfile,
@@ -3996,7 +3998,7 @@ describe('TUI', function()
       assert_log('key_f1%s*= ' .. terminfo.key_f1, logfile, 9999)
       assert_log('key_f63%s*= ' .. terminfo.key_f63, logfile, 9999)
       assert_log('extended underline[^\n]*: ' .. tostring(terminfo.Su), logfile, 9999)
-      assert_log(string.format('max_colors: %d', terminfo.max_colors), logfile, 9999)
+      assert_log('max_colors: ' .. terminfo.max_colors, logfile, 9999)
     end)
   end)
 

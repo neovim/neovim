@@ -18,33 +18,29 @@ typedef struct {
 
 // uncrustify:off
 static const TerminfoField terminfo_field_entries[] = {
-#define FIELD(n, t) { .name = #n, .type = kObjectType##t, .offset = offsetof(TerminfoEntry, n) },
-  FIELD(back_color_erase, Boolean)
-  FIELD(Tc, Boolean)
-  FIELD(RGB, Boolean)
-  FIELD(Su, Boolean)
-  FIELD(max_colors, Integer)
-  FIELD(lines, Integer)
-  FIELD(columns, Integer)
-#undef FIELD
-#define X(n) { .name = #n, .type = kObjectTypeString, \
-               .offset = offsetof(TerminfoEntry, defs[kTerm_##n]) },
+#define FIELD(n, t, off) { .name = n, .type = kObjectType##t, \
+                           .offset = offsetof(TerminfoEntry, off) },
+#define X(n) FIELD(#n, Boolean, n)
+  XLIST_TERMINFO_BOOLS
+#undef X
+#define X(n) FIELD(#n, Integer, n)
+  XLIST_TERMINFO_INTS
+#undef X
+#define X(n) FIELD(#n, String, defs[kTerm_##n])
   XLIST_TERMINFO_BUILTIN
 #undef X
-#define X(n, code) { .name = #n, .type = kObjectTypeString, \
-                     .offset = offsetof(TerminfoEntry, defs[kTerm_##n]) },
+#define X(n, code) FIELD(#n, String, defs[kTerm_##n])
   XLIST_TERMINFO_EXT
 #undef X
-#define X(n) { .name = "key_" #n, .type = kObjectTypeString, \
-               .offset = offsetof(TerminfoEntry, keys[kTermKey_##n]) },
-#define Y(n) { .name = "key_" #n, .type = kObjectTypeArray, \
-               .offset = offsetof(TerminfoEntry, keys[kTermKey_##n]) },
+#define X(n) FIELD("key_" #n, String, keys[kTermKey_##n])
+#define Y(n) FIELD("key_" #n, Array, keys[kTermKey_##n])
   XYLIST_TERMINFO_KEYS
 #undef X
 #undef Y
-#define X(n, idx) { "key_" #n, kObjectTypeString, offsetof(TerminfoEntry, f_keys[idx]) },
+#define X(n, idx) FIELD("key_" #n, String, f_keys[idx])
   XLIST_TERMINFO_FKEYS
 #undef X
+#undef FIELD
 };
 // uncrustify:on
 
