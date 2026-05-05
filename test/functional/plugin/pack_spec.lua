@@ -413,9 +413,17 @@ describe('vim.pack', function()
   end)
 
   after_each(function()
-    n.rmdir(pack_get_dir())
-    pcall(vim.fs.rm, get_lock_path(), { force = true })
+    local pack_dir = pack_get_dir()
+    local lock_path = get_lock_path()
     local log_path = vim.fs.joinpath(fn.stdpath('log'), 'nvim-pack.log')
+
+    -- Wait for neovim to close before removing directories so it can release
+    -- the file handles it has open. We don't want to conflict with open files
+    -- when we remove dirs below.
+    n.check_close()
+
+    n.rmdir(pack_dir)
+    pcall(vim.fs.rm, lock_path, { force = true })
     pcall(vim.fs.rm, log_path, { force = true })
   end)
 
@@ -879,7 +887,7 @@ describe('vim.pack', function()
       local function assert_works()
         -- Should auto-install but wait before executing code after it
         n.clear({ args_rm = { '-u' } })
-        t.retry(nil, 5000, function()
+        t.retry(nil, t.is_os('win') and 30000 or 5000, function()
           eq(true, exec_lua('return _G.done'))
         end)
         assert_loaded()
