@@ -1254,8 +1254,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
   size_t off = 0;
   while (off < remaining) {
     // CRLF
-    // there is special case for binary mode
-    // we don't remove CR in that case
+    // special case: for binary mode, don't remove CR.
     if (output[off] == CAR && output[off + 1] == NL && !curbuf->b_p_bin) {
       output[off] = NUL;
       ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
