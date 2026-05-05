@@ -506,4 +506,18 @@ func Test_modeline_nowrap_lcs_extends()
   set equalalways&
 endfunc
 
+" Verify that backticks in 'path' set from a modeline are not executed
+func Test_path_modeline()
+  let lines =<< trim END
+    // vim: set path+=foobar :
+  END
+  call writefile(lines, 'Xpoc.c', 'D')
+
+  set nomodelinestrict modeline
+  call assert_fails('split Xpoc.c', 'E520:')
+
+  bwipe!
+  set modelinestrict& modeline&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

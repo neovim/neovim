@@ -4794,6 +4794,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'path'* *'pa'* *E343* *E345* *E347* *E854*
 'path' 'pa'		string	(default ".,,")
 			global or local to buffer |global-local|
+			Disallowed in |modeline|. |no-modeline-option|
 	This is a list of directories which will be searched when using the
 	|gf|, [f, ]f, ^Wf, |:find|, |:sfind|, |:tabfind| and other commands,
 	provided that the file being searched for has a relative path (not
