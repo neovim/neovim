@@ -6544,7 +6544,6 @@ local options = {
       full_name = 'path',
       list = 'comma',
       scope = { 'global', 'buf' },
-      secure = true,
       short_desc = N_('list of directories searched with "gf" et.al.'),
       tags = { 'E343', 'E345', 'E347', 'E854' },
       type = 'string',
