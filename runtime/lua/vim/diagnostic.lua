@@ -383,6 +383,7 @@ local builtin_handler_names = {
   underline = true,
   virtual_text = true,
   virtual_lines = true,
+  ui2 = true,
 }
 
 --- @nodoc
@@ -670,6 +671,15 @@ M.handlers.virtual_lines = {
   end,
   hide = function(namespace, bufnr)
     return M._handlers.virtual_lines.hide(namespace, bufnr)
+  end,
+}
+
+M.handlers.ui2 = {
+  show = function(...)
+    return M._handlers.ui2.show(...)
+  end,
+  hide = function(namespace, bufnr)
+    return M._handlers.ui2.hide(namespace, bufnr)
   end,
 }
 
