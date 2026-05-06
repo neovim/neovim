@@ -406,17 +406,6 @@ vim.v.key = ...
 --- @type string
 vim.v.lang = ...
 
---- Unix timestamp (seconds since epoch) of the most recent user
---- input. Updated when a key is received from a UI (TUI keystrokes
---- or RPC `nvim_input()`), throttled to second granularity.
---- Initialized to 0 (no user activity since startup).
----
---- Useful with `serverlist()` `info=true` to render a "last active"
---- column in pickers like `:connect`.
---- Read-only.
---- @type integer
-vim.v.useractivity = ...
-
 --- The current locale setting for time messages of the runtime
 --- environment.  This allows Vim scripts to be aware of the
 --- current language.  Technical: it's the value of LC_TIME.
@@ -815,6 +804,17 @@ vim.v.throwpoint = ...
 --- `expr7` when used with numeric operators).  Read-only.
 --- @type boolean
 vim.v['true'] = ...
+
+--- Nanoseconds since epoch (same precision as `v:starttime`) of the
+--- most recent user input. Updated every time a key is received
+--- from a UI (TUI keystrokes or RPC `nvim_input()`).
+--- Initialized to 0 (no user activity since startup).
+---
+--- Useful with `serverlist()` `info=true` to render a "last active"
+--- column in pickers like `:connect`.
+--- Read-only.
+--- @type integer
+vim.v.useractivity = ...
 
 --- Value of the current item of a `List` or `Dictionary`.  Only
 --- valid while evaluating the expression used with `map()` and

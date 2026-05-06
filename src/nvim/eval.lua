@@ -9980,7 +9980,7 @@ M.funcs = {
                                           peer is unreachable.
                   own           (bool)    Whether this server belongs to
                                           the current Nvim instance.
-                  useractivity  (number?) Unix timestamp (seconds) of the
+                  useractivity  (number?) Nanoseconds since epoch of the
                                           most recent user input on the
                                           server, see |v:useractivity|.
                                           |v:null| if peer is unreachable.

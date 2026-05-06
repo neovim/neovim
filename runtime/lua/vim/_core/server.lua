@@ -8,7 +8,7 @@ local M = {}
 ---@field addr string Server address (socket path, named pipe, or TCP host:port).
 ---@field pid integer? PID of the Nvim process owning this server (nil if unreachable).
 ---@field own boolean True if this server belongs to the current Nvim instance.
----@field useractivity integer? Unix timestamp (seconds) of last user input on the
+---@field useractivity integer? Nanoseconds since epoch of last user input on the
 ---                             server (|v:useractivity|). Nil if peer is unreachable.
 
 --- @param opts? table Options:
