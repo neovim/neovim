@@ -22,8 +22,15 @@ local function is_multi_value_directive(param)
   return vim.list_contains(multi_value_directives, param:lower())
 end
 
+---@class vim.net.SshHost
+---@field alias string Host alias from ssh config
+---@field hostname? string Resolved Hostname directive
+---@field user? string User directive
+---@field port? string Port directive
+---@field identity_file? string IdentityFile directive
+
 ---@param text string The ssh configuration which needs to be parsed
----@return string[] The parsed host names in the configuration
+---@return vim.net.SshHost[] The parsed host configurations
 function M.parse_ssh_config(text)
   local i = 1
   local line = 1
@@ -176,66 +183,404 @@ function M.parse_ssh_config(text)
     return node
   end
 
-  local hostnames = {}
+  ---@type vim.net.SshHost[]
+  local hosts = {}
+  local seen = {} ---@type table<string, boolean>
+  ---@type vim.net.SshHost[]
+  local current_hosts = {}
 
   ---@param value string
   local function is_valid(value)
-    return not (value:find('[?*!]') or vim.list_contains(hostnames, value))
+    return not (value:find('[?*!]') or seen[value])
+  end
+
+  local function flush()
+    for _, h in ipairs(current_hosts) do
+      table.insert(hosts, h)
+    end
+    current_hosts = {}
+  end
+
+  ---@param aliases string[]
+  local function add_aliases(aliases)
+    flush()
+    for _, alias in ipairs(aliases) do
+      if is_valid(alias) then
+        seen[alias] = true
+        table.insert(current_hosts, { alias = alias })
+      end
+    end
   end
 
   while chr do
     local node = parse_line()
     if node then
-      -- This is done just to assign the type
-      node.value = node.value ---@type string[]
-      if node.param:lower() == 'match' and node.value then
-        local current = nil
-        for ind, val in ipairs(node.value) do
-          if
-            val:lower() == 'host'
-            and ind + 1 <= #node.value
-            and is_valid(assert(node.value[ind + 1]))
-          then
-            current = node.value[ind + 1]
+      local lp = node.param:lower()
+      if lp == 'match' and node.value then
+        local values = node.value --[[@as string[] ]]
+        local match_aliases = {} ---@type string[]
+        for ind, val in ipairs(values) do
+          if val:lower() == 'host' and ind + 1 <= #values and is_valid(assert(values[ind + 1])) then
+            table.insert(match_aliases, values[ind + 1])
           end
         end
-        if current then
-          table.insert(hostnames, current)
-        end
-      elseif node.param:lower() == 'host' and node.value then
-        for _, value in ipairs(node.value) do
+        add_aliases(match_aliases)
+      elseif lp == 'host' and node.value then
+        local valid = {} ---@type string[]
+        for _, value in
+          ipairs(node.value --[[@as string[] ]])
+        do
           if is_valid(value) then
-            table.insert(hostnames, value)
+            table.insert(valid, value)
+          end
+        end
+        add_aliases(valid)
+      else
+        local val = (type(node.value) == 'string' and node.value or nil) --[[@as string?]]
+        if val then
+          for _, h in ipairs(current_hosts) do
+            if lp == 'hostname' then
+              h.hostname = val
+            elseif lp == 'user' then
+              h.user = val
+            elseif lp == 'port' then
+              h.port = val
+            elseif lp == 'identityfile' then
+              h.identity_file = val
+            end
           end
         end
       end
     end
   end
+  flush()
 
-  return hostnames
+  return hosts
 end
 
 ---@param filename string
----@return string[] The hostnames configured in the file located at filename
+---@return vim.net.SshHost[] The host configurations in the file
 function M.parse_config(filename)
-  local file = io.open(filename, 'r')
-  if not file then
-    error('Cannot read ssh configuration file')
-  end
-  local config_string = file:read('*a')
-  file:close()
-
-  return M.parse_ssh_config(config_string)
+  local text = vim.fn.readblob(filename)
+  return M.parse_ssh_config(text)
 end
 
----@return string[] The hostnames configured in the ssh configuration file
----                 located at "~/.ssh/config".
----                 Note: This does not currently process `Include` directives in the
----                 configuration file.
-function M.get_hosts()
-  local config_path = vim.fs.normalize('~/.ssh/config') ---@type string
+---@param filename? string Path to the SSH config file. Defaults to ~/.ssh/config
+---@return string[] The hostnames configured in the SSH config file.
+---                 Note: This does not currently process `Include` directives.
+function M.get_hosts(filename)
+  filename = filename or vim.fs.normalize('~/.ssh/config')
+  local ok, hosts = pcall(M.parse_config, filename)
+  if not ok then
+    return {}
+  end
+  return vim.tbl_map(
+    ---@param h vim.net.SshHost
+    function(h)
+      return h.alias
+    end,
+    hosts
+  )
+end
 
-  return M.parse_config(config_path)
+local _log --- @type vim.Log?
+
+--- Lazy `vim.log` instance for the remote-ssh feature. Writes to `stdpath('log')/remote-ssh.log`.
+---@return vim.Log
+local function log()
+  if not _log then
+    _log = vim.log.new({ name = 'remote-ssh', current_level = vim.log.levels.INFO })
+  end
+  return _log
+end
+
+---@param msg string
+---@param level? integer vim.log.levels.* (default INFO)
+local function notify(msg, level)
+  level = level or vim.log.levels.INFO
+  if level >= vim.log.levels.ERROR then
+    log().error(msg)
+  elseif level >= vim.log.levels.WARN then
+    log().warn(msg)
+  else
+    log().info(msg)
+  end
+  local function show()
+    vim.notify('remote-ssh: ' .. msg, level)
+    vim.cmd.redraw()
+  end
+  if vim.in_fast_event() then
+    vim.schedule(show)
+  else
+    show()
+  end
+end
+
+local function core_system()
+  -- Keep this lazy so parser-only users can load vim.net._ssh without editor state.
+  return require('vim._core.system')
+end
+
+--- Builds a command for the host identified by `ssh_uri`.
+---
+--- `ssh_args` are inserted before the target; `remote_cmd` is appended after the target.
+---
+---@param ssh_uri {host:string, user?:string, port?:string}
+---@param opts? { ssh_args?: string[], remote_cmd?: string[] }
+---@return string[]
+local function get_ssh_cmd(ssh_uri, opts)
+  opts = opts or {}
+  local mux_dir = vim.fn.stdpath('cache') .. '/ssh' --[[@as string]]
+  vim.fn.mkdir(mux_dir, 'p')
+  -- `%C` is SSH's hash of (localhost, host, port, user).
+  -- Its fixed length keeps the ControlPath socket under the 104-byte `sun_path` limit,
+  -- which the raw `%h_%p_%r` name plus a long base dir can exceed.
+  local mux_path = mux_dir .. '/mux_%C'
+  local ssh_cmd = {
+    'ssh',
+    '-T',
+    '-o',
+    'ControlMaster=auto',
+    '-o',
+    'ControlPath=' .. mux_path,
+    '-o',
+    'ControlPersist=10m',
+  }
+  if opts.ssh_args then
+    vim.list_extend(ssh_cmd, opts.ssh_args)
+  end
+  if ssh_uri.port then
+    table.insert(ssh_cmd, '-p')
+    table.insert(ssh_cmd, ssh_uri.port)
+  end
+  ---@type string
+  local target = ssh_uri.host
+  if ssh_uri.user then
+    target = ssh_uri.user .. '@' .. ssh_uri.host
+  end
+  table.insert(ssh_cmd, target)
+
+  if opts.remote_cmd then
+    vim.list_extend(ssh_cmd, opts.remote_cmd)
+  end
+
+  return ssh_cmd
+end
+
+--- Runs `script` via `sh -s` over stdin, so the remote login shell never re-parses it
+---
+---@param uri {host:string, user?:string, port?:string}
+---@param script string POSIX shell script.
+---@param opts? { ssh_args?: string[], wait_until?: fun(stdout: string, stderr: string): boolean }
+---@return vim.SystemRunWaitResult
+local function run_script(uri, script, opts)
+  opts = opts or {}
+  local ssh_cmd = get_ssh_cmd(uri, { ssh_args = opts.ssh_args, remote_cmd = { 'sh', '-s' } })
+  log().debug('run_script: running', ssh_cmd)
+  return core_system().run_wait(ssh_cmd, { stdin = script }, opts.wait_until, 300000)
+end
+
+--- Gets the operating system and architecture from the remote system.
+---
+---@param uri {host:string, user?:string, port?:string}
+---@return string os, string arch
+function M.get_system_info(uri)
+  local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { 'uname -s && uname -m' } })
+  log().debug('get_system_info: running', ssh_cmd)
+
+  local obj = core_system().run_wait(ssh_cmd, nil, nil, 300000)
+  log().debug('get_system_info: code', obj.code, 'stdout', obj.stdout, 'stderr', obj.stderr)
+  if obj.code ~= 0 then
+    error(
+      'Failed to detect remote system info: ' .. (obj.stderr ~= '' and obj.stderr or obj.stdout)
+    )
+  end
+
+  local lines = vim.split(vim.trim(obj.stdout), '\n', { plain = true })
+  local valid_lines = {}
+  for _, line in ipairs(lines) do
+    if vim.trim(line) ~= '' then
+      table.insert(valid_lines, vim.trim(line))
+    end
+  end
+
+  if #valid_lines < 2 then
+    error('Unexpected output from system info detection: ' .. obj.stdout)
+  end
+
+  ---@type string
+  local os = valid_lines[#valid_lines - 1]:lower()
+  ---@type string
+  local arch = valid_lines[#valid_lines]:lower()
+
+  if os:match('msys') or os:match('windows') or os:match('mingw') or os:match('cygwin') then
+    error('Not implemented yet: Windows targets are not supported.')
+  end
+
+  return os, arch
+end
+
+--- Installs the matching Nvim release on the remote host, unless present.
+--- Uses a per-version dir, never touching the user's own Nvim.
+---
+---@param uri {host:string, user?:string, port?:string}
+---@param os string
+---@param arch string
+---@return string nvim Remote path of the `nvim` binary, as a shell word.
+local function check_and_install(uri, os, arch)
+  local ver = vim.version()
+  local base = ('v%d.%d.%d'):format(ver.major, ver.minor, ver.patch)
+  -- prereleases: install the current nightly, once per version
+  local tag = ver.prerelease and 'nightly' or base
+  local install_name = ver.prerelease and ('nightly-' .. base) or base
+
+  local os_map = { linux = 'linux', darwin = 'macos' }
+  local arch_map = { x86_64 = 'x86_64', aarch64 = 'arm64', arm64 = 'arm64' }
+
+  local target_os = os_map[os]
+  local target_arch = arch_map[arch]
+  if not target_os or not target_arch then
+    error(string.format('Unsupported OS/Arch combination: %s/%s', os, arch))
+  end
+
+  local release_name = string.format('nvim-%s-%s', target_os, target_arch)
+  local release_url = string.format(
+    'https://github.com/neovim/neovim/releases/download/%s/%s.tar.gz',
+    tag,
+    release_name
+  )
+  local dest = '"$HOME"/.local/share/nvim-remote/releases/' .. install_name
+
+  local remote_script = string.format(
+    [[
+    set -eu
+    dest=%s
+    if [ -x "$dest/bin/nvim" ]; then
+      exit 0
+    fi
+
+    echo "Installing Nvim %s..." >&2
+    mkdir -p "${dest%%/*}"
+    tmp=$(mktemp -d "$dest.XXXXXX")
+    trap 'rm -rf "$tmp"' EXIT
+    curl -fsSL -o "$tmp/nvim.tar.gz" '%s'
+    tar -xzf "$tmp/nvim.tar.gz" -C "$tmp"
+    # atomic rename; keep a concurrent install that finished first
+    [ -e "$dest" ] || mv "$tmp/%s" "$dest"
+  ]],
+    dest,
+    install_name,
+    release_url,
+    release_name
+  )
+
+  log().debug('check_and_install: install', install_name, 'os', target_os, 'arch', target_arch)
+
+  local obj = run_script(uri, remote_script)
+  log().debug('check_and_install: code', obj.code, 'stdout', obj.stdout, 'stderr', obj.stderr)
+  if obj.code ~= 0 then
+    error('Installation failed: ' .. (obj.stderr ~= '' and obj.stderr or obj.stdout))
+  end
+
+  return dest .. '/bin/nvim'
+end
+
+--- @param uri_str string
+--- @return string local_socket path to the local forwarded socket
+--- @return vim.net.SshUri uri parsed SSH URI for cleanup
+--- @return fun() teardown function to close the SSH master connection
+function M.start(uri_str)
+  local uri = require('vim.uri')._parse_ssh_uri(uri_str)
+  notify('Connecting to ' .. uri_str .. '...')
+  local os, arch = M.get_system_info(uri)
+
+  notify('Checking remote Nvim install...')
+  local nvim = check_and_install(uri, os, arch)
+
+  local local_sock = vim.fn.tempname() .. '_remote_nvim.sock'
+
+  -- Fresh private dir per session: `mkdir` fails if it exists,
+  -- so nobody can plant a socket
+  local token = assert(vim.uv.random(8)):gsub('.', function(c)
+    return ('%02x'):format(c:byte())
+  end)
+  local remote_dir = '/tmp/nvim-remote.' .. token
+  local remote_sock = remote_dir .. '/nvim.sock'
+
+  local remote_cmd = string.format(
+    [[
+    dir='%s'
+    sock="$dir/nvim.sock"
+    mkdir -m 700 "$dir" || exit 1
+    NVIM_PID=
+    trap 'kill $NVIM_PID 2>/dev/null; rm -rf "$dir"' EXIT
+    trap 'exit 1' HUP INT TERM PIPE
+    NVIM_APPNAME=nvim-remote %s --headless --listen "$sock" </dev/null &
+    NVIM_PID=$!
+    while [ ! -S "$sock" ]; do
+      if ! kill -0 $NVIM_PID 2>/dev/null; then
+        echo "NVIM_CRASHED"
+        exit 1
+      fi
+      sleep 0.1
+    done
+    echo "NVIM_READY"
+    # no pty, so no SIGHUP on disconnect: a failed heartbeat write triggers the EXIT trap
+    while kill -0 $NVIM_PID 2>/dev/null; do
+      sleep 1
+      printf '\n' 2>/dev/null || exit 1
+    done
+  ]],
+    remote_dir,
+    nvim
+  )
+
+  local forward = local_sock .. ':' .. remote_sock
+
+  notify('Establishing SSH tunnel...')
+  log().debug('start: local_sock', local_sock)
+  local tunnel = run_script(uri, remote_cmd, {
+    ssh_args = { '-L', forward },
+    wait_until = function(stdout)
+      return stdout:match('NVIM_READY') ~= nil
+    end,
+  })
+  log().debug('start: tunnel stdout', tunnel.stdout, 'stderr', tunnel.stderr)
+
+  -- no NVIM_READY means the tunnel already exited
+  if not tunnel.stdout:match('NVIM_READY') then
+    -- the forward lives in the ssh master, which outlives this session
+    vim.system(get_ssh_cmd(uri, { ssh_args = { '-O', 'cancel', '-L', forward } })):wait()
+    local msg = tunnel.stdout:match('NVIM_CRASHED') and 'Remote Nvim crashed during startup'
+      or 'SSH tunnel exited before the remote Nvim was ready'
+    log().error(msg, 'code', tunnel.code, 'stderr', tunnel.stderr)
+    local detail = vim.trim(tunnel.stderr)
+    error(detail ~= '' and (msg .. ': ' .. detail) or msg)
+  end
+
+  notify('Connected to ' .. uri_str)
+
+  local cleaned_up = false
+
+  local function teardown()
+    if cleaned_up then
+      return
+    end
+    cleaned_up = true
+    log().info('teardown: closing ssh mux for ' .. uri_str)
+    local stop_cmd = get_ssh_cmd(uri, { ssh_args = { '-O', 'exit' } })
+    vim.system(stop_cmd):wait()
+    -- Wait for the original tunnel process to close its stdio handles.
+    if not tunnel:is_closing() then
+      tunnel:wait(1000)
+    end
+  end
+
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    callback = teardown,
+  })
+
+  return local_sock, uri, teardown
 end
 
 return M
