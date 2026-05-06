@@ -384,8 +384,8 @@ v:lang
 		in a different language than what is used for character
 		encoding.  See |multi-lang|.
 
-				*v:lastactivity* *lastactivity-variable*
-v:lastactivity
+				*v:useractivity* *useractivity-variable*
+v:useractivity
 		Unix timestamp (seconds since epoch) of the most recent user
 		input. Updated when a key is received from a UI (TUI keystrokes
 		or RPC |nvim_input()|), throttled to second granularity.

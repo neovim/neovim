@@ -231,43 +231,43 @@ describe('server', function()
       by_addr[entry.addr] = entry
     end
 
-    -- own server: own=true, pid matches, last_activity present
+    -- own server: own=true, pid matches, useractivity present
     local own_entry = by_addr[own_addr]
     eq(true, own_entry ~= nil)
     eq(true, own_entry.own)
     eq(self_pid, own_entry.pid)
-    eq('number', type(own_entry.last_activity))
-    eq(eval('v:lastactivity'), own_entry.last_activity)
+    eq('number', type(own_entry.useractivity))
+    eq(eval('v:useractivity'), own_entry.useractivity)
 
-    -- peer server: own=false, pid + last_activity from peer process
+    -- peer server: own=false, pid + useractivity from peer process
     local peer_entry = by_addr[peer_addr]
     eq(true, peer_entry ~= nil)
     eq(false, peer_entry.own)
     eq('number', type(peer_entry.pid))
-    eq('number', type(peer_entry.last_activity))
+    eq('number', type(peer_entry.useractivity))
     n.set_session(client)
     local peer_pid = fn.getpid()
-    local peer_lastactivity = eval('v:lastactivity')
+    local peer_useractivity = eval('v:useractivity')
     n.set_session(current_server)
     eq(peer_pid, peer_entry.pid)
-    eq(peer_lastactivity, peer_entry.last_activity)
+    eq(peer_useractivity, peer_entry.useractivity)
 
     client:close()
   end)
 
-  it('v:lastactivity advances on UI input', function()
+  it('v:useractivity advances on UI input', function()
     clear()
-    local before = eval('v:lastactivity')
+    local before = eval('v:useractivity')
     eq('number', type(before))
     vim.uv.sleep(1100)
     n.feed('ix<Esc>')
-    local after = eval('v:lastactivity')
+    local after = eval('v:useractivity')
     eq(true, after > before)
   end)
 
-  it('v:lastactivity is read-only', function()
+  it('v:useractivity is read-only', function()
     clear()
-    matches('E46:', pcall_err(n.command, 'let v:lastactivity = 0'))
+    matches('E46:', pcall_err(n.command, 'let v:useractivity = 0'))
   end)
 
   it('removes stale socket files automatically #36581', function()

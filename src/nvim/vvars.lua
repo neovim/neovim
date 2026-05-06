@@ -447,7 +447,7 @@ M.vars = {
       encoding.  See |multi-lang|.
     ]=],
   },
-  lastactivity = {
+  useractivity = {
     type = 'integer',
     desc = [=[
       Unix timestamp (seconds since epoch) of the most recent user

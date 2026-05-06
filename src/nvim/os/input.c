@@ -280,14 +280,14 @@ size_t input_enqueue(uint64_t chan_id, String keys)
 {
   current_ui = chan_id;
 
-  // Update v:lastactivity. All keys arriving here originate from a UI
+  // Update v:useractivity. All keys arriving here originate from a UI
   // (TUI keystrokes or RPC nvim_input)
   if (keys.size > 0) {
     static Timestamp last_activity = 0;
     Timestamp now = os_time();
     if (now != last_activity) {
       last_activity = now;
-      set_vim_var_nr(VV_LASTACTIVITY, (varnumber_T)now);
+      set_vim_var_nr(VV_USERACTIVITY, (varnumber_T)now);
     }
   }
 

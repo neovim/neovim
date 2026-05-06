@@ -241,11 +241,11 @@ VIMSCRIPT
 
 • |v:exitreason| is set before |QuitPre|.
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
-• |v:lastactivity| is the Unix timestamp (seconds) of the most recent user
+• |v:useractivity| is the Unix timestamp (seconds) of the most recent user
   input (TUI or RPC nvim_input). Exposed via |serverlist()| `info=true` for
   activity-aware pickers.
 • |serverlist()| accepts a new `info` option that returns a list of dicts
-  with `addr`, `pid`, `own` and `last_activity` for each server (own + peers),
+  with `addr`, `pid`, `own` and `useractivity` for each server (own + peers),
   enabling pickers like the future `:connect` host selector.
 
 ==============================================================================
