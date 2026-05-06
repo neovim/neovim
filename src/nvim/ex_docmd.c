@@ -3415,6 +3415,11 @@ uint32_t excmd_get_argt(cmdidx_T idx)
   return cmdnames[(int)idx].cmd_argt;
 }
 
+char *excmd_get_desc(cmdidx_T idx)
+{
+  return cmdnames[(int)idx].cmd_desc;
+}
+
 /// Skip a range specifier of the form: addr [,addr] [;addr] ..
 ///
 /// Backslashed delimiters after / or ? will be skipped, and commands will

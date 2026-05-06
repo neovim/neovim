@@ -389,14 +389,26 @@ static void cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches
                                bool showtail, bool cmdline_unchanged)
 {
   assert(numMatches >= 0);
+  bool is_excmd = (xp->xp_context == EXPAND_COMMANDS);
+
   // Add all the completion matches
   compl_match_array = xmalloc(sizeof(pumitem_T) * (size_t)numMatches);
   compl_match_arraysize = numMatches;
   for (int i = 0; i < numMatches; i++) {
+    char *info = NULL;
+    if (is_excmd) {
+      cmdidx_T idx = excmd_get_cmdidx(matches[i], strlen(matches[i]));
+      if (idx < CMD_SIZE) {
+        info = excmd_get_desc(idx);
+      } else {
+        info = get_user_command_info(matches[i]);
+      }
+    }
     compl_match_array[i] = (pumitem_T){
       .pum_text = (xp->xp_files_abbr != NULL && xp->xp_files_abbr[i] != NULL)
                   ? xp->xp_files_abbr[i] : SHOW_MATCH(i),
-      .pum_info = xp->xp_files_info != NULL ? xp->xp_files_info[i] : NULL,
+      .pum_info = (xp->xp_files_info != NULL && xp->xp_files_info[i] != NULL)
+                  ? xp->xp_files_info[i] : info,
       .pum_extra = xp->xp_files_menu != NULL ? xp->xp_files_menu[i] : NULL,
       .pum_kind = xp->xp_files_kind != NULL ? xp->xp_files_kind[i] : NULL,
       .pum_user_abbr_hlattr = -1,

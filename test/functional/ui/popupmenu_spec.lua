@@ -9284,7 +9284,7 @@ describe('builtin popupmenu', function()
       end)
 
       it("'pumborder' on cmdline and scrollbar rendering", function()
-        command('set wildoptions=pum')
+        command('set wildoptions=pum completeopt-=popup')
         feed(':t<TAB>')
         if multigrid then
           screen:expect({
@@ -9528,7 +9528,7 @@ describe('builtin popupmenu', function()
         end
       end)
       it("'pumborder' with none #36207", function()
-        command('set wildoptions=pum pumborder=none')
+        command('set wildoptions=pum pumborder=none completeopt-=popup')
         feed(':<TAB>')
         if multigrid then
           screen:expect({
@@ -9581,7 +9581,7 @@ describe('builtin popupmenu', function()
             :!^                            |
           ]])
         end
-        feed('<ESC>:set pumheight=2<CR>Gi<C-X><C-O>')
+        feed('<ESC>:set pumheight=2 completeopt+=popup<CR>Gi<C-X><C-O>')
         if not multigrid then
           screen:expect([[
             one^                           |

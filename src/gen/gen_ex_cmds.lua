@@ -18,6 +18,12 @@ local byte_a = string.byte('a')
 local byte_z = string.byte('z')
 local a_to_z = byte_z - byte_a + 1
 
+local function c_str_escape(s)
+  return (
+    s:gsub('\\', '\\\\'):gsub('"', '\\"'):gsub('\n', '\\n'):gsub('\r', '\\r'):gsub('\t', '\\t')
+  )
+end
+
 -- Table giving the index of the first command in cmdnames[] to lookup
 -- based on the first letter of a command.
 local cmdidxs1_out = string.format(
@@ -127,6 +133,14 @@ for _, cmd in ipairs(defs) do
   else
     preview_func = 'NULL'
   end
+  local cmd_desc
+  if cmd.desc and cmd.desc ~= '' then
+    cmd_desc = string.format('"%s"', c_str_escape(cmd.desc))
+  elseif cmd.short_desc and cmd.short_desc ~= '' then
+    cmd_desc = string.format('"%s"', c_str_escape(cmd.short_desc))
+  else
+    cmd_desc = 'NULL'
+  end
   enumfile:write('  ' .. enumname .. ',\n')
   defsfile:write(string.format(
     [[
@@ -135,7 +149,8 @@ for _, cmd in ipairs(defs) do
     .cmd_func = (ex_func_T)&%s,
     .cmd_preview_func = %s,
     .cmd_argt = %uL,
-    .cmd_addr_type = %s
+    .cmd_addr_type = %s,
+    .cmd_desc = %s
   },
 ]],
     enumname,
@@ -143,7 +158,8 @@ for _, cmd in ipairs(defs) do
     cmd.func,
     preview_func,
     cmd.flags,
-    cmd.addr_type
+    cmd.addr_type,
+    cmd_desc
   ))
 end
 for i = #cmds, 1, -1 do

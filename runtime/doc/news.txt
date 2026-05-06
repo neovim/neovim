@@ -139,6 +139,8 @@ EDITOR
 • |:log| opens log files.
 • |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
+• cmdline command completion shows descriptions when 'completeopt' include
+  "popup".
 
 EVENTS
 

@@ -1710,3 +1710,98 @@ describe('cmdheight=0', function()
     eq('1', p.stderr)
   end)
 end)
+
+describe('cmdline info popup', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 15)
+    n.command('set wildmenu wildoptions=pum wildmode=noinsert:full')
+  end)
+
+  it('shows description for selected', function()
+    feed(':q<TAB>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*7
+      {1:~               }{4:Exit Vim, unless there are some b}{1: }|
+      {1:~               }{4:uffers which have been changed. (}{1: }|
+      {1:~               }{4:Use ":bmod" to go to the next mod}{1: }|
+      {12: qall           }{4:ified buffer). When 'autowriteall}{1: }|
+      {4: quit           ' is set all changed buffers will}{1: }|
+      {4: quitall         be written, like :wqall.        }{1: }|
+      :q^                                                |
+    ]])
+    feed('<ESC>')
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+    command('set pumborder=rounded')
+    feed(':q<TAB>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*6
+      {1:~                 }{4:Exit Vim, unless there are some}{1: }|
+      {1:~                 }{4: buffers which have been change}{1: }|
+      {4:╭────────────────╮d. (Use ":bmod" to go to the ne}{1: }|
+      {4:│}{12: qall           }{4:│xt modified buffer). When 'auto}{1: }|
+      {4:│ quit           │writeall' is set all changed bu}{1: }|
+      {4:│ quitall        │ffers will be written, like :wq}{1: }|
+      {4:╰────────────────╯all.                           }{1: }|
+      :q^                                                |
+    ]])
+    feed('<C-N>')
+    screen:expect([[
+                        {4:Quit the current window. Quit V} |
+      {1:~                 }{4:im if this is the last edit-win}{1: }|
+      {1:~                 }{4:dow. This fails when changes ha}{1: }|
+      {1:~                 }{4:ve been made and Vim refuses to}{1: }|
+      {1:~                 }{4: abandon the current buffer, an}{1: }|
+      {1:~                 }{4:d when the last file in the arg}{1: }|
+      {1:~                 }{4:ument list has not been edited.}{1: }|
+      {1:~                 }{4: If there are other tab pages a}{1: }|
+      {1:~                 }{4:nd quitting the last window in }{1: }|
+      {4:╭────────────────╮the current tab page the curren}{1: }|
+      {4:│ qall           │t tab page is closed tab-page. }{1: }|
+      {4:│}{12: quit           }{4:│Triggers the QuitPre autocomman}{1: }|
+      {4:│ quitall        │d event. See CTRL-W_q for quitt}{1: }|
+      {4:╰────────────────╯ing another window.            }{1: }|
+      :quit^                                             |
+    ]])
+    feed('<ESC>')
+    command('set completeopt-=popup')
+    feed(':q<TAB>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*8
+      {4:╭────────────────╮}{1:                                }|
+      {4:│}{12: qall           }{4:│}{1:                                }|
+      {4:│ quit           │}{1:                                }|
+      {4:│ quitall        │}{1:                                }|
+      {4:╰────────────────╯}{1:                                }|
+      :q^                                                |
+    ]])
+  end)
+
+  it('show user command description', function()
+    command([[call nvim_create_user_command('SayHello', 'echo 222', {'desc': 'Say Hello'})"]])
+    feed(':S<TAB>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*12
+      {12: SayHello       }{4:Say Hello}{1:                         }|
+      :S^                                                |
+    ]])
+    feed('<ESC>')
+    command([[call nvim_create_user_command('NonDesc', 'echo 222', {})"]])
+    feed(':Non<TAB>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*12
+      {12: NonDesc        }{4:echo 222}{1:                          }|
+      :Non^                                              |
+    ]])
+  end)
+end)

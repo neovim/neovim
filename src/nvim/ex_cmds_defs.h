@@ -100,6 +100,7 @@ typedef struct {
   ex_preview_func_T cmd_preview_func;  ///< Preview callback function of this command.
   uint32_t cmd_argt;                   ///< Relevant flags from the declared above.
   cmd_addr_T cmd_addr_type;            ///< Flag for address type.
+  char *cmd_desc;
 } CommandDefinition;
 
 /// Arguments used for Ex commands.

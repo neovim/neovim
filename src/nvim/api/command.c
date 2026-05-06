@@ -1275,9 +1275,10 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     });
   }
 
+  const char *desc = (opts->desc.type == kObjectTypeString) ? opts->desc.data.string.data : NULL;
   WITH_SCRIPT_CONTEXT(channel_id, {
     if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
-                       compl_luaref, preview_luaref, addr_type_arg, luaref, force) != OK) {
+                       compl_luaref, preview_luaref, addr_type_arg, luaref, desc, force) != OK) {
       api_set_error(err, kErrorTypeException, "Failed to create user command");
       // Do not goto err, since uc_add_command now owns luaref, compl_luaref, preview_luaref,
       // and compl_arg

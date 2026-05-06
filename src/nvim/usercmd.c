@@ -890,7 +890,8 @@ char *uc_validate_name(char *name)
 /// @return  OK if the command is created, FAIL otherwise.
 int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, int64_t def,
                    int flags, int context, char *compl_arg, LuaRef compl_luaref,
-                   LuaRef preview_luaref, cmd_addr_T addr_type, LuaRef luaref, bool force)
+                   LuaRef preview_luaref, cmd_addr_T addr_type, LuaRef luaref, const char *desc,
+                   bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;
@@ -941,6 +942,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
       }
 
       XFREE_CLEAR(cmd->uc_rep);
+      XFREE_CLEAR(cmd->uc_desc);
       XFREE_CLEAR(cmd->uc_compl_arg);
       NLUA_CLEAR_REF(cmd->uc_luaref);
       NLUA_CLEAR_REF(cmd->uc_compl_luaref);
@@ -969,6 +971,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
   }
 
   cmd->uc_rep = rep_buf;
+  cmd->uc_desc = (desc != NULL && *desc != NUL) ? xstrdup(desc) : NULL;
   cmd->uc_argt = argt;
   cmd->uc_def = def;
   cmd->uc_compl = context;
@@ -1039,7 +1042,7 @@ void ex_command(exarg_T *eap)
     emsg(_(e_complete_used_without_allowing_arguments));
   } else {
     uc_add_command(name, name_len, p, argt, def, flags, context, compl_arg, LUA_NOREF, LUA_NOREF,
-                   addr_type_arg, LUA_NOREF, eap->forceit);
+                   addr_type_arg, LUA_NOREF, NULL, eap->forceit);
 
     return;  // success
   }
@@ -1062,6 +1065,7 @@ void free_ucmd(ucmd_T *cmd)
 {
   xfree(cmd->uc_name);
   xfree(cmd->uc_rep);
+  XFREE_CLEAR(cmd->uc_desc);
   xfree(cmd->uc_compl_arg);
   NLUA_CLEAR_REF(cmd->uc_compl_luaref);
   NLUA_CLEAR_REF(cmd->uc_luaref);
@@ -1782,6 +1786,7 @@ Dict commands_array(buf_T *buf, Arena *arena)
 
     PUT_C(d, "name", CSTR_AS_OBJ(cmd->uc_name));
     PUT_C(d, "definition", CSTR_AS_OBJ(cmd->uc_rep));
+    PUT_C(d, "desc", CSTR_AS_OBJ(cmd->uc_desc));
     PUT_C(d, "script_id", INTEGER_OBJ(cmd->uc_script_ctx.sc_sid));
     PUT_C(d, "bang", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_BANG)));
     PUT_C(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
@@ -1854,4 +1859,19 @@ Dict commands_array(buf_T *buf, Arena *arena)
     PUT_C(rv, cmd->uc_name, DICT_OBJ(d));
   }
   return rv;
+}
+
+char *get_user_command_info(const char *name)
+{
+  garray_T *gaps[2] = { &prevwin_curwin()->w_buffer->b_ucmds, &ucmds };
+  for (int g = 0; g < 2; g++) {
+    for (int i = 0; i < gaps[g]->ga_len; i++) {
+      ucmd_T *cmd = USER_CMD_GA(gaps[g], i);
+      if (strequal(cmd->uc_name, name)) {
+        char *info = cmd->uc_desc != NULL ? cmd->uc_desc : cmd->uc_rep;
+        return (info != NULL && *info != NUL) ? info : NULL;
+      }
+    }
+  }
+  return NULL;
 }
