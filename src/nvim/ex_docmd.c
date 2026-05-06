@@ -6042,7 +6042,7 @@ static void ex_connect(exarg_T *eap)
     nlua_call_vimfn("vim.net._remote", "start", argvars, &ssh_rettv);
 
     if (ssh_rettv.v_type != VAR_STRING || ssh_rettv.vval.v_string == NULL) {
-      emsg("E5000: SSH connection failed");
+      emsg("E6101: SSH connection failed");
       tv_clear(&ssh_rettv);
       return;
     }
