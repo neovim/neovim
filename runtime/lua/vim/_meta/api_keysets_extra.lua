@@ -130,6 +130,7 @@ error('Cannot require a meta file')
 --- @field range? string
 --- @field addr? string
 --- @field callback? function
+--- @field desc? string
 
 --- @class vim.api.keyset.hl_info.base
 --- @field reverse? true

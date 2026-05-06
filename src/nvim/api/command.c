@@ -1257,14 +1257,18 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     opts->preview.data.luaref = LUA_NOREF;
   }
 
+  const char *desc = NULL;
+  if (HAS_KEY(opts, user_command, desc)) {
+    VALIDATE_T("desc", kObjectTypeString, opts->desc.type, {
+      goto err;
+    });
+    desc = opts->desc.data.string.data;
+  }
+
   switch (cmd.type) {
   case kObjectTypeLuaRef:
     luaref = api_new_luaref(cmd.data.luaref);
-    if (opts->desc.type == kObjectTypeString) {
-      rep = opts->desc.data.string.data;
-    } else {
-      rep = "";
-    }
+    rep = "";
     break;
   case kObjectTypeString:
     rep = cmd.data.string.data;
@@ -1277,7 +1281,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
 
   WITH_SCRIPT_CONTEXT(channel_id, {
     if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
-                       compl_luaref, preview_luaref, addr_type_arg, luaref, force) != OK) {
+                       compl_luaref, preview_luaref, addr_type_arg, luaref, desc, force) != OK) {
       api_set_error(err, kErrorTypeException, "Failed to create user command");
       // Do not goto err, since uc_add_command now owns luaref, compl_luaref, preview_luaref,
       // and compl_arg
