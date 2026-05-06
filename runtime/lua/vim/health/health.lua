@@ -562,6 +562,52 @@ local function check_external_tools()
       'Install curl using your package manager.',
     })
   end
+
+  if vim.fn.executable('ssh') == 1 then
+    local ssh_path = vim.fn.exepath('ssh')
+    local ssh_job = vim.system({ ssh_path, '-V' }, { text = true }):wait()
+    -- ssh -V prints version to stderr
+    local ssh_out = vim.trim(ssh_job.stderr or '')
+    if ssh_job.code == 0 then
+      health.ok(('%s (%s)'):format(ssh_out, ssh_path))
+
+      ---@type string?
+      local version_match = ssh_out:match('OpenSSH_([%d%.]+)')
+      if version_match then
+        ---@type string?
+        local major = version_match:match('^(%d+)')
+        if vim.fn.has('win32') == 1 then
+          health.warn(
+            'Win32-OpenSSH does not support ControlMaster (multiplexing). Remote SSH features might be degraded or unsupported.'
+          )
+        elseif major and tonumber(major) >= 4 then
+          health.ok('OpenSSH version supports multiplexing')
+        else
+          health.warn(
+            'OpenSSH version is older than 4.0. Multiplexing is not supported, remote connections may be slow or fail.'
+          )
+        end
+      else
+        health.warn('Could not determine OpenSSH version. Multiplexing support is unknown.')
+      end
+
+      if vim.fn.has('win32') == 0 then
+        local tmp_stat = vim.uv.fs_stat('/tmp')
+        if tmp_stat and tmp_stat.type == 'directory' and vim.uv.fs_access('/tmp', 'W') then
+          health.ok('/tmp is writable (required for SSH multiplexing sockets)')
+        else
+          health.error('/tmp is not a writable directory. SSH multiplexing will fail.')
+        end
+      end
+    else
+      health.warn('ssh is installed but failed to run `ssh -V`', { ssh_job.stderr })
+    end
+  else
+    health.warn('ssh not found', {
+      'Required for remote SSH connections (:connect ssh://).',
+      'Install ssh using your package manager.',
+    })
+  end
 end
 
 local function detect_terminal()
