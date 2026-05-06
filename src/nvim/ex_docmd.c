@@ -6021,14 +6021,14 @@ static void ex_detach(exarg_T *eap)
 /// Connects the current UI to a different server
 ///
 /// ":connect <address>" detaches the current UI and connects to the given server.
-/// ":connect ssh://<uri>" bootstraps a remote Neovim over SSH, then connects.
+/// ":connect ssh://<uri>" bootstraps a remote Nvim over SSH, then connects.
 /// ":connect! <address>" stops the current server if no other UIs are attached, then connects to the given server.
 static void ex_connect(exarg_T *eap)
 {
   char *addr = eap->arg;
   typval_T ssh_rettv = { .v_type = VAR_UNKNOWN };
 
-  // SSH URI: bootstrap remote Neovim, get local forwarded socket
+  // SSH URI: bootstrap remote Nvim, get local forwarded socket
   if (strncmp(addr, "ssh://", 6) == 0) {
     typval_T argvars[2];
     argvars[0].v_type = VAR_STRING;

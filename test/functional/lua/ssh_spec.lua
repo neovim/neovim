@@ -44,13 +44,18 @@ describe('SSH parser', function()
         IdentitiesOnly yes
     ]]
 
-    eq({
-      'dev',
-      'prod',
-      'test',
-      'quoted string',
-      'gh',
-    }, parser.parse_ssh_config(config))
+    local hosts = parser.parse_ssh_config(config)
+    eq(
+      { 'dev', 'prod', 'test', 'quoted string', 'foo', 'gh' },
+      vim.tbl_map(function(h)
+        return h.alias
+      end, hosts)
+    )
+    eq('dev.example.com', hosts[1].hostname)
+    eq('devuser', hosts[1].user)
+    eq('2222', hosts[1].port)
+    eq('198.51.100.10', hosts[2].hostname)
+    eq('admin', hosts[2].user)
   end)
 
   it('fails when a quote is not closed', function()
