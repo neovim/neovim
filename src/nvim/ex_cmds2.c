@@ -223,12 +223,11 @@ void dialog_changed(buf_T *buf, bool checkall)
       }
     }
 
-    // restore to empty when write failed
+    // restore to empty when write failed or was cancelled
     if (empty_bufname) {
       buf->b_fname = NULL;
       XFREE_CLEAR(buf->b_ffname);
       XFREE_CLEAR(buf->b_sfname);
-      unchanged(buf, true, false);
     }
   } else if (ret == VIM_NO) {
     unchanged(buf, true, false);

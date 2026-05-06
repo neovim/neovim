@@ -344,6 +344,28 @@ func Test_goto_buf_with_confirm()
   close!
 endfunc
 
+" Test for issue #20132: when saving an unnamed buffer fails the modified
+" flag must be kept, otherwise the buffer is silently discarded.
+func Test_dialog_changed_keep_modified_on_write_fail()
+  CheckUnix
+  CheckNotGui
+  CheckFeature dialog_con
+  CheckNotFeature dialog_con_gui
+  CheckNotRoot
+
+  call writefile(['existing'], 'Untitled', 'D')
+  call setfperm('Untitled', 'r--r--r--')
+
+  new
+  call setline(1, 'test')
+  call feedkeys('y', 'L')
+  silent! confirm bdel
+  call assert_true(&modified)
+  call assert_equal(['existing'], readfile('Untitled'))
+
+  bw!
+endfunc
+
 " Test for splitting buffer with 'switchbuf'
 func Test_buffer_switchbuf()
   new Xswitchbuf
