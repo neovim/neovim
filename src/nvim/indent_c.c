@@ -1079,7 +1079,7 @@ static int cin_iswhileofdo(const char *p, linenr_T lnum)  // XXX
       p++;
       curwin->w_cursor.col++;
     }
-    if ((trypos = findmatchlimit(NULL, 0, 0, curbuf->b_ind_maxparen)) != NULL
+    if ((trypos = findmatchlimit(NULL, 0, FM_SKIPCOMM, curbuf->b_ind_maxparen)) != NULL
         && *cin_skipcomment(ml_get_pos(trypos) + 1) == ';') {
       retval = true;
     }
@@ -1484,7 +1484,7 @@ static pos_T *find_start_brace(void)  // XXX
   static pos_T pos_copy;
 
   cursor_save = curwin->w_cursor;
-  while ((trypos = findmatchlimit(NULL, '{', FM_BLOCKSTOP, 0)) != NULL) {
+  while ((trypos = findmatchlimit(NULL, '{', FM_BLOCKSTOP | FM_SKIPCOMM, 0)) != NULL) {
     pos_copy = *trypos;         // copy pos_T, next findmatch will change it
     trypos = &pos_copy;
     curwin->w_cursor = *trypos;
@@ -1519,7 +1519,7 @@ static pos_T *find_match_char(char c, int ind_maxparen)
   cursor_save = curwin->w_cursor;
   ind_maxp_wk = ind_maxparen;
 retry:
-  if ((trypos = findmatchlimit(NULL, (uint8_t)c, 0, ind_maxp_wk)) != NULL) {
+  if ((trypos = findmatchlimit(NULL, (uint8_t)c, FM_SKIPCOMM, ind_maxp_wk)) != NULL) {
     // check if the ( is in a // comment
     if ((colnr_T)cin_skip2pos(trypos) > trypos->col) {
       ind_maxp_wk = ind_maxparen - (cursor_save.lnum - trypos->lnum);
@@ -2299,7 +2299,7 @@ int get_c_indent(void)
           line = get_cursor_line_ptr();
           look_col = (int)(look - line);
           curwin->w_cursor.col = look_col + 1;
-          if ((trypos = findmatchlimit(NULL, ')', 0,
+          if ((trypos = findmatchlimit(NULL, ')', FM_SKIPCOMM,
                                        curbuf->b_ind_maxparen))
               != NULL
               && trypos->lnum == our_paren_pos.lnum
