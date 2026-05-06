@@ -4219,11 +4219,11 @@ describe('vim.diagnostic', function()
       )
     end)
 
-    it('uses text from diagnostic.config().status.format[severity]', function()
+    it('uses text from diagnostic.config().signs.text[severity]', function()
       local result = exec_lua(function()
         vim.diagnostic.config({
-          status = {
-            format = {
+          signs = {
+            text = {
               [vim.diagnostic.severity.ERROR] = '⨯',
               [vim.diagnostic.severity.WARN] = '⚠︎',
             },

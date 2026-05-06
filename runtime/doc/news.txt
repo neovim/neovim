@@ -28,6 +28,8 @@ DIAGNOSTICS
   (deprecated in Nvim 0.10 |deprecated-0.10|).
 • The legacy signature of |vim.diagnostic.enable()| (deprecated in Nvim 0.10
   |deprecated-0.10|) is no longer supported.
+• `vim.diagnostic.Opts.Status.format` no longer accepts the table mapping
+  from severity to text. Use `vim.diagnostic.Opts.Signs.text` instead.
 
 EDITOR
 
