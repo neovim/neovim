@@ -3977,29 +3977,23 @@ describe('TUI', function()
 
     nvim_tui('-V3' .. logfile, { NVIM_TERMDEFS = vim.json.encode(terminfo) })
 
-    retry(nil, 3000, function() -- Wait for log file to be flushed.
-      assert_log('enter_ca_mode[^\n]*= ' .. terminfo.enter_ca_mode, logfile, 9999)
-      assert_log(
-        'reset_cursor_style[^\n]*= ' .. vim.pesc(terminfo.reset_cursor_style:gsub('\027', '^[')),
-        logfile,
-        9999
-      )
-      assert_log(
-        string.format(
-          'key_home%%s*= %s, key_shome = %s',
-          terminfo.key_home[1],
-          terminfo.key_home[2]
-        ),
-        logfile,
-        9999
-      )
-      assert_log('key_npage%s*= ' .. terminfo.key_npage, logfile, 9999)
-      assert_log('key_end%s*= ' .. terminfo.key_end[1] .. '\n', logfile, 9999)
-      assert_log('key_f1%s*= ' .. terminfo.key_f1, logfile, 9999)
-      assert_log('key_f63%s*= ' .. terminfo.key_f63, logfile, 9999)
-      assert_log('extended underline[^\n]*: ' .. tostring(terminfo.Su), logfile, 9999)
-      assert_log('max_colors: ' .. terminfo.max_colors, logfile, 9999)
-    end)
+    assert_log('enter_ca_mode[^\n]*= ' .. terminfo.enter_ca_mode, logfile, 9999)
+    assert_log(
+      'reset_cursor_style[^\n]*= ' .. vim.pesc(terminfo.reset_cursor_style:gsub('\027', '^[')),
+      logfile,
+      9999
+    )
+    assert_log(
+      string.format('key_home%%s*= %s, key_shome = %s', terminfo.key_home[1], terminfo.key_home[2]),
+      logfile,
+      9999
+    )
+    assert_log('key_npage%s*= ' .. terminfo.key_npage, logfile, 9999)
+    assert_log('key_end%s*= ' .. terminfo.key_end[1] .. '\n', logfile, 9999)
+    assert_log('key_f1%s*= ' .. terminfo.key_f1, logfile, 9999)
+    assert_log('key_f63%s*= ' .. terminfo.key_f63, logfile, 9999)
+    assert_log('extended underline[^\n]*: ' .. tostring(terminfo.Su), logfile, 9999)
+    assert_log('max_colors: ' .. terminfo.max_colors, logfile, 9999)
   end)
 
   it('does not crash on large inputs #26099', function()

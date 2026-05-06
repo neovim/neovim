@@ -158,16 +158,6 @@ function M.query_apc(payload, opts, on_response)
   end)
 end
 
----@param msg string
-local function deferred_error(msg)
-  vim.api.nvim_create_autocmd('VimEnter', {
-    once = true,
-    callback = function()
-      error(msg)
-    end,
-  })
-end
-
 --- Get user overrides for terminfo entries as a table. See |$NVIM_TERMDEFS|
 local function get_termdefs()
   local termdefs_raw = os.getenv('NVIM_TERMDEFS')
@@ -175,16 +165,22 @@ local function get_termdefs()
     local ok, termdefs_or_err = pcall(vim.json.decode, termdefs_raw)
     if not ok then
       -- Can't error right away because then it's never displayed to the user.
-      deferred_error('E557: Failed to parse $NVIM_TERMDEFS: ' .. vim.inspect(termdefs_or_err))
+      vim.schedule(function()
+        error('E557: Failed to parse $NVIM_TERMDEFS: ' .. vim.inspect(termdefs_or_err))
+      end)
       return
     elseif type(termdefs_or_err) ~= 'table' or vim.isarray(termdefs_or_err) then
-      deferred_error('E557: expected $NVIM_TERMDEFS to be table. :help $NVIM_TERMDEFS')
+      vim.schedule(function()
+        error('E557: expected $NVIM_TERMDEFS to be table. :help $NVIM_TERMDEFS')
+      end)
       return
     end
     return termdefs_or_err
   end
 end
 
+-- We don't run this lazily because we want it to run on the server to produce
+-- an error for the user.
 M.termdefs = get_termdefs()
 
 return M

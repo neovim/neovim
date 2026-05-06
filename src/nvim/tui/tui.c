@@ -36,8 +36,8 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
+#include "nvim/tui/termdef_field_defs.h"
 #include "nvim/tui/terminfo.h"
-#include "nvim/tui/terminfo_field_defs.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/ugrid.h"
 #include "nvim/types_defs.h"
@@ -356,10 +356,10 @@ void tui_query_bg_color(TUIData *tui)
   flush_buf(tui);
 }
 
-static void apply_terminfo_field(TUIData *tui, TerminfoField *ti_field, KeyValuePair *kv)
+static void apply_termdef_field(TUIData *tui, TermdefField *td_field, KeyValuePair *kv)
 {
   Object val = kv->value;
-  char *dst = (char *)&tui->ti + ti_field->offset;
+  char *dst = (char *)&tui->ti + td_field->offset;
 
   switch (val.type) {
   case kObjectTypeBoolean:
@@ -402,9 +402,9 @@ static void apply_terminfo_field(TUIData *tui, TerminfoField *ti_field, KeyValue
 /// Use $NVIM_TERMDEFS to apply user overrides to terminfo.
 ///
 /// This is necessary for Windows, where terminfo files are broken in Unibilium. #37274
-/// If/when terminfo is removed, this will also be useful for anyone who wants to override
+/// If/when Unibilium is removed, this will also be useful for anyone who wants to override
 /// the built-in definitions.
-static void apply_terminfo_overrides(TUIData *tui)
+static void apply_termdefs(TUIData *tui)
 {
   // We allow empty values just to provide the user with a warning
   if (!os_env_exists("NVIM_TERMDEFS", false)) {
@@ -418,16 +418,16 @@ static void apply_terminfo_overrides(TUIData *tui)
     return;
   }
 
-  init_terminfo_fields();
+  init_termdef_fields();
 
   for (size_t i = 0; i < rv.data.dict.size; i++) {
     KeyValuePair kv = rv.data.dict.items[i];
-    TerminfoField *ti_field = pmap_get(cstr_t)(&terminfo_fields, kv.key.data);
-    if (!ti_field || kv.value.type != ti_field->type) {
+    TermdefField *td_field = pmap_get(cstr_t)(&termdef_fields, kv.key.data);
+    if (!td_field || kv.value.type != td_field->type) {
       WLOG("skipping invalid key in $NVIM_TERMDEFS: '%s'", kv.key.data);
       continue;
     }
-    apply_terminfo_field(tui, ti_field, &kv);
+    apply_termdef_field(tui, td_field, &kv);
   }
 
   api_free_object(rv);
@@ -516,7 +516,7 @@ static void terminfo_start(TUIData *tui)
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   augment_terminfo(tui, term, vtev, konsolev, weztermv, iterm_env, nsterm);
-  apply_terminfo_overrides(tui);
+  apply_termdefs(tui);
 
 #define TI_HAS(name) (tui->ti.defs[name] != NULL)
   tui->can_change_scroll_region = TI_HAS(kTerm_change_scroll_region);

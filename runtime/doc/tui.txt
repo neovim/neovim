@@ -56,10 +56,21 @@ To override terminfo entries without modifying terminfo files, use
 $NVIM_TERMDEFS. This may be useful on Windows, where Unibilium can't read
 terminfo files. When this is set, terminfo files are not used, but builtin
 terminfo entries are. Any values in this variable will override the builtin
-definitions. It should be a JSON object with any of the following keys. Be
-careful when putting escape sequences in strings, as JSON uses unicode escapes
-like `\u001b`. For keys of type `string[]`, the first entry is the unshifted
-variant of the key, and the second entry is the shifted variant.
+definitions. For example, to disable alternate screen, override the sequence
+nvim sends to reset the cursor style, and set the sequences that get
+interpreted as <Home> and <S-Home>: >
+
+  NVIM_TERMDEFS='{
+    "enter_ca_mode": "",
+    "exit_ca_mode": "",
+    "reset_cursor_style": "\u001b[0 q",
+    "key_home": ["\u001bOH", "\u001b[1;2H"]
+  }' nvim
+<
+Be careful when putting escape sequences in strings, as JSON uses unicode
+escapes like `\u001b`. The following fields are supported. For fields of type
+`string[]`, the first entry is the unshifted variant of the key, and the
+second entry is the shifted variant.
 >
   Key                        Type
   ------------------------------------------------------------
