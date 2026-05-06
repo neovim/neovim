@@ -335,4 +335,271 @@ function M.parse_uri(str)
   return uri
 end
 
+---@param msg string
+---@param level? integer vim.log.levels.* (default INFO)
+local function notify(msg, level)
+  level = level or vim.log.levels.INFO
+  vim.schedule(function()
+    vim.notify('[Remote SSH] ' .. msg, level)
+  end)
+end
+
+---@param uri {host:string, user?:string, port?:string}
+local function get_base_ssh_cmd(uri)
+  local mux_dir = vim.fn.stdpath('run') --[[@as string]]
+  local mux_path = mux_dir .. '/ssh_mux_%h_%p_%r'
+  local ssh_cmd = {
+    'ssh',
+    '-T',
+    '-o',
+    'ControlMaster=auto',
+    '-o',
+    'ControlPath=' .. mux_path,
+    '-o',
+    'ControlPersist=10m',
+  }
+  if uri.port then
+    table.insert(ssh_cmd, '-p')
+    table.insert(ssh_cmd, uri.port)
+  end
+  ---@type string
+  local target = uri.host
+  if uri.user then
+    target = uri.user .. '@' .. uri.host
+  end
+  table.insert(ssh_cmd, target)
+
+  return ssh_cmd
+end
+
+---@param ssh_cmd string[]
+---@param wait_mode boolean|string true to wait for exit, string to wait for specific output
+---@return { code?: number, stdout?: string, job_id?: number }
+local function exec_ssh(ssh_cmd, wait_mode)
+  local stdout_lines = {}
+  local is_done = false
+  local code = -1
+  ---@type string
+  local buffer = ''
+
+  ---@param _ number
+  ---@param data string[]
+  local on_stdout = function(_, data, _)
+    if not data then
+      return
+    end
+    for i, chunk in ipairs(data) do
+      if i < #data then
+        table.insert(stdout_lines, buffer .. chunk)
+        buffer = ''
+      else
+        buffer = buffer .. chunk
+      end
+    end
+  end
+
+  local on_exit = function(_, exit_code, _)
+    code = exit_code
+    is_done = true
+  end
+
+  local job_id = vim.fn.jobstart(ssh_cmd, {
+    on_stdout = on_stdout,
+    on_exit = on_exit,
+  })
+
+  if job_id <= 0 then
+    error('Failed to start SSH job')
+  end
+
+  if wait_mode then
+    local success = vim.wait(300000, function()
+      if type(wait_mode) == 'string' then
+        local output = table.concat(stdout_lines, '\n') .. buffer
+        if output:match(wait_mode) then
+          return true
+        end
+      end
+      return is_done
+    end, 50)
+    if not success then
+      vim.fn.jobstop(job_id)
+      error('SSH command timed out')
+    end
+    if buffer ~= '' then
+      table.insert(stdout_lines, buffer)
+    end
+    local stdout = table.concat(stdout_lines, '\n')
+
+    return { code = code, stdout = stdout }
+  else
+    return { job_id = job_id }
+  end
+end
+
+---@param uri {host:string, user?:string, port?:string}
+---@return string os, string arch
+function M.get_system_info(uri)
+  local ssh_cmd = get_base_ssh_cmd(uri)
+  table.insert(ssh_cmd, 'uname -s && uname -m')
+
+  local obj = exec_ssh(ssh_cmd, true)
+  if obj.code ~= 0 then
+    error('Failed to detect remote system info: ' .. obj.stdout)
+  end
+
+  local lines = vim.split(vim.trim(obj.stdout), '\n', { plain = true })
+  local valid_lines = {}
+  for _, line in ipairs(lines) do
+    if vim.trim(line) ~= '' then
+      table.insert(valid_lines, vim.trim(line))
+    end
+  end
+
+  if #valid_lines < 2 then
+    error('Unexpected output from system info detection: ' .. obj.stdout)
+  end
+
+  ---@type string
+  local os = valid_lines[#valid_lines - 1]:lower()
+  ---@type string
+  local arch = valid_lines[#valid_lines]:lower()
+
+  if os:match('msys') or os:match('windows') or os:match('mingw') or os:match('cygwin') then
+    error('Not implemented yet: Windows targets are not supported.')
+  end
+
+  return os, arch
+end
+
+local function check_and_install(uri, os, arch)
+  local ver = vim.version() --[[@as vim.Version]]
+  local nvim_version = 'v' .. tostring(ver)
+  local is_nightly = ver.prerelease ~= false
+
+  local os_map = { linux = 'linux', darwin = 'macos' }
+  local arch_map = { x86_64 = 'x86_64', aarch64 = 'arm64', arm64 = 'arm64' }
+
+  local target_os = os_map[os]
+  local target_arch = arch_map[arch]
+  if not target_os or not target_arch then
+    error(string.format('Unsupported OS/Arch combination: %s/%s', os, arch))
+  end
+
+  local release_file = string.format('nvim-%s-%s.tar.gz', target_os, target_arch)
+  local release_url =
+    string.format('https://github.com/neovim/neovim/releases/latest/download/%s', release_file)
+  if is_nightly then
+    release_url =
+      string.format('https://github.com/neovim/neovim/releases/download/nightly/%s', release_file)
+  end
+
+  local remote_script = string.format(
+    [[
+    TARGET_VER="%s"
+    INSTALL_DIR="$HOME/.local/share/nvim-remote"
+    BIN_DIR="$HOME/.local/bin"
+
+    mkdir -p "$BIN_DIR"
+    mkdir -p "$INSTALL_DIR"
+
+    if [ -x "$BIN_DIR/nvim" ]; then
+      CURRENT_VER=$("$BIN_DIR/nvim" -v | head -n1 | sed 's/^NVIM //')
+      if [ "$CURRENT_VER" = "$TARGET_VER" ]; then
+        exit 0
+      fi
+    fi
+
+    echo "Installing Nvim $TARGET_VER..." >&2
+    cd "$INSTALL_DIR" || exit 1
+    curl -fLo nvim.tar.gz "%s" || wget -O nvim.tar.gz "%s" || exit 1
+    rm -rf nvim-%s-%s
+    tar -xzf nvim.tar.gz || exit 1
+    ln -sf "$INSTALL_DIR/nvim-%s-%s/bin/nvim" "$BIN_DIR/nvim"
+  ]],
+    nvim_version,
+    release_url,
+    release_url,
+    target_os,
+    target_arch,
+    target_os,
+    target_arch
+  )
+
+  local ssh_cmd = get_base_ssh_cmd(uri)
+  table.insert(ssh_cmd, remote_script)
+
+  local obj = exec_ssh(ssh_cmd, true)
+  if obj.code ~= 0 then
+    error('Installation failed: ' .. obj.stdout)
+  end
+end
+
+--- @param uri_str string
+--- @return string local_socket path to the local forwarded socket
+--- @return vim.net.SshUri uri parsed SSH URI for cleanup
+--- @return fun() teardown function to close the SSH master connection
+function M.start(uri_str)
+  local uri = M.parse_uri(uri_str)
+  notify('Connecting to ' .. uri_str .. '...')
+  local os, arch = M.get_system_info(uri)
+
+  notify('Checking remote Nvim install...')
+  check_and_install(uri, os, arch)
+
+  local local_sock = vim.fn.tempname() .. '_remote_nvim.sock'
+
+  local ssh_cmd = get_base_ssh_cmd(uri)
+  table.insert(ssh_cmd, '-L')
+  table.insert(ssh_cmd, local_sock .. ':/tmp/nvim.sock')
+
+  local remote_cmd = [[
+    rm -f /tmp/nvim.sock
+    NVIM_APPNAME=nvim-remote ~/.local/bin/nvim --headless --listen /tmp/nvim.sock &
+    NVIM_PID=$!
+    trap 'kill $NVIM_PID 2>/dev/null; rm -f /tmp/nvim.sock' EXIT
+    while [ ! -S /tmp/nvim.sock ]; do
+      if ! kill -0 $NVIM_PID 2>/dev/null; then
+        echo "NVIM_CRASHED"
+        exit 1
+      fi
+      sleep 0.1
+    done
+    echo "NVIM_READY"
+    wait $NVIM_PID
+  ]]
+
+  table.insert(ssh_cmd, 'bash')
+  table.insert(ssh_cmd, '-c')
+  table.insert(ssh_cmd, remote_cmd)
+
+  notify('Establishing SSH tunnel...')
+  local obj = exec_ssh(ssh_cmd, 'NVIM_READY')
+
+  if obj.stdout:match('NVIM_CRASHED') then
+    error('Remote Nvim crashed during startup')
+  end
+
+  notify('Connected to ' .. uri_str)
+
+  local cleaned_up = false
+
+  local function teardown()
+    if cleaned_up then
+      return
+    end
+    cleaned_up = true
+    local stop_cmd = get_base_ssh_cmd(uri)
+    table.insert(stop_cmd, '-O')
+    table.insert(stop_cmd, 'exit')
+    vim.system(stop_cmd):wait()
+  end
+
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    callback = teardown,
+  })
+
+  return local_sock, uri, teardown
+end
+
 return M
