@@ -16,10 +16,10 @@ headless server.
 
 The remote SSH engine uses `ssh` to communicate with the remote system. It:
 - Detects the remote architecture.
-- Bootstraps the Neovim binary in `~/.local/bin/nvim` and `~/.local/share/nvim-remote`.
-- Starts the remote Neovim with `NVIM_APPNAME=nvim-remote`, keeping remote
-  state separate from any local Neovim installation on the remote host.
-- Initiates a headless Neovim server and connects your local UI via a Unix
+- Bootstraps the Nvim binary in `~/.local/bin/nvim` and `~/.local/share/nvim-remote`.
+- Starts the remote Nvim with `NVIM_APPNAME=nvim-remote`, keeping remote
+  state separate from any local Nvim installation on the remote host.
+- Initiates a headless Nvim server and connects your local UI via a Unix
   domain socket.
 - On teardown, kills the remote headless process and SSH mux socket, but
   leaves the persistent data directory (`~/.local/share/nvim-remote`) intact
@@ -37,7 +37,7 @@ a password if needed, but SSH keys are highly recommended.
     nvim -c 'connect ssh://root@server:2222'
 <
 
-From a running Neovim session: ~
+From a running Nvim session: ~
 
 `:connect` ssh://{uri}
 
@@ -66,14 +66,14 @@ Local (Host):
 
 Remote (Target):
 - Linux (x86_64, aarch64) or macOS (arm64, x86_64).
-- `tar`, `curl` or `wget` to extract the Neovim release.
+- `tar`, `curl` or `wget` to extract the Nvim release.
 - A POSIX-compliant shell.
 
 ==============================================================================
 4. Remote Environment                                     *remote-ssh-configs*
 
-The remote Neovim starts with `NVIM_APPNAME=nvim-remote`, which isolates its
-configuration and data directories from any existing Neovim installation on
+The remote Nvim starts with `NVIM_APPNAME=nvim-remote`, which isolates its
+configuration and data directories from any existing Nvim installation on
 the remote host. See |$NVIM_APPNAME|.
 
 Remote paths used:
@@ -87,10 +87,10 @@ teardown, only the headless process and SSH mux socket are cleaned up.
 ==============================================================================
 5. Lua API                                               *remote-ssh-lua-api*
 
-                                            *vim.net._remote.start()*
+                                            *vim.net._remote.start()* *E6101*
 vim.net._remote.start({uri})
-    Bootstraps a remote Neovim over SSH. Detects remote architecture,
-    installs Neovim, and establishes an SSH tunnel.
+    Bootstraps a remote Nvim over SSH. Detects remote architecture,
+    installs Nvim, and establishes an SSH tunnel.
 
     Parameters: ~
       - {uri} (`string`) SSH URI (e.g. "user@host", "ssh://root@server:2222")
