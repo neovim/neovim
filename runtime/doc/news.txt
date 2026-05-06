@@ -239,6 +239,8 @@ EDITOR
 <    Typing õõ in |Normal-mode| now invokes a mapping bound to ]].
 • New |complete-items| field "commit_chars": characters that accept the
   selected completion item when typed.
+• |:connect| with `ssh://` URI orchestrates a remote Nvim session over SSH.
+  See |remote-ssh|.
 
 EVENTS
 
