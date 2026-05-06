@@ -1,33 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change:
-" 2025 Aug 07 by Vim Project (use correct "=~#" for netrw_stylesize option #17901)
-" 2025 Aug 07 by Vim Project (netrw#BrowseX() distinguishes remote files #17794)
-" 2025 Aug 22 by Vim Project netrw#Explore handle terminal correctly #18069
-" 2025 Sep 05 by Vim Project ensure netrw#fs#Dirname() returns trailing slash #18199
-" 2025 Sep 11 by Vim Project only keep cursor position in tree mode #18275
-" 2025 Sep 17 by Vim Project tighten the regex to handle remote compressed archives #18318
-" 2025 Sep 18 by Vim Project 'equalalways' not always respected #18358
-" 2025 Oct 01 by Vim Project fix navigate to parent folder #18464
-" 2025 Oct 26 by Vim Project fix parsing of remote user names #18611
-" 2025 Oct 27 by Vim Project align comment after #18611
-" 2025 Nov 01 by Vim Project fix NetrwChgPerm #18674
-" 2025 Nov 13 by Vim Project don't wipe unnamed buffers #18740
-" 2025 Nov 18 by Vim Project use UNC paths when using scp and Windows paths #18764
-" 2025 Nov 28 by Vim Project fix undefined variable in *NetrwMenu #18829
-" 2025 Dec 26 by Vim Project fix use of g:netrw_cygwin #19015
-" 2026 Jan 19 by Vim Project do not create swapfiles #18854
-" 2026 Feb 15 by Vim Project fix global variable initialization for MS-Windows #19287
-" 2026 Feb 21 by Vim Project better absolute path detection on MS-Windows #19477
-" 2026 Feb 27 by Vim Project Make the hostname validation more strict
-" 2026 Mar 01 by Vim Project include portnumber in hostname checking #19533
-" 2026 Apr 01 by Vim Project use fnameescape() with netrw#FileUrlEdit()
-" 2026 Apr 05 by Vim Project Fix netrw#RFC2396() #19913
-" 2026 Apr 15 by Vim Project Add missing escape()
-" 2026 Apr 19 by Vim Project expand ~ on Windows #20003
-" 2026 Apr 21 by Vim Project fix shell-injection via tempfile suffix (sftp://, file://)
-" 2026 Apr 21 by Vim Project drop unused g:netrw_tmpfile_escape
+" Last Change: 2026 May 05
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -6352,7 +6326,7 @@ function s:NetrwUnMarkFile(islocal)
     endif
 
     let ibuf= 1
-    while ibuf < bufnr("$")
+    while ibuf <= bufnr("$")
         if exists("s:netrwmarkfilelist_".ibuf)
             unlet s:netrwmarkfilelist_{ibuf}
             unlet s:netrwmarkfilemtch_{ibuf}

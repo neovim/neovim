@@ -138,6 +138,33 @@ function Test_NetrwValidateHostname(hostname) abort
     return s:NetrwValidateHostname(a:hostname)
 endfunction
 
+" Test unmarking all files via s:NetrwUnMarkFile()
+function Test_NetrwUnMarkFile()
+    " set up: init global and buffer-local mark lists
+    new
+
+    " initializing the global mark list, the loop handles the buffer-local
+    let s:netrwmarkfilelist = ['test_file']
+
+    " making sure every buffer has a mark list and match pattern
+    let ibuf = 1
+    while ibuf <= bufnr('$')
+        let s:netrwmarkfilelist_{ibuf} = ['test_mark']
+        let s:netrwmarkfilemtch_{ibuf} = 'test_mark'
+        let ibuf = ibuf + 1
+    endwhile
+
+    call s:NetrwUnMarkFile(1)
+
+    call assert_false(exists('s:netrwmarkfilelist'), 'Global list should be wiped')
+    call assert_false(exists('s:netrwmarkfilelist_' . bufnr('$')), 'Last buffer-local list should be wiped')
+    call assert_false(exists('s:netrwmarkfilemtch_' . bufnr('$')), 'Last buffer-local match str should be wiped')
+    call assert_false(exists('s:netrwmarkfilelist_1'), 'First buffer-local list should be wiped')
+    call assert_false(exists('s:netrwmarkfilemtch_1'), 'First buffer-local match str should be wiped')
+
+    " wipe out the test buffer
+    bw
+endfunction
 " }}}
 END
 
@@ -650,6 +677,10 @@ func Test_netrw_Home_tilde()
   Explore ~
   call assert_match('Netrw Directory Listing', getline(2))
   bw!
+endfunc
+
+func Test_netrw_unmark_all()
+  call Test_NetrwUnMarkFile()
 endfunc
 
 " vim:ts=8 sts=2 sw=2 et
