@@ -4,7 +4,7 @@
 
 Remote SSH                                     *remote-ssh* *remote-ssh-plugin*
 
-Nvim allows orchestrating remote servers natively using SSH multiplexing.
+Nvim can connect to remote SSH servers.
 Using the |:connect| command with an `ssh://` URI, Nvim will automatically
 connect to a host, bootstrap itself, and connect the local UI to the remote
 headless server.
@@ -12,16 +12,16 @@ headless server.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Introduction                                      *remote-ssh-introduction*
+1. Introduction                               *remote-ssh-introduction* *E6101*
 
-The remote SSH engine uses `ssh` to communicate with the remote system. It:
+The remote-ssh feature uses `ssh` to connect to a remote system. It:
 - Detects the remote architecture.
 - Bootstraps the Nvim binary in `~/.local/bin/nvim` and `~/.local/share/nvim-remote`.
 - Starts the remote Nvim with `NVIM_APPNAME=nvim-remote`, keeping remote
   state separate from any local Nvim installation on the remote host.
 - Initiates a headless Nvim server and connects your local UI via a Unix
   domain socket.
-- On teardown, kills the remote headless process and SSH mux socket, but
+- On disconnect, kills the remote headless process and SSH mux socket, but
   leaves the persistent data directory (`~/.local/share/nvim-remote`) intact
   for fast reconnects.
 
@@ -30,8 +30,8 @@ The remote SSH engine uses `ssh` to communicate with the remote system. It:
 
 From the command line: ~
 
-Connect to a remote server using `-c` with |:connect|. Nvim will prompt for
-a password if needed, but SSH keys are highly recommended.
+Connect to a remote server using `-c` with |:connect|. SSH key-based
+authentication is required; password prompts are not supported.
 >sh
     nvim -c 'connect ssh://user@192.168.1.100'
     nvim -c 'connect ssh://root@server:2222'
@@ -41,8 +41,8 @@ From a running Nvim session: ~
 
 `:connect` ssh://{uri}
 
-Connects to {uri} over SSH. The SSH engine bootstraps the remote host
-and reconnects the local UI to the remote server.
+Connects to {uri} over SSH. The remote-ssh feature bootstraps the remote
+host and reconnects the local UI to the remote server.
 >vim
     :connect ssh://user@192.168.1.100
     :connect ssh://root@server:2222
@@ -61,7 +61,7 @@ Both local and remote systems must meet certain requirements:
 Local (Host):
 - `ssh` (OpenSSH 4.0+) installed and accessible in `$PATH`.
 - Multiplexing support (`ControlMaster`). Note: Win32-OpenSSH does not
-  support multiplexing, so Windows hosts are not supported currently.
+  support multiplexing, so Windows clients are not supported currently.
 - `/tmp` directory must be writable.
 
 Remote (Target):
@@ -83,35 +83,6 @@ Remote paths used:
 
 The data directory persists across connections for fast reconnects. On
 teardown, only the headless process and SSH mux socket are cleaned up.
-
-==============================================================================
-5. Lua API                                               *remote-ssh-lua-api*
-
-                                            *vim.net._remote.start()* *E6101*
-vim.net._remote.start({uri})
-    Bootstraps a remote Nvim over SSH. Detects remote architecture,
-    installs Nvim, and establishes an SSH tunnel.
-
-    Parameters: ~
-      - {uri} (`string`) SSH URI (e.g. "user@host", "ssh://root@server:2222")
-
-    Return: ~
-      (`string`) Path to the local forwarded Unix socket.
-
-                                            *vim.net._ssh.get_hosts_full()*
-vim.net._ssh.get_hosts_full([{filename}])
-    Parses the SSH configuration file and returns structured host metadata.
-
-    Parameters: ~
-      - {filename} (`string?`) Path to SSH config. Defaults to `~/.ssh/config`.
-
-    Return: ~
-      (`vim.net.SshHost[]`) List of host configurations with fields:
-        - `alias` (`string`) The Host alias
-        - `hostname` (`string?`) The Hostname directive
-        - `user` (`string?`) The User directive
-        - `port` (`string?`) The Port directive
-        - `identity_file` (`string?`) The IdentityFile directive
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:
