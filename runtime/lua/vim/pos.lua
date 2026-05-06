@@ -225,6 +225,33 @@ function M.extmark(buf, row, col)
   return M.new(buf, row, col)
 end
 
+--- Converts |vim.Pos| to buffer offset.
+---@param pos vim.Pos
+---@return integer
+function M.to_offset(pos)
+  return api.nvim_buf_get_offset(pos.buf, pos[1]) + pos[2]
+end
+
+--- Creates a new |vim.Pos| from buffer offset.
+---@param buf integer
+---@param offset integer
+---@return vim.Pos
+function M.offset(buf, offset)
+  local lnum = vim.list.bisect(
+    setmetatable({}, {
+      __index = function(_, lnum)
+        return api.nvim_buf_get_offset(buf, lnum - 1)
+      end,
+    }),
+    offset,
+    { lo = 1, hi = api.nvim_buf_line_count(buf) + 2, bound = 'upper' }
+  ) - 1
+
+  local row = lnum - 1
+  local col = offset - api.nvim_buf_get_offset(buf, row)
+  return M.new(buf, row, col)
+end
+
 -- Overload `Range.new` to allow calling this module as a function.
 setmetatable(M, {
   __call = function(_, ...)
