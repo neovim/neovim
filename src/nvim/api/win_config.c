@@ -129,6 +129,13 @@
 ///       - `row=0` and `col=0` if `anchor` is "SW" or "SE"
 ///         (thus like a tooltip near the buffer text).
 ///   - col: Column position in units of screen cell width, may be fractional.
+///   - drag: When true, dragging the title or footer area moves the window.
+///       If "resize" is false, dragging any border or corner also moves it.
+///       Dragging a non-editor-relative float converts it to editor-relative.
+///       Default false.
+///   - dragall: When true, dragging the content area moves the window.
+///       If neither "drag" nor "resize" is set, dragging the border also moves the window.
+///       Default false.
 ///   - external: GUI should display the window as an external
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
@@ -161,6 +168,10 @@
 ///      - "mouse"      Mouse position.
 ///      - "tabline"    Tabline if present, or first row.
 ///      - "win"        Window given by the `win` field, or current window.
+///   - resize: When true, dragging the border or corners resizes the window.
+///       When "drag" is also true, title and footer regions remain move handles.
+///       When "drag" is false, title and footer regions resize like the rest of the border.
+///       Has no effect without a border. Default false.
 ///   - row: Row position in units of "screen cell height", may be fractional.
 ///   - split: Split direction: "left", "right", "above", "below".
 ///   - style: (optional) Configure the appearance of the window:
@@ -878,6 +889,9 @@ Dict(win_config) nvim_win_get_config(Window win, Arena *arena, Error *err)
   PUT_KEY_X(rv, hide, config->hide);
   PUT_KEY_X(rv, mouse, config->mouse);
   PUT_KEY_X(rv, style, cstr_as_string(win_style_str[config->style]));
+  PUT_KEY_X(rv, drag, config->drag);
+  PUT_KEY_X(rv, dragall, config->dragall);
+  PUT_KEY_X(rv, resize, config->resize);
 
   if (wp->w_floating) {
     PUT_KEY_X(rv, width, config->width);
@@ -1522,6 +1536,17 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     fconfig->_cmdline_offset = (int)config->_cmdline_offset;
   }
 
+  if (HAS_KEY_X(config, drag)) {
+    fconfig->drag = config->drag;
+  }
+
+  if (HAS_KEY_X(config, dragall)) {
+    fconfig->dragall = config->dragall;
+  }
+
+  if (HAS_KEY_X(config, resize)) {
+    fconfig->resize = config->resize;
+  }
   return true;
 
 fail:

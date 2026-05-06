@@ -1619,6 +1619,9 @@ describe('float window', function()
         border = 'none',
         style = '',
         col = 5,
+        drag = false,
+        dragall = false,
+        resize = false,
         external = false,
         focusable = true,
         mouse = true,
@@ -1648,6 +1651,9 @@ describe('float window', function()
       )
 
       eq({
+        drag = false,
+        dragall = false,
+        resize = false,
         external = false,
         focusable = true,
         mouse = true,
@@ -1662,6 +1668,9 @@ describe('float window', function()
       if multigrid then
         api.nvim_win_set_config(win, { external = true, width = 10, height = 1 })
         eq({
+          drag = false,
+          dragall = false,
+          resize = false,
           external = true,
           focusable = true,
           mouse = true,
@@ -4687,6 +4696,9 @@ describe('float window', function()
         focusable = true,
         mouse = true,
         zindex = 50,
+        drag = false,
+        dragall = false,
+        resize = false,
       }, api.nvim_win_get_config(win))
 
       feed('<c-e>')

@@ -118,6 +118,8 @@ API
   shape when an unfocused float is on top of the cursor.
 • |nvim_echo()| distinguishes zero percent from omitted percent for Progress
   events.
+• |nvim_open_win()| added "drag", "resize", and "dragall" options for
+  mouse-driven moving and resizing of floating windows.
 
 BUILD
 

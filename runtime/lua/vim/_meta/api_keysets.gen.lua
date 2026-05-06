@@ -467,6 +467,8 @@ error('Cannot require a meta file')
 --- @field border? any[]|"none"|"single"|"double"|"rounded"|"solid"|"shadow"
 --- @field bufpos? integer[]
 --- @field col? number
+--- @field drag? boolean
+--- @field dragall? boolean
 --- @field external? boolean
 --- @field fixed? boolean
 --- @field focusable? boolean
@@ -477,6 +479,7 @@ error('Cannot require a meta file')
 --- @field mouse? boolean
 --- @field noautocmd? boolean
 --- @field relative? "cursor"|"editor"|"laststatus"|"mouse"|"tabline"|"win"
+--- @field resize? boolean
 --- @field row? number
 --- @field split? "left"|"right"|"above"|"below"
 --- @field style? ""|"minimal"

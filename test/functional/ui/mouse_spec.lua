@@ -2145,6 +2145,285 @@ describe('ui/mouse/input', function()
       api.nvim_input_mouse('left', 'press', '', 0, count, 0)
       eq('', api.nvim_get_vvar('errmsg'))
     end)
+
+    it('drag on float window border', function()
+      screen:try_resize(25, 15)
+      command('%delete')
+      local fwin = api.nvim_open_win(0, false, {
+        relative = 'editor',
+        row = 2,
+        col = 2,
+        height = 4,
+        width = 4,
+        border = 'single',
+        drag = true,
+        dragall = true,
+        resize = true,
+      })
+      poke_eventloop()
+      local drag_test = function(test_cases)
+        for _, case in ipairs(test_cases) do
+          local start_pos, drag1, drag2, exp1, exp2 = unpack(case)
+          feed(string.format('<LeftMouse><%d,%d>', start_pos[1], start_pos[2]))
+          poke_eventloop()
+          feed(string.format('<LeftDrag><%d,%d>', drag1[1], drag1[2]))
+          local conf = api.nvim_win_get_config(fwin)
+          for k, exp in pairs(exp1) do
+            eq(exp, conf[k])
+          end
+          feed(string.format('<LeftDrag><%d,%d>', drag2[1], drag2[2]))
+          conf = api.nvim_win_get_config(fwin)
+          for k, exp in pairs(exp2) do
+            eq(exp, conf[k])
+          end
+          feed('<LeftRelease><0,0>')
+        end
+      end
+      drag_test({
+        { { 7, 3 }, { 10, 3 }, { 7, 3 }, { width = 7 }, { width = 4 } }, -- right border
+        { { 2, 3 }, { 1, 3 }, { 2, 3 }, { width = 5 }, { width = 4 } }, -- left border
+        { { 4, 7 }, { 4, 10 }, { 4, 7 }, { height = 7 }, { height = 4 } }, -- bottom border
+        { { 4, 2 }, { 4, 0 }, { 4, 2 }, { height = 6 }, { height = 4 } }, -- top border
+      })
+
+      api.nvim_win_set_config(fwin, { title = 'test' }) -- drag title to move
+      drag_test({
+        { { 5, 2 }, { 10, 2 }, { 5, 2 }, { col = 7 }, { col = 2 } },
+      })
+
+      -- update row, col of anchor after drag
+      -- anchor is right-bot corner
+      api.nvim_win_set_config(fwin, { title = '', anchor = 'SE' })
+      drag_test({
+        { { 5, 2 }, { 10, 2 }, { 5, 2 }, { col = 10 }, { col = 5 } }, -- right border
+        { { 2, 5 }, { 2, 10 }, { 2, 5 }, { row = 10 }, { row = 5 } }, -- bot border
+      })
+
+      -- anchor is right-top corner
+      api.nvim_win_set_config(fwin, { anchor = 'NE' })
+      drag_test({
+        { { 5, 6 }, { 10, 6 }, { 5, 6 }, { col = 10 }, { col = 5 } }, -- right border
+        { { 2, 5 }, { 2, 2 }, { 2, 5 }, { row = 2 }, { row = 5 } }, -- top border
+      })
+
+      -- anchor is left-bot corner
+      api.nvim_win_set_config(fwin, { anchor = 'SW' })
+      drag_test({
+        { { 6, 2 }, { 2, 2 }, { 6, 2 }, { col = 2 }, { col = 6 } }, -- left border
+        { { 7, 5 }, { 7, 7 }, { 7, 5 }, { row = 7 }, { row = 5 } }, -- bot border
+      })
+
+      -- drag corner resize
+      api.nvim_win_set_config(
+        fwin,
+        { relative = 'editor', anchor = 'NW', row = 4, col = 4, drag = true }
+      )
+      drag_test({
+        {
+          { 4, 4 },
+          { 3, 3 },
+          { 4, 4 },
+          { width = 5, height = 5, row = 3, col = 3 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- left-top corner
+        {
+          { 4, 9 },
+          { 1, 10 },
+          { 4, 9 },
+          { width = 7, height = 5, row = 4, col = 1 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- left-bot corner
+        {
+          { 9, 4 },
+          { 10, 3 },
+          { 9, 4 },
+          { width = 5, height = 5, row = 3, col = 4 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- right-top corner
+        {
+          { 9, 9 },
+          { 8, 8 },
+          { 9, 9 },
+          { width = 3, height = 3, row = 4, col = 4 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- right-bot corner
+        {
+          { 6, 6 },
+          { 9, 7 },
+          { 6, 6 },
+          { width = 4, height = 4, row = 5, col = 7 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- drag on content area
+      })
+
+      -- non-square: catches w_height/w_width mix-up at corners
+      api.nvim_win_set_config(fwin, { width = 8, height = 4 })
+      drag_test({
+        {
+          { 13, 9 },
+          { 12, 8 },
+          { 13, 9 },
+          { width = 7, height = 3 },
+          { width = 8, height = 4 },
+        }, -- right-bot corner
+      })
+
+      -- long title must not cover corners
+      api.nvim_win_set_config(fwin, {
+        width = 4,
+        height = 4,
+        title = string.rep('x', 20),
+        title_pos = 'center',
+      })
+      drag_test({
+        {
+          { 4, 4 },
+          { 3, 3 },
+          { 4, 4 },
+          { width = 5, height = 5, row = 3, col = 3 },
+          { width = 4, height = 4, row = 4, col = 4 },
+        }, -- top-left corner under title
+      })
+
+      -- borderless dragall: first content row must be grabbable
+      api.nvim_win_set_config(fwin, {
+        relative = 'editor',
+        row = 4,
+        col = 4,
+        width = 6,
+        height = 4,
+        border = 'none',
+        title = '',
+        drag = false,
+        dragall = true,
+      })
+      drag_test({
+        { { 5, 4 }, { 8, 7 }, { 5, 4 }, { row = 7, col = 7 }, { row = 4, col = 4 } },
+      })
+
+      -- drag alone (no border, no title) is a no-op
+      api.nvim_win_set_config(fwin, { drag = true, dragall = false })
+      feed('<LeftMouse><5,4>')
+      poke_eventloop()
+      feed('<LeftDrag><10,8>')
+      feed('<LeftRelease><10,8>')
+      local conf = api.nvim_win_get_config(fwin)
+      eq(4, conf.row)
+      eq(4, conf.col)
+
+      --- drag footer title
+      api.nvim_win_set_config(fwin, {
+        relative = 'editor',
+        anchor = 'NW',
+        row = 4,
+        col = 4,
+        width = 4,
+        height = 4,
+        border = 'single',
+        title = '',
+        footer = 'foo',
+        footer_pos = 'left',
+        drag = true,
+        resize = true,
+        dragall = false,
+      })
+      drag_test({
+        { { 5, 9 }, { 10, 9 }, { 5, 9 }, { col = 9 }, { col = 4 } },
+      })
+
+      api.nvim_win_set_config(fwin, {
+        relative = 'editor',
+        anchor = 'NW',
+        row = 4,
+        col = 4,
+        width = 4,
+        height = 4,
+        border = 'single',
+        title = '',
+        footer = '',
+        drag = true,
+        resize = false,
+        dragall = false,
+      })
+      drag_test({
+        -- right border moves, doesn't resize
+        { { 9, 6 }, { 12, 6 }, { 9, 6 }, { col = 7, width = 4 }, { col = 4, width = 4 } },
+        -- bot border moves
+        { { 6, 9 }, { 6, 12 }, { 6, 9 }, { row = 7, height = 4 }, { row = 4, height = 4 } },
+        -- bot-right corner moves diagonally
+        {
+          { 9, 9 },
+          { 11, 11 },
+          { 9, 9 },
+          { row = 6, col = 6, width = 4, height = 4 },
+          { row = 4, col = 4, width = 4, height = 4 },
+        },
+      })
+    end)
+
+    it('float drag clamps to screen size', function()
+      screen:try_resize(20, 10)
+      command('%delete')
+      local fwin = api.nvim_open_win(0, false, {
+        relative = 'editor',
+        row = 1,
+        col = 1,
+        width = 4,
+        height = 4,
+        border = 'single',
+        resize = true,
+      })
+      poke_eventloop()
+
+      -- drag bot-right corner past screen: width and height clamp
+      feed('<LeftMouse><6,6>')
+      poke_eventloop()
+      feed('<LeftDrag><200,200>')
+      feed('<LeftRelease><200,200>')
+      local conf = api.nvim_win_get_config(fwin)
+      eq(true, conf.width >= 10)
+      eq(true, conf.width <= 20)
+      eq(true, conf.height >= 5)
+      eq(true, conf.height <= 9)
+
+      api.nvim_win_set_config(fwin, {
+        relative = 'editor',
+        row = 5,
+        col = 5,
+        width = 4,
+        height = 4,
+        border = 'single',
+        drag = true,
+        resize = true,
+      })
+      feed('<LeftMouse><5,5>')
+      poke_eventloop()
+      feed('<LeftDrag><-100,-100>')
+      feed('<LeftRelease><-100,-100>')
+      conf = api.nvim_win_get_config(fwin)
+      eq(true, conf.row >= 0)
+      eq(true, conf.col >= 0)
+    end)
+
+    it('drag converts relative=cursor float to editor', function()
+      screen:try_resize(25, 15)
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'line1', 'line2', 'line3', 'line4' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      local fwin = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
+        relative = 'cursor',
+        row = 1,
+        col = 1,
+        width = 4,
+        height = 3,
+        dragall = true,
+      })
+      poke_eventloop()
+      feed('<LeftMouse><4,4>')
+      poke_eventloop()
+      feed('<LeftDrag><10,8>')
+      feed('<LeftRelease><10,8>')
+      eq('editor', api.nvim_win_get_config(fwin).relative)
+    end)
   end
 
   describe('with ext_multigrid', function()
