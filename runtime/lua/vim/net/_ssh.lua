@@ -22,8 +22,15 @@ local function is_multi_value_directive(param)
   return vim.list_contains(multi_value_directives, param:lower())
 end
 
+---@class vim.net.SshHost
+---@field alias string Host alias from ssh config
+---@field hostname? string Resolved Hostname directive
+---@field user? string User directive
+---@field port? string Port directive
+---@field identity_file? string IdentityFile directive
+
 ---@param text string The ssh configuration which needs to be parsed
----@return string[] The parsed host names in the configuration
+---@return vim.net.SshHost[] The parsed host configurations
 function M.parse_ssh_config(text)
   local i = 1
   local line = 1
@@ -84,7 +91,7 @@ function M.parse_ssh_config(text)
       if escaped then
         table.insert(val, chr == '"' and chr or '\\' .. chr)
         escaped = false
-      elseif chr == '"' and (val == {} or quoted) then
+      elseif chr == '"' and (#val == 0 or quoted) then
         quoted = not quoted
       elseif chr == '\\' then
         escaped = true
@@ -127,7 +134,7 @@ function M.parse_ssh_config(text)
       elseif quoted then
         table.insert(val, chr)
       elseif chr:match('[ \t=]') then
-        if val ~= {} then
+        if #val > 0 then
           table.insert(results, vim.trim(table.concat(val)))
           val = {}
         end
@@ -143,7 +150,7 @@ function M.parse_ssh_config(text)
       error('Unexpected line break at line ' .. line)
     end
 
-    if val ~= {} then
+    if #val > 0 then
       table.insert(results, vim.trim(table.concat(val)))
     end
 
@@ -176,134 +183,104 @@ function M.parse_ssh_config(text)
     return node
   end
 
-  local hostnames = {}
+  ---@type vim.net.SshHost[]
+  local hosts = {}
+  local seen = {} ---@type table<string, boolean>
+  ---@type vim.net.SshHost[]
+  local current_hosts = {}
 
   ---@param value string
   local function is_valid(value)
-    return not (value:find('[?*!]') or vim.list_contains(hostnames, value))
+    return not (value:find('[?*!]') or seen[value])
+  end
+
+  local function flush()
+    for _, h in ipairs(current_hosts) do
+      table.insert(hosts, h)
+    end
+    current_hosts = {}
+  end
+
+  ---@param aliases string[]
+  local function add_aliases(aliases)
+    flush()
+    for _, alias in ipairs(aliases) do
+      if is_valid(alias) then
+        seen[alias] = true
+        table.insert(current_hosts, { alias = alias })
+      end
+    end
   end
 
   while chr do
     local node = parse_line()
     if node then
-      -- This is done just to assign the type
-      node.value = node.value ---@type string[]
-      if node.param:lower() == 'match' and node.value then
-        local current = nil
-        for ind, val in ipairs(node.value) do
-          if val:lower() == 'host' and ind + 1 <= #node.value and is_valid(node.value[ind + 1]) then
-            current = node.value[ind + 1]
+      local lp = node.param:lower()
+      if lp == 'match' and node.value then
+        local values = node.value --[[@as string[] ]]
+        local match_aliases = {} ---@type string[]
+        for ind, val in ipairs(values) do
+          if val:lower() == 'host' and ind + 1 <= #values and is_valid(values[ind + 1]) then
+            table.insert(match_aliases, values[ind + 1])
           end
         end
-        if current then
-          table.insert(hostnames, current)
-        end
-      elseif node.param:lower() == 'host' and node.value then
-        for _, value in ipairs(node.value) do
+        add_aliases(match_aliases)
+      elseif lp == 'host' and node.value then
+        local valid = {} ---@type string[]
+        for _, value in
+          ipairs(node.value --[[@as string[] ]])
+        do
           if is_valid(value) then
-            table.insert(hostnames, value)
+            table.insert(valid, value)
+          end
+        end
+        add_aliases(valid)
+      else
+        local val = (type(node.value) == 'string' and node.value or nil) --[[@as string?]]
+        if val then
+          for _, h in ipairs(current_hosts) do
+            if lp == 'hostname' then
+              h.hostname = val
+            elseif lp == 'user' then
+              h.user = val
+            elseif lp == 'port' then
+              h.port = val
+            elseif lp == 'identityfile' then
+              h.identity_file = val
+            end
           end
         end
       end
     end
   end
+  flush()
 
-  return hostnames
+  return hosts
 end
 
 ---@param filename string
----@return string[] The hostnames configured in the file located at filename
+---@return vim.net.SshHost[] The host configurations in the file
 function M.parse_config(filename)
-  local file = io.open(filename, 'r')
-  if not file then
-    error('Cannot read ssh configuration file')
-  end
-  local config_string = file:read('*a')
-  file:close()
-
-  return M.parse_ssh_config(config_string)
+  local text = vim.fn.readblob(filename)
+  return M.parse_ssh_config(text)
 end
-
----@return string[] The hostnames configured in the ssh configuration file
----                 located at "~/.ssh/config".
----                 Note: This does not currently process `Include` directives in the
----                 configuration file.
-function M.get_hosts()
-  local config_path = vim.fs.normalize('~/.ssh/config') ---@type string
-
-  return M.parse_config(config_path)
-end
-
----@class vim.net.SshHost
----@field alias string Host alias from ssh config
----@field hostname? string Resolved Hostname directive
----@field user? string User directive
----@field port? string Port directive
----@field identity_file? string IdentityFile directive
 
 ---@param filename? string Path to the SSH config file. Defaults to ~/.ssh/config
----@return vim.net.SshHost[] hosts List of parsed host configurations
-function M.get_hosts_full(filename)
+---@return string[] The hostnames configured in the SSH config file.
+---                 Note: This does not currently process `Include` directives.
+function M.get_hosts(filename)
   filename = filename or vim.fs.normalize('~/.ssh/config')
-  local file = io.open(filename, 'r')
-  if not file then
+  local ok, hosts = pcall(M.parse_config, filename)
+  if not ok then
     return {}
   end
-  local text = file:read('*a')
-  file:close()
-
-  ---@type vim.net.SshHost[]
-  local hosts = {}
-  ---@type vim.net.SshHost?
-  local current_host = nil
-
-  for line in vim.gsplit(text, '\n', { plain = true }) do
-    local trimmed = vim.trim(line)
-    if trimmed == '' or trimmed:sub(1, 1) == '#' then
-      -- skip empty lines and comments
-    else
-      local key, value = trimmed:match('^(%S+)%s+(.+)$')
-      if not key then
-        key, value = trimmed:match('^(%S+)=(.+)$')
-      end
-      if key then
-        ---@type string
-        local lkey = key:lower()
-        if lkey == 'host' then
-          if current_host then
-            table.insert(hosts, current_host)
-          end
-          -- skip wildcard-only patterns
-          if value:find('[?*!]') then
-            current_host = nil
-          else
-            current_host = { alias = vim.trim(value) }
-          end
-        elseif lkey == 'match' then
-          if current_host then
-            table.insert(hosts, current_host)
-          end
-          current_host = nil
-        elseif current_host then
-          if lkey == 'hostname' then
-            current_host.hostname = vim.trim(value)
-          elseif lkey == 'user' then
-            current_host.user = vim.trim(value)
-          elseif lkey == 'port' then
-            current_host.port = vim.trim(value)
-          elseif lkey == 'identityfile' then
-            current_host.identity_file = vim.trim(value)
-          end
-        end
-      end
-    end
-  end
-  -- flush last host
-  if current_host then
-    table.insert(hosts, current_host)
-  end
-
-  return hosts
+  return vim.tbl_map(
+    ---@param h vim.net.SshHost
+    function(h)
+      return h.alias
+    end,
+    hosts
+  )
 end
 
 ---@class vim.net.SshUri
@@ -475,7 +452,7 @@ end
 local function check_and_install(uri, os, arch)
   local ver = vim.version() --[[@as vim.Version]]
   local nvim_version = 'v' .. tostring(ver)
-  local is_nightly = ver.prerelease ~= false
+  local is_nightly = ver.prerelease and true or false
 
   local os_map = { linux = 'linux', darwin = 'macos' }
   local arch_map = { x86_64 = 'x86_64', aarch64 = 'arm64', arm64 = 'arm64' }
