@@ -8,10 +8,10 @@
 --- require('vim._core.ui2').enable({
 ---   enable = true, -- Whether to enable or disable the UI.
 ---   msg = { -- Options related to the message module.
----     ---@type 'cmd'|'msg' Default message target, either in the
----     ---cmdline or in a separate ephemeral message window.
 ---     ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
----     ---or table mapping |ui-messages| kinds and triggers to a target.
+---     ---or table mapping |ui-messages| kinds, triggers and IDs to a target.
+---     ---Table keys are are matched as a Lua pattern to the message ID. 'default'
+---     ---mapping applies to any omitted kind: { default = 'cmd', progress = 'msg' }.
 ---     targets = 'cmd',
 ---     cmd = { -- Options related to messages in the cmdline window.
 ---       height = 0.5 -- Maximum height while expanded for messages beyond 'cmdheight'.
@@ -57,8 +57,8 @@ local M = {
   cfg = {
     enable = true,
     msg = { -- Options related to the message module.
-      target = 'cmd', ---@type 'cmd'|'msg' Default message target if not present in targets.
-      targets = {}, ---@type table<string, 'cmd'|'msg'|'pager'> Kind specific message targets.
+      ---@type table<string, 'cmd'|'msg'|'pager'> Kind specific message targets.
+      targets = { default = 'cmd' },
       cmd = { -- Options related to messages in the cmdline window.
         height = 0.5, -- Maximum height while expanded for messages beyond 'cmdheight'.
       },
@@ -84,11 +84,7 @@ function M.check_targets()
     local win = api.nvim_win_is_valid(M.wins[type]) and M.wins[type]
     local floating = win and api.nvim_win_get_config(win).zindex
     local setopt = not buf or not win or not floating
-    M.bufs[type] = buf
-      or (function(b)
-        vim.bo[b].modeline = false
-        return b
-      end)(api.nvim_create_buf(false, false))
+    M.bufs[type] = buf or api.nvim_create_buf(false, false)
 
     if not win or not floating then
       -- Open a new window when closed or no longer floating (e.g. wincmd J).
@@ -124,6 +120,7 @@ function M.check_targets()
         api.nvim_set_option_value('showbreak', '', { scope = 'local' })
         api.nvim_set_option_value('spell', false, { scope = 'local' })
         api.nvim_set_option_value('swapfile', false, { scope = 'local' })
+        api.nvim_set_option_value('modeline', false, { scope = 'local' })
         api.nvim_set_option_value('modifiable', true, { scope = 'local' })
         api.nvim_set_option_value('bufhidden', 'hide', { scope = 'local' })
         api.nvim_set_option_value('buftype', 'nofile', { scope = 'local' })
@@ -148,8 +145,8 @@ function M.check_targets()
       if type == 'pager' then
         -- Close pager with `q`, same as `checkhealth`
         api.nvim_buf_set_keymap(M.bufs.pager, 'n', 'q', '<Cmd>wincmd c<CR>', {})
-      elseif type == M.cfg.msg.target then
-        M.msg.prev_msg = '' -- Will no longer be visible.
+      elseif M.msg[type] then
+        M.msg[type].prev_msg = '' -- Will no longer be visible.
       end
     end
   end
@@ -177,8 +174,9 @@ function M.enable(opts)
   opts = opts or {}
   vim.validate('opts', opts, 'table', true)
   M.cfg = vim.tbl_deep_extend('keep', opts, M.cfg)
-  M.cfg.msg.target = type(M.cfg.msg.targets) == 'string' and M.cfg.msg.targets or M.cfg.msg.target
-  M.cfg.msg.targets = type(M.cfg.msg.targets) == 'table' and M.cfg.msg.targets or {}
+  M.cfg.msg.targets = type(M.cfg.msg.targets) == 'table' and M.cfg.msg.targets
+    or { default = M.cfg.msg.targets }
+  M.cfg.msg.targets.default = M.cfg.msg.targets.default or 'cmd'
   if #vim.api.nvim_list_uis() == 0 then
     return -- Don't prevent stdout messaging when no UIs are attached.
   end

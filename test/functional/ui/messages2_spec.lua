@@ -9,7 +9,7 @@ local api, clear, command, exec_lua, feed = n.api, n.clear, n.command, n.exec_lu
 local msg_timeout = 400
 local function set_msg_target_zero_ch()
   exec_lua(function()
-    require('vim._core.ui2').enable({ msg = { target = 'msg', msg = { timeout = msg_timeout } } })
+    require('vim._core.ui2').enable({ msg = { targets = 'msg', msg = { timeout = msg_timeout } } })
     vim.o.cmdheight = 0
   end)
 end
@@ -955,8 +955,8 @@ describe('messages2', function()
 
   it('configured targets per kind', function()
     exec_lua(function()
-      local cfg = { msg = { targets = { echo = 'msg', list_cmd = 'pager' } } }
-      require('vim._core.ui2').enable(cfg)
+      local targets = { echo = 'msg', list_cmd = 'pager', bufwrite = 'cmd', lua_print = 'cmd' }
+      require('vim._core.ui2').enable({ msg = { targets = targets } })
       print('foo') -- "lua_print" kind goes to cmd
       vim.cmd.echo('"bar"') -- "echo" kind goes to msg
       vim.cmd.highlight('VisualNC') -- "list_cmd" kind goes to pager
@@ -976,6 +976,25 @@ describe('messages2', function()
       VisualNC       xxx cleared                           |
       ^VisualNC       xxx cleared                        {4:bar}|
       foo                                                  |
+    ]])
+    -- Duplicate indicator in msg and cmd target simultaneously
+    command('close | echo "bar" | lua print("foo")')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*11
+      {1:~                                              }{4:bar(1)}|
+      foo(1)                                               |
+    ]])
+    finally(function()
+      os.remove('Xfile')
+    end)
+    -- Route bufwrite as a pattern to the message ID #39341
+    command('edit Xfile | write')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*11
+      {1:~                                              }{4:bar(1)}|
+      "Xfile" [New] 0L, 0B written                         |
     ]])
   end)
 
