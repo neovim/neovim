@@ -1203,12 +1203,10 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     });
     argt |= EX_RANGE | EX_DFLALL;
     addr_type_arg = ADDR_POSITIONS;
-    addr_mode = kOmLineWise;
   } else if (opts->range.type == kObjectTypeInteger) {
     argt |= EX_RANGE | EX_ZEROR;
     def = opts->range.data.integer;
     addr_type_arg = ADDR_POSITIONS;
-    addr_mode = kOmLineWise;
   } else if (HAS_KEY(opts, user_command, range)) {
     VALIDATE_S(false, "range", "", {
       goto err;

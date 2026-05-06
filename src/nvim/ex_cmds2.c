@@ -907,6 +907,7 @@ void ex_drop(exarg_T *eap)
           .cookie = NULL
         };
         do_cmdline(&ea, DOCMD_VERBOSE);
+
         if (did_set_swapcommand) {
           set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
         }

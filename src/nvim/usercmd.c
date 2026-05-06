@@ -822,7 +822,6 @@ invalid_count:
       // default for -range is using buffer lines
       if (*addr_type_arg == ADDR_NONE) {
         *addr_type_arg = ADDR_POSITIONS;
-        *addr_mode = kOmLineWise;
       }
     } else if (STRNICMP(attr, "count", attrlen) == 0) {
       *argt |= (EX_COUNT | EX_ZEROR | EX_RANGE);

@@ -5415,14 +5415,13 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   } else if (name[0] == '$') {        // last column or line
     if (dollar_lnum) {
       pos.lnum = bp->b_ml.ml_line_count;
-      pos.col = 0;
     } else {
       pos.lnum = wp->w_cursor.lnum;
-      if (charcol) {
-        pos.col = (colnr_T)mb_charlen(ml_get_buf(bp, wp->w_cursor.lnum));
-      } else {
-        pos.col = ml_get_buf_len(bp, wp->w_cursor.lnum);
-      }
+    }
+    if (charcol) {
+      pos.col = (colnr_T)mb_charlen(ml_get_buf(bp, pos.lnum));
+    } else {
+      pos.col = ml_get_buf_len(bp, pos.lnum);
     }
     return &pos;
   }

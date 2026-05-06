@@ -702,6 +702,7 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
 
   if (output) {
     if (opts & kShellOptWrite) {
+      // TODO(616b2f): look if we can use block_def here
       ml_replace_range(curbuf->b_op_start, curbuf->b_op_end, output, nread);
     } else {
       ml_append_pos(curbuf->b_op_start, output, nread);
