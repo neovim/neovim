@@ -19,14 +19,14 @@ local F = {}
 --- @param ... T
 --- @return T
 function F.if_nil(...)
-  vim.deprecate('vim.F.if_nil', 'vim.nonnil', '0.14')
+  vim.deprecate('vim.F.if_nil', 'vim.nonnil', '0.15')
   return vim.nonnil(...)
 end
 
 -- Use in combination with pcall
 --- @deprecated
 function F.ok_or_nil(status, ...)
-  vim.deprecate('vim.F.ok_or_nil', 'actual error handling', '0.14')
+  vim.deprecate('vim.F.ok_or_nil', 'actual error handling', '0.15')
   if not status then
     return
   end
@@ -40,14 +40,14 @@ end
 --- @param ... T?
 --- @return T
 function F.npcall(fn, ...)
-  vim.deprecate('vim.F.npcall', 'vim.npcall', '0.14')
+  vim.deprecate('vim.F.npcall', 'vim.npcall', '0.15')
   return vim.npcall(fn, ...)
 end
 
 --- Wrap a function to return nil if it fails, otherwise the value
 --- @deprecated
 function F.nil_wrap(fn)
-  vim.deprecate('vim.F.nil_wrap', 'vim.npcall', '0.14')
+  vim.deprecate('vim.F.nil_wrap', 'vim.npcall', '0.15')
   return function(...)
     return vim.npcall(fn, ...)
   end
