@@ -12,6 +12,7 @@ local M = vim._defer_require('vim.treesitter', {
   language = ..., --- @module 'vim.treesitter.language'
   languagetree = ..., --- @module 'vim.treesitter.languagetree'
   query = ..., --- @module 'vim.treesitter.query'
+  _select = ..., --- @module 'vim.treesitter._select'
 })
 
 local LanguageTree = M.languagetree
