@@ -234,4 +234,105 @@ function M.get_hosts()
   return M.parse_config(config_path)
 end
 
+---@class vim.net.SshHost
+---@field alias string Host alias from ssh config
+---@field hostname? string Resolved Hostname directive
+---@field user? string User directive
+---@field port? string Port directive
+---@field identity_file? string IdentityFile directive
+
+---@param filename? string Path to the SSH config file. Defaults to ~/.ssh/config
+---@return vim.net.SshHost[] hosts List of parsed host configurations
+function M.get_hosts_full(filename)
+  filename = filename or vim.fs.normalize('~/.ssh/config')
+  local file = io.open(filename, 'r')
+  if not file then
+    return {}
+  end
+  local text = file:read('*a')
+  file:close()
+
+  ---@type vim.net.SshHost[]
+  local hosts = {}
+  ---@type vim.net.SshHost?
+  local current_host = nil
+
+  for line in vim.gsplit(text, '\n', { plain = true }) do
+    local trimmed = vim.trim(line)
+    if trimmed == '' or trimmed:sub(1, 1) == '#' then
+      -- skip empty lines and comments
+    else
+      local key, value = trimmed:match('^(%S+)%s+(.+)$')
+      if not key then
+        key, value = trimmed:match('^(%S+)=(.+)$')
+      end
+      if key then
+        ---@type string
+        local lkey = key:lower()
+        if lkey == 'host' then
+          if current_host then
+            table.insert(hosts, current_host)
+          end
+          -- skip wildcard-only patterns
+          if value:find('[?*!]') then
+            current_host = nil
+          else
+            current_host = { alias = vim.trim(value) }
+          end
+        elseif lkey == 'match' then
+          if current_host then
+            table.insert(hosts, current_host)
+          end
+          current_host = nil
+        elseif current_host then
+          if lkey == 'hostname' then
+            current_host.hostname = vim.trim(value)
+          elseif lkey == 'user' then
+            current_host.user = vim.trim(value)
+          elseif lkey == 'port' then
+            current_host.port = vim.trim(value)
+          elseif lkey == 'identityfile' then
+            current_host.identity_file = vim.trim(value)
+          end
+        end
+      end
+    end
+  end
+  -- flush last host
+  if current_host then
+    table.insert(hosts, current_host)
+  end
+
+  return hosts
+end
+
+---@class vim.net.SshUri
+---@field host string
+---@field user? string
+---@field port? string
+
+---@param str string
+---@return vim.net.SshUri
+function M.parse_uri(str)
+  ---@type vim.net.SshUri
+  local uri = { host = '' }
+  ---@type string?
+  local scheme_match = str:match('^ssh://(.*)')
+  if scheme_match then
+    str = scheme_match
+  end
+  local user_match = str:match('^(.-)@(.*)')
+  if user_match then
+    uri.user = str:match('^(.-)@')
+    str = str:match('@(.*)')
+  end
+  local port_match = str:match(':(%d+)$')
+  if port_match then
+    uri.port = port_match
+    str = str:sub(1, -(#port_match + 2))
+  end
+  uri.host = str
+  return uri
+end
+
 return M
