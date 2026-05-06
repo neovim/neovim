@@ -4399,6 +4399,16 @@ lsp({buf}, {pos}, {position_encoding})                         *vim.pos.lsp()*
       • {pos}                (`lsp.Position`)
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
+offset({buf}, {offset})                                     *vim.pos.offset()*
+    Creates a new |vim.Pos| from buffer offset.
+
+    Parameters: ~
+      • {buf}     (`integer`)
+      • {offset}  (`integer`)
+
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
+
 to_cursor({pos})                                         *vim.pos.to_cursor()*
     Converts |vim.Pos| to cursor position (see |api-indexing|).
 
@@ -4432,6 +4442,15 @@ to_lsp({pos}, {position_encoding})                          *vim.pos.to_lsp()*
     Parameters: ~
       • {pos}                (`vim.Pos`) See |vim.Pos|.
       • {position_encoding}  (`lsp.PositionEncodingKind`)
+
+to_offset({pos})                                         *vim.pos.to_offset()*
+    Converts |vim.Pos| to buffer offset.
+
+    Parameters: ~
+      • {pos}  (`vim.Pos`) See |vim.Pos|.
+
+    Return: ~
+        (`integer`)
 
 
 ==============================================================================

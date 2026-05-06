@@ -180,6 +180,7 @@ LUA
 • |vim.nonnil()| returns the first argument which is not nil.
 • |vim.npcall()| calls the function `fn` in protected-mode like |pcall()|,
   but returns `nil` on error.
+• |vim.pos| can now convert between positions and buffer offsets.
 
 OPTIONS
 
