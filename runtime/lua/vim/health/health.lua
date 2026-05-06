@@ -571,16 +571,14 @@ local function check_external_tools()
     if ssh_job.code == 0 then
       health.ok(('%s (%s)'):format(ssh_out, ssh_path))
 
-      ---@type string?
-      local version_match = ssh_out:match('OpenSSH_([%d%.]+)')
-      if version_match then
-        ---@type string?
-        local major = version_match:match('^(%d+)')
+      local version_str = ssh_out:match('OpenSSH_([%d%.]+)')
+      local ver = version_str and vim.version.parse(version_str)
+      if ver then
         if vim.fn.has('win32') == 1 then
           health.warn(
             'Win32-OpenSSH does not support ControlMaster (multiplexing). Remote SSH features might be degraded or unsupported.'
           )
-        elseif major and tonumber(major) >= 4 then
+        elseif ver >= vim.version.parse('4.0') then
           health.ok('OpenSSH version supports multiplexing')
         else
           health.warn(
@@ -592,11 +590,21 @@ local function check_external_tools()
       end
 
       if vim.fn.has('win32') == 0 then
-        local tmp_stat = vim.uv.fs_stat('/tmp')
-        if tmp_stat and tmp_stat.type == 'directory' and vim.uv.fs_access('/tmp', 'W') then
-          health.ok('/tmp is writable (required for SSH multiplexing sockets)')
+        local ssh_g = vim.system({ ssh_path, '-G', 'example.com' }):wait()
+        if ssh_g.code == 0 then
+          local controlmaster = ssh_g.stdout:match('controlmaster%s+(%S+)')
+          local controlpath = ssh_g.stdout:match('controlpath%s+(%S+)')
+          if controlmaster and controlmaster ~= 'no' then
+            health.ok(('SSH multiplexing configured (ControlMaster=%s)'):format(controlmaster))
+          elseif controlpath and controlpath ~= 'none' then
+            health.ok(('SSH ControlPath resolved to: %s'):format(controlpath))
+          else
+            health.info(
+              'SSH multiplexing not configured in ssh_config. :connect will set it automatically.'
+            )
+          end
         else
-          health.error('/tmp is not a writable directory. SSH multiplexing will fail.')
+          health.warn('`ssh -G` failed. Cannot verify SSH multiplexing configuration.')
         end
       end
     else
