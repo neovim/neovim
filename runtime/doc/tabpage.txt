@@ -4,33 +4,33 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-Editing with windows in multiple tab pages.		*tab-page* *tabpage*
+Editing with windows in multiple tabpages.		*tab-page* *tabpage*
 
-The commands which have been added to use multiple tab pages are explained
+The commands which have been added to use multiple tabpages are explained
 here.  Additionally, there are explanations for commands that work differently
-when used in combination with more than one tab page.
+when used in combination with more than one tabpage.
 
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction						*tabpage-intro*
 
-A tab page holds one or more windows.  You can easily switch between tab
+A tabpage holds one or more windows.  You can easily switch between tab
 pages, so that you have several collections of windows to work on different
 things.
 
 Usually you will see a list of labels at the top of the Vim window, one for
-each tab page.  With the mouse you can click on the label to jump to that tab
-page.  There are other ways to move between tab pages, see below.
+each tabpage.  With the mouse you can click on the label to jump to that tab
+page.  There are other ways to move between tabpages, see below.
 
-Most commands work only in the current tab page.  That includes the |CTRL-W|
+Most commands work only in the current tabpage.  That includes the |CTRL-W|
 commands, |:windo|, |:all| and |:ball| (when not using the |:tab| modifier).
-The commands that are aware of other tab pages than the current one are
+The commands that are aware of other tabpages than the current one are
 mentioned below.
 
-Tab pages are also a nice way to edit a buffer temporarily without changing
-the current window layout.  Open a new tab page, do whatever you want to do
-and close the tab page.
+Tabpages are also a nice way to edit a buffer temporarily without changing
+the current window layout.  Open a new tabpage, do whatever you want to do
+and close the tabpage.
 
 							*tab-ID* *tabid* *tabpageid*
 Each tabpage has an unique identifier which will not change, even after
@@ -46,32 +46,32 @@ converts a tab-id to a tab number.
 ==============================================================================
 2. Commands						*tabpage-commands*
 
-OPENING A NEW TAB PAGE:
+OPENING A NEW TABPAGE:
 
 When starting Vim "vim -p filename ..." opens each file argument in a separate
-tab page (up to 'tabpagemax').  See |-p|
+tabpage (up to 'tabpagemax').  See |-p|
 
-A double click with the mouse in the non-GUI tab pages line opens a new, empty
-tab page.  It is placed left of the position of the click.  The first click
-may select another tab page first, causing an extra screen update.
+A double click with the mouse in the non-GUI tabpages line opens a new, empty
+tabpage.  It is placed left of the position of the click.  The first click
+may select another tabpage first, causing an extra screen update.
 
 This also works in a few GUI versions, esp. Win32.  But only when clicking
 right of the labels.
 
-In the GUI tab pages line you can use the right mouse button to open menu.
+In the GUI tabpages line you can use the right mouse button to open menu.
 |tabline-menu|.
 
 For the related autocommands see |tabnew-autocmd|.
 
 :[count]tabe[dit]				*:tabe* *:tabedit* *:tabnew*
 :[count]tabnew
-		Open a new tab page with an empty window, after the current
-		tab page. If [count] is given the new tab page appears after
-		the tabpage [count] otherwise the new tab page will appear
+		Open a new tabpage with an empty window, after the current
+		tabpage. If [count] is given the new tabpage appears after
+		the tabpage [count] otherwise the new tabpage will appear
 		after the current one. >
 		    :tabnew     " opens tabpage after the current one
 		    :.tabnew    " as above
-		    :+tabnew    " opens tabpage after the next tab page
+		    :+tabnew    " opens tabpage after the next tabpage
 				" note: it is one further than :tabnew
 		    :-tabnew    " opens tabpage before the current
 		    :0tabnew    " opens tabpage before the first one
@@ -79,78 +79,78 @@ For the related autocommands see |tabnew-autocmd|.
 
 :[count]tabe[dit] [++opt] [+cmd] {file}
 :[count]tabnew [++opt] [+cmd] {file}
-		Open a new tab page and edit {file}, like with |:edit|.
+		Open a new tabpage and edit {file}, like with |:edit|.
 		For [count] see |:tabnew| above.
 
 :[count]tabf[ind] [++opt] [+cmd] {file}			*:tabf* *:tabfind*
-		Open a new tab page and edit {file} in 'path', like with
+		Open a new tabpage and edit {file} in 'path', like with
 		|:find|.  For [count] see |:tabnew| above.
 
 :[count]tab {cmd}					*:tab*
 		Execute {cmd} and when it opens a new window open a new tab
 		page instead.  Doesn't work for |:diffsplit|, |:diffpatch|,
 		|:execute| and |:normal|.
-		If [count] is given the new tab page appears after the tab
-		page [count] otherwise the new tab page will appear after the
+		If [count] is given the new tabpage appears after the tab
+		page [count] otherwise the new tabpage will appear after the
 		current one.
 		Examples: >
-		    :tab split	    " opens current buffer in new tab page
-		    :tab help gt    " opens tab page with help for "gt"
+		    :tab split	    " opens current buffer in new tabpage
+		    :tab help gt    " opens tabpage with help for "gt"
 		    :.tab help gt   " as above
-		    :+tab help	    " opens tab page with help after the next
-				    " tab page
-		    :-tab help	    " opens tab page with help before the
+		    :+tab help	    " opens tabpage with help after the next
+				    " tabpage
+		    :-tab help	    " opens tabpage with help before the
 				    " current one
-		    :0tab help	    " opens tab page with help before the
+		    :0tab help	    " opens tabpage with help before the
 				    " first one
-		    :$tab help	    " opens tab page with help after the last
+		    :$tab help	    " opens tabpage with help after the last
 				    " one
 
-CTRL-W gf	Open a new tab page and edit the file name under the cursor.
+CTRL-W gf	Open a new tabpage and edit the file name under the cursor.
 		See |CTRL-W_gf|.
 
-CTRL-W gF	Open a new tab page and edit the file name under the cursor
+CTRL-W gF	Open a new tabpage and edit the file name under the cursor
 		and jump to the line number following the file name.
 		See |CTRL-W_gF|.
 
-CLOSING A TAB PAGE:
+CLOSING A TABPAGE:
 
-Closing the last window of a tab page closes the tab page too, unless there is
-only one tab page.
+Closing the last window of a tabpage closes the tabpage too, unless there is
+only one tabpage.
 
-Using the mouse: If the tab page line is displayed you can click in the "X" at
-the top right to close the current tab page.  A custom 'tabline' may show
+Using the mouse: If the tabpage line is displayed you can click in the "X" at
+the top right to close the current tabpage.  A custom 'tabline' may show
 something else.
 
 							*:tabc* *:tabclose*
-:tabc[lose][!]	Close current tab page.
+:tabc[lose][!]	Close current tabpage.
 		This command fails when:
-		- There is only one tab page on the screen.		*E784*
+		- There is only one tabpage on the screen.		*E784*
 		- When 'hidden' is not set, [!] is not used, a buffer has
 		  changes, and there is no other window on this buffer.
 		Changes to the buffer are not written and won't get lost, so
 		this is a "safe" command. >
-                    :tabclose   " close the current tab page
+                    :tabclose   " close the current tabpage
 
 :{count}tabc[lose][!]
 :tabc[lose][!] {count}
-		Close tab page {count}.  Fails in the same way as `:tabclose`
+		Close tabpage {count}.  Fails in the same way as `:tabclose`
 		above. >
-		    :-tabclose	    " close the previous tab page
-		    :+tabclose	    " close the next tab page
-		    :1tabclose	    " close the first tab page
-		    :$tabclose	    " close the last tab page
-		    :tabclose -2    " close the 2nd previous tab page
-		    :tabclose +	    " close the next tab page
-		    :tabclose 3	    " close the third tab page
-		    :tabclose $	    " close the last tab page
-		    :tabclose #     " close the last accessed tab page
+		    :-tabclose	    " close the previous tabpage
+		    :+tabclose	    " close the next tabpage
+		    :1tabclose	    " close the first tabpage
+		    :$tabclose	    " close the last tabpage
+		    :tabclose -2    " close the 2nd previous tabpage
+		    :tabclose +	    " close the next tabpage
+		    :tabclose 3	    " close the third tabpage
+		    :tabclose $	    " close the last tabpage
+		    :tabclose #     " close the last accessed tabpage
 
-When a tab page is closed the next tab page will become the current one.  This
+When a tabpage is closed the next tabpage will become the current one.  This
 behaviour can be customized using the 'tabclose' option.
 
 							*:tabo* *:tabonly*
-:tabo[nly][!]	Close all other tab pages.
+:tabo[nly][!]	Close all other tabpages.
 		When the 'hidden' option is set, all buffers in closed windows
 		become hidden.
 		When 'hidden' is not set, and the 'autowrite' option is set,
@@ -158,146 +158,146 @@ behaviour can be customized using the 'tabclose' option.
 		buffers that are modified are not removed, unless the [!] is
 		given, then they become hidden.  But modified buffers are
 		never abandoned, so changes cannot get lost. >
-		    :tabonly " close all tab pages except the current one
+		    :tabonly " close all tabpages except the current one
 
 :tabo[nly][!] {count}
-		Close all tab pages except {count} one. >
+		Close all tabpages except {count} one. >
 		    :.tabonly	    " as above
-		    :-tabonly	    " close all tab pages except the previous
+		    :-tabonly	    " close all tabpages except the previous
 				    " one
-		    :+tabonly	    " close all tab pages except the next one
-		    :1tabonly	    " close all tab pages except the first one
-		    :$tabonly	    " close all tab pages except the last one
-		    :tabonly -	    " close all tab pages except the previous
+		    :+tabonly	    " close all tabpages except the next one
+		    :1tabonly	    " close all tabpages except the first one
+		    :$tabonly	    " close all tabpages except the last one
+		    :tabonly -	    " close all tabpages except the previous
 				    " one
-		    :tabonly +2     " close all tab pages except the two next
+		    :tabonly +2     " close all tabpages except the two next
 				    " one
-		    :tabonly 1	    " close all tab pages except the first one
-		    :tabonly $	    " close all tab pages except the last one
-		    :tabonly #	    " close all tab pages except the last
+		    :tabonly 1	    " close all tabpages except the first one
+		    :tabonly $	    " close all tabpages except the last one
+		    :tabonly #	    " close all tabpages except the last
 				    " accessed one
 
 
-SWITCHING TO ANOTHER TAB PAGE:
+SWITCHING TO ANOTHER TABPAGE:
 
-Using the mouse: If the tab page line is displayed you can click in a tab page
-label to switch to that tab page.  Click where there is no label to go to the
-next tab page.  'tabline'
+Using the mouse: If the tabpage line is displayed you can click in a tabpage
+label to switch to that tabpage.  Click where there is no label to go to the
+next tabpage.  'tabline'
 
 :tabn[ext]				*:tabn* *:tabnext* *gt*
 <C-PageDown>				*CTRL-<PageDown>* *<C-PageDown>*
 gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
-		Go to the next tab page.  Wraps around from the last to the
+		Go to the next tabpage.  Wraps around from the last to the
 		first one.
 
 :{count}tabn[ext]
 :tabn[ext] {count}
-		Go to tab page {count}.  The first tab page has number one. >
-		    :-tabnext	" go to the previous tab page
-		    :+tabnext	" go to the next tab page
-		    :+2tabnext	" go to the two next tab page
-		    :1tabnext	" go to the first tab page
-		    :$tabnext	" go to the last tab page
+		Go to tabpage {count}.  The first tabpage has number one. >
+		    :-tabnext	" go to the previous tabpage
+		    :+tabnext	" go to the next tabpage
+		    :+2tabnext	" go to the two next tabpage
+		    :1tabnext	" go to the first tabpage
+		    :$tabnext	" go to the last tabpage
 		    :tabnext $	" as above
-		    :tabnext #	" go to the last accessed tab page
-		    :tabnext -	" go to the previous tab page
+		    :tabnext #	" go to the last accessed tabpage
+		    :tabnext -	" go to the previous tabpage
 		    :tabnext -1	" as above
-		    :tabnext +	" go to the next tab page
+		    :tabnext +	" go to the next tabpage
 		    :tabnext +1	" as above
 
 {count}<C-PageDown>
-{count}gt	Go to tab page {count}.  The first tab page has number one.
+{count}gt	Go to tabpage {count}.  The first tabpage has number one.
 
 :tabp[revious]				*:tabp* *:tabprevious* *gT* *:tabN*
 :tabN[ext]				*:tabNext* *CTRL-<PageUp>*
 <C-PageUp>			 *<C-PageUp>* *i_CTRL-<PageUp>* *i_<C-PageUp>*
-gT		Go to the previous tab page.  Wraps around from the first one
+gT		Go to the previous tabpage.  Wraps around from the first one
 		to the last one.
 
 :tabp[revious] {count}
 :tabN[ext] {count}
 {count}<C-PageUp>
-{count}gT	Go {count} tab pages back.  Wraps around from the first one
+{count}gT	Go {count} tabpages back.  Wraps around from the first one
 		to the last one.  Note that the use of {count} is different
-		from |:tabnext|, where it is used as the tab page number.
+		from |:tabnext|, where it is used as the tabpage number.
 
 :tabr[ewind]			*:tabfir* *:tabfirst* *:tabr* *:tabrewind*
-:tabfir[st]	Go to the first tab page.
+:tabfir[st]	Go to the first tabpage.
 
 							*:tabl* *:tablast*
-:tabl[ast]	Go to the last tab page.
+:tabl[ast]	Go to the last tabpage.
 
 <C-Tab>						*CTRL-<Tab>* *<C-Tab>*
 g<Tab>						*g<Tab>* *CTRL-W_g<Tab>*
-CTRL-W g<Tab>	Go to the last accessed tab page.
+CTRL-W g<Tab>	Go to the last accessed tabpage.
 
 Other commands:
 							*:tabs*
-:tabs		List the tab pages and the windows they contain.
+:tabs		List the tabpages and the windows they contain.
 		Shows a ">" for the current window.
 		Shows a "+" for modified buffers.
 		For example:
-			Tab page 1 ~
+			Tabpage 1 ~
 			  + tabpage.txt ~
 			    ex_docmd.c ~
-			Tab page 2 ~
+			Tabpage 2 ~
 			>   main.c ~
 
 
-REORDERING TAB PAGES:
+REORDERING TABPAGES:
 
 :tabm[ove] [N]						*:tabm* *:tabmove*
 :[N]tabm[ove]
-		Move the current tab page to after tab page N.  Use zero to
-		make the current tab page the first one.  N is counted before
-		the move, thus if the second tab page is the current one,
+		Move the current tabpage to after tabpage N.  Use zero to
+		make the current tabpage the first one.  N is counted before
+		the move, thus if the second tabpage is the current one,
 		`:tabmove 1` and `:tabmove 2` have no effect.
-		Without N the tab page is made the last one. >
+		Without N the tabpage is made the last one. >
 		    :.tabmove	" do nothing
-		    :-tabmove	" move the tab page to the left
-		    :+tabmove	" move the tab page to the right
-		    :0tabmove	" move the tab page to the first
+		    :-tabmove	" move the tabpage to the left
+		    :+tabmove	" move the tabpage to the right
+		    :0tabmove	" move the tabpage to the first
 		    :tabmove 0	" as above
-		    :tabmove	" move the tab page to the last
+		    :tabmove	" move the tabpage to the last
 		    :$tabmove	" as above
 		    :tabmove $	" as above
-		    :tabmove #	" move the tab page after the last accessed
-				" tab page
+		    :tabmove #	" move the tabpage after the last accessed
+				" tabpage
 
 :tabm[ove] +[N]
 :tabm[ove] -[N]
-		Move the current tab page N places to the right (with +) or to
+		Move the current tabpage N places to the right (with +) or to
 		the left (with -). >
-		    :tabmove -	" move the tab page to the left
+		    :tabmove -	" move the tabpage to the left
 		    :tabmove -1	" as above
-		    :tabmove +	" move the tab page to the right
+		    :tabmove +	" move the tabpage to the right
 		    :tabmove +1	" as above
 
 
-Note that although it is possible to move a tab page behind the N-th one by
+Note that although it is possible to move a tabpage behind the N-th one by
 using :Ntabmove.  And move it by N places by using :+Ntabmove.  For
 clarification what +N means in this context see |[range]|.
 
 
-LOOPING OVER TAB PAGES:
+LOOPING OVER TABPAGES:
 
 							*:tabd* *:tabdo*
 :[range]tabd[o] {cmd}
-		Execute {cmd} in each tab page or, if [range] is given, only
-		in tabpages which tab page number is in the [range]. It works
+		Execute {cmd} in each tabpage or, if [range] is given, only
+		in tabpages which tabpage number is in the [range]. It works
 		like doing this: >
 			:tabfirst
 			:{cmd}
 			:tabnext
 			:{cmd}
 			etc.
-<		This only operates in the current window of each tab page.
-		When an error is detected on one tab page, further tab pages
+<		This only operates in the current window of each tabpage.
+		When an error is detected on one tabpage, further tabpages
 		will not be visited.
-		The last tab page (or where an error occurred) becomes the
-		current tab page.
+		The last tabpage (or where an error occurred) becomes the
+		current tabpage.
 		{cmd} can contain '|' to concatenate several commands.
-		{cmd} must not open or close tab pages or reorder them.
+		{cmd} must not open or close tabpages or reorder them.
 		Also see |:windo|, |:argdo|, |:bufdo|, |:cdo|, |:ldo|, |:cfdo|
 		and |:lfdo|.
 
@@ -305,38 +305,38 @@ LOOPING OVER TAB PAGES:
 3. Other items						*tabpage-other*
 
 							*tabline-menu*
-The GUI tab pages line has a popup menu.  It is accessed with a right click.
+The GUI tabpages line has a popup menu.  It is accessed with a right click.
 The entries are:
-	Close		Close the tab page under the mouse pointer.  The
+	Close		Close the tabpage under the mouse pointer.  The
 			current one if there is no label under the mouse
 			pointer.
-	New Tab		Open a tab page, editing an empty buffer.  It appears
+	New Tab		Open a tabpage, editing an empty buffer.  It appears
 			to the left of the mouse pointer.
 	Open Tab...	Like "New Tab" and additionally use a file selector to
 			select a file to edit.
 
-Diff mode works per tab page.  You can see the diffs between several files
-within one tab page.  Other tab pages can show differences between other
+Diff mode works per tabpage.  You can see the diffs between several files
+within one tabpage.  Other tabpages can show differences between other
 files.
 
-Variables local to a tab page start with "t:". |tabpage-variable|
+Variables local to a tabpage start with "t:". |tabpage-variable|
 
-Currently there is only one option local to a tab page: 'cmdheight'.
+Currently there is only one option local to a tabpage: 'cmdheight'.
 
 						*tabnew-autocmd*
 The TabLeave and TabEnter autocommand events can be used to do something when
-switching from one tab page to another.  The exact order depends on what you
-are doing.  When creating a new tab page this works as if you create a new
+switching from one tabpage to another.  The exact order depends on what you
+are doing.  When creating a new tabpage this works as if you create a new
 window on the same buffer and then edit another buffer.  Thus ":tabnew"
 triggers:
 	WinLeave		leave current window
-	TabLeave		leave current tab page
-	WinEnter		enter window in new tab page
-	TabEnter		enter new tab page
+	TabLeave		leave current tabpage
+	WinEnter		enter window in new tabpage
+	TabEnter		enter new tabpage
 	BufLeave		leave current buffer
 	BufEnter		enter new empty buffer
 
-When switching to another tab page the order is:
+When switching to another tabpage the order is:
 	BufLeave
 	WinLeave
 	TabLeave
@@ -344,27 +344,27 @@ When switching to another tab page the order is:
 	TabEnter
 	BufEnter
 
-When entering a new tab page (|:tabnew|), TabNew is triggered before TabEnter
+When entering a new tabpage (|:tabnew|), TabNew is triggered before TabEnter
 and after WinEnter.
 
 ==============================================================================
 4. Setting 'tabline'					*setting-tabline*
 
-The 'tabline' option specifies what the line with tab pages labels looks like.
+The 'tabline' option specifies what the line with tabpages labels looks like.
 It is only used when there is no GUI tab line.
 
 You can use the 'showtabline' option to specify when you want the line with
-tab page labels to appear: never, when there is more than one tab page or
+tabpage labels to appear: never, when there is more than one tabpage or
 always.
 
-The highlighting of the tab pages line is set with the groups TabLine
+The highlighting of the tabpages line is set with the groups TabLine
 TabLineSel and TabLineFill.  |hl-TabLine| |hl-TabLineSel| |hl-TabLineFill|
 
-A "+" will be shown for a tab page that has a modified window.  The number of
+A "+" will be shown for a tabpage that has a modified window.  The number of
 windows in a tabpage is also shown.  Thus "3+" means three windows and one of
 them has a modified buffer.
 
-The 'tabline' option allows you to define your preferred way to tab pages
+The 'tabline' option allows you to define your preferred way to tabpages
 labels.  This isn't easy, thus an example will be given here.
 
 For basics see the 'statusline' option.  The same items can be used in the
@@ -375,9 +375,9 @@ Since the number of tab labels will vary, you need to use an expression for
 the whole option.  Something like: >
 	:set tabline=%!MyTabLine()
 
-Then define the MyTabLine() function to list all the tab pages labels.  A
+Then define the MyTabLine() function to list all the tabpages labels.  A
 convenient method is to split it in two parts:  First go over all the tab
-pages and define labels for them.  Then get the label for each tab page. >
+pages and define labels for them.  Then get the label for each tabpage. >
 
 	function MyTabLine()
 	  let s = ''
@@ -389,17 +389,17 @@ pages and define labels for them.  Then get the label for each tab page. >
 	      let s ..= '%#TabLine#'
 	    endif
 
-	    " set the tab page number (for mouse clicks)
+	    " set the tabpage number (for mouse clicks)
 	    let s ..= '%' .. (i + 1) .. 'T'
 
 	    " the label is made by MyTabLabel()
 	    let s ..= ' %{MyTabLabel(' .. (i + 1) .. ')} '
 	  endfor
 
-	  " after the last tab page fill with TabLineFill and reset tab page nr
+	  " after the last tabpage fill with TabLineFill and reset tabpage nr
 	  let s ..= '%#TabLineFill#%T'
 
-	  " right-align the label to close the current tab page
+	  " right-align the label to close the current tabpage
 	  if tabpagenr('$') > 1
 	    let s ..= '%=%#TabLine#%999Xclose'
 	  endif
@@ -407,7 +407,7 @@ pages and define labels for them.  Then get the label for each tab page. >
 	  return s
 	endfunction
 
-Now the MyTabLabel() function is called for each tab page to get its label. >
+Now the MyTabLabel() function is called for each tabpage to get its label. >
 
 	function MyTabLabel(n)
 	  let buflist = tabpagebuflist(a:n)
@@ -415,7 +415,7 @@ Now the MyTabLabel() function is called for each tab page to get its label. >
 	  return bufname(buflist[winnr - 1])
 	endfunction
 
-This is just a simplistic example that results in a tab pages line that
+This is just a simplistic example that results in a tabpages line that
 resembles the default, but without adding a + for a modified buffer or
 truncating the names.  You will want to reduce the width of labels in a
 clever way when there is not enough room.  Check the 'columns' option for the
@@ -424,9 +424,9 @@ space available.
 ==============================================================================
 5. Setting 'guitablabel'				*setting-guitablabel*
 
-When the GUI tab pages line is displayed, 'guitablabel' can be used to
-specify the label to display for each tab page.  Unlike 'tabline', which
-specifies the whole tab pages line at once, 'guitablabel' is used for each
+When the GUI tabpages line is displayed, 'guitablabel' can be used to
+specify the label to display for each tabpage.  Unlike 'tabline', which
+specifies the whole tabpages line at once, 'guitablabel' is used for each
 label separately.
 
 'guitabtooltip' is very similar and is used for the tooltip of the same label.
@@ -435,25 +435,25 @@ usually is longer.  Only supported on some systems though.
 
 See the 'statusline' option for the format of the value.
 
-The "%N" item can be used for the current tab page number.  The |v:lnum|
+The "%N" item can be used for the current tabpage number.  The |v:lnum|
 variable is also set to this number when the option is evaluated.
-The items that use a file name refer to the current window of the tab page.
+The items that use a file name refer to the current window of the tabpage.
 
 Note that syntax highlighting is not used for the option.  The %T and %X
 items are also ignored.
 
-A simple example that puts the tab page number and the buffer name in the
+A simple example that puts the tabpage number and the buffer name in the
 label: >
 	:set guitablabel=%N\ %f
 
 An example that resembles the default 'guitablabel': Show the number of
-windows in the tab page and a '+' if there is a modified buffer: >
+windows in the tabpage and a '+' if there is a modified buffer: >
 
 	function GuiTabLabel()
 	  let label = ''
 	  let bufnrlist = tabpagebuflist(v:lnum)
 
-	  " Add '+' if one of the buffers in the tab page is modified
+	  " Add '+' if one of the buffers in the tabpage is modified
 	  for bufnr in bufnrlist
 	    if getbufvar(bufnr, "&modified")
 	      let label = '+'
@@ -461,7 +461,7 @@ windows in the tab page and a '+' if there is a modified buffer: >
 	    endif
 	  endfor
 
-	  " Append the number of windows in the tab page if more than one
+	  " Append the number of windows in the tabpage if more than one
 	  let wincount = tabpagewinnr(v:lnum, '$')
 	  if wincount > 1
 	    let label ..= wincount
@@ -481,8 +481,8 @@ you get an error message for the function not being known.
 
 If you want to fall back to the default label, return an empty string.
 
-If you want to show something specific for a tab page, you might want to use a
-tab page local variable. |t:var|
+If you want to show something specific for a tabpage, you might want to use a
+tabpage local variable. |t:var|
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

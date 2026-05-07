@@ -30,9 +30,9 @@ By default an internal diff library will be used.  When 'diffopt' or
 'diffexpr' has been set an external "diff" command will be used.  This only
 works when such a diff program is available.
 
-Diffs are local to the current tab page |tabpage|.  You can't see diffs with
-a window in another tab page.  This does make it possible to have several
-diffs at the same time, each in their own tab page.
+Diffs are local to the current |tabpage|.  You can't see diffs with a window
+in another tabpage.  This does make it possible to have several diffs at the
+same time, each in their own tabpage.
 
 What happens is that Nvim opens a window for each of the files.  This is like
 using the |-O| argument.  This uses vertical splits, but if you prefer
@@ -118,7 +118,7 @@ file for a moment and come back to the same file and be in diff mode again.
 		options also when 'diff' was not set.
 
 :diffo[ff]!	Switch off diff mode for the current window and in all windows
-		in the current tab page where 'diff' is set.  Resetting
+		in the current tabpage where 'diff' is set.  Resetting
 		related options only happens in a window that has 'diff' set,
 		if the current window does not have 'diff' set then no options
 		in it are changed.

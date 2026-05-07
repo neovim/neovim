@@ -19,7 +19,7 @@ side by side.  All this is possible with split windows.
 |08.6|	Commands for all windows
 |08.7|	Viewing differences with diff mode
 |08.8|	Various
-|08.9|	Tab pages
+|08.9|	Tabpages
 
      Next chapter: |usr_09.txt|  Using the GUI
  Previous chapter: |usr_07.txt|  Editing more than one file
@@ -511,12 +511,12 @@ window is to appear:
 
 
 ==============================================================================
-*08.9*	Tab pages
+*08.9*	Tabpages
 
 You will have noticed that windows never overlap.  That means you quickly run
-out of screen space.  The solution for this is called Tab pages.
+out of screen space.  The solution for this is called Tabpages.
 
-Assume you are editing "thisfile".  To create a new tab page use this command: >
+Assume you are editing "thisfile".  To create a new tabpage use this command: >
 
 	:tabedit thatfile
 
@@ -534,7 +534,7 @@ window.  And you will notice a bar at the top with the two file names:
 	|				   |
 	+----------------------------------+
 <
-You now have two tab pages.  The first one has a window for "thisfile" and the
+You now have two tabpages.  The first one has a window for "thisfile" and the
 second one a window for "thatfile".  It's like two pages that are on top of
 each other, with a tab sticking out of each page showing the file name.
 
@@ -551,15 +551,15 @@ Now use the mouse to click on "thisfile" in the top line.  The result is
 	|				   |
 	+----------------------------------+
 <
-Thus you can switch between tab pages by clicking on the label in the top
+Thus you can switch between tabpages by clicking on the label in the top
 line.  If you don't have a mouse or don't want to use it, you can use the "gt"
 command.  Mnemonic: Goto Tab.
 
-Now let's create another tab page with the command: >
+Now let's create another tabpage with the command: >
 
 	:tab split
 
-This makes a new tab page with one window that is editing the same buffer as
+This makes a new tabpage with one window that is editing the same buffer as
 the window we were in:
 >
 	+-------------------------------------+
@@ -574,27 +574,27 @@ the window we were in:
 	+-------------------------------------+
 <
 You can put ":tab" before any Ex command that opens a window.  The window will
-be opened in a new tab page.  Another example: >
+be opened in a new tabpage.  Another example: >
 
 	:tab help gt
 
-Will show the help text for "gt" in a new tab page.
+Will show the help text for "gt" in a new tabpage.
 
-A few more things you can do with tab pages:
+A few more things you can do with tabpages:
 
 - click with the mouse in the space after the last label
-	The next tab page will be selected, like with "gt".
+	The next tabpage will be selected, like with "gt".
 
 - click with the mouse on the "X" in the top right corner
-	The current tab page will be closed.  Unless there are unsaved
-	changes in the current tab page.
+	The current tabpage will be closed.  Unless there are unsaved
+	changes in the current tabpage.
 
 - double click with the mouse in the top line
-	A new tab page will be created.
+	A new tabpage will be created.
 
 - the "tabonly" command
-	Closes all tab pages except the current one.  Unless there are unsaved
-	changes in other tab pages.
+	Closes all tabpages except the current one.  Unless there are unsaved
+	changes in other tabpages.
 
 For more information about tabpages see |tabpage|.
 

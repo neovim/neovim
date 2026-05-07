@@ -551,7 +551,7 @@ Tag		Command		   Normal-mode action	~
 |CTRL-W_P|	CTRL-W P	   go to preview window
 |CTRL-W_R|	CTRL-W R	   rotate windows upwards N times
 |CTRL-W_S|	CTRL-W S	   same as "CTRL-W s"
-|CTRL-W_T|	CTRL-W T	   move current window to a new tab page
+|CTRL-W_T|	CTRL-W T	   move current window to a new tabpage
 |CTRL-W_W|	CTRL-W W	   go to N previous window (wrap around)
 |CTRL-W_]|	CTRL-W ]	   split window and jump to tag under cursor
 |CTRL-W_^|	CTRL-W ^	   split current window and edit alternate
@@ -573,12 +573,12 @@ Tag		Command		   Normal-mode action	~
 				   under cursor
 |CTRL-W_g}|	CTRL-W g }	   do a |:ptjump| to the tag under the cursor
 |CTRL-W_gf|	CTRL-W g f	   edit file name under the cursor in a new
-				   tab page
+				   tabpage
 |CTRL-W_gF|	CTRL-W g F	   edit file name under the cursor in a new
-				   tab page and jump to the line number
+				   tabpage and jump to the line number
 				   following the file name.
-|CTRL-W_gt|	CTRL-W g t	   same as `gt`: go to next tab page
-|CTRL-W_gT|	CTRL-W g T	   same as `gT`: go to previous tab page
+|CTRL-W_gt|	CTRL-W g t	   same as `gt`: go to next tabpage
+|CTRL-W_gT|	CTRL-W g T	   same as `gT`: go to previous tabpage
 |CTRL-W_g<Tab>|	CTRL-W g <Tab>	   same as |g<Tab>|: go to last accessed tab
 				   page
 |CTRL-W_h|	CTRL-W h	   go to Nth left window (stop at first window)
@@ -743,7 +743,7 @@ Tag		Char	      Note Normal-mode action	~
 				   cursor N times, leave the cursor after it
 |gQ|		gQ		   switch to "Ex" mode with Vim editing
 |gR|		gR		2  enter Virtual Replace mode
-|gT|		gT		   go to the previous tab page
+|gT|		gT		   go to the previous tabpage
 |gU|		gU{motion}	2  make Nmove text uppercase
 |gV|		gV		   don't reselect the previous Visual area
 				   when executing a mapping or menu in Select
@@ -783,7 +783,7 @@ Tag		Char	      Note Normal-mode action	~
 |gq|		gq{motion}	2  format Nmove text
 |gr|		gr{char}	2  virtual replace N chars with {char}
 |gs|		gs		   go to sleep for N seconds (default 1)
-|gt|		gt		   go to the next tab page
+|gt|		gt		   go to the next tabpage
 |gu|		gu{motion}	2  make Nmove text lowercase
 |gv|		gv		   reselect the previous Visual area
 |gw|		gw{motion}	2  format Nmove text and keep cursor
@@ -797,7 +797,7 @@ Tag		Char	      Note Normal-mode action	~
 |g<LeftMouse>|	g<LeftMouse>	   same as <C-LeftMouse>
 		g<MiddleMouse>	   same as <C-MiddleMouse>
 |g<RightMouse>|	g<RightMouse>	   same as <C-RightMouse>
-|g<Tab>|	g<Tab>		   go to last accessed tab page
+|g<Tab>|	g<Tab>		   go to last accessed tabpage
 |g<Up>|		g<Up>		1  same as "gk"
 
 ==============================================================================
@@ -1623,25 +1623,25 @@ Tag		Command		Action ~
 |:syncbind|	:sync[bind]	sync scroll binding
 |:t|		:t		same as ":copy"
 |:tNext|	:tN[ext]	jump to previous matching tag
-|:tabNext|	:tabN[ext]	go to previous tab page
-|:tabclose|	:tabc[lose]	close current tab page
-|:tabdo|	:tabd[o]	execute command in each tab page
-|:tabedit|	:tabe[dit]	edit a file in a new tab page
-|:tabfind|	:tabf[ind]	find file in 'path', edit it in a new tab page
-|:tabfirst|	:tabfir[st]	go to first tab page
-|:tablast|	:tabl[ast]	go to last tab page
-|:tabmove|	:tabm[ove]	move tab page to other position
-|:tabnew|	:tabnew		edit a file in a new tab page
-|:tabnext|	:tabn[ext]	go to next tab page
-|:tabonly|	:tabo[nly]	close all tab pages except the current one
-|:tabprevious|	:tabp[revious]	go to previous tab page
-|:tabrewind|	:tabr[ewind]	go to first tab page
-|:tabs|		:tabs		list the tab pages and what they contain
+|:tabNext|	:tabN[ext]	go to previous tabpage
+|:tabclose|	:tabc[lose]	close current tabpage
+|:tabdo|	:tabd[o]	execute command in each tabpage
+|:tabedit|	:tabe[dit]	edit a file in a new tabpage
+|:tabfind|	:tabf[ind]	find file in 'path', edit it in a new tabpage
+|:tabfirst|	:tabfir[st]	go to first tabpage
+|:tablast|	:tabl[ast]	go to last tabpage
+|:tabmove|	:tabm[ove]	move tabpage to other position
+|:tabnew|	:tabnew		edit a file in a new tabpage
+|:tabnext|	:tabn[ext]	go to next tabpage
+|:tabonly|	:tabo[nly]	close all tabpages except the current one
+|:tabprevious|	:tabp[revious]	go to previous tabpage
+|:tabrewind|	:tabr[ewind]	go to first tabpage
+|:tabs|		:tabs		list the tabpages and what they contain
 |:tab|		:tab		create new tab when opening new window
 |:tag|		:ta[g]		jump to tag
 |:tags|		:tags		show the contents of the tag stack
-|:tcd|		:tc[d]		change directory for tab page
-|:tchdir|	:tch[dir]	change directory for tab page
+|:tcd|		:tc[d]		change directory for tabpage
+|:tchdir|	:tch[dir]	change directory for tabpage
 |:terminal|	:te[rminal]	open a terminal buffer
 |:tfirst|	:tf[irst]	jump to first matching tag
 |:throw|	:th[row]	throw an exception
