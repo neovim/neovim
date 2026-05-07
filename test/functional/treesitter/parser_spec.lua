@@ -8,6 +8,8 @@ local eq = t.eq
 local insert = n.insert
 local exec_lua = n.exec_lua
 local feed = n.feed
+local matches = t.matches
+local pcall_err = t.pcall_err
 local run_query = ts_t.run_query
 local assert_alive = n.assert_alive
 
@@ -105,6 +107,24 @@ describe('treesitter parser API', function()
         return tree:included_ranges(true)
       end)
     )
+  end)
+
+  it('ignores repeated parser finalization', function()
+    matches(
+      'Parser has been deleted',
+      pcall_err(exec_lua, function()
+        vim.treesitter.language.add('c')
+
+        local parser = vim._create_ts_parser('c')
+        -- The parser metatable exposes __gc through __index, so this simulates a finalizer
+        -- running before all Lua references to the userdata are gone.
+        parser:__gc()
+        parser:__gc()
+
+        parser:parse(nil, 'int x;', false)
+      end)
+    )
+    assert_alive()
   end)
 
   it('respects eol settings when parsing buffer', function()
