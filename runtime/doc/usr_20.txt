@@ -383,4 +383,6 @@ there can be only one.
 
 Next chapter: |usr_21.txt|  Go away and come back
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:
+Copyright: see |manual-copyright|
+
+vim:tw=78:ts=8:noet:ft=help:norl:

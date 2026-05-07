@@ -242,4 +242,6 @@ the GUI in the foreground.  You can also use ":gui -f".
 
 Next chapter: |usr_32.txt|  The undo tree
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:
+Copyright: see |manual-copyright|
+
+vim:tw=78:ts=8:noet:ft=help:norl:
