@@ -210,10 +210,6 @@ struct terminal {
 
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
   VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
-  /// Buffer used to save libvterm's responses to query sequences received from the child process.
-  /// This allows us to de-duplicate libvterm's and ghostty's responses, and will be removed once
-  /// we stop calling vterm_output_set_callback.
-  StringBuilder vterm_response_buffer;
 
   size_t refcount;                  // reference count
 };
@@ -449,35 +445,6 @@ void terminal_teardown(void)
   // terminal_destroy might be called after terminal_teardown is invoked
   // make sure it is in an empty, valid state
   invalidated_terminals = (Set(ptr_t)) SET_INIT;
-}
-
-static void term_output_callback(const char *s, size_t len, void *user_data)
-{
-  Terminal *term = (Terminal *)user_data;
-  terminal_send(term, s, len);
-  kv_concat_len(term->vterm_response_buffer, s, len);
-}
-
-static bool terminal_dedup_ghostty_response(Terminal *term, const uint8_t *data, size_t len)
-{
-  StringBuilder *responses = &term->vterm_response_buffer;
-
-  if (len == 0 || kv_size(*responses) < len) {
-    return false;
-  }
-
-  for (size_t i = 0; i <= kv_size(*responses) - len; i++) {
-    if (memcmp(responses->items + i, data, len) != 0) {
-      continue;
-    }
-
-    size_t tail = kv_size(*responses) - i - len;
-    memmove(responses->items + i, responses->items + i + len, tail);
-    kv_size(*responses) -= len;
-    return true;
-  }
-
-  return false;
 }
 
 static void assert_ghostty_success(GhosttyResult res)
@@ -737,7 +704,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   vterm_screen_set_unrecognised_fallbacks(term->vts, &vterm_fallbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
-  vterm_output_set_callback(term->vt, term_output_callback, term);
 
   term->selection_buffer = xcalloc(SELECTIONBUF_SIZE, 1);
   vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
@@ -1444,7 +1410,6 @@ void terminal_destroy(Terminal **termpp)
     xfree(term->selection_buffer);
     kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
-    kv_destroy(term->vterm_response_buffer);
     vterm_free(term->vt);
     multiqueue_free(term->pending.events);
     ghostty_mouse_event_free(term->ghostty_mouse_event);
@@ -1793,7 +1758,6 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     vterm_input_write(term->vt, crlf_data.items, kv_size(crlf_data));
     ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)crlf_data.items, kv_size(crlf_data));
     terminal_ghostty_render_state_update(term);
-    kv_size(term->vterm_response_buffer) = 0;
     kv_destroy(crlf_data);
   } else {
     if (terminal_input_clears_scrollback(data, len)) {
@@ -1802,7 +1766,6 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     vterm_input_write(term->vt, data, len);
     ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
     terminal_ghostty_render_state_update(term);
-    kv_size(term->vterm_response_buffer) = 0;
   }
   vterm_screen_flush_damage(term->vts);
 
@@ -2125,9 +2088,6 @@ static void term_ghostty_write_pty_callback(GhosttyTerminal ghostty FUNC_ATTR_UN
                                             void *user_data, const uint8_t *data, size_t len)
 {
   Terminal *term = (Terminal *)user_data;
-  if (terminal_dedup_ghostty_response(term, data, len)) {
-    return;
-  }
   terminal_send(term, (const char *)data, len);
 }
 
