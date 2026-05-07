@@ -8616,12 +8616,6 @@ void verify_command(char *cmd)
       "                                       `nW", a);
 }
 
-/// Get argt of command with id
-uint32_t get_cmd_argt(cmdidx_T cmdidx)
-{
-  return cmdnames[(int)cmdidx].cmd_argt;
-}
-
 /// Check if a command is a :map/:abbrev command.
 bool is_map_cmd(cmdidx_T cmdidx)
 {
