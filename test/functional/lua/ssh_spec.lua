@@ -97,6 +97,7 @@ describe('vim.net._ssh', function()
     os.remove(fake_bin_dir)
     vim.uv.fs_mkdir(fake_bin_dir, 511)
     local fake_ssh_path = fake_bin_dir .. (is_windows and '/ssh.cmd' or '/ssh')
+    local fake_tunnel_pid = fake_bin_dir .. '/tunnel.pid'
 
     local script
     if is_windows then
@@ -162,6 +163,7 @@ describe('vim.net._ssh', function()
       script = t.dedent([=[
         #!/usr/bin/env bash
         ARGS="$*"
+        PID_FILE=]=] .. string.format('%q', fake_tunnel_pid) .. [=[
 
         if [[ "$ARGS" == *"uname -s && uname -m"* ]]; then
       ]=] .. (behavior.uname or [=[
@@ -178,10 +180,13 @@ describe('vim.net._ssh', function()
           fi
       ]=] .. (behavior.tunnel or [=[
           SOCK=$(echo "$ARGS" | grep -oE '\-L [^:]+' | cut -d' ' -f2)
+          sleep 60 &
+          SLEEP_PID=$!
+          echo "$$ $SLEEP_PID" > "$PID_FILE"
+          trap 'kill "$SLEEP_PID" 2>/dev/null || true; rm -f "$PID_FILE"; exit 0' TERM INT EXIT
           echo "NVIM_READY"
           touch "$SOCK"
-          sleep 60 &
-          exit 0
+          wait "$SLEEP_PID"
       ]=]) .. [=[
         fi
 
@@ -193,6 +198,11 @@ describe('vim.net._ssh', function()
         fi
 
         if [[ "$ARGS" == *"-O"*"exit"* ]]; then
+          if [[ -f "$PID_FILE" ]]; then
+            set -- $(cat "$PID_FILE")
+            kill "$2" 2>/dev/null || true
+            kill "$1" 2>/dev/null || true
+          fi
           exit 0
         fi
 
@@ -286,7 +296,9 @@ describe('vim.net._ssh', function()
       skip(is_os('win'), 'remote-ssh engine is POSIX-only')
       setup_fake_ssh()
       local sock = n.exec_lua([[
-        return require('vim.net._ssh').start('user@test-server')
+        local sock, _, teardown = require('vim.net._ssh').start('user@test-server')
+        teardown()
+        return sock
       ]])
 
       assert(sock:match('_remote_nvim%.sock$'))
