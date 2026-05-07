@@ -11,6 +11,7 @@ for k, v in pairs({
   loader = true,
   func = true,
   F = true,
+  log = true,
   lsp = true,
   hl = true,
   diagnostic = true,
@@ -170,19 +171,6 @@ function vim.wait(time, callback, interval, fast_only)
     vim._core.loop_poll(poll_timeout, fast_only)
   end
 end
-
---- @nodoc
-vim.log = {
-  --- @enum vim.log.levels
-  levels = {
-    TRACE = 0,
-    DEBUG = 1,
-    INFO = 2,
-    WARN = 3,
-    ERROR = 4,
-    OFF = 5,
-  },
-}
 
 local utfs = {
   ['utf-8'] = true,

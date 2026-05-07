@@ -4668,9 +4668,12 @@ describe('LSP', function()
 
     it('validates config on attach', function()
       local tmp1 = t.tmpname(true)
+      local logfile = exec_lua(function()
+        return vim.lsp.log.get_filename()
+      end)
+
       exec_lua(function()
-        vim.fn.writefile({ '' }, fake_lsp_logfile)
-        vim.lsp.log._set_filename(fake_lsp_logfile)
+        vim.fn.writefile({ '' }, vim.lsp.log.get_filename())
       end)
 
       local function test_cfg(cfg, err)
@@ -4684,7 +4687,7 @@ describe('LSP', function()
 
         -- Assert NO log for non-applicable 'filetype'. #35737
         if type(cfg.filetypes) == 'table' then
-          t.assert_nolog(err, fake_lsp_logfile)
+          t.assert_nolog(err, logfile)
         end
 
         exec_lua(function()
@@ -4692,7 +4695,7 @@ describe('LSP', function()
         end)
 
         retry(nil, 1000, function()
-          t.assert_log(err, fake_lsp_logfile)
+          t.assert_log(err, logfile)
         end)
       end
 

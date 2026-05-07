@@ -181,6 +181,7 @@ LUA
 • |vim.npcall()| calls the function `fn` in protected-mode like |pcall()|,
   but returns `nil` on error.
 • |vim.pos| can now convert between positions and buffer offsets.
+• |vim.log| for easily creating loggers.
 
 OPTIONS
 

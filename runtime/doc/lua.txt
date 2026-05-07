@@ -3855,6 +3855,102 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
 
 
 ==============================================================================
+Lua module: vim.log                                                  *vim.log*
+
+The |vim.log| module provides file-backed logger instances.
+
+Use `vim.log.new()` to create a logger, it exposes five writer functions:
+`trace()`, `debug()`, `info()`, `warn()`, and `error()`. They are correspond
+to log levels defined by |vim.log.levels|.
+
+Example: >lua
+    local log = vim.log.new({ name = 'my-plugin', })
+    -- By default, logs will be written to {name}.log under `stdpath('log')`.
+
+    log.error('request failed', 'timeout')
+    -- This will write a line like the following to the log file:
+    --   [ERROR][2024-01-01 12:00:00] source.lua:123    request failed    timeout
+
+    -- Set the log level to `INFO`, otherwise the `info()` call below would be ignored,
+    -- since the default level is `WARN`.
+    vim.log.set_level(log, vim.log.levels.INFO)
+    log.info('starting', { buf = vim.api.nvim_get_current_buf() })
+    -- This will write a line like the following to the log file:
+    --   [INFO][2024-01-01 12:01:00] source.lua:124    starting    { buf = 1 }
+<
+
+You can also provide a custom formatter function to customize the log output
+format.
+
+
+*vim.Log*
+
+    Fields: ~
+      • {debug}  (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.DEBUG`.
+      • {error}  (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.ERROR`.
+      • {info}   (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.INFO`.
+      • {trace}  (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.TRACE`.
+      • {warn}   (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.WARN`.
+
+
+get_level({log})                                         *vim.log.get_level()*
+    Gets the current log level.
+
+    Parameters: ~
+      • {log}  (`vim.Log`) See |vim.Log|.
+
+    Return: ~
+        (`vim.log.levels`)
+
+new({opts})                                                    *vim.log.new()*
+    Creates a logger instance.
+
+    The logger writes formatted messages to a file, using a per-instance log
+    level and formatting function.
+
+    Parameters: ~
+      • {opts}  (`table`) A table with the following fields:
+                • {current_level}? (`vim.log.levels`, default:
+                  `vim.log.levels.WARN`) Minimum level that will be written.
+                • {format_func}?
+                  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+                  Formatter used for each log entry. Receives the logger's
+                  current level, the message level, and the values passed to
+                  the writer. Return a string to write an entry, or `nil` to
+                  skip it.
+                • {name} (`string`) Display name used in notifications emitted
+                  by the logger.
+
+    Return: ~
+        (`vim.Log`) See |vim.Log|.
+
+set_format_func({log}, {func})                     *vim.log.set_format_func()*
+    Sets the formatter used to produce log entries.
+
+    The formatter receives the logger's current level, the message level, and
+    the values passed to the writer method. Return a string to write an entry,
+    or `nil` to skip it.
+
+    Parameters: ~
+      • {log}   (`vim.Log`) See |vim.Log|.
+      • {func}  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+
+set_level({log}, {level})                                *vim.log.set_level()*
+    Sets the current log level.
+
+    Entries below this level are skipped.
+
+    Parameters: ~
+      • {log}    (`vim.Log`) See |vim.Log|.
+      • {level}  (`vim.log.levels`)
+
+
+==============================================================================
 Lua module: vim.lpeg                                                *vim.lpeg*
 
 
