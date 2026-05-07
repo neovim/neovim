@@ -337,6 +337,10 @@ func Test_spellfile_format_error()
   " SN_COMPOUND: incorrect comppatlen
   call Spellfile_Test(0z080000000007040101000000020165, 'E758:')
 
+  " SN_COMPOUND: oversized sectionlen
+  let v = eval('0z08004000000803010161' .. repeat('61', 50) .. 'FF')
+  call Spellfile_Test(v, 'E759:')
+
   " SN_INFO: missing info
   call Spellfile_Test(0z0F0000000005040101, '')
 
