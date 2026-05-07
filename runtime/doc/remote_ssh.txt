@@ -66,7 +66,7 @@ Local (Host):
 
 Remote (Target):
 - Linux (x86_64, aarch64) or macOS (arm64, x86_64).
-- `tar`, `curl` or `wget` to extract the Nvim release.
+- `tar`, `curl` to download and extract the Nvim release.
 - A POSIX-compliant shell.
 
 ==============================================================================
