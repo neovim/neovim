@@ -380,7 +380,8 @@ function vim.api.nvim_buf_get_changedtick(buf) end
 --- Gets a map of buffer-local `user-commands`.
 ---
 --- @param buf integer Buffer id, or 0 for current buffer
---- @param opts vim.api.keyset.get_commands Optional parameters. Currently not used.
+--- @param opts vim.api.keyset.get_commands Same as `nvim_get_commands()`, except `builtin` is ignored
+--- (buffer-local commands are always user-defined).
 --- @return vim.api.keyset.command_info # Map of maps describing commands.
 function vim.api.nvim_buf_get_commands(buf, opts) end
 
@@ -1334,12 +1335,12 @@ function vim.api.nvim_get_color_map() end
 
 --- Gets a map of global (non-buffer-local) Ex commands.
 ---
---- Currently only `user-commands` are supported, not builtin Ex commands.
----
----
 --- @see vim.api.nvim_get_all_options_info
---- @param opts vim.api.keyset.get_commands Optional parameters. Currently only supports
---- {"builtin":false}
+--- @param opts vim.api.keyset.get_commands Optional parameters:
+--- - builtin: (boolean) Get builtin commands instead of user-defined ones.
+--- - desc: (boolean) Include the description. For builtin
+---   commands, descriptions come from the corresponding help files.
+--- - name: (string) Only return the named command.
 --- @return table<string,vim.api.keyset.command_info> # Map of maps describing commands.
 function vim.api.nvim_get_commands(opts) end
 

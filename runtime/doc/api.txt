@@ -2880,8 +2880,9 @@ nvim_buf_get_commands({buf}, {opts})                 *nvim_buf_get_commands()*
 
     Parameters: ~
       • {buf}   (`integer`) Buffer id, or 0 for current buffer
-      • {opts}  (`vim.api.keyset.get_commands`) Optional parameters. Currently
-                not used.
+      • {opts}  (`vim.api.keyset.get_commands`) Same as |nvim_get_commands()|,
+                except `builtin` is ignored (buffer-local commands are always
+                user-defined).
 
     Return: ~
         (`vim.api.keyset.command_info`) Map of maps describing commands.
@@ -2993,14 +2994,17 @@ nvim_del_user_command({name})                        *nvim_del_user_command()*
 nvim_get_commands({opts})                                *nvim_get_commands()*
     Gets a map of global (non-buffer-local) Ex commands.
 
-    Currently only |user-commands| are supported, not builtin Ex commands.
-
     Attributes: ~
         Since: 0.3.0
 
     Parameters: ~
-      • {opts}  (`vim.api.keyset.get_commands`) Optional parameters. Currently
-                only supports {"builtin":false}
+      • {opts}  (`vim.api.keyset.get_commands`) Optional parameters:
+                • builtin: (boolean) Get builtin commands instead of
+                  user-defined ones.
+                • desc: (boolean) Include the description. For builtin
+                  commands, descriptions come from the corresponding help
+                  files.
+                • name: (string) Only return the named command.
 
     Return: ~
         (`table<string,vim.api.keyset.command_info>`) Map of maps describing

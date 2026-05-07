@@ -135,6 +135,7 @@ API
 • |nvim_buf_set_extmark()| `virt_lines_overflow` accepts "wrap" to enable
   wrapping onto extra rows and "auto" which enables horizontal scrolling when
   'nowrap' is set and wrapping when 'wrap' is set.
+• |nvim_get_commands()| supports builtin commands, "name" and "desc".
 
 BUILD
 
