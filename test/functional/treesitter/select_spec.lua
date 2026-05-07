@@ -41,7 +41,7 @@ local function treeselect(cmd_, count_)
   end
 
   exec_lua(function(cmd, count)
-    vim.treesitter.select(cmd, { count = count })
+    vim.treesitter.select(cmd, count)
   end, cmd_, count_)
 end
 
