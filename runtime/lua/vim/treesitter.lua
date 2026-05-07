@@ -12,6 +12,7 @@ local M = vim._defer_require('vim.treesitter', {
   language = ..., --- @module 'vim.treesitter.language'
   languagetree = ..., --- @module 'vim.treesitter.languagetree'
   query = ..., --- @module 'vim.treesitter.query'
+  _select = ..., --- @module 'vim.treesitter._select'
 })
 
 local LanguageTree = M.languagetree
@@ -361,17 +362,20 @@ end
 --- Buffer number (nil or 0 for current buffer)
 --- @field bufnr integer?
 ---
---- 0-indexed (row, col) tuple. Defaults to cursor position in the
---- current window. Required if {bufnr} is not the current buffer
+--- 0-indexed (row, col) tuple. Required if {bufnr} is not the current buffer
+--- (default: window-local cursor)
 --- @field pos [integer, integer]?
 ---
---- Parser language. (default: from buffer filetype)
+--- Parser language.
+--- (default: from 'filetype')
 --- @field lang string?
 ---
---- Ignore injected languages (default true)
+--- Ignore injected languages
+--- (default: true)
 --- @field ignore_injections boolean?
 ---
---- Include anonymous nodes (default false)
+--- Include anonymous nodes
+--- (default: false)
 --- @field include_anonymous boolean?
 
 --- Returns the smallest named node at the given position
@@ -506,6 +510,44 @@ end
 ---@return string
 function M.foldexpr(lnum)
   return M._fold.foldexpr(lnum)
+end
+
+--- @class vim.treesitter.select.Opts
+--- @inlinedoc
+---
+--- Expand or adjust the selection this many times.
+--- (default: 1)
+--- @field count integer?
+
+--- Starts or adjusts a |Visual| selection at cursor, based on tree nodes. The `target` parameter
+--- decides the selection behavior.
+---
+---@param target 'parent'|'child'|'next'|'prev'|'extend_next'|'extend_prev' Decides the selection behavior.
+---@param opts vim.treesitter.select.Opts?
+function M.select(target, opts)
+  vim.validate('target', target, 'string')
+  vim.validate('opts', opts, 'table', true)
+  opts = opts or {}
+  if opts.count then
+    vim.validate('count', opts.count, 'number')
+  end
+  local count = opts.count or 1
+
+  if target == 'parent' then
+    return M._select.select_parent(count)
+  elseif target == 'child' then
+    return M._select.select_child(count)
+  elseif target == 'next' then
+    return M._select.select_next(count)
+  elseif target == 'prev' then
+    return M._select.select_prev(count)
+  elseif target == 'extend_next' then
+    return M._select.select_grow_next(count)
+  elseif target == 'extend_prev' then
+    return M._select.select_grow_prev(count)
+  else
+    error(('Invalid target: %s'):format(target))
+  end
 end
 
 return M

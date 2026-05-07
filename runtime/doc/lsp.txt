@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-LSP client/framework                                     *lsp* *LSP*
+LSP client/framework                                     *lsp* *LSP* *vim.lsp*
 
 Nvim supports the Language Server Protocol (LSP), which means it acts as
 a client to LSP servers and includes a Lua framework `vim.lsp` for building
@@ -1640,9 +1640,11 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
 
                                                *vim.lsp.buf.selection_range()*
 selection_range({direction}, {timeout_ms})
-    Perform an incremental selection at the cursor position based on ranges
-    given by the LSP. The `direction` parameter specifies the number of times
-    to expand the selection. Negative values will shrink the selection.
+                                                   *lsp-incremental-selection*
+
+    Expands or contracts a |Visual| selection at cursor, based on ranges given
+    by LSP. The `direction` parameter specifies the number of times to expand
+    the selection. Negative values will shrink the selection.
 
     Parameters: ~
       • {direction}   (`integer`)

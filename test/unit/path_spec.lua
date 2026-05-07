@@ -718,7 +718,7 @@ describe('path.c', function()
       eq(1, path_with_url([[test+abc-123.ghi://xyz/foo/b1]]))
       eq(2, path_with_url([[test+abc-123.ghi:\\xyz\foo\b1]]))
 
-      -- Check invalid scheme starting or ending wiht '+', '-', or '.'
+      -- Check invalid scheme starting or ending with '+', '-', or '.'
       eq(0, path_with_url([[-test://xyz/foo/b4]]))
       eq(0, path_with_url([[test-://xyz/foo/b5]]))
       eq(0, path_with_url([[+test://xyz/foo/b4]]))

@@ -28,6 +28,8 @@ DIAGNOSTICS
   (deprecated in Nvim 0.10 |deprecated-0.10|).
 • The legacy signature of |vim.diagnostic.enable()| (deprecated in Nvim 0.10
   |deprecated-0.10|) is no longer supported.
+• `vim.diagnostic.Opts.Status.format` no longer accepts the table mapping
+  from severity to text. Use `vim.diagnostic.Opts.Signs.text` instead.
 
 EDITOR
 
@@ -399,6 +401,8 @@ TREESITTER
 • |LanguageTree:parse()| now accepts a list of ranges.
 • |v_an| |v_in| |v_]n| |v_[n| incremental selection of treesitter nodes.
 • |v_]N| |v_[N| expand selection to sibling treesitter node.
+• |vim.treesitter.select()| starts or adjusts a visual selection at cursor,
+  based on tree nodes.
 
 TUI
 

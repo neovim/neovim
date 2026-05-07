@@ -21,7 +21,7 @@ The basics are explained in chapter 7 and 8 of the user manual |usr_07.txt|
 Summary:
    A buffer is the in-memory text of a file.
    A window is a viewport on a buffer.
-   A tab page is a collection of windows.
+   A tabpage is a collection of windows.
 
 A window is a viewport onto a buffer.  You can use multiple windows on one
 buffer, or several windows on different buffers.
@@ -61,8 +61,8 @@ empty buffer is created and it is not modified, the buffer will be re-used
 when loading another file into that buffer.  This also means the buffer number
 will not change.
 
-The main Vim window can hold several split windows.  There are also tab pages
-|tab-page|, each of which can hold multiple windows.
+The main Vim window can hold several split windows.  There are also
+|tabpage|s, each of which can hold multiple windows.
 
 							*focusable*
 If a window is focusable, it is part of the "navigation stack", that is,
@@ -352,9 +352,8 @@ CTRL-W c					*CTRL-W_c* *:clo* *:close*
 		[!] is used, the buffer becomes hidden (unless there is another
 		window editing it).
 
-		When there is only one |edit-window| in the current tab page
-		and there is another tab page, this closes the current tab
-		page.  |tab-page|.
+		When there is only one |edit-window| in the current |tabpage|
+		and there is another tabpage, this closes the current tabpage.
 
 		This command fails when:			*E444*
 		- There is only one window on the screen.
@@ -377,8 +376,8 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 
 		The buffer becomes hidden (unless there is another window
 		editing it or 'bufhidden' is `unload`, `delete` or `wipe`).
-		If the window is the last one in the current tab page the tab
-		page is closed. |tab-page|
+		If the window is the last one in the current |tabpage| the
+		tabpage is closed.
 
 		The value of 'hidden' is irrelevant for this command.
 		Changes to the buffer are not written and won't get lost, so
@@ -544,13 +543,13 @@ CTRL-W L	Move the current window to be at the far right, using the full
 		is created.
 
 						*CTRL-W_T*
-CTRL-W T	Move the current window to a new tab page.  This fails if
-		there is only one window in the current tab page.
+CTRL-W T	Move the current window to a new tabpage.  This fails if
+		there is only one window in the current tabpage.
 		This works like `:tab split`, except the previous window is
 		closed.
-		When a count is specified the new tab page will be opened
-		before the tab page with this index.  Otherwise it comes after
-		the current tab page.
+		When a count is specified the new tabpage will be opened
+		before the tabpage with this index.  Otherwise it comes after
+		the current tabpage.
 
 ==============================================================================
 6. Window resizing					*window-resize*
@@ -671,7 +670,7 @@ use the `winlayout()` and `getwininfo()` functions.
 
 |WinScrolled| and |WinResized| do not trigger when the first autocommand is
 added, only after the first scroll or resize.  They may trigger when switching
-to another tab page.
+to another tabpage.
 
 The commands executed are expected to not cause window size or scroll changes.
 If this happens anyway, the event will trigger again very soon.  In other
@@ -737,9 +736,9 @@ can also get to them with the buffer list commands, like ":bnext".
 		Rearrange the screen to open one window for each argument.
 		All other windows are closed.  When a count is given, this is
 		the maximum number of windows to open.
-		With the |:tab| modifier open a tab page for each argument.
+		With the |:tab| modifier open a tabpage for each argument.
 		When there are more arguments than 'tabpagemax' further ones
-		become split windows in the last tab page.
+		become split windows in the last tabpage.
 		When the 'hidden' option is set, all buffers in closed windows
 		become hidden.
 		When 'hidden' is not set, and the 'autowrite' option is set,
@@ -801,7 +800,7 @@ can also get to them with the buffer list commands, like ":bnext".
 		The purpose of this command is that it can be used from a
 		program that wants Vim to edit another file, e.g., a debugger.
 		When using the |:tab| modifier each argument is opened in a
-		tab page.  The last window is used if it's empty.
+		tabpage.  The last window is used if it's empty.
 		Also see |++opt| and |+cmd|.
 
 ==============================================================================
@@ -816,7 +815,7 @@ can also get to them with the buffer list commands, like ":bnext".
 				CTRL-W w
 				:{cmd}
 				etc.
-<			This only operates in the current tab page.
+<			This only operates in the current tabpage.
 			When an error is detected on one window, further
 			windows will not be visited.
 			The last window (or where an error occurred) becomes
@@ -874,14 +873,14 @@ the buffer.  The result is that all buffers will use the 'encoding' encoding
 :sta[g][!] [tagname]
 		Does ":tag[!] [tagname]" and splits the window for the found
 		tag.  Refer to 'switchbuf' to jump to a tag in a vertically
-		split window or a new tab page.  See also |:tag|.
+		split window or a new tabpage.  See also |:tag|.
 
 CTRL-W ]					*CTRL-W_]* *CTRL-W_CTRL-]*
 CTRL-W CTRL-]	Split current window in two.  Use identifier under cursor as a
 		tag and jump to it in the new upper window.
 		In Visual mode uses the Visually selected text as a tag.
 		Make new window N high.  Refer to 'switchbuf' to jump to a tag
-		in a vertically split window or a new tab page.
+		in a vertically split window or a new tabpage.
 
 							*CTRL-W_g]*
 CTRL-W g ]	Split current window in two.  Use identifier under cursor as a
@@ -912,21 +911,21 @@ CTRL-W F						*CTRL-W_F*
 		details on how the line number is obtained.
 
 CTRL-W gf						*CTRL-W_gf*
-		Open a new tab page and edit the file name under the cursor.
-		Like "tab split" and "gf", but the new tab page isn't created
+		Open a new tabpage and edit the file name under the cursor.
+		Like "tab split" and "gf", but the new tabpage isn't created
 		if the file does not exist.
 
 CTRL-W gF						*CTRL-W_gF*
-		Open a new tab page and edit the file name under the cursor
+		Open a new tabpage and edit the file name under the cursor
 		and jump to the line number following the file name.  Like
-		"tab split" and "gF", but the new tab page isn't created if
+		"tab split" and "gF", but the new tabpage isn't created if
 		the file does not exist.
 
 CTRL-W gt						*CTRL-W_gt*
-		Go to next tab page, same as `gt`.
+		Go to next tabpage, same as `gt`.
 
 CTRL-W gT						*CTRL-W_gT*
-		Go to previous tab page, same as `gT`.
+		Go to previous tabpage, same as `gT`.
 
 Also see |CTRL-W_CTRL-I|: open window for an included file that includes
 the keyword under the cursor.
@@ -938,7 +937,7 @@ The preview window is a special window to show (preview) another file.  It is
 normally a small window used to show an include file or definition of a
 function.
 
-There can be only one preview window (per tab page).  It is created with one
+There can be only one preview window (per tabpage).  It is created with one
 of the commands below.  The 'previewheight' option can be set to specify the
 height of the preview window when it's opened.  The 'previewwindow' option is
 set in the preview window to be able to recognize it.  The 'winfixheight'

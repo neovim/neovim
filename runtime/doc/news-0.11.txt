@@ -308,7 +308,7 @@ OPTIONS
 • 'completeopt' flag "preinsert" highlights text to be inserted.
 • 'wildmode' flag "noselect" shows 'wildmenu' without selecting an entry.
 • 'messagesopt' configures |:messages| and |hit-enter| prompt.
-• 'tabclose' controls which tab page to focus when closing a tab page.
+• 'tabclose' controls which tabpage to focus when closing a tabpage.
 • 'eventignorewin' to persistently ignore events in a window.
 • 'winborder' sets the default border for |floating-windows|.
 

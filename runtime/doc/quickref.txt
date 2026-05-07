@@ -738,8 +738,8 @@ Short explanation of each option:		*option-list*
 'guifont'	  'gfn'     GUI: Name(s) of font(s) to be used
 'guifontwide'	  'gfw'     list of font names for double-wide characters
 'guioptions'	  'go'	    GUI: Which components and options are used
-'guitablabel'	  'gtl'     GUI: custom label for a tab page
-'guitabtooltip'   'gtt'     GUI: custom tooltip for a tab page
+'guitablabel'	  'gtl'     GUI: custom label for a tabpage
+'guitabtooltip'   'gtt'     GUI: custom tooltip for a tabpage
 'helpfile'	  'hf'	    full path name of the main help file
 'helpheight'	  'hh'	    minimum height of a new help window
 'helplang'	  'hlg'     preferred help languages
@@ -866,7 +866,7 @@ Short explanation of each option:		*option-list*
 'showfulltag'	  'sft'     show full tag pattern when completing tag
 'showmatch'	  'sm'	    briefly jump to matching bracket if insert one
 'showmode'	  'smd'     message on status line to show current mode
-'showtabline'	  'stal'    tells when the tab pages line is displayed
+'showtabline'	  'stal'    tells when the tabpages line is displayed
 'sidescroll'	  'ss'	    minimum number of columns to scroll horizontal
 'sidescrolloff'   'siso'    min. nr. of columns to left and right of cursor
 'signcolumn'	  'scl'	    when and how to display the sign column
@@ -893,9 +893,9 @@ Short explanation of each option:		*option-list*
 'switchbuf'	  'swb'     sets behavior when switching to another buffer
 'synmaxcol'	  'smc'     maximum column to find syntax items
 'syntax'	  'syn'     syntax to be loaded for current buffer
-'tabclose'	  'tcl'     which tab page to focus when closing a tab
-'tabline'	  'tal'     custom format for the console tab pages line
-'tabpagemax'	  'tpm'     maximum number of tab pages for |-p| and "tab all"
+'tabclose'	  'tcl'     which tabpage to focus when closing a tab
+'tabline'	  'tal'     custom format for the console tabpages line
+'tabpagemax'	  'tpm'     maximum number of tabpages for |-p| and "tab all"
 'tabstop'	  'ts'	    number of columns between two tab stops
 'tagbsearch'	  'tbs'     use binary searching in tags files
 'tagcase'	  'tc'      how to handle case when searching in tags files

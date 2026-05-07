@@ -23,14 +23,26 @@ local function set_filetype(ft)
   api.nvim_set_option_value('filetype', ft, { buf = 0 })
 end
 
-local function treeselect(cmd_, ...)
+local function treeselect(cmd_, count_)
   if cmd_ == 'select_node' then
-    cmd_ = 'select_child'
+    cmd_ = 'child'
+  elseif cmd_ == 'select_child' then
+    cmd_ = 'child'
+  elseif cmd_ == 'select_parent' then
+    cmd_ = 'parent'
+  elseif cmd_ == 'select_next' then
+    cmd_ = 'next'
+  elseif cmd_ == 'select_prev' then
+    cmd_ = 'prev'
+  elseif cmd_ == 'select_grow_next' then
+    cmd_ = 'extend_next'
+  elseif cmd_ == 'select_grow_prev' then
+    cmd_ = 'extend_prev'
   end
 
-  exec_lua(function(cmd, ...)
-    require 'vim.treesitter._select'[cmd](...)
-  end, cmd_, ...)
+  exec_lua(function(cmd, count)
+    vim.treesitter.select(cmd, { count = count })
+  end, cmd_, count_)
 end
 
 describe('treesitter incremental-selection', function()
