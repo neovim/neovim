@@ -283,6 +283,8 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.get_commands
 --- @field builtin? boolean
+--- @field desc? boolean
+--- @field name? string
 
 --- @class vim.api.keyset.get_extmark
 --- @field details? boolean

@@ -124,6 +124,7 @@ API
   • |nvim_get_option_info2()|
   • |nvim_get_option_value()|
   • |nvim_set_option_value()|
+• |nvim_get_commands()| supports builtin commands, "name" and "desc".
 
 BUILD
 

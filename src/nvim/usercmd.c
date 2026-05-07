@@ -403,7 +403,7 @@ char *get_user_cmd_nargs(expand_T *xp, int idx)
   return user_cmd_nargs[idx];
 }
 
-static char *get_command_complete(int arg)
+char *get_command_complete(int arg)
 {
   if (arg < 0 || arg >= (int)(ARRAY_SIZE(command_complete))) {
     return NULL;
@@ -1776,97 +1776,15 @@ int do_ucmd(exarg_T *eap, bool preview)
   return 0;
 }
 
-/// Gets a map of maps describing user-commands defined for buffer `buf` or
-/// defined globally if `buf` is NULL.
-///
-/// @param buf  Buffer to inspect, or NULL to get global commands.
-///
-/// @return Map of maps describing commands
-Dict commands_array(buf_T *buf, Arena *arena)
+const char *cmd_addr_type_name(cmd_addr_T addr_type)
 {
-  garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
-
-  Dict rv = arena_dict(arena, (size_t)gap->ga_len);
-  for (int i = 0; i < gap->ga_len; i++) {
-    char arg[2] = { 0, 0 };
-    Dict d = arena_dict(arena, 16);
-    ucmd_T *cmd = USER_CMD_GA(gap, i);
-
-    PUT_C(d, "name", CSTR_AS_OBJ(cmd->uc_name));
-    PUT_C(d, "definition", CSTR_AS_OBJ(cmd->uc_rep));
-    PUT_C(d, "desc", CSTR_AS_OBJ(cmd->uc_desc));
-    PUT_C(d, "script_id", INTEGER_OBJ(cmd->uc_script_ctx.sc_sid));
-    PUT_C(d, "bang", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_BANG)));
-    PUT_C(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
-    PUT_C(d, "register", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_REGSTR)));
-    PUT_C(d, "keepscript", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_KEEPSCRIPT)));
-
-    if (cmd->uc_preview_luaref != LUA_NOREF) {
-      PUT_C(d, "preview", LUAREF_OBJ(api_new_luaref(cmd->uc_preview_luaref)));
-    }
-
-    if (cmd->uc_luaref != LUA_NOREF) {
-      PUT_C(d, "callback", LUAREF_OBJ(api_new_luaref(cmd->uc_luaref)));
-    }
-
-    switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE)) {
-    case 0:
-      arg[0] = '0'; break;
-    case (EX_EXTRA):
-      arg[0] = '*'; break;
-    case (EX_EXTRA | EX_NOSPC):
-      arg[0] = '?'; break;
-    case (EX_EXTRA | EX_NEEDARG):
-      arg[0] = '+'; break;
-    case (EX_EXTRA | EX_NOSPC | EX_NEEDARG):
-      arg[0] = '1'; break;
-    case (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE):
-      arg[0] = '_'; break;
-    }
-    PUT_C(d, "nargs", CSTR_TO_ARENA_OBJ(arena, arg));
-
-    if (cmd->uc_compl_luaref != LUA_NOREF) {
-      PUT_C(d, "complete", LUAREF_OBJ(api_new_luaref(cmd->uc_compl_luaref)));
-    } else {
-      char *cmd_compl = get_command_complete(cmd->uc_compl);
-      PUT_C(d, "complete", (cmd_compl == NULL ? NIL : CSTR_AS_OBJ(cmd_compl)));
-    }
-    PUT_C(d, "complete_arg", cmd->uc_compl_arg == NULL
-          ? NIL : CSTR_AS_OBJ(cmd->uc_compl_arg));
-
-    Object obj = NIL;
-    if (cmd->uc_argt & EX_COUNT) {
-      if (cmd->uc_def >= 0) {
-        obj = STRING_OBJ(arena_printf(arena, "%" PRId64, cmd->uc_def));    // -count=N
-      } else {
-        obj = CSTR_AS_OBJ("0");    // -count
-      }
-    }
-    PUT_C(d, "count", obj);
-
-    obj = NIL;
-    if (cmd->uc_argt & EX_RANGE) {
-      if (cmd->uc_argt & EX_DFLALL) {
-        obj = STATIC_CSTR_AS_OBJ("%");    // -range=%
-      } else if (cmd->uc_def >= 0) {
-        obj = STRING_OBJ(arena_printf(arena, "%" PRId64, cmd->uc_def));    // -range=N
-      } else {
-        obj = STATIC_CSTR_AS_OBJ(".");    // -range
-      }
-    }
-    PUT_C(d, "range", obj);
-
-    obj = NIL;
-    for (int j = 0; addr_type_complete[j].expand != ADDR_NONE; j++) {
-      if (addr_type_complete[j].expand != ADDR_LINES
-          && addr_type_complete[j].expand == cmd->uc_addr_type) {
-        obj = CSTR_AS_OBJ(addr_type_complete[j].name);
-        break;
-      }
-    }
-    PUT_C(d, "addr", obj);
-
-    PUT_C(rv, cmd->uc_name, DICT_OBJ(d));
+  if (addr_type == ADDR_LINES || addr_type == ADDR_NONE) {
+    return NULL;
   }
-  return rv;
+  for (int j = 0; addr_type_complete[j].expand != ADDR_NONE; j++) {
+    if (addr_type_complete[j].expand == addr_type) {
+      return addr_type_complete[j].name;
+    }
+  }
+  return NULL;
 }

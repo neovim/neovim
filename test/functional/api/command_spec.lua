@@ -54,7 +54,8 @@ describe('nvim_get_commands', function()
   end)
 
   it('validation', function()
-    eq('builtin=true not implemented', pcall_err(api.nvim_get_commands, { builtin = true }))
+    matches('Invalid command', pcall_err(api.nvim_get_commands, { builtin = true, name = 'foo' }))
+    matches('Invalid command', pcall_err(api.nvim_get_commands, { builtin = true, name = '#!' }))
     eq("Invalid key: 'foo'", pcall_err(api.nvim_get_commands, { foo = 'blah' }))
   end)
 
@@ -294,6 +295,47 @@ describe('nvim_get_commands', function()
       assert(cmd["preview"]() == 4)
       assert(cmd["complete"]() == 5)
     ]]
+  end)
+
+  it('gets builtin commands', function()
+    local t_cmd = {
+      addr = vim.NIL,
+      bang = false,
+      bar = true,
+      count = vim.NIL,
+      desc = 'Synonym for copy.',
+      name = 't',
+      nargs = '*',
+      range = '.',
+      register = false,
+    }
+    eq(t_cmd, api.nvim_get_commands({ builtin = true, name = 't', desc = true }).t)
+    t_cmd.desc = ''
+    eq(t_cmd, api.nvim_get_commands({ builtin = true, name = 't', desc = false }).t)
+    local builtin = api.nvim_get_commands({ builtin = true, desc = true })
+    eq(true, vim.tbl_count(builtin) > 0)
+    local user = api.nvim_get_commands({ builtin = false })
+    local all_completable = fn.getcompletion('', 'command')
+    eq(vim.tbl_count(builtin) + vim.tbl_count(user), #all_completable)
+
+    command('command Foo echo "foo"')
+    command('command Bar echo "bar"')
+    eq(1, vim.tbl_count(api.nvim_get_commands({ name = 'Foo' })))
+    eq({}, api.nvim_get_commands({ name = 'Nonexistent' }))
+
+    command('command -buffer BufFoo echo "foo"')
+    eq(1, vim.tbl_count(api.nvim_buf_get_commands(0, { name = 'BufFoo' })))
+  end)
+
+  it('builtin "desc" shows first block from help file', function()
+    local builtin = api.nvim_get_commands({ builtin = true, desc = true })
+    matches('^Quit the current window%.', builtin.quit.desc)
+    matches('^Create a quickfix list using the result', builtin.cexpr.desc)
+    matches('^Write the whole buffer to the current file%.', builtin.write.desc)
+    matches('^Split window and go to', builtin.sbNext.desc)
+    matches('^synonym for :number%.', builtin['#'].desc)
+    matches('^Repeat last :substitute with same search pattern', builtin['&'].desc)
+    matches('^The ":amenu" command can be used to define menu entries', builtin.amenu.desc)
   end)
 end)
 
