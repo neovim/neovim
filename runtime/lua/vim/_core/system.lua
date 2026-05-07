@@ -1,4 +1,5 @@
 local uv = vim.uv
+local M = {}
 
 --- @class vim.SystemOpts
 --- @inlinedoc
@@ -44,6 +45,13 @@ local uv = vim.uv
 --- @field signal integer
 --- @field stdout? string `nil` if stdout is disabled or has a custom handler.
 --- @field stderr? string `nil` if stderr is disabled or has a custom handler.
+
+--- @class (package) vim.SystemRunWaitResult
+--- @field code? integer
+--- @field signal? integer
+--- @field stdout string
+--- @field stderr string
+--- @field obj vim.SystemObj
 
 --- @class (package) vim.SystemState
 --- @field cmd string[]
@@ -205,6 +213,75 @@ end
 function SystemObj:is_closing()
   local handle = self._state.handle
   return handle == nil or handle:is_closing() or false
+end
+
+--- @nodoc
+--- Runs a command and waits until it exits or streamed output satisfies a predicate.
+---
+--- Unlike `vim.system(...):wait()`, this can return before the process exits. That is needed for
+--- long-lived commands such as `ssh -L ...`, which print a readiness marker and then keep running.
+---
+--- @param cmd string[] Command to execute.
+--- @param wait_until? fun(stdout: string, stderr: string): boolean Predicate checked after output.
+--- @param timeout? integer Time limit in ms.
+--- @return vim.SystemRunWaitResult
+function M.run_wait(cmd, wait_until, timeout)
+  vim.validate('cmd', cmd, 'table')
+  vim.validate('wait_until', wait_until, 'function', true)
+  vim.validate('timeout', timeout, 'number', true)
+
+  local stdout_chunks = {} --- @type string[]
+  local stderr_chunks = {} --- @type string[]
+  local result --- @type vim.SystemCompleted?
+
+  local function stdout()
+    return table.concat(stdout_chunks)
+  end
+
+  local function stderr()
+    return table.concat(stderr_chunks)
+  end
+
+  local obj = vim.system(cmd, {
+    stdout = function(err, data)
+      if err then
+        error(err)
+      end
+      if data then
+        table.insert(stdout_chunks, data)
+      end
+    end,
+    stderr = function(err, data)
+      if err then
+        error(err)
+      end
+      if data then
+        table.insert(stderr_chunks, data)
+      end
+    end,
+  }, function(res)
+    result = res
+  end)
+
+  local success = vim.wait(timeout or vim._maxint, function()
+    return result ~= nil or (wait_until and wait_until(stdout(), stderr())) or false
+  end, 50, true)
+
+  if not success then
+    if not obj:is_closing() then
+      obj:kill('sigterm')
+    end
+    obj:wait(1000)
+    error('command timed out')
+  end
+
+  return {
+    code = result and result.code or nil,
+    signal = result and result.signal or nil,
+    stdout = stdout(),
+    stderr = stderr(),
+    obj = obj,
+  }
 end
 
 --- @param output? fun(err: string?, data: string?)|false
@@ -528,3 +605,5 @@ function vim.system(cmd, opts, on_exit)
   end
   return run(cmd, opts, on_exit)
 end
+
+return M
