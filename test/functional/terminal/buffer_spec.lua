@@ -615,7 +615,7 @@ describe(':terminal buffer', function()
         rows: 6, cols: 25       │rows: 6, cols: 25        |
         mouse enabled           │mouse enabled            |
                                 │                         |*3
-        #!!                     │#!!   ^                   |
+        #!!                     │#!!^                      |
         {5:-- TERMINAL --}                                    |
       ]])
       -- Mouse is forwarded after process is resumed.

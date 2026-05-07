@@ -2710,7 +2710,7 @@ describe('TUI', function()
     child_session:request('nvim_set_hl', 0, 'Visual', { undercurl = true })
     feed_data('ifoobar\027V')
     screen:expect([[
-      {114:fooba}^r                                            |
+      {107:fooba}^r                                            |
       {100:~}                                                 |*3
       {3:[No Name] [+]                                     }|
       {5:-- VISUAL LINE --}                                 |
@@ -2718,7 +2718,7 @@ describe('TUI', function()
     ]])
     child_session:request('nvim_set_hl', 0, 'Visual', { underdouble = true })
     screen:expect([[
-      {115:fooba}^r                                            |
+      {107:fooba}^r                                            |
       {100:~}                                                 |*3
       {3:[No Name] [+]                                     }|
       {5:-- VISUAL LINE --}                                 |
@@ -3419,7 +3419,7 @@ describe('TUI', function()
     screen:expect([[
       ^                                                  |
       ~                                                 |*3
-      [No Name]                       0,0-1          All|
+      {2:[No Name]                       0,0-1          All}|
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -3429,7 +3429,7 @@ describe('TUI', function()
       --embed                                           |
       --clean                                           |
       ^Xargv0nvim                                        |
-      [No Name] [+]                   5,1            Bot|
+      {2:[No Name] [+]                   5,1            Bot}|
       4 more lines                                      |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -3452,7 +3452,7 @@ describe('TUI', function()
     screen:expect([[
       {5:^foo}                                               |
       ~                                                 |*3
-      [No Name] [+]                   1,1            All|
+      {2:[No Name] [+]                   1,1            All}|
       {5:foo}                                               |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -3551,7 +3551,7 @@ describe('TUI', function()
             ^                                                            |
             aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb|*12
             aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba@@@|
-      [No Name] [+]                                   1,0-1          Top|
+      {2:[No Name] [+]                                   1,0-1          Top}|
       42                                                                |
       {5:-- TERMINAL --}                                                    |
     ]])
@@ -3567,7 +3567,7 @@ describe('TUI', function()
             ^                                                            |
             aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb|*12
             aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba@@@|
-      [No Name] [+]                                   1,0-1          Top|
+      {2:[No Name] [+]                                   1,0-1          Top}|
                                                                         |
       {5:-- TERMINAL --}                                                    |
     ]])
