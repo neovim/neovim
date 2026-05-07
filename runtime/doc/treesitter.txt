@@ -1056,10 +1056,9 @@ get_parser({buf}, {lang}, {opts})                *vim.treesitter.get_parser()*
     If no parser can be created, nil (and an error message) is returned.
 
     Parameters: ~
-      • {buf}   (`integer?`) Buffer the parser should be tied to (default:
-                current buffer)
-      • {lang}  (`string?`) Language of this parser (default: from buffer
-                filetype)
+      • {buf}   (`integer?`) (default: current buffer) Buffer the parser
+                should be tied to
+      • {lang}  (`string?`) (default: from 'filetype') Language of this parser
       • {opts}  (`table?`) Options to pass to the created language tree
 
     Return (multiple): ~
@@ -1160,16 +1159,15 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
     Return: ~
         (`boolean`) True if the {node} contains the {range}
 
-select({target}, {opts})                             *vim.treesitter.select()*
+select({target}, {count})                            *vim.treesitter.select()*
     Starts or adjusts a |Visual| selection at cursor, based on tree nodes. The
     `target` parameter decides the selection behavior.
 
     Parameters: ~
       • {target}  (`'parent'|'child'|'next'|'prev'|'extend_next'|'extend_prev'`)
                   Decides the selection behavior.
-      • {opts}    (`table?`) A table with the following fields:
-                  • {count} (`integer?`, default: 1) Expand or adjust the
-                    selection this many times.
+      • {count}   (`integer?`) (default: 1) Expand or adjust the selection
+                  this many times.
 
 start({buf}, {lang})                                  *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
@@ -1193,17 +1191,16 @@ start({buf}, {lang})                                  *vim.treesitter.start()*
 <
 
     Parameters: ~
-      • {buf}   (`integer?`) Buffer to be highlighted (default: current
-                buffer)
-      • {lang}  (`string?`) Language of the parser (default: from buffer
-                filetype)
+      • {buf}   (`integer?`) (default: current buffer) Buffer to be
+                highlighted
+      • {lang}  (`string?`) (default: from 'filetype') Language of the parser
 
 stop({buf})                                            *vim.treesitter.stop()*
     Stops treesitter highlighting for a buffer
 
     Parameters: ~
-      • {buf}  (`integer?`) Buffer to stop highlighting (default: current
-               buffer)
+      • {buf}  (`integer?`) (default: current buffer) Buffer to stop
+               highlighting
 
 
 ==============================================================================
