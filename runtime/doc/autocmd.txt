@@ -1151,7 +1151,7 @@ TabClosed			After closing a tabpage. <afile> expands to
 				the closing |tabpage-number|.
 
 							*TabClosedPre*
-TabClosedPre			Before closing a tabpage.  The current tabpage
+TabClosedPre			Before closing a tabpage. The current tabpage
 				(|tabpagenr()|) is the one being closed. The
 				window layout is locked, thus opening and
 				closing of windows is prohibited.

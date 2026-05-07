@@ -982,13 +982,13 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- - callback (`function|string?`) Lua function (or Vimscript function name, if string)
 ---   called when the event(s) is triggered. Lua callback can return `lua-truthy` to delete
 ---   the autocommand. Callback receives one argument, a table with keys: [event-args]()
----     - id: (`number`) Autocommand id
----     - event: (`vim.api.keyset.events`) Name of the triggered event `autocmd-events`
----     - group: (`number?`) Group id, if any
----     - file: (`string`) [<afile>] (not expanded to a full path)
----     - match: (`string`) [<amatch>] (expanded to a full path)
 ---     - buf: (`number`) [<abuf>]
 ---     - data: (`any`) Arbitrary data passed from [nvim_exec_autocmds()] [event-data]()
+---     - event: (`vim.api.keyset.events`) Name of the triggered event `autocmd-events`
+---     - file: (`string`) [<afile>] (not expanded to a full path)
+---     - group: (`number?`) Group id, if any
+---     - id: (`number`) Autocommand id
+---     - match: (`string`) [<amatch>] (expanded to a full path)
 --- - command (string?) Vim command executed on event. Not allowed with {callback}.
 --- - desc (`string?`) Description (for documentation and troubleshooting).
 --- - group (`string|integer?`) Group name or id to match against.
@@ -1033,35 +1033,33 @@ function vim.api.nvim_create_namespace(name) end
 --- Hello world!
 --- ```
 ---
---- @param name string Name of the new user command. Must begin with an uppercase letter.
---- @param cmd string|fun(args: vim.api.keyset.create_user_command.command_args) Replacement command to execute when this user command is executed. When called
---- from Lua, the command can also be a Lua function. The function is called with a
---- single table argument that contains the following keys:
---- - args: (string) The args passed to the command, if any [<args>]
---- - bang: (boolean) "true" if the command was executed with a ! modifier [<bang>]
---- - count: (number) Any count supplied [<count>]
---- - fargs: (table) The args split by unescaped whitespace (when more than one
---- argument is allowed), if any [<f-args>]
---- - line1: (number) The starting line of the command range [<line1>]
---- - line2: (number) The final line of the command range [<line2>]
---- - mods: (string) Command modifiers, if any [<mods>]
---- - name: (string) Command name
---- - nargs: (string) Number of arguments allowed for the command
---- - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
---- - reg: (string) The optional register, if specified [<reg>]
---- - smods: (table) Command modifiers in a structured format. Has the same
---- structure as the "mods" key of `nvim_parse_cmd()`.
---- @param opts vim.api.keyset.user_command Optional flags
+--- @param name string Command name. First char must be uppercase.
+--- @param cmd string|fun(args: vim.api.keyset.create_user_command.command_args) Command or Lua function, executed when the command is invoked. Lua function
+--- receives a table with keys:
+--- - args: (string) Args passed to the command, if any. [<args>]
+--- - bang: (boolean) true if the command was executed with "!". [<bang>]
+--- - count: (number) Count, if any. [<count>]
+--- - fargs: (table) Args split by unescaped whitespace (when more than one arg is
+---   allowed), if any. [<f-args>]
+--- - line1: (number) Start of the command range. [<line1>]
+--- - line2: (number) End of the command range. [<line2>]
+--- - mods: (string) Command modifiers (unstructured string), if any. [<mods>]
+--- - name: (string) Command name.
+--- - nargs: (string) Number of arguments allowed by the command. `:command-nargs`
+--- - range: (number) Number of items in the command range: 0, 1, or 2. [<range>]
+--- - reg: (string) Register name, if any. [<reg>]
+--- - smods: (table) Command modifiers (structured), same as "mods" in `nvim_parse_cmd()`.
+--- @param opts vim.api.keyset.user_command Optional flags:
+--- - `addr` `:command-addr`
+--- - `complete` `:command-complete` command or function `:command-completion-customlist`.
+--- - `count` `:command-count`
 --- - `desc` (string) Command description.
---- - `force` (boolean, default true) Override any previous definition.
---- - `complete` `:command-complete` command or function like `:command-completion-customlist`.
---- - `nargs` Number of arguments allowed for the command `:command-nargs`
---- - `preview` (function) Preview handler for 'inccommand' `:command-preview`
---- - `range` see `:command-range`
---- - `count` see `:command-count`
---- - `addr` see `:command-addr`
---- - Set boolean `command-attributes` such as `:command-bang` or `:command-bar` to
----   true (but not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
+--- - `force` (boolean, default true) Override the existing definition, if any.
+--- - `nargs` Number of arguments allowed by the command. `:command-nargs`
+--- - `preview` (function) Preview handler for 'inccommand'. `:command-preview`
+--- - `range` `:command-range`
+--- - boolean `command-attributes` such as `:command-bang` or `:command-bar` (but
+---   not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
 function vim.api.nvim_create_user_command(name, cmd, opts) end
 
 --- Delete an autocommand group by id.
@@ -1965,18 +1963,18 @@ function vim.api.nvim_parse_cmd(str, opts) end
 ---
 --- @param expr string Expression to parse. Always treated as a single line.
 --- @param flags string Flags:
---- - "m" if multiple expressions in a row are allowed (only
----   the first one will be parsed),
 --- - "E" if EOC tokens are not allowed (determines whether
 ---   they will stop parsing process or be recognized as an
 ---   operator/space, though also yielding an error).
 --- - "l" when needing to start parsing with lvalues for
 ---   ":let" or ":for".
---- Common flag sets:
---- - "m" to parse like for `":echo"`.
---- - "E" to parse like for `"<C-r>="`.
---- - empty string for ":call".
---- - "lm" to parse for ":let".
+--- - "m" if multiple expressions in a row are allowed (only
+---   the first one will be parsed),
+--- - Common flag sets:
+---   - "E" to parse like for `"<C-r>="`.
+---   - "lm" to parse for ":let".
+---   - "m" to parse like for `":echo"`.
+---   - empty string for ":call".
 --- @param hl boolean If true, return value will also include "highlight"
 --- key containing array of 4-tuples (arrays) (Integer,
 --- Integer, Integer, String), where first three numbers
@@ -2305,9 +2303,9 @@ function vim.api.nvim_set_hl_ns_fast(ns_id) end
 --- @param rhs string Right-hand-side `{rhs}` of the mapping.
 --- @param opts vim.api.keyset.keymap Optional parameters map: Accepts all `:map-arguments` as keys except [<buffer>],
 --- values are booleans (default false). Also:
---- - "noremap" disables `recursive_mapping`, like `:noremap`
---- - "desc" human-readable description.
 --- - "callback" Lua function called in place of {rhs}.
+--- - "desc" human-readable description.
+--- - "noremap" disables `recursive_mapping`, like `:noremap`
 --- - "replace_keycodes" (boolean) When "expr" is true, replace keycodes in the
 ---   resulting string (see `nvim_replace_termcodes()`). Returning nil from the Lua
 ---   "callback" is equivalent to returning an empty string.

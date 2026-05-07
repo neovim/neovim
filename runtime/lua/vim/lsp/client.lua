@@ -892,9 +892,9 @@ end
 --- file corruption.
 ---
 --- @param force? integer|boolean (default: `self.exit_timeout`) Decides whether to force-stop the server.
+--- - `false`: Do not force-stop after "shutdown" request.
 --- - `nil`: Defaults to `exit_timeout` from |vim.lsp.ClientConfig|.
 --- - `true`: Force-stop after "shutdown" request.
---- - `false`: Do not force-stop after "shutdown" request.
 --- - number: Wait up to `force` milliseconds before force-stop.
 function Client:stop(force)
   validate('force', force, { 'number', 'boolean' }, true)

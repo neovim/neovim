@@ -2074,10 +2074,10 @@ Client:stop({force})                                           *Client:stop()*
     Parameters: ~
       • {force}  (`integer|boolean?`) (default: `self.exit_timeout`) Decides
                  whether to force-stop the server.
+                 • `false`: Do not force-stop after "shutdown" request.
                  • `nil`: Defaults to `exit_timeout` from
                    |vim.lsp.ClientConfig|.
                  • `true`: Force-stop after "shutdown" request.
-                 • `false`: Do not force-stop after "shutdown" request.
                  • number: Wait up to `force` milliseconds before force-stop.
 
 Client:supports_method({method}, {bufnr})           *Client:supports_method()*

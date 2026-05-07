@@ -977,35 +977,33 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// Hello world!
 /// ```
 ///
-/// @param  name    Name of the new user command. Must begin with an uppercase letter.
-/// @param  cmd     Replacement command to execute when this user command is executed. When called
-///                 from Lua, the command can also be a Lua function. The function is called with a
-///                 single table argument that contains the following keys:
-///                 - args: (string) The args passed to the command, if any [<args>]
-///                 - bang: (boolean) "true" if the command was executed with a ! modifier [<bang>]
-///                 - count: (number) Any count supplied [<count>]
-///                 - fargs: (table) The args split by unescaped whitespace (when more than one
-///                 argument is allowed), if any [<f-args>]
-///                 - line1: (number) The starting line of the command range [<line1>]
-///                 - line2: (number) The final line of the command range [<line2>]
-///                 - mods: (string) Command modifiers, if any [<mods>]
-///                 - name: (string) Command name
-///                 - nargs: (string) Number of arguments allowed for the command
-///                 - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
-///                 - reg: (string) The optional register, if specified [<reg>]
-///                 - smods: (table) Command modifiers in a structured format. Has the same
-///                 structure as the "mods" key of |nvim_parse_cmd()|.
-/// @param  opts    Optional flags
+/// @param  name    Command name. First char must be uppercase.
+/// @param  cmd     Command or Lua function, executed when the command is invoked. Lua function
+///                 receives a table with keys:
+///                 - args: (string) Args passed to the command, if any. [<args>]
+///                 - bang: (boolean) true if the command was executed with "!". [<bang>]
+///                 - count: (number) Count, if any. [<count>]
+///                 - fargs: (table) Args split by unescaped whitespace (when more than one arg is
+///                   allowed), if any. [<f-args>]
+///                 - line1: (number) Start of the command range. [<line1>]
+///                 - line2: (number) End of the command range. [<line2>]
+///                 - mods: (string) Command modifiers (unstructured string), if any. [<mods>]
+///                 - name: (string) Command name.
+///                 - nargs: (string) Number of arguments allowed by the command. |:command-nargs|
+///                 - range: (number) Number of items in the command range: 0, 1, or 2. [<range>]
+///                 - reg: (string) Register name, if any. [<reg>]
+///                 - smods: (table) Command modifiers (structured), same as "mods" in |nvim_parse_cmd()|.
+/// @param  opts    Optional flags:
+///                 - `addr` |:command-addr|
+///                 - `complete` |:command-complete| command or function |:command-completion-customlist|.
+///                 - `count` |:command-count|
 ///                 - `desc` (string) Command description.
-///                 - `force` (boolean, default true) Override any previous definition.
-///                 - `complete` |:command-complete| command or function like |:command-completion-customlist|.
-///                 - `nargs` Number of arguments allowed for the command |:command-nargs|
-///                 - `preview` (function) Preview handler for 'inccommand' |:command-preview|
-///                 - `range` see |:command-range|
-///                 - `count` see |:command-count|
-///                 - `addr` see |:command-addr|
-///                 - Set boolean |command-attributes| such as |:command-bang| or |:command-bar| to
-///                   true (but not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
+///                 - `force` (boolean, default true) Override the existing definition, if any.
+///                 - `nargs` Number of arguments allowed by the command. |:command-nargs|
+///                 - `preview` (function) Preview handler for 'inccommand'. |:command-preview|
+///                 - `range` |:command-range|
+///                 - boolean |command-attributes| such as |:command-bang| or |:command-bar| (but
+///                   not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
 /// @param[out] err Error details, if any.
 void nvim_create_user_command(uint64_t channel_id,
                               String name,
