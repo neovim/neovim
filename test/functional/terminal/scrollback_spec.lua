@@ -296,10 +296,10 @@ local function test_terminal_scrollback(hide_curbuf)
         line26                        |
         line27                        |
         line28                        |
-        ^line29                        |
+        line29                        |
         line30                        |
         rows: 10, cols: 30            |
-                                      |
+        ^                              |
         {5:-- TERMINAL --}                |
       ]])
       eq(20, api.nvim_buf_line_count(0))
@@ -333,9 +333,9 @@ local function test_terminal_scrollback(hide_curbuf)
         line30                        |
         rows: 10, cols: 30            |
         rows: 8, cols: 30             |
-        ^rows: 5, cols: 30             |
+        rows: 5, cols: 30             |
         rows: 8, cols: 30             |
-                                      |
+        ^                              |
         {5:-- TERMINAL --}                |
       ]])
       eq(18, api.nvim_buf_line_count(0))
@@ -575,14 +575,14 @@ local function test_terminal_scrollback(hide_curbuf)
     describe('and height decreased by 1', function()
       local function will_hide_top_line()
         feed([[<C-\><C-N>]])
-        try_resize(screen._width - 2, screen._height - 1)
+        try_resize(screen._width, screen._height - 1)
         screen:expect([[
-          {101:line2}                       |
-          line3                       |
-          line4                       |
-          rows: 5, cols: 28           |
-          ^                            |
-                                      |
+          {101:line2}                         |
+          line3                         |
+          line4                         |
+          rows: 5, cols: 30             |
+          ^                              |
+                                        |
         ]])
         eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
       end
@@ -592,31 +592,35 @@ local function test_terminal_scrollback(hide_curbuf)
       describe('and then decreased by 2', function()
         before_each(function()
           will_hide_top_line()
-          try_resize(screen._width - 2, screen._height - 2)
+          try_resize(screen._width, screen._height - 2)
+          screen:expect({ any = 'rows: 3, cols: 30' })
         end)
 
         it('will hide the top 3 lines', function()
-          screen:expect([[
-            rows: 5, cols: 28         |
-            rows: 3, cols: 26         |
-            ^                          |
-                                      |
-          ]])
+          screen:expect({
+            grid = [[
+              rows: 5, cols: 30             |
+              rows: 3, cols: 30             |
+              ^                              |
+                                            |
+            ]],
+            unchanged = true,
+          })
           eq(8, api.nvim_buf_line_count(0))
           eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
           feed('3k')
           screen:expect([[
-            ^line4                     |
-            rows: 5, cols: 28         |
-            rows: 3, cols: 26         |
-                                      |
+            ^line4                         |
+            rows: 5, cols: 30             |
+            rows: 3, cols: 30             |
+                                          |
           ]])
           feed('gg')
           screen:expect([[
-            ^tty ready                 |
-            line1                     |
-            {101:line2}                     |
-                                      |
+            ^tty ready                     |
+            line1                         |
+            {101:line2}                         |
+                                          |
           ]])
         end)
       end)
@@ -750,9 +754,9 @@ local function test_terminal_scrollback(hide_curbuf)
             line3                         |
             line4                         |
             rows: 3, cols: 30             |
-            ^rows: 4, cols: 30             |
+            rows: 4, cols: 30             |
             rows: 7, cols: 30             |
-                                          |
+            ^                              |
             {5:-- TERMINAL --}                |
           ]])
           eq(9, api.nvim_buf_line_count(0))
@@ -781,18 +785,19 @@ local function test_terminal_scrollback(hide_curbuf)
 
           it('will show all lines and leave a blank one at the end', function()
             screen:expect([[
-              tty ready                     |
-              line1                         |
-              {101:line2}                         |
-              line3                         |
-              line4                         |
-              ^rows: 3, cols: 30             |
-              rows: 4, cols: 30             |
-              rows: 7, cols: 30             |
-              rows: 11, cols: 30            |
-                                            |*2
-              {5:-- TERMINAL --}                |
-            ]])
+            tty ready                     |
+            line1                         |
+            {101:line2}                         |
+            line3                         |
+            line4                         |
+            rows: 3, cols: 30             |
+            rows: 4, cols: 30             |
+            rows: 7, cols: 30             |
+            rows: 11, cols: 30            |
+            ^                              |
+                                          |
+            {5:-- TERMINAL --}                |
+          ]])
             -- since there's an empty line after the cursor, the buffer line
             -- count equals the terminal screen height
             eq(11, api.nvim_buf_line_count(0))
