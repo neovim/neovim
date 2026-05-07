@@ -5665,6 +5665,14 @@ vim.ui.img.set({data_or_id}, {opts})                        *vim.ui.img.set()*
 ==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
 
+*vim.net.SshUri*
+
+    Fields: ~
+      • {host}   (`string`)
+      • {port}?  (`string`)
+      • {user}?  (`string`)
+
+
 vim.uri_decode({str})                                       *vim.uri_decode()*
     URI-decodes a string containing percent escapes.
 
