@@ -4134,14 +4134,20 @@ describe('TUI', function()
       pending('N/A: missing LuaJIT FFI')
     end
 
-    -- Change vterm's DA1 response so that it doesn't include 52
+    -- Change Ghostty's DA1 response so that it doesn't include 52.
     exec_lua(function()
       local ffi = require('ffi')
       ffi.cdef [[
-        extern char vterm_primary_device_attr[]
+        extern int terminal_ghostty_da_clipboard;
       ]]
 
-      ffi.copy(ffi.C.vterm_primary_device_attr, '61;22')
+      ffi.C.terminal_ghostty_da_clipboard = 0
+    end)
+    finally(function()
+      exec_lua(function()
+        local ffi = require('ffi')
+        ffi.C.terminal_ghostty_da_clipboard = 1
+      end)
     end)
 
     exec_lua([[

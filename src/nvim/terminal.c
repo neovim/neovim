@@ -125,12 +125,16 @@ typedef struct {
 
 #include "terminal.c.generated.h"
 
-// Delay for refreshing the terminal buffer after receiving updates from
-// libvterm. Improves performance when receiving large bursts of data.
+// Delay for refreshing the terminal buffer after receiving updates. Improves
+// performance when receiving large bursts of data.
 #define REFRESH_DELAY 10
 
 #define TEXTBUF_SIZE      0x1fff
 #define SELECTIONBUF_SIZE 0x0400
+
+// Whether to include OSC 52/clipboard support in Ghostty's DA1 response. Functional tests
+// toggle this to force the runtime OSC 52 detection path to fall back to XTGETTCAP.
+DLLEXPORT int terminal_ghostty_da_clipboard = 1;
 
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
@@ -157,8 +161,7 @@ struct terminal {
     bool urxvt;
     bool sgr_pixels;
   } ghostty_mouse_modes;
-  // Buffer used to fetch Ghostty rows and to receive data from libvterm as a
-  // result of key presses.
+  // Buffer used to fetch Ghostty rows.
   char textbuf[TEXTBUF_SIZE];
 
   size_t ghostty_scrollback_rows;  ///< Rows in Ghostty's full history.
@@ -166,7 +169,7 @@ struct terminal {
   size_t scrollback_deleted;       ///< Mirrored history rows deleted from the buffer top.
   bool scrollback_clear_pending;   ///< Ghostty processed CSI 3 J since the last refresh.
 
-  // buf_T instance that acts as a "drawing surface" for libvterm
+  // buf_T instance that acts as a "drawing surface" for the terminal.
   // we can't store a direct reference to the buffer because the
   // refresh_timer_cb may be called after the buffer was freed, and there's
   // no way to know if the memory was reused.
@@ -216,7 +219,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .damage = NULL,
   .moverect = NULL,
   .movecursor = NULL,
-  .settermprop = term_settermprop,
+  .settermprop = NULL,
   .bell = NULL,
   .theme = NULL,
 };
@@ -567,6 +570,32 @@ static void terminal_ghostty_cursor_update(Terminal *term)
   if (position_changed || visibility_changed || style_changed) {
     invalidate_terminal(term, -1, -1);
   }
+}
+
+static void terminal_ghostty_termprops_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool synchronized_output = terminal_ghostty_mode_get(term, GHOSTTY_MODE_SYNC_OUTPUT);
+  if (term->synchronized_output && !synchronized_output) {
+    term->sync_flush_pending = true;
+  }
+  term->synchronized_output = synchronized_output;
+
+  GhosttyTerminalScreen screen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
+  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
+                                              GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN,
+                                              &screen));
+  bool in_altscreen = screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE;
+  if (term->in_altscreen != in_altscreen) {
+    int height;
+    terminal_ghostty_size_get(term, &height, NULL);
+    term->invalid_start = 0;
+    term->invalid_end = height;
+    invalidate_terminal(term, -1, -1);
+  }
+  term->in_altscreen = in_altscreen;
+
+  term->theme_updates = terminal_ghostty_mode_get(term, GHOSTTY_MODE_COLOR_SCHEME_REPORT);
 }
 
 static int terminal_default_decsusr_cursor_style(void)
@@ -2203,11 +2232,11 @@ static bool term_ghostty_device_attributes_callback(GhosttyTerminal ghostty, voi
   (void)ghostty;
   (void)user_data;
 
-  *out_attrs = (GhosttyDeviceAttributes) {
+  GhosttyDeviceAttributes attrs = {
     .primary = {
       .conformance_level = GHOSTTY_DA_CONFORMANCE_VT220,
-      .features = { GHOSTTY_DA_FEATURE_ANSI_COLOR, GHOSTTY_DA_FEATURE_CLIPBOARD },
-      .num_features = 2,
+      .features = { GHOSTTY_DA_FEATURE_ANSI_COLOR },
+      .num_features = 1,
     },
     .secondary = {
       .device_type = GHOSTTY_DA_DEVICE_TYPE_VT220,
@@ -2218,6 +2247,10 @@ static bool term_ghostty_device_attributes_callback(GhosttyTerminal ghostty, voi
       .unit_id = 0,
     },
   };
+  if (terminal_ghostty_da_clipboard) {
+    attrs.primary.features[attrs.primary.num_features++] = GHOSTTY_DA_FEATURE_CLIPBOARD;
+  }
+  *out_attrs = attrs;
   return true;
 }
 
@@ -2239,46 +2272,6 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
   buf->b_locked--;
   api_clear_error(&err);
   status_redraw_buf(buf);
-}
-
-static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
-{
-  Terminal *term = data;
-
-  switch (prop) {
-  case VTERM_PROP_ALTSCREEN:
-    if (term->in_altscreen != val->boolean) {
-      int height;
-      terminal_ghostty_size_get(term, &height, NULL);
-      term->invalid_start = 0;
-      term->invalid_end = height;
-      invalidate_terminal(term, -1, -1);
-    }
-    term->in_altscreen = val->boolean;
-    break;
-
-  case VTERM_PROP_TITLE:
-  case VTERM_PROP_MOUSE:
-    break;
-
-  case VTERM_PROP_THEMEUPDATES:
-    term->theme_updates = val->boolean;
-    break;
-
-  case VTERM_PROP_SYNCOUTPUT:
-    term->synchronized_output = val->boolean;
-    if (!val->boolean) {
-      // Mark that sync just ended; terminal_receive() will flush
-      // the buffer immediately rather than waiting for the 10ms timer.
-      term->sync_flush_pending = true;
-    }
-    break;
-
-  default:
-    return 0;
-  }
-
-  return 1;
 }
 
 /// Called when the terminal program wants to query the system theme.
@@ -2949,6 +2942,7 @@ static void terminal_ghostty_render_state_update(Terminal *term)
   assert_ghostty_success(ghostty_render_state_update(term->ghostty_render_state,
                                                      term->ghostty));
   terminal_ghostty_cursor_update(term);
+  terminal_ghostty_termprops_update(term);
 
   GhosttyRenderStateDirty dirty_state = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
   assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
