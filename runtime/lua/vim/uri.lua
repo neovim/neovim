@@ -128,6 +128,7 @@ function M.uri_to_bufnr(uri)
 end
 
 ---@class vim.net.SshUri
+---@nodoc
 ---@field host string
 ---@field user? string
 ---@field port? string
