@@ -137,5 +137,5 @@ typedef enum {
   VV_VIRTNUM,
   VV_STARTTIME,
   VV_EXITREASON,
-  VV_USERACTIVITY,
+  VV_USERACTIVE,
 } VimVarIndex;

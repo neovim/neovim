@@ -281,7 +281,7 @@ size_t input_enqueue(uint64_t chan_id, String keys)
   current_ui = chan_id;
 
   if (keys.size > 0) {
-    set_vim_var_nr(VV_USERACTIVITY, (varnumber_T)os_realtime());
+    set_vim_var_nr(VV_USERACTIVE, (varnumber_T)os_realtime());
   }
 
   const char *ptr = keys.data;

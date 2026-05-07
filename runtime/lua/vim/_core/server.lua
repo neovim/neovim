@@ -6,10 +6,9 @@ local M = {}
 ---
 ---@class vim.ServerInfo
 ---@field addr string Server address (socket path, named pipe, or TCP host:port).
----@field pid integer? PID of the Nvim process owning this server (nil if unreachable).
+---@field pid integer PID of the Nvim process.
 ---@field own boolean True if this server belongs to the current Nvim instance.
----@field useractivity integer? Nanoseconds since epoch of last user input on the
----                             server (|v:useractivity|). Nil if peer is unreachable.
+---@field active integer Timestamp of last user activity.
 
 --- @param opts? table Options:
 ---              - opts.peer (boolean): If true, also discover peer servers.
@@ -44,7 +43,7 @@ function M.serverlist(opts, addrs)
   end, { path = root, type = 'socket', limit = math.huge })
 
   local peer_pids = {} ---@type table<string, integer>
-  local peer_useractivity = {} ---@type table<string, integer>
+  local peer_active = {} ---@type table<string, integer>
 
   for _, socket in ipairs(socket_paths) do
     if not own_set[socket] and not vim.list_contains(addrs, socket) then
@@ -60,9 +59,9 @@ function M.serverlist(opts, addrs)
             if ok_pid and type(pid) == 'number' then
               peer_pids[socket] = pid
             end
-            local ok_la, la = pcall(vim.fn.rpcrequest, chan, 'nvim_get_vvar', 'useractivity')
+            local ok_la, la = pcall(vim.fn.rpcrequest, chan, 'nvim_get_vvar', 'useractive')
             if ok_la and type(la) == 'number' then
-              peer_useractivity[socket] = la
+              peer_active[socket] = la
             end
           end
         end
@@ -76,7 +75,7 @@ function M.serverlist(opts, addrs)
   end
 
   local self_pid = vim.fn.getpid()
-  local self_useractivity = vim.v.useractivity
+  local self_active = vim.v.useractive
   local result = {} ---@type vim.ServerInfo[]
   for _, addr in ipairs(addrs) do
     local own = own_set[addr] == true
@@ -84,7 +83,7 @@ function M.serverlist(opts, addrs)
       addr = addr,
       pid = own and self_pid or peer_pids[addr],
       own = own,
-      useractivity = own and self_useractivity or peer_useractivity[addr],
+      active = own and self_active or peer_active[addr],
     })
   end
   return result

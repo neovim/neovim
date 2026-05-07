@@ -9975,15 +9975,10 @@ M.funcs = {
                 instead of addresses. Implies `peer=true`. Each Dict
                 has the following items:
                   addr          (string)  Server address.
-                  pid           (number?) PID of the Nvim process owning
-                                          the server, or |v:null| if the
-                                          peer is unreachable.
+                  pid           (number)  PID of the Nvim process.
                   own           (bool)    Whether this server belongs to
                                           the current Nvim instance.
-                  useractivity  (number?) Nanoseconds since epoch of the
-                                          most recent user input on the
-                                          server, see |v:useractivity|.
-                                          |v:null| if peer is unreachable.
+                  active        (number)  |v:useractive| of the server.
                 (default: |FALSE|)
 
       Example: >vim

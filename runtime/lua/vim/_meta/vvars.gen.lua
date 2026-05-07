@@ -805,16 +805,13 @@ vim.v.throwpoint = ...
 --- @type boolean
 vim.v['true'] = ...
 
---- Nanoseconds since epoch (same precision as `v:starttime`) of the
---- most recent user input. Updated every time a key is received
---- from a UI (TUI keystrokes or RPC `nvim_input()`).
+--- Timestamp indicating the most recent user activity.
+--- Updated every time a key is received from a UI
+--- (TUI keystrokes or RPC `nvim_input()`).
 --- Initialized to 0 (no user activity since startup).
----
---- Useful with `serverlist()` `info=true` to render a "last active"
---- column in pickers like `:connect`.
 --- Read-only.
 --- @type integer
-vim.v.useractivity = ...
+vim.v.useractive = ...
 
 --- Value of the current item of a `List` or `Dictionary`.  Only
 --- valid while evaluating the expression used with `map()` and

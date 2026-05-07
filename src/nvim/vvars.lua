@@ -447,16 +447,13 @@ M.vars = {
       encoding.  See |multi-lang|.
     ]=],
   },
-  useractivity = {
+  useractive = {
     type = 'integer',
     desc = [=[
-      Nanoseconds since epoch (same precision as |v:starttime|) of the
-      most recent user input. Updated every time a key is received
-      from a UI (TUI keystrokes or RPC |nvim_input()|).
+      Timestamp indicating the most recent user activity.
+      Updated every time a key is received from a UI
+      (TUI keystrokes or RPC |nvim_input()|).
       Initialized to 0 (no user activity since startup).
-
-      Useful with |serverlist()| `info=true` to render a "last active"
-      column in pickers like |:connect|.
       Read-only.
     ]=],
   },
