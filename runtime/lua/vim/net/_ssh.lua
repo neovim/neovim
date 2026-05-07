@@ -287,17 +287,31 @@ end
 ---@param level? integer vim.log.levels.* (default INFO)
 local function notify(msg, level)
   level = level or vim.log.levels.INFO
-  vim.schedule(function()
+  local function show()
     vim.notify('remote-ssh: ' .. msg, level)
-  end)
+    vim.cmd.redraw()
+  end
+  if vim.in_fast_event() then
+    vim.schedule(show)
+  else
+    show()
+  end
 end
 
---- Builds a command which will execute `remote_cmd` on the host identified by `ssh_uri`.
+local function core_system()
+  -- Keep this lazy so parser-only users can load vim.net._ssh without editor state.
+  return require('vim._core.system')
+end
+
+--- Builds a command for the host identified by `ssh_uri`.
+---
+--- `ssh_args` are inserted before the target; `remote_cmd` is appended after the target.
 ---
 ---@param ssh_uri {host:string, user?:string, port?:string}
----@param remote_cmd? string
+---@param opts? { ssh_args?: string[], remote_cmd?: string[] }
 ---@return string[]
-local function get_ssh_cmd(ssh_uri, remote_cmd)
+local function get_ssh_cmd(ssh_uri, opts)
+  opts = opts or {}
   local mux_dir = vim.fn.stdpath('run') --[[@as string]]
   local mux_path = mux_dir .. '/ssh_mux_%h_%p_%r'
   local ssh_cmd = {
@@ -310,6 +324,9 @@ local function get_ssh_cmd(ssh_uri, remote_cmd)
     '-o',
     'ControlPersist=10m',
   }
+  if opts.ssh_args then
+    vim.list_extend(ssh_cmd, opts.ssh_args)
+  end
   if ssh_uri.port then
     table.insert(ssh_cmd, '-p')
     table.insert(ssh_cmd, ssh_uri.port)
@@ -321,96 +338,11 @@ local function get_ssh_cmd(ssh_uri, remote_cmd)
   end
   table.insert(ssh_cmd, target)
 
-  if remote_cmd then
-    table.insert(ssh_cmd, remote_cmd)
+  if opts.remote_cmd then
+    vim.list_extend(ssh_cmd, opts.remote_cmd)
   end
 
   return ssh_cmd
-end
-
----@param ssh_cmd string[]
----@param wait_mode boolean|string true to wait for exit, string to wait for specific output
----@return { code?: number, stdout?: string, stderr?: string, job_id?: number }
-local function exec_ssh(ssh_cmd, wait_mode)
-  local stdout_lines = {}
-  local stderr_lines = {}
-  local is_done = false
-  local code = -1
-  ---@type string
-  local stdout_buffer = ''
-  ---@type string
-  local stderr_buffer = ''
-
-  ---@param lines string[]
-  ---@param buf string
-  ---@param data string[]
-  ---@return string
-  local function collect(lines, buf, data)
-    for i, chunk in ipairs(data) do
-      if i < #data then
-        table.insert(lines, buf .. chunk)
-        buf = ''
-      else
-        buf = buf .. chunk
-      end
-    end
-    return buf
-  end
-
-  local on_stdout = function(_, data, _)
-    if data then
-      stdout_buffer = collect(stdout_lines, stdout_buffer, data)
-    end
-  end
-
-  local on_stderr = function(_, data, _)
-    if data then
-      stderr_buffer = collect(stderr_lines, stderr_buffer, data)
-    end
-  end
-
-  local on_exit = function(_, exit_code, _)
-    code = exit_code
-    is_done = true
-  end
-
-  local job_id = vim.fn.jobstart(ssh_cmd, {
-    on_stdout = on_stdout,
-    on_stderr = on_stderr,
-    on_exit = on_exit,
-  })
-
-  if job_id <= 0 then
-    error('Failed to start SSH job')
-  end
-
-  if wait_mode then
-    local success = vim.wait(300000, function()
-      if type(wait_mode) == 'string' then
-        local output = table.concat(stdout_lines, '\n') .. stdout_buffer
-        if output:match(wait_mode) then
-          return true
-        end
-      end
-      return is_done
-    end, 50)
-    if not success then
-      vim.fn.jobstop(job_id)
-      error('SSH command timed out')
-    end
-    if stdout_buffer ~= '' then
-      table.insert(stdout_lines, stdout_buffer)
-    end
-    if stderr_buffer ~= '' then
-      table.insert(stderr_lines, stderr_buffer)
-    end
-    local stdout = table.concat(stdout_lines, '\n')
-    local stderr = table.concat(stderr_lines, '\n')
-
-    return { code = code, stdout = stdout, stderr = stderr }
-  else
-    return { job_id = job_id }
-  end
 end
 
 --- Gets the operating system and architecture from the remote system.
@@ -418,9 +350,9 @@ end
 ---@param uri {host:string, user?:string, port?:string}
 ---@return string os, string arch
 function M.get_system_info(uri)
-  local ssh_cmd = get_ssh_cmd(uri, 'uname -s && uname -m')
+  local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { 'uname -s && uname -m' } })
 
-  local obj = exec_ssh(ssh_cmd, true)
+  local obj = core_system().run_wait(ssh_cmd, nil, 300000)
   if obj.code ~= 0 then
     error(
       'Failed to detect remote system info: ' .. (obj.stderr ~= '' and obj.stderr or obj.stdout)
@@ -501,9 +433,9 @@ local function check_and_install(uri, os, arch)
     target_arch
   )
 
-  local ssh_cmd = get_ssh_cmd(uri, remote_script)
+  local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { remote_script } })
 
-  local obj = exec_ssh(ssh_cmd, true)
+  local obj = core_system().run_wait(ssh_cmd, nil, 300000)
   if obj.code ~= 0 then
     error('Installation failed: ' .. (obj.stderr ~= '' and obj.stderr or obj.stdout))
   end
@@ -539,17 +471,17 @@ function M.start(uri_str)
     wait $NVIM_PID
   ]]
 
-  local ssh_cmd = get_ssh_cmd(uri)
-  table.insert(ssh_cmd, '-L')
-  table.insert(ssh_cmd, local_sock .. ':/tmp/nvim-remote.sock')
-  table.insert(ssh_cmd, 'bash')
-  table.insert(ssh_cmd, '-c')
-  table.insert(ssh_cmd, remote_cmd)
+  local ssh_cmd = get_ssh_cmd(uri, {
+    ssh_args = { '-L', local_sock .. ':/tmp/nvim-remote.sock' },
+    remote_cmd = { 'bash', '-c', remote_cmd },
+  })
 
   notify('Establishing SSH tunnel...')
-  local obj = exec_ssh(ssh_cmd, 'NVIM_READY')
+  local tunnel = core_system().run_wait(ssh_cmd, function(stdout)
+    return stdout:match('NVIM_READY') ~= nil
+  end, 300000)
 
-  if obj.stdout:match('NVIM_CRASHED') then
+  if tunnel.stdout:match('NVIM_CRASHED') then
     error('Remote Nvim crashed during startup')
   end
 
@@ -562,10 +494,12 @@ function M.start(uri_str)
       return
     end
     cleaned_up = true
-    local stop_cmd = get_ssh_cmd(uri)
-    table.insert(stop_cmd, '-O')
-    table.insert(stop_cmd, 'exit')
+    local stop_cmd = get_ssh_cmd(uri, { ssh_args = { '-O', 'exit' } })
     vim.system(stop_cmd):wait()
+    -- Wait for the original tunnel process to close its stdio handles.
+    if not tunnel.obj:is_closing() then
+      tunnel.obj:wait(1000)
+    end
   end
 
   vim.api.nvim_create_autocmd('VimLeavePre', {
