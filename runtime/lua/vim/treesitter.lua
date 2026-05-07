@@ -73,9 +73,9 @@ end
 ---
 --- If no parser can be created, nil (and an error message) is returned.
 ---
----@param buf (integer|nil) Buffer the parser should be tied to (default: current buffer)
----@param lang (string|nil) Language of this parser (default: from buffer filetype)
----@param opts (table|nil) Options to pass to the created language tree
+---@param buf integer|nil (default: current buffer) Buffer the parser should be tied to
+---@param lang string|nil (default: from 'filetype') Language of this parser
+---@param opts table|nil Options to pass to the created language tree
 ---
 ---@return vim.treesitter.LanguageTree? object to use for parsing
 ---@return string? error message, if applicable
@@ -336,7 +336,7 @@ end
 
 --- Returns a list of highlight capture names under the cursor
 ---
----@param win (integer|nil): |window-ID| or 0 for current window (default)
+---@param win integer|nil # |window-ID| or 0 for current window (default)
 ---
 ---@return string[] List of capture names
 function M.get_captures_at_cursor(win)
@@ -445,8 +445,8 @@ end
 --- })
 --- ```
 ---
----@param buf integer? Buffer to be highlighted (default: current buffer)
----@param lang string? Language of the parser (default: from buffer filetype)
+---@param buf integer? (default: current buffer) Buffer to be highlighted
+---@param lang string? (default: from 'filetype') Language of the parser
 function M.start(buf, lang)
   buf = vim._resolve_bufnr(buf)
   -- Ensure buffer is loaded. `:edit` over `bufload()` to show swapfile prompt.
@@ -463,7 +463,7 @@ end
 
 --- Stops treesitter highlighting for a buffer
 ---
----@param buf (integer|nil) Buffer to stop highlighting (default: current buffer)
+---@param buf integer|nil (default: current buffer) Buffer to stop highlighting
 function M.stop(buf)
   buf = vim._resolve_bufnr(buf)
 
@@ -512,26 +512,15 @@ function M.foldexpr(lnum)
   return M._fold.foldexpr(lnum)
 end
 
---- @class vim.treesitter.select.Opts
---- @inlinedoc
----
---- Expand or adjust the selection this many times.
---- (default: 1)
---- @field count integer?
-
 --- Starts or adjusts a |Visual| selection at cursor, based on tree nodes. The `target` parameter
 --- decides the selection behavior.
 ---
 ---@param target 'parent'|'child'|'next'|'prev'|'extend_next'|'extend_prev' Decides the selection behavior.
----@param opts vim.treesitter.select.Opts?
-function M.select(target, opts)
+---@param count? integer (default: 1) Expand or adjust the selection this many times.
+function M.select(target, count)
   vim.validate('target', target, 'string')
-  vim.validate('opts', opts, 'table', true)
-  opts = opts or {}
-  if opts.count then
-    vim.validate('count', opts.count, 'number')
-  end
-  local count = opts.count or 1
+  vim.validate('count', count, 'number', true)
+  count = count or 1
 
   if target == 'parent' then
     return M._select.select_parent(count)
