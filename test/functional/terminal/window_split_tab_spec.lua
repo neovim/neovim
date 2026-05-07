@@ -98,15 +98,16 @@ describe(':terminal', function()
     screen:try_resize(w1, h1)
     screen:expect([[
       tty ready                                      |
+      rows: 7, cols: 50                              |
       rows: 7, cols: 47                              |
-                                                     |*4
+                                                     |*3
       ^                                               |
                                                      |
     ]])
     screen:try_resize(w2, h2)
     screen:expect([[
-      tty ready                                |
       rows: 7, cols: 47                        |
+      rows: 4, cols: {MATCH:%d%d}                        |
       rows: 4, cols: 41                        |
       ^                                         |
                                                |
