@@ -442,7 +442,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   } else if (!IS_USER_CMDIDX(ea.cmdidx)) {
     // Get the command flags so that we can know what type of arguments the command uses.
     // Not required for a user command since `find_ex_command` already deals with it in that case.
-    ea.argt = get_cmd_argt(ea.cmdidx);
+    ea.argt = excmd_get_argt(ea.cmdidx);
   }
 
   // Track whether the first argument was interpreted as count to avoid conflicts
