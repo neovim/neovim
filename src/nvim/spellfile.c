@@ -331,6 +331,9 @@ enum {
   CF_UPPER = 0x02,
 };
 
+// Max allowed length for COMPOUND section
+#define COMPOUND_MAX_LEN        100000
+
 static const char *e_spell_trunc = N_("E758: Truncated spell file");
 static const char e_error_while_reading_sug_file_str[]
   = N_("E782: Error while reading .sug file: %s");
@@ -1431,24 +1434,28 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   // "a[bc]/a*b+" -> "^\(a[bc]\|a*b\+\)$".
   // Inserting backslashes may double the length, "^\(\)$<Nul>" is 7 bytes.
   // Conversion to utf-8 may double the size.
-  c = todo * 2 + 7;
-  c += todo * 2;
-  char *pat = xmalloc((size_t)c);
+  if ((size_t)todo > COMPOUND_MAX_LEN) {
+    return SP_FORMERROR;
+  }
+  size_t patsize = (size_t)todo * 2 + 7;
+  patsize += (size_t)todo * 2;
+  size_t flagsize = (size_t)todo + 1;
+  char *pat = xmalloc(patsize);
 
   // We also need a list of all flags that can appear at the start and one
   // for all flags.
-  uint8_t *cp = xmalloc((size_t)todo + 1);
+  uint8_t *cp = xmalloc(flagsize);
   slang->sl_compstartflags = cp;
   *cp = NUL;
 
-  uint8_t *ap = xmalloc((size_t)todo + 1);
+  uint8_t *ap = xmalloc(flagsize);
   slang->sl_compallflags = ap;
   *ap = NUL;
 
   // And a list of all patterns in their original form, for checking whether
   // compounding may work in match_compoundrule().  This is freed when we
   // encounter a wildcard, the check doesn't work then.
-  uint8_t *crp = xmalloc((size_t)todo + 1);
+  uint8_t *crp = xmalloc(flagsize);
   slang->sl_comprules = crp;
 
   char *pp = pat;
