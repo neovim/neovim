@@ -72,7 +72,7 @@ escapes like `\u001b`. The following fields are supported. For fields of type
 `string[]`, the first entry is the unshifted variant of the key, and the
 second entry is the shifted variant.
 >
-  Key                        Type
+  Field                      Type
   ------------------------------------------------------------
   carriage_return            string
   change_scroll_region       string
