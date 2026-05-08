@@ -599,6 +599,17 @@ static int nlua_check_interrupt(lua_State *lstate)
   return 1;
 }
 
+static int nlua_os_exit(lua_State *lstate)
+{
+  int status = 0;
+  if (lua_gettop(lstate) >= 1 && !lua_isnil(lstate, 1)) {
+    status = lua_isboolean(lstate, 1) ? (lua_toboolean(lstate, 1) ? 0 : 1)
+                                      : (int)luaL_checkinteger(lstate, 1);
+  }
+  getout(status);
+  return 0;  // Unreachable, but MSVC does not infer getout() is noreturn.
+}
+
 static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -838,6 +849,12 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "getenv");
   lua_pop(lstate, 1);
 #endif
+
+  // os.exit()
+  lua_getglobal(lstate, "os");
+  lua_pushcfunction(lstate, &nlua_os_exit);
+  lua_setfield(lstate, -2, "exit");
+  lua_pop(lstate, 1);
 
   // vim
   lua_newtable(lstate);

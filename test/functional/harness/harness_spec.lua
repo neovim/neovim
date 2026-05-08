@@ -1,5 +1,5 @@
 -- Black-box tests for the local Lua harness itself. These spawn a separate
--- low-level Nvim process instead of driving an embedded instance via testnvim.
+-- Nvim process instead of driving an embedded instance via testnvim.
 local t = require('test.testutil')
 local uv = vim.uv
 
@@ -66,7 +66,7 @@ local function run_harness(suite_dir, extra_args)
   local exit_code --- @type integer?
 
   local args = {
-    '-ll',
+    '-l',
     runner,
     '-v',
     '--lpath=' .. build_dir .. '/?.lua',

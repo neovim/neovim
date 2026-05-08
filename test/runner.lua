@@ -27,9 +27,15 @@ end
 local root = repo_root()
 prepend_package_roots({ root, root .. '/test', '.', './test' })
 
+-- The harness is not an Nvim instance under test. If its startup server stays
+-- visible, serverlist({ peer = true }) can connect back to the runner and wait
+-- forever for an RPC response.
+if vim.v.servername ~= '' then
+  assert(vim.fn.serverstop(vim.v.servername) == 1)
+end
+
 local exit_code = require('test.harness').main(_G.arg)
 io.stdout:flush()
 io.stderr:flush()
 
--- Close the standalone Lua state before exit so sanitizers see Lua-owned cleanup.
-os.exit(exit_code, true)
+os.exit(exit_code)

@@ -102,7 +102,6 @@ local init = only_separate(function()
     c.func(unpack(c.args))
   end
   libnvim.event_init()
-  libnvim.early_init(nil)
   if child_calls_mod then
     for _, c in ipairs(child_calls_mod) do
       c.func(unpack(c.args))

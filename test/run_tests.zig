@@ -3,7 +3,7 @@ const LazyPath = std.Build.LazyPath;
 
 pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compile, config_dir: LazyPath, include_path: ?[]const LazyPath) !*std.Build.Step.Run {
     const test_step = b.addRunArtifact(nvim_bin);
-    test_step.addArg("-ll");
+    test_step.addArg("-l");
     test_step.addFileArg(b.path("./test/runner.lua"));
     if (include_path) |paths| {
         for (paths) |path| {

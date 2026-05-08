@@ -219,9 +219,17 @@ describe('TUI :restart', function()
     -- Retry: old server may still be alive (connect succeeds but yields stale starttime),
     -- or on Windows the --listen address is restored async.
     retry(nil, 5000, function()
-      sess = n.connect(addr)
-      local _, t = sess:request('nvim_eval', 'v:starttime')
+      local candidate = n.connect(addr)
+      local status, t = candidate:request('nvim_eval', 'v:starttime')
+      if not status then
+        candidate:close()
+        error(type(t) == 'table' and t[2] or t)
+      end
+      if t <= starttime then
+        candidate:close()
+      end
       ok(t > starttime, ('v:starttime (%d) > old starttime (%d)'):format(t, starttime), t)
+      sess = candidate
       new_starttime = t
     end)
     return new_starttime, sess

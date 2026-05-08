@@ -403,7 +403,7 @@ Then, in another terminal:
 USING LLDB TO STEP THROUGH UNIT TESTS
 
 >
-    lldb build/bin/nvim -- -ll test/runner.lua --lpath=./build/?.lua test/unit/
+    lldb build/bin/nvim -- -l test/runner.lua --lpath=./build/?.lua test/unit/
 <
 USING GDB
 

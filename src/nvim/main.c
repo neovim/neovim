@@ -189,9 +189,7 @@ static bool event_teardown(void)
 }
 
 /// Performs early initialization.
-///
-/// Needed for unit tests.
-void early_init(mparm_T *paramp)
+static void early_init(mparm_T *paramp)
 {
   os_hint_priority();
   estack_init();

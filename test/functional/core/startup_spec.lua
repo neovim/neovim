@@ -157,14 +157,6 @@ describe('startup', function()
     end)
 
     it('os.exit() sets Nvim exitcode', function()
-      -- tricky: LeakSanitizer triggers on os.exit() and disrupts the return value, disable it
-      exec_lua [[
-        local asan_options = os.getenv('ASAN_OPTIONS') or ''
-        if asan_options ~= '' then
-          asan_options = asan_options .. ':'
-        end
-        vim.uv.os_setenv('ASAN_OPTIONS', asan_options .. ':detect_leaks=0')
-      ]]
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out(
         [[
@@ -177,6 +169,38 @@ describe('startup', function()
         { '-arg1', '--exitcode', '73', '--arg2' }
       )
       eq(73, eval('v:shell_error'))
+    end)
+
+    it('os.exit() runs Nvim teardown', function()
+      local exit_file = t.tmpname(false)
+      finally(function()
+        os.remove(exit_file)
+      end)
+
+      fn.system(
+        {
+          nvim_prog,
+          '-u',
+          'NONE',
+          '-i',
+          'NONE',
+          '--cmd',
+          'set shada=',
+          '-l',
+          '-',
+        },
+        ([[
+        vim.api.nvim_create_autocmd('VimLeave', {
+          callback = function()
+            vim.fn.writefile({ tostring(vim.v.exiting) }, %s)
+          end,
+        })
+        os.exit(73)
+      ]]):format(vim.inspect(exit_file))
+      )
+
+      eq(73, eval('v:shell_error'))
+      eq('73\n', read_file(exit_file))
     end)
 
     it('Lua-error sets Nvim exitcode', function()

@@ -246,7 +246,7 @@ describe('server -> client', function()
       ]])
       api.nvim_set_var('args', {
         nvim_prog,
-        '-ll',
+        '-l',
         'test/functional/api/rpc_fixture.lua',
         package.path,
         package.cpath,
