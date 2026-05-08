@@ -6,7 +6,6 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = n.assert_alive
 local testprg = n.testprg
-local fn = n.fn
 local eq, call, clear, eval, feed_command, feed, api =
   t.eq, n.call, n.clear, n.eval, n.feed_command, n.feed, n.api
 local command = n.command
@@ -575,11 +574,18 @@ describe('shell :!', function()
     finally(function()
       os.remove(fname)
     end)
-    eq(0, fn.writefile({ '\r\n' }, fname, 'b'))
+
+    t.write_file(fname, '\r\n', true)
     command('edit ++bin ' .. fname)
     command('%!cat')
     command('w')
-    eq('\r\0', read_file(fname))
+    eq('\r\n', read_file(fname))
+
+    t.write_file(fname, '\r', true)
+    command('edit ++bin ' .. fname)
+    command('%!cat')
+    command('w')
+    eq('\r', read_file(fname))
   end)
 
   it(':{range}! works when the first char is NUL #34163', function()
