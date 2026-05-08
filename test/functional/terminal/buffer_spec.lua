@@ -776,6 +776,30 @@ describe(':terminal buffer', function()
       end)
     end)
 
+    it('includes pending scrollback in cursor position', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local screen = Screen.new(50, 10)
+      local term = exec_lua([[
+        _G.cursor = {}
+        local term = vim.api.nvim_open_term(0, {})
+        vim.api.nvim_create_autocmd('TermRequest', {
+          callback = function(ev)
+            _G.cursor = ev.data.cursor
+          end
+        })
+        return term
+      ]])
+      feed('a')
+
+      api.nvim_chan_send(term, string.rep('>\n', 9) .. '\027]133;D\027\\')
+      screen:expect([[
+        >                                                 |*8
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 10, 0 }, exec_lua('return _G.cursor'))
+    end)
+
     it('includes cursor position #31609', function()
       command('autocmd! nvim.terminal TermRequest')
       local screen = Screen.new(50, 10)
