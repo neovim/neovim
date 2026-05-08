@@ -230,16 +230,16 @@ local function test_terminal_scrollback(hide_curbuf)
         skip(is_os('win'), 'FIXME: wrong behavior on Windows, ConPTY bug?')
         feed_data('line31\nline32\n' .. '\027[3J' .. 'new_line1\nnew_line2')
         screen:expect([[
-          {101:line2^8}                        |
+          line28                        |
           line29                        |
-          line30                        |
+          {101:line3^0}                        |
           line31                        |
           line32                        |
           new_line1                     |
                                         |
         ]])
-        eq({ 0, 1, 4, 0 }, fn.getpos("'m"))
-        eq({ 0, 1, 6, 0 }, fn.getpos('.'))
+        eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
+        eq({ 0, 3, 6, 0 }, fn.getpos('.'))
       end)
     end)
 
@@ -296,13 +296,13 @@ local function test_terminal_scrollback(hide_curbuf)
         line26                        |
         line27                        |
         line28                        |
-        line29                        |
+        ^line29                        |
         line30                        |
         rows: 10, cols: 30            |
-        ^                              |
+                                      |
         {5:-- TERMINAL --}                |
       ]])
-      eq(17, api.nvim_buf_line_count(0))
+      eq(20, api.nvim_buf_line_count(0))
       try_resize(screen._width, screen._height - 2)
       screen:expect([[
         line26                        |
@@ -333,12 +333,12 @@ local function test_terminal_scrollback(hide_curbuf)
         line30                        |
         rows: 10, cols: 30            |
         rows: 8, cols: 30             |
-        rows: 5, cols: 30             |
+        ^rows: 5, cols: 30             |
         rows: 8, cols: 30             |
-        ^                              |
+                                      |
         {5:-- TERMINAL --}                |
       ]])
-      eq(16, api.nvim_buf_line_count(0))
+      eq(18, api.nvim_buf_line_count(0))
       feed([[<C-\><C-N>8<C-Y>]])
       screen:expect([[
         line20                        |
@@ -750,9 +750,9 @@ local function test_terminal_scrollback(hide_curbuf)
             line3                         |
             line4                         |
             rows: 3, cols: 30             |
-            rows: 4, cols: 30             |
+            ^rows: 4, cols: 30             |
             rows: 7, cols: 30             |
-            ^                              |
+                                          |
             {5:-- TERMINAL --}                |
           ]])
           eq(9, api.nvim_buf_line_count(0))
@@ -786,12 +786,11 @@ local function test_terminal_scrollback(hide_curbuf)
               {101:line2}                         |
               line3                         |
               line4                         |
-              rows: 3, cols: 30             |
+              ^rows: 3, cols: 30             |
               rows: 4, cols: 30             |
               rows: 7, cols: 30             |
               rows: 11, cols: 30            |
-              ^                              |
-                                            |
+                                            |*2
               {5:-- TERMINAL --}                |
             ]])
             -- since there's an empty line after the cursor, the buffer line
@@ -1193,11 +1192,11 @@ describe('scrollback is correct', function()
       vim.api.nvim_win_set_cursor(win, { 3, 0 })
     end)
     screen:expect([[
-      ^          │{100:TEST} 0             |
-      {1:~         }│{100:TEST} 1             |
-      {1:~         }│{100:TEST} 2             |
-      {1:~         }│{100:TEST} 3             |
-      {1:~         }│{100:TEST} 4             |
+      ^          │{103:TEST} 0             |
+      {1:~         }│{103:TEST} 1             |
+      {1:~         }│{103:TEST} 2             |
+      {1:~         }│{103:TEST} 3             |
+      {1:~         }│{103:TEST} 4             |
       {3:[No Name]  }{101:[Scratch] [-]      }|
       99 lines changed              |
     ]])
@@ -1213,11 +1212,11 @@ describe('scrollback is correct', function()
       vim.api.nvim_win_set_cursor(win, { 3, 3 })
     end)
     screen:expect([[
-      ^          │{100:TEST} 86            |
-      {1:~         }│{100:TEST} 87            |
-      {1:~         }│{100:TEST} 88            |
-      {1:~         }│{100:TEST} 89            |
-      {1:~         }│{100:TEST} 90            |
+      ^          │{103:TEST} 86            |
+      {1:~         }│{103:TEST} 87            |
+      {1:~         }│{103:TEST} 88            |
+      {1:~         }│{103:TEST} 89            |
+      {1:~         }│{103:TEST} 90            |
       {3:[No Name]  }{101:[Scratch] [-]      }|
       99 lines changed              |
     ]])
@@ -1302,7 +1301,7 @@ describe('scrollback is correct', function()
         it('output first', function()
           command(send_cmd .. ' | resize +2')
           screen:expect(screen_final)
-          check_buffer_lines(87, 99)
+          check_buffer_lines(85, 99)
         end)
 
         it('resize first', function()
