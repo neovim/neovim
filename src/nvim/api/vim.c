@@ -1752,22 +1752,24 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
   rpc_set_client_info(channel_id, copy_dict(info, NULL));
 }
 
-/// Sets the detach flag for the channel.
+/// Sets the detach flag for a channel.
 ///
 /// Detached channels do not trigger self-exit when they are closed.
 ///
 /// @param channel_id
+/// @param chan  Channel id, or 0 for the current channel.
 /// @param detach   New detach value for the channel.
 /// @param[out] err Error details, if any.
-void nvim__chan_set_detach(uint64_t channel_id, Boolean detach, Error *err)
-  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY
+void nvim__chan_set_detach(uint64_t channel_id, Integer chan, Boolean detach, Error *err)
+  FUNC_API_SINCE(14)
 {
-  Channel *chan = find_channel(channel_id);
-  VALIDATE(chan != NULL, "%s", e_invchan, {
+  uint64_t target = chan == 0 ? channel_id : (uint64_t)chan;
+  Channel *c = find_channel(target);
+  VALIDATE(c != NULL, "%s", e_invchan, {
     return;
   });
 
-  chan->detach = (bool)detach;
+  c->detach = (bool)detach;
 }
 
 /// Records the cmdwin scratchbuf and type, or clears both when type="" / buf=0. Internal use only.
