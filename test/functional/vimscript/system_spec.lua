@@ -9,8 +9,6 @@ local testprg = n.testprg
 local eq, call, clear, eval, feed_command, feed, api =
   t.eq, n.call, n.clear, n.eval, n.feed_command, n.feed, n.api
 local command = n.command
-local read_file = t.read_file
-local exec_lua = n.exec_lua
 local insert = n.insert
 local expect = n.expect
 local pcall_err = t.pcall_err
@@ -579,13 +577,13 @@ describe('shell :!', function()
     command('edit ++bin ' .. fname)
     command('%!cat')
     command('w')
-    eq('\r\n', read_file(fname))
+    eq('\r\n', t.read_file(fname))
 
     t.write_file(fname, '\r', true)
     command('edit ++bin ' .. fname)
     command('%!cat')
     command('w')
-    eq('\r', read_file(fname))
+    eq('\r', t.read_file(fname))
   end)
 
   it(':{range}! works when the first char is NUL #34163', function()
