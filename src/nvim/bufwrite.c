@@ -1669,9 +1669,9 @@ restore_backup:
 #endif
   if (!filtering) {
     add_quoted_fname(IObuff, IOSIZE, buf, fname);
-    // Append the filename to the message ID.
+    // Append the filename (without trailing char) to the message ID.
     char msg_id[IOSIZE + 14] = "nvim.bufwrite ";
-    strncat(msg_id + 14, IObuff, strlen(IObuff) - 1);
+    xstrlcat(msg_id, IObuff, 14 + strlen(IObuff));
     bool insert_space = false;
     if (write_info.bw_conv_error) {
       xstrlcat(IObuff, _(" CONVERSION ERROR"), IOSIZE);
