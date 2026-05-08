@@ -115,45 +115,13 @@ describe(':terminal mouse', function()
       it('will forward mouse press, drag and release to the program', function()
         skip(is_os('win'))
         feed('<LeftMouse><1,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-           "#^                                               |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('"#') })
         feed('<LeftDrag><2,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-             @##^                                            |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('@##') })
         feed('<LeftDrag><3,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-                @$#^                                         |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('@$#') })
         feed('<LeftRelease><3,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-                   #$#^                                      |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('#$#') })
       end)
 
       it('will forward mouse scroll to the program', function()
@@ -173,55 +141,15 @@ describe(':terminal mouse', function()
       it('dragging and scrolling do not interfere with each other', function()
         skip(is_os('win'))
         feed('<LeftMouse><1,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-           "#^                                               |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('"#') })
         feed('<ScrollWheelUp><1,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-             `"#^                                            |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('`"#') })
         feed('<LeftDrag><2,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-                @##^                                         |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('@##') })
         feed('<ScrollWheelUp><2,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-                   `##^                                      |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('`##') })
         feed('<LeftRelease><2,2>')
-        screen:expect([[
-          line27                                            |
-          line28                                            |
-          line29                                            |
-          line30                                            |
-          mouse enabled                                     |
-                      ###^                                   |
-          {5:-- TERMINAL --}                                    |
-        ]])
+        screen:expect({ any = vim.pesc('###') })
       end)
 
       it('will forward mouse clicks to the program with the correct even if set nu', function()
@@ -414,24 +342,24 @@ describe(':terminal mouse', function()
         screen:expect({ any = vim.pesc('rows: 11, cols: 58') })
 
         api.nvim_input_mouse('right', 'press', '', 2, 0, 0)
-        screen:expect({ any = vim.pesc('"!!^') })
+        screen:expect({ any = vim.pesc('"!!') })
         api.nvim_input_mouse('right', 'release', '', 2, 0, 0)
-        screen:expect({ any = vim.pesc('#!!^') })
+        screen:expect({ any = vim.pesc('#!!') })
 
         api.nvim_input_mouse('right', 'press', '', 2, 10, 0)
-        screen:expect({ any = vim.pesc('"!+^') })
+        screen:expect({ any = vim.pesc('"!+') })
         api.nvim_input_mouse('right', 'release', '', 2, 10, 0)
-        screen:expect({ any = vim.pesc('#!+^') })
+        screen:expect({ any = vim.pesc('#!+') })
 
         api.nvim_input_mouse('right', 'press', '', 2, 0, 57)
-        screen:expect({ any = vim.pesc('"Z!^') })
+        screen:expect({ any = vim.pesc('"Z!') })
         api.nvim_input_mouse('right', 'release', '', 2, 0, 57)
-        screen:expect({ any = vim.pesc('#Z!^') })
+        screen:expect({ any = vim.pesc('#Z!') })
 
         api.nvim_input_mouse('right', 'press', '', 2, 10, 57)
-        screen:expect({ any = vim.pesc('"Z+^') })
+        screen:expect({ any = vim.pesc('"Z+') })
         api.nvim_input_mouse('right', 'release', '', 2, 10, 57)
-        screen:expect({ any = vim.pesc('#Z+^') })
+        screen:expect({ any = vim.pesc('#Z+') })
 
         command('setlocal winbar=WINBAR')
         screen:expect({ any = vim.pesc(('{5:WINBAR%s}'):format((' '):rep(52))) })
@@ -450,24 +378,24 @@ describe(':terminal mouse', function()
         eq('t', api.nvim_get_mode().mode)
 
         api.nvim_input_mouse('right', 'press', '', 2, 1, 0)
-        screen:expect({ any = vim.pesc('"!!^') })
+        screen:expect({ any = vim.pesc('"!!') })
         api.nvim_input_mouse('right', 'release', '', 2, 1, 0)
-        screen:expect({ any = vim.pesc('#!!^') })
+        screen:expect({ any = vim.pesc('#!!') })
 
         api.nvim_input_mouse('right', 'press', '', 2, 10, 0)
-        screen:expect({ any = vim.pesc('"!*^') })
+        screen:expect({ any = vim.pesc('"!*') })
         api.nvim_input_mouse('right', 'release', '', 2, 10, 0)
-        screen:expect({ any = vim.pesc('#!*^') })
+        screen:expect({ any = vim.pesc('#!*') })
 
         api.nvim_input_mouse('right', 'press', '', 2, 1, 57)
-        screen:expect({ any = vim.pesc('"Z!^') })
+        screen:expect({ any = vim.pesc('"Z!') })
         api.nvim_input_mouse('right', 'release', '', 2, 1, 57)
-        screen:expect({ any = vim.pesc('#Z!^') })
+        screen:expect({ any = vim.pesc('#Z!') })
 
         api.nvim_input_mouse('right', 'press', '', 2, 10, 57)
-        screen:expect({ any = vim.pesc('"Z*^') })
+        screen:expect({ any = vim.pesc('"Z*') })
         api.nvim_input_mouse('right', 'release', '', 2, 10, 57)
-        screen:expect({ any = vim.pesc('#Z*^') })
+        screen:expect({ any = vim.pesc('#Z*') })
       end)
     end)
 

@@ -142,9 +142,10 @@ describe(':terminal altscreen', function()
     local function wait_removal()
       screen:try_resize(screen._width, screen._height - 2)
       screen:expect([[
-                                                          |*2
+                                                          |
         rows: 4, cols: 50                                 |
         ^                                                  |
+                                                          |
         {5:-- TERMINAL --}                                    |
       ]])
     end
@@ -153,10 +154,9 @@ describe(':terminal altscreen', function()
       wait_removal()
       feed('<c-\\><c-n>4k')
       screen:expect([[
-        ^                                                  |
-                                                          |*2
-        rows: 4, cols: 50                                 |
-                                                          |
+        line2                                             |
+        ^line3                                             |
+                                                          |*3
       ]])
       eq(9, api.nvim_buf_line_count(0))
     end)
@@ -168,17 +168,11 @@ describe(':terminal altscreen', function()
       end)
 
       it('restore buffer state', function()
-        screen:expect(t.is_os('win') and [[
+        screen:expect([[
           line6                                             |
           line7                                             |
           line8                                             |
           ^                                                  |
-          {5:-- TERMINAL --}                                    |
-        ]] or [[
-          line5                                             |
-          line6                                             |
-          line7                                             |
-          ^line8                                             |
           {5:-- TERMINAL --}                                    |
         ]])
       end)
