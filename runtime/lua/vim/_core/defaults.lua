@@ -459,24 +459,24 @@ do
   --- "Incremental selection" mappings (treesitter + LSP fallback).
   do
     vim.keymap.set({ 'x' }, '[n', function()
-      require 'vim.treesitter._select'.select_prev(vim.v.count1)
+      vim.treesitter.select('prev', vim.v.count1)
     end, { desc = 'Select previous node' })
 
     vim.keymap.set({ 'x' }, ']n', function()
-      require 'vim.treesitter._select'.select_next(vim.v.count1)
+      vim.treesitter.select('next', vim.v.count1)
     end, { desc = 'Select next node' })
 
     vim.keymap.set({ 'x' }, '[N', function()
-      require 'vim.treesitter._select'.select_grow_prev(vim.v.count1)
+      vim.treesitter.select('extend_prev', vim.v.count1)
     end, { desc = 'Select previous sibling node' })
 
     vim.keymap.set({ 'x' }, ']N', function()
-      require 'vim.treesitter._select'.select_grow_next(vim.v.count1)
+      vim.treesitter.select('extend_next', vim.v.count1)
     end, { desc = 'Select next sibling node' })
 
     vim.keymap.set({ 'x', 'o' }, 'an', function()
       if vim.treesitter.get_parser(nil, nil, { error = false }) then
-        require 'vim.treesitter._select'.select_parent(vim.v.count1)
+        vim.treesitter.select('parent', vim.v.count1)
       else
         vim.lsp.buf.selection_range(vim.v.count1)
       end
@@ -484,7 +484,7 @@ do
 
     vim.keymap.set({ 'x', 'o' }, 'in', function()
       if vim.treesitter.get_parser(nil, nil, { error = false }) then
-        require 'vim.treesitter._select'.select_child(vim.v.count1)
+        vim.treesitter.select('child', vim.v.count1)
       else
         vim.lsp.buf.selection_range(-vim.v.count1)
       end
