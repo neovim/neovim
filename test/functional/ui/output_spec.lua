@@ -35,7 +35,7 @@ describe('shell command :!', function()
     })
     screen:expect([[
       ^                                                  |
-      {100:~                                                 }|*4
+      {100:~}                                                 |*4
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -48,7 +48,7 @@ describe('shell command :!', function()
     tt.feed_data(':!printf foo; sleep 200\n')
     screen:expect([[
                                                         |
-      {100:~                                                 }|*2
+      {100:~}                                                 |*2
       {3:                                                  }|
       :!printf foo; sleep 200                           |
       foo                                               |

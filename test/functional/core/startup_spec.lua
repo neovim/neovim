@@ -1877,6 +1877,12 @@ describe('inccommand on ex mode', function()
     })
     fn.chansend(id, '%s/N')
     screen:add_extra_attr_ids({
+      [103] = {
+        background = Screen.colors.NvimDarkGray2,
+      },
+      [104] = {
+        background = Screen.colors.NvimDarkGray4,
+      },
       [101] = {
         background = Screen.colors.NvimDarkGrey4,
         foreground = Screen.colors.NvimLightGray2,
@@ -1887,11 +1893,11 @@ describe('inccommand on ex mode', function()
       },
     })
     screen:expect([[
-      {102:^                                                            }|
-      {102:                                                            }|*5
-      {101:                                                            }|
-      {102:Entering Ex mode.  Type "visual" to go to Normal mode.      }|
-      {102::%s/N                                                       }|
+      {103:^                                                            }|
+      {103:                                                            }|*5
+      {104:                                                            }|
+      {102:Entering Ex mode.  Type "visual" to go to Normal mode.}{103:      }|
+      {102::%s/N}{103:                                                       }|
                                                                   |
     ]])
   end)

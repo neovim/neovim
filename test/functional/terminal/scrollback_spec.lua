@@ -1145,6 +1145,7 @@ describe('scrollback is correct', function()
         foreground = Screen.colors.White,
         background = Screen.colors.DarkGreen,
       },
+      [103] = { foreground = tonumber('0xcc6666'), fg_indexed = true },
     })
     api.nvim_buf_set_lines(0, 0, -1, true, { '\027[31mTEST\027[0m 0' })
     feed('yy99pG$<C-V>98kg<C-A>')
@@ -1174,10 +1175,10 @@ describe('scrollback is correct', function()
   local function check_common()
     feed('<C-W>lG')
     screen:expect([[
-                │{100:TEST} 96            |
-      {1:~         }│{100:TEST} 97            |
-      {1:~         }│{100:TEST} 98            |
-      {1:~         }│{100:TEST} 99            |
+                │{103:TEST} 96            |
+      {1:~         }│{103:TEST} 97            |
+      {1:~         }│{103:TEST} 98            |
+      {1:~         }│{103:TEST} 99            |
       {1:~         }│^                   |
       {2:[No Name]  }{102:[Scratch] [-]      }|
       99 lines changed              |
@@ -1233,13 +1234,13 @@ describe('scrollback is correct', function()
         vim.cmd('$')
       end)
       screen:expect([[
-                  │{100:TEST} 88            |
-        {1:~         }│{100:TEST} 89            |
-        {1:~         }│{100:TEST} 90            |
-        {1:~         }│{100:TEST} 91            |
-        {1:~         }│{100:TEST} 92            |
-        {1:~         }│{100:TEST} 93            |
-        {1:~         }│{100:TEST} 94            |
+                  │{103:TEST} 88            |
+        {1:~         }│{103:TEST} 89            |
+        {1:~         }│{103:TEST} 90            |
+        {1:~         }│{103:TEST} 91            |
+        {1:~         }│{103:TEST} 92            |
+        {1:~         }│{103:TEST} 93            |
+        {1:~         }│{103:TEST} 94            |
         {1:~         }│^                   |
         {2:[No Name]  }{102:[Scratch] [-]      }|
                                       |
@@ -1261,15 +1262,15 @@ describe('scrollback is correct', function()
       )
       assert(#perms == 2 + 6 + 6)
       local screen_final = [[
-                  │{100:TEST} 91            |
-        {1:~         }│{100:TEST} 92            |
-        {1:~         }│{100:TEST} 93            |
-        {1:~         }│{100:TEST} 94            |
-        {1:~         }│{100:TEST} 95            |
-        {1:~         }│{100:TEST} 96            |
-        {1:~         }│{100:TEST} 97            |
-        {1:~         }│{100:TEST} 98            |
-        {1:~         }│{100:TEST} 99            |
+                  │{103:TEST} 91            |
+        {1:~         }│{103:TEST} 92            |
+        {1:~         }│{103:TEST} 93            |
+        {1:~         }│{103:TEST} 94            |
+        {1:~         }│{103:TEST} 95            |
+        {1:~         }│{103:TEST} 96            |
+        {1:~         }│{103:TEST} 97            |
+        {1:~         }│{103:TEST} 98            |
+        {1:~         }│{103:TEST} 99            |
         {1:~         }│^                   |
         {2:[No Name]  }{102:[Scratch] [-]      }|
                                       |
@@ -1319,11 +1320,11 @@ describe('scrollback is correct', function()
       )
       assert(#perms == 2 + 6 + 6)
       local screen_final = [[
-                  │{100:TEST} 95            |
-        {1:~         }│{100:TEST} 96            |
-        {1:~         }│{100:TEST} 97            |
-        {1:~         }│{100:TEST} 98            |
-        {1:~         }│{100:TEST} 99            |
+                  │{103:TEST} 95            |
+        {1:~         }│{103:TEST} 96            |
+        {1:~         }│{103:TEST} 97            |
+        {1:~         }│{103:TEST} 98            |
+        {1:~         }│{103:TEST} 99            |
         {1:~         }│^                   |
         {2:[No Name]  }{102:[Scratch] [-]      }|
                                       |
@@ -1359,7 +1360,7 @@ describe('scrollback is correct', function()
         { 'resize +6', 'resize -12', send_cmd },
       }
       local screen_final = [[
-                  │{100:TEST} 99            |
+                  │{103:TEST} 99            |
         {1:~         }│^                   |
         {2:[No Name]  }{102:[Scratch] [-]      }|
                                       |
