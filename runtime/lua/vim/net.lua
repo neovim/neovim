@@ -9,8 +9,85 @@ local http_methods = {
   DELETE = true,
 }
 
+--- @nodoc
+---@enum vim.net.HttpStatusCode
+M.status = {
+  CONTINUE = 100,
+  SWITCHING_PROTOCOLS = 101,
+  OK = 200,
+  CREATED = 201,
+  ACCEPTED = 202,
+  NO_CONTENT = 204,
+  RESET_CONTENT = 205,
+  PARTIAL_CONTENT = 206,
+  MOVED_PERMANENTLY = 301,
+  FOUND = 302,
+  SEE_OTHER = 303,
+  NOT_MODIFIED = 304,
+  TEMPORARY_REDIRECT = 307,
+  PERMANENT_REDIRECT = 308,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  NOT_FOUND = 404,
+  METHOD_NOT_ALLOWED = 405,
+  REQUEST_TIMEOUT = 408,
+  CONFLICT = 409,
+  GONE = 410,
+  LENGTH_REQUIRED = 411,
+  PAYLOAD_TOO_LARGE = 413,
+  URI_TOO_LONG = 414,
+  UNSUPPORTED_MEDIA_TYPE = 415,
+  RANGE_NOT_SATISFIABLE = 416,
+  EXPECTATION_FAILED = 417,
+  TOO_MANY_REQUESTS = 429,
+  INTERNAL_SERVER_ERROR = 500,
+  NOT_IMPLEMENTED = 501,
+  BAD_GATEWAY = 502,
+  SERVICE_UNAVAILABLE = 503,
+  GATEWAY_TIMEOUT = 504,
+  HTTP_VERSION_NOT_SUPPORTED = 505,
+}
+
+---@param res vim.SystemCompleted
+---@return vim.net.request.Response
+local function parse_response(res)
+  ---@type vim.net.request.ResponseHeaders
+  local headers = {}
+  local body = res.stdout or ''
+  ---@type vim.net.HttpStatusCode
+  local status_code
+
+  for line in res.stderr:gmatch('[^\r\n]+') do
+    -- Match lines starting with "< " (response headers/status)
+    local content = line:match('^< (.*)')
+    if content then
+      -- Check for HTTP status line
+      ---@type string
+      local code = content:match('^HTTP/%S+ (%d+)')
+      if code then
+        ---@diagnostic disable-next-line: cast-local-type
+        status_code = tonumber(code)
+        headers = {}
+      else
+        ---@type string,string
+        local key, value = content:match('^([^:]+):%s*(.*)')
+        if key then
+          headers[key] = value
+        end
+      end
+    elseif status_code and line:match('^%s*$') then
+      -- Empty line marks end of header block
+      break
+    end
+  end
+
+  return { body = body, headers = headers, status = status_code }
+end
+
 ---@alias vim.net.request.ResponseFunc fun(err: string?, response: vim.net.request.Response?)
 ---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PATCH" | "HEAD" | "DELETE"
+---@alias vim.net.request.ResponseHeaders table<string, string>
 
 ---@class vim.net.request.Opts
 ---@inlinedoc
@@ -38,6 +115,12 @@ local http_methods = {
 ---
 ---The HTTP body of the request
 ---@field body string
+---
+---The HTTP response status code
+---@field status vim.net.HttpStatusCode
+---
+---The HTTP response headers
+---@field headers vim.net.request.ResponseHeaders
 
 --- Makes an HTTP request to the given URL, asynchronously passing the result to the specified
 --- `on_response`, `outpath` or `outbuf`.
@@ -49,14 +132,16 @@ local http_methods = {
 ---   outpath = 'vision.html',
 --- })
 ---
---- -- Process the response.
+--- -- Process the response. Check the status before doing any action
 --- vim.net.request(
 ---   'https://api.github.com/repos/neovim/neovim',
 ---   {},
 ---   function (err, res)
 ---     if err then return end
----     local stars = vim.json.decode(res.body).stargazers_count
----     vim.print(('Neovim currently has %d stars'):format(stars))
+---     local data = vim.json.decode(res.body)
+---     if res.status == vim.net.status.OK then
+---       vim.print(('Neovim currently has %d stars'):format(data.stargazers_count))
+---     end
 ---   end
 --- )
 ---
@@ -112,7 +197,7 @@ function M.request(method, url, opts, on_response)
 
   -- Build curl command
   local args = { 'curl' }
-  if opts.verbose then
+  if opts.verbose or on_response then
     table.insert(args, '--verbose')
   else
     vim.list_extend(args, { '--silent', '--show-error', '--fail' })
@@ -160,7 +245,7 @@ function M.request(method, url, opts, on_response)
       err = res.stderr ~= '' and res.stderr or ('Request failed with exit code %d'):format(res.code)
     else
       if on_response then
-        response = { body = res.stdout or '' }
+        response = parse_response(res)
       end
     end
 

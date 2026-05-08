@@ -4421,7 +4421,10 @@ Lua module: vim.net                                                  *vim.net*
 *vim.net.request.Response*
 
     Fields: ~
-      • {body}  (`string`) The HTTP body of the request
+      • {body}     (`string`) The HTTP body of the request
+      • {headers}  (`vim.net.request.ResponseHeaders`) The HTTP response
+                   headers
+      • {status}   (`vim.net.HttpStatusCode`) The HTTP response status code
 
 
                                                            *vim.net.request()*
@@ -4435,14 +4438,16 @@ vim.net.request({method}, {url}, {opts}, {on_response})
           outpath = 'vision.html',
         })
 
-        -- Process the response.
+        -- Process the response. Check the status before doing any action
         vim.net.request(
           'https://api.github.com/repos/neovim/neovim',
           {},
           function (err, res)
             if err then return end
-            local stars = vim.json.decode(res.body).stargazers_count
-            vim.print(('Neovim currently has %d stars'):format(stars))
+            local data = vim.json.decode(res.body)
+            if res.status == vim.net.status.OK then
+              vim.print(('Neovim currently has %d stars'):format(data.stargazers_count))
+            end
           end
         )
 
