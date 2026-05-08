@@ -13,7 +13,7 @@ describe('matchparen', function()
   it('redraws properly after scrolling with scrolloff=1', function()
     local screen = Screen.new(30, 7)
     exec([[
-      source $VIMRUNTIME/plugin/matchparen.vim
+      source $VIMRUNTIME/plugin/matchparen.lua
       set scrolloff=1
       call setline(1, ['a', 'b', 'c', 'd', 'e', '', '{', '}', '{', 'f', 'g', '}'])
       call cursor(5, 1)
@@ -50,7 +50,7 @@ describe('matchparen', function()
     ]]
 
     exec([[
-      source $VIMRUNTIME/plugin/matchparen.vim
+      source $VIMRUNTIME/plugin/matchparen.lua
       set hidden
       call setline(1, ['()'])
       normal 0
@@ -80,7 +80,7 @@ describe('matchparen', function()
     }
 
     exec([[
-      source $VIMRUNTIME/plugin/matchparen.vim
+      source $VIMRUNTIME/plugin/matchparen.lua
       let s:win = win_getid()
       call setline(1, '{}')
       split
@@ -107,7 +107,7 @@ describe('matchparen', function()
     local screen = Screen.new(30, 9)
 
     exec([[
-      source $VIMRUNTIME/plugin/matchparen.vim
+      source $VIMRUNTIME/plugin/matchparen.lua
       set completeopt=menuone
       call setline(1, ['aa', 'aaa', 'aaaa', '(a)'])
       call cursor(4, 3)
@@ -135,7 +135,7 @@ describe('matchparen', function()
     }
 
     exec([[
-      source $VIMRUNTIME/plugin/matchparen.vim
+      source $VIMRUNTIME/plugin/matchparen.lua
       call setline(1, ['aaaaaaaa（', 'bbbb）cc'])
       set matchpairs+=（:）
     ]])
@@ -202,7 +202,7 @@ describe('matchparen', function()
     local screen = Screen.new(40, 15)
     exec([[
       syntax on
-      source $VIMRUNTIME/plugin/matchparen.vim
+      source $VIMRUNTIME/plugin/matchparen.lua
       set ft=sh
       call setline(1, [
             \ '#!/bin/sh',
@@ -266,7 +266,7 @@ describe('matchparen', function()
   it('with scrolling', function()
     local screen = Screen.new(30, 7)
     exec([[
-      source $VIMRUNTIME/plugin/matchparen.vim
+      source $VIMRUNTIME/plugin/matchparen.lua
       set scrolloff=1
       call setline(1, ['foobar {', '', '', '', '}'])
       call cursor(5, 1)
