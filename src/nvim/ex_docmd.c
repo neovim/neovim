@@ -5099,7 +5099,8 @@ static void ex_restart(exarg_T *eap)
 
   // Prevent new server from self-exiting when the channel closes.
   ArenaMem result_mem = NULL;
-  MAXSIZE_TEMP_ARRAY(detach_args, 1);
+  MAXSIZE_TEMP_ARRAY(detach_args, 2);
+  ADD_C(detach_args, INTEGER_OBJ(0));
   ADD_C(detach_args, BOOLEAN_OBJ(true));
   rpc_send_call(channel->id, "nvim__chan_set_detach", detach_args, &result_mem, &err);
   if (ERROR_SET(&err)) {
@@ -5993,7 +5994,7 @@ static void ex_detach(exarg_T *eap)
     }
     // Prevent self-exit on channel-close.
     Error detach_err = ERROR_INIT;
-    nvim__chan_set_detach(chan->id, true, &detach_err);
+    nvim__chan_set_detach(chan->id, 0, true, &detach_err);
     api_clear_error(&detach_err);
 
     // Server-side UI detach. Doesn't close the channel.

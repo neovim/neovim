@@ -17,7 +17,6 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
-#include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
@@ -107,28 +106,6 @@ void remote_ui_disconnect(uint64_t channel_id, Error *err, bool send_error_exit)
   }
 
   remote_ui_destroy(ui);
-}
-
-/// Detaches the UI on channel `chan`.
-///
-/// Sets the channel's detach flag (so the server doesn't exit on stdio UIs),
-/// sends an "error_exit" UI event, and closes the channel.
-///
-/// @param chan  UI channel to disconnect.
-/// @param[out] err Error details, if any.
-void nvim__ui_detach(Integer chan, Error *err)
-  FUNC_API_SINCE(14)
-{
-  Channel *c = find_channel((uint64_t)chan);
-  VALIDATE(c != NULL, "%s", e_invchan, {
-    return;
-  });
-  c->detach = true;
-  remote_ui_disconnect((uint64_t)chan, err, true);
-  if (ERROR_SET(err)) {
-    return;
-  }
-  channel_close((uint64_t)chan, kChannelPartAll, NULL);
 }
 
 #ifdef EXITFREE
