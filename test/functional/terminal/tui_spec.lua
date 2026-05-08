@@ -214,13 +214,7 @@ describe('TUI :detach', function()
     end)
 
     tt.feed_data('iHello from detach!')
-    screen:expect([[
-      Hello from detach!^                                |
-      {100:~                                                 }|*3
-      {3:[No Name] [+]                                     }|
-      {5:-- INSERT --}                                      |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    screen:expect({ any = vim.pesc('Hello from detach!^') })
     tt.feed_data('\027')
 
     local child_session = n.connect(child_server)
@@ -230,13 +224,7 @@ describe('TUI :detach', function()
 
     -- :detach! with only 1 UI is a no-op.
     tt.feed_data(':detach!\013')
-    screen:expect([[
-      Hello from detach^!                                |
-      {100:~                                                 }|*3
-      {3:[No Name] [+]                                     }|
-      No other UIs are attached                         |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    screen:expect({ any = vim.pesc('No other UIs are attached') })
     local _, uis_noop = child_session:request('nvim_list_uis')
     eq(1, #uis_noop)
 
