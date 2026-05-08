@@ -3326,7 +3326,7 @@ describe('TUI', function()
     end)
     local child_session = n.connect(child_server)
     local expected_msg =
-      'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.'
+      "defaults.lua: Did not detect DSR response from terminal for 'background' detection. This results in a slower startup time. To disable this and other 'ttyfast' features during startup, set the environment variable NVIM_NOTTYFAST"
     retry(nil, 4000, function()
       eq({ true, { mode = 'n', blocking = false } }, { child_session:request('nvim_get_mode') })
       if not is_os('win') then -- ConPTY provides DSR response on Windows?

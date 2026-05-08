@@ -9736,12 +9736,20 @@ local options = {
     {
       abbreviation = 'tf',
       defaults = true,
+      desc = [=[
+        Assume that the underlying terminal can respond quickly to queries
+        required by features such as 'background' detection.
+        
+        Nvim issues terminal queries before reading the user's |config| file,
+        so disabling this option there will not work. Set $NVIM_NOTTYFAST
+        before starting Nvim to disable terminal queries.
+      ]=],
       full_name = 'ttyfast',
       no_mkrc = true,
       scope = { 'global' },
-      short_desc = N_('Deprecated'),
+      short_desc = N_('assume terminal responds quickly, enabling more features'),
       type = 'boolean',
-      immutable = true,
+      varname = 'p_tf',
     },
     {
       abbreviation = 'udir',

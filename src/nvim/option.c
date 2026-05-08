@@ -407,6 +407,12 @@ void set_init_1(bool clean_arg)
   // Expand environment variables and things like "~" for the defaults.
   set_init_expand_env();
 
+  // Allow disabling ttyfast during startup to disable features such as
+  // automatic background detection over slow connections.
+  if (os_env_exists("NVIM_NOTTYFAST", false)) {
+    set_option_value_give_err(kOptTtyfast, BOOLEAN_OPTVAL(false), 0);
+  }
+
   save_file_ff(curbuf);         // Buffer is unchanged
 
   // Detect use of mlterm.
