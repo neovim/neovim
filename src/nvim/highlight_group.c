@@ -47,6 +47,7 @@
 #include "nvim/os/time.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_defs.h"
@@ -1019,10 +1020,12 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     if (did_changed) {
       highlight_attr_set_all();
     }
+    terminal_update_colors_all();
     ui_default_colors_set();
   } else {
     // a cursor style uses this syn_id, make sure its attribute is updated.
     if (cursor_mode_uses_syn_id(id)) {
+      terminal_update_colors_all();
       ui_mode_info_set();
     }
   }
@@ -1516,6 +1519,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // redraw below will still handle usages of guibg=fg etc.
       ui_default_colors_set();
     }
+    terminal_update_colors_all();
     did_highlight_changed = true;
     redraw_all_later(UPD_NOT_VALID);
   } else {
@@ -1984,6 +1988,7 @@ static void set_hl_attr(int idx)
 
   // a cursor style uses this syn_id, make sure its attribute is updated.
   if (cursor_mode_uses_syn_id(idx + 1)) {
+    terminal_update_colors_all();
     ui_mode_info_set();
   }
 }
