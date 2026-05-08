@@ -1499,6 +1499,15 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
         if vim.wait(10000, function() return vim.g.timer_result end) then
           print('Only waiting a little bit of time!')
         end
+
+        -- Yield via vim.wait() to allow CTRL-C to interrupt Lua code.
+        while true do
+          -- ...work...
+          local _, code = vim.wait(0, nil, 0)
+          if code == -2 then -- CTRL-C.
+            break
+          end
+        end
 <
 
     Parameters: ~

@@ -11,6 +11,16 @@ Various commands					*various*
 ==============================================================================
 1. Various commands					*various-cmds*
 
+							*CTRL-C*
+CTRL-C			Interrupt the current command, script, mapping,
+			prompt, or search.
+
+			In Normal mode, any pending command is aborted. During
+			a search, interrupts the search.
+
+			Lua code cannot be interrupted unless it "yields" via
+			|vim.wait()|.
+
 							*CTRL-L*
 CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.

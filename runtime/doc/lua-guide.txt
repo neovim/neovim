@@ -87,6 +87,22 @@ Finally, you can include Lua code in a Vimscript file by putting it inside a
       end
     EOF
 <
+                                                       *lua-guide-interrupt*
+Lua cannot normally be interrupted by |CTRL-C| (Lua does not implicitly
+"yield" to Nvim). To allow the user to interrupt potentially slow loops,
+periodically call |vim.wait()|. Passing `interval=0` skips the dummy timer
+setup, minimizing per-call overhead in a tight loop: >lua
+
+    while true do
+      -- ...work...
+      local _, code = vim.wait(0, nil, 0)
+      if code == -2 then -- CTRL-C.
+        break
+      end
+    end
+<
+See also: https://github.com/neovim/neovim/issues/6800
+
 ------------------------------------------------------------------------------
 Using Lua files on startup                                    *lua-guide-config*
 

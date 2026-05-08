@@ -2567,6 +2567,26 @@ describe('lua stdlib', function()
       end)
     end)
 
+    it('lets CTRL-C interrupt a Lua loop', function()
+      api.nvim_set_var('channel', api.nvim_get_chan_info(0).id)
+      exec_lua([[
+        function _G.Loop()
+          vim.rpcnotify(vim.g.channel, 'ready')
+          while true do
+            local _, code = vim.wait(0, nil, 0)
+            if code == -2 then
+              vim.rpcnotify(vim.g.channel, 'wait', code)
+              return
+            end
+          end
+        end
+      ]])
+      feed(':lua _G.Loop()<CR>')
+      eq({ 'notification', 'ready', {} }, next_msg(500))
+      feed('<C-C>')
+      eq({ 'notification', 'wait', { -2 } }, next_msg(500))
+    end)
+
     it('fails in fast callbacks #26122', function()
       local screen = Screen.new(80, 10)
       exec_lua([[

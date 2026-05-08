@@ -459,8 +459,8 @@ typed.  The `vgetc()` function is used for this.  It also handles mapping.
 
 What we consider the "Nvim event loop" is actually a wrapper around `uv_run` to
 handle both the `fast_events` queue and possibly (a suitable subset of) deferred
-events. Therefore "raw" `vim.uv.run()` is often not enough to "yield" from Lua
-plugins; instead they can call `vim.wait(0)`.
+events. Therefore "raw" `vim.uv.run()` is often not enough to yield from Lua;
+instead call `vim.wait(0)` and check its result.
 
 Updating the screen is mostly postponed until a command or a sequence of
 commands has finished.  The work is done by `update_screen()`, which calls
