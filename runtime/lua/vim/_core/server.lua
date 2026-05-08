@@ -166,7 +166,13 @@ function M.detach_others(keep_chan)
       vim.fn.chanclose(ui.chan)
     end
   end
-  return uicount - #vim.api.nvim_list_uis()
+  local n = uicount - #vim.api.nvim_list_uis()
+  if n == 0 then
+    vim.api.nvim_echo({ { 'No other UIs are attached' } }, true, {})
+  else
+    vim.api.nvim_echo({ { ('Detached %d non-current UIs'):format(n) } }, true, {})
+  end
+  return n
 end
 
 return M
