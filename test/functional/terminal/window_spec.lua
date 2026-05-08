@@ -69,8 +69,8 @@ describe(':terminal window', function()
     -- Window with less room scrolls anyway to keep its cursor in-view.
     feed('gg$20<C-W>v')
     screen:expect([[
-      interact $ AAAAAAAAAAAAAAAAAA│$ AAAAAAAAAAAAAAAAA^A|
-      AAAAAAAAAAAA                 │AAA                 |
+      interact $ AAAAAAAAAAAAAAAAAA│^interact $ AAAAAAAAA|
+      AAAAAAAAAAAA                 │AAAAAAAAAAAA        |
                                    │                    |*3
       {119:1000                          }{120:1002                }|
                                                         |
@@ -370,7 +370,7 @@ describe(':terminal window', function()
       rows: 5, cols: 25        │rows: 5, cols: 25       |
       ^                         │                        |
                                │                        |*2
-      {120:<o [-] 3,0-1          All }{119:< [-] 1,1            All}|
+      {120:<o [-] 3,0-1          All }{119:< [-] 2,0-1          Top}|
       {5:-- TERMINAL --}                                    |
     ]])
     command('echo ""')
@@ -461,8 +461,8 @@ describe(':terminal window', function()
     command('quit | botright split')
     -- NOTE: right window's cursor not on the last line, so it's not tailing.
     screen:expect([[
+      rows: 5, cols: 25        │tty ready               |
       rows: 5, cols: 50        │rows: 5, cols: 25       |
-      rows: 2, cols: 50        │rows: 5, cols: 50       |
       {18:foo [-]                   foo [-]                 }|
       rows: 2, cols: 50                                 |
       ^                                                  |
@@ -473,19 +473,19 @@ describe(':terminal window', function()
     screen:expect([[
       rows: 5, cols: 25        │tty ready               |
       rows: 5, cols: 50        │rows: 5, cols: 25       |
-      rows: 2, cols: 50        │rows: 5, cols: 50       |
+      ^rows: 2, cols: 50        │rows: 5, cols: 50       |
       rows: 5, cols: 25        │rows: 2, cols: 50       |
-      ^                         │rows: 5, cols: 25       |
+                               │rows: 5, cols: 25       |
       {17:foo [-]                   }{18:foo [-]                 }|
       {3:-- TERMINAL --}                                    |
     ]])
     command('call nvim_open_win(0, 0, #{relative: "editor", row: 0, col: 0, width: 40, height: 3})')
     screen:expect([[
-      {2:rows: 5, cols: 25                       }          |
-      {2:rows: 5, cols: 40                       } 25       |
-      {2:                                        } 50       |
-      rows: 5, cols: 40        │rows: 2, cols: 50       |
-      ^                         │rows: 5, cols: 25       |
+      {2:rows: 5, cols: 50                       }          |
+      {2:rows: 2, cols: 50                       } 25       |
+      {2:rows: 5, cols: 25                       } 50       |
+      ^rows: 5, cols: 40        │rows: 2, cols: 50       |
+                               │rows: 5, cols: 25       |
       {17:foo [-]                   }{18:foo [-]                 }|
       {3:-- TERMINAL --}                                    |
     ]])
@@ -534,8 +534,8 @@ describe(':terminal window', function()
     end)
     command('botright new')
     screen:expect([[
-      rows: 2, cols: 25        │rows: 5, cols: 25       |
-                               │rows: 5, cols: 50       |
+      rows: 2, cols: 25        │tty ready               |
+                               │rows: 5, cols: 25       |
       {18:foo [-]                   foo [-]                 }|
       ^                                                  |
       {4:~                                                 }|
@@ -606,8 +606,8 @@ describe(':terminal window', function()
       setlocal nocursorline cursorcolumn cursorlineopt=number
     ]])
     screen:expect([[
-      {19:t}ty ready                │tty ready               |
-      ^rows: 5, cols: 25        │{12:rows: 5, cols: 25       }|
+      ^tty ready                │{12:tty ready               }|
+      {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
       {19: }                        │                        |*3
       {17:foo [-]                   }{18:foo [-]                 }|
                                                         |
@@ -615,8 +615,8 @@ describe(':terminal window', function()
 
     feed('i')
     screen:expect([[
-      tty ready                │tty ready               |
-      rows: 5, cols: 25        │{12:rows: 5, cols: 25       }|
+      tty ready                │{12:tty ready               }|
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
       ^                         │                        |
                                │                        |*2
       {17:foo [-]                   }{18:foo [-]                 }|
@@ -893,9 +893,8 @@ describe(':terminal with multigrid', function()
         tty ready                                         |
         rows: 10, cols: 20                                |
         rows: 3, cols: 70                                 |
-        rows: 6, cols: 50                                 |
-        ^                                                  |
-                                                          |
+        ^rows: 6, cols: 50                                 |
+                                                          |*2
       ## grid 3
         {5:-- TERMINAL --}                                    |
       ]])

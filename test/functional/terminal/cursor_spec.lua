@@ -313,8 +313,8 @@ describe(':terminal cursor', function()
         tty ready                                         |
         ^                                                  |
         {120:~~~                                               }|
+        tty ready                                         |
         rows: 2, cols: 50                                 |
-                                                          |
         {119:~~~                                               }|
         {5:-- TERMINAL --}                                    |
       ]],
@@ -333,8 +333,8 @@ describe(':terminal cursor', function()
         tty ready                                         |
         ^                                                  |
         {120:~~~                                               }|
+        tty ready                                         |
         rows: 2, cols: 50                                 |
-                                                          |
         {119:~~~                                               }|
         {5:-- TERMINAL --}                                    |
       ]],
