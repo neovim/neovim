@@ -921,9 +921,8 @@ describe(':terminal with multigrid', function()
         tty ready                                         |
         rows: 10, cols: 20                                |
         rows: 3, cols: 70                                 |
-        rows: 6, cols: 50                                 |
-        ^                                                  |
-                                                          |
+        ^rows: 6, cols: 50                                 |
+                                                          |*2
       ## grid 3
         {5:-- TERMINAL --}                                    |
       ]])
