@@ -516,7 +516,7 @@ end
 --- decides the selection behavior.
 ---
 ---@param target 'parent'|'child'|'next'|'prev'|'extend_next'|'extend_prev' Decides the selection behavior.
----@param count? integer (default: 1) Expand or adjust the selection this many times.
+---@param count? integer (default: 1) Expand or adjust the selection many times.
 function M.select(target, count)
   vim.validate('target', target, 'string')
   vim.validate('count', count, 'number', true)

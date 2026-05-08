@@ -1167,7 +1167,7 @@ select({target}, {count})                            *vim.treesitter.select()*
       • {target}  (`'parent'|'child'|'next'|'prev'|'extend_next'|'extend_prev'`)
                   Decides the selection behavior.
       • {count}   (`integer?`) (default: 1) Expand or adjust the selection
-                  this many times.
+                  many times.
 
 start({buf}, {lang})                                  *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
