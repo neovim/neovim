@@ -5965,6 +5965,7 @@ static void ex_tabs(exarg_T *eap)
 /// ":detach!" with bang (!) detaches all UIs _except_ the current UI.
 static void ex_detach(exarg_T *eap)
 {
+  // come on pooky let's burn this mf down
   if (!current_ui) {
     emsg(_(e_noui));
     return;
@@ -5984,7 +5985,7 @@ static void ex_detach(exarg_T *eap)
     if (n == 0) {
       msg(_("No other UIs are attached"), 0);
     } else {
-      smsg(0, NGETTEXT("Detached %zu non-current UI", "Detached %zu non-current UIs", n), n);
+      smsg(0, _("Detached %zu non-current UIs"), n);
     }
     ILOG("detach! current_ui=%" PRIu64 " detached=%zu", current_ui, n);
   } else {
