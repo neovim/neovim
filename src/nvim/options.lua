@@ -8918,7 +8918,7 @@ local options = {
                  added without modifying code that reacts on mouse clicks on
                  this label.
               Use |getmousepos()|.winid in the specified function to get the
-              corresponding window id of the clicked item.
+              corresponding |window-ID| of the clicked item.
         \< -   Where to truncate line if too long.  Default is at the start.
               No width fields allowed.
         = -   Separation point between alignment sections.  Each section will

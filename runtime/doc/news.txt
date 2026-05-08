@@ -185,8 +185,7 @@ LUA
 
 OPTIONS
 
-• 'ttyfast' can be disabled during startup by setting the environment variable
-  `NVIM_NOTTYFAST` to disable automatic background detection.
+• 'ttyfast' can be disabled during startup by setting |$NVIM_NOTTYFAST|.
 • 'scrolloffpad' allows vertically centering cursor at the end of file.
 • 'shortmess' flag |shm-u| silences undo/redo messages.
 • 'winpinned' prevents window from closing unless specifically targeted.
