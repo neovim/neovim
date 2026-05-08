@@ -1592,10 +1592,10 @@ describe('vim.pack', function()
 
         local ref_lockfile = get_lock_tbl() --- @type vim.pack.Lock
 
-        local function assert_action(pos, action_titles, select_idx)
+        local function assert_action(pos, action_titles, select_idx, should_preserve_lines)
           api.nvim_win_set_cursor(0, pos)
 
-          local lines = api.nvim_buf_get_lines(0, 0, -1, false)
+          local buf_lines = api.nvim_buf_get_lines(0, 0, -1, false)
           n.exec_lua(function()
             _G.select_items = nil
             _G.select_idx = select_idx
@@ -1607,33 +1607,35 @@ describe('vim.pack', function()
           eq(titles, action_titles)
 
           -- If no action is asked (like via cancel), should not delete lines
-          if select_idx <= 0 then
-            eq(lines, api.nvim_buf_get_lines(0, 0, -1, false))
+          if select_idx <= 0 or should_preserve_lines then
+            eq(buf_lines, api.nvim_buf_get_lines(0, 0, -1, false))
           end
         end
 
         -- - Should not include "namespace" header as "plugin at cursor"
         assert_action({ 1, 1 }, {}, 0)
         assert_action({ 2, 0 }, {}, 0)
-        -- - No actions for `defbranch` since it is active and has no updates
-        assert_action({ 3, 1 }, {}, 0)
-        assert_action({ 7, 0 }, {}, 0)
+        -- - "Delete" action should be present for active plugins
+        local defbranch_actions = { 'Delete `defbranch`' }
+        assert_action({ 3, 1 }, defbranch_actions, 0)
+        assert_action({ 7, 0 }, defbranch_actions, 0)
         -- - Should not include separator blank line as "plugin at cursor"
         assert_action({ 8, 0 }, {}, 0)
         assert_action({ 9, 0 }, {}, 0)
         assert_action({ 10, 0 }, {}, 0)
         -- - Should suggest updating related actions if updates available
-        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`' }
+        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`', 'Delete `fetch`' }
         assert_action({ 11, 0 }, fetch_actions, 0)
         assert_action({ 14, 0 }, fetch_actions, 0)
         assert_action({ 20, 0 }, fetch_actions, 0)
         assert_action({ 21, 0 }, {}, 0)
         assert_action({ 22, 0 }, {}, 0)
         assert_action({ 23, 0 }, {}, 0)
-        -- - Only deletion should be available for not active plugins
-        assert_action({ 24, 0 }, { 'Delete `semver`' }, 0)
-        assert_action({ 28, 0 }, { 'Delete `semver`' }, 0)
-        assert_action({ 31, 0 }, { 'Delete `semver`' }, 0)
+        -- - "Delete" action should be present for not active plugin
+        local semver_actions = { 'Delete `semver`' }
+        assert_action({ 24, 0 }, semver_actions, 0)
+        assert_action({ 28, 0 }, semver_actions, 0)
+        assert_action({ 31, 0 }, semver_actions, 0)
 
         -- - Should correctly perform action and remove plugin's lines
         local function line_match(lnum, pattern)
@@ -1641,7 +1643,7 @@ describe('vim.pack', function()
         end
 
         -- - Delete not active plugin. Should remove from disk and update lockfile.
-        assert_action({ 24, 0 }, { 'Delete `semver`' }, 1)
+        assert_action({ 24, 0 }, semver_actions, 1)
         eq(false, pack_exists('semver'))
         line_match(22, '^# Same')
         eq(22, api.nvim_buf_line_count(0))
@@ -1655,6 +1657,27 @@ describe('vim.pack', function()
         line_match(9, '^# Update')
         line_match(10, '^$')
         line_match(11, '^# Same')
+
+        -- - Delete active plugin. Should ask for confirmation before force deleting
+        --   with possibility to not confirm.
+        mock_confirm(2) -- No
+        assert_action({ 3, 0 }, defbranch_actions, 1, true)
+        eq(true, pack_exists('defbranch'))
+        eq(ref_lockfile, get_lock_tbl())
+        local confirm_msg = 'Plugin `defbranch` is active.'
+          .. ' Make sure its `vim.pack.add` call is removed from config.'
+        local ref_confirm_log = { { confirm_msg, 'Delete? &Yes\n&No', 1, 'Question' } }
+        eq(ref_confirm_log, exec_lua('return _G.confirm_log'))
+
+        mock_confirm(1) -- Yes
+        assert_action({ 3, 0 }, defbranch_actions, 1)
+        eq(false, pack_exists('defbranch'))
+        ref_lockfile.plugins.defbranch = nil
+        eq(ref_lockfile, get_lock_tbl())
+        eq(5, api.nvim_buf_line_count(0))
+        line_match(1, '^# Error')
+        line_match(3, '^# Update')
+        line_match(5, '^# Same')
 
         -- - Update plugin. Should not re-fetch new data and update lockfile.
         n.exec('quit')

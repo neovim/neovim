@@ -1255,8 +1255,8 @@ end
 --- - 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) - show more
 ---   information at cursor. Like details of particular pending change or newer tag.
 --- - 'textDocument/codeAction' (`gra` via |lsp-defaults| or |vim.lsp.buf.code_action()|) - show
----   code actions relevant for "plugin at cursor". Like "delete" (if plugin is not active),
----   "update" or "skip updating" (if there are pending updates).
+---   code actions relevant for "plugin at cursor". Like "delete" (after extra confirmation for
+---   active plugins), "update" or "skip updating" (if there are pending updates).
 ---
 --- @param names? string[] List of plugin names to update. Must be managed
 --- by |vim.pack|, not necessarily already added to current session.

@@ -520,8 +520,8 @@ update({names}, {opts})                                    *vim.pack.update()*
       change or newer tag.
     • 'textDocument/codeAction' (`gra` via |lsp-defaults| or
       |vim.lsp.buf.code_action()|) - show code actions relevant for "plugin at
-      cursor". Like "delete" (if plugin is not active), "update" or "skip
-      updating" (if there are pending updates).
+      cursor". Like "delete" (after extra confirmation for active plugins),
+      "update" or "skip updating" (if there are pending updates).
 
     Parameters: ~
       • {names}  (`string[]?`) List of plugin names to update. Must be managed
