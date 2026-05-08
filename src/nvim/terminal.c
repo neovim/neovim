@@ -869,8 +869,6 @@ void terminal_open(Terminal **termpp, buf_T *buf)
                                               GHOSTTY_TERMINAL_DATA_COLOR_PALETTE_DEFAULT,
                                               palette));
 
-  VTermState *state = vterm_obtain_state(term->vt);
-
   // Configure the color palette. Try to get the color from:
   //
   // - b:terminal_color_{NUM}
@@ -892,12 +890,6 @@ void terminal_open(Terminal **termpp, buf_T *buf)
       .g = (uint8_t)((color_val >> 8) & 0xFF),
       .b = (uint8_t)((color_val >> 0) & 0xFF),
     };
-    VTermColor color;
-    vterm_color_rgb(&color,
-                    (uint8_t)((color_val >> 16) & 0xFF),
-                    (uint8_t)((color_val >> 8) & 0xFF),
-                    (uint8_t)((color_val >> 0) & 0xFF));
-    vterm_state_set_palette_color(state, i, &color);
     term->color_set[i] = true;
   }
 
