@@ -162,7 +162,8 @@ function M.detach_others(keep_chan)
   local detached = 0
   for _, ui in ipairs(vim.api.nvim_list_uis()) do
     if ui.chan and ui.chan ~= keep_chan then
-      vim.api.nvim__ui_detach(ui.chan)
+      vim.api.nvim__chan_set_detach(ui.chan, true)
+      vim.fn.chanclose(ui.chan)
       detached = detached + 1
     end
   end
