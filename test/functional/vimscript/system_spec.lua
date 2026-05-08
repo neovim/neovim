@@ -572,7 +572,9 @@ describe('shell :!', function()
 
   it('preserves newlines (including CR) in binary-mode buffer #39424', function()
     local fname = 'Xbinaryfile'
-    os.remove(fname)
+    finally(function()
+      os.remove(fname)
+    end)
     eq(0, fn.writefile({ '\r\n' }, fname, 'b'))
     command('edit ++bin ' .. fname)
     command('%!cat')
