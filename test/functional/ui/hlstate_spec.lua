@@ -213,14 +213,14 @@ describe('ext_hlstate detailed highlights', function()
 
     screen:set_default_attr_ids({
       [1] = { {}, { { hi_name = 'TermCursorNC', ui_name = 'TermCursorNC', kind = 'ui' } } },
-      [2] = { { foreground = tonumber('0x00ccff'), fg_indexed = true }, { { kind = 'term' } } },
+      [2] = { { foreground = tonumber('0x00d7ff'), fg_indexed = true }, { { kind = 'term' } } },
       [3] = {
-        { bold = true, foreground = tonumber('0x00ccff'), fg_indexed = true },
+        { bold = true, foreground = tonumber('0x00d7ff'), fg_indexed = true },
         {
           { kind = 'term' },
         },
       },
-      [4] = { { foreground = tonumber('0x00ccff'), fg_indexed = true }, { 2, 1 } },
+      [4] = { { foreground = tonumber('0x00d7ff'), fg_indexed = true }, { 2, 1 } },
       [5] = { { foreground = tonumber('0x40ffff'), fg_indexed = true }, { { kind = 'term' } } },
       [6] = { { foreground = tonumber('0x40ffff'), fg_indexed = true }, { 5, 1 } },
       [7] = { {}, { { hi_name = 'MsgArea', ui_name = 'MsgArea', kind = 'ui' } } },

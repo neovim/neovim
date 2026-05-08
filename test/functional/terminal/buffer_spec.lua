@@ -645,6 +645,7 @@ describe(':terminal buffer', function()
 
     local screen = Screen.new(50, 7)
     screen:add_extra_attr_ids({
+      Blank = { background = Screen.colors.NvimLightGrey2 },
       [100] = {
         foreground = Screen.colors.NvimDarkGrey2,
         background = Screen.colors.NvimLightGrey2,
@@ -661,14 +662,13 @@ describe(':terminal buffer', function()
     command('set shell=fish termguicolors')
     command(('terminal %s -u NONE -i NONE'):format(fn.shellescape(nvim_prog)))
     command('startinsert')
-    local s0 = [[
-      {100:^                                                  }|
-      {101:~                                                 }|*3
+    screen:expect([[
+      {Blank:^                                                  }|
+      {101:~}{Blank:                                                 }|*3
       {102:[No Name]                       0,0-1          All}|
-      {100:                                                  }|
+      {Blank:                                                  }|
       {5:-- TERMINAL --}                                    |
-    ]]
-    screen:expect(s0)
+    ]])
     feed('<C-Z>')
     screen:expect([[
                                                         |*5
@@ -676,7 +676,13 @@ describe(':terminal buffer', function()
       {5:-- TERMINAL --}                                    |
     ]])
     feed('<Space>')
-    screen:expect(s0)
+    screen:expect([[
+      {Blank:^                                                  }|
+      {101:~}{Blank:                                                 }|*3
+      {102:[No Name]                       0,0-1          All}|
+      {100:                                                  }|
+      {5:-- TERMINAL --}                                    |
+    ]])
   end)
 
   it('term_close() use-after-free #4393', function()
@@ -1604,7 +1610,7 @@ describe('terminal input', function()
     })
     screen:expect([[
       ^                                                  |
-      {100:~                                                 }|*3
+      {100:~}                                                 |*3
       {3:[No Name]                       0,0-1          All}|
                                                         |
       {5:-- TERMINAL --}                                    |
@@ -1699,7 +1705,7 @@ describe('terminal input', function()
       feed(key)
       screen:expect(([[
                                                           |
-        {100:~                                                 }|*3
+        {100:~}                                                 |*3
         {3:[No Name]                       0,0-1          All}|
         %s^ {MATCH: *}|
         {5:-- TERMINAL --}                                    |
