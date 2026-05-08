@@ -123,6 +123,12 @@ typedef struct {
   OptInt save_w_p_siso;
 } TerminalState;
 
+typedef struct {
+  int16_t idx;
+  int rgb;
+  bool is_default;
+} TerminalColorAttrs;
+
 #include "terminal.c.generated.h"
 
 // Delay for refreshing the terminal buffer after receiving updates from
@@ -1879,13 +1885,40 @@ static bool terminal_ghostty_screen_ref(Terminal *term, int row, int col, Ghostt
   return true;
 }
 
-static int get_rgb(VTermState *state, VTermColor color)
+static int terminal_ghostty_underline_hl_flag(int underline)
+{
+  switch (underline) {
+  case GHOSTTY_SGR_UNDERLINE_NONE:
+    return 0;
+  case GHOSTTY_SGR_UNDERLINE_SINGLE:
+    return HL_UNDERLINE;
+  case GHOSTTY_SGR_UNDERLINE_DOUBLE:
+    return HL_UNDERDOUBLE;
+  case GHOSTTY_SGR_UNDERLINE_CURLY:
+    return HL_UNDERCURL;
+  case GHOSTTY_SGR_UNDERLINE_DOTTED:
+    return HL_UNDERDOTTED;
+  case GHOSTTY_SGR_UNDERLINE_DASHED:
+    return HL_UNDERDASHED;
+  default:
+    return HL_UNDERLINE;
+  }
+}
+
+static int terminal_ghostty_rgb(GhosttyColorRgb color)
+{
+  return RGB_(color.r, color.g, color.b);
+}
+
+// TODO(noib3): Remove once scrollback attrs are no longer libvterm-owned.
+static int terminal_vterm_rgb(VTermState *state, VTermColor color)
 {
   vterm_state_convert_color_to_rgb(state, &color);
   return RGB_(color.rgb.red, color.rgb.green, color.rgb.blue);
 }
 
-static int get_underline_hl_flag(VTermScreenCellAttrs attrs)
+// TODO(noib3): Remove once scrollback attrs are no longer libvterm-owned.
+static int terminal_vterm_underline_hl_flag(VTermScreenCellAttrs attrs)
 {
   switch (attrs.underline) {
   case VTERM_UNDERLINE_OFF:
@@ -1901,11 +1934,189 @@ static int get_underline_hl_flag(VTermScreenCellAttrs attrs)
   }
 }
 
+static int terminal_cell_hl_attr(Terminal *term, int hl_attrs, int16_t fg_idx, int16_t bg_idx,
+                                 int fg, int bg, bool fg_default, bool bg_default, int url_attr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool fg_indexed = fg_idx != 0;
+  bool bg_indexed = bg_idx != 0;
+  bool fg_set = fg_idx && fg_idx <= 16 && term->color_set[fg_idx - 1];
+  bool bg_set = bg_idx && bg_idx <= 16 && term->color_set[bg_idx - 1];
+
+  hl_attrs |= ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
+              | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
+
+  int attr_id = 0;
+  if (hl_attrs || !fg_default || !bg_default) {
+    attr_id = hl_get_term_attr(&(HlAttrs) {
+      .cterm_ae_attr = (int32_t)hl_attrs,
+      .cterm_fg_color = fg_idx,
+      .cterm_bg_color = bg_idx,
+      .rgb_ae_attr = (int32_t)hl_attrs,
+      .rgb_fg_color = fg,
+      .rgb_bg_color = bg,
+      .rgb_sp_color = -1,
+      .hl_blend = -1,
+      .url = -1,
+    });
+  }
+
+  return url_attr > 0 ? hl_combine_attr(attr_id, url_attr) : attr_id;
+}
+
+static int16_t terminal_ghostty_style_color_index(GhosttyStyleColor color)
+{
+  if (color.tag != GHOSTTY_STYLE_COLOR_PALETTE) {
+    return 0;
+  }
+  return (int16_t)(color.value.palette + 1);
+}
+
+static int terminal_ghostty_style_color_rgb(const GhosttyColorRgb palette[256],
+                                            GhosttyStyleColor color)
+{
+  switch (color.tag) {
+  case GHOSTTY_STYLE_COLOR_NONE:
+    return -1;
+  case GHOSTTY_STYLE_COLOR_PALETTE:
+    return terminal_ghostty_rgb(palette[color.value.palette]);
+  case GHOSTTY_STYLE_COLOR_RGB:
+    return terminal_ghostty_rgb(color.value.rgb);
+  default:
+    return -1;
+  }
+}
+
+static TerminalColorAttrs terminal_ghostty_style_color_attrs(const GhosttyColorRgb palette[256],
+                                                             GhosttyStyleColor color)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (TerminalColorAttrs) {
+    .idx = terminal_ghostty_style_color_index(color),
+    .rgb = terminal_ghostty_style_color_rgb(palette, color),
+    .is_default = color.tag == GHOSTTY_STYLE_COLOR_NONE,
+  };
+}
+
+static TerminalColorAttrs terminal_ghostty_cell_bg_attrs(GhosttyCell cell, GhosttyStyleColor color,
+                                                         const GhosttyColorRgb palette[256])
+  FUNC_ATTR_NONNULL_ALL
+{
+  TerminalColorAttrs attrs = terminal_ghostty_style_color_attrs(palette, color);
+  if (color.tag != GHOSTTY_STYLE_COLOR_NONE) {
+    return attrs;
+  }
+
+  GhosttyCellContentTag content_tag = GHOSTTY_CELL_CONTENT_CODEPOINT;
+  assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_CONTENT_TAG, &content_tag));
+  if (content_tag == GHOSTTY_CELL_CONTENT_BG_COLOR_PALETTE) {
+    GhosttyColorPaletteIndex palette_index = 0;
+    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_COLOR_PALETTE,
+                                            &palette_index));
+    return (TerminalColorAttrs) {
+      .idx = (int16_t)(palette_index + 1),
+      .rgb = terminal_ghostty_rgb(palette[palette_index]),
+      .is_default = false,
+    };
+  }
+
+  if (content_tag == GHOSTTY_CELL_CONTENT_BG_COLOR_RGB) {
+    GhosttyColorRgb bg = { 0 };
+    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_COLOR_RGB, &bg));
+    attrs.rgb = terminal_ghostty_rgb(bg);
+    attrs.is_default = false;
+  }
+  return attrs;
+}
+
+static int terminal_ghostty_cell_url_attr(const GhosttyGridRef *ref)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t uri_len = 0;
+  GhosttyResult result = ghostty_grid_ref_hyperlink_uri(ref, NULL, 0, &uri_len);
+  if (result == GHOSTTY_SUCCESS && uri_len == 0) {
+    return 0;
+  }
+  if (result != GHOSTTY_OUT_OF_SPACE) {
+    assert_ghostty_success(result);
+  }
+
+  char *uri = xmalloc(uri_len + 1);
+  result = ghostty_grid_ref_hyperlink_uri(ref, (uint8_t *)uri, uri_len, &uri_len);
+  assert_ghostty_success(result);
+  uri[uri_len] = NUL;
+  int attr = hl_add_url(0, uri);
+  xfree(uri);
+  return attr;
+}
+
+static int terminal_ghostty_cell_attr(Terminal *term, int row, int col,
+                                      const GhosttyColorRgb palette[256])
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyGridRef ref = { 0 };
+  if (!terminal_ghostty_screen_ref(term, row, col, &ref)) {
+    return 0;
+  }
+
+  GhosttyCell cell = 0;
+  assert_ghostty_success(ghostty_grid_ref_cell(&ref, &cell));
+
+  GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+  assert_ghostty_success(ghostty_grid_ref_style(&ref, &style));
+
+  TerminalColorAttrs fg = terminal_ghostty_style_color_attrs(palette, style.fg_color);
+  TerminalColorAttrs bg = terminal_ghostty_cell_bg_attrs(cell, style.bg_color, palette);
+
+  int hl_attrs = (style.bold ? HL_BOLD : 0)
+                 | (style.faint ? HL_DIM : 0)
+                 | (style.blink ? HL_BLINK : 0)
+                 | (style.invisible ? HL_CONCEALED : 0)
+                 | (style.overline ? HL_OVERLINE : 0)
+                 | (style.italic ? HL_ITALIC : 0)
+                 | (style.inverse ? HL_INVERSE : 0)
+                 | terminal_ghostty_underline_hl_flag(style.underline)
+                 | (style.strikethrough ? HL_STRIKETHROUGH : 0);
+
+  int url_attr = terminal_ghostty_cell_url_attr(&ref);
+  return terminal_cell_hl_attr(term, hl_attrs, fg.idx, bg.idx, fg.rgb, bg.rgb,
+                               fg.is_default, bg.is_default, url_attr);
+}
+
+// TODO(noib3): Remove once scrollback attrs are no longer libvterm-owned.
+static int terminal_vterm_cell_attr(Terminal *term, VTermState *state, int row, int col)
+{
+  VTermScreenCell cell;
+  bool color_valid = fetch_cell(term, row, col, &cell);
+  bool fg_default = !color_valid || VTERM_COLOR_IS_DEFAULT_FG(&cell.fg);
+  bool bg_default = !color_valid || VTERM_COLOR_IS_DEFAULT_BG(&cell.bg);
+
+  int vt_fg = fg_default ? -1 : terminal_vterm_rgb(state, cell.fg);
+  int vt_bg = bg_default ? -1 : terminal_vterm_rgb(state, cell.bg);
+
+  int16_t vt_fg_idx = (!fg_default && VTERM_COLOR_IS_INDEXED(&cell.fg))
+                      ? cell.fg.indexed.idx + 1 : 0;
+  int16_t vt_bg_idx = (!bg_default && VTERM_COLOR_IS_INDEXED(&cell.bg))
+                      ? cell.bg.indexed.idx + 1 : 0;
+
+  int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
+                 | (cell.attrs.dim ? HL_DIM : 0)
+                 | (cell.attrs.blink ? HL_BLINK : 0)
+                 | (cell.attrs.conceal ? HL_CONCEALED : 0)
+                 | (cell.attrs.overline ? HL_OVERLINE : 0)
+                 | (cell.attrs.italic ? HL_ITALIC : 0)
+                 | (cell.attrs.reverse ? HL_INVERSE : 0)
+                 | terminal_vterm_underline_hl_flag(cell.attrs)
+                 | (cell.attrs.strike ? HL_STRIKETHROUGH : 0);
+
+  return terminal_cell_hl_attr(term, hl_attrs, vt_fg_idx, vt_bg_idx, vt_fg, vt_bg,
+                               fg_default, bg_default, cell.uri);
+}
+
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *term_attrs)
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
-  VTermState *state = vterm_obtain_state(term->vt);
   assert(linenr);
   int row = linenr_to_row(term, linenr);
   if (row >= height) {
@@ -1915,57 +2126,18 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
   }
 
   width = MIN(TERM_ATTRS_MAX, width);
+  if (row < 0) {
+    VTermState *state = vterm_obtain_state(term->vt);
+    for (int col = 0; col < width; col++) {
+      term_attrs[col] = terminal_vterm_cell_attr(term, state, row, col);
+    }
+    return;
+  }
+
+  GhosttyRenderStateColors colors = GHOSTTY_INIT_SIZED(GhosttyRenderStateColors);
+  assert_ghostty_success(ghostty_render_state_colors_get(term->ghostty_render_state, &colors));
   for (int col = 0; col < width; col++) {
-    VTermScreenCell cell;
-    bool color_valid = fetch_cell(term, row, col, &cell);
-    bool fg_default = !color_valid || VTERM_COLOR_IS_DEFAULT_FG(&cell.fg);
-    bool bg_default = !color_valid || VTERM_COLOR_IS_DEFAULT_BG(&cell.bg);
-
-    // Get the rgb value set by libvterm.
-    int vt_fg = fg_default ? -1 : get_rgb(state, cell.fg);
-    int vt_bg = bg_default ? -1 : get_rgb(state, cell.bg);
-
-    bool fg_indexed = VTERM_COLOR_IS_INDEXED(&cell.fg);
-    bool bg_indexed = VTERM_COLOR_IS_INDEXED(&cell.bg);
-
-    int16_t vt_fg_idx = ((!fg_default && fg_indexed) ? cell.fg.indexed.idx + 1 : 0);
-    int16_t vt_bg_idx = ((!bg_default && bg_indexed) ? cell.bg.indexed.idx + 1 : 0);
-
-    bool fg_set = vt_fg_idx && vt_fg_idx <= 16 && term->color_set[vt_fg_idx - 1];
-    bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx - 1];
-
-    int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
-                   | (cell.attrs.dim ? HL_DIM : 0)
-                   | (cell.attrs.blink ? HL_BLINK : 0)
-                   | (cell.attrs.conceal ? HL_CONCEALED : 0)
-                   | (cell.attrs.overline ? HL_OVERLINE : 0)
-                   | (cell.attrs.italic ? HL_ITALIC : 0)
-                   | (cell.attrs.reverse ? HL_INVERSE : 0)
-                   | get_underline_hl_flag(cell.attrs)
-                   | (cell.attrs.strike ? HL_STRIKETHROUGH : 0)
-                   | ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
-                   | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
-
-    int attr_id = 0;
-
-    if (hl_attrs || !fg_default || !bg_default) {
-      attr_id = hl_get_term_attr(&(HlAttrs) {
-        .cterm_ae_attr = (int32_t)hl_attrs,
-        .cterm_fg_color = vt_fg_idx,
-        .cterm_bg_color = vt_bg_idx,
-        .rgb_ae_attr = (int32_t)hl_attrs,
-        .rgb_fg_color = vt_fg,
-        .rgb_bg_color = vt_bg,
-        .rgb_sp_color = -1,
-        .hl_blend = -1,
-        .url = -1,
-      });
-    }
-
-    if (cell.uri > 0) {
-      attr_id = hl_combine_attr(attr_id, cell.uri);
-    }
-
+    int attr_id = terminal_ghostty_cell_attr(term, row, col, colors.palette);
     term_attrs[col] = attr_id;
   }
 }
