@@ -2629,6 +2629,8 @@ func Test_string_option_revert_on_failure()
         \ ['selection', 'exclusive', 'a123'],
         \ ['selectmode', 'cmd', 'a123'],
         \ ['sessionoptions', 'options', 'a123'],
+        \ ['shellpipe', '>%s', "%s%s%s"],
+        \ ['shellredir', '>%s', "%s%s%s"],
         \ ['shortmess', 'w', '2'],
         \ ['showbreak', '>>', "\x01"],
         \ ['showcmdloc', 'statusline', 'a123'],

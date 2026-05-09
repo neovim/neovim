@@ -7722,6 +7722,7 @@ local options = {
     },
     {
       abbreviation = 'sp',
+      cb = 'did_set_shellpipe_redir',
       defaults = {
         condition = 'MSWIN',
         if_false = '| tee',
@@ -7758,6 +7759,7 @@ local options = {
         Note: When using a pipe like "| tee", you'll lose the exit code of the
         shell command.  This might be configurable by your shell, look for
         the pipefail option (for bash and zsh, use ":set -o pipefail").
+        Only a single "%s" value is allowed.
       ]=],
       full_name = 'shellpipe',
       scope = { 'global' },
@@ -7793,6 +7795,7 @@ local options = {
     },
     {
       abbreviation = 'srr',
+      cb = 'did_set_shellpipe_redir',
       defaults = {
         condition = 'MSWIN',
         if_false = '>',
@@ -7819,6 +7822,8 @@ local options = {
         explicitly set before.
         In the future pipes may be used for filtering and this option will
         become obsolete (at least for Unix).
+        							*E1577*
+        Only a single "%s" item is allowed in the option value.
       ]=],
       full_name = 'shellredir',
       scope = { 'global' },
