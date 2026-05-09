@@ -1122,8 +1122,8 @@ function M.status(buf)
   if type(format) == 'function' then
     result_str = format(counts)
   else
-    local signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs.text
-      or default_status_signs
+    local resolved_signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs
+    local signs = (type(resolved_signs) == 'table' and resolved_signs.text) or default_status_signs
     result_str = vim
       .iter(pairs(counts))
       :map(function(level, value)
