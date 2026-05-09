@@ -1703,7 +1703,7 @@ workspace_diagnostics({opts})            *vim.lsp.buf.workspace_diagnostics()*
                   clients.
 
     See also: ~
-      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_diagnostic
 
 workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.
