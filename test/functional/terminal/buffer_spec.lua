@@ -1547,6 +1547,16 @@ describe('terminal input', function()
     eq('013579./*-+,=', exec_lua([[return _G.input_data]]))
   end)
 
+  it('sends super-modified keys', function()
+    feed('<D-Left>')
+    eq('\027[1;9D', exec_lua([[return _G.input_data]]))
+
+    api.nvim_chan_send(chan, '\027[>1u')
+    poke_eventloop()
+    feed('<D-w>')
+    eq('\027[1;9D\027[119;9u', exec_lua([[return _G.input_data]]))
+  end)
+
   it('unknown special keys are not sent', function()
     feed('aaa<Help>bbb')
     eq('aaabbb', exec_lua([[return _G.input_data]]))
