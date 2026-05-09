@@ -317,6 +317,8 @@ Commands:
 - |:lsp|
 - |:Man| is available by default, with many improvements such as completion
 - |:match| can be invoked before highlight group is defined
+- |:packdel|
+- |:packupdate|
 - |:restart|
 - |:source| works with Lua
 - |:trust|

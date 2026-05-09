@@ -8307,6 +8307,18 @@ static void ex_lsp(exarg_T *eap)
   nlua_call_excmd("vim._core.ex_cmd", "ex_lsp", eap, &cmdmod, NULL);
 }
 
+/// ":packdel {name}"
+static void ex_packdel(exarg_T *eap)
+{
+  nlua_call_excmd("vim._core.ex_cmd", "ex_packdel", eap, &cmdmod, NULL);
+}
+
+/// ":packupdate {name}"
+static void ex_packupdate(exarg_T *eap)
+{
+  nlua_call_excmd("vim._core.ex_cmd", "ex_packupdate", eap, &cmdmod, NULL);
+}
+
 /// ":uptime"
 static void ex_uptime(exarg_T *eap)
 {

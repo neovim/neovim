@@ -1334,6 +1334,8 @@ char *addstar(char *fname, size_t len, int context)
         || context == EXPAND_CHECKHEALTH
         || context == EXPAND_LSP
         || context == EXPAND_LOG
+        || context == EXPAND_PACKDEL
+        || context == EXPAND_PACKUPDATE
         || context == EXPAND_LUA) {
       retval = xstrnsave(fname, len);
     } else {
@@ -2356,6 +2358,14 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_context = EXPAND_LSP;
     break;
 
+  case CMD_packdel:
+    xp->xp_context = EXPAND_PACKDEL;
+    break;
+
+  case CMD_packupdate:
+    xp->xp_context = EXPAND_PACKUPDATE;
+    break;
+
   case CMD_retab:
     xp->xp_context = EXPAND_RETAB;
     xp->xp_pattern = (char *)arg;
@@ -2906,9 +2916,10 @@ static char *get_arg1_from_lua(char *lua, expand_T *xp, int idx)
       || last_gen != get_cmdline_last_prompt_id()) {
     xfree(last_xp_line);
     last_xp_line = xstrdup(xp->xp_line);
-    MAXSIZE_TEMP_ARRAY(args, 1);
+    MAXSIZE_TEMP_ARRAY(args, 2);
     Error err = ERROR_INIT;
 
+    ADD_C(args, CSTR_AS_OBJ(xp->xp_pattern));
     ADD_C(args, CSTR_AS_OBJ(xp->xp_line));
     // Build the current command line as a Lua string argument
     Object res = nlua_exec(cstr_as_string(lua), NULL, args, kRetObject, NULL, &err);
@@ -2943,6 +2954,26 @@ static char *get_log_arg(expand_T *xp, int idx)
 static char *get_lsp_arg(expand_T *xp, int idx)
 {
   return get_arg1_from_lua("return require'vim._core.ex_cmd'.lsp_complete(...)", xp, idx);
+}
+
+/// Completion for |:packdel| command.
+///
+/// Given to ExpandGeneric() to obtain `:packdel` completion.
+/// @param[in] xp  Expandy thing.
+/// @param[in] idx  Index of the item.
+static char *get_packdel_arg(expand_T *xp, int idx)
+{
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.packdel_complete(...)", xp, idx);
+}
+
+/// Completion for |:packupdate| command.
+///
+/// Given to ExpandGeneric() to obtain `:packupdate` completion.
+/// @param[in] xp  Expandy thing.
+/// @param[in] idx  Index of the item.
+static char *get_packupdate_arg(expand_T *xp, int idx)
+{
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.packupdate_complete(...)", xp, idx);
 }
 
 /// Do the expansion based on xp->xp_context and "rmp".
@@ -2989,6 +3020,8 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
     { EXPAND_LOG, get_log_arg, true, false },
     { EXPAND_LSP, get_lsp_arg, true, false },
+    { EXPAND_PACKDEL, get_packdel_arg, true, false },
+    { EXPAND_PACKUPDATE, get_packupdate_arg, true, false },
   };
   int ret = FAIL;
 

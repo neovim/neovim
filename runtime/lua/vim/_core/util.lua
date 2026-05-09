@@ -166,4 +166,10 @@ function M.get_forge_url(repo, target, target_type)
   return ('%s/%s/%s'):format(repo, middle, target)
 end
 
+--- Utility function for displaying vim error codes (EXX)
+--- @param msg string
+function M.echo_err(msg)
+  vim.api.nvim_echo({ { msg } }, true, { err = true })
+end
+
 return M

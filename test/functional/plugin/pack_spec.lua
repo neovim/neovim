@@ -2060,12 +2060,12 @@ describe('vim.pack', function()
 
       assert('Plugin `ccc` is not installed', { 'ccc', 'basic', 'aaa' })
 
-      -- Empty list is allowed with warning
+      -- Empty list is allowed
       n.exec('messages clear')
       exec_lua(function()
         vim.pack.update({})
       end)
-      eq('vim.pack: Nothing to update', n.exec_capture('messages'))
+      eq('', n.exec_capture('messages'))
     end)
   end)
 
@@ -2247,6 +2247,13 @@ describe('vim.pack', function()
       local msg = "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'"
       eq(msg, n.exec_capture('messages'))
 
+      -- `:packdel` should output E5810 instead of the normal error
+      eq(
+        'Vim(packdel):E5810: Some plugins are active and were not deleted: defbranch',
+        pcall_err(n.command, 'packdel defbranch')
+      )
+      assert_on_disk({ defbranch = true })
+
       -- Should trigger relevant events in order as specified in `vim.pack.add()`
       local log = exec_lua('return _G.event_log')
       local find_event = make_find_packchanged(log)
@@ -2326,12 +2333,12 @@ describe('vim.pack', function()
       assert('Plugin `ccc` is not installed', { 'ccc', 'basic', 'aaa' })
       eq(true, pack_exists('basic'))
 
-      -- Empty list is allowed with warning
+      -- Empty list is allowed
       n.exec('messages clear')
       exec_lua(function()
         vim.pack.del({})
       end)
-      eq('vim.pack: Nothing to remove', n.exec_capture('messages'))
+      eq('', n.exec_capture('messages'))
     end)
   end)
 end)

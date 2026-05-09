@@ -1478,7 +1478,9 @@ Tag		Command		Action ~
 |:ounmap|	:ou[nmap]	like ":unmap" but for Operator-pending mode
 |:ounmenu|	:ounme[nu]	remove menu for Operator-pending mode
 |:packadd|	:pa[ckadd]	add a plugin from 'packpath'
+|:packdel|	:packd[el]	remove |vim.pack| plugins
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
+|:packupdate|	:packu[pdate]	update |vim.pack| plugins
 |:pbuffer|	:pb[uffer]	edit buffer in the preview window
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window

@@ -139,6 +139,7 @@ EDITOR
 • |:log| opens log files.
 • |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
+• |:packupdate| and |:packdel| for managing |vim.pack|.
 
 EVENTS
 

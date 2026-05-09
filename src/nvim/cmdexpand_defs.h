@@ -131,6 +131,8 @@ enum {
   EXPAND_LUA,
   EXPAND_LSP,
   EXPAND_LOG,
+  EXPAND_PACKDEL,
+  EXPAND_PACKUPDATE,
 };
 
 /// Type used by ExpandGeneric()

@@ -66,7 +66,7 @@
 ---taken from |vim.pack-lockfile| (if present) or inferred from the `version`.
 ---
 ---- To update all plugins with new changes:
----    - Execute |vim.pack.update()|. This will download updates from source and
+---    - Execute |:packupdate|. This will download updates from source and
 ---      show confirmation buffer in a separate tabpage.
 ---    - Review changes. To confirm all updates execute |:write|.
 ---      To discard updates execute |:quit|.
@@ -92,7 +92,7 @@
 ---
 ---Explore installed plugins ~
 ---
----- `vim.pack.update(nil, { offline = true })`
+---- `:packupdate ++offline`
 ---- Navigate between plugins with `[[` and `]]`. List them with `gO`
 ---  (|vim.lsp.buf.document_symbol()|).
 ---
@@ -102,11 +102,11 @@
 ---  Let's say, the switch is for plugin named 'plugin1'.
 ---- |:restart|. The plugin's state on disk (revision and/or tracked source)
 ---  is not yet changed. Only plugin's `version` in |vim.pack-lockfile| is updated.
----- Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated.
----  If only switching version, use `{ offline = true }` option table.
+---- Execute `:packupdate plugin1`. The plugin's source is updated. If only
+---  switching version, also pass the `++offline` argument.
 ---- Review changes and either confirm or discard them. If discarded, revert
 ---  `version` change in 'init.lua' as well or you will be prompted again next time
----  you run |vim.pack.update()|.
+---  you run `:packupdate`.
 ---
 ---Freeze plugin from being updated ~
 ---
@@ -128,7 +128,7 @@
 ---      locate the revisions before the latest update, and (carefully) adjust
 ---      current lockfile to have those revisions.
 ---- |:restart|.
----- `vim.pack.update({ 'plugin' }, { offline = true, target = 'lockfile' })`.
+---- `:packupdate ++offline ++lockfile plugin`.
 ---  Read and confirm.
 ---
 ---Synchronize config across machines ~
@@ -142,9 +142,9 @@
 ---       are installed at proper revision. If some installation has failed but
 ---       you know it should not (like due to bad Internet connection),
 ---       revert |vim.pack-lockfile| and |:restart| again.
----     - `vim.pack.update(nil, { target = 'lockfile' })`. Read and confirm.
+---     - `:packupdate ++lockfile`. Read and confirm.
 ---     - Manually delete outdated plugins (present locally, but were not present
----       in the lockfile prior to restart) with `vim.pack.del( { 'plugin' })`.
+---       in the lockfile prior to restart) with `:packdel plugin`.
 ---       They can be located by examining the VCS difference of the lockfile
 ---       (`git diff -- nvim-pack-lock.json` for Git).
 ---
@@ -153,14 +153,32 @@
 ---- Remove plugin specs from |vim.pack.add()| calls in 'init.lua' or they will be
 ---  reinstalled later.
 ---- |:restart|.
----- Use |vim.pack.del()| with a list of plugin names to remove. Use |vim.pack.get()|
----  to get all non-active plugins:
----```lua
----vim.iter(vim.pack.get())
----  :filter(function(x) return not x.active end)
----  :map(function(x) return x.spec.name end)
----  :totable()
----```
+---- Use |:packdel| with plugin names to remove. Use `:packdel ++all` to delete
+---  all inactive plugins.
+---
+--- <pre>help
+--- Commands                                             *vim.pack-commands* *E5807*
+---
+---                                                      *:packu* *:packupdate* *E5808*
+--- :packu[pdate][!] [++offline] [++lockfile] [name]
+---
+---     Interactively update the specified plugins. Skips confirmation when `!` is
+---     given. If no plugin names are provided, update all plugins.
+---
+---     When `++offline` is given, skip downloading new updates.
+---
+---     When `++lockfile` is given, use revisions from the lockfile.
+---
+---                                         *:packd* *:packdel* *E5809* *E5810* *E5811*
+--- :packd[el][!] {name}
+---
+---     Remove the specified plugins. Can only remove inactive plugins unless `!`
+---     is given.
+---
+--- :packd[el][!] ++all
+---
+---     Remove all inactive plugins. When `!` is given, instead remove all plugins.
+--- </pre>
 ---
 ---[vim.pack-events]()
 ---
@@ -207,6 +225,8 @@
 local api = vim.api
 local uv = vim.uv
 local async = require('vim._async')
+local util = require('vim._core.util')
+local N_ = vim.fn.gettext
 
 local M = {}
 
@@ -1268,7 +1288,9 @@ function M.update(names, opts)
 
   local plug_list = plug_list_from_names(names)
   if #plug_list == 0 then
-    notify('Nothing to update', 'WARN')
+    if opts._ex then
+      util.echo_err(N_('E5808: Nothing to update'))
+    end
     return
   end
   git_ensure_exec()
@@ -1367,7 +1389,9 @@ function M.del(names, opts)
 
   local plug_list = plug_list_from_names(names)
   if #plug_list == 0 then
-    notify('Nothing to remove', 'WARN')
+    if opts._ex then
+      util.echo_err(N_('E5809: Nothing to remove'))
+    end
     return
   end
 
@@ -1394,9 +1418,14 @@ function M.del(names, opts)
 
   if #fail_to_delete > 0 then
     local plugs = table.concat(fail_to_delete, ', ')
-    local msg = ('Some plugins are active and were not deleted: %s.'):format(plugs)
-      .. ' Remove them from init.lua, restart, and try again.'
-    error(msg)
+    if opts._ex then
+      util.echo_err(N_('E5810: Some plugins are active and were not deleted: %s'):format(plugs))
+      return
+    else
+      local msg = ('Some plugins are active and were not deleted: %s.'):format(plugs)
+        .. ' Remove them from init.lua, restart, and try again.'
+      error(msg)
+    end
   end
 end
 
@@ -1486,6 +1515,18 @@ function M.get(names, opts)
   end
 
   return res
+end
+
+--- @param skip_inactive? boolean
+--- @return string[] plugin_names
+function M._get_names(skip_inactive)
+  local names = {} --- @type string[]
+  for _, plugin_data in ipairs(vim.pack.get(nil, { info = false })) do
+    if not (skip_inactive and plugin_data.active) then
+      names[#names + 1] = plugin_data.spec.name
+    end
+  end
+  return names
 end
 
 return M
