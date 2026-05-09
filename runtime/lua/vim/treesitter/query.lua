@@ -917,7 +917,7 @@ end
 ---@param end_row? integer Stopping line for the search (end-inclusive, unless `stop_col` is provided). Defaults to `node:end_()`.
 ---@param opts? table Optional keyword arguments:
 ---   - end_col (integer) Stopping column for the search (end-exclusive).
----   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
+---   - match_limit (integer) Set the maximum number of in-progress matches (Default: none).
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
 ---   - start_col (integer) Starting column for the search.
@@ -928,7 +928,6 @@ end
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
 function Query:iter_captures(node, source, start_row, end_row, opts)
   opts = opts or {}
-  opts.match_limit = opts.match_limit or 256
 
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
@@ -943,7 +942,7 @@ function Query:iter_captures(node, source, start_row, end_row, opts)
     end_row = end_row,
     end_col = opts.end_col or 0,
     max_start_depth = opts.max_start_depth,
-    match_limit = opts.match_limit or 256,
+    match_limit = opts.match_limit,
   })
 
   -- For faster checks that a match is not in the cache.
@@ -1037,14 +1036,13 @@ end
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
 ---@param opts? table Optional keyword arguments:
----   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
+---   - match_limit (integer) Set the maximum number of in-progress matches (Default: none).
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree): pattern id, match, metadata, tree
 function Query:iter_matches(node, source, start, stop, opts)
   opts = opts or {}
-  opts.match_limit = opts.match_limit or 256
 
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
@@ -1059,7 +1057,7 @@ function Query:iter_matches(node, source, start, stop, opts)
     end_row = stop,
     end_col = 0,
     max_start_depth = opts.max_start_depth,
-    match_limit = opts.match_limit or 256,
+    match_limit = opts.match_limit,
   })
 
   local function iter()
