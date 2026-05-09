@@ -310,12 +310,29 @@ describe(':terminal highlight forwarding', function()
       [1] = { { bold = true }, { bold = true } },
       [2] = { { fg_indexed = true, foreground = tonumber('0xf0c674') }, { foreground = 3 } },
       [3] = { { foreground = tonumber('0xff8000') }, {} },
+      [4] = { { undercurl = true, special = tonumber('0xf08f68') }, { undercurl = true } },
+      [5] = { { undercurl = true }, { undercurl = true } },
     })
     command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
       tty ready                                         |
       ^                                                  |
+                                                        |*4
+      {1:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('will handle colored underline', function()
+    tt.set_undercurl()
+    tt.feed_termcode('[58:2::240:143:104m')
+    tt.feed_data('color')
+    tt.feed_termcode('[59m')
+    tt.feed_data('plain')
+    tt.clear_attrs()
+    screen:expect([[
+      tty ready                                         |
+      {4:color}{5:plain}^                                        |
                                                         |*4
       {1:-- TERMINAL --}                                    |
     ]])
