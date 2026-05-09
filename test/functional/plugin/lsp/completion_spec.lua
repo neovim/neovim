@@ -222,6 +222,59 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, got)
   end
 
+  it('uses filterText as word if label/newText would not match', function()
+    local items = {
+      {
+        filterText = '<module',
+        insertTextFormat = 2,
+        kind = 10,
+        label = 'module',
+        sortText = 'module',
+        textEdit = {
+          newText = '<module>$1</module>$0',
+          range = {
+            start = { character = 0, line = 0 },
+            ['end'] = { character = 0, line = 0 },
+          },
+        },
+      },
+      {
+        filterText = 'atto',
+        insertTextFormat = 1,
+        kind = 7,
+        label = '•std::atto',
+        sortText = 'atto',
+        textEdit = {
+          newText = 'std::atto',
+          range = {
+            start = { character = 0, line = 0 },
+            ['end'] = { character = 0, line = 0 },
+          },
+        },
+      },
+      {
+        filterText = 'adopt_lock_t',
+        insertTextFormat = 1,
+        kind = 7,
+        label = '•std::adopt_lock_t',
+        sortText = 'adopt_lock_t',
+        insertText = 'std::adopt_lock_t',
+      },
+    }
+    assert_completion_matches('<mo', items, {
+      { abbr = 'module', word = '<module' },
+    })
+    assert_completion_matches('a', items, {
+      { abbr = '•std::atto', word = 'atto' },
+      { abbr = '•std::adopt_lock_t', word = 'adopt_lock_t' },
+    })
+    assert_completion_matches('', items, {
+      { abbr = 'module', word = 'module' },
+      { abbr = '•std::atto', word = 'std::atto' },
+      { abbr = '•std::adopt_lock_t', word = 'std::adopt_lock_t' },
+    })
+  end)
+
   describe('when completeopt has fuzzy matching enabled', function()
     before_each(function()
       exec_lua(function()
@@ -242,31 +295,6 @@ describe('vim.lsp.completion: item conversion', function()
       }, {
         { abbr = 'faz other', word = 'faz other' },
         { abbr = '?.foo', word = '?.foo' },
-      })
-    end)
-
-    it('uses filterText as word if label/newText would not match', function()
-      local items = {
-        {
-          filterText = '<module',
-          insertTextFormat = 2,
-          kind = 10,
-          label = 'module',
-          sortText = 'module',
-          textEdit = {
-            newText = '<module>$1</module>$0',
-            range = {
-              start = { character = 0, line = 0 },
-              ['end'] = { character = 0, line = 0 },
-            },
-          },
-        },
-      }
-      assert_completion_matches('<mo', items, {
-        { abbr = 'module', word = '<module' },
-      })
-      assert_completion_matches('', items, {
-        { abbr = 'module', word = 'module' },
       })
     end)
 
