@@ -12,10 +12,9 @@ function! tutor#SetupVim()
     endif
 endfunction
 
-" Loads metadata file, if available
+" Load inline metadata
 function! tutor#LoadMetadata()
-    let l:metadata_file = exists('b:tutor_file') ?  b:tutor_file : expand('%')
-    let b:tutor_metadata = json_decode(readfile(l:metadata_file .. '.json'))
+    lua require('nvim.tutor').load_metadata()
 endfunction
 
 " Mappings: {{{1
