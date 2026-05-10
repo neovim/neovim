@@ -1070,6 +1070,16 @@ local function compute_feedback_lines_single(p)
     return ('## %s%s\n\n %s'):format(p.spec.name, active_suffix, p.info.err:gsub('\n', '\n  '))
   end
 
+  -- Missing revisions imply an upstream failure not captured in `p.info.err`.
+  -- Avoid crashing the concatenations below.
+  if p.info.sha_head == nil or p.info.sha_target == nil then
+    local msg = ('Missing revision data (sha_head=%s, sha_target=%s).'):format(
+      tostring(p.info.sha_head),
+      tostring(p.info.sha_target)
+    )
+    return ('## %s%s\n\n %s'):format(p.spec.name, active_suffix, msg)
+  end
+
   local parts = { ('## %s%s\n'):format(p.spec.name, active_suffix) }
   local version_suffix = p.info.version_str == '' and '' or (' (%s)'):format(p.info.version_str)
 
@@ -1298,6 +1308,9 @@ function M.update(names, opts)
 
     -- Compute change info: changelog if any, new tags if nothing to update
     if opts.target == 'lockfile' then
+      if type(l_data.rev) ~= 'string' or l_data.rev == '' then
+        error('No revision in lockfile. Update with `target = "version"` first.')
+      end
       p.info.version_str = '*lockfile*'
       p.info.sha_target = l_data.rev
     end
