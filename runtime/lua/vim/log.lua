@@ -223,19 +223,25 @@ end
 
 --- Creates a writer function for a specific log level.
 ---
+--- The returned writer supports a "should-log" check: calling it with no
+--- arguments returns `true` if the level is enabled, `false` otherwise. This
+--- lets callers cheaply guard expensive message construction:
+--- ```lua
+--- if log.trace() then
+---   log.trace('heavy', vim.inspect(big_table))
+--- end
+--- ```
+---
 ---@package
 ---@param level vim.log.levels
 ---@return fun(...:any):boolean?
 function M:create_writer(level)
-  ---@return boolean? # `false` if the log file could not be opened.
   return function(...)
+    if level < self.level then
+      return false
+    end
     local argc = select('#', ...)
     if argc == 0 then
-      return true
-    end
-    -- Fast-path: skip filtering work (and avoid opening the file) when the entry would be filtered
-    -- out anyway. Note: `fmt` may also return nil for finer-grained filtering.
-    if level < self.level then
       return true
     end
     if not self:open_file() then

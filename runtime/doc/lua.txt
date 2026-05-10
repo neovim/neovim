@@ -3909,7 +3909,7 @@ To customize the output format, override `log.fmt` directly: >lua
 
 
 get_level({log})                                         *vim.log.get_level()*
-    Gets the current log level. Equivalent to `log:get_level()`.
+    Gets the current log-level.
 
     Parameters: ~
       • {log}  (`vim.Log`) See |vim.Log|.
@@ -3941,10 +3941,8 @@ new({name}, {opts})                                            *vim.log.new()*
         (`vim.Log`) See |vim.Log|.
 
 set_level({log}, {level})                                *vim.log.set_level()*
-    Sets the current log level.
-
-    Entries below this level are skipped. Equivalent to
-    `log:set_level(level)`.
+    Sets the current log-level. Messages below this level are skipped (not
+    logged).
 
     Parameters: ~
       • {log}    (`vim.Log`) See |vim.Log|.
