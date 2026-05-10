@@ -122,6 +122,44 @@ describe('vim.log', function()
     assert_nolog('skip', logfile, 10)
   end)
 
+  it('close_file() reopens on next write', function()
+    local info = exec_lua(function()
+      local logger = vim.log.new({ name = 'CloseFile' })
+
+      logger.warn('before-close')
+      ---@diagnostic disable-next-line: invisible
+      local old_fd = logger.fd
+      local close_ok = logger:close_file()
+      local second_close_ok = logger:close_file()
+      ---@diagnostic disable-next-line: invisible
+      local closed_before_reopen = logger.fd == nil
+      ---@diagnostic disable-next-line: param-type-mismatch
+      local old_fd_write_ok = vim.uv.fs_write(old_fd, 'after-close-on-old-fd\n')
+
+      logger.warn('after-reopen')
+
+      return {
+        close_ok = close_ok,
+        second_close_ok = second_close_ok,
+        closed_before_reopen = closed_before_reopen,
+        old_fd_write_ok = old_fd_write_ok,
+        ---@diagnostic disable-next-line: invisible
+        reopened = logger.fd ~= nil,
+      }
+    end)
+
+    eq(true, info.close_ok)
+    eq(true, info.second_close_ok)
+    eq(true, info.closed_before_reopen)
+    eq(nil, info.old_fd_write_ok)
+    eq(true, info.reopened)
+
+    local logfile = get_logfile('CloseFile')
+    assert_log('before%-close', logfile, 10)
+    assert_log('after%-reopen', logfile, 10)
+    assert_nolog('after%-close%-on%-old%-fd', logfile, 10)
+  end)
+
   it('set_format_func() replaces the formatter and can skip entries', function()
     exec_lua(function()
       local logger = vim.log.new({
