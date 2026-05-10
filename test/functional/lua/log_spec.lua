@@ -72,6 +72,24 @@ describe('vim.log', function()
     )
   end)
 
+  it('writer methods called with no args report should-log status', function()
+    eq(
+      { false, false, true, true, true, false },
+      exec_lua(function()
+        local logger = vim.log.new('ShouldLog', { level = vim.log.levels.INFO })
+        local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'shouldlog.log')
+        return {
+          logger.trace(),
+          logger.debug(),
+          logger.info(),
+          logger.warn(),
+          logger.error(),
+          vim.uv.fs_stat(logfile) ~= nil,
+        }
+      end)
+    )
+  end)
+
   it('new() respects level and fmt opts', function()
     exec_lua(function()
       local logger = vim.log.new('CustomFormat', {
