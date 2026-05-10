@@ -33,9 +33,7 @@ local protocol = require('vim.lsp.protocol')
 --- @nodoc
 M.levels = vim.deepcopy(log_levels)
 
-local log = vim.log.new({
-  name = 'LSP',
-})
+local log = vim.log.new('LSP')
 
 M._self = log
 
@@ -96,9 +94,9 @@ end
 ---@param handle fun(level:string, ...): string? Function to apply to log entries. The default will log the level,
 ---date, source and line number of the caller, followed by the arguments.
 function M.set_format_func(handle)
-  log:set_format_func(function(_, level, ...)
+  log.fmt = function(_, level, ...)
     return handle(M.levels[level], ...)
-  end)
+  end
 end
 
 --- Checks whether the level is sufficient for logging.
