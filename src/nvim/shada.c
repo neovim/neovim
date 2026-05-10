@@ -1180,7 +1180,7 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
       }
       const fmark_T fm = (fmark_T) {
         .mark = cur_entry.data.filemark.mark,
-        .fnum = 0,
+        .fnum = buf->b_fnum,
         .timestamp = cur_entry.timestamp,
         .view = INIT_FMARKV,
         .additional_data = cur_entry.additional_data,
