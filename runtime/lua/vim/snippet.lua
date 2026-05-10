@@ -1,3 +1,15 @@
+--- @brief
+--- Snippet expansion and navigation.
+---
+--- Internal autocmds live in the `nvim.snippet` augroup. To disable them (e.g.
+--- to manage sessions yourself), clear it:
+---
+--- ```lua
+--- vim.api.nvim_clear_autocmds({ group = 'nvim.snippet', buffer = 0 })
+--- ```
+---
+--- Heads-up: |vim.snippet.jump()| re-registers them on every jump.
+
 local G = vim.lsp._snippet_grammar
 local snippet_group = vim.api.nvim_create_augroup('nvim.snippet', {})
 local snippet_ns = vim.api.nvim_create_namespace('nvim.snippet')
@@ -466,6 +478,22 @@ local function setup_autocmds(bufnr)
     buf = bufnr,
     callback = function()
       M.stop()
+    end,
+  })
+  vim.api.nvim_create_autocmd('ModeChanged', {
+    group = snippet_group,
+    desc = 'Stop the snippet session when leaving select mode',
+    buf = bufnr,
+    callback = function(args)
+      if args.match ~= 's:n' then
+        return
+      end
+      vim.schedule(function()
+        if not M.active() or vim.api.nvim_get_mode().mode:match('^[siRS\19]') then
+          return
+        end
+        M.stop()
+      end)
     end,
   })
 end

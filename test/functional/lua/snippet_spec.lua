@@ -269,6 +269,18 @@ describe('vim.snippet', function()
     eq(false, exec_lua('return vim.snippet.active()'))
   end)
 
+  it('cancels session on <Esc> from tabstop #39220', function()
+    local ns = api.nvim_create_namespace('nvim.snippet')
+    test_expand_success({ 'local ${1:name} = ${2:value}' }, { 'local name = value' })
+    eq('s', fn.mode())
+    eq(true, exec_lua('return vim.snippet.active()'))
+    t.neq(0, #api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+    feed('<Esc>')
+    poke_eventloop()
+    eq(false, exec_lua('return vim.snippet.active()'))
+    eq(0, #api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+  end)
+
   it('stop session when jumping to $0', function()
     test_expand_success({ 'local ${1:name} = ${2:value}$0' }, { 'local name = value' })
     -- Jump to $2
