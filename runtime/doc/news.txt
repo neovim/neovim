@@ -158,6 +158,7 @@ LSP
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
   and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
+• Add |vim.lsp.resolve_config()|, to manually resolve lsp configurations.
 • Support for nested snippets.
 
 LUA

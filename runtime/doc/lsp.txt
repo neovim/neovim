@@ -1319,6 +1319,22 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
       • |complete-items|
       • |CompleteDone|
 
+                                                    *vim.lsp.resolve_config()*
+resolve_config({bufnr}, {config}, {on_resolve})
+    Resolves a |vim.lsp.Config| into a fully usable |vim.lsp.ClientConfig|.
+    Aborts if the config requires a workspace and none can be found.
+
+    Parameters: ~
+      • {bufnr}       (`integer`) Buffer number the config is being resolved
+                      for.
+      • {config}      (`vim.lsp.Config`) Base LSP configuration to resolve.
+                      See |vim.lsp.Config|.
+      • {on_resolve}  (`fun(config: vim.lsp.ClientConfig, opts: vim.lsp.start.Opts)`)
+                      Called with the resolved config.
+
+    Return: ~
+        (`vim.lsp.ClientConfig?`) See |vim.lsp.ClientConfig|.
+
 start({config}, {opts})                                      *vim.lsp.start()*
     Create a new LSP client and start a language server or reuses an already
     running client if one is found matching `name` and `root_dir`. Attaches
