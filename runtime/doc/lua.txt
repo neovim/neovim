@@ -2626,6 +2626,11 @@ vim.fs.dirname({file})                                      *vim.fs.dirname()*
     Gets the parent directory of the given path (not expanded/resolved, the
     caller must do that).
 
+    Filesystem roots return themselves. For normalized absolute paths, this
+    can be used to detect a filesystem root: >lua
+        path == vim.fs.dirname(path)
+<
+
     Attributes: ~
         Since: 0.8.0
 

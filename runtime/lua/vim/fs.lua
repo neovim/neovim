@@ -109,6 +109,13 @@ end
 
 --- Gets the parent directory of the given path (not expanded/resolved, the caller must do that).
 ---
+--- Filesystem roots return themselves. For normalized absolute paths, this can
+--- be used to detect a filesystem root:
+---
+--- ```lua
+--- path == vim.fs.dirname(path)
+--- ```
+---
 ---@since 10
 ---@generic T : string|nil
 ---@param file T Path
@@ -523,6 +530,7 @@ end
 --- - `C:/foo/bar` -> `C:`, `/foo/bar`
 --- - `C:foo/bar` -> `C:`, `foo/bar`
 ---
+--- @private
 --- @param path string Path to split.
 --- @return string, string, boolean : prefix, body, whether path is valid.
 split_windows_path = function(path)
