@@ -49,6 +49,28 @@ local sysname = uv.os_uname().sysname:lower()
 local iswin = not not (sysname:find('windows') or sysname:find('mingw'))
 local os_sep = iswin and '\\' or '/'
 
+---@type fun(path: string): string, string, boolean
+local split_windows_path
+
+---@param file string
+---@return string
+local function dirname_posix(file)
+  if file:match('^///') then
+    file = file:gsub('^/+', '/')
+  end
+
+  if not file:match('/') then
+    return '.'
+  elseif file == '/' then
+    return '/'
+  elseif file == '//' or file:match('^//[^/]+$') then
+    return '//'
+  elseif file:match('^/[^/]+$') then
+    return '/'
+  end
+  return file:match('/$') and file:sub(1, #file - 1) or file:match('^(/?.+)/')
+end
+
 --- Iterate over all the parents of the given path (not expanded/resolved, the caller must do that).
 ---
 --- Example:
@@ -101,17 +123,24 @@ function M.dirname(file)
     if file:match('^%w:/?$') then
       return file
     end
+    if vim.startswith(file, '//') then
+      local prefix, path, is_valid = split_windows_path(file)
+      if is_valid then
+        local dir = dirname_posix(path)
+        if dir == '.' then
+          return prefix
+        elseif dir == '/' then
+          return prefix .. '/'
+        end
+        return prefix .. dir
+      end
+    end
   end
-  if not file:match('/') then
-    return '.'
-  elseif file == '/' or file:match('^/[^/]+$') then
-    return '/'
-  end
-  ---@type string
-  local dir = file:match('/$') and file:sub(1, #file - 1) or file:match('^(/?.+)/')
+  local dir = dirname_posix(file)
   if iswin and dir:match('^%w:$') then
     return dir .. '/'
   end
+
   return dir
 end
 
@@ -495,8 +524,8 @@ end
 --- - `C:foo/bar` -> `C:`, `foo/bar`
 ---
 --- @param path string Path to split.
---- @return string, string, boolean : prefix, body, whether path is invalid.
-local function split_windows_path(path)
+--- @return string, string, boolean : prefix, body, whether path is valid.
+split_windows_path = function(path)
   local prefix = ''
 
   --- Match pattern. If there is a match, move the matched pattern from the path to the prefix.
@@ -516,7 +545,7 @@ local function split_windows_path(path)
   end
 
   local function process_unc_path()
-    return match_to_prefix('[^/]+/+[^/]+/+')
+    return match_to_prefix('[^/]+/+[^/]+/*')
   end
 
   if match_to_prefix('^//[?.]/') then
@@ -804,7 +833,7 @@ function M.abspath(path)
     prefix, path = split_windows_path(path)
   end
 
-  if prefix == '//' or vim.startswith(path, '/') then
+  if prefix == '//' or vim.startswith(path, '/') or (iswin and vim.startswith(prefix, '//')) then
     -- Path is already absolute, do nothing
     return prefix .. path
   end

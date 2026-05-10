@@ -100,6 +100,44 @@ describe('vim.fs', function()
         test_paths(tests_windows_paths, true)
       end
     end)
+
+    it('preserves filesystem roots', function()
+      eq('/', vim.fs.dirname('/'))
+
+      if is_os('win') then
+        local cases = {
+          -- UNC roots.
+          { '//server/share', '//server/share' },
+          { '//server/share/foo', '//server/share/' },
+
+          -- Device drive roots.
+          { '//?/C:/', '//?/C:/' },
+          { '//?/C:/foo', '//?/C:/' },
+
+          -- Device UNC roots.
+          { '//?/UNC/server/share', '//?/UNC/server/share' },
+          { '//?/UNC/server/share/foo', '//?/UNC/server/share/' },
+
+          -- Device volume roots.
+          { '//?/BootPartition/', '//?/BootPartition/' },
+          { '//?/BootPartition/foo', '//?/BootPartition/' },
+        }
+
+        for _, case in ipairs(cases) do
+          eq(case[2], vim.fs.dirname(case[1]), case[1])
+        end
+      else
+        -- POSIX implementation-defined double-slash roots.
+        eq('//', vim.fs.dirname('//'))
+        eq('//', vim.fs.dirname('//foo'))
+
+        -- More than two leading slashes are ordinary absolute paths.
+        eq('/', vim.fs.dirname('///'))
+        eq('/', vim.fs.dirname('////'))
+        eq('/', vim.fs.dirname('///foo'))
+        eq('/foo', vim.fs.dirname('///foo/bar'))
+      end
+    end)
   end)
 
   describe('basename()', function()
