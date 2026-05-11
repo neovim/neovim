@@ -90,7 +90,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is set by default, but it can be unset during startup by setting
   the environment variable `NVIM_NOTTYFAST` to adjust the startup sequence for
-  slow environments.
+  slow environments (such as ssh).
 - 'undodir' defaults to ~/.local/state/nvim/undo// (|xdg|), auto-created
 - 'viewoptions' includes "unix,slash", excludes "options"
 - 'viminfo' includes "!"

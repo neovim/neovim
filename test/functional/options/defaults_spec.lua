@@ -30,6 +30,11 @@ local is_os = t.is_os
 local testlog = 'Xtest-defaults-log'
 
 describe('startup defaults', function()
+  it("NVIM_NOTTYFAST=1 unsets 'ttyfast'", function()
+    clear { env = { NVIM_NOTTYFAST = '1' } }
+    eq(0, n.eval('&ttyfast'))
+  end)
+
   describe(':filetype', function()
     local function expect_filetype(expected)
       local screen = Screen.new(50, 4)

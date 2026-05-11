@@ -78,15 +78,16 @@ Windows (especially floating windows) can have many other |api-win_config|
 properties such as "hide" and "fixed" which also affect behavior.
 
 					*window-ID* *winid* *windowid*
-Each window has a unique identifier called the window ID.  This identifier
-will not change within a Vim session.  The |win_getid()| and |win_id2tabwin()|
-functions can be used to convert between the window/tab number and the
-identifier.  There is also the window number, which may change whenever
-windows are opened or closed, see |winnr()|.
-The window number is only valid in one specific tab.  The window ID is valid
-across tabs.  For most functions that take a window ID or a window number, the
-window number only applies to the current tab, while the window ID can refer
-to a window in any tab.
+Each window has a unique identifier called the window ID, which is permanent
+during the Nvim session. The |win_getid()| and |win_id2tabwin()| functions
+convert between the window/tab "number" and the identifier.
+							*window-number*
+Windows are also numbered according to their arrangement in a tabpage; this
+window "number" is given by |winnr()| and may change whenever windows are
+opened or closed. The window number is only valid in one specific tab, whereas
+the window ID is valid globally, across tabs.  For most functions that take
+a window ID or a window number, the window number only applies to the current
+tab, while the window ID can refer to a window in any tab.
 
 
 ==============================================================================
