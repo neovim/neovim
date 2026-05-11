@@ -697,6 +697,13 @@ func Sandbox_tests()
   if has('unix')
     call assert_fails('cd `pwd`', 'E48:')
   endif
+  "call assert_fails("call echoraw('test')", 'E48:')
+  "call assert_fails("echoconsole 'test'", 'E48:')
+  call assert_fails("call readfile('Xsomefile')", 'E48:')
+  call assert_fails("call readblob('Xsomefile')", 'E48:')
+  call assert_fails("call readdir('.')", 'E48:')
+  "call assert_fails("call readdirex('.')", 'E48:')
+  call assert_fails("call chdir('.')", 'E48:')
   " some options cannot be changed in a sandbox
   call assert_fails('set exrc', 'E48:')
   call assert_fails('set cdpath', 'E48:')
