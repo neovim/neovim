@@ -88,7 +88,7 @@ static hashtab_T compat_hashtab;
     .vv_di = { \
       .di_tv = { .v_type = (type) }, \
       .di_flags = 0, \
-      .di_key = { 0 }, \
+      .di_key = name, \
     }, \
     .vv_flags = (flags), \
   }
@@ -266,8 +266,6 @@ void evalvars_init(void)
 
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     struct vimvar *p = &vimvars[i];
-    assert(strlen(p->vv_name) <= VIMVAR_KEY_LEN);
-    STRCPY(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO) {
       p->vv_di.di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     } else if (p->vv_flags & VV_RO_SBX) {
