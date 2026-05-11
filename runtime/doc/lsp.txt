@@ -29,28 +29,25 @@ Follow these steps to get LSP features:
    https://microsoft.github.io/language-server-protocol/implementors/servers/
 2. Define a new config |lsp-new-config| (or install https://github.com/neovim/nvim-lspconfig).
    Example: >lua
-     vim.lsp.config['lua_ls'] = {
+     vim.lsp.config['emmylua_ls'] = {
        -- Command and arguments to start the server.
-       cmd = { 'lua-language-server' },
+       cmd = { 'emmylua_ls' },
        -- Filetypes to automatically attach to.
        filetypes = { 'lua' },
-       -- Sets the "workspace" to the directory where any of these files is found.
-       -- Files that share a root directory will reuse the LSP server connection.
+       -- Sets the workspace "root" to the directory where any of these files is found.
+       -- Files sharing a root will reuse the LSP client/connection.
        -- Nested lists indicate equal priority, see |vim.lsp.Config|.
-       root_markers = { { '.luarc.json', '.luarc.jsonc' }, '.git' },
-       -- Specific settings to send to the server. The schema is server-defined.
-       -- Example: https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json
+       root_markers = { { '.emmyrc.json', '.luarc.json' }, '.git' },
+       -- Server-specific settings. https://github.com/EmmyLuaLs/emmylua-analyzer-rust/blob/main/docs/config/emmyrc_json_EN.md
        settings = {
-         Lua = {
-           runtime = {
-             version = 'LuaJIT',
-           }
+         runtime = {
+           version = 'LuaJIT',
          }
        }
      }
 3. Use |vim.lsp.enable()| to enable the config.
    Example: >lua
-     vim.lsp.enable('lua_ls')
+     vim.lsp.enable('emmylua_ls')
 4. Open a code file matching one of the `filetypes` specified in the config.
    Note: Depending on the LSP server, you may need to ensure your project has
    a |lsp-root_markers| file so the workspace can be recognized.
@@ -1109,8 +1106,8 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       filetypes = { 'c', 'cpp' },
     }
 <
-    • Get the resolved configuration for "lua_ls": >lua
-      local cfg = vim.lsp.config.lua_ls
+    • Get the resolved configuration for "emmylua_ls": >lua
+      local cfg = vim.lsp.config.emmylua_ls
 <
 
     Attributes: ~
@@ -1137,13 +1134,13 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
 
     Examples: >lua
         vim.lsp.enable('clangd')
-        vim.lsp.enable({'lua_ls', 'pyright'})
+        vim.lsp.enable({'emmylua_ls', 'pyright'})
 <
 
     Example: To dynamically decide whether LSP is activated, define a
     |lsp-root_dir()| function which calls `on_dir()` only when you want that
     config to activate: >lua
-        vim.lsp.config('lua_ls', {
+        vim.lsp.config('emmylua_ls', {
           root_dir = function(bufnr, on_dir)
             if vim.fs.ext(vim.fn.bufname(bufnr)) ~= 'txt' then
               on_dir(vim.fn.getcwd())
@@ -1707,7 +1704,7 @@ workspace_diagnostics({opts})            *vim.lsp.buf.workspace_diagnostics()*
                   clients.
 
     See also: ~
-      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_diagnostic
 
 workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.

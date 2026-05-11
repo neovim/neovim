@@ -1077,7 +1077,7 @@ end
 
 --- Request workspace-wide diagnostics.
 --- @param opts? vim.lsp.WorkspaceDiagnosticsOpts
---- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_diagnostic
 function M.workspace_diagnostics(opts)
   validate('opts', opts, 'table', true)
 

@@ -171,7 +171,7 @@ Put this in `uppercase.vim` and run:  >bash
     nvim --headless --cmd "source uppercase.vim"
 
 ==============================================================================
-5. Using a prompt buffer				*prompt-buffer*
+5. Using a prompt buffer                                   *repl* *prompt-buffer*
 
 Prompt buffers provide a "prompt" interface: they are like regular buffers,
 except only the last section of the buffer is editable, and the user can
@@ -221,8 +221,12 @@ Any command that starts Insert mode, such as "a", "i", "A" and "I", will move
 the cursor to the last line.  "A" will move to the end of the line, "I" to the
 start of the line.
 
-Example: start a shell in the background and prompt for the next shell
-command, displaying shell output above the prompt: >lua
+                                                                *emacs-eshell*
+Example: The following code snippet implements a "shell buffer" similar to
+Emacs "eshell". Because the interface is a prompt-buffer, you can edit the
+prompt using normal Nvim commands, unlike a |:terminal| shell. Each prompt is
+sent to the shell process started by |jobstart()|, and appended to the buffer
+when output is received: >lua
 
     local shell_job
 

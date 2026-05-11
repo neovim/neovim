@@ -1780,7 +1780,7 @@ Query:iter_captures({node}, {source}, {start_row}, {end_row}, {opts})
 
     Return: ~
         (`fun(end_line: integer?, end_col: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
-        capture id, capture node, metadata, match, tree
+        capture-id, capture-node, metadata, match, tree
 
                                                         *Query:iter_matches()*
 Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
@@ -1822,7 +1822,7 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
 
     Return: ~
         (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
-        pattern id, match, metadata, tree
+        pattern-id, match, metadata, tree
 
 set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
     Sets the runtime query named {query_name} for {lang}

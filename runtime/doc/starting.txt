@@ -620,7 +620,7 @@ setting can affect the entire editor in ways that are not initially obvious.
 
 To find the cause of a problem in your config, you must "bisect" it:
 1. Remove or disable half of your |config|.
-2. Restart Nvim.
+2. Restart Nvim (|:restart|).
 3. If the problem still occurs, goto 1.
 4. If the problem is gone, restore half of the removed lines.
 5. Continue narrowing your config in this way, until you find the setting or

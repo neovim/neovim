@@ -274,9 +274,9 @@ end
 ---     filetypes = { 'c', 'cpp' },
 ---   }
 ---   ```
---- - Get the resolved configuration for "lua_ls":
+--- - Get the resolved configuration for "emmylua_ls":
 ---   ```lua
----   local cfg = vim.lsp.config.lua_ls
+---   local cfg = vim.lsp.config.emmylua_ls
 ---   ```
 ---
 ---@since 13
@@ -589,14 +589,14 @@ end
 ---
 --- ```lua
 --- vim.lsp.enable('clangd')
---- vim.lsp.enable({'lua_ls', 'pyright'})
+--- vim.lsp.enable({'emmylua_ls', 'pyright'})
 --- ```
 ---
 --- Example: To _dynamically_ decide whether LSP is activated, define a |lsp-root_dir()| function
 --- which calls `on_dir()` only when you want that config to activate:
 ---
 --- ```lua
---- vim.lsp.config('lua_ls', {
+--- vim.lsp.config('emmylua_ls', {
 ---   root_dir = function(bufnr, on_dir)
 ---     if vim.fs.ext(vim.fn.bufname(bufnr)) ~= 'txt' then
 ---       on_dir(vim.fn.getcwd())

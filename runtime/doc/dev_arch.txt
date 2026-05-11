@@ -20,7 +20,7 @@ The purpose of this document is to give:
                                   Type |gO| to see the table of contents.
 
 ==============================================================================
-Project layout: where things go
+Project layout: where things go                                   *dev-layout*
 
 C CODE
 

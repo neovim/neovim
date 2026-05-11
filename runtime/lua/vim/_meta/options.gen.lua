@@ -4158,7 +4158,7 @@ vim.wo.list = vim.o.list
 --- 			set listchars+=tab:>-,lead:.
 --- ```
 ---
---- 						*lcs-leadmultispace*
+---                                 *lcs-leadmultispace* *indent-guides*
 ---   leadmultispace:c...
 --- 		Like the `lcs-multispace` value, but for leading
 --- 		spaces only.  Also overrides `lcs-lead` for leading
@@ -4171,6 +4171,16 @@ vim.wo.list = vim.o.list
 ---
 --- 		Where "XXX" denotes the first non-blank characters in
 --- 		the line.
+---
+---                 Combined with `lcs-leadtab`, this can be used to show
+---                 "indentation guides" (vertical lines).
+--- 		For example, with 'shiftwidth' 2:
+---
+--- ```vim
+--- 			set list listchars=leadtab:\ \ │,tab:\ \ │,leadmultispace:\ \ │
+--- ```
+--- For richer rendering (per-level colors, treesitter-aware
+--- 		scopes, etc.) use a third-party plugin.
 --- 						*lcs-leadtab*
 ---   leadtab:xy[z]
 --- 		Like `lcs-tab`, but only for leading tabs.  When

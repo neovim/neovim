@@ -552,7 +552,7 @@ local function parse_cmdline(arg_lead, cmd_line)
 
   if arg_lead:match('^[^()]+%([^()]*$') then
     -- cursor (|) is at ':Man printf(|' or ':Man 1 printf(|'
-    -- The later is is allowed because of ':Man pri<TAB>'.
+    -- The latter is allowed because of ':Man pri<TAB>'.
     -- It will offer 'priclass.d(1m)' even though section is specified as 1.
     local tmp = vim.split(arg_lead, '(', { plain = true })
     local name = tmp[1]
