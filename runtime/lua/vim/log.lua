@@ -1,4 +1,5 @@
 local uv = vim.uv
+local api = vim.api
 local stringbuffer = require('vim._core.stringbuffer')
 
 --- @brief
@@ -51,6 +52,9 @@ local stringbuffer = require('vim._core.stringbuffer')
 ---
 --- Internal state for the log file open error.
 ---@field private openerr string?
+---
+--- The augroup owned by this instance, which will be cleared upon destruction.
+---@field private augroup integer
 ---
 --- Writes a message at `vim.log.levels.TRACE`.
 ---@field trace fun(...:any): boolean?
@@ -150,7 +154,8 @@ function M.new(opts)
   vim.validate('opts.current_level', opts.current_level, 'number', true)
   vim.validate('opts.format_func', opts.format_func, 'function', true)
 
-  local filename = vim.fs.joinpath(vim.fn.stdpath('log'), opts.name:lower() .. '.log')
+  local name = opts.name
+  local filename = vim.fs.joinpath(vim.fn.stdpath('log'), name:lower() .. '.log')
   local log_dir = vim.fs.dirname(filename)
   if log_dir then
     -- TODO: Ideally, directory creation should be delayed until open_file(), right before
@@ -158,13 +163,15 @@ function M.new(opts)
     -- where using fn.mkdir() is not allowed.
     vim.fn.mkdir(log_dir, 'p')
   end
+  local augroup = api.nvim_create_augroup(string.format('nvim.log:%s', name), { clear = true })
 
   local log = setmetatable({
-    name = opts.name,
+    name = name,
     filename = filename,
     current_level = opts.current_level or M.levels.WARN,
     format_func = opts.format_func or default_format_func,
     strbuf = stringbuffer.new(),
+    augroup = augroup,
   }, { __index = M })
   log.trace = log:create_writer(M.levels.TRACE)
   log.debug = log:create_writer(M.levels.DEBUG)
@@ -172,6 +179,28 @@ function M.new(opts)
   log.warn = log:create_writer(M.levels.WARN)
   log.error = log:create_writer(M.levels.ERROR)
 
+  api.nvim_create_autocmd({ 'FocusGained', 'FocusLost' }, {
+    group = augroup,
+    desc = string.format('Flush %s log on focus change', name),
+    callback = function()
+      log:flush()
+    end,
+  })
+  api.nvim_create_autocmd('BufReadPre', {
+    group = augroup,
+    pattern = filename,
+    desc = string.format('Flush %s log before reading log file', name),
+    callback = function()
+      log:flush()
+    end,
+  })
+  api.nvim_create_autocmd('VimLeavePre', {
+    group = augroup,
+    desc = string.format('Flush %s log on exit', name),
+    callback = function()
+      log:flush()
+    end,
+  })
   return log
 end
 
@@ -182,6 +211,7 @@ end
 ---@param log vim.Log
 ---@return boolean # `true` if the logger was destroyed, `false` on error.
 function M.destroy(log)
+  api.nvim_del_augroup_by_id(log.augroup)
   return log:close_file()
 end
 
@@ -195,6 +225,14 @@ local function notify(msg, level)
   else
     vim.notify(msg, level)
   end
+end
+
+---@package
+function M:flush()
+  if not self.fd then
+    return
+  end
+  uv.fs_write(self.fd, self.strbuf:get())
 end
 
 --- Opens the log file on first use.
@@ -249,6 +287,7 @@ function M:close_file()
     return true
   end
 
+  self:flush()
   self.fd = nil
   local ok, err = uv.fs_close(fd)
   if not ok then
@@ -277,7 +316,9 @@ function M:create_writer(level)
     local message = self.format_func(self.current_level, level, ...)
     if message then
       self.strbuf:put(message)
-      uv.fs_write(self.fd, self.strbuf:get())
+      if stringbuffer.len(self.strbuf) > 1e6 then
+        self:flush()
+      end
     end
   end
 end

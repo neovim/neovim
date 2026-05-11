@@ -1,8 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local assert_log = t.assert_log
-local assert_nolog = t.assert_nolog
+local assert_log = n.assert_log
+local assert_nolog = n.assert_nolog
 local clear = n.clear
 local eq = t.eq
 local exec_lua = n.exec_lua

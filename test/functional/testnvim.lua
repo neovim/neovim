@@ -923,6 +923,37 @@ function M.exec_lua(code, ...)
   return require('test.functional.testnvim.exec_lua')(session, 2, code, ...)
 end
 
+-- Flush buffered vim.log entries before reading log files from the test runner.
+-- This mirrors what happens when Nvim itself reads a log file.
+local function log_bufreadpre(logfile)
+  if not logfile then
+    return
+  end
+  M.exec_lua(function(path)
+    vim.api.nvim_exec_autocmds('BufReadPre', {
+      pattern = path,
+      modeline = false,
+    })
+  end, logfile)
+end
+
+---@param pat string
+---@param logfile? string
+---@param nrlines? number
+---@param inverse? boolean
+function M.assert_log(pat, logfile, nrlines, inverse)
+  log_bufreadpre(logfile)
+  return t.assert_log(pat, logfile, nrlines, inverse)
+end
+
+---@param pat string
+---@param logfile? string
+---@param nrlines? number
+function M.assert_nolog(pat, logfile, nrlines)
+  log_bufreadpre(logfile)
+  return t.assert_nolog(pat, logfile, nrlines)
+end
+
 function M.get_pathsep()
   return is_os('win') and '\\' or '/'
 end
