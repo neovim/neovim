@@ -2427,4 +2427,75 @@ describe('api/buf', function()
       eq(false, pcall(api.nvim_buf_del_mark, 99, 'a'))
     end)
   end)
+
+  describe('nvim_buf_call', function()
+    it('supports multiple returns', function()
+      local curbuf = api.nvim_get_current_buf()
+      local other = api.nvim_create_buf(false, true)
+      exec_lua(function()
+        function with_len(...)
+          return select('#', ...), { ... }
+        end
+        function test(fn)
+          local len, res = with_len(vim.api.nvim_buf_call(other, fn))
+          -- convert to serializable vim.NIL
+          for i = 1, len do
+            if res[i] == nil then
+              res[i] = vim.NIL
+            end
+          end
+          return res
+        end
+      end)
+
+      eq(
+        { other },
+        exec_lua(function()
+          return test(function()
+            return vim.api.nvim_get_current_buf()
+          end)
+        end)
+      )
+      eq(curbuf, api.nvim_get_current_buf())
+      eq(
+        { other, vim.NIL },
+        exec_lua(function()
+          return test(function()
+            return vim.api.nvim_get_current_buf(), nil
+          end)
+        end)
+      )
+
+      eq(
+        { 6, 7 },
+        exec_lua(function()
+          return test(function()
+            return 6, 7
+          end)
+        end)
+      )
+      eq(
+        { 6, vim.NIL, 7 },
+        exec_lua(function()
+          return test(function()
+            return 6, nil, 7
+          end)
+        end)
+      )
+      eq(
+        {},
+        exec_lua(function()
+          return test(function() end)
+        end)
+      )
+      eq(
+        { vim.NIL },
+        exec_lua(function()
+          return test(function()
+            return nil
+          end)
+        end)
+      )
+    end)
+  end)
 end)

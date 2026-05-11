@@ -1801,7 +1801,7 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, 
 
 static int mode_ret(LuaRetMode mode)
 {
-  return mode == kRetMulti ? LUA_MULTRET : 1;
+  return (mode == kRetMulti || mode == kRetMultiStack) ? LUA_MULTRET : 1;
 }
 
 /// Like nlua_call_ref, but with an option to run in fast (api-fast) context.
@@ -1844,7 +1844,7 @@ Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, Lu
 static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *arena, int pretop,
                                    Error *err)
 {
-  if (mode != kRetMulti && lua_isnil(lstate, -1)) {
+  if (mode != kRetMulti && mode != kRetMultiStack && lua_isnil(lstate, -1)) {
     lua_pop(lstate, 1);
     return NIL;
   }
@@ -1878,6 +1878,9 @@ static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *ar
     }
     res.size = (size_t)nres;
     return ARRAY_OBJ(res);
+  case kRetMultiStack:
+    ;
+    return NIL;
   }
   UNREACHABLE;
 }

@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "lua.h"
 #include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
@@ -400,12 +401,14 @@ void nvim_win_close(Window win, Boolean force, Error *err)
 /// @see |win_execute()|
 /// @see |nvim_buf_call()|
 ///
+/// This preserves any Lua return values, including multiple return values.
+///
 /// @param win     |window-ID|, or 0 for current window
 /// @param fun        Function to call inside the window (currently Lua callable
 ///                   only)
 /// @param[out] err   Error details, if any
 /// @return           Return value of function.
-Object nvim_win_call(Window win, LuaRef fun, Error *err)
+Object nvim_win_call(Window win, LuaRef fun, lua_State *lstate, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY
 {
@@ -415,16 +418,15 @@ Object nvim_win_call(Window win, LuaRef fun, Error *err)
   }
   tabpage_T *tabpage = win_find_tabpage(w);
 
-  Object res = OBJECT_INIT;
   TRY_WRAP(err, {
     win_execute_T win_execute_args;
     if (win_execute_before(&win_execute_args, w, tabpage)) {
       Array args = ARRAY_DICT_INIT;
-      res = nlua_call_ref(fun, NULL, args, kRetLuaref, NULL, err);
+      nlua_call_ref(fun, NULL, args, kRetMultiStack, NULL, err);
     }
     win_execute_after(&win_execute_args);
   });
-  return res;
+  return NIL;  // kRetMultiStack: values are already on the lua stack
 }
 
 /// Set highlight namespace for a window. This will use highlights defined with

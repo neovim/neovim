@@ -277,6 +277,8 @@ function vim.api.nvim_buf_attach(buf, send_buffer, opts) end
 --- This is useful e.g. to call Vimscript functions that only work with the
 --- current buffer/window currently, like `jobstart(…, {'term': v:true})`.
 ---
+--- This preserves any Lua return values, including multiple return values.
+---
 --- @param buf integer Buffer id, or 0 for current buffer
 --- @param fun function Function to call inside the buffer (currently Lua callable
 --- only)
@@ -2419,6 +2421,8 @@ function vim.api.nvim_ui_send(content) end
 
 --- Calls a function with window as temporary current window.
 ---
+---
+--- This preserves any Lua return values, including multiple return values.
 ---
 --- @see `:help win_execute()`
 --- @see vim.api.nvim_buf_call

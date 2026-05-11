@@ -2422,6 +2422,8 @@ nvim_buf_call({buf}, {fun})                                  *nvim_buf_call()*
     This is useful e.g. to call Vimscript functions that only work with the
     current buffer/window currently, like `jobstart(…, {'term': v:true})`.
 
+    This preserves any Lua return values, including multiple return values.
+
     Attributes: ~
         Lua |vim.api| only
         Since: 0.5.0
@@ -4055,6 +4057,8 @@ Window Functions                                                  *api-window*
 
 nvim_win_call({win}, {fun})                                  *nvim_win_call()*
     Calls a function with window as temporary current window.
+
+    This preserves any Lua return values, including multiple return values.
 
     Attributes: ~
         Lua |vim.api| only

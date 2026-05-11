@@ -882,16 +882,8 @@ exit_0:
     local ret_type = real_type(fn.return_type)
     local ret_mode = (ret_type == 'Object') and '&' or ''
     if fn.has_lua_imp then
-      -- only push onto the Lua stack if we haven't already
-      write_shifted_output(
-        [[
-    if (lua_gettop(lstate) == 0) {
-      nlua_push_%s(lstate, %sret, kNluaPushSpecial | kNluaPushFreeRefs);
-    }
-      ]],
-        return_type,
-        ret_mode
-      )
+      -- it is up to the function to push return values
+      write_shifted_output('    (void)ret;')
     elseif ret_type:match('^KeyDict_') then
       write_shifted_output('    nlua_push_keydict(lstate, &ret, %s_table);\n', return_type:sub(9))
     else
@@ -911,11 +903,12 @@ exit_0:
   %s
   %s
   %s
-    return 1;
+    return %s;
     ]],
       free_retval,
       free_at_exit_code,
-      err_throw_code
+      err_throw_code,
+      (fn.has_lua_imp and 'lua_gettop(lstate)' or '1')
     )
   else
     write_shifted_output(
