@@ -15,8 +15,10 @@ setup(function()
   n.mkdir_p(testdir_right)
   t.write_file(testdir_left .. pathsep .. 'file1.txt', 'hello')
   t.write_file(testdir_left .. pathsep .. 'file2.txt', 'foo')
+  t.write_file(testdir_left .. pathsep .. 'file4 with space.txt', 'hello')
   t.write_file(testdir_right .. pathsep .. 'file1.txt', 'hello world') -- modified
   t.write_file(testdir_right .. pathsep .. 'file3.txt', 'bar') -- added
+  t.write_file(testdir_right .. pathsep .. 'file4 with space.txt', 'hello world') -- modified
 end)
 
 teardown(function()
@@ -42,34 +44,13 @@ describe('nvim.difftool', function()
     -- file1.txt as modified (M)
     -- file2.txt as deleted (D)
     -- file3.txt as added (A)
+    -- file4 with space.txt as modified (M)
     eq({
       { text = 'M', rel = 'file1.txt' },
       { text = 'D', rel = 'file2.txt' },
       { text = 'A', rel = 'file3.txt' },
+      { text = 'M', rel = 'file4 with space.txt' },
     }, entries)
-  end)
-
-  it('handles filenames containing spaces', function()
-    -- Create extra temp files with spaces in their name to test with.
-    local left = 'Xtest-difftool-space-left'
-    local right = 'Xtest-difftool-space-right'
-    n.mkdir_p(left)
-    n.mkdir_p(right)
-    finally(function()
-      n.rmdir(left)
-      n.rmdir(right)
-    end)
-    t.write_file(left .. pathsep .. 'file with space.txt', 'hello')
-    t.write_file(right .. pathsep .. 'file with space.txt', 'hello world')
-
-    command(('DiffTool %s %s'):format(left, right))
-
-    local qflist = fn.getqflist()
-    local entries = {}
-    for _, item in ipairs(qflist) do
-      table.insert(entries, { text = item.text, rel = item.user_data and item.user_data.rel })
-    end
-    eq({ { text = 'M', rel = 'file with space.txt' } }, entries)
   end)
 
   it('has consistent split layout', function()
@@ -106,6 +87,7 @@ describe('nvim.difftool', function()
     eq({
       { text = 'M', rel = 'file1.txt' },
       { text = 'A', rel = 'file3.txt' },
+      { text = 'M', rel = 'file4 with space.txt' },
     }, entries)
   end)
 
@@ -167,6 +149,7 @@ describe('nvim.difftool', function()
       { text = 'M', rel = 'file1.txt' },
       { text = 'D', rel = 'file2.txt' },
       { text = 'A', rel = 'file3.txt' },
+      { text = 'M', rel = 'file4 with space.txt' },
     }, entries)
   end)
 end)
