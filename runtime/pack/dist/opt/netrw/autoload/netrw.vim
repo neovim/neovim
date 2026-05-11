@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 May 10
+" Last Change: 2026 May 11
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -8983,21 +8983,30 @@ function s:MakeSshCmd(sshcmd)
     return sshcmd
 endfunction
 
-" s:MakeBookmark: enters a bookmark into Netrw's bookmark system   {{{2
+" s:MakeBookmark: enters a bookmark into Netrw's bookmark system {{{2
+" Note that bookmark paths should always be absolute.
 function s:MakeBookmark(fname)
 
     if !exists("g:netrw_bookmarklist")
-        let g:netrw_bookmarklist= []
+        let g:netrw_bookmarklist = []
     endif
 
-    if index(g:netrw_bookmarklist,a:fname) == -1
-        " curdir not currently in g:netrw_bookmarklist, so include it
-        if isdirectory(s:NetrwFile(a:fname)) && a:fname !~ '/$'
-            " Directory without a trailing slash
-            call add(g:netrw_bookmarklist, s:NetrwFile(a:fname) . '/')
-        else
-            call add(g:netrw_bookmarklist, s:NetrwFile(a:fname))
-        endif
+    " Normalize path to prevent duplicate entries
+    let bookmark_path = netrw#fs#AbsPath(s:NetrwFile(a:fname))
+    let ignore_case = 0
+    if has('win32')
+        let bookmark_path = substitute(bookmark_path, '\\', '/', 'ge')
+        let ignore_case = 1
+    endif
+    let bookmark_path = simplify(bookmark_path)
+
+    if isdirectory(bookmark_path) && bookmark_path !~ '/$'
+        let bookmark_path .= '/'
+    endif
+
+    if index(g:netrw_bookmarklist, bookmark_path, 0, ignore_case) == -1
+        " Not currently in the bookmarks list, so include it
+        call add(g:netrw_bookmarklist, bookmark_path)
         call sort(g:netrw_bookmarklist)
     endif
 

@@ -1141,6 +1141,8 @@ One may easily "bookmark" the currently browsed directory by using >
 
 	mb
 <
+Note: Bookmarked paths are normalized and stored as absolute paths.
+
 								*.netrwbook*
 Bookmarks are retained in between sessions of vim in a file called .netrwbook
 as a |List|, which is typically stored in the first directory on the user's

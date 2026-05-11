@@ -699,7 +699,7 @@ func Test_netrw_bookmark_marked_file()
   " Make sure Vim's working directory diverge from Netrw's
   let g:netrw_keepdir = 1
   let g:netrw_bookmarklist = []
-  let test_workdir = 'Xtest_workdir'
+  let test_workdir = getcwd() . '/Xtest_workdir'
   let test_netrw_curdir = test_workdir . '/Xtest_netrw_curdir'
   call mkdir(test_netrw_curdir, 'p')
   call writefile([], test_netrw_curdir . '/test_file')
@@ -707,8 +707,16 @@ func Test_netrw_bookmark_marked_file()
   execute 'cd ' . test_workdir
   call Test_MakeBookmark(test_netrw_curdir, 'test_file')
 
+  " Bookmark paths should be absolute and normalized to prevent duplicates on win32
+  let expected_path = netrw#fs#AbsPath(test_netrw_curdir . '/test_file')
+  if has('win32')
+    let expected_path = substitute(expected_path, '\\', '/', 'ge')
+  endif
+  let expected_path = simplify(expected_path)
+
   call assert_equal(1, len(g:netrw_bookmarklist))
-  call assert_match(test_netrw_curdir . '/test_file', g:netrw_bookmarklist[0])
+  call assert_equal(expected_path, g:netrw_bookmarklist[0])
+  call assert_true(isabsolutepath(g:netrw_bookmarklist[0]), 'Bookmark paths should be absolute')
 
   " Tear down
   execute 'cd ' . save_workdir
