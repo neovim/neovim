@@ -123,6 +123,14 @@ describe(':terminal buffer', function()
       appended tty ready                                |*5
                                                         |
     ]])
+    -- pasting expression register shouldn't leak memory
+    feed([["="abcd\nefghi"<CR>pi]])
+    screen:expect([[
+      appended tty ready                                |*4
+      abcd                                              |
+      efghi^                                             |
+      {5:-- TERMINAL --}                                    |
+    ]])
   end)
 
   it('sends data to the terminal when the ":put" command is used', function()

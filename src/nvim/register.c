@@ -1470,7 +1470,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
 
   if (curbuf->terminal) {
     terminal_paste(count, y_array, y_size);
-    return;
+    goto end;
   }
 
   colnr_T split_pos = 0;
@@ -2076,7 +2076,9 @@ end:
     xfree(y_array);
   }
 
-  VIsual_active = false;
+  if (!curbuf->terminal) {  // XXX
+    VIsual_active = false;
+  }
 
   // If the cursor is past the end of the line put it at the end.
   adjust_cursor_eol();
