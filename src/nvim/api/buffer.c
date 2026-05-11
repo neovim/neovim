@@ -965,7 +965,8 @@ void nvim_buf_set_name(Buffer buf, String name, Error *err)
     const bool is_curbuf = b == curbuf;
     const int save_acd = p_acd;
     if (!is_curbuf) {
-      // Temporarily disable 'autochdir' when setting file name for another buffer.
+      // Don't update 'title' and 'autochdir' when setting file name for another buffer.
+      RedrawingDisabled++;
       p_acd = false;
     }
 
@@ -976,6 +977,7 @@ void nvim_buf_set_name(Buffer buf, String name, Error *err)
     aucmd_restbuf(&aco);
 
     if (!is_curbuf) {
+      RedrawingDisabled--;
       p_acd = save_acd;
     }
   });
