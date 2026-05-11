@@ -59,5 +59,5 @@ WASMTIME_SHA256 aa82e354f782125665b448997daec3d9b239c4f180887eb3035f71ab97433fa6
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.83.0.tar.gz
 UNCRUSTIFY_SHA256 1d4d3ab3a991c66eb24cb0a3e690573b4882fd98bc6ec64a01c283998c20dc87
 
-GHOSTTY_URL https://github.com/noib3/ghostty/archive/15cf1d7f8dfbb2fe830f2dc8589f151f1ce5b5b5.tar.gz
-GHOSTTY_SHA256 43bccd216ee564b502485554f62a4efa24a25c9e9cd4817101239b82b884690a
+GHOSTTY_URL https://github.com/noib3/ghostty/archive/371401695017c1a903face2b514cd44877a0b677.tar.gz
+GHOSTTY_SHA256 e853247ff436260764abb3ab8eb997a98aaaaacc226aa1591e1571fbb46fb0c9
