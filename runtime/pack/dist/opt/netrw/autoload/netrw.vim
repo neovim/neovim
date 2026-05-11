@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 May 05
+" Last Change: 2026 May 10
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -8993,11 +8993,10 @@ function s:MakeBookmark(fname)
     if index(g:netrw_bookmarklist,a:fname) == -1
         " curdir not currently in g:netrw_bookmarklist, so include it
         if isdirectory(s:NetrwFile(a:fname)) && a:fname !~ '/$'
-            call add(g:netrw_bookmarklist,a:fname.'/')
-        elseif a:fname !~ '/'
-            call add(g:netrw_bookmarklist,getcwd()."/".a:fname)
+            " Directory without a trailing slash
+            call add(g:netrw_bookmarklist, s:NetrwFile(a:fname) . '/')
         else
-            call add(g:netrw_bookmarklist,a:fname)
+            call add(g:netrw_bookmarklist, s:NetrwFile(a:fname))
         endif
         call sort(g:netrw_bookmarklist)
     endif
