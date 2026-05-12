@@ -273,7 +273,6 @@ int main(int argc, char **argv)
   char *fname = NULL;     // file name from command line
   mparm_T params;         // various parameters passed between
                           // main() and other functions.
-  char *cwd = NULL;       // current working dir on startup
 
   // Many variables are in `params` so that we can pass them around easily.
   // `argc` and `argv` are also copied, so that they can be changed.
@@ -328,7 +327,7 @@ int main(int argc, char **argv)
   }
 
   if (GARGCOUNT > 0) {
-    fname = get_fname(&params, cwd);
+    fname = get_fname(&params);
   }
 
   // Recovery mode without a file name: List swap files.
@@ -601,8 +600,7 @@ int main(int argc, char **argv)
 
   // If opened more than one window, start editing files in the other
   // windows.
-  edit_buffers(&params, cwd);
-  xfree(cwd);
+  edit_buffers(&params);
 
   if (params.diff_mode) {
     // set options in each window for "nvim -d".
@@ -1632,7 +1630,7 @@ static void init_path(const char *exename)
 }
 
 /// Get filename from command line, if any.
-static char *get_fname(mparm_T *parmp, char *cwd)
+static char *get_fname(mparm_T *parmp)
 {
   return alist_name(&GARGLIST[0]);
 }
@@ -1857,7 +1855,7 @@ static void create_windows(mparm_T *parmp)
 
 /// If opened more than one window, start editing files in the other
 /// windows. make_windows() has already opened the windows.
-static void edit_buffers(mparm_T *parmp, char *cwd)
+static void edit_buffers(mparm_T *parmp)
 {
   int arg_idx;                          // index in argument list
   bool advance = true;
@@ -1876,9 +1874,6 @@ static void edit_buffers(mparm_T *parmp, char *cwd)
 
   arg_idx = 1;
   for (int i = 1; i < parmp->window_count; i++) {
-    if (cwd != NULL) {
-      os_chdir(cwd);
-    }
     // When w_arg_idx is -1 remove the window (see create_windows()).
     if (curwin->w_arg_idx == -1) {
       arg_idx++;
