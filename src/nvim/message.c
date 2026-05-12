@@ -1111,6 +1111,7 @@ char *msg_progress(char *s, char *id, char *status, int hl_id, bool hist, bool t
   };
   HlMessage chunks = KV_INITIAL_VALUE;
   kv_push(chunks, ((HlMessageChunk){ cstr_as_string(s), hl_id }));
+  msg_ext_no_fast();
   msg_multihl(CSTR_AS_OBJ(id), chunks, "progress", false, false, &data, &clear);
   kv_destroy(chunks);
   ui_flush();
@@ -1705,6 +1706,10 @@ void msg_ext_set_kind(const char *msg_kind)
   // the kind but this is called more consistently at the start of a message
   // than msg_start() at this point.
   redir_col = msg_ext_append ? redir_col : 0;
+
+  if (strcmp("list_cmd", msg_kind) == 0) {
+    msg_ext_no_fast();
+  }
 }
 
 void msg_ext_set_append(bool append)
@@ -1717,6 +1722,13 @@ void msg_ext_set_trigger(const char *trigger)
 {
   msg_ext_ui_flush();
   msg_ext_trigger = trigger;
+}
+
+// Should be executed at all callsites emitting non-internal messages.
+void msg_ext_no_fast(void)
+{
+  msg_ext_ui_flush();
+  msg_ext_fast = false;
 }
 
 /// Prepare for outputting characters in the command line.
@@ -2366,7 +2378,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   // Don't print anything when using ":silent cmd" or empty message.
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
-      msg_ext_ui_flush();  // ensure messages until now are emitted
+      msg_ext_no_fast();
       ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
                        INTEGER_OBJ(-1), (String)STRING_INIT);
       cmdline_was_last_drawn = false;
@@ -3421,6 +3433,7 @@ void msg_ext_ui_flush(void)
     msg_ext_overwrite = false;
     msg_ext_history = false;
     msg_ext_append = false;
+    msg_ext_fast = true;
     msg_ext_kind = NULL;
     msg_id_next += (msg_ext_id.data.integer == msg_id_next);
     msg_ext_id = INTEGER_OBJ(msg_id_next);

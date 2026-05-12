@@ -306,6 +306,7 @@ void nlua_error(lua_State *const lstate, const char *const msg)
     fprintf(stderr, msg, (int)len, str);
     fprintf(stderr, "\n");
   } else {
+    msg_ext_no_fast();
     semsg_multiline("lua_error", msg, (int)len, str);
   }
 
@@ -342,6 +343,7 @@ static void nlua_luv_error_event(void **argv)
   luv_err_t type = (luv_err_t)(intptr_t)argv[1];
   switch (type) {
   case kCallback:
+    msg_ext_no_fast();
     semsg_multiline("lua_error", "Lua callback:\n%s", error);
     break;
   case kThread:
@@ -1049,6 +1051,7 @@ static void nlua_print_event(void **argv)
   HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
   kv_push(msg, chunk);
   bool needs_clear = false;
+  msg_ext_no_fast();
   msg_multihl(NIL, msg, "lua_print", true, false, NULL, &needs_clear);
 }
 

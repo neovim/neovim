@@ -701,6 +701,7 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
     msg_ext_set_kind("shell_ret");
+    msg_ext_no_fast();
     if (!ui_has(kUIMessages)) {
       msg_putchar('\n');
     }
@@ -1126,6 +1127,7 @@ static void out_data_event(void **argv)
   int hl = (int)(intptr_t)argv[2] == STDERR_FILENO ? HLF_SE : HLF_SO;
   msg_ext_set_kind((int)(intptr_t)argv[2] == STDERR_FILENO ? "shell_err" : "shell_out");
   msg_ext_set_append(true);
+  msg_ext_no_fast();
   msg_multiline(cbuf_as_string((char *)argv[0], (size_t)argv[1]), hl, false, false, &need_clear);
   xfree(argv[0]);
   ui_flush();

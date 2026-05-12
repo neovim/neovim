@@ -691,6 +691,19 @@ describe('messages2', function()
       {1:~                                                    }|*12
       foo                                                  |
     ]])
+    feed('<CR>')
+    -- Fast context is not determined by message kind #39666
+    exec_lua(function()
+      vim.schedule(function()
+        vim.api.nvim_echo({ { 'bar' } }, false, { kind = 'search_cmd' })
+        vim.fn.getchar()
+      end)
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      bar                                                  |
+    ]])
   end)
 
   it('properly formatted carriage return messages', function()

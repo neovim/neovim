@@ -1219,6 +1219,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   if (addr_count == 0) {                // :!
     // echo the command
     msg_start();
+    msg_ext_no_fast();
     msg_ext_set_kind("shell_cmd");
     msg_putchar(':');
     msg_putchar('!');

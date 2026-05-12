@@ -924,6 +924,7 @@ static void write_msg(String message, bool to_err, bool writeln)
   static StringBuilder err_line_buf = KV_INITIAL_VALUE;
   StringBuilder *line_buf = to_err ? &err_line_buf : &out_line_buf;
 
+  msg_ext_no_fast();
 #define PUSH_CHAR(c) \
   if (kv_max(*line_buf) == 0) { \
     kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \

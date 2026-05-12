@@ -777,28 +777,6 @@ static void ui_attach_error(uint32_t ns_id, const char *name, const char *msg)
 
 void ui_call_event(char *name, Array args)
 {
-  // Internal messages are considered unsafe and are executed in fast context.
-  bool fast = strcmp(name, "msg_show") == 0;
-  const char *not_fast[] = {
-    "empty",
-    "echo",
-    "echomsg",
-    "echoerr",
-    "list_cmd",
-    "lua_error",
-    "lua_print",
-    "progress",
-    "shell_cmd",
-    "shell_err",
-    "shell_out",
-    "shell_ret",
-    NULL,
-  };
-
-  for (int i = 0; fast && not_fast[i]; i++) {
-    fast = !strequal(not_fast[i], args.items[0].data.string.data);
-  }
-
   // Don't impose textlock restrictions upon UI event handlers.
   int save_expr_map_lock = expr_map_lock;
   int save_textlock = textlock;
@@ -806,6 +784,7 @@ void ui_call_event(char *name, Array args)
   textlock = 0;
 
   bool handled = false;
+  bool fast = msg_ext_fast && strcmp("msg_show", name) == 0;
   UIEventCallback *event_cb;
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
