@@ -17,7 +17,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: actions/labeler@v6.0.1
+    - uses: actions/labeler@v6.1.0
       with:
         configuration-path: .github/scripts/labeler_configuration.yml
 
