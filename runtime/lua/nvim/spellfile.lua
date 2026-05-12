@@ -281,7 +281,7 @@ function M.get(lang)
       info.lang,
       info.encoding
     )
-    vim.ui.input({ prompt = prompt }, function(input)
+    vim.ui.input({ prompt = prompt, scope = 'editor' }, function(input)
       -- properly clear the message window
       vim.api.nvim_echo({ { ' ' } }, false, { kind = 'empty' })
       if not input or input:lower() ~= 'y' then

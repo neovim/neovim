@@ -98,6 +98,12 @@ end
 ---Function that will be used for highlighting
 ---user inputs.
 ---@field highlight? function
+---
+---Input scope, as in "This input is for something at cursor/line/etc scope".
+---Can be used by `vim.ui.input` implementations to tweak behavior and presentation.
+---For example, the input may adjust the floating window position: near the cursor if
+---`cursor`, in window corner if `buffer` or `window`, etc.
+---@field scope? 'cursor'|'line'|'buffer'|'window'|'tabpage'|'editor'|'project'
 
 --- Prompts the user for input, allowing arbitrary (potentially asynchronous) work until
 --- `on_confirm`.
@@ -105,7 +111,8 @@ end
 --- Example:
 ---
 --- ```lua
---- vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
+--- local opts = { prompt = 'Enter value for shiftwidth: ', scope = 'buffer' }
+--- vim.ui.input(opts, function(input)
 ---     vim.o.shiftwidth = tonumber(input)
 --- end)
 --- ```
