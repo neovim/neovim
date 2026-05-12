@@ -291,6 +291,8 @@ void f_prompt_appendbuf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   linenr_T lnum = MAX(0, buf->b_prompt_start.mark.lnum - 1);
   typval_T *lines = &argvars[1];
+  bool did_concat = false;
+
   if (!buf->b_prompt_append_new_line) {
     // Since we are not creating a new line we need to append input to current line
     const char *text = (lnum > 0) ? (const char *)ml_get_buf(buf, lnum) : "";
@@ -303,6 +305,7 @@ void f_prompt_appendbuf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         tv_clear(&li->li_tv);
         li->li_tv.v_type = VAR_STRING;
         li->li_tv.vval.v_string = new_str;
+        did_concat = true;
       }
     } else if (lines->v_type == VAR_STRING) {
       const char *str = tv_get_string(lines);
@@ -314,7 +317,20 @@ void f_prompt_appendbuf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (did_emsg == did_emsg_before) {
-    set_buffer_lines(buf, lnum, buf->b_prompt_append_new_line, lines, rettv);
+    if (did_concat && tv_list_len(lines->vval.v_list) > 1) {
+      // Multi-element list with concat: first element (already concatenated)
+      // replaces the line at lnum, remaining elements are inserted after.
+      list_T *l = lines->vval.v_list;
+      listitem_T *li = tv_list_first(l);
+      set_buffer_lines(buf, lnum, false, &li->li_tv, rettv);
+
+      if (rettv->vval.v_number == 0) {
+        tv_list_item_remove(l, li);
+        set_buffer_lines(buf, lnum, true, lines, rettv);
+      }
+    } else {
+      set_buffer_lines(buf, lnum, buf->b_prompt_append_new_line, lines, rettv);
+    }
   }
 
   if (rettv->vval.v_number == 0) {
