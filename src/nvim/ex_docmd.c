@@ -5975,7 +5975,7 @@ static void ex_detach(exarg_T *eap)
     nlua_call_vimfn("vim._core.server", "detach_others", lua_args, &rv);
     ILOG("detach! current_ui=%" PRIu64 " detached=%zu", current_ui,
          (rv.v_type == VAR_NUMBER && rv.vval.v_number > 0)
-             ? (size_t)rv.vval.v_number : (size_t)0);
+         ? (size_t)rv.vval.v_number : (size_t)0);
     tv_clear(&rv);
   } else {
     // 1. Send "error_exit" UI-event (notification only).
