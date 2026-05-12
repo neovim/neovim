@@ -7081,6 +7081,11 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   }
 
   wp->w_redr_status = true;
+
+  // Must keep grid dimensions updated during redraw.
+  if (updating_screen) {
+    win_grid_alloc(wp);
+  }
 }
 
 /// Set the width of a window.

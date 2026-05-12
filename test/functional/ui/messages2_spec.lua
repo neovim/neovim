@@ -1015,4 +1015,28 @@ describe('messages2', function()
       {1:~                                               }{4:hello}|
     ]])
   end)
+
+  it('no crash for resized grid during redraw #39075', function()
+    exec_lua(function()
+      vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace(''), {
+        on_win = function()
+          print('\n')
+        end,
+      })
+    end)
+    feed(':')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}^                                                    |
+    ]])
+    feed('f')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+                                                           |*2
+      {16::}{15:f}^                                                   |
+    ]])
+  end)
 end)
