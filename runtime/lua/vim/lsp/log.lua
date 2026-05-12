@@ -37,11 +37,15 @@ local log = vim.log.new({
   name = 'LSP',
 })
 
+---@diagnostic disable-next-line: invisible
+local log_sink = log.sink
+---@cast log_sink vim.log.FileSink
+
 --- Returns the log filename.
 ---@return string log filename
 function M.get_filename()
   ---@diagnostic disable-next-line: invisible
-  return log.filename
+  return log_sink.filename
 end
 
 for level, levelnr in pairs(log_levels) do
@@ -94,7 +98,8 @@ end
 ---@param handle fun(level:string, ...): string? Function to apply to log entries. The default will log the level,
 ---date, source and line number of the caller, followed by the arguments.
 function M.set_format_func(handle)
-  log:set_format_func(function(_, level, ...)
+  ---@diagnostic disable-next-line: invisible
+  log_sink:set_format_func(function(_, level, ...)
     return handle(M.levels[level], ...)
   end)
 end
