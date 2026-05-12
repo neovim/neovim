@@ -1437,6 +1437,19 @@ describe('vim.lsp.completion: integration', function()
           sortText = '0003',
         },
         {
+          textEdit = {
+            newText = 'for ${1:j} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+            range = {
+              start = { character = 0, line = 0 },
+              ['end'] = { character = 0, line = 0 },
+            },
+          },
+          insertTextFormat = 2,
+          kind = 15,
+          label = 'for j = ..',
+          sortText = '0004',
+        },
+        {
           insertText = '_assert_integer(${1:x}, ${2:base?})',
           insertTextFormat = 2,
           kind = 3,
@@ -1464,11 +1477,26 @@ describe('vim.lsp.completion: integration', function()
           sortText = '0002',
         },
         {
+          -- snippet populated in insertText
           insertText = 'for ${1:i} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
           insertTextFormat = 2,
           kind = 15,
           label = 'for i = ..',
           sortText = '0003',
+        },
+        {
+          -- snippet populated in textEdit.newText
+          textEdit = {
+            newText = 'for ${1:j} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+            range = {
+              start = { character = 0, line = 0 },
+              ['end'] = { character = 0, line = 0 },
+            },
+          },
+          insertTextFormat = 2,
+          kind = 15,
+          label = 'for j = ..',
+          sortText = '0004',
         },
         {
           -- detail is in documentation, should not be duplicated
@@ -1508,8 +1536,8 @@ describe('vim.lsp.completion: integration', function()
       nvim__id_array^                                    |
       {12:nvim__id_array  Function }{100:(method) nvim__id_array(}{1: }|
       {4:for i = ..      Snippet  }{100:arr: any[]): any[]}{4:      }{1: }|
-      {4:_assert_integer Function }{100:lua\nfunction vim.api}{4:   }{1: }|
-      {1:~                        }{100:.nvim__id_array(arr: any}{1: }|
+      {4:for j = ..      Snippet  }{100:lua\nfunction vim.api}{4:   }{1: }|
+      {4:_assert_integer Function }{100:.nvim__id_array(arr: any}{1: }|
       {1:~                        }{100:[])\n  -> any[]\n}{4:       }{1: }|
       {1:~                                                 }|*13
       {5:-- INSERT --}                                      |
@@ -1519,8 +1547,19 @@ describe('vim.lsp.completion: integration', function()
       for i = ..^                                        |
       {4:nvim__id_array  Function }{100:for i = 1, 10, 1 do}{1:      }|
       {12:for i = ..      Snippet  }{100:        }{4:           }{1:      }|
-      {4:_assert_integer Function }{100:end}{4:                }{1:      }|
-      {1:~                                                 }|*15
+      {4:for j = ..      Snippet  }{100:end}{4:                }{1:      }|
+      {4:_assert_integer Function }{1:                         }|
+      {1:~                                                 }|*14
+      {5:-- INSERT --}                                      |
+    ]])
+    feed('<C-N>')
+    screen:expect([[
+      for j = ..^                                        |
+      {4:nvim__id_array  Function }{100:for j = 1, 10, 1 do}{1:      }|
+      {4:for i = ..      Snippet  }{100:        }{4:           }{1:      }|
+      {12:for j = ..      Snippet  }{100:end}{4:                }{1:      }|
+      {4:_assert_integer Function }{1:                         }|
+      {1:~                                                 }|*14
       {5:-- INSERT --}                                      |
     ]])
     feed('<C-N>')
@@ -1541,8 +1580,9 @@ describe('vim.lsp.completion: integration', function()
       _assert_integer(x, base)^                          |
       {4:nvim__id_array  Function }{100:lua\nmore doc for vim}{4:   }{1: }|
       {4:for i = ..      Snippet  }{100:._assert_integer\n}{4:      }{1: }|
+      {4:for j = ..      Snippet  }{1:                         }|
       {12:_assert_integer Function }{1:                         }|
-      {1:~                                                 }|*15
+      {1:~                                                 }|*14
       {5:-- INSERT --}                                      |
     ]])
 

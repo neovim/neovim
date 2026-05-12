@@ -773,9 +773,9 @@ function CompletionResolver:request(bufnr, param, selected_word)
           return
         end
         -- generate snippet preview info
-        local insert_text = vim.tbl_get(result, 'insertText')
-        if insert_text then
-          value = ('```%s\n%s\n```'):format(vim.bo.filetype, parse_snippet(insert_text))
+        local text = vim.tbl_get(result, 'insertText') or vim.tbl_get(result, 'textEdit', 'newText')
+        if text then
+          value = ('```%s\n%s\n```'):format(vim.bo.filetype, parse_snippet(text))
           kind = lsp.protocol.MarkupKind.Markdown
         end
       end
