@@ -285,7 +285,7 @@ jobs:
       - run: zig build functionaltest -Dluajit=false
 
   zig-build-windows:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     timeout-minutes: 45
     name: build using zig build (windows)
     steps:

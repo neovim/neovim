@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   windows:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     timeout-minutes: 45
     strategy:
       fail-fast: false
