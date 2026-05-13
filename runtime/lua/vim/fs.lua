@@ -214,13 +214,13 @@ function M.dir(path, opts)
 
       if etype == nil then
         local stat = vim.uv.fs_lstat(M.joinpath(path, name))
+        -- Workaround #39612 https://github.com/luvit/luv/issues/660
         etype = stat and stat.type or 'unknown'
       end
 
       return name, etype
     end
   end
-
 
   --- @async
   return coroutine.wrap(function()
