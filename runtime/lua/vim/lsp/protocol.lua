@@ -483,6 +483,7 @@ function protocol.make_client_capabilities()
               'additionalTextEdits',
               'command',
               'documentation',
+              'detail',
             },
           },
           tagSupport = {
