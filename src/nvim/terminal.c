@@ -863,6 +863,14 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   assert_ghostty_success(ghostty_render_state_row_iterator_new(NULL,
                                                                &term->ghostty_render_row_iterator));
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_USERDATA, term));
+
+  // ghostty_terminal_set() takes option values as const void *, including
+  // callback options. ISO C does not allow converting function pointers to
+  // object pointers, so we briefly disable pedantic warnings.
+#if defined(__GNUC__)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wpedantic"
+#endif
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_WRITE_PTY,
                                               (const void *)term_ghostty_write_pty_callback));
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_BELL,
@@ -873,6 +881,10 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                               (const void *)term_ghostty_color_scheme_callback));
   assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_DEVICE_ATTRIBUTES,
                                               (const void *)term_ghostty_device_attributes_callback));
+#if defined(__GNUC__)
+# pragma GCC diagnostic pop
+#endif
+
   assert_ghostty_success(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
   assert_ghostty_success(ghostty_key_event_new(NULL, &term->ghostty_key_event));
   assert_ghostty_success(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
@@ -1912,7 +1924,7 @@ static void terminal_vt_write(Terminal *term, const char *data, size_t len)
 
 void terminal_receive(Terminal *term, const char *data, size_t len)
 {
-  if (!data) {
+  if (!data || len == 0) {
     return;
   }
 
