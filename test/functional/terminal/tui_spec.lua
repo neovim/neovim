@@ -4604,7 +4604,9 @@ describe('TUI bg color', function()
     end)
   end)
 
-  it('queries the terminal for background color', function()
+  it('answers the terminal background color query without TermRequest', function()
+    command('highlight clear Normal')
+    command('set background=light')
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(ev)
@@ -4616,16 +4618,22 @@ describe('TUI bg color', function()
         end,
       })
     ]])
-    tt.setup_child_nvim({
+    local child_server = new_pipename()
+    local screen = tt.setup_child_nvim({
       '--clean',
+      '--listen',
+      child_server,
       '--cmd',
       'colorscheme vim',
       '--cmd',
       'set noswapfile',
     })
-    retry(nil, 1000, function()
-      eq(true, eval("get(g:, 'oscrequest', v:false)"))
+    screen:expect({ any = '%[No Name%]' })
+    local child_session = n.connect(child_server)
+    retry(nil, nil, function()
+      eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
     end)
+    eq(false, eval("get(g:, 'oscrequest', v:false)"))
   end)
 
   it('does not trigger OptionSet from automatic background processing', function()
