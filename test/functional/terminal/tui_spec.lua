@@ -4604,7 +4604,7 @@ describe('TUI bg color', function()
     end)
   end)
 
-  it('answers the terminal background color query without TermRequest', function()
+  it('answers the terminal background color query and emits TermRequest', function()
     command('highlight clear Normal')
     command('set background=light')
     exec_lua([[
@@ -4633,7 +4633,7 @@ describe('TUI bg color', function()
     retry(nil, nil, function()
       eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
     end)
-    eq(false, eval("get(g:, 'oscrequest', v:false)"))
+    eq(true, eval("get(g:, 'oscrequest', v:false)"))
   end)
 
   it('does not trigger OptionSet from automatic background processing', function()

@@ -123,7 +123,7 @@ return {
     TermEnter = false, -- after entering Terminal mode
     TermLeave = false, -- after leaving Terminal mode
     TermOpen = false, -- after opening a terminal buffer
-    TermRequest = false, -- after an unhandled OSC sequence is emitted
+    TermRequest = false, -- after an OSC, DCS, or APC sequence is emitted
     TermResponse = false, -- after setting "v:termresponse"
     TextChanged = true, -- text was modified
     TextChangedI = true, -- text was modified in Insert mode(no popup)
