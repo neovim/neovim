@@ -422,7 +422,6 @@ foreach(subdir
         msgpack_rpc
         tui
         tui/termkey
-        vterm
         event
         eval
         lua
