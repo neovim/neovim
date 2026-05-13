@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: true
 
-      - uses: actions/create-github-app-token@v3
+      - uses: actions/create-github-app-token@v3.1.1
         id: app-token
         with:
           app-id: ${{ vars.BACKPORT_APP }}
@@ -26,7 +26,7 @@ jobs:
 
       - name: Create backport PR
         id: backport
-        uses: korthout/backport-action@7c3f6cd5843cac11bc59a04a1b7699af93261670 # v4.5.0
+        uses: korthout/backport-action@bf97bcfb53d5250af8b9a15fab0f56158a63b224 # v4.5.1
         with:
           pull_title: "backport: ${pull_title}"
           label_pattern: "^ci:backport ([^ ]+)$"
