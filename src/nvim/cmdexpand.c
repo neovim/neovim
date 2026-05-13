@@ -4363,8 +4363,8 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
     }
 
     // Extract the matching text prepended to completed word
-    if (!copy_substring_from_pos(&cur_match_pos, &end_match_pos, &full_match,
-                                 &word_end_pos)) {
+    if (copy_substring_from_pos(&cur_match_pos, &end_match_pos, &full_match,
+                                &word_end_pos) == FAIL) {
       break;
     }
 
