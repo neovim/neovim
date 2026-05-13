@@ -380,6 +380,7 @@ void ui_client_attach_to_restarted_server(bool error_restart)
       }
     }
     chan_id = ui_client_start_server(first_arg, cmdargs.size, argv);
+    xfree(argv);
     ui_client_error_exit = -1;
   } else {
     bool is_tcp = socket_address_tcp_host_end(first_arg) != NULL;
