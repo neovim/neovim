@@ -122,10 +122,10 @@ file by giving a file name argument to the ":write" command.  For example: >
 	:q
 
 This will create a file "newfile", that is a modified copy of "testfile".
-The file "testfile" will remain unchanged.  Anyway, if the 'backup' option is
-set, Vim renames or copies the original file before it will be overwritten.
-You can use this file if you discover that you need the original file.  See
-also the 'patchmode' option.  The name of the backup file is normally the same
+The file "testfile" will remain unchanged.  Anyway, if the 'writebackup'
+option is set, Vim renames or copies the original file before it will be
+overwritten, but quickly discards it. If you expect to need the original file,
+see the 'patchmode' option.  The name of the backup file is normally the same
 as the original file with 'backupext' appended.  The default "~" is a bit
 strange to avoid accidentally overwriting existing files.  If you prefer
 ".bak" change the 'backupext' option.  The backup file can be placed in
@@ -1014,28 +1014,26 @@ Vim will warn you if you try to overwrite a file that has been changed
 elsewhere (unless "!" was used).  See |timestamp|.
 
 			    *backup* *E207* *E506* *E507* *E508* *E509* *E510*
-If you write to an existing file (but do not append) while the 'backup',
-'writebackup' or 'patchmode' option is on, a backup of the original file is
-made.  The file is either copied or renamed (see 'backupcopy').  After the
-file has been successfully written and when the 'writebackup' option is on and
-the 'backup' option is off, the backup file is deleted.  When the 'patchmode'
-option is on the backup file may be renamed.
+If you write to an existing file (but do not append) while the 'writebackup'
+or 'patchmode' option is on, a backup of the original file is made.  The file
+is either copied or renamed (see 'backupcopy').  After the file has been
+successfully written and when the 'writebackup' option is on, the backup file
+is deleted.  When the 'patchmode' option is on the backup file may be renamed.
 
 							*backup-table*
 'backup' 'writebackup'	action	~
    off	     off	no backup made
-   off	     on		backup current file, deleted afterwards (default)
-   on	     off	delete old backup, backup current file
-   on	     on		delete old backup, backup current file
+   off	     on		backup current file, deleted afterwards
+   on	     off	delete old backup, backup new file
+   on	     on		delete old, backup current, and overwrite (default)
 
 When the 'backupskip' pattern matches with the name of the file which is
 written, no backup file is made.  The values of 'backup' and 'writebackup' are
 ignored then.
 
-When the 'backup' option is on, an old backup file (with the same name as the
-new backup file) will be deleted.  If 'backup' is not set, but 'writebackup'
-is set, an existing backup file will not be deleted.  The backup file that is
-made while the file is being written will have a different name.
+If 'backup' is not set, but 'writebackup' is set, an existing backup file will
+not be deleted.  The backup file that is made while the file is being written
+will have a different name.
 
 On some filesystems it's possible that in a crash you lose both the backup and
 the newly written file (it might be there but contain bogus data).  In that
