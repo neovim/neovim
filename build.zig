@@ -227,7 +227,6 @@ pub fn build(b: *std.Build) !void {
         "lua/",
         "viml/",
         "viml/parser/",
-        "vterm/",
     };
 
     // source names _relative_ src/nvim/, not including other src/ subdircs
@@ -353,7 +352,6 @@ pub fn build(b: *std.Build) !void {
         .HAVE_WIMPLICIT_FALLTHROUGH_FLAG = true,
         .HAVE_BITSCANFORWARD64 = null,
 
-        .VTERM_TEST_FILE = "test/vterm_test_output", // TODO(bfredl): revisit when porting libvterm tests
     });
 
     _ = gen_config.addCopyFile(sysconfig_step.getOutputFile(), "auto/config.h"); // run_preprocessor() workaronnd
@@ -929,7 +927,6 @@ pub fn test_config(b: *std.Build) ![]u8 {
         \\M.translations_enabled = "$ENABLE_TRANSLATIONS" == "ON"
         \\M.is_asan = "$ENABLE_ASAN_UBSAN" == "ON"
         \\M.is_zig_build = true
-        \\M.vterm_test_file = "test/vterm_test_output"
         \\M.test_build_dir = _G.nvim_build_dir -- command line arg
         \\M.test_source_path = "{[src_path]s}"
         \\M.test_lua_prg = ""

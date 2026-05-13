@@ -6,7 +6,7 @@
 
 Terminal emulator                                     *terminal* *terminal-emulator*
 
-Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
+Nvim embeds a VT220/xterm terminal emulator based on libghostty. The terminal is
 presented as a special 'buftype', asynchronously updated as data is received
 from the connected program.
 

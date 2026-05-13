@@ -2705,7 +2705,6 @@ describe('TUI', function()
     ]])
   end)
 
-  -- Note: libvterm doesn't support colored underline or undercurl.
   it('supports undercurl and underdouble when run in :terminal', function()
     child_session:request('nvim_set_hl', 0, 'Visual', { undercurl = true })
     feed_data('ifoobar\027V')
@@ -4139,7 +4138,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- others:
 
   -- TODO(blueyed): this is made pending, since it causes failure + later hang
-  --                when using non-compatible libvterm (#9494/#10179).
+  --                with some terminal implementations (#9494/#10179).
   pending('TERM=interix uses 8 colors', function()
     assert_term_colors('interix', nil, 8)
   end)

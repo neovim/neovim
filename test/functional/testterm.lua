@@ -50,7 +50,7 @@ function M.make_lua_executor(session)
 end
 
 -- some helpers for controlling the terminal. the codes were taken from
--- infocmp xterm-256color which is less what libvterm understands
+-- infocmp xterm-256color.
 -- civis/cnorm
 function M.hide_cursor()
   M.feed_termcode('[?25l')

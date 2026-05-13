@@ -1,11 +1,5 @@
 // VT220/xterm-like terminal emulator.
-// Powered by libvterm http://www.leonerd.org.uk/code/libvterm
-// and libghostty https://ghostty.org
-//
-// libvterm is a pure C99 terminal emulation library with abstract input and
-// display. This means that the library needs to read data from the master fd
-// and feed VTerm instances, which will invoke user callbacks with screen
-// update instructions that must be mirrored to the real display.
+// Powered by libghostty https://ghostty.org
 //
 // Keys are encoded into byte streams that must be fed back to the master fd.
 //
@@ -92,11 +86,6 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
-#include "nvim/vterm/parser.h"
-#include "nvim/vterm/pen.h"
-#include "nvim/vterm/screen.h"
-#include "nvim/vterm/state.h"
-#include "nvim/vterm/vterm.h"
 #include "nvim/window.h"
 
 typedef struct {
@@ -174,8 +163,6 @@ static bool refresh_pending = false;
 
 struct terminal {
   TerminalOptions opts;  // options passed to terminal_alloc()
-  VTerm *vt;
-  VTermScreen *vts;
   GhosttyTerminal ghostty;
   GhosttyRenderState ghostty_render_state;
   GhosttyRenderStateRowIterator ghostty_render_row_iterator;
@@ -853,9 +840,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // Associate the terminal instance with the new buffer
   term->buf_handle = buf->handle;
   buf->terminal = term;
-  // Create VTerm
-  term->vt = vterm_new(opts.height, opts.width);
-  vterm_set_utf8(term->vt, 1);
   // Create Ghostty
   uint16_t ghostty_cols = MAX(opts.width, 1);
   uint16_t ghostty_rows = MAX(opts.height, 1);
@@ -900,13 +884,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                &track_last_cell);
   terminal_ghostty_init_cursor_style(term);
   terminal_ghostty_render_state_update(term);
-
-  // Set up screen
-  term->vts = vterm_obtain_screen(term->vt);
-  vterm_screen_enable_altscreen(term->vts, true);
-  vterm_screen_enable_reflow(term->vts, true);
-  vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
-  vterm_screen_reset(term->vts, 1);
 
   // Force an initial refresh so the buffer starts with one line per screen row.
   term->invalid_start = 0;
@@ -1149,8 +1126,6 @@ void terminal_check_size(Terminal *term)
   }
 
   term->opts.resize_cb(width, height, term->opts.data);
-  vterm_set_size(term->vt, height, width);
-  vterm_screen_flush_damage(term->vts);
   assert_ghostty_success(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
   terminal_ghostty_render_state_update(term);
   terminal_mouse_encoder_set_size(term, width, height);
@@ -1579,7 +1554,6 @@ void terminal_destroy(Terminal **termpp)
       set_del(ptr_t, &invalidated_terminals, term);
     }
     kv_destroy(term->termrequest_buffer);
-    vterm_free(term->vt);
     multiqueue_free(term->pending.events);
     ghostty_mouse_event_free(term->ghostty_mouse_event);
     ghostty_mouse_encoder_free(term->ghostty_mouse_encoder);
@@ -2332,7 +2306,7 @@ static void terminal_focus(Terminal *term, bool focus)
 }
 
 // }}}
-// libghostty and libvterm callbacks {{{
+// libghostty callbacks {{{
 
 /// Called when Ghostty needs to write the response for a terminal query.
 static void term_ghostty_write_pty_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
