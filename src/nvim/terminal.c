@@ -41,6 +41,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
+#include "nvim/base64.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
@@ -150,14 +151,18 @@ typedef enum {
   kTermRequestParserEventFinish,
 } TermRequestParserEvent;
 
+typedef enum {
+  kTerminalClipboardRegister = 0,
+  kTerminalClipboardPrimary,
+} TerminalClipboardRegister;
+
 #include "terminal.c.generated.h"
 
 // Delay for refreshing the terminal buffer after receiving updates. Improves
 // performance when receiving large bursts of data.
 #define REFRESH_DELAY 10
 
-#define TEXTBUF_SIZE      0x1fff
-#define SELECTIONBUF_SIZE 0x0400
+#define TEXTBUF_SIZE 0x1fff
 
 // Whether to include OSC 52/clipboard support in Ghostty's DA1 response. Functional tests
 // toggle this to force the runtime OSC 52 detection path to fall back to XTGETTCAP.
@@ -233,30 +238,12 @@ struct terminal {
 
   bool color_set[16];
 
-  char *selection_buffer;  ///< libvterm selection buffer
-  StringBuilder selection;  ///< Growable array containing full selection data
-
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
   TermRequestParserState termrequest_state;  ///< Current OSC/DCS/APC TermRequest parser state.
   TermRequestKind termrequest_kind;  ///< Current OSC/DCS/APC sequence kind.
   TermRequestTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in request.
 
   size_t refcount;                  // reference count
-};
-
-static VTermScreenCallbacks vterm_screen_callbacks = {
-  .damage = NULL,
-  .moverect = NULL,
-  .movecursor = NULL,
-  .settermprop = NULL,
-  .bell = NULL,
-  .theme = NULL,
-};
-
-static VTermSelectionCallbacks vterm_selection_callbacks = {
-  .set = term_selection_set,
-  // For security reasons we don't support querying the system clipboard from the embedded terminal
-  .query = NULL,
 };
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;
@@ -450,6 +437,62 @@ static TermRequestParserEvent terminal_termrequest_parse_byte(Terminal *term, ui
     return kTermRequestParserEventNone;
   }
   return kTermRequestParserEventNone;
+}
+
+static TerminalClipboardRegister terminal_osc52_register(const char *selectors, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (len == 0) {
+    return kTerminalClipboardRegister;
+  }
+
+  for (size_t i = 0; i < len; i++) {
+    if (selectors[i] != 'p') {
+      return kTerminalClipboardRegister;
+    }
+  }
+  return kTerminalClipboardPrimary;
+}
+
+static void terminal_osc52_handle(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (term->termrequest_kind != kTermRequestKindOsc) {
+    return;
+  }
+
+  const char *seq = term->termrequest_buffer.items;
+  size_t len = term->termrequest_buffer.size;
+  static const char prefix[] = "\033]52;";
+  const size_t prefix_len = sizeof(prefix) - 1;
+  if (len < prefix_len || memcmp(seq, prefix, prefix_len) != 0) {
+    return;
+  }
+
+  const char *selectors = seq + prefix_len;
+  size_t rest_len = len - prefix_len;
+  const char *sep = memchr(selectors, ';', rest_len);
+  if (sep == NULL) {
+    return;
+  }
+
+  size_t selector_len = (size_t)(sep - selectors);
+  const char *payload = sep + 1;
+  size_t payload_len = rest_len - selector_len - 1;
+  if (payload_len == 1 && payload[0] == '?') {
+    return;
+  }
+
+  size_t decoded_len = 0;
+  char *decoded = base64_decode(payload, payload_len, &decoded_len);
+  if (decoded == NULL) {
+    return;
+  }
+
+  char *data = xmemdupz(decoded, decoded_len);
+  xfree(decoded);
+  multiqueue_put(main_loop.events, term_clipboard_set,
+                 (void *)(intptr_t)terminal_osc52_register(selectors, selector_len), data);
 }
 
 void terminal_init(void)
@@ -857,19 +900,12 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   terminal_ghostty_init_cursor_style(term);
   terminal_ghostty_render_state_update(term);
 
-  // Setup state
-  VTermState *state = vterm_obtain_state(term->vt);
   // Set up screen
   term->vts = vterm_obtain_screen(term->vt);
   vterm_screen_enable_altscreen(term->vts, true);
   vterm_screen_enable_reflow(term->vts, true);
-  vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
-
-  term->selection_buffer = xcalloc(SELECTIONBUF_SIZE, 1);
-  vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
-                                      term->selection_buffer, SELECTIONBUF_SIZE);
 
   // Force an initial refresh so the buffer starts with one line per screen row.
   term->invalid_start = 0;
@@ -1541,8 +1577,6 @@ void terminal_destroy(Terminal **termpp)
       unblock_autocmds();
       set_del(ptr_t, &invalidated_terminals, term);
     }
-    xfree(term->selection_buffer);
-    kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
     multiqueue_free(term->pending.events);
@@ -1868,14 +1902,6 @@ static void on_sync_flush(void **argv)
   unblock_autocmds();
 }
 
-// TODO(noib3): inline to ghostty_terminal_vt_write once we port OSC 52 support away from libvterm.
-static void terminal_vt_write_chunk(Terminal *term, const char *data, size_t len)
-  FUNC_ATTR_NONNULL_ALL
-{
-  vterm_input_write(term->vt, data, len);
-  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
-}
-
 static void terminal_vt_write(Terminal *term, const char *data, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1888,10 +1914,13 @@ static void terminal_vt_write(Terminal *term, const char *data, size_t len)
           && ((uint8_t)data[i] == ']' || (uint8_t)data[i] == 'P' || (uint8_t)data[i] == '_')) {
         request_start--;
       }
-      terminal_vt_write_chunk(term, data + chunk_start, request_start - chunk_start);
+      ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
+                                request_start - chunk_start);
       chunk_start = request_start;
     } else if (event == kTermRequestParserEventFinish) {
-      terminal_vt_write_chunk(term, data + chunk_start, i + 1 - chunk_start);
+      ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
+                                i + 1 - chunk_start);
+      terminal_osc52_handle(term);
       if (has_event(EVENT_TERMREQUEST)) {
         schedule_termrequest(term);
       }
@@ -1901,7 +1930,8 @@ static void terminal_vt_write(Terminal *term, const char *data, size_t len)
       chunk_start = i + 1;
     }
   }
-  terminal_vt_write_chunk(term, data + chunk_start, len - chunk_start);
+  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
+                            len - chunk_start);
   terminal_ghostty_render_state_update(term);
 }
 
@@ -1932,7 +1962,6 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     }
     terminal_vt_write(term, data, len);
   }
-  vterm_screen_flush_damage(term->vts);
 
   // When a synchronized update just ended, refresh the buffer immediately
   // instead of waiting for the 10ms timer.  This eliminates the window where
@@ -2390,19 +2419,16 @@ static bool term_ghostty_color_scheme_callback(GhosttyTerminal ghostty FUNC_ATTR
 
 static void term_clipboard_set(void **argv)
 {
-  VTermSelectionMask mask = (VTermSelectionMask)(long)argv[0];
+  TerminalClipboardRegister reg = (TerminalClipboardRegister)(intptr_t)argv[0];
   char *data = argv[1];
 
   char regname;
-  switch (mask) {
-  case VTERM_SELECTION_CLIPBOARD:
+  switch (reg) {
+  case kTerminalClipboardRegister:
     regname = '+';
     break;
-  case VTERM_SELECTION_PRIMARY:
+  case kTerminalClipboardPrimary:
     regname = '*';
-    break;
-  default:
-    regname = '+';
     break;
   }
 
@@ -2417,23 +2443,6 @@ static void term_clipboard_set(void **argv)
 
   tv_list_append_string(args, &regname, 1);
   eval_call_provider("clipboard", "set", args, true);
-}
-
-static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag, void *user)
-{
-  Terminal *term = user;
-  if (frag.initial) {
-    kv_size(term->selection) = 0;
-  }
-
-  kv_concat_len(term->selection, frag.str, frag.len);
-
-  if (frag.final) {
-    char *data = xmemdupz(term->selection.items, kv_size(term->selection));
-    multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, data);
-  }
-
-  return 1;
 }
 
 // }}}
