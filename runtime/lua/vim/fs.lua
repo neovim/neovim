@@ -207,6 +207,7 @@ function M.dir(path, opts)
         return
       end
 
+      -- use lstat instead of stat to avoid descending into a symlink entry as a directory/file
       local name, etype = uv.fs_scandir_next(fs)
       if not name then
         return
