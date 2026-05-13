@@ -439,7 +439,7 @@ function M._lsp_to_complete_items(
         word = word,
         abbr = ('%s%s'):format(item.label, vim.tbl_get(item, 'labelDetails', 'detail') or ''),
         kind = kind,
-        menu = vim.tbl_get(item, 'labelDetails', 'description') or item.detail or '',
+        menu = vim.tbl_get(item, 'labelDetails', 'description') or '',
         info = get_doc(item),
         icase = 1,
         dup = 1,
@@ -795,16 +795,18 @@ local function on_completechanged(group, bufnr)
     desc = 'Request and display LSP completion item documentation via completionItem/resolve',
   }, function(ev)
     local completed_item = vim.v.event.completed_item or {}
-    local lsp_item = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'completion_item')
+    local lsp_item = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'completion_item') --[[@as lsp.CompletionItem?]]
+    if not lsp_item then
+      return
+    end
     local data = vim.fn.complete_info({ 'selected' })
     if (completed_item.info or '') ~= '' then
-      local kind = vim.tbl_get(lsp_item or {}, 'documentation', 'kind')
+      local kind = vim.tbl_get(lsp_item, 'documentation', 'kind')
       update_popup_window(
         data.preview_winid,
         data.preview_bufnr,
         kind or protocol.MarkupKind.Markdown
       )
-      return
     end
 
     if
@@ -816,7 +818,6 @@ local function on_completechanged(group, bufnr)
     then
       if
         has_completeopt('popup')
-        and lsp_item
         and lsp_item.insertTextFormat == protocol.InsertTextFormat.Snippet
       then
         -- Shows snippet preview in doc popup if completeopt=popup.
@@ -832,7 +833,7 @@ local function on_completechanged(group, bufnr)
 
     -- Retrieve the raw LSP completionItem from completed_item as the parameter for
     -- the completionItem/resolve request
-    if lsp_item then
+    if not lsp_item.detail or not lsp_item.documentation then
       Context.resolve_handler = Context.resolve_handler or CompletionResolver.new()
       Context.resolve_handler:request(ev.buf, lsp_item, completed_item.word)
     end

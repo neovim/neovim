@@ -1423,10 +1423,24 @@ describe('vim.lsp.completion: integration', function()
       isIncomplete = false,
       items = {
         {
-          insertText = 'nvim__id_array',
+          -- detail populated but not documentation
+          detail = '(method) nvim__id_array_1(arr: any[]): any[]',
+          insertText = 'nvim__id_array_1',
           insertTextFormat = 1,
           kind = 3,
-          label = 'nvim__id_array(arr)',
+          label = 'nvim__id_array_1(arr)',
+          sortText = '0001',
+        },
+        {
+          -- documentation populated but not detail
+          documentation = {
+            kind = 'markdown',
+            value = [[```lua\nfunction vim.api.nvim__id_array_2(arr: any[])\n  -> any[]\n```]],
+          },
+          insertText = 'nvim__id_array_2',
+          insertTextFormat = 1,
+          kind = 3,
+          label = 'nvim__id_array_2(arr)',
           sortText = '0002',
         },
         {
@@ -1465,15 +1479,28 @@ describe('vim.lsp.completion: integration', function()
       resolve_result = {
         {
           -- detail not in documentation, should be prepended as code block
-          detail = '(method) nvim__id_array(arr: any[]): any[]',
+          detail = '(method) nvim__id_array_1(arr: any[]): any[]',
           documentation = {
             kind = 'markdown',
-            value = [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]],
+            value = [[```lua\nfunction vim.api.nvim__id_array_1(arr: any[])\n  -> any[]\n```]],
           },
-          insertText = 'nvim__id_array',
+          insertText = 'nvim__id_array_1',
           insertTextFormat = 1,
           kind = 3,
-          label = 'nvim__id_array(arr)',
+          label = 'nvim__id_array_1(arr)',
+          sortText = '0001',
+        },
+        {
+          -- detail not in documentation, should be prepended as code block
+          detail = '(method) nvim__id_array_2(arr: any[]): any[]',
+          documentation = {
+            kind = 'markdown',
+            value = [[```lua\nfunction vim.api.nvim__id_array_2(arr: any[])\n  -> any[]\n```]],
+          },
+          insertText = 'nvim__id_array_2',
+          insertTextFormat = 1,
+          kind = 3,
+          label = 'nvim__id_array_2(arr)',
           sortText = '0002',
         },
         {
@@ -1529,37 +1556,52 @@ describe('vim.lsp.completion: integration', function()
         return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n')
       end)
       -- item 1: detail is not in documentation, should be prepended
-      neq(nil, info:find('(method) nvim__id_array(arr: any[]): any[]', 1, true))
-      neq(nil, info:find('function vim.api.nvim__id_array', 1, true))
+      neq(nil, info:find('(method) nvim__id_array_1(arr: any[]): any[]', 1, true))
+      neq(nil, info:find('function vim.api.nvim__id_array_1', 1, true))
     end)
     screen:expect([[
-      nvim__id_array^                                    |
-      {12:nvim__id_array  Function }{100:(method) nvim__id_array(}{1: }|
-      {4:for i = ..      Snippet  }{100:arr: any[]): any[]}{4:      }{1: }|
-      {4:for j = ..      Snippet  }{100:lua\nfunction vim.api}{4:   }{1: }|
-      {4:_assert_integer Function }{100:.nvim__id_array(arr: any}{1: }|
-      {1:~                        }{100:[])\n  -> any[]\n}{4:       }{1: }|
-      {1:~                                                 }|*13
+      nvim__id_array_1^                                  |
+      {12:nvim__id_array_1 Function }{100:(method) nvim__id_array}{1: }|
+      {4:nvim__id_array_2 Function }{100:_1(arr: any[]): any[]}{4:  }{1: }|
+      {4:for i = ..       Snippet  }{100:lua\nfunction vim.ap}{4:   }{1: }|
+      {4:for j = ..       Snippet  }{100:i.nvim__id_array_1(arr:}{1: }|
+      {4:_assert_integer  Function }{100: any[])\n  -> any[]\n}{4:  }{1: }|
+      {1:~                         }{4:                       }{1: }|
+      {1:~                                                 }|*12
+      {5:-- INSERT --}                                      |
+    ]])
+    feed('<C-N>')
+    screen:expect([[
+      nvim__id_array_2^                                  |
+      {4:nvim__id_array_1 Function }{100:(method) nvim__id_array}{1: }|
+      {12:nvim__id_array_2 Function }{100:_2(arr: any[]): any[]}{4:  }{1: }|
+      {4:for i = ..       Snippet  }{100:lua\nfunction vim.ap}{4:   }{1: }|
+      {4:for j = ..       Snippet  }{100:i.nvim__id_array_2(arr:}{1: }|
+      {4:_assert_integer  Function }{100: any[])\n  -> any[]\n}{4:  }{1: }|
+      {1:~                         }{4:                       }{1: }|
+      {1:~                                                 }|*12
       {5:-- INSERT --}                                      |
     ]])
     feed('<C-N>')
     screen:expect([[
       for i = ..^                                        |
-      {4:nvim__id_array  Function }{100:for i = 1, 10, 1 do}{1:      }|
-      {12:for i = ..      Snippet  }{100:        }{4:           }{1:      }|
-      {4:for j = ..      Snippet  }{100:end}{4:                }{1:      }|
-      {4:_assert_integer Function }{1:                         }|
-      {1:~                                                 }|*14
+      {4:nvim__id_array_1 Function }{100:for i = 1, 10, 1 do}{1:     }|
+      {4:nvim__id_array_2 Function }{100:        }{4:           }{1:     }|
+      {12:for i = ..       Snippet  }{100:end}{4:                }{1:     }|
+      {4:for j = ..       Snippet  }{1:                        }|
+      {4:_assert_integer  Function }{1:                        }|
+      {1:~                                                 }|*13
       {5:-- INSERT --}                                      |
     ]])
     feed('<C-N>')
     screen:expect([[
       for j = ..^                                        |
-      {4:nvim__id_array  Function }{100:for j = 1, 10, 1 do}{1:      }|
-      {4:for i = ..      Snippet  }{100:        }{4:           }{1:      }|
-      {12:for j = ..      Snippet  }{100:end}{4:                }{1:      }|
-      {4:_assert_integer Function }{1:                         }|
-      {1:~                                                 }|*14
+      {4:nvim__id_array_1 Function }{100:for j = 1, 10, 1 do}{1:     }|
+      {4:nvim__id_array_2 Function }{100:        }{4:           }{1:     }|
+      {4:for i = ..       Snippet  }{100:end}{4:                }{1:     }|
+      {12:for j = ..       Snippet  }{1:                        }|
+      {4:_assert_integer  Function }{1:                        }|
+      {1:~                                                 }|*13
       {5:-- INSERT --}                                      |
     ]])
     feed('<C-N>')
@@ -1578,11 +1620,12 @@ describe('vim.lsp.completion: integration', function()
     end)
     screen:expect([[
       _assert_integer(x, base)^                          |
-      {4:nvim__id_array  Function }{100:lua\nmore doc for vim}{4:   }{1: }|
-      {4:for i = ..      Snippet  }{100:._assert_integer\n}{4:      }{1: }|
-      {4:for j = ..      Snippet  }{1:                         }|
-      {12:_assert_integer Function }{1:                         }|
-      {1:~                                                 }|*14
+      {4:nvim__id_array_1 Function }{100:lua\nmore doc for vi}{4:   }{1: }|
+      {4:nvim__id_array_2 Function }{100:m._assert_integer\n}{4:    }{1: }|
+      {4:for i = ..       Snippet  }{1:                        }|
+      {4:for j = ..       Snippet  }{1:                        }|
+      {12:_assert_integer  Function }{1:                        }|
+      {1:~                                                 }|*13
       {5:-- INSERT --}                                      |
     ]])
 
