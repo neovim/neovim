@@ -209,9 +209,6 @@ clipboard. Reading from the system clipboard with OSC 52 is not supported, as
 this would allow any arbitrary program in the :terminal to read the user's
 clipboard.
 
-OSC 52 sequences sent from the :terminal buffer do not emit a |TermRequest|
-event. The event is handled directly by Nvim and is not forwarded to plugins.
-
 OSC 133: shell integration                    *terminal-osc133* *shell-prompt*
 
 Shells can emit semantic escape sequences (OSC 133) to mark where each prompt
