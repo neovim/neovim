@@ -103,7 +103,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: |
-          cmake -S cmake.deps --preset ci -D ENABLE_GHOSTTY=ON
+          cmake -S cmake.deps --preset ci
           cmake --build .deps
-          cmake --preset ci -D ENABLE_GHOSSTY=ON
+          cmake --preset ci
           cmake --build build
