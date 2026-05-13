@@ -435,12 +435,21 @@ function M._lsp_to_complete_items(
         hl_group = 'DiagnosticDeprecated'
       end
       local kind, kind_hlgroup = generate_kind(item)
+      local info = get_doc(item)
+      if item.detail and item.detail ~= '' then
+        if info == '' then
+          info = ('```%s\n%s\n```'):format(vim.bo.filetype, item.detail)
+        elseif not info:find(item.detail, 1, true) then
+          local detail_block = ('```%s\n%s\n```'):format(vim.bo.filetype, item.detail)
+          info = detail_block .. '\n' .. info
+        end
+      end
       local completion_item = {
         word = word,
         abbr = ('%s%s'):format(item.label, vim.tbl_get(item, 'labelDetails', 'detail') or ''),
         kind = kind,
         menu = vim.tbl_get(item, 'labelDetails', 'description') or '',
-        info = get_doc(item),
+        info = info,
         icase = 1,
         dup = 1,
         empty = 1,
@@ -800,7 +809,8 @@ local function on_completechanged(group, bufnr)
       return
     end
     local data = vim.fn.complete_info({ 'selected' })
-    if (completed_item.info or '') ~= '' then
+    local info = completed_item.info or ''
+    if info ~= '' then
       local kind = vim.tbl_get(lsp_item, 'documentation', 'kind')
       update_popup_window(
         data.preview_winid,
@@ -818,6 +828,7 @@ local function on_completechanged(group, bufnr)
     then
       if
         has_completeopt('popup')
+        and info == ''
         and lsp_item.insertTextFormat == protocol.InsertTextFormat.Snippet
       then
         -- Shows snippet preview in doc popup if completeopt=popup.
