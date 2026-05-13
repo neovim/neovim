@@ -197,7 +197,6 @@ The externally maintained libraries used by Neovim are:
   - libmpack: MIT license
   - libtermkey: MIT license
   - libuv. Copyright Joyent, Inc. and other Node contributors. Node.js license.
-  - libvterm: MIT license
   - lua-bitop: MIT license
   - lua-cjson: MIT license
   - lua-compat: MIT license
