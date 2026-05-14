@@ -5064,6 +5064,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_qe);
   case kOptReadonly:
     return &(buf->b_p_ro);
+  case kOptRootdir:
+    return &(buf->b_p_rootdir);
   case kOptScrollback:
     return &(buf->b_p_scbk);
   case kOptSmartindent:
@@ -5491,6 +5493,7 @@ void buf_copy_options(buf_T *buf, int flags)
 
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_string_option;
+      buf->b_p_rootdir = empty_string_option;
       buf->b_p_pi = p_pi;
       COPY_OPT_SCTX(buf, kBufOptPreserveindent);
       buf->b_p_cinw = xstrdup(p_cinw);

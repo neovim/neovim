@@ -408,7 +408,7 @@ vim.go.bkc = vim.go.backupcopy
 --- uses another default.
 ---
 --- @type string
-vim.o.backupdir = ".,$XDG_STATE_HOME/nvim/backup//"
+vim.o.backupdir = ".,C:/Users/Xing/AppData/Local/nvim-data/backup//"
 vim.o.bdir = vim.o.backupdir
 vim.go.backupdir = vim.o.backupdir
 vim.go.bdir = vim.go.backupdir
@@ -1985,7 +1985,7 @@ vim.go.dg = vim.go.digraph
 --- list, this avoids problems if the Nvim default is changed.
 ---
 --- @type string
-vim.o.directory = "$XDG_STATE_HOME/nvim/swap//"
+vim.o.directory = "C:/Users/Xing/AppData/Local/nvim-data/swap//"
 vim.o.dir = vim.o.directory
 vim.go.directory = vim.o.directory
 vim.go.dir = vim.go.directory
@@ -2147,7 +2147,7 @@ vim.go.ef = vim.go.errorfile
 --- (see `errorformat`).
 ---
 --- @type string
-vim.o.errorformat = "%*[^\"]\"%f\"%*\\D%l: %m,\"%f\"%*\\D%l: %m,%-Gg%\\?make[%*\\d]: *** [%f:%l:%m,%-Gg%\\?make: *** [%f:%l:%m,%-G%f:%l: (Each undeclared identifier is reported only once,%-G%f:%l: for each function it appears in.),%-GIn file included from %f:%l:%c:,%-GIn file included from %f:%l:%c\\,,%-GIn file included from %f:%l:%c,%-GIn file included from %f:%l,%-G%*[ ]from %f:%l:%c,%-G%*[ ]from %f:%l:,%-G%*[ ]from %f:%l\\,,%-G%*[ ]from %f:%l,%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,\"%f\"\\, line %l%*\\D%c%*[^ ] %m,%D%*\\a[%*\\d]: Entering directory %*[`']%f',%X%*\\a[%*\\d]: Leaving directory %*[`']%f',%D%*\\a: Entering directory %*[`']%f',%X%*\\a: Leaving directory %*[`']%f',%DMaking %*\\a in %f,%f|%l| %m"
+vim.o.errorformat = '%f(%l): %t%*\\D%n: %m,%f(%l\\,%c): %t%*\\D%n: %m,%f(%l) \\=: %t%*\\D%n: %m,%*[^"]"%f"%*\\D%l: %m,%f(%l) \\=: %m,%*[^ ] %f %l: %m,%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,%f|%l| %m'
 vim.o.efm = vim.o.errorformat
 vim.bo.errorformat = vim.o.errorformat
 vim.bo.efm = vim.bo.errorformat
@@ -5305,6 +5305,24 @@ vim.o.rlc = vim.o.rightleftcmd
 vim.wo.rightleftcmd = vim.o.rightleftcmd
 vim.wo.rlc = vim.wo.rightleftcmd
 
+--- The resolved project root directory for the current buffer.
+--- Normally set automatically by the LSP client when it attaches to a
+--- buffer.  Can also be set by plugins that implement project root
+--- detection (e.g., using `vim.fs.root()`).  Plugins can read this
+--- option to locate the project root without depending on LSP being
+--- active.
+---
+--- When an LSP client attaches, its root directory is written here if
+--- the option is still empty.  Subsequent clients do not overwrite a
+--- value that was already set.
+---
+--- Note: This option has no effect on the current working directory.
+--- See `:lcd`, `:tcd`, and `getcwd()` for that.
+---
+--- @type string
+vim.o.rootdir = ""
+vim.bo.rootdir = vim.o.rootdir
+
 --- Show the line and column number of the cursor position, separated by a
 --- comma.  When there is room, the relative position of the displayed
 --- text in the file is shown on the far right:
@@ -6028,7 +6046,7 @@ vim.go.sxe = vim.go.shellxescape
 --- When the value is '(' then also see 'shellxescape'.
 ---
 --- @type string
-vim.o.shellxquote = ""
+vim.o.shellxquote = '"'
 vim.o.sxq = vim.o.shellxquote
 vim.go.shellxquote = vim.o.shellxquote
 vim.go.sxq = vim.go.shellxquote
@@ -7606,7 +7624,7 @@ vim.go.tf = vim.go.ttyfast
 --- means).
 ---
 --- @type string
-vim.o.undodir = "$XDG_STATE_HOME/nvim/undo//"
+vim.o.undodir = "C:/Users/Xing/AppData/Local/nvim-data/undo//"
 vim.o.udir = vim.o.undodir
 vim.go.undodir = vim.o.undodir
 vim.go.udir = vim.go.undodir
@@ -7803,7 +7821,7 @@ vim.go.vfile = vim.go.verbosefile
 --- Environment variables are expanded `:set_env`.
 ---
 --- @type string
-vim.o.viewdir = "$XDG_STATE_HOME/nvim/view//"
+vim.o.viewdir = "C:/Users/Xing/AppData/Local/nvim-data/view//"
 vim.o.vdir = vim.o.viewdir
 vim.go.viewdir = vim.o.viewdir
 vim.go.vdir = vim.go.viewdir

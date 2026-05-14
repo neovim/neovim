@@ -970,7 +970,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default ".,$XDG_STATE_HOME/nvim/backup//")
+'backupdir' 'bdir'	string	(default ".,C:/Users/Xing/AppData/Local/nvim-data/backup//")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	List of directories for the backup file, separated with commas.
@@ -2341,7 +2341,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{char2}.  See |digraphs|.
 
 						*'directory'* *'dir'*
-'directory' 'dir'	string	(default "$XDG_STATE_HOME/nvim/swap//")
+'directory' 'dir'	string	(default "C:/Users/Xing/AppData/Local/nvim-data/swap//")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	List of directory names for the swap file, separated with commas.
@@ -5102,6 +5102,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This is useful for languages such as Hebrew, Arabic and Farsi.
 	The 'rightleft' option must be set for 'rightleftcmd' to take effect.
 
+							*'rootdir'*
+'rootdir'		string	(default "")
+			local to buffer
+	The resolved project root directory for the current buffer.
+	Normally set automatically by the LSP client when it attaches to a
+	buffer.  Can also be set by plugins that implement project root
+	detection (e.g., using |vim.fs.root()|).  Plugins can read this
+	option to locate the project root without depending on LSP being
+	active.
+
+	When an LSP client attaches, its root directory is written here if
+	the option is still empty.  Subsequent clients do not overwrite a
+	value that was already set.
+
+	Note: This option has no effect on the current working directory.
+	See |:lcd|, |:tcd|, and |getcwd()| for that.
+
 					*'ruler'* *'ru'* *'noruler'* *'noru'*
 'ruler' 'ru'		boolean	(default on)
 			global
@@ -7035,7 +7052,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	`:set nottyfast` in your config happens too late.
 
 					*'undodir'* *'udir'* *E5003*
-'undodir' 'udir'	string	(default "$XDG_STATE_HOME/nvim/undo//")
+'undodir' 'udir'	string	(default "C:/Users/Xing/AppData/Local/nvim-data/undo//")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	List of directory names for undo files, separated with commas.
@@ -7208,7 +7225,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Environment variables are expanded |:set_env|.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default "$XDG_STATE_HOME/nvim/view//")
+'viewdir' 'vdir'	string	(default "C:/Users/Xing/AppData/Local/nvim-data/view//")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	Name of the directory where to store files for |:mkview|.
