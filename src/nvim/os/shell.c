@@ -729,7 +729,9 @@ int call_shell(char *cmd, int opts, char *extra_shell_arg)
   if (p_verbose > 3) {
     verbose_enter();
     smsg(0, _("Executing command: \"%s\""), cmd == NULL ? p_sh : cmd);
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
     verbose_leave();
   }
 

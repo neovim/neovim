@@ -1339,7 +1339,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     goto filterend;
   }
 
-  if (!do_out) {
+  if (!do_out && !ui_has(kUIMessages)) {
     msg_putchar('\n');
   }
 
@@ -1446,7 +1446,9 @@ error:
     // put cursor back in same position for ":w !cmd"
     curwin->w_cursor = cursor_save;
     no_wait_return--;
-    wait_return(false);
+    if (!ui_has(kUIMessages)) {
+      wait_return(false);
+    }
   }
 
 filterend:

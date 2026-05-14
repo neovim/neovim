@@ -383,6 +383,16 @@ describe('messages2', function()
     ]])
   end)
 
+  it('no prompt and newlines with Visual filter command #38273', function()
+    set_msg_target_zero_ch()
+    feed('V:w !printf foo<CR>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {1:~                                                 }{4:foo}|
+    ]])
+  end)
+
   it('empty kind after message that does not flush immediately', function()
     command('echon "foo" | echo')
     screen:expect([[
