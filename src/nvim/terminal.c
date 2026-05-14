@@ -188,6 +188,7 @@ struct terminal {
   size_t scrollback_rows;          ///< Ghostty history rows mirrored in the nvim buffer.
   size_t scrollback_deleted;       ///< Mirrored history rows deleted from the buffer top.
   bool scrollback_clear_pending;   ///< Ghostty processed CSI 3 J since the last refresh.
+  size_t scrollback_clear_rows;    ///< Buffer rows that became history before CSI 3 J.
 
   // buf_T instance that acts as a "drawing surface" for the terminal.
   // we can't store a direct reference to the buffer because the
@@ -691,22 +692,34 @@ static size_t terminal_ghostty_scrollback_rows_get(Terminal *term)
   return rows;
 }
 
-static bool terminal_input_clears_scrollback(const char *data, size_t len)
+static size_t terminal_scrollback_clear_sequence_len(const char *data, size_t len, size_t offset)
   FUNC_ATTR_NONNULL_ALL
 {
-  for (size_t i = 0; i < len; i++) {
-    if ((uint8_t)data[i] == 0x9b && i + 2 < len && data[i + 1] == '3'
-        && data[i + 2] == 'J') {
-      return true;
-    }
-    if (data[i] != ESC || i + 1 >= len || data[i + 1] != '[') {
-      continue;
-    }
-    if (i + 3 < len && data[i + 2] == '3' && data[i + 3] == 'J') {
-      return true;
+  if ((uint8_t)data[offset] == 0x9b && offset + 2 < len && data[offset + 1] == '3'
+      && data[offset + 2] == 'J') {
+    return 3;
+  }
+  if (data[offset] == ESC && offset + 3 < len && data[offset + 1] == '['
+      && data[offset + 2] == '3' && data[offset + 3] == 'J') {
+    return 4;
+  }
+  return 0;
+}
+
+static void terminal_scrollback_clear_record(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t history_rows = terminal_ghostty_scrollback_rows_get(term);
+  size_t clear_rows = history_rows;
+  if (!term->scrollback_clear_pending) {
+    clear_rows = term->scrollback_rows;
+    if (history_rows > term->ghostty_scrollback_rows) {
+      clear_rows += history_rows - term->ghostty_scrollback_rows;
     }
   }
-  return false;
+
+  term->scrollback_clear_pending = true;
+  term->scrollback_clear_rows += clear_rows;
 }
 
 static void terminal_mouse_encoder_set_size(Terminal *term, uint16_t width, uint16_t height)
@@ -1889,11 +1902,28 @@ static void on_sync_flush(void **argv)
   unblock_autocmds();
 }
 
-static void terminal_vt_write(Terminal *term, const char *data, size_t len)
+static void terminal_process_vt_input(Terminal *term, const char *data, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t chunk_start = 0;
   for (size_t i = 0; i < len; i++) {
+    if (term->termrequest_state == kTermRequestParserNormal) {
+      size_t clear_sequence_len = terminal_scrollback_clear_sequence_len(data, len, i);
+      if (clear_sequence_len > 0) {
+        if (i > chunk_start) {
+          ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
+                                    i - chunk_start);
+          terminal_ghostty_render_state_update(term);
+        }
+        terminal_scrollback_clear_record(term);
+        ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + i),
+                                  clear_sequence_len);
+        i += clear_sequence_len - 1;
+        chunk_start = i + 1;
+        continue;
+      }
+    }
+
     TermRequestParserEvent event = terminal_termrequest_parse_byte(term, (uint8_t)data[i]);
     if (event == kTermRequestParserEventStart) {
       size_t request_start = i;
@@ -1938,16 +1968,10 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
       kv_push(crlf_data, data[i]);
     }
 
-    if (terminal_input_clears_scrollback(crlf_data.items, kv_size(crlf_data))) {
-      term->scrollback_clear_pending = true;
-    }
-    terminal_vt_write(term, crlf_data.items, kv_size(crlf_data));
+    terminal_process_vt_input(term, crlf_data.items, kv_size(crlf_data));
     kv_destroy(crlf_data);
   } else {
-    if (terminal_input_clears_scrollback(data, len)) {
-      term->scrollback_clear_pending = true;
-    }
-    terminal_vt_write(term, data, len);
+    terminal_process_vt_input(term, data, len);
   }
 
   // When a synchronized update just ended, refresh the buffer immediately
@@ -3288,10 +3312,13 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
   size_t initial_scrollback_rows = old_scrollback_rows;
   size_t old_ghostty_scrollback_rows = term->ghostty_scrollback_rows;
   bool scrollback_cleared = term->scrollback_clear_pending;
+  size_t scrollback_clear_rows = term->scrollback_clear_rows;
   term->scrollback_clear_pending = false;
+  term->scrollback_clear_rows = 0;
 
   if (!resized && scrollback_cleared) {
-    size_t deleted = old_scrollback_rows;
+    size_t max_deleted = buf->b_ml.ml_line_count > 1 ? (size_t)buf->b_ml.ml_line_count - 1 : 0;
+    size_t deleted = MIN(scrollback_clear_rows, max_deleted);
     if (deleted > 0) {
       mark_adjust_buf(buf, 1, (linenr_T)deleted, MAXLNUM, -(linenr_T)deleted, true,
                       kMarkAdjustTerm, kExtmarkUndo);
@@ -3302,7 +3329,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
       deleted_lines_buf(buf, 1, 1);
       deleted--;
     }
-    old_scrollback_rows = scrollback_rows;
+    old_scrollback_rows = 0;
   } else if (old_ghostty_scrollback_rows <= ghostty_scrollback_rows) {
     size_t ghostty_delta = ghostty_scrollback_rows - old_ghostty_scrollback_rows;
     size_t mirrored_delta = scrollback_rows > old_scrollback_rows
