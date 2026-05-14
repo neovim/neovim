@@ -970,7 +970,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default ".,C:/Users/Xing/AppData/Local/nvim-data/backup//")
+'backupdir' 'bdir'	string	(default ".,$XDG_STATE_HOME/nvim/backup//")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	List of directories for the backup file, separated with commas.
@@ -2341,7 +2341,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{char2}.  See |digraphs|.
 
 						*'directory'* *'dir'*
-'directory' 'dir'	string	(default "C:/Users/Xing/AppData/Local/nvim-data/swap//")
+'directory' 'dir'	string	(default "$XDG_STATE_HOME/nvim/swap//")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	List of directory names for the swap file, separated with commas.
@@ -7052,7 +7052,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	`:set nottyfast` in your config happens too late.
 
 					*'undodir'* *'udir'* *E5003*
-'undodir' 'udir'	string	(default "C:/Users/Xing/AppData/Local/nvim-data/undo//")
+'undodir' 'udir'	string	(default "$XDG_STATE_HOME/nvim/undo//")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	List of directory names for undo files, separated with commas.
@@ -7225,7 +7225,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Environment variables are expanded |:set_env|.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default "C:/Users/Xing/AppData/Local/nvim-data/view//")
+'viewdir' 'vdir'	string	(default "$XDG_STATE_HOME/nvim/view//")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	Name of the directory where to store files for |:mkview|.

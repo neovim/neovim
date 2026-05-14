@@ -586,9 +586,9 @@ describe('LSP', function()
           root_dir = '/my/project',
         }))
         local ok = vim.wait(1000, function()
-          return vim.lsp.buf_is_attached(bufnr, client_id)
+          return vim.bo[bufnr].rootdir ~= ''
         end)
-        assert(ok, 'client did not attach')
+        assert(ok, 'rootdir was not set')
         return vim.bo[bufnr].rootdir
       end)
       eq('/my/project', result)
@@ -606,10 +606,12 @@ describe('LSP', function()
           cmd = server.cmd,
           root_dir = '/my/project',
         }))
+        -- omnifunc is set unconditionally by _set_defaults, so its presence
+        -- confirms on_attach has run and rootdir had a chance to be overwritten
         local ok = vim.wait(1000, function()
-          return vim.lsp.buf_is_attached(bufnr, client_id)
+          return vim.bo[bufnr].omnifunc ~= ''
         end)
-        assert(ok, 'client did not attach')
+        assert(ok, 'on_attach did not run')
         return vim.bo[bufnr].rootdir
       end)
       eq('/pre/existing', result)
@@ -625,10 +627,12 @@ describe('LSP', function()
           name = 'rootdir-test',
           cmd = server.cmd,
         }))
+        -- omnifunc is set unconditionally by _set_defaults, so its presence
+        -- confirms on_attach has run and rootdir was not set
         local ok = vim.wait(1000, function()
-          return vim.lsp.buf_is_attached(bufnr, client_id)
+          return vim.bo[bufnr].omnifunc ~= ''
         end)
-        assert(ok, 'client did not attach')
+        assert(ok, 'on_attach did not run')
         return vim.bo[bufnr].rootdir
       end)
       eq('', result)

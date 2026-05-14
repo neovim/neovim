@@ -408,7 +408,7 @@ vim.go.bkc = vim.go.backupcopy
 --- uses another default.
 ---
 --- @type string
-vim.o.backupdir = ".,C:/Users/Xing/AppData/Local/nvim-data/backup//"
+vim.o.backupdir = ".,$XDG_STATE_HOME/nvim/backup//"
 vim.o.bdir = vim.o.backupdir
 vim.go.backupdir = vim.o.backupdir
 vim.go.bdir = vim.go.backupdir
@@ -1985,7 +1985,7 @@ vim.go.dg = vim.go.digraph
 --- list, this avoids problems if the Nvim default is changed.
 ---
 --- @type string
-vim.o.directory = "C:/Users/Xing/AppData/Local/nvim-data/swap//"
+vim.o.directory = "$XDG_STATE_HOME/nvim/swap//"
 vim.o.dir = vim.o.directory
 vim.go.directory = vim.o.directory
 vim.go.dir = vim.go.directory
@@ -7624,7 +7624,7 @@ vim.go.tf = vim.go.ttyfast
 --- means).
 ---
 --- @type string
-vim.o.undodir = "C:/Users/Xing/AppData/Local/nvim-data/undo//"
+vim.o.undodir = "$XDG_STATE_HOME/nvim/undo//"
 vim.o.udir = vim.o.undodir
 vim.go.undodir = vim.o.undodir
 vim.go.udir = vim.go.undodir
@@ -7821,7 +7821,7 @@ vim.go.vfile = vim.go.verbosefile
 --- Environment variables are expanded `:set_env`.
 ---
 --- @type string
-vim.o.viewdir = "C:/Users/Xing/AppData/Local/nvim-data/view//"
+vim.o.viewdir = "$XDG_STATE_HOME/nvim/view//"
 vim.o.vdir = vim.o.viewdir
 vim.go.viewdir = vim.o.viewdir
 vim.go.vdir = vim.go.viewdir
