@@ -100,6 +100,10 @@ describe('vim.fs', function()
         test_paths(tests_windows_paths, true)
       end
     end)
+
+    it('trims redundant slashes #37698', function()
+      eq('/name', vim.fs.dirname('/name//////////'))
+    end)
   end)
 
   describe('basename()', function()
@@ -127,6 +131,12 @@ describe('vim.fs', function()
       if is_os('win') then
         test_paths(tests_windows_paths, true)
       end
+    end)
+
+    it('trims redundant slashes #37698', function()
+      -- XXX: for better or worse, this matches python's `os.path.basename`.
+      -- https://github.com/neovim/neovim/issues/37698#issuecomment-3847866806
+      eq('', vim.fs.basename('/name//////////'))
     end)
   end)
 
