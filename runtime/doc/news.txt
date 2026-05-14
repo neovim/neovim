@@ -140,6 +140,8 @@ EDITOR
 • |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
+• 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
+  number of history lines kept above the prompt.
 
 EVENTS
 

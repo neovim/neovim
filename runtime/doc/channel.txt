@@ -175,7 +175,9 @@ Put this in `uppercase.vim` and run:  >bash
 
 Prompt buffers provide a "prompt" interface: they are like regular buffers,
 except only the last section of the buffer is editable, and the user can
-"submit" the prompt by hitting Enter. Useful for implementing:
+"submit" the prompt by hitting Enter. The 'scrollback' option can be used
+to limit the number of history lines kept above the prompt. Useful for
+implementing:
 
 - chat UI
 - REPL or shell plugins

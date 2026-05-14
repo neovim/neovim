@@ -6691,6 +6691,40 @@ char *prompt_get_input(buf_T *buf)
   return full_text;
 }
 
+/// Trim lines above the prompt to enforce 'scrollback' limit
+void prompt_trim_scrollback(buf_T *buf)
+{
+  if (buf->b_p_scbk <= 0) {
+    return;
+  }
+
+  linenr_T prompt_line = buf->b_prompt_start.mark.lnum;
+  linenr_T above_prompt = prompt_line - 1;
+  if (above_prompt <= (linenr_T)buf->b_p_scbk) {
+    return;
+  }
+
+  linenr_T to_delete = above_prompt - (linenr_T)buf->b_p_scbk;
+  for (linenr_T i = 0; i < to_delete; i++) {
+    ml_delete_buf(buf, 1, false);
+  }
+  mark_adjust_buf(buf, 1, to_delete, MAXLNUM, -to_delete, true,
+                  kMarkAdjustNormal, kExtmarkUndo);
+  deleted_lines_buf(buf, 1, to_delete);
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == buf) {
+      wp->w_cursor.lnum = wp->w_cursor.lnum <= to_delete
+                          ? 1
+                          : wp->w_cursor.lnum - to_delete;
+      if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
+        wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
+      }
+    }
+  }
+  check_cursor_col(curwin);
+}
+
 /// Invokes the user-defined callback defined for the current prompt-buffer.
 void prompt_invoke_callback(void)
 {
@@ -6731,6 +6765,8 @@ theend:
 
   curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
   curbuf->b_prompt_append_new_line = true;
+
+  prompt_trim_scrollback(curbuf);
 }
 
 /// @return  true when the interrupt callback was invoked.

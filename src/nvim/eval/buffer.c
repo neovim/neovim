@@ -355,6 +355,8 @@ void f_prompt_appendbuf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         buf->b_prompt_append_new_line = true;
       }
     }
+
+    prompt_trim_scrollback(buf);
   }
 }
 

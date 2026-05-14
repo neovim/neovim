@@ -7189,9 +7189,9 @@ local options = {
         Maximum number of lines kept beyond the visible screen. Lines at the
         top are deleted if new lines exceed this limit.
         Minimum is 1, maximum is 1000000.
-        Only in |terminal| buffers.
+        Only in |terminal| and |prompt-buffer| buffers.
 
-        Note: Lines that are not visible and kept in scrollback are not
+        Note: Lines that are not visible and kept in terminal scrollback are not
         reflown when the terminal buffer is resized horizontally.
       ]=],
       full_name = 'scrollback',
