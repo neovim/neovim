@@ -127,8 +127,8 @@ describe('spellfile', function()
       n.insert('abc')
       n.feed('zg')
       eq(
-        t.fix_slashes(fn.stdpath('data') .. '/site/spell/en.utf-8.add'),
-        t.fix_slashes(api.nvim_get_option_value('spellfile', {}))
+        fn.stdpath('data') .. '/site/spell/en.utf-8.add',
+        api.nvim_get_option_value('spellfile', {})
       )
     end)
 

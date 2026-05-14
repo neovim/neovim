@@ -1554,10 +1554,13 @@ char *path_to_backslash(char *p)
   return p;
 }
 
-/// Convert all backslashes to forward slashes in-place.
+/// Convert all backslashes to forward slashes in-place,
+/// unless when it looks like a URL.
+/// autocmd pattern might contain backslashes?
+/// e.g. `term://xxxC:\cmd.exe` :/
 char *path_to_slash(char *p)
 {
-  if (p != NULL) {
+  if (p != NULL && !path_with_url(p)) {
     strchrsub(p, '\\', PATHSEP);
   }
   return p;

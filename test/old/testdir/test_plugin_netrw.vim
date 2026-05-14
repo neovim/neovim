@@ -443,8 +443,9 @@ endfunc
 func s:netrw_filecopy(count = 1)
   " setup
   let marked_files = []
-  let source_dir = netrw#fs#PathJoin($HOME, "src")
-  let target_dir = netrw#fs#PathJoin($HOME, "target")
+  let home = expand('$HOME')
+  let source_dir = netrw#fs#PathJoin(home, "src")
+  let target_dir = netrw#fs#PathJoin(home, "target")
 
   call mkdir(source_dir, "R")
   call mkdir(target_dir, "R")
@@ -504,8 +505,9 @@ func s:netrw_dircopy(count = 1)
 
   " setup
   let marked_dirname = "test_dir"
-  let marked_dir = netrw#fs#PathJoin($HOME, marked_dirname)
-  let target_dir = netrw#fs#PathJoin($HOME, "target")
+  let home = expand('$HOME')
+  let marked_dir = netrw#fs#PathJoin(home, marked_dirname)
+  let target_dir = netrw#fs#PathJoin(home, "target")
 
   call mkdir(marked_dir, "R")
   call mkdir(target_dir, "R")
@@ -519,7 +521,7 @@ func s:netrw_dircopy(count = 1)
   endfor
 
   " delegate
-  call Test_NetrwMarkFileCopy($HOME, target_dir, [marked_dirname])
+  call Test_NetrwMarkFileCopy(home, target_dir, [marked_dirname])
 
   " verify
   for file in dir_content

@@ -5017,7 +5017,7 @@ static void ex_restart(exarg_T *eap)
       if (next_li != NULL) {
         const char *addr = tv_get_string(TV_LIST_ITEM_TV(next_li));
         if (strstr(addr, ":") || strstr(addr, "/") || strstr(addr, "\\")) {
-          listen_arg = addr;
+          listen_arg = TO_SLASH_SAVE(addr);
 #ifdef MSWIN
           // On Windows, don't pass --listen to new server (named pipe can't be reused immediately).
           // Instead pass the address via RPC; new server rebinds after startup.
@@ -5047,14 +5047,12 @@ static void ex_restart(exarg_T *eap)
   // On Windows, --listen is omitted from child argv because the named pipe can't be reused immediately.
   // Recover the canonical address from the Lua module state (set by the previous rebind_after_restart() call),
   // and keep the current listener alive (new server reclaims it).
-  char *listen_arg_alloc = NULL;
   if (listen_arg == NULL) {
     Error lua_err = ERROR_INIT;
     Object rv = NLUA_EXEC_STATIC("return require('vim._core.server').restart_canonical_addr",
                                  (Array)ARRAY_DICT_INIT, kRetObject, NULL, &lua_err);
     if (!ERROR_SET(&lua_err) && rv.type == kObjectTypeString && rv.data.string.size > 0) {
-      listen_arg_alloc = xstrdup(rv.data.string.data);
-      listen_arg = listen_arg_alloc;
+      listen_arg = xstrdup(rv.data.string.data);
     }
     api_free_object(rv);
     api_clear_error(&lua_err);
@@ -5216,9 +5214,7 @@ fail_1:
   if (server_stopped && server_start(listen_arg) != 0) {
     semsg("couldn't resume listening on %s", listen_arg);
   }
-#ifdef MSWIN
-  xfree(listen_arg_alloc);
-#endif
+  XFREE_CLEAR(listen_arg);
 }
 
 /// ":close": close current window, unless it is the last one
@@ -7743,6 +7739,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
   bool tilde_file = false;
   bool skip_mod = false;
   char strbuf[30];
+  bool normalize = false;
 
   *errormsg = NULL;
   if (escaped != NULL) {
@@ -7795,6 +7792,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
         result = curbuf->b_fname;
         tilde_file = strcmp(result, "~") == 0;
       }
+      normalize = true;
       break;
 
     case SPEC_HASH:             // '#' or "#99": alternate file
@@ -7808,6 +7806,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
         skip_mod = true;
         break;
       }
+      normalize = true;
       char *s = src + 1;
       if (*s == '<') {                  // "#<99" uses v:oldfiles.
         s++;
@@ -7862,6 +7861,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_AFILE:  // file name for autocommand
+      normalize = !autocmd_fname_full;
       if (autocmd_fname != NULL && !autocmd_fname_full) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
@@ -7897,6 +7897,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_SFILE:            // file name for ":so" command
+      normalize = true;
       result = estack_sfile(ESTACK_SFILE);
       if (result == NULL) {
         *errormsg = _(e_no_source_file_name_to_substitute_for_sfile);
@@ -7905,6 +7906,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       resultbuf = result;  // remember allocated string
       break;
     case SPEC_STACK:            // call stack
+      normalize = true;
       result = estack_sfile(ESTACK_STACK);
       if (result == NULL) {
         *errormsg = _(e_no_call_stack_to_substitute_for_stack);
@@ -7913,6 +7915,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       resultbuf = result;  // remember allocated string
       break;
     case SPEC_SCRIPT:           // script file name
+      normalize = true;
       result = estack_sfile(ESTACK_SCRIPT);
       if (result == NULL) {
         *errormsg = _(e_no_script_file_name_to_substitute_for_script);
@@ -7967,7 +7970,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       }
     } else if (!skip_mod) {
       valid |= modify_fname(src, tilde_file, usedlen, &result,
-                            &resultbuf, &resultlen);
+                            &resultbuf, &resultlen, normalize);
       if (result == NULL) {
         *errormsg = "";
         return NULL;

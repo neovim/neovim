@@ -39,16 +39,10 @@ local testlog = 'Xtest-startupspec-log'
 describe('startup', function()
   it('--clean', function()
     clear()
-    matches(
-      vim.pesc(t.fix_slashes(fn.stdpath('config'))),
-      t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
-    )
+    matches(vim.pesc(fn.stdpath('config')), api.nvim_get_option_value('runtimepath', {}))
 
     clear('--clean')
-    ok(
-      not t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
-        :match(vim.pesc(t.fix_slashes(fn.stdpath('config'))))
-    )
+    ok(not api.nvim_get_option_value('runtimepath', {}):match(vim.pesc(fn.stdpath('config'))))
   end)
 
   it('prevents remote UI infinite loop', function()
@@ -1301,7 +1295,6 @@ describe('sysinit', function()
   local xdgdir = 'Xxdg'
   local vimdir = 'Xvim'
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
 
   before_each(function()
     rmdir(xdgdir)
@@ -1309,9 +1302,9 @@ describe('sysinit', function()
     rmdir(xhome)
 
     mkdir(xdgdir)
-    mkdir(xdgdir .. pathsep .. 'nvim')
+    mkdir(xdgdir .. '/nvim')
     write_file(
-      table.concat({ xdgdir, 'nvim', 'sysinit.vim' }, pathsep),
+      xdgdir .. '/nvim/sysinit.vim',
       [[
       let g:loaded = get(g:, "loaded", 0) + 1
       let g:xdg = 1
@@ -1320,7 +1313,7 @@ describe('sysinit', function()
 
     mkdir(vimdir)
     write_file(
-      table.concat({ vimdir, 'sysinit.vim' }, pathsep),
+      vimdir .. '/sysinit.vim',
       [[
       let g:loaded = get(g:, "loaded", 0) + 1
       let g:vim = 1
@@ -1361,11 +1354,8 @@ describe('sysinit', function()
 
   it('respects NVIM_APPNAME in XDG_CONFIG_DIRS', function()
     local appname = 'mysysinitapp'
-    mkdir(xdgdir .. pathsep .. appname)
-    write_file(
-      table.concat({ xdgdir, appname, 'sysinit.vim' }, pathsep),
-      [[let g:appname_sysinit = 1]]
-    )
+    mkdir(xdgdir .. '/' .. appname)
+    write_file(xdgdir .. '/' .. appname .. '/sysinit.vim', [[let g:appname_sysinit = 1]])
     clear {
       args_rm = { '-u' },
       env = { HOME = xhome, XDG_CONFIG_DIRS = xdgdir, NVIM_APPNAME = appname },
@@ -1378,16 +1368,15 @@ end)
 
 describe('user config init', function()
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
-  local xconfig = xhome .. pathsep .. 'Xconfig'
-  local xdata = xhome .. pathsep .. 'Xdata'
-  local init_lua_path = table.concat({ xconfig, 'nvim', 'init.lua' }, pathsep)
+  local xconfig = xhome .. '/Xconfig'
+  local xdata = xhome .. '/Xdata'
+  local init_lua_path = xconfig .. '/nvim/init.lua'
   local xenv = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata }
 
   before_each(function()
     rmdir(xhome)
 
-    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xconfig .. '/nvim')
     mkdir_p(xdata)
 
     write_file(init_lua_path, [[vim.g.lua_rc = 1]])
@@ -1401,7 +1390,7 @@ describe('user config init', function()
     clear { args_rm = { '-u' }, env = xenv }
 
     eq(1, eval('g:lua_rc'))
-    eq(fn.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
+    eq(t.fix_slashes(fn.fnamemodify(init_lua_path, ':p')), eval('$MYVIMRC'))
   end)
 
   describe('loads existing', function()
@@ -1451,7 +1440,7 @@ describe('user config init', function()
           vim.g.exrc_file = '---'
         ]]
       )
-      mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      mkdir_p(xstate .. (is_os('win') and '/nvim-data' or '/nvim'))
     end)
 
     after_each(function()
@@ -1577,7 +1566,7 @@ describe('user config init', function()
   end)
 
   describe('with explicitly provided config', function()
-    local custom_lua_path = table.concat({ xhome, 'custom.lua' }, pathsep)
+    local custom_lua_path = xhome .. '/custom.lua'
     before_each(function()
       write_file(
         custom_lua_path,
@@ -1597,7 +1586,7 @@ describe('user config init', function()
   describe('VIMRC also exists', function()
     before_each(function()
       write_file(
-        table.concat({ xconfig, 'nvim', 'init.vim' }, pathsep),
+        xconfig .. '/nvim/init.vim',
         [[
           let g:vim_rc = 1
         ]]
@@ -1621,7 +1610,7 @@ describe('user config init', function()
       -- Remove init.lua from XDG_CONFIG_HOME so nvim falls back to XDG_CONFIG_DIRS
       os.remove(init_lua_path)
       rmdir(xdgdir)
-      mkdir_p(xdgdir .. pathsep .. 'nvim')
+      mkdir_p(xdgdir .. '/nvim')
     end)
 
     after_each(function()
@@ -1629,24 +1618,18 @@ describe('user config init', function()
     end)
 
     it('loads init.lua from XDG_CONFIG_DIRS when no config in XDG_CONFIG_HOME', function()
-      write_file(
-        table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
-        [[vim.g.xdg_config_dirs_lua = 1]]
-      )
+      write_file(xdgdir .. '/nvim/init.lua', [[vim.g.xdg_config_dirs_lua = 1]])
       clear {
         args_rm = { '-u' },
         env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
       }
       eq(1, eval('g:xdg_config_dirs_lua'))
-      eq(
-        fn.fnamemodify(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), ':p'),
-        eval('$MYVIMRC')
-      )
+      eq(t.fix_slashes(fn.fnamemodify(xdgdir .. '/nvim/init.lua', ':p')), eval('$MYVIMRC'))
     end)
 
     it('prefers init.lua over init.vim, shows E5422', function()
-      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.xdg_lua = 1]])
-      write_file(table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep), [[let g:xdg_vim = 1]])
+      write_file(xdgdir .. '/nvim/init.lua', [[vim.g.xdg_lua = 1]])
+      write_file(xdgdir .. '/nvim/init.vim', [[let g:xdg_vim = 1]])
       clear {
         args_rm = { '-u' },
         env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
@@ -1657,7 +1640,7 @@ describe('user config init', function()
     end)
 
     it('falls back to init.vim when no init.lua', function()
-      write_file(table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep), [[let g:xdg_vim = 1]])
+      write_file(xdgdir .. '/nvim/init.vim', [[let g:xdg_vim = 1]])
       clear {
         args_rm = { '-u' },
         env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
@@ -1667,10 +1650,11 @@ describe('user config init', function()
 
     it('respects NVIM_APPNAME', function()
       local appname = 'mytestapp'
-      mkdir_p(xdgdir .. pathsep .. appname)
+      local appdir = xdgdir .. '/' .. appname
+      mkdir_p(appdir)
       -- Also create nvim/ with a config that should NOT be loaded
-      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.wrong = 1]])
-      write_file(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), [[vim.g.appname_lua = 1]])
+      write_file(xdgdir .. '/nvim/init.lua', [[vim.g.wrong = 1]])
+      write_file(appdir .. '/init.lua', [[vim.g.appname_lua = 1]])
       clear {
         args_rm = { '-u' },
         env = {
@@ -1682,24 +1666,20 @@ describe('user config init', function()
       }
       eq(1, eval('g:appname_lua'))
       eq(0, eval('get(g:, "wrong", 0)'))
-      eq(
-        fn.fnamemodify(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), ':p'),
-        eval('$MYVIMRC')
-      )
+      eq(t.fix_slashes(fn.fnamemodify(appdir .. '/init.lua', ':p')), eval('$MYVIMRC'))
     end)
   end)
 end)
 
 describe('runtime:', function()
   local xhome = 'Xhome'
-  local pathsep = '/'
-  local xconfig = xhome .. pathsep .. 'Xconfig'
-  local xdata = xhome .. pathsep .. 'Xdata'
+  local xconfig = xhome .. '/Xconfig'
+  local xdata = xhome .. '/Xdata'
   local xenv = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata }
 
   setup(function()
     rmdir(xhome)
-    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xconfig .. '/nvim')
     mkdir_p(xdata)
   end)
 
@@ -1708,8 +1688,8 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from XDG config home', function()
-    local plugin_folder_path = table.concat({ xconfig, 'nvim', 'plugin' }, pathsep)
-    local plugin_file_path = table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep)
+    local plugin_folder_path = xconfig .. '/nvim/plugin'
+    local plugin_file_path = plugin_folder_path .. '/plugin.lua'
     mkdir_p(plugin_folder_path)
     finally(function()
       rmdir(plugin_folder_path)
@@ -1722,10 +1702,9 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from start packages', function()
-    local plugin_path =
-      table.concat({ xconfig, 'nvim', 'pack', 'category', 'start', 'test_plugin' }, pathsep)
-    local plugin_folder_path = table.concat({ plugin_path, 'plugin' }, pathsep)
-    local plugin_file_path = table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep)
+    local plugin_path = xconfig .. '/nvim/pack/category/start/test_plugin'
+    local plugin_folder_path = plugin_path .. '/plugin'
+    local plugin_file_path = plugin_folder_path .. '/plugin.lua'
     local profiler_file = 'test_startuptime.log'
     mkdir_p(plugin_folder_path)
     finally(function()
@@ -1754,13 +1733,12 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from site packages', function()
-    local nvimdata = is_os('win') and 'nvim-data' or 'nvim'
-    local plugin_path =
-      table.concat({ xdata, nvimdata, 'site', 'pack', 'xa', 'start', 'yb' }, pathsep)
-    local plugin_folder_path = table.concat({ plugin_path, 'plugin' }, pathsep)
-    local plugin_after_path = table.concat({ plugin_path, 'after', 'plugin' }, pathsep)
-    local plugin_file_path = table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep)
-    local plugin_after_file_path = table.concat({ plugin_after_path, 'helloo.lua' }, pathsep)
+    local nvimdata = is_os('win') and '/nvim-data' or '/nvim'
+    local plugin_path = xdata .. nvimdata .. '/site/pack/xa/start/yb'
+    local plugin_folder_path = plugin_path .. '/plugin'
+    local plugin_after_path = plugin_path .. '/after/plugin'
+    local plugin_file_path = plugin_folder_path .. '/plugin.lua'
+    local plugin_after_file_path = plugin_after_path .. '/helloo.lua'
     mkdir_p(plugin_folder_path)
     mkdir_p(plugin_after_path)
     finally(function()
@@ -1776,21 +1754,21 @@ describe('runtime:', function()
   end)
 
   it('no crash setting &rtp in plugins with :packloadall called before #18315', function()
-    local plugin_folder_path = table.concat({ xconfig, 'nvim', 'plugin' }, pathsep)
+    local plugin_folder_path = xconfig .. '/nvim/plugin'
     mkdir_p(plugin_folder_path)
     finally(function()
       rmdir(plugin_folder_path)
     end)
 
     write_file(
-      table.concat({ plugin_folder_path, 'plugin.vim' }, pathsep),
+      plugin_folder_path .. '/plugin.vim',
       [[
         let &runtimepath = &runtimepath
         let g:vim_plugin = 1
       ]]
     )
     write_file(
-      table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep),
+      plugin_folder_path .. '/plugin.lua',
       [[
         vim.o.runtimepath = vim.o.runtimepath
         vim.g.lua_plugin = 1
@@ -1804,29 +1782,29 @@ describe('runtime:', function()
   end)
 
   it("loads ftdetect/*.{vim,lua} respecting 'rtp' order", function()
-    local rtp_folder = table.concat({ xconfig, 'nvim' }, pathsep)
-    local after_rtp_folder = table.concat({ rtp_folder, 'after' }, pathsep)
-    local ftdetect_folder = table.concat({ rtp_folder, 'ftdetect' }, pathsep)
-    local after_ftdetect_folder = table.concat({ after_rtp_folder, 'ftdetect' }, pathsep)
+    local rtp_folder = xconfig .. '/nvim'
+    local after_rtp_folder = rtp_folder .. '/after'
+    local ftdetect_folder = rtp_folder .. '/ftdetect'
+    local after_ftdetect_folder = after_rtp_folder .. '/ftdetect'
     mkdir_p(ftdetect_folder)
     mkdir_p(after_ftdetect_folder)
     finally(function()
       rmdir(ftdetect_folder)
       rmdir(after_ftdetect_folder)
     end)
-    write_file(table.concat({ rtp_folder, 'scripts.vim' }, pathsep), [[let g:aseq ..= 'S']])
-    write_file(table.concat({ after_rtp_folder, 'scripts.vim' }, pathsep), [[let g:aseq ..= 's']])
+    write_file(rtp_folder .. '/scripts.vim', [[let g:aseq ..= 'S']])
+    write_file(after_rtp_folder .. '/scripts.vim', [[let g:aseq ..= 's']])
     -- A .lua file is loaded after a .vim file if they only differ in extension.
     -- All files in after/ftdetect/ are loaded after all files in ftdetect/.
     write_file(
-      table.concat({ ftdetect_folder, 'new-ft.vim' }, pathsep),
+      ftdetect_folder .. '/new-ft.vim',
       [[
         let g:seq ..= 'A'
         autocmd BufRead,BufNewFile FTDETECT let g:aseq ..= 'A'
       ]]
     )
     write_file(
-      table.concat({ ftdetect_folder, 'new-ft.lua' }, pathsep),
+      ftdetect_folder .. '/new-ft.lua',
       [[
         vim.g.seq = vim.g.seq .. 'B'
         vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
@@ -1836,14 +1814,14 @@ describe('runtime:', function()
       ]]
     )
     write_file(
-      table.concat({ after_ftdetect_folder, 'new-ft.vim' }, pathsep),
+      after_ftdetect_folder .. '/new-ft.vim',
       [[
         let g:seq ..= 'a'
         autocmd BufRead,BufNewFile FTDETECT let g:aseq ..= 'a'
       ]]
     )
     write_file(
-      table.concat({ after_ftdetect_folder, 'new-ft.lua' }, pathsep),
+      after_ftdetect_folder .. '/new-ft.lua',
       [[
         vim.g.seq = vim.g.seq .. 'b'
         vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
@@ -1874,8 +1852,7 @@ end)
 
 describe('user session', function()
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
-  local session_file = table.concat({ xhome, 'session.lua' }, pathsep)
+  local session_file = xhome .. '/session.lua'
 
   before_each(function()
     rmdir(xhome)
