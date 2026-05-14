@@ -230,16 +230,16 @@ local function test_terminal_scrollback(hide_curbuf)
         skip(is_os('win'), 'FIXME: wrong behavior on Windows, ConPTY bug?')
         feed_data('line31\nline32\n' .. '\027[3J' .. 'new_line1\nnew_line2')
         screen:expect([[
-          line28                        |
+          {101:line2^8}                        |
           line29                        |
-          {101:line3^0}                        |
+          line30                        |
           line31                        |
           line32                        |
           new_line1                     |
                                         |
         ]])
-        eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
-        eq({ 0, 3, 6, 0 }, fn.getpos('.'))
+        eq({ 0, 1, 4, 0 }, fn.getpos("'m"))
+        eq({ 0, 1, 6, 0 }, fn.getpos('.'))
       end)
     end)
 
