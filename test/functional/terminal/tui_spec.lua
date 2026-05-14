@@ -1151,30 +1151,30 @@ describe('TUI', function()
 
     screen:try_resize(50, 7)
     screen:expect([[
+      {101:FAIL 1}                                            |
       {101:FAIL 2}                                            |
       {101:FAIL 3}                                            |
       {101:FAIL 4}                                            |
       {101:FAIL 5}                                            |
       {102:-- More --}^                                        |
-      FAIL 4                                            |
       {5:-- TERMINAL --}                                    |
     ]])
 
     screen:try_resize(50, 5)
     screen:expect([[
+      {101:FAIL 3}                                            |
       {101:FAIL 4}                                            |
       {101:FAIL 5}                                            |
       {102:-- More --}^                                        |
-      FAIL 5                                            |
       {5:-- TERMINAL --}                                    |
     ]])
 
     feed_data('g')
     screen:expect([[
+      :call ManyErr()                                   |
       {101:Error in function ManyErr:}                        |
       {103:line    2:}                                        |
       {102:-- More --}^                                        |
-      FAIL 5                                            |
       {5:-- TERMINAL --}                                    |
     ]])
 

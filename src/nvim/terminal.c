@@ -3275,7 +3275,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
 
   if (term->in_altscreen) {
     linenr_T target_line_count = (linenr_T)(term->scrollback_rows + (size_t)height);
-    if (buf->b_ml.ml_line_count > target_line_count) {
+    if (term->scrollback_rows > 0 && buf->b_ml.ml_line_count > target_line_count) {
       target_line_count++;
     }
     FOR_ALL_TAB_WINDOWS(tp, wp) {
