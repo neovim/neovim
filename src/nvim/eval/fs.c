@@ -64,14 +64,24 @@ static const char e_error_while_writing_str[] = N_("E80: Error while writing: %s
 /// @param fnamep  file name so far
 /// @param bufp  buffer for allocated file name or NULL
 /// @param fnamelen  length of fnamep
+/// @param normalize normalize backslash, then adjust the return value based on 'shellslash'
 int modify_fname(char *src, bool tilde_file, size_t *usedlen, char **fnamep, char **bufp,
-                 size_t *fnamelen)
+                 size_t *fnamelen, bool normalize)
 {
   int valid = 0;
   char *s, *p, *pbuf;
   char dirname[MAXPATHL];
   bool has_fullname = false;
   bool has_homerelative = false;
+  bool didit = false;
+
+#ifdef BACKSLASH_IN_FILENAME
+  if (normalize) {
+    *fnamep = TO_SLASH_SAVE(*fnamep);
+    xfree(*bufp);
+    *bufp = *fnamep;
+  }
+#endif
 
 repeat:
   // ":p" - full path/file_name
@@ -303,13 +313,17 @@ repeat:
     *usedlen += 2;
   }
 
+#ifdef BACKSLASH_IN_FILENAME
+  if (!didit && normalize && *fnamep != NULL) {
+    slash_adjust(*fnamep);
+  }
+#endif
+
   // ":s?pat?foo?" - substitute
   // ":gs?pat?foo?" - global substitute
   if (src[*usedlen] == ':'
       && (src[*usedlen + 1] == 's'
           || (src[*usedlen + 1] == 'g' && src[*usedlen + 2] == 's'))) {
-    bool didit = false;
-
     char *flags = "";
     s = src + *usedlen + 2;
     if (src[*usedlen + 1] == 'g') {
@@ -378,21 +392,20 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if (argvars[0].v_type != VAR_STRING) {
+  if (argvars[0].v_type != VAR_STRING || argvars[0].vval.v_string == NULL) {
     // Returning an empty string means it failed.
     // No error message, for historic reasons.
     return;
   }
 
   // Return the current directory
-  char *cwd = xmalloc(MAXPATHL);
+  char cwd[MAXPATHL];
   if (os_dirname(cwd, MAXPATHL) != FAIL) {
 #ifdef BACKSLASH_IN_FILENAME
     slash_adjust(cwd);
 #endif
     rettv->vval.v_string = xstrdup(cwd);
   }
-  xfree(cwd);
 
   CdScope scope = kCdScopeGlobal;
   if (argvars[1].v_type != VAR_UNKNOWN) {
@@ -413,7 +426,9 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     scope = kCdScopeTabpage;
   }
 
-  if (!changedir_func(argvars[0].vval.v_string, scope)) {
+  STRCPY(cwd, argvars[0].vval.v_string);
+  TO_SLASH(cwd);
+  if (!changedir_func(cwd, scope)) {
     // Directory change failed
     XFREE_CLEAR(rettv->vval.v_string);
   }
@@ -616,7 +631,7 @@ void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (*mods != NUL) {
       size_t usedlen = 0;
       modify_fname((char *)mods, false, &usedlen,
-                   (char **)&fname, &fbuf, &len);
+                   (char **)&fname, &fbuf, &len, true);
     }
   }
 

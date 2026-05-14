@@ -33,9 +33,8 @@ char *socket_address_tcp_host_end(const char *address)
     return NULL;
   }
 
-  // Windows drive letter path: "X:\..." or "X:/..." is a local path, not TCP.
-  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':'
-      && (address[2] == '\\' || address[2] == '/')) {
+  // Windows drive letter path: "X:/..." is a local path, not TCP.
+  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':' && address[2] == '/') {
     return NULL;
   }
 

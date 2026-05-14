@@ -378,7 +378,7 @@ describe('tmpdir', function()
 
     local function rm_tmpdir()
       local tmpname1 = fn.tempname()
-      local tmpdir1 = fn.fnamemodify(tmpname1, ':h')
+      local tmpdir1 = vim.fs.normalize(fn.fnamemodify(tmpname1, ':h'))
       eq(fn.stdpath('run'), tmpdir1)
 
       rmdir(tmpdir1)
@@ -386,7 +386,7 @@ describe('tmpdir', function()
         eq(0, fn.isdirectory(tmpdir1))
       end)
       local tmpname2 = fn.tempname()
-      local tmpdir2 = fn.fnamemodify(tmpname2, ':h')
+      local tmpdir2 = vim.fs.normalize(fn.fnamemodify(tmpname2, ':h'))
       neq(tmpdir1, tmpdir2)
     end
 

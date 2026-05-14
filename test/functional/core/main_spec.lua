@@ -10,6 +10,9 @@ local clear = n.clear
 local fn = n.fn
 local write_file = t.write_file
 local is_os = t.is_os
+local mkdir, ok = t.mkdir, t.ok
+local api, rmdir = n.api, n.rmdir
+local pathsep = n.get_pathsep()
 
 describe('command-line option', function()
   describe('-s', function()
@@ -178,28 +181,63 @@ describe('command-line option', function()
     matches('Run "nvim %-V1 %-v"', n.spawn_wait('-v').stdout)
     matches('fall%-back for %$VIM: .*Run :checkhealth', n.spawn_wait('-V1', '-v').stdout)
   end)
+end)
 
-  if is_os('win') then
-    for _, prefix in ipairs({ '~/', '~\\' }) do
-      it('expands ' .. prefix .. ' on Windows', function()
-        local fname = os.getenv('USERPROFILE') .. '\\nvim_test.txt'
-        finally(function()
-          os.remove(fname)
-        end)
-        write_file(fname, 'some text')
-        eq(
-          'some text',
-          fn.system({
-            n.nvim_prog,
-            '-es',
-            '+%print',
-            '+q',
-            prefix .. 'nvim_test.txt',
-          }):gsub('\n', '')
-        )
-      end)
-    end
-  end
+describe('path handling', function()
+  local foo, bar = 'Xtest-foo.lua', 'Xtest-bar.lua'
+  local home = is_os('win') and os.getenv('USERPROFILE') or os.getenv('HOME')
+
+  setup(function()
+    write_file(home .. pathsep .. foo, '')
+    write_file(home .. pathsep .. bar, '')
+  end)
+  teardown(function()
+    os.remove(home .. pathsep .. foo)
+    os.remove(home .. pathsep .. bar)
+  end)
+
+  before_each(function()
+    t.skip(not is_os('win'), 'N/A for non-Windows')
+  end)
+
+  it('expands tidle prefix to profile directory #29380', function()
+    clear {
+      args = { '~/' .. foo, '~\\' .. bar },
+    }
+    local expected = {
+      vim.fs.normalize(home .. pathsep .. foo),
+      vim.fs.normalize(home .. pathsep .. bar),
+    }
+    eq(expected, vim.tbl_map(fn.bufname, api.nvim_list_bufs()))
+    eq(expected, fn.argv())
+  end)
+
+  it('v:progpath returns slashes #39382', function()
+    clear()
+    eq(
+      n.nvim_prog,
+      fn.system({
+        n.nvim_prog:gsub('/', '\\'),
+        '--clean',
+        '--headless',
+        '+echo v:progpath',
+        '+q',
+      })
+    )
+  end)
+
+  it('normalizes -u arg and triggers SourceCmd normally #39382', function()
+    clear {
+      args_rm = { '-u' },
+      args = {
+        '--cmd',
+        'autocmd SourceCmd */' .. foo .. ' let g:matched = 1',
+        '-u',
+        home .. '\\' .. foo,
+      },
+    }
+    ok(fn.eval('g:matched'))
+  end)
 end)
 
 describe('vim._core', function()

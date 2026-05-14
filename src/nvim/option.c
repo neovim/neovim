@@ -2686,8 +2686,6 @@ static const char *did_set_scrollbind(optset_T *args)
 
 #ifdef BACKSLASH_IN_FILENAME
 /// Process the updated 'shellslash' option value.
-/// TODO(ntdiary): Remove this once we're confident that the `shellslash`
-/// option is no longer needed.
 static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (p_ssl) {
@@ -2699,12 +2697,6 @@ static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
     psepcN = '/';
     pseps[0] = '\\';
   }
-
-  // TODO(ntdiary): Remove these in the follow PR.
-  // need to adjust the file name arguments and buffer names.
-  // buflist_slash_adjust();
-  // alist_slash_adjust();
-  // scriptnames_slash_adjust();
   return NULL;
 }
 #endif

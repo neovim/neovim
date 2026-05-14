@@ -1401,9 +1401,11 @@ static void command_line_scan(mparm_T *parmp)
             parmp->pre_commands[parmp->n_pre_commands++] = argv[0];
           } else if (strequal(argv[-1], "--listen")) {
             // "--listen {address}"
+            TO_SLASH(argv[0]);
             parmp->listen_addr = argv[0];
           } else if (strequal(argv[-1], "--server")) {
             // "--server {address}"
+            TO_SLASH(argv[0]);
             parmp->server_addr = argv[0];
           }
           // "--startuptime <file>" already handled
@@ -1489,14 +1491,14 @@ scripterror:
 
       // On Windows expand "~\" or "~/" prefix in file names to profile directory.
 #ifdef MSWIN
-      if (*p == '~' && (p[1] == '\\' || p[1] == '/')) {
+      TO_SLASH(p);
+      if (*p == '~' && p[1] == '/') {
         size_t size = strlen(os_homedir()) + strlen(p);
         char *tilde_expanded = xmalloc(size);
         snprintf(tilde_expanded, size, "%s%s", os_homedir(), p + 1);
         xfree(p);
         p = tilde_expanded;
       }
-      TO_SLASH(p);
 #endif
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0

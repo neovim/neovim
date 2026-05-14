@@ -29,6 +29,7 @@ local set_session = n.set_session
 local write_file = t.write_file
 local eval = n.eval
 local assert_log = t.assert_log
+local skip = t.skip
 
 local testlog = 'Xtest-tui-log'
 
@@ -857,6 +858,37 @@ describe('TUI :connect', function()
     screen2:expect({ any = vim.pesc('[Process exited 0]') })
 
     screen2:detach()
+  end)
+
+  it('named pipe with backslashes still works well #39382', function()
+    skip(not is_os('win'), 'N/A: Named pipe is Windows feature')
+    local server1 = [[\\.\pipe\Xtest]]
+    local screen1 = tt.setup_child_nvim({ '--listen', server1, '--clean' })
+    screen1:expect({ any = vim.pesc('[No Name]') })
+
+    tt.feed_data('iThis is server 1.\027')
+    screen1:expect({ any = vim.pesc('This is server 1^.') })
+
+    -- Prevent screen2 from receiving the old terminal state.
+    command('enew')
+    screen1:expect(screen_empty)
+    screen1:detach()
+
+    local server2 = new_pipename()
+    local screen2 = tt.setup_child_nvim({ '--listen', server2, '--clean' })
+    screen2:expect({ any = vim.pesc('[No Name]') })
+
+    tt.feed_data(':connect ' .. server1 .. '\013')
+    screen2:expect({ any = vim.pesc('This is server 1^.') })
+
+    local server1_session = n.connect(server1)
+    server1_session:request('nvim_command', 'qall!')
+    screen2:expect({ any = vim.pesc('[Process exited 0]') })
+
+    screen2:detach()
+
+    local server2_session = n.connect(server2)
+    server2_session:request('nvim_command', 'qall!')
   end)
 end)
 
