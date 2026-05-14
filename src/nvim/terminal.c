@@ -1359,7 +1359,7 @@ static void terminal_check_cursor(void)
   } else {
     // Nudge cursor when returning to normal-mode.
     int off = (State & MODE_TERMINAL) ? 0 : (curwin->w_p_rl ? 1 : -1);
-    coladvance(curwin, MAX(0, term->cursor.col + off));
+    coladvance(curwin, MAX(0, terminal_cursor_virtcol(term) + off));
   }
 }
 
@@ -2203,6 +2203,91 @@ static int terminal_ghostty_cell_attr(Terminal *term, GhosttyPointTag tag, uint3
   int url_attr = terminal_ghostty_cell_url_attr(&ref);
   return terminal_cell_hl_attr(term, hl_attrs, fg.idx, bg.idx, fg.rgb, bg.rgb, sp,
                                fg.is_default, bg.is_default, url_attr);
+}
+
+/// Returns the number of Nvim display cells used by text mirrored from a Ghostty cell.
+static int terminal_ghostty_cell_display_width(const GhosttyGridRef *ref)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t grapheme_len = 0;
+  GhosttyResult result = ghostty_grid_ref_graphemes(ref, NULL, 0, &grapheme_len);
+  if (grapheme_len == 0) {
+    return 1;
+  }
+  if (result != GHOSTTY_OUT_OF_SPACE) {
+    assert_ghostty_success(result);
+  }
+
+  uint32_t stack[16];
+  uint32_t *graphemes = stack;
+  if (grapheme_len > ARRAY_SIZE(stack)) {
+    graphemes = xmalloc(sizeof(*graphemes) * grapheme_len);
+  }
+
+  assert_ghostty_success(ghostty_grid_ref_graphemes(ref, graphemes, grapheme_len,
+                                                    &grapheme_len));
+  char buf[MB_MAXBYTES * ARRAY_SIZE(stack)];
+  char *text = buf;
+  if (grapheme_len > ARRAY_SIZE(stack)) {
+    text = xmalloc(MB_MAXBYTES * grapheme_len);
+  }
+
+  size_t len = 0;
+  for (size_t i = 0; i < grapheme_len; i++) {
+    len += (size_t)utf_char2bytes((int)graphemes[i], text + len);
+  }
+
+  int width = utf_ptr2cells_len(text, (int)len);
+
+  if (text != buf) {
+    xfree(text);
+  }
+  if (graphemes != stack) {
+    xfree(graphemes);
+  }
+
+  return width;
+}
+
+/// Converts Ghostty's cursor column on the active row to the virtual column in the buffer.
+static int terminal_cursor_virtcol(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (term->cursor.col == 0) {
+    return 0;
+  }
+
+  int width = 0;
+  terminal_ghostty_size_get(term, NULL, &width);
+
+  int vcol = 0;
+  int col = 0;
+  while (col < term->cursor.col && col < width) {
+    GhosttyGridRef ref = { 0 };
+    if (!terminal_ghostty_grid_ref(term, GHOSTTY_POINT_TAG_ACTIVE, (uint32_t)term->cursor.row, col,
+                                   &ref)) {
+      break;
+    }
+
+    GhosttyCell cell = 0;
+    assert_ghostty_success(ghostty_grid_ref_cell(&ref, &cell));
+
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
+    int cell_width = wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
+    int next_col = col + cell_width;
+    int display_width = terminal_ghostty_cell_display_width(&ref);
+
+    if (next_col > term->cursor.col) {
+      vcol += MIN(display_width, term->cursor.col - col);
+      break;
+    }
+
+    vcol += display_width;
+    col = next_col;
+  }
+
+  return vcol + term->cursor.col - col;
 }
 
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *term_attrs)
