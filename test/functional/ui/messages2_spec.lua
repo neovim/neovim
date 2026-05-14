@@ -1052,4 +1052,14 @@ describe('messages2', function()
       {16::}{15:f}^                                                   |
     ]])
   end)
+
+  it('configured cmd window height prevents expanded message #39375', function()
+    exec_lua('require("vim._core.ui2").enable({ msg = { cmd = { height = 1 } } })')
+    command('echo "foo\nbar"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      foo [+1]                                             |
+    ]])
+  end)
 end)

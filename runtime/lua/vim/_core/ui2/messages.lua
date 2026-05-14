@@ -358,8 +358,9 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
       M.cmd.msg_row = texth.end_row
 
       -- Expand the cmdline for a non-error message that doesn't fit.
+      local expand = ui.cfg.msg.cmd.height < 1 or ui.cfg.msg.cmd.height > ui.cmdheight
       local error_kinds = { rpc_error = 1, emsg = 1, echoerr = 1, lua_error = 1 }
-      if texth.all > ui.cmdheight and (ui.cmdheight == 0 or not error_kinds[kind]) then
+      if expand and texth.all > ui.cmdheight and (ui.cmdheight == 0 or not error_kinds[kind]) then
         M.expand_msg(tgt)
       end
     end
@@ -609,7 +610,7 @@ local was_cmdwin = ''
 ---@param min integer Minimum window height.
 local function win_row_height_border(tgt, min)
   local cfgmin = ui.cfg.msg[tgt].height --[[@as number]]
-  min = math.min(min, cfgmin > 1 and cfgmin or math.ceil(o.lines * cfgmin))
+  min = math.min(min, cfgmin < 1 and math.ceil(o.lines * cfgmin) or cfgmin)
   if tgt ~= 'pager' then
     return (tgt == 'msg' and 0 or 1) - ui.cmd.wmnumode, min, min < o.lines - ui.cmdheight
   end

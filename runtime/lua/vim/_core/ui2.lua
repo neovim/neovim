@@ -14,7 +14,9 @@
 ---     ---mapping applies to any omitted kind: { default = 'cmd', progress = 'msg' }.
 ---     targets = 'cmd',
 ---     cmd = { -- Options related to messages in the cmdline window.
----       height = 0.5 -- Maximum height while expanded for messages beyond 'cmdheight'.
+---       -- Maximum height (rows if >=1, or % of 'lines' if <1) of messages expanded
+---       -- beyond 'cmdheight'; 0.999 for full height.
+---       height = 0.5,
 ---     },
 ---     dialog = { -- Options related to dialog window.
 ---       height = 0.5, -- Maximum height.
@@ -24,7 +26,7 @@
 ---       timeout = 4000, -- Time a message is visible in the message window.
 ---     },
 ---     pager = { -- Options related to message window.
----       height = 1, -- Maximum height.
+---       height = 0.999, -- Maximum height.
 ---     },
 ---   },
 --- })
@@ -70,7 +72,7 @@ local M = {
         timeout = 4000, -- Time a message is visible in the message window.
       },
       pager = { -- Options related to message window.
-        height = 1, -- Maximum height.
+        height = 0.999, -- Maximum height.
       },
     },
   },
