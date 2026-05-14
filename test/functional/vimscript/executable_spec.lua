@@ -19,13 +19,13 @@ describe('executable()', function()
   end)
 
   if is_os('win') then
-    it('exepath returns consistent slashes #13787', function()
+    it('exepath respects shellslash #13787', function()
       -- test/ cannot be a symlink in this test.
       n.api.nvim_set_current_dir(t.paths.test_source_path)
 
       command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
       eq(
-        [[test/functional/fixtures/bin/null.CMD]],
+        [[test\functional\fixtures\bin\null.CMD]],
         call('fnamemodify', call('exepath', 'null'), ':.')
       )
       command('set shellslash')
@@ -39,10 +39,7 @@ describe('executable()', function()
       -- Needs to check paths relative to repo root dir.
       n.api.nvim_set_current_dir(t.paths.test_source_path)
 
-      t.matches(
-        [[build/Xtest_xdg[%w_]*/share/nvim%-data]],
-        call('fnamemodify', call('stdpath', 'data'), ':.')
-      )
+      t.matches([[build/Xtest_xdg[%w_]*/share/nvim%-data]], call('stdpath', 'data'))
       command('set shellslash')
       t.matches(
         'build/Xtest_xdg[%w_]*/share/nvim%-data',

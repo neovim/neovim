@@ -12,6 +12,8 @@ local api = n.api
 local set_session = n.set_session
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
+local new_session = n.new_session
+local skip, is_os = t.skip, t.is_os
 
 describe('server -> client', function()
   local cid
@@ -328,7 +330,19 @@ describe('server -> client', function()
       set_session(server)
       local address = fn.serverlist()[1]
       local first = string.sub(address, 1, 1)
-      ok(first == '/' or first == '\\')
+      ok(first == '/')
+      connect_test(server, 'pipe', address)
+    end)
+
+    it('with backslashes still works well #39382', function()
+      skip(not is_os('win'), 'N/A for non-Windows')
+      local address = [[\\.\pipe\Xtest]]
+      local server = new_session(false, {
+        args_rm = { '--listen' },
+        args = { '--listen', address },
+      })
+      set_session(server)
+      eq(vim.fs.normalize(address), api.nvim_get_vvar('servername'))
       connect_test(server, 'pipe', address)
     end)
 
