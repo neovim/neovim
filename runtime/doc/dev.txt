@@ -680,6 +680,12 @@ API CLIENT IMPLEMENTATION GUIDELINES
 
 
 ------------------------------------------------------------------------------
+LOGGING                                                 *dev-logging*
+
+- Use |nvim_log()|.  Avoid separate log files for plugins/clients/UIs.
+
+
+------------------------------------------------------------------------------
 EXTERNAL UI                                                           *dev-ui*
 
 External UIs should be aware of the |api-contract|. In particular, future
