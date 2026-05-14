@@ -163,6 +163,8 @@ local function filter_complex_blocks(body)
         or string.find(line, 'mach_vm_range_recipe')
         or string.find(line, 'ipc_info_object_type_t')
         or string.find(line, '__Reply__mach_port_kobject_t')
+        -- C11 keyword, not understood by LuaJIT FFI. Emitted by some libc headers (e.g. ARM/clang glibc).
+        or string.find(line, '_Static_assert', 1, true)
       )
     then
       -- Remove GCC's extension keyword which is just used to disable warnings.
