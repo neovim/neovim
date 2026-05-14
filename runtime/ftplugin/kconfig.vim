@@ -21,3 +21,9 @@ if exists("loaded_matchit")
   let b:match_words = '^\<menu\>:\<endmenu\>,^\<if\>:\<endif\>,^\<choice\>:\<endchoice\>'
   let b:undo_ftplugin .= "| unlet! b:match_words"
 endif
+
+" Kconfig indentation settings
+setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=4
+
+let b:undo_ftplugin .=
+      \ " | setlocal expandtab< shiftwidth< softtabstop< tabstop<"
