@@ -2147,7 +2147,7 @@ vim.go.ef = vim.go.errorfile
 --- (see `errorformat`).
 ---
 --- @type string
-vim.o.errorformat = '%f(%l): %t%*\\D%n: %m,%f(%l\\,%c): %t%*\\D%n: %m,%f(%l) \\=: %t%*\\D%n: %m,%*[^"]"%f"%*\\D%l: %m,%f(%l) \\=: %m,%*[^ ] %f %l: %m,%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,%f|%l| %m'
+vim.o.errorformat = "%*[^\"]\"%f\"%*\\D%l: %m,\"%f\"%*\\D%l: %m,%-Gg%\\?make[%*\\d]: *** [%f:%l:%m,%-Gg%\\?make: *** [%f:%l:%m,%-G%f:%l: (Each undeclared identifier is reported only once,%-G%f:%l: for each function it appears in.),%-GIn file included from %f:%l:%c:,%-GIn file included from %f:%l:%c\\,,%-GIn file included from %f:%l:%c,%-GIn file included from %f:%l,%-G%*[ ]from %f:%l:%c,%-G%*[ ]from %f:%l:,%-G%*[ ]from %f:%l\\,,%-G%*[ ]from %f:%l,%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,\"%f\"\\, line %l%*\\D%c%*[^ ] %m,%D%*\\a[%*\\d]: Entering directory %*[`']%f',%X%*\\a[%*\\d]: Leaving directory %*[`']%f',%D%*\\a: Entering directory %*[`']%f',%X%*\\a: Leaving directory %*[`']%f',%DMaking %*\\a in %f,%f|%l| %m"
 vim.o.efm = vim.o.errorformat
 vim.bo.errorformat = vim.o.errorformat
 vim.bo.efm = vim.bo.errorformat
@@ -6046,7 +6046,7 @@ vim.go.sxe = vim.go.shellxescape
 --- When the value is '(' then also see 'shellxescape'.
 ---
 --- @type string
-vim.o.shellxquote = '"'
+vim.o.shellxquote = ""
 vim.o.sxq = vim.o.shellxquote
 vim.go.shellxquote = vim.o.shellxquote
 vim.go.sxq = vim.go.shellxquote
