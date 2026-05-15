@@ -203,6 +203,21 @@ repeat:
     }
   }
 
+#ifndef MSWIN
+  if (src[*usedlen] == ':' && src[*usedlen + 1] == 'h') {
+    char *fname = *fnamep;
+    // POSIX reserves exactly "//"; longer slash runs are ordinary absolute paths.
+    // "///foo/bar" => "/foo"
+    // "//foo/bar" => "//foo"
+    if (fname[0] == '/' && fname[1] == '/' && fname[2] == '/') {
+      while (fname[1] == '/') {
+        fname++;
+      }
+      *fnamep = fname;
+    }
+  }
+#endif
+
   char *tail = path_tail(*fnamep);
   *fnamelen = strlen(*fnamep);
 
