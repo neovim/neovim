@@ -194,6 +194,8 @@ OPTIONS
 • 'scrolloffpad' allows vertically centering cursor at the end of file.
 • 'shortmess' flag |shm-u| silences undo/redo messages.
 • 'winpinned' prevents window from closing unless specifically targeted.
+• 'rootdir' buffer option exposes the project root directory. Set automatically
+  by the LSP client on attach; plugins can read or write it independently of LSP.
 
 PERFORMANCE
 
