@@ -143,15 +143,24 @@ TUI TRACE
 
 From the Ghostty inspector you can click the "Terminal IO" tab to get a trace.
 
-Alternatively, the ancient `script` command can record a Nvim terminal session: >sh
+Alternatively, the ancient `script` command is the "state of the art". The
+libvterm `vterm-dump` utility formats the result for human-readability.
+
+Record a Nvim terminal session and format it with `vterm-dump`: >sh
 
     script foo
     ./build/bin/nvim -u NONE
     # Exit the script session with CTRL-d
 
+    # Use `vterm-dump` utility to format the result.
+    ./.deps/usr/bin/vterm-dump foo > bar
+
+Then you can compare `bar` with another session, to debug TUI behavior.
+
 TERMINAL REFERENCE
 
 - `man terminfo`
+- https://github.com/vim/vim/blob/0124320c97b0fbbb44613f42fc1c34fee6181fc8/src/libvterm/doc/seqs.txt
 - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
 ==============================================================================
