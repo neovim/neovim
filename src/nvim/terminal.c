@@ -502,7 +502,7 @@ void terminal_teardown(void)
   invalidated_terminals = (Set(ptr_t)) SET_INIT;
 }
 
-static void assert_ghostty_success(GhosttyResult res)
+static void assert_ok(GhosttyResult res)
 {
   assert(res == GHOSTTY_SUCCESS);
 }
@@ -511,7 +511,7 @@ static bool terminal_ghostty_mode_get(Terminal *term, GhosttyMode mode)
   FUNC_ATTR_NONNULL_ALL
 {
   bool enabled = false;
-  assert_ghostty_success(ghostty_terminal_mode_get(term->ghostty, mode, &enabled));
+  assert_ok(ghostty_terminal_mode_get(term->ghostty, mode, &enabled));
   return enabled;
 }
 
@@ -519,9 +519,9 @@ static bool terminal_mouse_tracking_enabled(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
   bool enabled = false;
-  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
-                                              GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING,
-                                              &enabled));
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_MOUSE_TRACKING,
+                                 &enabled));
   return enabled;
 }
 
@@ -539,8 +539,8 @@ static void terminal_ghostty_size_get(Terminal *term, int *height, int *width)
 {
   uint16_t rows = 0;
   uint16_t cols = 0;
-  assert_ghostty_success(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_ROWS, &rows));
-  assert_ghostty_success(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_COLS, &cols));
+  assert_ok(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_ROWS, &rows));
+  assert_ok(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_COLS, &cols));
   if (height != NULL) {
     *height = (int)rows;
   }
@@ -554,12 +554,12 @@ static void terminal_ghostty_cursor_position_update(Terminal *term)
 {
   uint16_t col = 0;
   uint16_t row = 0;
-  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
-                                              GHOSTTY_TERMINAL_DATA_CURSOR_X,
-                                              &col));
-  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
-                                              GHOSTTY_TERMINAL_DATA_CURSOR_Y,
-                                              &row));
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_CURSOR_X,
+                                 &col));
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_CURSOR_Y,
+                                 &row));
   term->cursor.col = (int)col;
   term->cursor.row = (int)row;
 }
@@ -568,9 +568,9 @@ static void terminal_ghostty_cursor_viewport_position_update(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
   bool has_viewport_cursor = false;
-  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE,
-                                                  &has_viewport_cursor));
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE,
+                                     &has_viewport_cursor));
   if (!has_viewport_cursor) {
     terminal_ghostty_cursor_position_update(term);
     return;
@@ -578,12 +578,12 @@ static void terminal_ghostty_cursor_viewport_position_update(Terminal *term)
 
   uint16_t col = 0;
   uint16_t row = 0;
-  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X,
-                                                  &col));
-  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y,
-                                                  &row));
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X,
+                                     &col));
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y,
+                                     &row));
   term->cursor.col = (int)col;
   term->cursor.row = (int)row;
 }
@@ -597,19 +597,19 @@ static void terminal_ghostty_cursor_update(Terminal *term)
   bool position_changed = term->cursor.row != old_row || term->cursor.col != old_col;
 
   bool visible = false;
-  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VISIBLE,
-                                                  &visible));
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR_VISIBLE,
+                                     &visible));
 
   bool blink = false;
-  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_BLINKING,
-                                                  &blink));
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR_BLINKING,
+                                     &blink));
 
   GhosttyRenderStateCursorVisualStyle shape = GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK;
-  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE,
-                                                  &shape));
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE,
+                                     &shape));
 
   bool visibility_changed = term->cursor.visible != visible;
   bool style_changed = term->cursor.blink != blink || term->cursor.shape != shape;
@@ -635,9 +635,9 @@ static void terminal_ghostty_termprops_update(Terminal *term)
   term->synchronized_output = synchronized_output;
 
   GhosttyTerminalScreen screen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
-  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
-                                              GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN,
-                                              &screen));
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN,
+                                 &screen));
   bool in_altscreen = screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE;
   if (term->in_altscreen != in_altscreen) {
     int height;
@@ -686,9 +686,9 @@ static size_t terminal_ghostty_scrollback_rows_get(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t rows = 0;
-  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
-                                              GHOSTTY_TERMINAL_DATA_SCROLLBACK_ROWS,
-                                              &rows));
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_SCROLLBACK_ROWS,
+                                 &rows));
   return rows;
 }
 
@@ -867,15 +867,15 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
     .rows = ghostty_rows,
     .max_scrollback = ghostty_max_scrollback,
   };
-  assert_ghostty_success(ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts));
-  assert_ghostty_success(ghostty_terminal_mode_set(term->ghostty,
-                                                   GHOSTTY_MODE_GRAPHEME_CLUSTER,
-                                                   true));
+  assert_ok(ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts));
+  assert_ok(ghostty_terminal_mode_set(term->ghostty,
+                                      GHOSTTY_MODE_GRAPHEME_CLUSTER,
+                                      true));
   terminal_update_colors(term);
-  assert_ghostty_success(ghostty_render_state_new(NULL, &term->ghostty_render_state));
-  assert_ghostty_success(ghostty_render_state_row_iterator_new(NULL,
-                                                               &term->ghostty_render_row_iterator));
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_USERDATA, term));
+  assert_ok(ghostty_render_state_new(NULL, &term->ghostty_render_state));
+  assert_ok(ghostty_render_state_row_iterator_new(NULL,
+                                                  &term->ghostty_render_row_iterator));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_USERDATA, term));
 
   // ghostty_terminal_set() takes option values as const void *, including
   // callback options. ISO C does not allow converting function pointers to
@@ -884,24 +884,24 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wpedantic"
 #endif
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_WRITE_PTY,
-                                              (const void *)term_ghostty_write_pty_callback));
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_BELL,
-                                              (const void *)term_ghostty_bell_callback));
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
-                                              (const void *)term_ghostty_title_changed_callback));
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_SCHEME,
-                                              (const void *)term_ghostty_color_scheme_callback));
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_DEVICE_ATTRIBUTES,
-                                              (const void *)term_ghostty_device_attributes_callback));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_WRITE_PTY,
+                                 (const void *)term_ghostty_write_pty_callback));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_BELL,
+                                 (const void *)term_ghostty_bell_callback));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
+                                 (const void *)term_ghostty_title_changed_callback));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_SCHEME,
+                                 (const void *)term_ghostty_color_scheme_callback));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_DEVICE_ATTRIBUTES,
+                                 (const void *)term_ghostty_device_attributes_callback));
 #if defined(__GNUC__)
 # pragma GCC diagnostic pop
 #endif
 
-  assert_ghostty_success(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
-  assert_ghostty_success(ghostty_key_event_new(NULL, &term->ghostty_key_event));
-  assert_ghostty_success(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
-  assert_ghostty_success(ghostty_mouse_event_new(NULL, &term->ghostty_mouse_event));
+  assert_ok(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
+  assert_ok(ghostty_key_event_new(NULL, &term->ghostty_key_event));
+  assert_ok(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
+  assert_ok(ghostty_mouse_event_new(NULL, &term->ghostty_mouse_event));
   terminal_mouse_encoder_set_size(term, ghostty_cols, ghostty_rows);
   bool track_last_cell = true;
   ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder,
@@ -968,9 +968,9 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   (void)terminal_scrollback_limit(buf);
 
   GhosttyColorRgb palette[256];
-  assert_ghostty_success(ghostty_terminal_get(term->ghostty,
-                                              GHOSTTY_TERMINAL_DATA_COLOR_PALETTE_DEFAULT,
-                                              palette));
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_COLOR_PALETTE_DEFAULT,
+                                 palette));
 
   // Configure the color palette. Try to get the color from:
   //
@@ -996,9 +996,9 @@ void terminal_open(Terminal **termpp, buf_T *buf)
     term->color_set[i] = true;
   }
 
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty,
-                                              GHOSTTY_TERMINAL_OPT_COLOR_PALETTE,
-                                              palette));
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_COLOR_PALETTE,
+                                 palette));
 
   terminal_update_colors(term);
 }
@@ -1151,7 +1151,7 @@ void terminal_check_size(Terminal *term)
   }
 
   term->opts.resize_cb(width, height, term->opts.data);
-  assert_ghostty_success(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
+  assert_ok(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
   terminal_ghostty_render_state_update(term);
   terminal_mouse_encoder_set_size(term, width, height);
   term->pending.resize = true;
@@ -1640,9 +1640,9 @@ static void terminal_send_bracketed_paste(Terminal *term, bool start)
   FUNC_ATTR_NONNULL_ALL
 {
   bool bracketed_paste = false;
-  assert_ghostty_success(ghostty_terminal_mode_get(term->ghostty,
-                                                   GHOSTTY_MODE_BRACKETED_PASTE,
-                                                   &bracketed_paste));
+  assert_ok(ghostty_terminal_mode_get(term->ghostty,
+                                      GHOSTTY_MODE_BRACKETED_PASTE,
+                                      &bracketed_paste));
   if (bracketed_paste) {
     terminal_send(term, start ? "\x1b[200~" : "\x1b[201~", 6);
   }
@@ -1834,17 +1834,17 @@ static void terminal_key_encode_event(Terminal *term, GhosttyKey key, GhosttyMod
   // If that was too small, allocate on the heap.
   if (res == GHOSTTY_OUT_OF_SPACE) {
     char *big_buf = xmalloc(len);
-    assert_ghostty_success(ghostty_key_encoder_encode(term->ghostty_key_encoder,
-                                                      term->ghostty_key_event,
-                                                      big_buf,
-                                                      len,
-                                                      &len));
+    assert_ok(ghostty_key_encoder_encode(term->ghostty_key_encoder,
+                                         term->ghostty_key_event,
+                                         big_buf,
+                                         len,
+                                         &len));
     terminal_send(term, big_buf, len);
     xfree(big_buf);
     return;
   }
 
-  assert_ghostty_success(res);
+  assert_ok(res);
   if (len > 0) {
     terminal_send(term, buf, len);
   }
@@ -2014,7 +2014,7 @@ static bool terminal_ghostty_grid_ref(Terminal *term, GhosttyPointTag tag, uint3
   if (result == GHOSTTY_INVALID_VALUE || result == GHOSTTY_NO_VALUE) {
     return false;
   }
-  assert_ghostty_success(result);
+  assert_ok(result);
   return true;
 }
 
@@ -2128,11 +2128,11 @@ static TerminalColorAttrs terminal_ghostty_cell_bg_attrs(GhosttyCell cell, Ghost
   }
 
   GhosttyCellContentTag content_tag = GHOSTTY_CELL_CONTENT_CODEPOINT;
-  assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_CONTENT_TAG, &content_tag));
+  assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_CONTENT_TAG, &content_tag));
   if (content_tag == GHOSTTY_CELL_CONTENT_BG_COLOR_PALETTE) {
     GhosttyColorPaletteIndex palette_index = 0;
-    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_COLOR_PALETTE,
-                                            &palette_index));
+    assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_COLOR_PALETTE,
+                               &palette_index));
     return (TerminalColorAttrs) {
       .idx = (int16_t)(palette_index + 1),
       .rgb = terminal_ghostty_rgb(palette[palette_index]),
@@ -2142,7 +2142,7 @@ static TerminalColorAttrs terminal_ghostty_cell_bg_attrs(GhosttyCell cell, Ghost
 
   if (content_tag == GHOSTTY_CELL_CONTENT_BG_COLOR_RGB) {
     GhosttyColorRgb bg = { 0 };
-    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_COLOR_RGB, &bg));
+    assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_COLOR_RGB, &bg));
     attrs.rgb = terminal_ghostty_rgb(bg);
     attrs.is_default = false;
   }
@@ -2158,12 +2158,12 @@ static int terminal_ghostty_cell_url_attr(const GhosttyGridRef *ref)
     return 0;
   }
   if (result != GHOSTTY_OUT_OF_SPACE) {
-    assert_ghostty_success(result);
+    assert_ok(result);
   }
 
   char *uri = xmalloc(uri_len + 1);
   result = ghostty_grid_ref_hyperlink_uri(ref, (uint8_t *)uri, uri_len, &uri_len);
-  assert_ghostty_success(result);
+  assert_ok(result);
   uri[uri_len] = NUL;
   int attr = hl_add_url(0, uri);
   xfree(uri);
@@ -2180,10 +2180,10 @@ static int terminal_ghostty_cell_attr(Terminal *term, GhosttyPointTag tag, uint3
   }
 
   GhosttyCell cell = 0;
-  assert_ghostty_success(ghostty_grid_ref_cell(&ref, &cell));
+  assert_ok(ghostty_grid_ref_cell(&ref, &cell));
 
   GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
-  assert_ghostty_success(ghostty_grid_ref_style(&ref, &style));
+  assert_ok(ghostty_grid_ref_style(&ref, &style));
 
   TerminalColorAttrs fg = terminal_ghostty_style_color_attrs(palette, style.fg_color);
   TerminalColorAttrs bg = terminal_ghostty_cell_bg_attrs(cell, style.bg_color, palette);
@@ -2215,7 +2215,7 @@ static int terminal_ghostty_cell_display_width(const GhosttyGridRef *ref)
     return 1;
   }
   if (result != GHOSTTY_OUT_OF_SPACE) {
-    assert_ghostty_success(result);
+    assert_ok(result);
   }
 
   uint32_t stack[16];
@@ -2224,8 +2224,8 @@ static int terminal_ghostty_cell_display_width(const GhosttyGridRef *ref)
     graphemes = xmalloc(sizeof(*graphemes) * grapheme_len);
   }
 
-  assert_ghostty_success(ghostty_grid_ref_graphemes(ref, graphemes, grapheme_len,
-                                                    &grapheme_len));
+  assert_ok(ghostty_grid_ref_graphemes(ref, graphemes, grapheme_len,
+                                       &grapheme_len));
   char buf[MB_MAXBYTES * ARRAY_SIZE(stack)];
   char *text = buf;
   if (grapheme_len > ARRAY_SIZE(stack)) {
@@ -2270,10 +2270,10 @@ static int terminal_cursor_virtcol(Terminal *term)
     }
 
     GhosttyCell cell = 0;
-    assert_ghostty_success(ghostty_grid_ref_cell(&ref, &cell));
+    assert_ok(ghostty_grid_ref_cell(&ref, &cell));
 
     GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
+    assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
     int cell_width = wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
     int next_col = col + cell_width;
     int display_width = terminal_ghostty_cell_display_width(&ref);
@@ -2309,7 +2309,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
 
   width = MIN(TERM_ATTRS_MAX, width);
   GhosttyRenderStateColors colors = GHOSTTY_INIT_SIZED(GhosttyRenderStateColors);
-  assert_ghostty_success(ghostty_render_state_colors_get(term->ghostty_render_state, &colors));
+  assert_ok(ghostty_render_state_colors_get(term->ghostty_render_state, &colors));
   GhosttyPointTag tag = GHOSTTY_POINT_TAG_ACTIVE;
   uint32_t row = 0;
   if (screen_row < term->scrollback_rows) {
@@ -2367,28 +2367,28 @@ void terminal_update_colors(Terminal *term)
   // Set the foreground color.
   RgbValue fg = (p_tgc && normal_fg >= 0) ? normal_fg : (dark ? 0xffffff : 0x000000);
   GhosttyColorRgb fg_ghostty = rgb_value_to_ghostty_color(fg);
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND,
-                                              &fg_ghostty));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND,
+                                 &fg_ghostty));
 
   // Set the background color.
   RgbValue bg = (p_tgc && normal_bg >= 0) ? normal_bg : (dark ? 0x000000 : 0xffffff);
   GhosttyColorRgb bg_ghostty = rgb_value_to_ghostty_color(bg);
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_BACKGROUND,
-                                              &bg_ghostty));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_BACKGROUND,
+                                 &bg_ghostty));
 
   // Set the cursor color.
   if (*p_guicursor != NUL && shape_table[SHAPE_IDX_TERM].id != 0) {
     HlAttrs attrs = syn_attr2entry(syn_id2attr(shape_table[SHAPE_IDX_TERM].id));
     if (attrs.hl_blend != 100 && !(attrs.rgb_ae_attr & HL_INVERSE) && attrs.rgb_bg_color >= 0) {
       GhosttyColorRgb cursor_ghostty = rgb_value_to_ghostty_color(attrs.rgb_bg_color);
-      assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_CURSOR,
-                                                  &cursor_ghostty));
+      assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_CURSOR,
+                                     &cursor_ghostty));
       return;
     }
   }
 
-  assert_ghostty_success(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_CURSOR,
-                                              NULL));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_CURSOR,
+                                 NULL));
 }
 
 /// Updates the default colors for every open terminal buffer.
@@ -2406,9 +2406,9 @@ static void terminal_focus(Terminal *term, bool focus)
 {
   bool report_focus = false;
 
-  assert_ghostty_success(ghostty_terminal_mode_get(term->ghostty,
-                                                   GHOSTTY_MODE_FOCUS_EVENT,
-                                                   &report_focus));
+  assert_ok(ghostty_terminal_mode_get(term->ghostty,
+                                      GHOSTTY_MODE_FOCUS_EVENT,
+                                      &report_focus));
 
   // Return early if focus reporting is not enabled.
   if (!report_focus) {
@@ -2418,10 +2418,10 @@ static void terminal_focus(Terminal *term, bool focus)
   enum { FOCUS_BUF_SIZE = 3, };
   char buf[FOCUS_BUF_SIZE];
   size_t len = 0;
-  assert_ghostty_success(ghostty_focus_encode(focus ? GHOSTTY_FOCUS_GAINED : GHOSTTY_FOCUS_LOST,
-                                              buf,
-                                              FOCUS_BUF_SIZE,
-                                              &len));
+  assert_ok(ghostty_focus_encode(focus ? GHOSTTY_FOCUS_GAINED : GHOSTTY_FOCUS_LOST,
+                                 buf,
+                                 FOCUS_BUF_SIZE,
+                                 &len));
 
   terminal_send(term, buf, len);
 }
@@ -2442,7 +2442,7 @@ static void term_ghostty_title_changed_callback(GhosttyTerminal ghostty, void *u
 {
   Terminal *term = (Terminal *)user_data;
   GhosttyString title = { 0 };
-  assert_ghostty_success(ghostty_terminal_get(ghostty, GHOSTTY_TERMINAL_DATA_TITLE, &title));
+  assert_ok(ghostty_terminal_get(ghostty, GHOSTTY_TERMINAL_DATA_TITLE, &title));
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
   buf_set_term_title(buf, title.ptr == NULL ? "" : (const char *)title.ptr, title.len);
@@ -2828,17 +2828,17 @@ static void terminal_mouse_encode_event(Terminal *term, GhosttyMouseAction actio
   // If that was too small, allocate on the heap.
   if (res == GHOSTTY_OUT_OF_SPACE) {
     char *big_buf = xmalloc(len);
-    assert_ghostty_success(ghostty_mouse_encoder_encode(term->ghostty_mouse_encoder,
-                                                        term->ghostty_mouse_event,
-                                                        big_buf,
-                                                        len,
-                                                        &len));
+    assert_ok(ghostty_mouse_encoder_encode(term->ghostty_mouse_encoder,
+                                           term->ghostty_mouse_event,
+                                           big_buf,
+                                           len,
+                                           &len));
     terminal_send(term, big_buf, len);
     xfree(big_buf);
     return;
   }
 
-  assert_ghostty_success(res);
+  assert_ok(res);
   if (len > 0) {
     terminal_send(term, buf, len);
   }
@@ -3048,14 +3048,14 @@ static void terminal_ghostty_append_cell_text(Terminal *term, const GhosttyGridR
       *(*ptr)++ = ' ';
     }
     bool has_styling = false;
-    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_HAS_STYLING, &has_styling));
+    assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_HAS_STYLING, &has_styling));
     if (has_styling) {
       *line_len = (size_t)(*ptr - term->textbuf);
     }
     return;
   }
   if (result != GHOSTTY_OUT_OF_SPACE) {
-    assert_ghostty_success(result);
+    assert_ok(result);
   }
 
   uint32_t stack[16];
@@ -3064,8 +3064,8 @@ static void terminal_ghostty_append_cell_text(Terminal *term, const GhosttyGridR
     graphemes = xmalloc(sizeof(*graphemes) * grapheme_len);
   }
 
-  assert_ghostty_success(ghostty_grid_ref_graphemes(ref, graphemes, grapheme_len,
-                                                    &grapheme_len));
+  assert_ok(ghostty_grid_ref_graphemes(ref, graphemes, grapheme_len,
+                                       &grapheme_len));
   size_t cell_len = 0;
   for (size_t i = 0; i < grapheme_len; i++) {
     if (!terminal_ghostty_append_codepoint(term, ptr, &cell_len, graphemes[i])) {
@@ -3092,10 +3092,10 @@ static size_t fetch_ghostty_row(Terminal *term, GhosttyPointTag tag, uint32_t ro
       break;
     }
     GhosttyCell cell = 0;
-    assert_ghostty_success(ghostty_grid_ref_cell(&ref, &cell));
+    assert_ok(ghostty_grid_ref_cell(&ref, &cell));
     terminal_ghostty_append_cell_text(term, &ref, cell, &ptr, &line_len);
     GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-    assert_ghostty_success(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
+    assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
     col += wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
   }
 
@@ -3149,15 +3149,15 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
 static void terminal_ghostty_render_state_update(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert_ghostty_success(ghostty_render_state_update(term->ghostty_render_state,
-                                                     term->ghostty));
+  assert_ok(ghostty_render_state_update(term->ghostty_render_state,
+                                        term->ghostty));
   terminal_ghostty_cursor_update(term);
   terminal_ghostty_termprops_update(term);
 
   GhosttyRenderStateDirty dirty_state = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
-  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_DIRTY,
-                                                  &dirty_state));
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_DIRTY,
+                                     &dirty_state));
   // Nothing to re-render, so we're done.
   if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_FALSE) {
     return;
@@ -3169,25 +3169,25 @@ static void terminal_ghostty_render_state_update(Terminal *term)
   // The whole screen is dirty, so the dirty range spans the full height.
   if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_FULL) {
     uint16_t rows = 0;
-    assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                    GHOSTTY_RENDER_STATE_DATA_ROWS,
-                                                    &rows));
+    assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                       GHOSTTY_RENDER_STATE_DATA_ROWS,
+                                       &rows));
     dirty_start = 0;
     dirty_end = rows;
   }
 
-  assert_ghostty_success(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
-                                                  &term->ghostty_render_row_iterator));
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
+                                     &term->ghostty_render_row_iterator));
 
   int row_idx = 0;
 
   while (ghostty_render_state_row_iterator_next(term->ghostty_render_row_iterator)) {
     if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_PARTIAL) {
       bool row_dirty = false;
-      assert_ghostty_success(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
-                                                          GHOSTTY_RENDER_STATE_ROW_DATA_DIRTY,
-                                                          &row_dirty));
+      assert_ok(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
+                                             GHOSTTY_RENDER_STATE_ROW_DATA_DIRTY,
+                                             &row_dirty));
       if (row_dirty) {
         dirty_start = MIN(dirty_start, row_idx);
         dirty_end = row_idx + 1;
@@ -3196,18 +3196,18 @@ static void terminal_ghostty_render_state_update(Terminal *term)
 
     // Mark the row as clean.
     bool dirty = false;
-    assert_ghostty_success(ghostty_render_state_row_set(term->ghostty_render_row_iterator,
-                                                        GHOSTTY_RENDER_STATE_ROW_OPTION_DIRTY,
-                                                        &dirty));
+    assert_ok(ghostty_render_state_row_set(term->ghostty_render_row_iterator,
+                                           GHOSTTY_RENDER_STATE_ROW_OPTION_DIRTY,
+                                           &dirty));
     row_idx++;
   }
 
   invalidate_terminal(term, dirty_start, dirty_end);
 
   dirty_state = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
-  assert_ghostty_success(ghostty_render_state_set(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_OPTION_DIRTY,
-                                                  &dirty_state));
+  assert_ok(ghostty_render_state_set(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_OPTION_DIRTY,
+                                     &dirty_state));
 }
 
 /// Normally refresh_timer_cb() is called when processing main_loop.events, but with
