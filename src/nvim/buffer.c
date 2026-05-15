@@ -1462,6 +1462,14 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       }
 
       close_windows(buf, false);
+      // close_windows keeps the last non-float window. If it still
+      // shows buf, jump there and retry so curbuf gets replaced.
+      if (bufref_valid(&bufref) && buf->b_nwindows > 0) {
+        win_T *holder = buf_jump_open_win(buf);
+        if (holder != NULL && !holder->w_floating) {
+          return do_buffer_ext(action, start, dir, count, flags);
+        }
+      }
 
       if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows <= 0) {
         close_buffer(NULL, buf, action, false, false, false);
