@@ -885,15 +885,15 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
 # pragma GCC diagnostic ignored "-Wpedantic"
 #endif
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_WRITE_PTY,
-                                 (const void *)term_ghostty_write_pty_callback));
+                                 (const void *)on_ghostty_write_pty));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_BELL,
-                                 (const void *)term_ghostty_bell_callback));
+                                 (const void *)on_term_ghostty_bell));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
-                                 (const void *)term_ghostty_title_changed_callback));
+                                 (const void *)on_ghostty_title_changed));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_SCHEME,
-                                 (const void *)term_ghostty_color_scheme_callback));
+                                 (const void *)on_term_ghostty_color_scheme));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_DEVICE_ATTRIBUTES,
-                                 (const void *)term_ghostty_device_attributes_callback));
+                                 (const void *)on_term_ghostty_device_attributes));
 #if defined(__GNUC__)
 # pragma GCC diagnostic pop
 #endif
@@ -2430,15 +2430,15 @@ static void terminal_focus(Terminal *term, bool focus)
 // libghostty callbacks {{{
 
 /// Called when Ghostty needs to write the response for a terminal query.
-static void term_ghostty_write_pty_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
-                                            void *user_data, const uint8_t *data, size_t len)
+static void on_ghostty_write_pty(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data,
+                                 const uint8_t *data, size_t len)
 {
   Terminal *term = (Terminal *)user_data;
   terminal_send(term, (const char *)data, len);
 }
 
 /// Called when the terminal program wants to set the title.
-static void term_ghostty_title_changed_callback(GhosttyTerminal ghostty, void *user_data)
+static void on_ghostty_title_changed(GhosttyTerminal ghostty, void *user_data)
 {
   Terminal *term = (Terminal *)user_data;
   GhosttyString title = { 0 };
@@ -2449,15 +2449,15 @@ static void term_ghostty_title_changed_callback(GhosttyTerminal ghostty, void *u
 }
 
 /// Called when the terminal program wants to ring the system bell.
-static void term_ghostty_bell_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
-                                       void *user_data FUNC_ATTR_UNUSED)
+static void on_term_ghostty_bell(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
+                                 void *user_data FUNC_ATTR_UNUSED)
 {
   vim_beep(kOptBoFlagTerm);
 }
 
 /// Called when the terminal program wants to know the terminal device attributes.
-static bool term_ghostty_device_attributes_callback(GhosttyTerminal ghostty, void *user_data,
-                                                    GhosttyDeviceAttributes *out_attrs)
+static bool on_term_ghostty_device_attributes(GhosttyTerminal ghostty, void *user_data,
+                                              GhosttyDeviceAttributes *out_attrs)
 {
   (void)ghostty;
   (void)user_data;
@@ -2505,9 +2505,9 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
 }
 
 /// Called when the terminal program wants to query the system theme.
-static bool term_ghostty_color_scheme_callback(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
-                                               void *user_data FUNC_ATTR_UNUSED,
-                                               GhosttyColorScheme *out_scheme)
+static bool on_term_ghostty_color_scheme(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
+                                         void *user_data FUNC_ATTR_UNUSED,
+                                         GhosttyColorScheme *out_scheme)
 {
   *out_scheme = (*p_bg == 'd') ? GHOSTTY_COLOR_SCHEME_DARK : GHOSTTY_COLOR_SCHEME_LIGHT;
   return true;
