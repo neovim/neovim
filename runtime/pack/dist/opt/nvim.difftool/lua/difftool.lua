@@ -123,7 +123,7 @@ local function diff_dirs_diffr(left_dir, right_dir, opt)
   local qf_entries = {}
 
   for _, line in ipairs(lines) do
-    local modified_left, modified_right = line:match('^Files (.+) and (.+) differ$')
+    local modified_left, modified_right = line:match("^Files '?(.-)'? and '?(.-)'? differ$")
     if modified_left and modified_right then
       local left_exists = vim.fn.filereadable(modified_left) == 1
       local right_exists = vim.fn.filereadable(modified_right) == 1
