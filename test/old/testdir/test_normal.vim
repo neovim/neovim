@@ -795,8 +795,7 @@ func Test_normal10_expand()
 
   if executable('echo')
     " Test expand(`...`) i.e. backticks command expansion.
-    " MS-Windows has a trailing space.
-    call assert_match('^abcde *$', expand('`echo abcde`'))
+    call assert_equal('abcde', expand('`echo abcde`'))
   endif
 
   " Test expand(`=...`) i.e. backticks expression expansion
