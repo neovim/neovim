@@ -3394,7 +3394,6 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
   }
 
   size_t old_scrollback_rows = term->scrollback_rows;
-  size_t initial_scrollback_rows = old_scrollback_rows;
   size_t old_ghostty_scrollback_rows = term->ghostty_scrollback_rows;
   bool scrollback_cleared = term->scrollback_clear_pending;
   size_t scrollback_clear_rows = term->scrollback_clear_rows;
@@ -3479,18 +3478,10 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
     deleted_lines_buf(buf, 1, 1);
   }
 
-  bool history_dirty = resized || scrollback_cleared
-                       || old_ghostty_scrollback_rows != ghostty_scrollback_rows
-                       || initial_scrollback_rows != scrollback_rows
-                       || buf->b_ml.ml_line_count < (linenr_T)scrollback_rows;
-  if (history_dirty) {
+  if (resized) {
     for (size_t row = 0; row < scrollback_rows; row++) {
       fetch_screen_row(term, row, width);
       linenr_T linenr = (linenr_T)row + 1;
-      while (buf->b_ml.ml_line_count < linenr - 1) {
-        ml_append_buf(buf, buf->b_ml.ml_line_count, "", 0, false);
-        appended_lines_buf(buf, buf->b_ml.ml_line_count, 1);
-      }
       if (linenr <= buf->b_ml.ml_line_count) {
         ml_replace_buf(buf, linenr, term->textbuf, true, false);
       } else {
