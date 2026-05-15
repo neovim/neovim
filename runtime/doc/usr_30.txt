@@ -531,9 +531,9 @@ they do when using only tab characters.
   Vim 5.4 introduced the 'softtabstop' option.  On top of the (hard) tab stops
 used to display the horizontal tab characters in the text, Vim adds extra
 soft tab stops dedicated only to the cursor.  When 'softtabstop' is set to a
-positive value, and the <Tab> key will push the cursor to the next soft tab
+positive value, the <Tab> key will push the cursor to the next soft tab
 stop.  Vim will insert the correct combination of tab characters and spaces to
-make the effect visually.  Likewise pressing <BS> will have the cursor try to
+achieve this effect.  Likewise pressing <BS> will have the cursor try to
 reach the nearest soft tab stop.  The following example uses
 `:set softtabstop=4`
 
