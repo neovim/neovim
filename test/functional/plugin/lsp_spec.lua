@@ -604,14 +604,18 @@ describe('LSP', function()
         local attached = false
         vim.api.nvim_create_autocmd('LspAttach', {
           buffer = bufnr,
-          callback = function() attached = true end,
+          callback = function()
+            attached = true
+          end,
         })
         assert(vim.lsp.start({
           name = 'rootdir-test',
           cmd = server.cmd,
           root_dir = '/my/project',
         }))
-        local ok = vim.wait(1000, function() return attached end)
+        local ok = vim.wait(1000, function()
+          return attached
+        end)
         assert(ok, 'on_attach did not run')
         return vim.bo[bufnr].rootdir
       end)
@@ -627,13 +631,17 @@ describe('LSP', function()
         local attached = false
         vim.api.nvim_create_autocmd('LspAttach', {
           buffer = bufnr,
-          callback = function() attached = true end,
+          callback = function()
+            attached = true
+          end,
         })
         assert(vim.lsp.start({
           name = 'rootdir-test',
           cmd = server.cmd,
         }))
-        local ok = vim.wait(1000, function() return attached end)
+        local ok = vim.wait(1000, function()
+          return attached
+        end)
         assert(ok, 'on_attach did not run')
         return vim.bo[bufnr].rootdir
       end)
