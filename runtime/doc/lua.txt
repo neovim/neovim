@@ -2954,21 +2954,23 @@ vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
 ==============================================================================
 Lua module: vim.hl                                                    *vim.hl*
 
-vim.hl.on_yank({opts})                                      *vim.hl.on_yank()*
-    Highlight the yanked text during a |TextYankPost| event.
+vim.hl.hl_op({opts})                                          *vim.hl.hl_op()*
+    Highlight the related text region during a |TextYankPost| or |TextPutPost|
+    event.
 
     Add the following to your `init.vim`: >vim
-        autocmd TextYankPost * silent! lua vim.hl.on_yank {higroup='Visual', timeout=300}
+        autocmd TextYankPost * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
+        autocmd TextPutPost * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
 <
 
     Parameters: ~
       • {opts}  (`table?`) Optional parameters
                 • event event structure (default vim.v.event)
-                • higroup highlight group for yanked region (default
+                • higroup highlight group for the text region (default
                   "IncSearch")
                 • on_macro highlight when executing macro (default false)
-                • on_visual highlight when yanking visual selection (default
-                  true)
+                • on_visual highlight when the event is in |Visual| mode
+                  (default true)
                 • priority integer priority (default
                   |vim.hl.priorities|`.user`)
                 • timeout time in ms before highlight is cleared (default 150)
@@ -2980,7 +2982,7 @@ vim.hl.priorities                                          *vim.hl.priorities*
     • `semantic_tokens`: `125`, used for LSP semantic token highlighting
     • `diagnostics`: `150`, used for code analysis such as diagnostics
     • `user`: `200`, used for user-triggered highlights such as LSP document
-      symbols or `on_yank` autocommands
+      symbols or `hl_op` autocommands
 
                                                               *vim.hl.range()*
 vim.hl.range({buf}, {ns}, {higroup}, {start}, {finish}, {opts})

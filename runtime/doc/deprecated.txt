@@ -27,6 +27,10 @@ API
 EVENTS
 • *BufModifiedSet*	Use |OptionSet| with pattern "modified" instead.
 
+HIGHLIGHTS
+
+• vim.hl.on_yank()	Use |vim.hl.hl_op()| instead.
+
 LUA
 
 • vim.F.if_nil()			Renamed to |vim.nonnil()|

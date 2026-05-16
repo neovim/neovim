@@ -152,6 +152,8 @@ EVENTS
 HIGHLIGHTS
 
 • `Dimmed` for text that should be de-emphasized.
+• |vim.hl.hl_op()| highlights text regions for |TextYankPost| and
+  |TextPutPost| events. It replaces the now deprecated `vim.hl.on_yank()`.
 
 LSP
 

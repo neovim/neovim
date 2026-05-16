@@ -215,7 +215,7 @@ describe('vim.hl.range', function()
   end)
 end)
 
-describe('vim.hl.on_yank', function()
+describe('vim.hl.hl_op', function()
   before_each(function()
     clear()
   end)
@@ -224,7 +224,7 @@ describe('vim.hl.on_yank', function()
     command('new')
     n.feed('ifoo<esc>') -- set '[, ']
     exec_lua(function()
-      vim.hl.on_yank({
+      vim.hl.hl_op({
         timeout = 10,
         on_macro = true,
         event = { operator = 'y', regtype = 'v' },
@@ -238,10 +238,10 @@ describe('vim.hl.on_yank', function()
 
   it('does not close timer twice', function()
     exec_lua(function()
-      vim.hl.on_yank({ timeout = 10, on_macro = true, event = { operator = 'y' } })
+      vim.hl.hl_op({ timeout = 10, on_macro = true, event = { operator = 'y' } })
       vim.uv.sleep(10)
       vim.schedule(function()
-        vim.hl.on_yank({ timeout = 0, on_macro = true, event = { operator = 'y' } })
+        vim.hl.hl_op({ timeout = 0, on_macro = true, event = { operator = 'y' } })
       end)
     end)
     eq('', eval('v:errmsg'))
@@ -252,16 +252,16 @@ describe('vim.hl.on_yank', function()
     exec_lua(function()
       vim.api.nvim_buf_set_mark(0, '[', 1, 1, {})
       vim.api.nvim_buf_set_mark(0, ']', 1, 1, {})
-      vim.hl.on_yank({ timeout = math.huge, on_macro = true, event = { operator = 'y' } })
+      vim.hl.hl_op({ timeout = math.huge, on_macro = true, event = { operator = 'y' } })
     end)
-    local ns = api.nvim_create_namespace('nvim.hlyank')
+    local ns = api.nvim_create_namespace('nvim.hl.events')
     local win = api.nvim_get_current_win()
     eq({ win }, api.nvim__ns_get(ns).wins)
     command('wincmd w')
     eq({ win }, api.nvim__ns_get(ns).wins)
-    -- Use a new vim.hl.on_yank() call to cancel the previous timer
+    -- Use a new vim.hl.hl_op() call to cancel the previous timer
     exec_lua(function()
-      vim.hl.on_yank({ timeout = 0, on_macro = true, event = { operator = 'y' } })
+      vim.hl.hl_op({ timeout = 0, on_macro = true, event = { operator = 'y' } })
     end)
   end)
 
@@ -270,23 +270,23 @@ describe('vim.hl.on_yank', function()
     exec_lua(function()
       vim.api.nvim_buf_set_mark(0, '[', 1, 1, {})
       vim.api.nvim_buf_set_mark(0, ']', 1, 1, {})
-      vim.hl.on_yank({ timeout = math.huge, on_macro = true, event = { operator = 'y' } })
+      vim.hl.hl_op({ timeout = math.huge, on_macro = true, event = { operator = 'y' } })
     end)
-    local ns = api.nvim_create_namespace('nvim.hlyank')
+    local ns = api.nvim_create_namespace('nvim.hl.events')
     eq(api.nvim_get_current_win(), api.nvim__ns_get(ns).wins[1])
     command('wincmd w')
     exec_lua(function()
       vim.api.nvim_buf_set_mark(0, '[', 1, 1, {})
       vim.api.nvim_buf_set_mark(0, ']', 1, 1, {})
-      vim.hl.on_yank({ timeout = math.huge, on_macro = true, event = { operator = 'y' } })
+      vim.hl.hl_op({ timeout = math.huge, on_macro = true, event = { operator = 'y' } })
     end)
     local win = api.nvim_get_current_win()
     eq({ win }, api.nvim__ns_get(ns).wins)
     command('wincmd w')
     eq({ win }, api.nvim__ns_get(ns).wins)
-    -- Use a new vim.hl.on_yank() call to cancel the previous timer
+    -- Use a new vim.hl.hl_op() call to cancel the previous timer
     exec_lua(function()
-      vim.hl.on_yank({ timeout = 0, on_macro = true, event = { operator = 'y' } })
+      vim.hl.hl_op({ timeout = 0, on_macro = true, event = { operator = 'y' } })
     end)
   end)
 
@@ -295,7 +295,7 @@ describe('vim.hl.on_yank', function()
     screen:add_extra_attr_ids({
       [100] = { foreground = Screen.colors.Blue, background = Screen.colors.Yellow, bold = true },
     })
-    command('autocmd TextYankPost * lua vim.hl.on_yank{timeout=100000}')
+    command('autocmd TextYankPost * lua vim.hl.hl_op{timeout=100000}')
     api.nvim_buf_set_lines(0, 0, -1, true, {
       [[foo(bar) 'baz']],
       [[foo(bar) 'baz']],
@@ -321,9 +321,32 @@ describe('vim.hl.on_yank', function()
       {1:~                                                           }|
                                                                   |
     ]])
-    -- Use a new vim.hl.on_yank() call to cancel the previous timer
+    -- Use a new vim.hl.hl_op() call to cancel the previous timer
     exec_lua(function()
-      vim.hl.on_yank({ timeout = 0, on_macro = true, event = { operator = 'y' } })
+      vim.hl.hl_op({ timeout = 0, on_macro = true, event = { operator = 'y' } })
+    end)
+  end)
+
+  it('highlights TextPutPost', function()
+    local screen = Screen.new(60, 4)
+    screen:add_extra_attr_ids({
+      [100] = { foreground = Screen.colors.Blue, background = Screen.colors.Yellow, bold = true },
+    })
+    command('autocmd TextPutPost * lua vim.hl.hl_op{timeout=100000}')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      [[foo(bar) '1']],
+      [[foo(bar) '2']],
+    })
+    n.feed('ggyyp')
+    screen:expect([[
+      foo(bar) '1'                                                |
+      {2:^foo(bar) '1'}                                                |
+      foo(bar) '2'                                                |
+                                                                  |
+    ]])
+    -- Use a new vim.hl.hl_op() call to cancel the previous timer
+    exec_lua(function()
+      vim.hl.hl_op({ timeout = 0, on_macro = true, event = { operator = 'p' } })
     end)
   end)
 end)
