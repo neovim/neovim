@@ -1969,15 +1969,15 @@ describe('API', function()
         })
       )
       eq(
-        "'tab' can only be used with option 'cmdheight'",
+        "Conflict: 'tab' not allowed with 'shiftwidth'",
         pcall_err(api.nvim_get_option_value, 'shiftwidth', { tab = tab1 })
       )
       eq(
-        "Conflict: 'tab' not allowed with 'nvim_set_option_value'",
+        "Conflict: 'tab' not allowed with this function",
         pcall_err(api.nvim_set_option_value, 'cmdheight', 2, { tab = tab1 })
       )
       eq(
-        "Conflict: 'tab' not allowed with 'nvim_get_option_info2'",
+        "Conflict: 'tab' not allowed with this function",
         pcall_err(api.nvim_get_option_info2, 'cmdheight', { tab = tab1 })
       )
       eq(

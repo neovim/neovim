@@ -24,30 +24,29 @@
 
 #include "api/options.c.generated.h"
 
-static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *opt_idxp,
-                                      int *opt_flags, OptScope *scope, void **from, char **filetype,
-                                      tabpage_T **opt_tabp, Error *err)
+static int validate_option_value_args(Dict(option) *opts, char *name, bool allow_tab,
+                                      OptIndex *opt_idxp, int *opt_flags, OptScope *scope,
+                                      void **from, char **filetype, Error *err)
 {
 #define HAS_KEY_X(d, v) HAS_KEY(d, option, v)
-  assert(opt_tabp != NULL);
-  *opt_tabp = NULL;
-
   // Validate incompatible argument combinations first, then resolve handles and scope.
-  if (HAS_KEY_X(opts, filetype)) {
-    VALIDATE_CON(!HAS_KEY_X(opts, scope) && !HAS_KEY_X(opts, buf)
-                 && !HAS_KEY_X(opts, win) && !HAS_KEY_X(opts, tab),
-                 "filetype", "'scope', 'buf', 'win' or 'tab'", {
-      return FAIL;
-    });
-  }
+  VALIDATE_CON(!HAS_KEY_X(opts, filetype)
+               || (!HAS_KEY_X(opts, scope) && !HAS_KEY_X(opts, buf)
+                   && !HAS_KEY_X(opts, win) && !HAS_KEY_X(opts, tab)),
+               "filetype", "'scope', 'buf', 'win' or 'tab'", {
+    return FAIL;
+  });
 
-  if (HAS_KEY_X(opts, tab)) {
-    VALIDATE_CON(!HAS_KEY_X(opts, win) && !HAS_KEY_X(opts, buf)
-                 && !HAS_KEY_X(opts, filetype) && !HAS_KEY_X(opts, scope),
-                 "tab", "'win', 'buf', 'filetype' or 'scope'", {
-      return FAIL;
-    });
-  }
+  VALIDATE_CON(!HAS_KEY_X(opts, tab) || allow_tab, "tab", "this function", {
+    return FAIL;
+  });
+
+  VALIDATE_CON(!HAS_KEY_X(opts, tab)
+               || (!HAS_KEY_X(opts, win) && !HAS_KEY_X(opts, buf)
+                   && !HAS_KEY_X(opts, filetype) && !HAS_KEY_X(opts, scope)),
+               "tab", "'win', 'buf', 'filetype' or 'scope'", {
+    return FAIL;
+  });
 
   VALIDATE_CON(!(HAS_KEY_X(opts, win) && HAS_KEY_X(opts, buf)), "buf", "win", {
     return FAIL;
@@ -91,13 +90,6 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
     }
   }
 
-  if (HAS_KEY_X(opts, tab)) {
-    *opt_tabp = find_tab_by_handle(opts->tab, err);
-    if (ERROR_SET(err)) {
-      return FAIL;
-    }
-  }
-
   *opt_idxp = find_option(name);
   if (*opt_idxp == kOptInvalid) {
     // unknown option
@@ -105,10 +97,11 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
     return FAIL;
   }
 
-  if (*opt_tabp != NULL && *opt_idxp != kOptCmdheight) {
-    api_set_error(err, kErrorTypeValidation, "'tab' can only be used with option 'cmdheight'");
+  // The only tab-local option is 'cmdheight'.
+  // TODO(justinmk): introduce kOptScopeTab into option metadata, then use option_has_scope below.
+  VALIDATE_CON(!HAS_KEY_X(opts, tab) || (*opt_idxp == kOptCmdheight), "tab", name, {
     return FAIL;
-  }
+  });
 
   // If 'buf' or 'win' is passed, make sure the option supports it.
   if (*scope == kOptScopeBuf || *scope == kOptScopeWin) {
@@ -236,15 +229,18 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   OptScope scope = kOptScopeGlobal;
   void *from = NULL;
   char *filetype = NULL;
-  tabpage_T *opt_tab = NULL;
 
-  if (!validate_option_value_args(opts, name.data, &opt_idx, &opt_flags, &scope, &from,
-                                  &filetype, &opt_tab, err)) {
+  if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &from,
+                                  &filetype, err)) {
     return (Object)OBJECT_INIT;
   }
 
-  if (opt_tab != NULL) {
-    const OptInt ch = opt_tab == curtab ? p_ch : opt_tab->tp_ch_used;
+  if (HAS_KEY(opts, option, tab)) {
+    tabpage_T *tab = find_tab_by_handle(opts->tab, err);
+    if (ERROR_SET(err)) {
+      return (Object)OBJECT_INIT;
+    }
+    const OptInt ch = (tab == curtab) ? p_ch : tab->tp_ch_used;
     return optval_as_object(NUMBER_OPTVAL(ch));
   }
 
@@ -310,19 +306,13 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
                            Error *err)
   FUNC_API_SINCE(9)
 {
-  // TODO(EliWiegman): support tab-local option setting (only nvim_get_option_value supports `tab`).
-  VALIDATE_CON(!(opts && HAS_KEY(opts, option, tab)),
-               "tab", "nvim_set_option_value", {
-    return;
-  });
-
   OptIndex opt_idx = 0;
   int opt_flags = 0;
   OptScope scope = kOptScopeGlobal;
   void *to = NULL;
-  tabpage_T *opt_tab = NULL;
-  if (!validate_option_value_args(opts, name.data, &opt_idx, &opt_flags, &scope, &to, NULL,
-                                  &opt_tab, err)) {
+  // TODO(justinmk): support tab-local option.
+  if (!validate_option_value_args(opts, name.data, false, &opt_idx, &opt_flags, &scope, &to, NULL,
+                                  err)) {
     return;
   }
 
@@ -405,18 +395,13 @@ DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, A
                                               Error *err)
   FUNC_API_SINCE(11)
 {
-  VALIDATE_CON(!(opts && HAS_KEY(opts, option, tab)),
-               "tab", "nvim_get_option_info2", {
-    return (Dict)ARRAY_DICT_INIT;
-  });
-
   OptIndex opt_idx = 0;
   int opt_flags = 0;
   OptScope scope = kOptScopeGlobal;
   void *from = NULL;
-  tabpage_T *opt_tab = NULL;
-  if (!validate_option_value_args(opts, name.data, &opt_idx, &opt_flags, &scope, &from, NULL,
-                                  &opt_tab, err)) {
+  // TODO(justinmk): support tab-local option.
+  if (!validate_option_value_args(opts, name.data, false, &opt_idx, &opt_flags, &scope, &from, NULL,
+                                  err)) {
     return (Dict)ARRAY_DICT_INIT;
   }
 
