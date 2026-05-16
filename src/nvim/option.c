@@ -4081,7 +4081,7 @@ void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T
   curbuf = save_curbuf;
 }
 
-/// Set the value of an option.
+/// Sets the value of an (non-tty) option.
 ///
 /// @param      opt_idx    Index in options[] table. Must not be kOptInvalid.
 /// @param[in]  value      Option value. If NIL_OPTVAL, the option value is cleared.

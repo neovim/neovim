@@ -5,7 +5,6 @@ local Screen = require('test.functional.ui.screen')
 local clear = n.clear
 local command = n.command
 local exec_lua = n.exec_lua
-local insert = n.insert
 local poke_eventloop = n.poke_eventloop
 local api = n.api
 local eval = n.eval
@@ -17,7 +16,7 @@ describe('TabMoved', function()
     clear()
   end)
 
-  it('sets <amatch> and event-data fields', function()
+  it('sets <amatch>, event-data', function()
     -- start on tabpage 1, create 2 more so tabpage 3 is "current tab"
     command('tabnew')
     command('tabnew')
@@ -35,23 +34,20 @@ describe('TabMoved', function()
     poke_eventloop()
     local events = exec_lua('return _G.tm_events')
     eq('3', events[1].match)
-    eq(3, events[1].data.tabnr_old)
-    eq(1, events[1].data.tabnr_new)
+    eq({ tabnr_new = 1, tabnr_old = 3 }, events[1].data)
 
     command('tabnext 2')
     command('tabmove $')
     poke_eventloop()
     events = exec_lua('return _G.tm_events')
     eq('2', events[2].match)
-    eq(2, events[2].data.tabnr_old)
-    eq(3, events[2].data.tabnr_new)
+    eq({ tabnr_new = 3, tabnr_old = 2 }, events[2].data)
 
     command('tabmove -1')
     poke_eventloop()
     events = exec_lua('return _G.tm_events')
     eq('3', events[3].match)
-    eq(3, events[3].data.tabnr_old)
-    eq(2, events[3].data.tabnr_new)
+    eq({ tabnr_new = 2, tabnr_old = 3 }, events[3].data)
   end)
 
   it('does not trigger when a tab is moved to same position', function()
@@ -75,7 +71,7 @@ describe('TabMoved', function()
     eq(0, eval('g:test'))
   end)
 
-  it('responds correctly to mouse interactions on the tabline', function()
+  it('handles mouse interactions on the tabline', function()
     local function setup()
       Screen.new(25, 5)
       command('set mouse=a')
@@ -96,7 +92,7 @@ describe('TabMoved', function()
     api.nvim_input_mouse('left', 'press', '', 0, 0, 5)
     api.nvim_input_mouse('left', 'release', '', 0, 0, 5)
     poke_eventloop()
-    eq(0, #exec_lua('return _G.tm_events'))
+    eq({}, exec_lua('return _G.tm_events'))
     clear()
 
     -- dragging tab 1 to the right should trigger the event.
@@ -108,7 +104,6 @@ describe('TabMoved', function()
     poke_eventloop()
     local events = exec_lua('return _G.tm_events')
     eq(1, #events)
-    eq(1, events[1].data.tabnr_old)
-    eq(2, events[1].data.tabnr_new)
+    eq({ tabnr_new = 2, tabnr_old = 1 }, events[1].data)
   end)
 end)
