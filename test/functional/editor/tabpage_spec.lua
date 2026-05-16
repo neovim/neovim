@@ -142,6 +142,22 @@ describe('tabpage', function()
     eq(42, fn.gettabvar(0, 'tabvar'))
   end)
 
+  it("gettabwinvar() returns tab-local 'cmdheight' #31140", function()
+    command('set cmdheight=5')
+    local tab1 = api.nvim_get_current_tabpage()
+    command('tabnew')
+    command('set cmdheight=2')
+    local tab2 = api.nvim_get_current_tabpage()
+    local tnr1 = fn.nvim_tabpage_get_number(tab1)
+    local tnr2 = fn.nvim_tabpage_get_number(tab2)
+
+    -- Reading the *other* tab's cmdheight does not change the current tab.
+    eq(5, fn.gettabwinvar(tnr1, 1, '&cmdheight'))
+    eq(2, fn.gettabwinvar(tnr2, 1, '&cmdheight'))
+    eq(tab2, api.nvim_get_current_tabpage())
+    eq(2, api.nvim_get_option_value('cmdheight', {}))
+  end)
+
   it(':tabs does not overflow IObuff with long path with comma #20850', function()
     api.nvim_buf_set_name(0, ('x'):rep(1024) .. ',' .. ('x'):rep(1024))
     command('tabs')

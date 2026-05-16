@@ -4337,6 +4337,10 @@ void unuse_tabpage(tabpage_T *tp)
   tp->tp_firstwin = firstwin;
   tp->tp_lastwin = lastwin;
   tp->tp_curwin = curwin;
+  // Set this tab's stored cmdheight so use_tabpage() can restore it later.
+  // command_height() and win_new_screen_rows() also keep tp_ch_used in sync for the current tab
+  // between tab switches; this catches the no-display switch_win() path which bypasses them.
+  tp->tp_ch_used = p_ch;
 }
 
 // When switching tabpage, handle other side-effects in command_height(), but
@@ -4352,6 +4356,9 @@ void use_tabpage(tabpage_T *tp)
   firstwin = curtab->tp_firstwin;
   lastwin = curtab->tp_lastwin;
   curwin = curtab->tp_curwin;
+  // Restore this tab's cmdheight. Layout adjustment (OptionSet, frame resize) is the caller's
+  // responsibility, see enter_tabpage().
+  p_ch = curtab->tp_ch_used;
 }
 
 // Allocate the first window and put an empty buffer in it.
@@ -4789,20 +4796,21 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   int old_off = tp->tp_firstwin->w_winrow;
   win_T *next_prevwin = tp->tp_prevwin;
   tabpage_T *old_curtab = curtab;
+  OptInt prev_p_ch = p_ch;
 
   use_tabpage(tp);
 
-  if (old_curtab != curtab) {
+  if (old_curtab != curtab && p_ch != prev_p_ch) {
     tabpage_check_windows(old_curtab);
-    if (p_ch != curtab->tp_ch_used) {
-      // Use the stored value of p_ch, so that it can be different for each tab page.
-      // Handle other side-effects but avoid setting frame sizes, which are still correct.
-      OptInt new_ch = curtab->tp_ch_used;
-      curtab->tp_ch_used = p_ch;
-      command_frame_height = false;
-      set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
-      command_frame_height = true;
-    }
+    // use_tabpage() loaded a different cmdheight for the new tab. Fire OptionSet and adjust
+    // the cmdline row without touching frame sizes (the new tab's frames are already correct).
+    OptInt new_ch = p_ch;
+    p_ch = prev_p_ch;
+    command_frame_height = false;
+    set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
+    command_frame_height = true;
+  } else if (old_curtab != curtab) {
+    tabpage_check_windows(old_curtab);
   }
 
   // We would like doing the TabEnter event first, but we don't have a

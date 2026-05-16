@@ -3593,22 +3593,25 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      The result is the value of option or local buffer variable
-      {varname} in buffer {buf}.  Note that the name without "b:"
-      must be used.
-      The {varname} argument is a string.
-      When {varname} is empty returns a |Dictionary| with all the
-      buffer-local variables.
-      When {varname} is equal to "&" returns a |Dictionary| with all
-      the buffer-local options.
-      Otherwise, when {varname} starts with "&" returns the value of
-      a buffer-local option.
-      This also works for a global or buffer-local option, but it
-      doesn't work for a global variable, window-local variable or
-      window-local option.
-      For the use of {buf}, see |bufname()| above.
-      When the buffer or variable doesn't exist {def} or an empty
-      string is returned, there is no error message.
+      Gets the value of a buffer-local variable or option {varname}
+      in buffer {buf}.
+
+      {varname} is a string:
+      - Name of the variable (without "b:").
+      - If empty, gets a |Dictionary| of all buffer-local variables.
+      - If "&", gets a |Dictionary| of all buffer-local options.
+      - If it starts with "&", gets the value of a buffer-local
+        option.
+
+      {buf} has the same form as in |bufname()|.
+
+      Also works for a global or buffer-local option. But not for
+      a global variable, window-local variable or window-local
+      option.
+
+      When the buffer or variable doesn't exist, {def} or an empty
+      string is returned; there is no error.
+
       Examples: >vim
       	let bufmodified = getbufvar(1, "&mod")
       	echo "todo myvar = " .. getbufvar("todo", "myvar")
@@ -5006,29 +5009,34 @@ M.funcs = {
     args = { 3, 4 },
     base = 1,
     desc = [=[
-      Get the value of window-local variable {varname} in window
-      {winnr} in tabpage {tabnr}.
-      The {varname} argument is a string.  When {varname} is empty a
-      dictionary with all window-local variables is returned.
-      When {varname} is equal to "&" get the values of all
-      window-local options in a |Dictionary|.
-      Otherwise, when {varname} starts with "&" get the value of a
-      window-local option.
-      Note that {varname} must be the name without "w:".
-      Tabs are numbered starting with one.  For the current tabpage
-      use |getwinvar()|.
-      {winnr} is a |window-number| or |window-ID|.
+      Gets the value of window-local variable {varname} in {winnr}
+      (|window-number| or |window-ID|) in |tabpage-number| {tabnr}.
+
+      {varname} is a string:
+      - Name of the variable (without "w:").
+      - If empty, gets a dictionary with all window-local variables.
+      - If "&", gets the values of all window-local options in
+        a |Dictionary|.
+      - If it starts with "&", gets the value of a window-local
+        option.
+
+      To get window-local variables in the current tabpage use
+      |getwinvar()|.
+
       When {winnr} is zero the current window is used.
-      This also works for a global option, buffer-local option and
-      window-local option, but it doesn't work for a global variable
-      or buffer-local variable.
-      When the tab, window or variable doesn't exist {def} or an
-      empty string is returned, there is no error message.
+
+      Also works for a global option, buffer-local option,
+      window-local option, and tab-local option ('cmdheight').
+      But not for a global variable or buffer-local variable.
+
+      When the tab, window or variable doesn't exist, {def} or an
+      empty string is returned; there is no error.
+
       Examples: >vim
       	let list_is_on = gettabwinvar(1, 2, '&list')
       	echo "myvar = " .. gettabwinvar(3, 1, 'myvar')
       <
-      To obtain all window-local variables use: >vim
+      To get all window-local variables: >vim
       	gettabwinvar({tabnr}, {winnr}, '&')
       <
     ]=],

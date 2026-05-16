@@ -74,7 +74,6 @@
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
-#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
@@ -3559,28 +3558,37 @@ bool option_has_scope(OptIndex opt_idx, OptScope scope)
   return get_option(opt_idx)->scope_flags & (1 << scope);
 }
 
-/// Check if option is global-local.
+/// Check if option is global-local (has global AND buffer/window scope).
+/// Tab scope is independent and does not make an option "global-local".
 static inline bool option_is_global_local(OptIndex opt_idx)
 {
-  // Global-local options have at least two types, so their type flag cannot be a power of two.
-  return opt_idx != kOptInvalid && !is_power_of_two(options[opt_idx].scope_flags);
-}
-
-/// Check if option only supports global scope.
-static inline bool option_is_global_only(OptIndex opt_idx)
-{
-  // For an option to be global-only, it has to only have a single scope, which means the scope
-  // flags must be a power of two, and it must have the global scope.
-  return opt_idx != kOptInvalid && is_power_of_two(options[opt_idx].scope_flags)
+  if (opt_idx == kOptInvalid) {
+    return false;
+  }
+  const OptScopeFlags bw = (1 << kOptScopeBuf) | (1 << kOptScopeWin);
+  return (options[opt_idx].scope_flags & bw) != 0
          && option_has_scope(opt_idx, kOptScopeGlobal);
 }
 
-/// Check if option only supports window scope.
+/// Check if option only supports global scope (ignoring tab scope, which is independent).
+static inline bool option_is_global_only(OptIndex opt_idx)
+{
+  if (opt_idx == kOptInvalid) {
+    return false;
+  }
+  const OptScopeFlags bw = (1 << kOptScopeBuf) | (1 << kOptScopeWin);
+  return (options[opt_idx].scope_flags & bw) == 0
+         && option_has_scope(opt_idx, kOptScopeGlobal);
+}
+
+/// Check if option only supports window scope (ignoring tab scope, which is independent).
 static inline bool option_is_window_local(OptIndex opt_idx)
 {
-  // For an option to be window-local it has to only have a single scope, which means the scope
-  // flags must be a power of two, and it must have the window scope.
-  return opt_idx != kOptInvalid && is_power_of_two(options[opt_idx].scope_flags)
+  if (opt_idx == kOptInvalid) {
+    return false;
+  }
+  const OptScopeFlags exclude = (1 << kOptScopeGlobal) | (1 << kOptScopeBuf);
+  return (options[opt_idx].scope_flags & exclude) == 0
          && option_has_scope(opt_idx, kOptScopeWin);
 }
 
@@ -4073,6 +4081,10 @@ void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T
   case kOptScopeBuf:
     curbuf = (buf_T *)from;
     break;
+  case kOptScopeTab:
+    // No context to switch; tab-scoped direct-set isn't used. Caller should route through
+    // set_option_value_for() instead.
+    abort();
   }
 
   set_option_direct(opt_idx, value, opt_flags, set_sid);
@@ -4156,12 +4168,18 @@ void set_option_value_give_err(const OptIndex opt_idx, OptVal value, int opt_fla
   }
 }
 
-/// Switch current context to get/set option value for window/buffer.
+/// Switch current context to get/set option value for the target window/buffer/tabpage.
 ///
-/// @param[out]  ctx        Current context. switchwin_T for window and aco_save_T for buffer.
-/// @param       scope      Option scope. See OptScope in option.h.
-/// @param[in]   from       Target buffer/window.
-/// @param[out]  err        Error message, if any.
+/// Tab-scope switch is GET-only (SET requires side-effects, see set_option_value_for()).
+///
+/// @param[out]  ctx   Switched-from context, restored by restore_option_context():
+///                    - kOptScopeWin: switchwin_T
+///                    - kOptScopeBuf: aco_save_T
+///                    - kOptScopeTab: tabpage_T * (saved curtab)
+///                    - kOptScopeGlobal: unused
+/// @param       scope Option scope. See OptScope in option.h.
+/// @param[in]   from  Target win_T/buf_T/tabpage_T.
+/// @param[out]  err   Error message, if any.
 ///
 /// @return  true if context was switched, false otherwise.
 static bool switch_option_context(void *const ctx, OptScope scope, void *const from, Error *err)
@@ -4177,8 +4195,7 @@ static bool switch_option_context(void *const ctx, OptScope scope, void *const f
       return false;
     }
 
-    if (switch_win_noblock(switchwin, win, win_find_tabpage(win), true)
-        == FAIL) {
+    if (FAIL == switch_win_noblock(switchwin, win, win_find_tabpage(win), true)) {
       restore_win_noblock(switchwin, true);
 
       if (ERROR_SET(err)) {
@@ -4199,6 +4216,20 @@ static bool switch_option_context(void *const ctx, OptScope scope, void *const f
     aucmd_prepbuf(aco, buf);
     return true;
   }
+  case kOptScopeTab: {
+    // GET-only: swap curtab so get_option_value() reads the target tab's stored value (p_ch).
+    // SET on a non-current tab cannot use this path, see comment in set_option_value_for().
+    tabpage_T *const tab = (tabpage_T *)from;
+    tabpage_T **const saved_curtab = (tabpage_T **)ctx;
+
+    if (tab == curtab) {
+      return false;
+    }
+    *saved_curtab = curtab;
+    unuse_tabpage(curtab);
+    use_tabpage(tab);
+    return true;
+  }
   }
   UNREACHABLE;
 }
@@ -4216,6 +4247,12 @@ static void restore_option_context(void *const ctx, OptScope scope)
   case kOptScopeBuf:
     aucmd_restbuf((aco_save_T *)ctx);
     break;
+  case kOptScopeTab: {
+    tabpage_T *const saved_curtab = *(tabpage_T **)ctx;
+    unuse_tabpage(curtab);
+    use_tabpage(saved_curtab);
+    break;
+  }
   }
 }
 
@@ -4235,8 +4272,11 @@ OptVal get_option_value_for(OptIndex opt_idx, int opt_flags, const OptScope scop
 {
   switchwin_T switchwin;
   aco_save_T aco;
+  tabpage_T *swtab = NULL;
   void *ctx = scope == kOptScopeWin ? (void *)&switchwin
-                                    : (scope == kOptScopeBuf ? (void *)&aco : NULL);
+                                    : scope == kOptScopeBuf ? (void *)&aco
+                                                            : scope == kOptScopeTab ? (void *)&swtab
+                                                                                    : NULL;
 
   bool switched = switch_option_context(ctx, scope, from, err);
   if (ERROR_SET(err)) {
@@ -4265,10 +4305,29 @@ void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, cons
                           const OptScope scope, void *const from, Error *err)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  // Special case: Tab scope (for NON-CURRENT tab) can't go through the normal "set" path:
+  // did_set_cmdheight() mutates globals not managed by use_tabpage()/unuse_tabpage(), which would
+  // leak across switch_option_context().
+  //
+  // Workaround: set `tp_ch_used` directly; the cmdline will resize when the tab is switched-to.
+  if (scope == kOptScopeTab && (tabpage_T *)from != curtab) {
+    tabpage_T *const tab = (tabpage_T *)from;
+    assert(opt_idx == kOptCmdheight);
+    if (value.type != kOptValTypeNumber) {
+      api_set_error(err, kErrorTypeValidation, "'cmdheight' requires a Number");
+      return;
+    }
+    tab->tp_ch_used = value.data.number;
+    return;
+  }
+
   switchwin_T switchwin;
   aco_save_T aco;
+  tabpage_T *swtab = NULL;
   void *ctx = scope == kOptScopeWin ? (void *)&switchwin
-                                    : (scope == kOptScopeBuf ? (void *)&aco : NULL);
+                                    : scope == kOptScopeBuf ? (void *)&aco
+                                                            : scope == kOptScopeTab ? (void *)&swtab
+                                                                                    : NULL;
 
   bool switched = switch_option_context(ctx, scope, from, err);
   if (ERROR_SET(err)) {
@@ -6686,6 +6745,8 @@ static Dict vimoption2dict(vimoption_T *opt, int opt_flags, buf_T *buf, win_T *w
     scope = "buf";
   } else if (option_has_scope(opt_idx, kOptScopeWin)) {
     scope = "win";
+  } else if (option_has_scope(opt_idx, kOptScopeTab)) {
+    scope = "tab";
   } else {
     scope = "global";
   }

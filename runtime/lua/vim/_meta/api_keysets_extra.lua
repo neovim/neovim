@@ -200,7 +200,7 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.get_option_info
 --- @field name string
 --- @field shortname string
---- @field scope 'buf'|'win'|'global'
+--- @field scope 'buf'|'win'|'global'|'tab'
 --- @field global_local boolean
 --- @field commalist boolean
 --- @field flaglist boolean
