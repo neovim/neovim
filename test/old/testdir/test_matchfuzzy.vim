@@ -333,4 +333,13 @@ func Test_matchfuzzy_initialized()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_matchfuzzy_long_multiword_no_overflow()
+  let word = repeat('a', 100)
+  let pat_ok = repeat(word . ' ', 9) . word
+  call assert_equal([word], matchfuzzy([word], pat_ok))
+
+  let pat_overflow = repeat(word . ' ', 14) . word
+  call assert_equal([[], [], []], matchfuzzypos([word], pat_overflow))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

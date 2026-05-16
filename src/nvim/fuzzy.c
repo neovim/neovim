@@ -78,6 +78,7 @@ bool fuzzy_match(char *const str, const char *const pat_arg, const bool matchseq
 {
   bool complete = false;
   int numMatches = 0;
+  int pat_chars = 0;
 
   *outScore = 0;
 
@@ -103,6 +104,17 @@ bool fuzzy_match(char *const str, const char *const pat_arg, const bool matchseq
         complete = true;
       }
       *p = NUL;
+    }
+    // match_positions() always writes pat_chars entries,
+    // so bail if they won't fit.
+    pat_chars = mb_charlen(pat);
+    if (pat_chars > maxMatches) {
+      pat_chars = maxMatches;
+    }
+    if (numMatches > maxMatches - pat_chars) {
+      numMatches = 0;
+      *outScore = FUZZY_SCORE_NONE;
+      break;
     }
 
     int score = FUZZY_SCORE_NONE;
@@ -131,7 +143,7 @@ bool fuzzy_match(char *const str, const char *const pat_arg, const bool matchseq
       *outScore += score;
     }
 
-    numMatches += mb_charlen(pat);
+    numMatches += pat_chars;
 
     if (complete || numMatches >= maxMatches) {
       break;
