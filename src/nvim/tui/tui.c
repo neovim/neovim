@@ -356,49 +356,6 @@ void tui_query_bg_color(TUIData *tui)
   flush_buf(tui);
 }
 
-static void apply_termdef_field(TUIData *tui, TermdefField *td_field, KeyValuePair *kv)
-{
-  Object val = kv->value;
-  char *dst = (char *)&tui->ti + td_field->offset;
-
-  switch (val.type) {
-  case kObjectTypeBoolean:
-    *(bool *)dst = val.data.boolean;
-    break;
-  case kObjectTypeInteger:
-    *(int *)dst = (int)val.data.integer;
-    break;
-  case kObjectTypeString:
-    *(const char **)dst = arena_strdup(&tui->ti_arena,
-                                       val.data.string.data);
-    break;
-  case kObjectTypeArray:
-    if (val.data.array.size > 2) {
-      WLOG(
-          "skipping invalid key definition in $NVIM_TERMDEFS for %s: array should have at most two entries for unshifted and shifted key variants.",
-          kv->key.data);
-      return;
-    }
-    *(const char **)dst = NULL;
-    *(const char **)(dst + sizeof(char *)) = NULL;
-
-    for (size_t key_map_idx = 0; key_map_idx < val.data.array.size;
-         key_map_idx++) {
-      Object key_mapping = val.data.array.items[key_map_idx];
-      if (key_mapping.type != kObjectTypeString) {
-        WLOG("skipping invalid key definition in $NVIM_TERMDEFS for %s[%zu]: expected 'string'",
-             kv->key.data, key_map_idx);
-        continue;
-      }
-      size_t offset = key_map_idx * sizeof(char *);
-      *(const char **)(dst + offset) = arena_strdup(&tui->ti_arena, key_mapping.data.string.data);
-    }
-    break;
-  default:
-    break;
-  }
-}
-
 /// Use $NVIM_TERMDEFS to apply user overrides to terminfo.
 ///
 /// This is necessary for Windows, where terminfo files are broken in Unibilium. #37274
@@ -412,7 +369,7 @@ static void apply_termdefs(TUIData *tui)
   }
 
   Error lua_err = ERROR_INIT;
-  Object rv = NLUA_EXEC_STATIC("return require('vim.tty').termdefs",
+  Object rv = NLUA_EXEC_STATIC("return require('vim.tty').get_termdefs()",
                                (Array)ARRAY_DICT_INIT, kRetObject, NULL, &lua_err);
   if (rv.type != kObjectTypeDict) {
     return;
@@ -420,18 +377,85 @@ static void apply_termdefs(TUIData *tui)
 
   init_termdef_fields();
 
+  Arena err_arena = ARENA_EMPTY;
+  Array chunks = ARRAY_DICT_INIT;
+  int err_count = 0;
+
+#define PUSH_ERR(fmt, ...) \
+  do { \
+    String str = arena_printf(&err_arena, fmt, __VA_ARGS__); \
+    Array err = arena_array(&err_arena, 2); \
+    ADD(err, STRING_OBJ(str)); \
+    ADD(err, STATIC_CSTR_AS_OBJ("ErrorMsg")); \
+    ADD(chunks, ARRAY_OBJ(err)); \
+    err_count++; \
+  } while (0)
+
   for (size_t i = 0; i < rv.data.dict.size; i++) {
     KeyValuePair kv = rv.data.dict.items[i];
     TermdefField *td_field = pmap_get(cstr_t)(&termdef_fields, kv.key.data);
     if (!td_field || kv.value.type != td_field->type) {
-      WLOG("skipping invalid key in $NVIM_TERMDEFS: '%s'", kv.key.data);
+      PUSH_ERR("skipping invalid field in $NVIM_TERMDEFS: '%s'\n", kv.key.data);
       continue;
     }
-    apply_termdef_field(tui, td_field, &kv);
+    Object val = kv.value;
+    char *dst = (char *)&tui->ti + td_field->offset;
+
+    switch (val.type) {
+    case kObjectTypeBoolean:
+      *(bool *)dst = val.data.boolean;
+      break;
+    case kObjectTypeInteger:
+      *(int *)dst = (int)val.data.integer;
+      break;
+    case kObjectTypeString:
+      *(const char **)dst = arena_strdup(&tui->ti_arena,
+                                         val.data.string.data);
+      break;
+    case kObjectTypeArray:
+      if (val.data.array.size > 2) {
+        PUSH_ERR(
+                "skipping invalid field definition in $NVIM_TERMDEFS for %s: array should have at most two entries for unshifted and shifted key variants.\n",
+                kv.key.data);
+        continue;
+      }
+      *(const char **)dst = NULL;
+      *(const char **)(dst + sizeof(char *)) = NULL;
+
+      for (size_t key_map_idx = 0; key_map_idx < val.data.array.size;
+           key_map_idx++) {
+        Object key_mapping = val.data.array.items[key_map_idx];
+        if (key_mapping.type != kObjectTypeString) {
+          PUSH_ERR(
+                  "skipping invalid field definition in $NVIM_TERMDEFS for %s[%zu]: expected type 'string'\n",
+                  kv.key.data, key_map_idx);
+          continue;
+        }
+        size_t offset = key_map_idx * sizeof(char *);
+        *(const char **)(dst + offset) = arena_strdup(&tui->ti_arena, key_mapping.data.string.data);
+      }
+      break;
+    default:
+      break;
+    }
   }
 
+  if (err_count > 0) {
+    MAXSIZE_TEMP_ARRAY(args, 3);
+    ADD_C(args, ARRAY_OBJ(chunks));
+    ADD_C(args, BOOLEAN_OBJ(true));  // history
+    MAXSIZE_TEMP_DICT(opts, 1);
+    PUT_C(opts, "err", BOOLEAN_OBJ(true));
+    ADD_C(args, DICT_OBJ(opts));
+    rpc_send_event(ui_client_channel_id, "nvim_echo", args);
+  }
+
+  arena_mem_free(arena_finish(&err_arena));
+  kv_destroy(chunks);
   api_free_object(rv);
   api_clear_error(&lua_err);
+
+#undef PUSH_ERR
 }
 
 /// Enable the alternate screen and emit other control sequences to start the TUI.
