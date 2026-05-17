@@ -1347,7 +1347,7 @@ describe('user config init', function()
     clear { args_rm = { '-u' }, env = xenv }
 
     eq(1, eval('g:lua_rc'))
-    eq(t.fix_slashes(fn.fnamemodify(init_lua_path, ':p')), eval('$MYVIMRC'))
+    eq(fn.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
   end)
 
   describe('loads existing', function()
@@ -1581,7 +1581,7 @@ describe('user config init', function()
         env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
       }
       eq(1, eval('g:xdg_config_dirs_lua'))
-      eq(t.fix_slashes(fn.fnamemodify(xdgdir .. '/nvim/init.lua', ':p')), eval('$MYVIMRC'))
+      eq(fn.fnamemodify(xdgdir .. '/nvim/init.lua', ':p'), eval('$MYVIMRC'))
     end)
 
     it('prefers init.lua over init.vim, shows E5422', function()
@@ -1623,7 +1623,7 @@ describe('user config init', function()
       }
       eq(1, eval('g:appname_lua'))
       eq(0, eval('get(g:, "wrong", 0)'))
-      eq(t.fix_slashes(fn.fnamemodify(appdir .. '/init.lua', ':p')), eval('$MYVIMRC'))
+      eq(fn.fnamemodify(appdir .. '/init.lua', ':p'), eval('$MYVIMRC'))
     end)
   end)
 end)
