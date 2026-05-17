@@ -158,4 +158,30 @@ function M.query_apc(payload, opts, on_response)
   end)
 end
 
+--- Displays error even when this code runs in the context of the client
+--- @param msg string
+local function broadcast_error(msg)
+  vim.rpcnotify(0, 'nvim_echo', {
+    {
+      msg,
+    },
+  }, true, { err = true })
+end
+
+--- Get user overrides for terminfo entries as a table. See |$NVIM_TERMDEFS|
+function M.get_termdefs()
+  local termdefs_raw = os.getenv('NVIM_TERMDEFS')
+  if termdefs_raw ~= nil then
+    local ok, termdefs_or_err = pcall(vim.json.decode, termdefs_raw)
+    if not ok then
+      broadcast_error('E557: Failed to parse $NVIM_TERMDEFS: ' .. vim.inspect(termdefs_or_err))
+      return
+    elseif type(termdefs_or_err) ~= 'table' or vim.isarray(termdefs_or_err) then
+      broadcast_error('E557: expected $NVIM_TERMDEFS to be table. :help $NVIM_TERMDEFS')
+      return
+    end
+    return termdefs_or_err
+  end
+end
+
 return M

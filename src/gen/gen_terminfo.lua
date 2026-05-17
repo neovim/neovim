@@ -18,104 +18,13 @@ local url = 'https://invisible-island.net/datafiles/current/terminfo.src.gz'
 local target_gen = 'src/nvim/tui/terminfo_builtin.h'
 local target_enum = 'src/nvim/tui/terminfo_enum_defs.h'
 
-local entries = {
-  { 'ansi', 'ansi_terminfo' },
-  { 'ghostty', 'ghostty_terminfo' }, -- Note: ncurses defs do not exactly match what ghostty ships.
-  { 'interix', 'interix_8colour_terminfo' },
-  { 'iterm2', 'iterm_256colour_terminfo' },
-  { 'linux', 'linux_16colour_terminfo' },
-  { 'putty-256color', 'putty_256colour_terminfo' },
-  { 'rxvt-256color', 'rxvt_256colour_terminfo' },
-  { 'screen-256color', 'screen_256colour_terminfo' },
-  { 'st-256color', 'st_256colour_terminfo' },
-  { 'tmux-256color', 'tmux_256colour_terminfo' },
-  { 'vte-256color', 'vte_256colour_terminfo' },
-  { 'xterm-256color', 'xterm_256colour_terminfo' },
-  { 'cygwin', 'cygwin_terminfo' },
-  { 'win32con', 'win32con_terminfo' },
-  { 'conemu', 'conemu_terminfo' },
-  { 'vtpcon', 'vtpcon_terminfo' },
-}
-
-local wanted_numbers = { 'max_colors', 'lines', 'columns' }
-local wanted_strings = {
-  'carriage_return',
-  'change_scroll_region',
-  'clear_screen',
-  'clr_eol',
-  'clr_eos',
-  'cursor_address',
-  'cursor_down',
-  'cursor_invisible',
-  'cursor_left',
-  'cursor_home',
-  'cursor_normal',
-  'cursor_up',
-  'cursor_right',
-  'delete_line',
-  'enter_blink_mode',
-  'enter_bold_mode',
-  'enter_ca_mode',
-  'enter_dim_mode',
-  'enter_italics_mode',
-  'enter_reverse_mode',
-  'enter_secure_mode',
-  'enter_standout_mode',
-  'enter_underline_mode',
-  'erase_chars',
-  'exit_attribute_mode',
-  'exit_ca_mode',
-  'from_status_line',
-  'insert_line',
-  'keypad_local',
-  'keypad_xmit',
-  'parm_delete_line',
-  'parm_down_cursor',
-  'parm_insert_line',
-  'parm_left_cursor',
-  'parm_right_cursor',
-  'parm_up_cursor',
-  'set_a_background',
-  'set_a_foreground',
-  'set_attributes',
-  'set_lr_margin',
-  'to_status_line',
-}
-
-local wanted_strings_ext = {
-  -- the following are our custom name for extensions, see "extmap"
-  { 'reset_cursor_style', 'Se' },
-  { 'set_cursor_style', 'Ss' },
-  -- terminfo describes strikethrough modes as rmxx/smxx with respect
-  -- to the ECMA-48 strikeout/crossed-out attributes.
-  { 'enter_strikethrough_mode', 'smxx' },
-  { 'set_rgb_foreground', 'setrgbf' },
-  { 'set_rgb_background', 'setrgbb' },
-  { 'set_cursor_color', 'Cs' },
-  { 'reset_cursor_color', 'Cr' },
-  { 'set_underline_style', 'Smulx' },
-}
-
--- Note: these are only consumed by driver-ti via it's table of "funcs" keys.
--- Second value is whether there is a "shift" variant in terminfo.
-local wanted_termkeys = {
-  { 'backspace', false },
-  { 'beg', true }, -- sometimes known as: "begin"
-  { 'btab', false },
-  { 'clear', false },
-  { 'dc', true },
-  { 'end', true },
-  { 'find', true },
-  { 'home', true },
-  { 'ic', true },
-  { 'npage', false },
-  { 'ppage', false },
-  { 'select', false },
-  { 'suspend', true },
-  { 'undo', true },
-  { 'left', true },
-  { 'right', true },
-}
+local terminfo = require('src.gen.terminfo')
+local entries = terminfo.builtin_terminals
+local wanted_strings = terminfo.fields.strings
+local wanted_strings_ext = terminfo.fields.strings_ext
+local wanted_bools = terminfo.fields.bools
+local wanted_ints = terminfo.fields.ints
+local wanted_termkeys = terminfo.fields.termkeys
 
 local db = '/tmp/nvim_terminfo'
 if vim.uv.fs_stat(db) == nil then
@@ -173,7 +82,7 @@ f_enum:write([[
 // but will then be encoded as chords. We might actually prefer that but it is
 // potentially breaking change.
 ]])
-local func_key_max = 63
+local func_key_max = terminfo.fields.func_key_max
 f_enum:write('#define kTerminfoFuncKeyMax ' .. func_key_max .. '\n')
 f_enum:write('typedef enum {\n')
 for _, item in ipairs(wanted_termkeys) do
@@ -223,12 +132,11 @@ for _, entry in ipairs(entries) do
   end
 
   f_defs:write('\nstatic const TerminfoEntry ' .. target .. ' = {\n')
-  f_defs:write('  .bce = ' .. tostring(bools.back_color_erase or false) .. ',\n')
-  local has_Tc_or_RGB = (bools.Tc or bools.RGB) or false
-  f_defs:write('  .has_Tc_or_RGB = ' .. tostring(has_Tc_or_RGB or false) .. ',\n')
-  f_defs:write('  .Su = ' .. tostring(bools.Su or false) .. ',\n')
+  for _, b in ipairs(wanted_bools) do
+    f_defs:write('  .' .. b .. ' = ' .. tostring(bools[b] or false) .. ',\n')
+  end
 
-  for _, name in ipairs(wanted_numbers) do
+  for _, name in ipairs(wanted_ints) do
     f_defs:write('  .' .. name .. ' = ' .. (nums[name] or '-1') .. ',\n')
   end
   f_defs:write('  .defs = {\n')
@@ -269,7 +177,17 @@ for _, entry in ipairs(entries) do
   f_defs:write('};\n')
 end
 
-f_defs:write('\n#define XLIST_TERMINFO_BUILTIN \\\n')
+f_defs:write('\n#define XLIST_TERMINFO_BOOLS \\\n')
+for _, item in ipairs(wanted_bools) do
+  f_defs:write('  X(' .. item .. ') \\\n')
+end
+f_defs:write('// end of list\n\n')
+f_defs:write('#define XLIST_TERMINFO_INTS \\\n')
+for _, item in ipairs(wanted_ints) do
+  f_defs:write('  X(' .. item .. ') \\\n')
+end
+f_defs:write('// end of list\n\n')
+f_defs:write('#define XLIST_TERMINFO_BUILTIN \\\n')
 for _, name in ipairs(wanted_strings) do
   f_defs:write('  X(' .. name .. ') \\\n')
 end
@@ -286,7 +204,7 @@ end
 f_defs:write('// end of list\n\n')
 f_defs:write('#define XLIST_TERMINFO_FKEYS \\\n')
 for i = 1, func_key_max do
-  f_defs:write('  X(f' .. i .. ') \\\n')
+  f_defs:write('  X(f' .. i .. ', ' .. i - 1 .. ') \\\n')
 end
 f_defs:write('// end of list\n')
 f_defs:close()

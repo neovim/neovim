@@ -24,6 +24,7 @@
 #include "nvim/grid.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/log.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
@@ -35,6 +36,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
+#include "nvim/tui/termdef_field_defs.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/ugrid.h"
@@ -354,6 +356,108 @@ void tui_query_bg_color(TUIData *tui)
   flush_buf(tui);
 }
 
+/// Use $NVIM_TERMDEFS to apply user overrides to terminfo.
+///
+/// This is necessary for Windows, where terminfo files are broken in Unibilium. #37274
+/// If/when Unibilium is removed, this will also be useful for anyone who wants to override
+/// the built-in definitions.
+static void apply_termdefs(TUIData *tui)
+{
+  // We allow empty values just to provide the user with a warning
+  if (!os_env_exists("NVIM_TERMDEFS", false)) {
+    return;
+  }
+
+  Error lua_err = ERROR_INIT;
+  Object rv = NLUA_EXEC_STATIC("return require('vim.tty').get_termdefs()",
+                               (Array)ARRAY_DICT_INIT, kRetObject, NULL, &lua_err);
+  if (rv.type != kObjectTypeDict) {
+    return;
+  }
+
+  init_termdef_fields();
+
+  Arena err_arena = ARENA_EMPTY;
+  Array chunks = ARRAY_DICT_INIT;
+  int err_count = 0;
+
+#define PUSH_ERR(fmt, ...) \
+  do { \
+    String str = arena_printf(&err_arena, fmt, __VA_ARGS__); \
+    Array err = arena_array(&err_arena, 2); \
+    ADD(err, STRING_OBJ(str)); \
+    ADD(err, STATIC_CSTR_AS_OBJ("ErrorMsg")); \
+    ADD(chunks, ARRAY_OBJ(err)); \
+    err_count++; \
+  } while (0)
+
+  for (size_t i = 0; i < rv.data.dict.size; i++) {
+    KeyValuePair kv = rv.data.dict.items[i];
+    TermdefField *td_field = pmap_get(cstr_t)(&termdef_fields, kv.key.data);
+    if (!td_field || kv.value.type != td_field->type) {
+      PUSH_ERR("skipping invalid field in $NVIM_TERMDEFS: '%s'\n", kv.key.data);
+      continue;
+    }
+    Object val = kv.value;
+    char *dst = (char *)&tui->ti + td_field->offset;
+
+    switch (val.type) {
+    case kObjectTypeBoolean:
+      *(bool *)dst = val.data.boolean;
+      break;
+    case kObjectTypeInteger:
+      *(int *)dst = (int)val.data.integer;
+      break;
+    case kObjectTypeString:
+      *(const char **)dst = arena_strdup(&tui->ti_arena,
+                                         val.data.string.data);
+      break;
+    case kObjectTypeArray:
+      if (val.data.array.size > 2) {
+        PUSH_ERR(
+                "skipping invalid field definition in $NVIM_TERMDEFS for %s: array should have at most two entries for unshifted and shifted key variants.\n",
+                kv.key.data);
+        continue;
+      }
+      *(const char **)dst = NULL;
+      *(const char **)(dst + sizeof(char *)) = NULL;
+
+      for (size_t key_map_idx = 0; key_map_idx < val.data.array.size;
+           key_map_idx++) {
+        Object key_mapping = val.data.array.items[key_map_idx];
+        if (key_mapping.type != kObjectTypeString) {
+          PUSH_ERR(
+                  "skipping invalid field definition in $NVIM_TERMDEFS for %s[%zu]: expected type 'string'\n",
+                  kv.key.data, key_map_idx);
+          continue;
+        }
+        size_t offset = key_map_idx * sizeof(char *);
+        *(const char **)(dst + offset) = arena_strdup(&tui->ti_arena, key_mapping.data.string.data);
+      }
+      break;
+    default:
+      break;
+    }
+  }
+
+  if (err_count > 0) {
+    MAXSIZE_TEMP_ARRAY(args, 3);
+    ADD_C(args, ARRAY_OBJ(chunks));
+    ADD_C(args, BOOLEAN_OBJ(true));  // history
+    MAXSIZE_TEMP_DICT(opts, 1);
+    PUT_C(opts, "err", BOOLEAN_OBJ(true));
+    ADD_C(args, DICT_OBJ(opts));
+    rpc_send_event(ui_client_channel_id, "nvim_echo", args);
+  }
+
+  arena_mem_free(arena_finish(&err_arena));
+  kv_destroy(chunks);
+  api_free_object(rv);
+  api_clear_error(&lua_err);
+
+#undef PUSH_ERR
+}
+
 /// Enable the alternate screen and emit other control sequences to start the TUI.
 ///
 /// This is also called when the TUI is resumed after being suspended. We reinitialize all state
@@ -396,7 +500,7 @@ static void terminfo_start(TUIData *tui)
 
   // Set up terminfo.
   tui->terminfo_found_in_db = false;
-  if (term) {
+  if (term && !os_env_exists("NVIM_TERMDEFS", false)) {
     if (terminfo_from_database(&tui->ti, term, &tui->ti_arena)) {
       tui->term = arena_strdup(&tui->ti_arena, term);
       tui->terminfo_found_in_db = true;
@@ -436,6 +540,7 @@ static void terminfo_start(TUIData *tui)
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   augment_terminfo(tui, term, vtev, konsolev, weztermv, iterm_env, nsterm);
+  apply_termdefs(tui);
 
 #define TI_HAS(name) (tui->ti.defs[name] != NULL)
   tui->can_change_scroll_region = TI_HAS(kTerm_change_scroll_region);
@@ -452,7 +557,7 @@ static void terminfo_start(TUIData *tui)
     || terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "win32con")
     || terminfo_is_term_family(term, "interix");
-  tui->bce = tui->ti.bce;
+  tui->bce = tui->ti.back_color_erase;
   // Set 't_Co' from the result of terminfo & fix_terminfo.
   t_colors = tui->ti.max_colors;
   // Enter alternate screen, save title, and clear.
@@ -2033,7 +2138,7 @@ static bool term_has_truecolor(TUIData *tui, const char *colorterm)
     return true;
   }
 
-  if (tui->ti.has_Tc_or_RGB) {
+  if (tui->ti.Tc || tui->ti.RGB) {
     // terminfo had one of "Tc" or "RGB" extended boolean capabilities
     return true;
   }
@@ -2121,7 +2226,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
 
   if (tmux || screen || kitty) {
     // Disable BCE in some cases we know it is not working. #8806
-    tui->ti.bce = false;
+    tui->ti.back_color_erase = false;
   }
 
   if (xterm || hterm) {
