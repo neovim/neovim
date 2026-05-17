@@ -29,8 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      CMAKE_URL: 'https://cmake.org/files/v3.16/cmake-3.16.0-Linux-x86_64.sh'
-      CMAKE_VERSION: '3.16.0'
+      CMAKE_URL: 'https://cmake.org/files/v3.19/cmake-3.19.0-Linux-x86_64.sh'
+      CMAKE_VERSION: '3.19.0'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -90,3 +90,20 @@ jobs:
 
       - name: Build
         run: make CMAKE_FLAGS="-D CI_BUILD=ON"
+
+  libghostty-vt:
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.test }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: |
+          cmake -S cmake.deps --preset ci -D ENABLE_GHOSTTY=ON
+          cmake --build .deps
+          cmake --preset ci -D ENABLE_GHOSSTY=ON
+          cmake --build build
