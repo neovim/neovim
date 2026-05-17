@@ -356,11 +356,10 @@ void tui_query_bg_color(TUIData *tui)
   flush_buf(tui);
 }
 
-/// Use $NVIM_TERMDEFS to apply user overrides to terminfo.
+/// Use $NVIM_TERMDEFS to apply user overrides to terminfo. This is our own homebaked "terminfo",
+/// analogous to Vim's t_xx options. #37274
 ///
-/// This is necessary for Windows, where terminfo files are broken in Unibilium. #37274
-/// If/when Unibilium is removed, this will also be useful for anyone who wants to override
-/// the built-in definitions.
+/// This also positions us to drop Unibilium entirely.
 static void apply_termdefs(TUIData *tui)
 {
   // We allow empty values just to provide the user with a warning
@@ -369,7 +368,7 @@ static void apply_termdefs(TUIData *tui)
   }
 
   Error lua_err = ERROR_INIT;
-  Object rv = NLUA_EXEC_STATIC("return require('vim.tty').get_termdefs()",
+  Object rv = NLUA_EXEC_STATIC("return require('vim.tty')._get_termdefs()",
                                (Array)ARRAY_DICT_INIT, kRetObject, NULL, &lua_err);
   if (rv.type != kObjectTypeDict) {
     return;

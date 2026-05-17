@@ -2955,25 +2955,25 @@ vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
 Lua module: vim.hl                                                    *vim.hl*
 
 vim.hl.hl_op({opts})                                          *vim.hl.hl_op()*
-    Highlight the related text region during a |TextYankPost| or |TextPutPost|
-    event.
+    Highlights the affected text region during a |TextYankPost| or
+    |TextPutPost| event.
 
-    Add the following to your `init.vim`: >vim
+    Add this to your `init.vim`: >vim
         autocmd TextYankPost * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
-        autocmd TextPutPost * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
+        autocmd TextPutPost  * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
 <
 
     Parameters: ~
       • {opts}  (`table?`) Optional parameters
-                • event event structure (default vim.v.event)
-                • higroup highlight group for the text region (default
-                  "IncSearch")
-                • on_macro highlight when executing macro (default false)
-                • on_visual highlight when the event is in |Visual| mode
-                  (default true)
-                • priority integer priority (default
-                  |vim.hl.priorities|`.user`)
-                • timeout time in ms before highlight is cleared (default 150)
+                • event (default vim.v.event) Event structure.
+                • higroup (default "IncSearch") Highlight group for the text
+                  region.
+                • on_macro (default false) Highlight during |macro| execution.
+                • on_visual (default true) Highlight during |Visual| mode.
+                • priority (default |vim.hl.priorities|`.user`) Integer
+                  priority.
+                • timeout (default 150) Time in ms before highlight is
+                  cleared.
 
 vim.hl.priorities                                          *vim.hl.priorities*
     Table with default priorities used for highlighting:
