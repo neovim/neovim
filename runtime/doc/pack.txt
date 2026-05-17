@@ -496,7 +496,8 @@ get({names}, {opts})                                          *vim.pack.get()*
         • {branches}? (`string[]`) Available Git branches (first is default).
           Missing if `info=false`.
         • {path} (`string`) Plugin's path on disk.
-        • {rev} (`string`) Current Git revision.
+        • {rev} (`string`) Current Git revision. Taken from
+          |vim.pack-lockfile| if `info=false`.
         • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with resolved
           `name`.
         • {tags}? (`string[]`) Available Git tags. Missing if `info=false`.

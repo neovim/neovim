@@ -1434,7 +1434,7 @@ end
 --- @field active boolean Whether plugin was added via |vim.pack.add()| to current session.
 --- @field branches? string[] Available Git branches (first is default). Missing if `info=false`.
 --- @field path string Plugin's path on disk.
---- @field rev string Current Git revision.
+--- @field rev string Current Git revision. Taken from |vim.pack-lockfile| if `info=false`.
 --- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
 --- @field tags? string[] Available Git tags. Missing if `info=false`.
 
@@ -1450,6 +1450,7 @@ local function add_p_data_info(p_data_list)
     --- @async
     funs[i] = function()
       p_data.branches = git_get_branches(path)
+      p_data.rev = git_get_hash('HEAD', path)
       p_data.tags = git_get_tags(path)
     end
   end

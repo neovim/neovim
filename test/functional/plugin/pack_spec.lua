@@ -2073,11 +2073,13 @@ describe('vim.pack', function()
     local function make_basic_data(active, info)
       local spec = { name = 'basic', src = repos_src.basic, version = 'feat-branch' }
       local path = pack_get_plug_path('basic')
-      local rev = git_get_hash('feat-branch', 'basic')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'main', 'feat-branch' }
+        res.rev = git_get_hash('feat-branch', 'basic')
         res.tags = { 'some-tag' }
+      else
+        res.rev = get_lock_tbl().plugins.basic.rev
       end
       return res
     end
@@ -2085,11 +2087,13 @@ describe('vim.pack', function()
     local function make_defbranch_data(active, info)
       local spec = { name = 'defbranch', src = repos_src.defbranch }
       local path = pack_get_plug_path('defbranch')
-      local rev = git_get_hash('dev', 'defbranch')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'dev', 'main' }
+        res.rev = git_get_hash('dev', 'defbranch')
         res.tags = {}
+      else
+        res.rev = get_lock_tbl().plugins.defbranch.rev
       end
       return res
     end
@@ -2098,11 +2102,13 @@ describe('vim.pack', function()
       local spec =
         { name = 'plugindirs', src = repos_src.plugindirs, version = vim.version.range('*') }
       local path = pack_get_plug_path('plugindirs')
-      local rev = git_get_hash('v0.0.1', 'plugindirs')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'main' }
+        res.rev = git_get_hash('v0.0.1', 'plugindirs')
         res.tags = { 'v0.0.1' }
+      else
+        res.rev = get_lock_tbl().plugins.plugindirs.rev
       end
       return res
     end
@@ -2124,8 +2130,15 @@ describe('vim.pack', function()
       -- Should preserve order in which plugins were `vim.pack.add()`ed
       eq({ defbranch_data, basic_data, plugindirs_data }, exec_lua('return vim.pack.get()'))
 
-      -- Should also list non-active plugins
+      -- Should also list non-active plugins and use proper source for `rev`
+      local lock_tbl = get_lock_tbl()
+      lock_tbl.plugins.defbranch.rev = 'aaa'
+      lock_tbl.plugins.basic.rev = 'bbb'
+      lock_tbl.plugins.plugindirs.rev = 'ccc'
+      local lockfile_text = vim.json.encode(lock_tbl, { indent = '  ', sort_keys = true })
+      fn.writefile(vim.split(lockfile_text, '\n'), get_lock_path())
       n.clear()
+
       vim_pack_add({ repos_src.defbranch })
       defbranch_data = make_defbranch_data(true, true)
       basic_data = make_basic_data(false, true)
@@ -2182,9 +2195,9 @@ describe('vim.pack', function()
 
       -- Should not include removed plugins immediately after they are removed,
       -- while still returning list without holes
-      exec_lua('vim.pack.del({ "defbranch" }, { force = true })')
       local defbranch_data = make_defbranch_data(true, true)
       local basic_data = make_basic_data(true, true)
+      exec_lua('vim.pack.del({ "defbranch" }, { force = true })')
       eq({ { defbranch_data, basic_data }, { basic_data } }, exec_lua('return _G.get_log'))
     end)
 
