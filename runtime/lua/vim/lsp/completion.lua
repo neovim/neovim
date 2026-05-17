@@ -211,8 +211,15 @@ local function get_completion_word(item, prefix, match)
   elseif item.textEdit then
     local word = item.textEdit.newText
     word = string.gsub(word, '\r\n?', '\n')
-    return word:match('([^\n]*)') or word
+    word = word:match('([^\n]*)') or word
+    if item.filterText and not match(word, prefix) then
+      return item.filterText
+    end
+    return word
   elseif item.insertText and item.insertText ~= '' then
+    if item.filterText and not match(item.insertText, prefix) then
+      return item.filterText
+    end
     return item.insertText
   end
   return item.label
