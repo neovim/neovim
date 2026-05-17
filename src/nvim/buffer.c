@@ -636,8 +636,8 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   if (win_valid && win->w_buffer == buf && buf->b_nwindows == 1) {
     buf->b_locked++;
     buf->b_locked_split++;
-    if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
-                       buf) && !bufref_valid(&bufref)) {
+    if (apply_autocmds_win(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
+                           buf, win) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
       emsg(_(e_auabort));
       return false;

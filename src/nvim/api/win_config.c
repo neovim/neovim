@@ -299,7 +299,7 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
     const bool result = ctx_switch(&switchwin, wp, tp, NULL, kCtxNoDisplay);
     assert(result);
     (void)result;
-    if (apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf)) {
+    if (apply_autocmds_win(EVENT_WINNEW, NULL, NULL, false, curbuf, wp)) {
       tp = win_find_tabpage(wp);
     }
     ctx_restore(&switchwin);
