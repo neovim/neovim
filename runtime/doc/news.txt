@@ -313,6 +313,7 @@ LUA
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
   the same range instances now compare equal.
 • |vim.pos| can now convert between positions and buffer offsets.
+• |vim.ui.input()| now allows setting input scope.
 
 OPTIONS
 
