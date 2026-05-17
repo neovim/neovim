@@ -1435,6 +1435,9 @@ end
 --- @field branches? string[] Available Git branches (first is default). Missing if `info=false`.
 --- @field path string Plugin's path on disk.
 --- @field rev string Current Git revision. Taken from |vim.pack-lockfile| if `info=false`.
+--- Git revision of a pending update. The same as used during |vim.pack.update()| and which
+--- points to a resolved `spec.version`. Missing if `info=false`.
+--- @field rev_to? string
 --- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
 --- @field tags? string[] Available Git tags. Missing if `info=false`.
 
@@ -1445,13 +1448,18 @@ end
 --- @param p_data_list vim.pack.PlugData[]
 local function add_p_data_info(p_data_list)
   local funs = {} --- @type (async fun())[]
+  local plug_dir = get_plug_dir()
   for i, p_data in ipairs(p_data_list) do
+    local plug = new_plug(p_data.spec, plug_dir)
     local path = p_data.path
     --- @async
     funs[i] = function()
       p_data.branches = git_get_branches(path)
-      p_data.rev = git_get_hash('HEAD', path)
       p_data.tags = git_get_tags(path)
+
+      infer_revisions(plug)
+      p_data.rev = plug.info.sha_head
+      p_data.rev_to = plug.info.sha_target
     end
   end
   async_join_run_wait(funs)

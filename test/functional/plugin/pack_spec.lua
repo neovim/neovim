@@ -2077,6 +2077,7 @@ describe('vim.pack', function()
       if info then
         res.branches = { 'main', 'feat-branch' }
         res.rev = git_get_hash('feat-branch', 'basic')
+        res.rev_to = res.rev
         res.tags = { 'some-tag' }
       else
         res.rev = get_lock_tbl().plugins.basic.rev
@@ -2091,6 +2092,7 @@ describe('vim.pack', function()
       if info then
         res.branches = { 'dev', 'main' }
         res.rev = git_get_hash('dev', 'defbranch')
+        res.rev_to = res.rev
         res.tags = {}
       else
         res.rev = get_lock_tbl().plugins.defbranch.rev
@@ -2106,6 +2108,7 @@ describe('vim.pack', function()
       if info then
         res.branches = { 'main' }
         res.rev = git_get_hash('v0.0.1', 'plugindirs')
+        res.rev_to = res.rev
         res.tags = { 'v0.0.1' }
       else
         res.rev = get_lock_tbl().plugins.plugindirs.rev
@@ -2166,6 +2169,28 @@ describe('vim.pack', function()
       )
       eq({ basic_data }, exec_lua('return vim.pack.get({ "basic" }, { info = false })'))
       eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" }, { info = false })'))
+    end)
+
+    it('reports potential revision after update', function()
+      -- Install and set up different version without running `vim.pack.update()`
+      vim_pack_add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
+      pack_assert_content('defbranch', 'return "defbranch dev"')
+      pack_assert_content('basic', 'return "basic feat-branch"')
+
+      n.clear()
+      vim_pack_add({ { src = repos_src.defbranch, version = 'main' }, repos_src.basic })
+      n.clear()
+
+      -- Should report correct `rev_to` with active and not active plugins
+      vim_pack_add({ { src = repos_src.defbranch, version = 'main' } })
+      local defbranch_data = make_defbranch_data(true, true)
+      defbranch_data.spec.version = 'main'
+      defbranch_data.rev_to = git_get_hash('main', 'defbranch')
+      local basic_data = make_basic_data(false, true)
+      basic_data.spec.version = nil
+      basic_data.rev_to = git_get_hash('main', 'basic')
+
+      eq({ defbranch_data, basic_data }, exec_lua('return vim.pack.get()'))
     end)
 
     it('respects `data` field', function()
