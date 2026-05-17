@@ -1755,7 +1755,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
 
       // Trigger FuncUndefined event, may load the function.
       if (fp == NULL
-          && apply_autocmds(EVENT_FUNCUNDEFINED, rfname, rfname, true, NULL)
+          && apply_autocmds(EVENT_FUNCUNDEFINED, rfname, rfname, true, NULL, NULL)
           && !aborting()) {
         // executed an autocommand, search for the function again
         fp = find_func(rfname);

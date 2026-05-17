@@ -2235,17 +2235,17 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
     // Apply SourceCmd autocommands, they should get the file and source it.
     if (has_autocmd(EVENT_SOURCECMD, fname_exp, NULL)
         && apply_autocmds(EVENT_SOURCECMD, fname_exp, fname_exp,
-                          false, curbuf)) {
+                          false, curbuf, curwin)) {
       retval = aborting() ? FAIL : OK;
       if (retval == OK) {
         // Apply SourcePost autocommands.
-        apply_autocmds(EVENT_SOURCEPOST, fname_exp, fname_exp, false, curbuf);
+        apply_autocmds(EVENT_SOURCEPOST, fname_exp, fname_exp, false, curbuf, curwin);
       }
       goto theend;
     }
 
     // Apply SourcePre autocommands, they may get the file.
-    apply_autocmds(EVENT_SOURCEPRE, fname_exp, fname_exp, false, curbuf);
+    apply_autocmds(EVENT_SOURCEPRE, fname_exp, fname_exp, false, curbuf, curwin);
   }
 
   if (!cookie.source_from_buf_or_str) {
@@ -2480,7 +2480,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   convert_setup(&cookie.conv, NULL, NULL);
 
   if (str == NULL && trigger_source_post) {
-    apply_autocmds(EVENT_SOURCEPOST, fname_exp, fname_exp, false, curbuf);
+    apply_autocmds(EVENT_SOURCEPOST, fname_exp, fname_exp, false, curbuf, curwin);
   }
 
 theend:

@@ -1591,7 +1591,7 @@ static void spell_load_lang(char *lang)
 
       if (r == FAIL && *sl.sl_lang != NUL && round == 1
           && apply_autocmds(EVENT_SPELLFILEMISSING, lang,
-                            curbuf->b_fname, false, curbuf)) {
+                            curbuf->b_fname, false, curbuf, curwin)) {
         continue;
       }
       break;
