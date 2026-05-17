@@ -850,7 +850,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When set to "dark" or "light", adjusts the default color groups for
 	that background type.  The |TUI| or other UI sets this on startup
-	(triggering |OptionSet|) if it can detect the background color.
+	if it can detect the background color.
 
 	This option does NOT change the background color, it tells Nvim what
 	the "inherited" (terminal/GUI) background looks like.
@@ -1466,7 +1466,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
-			global or local to tab page
+			global or local to tabpage
 	Number of screen lines to use for the command-line.  Helps avoiding
 	|hit-enter| prompts.
 	The value of this option is stored with the tabpage, so that each

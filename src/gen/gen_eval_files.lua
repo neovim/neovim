@@ -645,7 +645,7 @@ local function option_scope_doc(o)
     global = 'global',
     buf = 'local to buffer',
     win = 'local to window',
-    tab = 'local to tab page',
+    tab = 'local to tabpage',
   }
 
   local r --- @type string

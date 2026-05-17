@@ -482,6 +482,8 @@ These existing features changed their behavior.
   • |nvim_create_autocmd()|
   • |nvim_exec_autocmds()|
   • |nvim_get_autocmds()|
+• |OptionSet| is no longer triggered during startup by automatic
+  |'background'| detection.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

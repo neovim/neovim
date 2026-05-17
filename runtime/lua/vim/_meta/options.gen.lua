@@ -224,7 +224,7 @@ vim.go.awa = vim.go.autowriteall
 
 --- When set to "dark" or "light", adjusts the default color groups for
 --- that background type.  The `TUI` or other UI sets this on startup
---- (triggering `OptionSet`) if it can detect the background color.
+--- if it can detect the background color.
 ---
 --- This option does NOT change the background color, it tells Nvim what
 --- the "inherited" (terminal/GUI) background looks like.
