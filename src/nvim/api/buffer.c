@@ -1178,7 +1178,8 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buf, String name, Arena *arena, Err
   return rv;
 }
 
-/// Call a function with buffer as temporary current buffer.
+/// Calls function `fn` in the context of buffer `buf` and returns its result (may be multiple
+/// values).
 ///
 /// This temporarily switches current buffer to `buf`.
 /// If the current window already shows `buf`, the window is not switched.
@@ -1190,14 +1191,11 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buf, String name, Arena *arena, Err
 /// This is useful e.g. to call Vimscript functions that only work with the
 /// current buffer/window currently, like `jobstart(…, {'term': v:true})`.
 ///
-/// This preserves any Lua return values, including multiple return values.
-///
-/// @param buf     Buffer id, or 0 for current buffer
-/// @param fun        Function to call inside the buffer (currently Lua callable
-///                   only)
-/// @param[out] err   Error details, if any
-/// @return           Return value of function.
-Object nvim_buf_call(Buffer buf, LuaRef fun, lua_State *lstate, Error *err)
+/// @param buf  Buffer id, or 0 for current buffer.
+/// @param fn   Lua function to call inside the buffer.
+/// @param err  Error details, if any.
+/// @return     Value(s) returned by `fn()`.
+Object nvim_buf_call(Buffer buf, LuaRef fn, lua_State *lstate, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY
 {
@@ -1211,7 +1209,7 @@ Object nvim_buf_call(Buffer buf, LuaRef fun, lua_State *lstate, Error *err)
     aucmd_prepbuf(&aco, b);
 
     Array args = ARRAY_DICT_INIT;
-    nlua_call_ref(fun, NULL, args, kRetMultiStack, NULL, err);
+    nlua_call_ref(fn, NULL, args, kRetMultiStack, NULL, err);
 
     aucmd_restbuf(&aco);
   });

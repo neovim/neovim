@@ -111,6 +111,7 @@ The following new features were added.
 
 API
 
+• |nvim_buf_call()| and |nvim_win_call()| now preserve multiple return values.
 • |nvim_set_hl()| supports "font" key.
 • |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor
   shape when an unfocused float is on top of the cursor.
@@ -273,10 +274,6 @@ These existing features changed their behavior.
   • |nvim_create_autocmd()|
   • |nvim_exec_autocmds()|
   • |nvim_get_autocmds()|
-
-• API:
-  • |nvim_buf_call()| and |nvim_win_call()| now preserve multiple return
-    values
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

@@ -396,19 +396,17 @@ void nvim_win_close(Window win, Boolean force, Error *err)
   });
 }
 
-/// Calls a function with window as temporary current window.
+/// Calls function `fn` in the context of window `win` and returns its result (may be multiple
+/// values).
 ///
 /// @see |win_execute()|
 /// @see |nvim_buf_call()|
 ///
-/// This preserves any Lua return values, including multiple return values.
-///
-/// @param win     |window-ID|, or 0 for current window
-/// @param fun        Function to call inside the window (currently Lua callable
-///                   only)
-/// @param[out] err   Error details, if any
-/// @return           Return value of function.
-Object nvim_win_call(Window win, LuaRef fun, lua_State *lstate, Error *err)
+/// @param win  |window-ID|, or 0 for current window.
+/// @param fn   Lua function to call inside the window.
+/// @param err  Error details, if any.
+/// @return     Value(s) returned by `fn()`.
+Object nvim_win_call(Window win, LuaRef fn, lua_State *lstate, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY
 {
@@ -422,7 +420,7 @@ Object nvim_win_call(Window win, LuaRef fun, lua_State *lstate, Error *err)
     win_execute_T win_execute_args;
     if (win_execute_before(&win_execute_args, w, tabpage)) {
       Array args = ARRAY_DICT_INIT;
-      nlua_call_ref(fun, NULL, args, kRetMultiStack, NULL, err);
+      nlua_call_ref(fn, NULL, args, kRetMultiStack, NULL, err);
     }
     win_execute_after(&win_execute_args);
   });
