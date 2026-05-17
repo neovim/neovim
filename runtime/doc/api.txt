@@ -2311,7 +2311,6 @@ nvim_get_autocmds({opts})                                *nvim_get_autocmds()*
 ==============================================================================
 Buffer Functions                                                  *api-buffer*
 
-
 For more information on buffers, see |buffers|.
 
 Unloaded Buffers: ~

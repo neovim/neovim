@@ -596,10 +596,8 @@ A subset of the `vim.*` stdlib is available in threads, including:
   `vim.split`, `vim.tbl_*`, `vim.list_*`, etc.
 - `vim.is_thread()` returns true from a non-main thread.
 
-
 ==============================================================================
 VIM                                                              *vim.builtin*
-
 
 vim.api.{func}({...})                                                *vim.api*
     Invokes Nvim |API| function {func} with arguments {...}.
@@ -868,7 +866,6 @@ Lua list copies the list object to Vimscript and does NOT modify the Lua list: >
     vim.print(list)  --> "{ 1, 2, 3 }"
 <
 
-
 vim.call({func}, {...})                                           *vim.call()*
     Invokes |vim-function| or |user-function| {func} with arguments {...}.
     See also |vim.fn|.
@@ -947,7 +944,6 @@ vim.v                                                                  *vim.v*
     |v:| variables.
     Invalid or unset key returns `nil`.
 
-
                                                                  *lua-options*
                                                              *lua-vim-options*
                                                                  *lua-vim-set*
@@ -970,7 +966,6 @@ Similarly, there is |vim.bo| and |vim.wo| for setting buffer-scoped and
 window-scoped options. Note that this must NOT be confused with
 |local-options| and |:setlocal|. There is also |vim.go| that only accesses the
 global value of a |global-local| option, see |:setglobal|.
-
 
                                                                *vim.opt_local*
                                                               *vim.opt_global*
@@ -3963,7 +3958,6 @@ set_level({log}, {level})                                *vim.log.set_level()*
 
 ==============================================================================
 Lua module: vim.lpeg                                                *vim.lpeg*
-
 
 LPeg is a pattern-matching library for Lua, based on Parsing Expression
 Grammars (PEGs). https://bford.info/packrat/

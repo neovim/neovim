@@ -657,7 +657,7 @@ The earliest parser ABI version that is supported by the bundled treesitter
 library.
 
 ==============================================================================
-TREESITTER TREES                                    *treesitter-tree* *TSTree*
+TREESITTER TREES                                      *treesitter-tree* *TSTree*
 
 A "treesitter tree" represents the parsed contents of a buffer, which can be
 used to perform further analysis. It is a |userdata| reference to an object
@@ -680,7 +680,7 @@ TSTree:root()                                                  *TSTree:root()*
 
 
 ==============================================================================
-TREESITTER NODES                                    *treesitter-node* *TSNode*
+TREESITTER NODES                                      *treesitter-node* *TSNode*
 
 A "treesitter node" represents one specific element of the parsed contents of
 a buffer, which can be captured by a |treesitter-query| for, e.g.,
