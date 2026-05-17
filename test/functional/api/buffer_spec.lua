@@ -2497,5 +2497,105 @@ describe('api/buf', function()
         end)
       )
     end)
+
+    it('can access buf options', function()
+      local buf1 = api.nvim_get_current_buf()
+      local buf2 = exec_lua [[
+        buf2 = vim.api.nvim_create_buf(false, true)
+        return buf2
+      ]]
+
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf1 }))
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf2 }))
+
+      local val = exec_lua [[
+        return vim.api.nvim_buf_call(buf2, function()
+          vim.cmd "set autoindent"
+          return vim.api.nvim_get_current_buf()
+        end)
+      ]]
+
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf1 }))
+      eq(true, api.nvim_get_option_value('autoindent', { buf = buf2 }))
+      eq(buf1, api.nvim_get_current_buf())
+      eq(buf2, val)
+    end)
+
+    it('does not cause ml_get errors with invalid visual selection', function()
+      -- Should be fixed by vim-patch:8.2.4028.
+      exec_lua [[
+        local api = vim.api
+        local t = function(s) return api.nvim_replace_termcodes(s, true, true, true) end
+        api.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+        api.nvim_feedkeys(t "G<C-V>", "txn", false)
+        api.nvim_buf_call(api.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
+      ]]
+    end)
+
+    it('can be nested crazily with hidden buffers', function()
+      eq(
+        true,
+        exec_lua([[
+        local function scratch_buf_call(fn)
+          local buf = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_set_option_value('cindent', true, {buf = buf})
+          return vim.api.nvim_buf_call(buf, function()
+            return vim.api.nvim_get_current_buf() == buf
+              and vim.api.nvim_get_option_value('cindent', {buf = buf})
+              and fn()
+          end) and vim.api.nvim_buf_delete(buf, {}) == nil
+        end
+
+        return scratch_buf_call(function()
+          return scratch_buf_call(function()
+            return scratch_buf_call(function()
+              return scratch_buf_call(function()
+                return scratch_buf_call(function()
+                  return scratch_buf_call(function()
+                    return scratch_buf_call(function()
+                      return scratch_buf_call(function()
+                        return scratch_buf_call(function()
+                          return scratch_buf_call(function()
+                            return scratch_buf_call(function()
+                              return scratch_buf_call(function()
+                                return true
+                              end)
+                            end)
+                          end)
+                        end)
+                      end)
+                    end)
+                  end)
+                end)
+              end)
+            end)
+          end)
+        end)
+      ]])
+      )
+    end)
+
+    it('can return values by reference', function()
+      eq(
+        { 4, 7 },
+        exec_lua [[
+        local val = {4, 10}
+        local ref = vim.api.nvim_buf_call(0, function() return val end)
+        ref[2] = 7
+        return val
+      ]]
+      )
+    end)
+
+    it('can get Visual selection in current buffer #34162', function()
+      insert('foo bar baz')
+      feed('gg0fbvtb')
+      local text = exec_lua([[
+        return vim.api.nvim_buf_call(0, function()
+          return vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'))
+        end)
+      ]])
+      eq({ 'bar ' }, text)
+    end)
   end)
 end)
