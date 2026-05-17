@@ -150,11 +150,12 @@ end
 ---@param buf integer
 ---@return integer, integer
 local function to_inclusive_pos(buf, row, col)
+  local line = get_line(buf, row)
   if col > 0 then
-    col = col - 1
+    col = col + vim.str_utf_start(line, col) - 1
   elseif col == 0 and row > 0 then
     row = row - 1
-    col = #get_line(buf, row)
+    col = #line > 0 and #line + vim.str_utf_start(line, #line) - 1 or 0
   end
 
   return row, col
@@ -165,11 +166,12 @@ end
 ---@param buf integer
 ---@return integer, integer
 local function to_exclusive_pos(buf, row, col)
-  if col >= #get_line(buf, row) then
+  local line = get_line(buf, row)
+  if col >= #line then
     row = row + 1
     col = 0
   else
-    col = col + 1
+    col = col + vim.str_utf_end(line, col + 1) + 1
   end
 
   return row, col
@@ -179,7 +181,7 @@ end
 ---@param r1 vim.Range
 ---@param r2 vim.Range
 function M.__lt(r1, r2)
-  if r1:is_empty() then
+  if r1:is_empty() or r2:is_empty() then
     return cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1
   end
 
@@ -191,7 +193,7 @@ end
 ---@param r1 vim.Range
 ---@param r2 vim.Range
 function M.__le(r1, r2)
-  if r1:is_empty() then
+  if r1:is_empty() or r2:is_empty() then
     return cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1
   end
 
