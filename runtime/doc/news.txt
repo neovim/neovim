@@ -260,6 +260,8 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
+• |OptionSet| is no longer triggered during startup by automatic
+  |'background'| detection.
 • |:Open| with no arguments uses the current file.
 • The "buffer" key was renamed to "buf" in these functions (but the old name
   "buffer" is still accepted, for backwards compatibility):
