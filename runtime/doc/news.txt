@@ -201,6 +201,8 @@ LUA
 • |vim.pos| can now convert between positions and buffer offsets.
 • |vim.ui.input()| now allows setting input scope.
 • |vim.log| for easily creating loggers.
+• |vim.pack.get()| output includes revision of a pending update.
+• |vim.pack.get()| can fetch new updates before computing the output.
 
 OPTIONS
 

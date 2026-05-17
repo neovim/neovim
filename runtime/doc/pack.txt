@@ -350,6 +350,11 @@ Remove plugins from disk ~
 • Use |:packdel| with plugin names to remove. Use `:packdel ++all` to delete
   all inactive plugins.
 
+Check for pending updates ~
+• Run `vim.pack.get(nil, { offline = false })` and check the output for items
+  with different `rev` and `rev_to` fields. To not download new updates from
+  source, use plain `vim.pack.get()`.
+
 
 Commands                                             *vim.pack-commands* *E5807*
 
@@ -486,8 +491,10 @@ get({names}, {opts})                                          *vim.pack.get()*
       • {names}  (`string[]?`) List of plugin names. Default: all plugins
                  managed by |vim.pack|.
       • {opts}   (`table?`) A table with the following fields:
-                 • {info} (`boolean`) Whether to include extra plugin info.
+                 • {info}? (`boolean`) Whether to include extra plugin info.
                    Default `true`.
+                 • {offline}? (`boolean`) Whether to skip downloading new
+                   updates. Requires `info=true`. Default: `true`.
 
     Return: ~
         (`table[]`) A list of objects with the following fields:
@@ -496,7 +503,11 @@ get({names}, {opts})                                          *vim.pack.get()*
         • {branches}? (`string[]`) Available Git branches (first is default).
           Missing if `info=false`.
         • {path} (`string`) Plugin's path on disk.
-        • {rev} (`string`) Current Git revision.
+        • {rev} (`string`) Current Git revision. Taken from
+          |vim.pack-lockfile| if `info=false`.
+        • {rev_to}? (`string`) Git revision of a pending update. The same as
+          used during |vim.pack.update()| and which points to a resolved
+          `spec.version`. Missing if `info=false`.
         • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with resolved
           `name`.
         • {tags}? (`string[]`) Available Git tags. Missing if `info=false`.

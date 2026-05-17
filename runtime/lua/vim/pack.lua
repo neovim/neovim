@@ -156,6 +156,12 @@
 ---- Use |:packdel| with plugin names to remove. Use `:packdel ++all` to delete
 ---  all inactive plugins.
 ---
+---Check for pending updates ~
+---
+---- Run `vim.pack.get(nil, { offline = false })` and check the output for items
+---  with different `rev` and `rev_to` fields. To not download new updates
+---  from source, use plain `vim.pack.get()`.
+---
 --- <pre>help
 --- Commands                                             *vim.pack-commands* *E5807*
 ---
@@ -315,6 +321,14 @@ local function git_get_hash(ref, cwd)
   -- Using `rev-list -1` shows a commit of reference, while `rev-parse` shows
   -- hash of reference. Those are different for annotated tags.
   return git_cmd({ 'rev-list', '-1', ref }, cwd)
+end
+
+--- @async
+--- @param cwd string
+local function git_fetch(cwd)
+  -- Using '--tags --force' means conflicting tags will be synced with remote
+  local args = { 'fetch', '--quiet', '--tags', '--force', '--recurse-submodules=yes', 'origin' }
+  git_cmd(args, cwd)
 end
 
 --- @async
@@ -1313,9 +1327,7 @@ function M.update(names, opts)
 
     -- Fetch
     if not opts.offline then
-      -- Using '--tags --force' means conflicting tags will be synced with remote
-      local args = { 'fetch', '--quiet', '--tags', '--force', '--recurse-submodules=yes', 'origin' }
-      git_cmd(args, p.path)
+      git_fetch(p.path)
     end
 
     -- Compute change info: changelog if any, new tags if nothing to update
@@ -1434,23 +1446,39 @@ end
 --- @field active boolean Whether plugin was added via |vim.pack.add()| to current session.
 --- @field branches? string[] Available Git branches (first is default). Missing if `info=false`.
 --- @field path string Plugin's path on disk.
---- @field rev string Current Git revision.
+--- @field rev string Current Git revision. Taken from |vim.pack-lockfile| if `info=false`.
+--- Git revision of a pending update. The same as used during |vim.pack.update()| and which
+--- points to a resolved `spec.version`. Missing if `info=false`.
+--- @field rev_to? string
 --- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
 --- @field tags? string[] Available Git tags. Missing if `info=false`.
 
 --- @class vim.pack.keyset.get
 --- @inlinedoc
---- @field info boolean Whether to include extra plugin info. Default `true`.
+--- @field info? boolean Whether to include extra plugin info. Default `true`.
+--- Whether to skip downloading new updates. Requires `info=true`. Default: `true`.
+--- @field offline? boolean
 
 --- @param p_data_list vim.pack.PlugData[]
-local function add_p_data_info(p_data_list)
+--- @param offline boolean
+local function add_p_data_info(p_data_list, offline)
   local funs = {} --- @type (async fun())[]
+  local plug_dir = get_plug_dir()
   for i, p_data in ipairs(p_data_list) do
+    local plug = new_plug(p_data.spec, plug_dir)
     local path = p_data.path
     --- @async
     funs[i] = function()
       p_data.branches = git_get_branches(path)
       p_data.tags = git_get_tags(path)
+
+      if not offline then
+        git_fetch(path)
+      end
+
+      infer_revisions(plug)
+      p_data.rev = plug.info.sha_head
+      p_data.rev_to = plug.info.sha_target
     end
   end
   async_join_run_wait(funs)
@@ -1462,7 +1490,7 @@ end
 --- @return vim.pack.PlugData[]
 function M.get(names, opts)
   vim.validate('names', names, vim.islist, true, 'list')
-  opts = vim.tbl_extend('force', { info = true }, opts or {})
+  opts = vim.tbl_extend('force', { info = true, offline = true }, opts or {})
 
   -- Process active plugins in order they were added. Take into account that
   -- there might be "holes" after `vim.pack.del()`.
@@ -1511,7 +1539,7 @@ function M.get(names, opts)
 
   if opts.info then
     git_ensure_exec()
-    add_p_data_info(res)
+    add_p_data_info(res, opts.offline)
   end
 
   return res

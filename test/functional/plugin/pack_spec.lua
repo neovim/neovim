@@ -2073,11 +2073,14 @@ describe('vim.pack', function()
     local function make_basic_data(active, info)
       local spec = { name = 'basic', src = repos_src.basic, version = 'feat-branch' }
       local path = pack_get_plug_path('basic')
-      local rev = git_get_hash('feat-branch', 'basic')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'main', 'feat-branch' }
+        res.rev = git_get_hash('feat-branch', 'basic')
+        res.rev_to = res.rev
         res.tags = { 'some-tag' }
+      else
+        res.rev = get_lock_tbl().plugins.basic.rev
       end
       return res
     end
@@ -2085,11 +2088,14 @@ describe('vim.pack', function()
     local function make_defbranch_data(active, info)
       local spec = { name = 'defbranch', src = repos_src.defbranch }
       local path = pack_get_plug_path('defbranch')
-      local rev = git_get_hash('dev', 'defbranch')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'dev', 'main' }
+        res.rev = git_get_hash('dev', 'defbranch')
+        res.rev_to = res.rev
         res.tags = {}
+      else
+        res.rev = get_lock_tbl().plugins.defbranch.rev
       end
       return res
     end
@@ -2098,11 +2104,14 @@ describe('vim.pack', function()
       local spec =
         { name = 'plugindirs', src = repos_src.plugindirs, version = vim.version.range('*') }
       local path = pack_get_plug_path('plugindirs')
-      local rev = git_get_hash('v0.0.1', 'plugindirs')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'main' }
+        res.rev = git_get_hash('v0.0.1', 'plugindirs')
+        res.rev_to = res.rev
         res.tags = { 'v0.0.1' }
+      else
+        res.rev = get_lock_tbl().plugins.plugindirs.rev
       end
       return res
     end
@@ -2124,8 +2133,15 @@ describe('vim.pack', function()
       -- Should preserve order in which plugins were `vim.pack.add()`ed
       eq({ defbranch_data, basic_data, plugindirs_data }, exec_lua('return vim.pack.get()'))
 
-      -- Should also list non-active plugins
+      -- Should also list non-active plugins and use proper source for `rev`
+      local lock_tbl = get_lock_tbl()
+      lock_tbl.plugins.defbranch.rev = 'aaa'
+      lock_tbl.plugins.basic.rev = 'bbb'
+      lock_tbl.plugins.plugindirs.rev = 'ccc'
+      local lockfile_text = vim.json.encode(lock_tbl, { indent = '  ', sort_keys = true })
+      fn.writefile(vim.split(lockfile_text, '\n'), get_lock_path())
       n.clear()
+
       vim_pack_add({ repos_src.defbranch })
       defbranch_data = make_defbranch_data(true, true)
       basic_data = make_basic_data(false, true)
@@ -2155,6 +2171,75 @@ describe('vim.pack', function()
       eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" }, { info = false })'))
     end)
 
+    it('reports potential revision after update', function()
+      -- Install and set up different version without running `vim.pack.update()`
+      vim_pack_add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
+      pack_assert_content('defbranch', 'return "defbranch dev"')
+      pack_assert_content('basic', 'return "basic feat-branch"')
+
+      n.clear()
+      vim_pack_add({ { src = repos_src.defbranch, version = 'main' }, repos_src.basic })
+      n.clear()
+
+      -- Should report correct `rev_to` with active and not active plugins
+      vim_pack_add({ { src = repos_src.defbranch, version = 'main' } })
+      local defbranch_data = make_defbranch_data(true, true)
+      defbranch_data.spec.version = 'main'
+      defbranch_data.rev_to = git_get_hash('main', 'defbranch')
+      local basic_data = make_basic_data(false, true)
+      basic_data.spec.version = nil
+      basic_data.rev_to = git_get_hash('main', 'basic')
+
+      eq({ defbranch_data, basic_data }, exec_lua('return vim.pack.get()'))
+    end)
+
+    describe('opts.offline', function()
+      after_each(function()
+        n.rmdir(repo_get_path('fetch'))
+      end)
+
+      it('can fetch new updates', function()
+        -- Create a dedicated clean repo for which "push changes" will be mocked
+        init_test_repo('fetch')
+
+        repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch init"')
+        git_add_commit('Initial commit', 'fetch')
+
+        local fetch_head = git_get_hash('HEAD', 'fetch')
+
+        -- Install initial versions of tested plugins
+        vim_pack_add({ repos_src.fetch })
+
+        -- Mock remote repo update
+        -- - Force push
+        repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new"')
+        git_cmd({ 'add', '*' }, 'fetch')
+        git_cmd({ 'commit', '--amend', '-m', 'Second commit' }, 'fetch')
+        local fetch_new = git_get_hash('HEAD', 'fetch')
+        t.neq(fetch_head, fetch_new)
+
+        -- Should not fetch new data with `offline=true` (default)
+        -- or if `info=false`
+        local spec = { name = 'fetch', src = repos_src.fetch }
+        local path = pack_get_plug_path('fetch')
+        local fetch_data = { active = true, path = path, spec = spec }
+        fetch_data.branches = { 'main' }
+        fetch_data.tags = {}
+        fetch_data.rev = fetch_head
+        fetch_data.rev_to = fetch_head
+
+        exec_lua('vim.pack.get(nil, { info = false, offline = false })')
+        eq({ fetch_data }, exec_lua('return vim.pack.get()'))
+
+        -- Should fetch new data with `offline=false`
+        fetch_data.rev_to = fetch_new
+        eq({ fetch_data }, exec_lua('return vim.pack.get(nil, { offline = false })'))
+
+        -- Should keep using already fetched data with `offline=true`
+        eq({ fetch_data }, exec_lua('return vim.pack.get(nil, {})'))
+      end)
+    end)
+
     it('respects `data` field', function()
       vim_pack_add({
         { src = repos_src.basic, version = 'feat-branch', data = { test = 'value' } },
@@ -2182,9 +2267,9 @@ describe('vim.pack', function()
 
       -- Should not include removed plugins immediately after they are removed,
       -- while still returning list without holes
-      exec_lua('vim.pack.del({ "defbranch" }, { force = true })')
       local defbranch_data = make_defbranch_data(true, true)
       local basic_data = make_basic_data(true, true)
+      exec_lua('vim.pack.del({ "defbranch" }, { force = true })')
       eq({ { defbranch_data, basic_data }, { basic_data } }, exec_lua('return _G.get_log'))
     end)
 
