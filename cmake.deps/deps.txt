@@ -49,5 +49,5 @@ TREESITTER_SHA256 02cfb3d3d8fa82758b7e90e13f239bcd5b81fc72294c535c81303eafa2ce11
 WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.6.tar.gz
 WASMTIME_SHA256 c4a3c596a07c02ba6adce503154a2095fd98037a1e50d56add9773f0269ec9b7
 
-UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.82.0.tar.gz
-UNCRUSTIFY_SHA256 e05f8d5ee36aaa1acfa032fe97546b7be46b1f4620e7c38037f8a42e25fe676f
+UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.83.0.tar.gz
+UNCRUSTIFY_SHA256 1d4d3ab3a991c66eb24cb0a3e690573b4882fd98bc6ec64a01c283998c20dc87
