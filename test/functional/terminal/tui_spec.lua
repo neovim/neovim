@@ -4290,23 +4290,28 @@ describe('TUI bg color', function()
     end)
   end)
 
-  it('triggers OptionSet from automatic background processing', function()
+  it('does not trigger OptionSet from automatic background processing', function()
+    command('set background=light')
+    local child_server = new_pipename()
     local screen = tt.setup_child_nvim({
       '--clean',
+      '--listen',
+      child_server,
       '--cmd',
       'colorscheme vim',
       '--cmd',
       'set noswapfile',
       '-c',
-      'autocmd OptionSet background echo "did OptionSet, yay!"',
+      [[let g:background_optionset = 0]],
+      '-c',
+      [[autocmd OptionSet background let g:background_optionset += 1]],
     })
-    screen:expect([[
-      ^                                                  |
-      {5:~}                                                 |*3
-      {3:[No Name]                       0,0-1          All}|
-      did OptionSet, yay!                               |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    screen:expect({ any = '%[No Name%]' })
+    local child_session = n.connect(child_server)
+    retry(nil, nil, function()
+      eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
+    end)
+    eq({ true, 0 }, { child_session:request('nvim_eval', 'g:background_optionset') })
   end)
 
   it('sends theme update notifications when background changes #31652', function()
