@@ -90,6 +90,14 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
     }
   }
 
+  if (HAS_KEY_X(opts, tab)) {
+    *scope = kOptScopeTab;
+    *from = find_tab_by_handle(opts->tab, err);
+    if (ERROR_SET(err)) {
+      return FAIL;
+    }
+  }
+
   *opt_idxp = find_option(name);
   if (*opt_idxp == kOptInvalid) {
     // unknown option
@@ -97,11 +105,9 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
     return FAIL;
   }
 
-  // The only tab-local option is 'cmdheight'.
-  // TODO(justinmk): introduce kOptScopeTab into option metadata, then use option_has_scope below.
-  VALIDATE_CON(!HAS_KEY_X(opts, tab) || (*opt_idxp == kOptCmdheight), "tab", name, {
-    return FAIL;
-  });
+  // Reject keys whose scope the option doesn't support.
+  VALIDATE_CON(!HAS_KEY_X(opts, tab) || option_has_scope(*opt_idxp, kOptScopeTab),
+               "tab", name, { return FAIL; });
 
   // If 'buf' or 'win' is passed, make sure the option supports it.
   if (*scope == kOptScopeBuf || *scope == kOptScopeWin) {
@@ -235,15 +241,6 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  if (HAS_KEY(opts, option, tab)) {
-    tabpage_T *tab = find_tab_by_handle(opts->tab, err);
-    if (ERROR_SET(err)) {
-      return (Object)OBJECT_INIT;
-    }
-    const OptInt ch = (tab == curtab) ? p_ch : tab->tp_ch_used;
-    return optval_as_object(NUMBER_OPTVAL(ch));
-  }
-
   aco_save_T aco;
   bool aco_used;
 
@@ -300,6 +297,9 @@ err:
 ///                  - buf: Buffer number. Used for setting buffer local option.
 ///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
+///                  - tab: |tab-ID| for tab-local options (currently only 'cmdheight'). Tabpage 0
+///                    means the current tabpage. If a non-current tab is given, the value will take
+///                    effect when it is switched-to.
 ///                  - win: |window-ID|. Used for setting window local option.
 /// @param[out] err  Error details, if any
 void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
@@ -310,8 +310,7 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
   int opt_flags = 0;
   OptScope scope = kOptScopeGlobal;
   void *to = NULL;
-  // TODO(justinmk): support tab-local option.
-  if (!validate_option_value_args(opts, name.data, false, &opt_idx, &opt_flags, &scope, &to, NULL,
+  if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &to, NULL,
                                   err)) {
     return;
   }
@@ -371,7 +370,7 @@ Dict nvim_get_all_options_info(Arena *arena, Error *err)
 /// - last_set_linenr: line number where option was set
 /// - last_set_chan: Channel where option was set (0 for local)
 ///
-/// - scope: one of "global", "win", or "buf"
+/// - scope: one of "global", "win", "buf", or "tab"
 /// - global_local: whether win or buf option has a global value
 ///
 /// - commalist: List of comma separated values

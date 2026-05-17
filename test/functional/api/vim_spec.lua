@@ -1973,8 +1973,8 @@ describe('API', function()
         pcall_err(api.nvim_get_option_value, 'shiftwidth', { tab = tab1 })
       )
       eq(
-        "Conflict: 'tab' not allowed with this function",
-        pcall_err(api.nvim_set_option_value, 'cmdheight', 2, { tab = tab1 })
+        "Conflict: 'tab' not allowed with 'shiftwidth'",
+        pcall_err(api.nvim_set_option_value, 'shiftwidth', 2, { tab = tab1 })
       )
       eq(
         "Conflict: 'tab' not allowed with this function",
@@ -1986,7 +1986,7 @@ describe('API', function()
       )
     end)
 
-    it("tabpage-local 'cmdheight' #31140", function()
+    it("tabpage-local option ('cmdheight') #31140", function()
       api.nvim_set_option_value('cmdheight', 1, {})
       local tab1 = api.nvim_get_current_tabpage()
       eq(1, api.nvim_get_option_value('cmdheight', { tab = 0 }))
@@ -1998,6 +1998,14 @@ describe('API', function()
       eq(4, api.nvim_get_option_value('cmdheight', { tab = tab2 }))
       eq(1, api.nvim_get_option_value('cmdheight', { tab = tab1 }))
       eq(4, api.nvim_get_option_value('cmdheight', {}))
+
+      -- Set non-current tab option.
+      api.nvim_set_option_value('cmdheight', 3, { tab = tab1 })
+      eq(3, api.nvim_get_option_value('cmdheight', { tab = tab1 }))
+      eq(4, api.nvim_get_option_value('cmdheight', { tab = tab2 }))
+      eq(4, api.nvim_get_option_value('cmdheight', {}))
+      command('tabnext')
+      eq(3, api.nvim_get_option_value('cmdheight', {}))
     end)
 
     it('can get local values when global value is set', function()
@@ -3891,10 +3899,11 @@ describe('API', function()
       os.remove(fname)
     end)
 
-    it('should return option information', function()
+    it('gets option info', function()
       eq(api.nvim_get_option_info('dictionary'), api.nvim_get_option_info2('dictionary', {})) -- buffer
       eq(api.nvim_get_option_info('fillchars'), api.nvim_get_option_info2('fillchars', {})) -- window
       eq(api.nvim_get_option_info('completeopt'), api.nvim_get_option_info2('completeopt', {})) -- global
+      eq('tab', api.nvim_get_option_info2('cmdheight', {}).scope) -- tab #31140
     end)
 
     describe('last set', function()
@@ -3933,13 +3942,13 @@ describe('API', function()
         end)
       end
 
-      it('is provided for cross-buffer requests', function()
+      it('cross-buffer', function()
         local info = api.nvim_get_option_info2('formatprg', { buf = bufs[2] })
         eq(2, info.last_set_linenr)
         eq(1, info.last_set_sid)
       end)
 
-      it('is provided for cross-window requests', function()
+      it('cross-window', function()
         local info = api.nvim_get_option_info2('listchars', { win = wins[2] })
         eq(6, info.last_set_linenr)
         eq(1, info.last_set_sid)

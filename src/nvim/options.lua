@@ -88,7 +88,7 @@ end
 local options = {
   cstr = cstr,
   --- @type string[]
-  valid_scopes = { 'global', 'buf', 'win' },
+  valid_scopes = { 'global', 'buf', 'win', 'tab' },
   --- @type vim.option_meta[]
   --- The order of the options MUST be alphabetic for ":set all".
   options = {
@@ -1350,7 +1350,7 @@ local options = {
       ]=],
       full_name = 'cmdheight',
       redraw = { 'all_windows' },
-      scope = { 'global' },
+      scope = { 'global', 'tab' },
       short_desc = N_('number of lines to use for the command-line'),
       type = 'number',
       varname = 'p_ch',

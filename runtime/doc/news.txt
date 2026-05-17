@@ -117,6 +117,12 @@ API
 • |nvim_echo()| distinguishes zero percent from omitted percent for Progress
   events.
 • |nvim_create_user_command()| accepts `desc` for Vimscript commands.
+• Support for tabpage-local options ('cmdheight'):
+  • |gettabvar()|
+  • |gettabwinvar()|
+  • |nvim_get_option_info2()|
+  • |nvim_get_option_value()|
+  • |nvim_set_option_value()|
 
 BUILD
 

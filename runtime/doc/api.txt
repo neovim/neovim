@@ -3514,7 +3514,7 @@ nvim_get_option_info2({name}, {opts})                *nvim_get_option_info2()*
     • last_set_sid: Last set script id (if any)
     • last_set_linenr: line number where option was set
     • last_set_chan: Channel where option was set (0 for local)
-    • scope: one of "global", "win", or "buf"
+    • scope: one of "global", "win", "buf", or "tab"
     • global_local: whether win or buf option has a global value
     • commalist: List of comma separated values
     • flaglist: List of single char flags
@@ -3584,6 +3584,10 @@ nvim_set_option_value({name}, {value}, {opts})
                  • buf: Buffer number. Used for setting buffer local option.
                  • scope: One of "global" or "local". Analogous to
                    |:setglobal| and |:setlocal|, respectively.
+                 • tab: |tab-ID| for tab-local options (currently only
+                   'cmdheight'). Tabpage 0 means the current tabpage. If a
+                   non-current tab is given, the value will take effect when
+                   it is switched-to.
                  • win: |window-ID|. Used for setting window local option.
 
 
