@@ -64,7 +64,7 @@ static const char e_error_while_writing_str[] = N_("E80: Error while writing: %s
 /// @param fnamep  file name so far
 /// @param bufp  buffer for allocated file name or NULL
 /// @param fnamelen  length of fnamep
-/// @param normalize normalize backslash, then adjust the return value based on 'shellslash'
+/// @param normalize adjust separators in `*fnamep` according to 'shellslash'
 int modify_fname(char *src, bool tilde_file, size_t *usedlen, char **fnamep, char **bufp,
                  size_t *fnamelen, bool normalize)
 {
@@ -74,14 +74,6 @@ int modify_fname(char *src, bool tilde_file, size_t *usedlen, char **fnamep, cha
   bool has_fullname = false;
   bool has_homerelative = false;
   bool didit = false;
-
-#ifdef BACKSLASH_IN_FILENAME
-  if (normalize) {
-    *fnamep = TO_SLASH_SAVE(*fnamep);
-    xfree(*bufp);
-    *bufp = *fnamep;
-  }
-#endif
 
 repeat:
   // ":p" - full path/file_name
@@ -636,11 +628,13 @@ void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (mods == NULL || fname == NULL) {
     fname = NULL;
   } else {
+    fbuf = TO_SLASH_SAVE(fname);
+    fname = fbuf;
     len = strlen(fname);
     if (*mods != NUL) {
       size_t usedlen = 0;
       modify_fname((char *)mods, false, &usedlen,
-                   (char **)&fname, &fbuf, &len, true);
+                   (char **)&fname, &fbuf, &len, false);
     }
   }
 
