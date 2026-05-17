@@ -7,6 +7,7 @@ local clear = n.clear
 local fn = n.fn
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
+local write_file = t.write_file
 
 describe('nlua_call_excmd excmds', function()
   -- Exercise nlua_call_excmd by testing commands implemented with it (:log, :lsp).
@@ -22,8 +23,19 @@ describe('nlua_call_excmd excmds', function()
 end)
 
 describe('excmds', function()
+  local glob_files = { 'Xedit_glob_one.js', 'Xedit_glob_two.js' }
+
   before_each(function()
     clear()
+    for _, file in ipairs(glob_files) do
+      fn.delete(file)
+    end
+  end)
+
+  after_each(function()
+    for _, file in ipairs(glob_files) do
+      fn.delete(file)
+    end
   end)
 
   local function check_excmd_err(cmd, err)
@@ -64,6 +76,17 @@ describe('excmds', function()
   it('listing long user command does not crash', function()
     command('execute "command" repeat("T", 255) ":"')
     command('command')
+  end)
+
+  it(':edit with glob reports unsupported glob expansion', function()
+    for _, file in ipairs(glob_files) do
+      write_file(file, '')
+    end
+
+    eq(
+      'Vim(edit):E77: Too many file names (glob expansion is not supported here)',
+      pcall_err(command, 'edit Xedit_glob_*.js')
+    )
   end)
 
   it(':def is an unknown command #23149', function()
