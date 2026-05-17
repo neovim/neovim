@@ -809,6 +809,7 @@ function M.rename(new_name, opts)
 
         local prompt_opts = {
           prompt = 'New Name: ',
+          scope = 'cursor',
         }
         if result.placeholder then
           prompt_opts.default = result.placeholder
@@ -839,6 +840,7 @@ function M.rename(new_name, opts)
       local prompt_opts = {
         prompt = 'New Name: ',
         default = cword,
+        scope = 'cursor',
       }
       vim.ui.input(prompt_opts, function(input)
         if not input or #input == 0 then
