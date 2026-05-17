@@ -5275,7 +5275,7 @@ void ex_ownsyntax(exarg_T *eap)
   }
 
   // Apply the "syntax" autocommand event, this finds and loads the syntax file.
-  apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, true, curbuf);
+  apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, true, curbuf, curwin);
 
   // Move value of b:current_syntax to w:current_syntax.
   char *new_value = get_var_value("b:current_syntax");

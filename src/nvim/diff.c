@@ -1116,7 +1116,7 @@ theend:
   // are diffs now, which means they got updated.
   if (had_diffs || curtab->tp_first_diff != NULL) {
     diff_redraw(true);
-    apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf, NULL);
   }
 }
 
@@ -3860,7 +3860,7 @@ theend:
   } else {
     // Also need to redraw the other buffers.
     diff_redraw(false);
-    apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf, NULL);
   }
 }
 

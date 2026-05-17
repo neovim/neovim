@@ -1232,7 +1232,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     // Careful: This may recursively call do_bang() again! (because of
     // autocommands)
     do_filter(line1, line2, eap, newcmd, do_in, do_out);
-    apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf, curwin);
   }
 
 theend:
@@ -1514,7 +1514,7 @@ void do_shell(char *cmd, int flags)
   msg_row = Rows - 1;
   msg_col = 0;
 
-  apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, false, curbuf, curwin);
 }
 
 #ifndef UNIX
@@ -1712,7 +1712,7 @@ void print_line(linenr_T lnum, bool use_number, bool list, bool first)
 int rename_buffer(char *new_fname)
 {
   buf_T *buf = curbuf;
-  apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf, curwin);
   // buffer changed, don't change name now
   if (buf != curbuf) {
     return FAIL;
@@ -1744,7 +1744,7 @@ int rename_buffer(char *new_fname)
   }
   xfree(fname);
   xfree(sfname);
-  apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf, curwin);
   // Change directories when the 'acd' option is set.
   do_autochdir();
   return OK;
@@ -1912,8 +1912,8 @@ int do_write(exarg_T *eap)
     if (eap->cmdidx == CMD_saveas && alt_buf != NULL) {
       buf_T *was_curbuf = curbuf;
 
-      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, alt_buf);
+      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf, curwin);
+      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, alt_buf, curwin);
       if (curbuf != was_curbuf || aborting()) {
         // buffer changed, don't change name now
         retval = FAIL;
@@ -1934,11 +1934,11 @@ int do_write(exarg_T *eap)
       alt_buf->b_sfname = curbuf->b_sfname;
       curbuf->b_sfname = fname;
       buf_name_changed(curbuf);
-      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
-      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, alt_buf);
+      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf, curwin);
+      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, alt_buf, curwin);
       if (!alt_buf->b_p_bl) {
         alt_buf->b_p_bl = true;
-        apply_autocmds(EVENT_BUFADD, NULL, NULL, false, alt_buf);
+        apply_autocmds(EVENT_BUFADD, NULL, NULL, false, alt_buf, NULL);
       }
       if (curbuf != was_curbuf || aborting()) {
         // buffer changed, don't write the file
@@ -2566,7 +2566,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       }
       const bufref_T save_au_new_curbuf = au_new_curbuf;
       set_bufref(&au_new_curbuf, buf);
-      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf, curwin);
 
       cmdwin_type = save_cmdwin_type;
       cmdwin_win = save_cmdwin_win;
@@ -2821,11 +2821,9 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       // changed by the user.
       do_modelines(OPT_WINONLY);
 
-      apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf,
-                            &retval);
+      apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf, curwin, &retval);
       if ((flags & ECMD_NOWINENTER) == 0) {
-        apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
-                              &retval);
+        apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf, curwin, &retval);
       }
     }
     check_arg_idx(curwin);

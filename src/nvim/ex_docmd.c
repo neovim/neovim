@@ -2168,7 +2168,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       cmdname++;
     }
     cmdname = xmemdupz(ea.cmd, (size_t)(cmdname - ea.cmd));
-    int ret = apply_autocmds(EVENT_CMDUNDEFINED, cmdname, cmdname, true, NULL);
+    int ret = apply_autocmds(EVENT_CMDUNDEFINED, cmdname, cmdname, true, NULL, NULL);
     xfree(cmdname);
     // If the autocommands did something and didn't cause an error, try
     // finding the command again.
@@ -4833,7 +4833,7 @@ bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
   if (*get_vim_var_str(VV_EXITREASON) == NUL) {
     set_vim_var_string(VV_EXITREASON, S_LEN("quit"));
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer, wp);
 
   // Bail out when autocommands closed the window.
   // Refuse to quit when the buffer in the last window is being closed (can
@@ -4847,7 +4847,7 @@ bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
 
   if (quit_all
       || (check_more(false, forceit) == OK && only_one_window())) {
-    apply_autocmds(EVENT_EXITPRE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_EXITPRE, NULL, NULL, false, curbuf, NULL);
     // Refuse to quit when locked or when the window was closed or the
     // buffer in the last window is being closed (can only happen in
     // autocommands).
@@ -5820,7 +5820,7 @@ void ex_splitview(exarg_T *eap)
     if (win_new_tabpage(cmdmod.cmod_tab != 0 ? cmdmod.cmod_tab : eap->addr_count == 0
                         ? 0 : (int)eap->line2 + 1, eap->arg, true, NULL)) {
       do_exedit(eap, old_curwin);
-      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf, NULL);
 
       // set the alternate buffer for the window we came from
       if (curwin != old_curwin

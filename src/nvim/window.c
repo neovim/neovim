@@ -502,7 +502,7 @@ newwindow:
         }
         if (valid_tabpage(newtab)) {
           goto_tabpage_tp(newtab, true, true);
-          apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+          apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf, NULL);
         }
       }
     }
@@ -2744,10 +2744,10 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
 
   // Since goto_tabpage_tp above did not trigger *Enter autocommands, do
   // that now.
-  apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
-  apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf, curwin);
+  apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf, NULL);
   if (old_curbuf != curbuf) {
-    apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf, curwin);
   }
   return true;
 }
@@ -2911,7 +2911,7 @@ int win_close(win_T *win, bool free_buf, bool force)
         return FAIL;
       }
       win->w_locked++;
-      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf, curwin);
       if (!win_valid(win)) {
         return FAIL;
       }
@@ -2921,7 +2921,7 @@ int win_close(win_T *win, bool free_buf, bool force)
       }
     }
     win->w_locked++;
-    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf, curwin);
     if (!win_valid(win)) {
       return FAIL;
     }
@@ -3086,7 +3086,7 @@ int win_close(win_T *win, bool free_buf, bool force)
                   | WEE_TRIGGER_LEAVE_AUTOCMDS);
     if (other_buffer) {
       // careful: after this wp and win may be invalid!
-      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf, curwin);
     }
   }
 
@@ -3095,7 +3095,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     // The new curwin is the last window in the current tab page, and it is
     // already being closed.  Trigger TabLeave now, as after its buffer is
     // removed it's no longer safe to do that.
-    apply_autocmds(EVENT_TABLEAVE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TABLEAVE, NULL, NULL, false, curbuf, NULL);
   }
 
   split_disallowed--;
@@ -3133,7 +3133,7 @@ int win_close(win_T *win, bool free_buf, bool force)
 static void trigger_winnewpre(void)
 {
   window_layout_lock();
-  apply_autocmds(EVENT_WINNEWPRE, NULL, NULL, false, NULL);
+  apply_autocmds(EVENT_WINNEWPRE, NULL, NULL, false, NULL, curwin);
   window_layout_unlock();
 }
 
@@ -3147,7 +3147,7 @@ static void do_autocmd_winclosed(win_T *win)
   recursive = true;
   char winid[NUMBUFLEN];
   vim_snprintf(winid, sizeof(winid), "%d", win->handle);
-  apply_autocmds(EVENT_WINCLOSED, winid, winid, false, win->w_buffer);
+  apply_autocmds(EVENT_WINCLOSED, winid, winid, false, win->w_buffer, win);
   recursive = false;
 }
 
@@ -3167,7 +3167,7 @@ void trigger_tabclosedpre(tabpage_T *tp)
   }
   recursive = true;
   window_layout_lock();
-  apply_autocmds(EVENT_TABCLOSEDPRE, NULL, NULL, false, NULL);
+  apply_autocmds(EVENT_TABCLOSEDPRE, NULL, NULL, false, NULL, NULL);
   window_layout_unlock();
   recursive = false;
   // tabpage may have been modified or deleted by autocmds
@@ -3321,7 +3321,7 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
       char prev_idx[NUMBUFLEN];
       vim_snprintf(prev_idx, NUMBUFLEN, "%i", free_tp_idx);
       apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false,
-                     bufref.br_buf && bufref_valid(&bufref) ? bufref.br_buf : curbuf);
+                     bufref.br_buf && bufref_valid(&bufref) ? bufref.br_buf : curbuf, NULL);
     }
   }
   return true;
@@ -4584,10 +4584,10 @@ tabpage_T *win_new_tabpage(int after, char *filename, bool enter, win_T **first)
     lastused_tabpage = old_curtab;
     entering_window(curwin);
 
-    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
-    apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
-    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
-    apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf, curwin);
+    apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf, curwin);
+    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf, NULL);
+    apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf, NULL);
   } else {
     unuse_tabpage(curtab);
     use_tabpage(old_curtab);
@@ -4604,8 +4604,8 @@ tabpage_T *win_new_tabpage(int after, char *filename, bool enter, win_T **first)
     assert(sw_result == OK);  // tp_curwin is valid in newtp
     (void)sw_result;
 
-    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
-    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
+    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf, curwin);
+    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf, NULL);
 
     restore_win_noblock(&switchwin, true);
   }
@@ -4628,7 +4628,7 @@ static int may_open_tabpage(void)
   postponed_split_tab = 0;
   int status = win_new_tabpage(n, NULL, true, NULL) ? OK : FAIL;
   if (status == OK) {
-    apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf, NULL);
   }
   return status;
 }
@@ -4756,16 +4756,16 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
   reset_VIsual_and_resel();     // stop Visual mode
   if (trigger_leave_autocmds) {
     if (new_curbuf != curbuf) {
-      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf, curwin);
       if (curtab != tp) {
         return FAIL;
       }
     }
-    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf, curwin);
     if (curtab != tp) {
       return FAIL;
     }
-    apply_autocmds(EVENT_TABLEAVE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TABLEAVE, NULL, NULL, false, curbuf, NULL);
     if (curtab != tp) {
       return FAIL;
     }
@@ -4849,9 +4849,9 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   // Apply autocommands after updating the display, when 'rows' and
   // 'columns' have been set correctly.
   if (trigger_enter_autocmds) {
-    apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf, NULL);
     if (old_curbuf != curbuf) {
-      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf, curwin);
     }
   }
 
@@ -5286,13 +5286,13 @@ static void win_enter_ext(win_T *const wp, const int flags)
   if (!curwin_invalid && (flags & WEE_TRIGGER_LEAVE_AUTOCMDS)) {
     // Be careful: If autocommands delete the window, return now.
     if (wp->w_buffer != curbuf) {
-      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf, curwin);
       other_buffer = true;
       if (!win_valid(wp)) {
         return;
       }
     }
-    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf, curwin);
     if (!win_valid(wp)) {
       return;
     }
@@ -5341,12 +5341,12 @@ static void win_enter_ext(win_T *const wp, const int flags)
   entering_window(curwin);
   // Careful: autocommands may close the window and make "wp" invalid
   if (flags & WEE_TRIGGER_NEW_AUTOCMDS) {
-    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf, curwin);
   }
   if (flags & WEE_TRIGGER_ENTER_AUTOCMDS) {
-    apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf, curwin);
     if (other_buffer) {
-      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf, curwin);
     }
   }
 
@@ -6088,16 +6088,20 @@ void may_trigger_win_scrolled_resized(void)
 
   // Save window info before autocmds since they can free windows
   char resize_winid[NUMBUFLEN];
+  win_T *resize_win = NULL;
   bufref_T resize_bufref;
   if (trigger_resize) {
-    vim_snprintf(resize_winid, sizeof(resize_winid), "%d", first_size_win->handle);
+    resize_win = first_size_win;
+    vim_snprintf(resize_winid, sizeof(resize_winid), "%d", resize_win->handle);
     set_bufref(&resize_bufref, first_size_win->w_buffer);
   }
 
   char scroll_winid[NUMBUFLEN];
+  win_T *scroll_win = NULL;
   bufref_T scroll_bufref;
   if (trigger_scroll) {
-    vim_snprintf(scroll_winid, sizeof(scroll_winid), "%d", first_scroll_win->handle);
+    scroll_win = first_scroll_win;
+    vim_snprintf(scroll_winid, sizeof(scroll_winid), "%d", scroll_win->handle);
     set_bufref(&scroll_bufref, first_scroll_win->w_buffer);
   }
 
@@ -6109,7 +6113,9 @@ void may_trigger_win_scrolled_resized(void)
     if (tv_dict_add_list(v_event, S_LEN("windows"), windows_list) == OK) {
       tv_dict_set_keys_readonly(v_event);
       buf_T *buf = bufref_valid(&resize_bufref) ? resize_bufref.br_buf : curbuf;
-      apply_autocmds(EVENT_WINRESIZED, resize_winid, resize_winid, false, buf);
+      // resize_win may have been freed by a prior autocmd; validate before use.
+      win_T *win = win_valid_any_tab(resize_win) ? resize_win : NULL;
+      apply_autocmds(EVENT_WINRESIZED, resize_winid, resize_winid, false, buf, win);
     }
     restore_v_event(v_event, &save_v_event);
   }
@@ -6122,10 +6128,9 @@ void may_trigger_win_scrolled_resized(void)
     tv_dict_extend(v_event, scroll_dict, "move");
     tv_dict_set_keys_readonly(v_event);
     tv_dict_unref(scroll_dict);
-
     buf_T *buf = bufref_valid(&scroll_bufref) ? scroll_bufref.br_buf : curbuf;
-    apply_autocmds(EVENT_WINSCROLLED, scroll_winid, scroll_winid, false, buf);
-
+    win_T *win = win_valid_any_tab(scroll_win) ? scroll_win : NULL;
+    apply_autocmds(EVENT_WINSCROLLED, scroll_winid, scroll_winid, false, buf, win);
     restore_v_event(v_event, &save_v_event);
   }
 

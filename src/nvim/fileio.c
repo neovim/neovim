@@ -1912,7 +1912,7 @@ failed:
       if (!curbuf->b_au_did_filetype && *curbuf->b_p_ft != NUL) {
         // EVENT_FILETYPE was not triggered but the buffer already has a
         // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
-        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf, curwin);
       }
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
@@ -2113,9 +2113,9 @@ int set_rw_fname(char *fname, char *sfname)
 
   // It's like the unnamed buffer is deleted....
   if (curbuf->b_p_bl) {
-    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf, NULL);
   }
-  apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, false, curbuf, NULL);
   if (aborting()) {         // autocmds may abort script processing
     return FAIL;
   }
@@ -2130,9 +2130,9 @@ int set_rw_fname(char *fname, char *sfname)
   }
 
   // ....and a new named one is created
-  apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, curbuf, NULL);
   if (curbuf->b_p_bl) {
-    apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf, NULL);
   }
   if (aborting()) {         // autocmds may abort script processing
     return FAIL;
@@ -2996,7 +2996,8 @@ int buf_check_timestamp(buf_T *buf)
       set_vim_var_string(VV_FCS_REASON, reason, (int)reasonlen);
       set_vim_var_string(VV_FCS_CHOICE, "", 0);
       allbuf_lock++;
-      bool n = apply_autocmds(EVENT_FILECHANGEDSHELL, buf->b_fname, buf->b_fname, false, buf);
+      bool n = apply_autocmds(EVENT_FILECHANGEDSHELL, buf->b_fname, buf->b_fname, false, buf,
+                              curwin);
       allbuf_lock--;
       busy = false;
       if (n) {
@@ -3122,7 +3123,7 @@ int buf_check_timestamp(buf_T *buf)
 
   // Trigger FileChangedShell when the file was changed in any way.
   if (bufref_valid(&bufref) && retval != 0) {
-    apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname, false, buf);
+    apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname, false, buf, curwin);
   }
   return retval;
 }

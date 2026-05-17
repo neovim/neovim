@@ -273,7 +273,7 @@ void may_trigger_modechanged(void)
   // concatenate modes in format "old_mode:new_mode"
   vim_snprintf(pattern_buf, sizeof(pattern_buf), "%s:%s", last_mode, curr_mode);
 
-  apply_autocmds(EVENT_MODECHANGED, pattern_buf, NULL, false, curbuf);
+  apply_autocmds(EVENT_MODECHANGED, pattern_buf, NULL, false, curbuf, curwin);
   STRCPY(last_mode, curr_mode);
 
   restore_v_event(v_event, &save_v_event);
@@ -305,7 +305,7 @@ void may_trigger_safestate(bool safe)
     DLOG(is_safe ? "SafeState: Start triggering" : "SafeState: Stop triggering");
   }
   if (is_safe) {
-    apply_autocmds(EVENT_SAFESTATE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_SAFESTATE, NULL, NULL, false, curbuf, curwin);
   }
   was_safe = is_safe;
 }

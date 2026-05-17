@@ -309,7 +309,7 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
     const int result = switch_win_noblock(&switchwin, wp, tp, true);
     assert(result == OK);
     (void)result;
-    if (apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf)) {
+    if (apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf, wp)) {
       tp = win_find_tabpage(wp);
     }
     restore_win_noblock(&switchwin, true);

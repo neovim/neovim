@@ -2163,6 +2163,7 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
                    • group: (`number?`) Group id, if any
                    • id: (`number`) Autocommand id
                    • match: (`string`) <amatch> (expanded to a full path)
+                   • win: (`number`) |window-ID| for the event.
                  • command (string?) Vim command executed on event. Not
                    allowed with {callback}.
                  • desc (`string?`) Description (for documentation and

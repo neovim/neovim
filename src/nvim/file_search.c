@@ -1884,7 +1884,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
     abort();
   }
 
-  apply_autocmds(event, buf, new_dir, false, curbuf);
+  apply_autocmds(event, buf, new_dir, false, curbuf, curwin);
 
   restore_v_event(dict, &save_v_event);
 

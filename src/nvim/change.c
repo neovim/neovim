@@ -75,7 +75,7 @@ void change_warning(buf_T *buf, int col)
       && !autocmd_busy
       && buf->b_p_ro) {
     buf->b_ro_locked++;
-    apply_autocmds(EVENT_FILECHANGEDRO, NULL, NULL, false, buf);
+    apply_autocmds(EVENT_FILECHANGEDRO, NULL, NULL, false, buf, curwin);
     buf->b_ro_locked--;
     if (!buf->b_p_ro) {
       return;
