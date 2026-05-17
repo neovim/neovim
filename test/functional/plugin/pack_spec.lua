@@ -2193,6 +2193,53 @@ describe('vim.pack', function()
       eq({ defbranch_data, basic_data }, exec_lua('return vim.pack.get()'))
     end)
 
+    describe('opts.offline', function()
+      after_each(function()
+        n.rmdir(repo_get_path('fetch'))
+      end)
+
+      it('can fetch new updates', function()
+        -- Create a dedicated clean repo for which "push changes" will be mocked
+        init_test_repo('fetch')
+
+        repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch init"')
+        git_add_commit('Initial commit', 'fetch')
+
+        local fetch_head = git_get_hash('HEAD', 'fetch')
+
+        -- Install initial versions of tested plugins
+        vim_pack_add({ repos_src.fetch })
+
+        -- Mock remote repo update
+        -- - Force push
+        repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new"')
+        git_cmd({ 'add', '*' }, 'fetch')
+        git_cmd({ 'commit', '--amend', '-m', 'Second commit' }, 'fetch')
+        local fetch_new = git_get_hash('HEAD', 'fetch')
+        t.neq(fetch_head, fetch_new)
+
+        -- Should not fetch new data with `offline=true` (default)
+        -- or if `info=false`
+        local spec = { name = 'fetch', src = repos_src.fetch }
+        local path = pack_get_plug_path('fetch')
+        local fetch_data = { active = true, path = path, spec = spec }
+        fetch_data.branches = { 'main' }
+        fetch_data.tags = {}
+        fetch_data.rev = fetch_head
+        fetch_data.rev_to = fetch_head
+
+        exec_lua('vim.pack.get(nil, { info = false, offline = false })')
+        eq({ fetch_data }, exec_lua('return vim.pack.get()'))
+
+        -- Should fetch new data with `offline=false`
+        fetch_data.rev_to = fetch_new
+        eq({ fetch_data }, exec_lua('return vim.pack.get(nil, { offline = false })'))
+
+        -- Should keep using already fetched data with `offline=true`
+        eq({ fetch_data }, exec_lua('return vim.pack.get(nil, {})'))
+      end)
+    end)
+
     it('respects `data` field', function()
       vim_pack_add({
         { src = repos_src.basic, version = 'feat-branch', data = { test = 'value' } },
