@@ -289,12 +289,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
     return rv;
   });
 
-  if (start >= end) {
-    // Return 0-length array
-    return rv;
-  }
-
-  size_t size = (size_t)(end - start);
+  size_t size = end >= start ? (size_t)(end - start) : 0;
 
   init_line_array(lstate, &rv, size, arena);
 
@@ -1195,12 +1190,14 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buf, String name, Arena *arena, Err
 /// This is useful e.g. to call Vimscript functions that only work with the
 /// current buffer/window currently, like `jobstart(…, {'term': v:true})`.
 ///
+/// This preserves any Lua return values, including multiple return values.
+///
 /// @param buf     Buffer id, or 0 for current buffer
 /// @param fun        Function to call inside the buffer (currently Lua callable
 ///                   only)
 /// @param[out] err   Error details, if any
 /// @return           Return value of function.
-Object nvim_buf_call(Buffer buf, LuaRef fun, Error *err)
+Object nvim_buf_call(Buffer buf, LuaRef fun, lua_State *lstate, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY
 {
@@ -1209,18 +1206,17 @@ Object nvim_buf_call(Buffer buf, LuaRef fun, Error *err)
     return NIL;
   }
 
-  Object res = OBJECT_INIT;
   TRY_WRAP(err, {
     aco_save_T aco;
     aucmd_prepbuf(&aco, b);
 
     Array args = ARRAY_DICT_INIT;
-    res = nlua_call_ref(fun, NULL, args, kRetLuaref, NULL, err);
+    nlua_call_ref(fun, NULL, args, kRetMultiStack, NULL, err);
 
     aucmd_restbuf(&aco);
   });
 
-  return res;
+  return NIL;  // kRetMultiStack: values are already on the lua stack
 }
 
 /// @nodoc

@@ -274,6 +274,10 @@ These existing features changed their behavior.
   • |nvim_exec_autocmds()|
   • |nvim_get_autocmds()|
 
+• API:
+  • |nvim_buf_call()| and |nvim_win_call()| now preserve multiple return
+    values
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
