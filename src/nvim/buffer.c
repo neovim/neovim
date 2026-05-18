@@ -223,7 +223,7 @@ bool buf_ensure_loaded(buf_T *buf)
     return true;
   }
 
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
 
   // Make sure the buffer is in a window.
   aucmd_prepbuf(&aco, buf);
@@ -421,7 +421,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // The autocommands may have changed the current buffer.  Apply the
   // modelines to the correct buffer, if it still exists and is loaded.
   if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->b_ml.ml_mfp != NULL) {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
 
     // Go to the buffer that was opened, make sure it is in a window.
     aucmd_prepbuf(&aco, old_curbuf.br_buf);
@@ -4138,7 +4138,7 @@ bool buf_contents_changed(buf_T *buf)
   prep_exarg(&ea, buf);
 
   // Set curwin/curbuf to buf and save a few things.
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   aucmd_prepbuf(&aco, newbuf);
 
   // We don't want to trigger autocommands now, they may have nasty

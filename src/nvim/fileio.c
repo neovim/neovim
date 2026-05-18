@@ -3138,7 +3138,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   buf_T *savebuf;
   bufref_T bufref;
   int saved = OK;
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   int flags = READ_NEW;
 
   // Set curwin/curbuf for "buf" and save some things.

@@ -355,7 +355,7 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   linenr_T old_line_count = buf->b_ml.ml_line_count;
   int msg_save = msg_scroll;
 
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   bool did_cmd = false;
   bool nofile_err = false;
   bool empty_memline = buf->b_ml.ml_mfp == NULL;
@@ -518,7 +518,7 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
 static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bool append,
                                        bool filtering, bool reset_changed, bool whole)
 {
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
 
   curbuf->b_no_eol_lnum = 0;      // in case it was set by the previous read
 

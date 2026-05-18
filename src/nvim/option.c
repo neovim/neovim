@@ -4271,7 +4271,7 @@ OptVal get_option_value_for(OptIndex opt_idx, int opt_flags, const OptScope scop
                             Error *err)
 {
   switchwin_T switchwin;
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   tabpage_T *swtab = NULL;
   void *ctx = scope == kOptScopeWin ? (void *)&switchwin
                                     : scope == kOptScopeBuf ? (void *)&aco
@@ -4322,7 +4322,7 @@ void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, cons
   }
 
   switchwin_T switchwin;
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   tabpage_T *swtab = NULL;
   void *ctx = scope == kOptScopeWin ? (void *)&switchwin
                                     : scope == kOptScopeBuf ? (void *)&aco

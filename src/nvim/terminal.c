@@ -587,7 +587,7 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   Terminal *term = *termpp;
   assert(term != NULL);
 
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   aucmd_prepbuf(&aco, buf);
 
   if (term->sb_buffer != NULL) {
