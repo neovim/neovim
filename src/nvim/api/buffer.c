@@ -278,6 +278,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
 
   // return sentinel value if the buffer isn't loaded
   if (b->b_ml.ml_mfp == NULL) {
+    init_line_array(lstate, &rv, 0, arena);
     return rv;
   }
 
@@ -715,6 +716,7 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buf,
 
   // return sentinel value if the buffer isn't loaded
   if (b->b_ml.ml_mfp == NULL) {
+    init_line_array(lstate, &rv, 0, arena);
     return rv;
   }
 
