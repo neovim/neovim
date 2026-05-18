@@ -1204,6 +1204,9 @@ Object nvim_buf_call(Buffer buf, LuaRef fn, lua_State *lstate, Error *err)
     return NIL;
   }
 
+  lua_State *const gstate = get_global_lstate();
+  const int gtop = lua_gettop(gstate);
+
   TRY_WRAP(err, {
     aco_save_T aco;
     aucmd_prepbuf(&aco, b);
@@ -1214,6 +1217,16 @@ Object nvim_buf_call(Buffer buf, LuaRef fn, lua_State *lstate, Error *err)
     aucmd_restbuf(&aco);
   });
 
+  // nlua_call_ref runs the callback on global_lstate, so return values land there.
+  // When called from a coroutine, move them onto the caller's stack.
+  const int nres = lua_gettop(gstate) - gtop;
+  if (nres > 0) {
+    if (ERROR_SET(err)) {
+      lua_pop(gstate, nres);
+    } else if (gstate != lstate) {
+      lua_xmove(gstate, lstate, nres);
+    }
+  }
   return NIL;  // kRetMultiStack: values are already on the lua stack
 }
 

@@ -3956,6 +3956,49 @@ describe('API/win', function()
       )
     end)
 
+    it('propagates return values when called from a coroutine #39834', function()
+      local other = api.nvim_open_win(api.nvim_create_buf(false, true), false, { split = 'left' })
+      -- Single return value.
+      eq(
+        { other },
+        exec_lua(function()
+          local out
+          local co = coroutine.create(function()
+            out = {
+              vim.api.nvim_win_call(other, function()
+                return vim.api.nvim_get_current_win()
+              end),
+            }
+          end)
+          assert(coroutine.resume(co))
+          return out
+        end)
+      )
+      -- Multiple return values (including nil in the middle).
+      eq(
+        { 6, vim.NIL, 7 },
+        exec_lua(function()
+          local out
+          local co = coroutine.create(function()
+            local function pack(...)
+              local r = { ... }
+              for i = 1, select('#', ...) do
+                if r[i] == nil then
+                  r[i] = vim.NIL
+                end
+              end
+              return r
+            end
+            out = pack(vim.api.nvim_win_call(other, function()
+              return 6, nil, 7
+            end))
+          end)
+          assert(coroutine.resume(co))
+          return out
+        end)
+      )
+    end)
+
     it('can access window options', function()
       command('vsplit')
       local win1 = api.nvim_get_current_win()

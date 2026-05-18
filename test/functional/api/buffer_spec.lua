@@ -202,6 +202,14 @@ describe('api/buf', function()
       eq({}, api.nvim_buf_get_lines(bufnr, 1, 3, true))
       -- it's impossible to get out-of-bounds errors for an unloaded buffer
       eq({}, api.nvim_buf_get_lines(bufnr, 8888, 9999, true))
+      -- The Lua path (vim.api) must also return an empty table, not nil. #39833 #39851
+      eq(
+        { 'table', {} },
+        exec_lua(function()
+          local r = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+          return { type(r), r }
+        end)
+      )
     end)
 
     describe('handles topline', function()
@@ -2494,6 +2502,32 @@ describe('api/buf', function()
           return test(function()
             return nil
           end)
+        end)
+      )
+    end)
+
+    it('propagates return values when called from a coroutine #39834', function()
+      local other = api.nvim_create_buf(false, true)
+      eq(
+        { other, vim.NIL, 42 },
+        exec_lua(function()
+          local out
+          local co = coroutine.create(function()
+            local function pack(...)
+              local r = { ... }
+              for i = 1, select('#', ...) do
+                if r[i] == nil then
+                  r[i] = vim.NIL
+                end
+              end
+              return r
+            end
+            out = pack(vim.api.nvim_buf_call(other, function()
+              return vim.api.nvim_get_current_buf(), nil, 42
+            end))
+          end)
+          assert(coroutine.resume(co))
+          return out
         end)
       )
     end)
