@@ -46,6 +46,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval/window.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_cmds_defs.h"
@@ -1462,11 +1463,21 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       }
 
       close_windows(buf, false);
-      // close_windows keeps the last non-float window. If it still
-      // shows buf, jump there and retry so curbuf gets replaced.
-      if (bufref_valid(&bufref) && buf->b_nwindows > 0) {
-        win_T *holder = buf_jump_open_win(buf);
-        if (holder != NULL && !holder->w_floating) {
+      // close_windows() refuses to close curtab's last non-float window.
+      // If it still shows buf, retry the delete from there.
+      win_T *holder = close_windows(buf, false);
+      if (buf != curbuf && bufref_valid(&bufref) && holder != NULL) {
+        if (curwin->w_floating) {
+          // swap into holder without entering it: caller keeps focus,
+          // BufEnter doesn't fire for the deleted buffer.
+          switchwin_T switchwin;
+          const int rv = switch_win_noblock(&switchwin, holder, curtab, true);
+          assert(rv == OK);
+          (void)rv;
+          do_buffer_ext(action, start, dir, count, flags);
+          restore_win_noblock(&switchwin, true);
+        } else {
+          buf_jump_open_win(buf);
           return do_buffer_ext(action, start, dir, count, flags);
         }
       }
