@@ -149,6 +149,8 @@ EDITOR
 • |:packupdate| and |:packdel| for managing |vim.pack|.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
   number of history lines kept above the prompt.
+• |v_al| and |v_il| text objects select the whole buffer and the current line
+  without leading or trailing white space.
 
 EVENTS
 

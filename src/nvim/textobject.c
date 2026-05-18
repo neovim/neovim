@@ -3,9 +3,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -713,6 +715,75 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
     }
   } else {
     oap->inclusive = inclusive;
+  }
+
+  return OK;
+}
+
+/// Find the current line ("il") or all lines ("al").
+///
+/// @param include  true: all lines, false: current line without surrounding
+///                 white space
+int current_line(oparg_T *oap, bool include)
+{
+  if (include) {
+    if (VIsual_active) {
+      VIsual.lnum = 1;
+      VIsual.col = 0;
+      VIsual.coladd = 0;
+      VIsual_mode = 'V';
+      redraw_curbuf_later(UPD_INVERTED);
+      showmode();
+    } else {
+      oap->cursor_start = curwin->w_cursor;
+      oap->restore_cursor = true;
+      oap->start.lnum = 1;
+      oap->start.col = 0;
+      oap->start.coladd = 0;
+      oap->motion_type = kMTLineWise;
+    }
+    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    curwin->w_cursor.col = 0;
+    curwin->w_cursor.coladd = 0;
+    return OK;
+  }
+
+  char *line = ml_get(curwin->w_cursor.lnum);
+  char *start = skipwhite(line);
+  char *end = line + strlen(line);
+  while (end > start) {
+    char *prev = mb_prevptr(line, end);
+    if (!ascii_iswhite((uint8_t)(*prev))) {
+      break;
+    }
+    end = prev;
+  }
+  if (start == end) {
+    return FAIL;
+  }
+
+  pos_T start_pos = curwin->w_cursor;
+  start_pos.col = (colnr_T)(start - line);
+  start_pos.coladd = 0;
+
+  pos_T end_pos = curwin->w_cursor;
+  end_pos.col = (colnr_T)(mb_prevptr(line, end) - line);
+  end_pos.coladd = 0;
+
+  if (VIsual_active) {
+    VIsual = start_pos;
+    curwin->w_cursor = end_pos;
+    if (*p_sel == 'e' && ltoreq(VIsual, curwin->w_cursor)) {
+      inc_cursor();
+    }
+    VIsual_mode = 'v';
+    redraw_curbuf_later(UPD_INVERTED);
+    showmode();
+  } else {
+    oap->start = start_pos;
+    oap->motion_type = kMTCharWise;
+    oap->inclusive = true;
+    curwin->w_cursor = end_pos;
   }
 
   return OK;

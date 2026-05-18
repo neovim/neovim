@@ -228,6 +228,8 @@ The objects that can be used are:
 	is	inner sentence					|v_is|
 	ap	a paragraph (with white space)			|v_ap|
 	ip	inner paragraph					|v_ip|
+	al	all lines					|v_al|
+	il	inner line					|v_il|
 	ab	a () block (with parentheses)			|v_ab|
 	ib	inner () block					|v_ib|
 	aB	a {} block (with braces)			|v_aB|
