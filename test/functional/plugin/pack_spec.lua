@@ -1637,6 +1637,23 @@ describe('vim.pack', function()
         assert_action({ 28, 0 }, semver_actions, 0)
         assert_action({ 31, 0 }, semver_actions, 0)
 
+        -- - Source kind: file-level "Update all plugins" should be advertised
+        --   whenever the confirmation buffer has a "# Update" section.
+        local function assert_source_action(ref_titles)
+          n.exec_lua(function()
+            _G.select_items = nil
+            _G.select_idx = 0
+            vim.lsp.buf.code_action({
+              context = { only = { vim.lsp.protocol.CodeActionKind.Source } },
+            })
+          end)
+          local titles = vim.tbl_map(function(x) --- @param x table
+            return x.action.title
+          end, n.exec_lua('return _G.select_items or {}'))
+          eq(ref_titles, titles)
+        end
+        assert_source_action({ 'Update all plugins' })
+
         -- - Should correctly perform action and remove plugin's lines
         local function line_match(lnum, pattern)
           matches(pattern, api.nvim_buf_get_lines(0, lnum - 1, lnum, false)[1])

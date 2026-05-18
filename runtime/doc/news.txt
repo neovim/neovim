@@ -146,6 +146,8 @@ EDITOR
 • |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
+• |vim.pack| update confirmation buffer provides a source-level (kind `source`)
+  code action to update all listed plugins at once.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
   number of history lines kept above the prompt.
 

@@ -12,7 +12,9 @@ local capabilities = {
   codeActionProvider = true,
   documentLinkProvider = { resolveProvider = false },
   documentSymbolProvider = true,
-  executeCommandProvider = { commands = { 'delete_plugin', 'update_plugin', 'skip_update_plugin' } },
+  executeCommandProvider = {
+    commands = { 'delete_plugin', 'update_plugin', 'skip_update_plugin', 'update_all_plugins' },
+  },
   hoverProvider = true,
 }
 --- @type table<string,function>
@@ -195,36 +197,66 @@ end
 
 --- @alias vim.pack.lsp.CodeActionContext { diagnostics: table, only: table?, triggerKind: integer? }
 
+--- @param bufnr integer
+--- @return boolean
+local function has_pending_updates(bufnr)
+  local in_update = false
+  for _, l in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
+    local group = l:match(group_header_pattern)
+    if group then
+      in_update = group == 'Update'
+    elseif in_update and l:match(plugin_header_pattern) then
+      return true
+    end
+  end
+  return false
+end
+
 --- @param params { textDocument: { uri: string }, range: vim.pack.lsp.Range, context: vim.pack.lsp.CodeActionContext }
 --- @param callback function
 methods['textDocument/codeAction'] = function(params, callback)
   local bufnr = get_confirm_bufnr(params.textDocument.uri)
+  if not bufnr then
+    return callback(nil, {})
+  end
   local empty_kind = vim.lsp.protocol.CodeActionKind.Empty
-  local only = params.context.only or { empty_kind }
-  if not (bufnr and vim.tbl_contains(only, empty_kind)) then
-    return callback(nil, {})
-  end
-  local plug_data = get_plug_data_at_lnum(bufnr, params.range.start.line + 1)
-  if not plug_data.name then
-    return callback(nil, {})
-  end
-
-  local function new_action(title, command)
-    return {
-      title = ('%s `%s`'):format(title, plug_data.name),
-      command = { title = title, command = command, arguments = { bufnr, plug_data } },
-    }
-  end
+  local source_kind = vim.lsp.protocol.CodeActionKind.Source
+  local only = params.context.only
 
   local res = {}
-  if plug_data.group == 'Update' then
-    vim.list_extend(res, {
-      new_action('Update', 'update_plugin'),
-      new_action('Skip updating', 'skip_update_plugin'),
-    }, 0)
+
+  -- Only advertise the source-level action when the client explicitly asks
+  -- for `source` actions via `only`.
+  if only and vim.tbl_contains(only, source_kind) and has_pending_updates(bufnr) then
+    local title = 'Update all plugins'
+    table.insert(res, {
+      title = title,
+      kind = source_kind,
+      command = { title = title, command = 'update_all_plugins', arguments = { bufnr } },
+    })
   end
-  plug_data.active = vim.pack.get({ plug_data.name })[1].active
-  vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
+
+  if not only or vim.tbl_contains(only, empty_kind) then
+    local plug_data = get_plug_data_at_lnum(bufnr, params.range.start.line + 1)
+    if plug_data.name then
+      local function new_action(title, command)
+        return {
+          title = ('%s `%s`'):format(title, plug_data.name),
+          command = { title = title, command = command, arguments = { bufnr, plug_data } },
+        }
+      end
+
+      if plug_data.group == 'Update' then
+        vim.list_extend(res, {
+          new_action('Update', 'update_plugin'),
+          new_action('Skip updating', 'skip_update_plugin'),
+        })
+      end
+      plug_data.active = vim.pack.get({ plug_data.name })[1].active
+      vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
+    end
+  end
+
   callback(nil, res)
 end
 
@@ -251,6 +283,19 @@ local commands = {
 --- @param params { command: string, arguments: table }
 --- @param callback function
 methods['workspace/executeCommand'] = vim.schedule_wrap(function(params, callback)
+  if params.command == 'update_all_plugins' then
+    local bufnr = params.arguments[1] --[[@as integer]]
+    local ok, res = pcall(function()
+      vim.api.nvim_buf_call(bufnr, function()
+        vim.cmd.write({ mods = { silent = true } })
+      end)
+    end)
+    if not ok then
+      return callback({ code = 1, message = res }, {})
+    end
+    return callback(nil, {})
+  end
+
   --- @type integer, table
   local bufnr, plug_data = unpack(params.arguments)
   local ok, res = pcall(commands[params.command], plug_data)
