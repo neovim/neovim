@@ -121,8 +121,6 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
-static void async_cmd_event(void **argv);
-
 static const char e_ambiguous_use_of_user_defined_command[]
   = N_("E464: Ambiguous use of user-defined command");
 static const char e_no_call_stack_to_substitute_for_stack[]
