@@ -1279,10 +1279,9 @@ end
 --- @param rcid integer
 --- @param server_addr string
 --- @param connect_error string
---- @param args string[]
 --- @param f_tab boolean
 --- @param remote_arg_idx integer
-function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_arg_idx)
+function vim._cs_remote(rcid, server_addr, connect_error, f_tab, remote_arg_idx)
   --- @return string
   local function connection_failure_errmsg(consequence)
     local explanation --- @type string
@@ -1297,6 +1296,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
     return 'E247: ' .. explanation .. '. ' .. consequence
   end
 
+  local args = vim.list_slice(vim.v.argv, 2)
   local remote_arg = args[remote_arg_idx] --- @type string
   local subcmd = string.sub(remote_arg, 10)
   if subcmd ~= '' then

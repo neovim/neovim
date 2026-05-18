@@ -1014,23 +1014,15 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
     return;
   }
 
-  Array args = ARRAY_DICT_INIT;
-  kv_resize(args, (size_t)(argc - 1));
-  for (int t_argc = 1; t_argc < argc; t_argc++) {
-    ADD_C(args, CSTR_AS_OBJ(argv[t_argc]));
-  }
-
   Error err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(a, 6);
+  MAXSIZE_TEMP_ARRAY(a, 5);
   ADD_C(a, INTEGER_OBJ((int)chan));
   ADD_C(a, CSTR_AS_OBJ(server_addr));
   ADD_C(a, CSTR_AS_OBJ(connect_error));
-  ADD_C(a, ARRAY_OBJ(args));
   ADD_C(a, BOOLEAN_OBJ(params->window_layout == WIN_TABS));
   ADD_C(a, INTEGER_OBJ(remote_args));
   String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
   Object o = nlua_exec(s, NULL, a, kRetObject, NULL, &err);
-  kv_destroy(args);
   if (ERROR_SET(&err)) {
     fprintf(stderr, "%s\n", err.msg);
     os_exit(2);
