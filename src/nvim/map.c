@@ -102,9 +102,6 @@ void mh_clear(MapHash *h)
 
 #define KEY_NAME(x) x##int
 #include "nvim/map_key_impl.c.h"
-#define VAL_NAME(x) quasiquote(x, int)
-#include "nvim/map_value_impl.c.h"
-#undef VAL_NAME
 #define VAL_NAME(x) quasiquote(x, ptr_t)
 #include "nvim/map_value_impl.c.h"
 #undef VAL_NAME
@@ -150,12 +147,6 @@ void mh_clear(MapHash *h)
 #define KEY_NAME(x) x##uint64_t
 #include "nvim/map_key_impl.c.h"
 #define VAL_NAME(x) quasiquote(x, ptr_t)
-#include "nvim/map_value_impl.c.h"
-#undef VAL_NAME
-#define VAL_NAME(x) quasiquote(x, ssize_t)
-#include "nvim/map_value_impl.c.h"
-#undef VAL_NAME
-#define VAL_NAME(x) quasiquote(x, uint64_t)
 #include "nvim/map_value_impl.c.h"
 #undef VAL_NAME
 #define VAL_NAME(x) quasiquote(x, int)
