@@ -728,6 +728,13 @@ local function create_option_accessor(scope)
   end
 
   option_mt = {
+    -- To set a value, instead use:
+    --  opt[my_option] = value
+    _set = function(self)
+      local value = convert_value_to_vim(self._name, self._info, self._value)
+      api.nvim_set_option_value(self._name, value, { scope = scope })
+    end,
+
     get = function(self)
       return convert_value_to_lua(self._info, self._value)
     end,
@@ -767,7 +774,7 @@ local function create_option_accessor(scope)
     end,
 
     __newindex = function(_, k, v)
-      api.nvim_set_option_value(k, v, { scope = scope })
+      make_option(k, v):_set()
     end,
   })
 end
