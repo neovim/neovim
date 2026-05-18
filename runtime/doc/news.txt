@@ -166,6 +166,8 @@ EDITOR
   number of history lines kept above the prompt.
 • |v_al| and |v_il| text objects select the whole buffer and the current line
   without leading or trailing white space.
+• 'autoread' uses file system watchers to detect external changes in
+  real-time, instead of only on |FocusGained|/|:checktime|.
 
 EVENTS
 
