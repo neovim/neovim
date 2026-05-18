@@ -201,11 +201,11 @@ LUA
 • |vim.npcall()| calls the function `fn` in protected-mode like |pcall()|,
   but returns `nil` on error.
 • |vim.pos| can now convert between positions and buffer offsets.
+• |vim.pos| and |vim.range| can now convert between mark positions.
 • |vim.ui.input()| now allows setting input scope.
-• |vim.log| for easily creating loggers.
+• |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
-• |vim.pos| and |vim.range| can now convert between mark positions.
 
 OPTIONS
 
@@ -218,15 +218,13 @@ PERFORMANCE
 
 • |treesitter-highlight| performance on large injection-heavy files improves
   by 50% to 100% by reusing edited child-tree ranges.
-
 • Nvim architecture allows pure-Lua implementations of some `vim.fn`
   functions, which skips the Vimscript <=> Lua "bridge" (no data
   conversion/marshalling) entirely, if the `vim.fn` function is called from
   Lua.
-• The table holding LSP data is now cleared using `table.clear`,
-  thus reducing GC and memory reallocation during each data reset.
-• When parsing the received Content-Length messages,
-  the RPC client will no longer allocate extra strings.
+• Internal LSP data is cleared using `table.clear`, which reduces GC and
+  memory reallocation during each data reset.
+• RPC client avoids string allocations when parsing Content-Length messages.
 
 PLUGINS
 
@@ -275,6 +273,7 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
+• `nvim_exec_autocmds({buf=…})` runs in the context of the target buffer.
 • |OptionSet| is no longer triggered during startup by automatic
   |'background'| detection.
 • |:Open| with no arguments uses the current file.

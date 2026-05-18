@@ -772,6 +772,43 @@ matching end tag.  These are ignored.
 
 The text objects are tolerant about mistakes.  Stray end tags are ignored.
 
+------------------------------------------------------------------------------
+Custom text object					  *text-object-define*
+
+The following code example shows how to define your own custom text-object.
+Notice how the Visual-mode (xnoremap) mapping is defined as an <expr> mapping
+which sets the |'[| |']| marks, then the Operator-pending (onoremap) mapping
+is implemented using Visual-mode.
+
+>vim
+    " text-object: entire buffer
+    function! s:line_outer_movement(count) abort
+      if empty(getline(1)) && 1 == line('$')
+        return "\<Esc>"
+      endif
+      let [lopen, copen, lclose, cclose] = [1, 1, line('$'), 1]
+      call setpos("'[", [0, lopen, copen, 0])
+      call setpos("']", [0, lclose, cclose, 0])
+      return "'[o']"
+    endfunction
+    xnoremap <expr>   al <SID>line_outer_movement(v:count1)
+    onoremap <silent> al :normal Val<CR>
+
+    " text-object: line
+    function! s:line_inner_movement(count) abort
+      "TODO: handle count
+      if empty(getline('.'))
+        return "\<Esc>"
+      endif
+      let [lopen, copen, lclose, cclose] = [line('.'), 1, line('.'), col('$')-1]
+      call setpos("'[", [0, lopen, copen, 0])
+      call setpos("']", [0, lclose, cclose, 0])
+      return "`[o`]"
+    endfunction
+    xnoremap <expr>   il <SID>line_inner_movement(v:count1)
+    onoremap <silent> il :normal vil<CR>
+<
+
 ==============================================================================
 7. Marks					*mark-motions* *E20* *E78*
 

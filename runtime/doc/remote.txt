@@ -111,25 +111,5 @@ yet. The following command line arguments are not yet available:
    --remote-tab-wait-silent	Not yet supported by Nvim.
 				Like --remote-wait-silent but open each file
 				in a new tabpage.
-							    *--servername*
-   --servername {name}          Not yet supported by Nvim.
-				Become the server {name}.  When used together
-                                with one of the --remote commands: connect to
-                                server {name} instead of the default (see
-                                below).  The name used will be uppercase.
-
-								*--serverlist*
-   --serverlist			Not yet supported by Nvim.
-				Output a list of server names.
-
-
-
-
-SERVER NAME						*client-server-name*
-
-By default Vim will try to register the name under which it was invoked (gvim,
-egvim ...).  This can be overridden with the --servername argument.  Nvim
-either listens on a named pipe or a socket and does not yet support this
---servername functionality.
 
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

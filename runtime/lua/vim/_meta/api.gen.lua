@@ -1231,7 +1231,8 @@ function vim.api.nvim_exec(src, output) end
 --- - output: (string|nil) Output if `opts.output` is true.
 function vim.api.nvim_exec2(src, opts) end
 
---- Executes handlers for {event} that match the corresponding {opts} query. `autocmd-execute`
+--- Executes {event} handlers matching the {opts} query, in the context of {buf} (if given). `autocmd-execute`
+---
 --- @see `:help :doautocmd`
 --- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) to execute.
 --- @param opts vim.api.keyset.exec_autocmds Optional filters:

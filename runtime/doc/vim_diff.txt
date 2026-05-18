@@ -231,7 +231,7 @@ MAJOR COMPONENTS
 - API                             |API|
 - Job control                     |job-control|
 - LSP framework                   |lsp|
-- Lua scripting                   |lua|
+- Lua scripting                   |lua| |-l|
 - Parsing engine                  |treesitter|
 - Plugin manager                  |vim.pack|
 - Providers
@@ -239,6 +239,7 @@ MAJOR COMPONENTS
   - Node.js plugins               |provider-nodejs|
   - Python plugins                |provider-python|
   - Ruby plugins                  |provider-ruby|
+- Remote                          |--remote-ui| |:connect| |:detach|
 - Remote plugins                  |remote-plugin|
 - Shared data                     |shada|
 - Terminal emulator               |terminal|
@@ -282,8 +283,7 @@ ARCHITECTURE
 
 The Nvim UI is "decoupled" from the core editor: all UIs, including the
 builtin |TUI| are just plugins that connect to a Nvim server (via |--server|
-or |--embed|). Multiple Nvim UI clients can connect to the same Nvim editor
-server.
+or |--embed|). Multiple UI clients can |:connect| to the same editor server.
 
 External plugins run in separate processes. |remote-plugin| This improves
 stability and allows those plugins to work without blocking the editor. Even
@@ -292,7 +292,7 @@ stability and allows those plugins to work without blocking the editor. Even
 
 Platform and I/O facilities are built upon libuv. Nvim benefits from libuv
 features and bug fixes, and other projects benefit from improvements to libuv
-by Nvim developers.
+by Nvim developers. This enables features such as |vim.wait()| and |vim.uv|.
 
 FEATURES
 
@@ -910,6 +910,8 @@ Providers:
 Startup:
 - `--literal`: File args are always literal; to expand wildcards on Windows,
   use |:n| e.g. `nvim +"n *"`
+- *--serverlist* Use instead: `nvim -es -V1 +'echo serverlist()'`
+- *--servername* Use instead: |--server| or |:connect|.
 - Easy mode: eview, evim, nvim -y
 - Restricted mode: rview, rvim, nvim -Z
 - Vi mode: nvim -v
