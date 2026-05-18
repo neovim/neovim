@@ -121,6 +121,8 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
+static void async_cmd_event(void **argv);
+
 static const char e_ambiguous_use_of_user_defined_command[]
   = N_("E464: Ambiguous use of user-defined command");
 static const char e_no_call_stack_to_substitute_for_stack[]
@@ -2100,6 +2102,10 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
              || did_throw
              || (cstack->cs_idx >= 0
                  && !(cstack->cs_flags[cstack->cs_idx] & CSF_ACTIVE)));
+  if (!ea.skip && (cmdmod.cmod_flags & CMOD_ASYNC)) {
+    multiqueue_put(main_loop.events, async_cmd_event, xstrdup(ea.cmd));
+    goto doend;
+  }
 
   // 3. Skip over the range to find the command. Let "p" point to after it.
   //
@@ -2477,6 +2483,13 @@ doend:
   return ea.nextcmd;
 }
 
+static void async_cmd_event(void **argv)
+{
+  char *cmd = argv[0];
+  do_cmdline_cmd(cmd);
+  xfree(cmd);
+}
+
 static char ex_error_buf[MSG_BUF_LEN];
 
 /// @return an error message with argument included.
@@ -2609,10 +2622,14 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     switch (*p) {
     // When adding an entry, also modify cmdmods[]
     case 'a':
-      if (!checkforcmd(&eap->cmd, "aboveleft", 3)) {
+      if (checkforcmd(&eap->cmd, "aboveleft", 3)) {
+        cmod->cmod_split |= WSP_ABOVE;
+        continue;
+      }
+      if (!checkforcmd(&eap->cmd, "async", 5)) {
         break;
       }
-      cmod->cmod_split |= WSP_ABOVE;
+      cmod->cmod_flags |= CMOD_ASYNC;
       continue;
 
     case 'b':
@@ -3278,6 +3295,7 @@ static struct cmdmod {
   int has_count;            // :123verbose  :3tab
 } cmdmods[] = {
   { "aboveleft", 3, false },
+  { "async", 5, false },
   { "belowright", 3, false },
   { "botright", 2, false },
   { "browse", 3, false },

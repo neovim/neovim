@@ -5480,6 +5480,14 @@ describe('API', function()
       eq('', api.nvim_cmd({ cmd = '', mods = { noautocmd = true } }, {}))
     end)
 
+    it('schedules commands with :async', function()
+      command('let g:async_ran = 0')
+      command('async let g:async_ran = 1')
+      eq(0, eval('g:async_ran'))
+      n.poke_eventloop()
+      eq(1, eval('g:async_ran'))
+    end)
+
     it('works with magic.file', function()
       exec_lua([[
         vim.api.nvim_create_user_command("Foo", function(opts)

@@ -38,14 +38,13 @@ The following command line arguments are available:
 <				Use |-Es| to suppress the warning when no
 				server is found: >
 				  nvim -Es --server {addr} --remote {file} ...
-<			Use |+async| to open without waiting: >
+<			Use |:async| to open without waiting: >
 			  nvim --server {addr} --remote +async {file} ...
-<								*+async*
-   +async		Special +{cmd} token for |--remote|. When present,
-			the client opens the files on the server and exits
-			immediately without waiting for the buffers to be
-			closed. Can be combined with other +{cmd} arguments
-			and |-p|: >
+<
+   +async		Uses the |:async| command modifier. The client opens
+			the files on the server and exits immediately without
+			waiting for the buffers to be closed. Can be combined
+			with other +{cmd} arguments and |-p|: >
 			  nvim --server {addr} --remote +async file.txt
 			  nvim -p --server {addr} --remote +async file.txt
 			  nvim --server {addr} --remote +async "+set ft=markdown" file.txt

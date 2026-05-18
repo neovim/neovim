@@ -165,6 +165,7 @@ enum {
   CMOD_LOCKMARKS    = 0x0800,  ///< ":lockmarks"
   CMOD_KEEPPATTERNS = 0x1000,  ///< ":keeppatterns"
   CMOD_NOSWAPFILE   = 0x2000,  ///< ":noswapfile"
+  CMOD_ASYNC        = 0x4000,  ///< ":async"
 };
 
 /// Command modifiers ":vertical", ":browse", ":confirm", ":hide", etc. set a
