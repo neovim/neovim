@@ -457,10 +457,14 @@ describe('vim.lsp.completion: item conversion', function()
 
   it('works on non word prefix', function()
     local completion_list = {
-      { label = ' foo', insertText = '->foo' },
+      { label = ' foo', insertText = '->foo', sortText = '1' },
+      { label = ' bar', insertText = '->bar', filterText = 'bar', sortText = '2' },
     }
     local result = complete('wp.|', completion_list, 0, 2)
-    eq({ { abbr = ' foo', word = '->foo' } }, extract_word_abbr(result.items))
+    eq({
+      { abbr = ' foo', word = '->foo' },
+      { abbr = ' bar', word = '->bar' },
+    }, extract_word_abbr(result.items))
   end)
 
   it('trims trailing newline or tab from textEdit', function()
