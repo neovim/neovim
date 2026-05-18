@@ -170,6 +170,7 @@ typedef struct {
   Buffer buf;
   Tabpage tab;
   String filetype;
+  String operation;
 } Dict(option);
 
 typedef struct {

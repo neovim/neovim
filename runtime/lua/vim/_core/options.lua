@@ -92,6 +92,7 @@
 ---     Invalid or unset key returns `nil`.
 --- </pre>
 
+local M = {}
 local api = vim.api
 
 -- TODO(tjdevries): Improve option metadata so that this doesn't have to be hardcoded.
@@ -167,7 +168,7 @@ local function new_buf_opt_accessor(bufnr)
     end,
 
     __newindex = function(_, k, v)
-      return api.nvim_set_option_value(k, v, { buf = bufnr or 0 })
+      api.nvim_set_option_value(k, v, { buf = bufnr or 0 })
     end,
   })
 end
@@ -195,7 +196,7 @@ local function new_win_opt_accessor(winid, bufnr)
     end,
 
     __newindex = function(_, k, v)
-      return api.nvim_set_option_value(k, v, {
+      api.nvim_set_option_value(k, v, {
         scope = bufnr and 'local' or nil,
         win = winid or 0,
       })
@@ -243,7 +244,7 @@ vim.o = setmetatable({}, {
     return api.nvim_get_option_value(k, {})
   end,
   __newindex = function(_, k, v)
-    return api.nvim_set_option_value(k, v, {})
+    api.nvim_set_option_value(k, v, {})
   end,
 })
 
@@ -264,7 +265,7 @@ vim.go = setmetatable({}, {
     return api.nvim_get_option_value(k, { scope = 'global' })
   end,
   __newindex = function(_, k, v)
-    return api.nvim_set_option_value(k, v, { scope = 'global' })
+    api.nvim_set_option_value(k, v, { scope = 'global' })
   end,
 })
 
@@ -446,7 +447,7 @@ local to_vim_value = {
 
 --- Convert a Lua value to a vimoption_T value
 local function convert_value_to_vim(name, info, value)
-  if value == nil then
+  if value == nil or value == vim.NIL then
     return vim.NIL
   end
 
@@ -681,7 +682,28 @@ local remove_methods = {
 
 --- Handles the '-' operator
 local function remove_value(info, current, new)
-  return remove_methods[info.metatype](convert_value_to_lua(info, current), new)
+  return remove_methods[info.metatype](
+    convert_value_to_lua(info, current),
+    convert_value_to_lua(info, new)
+  )
+end
+
+function M.merge_opt_vals(name, current, new, operation)
+  local ret
+  local info = get_options_info(name) or error('Not a valid option name: ' .. name)
+  if operation == 'set' then
+    ret = new
+  elseif operation == 'append' then
+    ret = add_value(info, current, new)
+  elseif operation == 'prepend' then
+    ret = prepend_value(info, current, new)
+  elseif operation == 'remove' then
+    ret = remove_value(info, current, new)
+  else
+    error('Invalid operation for option: ' .. vim.inspect(operation))
+  end
+
+  return convert_value_to_vim(name, info, ret)
 end
 
 local function create_option_accessor(scope)
@@ -706,21 +728,12 @@ local function create_option_accessor(scope)
   end
 
   option_mt = {
-    -- To set a value, instead use:
-    --  opt[my_option] = value
-    _set = function(self)
-      local value = convert_value_to_vim(self._name, self._info, self._value)
-      api.nvim_set_option_value(self._name, value, { scope = scope })
-    end,
-
     get = function(self)
       return convert_value_to_lua(self._info, self._value)
     end,
 
     append = function(self, right)
-      --- @diagnostic disable-next-line: no-unknown
-      self._value = add_value(self._info, self._value, right)
-      self:_set()
+      vim.api.nvim_set_option_value(self._name, right, { operation = 'append', scope = scope })
     end,
 
     __add = function(self, right)
@@ -728,9 +741,7 @@ local function create_option_accessor(scope)
     end,
 
     prepend = function(self, right)
-      --- @diagnostic disable-next-line: no-unknown
-      self._value = prepend_value(self._info, self._value, right)
-      self:_set()
+      vim.api.nvim_set_option_value(self._name, right, { operation = 'prepend', scope = scope })
     end,
 
     __pow = function(self, right)
@@ -738,9 +749,7 @@ local function create_option_accessor(scope)
     end,
 
     remove = function(self, right)
-      --- @diagnostic disable-next-line: no-unknown
-      self._value = remove_value(self._info, self._value, right)
-      self:_set()
+      vim.api.nvim_set_option_value(self._name, right, { operation = 'remove', scope = scope })
     end,
 
     __sub = function(self, right)
@@ -758,7 +767,7 @@ local function create_option_accessor(scope)
     end,
 
     __newindex = function(_, k, v)
-      make_option(k, v):_set()
+      api.nvim_set_option_value(k, v, { scope = scope })
     end,
   })
 end
@@ -927,3 +936,5 @@ vim.opt_local = create_option_accessor('local')
 
 --- @nodoc
 vim.opt_global = create_option_accessor('global')
+
+return M
