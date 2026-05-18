@@ -257,6 +257,7 @@ TUI
 
 UI
 
+• |:checkhealth| shows filewatcher info in the Performance section.
 • These builtin "picker" menus delegate to |vim.ui.select()|:
   • :browse oldfiles
   • |:recover|

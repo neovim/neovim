@@ -112,6 +112,7 @@ local function check_active_clients()
   end
 end
 
+-- See also runtime/lua/vim/health/health.lua:check_watchers()
 local function check_watcher()
   vim.health.start('vim.lsp: File Watcher')
 
