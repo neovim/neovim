@@ -3463,4 +3463,34 @@ func Test_app_file()
   filetype off
 endfunc
 
+func Test_cucumber_code_injection()
+  CheckFeature ruby
+  filetype plugin on
+
+  call mkdir('Xcucu/features/step_definitions', 'pR')
+  call writefile([
+        \ 'Feature: demo',
+        \ '  Scenario: trigger',
+        \ '    Given xyzzy',
+        \ ], 'Xcucu/features/test.feature')
+  let marker = getcwd() . '/Xcucu/MARKER'
+  " Malicious step: terminates the regex literal, injects Ruby system(),
+  " comments the trailing slash.  With the fix, the pattern is passed to
+  " Regexp.new() instead of Kernel.eval() and the payload is inert.
+  call writefile([
+        \ 'Given /xyzzy/; system("touch ' . marker . '"); #/ do',
+        \ 'end',
+        \ ], 'Xcucu/features/step_definitions/poc.rb')
+
+  new Xcucu/features/test.feature
+  call assert_equal('cucumber', &filetype)
+  call cursor(3, 1)
+  " Triggers s:jump -> s:steps -> s:stepmatch on every discovered step,
+  " including the malicious one.  Suppress preview and error messages.
+  silent! normal [d
+  call assert_false(filereadable(marker), 'Ruby injection executed')
+  bwipe!
+  filetype plugin off
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

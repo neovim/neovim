@@ -767,4 +767,24 @@ function Test_netrw_NetrwMaps_CR_dirname()
   unlet! g:netrw_pwn
   bw!
 endfunction
+
+func Test_netrw_injection()
+  let g:netrw_home       = getcwd()
+  let savefile           = g:netrw_home . '/.netrwhist'
+  let g:netrw_dirhistmax = 10
+  let g:netrw_dirhistcnt = 1
+  let g:netrw_dirhist_1  = "x'|let g:injected = 1|let y='z"
+  call delete(savefile)
+  try
+    call netrw#Call('NetrwBookHistSave')
+    call assert_true(filereadable(savefile), savefile . ' must be written')
+    unlet g:netrw_dirhist_1
+    execute 'source ' . fnameescape(savefile)
+    call assert_false(exists("g:injected"), 'injected statement must not execute')
+    call assert_equal("x'|let g:injected = 1|let y='z", g:netrw_dirhist_1, 'dirname must round-trip')
+  finally
+    call delete(savefile)
+    unlet! g:netrw_home g:netrw_dirhistmax g:netrw_dirhistcnt g:netrw_dirhist_1 g:injected
+  endtry
+endfunc
 " vim:ts=8 sts=2 sw=2 et
