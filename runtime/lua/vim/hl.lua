@@ -154,23 +154,22 @@ local hl_op_state = {}
 
 local events_ns = api.nvim_create_namespace('nvim.hl.events')
 
---- Highlight the related text region during a |TextYankPost| or |TextPutPost|
---- event.
+--- Highlights the affected text region during a |TextYankPost| or |TextPutPost| event.
 ---
---- Add the following to your `init.vim`:
+--- Add this to your `init.vim`:
 ---
 --- ```vim
 --- autocmd TextYankPost * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
---- autocmd TextPutPost * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
+--- autocmd TextPutPost  * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
 --- ```
 ---
 --- @param opts table|nil Optional parameters
----              - event     event structure (default vim.v.event)
----              - higroup   highlight group for the text region (default "IncSearch")
----              - on_macro  highlight when executing macro (default false)
----              - on_visual highlight when the event is in |Visual| mode (default true)
----              - priority  integer priority (default |vim.hl.priorities|`.user`)
----              - timeout   time in ms before highlight is cleared (default 150)
+---              - event     (default vim.v.event) Event structure.
+---              - higroup   (default "IncSearch") Highlight group for the text region.
+---              - on_macro  (default false) Highlight during |macro| execution.
+---              - on_visual (default true) Highlight during |Visual| mode.
+---              - priority  (default |vim.hl.priorities|`.user`) Integer priority.
+---              - timeout   (default 150) Time in ms before highlight is cleared.
 function M.hl_op(opts)
   vim.validate('opts', opts, 'table', true)
   opts = opts or {}
@@ -180,23 +179,16 @@ function M.hl_op(opts)
 
   if not on_macro and vim.fn.reg_executing() ~= '' then
     return
-  end
-  if event.regtype == '' then
+  elseif
+    event.regtype == ''
+    or (event.operator ~= 'y' and event.operator ~= 'p' and event.operator ~= 'P')
+  then
     return
-  end
-  if not on_visual and event.visual then
-    return
-  end
-
-  local state_key --- @type string
-  if event.operator == 'y' then
-    state_key = 'yank'
-  elseif event.operator == 'p' or event.operator == 'P' then
-    state_key = 'put'
-  else
+  elseif not on_visual and event.visual then
     return
   end
 
+  local state_key = event.operator == 'y' and 'yank' or 'put'
   local higroup = opts.higroup or 'IncSearch'
 
   local bufnr = api.nvim_get_current_buf()
@@ -223,9 +215,9 @@ function M.hl_op(opts)
   }
 end
 
---- @deprecated Please use |vim.hl.hl_op()| instead.
+--- @deprecated Use |vim.hl.hl_op()| instead.
 function M.on_yank(opts)
-  vim.deprecate('vim.hl.on_yank', 'vim.hl.hl_op', '0.13')
+  vim.deprecate('vim.hl.on_yank', 'vim.hl.hl_op', '0.14')
   return M.hl_op(opts)
 end
 

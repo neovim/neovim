@@ -941,7 +941,8 @@ TUI:
                           *t_xx* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
 - Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
   terminal capabilities. Instead Nvim treats the terminal as any other UI,
-  e.g. 'guicursor' sets the terminal cursor style if possible.
+  e.g. 'guicursor' sets the terminal cursor style if possible. You can use
+  |$NVIM_TERMDEFS| if you still need to override the builtin definitions.
 
                           *termcap*
 - Nvim never uses the termcap database, only |terminfo| and |builtin-terms|.

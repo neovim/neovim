@@ -52,13 +52,14 @@ own terminfo is usually as simple as running this:
 <
 
                                                        *$NVIM_TERMDEFS*
-To override terminfo entries without modifying terminfo files, use
-$NVIM_TERMDEFS. This may be useful on Windows, where Unibilium can't read
-terminfo files. When this is set, terminfo files are not used, but builtin
-terminfo entries are. Any values in this variable will override the builtin
-definitions. For example, to disable alternate screen, override the sequence
-nvim sends to reset the cursor style, and set the sequences that get
-interpreted as <Home> and <S-Home>: >
+To override the builtin terminfo, set $NVIM_TERMDEFS to a JSON object whose
+keys correspond to one or more of the fields below, each of which will
+override its counterpart (if any) in the builtin terminfo. The system terminfo
+will be skipped entirely: only builtin definitions, plus the $NVIM_TERMDEFS
+overrides, will be used.
+
+For example, to disable alternate screen, override the "reset the cursor
+style" sequence, and set the <Home> and <S-Home> sequences: >
 
   NVIM_TERMDEFS='{
     "enter_ca_mode": "",

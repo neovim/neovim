@@ -169,7 +169,7 @@ local function broadcast_error(msg)
 end
 
 --- Get user overrides for terminfo entries as a table. See |$NVIM_TERMDEFS|
-function M.get_termdefs()
+function M._get_termdefs()
   local termdefs_raw = os.getenv('NVIM_TERMDEFS')
   if termdefs_raw ~= nil then
     local ok, termdefs_or_err = pcall(vim.json.decode, termdefs_raw)
