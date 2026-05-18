@@ -37,7 +37,8 @@
 #define EX_BANG            0x002U  // allow a ! after the command name
 #define EX_EXTRA           0x004U  // allow extra args after command name
 #define EX_XFILE           0x008U  // expand wildcards in extra part
-#define EX_NOSPC           0x010U  // no spaces allowed in the extra part
+#define EX_NOSPC           0x010U  // extra part is a single argument (no split on
+                                   // whitespace)
 #define EX_DFLALL          0x020U  // default file range is 1,$
 #define EX_WHOLEFOLD       0x040U  // extend range to include whole fold also
                                    // when less than two numbers given
@@ -61,6 +62,7 @@
                                    // buffer when curbuf->b_ro_locked is set
 #define EX_KEEPSCRIPT  0x4000000U  // keep sctx of where command was invoked
 #define EX_PREVIEW     0x8000000U  // allow incremental command preview
+#define EX_ARGSPACE   0x40000000U  // completion: keep spaces in arg lead
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
 #define EX_FILE1 (EX_FILES | EX_NOSPC)  // 1 file, defaults to current file
 #define EX_WORD1 (EX_EXTRA | EX_NOSPC)  // one extra word allowed

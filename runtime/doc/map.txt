@@ -1350,7 +1350,10 @@ reported if any are supplied).  However, it is possible to specify that the
 command can take arguments, using the -nargs attribute.  Valid cases are:
 
 	-nargs=0    No arguments are allowed (the default)
-	-nargs=1    Exactly one argument is required, it includes spaces
+	-nargs=1    Exactly one argument is required, it includes spaces;
+		    completion treats white spaces as argument separation
+	-nargs=_    Exactly one argument is required, it includes spaces;
+		    completion treats white spaces as part of the argument
 	-nargs=*    Any number of arguments are allowed (0, 1, or many),
 		    separated by white space
 	-nargs=?    0 or 1 arguments are allowed
@@ -1358,7 +1361,23 @@ command can take arguments, using the -nargs attribute.  Valid cases are:
 
 Arguments are considered to be separated by (unescaped) spaces or tabs in this
 context, except when there is one argument, then the white space is part of
-the argument.
+the argument. The difference between the "-nargs=1" and "-nargs=_": >
+
+	func MyComplete(ArgLead, CmdLine, CursorPos)
+	  return ["one value", "two values", "three values"]
+		\->matchfuzzy(a:ArgLead)
+	endfunc
+	:command -nargs=1 -complete=customlist,MyComplete MyCmd1 echo <q-args>
+	:command -nargs=_ -complete=customlist,MyComplete MyCmd2 echo <q-args>
+
+Completing ":MyCmd1 two va<tab>" will complete with: >
+
+	:MyCmd1 two one value
+
+Completing ":MyCmd2 two va<tab>" will complete with: >
+
+	:MyCmd2 two values
+
 
 Note that arguments are used as text, not as expressions.  Specifically,
 "s:var" will use the script-local variable in the script where the command was

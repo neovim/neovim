@@ -152,7 +152,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
     // For mapping commands, split differently to preserve whitespace
     args = parse_map_cmd(ea.arg, arena);
   } else if (ea.argt & EX_NOSPC) {
-    // For nargs = 1 or '?', pass the entire argument list as a single argument,
+    // For nargs = 1 or '_' or '?', pass the entire argument list as a single argument,
     // otherwise split arguments by whitespace.
     if (*ea.arg != NUL) {
       args = arena_array(arena, 1);
@@ -217,7 +217,9 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char nargs[2];
   if (ea.argt & EX_EXTRA) {
     if (ea.argt & EX_NOSPC) {
-      if (ea.argt & EX_NEEDARG) {
+      if (ea.argt & EX_ARGSPACE) {
+        nargs[0] = '_';
+      } else if (ea.argt & EX_NEEDARG) {
         nargs[0] = '1';
       } else {
         nargs[0] = '?';
@@ -1139,6 +1141,9 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
       break;
     case '+':
       argt |= EX_EXTRA | EX_NEEDARG;
+      break;
+    case '_':
+      argt |= EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE;
       break;
     default:
       VALIDATE_S(false, "nargs", opts->nargs.data.string.data, {

@@ -2395,7 +2395,9 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   char nargs[2];
   if (cmd->uc_argt & EX_EXTRA) {
     if (cmd->uc_argt & EX_NOSPC) {
-      if (cmd->uc_argt & EX_NEEDARG) {
+      if (cmd->uc_argt & EX_ARGSPACE) {
+        nargs[0] = '_';
+      } else if (cmd->uc_argt & EX_NEEDARG) {
         nargs[0] = '1';
       } else {
         nargs[0] = '?';
