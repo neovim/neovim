@@ -121,12 +121,39 @@ func Test_netrw_wipe_empty_buffer_fastpath()
   call setline(1, 'foobar')
   let  bufnr = bufnr('%')
   tabnew
+  let  tabbuf = bufnr('%')
   Explore
   call search('README.txt', 'W')
   exe ":norm \<cr>"
-  call assert_equal(4, bufnr('$'))
+  call assert_equal(tabbuf + 1, bufnr('$'))
   call assert_true(bufexists(bufnr))
   bw
 
   unlet! netrw_fastbrowse
 endfunction
+
+func Test_netrw_injection()
+  packadd netrw
+  call s:setup()
+  " Nvim: s:NetrwHome() always uses stdpath('state')
+  let save_state_home = $XDG_STATE_HOME
+  let $XDG_STATE_HOME = getcwd() . '/Xnetrwstate'
+  call mkdir(stdpath('state'), 'p')
+  let savefile           = stdpath('state') . '/netrw/.netrwhist'
+  let g:netrw_dirhistmax = 10
+  let g:netrw_dirhistcnt = 1
+  let g:netrw_dirhist_1  = "x'|let g:injected = 1|let y='z"
+  try
+    call netrw#Call('NetrwBookHistSave')
+    call assert_true(filereadable(savefile), savefile . ' must be written')
+    unlet g:netrw_dirhist_1
+    execute 'source ' . fnameescape(savefile)
+    call assert_false(exists("g:injected"), 'injected statement must not execute')
+    call assert_equal("x'|let g:injected = 1|let y='z", g:netrw_dirhist_1, 'dirname must round-trip')
+  finally
+    call delete('Xnetrwstate', 'rf')
+    let $XDG_STATE_HOME = save_state_home
+    unlet! g:netrw_home g:netrw_dirhistmax g:netrw_dirhistcnt g:netrw_dirhist_1 g:injected
+    call s:cleanup()
+  endtry
+endfunc
