@@ -14,6 +14,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
@@ -301,15 +302,17 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
                                   CMD_map);
   }
   // Find start of last argument.
-  const char *p = arg;
-  while (*p) {
-    if (*p == ' ') {
-      // argument starts after a space
-      arg = p + 1;
-    } else if (*p == '\\' && *(p + 1) != NUL) {
-      p++;  // skip over escaped character
+  if (!(argt & EX_ARGSPACE)) {
+    const char *p = arg;
+    while (*p) {
+      if (*p == ' ') {
+        // argument starts after a space
+        arg = p + 1;
+      } else if (*p == '\\' && *(p + 1) != NUL) {
+        p++;  // skip over escaped character
+      }
+      MB_PTR_ADV(p);
     }
-    MB_PTR_ADV(p);
   }
   xp->xp_pattern = (char *)arg;
   xp->xp_context = context;
@@ -392,7 +395,7 @@ char *get_user_cmd_flags(expand_T *xp, int idx)
 /// Function given to ExpandGeneric() to obtain the list of values for -nargs.
 char *get_user_cmd_nargs(expand_T *xp, int idx)
 {
-  static char *user_cmd_nargs[] = { "0", "1", "*", "?", "+" };
+  static char *user_cmd_nargs[] = { "0", "1", "_", "*", "?", "+" };
 
   if (idx >= (int)ARRAY_SIZE(user_cmd_nargs)) {
     return NULL;
@@ -533,7 +536,7 @@ static void uc_list(char *name, size_t name_len)
       len = 0;
 
       // Arguments
-      switch (a & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
+      switch (a & (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE)) {
       case 0:
         IObuff[len++] = '0';
         break;
@@ -548,6 +551,9 @@ static void uc_list(char *name, size_t name_len)
         break;
       case (EX_EXTRA | EX_NOSPC | EX_NEEDARG):
         IObuff[len++] = '1';
+        break;
+      case (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE):
+        IObuff[len++] = '_';
         break;
       }
 
@@ -777,6 +783,8 @@ static int uc_scan_attr(char *attr, size_t len, uint32_t *argt, int *def, int *f
           *argt |= (EX_EXTRA | EX_NOSPC);
         } else if (*val == '+') {
           *argt |= (EX_EXTRA | EX_NEEDARG);
+        } else if (*val == '_') {
+          *argt |= (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE);
         } else {
           goto wrong_nargs;
         }
@@ -1801,7 +1809,7 @@ Dict commands_array(buf_T *buf, Arena *arena)
       PUT_C(d, "callback", LUAREF_OBJ(api_new_luaref(cmd->uc_luaref)));
     }
 
-    switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
+    switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE)) {
     case 0:
       arg[0] = '0'; break;
     case (EX_EXTRA):
@@ -1812,6 +1820,8 @@ Dict commands_array(buf_T *buf, Arena *arena)
       arg[0] = '+'; break;
     case (EX_EXTRA | EX_NOSPC | EX_NEEDARG):
       arg[0] = '1'; break;
+    case (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE):
+      arg[0] = '_'; break;
     }
     PUT_C(d, "nargs", CSTR_TO_ARENA_OBJ(arena, arg));
 
