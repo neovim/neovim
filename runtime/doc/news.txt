@@ -203,6 +203,7 @@ LUA
 • |vim.log| for easily creating loggers.
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
+• |vim.pos| and |vim.range| can now convert between mark positions.
 
 OPTIONS
 

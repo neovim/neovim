@@ -150,11 +150,28 @@ end
 ---@param buf integer
 ---@return integer, integer
 local function to_inclusive_pos(buf, row, col)
+  local line = get_line(buf, row)
   if col > 0 then
-    col = col - 1
+    col = col + vim.str_utf_start(line, col) - 1
   elseif col == 0 and row > 0 then
     row = row - 1
-    col = #get_line(buf, row)
+    col = #line > 0 and #line + vim.str_utf_start(line, #line) - 1 or 0
+  end
+
+  return row, col
+end
+
+---@param row integer
+---@param col integer
+---@param buf integer
+---@return integer, integer
+local function to_exclusive_pos(buf, row, col)
+  local line = get_line(buf, row)
+  if col >= #line then
+    row = row + 1
+    col = 0
+  else
+    col = col + vim.str_utf_end(line, col + 1) + 1
   end
 
   return row, col
@@ -164,7 +181,7 @@ end
 ---@param r1 vim.Range
 ---@param r2 vim.Range
 function M.__lt(r1, r2)
-  if r1:is_empty() then
+  if r1:is_empty() or r2:is_empty() then
     return cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1
   end
 
@@ -176,7 +193,7 @@ end
 ---@param r1 vim.Range
 ---@param r2 vim.Range
 function M.__le(r1, r2)
-  if r1:is_empty() then
+  if r1:is_empty() or r2:is_empty() then
     return cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1
   end
 
@@ -311,6 +328,67 @@ function M.lsp(buf, range, position_encoding)
   local start = vim.pos.lsp(buf, range['start'], position_encoding)
   local end_ = vim.pos.lsp(buf, range['end'], position_encoding)
 
+  return M.new(start, end_)
+end
+
+--- Converts |vim.Range| to extmark range (see |api-indexing|).
+---
+--- Example:
+--- ```lua
+--- local range = vim.range(0, 3, 5, 4, 0)
+---
+--- -- Convert to mark range, you can call it in a method style.
+--- local start_row, start_col, end_row, end_col = range:to_mark()
+--- ```
+---@param range vim.Range
+---@return integer, integer, integer, integer
+function M.to_mark(range)
+  validate('range', range, 'table')
+
+  local buf = range.buf
+  local start_row, start_col, end_row, end_col = range[1], range[2], range[3], range[4]
+  if vim.o.selection ~= 'exclusive' then
+    end_row, end_col = to_inclusive_pos(buf, end_row, end_col)
+  end
+
+  start_row, start_col = vim.pos(buf, start_row, start_col):to_mark()
+  end_row, end_col = vim.pos(buf, end_row, end_col):to_mark()
+  return start_row, start_col, end_row, end_col
+end
+
+--- Creates a new |vim.Range| from "mark-indexed" range (see |api-indexing|).
+---
+--- Example:
+--- ```lua
+--- -- A range represented by marks may be end-inclusive (decided by 'selection' option).
+--- local start_row, start_col = unpack(api.nvim_buf_get_mark(bufnr, '<'))
+--- local end_row, end_col = unpack(api.nvim_buf_get_mark(bufnr, '>'))
+---
+--- -- Create an end-exclusive range.
+--- local range = vim.range.mark(0, start_row, start_col, end_row, end_col)
+--- ```
+---@param buf integer
+---@param start_row integer
+---@param start_col integer
+---@param end_row integer
+---@param end_col integer
+function M.mark(buf, start_row, start_col, end_row, end_col)
+  validate('buf', buf, 'number')
+  validate('start_row', start_row, 'number')
+  validate('start_col', start_col, 'number')
+  validate('end_row', end_row, 'number')
+  validate('end_col', end_col, 'number')
+
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
+
+  local start = vim.pos.mark(buf, start_row, start_col)
+  local end_ = vim.pos.mark(buf, end_row, end_col)
+
+  if vim.o.selection ~= 'exclusive' then
+    end_[1], end_[2] = to_exclusive_pos(buf, end_[1], end_[2])
+  end
   return M.new(start, end_)
 end
 

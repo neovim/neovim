@@ -2941,20 +2941,6 @@ buf_highlight_references({bufnr}, {references}, {position_encoding})
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
 
-                                             *vim.lsp.util.character_offset()*
-character_offset({buf}, {row}, {col}, {position_encoding})
-    Returns the UTF-32 and UTF-16 offsets for a position in a certain buffer.
-
-    Parameters: ~
-      • {buf}                (`integer`) buffer number (0 for current)
-      • {row}                (`integer`) 0-indexed line
-      • {col}                (`integer`) 0-indexed byte offset in line
-      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
-
-    Return: ~
-        (`integer`) `position_encoding` index of the character in line {row}
-        column {col} in buffer {buf}
-
                               *vim.lsp.util.convert_input_to_markdown_lines()*
 convert_input_to_markdown_lines({input}, {contents})
     Converts any of `MarkedString` | `MarkedString[]` | `MarkupContent` into a

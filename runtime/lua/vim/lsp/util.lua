@@ -1856,32 +1856,11 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, position_encoding)
   validate('position_encoding', position_encoding, 'string')
 
   bufnr = vim._resolve_bufnr(bufnr)
-  --- @type [integer, integer]
-  local A = { unpack(start_pos or api.nvim_buf_get_mark(bufnr, '<')) }
-  --- @type [integer, integer]
-  local B = { unpack(end_pos or api.nvim_buf_get_mark(bufnr, '>')) }
-  -- convert to 0-index
-  A[1] = A[1] - 1
-  B[1] = B[1] - 1
-  -- account for position_encoding.
-  if A[2] > 0 then
-    A[2] = M.character_offset(bufnr, A[1], A[2], position_encoding)
-  end
-  if B[2] > 0 then
-    B[2] = M.character_offset(bufnr, B[1], B[2], position_encoding)
-  end
-  -- we need to offset the end character position otherwise we loose the last
-  -- character of the selection, as LSP end position is exclusive
-  -- see https://microsoft.github.io/language-server-protocol/specification#range
-  if vim.o.selection ~= 'exclusive' then
-    B[2] = B[2] + 1
-  end
+  local start_row, start_col = unpack(start_pos or api.nvim_buf_get_mark(bufnr, '<'))
+  local end_row, end_col = unpack(end_pos or api.nvim_buf_get_mark(bufnr, '>'))
   return {
     textDocument = M.make_text_document_params(bufnr),
-    range = {
-      start = { line = A[1], character = A[2] },
-      ['end'] = { line = B[1], character = B[2] },
-    },
+    range = vim.range.mark(bufnr, start_row, start_col, end_row, end_col):to_lsp(position_encoding),
   }
 end
 
@@ -1933,12 +1912,14 @@ end
 
 --- Returns the UTF-32 and UTF-16 offsets for a position in a certain buffer.
 ---
+---@deprecated
 ---@param buf integer buffer number (0 for current)
 ---@param row integer 0-indexed line
 ---@param col integer 0-indexed byte offset in line
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return integer `position_encoding` index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(buf, row, col, position_encoding)
+  vim.deprecate('vim.lsp.util.character_offset', 'vim.str_utfindex', '0.14')
   vim.validate('position_encoding', position_encoding, 'string')
 
   local line = get_line(buf, row)

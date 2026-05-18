@@ -80,6 +80,18 @@ describe('vim.range', function()
     }, range)
   end)
 
+  it('converts between inclusive mark ranges ending on multibyte characters', function()
+    insert('🙂')
+
+    local range, mark_range = exec_lua(function()
+      vim.o.selection = 'inclusive'
+      local range = vim.range.mark(0, 1, 0, 1, 0)
+      return { range[1], range[2], range[3], range[4] }, { range:to_mark() }
+    end)
+    eq({ 0, 0, 0, 4 }, range)
+    eq({ 1, 0, 1, 0 }, mark_range)
+  end)
+
   it('checks whether a range contains a position', function()
     eq(
       true,
