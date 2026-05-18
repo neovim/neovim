@@ -291,6 +291,25 @@ function M.cursor(buf, pos)
   return M.new(buf, pos[1] - 1, pos[2])
 end
 
+--- Converts |vim.Pos| to mark position (see |api-indexing|).
+---@param pos vim.Pos
+---@return integer, integer
+function M.to_mark(pos)
+  return pos[1] + 1, pos[2]
+end
+
+--- Creates a new |vim.Pos| from mark position (see |api-indexing|).
+---@param buf integer
+---@param row integer
+---@param col integer
+function M.mark(buf, row, col)
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
+
+  return M.new(buf, row - 1, col)
+end
+
 --- Converts |vim.Pos| to extmark position (see |api-indexing|).
 ---@param pos vim.Pos
 ---@return integer, integer
