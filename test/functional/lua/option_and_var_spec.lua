@@ -896,8 +896,9 @@ describe('lua stdlib', function()
         end)
 
         it('allows prepending a key:value string to a listchars', function()
-          eq_exec_lua('eol:~,space:.,tab:>~', function()
+          eq_exec_lua('tab:>~,eol:~,space:.', function()
             vim.opt.listchars = { eol = '~', space = '.' }
+            -- Operator overloading is cursed.
             vim.opt.listchars = vim.opt.listchars ^ 'tab:>~'
             return vim.o.listchars
           end)
@@ -1018,19 +1019,19 @@ describe('lua stdlib', function()
           end)
 
           matches(
-            "Invalid option type 'string' for 'tabstop'",
+            'Invalid value for option \'tabstop\': expected number, got string "4"',
             pcall_err(exec_lua, [[vim.opt.tabstop = '4']])
           )
           matches(
-            "Invalid option type 'boolean' for 'tabstop'",
+            "Invalid value for option 'tabstop': expected number, got boolean true",
             pcall_err(exec_lua, [[vim.opt.tabstop = true]])
           )
           matches(
-            "Invalid option type 'table' for 'tabstop'",
+            "Invalid 'value': expected valid option type, got Array",
             pcall_err(exec_lua, [[vim.opt.tabstop = {4, 2}]])
           )
           matches(
-            "Invalid option type 'function' for 'tabstop'",
+            "Invalid 'value': expected valid option type, got Function",
             pcall_err(exec_lua, [[vim.opt.tabstop = function() return 4 end]])
           )
         end)
@@ -1042,19 +1043,19 @@ describe('lua stdlib', function()
           end)
 
           matches(
-            "Invalid option type 'number' for 'undofile'",
+            "Invalid value for option 'undofile': expected boolean, got number 0",
             pcall_err(exec_lua, [[vim.opt.undofile = 0]])
           )
           matches(
-            "Invalid option type 'table' for 'undofile'",
+            "Invalid 'value': expected valid option type, got Array",
             pcall_err(exec_lua, [[vim.opt.undofile = {true}]])
           )
           matches(
-            "Invalid option type 'string' for 'undofile'",
+            'Invalid value for option \'undofile\': expected boolean, got string "true"',
             pcall_err(exec_lua, [[vim.opt.undofile = 'true']])
           )
           matches(
-            "Invalid option type 'function' for 'undofile'",
+            "Invalid 'value': expected valid option type, got Function",
             pcall_err(exec_lua, [[vim.opt.undofile = function() return true end]])
           )
         end)

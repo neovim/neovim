@@ -1100,16 +1100,19 @@ static void stropt_remove_dupflags(char *newval, uint32_t flags)
 /// Get the string value specified for a ":set" command.  The following set options are supported:
 ///     set {opt}={val}
 ///     set {opt}:{val}
-static char *stropt_get_newval(int nextchar, OptIndex opt_idx, char **argp, void *varp,
-                               const char *origval, set_op_T *op_arg, uint32_t flags)
+char *stropt_get_newval(OptIndex opt_idx, char **argp, void *varp, const char *origval,
+                        set_op_T *op_arg, bool skipchar)
 {
   char *arg = *argp;
   set_op_T op = *op_arg;
   char *save_arg = NULL;
   char *newval;
   const char *s = NULL;
+  uint32_t flags = options[opt_idx].flags;
 
-  arg++;  // jump to after the '=' or ':'
+  if (skipchar) {
+    arg++;  // jump to after the '=' or ':'
+  }
 
   // Set 'keywordprg' to ":help" if an empty
   // value was passed to :set by the user.
@@ -1434,8 +1437,7 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
   case kOptValTypeString: {
     const char *oldval_str = oldval.data.string.data;
     // Get the new value for the option
-    const char *newval_str = stropt_get_newval(nextchar, opt_idx, argp, varp, oldval_str, &op,
-                                               flags);
+    const char *newval_str = stropt_get_newval(opt_idx, argp, varp, oldval_str, &op, true);
     newval = CSTR_AS_OPTVAL(newval_str);
     break;
   }
@@ -6072,7 +6074,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
 
 /// Escape an option value that can be used on the command-line with :set.
 /// Caller needs to free the returned string, unless NULL is returned.
-static char *escape_option_str_cmdline(char *var)
+char *escape_option_str_cmdline(char *var)
 {
   // A backslash is required before some characters.  This is the reverse of
   // what happens in do_set().
