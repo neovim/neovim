@@ -216,6 +216,8 @@ function M._send_did_save(bufnr)
           },
           text = included_text,
         })
+      else
+        M.flush(client, bufnr)
       end
     end
   end
