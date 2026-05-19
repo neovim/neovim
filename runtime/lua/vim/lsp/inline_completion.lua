@@ -40,6 +40,7 @@ local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local grammar = require('vim.lsp._snippet_grammar')
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 local Capability = require('vim.lsp._capability')
 
@@ -78,20 +79,12 @@ Capability.all[Completor.name] = Completor
 function Completor:new(buf)
   self = Capability.new(self, buf)
   self.client_state = {}
-  api.nvim_create_autocmd({ 'InsertEnter', 'CursorMovedI', 'TextChangedP' }, {
-    group = self.augroup,
-    buf = buf,
-    callback = function()
-      self:automatic_request()
-    end,
-  })
-  api.nvim_create_autocmd({ 'InsertLeave' }, {
-    group = self.augroup,
-    buf = buf,
-    callback = function()
-      self:abort()
-    end,
-  })
+  nvim_on({ 'InsertEnter', 'CursorMovedI', 'TextChangedP' }, self.augroup, { buf = buf }, function()
+    self:automatic_request()
+  end)
+  nvim_on({ 'InsertLeave' }, self.augroup, { buf = buf }, function()
+    self:abort()
+  end)
   return self
 end
 

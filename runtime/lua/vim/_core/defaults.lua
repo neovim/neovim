@@ -1,5 +1,7 @@
 -- Default user-commands, autocmds, mappings, menus.
 
+local nvim_on = require('vim._core.util').nvim_on
+
 --- Default user commands
 do
   vim.api.nvim_create_user_command('Inspect', function(cmd)
@@ -547,15 +549,13 @@ do
   end
 
   local nvim_popupmenu_augroup = vim.api.nvim_create_augroup('nvim.popupmenu', {})
-  vim.api.nvim_create_autocmd('MenuPopup', {
+  nvim_on('MenuPopup', nvim_popupmenu_augroup, {
     pattern = '*',
-    group = nvim_popupmenu_augroup,
     desc = 'Mouse popup menu',
     -- nested = true,
-    callback = function()
-      enable_ctx_menu()
-    end,
-  })
+  }, function()
+    enable_ctx_menu()
+  end)
 end
 
 --- Default autocommands. See |default-autocmds|
@@ -564,12 +564,9 @@ do
   if vim.v.vim_did_enter then
     require('vim._core.log').check_log_file()
   else
-    vim.api.nvim_create_autocmd('VimEnter', {
-      once = true,
-      callback = function()
-        require('vim._core.log').check_log_file()
-      end,
-    })
+    nvim_on('VimEnter', nil, { once = true }, function()
+      require('vim._core.log').check_log_file()
+    end)
   end
 
   local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim.terminal', {})
@@ -581,21 +578,19 @@ do
     command = "if !exists('b:term_title')|call jobstart(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'term': v:true, 'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
   })
 
-  vim.api.nvim_create_autocmd({ 'TermClose' }, {
-    group = nvim_terminal_augroup,
+  nvim_on({ 'TermClose' }, nvim_terminal_augroup, {
     nested = true,
     desc = 'Automatically close terminal buffers when started with no arguments and exiting without an error',
-    callback = function(ev)
-      if vim.v.event.status ~= 0 then
-        return
-      end
-      local info = vim.api.nvim_get_chan_info(vim.bo[ev.buf].channel)
-      local argv = info.argv or {}
-      if table.concat(argv, ' ') == vim.o.shell then
-        vim.api.nvim_buf_delete(ev.buf, { force = true })
-      end
-    end,
-  })
+  }, function(ev)
+    if vim.v.event.status ~= 0 then
+      return
+    end
+    local info = vim.api.nvim_get_chan_info(vim.bo[ev.buf].channel)
+    local argv = info.argv or {}
+    if table.concat(argv, ' ') == vim.o.shell then
+      vim.api.nvim_buf_delete(ev.buf, { force = true })
+    end
+  end)
 
   local nvim_terminal_exitmsg_ns = vim.api.nvim_create_namespace('nvim.terminal.exitmsg')
 
@@ -609,95 +604,82 @@ do
     })
   end
 
-  vim.api.nvim_create_autocmd('TermClose', {
-    group = nvim_terminal_augroup,
+  nvim_on('TermClose', nvim_terminal_augroup, {
     nested = true,
     desc = 'Displays the "[Process exited]" virtual text',
-    callback = function(ev)
-      if not vim.api.nvim_buf_is_valid(ev.buf) then
-        return
-      end
+  }, function(ev)
+    if not vim.api.nvim_buf_is_valid(ev.buf) then
+      return
+    end
 
-      local buf = vim.bo[ev.buf]
-      local pos = ev.data.pos ---@type integer
-      local buf_has_exitmsg = #(
-          vim.api.nvim_buf_get_extmarks(ev.buf, nvim_terminal_exitmsg_ns, 0, -1, {})
-        ) > 0
+    local buf = vim.bo[ev.buf]
+    local pos = ev.data.pos ---@type integer
+    local buf_has_exitmsg = #(
+        vim.api.nvim_buf_get_extmarks(ev.buf, nvim_terminal_exitmsg_ns, 0, -1, {})
+      ) > 0
 
-      -- `nvim_open_term` buffers do not have an attached 'channel'.
-      local msg = buf.channel == 0 and '[Terminal closed]'
-        or ('[Process exited %d]'):format(vim.v.event.status)
+    -- `nvim_open_term` buffers do not have an attached 'channel'.
+    local msg = buf.channel == 0 and '[Terminal closed]'
+      or ('[Process exited %d]'):format(vim.v.event.status)
 
-      if buf.buftype ~= 'terminal' or buf_has_exitmsg then
-        -- TermClose may be queued before TermOpen if process exits before `terminal_open` is called.
-        -- Don't display the msg now, let TermOpen display it.
-        vim.api.nvim_create_autocmd('TermOpen', {
-          buf = ev.buf,
-          once = true,
-          callback = function()
-            set_terminal_exitmsg(ev.buf, msg, pos)
-          end,
-        })
-        return
-      end
-      set_terminal_exitmsg(ev.buf, msg, pos)
-    end,
-  })
+    if buf.buftype ~= 'terminal' or buf_has_exitmsg then
+      -- TermClose may be queued before TermOpen if process exits before `terminal_open` is called.
+      -- Don't display the msg now, let TermOpen display it.
+      nvim_on('TermOpen', nil, {
+        buf = ev.buf,
+        once = true,
+      }, function()
+        set_terminal_exitmsg(ev.buf, msg, pos)
+      end)
+      return
+    end
+    set_terminal_exitmsg(ev.buf, msg, pos)
+  end)
 
-  vim.api.nvim_create_autocmd('TermRequest', {
-    group = nvim_terminal_augroup,
+  nvim_on('TermRequest', nvim_terminal_augroup, {
     desc = 'Handles OSC foreground/background color requests',
-    callback = function(ev)
-      --- @type integer
-      local channel = vim.bo[ev.buf].channel
-      if channel == 0 then
-        return
+  }, function(ev)
+    --- @type integer
+    local channel = vim.bo[ev.buf].channel
+    if channel == 0 then
+      return
+    end
+    local fg_request = ev.data.sequence == '\027]10;?'
+    local bg_request = ev.data.sequence == '\027]11;?'
+    if fg_request or bg_request then
+      -- WARN: This does not return the actual foreground/background color,
+      -- but rather returns:
+      --   - fg=white/bg=black when Nvim option 'background' is 'dark'
+      --   - fg=black/bg=white when Nvim option 'background' is 'light'
+      local red, green, blue = 0, 0, 0
+      local bg_option_dark = vim.o.background == 'dark'
+      if (fg_request and bg_option_dark) or (bg_request and not bg_option_dark) then
+        red, green, blue = 65535, 65535, 65535
       end
-      local fg_request = ev.data.sequence == '\027]10;?'
-      local bg_request = ev.data.sequence == '\027]11;?'
-      if fg_request or bg_request then
-        -- WARN: This does not return the actual foreground/background color,
-        -- but rather returns:
-        --   - fg=white/bg=black when Nvim option 'background' is 'dark'
-        --   - fg=black/bg=white when Nvim option 'background' is 'light'
-        local red, green, blue = 0, 0, 0
-        local bg_option_dark = vim.o.background == 'dark'
-        if (fg_request and bg_option_dark) or (bg_request and not bg_option_dark) then
-          red, green, blue = 65535, 65535, 65535
-        end
-        local command = fg_request and 10 or 11
-        local data = string.format(
-          '\027]%d;rgb:%04x/%04x/%04x%s',
-          command,
-          red,
-          green,
-          blue,
-          ev.data.terminator
-        )
-        vim.api.nvim_chan_send(channel, data)
-      end
-    end,
-  })
+      local command = fg_request and 10 or 11
+      local data =
+        string.format('\027]%d;rgb:%04x/%04x/%04x%s', command, red, green, blue, ev.data.terminator)
+      vim.api.nvim_chan_send(channel, data)
+    end
+  end)
 
   local nvim_terminal_prompt_ns = vim.api.nvim_create_namespace('nvim.terminal.prompt')
-  vim.api.nvim_create_autocmd('TermRequest', {
-    group = nvim_terminal_augroup,
+  nvim_on('TermRequest', nvim_terminal_augroup, {
     desc = 'Mark shell prompts indicated by OSC 133 sequences for navigation',
-    callback = function(ev)
-      if string.match(ev.data.sequence, '^\027]133;A') then
-        local lnum = ev.data.cursor[1] ---@type integer
-        if lnum >= 1 then
-          vim.api.nvim_buf_set_extmark(
-            ev.buf,
-            nvim_terminal_prompt_ns,
-            lnum - 1,
-            0,
-            { right_gravity = false }
-          )
-        end
+  }, function(ev)
+    if string.match(ev.data.sequence, '^\027]133;A') then
+      local lnum = ev.data.cursor[1] ---@type integer
+      if lnum >= 1 then
+        vim.api.nvim_buf_set_extmark(
+          ev.buf,
+          nvim_terminal_prompt_ns,
+          lnum - 1,
+          0,
+          { right_gravity = false }
+        )
       end
-    end,
-  })
+    end
+  end)
 
   ---@param ns integer
   ---@param buf integer
@@ -732,39 +714,37 @@ do
     end
   end
 
-  vim.api.nvim_create_autocmd('TermOpen', {
-    group = nvim_terminal_augroup,
+  nvim_on('TermOpen', nvim_terminal_augroup, {
     desc = 'Default settings for :terminal buffers',
-    callback = function(ev)
-      vim.bo[ev.buf].modifiable = false
-      vim.bo[ev.buf].undolevels = -1
-      vim.bo[ev.buf].scrollback = vim.o.scrollback < 0 and 10000 or math.max(1, vim.o.scrollback)
-      vim.bo[ev.buf].textwidth = 0
-      vim.wo[0][0].wrap = false
-      vim.wo[0][0].list = false
-      vim.wo[0][0].number = false
-      vim.wo[0][0].relativenumber = false
-      vim.wo[0][0].signcolumn = 'no'
-      vim.wo[0][0].foldcolumn = '0'
+  }, function(ev)
+    vim.bo[ev.buf].modifiable = false
+    vim.bo[ev.buf].undolevels = -1
+    vim.bo[ev.buf].scrollback = vim.o.scrollback < 0 and 10000 or math.max(1, vim.o.scrollback)
+    vim.bo[ev.buf].textwidth = 0
+    vim.wo[0][0].wrap = false
+    vim.wo[0][0].list = false
+    vim.wo[0][0].number = false
+    vim.wo[0][0].relativenumber = false
+    vim.wo[0][0].signcolumn = 'no'
+    vim.wo[0][0].foldcolumn = '0'
 
-      -- This is gross. Proper list options support when?
-      local winhl = vim.o.winhighlight
-      if winhl ~= '' then
-        winhl = winhl .. ','
-      end
-      vim.wo[0][0].winhighlight = winhl .. 'StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC'
+    -- This is gross. Proper list options support when?
+    local winhl = vim.o.winhighlight
+    if winhl ~= '' then
+      winhl = winhl .. ','
+    end
+    vim.wo[0][0].winhighlight = winhl .. 'StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC'
 
-      vim.keymap.set({ 'n', 'x', 'o' }, '[[', function()
-        jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, -vim.v.count1)
-      end, { buf = ev.buf, desc = 'Jump [count] shell prompts backward' })
-      vim.keymap.set({ 'n', 'x', 'o' }, ']]', function()
-        jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, vim.v.count1)
-      end, { buf = ev.buf, desc = 'Jump [count] shell prompts forward' })
+    vim.keymap.set({ 'n', 'x', 'o' }, '[[', function()
+      jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, -vim.v.count1)
+    end, { buf = ev.buf, desc = 'Jump [count] shell prompts backward' })
+    vim.keymap.set({ 'n', 'x', 'o' }, ']]', function()
+      jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, vim.v.count1)
+    end, { buf = ev.buf, desc = 'Jump [count] shell prompts forward' })
 
-      -- If the terminal buffer is being reused, clear the previous exit msg
-      vim.api.nvim_buf_clear_namespace(ev.buf, nvim_terminal_exitmsg_ns, 0, -1)
-    end,
-  })
+    -- If the terminal buffer is being reused, clear the previous exit msg
+    vim.api.nvim_buf_clear_namespace(ev.buf, nvim_terminal_exitmsg_ns, 0, -1)
+  end)
 
   vim.api.nvim_create_autocmd('CmdwinEnter', {
     pattern = '[:>]',
@@ -773,26 +753,24 @@ do
     command = 'syntax sync minlines=1 maxlines=1',
   })
 
-  vim.api.nvim_create_autocmd('SwapExists', {
+  nvim_on('SwapExists', vim.api.nvim_create_augroup('nvim.swapfile', {}), {
     pattern = '*',
     desc = 'Skip the swapfile prompt when the swapfile is owned by a running Nvim process',
-    group = vim.api.nvim_create_augroup('nvim.swapfile', {}),
-    callback = function()
-      local info = vim.fn.swapinfo(vim.v.swapname)
-      local user = vim.uv.os_get_passwd().username
-      local iswin = 1 == vim.fn.has('win32')
-      if info.error or info.pid <= 0 or (not iswin and info.user ~= user) then
-        vim.v.swapchoice = '' -- Show the prompt.
-        return
-      end
-      vim.v.swapchoice = 'e' -- Choose "(E)dit".
-      vim.notify(
-        ('W325: Ignoring swapfile from Nvim process %d'):format(info.pid),
-        vim.log.levels.WARN,
-        { _truncate = true }
-      )
-    end,
-  })
+  }, function()
+    local info = vim.fn.swapinfo(vim.v.swapname)
+    local user = vim.uv.os_get_passwd().username
+    local iswin = 1 == vim.fn.has('win32')
+    if info.error or info.pid <= 0 or (not iswin and info.user ~= user) then
+      vim.v.swapchoice = '' -- Show the prompt.
+      return
+    end
+    vim.v.swapchoice = 'e' -- Choose "(E)dit".
+    vim.notify(
+      ('W325: Ignoring swapfile from Nvim process %d'):format(info.pid),
+      vim.log.levels.WARN,
+      { _truncate = true }
+    )
+  end)
 
   -- Check if a TTY is attached
   local tty = nil
@@ -824,14 +802,12 @@ do
         --- @diagnostic disable-next-line:no-unknown
         vim.o[option] = value
       else
-        vim.api.nvim_create_autocmd('VimEnter', {
-          group = group,
+        nvim_on('VimEnter', group, {
           once = true,
           nested = true,
-          callback = function()
-            setoption(option, value, force)
-          end,
-        })
+        }, function()
+          setoption(option, value, force)
+        end)
       end
     end
 
@@ -950,22 +926,20 @@ do
         end
       end)
 
-      vim.api.nvim_create_autocmd('VimEnter', {
-        group = group,
+      nvim_on('VimEnter', group, {
         nested = true,
         once = true,
-        callback = function()
-          local optinfo = vim.api.nvim_get_option_info2('background', {})
-          local sid_lua = -8
-          if
-            optinfo.was_set
-            and optinfo.last_set_sid ~= sid_lua
-            and next(vim.api.nvim_get_autocmds({ id = id })) ~= nil
-          then
-            vim.api.nvim_del_autocmd(id)
-          end
-        end,
-      })
+      }, function()
+        local optinfo = vim.api.nvim_get_option_info2('background', {})
+        local sid_lua = -8
+        if
+          optinfo.was_set
+          and optinfo.last_set_sid ~= sid_lua
+          and next(vim.api.nvim_get_autocmds({ id = id })) ~= nil
+        then
+          vim.api.nvim_del_autocmd(id)
+        end
+      end)
 
       -- Wait until detection of OSC 11 capabilities is complete to
       -- ensure background is automatically set before user config.
@@ -1068,22 +1042,20 @@ do
 
   if tty then
     -- Show progress bars in supporting terminals
-    vim.api.nvim_create_autocmd('Progress', {
-      group = vim.api.nvim_create_augroup('nvim.progress', {}),
+    nvim_on('Progress', vim.api.nvim_create_augroup('nvim.progress', {}), {
       desc = 'Display native progress bars',
-      callback = function(ev)
-        if ev.data.status == 'running' then
-          if ev.data.percent ~= nil then
-            vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', ev.data.percent))
-          else
-            -- "Indeterminate" progress (unknown percent).
-            vim.api.nvim_ui_send(string.format('\027]9;4;3\027\\'))
-          end
+    }, function(ev)
+      if ev.data.status == 'running' then
+        if ev.data.percent ~= nil then
+          vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', ev.data.percent))
         else
-          vim.api.nvim_ui_send('\027]9;4;0;0\027\\')
+          -- "Indeterminate" progress (unknown percent).
+          vim.api.nvim_ui_send(string.format('\027]9;4;3\027\\'))
         end
-      end,
-    })
+      else
+        vim.api.nvim_ui_send('\027]9;4;0;0\027\\')
+      end
+    end)
   end
 end
 

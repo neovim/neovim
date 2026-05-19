@@ -1,3 +1,5 @@
+local nvim_on = require('vim._core.util').nvim_on
+
 local M = {}
 local health = require('vim.health')
 
@@ -707,31 +709,27 @@ local function check_sysinfo()
     )
   )
 
-  vim.api.nvim_create_autocmd('FileType', {
-    pattern = 'checkhealth',
-    once = true,
-    callback = function(ev)
-      local buf = ev.buf
-      local win = vim.fn.bufwinid(buf)
-      if win == -1 then
-        return
-      end
-      local encoded_body = vim.uri_encode(body) --- @type string
-      local issue_url = 'https://github.com/neovim/neovim/issues/new?type=Bug&body=' .. encoded_body
+  nvim_on('FileType', nil, { pattern = 'checkhealth', once = true }, function(ev)
+    local buf = ev.buf
+    local win = vim.fn.bufwinid(buf)
+    if win == -1 then
+      return
+    end
+    local encoded_body = vim.uri_encode(body) --- @type string
+    local issue_url = 'https://github.com/neovim/neovim/issues/new?type=Bug&body=' .. encoded_body
 
-      _G.nvim_health_bugreport_open = function()
-        vim.ui.open(issue_url)
-      end
-      vim.wo[win].winbar =
-        '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@▶ Create Bug Report on GitHub%X%*'
+    _G.nvim_health_bugreport_open = function()
+      vim.ui.open(issue_url)
+    end
+    vim.wo[win].winbar =
+      '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@▶ Create Bug Report on GitHub%X%*'
 
-      vim.api.nvim_create_autocmd('BufDelete', {
-        buf = buf,
-        once = true,
-        command = 'lua _G.nvim_health_bugreport_open = nil',
-      })
-    end,
-  })
+    vim.api.nvim_create_autocmd('BufDelete', {
+      buf = buf,
+      once = true,
+      command = 'lua _G.nvim_health_bugreport_open = nil',
+    })
+  end)
 end
 
 function M.check()

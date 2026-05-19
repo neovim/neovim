@@ -2,6 +2,7 @@
 --- text. See |vim.treesitter.query.parse()| for a working example.
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local language = require('vim.treesitter.language')
 local memoize = vim.func._memoize
 local cmp_ge = require('vim.treesitter._range').cmp_pos.ge
@@ -333,14 +334,17 @@ M.get = memoize('concat-2', function(lang, query_name)
   return M.parse(lang, query_string)
 end, false)
 
-api.nvim_create_autocmd('OptionSet', {
-  pattern = { 'runtimepath' },
-  group = api.nvim_create_augroup('nvim.treesitter.query_cache_reset', { clear = true }),
-  callback = function()
+nvim_on(
+  'OptionSet',
+  api.nvim_create_augroup('nvim.treesitter.query_cache_reset', { clear = true }),
+  {
+    pattern = { 'runtimepath' },
+  },
+  function()
     --- @diagnostic disable-next-line: undefined-field LuaLS bad at generics
     M.get:clear()
-  end,
-})
+  end
+)
 
 --- Parses a {query} string and returns a `Query` object (|lua-treesitter-query|), which can be used
 --- to search the tree for the query patterns (via |Query:iter_captures()|, |Query:iter_matches()|),

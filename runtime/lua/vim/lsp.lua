@@ -1,5 +1,6 @@
 local api = vim.api
 local validate = vim.validate
+local nvim_on = require('vim._core.util').nvim_on
 
 local lsp = vim._defer_require('vim.lsp', {
   _capability = ..., --- @module 'vim.lsp._capability'
@@ -643,12 +644,9 @@ function lsp.enable(name, enable)
   else
     -- Only ever create autocmd once to reuse computation of config merging.
     lsp_enable_autocmd_id = lsp_enable_autocmd_id
-      or api.nvim_create_autocmd('FileType', {
-        group = api.nvim_create_augroup('nvim.lsp.enable', {}),
-        callback = function(ev)
-          lsp_enable_callback(ev.buf)
-        end,
-      })
+      or nvim_on('FileType', api.nvim_create_augroup('nvim.lsp.enable', {}), function(ev)
+        lsp_enable_callback(ev.buf)
+      end)
   end
 
   -- Ensure any pre-existing buffers start/stop their LSP clients.
@@ -909,41 +907,37 @@ local function buf_attach(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local augroup = ('nvim.lsp.b_%d_save'):format(bufnr)
   local group = api.nvim_create_augroup(augroup, { clear = true })
-  api.nvim_create_autocmd('BufWritePre', {
-    group = group,
+  nvim_on('BufWritePre', group, {
     buf = bufnr,
     desc = 'vim.lsp: textDocument/willSave',
-    callback = function(ctx)
-      for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
-        local params = {
-          textDocument = {
-            uri = uri,
-          },
-          reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
-        }
-        if client:supports_method('textDocument/willSave') then
-          client:notify('textDocument/willSave', params)
-        end
-        if client:supports_method('textDocument/willSaveWaitUntil') then
-          local result, err =
-            client:request_sync('textDocument/willSaveWaitUntil', params, 1000, ctx.buf)
-          if result and result.result then
-            util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
-          elseif err then
-            log.error(vim.inspect(err))
-          end
+  }, function(ctx)
+    for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
+      local params = {
+        textDocument = {
+          uri = uri,
+        },
+        reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
+      }
+      if client:supports_method('textDocument/willSave') then
+        client:notify('textDocument/willSave', params)
+      end
+      if client:supports_method('textDocument/willSaveWaitUntil') then
+        local result, err =
+          client:request_sync('textDocument/willSaveWaitUntil', params, 1000, ctx.buf)
+        if result and result.result then
+          util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
+        elseif err then
+          log.error(vim.inspect(err))
         end
       end
-    end,
-  })
-  api.nvim_create_autocmd('BufWritePost', {
-    group = group,
+    end
+  end)
+  nvim_on('BufWritePost', group, {
     buf = bufnr,
     desc = 'vim.lsp: textDocument/didSave handler',
-    callback = function(ctx)
-      text_document_did_save_handler(ctx.buf)
-    end,
-  })
+  }, function(ctx)
+    text_document_did_save_handler(ctx.buf)
+  end)
   -- First time, so attach and set up stuff.
   api.nvim_buf_attach(bufnr, false, {
     on_lines = function(_, _, changedtick, firstline, lastline, new_lastline)
@@ -1169,42 +1163,36 @@ end
 -- Minimum time before warning about LSP exit_timeout on Nvim exit.
 local min_warn_exit_timeout = 100
 
-api.nvim_create_autocmd('VimLeavePre', {
-  desc = 'vim.lsp: exit handler',
-  callback = function()
-    local active_clients = lsp.get_clients()
-    log.info('exit_handler', active_clients)
+nvim_on('VimLeavePre', nil, { desc = 'vim.lsp: exit handler' }, function()
+  local active_clients = lsp.get_clients()
+  log.info('exit_handler', active_clients)
 
-    local max_timeout = 0
-    for _, client in pairs(active_clients) do
-      max_timeout = math.max(max_timeout, vim._tointeger(client.exit_timeout) or 0)
-      client:stop(client.exit_timeout)
-    end
+  local max_timeout = 0
+  for _, client in pairs(active_clients) do
+    max_timeout = math.max(max_timeout, vim._tointeger(client.exit_timeout) or 0)
+    client:stop(client.exit_timeout)
+  end
 
-    local exit_warning_timer = max_timeout > min_warn_exit_timeout
-      and vim.defer_fn(function()
-        api.nvim_echo({
-          {
-            string.format(
-              'Waiting %ss for LSP exit (Press Ctrl-C to force exit)',
-              max_timeout / 1e3
-            ),
-            'WarningMsg',
-          },
-        }, true, {})
-      end, min_warn_exit_timeout)
+  local exit_warning_timer = max_timeout > min_warn_exit_timeout
+    and vim.defer_fn(function()
+      api.nvim_echo({
+        {
+          string.format('Waiting %ss for LSP exit (Press Ctrl-C to force exit)', max_timeout / 1e3),
+          'WarningMsg',
+        },
+      }, true, {})
+    end, min_warn_exit_timeout)
 
-    vim.wait(max_timeout, function()
-      return vim.iter(active_clients):all(function(client)
-        return client.rpc.is_closing()
-      end)
+  vim.wait(max_timeout, function()
+    return vim.iter(active_clients):all(function(client)
+      return client.rpc.is_closing()
     end)
+  end)
 
-    if exit_warning_timer and not exit_warning_timer:is_closing() then
-      exit_warning_timer:close()
-    end
-  end,
-})
+  if exit_warning_timer and not exit_warning_timer:is_closing() then
+    exit_warning_timer:close()
+  end
+end)
 
 ---@nodoc
 --- Sends an async request for all active clients attached to the

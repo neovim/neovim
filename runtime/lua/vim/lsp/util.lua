@@ -1,6 +1,7 @@
 local protocol = require('vim.lsp.protocol')
 local validate = vim.validate
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local list_extend = vim.list_extend
 local uv = vim.uv
 
@@ -1320,28 +1321,20 @@ local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
 
   -- close the preview window when entered a buffer that is not
   -- the floating window buffer or the buffer that spawned it
-  api.nvim_create_autocmd('BufLeave', {
-    group = augroup,
-    buf = bufnr,
-    callback = function()
-      vim.schedule(function()
-        -- When jumping to the quickfix window from the preview window,
-        -- do not close the preview window.
-        if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
-          close_preview_window(winnr, { floating_bufnr, bufnr })
-        end
-      end)
-    end,
-  })
+  nvim_on('BufLeave', augroup, { buf = bufnr }, function()
+    vim.schedule(function()
+      -- When jumping to the quickfix window from the preview window,
+      -- do not close the preview window.
+      if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
+        close_preview_window(winnr, { floating_bufnr, bufnr })
+      end
+    end)
+  end)
 
   if #events > 0 then
-    api.nvim_create_autocmd(events, {
-      group = augroup,
-      buf = bufnr,
-      callback = function()
-        close_preview_window(winnr)
-      end,
-    })
+    nvim_on(events, augroup, { buf = bufnr }, function()
+      close_preview_window(winnr)
+    end)
   end
 end
 
@@ -1593,9 +1586,10 @@ function M.open_floating_preview(contents, syntax, opts)
     api.nvim_win_set_var(floating_winnr, 'lsp_floating_bufnr', bufnr)
   end
 
-  api.nvim_create_autocmd('WinClosed', {
-    group = api.nvim_create_augroup('nvim.closing_floating_preview', { clear = true }),
-    callback = function(args)
+  nvim_on(
+    'WinClosed',
+    api.nvim_create_augroup('nvim.closing_floating_preview', { clear = true }),
+    function(args)
       local winid = vim._tointeger(args.match)
       local preview_bufnr = vim.w[winid].lsp_floating_bufnr
       if
@@ -1606,8 +1600,8 @@ function M.open_floating_preview(contents, syntax, opts)
         vim.b[bufnr].lsp_floating_preview = nil
         return true
       end
-    end,
-  })
+    end
+  )
 
   vim.wo[floating_winnr].foldenable = false -- Disable folding.
   vim.wo[floating_winnr].wrap = opts.wrap -- Soft wrapping.

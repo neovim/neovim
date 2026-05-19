@@ -1,4 +1,5 @@
 local api, fn, o = vim.api, vim.fn, vim.o
+local nvim_on = require('vim._core.util').nvim_on
 local ui = require('vim._core.ui2')
 
 ---@alias Msg { extid: integer, timer: uv.uv_timer_t? }
@@ -634,35 +635,33 @@ local function enter_pager()
     local height, id = api.nvim_win_get_height(ui.wins.pager), 0
     api.nvim_set_option_value('eiw', '', { scope = 'local', win = ui.wins.pager })
     api.nvim_set_current_win(ui.wins.pager)
-    id = api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'WinResized' }, {
-      group = ui.augroup,
-      callback = function(ev)
-        if fn.getcmdtype() ~= '' then
-          -- WinEnter fires before we can detect cmdwin will be entered: keep open.
-          return
-        elseif ev.event == 'WinResized' and fn.getcmdwintype() == '' then
-          -- Remember height to be restored when cmdwin is closed.
-          height = api.nvim_win_get_height(ui.wins.pager)
-        elseif ev.event == 'WinEnter' then
-          -- Close when no longer current window.
-          in_pager = api.nvim_get_current_win() == ui.wins.pager
-        end
-        in_pager = in_pager and api.nvim_win_is_valid(ui.wins.pager)
-        local cfg = in_pager and { relative = 'laststatus', col = 0 } or { hide = true }
-        if in_pager then
-          cfg.row, cfg.height, cfg.border = win_row_height_border('pager', height)
-        else
-          pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
-          api.nvim_del_autocmd(id)
-          if was_cmdwin ~= '' then
-            api.nvim_feedkeys('q' .. was_cmdwin, 'n', false)
-            was_cmdwin = ''
-          end
-        end
-        pcall(api.nvim_win_set_config, ui.wins.pager, cfg)
-      end,
+    id = nvim_on({ 'WinEnter', 'CmdwinEnter', 'WinResized' }, ui.augroup, {
       desc = 'Hide or reposition pager window.',
-    })
+    }, function(ev)
+      if fn.getcmdtype() ~= '' then
+        -- WinEnter fires before we can detect cmdwin will be entered: keep open.
+        return
+      elseif ev.event == 'WinResized' and fn.getcmdwintype() == '' then
+        -- Remember height to be restored when cmdwin is closed.
+        height = api.nvim_win_get_height(ui.wins.pager)
+      elseif ev.event == 'WinEnter' then
+        -- Close when no longer current window.
+        in_pager = api.nvim_get_current_win() == ui.wins.pager
+      end
+      in_pager = in_pager and api.nvim_win_is_valid(ui.wins.pager)
+      local cfg = in_pager and { relative = 'laststatus', col = 0 } or { hide = true }
+      if in_pager then
+        cfg.row, cfg.height, cfg.border = win_row_height_border('pager', height)
+      else
+        pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
+        api.nvim_del_autocmd(id)
+        if was_cmdwin ~= '' then
+          api.nvim_feedkeys('q' .. was_cmdwin, 'n', false)
+          was_cmdwin = ''
+        end
+      end
+      pcall(api.nvim_win_set_config, ui.wins.pager, cfg)
+    end)
   end)
 end
 

@@ -324,13 +324,10 @@ describe('startup', function()
         os.remove('Xtest_shada')
       end)
 
-      assert_l_out(
-        'updatecount=0 shadafile=NONE loadplugins=false scripts=1\n',
-        nil,
-        nil,
-        '-',
-        script
-      )
+      assert_l_out(function(out)
+        -- Accept scripts=2 for PUC Lua where `vim._core.util` is sourced from disk instead of a preload blob.
+        return matches('updatecount=0 shadafile=NONE loadplugins=false scripts=[12]\n', out)
+      end, nil, nil, '-', script)
 
       -- User can override.
       assert_l_out(

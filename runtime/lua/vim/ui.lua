@@ -342,11 +342,13 @@ do
   --- Initialize Progress handlers.
   local function progress_init()
     progress_group = vim.api.nvim_create_augroup('nvim.ui.progress_status', { clear = true })
-    progress_autocmd = vim.api.nvim_create_autocmd('Progress', {
-      group = progress_group,
-      desc = 'Tracks progress messages for vim.ui.progress_status()',
-      ---@param ev {data: vim.event.progress.data}
-      callback = function(ev)
+    progress_autocmd = require('vim._core.util').nvim_on(
+      'Progress',
+      progress_group,
+      {
+        desc = 'Tracks progress messages for vim.ui.progress_status()',
+      }, ---@param ev {data: vim.event.progress.data}
+      function(ev)
         if not ev.data or not ev.data.id then
           return
         end
@@ -362,8 +364,8 @@ do
         then
           progress[ev.data.id] = nil
         end
-      end,
-    })
+      end
+    )
   end
 
   --- Gets a status description summarizing currently running progress messages.

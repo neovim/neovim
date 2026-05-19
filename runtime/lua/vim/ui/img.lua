@@ -1,3 +1,5 @@
+local nvim_on = require('vim._core.util').nvim_on
+
 local M = {}
 
 ---@brief
@@ -142,10 +144,8 @@ function M._supported(opts)
   return require('vim.ui.img._kitty').supported(opts)
 end
 
-vim.api.nvim_create_autocmd('VimLeavePre', {
-  callback = function()
-    M.del(math.huge)
-  end,
-})
+nvim_on('VimLeavePre', nil, function()
+  M.del(math.huge)
+end)
 
 return M

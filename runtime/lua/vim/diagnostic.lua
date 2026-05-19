@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 -- TODO(lewis6991): deprecate some top level functions in favour of the submodule version
 -- e.g. vim.diagnostic.get_namespace() -> vim.diagnostic.namespace.get()
@@ -1139,14 +1140,12 @@ function M.status(buf)
   return result_str
 end
 
-api.nvim_create_autocmd('DiagnosticChanged', {
-  group = api.nvim_create_augroup('nvim.diagnostic.status', {}),
-  callback = function(ev)
-    if api.nvim_buf_is_loaded(ev.buf) then
-      api.nvim__redraw({ buf = ev.buf, statusline = true })
-    end
-  end,
+nvim_on('DiagnosticChanged', api.nvim_create_augroup('nvim.diagnostic.status', {}), {
   desc = 'diagnostics component for the statusline',
-})
+}, function(ev)
+  if api.nvim_buf_is_loaded(ev.buf) then
+    api.nvim__redraw({ buf = ev.buf, statusline = true })
+  end
+end)
 
 return M
