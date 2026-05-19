@@ -3695,6 +3695,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         restore_lbr(lbr_saved);
         oap->excl_tr_ws = cap->cmdchar == 'z';
+        if (oap->restore_cursor) {
+          curwin->w_cursor = oap->cursor_start;
+        }
         op_yank(oap, !gui_yank);
       }
       check_cursor_col(curwin);

@@ -582,6 +582,17 @@ ip			"inner paragraph", select [count] paragraphs (see
 			is also a paragraph boundary.
 			When used in Visual mode it is made linewise.
 
+							*v_al* *al*
+al			"all lines", select the whole buffer.
+			When used in Visual mode it is made linewise.
+
+							*v_il* *il*
+il			"inner line", select the current line without leading
+			or trailing white space.  Fails on a blank or
+			white-space-only line.
+			When used in Visual mode it selects the line under the
+			cursor and switches to charwise Visual mode.
+
 a]						*v_a]* *v_a[* *a]* *a[*
 a[			"a [] block", select [count] '[' ']' blocks.  This
 			goes backwards to the [count] unclosed '[', and finds

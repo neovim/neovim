@@ -1819,6 +1819,7 @@ void clearop(oparg_T *oap)
   oap->regname = 0;
   oap->motion_force = NUL;
   oap->use_reg_one = false;
+  oap->restore_cursor = false;
   motion_force = NUL;
 }
 
@@ -6355,6 +6356,9 @@ static void nv_object(cmdarg_T *cap)
     break;
   case 'p':       // "ap" = a paragraph
     flag = current_par(cap->oap, cap->count1, include, 'p');
+    break;
+  case 'l':       // "il" = inner line, "al" = all lines
+    flag = current_line(cap->oap, include);
     break;
   case 's':       // "as" = a sentence
     flag = current_sent(cap->oap, cap->count1, include);

@@ -485,6 +485,7 @@ Tag		Command		   Op-pending and Visual-mode action	~
 |v_a]|		a]		   same as a[
 |v_a`|		a`		   string in backticks
 |v_ab|		ab		   "a block" from "[(" to "])" (with braces)
+|v_al|		al		   all lines (entire buffer)
 |v_ap|		ap		   "a paragraph" (with white space)
 |v_as|		as		   "a sentence" (with white space)
 |v_at|		at		   "a tag block" (with white space)
@@ -503,6 +504,7 @@ Tag		Command		   Op-pending and Visual-mode action	~
 |v_i]|		i]		   same as i[
 |v_i`|		i`		   string in backticks without the backticks
 |v_ib|		ib		   "inner block" from "[(" to "])"
+|v_il|		il		   inner line (without surrounding whitespace)
 |v_ip|		ip		   "inner paragraph"
 |v_is|		is		   "inner sentence"
 |v_it|		it		   "inner tag block"
@@ -952,6 +954,7 @@ Tag		Command	      Note Visual-mode action	~
 |v_a`|		a`		   extend highlighted area with a backtick
 				   quoted string
 |v_ab|		ab		   extend highlighted area with a () block
+|v_al|		al		   extend highlighted area to all lines
 |v_ap|		ap		   extend highlighted area with a paragraph
 |v_as|		as		   extend highlighted area with a sentence
 |v_at|		at		   extend highlighted area with a tag block
@@ -982,6 +985,7 @@ Tag		Command	      Note Visual-mode action	~
 |v_i`|		i`		   extend highlighted area with a backtick
 				   quoted string (without the backticks)
 |v_ib|		ib		   extend highlighted area with inner () block
+|v_il|		il		   select inner line under cursor
 |v_ip|		ip		   extend highlighted area with inner paragraph
 |v_is|		is		   extend highlighted area with inner sentence
 |v_it|		it		   extend highlighted area with inner tag block
