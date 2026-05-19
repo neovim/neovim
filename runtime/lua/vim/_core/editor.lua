@@ -1381,6 +1381,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, f_tab, remote_arg_idx)
     return { should_exit = true }
   end
 
+  -- Commands without files do not need the client-side remote-wait machinery.
   if #files == 0 then
     run_remote_cmds()
     return { should_exit = true }

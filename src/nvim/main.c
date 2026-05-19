@@ -1067,6 +1067,7 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   api_free_object(o);
 
   if (wait_count > 0) {
+    // Keep the client alive until the server reports that all remote buffers unloaded.
     remote_wait_buf_count = wait_count;
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1, remote_wait_buf_count <= 0);
     os_exit(0);
