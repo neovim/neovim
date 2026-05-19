@@ -142,6 +142,15 @@ describe('startup', function()
       end
     end
 
+    local function spawn_l(script)
+      local lua_fname = t.tmpname(false)
+      finally(function()
+        os.remove(lua_fname)
+      end)
+      write_file(lua_fname, script)
+      return n.spawn_wait('-l', lua_fname)
+    end
+
     it('outputs the EOF as LF (not CRLF) #36853', function()
       local args = { nvim_prog, '-l', '-' }
       local input = 'print("foo")'
@@ -201,6 +210,118 @@ describe('startup', function()
 
       eq(73, eval('v:shell_error'))
       eq('73\n', read_file(exit_file))
+    end)
+
+    it('os.exit() exits from libuv process callback #39783', function()
+      local marker = t.tmpname(false)
+      finally(function()
+        os.remove(marker)
+      end)
+
+      local proc = spawn_l(([[
+        local marker = %s
+        local handle
+        handle = assert(vim.uv.spawn(%s, { args = { 'EXIT', '0' } }, function()
+          handle:close()
+          os.exit(73)
+          local f = assert(io.open(marker, 'w'))
+          f:write('after exit\n')
+          f:close()
+        end))
+        vim.wait(1000, function()
+          return false
+        end)
+        error('os.exit() did not run')
+      ]]):format(vim.inspect(marker), vim.inspect(n.testprg('shell-test'))))
+
+      eq(0, proc.signal)
+      eq(73, proc.status)
+      eq(nil, vim.uv.fs_stat(marker))
+    end)
+
+    it('os.exit() is not catchable by pcall in libuv process callback #39783', function()
+      local marker = t.tmpname(false)
+      finally(function()
+        os.remove(marker)
+      end)
+
+      local proc = spawn_l(([[
+        local marker = %s
+        local handle
+        handle = assert(vim.uv.spawn(%s, { args = { 'EXIT', '0' } }, function()
+          handle:close()
+          pcall(os.exit, 74)
+          local f = assert(io.open(marker, 'w'))
+          f:write('after exit\n')
+          f:close()
+        end))
+        vim.wait(1000, function()
+          return false
+        end)
+        error('os.exit() did not run')
+      ]]):format(vim.inspect(marker), vim.inspect(n.testprg('shell-test'))))
+
+      eq(0, proc.signal)
+      eq(74, proc.status)
+      eq(nil, vim.uv.fs_stat(marker))
+    end)
+
+    it(
+      'os.exit() is not catchable by coroutine.resume() in libuv process callback #39783',
+      function()
+        local marker = t.tmpname(false)
+        finally(function()
+          os.remove(marker)
+        end)
+
+        local proc = spawn_l(([[
+        local marker = %s
+        local handle
+        handle = assert(vim.uv.spawn(%s, { args = { 'EXIT', '0' } }, function()
+          handle:close()
+          local co = coroutine.create(function()
+            os.exit(76)
+          end)
+          local ok, err = coroutine.resume(co)
+          local f = assert(io.open(marker, 'w'))
+          f:write('after resume: ', tostring(ok), ':', tostring(err), '\n')
+          f:close()
+        end))
+        vim.wait(1000, function()
+          return false
+        end)
+        error('os.exit() did not run')
+      ]]):format(vim.inspect(marker), vim.inspect(n.testprg('shell-test'))))
+
+        eq(0, proc.signal)
+        eq(76, proc.status)
+        eq(nil, vim.uv.fs_stat(marker))
+      end
+    )
+
+    it('os.exit() does not re-enter teardown from libuv callback #39783', function()
+      local marker = t.tmpname(false)
+      finally(function()
+        os.remove(marker)
+      end)
+
+      local proc = spawn_l(([[
+        local marker = %s
+        local timer = assert(vim.uv.new_timer())
+        timer:start(0, 0, function()
+          timer:close()
+          local f = assert(io.open(marker, 'w'))
+          f:write('callback\n')
+          f:close()
+          os.exit(42)
+        end)
+        os.exit(73)
+        error('os.exit() did not run')
+      ]]):format(vim.inspect(marker)))
+
+      eq(0, proc.signal)
+      eq(73, proc.status)
+      eq('callback\n', read_file(marker))
     end)
 
     it('Lua-error sets Nvim exitcode', function()

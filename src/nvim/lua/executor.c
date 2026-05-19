@@ -78,6 +78,13 @@
 
 static int in_fast_callback = 0;
 static bool in_script = false;
+static bool nlua_os_exit_event_pending = false;
+static bool nlua_os_exit_hook_active = false;
+static lua_State *nlua_os_exit_hook_lstate = NULL;
+static lua_Hook nlua_os_exit_prev_hook = NULL;
+static int nlua_os_exit_prev_hook_mask = 0;
+static int nlua_os_exit_prev_hook_count = 0;
+static char nlua_os_exit_error = 0;
 
 // Initialized in nlua_init().
 static lua_State *global_lstate = NULL;
@@ -358,6 +365,43 @@ static void nlua_luv_error_event(void **argv)
   xfree(error);
 }
 
+static void nlua_os_exit_event(void **argv)
+  FUNC_ATTR_NORETURN
+{
+  int status = (int)(intptr_t)argv[0];
+  getout(status);
+}
+
+static void nlua_os_exit_hook(lua_State *lstate, lua_Debug *ar)
+{
+  (void)ar;
+  lua_pushlightuserdata(lstate, &nlua_os_exit_error);
+  lua_error(lstate);
+}
+
+static void nlua_os_exit_set_hook(lua_State *lstate)
+{
+  if (!nlua_os_exit_hook_active) {
+    nlua_os_exit_hook_lstate = lstate;
+    nlua_os_exit_prev_hook = lua_gethook(lstate);
+    nlua_os_exit_prev_hook_mask = lua_gethookmask(lstate);
+    nlua_os_exit_prev_hook_count = lua_gethookcount(lstate);
+    nlua_os_exit_hook_active = true;
+  }
+  lua_sethook(lstate, nlua_os_exit_hook, LUA_MASKCOUNT, 1);
+}
+
+static void nlua_os_exit_restore_hook(void)
+{
+  if (nlua_os_exit_hook_active) {
+    lua_State *lstate = nlua_os_exit_hook_lstate;
+    lua_sethook(lstate, nlua_os_exit_prev_hook, nlua_os_exit_prev_hook_mask,
+                nlua_os_exit_prev_hook_count);
+    nlua_os_exit_hook_active = false;
+    nlua_os_exit_hook_lstate = NULL;
+  }
+}
+
 /// Execute callback in "fast" context. Used for luv and some vim.ui_event
 /// callbacks where using the API directly is not safe.
 static int nlua_fast_cfpcall(lua_State *lstate, int nargs, int nresult, int flags)
@@ -369,7 +413,22 @@ static int nlua_fast_cfpcall(lua_State *lstate, int nargs, int nresult, int flag
 
   int top = lua_gettop(lstate);
   int status = nlua_pcall(lstate, nargs, nresult);
+
   if (status) {
+    if (lua_touserdata(lstate, -1) == &nlua_os_exit_error) {
+      nlua_os_exit_restore_hook();
+      lua_pop(lstate, 1);
+      if (nresult == LUA_MULTRET) {
+        retval = 0;
+        goto exit;
+      }
+      for (int i = 0; i < nresult; i++) {
+        lua_pushnil(lstate);
+      }
+      retval = nresult;
+      goto exit;
+    }
+
     if (status == LUA_ERRMEM && !(flags & LUVF_CALLBACK_NOEXIT)) {
       // consider out of memory errors unrecoverable, just like xmalloc()
       preserve_exit(e_outofmem);
@@ -389,6 +448,7 @@ static int nlua_fast_cfpcall(lua_State *lstate, int nargs, int nresult, int flag
     retval = nresult;
   }
 
+exit:
   in_fast_callback--;
   return retval;
 }
@@ -607,6 +667,17 @@ static int nlua_os_exit(lua_State *lstate)
   if (lua_gettop(lstate) >= 1 && !lua_isnil(lstate, 1)) {
     status = lua_isboolean(lstate, 1) ? (lua_toboolean(lstate, 1) ? 0 : 1)
                                       : (int)luaL_checkinteger(lstate, 1);
+  }
+  if (in_fast_callback > 0) {
+    // Fast callbacks may run inside uv_run(). getout() polls libuv during
+    // teardown, so defer exit until the current fast callback returns.
+    if (!exiting && !nlua_os_exit_event_pending) {
+      nlua_os_exit_event_pending = true;
+      multiqueue_put(main_loop.fast_events, nlua_os_exit_event, (void *)(intptr_t)status);
+    }
+    nlua_os_exit_set_hook(lstate);
+    lua_pushlightuserdata(lstate, &nlua_os_exit_error);
+    return lua_error(lstate);
   }
   getout(status);
   return 0;  // Unreachable, but MSVC does not infer getout() is noreturn.
