@@ -8041,16 +8041,6 @@ static void ex_shada(exarg_T *eap)
   p_shada = save_shada;
 }
 
-/// Make a dialog message in "buff[DIALOG_MSG_SIZE]".
-/// "format" must contain "%s".
-void dialog_msg(char *buff, char *format, char *fname)
-{
-  if (fname == NULL) {
-    fname = _("Untitled");
-  }
-  vim_snprintf(buff, DIALOG_MSG_SIZE, format, fname);
-}
-
 static TriState filetype_detect = kNone;
 static TriState filetype_plugin = kNone;
 static TriState filetype_indent = kNone;
