@@ -196,13 +196,13 @@ The plugin can be disabled by setting `g:loaded_spellfile_plugin = 1`.
     A table with the following fields:
 
     Fields: ~
-      • {confirm}     (`boolean`, default: `true`) Whether to ask user to
-                      confirm download.
-      • {timeout_ms}  (`integer`, default: 15000) Number of milliseconds after
-                      which the |vim.net.request()| times out.
-      • {url}         (`string`) The base URL from where the spellfiles are
-                      downloaded. Uses `g:spellfile_URL` if it's set,
-                      otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
+      • {confirm}?     (`boolean`, default: `true`) Whether to ask user to
+                       confirm download.
+      • {timeout_ms}?  (`integer`, default: 15000) Number of milliseconds
+                       after which the |vim.net.request()| times out.
+      • {url}?         (`string`) The base URL from where the spellfiles are
+                       downloaded. Uses `g:spellfile_URL` if it's set,
+                       otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
 
 
 config({opts})                                            *spellfile.config()*

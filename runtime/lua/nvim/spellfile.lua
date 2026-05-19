@@ -20,15 +20,15 @@ local M = {}
 ---
 --- The base URL from where the spellfiles are downloaded. Uses `g:spellfile_URL`
 --- if it's set, otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
---- @field url string
+--- @field url? string
 ---
 --- Number of milliseconds after which the [vim.net.request()] times out.
 --- (default: 15000)
---- @field timeout_ms integer
+--- @field timeout_ms? integer
 ---
 --- Whether to ask user to confirm download.
 --- (default: `true`)
---- @field confirm boolean
+--- @field confirm? boolean
 
 --- @type nvim.spellfile.Opts
 local config = {
