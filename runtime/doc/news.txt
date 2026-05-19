@@ -69,6 +69,8 @@ API
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
 • |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
   `msg_show.progress` events.
+• |nvim_set_option_value()| can modify an existing value using the new
+  `operation` field.
 
 DIAGNOSTICS
 
