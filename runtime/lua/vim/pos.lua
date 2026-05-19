@@ -278,6 +278,15 @@ function M.lsp(buf, pos, position_encoding)
 end
 
 --- Converts |vim.Pos| to cursor position (see |api-indexing|).
+---
+--- Example:
+--- ```lua
+--- local pos = vim.pos(0, 3, 5)
+---
+--- -- Convert to cursor position, you can call it in a method style.
+--- local cursor_pos = { pos:to_cursor() }
+--- vim.api.nvim_win_set_cursor(0, cursor_pos)
+--- ```
 ---@param pos vim.Pos
 ---@return integer, integer
 function M.to_cursor(pos)

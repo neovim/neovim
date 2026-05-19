@@ -4560,6 +4560,14 @@ offset({buf}, {offset})                                     *vim.pos.offset()*
 to_cursor({pos})                                         *vim.pos.to_cursor()*
     Converts |vim.Pos| to cursor position (see |api-indexing|).
 
+    Example: >lua
+        local pos = vim.pos(0, 3, 5)
+
+        -- Convert to cursor position, you can call it in a method style.
+        local cursor_pos = { pos:to_cursor() }
+        vim.api.nvim_win_set_cursor(0, cursor_pos)
+<
+
     Parameters: ~
       • {pos}  (`vim.Pos`) See |vim.Pos|.
 
@@ -4658,22 +4666,6 @@ Provides operations to compare, calculate, and convert ranges represented by
       • {start_row}  (`integer`) 0-based byte index.
 
 
-cursor({buf}, {start_pos}, {end_pos})                     *vim.range.cursor()*
-    Creates a new |vim.Range| from mark-like range (see |api-indexing|).
-
-    Example: >lua
-        local start = vim.api.nvim_win_get_cursor(0)
-        -- move the cursor
-        local end_ = vim.api.nvim_win_get_cursor(0)
-
-        local range = vim.range.cursor(0, start, end_)
-<
-
-    Parameters: ~
-      • {buf}        (`integer`)
-      • {start_pos}  (`[integer, integer]`)
-      • {end_pos}    (`[integer, integer]`)
-
                                                          *vim.range.extmark()*
 extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
     Creates a new |vim.Range| from extmark range (see |api-indexing|).
@@ -4756,19 +4748,6 @@ mark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
       • {start_col}  (`integer`)
       • {end_row}    (`integer`)
       • {end_col}    (`integer`)
-
-to_cursor({range})                                     *vim.range.to_cursor()*
-    Converts |vim.Range| to mark-like range (see |api-indexing|).
-
-    Example: >lua
-        local range = vim.range(0, 3, 5, 4, 0)
-
-        -- Convert to cursor range, you can call it in a method style.
-        local cursor_range = range:to_cursor()
-<
-
-    Parameters: ~
-      • {range}  (`vim.Range`) See |vim.Range|.
 
 to_extmark({range})                                   *vim.range.to_extmark()*
     Converts |vim.Range| to extmark range (see |api-indexing|).

@@ -438,52 +438,6 @@ function M.extmark(buf, start_row, start_col, end_row, end_col)
   return M.new(start, end_)
 end
 
---- Converts |vim.Range| to mark-like range (see |api-indexing|).
----
---- Example:
---- ```lua
---- local range = vim.range(0, 3, 5, 4, 0)
----
---- -- Convert to cursor range, you can call it in a method style.
---- local cursor_range = range:to_cursor()
---- ```
----@param range vim.Range
-function M.to_cursor(range)
-  validate('range', range, 'table')
-
-  local srow, scol = vim.pos(range.buf, range[1], range[2]):to_cursor()
-  local erow, ecol = vim.pos(range.buf, range[3], range[4]):to_cursor()
-  return srow, scol, erow, ecol
-end
-
---- Creates a new |vim.Range| from mark-like range (see |api-indexing|).
----
---- Example:
---- ```lua
---- local start = vim.api.nvim_win_get_cursor(0)
---- -- move the cursor
---- local end_ = vim.api.nvim_win_get_cursor(0)
----
---- local range = vim.range.cursor(0, start, end_)
---- ```
----@param buf integer
----@param start_pos [integer, integer]
----@param end_pos [integer, integer]
-function M.cursor(buf, start_pos, end_pos)
-  validate('buf', buf, 'number')
-  validate('range', start_pos, 'table')
-  validate('range', end_pos, 'table')
-
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
-  end
-
-  local start = vim.pos.cursor(buf, start_pos)
-  local end_ = vim.pos.cursor(buf, end_pos)
-
-  return M.new(start, end_)
-end
-
 -- Overload `Range.new` to allow calling this module as a function.
 setmetatable(M, {
   __call = function(_, ...)
