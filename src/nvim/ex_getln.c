@@ -2493,7 +2493,7 @@ static buf_T *cmdpreview_open_buf(void)
   }
 
   // Rename preview buffer.
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   aucmd_prepbuf(&aco, cmdpreview_buf);
   int retv = rename_buffer("[Preview]");
   aucmd_restbuf(&aco);
@@ -2687,7 +2687,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
            uhp != NULL;
            uhp = uhp->uh_next.ptr, ++count) {}
 
-      aco_save_T aco;
+      aco_save_T aco = { 0 };
       aucmd_prepbuf(&aco, buf);
       // Ensure all the entries will be undone
       if (curbuf->b_u_synced == false) {

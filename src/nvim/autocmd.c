@@ -1179,7 +1179,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
 void ex_doautoall(exarg_T *eap)
 {
   int retval = OK;
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   char *arg = eap->arg;
   int call_do_modelines = check_nomodeline(&arg);
   bufref_T bufref;
@@ -1357,9 +1357,24 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 /// Cleanup after executing autocommands for a (hidden) buffer.
 /// Restore the window as it was (if possible).
 ///
+/// If `aco` was zero-initialized, then `aucmd_restbuf` may be safely called even if `aucmd_prepbuf`
+/// was skipped:
+///
+///      aco_save_T aco = { 0 };
+///      if (some_condition) {
+///        aucmd_prepbuf(&aco, buf);
+///      }
+///      ...
+///      aucmd_restbuf(&aco);  // no-op if aucmd_prepbuf was skipped.
+///
 /// @param aco  structure holding saved values
 void aucmd_restbuf(aco_save_T *aco)
 {
+  // NULL br_buf means `aucmd_prepbuf` was never called on this `aco`.
+  if (aco->new_curbuf.br_buf == NULL) {
+    return;
+  }
+
   if (aco->use_aucmd_win_idx >= 0) {
     win_T *awp = aucmd_win[aco->use_aucmd_win_idx].auc_win;
 
@@ -1534,7 +1549,7 @@ static void deferred_event(void **argv)
     }
     tv_dict_set_keys_readonly(v_event);
 
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     aucmd_prepbuf(&aco, buf);
     apply_autocmds_group(event, fname, fname_io, false, group, buf, eap, data);
     aucmd_restbuf(&aco);
@@ -1560,7 +1575,7 @@ static void deferred_optionset_modified(void **argv)
     bool new_val = (bool)(uintptr_t)argv[1];
     OptVal old = BOOLEAN_OPTVAL(!new_val);
     OptVal new = BOOLEAN_OPTVAL(new_val);
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     aucmd_prepbuf(&aco, buf);
     apply_optionset_autocmd_now(kOptModified, OPT_LOCAL, old, old, old, new, NULL);
     aucmd_restbuf(&aco);

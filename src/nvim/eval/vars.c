@@ -3606,7 +3606,7 @@ void f_setbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (*varname == '&') {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
 
     // Set curbuf to be our buf, temporarily.
     aucmd_prepbuf(&aco, buf);

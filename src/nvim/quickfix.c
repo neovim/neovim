@@ -4199,7 +4199,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   // autocommands may cause trouble
   incr_quickfix_busy();
 
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
 
   if (old_last == NULL) {
     // set curwin/curbuf to buf and save a few things
@@ -5794,7 +5794,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
           // need to be done now, in that buffer.  And the modelines
           // need to be done (again).  But not the window-local
           // options!
-          aco_save_T aco;
+          aco_save_T aco = { 0 };
           aucmd_prepbuf(&aco, buf);
           apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, true, buf);
           do_modelines(OPT_NOWIN);
@@ -5958,7 +5958,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     // Make sure this buffer isn't wiped out by autocommands.
     newbuf->b_locked++;
     // set curwin/curbuf to buf and save a few things
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     aucmd_prepbuf(&aco, newbuf);
 
     // Need to set the filename for autocommands.

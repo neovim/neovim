@@ -639,7 +639,7 @@ static int nlua_with(lua_State *L)
 
   Error err = ERROR_INIT;
   TRY_WRAP(&err, {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     win_execute_T win_execute_args;
 
     if (win) {

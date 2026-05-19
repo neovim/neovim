@@ -129,10 +129,9 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
 }
 
 /// Create a dummy buffer and run the FileType autocmd on it.
-static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, Error *err)
-  FUNC_ATTR_NONNULL_ARG(2, 3, 4)
+static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, Error *err)
+  FUNC_ATTR_NONNULL_ARG(2, 3)
 {
-  *aco_used = false;
   if (filetype == NULL) {
     return NULL;
   }
@@ -155,7 +154,6 @@ static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, E
 
   // Set curwin/curbuf to buf and save a few things.
   aucmd_prepbuf(aco, ftbuf);
-  *aco_used = true;
 
   set_option_direct(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL, SID_NONE);
   set_option_direct(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL, SID_NONE);
@@ -241,15 +239,12 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  aco_save_T aco;
-  bool aco_used;
+  aco_save_T aco = { 0 };
 
-  buf_T *ftbuf = do_ft_buf(filetype, &aco, &aco_used, err);
+  buf_T *ftbuf = do_ft_buf(filetype, &aco, err);
   if (ERROR_SET(err)) {
-    if (aco_used) {
-      // restore curwin/curbuf and a few other things
-      aucmd_restbuf(&aco);
-    }
+    // Restore curwin/curbuf and a few other things.
+    aucmd_restbuf(&aco);
     if (ftbuf != NULL) {
       wipe_ft_buf(ftbuf);
     }
@@ -263,11 +258,9 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 
   OptVal value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
 
+  // Restore curwin/curbuf and a few other things.
+  aucmd_restbuf(&aco);
   if (ftbuf != NULL) {
-    if (aco_used) {
-      // restore curwin/curbuf and a few other things
-      aucmd_restbuf(&aco);
-    }
     wipe_ft_buf(ftbuf);
   }
 

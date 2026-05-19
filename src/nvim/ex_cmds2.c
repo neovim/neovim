@@ -689,7 +689,7 @@ void ex_listdo(exarg_T *eap)
   msg_listdo_overwrite--;
   if (save_ei != NULL) {
     buf_T *bnext;
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
 
     au_event_restore(save_ei);
 

@@ -1424,7 +1424,7 @@ void ins_redraw(bool ready)
   if (ready && has_event(EVENT_TEXTCHANGEDI)
       && curbuf->b_last_changedtick_i != buf_get_changedtick(curbuf)
       && !pum_visible()) {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     varnumber_T tick = buf_get_changedtick(curbuf);
 
     // save and restore curwin and curbuf, in case the autocmd changes them
@@ -1444,7 +1444,7 @@ void ins_redraw(bool ready)
   if (ready && has_event(EVENT_TEXTCHANGEDP)
       && curbuf->b_last_changedtick_pum != buf_get_changedtick(curbuf)
       && pum_visible()) {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     varnumber_T tick = buf_get_changedtick(curbuf);
 
     // save and restore curwin and curbuf, in case the autocmd changes them
