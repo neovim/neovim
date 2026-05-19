@@ -2257,6 +2257,104 @@ describe('folded lines', function()
       end
     end)
 
+    it('virt_lines above line where fold begins do not duplicate foldcolumn', function()
+      fn.setline(1, 'line 1')
+      fn.setline(2, 'line 2')
+      fn.setline(3, 'line 3')
+      fn.setline(4, 'line 4')
+
+      local ns = api.nvim_create_namespace('ns')
+      api.nvim_buf_set_extmark(
+        0,
+        ns,
+        1,
+        0,
+        { virt_lines_above = true, virt_lines = { { { 'above line 2' } } } }
+      )
+      api.nvim_buf_set_extmark(0, ns, 2, 0, { virt_lines = { { { 'below line 3' } } } })
+
+      command('set foldcolumn=1')
+      feed('jzfl')
+      feed('2jzfl')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7: }line 1                                      |
+          {7: }above line 2                                |
+          {7:-}line 2                                      |
+          {7: }line 3                                      |
+          {7: }below line 3                                |
+          {7:-}^line 4                                      |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7: }line 1                                      |
+          {7: }above line 2                                |
+          {7:-}line 2                                      |
+          {7: }line 3                                      |
+          {7: }below line 3                                |
+          {7:-}^line 4                                      |
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+    end)
+
+    it('foldcolumn is not interrupted when virt_lines are inside a fold', function()
+      fn.setline(1, 'line 1')
+      fn.setline(2, 'line 2')
+      fn.setline(3, 'line 3')
+      fn.setline(4, 'line 4')
+
+      local ns = api.nvim_create_namespace('ns')
+      api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_lines = { { { 'below line 2', '' } } } })
+      api.nvim_buf_set_extmark(
+        0,
+        ns,
+        2,
+        0,
+        { virt_lines_above = true, virt_lines = { { { 'above line 3', '' } } } }
+      )
+
+      command('set foldcolumn=1')
+      feed('zf2j')
+      feed('zo')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:-}^line 1                                      |
+          {7:│}line 2                                      |
+          {7:│}below line 2                                |
+          {7:│}above line 3                                |
+          {7:│}line 3                                      |
+          {7: }line 4                                      |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7:-}^line 1                                      |
+          {7:│}line 2                                      |
+          {7:│}below line 2                                |
+          {7:│}above line 3                                |
+          {7:│}line 3                                      |
+          {7: }line 4                                      |
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+    end)
+
     it('Folded and Visual highlights are combined #19691', function()
       command('hi! Visual guifg=NONE guibg=Red')
       insert([[
