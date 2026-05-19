@@ -2,7 +2,6 @@
 " Language:	Django HTML template
 " Maintainer:	Dave Hodder <dmh@dmh.org.uk>
 " Last Change:	2014 Jul 13
-" 2026 May 17 by Vim Project Add highlighting for comparison operators #20232
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -23,9 +22,5 @@ syn region djangoTagBlock start="{%" end="%}" contains=djangoStatement,djangoFil
 syn region djangoVarBlock start="{{" end="}}" contains=djangoFilter,djangoArgument,djangoVarError display containedin=ALLBUT,@djangoBlocks
 syn region djangoComment start="{%\s*comment\(\s\+.\{-}\)\?%}" end="{%\s*endcomment\s*%}" contains=djangoTodo containedin=ALLBUT,@djangoBlocks
 syn region djangoComBlock start="{#" end="#}" contains=djangoTodo containedin=ALLBUT,@djangoBlocks
-
-" Use djangoTagBlockNaive to limit the djangoOperator matched characters to avoid spill-over with HTML, JS and CSS.
-syn region djangoTagBlockNaive start="{%" end="%}" contains=djangoTagBlock,djangoVarBlock,djangoComment,djangoComBlock
-syn match djangoOperator "==\|!=\|<=\|>=\|<\|>" contained containedin=CONTAINS,@djangoTagBlockNaive
 
 let b:current_syntax = "htmldjango"
