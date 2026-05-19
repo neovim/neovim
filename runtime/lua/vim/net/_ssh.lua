@@ -497,8 +497,8 @@ function M.start(uri_str)
     local stop_cmd = get_ssh_cmd(uri, { ssh_args = { '-O', 'exit' } })
     vim.system(stop_cmd):wait()
     -- Wait for the original tunnel process to close its stdio handles.
-    if not tunnel.obj:is_closing() then
-      tunnel.obj:wait(1000)
+    if not tunnel:is_closing() then
+      tunnel:wait(1000)
     end
   end
 

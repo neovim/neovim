@@ -46,12 +46,11 @@ local M = {}
 --- @field stdout? string `nil` if stdout is disabled or has a custom handler.
 --- @field stderr? string `nil` if stderr is disabled or has a custom handler.
 
---- @class (package) vim.SystemRunWaitResult
---- @field code? integer
---- @field signal? integer
---- @field stdout string
---- @field stderr string
---- @field obj vim.SystemObj
+--- @class (package) vim.SystemRunWaitResult : vim.SystemObj
+--- @field code? integer Exit code, if the process exited before the predicate matched.
+--- @field signal? integer Exit signal, if the process exited before the predicate matched.
+--- @field stdout string Captured stdout so far.
+--- @field stderr string Captured stderr so far.
 
 --- @class (package) vim.SystemState
 --- @field cmd string[]
@@ -243,12 +242,13 @@ function M.run_wait(cmd, wait_until, timeout)
   end
 
   local obj = vim.system(cmd, {
+    text = true,
     stdout = function(err, data)
       if err then
         error(err)
       end
       if data then
-        table.insert(stdout_chunks, data)
+        stdout_chunks[#stdout_chunks + 1] = data
       end
     end,
     stderr = function(err, data)
@@ -256,12 +256,12 @@ function M.run_wait(cmd, wait_until, timeout)
         error(err)
       end
       if data then
-        table.insert(stderr_chunks, data)
+        stderr_chunks[#stderr_chunks + 1] = data
       end
     end,
   }, function(res)
     result = res
-  end)
+  end) --[[@as vim.SystemRunWaitResult]]
 
   local success = vim.wait(timeout or vim._maxint, function()
     return result ~= nil or (wait_until and wait_until(stdout(), stderr())) or false
@@ -275,13 +275,12 @@ function M.run_wait(cmd, wait_until, timeout)
     error('command timed out')
   end
 
-  return {
-    code = result and result.code or nil,
-    signal = result and result.signal or nil,
-    stdout = stdout(),
-    stderr = stderr(),
-    obj = obj,
-  }
+  obj.code = result and result.code or nil
+  obj.signal = result and result.signal or nil
+  obj.stdout = stdout()
+  obj.stderr = stderr()
+
+  return obj
 end
 
 --- @param output? fun(err: string?, data: string?)|false
