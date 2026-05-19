@@ -68,7 +68,7 @@ Send input to the server via |nvim_input()|: >
 
 REMOTE EDITING
 
-The --remote argument causes each given file to be opened with |:drop| (or
+The --remote argument causes each file argument to be opened with |:drop| (or
 |:tab| + drop when |-p| is used) on the server. Command-line `+{cmd}` and
 |-c| commands are also executed on the server; their output is written to
 stdout.
