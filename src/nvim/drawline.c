@@ -509,31 +509,35 @@ void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, in
 {
   bool closed = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   int level = foldinfo.fi_level;
+  int ln_folds = level - foldinfo.fi_low_level + 1;
 
-  // If the column is too narrow, we start at the lowest level that
-  // fits and use numbers to indicate the depth.
-  int first_level = MAX(level - fdc - closed + 1, 1);
-  int closedcol = MIN(fdc, level);
+  // If the column is too narrow, we prioritize `foldopen` before
+  // considering `foldsep`. We then use the last column to display
+  // the overflow count (or `foldinner` if set).
+  int n = MIN(fdc, level);
+  int overflow = MAX(level - fdc, 0);
 
   for (int i = 0; i < fdc; i++) {
-    schar_T symbol = 0;
+    schar_T symbol;
     if (i >= level) {
       symbol = schar_from_ascii(' ');
-    } else if (i == closedcol - 1 && closed) {
+    } else if (i == n - 1 && closed) {
       symbol = wp->w_p_fcs_chars.foldclosed;
-    } else if (foldinfo.fi_lnum == lnum && first_level + i >= foldinfo.fi_low_level) {
+    } else if (i >= n - ln_folds && foldinfo.fi_lnum == lnum) {
       symbol = wp->w_p_fcs_chars.foldopen;
-    } else if (first_level == 1) {
-      symbol = wp->w_p_fcs_chars.foldsep;
-    } else if (wp->w_p_fcs_chars.foldinner != NUL) {
-      symbol = wp->w_p_fcs_chars.foldinner;
-    } else if (first_level + i <= 9) {
-      symbol = schar_from_ascii('0' + first_level + i);
+    } else if (i == n - 1 && overflow > 0) {
+      if (wp->w_p_fcs_chars.foldinner != NUL) {
+        symbol = wp->w_p_fcs_chars.foldinner;
+      } else if (overflow < 9) {
+        symbol = schar_from_ascii('1' + overflow);
+      } else {
+        symbol = schar_from_ascii('>');
+      }
     } else {
-      symbol = schar_from_ascii('>');
+      symbol = wp->w_p_fcs_chars.foldsep;
     }
 
-    int vcol = i >= level ? -1 : (i == closedcol - 1 && closed) ? -2 : -3;
+    int vcol = i >= level ? -1 : (i == n - 1 && closed) ? -2 : -3;
     if (out_buffer) {
       out_vcol[i] = vcol;
       out_buffer[i] = symbol;
