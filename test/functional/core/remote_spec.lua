@@ -184,6 +184,23 @@ describe('Remote', function()
       eq(2, buf_count)
     end)
 
+    it('opens all file args on the server', function()
+      local buf_count --- @type integer
+      local code, stdout, stderr = run_remote(
+        { fname, '--remote', other_fname },
+        other_fname,
+        function()
+          buf_count = #fn.getbufinfo({ buflisted = 1 })
+          command('bdelete!')
+          command('bdelete!')
+        end
+      )
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+      eq(2, buf_count)
+    end)
+
     it('does not exit until all files are closed', function()
       local code, _, _ = run_remote({ '--remote', fname, other_fname }, other_fname, function()
         command('bdelete!')
