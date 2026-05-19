@@ -29,7 +29,8 @@ The following command line arguments are available:
 				commands are treated as Ex commands and
 				executed on the server after opening the
 				files. Their output is written to stdout.
-				All other arguments are treated as filenames.
+				All file arguments in the command line are
+				opened on the server.
 				Use |--| before filenames to force literal
 				handling for names that start with "+" or "-c".
 				You cannot edit stdin this way |--|.
