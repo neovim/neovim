@@ -416,14 +416,13 @@ describe('Remote', function()
       eq('', stderr)
     end)
 
-    -- Runs a `nvim --remote +async` command, waits for the client to exit
-    -- (capturing exit code via on_exit so jobwait is not needed), optionally
-    -- waits for a file to appear in the server, then runs action_fn.
+    -- Runs a remote command expected to exit without waiting, optionally waits
+    -- for a file to appear in the server, then runs action_fn.
     --- @param args string[]
     --- @param file string|nil
     --- @param action_fn fun()|nil
     --- @return integer, string, string
-    local function run_async(args, file, action_fn)
+    local function run_remote_nowait(args, file, action_fn)
       set_session(server)
       local addr = fn.serverlist()[1] --- @type string
 
@@ -476,46 +475,11 @@ describe('Remote', function()
       return code, stdout, stderr
     end
 
-    it('+async opens file and exits immediately without waiting', function()
-      local code, stdout, stderr = run_async({ '--remote', '+async', fname }, fname, nil)
-      eq(0, code)
-      eq('', stdout)
-      eq('', stderr)
-    end)
-
-    it('+async opens multiple files and exits immediately', function()
+    it(':async command modifier schedules remote commands without waiting', function()
       local code, stdout, stderr =
-        run_async({ '--remote', '+async', fname, other_fname }, other_fname, nil)
+        run_remote_nowait({ '--remote', '+async edit ' .. fname }, fname, nil)
       eq(0, code)
       eq('', stdout)
-      eq('', stderr)
-    end)
-
-    it('+async with -p opens files in tabs and exits immediately', function()
-      local code, stdout, stderr = run_async({ '-p', '--remote', '+async', fname }, fname, nil)
-      eq(0, code)
-      eq('', stdout)
-      eq('', stderr)
-    end)
-
-    it('+async combined with other +cmd args', function()
-      local code, stdout, stderr = run_async(
-        { '--remote', '+async', fname, '+call setline(1, "async-modified")' },
-        fname,
-        function()
-          expect('async-modified')
-        end
-      )
-      eq(0, code)
-      eq('', stdout)
-      eq('', stderr)
-    end)
-
-    it('+async returns output from remote commands', function()
-      local code, stdout, stderr =
-        run_async({ '--remote', '+async', fname, '+echo 1+1' }, fname, nil)
-      eq(0, code)
-      neq(nil, string.find(stdout, '2'))
       eq('', stderr)
     end)
 

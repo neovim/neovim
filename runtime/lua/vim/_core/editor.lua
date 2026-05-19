@@ -1332,7 +1332,6 @@ function vim._cs_remote(rcid, server_addr, connect_error, f_tab, remote_arg_idx)
 
   local files = vim.v.argf --- @type string[]
   local cmds = {} --- @type string[]
-  local f_async = false
 
   local had_minmin = false
   local j = 1
@@ -1342,11 +1341,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, f_tab, remote_arg_idx)
       had_minmin = true
     elseif not had_minmin and arg:sub(1, 1) == '+' then
       local cmd = arg:sub(2) --- @type string
-      if cmd == 'async' then
-        f_async = true
-      else
-        table.insert(cmds, cmd)
-      end
+      table.insert(cmds, cmd)
     elseif not had_minmin and arg == '-c' then
       if j + 1 <= #args then
         table.insert(cmds, args[j + 1])
@@ -1387,15 +1382,6 @@ function vim._cs_remote(rcid, server_addr, connect_error, f_tab, remote_arg_idx)
   end
 
   if #files == 0 then
-    run_remote_cmds()
-    return { should_exit = true }
-  end
-
-  if f_async then
-    for _, file in ipairs(files) do
-      local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(file)
-      vim.fn.rpcrequest(rcid, 'nvim_command', open_cmd)
-    end
     run_remote_cmds()
     return { should_exit = true }
   end
