@@ -122,7 +122,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
       });
     }
 
-    VALIDATE_CON(operation == OP_NONE || option_has_type(*opt_idxp, kOptValTypeString),
+    VALIDATE_CON(*operation == OP_NONE || option_has_type(*opt_idxp, kOptValTypeString),
                  opts->operation.data,
                  "boolean or number options", {
       return FAIL;
@@ -323,7 +323,7 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
   void *to = NULL;
   if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &to, NULL,
                                   &operation, err)) {
-    return (Object)OBJECT_INIT;
+    return NIL;
   }
 
   // Only string values are suitable for merging. Note that returning before
@@ -347,11 +347,13 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
       NLUA_EXEC_STATIC("return require('vim._core.options').convert_value_to_vim(...)", \
                        args, kRetObject, NULL, &lua_err); \
     VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, { \
-      return (Object)OBJECT_INIT; \
+      return NIL; \
     }); \
     bool error = false; \
-    /* NOTE: convert_value_to_vim makes this safe */ \
     dst = object_as_optval(vim_val, &error); \
+    VALIDATE_EXP(!error, "value", "valid option type", api_typename(vim_val.type), { \
+      return NIL; \
+    }); \
   } while (0);
 
   CONVERT_TO_OPTVAL(left, optval_left);
@@ -360,7 +362,7 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
   if (!(optval_left.type == kOptValTypeString && optval_right.type == kOptValTypeString)) {
     api_set_error(err, kErrorTypeValidation, "incompatible types provided for merging: %s and %s",
                   api_typename(left.type), api_typename(right.type));
-    return (Object)OBJECT_INIT;
+    return NIL;
   }
 
   // String optvals have to be escaped like they would be on the cmdline
@@ -394,6 +396,9 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
 ///                    means the current tabpage. If a non-current tab is given, the value will take
 ///                    effect when it is switched-to.
 ///                  - win: |window-ID|. Used for setting window local option.
+///                  - operation: One of "set", "append", "prepend", or "remove".
+///                    Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+///                    Default is "set".
 /// @param[out] err  Error details, if any
 void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
                            Error *err)
@@ -421,10 +426,18 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     }
   }
 
+  // We fall back to the global value when retrieving the value to be merged
+  // (for global-local options), so we want to unset the scope when retrieving
+  // the original value.
+  OptionalKeys set_keys = opts->is_set__option_;
+  UNSET_KEY(opts, option, scope);
   Object old_val = nvim_get_option_value(name, opts, err);
+  opts->is_set__option_ = set_keys;
+
+  bool error = false;
   Object merged_val = nvim__merge_option_value(name, old_val, value, opts, err);
-  bool error;
   OptVal merged_optval = object_as_optval(merged_val, &error);
+  api_free_object(old_val);
 
   // Handle invalid option value type.
   // Don't use `name` in the error message here, because `name` can be any String.
