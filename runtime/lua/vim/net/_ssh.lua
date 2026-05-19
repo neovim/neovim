@@ -283,10 +283,28 @@ function M.get_hosts(filename)
   )
 end
 
+local _log --- @type vim.Log?
+
+--- Lazy `vim.log` instance for the remote-ssh feature. Writes to `stdpath('log')/remote-ssh.log`.
+---@return vim.Log
+local function log()
+  if not _log then
+    _log = vim.log.new({ name = 'remote-ssh', current_level = vim.log.levels.INFO })
+  end
+  return _log
+end
+
 ---@param msg string
 ---@param level? integer vim.log.levels.* (default INFO)
 local function notify(msg, level)
   level = level or vim.log.levels.INFO
+  if level >= vim.log.levels.ERROR then
+    log().error(msg)
+  elseif level >= vim.log.levels.WARN then
+    log().warn(msg)
+  else
+    log().info(msg)
+  end
   local function show()
     vim.notify('remote-ssh: ' .. msg, level)
     vim.cmd.redraw()
@@ -351,8 +369,10 @@ end
 ---@return string os, string arch
 function M.get_system_info(uri)
   local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { 'uname -s && uname -m' } })
+  log().debug('get_system_info: running', ssh_cmd)
 
   local obj = core_system().run_wait(ssh_cmd, nil, 300000)
+  log().debug('get_system_info: code', obj.code, 'stdout', obj.stdout, 'stderr', obj.stderr)
   if obj.code ~= 0 then
     error(
       'Failed to detect remote system info: ' .. (obj.stderr ~= '' and obj.stderr or obj.stdout)
@@ -434,8 +454,10 @@ local function check_and_install(uri, os, arch)
   )
 
   local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { remote_script } })
+  log().debug('check_and_install: target_ver', nvim_version, 'os', target_os, 'arch', target_arch)
 
   local obj = core_system().run_wait(ssh_cmd, nil, 300000)
+  log().debug('check_and_install: code', obj.code, 'stdout', obj.stdout, 'stderr', obj.stderr)
   if obj.code ~= 0 then
     error('Installation failed: ' .. (obj.stderr ~= '' and obj.stderr or obj.stdout))
   end
@@ -477,11 +499,14 @@ function M.start(uri_str)
   })
 
   notify('Establishing SSH tunnel...')
+  log().debug('start: local_sock', local_sock)
   local tunnel = core_system().run_wait(ssh_cmd, function(stdout)
     return stdout:match('NVIM_READY') ~= nil
   end, 300000)
+  log().debug('start: tunnel stdout', tunnel.stdout, 'stderr', tunnel.stderr)
 
   if tunnel.stdout:match('NVIM_CRASHED') then
+    log().error('Remote Nvim crashed during startup', tunnel.stderr)
     error('Remote Nvim crashed during startup')
   end
 
@@ -494,6 +519,7 @@ function M.start(uri_str)
       return
     end
     cleaned_up = true
+    log().info('teardown: closing ssh mux for ' .. uri_str)
     local stop_cmd = get_ssh_cmd(uri, { ssh_args = { '-O', 'exit' } })
     vim.system(stop_cmd):wait()
     -- Wait for the original tunnel process to close its stdio handles.
