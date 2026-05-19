@@ -3586,6 +3586,9 @@ nvim_set_option_value({name}, {value}, {opts})
       • {value}  (`any`) New option value
       • {opts}   (`vim.api.keyset.option`) Optional parameters
                  • buf: Buffer number. Used for setting buffer local option.
+                 • operation: One of "set", "append", "prepend", or "remove".
+                   Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+                   Default is "set".
                  • scope: One of "global" or "local". Analogous to
                    |:setglobal| and |:setlocal|, respectively.
                  • tab: |tab-ID| for tab-local options (currently only
@@ -3593,6 +3596,24 @@ nvim_set_option_value({name}, {value}, {opts})
                    non-current tab is given, the value will take effect when
                    it is switched-to.
                  • win: |window-ID|. Used for setting window local option.
+
+                                                  *nvim__merge_option_value()*
+nvim__merge_option_value({name}, {left}, {right}, {opts})
+    WARNING: This feature is experimental/unstable.
+
+    Returns left and right option values merged by an operation.
+
+    Parameters: ~
+      • {name}   (`string`) Option name
+      • {left}   (`any`) First value to be merged
+      • {right}  (`any`) Second value to be merged
+      • {opts}   (`vim.api.keyset.option`) Optional parameters
+                 • operation: One of "set", "append", "prepend", or "remove".
+                   Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+                   Default is "set".
+
+    Return: ~
+        (`any`) Merged option value
 
 
 ==============================================================================

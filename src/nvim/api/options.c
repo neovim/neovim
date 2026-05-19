@@ -326,13 +326,6 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
     return NIL;
   }
 
-  // Only string values are suitable for merging. Note that returning before
-  // running `convert_value_to_vim` yields slightly inconsistent error messages
-  // for vim.opt.
-  if (!option_has_type(opt_idx, kOptValTypeString)) {
-    return right;
-  }
-
   // Convert the incoming Lua object (which could be a table) into the proper
   // OptVal type (string even for list/dict style options)
 #define CONVERT_TO_OPTVAL(src, dst) \
@@ -356,8 +349,15 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
     }); \
   } while (0);
 
-  CONVERT_TO_OPTVAL(left, optval_left);
   CONVERT_TO_OPTVAL(right, optval_right);
+
+  // Only string values are suitable for merging. Also don't try merging if
+  // operation is "set", because the user may have passed a value like nil,
+  // which is valid on its own but unmergeable.
+  if (!option_has_type(opt_idx, kOptValTypeString) || operation == OP_NONE) {
+    return optval_as_object(optval_right);
+  }
+  CONVERT_TO_OPTVAL(left, optval_left);
 
   if (!(optval_left.type == kOptValTypeString && optval_right.type == kOptValTypeString)) {
     api_set_error(err, kErrorTypeValidation, "incompatible types provided for merging: %s and %s",
@@ -375,6 +375,8 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
   OptVal merged_val = CSTR_AS_OPTVAL(merged_val_str);
 
   XFREE_CLEAR(optval_escaped_orig);
+  optval_free(optval_left);
+  optval_free(optval_right);
 
   return optval_as_object(merged_val);
 #undef CONVERT_TO_OPTVAL
@@ -390,15 +392,15 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
 /// @param value     New option value
 /// @param opts      Optional parameters
 ///                  - buf: Buffer number. Used for setting buffer local option.
+///                  - operation: One of "set", "append", "prepend", or "remove".
+///                    Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+///                    Default is "set".
 ///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
 ///                  - tab: |tab-ID| for tab-local options (currently only 'cmdheight'). Tabpage 0
 ///                    means the current tabpage. If a non-current tab is given, the value will take
 ///                    effect when it is switched-to.
 ///                  - win: |window-ID|. Used for setting window local option.
-///                  - operation: One of "set", "append", "prepend", or "remove".
-///                    Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
-///                    Default is "set".
 /// @param[out] err  Error details, if any
 void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
                            Error *err)

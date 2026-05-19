@@ -71,8 +71,8 @@ API
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
 • |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
   `msg_show.progress` events.
-• |nvim_set_option_value()| can modify an existing value using the new
-  `operation` field.
+• |vim.o|, |vim.opt|, and |nvim_set_option_value()| expand `~` and environment
+  variables.
 
 DIAGNOSTICS
 
@@ -137,6 +137,8 @@ API
 • |nvim_buf_set_extmark()| `virt_lines_overflow` accepts "wrap" to enable
   wrapping onto extra rows and "auto" which enables horizontal scrolling when
   'nowrap' is set and wrapping when 'wrap' is set.
+• |nvim_set_option_value()| accepts a new `operation` field to modify the
+  existing option value.
 
 BUILD
 
@@ -241,6 +243,7 @@ LUA
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
+• |vim.o| now accepts table style values for assignment.
 
 OPTIONS
 
