@@ -136,7 +136,7 @@ describe('Remote', function()
       end
 
       set_session(helper)
-      local timeout = wait_ms or 3000
+      local timeout = wait_ms or n.load_adjust(3000)
       local code = exec_lua(
         [[
           local timeout = ...
