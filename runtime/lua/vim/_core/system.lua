@@ -85,7 +85,7 @@ end
 --- @class vim.SystemObj
 --- @field cmd string[] Command name and args
 --- @field pid integer Process ID
---- @field private _state vim.SystemState
+--- @field package _state vim.SystemState
 local SystemObj = {}
 
 --- @param state vim.SystemState
@@ -229,42 +229,19 @@ function M.run_wait(cmd, wait_until, timeout)
   vim.validate('wait_until', wait_until, 'function', true)
   vim.validate('timeout', timeout, 'number', true)
 
-  local stdout_chunks = {} --- @type string[]
-  local stderr_chunks = {} --- @type string[]
-  local result --- @type vim.SystemCompleted?
+  local obj = vim.system(cmd, { text = true }) --[[@as vim.SystemRunWaitResult]]
+  local state = obj._state
 
   local function stdout()
-    return table.concat(stdout_chunks)
+    return table.concat(state.stdout_data or {})
   end
 
   local function stderr()
-    return table.concat(stderr_chunks)
+    return table.concat(state.stderr_data or {})
   end
 
-  local obj = vim.system(cmd, {
-    text = true,
-    stdout = function(err, data)
-      if err then
-        error(err)
-      end
-      if data then
-        stdout_chunks[#stdout_chunks + 1] = data
-      end
-    end,
-    stderr = function(err, data)
-      if err then
-        error(err)
-      end
-      if data then
-        stderr_chunks[#stderr_chunks + 1] = data
-      end
-    end,
-  }, function(res)
-    result = res
-  end) --[[@as vim.SystemRunWaitResult]]
-
   local success = vim.wait(timeout or vim._maxint, function()
-    return result ~= nil or (wait_until and wait_until(stdout(), stderr())) or false
+    return state.result ~= nil or (wait_until and wait_until(stdout(), stderr())) or false
   end, 50, true)
 
   if not success then
@@ -275,10 +252,10 @@ function M.run_wait(cmd, wait_until, timeout)
     error('command timed out')
   end
 
-  obj.code = result and result.code or nil
-  obj.signal = result and result.signal or nil
-  obj.stdout = stdout()
-  obj.stderr = stderr()
+  obj.code = state.result and state.result.code or nil
+  obj.signal = state.result and state.result.signal or nil
+  obj.stdout = state.result and state.result.stdout or stdout()
+  obj.stderr = state.result and state.result.stderr or stderr()
 
   return obj
 end
