@@ -125,14 +125,14 @@ describe('vim.system', function()
         assert(res)
         assert(res.code == nil)
         assert(res.stdout == 'READY\n')
-        assert(vim.api.nvim_get_proc(res.obj.pid), 'process already exited')
+        assert(vim.api.nvim_get_proc(res.pid), 'process already exited')
       end)
 
       if res then
-        if not res.obj:is_closing() then
-          res.obj:kill('sigterm')
+        if not res:is_closing() then
+          res:kill('sigterm')
         end
-        res.obj:wait(1000)
+        res:wait(1000)
       end
       if not ok then
         error(err)
