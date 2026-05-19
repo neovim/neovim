@@ -100,6 +100,13 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
     }
   }
 
+  *opt_idxp = find_option(name);
+  if (*opt_idxp == kOptInvalid) {
+    // unknown option
+    api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
+    return FAIL;
+  }
+
   if (operation != NULL && HAS_KEY_X(opts, operation)) {
     if (!strcmp(opts->operation.data, "set")) {
       *operation = OP_NONE;
@@ -114,13 +121,12 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
         return FAIL;
       });
     }
-  }
 
-  *opt_idxp = find_option(name);
-  if (*opt_idxp == kOptInvalid) {
-    // unknown option
-    api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
-    return FAIL;
+    VALIDATE_CON(operation == OP_NONE || option_has_type(*opt_idxp, kOptValTypeString),
+                 opts->operation.data,
+                 "boolean or number options", {
+      return FAIL;
+    });
   }
 
   // Reject keys whose scope the option doesn't support.
@@ -296,6 +302,82 @@ err:
   return (Object)OBJECT_INIT;
 }
 
+/// Returns left and right option values merged by an operation.
+///
+/// @param name      Option name
+/// @param left      First value to be merged
+/// @param right     Second value to be merged
+/// @param opts      Optional parameters
+///                  - operation: One of "set", "append", "prepend", or "remove".
+///                    Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+///                    Default is "set".
+/// @param[out] err  Error details, if any
+/// @return          Merged option value
+Object nvim__merge_option_value(String name, Object left, Object right, Dict(option) *opts,
+                                Error *err)
+{
+  OptIndex opt_idx = 0;
+  int opt_flags = 0;
+  OptScope scope = kOptScopeGlobal;
+  set_op_T operation = OP_NONE;
+  void *to = NULL;
+  if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &to, NULL,
+                                  &operation, err)) {
+    return (Object)OBJECT_INIT;
+  }
+
+  // Only string values are suitable for merging. Note that returning before
+  // running `convert_value_to_vim` yields slightly inconsistent error messages
+  // for vim.opt.
+  if (!option_has_type(opt_idx, kOptValTypeString)) {
+    return right;
+  }
+
+  // Convert the incoming Lua object (which could be a table) into the proper
+  // OptVal type (string even for list/dict style options)
+#define CONVERT_TO_OPTVAL(src, dst) \
+  OptVal dst; \
+  do { \
+    Error lua_err = ERROR_INIT; \
+    MAXSIZE_TEMP_ARRAY(args, 3); \
+    ADD_C(args, STRING_OBJ(name)); \
+    ADD_C(args, src); \
+    ADD_C(args, CSTR_AS_OBJ(set_op_get_name(operation))); \
+    Object vim_val = \
+      NLUA_EXEC_STATIC("return require('vim._core.options').convert_value_to_vim(...)", \
+                       args, kRetObject, NULL, &lua_err); \
+    VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, { \
+      return (Object)OBJECT_INIT; \
+    }); \
+    bool error = false; \
+    /* NOTE: convert_value_to_vim makes this safe */ \
+    dst = object_as_optval(vim_val, &error); \
+  } while (0);
+
+  CONVERT_TO_OPTVAL(left, optval_left);
+  CONVERT_TO_OPTVAL(right, optval_right);
+
+  if (!(optval_left.type == kOptValTypeString && optval_right.type == kOptValTypeString)) {
+    api_set_error(err, kErrorTypeValidation, "incompatible types provided for merging: %s and %s",
+                  api_typename(left.type), api_typename(right.type));
+    return (Object)OBJECT_INIT;
+  }
+
+  // String optvals have to be escaped like they would be on the cmdline
+  char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
+  // stropt_get_newval modifies the pointer, so we have to save this to free it
+  char *optval_escaped_orig = optval_escaped;
+
+  const char *merged_val_str = stropt_get_newval(opt_idx, &optval_escaped, NULL,
+                                                 optval_left.data.string.data, &operation, false);
+  OptVal merged_val = CSTR_AS_OPTVAL(merged_val_str);
+
+  XFREE_CLEAR(optval_escaped_orig);
+
+  return optval_as_object(merged_val);
+#undef CONVERT_TO_OPTVAL
+}
+
 /// Sets the value of an option. The behavior of this function matches that of
 /// |:set|: for global-local options, both the global and local value are set
 /// unless otherwise specified with {scope}.
@@ -327,11 +409,6 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     return;
   }
 
-  VALIDATE(operation == OP_NONE || option_has_type(opt_idx, kOptValTypeString), "%s",
-           "'append', 'prepend', and 'remove' operations can only be applied to string options", {
-    return;
-  });
-
   // If:
   // - window id is provided
   // - scope is not provided
@@ -344,23 +421,10 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     }
   }
 
-  Error lua_err = ERROR_INIT;
   Object old_val = nvim_get_option_value(name, opts, err);
-
-  MAXSIZE_TEMP_ARRAY(args, 4);
-  ADD_C(args, STRING_OBJ(name));
-  ADD_C(args, old_val);
-  ADD_C(args, value);
-  ADD_C(args, CSTR_AS_OBJ(set_op_get_name(operation)));
-
-  Object merged_val = NLUA_EXEC_STATIC("return require('vim._core.options').merge_opt_vals(...)",
-                                       args, kRetObject, NULL, &lua_err);
-  VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, {
-    return;
-  });
-
-  bool error = false;
-  OptVal optval = object_as_optval(merged_val, &error);
+  Object merged_val = nvim__merge_option_value(name, old_val, value, opts, err);
+  bool error;
+  OptVal merged_optval = object_as_optval(merged_val, &error);
 
   // Handle invalid option value type.
   // Don't use `name` in the error message here, because `name` can be any String.
@@ -371,7 +435,7 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
   });
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
+    set_option_value_for(name.data, opt_idx, merged_optval, opt_flags, scope, to, err);
   });
 }
 

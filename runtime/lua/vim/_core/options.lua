@@ -351,24 +351,6 @@ local function passthrough(_, x)
   return x
 end
 
-local function tbl_merge(left, right)
-  return vim.tbl_extend('force', left, right)
-end
-
---- @param t table<any,any>
---- @param value any|any[]
-local function tbl_remove(t, value)
-  if type(value) == 'string' then
-    t[value] = nil
-  else
-    for _, v in ipairs(value) do
-      t[v] = nil
-    end
-  end
-
-  return t
-end
-
 local valid_types = {
   boolean = { 'boolean' },
   number = { 'number' },
@@ -446,14 +428,24 @@ local to_vim_value = {
 }
 
 --- Convert a Lua value to a vimoption_T value
-local function convert_value_to_vim(name, info, value)
-  if value == nil or value == vim.NIL then
+function M.convert_value_to_vim(name, value, operation)
+  if value == nil then
     return vim.NIL
   end
 
+  local info = get_options_info(name) or error('Not a valid option name: ' .. name)
   assert_valid_value(name, value, valid_types[info.metatype])
 
-  return to_vim_value[info.metatype](info, value)
+  local vim_value = to_vim_value[info.metatype](info, value)
+  -- In lua, we allow vim.opt.listchars = vim.opt.listchars - 'space'
+  -- In vim, the key requires a colon on the end. See stropt_handle_keymatch.
+  if operation == 'remove' and info.metatype == 'map' then
+    if not vim_value:find(':') then
+      vim_value = vim_value .. ':'
+    end
+  end
+
+  return vim_value
 end
 
 -- Map of OptionType to functions that take vimoption_T values and convert to Lua values.
@@ -463,15 +455,7 @@ local to_lua_value = {
   number = passthrough,
   string = passthrough,
 
-  array = function(info, value)
-    if type(value) == 'table' then
-      if not info.allows_duplicates then
-        value = remove_duplicate_values(value)
-      end
-
-      return value
-    end
-
+  array = function(_, value)
     -- Empty strings mean that there is nothing there,
     -- so empty table should be returned.
     if value == '' then
@@ -566,146 +550,6 @@ local function convert_value_to_lua(info, option_value)
   return to_lua_value[info.metatype](info, option_value)
 end
 
-local prepend_methods = {
-  number = function()
-    error("The '^' operator is not currently supported for")
-  end,
-
-  string = function(left, right)
-    return right .. left
-  end,
-
-  array = function(left, right)
-    for i = #right, 1, -1 do
-      table.insert(left, 1, right[i])
-    end
-
-    return left
-  end,
-
-  map = tbl_merge,
-  set = tbl_merge,
-}
-
---- Handles the '^' operator
-local function prepend_value(info, current, new)
-  return prepend_methods[info.metatype](
-    convert_value_to_lua(info, current),
-    convert_value_to_lua(info, new)
-  )
-end
-
-local add_methods = {
-  --- @param left integer
-  --- @param right integer
-  number = function(left, right)
-    return left + right
-  end,
-
-  --- @param left string
-  --- @param right string
-  string = function(left, right)
-    return left .. right
-  end,
-
-  --- @param left string[]
-  --- @param right string[]
-  --- @return string[]
-  array = function(left, right)
-    for _, v in ipairs(right) do
-      table.insert(left, v)
-    end
-
-    return left
-  end,
-
-  map = tbl_merge,
-  set = tbl_merge,
-}
-
---- Handles the '+' operator
-local function add_value(info, current, new)
-  return add_methods[info.metatype](
-    convert_value_to_lua(info, current),
-    convert_value_to_lua(info, new)
-  )
-end
-
---- @param t table<any,any>
---- @param val any
-local function remove_one_item(t, val)
-  if vim.islist(t) then
-    local remove_index = nil
-    for i, v in ipairs(t) do
-      if v == val then
-        remove_index = i
-      end
-    end
-
-    if remove_index then
-      table.remove(t, remove_index)
-    end
-  else
-    t[val] = nil
-  end
-end
-
-local remove_methods = {
-  --- @param left integer
-  --- @param right integer
-  number = function(left, right)
-    return left - right
-  end,
-
-  string = function()
-    error('Subtraction not supported for strings.')
-  end,
-
-  --- @param left string[]
-  --- @param right string[]
-  --- @return string[]
-  array = function(left, right)
-    if type(right) == 'string' then
-      remove_one_item(left, right)
-    else
-      for _, v in ipairs(right) do
-        remove_one_item(left, v)
-      end
-    end
-
-    return left
-  end,
-
-  map = tbl_remove,
-  set = tbl_remove,
-}
-
---- Handles the '-' operator
-local function remove_value(info, current, new)
-  return remove_methods[info.metatype](
-    convert_value_to_lua(info, current),
-    convert_value_to_lua(info, new)
-  )
-end
-
-function M.merge_opt_vals(name, current, new, operation)
-  local ret
-  local info = get_options_info(name) or error('Not a valid option name: ' .. name)
-  if operation == 'set' then
-    ret = new
-  elseif operation == 'append' then
-    ret = add_value(info, current, new)
-  elseif operation == 'prepend' then
-    ret = prepend_value(info, current, new)
-  elseif operation == 'remove' then
-    ret = remove_value(info, current, new)
-  else
-    error('Invalid operation for option: ' .. vim.inspect(operation))
-  end
-
-  return convert_value_to_vim(name, info, ret)
-end
-
 local function create_option_accessor(scope)
   --- @diagnostic disable-next-line: no-unknown
   local option_mt
@@ -731,8 +575,7 @@ local function create_option_accessor(scope)
     -- To set a value, instead use:
     --  opt[my_option] = value
     _set = function(self)
-      local value = convert_value_to_vim(self._name, self._info, self._value)
-      api.nvim_set_option_value(self._name, value, { scope = scope })
+      api.nvim_set_option_value(self._name, self._value, { scope = scope })
     end,
 
     get = function(self)
@@ -744,7 +587,18 @@ local function create_option_accessor(scope)
     end,
 
     __add = function(self, right)
-      return make_option(self._name, add_value(self._info, self._value, right))
+      if self._info.metatype == 'number' then
+        return make_option(self._name, self._value + right)
+      end
+      return make_option(
+        self._name,
+        vim.api.nvim__merge_option_value(
+          self._name,
+          self._value,
+          right,
+          { operation = 'append', scope = scope }
+        )
+      )
     end,
 
     prepend = function(self, right)
@@ -752,7 +606,18 @@ local function create_option_accessor(scope)
     end,
 
     __pow = function(self, right)
-      return make_option(self._name, prepend_value(self._info, self._value, right))
+      if self._info.metatype == 'number' then
+        return make_option(self._name, self._value ^ right)
+      end
+      return make_option(
+        self._name,
+        vim.api.nvim__merge_option_value(
+          self._name,
+          self._value,
+          right,
+          { operation = 'prepend', scope = scope }
+        )
+      )
     end,
 
     remove = function(self, right)
@@ -760,7 +625,18 @@ local function create_option_accessor(scope)
     end,
 
     __sub = function(self, right)
-      return make_option(self._name, remove_value(self._info, self._value, right))
+      if self._info.metatype == 'number' then
+        return make_option(self._name, self._value - right)
+      end
+      return make_option(
+        self._name,
+        vim.api.nvim__merge_option_value(
+          self._name,
+          self._value,
+          right,
+          { operation = 'remove', scope = scope }
+        )
+      )
     end,
   }
   option_mt.__index = option_mt
