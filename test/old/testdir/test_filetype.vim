@@ -1874,6 +1874,27 @@ func Test_html_file()
   call assert_equal('htmlangular', &filetype)
   bwipe!
 
+  " HTML Angular ng-template element
+  let content = ['<ng-template let-foo>{{ foo }}</ng-template>']
+  call writefile(content, 'Xfile.html', 'D')
+  split Xfile.html
+  call assert_equal('htmlangular', &filetype)
+  bwipe!
+
+  " HTML Angular ng-content element
+  let content = ['<div><ng-content select="[item]"></ng-content></div>']
+  call writefile(content, 'Xfile.html', 'D')
+  split Xfile.html
+  call assert_equal('htmlangular', &filetype)
+  bwipe!
+
+  " Word containing 'ng-template' as a suffix must not trigger htmlangular
+  let content = ['<div class="song-template">', '  <h1>Not Angular</h1>', '</div>']
+  call writefile(content, 'Xfile.html', 'D')
+  split Xfile.html
+  call assert_equal('html', &filetype)
+  bwipe!
+
   " Django Template
   let content = ['{% if foobar %}',
       \ '    <ul>',
