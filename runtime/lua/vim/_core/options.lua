@@ -222,6 +222,12 @@ end
 ---     To set a string value:
 ---         Vimscript: `set wildignore=*.o,*.a,__pycache__`
 ---         Lua:       `vim.o.wildignore = '*.o,*.a,__pycache__'`
+---         Lua (alt): `vim.o.wildignore = { '*.o', '*.a', '__pycache__' }`
+---
+---     To set a key:value type option:
+---         Vimscript: `set listchars=eol:~,space:-`
+---         Lua:       `vim.o.listchars = 'eol:~,space:-'`
+---         Lua (alt): `vim.o.listchars = { eol = '~', space = '-' }`
 ---
 --- Similarly, there is |vim.bo| and |vim.wo| for setting buffer-scoped and
 --- window-scoped options. Note that this must NOT be confused with
@@ -429,7 +435,7 @@ local to_vim_value = {
 
 --- Convert a Lua value to a vimoption_T value
 function M.convert_value_to_vim(name, value, operation)
-  if value == nil then
+  if value == nil or value == vim.NIL then
     return vim.NIL
   end
 
