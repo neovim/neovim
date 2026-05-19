@@ -247,6 +247,37 @@ COMMANDS
 • *:rv* *:rviminfo*		Deprecated alias to |:rshada| command.
 • *:wv* *:wviminfo*		Deprecated alias to |:wshada| command.
 
+COMMAND-LINE FLAGS
+• *--remote-silent*		Use |-Es| instead: >
+					nvim -Es --server {addr} --remote {file}
+<
+• *--remote-tab*		Use |-p| instead: >
+					nvim -p --server {addr} --remote {file}
+<
+• *--remote-tab-silent*		Use |-Es| |-p| instead: >
+					nvim -Es -p --server {addr} --remote {file}
+<
+• *--remote-wait*		Use |--remote| instead.
+• *--remote-wait-silent*	Use |-Es| instead: >
+					nvim -Es --server {addr} --remote {file}
+<
+• *--remote-tab-wait*		Use |-p| instead: >
+					nvim -p --server {addr} --remote {file}
+<
+• *--remote-tab-wait-silent*	Use |-Es| |-p| instead: >
+					nvim -Es -p --server {addr} --remote {file}
+<
+• *--remote-send*		Use |nvim_input()| instead: >
+					nvim --server {addr} --remote "+call nvim_input('ifoo')"
+<
+• *--remote-expr*		Use |-Es| and |--remote| +cmd: >
+					nvim -Es --server {addr} --remote "+echo 1+1" +q
+<
+• *--serverlist*		Use instead: >
+					nvim -Es --server {addr} --remote "+echom serverlist()" +q
+<
+• *--servername*
+
 ENVIRONMENT VARIABLES
 • *$NVIM_LISTEN_ADDRESS*
   • Deprecated way to:

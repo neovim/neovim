@@ -88,43 +88,4 @@ The --remote argument causes each given file to be opened with |:drop| (or
 stdout.
 
 
-==============================================================================
-2. Removed flags					*clientserver-removed*
-
-These Vim flags are not supported by Nvim. Use the alternatives shown.
-
-*--remote-silent*               Removed. Use |-Es| instead: >
-                              nvim -Es --server {addr} --remote {file}
-<
-*--remote-tab*                  Removed. Use |-p| instead: >
-                              nvim -p --server {addr} --remote {file}
-<
-*--remote-tab-silent*           Removed. Use |-Es| |-p| instead: >
-                              nvim -Es -p --server {addr} --remote {file}
-<
-*--remote-wait*                 Removed. Use |--remote| instead.
-
-*--remote-wait-silent*          Removed. Use |-Es| instead: >
-                              nvim -Es --server {addr} --remote {file}
-<
-*--remote-tab-wait*             Removed. Use |-p| instead: >
-                              nvim -p --server {addr} --remote {file}
-<
-*--remote-tab-wait-silent*      Removed. Use |-Es| |-p| instead: >
-                              nvim -Es -p --server {addr} --remote {file}
-<
-*--remote-send*                 Removed. Use |nvim_input()| instead: >
-                              nvim --server {addr} --remote "+call nvim_input('ifoo')"
-<
-*--remote-expr*                 Removed. Use |-Es| and |--remote| +cmd: >
-                              nvim -Es --server {addr} --remote "+echo 1+1" +q
-<
-
-*--serverlist*                  Removed. Use instead: >
-                              nvim -Es --server {addr} --remote "+echom serverlist()" +q
-<
-
-*--servername*                  Removed.
-
-
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
