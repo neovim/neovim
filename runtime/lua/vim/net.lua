@@ -11,7 +11,7 @@ local http_methods = {
 
 --- @nodoc
 ---@enum vim.net.HttpStatusCode
-M.status = {
+M.http_status = {
   CONTINUE = 100,
   SWITCHING_PROTOCOLS = 101,
   OK = 200,
@@ -85,7 +85,7 @@ local function parse_response(res)
   return { body = body, headers = headers, status = status_code }
 end
 
----@alias vim.net.request.ResponseFunc fun(err: string?, response: vim.net.request.Response?)
+---@alias vim.net.HttpResponseFunc fun(err: string?, response: vim.net.request.Response?)
 ---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PATCH" | "HEAD" | "DELETE"
 ---@alias vim.net.request.ResponseHeaders table<string, string>
 
@@ -139,7 +139,7 @@ end
 ---   function (err, res)
 ---     if err then return end
 ---     local data = vim.json.decode(res.body)
----     if res.status == vim.net.status.OK then
+---     if res.status == vim.net.http_status.OK then
 ---       vim.print(('Neovim currently has %d stars'):format(data.stargazers_count))
 ---     end
 ---   end
@@ -167,9 +167,9 @@ end
 --- @param method vim.net.HttpMethod (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
 --- @param url string The URL for the request.
 --- @param opts? vim.net.request.Opts
---- @param on_response? vim.net.request.ResponseFunc Callback invoked on request completion.
---- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
---- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
+--- @param on_response? vim.net.HttpResponseFunc Callback invoked on request completion.
+--- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.HttpResponseFunc)
+--- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.HttpResponseFunc)
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
 function M.request(method, url, opts, on_response)
   if type(url) ~= 'string' then

@@ -4445,7 +4445,7 @@ vim.net.request({method}, {url}, {opts}, {on_response})
           function (err, res)
             if err then return end
             local data = vim.json.decode(res.body)
-            if res.status == vim.net.status.OK then
+            if res.status == vim.net.http_status.OK then
               vim.print(('Neovim currently has %d stars'):format(data.stargazers_count))
             end
           end
@@ -4489,12 +4489,12 @@ vim.net.request({method}, {url}, {opts}, {on_response})
                        • {retry}? (`integer`) Number of retries on transient
                          failures (default: 3).
                        • {verbose}? (`boolean`) Enables verbose output.
-      • {on_response}  (`vim.net.request.ResponseFunc?`) Callback invoked on
+      • {on_response}  (`vim.net.HttpResponseFunc?`) Callback invoked on
                        request completion.
 
     Overloads: ~
-      • `fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)`
-      • `fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)`
+      • `fun(url: string, opts: vim.net.request.Opts, response: vim.net.HttpResponseFunc)`
+      • `fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.HttpResponseFunc)`
 
     Return: ~
         (`{ close: fun() }`) Object with `close()` method which cancels the
