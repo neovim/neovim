@@ -268,6 +268,34 @@ describe('vim.secure', function()
       -- Trust database is not updated
       eq(nil, read_file(vim.fs.joinpath(stdpath('state'), 'trust')))
     end)
+
+    it('(v)iew action does not execute malicious filename #39914', function()
+      if t.skip(t.is_os('win'), 'N/A: filename cannot have "|" char') then
+        return
+      end
+
+      local evil = 'Xfile|let g:secure_poc=42'
+      t.write_file(evil, 'pwned\n')
+      finally(function()
+        os.remove(evil)
+      end)
+
+      eq(
+        nil,
+        exec_lua(function(path)
+          vim.fn.confirm = function()
+            return 2 -- View
+          end
+          return vim.secure.read(path)
+        end, evil)
+      )
+
+      -- Malicious injected `:let` did NOT execute.
+      eq(0, fn.exists('g:secure_poc'))
+      -- The file is opened in a [RO] split with its literal name.
+      eq(true, api.nvim_get_option_value('readonly', {}))
+      eq(evil, vim.fs.basename(api.nvim_buf_get_name(0)))
+    end)
   end)
 
   describe('trust()', function()

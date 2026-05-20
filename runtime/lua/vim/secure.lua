@@ -151,7 +151,7 @@ function M.read(path)
     return nil
   elseif result == 2 then
     -- View
-    vim.cmd('sview ' .. fullpath)
+    vim.cmd(('sview %s'):format(vim.fn.fnameescape(fullpath)))
     return nil
   elseif result == 3 then
     -- Deny
