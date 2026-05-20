@@ -151,13 +151,6 @@ static char *p_vsts_nopaste;
 
 #define OPTION_COUNT ARRAY_SIZE(options)
 
-/// :set boolean option prefix
-typedef enum {
-  PREFIX_NO = 0,  ///< "no" prefix
-  PREFIX_NONE,    ///< no prefix
-  PREFIX_INV,     ///< "inv" prefix
-} set_prefix_T;
-
 #include "option.c.generated.h"
 
 // options[] is initialized in options.generated.h.
@@ -1101,7 +1094,7 @@ static void stropt_remove_dupflags(char *newval, uint32_t flags)
 ///     set {opt}={val}
 ///     set {opt}:{val}
 char *stropt_get_newval(OptIndex opt_idx, char **argp, void *varp, const char *origval,
-                        set_op_T *op_arg, bool skipchar)
+                        set_op_T *op_arg)
 {
   char *arg = *argp;
   set_op_T op = *op_arg;
@@ -1110,9 +1103,7 @@ char *stropt_get_newval(OptIndex opt_idx, char **argp, void *varp, const char *o
   const char *s = NULL;
   uint32_t flags = options[opt_idx].flags;
 
-  if (skipchar) {
-    arg++;  // jump to after the '=' or ':'
-  }
+  arg++;  // jump to after the '=' or ':'
 
   // Set 'keywordprg' to ":help" if an empty
   // value was passed to :set by the user.
@@ -1178,6 +1169,58 @@ char *stropt_get_newval(OptIndex opt_idx, char **argp, void *varp, const char *o
   *op_arg = op;
 
   return newval;
+}
+
+OptVal numberopt_get_newval(OptIndex opt_idx, OptVal oldval, char **argp, void *varp, set_op_T op,
+                            const char **errmsg)
+{
+  char *arg = *argp;
+
+  OptInt oldval_num = oldval.data.number;
+  OptInt newval_num;
+  OptVal newval = NIL_OPTVAL;
+
+  // skip =
+  arg++;
+
+  // Different ways to set a number option:
+  // <xx>         accept special key codes for 'wildchar' or 'wildcharm'
+  // ^x           accept ctrl key codes for 'wildchar' or 'wildcharm'
+  // c            accept any non-digit for 'wildchar' or 'wildcharm'
+  // [-]0-9       set number
+  // other        error
+  if (((OptInt *)varp == &p_wc || (OptInt *)varp == &p_wcm)
+      && (*arg == '<' || *arg == '^'
+          || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1])) && !ascii_isdigit(*arg)))) {
+    newval_num = string_to_key(arg);
+    if (newval_num == 0) {
+      *errmsg = e_invarg;
+      return newval;
+    }
+  } else if (*arg == '-' || ascii_isdigit(*arg)) {
+    int i;
+    // Allow negative, octal and hex numbers.
+    vim_str2nr(arg, NULL, &i, STR2NR_ALL, &newval_num, NULL, 0, true, NULL);
+    if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
+      *errmsg = e_number_required_after_equal;
+      return newval;
+    }
+  } else {
+    *errmsg = e_number_required_after_equal;
+    return newval;
+  }
+
+  if (op == OP_ADDING) {
+    newval_num = oldval_num + newval_num;
+  }
+  if (op == OP_PREPENDING) {
+    newval_num = oldval_num * newval_num;
+  }
+  if (op == OP_REMOVING) {
+    newval_num = oldval_num - newval_num;
+  }
+
+  return NUMBER_OPTVAL(newval_num);
 }
 
 static set_op_T get_op(const char *arg)
@@ -1329,15 +1372,14 @@ const char *find_option_end(const char *arg, OptIndex *opt_idxp)
 
 /// Get new option value from argp. Allocated OptVal must be freed by caller.
 /// Can unset local value of an option when ":set {option}<" is used.
-static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
-                                int nextchar, set_op_T op, uint32_t flags, void *varp, char *errbuf,
-                                const size_t errbuflen, const char **errmsg)
+OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
+                         int nextchar, set_op_T op, uint32_t flags, void *varp, char *errbuf,
+                         const size_t errbuflen, const char **errmsg)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(varp != NULL);
 
   vimoption_T *opt = &options[opt_idx];
-  char *arg = *argp;
   // When setting the local value of a global option, the old value may be the global value.
   const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
   OptVal oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
@@ -1390,54 +1432,13 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
     break;
   }
   case kOptValTypeNumber: {
-    OptInt oldval_num = oldval.data.number;
-    OptInt newval_num;
-
-    // Different ways to set a number option:
-    // <xx>         accept special key codes for 'wildchar' or 'wildcharm'
-    // ^x           accept ctrl key codes for 'wildchar' or 'wildcharm'
-    // c            accept any non-digit for 'wildchar' or 'wildcharm'
-    // [-]0-9       set number
-    // other        error
-    arg++;
-    if (((OptInt *)varp == &p_wc || (OptInt *)varp == &p_wcm)
-        && (*arg == '<' || *arg == '^'
-            || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1])) && !ascii_isdigit(*arg)))) {
-      newval_num = string_to_key(arg);
-      if (newval_num == 0) {
-        *errmsg = e_invarg;
-        return newval;
-      }
-    } else if (*arg == '-' || ascii_isdigit(*arg)) {
-      int i;
-      // Allow negative, octal and hex numbers.
-      vim_str2nr(arg, NULL, &i, STR2NR_ALL, &newval_num, NULL, 0, true, NULL);
-      if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
-        *errmsg = e_number_required_after_equal;
-        return newval;
-      }
-    } else {
-      *errmsg = e_number_required_after_equal;
-      return newval;
-    }
-
-    if (op == OP_ADDING) {
-      newval_num = oldval_num + newval_num;
-    }
-    if (op == OP_PREPENDING) {
-      newval_num = oldval_num * newval_num;
-    }
-    if (op == OP_REMOVING) {
-      newval_num = oldval_num - newval_num;
-    }
-
-    newval = NUMBER_OPTVAL(newval_num);
+    newval = numberopt_get_newval(opt_idx, oldval, argp, varp, op, errmsg);
     break;
   }
   case kOptValTypeString: {
     const char *oldval_str = oldval.data.string.data;
     // Get the new value for the option
-    const char *newval_str = stropt_get_newval(opt_idx, argp, varp, oldval_str, &op, true);
+    const char *newval_str = stropt_get_newval(opt_idx, argp, varp, oldval_str, &op);
     newval = CSTR_AS_OPTVAL(newval_str);
     break;
   }

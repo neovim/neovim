@@ -590,6 +590,13 @@ describe('lua stdlib', function()
           return vim.opt.formatoptions:get()
         end)
       end)
+
+      it('works for weird number options', function()
+        eq_exec_lua(9, function()
+          vim.o.wildchar = '<Tab>'
+          return vim.o.wildchar
+        end)
+      end)
     end)
 
     describe('vim.bo', function()
@@ -1084,10 +1091,6 @@ describe('lua stdlib', function()
             return vim.bo.tabstop
           end)
 
-          matches(
-            "Invalid option type 'string' for 'tabstop'",
-            pcall_err(exec_lua, [[vim.opt.tabstop = '4']])
-          )
           matches(
             "Invalid option type 'boolean' for 'tabstop'",
             pcall_err(exec_lua, [[vim.opt.tabstop = true]])

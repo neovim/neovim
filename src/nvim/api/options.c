@@ -20,6 +20,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -122,9 +123,11 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
       });
     }
 
-    VALIDATE_CON(*operation == OP_NONE || option_has_type(*opt_idxp, kOptValTypeString),
+    VALIDATE_CON(*operation == OP_NONE || option_has_type(*opt_idxp,
+                                                          kOptValTypeString)
+                 || option_has_type(*opt_idxp, kOptValTypeNumber),
                  opts->operation.data,
-                 "boolean or number options", {
+                 "boolean options", {
       return FAIL;
     });
   }
@@ -350,33 +353,57 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
   } while (0);
 
   CONVERT_TO_OPTVAL(right, optval_right);
-
-  // Only string values are suitable for merging. Also don't try merging if
-  // operation is "set", because the user may have passed a value like nil,
-  // which is valid on its own but unmergeable.
-  if (!option_has_type(opt_idx, kOptValTypeString) || operation == OP_NONE) {
-    return optval_as_object(optval_right);
-  }
   CONVERT_TO_OPTVAL(left, optval_left);
-
-  if (!(optval_left.type == kOptValTypeString && optval_right.type == kOptValTypeString)) {
-    api_set_error(err, kErrorTypeValidation, "incompatible types provided for merging: %s and %s",
-                  api_typename(left.type), api_typename(right.type));
-    return NIL;
+  if (optval_right.type == kOptValTypeNil) {
+    // Immediate return if trying to set nil values because they get handled
+    // specially
+    if (operation == OP_NONE) {
+      optval_free(optval_left);
+      return optval_as_object(optval_right);
+    } else {
+      optval_free(optval_right);
+      return optval_as_object(optval_left);
+    }
   }
 
-  // String optvals have to be escaped like they would be on the cmdline
-  char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
-  // stropt_get_newval modifies the pointer, so we have to save this to free it
-  char *optval_escaped_orig = optval_escaped;
+  const char *errmsg = NULL;
+  vimoption_T *option = get_option(opt_idx);
+  // Not sure if we need get_varp_scope_from
+  void *varp = get_varp_scope(option, opt_flags);
+  OptVal merged_val = NIL_OPTVAL;
+  Arena arena = ARENA_EMPTY;
+  char *argp = NULL;
 
-  const char *merged_val_str = stropt_get_newval(opt_idx, &optval_escaped, NULL,
-                                                 optval_left.data.string.data, &operation, false);
-  OptVal merged_val = CSTR_AS_OPTVAL(merged_val_str);
+  if (option->type == kOptValTypeString) {
+    // String optvals have to be escaped like they would be on the cmdline
+    char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
+    argp = arena_printf(&arena, "=%s", optval_escaped).data;
+    const char *merged_val_str = stropt_get_newval(opt_idx, &argp, NULL,
+                                                   optval_left.data.string.data, &operation);
+    merged_val = CSTR_AS_OPTVAL(merged_val_str);
+    XFREE_CLEAR(optval_escaped);
+  } else if (option->type == kOptValTypeNumber) {
+    // This is here for special number options like wildchar.
+    // See `string_to_key`
+    if (optval_right.type == kOptValTypeString) {
+      argp = arena_printf(NULL, "=%s", optval_right.data.string.data).data;
+    } else {
+      argp = arena_printf(NULL, "=%" PRId64, optval_right.data.number).data;
+    }
+    merged_val = numberopt_get_newval(opt_idx, optval_left, &argp, varp,
+                                      operation, &errmsg);
+    if (errmsg != NULL) {
+      api_set_error(err, kErrorTypeValidation, "%s", errmsg);
+    }
+  } else if (option->type == kOptValTypeBoolean) {
+    merged_val = optval_right;
+  } else {
+    merged_val = NIL_OPTVAL;
+  }
 
-  XFREE_CLEAR(optval_escaped_orig);
   optval_free(optval_left);
   optval_free(optval_right);
+  arena_mem_free(arena_finish(&arena));
 
   return optval_as_object(merged_val);
 #undef CONVERT_TO_OPTVAL
