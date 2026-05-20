@@ -172,4 +172,33 @@ function M.echo_err(msg)
   vim.api.nvim_echo({ { msg } }, true, { err = true })
 end
 
+--- Define event-handlers (autocmds) ergonomically.
+---
+--- Examples:
+--- ```lua
+---   local nvim_on = require('vim._core.util').nvim_on
+---   nvim_on('BufWritePost', group, function(ev) print(ev.file) end)
+---   nvim_on({ 'BufRead', 'BufNew' }, group, { pattern = '*.lua' }, function(ev) end)
+---   nvim_on('VimLeavePre', nil, function() end)
+--- ```
+---
+--- @param events vim.api.keyset.events|vim.api.keyset.events[] Event(s) to watch. See |autocmd-events|.
+--- @param group string|integer? Group name or id, or `nil`.
+--- @param opts_or_fn vim.api.keyset.create_autocmd Options.
+--- @param fn fun(ev: vim.api.keyset.create_autocmd.callback_args): boolean? Event handler.
+--- @return integer # Autocmd id (see |nvim_create_autocmd()|).
+--- @overload fun(events: vim.api.keyset.events|vim.api.keyset.events[], group: string|integer?, fn: fun(ev: vim.api.keyset.create_autocmd.callback_args): boolean?): integer
+function M.nvim_on(events, group, opts_or_fn, fn)
+  vim.validate('opts_or_fn', opts_or_fn, { 'function', 'table' })
+  local opts --- @type vim.api.keyset.create_autocmd
+  if type(opts_or_fn) == 'function' then
+    fn, opts = opts_or_fn, {}
+  else
+    opts = opts_or_fn
+  end
+  opts.group = group
+  opts.callback = fn
+  return vim.api.nvim_create_autocmd(events, opts)
+end
+
 return M

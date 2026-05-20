@@ -8,6 +8,7 @@ local protocol = lsp.protocol
 local util = lsp.util
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 local M = {}
 
@@ -416,22 +417,18 @@ function M._enable(bufnr)
     bufstates[bufnr] = { pull_kind = 'document', client_result_id = {} }
   end
 
-  api.nvim_create_autocmd('LspNotify', {
-    buf = bufnr,
-    callback = function(opts)
-      if
-        opts.data.method ~= 'textDocument/didChange'
-        and opts.data.method ~= 'textDocument/didOpen'
-      then
-        return
-      end
-      if bufstates[bufnr] and bufstates[bufnr].pull_kind == 'document' then
-        local client_id = opts.data.client_id --- @type integer?
-        M._refresh(bufnr, client_id, true)
-      end
-    end,
-    group = augroup,
-  })
+  nvim_on('LspNotify', augroup, { buf = bufnr }, function(opts)
+    if
+      opts.data.method ~= 'textDocument/didChange'
+      and opts.data.method ~= 'textDocument/didOpen'
+    then
+      return
+    end
+    if bufstates[bufnr] and bufstates[bufnr].pull_kind == 'document' then
+      local client_id = opts.data.client_id --- @type integer?
+      M._refresh(bufnr, client_id, true)
+    end
+  end)
 
   api.nvim_buf_attach(bufnr, false, {
     on_reload = function()
@@ -444,21 +441,15 @@ function M._enable(bufnr)
     end,
   })
 
-  api.nvim_create_autocmd('LspDetach', {
-    buf = bufnr,
-    callback = function(ev)
-      local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/diagnostic' })
+  nvim_on('LspDetach', augroup, { buf = bufnr }, function(ev)
+    local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/diagnostic' })
 
-      if
-        not vim.iter(clients):any(function(c)
-          return c.id ~= ev.data.client_id
-        end)
-      then
-        disable(bufnr)
-      end
-    end,
-    group = augroup,
-  })
+    if not vim.iter(clients):any(function(c)
+      return c.id ~= ev.data.client_id
+    end) then
+      disable(bufnr)
+    end
+  end)
 end
 
 --- Returns the result IDs from the reports provided by the given client.

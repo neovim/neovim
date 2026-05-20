@@ -232,6 +232,7 @@ local api = vim.api
 local uv = vim.uv
 local async = require('vim._async')
 local util = require('vim._core.util')
+local nvim_on = util.nvim_on
 local N_ = vim.fn.gettext
 
 local M = {}
@@ -1199,7 +1200,7 @@ local function show_confirm_buf(lines, on_finish)
     delete_buffer()
   end
   -- - Use `nested` to allow other events (useful for statuslines)
-  api.nvim_create_autocmd('BufWriteCmd', { buf = bufnr, nested = true, callback = finish })
+  nvim_on('BufWriteCmd', nil, { buf = bufnr, nested = true }, finish)
 
   -- Define action to cancel confirm
   --- @type integer
@@ -1211,7 +1212,7 @@ local function show_confirm_buf(lines, on_finish)
     pcall(api.nvim_del_autocmd, cancel_au_id)
     delete_buffer()
   end
-  cancel_au_id = api.nvim_create_autocmd('WinClosed', { nested = true, callback = on_cancel })
+  cancel_au_id = nvim_on('WinClosed', nil, { nested = true }, on_cancel)
 
   -- Set buffer-local options last (so that user autocmmands could override)
   vim.bo[bufnr].modified = false

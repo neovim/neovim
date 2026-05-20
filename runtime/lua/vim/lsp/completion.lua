@@ -34,6 +34,7 @@
 local M = {}
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
 local protocol = lsp.protocol
 
@@ -789,55 +790,53 @@ end
 --- Defines a CompleteChanged handler to request and display LSP completion item documentation
 --- via completionItem/resolve
 local function on_completechanged(group, bufnr)
-  api.nvim_create_autocmd('CompleteChanged', {
-    group = group,
+  nvim_on('CompleteChanged', group, {
     buf = bufnr,
-    callback = function(ev)
-      local completed_item = vim.v.event.completed_item or {}
-      local lsp_item = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'completion_item')
-      local data = vim.fn.complete_info({ 'selected' })
-      if (completed_item.info or '') ~= '' then
-        local kind = vim.tbl_get(lsp_item or {}, 'documentation', 'kind')
-        update_popup_window(
-          data.preview_winid,
-          data.preview_bufnr,
-          kind or protocol.MarkupKind.Markdown
-        )
-        return
-      end
-
-      if
-        #lsp.get_clients({
-          id = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'client_id'),
-          method = 'completionItem/resolve',
-          bufnr = ev.buf,
-        }) == 0
-      then
-        if
-          has_completeopt('popup')
-          and lsp_item
-          and lsp_item.insertTextFormat == protocol.InsertTextFormat.Snippet
-        then
-          -- Shows snippet preview in doc popup if completeopt=popup.
-          local text = parse_snippet(lsp_item.insertText or lsp_item.textEdit.newText)
-          local windata = api.nvim__complete_set(
-            data.selected,
-            { info = ('```%s\n%s\n```'):format(vim.bo.filetype, text) }
-          )
-          update_popup_window(windata.winid, windata.bufnr, protocol.MarkupKind.Markdown)
-        end
-        return
-      end
-
-      -- Retrieve the raw LSP completionItem from completed_item as the parameter for
-      -- the completionItem/resolve request
-      if lsp_item then
-        Context.resolve_handler = Context.resolve_handler or CompletionResolver.new()
-        Context.resolve_handler:request(ev.buf, lsp_item, completed_item.word)
-      end
-    end,
     desc = 'Request and display LSP completion item documentation via completionItem/resolve',
-  })
+  }, function(ev)
+    local completed_item = vim.v.event.completed_item or {}
+    local lsp_item = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'completion_item')
+    local data = vim.fn.complete_info({ 'selected' })
+    if (completed_item.info or '') ~= '' then
+      local kind = vim.tbl_get(lsp_item or {}, 'documentation', 'kind')
+      update_popup_window(
+        data.preview_winid,
+        data.preview_bufnr,
+        kind or protocol.MarkupKind.Markdown
+      )
+      return
+    end
+
+    if
+      #lsp.get_clients({
+        id = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'client_id'),
+        method = 'completionItem/resolve',
+        bufnr = ev.buf,
+      }) == 0
+    then
+      if
+        has_completeopt('popup')
+        and lsp_item
+        and lsp_item.insertTextFormat == protocol.InsertTextFormat.Snippet
+      then
+        -- Shows snippet preview in doc popup if completeopt=popup.
+        local text = parse_snippet(lsp_item.insertText or lsp_item.textEdit.newText)
+        local windata = api.nvim__complete_set(
+          data.selected,
+          { info = ('```%s\n%s\n```'):format(vim.bo.filetype, text) }
+        )
+        update_popup_window(windata.winid, windata.bufnr, protocol.MarkupKind.Markdown)
+      end
+      return
+    end
+
+    -- Retrieve the raw LSP completionItem from completed_item as the parameter for
+    -- the completionItem/resolve request
+    if lsp_item then
+      Context.resolve_handler = Context.resolve_handler or CompletionResolver.new()
+      Context.resolve_handler:request(ev.buf, lsp_item, completed_item.word)
+    end
+  end)
 end
 
 local function on_complete_done()
@@ -941,16 +940,12 @@ local function register_completedone(bufnr)
     return group
   end
 
-  api.nvim_create_autocmd('CompleteDone', {
-    group = group,
-    buf = bufnr,
-    callback = function()
-      local reason = api.nvim_get_vvar('event').reason ---@type string
-      if reason == 'accept' then
-        on_complete_done()
-      end
-    end,
-  })
+  nvim_on('CompleteDone', group, { buf = bufnr }, function()
+    local reason = api.nvim_get_vvar('event').reason ---@type string
+    if reason == 'accept' then
+      on_complete_done()
+    end
+  end)
 
   return group
 end
@@ -1167,28 +1162,18 @@ local function enable_completions(client_id, bufnr, opts)
 
     -- Set up autocommands.
     local group = register_completedone(bufnr)
-    api.nvim_create_autocmd('LspDetach', {
-      group = group,
+    nvim_on('LspDetach', group, {
       buf = bufnr,
       desc = 'vim.lsp.completion: clean up client on detach',
-      callback = function(ev)
-        disable_completions(ev.data.client_id, ev.buf)
-      end,
-    })
+    }, function(ev)
+      disable_completions(ev.data.client_id, ev.buf)
+    end)
 
     if opts.autotrigger then
-      api.nvim_create_autocmd('InsertCharPre', {
-        group = group,
-        buf = bufnr,
-        callback = function()
-          on_insert_char_pre(buf_handles[bufnr])
-        end,
-      })
-      api.nvim_create_autocmd('InsertLeave', {
-        group = group,
-        buf = bufnr,
-        callback = on_insert_leave,
-      })
+      nvim_on('InsertCharPre', group, { buf = bufnr }, function()
+        on_insert_char_pre(buf_handles[bufnr])
+      end)
+      nvim_on('InsertLeave', group, { buf = bufnr }, on_insert_leave)
     end
   end
 

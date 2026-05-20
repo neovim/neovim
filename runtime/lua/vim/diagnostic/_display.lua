@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 local diagnostic_modules = vim._defer_require('vim.diagnostic', {
   _config = ..., --- @module 'vim.diagnostic._config'
@@ -62,14 +63,12 @@ local function schedule_display(namespace, bufnr, args)
   local key = make_augroup_key(namespace, bufnr)
   if not registered_autocmds[key] then
     local group = api.nvim_create_augroup(key, { clear = true })
-    api.nvim_create_autocmd(insert_leave_auto_cmds, {
-      group = group,
+    nvim_on(insert_leave_auto_cmds, group, {
       buf = bufnr,
-      callback = function()
-        execute_scheduled_display(namespace, bufnr)
-      end,
       desc = 'vim.diagnostic: display diagnostics',
-    })
+    }, function()
+      execute_scheduled_display(namespace, bufnr)
+    end)
     registered_autocmds[key] = true
   end
 end

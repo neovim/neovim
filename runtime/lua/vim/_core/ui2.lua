@@ -49,6 +49,7 @@
 --- - |g<| at any time.
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local M = {
   ns = api.nvim_create_namespace('nvim.ui2'),
   augroup = api.nvim_create_augroup('nvim.ui2', {}),
@@ -229,30 +230,26 @@ function M.enable(opts)
     end)
   end
 
-  api.nvim_create_autocmd('OptionSet', {
-    group = M.augroup,
+  nvim_on('OptionSet', M.augroup, {
     pattern = { 'cmdheight', 'laststatus' },
-    callback = function(ev)
-      if ev.match == 'cmdheight' then
-        check_cmdheight(vim.v.option_new)
-      end
-      M.msg.set_pos()
-    end,
     desc = 'Set cmdline and message window dimensions for changed option values.',
-  })
+  }, function(ev)
+    if ev.match == 'cmdheight' then
+      check_cmdheight(vim.v.option_new)
+    end
+    M.msg.set_pos()
+  end)
 
-  api.nvim_create_autocmd({ 'VimResized', 'TabEnter' }, {
-    group = M.augroup,
-    callback = function(ev)
-      M.check_targets()
-      -- After a tabpage was closed unhide the msg window on the current tabpage.
-      if ev.event == 'TabEnter' and next(M.msg.msg.ids) ~= nil then
-        api.nvim_win_set_config(M.wins.msg, { hide = false, width = M.msg.msg.width })
-      end
-      M.msg.set_pos()
-    end,
+  nvim_on({ 'VimResized', 'TabEnter' }, M.augroup, {
     desc = 'Set cmdline and message window dimensions after shell resize or tabpage change.',
-  })
+  }, function(ev)
+    M.check_targets()
+    -- After a tabpage was closed unhide the msg window on the current tabpage.
+    if ev.event == 'TabEnter' and next(M.msg.msg.ids) ~= nil then
+      api.nvim_win_set_config(M.wins.msg, { hide = false, width = M.msg.msg.width })
+    end
+    M.msg.set_pos()
+  end)
 end
 
 return M

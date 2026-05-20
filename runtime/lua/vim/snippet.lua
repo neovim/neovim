@@ -399,103 +399,97 @@ end
 ---
 --- @param bufnr integer
 local function setup_autocmds(bufnr)
-  vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-    group = snippet_group,
+  local nvim_on = require('vim._core.util').nvim_on
+  nvim_on({ 'CursorMoved', 'CursorMovedI' }, snippet_group, {
     desc = 'Update snippet state when the cursor moves',
     buf = bufnr,
-    callback = function()
-      -- Just update the tabstop in insert and select modes.
-      if not vim.fn.mode():match('^[isS]') then
-        return
-      end
+  }, function()
+    -- Just update the tabstop in insert and select modes.
+    if not vim.fn.mode():match('^[isS]') then
+      return
+    end
 
-      local cursor_row, cursor_col = cursor_pos()
+    local cursor_row, cursor_col = cursor_pos()
 
-      -- The cursor left the snippet region.
-      local snippet_range = get_extmark_range(bufnr, M._session.extmark_id)
-      if
-        cursor_row < snippet_range[1]
-        or (cursor_row == snippet_range[1] and cursor_col < snippet_range[2])
-        or cursor_row > snippet_range[3]
-        or (cursor_row == snippet_range[3] and cursor_col > snippet_range[4])
-      then
-        M.stop()
-        return true
-      end
+    -- The cursor left the snippet region.
+    local snippet_range = get_extmark_range(bufnr, M._session.extmark_id)
+    if
+      cursor_row < snippet_range[1]
+      or (cursor_row == snippet_range[1] and cursor_col < snippet_range[2])
+      or cursor_row > snippet_range[3]
+      or (cursor_row == snippet_range[3] and cursor_col > snippet_range[4])
+    then
+      M.stop()
+      return true
+    end
 
-      for tabstop_index, tabstops in pairs(M._session.tabstops) do
-        for _, tabstop in ipairs(tabstops) do
-          local range = tabstop:get_range()
-          if
-            (cursor_row > range[1] or (cursor_row == range[1] and cursor_col >= range[2]))
-            and (cursor_row < range[3] or (cursor_row == range[3] and cursor_col <= range[4]))
-          then
-            if tabstop_index ~= 0 then
-              return
-            end
+    for tabstop_index, tabstops in pairs(M._session.tabstops) do
+      for _, tabstop in ipairs(tabstops) do
+        local range = tabstop:get_range()
+        if
+          (cursor_row > range[1] or (cursor_row == range[1] and cursor_col >= range[2]))
+          and (cursor_row < range[3] or (cursor_row == range[3] and cursor_col <= range[4]))
+        then
+          if tabstop_index ~= 0 then
+            return
           end
         end
       end
+    end
 
-      -- The cursor is either not on a tabstop or we reached the end, so exit the session.
-      M.stop()
-      return true
-    end,
-  })
+    -- The cursor is either not on a tabstop or we reached the end, so exit the session.
+    M.stop()
+    return true
+  end)
 
-  vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'TextChangedP' }, {
-    group = snippet_group,
+  nvim_on({ 'TextChanged', 'TextChangedI', 'TextChangedP' }, snippet_group, {
     desc = 'Update active tabstops when buffer text changes',
     buf = bufnr,
-    callback = function()
-      -- Check that the snippet hasn't been deleted.
-      local snippet_range = get_extmark_range(M._session.bufnr, M._session.extmark_id)
-      if
-        (snippet_range[1] == snippet_range[3] and snippet_range[2] == snippet_range[4])
-        or snippet_range[3] + 1 > vim.fn.line('$')
-      then
-        M.stop()
-      end
+  }, function()
+    -- Check that the snippet hasn't been deleted.
+    local snippet_range = get_extmark_range(M._session.bufnr, M._session.extmark_id)
+    if
+      (snippet_range[1] == snippet_range[3] and snippet_range[2] == snippet_range[4])
+      or snippet_range[3] + 1 > vim.fn.line('$')
+    then
+      M.stop()
+    end
 
-      if not M.active() then
-        return true
-      end
+    if not M.active() then
+      return true
+    end
 
-      -- Sync the tabstops in the current group.
-      local current_tabstop = M._session.current_tabstop
-      local current_text = current_tabstop:get_text()
-      for _, tabstop in ipairs(M._session.tabstops[current_tabstop.index]) do
-        if tabstop.extmark_id ~= current_tabstop.extmark_id then
-          tabstop:set_text(current_text)
-        end
+    -- Sync the tabstops in the current group.
+    local current_tabstop = M._session.current_tabstop
+    local current_text = current_tabstop:get_text()
+    for _, tabstop in ipairs(M._session.tabstops[current_tabstop.index]) do
+      if tabstop.extmark_id ~= current_tabstop.extmark_id then
+        tabstop:set_text(current_text)
       end
-    end,
-  })
+    end
+  end)
 
-  vim.api.nvim_create_autocmd('BufLeave', {
-    group = snippet_group,
+  nvim_on('BufLeave', snippet_group, {
     desc = 'Stop the snippet session when leaving the buffer',
     buf = bufnr,
-    callback = function()
-      M.stop()
-    end,
-  })
-  vim.api.nvim_create_autocmd('ModeChanged', {
-    group = snippet_group,
+  }, function()
+    M.stop()
+  end)
+
+  nvim_on('ModeChanged', snippet_group, {
     desc = 'Stop the snippet session when leaving select mode',
     buf = bufnr,
-    callback = function(args)
-      if args.match ~= 's:n' then
+  }, function(args)
+    if args.match ~= 's:n' then
+      return
+    end
+    vim.schedule(function()
+      if not M.active() or vim.api.nvim_get_mode().mode:match('^[siRS\19]') then
         return
       end
-      vim.schedule(function()
-        if not M.active() or vim.api.nvim_get_mode().mode:match('^[siRS\19]') then
-          return
-        end
-        M.stop()
-      end)
-    end,
-  })
+      M.stop()
+    end)
+  end)
 end
 
 --- Expands the given snippet text.

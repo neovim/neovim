@@ -1,5 +1,6 @@
 local api = vim.api
 local fn = vim.fn
+local nvim_on = require('vim._core.util').nvim_on
 
 local M = {}
 
@@ -42,41 +43,21 @@ function M.enable()
   local group = api.nvim_create_augroup('matchparen', { clear = true })
 
   -- Replace all matchparen autocommands
-  api.nvim_create_autocmd({
-    'CursorMoved',
-    'CursorMovedI',
-    'WinEnter',
-    'WinScrolled',
-    'TextChanged',
-    'TextChangedI',
-  }, {
-    group = group,
-    callback = function()
+  nvim_on(
+    { 'CursorMoved', 'CursorMovedI', 'WinEnter', 'WinScrolled', 'TextChanged', 'TextChangedI' },
+    group,
+    function()
       M.highlight_matching_pair()
-    end,
-  })
-  api.nvim_create_autocmd('BufWinEnter', {
-    group = group,
-    callback = function()
-      api.nvim_create_autocmd('SafeState', {
-        group = group,
-        once = true,
-        callback = function()
-          M.highlight_matching_pair()
-        end,
-      })
-    end,
-  })
-  api.nvim_create_autocmd({
-    'WinLeave',
-    'BufLeave',
-    'TextChangedP',
-  }, {
-    group = group,
-    callback = function()
-      M.remove_matches()
-    end,
-  })
+    end
+  )
+  nvim_on('BufWinEnter', group, function()
+    nvim_on('SafeState', group, { once = true }, function()
+      M.highlight_matching_pair()
+    end)
+  end)
+  nvim_on({ 'WinLeave', 'BufLeave', 'TextChangedP' }, group, function()
+    M.remove_matches()
+  end)
 
   -- Define commands that will disable and enable the plugin.
   api.nvim_create_user_command('DoMatchParen', function()

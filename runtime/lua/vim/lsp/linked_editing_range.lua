@@ -9,6 +9,7 @@
 
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
+local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
 local method = 'textDocument/linkedEditingRange'
 local Range = require('vim.treesitter._range')
@@ -201,30 +202,18 @@ function LinkedEditor.new(buf)
   self.augroup = augroup
   self.client_states = {}
 
-  api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
-    buf = buf,
-    group = augroup,
-    callback = function()
-      for _, client_state in pairs(self.client_states) do
-        update_ranges(buf, client_state)
-      end
-      self:refresh()
-    end,
-  })
-  api.nvim_create_autocmd('CursorMoved', {
-    group = augroup,
-    buf = buf,
-    callback = function()
-      self:refresh()
-    end,
-  })
-  api.nvim_create_autocmd('LspDetach', {
-    group = augroup,
-    buf = buf,
-    callback = function(ev)
-      self:detach(ev.data.client_id)
-    end,
-  })
+  nvim_on({ 'TextChanged', 'TextChangedI' }, augroup, { buf = buf }, function()
+    for _, client_state in pairs(self.client_states) do
+      update_ranges(buf, client_state)
+    end
+    self:refresh()
+  end)
+  nvim_on('CursorMoved', augroup, { buf = buf }, function()
+    self:refresh()
+  end)
+  nvim_on('LspDetach', augroup, { buf = buf }, function(ev)
+    self:detach(ev.data.client_id)
+  end)
 
   LinkedEditor.active[buf] = self
   return self
@@ -263,20 +252,19 @@ local function detach_linked_editor(bufnr, client)
   linked_editor:detach(client.id)
 end
 
-api.nvim_create_autocmd('LspAttach', {
+nvim_on('LspAttach', nil, {
   desc = 'Enable linked editing ranges for all buffers this client attaches to, if enabled',
-  callback = function(ev)
-    local client = assert(lsp.get_client_by_id(ev.data.client_id))
-    if
-      not client._enabled_capabilities['linked_editing_range']
-      or not client:supports_method(method, ev.buf)
-    then
-      return
-    end
+}, function(ev)
+  local client = assert(lsp.get_client_by_id(ev.data.client_id))
+  if
+    not client._enabled_capabilities['linked_editing_range']
+    or not client:supports_method(method, ev.buf)
+  then
+    return
+  end
 
-    attach_linked_editor(ev.buf, client)
-  end,
-})
+  attach_linked_editor(ev.buf, client)
+end)
 
 ---@param enable boolean
 ---@param client vim.lsp.Client
@@ -302,16 +290,14 @@ local function toggle_linked_editing_globally(enable)
   -- If disabling, only clear the attachment autocmd. If enabling, create it.
   local group = api.nvim_create_augroup('nvim.lsp.linked_editing_range', { clear = true })
   if enable then
-    api.nvim_create_autocmd('LspAttach', {
-      group = group,
+    nvim_on('LspAttach', group, {
       desc = 'Enable linked editing ranges for all clients',
-      callback = function(ev)
-        local client = assert(lsp.get_client_by_id(ev.data.client_id))
-        if client:supports_method(method, ev.buf) then
-          attach_linked_editor(ev.buf, client)
-        end
-      end,
-    })
+    }, function(ev)
+      local client = assert(lsp.get_client_by_id(ev.data.client_id))
+      if client:supports_method(method, ev.buf) then
+        attach_linked_editor(ev.buf, client)
+      end
+    end)
   end
 end
 

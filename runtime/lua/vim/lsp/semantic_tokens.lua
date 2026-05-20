@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local bit = require('bit')
 local util = require('vim.lsp.util')
 local Range = require('vim.treesitter._range')
@@ -257,22 +258,14 @@ function STHighlighter:on_attach(client_id)
     self.client_state[client_id] = state
   end
 
-  api.nvim_create_autocmd({ 'BufWinEnter', 'InsertLeave' }, {
-    buf = self.bufnr,
-    group = self.augroup,
-    callback = function()
-      self:send_request()
-    end,
-  })
+  nvim_on({ 'BufWinEnter', 'InsertLeave' }, self.augroup, { buf = self.bufnr }, function()
+    self:send_request()
+  end)
 
   if state.supports_range then
-    api.nvim_create_autocmd('WinScrolled', {
-      buf = self.bufnr,
-      group = self.augroup,
-      callback = function()
-        self:on_change()
-      end,
-    })
+    nvim_on('WinScrolled', self.augroup, { buf = self.bufnr }, function()
+      self:on_change()
+    end)
   end
 
   self:send_request()

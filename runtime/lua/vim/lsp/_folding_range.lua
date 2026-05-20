@@ -1,6 +1,7 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local tableclear = require('vim._core.table').clear
+local nvim_on = require('vim._core.util').nvim_on
 local api = vim.api
 
 ---@type table<lsp.FoldingRangeKind, true>
@@ -116,14 +117,10 @@ local scheduled_foldupdate = {}
 local function schedule_foldupdate(bufnr)
   if not scheduled_foldupdate[bufnr] then
     scheduled_foldupdate[bufnr] = true
-    api.nvim_create_autocmd('InsertLeave', {
-      buf = bufnr,
-      once = true,
-      callback = function()
-        foldupdate(bufnr)
-        scheduled_foldupdate[bufnr] = nil
-      end,
-    })
+    nvim_on('InsertLeave', nil, { buf = bufnr, once = true }, function()
+      foldupdate(bufnr)
+      scheduled_foldupdate[bufnr] = nil
+    end)
   end
 end
 
@@ -238,35 +235,23 @@ function State:new(bufnr)
       end
     end,
   })
-  api.nvim_create_autocmd('LspNotify', {
-    group = self.augroup,
-    buf = bufnr,
-    callback = function(ev)
-      local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
-      if
-        client:supports_method('textDocument/foldingRange', bufnr)
-        and (ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen')
-      then
-        self:refresh(client)
-      end
-    end,
-  })
-  api.nvim_create_autocmd('OptionSet', {
-    group = self.augroup,
-    pattern = 'foldexpr',
-    callback = function()
-      if vim.v.option_type == 'global' or api.nvim_get_current_buf() == bufnr then
-        vim.lsp._capability.enable('folding_range', false, { bufnr = bufnr })
-      end
-    end,
-  })
-  api.nvim_create_autocmd('FileType', {
-    group = self.augroup,
-    buf = bufnr,
-    callback = function()
-      self:reset()
-    end,
-  })
+  nvim_on('LspNotify', self.augroup, { buf = bufnr }, function(ev)
+    local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
+    if
+      client:supports_method('textDocument/foldingRange', bufnr)
+      and (ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen')
+    then
+      self:refresh(client)
+    end
+  end)
+  nvim_on('OptionSet', self.augroup, { pattern = 'foldexpr' }, function()
+    if vim.v.option_type == 'global' or api.nvim_get_current_buf() == bufnr then
+      vim.lsp._capability.enable('folding_range', false, { bufnr = bufnr })
+    end
+  end)
+  nvim_on('FileType', self.augroup, { buf = bufnr }, function()
+    self:reset()
+  end)
 
   return self
 end

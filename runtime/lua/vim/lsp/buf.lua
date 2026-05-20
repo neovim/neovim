@@ -2,6 +2,7 @@
 --- The `vim.lsp.buf_…` functions perform operations for LSP clients attached to the current buffer.
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
 local validate = vim.validate
 local util = require('vim.lsp.util')
@@ -188,14 +189,10 @@ function M.hover(config)
 
     local _, winid = lsp.util.open_floating_preview(contents, format, config)
 
-    api.nvim_create_autocmd('WinClosed', {
-      pattern = tostring(winid),
-      once = true,
-      callback = function()
-        api.nvim_buf_clear_namespace(bufnr, hover_ns, 0, -1)
-        return true
-      end,
-    })
+    nvim_on('WinClosed', nil, { pattern = tostring(winid), once = true }, function()
+      api.nvim_buf_clear_namespace(bufnr, hover_ns, 0, -1)
+      return true
+    end)
   end)
 end
 
@@ -1509,13 +1506,9 @@ function M.selection_range(direction, timeout_ms)
   end
 
   -- Clear selection ranges when leaving visual mode.
-  api.nvim_create_autocmd('ModeChanged', {
-    once = true,
-    pattern = 'v*:*',
-    callback = function()
-      selection_ranges = nil
-    end,
-  })
+  nvim_on('ModeChanged', nil, { once = true, pattern = 'v*:*' }, function()
+    selection_ranges = nil
+  end)
 
   if #ranges > 0 then
     local index = math.min(#ranges, math.max(1, direction))
