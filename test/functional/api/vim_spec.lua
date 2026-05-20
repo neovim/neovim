@@ -1940,16 +1940,16 @@ describe('API', function()
         "Invalid 'scope': expected String, got Integer",
         pcall_err(api.nvim_get_option_value, 'scrolloff', { scope = 42 })
       )
-      eq(
-        "Invalid 'value': expected valid option type, got Array",
+      matches(
+        "Invalid option type 'table' for 'scrolloff', should be number",
         pcall_err(api.nvim_set_option_value, 'scrolloff', {}, {})
       )
-      eq(
-        "Invalid value for option 'scrolloff': expected number, got boolean true",
+      matches(
+        "Invalid option type 'boolean' for 'scrolloff', should be number",
         pcall_err(api.nvim_set_option_value, 'scrolloff', true, {})
       )
-      eq(
-        'Invalid value for option \'scrolloff\': expected number, got string "wrong"',
+      matches(
+        'E521: Number required after =',
         pcall_err(api.nvim_set_option_value, 'scrolloff', 'wrong', {})
       )
       local tab1 = api.nvim_get_current_tabpage()

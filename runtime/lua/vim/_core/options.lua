@@ -338,7 +338,9 @@ end
 local function assert_valid_value(name, value, types)
   local type_of_value = type(value)
   for _, valid_type in ipairs(types) do
-    if valid_type == type_of_value then
+    -- Allow strings for number options because of options like wildchar.
+    -- It gets converted to a string in the end anyways.
+    if valid_type == type_of_value or (valid_type == 'number' and type_of_value == 'string') then
       return
     end
   end
@@ -578,12 +580,6 @@ local function create_option_accessor(scope)
   end
 
   option_mt = {
-    -- To set a value, instead use:
-    --  opt[my_option] = value
-    _set = function(self)
-      api.nvim_set_option_value(self._name, self._value, { scope = scope })
-    end,
-
     get = function(self)
       return convert_value_to_lua(self._info, self._value)
     end,
@@ -593,9 +589,6 @@ local function create_option_accessor(scope)
     end,
 
     __add = function(self, right)
-      if self._info.metatype == 'number' then
-        return make_option(self._name, self._value + right)
-      end
       return make_option(
         self._name,
         vim.api.nvim__merge_option_value(
@@ -612,9 +605,6 @@ local function create_option_accessor(scope)
     end,
 
     __pow = function(self, right)
-      if self._info.metatype == 'number' then
-        return make_option(self._name, self._value ^ right)
-      end
       return make_option(
         self._name,
         vim.api.nvim__merge_option_value(
@@ -631,9 +621,6 @@ local function create_option_accessor(scope)
     end,
 
     __sub = function(self, right)
-      if self._info.metatype == 'number' then
-        return make_option(self._name, self._value - right)
-      end
       return make_option(
         self._name,
         vim.api.nvim__merge_option_value(
@@ -656,7 +643,8 @@ local function create_option_accessor(scope)
     end,
 
     __newindex = function(_, k, v)
-      make_option(k, v):_set()
+      local option = make_option(k, v)
+      api.nvim_set_option_value(option._name, option._value, { scope = scope })
     end,
   })
 end
