@@ -29,7 +29,8 @@
 
 static int validate_option_value_args(Dict(option) *opts, char *name, bool allow_tab,
                                       OptIndex *opt_idxp, int *opt_flags, OptScope *scope,
-                                      void **from, char **filetype, set_op_T *operation, Error *err)
+                                      void **from, char **filetype, set_op_T *operation,
+                                      bool *dry_run, Error *err)
 {
 #define HAS_KEY_X(d, v) HAS_KEY(d, option, v)
   // Validate incompatible argument combinations first, then resolve handles and scope.
@@ -130,6 +131,10 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
                  "boolean options", {
       return FAIL;
     });
+  }
+
+  if (dry_run != NULL && HAS_KEY_X(opts, dry_run)) {
+    *dry_run = opts->dry_run;
   }
 
   // Reject keys whose scope the option doesn't support.
@@ -262,7 +267,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   char *filetype = NULL;
 
   if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &from,
-                                  &filetype, NULL, err)) {
+                                  &filetype, NULL, NULL, err)) {
     return (Object)OBJECT_INIT;
   }
 
@@ -305,110 +310,6 @@ err:
   return (Object)OBJECT_INIT;
 }
 
-/// Returns left and right option values merged by an operation.
-///
-/// @param name      Option name
-/// @param left      First value to be merged
-/// @param right     Second value to be merged
-/// @param opts      Optional parameters
-///                  - operation: One of "set", "append", "prepend", or "remove".
-///                    Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
-///                    Default is "set".
-/// @param[out] err  Error details, if any
-/// @return          Merged option value
-Object nvim__merge_option_value(String name, Object left, Object right, Dict(option) *opts,
-                                Error *err)
-{
-  OptIndex opt_idx = 0;
-  int opt_flags = 0;
-  OptScope scope = kOptScopeGlobal;
-  set_op_T operation = OP_NONE;
-  void *to = NULL;
-  if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &to, NULL,
-                                  &operation, err)) {
-    return NIL;
-  }
-
-  // Convert the incoming Lua object (which could be a table) into the proper
-  // OptVal type (string even for list/dict style options)
-#define CONVERT_TO_OPTVAL(src, dst) \
-  OptVal dst; \
-  do { \
-    Error lua_err = ERROR_INIT; \
-    MAXSIZE_TEMP_ARRAY(args, 3); \
-    ADD_C(args, STRING_OBJ(name)); \
-    ADD_C(args, src); \
-    ADD_C(args, CSTR_AS_OBJ(set_op_get_name(operation))); \
-    Object vim_val = \
-      NLUA_EXEC_STATIC("return require('vim._core.options').convert_value_to_vim(...)", \
-                       args, kRetObject, NULL, &lua_err); \
-    VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, { \
-      return NIL; \
-    }); \
-    bool error = false; \
-    dst = object_as_optval(vim_val, &error); \
-    VALIDATE_EXP(!error, "value", "valid option type", api_typename(vim_val.type), { \
-      return NIL; \
-    }); \
-  } while (0);
-
-  CONVERT_TO_OPTVAL(right, optval_right);
-  CONVERT_TO_OPTVAL(left, optval_left);
-  if (optval_right.type == kOptValTypeNil) {
-    // Immediate return if trying to set nil values because they get handled
-    // specially
-    if (operation == OP_NONE) {
-      optval_free(optval_left);
-      return optval_as_object(optval_right);
-    } else {
-      optval_free(optval_right);
-      return optval_as_object(optval_left);
-    }
-  }
-
-  const char *errmsg = NULL;
-  vimoption_T *option = get_option(opt_idx);
-  // Not sure if we need get_varp_scope_from
-  void *varp = get_varp_scope(option, opt_flags);
-  OptVal merged_val = NIL_OPTVAL;
-  Arena arena = ARENA_EMPTY;
-  char *argp = NULL;
-
-  if (option->type == kOptValTypeString) {
-    // String optvals have to be escaped like they would be on the cmdline
-    char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
-    argp = arena_printf(&arena, "=%s", optval_escaped).data;
-    const char *merged_val_str = stropt_get_newval(opt_idx, &argp, NULL,
-                                                   optval_left.data.string.data, &operation);
-    merged_val = CSTR_AS_OPTVAL(merged_val_str);
-    XFREE_CLEAR(optval_escaped);
-  } else if (option->type == kOptValTypeNumber) {
-    // This is here for special number options like wildchar.
-    // See `string_to_key`
-    if (optval_right.type == kOptValTypeString) {
-      argp = arena_printf(NULL, "=%s", optval_right.data.string.data).data;
-    } else {
-      argp = arena_printf(NULL, "=%" PRId64, optval_right.data.number).data;
-    }
-    merged_val = numberopt_get_newval(opt_idx, optval_left, &argp, varp,
-                                      operation, &errmsg);
-    if (errmsg != NULL) {
-      api_set_error(err, kErrorTypeValidation, "%s", errmsg);
-    }
-  } else if (option->type == kOptValTypeBoolean) {
-    merged_val = optval_right;
-  } else {
-    merged_val = NIL_OPTVAL;
-  }
-
-  optval_free(optval_left);
-  optval_free(optval_right);
-  arena_mem_free(arena_finish(&arena));
-
-  return optval_as_object(merged_val);
-#undef CONVERT_TO_OPTVAL
-}
-
 /// Sets the value of an option. The behavior of this function matches that of
 /// |:set|: for global-local options, both the global and local value are set
 /// unless otherwise specified with {scope}.
@@ -419,6 +320,8 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
 /// @param value     New option value
 /// @param opts      Optional parameters
 ///                  - buf: Buffer number. Used for setting buffer local option.
+///                  - dry_run: (`boolean?`, default: false) If true, then the
+///                    option value won't be set.
 ///                  - operation: One of "set", "append", "prepend", or "remove".
 ///                    Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
 ///                    Default is "set".
@@ -429,8 +332,9 @@ Object nvim__merge_option_value(String name, Object left, Object right, Dict(opt
 ///                    effect when it is switched-to.
 ///                  - win: |window-ID|. Used for setting window local option.
 /// @param[out] err  Error details, if any
-void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
-                           Error *err)
+/// @return          Option value
+Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
+                             Error *err)
   FUNC_API_SINCE(9)
 {
   OptIndex opt_idx = 0;
@@ -438,9 +342,10 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
   OptScope scope = kOptScopeGlobal;
   set_op_T operation = OP_NONE;
   void *to = NULL;
+  bool dry_run = false;
   if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &to, NULL,
-                                  &operation, err)) {
-    return;
+                                  &operation, &dry_run, err)) {
+    return NIL;
   }
 
   // If:
@@ -455,30 +360,75 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     }
   }
 
-  // We fall back to the global value when retrieving the value to be merged
-  // (for global-local options), so we want to unset the scope when retrieving
-  // the original value.
-  OptionalKeys set_keys = opts->is_set__option_;
-  UNSET_KEY(opts, option, scope);
-  Object old_val = nvim_get_option_value(name, opts, err);
-  opts->is_set__option_ = set_keys;
-
+  // Convert the incoming Lua object (which could be a table) into the proper
+  // OptVal type (string even for list/dict style options)
+  Error lua_err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, STRING_OBJ(name));
+  ADD_C(args, value);
+  ADD_C(args, CSTR_AS_OBJ(set_op_get_name(operation)));
+  Object vim_val =
+    NLUA_EXEC_STATIC("return require('vim._core.options').convert_value_to_vim(...)",
+                     args, kRetObject, NULL, &lua_err);
+  VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, {
+    api_clear_error(&lua_err);
+    return NIL;
+  });
   bool error = false;
-  Object merged_val = nvim__merge_option_value(name, old_val, value, opts, err);
-  OptVal merged_optval = object_as_optval(merged_val, &error);
-  api_free_object(old_val);
+  OptVal optval_right = object_as_optval(vim_val, &error);
 
   // Handle invalid option value type.
   // Don't use `name` in the error message here, because `name` can be any String.
   // No need to check if value type actually matches the types for the option, as set_option_value()
   // already handles that.
-  VALIDATE_EXP(!error, "value", "valid option type", api_typename(merged_val.type), {
-    return;
+  VALIDATE_EXP(!error, "value", "valid option type", api_typename(value.type), {
+    return NIL;
   });
 
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, opt_idx, merged_optval, opt_flags, scope, to, err);
-  });
+  OptVal merged_val = NIL_OPTVAL;
+  const char *errmsg = NULL;
+  vimoption_T *option = get_option(opt_idx);
+  // Not sure if we need get_varp_scope_from
+  void *varp = get_varp_scope(option, opt_flags);
+  Arena arena = ARENA_EMPTY;
+  char *argp = NULL;
+  switch (optval_right.type) {
+  case kOptValTypeNil:
+    break;
+  case kOptValTypeString: {
+    char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
+    // We need a leading equal sign because get_option_newval is used for
+    // cmdline stuff and expects an =
+    argp = arena_printf(&arena, "=%s", optval_escaped).data;
+    XFREE_CLEAR(optval_escaped);
+    break;
+  }
+  case kOptValTypeNumber:
+    argp = arena_printf(&arena, "=%" PRId64, optval_right.data.number).data;
+    break;
+  case kOptValTypeBoolean:
+    merged_val = optval_right;
+    break;
+  }
+
+  optval_free(optval_right);
+
+  if (optval_right.type == kOptValTypeNumber || optval_right.type == kOptValTypeString) {
+    merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
+                                   option->flags, varp, NULL, 0, &errmsg);
+    arena_mem_free(arena_finish(&arena));
+    VALIDATE(errmsg == NULL, "%s", errmsg, {
+      return NIL;
+    });
+  }
+
+  if (!dry_run) {
+    WITH_SCRIPT_CONTEXT(channel_id, {
+      set_option_value_for(name.data, opt_idx, merged_val, opt_flags, scope, to, err);
+    });
+  }
+
+  return optval_as_object(merged_val);
 }
 
 /// Gets the option information for all options.
@@ -538,7 +488,7 @@ DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, A
   void *from = NULL;
   // TODO(justinmk): support tab-local option.
   if (!validate_option_value_args(opts, name.data, false, &opt_idx, &opt_flags, &scope, &from, NULL,
-                                  NULL, err)) {
+                                  NULL, NULL, err)) {
     return (Dict)ARRAY_DICT_INIT;
   }
 

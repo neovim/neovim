@@ -113,20 +113,6 @@ function vim.api.nvim__invalidate_glyph_cache() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
---- Returns left and right option values merged by an operation.
----
---- @param name string Option name
---- @param left any First value to be merged
---- @param right any Second value to be merged
---- @param opts vim.api.keyset.option Optional parameters
---- - operation: One of "set", "append", "prepend", or "remove".
----   Analogous to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
----   Default is "set".
---- @return any # Merged option value
-function vim.api.nvim__merge_option_value(name, left, right, opts) end
-
---- WARNING: This feature is experimental/unstable.
----
 --- Get the properties for namespace
 ---
 --- @param ns_id integer Namespace
@@ -2313,6 +2299,8 @@ function vim.api.nvim_set_option(name, value) end
 --- @param value any New option value
 --- @param opts vim.api.keyset.option Optional parameters
 --- - buf: Buffer number. Used for setting buffer local option.
+--- - dry_run: (`boolean?`, default: false) If true, then the
+---   option value won't be set.
 --- - operation: One of "set", "append", "prepend", or "remove".
 ---   Analogous to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
 ---   Default is "set".
@@ -2322,6 +2310,7 @@ function vim.api.nvim_set_option(name, value) end
 ---   means the current tabpage. If a non-current tab is given, the value will take
 ---   effect when it is switched-to.
 --- - win: `window-ID`. Used for setting window local option.
+--- @return any # Option value
 function vim.api.nvim_set_option_value(name, value, opts) end
 
 --- Sets a global (g:) variable.
