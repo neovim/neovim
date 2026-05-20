@@ -169,6 +169,41 @@ local function check_config()
   end
 end
 
+-- Note: this is part of check_performance().
+local function check_watchers()
+  local a = vim._watch.active
+  local total = a.watch + a.watchdirs + a.inotify
+  health.info(
+    ('filewatchers (vim._watch): %d (watch=%d, watchdirs=%d, inotify=%d)'):format(
+      total,
+      a.watch,
+      a.watchdirs,
+      a.inotify
+    )
+  )
+
+  -- Walk libuv for an independent view. These counts include handles created outside `vim._watch`
+  -- (e.g. plugins calling `vim.uv.new_fs_event()` directly).
+  local libuv = { fs_event = 0, fs_poll = 0, process = 0, timer = 0 }
+  vim.uv.walk(function(handle)
+    if handle:is_closing() then
+      return
+    end
+    local t = handle:get_type()
+    if libuv[t] ~= nil then
+      libuv[t] = libuv[t] + 1
+    end
+  end)
+  health.info(
+    ('libuv handles: fs_event=%d, fs_poll=%d, process=%d, timer=%d'):format(
+      libuv.fs_event,
+      libuv.fs_poll,
+      libuv.process,
+      libuv.timer
+    )
+  )
+end
+
 local function check_performance()
   health.start('Performance')
 
@@ -199,6 +234,8 @@ local function check_performance()
       'Slow shell invocation (took ' .. vim.fn.printf('%.2f', elapsed_time) .. ' seconds).'
     )
   end
+
+  check_watchers()
 end
 
 -- Load the remote plugin manifest file and check for unregistered plugins
@@ -686,7 +723,7 @@ local function check_sysinfo()
         vim.ui.open(issue_url)
       end
       vim.wo[win].winbar =
-        '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@Click to Create Bug Report on GitHub%X%*'
+        '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@▶ Create Bug Report on GitHub%X%*'
 
       vim.api.nvim_create_autocmd('BufDelete', {
         buf = buf,

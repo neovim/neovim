@@ -174,6 +174,7 @@ LSP
     "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
   • `textDocument/foldingRange` |vim.lsp.foldtext()| highlights collapsed text.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
+• `:checkhealth vim.lsp` highlights the "current buffer".
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
   now follows 'switchbuf'.
@@ -257,6 +258,7 @@ TUI
 
 UI
 
+• |:checkhealth| shows filewatcher info in the Performance section.
 • These builtin "picker" menus delegate to |vim.ui.select()|:
   • :browse oldfiles
   • |:recover|

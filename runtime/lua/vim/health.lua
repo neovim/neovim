@@ -442,10 +442,22 @@ function M._check(eap)
     return
   end
 
-  local total_checks = #vim.tbl_keys(healthchecks)
+  -- Show nvim-owned first (`vim.*`, `runtime/lua/vim/**/health.lua`).
+  local names = vim.tbl_keys(healthchecks) --- @type string[]
+  table.sort(names, function(a, b)
+    local a_nvim = vim.startswith(a, 'vim.')
+    local b_nvim = vim.startswith(b, 'vim.')
+    if a_nvim ~= b_nvim then
+      return a_nvim
+    end
+    return a < b
+  end)
+
+  local total_checks = #names
   local progress_msg = progress_report(total_checks)
   local check_idx = 1
-  for name, value in vim.spairs(healthchecks) do
+  for _, name in ipairs(names) do
+    local value = healthchecks[name]
     progress_msg('running', check_idx, 'checking %s', name)
     check_idx = check_idx + 1
     local func = value[1]

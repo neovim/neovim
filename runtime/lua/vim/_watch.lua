@@ -10,6 +10,28 @@ M.FileChangeType = {
   Deleted = 3,
 }
 
+--- Count of currently-active watchers. Each "watcher" here is one call to vim._watch.watch(),
+--- vim._watch.watchdirs(), or vim._watch.inotify() that hasn't been cancelled yet.
+M.active = { watch = 0, watchdirs = 0, inotify = 0 }
+
+--- Wraps a cancel function so the global counter is decremented exactly once, even if the caller
+--- invokes the cancel function multiple times.
+--- @param backend 'watch'|'watchdirs'|'inotify'
+--- @param cancel fun()
+--- @return fun()
+local function tracked_cancel(backend, cancel)
+  M.active[backend] = M.active[backend] + 1
+  local done = false
+  return function()
+    if done then
+      return
+    end
+    done = true
+    M.active[backend] = M.active[backend] - 1
+    cancel()
+  end
+end
+
 --- @class vim._watch.Opts
 ---
 --- @field debounce? integer ms
@@ -109,7 +131,7 @@ function M.watch(path, opts, callback)
     return function() end
   end
 
-  return function()
+  return tracked_cancel('watch', function()
     local _, stop_err = handle:stop()
     assert(not stop_err, stop_err)
     local is_closing, close_err = handle:is_closing()
@@ -117,7 +139,7 @@ function M.watch(path, opts, callback)
     if not is_closing then
       handle:close()
     end
-  end
+  end)
 end
 
 --- Initializes and starts a |uv_fs_event_t| recursively watching every directory underneath the
@@ -241,7 +263,7 @@ function M.watchdirs(path, opts, callback)
     timer:close()
   end
 
-  return cancel
+  return tracked_cancel('watchdirs', cancel)
 end
 
 --- @param data string
@@ -328,9 +350,9 @@ function M.inotify(path, opts, callback)
     env = { LC_NUMERIC = 'C' },
   })
 
-  return function()
+  return tracked_cancel('inotify', function()
     obj:kill(2)
-  end
+  end)
 end
 
 return M
