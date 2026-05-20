@@ -486,7 +486,15 @@ static void draw_foldcolumn(win_T *wp, winlinevars_T *wlv)
   int fdc = compute_foldcolumn(wp, 0);
   if (fdc > 0) {
     int attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLF : HLF_FC);
-    fill_foldcolumn(wp, wlv->foldinfo, wlv->lnum, attr, fdc, &wlv->off, NULL, NULL);
+    // Only draw 'foldcolumn' for filler line if lnum is inside a fold that
+    // starts higher up. We don't want to show 'foldopen' or 'foldclose' twice.
+    foldinfo_T fi;
+    if (wlv->filler_todo <= 0 || wlv->foldinfo.fi_lnum < wlv->lnum) {
+      fi = wlv->foldinfo;
+    } else {
+      fi = (foldinfo_T){ 0 };
+    }
+    fill_foldcolumn(wp, fi, wlv->lnum, attr, fdc, &wlv->off, NULL, NULL);
   }
 }
 
