@@ -1390,6 +1390,10 @@ function vim._cs_remote(rcid, server_addr, connect_error, f_tab, remote_arg_idx)
   local client_chan_id = vim.fn.rpcrequest(rcid, 'nvim_get_chan_info', 0).id --[[@as integer]]
   local file_count = #files
 
+  -- Install wait handlers before running remote +cmd/-c commands, since those
+  -- commands may unload the buffers or quit the server. The client waits in C
+  -- for one nvim_remote_wait_done_event per file: BufUnload reports normal
+  -- closes, and VimLeave drains the remaining count if the server exits first.
   for idx, file in ipairs(files) do
     local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(file)
     local is_first = idx == 1
