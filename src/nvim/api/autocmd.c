@@ -678,7 +678,8 @@ void nvim_del_augroup_by_name(String name, Error *err)
   });
 }
 
-/// Executes handlers for {event} that match the corresponding {opts} query. |autocmd-execute|
+/// Executes {event} handlers matching the {opts} query, in the context of {buf} (if given). |autocmd-execute|
+///
 /// @param event Event(s) to execute.
 /// @param opts Optional filters:
 ///        - buf (`integer?`) Buffer where the event is applied. |autocmd-buflocal| Not allowed with {pattern}.
