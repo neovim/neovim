@@ -1334,7 +1334,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, f_tab, remote_arg_idx)
   local cmds = {} --- @type string[]
 
   local had_minmin = false
-  local j = 1
+  local j = remote_arg_idx + 1
   while j <= #args do
     local arg = args[j] --- @type string
     if not had_minmin and arg == '--' then

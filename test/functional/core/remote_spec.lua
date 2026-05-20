@@ -335,12 +335,12 @@ describe('Remote', function()
       eq('', stderr)
     end)
 
-    it('executes +cmd and -c around --remote in order', function()
+    it('executes +cmd and -c after --remote in order', function()
       local code, stdout, stderr = run_remote(
         {
-          '+call setline(1, "first")',
           '--remote',
           fname,
+          '+call setline(1, "first")',
           '-c',
           'call append(1, "second")',
           '+echo getline(1)',
@@ -359,6 +359,21 @@ describe('Remote', function()
       neq(nil, p1)
       neq(nil, p2)
       eq(true, p1 < p2)
+      eq('', stderr)
+    end)
+
+    it('does not execute +cmd before --remote on the server', function()
+      local code, stdout, stderr = run_remote(
+        {
+          '+echo "local"',
+          '--remote',
+          '+echo "remote"',
+        },
+        nil,
+        nil
+      )
+      eq(0, code)
+      eq('remote', normalized_stdout(stdout))
       eq('', stderr)
     end)
 

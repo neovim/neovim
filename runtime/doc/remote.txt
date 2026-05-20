@@ -25,10 +25,11 @@ The following command line arguments are available:
 				(closed) in the server. Exits with code 0.
 				If no server is found, a warning is printed
 				and files are edited locally.
-				Arguments starting with + and any |-c|
-				commands are treated as Ex commands and
-				executed on the server after opening the
-				files. Their output is written to stdout.
+				Arguments after --remote starting with +
+				and any |-c| commands are treated as Ex
+				commands and executed on the server after
+				opening the files. Their output is written
+				to stdout.
 				All file arguments in the command line are
 				opened on the server.
 				Use |--| before filenames to force literal
@@ -72,9 +73,9 @@ Open "file.txt" on the server without waiting: >
 REMOTE EDITING
 
 The --remote argument causes each file argument to be opened with |:drop| (or
-|:tab| + drop when |-p| is used) on the server. Command-line `+{cmd}` and
-|-c| commands are also executed on the server; their output is written to
-stdout.
+|:tab| + drop when |-p| is used) on the server. `+{cmd}` and |-c| command
+arguments after |--remote| are also executed on the server; their output is
+written to stdout.
 
 
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
