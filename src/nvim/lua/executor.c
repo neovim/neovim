@@ -1808,6 +1808,9 @@ static int mode_ret(LuaRetMode mode)
 Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, LuaRetMode mode,
                          Arena *arena, Error *err)
 {
+  // Use active_lstate (set by ENTER_LUA_ACTIVE_STATE in gen_api_dispatch.lua) so callbacks run on
+  // the caller's Lua thread. This matters for coroutines: with global_lstate, return values pushed
+  // by kRetMultiStack would land on the main thread's stack, instead of coroutine stack.
   lua_State *const lstate = active_lstate;
   int top = lua_gettop(lstate);
   nlua_pushref(lstate, ref);
