@@ -3,6 +3,23 @@ local M = {}
 local report_info = vim.health.info
 local report_warn = vim.health.warn
 
+--- Buffer the user was in when they ran `:checkhealth`.
+--- @type integer?
+local cur_bufnr = -1
+
+--- Decorates a buffer-id in a report line, so it is easy for the user to see (and for us to highlight).
+--- @param bufnr integer
+--- @return string
+local function decor_curbuf(bufnr)
+  if bufnr == cur_bufnr and vim.api.nvim_buf_is_valid(bufnr) then
+    return ('%d (current buffer, %q)'):format(
+      bufnr,
+      vim.fs.basename(vim.api.nvim_buf_get_name(bufnr))
+    )
+  end
+  return tostring(bufnr)
+end
+
 local function check_log()
   local log = vim.lsp.log
   local current_log_level = log.get_level()
@@ -54,7 +71,7 @@ local function check_active_features()
         client_info = 'No supported client attached'
       end
 
-      buf_infos[#buf_infos + 1] = string.format('  [%d]: %s', bufnr, client_info)
+      buf_infos[#buf_infos + 1] = ('  [%s]: %s'):format(decor_curbuf(bufnr), client_info)
     end
 
     report_info(table.concat({
@@ -102,14 +119,13 @@ local function check_active_clients()
       end
       report_info(table.concat({
         string.format('%s (id: %d)', client.name, client.id),
+        ('- Attached buffers: %s'):format(
+          vim.iter(pairs(client.attached_buffers)):map(decor_curbuf):join(', ')
+        ),
         string.format('- Version: %s', server_version),
         dirs_info,
         string.format('- Command: %s', cmd),
         string.format('- Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
-        string.format(
-          '- Attached buffers: %s',
-          vim.iter(pairs(client.attached_buffers)):map(tostring):join(', ')
-        ),
       }, '\n'))
     end
   else
@@ -272,12 +288,27 @@ end
 
 --- Performs a healthcheck for LSP
 function M.check()
+  cur_bufnr = vim.fn.bufnr('#')
+
   check_log()
   check_watcher()
   check_position_encodings()
   check_active_features()
   check_active_clients()
   check_enabled_configs()
+
+  --- Highlight the "current buffer" token emitted by `decor_curbuf`.
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'checkhealth',
+    once = true,
+    callback = function()
+      vim.cmd([[
+        silent! syntax clear healthLspCurBuf
+        syntax match healthLspCurBuf /\d\+ (current buffer[^)]*)/
+        highlight default link healthLspCurBuf Visual
+      ]])
+    end,
+  })
 end
 
 return M
