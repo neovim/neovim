@@ -1852,8 +1852,7 @@ function vim.api.nvim_open_term(buf, opts) end
 ---     Value can be one of "left", "center", or "right".
 ---     Default is `"left"`.
 --- - height: Window height (in character cells). Minimum of 1.
---- - hide: If true the floating window will be hidden and the cursor will be invisible when
----         focused on it.
+--- - hide: Hides the floating window. `window-hidden`
 --- - mouse: Specify how this window interacts with mouse events.
 ---     Defaults to `focusable` value.
 ---     - If false, mouse events pass through this window.
@@ -2514,12 +2513,10 @@ function vim.api.nvim_win_get_var(win, name) end
 --- @return integer # Width as a count of columns
 function vim.api.nvim_win_get_width(win) end
 
---- Closes the window and hide the buffer it contains (like `:hide` with a
---- `window-ID`).
+--- Closes the window and hides the buffer it contains (like `:hide` with a `window-ID`; unrelated
+--- to the `hide` flag of `nvim_open_win()`, `nvim_win_get_config()`).
 ---
---- Like `:hide` the buffer becomes hidden unless another window is editing it,
---- or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to `:close` or
---- `nvim_win_close()`, which will close the buffer.
+--- Compare `:close` and `nvim_win_close()`, which close the buffer instead of hiding it.
 ---
 --- @param win integer `window-ID`, or 0 for current window
 function vim.api.nvim_win_hide(win) end

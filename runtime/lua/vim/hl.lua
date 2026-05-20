@@ -164,12 +164,12 @@ local events_ns = api.nvim_create_namespace('nvim.hl.events')
 --- ```
 ---
 --- @param opts table|nil Optional parameters
----              - event     (default vim.v.event) Event structure.
----              - higroup   (default "IncSearch") Highlight group for the text region.
----              - on_macro  (default false) Highlight during |macro| execution.
----              - on_visual (default true) Highlight during |Visual| mode.
----              - priority  (default |vim.hl.priorities|`.user`) Integer priority.
----              - timeout   (default 150) Time in ms before highlight is cleared.
+---              - event     (default: vim.v.event) Event structure.
+---              - higroup   (default: "IncSearch") Highlight group for the text region.
+---              - on_macro  (default: false) Highlight during |macro| execution.
+---              - on_visual (default: true) Highlight during |Visual| mode.
+---              - priority  (default: |vim.hl.priorities|`.user`) Integer priority.
+---              - timeout   (default: 150) Time in ms before highlight is cleared.
 function M.hl_op(opts)
   vim.validate('opts', opts, 'table', true)
   opts = opts or {}

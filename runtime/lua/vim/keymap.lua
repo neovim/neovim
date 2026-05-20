@@ -16,7 +16,8 @@ local keymap = {}
 --- (Default: `false`)
 --- @field remap? boolean
 
---- Defines a |mapping| of |keycodes| to a function or keycodes.
+--- Defines a |mapping| of |keycodes| to a function or keycodes. If `lhs` is a list, defines
+--- a mapping for each (mode, lhs) pair.
 ---
 --- Examples:
 ---
@@ -43,6 +44,13 @@ local keymap = {}
 ---   local line2 = region[#region][1][2]
 ---   vim.print({ line1, line2 })
 --- end)
+---
+--- vim.keymap.set({ 'n', 'i' }, { 'a', 'b' }, '<cmd>echom localtime()<cr>')
+--- -- ... is the same as:
+--- vim.keymap.set('n', 'a', '<cmd>echom localtime()<cr>')
+--- vim.keymap.set('i', 'a', '<cmd>echom localtime()<cr>')
+--- vim.keymap.set('n', 'b', '<cmd>echom localtime()<cr>')
+--- vim.keymap.set('i', 'b', '<cmd>echom localtime()<cr>')
 --- ```
 ---
 ---@param modes string|string[] Mode "short-name" (see |nvim_set_keymap()|), or a list thereof.
@@ -112,12 +120,11 @@ end
 --- Remove a mapping from the given buffer. `0` for current.
 --- @field buf? integer
 
---- Remove an existing mapping.
+--- Removes a mapping, or removes each (mode, lhs) pair if `lhs` is a list.
 --- Examples:
 ---
 --- ```lua
 --- vim.keymap.del('n', 'lhs')
----
 --- vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buf = 5 })
 --- ```
 ---

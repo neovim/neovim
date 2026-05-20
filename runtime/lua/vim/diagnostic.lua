@@ -52,8 +52,9 @@ local M = vim._defer_require('vim.diagnostic', {
 
 --- [diagnostic-structure]()
 ---
---- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
---- rows and columns). |api-indexing|
+--- Diagnostics use |api-indexing| (i.e. 0-based rows and columns). See also |vim.pos| and
+--- |vim.range| to convert positions from other systems.
+---
 --- @class vim.Diagnostic : vim.Diagnostic.Set
 --- @field bufnr integer Buffer number
 --- @field end_lnum integer The final line of the diagnostic (0-indexed)
@@ -568,7 +569,7 @@ end
 --- Limit diagnostics to one or more namespaces.
 --- @field namespace? integer[]|integer
 ---
---- Limit diagnostics to those spanning the specified line number.
+--- Limit diagnostics to those spanning the specified line number (0-indexed, see |diagnostic-structure|).
 --- @field lnum? integer
 ---
 --- See |diagnostic-severity|.

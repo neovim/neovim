@@ -442,8 +442,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 
                                                         *diagnostic-structure*
 
-    Diagnostics use the same indexing as the rest of the Nvim API (i.e.
-    0-based rows and columns). |api-indexing|
+    Diagnostics use |api-indexing| (i.e. 0-based rows and columns). See also
+    |vim.pos| and |vim.range| to convert positions from other systems.
 
     Fields: ~
       • {bufnr}       (`integer`) Buffer number
@@ -484,7 +484,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                       enabled or disabled. If nil, enablement is ignored. See
                       |vim.diagnostic.enable()|
       • {lnum}?       (`integer`) Limit diagnostics to those spanning the
-                      specified line number.
+                      specified line number (0-indexed, see
+                      |diagnostic-structure|).
       • {namespace}?  (`integer[]|integer`) Limit diagnostics to one or more
                       namespaces.
       • {severity}?   (`vim.diagnostic.SeverityFilter`) See

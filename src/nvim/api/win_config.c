@@ -145,8 +145,7 @@
 ///       Value can be one of "left", "center", or "right".
 ///       Default is `"left"`.
 ///   - height: Window height (in character cells). Minimum of 1.
-///   - hide: If true the floating window will be hidden and the cursor will be invisible when
-///           focused on it.
+///   - hide: Hides the floating window. |window-hidden|
 ///   - mouse: Specify how this window interacts with mouse events.
 ///       Defaults to `focusable` value.
 ///       - If false, mouse events pass through this window.

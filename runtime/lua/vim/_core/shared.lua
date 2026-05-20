@@ -311,7 +311,8 @@ end
 --- @class vim.tbl_contains.Opts
 --- @inlinedoc
 ---
---- `value` is a function reference to be checked (default false)
+--- `value` is a function reference to be checked
+--- (default: false)
 --- @field predicate? boolean
 
 --- Checks if a table contains a given value, specified either directly or via
@@ -1223,27 +1224,13 @@ do
   ---       end
   ---     ```
   ---
-  --- 2. `vim.validate(spec)` (deprecated)
-  ---     where `spec` is of type
+  --- 2. `vim.validate(spec)` (DEPRECATED) where `spec` is of type
   ---    `table<string,[value:any, validator: vim.validate.Validator, optional_or_msg? : boolean|string]>)`
   ---
   ---     Validates a argument specification.
   ---     Specs are evaluated in alphanumeric order, until the first failure.
   ---
-  ---     Example:
-  ---
-  ---     ```lua
-  ---       function user.new(name, age, hobbies)
-  ---         vim.validate{
-  ---           name={name, 'string'},
-  ---           age={age, 'number'},
-  ---           hobbies={hobbies, 'table'},
-  ---         }
-  ---         -- ...
-  ---       end
-  ---     ```
-  ---
-  --- Examples with explicit argument values (can be run directly):
+  --- Examples:
   ---
   --- ```lua
   --- vim.validate('arg1', {'foo'}, 'table')
@@ -1256,15 +1243,11 @@ do
   ---
   --- vim.validate('arg1', 3, function(a) return (a % 2) == 0 end, 'even number')
   ---    --> error('arg1: expected even number, got 3')
-  --- ```
   ---
-  --- If multiple types are valid they can be given as a list.
-  ---
-  --- ```lua
+  --- -- If multiple types are valid they can be given as a list:
   --- vim.validate('arg1', {'foo'}, {'table', 'string'})
   --- vim.validate('arg2', 'foo', {'table', 'string'})
   --- -- NOP (success)
-  ---
   --- vim.validate('arg1', 1, {'string', 'table'})
   --- -- error('arg1: expected string|table, got number')
   --- ```
@@ -1280,7 +1263,7 @@ do
   ---     `'thread'`, `'userdata'`.
   ---   - (`fun(val:any): boolean, string?`) A function that returns a boolean and an optional
   ---     string message.
-  --- @param optional? boolean Parameter is optional (may be omitted or nil)
+  --- @param optional? boolean (default: false) Parameter is optional (may be omitted or nil)
   --- @param message? string message when validation fails
   --- @overload fun(name: string, val: any, validator: vim.validate.Validator, message: string)
   --- @overload fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)

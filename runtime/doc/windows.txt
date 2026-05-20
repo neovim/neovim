@@ -76,6 +76,11 @@ Non-focusable windows are not listed by |:tabs|, or counted by the default
 
 Windows (especially floating windows) can have many other |api-win_config|
 properties such as "hide" and "fixed" which also affect behavior.
+							*window-hidden*
+If the |api-win_config| `hide` flag is set, then the window is "hidden": it
+exists but is not shown anywhere. Hidden windows may be focused (the cursor
+may enter it), so the cursor can perform actions in it, but the cursor will be
+invisible.
 
 					*window-ID* *winid* *windowid*
 Each window has a unique identifier called the window ID, which is permanent
