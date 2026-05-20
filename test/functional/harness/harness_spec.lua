@@ -819,6 +819,37 @@ describe('test harness', function()
     not_matches('skipped suite works', output, true)
   end)
 
+  it('filters tests out by multiple repeated option values', function()
+    local suite_dir = write_suite({
+      ['one_spec.lua'] = [[
+        describe('chosen suite', function()
+          it('works', function() end)
+        end)
+      ]],
+      ['two_spec.lua'] = [[
+        describe('skipped suite', function()
+          it('works', function() end)
+        end)
+      ]],
+      ['three_spec.lua'] = [[
+        describe('three', function()
+          it('skipped test', function() end)
+        end)
+      ]],
+    })
+
+    local code, output = run_harness(suite_dir, {
+      '--filter-out=skipped suite',
+      '--filter-out=skipped test',
+    })
+
+    eq(0, code)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('chosen suite works', output, true)
+    not_matches('skipped suite works', output, true)
+    not_matches('three skipped test', output, true)
+  end)
+
   it('reports when filters exclude all tests', function()
     local suite_dir = write_suite({
       ['one_spec.lua'] = [[
