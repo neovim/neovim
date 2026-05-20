@@ -1361,7 +1361,8 @@ function vim._cs_remote(rcid, server_addr, connect_error, f_tab, remote_arg_idx)
       else
         local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_exec2', cmd, { output = true })
         if not ok then
-          if idx == #cmds and tostring(result):find('closed by the peer', 1, true) then
+          local chan_valid = not vim.tbl_isempty(vim.api.nvim_get_chan_info(rcid))
+          if idx == #cmds and not chan_valid then
             break
           end
           error(result)
