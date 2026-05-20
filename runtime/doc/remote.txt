@@ -66,6 +66,9 @@ Fall back silently to local editing when no server is found: >
 Send input to the server via |nvim_input()|: >
     nvim --server ~/.cache/nvim/server.pipe --remote "+call nvim_input('ifoo')"
 
+Open "file.txt" on the server without waiting: >
+    nvim --server ~/.cache/nvim/server.pipe --remote "+async edit file.txt"
+
 REMOTE EDITING
 
 The --remote argument causes each file argument to be opened with |:drop| (or
