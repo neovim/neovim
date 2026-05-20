@@ -1818,6 +1818,18 @@ describe('runtime:', function()
     command('edit FTDETECT')
     eq('SsABab', eval('g:aseq'))
   end)
+
+  it('no crash for recursive search_path build #39815', function()
+    clear()
+    local screen = Screen.new()
+    fn.jobstart({
+      nvim_prog,
+      '--clean',
+      '+lua require("vim._core.ui2").enable()',
+      '+set rtp+=$FOO | set syntax',
+    }, { term = true, env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } })
+    screen:expect({ any = 'syntax', none = 'Process exited 1' })
+  end)
 end)
 
 describe('user session', function()
