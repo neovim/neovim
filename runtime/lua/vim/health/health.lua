@@ -171,8 +171,7 @@ end
 
 -- Note: this is part of check_performance().
 local function check_watchers()
-  health.start('Filewatchers')
-  local a = assert(vim._watch.active)
+  local a = vim._watch.active
   local total = a.watch + a.watchdirs + a.inotify
   health.info(
     ('filewatchers (vim._watch): %d (watch=%d, watchdirs=%d, inotify=%d)'):format(

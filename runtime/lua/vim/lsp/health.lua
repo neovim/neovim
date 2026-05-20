@@ -30,6 +30,11 @@ end
 
 local function check_active_features()
   vim.health.start('vim.lsp: Active Features')
+  if not next(vim.lsp.get_clients()) then
+    report_info('No active clients')
+    return
+  end
+
   for _, Capability in pairs(vim.lsp._capability.all) do
     ---@type string[]
     local buf_infos = {}
@@ -49,13 +54,13 @@ local function check_active_features()
         client_info = 'No supported client attached'
       end
 
-      buf_infos[#buf_infos + 1] = string.format('    [%d]: %s', bufnr, client_info)
+      buf_infos[#buf_infos + 1] = string.format('  [%d]: %s', bufnr, client_info)
     end
 
     report_info(table.concat({
       Capability.name,
       '- Active buffers:',
-      string.format(table.concat(buf_infos, '\n')),
+      vim.tbl_isempty(buf_infos) and '  (none)' or string.format(table.concat(buf_infos, '\n')),
     }, '\n'))
   end
 end
@@ -112,10 +117,8 @@ local function check_active_clients()
   end
 end
 
--- See also runtime/lua/vim/health/health.lua:check_watchers()
+-- Non-LSP filewatchers are also checked in: runtime/lua/vim/health/health.lua
 local function check_watcher()
-  vim.health.start('vim.lsp: File Watcher')
-
   -- Only run the check if file watching has been enabled by a client.
   local clients = vim.lsp.get_clients()
   if
@@ -134,7 +137,7 @@ local function check_watcher()
         or client.workspace_folders == nil
     end)
   then
-    report_info('file watching "(workspace/didChangeWatchedFiles)" disabled on all clients')
+    report_info('Filewatchers "(workspace/didChangeWatchedFiles)" disabled on all clients')
     return
   end
 
@@ -151,16 +154,17 @@ local function check_watcher()
     watchfunc_name = string.format('Custom (%s)', nm)
   end
 
-  report_info('File watch backend: ' .. watchfunc_name)
+  report_info('Filewatch backend: ' .. watchfunc_name)
   if watchfunc_name == 'libuv-watchdirs' then
     report_warn('libuv-watchdirs has known performance issues. Consider installing inotify-tools.')
   end
 end
 
 local function check_position_encodings()
-  vim.health.start('vim.lsp: Position Encodings')
   local clients = vim.lsp.get_clients()
-  if next(clients) then
+  if not next(clients) then
+    report_info('Position encodings: No active clients')
+  else
     local position_encodings = {} ---@type table<integer, table<string, integer[]>>
     for _, client in pairs(clients) do
       for bufnr in pairs(client.attached_buffers) do
@@ -188,8 +192,9 @@ local function check_position_encodings()
     end
 
     if #buffers > 0 then
-      local lines =
-        { 'Found buffers attached to multiple clients with different position encodings.' }
+      local lines = {
+        'Position encodings: Found buffers attached to multiple clients with different position encodings.',
+      }
       for _, bufnr in ipairs(buffers) do
         local encodings = position_encodings[bufnr]
         local parts = {}
@@ -206,10 +211,8 @@ local function check_position_encodings()
         'Use the positionEncodings client capability to ensure all clients use the same position encoding'
       )
     else
-      report_info('No buffers contain mixed position encodings')
+      report_info('Position encodings: No buffers contain mixed position encodings')
     end
-  else
-    report_info('No active clients')
   end
 end
 
@@ -270,11 +273,11 @@ end
 --- Performs a healthcheck for LSP
 function M.check()
   check_log()
+  check_watcher()
+  check_position_encodings()
   check_active_features()
   check_active_clients()
   check_enabled_configs()
-  check_watcher()
-  check_position_encodings()
 end
 
 return M
