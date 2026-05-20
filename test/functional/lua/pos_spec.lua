@@ -92,36 +92,6 @@ describe('vim.pos', function()
     }, pos)
   end)
 
-  it("converts between vim.Pos and extmark on buffer's last line", function()
-    local buf = exec_lua(function()
-      return vim.api.nvim_get_current_buf()
-    end)
-    insert('Some text')
-    local extmark_pos = {
-      exec_lua(function()
-        local pos = vim.pos(buf, 1, 0)
-        return pos:to_extmark()
-      end),
-    }
-    eq({ 0, 9 }, extmark_pos)
-    local pos = exec_lua(function()
-      return vim.pos.extmark(buf, extmark_pos[1], extmark_pos[2])
-    end)
-    eq({ 0, 9, buf }, pos)
-
-    local extmark_pos2 = {
-      exec_lua(function()
-        local pos2 = vim.pos(buf, 0, 9)
-        return pos2:to_extmark()
-      end),
-    }
-    eq({ 0, 9 }, extmark_pos2)
-    local pos2 = exec_lua(function()
-      return vim.pos.extmark(buf, extmark_pos2[1], extmark_pos2[2])
-    end)
-    eq({ 0, 9, buf }, pos2)
-  end)
-
   it('converts between vim.Pos and buffer offset', function()
     local buf = exec_lua(function()
       return vim.api.nvim_get_current_buf()

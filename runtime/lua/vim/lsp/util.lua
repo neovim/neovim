@@ -133,9 +133,9 @@ local function sort_by_key(fn)
   end
 end
 
-local get_lines = vim.pos._get_lines
-
-local get_line = vim.pos._get_line
+-- TODO(ofseed): remove these exported functions by replacing their usages with `vim.pos`.
+local get_lines = require('vim.pos._util').get_lines
+local get_line = require('vim.pos._util').get_line
 
 --- Applies a list of text edits to a buffer. Note: this mutates `text_edits` (sorts in-place and
 --- adds `_index` fields).

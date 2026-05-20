@@ -8,6 +8,7 @@
 
 local validate = vim.validate
 local api = vim.api
+local util = require('vim.pos._util')
 
 --- Represents a range. Call `vim.range()` to create a new range.
 ---
@@ -114,43 +115,12 @@ function M.new(...)
   return self
 end
 
---- TODO(ofseed): Make it work for unloaded buffers. Check get_line() in vim.lsp.util.
----@param buf integer
----@param row integer
-local function get_line(buf, row)
-  return api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
-end
-
----@param p1_row integer Row of first position to compare.
----@param p1_col integer Col of first position to compare.
----@param p2_row integer Row of second position to compare.
----@param p2_col integer Col of second position to compare.
----@return integer
---- 1: a > b
---- 0: a == b
---- -1: a < b
-local function cmp_pos(p1_row, p1_col, p2_row, p2_col)
-  if p1_row == p2_row then
-    if p1_col > p2_col then
-      return 1
-    elseif p1_col < p2_col then
-      return -1
-    else
-      return 0
-    end
-  elseif p1_row > p2_row then
-    return 1
-  end
-
-  return -1
-end
-
 ---@param row integer
 ---@param col integer
 ---@param buf integer
 ---@return integer, integer
 local function to_inclusive_pos(buf, row, col)
-  local line = get_line(buf, row)
+  local line = util.get_line(buf, row)
   if col > 0 then
     col = col + vim.str_utf_start(line, col) - 1
   elseif col == 0 and row > 0 then
@@ -166,7 +136,7 @@ end
 ---@param buf integer
 ---@return integer, integer
 local function to_exclusive_pos(buf, row, col)
-  local line = get_line(buf, row)
+  local line = util.get_line(buf, row)
   if col >= #line then
     row = row + 1
     col = 0
@@ -182,11 +152,11 @@ end
 ---@param r2 vim.Range
 function M.__lt(r1, r2)
   if r1:is_empty() or r2:is_empty() then
-    return cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1
+    return util.cmp_pos.le(r1[3], r1[4], r2[1], r2[2])
   end
 
   local r1_inclusive_end_row, r1_inclusive_end_col = to_inclusive_pos(r1.buf, r1[3], r1[4])
-  return cmp_pos(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2]) == -1
+  return util.cmp_pos.lt(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2])
 end
 
 ---@private
@@ -194,18 +164,18 @@ end
 ---@param r2 vim.Range
 function M.__le(r1, r2)
   if r1:is_empty() or r2:is_empty() then
-    return cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1
+    return util.cmp_pos.le(r1[3], r1[4], r2[1], r2[2])
   end
 
   local r1_inclusive_end_row, r1_inclusive_end_col = to_inclusive_pos(r1.buf, r1[3], r1[4])
-  return cmp_pos(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2]) ~= 1
+  return util.cmp_pos.le(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2])
 end
 
 ---@private
 ---@param r1 vim.Range
 ---@param r2 vim.Range
 function M.__eq(r1, r2)
-  return cmp_pos(r1[1], r1[2], r2[1], r2[2]) == 0 and cmp_pos(r1[3], r1[4], r2[3], r2[4]) == 0
+  return util.cmp_pos.eq(r1[1], r1[2], r2[1], r2[2]) and util.cmp_pos.eq(r1[3], r1[4], r2[3], r2[4])
 end
 
 --- Checks whether the given range is empty; i.e., start >= end.
@@ -213,7 +183,7 @@ end
 ---@param range vim.Range
 ---@return boolean `true` if the given range is empty.
 function M.is_empty(range)
-  return cmp_pos(range[1], range[2], range[3], range[4]) ~= -1
+  return util.cmp_pos.ge(range[1], range[2], range[3], range[4])
 end
 
 --- Checks whether {outer} range contains {inner} range or position.
@@ -224,8 +194,8 @@ end
 function M.has(outer, inner)
   if getmetatable(inner) == vim.pos then
     ---@cast inner -vim.Range
-    return cmp_pos(outer[1], outer[2], inner[1], inner[2]) ~= 1
-      and cmp_pos(outer[3], outer[4], inner[1], inner[2]) ~= -1
+    return util.cmp_pos.le(outer[1], outer[2], inner[1], inner[2])
+      and util.cmp_pos.ge(outer[3], outer[4], inner[1], inner[2])
   end
   ---@cast inner -vim.Pos
 
@@ -237,15 +207,15 @@ function M.has(outer, inner)
   -- the text outside `outer`
   if
     (
-      cmp_pos(outer[1], outer[2], inner[3], inner[4]) ~= -1
-      or cmp_pos(outer[3], outer[4], inner[1], inner[2]) ~= 1
+      util.cmp_pos.ge(outer[1], outer[2], inner[3], inner[4])
+      or util.cmp_pos.le(outer[3], outer[4], inner[1], inner[2])
     ) and inner:is_empty()
   then
     return false
   end
 
-  return cmp_pos(outer[1], outer[2], inner[1], inner[2]) ~= 1
-    and cmp_pos(outer[3], outer[4], inner[3], inner[4]) ~= -1
+  return util.cmp_pos.le(outer[1], outer[2], inner[1], inner[2])
+    and util.cmp_pos.ge(outer[3], outer[4], inner[3], inner[4])
 end
 
 --- Computes the common range shared by the given ranges.
@@ -266,14 +236,14 @@ function M.intersect(r1, r2)
   local r2_inclusive_end_row, r2_inclusive_end_col = to_inclusive_pos(r2.buf, r2[3], r2[4])
 
   if
-    cmp_pos(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2]) ~= 1
-    or cmp_pos(r1[1], r1[2], r2_inclusive_end_row, r2_inclusive_end_col) ~= -1
+    util.cmp_pos.le(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2])
+    or util.cmp_pos.ge(r1[1], r1[2], r2_inclusive_end_row, r2_inclusive_end_col)
   then
     return nil
   end
 
-  local rs = cmp_pos(r1[1], r1[2], r2[1], r2[2]) ~= 1 and r2 or r1
-  local re = cmp_pos(r1[3], r1[4], r2[3], r2[4]) ~= -1 and r2 or r1
+  local rs = util.cmp_pos.le(r1[1], r1[2], r2[1], r2[2]) and r2 or r1
+  local re = util.cmp_pos.ge(r1[3], r1[4], r2[3], r2[4]) and r2 or r1
   return M.new(r1.buf, rs[1], rs[2], re[3], re[4])
 end
 
@@ -293,10 +263,11 @@ function M.to_lsp(range, position_encoding)
   validate('range', range, 'table')
   validate('position_encoding', position_encoding, 'string', true)
 
+  local buf = range.buf
   ---@type lsp.Range
   return {
-    ['start'] = vim.pos(range.buf, range[1], range[2]):to_lsp(position_encoding),
-    ['end'] = vim.pos(range.buf, range[3], range[4]):to_lsp(position_encoding),
+    ['start'] = util.to_lsp(buf, range[1], range[2], position_encoding),
+    ['end'] = util.to_lsp(buf, range[3], range[4], position_encoding),
   }
 end
 
@@ -323,12 +294,9 @@ function M.lsp(buf, range, position_encoding)
     buf = api.nvim_get_current_buf()
   end
 
-  -- TODO(ofseed): avoid using `Pos:lsp()` here,
-  -- as they need reading files separately if buffer is unloaded.
-  local start = vim.pos.lsp(buf, range['start'], position_encoding)
-  local end_ = vim.pos.lsp(buf, range['end'], position_encoding)
-
-  return M.new(start, end_)
+  local start_row, start_col = util.from_lsp(buf, range['start'], position_encoding)
+  local end_row, end_col = util.from_lsp(buf, range['end'], position_encoding)
+  return M.new(buf, start_row, start_col, end_row, end_col)
 end
 
 --- Converts |vim.Range| to extmark range (see |api-indexing|).
@@ -351,8 +319,8 @@ function M.to_mark(range)
     end_row, end_col = to_inclusive_pos(buf, end_row, end_col)
   end
 
-  start_row, start_col = vim.pos(buf, start_row, start_col):to_mark()
-  end_row, end_col = vim.pos(buf, end_row, end_col):to_mark()
+  start_row, start_col = util.to_mark(start_row, start_col)
+  end_row, end_col = util.to_mark(end_row, end_col)
   return start_row, start_col, end_row, end_col
 end
 
@@ -383,13 +351,13 @@ function M.mark(buf, start_row, start_col, end_row, end_col)
     buf = api.nvim_get_current_buf()
   end
 
-  local start = vim.pos.mark(buf, start_row, start_col)
-  local end_ = vim.pos.mark(buf, end_row, end_col)
+  start_row, start_col = util.from_mark(start_row, start_col)
+  end_row, end_col = util.from_mark(end_row, end_col)
 
   if vim.o.selection ~= 'exclusive' then
-    end_[1], end_[2] = to_exclusive_pos(buf, end_[1], end_[2])
+    end_row, end_col = to_exclusive_pos(buf, end_row, end_col)
   end
-  return M.new(start, end_)
+  return M.new(buf, start_row, start_col, end_row, end_col)
 end
 
 --- Converts |vim.Range| to extmark range (see |api-indexing|).
@@ -405,9 +373,26 @@ end
 function M.to_extmark(range)
   validate('range', range, 'table')
 
-  local srow, scol = vim.pos(range.buf, range[1], range[2]):to_extmark()
-  local erow, ecol = vim.pos(range.buf, range[3], range[4]):to_extmark()
-  return srow, scol, erow, ecol
+  local buf = range.buf
+  local start_row, start_col, end_row, end_col = range[1], range[2], range[3], range[4]
+  -- Consider a buffer like this:
+  -- ```
+  -- 0123456
+  -- abcdefg
+  -- ```
+  --
+  -- Two ways to describe the range of the first line, i.e. '0123456':
+  -- 1. `{ start_row = 0, start_col = 0, end_row = 0, end_col = 7 }`
+  -- 2. `{ start_row = 0, start_col = 0, end_row = 1, end_col = 0 }`
+  --
+  -- Both of the above methods satisfy the "end-exclusive" definition,
+  -- but `nvim_buf_set_extmark()` throws an out-of-bounds error for the second method,
+  -- so we need to convert it to the first method.
+  if end_col == 0 and end_row == api.nvim_buf_line_count(buf) then
+    end_row = end_row - 1
+    end_col = #util.get_line(buf, end_row)
+  end
+  return start_row, start_col, end_row, end_col
 end
 
 --- Creates a new |vim.Range| from extmark range (see |api-indexing|).
@@ -432,10 +417,7 @@ function M.extmark(buf, start_row, start_col, end_row, end_col)
     buf = api.nvim_get_current_buf()
   end
 
-  local start = vim.pos.extmark(buf, start_row, start_col)
-  local end_ = vim.pos.extmark(buf, end_row, end_col)
-
-  return M.new(start, end_)
+  return M.new(buf, start_row, start_col, end_row, end_col)
 end
 
 -- Overload `Range.new` to allow calling this module as a function.

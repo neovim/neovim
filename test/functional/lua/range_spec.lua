@@ -92,6 +92,48 @@ describe('vim.range', function()
     eq({ 1, 0, 1, 0 }, mark_range)
   end)
 
+  it("converts between vim.Range and extmark on buffer's last line", function()
+    local buf = exec_lua(function()
+      return vim.api.nvim_get_current_buf()
+    end)
+    insert('Some text')
+    local extmark_range = {
+      exec_lua(function()
+        local range = vim.range(buf, 0, 0, 1, 0)
+        return range:to_extmark()
+      end),
+    }
+    eq({ 0, 0, 0, 9 }, extmark_range)
+    local range = exec_lua(function()
+      return vim.range.extmark(
+        buf,
+        extmark_range[1],
+        extmark_range[2],
+        extmark_range[3],
+        extmark_range[4]
+      )
+    end)
+    eq({ 0, 0, 0, 9, buf }, range)
+
+    local extmark_range2 = {
+      exec_lua(function()
+        local range2 = vim.range(buf, 0, 0, 0, 9)
+        return range2:to_extmark()
+      end),
+    }
+    eq({ 0, 0, 0, 9 }, extmark_range2)
+    local range2 = exec_lua(function()
+      return vim.range.extmark(
+        buf,
+        extmark_range2[1],
+        extmark_range2[2],
+        extmark_range2[3],
+        extmark_range2[4]
+      )
+    end)
+    eq({ 0, 0, 0, 9, buf }, range2)
+  end)
+
   it('checks whether a range contains a position', function()
     eq(
       true,

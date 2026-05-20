@@ -7,8 +7,8 @@
 --- objects.
 
 local api = vim.api
-local uv = vim.uv
 local validate = vim.validate
+local util = require('vim.pos._util')
 
 --- Represents a well-defined position.
 ---
@@ -80,134 +80,25 @@ function M.new(buf, row, col)
   return self
 end
 
----@param p1 vim.Pos First position to compare.
----@param p2 vim.Pos Second position to compare.
----@return integer
---- 1: a > b
---- 0: a == b
---- -1: a < b
-local function cmp_pos(p1, p2)
-  if p1[1] == p2[1] then
-    if p1[2] > p2[2] then
-      return 1
-    elseif p1[2] < p2[2] then
-      return -1
-    else
-      return 0
-    end
-  elseif p1[1] > p2[1] then
-    return 1
-  end
-
-  return -1
+---@private
+---@param p1 vim.Pos
+---@param p2 vim.Pos
+function M.__lt(p1, p2)
+  return util.cmp_pos.lt(p1[1], p1[2], p2[1], p2[2])
 end
 
 ---@private
-function M.__lt(...)
-  return cmp_pos(...) == -1
+---@param p1 vim.Pos
+---@param p2 vim.Pos
+function M.__le(p1, p2)
+  return util.cmp_pos.le(p1[1], p1[2], p2[1], p2[2])
 end
 
 ---@private
-function M.__le(...)
-  return cmp_pos(...) ~= 1
-end
-
----@private
-function M.__eq(...)
-  return cmp_pos(...) == 0
-end
-
---- Gets the zero-indexed lines from the given buffer.
---- Works on unloaded buffers by reading the file using libuv to bypass buf reading events.
---- Falls back to loading the buffer and nvim_buf_get_lines for buffers with non-file URI.
----
----@param bufnr integer bufnr to get the lines from
----@param rows integer[] zero-indexed line numbers
----@return table<integer, string> # a table mapping rows to lines
-local function get_lines(bufnr, rows)
-  --- @type integer[]
-  rows = type(rows) == 'table' and rows or { rows }
-
-  -- This is needed for bufload and bufloaded
-  bufnr = vim._resolve_bufnr(bufnr)
-
-  local function buf_lines()
-    local lines = {} --- @type table<integer,string>
-    for _, row in ipairs(rows) do
-      lines[row] = (api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { '' })[1]
-    end
-    return lines
-  end
-
-  -- use loaded buffers if available
-  if vim.fn.bufloaded(bufnr) == 1 then
-    return buf_lines()
-  end
-
-  local uri = vim.uri_from_bufnr(bufnr)
-
-  -- load the buffer if this is not a file uri
-  -- Custom language server protocol extensions can result in servers sending URIs with custom schemes. Plugins are able to load these via `BufReadCmd` autocmds.
-  if uri:sub(1, 4) ~= 'file' then
-    vim.fn.bufload(bufnr)
-    return buf_lines()
-  end
-
-  local filename = api.nvim_buf_get_name(bufnr)
-  if vim.fn.isdirectory(filename) ~= 0 then
-    return {}
-  end
-
-  -- get the data from the file
-  local fd = uv.fs_open(filename, 'r', 438)
-  if not fd then
-    return {}
-  end
-  local stat = assert(uv.fs_fstat(fd))
-  local data = assert(uv.fs_read(fd, stat.size, 0))
-  uv.fs_close(fd)
-
-  local lines = {} --- @type table<integer,true|string> rows we need to retrieve
-  local need = 0 -- keep track of how many unique rows we need
-  for _, row in pairs(rows) do
-    if not lines[row] then
-      need = need + 1
-    end
-    lines[row] = true
-  end
-
-  local found = 0
-  local lnum = 0
-
-  for line in string.gmatch(data, '([^\n]*)\n?') do
-    if lines[lnum] == true then
-      lines[lnum] = line
-      found = found + 1
-      if found == need then
-        break
-      end
-    end
-    lnum = lnum + 1
-  end
-
-  -- change any lines we didn't find to the empty string
-  for i, line in pairs(lines) do
-    if line == true then
-      lines[i] = ''
-    end
-  end
-  return lines --[[@as table<integer,string>]]
-end
-
---- Gets the zero-indexed line from the given buffer.
---- Works on unloaded buffers by reading the file using libuv to bypass buf reading events.
---- Falls back to loading the buffer and nvim_buf_get_lines for buffers with non-file URI.
----
----@param bufnr integer
----@param row integer zero-indexed line number
----@return string the line at row in filename
-local function get_line(bufnr, row)
-  return get_lines(bufnr, { row })[row]
+---@param p1 vim.Pos
+---@param p2 vim.Pos
+function M.__eq(p1, p2)
+  return util.cmp_pos.eq(p1[1], p1[2], p2[1], p2[2])
 end
 
 --- Converts |vim.Pos| to `lsp.Position`.
@@ -225,21 +116,7 @@ function M.to_lsp(pos, position_encoding)
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
 
-  local buf, row, col = pos.buf, pos[1], pos[2]
-  -- When on the first character,
-  -- we can ignore the difference between byte and character.
-  if col > 0 then
-    col = vim.str_utfindex(get_line(buf, row), position_encoding, col, false)
-  elseif col == 0 and row == api.nvim_buf_line_count(buf) and not vim.bo[buf].endofline then
-    -- Some LSP servers reject ranges that end at the virtual EOF position
-    -- (i.e., `[line_count, 0]`) when the buffer has no trailing newline.
-    -- Normalize such positions to the end of the last real line instead.
-    row = row - 1
-    col = vim.str_utfindex(get_line(buf, row), position_encoding)
-  end
-
-  ---@type lsp.Position
-  return { line = row, character = col }
+  return util.to_lsp(pos.buf, pos[1], pos[2], position_encoding)
 end
 
 --- Creates a new |vim.Pos| from `lsp.Position`.
@@ -265,15 +142,7 @@ function M.lsp(buf, pos, position_encoding)
     buf = api.nvim_get_current_buf()
   end
 
-  local row, col = pos.line, pos.character
-  -- When on the first character,
-  -- we can ignore the difference between byte and character.
-  if col > 0 then
-    -- `strict_indexing` is disabled, because LSP responses are asynchronous,
-    -- and the buffer content may have changed, causing out-of-bounds errors.
-    col = vim.str_byteindex(get_line(buf, row) or '', position_encoding, col, false)
-  end
-
+  local row, col = util.from_lsp(buf, pos, position_encoding)
   return M.new(buf, row, col)
 end
 
@@ -290,21 +159,21 @@ end
 ---@param pos vim.Pos
 ---@return integer, integer
 function M.to_cursor(pos)
-  return pos[1] + 1, pos[2]
+  return util.to_mark(pos[1], pos[2])
 end
 
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 ---@param buf integer
 ---@param pos [integer, integer]
 function M.cursor(buf, pos)
-  return M.new(buf, pos[1] - 1, pos[2])
+  return M.new(buf, util.from_mark(pos[1], pos[2]))
 end
 
 --- Converts |vim.Pos| to mark position (see |api-indexing|).
 ---@param pos vim.Pos
 ---@return integer, integer
 function M.to_mark(pos)
-  return pos[1] + 1, pos[2]
+  return util.to_mark(pos[1], pos[2])
 end
 
 --- Creates a new |vim.Pos| from mark position (see |api-indexing|).
@@ -316,33 +185,14 @@ function M.mark(buf, row, col)
     buf = api.nvim_get_current_buf()
   end
 
-  return M.new(buf, row - 1, col)
+  return M.new(buf, util.from_mark(row, col))
 end
 
 --- Converts |vim.Pos| to extmark position (see |api-indexing|).
 ---@param pos vim.Pos
 ---@return integer, integer
 function M.to_extmark(pos)
-  local row, col = pos[1], pos[2]
-  -- Consider a buffer like this:
-  -- ```
-  -- 0123456
-  -- abcdefg
-  -- ```
-  --
-  -- Two ways to describe the range of the first line, i.e. '0123456':
-  -- 1. `{ start_row = 0, start_col = 0, end_row = 0, end_col = 7 }`
-  -- 2. `{ start_row = 0, start_col = 0, end_row = 1, end_col = 0 }`
-  --
-  -- Both of the above methods satisfy the "end-exclusive" definition,
-  -- but `nvim_buf_set_extmark()` throws an out-of-bounds error for the second method,
-  -- so we need to convert it to the first method.
-  if col == 0 and row == api.nvim_buf_line_count(pos.buf) then
-    row = row - 1
-    col = #get_line(pos.buf, row)
-  end
-
-  return row, col
+  return pos[1], pos[2]
 end
 
 --- Creates a new |vim.Pos| from extmark position (see |api-indexing|).
@@ -383,11 +233,6 @@ function M.offset(buf, offset)
   local col = offset - api.nvim_buf_get_offset(buf, row)
   return M.new(buf, row, col)
 end
-
--- TODO(ofseed): remove these exported functions by replacing their usages with `vim.pos`.
-M._get_lines = get_lines
-
-M._get_line = get_line
 
 -- Overload `Range.new` to allow calling this module as a function.
 setmetatable(M, {
