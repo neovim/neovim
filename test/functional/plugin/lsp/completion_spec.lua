@@ -1641,6 +1641,62 @@ describe('vim.lsp.completion: integration', function()
       end)
     )
   end)
+
+  it('discards stale response when cursor moves before request col', function()
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noselect'
+    end)
+    create_server('dummy', {
+      isIncomplete = false,
+      items = { { label = 'XXX' } },
+    }, { delay = 50 })
+    feed('ihe')
+    exec_lua(function()
+      vim.lsp.completion.get()
+    end)
+    feed('<bs><bs>')
+    exec_lua(function()
+      vim.wait(150)
+    end)
+    eq(
+      '',
+      exec_lua(function()
+        return vim.api.nvim_get_current_line()
+      end)
+    )
+    eq(
+      0,
+      exec_lua(function()
+        return vim.fn.pumvisible()
+      end)
+    )
+  end)
+
+  it('does not show stale items when forward typing on incomplete list', function()
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noselect'
+    end)
+    create_server('dummy', {
+      isIncomplete = true,
+      items = {
+        { label = 'head' },
+        { label = 'help_x' },
+      },
+    }, { delay = 50 })
+
+    feed('ih')
+    exec_lua(function()
+      vim.lsp.completion.get()
+    end)
+    feed('e')
+    exec_lua(function()
+      vim.wait(150)
+    end)
+    local items = exec_lua(function()
+      return vim.fn.complete_info({ 'items' }).items
+    end)
+    eq(0, #items)
+  end)
 end)
 
 describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()

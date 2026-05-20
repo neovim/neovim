@@ -56,6 +56,7 @@ local ns_to_ms = 0.000001
 --- @field clients table<integer, vim.lsp.Client>
 --- @field triggers table<string, vim.lsp.Client[]>
 --- @field convert? fun(item: lsp.CompletionItem): table
+--- @field autotrigger boolean
 
 --- @type table<integer, vim.lsp.completion.BufHandle>
 local buf_handles = {}
@@ -971,7 +972,8 @@ local function trigger(bufnr, clients, ctx)
   end
 
   local win = api.nvim_get_current_win()
-  local cursor_row = api.nvim_win_get_cursor(win)[1]
+  local cursor_row, req_col = unpack(api.nvim_win_get_cursor(win))
+  local req_word_boundary = vim.fn.match(api.nvim_get_current_line():sub(1, req_col), '\\k*$')
   local start_time = vim.uv.hrtime() --[[@as integer]]
   Context.last_request_time = start_time
 
@@ -992,6 +994,9 @@ local function trigger(bufnr, clients, ctx)
     local line = api.nvim_get_current_line()
     local line_to_cursor = line:sub(1, cursor_col)
     local word_boundary = vim.fn.match(line_to_cursor, '\\k*$')
+    if cursor_col < req_col or word_boundary ~= req_word_boundary then
+      return
+    end
 
     local matches = {}
 
@@ -1034,6 +1039,10 @@ local function trigger(bufnr, clients, ctx)
       end
     end
 
+    if cursor_col > req_col and Context.isIncomplete then
+      return
+    end
+
     --- @type table[]
     local prev_matches = vim.fn.complete_info({ 'items', 'matches' })['items']
 
@@ -1068,28 +1077,28 @@ end
 
 --- @param handle vim.lsp.completion.BufHandle
 local function on_insert_char_pre(handle)
-  if vim.fn.pumvisible() ~= 0 then
-    if Context.isIncomplete then
-      reset_timer()
-
-      local debounce_ms = adaptive_debounce(Context.last_request_time, rtt_ms)
-      local ctx = { triggerKind = protocol.CompletionTriggerKind.TriggerForIncompleteCompletions }
-      if debounce_ms == 0 then
-        vim.schedule(function()
+  if Context.isIncomplete then
+    reset_timer()
+    local debounce_ms = adaptive_debounce(Context.last_request_time, rtt_ms)
+    local ctx = { triggerKind = protocol.CompletionTriggerKind.TriggerForIncompleteCompletions }
+    if debounce_ms == 0 then
+      vim.schedule(function()
+        M.get({ ctx = ctx })
+      end)
+    else
+      completion_timer = new_timer()
+      completion_timer:start(
+        math.floor(debounce_ms),
+        0,
+        vim.schedule_wrap(function()
           M.get({ ctx = ctx })
         end)
-      else
-        completion_timer = new_timer()
-        completion_timer:start(
-          math.floor(debounce_ms),
-          0,
-          vim.schedule_wrap(function()
-            M.get({ ctx = ctx })
-          end)
-        )
-      end
+      )
     end
+    return
+  end
 
+  if vim.fn.pumvisible() ~= 0 or not handle.autotrigger then
     return
   end
 
@@ -1152,7 +1161,13 @@ end
 local function enable_completions(client_id, bufnr, opts)
   local buf_handle = buf_handles[bufnr]
   if not buf_handle then
-    buf_handle = { clients = {}, triggers = {}, convert = opts.convert, cmp = opts.cmp }
+    buf_handle = {
+      clients = {},
+      triggers = {},
+      convert = opts.convert,
+      cmp = opts.cmp,
+      autotrigger = opts.autotrigger or false,
+    }
     buf_handles[bufnr] = buf_handle
 
     -- Attach to buffer events.
@@ -1176,20 +1191,23 @@ local function enable_completions(client_id, bufnr, opts)
       end,
     })
 
-    if opts.autotrigger then
-      api.nvim_create_autocmd('InsertCharPre', {
-        group = group,
-        buf = bufnr,
-        callback = function()
-          on_insert_char_pre(buf_handles[bufnr])
-        end,
-      })
-      api.nvim_create_autocmd('InsertLeave', {
-        group = group,
-        buf = bufnr,
-        callback = on_insert_leave,
-      })
-    end
+    api.nvim_create_autocmd('InsertCharPre', {
+      group = group,
+      buf = bufnr,
+      callback = function()
+        local handle = buf_handles[bufnr]
+        if handle then
+          on_insert_char_pre(handle)
+        end
+      end,
+    })
+    api.nvim_create_autocmd('InsertLeave', {
+      group = group,
+      buf = bufnr,
+      callback = on_insert_leave,
+    })
+  elseif opts.autotrigger ~= nil then
+    buf_handle.autotrigger = opts.autotrigger == true
   end
 
   if not buf_handle.clients[client_id] then
