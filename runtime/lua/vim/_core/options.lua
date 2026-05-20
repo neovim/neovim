@@ -338,9 +338,7 @@ end
 local function assert_valid_value(name, value, types)
   local type_of_value = type(value)
   for _, valid_type in ipairs(types) do
-    -- Allow strings for number options because of options like wildchar.
-    -- It gets converted to a string in the end anyways.
-    if valid_type == type_of_value or (valid_type == 'number' and type_of_value == 'string') then
+    if valid_type == type_of_value then
       return
     end
   end
@@ -359,7 +357,7 @@ local function passthrough(_, x)
   return x
 end
 
-local valid_types = {
+local type_mappings = {
   boolean = { 'boolean' },
   number = { 'number' },
   string = { 'string' },
@@ -367,6 +365,15 @@ local valid_types = {
   array = { 'string', 'table' },
   map = { 'string', 'table' },
 }
+
+local function valid_types(name, metatype)
+  -- Allow strings for special number options like wildchar and wildcharm.
+  if name == 'wildchar' or name == 'wildcharm' then
+    return { 'number', 'string' }
+  else
+    return type_mappings[metatype]
+  end
+end
 
 -- Map of functions to take a Lua style value and convert to vimoption_T style value.
 -- Each function takes (info, lua_value) -> vim_value
@@ -442,7 +449,7 @@ function M.convert_value_to_vim(name, value, operation)
   end
 
   local info = get_options_info(name) or error('Not a valid option name: ' .. name)
-  assert_valid_value(name, value, valid_types[info.metatype])
+  assert_valid_value(name, value, valid_types(name, info.metatype))
 
   local vim_value = to_vim_value[info.metatype](info, value)
   -- In lua, we allow vim.opt.listchars = vim.opt.listchars - 'space'
@@ -591,11 +598,10 @@ local function create_option_accessor(scope)
     __add = function(self, right)
       return make_option(
         self._name,
-        vim.api.nvim__merge_option_value(
+        vim.api.nvim_set_option_value(
           self._name,
-          self._value,
           right,
-          { operation = 'append', scope = scope }
+          { operation = 'append', scope = scope, dry_run = true }
         )
       )
     end,
@@ -607,11 +613,10 @@ local function create_option_accessor(scope)
     __pow = function(self, right)
       return make_option(
         self._name,
-        vim.api.nvim__merge_option_value(
+        vim.api.nvim_set_option_value(
           self._name,
-          self._value,
           right,
-          { operation = 'prepend', scope = scope }
+          { operation = 'prepend', scope = scope, dry_run = true }
         )
       )
     end,
@@ -623,11 +628,10 @@ local function create_option_accessor(scope)
     __sub = function(self, right)
       return make_option(
         self._name,
-        vim.api.nvim__merge_option_value(
+        vim.api.nvim_set_option_value(
           self._name,
-          self._value,
           right,
-          { operation = 'remove', scope = scope }
+          { operation = 'remove', scope = scope, dry_run = true }
         )
       )
     end,

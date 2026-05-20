@@ -380,6 +380,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.option
 --- @field buf? integer
+--- @field dry_run? boolean
 --- @field filetype? string
 --- @field operation? string
 --- @field scope? string

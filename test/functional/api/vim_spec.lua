@@ -1949,7 +1949,7 @@ describe('API', function()
         pcall_err(api.nvim_set_option_value, 'scrolloff', true, {})
       )
       matches(
-        'E521: Number required after =',
+        "Invalid option type 'string' for 'scrolloff', should be number",
         pcall_err(api.nvim_set_option_value, 'scrolloff', 'wrong', {})
       )
       local tab1 = api.nvim_get_current_tabpage()
