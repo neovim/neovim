@@ -273,10 +273,6 @@ COMMAND-LINE FLAGS
 • *--remote-expr*		Use |-Es| and |--remote| +cmd: >
 					nvim -Es --server {addr} --remote "+echo 1+1" +q
 <
-• *--serverlist*		Use instead: >
-					nvim -Es --server {addr} --remote "+echom serverlist()" +q
-<
-• *--servername*
 
 ENVIRONMENT VARIABLES
 • *$NVIM_LISTEN_ADDRESS*
