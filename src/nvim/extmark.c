@@ -553,9 +553,11 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                          colnr_T new_col, bcount_t new_byte, ExtmarkOp undo)
 {
   buf->deleted_bytes2 = 0;
-  buf_updates_send_splice(buf, start_row, start_col, start_byte,
-                          old_row, old_col, old_byte,
-                          new_row, new_col, new_byte);
+  if(undo != kExtmarkNoUndo) {
+    buf_updates_send_splice(buf, start_row, start_col, start_byte,
+                            old_row, old_col, old_byte,
+                            new_row, new_col, new_byte);
+  }
 
   if (old_row > 0 || old_col > 0) {
     // Copy and invalidate marks that would be effected by delete
