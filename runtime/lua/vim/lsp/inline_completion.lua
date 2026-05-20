@@ -348,7 +348,7 @@ function Completor:accept(item)
       api.nvim_buf_set_text(self.bufnr, start_row, start_col, end_row, end_col, lines)
       local win = api.nvim_get_current_win()
       win = api.nvim_win_get_buf(win) == self.bufnr and win or vim.fn.bufwinid(self.bufnr)
-      local row, col = item.range:to_cursor()
+      local row, col = item.range:to_mark()
       api.nvim_win_set_cursor(win, {
         row + #lines - 1,
         (#lines == 1 and col or 0) + #lines[#lines],

@@ -4510,17 +4510,32 @@ by |vim.Pos| objects.
 cursor({buf}, {pos})                                        *vim.pos.cursor()*
     Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 
+    Example: >lua
+        local cursor_pos = vim.api.nvim_win_get_cursor(0)
+        local pos = vim.pos.lsp(0, cursor_pos)
+<
+
     Parameters: ~
       • {buf}  (`integer`)
-      • {pos}  (`[integer, integer]`)
+      • {pos}  (`[integer, integer]`) (lnum, col) tuple
+
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
 
 extmark({buf}, {row}, {col})                               *vim.pos.extmark()*
     Creates a new |vim.Pos| from extmark position (see |api-indexing|).
+
+    Example: >lua
+        local pos = vim.pos.extmark(0, 3, 5)
+<
 
     Parameters: ~
       • {buf}  (`integer`)
       • {row}  (`integer`)
       • {col}  (`integer`)
+
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
 
 lsp({buf}, {pos}, {position_encoding})                         *vim.pos.lsp()*
     Creates a new |vim.Pos| from `lsp.Position`.
@@ -4539,16 +4554,38 @@ lsp({buf}, {pos}, {position_encoding})                         *vim.pos.lsp()*
       • {pos}                (`lsp.Position`)
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
-mark({buf}, {row}, {col})                                     *vim.pos.mark()*
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
+
+mark({buf}, {lnum}, {col})                                    *vim.pos.mark()*
     Creates a new |vim.Pos| from mark position (see |api-indexing|).
 
+    Example: >lua
+        local mark_info = vim.api.nvim_get_mark('M', {})
+        local lnum, col, buf, name = unpack(mark_info)
+
+        if lnum == 0 and col == 0 and buf == 0 then
+          return -- mark 'M' is not set.
+        end
+
+        local pos = vim.pos.mark(buf, lnum, col)
+<
+
     Parameters: ~
-      • {buf}  (`integer`)
-      • {row}  (`integer`)
-      • {col}  (`integer`)
+      • {buf}   (`integer`)
+      • {lnum}  (`integer`)
+      • {col}   (`integer`)
+
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
 
 offset({buf}, {offset})                                     *vim.pos.offset()*
-    Creates a new |vim.Pos| from buffer offset.
+    Creates a new |vim.Pos| from buffer (bytes) offset.
+
+    Example: >lua
+        local offset = vim.api.nvim_buf_get_offset(0, vim.api.nvim_buf_line_count(0))
+        local pos = vim.pos.offset(0, offset)
+<
 
     Parameters: ~
       • {buf}     (`integer`)
@@ -4560,22 +4597,37 @@ offset({buf}, {offset})                                     *vim.pos.offset()*
 to_cursor({pos})                                         *vim.pos.to_cursor()*
     Converts |vim.Pos| to cursor position (see |api-indexing|).
 
+    Example: >lua
+        local pos = vim.pos(0, 3, 5)
+
+        -- Convert to cursor position, you can call it in a method style.
+        local cursor_pos = { pos:to_cursor() }
+        vim.api.nvim_win_set_cursor(0, cursor_pos)
+<
+
     Parameters: ~
       • {pos}  (`vim.Pos`) See |vim.Pos|.
 
     Return (multiple): ~
-        (`integer`)
-        (`integer`)
+        (`integer`) lnum
+        (`integer`) col
 
 to_extmark({pos})                                       *vim.pos.to_extmark()*
     Converts |vim.Pos| to extmark position (see |api-indexing|).
 
+    Example: >lua
+        local pos = vim.pos(0, 3, 5)
+
+        -- Convert to extmark position, you can call it in a method style.
+        local extmark_pos = pos:to_extmark()
+<
+
     Parameters: ~
       • {pos}  (`vim.Pos`) See |vim.Pos|.
 
     Return (multiple): ~
-        (`integer`)
-        (`integer`)
+        (`integer`) row
+        (`integer`) col
 
 to_lsp({pos}, {position_encoding})                          *vim.pos.to_lsp()*
     Converts |vim.Pos| to `lsp.Position`.
@@ -4591,18 +4643,40 @@ to_lsp({pos}, {position_encoding})                          *vim.pos.to_lsp()*
       • {pos}                (`vim.Pos`) See |vim.Pos|.
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
+    Return: ~
+        (`lsp.Position`)
+
 to_mark({pos})                                             *vim.pos.to_mark()*
     Converts |vim.Pos| to mark position (see |api-indexing|).
+
+    Example: >lua
+        local pos = vim.pos(0, 3, 5)
+
+        -- Convert to mark position, you can call it in a method style.
+        local lnum, col = pos:to_mark()
+        vim.api.nvim_buf_set_mark(0, 'M', lnum, col, {})
+<
 
     Parameters: ~
       • {pos}  (`vim.Pos`) See |vim.Pos|.
 
     Return (multiple): ~
-        (`integer`)
-        (`integer`)
+        (`integer`) lnum
+        (`integer`) col
 
 to_offset({pos})                                         *vim.pos.to_offset()*
-    Converts |vim.Pos| to buffer offset.
+    Converts |vim.Pos| to buffer (bytes) offset.
+
+    Example: >lua
+        local p1 = vim.pos(0, 3, 5)
+        local p2 = vim.pos(0, 4, 0)
+
+        -- Convert to buffer offset, you can call it in a method style.
+        local offset1 = p1:to_offset()
+        local offset2 = p2:to_offset()
+        -- Can be used to calculate the distance between two locations.
+        local distance = offset2 - offset1
+<
 
     Parameters: ~
       • {pos}  (`vim.Pos`) See |vim.Pos|.
@@ -4658,22 +4732,6 @@ Provides operations to compare, calculate, and convert ranges represented by
       • {start_row}  (`integer`) 0-based byte index.
 
 
-cursor({buf}, {start_pos}, {end_pos})                     *vim.range.cursor()*
-    Creates a new |vim.Range| from mark-like range (see |api-indexing|).
-
-    Example: >lua
-        local start = vim.api.nvim_win_get_cursor(0)
-        -- move the cursor
-        local end_ = vim.api.nvim_win_get_cursor(0)
-
-        local range = vim.range.cursor(0, start, end_)
-<
-
-    Parameters: ~
-      • {buf}        (`integer`)
-      • {start_pos}  (`[integer, integer]`)
-      • {end_pos}    (`[integer, integer]`)
-
                                                          *vim.range.extmark()*
 extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
     Creates a new |vim.Range| from extmark range (see |api-indexing|).
@@ -4688,6 +4746,9 @@ extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
       • {start_col}  (`integer`)
       • {end_row}    (`integer`)
       • {end_col}    (`integer`)
+
+    Return: ~
+        (`vim.Range`) See |vim.Range|.
 
 has({outer}, {inner})                                        *vim.range.has()*
     Checks whether {outer} range contains {inner} range or position.
@@ -4737,38 +4798,31 @@ lsp({buf}, {range}, {position_encoding})                     *vim.range.lsp()*
       • {range}              (`lsp.Range`)
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
+    Return: ~
+        (`vim.Range`) See |vim.Range|.
+
                                                             *vim.range.mark()*
-mark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
+mark({buf}, {start_lnum}, {start_col}, {end_lnum}, {end_col})
     Creates a new |vim.Range| from "mark-indexed" range (see |api-indexing|).
 
     Example: >lua
         -- A range represented by marks may be end-inclusive (decided by 'selection' option).
-        local start_row, start_col = unpack(api.nvim_buf_get_mark(bufnr, '<'))
-        local end_row, end_col = unpack(api.nvim_buf_get_mark(bufnr, '>'))
+        local start_lnum, start_col = unpack(api.nvim_buf_get_mark(bufnr, '<'))
+        local end_lnum, end_col = unpack(api.nvim_buf_get_mark(bufnr, '>'))
 
         -- Create an end-exclusive range.
-        local range = vim.range.mark(0, start_row, start_col, end_row, end_col)
+        local range = vim.range.mark(0, start_lnum, start_col, end_lnum, end_col)
 <
 
     Parameters: ~
-      • {buf}        (`integer`)
-      • {start_row}  (`integer`)
-      • {start_col}  (`integer`)
-      • {end_row}    (`integer`)
-      • {end_col}    (`integer`)
+      • {buf}         (`integer`)
+      • {start_lnum}  (`integer`)
+      • {start_col}   (`integer`)
+      • {end_lnum}    (`integer`)
+      • {end_col}     (`integer`)
 
-to_cursor({range})                                     *vim.range.to_cursor()*
-    Converts |vim.Range| to mark-like range (see |api-indexing|).
-
-    Example: >lua
-        local range = vim.range(0, 3, 5, 4, 0)
-
-        -- Convert to cursor range, you can call it in a method style.
-        local cursor_range = range:to_cursor()
-<
-
-    Parameters: ~
-      • {range}  (`vim.Range`) See |vim.Range|.
+    Return: ~
+        (`vim.Range`) See |vim.Range|.
 
 to_extmark({range})                                   *vim.range.to_extmark()*
     Converts |vim.Range| to extmark range (see |api-indexing|).
@@ -4782,6 +4836,12 @@ to_extmark({range})                                   *vim.range.to_extmark()*
 
     Parameters: ~
       • {range}  (`vim.Range`) See |vim.Range|.
+
+    Return (multiple): ~
+        (`integer`) start_row
+        (`integer`) start_col
+        (`integer`) end_row
+        (`integer`) end_col
 
 to_lsp({range}, {position_encoding})                      *vim.range.to_lsp()*
     Converts |vim.Range| to `lsp.Range`.
@@ -4807,17 +4867,17 @@ to_mark({range})                                         *vim.range.to_mark()*
         local range = vim.range(0, 3, 5, 4, 0)
 
         -- Convert to mark range, you can call it in a method style.
-        local start_row, start_col, end_row, end_col = range:to_mark()
+        local start_lnum, start_col, end_lnum, end_col = range:to_mark()
 <
 
     Parameters: ~
       • {range}  (`vim.Range`) See |vim.Range|.
 
     Return (multiple): ~
-        (`integer`)
-        (`integer`)
-        (`integer`)
-        (`integer`)
+        (`integer`) start_lnum
+        (`integer`) start_col
+        (`integer`) end_lnum
+        (`integer`) end_col
 
 
 ==============================================================================
