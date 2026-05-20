@@ -2329,7 +2329,7 @@ describe('vim.pack', function()
 
       assert_on_disk({ basic = false, defbranch = true, plugindirs = false })
 
-      local msg = "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'"
+      local msg = 'vim.pack: Removed plugins: basic, plugindirs'
       eq(msg, n.exec_capture('messages'))
 
       -- `:packdel` should output E5810 instead of the normal error
@@ -2357,7 +2357,7 @@ describe('vim.pack', function()
 
       assert_on_disk({ basic = false, defbranch = false, plugindirs = false })
 
-      eq("vim.pack: Removed plugin 'defbranch'", n.exec_capture('messages'))
+      eq('vim.pack: Removed plugin: defbranch', n.exec_capture('messages'))
 
       log = exec_lua('return _G.event_log')
       find_event = make_find_packchanged(log)

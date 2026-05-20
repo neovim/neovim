@@ -1409,6 +1409,7 @@ function M.del(names, opts)
 
   lock_read()
 
+  local successful_delete = {} --- @type string[]
   local fail_to_delete = {} --- @type string[]
   for _, p in ipairs(plug_list) do
     if not active_plugins[p.path] or opts.force then
@@ -1416,17 +1417,22 @@ function M.del(names, opts)
 
       vim.fs.rm(p.path, { recursive = true, force = true })
       active_plugins[p.path] = nil
-      notify(("Removed plugin '%s'"):format(p.spec.name), 'INFO')
-
       plugin_lock.plugins[p.spec.name] = nil
 
       trigger_event(p, 'PackChanged', 'delete')
+      successful_delete[#successful_delete + 1] = p.spec.name
     else
       fail_to_delete[#fail_to_delete + 1] = p.spec.name
     end
   end
 
   lock_write()
+
+  if #successful_delete > 0 then
+    local suffix = #successful_delete == 1 and '' or 's'
+    local plugs = table.concat(successful_delete, ', ')
+    notify(('Removed plugin%s: %s'):format(suffix, plugs), 'INFO')
+  end
 
   if #fail_to_delete > 0 then
     local plugs = table.concat(fail_to_delete, ', ')
