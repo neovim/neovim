@@ -183,6 +183,7 @@ end
 ---@param range vim.Range
 ---@return boolean `true` if the given range is empty.
 function M.is_empty(range)
+  validate('range', range, 'table')
   return util.cmp_pos.ge(range[1], range[2], range[3], range[4])
 end
 
@@ -192,6 +193,9 @@ end
 ---@param inner vim.Range|vim.Pos
 ---@return boolean `true` if {outer} range fully contains {inner} range or position.
 function M.has(outer, inner)
+  validate('outer', outer, 'table')
+  validate('inner', inner, 'table')
+
   if getmetatable(inner) == vim.pos then
     ---@cast inner -vim.Range
     return util.cmp_pos.le(outer[1], outer[2], inner[1], inner[2])
@@ -225,6 +229,9 @@ end
 ---@return vim.Range? range that is present inside both `r1` and `r2`.
 ---                   `nil` if such range does not exist.
 function M.intersect(r1, r2)
+  validate('r1', r1, 'table')
+  validate('r2', r2, 'table')
+
   if r1.buf ~= r2.buf then
     return nil
   end
@@ -285,6 +292,7 @@ end
 ---@param buf integer
 ---@param range lsp.Range
 ---@param position_encoding lsp.PositionEncodingKind
+---@return vim.Range
 function M.lsp(buf, range, position_encoding)
   validate('buf', buf, 'number')
   validate('range', range, 'table')
@@ -306,10 +314,10 @@ end
 --- local range = vim.range(0, 3, 5, 4, 0)
 ---
 --- -- Convert to mark range, you can call it in a method style.
---- local start_row, start_col, end_row, end_col = range:to_mark()
+--- local start_lnum, start_col, end_lnum, end_col = range:to_mark()
 --- ```
 ---@param range vim.Range
----@return integer, integer, integer, integer
+---@return integer start_lnum, integer start_col, integer end_lnum, integer end_col
 function M.to_mark(range)
   validate('range', range, 'table')
 
@@ -329,35 +337,36 @@ end
 --- Example:
 --- ```lua
 --- -- A range represented by marks may be end-inclusive (decided by 'selection' option).
---- local start_row, start_col = unpack(api.nvim_buf_get_mark(bufnr, '<'))
---- local end_row, end_col = unpack(api.nvim_buf_get_mark(bufnr, '>'))
+--- local start_lnum, start_col = unpack(api.nvim_buf_get_mark(bufnr, '<'))
+--- local end_lnum, end_col = unpack(api.nvim_buf_get_mark(bufnr, '>'))
 ---
 --- -- Create an end-exclusive range.
---- local range = vim.range.mark(0, start_row, start_col, end_row, end_col)
+--- local range = vim.range.mark(0, start_lnum, start_col, end_lnum, end_col)
 --- ```
 ---@param buf integer
----@param start_row integer
+---@param start_lnum integer
 ---@param start_col integer
----@param end_row integer
+---@param end_lnum integer
 ---@param end_col integer
-function M.mark(buf, start_row, start_col, end_row, end_col)
+---@return vim.Range
+function M.mark(buf, start_lnum, start_col, end_lnum, end_col)
   validate('buf', buf, 'number')
-  validate('start_row', start_row, 'number')
+  validate('start_lnum', start_lnum, 'number')
   validate('start_col', start_col, 'number')
-  validate('end_row', end_row, 'number')
+  validate('end_lnum', end_lnum, 'number')
   validate('end_col', end_col, 'number')
 
   if buf == 0 then
     buf = api.nvim_get_current_buf()
   end
 
-  start_row, start_col = util.from_mark(start_row, start_col)
-  end_row, end_col = util.from_mark(end_row, end_col)
+  start_lnum, start_col = util.from_mark(start_lnum, start_col)
+  end_lnum, end_col = util.from_mark(end_lnum, end_col)
 
   if vim.o.selection ~= 'exclusive' then
-    end_row, end_col = to_exclusive_pos(buf, end_row, end_col)
+    end_lnum, end_col = to_exclusive_pos(buf, end_lnum, end_col)
   end
-  return M.new(buf, start_row, start_col, end_row, end_col)
+  return M.new(buf, start_lnum, start_col, end_lnum, end_col)
 end
 
 --- Converts |vim.Range| to extmark range (see |api-indexing|).
@@ -370,6 +379,7 @@ end
 --- local extmark_range = range:to_extmark()
 --- ```
 ---@param range vim.Range
+---@return integer start_row, integer start_col, integer end_row, integer end_col
 function M.to_extmark(range)
   validate('range', range, 'table')
 
@@ -406,6 +416,7 @@ end
 ---@param start_col integer
 ---@param end_row integer
 ---@param end_col integer
+---@return vim.Range
 function M.extmark(buf, start_row, start_col, end_row, end_col)
   validate('buf', buf, 'number')
   validate('start_row', start_row, 'number')
