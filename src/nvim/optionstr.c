@@ -2306,12 +2306,15 @@ static const struct chars_tab lcs_tab[] = {
 
 #undef CHARSTAB_ENTRY
 
-static char *field_value_err(char *errbuf, size_t errbuflen, const char *fmt, const char *field)
+static char *field_value_err(char *errbuf, size_t errbuflen, const char *fmt, ...)
 {
   if (errbuf == NULL) {
     return "";
   }
-  vim_snprintf(errbuf, errbuflen, _(fmt), field);
+  va_list arglist;
+  va_start(arglist, fmt);
+  vim_vsnprintf(errbuf, errbuflen, _(fmt), arglist);
+  va_end(arglist);
   return errbuf;
 }
 

@@ -145,6 +145,9 @@
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
   _Pragma("clang diagnostic push") \
   _Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
+# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_FORMAT_ATTRIBUTE \
+  _Pragma("clang diagnostic push") \
+  _Pragma("clang diagnostic ignored \"-Wmissing-format-attribute\"")
 # ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
 #  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
   _Pragma("clang diagnostic push") \
@@ -159,6 +162,8 @@
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
   _Pragma("GCC diagnostic push") \
   _Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
+# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_FORMAT_ATTRIBUTE \
+  _Pragma("GCC diagnostic push")
 # ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
 #  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
   _Pragma("GCC diagnostic push") \
@@ -171,6 +176,7 @@
   _Pragma("GCC diagnostic pop")
 #else
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
+# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_FORMAT_ATTRIBUTE
 # define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH
 # define PRAGMA_DIAG_POP
 #endif

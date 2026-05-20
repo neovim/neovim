@@ -203,7 +203,8 @@ void dialog_changed(buf_T *buf, bool checkall)
     .forceit = false,
   };
 
-  dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
+  const char *fname = buf->b_fname ? buf->b_fname : _("Untitled");
+  snprintf(buff, sizeof buff, _("Save changes to \"%s\"?"), fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {
@@ -267,8 +268,8 @@ bool dialog_close_terminal(buf_T *buf)
 {
   char buff[DIALOG_MSG_SIZE];
 
-  dialog_msg(buff, _("Close \"%s\"?"),
-             (buf->b_fname != NULL) ? buf->b_fname : "?");
+  snprintf(buff, sizeof buff, _("Close \"%s\"?"),
+           (buf->b_fname != NULL) ? buf->b_fname : "?");
 
   int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
 

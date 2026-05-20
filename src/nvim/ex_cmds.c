@@ -1662,7 +1662,13 @@ void append_redir(char *const buf, const size_t buflen, const char *const opt,
   }
   if (p != NULL) {
     *end = ' ';  // not really needed? Not with sh, ksh or bash
+
+// This looks incredibly suss because it is: we are allowing a user option to
+// define a snprintf format string. Such code should normally not be written.
+// The validitiy of these option values are checked in `did_set_shellpipe_redir`
+    PRAGMA_DIAG_PUSH_IGNORE_MISSING_FORMAT_ATTRIBUTE;
     vim_snprintf(end + 1, (size_t)((ptrdiff_t)buflen - (end + 1 - buf)), opt, fname);
+    PRAGMA_DIAG_POP;
   } else {
     vim_snprintf(end, (size_t)((ptrdiff_t)buflen - (end - buf)), " %s %s", opt, fname);
   }
@@ -2023,8 +2029,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, bool ot
 #endif
       if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
         char buff[DIALOG_MSG_SIZE];
-
-        dialog_msg(buff, _("Overwrite existing file \"%s\"?"), fname);
+        snprintf(buff, sizeof buff, _("Overwrite existing file \"%s\"?"), fname);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) != VIM_YES) {
           return FAIL;
         }
@@ -2058,9 +2063,9 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, bool ot
         if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
           char buff[DIALOG_MSG_SIZE];
 
-          dialog_msg(buff,
-                     _("Swap file \"%s\" exists, overwrite anyway?"),
-                     swapname);
+          vim_snprintf(buff, sizeof buff,
+                       _("Swap file \"%s\" exists, overwrite anyway?"),
+                       swapname);
           if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2)
               != VIM_YES) {
             xfree(swapname);
@@ -2184,15 +2189,16 @@ static int check_readonly(int *forceit, buf_T *buf)
     if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && buf->b_fname != NULL) {
       char buff[DIALOG_MSG_SIZE];
 
+      const char *fname = buf->b_fname ? buf->b_fname : _("Untitled");
       if (buf->b_p_ro) {
-        dialog_msg(buff,
-                   _("'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
-                   buf->b_fname);
+        snprintf(buff, sizeof buff,
+                 _("'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
+                 fname);
       } else {
-        dialog_msg(buff,
-                   _("File permissions of \"%s\" are read-only.\nIt may still be possible to "
-                     "write it.\nDo you wish to try?"),
-                   buf->b_fname);
+        snprintf(buff, sizeof buff,
+                 _("File permissions of \"%s\" are read-only.\nIt may still be possible to "
+                   "write it.\nDo you wish to try?"),
+                 fname);
       }
 
       if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) == VIM_YES) {
