@@ -277,16 +277,18 @@ lua_State *get_global_lstate(void)
 /// The returned string points to memory on the Lua stack. Use or duplicate it before using
 /// `lstate` again.
 ///
-/// @param[out] len length of error (can be NULL)
+/// @param[out] len length of error
 static const char *nlua_get_error(lua_State *lstate, size_t *len)
+  FUNC_ATTR_NONNULL_RET
 {
-  if (luaL_getmetafield(lstate, -1, "__tostring")) {
-    if (lua_isfunction(lstate, -1) && luaL_callmeta(lstate, -2, "__tostring")) {
-      // call __tostring, convert the result and replace error with it
-      lua_replace(lstate, -3);
+  if (lua_type(lstate, -1) != LUA_TSTRING) {
+    lua_getglobal(lstate, "tostring");
+    lua_pushvalue(lstate, -2);
+    if (lua_pcall(lstate, 1, 1, 0) || lua_type(lstate, -1) != LUA_TSTRING) {
+      lua_pop(lstate, 1);
+      lua_pushstring(lstate, "[UNPRINTABLE ERROR]");
     }
-    // pop __tostring.
-    lua_pop(lstate, 1);
+    lua_replace(lstate, -2);
   }
 
   return lua_tolstring(lstate, -1, len);
@@ -433,10 +435,11 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
       pthread_exit(0);
 #endif
     }
-    const char *error = lua_tostring(lstate, -1);
+    size_t len;
+    const char *error = nlua_get_error(lstate, &len);
     loop_schedule_deferred(&main_loop,
                            event_create(nlua_luv_error_event,
-                                        error != NULL ? xstrdup(error) : NULL,
+                                        xmemdupz(error, len),
                                         (void *)(intptr_t)(is_callback
                                                            ? kThreadCallback
                                                            : kThread)));

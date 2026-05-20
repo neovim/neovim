@@ -495,7 +495,7 @@ describe('luaeval()', function()
       remove_trace(pcall_err(command, [[call luaeval("error('ERROR')")]]))
     )
     eq(
-      'Vim(call):E5108: Lua: [NULL]',
+      'Vim(call):E5108: Lua: nil',
       remove_trace(pcall_err(command, [[call luaeval("error(nil)")]]))
     )
   end)

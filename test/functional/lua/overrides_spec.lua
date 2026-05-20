@@ -4,6 +4,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local eq = t.eq
+local matches = t.matches
 local NIL = vim.NIL
 local feed = n.feed
 local clear = n.clear
@@ -105,13 +106,13 @@ describe('print', function()
       'Vim(lua):E5108: Lua: Xtest-functional-lua-overrides-luafile:2: 1234',
       pcall_err(command, 'lua number_error()')
     )
-    eq('Vim(lua):E5108: Lua: [NULL]', pcall_err(command, 'lua nil_error()'))
-    eq('Vim(lua):E5108: Lua: [NULL]', pcall_err(command, 'lua table_error()'))
+    eq('Vim(lua):E5108: Lua: nil', pcall_err(command, 'lua nil_error()'))
+    matches('^Vim%(lua%):E5108: Lua: table: 0x%x+$', pcall_err(command, 'lua table_error()'))
     eq(
       'Vim(lua):E5108: Lua: Internal Error [11234] my mistake',
       pcall_err(command, 'lua custom_error()')
     )
-    eq('Vim(lua):E5108: Lua: [NULL]', pcall_err(command, 'lua bad_custom_error()'))
+    eq('Vim(lua):E5108: Lua: [UNPRINTABLE ERROR]', pcall_err(command, 'lua bad_custom_error()'))
   end)
   it('prints strings with NULs and NLs correctly', function()
     api.nvim_set_option_value('more', true, {})
