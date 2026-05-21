@@ -2593,8 +2593,7 @@ void curwin_init(void)
 /// Closes all windows for buffer `buf` unless there is only one non-floating window.
 ///
 /// @param keep_curwin  don't close `curwin`
-/// @return the kept holder window, or NULL.
-win_T *close_windows(buf_T *buf, bool keep_curwin)
+void close_windows(buf_T *buf, bool keep_curwin)
 {
   RedrawingDisabled++;
 
@@ -2647,12 +2646,6 @@ win_T *close_windows(buf_T *buf, bool keep_curwin)
 
 theend:
   RedrawingDisabled--;
-
-  // If buf is still shown in the last non-float window, let the caller retry there.
-  if (firstwin->w_buffer == buf && !firstwin->w_floating) {
-    return firstwin;
-  }
-  return NULL;
 }
 
 /// Check if "win" is the last non-floating window that exists.
