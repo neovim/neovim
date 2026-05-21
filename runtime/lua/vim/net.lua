@@ -52,7 +52,7 @@ M.http_status = {
 ---@param res vim.SystemCompleted
 ---@return vim.net.request.Response
 local function parse_response(res)
-  ---@type vim.net.request.ResponseHeaders
+  ---@type vim.net.HttpHeaders
   local headers = {}
   local body = res.stdout or ''
   ---@type vim.net.HttpStatusCode
@@ -87,7 +87,7 @@ end
 
 ---@alias vim.net.HttpResponseFunc fun(err: string?, response: vim.net.request.Response?)
 ---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PATCH" | "HEAD" | "DELETE"
----@alias vim.net.request.ResponseHeaders table<string, string>
+---@alias vim.net.HttpHeaders table<string, string|string[]>
 
 ---@class vim.net.request.Opts
 ---@inlinedoc
@@ -109,7 +109,7 @@ end
 ---
 ---Custom headers to send with the request. Supports basic key/value headers and empty headers as
 ---supported by curl. Does not support "@filename" style, internal header deletion ("Header:").
----@field headers? table<string, string>
+---@field headers? vim.net.HttpHeaders
 
 ---@class vim.net.request.Response
 ---
@@ -120,7 +120,7 @@ end
 ---@field status vim.net.HttpStatusCode
 ---
 ---The HTTP response headers
----@field headers vim.net.request.ResponseHeaders
+---@field headers vim.net.HttpHeaders
 
 --- Makes an HTTP request to the given URL, asynchronously passing the result to the specified
 --- `on_response`, `outpath` or `outbuf`.
@@ -217,6 +217,7 @@ function M.request(method, url, opts, on_response)
 
   if opts.headers then
     for key, value in pairs(opts.headers) do
+      -- TODO(ellisonleao): handle table values
       if type(key) ~= 'string' or type(value) ~= 'string' then
         error('headers keys and values must be strings')
       end
