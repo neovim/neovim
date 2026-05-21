@@ -4034,6 +4034,27 @@ func Test_fuzzy_completion_cmd_k()
   set wildoptions&
 endfunc
 
+" Issue #20241: with 'ignorecase', a lowercase "k"-prefixed input should
+" still complete a user command starting with "K".
+func Test_cmdline_complete_user_cmd_k_with_ignorecase()
+  command! Kz echo "hello"
+  command! Gz echo "here"
+
+  set noignorecase
+  call assert_equal([], getcompletion('kz', 'cmdline'))
+  call assert_equal([], getcompletion('gz', 'cmdline'))
+  call assert_equal(['Kz'], getcompletion('Kz', 'cmdline'))
+  call assert_equal(['Gz'], getcompletion('Gz', 'cmdline'))
+
+  set ignorecase
+  call assert_equal(['Kz'], getcompletion('kz', 'cmdline'))
+  call assert_equal(['Gz'], getcompletion('gz', 'cmdline'))
+
+  set ignorecase&
+  delcommand Kz
+  delcommand Gz
+endfunc
+
 " Test for fuzzy completion for user defined custom completion function
 func Test_fuzzy_completion_custom_func()
   func Tcompl(a, c, p)
