@@ -560,7 +560,8 @@ local to_lua_value = {
 }
 
 --- Converts a vimoption_T style value to a Lua value
-local function convert_value_to_lua(info, option_value)
+local function convert_value_to_lua(name, option_value)
+  local info = get_options_info(name) or error('Not a valid option name: ' .. name)
   return to_lua_value[info.metatype](info, option_value)
 end
 
@@ -569,8 +570,6 @@ local function create_option_accessor(scope)
   local option_mt
 
   local function make_option(name, value, op_count)
-    local info = get_options_info(name) or error('Not a valid option name: ' .. name)
-
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")
 
@@ -581,14 +580,13 @@ local function create_option_accessor(scope)
     return setmetatable({
       _name = name,
       _value = value,
-      _info = info,
       _op_count = op_count,
     }, option_mt)
   end
 
   option_mt = {
     get = function(self)
-      return convert_value_to_lua(self._info, self._value)
+      return convert_value_to_lua(self._name, self._value)
     end,
 
     append = function(self, right)

@@ -334,7 +334,7 @@ err:
 /// @param[out] err  Error details, if any
 /// @return          Option value
 Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
-                             Error *err)
+                             Arena *arena, Error *err)
   FUNC_API_SINCE(9)
 {
   OptIndex opt_idx = 0;
@@ -390,7 +390,6 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   vimoption_T *option = get_option(opt_idx);
   // Not sure if we need get_varp_scope_from
   void *varp = get_varp_scope(option, opt_flags);
-  Arena arena = ARENA_EMPTY;
   char *argp = NULL;
   switch (optval_right.type) {
   case kOptValTypeNil:
@@ -399,12 +398,12 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
     // We need a leading equal sign because get_option_newval is used for
     // cmdline stuff and expects an =
-    argp = arena_printf(&arena, "=%s", optval_escaped).data;
+    argp = arena_printf(arena, "=%s", optval_escaped).data;
     XFREE_CLEAR(optval_escaped);
     break;
   }
   case kOptValTypeNumber:
-    argp = arena_printf(&arena, "=%" PRId64, optval_right.data.number).data;
+    argp = arena_printf(arena, "=%" PRId64, optval_right.data.number).data;
     break;
   case kOptValTypeBoolean:
     merged_val = optval_right;
@@ -416,7 +415,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   if (optval_right.type == kOptValTypeNumber || optval_right.type == kOptValTypeString) {
     merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
                                    option->flags, varp, NULL, 0, &errmsg);
-    arena_mem_free(arena_finish(&arena));
+    arena_mem_free(arena_finish(arena));
     VALIDATE(errmsg == NULL, "%s", errmsg, {
       return NIL;
     });
@@ -426,6 +425,16 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     WITH_SCRIPT_CONTEXT(channel_id, {
       set_option_value_for(name.data, opt_idx, merged_val, opt_flags, scope, to, err);
     });
+  }
+
+  if (merged_val.type == kOptValTypeString) {
+    String arena_val = arena_string(arena, merged_val.data.string);
+    optval_free(merged_val);
+    // Unfortunately, we return the value as a string rather than converting
+    // to lua value. This is because if we convert to a lua value, maps may
+    // not return in the expected order. I'm not sure if the order matters
+    // for any of the map options.
+    return STRING_OBJ(arena_val);
   }
 
   return optval_as_object(merged_val);
