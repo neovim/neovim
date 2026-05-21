@@ -205,12 +205,13 @@ end
 
 local hlopts = { undo_restore = false, invalidate = true, priority = 1 }
 --- Move messages to expanded cmdline, dialog or pager to show in full.
+--- Return updated target+buffer in case it differs from 'src'.
 function M.expand_msg(src, tgt)
   -- Copy and clear message from src to enlarged cmdline that is dismissed by any
   -- key press. Append to pager instead if it isn't hidden or we want to enter it
   -- after cmdline was entered during expanded cmdline.
   local hidden = api.nvim_win_get_config(ui.wins.pager).hide
-  tgt = tgt or not hidden and 'pager' or 'cmd'
+  tgt = tgt or not hidden and 'pager' or 'cmd' ---@type 'cmd'|'dialog'|'msg'|'pager'
   if tgt ~= src then
     local srow = hidden and 0 or api.nvim_buf_line_count(ui.bufs.pager)
     local opts = { details = true, type = 'highlight' }
@@ -238,12 +239,12 @@ function M.expand_msg(src, tgt)
     end
   end
   M.set_pos(tgt)
+  return tgt, ui.bufs[tgt]
 end
 
--- Keep track of the current message column to be able to
--- append or overwrite messages for :echon or carriage returns.
-local col = 0
+local col = 0 -- Current message column appended to with :echon or reset for carriage return.
 local cmd_timer ---@type uv.uv_timer_t? Timer resetting cmdline state next event loop.
+
 ---@param tgt 'cmd'|'dialog'|'msg'|'pager'
 ---@param kind string
 ---@param content MsgContent
@@ -289,8 +290,46 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   local start_row, width = row, M.msg.width
   col = mark[2] or (append and not cr and math.min(col, #curline) or 0)
   local start_col, insert = col, false
+  local stime, lines, code = vim.uv.hrtime(), o.lines, nil
 
-  -- Accumulate to be inserted and highlighted message chunks.
+  local function set_target_pos()
+    if tgt == 'msg' then
+      api.nvim_win_set_width(ui.wins.msg, width)
+      local texth = api.nvim_win_text_height(ui.wins.msg, { start_row = start_row, end_row = row })
+      if texth.all > math.ceil(lines * 0.5) then
+        tgt, buf = M.expand_msg(tgt)
+      else
+        M.msg.width = width
+        M.msg:start_timer(ui.bufs[tgt], id)
+        M.set_pos(tgt)
+      end
+    elseif tgt == 'cmd' and dupe == 0 then
+      fn.clearmatches(ui.wins.cmd) -- Clear matchparen highlights.
+      if ui.cmd.srow > 0 then
+        -- In block mode the cmdheight is already dynamic, so just print the full message
+        -- regardless of height. Put cmdline below message.
+        ui.cmd.srow = row + 1
+      else
+        api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 }) -- ensure first line is visible
+        -- Place [+x] indicator for lines that spill over 'cmdheight'.
+        local texth = api.nvim_win_text_height(ui.wins.cmd, { max_height = lines })
+        texth.all = math.max(texth.all, api.nvim_buf_line_count(ui.bufs.cmd))
+        local spill = texth.all > ui.cmdheight and (' [+%d]'):format(texth.all - ui.cmdheight)
+        M.virt.cmd[M.virt.idx.spill][1] = spill and { 0, spill } or nil
+        M.cmd.msg_row = texth.end_row
+
+        -- Expand the cmdline for a non-error message that doesn't fit.
+        local expand = ui.cfg.msg.cmd.height < 1 or ui.cfg.msg.cmd.height > ui.cmdheight
+        local error_kinds = { rpc_error = 1, emsg = 1, echoerr = 1, lua_error = 1 }
+        if expand and texth.all > ui.cmdheight and (ui.cmdheight == 0 or not error_kinds[kind]) then
+          tgt, buf = M.expand_msg(tgt)
+        end
+      end
+    elseif tgt ~= 'cmd' then
+      M.set_pos(tgt)
+    end
+  end
+
   for i, chunk in ipairs(content) do
     -- Split at newline and write to start of line after carriage return.
     for str in (chunk[2] .. '\0'):gmatch('.-[\n\r%z]') do
@@ -314,63 +353,40 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
         api.nvim_buf_set_extmark(buf, ui.ns, row, col, hlopts)
       end
 
+      -- Show progress and check for CTRL-C when taking a while.
+      local time = vim.uv.hrtime()
+      if time - stime > 100000000 then
+        stime, _, code = time, vim.wait(0, nil, 0)
+        if code == -2 then
+          break -- CTRL-C
+        end
+        set_target_pos()
+        api.nvim__redraw({ flush = true })
+      elseif tgt == 'msg' and (pat == '\n' or (i == #content and pat == '\0')) then
+        width = api.nvim_win_call(ui.wins.msg, function()
+          return math.max(width, fn.strdisplaywidth(curline))
+        end)
+      end
+
       if pat == '\n' then
         row, col, insert = row + 1, 0, mark[1] ~= nil
       else
         col = pat == '\r' and 0 or end_col
       end
-      if tgt == 'msg' and (pat == '\n' or (i == #content and pat == '\0')) then
-        width = api.nvim_win_call(ui.wins.msg, function()
-          return math.max(width, fn.strdisplaywidth(curline))
-        end)
-      end
+    end
+    if code == -2 then
+      break -- CTRL-C
     end
   end
 
   if M[tgt] then
     -- Keep track of message span to replace by ID.
     local opts = { end_row = row, end_col = col, invalidate = true, undo_restore = false }
-    M[tgt].ids[id] = M[tgt].ids[id] or {}
+    M[tgt].prev_id, M[tgt].prev_msg, M[tgt].ids[id] = id, msg, M[tgt].ids[id] or {}
     M[tgt].ids[id].extid = api.nvim_buf_set_extmark(buf, ui.ns, start_row, start_col, opts)
-    M[tgt].prev_id, M[tgt].prev_msg, M[tgt].dupe = id, msg, dupe
   end
 
-  if tgt == 'msg' then
-    api.nvim_win_set_width(ui.wins.msg, width)
-    local texth = api.nvim_win_text_height(ui.wins.msg, { start_row = start_row, end_row = row })
-    if texth.all > math.ceil(o.lines * 0.5) then
-      M.expand_msg(tgt)
-    else
-      M.msg.width = width
-      M.msg:start_timer(buf, id)
-    end
-  elseif tgt == 'cmd' and dupe == 0 then
-    fn.clearmatches(ui.wins.cmd) -- Clear matchparen highlights.
-    if ui.cmd.srow > 0 then
-      -- In block mode the cmdheight is already dynamic, so just print the full message
-      -- regardless of height. Put cmdline below message.
-      ui.cmd.srow = row + 1
-    else
-      api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 }) -- ensure first line is visible
-      -- Place [+x] indicator for lines that spill over 'cmdheight'.
-      local texth = api.nvim_win_text_height(ui.wins.cmd, {})
-      local spill = texth.all > ui.cmdheight and (' [+%d]'):format(texth.all - ui.cmdheight)
-      M.virt.cmd[M.virt.idx.spill][1] = spill and { 0, spill } or nil
-      M.cmd.msg_row = texth.end_row
-
-      -- Expand the cmdline for a non-error message that doesn't fit.
-      local expand = ui.cfg.msg.cmd.height < 1 or ui.cfg.msg.cmd.height > ui.cmdheight
-      local error_kinds = { rpc_error = 1, emsg = 1, echoerr = 1, lua_error = 1 }
-      if expand and texth.all > ui.cmdheight and (ui.cmdheight == 0 or not error_kinds[kind]) then
-        M.expand_msg(tgt)
-      end
-    end
-  end
-
-  -- Set pager/dialog/msg dimensions unless sent to expanded cmdline.
-  if tgt ~= 'cmd' and (tgt ~= 'msg' or M.msg.ids[id]) then
-    M.set_pos(tgt)
-  end
+  set_target_pos()
 
   if M[tgt] and not M.cmd_on_key and row == api.nvim_buf_line_count(buf) - 1 then
     -- Place (x) indicator for repeated messages. Mainly to mitigate unnecessary
@@ -542,7 +558,7 @@ function M.msg_history_show(entries, prev_cmd)
 end
 
 local typed_g = false
-local cmd_on_key = function(key, typed)
+local function cmd_on_key(key, typed)
   -- Don't dismiss for non-typed keys and mouse movement. When 'g' is passed (typed
   -- or mapped), wait until the next key to avoid flickering when the pager is opened.
   if not typed_g and (typed == '' or typed == '<MouseMove>' or typed == 'g' or key == 'g') then
@@ -674,7 +690,7 @@ function M.set_pos(tgt)
       and api.nvim_win_is_valid(win)
       and api.nvim_win_get_config(win)
     if cfg and (tgt or not cfg.hide) then
-      local texth = api.nvim_win_text_height(win, {})
+      local texth = api.nvim_win_text_height(win, { max_height = o.lines })
       local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
       cfg = { hide = false, relative = 'laststatus', col = 10000 } ---@type table
       cfg.row, cfg.height, cfg.border = win_row_height_border(t, texth.all)
@@ -684,6 +700,7 @@ function M.set_pos(tgt)
 
       if tgt == 'cmd' then
         -- Dismiss temporarily expanded cmdline on next keypress and update spill indicator.
+        texth.all = math.max(texth.all, api.nvim_buf_line_count(ui.bufs.cmd))
         local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
         M.virt.cmd[M.virt.idx.spill][1] = spill and { 0, spill } or nil
         set_virttext('cmd', 'cmd')
