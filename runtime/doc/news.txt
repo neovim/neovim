@@ -101,6 +101,8 @@ LUA
 
 • "standalone" Lua interpreter mode `nvim -ll` was removed. Use |-l| script
   mode instead.
+• |vim.opt| no longer supports chaining multiple infix operators (e.g.
+  `vim.opt.wildignore + '*.o' + '*.obj'`).
 
 OPTIONS
 
