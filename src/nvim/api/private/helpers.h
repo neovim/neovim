@@ -66,9 +66,6 @@
 
 #define HAS_KEY(d, typ, key) (((d)->is_set__##typ##_ & (1ULL << KEYSET_OPTIDX_##typ##__##key)) != 0)
 
-#define UNSET_KEY(d, typ, key) \
-  do { (d)->is_set__##typ##_ &= ~(1ULL << KEYSET_OPTIDX_##typ##__##key); } while (0)
-
 #define GET_BOOL_OR_TRUE(d, typ, key) (HAS_KEY(d, typ, key) ? (d)->key : true)
 
 #define PUT(dict, k, v) \
