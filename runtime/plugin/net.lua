@@ -85,6 +85,7 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
 
         vim.api.nvim_exec_autocmds('BufRead', { group = 'filetypedetect', buf = ev.buf })
         vim.bo[ev.buf].modified = false
+        vim.bo[ev.buf].buftype = 'nofile'
         vim.notify(('Loaded %s'):format(url), vim.log.levels.INFO)
       end)
     )
