@@ -1634,6 +1634,10 @@ describe('vim.lsp.buf', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_name(
+          bufnr,
+          vim.fs.joinpath(vim.uv.cwd(), 'Xlsp-location-merge.lua')
+        )
         local function serveropts(character)
           return {
             capabilities = {
@@ -1671,6 +1675,62 @@ describe('vim.lsp.buf', function()
         return response
       end)
       eq(2, #result.items)
+    end)
+
+    it('deduplicates matching locations from multiple servers', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_name(
+          bufnr,
+          vim.fs.joinpath(vim.uv.cwd(), 'Xlsp-location-dedup.lua')
+        )
+        local function location(start_character, end_character)
+          return {
+            range = {
+              start = { line = 0, character = start_character },
+              ['end'] = { line = 0, character = end_character },
+            },
+            uri = vim.uri_from_bufnr(bufnr),
+          }
+        end
+        local function serveropts(locations)
+          return {
+            capabilities = {
+              definitionProvider = true,
+            },
+            handlers = {
+              ['textDocument/definition'] = function(_, _, callback)
+                callback(nil, locations)
+              end,
+            },
+          }
+        end
+        local server1 = _G._create_server(serveropts({ location(0, 1) }))
+        local server2 = _G._create_server(serveropts({ location(0, 1), location(0, 2) }))
+        local win = vim.api.nvim_get_current_win()
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, { 'local x = 10', '', 'print(x)' })
+        vim.api.nvim_win_set_cursor(win, { 3, 6 })
+        local client_id1 = assert(vim.lsp.start({ name = 'dummy1', cmd = server1.cmd }))
+        local client_id2 = assert(vim.lsp.start({ name = 'dummy2', cmd = server2.cmd }))
+        local response
+        vim.lsp.buf.definition({
+          on_list = function(r)
+            response = r
+          end,
+        })
+        vim.lsp.get_client_by_id(client_id1):stop()
+        vim.lsp.get_client_by_id(client_id2):stop()
+
+        local ranges = vim.tbl_map(function(item)
+          return { item.lnum, item.col, item.end_lnum, item.end_col }
+        end, response.items)
+        table.sort(ranges, function(a, b)
+          return a[4] < b[4]
+        end)
+        return ranges
+      end)
+      eq({ { 1, 1, 1, 2 }, { 1, 1, 1, 3 } }, result)
     end)
   end)
 
