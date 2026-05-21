@@ -2154,19 +2154,20 @@ int set_rw_fname(char *fname, char *sfname)
 /// Replaces home directory at the start with `~`.
 ///
 /// @param[out]  ret_buf  Buffer to save results to.
-/// @param[in]  buf_len  ret_buf length.
+/// @param[in]  bufsize  ret_buf size.
 /// @param[in]  buf  buf_T file name is coming from.
 /// @param[in]  fname  File name to write.
-void add_quoted_fname(char *const ret_buf, const size_t buf_len, const buf_T *const buf,
+void add_quoted_fname(char *const ret_buf, const size_t bufsize, const buf_T *const buf,
                       const char *fname)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (fname == NULL) {
     fname = "-stdin-";
   }
-  ret_buf[0] = '"';
-  home_replace(buf, fname, ret_buf + 1, buf_len - 4, true);
-  xstrlcat(ret_buf, "\" ", buf_len);
+  size_t len = 0;
+  ret_buf[len++] = '"';
+  len += home_replace(buf, fname, ret_buf + len, bufsize - 4, true);
+  xstrlcpy(ret_buf + len, "\" ", bufsize - len);
 }
 
 /// Append message for text mode to IObuff.

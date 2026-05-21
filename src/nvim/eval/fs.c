@@ -161,19 +161,24 @@ repeat:
     has_fullname = false;
 
     if (p != NULL) {
+      size_t dirnamelen = 0;
+
       if (c == '.') {
         os_dirname(dirname, MAXPATHL);
         if (has_homerelative) {
           s = xstrdup(dirname);
-          home_replace(NULL, s, dirname, MAXPATHL, true);
+          dirnamelen = home_replace(NULL, s, dirname, MAXPATHL, true);
           xfree(s);
         }
-        size_t namelen = strlen(dirname);
+
+        if (dirnamelen == 0) {
+          dirnamelen = strlen(dirname);
+        }
 
         // Do not call shorten_fname() here since it removes the prefix
         // even though the path does not have a prefix.
-        if (path_fnamencmp(p, dirname, namelen) == 0) {
-          p += namelen;
+        if (path_fnamencmp(p, dirname, dirnamelen) == 0) {
+          p += dirnamelen;
           if (vim_ispathsep(*p)) {
             while (*p && vim_ispathsep(*p)) {
               p++;
@@ -188,10 +193,10 @@ repeat:
           }
         }
       } else {
-        home_replace(NULL, p, dirname, MAXPATHL, true);
+        dirnamelen = home_replace(NULL, p, dirname, MAXPATHL, true);
         // Only replace it when it starts with '~'
         if (*dirname == '~') {
-          s = xstrdup(dirname);
+          s = xmemdupz(dirname, dirnamelen);
           assert(s != NULL);  // suppress clang "Argument with 'nonnull' attribute passed null"
           *fnamep = s;
           xfree(*bufp);
