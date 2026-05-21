@@ -485,10 +485,10 @@ local config = {
     section_order = { 'tui.lua' },
     files = { 'runtime/lua/vim/_meta/tui.lua' },
     section_fmt = function(_name)
-      return 'Startup'
+      return 'Terminfo override'
     end,
     helptag_fmt = function()
-      return { 'startup-tui', 'startup-terminal' }
+      return { 'tui-termdefs' }
     end,
     brief_xform = function(brief)
       local terminfo = require('src.gen.terminfo').fields
@@ -546,17 +546,16 @@ local config = {
       local table_str_rows = {}
       local min_padding = 3 -- padding between table columns
       local max_width = 0 -- max width of col1 + padding + col2
-      local indent = '  '
+      local indent = '    '
       for _, row in ipairs(table_rows) do
         if #row[1] == 0 then
           table.insert(table_str_rows, '')
-          goto continue
+        else
+          local padding = string.rep(' ', col1_max_width + min_padding - #row[1])
+          local val = table.concat(row, padding)
+          max_width = math.max(max_width, #val)
+          table.insert(table_str_rows, indent .. val)
         end
-        local padding = string.rep(' ', col1_max_width + min_padding - #row[1])
-        local val = table.concat(row, padding)
-        max_width = math.max(max_width, #val)
-        table.insert(table_str_rows, indent .. val)
-        ::continue::
       end
 
       -- Add table header
