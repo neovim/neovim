@@ -28,6 +28,7 @@ local fmt = string.format
 
 local wrap = util.wrap
 local md_to_vimdoc = util.md_to_vimdoc
+local align_tags = util.align_tags
 
 local TEXT_WIDTH = 78
 local INDENTATION = 4
@@ -48,6 +49,8 @@ local INDENTATION = 4
 --- @field fn_name_pat? string
 ---
 --- @field fn_xform? fun(fun: nvim.luacats.parser.fun)
+---
+--- @field brief_xform? fun(brief: string): string
 ---
 --- For generated section names.
 --- @field section_fmt fun(name: string): string
@@ -475,6 +478,89 @@ local config = {
         name = ('package-%s'):format(name)
       end
       return name
+    end,
+  },
+  tui = {
+    filename = 'tui.txt',
+    section_order = { 'tui.lua' },
+    files = { 'runtime/lua/vim/_meta/tui.lua' },
+    section_fmt = function(_name)
+      return 'Terminfo override'
+    end,
+    helptag_fmt = function()
+      return { 'tui-termdefs' }
+    end,
+    brief_xform = function(brief)
+      local terminfo = require('src.gen.terminfo').fields
+      local booleans = terminfo.bools
+      local numbers = terminfo.ints
+      local strings = terminfo.strings
+
+      local strings_ext = vim.tbl_map(function(v)
+        return v[1]
+      end, terminfo.strings_ext)
+
+      local unshifted_keys = vim.tbl_map(function(v)
+        return 'key_' .. v[1]
+      end, (vim.tbl_filter(function(v)
+        return not v[2]
+      end, terminfo.termkeys)))
+
+      local shifted_keys = vim.tbl_map(function(v)
+        return 'key_' .. v[1]
+      end, (vim.tbl_filter(function(v)
+        return v[2]
+      end, terminfo.termkeys)))
+
+      local f_keys = { 'key_f1', '...', 'key_f' .. terminfo.func_key_max }
+
+      local table_rows = { { 'Field', 'Type' } }
+      local col1_max_width = 0
+      --- @param defs string[]
+      --- @param type string
+      --- @param omit_padding_row nil | boolean
+      --- @param skip_sort nil | boolean
+      local function add_defs(defs, type, omit_padding_row, skip_sort)
+        if not skip_sort then
+          table.sort(defs)
+        end
+        for _, def in ipairs(defs) do
+          table.insert(table_rows, { def, type })
+          col1_max_width = math.max(col1_max_width, #def)
+        end
+        if not omit_padding_row then
+          table.insert(table_rows, { '', '' })
+        end
+      end
+
+      add_defs(booleans, 'bool')
+      add_defs(numbers, 'int')
+      add_defs(strings, 'string')
+      add_defs(strings_ext, 'string')
+      add_defs(unshifted_keys, 'string')
+      add_defs(shifted_keys, 'string[]')
+      add_defs(f_keys, 'string', true, true)
+
+      -- Convert all the table rows into strings by calculating the padding
+      -- needed between them
+      local table_str_rows = {}
+      local min_padding = 3 -- padding between table columns
+      local max_width = 0 -- max width of col1 + padding + col2
+      local indent = '    '
+      for _, row in ipairs(table_rows) do
+        if #row[1] == 0 then
+          table.insert(table_str_rows, '')
+        else
+          local padding = string.rep(' ', col1_max_width + min_padding - #row[1])
+          local val = table.concat(row, padding)
+          max_width = math.max(max_width, #val)
+          table.insert(table_str_rows, indent .. val)
+        end
+      end
+
+      -- Add table header
+      table.insert(table_str_rows, 2, indent .. string.rep('-', max_width))
+      return (brief:gsub('NVIM_TERMDEFS_TABLE', table.concat(table_str_rows, '\n')))
     end,
   },
 }
@@ -939,6 +1025,21 @@ local function render_fun(fun, classes, cfg)
   return table.concat(ret)
 end
 
+--- @param briefs string[]
+--- @param cfg nvim.gen_vimdoc.Config
+local function render_briefs(briefs, cfg)
+  local ret = {} --- @type string[]
+
+  for _, b in ipairs(briefs) do
+    if cfg.brief_xform then
+      b = cfg.brief_xform(b)
+    end
+    ret[#ret + 1] = b
+  end
+
+  return ret
+end
+
 --- @param funs nvim.luacats.parser.fun[]
 --- @param classes table<string,nvim.luacats.parser.class>
 --- @param cfg nvim.gen_vimdoc.Config
@@ -1063,8 +1164,7 @@ local function render_section(section, add_header)
     vim.list_extend(doc, {
       string.rep('=', TEXT_WIDTH),
       '\n',
-      section.title,
-      fmt('%' .. (TEXT_WIDTH - section.title:len()) .. 's', section.help_tag),
+      align_tags(TEXT_WIDTH)(section.title .. ' ' .. section.help_tag),
     })
   end
 
@@ -1173,7 +1273,7 @@ local function gen_target(cfg)
     sections[f_base] = make_section(
       f_base,
       cfg,
-      briefs,
+      render_briefs(briefs, cfg),
       render_funs(funs, all_classes, cfg),
       render_classes(classes, funs, cfg)
     )

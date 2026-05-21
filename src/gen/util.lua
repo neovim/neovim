@@ -311,7 +311,7 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
     end
     parts[#parts + 1] = '<\n'
   elseif ntype == 'html_block' then
-    local text = node.text:gsub('^<pre>help', '')
+    local text = node.text:gsub('^<pre>help%s*', '')
     text = text:gsub('</pre>%s*$', '')
     parts[#parts + 1] = text
   elseif ntype == 'list_marker_dot' then
@@ -358,7 +358,7 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
 end
 
 --- @param text_width integer
-local function align_tags(text_width)
+function M.align_tags(text_width)
   --- @param line string
   --- @return string
   return function(line)
@@ -393,7 +393,7 @@ function M.md_to_vimdoc(text, start_indent, indent, text_width, is_list)
 
   local lines = vim.split(table.concat(ret):gsub(NBSP, ' '), '\n')
 
-  lines = vim.tbl_map(align_tags(text_width), lines)
+  lines = vim.tbl_map(M.align_tags(text_width), lines)
 
   local s = table.concat(lines, '\n')
 

@@ -69,94 +69,7 @@ style" sequence, and set the <Home> and <S-Home> sequences: >
   }' nvim
 <
 Be careful when putting escape sequences in strings, as JSON uses unicode
-escapes like `\u001b`. The following fields are supported. For fields of type
-`string[]`, the first entry is the unshifted variant of the key, and the
-second entry is the shifted variant.
->
-  Field                      Type
-  ------------------------------------------------------------
-  carriage_return            string
-  change_scroll_region       string
-  clear_screen               string
-  clr_eol                    string
-  clr_eos                    string
-  cursor_address             string
-  cursor_down                string
-  cursor_home                string
-  cursor_invisible           string
-  cursor_left                string
-  cursor_normal              string
-  cursor_right               string
-  cursor_up                  string
-  delete_line                string
-  enter_blink_mode           string
-  enter_bold_mode            string
-  enter_ca_mode              string
-  enter_dim_mode             string
-  enter_italics_mode         string
-  enter_reverse_mode         string
-  enter_secure_mode          string
-  enter_standout_mode        string
-  enter_underline_mode       string
-  erase_chars                string
-  exit_attribute_mode        string
-  exit_ca_mode               string
-  from_status_line           string
-  insert_line                string
-  keypad_local               string
-  keypad_xmit                string
-  parm_delete_line           string
-  parm_down_cursor           string
-  parm_insert_line           string
-  parm_left_cursor           string
-  parm_right_cursor          string
-  parm_up_cursor             string
-  set_a_background           string
-  set_a_foreground           string
-  set_attributes             string
-  set_lr_margin              string
-  to_status_line             string
-
-  enter_strikethrough_mode   string
-  reset_cursor_color         string
-  reset_cursor_style         string
-  set_cursor_color           string
-  set_cursor_style           string
-  set_rgb_background         string
-  set_rgb_foreground         string
-  set_underline_style        string
-
-  key_backspace              string
-  key_btab                   string
-  key_clear                  string
-  key_npage                  string
-  key_ppage                  string
-  key_select                 string
-
-  key_beg                    string[]
-  key_dc                     string[]
-  key_end                    string[]
-  key_find                   string[]
-  key_home                   string[]
-  key_ic                     string[]
-  key_left                   string[]
-  key_right                  string[]
-  key_suspend                string[]
-  key_undo                   string[]
-
-  key_f1                     string
-  ...
-  key_f63                    string
-
-  RGB                        bool
-  Su                         bool
-  Tc                         bool
-  back_color_erase           bool
-
-  columns                    int
-  lines                      int
-  max_colors                 int
-<
+escapes like `\u001b`. For all available fields, see |tui-termdefs|.
 
 								*$TERM*
 The $TERM environment variable must match the terminal you are using!
@@ -394,5 +307,96 @@ colours of whitespace are immaterial, in practice they change the colours of
 cursors and selections that cross them.  This may have a visible, but minor,
 effect on some UIs.
 
+==============================================================================
+Terminfo override                                               *tui-termdefs*
 
- vim:et:sw=2:tw=78:ts=8:ft=help:norl:
+Below are the available fields in |$NVIM_TERMDEFS|. For keys of type `string[]`,
+the first entry is the unshifted variant of the key, and the second entry is
+the shifted variant. >
+
+    Field                      Type
+    -----------------------------------
+    RGB                        bool
+    Su                         bool
+    Tc                         bool
+    back_color_erase           bool
+
+    columns                    int
+    lines                      int
+    max_colors                 int
+
+    carriage_return            string
+    change_scroll_region       string
+    clear_screen               string
+    clr_eol                    string
+    clr_eos                    string
+    cursor_address             string
+    cursor_down                string
+    cursor_home                string
+    cursor_invisible           string
+    cursor_left                string
+    cursor_normal              string
+    cursor_right               string
+    cursor_up                  string
+    delete_line                string
+    enter_blink_mode           string
+    enter_bold_mode            string
+    enter_ca_mode              string
+    enter_dim_mode             string
+    enter_italics_mode         string
+    enter_reverse_mode         string
+    enter_secure_mode          string
+    enter_standout_mode        string
+    enter_underline_mode       string
+    erase_chars                string
+    exit_attribute_mode        string
+    exit_ca_mode               string
+    from_status_line           string
+    insert_line                string
+    keypad_local               string
+    keypad_xmit                string
+    parm_delete_line           string
+    parm_down_cursor           string
+    parm_insert_line           string
+    parm_left_cursor           string
+    parm_right_cursor          string
+    parm_up_cursor             string
+    set_a_background           string
+    set_a_foreground           string
+    set_attributes             string
+    set_lr_margin              string
+    to_status_line             string
+
+    enter_strikethrough_mode   string
+    reset_cursor_color         string
+    reset_cursor_style         string
+    set_cursor_color           string
+    set_cursor_style           string
+    set_rgb_background         string
+    set_rgb_foreground         string
+    set_underline_style        string
+
+    key_backspace              string
+    key_btab                   string
+    key_clear                  string
+    key_npage                  string
+    key_ppage                  string
+    key_select                 string
+
+    key_beg                    string[]
+    key_dc                     string[]
+    key_end                    string[]
+    key_find                   string[]
+    key_home                   string[]
+    key_ic                     string[]
+    key_left                   string[]
+    key_right                  string[]
+    key_suspend                string[]
+    key_undo                   string[]
+
+    key_f1                     string
+    ...                        string
+    key_f63                    string
+<
+
+ vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
