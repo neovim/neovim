@@ -3317,9 +3317,8 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
                                       IOSIZE - bufferlen, "%s", name);
   } else {
     name = (!fullname && curbuf->b_fname != NULL) ? curbuf->b_fname : curbuf->b_ffname;
-    home_replace(shorthelp ? curbuf : NULL, name, buffer + bufferlen,
-                 IOSIZE - bufferlen, true);
-    bufferlen += strlen(buffer + bufferlen);
+    bufferlen += home_replace(shorthelp ? curbuf : NULL, name,
+                              buffer + bufferlen, IOSIZE - bufferlen, true);
   }
 
   bool dontwrite = bt_dontwrite(curbuf);

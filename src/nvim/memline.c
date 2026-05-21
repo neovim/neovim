@@ -669,13 +669,12 @@ static void set_b0_fname(ZeroBlock *b0p, buf_T *buf)
     // editing the same file on different machines over a network.
     // First replace home dir path with "~/" with home_replace().
     // Then insert the user name to get "~user/".
-    home_replace(NULL, buf->b_ffname, b0p->b0_fname,
-                 B0_FNAME_SIZE_CRYPT, true);
+    size_t flen = home_replace(NULL, buf->b_ffname, b0p->b0_fname,
+                               B0_FNAME_SIZE_CRYPT, true);
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
       int retval = os_get_username(uname, B0_UNAME_SIZE);
       size_t ulen = strlen(uname);
-      size_t flen = strlen(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
         xstrlcpy(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
       } else {
