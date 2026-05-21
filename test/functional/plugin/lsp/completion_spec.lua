@@ -927,7 +927,12 @@ describe('vim.lsp.completion: protocol', function()
           abbr_hlgroup = '',
           user_data = {
             nvim = {
-              lsp = { client_id = 1, completion_item = { label = 'hello' } },
+              lsp = {
+                client_id = 1,
+                completion_item = { label = 'hello' },
+                info_kind = 'markdown',
+                completion_item_needs_resolving = false,
+              },
             },
           },
           word = 'hello',
@@ -946,6 +951,8 @@ describe('vim.lsp.completion: protocol', function()
               lsp = {
                 client_id = 1,
                 completion_item = { label = 'hercules', tags = { 1 } },
+                info_kind = 'markdown',
+                completion_item_needs_resolving = false,
               },
             },
           },
@@ -965,6 +972,8 @@ describe('vim.lsp.completion: protocol', function()
               lsp = {
                 client_id = 1,
                 completion_item = { label = 'hero', deprecated = true },
+                info_kind = 'markdown',
+                completion_item_needs_resolving = false,
               },
             },
           },
