@@ -2243,6 +2243,19 @@ describe('API', function()
       eq(0, eval('g:modeline'))
       eq(1, eval('g:bufloaded'))
     end)
+
+    it('expands env vars', function()
+      -- I don't know why setting vim.env.INCLUDE doesn't work here.
+      clear { env = { INCLUDE = '/dev/null' } }
+      api.nvim_set_option_value('path', '$INCLUDE', {})
+      eq('/dev/null', api.nvim_get_option_value('path', {}))
+    end)
+
+    it('expands ~', function()
+      clear { env = { HOME = '/dev/null' } }
+      api.nvim_set_option_value('rtp', '~', {})
+      eq('/dev/null', api.nvim_get_option_value('rtp', {}))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()
