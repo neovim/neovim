@@ -597,6 +597,22 @@ describe('lua stdlib', function()
           return vim.o.wildchar
         end)
       end)
+
+      it('expands env vars', function()
+        eq_exec_lua('/dev/null', function()
+          vim.fn.setenv('INCLUDE', '/dev/null')
+          vim.o.path = '$INCLUDE'
+          return vim.o.path
+        end)
+      end)
+
+      it('expands ~', function()
+        eq_exec_lua('/dev/null', function()
+          vim.fn.setenv('HOME', '/dev/null')
+          vim.o.rtp = '~'
+          return vim.o.rtp
+        end)
+      end)
     end)
 
     describe('vim.bo', function()
@@ -1303,6 +1319,22 @@ describe('lua stdlib', function()
             vim.opt.formatoptions:prepend('t')
             return vim.opt.formatoptions:get()
           end)
+        end)
+      end)
+
+      it('expands env vars', function()
+        eq_exec_lua({ '/dev/null' }, function()
+          vim.env.INCLUDE = '/dev/null'
+          vim.opt.path = '$INCLUDE'
+          return vim.opt.path:get()
+        end)
+      end)
+
+      it('expands ~', function()
+        eq_exec_lua({ '/dev/null' }, function()
+          vim.env.HOME = '/dev/null'
+          vim.opt.rtp = '~'
+          return vim.opt.rtp:get()
         end)
       end)
     end) -- vim.opt

@@ -70,7 +70,7 @@ API
 • |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
   `msg_show.progress` events.
 • |vim.o|, |vim.opt|, and |nvim_set_option_value()| expand `~` and environment
-  variables.
+  variables (|expand-env|).
 
 DIAGNOSTICS
 
