@@ -363,15 +363,11 @@ describe('Remote', function()
     end)
 
     it('does not execute +cmd before --remote on the server', function()
-      local code, stdout, stderr = run_remote(
-        {
-          '+echo "local"',
-          '--remote',
-          '+echo "remote"',
-        },
-        nil,
-        nil
-      )
+      local code, stdout, stderr = run_remote({
+        '+echo "local"',
+        '--remote',
+        '+echo "remote"',
+      }, nil, nil)
       eq(0, code)
       eq('remote', normalized_stdout(stdout))
       eq('', stderr)
