@@ -367,12 +367,11 @@ local type_mappings = {
 }
 
 local function valid_types(name, metatype)
-  -- Allow strings for special number options like wildchar and wildcharm.
+  -- Allow strings for special number options
   if name == 'wildchar' or name == 'wildcharm' then
     return { 'number', 'string' }
-  else
-    return type_mappings[metatype]
   end
+  return type_mappings[metatype]
 end
 
 -- Map of functions to take a Lua style value and convert to vimoption_T style value.
@@ -569,7 +568,7 @@ local function create_option_accessor(scope)
   --- @diagnostic disable-next-line: no-unknown
   local option_mt
 
-  local function make_option(name, value)
+  local function make_option(name, value, op_count)
     local info = get_options_info(name) or error('Not a valid option name: ' .. name)
 
     if type(value) == 'table' and getmetatable(value) == option_mt then
@@ -583,6 +582,7 @@ local function create_option_accessor(scope)
       _name = name,
       _value = value,
       _info = info,
+      _op_count = op_count,
     }, option_mt)
   end
 
@@ -595,15 +595,34 @@ local function create_option_accessor(scope)
       vim.api.nvim_set_option_value(self._name, right, { operation = 'append', scope = scope })
     end,
 
-    __add = function(self, right)
+    __infix = function(self, right, operation)
+      -- TODO(kylesower): support multiple infix operations. Right now this
+      -- doesn't work because nvim_set_option_value uses get_option_newval to
+      -- merge the values, and that always expects a varp pointer that points
+      -- to the existing option value. Thus, when a new value is computed with
+      -- an infix op, but the option isn't updated, subsequent infix ops still
+      -- use the outdated option value.
+      -- This could be resolved by updating the option value when computing
+      -- the infix ops; however, this would then turn the infix ops into
+      -- assignments. The full solution to the problem requires computing the
+      -- infix op of two arbitrary values (not just one value compared to an
+      -- existing option).
+      if self._op_count > 0 then
+        error('Multiple vim.opt infix operations unsupported')
+      end
       return make_option(
         self._name,
         vim.api.nvim_set_option_value(
           self._name,
           right,
-          { operation = 'append', scope = scope, dry_run = true }
-        )
+          { operation = operation, scope = scope, dry_run = true }
+        ),
+        self._op_count + 1
       )
+    end,
+
+    __add = function(self, right)
+      return self:__infix(right, 'append')
     end,
 
     prepend = function(self, right)
@@ -611,14 +630,7 @@ local function create_option_accessor(scope)
     end,
 
     __pow = function(self, right)
-      return make_option(
-        self._name,
-        vim.api.nvim_set_option_value(
-          self._name,
-          right,
-          { operation = 'prepend', scope = scope, dry_run = true }
-        )
-      )
+      return self:__infix(right, 'prepend')
     end,
 
     remove = function(self, right)
@@ -626,14 +638,7 @@ local function create_option_accessor(scope)
     end,
 
     __sub = function(self, right)
-      return make_option(
-        self._name,
-        vim.api.nvim_set_option_value(
-          self._name,
-          right,
-          { operation = 'remove', scope = scope, dry_run = true }
-        )
-      )
+      return self:__infix(right, 'remove')
     end,
   }
   option_mt.__index = option_mt
@@ -643,11 +648,11 @@ local function create_option_accessor(scope)
       -- vim.opt_global must get global value only
       -- vim.opt_local may fall back to global value like vim.opt
       local opts = { scope = scope == 'global' and 'global' or nil }
-      return make_option(k, api.nvim_get_option_value(k, opts))
+      return make_option(k, api.nvim_get_option_value(k, opts), 0)
     end,
 
     __newindex = function(_, k, v)
-      local option = make_option(k, v)
+      local option = make_option(k, v, 0)
       api.nvim_set_option_value(option._name, option._value, { scope = scope })
     end,
   })

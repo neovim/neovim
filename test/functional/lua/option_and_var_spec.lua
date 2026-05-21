@@ -920,12 +920,17 @@ describe('lua stdlib', function()
           end)
         end)
 
-        it('allows adding dict style', function()
-          eq_exec_lua('eol:~,space:_', function()
-            vim.opt.listchars = { eol = '~', space = '.' }
-            vim.opt.listchars = vim.opt.listchars + { space = '-' } + { space = '_' }
-            return vim.o.listchars
-          end)
+        it('does not allow adding dict style multiple times', function()
+          matches(
+            'Multiple vim.opt infix operations unsupported',
+            pcall_err(
+              exec_lua,
+              [[
+              vim.opt.listchars = { eol = '~', space = '.' }
+              vim.opt.listchars = vim.opt.listchars + { space = '-' } + { space = '_' }
+            ]]
+            )
+          )
         end)
 
         it('allows completely new keys', function()
@@ -944,20 +949,30 @@ describe('lua stdlib', function()
           end)
         end)
 
-        it('allows subtracting dict style', function()
-          eq_exec_lua('', function()
-            vim.opt.listchars = { eol = '~', space = '.' }
-            vim.opt.listchars = vim.opt.listchars - 'space' - 'eol'
-            return vim.o.listchars
-          end)
+        it('does not allow subtracting dict style multiple times', function()
+          matches(
+            'Multiple vim.opt infix operations unsupported',
+            pcall_err(
+              exec_lua,
+              [[
+              vim.opt.listchars = { eol = '~', space = '.' }
+              vim.opt.listchars = vim.opt.listchars - 'space' - 'eol'
+            ]]
+            )
+          )
         end)
 
-        it('allows subtracting dict style multiple times', function()
-          eq_exec_lua('eol:~', function()
-            vim.opt.listchars = { eol = '~', space = '.' }
-            vim.opt.listchars = vim.opt.listchars - 'space' - 'space'
-            return vim.o.listchars
-          end)
+        it('does not allow subtracting dict style multiple times', function()
+          matches(
+            'Multiple vim.opt infix operations unsupported',
+            pcall_err(
+              exec_lua,
+              [[
+              vim.opt.listchars = { eol = '~', space = '.' }
+              vim.opt.listchars = vim.opt.listchars - 'space' - 'space'
+            ]]
+            )
+          )
         end)
 
         it('allows adding a key:value string to a listchars', function()
@@ -1039,12 +1054,17 @@ describe('lua stdlib', function()
         end)
       end)
 
-      it('allows adding multiple times', function()
-        eq_exec_lua('foo,bar,baz', function()
-          vim.opt.wildignore = 'foo'
-          vim.opt.wildignore = vim.opt.wildignore + 'bar' + 'baz'
-          return vim.o.wildignore
-        end)
+      it('does not allow adding multiple times', function()
+        matches(
+          'Multiple vim.opt infix operations unsupported',
+          pcall_err(
+            exec_lua,
+            [[
+            vim.opt.wildignore = 'foo'
+            vim.opt.wildignore = vim.opt.wildignore + 'bar' + 'baz'
+          ]]
+          )
+        )
       end)
 
       it('removes values when you use minus', function()
@@ -1091,6 +1111,10 @@ describe('lua stdlib', function()
             return vim.bo.tabstop
           end)
 
+          matches(
+            "Invalid option type 'string' for 'tabstop'",
+            pcall_err(exec_lua, [[vim.opt.tabstop = '4']])
+          )
           matches(
             "Invalid option type 'boolean' for 'tabstop'",
             pcall_err(exec_lua, [[vim.opt.tabstop = true]])
