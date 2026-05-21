@@ -719,18 +719,6 @@ function M.virtual_lines.hide(namespace, bufnr)
 end
 
 
---- Clear the msg area when moved to a line without a diagnostic.
---- Only do this once, right after the diagnostic has been shown.
-local function clear_ui2_msg()
-  vim.api.nvim_create_autocmd('CursorMoved', {
-    once = true,
-    group = vim.api.nvim_create_augroup('TODO', {}),
-    callback = function()
-      vim.api.nvim_echo({ { '' } }, false, { kind = 'empty' })
-    end,
-  })
-end
-
 --- @param d vim.Diagnostic
 --- @return [string, string?][]
 local function format_ui2(d)
@@ -771,10 +759,6 @@ function M.ui2.show(namespace, bufnr, diagnostics, opts)
         string.format('nvim.%s.diagnostic.ui2', ns.name),
         { clear = true }
       )
-      ns.user_data.ui2_clear_augroup = api.nvim_create_augroup(
-        string.format('nvim.%s.diagnostic.ui2.clear', ns.name),
-        { clear = true }
-      )
     end
 
     api.nvim_clear_autocmds({ group = ns.user_data.ui2_augroup, buf = bufnr })
@@ -789,28 +773,18 @@ function M.ui2.show(namespace, bufnr, diagnostics, opts)
       callback = function()
         diagnostics = diagnostic_shared.diagnostics_at_cursor(line_diagnostics)
         if #diagnostics == 0 then
+          vim.api.nvim_echo({ { '' } }, false, { kind = 'diagnostic' })
           return
         end
 
         -- TODO: severity_sort
-        if true then
-          table.sort(diagnostics, function(a, b)
-            return diagnostic_shared.diagnostic_cmp(a, b, 'severity', false)
-          end)
-        end
+        table.sort(diagnostics, function(a, b)
+          return diagnostic_shared.diagnostic_cmp(a, b, 'severity', false)
+        end)
 
         local fmt = ui2opts.format or format_ui2
         local chunks = fmt(diagnostics[1]) -- TODO: join with { '\n' }
-        vim.api.nvim_echo(chunks, false, { kind = 'echo' })
-
-        -- Clear msg area after moving
-        vim.api.nvim_create_autocmd('CursorMoved', {
-          once = true,
-          group = ns.user_data.ui2_clear_augroup,
-          callback = function()
-            vim.api.nvim_echo({ { ' ' } }, false, { kind = 'empty' })
-          end,
-        })
+        vim.api.nvim_echo(chunks, false, { kind = 'diagnostic' })
       end,
     })
   end)
@@ -824,9 +798,9 @@ function M.ui2.hide(namespace, bufnr)
   if ns.user_data.ui2_ns then
     if api.nvim_buf_is_valid(bufnr) then
       api.nvim_clear_autocmds({ group = ns.user_data.ui2_augroup, buf = bufnr })
-      api.nvim_clear_autocmds({ group = ns.user_data.ui2_clear_augroup, buf = bufnr })
     end
   end
+  vim.api.nvim_echo({ { '' } }, false, { kind = 'diagnostic' })
 end
 
 return M
