@@ -110,13 +110,13 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
   }
 
   if (operation != NULL && HAS_KEY_X(opts, operation)) {
-    if (!strcmp(opts->operation.data, "set")) {
+    if (strequal(opts->operation.data, "set")) {
       *operation = OP_NONE;
-    } else if (!strcmp(opts->operation.data, "append")) {
+    } else if (strequal(opts->operation.data, "append")) {
       *operation = OP_ADDING;
-    } else if (!strcmp(opts->operation.data, "prepend")) {
+    } else if (strequal(opts->operation.data, "prepend")) {
       *operation = OP_PREPENDING;
-    } else if (!strcmp(opts->operation.data, "remove")) {
+    } else if (strequal(opts->operation.data, "remove")) {
       *operation = OP_REMOVING;
     } else {
       VALIDATE_EXP(false, "operation", "'set', 'append', 'prepend', or 'remove'", NULL, {
