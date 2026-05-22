@@ -5488,9 +5488,6 @@ vim.wo.scr = vim.wo.scroll
 --- Minimum is 1, maximum is 1000000.
 --- Only in `terminal` and `prompt-buffer` buffers.
 ---
---- Note: Lines that are not visible and kept in terminal scrollback are not
---- reflown when the terminal buffer is resized horizontally.
----
 --- @type integer
 vim.o.scrollback = -1
 vim.o.scbk = vim.o.scrollback
