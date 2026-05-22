@@ -1,6 +1,6 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local lsp_transport = require('vim.lsp._transport')
+local vim_transport = require('vim.net._transport')
 local strbuffer = require('vim._core.stringbuffer')
 local validate = vim.validate
 
@@ -25,16 +25,18 @@ end
 --- We ignore lines ending with `\n` that don't contain `content-length`, since some servers
 --- write log to standard output and there's no way to avoid it.
 --- See https://github.com/neovim/neovim/pull/35743#pullrequestreview-3379705828
---- @param header string The header to parse
+--- @param ptr vim._core.stringbuffer.ptr The ptr to buffer to parse
+--- @param start integer The starting index of the buffer to parse, 0-based
+--- @param len integer The length of the header to parse
 --- @return integer
-local function get_content_length(header)
+local function get_content_length(ptr, start, len)
   local state = 'name'
-  local i, len = 1, #header
+  local i, end_ = start, start + len
   local j, name = 1, 'content-length'
   local buf = strbuffer.new()
   local digit = true
-  while i <= len do
-    local c = header:byte(i)
+  while i < end_ do
+    local c = ptr[i]
     if state == 'name' then
       if c >= 65 and c <= 90 then -- lower case
         c = c + 32
@@ -54,7 +56,7 @@ local function get_content_length(header)
         i = i - 1
       end
     elseif state == 'value' then
-      if c == 13 and header:byte(i + 1) == 10 then -- must end with \r\n
+      if c == 13 and ptr[i + 1] == 10 then -- must end with \r\n
         local value = buf:get()
         if digit then
           return vim._assert_integer(value)
@@ -73,7 +75,11 @@ local function get_content_length(header)
     end
     i = i + 1
   end
-  error('Content-Length not found in header: ' .. header)
+  local header = strbuffer.new()
+  for k = start, end_ - 1 do
+    header:put(string.char(ptr[k]))
+  end
+  error('Content-Length not found in header: ' .. header:tostring())
 end
 
 local M = {}
@@ -190,33 +196,36 @@ local default_dispatchers = {
   end,
 }
 
---- @async
-local function message_decoder()
-  local strbuf = strbuffer.new()
-  while true do
-    local header_len ---@type integer?
-    local ptr, len = strbuf:ref()
-    for i = 0, len - 4 do
-      -- Find the header boundary "\r\n\r\n"
-      -- (compare bytes instead of string.find(), to avoid a string alloc).
-      if ptr[i] == 13 and ptr[i + 1] == 10 and ptr[i + 2] == 13 and ptr[i + 3] == 10 then
-        header_len = i + 2
-        break
-      end
-    end
-    if header_len then
-      local header = strbuf:get(header_len)
-      strbuf:skip(2) -- skip past header boundary
-      local content_length = get_content_length(header)
-      while strbuffer.len(strbuf) < content_length do
-        strbuf:put(coroutine.yield())
-      end
-      local body = strbuf:get(content_length)
-      strbuf:put(coroutine.yield(body))
-    else
-      strbuf:put(coroutine.yield())
+--- Parse one `Content-Length` framed message from `strbuf`.
+---
+--- Returns a body after consuming one full frame, returns nil if more bytes are needed.
+--- Raises an error if the buffered data is not a valid frame.
+---
+---@param strbuf vim._core.stringbuffer
+---@return string?
+local function message_decoder(strbuf)
+  local header_len ---@type integer?
+  local ptr, len = strbuf:ref()
+  for i = 0, len - 4 do
+    -- Find the header boundary "\r\n\r\n"
+    -- (compare bytes instead of string.find(), to avoid a string alloc).
+    if ptr[i] == 13 and ptr[i + 1] == 10 and ptr[i + 2] == 13 and ptr[i + 3] == 10 then
+      header_len = i + 2
+      break
     end
   end
+
+  if not header_len then
+    return nil
+  end
+
+  local content_length = get_content_length(ptr, 0, header_len)
+  if strbuffer.len(strbuf) < header_len + 2 + content_length then
+    return nil
+  end
+
+  strbuf:skip(header_len + 2) -- skip past header boundary
+  return strbuf:get(content_length)
 end
 
 --- @private
@@ -226,35 +235,25 @@ end
 function M.create_read_loop(handle_body, on_exit, on_error)
   on_exit = on_exit or function() end
   on_error = on_error or function() end
-  local co = coroutine.create(message_decoder)
-  coroutine.resume(co)
-  return function(err, chunk)
-    if err then
-      on_error(err, M.client_errors.READ_ERROR)
-      return
-    end
-
-    if not chunk then
-      on_exit()
-      return
-    end
-
-    if coroutine.status(co) == 'dead' then
-      return
-    end
-
-    while true do
-      local ok, res = coroutine.resume(co, chunk)
-      if not ok then
-        on_error(res, M.client_errors.INVALID_SERVER_MESSAGE)
-        break
-      elseif res then
-        handle_body(res)
-        chunk = ''
+  local message_stream = vim_transport.MessageStream.new(
+    message_decoder,
+    format_message_with_content_length,
+    function(err, chunk)
+      if err then
+        on_error(err, M.client_errors.READ_ERROR)
+      elseif chunk then
+        handle_body(chunk)
       else
-        break
+        on_exit()
       end
+    end,
+    function(err)
+      on_error(err, M.client_errors.INVALID_SERVER_MESSAGE)
     end
+  )
+
+  return function(err, chunk)
+    message_stream:feed(err, chunk)
   end
 end
 
@@ -263,7 +262,8 @@ end
 --- @field private message_index integer
 --- @field private message_callbacks table<integer, function> dict of message_id to callback
 --- @field private notify_reply_callbacks table<integer, function> dict of message_id to callback
---- @field private transport vim.lsp.rpc.Transport
+--- @field private transport vim.Transport
+--- @field private message_stream vim.MessageStream
 --- @field private dispatchers vim.lsp.rpc.Dispatchers
 ---
 --- See [vim.lsp.rpc.request()]
@@ -281,9 +281,11 @@ local Client = {}
 
 ---@package
 ---@param dispatchers vim.lsp.rpc.Dispatchers
----@param transport vim.lsp.rpc.Transport
+---@param transport vim.Transport
+---@param decode fun(buf: vim._core.stringbuffer): string?
+---@param format fun(msg: string): string
 ---@return vim.lsp.rpc.Client
-function Client.new(dispatchers, transport)
+function Client.new(dispatchers, transport, decode, format)
   local result = {
     message_index = 0,
     message_callbacks = {},
@@ -324,27 +326,26 @@ function Client.new(dispatchers, transport)
 
   ---@cast result vim.lsp.rpc.Client
   local self = setmetatable(result, { __index = Client })
-  --- @param body string
-  local function handle_body(body)
-    self:handle_body(body)
-  end
 
-  local function on_exit()
-    ---@diagnostic disable-next-line: invisible
-    self.transport:terminate()
-  end
-
-  --- @param errkind vim.lsp.rpc.ClientErrors
-  local function on_error(err, errkind)
-    self:on_error(errkind, err)
-    if errkind == M.client_errors.INVALID_SERVER_MESSAGE then
+  self.message_stream = vim_transport.MessageStream.new(decode, format, function(err, data)
+    if err then
+      self:on_error(M.client_errors.READ_ERROR, err)
+    elseif data then
+      self:handle_body(data)
+    else
       ---@diagnostic disable-next-line: invisible
       self.transport:terminate()
     end
-  end
+  end, function(err)
+    self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, err)
+    ---@diagnostic disable-next-line: invisible
+    self.transport:terminate()
+  end)
 
-  local on_read = M.create_read_loop(handle_body, on_exit, on_error)
-  transport:listen(on_read, dispatchers.on_exit)
+  transport:listen(function(err, data)
+    ---@diagnostic disable-next-line: invisible
+    self.message_stream:feed(err, data)
+  end, dispatchers.on_exit)
   return self
 end
 
@@ -356,7 +357,7 @@ function Client:encode_and_send(payload)
   end
   local jsonstr = vim.json.encode(payload)
 
-  self.transport:write(format_message_with_content_length(jsonstr))
+  self.transport:write(self.message_stream.encode(jsonstr))
   return true
 end
 
@@ -636,13 +637,13 @@ function M.connect(host_or_path, port)
 
     dispatchers = merge_dispatchers(dispatchers)
 
-    local transport = lsp_transport.TransportConnect.new(host_or_path, port)
-    return Client.new(dispatchers, transport)
+    local transport = vim_transport.TransportConnect.new(host_or_path, port)
+    return Client.new(dispatchers, transport, message_decoder, format_message_with_content_length)
   end
 end
 
 --- Additional context for the LSP server process.
---- @class vim.lsp.rpc.ExtraSpawnParams
+--- @class vim.transport.ExtraSpawnParams
 --- @inlinedoc
 --- @field cwd? string Working directory for the LSP server process
 --- @field detached? boolean Detach the LSP server process from the current process
@@ -654,7 +655,7 @@ end
 ---
 --- @param cmd string[] Command to start the LSP server.
 --- @param dispatchers? vim.lsp.rpc.Dispatchers
---- @param extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
+--- @param extra_spawn_params? vim.transport.ExtraSpawnParams
 --- @return vim.lsp.rpc.Client
 function M.start(cmd, dispatchers, extra_spawn_params)
   log.info('Starting RPC client', { cmd = cmd, extra = extra_spawn_params })
@@ -664,8 +665,8 @@ function M.start(cmd, dispatchers, extra_spawn_params)
 
   dispatchers = merge_dispatchers(dispatchers)
 
-  local transport = lsp_transport.TransportRun.new(cmd, extra_spawn_params)
-  return Client.new(dispatchers, transport)
+  local transport = vim_transport.TransportRun.new(cmd, extra_spawn_params)
+  return Client.new(dispatchers, transport, message_decoder, format_message_with_content_length)
 end
 
 return M
