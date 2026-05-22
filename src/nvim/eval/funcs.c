@@ -1022,6 +1022,20 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
   // Correct cursor for multi-byte character.
   mb_adjust_cursor();
 
+  if (curwin->w_cursor.coladd > 0) {
+    char *ptr = get_cursor_pos_ptr();
+
+    if (*ptr != NUL) {
+      int cells = ptr2cells(ptr);
+      int len = utfc_ptr2len(ptr);
+
+      if (curwin->w_cursor.coladd == cells && ptr[len] == NUL) {
+        curwin->w_cursor.col += len;
+        curwin->w_cursor.coladd = 0;
+      }
+    }
+  }
+
   curwin->w_set_curswant = set_curswant;
   rettv->vval.v_number = 0;
 }

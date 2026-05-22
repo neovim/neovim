@@ -63,4 +63,45 @@ describe('ModeChanged', function()
     eq(2, eval('g:t_count'))
     eq('n', eval('g:t_mode'))
   end)
+
+  it('keeps cursor column when virtualedit changes during ModeChanged', function()
+    exec_lua([[
+      vim.o.virtualedit = 'all'
+
+      vim.api.nvim_create_augroup('test_virtualedit_modechanged', { clear = true })
+
+      vim.api.nvim_create_autocmd('ModeChanged', {
+        group = 'test_virtualedit_modechanged',
+        pattern = 'n:*',
+        callback = function()
+          vim.o.virtualedit = 'onemore'
+        end,
+      })
+
+      vim.api.nvim_create_autocmd('ModeChanged', {
+        group = 'test_virtualedit_modechanged',
+        pattern = '*:n',
+        callback = function()
+          vim.o.virtualedit = 'all'
+        end,
+      })
+
+      vim.api.nvim_create_autocmd('ModeChanged', {
+        group = 'test_virtualedit_modechanged',
+        pattern = 'i:*',
+        callback = function()
+          local pos = vim.fn.getpos("'^")
+          table.remove(pos, 1)
+          vim.fn.cursor(pos)
+        end,
+      })
+    ]])
+
+    feed('cclkj<Esc>')
+
+    eq(
+      { 1, 4, 4, 0, 4 },
+      eval('[line("."), col("."), virtcol("."), getcurpos()[3], getcurpos()[4]]')
+    )
+  end)
 end)
