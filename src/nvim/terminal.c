@@ -2428,9 +2428,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
     uint32_t row = (uint32_t)(screen_row - term->scrollback_rows);
     GhosttyRenderStateRowCells cells = NULL;
     if (render_active_row_cells(term, row, &cells)) {
-      for (int col = 0; col < width; col++) {
-        assert_ok(ghostty_render_state_row_cells_select(cells, (uint16_t)col));
-
+      int col = 0;
+      while (col < width && ghostty_render_state_row_cells_next(cells)) {
         GhosttyCell cell = 0;
         assert_ok(ghostty_render_state_row_cells_get(cells,
                                                      GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
@@ -2443,6 +2442,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
 
         term_attrs[col] = cell_raw_attr(term, GHOSTTY_POINT_TAG_ACTIVE, row, col,
                                         cell, style, colors.palette);
+        col++;
       }
       return;
     }
@@ -3290,16 +3290,17 @@ static size_t fetch_render_row_cells(Terminal *term, GhosttyRenderStateRowCells 
   size_t line_len = 0;
   char *ptr = term->textbuf;
 
-  while (col < end_col) {
-    assert_ok(ghostty_render_state_row_cells_select(cells, (uint16_t)col));
+  while (col < end_col && ghostty_render_state_row_cells_next(cells)) {
     GhosttyCell cell = 0;
     assert_ok(ghostty_render_state_row_cells_get(cells,
                                                  GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
                                                  &cell));
-    append_render_cell_text(term, cells, cell, &ptr, &line_len);
     GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
     assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
-    col += wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
+    if (wide != GHOSTTY_CELL_WIDE_SPACER_TAIL) {
+      append_render_cell_text(term, cells, cell, &ptr, &line_len);
+    }
+    col++;
   }
 
   term->textbuf[line_len] = NUL;
