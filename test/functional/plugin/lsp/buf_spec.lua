@@ -1634,10 +1634,7 @@ describe('vim.lsp.buf', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
-        vim.api.nvim_buf_set_name(
-          bufnr,
-          vim.fs.joinpath(vim.uv.cwd(), 'Xlsp-location-merge.lua')
-        )
+        vim.api.nvim_buf_set_name(bufnr, vim.fs.joinpath(vim.uv.cwd(), 'Xlsp-location-merge.lua'))
         local function serveropts(character)
           return {
             capabilities = {
@@ -1681,10 +1678,7 @@ describe('vim.lsp.buf', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
-        vim.api.nvim_buf_set_name(
-          bufnr,
-          vim.fs.joinpath(vim.uv.cwd(), 'Xlsp-location-dedup.lua')
-        )
+        vim.api.nvim_buf_set_name(bufnr, vim.fs.joinpath(vim.uv.cwd(), 'Xlsp-location-dedup.lua'))
         local function location(start_character, end_character)
           return {
             range = {
