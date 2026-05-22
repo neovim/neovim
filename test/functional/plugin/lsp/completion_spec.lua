@@ -927,7 +927,12 @@ describe('vim.lsp.completion: protocol', function()
           abbr_hlgroup = '',
           user_data = {
             nvim = {
-              lsp = { client_id = 1, completion_item = { label = 'hello' } },
+              lsp = {
+                client_id = 1,
+                completion_item = { label = 'hello' },
+                info_kind = 'markdown',
+                completion_item_needs_resolving = false,
+              },
             },
           },
           word = 'hello',
@@ -946,6 +951,8 @@ describe('vim.lsp.completion: protocol', function()
               lsp = {
                 client_id = 1,
                 completion_item = { label = 'hercules', tags = { 1 } },
+                info_kind = 'markdown',
+                completion_item_needs_resolving = false,
               },
             },
           },
@@ -965,6 +972,8 @@ describe('vim.lsp.completion: protocol', function()
               lsp = {
                 client_id = 1,
                 completion_item = { label = 'hero', deprecated = true },
+                info_kind = 'markdown',
+                completion_item_needs_resolving = false,
               },
             },
           },
@@ -1414,172 +1423,236 @@ describe('vim.lsp.completion: integration', function()
     eq('w-1/2', n.api.nvim_get_current_line())
   end)
 
-  it('selecting an item triggers completionItem/resolve + (snippet) preview', function()
-    local screen = Screen.new(50, 20)
-    screen:add_extra_attr_ids({
-      [100] = { background = Screen.colors.Plum1, foreground = Screen.colors.Blue },
-    })
-    local completion_list = {
-      isIncomplete = false,
-      items = {
-        {
-          insertText = 'nvim__id_array',
-          insertTextFormat = 1,
-          kind = 3,
-          label = 'nvim__id_array(arr)',
-          sortText = '0002',
+  describe('selecting an item triggers (snippet) preview', function()
+    ---@type lsp.CompletionItem[]
+    local incomplete_items = {
+      {
+        -- detail populated but not documentation
+        detail = '(method) nvim__id_array_1(arr: any[]): any[]',
+        insertText = 'nvim__id_array_1',
+        insertTextFormat = 1,
+        kind = 3,
+        label = 'nvim__id_array_1(arr)',
+        sortText = '0001',
+      },
+      {
+        -- documentation populated but not detail
+        documentation = {
+          kind = 'markdown',
+          value = [[```lua\nfunction vim.api.nvim__id_array_2(arr: any[])\n  -> any[]\n```]],
         },
-        {
-          insertText = 'for ${1:i} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
-          insertTextFormat = 2,
-          kind = 15,
-          label = 'for i = ..',
-          sortText = '0003',
+        insertText = 'nvim__id_array_2',
+        insertTextFormat = 1,
+        kind = 3,
+        label = 'nvim__id_array_2(arr)',
+        sortText = '0002',
+      },
+      {
+        insertText = 'for ${1:i} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+        insertTextFormat = 2,
+        kind = 15,
+        label = 'for i = ..',
+        sortText = '0003',
+      },
+      {
+        textEdit = {
+          newText = 'for ${1:j} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+          range = {
+            start = { character = 0, line = 0 },
+            ['end'] = { character = 0, line = 0 },
+          },
         },
-        {
-          insertText = '_assert_integer(${1:x}, ${2:base?})',
-          insertTextFormat = 2,
-          kind = 3,
-          label = '_assert_integer(x, base)',
-          sortText = '0005',
-        },
+        insertTextFormat = 2,
+        kind = 15,
+        label = 'for j = ..',
+        sortText = '0004',
+      },
+      {
+        insertText = '_assert_integer(${1:x}, ${2:base?})',
+        insertTextFormat = 2,
+        kind = 3,
+        label = '_assert_integer(x, base)',
+        sortText = '0005',
       },
     }
-    exec_lua(function()
-      vim.o.completeopt = 'menuone,popup'
-    end)
-    local dummy_client_id = create_server('dummy', completion_list, {
-      resolve_result = {
-        {
-          -- detail not in documentation, should be prepended as code block
-          detail = '(method) nvim__id_array(arr: any[]): any[]',
-          documentation = {
-            kind = 'markdown',
-            value = [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]],
-          },
-          insertText = 'nvim__id_array',
-          insertTextFormat = 1,
-          kind = 3,
-          label = 'nvim__id_array(arr)',
-          sortText = '0002',
+    ---@type lsp.CompletionItem[]
+    local complete_items = {
+      {
+        -- detail not in documentation, should be prepended as code block
+        detail = '(method) nvim__id_array_1(arr: any[]): any[]',
+        documentation = {
+          kind = 'markdown',
+          value = [[```lua\nfunction vim.api.nvim__id_array_1(arr: any[])\n  -> any[]\n```]],
         },
-        {
-          insertText = 'for ${1:i} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
-          insertTextFormat = 2,
-          kind = 15,
-          label = 'for i = ..',
-          sortText = '0003',
-        },
-        {
-          -- detail is in documentation, should not be duplicated
-          detail = '_assert_integer',
-          documentation = {
-            kind = 'markdown',
-            value = [[```lua\nmore doc for vim._assert_integer\n```]],
-          },
-          insertText = 'nvim__id_array',
-          insertTextFormat = 2,
-          kind = 3,
-          label = '_assert_integer',
-          sortText = '0005',
-        },
+        insertText = 'nvim__id_array_1',
+        insertTextFormat = 1,
+        kind = 3,
+        label = 'nvim__id_array_1(arr)',
+        sortText = '0001',
       },
-    })
-
-    feed('S<C-X><C-O>')
-    retry(nil, nil, function()
-      local info = exec_lua(function()
-        local data = vim.fn.complete_info({ 'selected' })
-        if
-          not data.preview_winid
-          or not vim.api.nvim_win_is_valid(data.preview_winid)
-          or not data.preview_bufnr
-          or not vim.api.nvim_buf_is_valid(data.preview_bufnr)
-        then
-          error('preview not ready')
-        end
-        return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n')
-      end)
-      -- item 1: detail is not in documentation, should be prepended
-      neq(nil, info:find('(method) nvim__id_array(arr: any[]): any[]', 1, true))
-      neq(nil, info:find('function vim.api.nvim__id_array', 1, true))
-    end)
-    screen:expect([[
-      nvim__id_array^                                    |
-      {12:nvim__id_array  Function }{100:(method) nvim__id_array(}{1: }|
-      {4:for i = ..      Snippet  }{100:arr: any[]): any[]}{4:      }{1: }|
-      {4:_assert_integer Function }{100:lua\nfunction vim.api}{4:   }{1: }|
-      {1:~                        }{100:.nvim__id_array(arr: any}{1: }|
-      {1:~                        }{100:[])\n  -> any[]\n}{4:       }{1: }|
-      {1:~                                                 }|*13
-      {5:-- INSERT --}                                      |
-    ]])
-    feed('<C-N>')
-    screen:expect([[
-      for i = ..^                                        |
-      {4:nvim__id_array  Function }{100:for i = 1, 10, 1 do}{1:      }|
-      {12:for i = ..      Snippet  }{100:        }{4:           }{1:      }|
-      {4:_assert_integer Function }{100:end}{4:                }{1:      }|
-      {1:~                                                 }|*15
-      {5:-- INSERT --}                                      |
-    ]])
-    feed('<C-N>')
-    retry(nil, nil, function()
-      local info = exec_lua(function()
-        local data = vim.fn.complete_info({ 'selected' })
-        if not data.preview_bufnr or not vim.api.nvim_buf_is_valid(data.preview_bufnr) then
-          error('preview not ready')
-        end
-        return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n')
-      end)
-      neq(nil, info:find('more doc for vim._assert_integer', 1, true))
-      local _, count = info:gsub('_assert_integer', '')
-      -- item 3: detail '_assert_integer' is in documentation, should not be duplicated
-      eq(1, count)
-    end)
-    screen:expect([[
-      _assert_integer(x, base)^                          |
-      {4:nvim__id_array  Function }{100:lua\nmore doc for vim}{4:   }{1: }|
-      {4:for i = ..      Snippet  }{100:._assert_integer\n}{4:      }{1: }|
-      {12:_assert_integer Function }{1:                         }|
-      {1:~                                                 }|*15
-      {5:-- INSERT --}                                      |
-    ]])
-
-    n.command('lua vim.lsp.buf_detach_client(0, ' .. dummy_client_id .. ')')
-    -- Server which doesn't support completionItem/resolve
-    create_server('dummy2', {
-      isIncomplete = false,
-      items = {
-        {
-          insertText = 'package main',
-          insertTextFormat = 1,
-          kind = 9,
-          label = 'package main',
-          sortText = '0001',
+      {
+        -- detail not in documentation, should be prepended as code block
+        detail = '(method) nvim__id_array_2(arr: any[]): any[]',
+        documentation = {
+          kind = 'markdown',
+          value = [[```lua\nfunction vim.api.nvim__id_array_2(arr: any[])\n  -> any[]\n```]],
         },
-        {
-          insertText = 'package ${1:name}',
-          insertTextFormat = 2,
-          kind = 9,
-          label = 'package',
-          sortText = '0002',
-        },
+        insertText = 'nvim__id_array_2',
+        insertTextFormat = 1,
+        kind = 3,
+        label = 'nvim__id_array_2(arr)',
+        sortText = '0002',
       },
-    })
-    feed('<ESC>S<C-x><C-O>')
-    -- No popup shown for item without snippet
-    wait_for_pum()
-    eq(true, n.fn.complete_info({ 'selected' }).preview_bufnr == nil)
-    feed('<C-N>')
-    -- Popup shown for item with snippet
-    screen:expect([[
-      package^                                           |
-      {4:package main Module }{100:package name}{1:                  }|
-      {12:package      Module }{1:                              }|
-      {1:~                                                 }|*16
-      {5:-- INSERT --}                                      |
-    ]])
+      {
+        -- snippet populated in insertText
+        insertText = 'for ${1:i} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+        insertTextFormat = 2,
+        kind = 15,
+        label = 'for i = ..',
+        sortText = '0003',
+      },
+      {
+        -- snippet populated in textEdit.newText
+        textEdit = {
+          newText = 'for ${1:j} = ${2:1}, ${3:10, 1} do\n\t$0\nend',
+          range = {
+            start = { character = 0, line = 0 },
+            ['end'] = { character = 0, line = 0 },
+          },
+        },
+        insertTextFormat = 2,
+        kind = 15,
+        label = 'for j = ..',
+        sortText = '0004',
+      },
+      {
+        -- detail is in documentation, should not be duplicated
+        detail = '_assert_integer',
+        documentation = {
+          kind = 'markdown',
+          value = [[```lua\nmore doc for vim._assert_integer\n```]],
+        },
+        insertText = '_assert_integer(${1:x}, ${2:base?})',
+        insertTextFormat = 2,
+        kind = 3,
+        label = '_assert_integer(x, base)',
+        sortText = '0005',
+      },
+    }
+
+    ---@param opts {items:lsp.CompletionItem[], resolved_items:lsp.CompletionItem[]}
+    local function run_test(opts)
+      local screen = Screen.new(50, 20)
+      screen:add_extra_attr_ids({
+        [100] = { background = Screen.colors.Plum1, foreground = Screen.colors.Blue },
+      })
+      local completion_list = {
+        isIncomplete = false,
+        items = opts.items,
+      }
+      exec_lua(function()
+        vim.o.completeopt = 'menuone,popup'
+      end)
+      create_server('dummy', completion_list, {
+        resolve_result = opts.resolved_items,
+      })
+
+      feed('S<C-X><C-O>')
+      retry(nil, nil, function()
+        local info = exec_lua(function()
+          local data = vim.fn.complete_info({ 'selected' })
+          if
+            not data.preview_winid
+            or not vim.api.nvim_win_is_valid(data.preview_winid)
+            or not data.preview_bufnr
+            or not vim.api.nvim_buf_is_valid(data.preview_bufnr)
+          then
+            error('preview not ready')
+          end
+          return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n')
+        end)
+        -- item 1: detail is not in documentation, should be prepended
+        neq(nil, info:find('(method) nvim__id_array_1(arr: any[]): any[]', 1, true))
+        neq(nil, info:find('function vim.api.nvim__id_array_1', 1, true))
+      end)
+      screen:expect([[
+        nvim__id_array_1^                                  |
+        {12:nvim__id_array_1 Function }{100:(method) nvim__id_array}{1: }|
+        {4:nvim__id_array_2 Function }{100:_1(arr: any[]): any[]}{4:  }{1: }|
+        {4:for i = ..       Snippet  }{100:lua\nfunction vim.ap}{4:   }{1: }|
+        {4:for j = ..       Snippet  }{100:i.nvim__id_array_1(arr:}{1: }|
+        {4:_assert_integer  Function }{100: any[])\n  -> any[]\n}{4:  }{1: }|
+        {1:~                         }{4:                       }{1: }|
+        {1:~                                                 }|*12
+        {5:-- INSERT --}                                      |
+      ]])
+      feed('<C-N>')
+      screen:expect([[
+        nvim__id_array_2^                                  |
+        {4:nvim__id_array_1 Function }{100:(method) nvim__id_array}{1: }|
+        {12:nvim__id_array_2 Function }{100:_2(arr: any[]): any[]}{4:  }{1: }|
+        {4:for i = ..       Snippet  }{100:lua\nfunction vim.ap}{4:   }{1: }|
+        {4:for j = ..       Snippet  }{100:i.nvim__id_array_2(arr:}{1: }|
+        {4:_assert_integer  Function }{100: any[])\n  -> any[]\n}{4:  }{1: }|
+        {1:~                         }{4:                       }{1: }|
+        {1:~                                                 }|*12
+        {5:-- INSERT --}                                      |
+      ]])
+      feed('<C-N>')
+      screen:expect([[
+        for i = ..^                                        |
+        {4:nvim__id_array_1 Function }{100:for i = 1, 10, 1 do}{1:     }|
+        {4:nvim__id_array_2 Function }{100:        }{4:           }{1:     }|
+        {12:for i = ..       Snippet  }{100:end}{4:                }{1:     }|
+        {4:for j = ..       Snippet  }{1:                        }|
+        {4:_assert_integer  Function }{1:                        }|
+        {1:~                                                 }|*13
+        {5:-- INSERT --}                                      |
+      ]])
+      feed('<C-N>')
+      screen:expect([[
+        for j = ..^                                        |
+        {4:nvim__id_array_1 Function }{100:for j = 1, 10, 1 do}{1:     }|
+        {4:nvim__id_array_2 Function }{100:        }{4:           }{1:     }|
+        {4:for i = ..       Snippet  }{100:end}{4:                }{1:     }|
+        {12:for j = ..       Snippet  }{1:                        }|
+        {4:_assert_integer  Function }{1:                        }|
+        {1:~                                                 }|*13
+        {5:-- INSERT --}                                      |
+      ]])
+      feed('<C-N>')
+      retry(nil, nil, function()
+        local info = exec_lua(function()
+          local data = vim.fn.complete_info({ 'selected' })
+          if not data.preview_bufnr or not vim.api.nvim_buf_is_valid(data.preview_bufnr) then
+            error('preview not ready')
+          end
+          return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n')
+        end)
+        neq(nil, info:find('more doc for vim._assert_integer', 1, true))
+        local _, count = info:gsub('_assert_integer', '')
+        -- item 3: detail '_assert_integer' is in documentation, should not be duplicated
+        eq(1, count)
+      end)
+      screen:expect([[
+        _assert_integer(x, base)^                          |
+        {4:nvim__id_array_1 Function }{100:lua\nmore doc for vi}{4:   }{1: }|
+        {4:nvim__id_array_2 Function }{100:m._assert_integer\n}{4:    }{1: }|
+        {4:for i = ..       Snippet  }{1:                        }|
+        {4:for j = ..       Snippet  }{1:                        }|
+        {12:_assert_integer  Function }{1:                        }|
+        {1:~                                                 }|*13
+        {5:-- INSERT --}                                      |
+      ]])
+    end
+
+    it('when server supports completionItem/resolve', function()
+      run_test({ items = incomplete_items, resolved_items = complete_items })
+    end)
+
+    it('when server does not support completionItem/resolve', function()
+      run_test({ items = complete_items })
+    end)
   end)
 
   it('omnifunc works without enable() #38252', function()
