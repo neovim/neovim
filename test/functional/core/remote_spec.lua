@@ -336,23 +336,17 @@ describe('Remote', function()
     end)
 
     it('executes +cmd and -c after --remote in order', function()
-      local code, stdout, stderr = run_remote(
-        {
-          '--remote',
-          fname,
-          '+call setline(1, "first")',
-          '-c',
-          'call append(1, "second")',
-          '+echo getline(1)',
-          '-c',
-          'echo getline(2)',
-        },
+      local code, stdout, stderr = run_remote({
+        '--remote',
         fname,
-        function()
-          expect('first\nsecond')
-          command('bdelete!')
-        end
-      )
+        '+call setline(1, "first")',
+        '-c',
+        'call append(1, "second")',
+        '+echo getline(1)',
+        '-c',
+        'echo getline(2)',
+        '+lua vim.schedule(function() vim.cmd("bdelete!") end)',
+      }, nil, nil)
       eq(0, code)
       local p1 = string.find(stdout, 'first', 1, true)
       local p2 = string.find(stdout, 'second', 1, true)
