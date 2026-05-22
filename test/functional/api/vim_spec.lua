@@ -2256,6 +2256,46 @@ describe('API', function()
       api.nvim_set_option_value('rtp', '~', {})
       eq('/dev/null', api.nvim_get_option_value('rtp', {}))
     end)
+
+    it('allows setting, appending, prepending, and removing lists', function()
+      api.nvim_set_option_value('wildignore', { '*.o', '*.obj' }, {})
+      eq('*.o,*.obj', api.nvim_get_option_value('wildignore', {}))
+
+      api.nvim_set_option_value('wildignore', { '*.a', '*.b', '*.c' }, { operation = 'append' })
+      eq('*.o,*.obj,*.a,*.b,*.c', api.nvim_get_option_value('wildignore', {}))
+
+      api.nvim_set_option_value('wildignore', { '1', '2', '3' }, { operation = 'prepend' })
+      eq('1,2,3,*.o,*.obj,*.a,*.b,*.c', api.nvim_get_option_value('wildignore', {}))
+
+      -- NOTE: you can't remove something like { '1', '*.obj' } because lists
+      -- only support removing items in order. Behavior matches :set-=
+      api.nvim_set_option_value('wildignore', { '1', '2', '3' }, { operation = 'remove' })
+      eq('*.o,*.obj,*.a,*.b,*.c', api.nvim_get_option_value('wildignore', {}))
+    end)
+
+    it('allows setting, appending, prepending, removing tables', function()
+      -- NOTE: order is dependent on lua's hash map implementation. I don't
+      -- *think* order matters for the map style options
+      api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, {})
+      eq('eol:~,space:-', api.nvim_get_option_value('listchars', {}))
+
+      api.nvim_set_option_value(
+        'listchars',
+        { multispace = '---+', tab = '>-' },
+        { operation = 'append' }
+      )
+      eq('eol:~,space:-,multispace:---+,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      api.nvim_set_option_value('listchars', { lead = '.' }, { operation = 'prepend' })
+      eq('lead:.,eol:~,space:-,multispace:---+,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      api.nvim_set_option_value(
+        'listchars',
+        { lead = '', multispace = '' },
+        { operation = 'remove' }
+      )
+      eq('eol:~,space:-,tab:>-', api.nvim_get_option_value('listchars', {}))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()
