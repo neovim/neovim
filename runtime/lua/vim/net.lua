@@ -49,40 +49,23 @@ M.http_status = {
   HTTP_VERSION_NOT_SUPPORTED = 505,
 }
 
----@param res vim.SystemCompleted
+-- dirty hack to split curl's body from metadata in the response using a string that
+-- does not show in the http response
+local split_metadata_body_char = '<>'
+
+---@param res string
 ---@return vim.net.request.Response
 local function parse_response(res)
-  ---@type vim.net.HttpHeaders
-  local headers = {}
-  local body = res.stdout or ''
-  ---@type vim.net.HttpStatusCode
-  local status_code
+  local splitted = vim.split(res, split_metadata_body_char)
+  local body, metadata = splitted[1], splitted[2]
 
-  for line in res.stderr:gmatch('[^\r\n]+') do
-    -- Match lines starting with "< " (response headers/status)
-    local content = line:match('^< (.*)')
-    if content then
-      -- Check for HTTP status line
-      ---@type string
-      local code = content:match('^HTTP/%S+ (%d+)')
-      if code then
-        ---@diagnostic disable-next-line: cast-local-type
-        status_code = tonumber(code)
-        headers = {}
-      else
-        ---@type string,string
-        local key, value = content:match('^([^:]+):%s*(.*)')
-        if key then
-          headers[key] = value
-        end
-      end
-    elseif status_code and line:match('^%s*$') then
-      -- Empty line marks end of header block
-      break
-    end
+  local ok, parsed = pcall(vim.json.decode, metadata)
+  if not ok then
+    error('error on parsing response headers metadata')
   end
 
-  return { body = body, headers = headers, status = status_code }
+  ---@diagnostic disable-next-line: no-unknown
+  return { body = body, headers = parsed.headers, status = tonumber(parsed.status_code) }
 end
 
 ---@alias vim.net.HttpResponseFunc fun(err: string?, response: vim.net.request.Response?)
@@ -197,12 +180,10 @@ function M.request(method, url, opts, on_response)
 
   -- Build curl command
   local args = { 'curl' }
-  if opts.verbose or on_response then
+  if opts.verbose then
     table.insert(args, '--verbose')
-  else
-    vim.list_extend(args, { '--silent', '--show-error', '--fail' })
   end
-  vim.list_extend(args, { '--location', '--retry', tostring(retry) })
+  vim.list_extend(args, { '--silent', '--location', '--retry', tostring(retry) })
 
   if opts.outpath then
     vim.list_extend(args, { '--output', opts.outpath })
@@ -234,6 +215,12 @@ function M.request(method, url, opts, on_response)
     end
   end
 
+  if on_response then
+    local metadata_format = split_metadata_body_char
+      .. '{"status_code":%{http_code},"headers":%{header_json}}'
+    vim.list_extend(args, { '--write-out', metadata_format })
+  end
+
   table.insert(args, url)
 
   local system_opts = opts.body and { stdin = opts.body } or {}
@@ -246,7 +233,7 @@ function M.request(method, url, opts, on_response)
       err = res.stderr ~= '' and res.stderr or ('Request failed with exit code %d'):format(res.code)
     else
       if on_response then
-        response = parse_response(res)
+        response = parse_response(res.stdout)
       end
     end
 
