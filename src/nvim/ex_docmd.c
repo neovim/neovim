@@ -5711,6 +5711,8 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
 
   findarg[findarg_len] = cc;
 
+  TO_SLASH(ret_fname);
+
   return ret_fname;
 }
 

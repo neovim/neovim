@@ -3096,6 +3096,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
                                       FNAME_EXP|FNAME_INCL|FNAME_REL, 1, p_fname,
                                       NULL);
       }
+      TO_SLASH(new_fname);
       bool already_searched = false;
       if (new_fname != NULL) {
         // Check whether we have already searched in this file
