@@ -188,7 +188,7 @@ describe('vim.net.request', function()
     t.eq(true, rv.zipfile)
   end)
 
-  it('accepts custom headers', function()
+  it('accepts custom request headers', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
     ---@type table
     local result = request('GET', 'https://httpbingo.org/anything', {
@@ -247,7 +247,7 @@ describe('vim.net.request', function()
       t.eq(nil, result.error)
       t.eq(expected_status, result.status)
       -- all the response headers in those requests will have the same content-type header
-      t.matches('text/plain', result.headers['content-type'])
+      t.matches('text/plain', result.headers['content-type'][1])
     end
 
     assert_status_and_headers(200, 'GET', 'https://httpbingo.org/status/200')
