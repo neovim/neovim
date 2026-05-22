@@ -166,6 +166,7 @@ struct terminal {
   GhosttyTerminal ghostty;
   GhosttyRenderState ghostty_render_state;
   GhosttyRenderStateRowIterator ghostty_render_row_iterator;
+  GhosttyRenderStateRowCells ghostty_render_row_cells;
   GhosttyKeyEncoder ghostty_key_encoder;
   GhosttyKeyEvent ghostty_key_event;
   GhosttyMouseEncoder ghostty_mouse_encoder;
@@ -875,6 +876,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   assert_ok(ghostty_render_state_new(NULL, &term->ghostty_render_state));
   assert_ok(ghostty_render_state_row_iterator_new(NULL,
                                                   &term->ghostty_render_row_iterator));
+  assert_ok(ghostty_render_state_row_cells_new(NULL,
+                                               &term->ghostty_render_row_cells));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_USERDATA, term));
 
   // ghostty_terminal_set() takes option values as const void *, including
@@ -1584,6 +1587,7 @@ void terminal_destroy(Terminal **termpp)
     ghostty_mouse_encoder_free(term->ghostty_mouse_encoder);
     ghostty_key_event_free(term->ghostty_key_event);
     ghostty_key_encoder_free(term->ghostty_key_encoder);
+    ghostty_render_state_row_cells_free(term->ghostty_render_row_cells);
     ghostty_render_state_row_iterator_free(term->ghostty_render_row_iterator);
     ghostty_render_state_free(term->ghostty_render_state);
     ghostty_terminal_free(term->ghostty);
@@ -2018,6 +2022,27 @@ static bool terminal_ghostty_grid_ref(Terminal *term, GhosttyPointTag tag, uint3
   return true;
 }
 
+static bool render_active_row_cells(Terminal *term, uint32_t row,
+                                    GhosttyRenderStateRowCells *cells)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
+                                     &term->ghostty_render_row_iterator));
+
+  for (uint32_t row_idx = 0; row_idx <= row; row_idx++) {
+    if (!ghostty_render_state_row_iterator_next(term->ghostty_render_row_iterator)) {
+      return false;
+    }
+  }
+
+  *cells = term->ghostty_render_row_cells;
+  assert_ok(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
+                                         GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
+                                         cells));
+  return true;
+}
+
 static int terminal_ghostty_underline_hl_flag(int underline)
 {
   switch (underline) {
@@ -2170,21 +2195,11 @@ static int terminal_ghostty_cell_url_attr(const GhosttyGridRef *ref)
   return attr;
 }
 
-static int terminal_ghostty_cell_attr(Terminal *term, GhosttyPointTag tag, uint32_t row, int col,
-                                      const GhosttyColorRgb palette[256])
+static int cell_raw_attr(Terminal *term, GhosttyPointTag tag, uint32_t row, int col,
+                         GhosttyCell cell, GhosttyStyle style,
+                         const GhosttyColorRgb palette[256])
   FUNC_ATTR_NONNULL_ALL
 {
-  GhosttyGridRef ref = { 0 };
-  if (!terminal_ghostty_grid_ref(term, tag, row, col, &ref)) {
-    return 0;
-  }
-
-  GhosttyCell cell = 0;
-  assert_ok(ghostty_grid_ref_cell(&ref, &cell));
-
-  GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
-  assert_ok(ghostty_grid_ref_style(&ref, &style));
-
   TerminalColorAttrs fg = terminal_ghostty_style_color_attrs(palette, style.fg_color);
   TerminalColorAttrs bg = terminal_ghostty_cell_bg_attrs(cell, style.bg_color, palette);
   int underline = terminal_ghostty_underline_hl_flag(style.underline);
@@ -2200,9 +2215,36 @@ static int terminal_ghostty_cell_attr(Terminal *term, GhosttyPointTag tag, uint3
                  | underline
                  | (style.strikethrough ? HL_STRIKETHROUGH : 0);
 
-  int url_attr = terminal_ghostty_cell_url_attr(&ref);
+  int url_attr = 0;
+  bool has_hyperlink = false;
+  assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_HAS_HYPERLINK, &has_hyperlink));
+  if (has_hyperlink) {
+    GhosttyGridRef ref = { 0 };
+    if (terminal_ghostty_grid_ref(term, tag, row, col, &ref)) {
+      url_attr = terminal_ghostty_cell_url_attr(&ref);
+    }
+  }
+
   return terminal_cell_hl_attr(term, hl_attrs, fg.idx, bg.idx, fg.rgb, bg.rgb, sp,
                                fg.is_default, bg.is_default, url_attr);
+}
+
+static int terminal_ghostty_cell_attr(Terminal *term, GhosttyPointTag tag, uint32_t row, int col,
+                                      const GhosttyColorRgb palette[256])
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyGridRef ref = { 0 };
+  if (!terminal_ghostty_grid_ref(term, tag, row, col, &ref)) {
+    return 0;
+  }
+
+  GhosttyCell cell = 0;
+  assert_ok(ghostty_grid_ref_cell(&ref, &cell));
+
+  GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+  assert_ok(ghostty_grid_ref_style(&ref, &style));
+
+  return cell_raw_attr(term, tag, row, col, cell, style, palette);
 }
 
 /// Returns the number of Nvim display cells used by text mirrored from a Ghostty cell.
@@ -2249,6 +2291,49 @@ static int terminal_ghostty_cell_display_width(const GhosttyGridRef *ref)
   return width;
 }
 
+static int render_cell_display_width(GhosttyRenderStateRowCells cells)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint32_t grapheme_len = 0;
+  assert_ok(ghostty_render_state_row_cells_get(cells,
+                                               GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
+                                               &grapheme_len));
+  if (grapheme_len == 0) {
+    return 1;
+  }
+
+  uint32_t stack[16];
+  uint32_t *graphemes = stack;
+  if (grapheme_len > ARRAY_SIZE(stack)) {
+    graphemes = xmalloc(sizeof(*graphemes) * grapheme_len);
+  }
+
+  assert_ok(ghostty_render_state_row_cells_get(cells,
+                                               GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
+                                               graphemes));
+  char buf[MB_MAXBYTES * ARRAY_SIZE(stack)];
+  char *text = buf;
+  if (grapheme_len > ARRAY_SIZE(stack)) {
+    text = xmalloc(MB_MAXBYTES * grapheme_len);
+  }
+
+  size_t len = 0;
+  for (uint32_t i = 0; i < grapheme_len; i++) {
+    len += (size_t)utf_char2bytes((int)graphemes[i], text + len);
+  }
+
+  int width = utf_ptr2cells_len(text, (int)len);
+
+  if (text != buf) {
+    xfree(text);
+  }
+  if (graphemes != stack) {
+    xfree(graphemes);
+  }
+
+  return width;
+}
+
 /// Converts Ghostty's cursor column on the active row to the virtual column in the buffer.
 static int terminal_cursor_virtcol(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
@@ -2262,6 +2347,34 @@ static int terminal_cursor_virtcol(Terminal *term)
 
   int vcol = 0;
   int col = 0;
+  GhosttyRenderStateRowCells cells = NULL;
+  if (render_active_row_cells(term, (uint32_t)term->cursor.row, &cells)) {
+    while (col < term->cursor.col && col < width) {
+      assert_ok(ghostty_render_state_row_cells_select(cells, (uint16_t)col));
+
+      GhosttyCell cell = 0;
+      assert_ok(ghostty_render_state_row_cells_get(cells,
+                                                   GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                                                   &cell));
+
+      GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+      assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
+      int cell_width = wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
+      int next_col = col + cell_width;
+      int display_width = render_cell_display_width(cells);
+
+      if (next_col > term->cursor.col) {
+        vcol += MIN(display_width, term->cursor.col - col);
+        break;
+      }
+
+      vcol += display_width;
+      col = next_col;
+    }
+
+    return vcol + term->cursor.col - col;
+  }
+
   while (col < term->cursor.col && col < width) {
     GhosttyGridRef ref = { 0 };
     if (!terminal_ghostty_grid_ref(term, GHOSTTY_POINT_TAG_ACTIVE, (uint32_t)term->cursor.row, col,
@@ -2310,6 +2423,31 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
   width = MIN(TERM_ATTRS_MAX, width);
   GhosttyRenderStateColors colors = GHOSTTY_INIT_SIZED(GhosttyRenderStateColors);
   assert_ok(ghostty_render_state_colors_get(term->ghostty_render_state, &colors));
+
+  if (screen_row >= term->scrollback_rows) {
+    uint32_t row = (uint32_t)(screen_row - term->scrollback_rows);
+    GhosttyRenderStateRowCells cells = NULL;
+    if (render_active_row_cells(term, row, &cells)) {
+      for (int col = 0; col < width; col++) {
+        assert_ok(ghostty_render_state_row_cells_select(cells, (uint16_t)col));
+
+        GhosttyCell cell = 0;
+        assert_ok(ghostty_render_state_row_cells_get(cells,
+                                                     GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                                                     &cell));
+
+        GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+        assert_ok(ghostty_render_state_row_cells_get(cells,
+                                                     GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
+                                                     &style));
+
+        term_attrs[col] = cell_raw_attr(term, GHOSTTY_POINT_TAG_ACTIVE, row, col,
+                                        cell, style, colors.palette);
+      }
+      return;
+    }
+  }
+
   GhosttyPointTag tag = GHOSTTY_POINT_TAG_ACTIVE;
   uint32_t row = 0;
   if (screen_row < term->scrollback_rows) {
@@ -3079,6 +3217,48 @@ static void terminal_ghostty_append_cell_text(Terminal *term, const GhosttyGridR
   }
 }
 
+static void append_render_cell_text(Terminal *term, GhosttyRenderStateRowCells cells,
+                                    GhosttyCell cell, char **ptr, size_t *line_len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint32_t grapheme_len = 0;
+  assert_ok(ghostty_render_state_row_cells_get(cells,
+                                               GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
+                                               &grapheme_len));
+  if (grapheme_len == 0) {
+    if ((size_t)(*ptr - term->textbuf) < TEXTBUF_SIZE - 1) {
+      *(*ptr)++ = ' ';
+    }
+    bool has_styling = false;
+    assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_HAS_STYLING, &has_styling));
+    if (has_styling) {
+      *line_len = (size_t)(*ptr - term->textbuf);
+    }
+    return;
+  }
+
+  uint32_t stack[16];
+  uint32_t *graphemes = stack;
+  if (grapheme_len > ARRAY_SIZE(stack)) {
+    graphemes = xmalloc(sizeof(*graphemes) * grapheme_len);
+  }
+
+  assert_ok(ghostty_render_state_row_cells_get(cells,
+                                               GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
+                                               graphemes));
+  size_t cell_len = 0;
+  for (uint32_t i = 0; i < grapheme_len; i++) {
+    if (!terminal_ghostty_append_codepoint(term, ptr, &cell_len, graphemes[i])) {
+      break;
+    }
+  }
+  *line_len = (size_t)(*ptr - term->textbuf);
+
+  if (graphemes != stack) {
+    xfree(graphemes);
+  }
+}
+
 static size_t fetch_ghostty_row(Terminal *term, GhosttyPointTag tag, uint32_t row, int end_col)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3103,9 +3283,38 @@ static size_t fetch_ghostty_row(Terminal *term, GhosttyPointTag tag, uint32_t ro
   return line_len;
 }
 
+static size_t fetch_render_active_row(Terminal *term, uint32_t row, int end_col)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyRenderStateRowCells cells = NULL;
+  if (!render_active_row_cells(term, row, &cells)) {
+    term->textbuf[0] = NUL;
+    return 0;
+  }
+
+  int col = 0;
+  size_t line_len = 0;
+  char *ptr = term->textbuf;
+
+  while (col < end_col) {
+    assert_ok(ghostty_render_state_row_cells_select(cells, (uint16_t)col));
+    GhosttyCell cell = 0;
+    assert_ok(ghostty_render_state_row_cells_get(cells,
+                                                 GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                                                 &cell));
+    append_render_cell_text(term, cells, cell, &ptr, &line_len);
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
+    col += wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
+  }
+
+  term->textbuf[line_len] = NUL;
+  return line_len;
+}
+
 static void fetch_active_row(Terminal *term, int row, int end_col)
 {
-  if (row < 0 || fetch_ghostty_row(term, GHOSTTY_POINT_TAG_ACTIVE, (uint32_t)row, end_col) == 0) {
+  if (row < 0 || fetch_render_active_row(term, (uint32_t)row, end_col) == 0) {
     term->textbuf[0] = NUL;
   }
 }
