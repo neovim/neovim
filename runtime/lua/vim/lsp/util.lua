@@ -536,6 +536,7 @@ end
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32' (required)
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 function M.apply_workspace_edit(workspace_edit, position_encoding)
+  vim.validate('workspace_edit', workspace_edit, 'table')
   vim.validate('position_encoding', position_encoding, 'string')
 
   if workspace_edit.documentChanges then
