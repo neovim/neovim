@@ -9,6 +9,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -440,7 +441,8 @@ void win_redr_winbar(win_T *wp)
 void redraw_ruler(void)
 {
   static int did_ruler_col = -1;
-  win_T *wp = curwin->w_status_height == 0 ? curwin : lastwin_nofloating(NULL);
+  win_T *wp = !is_aucmd_win(curwin)
+              && curwin->w_status_height == 0 ? curwin : lastwin_nofloating(NULL);
   bool is_stl_global = global_stl_height() > 0;
 
   // Check if ruler should be drawn, clear if it was drawn before.
