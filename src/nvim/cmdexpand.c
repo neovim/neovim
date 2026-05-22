@@ -1512,11 +1512,12 @@ static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, in
   // Isolate the command and search for it in the command table.
   // Exceptions:
   // - the 'k' command can directly be followed by any character, but do
-  // accept "keepmarks", "keepalt" and "keepjumps". As fuzzy matching can
-  // find matches anywhere in the command name, do this only for command
-  // expansion based on regular expression and not for fuzzy matching.
+  // accept "keepmarks", "keepalt" and "keepjumps". Bypass also when
+  // 'ignorecase' is set so a lowercase ":kz" still completes a user
+  // command like :Kz, and for fuzzy matching as that can find
+  // matches anywhere in the command name.
   // - the 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
-  if (!fuzzy && (*cmd == 'k' && cmd[1] != 'e')) {
+  if (!fuzzy && !p_ic && (*cmd == 'k' && cmd[1] != 'e')) {
     eap->cmdidx = CMD_k;
     p = cmd + 1;
   } else {
