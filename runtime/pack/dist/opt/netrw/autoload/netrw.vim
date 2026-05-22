@@ -6810,7 +6810,7 @@ function s:NetrwPreview(path) range
             " the BufEnter event set up in netrwPlugin.vim
             let eikeep = &ei
             set ei=BufEnter
-            exe (g:netrw_alto? "top " : "bot ").(g:netrw_preview? "vert " : "")."pedit ".fnameescape(a:path)
+            exe (g:netrw_alto? "top " : "bot ").(g:netrw_preview? "vert " : "")."hide pedit ".fnameescape(a:path)
             let &ei= eikeep
             if exists("pvhkeep")
                 let &pvh= pvhkeep
