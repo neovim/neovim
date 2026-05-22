@@ -6062,7 +6062,10 @@ local options = {
         		be acted upon, i.e. no cursor move.  This implies of
         		course, that right clicking outside a selection will
         		end Visual mode.
-        Overview of what button does what for each model:
+
+        For a detailed description of 'mousemodel' behaviour see
+        |mouse-mode-table|.  Overview of what button does what for each model:
+
         mouse		    extend		popup(_setpos) ~
         left click	    place cursor	place cursor
         left drag	    start selection	start selection
