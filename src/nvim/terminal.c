@@ -3283,15 +3283,9 @@ static size_t fetch_ghostty_row(Terminal *term, GhosttyPointTag tag, uint32_t ro
   return line_len;
 }
 
-static size_t fetch_render_active_row(Terminal *term, uint32_t row, int end_col)
+static size_t fetch_render_row_cells(Terminal *term, GhosttyRenderStateRowCells cells, int end_col)
   FUNC_ATTR_NONNULL_ALL
 {
-  GhosttyRenderStateRowCells cells = NULL;
-  if (!render_active_row_cells(term, row, &cells)) {
-    term->textbuf[0] = NUL;
-    return 0;
-  }
-
   int col = 0;
   size_t line_len = 0;
   char *ptr = term->textbuf;
@@ -3310,13 +3304,6 @@ static size_t fetch_render_active_row(Terminal *term, uint32_t row, int end_col)
 
   term->textbuf[line_len] = NUL;
   return line_len;
-}
-
-static void fetch_active_row(Terminal *term, int row, int end_col)
-{
-  if (row < 0 || fetch_render_active_row(term, (uint32_t)row, end_col) == 0) {
-    term->textbuf[0] = NUL;
-  }
 }
 
 static void fetch_screen_row(Terminal *term, size_t screen_row, int end_col)
@@ -3725,10 +3712,30 @@ static void refresh_screen(Terminal *term, buf_T *buf)
     return;
   }
 
-  for (int r = term->invalid_start, linenr = row_to_linenr(term, r);
-       r < term->invalid_end; r++, linenr++) {
-    fetch_active_row(term, r, width);
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
+                                     &term->ghostty_render_row_iterator));
 
+  bool has_row = true;
+  for (int r = 0; r < term->invalid_end; r++) {
+    if (has_row) {
+      has_row = ghostty_render_state_row_iterator_next(term->ghostty_render_row_iterator);
+    }
+    if (r < term->invalid_start) {
+      continue;
+    }
+
+    if (has_row) {
+      GhosttyRenderStateRowCells cells = term->ghostty_render_row_cells;
+      assert_ok(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
+                                             GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
+                                             &cells));
+      (void)fetch_render_row_cells(term, cells, width);
+    } else {
+      term->textbuf[0] = NUL;
+    }
+
+    int linenr = row_to_linenr(term, r);
     while (buf->b_ml.ml_line_count < linenr - 1) {
       ml_append_buf(buf, buf->b_ml.ml_line_count, "", 0, false);
       added++;
