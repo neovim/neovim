@@ -3104,6 +3104,7 @@ int setfname(buf_T *buf, char *ffname_arg, char *sfname_arg, bool message)
     }
     sfname = xstrdup(sfname);
 #ifdef CASE_INSENSITIVE_FILENAME
+    TO_SLASH(sfname);
     path_fix_case(sfname);            // set correct case for short file name
 #endif
     if (buf->b_sfname != buf->b_ffname) {

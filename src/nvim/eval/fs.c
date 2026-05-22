@@ -307,7 +307,10 @@ repeat:
 
 #ifdef BACKSLASH_IN_FILENAME
   if (!didit && normalize && *fnamep != NULL) {
+    *fnamep = xstrdup(*fnamep);
     slash_adjust(*fnamep);
+    xfree(*bufp);
+    *bufp = *fnamep;
   }
 #endif
 
