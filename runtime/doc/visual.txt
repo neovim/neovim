@@ -139,6 +139,9 @@ gN			Like |gn| but searches backward, like with `N`.
 			environment variable or the -display argument).  Only
 			when 'mouse' option contains 'n' or 'a'.
 
+<A-LeftMouse>		Starts or extends the Visual area blockwise, see
+			|<A-LeftMouse>|.
+
 If Visual mode is not active and the "v", "V" or CTRL-V is preceded with a
 count, the size of the previously highlighted area is used for a start.  You
 can then move the end of the highlighted area and give an operator.  The type
