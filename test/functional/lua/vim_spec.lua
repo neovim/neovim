@@ -2929,8 +2929,8 @@ describe('vim.keymap', function()
     )
 
     matches(
-      'lhs: expected string, got table',
-      pcall_err(exec_lua, [[vim.keymap.set('n', {}, print)]])
+      'lhs: expected string|table, got number',
+      pcall_err(exec_lua, [[vim.keymap.set('n', 5, print)]])
     )
 
     matches(
@@ -2957,13 +2957,16 @@ describe('vim.keymap', function()
       exec_lua [[
       GlobalCount = 0
       vim.keymap.set('n', 'asdf', function() GlobalCount = GlobalCount + 1 end)
+      vim.keymap.set('n', { 'ghjk', 'qwer' }, function() GlobalCount = GlobalCount + 1 end)
       return GlobalCount
     ]]
     )
 
     feed('asdf\n')
-
     eq(1, exec_lua [[return GlobalCount]])
+
+    feed('ghjk\nqwer\n')
+    eq(3, exec_lua [[return GlobalCount]])
   end)
 
   it('expr mapping', function()
@@ -3004,7 +3007,7 @@ describe('vim.keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.keymap.set('n', 'asdf', function() GlobalCount = GlobalCount + 1 end)
+      vim.keymap.set('n', { 'asdf', 'ghjk', 'qwer' }, function() GlobalCount = GlobalCount + 1 end)
       return GlobalCount
     ]]
     )
@@ -3021,6 +3024,16 @@ describe('vim.keymap', function()
 
     eq(1, exec_lua [[return GlobalCount]])
     eq('\nNo mapping found', n.exec_capture('nmap asdf'))
+
+    exec_lua [[
+      vim.keymap.del('n', { 'ghjk', 'qwer' })
+    ]]
+
+    feed('ghjk\nqwer\n')
+
+    eq(1, exec_lua [[return GlobalCount]])
+    eq('\nNo mapping found', n.exec_capture('nmap ghjk'))
+    eq('\nNo mapping found', n.exec_capture('nmap qwer'))
   end)
 
   it('buffer-local mappings', function()
