@@ -955,6 +955,18 @@ describe('statusline', function()
     end)
     eq('B:' .. truncated, rendered)
   end)
+
+  it('no cmdline ruler for autocmd window #39938', function()
+    command('set ruler laststatus=2')
+    api.nvim_create_autocmd('BufDelete', { command = 'redrawstatus' })
+    api.nvim_exec_autocmds('BufDelete', { buf = api.nvim_create_buf(true, true) })
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*5
+      {2:[No Name]             0,0-1          All}|
+                                              |
+    ]])
+  end)
 end)
 
 describe('default statusline', function()
