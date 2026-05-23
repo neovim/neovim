@@ -326,6 +326,8 @@ argument.
                                                         *-u* *E282*
 -u {vimrc}      The file {vimrc} is read for initializations.  Most other
                 initializations are skipped; see |initialization|.
+                $MYVIMRC is set to {vimrc}, except when {vimrc} is "NONE"
+                or "NORC".
 
                 This can be used to start Vim in a special mode, with special
                 mappings and settings.  A shell alias can be used to make

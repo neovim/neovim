@@ -2228,7 +2228,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
     if (strequal(parmp->use_vimrc, "NONE") || strequal(parmp->use_vimrc, "NORC")) {
       // Do nothing.
     } else {
-      if (do_source(parmp->use_vimrc, false, DOSO_NONE, NULL) != OK) {
+      if (do_source(parmp->use_vimrc, false, DOSO_VIMRC, NULL) != OK) {
         semsg(_(e_cannot_read_from_str_2), parmp->use_vimrc);
       }
     }

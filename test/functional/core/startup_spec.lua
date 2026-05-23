@@ -51,6 +51,38 @@ describe('startup', function()
     )
   end)
 
+  it('-u sets $MYVIMRC for the sourced vim config file', function()
+    local vimrc = t.tmpname(false) .. '.vim'
+    finally(function()
+      os.remove(vimrc)
+    end)
+
+    write_file(vimrc, 'let g:loaded_custom_vimrc = 1\n')
+    clear({ args = { '-u', vimrc } })
+
+    eq(1, eval('g:loaded_custom_vimrc'))
+    eq(
+      t.fix_slashes(fn.fnamemodify(vimrc, ':p')),
+      t.fix_slashes(fn.fnamemodify(eval('$MYVIMRC'), ':p'))
+    )
+  end)
+
+  it('-u sets $MYVIMRC for the sourced lua config file', function()
+    local luarc = t.tmpname(false) .. '.lua'
+    finally(function()
+      os.remove(luarc)
+    end)
+
+    write_file(luarc, 'vim.g.loaded_custom_lua_vimrc = 1\n')
+    clear({ args = { '-u', luarc } })
+
+    eq(1, eval('g:loaded_custom_lua_vimrc'))
+    eq(
+      t.fix_slashes(fn.fnamemodify(luarc, ':p')),
+      t.fix_slashes(fn.fnamemodify(eval('$MYVIMRC'), ':p'))
+    )
+  end)
+
   it('prevents remote UI infinite loop', function()
     clear()
     local screen = Screen.new(84, 3)
@@ -1544,10 +1576,13 @@ describe('user config init', function()
       )
     end)
 
-    it('loads custom lua config and does not set $MYVIMRC', function()
+    it('loads custom lua config and sets $MYVIMRC', function()
       clear { args = { '-u', custom_lua_path }, env = xenv }
       eq(1, eval('g:custom_lua_rc'))
-      eq('', eval('$MYVIMRC'))
+      eq(
+        t.fix_slashes(fn.fnamemodify(custom_lua_path, ':p')),
+        t.fix_slashes(fn.fnamemodify(eval('$MYVIMRC'), ':p'))
+      )
     end)
   end)
 
