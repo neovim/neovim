@@ -57,3 +57,28 @@ describe('Visual highlight', function()
     ]])
   end)
 end)
+
+describe('Visual percent motion', function()
+  it('allows percent match % on matching brackets in visual line mode', function()
+    local fn = n.fn
+    local t = require('test.testutil')
+    local eq = t.eq
+
+    exec([[
+      call setline(1, ['object(', ') {', '},'])
+    ]])
+
+    -- Start at line 1, column 1
+    eq({ 0, 1, 1, 0 }, fn.getpos('.'))
+
+    -- Go into line selection mode using V
+    -- Move to ( using $
+    -- Jump to matching ) using %
+    -- Press $ to go to {
+    -- Press % again to jump to matching }
+    feed('V$%$%')
+
+    -- Cursor should be on the matching '}' on line 3, column 1
+    eq({ 0, 3, 1, 0 }, fn.getpos('.'))
+  end)
+end)
