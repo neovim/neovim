@@ -6585,12 +6585,16 @@ static int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   return status;
 }
 
-/// Set the current index in the specified quickfix list
-/// @return OK
+/// Set the 'quickfixtextfunc' in the specified quickfix/location list
+/// @return OK or FAIL
 static int qf_setprop_qftf(qf_list_T *qfl, dictitem_T *di)
   FUNC_ATTR_NONNULL_ALL
 {
   Callback cb;
+
+  if (check_secure()) {
+    return FAIL;
+  }
 
   callback_free(&qfl->qf_qftf_cb);
   if (callback_from_typval(&cb, &di->di_tv)) {
