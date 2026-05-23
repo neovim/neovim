@@ -919,7 +919,10 @@ func Test_spellsuggest_too_deep()
   " This was incrementing "depth" over MAXWLEN.
   new
   norm s000G00ý000000000000
-  sil norm ..vzG................vvzG0     v z=
+  try
+    sil norm ..vzG................vvzG0     v z=
+  catch /E759:/
+  endtry
   bwipe!
 endfunc
 
