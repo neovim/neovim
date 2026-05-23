@@ -2474,4 +2474,28 @@ func Test_edit_CAR_with_completion()
   bw!
 endfunc
 
+func Test_autoindent_no_strip_after_cmd_setline()
+  new
+  setlocal autoindent
+  inoremap <buffer> <F2> <Cmd>call setline('.', 'v  v')<CR><Cmd>call cursor(line('.'), 2)<CR>
+  call feedkeys("Go\<F2>\<Esc>", 'tx')
+  call assert_equal('v  v', getline(2))
+  bwipe!
+endfunc
+
+func Test_autoindent_no_strip_after_cursorholdi()
+  CheckFeature timers
+  new
+  setlocal autoindent
+  set updatetime=50
+  au CursorHoldI <buffer> call setline('.', 'v v')
+  call setline(1, ' x')
+  call cursor(1, 2)
+  call timer_start(120, {-> feedkeys("\<Esc>", 't')})
+  call feedkeys("o", 'tx!')
+  call assert_equal('v v', getline(2))
+  set updatetime&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
