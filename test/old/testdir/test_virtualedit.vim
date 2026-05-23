@@ -753,4 +753,39 @@ func Test_virtualedit_getpos_stable_past_eol_after_visual()
   bwipe!
 endfunc
 
+func Test_virtualedit_insert()
+  new
+  set virtualedit=insert
+
+  call feedkeys("ifoobar\<Right>\<Right>\<Right>\<Right>baz\<Esc>", 'tnix')
+  call assert_equal('foobar    baz', getline(1))
+
+  call feedkeys("ccFOOBAR\<Right>\<Right>\<Right>\<Right>BAZ\<Esc>", 'tnix')
+  call assert_equal('FOOBAR    BAZ', getline(1))
+
+  set virtualedit&
+  bwipe!
+endfunc
+
+func Test_set_virtualedit_on_mode_change()
+  new
+  set virtualedit=all
+  augroup testing
+    au ModeChanged n:* set virtualedit=onemore
+    au ModeChanged *:n set virtualedit=all
+    au ModeChanged i:* call cursor(getpos("'^")[1:])
+  augroup END
+
+  call feedkeys("ilkj\<Esc>", 'tnix')
+  call assert_equal([0, 1, 4, 0], getpos('.'))
+
+  call feedkeys("cclkj\<Esc>", 'tnix')
+  call assert_equal([0, 1, 4, 0], getpos('.'))
+
+  au! testing ModeChanged
+  augroup! testing
+  set virtualedit&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
