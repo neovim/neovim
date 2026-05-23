@@ -375,6 +375,24 @@ func Test_spellfile_format_error()
   " LWORDTREE: incorrect sibling node count
   call Spellfile_Test(0zFF00000001040000000000000000, 'E759:')
 
+  " LWORDTREE: declared nodecount larger than the tree actually fills.
+  " Root has two siblings: 'x' (recurses into an end-of-word at idx 3..4)
+  " and BY_INDEX targeting position 9.  Tree fills positions 0..4, leaving
+  " 5..9 unwritten — byts[9] would be uninitialized without the fix.
+  call Spellfile_Test(0zFF0000000A02780100000979010000000000000000000000, 'E759:')
+
+  " LWORDTREE: recursion depth past MAXWLEN.  A linear chain of 254
+  " (siblingcount=1, byte='a') frames drives read_tree_node to depth
+  " MAXWLEN where the new guard rejects.  The trailing (01 00) gives the
+  " chain a clean end-of-word so an *unguarded* parser would accept the
+  " file silently — that's what makes this a meaningful regression test
+  " for the depth check specifically (a deeper chain would also crash
+  " unguarded builds via stack overflow, which we don't want in CI).
+  let v = eval('0zFF00000200' .. repeat('0161', 255)
+               \ .. '0100' ..  repeat('00', 8))
+
+  call Spellfile_Test(v, 'E759:')
+
   " KWORDTREE: missing tree node
   call Spellfile_Test(0zFF0000000000000004, 'E758:')
 
