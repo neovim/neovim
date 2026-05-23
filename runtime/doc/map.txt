@@ -186,8 +186,7 @@ be effective in the current buffer only.  Example: >
 Then you can map ",w" to something else in another buffer: >
 	:map <buffer>  ,w  /[#&!]<CR>
 The local buffer mappings are used before the global ones.  See <nowait> below
-to make a short local mapping taking effect when a longer global one
-exists.
+to make a short local mapping take effect when a longer global one exists.
 The "<buffer>" argument can also be used to clear mappings: >
 	:unmap <buffer> ,w
 	:mapclear <buffer>
