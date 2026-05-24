@@ -118,6 +118,39 @@ describe('startup', function()
     command('filetype detect')
     eq('filetype detection:ON  plugin:OFF  indent:OFF', exec_capture('filetype'))
   end)
+
+  it('opens swap file correctly when using device path #31606', function()
+    t.skip(not is_os('win'), 'N/A: Windows feature')
+    local cwd = vim.fs.normalize(vim.uv.cwd())
+    local drive, path = cwd:sub(1, 1), cwd:sub(3)
+    local swapdir = ('%s/Xtest_swap_dir'):format(cwd)
+    local dos_path = ('%s/nonexist/file'):format(cwd)
+    local device_quest_path = ('//?/%s'):format(dos_path)
+    local device_dot_path = ('//./%s'):format(dos_path)
+    local device_unc_path = ('//?/UNC/localhost/%s$%s'):format(drive, path)
+    clear({
+      args = {
+        '--embed',
+        '--headless',
+        '--cmd',
+        ('set directory=%s//'):format(swapdir),
+        '--',
+        device_quest_path,
+      },
+      merge = false,
+    })
+    local escaped_name = ('%s/%s.swp'):format(swapdir, dos_path:gsub('[:/]', '%%'))
+    eq(escaped_name, fn.swapname('%'))
+    command('bw!')
+    api.nvim_buf_set_name(0, dos_path)
+    eq(escaped_name, fn.swapname('%'))
+    command('bw!')
+    api.nvim_buf_set_name(0, device_dot_path)
+    eq(escaped_name, fn.swapname('%'))
+    command('bw!')
+    api.nvim_buf_set_name(0, device_unc_path)
+    eq(('%s/%%%s.swp'):format(swapdir, device_unc_path:sub(8):gsub('/', '%%')), fn.swapname('%'))
+  end)
 end)
 
 describe('startup', function()
