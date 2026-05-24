@@ -1,6 +1,7 @@
 " Vim compiler file
 " Compiler: Zig Compiler (zig cc)
 " Last Change: 2026 May 12
+" 2026 May 24 by the Vim project (do not escape vars for makeprg)
 
 if exists('current_compiler')
   finish
@@ -11,7 +12,7 @@ let current_compiler = 'zig_cc'
 let s:save_cpo = &cpo
 set cpo&vim
 
-CompilerSet makeprg=zig\ cc\ \%:S\ \$*
+CompilerSet makeprg=zig\ cc\ %:S\ $*
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

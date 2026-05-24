@@ -3,6 +3,7 @@
 " Upstream: https://github.com/ziglang/zig.vim
 " Last Change:
 " 2026 May 12 by the Vim project (set errormformat)
+" 2026 May 24 by the Vim project (do not escape vars for makeprg)
 
 if exists("current_compiler")
     finish
@@ -13,7 +14,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " a subcommand must be provided for the this compiler (test, build-exe, etc)
-CompilerSet makeprg=zig\ \$*\ \%:S
+CompilerSet makeprg=zig\ $*\ %:S
 
 CompilerSet errorformat=
             \%-G,
