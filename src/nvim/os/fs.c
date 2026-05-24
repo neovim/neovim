@@ -1188,6 +1188,40 @@ bool os_fileinfo(const char *path, FileInfo *file_info)
   return os_stat(path, &(file_info->stat)) == kLibuvSuccess;
 }
 
+/// Identify Windows path type and provide root offset for now, examples:
+/// - "//?/C:/foo" => type is `kPathDevice` root offset is 4
+/// - "//?/UNC/localhost/C$/foo" => type is `kPathDeviceUNC`, root offset is 8
+///
+/// TODO(ntdiary): Could be extended for path.c cleanup and path normalization
+/// logic. Eventually merge this with `os_fileinfo`
+///
+/// TODO(justinmk): return value is meaningless currently.
+bool os_fileinfo2(const char *path, FileInfo *info)
+  FUNC_ATTR_NONNULL_ALL
+{
+  CLEAR_POINTER(info);
+#ifdef MSWIN
+  size_t len = strlen(path);
+  if (len < 4) {
+    return true;
+  }
+  if (vim_ispathsep_nocolon(path[0])
+      && vim_ispathsep_nocolon(path[1])
+      && (path[2] == '?' || path[2] == '.')
+      && vim_ispathsep_nocolon(path[3])) {
+    if (len >= 8 && vim_strnicmp_asc(path + 4, "unc/", 4) == 0) {
+      info->root_off = 8;
+      info->type = kPathDeviceUNC;
+    } else {
+      info->root_off = 4;
+      info->type = kPathDevice;
+    }
+    return true;
+  }
+#endif
+  return true;
+}
+
 /// Get the file information for a given path without following links
 ///
 /// @param path Path to the file.
