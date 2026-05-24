@@ -6,6 +6,22 @@ func s:ReportError(fname, lnum, msg)
   endif
 endfunc
 
+func s:PerformCheck(fname, pattern, msg, skip)
+  let prev_lnum = 1
+  let lnum = 1
+  while (lnum > 0)
+    call cursor(lnum, 1)
+    let lnum = search(a:pattern, 'W', 0, 0, a:skip)
+    if (prev_lnum == lnum)
+      break
+    endif
+    let prev_lnum = lnum
+    if (lnum > 0)
+      call s:ReportError(a:fname, lnum, a:msg)
+    endif
+  endwhile
+endfunc
+
 func Test_test_files()
   for fname in glob('*.vim', 0, 1)
     let g:ignoreSwapExists = 'e'
@@ -98,5 +114,28 @@ func Test_help_files()
   bwipe!
 endfunc
 
+
+func Test_runtime_wrong_shellescape()
+  " Check that shellescape() is called with the {special} argument (a second,
+  " non-zero argument) when its result is used in a ":!" ex command.
+  " This could cause code injection!
+  let pattern = '\<shellescape(\%([^,()]\|([^()]*)\)\+)'
+
+  let q = "['" .. '"]'
+  let bang_exe = '\<\%(exe\%[cute]\|sil\%[ent]\)\>.*' .. q .. '[^"' .. "']*!"
+
+  let skip = 'getline(".") !~ ' .. string(bang_exe)
+        \ .. ' || getline(".") =~ ' .. string('\<system\%(list\)\=(')
+        \ .. ' || getline(".") =~ ' .. string('^\s*"')
+
+  for fpath in glob('../../../runtime/**/*.vim', 0, 1)
+    let g:ignoreSwapExists = 'e'
+    exe 'edit ' .. fpath
+    call s:PerformCheck(fpath, pattern,
+          \ 'shellescape() without {special} flag used in ":!" command', skip)
+  endfor
+
+  :%bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
