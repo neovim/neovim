@@ -3209,6 +3209,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
         // Need to store the list of prefix IDs with the word.
         if (get_pfxlist(affile, afflist, store_afflist, &totlen) == FAIL) {
           retval = FAIL;
+          xfree(pc);
           break;
         }
         pfxlen = totlen;
@@ -3219,6 +3220,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
         // Concatenate them to the list of prefix IDs.
         if (get_compflags(affile, afflist, store_afflist, &totlen) == FAIL) {
           retval = FAIL;
+          xfree(pc);
           break;
         }
       }
