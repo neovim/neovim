@@ -1219,5 +1219,37 @@ func Test_mkspell_no_buffer_overflow()
   defer delete('Xbof2.spl')
 endfunc
 
+func Test_mkspell_no_affixlist_overflow()
+  let aff_lines = [
+        \ 'SET ISO8859-1',
+        \ 'PFXPOSTPONE',
+        \ 'PFX A Y 1',
+        \ 'PFX A 0 pre .',
+        \ ]
+  call writefile(aff_lines, 'Xaffbof.aff', 'D')
+  call writefile(['1', 'word/' .. repeat('A', 300)], 'Xaffbof.dic', 'D')
+
+  call assert_fails('mkspell! Xaffbof.spl Xaffbof',
+        \ 'Too many postponed prefixes and/or compound flags')
+  call assert_false(filereadable('Xaffbof.spl'))
+endfunc
+
+func Test_mkspell_no_compflag_overflow()
+  " Overflow the compound-flag path in get_compflags(): a word whose
+  " affix list repeats a compound flag many times accumulates one ID per
+  " occurrence, overrunning store_afflist[MAXWLEN].
+  let aff_lines = [
+        \ 'SET ISO8859-1',
+        \ 'COMPOUNDFLAG c',
+        \ ]
+  call writefile(aff_lines, 'Xcompbof.aff', 'D')
+
+  " Repeat the compound flag 'c' far past MAXWLEN.
+  call writefile(['1', 'word/' .. repeat('c', 300)], 'Xcompbof.dic', 'D')
+
+  call assert_fails('mkspell! Xcompbof.spl Xcompbof',
+        \ 'Too many postponed prefixes and/or compound flags')
+  call assert_false(filereadable('Xcompbof.spl'))
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
