@@ -1211,6 +1211,13 @@ describe('lua stdlib', function()
           end)
         end)
       end)
+
+      it('preserves backslash-escaped commas in errorformat', function()
+        eq_exec_lua({ { 'a\\,b', 'c' }, 'a\\,b,c' }, function()
+          vim.opt.errorformat = 'a\\,b,c'
+          return { vim.opt.errorformat:get(), vim.go.errorformat }
+        end)
+      end)
     end) -- vim.opt
 
     describe('vim.opt_local', function()

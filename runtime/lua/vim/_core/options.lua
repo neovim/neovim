@@ -455,6 +455,31 @@ local function convert_value_to_vim(name, info, value)
   return to_vim_value[info.metatype](info, value)
 end
 
+local function split_commalist(value)
+  local result = {} --- @type string[]
+  local item = {} --- @type string[]
+  local i = 1
+  local len = #value
+  while i <= len do
+    local c = string.sub(value, i, i)
+    if c == '\\' then
+      table.insert(item, c)
+      if i < len then
+        i = i + 1
+        table.insert(item, string.sub(value, i, i))
+      end
+    elseif c == ',' then
+      table.insert(result, table.concat(item))
+      item = {}
+    else
+      table.insert(item, c)
+    end
+    i = i + 1
+  end
+  table.insert(result, table.concat(item))
+  return result
+end
+
 -- Map of OptionType to functions that take vimoption_T values and convert to Lua values.
 -- Each function takes (info, vim_value) -> lua_value
 local to_lua_value = {
@@ -483,9 +508,9 @@ local to_lua_value = {
       local left, right = unpack(vim.split(value, ',,,'))
 
       local result = {}
-      vim.list_extend(result, vim.split(left, ','))
+      vim.list_extend(result, split_commalist(left))
       table.insert(result, ',')
-      vim.list_extend(result, vim.split(right, ','))
+      vim.list_extend(result, split_commalist(right))
 
       table.sort(result)
 
@@ -497,16 +522,16 @@ local to_lua_value = {
       local left, right = unpack(vim.split(value, ',^,,', { plain = true }))
 
       local result = {}
-      vim.list_extend(result, vim.split(left, ','))
+      vim.list_extend(result, split_commalist(left))
       table.insert(result, '^,')
-      vim.list_extend(result, vim.split(right, ','))
+      vim.list_extend(result, split_commalist(right))
 
       table.sort(result)
 
       return result
     end
 
-    return vim.split(value, ',')
+    return split_commalist(value)
   end,
 
   set = function(info, value)
@@ -547,7 +572,7 @@ local to_lua_value = {
 
     local result = {} --- @type table<string,string>
 
-    local comma_split = vim.split(raw_value, ',')
+    local comma_split = split_commalist(raw_value)
     for _, key_value_str in ipairs(comma_split) do
       --- @type string, string
       local key, value = unpack(vim.split(key_value_str, ':'))
