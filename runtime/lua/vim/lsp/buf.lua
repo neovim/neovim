@@ -249,8 +249,6 @@ local function get_locations(method, context, opts)
   end, function(results)
     ---@type vim.quickfix.entry[]
     local all_items = {}
-    ---@type table<string, true>
-    local seen_items = {}
 
     for client_id, res in pairs(results) do
       local client = assert(lsp.get_client_by_id(client_id))
@@ -259,19 +257,7 @@ local function get_locations(method, context, opts)
         locations = vim.islist(res.result) and res.result or { res.result }
       end
       local items = util.locations_to_items(locations, client.offset_encoding)
-      for _, item in ipairs(items) do
-        local key = ('%s\0%d\0%d\0%d\0%d'):format(
-          item.filename or '',
-          item.lnum or 0,
-          item.col or 0,
-          item.end_lnum or 0,
-          item.end_col or 0
-        )
-        if not seen_items[key] then
-          seen_items[key] = true
-          all_items[#all_items + 1] = item
-        end
-      end
+      vim.list_extend(all_items, items)
     end
 
     local name = string.gsub(method:match('textDocument/(.*)'), '(%u)', ' %1'):lower()
@@ -341,6 +327,26 @@ end
 ---   else
 ---     vim.cmd('botright copen')
 ---   end
+--- end
+---
+--- vim.lsp.buf.definition({ on_list = on_list })
+--- vim.lsp.buf.references(nil, { on_list = on_list })
+--- ```
+--- The list can be transformed before it is shown. For example, to remove
+--- duplicate locations returned by multiple clients:
+--- ```lua
+--- local function on_list(what)
+---   vim.list.unique(what.items, function(item)
+---     return ('%s\0%d\0%d\0%d\0%d'):format(
+---       item.filename or '',
+---       item.lnum or 0,
+---       item.col or 0,
+---       item.end_lnum or 0,
+---       item.end_col or 0
+---     )
+---   end)
+---   vim.fn.setqflist({}, ' ', what)
+---   vim.cmd('botright copen')
 --- end
 ---
 --- vim.lsp.buf.definition({ on_list = on_list })
