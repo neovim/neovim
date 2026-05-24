@@ -7050,4 +7050,38 @@ func Test_efm_overlongline()
   call setqflist([], 'f')
 endfunc
 
+func Xtest_set_qftf_in_sandbox(cchar)
+  call s:setup_commands(a:cchar)
+
+  call g:Xsetlist([{'filename': 'test.c', 'lnum': 1, 'text': 'trigger'}])
+  let g:qftf_fn_called = v:false
+  func Qftf_Fn(d)
+    let g:qftf_fn_called = v:true
+    return []
+  endfunc
+
+  let g:caught_exception = v:false
+  try
+    sandbox call g:Xsetlist([], 'a', #{quickfixtextfunc: 'g:Qftf_Fn'})
+  catch /E48:/
+    let g:caught_exception = v:true
+  endtry
+  copen
+  cclose
+
+  call assert_equal(v:true, g:caught_exception)
+  call assert_equal(v:false, g:qftf_fn_called)
+
+  delfunc Qftf_Fn
+  unlet g:caught_exception
+  unlet g:qftf_fn_called
+  %bw!
+endfunc
+
+" Test for setting the 'quickfixtextfunc' in a sandbox
+func Test_set_qftf_in_sandbox()
+  call Xtest_set_qftf_in_sandbox('c')
+  call Xtest_set_qftf_in_sandbox('l')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
