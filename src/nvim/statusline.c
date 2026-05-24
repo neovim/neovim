@@ -287,18 +287,24 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     if (draw_ruler) {
       stl = p_ruf;
       opt_idx = kOptRulerformat;
-      // advance past any leading group spec - implicit in ru_col
-      if (*stl == '%') {
-        if (*++stl == '-') {
-          stl++;
-        }
-        if (atoi(stl)) {
-          while (ascii_isdigit(*stl)) {
+      // When the ruler is drawn in the command line, its leading group width
+      // is implicit in ru_col.  But when the ruler is drawn as part of the
+      // statusline, keep the full rulerformat so build_stl_str_hl() can handle
+      // fixed-width groups and %= inside them.
+      if (!in_status_line) {
+        // advance past any leading group spec - implicit in ru_col
+        if (*stl == '%') {
+          if (*++stl == '-') {
             stl++;
           }
-        }
-        if (*stl++ != '(') {
-          stl = p_ruf;
+          if (atoi(stl)) {
+            while (ascii_isdigit(*stl)) {
+              stl++;
+            }
+          }
+          if (*stl++ != '(') {
+            stl = p_ruf;
+          }
         }
       }
       col = MAX(ru_col - (Columns - maxwidth), (maxwidth + 1) / 2);
@@ -847,6 +853,48 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, linenr_T relnum, char *buf, st
   return width;
 }
 
+static int stl_fill_separators(stl_item_t *stl_items, int *separator_locations, int item_start,
+                               int item_end, int width, int maxwidth, schar_T fillchar,
+                               char **out_p)
+{
+  int num_separators = 0;
+  for (int i = item_start; i < item_end; i++) {
+    if (stl_items[i].type == Separate) {
+      separator_locations[num_separators++] = i;
+    }
+  }
+
+  if (num_separators == 0 || width >= maxwidth) {
+    return width;
+  }
+
+  int standard_spaces = (maxwidth - width) / num_separators;
+  int final_spaces = (maxwidth - width) - standard_spaces * (num_separators - 1);
+
+  for (int l = 0; l < num_separators; l++) {
+    int dislocation = l == num_separators - 1 ? final_spaces : standard_spaces;
+    dislocation *= (int)schar_len(fillchar);
+
+    char *start = stl_items[separator_locations[l]].start;
+    char *seploc = start + dislocation;
+    STRMOVE(seploc, start);
+
+    for (char *sp = start; sp < seploc;) {
+      schar_get_adv(&sp, fillchar);
+    }
+
+    if (out_p != NULL) {
+      *out_p += dislocation;
+    }
+
+    for (int item_idx = separator_locations[l] + 1; item_idx < item_end; item_idx++) {
+      stl_items[item_idx].start += dislocation;
+    }
+  }
+
+  return maxwidth;
+}
+
 /// Build a string from the status line items in "fmt".
 /// Return length of string in screen cells.
 ///
@@ -1040,10 +1088,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     // STL_SEPARATE: Separation between items, filled with white space.
     if (*fmt_p == STL_SEPARATE) {
       fmt_p++;
-      // Ignored when we are inside of a grouping
-      if (groupdepth > 0) {
-        continue;
-      }
       stl_items[curitem].type = Separate;
       stl_items[curitem++].start = out_p;
       continue;
@@ -1115,6 +1159,17 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
               stl_items[n].start = out_p;
             }
           }
+        }
+      }
+
+      int group_min_width = abs(stl_items[stl_groupitems[groupdepth]].minwid);
+      group_len = stl_fill_separators(stl_items, stl_separator_locations,
+                                      stl_groupitems[groupdepth] + 1, curitem,
+                                      (int)group_len, group_min_width, fillchar, &out_p);
+
+      for (int idx = stl_groupitems[groupdepth] + 1; idx < curitem; idx++) {
+        if (stl_items[idx].type == Separate) {
+          stl_items[idx].type = Empty;
         }
       }
 
@@ -2037,42 +2092,9 @@ stcsign:
     // fill up the available space.
   } else if (width < maxwidth
              && outputlen + (size_t)(maxwidth - width) * schar_len(fillchar) + 1 < outlen) {
-    // Find how many separators there are, which we will use when
-    // figuring out how many groups there are.
-    int num_separators = 0;
-    for (int i = evalstart; i < itemcnt + evalstart; i++) {
-      if (stl_items[i].type == Separate) {
-        // Create an array of the start location for each separator mark.
-        stl_separator_locations[num_separators] = i;
-        num_separators++;
-      }
-    }
-
-    // If we have separated groups, then we deal with it now
-    if (num_separators) {
-      int standard_spaces = (maxwidth - width) / num_separators;
-      int final_spaces = (maxwidth - width) -
-                         standard_spaces * (num_separators - 1);
-
-      for (int l = 0; l < num_separators; l++) {
-        int dislocation = (l == (num_separators - 1)) ? final_spaces : standard_spaces;
-        dislocation *= (int)schar_len(fillchar);
-        char *start = stl_items[stl_separator_locations[l]].start;
-        char *seploc = start + dislocation;
-        STRMOVE(seploc, start);
-        for (char *s = start; s < seploc;) {
-          schar_get_adv(&s, fillchar);
-        }
-
-        for (int item_idx = stl_separator_locations[l] + 1;
-             item_idx < itemcnt + evalstart;
-             item_idx++) {
-          stl_items[item_idx].start += dislocation;
-        }
-      }
-
-      width = maxwidth;
-    }
+    width = stl_fill_separators(stl_items, stl_separator_locations,
+                                evalstart, itemcnt + evalstart,
+                                width, maxwidth, fillchar, NULL);
   }
 
   // Store the info about highlighting.

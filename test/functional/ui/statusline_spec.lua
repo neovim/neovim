@@ -642,6 +642,24 @@ describe('statusline', function()
     }
   end)
 
+  it('supports %= inside fixed-width item groups', function()
+    eq(
+      'foo              bar',
+      api.nvim_eval_statusline('%20(foo%=bar%)', {
+        winid = api.nvim_get_current_win(),
+        maxwidth = 20,
+      }).str
+    )
+
+    eq(
+      'a        b         c',
+      api.nvim_eval_statusline('%20(a%=b%=c%)', {
+        winid = api.nvim_get_current_win(),
+        maxwidth = 20,
+      }).str
+    )
+  end)
+
   it('does not crash if it has Arabic characters #19447', function()
     api.nvim_set_option_value('statusline', 'غً', {})
     api.nvim_set_option_value('laststatus', 2, {})
