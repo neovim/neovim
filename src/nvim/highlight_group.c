@@ -190,6 +190,8 @@ static const char *highlight_init_both[] = {
   "default link TabLineFill      TabLine",
   "default link VertSplit        WinSeparator",
   "default link VisualNOS        Visual",
+  "default link HelixCursor      Cursor",
+  "default link HelixSelection   Visual",
   "default link Whitespace       NonText",
   "default link WildMenu         PmenuSel",
   "default link WinSeparator     Normal",

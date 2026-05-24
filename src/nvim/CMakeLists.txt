@@ -8,7 +8,7 @@ set_target_properties(nvim_bin
   PROPERTIES
   EXPORT_COMPILE_COMMANDS ON
   ENABLE_EXPORTS TRUE
-  OUTPUT_NAME nvim)
+  OUTPUT_NAME yanvim)
 
 #-------------------------------------------------------------------------------
 # Dependencies

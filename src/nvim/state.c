@@ -325,3 +325,50 @@ bool get_was_safe_state(void)
 {
   return was_safe;
 }
+
+// Helix paradigm selection state
+
+void helix_selection_init(void)
+{
+  current_helix_sel.anchor = curwin->w_cursor;
+  current_helix_sel.head = curwin->w_cursor;
+  current_helix_sel.has_selection = false;
+  redraw_curbuf_later(UPD_SOME_VALID);
+}
+
+void helix_selection_collapse(void)
+{
+  current_helix_sel.anchor = current_helix_sel.head;
+  current_helix_sel.has_selection = false;
+}
+
+void helix_selection_extend(pos_T new_head)
+{
+  current_helix_sel.head = new_head;
+  current_helix_sel.inclusive = false;
+  current_helix_sel.has_selection =
+    (current_helix_sel.anchor.lnum != new_head.lnum
+     || current_helix_sel.anchor.col != new_head.col);
+  redraw_curbuf_later(UPD_SOME_VALID);
+}
+
+void helix_selection_extend_inclusive(pos_T new_head)
+{
+  current_helix_sel.head = new_head;
+  current_helix_sel.inclusive = true;
+  current_helix_sel.has_selection =
+    (current_helix_sel.anchor.lnum != new_head.lnum
+     || current_helix_sel.anchor.col != new_head.col);
+  redraw_curbuf_later(UPD_SOME_VALID);
+}
+
+void helix_ensure_anchor(pos_T pre_motion_pos)
+{
+  current_helix_sel.anchor = pre_motion_pos;
+  current_helix_sel.head = pre_motion_pos;
+}
+
+bool helix_is_active(void)
+{
+  return HELIX_MODE() && (State & MODE_NORMAL) != 0 && !VIsual_active;
+}

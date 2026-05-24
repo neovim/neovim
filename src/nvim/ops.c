@@ -3937,3 +3937,57 @@ bcount_t get_region_bytecount(buf_T *buf, linenr_T start_lnum, linenr_T end_lnum
   }
   return deleted_bytes + end_col;
 }
+
+/// Apply an operator to the current helix selection.
+/// Returns true if the caller should enter Insert mode (for 'c').
+bool helix_apply_operator(int op_char)
+{
+  int op_type = get_op_type(op_char, NUL);
+
+  oparg_T oap;
+  CLEAR_FIELD(oap);
+  oap.op_type = op_type;
+  oap.motion_type = kMTCharWise;
+  oap.inclusive = current_helix_sel.has_selection ? current_helix_sel.inclusive : true;
+  oap.regname = 0;
+
+  // Ensure start <= end
+  if (!current_helix_sel.has_selection) {
+    // 1-char resting state: operate on char under cursor
+    oap.start = curwin->w_cursor;
+    oap.end = curwin->w_cursor;
+  } else if (lt(current_helix_sel.anchor, current_helix_sel.head)) {
+    oap.start = current_helix_sel.anchor;
+    oap.end = current_helix_sel.head;
+  } else {
+    oap.start = current_helix_sel.head;
+    oap.end = current_helix_sel.anchor;
+  }
+  oap.line_count = oap.end.lnum - oap.start.lnum + 1;
+
+  curwin->w_cursor = oap.start;
+
+  switch (op_type) {
+  case OP_DELETE:
+    op_delete(&oap);
+    break;
+  case OP_YANK:
+    op_yank(&oap, true);
+    curwin->w_cursor = oap.start;
+    helix_selection_init();
+    return false;
+  case OP_CHANGE:
+    op_delete(&oap);
+    helix_selection_collapse();
+    return true;
+  case OP_LSHIFT:
+  case OP_RSHIFT:
+    op_shift(&oap, true, (op_type == OP_LSHIFT) ? -1 : 1);
+    break;
+  default:
+    break;
+  }
+
+  helix_selection_collapse();
+  return false;
+}

@@ -476,6 +476,9 @@ EXTERN int resel_VIsual_mode INIT( = NUL);       // 'v', 'V', or Ctrl-V
 EXTERN linenr_T resel_VIsual_line_count;        // number of lines
 EXTERN colnr_T resel_VIsual_vcol;               // nr of cols or end col
 
+/// Helix paradigm selection state (defined in state.c)
+EXTERN HelixSelection current_helix_sel;
+
 /// When pasting text with the middle mouse button in visual mode with
 /// restart_edit set, remember where it started so we can set Insstart.
 EXTERN pos_T where_paste_started;

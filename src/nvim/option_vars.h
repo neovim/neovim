@@ -256,6 +256,9 @@ enum {
 // TODO(famiu): Remove this when refcounted strings are used for string options.
 EXTERN char empty_string_option[] INIT( = "");
 
+// Paradigm option constants
+#define HELIX_MODE() (p_pdm != NULL && *p_pdm == 'h')
+
 // The following are actual variables for the options
 
 EXTERN char *p_ambw;             ///< 'ambiwidth'
@@ -445,6 +448,7 @@ EXTERN OptInt p_mouset;         ///< 'mousetime'
 EXTERN int p_more;              ///< 'more'
 EXTERN char *p_nf;              ///< 'nrformats'
 EXTERN char *p_opfunc;          ///< 'operatorfunc'
+EXTERN char *p_pdm;             ///< 'paradigm'
 EXTERN char *p_para;            ///< 'paragraphs'
 EXTERN int p_paste;             ///< 'paste'
 EXTERN char *p_pex;             ///< 'patchexpr'

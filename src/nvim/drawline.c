@@ -1253,6 +1253,37 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         area_highlighting = true;
         vi_attr = win_hl_attr(wp, HLF_V);
       }
+      // handle helix paradigm selection highlighting
+    } else if (helix_is_active() && current_helix_sel.has_selection
+               && wp == curwin && !has_foldtext) {
+      pos_T sel_top, sel_bot;
+      if (ltoreq(current_helix_sel.anchor, current_helix_sel.head)) {
+        sel_top = current_helix_sel.anchor;
+        sel_bot = current_helix_sel.head;
+      } else {
+        sel_top = current_helix_sel.head;
+        sel_bot = current_helix_sel.anchor;
+      }
+      if (lnum >= sel_top.lnum && lnum <= sel_bot.lnum) {
+        if (lnum > sel_top.lnum && lnum < sel_bot.lnum) {
+          wlv.fromcol = 0;
+          wlv.tocol = MAXCOL;
+        } else {
+          if (lnum == sel_top.lnum) {
+            getvvcol(wp, &sel_top, &wlv.fromcol, NULL, NULL);
+          } else {
+            wlv.fromcol = 0;
+          }
+          if (lnum == sel_bot.lnum) {
+            getvvcol(wp, &sel_bot, NULL, NULL, &wlv.tocol);
+            wlv.tocol++;
+          } else {
+            wlv.tocol = MAXCOL;
+          }
+        }
+        area_highlighting = true;
+        vi_attr = win_hl_attr(wp, HLF_V);
+      }
       // handle 'incsearch' and ":s///c" highlighting
     } else if (highlight_match
                && wp == curwin

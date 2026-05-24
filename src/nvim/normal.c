@@ -519,6 +519,9 @@ void normal_enter(bool cmdwin, bool noexmode)
   state.cmdwin = cmdwin;
   state.noexmode = noexmode;
   state.toplevel = (!cmdwin || cmdwin_result == 0) && !noexmode;
+  if (HELIX_MODE()) {
+    helix_selection_init();
+  }
   state_enter(&state.state);
   current_oap = prev_oap;
 }
@@ -3726,6 +3729,16 @@ static void nv_right(cmdarg_T *cap)
     return;
   }
 
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    for (n = cap->count1; n > 0; n--) {
+      if (oneright() == false) {
+        break;
+      }
+    }
+    helix_selection_init();
+    return;
+  }
+
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   bool past_line = (VIsual_active && *p_sel != 'o');
@@ -3804,6 +3817,16 @@ static void nv_left(cmdarg_T *cap)
     return;
   }
 
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    for (n = cap->count1; n > 0; n--) {
+      if (oneleft() == false) {
+        break;
+      }
+    }
+    helix_selection_init();
+    return;
+  }
+
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   for (n = cap->count1; n > 0; n--) {
@@ -3858,6 +3881,16 @@ static void nv_up(cmdarg_T *cap)
     return;
   }
 
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    if (cursor_up(cap->count1, true) != false) {
+      if (cap->arg) {
+        beginline(BL_WHITE | BL_FIX);
+      }
+    }
+    helix_selection_init();
+    return;
+  }
+
   cap->oap->motion_type = kMTLineWise;
   if (cursor_up(cap->count1, cap->oap->op_type == OP_NOP) == false) {
     clearopbeep(cap->oap);
@@ -3874,7 +3907,20 @@ static void nv_down(cmdarg_T *cap)
     // <S-Down> is page down
     cap->arg = FORWARD;
     nv_page(cap);
-  } else if (bt_quickfix(curbuf) && cap->cmdchar == CAR) {
+    return;
+  }
+
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    if (cursor_down(cap->count1, true) != false) {
+      if (cap->arg) {
+        beginline(BL_WHITE | BL_FIX);
+      }
+    }
+    helix_selection_init();
+    return;
+  }
+
+  if (bt_quickfix(curbuf) && cap->cmdchar == CAR) {
     // Quickfix window only: view the result under the cursor.
     qf_view_result(false);
   } else {
@@ -3947,6 +3993,15 @@ static void nv_end(cmdarg_T *cap)
 /// Handle the "$" command.
 static void nv_dollar(cmdarg_T *cap)
 {
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    helix_ensure_anchor(curwin->w_cursor);
+    curwin->w_curswant = MAXCOL;
+    cursor_down(cap->count1 - 1, true);
+    coladvance(curwin, MAXCOL);
+    helix_selection_extend_inclusive(curwin->w_cursor);
+    return;
+  }
+
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = true;
   // In virtual mode when off the edge of a line and an operator
@@ -3988,9 +4043,13 @@ static void nv_search(cmdarg_T *cap)
     return;
   }
 
-  normal_search(cap, cap->cmdchar, cap->searchbuf, strlen(cap->searchbuf),
-                (cap->arg || !equalpos(save_cursor, curwin->w_cursor))
-                ? 0 : SEARCH_MARK, NULL);
+  int i = normal_search(cap, cap->cmdchar, cap->searchbuf, strlen(cap->searchbuf),
+                        (cap->arg || !equalpos(save_cursor, curwin->w_cursor))
+                        ? 0 : SEARCH_MARK, NULL);
+  if (helix_is_active() && i > 0) {
+    helix_ensure_anchor(save_cursor);
+    helix_selection_extend_inclusive(curwin->w_cursor);
+  }
 }
 
 /// Handle "N" and "n" commands.
@@ -4008,6 +4067,11 @@ static void nv_next(cmdarg_T *cap)
     cap->count1 += 1;
     normal_search(cap, 0, NULL, 0, SEARCH_MARK | cap->arg, NULL);
     cap->count1 -= 1;
+  }
+
+  if (helix_is_active() && i > 0) {
+    helix_ensure_anchor(old);
+    helix_selection_extend_inclusive(curwin->w_cursor);
   }
 
   // Redraw the window to refresh the highlighted matches.
@@ -4453,6 +4517,16 @@ static void nv_mark(cmdarg_T *cap)
 /// cmd->arg is BACKWARD for "{" and FORWARD for "}".
 static void nv_findpar(cmdarg_T *cap)
 {
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    helix_ensure_anchor(curwin->w_cursor);
+    bool inclusive = false;
+    if (findpar(&inclusive, cap->arg, cap->count1, NUL, false)) {
+      curwin->w_cursor.coladd = 0;
+    }
+    helix_selection_extend_inclusive(curwin->w_cursor);
+    return;
+  }
+
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   cap->oap->use_reg_one = true;
@@ -5850,6 +5924,20 @@ static void nv_operator(cmdarg_T *cap)
 {
   int op_type = get_op_type(cap->cmdchar, cap->nchar);
 
+  if (helix_is_active()) {
+    if (bt_prompt(curbuf) && op_is_change(op_type)
+        && !prompt_curpos_editable()) {
+      clearopbeep(cap->oap);
+      return;
+    }
+    bool enter_insert = helix_apply_operator(cap->cmdchar);
+    if (enter_insert) {
+      restart_edit = 'a';
+      edit('a', false, 1);
+    }
+    return;
+  }
+
   if (bt_prompt(curbuf) && op_is_change(op_type)
       && !prompt_curpos_editable()) {
     clearopbeep(cap->oap);
@@ -5944,6 +6032,13 @@ static void nv_pipe(cmdarg_T *cap)
 /// cap->arg is 1 for "B"
 static void nv_bck_word(cmdarg_T *cap)
 {
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    helix_ensure_anchor(curwin->w_cursor);
+    bck_word(cap->count1, cap->arg, false);
+    helix_selection_extend_inclusive(curwin->w_cursor);
+    return;
+  }
+
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   curwin->w_set_curswant = true;
@@ -5962,6 +6057,25 @@ static void nv_wordcmd(cmdarg_T *cap)
   bool word_end;
   bool flag = false;
   pos_T startpos = curwin->w_cursor;
+
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    helix_ensure_anchor(curwin->w_cursor);
+    word_end = (cap->cmdchar == 'e' || cap->cmdchar == 'E');
+    if (word_end) {
+      end_word(cap->count1, cap->arg, false, false);
+    } else {
+      fwd_word(cap->count1, cap->arg, false);
+    }
+    if (lt(startpos, curwin->w_cursor)) {
+      adjust_cursor(cap->oap);
+    }
+    if (word_end) {
+      helix_selection_extend_inclusive(curwin->w_cursor);
+    } else {
+      helix_selection_extend(curwin->w_cursor);
+    }
+    return;
+  }
 
   // Set inclusive for the "E" and "e" command.
   if (cap->cmdchar == 'e' || cap->cmdchar == 'E') {
@@ -6039,6 +6153,13 @@ static void adjust_cursor(oparg_T *oap)
 /// cap->arg is the argument for beginline().
 static void nv_beginline(cmdarg_T *cap)
 {
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    helix_ensure_anchor(curwin->w_cursor);
+    beginline(cap->arg);
+    helix_selection_extend_inclusive(curwin->w_cursor);
+    return;
+  }
+
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   beginline(cap->arg);
@@ -6123,6 +6244,20 @@ static void nv_goto(cmdarg_T *cap)
   } else {
     lnum = 1;
   }
+
+  if (helix_is_active() && cap->oap->op_type == OP_NOP) {
+    helix_ensure_anchor(curwin->w_cursor);
+    if (cap->count0 != 0) {
+      lnum = cap->count0;
+    }
+    lnum = MIN(MAX(lnum, 1), curbuf->b_ml.ml_line_count);
+    setpcmark();
+    curwin->w_cursor.lnum = lnum;
+    beginline(BL_SOL | BL_FIX);
+    helix_selection_extend_inclusive(curwin->w_cursor);
+    return;
+  }
+
   cap->oap->motion_type = kMTLineWise;
   setpcmark();
 
@@ -6194,6 +6329,12 @@ static void nv_esc(cmdarg_T *cap)
     // vgetorpeek() will repeatedly return ESC.  Exit the cmdline window to
     // break the loop.
     cmdwin_result = K_IGNORE;
+    return;
+  }
+
+  if (helix_is_active() && current_helix_sel.has_selection) {
+    helix_selection_collapse();
+    redraw_curbuf_later(UPD_SOME_VALID);
     return;
   }
 

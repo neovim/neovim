@@ -6411,6 +6411,24 @@ local options = {
       varname = 'p_pp',
     },
     {
+      abbreviation = 'pdm',
+      defaults = 'vim',
+      values = { 'vim', 'helix' },
+      desc = [=[
+        Sets the editing paradigm for Normal mode.
+        'vim'   Traditional operator-first (verb-noun) editing. Default.
+        'helix' Selection-first (noun-verb) editing, inspired by Helix.
+                Every motion creates a selection. Verbs operate on the
+                active selection. mode() still returns 'n' for plugin
+                compatibility.
+      ]=],
+      full_name = 'paradigm',
+      scope = { 'global' },
+      short_desc = N_('editing paradigm for Normal mode'),
+      type = 'string',
+      varname = 'p_pdm',
+    },
+    {
       abbreviation = 'para',
       defaults = 'IPLPPPQPP TPHPLIPpLpItpplpipbp',
       desc = [=[

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdbool.h>
+
+#include "nvim/pos_defs.h"
+
 typedef struct vim_state VimState;
 
 typedef int (*state_check_callback)(VimState *state);
@@ -42,3 +46,11 @@ enum {
   MODE_EXTERNCMD   = 0x5000,  ///< executing an external command
   MODE_SHOWMATCH   = 0x6000 | MODE_INSERT,  ///< show matching paren
 };
+
+/// Helix paradigm selection state
+typedef struct {
+  pos_T anchor;         ///< selection start, fixed until verb or Esc
+  pos_T head;           ///< selection end, moves with motions
+  bool  has_selection;  ///< true when selection spans > 1 char
+  bool  inclusive;      ///< true if head position is included in selection
+} HelixSelection;

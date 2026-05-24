@@ -1,115 +1,162 @@
 <h1 align="center">
-  <img src="https://raw.githubusercontent.com/neovim/neovim.github.io/master/static/logos/neovim-logo-300x87.png" alt="Neovim">
+  Yet Another Neovim
 
-  <a href="https://neovim.io/doc/">Documentation</a> |
-  <a href="https://app.element.io/#/room/#neovim:matrix.org">Chat</a>
+  <br>
+  <sub>Because the world desperately needed one more fork.</sub>
 </h1>
 
-[![Coverity Scan analysis](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
-[![Packages](https://repology.org/badge/tiny-repos/neovim.svg)](https://repology.org/metapackage/neovim)
-[![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
-[![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592001)](https://github.com/neovim/neovim/releases/)
+<p align="center">
+  A Neovim fork that adds a <code>paradigm</code> option, letting you switch Normal mode
+  between classic Vim (verb-noun) and Helix-style (noun-verb, selection-first) editing.
+  <br><br>
+  You select, <i>then</i> you act. Like a civilized person.
+</p>
 
-Neovim is a project that seeks to aggressively refactor [Vim](https://www.vim.org/) in order to:
+---
 
-- Simplify maintenance and encourage [contributions](CONTRIBUTING.md)
-- Split the work between multiple developers
-- Enable [advanced UIs] without modifications to the core
-- Maximize [extensibility](https://neovim.io/doc/user/api-ui-events.html#api-ui-events)
+## What is this?
 
-See the [Introduction](https://github.com/neovim/neovim/wiki/Introduction) wiki page and [Roadmap]
-for more information.
+This is a hard fork of [Neovim](https://github.com/neovim/neovim) with one meaningful addition: a built-in Helix editing paradigm.
 
-Features
---------
-
-- Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
-- [API access](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
-  from any language including C/C++, C#, Clojure, D, Elixir, Go, Haskell, Java/Kotlin,
-  JavaScript/Node.js, Julia, Lisp, Lua, Perl, Python, Racket, Ruby, Rust
-- Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/terminal.html)
-- Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
-- [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
-- [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
-- Compatible with most Vim plugins, including Ruby and Python plugins
-
-See [`:help nvim-features`][nvim-features] for the full list, and [`:help news`][nvim-news] for noteworthy changes in the latest version!
-
-Install from package
---------------------
-
-Pre-built packages for Windows, macOS, and Linux are found on the
-[Releases](https://github.com/neovim/neovim/releases/) page.
-
-[Managed packages] are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Void Linux], [Gentoo], and more!
-
-Install from source
--------------------
-
-See [BUILD.md](./BUILD.md) and [supported platforms](https://neovim.io/doc/user/support.html#supported-platforms) for details.
-
-The build is CMake-based, but a Makefile is provided as a convenience.
-After installing the dependencies, run the following command.
-```bash
-make CMAKE_BUILD_TYPE=RelWithDebInfo
-sudo make install
+```lua
+vim.opt.paradigm = 'vim'    -- default. you already know this one.
+vim.opt.paradigm = 'helix'  -- the good one.
 ```
 
-To install to a non-default location:
+Set it to `'helix'` and Normal mode becomes selection-first. Every motion selects. Every verb acts on what you selected. No more `d3w` and praying you counted the words right. You press `w` three times, *see* exactly what you're about to obliterate, and *then* press `d`. Revolutionary? No. Helix has been doing this for years. But you like your 847 Neovim plugins, and Helix doesn't have those. So here we are.
+
+## How it works
+
+**Motions select.** Press `w` and the next word lights up. Press `$` and everything to the end of the line lights up. Press `G` and... you get the idea.
+
+**`h`/`j`/`k`/`l` navigate.** They move the cursor and select the single character under it. Like arrow keys, but for people with taste.
+
+**Verbs operate on the selection.** `d` deletes it. `y` yanks it. `c` changes it. No operator-pending mode. No guessing.
+
+**`Esc` cancels.** Collapses the selection back to one character. No verb executed. No harm done.
+
+**Everything else is untouched.** Insert mode works. Visual mode works. Your plugins work. `mode()` returns `'n'` so your statusline plugin doesn't have an identity crisis.
+
+## Why not just use Helix?
+
+Because you have 200 hours invested in your Neovim config and you're not throwing that away. Because Telescope exists. Because LSP in Neovim is actually good now and you've already suffered through configuring it. Because switching editors is for people who don't have deadlines.
+
+This gives you the one thing Helix got right — selection-first editing — without making you abandon your entire setup.
+
+## Why a fork? Why not a plugin?
+
+Because selection-first editing needs to intercept every motion handler at the C level, before Neovim's state machine processes them. A Lua plugin can't do that without being a laggy, fragile hack stapled onto the event loop. This is the kind of change that belongs in the core. So here it is, in the core.
+
+## Update policy
+
+This fork tracks upstream Neovim. I merge in updates when I need them or when something interesting lands. This is not an automated pipeline. There is no bot. There is no CI that rebases nightly.
+
+**This is intentional.**
+
+In an era where your package manager updates 47 things before breakfast — half of which introduce breaking changes that their own test suite didn't catch — this fork updates when a human (me) decides it's worth updating. I use this daily. If upstream ships something I need, it gets merged. If upstream ships something that breaks things, it doesn't.
+
+You might call this "lazy maintenance." I call it "not letting a cron job ruin my editor on a Monday morning."
+
+Think of it as **artisanal software distribution**. Hand-merged. Locally sourced. Certified free of surprise regressions at 3 AM.
+
+## Building
+
+Same as Neovim. It's a Neovim fork, not a different species.
+
 ```bash
-make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=/full/path/
-make install
+cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build -j$(nproc)
 ```
 
-CMake hints for inspecting the build:
+The binary is called **`yanvim`**, not `nvim`. It installs alongside Neovim without conflicting.
 
-- `cmake --build build --target help` lists all build targets.
-- `build/CMakeCache.txt` (or `cmake -LAH build/`) contains the resolved values of all CMake variables.
-- `build/compile_commands.json` shows the full compiler invocations for each translation unit.
+Run it without installing:
+```bash
+VIMRUNTIME=runtime build/bin/yanvim
+```
 
-Transitioning from Vim
---------------------
+Or install it system-wide:
+```bash
+sudo cmake --install build
+```
 
-See [`:help nvim-from-vim`](https://neovim.io/doc/user/nvim.html#nvim-from-vim) for instructions.
+Or to `~/.local` (no sudo, keeps it in your user path):
+```bash
+cmake --install build --prefix ~/.local
+```
 
-Project layout
---------------
+yanvim uses the same config directory as Neovim (`~/.config/nvim/`), so your existing setup just works.
 
-    ├─ cmake/           CMake utils
-    ├─ cmake.config/    CMake defines
-    ├─ cmake.deps/      subproject to fetch and build dependencies (optional)
-    ├─ runtime/         plugins and docs
-    ├─ src/nvim/        application source code (see src/nvim/README.md)
-    │  ├─ api/          API subsystem
-    │  ├─ eval/         Vimscript subsystem
-    │  ├─ event/        event-loop subsystem
-    │  ├─ generators/   code generation (pre-compilation)
-    │  ├─ lib/          generic data structures
-    │  ├─ lua/          Lua subsystem
-    │  ├─ msgpack_rpc/  RPC subsystem
-    │  ├─ os/           low-level platform code
-    │  └─ tui/          built-in UI
-    └─ test/            tests (see test/README.md)
+See [BUILD.md](./BUILD.md) for dependencies and platform-specific details. If you can build Neovim, you can build this. If you can't build Neovim, that's between you and CMake.
 
-License
--------
+### Arch Linux (AUR)
 
-Neovim contributions since [b17d96][license-commit] are licensed under the
-Apache 2.0 license, except for contributions copied from Vim (identified by the
-`vim-patch` token). See [LICENSE.txt](./LICENSE.txt) for details.
+```bash
+yay -S yanvim-git
+```
 
-[license-commit]: https://github.com/neovim/neovim/commit/b17d9691a24099c9210289f16afb1a498a89d803
-[nvim-features]: https://neovim.io/doc/user/vim_diff.html#nvim-features
-[nvim-news]: https://neovim.io/doc/user/news.html
-[Roadmap]: https://neovim.io/roadmap/
-[advanced UIs]: https://github.com/neovim/neovim/wiki/Related-projects#gui
-[Managed packages]: ./INSTALL.md#install-from-package
-[Debian]: https://packages.debian.org/testing/neovim
-[Ubuntu]: https://packages.ubuntu.com/search?keywords=neovim
-[Fedora]: https://packages.fedoraproject.org/pkgs/neovim/neovim/
-[Arch Linux]: https://www.archlinux.org/packages/?q=neovim
-[Void Linux]: https://voidlinux.org/packages/?arch=x86_64&q=neovim
-[Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
-[Homebrew]: https://formulae.brew.sh/formula/neovim
+## Configuration
+
+Add to your `init.lua`:
+
+```lua
+vim.opt.paradigm = 'helix'
+```
+
+That's it. One line. You can switch back to classic Vim at any time:
+
+```lua
+vim.opt.paradigm = 'vim'
+```
+
+No restart needed. No side effects. Your muscle memory for both paradigms can coexist peacefully.
+
+### Highlight groups
+
+The selection uses two highlight groups you can customize:
+
+| Group | Default | Purpose |
+|---|---|---|
+| `HelixCursor` | links to `Cursor` | The 1-char resting selection |
+| `HelixSelection` | links to `Visual` | Active multi-char selection |
+
+They work with any colorscheme out of the box. Override them if you want your selections to look different from Visual mode.
+
+## Quick reference
+
+| Key | Vim paradigm | Helix paradigm |
+|---|---|---|
+| `w` | Move to next word | **Select** to next word |
+| `b` | Move to prev word | **Select** to prev word |
+| `$` | Move to end of line | **Select** to end of line |
+| `h`/`l` | Move left/right | Move left/right (1-char select) |
+| `j`/`k` | Move up/down | Move up/down (1-char select) |
+| `d` | (needs motion) | Delete selection |
+| `y` | (needs motion) | Yank selection |
+| `c` | (needs motion) | Change selection |
+| `Esc` | — | Collapse selection |
+
+## FAQ
+
+**Q: Is this stable?**
+A: I use it every day. So either it's stable, or I have a very high tolerance for pain. Probably both.
+
+**Q: Will my plugins break?**
+A: No. The helix paradigm reports `mode()` as `'n'`. Plugins see Normal mode. They don't know about the selection state and they don't need to.
+
+**Q: Can I map custom keys in helix mode?**
+A: Standard Neovim mappings work. The paradigm only changes what the built-in motions do in Normal mode.
+
+**Q: How far behind upstream are you?**
+A: Check the commit log. If it's more than a few weeks, I'm either on vacation or nothing interesting happened upstream. Either way, your editor still works.
+
+## License
+
+Same as Neovim. Apache 2.0 for new contributions, Vim license for code inherited from Vim.
+See [LICENSE.txt](./LICENSE.txt).
+
+## Credits
+
+Built on top of [Neovim](https://github.com/neovim/neovim), which is built on top of [Vim](https://www.vim.org/), which is built on top of [vi](https://en.wikipedia.org/wiki/Vi_(text_editor)), which is built on top of [ed](https://en.wikipedia.org/wiki/Ed_(text_editor)). It's turtles all the way down.
 
 <!-- vim: set tw=80: -->
