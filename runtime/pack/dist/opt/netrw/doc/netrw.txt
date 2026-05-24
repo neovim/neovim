@@ -2283,9 +2283,10 @@ Set the marked file copy/move-to target (see |netrw-mc| and |netrw-mm|):
     displayed directory is used for the copy/move-to target.
 
   * Also, if the cursor is in the banner, then the netrw window's currently
-    displayed directory is used for the copy/move-to target.
-    Unless the target already is the current directory.  In which case,
-    typing "mf" clears the target.
+    displayed directory is used for the copy/move-to target - unless that
+    directory is already the target, in which case typing "mt" again clears
+    it.  Repeating "mt" in the banner thus toggles the current directory as
+    the target.
 
   * However, if the cursor is atop a directory name, then that directory is
     used for the copy/move-to target
