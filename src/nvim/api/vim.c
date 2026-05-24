@@ -2539,7 +2539,7 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
   if (opts->statuscolumn || opts->statusline || opts->winbar) {
     if (win == NULL) {
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        if (buf == NULL || wp->w_buffer == buf) {
+        if (buf == NULL || (wp->w_buffer == buf && !is_aucmd_win(wp))) {
           redraw_status(wp, opts, &opts->flush);
         }
       }

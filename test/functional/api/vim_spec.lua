@@ -6221,4 +6221,25 @@ describe('API', function()
       ^:call getchar()                         |
     ]])
   end)
+
+  it("nvim__redraw doesn't draw statusline for autocmd window", function()
+    local drawn = exec_lua(function()
+      vim.g.drawn = false
+      function _G.statusline_draw()
+        vim.g.drawn = true
+      end
+      vim.o.laststatus = 2
+      vim.o.statusline = '%{%v:lua.statusline_draw()%}'
+
+      vim.api.nvim_create_autocmd('DiagnosticChanged', {
+        callback = function(ev)
+          vim.api.nvim__redraw({ buf = ev.buf, statusline = true })
+        end,
+      })
+      vim.api.nvim_exec_autocmds('DiagnosticChanged', { buf = vim.api.nvim_create_buf(true, true) })
+
+      return vim.g.drawn
+    end)
+    eq(false, drawn)
+  end)
 end)
