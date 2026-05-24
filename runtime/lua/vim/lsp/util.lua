@@ -1367,7 +1367,7 @@ function M._make_floating_popup_size(contents, opts)
   end
 
   local _, border_width = get_border_size(opts)
-  local screen_width = api.nvim_win_get_width(0)
+  local screen_width = opts.relative == 'editor' and vim.o.columns or api.nvim_win_get_width(0)
   width = math.min(width, screen_width)
 
   -- make sure borders are always inside the screen
