@@ -550,8 +550,8 @@ arguments.  A ":highlight link" is not counted.
 							*E77*  >
   Too many file names (glob not allowed)
 
-When expanding file names, more than one match was found.  Only one match is
-allowed for the command that was used.
+More than one file name was given, either explicitly or by expanding a glob.
+Only one file name is allowed for the command that was used.
 
 Use |:next| if you want to edit all files matching a glob pattern.
 
