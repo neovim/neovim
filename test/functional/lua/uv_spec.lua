@@ -174,7 +174,7 @@ describe('vim.uv', function()
       {1:~                                                 }|*5
       {3:                                                  }|
       {9:Lua callback:}                                     |
-      {9:[NULL]}                                            |
+      {9:nil}                                               |
       {6:Press ENTER or type command to continue}^           |
     ]]
     screen:expect(s)
@@ -209,7 +209,7 @@ describe('vim.uv', function()
     screen:expect([[
       {3:                                                  }|
       {9:Lua callback:}                                     |
-      {9:[NULL]}                                            |
+      {9:nil}                                               |
       {6:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')
