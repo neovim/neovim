@@ -548,7 +548,7 @@ into this limit, you have used too many |:highlight| commands with different
 arguments.  A ":highlight link" is not counted.
 
 							*E77*  >
-  Too many file names (glob not allowed)
+  Too many file names (only one allowed)
 
 More than one file name was given, either explicitly or by expanding a glob.
 Only one file name is allowed for the command that was used.
