@@ -2,7 +2,7 @@
 " Language:     Zig
 " Maintainer:   Mathias Lindgren <math.lindgren@gmail.com>
 " Last Change:  2024 Oct 04
-" Based on:     https://github.com/ziglang/zig.vim
+" Based on:     https://codeberg.org/ziglang/zig.vim
 
 if exists("b:did_ftplugin")
   finish

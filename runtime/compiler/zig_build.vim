@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler: Zig Compiler (zig build)
-" Upstream: https://github.com/ziglang/zig.vim
+" Upstream: https://codeberg.org/ziglang/zig.vim
 " Last Change: 2024 Apr 05 by the Vim Project (removed :CompilerSet definition)
 " 2026 May 12 by the Vim Project (removed comment)
 
