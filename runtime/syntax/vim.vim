@@ -507,7 +507,7 @@ syn match	vim9LambdaParams	   contained
       \ "(\%(\<func(\|[^(]\)*\%(\n\s*\\\%(\<func(\|[^(]\)*\|\n\s*#\\ .*\)*\ze\s\+=>"
       \ skipwhite nextgroup=vim9LambdaOperator
       \ contains=@vim9Continue,vimDefParam,vim9LambdaParen,vim9LambdaReturnType
-syn region	vim9LambdaReturnType contained	start=")\@<=:\s" end="\ze\s*#" end="\ze\s*=>" contains=@vim9Continue,@vimType transparent
+syn region	vim9LambdaReturnType contained	start=")\@1<=:\s" end="\ze\s*#" end="\ze\s*=>" contains=@vim9Continue,@vimType transparent
 syn region	vim9LambdaBlock	   contained	matchgroup=vimSep start="{" end="^\s*\zs}" contains=@vimDefBodyList
 
 syn match	vim9LambdaOperatorComment contained "#.*" skipwhite skipempty nextgroup=@vimExprList,vim9LambdaBlock,vim9LambdaOperatorComment
@@ -617,7 +617,7 @@ syn match	vimDelfunction			"\<delf\%[unction]\>"	skipwhite nextgroup=vimDelfunct
 " =====
 
 syn region	vimReturnType	contained
-      \ start=":\%(\s\|\n\)\@="
+      \ start=")\@1<=:\%(\s\|\n\)\@="
       \ skip=+\n\s*\%(\\\|#\\ \)\|^\s*#\\ +
       \ end="$"
       \ matchgroup=vim9Comment
@@ -684,7 +684,7 @@ if s:vim9script
         \ contains=vim9DefTypeParam
 
   syn region	vim9MethodDefReturnType	contained
-        \ start=":\%(\s\|\n\)\@="
+        \ start=")\@1<=:\%(\s\|\n\)\@="
         \ skip=+\n\s*\%(\\\|#\\ \)\|^\s*#\\ +
         \ end="$"
         \ matchgroup=vim9Comment
@@ -812,7 +812,7 @@ if s:vim9script
         \ skipwhite skipnl nextgroup=vimDefComment,vim9AbstractDefReturnType,vimCommentError
         \ contains=vimDefParam,vim9Comment,vimFunctionParamEquals
   syn region	vim9AbstractDefReturnType	contained
-        \ start=":\s" end="$" matchgroup=vim9Comment end="\ze[#"]"
+        \ start=")\@1<=:\s" end="$" matchgroup=vim9Comment end="\ze[#"]"
         \ skipwhite skipnl nextgroup=vimDefComment,vimCommentError
         \ contains=vimTypeSep
         \ transparent
