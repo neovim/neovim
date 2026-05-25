@@ -622,7 +622,7 @@ func Test_invalid_args()
     endfor
   endif
 
-  if has('gui_gtk')
+  if has('gui_gtk') && has("xterm_clipboard")
     let out = split(system(GetVimCommand() .. ' --display'), "\n")
     call assert_equal(1, v:shell_error)
     call assert_match('^VIM - Vi IMproved .* (.*)$',         out[0])
