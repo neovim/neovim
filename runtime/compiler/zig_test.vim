@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler: Zig Compiler (zig test)
-" Upstream: https://github.com/ziglang/zig.vim
+" Upstream: https://codeberg.org/ziglang/zig.vim
 " Last Change: 2025 Nov 16 by the Vim Project (set errorformat)
 " 2026 May 12 by the Vim Project (remove error format)
 " 2026 May 24 by the Vim project (do not escape vars for makeprg)
