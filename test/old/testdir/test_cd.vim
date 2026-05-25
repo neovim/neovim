@@ -267,7 +267,7 @@ func Test_cd_completion()
         let dir = d
         " Yay! We found a suitable dir!
         break
-      catch /:E472:/
+      catch /:\(E472\|E344\):/
         " Just skip directories where "cd" fails
         continue
       finally
