@@ -898,7 +898,7 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     if (mark.pos.row > row) {
       break;
     }
-    if (mt_conceal_lines(mark) && ns_in_win(pair.start.ns, wp)) {
+    if (mt_conceal_lines(mark) && ns_in_win(mark.ns, wp)) {
       return true;
     }
     marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_filter);
