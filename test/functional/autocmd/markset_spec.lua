@@ -200,98 +200,94 @@ describe('MarkSet', function()
   end)
 
   it('handles an autocommand that calls bwipeout!', function()
-    api.nvim_buf_set_lines(0, 0, -1, true, {
-      'line 1',
-      'line 2',
-      'line 3',
-    })
+    n.assert_autocmd_robust('MarkSet', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'line 1',
+        'line 2',
+        'line 3',
+      })
+      return {
+        bufnr = api.nvim_get_current_buf(),
+      }
+    end, function()
+      feed('ma')
+    end, function(ctx)
+      eq({ 'a' }, eval('g:autocmd_robust_matches'))
+      eq(false, api.nvim_buf_is_valid(ctx.bufnr))
 
-    local test_bufnr = api.nvim_get_current_buf()
+      local current_bufnr = api.nvim_get_current_buf()
+      neq(current_bufnr, ctx.bufnr)
+    end, 'bwipeout')
+  end)
 
-    command("autocmd MarkSet * let g:autocmd ..= expand('<amatch>') | bwipeout!")
-    command([[let g:autocmd = '']])
+  it('handles an autocommand that calls bdelete!', function()
+    n.assert_autocmd_robust('MarkSet', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'line 1',
+        'line 2',
+        'line 3',
+      })
+      return {
+        bufnr = api.nvim_get_current_buf(),
+      }
+    end, function()
+      feed('ma')
+    end, function(ctx)
+      eq({ 'a' }, eval('g:autocmd_robust_matches'))
+      eq(true, api.nvim_buf_is_valid(ctx.bufnr))
+      eq(false, api.nvim_buf_is_loaded(ctx.bufnr))
 
-    feed('ma')
-    poke_eventloop()
-
-    eq('a', eval('g:autocmd'))
-
-    eq(false, api.nvim_buf_is_valid(test_bufnr))
-
-    local current_bufnr = api.nvim_get_current_buf()
-    neq(current_bufnr, test_bufnr)
+      local current_bufnr = api.nvim_get_current_buf()
+      neq(current_bufnr, ctx.bufnr)
+    end, 'bdelete')
   end)
 
   it('when autocommand switches windows and tabs', function()
-    api.nvim_buf_set_lines(0, 0, -1, true, {
-      'first buffer line 1',
-      'first buffer line 2',
-      'first buffer line 3',
-    })
-    local first_bufnr = api.nvim_get_current_buf()
+    n.assert_autocmd_robust('MarkSet', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'first buffer line 1',
+        'first buffer line 2',
+        'first buffer line 3',
+      })
+      local first_bufnr = api.nvim_get_current_buf()
 
-    command('split')
-    command('enew')
-    api.nvim_buf_set_lines(0, 0, -1, true, {
-      'second buffer line 1',
-      'second buffer line 2',
-    })
-    local second_bufnr = api.nvim_get_current_buf()
+      command('split')
+      command('enew')
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'second buffer line 1',
+        'second buffer line 2',
+      })
+      local second_bufnr = api.nvim_get_current_buf()
 
-    command('tabnew')
-    api.nvim_buf_set_lines(0, 0, -1, true, {
-      'third buffer line 1',
-      'third buffer line 2',
-      'third buffer line 3',
-    })
-    local third_bufnr = api.nvim_get_current_buf()
-
-    command([[
-      let g:markset_events = []
-      autocmd MarkSet * call add(g:markset_events, {'buf': 0 + expand('<abuf>'), 'event': deepcopy(v:event)}) | wincmd w | tabnext
-    ]])
-
-    command('buffer ' .. second_bufnr)
-    feed('j')
-    feed('mA')
-    command('buffer ' .. third_bufnr)
-    feed('l')
-    feed('mB')
-    command('buffer ' .. first_bufnr)
-    feed('jj')
-    feed('mC')
-    poke_eventloop()
-
-    eq({
-      {
-        buf = 2,
-        event = {
-          col = 0,
-          line = 2,
-          name = 'A',
-        },
-      },
-      {
-        buf = 3,
-        event = {
-          col = 1,
-          line = 1,
-          name = 'B',
-        },
-      },
-      {
-        buf = 1,
-        event = {
-          col = 0,
-          line = 3,
-          name = 'C',
-        },
-      },
-    }, eval('g:markset_events'))
-
-    eq({ 2, 0 }, api.nvim_buf_get_mark(second_bufnr, 'A'))
-    eq({ 1, 1 }, api.nvim_buf_get_mark(third_bufnr, 'B'))
-    eq({ 3, 0 }, api.nvim_buf_get_mark(first_bufnr, 'C'))
+      command('tabnew')
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'third buffer line 1',
+        'third buffer line 2',
+        'third buffer line 3',
+      })
+      local third_bufnr = api.nvim_get_current_buf()
+      return {
+        first_bufnr = first_bufnr,
+        second_bufnr = second_bufnr,
+        third_bufnr = third_bufnr,
+      }
+    end, function(ctx)
+      command('buffer ' .. ctx.second_bufnr)
+      feed('j')
+      feed('mA')
+      command('buffer ' .. ctx.third_bufnr)
+      feed('l')
+      feed('mB')
+      command('buffer ' .. ctx.first_bufnr)
+      feed('jj')
+      feed('mC')
+      poke_eventloop()
+    end, function(ctx)
+      eq({ 'A', 'B', 'C' }, eval('g:autocmd_robust_matches'))
+      eq({ 2, 0 }, api.nvim_buf_get_mark(ctx.second_bufnr, 'A'))
+      eq({ 1, 1 }, api.nvim_buf_get_mark(ctx.third_bufnr, 'B'))
+      eq({ 3, 0 }, api.nvim_buf_get_mark(ctx.first_bufnr, 'C'))
+    end, 'switch-window-tab')
   end)
 
   it('emits when marks are deleted', function()
@@ -345,5 +341,24 @@ describe('MarkSet', function()
         },
       },
     }, eval('g:mark_events'))
+  end)
+
+  it('handles disruptive autocommands', function()
+    n.assert_autocmd_robust('MarkSet', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'line 1',
+        'line 2',
+        'line 3',
+      })
+      return {
+        bufnr = api.nvim_get_current_buf(),
+      }
+    end, function()
+      feed('ma')
+    end, function(ctx)
+      eq({ 'a' }, eval('g:autocmd_robust_matches'))
+      eq(true, api.nvim_buf_is_valid(ctx.bufnr))
+      eq({ 1, 0 }, api.nvim_buf_get_mark(ctx.bufnr, 'a'))
+    end, { 'split', 'vsplit', 'resize', 'system' })
   end)
 end)

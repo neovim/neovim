@@ -808,6 +808,64 @@ M.describe_lua_and_rpc = function(describe)
   end
 end
 
+--- @alias test.autocmd_robust.Case
+--- | 'bwipeout'
+--- | 'bdelete'
+--- | 'split'
+--- | 'vsplit'
+--- | 'switch-window-tab'
+--- | 'resize'
+--- | 'system'
+--- @param event string
+--- @param setup fun(): table?
+--- @param trigger fun(ctx: table?)
+--- @param check fun(ctx: table?)
+--- @param cases test.autocmd_robust.Case | test.autocmd_robust.Case[]
+M.assert_autocmd_robust = function(event, setup, trigger, check, cases)
+  --- @type table<test.autocmd_robust.Case,string>
+  local robust_cases = {
+    bwipeout = 'bwipeout!',
+    bdelete = 'bdelete!',
+    split = 'split',
+    ['switch-window-tab'] = 'wincmd w | tabnext',
+    vsplit = 'vsplit',
+    resize = 'resize +1',
+    system = 'call system(["true"])',
+  }
+
+  local case_names --- @type test.autocmd_robust.Case[]
+  if type(cases) == 'string' then
+    ---@cast cases test.autocmd_robust.Case
+    case_names = { cases }
+  else
+    ---@cast cases test.autocmd_robust.Case[]
+    case_names = cases
+  end
+
+  for _, case_name in ipairs(case_names) do
+    M.clear()
+    local action = robust_cases[case_name]
+    assert(action ~= nil, 'unknown autocmd robustness case: ' .. tostring(case_name))
+
+    local ctx = setup()
+
+    M.command('let g:autocmd_robust_fired = 0')
+    M.command('let g:autocmd_robust_matches = []')
+    M.command(
+      ('autocmd %s * let g:autocmd_robust_fired += 1 | call add(g:autocmd_robust_matches, expand("<amatch>")) | %s'):format(
+        event,
+        action
+      )
+    )
+
+    trigger(ctx)
+    M.poke_eventloop()
+    eq(1, M.eval('g:autocmd_robust_fired > 0'))
+    M.assert_alive()
+    check(ctx)
+  end
+end
+
 --- add for typing. The for loop after will overwrite this
 M.api = vim.api
 M.fn = vim.fn

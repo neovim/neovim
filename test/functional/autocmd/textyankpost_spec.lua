@@ -252,4 +252,22 @@ describe('TextYankPost', function()
     feed('"adj')
     eq('foo\nbar\nbaz text\n', eval('g:reg'))
   end)
+
+  it('handles disruptive autocommands', function()
+    n.assert_autocmd_robust('TextYankPost', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'foo bar',
+        'baz text',
+      })
+      return {
+        bufnr = api.nvim_get_current_buf(),
+      }
+    end, function()
+      feed('yy')
+    end, function(ctx)
+      eq({ '' }, eval('g:autocmd_robust_matches'))
+      eq(true, api.nvim_buf_is_valid(ctx.bufnr))
+      eq({ 'foo bar' }, fn.getreg('"', 1, 1))
+    end, { 'split', 'vsplit', 'resize', 'system' })
+  end)
 end)
