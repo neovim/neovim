@@ -9,8 +9,11 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "nvim/charset.h"
 #include "nvim/map_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/path.h"
 
 #define equal_simple(x, y) ((x) == (y))
 
@@ -41,6 +44,57 @@ static inline uint32_t hash_cstr_t(const char *s)
 }
 
 #define equal_cstr_t strequal
+
+/// Hash/equality for path strings. On case-insensitive platforms, case-fold first (via
+/// str_foldcase, the same fold used by mb_stricmp/path_fnamencmp) so the hash↔equality invariant
+/// holds.
+///
+/// On Windows we additionally:
+///   - fold '\\' -> '/'   (path_fnamencmp treats them as equal)
+///   - drop a leading drive letter "[A-Za-z]:" so that "C:\foo" and "\foo" land in the same bucket
+///     (path_fnamencmp considers them equal when the current drive matches the explicit drive
+///     letter). Two paths with *different* explicit drives ("C:\foo" vs "D:\foo") may now
+///     share a bucket — that's a permitted collision; equal_path_t still rejects them.
+///
+/// path_fnamencmp's non-Windows branch consults &fileignorecase, which is runtime-mutable and would
+/// break the hash invariant if flipped. So the macOS branch deliberately bypasses path_fnamencmp
+/// and uses the compile-time CASE_INSENSITIVE_FILENAME switch instead.
+static inline uint32_t hash_path_t(const char *p)
+{
+#ifdef BACKSLASH_IN_FILENAME
+  if (p[1] == ':' && ASCII_ISALPHA(p[0])) {
+    p += 2;
+  }
+#endif
+#ifdef CASE_INSENSITIVE_FILENAME
+  char *folded = str_foldcase((char *)p, (int)strlen(p), NULL, 0);
+  uint32_t h = hash_cstr_t(folded);
+  xfree(folded);
+  return h;
+#else
+  return hash_cstr_t(p);
+#endif
+}
+
+static inline bool equal_path_t(const char *a, const char *b)
+{
+  if (a == b) {
+    return true;
+  }
+  if (a == NULL || b == NULL) {
+    return false;
+  }
+#ifdef BACKSLASH_IN_FILENAME
+  // Inherit Windows-mode slash, drive-letter, and case folding.
+  size_t la = strlen(a);
+  size_t lb = strlen(b);
+  return path_fnamencmp(a, b, MAX(la, lb)) == 0;
+#elif defined(CASE_INSENSITIVE_FILENAME)
+  return mb_stricmp(a, b) == 0;
+#else
+  return strequal(a, b);
+#endif
+}
 
 static inline uint32_t hash_HlEntry(HlEntry ae)
 {
@@ -125,6 +179,10 @@ void mh_clear(MapHash *h)
 #define VAL_NAME(x) quasiquote(x, int)
 #include "nvim/map_value_impl.c.h"
 #undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##path_t
+#include "nvim/map_key_impl.c.h"
 #undef KEY_NAME
 
 #define KEY_NAME(x) x##String
