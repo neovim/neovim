@@ -1360,11 +1360,12 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     {
       char *block_start = fmt_p - 1;
       bool reevaluate = (*fmt_p == '%');
-      itemisflag = true;
 
       if (reevaluate) {
         fmt_p++;
       }
+      // %0{} keeps the result verbatim
+      itemisflag = zeropad ? false : true;
 
       // Attempt to copy the expression to evaluate into
       // the output buffer as a null-terminated string.
@@ -1420,7 +1421,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       // Check if the evaluated result is a number.
       // If so, convert the number to an int and free the string.
-      if (str != NULL && *str != NUL) {
+      if (!zeropad && str != NULL && *str != NUL) {
         if (*skipdigits(str) == NUL) {
           num = atoi(str);
           XFREE_CLEAR(str);
