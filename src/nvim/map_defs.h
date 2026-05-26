@@ -15,6 +15,7 @@
 #endif
 
 typedef const char *cstr_t;
+typedef const char *path_t;
 typedef void *ptr_t;
 
 // when used as a key, String doesn't need to be NUL terminated,
@@ -143,6 +144,7 @@ void mh_realloc(MapHash *h, uint32_t n_min_buckets);
 MH_DECLS(glyph, char, String)
 KEY_DECLS(int)
 KEY_DECLS(cstr_t)
+KEY_DECLS(path_t)
 KEY_DECLS(ptr_t)
 KEY_DECLS(uint64_t)
 KEY_DECLS(int64_t)

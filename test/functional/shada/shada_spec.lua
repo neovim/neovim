@@ -10,6 +10,7 @@ local api, nvim_command, fn, eq = n.api, n.command, n.fn, t.eq
 local write_file, set_session = t.write_file, n.set_session
 local is_os = t.is_os
 local skip = t.skip
+local feed = n.feed
 
 local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
 local read_shada_file = t_shada.read_shada_file
@@ -300,6 +301,29 @@ describe('ShaDa support code', function()
       t.pcall_err(n.command, 'wshada')
     )
     api.nvim_set_option_value('shada', '', {})
+  end)
+
+  it('deduplicates items on case-insensitive systems', function()
+    local file = ('%s/nonexist/dir/héllo'):format(dirname)
+    nvim_command(('edit %s'):format(file))
+    file = api.nvim_buf_get_name(0)
+    feed('i1<Esc>')
+    nvim_command(('wshada! %s'):format(dirshada))
+    nvim_command('bw!')
+    local upper = fn.toupper(file)
+    if t.is_os('win') then
+      upper = upper:sub(3)
+    end
+    nvim_command(('edit %s'):format(upper))
+    feed('i123<Esc>')
+    nvim_command('mark a')
+    nvim_command(('wshada %s'):format(dirshada))
+    nvim_command('bw!')
+    nvim_command(('rshada! %s'):format(dirshada))
+    local oldfiles = api.nvim_get_vvar('oldfiles')
+    eq((t.is_os('win') or t.is_os('mac')) and 1 or 2, #oldfiles)
+    -- Both filenames appear in shada file, but iteration order is unspecified.
+    t.ok(oldfiles[1] == file or oldfiles[1] == upper)
   end)
 end)
 
