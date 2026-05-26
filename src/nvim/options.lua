@@ -8879,7 +8879,8 @@ local options = {
         { NF  Evaluate expression between "%{" and "}" and substitute result.
               Note that there is no "%" before the closing "}".  The
               expression cannot contain a "}" character, call a function to
-              work around that.  See |stl-%{| below.
+              work around that.  See |stl-%{| below.  Use "%0{" to insert the
+              result verbatim.
         `{%` -  This is almost same as "{" except the result of the expression is
               re-evaluated as a statusline format string.  Thus if the
               return value of expr contains "%" items they will get expanded.
@@ -8982,6 +8983,8 @@ local options = {
         A result of all digits is regarded a number for display purposes.
         Otherwise the result is taken as flag text and applied to the rules
         described above.
+        							*stl-%0{*
+        With %0{ neither applies: the result is inserted as a literal string.
 
         Watch out for errors in expressions.  They may render Vim unusable!
         If you are stuck, hold down ':' or 'Q' to get a prompt, then quit and

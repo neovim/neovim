@@ -286,6 +286,16 @@ func Test_statusline()
   call assert_match('^vimLineComment\s*$', s:get_statusline())
   syntax off
 
+  " %0{: result of expression is inserted verbatim
+  set statusline=%{'\ x'}
+  call assert_match('^x\s*$', s:get_statusline())
+  set statusline=%0{'\ x'}
+  call assert_match('^ x\s*$', s:get_statusline())
+  set statusline=%{'000'}
+  call assert_match('^0\s*$', s:get_statusline())
+  set statusline=%0{'000'}
+  call assert_match('^000\s*$', s:get_statusline())
+
   "%{%expr%}: evaluates expressions present in result of expr
   func! Inner_eval()
     return '%n some other text'
