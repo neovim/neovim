@@ -277,7 +277,7 @@ describe('autocmd', function()
   it('internal `aucmd_win` window', function()
     -- Nvim uses a special internal window `aucmd_win` to execute certain
     -- actions for an invisible buffer (:help E813).
-    -- Check redrawing and API accesses to this window.
+    -- Check redrawing (never shown) and API access to this window.
 
     local screen = Screen.new(50, 10)
 
@@ -304,10 +304,9 @@ describe('autocmd', function()
 
     feed(':enew | doautoall User<cr>')
     screen:expect([[
-      {4:bb                                                }|
-      {11:~                                                 }|*4
-      {1:~                                                 }|*4
-      ^:enew | doautoall User                            |
+                                                        |
+      {1:~                                                 }|*8
+      :enew | doautoall User                            |
     ]])
 
     feed('<cr>')
@@ -330,10 +329,9 @@ describe('autocmd', function()
     command('let g:had_value = v:null')
     feed(':doautoall User<cr>')
     screen:expect([[
-      {4:bb                                                }|
-      {11:~                                                 }|*4
-      {1:~                                                 }|*4
-      ^:doautoall User                                   |
+                                                        |
+      {1:~                                                 }|*8
+      :doautoall User                                   |
     ]])
 
     feed('<cr>')

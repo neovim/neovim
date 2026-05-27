@@ -4385,6 +4385,7 @@ void win_alloc_aucmd_win(int idx)
   fconfig.height = 5;
   fconfig.focusable = false;
   fconfig.mouse = false;
+  fconfig.hide = true;
   aucmd_win[idx].auc_win = win_new_float(NULL, true, fconfig, &err);
   aucmd_win[idx].auc_win->w_buffer->b_nwindows--;
   RESET_BINDING(aucmd_win[idx].auc_win);

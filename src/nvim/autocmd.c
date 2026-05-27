@@ -1397,11 +1397,6 @@ win_found:
     // Remove the window.
     win_remove(curwin, NULL);
     pmap_del(int)(&window_handles, curwin->handle, NULL);
-    if (curwin->w_grid_alloc.chars != NULL) {
-      ui_comp_remove_grid(&curwin->w_grid_alloc);
-      ui_call_win_hide(curwin->w_grid_alloc.handle);
-      grid_free(&curwin->w_grid_alloc);
-    }
 
     // The window is marked as not used, but it is not freed, it can be
     // used again.
