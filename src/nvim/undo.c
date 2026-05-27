@@ -3234,6 +3234,14 @@ void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// Restores undo history on external change. Requires 'backup' to be enabled.
 static void u_handle_extern_change(const uint8_t *read_hash, linenr_T line_count)
 {
+  if (curbuf->b_p_ro
+    || (os_path_exists(curbuf->b_ffname)
+    && !os_file_is_writable(curbuf->b_ffname))) {
+    // no warning for this one so it won't make
+    // noise on opening help files and whatnot
+    return;
+  }
+
   if (!p_bk) {
     give_warning(_("File contents changed, cannot use undo info"), true, true);
     return;
