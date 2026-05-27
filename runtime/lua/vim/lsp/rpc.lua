@@ -1,6 +1,6 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local vim_transport = require('vim.net._transport')
+local net_transport = require('vim.net._transport')
 local strbuffer = require('vim._core.stringbuffer')
 local validate = vim.validate
 
@@ -235,7 +235,7 @@ end
 function M.create_read_loop(handle_body, on_exit, on_error)
   on_exit = on_exit or function() end
   on_error = on_error or function() end
-  local message_stream = vim_transport.MessageStream.new(
+  local message_stream = net_transport.MessageStream.new(
     message_decoder,
     format_message_with_content_length,
     function(err, chunk)
@@ -262,8 +262,8 @@ end
 --- @field private message_index integer
 --- @field private message_callbacks table<integer, function> dict of message_id to callback
 --- @field private notify_reply_callbacks table<integer, function> dict of message_id to callback
---- @field private transport vim.Transport
---- @field private message_stream vim.MessageStream
+--- @field private transport vim.net.Transport
+--- @field private message_stream vim.net.MessageStream
 --- @field private dispatchers vim.lsp.rpc.Dispatchers
 ---
 --- See [vim.lsp.rpc.request()]
@@ -281,7 +281,7 @@ local Client = {}
 
 ---@package
 ---@param dispatchers vim.lsp.rpc.Dispatchers
----@param transport vim.Transport
+---@param transport vim.net.Transport
 ---@param decode fun(buf: vim._core.stringbuffer): string?
 ---@param format fun(msg: string): string
 ---@return vim.lsp.rpc.Client
@@ -327,7 +327,7 @@ function Client.new(dispatchers, transport, decode, format)
   ---@cast result vim.lsp.rpc.Client
   local self = setmetatable(result, { __index = Client })
 
-  self.message_stream = vim_transport.MessageStream.new(decode, format, function(err, data)
+  self.message_stream = net_transport.MessageStream.new(decode, format, function(err, data)
     if err then
       self:on_error(M.client_errors.READ_ERROR, err)
     elseif data then
@@ -637,13 +637,13 @@ function M.connect(host_or_path, port)
 
     dispatchers = merge_dispatchers(dispatchers)
 
-    local transport = vim_transport.TransportConnect.new(host_or_path, port)
+    local transport = net_transport.TransportConnect.new(host_or_path, port)
     return Client.new(dispatchers, transport, message_decoder, format_message_with_content_length)
   end
 end
 
 --- Additional context for the LSP server process.
---- @class vim.transport.ExtraSpawnParams
+--- @class vim.net.transport.ExtraSpawnParams
 --- @inlinedoc
 --- @field cwd? string Working directory for the LSP server process
 --- @field detached? boolean Detach the LSP server process from the current process
@@ -655,7 +655,7 @@ end
 ---
 --- @param cmd string[] Command to start the LSP server.
 --- @param dispatchers? vim.lsp.rpc.Dispatchers
---- @param extra_spawn_params? vim.transport.ExtraSpawnParams
+--- @param extra_spawn_params? vim.net.transport.ExtraSpawnParams
 --- @return vim.lsp.rpc.Client
 function M.start(cmd, dispatchers, extra_spawn_params)
   log.info('Starting RPC client', { cmd = cmd, extra = extra_spawn_params })
@@ -665,7 +665,7 @@ function M.start(cmd, dispatchers, extra_spawn_params)
 
   dispatchers = merge_dispatchers(dispatchers)
 
-  local transport = vim_transport.TransportRun.new(cmd, extra_spawn_params)
+  local transport = net_transport.TransportRun.new(cmd, extra_spawn_params)
   return Client.new(dispatchers, transport, message_decoder, format_message_with_content_length)
 end
 
