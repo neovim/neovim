@@ -117,13 +117,15 @@ fn addLintcClintStep(
 ) *std.Build.Step {
     const lintc_clint = b.step("lintc-clint", "Lint C source with clint");
     const exclusions = [_][]const u8{ "src/nvim/tui/terminfo_defs.h", "src/xxd/xxd.c" };
-    const nvim_path = b.getInstallPath(.bin, nvim_exe_install.artifact.out_filename);
 
     outer: for (lint_sources.items) |file| {
         for (exclusions) |exclusion| {
             if (std.mem.endsWith(u8, file, exclusion)) continue :outer;
         }
-        const run = b.addSystemCommand(&.{nvim_path});
+        const run = std.Build.Step.Run.create(b, b.fmt("run clint for {s}", .{file}));
+        // this is a bit of a hack. it would be nice if there is a variant of addFileArg which
+        // depends only on the file's existence, but does not hash its contents
+        run.addDirectoryArg2(b.graph.path(.install_bin, ""), .{ .suffix = b.fmt("/{s}", .{nvim_exe_install.artifact.out_filename}) });
         run.step.dependOn(&nvim_exe_install.step);
         run.addArgs(&.{ "-u", "NONE", "-l" });
         run.addFileArg(b.path("src/clint.lua"));

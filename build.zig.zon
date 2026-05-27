@@ -2,12 +2,12 @@
     .name = .neovim,
     .fingerprint = 0x66eb090879307a38,
     .version = "0.13.0",
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
 
     .dependencies = .{
         .zlua = .{
-            .url = "git+https://github.com/natecraddock/ziglua.git#9ae39fa50b1ab8427d35f963216116d7bff1e584",
-            .hash = "zlua-0.1.0-hGRpC1mUBQCNQf4CnmRTM4I7gxE3YpCvZ-p2EarlcyER",
+            .url = "git+https://github.com/natecraddock/ziglua#9b9e855e91df9c3d903b5d15ba75e64c8f6ed5f0",
+            .hash = "zlua-0.1.0-hGRpC2mfBQAGjJIw0bTJnMnxPx6ZQxdCAGMtH13Gl3BP",
         },
         .luv = .{
             .url = "git+https://github.com/luvit/luv?ref=1.53.0-1#61e08e7b6911b43e4b8d9d16c0fee35f76729354",
@@ -40,8 +40,8 @@
             .lazy = true,
         },
         .uncrustify = .{
-            .url = "git+https://codeberg.org/allyourcodebase/uncrustify#2cdf880e4ffbe438a7946368cd45fca2df9f0f7a",
-            .hash = "uncrustify-0.83.0-qkVd7cVCAADAg1kS3ctVBhY2gkxEIs-W8wgurLadbgC-",
+            .url = "git+https://codeberg.org/allyourcodebase/uncrustify#ac65f4ab0786196f89ff03a3fc6328315edae29b",
+            .hash = "uncrustify-0.83.0-qkVd7WhCAACgSQizwSXaihK0_y8RYtX8kgEeKR4-aXNi",
         },
         .libiconv = .{
             .url = "git+https://github.com/allyourcodebase/libiconv#a244cea3e4f7a0962158307b0e09e656306f4936",

@@ -26,15 +26,23 @@ end
 -- TODO(bfredl): use also for cmake?
 if _G.arg[1] and vim.startswith(_G.arg[1], '-P') then
   local build_dir = string.sub(table.remove(_G.arg, 1), 3)
+  -- some tests expect absolute paths
+  build_dir = vim.fs.abspath(vim.fs.normalize(build_dir))
   _G.nvim_build_dir = build_dir
 
   -- TMPDIR: for testutil.tmpname() and Nvim tempname().
   vim.env.TMPDIR = build_dir .. '/Xtest_tmpdir'
   vim.fn.mkdir(vim.env.TMPDIR, 'p')
+
+  if vim.env.NVIM_LOG_FILE == nil then
+    vim.env.NVIM_LOG_FILE = build_dir .. '/nvim.log'
+  end
 end
 local run_dir --- @type string?
 if _G.arg[1] and vim.startswith(_G.arg[1], '-X') then
   local xdg_dir = string.sub(table.remove(_G.arg, 1), 3)
+  -- normalize to avoid "/./" components and such
+  xdg_dir = vim.fs.abspath(vim.fs.normalize(xdg_dir))
   vim.env.NVIM_RPLUGIN_MANIFEST = xdg_dir .. '/Xtest_rplugin_manifest'
   vim.env.XDG_CONFIG_HOME = xdg_dir .. '/config'
   vim.env.XDG_DATA_HOME = xdg_dir .. '/share'
