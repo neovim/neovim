@@ -4456,5 +4456,19 @@ describe('vim.diagnostic', function()
         end)
       )
     end)
+
+    it('does not redraw for buffer not in window', function()
+      local did_status = exec_lua(function()
+        _G.Status = function()
+          _G.did_status = (_G.did_status or 0) + 1
+        end
+        vim.o.laststatus, vim.o.statusline = 2, '%!v:lua._G.Status()'
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        return _G.did_status
+      end)
+      eq(nil, did_status)
+    end)
   end)
 end)

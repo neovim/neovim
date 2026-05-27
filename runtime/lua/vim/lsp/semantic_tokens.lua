@@ -584,7 +584,9 @@ function STHighlighter:process_response(response, client, request_id, version, i
   end
 
   -- redraw all windows displaying buffer
-  api.nvim__redraw({ buf = self.bufnr, valid = true })
+  if vim.fn.win_gettype(vim.fn.bufwinid(self.bufnr)) == '' then
+    api.nvim__redraw({ buf = self.bufnr, valid = true })
+  end
 end
 
 --- @param bufnr integer
