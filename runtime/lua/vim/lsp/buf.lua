@@ -332,6 +332,26 @@ end
 --- vim.lsp.buf.definition({ on_list = on_list })
 --- vim.lsp.buf.references(nil, { on_list = on_list })
 --- ```
+--- The list can be transformed before it is shown. For example, to remove
+--- duplicate locations returned by multiple clients:
+--- ```lua
+--- local function on_list(what)
+---   vim.list.unique(what.items, function(item)
+---     return ('%s\0%d\0%d\0%d\0%d'):format(
+---       item.filename or '',
+---       item.lnum or 0,
+---       item.col or 0,
+---       item.end_lnum or 0,
+---       item.end_col or 0
+---     )
+---   end)
+---   vim.fn.setqflist({}, ' ', what)
+---   vim.cmd('botright copen')
+--- end
+---
+--- vim.lsp.buf.definition({ on_list = on_list })
+--- vim.lsp.buf.references(nil, { on_list = on_list })
+--- ```
 --- See |setqflist-what| for the structure of the `what` parameter.
 --- @field on_list? fun(what: vim.fn.setqflist.what)
 ---
