@@ -65,9 +65,7 @@ pub fn build_nlua0(
     // for debugging the nlua0 environment
     // like this: `zig build nlua0 -- script.lua {args}`
     const run_cmd = b.addRunArtifact(nlua0_exe);
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    run_cmd.addPassthruArgs();
     const run_step = b.step("nlua0", "Run nlua0 build tool");
     run_step.dependOn(&run_cmd.step);
 

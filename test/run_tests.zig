@@ -10,7 +10,7 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
             test_step.addPrefixedDirectoryArg("-I", path);
         }
     }
-    test_step.addArg(b.fmt("-P{s}", .{b.install_path}));
+    test_step.addPrefixedDirectoryArg("-P", b.graph.path(.install_prefix, ""));
     test_step.addArg("-v");
     test_step.addArg(b.fmt("--helper=./test/{s}/preload.lua", .{kind}));
     test_step.addArg("--lpath=./src/?.lua");
@@ -18,7 +18,7 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
     test_step.addArg("--lpath=./?.lua");
     test_step.addPrefixedFileArg("--lpath=", config_dir.path(b, "?.lua")); // FULING: not a real file but works anyway?
     test_step.addArg(b.fmt("--default-path=./test/{s}", .{kind}));
-    if (b.args) |args| test_step.addArgs(args);
+    test_step.addPassthruArgs();
 
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
@@ -48,11 +48,8 @@ pub fn test_steps(b: *std.Build, nvim_bin: *std.Build.Step.Compile, depend_on: *
     const old_tests = b.addRunArtifact(nvim_bin);
     old_tests.addArg("-l");
     old_tests.addFileArg(b.path("./test/old/runner.lua"));
-    if (b.args) |args| {
-        old_tests.addArgs(args); // accept TEST_FILE as a positional argument
-    }
-    const env = old_tests.getEnvMap();
-    try env.put("BUILD_DIR", b.install_path);
+    old_tests.addPrefixedDirectoryArg("-P", b.graph.path(.install_prefix, ""));
+    old_tests.addPassthruArgs();
 
     const oldtest_step = b.step("oldtest", "run old tests");
     oldtest_step.dependOn(&old_tests.step);

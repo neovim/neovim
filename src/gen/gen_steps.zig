@@ -87,7 +87,7 @@ pub fn nvim_gen_sources(
 
         // Dynamically add all Lua _core/ modules (like CMakeLists.txt does)
         const io = b.graph.io;
-        if (b.build_root.handle.openDir(io, "runtime/lua/vim/_core", .{ .iterate = true })) |core_dir_handle| {
+        if (b.root.openDir(io, "runtime/lua/vim/_core", .{ .iterate = true })) |core_dir_handle| {
             var core_dir = core_dir_handle;
             defer core_dir.close(io);
 

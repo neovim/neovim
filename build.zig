@@ -246,7 +246,7 @@ pub fn build(b: *std.Build) !void {
     const unix_only = [_][]const u8{ "unix_defs.h", "pty_proc_unix.c", "pty_proc_unix.h" };
     const exclude_list = if (is_windows) &unix_only else &windows_only;
 
-    const src_dir = b.build_root.handle;
+    const src_dir = b.root;
     for (subdirs) |s| {
         var dir = try src_dir.openDir(io, b.fmt("src/nvim/{s}", .{s}), .{ .iterate = true });
         defer dir.close(io);
@@ -381,7 +381,7 @@ pub fn build(b: *std.Build) !void {
         });
         const git_describe_untrimmed = b.runAllowFail(&[_][]const u8{
             "git",
-            "-C", b.build_root.path orelse ".", // affects the --git-dir argument
+            "-C", try b.root.toString(b.graph.arena), // affects the --git-dir argument
             "--git-dir", ".git", // affected by the -C argument
             "describe", "--dirty", "--match", "v*.*.*", //
         }, &code, .ignore) catch {
@@ -645,13 +645,12 @@ pub fn build(b: *std.Build) !void {
 
     // run from dev environment
     const run_cmd = b.addRunArtifact(nvim_exe);
-    run_cmd.setEnvironmentVariable("VIMRUNTIME", try b.build_root.join(b.graph.arena, &.{"runtime"}));
-    run_cmd.setEnvironmentVariable("NVIM_ZIG_INSTALL_DIR", b.getInstallPath(.prefix, "runtime"));
+    run_cmd.setEnvironmentVariable("VIMRUNTIME", try (try b.root.join(b.graph.arena, "runtime")).toString(b.graph.arena));
+    // BRANCH_TODO
+    //run_cmd.setEnvironmentVariable("NVIM_ZIG_INSTALL_DIR", b.getInstallPath(.prefix, "runtime"));
     run_cmd.step.dependOn(nvim_dev);
     run_cmd.addArgs(&.{ "--cmd", "let &rtp = &rtp.','.$NVIM_ZIG_INSTALL_DIR" });
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    run_cmd.addPassthruArgs();
     const run_step = b.step("run_dev", "run the editor (for development)");
     run_step.dependOn(&run_cmd.step);
 
@@ -830,9 +829,7 @@ fn replace_backslashes(b: *std.Build, input: []const u8) ![]const u8 {
 }
 
 pub fn test_config(b: *std.Build) ![]u8 {
-    var buf: [std.fs.max_path_bytes]u8 = std.mem.zeroes([std.fs.max_path_bytes]u8);
-    _ = try b.build_root.handle.realPath(b.graph.io, &buf);
-    const src_path = std.mem.span(@as([*:0]u8, @ptrCast(&buf)));
+    const src_path = try b.root.toString(b.graph.arena);
 
     // we don't use test/cmakeconfig/paths.lua.in because it contains cmake specific logic
     return b.fmt(
@@ -865,12 +862,12 @@ fn appendSystemIncludePath(
         &code,
         .ignore,
     );
-    if (code != 0) return std.Build.PkgConfigError.PkgConfigFailed;
+    if (code != 0) return error.PkgConfigFailed;
     var arg_it = std.mem.tokenizeAny(u8, stdout, " \r\n\t");
     while (arg_it.next()) |arg| {
         if (std.mem.eql(u8, arg, "-I")) {
             // -I /foo/bar
-            const dir = arg_it.next() orelse return std.Build.PkgConfigError.PkgConfigInvalidOutput;
+            const dir = arg_it.next() orelse return error.PkgConfigInvalidOutput;
             try path.append(b.allocator, .{ .cwd_relative = dir });
         } else if (std.mem.startsWith(u8, arg, "-I")) {
             // -I/foo/bar
