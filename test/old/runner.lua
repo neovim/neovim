@@ -136,6 +136,10 @@ local function all_tests()
 end
 
 local files
+if #arg == 0 then
+  error 'nvim -l runner.lua BUILD_DIR [testfiles]'
+end
+vim.env.BUILD_DIR = table.remove(arg, 1)
 if #arg > 0 then
   files = {}
   for _, a in ipairs(arg) do
