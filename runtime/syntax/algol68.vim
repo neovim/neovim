@@ -3,7 +3,7 @@
 " Version:		0.4
 " Maintainer:		Janis Papanagnou
 " Previous Maintainer:	NevilleD.ALGOL_68@sgr-a.net
-" Last Change:		2026 May 02
+" Last Change:		2026 May 19
 
 if exists("b:current_syntax")
   finish
@@ -21,7 +21,8 @@ syn keyword algol68Boolean	TRUE FALSE
 syn keyword algol68Conditional	IF THEN ELSE ELIF FI
 syn keyword algol68Conditional	CASE IN OUT OUSE ESAC
 syn keyword algol68Constant	NIL SKIP EMPTY
-syn keyword algol68Statement	MODE OP PRIO PROC
+syn keyword algol68Statement	MODE PROC
+syn keyword algol68Statement	OP PRIO skipwhite nextgroup=algol68DefiningOperator
 syn keyword algol68Label	GOTO 
 syn match   algol68Label	"\<GO TO\>"
 syn keyword algol68Operator	ABS REPR ROUND ENTIER ARG BIN LENG SHORTEN ODD
@@ -60,19 +61,64 @@ syn match   algol68StringEscape	contained "\\$"
 syn match   algol68Identifier		"\<[a-z][a-z0-9_]*\>"
 
 
-if exists("algol68_symbolic_operators")
-  syn match   algol68SymbolOperator	"\\"
-  syn match   algol68SymbolOperator	":=\|="
-  syn match   algol68SymbolOperator	"[~^]"
-  syn match   algol68SymbolOperator	"[~^]="
-  syn match   algol68SymbolOperator	"[<>]"
-  syn match   algol68SymbolOperator	"[<>]="
-  syn match   algol68SymbolOperator	"\%([-+*%/]\|%\*\)"
-  syn match   algol68SymbolOperator	"\%([-+*%/]\|%\*\):="
-  syn match   algol68SymbolOperator	"+=:"
-  syn match   algol68SymbolOperator	"*\*\|&"
-  syn match   algol68SymbolOperator	":/\==:"
-endif
+" NOTE: monads = `[!%&+\-?^~]`, nomads = `[*/<=>]`, becomes = `:=`, assigns to = `=:`
+" monadic operator => "[!%&+\-?^~][*/<=>]\?\%(:=\|=:\)\?"
+"  dyadic operator => "\%([!%&+\-?^~]\|[*/<=>]\)[*/<=>]\?\%(:=\|=:\)\?"
+
+" 'becomes' and 'is defined as' symbols
+" syn match   algol68SymbolOperator	":=\|="
+syn match   algol68SymbolOperator	"\%([!%&+\-?^~]\|[*/<=>]\)\@1<!:="
+syn match   algol68SymbolOperator	"\%([!%&+\-?^~]\|[*/<=>]\|:\)\@1<!=\%([*/<=>]\|:=\|=:\)\@!"
+
+" NOT, AND
+" syn match   algol68SymbolOperator	"[~&]"
+syn match   algol68SymbolOperator	"[~&]\%([*/<=>]\|:=\|=:\)\@!"
+
+" NOT (Genie extension)
+" syn match   algol68SymbolOperator	"\^"
+syn match   algol68SymbolOperator	"\^\%([*/<=>]\|:=\|=:\)\@!"
+
+" NE, EQ
+" syn match   algol68SymbolOperator	"/=\|="
+syn match   algol68SymbolOperator	"/=\%(:=\|=:\|:\)\@!"
+syn match   algol68SymbolOperator	"\%([!%&+\-?^~]\|[*/<=>]\|:\)\@1<!=\%([*/<=>]\|:=\|=:\)\@!"
+
+" NE (Genie extension)
+" syn match   algol68SymbolOperator	"[~^]="
+syn match   algol68SymbolOperator	"[~^]=\%([*/<=>]\|:=\|=:\)\@!"
+
+" LT, GT, LE, GE
+" syn match   algol68SymbolOperator	"[<>]=\?"
+syn match   algol68SymbolOperator	"\%([!%&+\-?^~]\|[*/<=>]\)\@1<![<>]\%([*/<=>]\|:=\|=:\)\@!"
+syn match   algol68SymbolOperator	"\%([!%&+\-?^~]\|[*/<=>]\)\@1<![<>]=\%([*/<=>]\|:=\|=:\|:\)\@!"
+
+" -, +, *, OVER, /, MOD, UP
+" syn match   algol68SymbolOperator	"[-+*%/]\|%\*\|\*\*"
+syn match   algol68SymbolOperator	"[-+%]\%([*/<=>]\|:=\|=:\)\@!"
+syn match   algol68SymbolOperator	"\%([!%&+\-?^~]\|[*/<=>]\)\@1<![*/]\%([*/<=>]\|:=\|=:\)\@!"
+syn match   algol68SymbolOperator	"\%(%\*\|\*\*\)\%(:=\|=:\)\@!"
+
+" syn match   algol68SymbolOperator	"%\*\|\*\*"
+syn match   algol68SymbolOperator	"\%(%\*\|\*\*\)\%(:=\|=:\)\@!"
+
+" {MINUS,PLUS,TIMES,OVER,DIV,MOD}AB
+" syn match   algol68SymbolOperator	"\%([-+*%/]\|%\*\):="
+syn match   algol68SymbolOperator	"\%([-+%]\|%\*\):="
+syn match   algol68SymbolOperator	"\%([!%&+\-?^~]\|[*/<=>]\)\@1<!\%([*/]\|%\*\):="
+
+" PLUSTO
+syn match   algol68SymbolOperator	"+=:=\@!"
+
+" I
+" syn match   algol68SymbolOperator	"+\*"
+syn match   algol68SymbolOperator	"+\*\%([*/<=>]\|:=\|=:\)\@!"
+
+" IS, ISNT
+syn match   algol68SymbolOperator	":/\?=:"
+
+syn match   algol68DefiningOperator	"\u[A-Z0-9]" contained
+syn match   algol68DefiningOperator	"[!%&+\-?^~][*/<=>]\?\%(:=\|=:\)\?" contained
+syn match   algol68DefiningOperator	"\%([!%&+\-?^~]\|[*/<=>]\)[*/<=>]\?\%(:=\|=:\)\?" contained
 
 syn match  algol68Number	"\<\d\+\%(\s\+\d\+\)*\>"
 
@@ -395,7 +441,7 @@ if !exists("algol68_no_preludes")
 
 " Functions from GSL
 
-  syn keyword algol68Operator	CV RV T INV PINV MEAN DET TRACE NORM DYAD BEFORE ABOVE
+  syn keyword algol68Operator		CV RV T INV PINV MEAN DET TRACE NORM DYAD BEFORE ABOVE
   syn match algol68Function "\%(\%([a-z_]\|\l\d\+\)\s\+\)\@8<!\<angle\s*restrict\s*\%(pos\|symm\)\>\%(\s*[a-z0-9]\)\@!"
   syn match algol68Function "\%(\%([a-z_]\|\l\d\+\)\s\+\)\@8<!\<conical\s*p\s*\%([01]\|cylreg\|m\?half\|sph\s*reg\)\>\%(\s*[a-z0-9]\)\@!"
   syn match algol68Function "\%(\%([a-z_]\|\l\d\+\)\s\+\)\@8<!\<cholesky\s*\%(decomp\|solve\)\>\%(\s*[a-z0-9]\)\@!"

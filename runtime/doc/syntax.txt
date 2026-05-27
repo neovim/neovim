@@ -381,8 +381,7 @@ Highlighting can be further configured with the following variables.
 
 Variable			Highlight ~
 *algol68_no_preludes*		no prelude identifiers, procedures or
-				bold word operators
-*algol68_symbolic_operators*	all prelude symbolic operators
+				operators
 
 
 ANT							*ft-ant-syntax*
