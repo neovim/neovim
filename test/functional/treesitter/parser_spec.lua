@@ -1021,6 +1021,34 @@ describe('treesitter parser API', function()
       -- which resolves via the registered alias to the "c" parser
       eq('table', exec_lua('return type(parser:children().c)'))
     end)
+
+    it('allows plus in injection.language', function()
+      exec_lua(function()
+        vim.treesitter.language.register('c', 'c++')
+        _G.parser = vim.treesitter.get_parser(0, 'c', {
+          injections = {
+            c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "c++"))',
+          },
+        })
+        _G.parser:parse(true)
+      end)
+
+      eq('table', exec_lua('return type(parser:children().c)'))
+    end)
+
+    it('allows hash in injection.language', function()
+      exec_lua(function()
+        vim.treesitter.language.register('c', 'c#')
+        _G.parser = vim.treesitter.get_parser(0, 'c', {
+          injections = {
+            c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "c#"))',
+          },
+        })
+        _G.parser:parse(true)
+      end)
+
+      eq('table', exec_lua('return type(parser:children().c)'))
+    end)
   end)
 
   it('clips nested injections #34098', function()

@@ -1029,7 +1029,7 @@ local function resolve_lang(alias)
   alias = alias and alias:gsub('%s+', ''):lower():gsub('%-', '_')
 
   -- validate that `alias` is a legal language
-  if not (alias and alias:match('[%w_]+') == alias) then
+  if not (alias and alias:match('[%w_+#]+') == alias) then
     return
   end
 
