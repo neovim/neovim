@@ -230,7 +230,7 @@ func SetShell(shell)
         if has("win32")
           " Nvim: default 'shell' is "sh" due to $SHELL being set in Makefile,
           " but here 'shell' should be cmd.exe.
-          set shell=cmd.exe
+          set shell=cmd.exe shellcmdflag=/s\ /c
         endif
     elseif a:shell == "powershell" " help dos-powershell
         " powershell desktop is windows only
