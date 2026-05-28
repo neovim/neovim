@@ -64,6 +64,7 @@
 ^src/po/.*sjis
 ^src/proto
 ^src/testdir/dumps/
+^src/testdir/keycode_check\.
 ^src/testdir/python
 ^src/testdir/samples/crypt_
 ^src/testdir/util/gui_
