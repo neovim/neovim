@@ -52,10 +52,10 @@ local function check_active_features()
     return
   end
 
-  for _, Capability in pairs(vim.lsp._capability.all) do
+  for capname, capability in vim.spairs(vim.lsp._capability.all) do
     ---@type string[]
     local buf_infos = {}
-    for bufnr, instance in pairs(Capability.active) do
+    for bufnr, instance in pairs(capability.active) do
       local client_info = vim
         .iter(pairs(instance.client_state))
         :map(function(client_id)
@@ -63,7 +63,7 @@ local function check_active_features()
           if client then
             return string.format('%s (id: %d)', client.name, client.id)
           else
-            return string.format('unknow (id: %d)', client_id)
+            return string.format('unknown (id: %d)', client_id)
           end
         end)
         :join(', ')
@@ -75,7 +75,7 @@ local function check_active_features()
     end
 
     report_info(table.concat({
-      Capability.name,
+      capname,
       '- Active buffers:',
       vim.tbl_isempty(buf_infos) and '  (none)' or string.format(table.concat(buf_infos, '\n')),
     }, '\n'))
