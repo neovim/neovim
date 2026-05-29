@@ -3041,6 +3041,30 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
   return retval;
 }
 
+/// Return the byte index in the current line for screen column "vcol"
+/// (zero-based).  A <tab> is always counted as 8 screen columns, matching the
+/// column numbers compilers report for the "%v" item in 'errorformat',
+/// regardless of the buffer's 'tabstop'.
+static int qf_screen_col_to_idx(colnr_T vcol)
+{
+  const char *line = get_cursor_line_ptr();
+  const char *p = line;
+  colnr_T col = 0;
+
+  while (*p != NUL && col < vcol) {
+    if (*p == TAB) {
+      col += 8 - (col % 8);
+    } else {
+      col += ptr2cells(p);
+    }
+    if (col > vcol) {
+      break;
+    }
+    MB_PTR_ADV(p);
+  }
+  return (int)(p - line);
+}
+
 /// Go to the error line in the current file using either line/column number or
 /// a search pattern.
 static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char qf_viscol, char *qf_pattern)
@@ -3055,7 +3079,7 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char qf_viscol, char
     if (qf_col > 0) {
       curwin->w_cursor.coladd = 0;
       if (qf_viscol == true) {
-        coladvance(curwin, qf_col - 1);
+        curwin->w_cursor.col = qf_screen_col_to_idx(qf_col - 1);
       } else {
         curwin->w_cursor.col = qf_col - 1;
       }

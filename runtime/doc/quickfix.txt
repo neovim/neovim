@@ -1815,9 +1815,9 @@ Basic items
 	%c		column number (finds a number representing character
 			column of the error, byte index, a <tab> is 1
 			character column)
-	%v		virtual column number (finds a number representing
-			screen column of the error (1 <tab> == 8 screen
-			columns))
+	%v		virtual column number (finds a number representing the
+			screen column of the error, where a <tab> is always 8
+			screen columns regardless of 'tabstop')
 	%k		end column number (finds a number representing
 			the character column of the error, byte index, or a
 			number representing screen end column of the error if
