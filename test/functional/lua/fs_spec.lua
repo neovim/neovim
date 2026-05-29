@@ -252,6 +252,41 @@ describe('vim.fs', function()
         end)
       )
     end)
+
+    describe('fs_scandir_next fallback', function()
+      before_each(function()
+        mkdir('testdir')
+        t.write_file('testdir/test.txt', 'test file')
+      end)
+
+      after_each(function()
+        rmdir('testdir')
+      end)
+
+      it('falls back to fs_lstat when fs_scandir_next returns nil type', function()
+        local result = n.exec_lua([[
+          local orig = vim.uv.fs_scandir_next
+
+          vim.uv.fs_scandir_next = function(fs)
+            local name = orig(fs)
+            if name then
+              return name, nil
+            end
+            return name
+          end
+
+          local out = {}
+          for name, etype in vim.fs.dir('testdir') do
+            out[name] = etype
+          end
+
+          vim.uv.fs_scandir_next = orig
+          return out
+        ]])
+
+        eq('file', result['test.txt'])
+      end)
+    end)
   end)
 
   describe('find()', function()

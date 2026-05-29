@@ -147,6 +147,29 @@ function M.joinpath(...)
   return (path:gsub(iswin and '[/\\][/\\]*' or '//+', '/'))
 end
 
+--- Wrapper around `uv.fs_scandir_next()` that ensures a file type is returned.
+---
+--- @param fs uv.uv_fs_t
+--- @param path string
+--- @return string?
+--- @return string?
+local function fs_scandir_next(fs, path)
+  -- use uv.fs_lstat instead of uv.fs_stat to avoid descending into a symlink entry as a directory/file
+  local name, etype = uv.fs_scandir_next(fs)
+
+  if not name then
+    return
+  end
+
+  if etype == nil then
+    local stat = vim.uv.fs_lstat(M.joinpath(path, name))
+    -- Workaround #39612 https://github.com/luvit/luv/issues/660
+    etype = stat and stat.type or 'unknown'
+  end
+
+  return name, etype
+end
+
 --- @class vim.fs.dir.Opts
 --- @inlinedoc
 ---
@@ -190,7 +213,7 @@ function M.dir(path, opts)
       if not fs then
         return
       end
-      return uv.fs_scandir_next(fs)
+      return fs_scandir_next(fs, path)
     end
   end
 
@@ -203,7 +226,7 @@ function M.dir(path, opts)
       local dir = level == 1 and dir0 or M.joinpath(path, dir0)
       local fs = uv.fs_scandir(dir)
       while fs do
-        local name, t = uv.fs_scandir_next(fs)
+        local name, t = fs_scandir_next(fs, dir)
         if not name then
           break
         end
