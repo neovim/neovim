@@ -3742,7 +3742,7 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
 
     Parameters: ~
       • {modes}  (`string|string[]`)
-      • {lhs}    (`string`)
+      • {lhs}    (`string|string[]`)
       • {opts}   (`table?`) A table with the following fields:
                  • {buf}? (`integer`) Remove a mapping from the given buffer.
                    `0` for current.
@@ -3781,7 +3781,8 @@ vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
     Parameters: ~
       • {modes}  (`string|string[]`) Mode "short-name" (see
                  |nvim_set_keymap()|), or a list thereof.
-      • {lhs}    (`string`) Left-hand side |{lhs}| of the mapping.
+      • {lhs}    (`string|string[]`) Left-hand side |{lhs}| of the mapping, or
+                 a list thereof.
       • {rhs}    (`string|function`) Right-hand side |{rhs}| of the mapping,
                  can be a Lua function.
       • {opts}   (`table?`) Table of |:map-arguments|. Same as

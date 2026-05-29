@@ -288,6 +288,7 @@ These existing features changed their behavior.
   • |nvim_create_autocmd()|
   • |nvim_exec_autocmds()|
   • |nvim_get_autocmds()|
+• |vim.keymap.set()| and |vim.keymap.del()| accept a list of strings for `lhs`.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

@@ -46,7 +46,7 @@ local keymap = {}
 --- ```
 ---
 ---@param modes string|string[] Mode "short-name" (see |nvim_set_keymap()|), or a list thereof.
----@param lhs string           Left-hand side |{lhs}| of the mapping.
+---@param lhs string|string[]  Left-hand side |{lhs}| of the mapping, or a list thereof.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping, can be a Lua function.
 ---@param opts? vim.keymap.set.Opts
 ---
@@ -56,7 +56,7 @@ local keymap = {}
 ---@see |mapset()|
 function keymap.set(modes, lhs, rhs, opts)
   vim.validate('modes', modes, { 'string', 'table' })
-  vim.validate('lhs', lhs, 'string')
+  vim.validate('lhs', lhs, { 'string', 'table' })
   vim.validate('rhs', rhs, { 'string', 'function' })
   vim.validate('opts', opts, 'table', true)
 
@@ -64,6 +64,8 @@ function keymap.set(modes, lhs, rhs, opts)
 
   ---@cast modes string[]
   modes = type(modes) == 'string' and { modes } or modes
+  ---@cast lhs string[]
+  lhs = type(lhs) == 'string' and { lhs } or lhs
 
   if opts.expr and opts.replace_keycodes ~= false then
     opts.replace_keycodes = true
@@ -93,13 +95,13 @@ function keymap.set(modes, lhs, rhs, opts)
     opts.buffer = nil
   end
 
-  if buf then
-    for _, m in ipairs(modes) do
-      vim.api.nvim_buf_set_keymap(buf, m, lhs, rhs, opts)
-    end
-  else
-    for _, m in ipairs(modes) do
-      vim.api.nvim_set_keymap(m, lhs, rhs, opts)
+  for _, m in ipairs(modes) do
+    for _, l in ipairs(lhs) do
+      if buf then
+        vim.api.nvim_buf_set_keymap(buf, m, l, rhs, opts)
+      else
+        vim.api.nvim_set_keymap(m, l, rhs, opts)
+      end
     end
   end
 end
@@ -120,17 +122,20 @@ end
 --- ```
 ---
 ---@param modes string|string[]
----@param lhs string
+---@param lhs string|string[]
 ---@param opts? vim.keymap.del.Opts
 ---@see |vim.keymap.set()|
 function keymap.del(modes, lhs, opts)
   vim.validate('mode', modes, { 'string', 'table' })
-  vim.validate('lhs', lhs, 'string')
+  vim.validate('lhs', lhs, { 'string', 'table' })
   vim.validate('opts', opts, 'table', true)
 
   opts = opts or {}
-  modes = type(modes) == 'string' and { modes } or modes
+
   --- @cast modes string[]
+  modes = type(modes) == 'string' and { modes } or modes
+  ---@cast lhs string[]
+  lhs = type(lhs) == 'string' and { lhs } or lhs
 
   local buf = opts.buf
   --- @cast opts +{buffer?:integer|boolean}
@@ -140,13 +145,13 @@ function keymap.del(modes, lhs, opts)
     buf = opts.buffer == true and 0 or opts.buffer --[[@as integer?]]
   end
 
-  if buf then
-    for _, mode in ipairs(modes) do
-      vim.api.nvim_buf_del_keymap(buf, mode, lhs)
-    end
-  else
-    for _, mode in ipairs(modes) do
-      vim.api.nvim_del_keymap(mode, lhs)
+  for _, m in ipairs(modes) do
+    for _, l in ipairs(lhs) do
+      if buf then
+        vim.api.nvim_buf_del_keymap(buf, m, l)
+      else
+        vim.api.nvim_del_keymap(m, l)
+      end
     end
   end
 end
