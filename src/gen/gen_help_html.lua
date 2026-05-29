@@ -1,4 +1,4 @@
---- nvim -V1 -es --clean +"lua require('src.gen.gen_help_html').gen('./one_doc', './pdf_docs', 'typ')" +q && typst compile pdf_docs/usr_01.typ
+--- nvim -V1 -es --clean +"lua require('src.gen.gen_help_html').gen('typ', './usr_manual', './pdf_docs')" +q && typst compile pdf_docs/usr_01.typ
 --- Converts Nvim :help files to HTML.  Validates |tag| links and document syntax (parser errors).
 --
 -- USAGE (For CI/local testing purposes): Simply `make lintdoc`, which basically does the following:
@@ -162,6 +162,12 @@ local function html_esc(s)
   local html_entity =
     { ['&'] = '&amp;', ['<'] = '&lt;', ['>'] = '&gt;', ['{'] = '&#123;', ['}'] = '&#125;' }
   return (s and string.gsub(s, '[&<>{}]', html_entity) or nil)
+end
+
+---@type fun(s: string): string
+local function typ_esc(s)
+  -- TODO there are more things to escape
+  return (s and string.gsub(s, '([<*`_^$])', '\\%1') or '')
 end
 
 local function url_encode(s)
@@ -878,8 +884,8 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
   local trimmed ---@type string
   if root:named_child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
-    trimmed = html_esc(trim(text))
-    text = html_esc(text)
+    trimmed = typ_esc(trim(text))
+    text = typ_esc(text)
   else
     -- Process children and join them with whitespace.
     for node, _ in root:iter_children() do
