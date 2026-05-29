@@ -1350,6 +1350,7 @@ local extension = {
   tiltfile = 'tiltfile',
   tla = 'tla',
   tli = 'tli',
+  tolk = 'tolk',
   toml = 'toml',
   tpp = 'tpp',
   treetop = 'treetop',
