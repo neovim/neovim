@@ -1,4 +1,4 @@
---- nvim -V1 -es --clean +"lua require('src.gen.gen_help_html').gen_typ('./one_doc', './pdf_docs')" +q && typst compile pdf_docs/usr_01.typ
+--- nvim -V1 -es --clean +"lua require('src.gen.gen_help_html').gen('./one_doc', './pdf_docs', 'typ')" +q && typst compile pdf_docs/usr_01.typ
 --- Converts Nvim :help files to HTML.  Validates |tag| links and document syntax (parser errors).
 --
 -- USAGE (For CI/local testing purposes): Simply `make lintdoc`, which basically does the following:
@@ -1518,9 +1518,9 @@ function M.gen(output_format, help_dir, to_dir, include, commit, parser_path)
   end
 
   -- Map output formats to the function that outputs one file in that format
-  -- NOTE: Only .html for now, but .typ is coming
   local generators = {
     html = gen_one_html,
+    typ = gen_one_typ,
   }
   local gen_one = generators[output_format]
 
@@ -1556,7 +1556,7 @@ function M.gen(output_format, help_dir, to_dir, include, commit, parser_path)
     err_count = err_count + #stats.parse_errors
   end
 
-  print(('\ngenerated %d html pages'):format(#helpfiles + redirects_count))
+  print(('\ngenerated %d pages'):format(#helpfiles + redirects_count))
   print(('total errors: %d'):format(err_count))
   -- Why aren't the netrw tags found in neovim/docs/ CI?
   print(('invalid tags: %s'):format(vim.inspect(invalid_links)))
@@ -1566,90 +1566,6 @@ function M.gen(output_format, help_dir, to_dir, include, commit, parser_path)
     print(('redirects: %d'):format(redirects_count))
   end
 
-  print('\n')
-
-  --- @type nvim.gen_help_html.gen_result
-  return {
-    helpfiles = helpfiles,
-    err_count = err_count,
-    invalid_links = invalid_links,
-  }
-end
-
---- Generates .typ files from :help docs located in `help_dir` and writes the result in `to_dir`.
----
---- Example:
----
----   gen_typ('$VIMRUNTIME/doc', '/path/to/neovim.github.io/_site/doc/', {'api.txt', 'autocmd.txt', 'channel.txt'}, nil)
----
---- @param help_dir string Source directory containing the :help files. Must run `make helptags` first.
---- @param to_dir string Target directory where the .typ files will be written.
---- @param include string[]|nil Process only these filenames. Example: {'api.txt', 'autocmd.txt', 'channel.txt'}
---- @param commit string?
---- @param parser_path string? path to non-default vimdoc.so/dylib/dll
----
---- @return nvim.gen_help_html.gen_result result
-function M.gen_typ(help_dir, to_dir, include, commit, parser_path)
-  vim.validate('help_dir', help_dir, function(d)
-    return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
-  end, 'valid directory')
-  vim.validate('to_dir', to_dir, 'string')
-  vim.validate('include', include, 'table', true)
-  vim.validate('commit', commit, 'string', true)
-  vim.validate('parser_path', parser_path, function(f)
-    return vim.fn.filereadable(vim.fs.normalize(f)) == 1
-  end, true, 'valid vimdoc.{so,dll,dylib} filepath')
-
-  local err_count = 0
-  ensure_runtimepath()
-
-  parser_path = parser_path and vim.fs.normalize(parser_path) or nil
-  if parser_path then
-    -- XXX: Delete the installed .so files first, else this won't work :(
-    --    /usr/local/lib/nvim/parser/vimdoc.so
-    --    ./build/lib/nvim/parser/vimdoc.so
-    vim.treesitter.language.add('vimdoc', { path = parser_path })
-  end
-
-  tagmap = get_helptags(vim.fs.normalize(help_dir))
-  helpfiles = get_helpfiles(help_dir, include)
-  to_dir = vim.fs.normalize(to_dir)
-
-  print(('output dir: %s\n\n'):format(to_dir))
-  vim.fn.mkdir(to_dir, 'p')
-  -- NOTE: Better for Hugo to be in static/, but works fine with contents/ as to_dir
-  gen_helptags_json(('%s/helptags.json'):format(to_dir))
-  gen_helptag_html(('%s/helptag.html'):format(to_dir))
-
-  for _, f in ipairs(helpfiles) do
-    -- "foo.txt"
-    local helpfile = vim.fs.basename(f)
-    -- "to/dir/foo.typ"
-    -- TODO pass extension to get_helppage()
-    local to_fname = ('%s/%s'):format(to_dir, get_helppage_html(helpfile, true)):gsub('.html', '.typ')
-
-    local typ, stats = gen_one_typ(f, nil, to_fname, not new_layout[helpfile], commit or '?')
-    -- TODO Fix 01.1 label
-    -- TODO Deal with links that go to parts of the docs that aren't the manual
-    -- local extra_stuff = 'qwer #label("01.1")\nqwer #label("usr_02.txt")\nqwer #label("usr_toc.txt")\nqwer #label("notation")\nqwer #label("bars")\nqwer #label("number")\nqwer #label("help.txt")\nqwer #label("conceal")\nqwer #label("hl-Ignore")\nqwer #label("vimrc")\nqwer #label("Kuwasha")\n'
-    -- typ = ('%s\n\n%s'):format(typ, extra_stuff)
-
-    tofile(to_fname, typ)
-    print(
-      ('generated (%-2s errors): %-15s => %s'):format(
-        #stats.parse_errors,
-        helpfile,
-        vim.fs.basename(to_fname)
-      )
-    )
-
-    err_count = err_count + #stats.parse_errors
-  end
-
-  print(('\ngenerated %d pages'):format(#helpfiles))
-  print(('total errors: %d'):format(err_count))
-  -- Why aren't the netrw tags found in neovim/docs/ CI?
-  print(('invalid tags: %s'):format(vim.inspect(invalid_links)))
   print('\n')
 
   --- @type nvim.gen_help_html.gen_result
