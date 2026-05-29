@@ -4948,7 +4948,7 @@ endfunc
 " Test for parsing entries using visual screen column
 func Test_viscol()
   enew
-  call writefile(["Col1\tCol2\tCol3"], 'Xfile1')
+  call writefile(["Col1\tCol2\tCol3"], 'Xfile1', 'D')
   edit Xfile1
 
   " Use byte offset for column number
@@ -5013,7 +5013,34 @@ func Test_viscol()
 
   enew | only
   set efm&
-  call delete('Xfile1')
+endfunc
+
+" Test that '%v' is not affected by 'tabstop': a <tab> is always counted as
+" 8 screen columns, matching the column numbers reported by compilers.
+func Test_viscol_tabstop()
+  enew
+  call writefile(["\tABCDEFGH"], 'Xfile1', 'D')
+  edit Xfile1
+  set efm=%f:%l:%v:%m
+
+  " gcc reports column 9 for 'A' (the <tab> expands to 8 columns).  The jump
+  " must land on 'A' (byte 2) for any 'tabstop' value.
+  for ts in [8, 4, 2, 13]
+    exe 'setlocal tabstop=' .. ts
+    cexpr "Xfile1:1:9:XX"
+    call assert_equal(2, col('.'), 'tabstop=' .. ts)
+  endfor
+
+  " A multi-byte character after the tab: 'ä' is 2 bytes but 1 screen cell,
+  " so screen column 10 is the next character 'b' (byte 4).
+  call writefile(["\täbc"], 'Xfile1')
+  edit! Xfile1
+  setlocal tabstop=4
+  cexpr "Xfile1:1:10:XX"
+  call assert_equal(4, col('.'))
+
+  enew | only
+  set efm&
 endfunc
 
 " Test for the quickfix window buffer
