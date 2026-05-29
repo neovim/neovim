@@ -90,15 +90,16 @@ src/termlib.c
 src/testdir/Make_amiga.mak
 src/testdir/Make_dos.mak
 src/testdir/crash/heap_overflow3
-src/testdir/keycode_check.vim
 src/testdir/lsan-suppress.txt
 src/testdir/samples/terminal_max_combining_chars.txt
 src/testdir/samples/uncrypt_utf8_test.txt
+src/testdir/test_alot_latin.vim
 src/testdir/test_behave.vim
 src/testdir/test_clientserver.vim
 src/testdir/test_codestyle.vim
 src/testdir/test_crypt.vim
 src/testdir/test_cscope.vim
+src/testdir/test_expand_dllpath.vim
 src/testdir/test_function_lists.vim
 src/testdir/test_glvs.vim
 src/testdir/test_gui_init.vim
