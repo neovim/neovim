@@ -1315,6 +1315,9 @@ local function parse_args(argv)
     end),
     ['--lpath'] = append_value(opts.lpaths),
     ['--cpath'] = append_value(opts.cpaths),
+    ['--default-path'] = set_nonempty_value('--default-path', function(path)
+      opts.default_path = path
+    end),
   }
 
   local i = 1
@@ -1386,7 +1389,11 @@ local function parse_args(argv)
   end
 
   if #opts.paths == 0 then
-    return nil, 'no test paths provided'
+    if opts.default_path then
+      opts.paths[1] = opts.default_path
+    else
+      return nil, 'no test paths provided'
+    end
   end
 
   return opts

@@ -10,18 +10,15 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
             test_step.addPrefixedDirectoryArg("-I", path);
         }
     }
+    test_step.addArg(b.fmt("-P{s}", .{b.install_path}));
     test_step.addArg("-v");
     test_step.addArg(b.fmt("--helper=./test/{s}/preload.lua", .{kind}));
     test_step.addArg("--lpath=./src/?.lua");
     test_step.addArg("--lpath=./runtime/lua/?.lua");
     test_step.addArg("--lpath=./?.lua");
     test_step.addPrefixedFileArg("--lpath=", config_dir.path(b, "?.lua")); // FULING: not a real file but works anyway?
-    // TODO(bfredl): look into a TEST_ARGS user hook, TEST_TAG, TEST_FILTER.
-    if (b.args) |args| {
-        test_step.addArgs(args); // accept TEST_FILE as a positional argument
-    } else {
-        test_step.addArg(b.fmt("./test/{s}/", .{kind}));
-    }
+    test_step.addArg(b.fmt("--default-path=./test/{s}", .{kind}));
+    if (b.args) |args| test_step.addArgs(args);
 
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
@@ -30,8 +27,6 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
     try env.put("XDG_CONFIG_HOME", "Xtest_xdg/config");
     try env.put("XDG_DATA_HOME", "Xtest_xdg/share");
     try env.put("XDG_STATE_HOME", "Xtest_xdg/state");
-    try env.put("TMPDIR", b.fmt("{s}/Xtest_tmpdir", .{b.install_path}));
-    try env.put("NVIM_LOG_FILE", b.fmt("{s}/Xtest_nvimlog", .{b.install_path}));
 
     _ = env.swapRemove("NVIM");
     _ = env.swapRemove("XDG_DATA_DIRS");

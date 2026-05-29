@@ -353,17 +353,19 @@ pub fn build(b: *std.Build) !void {
         .VTERM_TEST_FILE = "test/vterm_test_output", // TODO(bfredl): revisit when porting libvterm tests
     });
 
-    const system_install_path = b.option([]const u8, "install-path", "Install path (for packagers)");
-    const install_path = system_install_path orelse b.install_path;
-    const lib_dir = if (system_install_path) |path| b.fmt("{s}/lib", .{path}) else b.lib_dir;
     _ = gen_config.addCopyFile(sysconfig_step.getOutputFile(), "auto/config.h"); // run_preprocessor() workaronnd
+    //
+    const system_install_path = b.option([]const u8, "install-path", "Install path (for packagers)");
+    const vim_dir, const lib_dir = if (system_install_path) |path| confinstall: {
+        const good_path = try replace_backslashes(b, path);
+        break :confinstall .{ b.fmt("{s}/share/nvim", .{good_path}), b.fmt("{s}/lib/nvim", .{good_path}) };
+    } else .{ "", "" };
 
     _ = gen_config.add("auto/pathdef.h", b.fmt(
-        \\char *default_vim_dir = "{s}/share/nvim";
+        \\char *default_vim_dir = "{s}";
         \\char *default_vimruntime_dir = "";
-        \\char *default_lib_dir = "{s}/nvim";
-        // b.lib_dir is typically b.install_path + "/lib" but may be overridden
-    , .{ try replace_backslashes(b, install_path), try replace_backslashes(b, lib_dir) }));
+        \\char *default_lib_dir = "{s}";
+    , .{ vim_dir, lib_dir }));
 
     const opt_version_string = b.option(
         []const u8,
@@ -841,7 +843,7 @@ pub fn test_config(b: *std.Build, io: std.Io) ![]u8 {
         \\M.is_asan = "$ENABLE_ASAN_UBSAN" == "ON"
         \\M.is_zig_build = true
         \\M.vterm_test_file = "test/vterm_test_output"
-        \\M.test_build_dir = "{[bin_dir]s}" -- bull
+        \\M.test_build_dir = _G.nvim_build_dir -- command line arg
         \\M.test_source_path = "{[src_path]s}"
         \\M.test_lua_prg = ""
         \\M.test_luajit_prg = ""
@@ -849,7 +851,7 @@ pub fn test_config(b: *std.Build, io: std.Io) ![]u8 {
         \\M.include_paths = _G.c_include_path or {{}}
         \\
         \\return M
-    , .{ .bin_dir = try replace_backslashes(b, b.install_path), .src_path = try replace_backslashes(b, src_path) });
+    , .{ .src_path = try replace_backslashes(b, src_path) });
 }
 
 fn appendSystemIncludePath(

@@ -247,7 +247,8 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (linux)
     env:
-      OPTS: -Doptimize=ReleaseSafe
+      # NB: tests assume there is a chosen install path, but nothing needs to be actually installed
+      OPTS: -Doptimize=ReleaseSafe -Dinstall-path=/usr/
     steps:
       - uses: actions/checkout@v6.0.2
         with:
@@ -274,7 +275,7 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (macos 15)
     env:
-      OPTS: # empty
+      OPTS: -Dinstall-path=/usr/
     steps:
       - uses: actions/checkout@v6.0.2
         with:
