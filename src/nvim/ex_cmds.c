@@ -3336,14 +3336,14 @@ void sub_set_replacement(SubReplacementString sub)
 /// @param[in]  save Save pattern to options, history
 ///
 /// @returns true if :substitute can be replaced with a join command
-static bool sub_joining_lines(exarg_T *eap, char *pat, size_t patlen, const char *sub,
-                              const char *cmd, bool save, bool keeppatterns)
-  FUNC_ATTR_NONNULL_ARG(1, 4, 5)
+static bool sub_joining_lines(exarg_T *eap, String pat, const char *sub, const char *cmd, bool save,
+                              bool keeppatterns)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4)
 {
   // TODO(vim): find a generic solution to make line-joining operations more
   // efficient, avoid allocating a string that grows in size.
-  if (pat != NULL
-      && strcmp(pat, "\\n") == 0
+  if (pat.data != NULL
+      && strcmp(pat.data, "\\n") == 0
       && *sub == NUL
       && (*cmd == NUL || (cmd[1] == NUL
                           && (*cmd == 'g'
@@ -3376,10 +3376,10 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, size_t patlen, const char
 
     if (save) {
       if (!keeppatterns) {
-        save_re_pat(RE_SUBST, pat, patlen, magic_isset());
+        save_re_pat(RE_SUBST, pat.data, pat.size, magic_isset());
       }
       // put pattern in history
-      add_to_history(HIST_SEARCH, pat, patlen, true, NUL);
+      add_to_history(HIST_SEARCH, pat.data, pat.size, true, NUL);
     }
 
     return true;
@@ -3393,40 +3393,33 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, size_t patlen, const char
 /// Slightly more memory that is strictly necessary is allocated to reduce the
 /// frequency of memory (re)allocation.
 ///
-/// @param[in,out]  new_start      pointer to the memory for the replacement text
-/// @param[in,out]  new_start_len  pointer to length of new_start
-/// @param[in]      needed_len     amount of memory needed
-///
-/// @returns pointer to the end of the allocated memory
-static char *sub_grow_buf(char **new_start, int *new_start_len, int needed_len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+/// @param[in,out]  new_start       pointer to the memory for the replacement text
+/// @param[in,out]  new_start_size  pointer to allocated size of new_start->data
+/// @param[in]      needed_size     amount of memory needed
+static void sub_grow_buf(String *new_start, size_t *new_start_size, size_t needed_size)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char *new_end;
-  if (*new_start == NULL) {
+  if (new_start->data == NULL) {
     // Get some space for a temporary buffer to do the
     // substitution into (and some extra space to avoid
     // too many calls to xmalloc()/free()).
-    *new_start_len = needed_len + 50;
-    *new_start = xcalloc(1, (size_t)(*new_start_len));
-    **new_start = NUL;
-    new_end = *new_start;
+    *new_start_size = needed_size + 50;
+    new_start->data = xcalloc(1, *new_start_size);
+    new_start->data[0] = NUL;
+    new_start->size = 0;
   } else {
     // Check if the temporary buffer is long enough to do the
     // substitution into.  If not, make it larger (with a bit
     // extra to avoid too many calls to xmalloc()/free()).
-    size_t len = strlen(*new_start);
-    needed_len += (int)len;
-    if (needed_len > *new_start_len) {
-      size_t prev_new_start_len = (size_t)(*new_start_len);
-      *new_start_len = needed_len + 50;
-      size_t added_len = (size_t)(*new_start_len) - prev_new_start_len;
-      *new_start = xrealloc(*new_start, (size_t)(*new_start_len));
-      memset(*new_start + prev_new_start_len, 0, added_len);
+    needed_size += new_start->size;
+    if (needed_size > *new_start_size) {
+      size_t prev_new_start_size = *new_start_size;
+      *new_start_size = needed_size + 50;
+      size_t added_len = *new_start_size - prev_new_start_size;
+      new_start->data = xrealloc(new_start->data, *new_start_size);
+      memset(new_start->data + prev_new_start_size, 0, added_len);
     }
-    new_end = *new_start + len;
   }
-
-  return new_end;
 }
 
 /// Parse cmd string for :substitute's {flags} and update subflags accordingly
@@ -3537,9 +3530,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     /* line and continue in that one. */ \
     if (nmatch > 1) { \
       sub_firstlnum += (linenr_T)nmatch - 1; \
-      xfree(sub_firstline); \
-      sub_firstline = xstrnsave(ml_get(sub_firstlnum), \
-                                (size_t)ml_get_len(sub_firstlnum)); \
+      xfree(sub_firstline.data); \
+      sub_firstline = cbuf_to_string(ml_get(sub_firstlnum), \
+                                     (size_t)ml_get_len(sub_firstlnum)); \
       /* When going beyond the last line, stop substituting. */ \
       if (sub_firstlnum <= line2) { \
         do_again = true; \
@@ -3550,8 +3543,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     if (skip_match) { \
       /* Already hit end of the buffer, sub_firstlnum is one */ \
       /* less than what it ought to be. */ \
-      xfree(sub_firstline); \
-      sub_firstline = xstrdup(""); \
+      xfree(sub_firstline.data); \
+      sub_firstline = STATIC_CSTR_TO_STRING(""); \
       copycol = 0; \
     } \
   } while (0)
@@ -3568,20 +3561,19 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     .do_number = false,
     .do_ic = kSubHonorOptions
   };
-  char *pat = NULL;
   char *sub = NULL;  // init for GCC
-  size_t patlen = 0;
+  String pat = STRING_INIT;
   int delimiter;
   bool has_second_delim = false;
-  int sublen;
+  size_t sublen;
   bool got_quit = false;
   bool got_match = false;
   int which_pat;
   char *cmd = eap->arg;
   linenr_T first_line = 0;  // first changed line
-  linenr_T last_line = 0;    // below last changed line AFTER the change
+  linenr_T last_line = 0;   // below last changed line AFTER the change
   linenr_T old_line_count = curbuf->b_ml.ml_line_count;
-  char *sub_firstline;    // allocated copy of first sub line
+  String sub_firstline;     // allocated copy of first sub line
   bool endcolumn = false;   // cursor in last column when done
   const bool keeppatterns = cmdmod.cmod_flags & CMOD_KEEPPATTERNS;
   PreviewLines preview_lines = { KV_INITIAL_VALUE, 0 };
@@ -3622,20 +3614,19 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
       if (*cmd != '&') {
         which_pat = RE_SEARCH;              // use last '/' pattern
       }
-      pat = "";                   // empty search pattern
-      patlen = 0;
-      delimiter = (uint8_t)(*cmd++);                   // remember delimiter character
+      pat = STATIC_CSTR_AS_STRING("");      // empty search pattern
+      delimiter = (uint8_t)(*cmd++);        // remember delimiter character
       has_second_delim = true;
     } else {          // find the end of the regexp
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = (uint8_t)(*cmd++);                   // remember delimiter character
-      pat = cmd;                            // remember start of search pat
+      pat.data = cmd;                       // remember start of search pat
       cmd = skip_regexp_ex(cmd, delimiter, magic_isset(), &eap->arg, NULL, NULL);
+      pat.size = (size_t)(cmd - pat.data);
       if (cmd[0] == delimiter) {            // end delimiter found
         *cmd++ = NUL;                       // replace it with a NUL
         has_second_delim = true;
       }
-      patlen = strlen(pat);
     }
 
     // Small incompatibility: vi sees '\n' as end of the command, but in
@@ -3656,8 +3647,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
       emsg(_(e_nopresub));
       return 0;
     }
-    pat = NULL;                 // search_regcomp() will use previous pattern
-    patlen = 0;
+    pat = NULL_STRING;              // search_regcomp() will use previous pattern
     sub = xstrdup(old_sub.sub);
 
     // Vi compatibility quirk: repeating with ":s" keeps the cursor in the
@@ -3665,7 +3655,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub != NULL && sub_joining_lines(eap, pat, patlen, sub, cmd, cmdpreview_ns <= 0,
+  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, cmdpreview_ns <= 0,
                                        keeppatterns)) {
     xfree(sub);
     return 0;
@@ -3718,7 +3708,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     return 0;
   }
 
-  if (search_regcomp(pat, patlen, NULL, RE_SUBST, which_pat,
+  if (search_regcomp(pat.data, pat.size, NULL, RE_SUBST, which_pat,
                      (cmdpreview_ns > 0 ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
     if (subflags.do_error) {
       emsg(_(e_invcmd));
@@ -3734,7 +3724,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     regmatch.rmm_ic = false;
   }
 
-  sub_firstline = NULL;
+  sub_firstline = NULL_STRING;
 
   assert(sub != NULL);
 
@@ -3770,10 +3760,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
       colnr_T copycol;
       colnr_T matchcol;
       colnr_T prev_matchcol = MAXCOL;
+      String new_start = STRING_INIT;
+      size_t new_start_size = 0;
       char *new_end;
-      char *new_start = NULL;
-      int new_start_len = 0;
-      char *p1;
       bool did_sub = false;
       int lastone;
       linenr_T nmatch_tl = 0;               // nr of lines matched below lnum
@@ -3837,7 +3826,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
       //   accordingly.
       //
       // The new text is built up in new_start[].  It has some extra
-      // room to avoid using xmalloc()/free() too often.  new_start_len is
+      // room to avoid using xmalloc()/free() too often.  new_start_size is
       // the length of the allocated memory at new_start.
       //
       // Make a copy of the old line, so it won't be taken away when
@@ -3876,7 +3865,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           lnum += regmatch.startpos[0].lnum;
           sub_firstlnum += regmatch.startpos[0].lnum;
           nmatch -= regmatch.startpos[0].lnum;
-          XFREE_CLEAR(sub_firstline);
+          API_CLEAR_STRING(sub_firstline);
         }
 
         // Now we're at the line where the pattern match starts
@@ -3888,9 +3877,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
         if (lnum > curbuf->b_ml.ml_line_count) {
           break;
         }
-        if (sub_firstline == NULL) {
-          sub_firstline = xstrnsave(ml_get(sub_firstlnum),
-                                    (size_t)ml_get_len(sub_firstlnum));
+        if (sub_firstline.data == NULL) {
+          sub_firstline = cbuf_to_string(ml_get(sub_firstlnum),
+                                         (size_t)ml_get_len(sub_firstlnum));
         }
 
         // Save the line number of the last change for the final
@@ -3904,13 +3893,13 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
         if (matchcol == prev_matchcol
             && regmatch.endpos[0].lnum == 0
             && matchcol == regmatch.endpos[0].col) {
-          if (sub_firstline[matchcol] == NUL) {
+          if (sub_firstline.data[matchcol] == NUL) {
             // We already were at the end of the line.  Don't look
             // for a match in this line again.
             skip_match = true;
           } else {
             // search for a match at next column
-            matchcol += utfc_ptr2len(sub_firstline + matchcol);
+            matchcol += utfc_ptr2len(sub_firstline.data + matchcol);
           }
           // match will be pushed to preview_lines, bring it into a proper state
           current_match.start.col = matchcol;
@@ -3932,7 +3921,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           // we continue looking for a match on the next line.
           // Avoids that ":s/\nB\@=//gc" get stuck.
           if (nmatch > 1) {
-            matchcol = (colnr_T)strlen(sub_firstline);
+            matchcol = (colnr_T)sub_firstline.size;
             nmatch = 1;
             skip_match = true;
           }
@@ -4000,7 +3989,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
                 typed = 'q';
               }
             } else {
-              char *orig_line = NULL;
+              String orig_line = STRING_INIT;
               int len_change = 0;
               const bool save_p_lz = p_lz;
               int save_p_fen = curwin->w_p_fen;
@@ -4014,21 +4003,24 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               // avoid calling update_screen() in vgetorpeek()
               p_lz = false;
 
-              if (new_start != NULL) {
+              if (new_start.data != NULL) {
                 // There already was a substitution, we would
                 // like to show this to the user.  We cannot
                 // really update the line, it would change
                 // what matches.  Temporarily replace the line
                 // and change it back afterwards.
-                orig_line = xstrnsave(ml_get(lnum), (size_t)ml_get_len(lnum));
-                char *new_line = concat_str(new_start, sub_firstline + copycol);
+                orig_line = cbuf_to_string(ml_get(lnum), (size_t)ml_get_len(lnum));
+                String new_line = {
+                  .data = concat_str(new_start.data, sub_firstline.data + copycol),
+                  .size = new_start.size + (sub_firstline.size - (size_t)copycol),
+                };
 
                 // Position the cursor relative to the end of the line, the
                 // previous substitute may have inserted or deleted characters
                 // before the cursor.
-                len_change = (int)strlen(new_line) - (int)strlen(orig_line);
+                len_change = (int)new_line.size - (int)orig_line.size;
                 curwin->w_cursor.col += len_change;
-                ml_replace(lnum, new_line, false);
+                ml_replace(lnum, new_line.data, false);
               }
 
               search_match_lines = regmatch.endpos[0].lnum
@@ -4063,8 +4055,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               RedrawingDisabled = temp;
 
               // restore the line
-              if (orig_line != NULL) {
-                ml_replace(lnum, orig_line, false);
+              if (orig_line.data != NULL) {
+                ml_replace(lnum, orig_line.data, false);
               }
             }
 
@@ -4108,7 +4100,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
             // Avoids that ":%s/\nB\@=//gc" and ":%s/\n/,\r/gc"
             // get stuck when pressing 'n'.
             if (nmatch > 1) {
-              matchcol = (colnr_T)strlen(sub_firstline);
+              matchcol = (colnr_T)sub_firstline.size;
               skip_match = true;
             }
             goto skip;
@@ -4169,11 +4161,11 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           textlock++;
           // Get length of substitution part, including the NUL.
           // When it fails sublen is zero.
-          sublen = vim_regsub_multi(&regmatch,
-                                    sub_firstlnum - regmatch.startpos[0].lnum,
-                                    sub, sub_firstline, 0,
-                                    REGSUB_BACKSLASH
-                                    | (magic_isset() ? REGSUB_MAGIC : 0));
+          sublen = (size_t)vim_regsub_multi(&regmatch,
+                                            sub_firstlnum - regmatch.startpos[0].lnum,
+                                            sub, sub_firstline.data, 0,
+                                            REGSUB_BACKSLASH
+                                            | (magic_isset() ? REGSUB_MAGIC : 0));
           textlock--;
 
           // If getting the substitute string caused an error, don't do
@@ -4186,42 +4178,50 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
             goto skip;
           }
 
+          String tmp;
           // Need room for:
           // - result so far in new_start (not for first sub in line)
           // - original text up to match
           // - length of substituted part
           // - original text after match
           if (nmatch == 1) {
-            p1 = sub_firstline;
+            tmp = sub_firstline;
           } else {
             linenr_T lastlnum = sub_firstlnum + (linenr_T)nmatch - 1;
-            p1 = ml_get(lastlnum);
+            tmp = cbuf_as_string(ml_get(lastlnum), (size_t)ml_get_len(lastlnum));
             nmatch_tl += nmatch - 1;
           }
-          int copy_len = regmatch.startpos[0].col - copycol;
-          new_end = sub_grow_buf(&new_start, &new_start_len,
-                                 (colnr_T)strlen(p1) - regmatch.endpos[0].col
-                                 + copy_len + sublen + 1);
+          size_t copy_len = (size_t)(regmatch.startpos[0].col - copycol);
+          sub_grow_buf(&new_start, &new_start_size,
+                       copy_len
+                       + (tmp.size - (size_t)regmatch.endpos[0].col) + sublen + 1);
 
           // copy the text up to the part that matched
-          memmove(new_end, sub_firstline + copycol, (size_t)copy_len);
-          new_end += copy_len;
+          memmove(new_start.data + new_start.size,
+                  sub_firstline.data + copycol, copy_len);
+          new_start.size += copy_len;
 
-          if (new_start_len - copy_len < sublen) {
-            sublen = new_start_len - copy_len - 1;
+          // new text added here
+          new_end = new_start.data + new_start.size;
+
+          if (new_start_size - copy_len < sublen) {
+            sublen = new_start_size - copy_len - 1;
           }
 
           // Finally, at this point we can know where the match actually will
           // start in the new text
-          int start_col = (int)(new_end - new_start);
+          int start_col = (int)new_start.size;
           current_match.start.col = start_col;
 
           textlock++;
-          vim_regsub_multi(&regmatch,
-                           sub_firstlnum - regmatch.startpos[0].lnum,
-                           sub, new_end, sublen,
-                           REGSUB_COPY | REGSUB_BACKSLASH
-                           | (magic_isset() ? REGSUB_MAGIC : 0));
+          size_t n = (size_t)vim_regsub_multi(&regmatch,
+                                              sub_firstlnum - regmatch.startpos[0].lnum,
+                                              sub, new_end, (int)sublen,
+                                              REGSUB_COPY | REGSUB_BACKSLASH
+                                              | (magic_isset() ? REGSUB_MAGIC : 0));
+          if (n > 0) {
+            new_start.size += n - 1;      // remove 1 for the NUL
+          }
           textlock--;
           sub_nsubs++;
           did_sub = true;
@@ -4253,15 +4253,17 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           // CTRL-M with a backslash.  To be able to insert a backslash,
           // they must be doubled in the string and are halved here.
           // That is Vi compatible.
-          for (p1 = new_end; *p1; p1++) {
+          for (char *p1 = new_end; *p1; p1++) {
             if (p1[0] == '\\' && p1[1] != NUL) {            // remove backslash
               sublen--;  // correct the byte counts for extmark_splice()
-              STRMOVE(p1, p1 + 1);
+              n = new_start.size - (size_t)(p1 - new_start.data);
+              memmove(p1, p1 + 1, n + 1);
+              new_start.size--;
             } else if (*p1 == CAR) {
               if (u_inssub(lnum) == OK) {             // prepare for undo
+                colnr_T plen = (colnr_T)(p1 - new_start.data + 1);
                 *p1 = NUL;                            // truncate up to the CR
-                ml_append(lnum - 1, new_start,
-                          (colnr_T)(p1 - new_start + 1), false);
+                ml_append(lnum - 1, new_start.data, plen, false);
                 mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1, 0, kExtmarkNOOP);
 
                 if (subflags.do_ask) {
@@ -4279,14 +4281,16 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
                 // move the cursor to the new line, like Vi
                 curwin->w_cursor.lnum++;
                 // copy the rest
-                STRMOVE(new_start, p1 + 1);
-                p1 = new_start - 1;
+                n = new_start.size - (size_t)plen;
+                memmove(new_start.data, p1 + 1, n + 1);
+                new_start.size = n;
+                p1 = new_start.data - 1;
               }
             } else {
               p1 += utfc_ptr2len(p1) - 1;
             }
           }
-          colnr_T new_endcol = (colnr_T)strlen(new_start);
+          colnr_T new_endcol = (colnr_T)new_start.size;
           current_match.end.col = new_endcol;
           current_match.end.lnum = lnum;
 
@@ -4307,7 +4311,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           data->matchcols = matchcols;
           data->matchbytes = replaced_bytes;
           data->subcols = subcols;
-          data->subbytes = sublen - 1;
+          data->subbytes = (colnr_T)sublen - 1;
           data->lnum_before = lnum_before_newlines;
           data->lnum_after = lnum;
         }
@@ -4327,7 +4331,7 @@ skip:
                    || got_quit
                    || lnum > line2
                    || !(subflags.do_all || do_again)
-                   || (sub_firstline[matchcol] == NUL && nmatch <= 1
+                   || (sub_firstline.data[matchcol] == NUL && nmatch <= 1
                        && !re_multiline(regmatch.regprog)));
         nmatch = -1;
 
@@ -4344,21 +4348,21 @@ skip:
                                            curbuf, sub_firstlnum,
                                            matchcol, NULL, NULL)) == 0
             || regmatch.startpos[0].lnum > 0) {
-          if (new_start != NULL) {
+          if (new_start.data != NULL) {
             // Copy the rest of the line, that didn't match.
             // "matchcol" has to be adjusted, we use the end of
             // the line as reference, because the substitute may
             // have changed the number of characters.  Same for
             // "prev_matchcol".
-            strcat(new_start, sub_firstline + copycol);
-            matchcol = (colnr_T)strlen(sub_firstline) - matchcol;
-            prev_matchcol = (colnr_T)strlen(sub_firstline)
-                            - prev_matchcol;
+            STRCPY(new_start.data + new_start.size, sub_firstline.data + copycol);
+            new_start.size += sub_firstline.size - (size_t)copycol;
+            matchcol = (colnr_T)sub_firstline.size - matchcol;
+            prev_matchcol = (colnr_T)sub_firstline.size - prev_matchcol;
 
             if (u_savesub(lnum) != OK) {
               break;
             }
-            ml_replace(lnum, new_start, true);
+            ml_replace(lnum, new_start.data, true);
 
             // Call extmark_splice for each match on this line.
             for (size_t match_idx = 0; match_idx < kv_size(line_matches); match_idx++) {
@@ -4408,12 +4412,11 @@ skip:
             }
 
             sub_firstlnum = lnum;
-            xfree(sub_firstline);                // free the temp buffer
+            xfree(sub_firstline.data);           // free the temp buffer
             sub_firstline = new_start;
-            new_start = NULL;
-            matchcol = (colnr_T)strlen(sub_firstline) - matchcol;
-            prev_matchcol = (colnr_T)strlen(sub_firstline)
-                            - prev_matchcol;
+            new_start = NULL_STRING;
+            matchcol = (colnr_T)sub_firstline.size - matchcol;
+            prev_matchcol = (colnr_T)sub_firstline.size - prev_matchcol;
             copycol = 0;
           }
           if (nmatch == -1 && !lastone) {
@@ -4468,9 +4471,9 @@ skip:
       if (did_sub) {
         sub_nlines++;
       }
-      xfree(new_start);              // for when substitute was cancelled
-      XFREE_CLEAR(sub_firstline);    // free the copy of the original line
-      kv_destroy(line_matches);      // clean up match data
+      xfree(new_start.data);            // for when substitute was cancelled
+      API_CLEAR_STRING(sub_firstline);  // free the copy of the original line
+      kv_destroy(line_matches);         // clean up match data
     }
 
     line_breakcheck();
@@ -4494,7 +4497,7 @@ skip:
     buf_updates_send_changes(curbuf, first_line, num_added, num_removed);
   }
 
-  xfree(sub_firstline);   // may have to free allocated copy of the line
+  xfree(sub_firstline.data);   // may have to free allocated copy of the line
 
   // ":s/pat//n" doesn't move the cursor
   if (subflags.do_count) {
@@ -4560,7 +4563,7 @@ skip:
   if (cmdpreview_ns > 0 && !aborting()) {
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_option_direct(kOptInccommand, STATIC_CSTR_AS_OPTVAL(""), 0, SID_NONE);
-    } else if (*p_icm != NUL && pat != NULL) {
+    } else if (*p_icm != NUL && pat.data != NULL) {
       if (pre_hl_id == 0) {
         pre_hl_id = syn_check_group(S_LEN("Substitute"));
       }
