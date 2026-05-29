@@ -2512,4 +2512,22 @@ func Test_open_square_mark_after_ctrl_r_ctrl_p_paste()
   bwipe!
 endfunc
 
+func Test_autoindent_no_strip_cross_line()
+  new
+  setlocal autoindent
+  inoremap <buffer> <F3> {}<Left><CR><Cmd>normal! ==<CR><Up><End><CR>
+
+  call setline(1, '')
+  call feedkeys("i\<F3>\<Esc>", 'tx')
+
+  call assert_equal('{', getline(1))
+  call assert_equal('', getline(2))
+  call assert_equal('}', getline(3))
+  call assert_equal([0, 2, 1, 0], getpos('.'))
+
+  " Overwrite @. register with simple content to avoid affecting later tests.
+  call feedkeys("Go\<Esc>", 'tnix')
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

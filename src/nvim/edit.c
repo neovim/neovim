@@ -2335,6 +2335,9 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
         if (VIsual_active) {
           check_visual_pos();
         }
+      } else {
+        // Non-whitespace follows, keep original cursor.
+        curwin->w_cursor = tpos;
       }
     }
   }
