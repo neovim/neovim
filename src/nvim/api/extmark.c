@@ -669,7 +669,7 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
   }
 
   if (HAS_KEY(opts, set_extmark, virt_text)) {
-    virt_text.data.virt_text = parse_virt_text(opts->virt_text, err, &virt_text.width);
+    virt_text.data.virt_text = parse_virt_text(opts->virt_text, err, &virt_text.width, false);
     if (ERROR_SET(err)) {
       goto error;
     }
@@ -742,7 +742,7 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
         goto error;
       });
       int dummig;
-      VirtText jtem = parse_virt_text(a.items[j].data.array, err, &dummig);
+      VirtText jtem = parse_virt_text(a.items[j].data.array, err, &dummig, false);
       kv_push(virt_lines.data.virt_lines, ((struct virt_line){ jtem, virt_lines_flags }));
       if (ERROR_SET(err)) {
         goto error;
@@ -1192,7 +1192,7 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
   }
 }
 
-VirtText parse_virt_text(Array chunks, Error *err, int *width)
+VirtText parse_virt_text(Array chunks, Error *err, int *width, bool untab)
 {
   VirtText virt_text = KV_INITIAL_VALUE;
   int w = 0;
@@ -1230,7 +1230,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
       }
     }
 
-    char *text = transstr(str.size > 0 ? str.data : "", false);  // allocates
+    char *text = transstr(str.size > 0 ? str.data : "", untab);  // allocates
     w += (int)mb_string2cells(text);
 
     kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
