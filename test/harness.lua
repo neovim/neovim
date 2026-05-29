@@ -1034,6 +1034,8 @@ local function run_test(test, reporter, summary, file_summary)
         end
       end
     end
+    -- check for interrupts
+    vim.wait(0)
   end
 
   test.duration = now_seconds() - start_time
