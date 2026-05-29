@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 May 17
+" Last Change: 2026 May 28
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -2581,8 +2581,8 @@ function s:NetrwValidateHostname(hostname)
   " Username:
   let user_pat = '\%([a-zA-Z0-9._-]\+@\)\?'
   " Hostname: 1-64 chars, alphanumeric/dots/hyphens.
-  " No underscores. No leading/trailing dots/hyphens.
-  let host_pat = '[a-zA-Z0-9]\%([-a-zA-Z0-9.]\{0,62}[a-zA-Z0-9]\)\?'
+  " No leading/trailing dots/hyphens.
+  let host_pat = '[a-zA-Z0-9_]\%([-a-zA-Z0-9._]\{0,62}[a-zA-Z0-9_]\)\?'
   " Port: 16 bit unsigned integer
   let port_pat = '\%(:\d\{1,5\}\)\?$'
 

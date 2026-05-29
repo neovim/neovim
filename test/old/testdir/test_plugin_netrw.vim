@@ -617,6 +617,7 @@ endfunc
 func Test_netrw_hostname()
   let valid_hostnames = [
   \   'localhost',
+  \   '_gateway',
   \   '127.0.0.1',
   \   '::1',
   \   '0:0:0:0:0:0:0:1',
