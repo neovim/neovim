@@ -145,6 +145,15 @@ describe('cmdline2', function()
       {1:~                                                    }|*12
       ^                                                     |
     ]])
+    -- Message moved to dialog with empty prompt
+    feed("<CR>:echo 'foo' | call input('')<CR>")
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      foo                                                  |
+      ^                                                     |
+    ]])
   end)
 
   it('highlights after deleting buffer', function()
