@@ -2006,9 +2006,9 @@ for this mapping, but the user might already use it for something else.  To
 allow the user to define which keys a mapping in a plugin uses, the <Leader>
 item can be used: >
 
- 22	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+ 22	  map <unique> <Leader>a  <Plug>(TypecorrAdd)
 
-The "<Plug>TypecorrAdd;" thing will do the work, more about that further on.
+The "<Plug>(TypecorrAdd)" thing will do the work, more about that further on.
 
 The user can set the "mapleader" variable to the key sequence that they want
 this mapping to start with.  Thus if the user has done: >
@@ -2024,15 +2024,15 @@ already happened to exist. |:map-<unique>|
 But what if the user wants to define their own key sequence?  We can allow that
 with this mechanism: >
 
- 21	if !hasmapto('<Plug>TypecorrAdd;')
- 22	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+ 21	if !hasmapto('<Plug>(TypecorrAdd)')
+ 22	  map <unique> <Leader>a  <Plug>(TypecorrAdd)
  23	endif
 
-This checks if a mapping to "<Plug>TypecorrAdd;" already exists, and only
+This checks if a mapping to "<Plug>(TypecorrAdd)" already exists, and only
 defines the mapping from "<Leader>a" if it doesn't.  The user then has a
 chance of putting this in their vimrc file: >
 
-	map ,c  <Plug>TypecorrAdd;
+	map ,c  <Plug>(TypecorrAdd)
 
 Then the mapped key sequence will be ",c" instead of "_a" or "\a".
 
@@ -2062,13 +2062,13 @@ function (without the "s:"), which is again another function.
 <SID> can be used with mappings.  It generates a script ID, which identifies
 the current script.  In our typing correction plugin we use it like this: >
 
- 24	noremap <unique> <script> <Plug>TypecorrAdd;  <SID>Add
+ 24	noremap <unique> <script> <Plug>(TypecorrAdd)  <SID>Add
  ..
  28	noremap <SID>Add  :call <SID>Add(expand("<cword>"), 1)<CR>
 
 Thus when a user types "\a", this sequence is invoked: >
 
-	\a  ->  <Plug>TypecorrAdd;  ->  <SID>Add  ->  :call <SID>Add()
+	\a  ->  <Plug>(TypecorrAdd)  ->  <SID>Add  ->  :call <SID>Add()
 
 If another script also maps <SID>Add, it will get another script ID and
 thus define another mapping.
@@ -2111,9 +2111,16 @@ difference between using <SID> and <Plug>:
 	To make it very unlikely that other plugins use the same sequence of
 	characters, use this structure: <Plug> scriptname mapname
 	In our example the scriptname is "Typecorr" and the mapname is "Add".
-	We add a semicolon as the terminator.  This results in
-	"<Plug>TypecorrAdd;".  Only the first character of scriptname and
-	mapname is uppercase, so that we can see where mapname starts.
+	We wrap the name in parentheses.  This results in
+	"<Plug>(TypecorrAdd)".  The convention of using PascalCase helps
+	telling scriptname apart from mapname.
+
+	Note: the text after "<Plug>" is chosen by the plugin author and is
+	entirely arbitrary.  Wrapping the name in parentheses, using
+	PascalCase, or adding a ";" terminator like "<Plug>TypecorrAdd;" are
+	only conventions to keep the name readable and unlikely to clash with
+	other plugins.  None of them are required: all that matters is that
+	the sequence starts with "<Plug>" and is unique.
 
 <SID>	is the script ID, a unique identifier for a script.
 	Internally Vim translates <SID> to "<SNR>123_", where "123" can be any
@@ -2188,10 +2195,10 @@ Here is the resulting complete example: >
  18		\ synchronization
  19	let s:count = 4
  20
- 21	if !hasmapto('<Plug>TypecorrAdd;')
- 22	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+ 21	if !hasmapto('<Plug>(TypecorrAdd)')
+ 22	  map <unique> <Leader>a  <Plug>(TypecorrAdd)
  23	endif
- 24	noremap <unique> <script> <Plug>TypecorrAdd;  <SID>Add
+ 24	noremap <unique> <script> <Plug>(TypecorrAdd)  <SID>Add
  25
  26	noremenu <script> Plugin.Add\ Correction      <SID>Add
  27
@@ -2241,7 +2248,7 @@ Here is a simple example for a plugin help file, called "typecorr.txt": >
   6	There are currently only a few corrections.  Add your own if you like.
   7
   8	Mappings:
-  9	<Leader>a   or   <Plug>TypecorrAdd;
+  9	<Leader>a   or   <Plug>(TypecorrAdd)
  10		Add a correction for the word under the cursor.
  11
  12	Commands:
