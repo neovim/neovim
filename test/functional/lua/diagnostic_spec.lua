@@ -629,7 +629,7 @@ describe('vim.diagnostic', function()
     it('validation', function()
       matches('expected boolean|nil, got table', pcall_err(exec_lua, [[vim.diagnostic.enable({})]]))
       matches(
-        'filter: expected table, got string',
+        'filter: expected table|nil, got string',
         pcall_err(exec_lua, [[vim.diagnostic.enable(false, '')]])
       )
       matches(
@@ -637,10 +637,10 @@ describe('vim.diagnostic', function()
         pcall_err(exec_lua, [[vim.diagnostic.enable(true, { bufnr = 42 })]])
       )
       matches(
-        'expected boolean, got number',
+        'expected boolean|nil, got number',
         pcall_err(exec_lua, [[vim.diagnostic.enable(42, {})]])
       )
-      matches('expected boolean, got table', pcall_err(exec_lua, [[vim.diagnostic.enable({}, 42)]]))
+      matches('expected boolean|nil, got table', pcall_err(exec_lua, [[vim.diagnostic.enable({}, 42)]]))
     end)
 
     it('without arguments', function()

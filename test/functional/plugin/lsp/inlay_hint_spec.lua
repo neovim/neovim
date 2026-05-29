@@ -155,14 +155,14 @@ int main() {
         end)
       )
       t.matches(
-        'enable: expected boolean, got number',
+        'enable: expected boolean|nil, got number',
         t.pcall_err(exec_lua, function()
           --- @diagnostic disable-next-line:param-type-mismatch
           vim.lsp.inlay_hint.enable(42)
         end)
       )
       t.matches(
-        'filter: expected table, got number',
+        'filter: expected table|nil, got number',
         t.pcall_err(exec_lua, function()
           --- @diagnostic disable-next-line:param-type-mismatch
           vim.lsp.inlay_hint.enable(true, 42)
