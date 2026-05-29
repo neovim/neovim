@@ -903,6 +903,7 @@ func s:GetFilenameChecks() abort
     \ 'tla': ['file.tla'],
     \ 'tli': ['file.tli'],
     \ 'tmux': ['tmuxfile.conf', '.tmuxfile.conf', '.tmux-file.conf', '.tmux.conf', 'tmux-file.conf', 'tmux.conf', 'tmux.conf.local'],
+    \ 'tolk': ['file.tolk'],
     \ 'toml': ['file.toml', 'uv.lock', 'Gopkg.lock', 'Pipfile', '/home/user/.cargo/config', '.black',
     \          'any/containers/containers.conf', 'any/containers/containers.conf.d/file.conf',
     \          'any/containers/containers.conf.modules/file.conf', 'any/containers/containers.conf.modules/any/file.conf',
