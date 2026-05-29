@@ -4707,7 +4707,7 @@ describe('LSP', function()
       test_cfg({
         cmd = { 'cat' },
         filetypes = true,
-      }, 'invalid "foo" config: .* filetypes: expected table, got boolean')
+      }, 'invalid "foo" config: .* filetypes: expected table|nil, got boolean')
     end)
 
     it('does not start without workspace if workspace_required=true', function()

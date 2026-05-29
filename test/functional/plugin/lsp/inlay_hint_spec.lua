@@ -148,7 +148,7 @@ int main() {
   describe('enable()', function()
     it('validation', function()
       t.matches(
-        'enable: expected boolean, got table',
+        'enable: expected boolean|nil, got table',
         t.pcall_err(exec_lua, function()
           --- @diagnostic disable-next-line:param-type-mismatch
           vim.lsp.inlay_hint.enable({}, { bufnr = bufnr })
