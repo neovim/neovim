@@ -273,14 +273,14 @@ end
 --- Returns a list of highlight captures at the given position
 ---
 --- Each capture is represented by a table containing the capture name as a string, the capture's
---- language, a table of metadata (`priority`, `conceal`, ...; empty if none are defined), and the
---- id of the capture.
+--- language, a table of metadata (`priority`, `conceal`, ...; empty if none are defined), the id
+--- of the capture, and the (0-indexed) id of the matched pattern in the query.
 ---
 ---@param buf integer Buffer number (0 for current buffer)
 ---@param row integer Position row
 ---@param col integer Position column
 ---
----@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer}[]
+---@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer, pattern_id: integer}[]
 function M.get_captures_at_pos(buf, row, col)
   buf = vim._resolve_bufnr(buf)
   local buf_highlighter = M.highlighter.active[buf]
