@@ -2324,6 +2324,124 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 
 
 ==============================================================================
+Lua module: vim.async                                              *vim.async*
+
+*vim.async.ListQueue*
+
+    Fields: ~
+      • {is_empty}  (`fun(self: vim.async.ListQueue): boolean`) See
+                    |ListQueue:is_empty()|.
+      • {pop}       (`fun(self: vim.async.ListQueue): T?`) See
+                    |ListQueue:pop()|.
+      • {push}      (`fun(self: vim.async.ListQueue, item: T)`) See
+                    |ListQueue:push()|.
+
+*vim.async.RingQueue*
+
+    Fields: ~
+      • {is_empty}  (`fun(self: vim.async.RingQueue): boolean`) See
+                    |RingQueue:is_empty()|.
+      • {is_full}   (`fun(self: vim.async.RingQueue): boolean`) See
+                    |RingQueue:is_full()|.
+      • {pop}       (`fun(self: vim.async.RingQueue): T?`) See
+                    |RingQueue:pop()|.
+      • {push}      (`fun(self: vim.async.RingQueue, item: T): boolean`) See
+                    |RingQueue:push()|.
+
+
+ListQueue:is_empty()                                    *ListQueue:is_empty()*
+
+    Return: ~
+        (`boolean`)
+
+ListQueue:pop()                                              *ListQueue:pop()*
+
+    Return: ~
+        (`T?`)
+
+ListQueue:push({item})                                      *ListQueue:push()*
+
+    Parameters: ~
+      • {item}  (`T`)
+
+RingQueue:is_empty()                                    *RingQueue:is_empty()*
+
+    Return: ~
+        (`boolean`)
+
+RingQueue:is_full()                                      *RingQueue:is_full()*
+
+    Return: ~
+        (`boolean`)
+
+RingQueue:pop()                                              *RingQueue:pop()*
+    Removes and returns first queue item. Returns nil if queue is empty.
+
+    Return: ~
+        (`T?`)
+
+RingQueue:push({item})                                      *RingQueue:push()*
+    Pushes item to queue. Returns false if queue is full, and true otherwise.
+
+    Parameters: ~
+      • {item}  (`T`)
+
+    Return: ~
+        (`boolean`)
+
+vim.async.await({func}, {...})                             *vim.async.await()*
+    Await a callback-style async function and return its results
+    synchronously.
+
+    Appends a synthetic callback, calls `func`, then waits until it fires. If
+    called from a spawned coroutine it yields (safe); otherwise it uses
+    `vim.wait` to avoid 'yield across C-Call boundary' errors in
+    Neovim-managed coroutines.
+
+    The callback is expected to pass its results as normal return values:
+    callback(...) which will be returned by `await`.
+
+    Parameters: ~
+      • {func}  (`fun(..., callback: fun(...: R))`)
+      • {...}   (`any`) Arguments forwarded to `func` (before the callback)
+                @return ... R Results passed to the callback
+
+vim.async.chan({max})                                       *vim.async.chan()*
+    Creates a channel for coroutine-safe communication.
+
+    Parameters: ~
+      • {max}  (`number?`)
+
+    Return (multiple): ~
+        (`fun(...: T)`) send
+        (`fun(): T...`) recv
+        (`fun(): boolean`) close
+
+vim.async.spawn({func}, {...})                             *vim.async.spawn()*
+    Spawn a detached coroutine that runs a function.
+
+    The coroutine is tracked so `M.await` knows yielding across its resume is
+    safe.
+
+    Parameters: ~
+      • {func}  (`fun(...): any`) Function to run in a coroutine
+      • {...}   (`any`) Arguments forwarded to `func`
+
+vim.async.spawn_wrap({func})                          *vim.async.spawn_wrap()*
+    Wraps `func` so each call runs it in a spawned coroutine.
+
+    Equivalent to `function(...) vim.async.spawn(func, ...) end`. Useful for
+    passing a function that should run asynchronously as a callback (e.g. to
+    event handlers).
+
+    Parameters: ~
+      • {func}  (`fun(...: any)`) Function to run in a spawned coroutine
+
+    Return: ~
+        (`fun(...: any)`) Wrapped function that spawns `func` with given args
+
+
+==============================================================================
 Lua module: vim.base64                                            *vim.base64*
 
 vim.base64.decode({str})                                 *vim.base64.decode()*

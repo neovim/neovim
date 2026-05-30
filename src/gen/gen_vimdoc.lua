@@ -181,6 +181,7 @@ local config = {
       'shared.lua',
 
       -- Sections in alphanumeric order:
+      'async.lua',
       'base64.lua',
       'filetype.lua',
       'fs.lua',
@@ -218,6 +219,7 @@ local config = {
       'runtime/lua/vim/_core/system.lua',
       'runtime/lua/vim/_core/ui2.lua',
       'runtime/lua/vim/_inspector.lua',
+      'runtime/lua/vim/async.lua',
       'runtime/lua/vim/_meta/base64.lua',
       'runtime/lua/vim/_meta/builtin.lua',
       'runtime/lua/vim/_meta/json.lua',

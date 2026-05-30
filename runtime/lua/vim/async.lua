@@ -1,3 +1,21 @@
+--- @brief
+---
+--- `vim.async` provides primitives for coroutine-based asynchronous
+--- programming in Lua. It includes:
+---
+--- - `RingQueue` and `ListQueue`: bounded and unbounded first-in-first-out
+---   queue data structures with `push`/`pop` operations.
+--- - `spawn()`: run a function in a detached coroutine that is tracked so
+---   yielding across resume boundaries is safe.
+--- - `spawn_wrap()`: wrap a function so it runs in a spawned coroutine
+---   each time it is called.
+--- - `chan()`: create a communication channel with a bounded buffer for
+---   passing messages between coroutines, with support for backpressure
+---   and graceful close.
+--- - `await()`: invoke a callback-style async function and synchronously
+---   return its results, either by yielding (in a spawned coroutine) or
+---   via `vim.wait` (in other contexts).
+---
 local function class(body)
   return setmetatable(body or {}, {
     __call = function(cls, ...)
@@ -12,29 +30,29 @@ local function class(body)
 end
 
 ---@class vim.async.RingQueue<T>
----@field capacity number
----@field size number
----@field idx number
----@field items T[]
+---@field _capacity number
+---@field _size number
+---@field _idx number
+---@field _items T[]
 ---@overload fun(capacity: number): vim.async.RingQueue<T>
 local RingQueue = class {}
 
 ---@param capacity number
 function RingQueue:__init(capacity)
-  self.capacity = capacity
-  self.size = 0
-  self.idx = 1
-  self.items = {}
+  self._capacity = capacity
+  self._size = 0
+  self._idx = 1
+  self._items = {}
 end
 
 ---@return boolean
 function RingQueue:is_empty()
-  return self.size == 0
+  return self._size == 0
 end
 
 ---@return boolean
 function RingQueue:is_full()
-  return self.size == self.capacity
+  return self._size == self._capacity
 end
 
 --- Pushes item to queue. Returns false if queue is full, and true otherwise.
@@ -43,10 +61,10 @@ end
 function RingQueue:push(item)
   if self:is_full() then return false end
 
-  local idx = ((self.idx - 1 + self.size) % self.capacity) + 1
-  self.items[idx] = item
+  local idx = ((self._idx - 1 + self._size) % self._capacity) + 1
+  self._items[idx] = item
 
-  self.size = self.size + 1
+  self._size = self._size + 1
   return true
 end
 
@@ -55,11 +73,11 @@ end
 function RingQueue:pop()
   if self:is_empty() then return nil end
 
-  local item = self.items[self.idx]
-  self.items[self.idx] = nil
+  local item = self._items[self._idx]
+  self._items[self._idx] = nil
 
-  self.idx = (self.idx % self.capacity) + 1
-  self.size = self.size - 1
+  self._idx = (self._idx % self._capacity) + 1
+  self._size = self._size - 1
 
   return item
 end
@@ -75,47 +93,45 @@ end
 ---@field next vim.async.ListQueueNode?
 
 ---@class vim.async.ListQueue<T>
----@field size number
----@field start vim.async.ListQueueNode?
----@field end_ vim.async.ListQueueNode?
+---@field _size number
+---@field _start vim.async.ListQueueNode?
+---@field _end vim.async.ListQueueNode?
 ---@overload fun(): vim.async.ListQueue<T>
 local ListQueue = class {}
 
 function ListQueue:__init()
-  self.size = 0
-  self.start = nil
-  self.end_ = nil
+  self._size = 0
+  self._start = nil
+  self._end = nil
 end
 
 ---@return boolean
 function ListQueue:is_empty()
-  return self.size == 0
+  return self._size == 0
 end
 
 ---@param item T
 function ListQueue:push(item)
-  local node = { value = item }
+  local node = { _value = item }
   if self:is_empty() then
-    self.start = node
-    self.end_ = node
+    self._start = node
+    self._end = node
   else
-    self.end_.next = node
-    self.end_ = node
+    self._end.next = node
+    self._end = node
   end
-  self.size = self.size + 1
+  self._size = self._size + 1
 end
 
 ---@return T?
 function ListQueue:pop()
   if self:is_empty() then return nil end
 
-  local item = self.start.value
-  self.start = self.start.next
-  self.size = self.size - 1
+  local item = self._start.value
+  self._start = self._start.next
+  self._size = self._size - 1
 
-  if self.start == nil then
-    self.end_ = nil
-  end
+  if not self._start then self._end = nil end
 
   return item
 end
