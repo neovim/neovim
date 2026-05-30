@@ -652,14 +652,15 @@ vim.bo.buflisted = vim.o.buflisted
 vim.bo.bl = vim.bo.buflisted
 
 --- The value of this option specifies the type of a buffer:
----   <empty>	normal buffer
----   acwrite	buffer will always be written with `BufWriteCmd`s
----   help		help buffer (do not set this manually)
----   nofile	buffer is not related to a file, will not be written
----   nowrite	buffer will not be written
----   prompt	buffer where only the last section can be edited, for
+---   (empty)	Normal buffer.
+---   acwrite	Buffer will always be written with `BufWriteCmd`.
+---   help		Help buffer (do not set this manually).
+---   nofile	Buffer is not a file, will not be written.
+---   nowrite	Buffer represents a filepath (such as a directory),
+--- 		but will not be written.
+---   prompt	Buffer where only the last section can be edited, for
 --- 		use by plugins. `prompt-buffer`
----   quickfix	list of errors `:cwindow` or locations `:lwindow`
+---   quickfix	List of errors `:cwindow` or locations `:lwindow`
 ---   terminal	`terminal-emulator` buffer
 ---
 --- This option is used together with 'bufhidden' and 'swapfile' to

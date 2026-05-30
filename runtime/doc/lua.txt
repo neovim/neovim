@@ -2066,8 +2066,8 @@ vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
       • {t}      (`table`) Table to check
       • {value}  (`any`) Value to compare or predicate function reference
       • {opts}   (`table?`) Keyword arguments |kwargs|:
-                 • {predicate}? (`boolean`) `value` is a function reference to
-                   be checked (default false)
+                 • {predicate}? (`boolean`, default: false) `value` is a
+                   function reference to be checked
 
     Return: ~
         (`boolean`) `true` if `t` contains `value`
@@ -2262,22 +2262,12 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
         end
 <
 
-    2. `vim.validate(spec)` (deprecated) where `spec` is of type
+    2. `vim.validate(spec)` (DEPRECATED) where `spec` is of type
        `table<string,[value:any, validator: vim.validate.Validator, optional_or_msg? : boolean|string]>)`
        Validates a argument specification. Specs are evaluated in alphanumeric
        order, until the first failure.
-       Example: >lua
-         function user.new(name, age, hobbies)
-          vim.validate{
-            name={name, 'string'},
-            age={age, 'number'},
-            hobbies={hobbies, 'table'},
-          }
-          -- ...
-        end
-<
 
-    Examples with explicit argument values (can be run directly): >lua
+    Examples: >lua
         vim.validate('arg1', {'foo'}, 'table')
            --> NOP (success)
         vim.validate('arg2', 'foo', 'string')
@@ -2288,13 +2278,11 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 
         vim.validate('arg1', 3, function(a) return (a % 2) == 0 end, 'even number')
            --> error('arg1: expected even number, got 3')
-<
 
-    If multiple types are valid they can be given as a list. >lua
+        -- If multiple types are valid they can be given as a list:
         vim.validate('arg1', {'foo'}, {'table', 'string'})
         vim.validate('arg2', 'foo', {'table', 'string'})
         -- NOP (success)
-
         vim.validate('arg1', 1, {'string', 'table'})
         -- error('arg1: expected string|table, got number')
 <
@@ -2314,8 +2302,8 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
                        `'userdata'`.
                      • (`fun(val:any): boolean, string?`) A function that
                        returns a boolean and an optional string message.
-      • {optional}   (`boolean?`) Parameter is optional (may be omitted or
-                     nil)
+      • {optional}   (`boolean?`) (default: false) Parameter is optional (may
+                     be omitted or nil)
       • {message}    (`string?`) message when validation fails
 
     Overloads: ~
@@ -2960,14 +2948,15 @@ vim.hl.hl_op({opts})                                          *vim.hl.hl_op()*
 
     Parameters: ~
       • {opts}  (`table?`) Optional parameters
-                • event (default vim.v.event) Event structure.
-                • higroup (default "IncSearch") Highlight group for the text
+                • event (default: vim.v.event) Event structure.
+                • higroup (default: "IncSearch") Highlight group for the text
                   region.
-                • on_macro (default false) Highlight during |macro| execution.
-                • on_visual (default true) Highlight during |Visual| mode.
-                • priority (default |vim.hl.priorities|`.user`) Integer
+                • on_macro (default: false) Highlight during |macro|
+                  execution.
+                • on_visual (default: true) Highlight during |Visual| mode.
+                • priority (default: |vim.hl.priorities|`.user`) Integer
                   priority.
-                • timeout (default 150) Time in ms before highlight is
+                • timeout (default: 150) Time in ms before highlight is
                   cleared.
 
 vim.hl.priorities                                          *vim.hl.priorities*
@@ -3734,9 +3723,9 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
 Lua module: vim.keymap                                            *vim.keymap*
 
 vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
-    Remove an existing mapping. Examples: >lua
+    Removes a mapping, or removes each (mode, lhs) pair if `lhs` is a list.
+    Examples: >lua
         vim.keymap.del('n', 'lhs')
-
         vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buf = 5 })
 <
 
@@ -3751,7 +3740,8 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
       • |vim.keymap.set()|
 
 vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
-    Defines a |mapping| of |keycodes| to a function or keycodes.
+    Defines a |mapping| of |keycodes| to a function or keycodes. If `lhs` is a
+    list, defines a mapping for each (mode, lhs) pair.
 
     Examples: >lua
         -- Map "x" to a Lua function:
@@ -3776,6 +3766,13 @@ vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
           local line2 = region[#region][1][2]
           vim.print({ line1, line2 })
         end)
+
+        vim.keymap.set({ 'n', 'i' }, { 'a', 'b' }, '<cmd>echom localtime()<cr>')
+        -- ... is the same as:
+        vim.keymap.set('n', 'a', '<cmd>echom localtime()<cr>')
+        vim.keymap.set('i', 'a', '<cmd>echom localtime()<cr>')
+        vim.keymap.set('n', 'b', '<cmd>echom localtime()<cr>')
+        vim.keymap.set('i', 'b', '<cmd>echom localtime()<cr>')
 <
 
     Parameters: ~
@@ -4474,10 +4471,9 @@ by |vim.Pos| objects.
 
 
 *vim.Pos*
-    Represents a well-defined position.
-
-    A |vim.Pos| object contains the {row} and {col} coordinates of a position.
-    To create a new |vim.Pos| object, call `vim.pos()`.
+    Represents a buffer position based on |api-indexing| (0-indexed,
+    end-exclusive ranges). Call `vim.pos()` to create a new `vim.Pos` by
+    passing the {buf}, {row}, and {col} of a position.
 
     Example: >lua
         local pos1 = vim.pos(0, 3, 5)
@@ -4507,7 +4503,7 @@ cursor({buf}, {pos})                                        *vim.pos.cursor()*
 
     Example: >lua
         local cursor_pos = vim.api.nvim_win_get_cursor(0)
-        local pos = vim.pos.lsp(0, cursor_pos)
+        local pos = vim.pos.cursor(0, cursor_pos)
 <
 
     Parameters: ~
@@ -4692,13 +4688,12 @@ Provides operations to compare, calculate, and convert ranges represented by
 
 
 *vim.Range*
-    Represents a range. Call `vim.range()` to create a new range.
+    Represents a range based on |api-indexing| (0-indexed, end-exclusive).
+    Call `vim.range()` to create a new range by passing start and end
+    positions (|vim.Pos|).
 
-    A range contains a start and end position (see |vim.Pos|). The end
-    position is exclusive. Positions must have the same optional fields.
-
-    May include optional fields that enable additional capabilities, such as
-    format conversions.
+    Both positions must have the same optional fields, which may enable
+    additional capabilities (such as format conversions).
 
     Example: >lua
         local pos1 = vim.pos(0, 3, 5)

@@ -343,12 +343,10 @@ Boolean nvim_win_is_valid(Window win)
   return ret;
 }
 
-/// Closes the window and hide the buffer it contains (like |:hide| with a
-/// |window-ID|).
+/// Closes the window and hides the buffer it contains (like |:hide| with a |window-ID|; unrelated
+/// to the `hide` flag of |nvim_open_win()|, |nvim_win_get_config()|).
 ///
-/// Like |:hide| the buffer becomes hidden unless another window is editing it,
-/// or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close| or
-/// |nvim_win_close()|, which will close the buffer.
+/// Compare |:close| and |nvim_win_close()|, which close the buffer instead of hiding it.
 ///
 /// @param win   |window-ID|, or 0 for current window
 /// @param[out] err Error details, if any

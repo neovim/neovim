@@ -135,10 +135,11 @@ Special types (msgpack EXT) ~
 
                                                         *api-indexing*
 Most of the API uses 0-based indices, and ranges are end-exclusive. For the
-end of a range, -1 denotes the last line/column.
+end of a range, -1 denotes the last line/column. See |vim.pos|, |vim.range|
+for representing and converting positions.
 
 Exception: the following API functions use "mark-like" indexing (1-based
-lines, 0-based columns):
+lines, 0-based columns, see also |vim.pos.mark()|):
 
 - |nvim_get_mark()|
 - |nvim_buf_get_mark()|
@@ -147,14 +148,14 @@ lines, 0-based columns):
 - |nvim_win_set_cursor()|
 
 Exception: the following API functions use |extmarks| indexing (0-based
-indices, end-inclusive):
+indices, end-inclusive, see also |vim.pos.extmark()|):
 
 - |nvim_buf_del_extmark()|
 - |nvim_buf_get_extmark_by_id()|
 - |nvim_buf_get_extmarks()|
 - |nvim_buf_set_extmark()|
 
-						*api-fast* *deferred* *schedule*
+                                              *api-fast* *deferred* *schedule*
 Most API functions are deferred: they are queued ("scheduled") on the main
 loop and processed sequentially with normal input. If the editor is waiting
 for user input in a "modal" fashion (e.g. an |input()| prompt), a deferred
@@ -3948,8 +3949,7 @@ nvim_open_win({buf}, {enter}, {config})                      *nvim_open_win()*
                     option. Value can be one of "left", "center", or "right".
                     Default is `"left"`.
                   • height: Window height (in character cells). Minimum of 1.
-                  • hide: If true the floating window will be hidden and the
-                    cursor will be invisible when focused on it.
+                  • hide: Hides the floating window. |window-hidden|
                   • mouse: Specify how this window interacts with mouse
                     events. Defaults to `focusable` value.
                     • If false, mouse events pass through this window.
@@ -4202,12 +4202,12 @@ nvim_win_get_width({win})                               *nvim_win_get_width()*
         (`integer`) Width as a count of columns
 
 nvim_win_hide({win})                                         *nvim_win_hide()*
-    Closes the window and hide the buffer it contains (like |:hide| with a
-    |window-ID|).
+    Closes the window and hides the buffer it contains (like |:hide| with a
+    |window-ID|; unrelated to the `hide` flag of |nvim_open_win()|,
+    |nvim_win_get_config()|).
 
-    Like |:hide| the buffer becomes hidden unless another window is editing
-    it, or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close|
-    or |nvim_win_close()|, which will close the buffer.
+    Compare |:close| and |nvim_win_close()|, which close the buffer instead of
+    hiding it.
 
     Attributes: ~
         not allowed when |textlock| is active

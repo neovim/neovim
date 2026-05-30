@@ -1476,6 +1476,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
         const int rv = switch_win_noblock(&switchwin, firstwin, curtab, true);
         assert(rv == OK);
         (void)rv;
+        // retry (recurse)
         do_buffer_ext(action, start, dir, count, flags);
         restore_win_noblock(&switchwin, true);
       }

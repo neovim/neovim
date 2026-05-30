@@ -10,10 +10,8 @@ local api = vim.api
 local validate = vim.validate
 local util = require('vim.pos._util')
 
---- Represents a well-defined position.
----
---- A |vim.Pos| object contains the {row} and {col} coordinates of a position.
---- To create a new |vim.Pos| object, call `vim.pos()`.
+--- Represents a buffer position based on [api-indexing] (0-indexed, end-exclusive ranges).
+--- Call `vim.pos()` to create a new `vim.Pos` by passing the {buf}, {row}, and {col} of a position.
 ---
 --- Example:
 --- ```lua
@@ -170,7 +168,7 @@ end
 --- Example:
 --- ```lua
 --- local cursor_pos = vim.api.nvim_win_get_cursor(0)
---- local pos = vim.pos.lsp(0, cursor_pos)
+--- local pos = vim.pos.cursor(0, cursor_pos)
 --- ```
 ---@param buf integer
 ---@param pos [integer, integer] (lnum, col) tuple

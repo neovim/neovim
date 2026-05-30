@@ -10,12 +10,11 @@ local validate = vim.validate
 local api = vim.api
 local util = require('vim.pos._util')
 
---- Represents a range. Call `vim.range()` to create a new range.
+--- Represents a range based on [api-indexing] (0-indexed, end-exclusive). Call `vim.range()` to
+--- create a new range by passing start and end positions (|vim.Pos|).
 ---
---- A range contains a start and end position (see |vim.Pos|). The end position is exclusive.
---- Positions must have the same optional fields.
----
---- May include optional fields that enable additional capabilities, such as format conversions.
+--- Both positions must have the same optional fields, which may enable additional capabilities
+--- (such as format conversions).
 ---
 --- Example:
 --- ```lua
