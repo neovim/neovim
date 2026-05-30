@@ -640,7 +640,10 @@ describe('vim.diagnostic', function()
         'expected boolean|nil, got number',
         pcall_err(exec_lua, [[vim.diagnostic.enable(42, {})]])
       )
-      matches('expected boolean|nil, got table', pcall_err(exec_lua, [[vim.diagnostic.enable({}, 42)]]))
+      matches(
+        'expected boolean|nil, got table',
+        pcall_err(exec_lua, [[vim.diagnostic.enable({}, 42)]])
+      )
     end)
 
     it('without arguments', function()
