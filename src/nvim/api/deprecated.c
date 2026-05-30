@@ -234,7 +234,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
   uint32_t ns_id = src2ns(&src_id);
   int width;
 
-  VirtText virt_text = parse_virt_text(chunks, err, &width);
+  VirtText virt_text = parse_virt_text(chunks, err, &width, false);
   if (ERROR_SET(err)) {
     return 0;
   }

@@ -15,6 +15,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
@@ -1021,37 +1022,26 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
     return;
   });
 
-  bool *is_present;
-  VirtText *chunks;
-  int *width;
-  switch (bordertext_type) {
-  case kBorderTextTitle:
-    is_present = &fconfig->title;
-    chunks = &fconfig->title_chunks;
-    width = &fconfig->title_width;
-    break;
-  case kBorderTextFooter:
-    is_present = &fconfig->footer;
-    chunks = &fconfig->footer_chunks;
-    width = &fconfig->footer_width;
-    break;
-  }
+  bool is_title = bordertext_type == kBorderTextTitle;
+  bool *is_present = is_title ? &fconfig->title : &fconfig->footer;
+  VirtText *chunks = is_title ? &fconfig->title_chunks : &fconfig->footer_chunks;
+  int *width = is_title ? &fconfig->title_width : &fconfig->footer_width;
 
   if (bordertext.type == kObjectTypeString) {
     if (bordertext.data.string.size == 0) {
       *is_present = false;
       return;
     }
+    char *text = transstr(bordertext.data.string.data, true);
     kv_init(*chunks);
-    kv_push(*chunks, ((VirtTextChunk){ .text = xstrdup(bordertext.data.string.data),
-                                       .hl_id = -1 }));
-    *width = (int)mb_string2cells(bordertext.data.string.data);
-    *is_present = true;
-    return;
+    kv_push(*chunks, ((VirtTextChunk){ .text = text, .hl_id = -1 }));
+    *width = (int)mb_string2cells(text);
+  } else {
+    *chunks = parse_virt_text(bordertext.data.array, err, width, true);
+    if (ERROR_SET(err)) {
+      return;
+    }
   }
-
-  *width = 0;
-  *chunks = parse_virt_text(bordertext.data.array, err, width);
 
   *is_present = true;
 }
