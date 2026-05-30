@@ -1191,6 +1191,7 @@ local extension = {
   sdl = 'sdl',
   sed = 'sed',
   sexp = 'sexplib',
+  sgf = 'sgf',
   bash = detect.bash,
   bats = detect.bash,
   cygport = detect.bash,
