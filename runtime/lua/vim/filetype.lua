@@ -1457,6 +1457,7 @@ local extension = {
   xlc = 'xml',
   xba = 'xml',
   slnx = 'xml',
+  reanim = 'xml',
   xpm = detect_line1('XPM2', 'xpm2', 'xpm'),
   xpm2 = 'xpm2',
   xqy = 'xquery',
