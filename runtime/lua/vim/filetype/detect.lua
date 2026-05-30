@@ -63,6 +63,20 @@ function M.app(path, bufnr)
   end
 end
 
+-- This function checks for Kawasaki robots AS file or atlas file type.
+--- @type vim.filetype.mapfn
+function M.as(_, bufnr)
+  if vim.g.filetype_as then
+    return vim.g.filetype_as
+  end
+  for _, line in ipairs(getlines(bufnr, 1, 30)) do
+    if line:find('^%.NETCONF') then
+      return 'kawasaki_as'
+    end
+  end
+  return 'atlas'
+end
+
 --- @param bufnr integer
 --- @return boolean
 local function is_objectscript_routime(bufnr)
