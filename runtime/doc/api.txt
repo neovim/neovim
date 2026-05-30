@@ -2705,6 +2705,24 @@ nvim_buf_line_count({buf})                             *nvim_buf_line_count()*
     Return: ~
         (`integer`) Line count, or 0 for unloaded buffer. |api-buffer|
 
+                                                   *nvim_buf_set_file_mtime()*
+nvim_buf_set_file_mtime({buf}, {mtime_sec}, {mtime_nsec})
+    Sets the file modification time for a buffer's backing file.
+
+    The caller is expected to provide the file mtime measured immediately
+    after writing the file (e.g., from a libuv stat callback). Sets b_mtime
+    and b_mtime_read, which suppresses the external-change warning on the next
+    |:w|.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {buf}         (`integer`) Buffer handle, or 0 for current buffer
+      • {mtime_sec}   (`integer`) File modification time (seconds since epoch)
+      • {mtime_nsec}  (`integer`) File modification time (nanoseconds
+                      component)
+
                                                        *nvim_buf_set_keymap()*
 nvim_buf_set_keymap({buf}, {mode}, {lhs}, {rhs}, {opts})
     Sets a buffer-local |mapping| for the given mode.

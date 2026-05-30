@@ -731,6 +731,18 @@ function vim.api.nvim_buf_line_count(buf) end
 --- @return integer # Id of the created/updated extmark
 function vim.api.nvim_buf_set_extmark(buf, ns_id, line, col, opts) end
 
+--- Sets the file modification time for a buffer's backing file.
+---
+--- The caller is expected to provide the file mtime measured immediately
+--- after writing the file (e.g., from a libuv stat callback).  Sets
+--- b_mtime and b_mtime_read, which suppresses the external-change warning
+--- on the next `:w`.
+---
+--- @param buf integer Buffer handle, or 0 for current buffer
+--- @param mtime_sec integer File modification time (seconds since epoch)
+--- @param mtime_nsec integer File modification time (nanoseconds component)
+function vim.api.nvim_buf_set_file_mtime(buf, mtime_sec, mtime_nsec) end
+
 --- Sets a buffer-local `mapping` for the given mode.
 ---
 ---
