@@ -1476,6 +1476,7 @@ local extension = {
   yaml = 'yaml',
   eyaml = 'yaml',
   mplstyle = 'yaml',
+  ksy = 'yaml',
   kyaml = 'yaml',
   kyml = 'yaml',
   grc = detect_line1('<%?xml', 'xml', 'yaml'),
