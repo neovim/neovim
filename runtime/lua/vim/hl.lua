@@ -40,7 +40,8 @@ M.priorities = {
 ---
 ---@param buf integer Buffer number to apply highlighting to
 ---@param ns integer Namespace to add highlight to
----@param higroup string Highlight group to use for highlighting
+---@param higroup integer|integer[]|string|string[] Highlight group used for the text range.
+--- See the `hl_group` option in |nvim_buf_set_extmark()|.
 ---@param start [integer,integer]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param finish [integer,integer]|string End of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param opts? vim.hl.range.Opts
