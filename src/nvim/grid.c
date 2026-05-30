@@ -20,7 +20,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/arabic.h"
 #include "nvim/ascii_defs.h"
-#include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/globals.h"
@@ -952,11 +951,7 @@ void win_grid_alloc(win_T *wp)
   if (want_allocation && (!has_allocation
                           || grid_allocated->rows != total_rows
                           || grid_allocated->cols != total_cols)) {
-    // aucmd_win is a transient host for autocmds against a hidden buffer;
-    // initialize its grid with valid attrs so a nested redraw from a callback
-    // doesn't composite through uninitialized cells.
-    grid_alloc(grid_allocated, total_rows, total_cols,
-               wp->w_grid_alloc.valid, is_aucmd_win(wp));
+    grid_alloc(grid_allocated, total_rows, total_cols, wp->w_grid_alloc.valid, false);
     grid_allocated->valid = true;
     if (wp->w_floating && wp->w_config.border) {
       wp->w_redr_border = true;
@@ -969,12 +964,7 @@ void win_grid_alloc(win_T *wp)
     grid_allocated->valid = false;
     was_resized = true;
   } else if (want_allocation && has_allocation && !wp->w_grid_alloc.valid) {
-    if (is_aucmd_win(wp)) {
-      size_t n = (size_t)grid_allocated->rows * (size_t)grid_allocated->cols;
-      memset(grid_allocated->attrs, 0, n * sizeof(*grid_allocated->attrs));
-    } else {
-      grid_invalidate(grid_allocated);
-    }
+    grid_invalidate(grid_allocated);
     grid_allocated->valid = true;
   }
 
