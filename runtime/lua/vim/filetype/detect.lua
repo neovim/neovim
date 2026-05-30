@@ -63,6 +63,20 @@ function M.app(path, bufnr)
   end
 end
 
+-- This function checks for Kawasaki robots AS file or atlas file type.
+--- @type vim.filetype.mapfn
+function M.as(_, bufnr)
+  if vim.g.filetype_as then
+    return vim.g.filetype_as
+  end
+  for _, line in ipairs(getlines(bufnr, 1, 30)) do
+    if line:find('^%.NETCONF') then
+      return 'kawasaki_as'
+    end
+  end
+  return 'atlas'
+end
+
 --- @param bufnr integer
 --- @return boolean
 local function is_objectscript_routime(bufnr)
@@ -2143,6 +2157,8 @@ local function match_from_hashbang(contents, path, dispatch_extension)
     name = fn.substitute(first_line, [[^#!.*\<env\>\s\+\(\i\+\).*]], '\\1', '')
   elseif matchregex(first_line, [[^#!\s*[^/\\ ]*\>\([^/\\]\|$\)]]) then
     name = fn.substitute(first_line, [[^#!\s*\([^/\\ ]*\>\).*]], '\\1', '')
+  elseif matchregex(first_line, [[^#!.*\<busybox\>]]) then
+    name = fn.substitute(first_line, [[^#!.*\<busybox\>\s\+\(\i\+\).*]], '\\1', '')
   else
     name = fn.substitute(first_line, [[^#!\s*\S*[/\\]\(\f\+\).*]], '\\1', '')
   end
@@ -2153,7 +2169,7 @@ local function match_from_hashbang(contents, path, dispatch_extension)
     name = 'wish'
   end
 
-  if matchregex(name, [[^\(bash\d*\|dash\|ksh\d*\|sh\)\>]]) then
+  if matchregex(name, [[^\(bash\d*\|d\?ash\|ksh\d*\|sh\)\>]]) then
     -- Bourne-like shell scripts: bash bash2 dash ksh ksh93 sh
     return sh(path, contents, first_line)
   elseif matchregex(name, [[^csh\>]]) then

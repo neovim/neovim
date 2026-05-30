@@ -137,6 +137,7 @@ variables can be used to overrule the filetype used for certain extensions:
 
 	file name	variable ~
 	`*.app`		g:filetype_app
+	`*.as`		g:filetype_as
 	`*.asa`		g:filetype_asa		|ft-aspperl-syntax|
 						|ft-aspvbs-syntax|
 	`*.asm`		g:asmsyntax		|ft-asm-syntax|
@@ -910,6 +911,20 @@ By default the following options are set, in accordance with PEP8: >
 To disable this behavior, set the following variable in your vimrc: >
 
 	let g:python_recommended_style = 0
+<
+Python omni-completion |compl-omni| is provided by python3complete.vim (or
+pythoncomplete.vim) for Nvim with the |python3| provider.
+By default it does not inspect the import / from statements found in the
+buffer. This means completion of names defined in the buffer itself (classes,
+functions, variables) works, but completion of members of imported modules is
+not offered.
+
+To enable completion of imported module members, set: >
+	let g:pythoncomplete_allow_import = 1
+<
+WARNING: enabling this causes omni-completion to execute the import statements
+found in the buffer through Python's import machinery, which runs the imported
+modules' top-level code. Only enable this for code you trust.
 
 POWERSHELL
 

@@ -12,6 +12,10 @@
 "   i.e. "import url<c-x,c-o>"
 " Continue parsing on invalid line??
 "
+" v 0.10 by Vim project
+"   * disables importing local modules, unless the global Vim variable
+"     g:pythoncomplete_allow_import is set to non-zero
+"
 " v 0.9
 "   * Fixed docstring parsing for classes and functions
 "   * Fixed parsing of *args and **kwargs type arguments
@@ -146,11 +150,20 @@ class Completer(object):
 
     def evalsource(self,text,line=0):
         sc = self.parser.parse(text,line)
+        try: allow_imports = int(
+          vim.eval("get(g:, 'pythoncomplete_allow_import', 0)"))
+        except Exception:
+          allow_imports = 0
         src = sc.get_code()
         dbg("source: %s" % src)
         try: exec(src) in self.compldict
         except: dbg("parser: %s, %s" % (sys.exc_info()[0],sys.exc_info()[1]))
         for l in sc.locals:
+            # Executing import/from statements harvested from the buffer runs
+            # arbitrary package code; only do so when the user opted in.
+            if not allow_imports and (l.startswith('import')
+                                            or l.startswith('from ')):
+                continue
             try: exec(l) in self.compldict
             except: dbg("locals: %s, %s [%s]" % (sys.exc_info()[0],sys.exc_info()[1],l))
 
@@ -315,13 +328,11 @@ class Scope(object):
     def get_code(self):
         str = ""
         if len(self.docstr) > 0: str += '"""'+self.docstr+'"""\n'
-        for l in self.locals:
-            if l.startswith('import'): str += l+'\n'
         str += 'class _PyCmplNoType:\n    def __getattr__(self,name):\n        return None\n'
         for sub in self.subscopes:
             str += sub.get_code()
         for l in self.locals:
-            if not l.startswith('import'): str += l+'\n'
+            if not l.startswith('import') and not l.startswith('from '): str += l+'\n'
 
         return str
 
