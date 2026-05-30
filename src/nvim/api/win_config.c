@@ -1514,6 +1514,9 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, hide)) {
+    if (fconfig->hide && !config->hide) {
+      redraw_later(wp, UPD_NOT_VALID);
+    }
     fconfig->hide = config->hide;
   }
 

@@ -2176,6 +2176,8 @@ function vim.api.nvim_set_current_win(win) end
 ---
 --- Note: It is not allowed to remove or update extmarks in `on_line` or `on_range` callbacks.
 ---
+--- Note: Callbacks will not run for `window-hidden`, as they are not redrawn.
+---
 --- @param ns_id integer Namespace id from `nvim_create_namespace()`
 --- @param opts vim.api.keyset.set_decoration_provider Table of callbacks:
 --- - on_buf: called for each buffer being redrawn (once per edit,

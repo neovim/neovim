@@ -4,7 +4,7 @@ local Screen = require('test.functional.ui.screen')
 
 local set_session, clear, assert_alive = n.set_session, n.clear, n.assert_alive
 local feed, command = n.feed, n.command
-local exec = n.exec
+local exec, exec_lua = n.exec, n.exec_lua
 local insert = n.insert
 local eq = t.eq
 local fn, api = n.fn, n.api
@@ -1008,5 +1008,38 @@ it("scrolling in narrow window doesn't draw over separator #29033", function()
     {8: }│{8: 10 }a                                                     |
     {2:< }{3:[No Name] [+]                                             }|
                                                                 |
+  ]])
+end)
+
+it('hidden windows are not redrawn', function()
+  clear()
+  local screen = Screen.new()
+  local opts = { width = 5, height = 5, bufpos = { 0, 0 }, relative = 'win', hide = true }
+  local win = api.nvim_open_win(0, false, opts)
+  local no_redraw = function()
+    vim.o.laststatus = 3
+    local on_win = function(_, winid)
+      _G.did_win = (_G.did_win or 0) + (winid == win and 1 or 0)
+    end
+    vim.api.nvim_set_decoration_provider(1, { on_win = on_win })
+    vim.api.nvim__redraw({ flush = true })
+    return _G.did_win
+  end
+  eq(0, exec_lua(no_redraw))
+  screen:expect([[
+    ^                                                     |
+    {1:~                                                    }|*11
+    {3:[No Name]                                            }|
+                                                         |
+  ]])
+  -- Redrawn properly after unhiding
+  api.nvim_win_set_config(win, { hide = false })
+  screen:expect([[
+    ^                                                     |
+    {4:     }{1:                                                }|
+    {11:~    }{1:                                                }|*4
+    {1:~                                                    }|*6
+    {3:[No Name]                                            }|
+                                                         |
   ]])
 end)
