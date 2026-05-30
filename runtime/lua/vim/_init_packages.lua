@@ -62,6 +62,7 @@ vim._submodules = {
   text = true,
   tty = true,
   provider = true,
+  async = true,
 }
 
 -- These are for loading runtime modules in the vim namespace lazily.
