@@ -1684,12 +1684,8 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   }
 
   // Set the "magic" values (characters that get treated specially)
-  if (eap->argt & EX_XFILE) {
-    cmdinfo->magic.file = true;
-  }
-  if (eap->argt & EX_TRLBAR) {
-    cmdinfo->magic.bar = true;
-  }
+  eap->magic.file = eap->argt & EX_XFILE;
+  eap->magic.bar = eap->argt & EX_TRLBAR;
 
   retval = true;
 end:
