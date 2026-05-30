@@ -2326,6 +2326,29 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 ==============================================================================
 Lua module: vim.async                                              *vim.async*
 
+*vim.async.Chan*
+    `vim.async.Chan` is a communication channel between coroutines with a
+    bounded buffer.
+
+    The buffer size is set when the channel is created via |vim.async.chan()|.
+    `send` inserts messages into the buffer; `recv` removes them.
+
+    When the buffer is full, `send` blocks by yielding if the caller is inside
+    a spawned coroutine, or raises an error otherwise. When the buffer is
+    empty, `recv` either yields or polls with |vim.wait()|.
+
+    Calling `close` wakes all blocked senders and receivers. Senders will get
+    a "Send on closed channel" error; receivers will drain remaining messages
+    then return `nil`.
+
+    Fields: ~
+      • {close}      (`fun(self: vim.async.Chan): boolean`) See
+                     |Chan:close()|.
+      • {is_closed}  (`fun(self: vim.async.Chan): boolean`) See
+                     |Chan:is_closed()|.
+      • {recv}       (`fun(self: vim.async.Chan): T?`) See |Chan:recv()|.
+      • {send}       (`fun(self: vim.async.Chan, ...: T)`) See |Chan:send()|.
+
 *vim.async.ListQueue*
 
     Fields: ~
@@ -2335,6 +2358,8 @@ Lua module: vim.async                                              *vim.async*
                     |ListQueue:pop()|.
       • {push}      (`fun(self: vim.async.ListQueue, item: T)`) See
                     |ListQueue:push()|.
+
+*vim.async.ListQueueNode*
 
 *vim.async.RingQueue*
 
@@ -2348,6 +2373,42 @@ Lua module: vim.async                                              *vim.async*
       • {push}      (`fun(self: vim.async.RingQueue, item: T): boolean`) See
                     |RingQueue:push()|.
 
+
+Chan:close()                                                    *Chan:close()*
+    Closes the channel.
+
+    Wakes all blocked senders and receivers. Subsequent sends will error, and
+    receivers will drain remaining messages then return `nil`.
+
+    Return: ~
+        (`boolean`) `true` if the channel was open, `false` if already closed
+
+Chan:is_closed()                                            *Chan:is_closed()*
+
+    Return: ~
+        (`boolean`)
+
+Chan:recv()                                                      *Chan:recv()*
+    Receives a message from the channel.
+
+    Blocks (by yielding) if the buffer is empty and the caller is in a spawned
+    coroutine. Otherwise polls with `vim.wait` and errors on timeout.
+
+    Returns `nil` when the channel is closed and the buffer is empty.
+
+    Return: ~
+        (`T?`)
+
+Chan:send({...})                                                 *Chan:send()*
+    Sends a message to the channel.
+
+    Blocks (by yielding) if the buffer is full and the caller is in a spawned
+    coroutine. Otherwise, errors immediately.
+
+    Errors if the channel is closed.
+
+    Parameters: ~
+      • {...}  (`T`)
 
 ListQueue:is_empty()                                    *ListQueue:is_empty()*
 
@@ -2407,15 +2468,13 @@ vim.async.await({func}, {...})                             *vim.async.await()*
                 @return ... R Results passed to the callback
 
 vim.async.chan({max})                                       *vim.async.chan()*
-    Creates a channel for coroutine-safe communication.
+    Creates a buffered channel for coroutine-safe communication.
 
     Parameters: ~
-      • {max}  (`number?`)
+      • {max}  (`number?`) Message buffer size
 
-    Return (multiple): ~
-        (`fun(...: T)`) send
-        (`fun(): T...`) recv
-        (`fun(): boolean`) close
+    Return: ~
+        (`vim.async.Chan<T>`)
 
 vim.async.spawn({func}, {...})                             *vim.async.spawn()*
     Spawn a detached coroutine that runs a function.

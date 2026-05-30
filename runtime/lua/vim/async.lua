@@ -39,7 +39,7 @@ local RingQueue = class {}
 
 ---@param capacity number
 function RingQueue:__init(capacity)
-  self._capacity = capacity
+  self._capacity = math.max(capacity, 0)
   self._size = 0
   self._idx = 1
   self._items = {}
@@ -89,8 +89,8 @@ function RingQueue:__call()
 end
 
 ---@class vim.async.ListQueueNode<T>
----@field value T
----@field next vim.async.ListQueueNode?
+---@field _value T
+---@field _next vim.async.ListQueueNode?
 
 ---@class vim.async.ListQueue<T>
 ---@field _size number
@@ -117,7 +117,7 @@ function ListQueue:push(item)
     self._start = node
     self._end = node
   else
-    self._end.next = node
+    self._end._next = node
     self._end = node
   end
   self._size = self._size + 1
@@ -127,8 +127,8 @@ end
 function ListQueue:pop()
   if self:is_empty() then return nil end
 
-  local item = self._start.value
-  self._start = self._start.next
+  local item = self._start._value
+  self._start = self._start._next
   self._size = self._size - 1
 
   if not self._start then self._end = nil end
@@ -191,95 +191,151 @@ end
 
 local TIMEOUT = 1000
 
---- Creates a channel for coroutine-safe communication.
----@generic T
+--- `vim.async.Chan` is a communication channel between coroutines with a
+--- bounded buffer.
+---
+--- The buffer size is set when the channel is created via |vim.async.chan()|.
+--- `send` inserts messages into the buffer; `recv` removes them.
+---
+--- When the buffer is full, `send` blocks by yielding if the caller is
+--- inside a spawned coroutine, or raises an error otherwise. When the
+--- buffer is empty, `recv` either yields or polls with |vim.wait()|.
+---
+--- Calling `close` wakes all blocked senders and receivers. Senders will
+--- get a "Send on closed channel" error; receivers will drain remaining
+--- messages then return `nil`.
+---
+---@class vim.async.Chan<T>
+---@field _message_queue vim.async.RingQueue
+---@field _recv_queue vim.async.ListQueue<thread>
+---@field _send_queue vim.async.ListQueue<thread>
+---@field _closed boolean
+---@overload fun(max?: number): vim.async.Chan<T>
+local Chan = class {}
+
 ---@param max? number
----@return fun(...: T) send
----@return fun(): T... recv
----@return fun(): boolean close
+function Chan:__init(max)
+  self._message_queue = RingQueue(math.max(1, max or 1))
+  self._recv_queue = ListQueue()
+  self._send_queue = ListQueue()
+  self._closed = false
+end
+
+--- Sends a message to the channel.
+---
+--- Blocks (by yielding) if the buffer is full and the caller is in a
+--- spawned coroutine. Otherwise, errors immediately.
+---
+--- Errors if the channel is closed.
+---
+---@param ... T
+function Chan:send(...)
+  if self._closed then error("Send on closed channel") end
+
+  local message = { ... }
+
+  while true do
+    if self._message_queue:push(message) then
+      for coro in self._recv_queue do
+        if coroutine.status(coro) ~= 'dead' then
+          safe_resume(coro)
+          break
+        end
+      end
+      return
+    end
+
+    if self._closed then error("Send on closed channel") end
+
+    local coro = coroutine.running()
+    if coro and spawned[coro] then
+      self._send_queue:push(coro)
+      coroutine.yield()
+      if self._closed then error("Send on closed channel") end
+    else
+      self:close()
+      error("Message queue is full, send from non-spawned context")
+    end
+  end
+end
+
+--- Receives a message from the channel.
+---
+--- Blocks (by yielding) if the buffer is empty and the caller is in a
+--- spawned coroutine. Otherwise polls with `vim.wait` and errors on
+--- timeout.
+---
+--- Returns `nil` when the channel is closed and the buffer is empty.
+---
+---@return T?...
+function Chan:recv()
+  while true do
+    local message = self._message_queue:pop()
+    if message then
+      for coro in self._send_queue do
+        if coroutine.status(coro) ~= 'dead' then
+          safe_resume(coro)
+          break
+        end
+      end
+      return unpack(message)
+    end
+
+    if self._closed then return nil end
+
+    local coro = coroutine.running()
+    if coro and spawned[coro] then
+      self._recv_queue:push(coro)
+      coroutine.yield()
+    else
+      local ok = vim.wait(TIMEOUT,
+        function() return not self._message_queue:is_empty() end, nil, true)
+      if not ok then error("Exceeded maximum coroutine waiting time.") end
+    end
+  end
+end
+
+---@return boolean
+function Chan:is_closed()
+  return self._closed
+end
+
+--- Closes the channel.
+---
+--- Wakes all blocked senders and receivers. Subsequent sends will error,
+--- and receivers will drain remaining messages then return `nil`.
+---
+---@return boolean  `true` if the channel was open, `false` if already closed
+function Chan:close()
+  if self._closed then return false end
+
+  self._closed = true
+
+  for coro in self._recv_queue do
+    if coroutine.status(coro) ~= 'dead' then
+      safe_resume(coro)
+    end
+  end
+
+  for coro in self._send_queue do
+    if coroutine.status(coro) ~= 'dead' then
+      safe_resume(coro)
+    end
+  end
+
+  return true
+end
+
+function Chan:__call()
+  return self:recv()
+end
+
+--- Creates a buffered channel for coroutine-safe communication.
+---@generic T
+---@param max? number Message buffer size
+---@return vim.async.Chan<T>
 function M.chan(max)
-  local message_queue = RingQueue(max or 1)
-  local recv_queue = ListQueue()
-  local send_queue = ListQueue()
-  local closed = false
-
-  local function send(...)
-    if closed then error("Send on closed channel") end
-
-    local message = { ... }
-
-    while true do
-      if message_queue:push(message) then
-        for coro in recv_queue do
-          if coroutine.status(coro) ~= 'dead' then
-            safe_resume(coro)
-            break
-          end
-        end
-        return
-      end
-
-      if closed then error("Send on closed channel") end
-
-      local coro = coroutine.running()
-      if coro and spawned[coro] then
-        send_queue:push(coro)
-        coroutine.yield()
-        if closed then error("Send on closed channel") end
-      else
-        error("Channel queue is full, send from non-spawned context")
-      end
-    end
-  end
-
-  local function recv()
-    while true do
-      local message = message_queue:pop()
-      if message then
-        for coro in send_queue do
-          if coroutine.status(coro) ~= 'dead' then
-            safe_resume(coro)
-            break
-          end
-        end
-        return unpack(message)
-      end
-
-      if closed then return nil end
-
-      local coro = coroutine.running()
-      if coro and spawned[coro] then
-        recv_queue:push(coro)
-        coroutine.yield()
-      else
-        local ok = vim.wait(TIMEOUT,
-          function() return not message_queue:is_empty() end, nil, true)
-        if not ok then error("Exceeded maximum coroutine waiting time.") end
-      end
-    end
-  end
-
-  local function close()
-    if closed then return false end
-
-    closed = true
-
-    for coro in recv_queue do
-      if coroutine.status(coro) ~= 'dead' then
-        safe_resume(coro)
-      end
-    end
-
-    for coro in send_queue do
-      if coroutine.status(coro) ~= 'dead' then
-        safe_resume(coro)
-      end
-    end
-
-    return true
-  end
-
-  return send, recv, close
+  return Chan(max)
 end
 
 --- Wraps `func` so each call runs it in a spawned coroutine.
@@ -310,11 +366,11 @@ end
 --- @param ... any Arguments forwarded to `func` (before the callback)
 --- @return ... R Results passed to the callback
 function M.await(func, ...)
-  local send, recv = M.chan()
+  local c = M.chan()
   local args = { ... }
-  table.insert(args, send)
+  table.insert(args, function(...) c:send(...) end)
   func(unpack(args))
-  return recv()
+  return c:recv()
 end
 
 return M
