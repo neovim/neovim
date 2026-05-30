@@ -2341,6 +2341,49 @@ Lua module: vim.async                                              *vim.async*
     a "Send on closed channel" error; receivers will drain remaining messages
     then return `nil`.
 
+    Examples:
+
+    Note: these examples use |vim.async.spawn()| to run the work in detached
+    coroutines. Without it the channel operations would still work, but they
+    would block the main loop (|send| would error on a full buffer, |recv|
+    would poll with |vim.wait()| instead of yielding). Use |spawn()| whenever
+    channel calls might block. >lua
+            -- Send messages from a timer-based producer:
+            local function counter(chan)
+              local timer = assert(vim.uv.new_timer())
+              local i = 0
+              timer:start(1000, 750, function()
+                if i > 4 then
+                  timer:close()
+                  chan:close()
+                  return
+                end
+                chan:send(i)
+                i = i + 1
+              end)
+            end
+
+            vim.async.spawn(function()
+              local chan = vim.async.chan()
+              counter(chan)
+              for i in chan do
+                print(i)
+              end
+            end)
+
+            -- Basic message passing:
+            local chan = vim.async.chan()
+            vim.async.spawn(function()
+              chan:send('hello')
+              chan:close()
+            end)
+            vim.async.spawn(function()
+              for msg in chan do
+                print(msg)
+              end
+            end)
+<
+
     Fields: ~
       • {close}      (`fun(self: vim.async.Chan): boolean`) See
                      |Chan:close()|.
