@@ -189,7 +189,8 @@ function M.spawn(func, ...)
   safe_resume(coro)
 end
 
-local TIMEOUT = 1000
+--- Default channel timeout. Time to wait for a channel message in non-spawned context.
+M.timeout = 10000
 
 --- `vim.async.Chan` is a communication channel between coroutines with a
 --- bounded buffer.
@@ -210,15 +211,17 @@ local TIMEOUT = 1000
 ---@field _recv_queue vim.async.ListQueue<thread>
 ---@field _send_queue vim.async.ListQueue<thread>
 ---@field _closed boolean
----@overload fun(max?: number): vim.async.Chan<T>
+---@overload fun(max?: number, timeout?: number): vim.async.Chan<T>
 local Chan = class {}
 
 ---@param max? number
-function Chan:__init(max)
+---@param timeout? number
+function Chan:__init(max, timeout)
   self._message_queue = RingQueue(math.max(1, max or 1))
   self._recv_queue = ListQueue()
   self._send_queue = ListQueue()
   self._closed = false
+  self._timeout = math.max(0, timeout or M.timeout)
 end
 
 --- Sends a message to the channel.
@@ -267,7 +270,7 @@ end
 ---
 --- Returns `nil` when the channel is closed and the buffer is empty.
 ---
----@return T?...
+---@return T...
 function Chan:recv()
   while true do
     local message = self._message_queue:pop()
@@ -288,9 +291,14 @@ function Chan:recv()
       self._recv_queue:push(coro)
       coroutine.yield()
     else
-      local ok = vim.wait(TIMEOUT,
-        function() return not self._message_queue:is_empty() end, nil, true)
-      if not ok then error("Exceeded maximum coroutine waiting time.") end
+      local function wait()
+        return not self._message_queue:is_empty() or self._closed
+      end
+      if not vim.wait(self._timeout, wait, nil, true) then
+        error(
+          string.format("Exceeded maximum coroutine waiting time of %dms",
+            self._timeout))
+      end
     end
   end
 end
@@ -332,10 +340,11 @@ end
 
 --- Creates a buffered channel for coroutine-safe communication.
 ---@generic T
----@param max? number Message buffer size
+---@param max? number Message buffer size (default 1)
+---@param timeout? number Receive timeout in ms (default vim.async.timeout, 10000)
 ---@return vim.async.Chan<T>
-function M.chan(max)
-  return Chan(max)
+function M.chan(max, timeout)
+  return Chan(max, timeout)
 end
 
 --- Wraps `func` so each call runs it in a spawned coroutine.

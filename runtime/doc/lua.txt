@@ -2346,7 +2346,7 @@ Lua module: vim.async                                              *vim.async*
                      |Chan:close()|.
       • {is_closed}  (`fun(self: vim.async.Chan): boolean`) See
                      |Chan:is_closed()|.
-      • {recv}       (`fun(self: vim.async.Chan): T?`) See |Chan:recv()|.
+      • {recv}       (`fun(self: vim.async.Chan): T...`) See |Chan:recv()|.
       • {send}       (`fun(self: vim.async.Chan, ...: T)`) See |Chan:send()|.
 
 *vim.async.ListQueue*
@@ -2397,7 +2397,7 @@ Chan:recv()                                                      *Chan:recv()*
     Returns `nil` when the channel is closed and the buffer is empty.
 
     Return: ~
-        (`T?`)
+        (`T...`)
 
 Chan:send({...})                                                 *Chan:send()*
     Sends a message to the channel.
@@ -2467,11 +2467,13 @@ vim.async.await({func}, {...})                             *vim.async.await()*
       • {...}   (`any`) Arguments forwarded to `func` (before the callback)
                 @return ... R Results passed to the callback
 
-vim.async.chan({max})                                       *vim.async.chan()*
+vim.async.chan({max}, {timeout})                            *vim.async.chan()*
     Creates a buffered channel for coroutine-safe communication.
 
     Parameters: ~
-      • {max}  (`number?`) Message buffer size
+      • {max}      (`number?`) Message buffer size (default 1)
+      • {timeout}  (`number?`) Receive timeout in ms (default
+                   vim.async.timeout, 10000)
 
     Return: ~
         (`vim.async.Chan<T>`)
@@ -2498,6 +2500,10 @@ vim.async.spawn_wrap({func})                          *vim.async.spawn_wrap()*
 
     Return: ~
         (`fun(...: any)`) Wrapped function that spawns `func` with given args
+
+vim.async.timeout                                          *vim.async.timeout*
+    Default channel timeout. Time to wait for a channel message in non-spawned
+    context.
 
 
 ==============================================================================
