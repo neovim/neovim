@@ -663,8 +663,17 @@ wingotofile:
       if (wp == NULL && win_split(0, 0) == OK) {
         RESET_BINDING(curwin);
         if (do_ecmd(0, ptr, NULL, NULL, ECMD_LASTL, ECMD_HIDE, NULL) == FAIL) {
+          // Note: if do_ecmd() is aborted resulting in got_int being true, win_close()
+          // unconditionally fails. In such case, the window split for do_ecmd() is
+          // left unclosed, i.e. the current window is just duplicated. To avoid this,
+          // save and load got_int value before and after closing the window.
+          const bool old_got_int = got_int;
+          got_int = false;
+
           // Failed to open the file, close the window opened for it.
           win_close(curwin, false, false);
+          got_int = got_int || old_got_int;
+
           goto_tabpage_win(oldtab, oldwin);
         } else {
           wp = curwin;
