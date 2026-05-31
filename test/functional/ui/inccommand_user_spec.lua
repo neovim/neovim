@@ -109,7 +109,13 @@ local setup_replace_cmd = [[
     -- Get list of valid and listed buffers
     local buffers = vim.tbl_filter(
         function(buf)
-          if not (vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted and buf ~= preview_buf)
+          if
+            not (
+              vim.api.nvim_buf_is_valid(buf)
+              and vim.bo[buf].buflisted
+              and buf ~= preview_buf
+              and vim.bo[buf].buftype ~= 'nofile'
+            )
           then
             return false
           end
@@ -712,6 +718,151 @@ describe("'inccommand' with multiple buffers", function()
       {1:~                   }│{1:~                  }|*11
       {3:[No Name] [+]        }{2:[No Name] [+]      }|
       :Replace foo bar                        |
+    ]])
+  end)
+end)
+
+describe("'inccommand' with user commands in cmdwin", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(45, 17)
+    exec_lua(setup_replace_cmd)
+    command('set cmdwinheight=5 noruler')
+    command('syntax off')
+    insert [[
+      To be, or not to be, that is the question:
+      Whether 'tis nobler in the mind to suffer
+      The slings and arrows of outrageous fortune,
+      Or to take arms against a sea of troubles
+      And by opposing end them.
+    ]]
+  end)
+
+  it('inccommand=nosplit shows inline preview in cmdwin', function()
+    command('set inccommand=nosplit')
+    feed('q:')
+
+    feed('iReplace be C')
+    screen:expect([[
+      To {10:C}, or not to {10:C}, that is the question:     |
+      Whether 'tis nobler in the mind to suffer    |
+      The slings and arrows of outrageous fortune, |
+      Or to take arms against a sea of troubles    |
+      And by opposing end them.                    |
+                                                   |
+      {1:~                                            }|*3
+      {2:[No Name] [+]                                }|
+      {1::}Replace be C^                                |
+      {1:~                                            }|*4
+      {3:[Command Line]                               }|
+      {5:-- INSERT --}                                 |
+    ]])
+  end)
+
+  it('inccommand=split shows split preview window in cmdwin', function()
+    command('set inccommand=split')
+    feed('q:')
+    feed('iReplace be C')
+    screen:expect([[
+      And by opposing end them.                    |
+                                                   |
+      {1:~                                            }|
+      {2:[No Name] [+]                                }|
+      |1| To {10:C}, or not to {10:C}, that is the question: |
+                                                   |
+      {1:~                                            }|*3
+      {2:[Preview]                                    }|
+      {1::}Replace be C^                                |
+      {1:~                                            }|*4
+      {3:[Command Line]                               }|
+      {5:-- INSERT --}                                 |
+    ]])
+  end)
+
+  it('split: clears preview when entering nested command-line', function()
+    command('set inccommand=split')
+    feed('q:')
+    feed('iReplace be C<Esc>')
+    feed(':')
+    screen:expect([[
+      To be, or not to be, that is the question:   |
+      Whether 'tis nobler in the mind to suffer    |
+      The slings and arrows of outrageous fortune, |
+      Or to take arms against a sea of troubles    |
+      And by opposing end them.                    |
+                                                   |
+      {1:~                                            }|*3
+      {2:[No Name] [+]                                }|
+      {1::}Replace be C                                |
+      {1:~                                            }|*4
+      {3:[Command Line]                               }|
+      :^                                            |
+    ]])
+  end)
+
+  it('split: re-shows preview when exiting nested command-line', function()
+    command('set inccommand=split')
+    feed('q:')
+    feed('iReplace be C<Esc>')
+    feed(':<Esc>')
+    screen:expect([[
+      And by opposing end them.                    |
+                                                   |
+      {1:~                                            }|
+      {2:[No Name] [+]                                }|
+      |1| To {10:C}, or not to {10:C}, that is the question: |
+                                                   |
+      {1:~                                            }|*3
+      {2:[Preview]                                    }|
+      {1::}Replace be ^C                                |
+      {1:~                                            }|*4
+      {3:[Command Line]                               }|
+                                                   |
+    ]])
+  end)
+
+  it('split: updates preview when cursor moves to another command', function()
+    command('set inccommand=split')
+    feed(':Replace be C<Esc>')
+    feed(':Replace arrows -><Esc>')
+    feed('q:')
+
+    feed('k')
+    screen:expect([[
+      And by opposing end them.                    |
+                                                   |
+      {1:~                                            }|
+      {2:[No Name] [+]                                }|
+      |3| The slings and {10:->} of outrageous fortune, |
+                                                   |
+      {1:~                                            }|*3
+      {2:[Preview]                                    }|
+      {1::}Replace be C                                |
+      {1::}^Replace arrows ->                           |
+      {1::}                                            |
+      {1:~                                            }|*2
+      {3:[Command Line]                               }|
+      :                                            |
+    ]])
+
+    feed('k')
+    screen:expect([[
+      And by opposing end them.                    |
+                                                   |
+      {1:~                                            }|
+      {2:[No Name] [+]                                }|
+      |1| To {10:C}, or not to {10:C}, that is the question: |
+                                                   |
+      {1:~                                            }|*3
+      {2:[Preview]                                    }|
+      {1::}^Replace be C                                |
+      {1::}Replace arrows ->                           |
+      {1::}                                            |
+      {1:~                                            }|*2
+      {3:[Command Line]                               }|
+      :                                            |
     ]])
   end)
 end)

@@ -3604,7 +3604,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When nonempty, shows the effects of |:substitute|, |:smagic|,
 	|:snomagic| and user commands with the |:command-preview| flag as you
-	type.
+	type a command or move the cursor to a different line inside the
+	|cmdline-window|.
 
 	Possible values:
 		nosplit	Shows the effects of a command incrementally in the

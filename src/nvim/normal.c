@@ -1314,6 +1314,16 @@ static void normal_check_cursor_moved(NormalState *s)
     last_cursormoved_win = curwin;
     last_cursormoved = curwin->w_cursor;
   }
+
+  // Try to show command preview when the cursor moves to a different line inside the cmdwin.
+  if (!finish_op && cmdwin_type == ':' && curbuf == cmdwin_buf
+      && curwin->w_cursor.lnum != cmdwin_lnum) {
+    // Update both values so the similar condition in `normal_check_text_changed` does not
+    // show the same preview again.
+    cmdwin_lnum = curwin->w_cursor.lnum;
+    cmdwin_changedtick = buf_get_changedtick(cmdwin_buf);
+    try_show_cmdpreview();
+  }
 }
 
 static void normal_check_text_changed(NormalState *s)
@@ -1323,6 +1333,14 @@ static void normal_check_text_changed(NormalState *s)
       && curbuf->b_last_changedtick != buf_get_changedtick(curbuf)) {
     apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
     curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
+  }
+
+  // Try to show command preview when cmdwin buffer content changes.
+  if (!finish_op && cmdwin_type == ':' && curbuf == cmdwin_buf
+      && cmdwin_changedtick != buf_get_changedtick(cmdwin_buf)) {
+    cmdwin_lnum = curwin->w_cursor.lnum;
+    cmdwin_changedtick = buf_get_changedtick(cmdwin_buf);
+    try_show_cmdpreview();
   }
 }
 

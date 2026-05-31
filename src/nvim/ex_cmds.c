@@ -2553,11 +2553,15 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       const int save_cmdwin_type = cmdwin_type;
       win_T *const save_cmdwin_win = cmdwin_win;
       win_T *const save_cmdwin_old_curwin = cmdwin_old_curwin;
+      const varnumber_T save_cmdwin_changedtick = cmdwin_changedtick;
+      const linenr_T save_cmdwin_lnum = cmdwin_lnum;
 
       // BufLeave applies to the old buffer.
       cmdwin_type = 0;
       cmdwin_win = NULL;
       cmdwin_old_curwin = NULL;
+      cmdwin_changedtick = 0;
+      cmdwin_lnum = 0;
 
       // Be careful: The autocommands may delete any buffer and change
       // the current buffer.
@@ -2577,6 +2581,8 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       cmdwin_type = save_cmdwin_type;
       cmdwin_win = save_cmdwin_win;
       cmdwin_old_curwin = save_cmdwin_old_curwin;
+      cmdwin_changedtick = save_cmdwin_changedtick;
+      cmdwin_lnum = save_cmdwin_lnum;
 
       if (!bufref_valid(&au_new_curbuf)) {
         // New buffer has been deleted.

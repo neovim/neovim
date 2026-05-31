@@ -3377,6 +3377,8 @@ void win_free_all(void)
   cmdwin_buf = NULL;
   cmdwin_win = NULL;
   cmdwin_old_curwin = NULL;
+  cmdwin_changedtick = 0;
+  cmdwin_lnum = 0;
 
   while (first_tabpage->tp_next != NULL) {
     tabpage_close(true);

@@ -28,6 +28,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/fileio.h"
@@ -1455,6 +1456,16 @@ void ins_redraw(bool ready)
     if (tick != buf_get_changedtick(curbuf)) {  // see ins_apply_autocmds()
       u_save(curwin->w_cursor.lnum,
              (linenr_T)(curwin->w_cursor.lnum + 1));
+    }
+  }
+
+  // Try to show command preview from inside a cmdwin.
+  if (ready && is_in_cmdwin() && cmdwin_type == ':') {
+    if (curwin->w_cursor.lnum != cmdwin_lnum
+        || (cmdwin_changedtick != buf_get_changedtick(cmdwin_buf))) {
+      cmdwin_changedtick = buf_get_changedtick(cmdwin_buf);
+      cmdwin_lnum = curwin->w_cursor.lnum;
+      try_show_cmdpreview();
     }
   }
 

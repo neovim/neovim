@@ -193,7 +193,12 @@ typedef struct {
   bool save_hls;
   cmdmod_T save_cmdmod;
   garray_T save_view;
+  aco_save_T save_cmdwin;
 } CpInfo;
+
+// Command preview info that stores window and buffer states as they were before the preview. We
+// show the preview and then immediately switch back to the original state held here.
+static CpInfo cpinfo;
 
 /// Return value when handling keys in command-line mode.
 enum {
@@ -739,6 +744,10 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   bool save_cmdpreview = cmdpreview;
   cmdpreview = false;
+  // When entering a nested command-line inside a cmdwin, redraw to clear preview.
+  if (save_cmdpreview && is_in_cmdwin()) {
+    update_screen();
+  }
   CommandLineState state = {
     .firstc = firstc,
     .count = count,
@@ -1002,6 +1011,10 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   if (cmdpreview != save_cmdpreview) {
     cmdpreview = save_cmdpreview;  // restore preview state
     redraw_all_later(UPD_SOME_VALID);
+  }
+  // Entering nested command-line in a cmdwin, invalidate lnum to restore preview
+  if (is_in_cmdwin()) {
+    cmdwin_lnum = 0;
   }
   may_trigger_modechanged();
   setmouse();
@@ -2525,8 +2538,9 @@ static win_T *cmdpreview_open_win(buf_T *cmdpreview_buf)
 {
   win_T *save_curwin = curwin;
 
-  // Open preview window.
-  if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
+  // Open preview window. When in cmdwin, split below original window and above cmdwin.
+  int split_flags = is_in_cmdwin() ? WSP_BELOW : WSP_BOT;
+  if (win_split((int)p_cwh, split_flags) == FAIL) {
     return NULL;
   }
 
@@ -2534,10 +2548,13 @@ static win_T *cmdpreview_open_win(buf_T *cmdpreview_buf)
   Error err = ERROR_INIT;
   int result = OK;
 
-  // Switch to preview buffer
+  // Switch to preview buffer. Temporarily clear cmdwin_buf so assert in `do_ecmd` passes.
+  buf_T *save_cmdwin_buf = cmdwin_buf;
+  cmdwin_buf = NULL;
   TRY_WRAP(&err, {
     result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, cmdpreview_buf->handle, 0);
   });
+  cmdwin_buf = save_cmdwin_buf;
   if (ERROR_SET(&err) || result == FAIL) {
     api_clear_error(&err);
     return NULL;
@@ -2601,19 +2618,21 @@ static void cmdpreview_restore_undo(const CpUndoInfo *cp_undoinfo, buf_T *buf)
 }
 
 /// Save current state and prepare windows and buffers for command preview.
-static void cmdpreview_prepare(CpInfo *cpinfo)
-  FUNC_ATTR_NONNULL_ALL
+static void cmdpreview_prepare(void)
 {
+  CLEAR_FIELD(cpinfo);
+
   Set(ptr_t) saved_bufs = SET_INIT;
 
-  kv_init(cpinfo->buf_info);
-  kv_init(cpinfo->win_info);
+  kv_init(cpinfo.buf_info);
+  kv_init(cpinfo.win_info);
 
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     buf_T *buf = win->w_buffer;
 
     // Don't save state of command preview buffer or preview window.
-    if (buf->handle == cmdpreview_bufnr) {
+    // Don't save cmdwin buffer if we're in a nested cmdline inside the cmdwin.
+    if (buf->handle == cmdpreview_bufnr || (buf == cmdwin_buf && is_in_cmdwin())) {
       continue;
     }
 
@@ -2627,7 +2646,7 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
       cp_bufinfo.save_b_op_end = buf->b_op_end;
       cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
       cmdpreview_save_undo(&cp_bufinfo.undo_info, buf);
-      kv_push(cpinfo->buf_info, cp_bufinfo);
+      kv_push(cpinfo.buf_info, cp_bufinfo);
       set_put(ptr_t, &saved_bufs, buf);
 
       u_clearall(buf);
@@ -2645,7 +2664,7 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
     cp_wininfo.save_w_p_cul = win->w_p_cul;
     cp_wininfo.save_w_p_cuc = win->w_p_cuc;
 
-    kv_push(cpinfo->win_info, cp_wininfo);
+    kv_push(cpinfo.win_info, cp_wininfo);
 
     win->w_p_cul = false;       // Disable 'cursorline' so it doesn't mess up the highlights
     win->w_p_cuc = false;       // Disable 'cursorcolumn' so it doesn't mess up the highlights
@@ -2653,9 +2672,9 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
 
   set_destroy(ptr_t, &saved_bufs);
 
-  cpinfo->save_hls = p_hls;
-  cpinfo->save_cmdmod = cmdmod;
-  win_size_save(&cpinfo->save_view);
+  cpinfo.save_hls = p_hls;
+  cpinfo.save_cmdmod = cmdmod;
+  win_size_save(&cpinfo.save_view);
   save_search_patterns();
 
   p_hls = false;                 // Don't show search highlighting during live substitution
@@ -2667,11 +2686,10 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
 }
 
 /// Restore the state of buffers and windows for command preview.
-static void cmdpreview_restore_state(CpInfo *cpinfo)
-  FUNC_ATTR_NONNULL_ALL
+static void cmdpreview_restore_state(void)
 {
-  for (size_t i = 0; i < cpinfo->buf_info.size; i++) {
-    CpBufInfo cp_bufinfo = cpinfo->buf_info.items[i];
+  for (size_t i = 0; i < cpinfo.buf_info.size; i++) {
+    CpBufInfo cp_bufinfo = cpinfo.buf_info.items[i];
     buf_T *buf = cp_bufinfo.buf;
 
     buf->b_changed = cp_bufinfo.save_b_changed;
@@ -2714,8 +2732,8 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
     buf->b_p_ma = cp_bufinfo.save_b_p_ma;        // Restore 'modifiable'
   }
 
-  for (size_t i = 0; i < cpinfo->win_info.size; i++) {
-    CpWinInfo cp_wininfo = cpinfo->win_info.items[i];
+  for (size_t i = 0; i < cpinfo.win_info.size; i++) {
+    CpWinInfo cp_wininfo = cpinfo.win_info.items[i];
     win_T *win = cp_wininfo.win;
 
     // Restore window cursor position and viewstate
@@ -2729,14 +2747,14 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
     update_topline(win);
   }
 
-  cmdmod = cpinfo->save_cmdmod;                // Restore cmdmod
-  p_hls = cpinfo->save_hls;                    // Restore 'hlsearch'
+  cmdmod = cpinfo.save_cmdmod;                // Restore cmdmod
+  p_hls = cpinfo.save_hls;                    // Restore 'hlsearch'
   restore_search_patterns();           // Restore search patterns
-  win_size_restore(&cpinfo->save_view);        // Restore window sizes
+  win_size_restore(&cpinfo.save_view);        // Restore window sizes
 
-  ga_clear(&cpinfo->save_view);
-  kv_destroy(cpinfo->win_info);
-  kv_destroy(cpinfo->buf_info);
+  ga_clear(&cpinfo.save_view);
+  kv_destroy(cpinfo.win_info);
+  kv_destroy(cpinfo.buf_info);
 }
 
 /// Show 'inccommand' preview if command is previewable. It works like this:
@@ -2753,18 +2771,37 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
 ///       of the preview are still in place.
 ///    6. Revert all changes made by the preview callback.
 ///
+/// For command-line window previews, there are a couple of extra steps that need to happen:
+///    - We have to switch curwin to `cmdwin_old_curwin` before parsing the command so ranges
+///    don't resolve to the cmdwin.
+///    - We have to wrap step (2) inside a `aucmd_prepbuf` and `aucmd_restbuf` pair, so preview
+///    callback correctly uses `cmdwin_old_curwin` as the current window and buffer.
+///
 /// @return whether preview is shown or not.
-static bool cmdpreview_may_show(CommandLineState *s)
+static bool cmdpreview_may_show(void)
 {
+  bool is_cmdwin = is_in_cmdwin();
+
   // Parse the command line and return if it fails.
   exarg_T ea;
   CmdParseInfo cmdinfo;
-  // Copy the command line so we can modify it.
+  // Copy the command line so we can modify it. For a cmdwin preview, use the cursor line instead.
   int cmdpreview_type = 0;
-  char *cmdline = xstrdup(ccline.cmdbuff);
+  char *cmdline = xstrdup(is_cmdwin ? get_cursor_line_ptr() : ccline.cmdbuff);
   const char *errormsg = NULL;
   emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
-  if (!parse_cmdline(&cmdline, &ea, &cmdinfo, &errormsg)) {
+
+  // Temporary switch to intended window and buffer so parse resolves intended ranges.
+  aco_save_T parse_aco;
+  if (is_cmdwin) {
+    aucmd_prepbuf(&parse_aco, cmdwin_old_curwin->w_buffer);
+  }
+  bool parse_ok = parse_cmdline(&cmdline, &ea, &cmdinfo, &errormsg);
+  if (is_cmdwin) {
+    aucmd_restbuf(&parse_aco);
+  }
+
+  if (!parse_ok) {
     emsg_off--;
     goto end;
   }
@@ -2776,12 +2813,14 @@ static bool cmdpreview_may_show(CommandLineState *s)
     goto end;
   }
 
-  // Cursor may be at the end of the message grid rather than at cmdspos.
-  // Place it there in case preview callback flushes it. #30696
-  cursorcmd();
-  // Flush now: external cmdline may itself wish to update the screen which is
-  // currently disallowed during cmdpreview (no longer needed in case that changes).
-  cmdline_ui_flush();
+  if (!is_cmdwin) {
+    // Cursor may be at the end of the message grid rather than at cmdspos.
+    // Place it there in case preview callback flushes it. #30696
+    cursorcmd();
+    // Flush now: external cmdline may itself wish to update the screen which is
+    // currently disallowed during cmdpreview (no longer needed in case that changes).
+    cmdline_ui_flush();
+  }
 
   // Swap invalid command range if needed
   if ((ea.argt & EX_RANGE) && ea.line1 > ea.line2) {
@@ -2790,7 +2829,6 @@ static bool cmdpreview_may_show(CommandLineState *s)
     ea.line2 = lnum;
   }
 
-  CpInfo cpinfo;
   bool icm_split = *p_icm == 's';  // inccommand=split
   buf_T *cmdpreview_buf = NULL;
   win_T *cmdpreview_win = NULL;
@@ -2801,7 +2839,11 @@ static bool cmdpreview_may_show(CommandLineState *s)
   block_autocmds();              // Block events
 
   // Save current state and prepare for command preview.
-  cmdpreview_prepare(&cpinfo);
+  cmdpreview_prepare();
+  if (is_cmdwin) {
+    // Move from the cmdwin to the intended window.
+    aucmd_prepbuf(&cpinfo.save_cmdwin, cmdwin_old_curwin->w_buffer);
+  }
 
   // Open preview buffer if inccommand=split.
   if (icm_split && (cmdpreview_buf = cmdpreview_open_buf()) == NULL) {
@@ -2836,6 +2878,11 @@ static bool cmdpreview_may_show(CommandLineState *s)
     cmdpreview_type = 1;
   }
 
+  // Move back to cmdwin.
+  if (is_cmdwin) {
+    aucmd_restbuf(&cpinfo.save_cmdwin);
+  }
+
   // If preview callback return value is nonzero, update screen now.
   if (cmdpreview_type != 0) {
     int save_rd = RedrawingDisabled;
@@ -2850,15 +2897,54 @@ static bool cmdpreview_may_show(CommandLineState *s)
   }
 
   // Restore state.
-  cmdpreview_restore_state(&cpinfo);
+  cmdpreview_restore_state();
+
+  if (is_cmdwin) {
+    // For cmdwin preview, we don't want the restore queuing redraws that wipe the preview.
+    must_redraw = 0;
+    // Suppress pending statusline redraws as they are misleading after the restore when
+    // 'inccommand=split'.
+    if (icm_split) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+        wp->w_redr_status = false;
+      }
+    }
+  }
 
   unblock_autocmds();                  // Unblock events
   msg_silent--;                        // Unblock messages
   emsg_silent--;                       // Unblock error reporting
-  redrawcmdline();
+  if (!is_cmdwin) {
+    redrawcmdline();
+  }
 end:
   xfree(cmdline);
   return cmdpreview_type != 0;
+}
+
+/// If 'inccommand' is set, try to show a command preview. If preview is not possible, we
+/// potentially redraw the screen to clear a previously shown preview.
+///
+/// @return whether preview is showing or not.
+bool try_show_cmdpreview(void)
+{
+  bool prev_cmdpreview = cmdpreview;
+  if (current_sctx.sc_sid == 0    // only if interactive
+      && *p_icm != NUL       // 'inccommand' is set
+      && !exmode_active      // not in ex mode
+      && cmdline_star == 0   // not typing a password
+      && !vpeekc_any()
+      && cmdpreview_may_show()) {
+    return true;
+  } else {
+    cmdpreview = false;
+    if (prev_cmdpreview) {
+      // TODO(bfredl): add an immediate redraw flag for cmdline mode which will trigger
+      // at next wait-for-input
+      update_screen();
+    }
+    return false;
+  }
 }
 
 /// Trigger CmdlineChanged autocommands.
@@ -2895,22 +2981,9 @@ static void do_autocmd_cmdlinechanged(int firstc)
 
 static int command_line_changed(CommandLineState *s)
 {
-  const bool prev_cmdpreview = cmdpreview;
-  if (s->firstc == ':'
-      && current_sctx.sc_sid == 0    // only if interactive
-      && *p_icm != NUL       // 'inccommand' is set
-      && !exmode_active      // not in ex mode
-      && cmdline_star == 0   // not typing a password
-      && !vpeekc_any()
-      && cmdpreview_may_show(s)) {
+  if (s->firstc == ':' && try_show_cmdpreview()) {
     // 'inccommand' preview has been shown.
   } else {
-    cmdpreview = false;
-    if (prev_cmdpreview) {
-      // TODO(bfredl): add an immediate redraw flag for cmdline mode which will trigger
-      // at next wait-for-input
-      update_screen();  // Clear 'inccommand' preview.
-    }
     if (s->xpc.xp_context == EXPAND_NOTHING && (KeyTyped || vpeekc() == NUL)) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
@@ -4646,6 +4719,8 @@ static int open_cmdwin(void)
     cmdwin_level = 0;
     cmdwin_win = NULL;
     cmdwin_old_curwin = NULL;
+    cmdwin_changedtick = 0;
+    cmdwin_lnum = 0;
     beep_flush();
     ga_clear(&winsizes);
     return Ctrl_C;
@@ -4727,6 +4802,13 @@ static int open_cmdwin(void)
   RedrawingDisabled = 0;
   int save_count = save_batch_count();
 
+  // Try to show initial 'inccommand' preview when first entering cmdwin.
+  if (cmdwin_type == ':') {
+    cmdwin_lnum = curwin->w_cursor.lnum;
+    cmdwin_changedtick = buf_get_changedtick(curbuf);
+    try_show_cmdpreview();
+  }
+
   // Call the main loop until <CR> or CTRL-C is typed.
   normal_enter(true, false);
 
@@ -4746,6 +4828,8 @@ static int open_cmdwin(void)
   cmdwin_buf = NULL;
   cmdwin_win = NULL;
   cmdwin_old_curwin = NULL;
+  cmdwin_changedtick = 0;
+  cmdwin_lnum = 0;
 
   exmode_active = save_exmode;
 

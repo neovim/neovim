@@ -5,6 +5,7 @@
 
 #include "nvim/arglist_defs.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
@@ -13,6 +14,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/menu_defs.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/pos_defs.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/syntax_defs.h"
@@ -742,6 +744,8 @@ EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< buffer of cmdline window or NULL
 EXTERN win_T *cmdwin_win INIT( = NULL);  ///< window of cmdline window or NULL
 EXTERN win_T *cmdwin_old_curwin INIT( = NULL);  ///< curwin before opening cmdline window or NULL
 EXTERN win_T *cmdline_win INIT( = NULL);  ///< window in use by ext_cmdline
+EXTERN varnumber_T cmdwin_changedtick INIT( = 0);  ///< b:changedtick of cmdline window buffer or 0
+EXTERN linenr_T cmdwin_lnum INIT( = 0);  ///< lnum of the cmdline window cursor or 0
 
 EXTERN char no_lines_msg[] INIT( = N_("--No lines in buffer--"));
 

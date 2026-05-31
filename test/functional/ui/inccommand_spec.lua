@@ -2949,3 +2949,429 @@ it("'inccommand' :substitute preview skips input() prompt #11940", function()
     :s/f/\=input("sub: ")^         |
   ]])
 end)
+
+describe('in cmdwin', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(30, 12)
+    common_setup(screen, 'nosplit', default_text)
+    command('set cmdwinheight=3 noruler')
+    command('syntax off')
+  end)
+
+  it('inccommand= does nothing', function()
+    command('set inccommand=')
+    feed('q:')
+    feed('i%s/sub/in')
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {1:~                             }|*3
+      {2:[No Name] [+]                 }|
+      {1::}%s/sub/in^                    |
+      {1:~                             }|*2
+      {3:[Command Line]                }|
+      {5:-- INSERT --}                  |
+    ]])
+  end)
+
+  describe('inccommand=nosplit', function()
+    it('shows preview on entry via <C-F>', function()
+      feed(':%s/sub/in')
+      feed('<C-F>')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/i^n                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        :%s/sub/in                    |
+      ]])
+    end)
+
+    it('uses oldwin cursor position for ranges', function()
+      feed('2gg')
+      feed(':s/n/v<C-F>')
+      screen:expect([[
+        Inc substitution on           |
+        two li{20:v}es                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}s/n/^v                        |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        :s/n/v                        |
+      ]])
+    end)
+
+    it('updates preview when cursor moves to another command', function()
+      feed(':%s/sub/in<Esc>')
+      feed(':%s/ion/te<Esc>')
+      feed('q:')
+
+      feed('k')
+      screen:expect([[
+        Inc substitut{20:te} on            |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/in                    |
+        {1::}^%s/ion/te                    |
+        {1::}                             |
+        {3:[Command Line]                }|
+        :                             |
+      ]])
+
+      feed('k')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}^%s/sub/in                    |
+        {1::}%s/ion/te                    |
+        {1::}                             |
+        {3:[Command Line]                }|
+        :                             |
+      ]])
+
+      -- Moving in insert mode
+      feed('i<Down>')
+      screen:expect([[
+        Inc substitut{20:te} on            |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/in                    |
+        {1::}^%s/ion/te                    |
+        {1::}                             |
+        {3:[Command Line]                }|
+        {5:-- INSERT --}                  |
+      ]])
+    end)
+
+    it('clears preview when cursor moves to command that is not previewable', function()
+      feed(':%s/sub/in<Esc>')
+      feed('q:')
+
+      feed('kj')
+      screen:expect([[
+        Inc substitution on           |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/in                    |
+        {1::}^                             |
+        {1:~                             }|
+        {3:[Command Line]                }|
+        :                             |
+      ]])
+    end)
+
+    it('clears preview when exiting cmdwin', function()
+      feed('q:')
+      feed('i%s/sub/in<Esc>')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/i^n                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+                                      |
+      ]])
+
+      feed(':q<CR>')
+      screen:expect([[
+        Inc substitution on           |
+        two lines                     |
+        ^                              |
+        {1:~                             }|*8
+                                      |
+      ]])
+    end)
+
+    it('clears preview when entering nested command-line', function()
+      feed('q:')
+      feed('i%s/sub/in<Esc>')
+      feed(':')
+      screen:expect([[
+        Inc substitution on           |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/in                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        :^                             |
+      ]])
+    end)
+
+    it('re-shows preview when exiting nested command-line', function()
+      feed('q:')
+      feed('i%s/sub/in<Esc>')
+      feed(':<Esc>')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/i^n                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+                                      |
+      ]])
+    end)
+
+    it('updates preview when cmdwin buffer is changed in insert mode', function()
+      feed('q:')
+      feed('i%s/two/')
+      screen:expect([[
+        Inc substitution on           |
+         lines                        |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/two/^                      |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        {5:-- INSERT --}                  |
+      ]])
+
+      feed('tweed')
+      screen:expect([[
+        Inc substitution on           |
+        {20:tweed} lines                   |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/two/tweed^                 |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        {5:-- INSERT --}                  |
+      ]])
+    end)
+
+    it('updates preview when cmdwin buffer is changed in normal mode', function()
+      feed('q:')
+      feed('i%s/wo/we')
+      feed('<Esc>vy4p')
+      screen:expect([[
+        Inc substitution on           |
+        t{20:weeeee} lines                 |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/wo/weeee^e                 |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+                                      |
+      ]])
+    end)
+
+    it('nested command-line clears preview', function()
+      feed('q:')
+      feed('i%s/wo/we<Esc>')
+      feed(':')
+      screen:expect([[
+        Inc substitution on           |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/wo/we                     |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        :^                             |
+      ]])
+    end)
+
+    it('nested command-line previews changes in cmdwin', function()
+      feed('q:')
+      feed('i%s/wo/we<Esc>')
+      feed(':%s/w/m/g')
+      screen:expect([[
+        Inc substitution on           |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/{20:m}o/{20:m}e                     |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        :%s/w/m/g^                     |
+      ]])
+    end)
+  end)
+
+  describe('inccommand=split', function()
+    before_each(function()
+      command('set inccommand=split')
+    end)
+
+    it('shows split preview window', function()
+      feed('q:')
+      feed('i%s/sub/in')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+        {2:[No Name] [+]                 }|
+        |1| Inc {20:in}stitution on        |
+        {1:~                             }|*2
+        {2:[Preview]                     }|
+        {1::}%s/sub/in^                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        {5:-- INSERT --}                  |
+      ]])
+    end)
+
+    it('clears split preview when entering nested command-line', function()
+      feed('q:')
+      feed('i%s/sub/in<Esc>')
+      feed(':')
+      screen:expect([[
+        Inc substitution on           |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/in                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        :^                             |
+      ]])
+    end)
+
+    it('re-shows split preview when exiting nested command-line', function()
+      feed('q:')
+      feed('i%s/sub/in<Esc>')
+      feed(':<Esc>')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+        {2:[No Name] [+]                 }|
+        |1| Inc {20:in}stitution on        |
+        {1:~                             }|*2
+        {2:[Preview]                     }|
+        {1::}%s/sub/i^n                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+                                      |
+      ]])
+    end)
+
+    it('clears split preview when exiting cmdwin', function()
+      feed('q:')
+      feed('i%s/sub/in<Esc>')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+        {2:[No Name] [+]                 }|
+        |1| Inc {20:in}stitution on        |
+        {1:~                             }|*2
+        {2:[Preview]                     }|
+        {1::}%s/sub/i^n                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+                                      |
+      ]])
+
+      feed(':q<CR>')
+      screen:expect([[
+        Inc substitution on           |
+        two lines                     |
+        ^                              |
+        {1:~                             }|*8
+                                      |
+      ]])
+    end)
+
+    it('updates split preview when cursor moves to another command', function()
+      feed(':%s/sub/in<Esc>')
+      feed(':%s/ion/te<Esc>')
+      feed('q:')
+
+      feed('k')
+      screen:expect([[
+        Inc substitut{20:te} on            |
+        two lines                     |
+        {2:[No Name] [+]                 }|
+        |1| Inc substitut{20:te} on        |
+        {1:~                             }|*2
+        {2:[Preview]                     }|
+        {1::}%s/sub/in                    |
+        {1::}^%s/ion/te                    |
+        {1::}                             |
+        {3:[Command Line]                }|
+        :                             |
+      ]])
+
+      feed('k')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+        {2:[No Name] [+]                 }|
+        |1| Inc {20:in}stitution on        |
+        {1:~                             }|*2
+        {2:[Preview]                     }|
+        {1::}^%s/sub/in                    |
+        {1::}%s/ion/te                    |
+        {1::}                             |
+        {3:[Command Line]                }|
+        :                             |
+      ]])
+    end)
+
+    it('clears split preview when cursor moves to non-previewable command', function()
+      feed(':%s/sub/in<Esc>')
+      feed('q:')
+
+      feed('kj')
+      screen:expect([[
+        Inc substitution on           |
+        two lines                     |
+                                      |
+        {1:~                             }|*3
+        {2:[No Name] [+]                 }|
+        {1::}%s/sub/in                    |
+        {1::}^                             |
+        {1:~                             }|
+        {3:[Command Line]                }|
+        :                             |
+      ]])
+    end)
+
+    it('shows split preview on entry via <C-F>', function()
+      feed(':%s/sub/in')
+      feed('<C-F>')
+      screen:expect([[
+        Inc {20:in}stitution on            |
+        two lines                     |
+        {2:[No Name] [+]                 }|
+        |1| Inc {20:in}stitution on        |
+        {1:~                             }|*2
+        {2:[Preview]                     }|
+        {1::}%s/sub/i^n                    |
+        {1:~                             }|*2
+        {3:[Command Line]                }|
+        :%s/sub/in                    |
+      ]])
+    end)
+  end)
+end)
