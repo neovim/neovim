@@ -149,6 +149,9 @@ class Completer(object):
        self.parser = PyParser()
 
     def evalsource(self,text,line=0):
+        # vim is imported locally in vimcomplete(); re-import here so the
+        # vim.eval() below works (otherwise NameError, silently caught).
+        import vim
         sc = self.parser.parse(text,line)
         try: allow_imports = int(
           vim.eval("get(g:, 'pythoncomplete_allow_import', 0)"))
