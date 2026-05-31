@@ -205,6 +205,13 @@ describe('float window', function()
       "Conflict: 'bufpos' not allowed with non-float window",
       pcall_err(api.nvim_win_set_config, winid, { split = 'right', bufpos = { 0, 0 } })
     )
+
+    -- Reconfiguring split
+    local not_allowed = { hide = true, zindex = 1, title = '', footer = '', border = 'single' }
+    for k, v in pairs(not_allowed) do
+      local err = ("Conflict: '%s' not allowed with non-float window"):format(k)
+      eq(err, pcall_err(api.nvim_win_set_config, winid, { [k] = v }))
+    end
   end)
 
   it('win_execute() should work', function()
