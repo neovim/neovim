@@ -2263,7 +2263,7 @@ char *nlua_register_table_as_callable(const typval_T *const arg)
 }
 
 /// @return true to discard the key
-bool nlua_execute_on_key(int c, char *typed_buf)
+bool nlua_execute_on_key(int c, char *typed_buf, bool is_getchar)
 {
   static bool recursive = false;
 
@@ -2295,11 +2295,14 @@ bool nlua_execute_on_key(int c, char *typed_buf)
   // [ vim, vim._on_key, buf, typed_buf ]
   lua_pushstring(lstate, typed_buf);
 
+  // [ vim, vim._on_key, buf, typed_buf, is_getchar]
+  lua_pushboolean(lstate, is_getchar);
+
   int save_got_int = got_int;
   got_int = false;  // avoid interrupts when the key typed is Ctrl-C
   bool discard = false;
   // Do not use nlua_pcall here to avoid duplicate stack trace information
-  if (lua_pcall(lstate, 2, 1, 0)) {
+  if (lua_pcall(lstate, 3, 1, 0)) {
     nlua_error(lstate, _("vim.on_key() callbacks: %.*s"));
   } else {
     if (lua_isboolean(lstate, -1)) {
