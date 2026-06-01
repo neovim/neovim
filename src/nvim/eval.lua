@@ -3230,9 +3230,16 @@ M.funcs = {
       Returns an empty string if a command doesn't exist or if it's
       ambiguous (for user-defined commands).
 
-      For example `fullcommand('s')`, `fullcommand('sub')`,
-      `fullcommand(':%substitute')` all return "substitute".
-
+      Note: Command validation is not performed.  Results depend on
+      Vim's internal command-specific identification rules.
+      Examples:
+      >vim
+        echo [fullcommand('s')]		|" ['substitute']
+        echo [fullcommand('sub')]		|" ['substitute']
+        echo [fullcommand(': mark word')]	|" ['mark']
+        echo [fullcommand(': markword')]	|" ['']
+        echo [fullcommand('en')]		|" ['endif']
+      <
     ]=],
     name = 'fullcommand',
     params = { { 'name', 'string' } },

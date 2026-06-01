@@ -840,8 +840,8 @@ CTRL-W i		Open a new window, with the cursor on the first line
 			Like `[D`  and `]D`, but search in [range] lines
 			(default: whole file).
 			See |:search-args| for [/] and [!].
-			Note that `:dl` works like `:delete` with the "l"
-			flag, not `:dlist`.
+			Note: `:dl` works like `:delete` with the "l" flag,
+			not `:dlist`.
 
 							*[_CTRL-D*
 [ CTRL-D		Jump to the first macro definition that contains the

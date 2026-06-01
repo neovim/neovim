@@ -119,6 +119,14 @@ Some of the ":" commands are really long.  We already mentioned that
 ":substitute" can be abbreviated to ":s".  This is a generic mechanism, all
 ":" commands can be abbreviated.
 
+The builtin function |fullcommand()| can be used to return an abbreviated
+command's full name.  For example, the following commands echo "edit", "echo",
+and "echomsg":
+>vim
+	:echo fullcommand('e')
+	:echo fullcommand('ec')
+	:echo fullcommand('echom')
+<
 How short can a command get?  There are 26 letters, and many more commands.
 For example, ":set" also starts with ":s", but ":s" doesn't start a ":set"
 command.  Instead ":set" can be abbreviated to ":se".
