@@ -169,6 +169,6 @@ struct proc {
   proc_exit_cb cb;
   proc_state_cb state_cb;
   internal_proc_cb internal_exit_cb, internal_close_cb;
-  bool closed, detach, overlapped, fwd_err;
+  bool closed, detach, overlapped, fwd_err, stdio_noinherit;
   MultiQueue *events;
 };
