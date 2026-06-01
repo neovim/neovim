@@ -170,5 +170,6 @@ struct proc {
   proc_state_cb state_cb;
   internal_proc_cb internal_exit_cb, internal_close_cb;
   bool closed, detach, overlapped, fwd_err;
+  bool stdio_noinherit;  ///< MSWIN: channel jobs don't inherit stdio, to prevent CON leaking to TUI
   MultiQueue *events;
 };
