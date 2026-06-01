@@ -2828,20 +2828,31 @@ describe('LSP', function()
       exec_lua(function()
         vim.bo.formatexpr = 'v:lua.vim.lsp.formatexpr()'
 
+        ---@class test.functional.plugin.lsp_spec.formatexpr.start_server.Opts
+        ---@field range_formatting_handler? fun(params: lsp.DocumentRangeFormattingParams): lsp.TextEdit[]?
+        ---@field formatting_handler? fun(params: lsp.DocumentFormattingParams): lsp.TextEdit[]?
+
         local server_number = 1
-        ---Starts a server which can support textDocument/rangeFormatting. Providing a handler for
-        ---textDocument/rangeFormatting enables the corresponding capability.
-        ---@param handlers {range_formatting: fun(params: lsp.DocumentRangeFormattingParams): lsp.TextEdit[]??}?
-        function _G.start_server(handlers)
-          handlers = handlers or {}
+        ---Starts a server which can support textDocument/rangeFormatting and
+        ---textDocument/formatting. Providing a handler for either method enables the corresponding
+        ---capability.
+        ---@param opts test.functional.plugin.lsp_spec.formatexpr.start_server.Opts?
+        function _G.start_server(opts)
+          opts = opts or {}
           local server = _G._create_server({
             capabilities = {
-              documentRangeFormattingProvider = handlers.range_formatting ~= nil,
+              documentRangeFormattingProvider = opts.range_formatting_handler ~= nil,
+              documentFormattingProvider = opts.formatting_handler ~= nil,
             },
             handlers = {
               ---@param params lsp.DocumentRangeFormattingParams
               ['textDocument/rangeFormatting'] = function(_, params, callback)
-                local text_edits = handlers.range_formatting(params)
+                local text_edits = opts.range_formatting_handler(params)
+                callback(nil, text_edits)
+              end,
+              ---@param params lsp.DocumentFormattingParams
+              ['textDocument/formatting'] = function(_, params, callback)
+                local text_edits = opts.formatting_handler(params)
                 callback(nil, text_edits)
               end,
             },
@@ -2861,7 +2872,7 @@ describe('LSP', function()
         -- to verify that the correct range is requested for formatting (starts at first character
         -- of first line and ends on last character of last line).
         start_server({
-          range_formatting = function(params)
+          range_formatting_handler = function(params)
             local lines = {} ---@type string[]
             for i = params.range.start.line + 1, params.range['end'].line + 1 do
               table.insert(lines, string.format('formatted line %d', i))
@@ -2880,6 +2891,99 @@ describe('LSP', function()
       eq(expected_lines, nvim_buf_get_all_lines())
     end)
 
+    it(
+      'formats whole buffer with textDocument/rangeFormatting when client supports textDocument/rangeFormatting and textDocument/formatting',
+      function()
+        local range_formatting_new_text = 'range formatting result'
+        local formatting_new_text = 'formatting result'
+        exec_lua(function()
+          -- This server formats a range and a whole document by inserting "range formatting result"
+          -- and "formatting result" respectively at the start of the buffer.
+          local first_char = { line = 0, character = 0 }
+          start_server({
+            range_formatting_handler = function()
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = range_formatting_new_text,
+                },
+              }
+            end,
+            formatting_handler = function()
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = formatting_new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('gqal') -- Format whole buffer
+
+        eq({ range_formatting_new_text }, nvim_buf_get_all_lines())
+      end
+    )
+
+    it(
+      'formats whole buffer with textDocument/formatting when client supports textDocument/formatting but not textDocument/rangeFormatting',
+      function()
+        local new_text = 'formatting result'
+        exec_lua(function()
+          -- This server formats a whole document by inserting "formatting result" at the start of
+          -- the buffer.
+          start_server({
+            formatting_handler = function()
+              local first_char = { line = 0, character = 0 }
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('gqal') -- Format whole buffer
+
+        eq({ new_text }, nvim_buf_get_all_lines())
+      end
+    )
+
+    it(
+      'does nothing when range is not whole buffer and client supports textDocument/formatting but not textDocument/rangeFormatting',
+      function()
+        local lines = { 'a b', 'c d' }
+        local new_text = 'formatting result'
+        exec_lua(function()
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+          -- Set small textwidth to verify that gq doesn't perform internal formatting (wrap
+          -- lines) on the buffer.
+          vim.bo.textwidth = 1
+          -- This server formats a whole document by inserting "formatting result" at the start of
+          -- the buffer.
+          start_server({
+            formatting_handler = function()
+              local first_char = { line = 0, character = 0 }
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('2G') -- Move to line 2
+        feed('Vgq') -- Format line 2
+
+        eq(lines, nvim_buf_get_all_lines())
+      end
+    )
+
     it('applies only one formatting result when multiple clients support formatting', function()
       local new_text = 'formatting result'
       exec_lua(function()
@@ -2888,7 +2992,7 @@ describe('LSP', function()
         -- both results would have been inserted at the start of the buffer.
         for _ = 1, 2 do
           start_server({
-            range_formatting = function()
+            range_formatting_handler = function()
               local first_char = { line = 0, character = 0 }
               return {
                 {
@@ -2916,7 +3020,7 @@ describe('LSP', function()
           -- (undefined) order that clients are called in.
           for _ = 1, 2 do
             start_server({
-              range_formatting = function()
+              range_formatting_handler = function()
                 if not range_formatting_called then
                   _G.range_formatting_called = true
                   return nil
@@ -2946,12 +3050,12 @@ describe('LSP', function()
         ['no clients are attached'] = function() end,
         ['all servers return null formatting result'] = function()
           start_server({
-            range_formatting = function()
+            range_formatting_handler = function()
               return nil
             end,
           })
         end,
-        ['no servers support textDocument/rangeFormatting'] = function()
+        ['no servers support textDocument/rangeFormatting or textDocument/formatting'] = function()
           start_server()
         end,
       }
@@ -2965,7 +3069,7 @@ describe('LSP', function()
             -- lines) on the buffer.
             vim.bo.textwidth = 1
             start_server({
-              range_formatting = function()
+              range_formatting_handler = function()
                 return nil
               end,
             })
@@ -2987,7 +3091,7 @@ describe('LSP', function()
             -- This server formats a range by inserting "formatting result" at the start of the
             -- buffer.
             start_server({
-              range_formatting = function()
+              range_formatting_handler = function()
                 local first_char = { line = 0, character = 0 }
                 return {
                   {
