@@ -17,7 +17,7 @@ local function join_path(...)
   return table.concat({ ... }, '/')
 end
 
-describe('path collapse', function()
+describe('path', function()
   local targetdir
   local expected_path
 
@@ -58,6 +58,13 @@ describe('path collapse', function()
   it('with ./../ and different starting directory #7117', function()
     command('cd test')
     command('edit ' .. join_path('.', '..', targetdir, 'tty-test.c'))
+    eq(expected_path, eval('expand("%:p")'))
+  end)
+
+  it('with implicit drive letter #40013', function()
+    t.skip(not is_os('win'), 'N/A: only works on Windows')
+    command('edit ' .. expected_path:sub(3))
+    eq(1, #fn.getbufinfo())
     eq(expected_path, eval('expand("%:p")'))
   end)
 end)

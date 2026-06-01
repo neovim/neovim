@@ -414,9 +414,11 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
   while (len > 0) {
     c1 = utf_ptr2char(p1);
     c2 = utf_ptr2char(p2);
-    if ((c1 == NUL || c2 == NUL
-         || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/'))))
-        && (p_fic ? (c1 != c2 && utf_fold(c1) != utf_fold(c2)) : c1 != c2)) {
+    if (c1 == NUL
+        || c2 == NUL
+        || (c1 != c2
+            && ((c1 != '/' && c1 != '\\') || (c2 != '/' && c2 != '\\'))
+            && (!p_fic || utf_fold(c1) != utf_fold(c2)))) {
       break;
     }
     len -= (size_t)utfc_ptr2len(p1);
