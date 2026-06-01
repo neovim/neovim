@@ -3269,6 +3269,14 @@ char *find_ex_command(exarg_T *eap, int *full)
     }
   }
 
+  // Force ":ho" to be unresolved.  Without this, find_ex_command()
+  // matches it to CMD_horizontal (the only "ho*" entry), which makes
+  // fullcommand("ho") return "horizontal" even though ":ho" cannot be
+  // used as the modifier (cmdmods[] requires 3 chars, "hor").
+  if (eap->cmdidx == CMD_horizontal && p - eap->cmd == 2) {
+    eap->cmdidx = CMD_SIZE;
+  }
+
   return p;
 }
 

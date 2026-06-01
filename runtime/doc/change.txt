@@ -62,17 +62,17 @@ For inserting text see |insert.txt|.
 :[range]d[elete] [x]	Delete [range] lines (default: current line) [into
 			register x].
 			Note these weird abbreviations:
-			   :dl		delete and list
-			   :dell	idem
-			   :delel	idem
-			   :deletl	idem
-			   :deletel	idem
-			   :dp		delete and print
-			   :dep		idem
-			   :delp	idem
-			   :delep	idem
-			   :deletp	idem
-			   :deletep	idem
+			  :dl		delete and list
+			  :dell		idem
+			  :delel	idem
+			  :deletl	idem
+			  :deletel	idem
+			  :dp		delete and print
+			  :dep		idem
+			  :delp		idem
+			  :delep	idem
+			  :deletp	idem
+			  :deletep	idem
 
 :[range]d[elete] [x] {count}
 			Delete {count} lines, starting with [range]
