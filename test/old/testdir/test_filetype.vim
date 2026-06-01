@@ -3538,7 +3538,7 @@ func Test_as_file()
   split Xfile.as
   call assert_equal('atlas', &filetype)
   bwipe!
-  call writefile(['', '.NETCONF'], 'Xfile.as', 'D')
+  call writefile(['', '.NETCONF     192.168.1.11,"TIMESYS-",255.255.255.0,192.168.0.1,0.0.0.0,0.0.0.0," "'], 'Xfile.as', 'D')
   split Xfile.as
   call assert_equal('kawasaki_as', &filetype)
   bwipe!
