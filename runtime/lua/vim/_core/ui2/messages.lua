@@ -553,7 +553,7 @@ function M.msg_history_show(entries, prev_cmd)
 end
 
 local typed_g = false
-local function cmd_on_key(key, typed)
+local function cmd_on_key(key, typed, discard)
   -- Don't dismiss for non-typed keys and mouse movement. When 'g' is passed (typed
   -- or mapped), wait until the next key to avoid flickering when the pager is opened.
   if not typed_g and (typed == '' or typed == '<MouseMove>' or typed == 'g' or key == 'g') then
@@ -567,7 +567,8 @@ local function cmd_on_key(key, typed)
   typed = fn.keytrans(typed)
 
   -- Check if window was entered and reopen with original config.
-  local mode = not api.nvim_get_mode().mode:match('[it]')
+  -- Don't enter if other callback has already discarded the key.
+  local mode = not discard and not api.nvim_get_mode().mode:match('[it]')
   local enter = mode and (typed == '<CR>' or typed_g and (typed == '<lt>' or key == '<'))
     or (typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd)
   if enter then

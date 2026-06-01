@@ -711,8 +711,8 @@ do
   end
 end
 
-local on_key_cbs = {} --- @type table<integer,[function, table]>
-
+---@alias OnKeyCb fun(key: string, typed: string, discard: boolean): string?
+local on_key_cbs = {} ---@type { cb: OnKeyCb, ns_id: integer, opts: table }[]
 --- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
 --- yes every, input key.
 ---
@@ -724,15 +724,21 @@ local on_key_cbs = {} --- @type table<integer,[function, table]>
 ---           it won't be invoked for those keys.
 ---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
 ---
----@param fn nil|fun(key: string, typed: string): string? Function invoked for every input key,
----          after mappings have been applied but before further processing. Arguments
----          {key} and {typed} are raw keycodes, where {key} is the key after mappings
----          are applied, and {typed} is the key(s) before mappings are applied.
----          {typed} may be empty if {key} is produced by non-typed key(s) or by the
----          same typed key(s) that produced a previous {key}.
+---@param fn nil|fun(key: string, typed: string, discard: boolean): string? Function invoked
+---          for every input key, after mappings have been applied but before further
+---          processing. Arguments {key} and {typed} are raw keycodes, where {key} is the
+---          key after mappings are applied, and {typed} is the key(s) before mappings are
+---          applied. {typed} may be empty if {key} is produced by non-typed key(s) or by
+---          the same typed key(s) that produced a previous {key}. {discard} is `true`
+---          when |getchar()|, |getcharstr()|, or a callback from another namespace has
+---          discarded the key; ignoring an already handled key may be appropriate.
+---
 ---          If {fn} returns an empty string, {key} is discarded/ignored, and if {key}
 ---          is [<Cmd>] then the "[<Cmd>]…[<CR>]" sequence is discarded as a whole.
+---
 ---          When {fn} is `nil`, the callback associated with namespace {ns_id} is removed.
+---
+---          Callbacks (from other namespaces) are executed in order of recency.
 ---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
 ---                      new |nvim_create_namespace()| id.
 ---@param opts table? Optional parameters
@@ -742,55 +748,52 @@ local on_key_cbs = {} --- @type table<integer,[function, table]>
 ---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
 function vim.on_key(fn, ns_id, opts)
-  if fn == nil and ns_id == nil then
-    return vim.tbl_count(on_key_cbs)
-  end
-
   vim.validate('fn', fn, 'callable', true)
   vim.validate('ns_id', ns_id, 'number', true)
   vim.validate('opts', opts, 'table', true)
   opts = opts or {}
 
-  if ns_id == nil or ns_id == 0 then
-    ns_id = vim.api.nvim_create_namespace('')
+  if fn == nil and ns_id == nil then
+    return vim.tbl_count(on_key_cbs)
   end
 
-  on_key_cbs[ns_id] = fn and { fn, opts }
+  ns_id = ns_id ~= 0 and ns_id or vim.api.nvim_create_namespace('')
+
+  if fn == nil then
+    local remove_ns = function(v)
+      return v.ns_id ~= ns_id
+    end
+    on_key_cbs = vim.iter(on_key_cbs):filter(remove_ns):totable()
+  else
+    table.insert(on_key_cbs, 1, { cb = fn, ns_id = ns_id, opts = opts })
+  end
+
   return ns_id
 end
 
 --- Executes the on_key callbacks.
 ---@private
-function vim._on_key(buf, typed_buf)
-  local failed = {} ---@type [integer, string][]
-  local discard = false
-  for k, v in pairs(on_key_cbs) do
-    local fn = v[1]
-    --- @type boolean, any
+function vim._on_key(buf, typed_buf, is_getchar)
+  local discard, errmsg = false, ''
+  -- Iterate over all callbacks, let callbacks know if key will be discarded,
+  -- or is already not passed on to the main loop because it is consumed by
+  -- getchar(). Callbacks may want to ignore "already handled" keys.
+  for _, v in ipairs(on_key_cbs) do
     local ok, rv = xpcall(function()
-      return fn(buf, typed_buf)
+      return v.cb(buf, typed_buf, is_getchar or discard)
     end, debug.traceback)
-    if ok and rv ~= nil then
-      if type(rv) == 'string' and #rv == 0 then
-        discard = true
-        -- break   -- Without break deliver to all callbacks even when it eventually discards.
-        -- "break" does not make sense unless callbacks are sorted by ???.
-      else
-        ok = false
-        rv = 'return string must be empty'
-      end
+    if ok and rv == '' then
+      discard = true
+    elseif ok and rv ~= nil then
+      ok, rv = false, 'return string must be empty'
     end
     if not ok then
-      vim.on_key(nil, k)
-      table.insert(failed, { k, rv })
+      errmsg = ('%s\nWith ns_id %d: %s'):format(errmsg, v.ns_id, rv)
+      vim.on_key(nil, v.ns_id)
     end
   end
 
-  if #failed > 0 then
-    local errmsg = ''
-    for _, v in ipairs(failed) do
-      errmsg = errmsg .. string.format('\nWith ns_id %d: %s', v[1], v[2])
-    end
+  if errmsg ~= '' then
     error(errmsg)
   end
   return discard
