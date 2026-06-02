@@ -88,44 +88,30 @@ function M.get_lines(buf, rows)
     return buf_lines()
   end
 
+  local row_line = {} --- @type table<integer, string>
+  for _, row in pairs(rows) do
+    row_line[row] = ''
+  end
+
   -- Get the data from the file.
   local success, data = pcall(vim.fn.readblob, vim.api.nvim_buf_get_name(buf))
   if not success then
-    return {}
+    return row_line
   end
 
-  local row_line = {} --- @type table<integer,true|string> rows we need to retrieve
-  local need = 0 -- Keep track of how many unique rows we need.
-  for _, row in pairs(rows) do
-    if not row_line[row] then
-      need = need + 1
-    end
-    row_line[row] = true
-  end
-
-  do
-    local found = 0
-    local row = 0
-
-    for line in string.gmatch(data, '([^\n]*)\n?') do
-      if row_line[row] == true then
-        row_line[row] = line
-        found = found + 1
-        if found == need then
-          break
-        end
+  local need = vim.tbl_count(row_line)
+  local row = 0
+  for line in string.gmatch(data, '([^\n]*)\n?') do
+    if row_line[row] then
+      row_line[row] = line
+      need = need - 1
+      if need == 0 then
+        break
       end
-      row = row + 1
     end
+    row = row + 1
   end
-
-  -- Change any lines we didn't find to the empty string.
-  for row, line in pairs(row_line) do
-    if line == true then
-      row_line[row] = ''
-    end
-  end
-  return row_line --[[@as table<integer,string>]]
+  return row_line
 end
 
 --- Gets the zero-indexed line from the given buffer.
@@ -169,7 +155,7 @@ function M.from_lsp(buf, position, position_encoding)
   if col > 0 then
     -- `strict_indexing` is disabled, because LSP responses are asynchronous,
     -- and the buffer content may have changed, causing out-of-bounds errors.
-    col = vim.str_byteindex(M.get_line(buf, row) or '', position_encoding, col, false)
+    col = vim.str_byteindex(M.get_line(buf, row), position_encoding, col, false)
   end
   return row, col
 end
