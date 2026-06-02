@@ -3048,13 +3048,11 @@ describe('LSP', function()
     end)
 
     --- Starts a TCP server that completes initialization, then sends `null_id_payload` after the
-    --- "initialized" notification. If `notification_method` is given, registers a handler
-    --- that tracks whether it was dispatched as a notification.
+    --- "initialized" notification.
     ---
     --- @param null_id_payload string JSON
-    --- @param notification_method? string
     --- @return { on_error_called: table, notification_received: boolean, messages: boolean }.
-    local function test_null_id_response(null_id_payload, notification_method)
+    local function test_null_id_response(null_id_payload)
       return exec_lua(function()
         local server = assert(vim.uv.new_tcp())
         local accepted
@@ -3102,22 +3100,21 @@ describe('LSP', function()
         local port = server:getsockname().port
         local on_error_called = false
         local notification_received = false
-        local handlers = nil
-        if notification_method then
-          handlers = {
-            [notification_method] = function()
-              notification_received = true
-              return {}
-            end,
-          }
-        end
         local client_id = assert(vim.lsp.start({
           name = 'null-id-test',
-          cmd = vim.lsp.rpc.connect('127.0.0.1', port),
+          cmd = function(dispatchers)
+            local notification = dispatchers.notification
+            dispatchers.notification = function(method, params)
+              notification_received = true
+              if notification then
+                notification(method, params)
+              end
+            end
+            return vim.lsp.rpc.connect('127.0.0.1', port)(dispatchers)
+          end,
           on_error = function(_code, _err)
             on_error_called = true
           end,
-          handlers = handlers,
         }))
         vim.lsp.get_client_by_id(client_id)
         vim.wait(1000, function()
@@ -3147,19 +3144,15 @@ describe('LSP', function()
     it('null-id in response does not misclassify as a notification', function()
       -- Sanity check: a real notification (no id) dispatches the handler.
       local valid = test_null_id_response(
-        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]}}',
-        'workspace/configuration'
+        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]}}'
       )
       eq(true, valid.notification_received)
 
       local result = test_null_id_response(
         -- Error response with null id (parse error per JSON-RPC 2.0 §5)
-        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]},"id":null}',
-        'workspace/configuration'
+        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]},"id":null}'
       )
-      -- Should be dispatched as an error, NOT silently handled as a notification.
-      eq(true, result.on_error_called)
-      -- Null id must NOT be dispatched as a notification.
+      -- Null id must be dispatched as a request, not as a notification.
       eq(false, result.notification_received)
     end)
   end)

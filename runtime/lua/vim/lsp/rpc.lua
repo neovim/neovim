@@ -461,9 +461,11 @@ function Client:handle_body(body)
 
   log.debug('rpc.receive', decoded)
 
-  -- Received a request.
-  if type(decoded.method) == 'string' and decoded.id and decoded.id ~= vim.NIL then
-    if type(decoded.id) ~= 'number' and type(decoded.id) ~= 'string' then
+  if
+    -- Received a request.
+    type(decoded.method) == 'string' and decoded.id
+  then
+    if type(decoded.id) ~= 'number' and type(decoded.id) ~= 'string' and decoded.id ~= vim.NIL then
       log.error(
         'Server request id must be a number or string, got ' .. type(decoded.id),
         decoded.method,
@@ -515,17 +517,25 @@ function Client:handle_body(body)
     end))
   elseif
     -- Received a response to a request we sent.
+    decoded.id
+  then
+    -- If there was an error in detecting the id in the Request object
+    -- (e.g. Parse error/Invalid Request), it must be Null.
+    if decoded.id == vim.NIL then
+      log.warn('Server sent response with null id', decoded)
+      self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+      return
+    end
     -- Proceed only if exactly one of 'result' or 'error' is present,
     -- as required by the JSON-RPC spec:
     -- * If 'error' is nil, then 'result' must be present.
     -- * If 'result' is nil, then 'error' must be present (and not vim.NIL).
-    decoded.id
-    and decoded.id ~= vim.NIL
-    and (
-      (decoded.error == nil and decoded.result ~= nil)
-      or (decoded.result == nil and decoded.error ~= nil and decoded.error ~= vim.NIL)
-    )
-  then
+    if (decoded.error == nil or decoded.error == vim.NIL) and decoded.result == nil then
+      log.error('Server respond empty result and error', decoded)
+      self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+      return
+    end
+
     -- We sent a number, so we expect a number.
     local result_id = vim._assert_integer(decoded.id)
 
@@ -569,11 +579,10 @@ function Client:handle_body(body)
       self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
       log.error('No callback found for server response id ' .. result_id)
     end
-  elseif decoded.id == vim.NIL then
-    log.warn('Server sent response with null id', decoded.method, decoded.error)
-    self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
-  elseif type(decoded.method) == 'string' then
+  elseif
     -- Received a notification.
+    type(decoded.method) == 'string'
+  then
     self:try_call(
       M.client_errors.NOTIFICATION_HANDLER_ERROR,
       self.dispatchers.notification,
