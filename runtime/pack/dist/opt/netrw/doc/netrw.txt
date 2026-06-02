@@ -1367,7 +1367,7 @@ Associated setting variables: |g:netrw_chgperm|
 
 CHANGING TO A BOOKMARKED PATH			*netrw-gb*  {{{2
 
-To change to a bookmarked path, use
+To change to a bookmarked path, use >
 
 	[{cnt}]gb
 
