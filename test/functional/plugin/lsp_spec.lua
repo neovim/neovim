@@ -2837,17 +2837,14 @@ describe('LSP', function()
       exec_lua(function()
         _G.mock_locations = mock_locations
         _G.server = _G._create_server({
-          ---@type lsp.ServerCapabilities
           capabilities = {
             definitionProvider = true,
             workspaceSymbolProvider = true,
           },
           handlers = {
-            ---@return lsp.Location[]
             ['textDocument/definition'] = function(_, _, callback)
               callback(nil, { _G.mock_locations[1] })
             end,
-            ---@return lsp.WorkspaceSymbol[]
             ['workspace/symbol'] = function(_, request, callback)
               assert(request.query == 'foobar')
               callback(nil, {
@@ -3576,6 +3573,8 @@ describe('LSP', function()
           capabilities = {
             colorProvider = { id = 'color-registration' },
             diagnosticProvider = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
               id = 'diag-registration',
               identifier = 'diag-ident-static',
               workspaceDiagnostics = true,
@@ -3625,6 +3624,8 @@ describe('LSP', function()
             id = 'diag-registration',
             method = 'textDocument/diagnostic',
             registerOptions = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
               id = 'diag-registration',
               identifier = 'diag-ident-static',
               workspaceDiagnostics = true,

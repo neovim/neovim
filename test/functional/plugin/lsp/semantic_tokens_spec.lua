@@ -877,15 +877,14 @@ describe('semantic token highlighting', function()
         _G.server2 = _G._create_server({
           capabilities = {
             semanticTokensProvider = {
+              legend = vim.fn.json_decode(legend),
               full = { delta = false },
             },
           },
           handlers = {
-            --- @param callback function
             ['textDocument/semanticTokens/full'] = function(_, _, callback)
               callback(nil, nil)
             end,
-            --- @param callback function
             ['textDocument/semanticTokens/full/delta'] = function(_, _, callback)
               callback(nil, nil)
             end,
@@ -928,6 +927,7 @@ describe('semantic token highlighting', function()
         _G.server2 = _G._create_server({
           capabilities = {
             semanticTokensProvider = {
+              legend = vim.fn.json_decode(legend),
               full = { delta = false },
             },
           },
