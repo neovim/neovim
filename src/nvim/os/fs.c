@@ -1318,18 +1318,6 @@ bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
          && file_id_1->device_id == file_id_2->device_id;
 }
 
-/// Check if a `FileID` is equal to a `FileInfo`
-///
-/// @param file_id Pointer to a `FileID`
-/// @param file_info Pointer to a `FileInfo`
-/// @return `true` if the `FileID` and the `FileInfo` represent te same file.
-bool os_fileid_equal_fileinfo(const FileID *file_id, const FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
-{
-  return file_id->inode == file_info->stat.st_ino
-         && file_id->device_id == file_info->stat.st_dev;
-}
-
 /// Return the canonicalized absolute pathname.
 ///
 /// @param[in] name Filename to be canonicalized.
