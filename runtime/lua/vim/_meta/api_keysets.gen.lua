@@ -441,7 +441,7 @@ error('Cannot require a meta file')
 --- @field virt_lines? any[]
 --- @field virt_lines_above? boolean
 --- @field virt_lines_leftcol? boolean
---- @field virt_lines_overflow? "trunc"|"scroll"
+--- @field virt_lines_overflow? "trunc"|"scroll"|"wrap"|"auto"
 --- @field virt_text? any[]
 --- @field virt_text_hide? boolean
 --- @field virt_text_pos? "eol"|"eol_right_align"|"overlay"|"right_align"|"inline"

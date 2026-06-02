@@ -696,6 +696,8 @@ function vim.api.nvim_buf_line_count(buf) end
 ---   - "trunc": truncate virtual lines on the right (default).
 ---   - "scroll": virtual lines can scroll horizontally with 'nowrap',
 ---      otherwise the same as "trunc".
+---   - "wrap": virtual lines can wrap onto extra lines.
+---   - "auto": virtual lines wrap with 'wrap' and scroll horizontally with 'nowrap'.
 --- - virt_text : [](virtual-text) to link to this mark.
 ---     A list of `[text, highlight]` tuples, each representing a
 ---     text chunk with specified highlight. `highlight` element

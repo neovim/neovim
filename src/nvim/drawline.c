@@ -1322,6 +1322,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   }
   VirtLines virt_lines = KV_INITIAL_VALUE;
   wlv.n_virt_lines = decor_virt_lines(wp, lnum - 1, lnum, &wlv.n_virt_below, &virt_lines, true);
+  // Preserving count of virt_lines for topline visibility
+  int total_virt_rows = wlv.n_virt_lines;
   wlv.filler_lines += wlv.n_virt_lines;
   if (lnum == wp->w_topline) {
     wlv.filler_lines = wp->w_topfill;
@@ -1674,8 +1676,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
   const bool may_have_inline_virt
     = !has_foldtext && buf_meta_total(wp->w_buffer, kMTMetaInline) > 0;
-  int virt_line_index = -1;
+  bool has_virt_line = false;
   int virt_line_flags = 0;
+  // Index into virt_lines and the starting row of that line (virt_line_start_row).
+  // Both persist across iterations to avoid traversing previously visited rows.
+  int virt_line_index = 0;
+  int virt_line_start_row = 0;
+  int virt_line_skip_cells = 0;
 
   // Repeat for each cell in the displayed line.
   while (true) {
@@ -1715,15 +1722,29 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       if (wlv.filler_todo > 0) {
-        int index = wlv.filler_todo - (wlv.filler_lines - wlv.n_virt_lines);
-        if (index > 0) {
-          virt_line_index = (int)kv_size(virt_lines) - index;
-          assert(virt_line_index >= 0);
-          virt_line_flags = kv_A(virt_lines, virt_line_index).flags;
+        // nvim_buf_set_extmark: virt_lines_overflow
+        int virt_rows_todo = wlv.filler_todo - (wlv.filler_lines - wlv.n_virt_lines);
+        if (virt_rows_todo > 0) {
+          int target_row = total_virt_rows - virt_rows_todo;
+          // Count number of rows spanned by virtual line.
+          // Find the virtual line containing the target row.
+          // Set skip cells with the same row-counting function so offset calculation stays in sync
+          for (; virt_line_index < (int)kv_size(virt_lines); virt_line_index++) {
+            int line_rows = decor_virt_line_rows(wp, &kv_A(virt_lines, virt_line_index), 0, NULL);
+            if (target_row < virt_line_start_row + line_rows) {
+              has_virt_line = true;
+              virt_line_flags = kv_A(virt_lines, virt_line_index).flags;
+              decor_virt_line_rows(wp, &kv_A(virt_lines, virt_line_index),
+                                   target_row - virt_line_start_row,
+                                   &virt_line_skip_cells);
+              break;
+            }
+            virt_line_start_row += line_rows;
+          }
         }
       }
 
-      if (virt_line_index >= 0 && (virt_line_flags & kVLLeftcol)) {
+      if (has_virt_line && (virt_line_flags & kVLLeftcol)) {
         // skip columns
       } else if (statuscol.draw) {
         // Draw 'statuscolumn' if it is set.
@@ -1768,7 +1789,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             break;
           }
           wlv.filler_todo--;
-          virt_line_index = -1;
+          has_virt_line = false;
           if (wlv.filler_todo == 0 && (wp->w_botfill || !draw_text)) {
             break;
           }
@@ -3149,14 +3170,20 @@ end_check:
         }
       }
 
-      if (virt_line_index >= 0) {
+      if (has_virt_line) {
+        VirtLineOverflow overflow = kv_A(virt_lines, virt_line_index).overflow;
+        bool virt_row_scroll = (overflow == kVLOverflowScroll)
+                               || ((overflow == kVLOverflowAuto) && !wp->w_p_wrap);
+        if (virt_row_scroll) {
+          virt_line_skip_cells = wp->w_leftcol;
+        }
         draw_virt_text_item(buf,
-                            virt_line_flags & kVLLeftcol ? 0 : win_col_offset,
+                            (virt_line_flags & kVLLeftcol) ? 0 : win_col_offset,
                             kv_A(virt_lines, virt_line_index).line,
                             kHlModeReplace,
                             view_width,
                             0,
-                            virt_line_flags & kVLScroll ? wp->w_leftcol : 0);
+                            virt_line_skip_cells);
       } else if (wlv.filler_todo <= 0) {
         draw_virt_text(wp, buf, win_col_offset, &draw_col, wlv.row);
       }
@@ -3205,7 +3232,7 @@ end_check:
         statuscol.draw = false;  // don't draw status column if "n" is in 'cpo'
       }
       wlv.filler_todo--;
-      virt_line_index = -1;
+      has_virt_line = false;
       virt_line_flags = 0;
       // When the filler lines are actually below the last line of the
       // file, or we are not drawing text for this line, break here.
