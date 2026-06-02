@@ -3423,6 +3423,8 @@ nvim_set_decoration_provider({ns_id}, {opts})
     Note: It is not allowed to remove or update extmarks in `on_line` or
     `on_range` callbacks.
 
+    Note: Callbacks will not run for |window-hidden|, as they are not redrawn.
+
     Attributes: ~
         Lua |vim.api| only
         Since: 0.5.0

@@ -212,12 +212,12 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
     return 0;
   }
 
+  bool is_split = HAS_KEY_X(config, split) || HAS_KEY_X(config, vertical);
   WinConfig fconfig = WIN_CONFIG_INIT;
-  if (!parse_win_config(NULL, config, &fconfig, false, err)) {
+  if (!parse_win_config(NULL, config, &fconfig, false, !is_split, err)) {
     return 0;
   }
 
-  bool is_split = HAS_KEY_X(config, split) || HAS_KEY_X(config, vertical);
   Window rv = 0;
   if (fconfig.noautocmd) {
     block_autocmds();
@@ -772,8 +772,9 @@ void nvim_win_set_config(Window win, Dict(win_config) *config, Error *err)
   bool to_split = config->relative.size == 0
                   && !(HAS_KEY_X(config, external) && config->external)
                   && (has_split || has_vertical || was_split);
+  bool will_float = (!was_split && !to_split) || config->relative.size > 0 || config->external;
 
-  if (!parse_win_config(w, config, &fconfig, !was_split || to_split, err)) {
+  if (!parse_win_config(w, config, &fconfig, !was_split || to_split, will_float, err)) {
     return;
   }
 
@@ -1248,7 +1249,7 @@ bool parse_winborder(WinConfig *fconfig, char *border_opt, Error *err)
 }
 
 static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fconfig, bool reconf,
-                             Error *err)
+                             bool will_float, Error *err)
 {
   bool has_relative = false, relative_is_win = false, is_split = false;
   if (config->relative.size > 0) {
@@ -1413,7 +1414,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, zindex)) {
-    VALIDATE_CON(!is_split, "zindex", "non-float window", {
+    VALIDATE_CON(will_float, "zindex", "non-float window", {
       goto fail;
     });
     VALIDATE_EXP((config->zindex > 0), "zindex", "positive Integer", NULL, {
@@ -1423,7 +1424,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, title)) {
-    VALIDATE_CON(!is_split, "title", "non-float window", {
+    VALIDATE_CON(will_float, "title", "non-float window", {
       goto fail;
     });
 
@@ -1443,7 +1444,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, footer)) {
-    VALIDATE_CON(!is_split, "footer", "non-float window", {
+    VALIDATE_CON(will_float, "footer", "non-float window", {
       goto fail;
     });
 
@@ -1464,7 +1465,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   Object border_style = OBJECT_INIT;
   if (HAS_KEY_X(config, border)) {
-    VALIDATE_CON(!is_split, "border", "non-float window", {
+    VALIDATE_CON(will_float, "border", "non-float window", {
       goto fail;
     });
     border_style = config->border;
@@ -1504,6 +1505,12 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, hide)) {
+    VALIDATE_CON(will_float || !config->hide, "hide", "non-float window", {
+      goto fail;
+    });
+    if (fconfig->hide && !config->hide) {
+      redraw_later(wp, UPD_NOT_VALID);
+    }
     fconfig->hide = config->hide;
   }
 
