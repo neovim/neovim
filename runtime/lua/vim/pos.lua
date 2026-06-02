@@ -153,14 +153,14 @@ end
 --- local pos = vim.pos(0, 3, 5)
 ---
 --- -- Convert to cursor position, you can call it in a method style.
---- local cursor_pos = { pos:to_cursor() }
+--- local cursor_pos = pos:to_cursor()
 --- vim.api.nvim_win_set_cursor(0, cursor_pos)
 --- ```
 ---@param pos vim.Pos
----@return integer lnum, integer col
+---@return [integer, integer] (lnum, col) tuple
 function M.to_cursor(pos)
   validate('pos', pos, 'table')
-  return util.to_mark(pos[1], pos[2])
+  return { util.to_mark(pos[1], pos[2]) }
 end
 
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).

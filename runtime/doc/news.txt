@@ -35,6 +35,8 @@ LUA
 • vim.pos, vim.range always require the `buf` parameter.
 • range.cursor() and range.to_cursor() are removed.
   Use range.mark() and range.to_mark() instead.
+• pos.to_cursor() returns a (`row,` `col)` tuple
+  instead of returning them as separate values.
 
 DIAGNOSTICS
 
