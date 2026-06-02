@@ -776,6 +776,7 @@ cpp_no_cpp11		don't highlight C++11 standard items
 cpp_no_cpp14		don't highlight C++14 standard items
 cpp_no_cpp17		don't highlight C++17 standard items
 cpp_no_cpp20		don't highlight C++20 standard items
+cpp_no_cpp23		don't highlight C++23 standard items
 
 
 CSH							*ft-csh-syntax*
