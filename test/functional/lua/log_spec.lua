@@ -122,36 +122,6 @@ describe('vim.log', function()
     assert_nolog('skip', logfile, 10)
   end)
 
-  it('set_format_func() replaces the formatter and can skip entries', function()
-    exec_lua(function()
-      local logger = vim.log.new({
-        name = 'SetFormat',
-        current_level = vim.log.levels.TRACE,
-        format_func = function()
-          return 'old\n'
-        end,
-      })
-
-      vim.log.set_format_func(logger, function(current_level, level, ...)
-        return table.concat({ 'new', current_level, level, tostring(select(1, ...)) }, '|') .. '\n'
-      end)
-
-      logger.error('formatted')
-
-      vim.log.set_format_func(logger, function()
-        return nil
-      end)
-
-      logger.error('skip-me')
-    end)
-
-    local logfile = get_logfile('SetFormat')
-    assert_log('%[START%]%[.+%] SetFormat logging initiated', logfile, 10)
-    assert_log('formatted', logfile, 10)
-    assert_nolog('old', logfile, 10)
-    assert_nolog('skip%-me', logfile, 10)
-  end)
-
   it('default formatter logs the real caller source and line', function()
     caller_script = t.tmpname(false) .. '.lua'
     write_file(

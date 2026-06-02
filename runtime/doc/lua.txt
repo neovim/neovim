@@ -3933,17 +3933,6 @@ new({opts})                                                    *vim.log.new()*
     Return: ~
         (`vim.Log`) See |vim.Log|.
 
-set_format_func({log}, {func})                     *vim.log.set_format_func()*
-    Sets the formatter used to produce log entries.
-
-    The formatter receives the logger's current level, the message level, and
-    the values passed to the writer method. Return a string to write an entry,
-    or `nil` to skip it.
-
-    Parameters: ~
-      • {log}   (`vim.Log`) See |vim.Log|.
-      • {func}  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
-
 set_level({log}, {level})                                *vim.log.set_level()*
     Sets the current log level.
 

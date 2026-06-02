@@ -26,6 +26,56 @@
 ---
 --- You can also provide a custom formatter function to customize the log output format.
 
+--- Interface for a log sink, which is responsible for writing log entries to a destination.
+---@class (private) vim.log.Sink
+---@field name string Display name used in notifications emitted by the logger.
+---@field write fun(self: vim.log.Sink, current_level: vim.log.levels, level: vim.log.levels, ...): boolean? Returns `false` if the log file could not be opened.
+
+---@alias vim.log.FormatFunc fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?
+
+---@class (private) vim.log.FileSink : vim.log.Sink
+---@field private filename string Path of the log file.
+---@field private logfile file*? Log file handle. `nil` until the file is opened.
+---@field private openerr string? Log file open error.
+---@field private format_func vim.log.FormatFunc Function used to format a log entry.
+---@field new fun(name: string, format_func: vim.log.FormatFunc): vim.log.Sink
+local FileSink = {}
+
+---@package
+function FileSink.new(name, format_func)
+  local filename = vim.fs.joinpath(vim.fn.stdpath('log'), name:lower() .. '.log')
+  local log_dir = vim.fs.dirname(filename)
+  if log_dir then
+    -- TODO: Ideally, directory creation should be delayed until open_file(), right before
+    -- opening the log file, but open() can be called from libuv callbacks,
+    -- where using fn.mkdir() is not allowed.
+    vim.fn.mkdir(log_dir, 'p')
+  end
+
+  return setmetatable({
+    name = name,
+    filename = filename,
+    format_func = format_func,
+  }, { __index = FileSink })
+end
+
+---@package
+function FileSink.write(self, current_level, level, ...)
+  local argc = select('#', ...)
+  if argc == 0 then
+    return true
+  end
+  if not self:open_file() then
+    return false
+  end
+  local message = self.format_func(current_level, level, ...)
+  if message then
+    assert(self.logfile)
+    self.logfile:write(message)
+    self.logfile:flush()
+  end
+end
+
 ---@class vim.Log
 ---
 --- Display name used in notifications emitted by the logger.
@@ -34,17 +84,8 @@
 --- Minimum level that will be written.
 ---@field private current_level integer
 ---
---- Function used to format a log entry.
----@field private format_func fun(current_level: vim.log.levels, level:vim.log.levels, ...): string?
----
---- Path of the log file.
----@field private filename string
----
---- Internal state for the log file handle. `nil` until the file is opened.
----@field private logfile file*?
----
---- Internal state for the log file open error.
----@field private openerr string?
+--- Sink used to write log entries.
+---@field private sink vim.log.Sink
 ---
 --- Writes a message at `vim.log.levels.TRACE`.
 ---@field trace fun(...:any): boolean?
@@ -98,8 +139,8 @@ local function default_format_func(current_level, level, ...)
   end
 
   -- Stack shape:
-  --   default_format_func <- create_writer closure <- user callsite
-  local info = debug.getinfo(3, 'Sl')
+  --   default_format_func <- sink.write <- create_writer closure <- user callsite
+  local info = debug.getinfo(4, 'Sl')
   local header = string.format(
     '[%s][%s] %s:%s',
     level_names[level],
@@ -144,20 +185,14 @@ function M.new(opts)
   vim.validate('opts.current_level', opts.current_level, 'number', true)
   vim.validate('opts.format_func', opts.format_func, 'function', true)
 
-  local filename = vim.fs.joinpath(vim.fn.stdpath('log'), opts.name:lower() .. '.log')
-  local log_dir = vim.fs.dirname(filename)
-  if log_dir then
-    -- TODO: Ideally, directory creation should be delayed until open_file(), right before
-    -- opening the log file, but open() can be called from libuv callbacks,
-    -- where using fn.mkdir() is not allowed.
-    vim.fn.mkdir(log_dir, 'p')
-  end
-
+  local name = opts.name
+  local current_level = opts.current_level or M.levels.WARN
+  local format_func = opts.format_func or default_format_func
+  local sink = FileSink.new(name, format_func)
   local log = setmetatable({
-    name = opts.name,
-    filename = filename,
-    current_level = opts.current_level or M.levels.WARN,
-    format_func = opts.format_func or default_format_func,
+    name = name,
+    current_level = current_level,
+    sink = sink,
   }, { __index = M })
   log.trace = log:create_writer(M.levels.TRACE)
   log.debug = log:create_writer(M.levels.DEBUG)
@@ -186,7 +221,7 @@ end
 ---
 ---@package
 ---@return boolean # `true` if the file is open, `false` on error.
-function M:open_file()
+function FileSink:open_file()
   if self.logfile then
     return true
   end
@@ -223,22 +258,12 @@ end
 ---
 ---@package
 ---@param level vim.log.levels
----@return fun(...:any): boolean? # Returns `false` if the log file could not be opened.
+---@return fun(...:any): boolean?
 function M:create_writer(level)
   return function(...)
-    local argc = select('#', ...)
-    if argc == 0 then
-      return true
-    end
-    if not self:open_file() then
-      return false
-    end
-    local message = self.format_func(self.current_level, level, ...)
-    if message then
-      assert(self.logfile)
-      self.logfile:write(message)
-      self.logfile:flush()
-    end
+    -- Tail call optimization can make formatter callsite reporting unstable.
+    local ok = self.sink:write(self.current_level, level, ...)
+    return ok
   end
 end
 
@@ -266,14 +291,15 @@ end
 --- and the values passed to the writer method.
 --- Return a string to write an entry, or `nil` to skip it.
 ---
----@param log vim.Log
+---@package
+---@param sink vim.log.FileSink
 ---@param func fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?
-function M.set_format_func(log, func)
+function FileSink.set_format_func(sink, func)
   vim.validate('func', func, function(f)
     return type(f) == 'function' or f == vim.inspect
   end, false, 'func must be a function')
 
-  log.format_func = func
+  sink.format_func = func
 end
 
 return M
