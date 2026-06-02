@@ -654,10 +654,13 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
             break;
           }
         } else {
-          if (fuzzy_match_str(*ptr, pattern) != FUZZY_SCORE_NONE) {
+          char *line = *ptr;
+          char *p = skipwhite(line);
+          if (fuzzy_match_str(p, pattern) != FUZZY_SCORE_NONE) {
             found_new_match = true;
             *pos = current_pos;
-            *len = ml_get_buf_len(buf, current_pos.lnum);
+            *ptr = p;
+            *len = ml_get_buf_len(buf, current_pos.lnum) - (int)(p - line);
             break;
           }
         }
