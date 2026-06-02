@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		C
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Jan 13
+" Last Change:		2026 Jun 01
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -278,9 +278,9 @@ if exists("c_gnu")
   syn keyword	cOperator	__alignof__
   syn keyword	cOperator	typeof __typeof__
   syn keyword	cOperator	__real__ __imag__
-  syn keyword	cStorageClass	__attribute__ __const__ __extension__
-  syn keyword	cStorageClass	inline __inline __inline__
-  syn keyword	cStorageClass	__restrict__ __volatile__ __noreturn__
+  syn keyword	cStorageClass	__attribute__ __extension__
+  syn keyword	cTypeQualifier	__const__ __restrict__ __volatile__
+  syn keyword	cFunctionSpec	inline __inline __inline__ __noreturn__
 endif
 syn keyword	cType		int long short char void
 syn keyword	cType		signed unsigned float double
@@ -314,9 +314,11 @@ endif
 
 syn keyword	cTypedef	typedef
 syn keyword	cStructure	struct union enum
-syn keyword	cStorageClass	static register auto volatile extern const
+syn keyword	cStorageClass	static register auto extern
+syn keyword	cTypeQualifier	const volatile
 if !exists("c_no_c99") && !s:in_cpp_family
-  syn keyword	cStorageClass	inline restrict
+  syn keyword	cFunctionSpec	inline
+  syn keyword	cTypeQualifier	restrict
 endif
 if (s:ft ==# "c" && !exists("c_no_c23")) || (s:in_cpp_family && !exists("cpp_no_cpp11"))
   syn keyword	cStorageClass	constexpr
@@ -324,11 +326,11 @@ endif
 if !exists("c_no_c11")
   syn keyword	cStorageClass	_Alignas alignas
   syn keyword	cOperator	_Alignof alignof
-  syn keyword	cStorageClass	_Atomic
+  syn keyword	cTypeQualifier	_Atomic
   syn keyword	cOperator	_Generic
-  syn keyword	cStorageClass	_Noreturn
+  syn keyword	cFunctionSpec	_Noreturn
   if !s:in_cpp_family
-    syn keyword	cStorageClass	noreturn
+    syn keyword	cStandardAttribute	noreturn
   endif
   syn keyword	cOperator	_Static_assert static_assert
   syn keyword	cStorageClass	_Thread_local thread_local
@@ -350,6 +352,11 @@ if !exists("c_no_c11")
   syn keyword	cType		atomic_intptr_t atomic_uintptr_t
   syn keyword	cType		atomic_size_t atomic_ptrdiff_t
   syn keyword	cType		atomic_intmax_t atomic_uintmax_t
+endif
+
+if !exists("c_no_c23") && !s:in_cpp_family
+  syn keyword	cStandardAttribute	deprecated fallthrough maybe_unused nodiscard
+  syn keyword	cStandardAttribute	unsequenced reproducible
 endif
 
 if (s:ft ==# "c" && !exists("c_no_c23")) || (s:in_cpp_family && !exists("cpp_no_cpp20"))
@@ -606,6 +613,9 @@ hi def link cOperator		Operator
 hi def link cStructure		Structure
 hi def link cTypedef		Structure
 hi def link cStorageClass	StorageClass
+hi def link cTypeQualifier	cStorageClass
+hi def link cFunctionSpec	cStorageClass
+hi def link cStandardAttribute	cStorageClass
 hi def link cInclude		Include
 hi def link cPreProc		PreProc
 hi def link cDefine		Macro
