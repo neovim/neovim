@@ -1,5 +1,4 @@
 local uv = vim.uv
-local log = require('vim.lsp.log')
 local strbuffer = require('vim._core.stringbuffer')
 
 --- Interface for transport implementations.
@@ -15,14 +14,16 @@ local strbuffer = require('vim._core.stringbuffer')
 --- @class (private, exact) vim.net.TransportRun : vim.net.Transport
 --- @field private cmd string[] Command to start the process.
 --- @field private extra_spawn_params? vim.net.transport.ExtraSpawnParams
+--- @field private log vim.Log
 --- @field private sysobj? vim.SystemObj
---- @field new fun(cmd: string[], extra_spawn_params?: vim.net.transport.ExtraSpawnParams): vim.net.TransportRun
+--- @field new fun(cmd: string[], extra_spawn_params?: vim.net.transport.ExtraSpawnParams, log: vim.Log): vim.net.TransportRun
 local TransportRun = {}
 
-function TransportRun.new(cmd, extra_spawn_params)
+function TransportRun.new(cmd, extra_spawn_params, log)
   return setmetatable({
     cmd = cmd,
     extra_spawn_params = extra_spawn_params,
+    log = log,
   }, { __index = TransportRun })
 end
 
@@ -31,7 +32,7 @@ end
 function TransportRun:listen(on_read, on_exit)
   local function on_stderr(_, chunk)
     if chunk then
-      log.error('transport', self.cmd[1], 'stderr', chunk)
+      self.log.error('transport', self.cmd[1], 'stderr', chunk)
     end
   end
 
@@ -93,6 +94,7 @@ end
 --- @class (private, exact) vim.net.TransportConnect : vim.net.Transport
 --- @field private host_or_path string
 --- @field private port? integer
+--- @field private log vim.Log
 --- @field private handle? uv.uv_pipe_t|uv.uv_tcp_t
 --- Connect returns a PublicClient synchronously so the caller
 --- can immediately send messages before the connection is established.
@@ -101,13 +103,14 @@ end
 --- @field private closing boolean
 --- @field private msgbuf vim.Ringbuf
 --- @field private on_exit? fun(code: integer, signal: integer)
---- @field new fun(host_or_path: string, port?: integer): vim.net.TransportConnect
+--- @field new fun(host_or_path: string, port?: integer, log: vim.Log): vim.net.TransportConnect
 local TransportConnect = {}
 
-function TransportConnect.new(host_or_path, port)
+function TransportConnect.new(host_or_path, port, log)
   return setmetatable({
     host_or_path = host_or_path,
     port = port,
+    log = log,
     connected = false,
     -- size should be enough because the client can't really do anything until initialization is done
     -- which required a response from the process - implying the connection got established
@@ -157,7 +160,7 @@ function TransportConnect:write(msg)
   if self.connected then
     local _, err = self.handle:write(msg)
     if err and not self.closing then
-      log.error('Error on handle:write: %q', err)
+      self.log.error('Error on handle:write: %q', err)
     end
     return
   end

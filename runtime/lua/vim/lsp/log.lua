@@ -37,6 +37,8 @@ local log = vim.log.new({
   name = 'LSP',
 })
 
+M._self = log
+
 --- Returns the log filename.
 ---@return string log filename
 function M.get_filename()

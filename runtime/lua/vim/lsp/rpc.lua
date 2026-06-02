@@ -637,7 +637,7 @@ function M.connect(host_or_path, port)
 
     dispatchers = merge_dispatchers(dispatchers)
 
-    local transport = net_transport.TransportConnect.new(host_or_path, port)
+    local transport = net_transport.TransportConnect.new(host_or_path, port, vim.lsp.log._self)
     return Client.new(dispatchers, transport, message_decoder, format_message_with_content_length)
   end
 end
@@ -665,7 +665,7 @@ function M.start(cmd, dispatchers, extra_spawn_params)
 
   dispatchers = merge_dispatchers(dispatchers)
 
-  local transport = net_transport.TransportRun.new(cmd, extra_spawn_params)
+  local transport = net_transport.TransportRun.new(cmd, extra_spawn_params, vim.lsp.log._self)
   return Client.new(dispatchers, transport, message_decoder, format_message_with_content_length)
 end
 
