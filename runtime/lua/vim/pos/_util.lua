@@ -70,7 +70,7 @@ function M.get_lines(buf, rows)
   local function buf_lines()
     local row_line = {} --- @type table<integer,string>
     for _, row in ipairs(rows) do
-      row_line[row] = (api.nvim_buf_get_lines(buf, row, row + 1, false) or { '' })[1]
+      row_line[row] = api.nvim_buf_get_lines(buf, row, row + 1, false)[1] or ''
     end
     return row_line
   end
