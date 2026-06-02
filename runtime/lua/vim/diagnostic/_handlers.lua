@@ -280,16 +280,14 @@ function M.underline.show(namespace, bufnr, diagnostics, opts)
       local lines =
         api.nvim_buf_get_lines(diagnostic0.bufnr, diagnostic0.lnum, diagnostic0.lnum + 1, true)
 
-      for _, higroup in ipairs(higroups) do
-        vim.hl.range(
-          bufnr,
-          underline_ns,
-          higroup,
-          { diagnostic0.lnum, math.min(diagnostic0.col, #lines[1] - 1) },
-          { diagnostic0.end_lnum, diagnostic0.end_col },
-          { priority = get_priority(diagnostic0.severity) }
-        )
-      end
+      vim.hl.range(
+        bufnr,
+        underline_ns,
+        higroups,
+        { diagnostic0.lnum, math.min(diagnostic0.col, #lines[1] - 1) },
+        { diagnostic0.end_lnum, diagnostic0.end_col },
+        { priority = get_priority(diagnostic0.severity) }
+      )
     end
 
     save_extmarks(underline_ns, bufnr)

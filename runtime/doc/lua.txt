@@ -2975,7 +2975,9 @@ vim.hl.range({buf}, {ns}, {higroup}, {start}, {finish}, {opts})
     Parameters: ~
       • {buf}      (`integer`) Buffer number to apply highlighting to
       • {ns}       (`integer`) Namespace to add highlight to
-      • {higroup}  (`string`) Highlight group to use for highlighting
+      • {higroup}  (`integer|integer[]|string|string[]`) Highlight group used
+                   for the text range. See the `hl_group` option in
+                   |nvim_buf_set_extmark()|.
       • {start}    (`[integer,integer]|string`) Start of region as a (line,
                    column) tuple or string accepted by |getpos()|
       • {finish}   (`[integer,integer]|string`) End of region as a (line,
