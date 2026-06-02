@@ -7158,4 +7158,20 @@ func Test_set_qftf_in_sandbox()
   call Xtest_set_qftf_in_sandbox('l')
 endfunc
 
+" Test for the 'statusline' height remaining at one when the quickfix buffer
+" is wiped out when quickfix window is the only window open.
+func Test_qf_statusline_height()
+  %bw!
+  copen
+  wincmd p
+  let prev_wh = winheight('.')
+  wincmd p
+  only
+  bw!
+  copen
+  wincmd p
+  call assert_equal(prev_wh, winheight('.'))
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
