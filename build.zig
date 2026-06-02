@@ -58,7 +58,12 @@ pub fn build(b: *std.Build) !void {
     const modern_unix = is_darwin or os_tag.isBSD() or is_linux;
     const is_wasm = t.cpu.arch == .wasm32;
 
-    const cross_compiling = b.option(bool, "cross", "cross compile") orelse is_wasm;
+    const h = b.graph.host.result;
+    const host = b.option([]const u8, "host", "target for host ") orelse
+        if (target.query.isNative() or h.cpu.arch == t.cpu.arch and h.os.tag == t.os.tag) "" else "native";
+    const cross_compiling = host.len > 0;
+    const target_host = if (cross_compiling) b.resolveTargetQuery(try std.Build.parseTargetQuery(.{ .arch_os_abi = host })) else target;
+
     const emscripten_sysroot = b.option([]const u8, "emscripten-sysroot", "path to emscripten sysroot");
     const emscripten_include = if (emscripten_sysroot) |s|
         std.Build.LazyPath{ .cwd_relative = b.pathJoin(&.{ s, "include" }) }
@@ -76,9 +81,6 @@ pub fn build(b: *std.Build) !void {
         }
         break :blk null;
     } else null;
-
-    // TODO(bfredl): option to set nlua0 target explicitly when cross compiling?
-    const target_host = if (cross_compiling) b.graph.host else target;
 
     // without cross_compiling we like to reuse libluv etc at the same optimize level
     const optimize_host = if (cross_compiling) .ReleaseSafe else optimize;
@@ -282,13 +284,12 @@ pub fn build(b: *std.Build) !void {
 
     const version_lua = gen_config.add("nvim_version.lua", lua_version_info(b));
 
-    var config_str = b.fmt("zig build -Doptimize={s}", .{@tagName(optimize)});
+    // Note: these represent the actually resolved target and host platforms, which are often
+    // more verbose than what needs to be passed in (often -Dhost=native is auto-decteted)
+    // TODO(bfredl): we could include stuff like specific cpu features and os version but eh
+    var config_str = b.fmt("zig build -Doptimize={s} -Dtarget={s}", .{ @tagName(optimize), try t.linuxTriple(b.graph.arena) });
     if (cross_compiling) {
-        config_str = b.fmt("{s} -Dcross -Dtarget={s} (host: {s})", .{
-            config_str,
-            try t.linuxTriple(b.allocator),
-            try b.graph.host.result.linuxTriple(b.allocator),
-        });
+        config_str = b.fmt("{s} -Dhost={s}", .{ config_str, try target_host.result.linuxTriple(b.graph.arena) });
     }
 
     const versiondef_step = b.addConfigHeader(.{
@@ -463,6 +464,7 @@ pub fn build(b: *std.Build) !void {
         &api_headers,
         versiondef_git,
         version_lua,
+        !cross_compiling,
     );
 
     const test_config_step = b.addWriteFiles();

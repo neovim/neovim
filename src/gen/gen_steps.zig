@@ -11,6 +11,7 @@ pub fn nvim_gen_sources(
     api_headers: *std.ArrayList(LazyPath),
     versiondef_git: LazyPath,
     version_lua: LazyPath,
+    precompile: bool,
 ) !struct { *std.Build.Step.WriteFile, LazyPath } {
     const gen_headers = b.addWriteFiles();
 
@@ -64,7 +65,7 @@ pub fn nvim_gen_sources(
     {
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_char_blob.lua"));
-        gen_step.addArg("-c");
+        if (precompile) gen_step.addArg("-c");
         _ = gen_header(b, gen_step, "lua/vim_module.generated.h", gen_headers);
         // NB: vim._init_packages and vim.inspect must be be first and second ones
         // respectively, otherwise --luamod-dev won't work properly.
