@@ -224,7 +224,7 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
       if max <= start_row then
         api.nvim_buf_set_lines(bufnr, max, max, false, text)
       else
-        local last_line_len = #(get_line(bufnr, math.min(end_row, max - 1)) or '')
+        local last_line_len = #get_line(bufnr, math.min(end_row, max - 1))
         -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't
         -- accept it so we should fix it here.
         if max <= end_row then
@@ -325,7 +325,7 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
     if pos then
       -- make sure we don't go out of bounds
       pos[1] = math.min(pos[1], max)
-      pos[2] = math.min(pos[2], #(get_line(bufnr, pos[1] - 1) or ''))
+      pos[2] = math.min(pos[2], #get_line(bufnr, pos[1] - 1))
       api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2], {})
     end
   end
@@ -1723,8 +1723,8 @@ function M.locations_to_items(locations, position_encoding)
       local end_pos = temp['end']
       local row = pos.line
       local end_row = end_pos.line
-      local line = lines[row] or ''
-      local end_line = lines[end_row] or ''
+      local line = lines[row]
+      local end_line = lines[end_row]
       local col = vim.str_byteindex(line, position_encoding, pos.character, false)
       local end_col = vim.str_byteindex(end_line, position_encoding, end_pos.character, false)
 
