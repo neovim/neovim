@@ -103,6 +103,7 @@ struct TUIData {
   bool mouse_enabled_save;
   bool title_enabled;
   bool sync_output;
+  bool sync_output_active;
   bool busy, is_invisible, want_invisible;
   bool set_cursor_color_as_str;
   bool cursor_has_color;
@@ -144,6 +145,11 @@ struct TUIData {
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
   Arena ti_arena;
 };
+
+typedef enum {
+  kFlushBufPartial,
+  kFlushBufFinal,
+} FlushBufFinish;
 
 static bool cursor_style_enabled = false;
 #include "tui/tui.c.generated.h"
@@ -1212,7 +1218,7 @@ static void print_spaces(TUIData *tui, int width)
     if (left == 0) {
       break;  // likely: didn't need to flush for sm0l spaces
     }
-    flush_buf(tui);
+    flush_buf_part(tui);
   }
 
   grid->col += width;
@@ -2027,12 +2033,12 @@ static void out(TUIData *tui, const char *str, size_t len)
   size_t available = sizeof(tui->buf) - tui->bufpos;
 
   if (len > available) {
-    flush_buf(tui);
+    flush_buf_part(tui);
     if (len > sizeof(tui->buf)) {
       // Don't use tui->buf[] when the string to output is too long. #30794
       tui->buf_to_flush = (char *)str;
       tui->bufpos = len;
-      flush_buf(tui);
+      flush_buf_part(tui);
       return;
     }
   }
@@ -2055,7 +2061,7 @@ void out_printf(TUIData *tui, size_t limit, const char *fmt, ...)
   assert(limit <= sizeof(tui->buf));
   size_t available = sizeof(tui->buf) - tui->bufpos;
   if (available < limit) {
-    flush_buf(tui);
+    flush_buf_part(tui);
   }
 
   va_list ap;
@@ -2106,7 +2112,7 @@ static void terminfo_print(TUIData *tui, TerminfoDef what, TPVAR *params)
   }
 
   // try again with fresh buffer
-  flush_buf(tui);
+  flush_buf_part(tui);
   size_t len = terminfo_fmt(tui->buf + tui->bufpos, tui->buf + sizeof(tui->buf), str, params);
   if (len > 0) {
     tui->bufpos += len;
@@ -2570,7 +2576,8 @@ static bool should_invisible(TUIData *tui)
 static size_t flush_buf_start(TUIData *tui, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (tui->sync_output && tui->has_sync_mode) {
+  if (tui->sync_output && tui->has_sync_mode && !tui->sync_output_active) {
+    tui->sync_output_active = true;
     return xstrlcpy(buf, "\x1b[?2026h", len);
   } else if (!tui->is_invisible) {
     tui->is_invisible = true;
@@ -2597,12 +2604,20 @@ static size_t flush_buf_end(TUIData *tui, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t offset = 0;
-  if (tui->sync_output && tui->has_sync_mode) {
+  if (tui->sync_output_active) {
 #define SYNC_END "\x1b[?2026l"
     memcpy(buf, SYNC_END, sizeof SYNC_END);
     offset += sizeof SYNC_END - 1;
+    tui->sync_output_active = false;
   }
 
+  return offset + flush_buf_update_cursor(tui, buf + offset, len - offset);
+}
+
+static size_t flush_buf_update_cursor(TUIData *tui, char *buf, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t offset = 0;
   const char *str = NULL;
   if (tui->is_invisible && !should_invisible(tui)) {
     str = tui->ti.defs[kTerm_cursor_normal];
@@ -2624,14 +2639,26 @@ static size_t flush_buf_end(TUIData *tui, char *buf, size_t len)
 /// @see tui_flush
 static void flush_buf(TUIData *tui)
 {
+  flush_buf_with_finish(tui, kFlushBufFinal);
+}
+
+static void flush_buf_part(TUIData *tui)
+{
+  flush_buf_with_finish(tui, kFlushBufPartial);
+}
+
+static void flush_buf_with_finish(TUIData *tui, FlushBufFinish finish)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (tui->bufpos <= 0 && tui->is_invisible == should_invisible(tui)
+      && !(finish == kFlushBufFinal && tui->sync_output_active)) {
+    return;
+  }
+
   uv_write_t req;
   uv_buf_t bufs[3];
   char pre[32];
   char post[32];
-
-  if (tui->bufpos <= 0 && tui->is_invisible == should_invisible(tui)) {
-    return;
-  }
 
   bufs[0].base = pre;
   bufs[0].len = UV_BUF_LEN(flush_buf_start(tui, pre, sizeof(pre)));
@@ -2640,7 +2667,9 @@ static void flush_buf(TUIData *tui)
   bufs[1].len = UV_BUF_LEN(tui->bufpos);
 
   bufs[2].base = post;
-  bufs[2].len = UV_BUF_LEN(flush_buf_end(tui, post, sizeof(post)));
+  bufs[2].len = finish == kFlushBufFinal
+                ? UV_BUF_LEN(flush_buf_end(tui, post, sizeof(post)))
+                : UV_BUF_LEN(flush_buf_update_cursor(tui, post, sizeof(post)));
 
   if (tui->screenshot) {
     for (size_t i = 0; i < ARRAY_SIZE(bufs); i++) {
