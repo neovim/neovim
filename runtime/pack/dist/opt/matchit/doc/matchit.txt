@@ -1,4 +1,4 @@
-*matchit.txt* Extended |%| matching  Last change: 2026 Jan 06
+*matchit.txt* Extended |%| matching  Last change: 2026 Jun 01
 
 		VIM REFERENCE MANUAL    by Benji Fisher et al
 
@@ -197,14 +197,6 @@ can be defined in the |filetype-plugin| or autocommand that defines
 The main variable is |b:match_words|.  It is described in the section below on
 supporting a new language.
 
-				*MatchError* *matchit-hl* *matchit-highlight*
-MatchError is the highlight group for error messages from the script.  By
-default, it is linked to WarningMsg.  If you do not want to be bothered by
-error messages, you can define this to be something invisible.  For example,
-if you use the GUI version of Vim and your command line is normally white, you
-can do >
-	:hi MatchError guifg=white guibg=white
-<
 						*b:match_ignorecase*
 If you >
 	:let b:match_ignorecase = 1
