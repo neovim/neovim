@@ -574,8 +574,13 @@ EXTERN bool pending_exmode_active INIT( = false);
 
 EXTERN bool ex_no_reprint INIT( = false);   // No need to print after z or p.
 
-// 'inccommand' command preview state
-EXTERN bool cmdpreview INIT( = false);
+// Buffer where current command preview is showing
+EXTERN buf_T *cmdpreview_curbuf INIT( = NULL);
+
+// True while a command preview is shown and waiting. While frozen, its buffer's
+// windows must not be redrawn or an async redraw (e.g. treesitter update) would
+// wipe the preview.
+EXTERN bool cmdpreview_frozen INIT( = false);
 
 EXTERN int reg_recording INIT( = 0);     // register for recording  or zero
 EXTERN int reg_executing INIT( = 0);     // register being executed or zero

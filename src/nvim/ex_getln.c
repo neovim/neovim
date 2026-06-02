@@ -737,8 +737,8 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   static int cmdline_level = 0;
   cmdline_level++;
 
-  bool save_cmdpreview = cmdpreview;
-  cmdpreview = false;
+  buf_T *save_cmdpreview_curbuf = cmdpreview_curbuf;
+  cmdpreview_curbuf = NULL;
   CommandLineState state = {
     .firstc = firstc,
     .count = count,
@@ -999,8 +999,8 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   set_option_direct(kOptInccommand, CSTR_AS_OPTVAL(s->save_p_icm), 0, SID_NONE);
   State = s->save_State;
-  if (cmdpreview != save_cmdpreview) {
-    cmdpreview = save_cmdpreview;  // restore preview state
+  if (cmdpreview_curbuf != save_cmdpreview_curbuf) {
+    cmdpreview_curbuf = save_cmdpreview_curbuf;  // restore preview state
     redraw_all_later(UPD_SOME_VALID);
   }
   may_trigger_modechanged();
@@ -2754,21 +2754,36 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
 ///    6. Revert all changes made by the preview callback.
 ///
 /// @return whether preview is shown or not.
-static bool cmdpreview_may_show(CommandLineState *s)
+bool cmdpreview_may_show(buf_T *buf, char *cmd)
+  FUNC_ATTR_NONNULL_ALL
 {
+  bool is_cmdline = get_cmdline_type() != NUL;  // We're showing the preview from the cmdline
+  bool is_other_buf = buf != curbuf;  // We're showing preview in a buffer other than the current one
+
+  int cmdpreview_type = 0;
+
   // Parse the command line and return if it fails.
   exarg_T ea;
   CmdParseInfo cmdinfo;
   // Copy the command line so we can modify it.
-  int cmdpreview_type = 0;
-  char *cmdline = xstrdup(ccline.cmdbuff);
+  char *cmdline = xstrdup(cmd);
   const char *errormsg = NULL;
+
+  // Switch to `buf` while parsing so ranges resolve correctly.
+  aco_save_T aco_parse = { 0 };
+  if (is_other_buf) {
+    aucmd_prepbuf(&aco_parse, buf);
+  }
+
   emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
-  if (!parse_cmdline(&cmdline, &ea, &cmdinfo, &errormsg)) {
-    emsg_off--;
+  bool parse_ok = parse_cmdline(&cmdline, &ea, &cmdinfo, &errormsg);
+  emsg_off--;
+
+  aucmd_restbuf(&aco_parse);
+
+  if (!parse_ok) {
     goto end;
   }
-  emsg_off--;
 
   // Check if command is previewable, if not, don't attempt to show preview
   if (!(ea.argt & EX_PREVIEW)) {
@@ -2776,12 +2791,14 @@ static bool cmdpreview_may_show(CommandLineState *s)
     goto end;
   }
 
-  // Cursor may be at the end of the message grid rather than at cmdspos.
-  // Place it there in case preview callback flushes it. #30696
-  cursorcmd();
-  // Flush now: external cmdline may itself wish to update the screen which is
-  // currently disallowed during cmdpreview (no longer needed in case that changes).
-  cmdline_ui_flush();
+  if (is_cmdline) {
+    // Cursor may be at the end of the message grid rather than at cmdspos.
+    // Place it there in case preview callback flushes it. #30696
+    cursorcmd();
+    // Flush now: external cmdline may itself wish to update the screen which is
+    // currently disallowed during cmdpreview (no longer needed in case that changes).
+    cmdline_ui_flush();
+  }
 
   // Swap invalid command range if needed
   if ((ea.argt & EX_RANGE) && ea.line1 > ea.line2) {
@@ -2790,8 +2807,8 @@ static bool cmdpreview_may_show(CommandLineState *s)
     ea.line2 = lnum;
   }
 
-  CpInfo cpinfo;
-  bool icm_split = *p_icm == 's';  // inccommand=split
+  // inccommand=split, only supported for cmdline preview.
+  bool icm_split = is_cmdline && *p_icm == 's';
   buf_T *cmdpreview_buf = NULL;
   win_T *cmdpreview_win = NULL;
 
@@ -2801,6 +2818,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
   block_autocmds();              // Block events
 
   // Save current state and prepare for command preview.
+  CpInfo cpinfo;
   cmdpreview_prepare(&cpinfo);
 
   // Open preview buffer if inccommand=split.
@@ -2809,13 +2827,22 @@ static bool cmdpreview_may_show(CommandLineState *s)
     set_option_direct(kOptInccommand, STATIC_CSTR_AS_OPTVAL("nosplit"), 0, SID_NONE);
     icm_split = false;
   }
+
   // Setup preview namespace if it's not already set.
   if (!cmdpreview_ns) {
     cmdpreview_ns = (int)nvim_create_namespace((String)STRING_INIT);
   }
 
-  // Set cmdpreview state.
-  cmdpreview = true;
+  // Running preview with `buf` as `curbuf`.
+  cmdpreview_curbuf = buf;
+  // Unfreeze so the `update_screen()` call below correctly renders preview.
+  cmdpreview_frozen = false;
+
+  // Switch to `buf` while executing preview callback.
+  aco_save_T aco_exec = { 0 };
+  if (is_other_buf) {
+    aucmd_prepbuf(&aco_exec, buf);
+  }
 
   // Execute the preview callback and use its return value to determine whether to show preview or
   // open the preview window. The preview callback also handles doing the changes and highlights for
@@ -2828,6 +2855,8 @@ static bool cmdpreview_may_show(CommandLineState *s)
     api_clear_error(&err);
     cmdpreview_type = 0;
   }
+
+  aucmd_restbuf(&aco_exec);
 
   // If inccommand=split and preview callback returns 2, open preview window.
   if (icm_split && cmdpreview_type == 2
@@ -2852,10 +2881,16 @@ static bool cmdpreview_may_show(CommandLineState *s)
   // Restore state.
   cmdpreview_restore_state(&cpinfo);
 
+  // Freeze so later window redraws (e.g. async treesitter) don't wipe the preview.
+  cmdpreview_frozen = true;
+
   unblock_autocmds();                  // Unblock events
   msg_silent--;                        // Unblock messages
   emsg_silent--;                       // Unblock error reporting
-  redrawcmdline();
+
+  if (is_cmdline) {
+    redrawcmdline();
+  }
 end:
   xfree(cmdline);
   return cmdpreview_type != 0;
@@ -2895,18 +2930,19 @@ static void do_autocmd_cmdlinechanged(int firstc)
 
 static int command_line_changed(CommandLineState *s)
 {
-  const bool prev_cmdpreview = cmdpreview;
+  const buf_T *prev_cmdpreview_curbuf = cmdpreview_curbuf;
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
       && *p_icm != NUL       // 'inccommand' is set
       && !exmode_active      // not in ex mode
       && cmdline_star == 0   // not typing a password
       && !vpeekc_any()
-      && cmdpreview_may_show(s)) {
+      && cmdpreview_may_show(curbuf, ccline.cmdbuff)) {
     // 'inccommand' preview has been shown.
   } else {
-    cmdpreview = false;
-    if (prev_cmdpreview) {
+    cmdpreview_curbuf = NULL;
+    cmdpreview_frozen = false;
+    if (prev_cmdpreview_curbuf != NULL) {
       // TODO(bfredl): add an immediate redraw flag for cmdline mode which will trigger
       // at next wait-for-input
       update_screen();  // Clear 'inccommand' preview.
@@ -4914,7 +4950,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-  if (cmdpreview) {
+  if (cmdpreview_curbuf != NULL) {
     return;
   }
 
