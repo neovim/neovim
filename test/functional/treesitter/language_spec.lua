@@ -19,7 +19,10 @@ describe('treesitter language API', function()
       return vim.treesitter.get_parser(0, 'borklang')
     end)
     eq(NIL, parser)
-    eq('Parser could not be created for buffer 1 and language "borklang"', error)
+    matches(
+      '^Parser could not be created for buffer 1 and language "borklang": .+: No parser for language "borklang"$',
+      error
+    )
 
     -- actual message depends on platform
     matches(
@@ -110,7 +113,10 @@ describe('treesitter language API', function()
         return vim.treesitter.get_parser(0, 'borklang')
       end)
       eq(NIL, parser)
-      eq('Parser could not be created for buffer 1 and language "borklang"', error)
+      matches(
+        '^Parser could not be created for buffer 1 and language "borklang": .+: No parser for language "borklang"$',
+        error
+      )
     end
   )
 

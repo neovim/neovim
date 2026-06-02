@@ -97,12 +97,12 @@ function M.get_parser(buf, lang, opts)
     if not api.nvim_buf_is_loaded(buf) then
       return nil, string.format('Buffer %s must be loaded to create parser', buf)
     end
-    local parser = vim.npcall(M._create_parser, buf, lang, opts)
-    if not parser then
-      return nil,
-        string.format('Parser could not be created for buffer %s and language "%s"', buf, lang)
+    local status, res = pcall(M._create_parser, buf, lang, opts)
+    if not status then
+      local msg = 'Parser could not be created for buffer %s and language "%s": %s'
+      return nil, string.format(msg, buf, lang, res)
     end
-    parsers[buf] = parser
+    parsers[buf] = res
   end
 
   parsers[buf]:register_cbs(opts.buf_attach_cbs)

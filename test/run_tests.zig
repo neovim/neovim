@@ -50,6 +50,19 @@ pub fn test_steps(b: *std.Build, nvim_bin: *std.Build.Step.Compile, depend_on: *
     const functionaltest_step = b.step("functionaltest", "run functional tests");
     functionaltest_step.dependOn(&functional_tests.step);
 
+    const old_tests = b.addRunArtifact(nvim_bin);
+    old_tests.addArg("-l");
+    old_tests.addFileArg(b.path("./test/old/runner.lua"));
+    if (b.args) |args| {
+        old_tests.addArgs(args); // accept TEST_FILE as a positional argument
+    }
+    const env = old_tests.getEnvMap();
+    try env.put("BUILD_DIR", b.install_path);
+
+    const oldtest_step = b.step("oldtest", "run old tests");
+    oldtest_step.dependOn(&old_tests.step);
+    oldtest_step.dependOn(depend_on);
+
     if (unit_paths) |paths| {
         const unit_tests = try testStep(b, "unit", nvim_bin, config_dir, paths);
         unit_tests.step.dependOn(depend_on);

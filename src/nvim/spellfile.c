@@ -1789,7 +1789,7 @@ static idx_T read_tree_node(FILE *fd, uint8_t *byts, idx_T *idxs, int maxidx, id
             c = (getc(fd) << 16) + c;                   // <region>
           }
           if (c & WF_AFX) {
-            c = (getc(fd) << 24) + c;                   // <affixID>
+            c = (int)((unsigned)getc(fd) << 24) + c;  // <affixID>
           }
         }
 
