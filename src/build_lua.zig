@@ -4,7 +4,6 @@ const LazyPath = std.Build.LazyPath;
 
 pub fn build_nlua0(
     b: *std.Build,
-    io: std.Io,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     use_luajit: bool,
@@ -60,7 +59,7 @@ pub fn build_nlua0(
 
         mod.addIncludePath(b.path("src"));
         mod.addIncludePath(b.path("src/includes_fixmelater"));
-        try add_lua_modules(b, io, target.result, mod, lpeg, use_luajit, true, system_integration_options);
+        try add_lua_modules(b, target.result, mod, lpeg, use_luajit, true, system_integration_options);
     }
 
     // for debugging the nlua0 environment
@@ -84,7 +83,6 @@ pub fn build_nlua0(
 
 pub fn add_lua_modules(
     b: *std.Build,
-    io: std.Io,
     target: std.Target,
     mod: *std.Build.Module,
     lpeg_dep: ?*std.Build.Dependency,
@@ -112,7 +110,7 @@ pub fn add_lua_modules(
         .flags = &flags,
     });
     if (system_integration_options.lpeg) {
-        if (try findLpeg(b, io, target)) |lpeg_lib| {
+        if (try findLpeg(b, target)) |lpeg_lib| {
             mod.addLibraryPath(.{ .cwd_relative = std.fs.path.dirname(lpeg_lib).? });
             mod.addObjectFile(.{ .cwd_relative = lpeg_lib });
         }
@@ -186,7 +184,7 @@ pub fn build_libluv(
     return lib;
 }
 
-fn findLpeg(b: *std.Build, io: std.Io, target: std.Target) !?[]const u8 {
+fn findLpeg(b: *std.Build, target: std.Target) !?[]const u8 {
     const filenames = [_][]const u8{
         "lpeg_a",
         "lpeg",
@@ -207,6 +205,7 @@ fn findLpeg(b: *std.Build, io: std.Io, target: std.Target) !?[]const u8 {
         try paths.append(b.allocator, dir);
         try paths.append(b.allocator, b.fmt("{s}/lua/5.1", .{dir}));
     }
+    const io = b.graph.io;
     for (paths.items) |path| {
         var dir = std.Io.Dir.openDirAbsolute(io, path, .{}) catch continue;
         defer dir.close(io);

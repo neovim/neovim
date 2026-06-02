@@ -197,7 +197,6 @@ pub fn build(b: *std.Build) !void {
 
     const nlua0 = try build_lua.build_nlua0(
         b,
-        io,
         target_host,
         optimize_host,
         host_use_luajit,
@@ -458,7 +457,6 @@ pub fn build(b: *std.Build) !void {
 
     const gen_headers, const funcs_data = try gen.nvim_gen_sources(
         b,
-        io,
         nlua0,
         &nvim_sources,
         &nvim_headers,
@@ -468,7 +466,7 @@ pub fn build(b: *std.Build) !void {
     );
 
     const test_config_step = b.addWriteFiles();
-    _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b, io));
+    _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b));
 
     const test_gen_step = b.step("gen_headers", "debug: output generated headers");
     const config_install = b.addInstallDirectory(.{
@@ -535,7 +533,7 @@ pub fn build(b: *std.Build) !void {
     nvim_mod.addIncludePath(b.path("src"));
     nvim_mod.addIncludePath(gen_config.getDirectory());
     nvim_mod.addIncludePath(gen_headers.getDirectory());
-    try build_lua.add_lua_modules(b, io, t, nvim_mod, lpeg, use_luajit, false, sys_opts);
+    try build_lua.add_lua_modules(b, t, nvim_mod, lpeg, use_luajit, false, sys_opts);
 
     var unit_test_sources = try std.ArrayList([]u8).initCapacity(b.allocator, 10);
     if (support_unittests) {
@@ -829,9 +827,9 @@ fn replace_backslashes(b: *std.Build, input: []const u8) ![]const u8 {
         input;
 }
 
-pub fn test_config(b: *std.Build, io: std.Io) ![]u8 {
+pub fn test_config(b: *std.Build) ![]u8 {
     var buf: [std.fs.max_path_bytes]u8 = std.mem.zeroes([std.fs.max_path_bytes]u8);
-    _ = try b.build_root.handle.realPath(io, &buf);
+    _ = try b.build_root.handle.realPath(b.graph.io, &buf);
     const src_path = std.mem.span(@as([*:0]u8, @ptrCast(&buf)));
 
     // we don't use test/cmakeconfig/paths.lua.in because it contains cmake specific logic
