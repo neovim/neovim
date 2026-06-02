@@ -6745,8 +6745,8 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Convert each number in {list} to a character string can
-      concatenate them all.  Examples: >vim
+      Converts each codepoint in {list} to a UTF-8 character and
+      returns the concatenated string.  Examples: >vim
       	echo list2str([32])		" returns " "
       	echo list2str([65, 66, 67])	" returns "ABC"
       <The same can be done (slowly) with: >vim
@@ -8123,11 +8123,10 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Return a string with a single character, which has the number
-      value {expr}.  Examples: >vim
+      Gets a UTF-8 string for a single codepoint {expr}.
+      Examples: >vim
       	echo nr2char(64)		" returns '@'
       	echo nr2char(32)		" returns ' '
-      <Example for "utf-8": >vim
       	echo nr2char(300)		" returns I with bow character
       <
       UTF-8 encoding is always used, {utf8} option has no effect,
