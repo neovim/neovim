@@ -259,6 +259,7 @@ jobs:
           version: 0.16.0
       - run: sudo apt-get install -y inotify-tools
 
+      - run: zig fmt --check . # run first, otherwise it will descend into zig-pkg..
       - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
       - run: zig build $OPTS test_nlua0
       - run: zig build $OPTS nvim_bin && ./zig-out/bin/nvim --version
