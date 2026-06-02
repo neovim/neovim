@@ -2320,6 +2320,53 @@ func Test_adjust_lnum()
   call Xadjust_qflnum('l')
 endfunc
 
+func Xqf_undo_after_delete(cchar)
+  call s:setup_commands(a:cchar)
+
+  enew | only
+
+  let fname = 'Xqfundofile' . a:cchar
+  call s:create_test_file(fname)
+  exe 'edit ' . fname
+
+  Xgetexpr [fname . ':5:Line5',
+	      \ fname . ':10:Line10',
+	      \ fname . ':15:Line15']
+
+  " Delete the line of the second error and undo the deletion.
+  10delete
+  let l = g:Xgetlist()
+  call assert_equal(5, l[0].lnum)
+  call assert_equal(10, l[1].lnum)
+  call assert_equal(14, l[2].lnum)
+
+  undo
+  call assert_equal('Line10', getline(10))
+  let l = g:Xgetlist()
+  call assert_equal(5, l[0].lnum)
+  call assert_equal(10, l[1].lnum)
+  call assert_equal(15, l[2].lnum)
+
+  " Redo and undo again to make sure the line number does not drift.
+  redo
+  call assert_equal(14, g:Xgetlist()[2].lnum)
+  undo
+  let l = g:Xgetlist()
+  call assert_equal(10, l[1].lnum)
+  call assert_equal(15, l[2].lnum)
+
+  call g:Xsetlist([], 'f')
+  enew!
+  call delete(fname)
+endfunc
+
+func Test_qf_undo_after_delete()
+  call setloclist(0, [])
+  call Xqf_undo_after_delete('c')
+  call setqflist([])
+  call Xqf_undo_after_delete('l')
+endfunc
+
 " Tests for the :grep/:lgrep and :grepadd/:lgrepadd commands
 func s:test_xgrep(cchar)
   call s:setup_commands(a:cchar)
