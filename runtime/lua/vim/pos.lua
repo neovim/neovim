@@ -165,20 +165,38 @@ end
 
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 ---
+--- If {pos} is omitted, the first argument is treated as {win} instead of {buf},
+--- and the current cursor position of {win} is used.
+---
 --- Example:
 --- ```lua
+--- local buf = vim.api.nvim_win_get_buf(0)
 --- local cursor_pos = vim.api.nvim_win_get_cursor(0)
---- local pos = vim.pos.cursor(0, cursor_pos)
+--- local pos = vim.pos.cursor(buf, cursor_pos)
+--- -- This is equivalent:
+--- local pos = vim.pos.cursor(0)
 --- ```
 ---@param buf integer
 ---@param pos [integer, integer] (lnum, col) tuple
 ---@return vim.Pos
+---@overload fun(win: integer): vim.Pos
 function M.cursor(buf, pos)
-  validate('buf', buf, 'number')
-  validate('pos', pos, 'table')
+  validate('pos', pos, 'table', true)
 
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
+  if pos then
+    validate('buf', buf, 'number')
+    if buf == 0 then
+      buf = api.nvim_get_current_buf()
+    end
+  else
+    local win = buf
+    validate('win', win, 'number')
+    if win == 0 then
+      win = api.nvim_get_current_win()
+    end
+
+    buf = api.nvim_win_get_buf(win)
+    pos = api.nvim_win_get_cursor(win)
   end
 
   return M.new(buf, util.from_mark(pos[1], pos[2]))
