@@ -382,7 +382,7 @@ General requirements (see [#1469](https://github.com/neovim/neovim/issues/1469#i
 - Clang or GCC version 4.9+
 - CMake version 3.16+, built with TLS/SSL support
   - Optional: Get the latest CMake from https://cmake.org/download/
-    - Provides a shell script which works on most Linux systems. After running it, ensure the resulting `cmake` binary is in your $PATH so the the Nvim build will find it.
+    - Provides a shell script which works on most Linux systems. After running it, ensure the resulting `cmake` binary is in your $PATH so the Nvim build will find it.
 
 Platform-specific requirements are listed below.
 

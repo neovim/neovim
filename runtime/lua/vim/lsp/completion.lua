@@ -1211,7 +1211,11 @@ end
 ---
 --- Examples: |lsp-attach| |lsp-completion|
 ---
---- Note: the behavior of `autotrigger=true` is controlled by the LSP `triggerCharacters` field. You
+--- @note |vim.lsp.omnifunc()| (|i_CTRL-X_CTRL-O|) queries every client that advertises completion,
+--- including clients that were disabled by `enable(false)`. To suppress completions for a client,
+--- clear its capability on |LspAttach|: `client.server_capabilities.completionProvider = nil`.
+---
+--- @note Behavior of `autotrigger=true` is controlled by the LSP `triggerCharacters` field. You
 --- can override it on LspAttach, see |lsp-autocompletion|.
 ---
 --- @param enable boolean True to enable, false to disable
@@ -1235,9 +1239,7 @@ end
 --- Triggers LSP completion once in the current buffer, if LSP completion is enabled
 --- (see |lsp-attach| |lsp-completion|).
 ---
---- Used by the default LSP |omnicompletion| provider |vim.lsp.omnifunc()|, thus |i_CTRL-X_CTRL-O|
---- invokes this in LSP-enabled buffers. Use CTRL-Y to select an item from the completion menu.
---- |complete_CTRL-Y|
+--- Use CTRL-Y to select an item from the completion menu. |complete_CTRL-Y|
 ---
 --- To invoke manually with CTRL-space, use this mapping:
 --- ```lua
