@@ -6,7 +6,7 @@
 --    # Optional: Ensure the latest ncurses+tic is in your PATH.
 --    export PATH="/opt/homebrew/Cellar/ncurses/6.5/bin/":"$PATH"
 --
---    nvim -ll src/gen/gen_terminfo.lua
+--    nvim -l src/gen/gen_terminfo.lua
 --
 -- This script does:
 --

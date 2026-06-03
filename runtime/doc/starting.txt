@@ -247,14 +247,6 @@ argument.
                 Disables |shada| unless |-i| was given.
                 Disables swapfile (like |-n|).
 
-                                                        *-ll*
--ll {script} [args]
-                Executes a Lua script, similarly to |-l|, but the editor is not
-                initialized. This gives a Lua environment similar to a worker
-                thread. See |lua-loop-threading|.
-
-                Unlike `-l` no prior arguments are allowed.
-
                                                         *-b*
 -b              Binary mode.  File I/O will only recognize <NL> to separate
                 lines.  The 'expandtab' option will be reset.  The 'textwidth'
