@@ -2121,6 +2121,9 @@ difference between using <SID> and <Plug>:
 	only conventions to keep the name readable and unlikely to clash with
 	other plugins.  None of them are required: all that matters is that
 	the sequence starts with "<Plug>" and is unique.
+	A mapping whose {lhs} starts with <Plug> is always applied to the
+	{rhs} of another mapping, even if remapping is explicitly disallowed.
+	|:nore|
 
 <SID>	is the script ID, a unique identifier for a script.
 	Internally Vim translates <SID> to "<SNR>123_", where "123" can be any
@@ -2129,6 +2132,8 @@ difference between using <SID> and <Plug>:
 	you use the ":function" command to get a list of functions.  The
 	translation of <SID> in mappings is exactly the same, that's how you
 	can call a script-local function from a mapping.
+	Note: when <SID> appears in the {rhs} of a mapping, you might consider
+	using <script>. |:map-<script>|
 
 
 USER COMMAND
@@ -2307,8 +2312,8 @@ hasmapto()		Function to test if the user already defined a mapping
 
 :map <unique>		Give a warning if a mapping already exists.
 
-:noremap <script>	Use only mappings local to the script, not global
-			mappings.
+:noremap <script>	Only remap mappings defined in this script that start
+			with <SID>.
 
 exists(":Cmd")		Check if a user command already exists.
 
