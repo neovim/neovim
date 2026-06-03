@@ -426,23 +426,6 @@ function Client:on_error(errkind, err)
   pcall(self.dispatchers.on_error, errkind, err)
 end
 
----@private
----@param errkind integer
----@param fn function
----@param ... any
----@return boolean success
----@return any result
----@return any ...
-function Client:try_call(errkind, fn, ...)
-  local args = vim.F.pack_len(...)
-  return xpcall(function()
-    -- PUC Lua 5.1 xpcall() does not support forwarding extra arguments.
-    return fn(vim.F.unpack_len(args))
-  end, function(err)
-    self:on_error(errkind, err)
-  end)
-end
-
 -- TODO periodically check message_callbacks for old requests past a certain
 -- time and log them. This would require storing the timestamp. I could call
 -- them with an error then, perhaps.
@@ -478,16 +461,9 @@ function Client:handle_body(body)
     -- Schedule here so that the users functions don't trigger an error and
     -- we can still use the result.
     vim.schedule(coroutine.wrap(function()
-      --- @type boolean, any, lsp.ResponseError?
-      local success, result, err = self:try_call(
-        M.client_errors.SERVER_REQUEST_HANDLER_ERROR,
-        self.dispatchers.server_request,
-        decoded.method,
-        decoded.params
-      )
-      log.debug('server_request: callback result', { status = success, result = result, err = err })
-      -- Dispatcher returns without an exception.
-      if success then
+      xpcall(function()
+        local result, err = self.dispatchers.server_request(decoded.method, decoded.params)
+        log.debug('server_request: callback result', { result = result, err = err })
         if result == nil and err == nil then
           error(
             string.format(
@@ -501,19 +477,20 @@ function Client:handle_body(body)
             type(err) == 'table',
             'err must be a table. Use rpc_response_error to help format errors.'
           )
-          ---@type string
-          local code_name = assert(
+          assert(
             protocol.ErrorCodes[err.code],
             'Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.'
           )
-          err.message = err.message or code_name
         end
-      else
-        -- On an exception, result will contain the error message.
-        err = M.rpc_response_error(protocol.ErrorCodes.InternalError, result)
-        result = nil
-      end
-      self:send_response(decoded.id, err, result)
+        self:send_response(decoded.id, err, result)
+      end, function(err)
+        self:on_error(M.client_errors.SERVER_REQUEST_HANDLER_ERROR, err)
+        self:send_response(
+          decoded.id,
+          M.rpc_response_error(protocol.ErrorCodes.InternalError, err),
+          nil
+        )
+      end)
     end))
   elseif
     -- Received a response to a request we sent.
@@ -568,13 +545,11 @@ function Client:handle_body(body)
     if callback then
       self.message_callbacks[result_id] = nil
       validate('callback', callback, 'function')
-      self:try_call(
-        M.client_errors.SERVER_RESULT_CALLBACK_ERROR,
-        callback,
-        decoded.error,
-        decoded.result ~= vim.NIL and decoded.result or nil,
-        result_id
-      )
+      xpcall(function()
+        callback(decoded.error, decoded.result ~= vim.NIL and decoded.result or nil, result_id)
+      end, function(err)
+        self:on_error(M.client_errors.SERVER_RESULT_CALLBACK_ERROR, err)
+      end)
     else
       self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
       log.error('No callback found for server response id ' .. result_id)
@@ -583,12 +558,14 @@ function Client:handle_body(body)
     -- Received a notification.
     type(decoded.method) == 'string'
   then
-    self:try_call(
-      M.client_errors.NOTIFICATION_HANDLER_ERROR,
-      self.dispatchers.notification,
-      decoded.method,
-      decoded.params
-    )
+    xpcall(function()
+      assert(
+        self.dispatchers.notification(decoded.method, decoded.params) == nil,
+        'notification handlers should not return a value'
+      )
+    end, function(err)
+      self:on_error(M.client_errors.NOTIFICATION_HANDLER_ERROR, err)
+    end)
   else
     -- Invalid server message
     self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
