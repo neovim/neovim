@@ -1329,6 +1329,7 @@ const char *did_set_guicursor(optset_T *args FUNC_ATTR_UNUSED)
     return errmsg;
   }
   terminal_update_colors_all();
+  terminal_update_default_cursor_all();
   if (Visual.active) {
     // In Visual mode cursor may be drawn differently.
     redrawWinline(curwin, curwin->w_cursor.lnum);
