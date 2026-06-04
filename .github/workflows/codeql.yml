@@ -24,18 +24,18 @@ jobs:
       security-events: write
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v6.0.2
       with:
         persist-credentials: false
 
     - uses: ./.github/actions/setup
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v4.35.5
+      uses: github/codeql-action/init@v4.36.0
       with:
         languages: cpp
 
     - run: make
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v4.35.5
+      uses: github/codeql-action/analyze@v4.36.0
