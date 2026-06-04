@@ -3793,12 +3793,11 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Get the position for String {expr}.  Same as |getpos()| but the
-      column number in the returned List is a character index
-      instead of a byte index.
-      If |getpos()| returns a very large column number, equal to
-      |v:maxcol|, then getcharpos() will return the character index
-      of the last character.
+      Same as |getpos()|, except the column-number is
+      character-indexed (UTF-8) instead of byte-indexed.
+
+      If |getpos()| returns |v:maxcol|, then getcharpos() returns
+      the index of the last character.
 
       Example:
       With the cursor on '세' in line 5 with text "여보세요": >vim

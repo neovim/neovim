@@ -267,11 +267,12 @@ g<End>			Like |g$| but to the last non-blank character
 f{char}			To [count]'th occurrence of {char} to the right.  The
 			cursor is placed on {char} |inclusive|.
 			{char} can be entered as a digraph |digraph-arg|.
-			When 'encoding' is set to Unicode, composing
-			characters may be used, see |utf-8-char-arg|.
+			Composing characters may be used |utf-8-char-arg|.
 			|:lmap| mappings apply to {char}.  The CTRL-^ command
 			in Insert mode can be used to switch this on/off
 			|i_CTRL-^|.
+
+			See |getcharsearch() |setcharsearch()
 
 							*F*
 F{char}			To the [count]'th occurrence of {char} to the left.
@@ -284,6 +285,8 @@ t{char}			Till before [count]'th occurrence of {char} to the
 			{char} |inclusive|.
 			{char} can be entered like with the |f| command.
 
+			See |getcharsearch() |setcharsearch()
+
 							*T*
 T{char}			Till after [count]'th occurrence of {char} to the
 			left.  The cursor is placed on the character right of
@@ -291,11 +294,15 @@ T{char}			Till after [count]'th occurrence of {char} to the
 			{char} can be entered like with the |f| command.
 
 							*;*
-;			Repeat latest f, t, F or T [count] times.  See |cpo-;|
+;			Repeat latest f, t, F or T [count] times.
+
+			See |getcharsearch() |setcharsearch() |cpo-;|
 
 							*,*
 ,			Repeat latest f, t, F or T in opposite direction
-			[count] times.  See also |cpo-;|
+			[count] times.
+
+			See |getcharsearch() |setcharsearch() |cpo-;|
 
 ==============================================================================
 3. Up-down motions					*up-down-motions*
