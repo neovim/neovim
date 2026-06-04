@@ -253,6 +253,9 @@ LUA
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
 • |writefile()| treats Lua strings as "blob", so it can be used to write
   binary data.
+• |vim.fs.dir()| and |vim.fs.find()| report errors encountered while
+  scanning directories that cannot be read (e.g. due to permissions),
+  instead of treating them as empty.
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing

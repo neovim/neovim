@@ -187,17 +187,36 @@ end
 --- (default: `false`)
 --- @field follow? boolean
 
----@alias Iterator fun(): string?, string?
+---@alias Iterator fun(): string?, string?, string?
 
 --- Gets an iterator over items found in `path` (normalized via |vim.fs.normalize()|).
+---
+--- Example:
+---
+--- ```lua
+--- local it, err = vim.fs.dir(path)
+---
+--- if err then
+---   -- Failed to scan the root directory
+--- end
+---
+--- for name, type, err in it do
+---   if err then
+---     -- Failed to scan a child directory
+---   end
+--- end
+--- ```
 ---
 ---@since 10
 ---@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()|.
 ---@param opts? vim.fs.dir.Opts Optional keyword arguments:
----@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
+---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type", along
+---        with an optional value "err"
 ---        "name" is the basename of the item relative to {path}.
 ---        "type" is one of the following:
 ---        "file", "directory", "link", "fifo", "socket", "char", "block", "unknown".
+---        "err" is a string with the format {errname}: {message}
+---@return string? err Error encountered while scanning the base directory
 function M.dir(path, opts)
   opts = opts or {}
 
@@ -207,31 +226,37 @@ function M.dir(path, opts)
   vim.validate('follow', opts.follow, 'boolean', true)
 
   path = M.normalize(path)
+
+  local rootfs, rooterr = uv.fs_scandir(path)
+
+  if not rootfs then
+    local empty = function()
+      return nil
+    end
+
+    return empty, rooterr
+  end
+
   if not opts.depth or opts.depth == 1 then
-    local fs = uv.fs_scandir(path)
     return function()
-      if not fs then
-        return
-      end
-      return fs_scandir_next(fs, path)
+      return fs_scandir_next(rootfs, path)
     end
   end
 
   --- @async
-  return coroutine.wrap(function()
-    local dirs = { { path, 1 } }
+  local it = coroutine.wrap(function()
+    local dirs = { { path, 1, rootfs } }
     while #dirs > 0 do
-      --- @type string, integer
-      local dir0, level = unpack(table.remove(dirs, 1))
+      --- @type string, integer, any
+      local dir0, level, fs = unpack(table.remove(dirs, 1))
       local dir = level == 1 and dir0 or M.joinpath(path, dir0)
-      local fs = uv.fs_scandir(dir)
       while fs do
         local name, t = fs_scandir_next(fs, dir)
         if not name then
           break
         end
         local f = level == 1 and name or M.joinpath(dir0, name)
-        coroutine.yield(f, t)
+        local err_scan = nil
         if
           opts.depth
           and level < opts.depth
@@ -240,11 +265,19 @@ function M.dir(path, opts)
           ).type == 'directory'))
           and (not opts.skip or opts.skip(f) ~= false)
         then
-          dirs[#dirs + 1] = { f, level + 1 }
+          local fs_next, err = uv.fs_scandir(M.joinpath(path, f))
+          if not fs_next then
+            err_scan = err
+          else
+            dirs[#dirs + 1] = { f, level + 1, fs_next }
+          end
         end
+        coroutine.yield(f, t, err_scan)
       end
     end
   end)
+
+  return it, nil
 end
 
 --- @class vim.fs.find.Opts
@@ -270,6 +303,15 @@ end
 --- Follow symbolic links.
 --- (default: `false`)
 --- @field follow? boolean
+
+--- @class vim.fs.find.Error
+--- @inlinedoc
+---
+--- Path at which error was encountered
+--- @field path string
+---
+--- Error message
+--- @field err string
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
@@ -308,7 +350,8 @@ end
 ---             The function should return `true` if the given item is considered a match.
 ---
 ---@param opts? vim.fs.find.Opts Optional keyword arguments:
----@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
+---@return string[] matches # Normalized paths |vim.fs.normalize()| of all matching items
+---@return vim.fs.find.Error[] errors # list of errors encountered during the search
 function M.find(names, opts)
   opts = opts or {}
   vim.validate('names', names, { 'string', 'table', 'function' })
@@ -328,6 +371,7 @@ function M.find(names, opts)
   local limit = opts.limit or 1
 
   local matches = {} --- @type string[]
+  local errors = {} --- @type vim.fs.find.Error[]
 
   local function add(match)
     matches[#matches + 1] = M.normalize(match)
@@ -342,9 +386,17 @@ function M.find(names, opts)
     if type(names) == 'function' then
       test = function(p)
         local t = {}
-        for name, type in M.dir(p) do
+        local it, base_err = M.dir(p)
+        if base_err ~= nil then
+          table.insert(errors, { path = p, err = base_err })
+        end
+        for name, type, err in it do
+          local f = M.joinpath(p, name)
+          if err ~= nil then
+            table.insert(errors, { path = f, err = err })
+          end
           if (not opts.type or opts.type == type) and names(name, p) then
-            table.insert(t, M.joinpath(p, name))
+            table.insert(t, f)
           end
         end
         return t
@@ -352,6 +404,11 @@ function M.find(names, opts)
     else
       test = function(p)
         local t = {} --- @type string[]
+        local _, base_err = M.dir(p)
+        if base_err ~= nil then -- Check if the directory itself is readable
+          table.insert(errors, { path = p, err = base_err })
+          return t
+        end
         for _, name in ipairs(names) do
           local f = M.joinpath(p, name)
           local stat = uv.fs_stat(f)
@@ -366,7 +423,7 @@ function M.find(names, opts)
 
     for _, match in ipairs(test(path)) do
       if add(match) then
-        return matches
+        return matches, errors
       end
     end
 
@@ -377,7 +434,7 @@ function M.find(names, opts)
 
       for _, match in ipairs(test(parent)) do
         if add(match) then
-          return matches
+          return matches, errors
         end
       end
     end
@@ -389,19 +446,26 @@ function M.find(names, opts)
         break
       end
 
-      for other, type_ in M.dir(dir) do
+      local it, base_err = M.dir(dir)
+      if base_err ~= nil then
+        table.insert(errors, { path = dir, err = base_err })
+      end
+      for other, type_, err in it do
         local f = M.joinpath(dir, other)
+        if err ~= nil then
+          table.insert(errors, { path = f, err = err })
+        end
         if type(names) == 'function' then
           if (not opts.type or opts.type == type_) and names(other, dir) then
             if add(f) then
-              return matches
+              return matches, errors
             end
           end
         else
           for _, name in ipairs(names) do
             if name == other and (not opts.type or opts.type == type_) then
               if add(f) then
-                return matches
+                return matches, errors
               end
             end
           end
@@ -417,7 +481,7 @@ function M.find(names, opts)
     end
   end
 
-  return matches
+  return matches, errors
 end
 
 --- Find the first parent directory containing a specific "marker", relative to a file path or
