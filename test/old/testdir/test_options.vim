@@ -2436,6 +2436,13 @@ func Test_opt_scrolljump()
          \            'topline':5, 'coladd':0, 'skipcol':0, 'curswant':0},
          \           winsaveview())
 
+  norm! 100Gzt
+  set scrolljump=-100
+  norm! 20k
+  call assert_equal({'lnum':80, 'leftcol':0, 'col':0, 'topfill':0,
+        \            'topline':71, 'coladd':0, 'skipcol':0, 'curswant':0},
+        \           winsaveview())
+
   set scrolljump&
   bw
 endfunc
