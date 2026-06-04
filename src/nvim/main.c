@@ -261,14 +261,6 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  if (argc > 1 && STRICMP(argv[1], "-ll") == 0) {
-    if (argc == 2) {
-      print_mainerr(err_arg_missing, argv[1], NULL);
-      exit(1);
-    }
-    nlua_run_script(argv, argc, 3);
-  }
-
   char *fname = NULL;     // file name from command line
   mparm_T params;         // various parameters passed between
                           // main() and other functions.

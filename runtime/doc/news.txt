@@ -92,7 +92,8 @@ LSP
 
 LUA
 
-• todo
+• "standalone" Lua interpreter mode `nvim -ll` was removed. Use |-l| script
+  mode instead.
 
 OPTIONS
 
