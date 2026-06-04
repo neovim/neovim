@@ -3,6 +3,8 @@ get_externalproject_options(ghostty ${DEPS_IGNORE_SHA})
 set(GHOSTTY_CMAKE_ARGS ${DEPS_CMAKE_ARGS})
 if(APPLE)
   list(APPEND GHOSTTY_CMAKE_ARGS -DGHOSTTY_ZIG_BUILD_FLAGS=-Demit-xcframework=false)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  list(APPEND GHOSTTY_CMAKE_ARGS -DGHOSTTY_ZIG_BUILD_FLAGS=-Dcpu=baseline)
 endif()
 
 ExternalProject_Add(ghostty
