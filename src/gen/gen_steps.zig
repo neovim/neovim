@@ -5,13 +5,13 @@ pub const SourceItem = struct { name: []u8, api_export: bool };
 
 pub fn nvim_gen_sources(
     b: *std.Build,
-    io: std.Io,
     nlua0: *std.Build.Step.Compile,
     nvim_sources: *std.ArrayList(SourceItem),
     nvim_headers: *std.ArrayList([]u8),
     api_headers: *std.ArrayList(LazyPath),
     versiondef_git: LazyPath,
     version_lua: LazyPath,
+    precompile: bool,
 ) !struct { *std.Build.Step.WriteFile, LazyPath } {
     const gen_headers = b.addWriteFiles();
 
@@ -65,7 +65,7 @@ pub fn nvim_gen_sources(
     {
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_char_blob.lua"));
-        gen_step.addArg("-c");
+        if (precompile) gen_step.addArg("-c");
         _ = gen_header(b, gen_step, "lua/vim_module.generated.h", gen_headers);
         // NB: vim._init_packages and vim.inspect must be be first and second ones
         // respectively, otherwise --luamod-dev won't work properly.
@@ -86,6 +86,7 @@ pub fn nvim_gen_sources(
         }
 
         // Dynamically add all Lua _core/ modules (like CMakeLists.txt does)
+        const io = b.graph.io;
         if (b.build_root.handle.openDir(io, "runtime/lua/vim/_core", .{ .iterate = true })) |core_dir_handle| {
             var core_dir = core_dir_handle;
             defer core_dir.close(io);
