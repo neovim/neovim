@@ -1,0 +1,117 @@
+---@meta
+error('Cannot require a meta file')
+
+--- A String specifying the version of the JSON-RPC protocol. MUST be exactly "2.0".
+---@alias vim.json.rpc.Version '2.0'
+
+--- An identifier established by the Client that MUST contain
+--- a String, Number, or NULL value if included.
+--- If it is not included it is assumed to be a notification.
+--- The value SHOULD normally not be Null [1]
+--- and Numbers SHOULD NOT contain fractional parts [2].
+---
+--- [1] The use of Null as a value for the id member in a Request object is discouraged,
+--- because this specification uses a value of Null for Responses with an unknown id.
+--- Also, because JSON-RPC 1.0 uses an id value of Null for Notifications
+--- this could cause confusion in handling.
+---
+--- [2] Fractional parts may be problematic,
+--- since many decimal fractions cannot be represented exactly as binary fractions.
+---@alias vim.json.rpc.Request.Id integer|string|vim.NIL
+
+--- A rpc call is represented by sending a Request object to a Server.
+--- The Request object has the following members:
+---@class vim.json.rpc.Request
+---@field jsonrpc vim.json.rpc.Version
+---
+--- A String containing the name of the method to be invoked.
+--- Method names that begin with the word rpc followed by
+--- a period character (U+002E or ASCII 46) are reserved for rpc-internal methods
+--- and extensions and MUST NOT be used for anything else.
+---@field method string
+---
+--- A Structured value that holds the parameter values to be used
+--- during the invocation of the method.
+---
+--- If present, parameters for the rpc call MUST be provided as a Structured value.
+--- Either by-position through an Array or by-name through an Object.
+--- - by-position: params MUST be an Array,
+---   containing the values in the Server expected order.
+--- - by-name: params MUST be an Object,
+---   with member names that match the Server expected parameter names.
+---   The absence of expected names MAY result in an error being generated.
+---   The names MUST match exactly, including case, to the method's expected parameters.
+---@field params? table
+---
+--- The Server MUST reply with the same value in the Response object if included.
+--- This member is used to correlate the context between the two objects.
+---@field id vim.json.rpc.Request.Id
+
+--- A Notification is a Request object without an "id" member.
+--- A Request object that is a Notification signifies
+--- the Client's lack of interest in the corresponding Response object,
+--- and as such no Response object needs to be returned to the client.
+--- The Server MUST NOT reply to a Notification,
+--- including those that are within a batch request.
+---@class vim.json.rpc.Notification
+---@field jsonrpc vim.json.rpc.Version
+---
+--- A String containing the name of the method to be invoked.
+--- Method names that begin with the word rpc followed by
+--- a period character (U+002E or ASCII 46) are reserved for rpc-internal methods
+--- and extensions and MUST NOT be used for anything else.
+---@field method string
+---
+--- A Structured value that holds the parameter values to be used
+--- during the invocation of the method.
+---
+--- If present, parameters for the rpc call MUST be provided as a Structured value.
+--- Either by-position through an Array or by-name through an Object.
+--- - by-position: params MUST be an Array,
+---   containing the values in the Server expected order.
+--- - by-name: params MUST be an Object,
+---   with member names that match the Server expected parameter names.
+---   The absence of expected names MAY result in an error being generated.
+---   The names MUST match exactly, including case, to the method's expected parameters.
+---@field params? table
+
+---@class vim.json.rpc.SuccessResponse
+---@field jsonrpc vim.json.rpc.Version
+---@field error nil
+---
+--- The value of this member is determined by the method invoked on the Server.
+---@field result any
+---
+--- It MUST be the same as the value of the id member in the Request Object.
+--- If there was an error in detecting the id in the Request object
+--- (e.g. Parse error/Invalid Request), it MUST be Null.
+---@field id vim.json.rpc.Request.Id
+
+---@class vim.json.rpc.ErrorResponse
+---@field jsonrpc vim.json.rpc.Version
+---@field error vim.json.rpc.Error
+---@field result nil
+---
+--- It MUST be the same as the value of the id member in the Request Object.
+--- If there was an error in detecting the id in the Request object
+--- (e.g. Parse error/Invalid Request), it MUST be Null.
+---@field id vim.json.rpc.Request.Id
+
+--- When a rpc call encounters an error,
+--- the Response Object MUST contain the error member with a value
+--- that is a Object with the following members:
+---@class vim.json.rpc.Error
+---
+--- A Number that indicates the error type that occurred.
+---@field code vim.json.rpc.error.Code
+---
+--- A String providing a short description of the error.
+--- The message SHOULD be limited to a concise single sentence.
+---@field message string
+---
+---A Primitive or Structured value that contains additional information about the error.
+-- The value of this member is defined by the Server (e.g. detailed error information, nested errors etc.).
+---@field data? any
+
+---@alias vim.json.rpc.Response vim.json.rpc.SuccessResponse|vim.json.rpc.ErrorResponse
+---@alias vim.json.rpc.Message vim.json.rpc.Request|vim.json.rpc.Notification|vim.json.rpc.Response
