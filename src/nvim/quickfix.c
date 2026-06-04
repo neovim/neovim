@@ -3666,8 +3666,6 @@ static void qf_free_items(qf_list_T *qfl)
     qfl->qf_count--;
   }
 
-  qfl->qf_start = NULL;
-  qfl->qf_ptr = NULL;
   qfl->qf_index = 0;
   qfl->qf_start = NULL;
   qfl->qf_last = NULL;
