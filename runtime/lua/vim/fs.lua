@@ -187,17 +187,36 @@ end
 --- (default: `false`)
 --- @field follow? boolean
 
----@alias Iterator fun(): string?, string?
+---@alias Iterator fun(): string?, string?, string?
 
 --- Gets an iterator over items found in `path` (normalized via |vim.fs.normalize()|).
+---
+--- Example:
+---
+--- ```lua
+--- local it, err = vim.fs.dir(path)
+---
+--- if err then
+---   -- Failed to scan the root directory
+--- end
+---
+--- for name, type, err in it do
+---   if err then
+---     -- Failed to scan a child directory
+---   end
+--- end
+--- ```
 ---
 ---@since 10
 ---@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()|.
 ---@param opts? vim.fs.dir.Opts Optional keyword arguments:
----@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
+---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type", along
+---        with an optional value "err"
 ---        "name" is the basename of the item relative to {path}.
 ---        "type" is one of the following:
 ---        "file", "directory", "link", "fifo", "socket", "char", "block", "unknown".
+---        "err" is a string with the format {errname}: {message}
+---@return string? err Error encountered while scanning the base directory
 function M.dir(path, opts)
   opts = opts or {}
 
@@ -207,31 +226,37 @@ function M.dir(path, opts)
   vim.validate('follow', opts.follow, 'boolean', true)
 
   path = M.normalize(path)
+
+  local rootfs, err = uv.fs_scandir(path)
+
+  if not rootfs then
+    local empty = function()
+      return nil
+    end
+
+    return empty, err
+  end
+
   if not opts.depth or opts.depth == 1 then
-    local fs = uv.fs_scandir(path)
     return function()
-      if not fs then
-        return
-      end
-      return fs_scandir_next(fs, path)
+      return fs_scandir_next(rootfs, path)
     end
   end
 
   --- @async
-  return coroutine.wrap(function()
-    local dirs = { { path, 1 } }
+  local it = coroutine.wrap(function()
+    local dirs = { { path, 1, rootfs } }
     while #dirs > 0 do
-      --- @type string, integer
-      local dir0, level = unpack(table.remove(dirs, 1))
+      --- @type string, integer, any
+      local dir0, level, fs = unpack(table.remove(dirs, 1))
       local dir = level == 1 and dir0 or M.joinpath(path, dir0)
-      local fs = uv.fs_scandir(dir)
       while fs do
         local name, t = fs_scandir_next(fs, dir)
         if not name then
           break
         end
         local f = level == 1 and name or M.joinpath(dir0, name)
-        coroutine.yield(f, t)
+        local errWhileScanning = nil
         if
           opts.depth
           and level < opts.depth
@@ -240,11 +265,19 @@ function M.dir(path, opts)
           ).type == 'directory'))
           and (not opts.skip or opts.skip(f) ~= false)
         then
-          dirs[#dirs + 1] = { f, level + 1 }
+          local fs, err = uv.fs_scandir(M.joinpath(path, f))
+          if not fs then
+            errWhileScanning = err
+          else
+            dirs[#dirs + 1] = { f, level + 1, fs }
+          end
         end
+        coroutine.yield(f, t, errWhileScanning)
       end
     end
   end)
+
+  return it, nil
 end
 
 --- @class vim.fs.find.Opts
