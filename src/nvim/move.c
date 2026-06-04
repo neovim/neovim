@@ -370,19 +370,14 @@ void update_topline(win_T *wp)
       // If we weren't very close to begin with, we scroll to put the
       // cursor in the middle of the window.  Otherwise put the cursor
       // near the top of the window.
-      if (n >= halfheight) {
-        if (eof_pressure) {
-          scroll_cursor_halfway(wp, true, true);
-        } else {
-          scroll_cursor_halfway(wp, false, false);
-        }
+      int min_scroll = scrolljump_value(wp);
+      if (eof_pressure) {
+        scroll_cursor_halfway(wp, true, true);
+      } else if (n >= halfheight && min_scroll < halfheight) {
+        scroll_cursor_halfway(wp, false, false);
       } else {
-        if (eof_pressure) {
-          scroll_cursor_halfway(wp, true, true);
-        } else {
-          scroll_cursor_top(wp, scrolljump_value(wp), false);
-          check_botline = true;
-        }
+        scroll_cursor_top(wp, min_scroll, false);
+        check_botline = true;
       }
     } else {
       // Make sure topline is the first line of a fold.
