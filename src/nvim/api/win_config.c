@@ -1213,27 +1213,20 @@ bool parse_winborder(WinConfig *fconfig, char *border_opt, Error *err)
   if (strchr(border_opt, ',')) {
     Array border_chars = ARRAY_DICT_INIT;
     char *p = border_opt;
-    char part[MAX_SCHAR_SIZE] = { 0 };
-    int count = 0;
-
-    while (*p != NUL) {
-      if (count >= 8) {
+    while (true) {
+      if (border_chars.size >= 8) {
         api_free_array(border_chars);
         return false;
       }
-
-      size_t part_len = copy_option_part(&p, part, sizeof(part), ",");
-      if (part_len == 0 || part[0] == NUL) {
-        api_free_array(border_chars);
-        return false;
+      char *comma = strchr(p, ',');
+      size_t part_len = comma != NULL ? (size_t)(comma - p) : strlen(p);
+      ADD(border_chars, STRING_OBJ(cbuf_to_string(p, part_len)));
+      if (comma == NULL) {
+        break;
       }
-
-      String str = cstr_to_string(part);
-      ADD(border_chars, STRING_OBJ(str));
-      count++;
+      p = comma + 1;
     }
-
-    if (count != 8) {
+    if (border_chars.size != 8) {
       api_free_array(border_chars);
       return false;
     }

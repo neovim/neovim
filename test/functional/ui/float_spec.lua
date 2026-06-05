@@ -11478,8 +11478,18 @@ describe('float window', function()
       winid = api.nvim_open_win(buf, false, config)
       eq('●', api.nvim_win_get_config(winid).border[1])
 
+      -- Single-space border char.
+      command([[lua vim.opt.winborder=",,, ,,,, "]])
+      winid = api.nvim_open_win(buf, false, config)
+      eq({ '', '', '', ' ', '', '', '', ' ' }, api.nvim_win_get_config(winid).border)
+
+      -- Trailing comma hides the last side
+      command([[set winborder=+,-,+,\|,+,-,+,]])
+      winid = api.nvim_open_win(buf, false, config)
+      eq({ '+', '-', '+', '|', '+', '-', '+', '' }, api.nvim_win_get_config(winid).border)
+      command('fclose!')
+
       eq('Vim(set):E474: Invalid argument: winborder=,,', pcall_err(command, 'set winborder=,,'))
-      eq('Vim(set):E474: Invalid argument: winborder=+,-,+,|,+,-,+,', pcall_err(command, [[set winborder=+,-,+,\|,+,-,+,]]))
       eq('Vim(set):E474: Invalid argument: winborder=custom', pcall_err(command, 'set winborder=custom'))
     end)
 

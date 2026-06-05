@@ -10602,9 +10602,12 @@ local options = {
         - "shadow": Drop shadow effect, by blending with the background.
         - "single": Single-line box.
         - "solid": Adds padding by a single whitespace cell.
-        - custom: comma-separated list of exactly 8 characters in clockwise
-          order starting from topleft. Example: >lua
-             vim.o.winborder='+,-,+,|,+,-,+,|'
+        - custom: comma-separated list of exactly 8 entries in clockwise
+          order starting from topleft. Each entry may be a single char, a
+          single space (filled with the background), or empty (no border on
+          that side). Example: >lua
+             vim.o.winborder = '+,-,+,|,+,-,+,|'
+             vim.o.winborder = ',,, ,,,, '  -- left/right padding only
         <
       ]=],
       short_desc = N_('border of floating window'),
