@@ -1385,7 +1385,7 @@ function lsp.formatexpr(opts)
   opts = opts or {}
   local timeout_ms = opts.timeout_ms or 500
 
-  if vim.list_contains({ 'i', 'R', 'ic', 'ix' }, vim.fn.mode()) then
+  if vim.list_contains({ 'i', 'R' }, vim.fn.mode()) then
     -- `formatexpr` is also called when exceeding `textwidth` in insert mode
     -- fall back to internal formatting
     return 1
