@@ -1,0 +1,74 @@
+if vim.g.loaded_nvim_directory_plugin ~= nil then
+  return
+end
+vim.g.loaded_nvim_directory_plugin = true
+
+local api = vim.api
+
+---@param path string
+---@return boolean
+local function is_dir(path)
+  local stat = vim.uv.fs_stat(vim.fs.normalize(vim.fs.abspath(path)))
+  return stat ~= nil and stat.type == 'directory'
+end
+
+---@param buf integer
+---@param path string
+---@return boolean
+local function should_open(buf, path)
+  if path == '' then
+    return false
+  end
+  if vim.bo[buf].buftype ~= '' and vim.b[buf].nvim_directory == nil then
+    return false
+  end
+  if vim.bo[buf].filetype == 'netrw' or vim.b[buf].netrw_curdir ~= nil then
+    return false
+  end
+  return is_dir(path)
+end
+
+local group = api.nvim_create_augroup('FileExplorer', { clear = true })
+local vimentered = vim.v.vim_did_enter == 1
+
+api.nvim_create_autocmd('BufEnter', {
+  group = group,
+  pattern = '*',
+  desc = 'Open local directories',
+  nested = true,
+  callback = function(ev)
+    if vimentered and should_open(ev.buf, ev.file) then
+      require('nvim.dir').try_open(ev.buf, ev.file)
+    end
+  end,
+})
+
+api.nvim_create_autocmd('VimEnter', {
+  group = group,
+  pattern = '*',
+  desc = 'Open startup local directories',
+  nested = true,
+  callback = function()
+    vimentered = true
+    for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
+      if api.nvim_win_is_valid(win) then
+        local buf = api.nvim_win_get_buf(win)
+        if should_open(buf, api.nvim_buf_get_name(buf)) then
+          require('nvim.dir').handle_startup_dirs()
+          return
+        end
+      end
+    end
+  end,
+})
+
+api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
+  group = group,
+  callback = function(ev)
+    ---@type { clear: fun(buf: integer) }?
+    local directory = package.loaded['nvim.dir']
+    if directory then
+      directory.clear(ev.buf)
+    end
+  end,
+})
