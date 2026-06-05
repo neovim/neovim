@@ -295,6 +295,8 @@ These existing features changed their behavior.
 • `nvim_exec_autocmds({buf=…})` runs in the context of the target buffer.
 • |OptionSet| is no longer triggered during startup by automatic
   |'background'| detection.
+• Editing a local directory now shows its contents in a `filetype=directory`
+  buffer. See |nvim-directory|.
 • |:Open| with no arguments uses the current file.
 • The "buffer" key was renamed to "buf" in these functions (but the old name
   "buffer" is still accepted, for backwards compatibility):
