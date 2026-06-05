@@ -1465,7 +1465,7 @@ the current buffer.
 
                     See |setqflist-what| for the structure of the `what`
                     parameter.
-      • {pos}       (`vim.Pos`, default: cursor position) Position on a buffer
+      • {pos}?      (`vim.Pos`, default: cursor position) Position on a buffer
                     to request.
 
 *vim.lsp.buf.hover.Opts*
