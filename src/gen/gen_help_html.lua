@@ -167,7 +167,7 @@ end
 ---@type fun(s: string): string
 local function typ_esc(s)
   -- TODO there are more things to escape
-  return (s and string.gsub(s, '([<*`_^$])', '\\%1') or '')
+  return (s and string.gsub(s, '([%[%]@#\\/<*`_^$])', '\\%1') or '')
 end
 
 local function url_encode(s)
@@ -998,9 +998,11 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
       and root:child(0)
       and vim.list_contains({ 'column_heading', 'h1', 'h2', 'h3' }, root:child(0):type())
     return string.format('%s%s', div and trim(text) or text, div and '' or '\n')
-  -- elseif parent == 'line_li' and node_name == 'prefix' then
-  --   return ''
-  -- elseif node_name == 'line_li' then
+  elseif parent == 'line_li' and node_name == 'prefix' then
+    return ''
+  elseif node_name == 'line_li' then
+    -- TODO indent correctly
+    return text
   --   local prefix = first(root, 'prefix')
   --   local numli = prefix and trim(node_text(prefix)):match('%d') -- Numbered listitem?
   --   local sib = root:prev_sibling()
@@ -1068,7 +1070,7 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
       )
       language = nil
     else
-      code = ('```%s```'):format(trim(trim_indent(text), 2))
+      code = ('\n```\n%s\n```\n'):format(trim(trim_indent(text), 2))
     end
     return code
   elseif node_name == 'tag' then -- anchor, h4 pseudo-heading
