@@ -885,6 +885,7 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
   if root:named_child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
     trimmed = typ_esc(trim(text))
+    -- TODO ARGH this also escapes the / in URLs (see usr_toc.txt)
     text = typ_esc(text)
   else
     -- Process children and join them with whitespace.
@@ -904,8 +905,8 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
     return ('%s#link("%s")%s'):format(ws(), fixed_url, removed_chars)
   elseif node_name == 'word' or node_name == 'uppercase_name' then
     return text
-  -- elseif node_name == 'note' then
-  --   return ('<b>%s</b>'):format(text)
+  elseif node_name == 'note' then
+    return ('*%s*'):format(text)
   elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
     if is_noise(text, stats.noise_lines) then
       return '' -- Discard common "noise" lines.
@@ -939,11 +940,15 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
     return ('%s %s'):format(string.rep("=", heading_level), trimmed)
   elseif node_name == 'heading' then
     return trimmed
-  -- elseif node_name == 'column_heading' or node_name == 'column_name' then
-  --   if root:has_error() then
-  --     return text
-  --   end
-  --   return ('<div class="help-column_heading">%s</div>'):format(text)
+  elseif node_name == 'column_heading' or node_name == 'column_name' then
+    if root:has_error() then
+      return text
+    end
+    -- TODO column_heading can be either:
+    -- * Some sort of title (see usr_toc.txt)
+    -- * Some example text (see usr_02.txt)
+    -- So what do we do with that?
+    return ('%s\n'):format(text)
   elseif node_name == 'block' then
     if is_blank(text) then
       return ''
@@ -1051,13 +1056,13 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
       return text
     end
     return ('%s`%s`'):format(ws(), trimmed)
-  -- elseif node_name == 'argument' then
-  --   return ('%s<code>%s</code>'):format(ws(), trim(node_text(root)))
+  elseif node_name == 'argument' then
+    return ('%s`%s`'):format(ws(), trim(node_text(root)))
   elseif node_name == 'codeblock' then
     return text
-  -- elseif node_name == 'language' then
-  --   language = node_text(root)
-  --   return ''
+  elseif node_name == 'language' then
+    language = node_text(root)
+    return ''
   elseif node_name == 'code' then -- Highlighted codeblock (child).
     if is_blank(text) then
       return ''
