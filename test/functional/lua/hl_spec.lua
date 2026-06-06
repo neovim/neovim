@@ -113,7 +113,7 @@ describe('vim.hl.range', function()
     ]])
   end)
 
-  it('removes highlight after given `timeout`', function()
+  it('removes highlight after `timeout`', function()
     local timeout = 300
     exec_lua(function()
       local ns = vim.api.nvim_create_namespace('')
@@ -130,6 +130,13 @@ describe('vim.hl.range', function()
     ]],
       timeout = timeout / 3,
     })
+    -- The deferred `range_hl_clear` works even if a different buffer was switched-to.
+    exec_lua(function()
+      local orig = vim.api.nvim_get_current_buf()
+      vim.api.nvim_set_current_buf(vim.api.nvim_create_buf(false, true))
+      vim.wait(timeout * 2)
+      vim.api.nvim_set_current_buf(orig)
+    end)
     screen:expect([[
       ^asdfghjkl{1:$}                                                  |
       «口=口»{1:$}                                                    |
@@ -180,7 +187,7 @@ describe('vim.hl.range', function()
     ]])
   end)
 
-  it('allows cancelling a highlight that has not timed out', function()
+  it('allows cancelling a highlight before timeout', function()
     exec_lua(function()
       local timeout = 3000
       local range_timer
@@ -220,7 +227,7 @@ describe('vim.hl.hl_op', function()
     clear()
   end)
 
-  it('does not show errors even if buffer is wiped before timeout', function()
+  it('no errors even if buffer is wiped before timeout', function()
     command('new')
     n.feed('ifoo<esc>') -- set '[, ']
     exec_lua(function()
@@ -265,7 +272,7 @@ describe('vim.hl.hl_op', function()
     end)
   end)
 
-  it('removes old highlight if new one is created before old one times out', function()
+  it('removes old highlight if new one is created before old timeout', function()
     command('vnew')
     exec_lua(function()
       vim.api.nvim_buf_set_mark(0, '[', 1, 1, {})
