@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = n.clear
 local exec = n.exec
 local feed = n.feed
+local fn, api = n.fn, n.api
 
 before_each(clear)
 
@@ -30,6 +31,27 @@ describe('matchaddpos()', function()
       12345678901{10:2}3                                               |
       1234567890123                                               |
                                                                   |
+    ]])
+  end)
+
+  it('priority works with extmarks', function()
+    local screen = Screen.new(50, 10)
+    screen:add_extra_attr_ids({
+      [101] = { foreground = Screen.colors.Blue, background = Screen.colors.Red },
+    })
+    n.insert([[line1]])
+    fn.matchaddpos('Error', { { 1, 1, 5 } }, 10)
+    local ns = api.nvim_create_namespace('Test')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      end_row = 0,
+      end_col = 5,
+      hl_group = 'Comment',
+      priority = 30,
+    })
+    screen:expect([[
+      {101:line^1}                                             |
+      {1:~                                                 }|*8
+                                                        |
     ]])
   end)
 end)
