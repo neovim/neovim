@@ -50,6 +50,8 @@ M.priorities = {
 --- @return fun()? range_clear A function which allows clearing the highlight manually.
 --- nil is returned if timeout is not specified
 function M.range(buf, ns, higroup, start, finish, opts)
+  -- Resolve buf=0 so the deferred `range_hl_clear` works correctly even after buffer-switch.
+  buf = vim._resolve_bufnr(buf)
   opts = opts or {}
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
