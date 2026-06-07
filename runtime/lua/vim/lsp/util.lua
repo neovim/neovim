@@ -223,6 +223,7 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
       -- of the buffer.
       if max <= start_row then
         api.nvim_buf_set_lines(bufnr, max, max, false, text)
+        has_eol_text_edit = true
       else
         local last_line_len = #get_line(bufnr, math.min(end_row, max - 1))
         -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't
