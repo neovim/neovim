@@ -327,6 +327,168 @@ describe('semantic token highlighting', function()
       eq(1, called_range)
     end)
 
+    it('uses flags.debounce_text_changes to debounce change requests', function()
+      exec_lua(create_server_definition)
+      insert(text)
+
+      local result = exec_lua(function()
+        _G.server = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              full = { delta = false },
+              range = false,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
+            end,
+          },
+        })
+
+        local function token_request_count()
+          local count = 0
+          for _, message in ipairs(_G.server.messages) do
+            if message.method == 'textDocument/semanticTokens/full' then
+              count = count + 1
+            end
+          end
+          return count
+        end
+
+        local bufnr = vim.api.nvim_get_current_buf()
+        assert(vim.lsp.start({
+          name = 'dummy',
+          cmd = _G.server.cmd,
+          flags = {
+            debounce_text_changes = 100,
+          },
+        }))
+        assert(
+          vim.wait(1000, function()
+            return token_request_count() >= 1
+          end),
+          'timed out waiting for initial semanticTokens/full request'
+        )
+
+        local initial = token_request_count()
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, { '#include <vector>' })
+        vim.api.nvim_buf_set_lines(bufnr, 2, 3, false, { 'int changed()' })
+        vim.wait(20)
+        local before_debounce = token_request_count()
+        assert(
+          vim.wait(1000, function()
+            return token_request_count() == initial + 1
+          end),
+          'timed out waiting for debounced semanticTokens/full request'
+        )
+
+        return {
+          debounce = vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].debounce,
+          initial = initial,
+          before_debounce = before_debounce,
+          final = token_request_count(),
+        }
+      end)
+
+      eq(100, result.debounce)
+      eq(result.initial, result.before_debounce)
+      eq(result.initial + 1, result.final)
+    end)
+
+    it('uses the slowest client debounce for shared change requests', function()
+      exec_lua(create_server_definition)
+      insert(text)
+
+      local result = exec_lua(function()
+        local capabilities = {
+          semanticTokensProvider = {
+            full = { delta = false },
+            range = false,
+            legend = vim.fn.json_decode(legend),
+          },
+        }
+        local handlers = {
+          ['textDocument/semanticTokens/full'] = function(_, _, callback)
+            callback(nil, vim.fn.json_decode(response))
+          end,
+        }
+        _G.server_fast = _G._create_server({
+          capabilities = capabilities,
+          handlers = handlers,
+        })
+        _G.server_slow = _G._create_server({
+          capabilities = capabilities,
+          handlers = handlers,
+        })
+
+        local function token_request_count(server)
+          local count = 0
+          for _, message in ipairs(server.messages) do
+            if message.method == 'textDocument/semanticTokens/full' then
+              count = count + 1
+            end
+          end
+          return count
+        end
+
+        local bufnr = vim.api.nvim_get_current_buf()
+        assert(vim.lsp.start({
+          name = 'fast',
+          cmd = _G.server_fast.cmd,
+          flags = {
+            debounce_text_changes = 10,
+          },
+        }))
+        assert(vim.lsp.start({
+          name = 'slow',
+          cmd = _G.server_slow.cmd,
+          flags = {
+            debounce_text_changes = 100,
+          },
+        }))
+        assert(
+          vim.wait(1000, function()
+            return token_request_count(_G.server_fast) >= 1
+              and token_request_count(_G.server_slow) >= 1
+          end),
+          'timed out waiting for initial semanticTokens/full requests'
+        )
+
+        local initial_fast = token_request_count(_G.server_fast)
+        local initial_slow = token_request_count(_G.server_slow)
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, { '#include <vector>' })
+        vim.api.nvim_buf_set_lines(bufnr, 2, 3, false, { 'int changed()' })
+        vim.wait(20)
+        local before_fast = token_request_count(_G.server_fast)
+        local before_slow = token_request_count(_G.server_slow)
+        assert(
+          vim.wait(1000, function()
+            return token_request_count(_G.server_fast) == initial_fast + 1
+              and token_request_count(_G.server_slow) == initial_slow + 1
+          end),
+          'timed out waiting for debounced semanticTokens/full requests'
+        )
+
+        return {
+          debounce = vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].debounce,
+          initial_fast = initial_fast,
+          initial_slow = initial_slow,
+          before_fast = before_fast,
+          before_slow = before_slow,
+          final_fast = token_request_count(_G.server_fast),
+          final_slow = token_request_count(_G.server_slow),
+        }
+      end)
+
+      eq(100, result.debounce)
+      eq(result.initial_fast, result.before_fast)
+      eq(result.initial_slow, result.before_slow)
+      eq(result.initial_fast + 1, result.final_fast)
+      eq(result.initial_slow + 1, result.final_slow)
+    end)
+
     it('range requests preserve highlights outside updated range', function()
       screen:try_resize(40, 6)
       insert(text)

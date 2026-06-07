@@ -43,6 +43,7 @@ local M = {}
 ---@field bufnr integer
 ---@field augroup integer augroup for buffer events
 ---@field debounce integer milliseconds to debounce requests for new tokens
+---@field explicit_debounce? boolean whether debounce was set explicitly by vim.lsp.semantic_tokens.start()
 ---@field timer table uv_timer for debouncing requests for new tokens
 ---@field client_state table<integer, STClientState>
 local STHighlighter = {
@@ -208,13 +209,19 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
   return ranges
 end
 
+--- @param client vim.lsp.Client
+--- @return integer
+local function get_client_debounce(client)
+  return client.flags.debounce_text_changes or 150
+end
+
 --- Construct a new STHighlighter for the buffer
 ---
 ---@private
 ---@param bufnr integer
 ---@return STHighlighter
 function STHighlighter:new(bufnr)
-  self.debounce = 200
+  self.debounce = 150
   self = Capability.new(self, bufnr)
 
   api.nvim_buf_attach(bufnr, false, {
@@ -237,6 +244,25 @@ function STHighlighter:new(bufnr)
   return self
 end
 
+---@private
+function STHighlighter:update_debounce()
+  if self.explicit_debounce then
+    return
+  end
+
+  local debounce --- @type integer?
+  for client_id in pairs(self.client_state) do
+    local client = vim.lsp.get_client_by_id(client_id)
+    if client then
+      local client_debounce = get_client_debounce(client)
+      -- One timer refreshes all clients, so it must not fire before any
+      -- attached client's debounced didChange notification can flush.
+      debounce = debounce and math.max(debounce, client_debounce) or client_debounce
+    end
+  end
+  self.debounce = debounce or 150
+end
+
 ---@package
 function STHighlighter:on_attach(client_id)
   local client = vim.lsp.get_client_by_id(client_id)
@@ -257,6 +283,7 @@ function STHighlighter:on_attach(client_id)
     }
     self.client_state[client_id] = state
   end
+  self:update_debounce()
 
   nvim_on({ 'BufWinEnter', 'InsertLeave' }, self.augroup, { buf = self.bufnr }, function()
     self:send_request()
@@ -279,6 +306,7 @@ function STHighlighter:on_detach(client_id)
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
     api.nvim_clear_autocmds({ group = self.augroup })
     self.client_state[client_id] = nil
+    self:update_debounce()
   end
 end
 
@@ -791,16 +819,18 @@ end
 
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
----@param debounce? (integer) (default: 200): Debounce token requests
+---@param debounce? (integer) (default: `flags.debounce_text_changes` or 150): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M._start(bufnr, client_id, debounce)
   local highlighter = STHighlighter.active[bufnr]
 
   if not highlighter then
     highlighter = STHighlighter:new(bufnr)
-    highlighter.debounce = debounce or 200
-  else
-    highlighter.debounce = debounce or highlighter.debounce
+  end
+
+  if debounce then
+    highlighter.debounce = debounce
+    highlighter.explicit_debounce = true
   end
 
   highlighter:on_attach(client_id)
@@ -823,7 +853,7 @@ end
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
 ---@param opts? (table) Optional keyword arguments
----  - debounce (integer, default: 200): Debounce token requests
+---  - debounce (integer, default: `flags.debounce_text_changes` or 150): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M.start(bufnr, client_id, opts)
   vim.deprecate('vim.lsp.semantic_tokens.start', 'vim.lsp.semantic_tokens.enable(true)', '0.13.0')
