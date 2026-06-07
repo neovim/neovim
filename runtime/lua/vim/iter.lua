@@ -491,13 +491,21 @@ end
 --- @return any[]
 function IterArray:totable()
   if self.next ~= IterArray.next or self._head >= self._tail then
-    return Iter.totable(self)
+    local t = Iter.totable(self)
+    self._head = self._tail
+    return t
   end
-
-  local needs_sanitize = getmetatable(self._table[self._head]) == packedmt
 
   -- Reindex and sanitize.
   local len = self._tail - self._head
+
+  local needs_sanitize = false
+  for i = self._head, self._tail - 1 do
+    if getmetatable(self._table[i]) == packedmt then
+      needs_sanitize = true
+      break
+    end
+  end
 
   if needs_sanitize then
     for i = 1, len do
@@ -515,6 +523,9 @@ function IterArray:totable()
 
   self._head = 1
   self._tail = len + 1
+  if needs_sanitize then
+    self._head = self._tail
+  end
 
   return self._table
 end

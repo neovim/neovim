@@ -117,6 +117,59 @@ describe('vim.iter', function()
       eq({ { 1, 1 }, { 2, 4 }, { 3, 9 } }, it:totable())
     end
 
+    do
+      local it = vim.iter({ 1, 2 }):map(function(v)
+        if v == 1 then
+          return v
+        end
+        return v, v * v
+      end)
+      eq({ 1, { 2, 4 } }, it:totable())
+
+      local a, b = it:next()
+      eq(nil, a)
+      eq(nil, b)
+      eq({}, it:totable())
+    end
+
+    do
+      local it = vim.iter({ 1 }):map(function()
+        return 0, 1
+      end)
+      eq({ { 0, 1 } }, it:totable())
+
+      local a, b = it:next()
+      eq(nil, a)
+      eq(nil, b)
+      eq({}, it:totable())
+    end
+
+    do
+      local it = vim.iter({ 1 }):map(function()
+        return 0, 1
+      end)
+
+      local a, b = it:next()
+      eq(0, a)
+      eq(1, b)
+
+      local c, d = it:next()
+      eq(nil, c)
+      eq(nil, d)
+    end
+
+    do
+      local it = vim.iter({ 1 })
+      eq({ 1 }, it:totable())
+      eq(1, it:next())
+    end
+
+    do
+      local it = vim.iter({})
+      eq({}, it:totable())
+      eq(nil, it:next())
+    end
+
     -- Holes in array-like tables are removed
     eq({ 1, 2, 3 }, vim.iter({ 1, nil, 2, nil, 3 }):totable())
 
