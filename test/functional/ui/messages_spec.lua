@@ -682,6 +682,98 @@ describe('ui/ext_messages', function()
     }
   end)
 
+  it('vim.notify() uses message levels', function()
+    feed(':lua vim.notify("notify warn", vim.log.levels.WARN)<cr>')
+    screen:expect {
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'notify warn', 19, 'WarningMsg' } },
+          history = true,
+          kind = 'echomsg',
+        },
+      },
+    }
+
+    feed(':lua vim.notify("notify info", vim.log.levels.INFO)<cr>')
+    screen:expect {
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        { content = { { 'notify info' } }, history = true, kind = 'echomsg' },
+      },
+    }
+
+    feed(':lua vim.notify("notify error", vim.log.levels.ERROR)<cr>')
+    screen:expect {
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'notify error', 9, 'ErrorMsg' } },
+          history = true,
+          kind = 'echoerr',
+        },
+      },
+    }
+  end)
+
+  it('vim.notify() ERROR works in scheduled callback during wait() #39816', function()
+    eq(
+      { notify_err = '', notify_ok = true, wait_result = 0 },
+      exec_lua [[
+        vim.g.notify_wait_done = false
+        vim.g.notify_wait_ok = false
+        vim.g.notify_wait_err = ''
+
+        vim.defer_fn(function()
+          local ok, err = pcall(vim.notify, 'notify wait error', vim.log.levels.ERROR)
+          vim.g.notify_wait_ok = ok
+          vim.g.notify_wait_err = err or ''
+          vim.g.notify_wait_done = true
+        end, 0)
+
+        local wait_result = vim.fn.wait(1000, 'g:notify_wait_done', 10)
+        return {
+          notify_err = vim.g.notify_wait_err,
+          notify_ok = vim.g.notify_wait_ok,
+          wait_result = wait_result,
+        }
+      ]]
+    )
+    screen:expect {
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'notify wait error', 9, 'ErrorMsg' } },
+          history = true,
+          kind = 'echoerr',
+        },
+      },
+    }
+
+    feed(':messages<cr>')
+    screen:expect {
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      msg_history = {
+        { kind = 'echoerr', content = { { 'notify wait error', 9, 'ErrorMsg' } } },
+      },
+    }
+  end)
+
   it(':echoerr multiline', function()
     exec_lua([[vim.g.multi = table.concat({ "bork", "fail" }, "\n")]])
     feed(':echoerr g:multi<cr>')

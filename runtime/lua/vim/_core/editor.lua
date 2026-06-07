@@ -681,12 +681,15 @@ end
 ---@param opts table|nil Optional parameters. Unused by default.
 ---@diagnostic disable-next-line: unused-local
 function vim.notify(msg, level, opts) -- luacheck: no unused args
-  local chunks = { { msg, level == vim.log.levels.WARN and 'WarningMsg' or nil } }
-  vim.api.nvim_echo(
-    chunks,
-    true,
-    { err = level == vim.log.levels.ERROR, _truncate = opts and opts._truncate }
-  )
+  local echo_opts = { _truncate = opts and opts._truncate }
+  local hl = level == vim.log.levels.WARN and 'WarningMsg' or nil
+
+  if level == vim.log.levels.ERROR then
+    hl = 'ErrorMsg'
+    echo_opts.kind = 'echoerr'
+  end
+
+  vim.api.nvim_echo({ { msg, hl } }, true, echo_opts)
 end
 
 do
