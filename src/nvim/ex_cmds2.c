@@ -703,10 +703,10 @@ void ex_listdo(exarg_T *eap)
         // need to trigger them now.
         if (buf == curbuf) {
           apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn, curbuf->b_fname, true,
-                         curbuf);
+                         curbuf, curwin);
         } else {
           aucmd_prepbuf(&aco, buf);
-          apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname, true, buf);
+          apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname, true, buf, NULL);
           aucmd_restbuf(&aco);
         }
 

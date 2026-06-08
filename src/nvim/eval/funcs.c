@@ -3656,7 +3656,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     channel_incref(chan);
     channel_terminal_alloc(buf, chan);
 
-    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, buf);
+    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, buf, NULL);
 
     if (chan->term == NULL || terminal_buf(chan->term) == 0) {
       goto term_done;  // Terminal may be destroyed during autocommands.
@@ -3681,7 +3681,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
 
     setfname(buf, NameBuff, NULL, true);
-    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, buf);
+    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, buf, NULL);
 
     if (chan->term == NULL || terminal_buf(chan->term) == 0) {
       goto term_done;  // Terminal may be destroyed during autocommands.
@@ -5852,6 +5852,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char *save_autocmd_fname, *save_autocmd_match;
   bool save_autocmd_fname_full;
   int save_autocmd_bufnr;
+  int save_autocmd_winid;
   funccal_entry_T funccal_entry;
 
   if (l_provider_call_nesting) {
@@ -5862,6 +5863,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     save_autocmd_match = autocmd_match;
     save_autocmd_fname_full = autocmd_fname_full;
     save_autocmd_bufnr = autocmd_bufnr;
+    save_autocmd_winid = autocmd_winid;
     save_funccal(&funccal_entry);
 
     current_sctx = provider_caller_scope.script_ctx;
@@ -5871,6 +5873,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     autocmd_match = provider_caller_scope.autocmd_match;
     autocmd_fname_full = provider_caller_scope.autocmd_fname_full;
     autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
+    autocmd_winid = provider_caller_scope.autocmd_winid;
     set_current_funccal((funccall_T *)(provider_caller_scope.funccalp));
   }
 
@@ -5890,6 +5893,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     autocmd_match = save_autocmd_match;
     autocmd_fname_full = save_autocmd_fname_full;
     autocmd_bufnr = save_autocmd_bufnr;
+    autocmd_winid = save_autocmd_winid;
     restore_funccal();
   }
 

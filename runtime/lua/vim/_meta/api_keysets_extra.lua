@@ -76,6 +76,7 @@ error('Cannot require a meta file')
 --- @field match string expanded value of <amatch>
 --- @field buf integer expanded value of <abuf>
 --- @field file string expanded value of <afile>
+--- @field win integer Window id for the event. See |window-ID|.
 --- @field data? any arbitrary data passed from |nvim_exec_autocmds()|
 
 --- @class vim.api.keyset.create_user_command.command_args

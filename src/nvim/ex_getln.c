@@ -232,7 +232,7 @@ static const char e_active_window_or_buffer_changed_or_deleted[]
 static void trigger_cmd_autocmd(int typechar, event_T evt)
 {
   char typestr[2] = { (char)typechar, NUL };
-  apply_autocmds(evt, typestr, typestr, false, curbuf);
+  apply_autocmds(evt, typestr, typestr, false, curbuf, curwin);
 }
 
 static void save_viewstate(win_T *wp, viewstate_T *vs)
@@ -845,7 +845,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
     tv_dict_set_keys_readonly(dict);
     TRY_WRAP(&err, {
-      apply_autocmds(EVENT_CMDLINEENTER, firstcbuf, firstcbuf, false, curbuf);
+      apply_autocmds(EVENT_CMDLINEENTER, firstcbuf, firstcbuf, false, curbuf, curwin);
       restore_v_event(dict, &save_v_event);
     });
 
@@ -924,7 +924,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
                      s->gotesc ? kBoolVarTrue : kBoolVarFalse);
     set_vim_var_char(s->c);  // Set v:char
     TRY_WRAP(&err, {
-      apply_autocmds(EVENT_CMDLINELEAVE, firstcbuf, firstcbuf, false, curbuf);
+      apply_autocmds(EVENT_CMDLINELEAVE, firstcbuf, firstcbuf, false, curbuf, curwin);
       // error printed below, to avoid redraw issues
     });
     if (tv_dict_get_number(dict, "abort") != 0) {
@@ -2878,7 +2878,7 @@ static void do_autocmd_cmdlinechanged(int firstc)
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
     tv_dict_set_keys_readonly(dict);
     TRY_WRAP(&err, {
-      apply_autocmds(EVENT_CMDLINECHANGED, firstcbuf, firstcbuf, false, curbuf);
+      apply_autocmds(EVENT_CMDLINECHANGED, firstcbuf, firstcbuf, false, curbuf, curwin);
       restore_v_event(dict, &save_v_event);
     });
     if (ERROR_SET(&err)) {

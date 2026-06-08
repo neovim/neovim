@@ -278,7 +278,7 @@ static void emit_termrequest(void **argv)
         VTERM_TERMINATOR_BEL ? STATIC_CSTR_AS_OBJ("\x07") : STATIC_CSTR_AS_OBJ("\x1b\\"));
 
   term->refcount++;
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, NULL,
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, NULL, NULL,
                        &DICT_OBJ(data), false);
   term->refcount--;
   xfree(sequence);
@@ -613,7 +613,7 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   // over-allocating in case TermOpen reduces 'scrollback'.
   // In the rare case where TermOpen polls for events, the scrollback buffer will be
   // allocated anyway if needed.
-  apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
+  apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf, curwin);
 
   aucmd_restbuf(&aco);
 
@@ -737,7 +737,7 @@ void terminal_close(Terminal **termpp, int status)
     PUT_C(data, "pos", INTEGER_OBJ(pos));
 
     apply_autocmds_group(EVENT_TERMCLOSE, NULL, NULL, status >= 0, AUGROUP_ALL,
-                         buf, NULL, &DICT_OBJ(data), false);
+                         buf, NULL, NULL, &DICT_OBJ(data), false);
 
     restore_v_event(dict, &save_v_event);
   }
@@ -931,7 +931,7 @@ bool terminal_enter(void)
 
   // Don't let autocommands free the terminal now!
   s->term->refcount++;
-  apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf, curwin);
   may_trigger_modechanged();
   s->term->refcount--;
   if (s->term->buf_handle == 0) {
@@ -976,7 +976,7 @@ bool terminal_enter(void)
   if (s->close) {
     s->term->refcount++;
   }
-  apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf, curwin);
   if (s->close) {
     s->term->refcount--;
     const handle_T buf_handle = s->term->buf_handle;  // Callback may free s->term.
@@ -1066,7 +1066,7 @@ static int terminal_check(VimState *state)
   s->term->refcount++;
   if (has_event(EVENT_TEXTCHANGEDT)
       && curbuf->b_last_changedtick_i != buf_get_changedtick(curbuf)) {
-    apply_autocmds(EVENT_TEXTCHANGEDT, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TEXTCHANGEDT, NULL, NULL, false, curbuf, curwin);
     curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
   }
   may_trigger_win_scrolled_resized();

@@ -995,6 +995,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---     - group: (`number?`) Group id, if any
 ---     - id: (`number`) Autocommand id
 ---     - match: (`string`) [<amatch>] (expanded to a full path)
+---     - win: (`number`)  `window-ID` for the event.
 --- - command (string?) Vim command executed on event. Not allowed with {callback}.
 --- - desc (`string?`) Description (for documentation and troubleshooting).
 --- - group (`string|integer?`) Group name or id to match against.

@@ -4498,8 +4498,8 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     curbuf->b_p_ma = false;
 
     curbuf->b_keep_filetype = true;  // don't detect 'filetype'
-    apply_autocmds(EVENT_BUFREADPOST, "quickfix", NULL, false, curbuf);
-    apply_autocmds(EVENT_BUFWINENTER, "quickfix", NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFREADPOST, "quickfix", NULL, false, curbuf, curwin);
+    apply_autocmds(EVENT_BUFWINENTER, "quickfix", NULL, false, curbuf, curwin);
     curbuf->b_keep_filetype = false;
     curbuf->b_ro_locked--;
 
@@ -4643,7 +4643,7 @@ void ex_make(exarg_T *eap)
 
   char *const au_name = make_get_auname(eap->cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-                                        curbuf->b_fname, true, curbuf)) {
+                                        curbuf->b_fname, true, curbuf, curwin)) {
     if (aborting()) {
       return;
     }
@@ -4691,7 +4691,7 @@ void ex_make(exarg_T *eap)
   unsigned save_qfid = qf_get_curlist(qi)->qf_id;
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true,
-                   curbuf);
+                   curbuf, curwin);
   }
   if (res > 0 && !eap->forceit && qflist_valid(wp, save_qfid)) {
     // display the first error
@@ -5369,7 +5369,7 @@ void ex_cfile(exarg_T *eap)
 
   au_name = cfile_get_auname(eap->cmdidx);
   if (au_name != NULL
-      && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name, NULL, false, curbuf)) {
+      && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name, NULL, false, curbuf, curwin)) {
     if (aborting()) {
       return;
     }
@@ -5409,7 +5409,7 @@ void ex_cfile(exarg_T *eap)
   }
   unsigned save_qfid = qf_get_curlist(qi)->qf_id;
   if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, false, curbuf);
+    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, false, curbuf, curwin);
   }
   // Jump to the first error for a new list and if autocmds didn't free the
   // list.
@@ -5822,7 +5822,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
           // options!
           aco_save_T aco = { 0 };
           aucmd_prepbuf(&aco, buf);
-          apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, true, buf);
+          apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, true, buf, NULL);
           do_modelines(OPT_NOWIN);
           aucmd_restbuf(&aco);
         }
@@ -5850,7 +5850,7 @@ void ex_vimgrep(exarg_T *eap)
 
   char *au_name = vgr_get_auname(eap->cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-                                        curbuf->b_fname, true, curbuf)) {
+                                        curbuf->b_fname, true, curbuf, curwin)) {
     if (aborting()) {
       return;
     }
@@ -5898,7 +5898,7 @@ void ex_vimgrep(exarg_T *eap)
   unsigned save_qfid = qf_get_curlist(qi)->qf_id;
 
   if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf);
+    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf, curwin);
   }
 
   // The QuickFixCmdPost autocmd may free the quickfix list. Check the list
@@ -7318,7 +7318,7 @@ void ex_cbuffer(exarg_T *eap)
 {
   char *au_name = cbuffer_get_auname(eap->cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-                                        curbuf->b_fname, true, curbuf)) {
+                                        curbuf->b_fname, true, curbuf, curwin)) {
     if (aborting()) {
       return;
     }
@@ -7360,7 +7360,7 @@ void ex_cbuffer(exarg_T *eap)
   unsigned save_qfid = qf_get_curlist(qi)->qf_id;
   if (au_name != NULL) {
     const buf_T *const curbuf_old = curbuf;
-    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf);
+    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf, curwin);
     if (curbuf != curbuf_old) {
       // Autocommands changed buffer, don't jump now, "qi" may
       // be invalid.
@@ -7403,7 +7403,7 @@ static int trigger_cexpr_autocmd(int cmdidx)
 {
   char *au_name = cexpr_get_auname(cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-                                        curbuf->b_fname, true, curbuf)) {
+                                        curbuf->b_fname, true, curbuf, curwin)) {
     if (aborting()) {
       return FAIL;
     }
@@ -7437,7 +7437,7 @@ int cexpr_core(const exarg_T *eap, typval_T *tv)
     // check for autocommands changing the current quickfix list.
     unsigned save_qfid = qf_get_curlist(qi)->qf_id;
     if (au_name != NULL) {
-      apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf);
+      apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf, curwin);
     }
     // Jump to the first error for a new list and if autocmds didn't
     // free the list.
@@ -7609,7 +7609,7 @@ void ex_helpgrep(exarg_T *eap)
     break;
   }
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-                                        curbuf->b_fname, true, curbuf)) {
+                                        curbuf->b_fname, true, curbuf, curwin)) {
     if (aborting()) {
       return;
     }
@@ -7667,7 +7667,7 @@ void ex_helpgrep(exarg_T *eap)
   }
 
   if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf);
+    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf, curwin);
     // When adding a location list to an existing location list stack,
     // if the autocmd made the stack invalid, then just return.
     if (!new_qi && IS_LL_STACK(qi) && qf_find_win_with_loclist(qi) == NULL) {

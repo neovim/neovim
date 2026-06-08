@@ -1093,12 +1093,12 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 
     bufref_T bufref;
     set_bufref(&bufref, buf);
-    if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf)
+    if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf, NULL)
         && !bufref_valid(&bufref)) {
       goto fail;
     }
     if (listed
-        && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+        && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf, NULL)
         && !bufref_valid(&bufref)) {
       goto fail;
     }

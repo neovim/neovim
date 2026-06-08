@@ -583,7 +583,7 @@ int main(int argc, char **argv)
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   }
 
-  apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf, curwin);
   TIME_MSG("BufEnter autocommands");
   setpcmark();
 
@@ -628,7 +628,7 @@ int main(int argc, char **argv)
   do_autochdir();
 
   set_vim_var_nr(VV_VIM_DID_ENTER, 1);
-  apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf, curwin);
   TIME_MSG("VimEnter autocommands");
   if (use_remote_ui) {
     do_autocmd_uienter_all();
@@ -785,7 +785,7 @@ void getout(int exitval)
           bufref_T bufref;
 
           set_bufref(&bufref, buf);
-          apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false, buf);
+          apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false, buf, wp);
           if (bufref_valid(&bufref)) {
             buf_set_changedtick(buf, -1);  // note that we did it already
           }
@@ -801,7 +801,7 @@ void getout(int exitval)
       if (buf->b_ml.ml_mfp != NULL) {
         bufref_T bufref;
         set_bufref(&bufref, buf);
-        apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf);
+        apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf, NULL);
         if (!bufref_valid(&bufref)) {
           // Autocmd deleted the buffer.
           break;
@@ -816,7 +816,7 @@ void getout(int exitval)
       unblock_autocmds();
       unblock++;
     }
-    apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, false, curbuf, NULL);
     if (unblock) {
       block_autocmds();
     }
@@ -839,7 +839,7 @@ void getout(int exitval)
       unblock_autocmds();
       unblock++;
     }
-    apply_autocmds(EVENT_VIMLEAVE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_VIMLEAVE, NULL, NULL, false, curbuf, NULL);
     if (unblock) {
       block_autocmds();
     }

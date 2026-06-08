@@ -1160,7 +1160,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
   // Loop over the events.
   while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
     if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true, group,
-                             curbuf, NULL, NULL, false)) {
+                             curbuf, curwin, NULL, NULL, false)) {
       nothing_done = false;
     }
   }
@@ -1546,7 +1546,7 @@ static void deferred_event(void **argv)
 
     aco_save_T aco = { 0 };
     aucmd_prepbuf(&aco, buf);
-    apply_autocmds_group(event, fname, fname_io, false, group, buf, eap, data, false);
+    apply_autocmds_group(event, fname, fname_io, false, group, buf, NULL, eap, data, false);
     aucmd_restbuf(&aco);
 
     restore_v_event(v_event, &save_v_event);
@@ -1599,9 +1599,10 @@ void aucmd_defer_modified(buf_T *buf, bool new_val)
 /// @param buf Buffer for <abuf>
 ///
 /// @return true if some commands were executed.
-bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_T *buf)
+bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_T *buf, win_T *win)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL, false);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, win, NULL, NULL,
+                              false);
 }
 
 /// Like apply_autocmds(), but with extra "eap" argument.  This takes care of
@@ -1618,7 +1619,8 @@ bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_
 bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
                           exarg_T *eap)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, eap, NULL, false);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, curwin, eap, NULL,
+                              false);
 }
 
 /// Like apply_autocmds(), but handles the caller's retval.  If the script
@@ -1631,18 +1633,19 @@ bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force
 /// @param fname_io fname to use for <afile> on cmdline
 /// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param buf Buffer for <abuf>
+/// @param win Window for ev.win (NULL means use curwin)
 /// @param[in,out] retval caller's retval
 ///
 /// @return true if some autocommands were executed
 bool apply_autocmds_retval(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
-                           int *retval)
+                           win_T *win, int *retval)
 {
   if (should_abort(*retval)) {
     return false;
   }
 
-  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL,
-                                      false);
+  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, win, NULL,
+                                      NULL, false);
   if (did_cmd && aborting()) {
     *retval = FAIL;
   }
@@ -1686,12 +1689,13 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param group autocmd group ID or AUGROUP_ALL
 /// @param buf Buffer for <abuf>
+/// @param win Window for ev.win (NULL means use curwin)
 /// @param eap Ex command arguments
 /// @param with_buf Run callbacks with "buf" as the current buffer
 ///
 /// @return true if some commands were executed.
 bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force, int group,
-                          buf_T *buf, exarg_T *eap, Object *data, bool with_buf)
+                          buf_T *buf, win_T *win, exarg_T *eap, Object *data, bool with_buf)
 {
   char *sfname = NULL;  // short file name
   bool retval = false;
@@ -1772,6 +1776,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   char *save_autocmd_fname = autocmd_fname;
   bool save_autocmd_fname_full = autocmd_fname_full;
   int save_autocmd_bufnr = autocmd_bufnr;
+  int save_autocmd_winid = autocmd_winid;
   char *save_autocmd_match = autocmd_match;
   int save_autocmd_busy = autocmd_busy;
   int save_autocmd_nested = autocmd_nested;
@@ -1803,6 +1808,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
 
   // Set the buffer number to be used for <abuf>.
   autocmd_bufnr = buf == NULL ? 0 : buf->b_fnum;
+
+  // Set the window handle to be used for ev.win.
+  autocmd_winid = win != NULL ? win->handle : (curwin != NULL ? curwin->handle : 0);
 
   // When the file name is NULL or empty, use the file name of buffer "buf".
   // Always use the full path of the file name to match with, in case
@@ -2013,6 +2021,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   autocmd_fname = save_autocmd_fname;
   autocmd_fname_full = save_autocmd_fname_full;
   autocmd_bufnr = save_autocmd_bufnr;
+  autocmd_winid = save_autocmd_winid;
   autocmd_match = save_autocmd_match;
   current_sctx = save_current_sctx;
   restore_funccal();
@@ -2081,7 +2090,7 @@ void do_termresponse_autocmd(const String sequence)
 {
   MAXSIZE_TEMP_DICT(data, 1);
   PUT_C(data, "sequence", STRING_OBJ(sequence));
-  apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, NULL,
+  apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, NULL, NULL,
                        &DICT_OBJ(data), false);
   termresponse_changed = true;
 }
@@ -2185,12 +2194,13 @@ static bool au_callback(const AutoCmd *ac, const AutoPatCmd *apc)
 {
   Callback callback = ac->handler_fn;
   if (callback.type == kCallbackLua) {
-    MAXSIZE_TEMP_DICT(data, 7);
+    MAXSIZE_TEMP_DICT(data, 8);
     PUT_C(data, "id", INTEGER_OBJ(ac->id));
     PUT_C(data, "event", CSTR_AS_OBJ(event_nr2name(apc->event)));
     PUT_C(data, "file", CSTR_AS_OBJ(apc->afile_orig));
     PUT_C(data, "match", CSTR_AS_OBJ(autocmd_match));
     PUT_C(data, "buf", INTEGER_OBJ(autocmd_bufnr));
+    PUT_C(data, "win", INTEGER_OBJ(autocmd_winid));
 
     if (apc->data) {
       PUT_C(data, "data", *apc->data);
@@ -2713,7 +2723,7 @@ static TriState pending_vimresume = kFalse;
 
 static void vimresume_event(void **argv)
 {
-  apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
+  apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL, NULL);
   pending_vimresume = kFalse;
 }
 
@@ -2722,7 +2732,7 @@ void may_trigger_vim_suspend_resume(bool suspend)
 {
   if (suspend && pending_vimresume == kFalse) {
     pending_vimresume = kNone;
-    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
+    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL, curwin);
     pending_vimresume = kTrue;
   } else if (!suspend && pending_vimresume == kTrue) {
     pending_vimresume = kNone;
@@ -2748,7 +2758,7 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
   assert(chanid < VARNUMBER_MAX);
   tv_dict_add_nr(dict, S_LEN("chan"), (varnumber_T)chanid);
   tv_dict_set_keys_readonly(dict);
-  apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE, NULL, NULL, false, curbuf);
+  apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE, NULL, NULL, false, curbuf, curwin);
   restore_v_event(dict, &save_v_event);
 
   recursive = false;
@@ -2765,7 +2775,7 @@ void do_autocmd_focusgained(bool gained)
     return;  // disallow recursion
   }
   recursive = true;
-  apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST), NULL, NULL, false, curbuf);
+  apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST), NULL, NULL, false, curbuf, curwin);
 
   // When activated: Check if any file was modified outside of Vim.
   // Only do this when not done within the last two seconds as:
@@ -2800,7 +2810,8 @@ bool do_filetype_autocmd(buf_T *buf, bool force)
   // Only pass true for "force" when it is true or
   // used recursively, to avoid endless recurrence.
   bool ret
-    = apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force || ft_recursive == 1, buf);
+    = apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force || ft_recursive == 1, buf,
+                     curwin);
   ft_recursive--;
 
   secure = secure_save;

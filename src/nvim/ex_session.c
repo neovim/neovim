@@ -1098,7 +1098,7 @@ void ex_mkrc(exarg_T *eap)
 
   xfree(viewFile);
 
-  apply_autocmds(EVENT_SESSIONWRITEPOST, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_SESSIONWRITEPOST, NULL, NULL, false, curbuf, curwin);
 }
 
 /// @return  the name of the view file for the current buffer.

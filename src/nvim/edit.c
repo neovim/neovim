@@ -1429,7 +1429,7 @@ void ins_redraw(bool ready)
 
     // save and restore curwin and curbuf, in case the autocmd changes them
     aucmd_prepbuf(&aco, curbuf);
-    apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, false, curbuf, curwin);
     aucmd_restbuf(&aco);
     curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
     if (tick != buf_get_changedtick(curbuf)) {  // see ins_apply_autocmds()
@@ -1449,7 +1449,7 @@ void ins_redraw(bool ready)
 
     // save and restore curwin and curbuf, in case the autocmd changes them
     aucmd_prepbuf(&aco, curbuf);
-    apply_autocmds(EVENT_TEXTCHANGEDP, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TEXTCHANGEDP, NULL, NULL, false, curbuf, curwin);
     aucmd_restbuf(&aco);
     curbuf->b_last_changedtick_pum = buf_get_changedtick(curbuf);
     if (tick != buf_get_changedtick(curbuf)) {  // see ins_apply_autocmds()
@@ -4386,7 +4386,7 @@ int ins_apply_autocmds(event_T event)
 {
   varnumber_T tick = buf_get_changedtick(curbuf);
 
-  int r = apply_autocmds(event, NULL, NULL, false, curbuf);
+  int r = apply_autocmds(event, NULL, NULL, false, curbuf, curwin);
 
   // If u_savesub() was called then we are not prepared to start
   // a new line.  Call u_save() with no contents to fix that.

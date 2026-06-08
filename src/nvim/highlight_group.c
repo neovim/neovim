@@ -811,12 +811,12 @@ int load_colors(char *name)
   recursive = true;
   size_t buflen = strlen(name) + 12;
   char *buf = xmalloc(buflen);
-  apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
+  apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf, curwin);
   snprintf(buf, buflen, "colors/%s.*", name);
   int retval = source_runtime_vim_lua(buf, DIP_START + DIP_OPT);
   xfree(buf);
   if (retval == OK) {
-    apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, false, curbuf);
+    apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, false, curbuf, curwin);
   }
 
   recursive = false;

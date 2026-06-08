@@ -378,6 +378,7 @@ cleanup:
 ///            - group: (`number?`) Group id, if any
 ///            - id: (`number`) Autocommand id
 ///            - match: (`string`) [<amatch>] (expanded to a full path)
+///            - win: (`number`)  |window-ID| for the event.
 ///        - command (string?) Vim command executed on event. Not allowed with {callback}.
 ///        - desc (`string?`) Description (for documentation and troubleshooting).
 ///        - group (`string|integer?`) Group name or id to match against.
@@ -761,7 +762,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, E
 
     FOREACH_ITEM(patterns, pat, {
       char *fname = !has_buf ? pat.data.string.data : NULL;
-      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, b, NULL, data,
+      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, b, NULL, NULL, data,
                                         has_buf);
     })
   })

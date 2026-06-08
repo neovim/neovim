@@ -449,7 +449,7 @@ int do_record(int c)
       regname = c;
       retval = OK;
 
-      apply_autocmds(EVENT_RECORDINGENTER, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_RECORDINGENTER, NULL, NULL, false, curbuf, curwin);
     }
   } else {  // stop recording
     save_v_event_T save_v_event;
@@ -474,7 +474,7 @@ int do_record(int c)
     // Get the recorded key hits.  K_SPECIAL will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
     // adds the escaping back later.
-    apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf, curwin);
     restore_v_event(dict, &save_v_event);
     reg_recorded = reg_recording;
     reg_recording = 0;
@@ -1254,7 +1254,7 @@ void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
 
   tv_dict_set_keys_readonly(dict);
   textlock++;
-  apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf, curwin);
   textlock--;
   restore_v_event(dict, &save_v_event);
 
@@ -1322,9 +1322,9 @@ static void put_do_autocmd(int regname, yankreg_T *reg, const String *insert, bo
   recursive = true;
   textlock++;
   if (post) {
-    apply_autocmds(EVENT_TEXTPUTPOST, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TEXTPUTPOST, NULL, NULL, false, curbuf, curwin);
   } else {
-    apply_autocmds(EVENT_TEXTPUTPRE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TEXTPUTPRE, NULL, NULL, false, curbuf, curwin);
   }
   textlock--;
   recursive = false;

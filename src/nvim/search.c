@@ -1403,7 +1403,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
     retval = 1;                     // pattern found
 
     if (sia && sia->sa_wrapped) {
-      apply_autocmds(EVENT_SEARCHWRAPPED, NULL, NULL, false, NULL);
+      apply_autocmds(EVENT_SEARCHWRAPPED, NULL, NULL, false, NULL, NULL);
     }
 
     // Add character and/or line offset
