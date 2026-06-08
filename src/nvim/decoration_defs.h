@@ -29,11 +29,16 @@ typedef enum {
 /// Flags for virtual lines
 enum {
   kVLLeftcol = 1,  ///< Start at left window edge, ignoring number column, etc.
-  kVLScroll = 2,   ///< Can scroll horizontally with 'nowrap'
-  // kVLWrap = 4,
 };
 
-typedef kvec_t(struct virt_line { VirtText line; int flags; }) VirtLines;
+typedef enum {
+  kVLOverflowTrunc,    ///< Truncate with 'nowrap'
+  kVLOverflowScroll,   ///< Scroll horizontally with 'nowrap'
+  kVLOverflowWrap,     ///< Wrap onto extra rows
+  kVLOverflowAuto,     ///< Scroll with 'nowrap'; wrap with 'wrap'
+} VirtLineOverflow;
+
+typedef kvec_t(struct virt_line { VirtText line; int flags; VirtLineOverflow overflow; }) VirtLines;
 
 typedef uint16_t DecorPriority;
 typedef uint32_t DecorPriorityInternal;

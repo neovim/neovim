@@ -495,6 +495,8 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 ///                 - "trunc": truncate virtual lines on the right (default).
 ///                 - "scroll": virtual lines can scroll horizontally with 'nowrap',
 ///                    otherwise the same as "trunc".
+///                 - "wrap": virtual lines can wrap onto extra lines.
+///                 - "auto": virtual lines wrap with 'wrap' and scroll horizontally with 'nowrap'.
 ///               - virt_text : [](virtual-text) to link to this mark.
 ///                   A list of `[text, highlight]` tuples, each representing a
 ///                   text chunk with specified highlight. `highlight` element
@@ -724,10 +726,15 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
   }
 
   int virt_lines_flags = opts->virt_lines_leftcol ? kVLLeftcol : 0;
+  VirtLineOverflow virt_lines_overflow = kVLOverflowTrunc;
   if (HAS_KEY(opts, set_extmark, virt_lines_overflow)) {
     String str = opts->virt_lines_overflow;
     if (strequal("scroll", str.data)) {
-      virt_lines_flags |= kVLScroll;
+      virt_lines_overflow = kVLOverflowScroll;
+    } else if (strequal("wrap", str.data)) {
+      virt_lines_overflow = kVLOverflowWrap;
+    } else if (strequal("auto", str.data)) {
+      virt_lines_overflow = kVLOverflowAuto;
     } else if (!strequal("trunc", str.data)) {
       VALIDATE_S(false, "virt_lines_overflow", str.data, {
         goto error;
@@ -743,7 +750,8 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
       });
       int dummig;
       VirtText jtem = parse_virt_text(a.items[j].data.array, err, &dummig, false);
-      kv_push(virt_lines.data.virt_lines, ((struct virt_line){ jtem, virt_lines_flags }));
+      kv_push(virt_lines.data.virt_lines,
+              ((struct virt_line){ jtem, virt_lines_flags, virt_lines_overflow }));
       if (ERROR_SET(err)) {
         goto error;
       }
