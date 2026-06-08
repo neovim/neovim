@@ -555,16 +555,18 @@ Note that the C++ compiler is explicitly set so that it can be found when the de
 ## Building with zig
 
 ### Prerequisites
- - zig 0.15.2
+
+- zig 0.16.x
 
 ### Instructions
- - Build the editor: `zig build`, run it with `./zig-out/bin/nvim`
- - Complete installation with runtime: `zig build install --prefix ~/.local`
- - Tests:
-   + `zig build functionaltest` to run all functionaltests
-   + `zig build functionaltest -- test/functional/autocmd/bufenter_spec.lua` to run the tests in one file
-   + `zig build unittest` to run all unittests
-   + `zig build oldtest` to run all oldtests
+
+- Build the editor: `zig build`, run it with `./zig-out/bin/nvim`
+- Complete installation with runtime: `zig build install --prefix ~/.local`
+- Tests:
+  - `zig build functionaltest` to run all functionaltests
+  - `zig build functionaltest -- test/functional/autocmd/bufenter_spec.lua` to run the tests in one file
+  - `zig build unittest` to run all unittests
+  - `zig build oldtest` to run all oldtests
 
 #### Using system dependencies
 
@@ -581,12 +583,11 @@ Also relevant for webassembly (WASM) build.
 
 - cmake: Set `NVIM_HOST_PRG` so that the docs and tags generation works without
   depending on the target binary.
-
-- zig build: often is enabled by just setting -Dtarget, e.g. from a linux host
-
+- zig build: cross-compilation is often enabled by just setting -Dtarget, e.g. from a linux host:
+  ```
    zig build -Dtarget=aarch64-macos
-
-  will automatically compilp a host lua for use during build. The
+  ```
+  will automatically compile a host lua for use during build. The
   "-Dhost={target_string}" option can be used to override the platform for
   running binaries during compile-time. use "-Dhost=native" to force
   cross-compiling or "-Dhost=" (empty string) to assume that target binaries

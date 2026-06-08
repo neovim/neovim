@@ -40,7 +40,7 @@ M.priorities = {
 ---
 ---@param buf integer Buffer number to apply highlighting to
 ---@param ns integer Namespace to add highlight to
----@param higroup integer|integer[]|string|string[] Highlight group used for the text range.
+---@param hlgroup integer|integer[]|string|string[] Highlight group used for the text range.
 --- See the `hl_group` option in |nvim_buf_set_extmark()|.
 ---@param start [integer,integer]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param finish [integer,integer]|string End of region as a (line, column) tuple or string accepted by |getpos()|
@@ -49,7 +49,7 @@ M.priorities = {
 --- highlight has left
 --- @return fun()? range_clear A function which allows clearing the highlight manually.
 --- nil is returned if timeout is not specified
-function M.range(buf, ns, higroup, start, finish, opts)
+function M.range(buf, ns, hlgroup, start, finish, opts)
   -- Resolve buf=0 so the deferred `range_hl_clear` works correctly even after buffer-switch.
   buf = vim._resolve_bufnr(buf)
   opts = opts or {}
@@ -123,7 +123,7 @@ function M.range(buf, ns, higroup, start, finish, opts)
     table.insert(
       extmarks,
       api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-        hl_group = higroup,
+        hl_group = hlgroup,
         end_row = end_row,
         end_col = end_col,
         priority = priority,
@@ -192,7 +192,7 @@ function M.hl_op(opts)
   end
 
   local state_key = event.operator == 'y' and 'yank' or 'put'
-  local higroup = opts.higroup or 'IncSearch'
+  local hlgroup = opts.higroup or 'IncSearch'
 
   local bufnr = api.nvim_get_current_buf()
   local winid = api.nvim_get_current_win()
@@ -205,7 +205,7 @@ function M.hl_op(opts)
   end
 
   api.nvim__ns_set(events_ns, { wins = { winid } })
-  local timer, clear = M.range(bufnr, events_ns, higroup, "'[", "']", {
+  local timer, clear = M.range(bufnr, events_ns, hlgroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = true,
     priority = opts.priority or M.priorities.user,

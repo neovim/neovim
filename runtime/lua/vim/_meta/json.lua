@@ -10,7 +10,7 @@ vim.json = {}
 --- @class vim.json.decode.Opts
 --- @inlinedoc
 ---
---- Convert `null` in JSON objects and/or arrays to Lua `nil` instead of |vim.NIL|.
+--- Convert JSON "null" in objects/arrays to Lua `nil` instead of |vim.NIL|.
 --- (default: `nil`)
 --- @field luanil? { object?: boolean, array?: boolean }
 ---

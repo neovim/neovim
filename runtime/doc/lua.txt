@@ -2969,13 +2969,13 @@ vim.hl.priorities                                          *vim.hl.priorities*
       symbols or `hl_op` autocommands
 
                                                               *vim.hl.range()*
-vim.hl.range({buf}, {ns}, {higroup}, {start}, {finish}, {opts})
+vim.hl.range({buf}, {ns}, {hlgroup}, {start}, {finish}, {opts})
     Apply highlight group to range of text.
 
     Parameters: ~
       • {buf}      (`integer`) Buffer number to apply highlighting to
       • {ns}       (`integer`) Namespace to add highlight to
-      • {higroup}  (`integer|integer[]|string|string[]`) Highlight group used
+      • {hlgroup}  (`integer|integer[]|string|string[]`) Highlight group used
                    for the text range. See the `hl_group` option in
                    |nvim_buf_set_extmark()|.
       • {start}    (`[integer,integer]|string`) Start of region as a (line,
@@ -3677,8 +3677,8 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
       • {str}   (`string`) Stringified JSON data.
       • {opts}  (`table?`) A table with the following fields:
                 • {luanil}? (`{ object?: boolean, array?: boolean }`, default:
-                  `nil`) Convert `null` in JSON objects and/or arrays to Lua
-                  `nil` instead of |vim.NIL|.
+                  `nil`) Convert JSON "null" in objects/arrays to Lua `nil`
+                  instead of |vim.NIL|.
                 • {skip_comments}? (`boolean`, default: `false`) Allows
                   JavaScript-style comments within JSON data. Comments are
                   treated as whitespace and may appear anywhere whitespace is
