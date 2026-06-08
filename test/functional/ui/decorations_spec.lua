@@ -6759,7 +6759,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     }
   end)
 
-  it('scrolls horizontally with virt_lines_overflow = "scroll" #31000', function()
+  it('scrolls horizontally with virt_lines_overflow=scroll #31000', function()
     command('set nowrap signcolumn=yes')
     insert('abcdefghijklmnopqrstuvwxyz')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {
@@ -7174,6 +7174,44 @@ if (h->n_buckets < new_n_buckets) { // expand
       {8:[2]}{16:dolor sit amet, consectetur. }                  |
       {8:[2]}^line2                                          |
       {8:[3]}line3                                          |
+                                                        |
+    ]])
+  end)
+
+  it('mixing virt_lines_overflow=wrap and virt_lines_overflow=scroll', function()
+    command('set nowrap signcolumn=yes')
+    insert('line1\nline2\nline3\n')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'BELOW ' .. string.rep('a', 60), 'Special' } } },
+      virt_lines_overflow = 'wrap',
+    })
+    api.nvim_buf_set_extmark(0, ns, 1, 0, {
+      virt_lines = { { { 'ABOVE ' .. string.rep('b', 60), 'Special' } } },
+      virt_lines_overflow = 'scroll',
+      virt_lines_above = true,
+    })
+    api.nvim_buf_set_extmark(0, ns, 1, 0, {
+      virt_lines = { { { 'BELOW ' .. string.rep('c', 60), 'Special' } } },
+      virt_lines_overflow = 'scroll',
+    })
+    api.nvim_buf_set_extmark(0, ns, 2, 0, {
+      virt_lines = { { { 'ABOVE ' .. string.rep('d', 60), 'Special' } } },
+      virt_lines_overflow = 'wrap',
+      virt_lines_above = true,
+    })
+    feed('2ggzlzl')
+    screen:expect([[
+      {7:  }ne1                                             |
+      {7:  }{16:BELOW aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7:  }{16:aaaaaaaaaaaaaaaaaa}                              |
+      {7:  }{16:OVE bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}|
+      {7:  }^ne2                                             |
+      {7:  }{16:LOW cccccccccccccccccccccccccccccccccccccccccccc}|
+      {7:  }{16:ABOVE dddddddddddddddddddddddddddddddddddddddddd}|
+      {7:  }{16:dddddddddddddddddd}                              |
+      {7:  }ne3                                             |
+      {7:  }                                                |
+      {1:~                                                 }|
                                                         |
     ]])
   end)

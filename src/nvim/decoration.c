@@ -1124,6 +1124,11 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 
 static const uint32_t lines_filter[kMTMetaCount] = {[kMTMetaLines] = kMTFilterSelect };
 
+static inline bool decor_virt_line_wrap(win_T *wp, VirtLineOverflow overflow)
+{
+  return overflow == kVLOverflowWrap || (overflow == kVLOverflowAuto && wp->w_p_wrap);
+}
+
 /// Counts the number of rows occupied by a virtual line. When skip_cells is non-NULL, sets it to
 /// the cell offset where target_row begins.
 ///
@@ -1133,13 +1138,14 @@ static const uint32_t lines_filter[kMTMetaCount] = {[kMTMetaLines] = kMTFilterSe
 /// @return Number of rows occupied by the virtual line.
 int decor_virt_line_rows(win_T *wp, const struct virt_line *vl, int target_row, int *skip_cells)
 {
-  VirtLineOverflow overflow = vl->overflow;
-  bool wrap = (overflow == kVLOverflowWrap) || ((overflow == kVLOverflowAuto) && wp->w_p_wrap);
-  int row_width = wp->w_view_width - ((vl->flags & kVLLeftcol) ? 0 : win_col_off(wp));
   if (skip_cells != NULL) {
     *skip_cells = 0;
   }
-  if (!wrap || row_width <= 0) {
+  if (!decor_virt_line_wrap(wp, vl->overflow)) {
+    return 1;
+  }
+  int row_width = wp->w_view_width - ((vl->flags & kVLLeftcol) ? 0 : win_col_off(wp));
+  if (row_width <= 0) {
     return 1;
   }
   VirtText vt = vl->line;
@@ -1196,30 +1202,40 @@ int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, Virt
 
   assert(start_row >= 0);
 
-  int virt_lines = 0;
+  int n_virt_lines = 0;
   while (true) {
     MTKey mark = marktree_itr_current(itr);
     DecorVirtText *vt = mt_decor_virt(mark);
     if (!mt_invalid(mark) && ns_in_win(mark.ns, wp)) {
       while (vt) {
-        if (vt->flags & kVTIsLines) {
+        VirtLines virt_lines = vt->data.virt_lines;
+        if ((vt->flags & kVTIsLines) && kv_size(virt_lines) > 0) {
           bool above = vt->flags & kVTLinesAbove;
           int mrow = mark.pos.row;
           int draw_row = mrow + (above ? 0 : 1);
           if (draw_row >= start_row && draw_row < end_row
               && (!apply_folds || !(hasFolding(wp, mrow + 1, NULL, NULL)
                                     || decor_conceal_line(wp, mrow, false)))) {
-            // Iterates over each virtual line summing number of rows.
-            // Rows belonging to previous line are accumulated in num_below.
-            for (int i = 0; i < (int)kv_size(vt->data.virt_lines); i++) {
-              int rows = decor_virt_line_rows(wp, &kv_A(vt->data.virt_lines, i), 0, NULL);
-              virt_lines += rows;
+            // All virtual lines from the same extmark have the same overflow flag.
+            if (decor_virt_line_wrap(wp, kv_A(virt_lines, 0).overflow)) {
+              // Iterates over each virtual line summing number of rows.
+              // Rows belonging to previous line are accumulated in num_below.
+              for (int i = 0; i < (int)kv_size(virt_lines); i++) {
+                int rows = decor_virt_line_rows(wp, &kv_A(virt_lines, i), 0, NULL);
+                n_virt_lines += rows;
+                if (num_below && !above) {
+                  (*num_below) += rows;
+                }
+              }
+            } else {
+              // If virtual lines don't wrap there is no need to iterate over them.
+              n_virt_lines += (int)kv_size(virt_lines);
               if (num_below && !above) {
-                (*num_below) += rows;
+                (*num_below) += (int)kv_size(virt_lines);
               }
             }
             if (lines) {
-              kv_splice(*lines, vt->data.virt_lines);
+              kv_splice(*lines, virt_lines);
             }
           }
         }
@@ -1232,7 +1248,7 @@ int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, Virt
     }
   }
 
-  return virt_lines;
+  return n_virt_lines;
 }
 
 /// This assumes maximum one entry of each kind, which will not always be the case.
