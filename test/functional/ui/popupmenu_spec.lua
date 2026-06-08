@@ -5690,6 +5690,191 @@ describe('builtin popupmenu', function()
       end
     end)
 
+    -- oldtest: Test_wildmenu_pum_info_mouse_scroll()
+    it('scrolling cmdline pum info popup', function()
+      screen:try_resize(55, 12)
+      exec([[
+        func DictComp(A, L, P)
+          let info = join(map(range(1, 30), '"info line " .. v:val'), "\n")
+          return [
+                \ {'word': 'apple',  'kind': 'f', 'menu': 'fruit', 'info': info},
+                \ {'word': 'banana', 'kind': 'f', 'menu': 'fruit', 'info': info},
+                \ ]
+        endfunc
+        command -nargs=1 -complete=customlist,DictComp DictCmd echo <q-args>
+        set wildmenu wildoptions=pum completeopt=menu,popup mouse=a
+      ]])
+
+      feed(':DictCmd <Tab>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+                                                                 |
+          {1:~                                                      }|*10
+        ## grid 3
+          :DictCmd apple^                                         |
+        ## grid 4
+          {n:info line 1 }|
+          {n:info line 2 }|
+          {n:info line 3 }|
+          {n:info line 4 }|
+          {n:info line 5 }|
+          {n:info line 6 }|
+          {n:info line 7 }|
+          {n:info line 8 }|
+          {n:info line 9 }|
+          {n:info line 10}|
+          {n:info line 11}|
+          {n:info line 12}|
+        ## grid 5
+          {12: apple  f fruit }|
+          {n: banana f fruit }|
+        ]],
+          float_pos = {
+            [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
+            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+          },
+        })
+      else
+        screen:expect([[
+                                  {n:info line 1 }                   |
+          {1:~                       }{n:info line 2 }{1:                   }|
+          {1:~                       }{n:info line 3 }{1:                   }|
+          {1:~                       }{n:info line 4 }{1:                   }|
+          {1:~                       }{n:info line 5 }{1:                   }|
+          {1:~                       }{n:info line 6 }{1:                   }|
+          {1:~                       }{n:info line 7 }{1:                   }|
+          {1:~                       }{n:info line 8 }{1:                   }|
+          {1:~                       }{n:info line 9 }{1:                   }|
+          {1:~       }{12: apple  f fruit }{n:info line 10}{1:                   }|
+          {1:~       }{n: banana f fruit info line 11}{1:                   }|
+          :DictCmd apple^                                         |
+        ]])
+      end
+
+      if send_mouse_grid then
+        api.nvim_input_mouse('wheel', 'down', '', 4, 0, 0)
+        api.nvim_input_mouse('wheel', 'down', '', 4, 0, 0)
+        api.nvim_input_mouse('wheel', 'down', '', 4, 0, 0)
+      else
+        api.nvim_input_mouse('wheel', 'down', '', 0, 0, 24)
+        api.nvim_input_mouse('wheel', 'down', '', 0, 0, 24)
+        api.nvim_input_mouse('wheel', 'down', '', 0, 0, 24)
+      end
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+                                                                 |
+          {1:~                                                      }|*10
+        ## grid 3
+          :DictCmd apple^                                         |
+        ## grid 4
+          {n:info line 10}|
+          {n:info line 11}|
+          {n:info line 12}|
+          {n:info line 13}|
+          {n:info line 14}|
+          {n:info line 15}|
+          {n:info line 16}|
+          {n:info line 17}|
+          {n:info line 18}|
+          {n:info line 19}|
+          {n:info line 20}|
+          {n:info line 21}|
+        ## grid 5
+          {12: apple  f fruit }|
+          {n: banana f fruit }|
+        ]],
+          float_pos = {
+            [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
+            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+          },
+        })
+      else
+        screen:expect([[
+                                  {n:info line 10}                   |
+          {1:~                       }{n:info line 11}{1:                   }|
+          {1:~                       }{n:info line 12}{1:                   }|
+          {1:~                       }{n:info line 13}{1:                   }|
+          {1:~                       }{n:info line 14}{1:                   }|
+          {1:~                       }{n:info line 15}{1:                   }|
+          {1:~                       }{n:info line 16}{1:                   }|
+          {1:~                       }{n:info line 17}{1:                   }|
+          {1:~                       }{n:info line 18}{1:                   }|
+          {1:~       }{12: apple  f fruit }{n:info line 19}{1:                   }|
+          {1:~       }{n: banana f fruit info line 20}{1:                   }|
+          :DictCmd apple^                                         |
+        ]])
+      end
+
+      if send_mouse_grid then
+        api.nvim_input_mouse('wheel', 'up', '', 4, 0, 0)
+        api.nvim_input_mouse('wheel', 'up', '', 4, 0, 0)
+      else
+        api.nvim_input_mouse('wheel', 'up', '', 0, 0, 24)
+        api.nvim_input_mouse('wheel', 'up', '', 0, 0, 24)
+      end
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:-------------------------------------------------------]|*11
+          [3:-------------------------------------------------------]|
+        ## grid 2
+                                                                 |
+          {1:~                                                      }|*10
+        ## grid 3
+          :DictCmd apple^                                         |
+        ## grid 4
+          {n:info line 4 }|
+          {n:info line 5 }|
+          {n:info line 6 }|
+          {n:info line 7 }|
+          {n:info line 8 }|
+          {n:info line 9 }|
+          {n:info line 10}|
+          {n:info line 11}|
+          {n:info line 12}|
+          {n:info line 13}|
+          {n:info line 14}|
+          {n:info line 15}|
+        ## grid 5
+          {12: apple  f fruit }|
+          {n: banana f fruit }|
+        ]],
+          float_pos = {
+            [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
+            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+          },
+        })
+      else
+        screen:expect([[
+                                  {n:info line 4 }                   |
+          {1:~                       }{n:info line 5 }{1:                   }|
+          {1:~                       }{n:info line 6 }{1:                   }|
+          {1:~                       }{n:info line 7 }{1:                   }|
+          {1:~                       }{n:info line 8 }{1:                   }|
+          {1:~                       }{n:info line 9 }{1:                   }|
+          {1:~                       }{n:info line 10}{1:                   }|
+          {1:~                       }{n:info line 11}{1:                   }|
+          {1:~                       }{n:info line 12}{1:                   }|
+          {1:~       }{12: apple  f fruit }{n:info line 13}{1:                   }|
+          {1:~       }{n: banana f fruit info line 14}{1:                   }|
+          :DictCmd apple^                                         |
+        ]])
+      end
+
+      feed('<Esc>')
+    end)
+
     -- oldtest: Test_cmdline_complete_findfunc_dict()
     it("'findfunc' can return extra info for cmdline completion", function()
       screen:try_resize(55, 12)

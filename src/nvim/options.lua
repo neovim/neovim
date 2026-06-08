@@ -10497,7 +10497,10 @@ local options = {
         		is not supported for file and directory names and
         		instead wildcard expansion is used.
           pum		Display the completion matches using the popup menu in
-        		the same style as the |ins-completion-menu|.
+        		the same style as the |ins-completion-menu|.  When an
+        		info popup is shown next to the menu, it can be
+        		scrolled by moving the mouse pointer on top of it and
+        		using the scroll wheel.
           tagfile	When using CTRL-D to list matching tags, the kind of
         		tag and the file of the tag is listed.	Only one match
         		is displayed per line.  Often used tag kinds are:
