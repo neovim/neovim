@@ -2420,6 +2420,43 @@ describe('api/buf', function()
     end)
   end)
 
+  describe('nvim_buf_set_file_mtime', function()
+    local fname = 'Xtest_set_file_mtime'
+
+    before_each(function()
+      t.write_file(fname, 'hello')
+    end)
+
+    after_each(function()
+      os.remove(fname)
+    end)
+
+    it('suppresses false :w external-change warning', function()
+      command('e ' .. fname)
+
+      -- Modify the buffer
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'hello', 'world' })
+
+      -- Write the same content externally to bump the file mtime
+      t.write_file(fname, 'hello\nworld')
+      local stat = assert(vim.uv.fs_stat(fname))
+
+      -- Sync the mtime so nvim knows our write was us
+      api.nvim_buf_set_file_mtime(0, stat.mtime.sec, stat.mtime.nsec)
+
+      -- :w should NOT warn about external changes and should succeed
+      command('w')
+      eq('hello', fn.readfile(fname)[1])
+      eq('world', fn.readfile(fname)[2])
+    end)
+
+    it('no-ops on buffers without a backing file', function()
+      command('new')
+      -- should not error
+      api.nvim_buf_set_file_mtime(0, 0, 0)
+    end)
+  end)
+
   describe('nvim_buf_is_loaded', function()
     it('works', function()
       -- record our buffer number for when we unload it

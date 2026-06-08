@@ -1001,6 +1001,35 @@ void nvim_buf_set_name(Buffer buf, String name, Error *err)
   }
 }
 
+/// Sets the file modification time for a buffer's backing file.
+///
+/// The caller is expected to provide the file mtime measured immediately
+/// after writing the file (e.g., from a libuv stat callback).  Sets
+/// b_mtime and b_mtime_read, which suppresses the external-change warning
+/// on the next |:w|.
+///
+/// @param buf        Buffer handle, or 0 for current buffer
+/// @param mtime_sec  File modification time (seconds since epoch)
+/// @param mtime_nsec File modification time (nanoseconds component)
+/// @param[out] err   Error details, if any
+void nvim_buf_set_file_mtime(Buffer buf, Integer mtime_sec, Integer mtime_nsec, Error *err)
+  FUNC_API_SINCE(15)
+{
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!b) {
+    return;
+  }
+
+  if (b->b_ffname == NULL || !bt_normal(b)) {
+    return;
+  }
+
+  b->b_mtime = (int64_t)mtime_sec;
+  b->b_mtime_ns = (int64_t)mtime_nsec;
+  b->b_mtime_read = b->b_mtime;
+  b->b_mtime_read_ns = b->b_mtime_ns;
+}
+
 /// Checks if a buffer is valid and loaded. See |api-buffer| for more info
 /// about unloaded buffers.
 ///

@@ -127,6 +127,8 @@ API
   • |nvim_get_option_info2()|
   • |nvim_get_option_value()|
   • |nvim_set_option_value()|
+• |nvim_buf_set_file_mtime()| sets b_mtime and b_mtime_read, suppressing
+  false external-change warnings after external writes.
 
 BUILD
 
