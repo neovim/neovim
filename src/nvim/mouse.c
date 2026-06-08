@@ -8,6 +8,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
@@ -1133,6 +1134,58 @@ void ins_mousescroll(int dir)
     start_arrow(&orig_cursor);
     set_can_cindent(true);
   }
+}
+
+/// Command-line mode implementation for scrolling in direction "dir", which is
+/// one of the MSCR_ values.  Scrolls the completion info popup when the mouse
+/// pointer is on top of it.
+/// Returns true when the info popup was scrolled.
+bool cmdline_mousescroll(int dir)
+{
+  cmdarg_T cap;
+  oparg_T oa;
+  CLEAR_FIELD(cap);
+  clear_oparg(&oa);
+  cap.oap = &oa;
+  cap.arg = dir;
+
+  switch (dir) {
+  case MSCR_UP:
+    cap.cmdchar = K_MOUSEUP; break;
+  case MSCR_DOWN:
+    cap.cmdchar = K_MOUSEDOWN; break;
+  case MSCR_LEFT:
+    cap.cmdchar = K_MOUSELEFT; break;
+  case MSCR_RIGHT:
+    cap.cmdchar = K_MOUSERIGHT; break;
+  }
+
+  if (mouse_row < 0 || mouse_col < 0) {
+    return false;
+  }
+
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+
+  // Only scroll when the mouse is on top of the info popup.
+  win_T *wp = mouse_find_win_inner(&grid, &row, &col);
+  if (wp == NULL || !wp->w_float_is_info) {
+    return false;
+  }
+
+  win_T *old_curwin = curwin;
+
+  curwin = wp;
+  curbuf = wp->w_buffer;
+  // Call the common mouse scroll function shared with other modes.
+  do_mousescroll(&cap);
+  curwin = old_curwin;
+  curbuf = curwin->w_buffer;
+
+  // Cmdline mode doesn't normally call update_screen(), so call it here.
+  update_screen();
+  return true;
 }
 
 /// Return true if "c" is a mouse key.
