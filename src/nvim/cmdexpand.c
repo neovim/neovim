@@ -3772,6 +3772,20 @@ int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, bool did_wi
   int c = key;
 
   if (cmdline_pum_active() || did_wild_list || wild_menu_showing) {
+    // When 'wildoptions' contains "swapnav", swap arrow key roles:
+    // Up/Down cycle matches, Left/Right navigate directories.
+    // (Default: Left/Right cycle, Up/Down navigate.)
+    if (wop_flags & kOptWopFlagSwapnav) {
+      if (c == K_UP) {
+        c = K_LEFT;
+      } else if (c == K_DOWN) {
+        c = K_RIGHT;
+      } else if (c == K_LEFT) {
+        c = K_UP;
+      } else if (c == K_RIGHT) {
+        c = K_DOWN;
+      }
+    }
     if (c == K_LEFT) {
       c = Ctrl_P;
     } else if (c == K_RIGHT) {

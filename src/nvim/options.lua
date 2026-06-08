@@ -10468,7 +10468,7 @@ local options = {
     {
       abbreviation = 'wop',
       defaults = 'pum,tagfile',
-      values = { 'fuzzy', 'tagfile', 'pum', 'exacttext' },
+      values = { 'fuzzy', 'tagfile', 'pum', 'exacttext', 'swapnav' },
       flags = true,
       deny_duplicates = true,
       desc = [=[
@@ -10498,6 +10498,12 @@ local options = {
         		instead wildcard expansion is used.
           pum		Display the completion matches using the popup menu in
         		the same style as the |ins-completion-menu|.
+          swapnav	Swap the arrow keys used to navigate wildmenu
+        		completions: <Up>/<Down> cycle through the match
+        		list, <Left>/<Right> ascend/descend directories.
+        		This swaps the default binding (Left/Right cycle
+        		matches, Up/Down change directories), which can
+        		feel inverted when using pum's vertical layout.
           tagfile	When using CTRL-D to list matching tags, the kind of
         		tag and the file of the tag is listed.	Only one match
         		is displayed per line.  Often used tag kinds are:

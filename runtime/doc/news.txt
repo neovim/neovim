@@ -231,6 +231,8 @@ OPTIONS
 • 'shortmess' flag |shm-u| silences undo/redo messages.
 • 'statusline' supports |stl-%0{| to insert the expression result verbatim.
 • 'winpinned' prevents window from closing unless specifically targeted.
+• 'wildoptions' 'swapnav' flag swaps wildmenu arrow key roles: Up/Down
+  cycle matches, Left/Right navigate directories.
 
 PERFORMANCE
 
