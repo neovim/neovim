@@ -6,7 +6,7 @@
 " 			Kevin Locke
 " 			LongJohnCoder
 " 			Devin Weaver
-" Last Change:		2026 Apr 26
+" Last Change:		2026 Jun 07
 
 " tuning parameters:
 " unlet javaScript_fold
@@ -59,7 +59,7 @@ syn keyword javaScriptConditional	if else switch
 syn keyword javaScriptRepeat		while for do in of
 syn keyword javaScriptBranch		break continue
 syn keyword javaScriptOperator		new delete instanceof typeof
-syn keyword javaScriptType		Array Boolean Date Function Number Object String RegExp
+syn keyword javaScriptType		Array Boolean Date Function Number Object String RegExp Symbol
 syn keyword javaScriptStatement		return with await yield
 syn keyword javaScriptBoolean		true false
 syn keyword javaScriptNull		null undefined
@@ -70,7 +70,7 @@ syn keyword javaScriptMessage		alert confirm prompt status
 syn keyword javaScriptGlobal		self window top parent
 syn keyword javaScriptMember		document event location
 syn keyword javaScriptDeprecated	escape unescape
-syn keyword javaScriptReserved		abstract as boolean byte char class const debugger double enum export extends final float from goto implements import int interface let long native package private protected public short super synchronized throws transient var volatile async using
+syn keyword javaScriptReserved		abstract as boolean byte char class const debugger double enum export extends final float from goto implements import int interface let long native package private protected public short super synchronized throws transient var void volatile async using
 syn keyword javaScriptModifier  static
 
 syn cluster  javaScriptEmbededExpr	contains=javaScriptBoolean,javaScriptNull,javaScriptIdentifier,javaScriptStringD,javaScriptStringS,javaScriptStringT
