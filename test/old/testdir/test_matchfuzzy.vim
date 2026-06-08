@@ -342,4 +342,31 @@ func Test_matchfuzzy_long_multiword_no_overflow()
   call assert_equal([[], [], []], matchfuzzypos([word], pat_overflow))
 endfunc
 
+func Test_matchfuzzy_long_candidate()
+  let str = repeat('a', 1024) .. 'z'
+  call assert_equal([], matchfuzzy([str], 'az'))
+  call assert_equal([[], [], []], matchfuzzypos([str], 'az'))
+
+  call assert_equal([str], matchfuzzy([str], 'a'))
+  let r = matchfuzzypos([str], 'a')
+  call assert_equal([str], r[0])
+  call assert_equal([0], r[1][0])
+
+  let edge = 'a' .. repeat('x', 1022) .. 'a'
+  call assert_equal([edge], matchfuzzy([edge], 'aa'))
+  let e = matchfuzzypos([edge], 'aa')
+  call assert_equal([edge], e[0])
+  call assert_equal([0, 1023], e[1][0])
+endfunc
+
+func Test_matchfuzzy_long_candidate_mbyte()
+  let ok = repeat('好', 1023) .. '界'
+  call assert_equal([ok], matchfuzzy([ok], '好界'))
+  call assert_notequal([], matchfuzzypos([ok], '好界')[0])
+
+  let toolong = repeat('好', 1024) .. '界'
+  call assert_equal([], matchfuzzy([toolong], '好界'))
+  call assert_equal([[], [], []], matchfuzzypos([toolong], '好界'))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
