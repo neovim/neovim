@@ -391,4 +391,101 @@ function M.local_additions()
   end
 end
 
+--- Get descriptions for builtin Ex commands.
+---
+--- Parses `doc/*.txt` `*:cmd*` sections and extracts command descriptions.
+---
+--- Used by |nvim_get_commands()| with `{ builtin = true, desc = true }`.
+--- @param names string[]
+--- @return string[]
+function M._get_excmd_descs(names)
+  local target = #names == 1 and names[1] or nil
+  local descs = {} --- @type table<string, string>
+
+  local function is_tag_only_line(line)
+    local s = vim.trim(line)
+    if s == '' then
+      return false
+    end
+    return s:gsub('%*[^*]+%*', ''):match('^%s*$') ~= nil
+  end
+
+  local function strip_cmd_leader(line)
+    if not vim.startswith(line, ':') then
+      return vim.trim(line)
+    end
+    ---@type string
+    local desc = line:match('^:.-\t+(.+)$') or line:match('^:.-%s%s+(.+)$')
+    return desc and vim.trim(desc) or ''
+  end
+
+  ---@param cur_cmds string[]
+  ---@param cur_lines string[]
+  ---@return boolean hit
+  local function flush(cur_cmds, cur_lines)
+    if #cur_lines == 0 then
+      return false
+    end
+    local desc = table.concat(cur_lines, ' ')
+    for _, cmd in ipairs(cur_cmds) do
+      if descs[cmd] == nil then
+        descs[cmd] = desc
+        if cmd == target then
+          return true
+        end
+      end
+    end
+    return false
+  end
+
+  --- Scan one file. Returns true if `target` was hit.
+  ---@param file string
+  ---@return boolean hit
+  local function scan_file(file)
+    local cur_cmds, cur_lines = {}, {} ---@type string[], string[]
+    for _, line in ipairs(vim.fn.readfile(file)) do
+      local new_cmds = {} ---@type string[]
+      for cmd in line:gmatch('%*:(%S-)%*') do
+        new_cmds[#new_cmds + 1] = cmd
+      end
+      local has_new_cmd = #new_cmds > 0
+      local ends = line:match('^%s*$') or line:match('^[=%-]+$') or has_new_cmd
+      if #cur_cmds > 0 and ends then
+        if flush(cur_cmds, cur_lines) then
+          return true
+        end
+        cur_cmds, cur_lines = {}, {}
+      end
+      if has_new_cmd then
+        cur_cmds = new_cmds
+      elseif #cur_cmds > 0 and not is_tag_only_line(line) then
+        local stripped = strip_cmd_leader(line)
+        if #stripped > 0 then
+          cur_lines[#cur_lines + 1] = stripped
+        end
+      end
+    end
+    return flush(cur_cmds, cur_lines)
+  end
+
+  local docdir = vim.fs.joinpath(vim.env.VIMRUNTIME, 'doc')
+  for name, t in vim.fs.dir(docdir) do
+    -- Allow Ctrl-C to interrupt long scans.
+    local _, code = vim.wait(0, nil, 0)
+    if code == -2 then
+      break
+    end
+
+    if t == 'file' and vim.endswith(name, '.txt') and scan_file(vim.fs.joinpath(docdir, name)) then
+      break
+    end
+  end
+
+  local result = {} --- @type string[]
+  for i, name in ipairs(names) do
+    result[i] = descs[name] or ''
+  end
+  return result
+end
+
 return M
