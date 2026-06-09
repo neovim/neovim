@@ -56,6 +56,7 @@
 #include "nvim/cursor_shape.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -72,6 +73,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/input.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
@@ -79,6 +81,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
@@ -93,6 +96,8 @@
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/terminal.h"
+#include "nvim/terminal_defs.h"
+#include "nvim/terminal_encode.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
@@ -132,87 +137,10 @@ typedef struct {
 // libvterm. Improves performance when receiving large bursts of data.
 #define REFRESH_DELAY 10
 
-#define TEXTBUF_SIZE      0x1fff
 #define SELECTIONBUF_SIZE 0x0400
 
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
-
-typedef struct {
-  size_t cols;
-  VTermScreenCell cells[];
-} ScrollbackLine;
-
-struct terminal {
-  TerminalOptions opts;  // options passed to terminal_alloc()
-  VTerm *vt;
-  VTermScreen *vts;
-  // buffer used to:
-  //  - convert VTermScreen cell arrays into utf8 strings
-  //  - receive data from libvterm as a result of key presses.
-  char textbuf[TEXTBUF_SIZE];
-
-  ScrollbackLine **sb_buffer;  ///< Scrollback storage.
-  size_t sb_current;           ///< Lines stored in sb_buffer.
-  size_t sb_size;              ///< Capacity of sb_buffer.
-  /// "virtual index" that points to the first sb_buffer row that we need to
-  /// push to the terminal buffer when refreshing the scrollback.
-  int sb_pending;
-  size_t sb_deleted;      ///< Lines deleted from sb_buffer.
-  size_t old_sb_deleted;  ///< Value of sb_deleted on last refresh_scrollback().
-  /// Lines in the terminal buffer belonging to the screen instead of the scrollback.
-  int old_height;
-
-  char *title;     // VTermStringFragment buffer
-  size_t title_len;
-  size_t title_size;
-
-  // buf_T instance that acts as a "drawing surface" for libvterm
-  // we can't store a direct reference to the buffer because the
-  // refresh_timer_cb may be called after the buffer was freed, and there's
-  // no way to know if the memory was reused.
-  handle_T buf_handle;
-  bool in_altscreen;
-  // program suspended
-  bool suspended;
-  // program exited
-  bool closed;
-  // when true, the terminal's destruction is already enqueued.
-  bool destroy;
-
-  // some vterm properties
-  bool forward_mouse;
-  int invalid_start, invalid_end;   // invalid rows in libvterm screen
-  struct {
-    int row, col;
-    int shape;
-    bool visible;  ///< Terminal wants to show cursor.
-                   ///< `TerminalState.cursor_visible` indicates whether it is actually shown.
-    bool blink;
-  } cursor;
-
-  struct {
-    bool resize;          ///< pending width/height
-    bool cursor;          ///< pending cursor shape or blink change
-    StringBuilder *send;  ///< When there is a pending TermRequest autocommand, block and store input.
-    MultiQueue *events;   ///< Events waiting for refresh.
-  } pending;
-
-  bool streamed_paste;  ///< Streamed pasting
-  bool theme_updates;  ///< Send a theme update notification when 'bg' changes
-  bool synchronized_output;  ///< Mode 2026: suppress redraws until end of synchronized update
-  bool sync_flush_pending;   ///< Set when mode 2026 ends; triggers immediate buffer refresh
-
-  bool color_set[16];
-
-  char *selection_buffer;  ///< libvterm selection buffer
-  StringBuilder selection;  ///< Growable array containing full selection data
-
-  StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
-  VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
-
-  size_t refcount;                  // reference count
-};
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
   .damage = term_damage,
@@ -1551,6 +1479,84 @@ static void terminal_focus(const Terminal *term, bool focus)
   } else {
     vterm_state_focus_out(state);
   }
+}
+
+/// Export the terminal's rendered state (scrollback + screen) to a msgpack file.
+///
+/// The destination, overwrite, and parent directory handling are decided by the
+/// Lua `vim._core.terminal.save`.
+/// The save path policy: if `fname` is
+///   - a bare filename, then it is stored under stdpath('state')/term/,
+///   - a path containing a path separator, then it's written directly to that location.
+///
+/// @param term     Terminal to export.
+/// @param fname    Destination name/path (must end in ".mpack", checked by the caller).
+/// @param force    Overwrite an existing destination (`:write!`).
+/// @param mkdir_p  Create missing parent directories for explicit paths (`++p`).
+/// @return true on success.
+bool terminal_save_state(Terminal *term, char *fname, bool force, bool mkdir_p)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (term->in_altscreen) {
+    emsg(_("Cannot :write terminal state while the alternate screen is active"));
+    return false;
+  }
+
+  refresh_terminal(term);
+
+  Channel *chan = (Channel *)term->opts.data;
+  const char *cwd = chan->stream.proc.cwd;
+
+  String content = te_encode_export_ansi(term);
+
+  typval_T tv_args[] = {
+    (typval_T){ .v_type = VAR_NUMBER, .vval.v_number = term->buf_handle },
+    (typval_T){ .v_type = VAR_STRING, .vval.v_string = content.data },
+    (typval_T){ .v_type = VAR_STRING, .vval.v_string = (char *)cwd },
+    (typval_T){ .v_type = VAR_STRING, .vval.v_string = fname },
+    (typval_T){ .v_type = VAR_BOOL, .vval.v_bool = force ? kBoolVarTrue : kBoolVarFalse },
+    (typval_T){ .v_type = VAR_BOOL, .vval.v_bool = mkdir_p ? kBoolVarTrue : kBoolVarFalse },
+    (typval_T){ .v_type = VAR_UNKNOWN },
+  };
+  typval_T rettv = TV_INITIAL_VALUE;
+  nlua_call_vimfn("vim._core.terminal", "save", tv_args, &rettv);
+
+  bool ok = false;
+  if (rettv.v_type == VAR_DICT) {
+    if (tv_dict_get_bool(rettv.vval.v_dict, "ok", false)) {
+      ok = true;
+      const char *msg_str = tv_dict_get_string(rettv.vval.v_dict, "msg", false);
+      if (msg_str) {
+        msg(msg_str, 0);
+      }
+    } else {
+      const int err = (int)tv_dict_get_number(rettv.vval.v_dict, "err");
+      const char *path = tv_dict_get_string(rettv.vval.v_dict, "path", false);
+      if (!path) {
+        path = "";
+      }
+      switch (err) {
+      case 13:
+        emsg(_(e_exists));
+        break;
+      case 17:
+        semsg(_(e_isadir2), path);
+        break;
+      case 212:
+        semsg(_(e_cant_open_file_for_writing_str), path);
+        break;
+      default:
+        emsg(_(e_cant_open_file_for_writing));
+        break;
+      }
+    }
+  } else if (rettv.v_type != VAR_UNKNOWN) {
+    emsg(_(e_cant_open_file_for_writing));
+  }
+
+  tv_clear(&rettv);
+  xfree(content.data);
+  return ok;
 }
 
 // }}}
