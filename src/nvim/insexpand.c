@@ -2299,6 +2299,7 @@ static void ins_compl_new_leader(void)
   compl_used_match = false;
 
   if (p_acl > 0) {
+    ins_redraw(true);
     pum_undisplay(true);
     redraw_later(curwin, UPD_VALID);
     update_screen();  // Show char (deletion) immediately
@@ -6298,11 +6299,11 @@ int ins_complete(int c, bool enable_pum)
   if (!shortmess(SHM_COMPLETIONMENU) && !compl_autocomplete) {
     ins_compl_show_statusmsg();
   }
-
   // Wait for the autocompletion delay to expire
   if (compl_autocomplete && p_acl > 0 && !disable_ac_delay && !no_matches_found
       && (os_hrtime() - compl_start_tv) / 1000000 < (uint64_t)p_acl) {
     setcursor();
+    ins_redraw(true);
     ui_flush();
     do {
       if (char_avail()) {
