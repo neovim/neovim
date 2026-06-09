@@ -93,6 +93,7 @@ end
 --- @field private _table (V1|[V1, V...])[] Underlying table data. Items may be packed tuples after transforms.
 --- @field private _head integer Index to the front of a table iterator
 --- @field private _tail integer Index to the end of a table iterator (exclusive)
+--- @field private _has_packed boolean True if the live window may contain packed tuples.
 local IterArray = setmetatable({}, Iter)
 IterArray.__index = IterArray
 IterArray.__call = Iter.__call
@@ -109,13 +110,14 @@ end
 
 --- @generic T...
 --- @param ... T... Values to pack
---- @return T|[T...]
+--- @return T|[T...] value
+--- @return boolean packed
 local function pack(...)
   local n = select('#', ...)
   if n > 1 then
-    return setmetatable({ n = n, ... }, packedmt)
+    return setmetatable({ n = n, ... }, packedmt), true
   end
-  return ...
+  return ..., false
 end
 
 local function sanitize(t)
@@ -324,6 +326,7 @@ function IterArray:flatten(depth)
   self._head = 1
   self._tail = #target + 1
   self._table = target
+  self._has_packed = false
   return self
 end
 
@@ -403,14 +406,19 @@ end
 function IterArray:map(f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
+  local has_packed = false
   for i = self._head, self._tail - inc, inc do
-    local v = pack(f(unpack(self._table[i])))
+    local v, packed = pack(f(unpack(self._table[i])))
     if v ~= nil then
+      if packed then
+        has_packed = true
+      end
       self._table[n] = v
       n = n + inc
     end
   end
   self._tail = n
+  self._has_packed = has_packed
   return self
 end
 
@@ -499,11 +507,14 @@ function IterArray:totable()
   -- Reindex and sanitize.
   local len = self._tail - self._head
 
-  local needs_sanitize = false
-  for i = self._head, self._tail - 1 do
-    if getmetatable(self._table[i]) == packedmt then
-      needs_sanitize = true
-      break
+  local needs_sanitize = self._has_packed
+  if needs_sanitize then
+    needs_sanitize = false
+    for i = self._head, self._tail - 1 do
+      if getmetatable(self._table[i]) == packedmt then
+        needs_sanitize = true
+        break
+      end
     end
   end
 
@@ -526,6 +537,7 @@ function IterArray:totable()
   if needs_sanitize then
     self._head = self._tail
   end
+  self._has_packed = false
 
   return self._table
 end
@@ -1235,6 +1247,7 @@ function IterArray:enumerate()
     local v = self._table[i]
     self._table[i] = pack(n, unpack(v))
   end
+  self._has_packed = self._head ~= self._tail
   return self
 end
 
@@ -1305,6 +1318,7 @@ function IterArray.new(t)
     _table = t,
     _head = 1,
     _tail = #t + 1,
+    _has_packed = false,
   }, IterArray)
 end
 
