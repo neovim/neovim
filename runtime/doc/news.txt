@@ -355,7 +355,10 @@ STARTUP
 
 TERMINAL
 
-• todo
+• |:write| with a ".mpack" filename extension in a terminal buffer saves the
+  rendered state as a msgpack file. The destination is `stdpath('state')/term/`
+  by default, or an exact path when the filename contains a path separator.
+  Plain `:write` without ".mpack" extention writes the buffer text normally.
 
 TREESITTER
 

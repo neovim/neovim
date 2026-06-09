@@ -1327,7 +1327,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
                   && !os_fileinfo_id_equal(&file_info, &file_info_old))) {
             err = set_err(_("E166: Can't open linked file for writing"));
           } else {
-            err = set_err_arg(_("E212: Can't open file for writing: %s"), fd);
+            err = set_err_arg(_(e_cant_open_file_for_writing_str), fd);
             if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL && perm >= 0) {
               // we write to the file, thus it should be marked
               // writable after all
@@ -1346,7 +1346,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
             }
           }
 #else
-          err = set_err_arg(_("E212: Can't open file for writing: %s"), fd);
+          err = set_err_arg(_(e_cant_open_file_for_writing_str), fd);
           if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL && perm >= 0) {
             if (!append) {                    // don't remove when appending
               os_remove(wfname);

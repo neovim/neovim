@@ -284,6 +284,30 @@ Concepts                                                   *terminal-concepts*
 TODO
 
 ==============================================================================
+Terminal persistence                                    *terminal-persistence*
+
+In a terminal buffer, `:write` with a ".mpack" extension exports the rendered
+terminal state (scrollback + visible screen) as a msgpack file, including
+metadata such as cwd, argv, and timestamp.
+
+`:w {name}.mpack`           Save rendered terminal state as a msgpack file to
+                          `stdpath('state')/term/`.
+`:w {path/}name.mpack`      If the name contains a path separator, write to
+                          that exact location.
+`:w! {name}.mpack`          Overwrite an existing file.
+
+Plain `:write` without ".mpack" (e.g. `:w foo.txt`) writes the buffer text
+normally.
+
+Terminal state files are stored in msgpack format with these fields:
+  `argv`        The command argument list of the terminal job.
+  `content`     ANSI escape sequences of the scrollback and screen.
+  `cwd`         Working directory of the terminal job.
+  `timestamp`   When the state was saved.
+
+Note: The alternate screen (e.g. vim, top) cannot be saved.
+
+==============================================================================
 :Termdebug plugin                         *terminal-debug* *terminal-debugger*
                                                *package-termdebug* *termdebug*
 
