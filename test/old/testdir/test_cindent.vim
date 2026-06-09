@@ -5590,6 +5590,37 @@ func Test_cindent_comment_brackets()
   call assert_equal('    arg3);', getline(3))
   bwipe!
 
+  " stray } in a // line comment inside an aggregate (enum/struct) whose
+  " opening brace is at the end of the line must not affect the next member
+  new
+  setl cindent sw=4
+  let code6 =<< trim [CODE]
+  typedef enum {
+      ND_BLOCK,  // { ... }
+      ND_FUNCALL,
+  } NodeKind;
+  [CODE]
+  call setline(1, code6)
+  call cursor(3, 1)
+  normal ==
+  call assert_equal('    ND_FUNCALL,', getline(3))
+  bwipe!
+
+  " same, a struct member with a trailing // } comment
+  new
+  setl cindent sw=4
+  let code7 =<< trim [CODE]
+  struct S {
+      int a;  // }
+      int b;
+  };
+  [CODE]
+  call setline(1, code7)
+  call cursor(3, 1)
+  normal ==
+  call assert_equal('    int b;', getline(3))
+  bwipe!
+
 endfunc
 
 
