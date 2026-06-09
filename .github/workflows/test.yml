@@ -36,7 +36,7 @@ jobs:
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
 
@@ -100,7 +100,7 @@ jobs:
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
 
@@ -148,7 +148,7 @@ jobs:
       CC: ${{ matrix.build.cc }}
       NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
 
@@ -250,7 +250,7 @@ jobs:
       # NB: tests assume there is a chosen install path, but nothing needs to be actually installed
       OPTS: -Doptimize=ReleaseSafe -Dinstall-path=/usr/
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
 
@@ -278,7 +278,7 @@ jobs:
     env:
       OPTS: -Dinstall-path=/usr/
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
 
@@ -297,7 +297,7 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (windows)
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
 
@@ -321,7 +321,7 @@ jobs:
     env:
       CC: gcc
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
 
