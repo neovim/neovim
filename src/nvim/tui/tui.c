@@ -359,7 +359,7 @@ void tui_query_bg_color(TUIData *tui)
   FUNC_ATTR_NONNULL_ALL
 {
   tui_query_bg_color_noflush(tui);
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
 }
 
 /// Use $NVIM_TERMDEFS to apply user overrides to terminfo. This is our own homebaked "terminfo",
@@ -633,7 +633,7 @@ static void terminfo_start(TUIData *tui)
       ELOG("uv_pipe_open failed: %s", uv_strerror(ret));
     }
   }
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
 
   xfree(term);
   xfree(colorterm);
@@ -689,7 +689,7 @@ static void terminfo_disable(TUIData *tui)
   out(tui, S_LEN("\x1b[c"));
 
   // Immediately flush the buffer and wait for the DA1 response.
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
 }
 
 /// Disable the alternate screen and prepare for the TUI to close.
@@ -709,7 +709,7 @@ static void terminfo_stop(TUIData *tui)
     terminfo_out(tui, kTerm_exit_ca_mode);
   }
 
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&tui->output_handle, NULL);
   uv_run(&tui->write_loop, UV_RUN_DEFAULT);
@@ -745,7 +745,7 @@ static void tui_terminal_after_startup(TUIData *tui)
   // Emit this after Nvim startup, not during.  This works around a tmux
   // 2.3 bug(?) which caused slow drawing during startup.  #7649
   out_len(tui, tui->terminfo_ext.enable_focus_reporting);
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
 }
 
 void tui_stop(TUIData *tui)
@@ -1218,7 +1218,7 @@ static void print_spaces(TUIData *tui, int width)
     if (left == 0) {
       break;  // likely: didn't need to flush for sm0l spaces
     }
-    flush_buf_part(tui);
+    flush_buf(tui, kFlushBufPartial);
   }
 
   grid->col += width;
@@ -1660,12 +1660,12 @@ void tui_visual_bell(TUIData *tui)
   } else {
     out(tui, S_LEN("\x1b[?5h"));
 
-    flush_buf(tui);
+    flush_buf(tui, kFlushBufFinal);
     uv_sleep(100);  // typically either 100 or 200 in terminfo. 100 seems enough
 
     out(tui, S_LEN("\x1b[?5l"));
   }
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
 }
 
 void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
@@ -1741,7 +1741,7 @@ void tui_flush(TUIData *tui)
 
   cursor_goto(tui, tui->row, tui->col);
 
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
 }
 
 /// Dumps termcap info to the messages area, if 'verbose' >= 3.
@@ -1822,7 +1822,7 @@ void tui_set_title(TUIData *tui, String title)
     if ((sizeof tui->buf - tui->bufpos) < title.size + 2 * TERMINFO_SEQ_LIMIT) {
       // The sequence to set title, is usually an OSC sequence that cannot be cut in half.
       // flush buffer prior to printing to avoid this
-      flush_buf(tui);
+      flush_buf(tui, kFlushBufFinal);
     }
     terminfo_out(tui, kTerm_to_status_line);
     out(tui, title.data, title.size);
@@ -1846,7 +1846,7 @@ void tui_screenshot(TUIData *tui, String path)
   }
 
   UGrid *grid = &tui->grid;
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
   grid->row = 0;
   grid->col = 0;
 
@@ -1862,7 +1862,7 @@ void tui_screenshot(TUIData *tui, String path)
       print_cell(tui, buf, cell.attr);
     }
   }
-  flush_buf(tui);
+  flush_buf(tui, kFlushBufFinal);
   tui->screenshot = NULL;
 
   fclose(f);
@@ -2033,12 +2033,12 @@ static void out(TUIData *tui, const char *str, size_t len)
   size_t available = sizeof(tui->buf) - tui->bufpos;
 
   if (len > available) {
-    flush_buf_part(tui);
+    flush_buf(tui, kFlushBufPartial);
     if (len > sizeof(tui->buf)) {
       // Don't use tui->buf[] when the string to output is too long. #30794
       tui->buf_to_flush = (char *)str;
       tui->bufpos = len;
-      flush_buf_part(tui);
+      flush_buf(tui, kFlushBufPartial);
       return;
     }
   }
@@ -2061,7 +2061,7 @@ void out_printf(TUIData *tui, size_t limit, const char *fmt, ...)
   assert(limit <= sizeof(tui->buf));
   size_t available = sizeof(tui->buf) - tui->bufpos;
   if (available < limit) {
-    flush_buf_part(tui);
+    flush_buf(tui, kFlushBufPartial);
   }
 
   va_list ap;
@@ -2112,7 +2112,7 @@ static void terminfo_print(TUIData *tui, TerminfoDef what, TPVAR *params)
   }
 
   // try again with fresh buffer
-  flush_buf_part(tui);
+  flush_buf(tui, kFlushBufPartial);
   size_t len = terminfo_fmt(tui->buf + tui->bufpos, tui->buf + sizeof(tui->buf), str, params);
   if (len > 0) {
     tui->bufpos += len;
@@ -2567,90 +2567,16 @@ static bool should_invisible(TUIData *tui)
   return tui->busy || tui->want_invisible;
 }
 
-/// Write the sequence to begin flushing output to `buf`.
-/// If 'termsync' is set and the terminal supports synchronized output, begin synchronized update.
-/// Otherwise, hide the cursor to avoid cursor jumping.
-///
-/// @param buf  the buffer to write the sequence to
-/// @param len  the length of `buf`
-static size_t flush_buf_start(TUIData *tui, char *buf, size_t len)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (tui->sync_output && tui->has_sync_mode && !tui->sync_output_active) {
-    tui->sync_output_active = true;
-    return xstrlcpy(buf, "\x1b[?2026h", len);
-  } else if (!tui->is_invisible) {
-    tui->is_invisible = true;
-
-    // TODO(bfredl): zero-param terminfo strings should be pre-filtered so we can just
-    // return a cached string here
-    TPVAR null_params[9] = { 0 };
-    const char *str = tui->ti.defs[kTerm_cursor_invisible];
-    if (str != NULL) {
-      return terminfo_fmt(buf, buf + len, str, null_params);
-    }
-  }
-
-  return 0;
-}
-
-/// Write the sequence to end flushing output to `buf`.
-/// If 'termsync' is set and the terminal supports synchronized output, end synchronized update.
-/// Otherwise, make the cursor visible again.
-///
-/// @param buf  the buffer to write the sequence to
-/// @param len  the length of `buf`
-static size_t flush_buf_end(TUIData *tui, char *buf, size_t len)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t offset = 0;
-  if (tui->sync_output_active) {
-#define SYNC_END "\x1b[?2026l"
-    memcpy(buf, SYNC_END, sizeof SYNC_END);
-    offset += sizeof SYNC_END - 1;
-    tui->sync_output_active = false;
-  }
-
-  return offset + flush_buf_update_cursor(tui, buf + offset, len - offset);
-}
-
-static size_t flush_buf_update_cursor(TUIData *tui, char *buf, size_t len)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t offset = 0;
-  const char *str = NULL;
-  if (tui->is_invisible && !should_invisible(tui)) {
-    str = tui->ti.defs[kTerm_cursor_normal];
-    tui->is_invisible = false;
-  } else if (!tui->is_invisible && should_invisible(tui)) {
-    str = tui->ti.defs[kTerm_cursor_invisible];
-    tui->is_invisible = true;
-  }
-  TPVAR null_params[9] = { 0 };
-  if (str != NULL) {
-    offset += terminfo_fmt(buf + offset, buf + len, str, null_params);
-  }
-
-  return offset;
-}
-
 /// Flushes the rendered buffer to the TTY.
 ///
 /// @see tui_flush
-static void flush_buf(TUIData *tui)
-{
-  flush_buf_with_finish(tui, kFlushBufFinal);
-}
-
-static void flush_buf_part(TUIData *tui)
-{
-  flush_buf_with_finish(tui, kFlushBufPartial);
-}
-
-static void flush_buf_with_finish(TUIData *tui, FlushBufFinish finish)
+static void flush_buf(TUIData *tui, FlushBufFinish finish)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (tui->bufpos <= 0 && tui->is_invisible == should_invisible(tui)
+  bool should_be_invisible = should_invisible(tui);
+
+  // Nothing to flush unless a final flush must end an active synchronized update.
+  if (tui->bufpos <= 0 && tui->is_invisible == should_be_invisible
       && !(finish == kFlushBufFinal && tui->sync_output_active)) {
     return;
   }
@@ -2659,17 +2585,61 @@ static void flush_buf_with_finish(TUIData *tui, FlushBufFinish finish)
   uv_buf_t bufs[3];
   char pre[32];
   char post[32];
+  size_t pre_len = 0;
+  size_t post_len = 0;
+  TPVAR null_params[9] = { 0 };
+
+  // Begin flushing output. If 'termsync' is set and the terminal supports synchronized
+  // output, begin synchronized update.
+  if (!tui->sync_output_active && tui->sync_output && tui->has_sync_mode) {
+    static const char sync_start[] = "\x1b[?2026h";
+    memcpy(pre, sync_start, sizeof sync_start);
+    pre_len += sizeof sync_start - 1;
+    tui->sync_output_active = true;
+  } else if (!tui->sync_output_active && !tui->is_invisible) {
+    // Otherwise, hide the cursor to avoid cursor jumping.
+    tui->is_invisible = true;
+
+    // TODO(bfredl): zero-param terminfo strings should be pre-filtered so we can just
+    // return a cached string here
+    const char *str = tui->ti.defs[kTerm_cursor_invisible];
+    if (str != NULL) {
+      pre_len += terminfo_fmt(pre + pre_len, pre + sizeof(pre), str, null_params);
+    }
+  }
+
+  // End synchronized update on the final flush.
+  if (finish == kFlushBufFinal && tui->sync_output_active) {
+    static const char sync_end[] = "\x1b[?2026l";
+    memcpy(post, sync_end, sizeof sync_end);
+    post_len += sizeof sync_end - 1;
+    tui->sync_output_active = false;
+  }
+
+  // Once synchronized output has ended, or when it was not active, make the cursor
+  // visible or invisible according to the current TUI state.
+  if (!tui->sync_output_active) {
+    const char *str = NULL;
+    if (tui->is_invisible && !should_be_invisible) {
+      str = tui->ti.defs[kTerm_cursor_normal];
+      tui->is_invisible = false;
+    } else if (!tui->is_invisible && should_be_invisible) {
+      str = tui->ti.defs[kTerm_cursor_invisible];
+      tui->is_invisible = true;
+    }
+    if (str != NULL) {
+      post_len += terminfo_fmt(post + post_len, post + sizeof(post), str, null_params);
+    }
+  }
 
   bufs[0].base = pre;
-  bufs[0].len = UV_BUF_LEN(flush_buf_start(tui, pre, sizeof(pre)));
+  bufs[0].len = UV_BUF_LEN(pre_len);
 
   bufs[1].base = tui->buf_to_flush != NULL ? tui->buf_to_flush : tui->buf;
   bufs[1].len = UV_BUF_LEN(tui->bufpos);
 
   bufs[2].base = post;
-  bufs[2].len = finish == kFlushBufFinal
-                ? UV_BUF_LEN(flush_buf_end(tui, post, sizeof(post)))
-                : UV_BUF_LEN(flush_buf_update_cursor(tui, post, sizeof(post)));
+  bufs[2].len = UV_BUF_LEN(post_len);
 
   if (tui->screenshot) {
     for (size_t i = 0; i < ARRAY_SIZE(bufs); i++) {
