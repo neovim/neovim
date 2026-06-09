@@ -7120,27 +7120,29 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]])
   end)
 
-  it('virt_lines_overflow=wrap with virt_lines_above', function()
+  it('virt_lines_overflow=wrap with virt_lines_above + virt_lines_leftcol', function()
     command('set wrap signcolumn=yes')
     insert('line1\nline2\nline3\n')
     feed('2gg')
     api.nvim_buf_set_extmark(0, ns, 1, 0, {
       virt_lines = {
-        { { string.rep('Lorem ipsum dolor sit amet, consectetur. ', 4), 'Special' } },
+        { { string.rep('Lorem ipsum dolor sit amet, consectetur. ', 6), 'Special' } },
       },
       virt_lines_overflow = 'wrap',
       virt_lines_above = true,
+      virt_lines_leftcol = true,
     })
     screen:expect([[
       {7:  }line1                                           |
-      {7:  }{16:Lorem ipsum dolor sit amet, consectetur. Lorem i}|
-      {7:  }{16:psum dolor sit amet, consectetur. Lorem ipsum do}|
-      {7:  }{16:lor sit amet, consectetur. Lorem ipsum dolor sit}|
-      {7:  }{16: amet, consectetur. }                            |
+      {16:Lorem ipsum dolor sit amet, consectetur. Lorem ips}|
+      {16:um dolor sit amet, consectetur. Lorem ipsum dolor }|
+      {16:sit amet, consectetur. Lorem ipsum dolor sit amet,}|
+      {16: consectetur. Lorem ipsum dolor sit amet, consecte}|
+      {16:tur. Lorem ipsum dolor sit amet, consectetur. }    |
       {7:  }^line2                                           |
       {7:  }line3                                           |
       {7:  }                                                |
-      {1:~                                                 }|*3
+      {1:~                                                 }|*2
                                                         |
     ]])
   end)
