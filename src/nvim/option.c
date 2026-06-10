@@ -626,44 +626,57 @@ void set_init_2(bool headless)
   change_option_default(kOptWindow, NUMBER_OPTVAL(Rows - 1));
 }
 
+static const struct {
+  const char *pat;
+  const char *shcf;
+  const char *sp;
+  const char *srr;
+  const char *sxq;
+} shell_rules[] = {
+#ifdef MSWIN
+  { "cmd",        "/s /c",    NULL,        NULL,       "\"" },
+  { "powershell", "-Command", NULL,        NULL,       NULL },
+#endif
+  { "csh",        NULL,       "|& tee",    ">&",       NULL },
+  { "sh",         NULL,       "2>&1| tee", ">%s 2>&1", NULL },
+};
+
+static void change_option_and_default_if_unset(OptIndex idx, const char *val)
+{
+  if (val == NULL || options[idx].flags & kOptFlagWasSet) {
+    return;
+  }
+  OptVal optval = CSTR_AS_OPTVAL(val);
+  set_option_direct(idx, optval, 0, SID_NONE);
+  change_option_default(idx, optval_copy(optval));
+}
+
 /// Initialize the options, part three: After reading the .vimrc
 void set_init_3(void)
 {
   parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
 
-  // Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
-  // This is done after other initializations, where 'shell' might have been
-  // set, but only if they have not been set before.
-  bool do_srr = !(options[kOptShellredir].flags & kOptFlagWasSet);
-  bool do_sp = !(options[kOptShellpipe].flags & kOptFlagWasSet);
-
-  size_t len = 0;
-  char *p = (char *)invocation_path_tail(p_sh, &len);
-  p = xmemdupz(p, len);
-
-  bool is_csh = path_fnamecmp(p, "csh") == 0 || path_fnamecmp(p, "tcsh") == 0;
-  bool is_known_shell = path_fnamecmp(p, "sh") == 0 || path_fnamecmp(p, "ksh") == 0
-                        || path_fnamecmp(p, "mksh") == 0 || path_fnamecmp(p, "pdksh") == 0
-                        || path_fnamecmp(p, "zsh") == 0 || path_fnamecmp(p, "zsh-beta") == 0
-                        || path_fnamecmp(p, "bash") == 0 || path_fnamecmp(p, "fish") == 0
-                        || path_fnamecmp(p, "ash") == 0 || path_fnamecmp(p, "dash") == 0;
-
-  // Default for p_sp is "| tee", for p_srr is ">".
-  // For known shells it is changed here to include stderr.
-  if (is_csh || is_known_shell) {
-    if (do_sp) {
-      const OptVal sp =
-        is_csh ? STATIC_CSTR_AS_OPTVAL("|& tee") : STATIC_CSTR_AS_OPTVAL("2>&1| tee");
-      set_option_direct(kOptShellpipe, sp, 0, SID_NONE);
-      change_option_default(kOptShellpipe, optval_copy(sp));
+  size_t len;
+  char name[MAXPATHL];
+  const char *p = invocation_path_tail(p_sh, &len);
+  xmemcpyz(name, p, len);
+  for (size_t i = 0; i < ARRAY_SIZE(shell_rules); i++) {
+    if (strstr(name, shell_rules[i].pat) == NULL) {
+      continue;
     }
-    if (do_srr) {
-      const OptVal srr = is_csh ? STATIC_CSTR_AS_OPTVAL(">&") : STATIC_CSTR_AS_OPTVAL(">%s 2>&1");
-      set_option_direct(kOptShellredir, srr, 0, SID_NONE);
-      change_option_default(kOptShellredir, optval_copy(srr));
+    change_option_and_default_if_unset(kOptShellcmdflag, shell_rules[i].shcf);
+    change_option_and_default_if_unset(kOptShellpipe, shell_rules[i].sp);
+    change_option_and_default_if_unset(kOptShellredir, shell_rules[i].srr);
+    change_option_and_default_if_unset(kOptShellxquote, shell_rules[i].sxq);
+#ifdef MSWIN
+    if (i > 0 && !(options[kOptShellslash].flags & kOptFlagWasSet)) {
+      // Use `/` as path separator on Unix-like shells or powershell on Windows
+      set_option_direct(kOptShellslash, BOOLEAN_OPTVAL(true), 0, SID_NONE);
+      change_option_default(kOptShellslash, BOOLEAN_OPTVAL(true));
     }
+#endif
+    break;
   }
-  xfree(p);
 
   if (buf_is_empty(curbuf)) {
     // Apply the first entry of 'fileformats' to the initial buffer.

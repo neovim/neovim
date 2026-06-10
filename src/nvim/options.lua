@@ -7709,10 +7709,9 @@ local options = {
     {
       abbreviation = 'shcf',
       defaults = {
-        condition = 'MSWIN',
-        if_false = '-c',
-        if_true = '/s /c',
-        doc = '"-c"; Windows: "/s /c"',
+        if_true = '-c',
+        doc = [["-c"; Windows, when 'shell'
+               contains "cmd" somewhere: "/s /c"]],
       },
       desc = [=[
         Flag passed to the shell to execute "!" and ":!" commands; e.g.,
@@ -7751,12 +7750,12 @@ local options = {
         For MS-Windows the default is "2>&1| tee".  The stdout and stderr are
         saved in a file and echoed to the screen.
         For Unix the default is "| tee".  The stdout of the compiler is saved
-        in a file and echoed to the screen.  If the 'shell' option is "csh" or
-        "tcsh" after initializations, the default becomes "|& tee".  If the
-        'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
-        "bash", "fish", "ash" or "dash" the default becomes "2>&1| tee".  This
-        means that stderr is also included.  Before using the 'shell' option a
-        path is removed, thus "/bin/sh" uses "sh".
+        in a file and echoed to the screen.  If the 'shell' option contains
+        "csh" (e.g. "tcsh") after initializations, the default becomes
+        "|& tee".  Otherwise, if it contains "sh" (e.g. "bash", "zsh"), the
+        default becomes "2>&1| tee".  This means that stderr is also included.
+        Before using the 'shell' option a path is removed, thus "/bin/sh" uses
+        "sh".
         The initialization of this option is done after reading the vimrc
         and the other initializations, so that when the 'shell' option is set
         there, the 'shellpipe' option changes automatically, unless it was
@@ -7821,12 +7820,12 @@ local options = {
         The name of the temporary file can be represented by "%s" if necessary
         (the file name is appended automatically if no %s appears in the value
         of this option).
-        The default is ">".  For Unix, if the 'shell' option is "csh" or
-        "tcsh" during initializations, the default becomes ">&".  If the
-        'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
-        "bash" or "fish", the default becomes ">%s 2>&1".  This means that
-        stderr is also included.  For Win32, the Unix checks are done and
-        additionally "cmd" is checked for, which makes the default ">%s 2>&1".
+        The default is ">".  For Unix, if the 'shell' option contains "csh"
+        (e.g. "tcsh") during initializations, the default becomes ">&".
+        Otherwise, if it contains "sh" (e.g. "bash", "zsh"), the default
+        becomes ">%s 2>&1". This means that stderr is also included.  For
+        Win32, the Unix checks are done and additionally "cmd" is checked
+        for, which makes the default ">%s 2>&1".
         Also, the same names with ".exe" appended are checked for.
         The initialization of this option is done after reading the vimrc
         and the other initializations, so that when the 'shell' option is set
@@ -7851,7 +7850,8 @@ local options = {
         condition = 'MSWIN',
         if_true = false,
         if_false = true,
-        doc = 'on, Windows: off',
+        doc = [[on; Windows: off, except when 'shell'
+               contains "sh" somewhere]],
       },
       desc = [=[
         		only modifiable in MS-Windows
@@ -7913,10 +7913,9 @@ local options = {
     {
       abbreviation = 'sxq',
       defaults = {
-        condition = 'MSWIN',
-        if_false = '',
-        if_true = '"',
-        doc = '"", Windows: "\\""',
+        if_true = '',
+        doc = [[""; Windows, when 'shell'
+               contains "cmd" somewhere: "\""]],
       },
       desc = [=[
         Quoting character(s), put around the command passed to the shell, for
