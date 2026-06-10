@@ -889,7 +889,7 @@ protocol.Methods = {
   textDocument_codeLens = 'textDocument/codeLens',
   --- A request to list all presentation for a color. The request's
   --- parameter is of type {@link ColorPresentationParams} the
-  --- response is of type {@link ColorInformation ColorInformation[]} or a Thenable
+  --- response is of type {@link ColorPresentation ColorPresentation[]} or a Thenable
   --- that resolves to such.
   textDocument_colorPresentation = 'textDocument/colorPresentation',
   --- Request to request completion at a given text document position. The request's
@@ -978,7 +978,6 @@ protocol.Methods = {
   --- type {@link InlineCompletionParams}, the response is of type
   --- {@link InlineCompletion InlineCompletion[]} or a Thenable that resolves to such.
   --- @since 3.18.0
-  --- @proposed
   textDocument_inlineCompletion = 'textDocument/inlineCompletion',
   --- A request to provide inline values in a document. The request's parameter is of
   --- type {@link InlineValueParams}, the response is of type
@@ -1012,7 +1011,6 @@ protocol.Methods = {
   textDocument_rangeFormatting = 'textDocument/rangeFormatting',
   --- A request to format ranges in a document.
   --- @since 3.18.0
-  --- @proposed
   textDocument_rangesFormatting = 'textDocument/rangesFormatting',
   --- A request to resolve project-wide references for the symbol denoted
   --- by the given text document position. The request's parameter is of
@@ -1121,8 +1119,8 @@ protocol.Methods = {
   --- A request send from the client to the server to execute a command. The request might return
   --- a workspace edit which the client will apply to the workspace.
   workspace_executeCommand = 'workspace/executeCommand',
+  --- A request to refresh the folding ranges in a document.
   --- @since 3.18.0
-  --- @proposed
   workspace_foldingRange_refresh = 'workspace/foldingRange/refresh',
   --- @since 3.17.0
   workspace_inlayHint_refresh = 'workspace/inlayHint/refresh',
@@ -1141,12 +1139,10 @@ protocol.Methods = {
   --- The `workspace/textDocumentContent` request is sent from the client to the
   --- server to request the content of a text document.
   --- @since 3.18.0
-  --- @proposed
   workspace_textDocumentContent = 'workspace/textDocumentContent',
   --- The `workspace/textDocumentContent` request is sent from the server to the client to refresh
   --- the content of a specific text document.
   --- @since 3.18.0
-  --- @proposed
   workspace_textDocumentContent_refresh = 'workspace/textDocumentContent/refresh',
   --- The will create files request is sent from the client to the server before files are actually
   --- created as long as the creation is triggered from within the client.
