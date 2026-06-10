@@ -967,6 +967,37 @@ describe('statusline', function()
                                               |
     ]])
   end)
+
+  it('active window is correct after nvim_exec_autocmds({buf}) #40153', function()
+    command('set laststatus=2')
+    local caller_win = api.nvim_get_current_win()
+    command('split')
+    local target = api.nvim_create_buf(true, false)
+    api.nvim_set_current_buf(target)
+    api.nvim_set_current_win(caller_win)
+    exec_lua(function(buf)
+      _G.Status = function()
+        return vim.api.nvim_get_current_win() == vim.g.statusline_winid and 'CUR' or 'nc'
+      end
+      vim.o.statusline = '%!v:lua.Status()'
+      vim.api.nvim_create_autocmd('User', {
+        buffer = buf,
+        callback = function(ev)
+          vim.api.nvim__redraw({ buf = ev.buf, statusline = true })
+        end,
+      })
+    end, target)
+    api.nvim_exec_autocmds('User', { buf = target })
+    screen:expect([[
+                                              |
+      {1:~                                       }|*2
+      {2:nc                                      }|
+      ^                                        |
+      {1:~                                       }|
+      {3:CUR                                     }|
+                                              |
+    ]])
+  end)
 end)
 
 describe('default statusline', function()

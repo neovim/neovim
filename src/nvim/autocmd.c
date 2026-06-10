@@ -1469,6 +1469,7 @@ win_found:
         curbuf->b_nwindows++;
       }
 
+      curwin->w_redr_status = true;
       curwin = save_curwin;
       curbuf = curwin->w_buffer;
       prevwin = win_find_by_handle(aco->save_prevwin_handle);
