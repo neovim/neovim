@@ -339,6 +339,8 @@ Events (autocommands):
 - |OptionSet| is triggered for 'modified' when writing a file, undoing changes,
   or using |:set| modified.
 - |Progress|
+- |MacroEnter|
+- |MacroLeave|
 - |RecordingEnter|
 - |RecordingLeave|
 - |SearchWrapped|
