@@ -152,6 +152,8 @@ DIAGNOSTICS
 
 • |vim.diagnostic.status()| uses the severity names defined by the `signs`
   field of |vim.diagnostic.config()|, if any.
+• `virtual_lines.overflow` in |vim.diagnostic.config()| controls
+  how virtual lines wider than the window are displayed.
 
 EDITOR
 

@@ -470,7 +470,8 @@ end
 --- @param namespace integer
 --- @param bufnr integer
 --- @param diagnostics vim.Diagnostic[]
-local function render_virtual_lines(namespace, bufnr, diagnostics)
+--- @param opts vim.diagnostic.Opts.VirtualLines
+local function render_virtual_lines(namespace, bufnr, diagnostics, opts)
   table.sort(diagnostics, function(d1, d2)
     return diagnostic_shared.diagnostic_cmp(d1, d2, 'lnum', false)
   end)
@@ -628,7 +629,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
     end
 
     api.nvim_buf_set_extmark(bufnr, namespace, line_anchor[lnum] or lnum, 0, {
-      virt_lines_overflow = 'scroll',
+      virt_lines_overflow = opts.overflow or 'auto',
       virt_lines = virt_lines,
     })
   end
@@ -685,7 +686,8 @@ function M.virtual_lines.show(namespace, bufnr, diagnostics, opts)
         render_virtual_lines(
           ns.user_data.virt_lines_ns,
           bufnr,
-          diagnostic_shared.diagnostics_at_cursor(line_diagnostics)
+          diagnostic_shared.diagnostics_at_cursor(line_diagnostics),
+          vopts
         )
       end)
 
@@ -693,10 +695,11 @@ function M.virtual_lines.show(namespace, bufnr, diagnostics, opts)
       render_virtual_lines(
         ns.user_data.virt_lines_ns,
         bufnr,
-        diagnostic_shared.diagnostics_at_cursor(line_diagnostics)
+        diagnostic_shared.diagnostics_at_cursor(line_diagnostics),
+        vopts
       )
     else
-      render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics)
+      render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics, vopts)
     end
 
     save_extmarks(ns.user_data.virt_lines_ns, bufnr)

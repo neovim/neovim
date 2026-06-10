@@ -718,6 +718,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                          a string or nil. If the return value is nil, the
                          diagnostic is not displayed by the handler. Else the
                          output text is used to display the diagnostic.
+      • {overflow}?      (`'trunc'|'scroll'|'wrap'|'auto'`, default: `auto`)
+                         See `virt_lines_overflow` in
+                         |nvim_buf_set_extmark()|.
       • {severity}?      (`vim.diagnostic.SeverityFilter`) Only show virtual
                          lines for diagnostics matching the given severity
                          |diagnostic-severity|
