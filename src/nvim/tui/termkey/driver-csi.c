@@ -205,7 +205,10 @@ static TermKeyResult handle_csi_u(TermKey *tk, TermKeyKey *key, int cmd, TermKey
       key->modifiers = 0;
     }
 
-    if (termkey_interpret_csi_param(params[0], &args[0], NULL, NULL) != TERMKEY_RES_KEY) {
+    int subparam = 0;
+    size_t nsubparams = 1;
+    if (termkey_interpret_csi_param(params[0], &args[0], &subparam,
+                                    &nsubparams) != TERMKEY_RES_KEY) {
       return TERMKEY_RES_ERROR;
     }
 
@@ -213,6 +216,10 @@ static TermKeyResult handle_csi_u(TermKey *tk, TermKeyKey *key, int cmd, TermKey
     key->type = TERMKEY_TYPE_KEYSYM;
     (*tk->method.emit_codepoint)(tk, args[0], key);
     key->modifiers |= mod;
+
+    if (nsubparams > 0) {
+      key->alt_codepoint = subparam;
+    }
 
     return TERMKEY_RES_KEY;
   }
