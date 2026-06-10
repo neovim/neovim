@@ -126,6 +126,8 @@ func RunServer(cmd, testfunc, args)
     endif
 
     call call(function(a:testfunc), [port])
+  catch /E901.*Address family for hostname not supported/
+    throw 'Skipped: Invalid network setup ("' .. v:exception .. '" in ' .. v:throwpoint .. ')'
   catch
     call assert_report('Caught exception: "' . v:exception . '" in ' . v:throwpoint)
   finally
