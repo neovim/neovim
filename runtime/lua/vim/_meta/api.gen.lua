@@ -1683,12 +1683,14 @@ function vim.api.nvim_open_tabpage(buf, enter, config) end
 --- will be echoed directly by the terminal. This is useful to display
 --- ANSI terminal sequences returned as part of an RPC message, or similar.
 ---
---- Note: to directly initiate the terminal using the right size, display the
---- buffer in a configured window before calling this. For instance, for a
---- floating display, first create an empty buffer using `nvim_create_buf()`,
---- then display it using `nvim_open_win()`, and then  call this function.
---- Then `nvim_chan_send()` can be called immediately to process sequences
---- in a virtual terminal having the intended size.
+--- Note: `:ls` reports the buffer as "R" (running) until the channel is closed. `chanclose()`
+---
+--- Note: To initialize the terminal size, display the buffer in a window first. E.g. for a floating display,
+--- 1. Create an empty buffer using `nvim_create_buf()`.
+--- 2. Display it with `nvim_open_win()`.
+--- 3. Call nvim_open_term().
+--- 4. Then calling `nvim_chan_send()` will process sequences in a virtual terminal with the
+---    intended size (defined by the window width/height).
 ---
 --- Example: this `TermHl` command can be used to display and highlight raw ANSI termcodes, so you
 --- can use Nvim as a "scrollback pager" (for terminals like kitty): [ansi-colorize]()
@@ -1700,8 +1702,8 @@ function vim.api.nvim_open_tabpage(buf, enter, config) end
 --- end, { desc = 'Highlights ANSI termcodes in curbuf' })
 --- ```
 ---
---- @param buf integer Buffer to use. Buffer contents (if any) will be written
---- to the PTY.
+--- @param buf integer Buffer which displays the PTY output. The initial buffer contents (if any) will be
+--- written to the PTY.
 --- @param opts vim.api.keyset.open_term Optional parameters.
 --- - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 --- - on_input: Lua callback for input sent, i e keypresses in terminal
