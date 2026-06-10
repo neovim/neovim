@@ -2250,6 +2250,20 @@ describe('LSP', function()
       }, buf_lines(1))
     end)
 
+    it('applies newline-terminated text edits at the end of the document', function()
+      apply_text_edits({
+        { 5, 0, 5, 0, 'foobar\n' },
+      })
+      eq({
+        'First line of text',
+        'Second line of text',
+        'Third line of text',
+        'Fourth line of text',
+        'å å ɧ 汉语 ↥ 🤦 🦄',
+        'foobar',
+      }, buf_lines(1))
+    end)
+
     it('it restores marks', function()
       eq(true, api.nvim_buf_set_mark(1, 'a', 2, 1, {}))
       apply_text_edits({
