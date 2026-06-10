@@ -6178,15 +6178,15 @@ function vim.fn.matchend(expr, pat, start, count) end
 ---     use for fuzzy matching.
 ---
 --- {str} is treated as a literal string and regular expression
---- matching is NOT supported.  The maximum supported {str} length
---- is 256.
+--- matching is NOT supported.  Only the first 1024 characters of
+--- {str} and of each item in {list} are used for matching;
+--- characters beyond that are ignored.
 ---
 --- When {str} has multiple words each separated by white space,
 --- then the list of strings that have all the words is returned.
 ---
 --- If there are no matching strings or there is an error, then an
---- empty list is returned.  If length of {str} is greater than
---- 256, then returns an empty list.
+--- empty list is returned.
 ---
 --- When {limit} is given, matchfuzzy() will find up to this
 --- number of matches in {list} and return them in sorted order.
