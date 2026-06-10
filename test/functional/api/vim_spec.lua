@@ -3756,6 +3756,23 @@ describe('API', function()
       eq(p(val[1]), vimruntime .. '/syntax/vim.vim')
       eq(p(val[2]), vimruntime .. '/ftplugin/vim.vim')
     end)
+
+    it('finds files via an 8.3 filename path #25019', function()
+      skip(not is_os('win'), 'N/A: 8.3 filenames are only available on Windows')
+      local path = 'Xtest_runtime_path'
+      mkdir_p(('%s/subdir/lua'):format(path))
+      write_file(('%s/subdir/lua/foo.lua'):format(path), '')
+      finally(function()
+        rmdir(path)
+      end)
+      local path_with_shortname =
+        p(fn.system(('for %%I in ("%s") do @echo %%~sI'):format(path), ''):gsub('\n', ''))
+      skip(path == vim.fs.basename(path_with_shortname), 'N/A: 8.3 filenames are disabled')
+      exec_lua(('vim.opt.rtp:prepend("%s/*")'):format(path_with_shortname))
+      local val = api.nvim_get_runtime_file('lua/foo.lua', true)
+      eq(1, #val)
+      eq(('%s/subdir/lua/foo.lua'):format(path_with_shortname), val[1])
+    end)
   end)
 
   describe('nvim_get_all_options_info', function()
