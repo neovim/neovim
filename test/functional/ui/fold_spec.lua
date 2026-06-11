@@ -3066,6 +3066,122 @@ describe('folded lines', function()
         ]])
       end
     end)
+
+    it("shows the correct overflow count in 'foldcolumn'", function()
+      fn.setline(1, 'line 1')
+      fn.setline(2, 'line 2')
+      fn.setline(3, 'line 3')
+      fn.setline(4, 'line 4')
+
+      command('1,4fold | 1,4foldopen')
+      command('2,4fold | 2,4foldopen')
+      command('3,4fold | 3,4foldopen')
+
+      command('set foldcolumn=1')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:-}^line 1                                      |
+          {7:-}line 2                                      |
+          {7:-}line 3                                      |
+          {7:3}line 4                                      |
+          {1:~                                            }|*3
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7:-}^line 1                                      |
+          {7:-}line 2                                      |
+          {7:-}line 3                                      |
+          {7:3}line 4                                      |
+          {1:~                                            }|*3
+                                                       |
+        ]])
+      end
+
+      command('set fillchars=foldinner:X')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:-}^line 1                                      |
+          {7:-}line 2                                      |
+          {7:-}line 3                                      |
+          {7:X}line 4                                      |
+          {1:~                                            }|*3
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7:-}^line 1                                      |
+          {7:-}line 2                                      |
+          {7:-}line 3                                      |
+          {7:X}line 4                                      |
+          {1:~                                            }|*3
+                                                       |
+        ]])
+      end
+      command('set fillchars=')
+
+      command('set foldcolumn=2')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:- }^line 1                                     |
+          {7:│-}line 2                                     |
+          {7:│-}line 3                                     |
+          {7:│2}line 4                                     |
+          {1:~                                            }|*3
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7:- }^line 1                                     |
+          {7:│-}line 2                                     |
+          {7:│-}line 3                                     |
+          {7:│2}line 4                                     |
+          {1:~                                            }|*3
+                                                       |
+        ]])
+      end
+
+      command('set foldcolumn=3')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:-  }^line 1                                    |
+          {7:│- }line 2                                    |
+          {7:││-}line 3                                    |
+          {7:│││}line 4                                    |
+          {1:~                                            }|*3
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7:-  }^line 1                                    |
+          {7:│- }line 2                                    |
+          {7:││-}line 3                                    |
+          {7:│││}line 4                                    |
+          {1:~                                            }|*3
+                                                       |
+        ]])
+      end
+    end)
   end
 
   describe('with ext_multigrid', function()
