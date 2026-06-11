@@ -172,6 +172,30 @@ function Test_MakeBookmark(netrw_curdir, fname)
   call s:MakeBookmark(a:fname)
   bw
 endfunction
+
+" Test the markings match pattern rebuilt by s:NetrwMarkFile() when unmarking an entry
+function Test_NetrwMarkFile_match_pattern_rebuild()
+  new
+  let curbufnr = bufnr("%")
+
+  call s:NetrwMarkFile(1, 'fname_dir/')
+  call s:NetrwMarkFile(1, 'fname_file')
+  let match_pattern = s:netrwmarkfilemtch_{curbufnr}
+
+  " Assert match pattern after marking and unmarking a directory entry
+  call s:NetrwMarkFile(1, 'dir/')
+  call s:NetrwMarkFile(1, 'dir/')
+  let rebuilt_match_pattern = s:netrwmarkfilemtch_{curbufnr}
+  call assert_equal(match_pattern, rebuilt_match_pattern)
+
+  " Assert match pattern after marking and unmarking a file entry
+  call s:NetrwMarkFile(1, 'file')
+  call s:NetrwMarkFile(1, 'file')
+  let rebuilt_match_pattern = s:netrwmarkfilemtch_{curbufnr}
+  call assert_equal(match_pattern, rebuilt_match_pattern)
+
+  bw
+endfunction
 " }}}
 END
 
@@ -770,6 +794,10 @@ func Test_netrw_bookmark_goto_delete_prompt()
   endif
 
   bw!
+endfunc
+
+func Test_netrw_markings_match_pattern_rebuild()
+  call Test_NetrwMarkFile_match_pattern_rebuild()
 endfunc
 
 func Test_netrw_mf_command_injection()
