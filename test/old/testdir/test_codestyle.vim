@@ -93,7 +93,7 @@ func Test_help_files()
     " Check for unnecessary whitespace at the end of a line
     call cursor(1, 1)
     while 1
-      let lnum = search('[^/~\\]\s$')
+      let lnum = search('\%([^/~\\]\|^\)\s\+$')
       " skip line that are known to have trailing white space
       if fname == 'map.txt' && getline(lnum) =~ "unmap @@ $"
             \ || fname == 'usr_12.txt' && getline(lnum) =~ "^\t/ \t$"
