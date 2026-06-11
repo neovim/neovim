@@ -156,10 +156,8 @@ char *path_tail_with_sep(char *fname)
 /// - "\"path/foo bar/bash\" --login" => "bash"
 /// - "\"path/foo\\\" bar/bash\" --login" => "bash"
 ///
-/// @param[in]  invocation Program invocation string.
-/// @param[out] len Stores the length of the executable name.
-///
-/// @post if `len` is not null, stores the length of the executable name.
+/// @param[in]  invocation Program invocation of the form: "path/to/exe [args]".
+/// @param[out] len Stores the length of the executable name, if not NULL.
 ///
 /// @return The position of the last path separator + 1.
 const char *invocation_path_tail(const char *invocation, size_t *len)

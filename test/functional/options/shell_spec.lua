@@ -7,7 +7,7 @@ local skip = t.skip
 local api = n.api
 local clear = n.clear
 
-describe('applies sensible default options for different shells #28384', function()
+describe("'shell…' option defaults based on $SHELL #28384", function()
   ---@param sh string
   ---@param shcf string
   ---@param sp string
@@ -69,7 +69,7 @@ describe('applies sensible default options for different shells #28384', functio
     )
   end)
 
-  it('even if the path contains spaces', function()
+  it('if the path contains spaces', function()
     clear {
       env = { SHELL = ('%s/foo bar/bash'):format(n.nvim_dir) },
     }

@@ -1131,25 +1131,23 @@ list of buffers. |unlisted-buffer|
 			"[No Name]"	no file name specified
 
 		Indicators (chars in the same column are mutually exclusive):
-		u	an unlisted buffer (only displayed when [!] is used)
-			   |unlisted-buffer|
-		 %	the buffer in the current window
-		 #	the alternate buffer for ":e #" and CTRL-^
-		  a	an active buffer: it is loaded and visible
-		  h	a hidden buffer: It is loaded, but currently not
-			   displayed in a window |hidden-buffer|
-		   `-`	a buffer with 'modifiable' off
-		   =	a readonly buffer
-		   R	a terminal buffer with a running job
-		   F	a terminal buffer with a finished job
-		   ?    a terminal buffer without a job: `:terminal NONE`
-		    +	a modified buffer
-		    x   a buffer with read errors
+		u	|unlisted-buffer| (only displayed when [!] is used)
+		 %	buffer in the current window
+		 #	|alternate-file| buffer for |:e#| and |CTRL-^|
+		  a	an active buffer: loaded and visible
+		  h	|hidden-buffer|: loaded, but not displayed in a window
+		   `-`	'nomodifiable' buffer
+		   =	readonly buffer
+		   R	terminal buffer with a Running job (open channel)
+		   F	terminal buffer with a Finished job (closed channel)
+		   ?    terminal buffer without a job: `:terminal NONE`
+		    +	'modified' buffer
+		    x   buffer with read errors
 
 		[flags] can be a combination of the following characters,
 		which restrict the buffers to be listed:
 			+	modified buffers
-			`-`	buffers with 'modifiable' off
+			`-`	'nomodifiable' buffers
 			=	readonly buffers
 			a	active buffers
 			u	unlisted buffers (overrides the "!")
@@ -1157,8 +1155,8 @@ list of buffers. |unlisted-buffer|
 			x	buffers with a read error
 			%	current buffer
 			#	alternate buffer
-			R	terminal buffers with a running job
-			F	terminal buffers with a finished job
+			R	terminal buffers with a Running job
+			F	terminal buffers with a Finished job
 			t	show time last used and sort buffers
 		Combining flags means they are "and"ed together, e.g.:
 			h+	hidden buffers which are modified

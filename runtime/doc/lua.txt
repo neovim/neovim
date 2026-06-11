@@ -2261,7 +2261,6 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
           -- ...
         end
 <
-
     2. `vim.validate(spec)` (DEPRECATED) where `spec` is of type
        `table<string,[value:any, validator: vim.validate.Validator, optional_or_msg? : boolean|string]>)`
        Validates a argument specification. Specs are evaluated in alphanumeric
@@ -2469,9 +2468,7 @@ vim.filetype.match({args})                              *vim.filetype.match()*
 
     The filetype can be detected using one of three methods:
     1. Using an existing buffer
-
     2. Using only a file name
-
     3. Using only file contents
 
     Of these, option 1 provides the most accurate result as it uses both the
