@@ -1885,6 +1885,14 @@ nvim__set_restart_on_crash({progpath}, {argv})
       • {progpath}  (`string`)
       • {argv}      (`any[]`)
 
+nvim__set_startreason({reason})                      *nvim__set_startreason()*
+    WARNING: This feature is experimental/unstable.
+
+    Set v:startreason variable.
+
+    Parameters: ~
+      • {reason}  (`string`) Startup reason ("normal", "restart").
+
 nvim__stats()                                                  *nvim__stats()*
     WARNING: This feature is experimental/unstable.
 

@@ -1775,6 +1775,21 @@ void nvim__chan_set_detach(uint64_t channel_id, Boolean detach, Error *err)
   chan->detach = (bool)detach;
 }
 
+
+/// Set v:startreason variable.
+///
+/// @param reason   Startup reason ("normal", "restart").
+/// @param[out] err Error details, if any.
+void nvim__set_startreason(String reason, Error *err)
+{
+  if (reason.data == NULL || reason.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "reason string not found");
+    return;
+  }
+
+  set_vim_var_string(VV_STARTREASON, reason.data, (ssize_t)reason.size);
+}
+
 /// Gets information about a channel.
 ///
 /// See |nvim_list_uis()| for an example of how to get channel info.

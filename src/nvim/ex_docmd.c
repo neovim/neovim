@@ -5108,6 +5108,16 @@ static void ex_restart(exarg_T *eap)
   arena_mem_free(result_mem);
   result_mem = NULL;
 
+  // Set v:startreason on new server
+  MAXSIZE_TEMP_ARRAY(startreason_args, 1);
+  ADD_C(startreason_args, CSTR_AS_OBJ("restart"));
+  rpc_send_call(channel->id, "nvim__set_startreason", startreason_args, &result_mem, &err);
+  if (ERROR_SET(&err)) {
+    goto fail_2;
+  }
+  arena_mem_free(result_mem);
+  result_mem = NULL;
+
   if (*eap->arg != NUL) {
     // Execute [command] on new server on UIEnter.
     MAXSIZE_TEMP_DICT(autocmd_opts, 3);

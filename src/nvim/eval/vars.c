@@ -218,6 +218,7 @@ static struct vimvar {
   VV(VV_STARTTIME,        "starttime",        VAR_NUMBER, VV_RO),
   VV(VV_EXITREASON,       "exitreason",       VAR_STRING, VV_RO),
   VV(VV_USERACTIVE,       "useractive",       VAR_NUMBER, VV_RO),
+  VV(VV_STARTREASON,      "startreason",      VAR_STRING, VV_RO),
 };
 #undef VV
 
@@ -315,6 +316,7 @@ void evalvars_init(void)
   set_vim_var_nr(VV_SEARCHFORWARD, 1);
   set_vim_var_nr(VV_HLSEARCH, 1);
   set_vim_var_nr(VV_COUNT1, 1);
+  set_vim_var_string(VV_STARTREASON, S_LEN("normal"));
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
   set_vim_var_nr(VV_TYPE_NUMBER, VAR_TYPE_NUMBER);
