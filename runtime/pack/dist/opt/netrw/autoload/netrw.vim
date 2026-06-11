@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 May 28
+" Last Change: 2026 Jun 10
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -5176,7 +5176,7 @@ endfunction
 "    s:netrwmarkfilelist_#  -- holds list of marked files in current-buffer's directory (#==bufnr())
 "
 "  Creates a marked file match string
-"    s:netrwmarfilemtch_#   -- used with 2match to display marked files
+"    s:netrwmarkfilemtch_#   -- used with 2match to display marked files
 "
 "  Creates a buffer version of islocal
 "    b:netrw_islocal
@@ -5188,23 +5188,21 @@ function s:NetrwMarkFile(islocal,fname)
     endif
     let curdir = s:NetrwGetCurdir(a:islocal)
 
-    let ykeep   = @@
-    let curbufnr= bufnr("%")
-    let leader= '\%(^\|\s\)\zs'
-    if a:fname =~ '\a$'
-        let trailer = '\>[@=|\/\*]\=\ze\%(  \|\t\|$\)'
-    else
-        let trailer = '[@=|\/\*]\=\ze\%(  \|\t\|$\)'
-    endif
+    let ykeep    = @@
+    let curbufnr = bufnr("%")
+    let leader   = '\%(^\|\s\)\zs'
+    let word_boundary_trailer = '\>[@=|\/\*]\=\ze\%(  \|\t\|$\)'
+    let fallback_trailer      = '[@=|\/\*]\=\ze\%(  \|\t\|$\)'
+    let trailer = (a:fname =~ '\a$') ? word_boundary_trailer : fallback_trailer
 
     if exists("s:netrwmarkfilelist_".curbufnr)
         " markfile list pre-exists
-        let b:netrw_islocal= a:islocal
+        let b:netrw_islocal = a:islocal
 
         if index(s:netrwmarkfilelist_{curbufnr},a:fname) == -1
             " append filename to buffer's markfilelist
-            call add(s:netrwmarkfilelist_{curbufnr},a:fname)
-            let s:netrwmarkfilemtch_{curbufnr}= s:netrwmarkfilemtch_{curbufnr}.'\|'.leader.escape(a:fname,g:netrw_markfileesc).trailer
+            call add(s:netrwmarkfilelist_{curbufnr},substitute(a:fname,'[|@]$','',''))
+            let s:netrwmarkfilemtch_{curbufnr} = s:netrwmarkfilemtch_{curbufnr}.'\|'.leader.escape(a:fname,g:netrw_markfileesc).trailer
 
         else
             " remove filename from buffer's markfilelist
@@ -5214,35 +5212,34 @@ function s:NetrwMarkFile(islocal,fname)
                 call s:NetrwUnmarkList(curbufnr,curdir)
             else
                 " rebuild match list to display markings correctly
-                let s:netrwmarkfilemtch_{curbufnr}= ""
-                let first                         = 1
+                let s:netrwmarkfilemtch_{curbufnr} = ""
+                let first = 1
                 for fname in s:netrwmarkfilelist_{curbufnr}
+                    let curtrailer = (fname =~ '\a$') ? word_boundary_trailer : fallback_trailer
+
+                    let match_str = leader.escape(fname, g:netrw_markfileesc).curtrailer
                     if first
-                        let s:netrwmarkfilemtch_{curbufnr}= s:netrwmarkfilemtch_{curbufnr}.leader.escape(fname,g:netrw_markfileesc).trailer
+                        let s:netrwmarkfilemtch_{curbufnr} = match_str
                     else
-                        let s:netrwmarkfilemtch_{curbufnr}= s:netrwmarkfilemtch_{curbufnr}.'\|'.leader.escape(fname,g:netrw_markfileesc).trailer
+                        let s:netrwmarkfilemtch_{curbufnr} = s:netrwmarkfilemtch_{curbufnr}.'\|'.match_str
                     endif
-                    let first= 0
+                    let first = 0
                 endfor
             endif
         endif
 
     else
         " initialize new markfilelist
-        let s:netrwmarkfilelist_{curbufnr}= []
+        let s:netrwmarkfilelist_{curbufnr} = []
         call add(s:netrwmarkfilelist_{curbufnr},substitute(a:fname,'[|@]$','',''))
 
         " build initial markfile matching pattern
-        if a:fname =~ '/$'
-            let s:netrwmarkfilemtch_{curbufnr}= leader.escape(a:fname,g:netrw_markfileesc)
-        else
-            let s:netrwmarkfilemtch_{curbufnr}= leader.escape(a:fname,g:netrw_markfileesc).trailer
-        endif
+        let s:netrwmarkfilemtch_{curbufnr} = leader.escape(a:fname,g:netrw_markfileesc).trailer
     endif
 
     " handle global markfilelist
     if exists("s:netrwmarkfilelist")
-        let dname= netrw#fs#ComposePath(b:netrw_curdir,a:fname)
+        let dname = netrw#fs#ComposePath(b:netrw_curdir,a:fname)
         if index(s:netrwmarkfilelist,dname) == -1
             " append new filename to global markfilelist
             call add(s:netrwmarkfilelist,netrw#fs#ComposePath(b:netrw_curdir,a:fname))
@@ -5255,7 +5252,7 @@ function s:NetrwMarkFile(islocal,fname)
         endif
     else
         " initialize new global-directory markfilelist
-        let s:netrwmarkfilelist= []
+        let s:netrwmarkfilelist = []
         call add(s:netrwmarkfilelist,netrw#fs#ComposePath(b:netrw_curdir,a:fname))
     endif
 
