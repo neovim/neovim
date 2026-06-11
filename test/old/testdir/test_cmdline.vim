@@ -1657,7 +1657,7 @@ func Test_lnum_and_pattern_as_range()
   2/foo/yank
   call assert_equal("foo 3\n", @")
   call assert_equal(1, line('.'))
-  close!
+  bw!
 endfunc
 
 " Tests for getcmdline(), getcmdpos() and getcmdtype()
@@ -2226,7 +2226,7 @@ func Test_cmdline_ctrl_g()
   " 'insertmode'
   " call feedkeys(":set im\<cr>\<C-L>:\<C-\>\<C-G>12\<C-L>:set noim\<cr>", 'xt')
   " call assert_equal('ab12xyc', getline(1))
-  close!
+  bw!
 endfunc
 
 " Test for 'wildmode'
