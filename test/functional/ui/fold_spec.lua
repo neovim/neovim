@@ -2304,6 +2304,10 @@ describe('folded lines', function()
                                                        |
         ]])
       end
+
+      -- `foldcolumn` in `statuscolumn` should be identical
+      command('set statuscolumn=%C')
+      screen:expect_unchanged()
     end)
 
     it('foldcolumn is not interrupted when virt_lines are inside a fold', function()
@@ -2353,6 +2357,129 @@ describe('folded lines', function()
                                                        |
         ]])
       end
+
+      command('set statuscolumn=%C')
+      screen:expect_unchanged()
+    end)
+
+    it('foldcolumn for a virt_line above a nested fold shows correct fold level', function()
+      fn.setline(1, 'line 1')
+      fn.setline(2, 'line 2')
+      fn.setline(3, 'line 3')
+      fn.setline(4, 'line 4')
+
+      local ns = api.nvim_create_namespace('ns')
+      api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_lines = { { { 'below line 2', '' } } } })
+      api.nvim_buf_set_extmark(
+        0,
+        ns,
+        2,
+        0,
+        { virt_lines_above = true, virt_lines = { { { 'above line 3', '' } } } }
+      )
+
+      command('1,4fold | 1,4foldopen')
+      command('3,4fold | 3,4foldopen ')
+      command('set foldcolumn=1')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:-}^line 1                                      |
+          {7:│}line 2                                      |
+          {7:│}below line 2                                |
+          {7:│}above line 3                                |
+          {7:-}line 3                                      |
+          {7:2}line 4                                      |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7:-}^line 1                                      |
+          {7:│}line 2                                      |
+          {7:│}below line 2                                |
+          {7:│}above line 3                                |
+          {7:-}line 3                                      |
+          {7:2}line 4                                      |
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+
+      command('set statuscolumn=%C')
+      screen:expect_unchanged()
+      command('set statuscolumn=')
+
+      command('set foldcolumn=2')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:- }^line 1                                     |
+          {7:│ }line 2                                     |
+          {7:│ }below line 2                               |
+          {7:│ }above line 3                               |
+          {7:│-}line 3                                     |
+          {7:││}line 4                                     |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7:- }^line 1                                     |
+          {7:│ }line 2                                     |
+          {7:│ }below line 2                               |
+          {7:│ }above line 3                               |
+          {7:│-}line 3                                     |
+          {7:││}line 4                                     |
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+
+      command('set statuscolumn=%C')
+      screen:expect_unchanged()
+      command('set statuscolumn=')
+
+      command('2,4fold | 2,4foldopen')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:- }^line 1                                     |
+          {7:│-}line 2                                     |
+          {7:││}below line 2                               |
+          {7:││}above line 3                               |
+          {7:2-}line 3                                     |
+          {7:23}line 4                                     |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {7:- }^line 1                                     |
+          {7:│-}line 2                                     |
+          {7:││}below line 2                               |
+          {7:││}above line 3                               |
+          {7:2-}line 3                                     |
+          {7:23}line 4                                     |
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+
+      command('set statuscolumn=%C')
+      screen:expect_unchanged()
     end)
 
     it('Folded and Visual highlights are combined #19691', function()
