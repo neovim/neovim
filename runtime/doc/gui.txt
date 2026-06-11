@@ -77,7 +77,8 @@ Restart Nvim
 
                                                 *:restart*
 :restart [+cmd] [command]
-                Restarts Nvim. Sets |v:exitreason|. See also |ZR|.
+                Restarts Nvim. Sets |v:exitreason| and |v:startreason|.
+                See also |ZR|.
 
                 1. Stops Nvim using `:qall` (or |+cmd|, if given).
                 2. Starts a new Nvim server using the same |v:argv| (except

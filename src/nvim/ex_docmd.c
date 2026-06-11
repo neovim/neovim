@@ -4995,7 +4995,7 @@ static void ex_restart(exarg_T *eap)
   const list_T *l = get_vim_var_list(VV_ARGV);
   int argc = tv_list_len(l);
 
-  char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
+  char **argv = xcalloc((size_t)argc + 4, sizeof(char *));
   size_t i = 0;
   const char *listen_arg = NULL;  // --listen arg given by user, if any.
 
@@ -5034,6 +5034,7 @@ static void ex_restart(exarg_T *eap)
       argv[i++] = xstrdup(arg);
       if (i == 1) {
         argv[i++] = xstrdup("--embed");
+        argv[i++] = xstrdup(startreason_restart_arg);
         // Without --headless, embed waits for UI to attach.
         // Only add --headless when there is no UI.
         if (no_ui) {

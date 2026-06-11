@@ -143,6 +143,7 @@ enum {
 Loop main_loop;
 
 static char *argv0 = NULL;
+const char startreason_restart_arg[] = "--startreason=restart";
 
 // Error messages
 static const char *err_arg_missing = N_("Argument missing after");
@@ -269,6 +270,18 @@ int main(int argc, char **argv)
   // `argc` and `argv` are also copied, so that they can be changed.
   init_params(&params, argc, argv);
 
+  bool start_reason_restart = false;
+  for (int i = 1; i < params.argc; i++) {
+    if (strequal(params.argv[i], startreason_restart_arg)) {
+      start_reason_restart = true;
+      memmove(params.argv + i, params.argv + i + 1,
+              (size_t)(params.argc - i) * sizeof(*params.argv));
+      params.argc--;
+      i--;
+    }
+  }
+  argc = params.argc;
+
   init_startuptime(&params);
 
   // Need to find "--clean" before actually parsing arguments.
@@ -282,6 +295,10 @@ int main(int argc, char **argv)
   event_init();
 
   early_init(&params);
+
+  if (start_reason_restart) {
+    set_vim_var_string(VV_STARTREASON, S_LEN("restart"));
+  }
 
   set_argv_var(argv, argc);  // set v:argv
 
