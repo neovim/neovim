@@ -18,6 +18,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -1599,7 +1600,8 @@ stcsign:
 
       if (fdc > 0) {
         schar_T fold_buf[9];
-        fill_foldcolumn(wp, stcp->foldinfo, lnum, 0, fdc, NULL, stcp->fold_vcol, fold_buf);
+        fill_foldcolumn(wp, stcp->foldinfo, stcp->lnum, 0, fdc, get_vim_var_nr(VV_VIRTNUM) < 0,
+                        NULL, stcp->fold_vcol, fold_buf);
         stl_items[curitem].minwid = -(use_cursor_line_highlight(wp, lnum) ? HLF_CLF : HLF_FC);
         size_t buflen = 0;
         // TODO(bfredl): this is very backwards. we must support schar_T
