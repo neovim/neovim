@@ -1273,11 +1273,8 @@ nvim_open_term({buf}, {opts})                               *nvim_open_term()*
     Note: To initialize the terminal size, display the buffer in a window
     first. E.g. for a floating display,
     1. Create an empty buffer using |nvim_create_buf()|.
-
     2. Display it with |nvim_open_win()|.
-
     3. Call nvim_open_term().
-
     4. Then calling |nvim_chan_send()| will process sequences in a virtual
        terminal with the intended size (defined by the window width/height).
 
