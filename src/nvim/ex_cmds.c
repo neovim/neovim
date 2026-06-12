@@ -4867,6 +4867,7 @@ void global_exe(char *cmd, exarg_T *eap)
           .addr_count = 4,
           .cmdidx = eap->cmdidx,
           .addr_type = eap->addr_type,
+          .addr_mode = eap->addr_mode,
         };
 
         global_exe_one(&ea);
@@ -4895,6 +4896,7 @@ void global_exe(char *cmd, exarg_T *eap)
         .addr_count = 4,
         .cmdidx = eap->cmdidx,
         .addr_type = eap->addr_type,
+        .addr_mode = eap->addr_mode,
       };
 
       global_exe_one(&ea);
@@ -4908,6 +4910,7 @@ void global_exe(char *cmd, exarg_T *eap)
         .col1 = 0,
         .col2 = 0,
         .addr_type = eap->addr_type,
+        .addr_mode = eap->addr_mode,
       };
       global_exe_one(&ea);
 

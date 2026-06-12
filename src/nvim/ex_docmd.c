@@ -2979,6 +2979,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   linenr_T lnum;
   colnr_T cnum;
   mpos_T addr;
+  addr_mode_T addr_mode = kOmLineWise;
   bool need_check_cursor = false;
   int ret = FAIL;
 
@@ -2999,6 +3000,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
                        eap->addr_count == 0, address_count++, errormsg);
     lnum = addr.lnum;
     cnum = addr.col;
+    addr_mode = addr.mode;
 
     if (eap->cmd == NULL) {  // error detected
       goto theend;
@@ -3016,6 +3018,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           if (eap->col2 > 0) {
             eap->col2--;
           }
+          eap->addr_mode = kOmLineWise;
           break;
         case ADDR_LOADED_BUFFERS: {
           buf_T *buf = firstbuf;
@@ -3072,7 +3075,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           // Will give an error later if a range is found.
           break;
         }
-        eap->addr_count++;
+        eap->addr_count = 2;
       } else if (*eap->cmd == '*') {
         // '*' - visual area
         if (eap->addr_type != ADDR_POSITIONS) {
@@ -3089,6 +3092,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           assert(fm != NULL);
           eap->line1 = fm->mark.lnum;
           eap->col1 = fm->mark.col;
+          eap->addr_mode = kOmLineWise;
 
           fm = mark_get_visual(curbuf, '>');
           if (!mark_check(fm, errormsg)) {
@@ -3097,12 +3101,13 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           assert(fm != NULL);
           eap->line2 = fm->mark.lnum;
           eap->col2 = fm->mark.col;
-          eap->addr_count++;
+          eap->addr_count = 4;
         }
       }
       address_count++;
     } else {
       eap->line2 = lnum;
+      eap->addr_mode = addr_mode;
       eap->addr_count++;
 
       if (eap->addr_type == ADDR_POSITIONS) {
@@ -3161,6 +3166,10 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
     if (lnum == MAXLNUM) {
       eap->addr_count = 0;
     }
+  }
+
+  if (eap->addr_count == 0) {
+    eap->line1 = eap->line2;
   }
   ret = OK;
 
@@ -3604,6 +3613,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
       case ADDR_OTHER:
         lnum = curwin->w_cursor.lnum;
         cnum = 0;
+        addr.mode = kOmLineWise;
         break;
       case ADDR_WINDOWS:
         lnum = CURRENT_WIN_NR;
@@ -3641,6 +3651,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
       case ADDR_OTHER:
         lnum = curbuf->b_ml.ml_line_count;
         cnum = 0;
+        addr.mode = kOmLineWise;
         break;
       case ADDR_WINDOWS:
         lnum = LAST_WIN_NR;
@@ -3709,6 +3720,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
           // Jumped to another file.
           lnum = curwin->w_cursor.lnum;
           cnum = 0;
+          addr.mode = kOmLineWise;
         } else {
           if (!mark_check(fm, errormsg)) {
             cmd = NULL;
@@ -3717,6 +3729,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
           assert(fm != NULL);
           lnum = fm->mark.lnum;
           cnum = 0;
+          addr.mode = kOmLineWise;
         }
       }
       break;
@@ -3744,6 +3757,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
           // Jumped to another file.
           lnum = curwin->w_cursor.lnum;
           cnum = curwin->w_cursor.col;
+          addr.mode = kOmCharWise;
         } else {
           if (!mark_check(fm, errormsg)) {
             cmd = NULL;
@@ -3752,6 +3766,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
           assert(fm != NULL);
           lnum = fm->mark.lnum;
           cnum = fm->mark.col;
+          addr.mode = kOmCharWise;
         }
       }
       break;
@@ -3799,11 +3814,13 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
         lnum = curwin->w_cursor.lnum;
         if (address_count != 2) {
           cnum = curwin->w_cursor.col;
+          addr.mode = kOmCharWise;
         } else {
           cnum = ml_get_len(lnum);
           if (cnum > 0) {
             cnum--;
           }
+          addr.mode = kOmLineWise;
         }
         curwin->w_cursor = pos;
         // adjust command string pointer
@@ -3839,6 +3856,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
                      "", 0, 1, SEARCH_MSG, i, NULL) != FAIL) {
           lnum = pos.lnum;
           cnum = pos.col;
+          addr.mode = kOmCharWise;
         } else {
           cmd = NULL;
           goto error;
@@ -3868,6 +3886,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
         case ADDR_OTHER:
           // "+1" is same as ".+1"
           lnum = curwin->w_cursor.lnum;
+          addr.mode = kOmLineWise;
           if (address_count != 2) {
             cnum = 0;
           } else {
@@ -3939,8 +3958,10 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
         }
         if (i == '.') {
           cnum = n;
+          addr.mode = kOmCharWise;
         } else if (i == '-') {
           lnum -= n;
+          addr.mode = kOmLineWise;
         } else {
           if (lnum >= 0 && n >= INT32_MAX - lnum) {
             *errormsg = _(e_line_number_out_of_range);
@@ -3948,6 +3969,7 @@ mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bo
             goto error;
           }
           lnum += n;
+          addr.mode = kOmLineWise;
           if (address_count != 2) {
             cnum = 0;
           } else {
@@ -6892,8 +6914,10 @@ static void ex_operators(exarg_T *eap)
   oa.end.col = eap->col2;
   oa.line_count = eap->line2 - eap->line1 + 1;
 
-  if (eap->addr_type == ADDR_POSITIONS) {
+  if (eap->addr_type == ADDR_POSITIONS && eap->addr_mode == kOmCharWise) {
     oa.motion_type = kMTCharWise;
+  } else {
+    oa.motion_type = kMTLineWise;
   }
 
   virtual_op = kFalse;

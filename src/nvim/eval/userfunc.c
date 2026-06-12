@@ -1267,8 +1267,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     // call do_cmdline() to execute the lines
     exarg_T ea = {
       .cmd = NULL,
-      .line1 = firstline,
-      .line2 = lastline,
+      .line1 = 1,
+      .line2 = 1,
       .col1 = 0,
       .col2 = MAXCOL,
       .ea_getline = get_func_line,

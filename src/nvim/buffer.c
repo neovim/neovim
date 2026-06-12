@@ -4270,10 +4270,23 @@ void read_buffer_into(buf_T *buf, pos_T *start_pos, pos_T *end_pos, StringBuilde
   size_t written = 0;
   size_t len = 0;
   linenr_T lnum = start_pos->lnum;
-  char *lp = ml_get_buf(buf, lnum) + start_pos->col;
-  size_t lplen = (size_t)ml_get_buf_len(buf, lnum) - (size_t)start_pos->col;
+  size_t line_len = (size_t)ml_get_buf_len(buf, lnum);
+  size_t start_col = (size_t)start_pos->col;
+  if (start_col > line_len) {
+    start_col = line_len;
+  }
+  char *lp = ml_get_buf(buf, lnum) + start_col;
+  size_t lplen = line_len - start_col;
   if (start_pos->lnum == end_pos->lnum) {
-    lplen = (size_t)end_pos->col - (size_t)start_pos->col + 1;
+    size_t end_col = (size_t)end_pos->col;
+    if (end_col >= line_len) {
+      end_col = line_len > 0 ? line_len - 1 : 0;
+    }
+    if (end_col >= start_col) {
+      lplen = end_col - start_col + 1;
+    } else {
+      lplen = 0;
+    }
   }
 
   while (true) {
@@ -4303,10 +4316,16 @@ void read_buffer_into(buf_T *buf, pos_T *start_pos, pos_T *end_pos, StringBuilde
         break;
       }
       lp = ml_get_buf(buf, lnum);
+      size_t cur_len = (size_t)ml_get_buf_len(buf, lnum);
       if (lnum == end_pos->lnum) {
-        lplen = (size_t)end_pos->col + 1;
+        size_t end_col = (size_t)end_pos->col;
+        if (end_col >= cur_len) {
+          lplen = cur_len;
+        } else {
+          lplen = end_col + 1;
+        }
       } else {
-        lplen = (size_t)ml_get_buf_len(buf, lnum);
+        lplen = cur_len;
       }
       written = 0;
     } else if (len > 0) {
