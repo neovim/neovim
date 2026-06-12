@@ -6033,13 +6033,36 @@ static void ex_detach(exarg_T *eap)
 /// Connects the current UI to a different server
 ///
 /// ":connect <address>" detaches the current UI and connects to the given server.
+/// ":connect ssh://<uri>" bootstraps a remote Nvim over SSH, then connects.
 /// ":connect! <address>" stops the current server if no other UIs are attached, then connects to the given server.
 static void ex_connect(exarg_T *eap)
 {
+  char *addr = eap->arg;
+  typval_T ssh_rettv = { .v_type = VAR_UNKNOWN };
+
+  // SSH URI: bootstrap remote Nvim, get local forwarded socket
+  if (strncmp(addr, "ssh://", 6) == 0) {
+    typval_T argvars[2];
+    argvars[0].v_type = VAR_STRING;
+    argvars[0].vval.v_string = addr;
+    argvars[1].v_type = VAR_UNKNOWN;
+
+    nlua_call_vimfn("vim.net._ssh", "start", argvars, &ssh_rettv);
+
+    if (ssh_rettv.v_type != VAR_STRING || ssh_rettv.vval.v_string == NULL) {
+      emsg("E6101: SSH connection failed");
+      tv_clear(&ssh_rettv);
+      return;
+    }
+
+    addr = ssh_rettv.vval.v_string;
+  }
+
   bool stop_server = eap->forceit ? (ui_active() == 1) : false;
 
   Error err = ERROR_INIT;
-  remote_ui_connect(current_ui, eap->arg, &err);
+  remote_ui_connect(current_ui, addr, &err);
+  tv_clear(&ssh_rettv);
 
   if (ERROR_SET(&err)) {
     emsg(err.msg);

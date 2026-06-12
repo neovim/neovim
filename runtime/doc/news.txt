@@ -166,6 +166,8 @@ EDITOR
   number of history lines kept above the prompt.
 • |v_al| and |v_il| text objects select the whole buffer and the current line
   without leading or trailing white space.
+• |:connect| with `ssh://` URI orchestrates a remote Nvim session over SSH.
+  See |remote-ssh|.
 
 EVENTS
 

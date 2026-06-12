@@ -560,6 +560,60 @@ local function check_external_tools()
       'Install curl using your package manager.',
     })
   end
+
+  if vim.fn.executable('ssh') == 1 then
+    local ssh_path = vim.fn.exepath('ssh')
+    local ssh_job = vim.system({ ssh_path, '-V' }, { text = true }):wait()
+    -- ssh -V prints version to stderr
+    local ssh_out = vim.trim(ssh_job.stderr or '')
+    if ssh_job.code == 0 then
+      health.ok(('%s (%s)'):format(ssh_out, ssh_path))
+
+      local version_str = ssh_out:match('OpenSSH_([%d%.]+)')
+      local ver = version_str and vim.version.parse(version_str)
+      if ver then
+        if vim.fn.has('win32') == 1 then
+          health.warn(
+            'Win32-OpenSSH does not support ControlMaster (multiplexing). Remote SSH features might be degraded or unsupported.'
+          )
+        elseif ver >= vim.version.parse('4.0') then
+          health.ok('OpenSSH version supports multiplexing')
+        else
+          health.warn(
+            'OpenSSH version is older than 4.0. Multiplexing is not supported, remote connections may be slow or fail.'
+          )
+        end
+      else
+        health.warn('Could not determine OpenSSH version. Multiplexing support is unknown.')
+      end
+
+      if vim.fn.has('win32') == 0 then
+        local ssh_g = vim.system({ ssh_path, '-G', 'example.com' }):wait()
+        if ssh_g.code == 0 then
+          local controlmaster = ssh_g.stdout:match('controlmaster%s+(%S+)')
+          local controlpath = ssh_g.stdout:match('controlpath%s+(%S+)')
+          if controlmaster and controlmaster ~= 'no' then
+            health.ok(('SSH multiplexing configured (ControlMaster=%s)'):format(controlmaster))
+          elseif controlpath and controlpath ~= 'none' then
+            health.ok(('SSH ControlPath resolved to: %s'):format(controlpath))
+          else
+            health.info(
+              'SSH multiplexing not configured in ssh_config. :connect will set it automatically.'
+            )
+          end
+        else
+          health.warn('`ssh -G` failed. Cannot verify SSH multiplexing configuration.')
+        end
+      end
+    else
+      health.warn('ssh is installed but failed to run `ssh -V`', { ssh_job.stderr })
+    end
+  else
+    health.warn('ssh not found', {
+      'Required for remote SSH connections (:connect ssh://).',
+      'Install ssh using your package manager.',
+    })
+  end
 end
 
 local function detect_terminal()
