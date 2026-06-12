@@ -244,6 +244,7 @@ PERFORMANCE
 • Internal LSP data is cleared using `table.clear`, which reduces GC and
   memory reallocation during each data reset.
 • RPC client avoids string allocations when parsing Content-Length messages.
+• LSP: "overscan" semantic_token range requests to avoid flicker.
 
 PLUGINS
 

@@ -1706,8 +1706,10 @@ function vim.api.nvim_open_tabpage(buf, enter, config) end
 --- written to the PTY.
 --- @param opts vim.api.keyset.open_term Optional parameters.
 --- - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
---- - on_input: Lua callback for input sent, i e keypresses in terminal
----   mode. Note: keypresses are sent raw as they would be to the pty
+--- - on_input: Invoked when the terminal pushes input, e.g.:
+---   - keypresses in terminal mode
+---   - a terminal response to a query (received on the channel via nvim_chan_send())
+---   Note: keypresses are sent raw as they would be to the pty
 ---   master end. For instance, a carriage return is sent
 ---   as a "\r", not as a "\n". `textlock` applies. It is possible
 ---   to call `nvim_chan_send()` directly in the callback however.
