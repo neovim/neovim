@@ -857,7 +857,7 @@ describe('vim.pack', function()
     end)
 
     it('can install from the Internet', function()
-      t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+      t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
       vim_pack_add({ 'https://github.com/neovim/nvim-lspconfig' })
       eq(true, exec_lua('return pcall(require, "lspconfig")'))
     end)

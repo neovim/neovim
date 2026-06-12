@@ -32,7 +32,7 @@ end
 
 clear()
 if fn.executable('man') == 0 then
-  pending('missing "man" command', function() end)
+  pending('N/A: missing "man" command', function() end)
   return
 end
 
