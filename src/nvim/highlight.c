@@ -149,7 +149,7 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
   if (at_en.cterm_fg_color != 0 || at_en.cterm_bg_color != 0
       || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
       || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
-      || at_en.rgb_ae_attr != 0 || ns_id != 0) {
+      || at_en.rgb_ae_attr != 0 || at_en.font >= 0 || ns_id != 0) {
     return get_attr_entry((HlEntry){ .attr = at_en, .kind = kHlSyntax,
                                      .id1 = idx, .id2 = ns_id });
   }
@@ -584,11 +584,6 @@ void clear_hl_tables(bool reinit)
     xfree((void *)url);
   });
 
-  const char *font = NULL;
-  set_foreach(&fonts, font, {
-    xfree((void *)font);
-  });
-
   if (reinit) {
     set_clear(HlEntry, &attr_entries);
     highlight_init();
@@ -596,12 +591,15 @@ void clear_hl_tables(bool reinit)
     map_clear(uint64_t, &blend_attr_entries);
     map_clear(uint64_t, &blendthrough_attr_entries);
     set_clear(cstr_t, &urls);
-    set_clear(cstr_t, &fonts);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
     screen_invalidate_highlights();
   } else {
+    const char *font = NULL;
+    set_foreach(&fonts, font, {
+      xfree((void *)font);
+    });
     set_destroy(HlEntry, &attr_entries);
     map_destroy(uint64_t, &combine_attr_entries);
     map_destroy(uint64_t, &blend_attr_entries);
@@ -701,6 +699,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   if ((new_en.url == -1) && (prim_aep.url >= 0)) {
     new_en.url = prim_aep.url;
+  }
+
+  if (prim_aep.font >= 0) {
+    new_en.font = prim_aep.font;
   }
 
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
@@ -1046,6 +1048,11 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
     if (mask & HL_BG_INDEXED) {
       PUT_C(*hl, "bg_indexed", BOOLEAN_OBJ(true));
     }
+
+    const char *font = hl_get_font(ae.font);
+    if (font != NULL) {
+      PUT_C(*hl, "font", STRING_OBJ(cstr_as_string(font)));
+    }
   } else {
     if (ae.cterm_fg_color != 0) {
       PUT_C(*hl, short_keys ? "ctermfg" : "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
@@ -1058,10 +1065,6 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
 
   if (ae.hl_blend > -1 && (use_rgb || !short_keys)) {
     PUT_C(*hl, "blend", INTEGER_OBJ(ae.hl_blend));
-  }
-  const char *font = hl_get_font(ae.font);
-  if (font != NULL) {
-    PUT_C(*hl, "font", STRING_OBJ(cstr_as_string(font)));
   }
 }
 
@@ -1077,6 +1080,7 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, HlAttrs 
   int blend = base ? base->hl_blend : -1;
   int32_t mask = base ? base->rgb_ae_attr : 0;
   int32_t cterm_mask = base ? base->cterm_ae_attr : 0;
+  int32_t font = base ? base->font : -1;
   bool cterm_mask_provided = false;
 
 #define CHECK_FLAG_WITH_KEY(d, m, name, extra, flag) \
@@ -1239,10 +1243,9 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, HlAttrs 
 
   if (HAS_KEY_X(dict, font)) {
     String str = dict->font;
-    if (str.size > 0 && STRICMP(str.data, "NONE") != 0) {
-      hlattrs.font = hl_add_font_idx(str.data);
-    }
+    font = (str.size > 0 && STRICMP(str.data, "NONE") != 0) ? hl_add_font_idx(str.data) : -1;
   }
+  hlattrs.font = font;
 
   return hlattrs;
 #undef HAS_KEY_X
