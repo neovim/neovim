@@ -2646,6 +2646,32 @@ describe('TUI', function()
     ]])
   end)
 
+  it('does not split large synchronized TUI output', function()
+    screen:try_resize(70, 333)
+    retry(nil, 1000, function()
+      eq({ true, 330 }, { child_session:request('nvim_win_get_height', 0) })
+    end)
+
+    local dump = t.tmpname()
+    finally(function()
+      os.remove(dump)
+    end)
+
+    -- Inform the TUI that synchronized output is supported.
+    feed_data('\027[?2026;2$y')
+    poke_both_eventloop()
+    child_session:request('nvim_set_option_value', 'termsync', true, {})
+    child_session:request('nvim_buf_set_lines', 0, 0, -1, true, { ('Ꝩ'):rep(21844), 'b' })
+
+    child_session:request('nvim__screenshot', dump)
+    poke_both_eventloop()
+    local raw = assert(read_file(dump))
+
+    local _, starts = raw:gsub('\027%[%?2026h', '')
+    local _, ends = raw:gsub('\027%[%?2026l', '')
+    eq({ 1, 1 }, { starts, ends })
+  end)
+
   it('draws correctly when setting title overflows #30793', function()
     screen:try_resize(67, 327)
     retry(nil, nil, function()
