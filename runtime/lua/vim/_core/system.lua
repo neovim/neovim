@@ -1,10 +1,20 @@
 local uv = vim.uv
 
+--- @type table<integer,uv.uv_process_t|nil>
+local active_jobs_registry = {}
+
+--- @type boolean
+local is_jobexit_registered = false
+
 --- @class vim.SystemOpts
 --- @inlinedoc
 ---
 --- Set the current working directory for the sub-process.
 --- @field cwd? string
+---
+--- Set type of new process to start. you can set it to "process" | "detach" | "job"
+--- or vim.SystemMode.PROCESS | vim.SystemOpts.DETACHED | vim.SystemOpts.JOB
+--- @field mode? vim.SystemMode | string
 ---
 --- Set environment variables for the new process. Inherits the current environment with `NVIM` set
 --- to |v:servername|.
@@ -47,6 +57,7 @@ local uv = vim.uv
 
 --- @class (package) vim.SystemState
 --- @field cmd string[]
+--- @field mode? vim.SystemMode | string
 --- @field handle? uv.uv_process_t
 --- @field timer?  uv.uv_timer_t
 --- @field pid? integer
@@ -66,6 +77,13 @@ local SIG = {
   KILL = 9, -- Kill signal
   TERM = 15, -- Termination signal
   -- STOP = 17,19,23  -- Stop the process
+}
+
+--- @enum vim.SystemMode
+SystemMode = {
+  PROCESS = 1,
+  JOB = 2,
+  DETACHED = 3,
 }
 
 ---@param handle uv.uv_handle_t?
@@ -103,7 +121,16 @@ end
 ---
 --- @param signal integer|string Signal to send to the process. See |luv-constants|.
 function SystemObj:kill(signal)
-  self._state.handle:kill(signal)
+  local state = self._state
+  if state.handle and state.handle:is_active() then
+    signal = signal or 15
+
+    if state.mode == SystemMode.PROCESS then
+      state.handle:kill(signal) -- sending signal to just targeted pid
+    else
+      vim.uv.kill(-state.pid, signal) -- sending signal to the whole group
+    end
+  end
 end
 
 --- @package
@@ -422,18 +449,37 @@ end
 --- @param on_exit? fun(out: vim.SystemCompleted)
 --- @return vim.SystemObj
 local function run(cmd, opts, on_exit)
+  opts = opts or {}
+  local mode = opts.mode or SystemMode.PROCESS
+
+  if type(mode) == 'string' then
+    if mode == 'job' then
+      mode = SystemMode.JOB
+    elseif mode == 'detached' then
+      mode = SystemMode.DETACHED
+    else
+      mode = SystemMode.PROCESS
+    end
+  end
+
   vim.validate('cmd', cmd, 'table')
   vim.validate('opts', opts, 'table', true)
   vim.validate('on_exit', on_exit, 'function', true)
-
-  opts = opts or {}
+  vim.validate('mode', mode, function(m)
+    return m == SystemMode.PROCESS or m == SystemMode.DETACHED or m == SystemMode.JOB
+  end, true)
 
   local stdout, stdout_child_fd, stdout_handler, stdout_data = setup_output(opts.stdout, opts.text)
   local stderr, stderr_child_fd, stderr_handler, stderr_data = setup_output(opts.stderr, opts.text)
   local stdin, stdin_child_fd, towrite = setup_input(opts.stdin)
 
+  if mode ~= SystemMode.PROCESS then
+    opts.detach = true
+  end
+
   --- @type vim.SystemState
   local state = {
+    mode = mode,
     done = false,
     cmd = cmd,
     timeout = opts.timeout,
@@ -455,6 +501,10 @@ local function run(cmd, opts, on_exit)
     detached = opts.detach,
     hide = true,
   }, function(code, signal)
+    if mode == SystemMode.JOB then
+      active_jobs_registry[state.pid] = nil
+    end
+
     _on_exit(state, code, signal, on_exit)
   end, function()
     _on_error(state)
@@ -481,6 +531,24 @@ local function run(cmd, opts, on_exit)
         obj:_timeout()
       end
     end)
+  end
+
+  if mode == SystemMode.JOB then
+    if not is_jobexit_registered then
+      is_jobexit_registered = true
+      vim.api.nvim_create_autocmd('VimLeave', {
+        desc = 'Clean any jobs owned by neovim',
+        callback = function()
+          for pid, handle in pairs(active_jobs_registry) do
+            if handle and handle:is_active() then
+              vim.uv.kill(-pid, SIG.TERM)
+            end
+          end
+        end,
+      })
+    end
+
+    active_jobs_registry[state.pid] = state.handle
   end
 
   return obj
