@@ -4970,8 +4970,7 @@ static void ex_quitall(exarg_T *eap)
 static void ex_restart(exarg_T *eap)
 {
   if (!eap->forceit) {
-    // Pass +cmd via the `extra` slot of nlua_call_excmd
-    dict_T *extra_d = tv_dict_alloc();
+    dict_T *extra_d = tv_dict_alloc();  // Pass +cmd in the `extra` param of nlua_call_excmd.
     tv_dict_add_str(extra_d, S_LEN("quit_cmd"), eap->do_ecmd_cmd ? eap->do_ecmd_cmd : "");
     typval_T extra_tv = { .v_type = VAR_DICT, .vval.v_dict = extra_d };
     nlua_call_excmd("vim._core.server", "ex_session_restart", eap, &cmdmod, &extra_tv);
@@ -4983,10 +4982,9 @@ static void ex_restart(exarg_T *eap)
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *after_cmd = eap->arg;
 
-  // "+:::" is how ex_session_restart() signals that it (recursively) called into :restart.
+  // XXX: "+:::" is how ex_session_restart() signals that it (recursively) called :restart.
   if (strequal(quit_cmd, ":::")) {
     startreason = "restart";
-    // Set quit_cmd and after_cmd from args
     if (eap->argc > 1) {
       eap->args[1][eap->arglens[1]] = NUL;
       quit_cmd = eap->args[1];

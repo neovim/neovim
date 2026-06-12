@@ -1,6 +1,4 @@
-local fs = vim.fs
-local uv = vim.uv
--- For "--listen" and related functionality.
+-- For "--listen", ":restart", and related remote/server functionality.
 
 local M = {}
 
@@ -156,34 +154,32 @@ function M.rebind_after_restart(canonical_addr, expected_uis)
   end)
 end
 
--- Called by ex_restart(). Saves the current session and calls back to
--- ex_restart() with the necessary arguments to restore the session.
+-- Called by ex_restart(). Saves the current session and calls ex_restart() (again) with the
+-- updated arguments.
+--
 -- TODO: https://github.com/neovim/neovim/issues/34204
+--
 --- @param eap vim._core.ExCmdArgs
 --- @param extra { quit_cmd: string }
 function M.ex_session_restart(eap, extra)
-  -- Commands to run after restart
-  local after_cmd = eap.args
+  local after_cmd = eap.args -- User-provided [command].
   assert(not after_cmd:find(']==]'))
 
-  -- Use custom quit command if provided
-  local quit_cmd = 'qall'
-  if extra.quit_cmd ~= '' then
-    quit_cmd = extra.quit_cmd
-  end
+  -- Use custom +cmd if given.
+  local quit_cmd = extra.quit_cmd == '' and 'qall' or extra.quit_cmd
 
-  -- Preserve the value of v:this_session
+  -- Preserve v:this_session in the restarted Nvim.
   local this_session = vim.v.this_session
   assert(not this_session:find(']==]'))
 
-  -- Get temp file to write session to
-  local temp_dir = fs.abspath(fs.dirname(fs.dirname(vim.fn.tempname())))
-  assert(not temp_dir:find(']==]'))
-  local fd, session = uv.fs_mkstemp(fs.joinpath(temp_dir, 'restart_session_XXXXXX'))
+  -- Nvim temp "root dir": "/tmp/…/nvim.<user>/"
+  local tmproot = vim.fs.abspath(vim.fs.dirname(vim.fs.dirname(vim.fn.tempname())))
+  assert(not tmproot:find(']==]'))
+  local fd, session = vim.uv.fs_mkstemp(vim.fs.joinpath(tmproot, 'restart_session_XXXXXX'))
   if not fd then
     error('Failed to get temporary filename for restart session')
   end
-  uv.fs_close(fd)
+  vim.uv.fs_close(fd)
 
   -- Write session
   local session_arg = vim.fn.fnameescape(session)
@@ -195,22 +191,20 @@ function M.ex_session_restart(eap, extra)
   table.insert(after_list, ('vim.cmd("source %s")'):format(session_arg))
   table.insert(after_list, ('pcall(vim.fs.rm, [==[%s]==])'):format(session))
   table.insert(after_list, ('vim.v.this_session = [==[%s]==]'):format(this_session))
-  -- User provided command
   if after_cmd ~= '' then
     table.insert(after_list, ('vim.cmd([==[%s]==])'):format(after_cmd))
   end
-  -- Concatenate everything together
   local after = 'lua ' .. table.concat(after_list, ';')
 
   -- Restart Neovim and run our Lua commands
   local success, msg = pcall(function()
-    -- "+:::" special argument tells the C handler that this is actually a non-bang restart
-    -- That way, v:startreason can be set correctly
+    -- "+:::" dummy prefix tells the C handler that this is actually a non-bang restart.
+    -- Then v:startreason (if any) can be preserved.
     vim.cmd.restart { '+:::', quit_cmd, after, bang = true }
   end)
 
   if not success then
-    fs.rm(session, { force = true })
+    vim.fs.rm(session, { force = true })
     error(msg)
   end
 end
