@@ -1742,7 +1742,7 @@ static idx_T read_tree_node(FILE *fd, uint8_t *byts, idx_T *idxs, int maxidx, id
     return SP_TRUNCERROR;
   }
 
-  if (startidx + len >= maxidx) {
+  if (len >= maxidx - startidx) {
     return SP_FORMERROR;
   }
   byts[idx++] = (uint8_t)len;
