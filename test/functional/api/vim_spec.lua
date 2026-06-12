@@ -3759,6 +3759,7 @@ describe('API', function()
 
     it('finds files via an 8.3 filename path #25019', function()
       skip(not is_os('win'), 'N/A: 8.3 filenames are only available on Windows')
+      fn.system(('fsutil 8dot3name set %s 0'):format(n.nvim_dir:sub(1, 2)))
       local path = 'Xtest_runtime_path'
       mkdir_p(('%s/subdir/lua'):format(path))
       write_file(('%s/subdir/lua/foo.lua'):format(path), '')
@@ -3767,7 +3768,7 @@ describe('API', function()
       end)
       local path_with_shortname =
         p(fn.system(('for %%I in ("%s") do @echo %%~sI'):format(path), ''):gsub('\n', ''))
-      skip(path == vim.fs.basename(path_with_shortname), 'N/A: 8.3 filenames are disabled')
+      eq('XTEST_~1', vim.fs.basename(path_with_shortname))
       exec_lua(('vim.opt.rtp:prepend("%s/*")'):format(path_with_shortname))
       local val = api.nvim_get_runtime_file('lua/foo.lua', true)
       eq(1, #val)

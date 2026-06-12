@@ -3568,7 +3568,14 @@ static bool vim_settempdir(char *tempdir)
     return false;
   }
 
-  vim_FullName(tempdir, buf, MAXPATHL, false);
+  vim_FullName(tempdir, buf, MAXPATHL,
+#ifdef MSWIN
+               true
+#else
+               false
+#endif
+               );
+
   size_t buflen = strlen(buf);
   if (!after_pathsep(buf, buf + buflen)) {
     strcpy(buf + buflen, PATHSEPSTR);  // NOLINT(runtime/printf)
