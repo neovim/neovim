@@ -5286,6 +5286,10 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                    • {env}? (`table<string,string|number>`) Set environment
                      variables for the new process. Inherits the current
                      environment with `NVIM` set to |v:servername|.
+                   • {mode}? (`vim.SystemMode|string`) Set type of new process
+                     to start. you can set it to "process" | "detach" | "job"
+                     or vim.SystemMode.PROCESS | vim.SystemOpts.DETACHED |
+                     vim.SystemOpts.JOB
                    • {stderr}? (`fun(err:string?, data: string?)|boolean`,
                      default: `true`) Handle output from stderr.
                    • {stdin}? (`string|string[]|true`) If `true`, then a pipe
