@@ -73,6 +73,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/proc.h"
+#include "nvim/path.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/register.h"
@@ -699,6 +700,7 @@ void nvim_set_current_dir(String dir, Error *err)
   memcpy(string, dir.data, dir.size);
   string[dir.size] = NUL;
 
+  TO_SLASH(string);
   TRY_WRAP(err, {
     changedir_func(string, kCdScopeGlobal);
   });

@@ -3104,6 +3104,7 @@ int setfname(buf_T *buf, char *ffname_arg, char *sfname_arg, bool message)
     }
     sfname = xstrdup(sfname);
 #ifdef CASE_INSENSITIVE_FILENAME
+    TO_SLASH(sfname);
     path_fix_case(sfname);            // set correct case for short file name
 #endif
     if (buf->b_sfname != buf->b_ffname) {
@@ -3208,22 +3209,6 @@ int buflist_add(char *fname, int flags)
   }
   return 0;
 }
-
-#ifdef BACKSLASH_IN_FILENAME
-/// Adjust slashes in file names.  Called after 'shellslash' was set.
-void buflist_slash_adjust(void)
-{
-  FOR_ALL_BUFFERS(bp) {
-    if (bp->b_ffname != NULL) {
-      slash_adjust(bp->b_ffname);
-    }
-    if (bp->b_sfname != NULL) {
-      slash_adjust(bp->b_sfname);
-    }
-  }
-}
-
-#endif
 
 /// Set alternate cursor position for the current buffer and window "win".
 /// Also save the local window option values.
@@ -3456,7 +3441,8 @@ void maketitle(void)
       }
     } else {
       // Format: "fname + (path) (1 of 2) - Nvim".
-      char *default_titlestring = "%t%( %M%)%( (%{expand('%:p:~:h')})%)%a - Nvim";
+      char *default_titlestring =
+        "%t%( %M%)%( (%{expand('%:p:~:h:gs?\\?/?')})%)%a - Nvim";
       build_stl_str_hl(curwin, buf, sizeof(buf), default_titlestring,
                        kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL, NULL);
       title_str = buf;

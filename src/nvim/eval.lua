@@ -10030,7 +10030,7 @@ M.funcs = {
 
       <Example named pipe: >vim
       	if has('win32')
-      	  echo serverstart('\\.\pipe\nvim-pipe-1234')
+      	  echo serverstart('//./pipe/nvim-pipe-1234')
       	else
       	  echo serverstart('nvim.sock')
       	endif

@@ -14,7 +14,7 @@ local rmdir = n.rmdir
 local write_file = t.write_file
 
 local function join_path(...)
-  return table.concat({ ... }, '/')
+  return table.concat({ ... }, n.get_pathsep())
 end
 
 describe('path', function()
@@ -178,10 +178,12 @@ describe('file search', function()
   end)
 
   ---@param funcname 'finddir' | 'findfile'
+  ---@param folder string
+  ---@param item string
   local function test_find_func(funcname, folder, item)
-    local d = join_path(testdir, folder)
+    local d = testdir .. '/' .. folder
     mkdir(d)
-    local expected = join_path(d, item)
+    local expected = d .. '/' .. item
     if funcname == 'finddir' then
       mkdir(expected)
     else
