@@ -788,4 +788,18 @@ func Test_set_virtualedit_on_mode_change()
   bwipe!
 endfunc
 
+func Test_strip_autoindent_with_virtualedit_onemore()
+  new
+  setlocal autoindent virtualedit=onemore
+  call feedkeys("i   x\<CR>\<Esc>", 'tnix')
+  call assert_equal(['   x', ''], getline(1, '$'))
+
+  %delete _
+  setlocal virtualedit&
+  call feedkeys("i   x\<CR>\<Esc>", 'tnix')
+  call assert_equal(['   x', ''], getline(1, '$'))
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
