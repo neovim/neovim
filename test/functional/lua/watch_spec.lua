@@ -82,7 +82,7 @@ describe('vim._watch', function()
 
     it(watchfunc .. '() detects file changes', function()
       if watchfunc == 'inotify' then
-        skip(is_os('win'), 'not supported on windows')
+        skip(is_os('win'), 'N/A: inotify not supported on Windows')
         skip(is_os('mac'), 'flaky test on mac')
         skip(not is_ci() and n.fn.executable('inotifywait') == 0, 'inotifywait not found')
         skip(t.is_arch('s390x'), 'inotifywait not available on s390x CI')

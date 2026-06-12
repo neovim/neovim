@@ -2526,7 +2526,7 @@ end)
 
 describe('ui/msg_puts_printf', function()
   it('output multibyte characters correctly', function()
-    skip(not t.translations_enabled(), 'Nvim not built with ENABLE_TRANSLATIONS')
+    skip(not t.translations_enabled(), 'N/A: Nvim not built with ENABLE_TRANSLATIONS')
     local screen
     local cmd = ''
     local build_dir = t.paths.test_build_dir

@@ -48,7 +48,7 @@ describe('vim.net.request', function()
   end)
 
   it('fetches a URL into memory (async success)', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     ---@type table
     local result = request('GET', 'https://httpbingo.org/anything')
@@ -58,7 +58,7 @@ describe('vim.net.request', function()
   end)
 
   it("detects filetype, sets 'nomodified'", function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local rv = exec_lua(function()
       vim.cmd('runtime! plugin/nvim/net.lua')
@@ -85,14 +85,14 @@ describe('vim.net.request', function()
   end)
 
   it('calls on_response with error on 404 (async failure)', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local result = request('GET', 'https://httpbingo.org/status/404')
     t.matches('404', result.error)
   end)
 
   it('plugin writes output to buffer', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local content = exec_lua(function()
       ---@type string[]
@@ -113,7 +113,7 @@ describe('vim.net.request', function()
   end)
 
   it('works with :read', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local content = exec_lua(function()
       vim.cmd('runtime plugin/net.lua')
@@ -137,7 +137,7 @@ describe('vim.net.request', function()
   end)
 
   it('opens remote tar.gz URLs as tar archives', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local rv = exec_lua(function()
       vim.cmd('runtime! plugin/net.lua')
@@ -164,7 +164,7 @@ describe('vim.net.request', function()
   end)
 
   it('opens remote zip URLs as zip archives', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local rv = exec_lua(function()
       vim.cmd('runtime! plugin/net.lua')
@@ -189,7 +189,7 @@ describe('vim.net.request', function()
   end)
 
   it('accepts custom headers', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
     ---@type table
     local result = request('GET', 'https://httpbingo.org/anything', {
       headers = {
@@ -213,7 +213,7 @@ describe('vim.net.request', function()
   end)
 
   it('accepts multiple HTTP methods', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local url = 'https://httpbingo.org/anything'
 

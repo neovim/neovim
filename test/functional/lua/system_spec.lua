@@ -175,8 +175,8 @@ describe('vim.system', function()
   end
 
   it('always captures all content of stdout/stderr #30846', function()
-    t.skip(n.fn.executable('git') == 0, 'missing "git" command')
-    t.skip(n.fn.isdirectory('.git') == 0, 'missing ".git" directory')
+    t.skip(n.fn.executable('git') == 0, 'N/A: missing "git" command')
+    t.skip(n.fn.isdirectory('.git') == 0, 'N/A: missing ".git" directory')
     eq(
       0,
       exec_lua(function()
