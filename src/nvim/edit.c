@@ -2311,6 +2311,9 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
       if (*skipwhite(get_cursor_line_ptr() + strip_col) == NUL) {
         curwin->w_cursor.col = strip_col;
         while (true) {
+          if (gchar_cursor() == NUL && curwin->w_cursor.col > 0) {
+            curwin->w_cursor.col--;
+          }
           cc = gchar_cursor();
           if (!ascii_iswhite(cc)) {
             break;
