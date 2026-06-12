@@ -306,6 +306,58 @@ describe('vim.lsp.codelens', function()
     ]])
   end)
 
+  it('refreshes immediately and cancels a pending automatic refresh', function()
+    exec_lua(function()
+      local deferred
+      local request_count = 0
+      local defer_fn = vim.defer_fn
+      local client = assert(vim.lsp.get_client_by_id(client_id))
+      local request = client.request
+
+      --- @diagnostic disable-next-line: duplicate-set-field
+      vim.defer_fn = function(callback)
+        deferred = {
+          callback = callback,
+          closed = false,
+          stopped = false,
+          is_closing = function(self)
+            return self.closed
+          end,
+          stop = function(self)
+            self.stopped = true
+          end,
+          close = function(self)
+            self.closed = true
+          end,
+        }
+        return deferred
+      end
+
+      client.request = function(self, method, ...)
+        if method == 'textDocument/codeLens' then
+          request_count = request_count + 1
+        end
+        return request(self, method, ...)
+      end
+
+      vim.api.nvim_buf_set_lines(0, 0, 0, false, { '// changed' })
+      assert(deferred, 'expected pending automatic codelens refresh')
+
+      vim.lsp.codelens.on_refresh(
+        nil,
+        nil,
+        { method = 'workspace/codeLens/refresh', client_id = client_id }
+      )
+
+      vim.defer_fn = defer_fn
+      client.request = request
+
+      assert(deferred.stopped, 'expected pending codelens refresh to stop')
+      assert(deferred.closed, 'expected pending codelens refresh to close')
+      assert(request_count == 1, 'expected exactly one immediate codelens refresh request')
+    end)
+  end)
+
   it('ignores stale codeLens/resolve responses', function()
     clear_notrace()
     exec_lua(create_server_definition)
