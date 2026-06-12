@@ -6491,6 +6491,7 @@ M.funcs = {
       Non-UTF-8 characters are an error.
 
     ]=],
+    func_lua = 'f_json_decode',
     name = 'json_decode',
     params = { { 'expr', 'any' } },
     signature = 'json_decode({expr})',
@@ -6512,6 +6513,7 @@ M.funcs = {
       |Blob|s are converted to arrays of the individual bytes.
 
     ]=],
+    func_lua = 'f_json_encode',
     name = 'json_encode',
     params = { { 'expr', 'any' } },
     returns = 'string',
