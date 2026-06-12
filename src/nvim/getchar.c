@@ -63,6 +63,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
+#include "nvim/register.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -661,6 +662,10 @@ void stuffRedoReadbuff(const char *s)
 
 void stuffReadbuffLen(const char *s, ptrdiff_t len)
 {
+  if (add_last_insert == 1) {  // Only add if this is the first call, for
+                               // recursive calls, ignore.
+    ga_concat_len(&last_insert_ga, s, (size_t)len);
+  }
   add_buff(&readbuf1, s, len);
 }
 

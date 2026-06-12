@@ -35,7 +35,7 @@ end
 local group_header_pattern = '^# (%S+)'
 local plugin_header_pattern = '^## (.+)$'
 
---- @return { group: string?, name: string?, from: integer?, to: integer? }
+--- @return { group: string?, name: string?, from: integer?, to: integer?, active: boolean? }
 local get_plug_data_at_lnum = function(bufnr, lnum)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   --- @type string, string, integer, integer
@@ -223,9 +223,8 @@ methods['textDocument/codeAction'] = function(params, callback)
       new_action('Skip updating', 'skip_update_plugin'),
     }, 0)
   end
-  if not vim.pack.get({ plug_data.name })[1].active then
-    vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
-  end
+  plug_data.active = vim.pack.get({ plug_data.name })[1].active
+  vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
   callback(nil, res)
 end
 
@@ -235,7 +234,15 @@ local commands = {
   end,
   skip_update_plugin = function(_) end,
   delete_plugin = function(plug_data)
-    vim.pack.del({ plug_data.name })
+    if plug_data.active then
+      local confirm_msg = ('Plugin `%s` is active.'):format(plug_data.name)
+        .. ' Make sure its `vim.pack.add` call is removed from config.'
+      local choice = vim.fn.confirm(confirm_msg, 'Delete? &Yes\n&No', 1, 'Question')
+      if choice ~= 1 then
+        return 'skip_line_update'
+      end
+    end
+    vim.pack.del({ plug_data.name }, { force = true })
   end,
 }
 
@@ -246,15 +253,18 @@ local commands = {
 methods['workspace/executeCommand'] = vim.schedule_wrap(function(params, callback)
   --- @type integer, table
   local bufnr, plug_data = unpack(params.arguments)
-  local ok, err = pcall(commands[params.command], plug_data)
+  local ok, res = pcall(commands[params.command], plug_data)
   if not ok then
-    return callback({ code = 1, message = err }, {})
+    return callback({ code = 1, message = res }, {})
   end
 
   -- Remove plugin lines (including blank line) to not later act on plugin
-  vim.bo[bufnr].modifiable = true
-  vim.api.nvim_buf_set_lines(bufnr, plug_data.from - 2, plug_data.to, false, {})
-  vim.bo[bufnr].modifiable, vim.bo[bufnr].modified = false, false
+  if res ~= 'skip_line_update' then
+    vim.bo[bufnr].modifiable = true
+    vim.api.nvim_buf_set_lines(bufnr, plug_data.from - 2, plug_data.to, false, {})
+    vim.bo[bufnr].modifiable, vim.bo[bufnr].modified = false, false
+  end
+
   callback(nil, {})
 end)
 

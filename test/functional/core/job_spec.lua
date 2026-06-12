@@ -1255,9 +1255,6 @@ describe('jobs', function()
   end)
 
   describe('running tty-test program', function()
-    if skip(is_os('win')) then
-      return
-    end
     local function next_chunk()
       local rv
       while true do
@@ -1267,6 +1264,12 @@ describe('jobs', function()
           data[i] = data[i]:gsub('\n', '\000')
         end
         rv = table.concat(data, '\n')
+        if is_os('win') then
+          -- ConPTY injects its own terminal escapes (init/teardown CSI+OSC) and pads redraw rows
+          -- with trailing spaces around tty-test's plain output.
+          rv = rv:gsub('\27%[[%d;?]*[%a~]', ''):gsub('\27%][^\7]*\7', '')
+          rv = rv:gsub('[%s]+$', '')
+        end
         rv = rv:gsub('\r\n$', ''):gsub('^\r\n', '')
         if rv ~= '' then
           break
@@ -1303,12 +1306,14 @@ describe('jobs', function()
 
     it('resizing window', function()
       command('call jobresize(j, 40, 10)')
-      eq('rows: 10, cols: 40', next_chunk())
+      -- Windows: ConPTY emits a full screen redraw, so prior content ("tty ready") may prefix the new line.
+      matches('rows: 10, cols: 40$', next_chunk())
       command('call jobresize(j, 10, 40)')
-      eq('rows: 40, cols: 10', next_chunk())
+      matches('rows: 40, cols: 10$', next_chunk())
     end)
 
     it('jobclose() sends SIGHUP', function()
+      skip(is_os('win'), 'N/A: SIGHUP is a POSIX signal')
       command('call jobclose(j)')
       local msg = next_msg()
       msg = (msg[2] == 'stdout') and next_msg() or msg -- Skip stdout, if any.

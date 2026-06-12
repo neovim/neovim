@@ -1,6 +1,6 @@
 " Vim filetype indent file
 " Language: Zig
-" Upstream: https://github.com/ziglang/zig.vim
+" Upstream: https://codeberg.org/ziglang/zig.vim
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")

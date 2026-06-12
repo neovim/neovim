@@ -224,7 +224,7 @@ vim.go.awa = vim.go.autowriteall
 
 --- When set to "dark" or "light", adjusts the default color groups for
 --- that background type.  The `TUI` or other UI sets this on startup
---- (triggering `OptionSet`) if it can detect the background color.
+--- if it can detect the background color.
 ---
 --- This option does NOT change the background color, it tells Nvim what
 --- the "inherited" (terminal/GUI) background looks like.
@@ -408,7 +408,7 @@ vim.go.bkc = vim.go.backupcopy
 --- uses another default.
 ---
 --- @type string
-vim.o.backupdir = ".,$XDG_STATE_HOME/nvim/backup//"
+vim.o.backupdir = ".,/var$XDG_STATE_HOME/nvim/backup//"
 vim.o.bdir = vim.o.backupdir
 vim.go.backupdir = vim.o.backupdir
 vim.go.bdir = vim.go.backupdir
@@ -652,14 +652,15 @@ vim.bo.buflisted = vim.o.buflisted
 vim.bo.bl = vim.bo.buflisted
 
 --- The value of this option specifies the type of a buffer:
----   <empty>	normal buffer
----   acwrite	buffer will always be written with `BufWriteCmd`s
----   help		help buffer (do not set this manually)
----   nofile	buffer is not related to a file, will not be written
----   nowrite	buffer will not be written
----   prompt	buffer where only the last section can be edited, for
+---   (empty)	Normal buffer.
+---   acwrite	Buffer will always be written with `BufWriteCmd`.
+---   help		Help buffer (do not set this manually).
+---   nofile	Buffer is not a file, will not be written.
+---   nowrite	Buffer represents a filepath (such as a directory),
+--- 		but will not be written.
+---   prompt	Buffer where only the last section can be edited, for
 --- 		use by plugins. `prompt-buffer`
----   quickfix	list of errors `:cwindow` or locations `:lwindow`
+---   quickfix	List of errors `:cwindow` or locations `:lwindow`
 ---   terminal	`terminal-emulator` buffer
 ---
 --- This option is used together with 'bufhidden' and 'swapfile' to
@@ -950,8 +951,8 @@ vim.go.cb = vim.go.clipboard
 
 --- Number of screen lines to use for the command-line.  Helps avoiding
 --- `hit-enter` prompts.
---- The value of this option is stored with the tab page, so that each tab
---- page can have a different value.
+--- The value of this option is stored with the tabpage, so that each
+--- tabpage can have a different value.
 ---
 --- When 'cmdheight' is zero, there is no command-line unless it is being
 --- used.  The command-line will cover the last line of the screen when
@@ -1807,7 +1808,7 @@ vim.go.dex = vim.go.diffexpr
 ---
 --- 	closeoff	When a window is closed where 'diff' is set
 --- 			and there is only one window remaining in the
---- 			same tab page with 'diff' set, execute
+--- 			same tabpage with 'diff' set, execute
 --- 			`:diffoff` in that window.  This undoes a
 --- 			`:diffsplit` command.
 ---
@@ -1985,7 +1986,7 @@ vim.go.dg = vim.go.digraph
 --- list, this avoids problems if the Nvim default is changed.
 ---
 --- @type string
-vim.o.directory = "$XDG_STATE_HOME/nvim/swap//"
+vim.o.directory = "/var$XDG_STATE_HOME/nvim/swap//"
 vim.o.dir = vim.o.directory
 vim.go.directory = vim.o.directory
 vim.go.dir = vim.go.directory
@@ -2240,6 +2241,7 @@ vim.go.ei = vim.go.eventignore
 --- 	`TabClosedPre`,
 --- 	`TabEnter`,
 --- 	`TabLeave`,
+--- 	`TabMoved`,
 --- 	`TabNew`,
 --- 	`TabNewEntered`,
 --- 	`TermClose`,
@@ -2625,7 +2627,8 @@ vim.go.fcs = vim.go.fillchars
 --- `String` and is the `:find` command argument.  The second argument is
 --- a `Boolean` and is set to `v:true` when the function is called to get
 --- a List of command-line completion matches for the `:find` command.
---- The function should return a List of strings.
+--- The function should return a List, which is handled similarly to the
+--- return value of a `:command-completion-customlist` function.
 ---
 --- The function is called only once per `:find` command invocation.
 --- The function can process all the directories specified in 'path'.
@@ -4157,7 +4160,7 @@ vim.wo.list = vim.o.list
 --- 			set listchars+=tab:>-,lead:.
 --- ```
 ---
---- 						*lcs-leadmultispace*
+---                                 *lcs-leadmultispace* *indent-guides*
 ---   leadmultispace:c...
 --- 		Like the `lcs-multispace` value, but for leading
 --- 		spaces only.  Also overrides `lcs-lead` for leading
@@ -4170,6 +4173,16 @@ vim.wo.list = vim.o.list
 ---
 --- 		Where "XXX" denotes the first non-blank characters in
 --- 		the line.
+---
+---                 Combined with `lcs-leadtab`, this can be used to show
+---                 "indentation guides" (vertical lines).
+--- 		For example, with 'shiftwidth' 2:
+---
+--- ```vim
+--- 			set list listchars=leadtab:\ \ │,tab:\ \ │,leadmultispace:\ \ │
+--- ```
+--- For richer rendering (per-level colors, treesitter-aware
+--- 		scopes, etc.) use a third-party plugin.
 --- 						*lcs-leadtab*
 ---   leadtab:xy[z]
 --- 		Like `lcs-tab`, but only for leading tabs.  When
@@ -4655,7 +4668,10 @@ vim.go.mh = vim.go.mousehide
 --- 		be acted upon, i.e. no cursor move.  This implies of
 --- 		course, that right clicking outside a selection will
 --- 		end Visual mode.
---- Overview of what button does what for each model:
+---
+--- For a detailed description of 'mousemodel' behaviour see
+--- `mouse-mode-table`.  Overview of what button does what for each model:
+---
 --- mouse		    extend		popup(_setpos) ~
 --- left click	    place cursor	place cursor
 --- left drag	    start selection	start selection
@@ -5445,9 +5461,9 @@ vim.wo.scr = vim.wo.scroll
 --- Maximum number of lines kept beyond the visible screen. Lines at the
 --- top are deleted if new lines exceed this limit.
 --- Minimum is 1, maximum is 1000000.
---- Only in `terminal` buffers.
+--- Only in `terminal` and `prompt-buffer` buffers.
 ---
---- Note: Lines that are not visible and kept in scrollback are not
+--- Note: Lines that are not visible and kept in terminal scrollback are not
 --- reflown when the terminal buffer is resized horizontally.
 ---
 --- @type integer
@@ -5456,15 +5472,16 @@ vim.o.scbk = vim.o.scrollback
 vim.bo.scrollback = vim.o.scrollback
 vim.bo.scbk = vim.bo.scrollback
 
---- See also `scroll-binding`.  When this option is set, scrolling the
---- current window also scrolls other scrollbind windows (windows that
---- also have this option set).  This option is useful for viewing the
---- differences between two versions of a file, see 'diff'.
---- See 'scrollopt' for options that determine how this option should be
---- interpreted.
---- This option is mostly reset when splitting a window to edit another
---- file.  This means that ":split | edit file" results in two windows
---- with scroll-binding, but ":split file" does not.
+--- Enables synchronized scrolling (in all windows with this option set).
+--- Useful for comparing two versions of a file, see 'diff'.
+--- Behavior is controlled by 'scrollopt'. See `scroll-binding`.
+---
+--- This option is (usually) reset when splitting a window to edit another
+--- file: ":split | edit file" results in two windows with scroll-binding,
+--- but ":split file" does not.
+---
+--- Note: Consider calling `:syncbind` on `WinResized`, `WinEnter` events
+--- (scoped to relevant buffers).
 ---
 --- @type boolean
 vim.o.scrollbind = false
@@ -5651,9 +5668,9 @@ vim.go.slm = vim.go.selectmode
 --- 		will become the current directory (useful with
 --- 		projects accessed over a network from different
 --- 		systems)
----    tabpages	all tab pages; without this only the current tab page
+---    tabpages	all tabpages; without this only the current tabpage
 --- 		is restored, so that you can make a session for each
---- 		tab page separately
+--- 		tabpage separately
 ---    terminal	include terminal windows where the command can be
 --- 		restored
 ---    winpos	position of the whole Vim window
@@ -5897,12 +5914,12 @@ vim.go.shcf = vim.go.shellcmdflag
 --- For MS-Windows the default is "2>&1| tee".  The stdout and stderr are
 --- saved in a file and echoed to the screen.
 --- For Unix the default is "| tee".  The stdout of the compiler is saved
---- in a file and echoed to the screen.  If the 'shell' option is "csh" or
---- "tcsh" after initializations, the default becomes "|& tee".  If the
---- 'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
---- "bash", "fish", "ash" or "dash" the default becomes "2>&1| tee".  This
---- means that stderr is also included.  Before using the 'shell' option a
---- path is removed, thus "/bin/sh" uses "sh".
+--- in a file and echoed to the screen.  If the 'shell' option contains
+--- "csh" (e.g. "tcsh") after initializations, the default becomes
+--- "|& tee".  Otherwise, if it contains "sh" (e.g. "bash", "zsh"), the
+--- default becomes "2>&1| tee".  This means that stderr is also included.
+--- Before using the 'shell' option a path is removed, thus "/bin/sh" uses
+--- "sh".
 --- The initialization of this option is done after reading the vimrc
 --- and the other initializations, so that when the 'shell' option is set
 --- there, the 'shellpipe' option changes automatically, unless it was
@@ -5917,6 +5934,7 @@ vim.go.shcf = vim.go.shellcmdflag
 --- Note: When using a pipe like "| tee", you'll lose the exit code of the
 --- shell command.  This might be configurable by your shell, look for
 --- the pipefail option (for bash and zsh, use ":set -o pipefail").
+--- Only a single "%s" value is allowed.
 ---
 --- @type string
 vim.o.shellpipe = "| tee"
@@ -5946,12 +5964,12 @@ vim.go.shq = vim.go.shellquote
 --- The name of the temporary file can be represented by "%s" if necessary
 --- (the file name is appended automatically if no %s appears in the value
 --- of this option).
---- The default is ">".  For Unix, if the 'shell' option is "csh" or
---- "tcsh" during initializations, the default becomes ">&".  If the
---- 'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
---- "bash" or "fish", the default becomes ">%s 2>&1".  This means that
---- stderr is also included.  For Win32, the Unix checks are done and
---- additionally "cmd" is checked for, which makes the default ">%s 2>&1".
+--- The default is ">".  For Unix, if the 'shell' option contains "csh"
+--- (e.g. "tcsh") during initializations, the default becomes ">&".
+--- Otherwise, if it contains "sh" (e.g. "bash", "zsh"), the default
+--- becomes ">%s 2>&1". This means that stderr is also included.  For
+--- Win32, the Unix checks are done and additionally "cmd" is checked
+--- for, which makes the default ">%s 2>&1".
 --- Also, the same names with ".exe" appended are checked for.
 --- The initialization of this option is done after reading the vimrc
 --- and the other initializations, so that when the 'shell' option is set
@@ -5959,6 +5977,8 @@ vim.go.shq = vim.go.shellquote
 --- explicitly set before.
 --- In the future pipes may be used for filtering and this option will
 --- become obsolete (at least for Unix).
+--- 							*E1577*
+--- Only a single "%s" item is allowed in the option value.
 ---
 --- @type string
 vim.o.shellredir = ">"
@@ -6231,14 +6251,10 @@ vim.o.smd = vim.o.showmode
 vim.go.showmode = vim.o.showmode
 vim.go.smd = vim.go.showmode
 
---- The value of this option specifies when the line with tab page labels
---- will be displayed:
+--- Specifies when the `tabpage` labels will be displayed:
 --- 	0: never
---- 	1: only if there are at least two tab pages
+--- 	1: only if there are at least two tabpages
 --- 	2: always
---- This is both for the GUI and non-GUI implementation of the tab pages
---- line.
---- See `tab-page` for more information about tab pages.
 ---
 --- @type integer
 vim.o.showtabline = 1
@@ -6803,7 +6819,8 @@ vim.wo.stc = vim.wo.statuscolumn
 --- { NF  Evaluate expression between "%{" and "}" and substitute result.
 ---       Note that there is no "%" before the closing "}".  The
 ---       expression cannot contain a "}" character, call a function to
----       work around that.  See `stl-%{` below.
+---       work around that.  See `stl-%{` below.  Use "%0{" to insert the
+---       result verbatim.
 --- `{%` -  This is almost same as "{" except the result of the expression is
 ---       re-evaluated as a statusline format string.  Thus if the
 ---       return value of expr contains "%" items they will get expanded.
@@ -6822,14 +6839,14 @@ vim.wo.stc = vim.wo.statuscolumn
 --- ( -   Start of item group.  Can be used for setting the width and
 ---       alignment of a section.  Must be followed by %) somewhere.
 --- ) -   End of item group.  No width fields allowed.
---- T N   For 'tabline': start of tab page N label.  Use %T or %X to end
+--- T N   For 'tabline': start of tabpage N label.  Use %T or %X to end
 ---       the label.  Clicking this label with left mouse button switches
----       to the specified tab page, while clicking it with middle mouse
----       button closes the specified tab page.
+---       to the specified tabpage, while clicking it with middle mouse
+---       button closes the specified tabpage.
 --- X N   For 'tabline': start of close tab N label.  Use %X or %T to end
 ---       the label, e.g.: %3Xclose%X.  Use %999X for a "close current
 ---       tab" label.  Clicking this label with left mouse button closes
----       the specified tab page.
+---       the specified tabpage.
 --- @ N   Start of execute function label. Use %X or %T to end the label,
 ---       e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this label runs the
 ---       specified function: in the example when clicking once using left
@@ -6855,7 +6872,7 @@ vim.wo.stc = vim.wo.statuscolumn
 ---          added without modifying code that reacts on mouse clicks on
 ---          this label.
 ---       Use `getmousepos()`.winid in the specified function to get the
----       corresponding window id of the clicked item.
+---       corresponding `window-ID` of the clicked item.
 --- \< -   Where to truncate line if too long.  Default is at the start.
 ---       No width fields allowed.
 --- = -   Separation point between alignment sections.  Each section will
@@ -6912,6 +6929,8 @@ vim.wo.stc = vim.wo.statuscolumn
 --- A result of all digits is regarded a number for display purposes.
 --- Otherwise the result is taken as flag text and applied to the rules
 --- described above.
+--- 							*stl-%0{*
+--- With %0{ neither applies: the result is inserted as a literal string.
 ---
 --- Watch out for errors in expressions.  They may render Vim unusable!
 --- If you are stuck, hold down ':' or 'Q' to get a prompt, then quit and
@@ -7032,18 +7051,18 @@ vim.bo.swf = vim.bo.swapfile
 ---   `:sbnext`, or `:sbrewind`).
 --- Possible values (comma-separated list):
 ---    useopen	If included, jump to the first open window in the
---- 		current tab page that contains the specified buffer
+--- 		current tabpage that contains the specified buffer
 --- 		(if there is one).  Otherwise: Do not examine other
 --- 		windows.
----    usetab	Like "useopen", but also consider windows in other tab
---- 		pages.
+---    usetab	Like "useopen", but also consider windows in other
+--- 		tabpages.
 ---    split	If included, split the current window before loading
 --- 		a buffer for a `quickfix` command that display errors.
 --- 		Otherwise: do not split, use current window (when used
 --- 		in the quickfix window: the previously used window or
 --- 		split if there is no other window).
 ---    vsplit	Just like "split" but split vertically.
----    newtab	Like "split", but open a new tab page.  Overrules
+---    newtab	Like "split", but open a new tabpage.  Overrules
 --- 		"split" when both are present.
 ---    uselast	If included, jump to the previously used window when
 --- 		jumping to errors with `quickfix` commands.
@@ -7107,13 +7126,13 @@ vim.o.syn = vim.o.syntax
 vim.bo.syntax = vim.o.syntax
 vim.bo.syn = vim.bo.syntax
 
---- This option controls the behavior when closing tab pages (e.g., using
---- `:tabclose`).  When empty Vim goes to the next (right) tab page.
+--- This option controls the behavior when closing tabpages (e.g., using
+--- `:tabclose`).  When empty Vim goes to the next (right) tabpage.
 ---
 --- Possible values (comma-separated list):
----    left		If included, go to the previous tab page instead of
+---    left		If included, go to the previous tabpage instead of
 --- 		the next one.
----    uselast	If included, go to the previously used tab page if
+---    uselast	If included, go to the previously used tabpage if
 --- 		possible.  This option takes precedence over the
 --- 		others.
 ---
@@ -7123,14 +7142,14 @@ vim.o.tcl = vim.o.tabclose
 vim.go.tabclose = vim.o.tabclose
 vim.go.tcl = vim.go.tabclose
 
---- When non-empty, this option determines the content of the tab pages
+--- When non-empty, this option determines the content of the tabpages
 --- line at the top of the Vim window.  When empty Vim will use a default
---- tab pages line.  See `setting-tabline` for more info.
+--- tabpages line.  See `setting-tabline` for more info.
 ---
---- The tab pages line only appears as specified with the 'showtabline'
+--- The tabpages line only appears as specified with the 'showtabline'
 --- option and only when there is no GUI tab line.  When 'e' is in
 --- 'guioptions' and the GUI supports a tab line 'guitablabel' is used
---- instead.  Note that the two tab pages lines are very different.
+--- instead.  Note that the two tabpages lines are very different.
 ---
 --- The value is evaluated like with 'statusline'.  You can use
 --- `tabpagenr()`, `tabpagewinnr()` and `tabpagebuflist()` to figure out
@@ -7141,7 +7160,7 @@ vim.go.tcl = vim.go.tabclose
 --- trigger it to be updated, use `:redrawtabline`.
 --- This option cannot be set in a modeline when 'modelineexpr' is off.
 ---
---- Keep in mind that only one of the tab pages is the current one, others
+--- Keep in mind that only one of the tabpages is the current one, others
 --- are invisible and you can't jump to their windows.
 ---
 --- @type string
@@ -7150,7 +7169,7 @@ vim.o.tal = vim.o.tabline
 vim.go.tabline = vim.o.tabline
 vim.go.tal = vim.go.tabline
 
---- Maximum number of tab pages to be opened by the `-p` command line
+--- Maximum number of tabpages to be opened by the `-p` command line
 --- argument or the ":tab all" command. `tabpage`
 ---
 --- @type integer
@@ -7606,7 +7625,7 @@ vim.go.tf = vim.go.ttyfast
 --- means).
 ---
 --- @type string
-vim.o.undodir = "$XDG_STATE_HOME/nvim/undo//"
+vim.o.undodir = "/var$XDG_STATE_HOME/nvim/undo//"
 vim.o.udir = vim.o.undodir
 vim.go.undodir = vim.o.undodir
 vim.go.udir = vim.go.undodir
@@ -7803,7 +7822,7 @@ vim.go.vfile = vim.go.verbosefile
 --- Environment variables are expanded `:set_env`.
 ---
 --- @type string
-vim.o.viewdir = "$XDG_STATE_HOME/nvim/view//"
+vim.o.viewdir = "/var$XDG_STATE_HOME/nvim/view//"
 vim.o.vdir = vim.o.viewdir
 vim.go.viewdir = vim.o.viewdir
 vim.go.vdir = vim.go.viewdir
@@ -8063,9 +8082,9 @@ vim.go.wmnu = vim.go.wildmenu
 --- "noselect"	If 'wildmenu' is enabled, show the menu but do not
 --- 		preselect the first item.
 --- "noinsert"	If 'wildmenu' is enabled, show the menu and preselect
---- 		the first match, but do not insert it in the
---- 		command line.  If both "noinsert" and "noselect" are
---- 		present, "noselect" takes precedence.
+--- 		the first match, but do not insert it in the command
+--- 		line.  If both "noinsert" and "noselect" are present,
+--- 		"noselect" takes precedence.
 --- If only one match exists, it is completed fully, unless "noselect" or
 --- "noinsert" is specified.
 ---
@@ -8157,7 +8176,10 @@ vim.go.wim = vim.go.wildmode
 --- 		is not supported for file and directory names and
 --- 		instead wildcard expansion is used.
 ---   pum		Display the completion matches using the popup menu in
---- 		the same style as the `ins-completion-menu`.
+--- 		the same style as the `ins-completion-menu`.  When an
+--- 		info popup is shown next to the menu, it can be
+--- 		scrolled by moving the mouse pointer on top of it and
+--- 		using the scroll wheel.
 ---   tagfile	When using CTRL-D to list matching tags, the kind of
 --- 		tag and the file of the tag is listed.	Only one match
 --- 		is displayed per line.  Often used tag kinds are:
@@ -8238,11 +8260,14 @@ vim.wo.winbl = vim.wo.winblend
 --- - "shadow": Drop shadow effect, by blending with the background.
 --- - "single": Single-line box.
 --- - "solid": Adds padding by a single whitespace cell.
---- - custom: comma-separated list of exactly 8 characters in clockwise
----   order starting from topleft. Example:
+--- - custom: comma-separated list of exactly 8 entries in clockwise
+---   order starting from topleft. Each entry may be a single char, a
+---   single space (filled with the background), or empty (no border on
+---   that side). Example:
 ---
 --- ```lua
----      vim.o.winborder='+,-,+,`,+,-,+,`'
+---      vim.o.winborder = '+,-,+,`,+,-,+,`'
+---      vim.o.winborder = ',,, ,,,, '  -- left/right padding only
 --- ```
 ---
 ---

@@ -43,6 +43,7 @@ typedef enum {
                 ///< Should also be used when return value is ignored, as it is allocation-free
   kRetLuaref,   ///< return value becomes a single Luaref, regardless of type (except NIL)
   kRetMulti,    ///< like kRetObject but return multiple return values as an Array
+  kRetMultiStack,  ///< like kRetMulti but leave values on the lua stack
 } LuaRetMode;
 
 /// Maximum number of errors in vim.ui_attach() and decor provider callbacks.

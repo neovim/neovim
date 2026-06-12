@@ -7,6 +7,7 @@
 "   2024 May 04 by Vim Project fix digit separator in octals and floats
 "   2026 Jan 06 by Vim Project orphaning announcement
 "   2026 Jan 08 by Vim Project highlight capital letter prefixes for numbers
+"   2026 May 29 by Vim Project add C++23 stdfloat types (#16498)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -102,6 +103,11 @@ if !exists("cpp_no_cpp20")
   syn keyword cppStructure	concept
   syn keyword cppType		char8_t
   syn keyword cppModule		import module export
+endif
+
+" C++ 23 extensions
+if !exists("cpp_no_cpp23")
+  syn keyword cppType		float16_t float32_t float64_t float128_t bfloat16_t
 endif
 
 " The minimum and maximum operators in GNU C++

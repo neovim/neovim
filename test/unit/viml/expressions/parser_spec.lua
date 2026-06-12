@@ -78,6 +78,7 @@ local predefined_hl_defs = {
   Delimiter = true,
   SpecialComment = true,
   Debug = true,
+  Dimmed = true,
 
   -- From highlight_init_(dark|light)
   ColorColumn = true,

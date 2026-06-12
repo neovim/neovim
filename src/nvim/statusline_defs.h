@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "nvim/fold_defs.h"
+#include "nvim/pos_defs.h"
 #include "nvim/sign_defs.h"
 
 /// 'statusline' item flags
@@ -101,6 +102,7 @@ struct stl_item {
 /// Struct to hold info for 'statuscolumn'
 typedef struct {
   int width;                           ///< width of the status column
+  linenr_T lnum;                       ///< buffer line being drawn
   int sign_cul_id;                     ///< cursorline sign highlight id
   bool draw;                           ///< whether to draw the statuscolumn
   stl_hlrec_t *hlrec;                  ///< highlight groups

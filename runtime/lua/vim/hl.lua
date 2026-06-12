@@ -8,7 +8,7 @@ local M = {}
 --- - `semantic_tokens`: `125`, used for LSP semantic token highlighting
 --- - `diagnostics`: `150`, used for code analysis such as diagnostics
 --- - `user`: `200`, used for user-triggered highlights such as LSP document
----   symbols or `on_yank` autocommands
+---   symbols or `hl_op` autocommands
 M.priorities = {
   syntax = 50,
   treesitter = 100,
@@ -40,7 +40,8 @@ M.priorities = {
 ---
 ---@param buf integer Buffer number to apply highlighting to
 ---@param ns integer Namespace to add highlight to
----@param higroup string Highlight group to use for highlighting
+---@param hlgroup integer|integer[]|string|string[] Highlight group used for the text range.
+--- See the `hl_group` option in |nvim_buf_set_extmark()|.
 ---@param start [integer,integer]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param finish [integer,integer]|string End of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param opts? vim.hl.range.Opts
@@ -48,7 +49,9 @@ M.priorities = {
 --- highlight has left
 --- @return fun()? range_clear A function which allows clearing the highlight manually.
 --- nil is returned if timeout is not specified
-function M.range(buf, ns, higroup, start, finish, opts)
+function M.range(buf, ns, hlgroup, start, finish, opts)
+  -- Resolve buf=0 so the deferred `range_hl_clear` works correctly even after buffer-switch.
+  buf = vim._resolve_bufnr(buf)
   opts = opts or {}
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
@@ -120,7 +123,7 @@ function M.range(buf, ns, higroup, start, finish, opts)
     table.insert(
       extmarks,
       api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-        hl_group = higroup,
+        hl_group = hlgroup,
         end_row = end_row,
         end_col = end_col,
         priority = priority,
@@ -144,26 +147,33 @@ function M.range(buf, ns, higroup, start, finish, opts)
   end
 end
 
-local yank_timer --- @type uv.uv_timer_t?
-local yank_hl_clear --- @type fun()?
-local yank_ns = api.nvim_create_namespace('nvim.hlyank')
+---@private
+---@class (private) vim.hl.OnEventState
+---@field timer? uv.uv_timer_t Timer to clear the highlight.
+---@field clear? fun() Function to clear the highlight immediately.
 
---- Highlight the yanked text during a |TextYankPost| event.
+--- @type { [string]: vim.hl.OnEventState }
+local hl_op_state = {}
+
+local events_ns = api.nvim_create_namespace('nvim.hl.events')
+
+--- Highlights the affected text region during a |TextYankPost| or |TextPutPost| event.
 ---
---- Add the following to your `init.vim`:
+--- Add this to your `init.vim`:
 ---
 --- ```vim
---- autocmd TextYankPost * silent! lua vim.hl.on_yank {higroup='Visual', timeout=300}
+--- autocmd TextYankPost * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
+--- autocmd TextPutPost  * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
 --- ```
 ---
 --- @param opts table|nil Optional parameters
----              - event     event structure (default vim.v.event)
----              - higroup   highlight group for yanked region (default "IncSearch")
----              - on_macro  highlight when executing macro (default false)
----              - on_visual highlight when yanking visual selection (default true)
----              - priority  integer priority (default |vim.hl.priorities|`.user`)
----              - timeout   time in ms before highlight is cleared (default 150)
-function M.on_yank(opts)
+---              - event     (default: vim.v.event) Event structure.
+---              - higroup   (default: "IncSearch") Highlight group for the text region.
+---              - on_macro  (default: false) Highlight during |macro| execution.
+---              - on_visual (default: true) Highlight during |Visual| mode.
+---              - priority  (default: |vim.hl.priorities|`.user`) Integer priority.
+---              - timeout   (default: 150) Time in ms before highlight is cleared.
+function M.hl_op(opts)
   vim.validate('opts', opts, 'table', true)
   opts = opts or {}
   local event = opts.event or vim.v.event
@@ -172,32 +182,46 @@ function M.on_yank(opts)
 
   if not on_macro and vim.fn.reg_executing() ~= '' then
     return
-  end
-  if event.operator ~= 'y' or event.regtype == '' then
+  elseif
+    event.regtype == ''
+    or (event.operator ~= 'y' and event.operator ~= 'p' and event.operator ~= 'P')
+  then
     return
-  end
-  if not on_visual and event.visual then
+  elseif not on_visual and event.visual then
     return
   end
 
-  local higroup = opts.higroup or 'IncSearch'
+  local state_key = event.operator == 'y' and 'yank' or 'put'
+  local hlgroup = opts.higroup or 'IncSearch'
 
   local bufnr = api.nvim_get_current_buf()
   local winid = api.nvim_get_current_win()
 
-  if yank_timer and not yank_timer:is_closing() then
-    yank_timer:close()
-    assert(yank_hl_clear)
-    yank_hl_clear()
+  local state = hl_op_state[state_key]
+  if state ~= nil and state.timer and not state.timer:is_closing() then
+    state.timer:close()
+    assert(state.clear)
+    state.clear()
   end
 
-  api.nvim__ns_set(yank_ns, { wins = { winid } })
-  yank_timer, yank_hl_clear = M.range(bufnr, yank_ns, higroup, "'[", "']", {
+  api.nvim__ns_set(events_ns, { wins = { winid } })
+  local timer, clear = M.range(bufnr, events_ns, hlgroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = true,
     priority = opts.priority or M.priorities.user,
     timeout = opts.timeout or 150,
   })
+
+  hl_op_state[state_key] = {
+    timer = timer,
+    clear = clear,
+  }
+end
+
+--- @deprecated Use |vim.hl.hl_op()| instead.
+function M.on_yank(opts)
+  vim.deprecate('vim.hl.on_yank', 'vim.hl.hl_op', '0.14')
+  return M.hl_op(opts)
 end
 
 return M

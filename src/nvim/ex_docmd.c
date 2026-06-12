@@ -2525,10 +2525,13 @@ static char ex_error_buf[MSG_BUF_LEN];
 /// @return an error message with argument included.
 /// Uses a static buffer, only the last error will be kept.
 /// "msg" will be translated, caller should use N_().
-char *ex_errmsg(const char *const msg, const char *const arg)
-  FUNC_ATTR_NONNULL_ALL
+char *ex_errmsg(const char *const msg, ...)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(1, 2)
 {
-  vim_snprintf(ex_error_buf, MSG_BUF_LEN, _(msg), arg);
+  va_list ap;
+  va_start(ap, msg);
+  vim_vsnprintf(ex_error_buf, MSG_BUF_LEN, _(msg), ap);
+  va_end(ap);
   return ex_error_buf;
 }
 
@@ -3191,7 +3194,7 @@ bool checkforcmd(char **pp, const char *cmd, int len)
   int i;
 
   for (i = 0; cmd[i] != NUL; i++) {
-    if ((cmd)[i] != (*pp)[i]) {
+    if (cmd[i] != (*pp)[i]) {
       break;
     }
   }
@@ -3301,7 +3304,7 @@ char *find_ex_command(exarg_T *eap, int *full)
       // :delete with the 'l' flag.  Same for 'p'.
       int i;
       for (i = 0; i < len; i++) {
-        if (eap->cmd[i] != ("delete")[i]) {
+        if (eap->cmd[i] != "delete"[i]) {
           break;
         }
       }
@@ -3366,6 +3369,14 @@ char *find_ex_command(exarg_T *eap, int *full)
     if (p == eap->cmd) {
       eap->cmdidx = CMD_SIZE;
     }
+  }
+
+  // Force ":ho" to be unresolved.  Without this, find_ex_command()
+  // matches it to CMD_horizontal (the only "ho*" entry), which makes
+  // fullcommand("ho") return "horizontal" even though ":ho" cannot be
+  // used as the modifier (cmdmods[] requires 3 chars, "hor").
+  if (eap->cmdidx == CMD_horizontal && p - eap->cmd == 2) {
+    eap->cmdidx = CMD_SIZE;
   }
 
   return p;
@@ -5848,7 +5859,7 @@ static list_T *call_findfunc(char *pat, BoolVarValue cmdcomplete)
 /// Find file names matching "pat" using 'findfunc' and return it in "files".
 /// Used for expanding the :find, :sfind and :tabfind command argument.
 /// Returns OK on success and FAIL otherwise.
-int expand_findfunc(char *pat, char ***files, int *numMatches)
+int expand_findfunc(expand_T *xp, char *pat, char ***files, int *numMatches)
 {
   *numMatches = 0;
   *files = NULL;
@@ -5864,18 +5875,7 @@ int expand_findfunc(char *pat, char ***files, int *numMatches)
     return FAIL;
   }
 
-  *files = xmalloc(sizeof(char *) * (size_t)len);
-
-  // Copy all the List items
-  int idx = 0;
-  TV_LIST_ITER_CONST(l, li, {
-    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
-      (*files)[idx] = TO_SLASH_SAVE(TV_LIST_ITEM_TV(li)->vval.v_string);
-      idx++;
-    }
-  });
-
-  *numMatches = idx;
+  expand_process_user_list(l, files, numMatches, xp);
   tv_list_free(l);
 
   return OK;
@@ -5899,9 +5899,14 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
     if (count > fname_count) {
       semsg(_(e_no_more_file_str_found_in_path), findarg);
     } else {
-      listitem_T *li = tv_list_find(fname_list, count - 1);
-      if (li != NULL && TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
-        ret_fname = TO_SLASH_SAVE(TV_LIST_ITEM_TV(li)->vval.v_string);
+      const listitem_T *li = tv_list_find(fname_list, count - 1);
+      if (li != NULL) {
+        const typval_T *tv = TV_LIST_ITEM_TV(li);
+        if (tv->v_type == VAR_STRING && tv->vval.v_string != NULL) {
+          ret_fname = xstrdup(tv->vval.v_string);
+        } else if (tv->v_type == VAR_DICT && tv->vval.v_dict != NULL) {
+          ret_fname = tv_dict_get_string(tv->vval.v_dict, "word", true);
+        }
       }
     }
   }
@@ -8255,16 +8260,6 @@ static void ex_shada(exarg_T *eap)
   p_shada = save_shada;
 }
 
-/// Make a dialog message in "buff[DIALOG_MSG_SIZE]".
-/// "format" must contain "%s".
-void dialog_msg(char *buff, char *format, char *fname)
-{
-  if (fname == NULL) {
-    fname = _("Untitled");
-  }
-  vim_snprintf(buff, DIALOG_MSG_SIZE, format, fname);
-}
-
 static TriState filetype_detect = kNone;
 static TriState filetype_plugin = kNone;
 static TriState filetype_indent = kNone;
@@ -8522,6 +8517,18 @@ static void ex_log(exarg_T *eap)
 static void ex_lsp(exarg_T *eap)
 {
   nlua_call_excmd("vim._core.ex_cmd", "ex_lsp", eap, &cmdmod, NULL);
+}
+
+/// ":packdel {name}"
+static void ex_packdel(exarg_T *eap)
+{
+  nlua_call_excmd("vim._core.ex_cmd", "ex_packdel", eap, &cmdmod, NULL);
+}
+
+/// ":packupdate {name}"
+static void ex_packupdate(exarg_T *eap)
+{
+  nlua_call_excmd("vim._core.ex_cmd", "ex_packupdate", eap, &cmdmod, NULL);
 }
 
 /// ":uptime"
@@ -8825,12 +8832,6 @@ void verify_command(char *cmd)
       "                                       `##", a);
   msg("`      `.:.`.,:iii;;;;;;;;iii;;;:`       `.``                 "
       "                                       `nW", a);
-}
-
-/// Get argt of command with id
-uint32_t get_cmd_argt(cmdidx_T cmdidx)
-{
-  return cmdnames[(int)cmdidx].cmd_argt;
 }
 
 /// Check if a command is a :map/:abbrev command.

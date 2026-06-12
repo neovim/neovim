@@ -433,6 +433,7 @@ func s:GetFilenameChecks() abort
     \ 'julia': ['file.jl'],
     \ 'just': ['justfile', 'Justfile', '.justfile', 'config.just'],
     \ 'karel': ['file.kl', 'file.KL'],
+    \ 'kawasaki_as': ['file.pg'],
     \ 'kconfig': ['Kconfig', 'Kconfig.debug', 'Kconfig.file', 'Config.in', 'Config.in.host'],
     \ 'kdl': ['file.kdl'],
     \ 'kerml': ['file.kerml'],
@@ -739,11 +740,12 @@ func s:GetFilenameChecks() abort
     \ 'services': ['/etc/services', 'any/etc/services'],
     \ 'setserial': ['/etc/serial.conf', 'any/etc/serial.conf'],
     \ 'sexplib': ['file.sexp'],
+    \ 'sgf': ['file.sgf'],
     \ 'sh': ['.bashrc', '.bash_profile', '.bash-profile', '.bash_logout', '.bash-logout', '.bash_aliases', '.bash-aliases', '.bash_history', '.bash-history',
     \        '/tmp/bash-fc-3Ozjlw', '/tmp/bash-fc.3Ozjlw', 'PKGBUILD', 'file.bash', '/usr/share/doc/bash-completion/filter.sh',
     \        '/etc/udev/cdsymlinks.conf', 'any/etc/udev/cdsymlinks.conf', 'file.bats', '.ash_history', 'any/etc/neofetch/config.conf', '.xprofile',
     \        'user-dirs.defaults', 'user-dirs.dirs', 'makepkg.conf', '.makepkg.conf', 'file.mdd', 'file.cygport', '.envrc', '.envrc.file', 'file.envrc', 'devscripts.conf',
-    \        '.devscripts', 'file.lo', 'file.la', 'file.lai'],
+    \        '.devscripts', 'file.lo', 'file.la', 'file.lai', '/etc/X11/xinit/xinitrc', '/etc/X11/xinit/xserverrc', '~/.xinitrc', '/etc/X11/xinit/xinitrc.d/foobar'],
     \ 'shaderslang': ['file.slang'],
     \ 'sieve': ['file.siv', 'file.sieve'],
     \ 'sil': ['file.sil'],
@@ -903,6 +905,7 @@ func s:GetFilenameChecks() abort
     \ 'tla': ['file.tla'],
     \ 'tli': ['file.tli'],
     \ 'tmux': ['tmuxfile.conf', '.tmuxfile.conf', '.tmux-file.conf', '.tmux.conf', 'tmux-file.conf', 'tmux.conf', 'tmux.conf.local'],
+    \ 'tolk': ['file.tolk'],
     \ 'toml': ['file.toml', 'uv.lock', 'Gopkg.lock', 'Pipfile', '/home/user/.cargo/config', '.black',
     \          'any/containers/containers.conf', 'any/containers/containers.conf.d/file.conf',
     \          'any/containers/containers.conf.modules/file.conf', 'any/containers/containers.conf.modules/any/file.conf',
@@ -983,7 +986,7 @@ func s:GetFilenameChecks() abort
     \ 'xml': ['/etc/blkid.tab', '/etc/blkid.tab.old', 'file.xmi', 'file.csproj', 'file.csproj.user', 'file.fsproj', 'file.fsproj.user', 'file.vbproj', 'file.vbproj.user', 'file.ui',
     \         'file.tpm', '/etc/xdg/menus/file.menu', 'fglrxrc', 'file.xlf', 'file.xliff', 'file.xul', 'file.wsdl', 'file.wpl', 'any/etc/blkid.tab', 'any/etc/blkid.tab.old',
     \         'any/etc/xdg/menus/file.menu', 'file.atom', 'file.rss', 'file.cdxml', 'file.psc1', 'file.mpd', 'fonts.conf', 'file.xcu', 'file.xlb', 'file.xlc', 'file.xba', 'file.xpr',
-    \         'file.xpfm', 'file.spfm', 'file.bxml', 'file.mmi', 'file.slnx', 'Directory.Packages.props', 'Directory.Build.targets', 'Directory.Build.props'],
+    \         'file.xpfm', 'file.spfm', 'file.bxml', 'file.mmi', 'file.slnx', 'Directory.Packages.props', 'Directory.Build.targets', 'Directory.Build.props', 'file.reanim'],
     \ 'xmodmap': ['anyXmodmap', 'Xmodmap', 'some-Xmodmap', 'some-xmodmap', 'some-xmodmap-file', 'xmodmap', 'xmodmap-file'],
     \ 'xpm': ['file.xpm'],
     \ 'xpm2': ['file.xpm2'],
@@ -993,7 +996,7 @@ func s:GetFilenameChecks() abort
     \ 'xslt': ['file.xsl', 'file.xslt'],
     \ 'yacc': ['file.yy', 'file.yxx', 'file.y++'],
     \ 'yaml': ['file.yaml', 'file.yml', 'file.eyaml', 'file.kyaml', 'file.kyml', 'any/.bundle/config', '.clangd', '.clang-format', '.clang-tidy', 'file.mplstyle', 'matplotlibrc', 'yarn.lock',
-    \          '/home/user/.kube/config', '/home/user/.kube/kuberc', '.condarc', 'condarc', '.mambarc', 'mambarc', 'pixi.lock', 'buf.lock'],
+    \          '/home/user/.kube/config', '/home/user/.kube/kuberc', '.condarc', 'condarc', '.mambarc', 'mambarc', 'pixi.lock', 'buf.lock', 'file.ksy'],
     \ 'yang': ['file.yang'],
     \ 'yara': ['file.yara', 'file.yar'],
     \ 'yuck': ['file.yuck'],
@@ -1085,7 +1088,10 @@ func s:GetScriptChecks() abort
       \         ['#!/path/bash2'],
       \         ['#!/path/dash'],
       \         ['#!/path/ksh'],
-      \         ['#!/path/ksh93']],
+      \         ['#!/path/ksh93'],
+      \         ['#!/path/ash'],
+      \         ['#!/path/busybox ash'],
+      \         ['#!/path/busybox sh']],
       \ 'csh': [['#!/path/csh']],
       \ 'tcsh': [['#!/path/tcsh']],
       \ 'zsh': [['#!/path/zsh']],
@@ -1874,6 +1880,27 @@ func Test_html_file()
   call assert_equal('htmlangular', &filetype)
   bwipe!
 
+  " HTML Angular ng-template element
+  let content = ['<ng-template let-foo>{{ foo }}</ng-template>']
+  call writefile(content, 'Xfile.html', 'D')
+  split Xfile.html
+  call assert_equal('htmlangular', &filetype)
+  bwipe!
+
+  " HTML Angular ng-content element
+  let content = ['<div><ng-content select="[item]"></ng-content></div>']
+  call writefile(content, 'Xfile.html', 'D')
+  split Xfile.html
+  call assert_equal('htmlangular', &filetype)
+  bwipe!
+
+  " Word containing 'ng-template' as a suffix must not trigger htmlangular
+  let content = ['<div class="song-template">', '  <h1>Not Angular</h1>', '</div>']
+  call writefile(content, 'Xfile.html', 'D')
+  split Xfile.html
+  call assert_equal('html', &filetype)
+  bwipe!
+
   " Django Template
   let content = ['{% if foobar %}',
       \ '    <ul>',
@@ -2052,6 +2079,37 @@ func Test_m4_file()
     call delete('Xsandbox', 'rf')
     filetype off
   endtry
+endfunc
+
+func Test_mm_file()
+  filetype on
+
+  call writefile(['#import "test.h"'], 'Xfile.mm', 'D')
+  split Xfile.mm
+  call assert_equal('objcpp', &filetype)
+  bwipe!
+
+  call writefile(['// Objective-C++ line comment'], 'Xfile.mm', 'D')
+  split Xfile.mm
+  call assert_equal('objcpp', &filetype)
+  bwipe!
+
+  call writefile(['.TH VIM 1 "YYYY Mth DD"'], 'Xfile.mm', 'D')
+  split Xfile.mm
+  call assert_equal('nroff', &filetype)
+  bwipe!
+
+  try
+    let g:filetype_mm = 'objcpp'
+    call writefile(['.TH VIM 1 "YYYY Mth DD"'], 'Xfile_override.mm', 'D')
+    split Xfile_override.mm
+    call assert_equal('objcpp', &filetype)
+    bwipe!
+  finally
+    unlet! g:filetype_mm
+  endtry
+
+  filetype off
 endfunc
 
 func Test_mod_file()
@@ -2765,7 +2823,13 @@ endfunc
 func Test_inc_file()
   filetype on
 
+  " pov
   call writefile(['this is the fallback'], 'Xfile.inc', 'D')
+  split Xfile.inc
+  call assert_equal('pov', &filetype)
+  bwipe!
+
+  call writefile(['!Comment with formular a = b/c'], 'Xfile.inc')
   split Xfile.inc
   call assert_equal('pov', &filetype)
   bwipe!
@@ -2818,6 +2882,11 @@ func Test_inc_file()
   bwipe!
 
   call writefile(['DEPENDS:append = " somedep"'], 'Xfile.inc')
+  split Xfile.inc
+  call assert_equal('bitbake', &filetype)
+  bwipe!
+
+  call writefile(['MACHINE ?= "qemu"'], 'Xfile.inc')
   split Xfile.inc
   call assert_equal('bitbake', &filetype)
   bwipe!
@@ -3427,6 +3496,51 @@ func Test_app_file()
         \ 'xfile3.app', 'D')
   split xfile3.app
   call assert_equal('erlang', &filetype)
+  bwipe!
+
+  filetype off
+endfunc
+
+func Test_cucumber_code_injection()
+  CheckFeature ruby
+  filetype plugin on
+
+  call mkdir('Xcucu/features/step_definitions', 'pR')
+  call writefile([
+        \ 'Feature: demo',
+        \ '  Scenario: trigger',
+        \ '    Given xyzzy',
+        \ ], 'Xcucu/features/test.feature')
+  let marker = getcwd() . '/Xcucu/MARKER'
+  " Malicious step: terminates the regex literal, injects Ruby system(),
+  " comments the trailing slash.  With the fix, the pattern is passed to
+  " Regexp.new() instead of Kernel.eval() and the payload is inert.
+  call writefile([
+        \ 'Given /xyzzy/; system("touch ' . marker . '"); #/ do',
+        \ 'end',
+        \ ], 'Xcucu/features/step_definitions/poc.rb')
+
+  new Xcucu/features/test.feature
+  call assert_equal('cucumber', &filetype)
+  call cursor(3, 1)
+  " Triggers s:jump -> s:steps -> s:stepmatch on every discovered step,
+  " including the malicious one.  Suppress preview and error messages.
+  silent! normal [d
+  call assert_false(filereadable(marker), 'Ruby injection executed')
+  bwipe!
+  filetype plugin off
+endfunc
+
+func Test_as_file()
+  filetype on
+
+  call writefile([], 'Xfile.as', 'D')
+  split Xfile.as
+  call assert_equal('atlas', &filetype)
+  bwipe!
+  call writefile(['', '.NETCONF     192.168.1.11,"TIMESYS-",255.255.255.0,192.168.0.1,0.0.0.0,0.0.0.0," "'], 'Xfile.as', 'D')
+  split Xfile.as
+  call assert_equal('kawasaki_as', &filetype)
   bwipe!
 
   filetype off

@@ -134,7 +134,7 @@ describe('normal', function()
 
   -- oldtest: Test_pos_percentage_in_turkish_locale()
   it('viewport position percentage in Turkish locale', function()
-    t.skip(not t.translations_enabled(), 'Nvim not built with ENABLE_TRANSLATIONS')
+    t.skip(not t.translations_enabled(), 'N/A: Nvim not built with ENABLE_TRANSLATIONS')
     t.skip(not pcall(exec, 'lang tr_TR.UTF-8'), 'Turkish locale not available')
 
     local build_dir = t.paths.test_build_dir

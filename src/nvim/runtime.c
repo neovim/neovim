@@ -934,6 +934,7 @@ void runtime_search_path_validate(void)
   }
   if (!runtime_search_path_valid) {
     if (!runtime_search_path_ref) {
+      msg_ext_ui_flush();  // avoid recursion due to UI callback
       runtime_search_path_free(runtime_search_path);
     }
     runtime_search_path = runtime_search_path_build();

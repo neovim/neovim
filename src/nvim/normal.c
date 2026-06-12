@@ -1819,6 +1819,7 @@ void clearop(oparg_T *oap)
   oap->regname = 0;
   oap->motion_force = NUL;
   oap->use_reg_one = false;
+  oap->restore_cursor = false;
   motion_force = NUL;
 }
 
@@ -5884,7 +5885,7 @@ static void set_op_var(int optype)
 
 /// Handle linewise operator "dd", "yy", etc.
 ///
-/// "_" is is a strange motion command that helps make operators more logical.
+/// "_" is a strange motion command that helps make operators more logical.
 /// It is actually implemented, but not documented in the real Vi.  This motion
 /// command actually refers to "the current line".  Commands like "dd" and "yy"
 /// are really an alternate form of "d_" and "y_".  It does accept a count, so
@@ -6362,6 +6363,9 @@ static void nv_object(cmdarg_T *cap)
     break;
   case 'p':       // "ap" = a paragraph
     flag = current_par(cap->oap, cap->count1, include, 'p');
+    break;
+  case 'l':       // "il" = inner line, "al" = all lines
+    flag = current_line(cap->oap, include);
     break;
   case 's':       // "as" = a sentence
     flag = current_sent(cap->oap, cap->count1, include);

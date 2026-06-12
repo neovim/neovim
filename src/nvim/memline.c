@@ -669,13 +669,12 @@ static void set_b0_fname(ZeroBlock *b0p, buf_T *buf)
     // editing the same file on different machines over a network.
     // First replace home dir path with "~/" with home_replace().
     // Then insert the user name to get "~user/".
-    home_replace(NULL, buf->b_ffname, b0p->b0_fname,
-                 B0_FNAME_SIZE_CRYPT, true);
+    size_t flen = home_replace(NULL, buf->b_ffname, b0p->b0_fname,
+                               B0_FNAME_SIZE_CRYPT, true);
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
       int retval = os_get_username(uname, B0_UNAME_SIZE);
       size_t ulen = strlen(uname);
-      size_t flen = strlen(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
         xstrlcpy(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
       } else {
@@ -1123,6 +1122,12 @@ void ml_recover(bool checkext)
             dp->db_txt_end = page_count * mfp->mf_page_size;
           }
 
+          if (dp->db_txt_start < HEADER_SIZE || dp->db_txt_start > dp->db_txt_end) {
+            ml_append(lnum++, _("??? block header corrupted"), 0, true);
+            error++;
+            has_error = true;
+            dp->db_txt_start = dp->db_txt_end;
+          }
           // Make sure there is a NUL at the end of the block so we
           // don't go over the end when copying text.
           *((char *)dp + dp->db_txt_end - 1) = NUL;
@@ -2320,7 +2325,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line_arg, colnr_T len_
       if (total_moved) {
         memmove(&pp_new->pb_pointer[0],
                 &pp->pb_pointer[pb_idx + 1],
-                (size_t)(total_moved) * sizeof(PointerEntry));
+                (size_t)total_moved * sizeof(PointerEntry));
         pp_new->pb_count = (uint16_t)total_moved;
         pp->pb_count = (uint16_t)(pp->pb_count - (total_moved - 1));
         pp->pb_pointer[pb_idx + 1].pe_bnum = bnum_right;
@@ -3250,7 +3255,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
       return hp;
     }
 
-    PointerBlock *pp = (PointerBlock *)(dp);                // must be pointer block
+    PointerBlock *pp = (PointerBlock *)dp;                // must be pointer block
     if (pp->pb_id != PTR_ID) {
       iemsg(_(e_pointer_block_id_wrong));
       goto error_block;

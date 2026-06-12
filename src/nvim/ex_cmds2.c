@@ -203,7 +203,8 @@ void dialog_changed(buf_T *buf, bool checkall)
     .forceit = false,
   };
 
-  dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
+  const char *fname = buf->b_fname ? buf->b_fname : _("Untitled");
+  snprintf(buff, sizeof buff, _("Save changes to \"%s\"?"), fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {
@@ -223,12 +224,11 @@ void dialog_changed(buf_T *buf, bool checkall)
       }
     }
 
-    // restore to empty when write failed
+    // restore to empty when write failed or was cancelled
     if (empty_bufname) {
       buf->b_fname = NULL;
       XFREE_CLEAR(buf->b_ffname);
       XFREE_CLEAR(buf->b_sfname);
-      unchanged(buf, true, false);
     }
   } else if (ret == VIM_NO) {
     unchanged(buf, true, false);
@@ -268,8 +268,8 @@ bool dialog_close_terminal(buf_T *buf)
 {
   char buff[DIALOG_MSG_SIZE];
 
-  dialog_msg(buff, _("Close \"%s\"?"),
-             (buf->b_fname != NULL) ? buf->b_fname : "?");
+  snprintf(buff, sizeof buff, _("Close \"%s\"?"),
+           (buf->b_fname != NULL) ? buf->b_fname : "?");
 
   int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
 
@@ -697,7 +697,7 @@ void ex_listdo(exarg_T *eap)
   msg_listdo_overwrite--;
   if (save_ei != NULL) {
     buf_T *bnext;
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
 
     au_event_restore(save_ei);
 

@@ -23,6 +23,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/option.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
@@ -370,13 +371,13 @@ cleanup:
 ///        - callback (`function|string?`) Lua function (or Vimscript function name, if string)
 ///          called when the event(s) is triggered. Lua callback can return |lua-truthy| to delete
 ///          the autocommand. Callback receives one argument, a table with keys: [event-args]()
-///            - id: (`number`) Autocommand id
-///            - event: (`vim.api.keyset.events`) Name of the triggered event |autocmd-events|
-///            - group: (`number?`) Group id, if any
-///            - file: (`string`) [<afile>] (not expanded to a full path)
-///            - match: (`string`) [<amatch>] (expanded to a full path)
 ///            - buf: (`number`) [<abuf>]
 ///            - data: (`any`) Arbitrary data passed from [nvim_exec_autocmds()] [event-data]()
+///            - event: (`vim.api.keyset.events`) Name of the triggered event |autocmd-events|
+///            - file: (`string`) [<afile>] (not expanded to a full path)
+///            - group: (`number?`) Group id, if any
+///            - id: (`number`) Autocommand id
+///            - match: (`string`) [<amatch>] (expanded to a full path)
 ///        - command (string?) Vim command executed on event. Not allowed with {callback}.
 ///        - desc (`string?`) Description (for documentation and troubleshooting).
 ///        - group (`string|integer?`) Group name or id to match against.
@@ -677,14 +678,15 @@ void nvim_del_augroup_by_name(String name, Error *err)
   });
 }
 
-/// Executes handlers for {event} that match the corresponding {opts} query. |autocmd-execute|
+/// Executes {event} handlers matching the {opts} query, in the context of {buf} (if given). |autocmd-execute|
+///
 /// @param event Event(s) to execute.
 /// @param opts Optional filters:
-///        - buf (`integer?`) Buffer id |autocmd-buflocal|. Not allowed with {pattern}.
+///        - buf (`integer?`) Buffer where the event is applied. |autocmd-buflocal| Not allowed with {pattern}.
 ///        - data (`any`): Arbitrary data passed to the callback. See |nvim_create_autocmd()|.
 ///        - group (`string|integer?`) Group name or id to match against. |autocmd-groups|.
 ///        - modeline (`boolean?`, default: true) Process the modeline after the autocommands
-///          [<nomodeline>].
+///          [<nomodeline>]. Ignored if `buf` is given.
 ///        - pattern (`string|array?`, default: current file name) |autocmd-pattern|. Not allowed with {buf}.
 /// @see |:doautocmd|
 void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, Error *err)
@@ -759,11 +761,12 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, E
 
     FOREACH_ITEM(patterns, pat, {
       char *fname = !has_buf ? pat.data.string.data : NULL;
-      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, b, NULL, data);
+      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, b, NULL, data,
+                                        has_buf);
     })
   })
 
-  if (did_aucmd && modeline) {
+  if (did_aucmd && modeline && !has_buf) {
     do_modelines(0);
   }
 }

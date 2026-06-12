@@ -951,8 +951,7 @@ void win_grid_alloc(win_T *wp)
   if (want_allocation && (!has_allocation
                           || grid_allocated->rows != total_rows
                           || grid_allocated->cols != total_cols)) {
-    grid_alloc(grid_allocated, total_rows, total_cols,
-               wp->w_grid_alloc.valid, false);
+    grid_alloc(grid_allocated, total_rows, total_cols, wp->w_grid_alloc.valid, false);
     grid_allocated->valid = true;
     if (wp->w_floating && wp->w_config.border) {
       wp->w_redr_border = true;

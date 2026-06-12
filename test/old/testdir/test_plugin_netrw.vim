@@ -138,6 +138,64 @@ function Test_NetrwValidateHostname(hostname) abort
     return s:NetrwValidateHostname(a:hostname)
 endfunction
 
+" Test unmarking all files via s:NetrwUnMarkFile()
+function Test_NetrwUnMarkFile()
+    " set up: init global and buffer-local mark lists
+    new
+
+    " initializing the global mark list, the loop handles the buffer-local
+    let s:netrwmarkfilelist = ['test_file']
+
+    " making sure every buffer has a mark list and match pattern
+    let ibuf = 1
+    while ibuf <= bufnr('$')
+        let s:netrwmarkfilelist_{ibuf} = ['test_mark']
+        let s:netrwmarkfilemtch_{ibuf} = 'test_mark'
+        let ibuf = ibuf + 1
+    endwhile
+
+    call s:NetrwUnMarkFile(1)
+
+    call assert_false(exists('s:netrwmarkfilelist'), 'Global list should be wiped')
+    call assert_false(exists('s:netrwmarkfilelist_' . bufnr('$')), 'Last buffer-local list should be wiped')
+    call assert_false(exists('s:netrwmarkfilemtch_' . bufnr('$')), 'Last buffer-local match str should be wiped')
+    call assert_false(exists('s:netrwmarkfilelist_1'), 'First buffer-local list should be wiped')
+    call assert_false(exists('s:netrwmarkfilemtch_1'), 'First buffer-local match str should be wiped')
+
+    " wipe out the test buffer
+    bw
+endfunction
+
+function Test_MakeBookmark(netrw_curdir, fname)
+  new
+  let b:netrw_curdir = a:netrw_curdir
+  call s:MakeBookmark(a:fname)
+  bw
+endfunction
+
+" Test the markings match pattern rebuilt by s:NetrwMarkFile() when unmarking an entry
+function Test_NetrwMarkFile_match_pattern_rebuild()
+  new
+  let curbufnr = bufnr("%")
+
+  call s:NetrwMarkFile(1, 'fname_dir/')
+  call s:NetrwMarkFile(1, 'fname_file')
+  let match_pattern = s:netrwmarkfilemtch_{curbufnr}
+
+  " Assert match pattern after marking and unmarking a directory entry
+  call s:NetrwMarkFile(1, 'dir/')
+  call s:NetrwMarkFile(1, 'dir/')
+  let rebuilt_match_pattern = s:netrwmarkfilemtch_{curbufnr}
+  call assert_equal(match_pattern, rebuilt_match_pattern)
+
+  " Assert match pattern after marking and unmarking a file entry
+  call s:NetrwMarkFile(1, 'file')
+  call s:NetrwMarkFile(1, 'file')
+  let rebuilt_match_pattern = s:netrwmarkfilemtch_{curbufnr}
+  call assert_equal(match_pattern, rebuilt_match_pattern)
+
+  bw
+endfunction
 " }}}
 END
 
@@ -196,7 +254,7 @@ func SetShell(shell)
         if has("win32")
           " Nvim: default 'shell' is "sh" due to $SHELL being set in Makefile,
           " but here 'shell' should be cmd.exe.
-          set shell=cmd.exe
+          set shell=cmd.exe shellcmdflag=/s\ /c
         endif
     elseif a:shell == "powershell" " help dos-powershell
         " powershell desktop is windows only
@@ -303,7 +361,9 @@ func Test_netrw_parse_special_char_user()
   call assert_equal(result.path, 'test.txt')
 endfunction
 
-func Test_netrw_empty_buffer_fastpath_wipe()
+" Note: Test_netrw_a_empty_buffer_fastpath_wipe() should run before
+"       any other tests that open a netrw buffer (e.g, :Explore).
+func Test_netrw_a_empty_buffer_fastpath_wipe()
   " SetUp() may have opened some buffers
   let previous = bufnr('$')
   let g:netrw_fastbrowse=0
@@ -581,6 +641,7 @@ endfunc
 func Test_netrw_hostname()
   let valid_hostnames = [
   \   'localhost',
+  \   '_gateway',
   \   '127.0.0.1',
   \   '::1',
   \   '0:0:0:0:0:0:0:1',
@@ -650,6 +711,149 @@ func Test_netrw_Home_tilde()
   Explore ~
   call assert_match('Netrw Directory Listing', getline(2))
   bw!
+endfunc
+
+func Test_netrw_unmark_all()
+  call Test_NetrwUnMarkFile()
+endfunc
+
+" Creating a bookmark from a marked file should use b:netrw_curdir as head directory
+func Test_netrw_bookmark_marked_file()
+  let save_keepdir = g:netrw_keepdir
+  let save_workdir = getcwd()
+  let save_bookmarklist = exists('g:netrw_bookmarklist') ? g:netrw_bookmarklist : v:null
+
+  " Make sure Vim's working directory diverge from Netrw's
+  let g:netrw_keepdir = 1
+  let g:netrw_bookmarklist = []
+  let test_workdir = getcwd() . '/Xtest_workdir'
+  let test_netrw_curdir = test_workdir . '/Xtest_netrw_curdir'
+  call mkdir(test_netrw_curdir, 'p')
+  call writefile([], test_netrw_curdir . '/test_file')
+
+  execute 'cd ' . test_workdir
+  call Test_MakeBookmark(test_netrw_curdir, 'test_file')
+
+  " Bookmark paths should be absolute and normalized to prevent duplicates on win32
+  let expected_path = netrw#fs#AbsPath(test_netrw_curdir . '/test_file')
+  if has('win32')
+    let expected_path = substitute(expected_path, '\\', '/', 'ge')
+  endif
+  let expected_path = simplify(expected_path)
+
+  call assert_equal(1, len(g:netrw_bookmarklist))
+  call assert_equal(expected_path, g:netrw_bookmarklist[0])
+  call assert_true(isabsolutepath(g:netrw_bookmarklist[0]), 'Bookmark paths should be absolute')
+
+  " Tear down
+  execute 'cd ' . save_workdir
+  call delete(test_workdir, 'rf')
+
+  let g:netrw_keepdir = save_keepdir
+  if save_bookmarklist is v:null
+    unlet! g:netrw_bookmarklist
+  else
+    let g:netrw_bookmarklist = save_bookmarklist
+  endif
+
+  bw!
+endfunc
+
+" Typing gb or mB without a count should prompt
+" for a bookmark number through an inputlist().
+" Expected dialog output (gb): # | Goto Bookmark:
+"                               1| /foo/bar/baz
+"
+" Expected dialog output (mB): # | Delete Bookmark:
+"                               1| /foo/bar/baz
+func Test_netrw_bookmark_goto_delete_prompt()
+  let save_home = g:netrw_home
+  let save_bookmarklist = exists('g:netrw_bookmarklist') ? g:netrw_bookmarklist : v:null
+
+  let g:netrw_home = getcwd()
+  let g:netrw_bookmarklist = ['/foo/bar/baz']
+  Explore .
+
+  " Inject 'q' to cancel the inputlist() prompt
+  call feedkeys('q', 't')
+  let dialog_out = execute('normal gb')
+  call assert_match('Goto Bookmark:', dialog_out)
+
+  call feedkeys('q', 't')
+  let dialog_out = execute('normal mB')
+  call assert_match('Delete Bookmark:', dialog_out)
+
+  " Tear down
+  call delete(g:netrw_home . '/.netrwbook')
+  call delete(g:netrw_home . '/.netrwhist')
+  let g:netrw_home = save_home
+  if save_bookmarklist is v:null
+    unlet! g:netrw_bookmarklist
+  else
+    let g:netrw_bookmarklist = save_bookmarklist
+  endif
+
+  bw!
+endfunc
+
+func Test_netrw_markings_match_pattern_rebuild()
+  call Test_NetrwMarkFile_match_pattern_rebuild()
+endfunc
+
+func Test_netrw_mf_command_injection()
+  CheckUnix
+  CheckExecutable touch
+  let path = tempname()
+  let fname = 'x" . execute("silent! !touch poc") . "'
+  call mkdir(path, 'R')
+  let _cwd = getcwd()
+  exe "cd " path
+  call writefile([], fname)
+  Explore .
+  call search('^x')
+  :norm mf
+  :norm mf
+  call assert_false(filereadable('poc'), 'Command injection via mf command')
+  exe "cd " _cwd
+  bw!
+endfunc
+
+function Test_netrw_NetrwMaps_CR_dirname()
+  CheckNotMSWindows
+
+  let tmpdir = tempname() . '/evil<CR>:let g:netrw_pwn=1<CR>'
+  call mkdir(tmpdir, 'pR')
+  call assert_true(isdirectory(tmpdir))
+  exe ":Explore " tmpdir
+  " Fire D
+  " If the commands are injected successfully,
+  " this fails with
+  "  Vim(let):E488: Trailing characters: \ @ command line script
+  call feedkeys("D\<C-c>\<C-c>", "xt")
+  call assert_false(exists("g:netrw_pwn"))
+
+  unlet! g:netrw_pwn
+  bw!
+endfunction
+
+func Test_netrw_injection()
+  let g:netrw_home       = getcwd()
+  let savefile           = g:netrw_home . '/.netrwhist'
+  let g:netrw_dirhistmax = 10
+  let g:netrw_dirhistcnt = 1
+  let g:netrw_dirhist_1  = "x'|let g:injected = 1|let y='z"
+  call delete(savefile)
+  try
+    call netrw#Call('NetrwBookHistSave')
+    call assert_true(filereadable(savefile), savefile . ' must be written')
+    unlet g:netrw_dirhist_1
+    execute 'source ' . fnameescape(savefile)
+    call assert_false(exists("g:injected"), 'injected statement must not execute')
+    call assert_equal("x'|let g:injected = 1|let y='z", g:netrw_dirhist_1, 'dirname must round-trip')
+  finally
+    call delete(savefile)
+    unlet! g:netrw_home g:netrw_dirhistmax g:netrw_dirhistcnt g:netrw_dirhist_1 g:injected
+  endtry
 endfunc
 
 " vim:ts=8 sts=2 sw=2 et

@@ -182,10 +182,10 @@ func Test_termdebug_basic()
   Break 9
   call Nterm_wait(gdb_buf)
   redraw!
-  call assert_equal([
+  call WaitForAssert({-> assert_equal([
         \ {'lnum': 9, 'id': 1014, 'name': 'debugBreakpoint1.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
   Run
   call Nterm_wait(gdb_buf, 400)
   redraw!
@@ -344,12 +344,12 @@ func Test_termdebug_tbreak()
   call Nterm_wait(gdb_buf)
   redraw!
   " both temporary and normal breakpoint signs were displayed...
-  call assert_equal([
+  call WaitForAssert({-> assert_equal([
         \ {'lnum': temp_bp_line, 'id': 1014, 'name': 'debugBreakpoint1.0',
         \  'priority': 110, 'group': 'TermDebug'},
         \ {'lnum': bp_line, 'id': 2014, 'name': 'debugBreakpoint2.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
 
   Run
   call Nterm_wait(gdb_buf, 400)
@@ -577,5 +577,88 @@ function Test_termdebug_save_restore_variables()
   unlet g:termdebug_config
 endfunction
 
+
+func Test_termdebug_toggle_break()
+  let g:test_is_flaky = 1
+  let bin_name = 'XTD_tbreak'
+  let src_name = bin_name .. '.c'
+
+  eval s:generate_files(bin_name)
+
+  execute 'edit ' .. src_name
+  execute 'Termdebug ./' .. bin_name
+
+  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
+  let gdb_buf = winbufnr(1)
+  wincmd b
+
+  let bp_line = 22        " 'return' statement in main
+  execute "normal! " .. bp_line .. "G"
+  execute "ToggleBreak"
+
+  call Nterm_wait(gdb_buf)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': bp_line, 'id': 1014, 'name': 'debugBreakpoint1.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+
+  RunOrContinue
+  call Nterm_wait(gdb_buf, 400)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': bp_line, 'id': 12, 'name': 'debugPC', 'priority': 110,
+        \  'group': 'TermDebug'},
+        \ {'lnum': bp_line, 'id': 1014, 'name': 'debugBreakpoint1.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
+
+  " Add one break point
+  execute "normal! " .. bp_line .. "G"
+  execute "ToggleBreak"
+  call Nterm_wait(gdb_buf)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': bp_line, 'id': 12, 'name': 'debugPC', 'priority': 110,
+        \  'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+
+  " Remove one break point
+  execute "normal! " .. bp_line .. "G"
+  execute "ToggleBreak"
+  call Nterm_wait(gdb_buf)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': bp_line, 'id': 2014, 'name': 'debugBreakpoint2.0',
+        \  'priority': 110, 'group': 'TermDebug'},
+        \ {'lnum': bp_line, 'id': 12, 'name': 'debugPC', 'priority': 110,
+        \  'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+
+  " Remove multiple break points
+  execute "Break"
+  execute "Break"
+  execute "Break"
+  execute "Break"
+  call Nterm_wait(gdb_buf, 400)
+  execute "ToggleBreak"
+  call Nterm_wait(gdb_buf)
+  redraw!
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': bp_line, 'id': 12, 'name': 'debugPC', 'priority': 110,
+        \  'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+
+
+  wincmd t
+  quit!
+  redraw!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
+  call assert_equal([], sign_getplaced('', #{group: 'TermDebug'})[0].signs)
+
+  eval s:cleanup_files(bin_name)
+  %bw!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

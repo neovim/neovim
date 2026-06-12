@@ -57,6 +57,8 @@
 ---
 --- The following properties are supported by default:
 
+local nvim_on = require('vim._core.util').nvim_on
+
 --- @type table<string,fun(bufnr: integer, val: string, opts?: table)>
 local properties = {}
 
@@ -163,16 +165,12 @@ function properties.trim_trailing_whitespace(bufnr, val)
     'trim_trailing_whitespace must be either "true" or "false"'
   )
   if val == 'true' then
-    vim.api.nvim_create_autocmd('BufWritePre', {
-      group = 'nvim.editorconfig',
-      buf = bufnr,
-      callback = function()
-        local view = vim.fn.winsaveview()
-        vim.api.nvim_command('silent! undojoin')
-        vim.api.nvim_command('silent keepjumps keeppatterns %s/\\s\\+$//e')
-        vim.fn.winrestview(view)
-      end,
-    })
+    nvim_on('BufWritePre', 'nvim.editorconfig', { buf = bufnr }, function()
+      local view = vim.fn.winsaveview()
+      vim.api.nvim_command('silent! undojoin')
+      vim.api.nvim_command('silent keepjumps keeppatterns %s/\\s\\+$//e')
+      vim.fn.winrestview(view)
+    end)
   else
     vim.api.nvim_clear_autocmds({
       event = 'BufWritePre',
@@ -192,14 +190,9 @@ function properties.insert_final_newline(bufnr, val)
   -- so only change 'endofline' right before writing the file
   local endofline = val == 'true'
   if vim.bo[bufnr].endofline ~= endofline then
-    vim.api.nvim_create_autocmd('BufWritePre', {
-      group = 'nvim.editorconfig',
-      buf = bufnr,
-      once = true,
-      callback = function()
-        vim.bo[bufnr].endofline = endofline
-      end,
-    })
+    nvim_on('BufWritePre', 'nvim.editorconfig', { buf = bufnr, once = true }, function()
+      vim.bo[bufnr].endofline = endofline
+    end)
   end
 end
 

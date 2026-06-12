@@ -804,9 +804,9 @@ static void channel_proc_exit_cb(Proc *proc, int status, void *data)
   // - EOF not received in receive_msgpack, then doesn't call chan_close_on_err().
   // - proc_close_handles not tickled by ui_client.c's LOOP_PROCESS_EVENTS?
   if (!exiting && ui_client_channel_id == chan->id) {
-    // Need to call ui_client_attach_to_restarted_server() here as well, as sometimes
-    // rpc_close_event() hasn't been called yet (also see comments above).
-    ui_client_attach_to_restarted_server();
+    // rpc_close_event() could handle this in principle also for processes, but
+    // sometimes it gets called later than this, and we do care about the exit status
+    ui_client_attach_to_restarted_server(proc->status != 0);
     if (ui_client_channel_id == chan->id) {
       // If the current embedded server has exited and no new server is started,
       // the client should exit with the same status.

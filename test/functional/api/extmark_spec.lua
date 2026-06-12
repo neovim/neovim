@@ -1738,6 +1738,50 @@ describe('API/extmarks', function()
       },
     }, get_extmark_by_id(ns, marks[3], { details = true }))
 
+    -- verify 'wrap' is returned through get_extmark_by_id to validate flag comparison
+    set_extmark(ns, marks[4], 0, 0, {
+      priority = 0,
+      ui_watched = true,
+      virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
+      virt_lines_overflow = 'wrap',
+    })
+    eq({
+      0,
+      0,
+      {
+        ns_id = ns,
+        right_gravity = true,
+        ui_watched = true,
+        priority = 0,
+        virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
+        virt_lines_above = false,
+        virt_lines_leftcol = false,
+        virt_lines_overflow = 'wrap',
+      },
+    }, get_extmark_by_id(ns, marks[4], { details = true }))
+
+    -- verify 'auto' is returned through get_extmark_by_id to validate flag comparison
+    set_extmark(ns, marks[5], 0, 0, {
+      priority = 0,
+      ui_watched = true,
+      virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
+      virt_lines_overflow = 'auto',
+    })
+    eq({
+      0,
+      0,
+      {
+        ns_id = ns,
+        right_gravity = true,
+        ui_watched = true,
+        priority = 0,
+        virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
+        virt_lines_above = false,
+        virt_lines_leftcol = false,
+        virt_lines_overflow = 'auto',
+      },
+    }, get_extmark_by_id(ns, marks[5], { details = true }))
+
     set_extmark(ns, marks[4], 0, 0, { cursorline_hl_group = 'Statement' })
     eq({
       0,

@@ -32,7 +32,7 @@ describe('thread', function()
       {1:~                                                 }|*5
       {3:                                                  }|
       {9:Luv thread:}                                       |
-      {9:[NULL]}                                            |
+      {9:nil}                                               |
       {6:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')

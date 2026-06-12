@@ -46,6 +46,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval/window.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_cmds_defs.h"
@@ -223,7 +224,7 @@ bool buf_ensure_loaded(buf_T *buf)
     return true;
   }
 
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
 
   // Make sure the buffer is in a window.
   aucmd_prepbuf(&aco, buf);
@@ -421,7 +422,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // The autocommands may have changed the current buffer.  Apply the
   // modelines to the correct buffer, if it still exists and is loaded.
   if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->b_ml.ml_mfp != NULL) {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
 
     // Go to the buffer that was opened, make sure it is in a window.
     aucmd_prepbuf(&aco, old_curbuf.br_buf);
@@ -662,6 +663,12 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     block_autocmds();
     goto_tabpage_win(the_curtab, win);
     unblock_autocmds();
+  }
+
+  // When a quickfix buffer is deleted from a window, clear the
+  // 'winfixheight' option.
+  if (bt_quickfix(buf) && win_valid && win->w_buffer == buf) {
+    win->w_p_wfh = false;
   }
 
   // Remember if the buffer may be hidden soon, or is already hidden.
@@ -1462,6 +1469,23 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       }
 
       close_windows(buf, false);
+      // close_windows() refuses to close curtab's last non-float window.
+      // If it still shows buf, retry the delete from there.
+      if (buf != curbuf && bufref_valid(&bufref) && firstwin->w_buffer == buf
+          && one_window(firstwin, NULL)) {
+        // Switch to buf's holder window without entering it: caller keeps focus,
+        // BufEnter doesn't fire for the deleted buffer.
+        // curwin must be floating: buf != curbuf, yet firstwin (the last non-float) shows buf.
+        // Also firstwin is valid in curtab, so switch_win_noblock should not fail.
+        assert(curwin->w_floating);
+        switchwin_T switchwin;
+        const int rv = switch_win_noblock(&switchwin, firstwin, curtab, true);
+        assert(rv == OK);
+        (void)rv;
+        // retry (recurse)
+        do_buffer_ext(action, start, dir, count, flags);
+        restore_win_noblock(&switchwin, true);
+      }
 
       if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows <= 0) {
         close_buffer(NULL, buf, action, false, false, false);
@@ -3309,9 +3333,8 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
                                       IOSIZE - bufferlen, "%s", name);
   } else {
     name = (!fullname && curbuf->b_fname != NULL) ? curbuf->b_fname : curbuf->b_ffname;
-    home_replace(shorthelp ? curbuf : NULL, name, buffer + bufferlen,
-                 IOSIZE - bufferlen, true);
-    bufferlen += strlen(buffer + bufferlen);
+    bufferlen += home_replace(shorthelp ? curbuf : NULL, name,
+                              buffer + bufferlen, IOSIZE - bufferlen, true);
   }
 
   bool dontwrite = bt_dontwrite(curbuf);
@@ -4130,7 +4153,7 @@ bool buf_contents_changed(buf_T *buf)
   prep_exarg(&ea, buf);
 
   // Set curwin/curbuf to buf and save a few things.
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   aucmd_prepbuf(&aco, newbuf);
 
   // We don't want to trigger autocommands now, they may have nasty

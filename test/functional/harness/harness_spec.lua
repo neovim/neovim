@@ -1,5 +1,5 @@
 -- Black-box tests for the local Lua harness itself. These spawn a separate
--- low-level Nvim process instead of driving an embedded instance via testnvim.
+-- Nvim process instead of driving an embedded instance via testnvim.
 local t = require('test.testutil')
 local uv = vim.uv
 
@@ -66,7 +66,7 @@ local function run_harness(suite_dir, extra_args)
   local exit_code --- @type integer?
 
   local args = {
-    '-ll',
+    '-l',
     runner,
     '-v',
     '--lpath=' .. build_dir .. '/?.lua',
@@ -817,6 +817,37 @@ describe('test harness', function()
     matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
     matches('chosen suite works', output, true)
     not_matches('skipped suite works', output, true)
+  end)
+
+  it('filters tests out by multiple repeated option values', function()
+    local suite_dir = write_suite({
+      ['one_spec.lua'] = [[
+        describe('chosen suite', function()
+          it('works', function() end)
+        end)
+      ]],
+      ['two_spec.lua'] = [[
+        describe('skipped suite', function()
+          it('works', function() end)
+        end)
+      ]],
+      ['three_spec.lua'] = [[
+        describe('three', function()
+          it('skipped test', function() end)
+        end)
+      ]],
+    })
+
+    local code, output = run_harness(suite_dir, {
+      '--filter-out=skipped suite',
+      '--filter-out=skipped test',
+    })
+
+    eq(0, code)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('chosen suite works', output, true)
+    not_matches('skipped suite works', output, true)
+    not_matches('three skipped test', output, true)
   end)
 
   it('reports when filters exclude all tests', function()

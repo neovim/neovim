@@ -1251,13 +1251,17 @@ static bool pum_set_selected(int n, int repeat)
               update_topline(curwin);
             }
 
+            const bool save_pum_is_drawn = pum_is_drawn;
+
             // Update the screen before drawing the popup menu.
             // Enable updating the status lines.
             // TODO(bfredl): can simplify, get rid of the flag munging?
             // or at least eliminate extra redraw before win_enter()?
             pum_is_visible = false;
+            pum_is_drawn = false;
             update_screen();
             pum_is_visible = true;
+            pum_is_drawn = save_pum_is_drawn;
 
             if (!resized && win_valid(curwin_save)) {
               no_u_sync++;
@@ -1268,8 +1272,10 @@ static bool pum_set_selected(int n, int repeat)
             // May need to update the screen again when there are
             // autocommands involved.
             pum_is_visible = false;
+            pum_is_drawn = false;
             update_screen();
             pum_is_visible = true;
+            pum_is_drawn = save_pum_is_drawn;
           }
         }
       }

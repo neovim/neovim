@@ -188,7 +188,7 @@ describe('api/buf', function()
       eq(0, api.nvim_buf_line_count(bufnr))
     end)
 
-    it('get_lines has defined behaviour for unloaded buffers', function()
+    it('get_lines and get_text has defined behaviour for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
       local bufnr = api.nvim_get_current_buf()
       -- replace the buffer contents with these three lines
@@ -202,6 +202,22 @@ describe('api/buf', function()
       eq({}, api.nvim_buf_get_lines(bufnr, 1, 3, true))
       -- it's impossible to get out-of-bounds errors for an unloaded buffer
       eq({}, api.nvim_buf_get_lines(bufnr, 8888, 9999, true))
+      eq({}, api.nvim_buf_get_text(bufnr, 8888, 1000, 9999, 2000, {}))
+      -- The Lua path (vim.api) must also return an empty table, not nil. #39833 #39851
+      eq(
+        { 'table', {} },
+        exec_lua(function()
+          local r = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+          return { type(r), r }
+        end)
+      )
+      eq(
+        { 'table', {} },
+        exec_lua(function()
+          local r = vim.api.nvim_buf_get_text(bufnr, 0, 0, -1, 0, {})
+          return { type(r), r }
+        end)
+      )
     end)
 
     describe('handles topline', function()
@@ -1003,6 +1019,110 @@ describe('api/buf', function()
       -- both cursors should be moved left by two columns (replacement is shorter by 2 chars)
       eq({ 1, 9 }, api.nvim_win_get_cursor(win))
       eq({ 1, 4 }, api.nvim_win_get_cursor(win2))
+    end)
+
+    it('keep visual select position #29558', function()
+      insert([[1234]])
+      api.nvim_win_set_cursor(0, { 1, 1 })
+      feed('vl')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0' }) end, 50)
+        vim.wait(80)
+      ]])
+      local mode = api.nvim_get_mode().mode
+      eq({ '23' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '01234' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1', '2', '3' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      feed('v')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0', '' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '2' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '0', '1', '2', '3' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1', '2' })
+      api.nvim_win_set_cursor(0, { 1, 0 })
+      feed('vj')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '1', '2' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '01', '2' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '123' })
+      api.nvim_win_set_cursor(0, { 1, 1 })
+      feed('v')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '', '' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '2' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '', '123' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      -- Visual block mode
+      api.nvim_buf_set_lines(0, 0, -1, false, { '123', '456' })
+      api.nvim_win_set_cursor(0, { 1, 0 })
+      feed('<C-v>jl')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '01', '45' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq(
+        { string.char(0x16), { '0123', '456' } },
+        { mode, api.nvim_buf_get_lines(0, 0, -1, false) }
+      )
+      feed('<ESC>')
+      -- also test nvim_buf_set_lines inserts line above visual selection
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1', '2', '3' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      feed('v')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_lines(0, 0, 0, false, { 'new' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '2' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { 'new', '1', '2', '3' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1234' })
+      api.nvim_win_set_cursor(0, { 1, 1 })
+      feed('vl')
+      exec_lua([[
+        vim.defer_fn(function()
+          vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0', 'foo' })
+        end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '23' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '0', 'foo1234' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1', '2', '3', '4', '5', '6', '7', '8', '9', '10' })
+      api.nvim_win_set_cursor(0, { 8, 0 })
+      feed('v')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_lines(0, 0, 5, false, {}) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '8' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '6', '7', '8', '9', '10' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
     end)
 
     describe('when text is being added right at cursor position #22526', function()
@@ -2425,6 +2545,203 @@ describe('api/buf', function()
     end)
     it('fails when invalid buffer number is used', function()
       eq(false, pcall(api.nvim_buf_del_mark, 99, 'a'))
+    end)
+  end)
+
+  describe('nvim_buf_call', function()
+    it('supports multiple returns', function()
+      local curbuf = api.nvim_get_current_buf()
+      local other = api.nvim_create_buf(false, true)
+      exec_lua(function()
+        function with_len(...)
+          return select('#', ...), { ... }
+        end
+        function test(fn)
+          local len, res = with_len(vim.api.nvim_buf_call(other, fn))
+          -- convert to serializable vim.NIL
+          for i = 1, len do
+            if res[i] == nil then
+              res[i] = vim.NIL
+            end
+          end
+          return res
+        end
+      end)
+
+      eq(
+        { other },
+        exec_lua(function()
+          return test(function()
+            return vim.api.nvim_get_current_buf()
+          end)
+        end)
+      )
+      eq(curbuf, api.nvim_get_current_buf())
+      eq(
+        { other, vim.NIL },
+        exec_lua(function()
+          return test(function()
+            return vim.api.nvim_get_current_buf(), nil
+          end)
+        end)
+      )
+
+      eq(
+        { 6, 7 },
+        exec_lua(function()
+          return test(function()
+            return 6, 7
+          end)
+        end)
+      )
+      eq(
+        { 6, vim.NIL, 7 },
+        exec_lua(function()
+          return test(function()
+            return 6, nil, 7
+          end)
+        end)
+      )
+      eq(
+        {},
+        exec_lua(function()
+          return test(function() end)
+        end)
+      )
+      eq(
+        { vim.NIL },
+        exec_lua(function()
+          return test(function()
+            return nil
+          end)
+        end)
+      )
+    end)
+
+    it('propagates return values when called from a coroutine #39834', function()
+      local other = api.nvim_create_buf(false, true)
+      eq(
+        { other, vim.NIL, 42 },
+        exec_lua(function()
+          local out
+          local co = coroutine.create(function()
+            local function pack(...)
+              local r = { ... }
+              for i = 1, select('#', ...) do
+                if r[i] == nil then
+                  r[i] = vim.NIL
+                end
+              end
+              return r
+            end
+            out = pack(vim.api.nvim_buf_call(other, function()
+              return vim.api.nvim_get_current_buf(), nil, 42
+            end))
+          end)
+          assert(coroutine.resume(co))
+          return out
+        end)
+      )
+    end)
+
+    it('can access buf options', function()
+      local buf1 = api.nvim_get_current_buf()
+      local buf2 = exec_lua [[
+        buf2 = vim.api.nvim_create_buf(false, true)
+        return buf2
+      ]]
+
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf1 }))
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf2 }))
+
+      local val = exec_lua [[
+        return vim.api.nvim_buf_call(buf2, function()
+          vim.cmd "set autoindent"
+          return vim.api.nvim_get_current_buf()
+        end)
+      ]]
+
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf1 }))
+      eq(true, api.nvim_get_option_value('autoindent', { buf = buf2 }))
+      eq(buf1, api.nvim_get_current_buf())
+      eq(buf2, val)
+    end)
+
+    it('does not cause ml_get errors with invalid visual selection', function()
+      -- Should be fixed by vim-patch:8.2.4028.
+      exec_lua [[
+        local api = vim.api
+        local t = function(s) return api.nvim_replace_termcodes(s, true, true, true) end
+        api.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+        api.nvim_feedkeys(t "G<C-V>", "txn", false)
+        api.nvim_buf_call(api.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
+      ]]
+    end)
+
+    it('can be nested crazily with hidden buffers', function()
+      eq(
+        true,
+        exec_lua([[
+        local function scratch_buf_call(fn)
+          local buf = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_set_option_value('cindent', true, {buf = buf})
+          return vim.api.nvim_buf_call(buf, function()
+            return vim.api.nvim_get_current_buf() == buf
+              and vim.api.nvim_get_option_value('cindent', {buf = buf})
+              and fn()
+          end) and vim.api.nvim_buf_delete(buf, {}) == nil
+        end
+
+        return scratch_buf_call(function()
+          return scratch_buf_call(function()
+            return scratch_buf_call(function()
+              return scratch_buf_call(function()
+                return scratch_buf_call(function()
+                  return scratch_buf_call(function()
+                    return scratch_buf_call(function()
+                      return scratch_buf_call(function()
+                        return scratch_buf_call(function()
+                          return scratch_buf_call(function()
+                            return scratch_buf_call(function()
+                              return scratch_buf_call(function()
+                                return true
+                              end)
+                            end)
+                          end)
+                        end)
+                      end)
+                    end)
+                  end)
+                end)
+              end)
+            end)
+          end)
+        end)
+      ]])
+      )
+    end)
+
+    it('can return values by reference', function()
+      eq(
+        { 4, 7 },
+        exec_lua [[
+        local val = {4, 10}
+        local ref = vim.api.nvim_buf_call(0, function() return val end)
+        ref[2] = 7
+        return val
+      ]]
+      )
+    end)
+
+    it('can get Visual selection in current buffer #34162', function()
+      insert('foo bar baz')
+      feed('gg0fbvtb')
+      local text = exec_lua([[
+        return vim.api.nvim_buf_call(0, function()
+          return vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'))
+        end)
+      ]])
+      eq({ 'bar ' }, text)
     end)
   end)
 end)

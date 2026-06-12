@@ -128,7 +128,7 @@ iterator functions, tables implementing the |__call()| metamethod, and
                                                                *list-iterator*
 Iterators on |lua-list| tables have a "middle" and "end", whereas iterators in
 general may be logically infinite. Therefore some |vim.iter| operations (e.g.
-|Iter:rev()|) make sense only on list-like tables (which are finite by
+|IterArray:rev()|) make sense only on list-like tables (which are finite by
 definition).
 
                                                            *lua-function-call*
@@ -596,10 +596,8 @@ A subset of the `vim.*` stdlib is available in threads, including:
   `vim.split`, `vim.tbl_*`, `vim.list_*`, etc.
 - `vim.is_thread()` returns true from a non-main thread.
 
-
 ==============================================================================
 VIM                                                              *vim.builtin*
-
 
 vim.api.{func}({...})                                                *vim.api*
     Invokes Nvim |API| function {func} with arguments {...}.
@@ -868,7 +866,6 @@ Lua list copies the list object to Vimscript and does NOT modify the Lua list: >
     vim.print(list)  --> "{ 1, 2, 3 }"
 <
 
-
 vim.call({func}, {...})                                           *vim.call()*
     Invokes |vim-function| or |user-function| {func} with arguments {...}.
     See also |vim.fn|.
@@ -947,7 +944,6 @@ vim.v                                                                  *vim.v*
     |v:| variables.
     Invalid or unset key returns `nil`.
 
-
                                                                  *lua-options*
                                                              *lua-vim-options*
                                                                  *lua-vim-set*
@@ -970,7 +966,6 @@ Similarly, there is |vim.bo| and |vim.wo| for setting buffer-scoped and
 window-scoped options. Note that this must NOT be confused with
 |local-options| and |:setlocal|. There is also |vim.go| that only accesses the
 global value of a |global-local| option, see |:setglobal|.
-
 
                                                                *vim.opt_local*
                                                               *vim.opt_global*
@@ -1499,6 +1494,15 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
         if vim.wait(10000, function() return vim.g.timer_result end) then
           print('Only waiting a little bit of time!')
         end
+
+        -- Yield via vim.wait() to allow CTRL-C to interrupt Lua code.
+        while true do
+          -- ...work...
+          local _, code = vim.wait(0, nil, 0)
+          if code == -2 then -- CTRL-C.
+            break
+          end
+        end
 <
 
     Parameters: ~
@@ -1768,6 +1772,18 @@ vim.islist({t})                                                 *vim.islist()*
     See also: ~
       • |vim.isarray()|
 
+vim.isnil({t})                                                   *vim.isnil()*
+    Tests if `t` is `nil` or |vim.NIL|.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {t}  (`any?`)
+
+    Return: ~
+        (`boolean`) `true` if `nil` or |vim.NIL|, else `false`.
+
 vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
     Search for a position in a sorted |lua-list| {t} where {val} can be
     inserted while keeping the list sorted.
@@ -1816,8 +1832,9 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
                     keeps the list sorted..
                 • {hi}? (`integer`, default: `#t + 1`) End index of the list,
                   exclusive.
-                • {key}? (`fun(val: any): any`) Optional, compare the return
-                  value instead of the {val} itself if provided.
+                • {key}? (`string|fun(val: any): any`) Optional, compare the
+                  return value instead of the {val} itself if provided. If a
+                  string, index each value by this field name.
                 • {lo}? (`integer`, default: `1`) Start index of the list.
 
     Return: ~
@@ -1831,10 +1848,11 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
     performed in-place and the input table is modified.
 
     Accepts an optional `key` argument, which if provided is called for each
-    value in the list to compute a hash key for uniqueness comparison. This is
-    useful for deduplicating table values or complex objects. If `key` returns
-    `nil` for a value, that value will be considered unique, even if multiple
-    values return `nil`.
+    value in the list to compute a hash key for uniqueness comparison. If
+    `key` is a string, it is used as the field name to index each value. This
+    is useful for deduplicating table values or complex objects. If `key`
+    returns `nil` for a value, that value will be considered unique, even if
+    multiple values return `nil`.
 
     Example: >lua
 
@@ -1843,7 +1861,7 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
         -- t is now {1, 2, 3}
 
         local t = { {id=1}, {id=2}, {id=1} }
-        vim.list.unique(t, function(x) return x.id end)
+        vim.list.unique(t, 'id')
         -- t is now { {id=1}, {id=2} }
 <
 
@@ -1852,8 +1870,8 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
 
     Parameters: ~
       • {t}    (`any[]`)
-      • {key}  (`fun(x: T): any?`) Optional hash function to determine
-               uniqueness of values
+      • {key}  (`string|fun(x: T): any?`) Optional field name or hash function
+               to determine uniqueness of values
 
     Return: ~
         (`any[]`) The deduplicated list
@@ -1902,6 +1920,42 @@ vim.list_slice({list}, {start}, {finish})                   *vim.list_slice()*
 
     Return: ~
         (`any[]`) Copy of table sliced from start to finish (inclusive)
+
+vim.nonnil({...})                                               *vim.nonnil()*
+    Returns the first argument which is not nil.
+
+    If all arguments are nil, returns nil.
+
+    Example: >lua
+        local a = nil
+        local b = nil
+        local c = 42
+        local d = true
+        assert(vim.nonnil(a, b, c, d) == 42)
+<
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {...}  (`any`)
+
+    Return: ~
+        (`any`)
+
+vim.npcall({fn}, {...})                                         *vim.npcall()*
+    Calls the function `fn` in `protected mode` like |pcall()|, but returns
+    `nil` on error.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {fn}   (`fun(...):T`)
+      • {...}  (`any?`)
+
+    Return: ~
+        (`any`) ...
 
 vim.pesc({s})                                                     *vim.pesc()*
     Escapes magic chars in |lua-pattern|s.
@@ -2012,8 +2066,8 @@ vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
       • {t}      (`table`) Table to check
       • {value}  (`any`) Value to compare or predicate function reference
       • {opts}   (`table?`) Keyword arguments |kwargs|:
-                 • {predicate}? (`boolean`) `value` is a function reference to
-                   be checked (default false)
+                 • {predicate}? (`boolean`, default: false) `value` is a
+                   function reference to be checked
 
     Return: ~
         (`boolean`) `true` if `t` contains `value`
@@ -2058,8 +2112,8 @@ vim.tbl_deep_extend({behavior}, {...})                 *vim.tbl_deep_extend()*
       • {behavior}  (`'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any`)
                     Decides what to do if a key is found in more than one map:
                     • "error": raise an error
-                    • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
+                    • "keep": use value from the leftmost map
                     • If a function, it receives the current key, the previous
                       value in the currently merged table (if present), the
                       current value and should return the value for the given
@@ -2079,8 +2133,8 @@ vim.tbl_extend({behavior}, {...})                           *vim.tbl_extend()*
       • {behavior}  (`'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any`)
                     Decides what to do if a key is found in more than one map:
                     • "error": raise an error
-                    • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
+                    • "keep": use value from the leftmost map
                     • If a function, it receives the current key, the previous
                       value in the currently merged table (if present), the
                       current value and should return the value for the given
@@ -2207,23 +2261,12 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
           -- ...
         end
 <
-
-    2. `vim.validate(spec)` (deprecated) where `spec` is of type
+    2. `vim.validate(spec)` (DEPRECATED) where `spec` is of type
        `table<string,[value:any, validator: vim.validate.Validator, optional_or_msg? : boolean|string]>)`
        Validates a argument specification. Specs are evaluated in alphanumeric
        order, until the first failure.
-       Example: >lua
-         function user.new(name, age, hobbies)
-          vim.validate{
-            name={name, 'string'},
-            age={age, 'number'},
-            hobbies={hobbies, 'table'},
-          }
-          -- ...
-        end
-<
 
-    Examples with explicit argument values (can be run directly): >lua
+    Examples: >lua
         vim.validate('arg1', {'foo'}, 'table')
            --> NOP (success)
         vim.validate('arg2', 'foo', 'string')
@@ -2234,13 +2277,11 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 
         vim.validate('arg1', 3, function(a) return (a % 2) == 0 end, 'even number')
            --> error('arg1: expected even number, got 3')
-<
 
-    If multiple types are valid they can be given as a list. >lua
+        -- If multiple types are valid they can be given as a list:
         vim.validate('arg1', {'foo'}, {'table', 'string'})
         vim.validate('arg2', 'foo', {'table', 'string'})
         -- NOP (success)
-
         vim.validate('arg1', 1, {'string', 'table'})
         -- error('arg1: expected string|table, got number')
 <
@@ -2260,8 +2301,8 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
                        `'userdata'`.
                      • (`fun(val:any): boolean, string?`) A function that
                        returns a boolean and an optional string message.
-      • {optional}   (`boolean?`) Parameter is optional (may be omitted or
-                     nil)
+      • {optional}   (`boolean?`) (default: false) Parameter is optional (may
+                     be omitted or nil)
       • {message}    (`string?`) message when validation fails
 
     Overloads: ~
@@ -2427,9 +2468,7 @@ vim.filetype.match({args})                              *vim.filetype.match()*
 
     The filetype can be detected using one of three methods:
     1. Using an existing buffer
-
     2. Using only a file name
-
     3. Using only file contents
 
     Of these, option 1 provides the most accurate result as it uses both the
@@ -2545,7 +2584,7 @@ vim.fs.basename({file})                                    *vim.fs.basename()*
       • {file}  (`string?`) Path
 
     Return: ~
-        (`string?`) Basename of {file}
+        (`string?`) Basename of `file`
 
 vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
     Gets an iterator over items found in `path` (normalized via
@@ -2583,7 +2622,7 @@ vim.fs.dirname({file})                                      *vim.fs.dirname()*
       • {file}  (`string?`) Path
 
     Return: ~
-        (`string?`) Parent directory of {file}
+        (`string?`) Parent directory of `file`
 
 vim.fs.ext({file}, {opts})                                      *vim.fs.ext()*
     Return the file's last extension, if any.
@@ -2895,24 +2934,27 @@ vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
 ==============================================================================
 Lua module: vim.hl                                                    *vim.hl*
 
-vim.hl.on_yank({opts})                                      *vim.hl.on_yank()*
-    Highlight the yanked text during a |TextYankPost| event.
+vim.hl.hl_op({opts})                                          *vim.hl.hl_op()*
+    Highlights the affected text region during a |TextYankPost| or
+    |TextPutPost| event.
 
-    Add the following to your `init.vim`: >vim
-        autocmd TextYankPost * silent! lua vim.hl.on_yank {higroup='Visual', timeout=300}
+    Add this to your `init.vim`: >vim
+        autocmd TextYankPost * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
+        autocmd TextPutPost  * silent! lua vim.hl.hl_op {higroup='Visual', timeout=300}
 <
 
     Parameters: ~
       • {opts}  (`table?`) Optional parameters
-                • event event structure (default vim.v.event)
-                • higroup highlight group for yanked region (default
-                  "IncSearch")
-                • on_macro highlight when executing macro (default false)
-                • on_visual highlight when yanking visual selection (default
-                  true)
-                • priority integer priority (default
-                  |vim.hl.priorities|`.user`)
-                • timeout time in ms before highlight is cleared (default 150)
+                • event (default: vim.v.event) Event structure.
+                • higroup (default: "IncSearch") Highlight group for the text
+                  region.
+                • on_macro (default: false) Highlight during |macro|
+                  execution.
+                • on_visual (default: true) Highlight during |Visual| mode.
+                • priority (default: |vim.hl.priorities|`.user`) Integer
+                  priority.
+                • timeout (default: 150) Time in ms before highlight is
+                  cleared.
 
 vim.hl.priorities                                          *vim.hl.priorities*
     Table with default priorities used for highlighting:
@@ -2921,16 +2963,18 @@ vim.hl.priorities                                          *vim.hl.priorities*
     • `semantic_tokens`: `125`, used for LSP semantic token highlighting
     • `diagnostics`: `150`, used for code analysis such as diagnostics
     • `user`: `200`, used for user-triggered highlights such as LSP document
-      symbols or `on_yank` autocommands
+      symbols or `hl_op` autocommands
 
                                                               *vim.hl.range()*
-vim.hl.range({buf}, {ns}, {higroup}, {start}, {finish}, {opts})
+vim.hl.range({buf}, {ns}, {hlgroup}, {start}, {finish}, {opts})
     Apply highlight group to range of text.
 
     Parameters: ~
       • {buf}      (`integer`) Buffer number to apply highlighting to
       • {ns}       (`integer`) Namespace to add highlight to
-      • {higroup}  (`string`) Highlight group to use for highlighting
+      • {hlgroup}  (`integer|integer[]|string|string[]`) Highlight group used
+                   for the text range. See the `hl_group` option in
+                   |nvim_buf_set_extmark()|.
       • {start}    (`[integer,integer]|string`) Start of region as a (line,
                    column) tuple or string accepted by |getpos()|
       • {finish}   (`[integer,integer]|string`) End of region as a (line,
@@ -2977,7 +3021,7 @@ The iterator pipeline terminates when the underlying |iterable| is exhausted
 Note: `vim.iter()` scans table input to decide if it is a list or a dict; to
 avoid this cost you can wrap the table with an iterator e.g.
 `vim.iter(ipairs({…}))`, but that precludes the use of |list-iterator|
-operations such as |Iter:rev()|).
+operations such as |IterArray:rev()|).
 
 Examples: >lua
     local it = vim.iter({ 1, 2, 3, 4, 5 })
@@ -3026,9 +3070,9 @@ Iter:all({pred})                                                  *Iter:all()*
         Since: 0.10.0
 
     Parameters: ~
-      • {pred}  (`fun(...):boolean`) Predicate function. Takes all values
-                returned from the previous stage in the pipeline as arguments
-                and returns true if the predicate matches.
+      • {pred}  (`fun(v: V1, ...: V...): boolean`) Predicate function. Takes
+                all values returned from the previous stage in the pipeline as
+                arguments and returns true if the predicate matches.
 
 Iter:any({pred})                                                  *Iter:any()*
     Returns true if any of the items in the iterator match the given
@@ -3038,9 +3082,9 @@ Iter:any({pred})                                                  *Iter:any()*
         Since: 0.10.0
 
     Parameters: ~
-      • {pred}  (`fun(...):boolean`) Predicate function. Takes all values
-                returned from the previous stage in the pipeline as arguments
-                and returns true if the predicate matches.
+      • {pred}  (`fun(v: V1, ...: V...): boolean`) Predicate function. Takes
+                all values returned from the previous stage in the pipeline as
+                arguments and returns true if the predicate matches.
 
 Iter:each({f})                                                   *Iter:each()*
     Calls a function once for each item in the pipeline, draining the
@@ -3053,9 +3097,9 @@ Iter:each({f})                                                   *Iter:each()*
         Since: 0.10.0
 
     Parameters: ~
-      • {f}  (`fun(...)`) Function to execute for each item in the pipeline.
-             Takes all of the values returned by the previous stage in the
-             pipeline as arguments.
+      • {f}  (`fun(v: V1, ...: V...)`) Function to execute for each item in
+             the pipeline. Takes all of the values returned by the previous
+             stage in the pipeline as arguments.
 
 Iter:enumerate()                                            *Iter:enumerate()*
     Yields the item index (count) and value for each item of an iterator
@@ -3083,8 +3127,11 @@ Iter:enumerate()                                            *Iter:enumerate()*
     Attributes: ~
         Since: 0.10.0
 
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>): vim.IterArray<integer, V1, V...>`
+
     Return: ~
-        (`Iter`)
+        (`vim.Iter<integer, V1, V...>`)
 
 Iter:filter({f})                                               *Iter:filter()*
     Filters an iterator pipeline.
@@ -3094,12 +3141,15 @@ Iter:filter({f})                                               *Iter:filter()*
 <
 
     Parameters: ~
-      • {f}  (`fun(...):boolean`) Takes all values returned from the previous
-             stage in the pipeline and returns false or nil if the current
-             iterator element should be removed.
+      • {f}  (`fun(v: V1, ...: V...): boolean`) Takes all values returned from
+             the previous stage in the pipeline and returns false or nil if
+             the current iterator element should be removed.
+
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, f: fun(v: V1, ...: V...): boolean): vim.IterArray<V1, V...>`
 
     Return: ~
-        (`Iter`)
+        (`vim.Iter<V1, V...>`)
 
 Iter:find({f})                                                   *Iter:find()*
     Find the first value in the iterator that satisfies the given predicate.
@@ -3126,35 +3176,14 @@ Iter:find({f})                                                   *Iter:find()*
         Since: 0.10.0
 
     Parameters: ~
-      • {f}  (`any`)
+      • {f}  (`(fun(v: V1, ...: V...): boolean)|any`)
 
-    Return: ~
-        (`any`)
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, f: V1|fun(v: V1, ...: V...): boolean): V1?, V...`
 
-Iter:flatten({depth})                                         *Iter:flatten()*
-    Flattens a |list-iterator|, un-nesting nested values up to the given
-    {depth}. Errors if it attempts to flatten a dict-like value.
-
-    Examples: >lua
-        vim.iter({ 1, { 2 }, { { 3 } } }):flatten():totable()
-        -- { 1, 2, { 3 } }
-
-        vim.iter({1, { { a = 2 } }, { 3 } }):flatten():totable()
-        -- { 1, { a = 2 }, 3 }
-
-        vim.iter({ 1, { { a = 2 } }, { 3 } }):flatten(math.huge):totable()
-        -- error: attempt to flatten a dict-like table
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {depth}  (`number?`) Depth to which |list-iterator| should be
-                 flattened (defaults to 1)
-
-    Return: ~
-        (`Iter`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
 Iter:fold({init}, {f})                                           *Iter:fold()*
     Folds ("reduces") an iterator into a single value.         *Iter:reduce()*
@@ -3181,7 +3210,7 @@ Iter:fold({init}, {f})                                           *Iter:fold()*
 
     Parameters: ~
       • {init}  (`any`) Initial value of the accumulator.
-      • {f}     (`fun(acc:A, ...):A`) Accumulation function.
+      • {f}     (`fun(acc: A, v: V1, ...: V...): A`) Accumulation function.
 
     Return: ~
         (`any`)
@@ -3219,11 +3248,12 @@ Iter:last()                                                      *Iter:last()*
     Attributes: ~
         Since: 0.10.0
 
-    Return: ~
-        (`any`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
     See also: ~
-      • |Iter:rpeek()|
+      • |IterArray:rpeek()|
 
 Iter:map({f})                                                     *Iter:map()*
     Maps the items of an iterator pipeline to the values returned by `f`.
@@ -3244,13 +3274,17 @@ Iter:map({f})                                                     *Iter:map()*
         Since: 0.10.0
 
     Parameters: ~
-      • {f}  (`fun(...):...:any`) Mapping function. Takes all values returned
-             from the previous stage in the pipeline as arguments and returns
-             one or more new values, which are used in the next pipeline
-             stage. Nil return values are filtered from the output.
+      • {f}  (`fun(v: V1, ...: V...): K2, V2...`) Mapping function. Takes all
+             values returned from the previous stage in the pipeline as
+             arguments and returns one or more new values, which are used in
+             the next pipeline stage. Nil return values are filtered from the
+             output.
+
+    Overloads: ~
+      • `fun<V1, V..., K1, K...>(self: vim.IterArray<V1, V...>, f: fun(v: V1, ...: V...): K1, K...): vim.IterArray<K1, K...>`
 
     Return: ~
-        (`Iter`)
+        (`vim.Iter<K2, V2...>`)
 
 Iter:next()                                                      *Iter:next()*
     Gets the next value from the iterator.
@@ -3269,8 +3303,9 @@ Iter:next()                                                      *Iter:next()*
     Attributes: ~
         Since: 0.10.0
 
-    Return: ~
-        (`any`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
 Iter:nth({n})                                                     *Iter:nth()*
     Gets the nth value of an iterator (and advances to it).
@@ -3295,11 +3330,12 @@ Iter:nth({n})                                                     *Iter:nth()*
         Since: 0.10.0
 
     Parameters: ~
-      • {n}  (`number`) Index of the value to return. May be negative if the
+      • {n}  (`integer`) Index of the value to return. May be negative if the
              source is a |list-iterator|.
 
-    Return: ~
-        (`any`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
 Iter:peek()                                                      *Iter:peek()*
     Gets the next value from the iterator without consuming it.
@@ -3321,112 +3357,9 @@ Iter:peek()                                                      *Iter:peek()*
     Attributes: ~
         Since: 0.10.0
 
-    Return: ~
-        (`any`)
-
-Iter:pop()                                                        *Iter:pop()*
-    "Pops" a value from a |list-iterator| (gets the last value and decrements
-    the tail).
-
-    Example: >lua
-        local it = vim.iter({1, 2, 3, 4})
-        it:pop()
-        -- 4
-        it:pop()
-        -- 3
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Return: ~
-        (`any`)
-
-Iter:rev()                                                        *Iter:rev()*
-    Reverses a |list-iterator| pipeline.
-
-    Example: >lua
-
-        local it = vim.iter({ 3, 6, 9, 12 }):rev()
-        it:totable()
-        -- { 12, 9, 6, 3 }
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Return: ~
-        (`Iter`)
-
-Iter:rfind({f})                                                 *Iter:rfind()*
-    Gets the first value satisfying a predicate, from the end of a
-    |list-iterator|.
-
-    Advances the iterator. Returns nil and drains the iterator if no value is
-    found.
-
-    Examples: >lua
-
-        local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
-        it:rfind(1)
-        -- 5	1
-        it:rfind(1)
-        -- 1	1
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {f}  (`any`)
-
-    Return: ~
-        (`any`)
-
-    See also: ~
-      • |Iter:find()|
-
-Iter:rpeek()                                                    *Iter:rpeek()*
-    Gets the last value of a |list-iterator| without consuming it.
-
-    Example: >lua
-        local it = vim.iter({1, 2, 3, 4})
-        it:rpeek()
-        -- 4
-        it:rpeek()
-        -- 4
-        it:pop()
-        -- 4
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Return: ~
-        (`any`)
-
-    See also: ~
-      • |Iter:last()|
-
-Iter:rskip({n})                                                 *Iter:rskip()*
-    Discards `n` values from the end of a |list-iterator| pipeline.
-
-    Example: >lua
-        local it = vim.iter({ 1, 2, 3, 4, 5 }):rskip(2)
-        it:next()
-        -- 1
-        it:pop()
-        -- 3
-<
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {n}  (`number`) Number of values to skip.
-
-    Return: ~
-        (`Iter`)
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
 
 Iter:skip({n})                                                   *Iter:skip()*
     Skips `n` values of an iterator pipeline, or skips values while a
@@ -3452,26 +3385,14 @@ Iter:skip({n})                                                   *Iter:skip()*
         Since: 0.10.0
 
     Parameters: ~
-      • {n}  (`integer|fun(...):boolean`) Number of values to skip or a
-             predicate.
+      • {n}  (`integer|fun(v: V1, ...: V...): boolean`) Number of values to
+             skip or a predicate.
+
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, n: integer|fun(v: V1, ...: V...): boolean): vim.IterArray<V1, V...>`
 
     Return: ~
-        (`Iter`)
-
-Iter:slice({first}, {last})                                     *Iter:slice()*
-    Sets the start and end of a |list-iterator| pipeline.
-
-    Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {first}  (`number`)
-      • {last}   (`number`)
-
-    Return: ~
-        (`Iter`)
+        (`vim.Iter<V1, V...>`)
 
 Iter:take({n})                                                   *Iter:take()*
     Transforms an iterator to yield only the first n values, or all values
@@ -3498,11 +3419,14 @@ Iter:take({n})                                                   *Iter:take()*
         Since: 0.10.0
 
     Parameters: ~
-      • {n}  (`integer|fun(...):boolean`) Number of values to take or a
-             predicate.
+      • {n}  (`integer|fun(v: V1, ...: V...): boolean`) Number of values to
+             take or a predicate.
+
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, n: integer|fun(v: V1, ...: V...): boolean): vim.IterArray<V1, V...>`
 
     Return: ~
-        (`Iter`)
+        (`vim.Iter<V1, V...>`)
 
 Iter:totable()                                                *Iter:totable()*
     Collect the iterator into a table.
@@ -3530,8 +3454,12 @@ Iter:totable()                                                *Iter:totable()*
     Attributes: ~
         Since: 0.10.0
 
+    Overloads: ~
+      • `fun<T>(self: vim.Iter<T>): T[]`
+      • `fun<V1, V2, V...>(self: vim.Iter<V1, V2, V...>): [V1, V2, V...][]`
+
     Return: ~
-        (`table`)
+        (`any[]`)
 
 Iter:unique({key})                                             *Iter:unique()*
     Removes duplicate values from an iterator pipeline.
@@ -3564,14 +3492,164 @@ Iter:unique({key})                                             *Iter:unique()*
         Since: 0.12.0
 
     Parameters: ~
-      • {key}  (`fun(...):any?`) Optional hash function to determine
-               uniqueness of values.
+      • {key}  (`fun(v: V1, ...: V...): any?`) Optional hash function to
+               determine uniqueness of values.
+
+    Overloads: ~
+      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, key: fun(v: V1, ...: V...): any?): vim.IterArray<V1, V...>`
 
     Return: ~
-        (`Iter`)
+        (`vim.Iter<V1, V...>`)
 
     See also: ~
       • |vim.list.unique()|
+
+IterArray:flatten({depth})                               *IterArray:flatten()*
+    Flattens a |list-iterator|, un-nesting nested values up to the given
+    {depth}. Errors if it attempts to flatten a dict-like value.
+
+    Examples: >lua
+        vim.iter({ 1, { 2 }, { { 3 } } }):flatten():totable()
+        -- { 1, 2, { 3 } }
+
+        vim.iter({1, { { a = 2 } }, { 3 } }):flatten():totable()
+        -- { 1, { a = 2 }, 3 }
+
+        vim.iter({ 1, { { a = 2 } }, { 3 } }):flatten(math.huge):totable()
+        -- error: attempt to flatten a dict-like table
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {depth}  (`integer?`) Depth to which |list-iterator| should be
+                 flattened (defaults to 1)
+
+    Return: ~
+        (`vim.IterArray<V1, V...>`)
+
+IterArray:pop()                                              *IterArray:pop()*
+    "Pops" a value from a |list-iterator| (gets the last value and decrements
+    the tail).
+
+    Example: >lua
+        local it = vim.iter({1, 2, 3, 4})
+        it:pop()
+        -- 4
+        it:pop()
+        -- 3
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
+
+IterArray:rev()                                              *IterArray:rev()*
+    Reverses a |list-iterator| pipeline.
+
+    Example: >lua
+
+        local it = vim.iter({ 3, 6, 9, 12 }):rev()
+        it:totable()
+        -- { 12, 9, 6, 3 }
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Return: ~
+        (`vim.IterArray<V1, V...>`)
+
+IterArray:rfind({f})                                       *IterArray:rfind()*
+    Gets the first value satisfying a predicate, from the end of a
+    |list-iterator|.
+
+    Advances the iterator. Returns nil and drains the iterator if no value is
+    found.
+
+    Examples: >lua
+
+        local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
+        it:rfind(1)
+        -- 5	1
+        it:rfind(1)
+        -- 1	1
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {f}  (`V1|fun(v: V1, ...: V...): boolean`)
+
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
+
+    See also: ~
+      • |Iter:find()|
+
+IterArray:rpeek()                                          *IterArray:rpeek()*
+    Gets the last value of a |list-iterator| without consuming it.
+
+    Example: >lua
+        local it = vim.iter({1, 2, 3, 4})
+        it:rpeek()
+        -- 4
+        it:rpeek()
+        -- 4
+        it:pop()
+        -- 4
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Return (multiple): ~
+        (`V1?`)
+        (`V...`)
+
+    See also: ~
+      • |Iter:last()|
+
+IterArray:rskip({n})                                       *IterArray:rskip()*
+    Discards `n` values from the end of a |list-iterator| pipeline.
+
+    Example: >lua
+        local it = vim.iter({ 1, 2, 3, 4, 5 }):rskip(2)
+        it:next()
+        -- 1
+        it:pop()
+        -- 3
+<
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {n}  (`integer`)
+
+    Return: ~
+        (`vim.IterArray<V1, V...>`)
+
+IterArray:slice({first}, {last})                           *IterArray:slice()*
+    Sets the start and end of a |list-iterator| pipeline.
+
+    Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {first}  (`integer`)
+      • {last}   (`integer`)
+
+    Return: ~
+        (`vim.IterArray<V1, V...>`)
 
 
 ==============================================================================
@@ -3596,8 +3674,8 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
       • {str}   (`string`) Stringified JSON data.
       • {opts}  (`table?`) A table with the following fields:
                 • {luanil}? (`{ object?: boolean, array?: boolean }`, default:
-                  `nil`) Convert `null` in JSON objects and/or arrays to Lua
-                  `nil` instead of |vim.NIL|.
+                  `nil`) Convert JSON "null" in objects/arrays to Lua `nil`
+                  instead of |vim.NIL|.
                 • {skip_comments}? (`boolean`, default: `false`) Allows
                   JavaScript-style comments within JSON data. Comments are
                   treated as whitespace and may appear anywhere whitespace is
@@ -3644,15 +3722,15 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
 Lua module: vim.keymap                                            *vim.keymap*
 
 vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
-    Remove an existing mapping. Examples: >lua
+    Removes a mapping, or removes each (mode, lhs) pair if `lhs` is a list.
+    Examples: >lua
         vim.keymap.del('n', 'lhs')
-
         vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buf = 5 })
 <
 
     Parameters: ~
       • {modes}  (`string|string[]`)
-      • {lhs}    (`string`)
+      • {lhs}    (`string|string[]`)
       • {opts}   (`table?`) A table with the following fields:
                  • {buf}? (`integer`) Remove a mapping from the given buffer.
                    `0` for current.
@@ -3661,7 +3739,8 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
       • |vim.keymap.set()|
 
 vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
-    Defines a |mapping| of |keycodes| to a function or keycodes.
+    Defines a |mapping| of |keycodes| to a function or keycodes. If `lhs` is a
+    list, defines a mapping for each (mode, lhs) pair.
 
     Examples: >lua
         -- Map "x" to a Lua function:
@@ -3686,12 +3765,20 @@ vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
           local line2 = region[#region][1][2]
           vim.print({ line1, line2 })
         end)
+
+        vim.keymap.set({ 'n', 'i' }, { 'a', 'b' }, '<cmd>echom localtime()<cr>')
+        -- ... is the same as:
+        vim.keymap.set('n', 'a', '<cmd>echom localtime()<cr>')
+        vim.keymap.set('i', 'a', '<cmd>echom localtime()<cr>')
+        vim.keymap.set('n', 'b', '<cmd>echom localtime()<cr>')
+        vim.keymap.set('i', 'b', '<cmd>echom localtime()<cr>')
 <
 
     Parameters: ~
       • {modes}  (`string|string[]`) Mode "short-name" (see
                  |nvim_set_keymap()|), or a list thereof.
-      • {lhs}    (`string`) Left-hand side |{lhs}| of the mapping.
+      • {lhs}    (`string|string[]`) Left-hand side |{lhs}| of the mapping, or
+                 a list thereof.
       • {rhs}    (`string|function`) Right-hand side |{rhs}| of the mapping,
                  can be a Lua function.
       • {opts}   (`table?`) Table of |:map-arguments|. Same as
@@ -3771,8 +3858,103 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
 
 
 ==============================================================================
-Lua module: vim.lpeg                                                *vim.lpeg*
+Lua module: vim.log                                                  *vim.log*
 
+The |vim.log| module provides file-backed logger instances.
+
+Use `vim.log.new()` to create a logger, it exposes five writer functions:
+`trace()`, `debug()`, `info()`, `warn()`, and `error()`. They are correspond
+to log levels defined by |vim.log.levels|.
+
+Example: >lua
+    local log = vim.log.new({ name = 'my-plugin', })
+    -- By default, logs will be written to {name}.log under `stdpath('log')`.
+
+    log.error('request failed', 'timeout')
+    -- This will write a line like the following to the log file:
+    --   [ERROR][2024-01-01 12:00:00] source.lua:123    request failed    timeout
+
+    -- Set the log level to `INFO`, otherwise the `info()` call below would be ignored,
+    -- since the default level is `WARN`.
+    vim.log.set_level(log, vim.log.levels.INFO)
+    log.info('starting', { buf = vim.api.nvim_get_current_buf() })
+    -- This will write a line like the following to the log file:
+    --   [INFO][2024-01-01 12:01:00] source.lua:124    starting    { buf = 1 }
+<
+
+You can also provide a custom formatter function to customize the log output
+format.
+
+
+*vim.Log*
+
+    Fields: ~
+      • {debug}  (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.DEBUG`.
+      • {error}  (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.ERROR`.
+      • {info}   (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.INFO`.
+      • {trace}  (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.TRACE`.
+      • {warn}   (`fun(...:any): boolean?`) Writes a message at
+                 `vim.log.levels.WARN`.
+
+
+get_level({log})                                         *vim.log.get_level()*
+    Gets the current log level.
+
+    Parameters: ~
+      • {log}  (`vim.Log`) See |vim.Log|.
+
+    Return: ~
+        (`vim.log.levels`)
+
+new({opts})                                                    *vim.log.new()*
+    Creates a logger instance.
+
+    The logger writes formatted messages to a file, using a per-instance log
+    level and formatting function.
+
+    Parameters: ~
+      • {opts}  (`table`) A table with the following fields:
+                • {current_level}? (`vim.log.levels`, default:
+                  `vim.log.levels.WARN`) Minimum level that will be written.
+                • {format_func}?
+                  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+                  Formatter used for each log entry. Receives the logger's
+                  current level, the message level, and the values passed to
+                  the writer. Return a string to write an entry, or `nil` to
+                  skip it.
+                • {name} (`string`) Display name used in notifications emitted
+                  by the logger.
+
+    Return: ~
+        (`vim.Log`) See |vim.Log|.
+
+set_format_func({log}, {func})                     *vim.log.set_format_func()*
+    Sets the formatter used to produce log entries.
+
+    The formatter receives the logger's current level, the message level, and
+    the values passed to the writer method. Return a string to write an entry,
+    or `nil` to skip it.
+
+    Parameters: ~
+      • {log}   (`vim.Log`) See |vim.Log|.
+      • {func}  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+
+set_level({log}, {level})                                *vim.log.set_level()*
+    Sets the current log level.
+
+    Entries below this level are skipped.
+
+    Parameters: ~
+      • {log}    (`vim.Log`) See |vim.Log|.
+      • {level}  (`vim.log.levels`)
+
+
+==============================================================================
+Lua module: vim.lpeg                                                *vim.lpeg*
 
 LPeg is a pattern-matching library for Lua, based on Parsing Expression
 Grammars (PEGs). https://bford.info/packrat/
@@ -4288,10 +4470,9 @@ by |vim.Pos| objects.
 
 
 *vim.Pos*
-    Represents a well-defined position.
-
-    A |vim.Pos| object contains the {row} and {col} coordinates of a position.
-    To create a new |vim.Pos| object, call `vim.pos()`.
+    Represents a buffer position based on |api-indexing| (0-indexed,
+    end-exclusive ranges). Call `vim.pos()` to create a new `vim.Pos` by
+    passing the {buf}, {row}, and {col} of a position.
 
     Example: >lua
         local pos1 = vim.pos(0, 3, 5)
@@ -4319,17 +4500,32 @@ by |vim.Pos| objects.
 cursor({buf}, {pos})                                        *vim.pos.cursor()*
     Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 
+    Example: >lua
+        local cursor_pos = vim.api.nvim_win_get_cursor(0)
+        local pos = vim.pos.cursor(0, cursor_pos)
+<
+
     Parameters: ~
       • {buf}  (`integer`)
-      • {pos}  (`[integer, integer]`)
+      • {pos}  (`[integer, integer]`) (lnum, col) tuple
+
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
 
 extmark({buf}, {row}, {col})                               *vim.pos.extmark()*
     Creates a new |vim.Pos| from extmark position (see |api-indexing|).
+
+    Example: >lua
+        local pos = vim.pos.extmark(0, 3, 5)
+<
 
     Parameters: ~
       • {buf}  (`integer`)
       • {row}  (`integer`)
       • {col}  (`integer`)
+
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
 
 lsp({buf}, {pos}, {position_encoding})                         *vim.pos.lsp()*
     Creates a new |vim.Pos| from `lsp.Position`.
@@ -4348,25 +4544,80 @@ lsp({buf}, {pos}, {position_encoding})                         *vim.pos.lsp()*
       • {pos}                (`lsp.Position`)
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
+
+mark({buf}, {lnum}, {col})                                    *vim.pos.mark()*
+    Creates a new |vim.Pos| from mark position (see |api-indexing|).
+
+    Example: >lua
+        local mark_info = vim.api.nvim_get_mark('M', {})
+        local lnum, col, buf, name = unpack(mark_info)
+
+        if lnum == 0 and col == 0 and buf == 0 then
+          return -- mark 'M' is not set.
+        end
+
+        local pos = vim.pos.mark(buf, lnum, col)
+<
+
+    Parameters: ~
+      • {buf}   (`integer`)
+      • {lnum}  (`integer`)
+      • {col}   (`integer`)
+
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
+
+offset({buf}, {offset})                                     *vim.pos.offset()*
+    Creates a new |vim.Pos| from buffer (bytes) offset.
+
+    Example: >lua
+        local offset = vim.api.nvim_buf_get_offset(0, vim.api.nvim_buf_line_count(0))
+        local pos = vim.pos.offset(0, offset)
+<
+
+    Parameters: ~
+      • {buf}     (`integer`)
+      • {offset}  (`integer`)
+
+    Return: ~
+        (`vim.Pos`) See |vim.Pos|.
+
 to_cursor({pos})                                         *vim.pos.to_cursor()*
     Converts |vim.Pos| to cursor position (see |api-indexing|).
+
+    Example: >lua
+        local pos = vim.pos(0, 3, 5)
+
+        -- Convert to cursor position, you can call it in a method style.
+        local cursor_pos = { pos:to_cursor() }
+        vim.api.nvim_win_set_cursor(0, cursor_pos)
+<
 
     Parameters: ~
       • {pos}  (`vim.Pos`) See |vim.Pos|.
 
     Return (multiple): ~
-        (`integer`)
-        (`integer`)
+        (`integer`) lnum
+        (`integer`) col
 
 to_extmark({pos})                                       *vim.pos.to_extmark()*
     Converts |vim.Pos| to extmark position (see |api-indexing|).
 
+    Example: >lua
+        local pos = vim.pos(0, 3, 5)
+
+        -- Convert to extmark position, you can call it in a method style.
+        local extmark_pos = pos:to_extmark()
+<
+
     Parameters: ~
       • {pos}  (`vim.Pos`) See |vim.Pos|.
 
     Return (multiple): ~
-        (`integer`)
-        (`integer`)
+        (`integer`) row
+        (`integer`) col
 
 to_lsp({pos}, {position_encoding})                          *vim.pos.to_lsp()*
     Converts |vim.Pos| to `lsp.Position`.
@@ -4382,6 +4633,47 @@ to_lsp({pos}, {position_encoding})                          *vim.pos.to_lsp()*
       • {pos}                (`vim.Pos`) See |vim.Pos|.
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
+    Return: ~
+        (`lsp.Position`)
+
+to_mark({pos})                                             *vim.pos.to_mark()*
+    Converts |vim.Pos| to mark position (see |api-indexing|).
+
+    Example: >lua
+        local pos = vim.pos(0, 3, 5)
+
+        -- Convert to mark position, you can call it in a method style.
+        local lnum, col = pos:to_mark()
+        vim.api.nvim_buf_set_mark(0, 'M', lnum, col, {})
+<
+
+    Parameters: ~
+      • {pos}  (`vim.Pos`) See |vim.Pos|.
+
+    Return (multiple): ~
+        (`integer`) lnum
+        (`integer`) col
+
+to_offset({pos})                                         *vim.pos.to_offset()*
+    Converts |vim.Pos| to buffer (bytes) offset.
+
+    Example: >lua
+        local p1 = vim.pos(0, 3, 5)
+        local p2 = vim.pos(0, 4, 0)
+
+        -- Convert to buffer offset, you can call it in a method style.
+        local offset1 = p1:to_offset()
+        local offset2 = p2:to_offset()
+        -- Can be used to calculate the distance between two locations.
+        local distance = offset2 - offset1
+<
+
+    Parameters: ~
+      • {pos}  (`vim.Pos`) See |vim.Pos|.
+
+    Return: ~
+        (`integer`)
+
 
 ==============================================================================
 Lua module: vim.range                                              *vim.range*
@@ -4395,13 +4687,12 @@ Provides operations to compare, calculate, and convert ranges represented by
 
 
 *vim.Range*
-    Represents a range. Call `vim.range()` to create a new range.
+    Represents a range based on |api-indexing| (0-indexed, end-exclusive).
+    Call `vim.range()` to create a new range by passing start and end
+    positions (|vim.Pos|).
 
-    A range contains a start and end position (see |vim.Pos|). The end
-    position is exclusive. Positions must have the same optional fields.
-
-    May include optional fields that enable additional capabilities, such as
-    format conversions.
+    Both positions must have the same optional fields, which may enable
+    additional capabilities (such as format conversions).
 
     Example: >lua
         local pos1 = vim.pos(0, 3, 5)
@@ -4430,22 +4721,6 @@ Provides operations to compare, calculate, and convert ranges represented by
       • {start_row}  (`integer`) 0-based byte index.
 
 
-cursor({buf}, {start_pos}, {end_pos})                     *vim.range.cursor()*
-    Creates a new |vim.Range| from mark-like range (see |api-indexing|).
-
-    Example: >lua
-        local start = vim.api.nvim_win_get_cursor(0)
-        -- move the cursor
-        local end_ = vim.api.nvim_win_get_cursor(0)
-
-        local range = vim.range.cursor(0, start, end_)
-<
-
-    Parameters: ~
-      • {buf}        (`integer`)
-      • {start_pos}  (`[integer, integer]`)
-      • {end_pos}    (`[integer, integer]`)
-
                                                          *vim.range.extmark()*
 extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
     Creates a new |vim.Range| from extmark range (see |api-indexing|).
@@ -4460,6 +4735,9 @@ extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
       • {start_col}  (`integer`)
       • {end_row}    (`integer`)
       • {end_col}    (`integer`)
+
+    Return: ~
+        (`vim.Range`) See |vim.Range|.
 
 has({outer}, {inner})                                        *vim.range.has()*
     Checks whether {outer} range contains {inner} range or position.
@@ -4509,18 +4787,31 @@ lsp({buf}, {range}, {position_encoding})                     *vim.range.lsp()*
       • {range}              (`lsp.Range`)
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
-to_cursor({range})                                     *vim.range.to_cursor()*
-    Converts |vim.Range| to mark-like range (see |api-indexing|).
+    Return: ~
+        (`vim.Range`) See |vim.Range|.
+
+                                                            *vim.range.mark()*
+mark({buf}, {start_lnum}, {start_col}, {end_lnum}, {end_col})
+    Creates a new |vim.Range| from "mark-indexed" range (see |api-indexing|).
 
     Example: >lua
-        local range = vim.range(0, 3, 5, 4, 0)
+        -- A range represented by marks may be end-inclusive (decided by 'selection' option).
+        local start_lnum, start_col = unpack(api.nvim_buf_get_mark(bufnr, '<'))
+        local end_lnum, end_col = unpack(api.nvim_buf_get_mark(bufnr, '>'))
 
-        -- Convert to cursor range, you can call it in a method style.
-        local cursor_range = range:to_cursor()
+        -- Create an end-exclusive range.
+        local range = vim.range.mark(0, start_lnum, start_col, end_lnum, end_col)
 <
 
     Parameters: ~
-      • {range}  (`vim.Range`) See |vim.Range|.
+      • {buf}         (`integer`)
+      • {start_lnum}  (`integer`)
+      • {start_col}   (`integer`)
+      • {end_lnum}    (`integer`)
+      • {end_col}     (`integer`)
+
+    Return: ~
+        (`vim.Range`) See |vim.Range|.
 
 to_extmark({range})                                   *vim.range.to_extmark()*
     Converts |vim.Range| to extmark range (see |api-indexing|).
@@ -4534,6 +4825,12 @@ to_extmark({range})                                   *vim.range.to_extmark()*
 
     Parameters: ~
       • {range}  (`vim.Range`) See |vim.Range|.
+
+    Return (multiple): ~
+        (`integer`) start_row
+        (`integer`) start_col
+        (`integer`) end_row
+        (`integer`) end_col
 
 to_lsp({range}, {position_encoding})                      *vim.range.to_lsp()*
     Converts |vim.Range| to `lsp.Range`.
@@ -4551,6 +4848,25 @@ to_lsp({range}, {position_encoding})                      *vim.range.to_lsp()*
 
     Return: ~
         (`lsp.Range`)
+
+to_mark({range})                                         *vim.range.to_mark()*
+    Converts |vim.Range| to extmark range (see |api-indexing|).
+
+    Example: >lua
+        local range = vim.range(0, 3, 5, 4, 0)
+
+        -- Convert to mark range, you can call it in a method style.
+        local start_lnum, start_col, end_lnum, end_col = range:to_mark()
+<
+
+    Parameters: ~
+      • {range}  (`vim.Range`) See |vim.Range|.
+
+    Return (multiple): ~
+        (`integer`) start_lnum
+        (`integer`) start_col
+        (`integer`) end_lnum
+        (`integer`) end_col
 
 
 ==============================================================================
@@ -4732,6 +5048,16 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
 
 ==============================================================================
 Lua module: vim.snippet                                          *vim.snippet*
+
+Snippet expansion and navigation.
+
+Internal autocmds live in the `nvim.snippet` augroup. To disable them (e.g. to
+manage sessions yourself), clear it: >lua
+    vim.api.nvim_clear_autocmds({ group = 'nvim.snippet', buffer = 0 })
+<
+
+Heads-up: |vim.snippet.jump()| re-registers them on every jump.
+
 
 *vim.snippet.ActiveFilter*
 
@@ -5114,7 +5440,8 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     work until `on_confirm`.
 
     Example: >lua
-        vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
+        local opts = { prompt = 'Enter value for shiftwidth: ', scope = 'buffer' }
+        vim.ui.input(opts, function(input)
             vim.o.shiftwidth = tonumber(input)
         end)
 <
@@ -5129,6 +5456,14 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
                       • {highlight}? (`function`) Function that will be used
                         for highlighting user inputs.
                       • {prompt}? (`string`) Text of the prompt
+                      • {scope}?
+                        (`'cursor'|'line'|'buffer'|'window'|'tabpage'|'editor'|'project'`)
+                        Input scope, as in "This input is for something at
+                        cursor/line/etc scope". Can be used by `vim.ui.input`
+                        implementations to tweak behavior and presentation.
+                        For example, the input may adjust the floating window
+                        position: near the cursor if `cursor`, in window
+                        corner if `buffer` or `window`, etc.
       • {on_confirm}  (`fun(input?: string)`) Called once the user confirms or
                       abort the input. `input` is what the user typed (it
                       might be an empty string if nothing was entered), or
@@ -5639,13 +5974,15 @@ To enable this feature (default opts shown): >lua
     require('vim._core.ui2').enable({
       enable = true, -- Whether to enable or disable the UI.
       msg = { -- Options related to the message module.
-        ---@type 'cmd'|'msg' Default message target, either in the
-        ---cmdline or in a separate ephemeral message window.
         ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
-        ---or table mapping |ui-messages| kinds and triggers to a target.
+        ---or table mapping |ui-messages| kinds, triggers and IDs to a target.
+        ---Table keys are are matched as a Lua pattern to the message ID. 'default'
+        ---mapping applies to any omitted kind: { default = 'cmd', progress = 'msg' }.
         targets = 'cmd',
         cmd = { -- Options related to messages in the cmdline window.
-          height = 0.5 -- Maximum height while expanded for messages beyond 'cmdheight'.
+          -- Maximum height (rows if >=1, or % of 'lines' if <1) of messages expanded
+          -- beyond 'cmdheight'; 0.999 for full height.
+          height = 0.5,
         },
         dialog = { -- Options related to dialog window.
           height = 0.5, -- Maximum height.
@@ -5655,7 +5992,7 @@ To enable this feature (default opts shown): >lua
           timeout = 4000, -- Time a message is visible in the message window.
         },
         pager = { -- Options related to message window.
-          height = 1, -- Maximum height.
+          height = 0.999, -- Maximum height.
         },
       },
     })

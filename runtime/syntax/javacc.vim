@@ -3,6 +3,7 @@
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:		http://www.fleiner.com/vim/syntax/javacc.vim
 " Last Change:	2012 Oct 05
+" 2026 May 11 by Vim project: check for existence of javaFuncDef before clearing it
 
 " Uses java.vim, and adds a few special things for JavaCC Parser files.
 " Those files usually have the extension  *.jj
@@ -33,7 +34,9 @@ syn clear	javaError2
 " remove function definitions (they look different) (first define in
 " in case it was not defined in java.vim)
 "syn match javaFuncDef "--"
-syn clear javaFuncDef
+if hlexists('javaFuncDef')
+  syn clear javaFuncDef
+endif
 syn match javaFuncDef "[$_a-zA-Z][$_a-zA-Z0-9_. \[\]]*([^-+*/()]*)[ \t]*:" contains=javaType
 
 syn keyword javaccPackages options DEBUG_PARSER DEBUG_LOOKAHEAD DEBUG_TOKEN_MANAGER

@@ -399,10 +399,10 @@ static int tslua_push_parser(lua_State *L)
   return 1;
 }
 
-static TSParser *parser_check(lua_State *L, uint16_t index)
+static TSParser *parser_check(lua_State *L, int index)
 {
   TSParser **ud = luaL_checkudata(L, index, TS_META_PARSER);
-  luaL_argcheck(L, *ud, index, "TSParser expected");
+  luaL_argcheck(L, *ud != NULL, index, "Parser has been deleted");
   return *ud;
 }
 
@@ -419,9 +419,12 @@ static void logger_gc(TSLogger logger)
 
 static int parser_gc(lua_State *L)
 {
-  TSParser *p = parser_check(L, 1);
-  logger_gc(ts_parser_logger(p));
-  ts_parser_delete(p);
+  TSParser **ud = luaL_checkudata(L, 1, TS_META_PARSER);
+  if (*ud) {
+    logger_gc(ts_parser_logger(*ud));
+    ts_parser_delete(*ud);
+    *ud = NULL;
+  }
   return 0;
 }
 

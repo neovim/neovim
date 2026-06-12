@@ -583,6 +583,25 @@ func s:SendCommand(cmd)
   endif
 endfunc
 
+func s:StopCommand()
+  if s:way == 'prompt'
+    call s:PromptInterrupt()
+  else
+    call s:SendCommand('-exec-interrupt')
+  endif
+endfunc
+
+func s:ContinueCommand()
+  if s:way == 'prompt'
+    call s:SendCommand('continue')
+  else
+    " using -exec-continue results in CTRL-C in the gdb window not working,
+    " communicating via commbuf (= use of SendCommand) has the same result
+    " call s:SendCommand('-exec-continue')
+    call chansend(s:gdb_job_id, "continue\r")
+  endif
+endfunc
+
 " This is global so that a user can create their mappings with this.
 func TermDebugSendCommand(cmd)
   if s:way == 'prompt'
@@ -987,6 +1006,7 @@ func s:InstallCommands()
 
   command -nargs=? Break call s:SetBreakpoint(<q-args>)
   command -nargs=? Tbreak call s:SetBreakpoint(<q-args>, v:true)
+  command ToggleBreak call s:ToggleBreak()
   command Clear call s:ClearBreakpoint()
   command Step call s:SendResumingCommand('-exec-step')
   command Over call s:SendResumingCommand('-exec-next')
@@ -994,17 +1014,9 @@ func s:InstallCommands()
   command Finish call s:SendResumingCommand('-exec-finish')
   command -nargs=* Run call s:Run(<q-args>)
   command -nargs=* Arguments call s:SendResumingCommand('-exec-arguments ' . <q-args>)
-
-  if s:way == 'prompt'
-    command Stop call s:PromptInterrupt()
-    command Continue call s:SendCommand('continue')
-  else
-    command Stop call s:SendCommand('-exec-interrupt')
-    " using -exec-continue results in CTRL-C in the gdb window not working,
-    " communicating via commbuf (= use of SendCommand) has the same result
-    "command Continue  call s:SendCommand('-exec-continue')
-    command Continue call chansend(s:gdb_job_id, "continue\r")
-  endif
+  command Stop call s:StopCommand()
+  command Continue call s:ContinueCommand()
+  command RunOrContinue call s:RunOrContinue()
 
   command -nargs=* Frame call s:Frame(<q-args>)
   command -count=1 Up call s:Up(<count>)
@@ -1115,6 +1127,8 @@ func s:DeleteCommands()
   delcommand Asm
   delcommand Var
   delcommand Winbar
+  delcommand RunOrContinue
+  delcommand ToggleBreak
 
   if exists('s:saved_K_map')
     if !empty(s:saved_K_map) && !s:saved_K_map.buffer
@@ -1335,11 +1349,32 @@ func s:ClearBreakpoint()
   endif
 endfunc
 
+func s:ToggleBreak()
+  let fname = fnameescape(expand('%:p'))
+  let lnum = line('.')
+  let bploc = printf('%s:%d', fname, lnum)
+  if has_key(s:breakpoint_locations, bploc)
+    while has_key(s:breakpoint_locations, bploc)
+      call s:ClearBreakpoint()
+    endwhile
+  else
+    call s:SetBreakpoint("")
+  endif
+endfunc
+
 func s:Run(args)
   if a:args != ''
     call s:SendResumingCommand($'-exec-arguments {a:args}')
   endif
   call s:SendResumingCommand('-exec-run')
+endfunc
+
+func s:RunOrContinue()
+  if s:running
+    call s:ContinueCommand()
+  else
+    call s:Run('')
+  endif
 endfunc
 
 " :Frame - go to a specific frame in the stack
@@ -1839,7 +1874,10 @@ func s:HandleNewBreakpoint(msg, modifiedFlag)
     if !has_key(s:breakpoint_locations, bploc)
       let s:breakpoint_locations[bploc] = []
     endif
-    let s:breakpoint_locations[bploc] += [id]
+    if s:breakpoint_locations[bploc]->index(id) == -1
+      " Make sure all ids are unique
+      let s:breakpoint_locations[bploc] += [id]
+    endif
 
     if bufloaded(fname)
       call s:PlaceSign(id, subid, entry)

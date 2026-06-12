@@ -254,7 +254,7 @@ void pty_proc_resume(PtyProc *ptyproc)
 }
 
 /// On Linux, libuv's polling (which uses epoll) doesn't flush PTY master's pending
-/// work on kernel workqueue, so use an explcit poll() before that. #37982
+/// work on kernel workqueue, so use an explicit poll() before that. #37982
 /// Note that poll() only flushes pending work if no data is immediately available,
 /// so this function is needed before every libuv poll in flush_stream().
 void pty_proc_flush_master(PtyProc *ptyproc)

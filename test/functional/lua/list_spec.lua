@@ -23,6 +23,8 @@ describe('vim.list', function()
         return x[1]
       end)
     )
+
+    eq({ { id = 1 }, { id = 2 } }, vim.list.unique({ { id = 1 }, { id = 2 }, { id = 1 } }, 'id'))
   end)
 
   --- Generate a list like { 1, 2, 2, 3, 3, 3, 4, 4, 4, 4, ...}.
@@ -52,6 +54,9 @@ describe('vim.list', function()
     local target = math.random(num)
     eq(vim.list.bisect(list, target, { bound = 'lower' }), index(target - 1) + 1)
     eq(vim.list.bisect(list, num + 1, { bound = 'lower' }), index(num) + 1)
+
+    local dict_list = { { value = 1 }, { value = 2 }, { value = 2 }, { value = 3 } }
+    eq(2, vim.list.bisect(dict_list, { value = 2 }, { key = 'value', bound = 'lower' }))
   end)
 
   it("vim.list.bisect(..., bound = { 'upper' })", function()
@@ -61,5 +66,8 @@ describe('vim.list', function()
     local target = math.random(num)
     eq(vim.list.bisect(list, target, { bound = 'upper' }), index(target) + 1)
     eq(vim.list.bisect(list, num + 1, { bound = 'upper' }), index(num) + 1)
+
+    local dict_list = { { value = 1 }, { value = 2 }, { value = 2 }, { value = 3 } }
+    eq(4, vim.list.bisect(dict_list, { value = 2 }, { key = 'value', bound = 'upper' }))
   end)
 end)

@@ -274,10 +274,12 @@ function M.lint_quasi_keysets(source, funs)
     for _, p in ipairs(fun.params or {}) do
       if p.desc then
         local prev = nil --- @type string?
-        for name in p.desc:gmatch('\n%- ([%w_]+)') do
+        -- Capture the keyname with optional punctuation (`, "), so the sort includes surrounding
+        -- chars: backtick items group together, double-quote group together, etc. (Example: |Client:stop()|)
+        for name in p.desc:gmatch('\n%- (["`]?[%w_]+["`]?)') do
           -- Sort underscore-prefixed keys (e.g. "_cmdline_offset") at the end.
-          local prev_key = prev and prev:gsub('^_', '~') or nil
-          local name_key = name:gsub('^_', '~')
+          local prev_key = prev and prev:gsub('^([`"]?)_', '%1~') or nil
+          local name_key = name:gsub('^([`"]?)_', '%1~')
           if prev_key and name_key < prev_key then
             errors[#errors + 1] = fmt(
               '%s: %s(): param "%s": key "%s" should come before "%s" (sort alphabetically)',

@@ -152,7 +152,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
     // For mapping commands, split differently to preserve whitespace
     args = parse_map_cmd(ea.arg, arena);
   } else if (ea.argt & EX_NOSPC) {
-    // For nargs = 1 or '?', pass the entire argument list as a single argument,
+    // For nargs = 1 or '_' or '?', pass the entire argument list as a single argument,
     // otherwise split arguments by whitespace.
     if (*ea.arg != NUL) {
       args = arena_array(arena, 1);
@@ -223,7 +223,9 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char nargs[2];
   if (ea.argt & EX_EXTRA) {
     if (ea.argt & EX_NOSPC) {
-      if (ea.argt & EX_NEEDARG) {
+      if (ea.argt & EX_ARGSPACE) {
+        nargs[0] = '_';
+      } else if (ea.argt & EX_NEEDARG) {
         nargs[0] = '1';
       } else {
         nargs[0] = '?';
@@ -449,7 +451,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   } else if (!IS_USER_CMDIDX(ea.cmdidx)) {
     // Get the command flags so that we can know what type of arguments the command uses.
     // Not required for a user command since `find_ex_command` already deals with it in that case.
-    ea.argt = get_cmd_argt(ea.cmdidx);
+    ea.argt = excmd_get_argt(ea.cmdidx);
   }
 
   // Track whether the first argument was interpreted as count to avoid conflicts
@@ -1007,36 +1009,35 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// Hello world!
 /// ```
 ///
-/// @param  name    Name of the new user command. Must begin with an uppercase letter.
-/// @param  cmd     Replacement command to execute when this user command is executed. When called
-///                 from Lua, the command can also be a Lua function. The function is called with a
-///                 single table argument that contains the following keys:
-///                 - args: (string) The args passed to the command, if any [<args>]
-///                 - bang: (boolean) "true" if the command was executed with a ! modifier [<bang>]
-///                 - count: (number) Any count supplied [<count>]
-///                 - fargs: (table) The args split by unescaped whitespace (when more than one
-///                 argument is allowed), if any [<f-args>]
-///                 - line1: (number) The starting line of the command range [<line1>]
-///                 - line2: (number) The final line of the command range [<line2>]
-///                 - col1: (number) The starting column of the command range [<col1>]
-///                 - col2: (number) The final line of the command range [<col2>]
-///                 - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
-///                 - count: (number) Any count supplied [<count>]
-///                 - reg: (string) The optional register, if specified [<reg>]
-///                 - mods: (string) Command modifiers, if any [<mods>]
-///                 - name: (string) Command name
-///                 - nargs: (string) Number of arguments |:command-nargs|
-///                 - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
-///                 - reg: (string) The optional register, if specified [<reg>]
-///                 - smods: (table) Command modifiers in a structured format. Has the same
-///                 structure as the "mods" key of |nvim_parse_cmd()|.
-/// @param  opts    Optional flags
+/// @param  name    Command name. First char must be uppercase.
+/// @param  cmd     Command or Lua function, executed when the command is invoked. Lua function
+///                 receives a table with keys:
+///                 - args: (string) Args passed to the command, if any. [<args>]
+///                 - bang: (boolean) true if the command was executed with "!". [<bang>]
+///                 - count: (number) Count, if any. [<count>]
+///                 - fargs: (table) Args split by unescaped whitespace (when more than one arg is
+///                   allowed), if any. [<f-args>]
+///                 - line1: (number) Start of the command range. [<line1>]
+///                 - line2: (number) End of the command range. [<line2>]
+///                 - col1: (number) Start of the command column range. [<col1>]
+///                 - col2: (number) End of the command column range. [<col2>]
+///                 - mods: (string) Command modifiers (unstructured string), if any. [<mods>]
+///                 - name: (string) Command name.
+///                 - nargs: (string) Number of arguments allowed by the command. |:command-nargs|
+///                 - range: (number) Number of items in the command range: 0, 1, or 2. [<range>]
+///                 - reg: (string) Register name, if any. [<reg>]
+///                 - smods: (table) Command modifiers (structured), same as "mods" in |nvim_parse_cmd()|.
+/// @param  opts    Optional flags:
+///                 - `addr` |:command-addr|
+///                 - `complete` |:command-complete| command or function |:command-completion-customlist|.
+///                 - `count` |:command-count|
 ///                 - `desc` (string) Command description.
-///                 - `force` (boolean, default true) Override any previous definition.
-///                 - `complete` |:command-complete| command or function like |:command-completion-customlist|.
-///                 - `preview` (function) Preview handler for 'inccommand' |:command-preview|
-///                 - Set boolean |command-attributes| such as |:command-bang| or |:command-bar| to
-///                   true (but not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
+///                 - `force` (boolean, default true) Override the existing definition, if any.
+///                 - `nargs` Number of arguments allowed by the command. |:command-nargs|
+///                 - `preview` (function) Preview handler for 'inccommand'. |:command-preview|
+///                 - `range` |:command-range|
+///                 - boolean |command-attributes| such as |:command-bang| or |:command-bar| (but
+///                   not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
 /// @param[out] err Error details, if any.
 void nvim_create_user_command(uint64_t channel_id,
                               String name,
@@ -1174,6 +1175,9 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     case '+':
       argt |= EX_EXTRA | EX_NEEDARG;
       break;
+    case '_':
+      argt |= EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE;
+      break;
     default:
       VALIDATE_S(false, "nargs", opts->nargs.data.string.data, {
         goto err;
@@ -1295,14 +1299,18 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     opts->preview.data.luaref = LUA_NOREF;
   }
 
+  const char *desc = NULL;
+  if (HAS_KEY(opts, user_command, desc)) {
+    VALIDATE_T("desc", kObjectTypeString, opts->desc.type, {
+      goto err;
+    });
+    desc = opts->desc.data.string.data;
+  }
+
   switch (cmd.type) {
   case kObjectTypeLuaRef:
     luaref = api_new_luaref(cmd.data.luaref);
-    if (opts->desc.type == kObjectTypeString) {
-      rep = opts->desc.data.string.data;
-    } else {
-      rep = "";
-    }
+    rep = "";
     break;
   case kObjectTypeString:
     rep = cmd.data.string.data;
@@ -1316,7 +1324,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
   WITH_SCRIPT_CONTEXT(channel_id, {
     if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
                        compl_luaref, preview_luaref, addr_type_arg, addr_mode, luaref,
-                       force) != OK) {
+                       desc, force) != OK) {
       api_set_error(err, kErrorTypeException, "Failed to create user command");
       // Do not goto err, since uc_add_command now owns luaref, compl_luaref, preview_luaref,
       // and compl_arg

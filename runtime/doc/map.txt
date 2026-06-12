@@ -186,8 +186,7 @@ be effective in the current buffer only.  Example: >
 Then you can map ",w" to something else in another buffer: >
 	:map <buffer>  ,w  /[#&!]<CR>
 The local buffer mappings are used before the global ones.  See <nowait> below
-to make a short local mapping not taking effect when a longer global one
-exists.
+to make a short local mapping take effect when a longer global one exists.
 The "<buffer>" argument can also be used to clear mappings: >
 	:unmap <buffer> ,w
 	:mapclear <buffer>
@@ -1350,7 +1349,10 @@ reported if any are supplied).  However, it is possible to specify that the
 command can take arguments, using the -nargs attribute.  Valid cases are:
 
 	-nargs=0    No arguments are allowed (the default)
-	-nargs=1    Exactly one argument is required, it includes spaces
+	-nargs=1    Exactly one argument is required, it includes spaces;
+		    completion treats white spaces as argument separation
+	-nargs=_    Exactly one argument is required, it includes spaces;
+		    completion treats white spaces as part of the argument
 	-nargs=*    Any number of arguments are allowed (0, 1, or many),
 		    separated by white space
 	-nargs=?    0 or 1 arguments are allowed
@@ -1358,7 +1360,23 @@ command can take arguments, using the -nargs attribute.  Valid cases are:
 
 Arguments are considered to be separated by (unescaped) spaces or tabs in this
 context, except when there is one argument, then the white space is part of
-the argument.
+the argument. The difference between the "-nargs=1" and "-nargs=_": >
+
+	func MyComplete(ArgLead, CmdLine, CursorPos)
+	  return ["one value", "two values", "three values"]
+		\->matchfuzzy(a:ArgLead)
+	endfunc
+	:command -nargs=1 -complete=customlist,MyComplete MyCmd1 echo <q-args>
+	:command -nargs=_ -complete=customlist,MyComplete MyCmd2 echo <q-args>
+
+Completing ":MyCmd1 two va<tab>" will complete with: >
+
+	:MyCmd1 two one value
+
+Completing ":MyCmd2 two va<tab>" will complete with: >
+
+	:MyCmd2 two values
+
 
 Note that arguments are used as text, not as expressions.  Specifically,
 "s:var" will use the script-local variable in the script where the command was
@@ -1448,7 +1466,20 @@ For the "custom" argument, the function should return the completion
 candidates one per line in a newline separated string.
 
 For the "customlist" argument, the function should return the completion
-candidates as a Vim List.  Non-string items in the list are ignored.
+candidates as a Vim List.  Each item may be either a string or a |Dictionary|.
+A Dictionary item may have the following keys:
+	word	(required) the text inserted into the command line when the
+		item is selected
+	abbr	alternative text shown in the popup menu in place of "word",
+		when 'wildoptions' contains "pum"; useful when the inserted
+		text and the displayed text should differ
+	kind	short kind text (one or two characters), shown in the popup
+		menu when 'wildoptions' contains "pum"
+	menu	extra text shown after the match in the popup menu
+	info	long description shown in the info popup
+Items that are neither a string nor a Dictionary, and Dictionary items without
+a "word" key, are ignored.  When 'wildoptions' does not contain "pum", only
+"word" is shown.
 
 The function arguments are:
 	ArgLead		the leading portion of the argument currently being
@@ -1508,7 +1539,7 @@ specified.
 					*:command-addr*
 It is possible that the special characters in the range like `.`, `$` or `%` which
 by default correspond to the current line, last line and the whole buffer,
-relate to arguments, (loaded) buffers, windows or tab pages.
+relate to arguments, (loaded) buffers, windows or tabpages.
 
 Possible values are (second column is the short name used in listing):
     -addr=lines			Range of lines (the default for -range)
@@ -1516,7 +1547,7 @@ Possible values are (second column is the short name used in listing):
     -addr=buffers	  buf	Range for buffers (also not loaded buffers)
     -addr=loaded_buffers  load	Range for loaded buffers
     -addr=windows	  win	Range for windows
-    -addr=tabs		  tab	Range for tab pages
+    -addr=tabs		  tab	Range for tabpages
     -addr=quickfix	  qf	Range for quickfix entries
     -addr=other		  ?	Other kind of range; can use ".", "$" and "%"
 				as with "lines" (the default for -count)

@@ -1971,10 +1971,22 @@ M.cmds = {
     func = 'ex_packadd',
   },
   {
+    command = 'packdel',
+    flags = bit.bor(BANG, EXTRA, NEEDARG, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_packdel',
+  },
+  {
     command = 'packloadall',
     flags = bit.bor(BANG, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
     func = 'ex_packloadall',
+  },
+  {
+    command = 'packupdate',
+    flags = bit.bor(BANG, EXTRA, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_packupdate',
   },
   {
     command = 'pbuffer',

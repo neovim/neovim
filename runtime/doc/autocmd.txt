@@ -1147,30 +1147,40 @@ Syntax				When the 'syntax' option has been set.  The
 				See |:syn-on|.
 
 							*TabClosed*
-TabClosed			After closing a tab page. <afile> expands to
-				the tab page number.
+TabClosed			After closing a tabpage. <afile> expands to
+				the closing |tabpage-number|.
 
 							*TabClosedPre*
-TabClosedPre			Before closing a tab page.  The window layout
-				is locked, thus opening and closing of windows
-				is prohibited.
+TabClosedPre			Before closing a tabpage. The current tabpage
+				(|tabpagenr()|) is the one being closed. The
+				window layout is locked, thus opening and
+				closing of windows is prohibited.
 
 							*TabEnter*
-TabEnter			Just after entering a tab page. |tab-page|
+TabEnter			Just after entering a |tabpage|.
 				After WinEnter.
 				Before BufEnter.
 
 							*TabLeave*
-TabLeave			Just before leaving a tab page. |tab-page|
+TabLeave			Just before leaving a |tabpage|.
 				After WinLeave.
 
+							*TabMoved*
+TabMoved			After a |tabpage| is moved (by |:tabmove| or
+				mouse drag). <amatch> expands to the old
+				|tabpage-number| before the move.
+
+				The |event-data| has these keys (type: `vim.event.tabmoved.data`)
+				- tabnr_old: |tabpage-number| before the move.
+				- tabnr_new: |tabpage-number| after the move.
+
 							*TabNew*
-TabNew				When creating a new tab page. |tab-page|
+TabNew				When creating a new |tabpage|.
 				After WinEnter.
 				Before TabEnter.
 
 							*TabNewEntered*
-TabNewEntered			After entering a new tab page. |tab-page|
+TabNewEntered			After entering a new |tabpage|.
 				After BufEnter.
 
 							*TermClose*
@@ -1264,6 +1274,46 @@ TextChangedP			After a change was made to the text in the
 TextChangedT			After a change was made to the text in the
 				current buffer in |Terminal-mode|.  Otherwise
 				the same as TextChanged.
+
+							*TextPutPost*
+TextPutPost			After text has been put in the current buffer.
+				The following values in |v:event| are mostly
+				the same as |TextYankPost|:
+				   operator	The operation performed,
+						either 'p' or 'P'.
+				   regcontents	Text that was put. For
+						|quote_=|, this is the result
+						of the expression.
+				   regname	Name of the register or empty
+						string for the unnamed
+						register.  For |nvim_put()|
+						this is set to '_'.
+				   regtype	Type of the register, see
+						|getregtype()|.
+				   visual	True if the operation is
+						performed in |Visual| mode.
+				Not triggered when |quote_| is used nor when
+				called recursively.
+				It is not allowed to change the buffer text,
+				see |textlock|.
+				Note that for the |quote_.| register, since
+				the last inserted text is buffered into the
+				input buffer (buffer isn't modified directly),
+				this autocommand is called directly after
+				|TextPutPre|.
+
+							*TextPutPre*
+TextPutPre			Before text has been put in the current buffer.
+				Same values as |TextPutPost| in |v:event|.  It
+				is valid to call |setreg()| in this
+				autocommand, allowing you to process and
+				modify the text in "regcontents" before it is
+				put.  However this does not apply to |quote_#|,
+				|quote_=|, |quote_%|, |quote_:|, |quote_/| or |quote_.|.
+				Not triggered when |quote_| is used nor when
+				called recursively.
+				It is not allowed to change the buffer text,
+				see |textlock|.
 
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
@@ -1381,7 +1431,7 @@ WinLeave			Before leaving a window.  If the window to be
 WinNewPre			Before creating a new window.  Triggered
 				before commands that modify window layout by
 				creating a split.
-				Not done when creating tab pages and for the
+				Not done when creating tabpages and for the
 				first window, as the window structure is not
 				initialized yet and so is generally not safe.
 				It is not allowed to modify window layout
@@ -1397,7 +1447,7 @@ WinNew				When a new window was created.  Not done for
 				Before WinEnter.
 
 							*WinResized*
-WinResized			After a window in the current tab page changed
+WinResized			After a window in the current tabpage changed
 				width or height.
 				See |win-scrolled-resized|.
 
@@ -1408,7 +1458,7 @@ WinResized			After a window in the current tab page changed
 				pattern, triggering and recursiveness.
 
 							*WinScrolled*
-WinScrolled			After any window in the current tab page
+WinScrolled			After any window in the current tabpage
 				scrolled the text (horizontally or vertically)
 				or changed width or height.  See
 				|win-scrolled-resized|.

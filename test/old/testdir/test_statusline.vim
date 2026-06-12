@@ -16,11 +16,15 @@ func TearDown()
 endfunc
 
 func s:get_statusline()
+  redraw!
   if has('gui_running')
-    redraw!
     sleep 1m
   endif
-  return ScreenLines(&lines - 1, &columns)[0]
+  " Read the screen directly after redraw! instead of going through
+  " ScreenLines(), whose own redraw! may process events and change the window
+  " layout between here and the screenstring() calls.
+  let row = &lines - 1
+  return join(map(range(1, &columns), 'screenstring(row, v:val)'), '')
 endfunc
 
 func StatuslineWithCaughtError()
@@ -285,6 +289,16 @@ func Test_statusline()
   s/^/"/
   call assert_match('^vimLineComment\s*$', s:get_statusline())
   syntax off
+
+  " %0{: result of expression is inserted verbatim
+  set statusline=%{'\ x'}
+  call assert_match('^x\s*$', s:get_statusline())
+  set statusline=%0{'\ x'}
+  call assert_match('^ x\s*$', s:get_statusline())
+  set statusline=%{'000'}
+  call assert_match('^0\s*$', s:get_statusline())
+  set statusline=%0{'000'}
+  call assert_match('^000\s*$', s:get_statusline())
 
   "%{%expr%}: evaluates expressions present in result of expr
   func! Inner_eval()

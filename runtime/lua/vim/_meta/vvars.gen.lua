@@ -805,6 +805,15 @@ vim.v.throwpoint = ...
 --- @type boolean
 vim.v['true'] = ...
 
+--- Timestamp (nanoseconds since UNIX epoch) indicating the most
+--- recent user activity, i.e. when a key is received from a UI
+--- (TUI input or `nvim_input()`).
+---
+--- Initialized to 0 (no user activity since startup).
+--- Read-only.
+--- @type integer
+vim.v.useractive = ...
+
 --- Value of the current item of a `List` or `Dictionary`.  Only
 --- valid while evaluating the expression used with `map()` and
 --- `filter()`.  Read-only.

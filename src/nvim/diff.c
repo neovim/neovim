@@ -3795,7 +3795,7 @@ void ex_diffgetput(exarg_T *eap)
     }
   }
 
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
 
   if (eap->cmdidx != CMD_diffget) {
     // Need to make the other buffer the current buffer to be able to make

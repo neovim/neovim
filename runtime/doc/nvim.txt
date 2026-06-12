@@ -31,6 +31,8 @@ copying the "example_init.lua" file: >vim
 
     :exe 'edit' stdpath('config') .. '/init.lua'
     :read $VIMRUNTIME/example_init.lua
+    :write ++p
+    :restart
 <
 See |lua-guide| for practical notes on using Lua to configure Nvim.
 
@@ -55,7 +57,7 @@ Transitioning from Vim                                         *nvim-from-vim*
 
 1. To start the transition, create your |init.vim| (user config) file: >vim
 
-    :exe 'edit '.stdpath('config').'/init.vim'
+    :exe 'edit' stdpath('config') .. '/init.vim'
     :write ++p
 
 2. Add these contents to the file: >vim

@@ -18,6 +18,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -231,6 +232,10 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
 
   ScreenGrid *grid = wp && wp->w_floating && !is_stl_global ? &wp->w_grid_alloc : &default_grid;
 
+  if (!is_stl_global && wp != NULL && wp->w_config.hide) {
+    return;  // unnecessary
+  }
+
   // There is a tiny chance that this gets called recursively: When
   // redrawing a status line triggers redrawing the ruler or tabline.
   // Avoid trouble by not allowing recursion.
@@ -440,7 +445,8 @@ void win_redr_winbar(win_T *wp)
 void redraw_ruler(void)
 {
   static int did_ruler_col = -1;
-  win_T *wp = curwin->w_status_height == 0 ? curwin : lastwin_nofloating(NULL);
+  win_T *wp = !curwin->w_config.hide
+              && curwin->w_status_height == 0 ? curwin : lastwin_nofloating(NULL);
   bool is_stl_global = global_stl_height() > 0;
 
   // Check if ruler should be drawn, clear if it was drawn before.
@@ -1358,11 +1364,12 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     {
       char *block_start = fmt_p - 1;
       bool reevaluate = (*fmt_p == '%');
-      itemisflag = true;
 
       if (reevaluate) {
         fmt_p++;
       }
+      // %0{} keeps the result verbatim
+      itemisflag = zeropad ? false : true;
 
       // Attempt to copy the expression to evaluate into
       // the output buffer as a null-terminated string.
@@ -1418,7 +1425,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       // Check if the evaluated result is a number.
       // If so, convert the number to an int and free the string.
-      if (str != NULL && *str != NUL) {
+      if (!zeropad && str != NULL && *str != NUL) {
         if (*skipdigits(str) == NUL) {
           num = atoi(str);
           XFREE_CLEAR(str);
@@ -1593,7 +1600,8 @@ stcsign:
 
       if (fdc > 0) {
         schar_T fold_buf[9];
-        fill_foldcolumn(wp, stcp->foldinfo, lnum, 0, fdc, NULL, stcp->fold_vcol, fold_buf);
+        fill_foldcolumn(wp, stcp->foldinfo, stcp->lnum, 0, fdc, get_vim_var_nr(VV_VIRTNUM) < 0,
+                        NULL, stcp->fold_vcol, fold_buf);
         stl_items[curitem].minwid = -(use_cursor_line_highlight(wp, lnum) ? HLF_CLF : HLF_FC);
         size_t buflen = 0;
         // TODO(bfredl): this is very backwards. we must support schar_T

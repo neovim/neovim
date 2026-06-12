@@ -442,6 +442,8 @@ describe('API', function()
       exec_lua('vim.ui_attach(1, { ext_messages = true }, function() end)')
       api.nvim_exec2('hi VisualNC', { output = true })
       eq('VisualNC       xxx cleared', api.nvim_exec2('hi VisualNC', { output = true }).output)
+      api.nvim_exec2('echon 1234567', { output = true })
+      eq('VisualNC       xxx cleared', api.nvim_exec2('hi VisualNC', { output = true }).output)
     end)
 
     it('captures multi-chunk err nvim_echo() #36883', function()
@@ -1553,29 +1555,53 @@ describe('API', function()
       )
     end)
     it('inserts text', function()
+      exec([[
+        let g:pre_event = []
+        let g:post_event = []
+        au TextPutPre * let g:pre_event = copy(v:event)
+        au TextPutPost * let g:post_event = copy(v:event)
+      ]])
       -- linewise
-      api.nvim_put({ 'line 1', 'line 2', 'line 3' }, 'l', true, true)
+      local lines = { 'line 1', 'line 2', 'line 3' }
+      local expected_event = {
+        regcontents = lines,
+        regname = '_',
+        operator = 'p',
+        regtype = 'V',
+        visual = false,
+      }
+      api.nvim_put(lines, 'l', true, true)
       expect([[
 
         line 1
         line 2
         line 3]])
       eq({ 0, 4, 1, 0 }, fn.getpos('.'))
+      eq(expected_event, api.nvim_get_var('pre_event'))
+      eq(expected_event, api.nvim_get_var('post_event'))
       command('%delete _')
       -- charwise
+      expected_event.regtype = 'v'
       api.nvim_put({ 'line 1', 'line 2', 'line 3' }, 'c', true, false)
       expect([[
         line 1
         line 2
         line 3]])
       eq({ 0, 1, 1, 0 }, fn.getpos('.')) -- follow=false
+      eq(expected_event, api.nvim_get_var('pre_event'))
+      eq(expected_event, api.nvim_get_var('post_event'))
       -- blockwise
-      api.nvim_put({ 'AA', 'BB' }, 'b', true, true)
+      lines = { 'AA', 'BB' }
+      expected_event.regcontents = lines
+      expected_event.regtype = '\0222'
+      api.nvim_put(lines, 'b', true, true)
       expect([[
         lAAine 1
         lBBine 2
         line 3]])
       eq({ 0, 2, 4, 0 }, fn.getpos('.'))
+      eq(expected_event, api.nvim_get_var('pre_event'))
+      eq(expected_event, api.nvim_get_var('post_event'))
       command('%delete _')
       -- Empty lines list.
       api.nvim_put({}, 'c', true, true)
@@ -1588,19 +1614,27 @@ describe('API', function()
       ]])
       api.nvim_put({ 'AB' }, 'c', true, true)
       -- after=false, follow=true
-      api.nvim_put({ 'line 1', 'line 2' }, 'c', false, true)
+      lines = { 'line 1', 'line 2' }
+      expected_event.regcontents = lines
+      expected_event.regtype = 'v'
+      expected_event.operator = 'P'
+      api.nvim_put(lines, 'c', false, true)
       expect([[
         Aline 1
         line 2B]])
       eq({ 0, 2, 7, 0 }, fn.getpos('.'))
+      eq(expected_event, api.nvim_get_var('pre_event'))
+      eq(expected_event, api.nvim_get_var('post_event'))
       command('%delete _')
       api.nvim_put({ 'AB' }, 'c', true, true)
       -- after=false, follow=false
-      api.nvim_put({ 'line 1', 'line 2' }, 'c', false, false)
+      api.nvim_put(lines, 'c', false, false)
       expect([[
         Aline 1
         line 2B]])
       eq({ 0, 1, 2, 0 }, fn.getpos('.'))
+      eq(expected_event, api.nvim_get_var('pre_event'))
+      eq(expected_event, api.nvim_get_var('post_event'))
       eq('', api.nvim_eval('v:errmsg'))
     end)
 
@@ -1918,6 +1952,60 @@ describe('API', function()
         'Invalid value for option \'scrolloff\': expected number, got string "wrong"',
         pcall_err(api.nvim_set_option_value, 'scrolloff', 'wrong', {})
       )
+      local tab1 = api.nvim_get_current_tabpage()
+      eq(
+        "Conflict: 'tab' not allowed with 'win', 'buf', 'filetype' or 'scope'",
+        pcall_err(
+          api.nvim_get_option_value,
+          'cmdheight',
+          { tab = tab1, win = api.nvim_get_current_win() }
+        )
+      )
+      eq(
+        "Conflict: 'tab' not allowed with 'win', 'buf', 'filetype' or 'scope'",
+        pcall_err(api.nvim_get_option_value, 'cmdheight', {
+          tab = tab1,
+          scope = 'local',
+        })
+      )
+      eq(
+        "Conflict: 'tab' not allowed with 'shiftwidth'",
+        pcall_err(api.nvim_get_option_value, 'shiftwidth', { tab = tab1 })
+      )
+      eq(
+        "Conflict: 'tab' not allowed with 'shiftwidth'",
+        pcall_err(api.nvim_set_option_value, 'shiftwidth', 2, { tab = tab1 })
+      )
+      eq(
+        "Conflict: 'tab' not allowed with this function",
+        pcall_err(api.nvim_get_option_info2, 'cmdheight', { tab = tab1 })
+      )
+      eq(
+        "Conflict: 'filetype' not allowed with 'scope', 'buf', 'win' or 'tab'",
+        pcall_err(api.nvim_get_option_value, 'cmdheight', { filetype = 'c', tab = 0 })
+      )
+    end)
+
+    it("tabpage-local option ('cmdheight') #31140", function()
+      api.nvim_set_option_value('cmdheight', 1, {})
+      local tab1 = api.nvim_get_current_tabpage()
+      eq(1, api.nvim_get_option_value('cmdheight', { tab = 0 }))
+      eq(1, api.nvim_get_option_value('cmdheight', { tab = tab1 }))
+      eq(1, api.nvim_get_option_value('cmdheight', {}))
+      command('tabnew')
+      local tab2 = api.nvim_get_current_tabpage()
+      api.nvim_set_option_value('cmdheight', 4, {})
+      eq(4, api.nvim_get_option_value('cmdheight', { tab = tab2 }))
+      eq(1, api.nvim_get_option_value('cmdheight', { tab = tab1 }))
+      eq(4, api.nvim_get_option_value('cmdheight', {}))
+
+      -- Set non-current tab option.
+      api.nvim_set_option_value('cmdheight', 3, { tab = tab1 })
+      eq(3, api.nvim_get_option_value('cmdheight', { tab = tab1 }))
+      eq(4, api.nvim_get_option_value('cmdheight', { tab = tab2 }))
+      eq(4, api.nvim_get_option_value('cmdheight', {}))
+      command('tabnext')
+      eq(3, api.nvim_get_option_value('cmdheight', {}))
     end)
 
     it('can get local values when global value is set', function()
@@ -2877,7 +2965,7 @@ describe('API', function()
 
     it('stream=job channel', function()
       eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
-      local catpath = eval('exepath("cat")')
+      local catpath = vim.fs.normalize(eval('exepath("cat")'))
       local info = {
         stream = 'job',
         id = 3,
@@ -2936,7 +3024,7 @@ describe('API', function()
       eq(1, api.nvim_get_current_buf())
       eq(3, api.nvim_get_option_value('channel', { buf = 1 }))
 
-      local info = term_channel_info(3, 1, { eval('exepath(&shell)') })
+      local info = term_channel_info(3, 1, { vim.fs.normalize(eval('exepath(&shell)')) })
       local event = api.nvim_get_var('opened_event')
       if not is_os('win') then
         info.pty = event.info.pty
@@ -2977,9 +3065,10 @@ describe('API', function()
 
       -- :terminal with args + stopped process (shell-test).
       command('enew')
-      argv = { n.testprg('shell-test'), 'INTERACT' }
+      -- Use a process that doesn't read stdin, so PTY EOF can't race SIGHUP.
+      argv = { n.testprg('shell-test'), 'HOLD' }
       fn.jobstart(argv, { term = true })
-      screen:expect({ any = { vim.pesc('interact $') } })
+      screen:expect({ any = { vim.pesc('holding $') } })
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)') -- Wait.
       local expected3 = term_channel_info(5, 3, argv)
@@ -3667,6 +3756,24 @@ describe('API', function()
       eq(p(val[1]), vimruntime .. '/syntax/vim.vim')
       eq(p(val[2]), vimruntime .. '/ftplugin/vim.vim')
     end)
+
+    it('finds files via an 8.3 filename path #25019', function()
+      skip(not is_os('win'), 'N/A: 8.3 filenames are only available on Windows')
+      fn.system(('fsutil 8dot3name set %s 0'):format(n.nvim_dir:sub(1, 2)))
+      local path = 'Xtest_runtime_path'
+      mkdir_p(('%s/subdir/lua'):format(path))
+      write_file(('%s/subdir/lua/foo.lua'):format(path), '')
+      finally(function()
+        rmdir(path)
+      end)
+      local path_with_shortname =
+        p(fn.system(('for %%I in ("%s") do @echo %%~sI'):format(path), ''):gsub('\n', ''))
+      eq('XTEST_~1', vim.fs.basename(path_with_shortname))
+      exec_lua(('vim.opt.rtp:prepend("%s/*")'):format(path_with_shortname))
+      local val = api.nvim_get_runtime_file('lua/foo.lua', true)
+      eq(1, #val)
+      eq(('%s/subdir/lua/foo.lua'):format(path_with_shortname), val[1])
+    end)
   end)
 
   describe('nvim_get_all_options_info', function()
@@ -3810,10 +3917,11 @@ describe('API', function()
       os.remove(fname)
     end)
 
-    it('should return option information', function()
+    it('gets option info', function()
       eq(api.nvim_get_option_info('dictionary'), api.nvim_get_option_info2('dictionary', {})) -- buffer
       eq(api.nvim_get_option_info('fillchars'), api.nvim_get_option_info2('fillchars', {})) -- window
       eq(api.nvim_get_option_info('completeopt'), api.nvim_get_option_info2('completeopt', {})) -- global
+      eq('tab', api.nvim_get_option_info2('cmdheight', {}).scope) -- tab #31140
     end)
 
     describe('last set', function()
@@ -3852,13 +3960,13 @@ describe('API', function()
         end)
       end
 
-      it('is provided for cross-buffer requests', function()
+      it('cross-buffer', function()
         local info = api.nvim_get_option_info2('formatprg', { buf = bufs[2] })
         eq(2, info.last_set_linenr)
         eq(1, info.last_set_sid)
       end)
 
-      it('is provided for cross-window requests', function()
+      it('cross-window', function()
         local info = api.nvim_get_option_info2('listchars', { win = wins[2] })
         eq(6, info.last_set_linenr)
         eq(1, info.last_set_sid)
@@ -3887,6 +3995,8 @@ describe('API', function()
       eq("Invalid 'id': -1", pcall_err(api.nvim_echo, { { 'foo' } }, false, { id = -1 }))
       -- String ids are always allowed (user-defined).
       eq('my.msg.id', api.nvim_echo({ { 'foo' } }, false, { id = 'my.msg.id' }))
+      local opts = { kind = 'progress', source = 'nvim', status = 'success' }
+      eq("Invalid 'source': 'nvim'", pcall_err(api.nvim_echo, { { '' } }, 1, opts))
     end)
 
     it('should clear cmdline message before echo', function()

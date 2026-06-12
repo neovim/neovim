@@ -318,6 +318,10 @@ static void channel_connect_event(void **argv)
 static Array restart_args = ARRAY_DICT_INIT;
 static bool restart_pending = false;
 
+// A server might indicate in advance how a new server should be restarted
+// in cases it crashes due to an unexpected error.
+static Array restart_args_after_crash_exit = ARRAY_DICT_INIT;
+
 /// Handles the "restart" ui-event.
 void ui_client_event_restart(Array args)
 {
@@ -330,38 +334,74 @@ void ui_client_event_restart(Array args)
   restart_pending = true;
 }
 
-/// Called during "restart" when the old server just exited.
-void ui_client_attach_to_restarted_server(void)
+void ui_client_event__set_restart_on_crash_exit(Array args)
 {
+  // Save the arguments for ui_client_may_restart_server() later.
+  api_free_array(restart_args_after_crash_exit);
+  restart_args_after_crash_exit = copy_array(args, NULL);
+}
+
+/// Called during "restart" when the old server just exited.
+void ui_client_attach_to_restarted_server(bool error_restart)
+{
+  Array args = restart_args;
+  bool restart = false;
   if (!restart_pending) {
-    return;
+    if (error_restart && ui_client_error_exit == -1 && restart_args_after_crash_exit.size > 0) {
+      restart = true;
+      args = restart_args_after_crash_exit;
+    } else {
+      return;
+    }
   }
 
   restart_pending = false;
 
-  if (restart_args.size < 1 || restart_args.items[0].type != kObjectTypeString) {
+  if (args.size < 1 || args.items[0].type != kObjectTypeString) {
     ELOG("Error handling ui event 'restart'");
     goto cleanup;
   }
 
-  char *listen_addr = restart_args.items[0].data.string.data;
-  bool is_tcp = socket_address_tcp_host_end(listen_addr) != NULL;
-  const char *err = "";
-  uint64_t chan_id = channel_connect(is_tcp, listen_addr, true, CALLBACK_READER_INIT, 50, &err);
-
-  if (!strequal(err, "")) {
-    ELOG("cannot connect to server %s: %s", listen_addr, err);
-    goto cleanup;
+  uint64_t chan_id;
+  const char *first_arg = args.items[0].data.string.data;
+  if (restart) {
+    if (args.size < 2 || args.items[1].type != kObjectTypeArray) {
+      ELOG("Error handling ui event 'restart'");
+      goto cleanup;
+    }
+    Array cmdargs = args.items[1].data.array;
+    char **argv = xcalloc(cmdargs.size + 1, sizeof(char *));
+    for (size_t i = 0; i < cmdargs.size; i++) {
+      if (cmdargs.items[i].type == kObjectTypeString) {
+        argv[i] = cmdargs.items[i].data.string.data;
+      }
+      if (argv[i] == NULL) {
+        argv[i] = "";
+      }
+    }
+    chan_id = ui_client_start_server(first_arg, cmdargs.size, argv);
+    xfree(argv);
+    ui_client_error_exit = -1;
+  } else {
+    bool is_tcp = socket_address_tcp_host_end(first_arg) != NULL;
+    const char *err = NULL;
+    chan_id = channel_connect(is_tcp, first_arg, true, CALLBACK_READER_INIT, 50, &err);
+    if (err != NULL) {
+      ELOG("cannot connect to server %s: %s", first_arg, err);
+      goto cleanup;
+    }
   }
 
   // Client-side server re-attach.
   ui_client_channel_id = chan_id;
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
-  ILOG("restarted server address=%s id=%" PRId64, listen_addr, chan_id);
+  ILOG("restarted server address=%s id=%" PRId64, first_arg, chan_id);
 cleanup:
   api_free_array(restart_args);
   restart_args = (Array)ARRAY_DICT_INIT;
+  api_free_array(restart_args_after_crash_exit);
+  restart_args_after_crash_exit = (Array)ARRAY_DICT_INIT;
 }
 
 /// Handles the "error_exit" ui-event.

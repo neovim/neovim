@@ -77,7 +77,7 @@ local function system(cmd, args)
     vim.fn.chansend(jobid, stdin)
   end
 
-  local res = vim.fn.jobwait({ jobid }, vim.F.if_nil(args.timeout, 30) * 1000)
+  local res = vim.fn.jobwait({ jobid }, vim.nonnil(args.timeout, 30) * 1000)
   if res[1] == -1 then
     error('Command timed out: ' .. shellify(cmd))
     vim.fn.jobstop(jobid)

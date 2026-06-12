@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local command = n.command
 local clear = n.clear
@@ -2041,29 +2042,41 @@ describe('vim.diagnostic', function()
     it(
       'shows deprecated and unnecessary highlights in addition to severity-based highlights',
       function()
-        ---@type string[]
-        local result = exec_lua(function()
-          local diagnostic = _G.make_error('Some error', 0, 0, 0, 0, 'source x')
+        local screen = Screen.new(50, 3)
+        screen:set_default_attr_ids({
+          --- DiagnosticUnderlineError + DiagnosticUnnecessary + DiagnosticDeprecated combined
+          [1] = {
+            background = Screen.colors.Red1,
+            strikethrough = true,
+            underline = true,
+            special = Screen.colors.Red1,
+            bold = true,
+          },
+        })
+
+        command('hi DiagnosticUnderlineError guibg=Red gui=underline guisp=Red')
+        command('hi DiagnosticUnnecessary gui=bold')
+        command('hi DiagnosticDeprecated gui=strikethrough')
+
+        exec_lua(function()
+          vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+          vim.diagnostic.config({
+            signs = false,
+          })
+
+          local diagnostic = _G.make_error('Some error', 0, 0, 0, 3, 'source x')
           diagnostic._tags = {
             deprecated = true,
             unnecessary = true,
           }
-
-          local diagnostics = { diagnostic }
-          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
-
-          local extmarks = _G.get_underline_extmarks(_G.diagnostic_ns)
-          local hl_groups = vim.tbl_map(function(extmark)
-            return extmark[4].hl_group
-          end, extmarks)
-          return hl_groups
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, { diagnostic })
         end)
 
-        eq({
-          'DiagnosticDeprecated',
-          'DiagnosticUnnecessary',
-          'DiagnosticUnderlineError',
-        }, result)
+        screen:expect([[
+          {1:^1st} line of text                                  |
+          2nd line of text                                  |
+                                                            |
+        ]])
       end
     )
 
@@ -4219,11 +4232,11 @@ describe('vim.diagnostic', function()
       )
     end)
 
-    it('uses text from diagnostic.config().status.format[severity]', function()
+    it('uses text from diagnostic.config().signs.text[severity]', function()
       local result = exec_lua(function()
         vim.diagnostic.config({
-          status = {
-            format = {
+          signs = {
+            text = {
               [vim.diagnostic.severity.ERROR] = '⨯',
               [vim.diagnostic.severity.WARN] = '⚠︎',
             },
@@ -4239,6 +4252,21 @@ describe('vim.diagnostic', function()
       end)
 
       eq('%#DiagnosticSignError#⨯:1 %#DiagnosticSignWarn#⚠︎:1%##', result)
+    end)
+
+    it('works when signs are disabled', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({ signs = false })
+
+        vim.diagnostic.set(_G.diagnostic_ns, 0, {
+          _G.make_error('Error 1', 0, 1, 0, 1),
+          _G.make_warning('Warning 1', 2, 2, 2, 2),
+        })
+
+        return vim.diagnostic.status()
+      end)
+
+      eq('%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:1%##', result)
     end)
 
     it('uses format function diagnostic.config().status.format', function()
@@ -4440,6 +4468,20 @@ describe('vim.diagnostic', function()
           }
         end)
       )
+    end)
+
+    it('does not redraw for buffer not in window', function()
+      local did_status = exec_lua(function()
+        _G.Status = function()
+          _G.did_status = (_G.did_status or 0) + 1
+        end
+        vim.o.laststatus, vim.o.statusline = 2, '%!v:lua._G.Status()'
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        return _G.did_status
+      end)
+      eq(nil, did_status)
     end)
   end)
 end)

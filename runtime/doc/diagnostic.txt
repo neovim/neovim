@@ -442,8 +442,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 
                                                         *diagnostic-structure*
 
-    Diagnostics use the same indexing as the rest of the Nvim API (i.e.
-    0-based rows and columns). |api-indexing|
+    Diagnostics use |api-indexing| (i.e. 0-based rows and columns). See also
+    |vim.pos| and |vim.range| to convert positions from other systems.
 
     Fields: ~
       • {bufnr}       (`integer`) Buffer number
@@ -484,7 +484,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                       enabled or disabled. If nil, enablement is ignored. See
                       |vim.diagnostic.enable()|
       • {lnum}?       (`integer`) Limit diagnostics to those spanning the
-                      specified line number.
+                      specified line number (0-indexed, see
+                      |diagnostic-structure|).
       • {namespace}?  (`integer[]|integer`) Limit diagnostics to one or more
                       namespaces.
       • {severity}?   (`vim.diagnostic.SeverityFilter`) See
@@ -661,9 +662,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                      |diagnostic-severity|
       • {text}?      (`table<vim.diagnostic.Severity,string>`) A table mapping
                      |diagnostic-severity| to the sign text to display in the
-                     sign column. The default is to use `"E"`, `"W"`, `"I"`,
-                     and `"H"` for errors, warnings, information, and hints,
-                     respectively. Example: >lua
+                     sign column and statusline. The default is to use `"E"`,
+                     `"W"`, `"I"`, and `"H"` for errors, warnings,
+                     information, and hints, respectively. Example: >lua
                          vim.diagnostic.config({
                            signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
                          })
@@ -672,36 +673,32 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.Opts.Status*
 
     Fields: ~
-      • {format}?  (`table<vim.diagnostic.Severity,string>|(fun(counts:table<vim.diagnostic.Severity,integer>): string)`)
-                   Either:
-                   • a table mapping |diagnostic-severity| to the text to use
-                     for each existing severity section.
-                   • a function that accepts a mapping of
-                     |diagnostic-severity| to the number of diagnostics of the
-                     corresponding severity (only those severity levels that
-                     have at least 1 diagnostic) and returns a 'statusline'
-                     component. In this case highlights must be applied by the
-                     user in the `format` function. Example: >lua
-                     local signs = {
-                     [vim.diagnostic.severity.ERROR] = "A",
-                     -- ...
-                   }
-                   local hl_map = {
-                     [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
-                     -- ...
-                   }
-                   vim.diagnostic.config({
-                     status = {
-                       format = function(counts)
-                         local items = {}
-                         for level, _ in ipairs(vim.diagnostic.severity) do
-                           local count = counts[level] or 0
-                           table.insert(items, ("%%#%s#%s %s"):format(hl_map[level], signs[level], count))
-                         end
-                         return table.concat(items, " ")
-                       end
-                     }
-                   })
+      • {format}?  (`fun(counts:table<vim.diagnostic.Severity,integer>): string`)
+                   Function that accepts a mapping of |diagnostic-severity| to
+                   the number of diagnostics of the corresponding severity
+                   (only those having at least 1 diagnostic) and returns a
+                   'statusline' component. Highlights must be applied by the
+                   `format` function. Example: >lua
+                       local signs = {
+                         [vim.diagnostic.severity.ERROR] = "A",
+                         -- ...
+                       }
+                       local hl_map = {
+                         [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+                         -- ...
+                       }
+                       vim.diagnostic.config({
+                         status = {
+                           format = function(severity_counts)
+                             local items = {}
+                             for severity in ipairs(vim.diagnostic.severity) do
+                               local count = severity_counts[severity] or 0
+                               table.insert(items, ("%%#%s#%s %s"):format(hl_map[severity], signs[severity], count))
+                             end
+                             return table.concat(items, " ")
+                           end
+                         }
+                       })
 <
 
 *vim.diagnostic.Opts.Underline*

@@ -77,7 +77,6 @@
 #endif
 
 static int in_fast_callback = 0;
-static bool in_script = false;
 
 // Initialized in nlua_init().
 static lua_State *global_lstate = NULL;
@@ -223,11 +222,33 @@ static void nlua_push_eap(lua_State *lstate, exarg_T *eap, const cmdmod_T *cmod)
   lua_setfield(lstate, -2, "reg");
 
   // Push pre-split args as "fargs" list, if available (set by the command-line parser).
-  if (eap->args != NULL && eap->argc > 0) {
+  // - Or fall back to splitting `eap->arg` on unescaped whitespace.
+  // - Usercmds with nargs=1/? need different splitting, handled by `nlua_do_ucmd`.
+  if (eap->args != NULL) {
     lua_createtable(lstate, (int)eap->argc, 0);
     for (size_t i = 0; i < eap->argc; i++) {
       lua_pushlstring(lstate, eap->args[i], eap->arglens[i]);
       lua_rawseti(lstate, -2, (int)i + 1);
+    }
+    lua_setfield(lstate, -2, "fargs");
+  } else {
+    lua_newtable(lstate);
+    size_t length = strlen(eap->arg);
+    if (length > 0) {
+      size_t end = 0;
+      size_t len = 0;
+      int i = 1;
+      char *buf = xcalloc(length, sizeof(char));
+      bool done = false;
+      while (!done) {
+        done = uc_split_args_iter(eap->arg, length, &end, buf, &len);
+        if (len > 0) {
+          lua_pushlstring(lstate, buf, len);
+          lua_rawseti(lstate, -2, i);
+          i++;
+        }
+      }
+      xfree(buf);
     }
     lua_setfield(lstate, -2, "fargs");
   }
@@ -255,16 +276,18 @@ lua_State *get_global_lstate(void)
 /// The returned string points to memory on the Lua stack. Use or duplicate it before using
 /// `lstate` again.
 ///
-/// @param[out] len length of error (can be NULL)
+/// @param[out] len length of error
 static const char *nlua_get_error(lua_State *lstate, size_t *len)
+  FUNC_ATTR_NONNULL_RET
 {
-  if (luaL_getmetafield(lstate, -1, "__tostring")) {
-    if (lua_isfunction(lstate, -1) && luaL_callmeta(lstate, -2, "__tostring")) {
-      // call __tostring, convert the result and replace error with it
-      lua_replace(lstate, -3);
+  if (lua_type(lstate, -1) != LUA_TSTRING) {
+    lua_getglobal(lstate, "tostring");
+    lua_pushvalue(lstate, -2);
+    if (lua_pcall(lstate, 1, 1, 0) || lua_type(lstate, -1) != LUA_TSTRING) {
+      lua_pop(lstate, 1);
+      lua_pushstring(lstate, "[UNPRINTABLE ERROR]");
     }
-    // pop __tostring.
-    lua_pop(lstate, 1);
+    lua_replace(lstate, -2);
   }
 
   return lua_tolstring(lstate, -1, len);
@@ -280,12 +303,8 @@ void nlua_error(lua_State *const lstate, const char *const msg)
   size_t len;
   const char *str = nlua_get_error(lstate, &len);
 
-  if (in_script) {
-    fprintf(stderr, msg, (int)len, str);
-    fprintf(stderr, "\n");
-  } else {
-    semsg_multiline("lua_error", msg, (int)len, str);
-  }
+  msg_ext_no_fast();
+  semsg_multiline("lua_error", msg, (int)len, str);
 
   lua_pop(lstate, 1);
 }
@@ -320,6 +339,7 @@ static void nlua_luv_error_event(void **argv)
   luv_err_t type = (luv_err_t)(intptr_t)argv[1];
   switch (type) {
   case kCallback:
+    msg_ext_no_fast();
     semsg_multiline("lua_error", "Lua callback:\n%s", error);
     break;
   case kThread:
@@ -409,10 +429,11 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
       pthread_exit(0);
 #endif
     }
-    const char *error = lua_tostring(lstate, -1);
+    size_t len;
+    const char *error = nlua_get_error(lstate, &len);
     loop_schedule_deferred(&main_loop,
                            event_create(nlua_luv_error_event,
-                                        error != NULL ? xstrdup(error) : NULL,
+                                        xmemdupz(error, len),
                                         (void *)(intptr_t)(is_callback
                                                            ? kThreadCallback
                                                            : kThread)));
@@ -577,6 +598,17 @@ static int nlua_check_interrupt(lua_State *lstate)
   return 1;
 }
 
+static int nlua_os_exit(lua_State *lstate)
+{
+  int status = 0;
+  if (lua_gettop(lstate) >= 1 && !lua_isnil(lstate, 1)) {
+    status = lua_isboolean(lstate, 1) ? (lua_toboolean(lstate, 1) ? 0 : 1)
+                                      : (int)luaL_checkinteger(lstate, 1);
+  }
+  getout(status);
+  return 0;  // Unreachable, but MSVC does not infer getout() is noreturn.
+}
+
 static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -619,7 +651,7 @@ int nlua_get_global_ref_count(void)
   return nlua_global_refs->ref_count;
 }
 
-static void nlua_common_vim_init(lua_State *lstate, bool is_thread, bool is_standalone)
+static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   nlua_ref_state_t *ref_state = nlua_new_ref_state(lstate, is_thread);
@@ -656,9 +688,7 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread, bool is_stan
   lua_setfield(lstate, -2, "_empty_dict_mt");
 
   // vim.uv
-  if (is_standalone) {
-    // do nothing, use libluv like in a standalone interpreter
-  } else if (is_thread) {
+  if (is_thread) {
     luv_set_callback(lstate, nlua_luv_thread_cb_cfpcall);
     luv_set_thread(lstate, nlua_luv_thread_cfpcall);
     luv_set_cthread(lstate, nlua_luv_thread_cfcpcall);
@@ -694,7 +724,7 @@ static int nlua_module_preloader(lua_State *lstate)
   return 1;
 }
 
-static bool nlua_init_packages(lua_State *lstate, bool is_standalone)
+static bool nlua_init_packages(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
   // put builtin packages in preload
@@ -706,7 +736,7 @@ static bool nlua_init_packages(lua_State *lstate, bool is_standalone)
     lua_pushcclosure(lstate, nlua_module_preloader, 1);  // [package, preload, cclosure]
     lua_setfield(lstate, -2, def.name);  // [package, preload]
 
-    if ((nlua_disable_preload && !is_standalone) && strequal(def.name, "vim.inspect")) {
+    if (nlua_disable_preload && strequal(def.name, "vim.inspect")) {
       break;
     }
   }
@@ -817,6 +847,12 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pop(lstate, 1);
 #endif
 
+  // os.exit()
+  lua_getglobal(lstate, "os");
+  lua_pushcfunction(lstate, &nlua_os_exit);
+  lua_setfield(lstate, -2, "exit");
+  lua_pop(lstate, 1);
+
   // vim
   lua_newtable(lstate);
 
@@ -854,7 +890,7 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_ui_detach);
   lua_setfield(lstate, -2, "ui_detach");
 
-  nlua_common_vim_init(lstate, false, false);
+  nlua_common_vim_init(lstate, false);
 
   // vim._core wait helpers
   lua_getfield(lstate, -1, "_core");
@@ -883,7 +919,7 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_setglobal(lstate, "vim");
 
-  if (!nlua_init_packages(lstate, false)) {
+  if (!nlua_init_packages(lstate)) {
     return false;
   }
 
@@ -925,25 +961,11 @@ static lua_State *nlua_thread_acquire_vm(void)
   return nlua_init_state(true);
 }
 
-void nlua_run_script(char **argv, int argc, int lua_arg0)
-  FUNC_ATTR_NORETURN
-{
-  in_script = true;
-  global_lstate = nlua_init_state(false);
-  luv_set_thread_cb(nlua_thread_acquire_vm, nlua_common_free_all_mem);
-  nlua_init_argv(global_lstate, argv, argc, lua_arg0);
-  bool lua_ok = nlua_exec_file(argv[lua_arg0 - 1]);
-#ifdef EXITFREE
-  nlua_free_all_mem();
-#endif
-  exit(lua_ok ? 0 : 1);
-}
-
 static lua_State *nlua_init_state(bool thread)
 {
   // If it is called from the main thread, it will attempt to rebuild the cache.
   const uv_thread_t self = uv_thread_self();
-  if (!in_script && uv_thread_equal(&main_thread, &self)) {
+  if (uv_thread_equal(&main_thread, &self)) {
     runtime_search_path_validate();
   }
 
@@ -952,11 +974,9 @@ static lua_State *nlua_init_state(bool thread)
   // Add in the lua standard libraries
   luaL_openlibs(lstate);
 
-  if (!in_script) {
-    // print
-    lua_pushcfunction(lstate, &nlua_print);
-    lua_setglobal(lstate, "print");
-  }
+  // print
+  lua_pushcfunction(lstate, &nlua_print);
+  lua_setglobal(lstate, "print");
 
   lua_pushinteger(lstate, 0);
   lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.refcount");
@@ -964,20 +984,18 @@ static lua_State *nlua_init_state(bool thread)
   // vim
   lua_newtable(lstate);
 
-  nlua_common_vim_init(lstate, thread, in_script);
+  nlua_common_vim_init(lstate, thread);
 
   nlua_state_add_stdlib(lstate, true);
 
-  if (!in_script) {
-    lua_createtable(lstate, 0, 0);
-    lua_pushcfunction(lstate, nlua_thr_api_nvim__get_runtime);
-    lua_setfield(lstate, -2, "nvim__get_runtime");
-    lua_setfield(lstate, -2, "api");
-  }
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, nlua_thr_api_nvim__get_runtime);
+  lua_setfield(lstate, -2, "nvim__get_runtime");
+  lua_setfield(lstate, -2, "api");
 
   lua_setglobal(lstate, "vim");
 
-  nlua_init_packages(lstate, in_script);
+  nlua_init_packages(lstate);
 
   lua_getglobal(lstate, "package");
   lua_getfield(lstate, -1, "loaded");
@@ -1027,6 +1045,7 @@ static void nlua_print_event(void **argv)
   HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
   kv_push(msg, chunk);
   bool needs_clear = false;
+  msg_ext_no_fast();
   msg_multihl(NIL, msg, "lua_print", true, false, NULL, &needs_clear);
 }
 
@@ -1759,14 +1778,17 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, 
 
 static int mode_ret(LuaRetMode mode)
 {
-  return mode == kRetMulti ? LUA_MULTRET : 1;
+  return (mode == kRetMulti || mode == kRetMultiStack) ? LUA_MULTRET : 1;
 }
 
 /// Like nlua_call_ref, but with an option to run in fast (api-fast) context.
 Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, LuaRetMode mode,
                          Arena *arena, Error *err)
 {
-  lua_State *const lstate = global_lstate;
+  // Use active_lstate (set by ENTER_LUA_ACTIVE_STATE in gen_api_dispatch.lua) so callbacks run on
+  // the caller's Lua thread. This matters for coroutines: with global_lstate, return values pushed
+  // by kRetMultiStack would land on the main thread's stack, instead of coroutine stack.
+  lua_State *const lstate = active_lstate;
   int top = lua_gettop(lstate);
   nlua_pushref(lstate, ref);
   int nargs = (int)args.size;
@@ -1802,7 +1824,7 @@ Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, Lu
 static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *arena, int pretop,
                                    Error *err)
 {
-  if (mode != kRetMulti && lua_isnil(lstate, -1)) {
+  if (mode != kRetMulti && mode != kRetMultiStack && lua_isnil(lstate, -1)) {
     lua_pop(lstate, 1);
     return NIL;
   }
@@ -1836,6 +1858,9 @@ static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *ar
     }
     res.size = (size_t)nres;
     return ARRAY_OBJ(res);
+  case kRetMultiStack:
+    ;
+    return NIL;
   }
   UNREACHABLE;
 }
@@ -2336,42 +2361,23 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
     lua_setfield(lstate, -2, "count");
   }
 
-  // Override fargs for user command-specific splitting (nlua_push_eap already set it
-  // for the eap->args!=NULL case, but user commands need special handling for nargs).
+  // Override fargs for nargs=1/? (EX_NOSPC): the whole arg as one element (or empty).
+  // Other cases are handled by `nlua_push_eap`.
   if (cmd->uc_argt & EX_NOSPC) {
-    // nargs=1 or "?": fargs is the whole arg as a single element, or empty.
     lua_createtable(lstate, 1, 0);
     if ((cmd->uc_argt & EX_NEEDARG) || *eap->arg != NUL) {
       lua_pushstring(lstate, eap->arg);
       lua_rawseti(lstate, -2, 1);
     }
     lua_setfield(lstate, -2, "fargs");
-  } else if (eap->args == NULL) {
-    // Pre-split args not available: tokenize eap->arg by unescaped whitespace.
-    lua_newtable(lstate);
-    size_t length = strlen(eap->arg);
-    size_t end = 0;
-    size_t len = 0;
-    int i = 1;
-    char *buf = xcalloc(length, sizeof(char));
-    bool done = false;
-    while (!done) {
-      done = uc_split_args_iter(eap->arg, length, &end, buf, &len);
-      if (len > 0) {
-        lua_pushlstring(lstate, buf, len);
-        lua_rawseti(lstate, -2, i);
-        i++;
-      }
-    }
-    xfree(buf);
-    lua_setfield(lstate, -2, "fargs");
   }
-  // else: eap->args was available, nlua_push_eap already set fargs.
 
   char nargs[2];
   if (cmd->uc_argt & EX_EXTRA) {
     if (cmd->uc_argt & EX_NOSPC) {
-      if (cmd->uc_argt & EX_NEEDARG) {
+      if (cmd->uc_argt & EX_ARGSPACE) {
+        nargs[0] = '_';
+      } else if (cmd->uc_argt & EX_NEEDARG) {
         nargs[0] = '1';
       } else {
         nargs[0] = '?';

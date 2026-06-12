@@ -31,6 +31,7 @@ typedef struct {
   pos_T start;             ///< start of the operator
   pos_T end;               ///< end of the operator
   pos_T cursor_start;      ///< cursor position before motion for "gw"
+  bool restore_cursor;     ///< restore cursor after yank
 
   linenr_T line_count;     ///< number of lines from op_start to op_end (inclusive)
   bool empty;              ///< op_start and op_end the same (only used by op_change())

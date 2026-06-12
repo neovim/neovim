@@ -2,10 +2,11 @@
 --- The `vim.lsp.buf_…` functions perform operations for LSP clients attached to the current buffer.
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
 local validate = vim.validate
 local util = require('vim.lsp.util')
-local npcall = vim.F.npcall
+local npcall = vim.npcall
 
 local M = {}
 
@@ -38,17 +39,21 @@ local function ctx_is_valid(ctx)
   then
     return false
   end
+  ---@type lsp.Position?
   local p = ctx.params and ctx.params.position
   if not p then
     return true
   end
 
-  local cur = api.nvim_win_get_cursor(0)
   local c = lsp.get_client_by_id(ctx.client_id)
   local enc = c and c.offset_encoding
+  if not enc then
+    return false
+  end
 
-  return cur[1] - 1 == p.line and enc and cur[2] == util._get_line_byte_from_position(bufnr, p, enc)
-    or false
+  local cur_pos = vim.pos.cursor(bufnr, api.nvim_win_get_cursor(0))
+  local pos = vim.pos.lsp(bufnr, p, enc)
+  return cur_pos == pos
 end
 
 --- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
@@ -162,19 +167,15 @@ function M.hover(config)
       else
         vim.list_extend(contents, util.convert_input_to_markdown_lines(result.contents))
       end
-      local range = result.range
-      if range then
-        local start = range.start
-        local end_ = range['end']
-        local start_idx = util._get_line_byte_from_position(bufnr, start, client.offset_encoding)
-        local end_idx = util._get_line_byte_from_position(bufnr, end_, client.offset_encoding)
+      if result.range then
+        local range = vim.range.lsp(bufnr, result.range, client.offset_encoding)
 
         vim.hl.range(
           bufnr,
           hover_ns,
           'LspReferenceTarget',
-          { start.line, start_idx },
-          { end_.line, end_idx },
+          { range.start_row, range.start_col },
+          { range.end_row, range.end_col },
           { priority = vim.hl.priorities.user }
         )
       end
@@ -188,14 +189,10 @@ function M.hover(config)
 
     local _, winid = lsp.util.open_floating_preview(contents, format, config)
 
-    api.nvim_create_autocmd('WinClosed', {
-      pattern = tostring(winid),
-      once = true,
-      callback = function()
-        api.nvim_buf_clear_namespace(bufnr, hover_ns, 0, -1)
-        return true
-      end,
-    })
+    nvim_on('WinClosed', nil, { pattern = tostring(winid), once = true }, function()
+      api.nvim_buf_clear_namespace(bufnr, hover_ns, 0, -1)
+      return true
+    end)
   end)
 end
 
@@ -225,23 +222,29 @@ local function get_locations(method, context, opts)
     )
   end
 
-  local bufnr = api.nvim_get_current_buf()
-  local win = api.nvim_get_current_win()
+  local pos = opts.pos or vim.pos.cursor(0, api.nvim_win_get_cursor(0))
+  local buf = pos.buf
 
-  local clients = lsp.get_clients({ method = method, bufnr = bufnr })
+  local clients = lsp.get_clients({ method = method, bufnr = buf })
   if not next(clients) then
     vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
     return
   end
 
   local from = vim.fn.getpos('.')
-  from[1] = bufnr
+  from[1] = buf
   local tagname = vim.fn.expand('<cword>')
 
-  lsp.buf_request_all(bufnr, method, function(client)
-    local params = util.make_position_params(win, client.offset_encoding)
-    ---@diagnostic disable-next-line: inject-field
-    params.context = context or { includeDeclaration = true }
+  lsp.buf_request_all(buf, method, function(client)
+    ---@type lsp.TextDocumentPositionParams
+    local params = {
+      textDocument = util.make_text_document_params(buf),
+      position = pos:to_lsp(client.offset_encoding),
+    }
+    if method == 'textDocument/references' then
+      ---@cast params lsp.ReferenceParams
+      params.context = context or { includeDeclaration = true }
+    end
     return params
   end, function(results)
     ---@type vim.quickfix.entry[]
@@ -267,7 +270,7 @@ local function get_locations(method, context, opts)
     local what = {
       title = name:gsub('^%l', string.upper),
       items = all_items,
-      context = { bufnr = bufnr, method = method },
+      context = { bufnr = buf, method = method },
     }
     if opts.on_list then
       validate('opts.on_list', opts.on_list, 'function')
@@ -285,7 +288,7 @@ local function get_locations(method, context, opts)
         and method ~= 'textDocument/references'
       then
         local tagstack = { { tagname = tagname, from = from } }
-        vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+        vim.fn.settagstack(vim.fn.bufwinid(buf), { items = tagstack }, 't')
         if opts.loclist then
           vim.cmd('lfirst')
         else
@@ -329,6 +332,26 @@ end
 --- vim.lsp.buf.definition({ on_list = on_list })
 --- vim.lsp.buf.references(nil, { on_list = on_list })
 --- ```
+--- The list can be transformed before it is shown. For example, to remove
+--- duplicate locations returned by multiple clients:
+--- ```lua
+--- local function on_list(what)
+---   vim.list.unique(what.items, function(item)
+---     return ('%s\0%d\0%d\0%d\0%d'):format(
+---       item.filename or '',
+---       item.lnum or 0,
+---       item.col or 0,
+---       item.end_lnum or 0,
+---       item.end_col or 0
+---     )
+---   end)
+---   vim.fn.setqflist({}, ' ', what)
+---   vim.cmd('botright copen')
+--- end
+---
+--- vim.lsp.buf.definition({ on_list = on_list })
+--- vim.lsp.buf.references(nil, { on_list = on_list })
+--- ```
 --- See |setqflist-what| for the structure of the `what` parameter.
 --- @field on_list? fun(what: vim.fn.setqflist.what)
 ---
@@ -338,6 +361,10 @@ end
 --- vim.lsp.buf.references(nil, { loclist = false })
 --- ```
 --- @field loclist? boolean
+---
+--- Position on a buffer to request.
+--- (default: cursor position)
+--- @field pos vim.Pos
 
 --- Jumps to the declaration of the symbol under the cursor.
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
@@ -509,27 +536,6 @@ function M.signature_help(config)
       end
     end
   end)
-end
-
---- @deprecated
---- Retrieves the completion items at the current cursor position. Can only be
---- called in Insert mode.
----
----@param context table (context support not yet implemented) Additional information
---- about the context in which a completion was triggered (how it was triggered,
---- and by which trigger character, if applicable)
----
----@see vim.lsp.protocol.CompletionTriggerKind
-function M.completion(context)
-  validate('context', context, 'table', true)
-  vim.deprecate('vim.lsp.buf.completion', 'vim.lsp.completion.trigger', '0.12')
-  return lsp.buf_request(
-    0,
-    'textDocument/completion',
-    client_positional_params({
-      context = context,
-    })
-  )
 end
 
 ---@param bufnr integer
@@ -750,12 +756,13 @@ function M.rename(new_name, opts)
   --- @param range lsp.Range
   --- @param position_encoding 'utf-8'|'utf-16'|'utf-32'
   local function get_text_at_range(range, position_encoding)
+    local vim_range = vim.range.lsp(bufnr, range, position_encoding)
     return api.nvim_buf_get_text(
       bufnr,
-      range.start.line,
-      util._get_line_byte_from_position(bufnr, range.start, position_encoding),
-      range['end'].line,
-      util._get_line_byte_from_position(bufnr, range['end'], position_encoding),
+      vim_range.start_row,
+      vim_range.start_col,
+      vim_range.end_row,
+      vim_range.end_col,
       {}
     )[1]
   end
@@ -798,32 +805,28 @@ function M.rename(new_name, opts)
           return
         end
 
-        local range ---@type lsp.Range?
+        local range ---@type vim.Range?
         if result.start then
           ---@cast result lsp.Range
-          range = result
+          range = vim.range.lsp(bufnr, result, client.offset_encoding)
         elseif result.range then
           ---@cast result { range: lsp.Range, placeholder: string }
-          range = result.range
+          range = vim.range.lsp(bufnr, result.range, client.offset_encoding)
         end
         if range then
-          local start = range.start
-          local end_ = range['end']
-          local start_idx = util._get_line_byte_from_position(bufnr, start, client.offset_encoding)
-          local end_idx = util._get_line_byte_from_position(bufnr, end_, client.offset_encoding)
-
           vim.hl.range(
             bufnr,
             rename_ns,
             'LspReferenceTarget',
-            { start.line, start_idx },
-            { end_.line, end_idx },
+            { range.start_row, range.start_col },
+            { range.end_row, range.end_col },
             { priority = vim.hl.priorities.user }
           )
         end
 
         local prompt_opts = {
           prompt = 'New Name: ',
+          scope = 'cursor',
         }
         if result.placeholder then
           prompt_opts.default = result.placeholder
@@ -854,6 +857,7 @@ function M.rename(new_name, opts)
       local prompt_opts = {
         prompt = 'New Name: ',
         default = cword,
+        scope = 'cursor',
       }
       vim.ui.input(prompt_opts, function(input)
         if not input or #input == 0 then
@@ -1088,7 +1092,7 @@ end
 
 --- Request workspace-wide diagnostics.
 --- @param opts? vim.lsp.WorkspaceDiagnosticsOpts
---- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_diagnostic
 function M.workspace_diagnostics(opts)
   validate('opts', opts, 'table', true)
 
@@ -1416,22 +1420,6 @@ function M.code_action(opts)
   end)
 end
 
---- @deprecated
---- Executes an LSP server command.
---- @param command_params lsp.ExecuteCommandParams
---- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-function M.execute_command(command_params)
-  validate('command', command_params.command, 'string')
-  validate('arguments', command_params.arguments, 'table', true)
-  vim.deprecate('execute_command', 'client:exec_cmd', '0.12')
-  command_params = {
-    command = command_params.command,
-    arguments = command_params.arguments,
-    workDoneToken = command_params.workDoneToken,
-  }
-  lsp.buf_request(0, 'workspace/executeCommand', command_params)
-end
-
 ---@type { index: integer, ranges: lsp.Range[] }?
 local selection_ranges = nil
 
@@ -1460,7 +1448,9 @@ local function is_empty(range)
   return range.start.line == range['end'].line and range.start.character == range['end'].character
 end
 
---- Perform an incremental selection at the cursor position based on ranges given by the LSP. The
+--- [lsp-incremental-selection]()
+---
+--- Expands or contracts a |Visual| selection at cursor, based on ranges given by LSP. The
 --- `direction` parameter specifies the number of times to expand the selection. Negative values
 --- will shrink the selection.
 ---
@@ -1536,13 +1526,9 @@ function M.selection_range(direction, timeout_ms)
   end
 
   -- Clear selection ranges when leaving visual mode.
-  api.nvim_create_autocmd('ModeChanged', {
-    once = true,
-    pattern = 'v*:*',
-    callback = function()
-      selection_ranges = nil
-    end,
-  })
+  nvim_on('ModeChanged', nil, { once = true, pattern = 'v*:*' }, function()
+    selection_ranges = nil
+  end)
 
   if #ranges > 0 then
     local index = math.min(#ranges, math.max(1, direction))

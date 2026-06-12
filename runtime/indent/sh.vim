@@ -3,10 +3,11 @@
 " Maintainer:          Christian Brabandt <cb@256bit.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
 " Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
-" Latest Revision:     2019-10-24
+" Latest Revision:     20260504
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
+"          20260504  - fix typo
 "          20250906  - indent function closing properly on multiline commands
 "          20250318  - Detect local arrays in functions
 "          20241411  - Detect dash character in function keyword for
@@ -233,7 +234,7 @@ function! s:is_array(line)
 endfunction
 
 function! s:is_in_block(line)
-  " checks whether a:line is whithin a 
+  " checks whether a:line is within a
   " block e.g. a shell function
   " foo() {
   " ..

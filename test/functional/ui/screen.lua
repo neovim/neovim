@@ -315,6 +315,10 @@ function Screen:attach(session)
 end
 
 function Screen:detach()
+  if self._stdout and not self._stdout:is_closing() then
+    self._stdout:close()
+  end
+  self._stdout = nil
   self.uimeths.detach()
   self._session = nil
 end

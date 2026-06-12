@@ -161,19 +161,24 @@ repeat:
     has_fullname = false;
 
     if (p != NULL) {
+      size_t dirnamelen = 0;
+
       if (c == '.') {
         os_dirname(dirname, MAXPATHL);
         if (has_homerelative) {
           s = xstrdup(dirname);
-          home_replace(NULL, s, dirname, MAXPATHL, true);
+          dirnamelen = home_replace(NULL, s, dirname, MAXPATHL, true);
           xfree(s);
         }
-        size_t namelen = strlen(dirname);
+
+        if (dirnamelen == 0) {
+          dirnamelen = strlen(dirname);
+        }
 
         // Do not call shorten_fname() here since it removes the prefix
         // even though the path does not have a prefix.
-        if (path_fnamencmp(p, dirname, namelen) == 0) {
-          p += namelen;
+        if (path_fnamencmp(p, dirname, dirnamelen) == 0) {
+          p += dirnamelen;
           if (vim_ispathsep(*p)) {
             while (*p && vim_ispathsep(*p)) {
               p++;
@@ -188,10 +193,10 @@ repeat:
           }
         }
       } else {
-        home_replace(NULL, p, dirname, MAXPATHL, true);
+        dirnamelen = home_replace(NULL, p, dirname, MAXPATHL, true);
         // Only replace it when it starts with '~'
         if (*dirname == '~') {
-          s = xstrdup(dirname);
+          s = xmemdupz(dirname, dirnamelen);
           assert(s != NULL);  // suppress clang "Argument with 'nonnull' attribute passed null"
           *fnamep = s;
           xfree(*bufp);
@@ -202,6 +207,21 @@ repeat:
       xfree(pbuf);
     }
   }
+
+#ifndef MSWIN
+  if (src[*usedlen] == ':' && src[*usedlen + 1] == 'h') {
+    char *fname = *fnamep;
+    // POSIX reserves exactly "//"; longer slash runs are ordinary absolute paths.
+    // "///foo/bar" => "/foo"
+    // "//foo/bar" => "//foo"
+    if (fname[0] == '/' && fname[1] == '/' && fname[2] == '/') {
+      while (fname[1] == '/') {
+        fname++;
+      }
+      *fnamep = fname;
+    }
+  }
+#endif
 
   char *tail = path_tail(*fnamep);
   *fnamelen = strlen(*fnamep);
@@ -363,6 +383,10 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
+  if (check_secure()) {
+    return;
+  }
+
   if (argvars[0].v_type != VAR_STRING) {
     // Returning an empty string means it failed.
     // No error message, for historic reasons.
@@ -461,6 +485,12 @@ void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char *path = NULL;
 
   os_can_exe(tv_get_string(&argvars[0]), &path, true);
+
+#ifdef BACKSLASH_IN_FILENAME
+  if (path != NULL) {
+    slash_adjust(path);
+  }
+#endif
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = path;
@@ -1175,6 +1205,9 @@ theend:
 void f_readdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_list_alloc_ret(rettv, kListLenUnknown);
+  if (check_secure()) {
+    return;
+  }
 
   const char *path = tv_get_string(&argvars[0]);
   typval_T *expr = &argvars[1];
@@ -1445,12 +1478,20 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
 /// "readblob()" function
 void f_readblob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  if (check_secure()) {
+    return;
+  }
+
   read_file_or_blob(argvars, rettv, true);
 }
 
 /// "readfile()" function
 void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  if (check_secure()) {
+    return;
+  }
+
   read_file_or_blob(argvars, rettv, false);
 }
 

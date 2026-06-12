@@ -30,7 +30,7 @@ function M.select_tag(eap, extra)
   end
 
   vim.ui.select(items, {
-    prompt = N_('Type number and <Enter> (q or empty cancels):'),
+    prompt = N_('Select a tag:'),
     kind = 'tag',
     format_item = function(m)
       local marker = m.cur and '>' or ' '

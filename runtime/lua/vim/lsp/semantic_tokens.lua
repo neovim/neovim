@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local bit = require('bit')
 local util = require('vim.lsp.util')
 local Range = require('vim.treesitter._range')
@@ -257,22 +258,14 @@ function STHighlighter:on_attach(client_id)
     self.client_state[client_id] = state
   end
 
-  api.nvim_create_autocmd({ 'BufWinEnter', 'InsertLeave' }, {
-    buf = self.bufnr,
-    group = self.augroup,
-    callback = function()
-      self:send_request()
-    end,
-  })
+  nvim_on({ 'BufWinEnter', 'InsertLeave' }, self.augroup, { buf = self.bufnr }, function()
+    self:send_request()
+  end)
 
   if state.supports_range then
-    api.nvim_create_autocmd('WinScrolled', {
-      buf = self.bufnr,
-      group = self.augroup,
-      callback = function()
-        self:on_change()
-      end,
-    })
+    nvim_on('WinScrolled', self.augroup, { buf = self.bufnr }, function()
+      self:on_change()
+    end)
   end
 
   self:send_request()
@@ -349,7 +342,7 @@ function STHighlighter:send_range_request(client, state, version)
   ---@type lsp.SemanticTokensRangeParams
   local params = {
     textDocument = util.make_text_document_params(self.bufnr),
-    range = self:get_visible_range(),
+    range = self:get_overscan_range(),
   }
 
   ---@type vim.lsp.protocol.Method.ClientToServer.Request
@@ -468,18 +461,21 @@ function STHighlighter:cancel_active_request(client_id)
   clear(state.active_request)
 end
 
---- Gets a range that encompasses all visible lines across all windows
+--- Gets a range that encompasses all visible lines plus overscan across all windows
 --- @private
 --- @return lsp.Range
-function STHighlighter:get_visible_range()
+function STHighlighter:get_overscan_range()
   local wins = vim.fn.win_findbuf(self.bufnr)
+  local num_lines = vim.api.nvim_buf_line_count(self.bufnr)
   local min_start, max_end = nil, nil
 
   for _, win in ipairs(wins) do
     local wininfo = vim.fn.getwininfo(win)[1]
     if wininfo then
-      local start_line = wininfo.topline - 1
-      local end_line = wininfo.botline
+      -- Overscan the token request by the height of the window on each side
+      -- to prevent flickering when navigating up and down.
+      local start_line = math.max(0, wininfo.topline - 1 - wininfo.height)
+      local end_line = math.min(num_lines, wininfo.botline + wininfo.height)
       if not min_start or start_line < min_start then
         min_start = start_line
       end
@@ -591,7 +587,9 @@ function STHighlighter:process_response(response, client, request_id, version, i
   end
 
   -- redraw all windows displaying buffer
-  api.nvim__redraw({ buf = self.bufnr, valid = true })
+  if vim.fn.win_gettype(vim.fn.bufwinid(self.bufnr)) == '' then
+    api.nvim__redraw({ buf = self.bufnr, valid = true })
+  end
 end
 
 --- @param bufnr integer

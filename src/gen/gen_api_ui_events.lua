@@ -106,7 +106,8 @@ for i = 1, #events do
   local ev = events[i]
   assert(ev.return_type == 'void')
 
-  if ev.since == nil and not ev.noexport then
+  -- Allow unstabilized events starting with "_". Compare "nvim__" for methods.
+  if ev.since == nil and not ev.noexport and not vim.startswith(ev.name, '_') then
     print('Ui event ' .. ev.name .. ' lacks since field.\n')
     os.exit(1)
   end
@@ -211,7 +212,7 @@ for _, ev in ipairs(events) do
       p[1] = 'Dictionary'
     end
   end
-  if not ev.noexport then
+  if not ev.noexport and not vim.startswith(ev.name, '_') then
     exported_events[#exported_events + 1] = ev_exported
   end
 end

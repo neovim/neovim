@@ -247,14 +247,6 @@ argument.
                 Disables |shada| unless |-i| was given.
                 Disables swapfile (like |-n|).
 
-                                                        *-ll*
--ll {script} [args]
-                Executes a Lua script, similarly to |-l|, but the editor is not
-                initialized. This gives a Lua environment similar to a worker
-                thread. See |lua-loop-threading|.
-
-                Unlike `-l` no prior arguments are allowed.
-
                                                         *-b*
 -b              Binary mode.  File I/O will only recognize <NL> to separate
                 lines.  The 'expandtab' option will be reset.  The 'textwidth'
@@ -315,10 +307,10 @@ argument.
                 the command line determines how the windows will be split.
 
                                                         *-p*
--p[N]           Open N tab pages.  If [N] is not given, one tab page is opened
+-p[N]           Open N tabpages.  If [N] is not given, one tabpage is opened
                 for every file given as argument.  The maximum is set with
-                'tabpagemax' pages (default 50).  If there are more tab pages
-                than arguments, the last few tab pages will be editing an
+                'tabpagemax' pages (default 50).  If there are more tabpages
+                than arguments, the last few tabpages will be editing an
                 empty file.  Also see |tabpage|.
                                                         *-d*
 -d              Start in |diff-mode|.
@@ -554,7 +546,7 @@ accordingly, proceeding as follows:
 
 18. Open all windows.
     - When |-o| was given, windows will be opened (but not displayed yet).
-    - When |-p| was given, tab pages will be created (but not displayed yet).
+    - When |-p| was given, tabpages will be created (but not displayed yet).
     - When switching screens, it happens now.  Redrawing starts.
     - If |-q| was given, the first error is jumped to.
     - Buffers for all windows will be loaded, without triggering |BufAdd|.
@@ -620,7 +612,7 @@ setting can affect the entire editor in ways that are not initially obvious.
 
 To find the cause of a problem in your config, you must "bisect" it:
 1. Remove or disable half of your |config|.
-2. Restart Nvim.
+2. Restart Nvim (|:restart|).
 3. If the problem still occurs, goto 1.
 4. If the problem is gone, restore half of the removed lines.
 5. Continue narrowing your config in this way, until you find the setting or
@@ -806,8 +798,8 @@ resulting file, when executed with a ":source" command:
    "options".  Script-local mappings will not be written.
 2. Restores global variables that start with an uppercase letter and contain
    at least one lowercase letter, if 'sessionoptions' contains "globals".
-3. Closes all windows in the current tab page, except the current one; closes
-   all tab pages except the current one (this results in currently loaded
+3. Closes all windows in the current tabpage, except the current one; closes
+   all tabpages except the current one (this results in currently loaded
    buffers to be unloaded, some may become hidden if 'hidden' is set or
    otherwise specified); wipes out the current buffer, if it is empty and
    unnamed.
@@ -839,8 +831,8 @@ An example mapping: >
   :nmap <F2> :wa<Bar>exe "mksession! " .. v:this_session<CR>:so ~/sessions/
 This saves the current Session, and starts off the command to load another.
 
-A session includes all tab pages, unless "tabpages" was removed from
-'sessionoptions'. |tab-page|
+A session includes all tabpages, unless "tabpages" was removed from
+'sessionoptions'. |tabpage|
 
 The |SessionLoadPre| autocmd event is triggered before a session file is
 loaded/sourced and |SessionLoadPost| autocmd event is triggered after.

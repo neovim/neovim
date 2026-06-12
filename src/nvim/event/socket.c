@@ -27,7 +27,7 @@
 ///
 /// @param address Address string
 /// @return pointer to the end of the host part of the address, or NULL if it is not a TCP address
-char *socket_address_tcp_host_end(char *address)
+char *socket_address_tcp_host_end(const char *address)
 {
   if (address == NULL) {
     return NULL;
@@ -39,7 +39,7 @@ char *socket_address_tcp_host_end(char *address)
     return NULL;
   }
 
-  char *colon = strrchr(address, ':');
+  char *colon = strrchr((char *)address, ':');
   return colon != NULL && colon != address ? colon : NULL;
 }
 

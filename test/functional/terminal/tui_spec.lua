@@ -219,9 +219,17 @@ describe('TUI :restart', function()
     -- Retry: old server may still be alive (connect succeeds but yields stale starttime),
     -- or on Windows the --listen address is restored async.
     retry(nil, 5000, function()
-      sess = n.connect(addr)
-      local _, t = sess:request('nvim_eval', 'v:starttime')
+      local candidate = n.connect(addr)
+      local status, t = candidate:request('nvim_eval', 'v:starttime')
+      if not status then
+        candidate:close()
+        error(type(t) == 'table' and t[2] or t)
+      end
+      if t <= starttime then
+        candidate:close()
+      end
       ok(t > starttime, ('v:starttime (%d) > old starttime (%d)'):format(t, starttime), t)
+      sess = candidate
       new_starttime = t
     end)
     return new_starttime, sess
@@ -3909,8 +3917,11 @@ describe('TUI', function()
   local screen --[[@type test.functional.ui.screen]]
 
   -- Runs (child) `nvim` in a TTY (:terminal), to start the builtin TUI.
-  local function nvim_tui(extra_args)
+  local function nvim_tui(extra_args, extra_env)
     clear()
+    extra_env = extra_env or {}
+    local env = vim.tbl_extend('force', { LANG = 'C' }, extra_env)
+
     screen = tt.setup_child_nvim({
       '--clean',
       '--cmd',
@@ -3919,9 +3930,7 @@ describe('TUI', function()
       nvim_set .. ' notermguicolors',
       extra_args,
     }, {
-      env = {
-        LANG = 'C',
-      },
+      env = env,
     })
   end
 
@@ -3946,6 +3955,45 @@ describe('TUI', function()
       eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n')) -- }}}
       ok(#log > 50)
     end)
+  end)
+
+  it('uses $NVIM_TERMDEFS to override terminfo', function()
+    local logfile = 'Xtest_terminfo_override_verbose_log'
+    finally(function()
+      os.remove(logfile)
+    end)
+
+    local terminfo = {
+      enter_ca_mode = 'ENTER_CA_MODE',
+      reset_cursor_style = '\027[0 q',
+      key_home = { 'ABC', 'DEF' },
+      key_npage = 'npage',
+      key_end = { 'GHI' },
+      key_f1 = 'JKL',
+      key_f63 = 'MNO',
+      Su = true,
+      max_colors = 999,
+    }
+
+    nvim_tui('-V3' .. logfile, { NVIM_TERMDEFS = vim.json.encode(terminfo) })
+
+    assert_log('enter_ca_mode[^\n]*= ' .. terminfo.enter_ca_mode, logfile, 9999)
+    assert_log(
+      'reset_cursor_style[^\n]*= ' .. vim.pesc(terminfo.reset_cursor_style:gsub('\027', '^[')),
+      logfile,
+      9999
+    )
+    assert_log(
+      string.format('key_home%%s*= %s, key_shome = %s', terminfo.key_home[1], terminfo.key_home[2]),
+      logfile,
+      9999
+    )
+    assert_log('key_npage%s*= ' .. terminfo.key_npage, logfile, 9999)
+    assert_log('key_end%s*= ' .. terminfo.key_end[1] .. '\n', logfile, 9999)
+    assert_log('key_f1%s*= ' .. terminfo.key_f1, logfile, 9999)
+    assert_log('key_f63%s*= ' .. terminfo.key_f63, logfile, 9999)
+    assert_log('extended underline[^\n]*: ' .. tostring(terminfo.Su), logfile, 9999)
+    assert_log('max_colors: ' .. terminfo.max_colors, logfile, 9999)
   end)
 
   it('does not crash on large inputs #26099', function()
@@ -4282,23 +4330,28 @@ describe('TUI bg color', function()
     end)
   end)
 
-  it('triggers OptionSet from automatic background processing', function()
+  it('does not trigger OptionSet from automatic background processing', function()
+    command('set background=light')
+    local child_server = new_pipename()
     local screen = tt.setup_child_nvim({
       '--clean',
+      '--listen',
+      child_server,
       '--cmd',
       'colorscheme vim',
       '--cmd',
       'set noswapfile',
       '-c',
-      'autocmd OptionSet background echo "did OptionSet, yay!"',
+      [[let g:background_optionset = 0]],
+      '-c',
+      [[autocmd OptionSet background let g:background_optionset += 1]],
     })
-    screen:expect([[
-      ^                                                  |
-      {5:~}                                                 |*3
-      {3:[No Name]                       0,0-1          All}|
-      did OptionSet, yay!                               |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    screen:expect({ any = '%[No Name%]' })
+    local child_session = n.connect(child_server)
+    retry(nil, nil, function()
+      eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
+    end)
+    eq({ true, 0 }, { child_session:request('nvim_eval', 'g:background_optionset') })
   end)
 
   it('sends theme update notifications when background changes #31652', function()

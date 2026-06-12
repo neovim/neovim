@@ -165,6 +165,7 @@ static sattr_T msg_ext_last_attr = -1;
 static int msg_ext_last_hl_id;
 
 static bool msg_ext_history = false;  ///< message was added to history
+static bool msg_ext_append = false;  ///< message appended to previous message line
 
 static int msg_grid_pos_at_flush = 0;
 
@@ -315,7 +316,7 @@ static int is_multihl = 0;
 ///
 /// @param hl_msg Message chunks
 /// @param msg_data Additional data for progress messages
-static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data)
+static bool format_progress_message(HlMessage *hl_msg, MessageData *msg_data)
 {
   HlMessage updated_msg = KV_INITIAL_VALUE;
   // progress messages are special. displayed as "title: percent% msg"
@@ -333,28 +334,26 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
     } else if (strequal(msg_data->status.data, "cancel")) {
       hl_id = syn_check_group("WarningMsg", STRLEN_LITERAL("WarningMsg"));
     }
-    kv_push(updated_msg,
-            ((HlMessageChunk){ .text = copy_string(msg_data->title, NULL), .hl_id = hl_id }));
-    kv_push(updated_msg, ((HlMessageChunk){ .text = cstr_to_string(": "), .hl_id = 0 }));
+    kv_push(updated_msg, ((HlMessageChunk){ copy_string(msg_data->title, NULL), hl_id }));
+    kv_push(updated_msg, ((HlMessageChunk){ cstr_to_string(": "), 0 }));
   }
   if (msg_data->percent >= 0) {
     char percent_buf[10];
     vim_snprintf(percent_buf, sizeof(percent_buf), "%3ld%% ", (long)msg_data->percent);
     String percent = cstr_to_string(percent_buf);
     int hl_id = syn_check_group("WarningMsg", STRLEN_LITERAL("WarningMsg"));
-    kv_push(updated_msg, ((HlMessageChunk){ .text = percent, .hl_id = hl_id }));
+    kv_push(updated_msg, ((HlMessageChunk){ percent, hl_id }));
   }
 
   if (kv_size(updated_msg) != 0) {
-    for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
-      kv_push(updated_msg,
-              ((HlMessageChunk){ .text = copy_string(kv_A(hl_msg, i).text, NULL),
-                                 .hl_id = kv_A(hl_msg, i).hl_id }));
+    for (uint32_t i = 0; i < kv_size(*hl_msg); i++) {
+      HlMessageChunk chunk = kv_A(*hl_msg, i);
+      kv_push(updated_msg, ((HlMessageChunk){ copy_string(chunk.text, NULL), chunk.hl_id }));
     }
-    return updated_msg;
-  } else {
-    return hl_msg;
+    *hl_msg = updated_msg;
+    return true;
   }
+  return false;
 }
 
 /// Print message chunks, each with their own highlight ID.
@@ -377,32 +376,29 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     abort();
   }
 
+  bool hl_msg_updated = false;
   // don't display progress message in cmd when target doesn't have cmd
-  if (strequal(kind, "progress") && (progress_msg_target & PROGRESS_TARGET_CMD) == 0) {
-    *needs_msg_clear = true;
-    return id;
+  if (strequal(kind, "progress")) {
+    do_autocmd_progress(id, hl_msg, msg_data);
+    if ((progress_msg_target & PROGRESS_TARGET_CMD) == 0) {
+      *needs_msg_clear = true;
+      return id;
+    }
+    if (msg_data && format_progress_message(&hl_msg, msg_data)) {
+      *needs_msg_clear = true;
+      hl_msg_updated = true;
+    }
   }
 
   no_wait_return++;
   msg_start();
   msg_clr_eos();
   bool need_clear = false;
-  bool hl_msg_updated = false;
   if (kind != NULL) {
     msg_ext_set_kind(kind);
   }
   msg_ext_skip_flush = true;
   msg_ext_id = id;
-
-  // progress message are special displayed as "title: percent% msg"
-  if (strequal(kind, "progress") && msg_data) {
-    HlMessage formated_message = format_progress_message(hl_msg, msg_data);
-    if (formated_message.items != hl_msg.items) {
-      *needs_msg_clear = true;
-      hl_msg_updated = true;
-      hl_msg = formated_message;
-    }
-  }
 
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
@@ -416,7 +412,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
 
   if (history && kv_size(hl_msg)) {
-    msg_hist_add_multihl(hl_msg, false, msg_data);
+    msg_hist_add_multihl(hl_msg, false);
   }
 
   msg_ext_skip_flush = false;
@@ -1101,25 +1097,23 @@ char *msg_may_trunc(bool force, char *s)
 
 char *msg_progress(char *s, char *id, char *status, int hl_id, bool hist, bool trunc)
 {
-  Error err = ERROR_INIT;
-  Dict(echo_opts) opts = {
-    .kind = cstr_as_string("progress"),
-    .source = cstr_as_string("nvim"),
-    .status = cstr_as_string(status),
-    .id = CSTR_AS_OBJ(id),
-  };
   if (hist && (!trunc || ui_has(kUIMessages))) {
     msg_hist_add(s, -1, 0);
   }
   if (trunc) {
     s = msg_may_trunc(false, s);
   }
-  MAXSIZE_TEMP_ARRAY(chunk, 2);
-  MAXSIZE_TEMP_ARRAY(chunks, 1);
-  ADD_C(chunk, CSTR_AS_OBJ(s));
-  ADD_C(chunk, INTEGER_OBJ(hl_id));
-  ADD_C(chunks, ARRAY_OBJ(chunk));
-  nvim_echo(chunks, false, &opts, &err);
+  bool clear = false;
+  MessageData data = {
+    .source = cstr_as_string("nvim"),
+    .status = cstr_as_string(status),
+    .percent = -1,
+  };
+  HlMessage chunks = KV_INITIAL_VALUE;
+  kv_push(chunks, ((HlMessageChunk){ cstr_as_string(s), hl_id }));
+  msg_ext_no_fast();
+  msg_multihl(CSTR_AS_OBJ(id), chunks, "progress", false, false, &data, &clear);
+  kv_destroy(chunks);
   ui_flush();
   return s;
 }
@@ -1153,7 +1147,7 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  msg_hist_add_multihl(msg, false, NULL);
+  msg_hist_add_multihl(msg, false);
 }
 
 static bool do_clear_hist_temp = true;
@@ -1186,11 +1180,11 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
   apply_autocmds_group(EVENT_PROGRESS,
                        (msg_data && msg_data->source.size > 0) ? msg_data->source.data : "", NULL,
                        true,
-                       AUGROUP_ALL, NULL, NULL, &DICT_OBJ(data));
+                       AUGROUP_ALL, NULL, NULL, &DICT_OBJ(data), false);
   kv_destroy(messages);
 }
 
-static void msg_hist_add_multihl(HlMessage msg, bool temp, MessageData *msg_data)
+static void msg_hist_add_multihl(HlMessage msg, bool temp)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1712,13 +1706,29 @@ void msg_ext_set_kind(const char *msg_kind)
   // the kind but this is called more consistently at the start of a message
   // than msg_start() at this point.
   redir_col = msg_ext_append ? redir_col : 0;
+
+  if (strcmp("list_cmd", msg_kind) == 0) {
+    msg_ext_no_fast();
+  }
+}
+
+void msg_ext_set_append(bool append)
+{
+  msg_ext_ui_flush();
+  msg_ext_append = append;
 }
 
 void msg_ext_set_trigger(const char *trigger)
 {
-  // Don't change the trigger of an existing batch:
   msg_ext_ui_flush();
   msg_ext_trigger = trigger;
+}
+
+// Should be executed at all callsites emitting non-internal messages.
+void msg_ext_no_fast(void)
+{
+  msg_ext_ui_flush();
+  msg_ext_fast = false;
 }
 
 /// Prepare for outputting characters in the command line.
@@ -2368,7 +2378,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   // Don't print anything when using ":silent cmd" or empty message.
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
-      msg_ext_ui_flush();  // ensure messages until now are emitted
+      msg_ext_no_fast();
       ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
                        INTEGER_OBJ(-1), (String)STRING_INIT);
       cmdline_was_last_drawn = false;
@@ -2454,7 +2464,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     const char *lastline = xmemrchr(str, '\n', len);
     maxlen -= (int)(lastline ? (lastline - str) : 0);
     const char *p = lastline ? lastline + 1 : str;
-    int col = (int)(maxlen < 0 ? mb_string2cells(p) : mb_string2cells_len(p, (size_t)(maxlen)));
+    int col = (int)(maxlen < 0 ? mb_string2cells(p) : mb_string2cells_len(p, (size_t)maxlen));
     msg_col = (lastline ? 0 : msg_col) + col;
 
     return;
@@ -3326,8 +3336,8 @@ void msg_clr_eos_force(void)
   if (ui_has(kUIMessages)) {
     return;
   }
-  int msg_startcol = (cmdmsg_rl) ? 0 : msg_col;
-  int msg_endcol = (cmdmsg_rl) ? Columns - msg_col : Columns;
+  int msg_startcol = cmdmsg_rl ? 0 : msg_col;
+  int msg_endcol = cmdmsg_rl ? Columns - msg_col : Columns;
 
   // TODO(bfredl): ugly, this state should already been validated at this
   // point. But msg_clr_eos() is called in a lot of places.
@@ -3417,12 +3427,13 @@ void msg_ext_ui_flush(void)
         xfree(chunk);
       }
       xfree(tofree->items);
-      msg_hist_add_multihl(msg, true, NULL);
+      msg_hist_add_multihl(msg, true);
     }
     xfree(tofree);
     msg_ext_overwrite = false;
     msg_ext_history = false;
     msg_ext_append = false;
+    msg_ext_fast = true;
     msg_ext_kind = NULL;
     msg_id_next += (msg_ext_id.data.integer == msg_id_next);
     msg_ext_id = INTEGER_OBJ(msg_id_next);

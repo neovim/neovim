@@ -88,7 +88,7 @@ static hashtab_T compat_hashtab;
     .vv_di = { \
       .di_tv = { .v_type = (type) }, \
       .di_flags = 0, \
-      .di_key = { 0 }, \
+      .di_key = name, \
     }, \
     .vv_flags = (flags), \
   }
@@ -217,6 +217,7 @@ static struct vimvar {
   VV(VV_VIRTNUM,          "virtnum",          VAR_NUMBER, VV_RO),
   VV(VV_STARTTIME,        "starttime",        VAR_NUMBER, VV_RO),
   VV(VV_EXITREASON,       "exitreason",       VAR_STRING, VV_RO),
+  VV(VV_USERACTIVE,       "useractive",       VAR_NUMBER, VV_RO),
 };
 #undef VV
 
@@ -265,8 +266,6 @@ void evalvars_init(void)
 
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     struct vimvar *p = &vimvars[i];
-    assert(strlen(p->vv_name) <= VIMVAR_KEY_LEN);
-    STRCPY(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO) {
       p->vv_di.di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     } else if (p->vv_flags & VV_RO_SBX) {
@@ -2260,7 +2259,7 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
     xlen += (size_t)rc;
   }
   if (eap->force_enc != 0) {
-    rc = snprintf(newval + (xlen), newval_len - xlen, " ++enc=%s", eap->cmd + eap->force_enc);
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++enc=%s", eap->cmd + eap->force_enc);
     if (rc < 0) {
       goto error;
     }
@@ -3607,7 +3606,7 @@ void f_setbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (*varname == '&') {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
 
     // Set curbuf to be our buf, temporarily.
     aucmd_prepbuf(&aco, buf);

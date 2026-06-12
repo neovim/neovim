@@ -5,13 +5,11 @@ local uv = vim.uv
 
 local eq = t.eq
 local matches = t.matches
-local feed = n.feed
 local eval = n.eval
 local clear = n.clear
 local fn = n.fn
 local write_file = t.write_file
 local is_os = t.is_os
-local skip = t.skip
 
 describe('command-line option', function()
   describe('-s', function()
@@ -84,26 +82,26 @@ describe('command-line option', function()
     end)
 
     it('does not crash after reading from stdin in non-headless mode', function()
-      skip(is_os('win'))
-      local screen = Screen.new(40, 8)
-      local args = {
+      -- Repro from fdfa1ed (2017): the empty `echo ""` pipe makes scriptin (`-s -`) hit EOF
+      -- immediately and call closescript(); if scriptin held fd 0 directly, libuv asserts.
+      --
+      -- Note: can't use nvim_chan_send because pty stdin never EOFs.
+      local nvim_set = 'set noswapfile shortmess+=IFW fileformats=unix notermguicolors'
+      local shell_cmd = ([[echo "" | %s "%s" --clean --cmd "%s" -s -]]):format(
+        is_os('win') and '&' or '',
         n.nvim_prog,
-        '-u',
-        'NONE',
-        '-i',
-        'NONE',
-        '--cmd',
-        '"set noswapfile shortmess+=IFW fileformats=unix notermguicolors"',
-        '-s',
-        '-',
-      }
-
-      -- Need to explicitly pipe to stdin so that the embedded Nvim instance doesn't try to read
-      -- data from the terminal #18181
-      fn.jobstart(string.format([[echo "" | %s]], table.concat(args, ' ')), {
+        nvim_set
+      )
+      if is_os('win') then
+        -- Use PowerShell; cmd.exe mis-parses libuv's `\"…\"` (MSVCRT quoting).
+        n.set_shell_powershell()
+      end
+      local screen = Screen.new(40, 8)
+      fn.jobstart(shell_cmd, {
         term = true,
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       })
+      -- First screen confirms Nvim reached TUI (didn't crash closing scriptin).
       screen:expect(
         [[
         ^                                        |
@@ -111,17 +109,18 @@ describe('command-line option', function()
         {1:[No Name]             0,0-1          All}|
                                                 |*2
       ]],
-        {
-          [1] = { reverse = true },
-        }
+        { [1] = { reverse = true } }
       )
-      feed('i:cq<CR>')
-      screen:expect([[
-        ^                                        |
-        [Process exited 1]                      |
-                                                |*5
-        {5:-- TERMINAL --}                          |
-      ]])
+
+      -- Exit with code 42 to avoid false positives.
+      n.feed('i:cq 42<CR>')
+
+      if is_os('win') then
+        -- XXX: `:cq 42` isn't reaching Nvim, or Nvim exits 1 anyway?
+        screen:expect({ any = '%[Process exited 1%]' })
+      else
+        screen:expect({ any = '%[Process exited 42%]' })
+      end
       --[=[ Example of incorrect output:
       screen:expect([[
         ^nvim: /var/tmp/portage/dev-libs/libuv-1.|

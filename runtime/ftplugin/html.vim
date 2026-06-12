@@ -3,6 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Dan Sharp
 " Last Change:		2025 Sep 12
+" 2026 May 25 by Vim plugin: improve the matchit plugin #20313
 
 if exists("b:did_ftplugin")
   finish
@@ -41,7 +42,7 @@ if exists("loaded_matchit") && !exists("b:match_words")
 	\	      '<:>,' ..
 	\	      '<\@<=[ou]l\>[^>]*\%(>\|$\):<\@<=li\>:<\@<=/[ou]l>,' ..
 	\	      '<\@<=dl\>[^>]*\%(>\|$\):<\@<=d[td]\>:<\@<=/dl>,' ..
-	\	      '<\@<=\([^/!][^ \t>]*\)[^>]*\%(>\|$\):<\@<=/\1>'
+	\	      '<\@<=\([^/!][^ \t>]*\)\%([ \t]\|>\|$\):<\@<=/\1>'
   let b:html_set_match_words = 1
   let b:undo_ftplugin ..= " | unlet! b:match_ignorecase b:match_words b:html_set_match_words"
 endif

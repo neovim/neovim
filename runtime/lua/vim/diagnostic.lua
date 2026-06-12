@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 -- TODO(lewis6991): deprecate some top level functions in favour of the submodule version
 -- e.g. vim.diagnostic.get_namespace() -> vim.diagnostic.namespace.get()
@@ -51,8 +52,9 @@ local M = vim._defer_require('vim.diagnostic', {
 
 --- [diagnostic-structure]()
 ---
---- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
---- rows and columns). |api-indexing|
+--- Diagnostics use |api-indexing| (i.e. 0-based rows and columns). See also |vim.pos| and
+--- |vim.range| to convert positions from other systems.
+---
 --- @class vim.Diagnostic : vim.Diagnostic.Set
 --- @field bufnr integer Buffer number
 --- @field end_lnum integer The final line of the diagnostic (0-indexed)
@@ -177,37 +179,33 @@ local M = vim._defer_require('vim.diagnostic', {
 
 --- @class vim.diagnostic.Opts.Status
 ---
---- Either:
---- - a table mapping |diagnostic-severity| to the text to use for each
----   existing severity section.
---- - a function that accepts a mapping of |diagnostic-severity| to the
----   number of diagnostics of the corresponding severity (only those
----   severity levels that have at least 1 diagnostic) and returns
----   a 'statusline' component. In this case highlights must be applied
----   by the user in the `format` function. Example:
----   ```lua
----   local signs = {
----     [vim.diagnostic.severity.ERROR] = "A",
----     -- ...
----   }
----   local hl_map = {
----     [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
----     -- ...
----   }
----   vim.diagnostic.config({
----     status = {
----       format = function(counts)
----         local items = {}
----         for level, _ in ipairs(vim.diagnostic.severity) do
----           local count = counts[level] or 0
----           table.insert(items, ("%%#%s#%s %s"):format(hl_map[level], signs[level], count))
----         end
----         return table.concat(items, " ")
+--- Function that accepts a mapping of |diagnostic-severity| to the number of diagnostics of the
+--- corresponding severity (only those having at least 1 diagnostic) and returns a 'statusline'
+--- component. Highlights must be applied by the `format` function.
+--- Example:
+--- ```lua
+--- local signs = {
+---   [vim.diagnostic.severity.ERROR] = "A",
+---   -- ...
+--- }
+--- local hl_map = {
+---   [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+---   -- ...
+--- }
+--- vim.diagnostic.config({
+---   status = {
+---     format = function(severity_counts)
+---       local items = {}
+---       for severity in ipairs(vim.diagnostic.severity) do
+---         local count = severity_counts[severity] or 0
+---         table.insert(items, ("%%#%s#%s %s"):format(hl_map[severity], signs[severity], count))
 ---       end
----     }
----   })
----   ```
---- @field format? table<vim.diagnostic.Severity,string>|(fun(counts:table<vim.diagnostic.Severity,integer>): string)
+---       return table.concat(items, " ")
+---     end
+---   }
+--- })
+--- ```
+--- @field format? (fun(counts:table<vim.diagnostic.Severity,integer>): string)
 
 --- @class vim.diagnostic.Opts.Underline
 ---
@@ -300,8 +298,8 @@ local M = vim._defer_require('vim.diagnostic', {
 --- @field priority? integer
 ---
 --- A table mapping |diagnostic-severity| to the sign text to display in the
---- sign column. The default is to use `"E"`, `"W"`, `"I"`, and `"H"` for errors,
---- warnings, information, and hints, respectively. Example:
+--- sign column and statusline. The default is to use `"E"`, `"W"`, `"I"`, and `"H"`
+--- for errors, warnings, information, and hints, respectively. Example:
 --- ```lua
 --- vim.diagnostic.config({
 ---   signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
@@ -571,7 +569,7 @@ end
 --- Limit diagnostics to one or more namespaces.
 --- @field namespace? integer[]|integer
 ---
---- Limit diagnostics to those spanning the specified line number.
+--- Limit diagnostics to those spanning the specified line number (0-indexed, see |diagnostic-structure|).
 --- @field lnum? integer
 ---
 --- See |diagnostic-severity|.
@@ -802,7 +800,7 @@ end
 --- @param opts? vim.diagnostic.setqflist.Opts|vim.diagnostic.setloclist.Opts
 local function set_list(loclist, opts)
   opts = opts or {}
-  local open = vim.F.if_nil(opts.open, true)
+  local open = vim.nonnil(opts.open, true)
   local title = opts.title or 'Diagnostics'
   local winnr = opts.winnr or 0
   local bufnr --- @type integer?
@@ -1118,21 +1116,22 @@ function M.status(buf)
   vim.validate('buf', buf, 'number', true)
   buf = buf or 0
   local config = assert(vim.diagnostic.config()).status or {} --- @type vim.diagnostic.Opts.Status
-  vim.validate('config.format', config.format, { 'table', 'function' }, true)
+  vim.validate('config.format', config.format, 'function', true)
 
   local counts = M.count(buf)
-  local format = config.format or default_status_signs
+  local format = config.format
   local result_str --- @type string
-  if type(format) == 'table' then
-    local signs = vim.tbl_extend('keep', format, default_status_signs)
+  if type(format) == 'function' then
+    result_str = format(counts)
+  else
+    local resolved_signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs
+    local signs = (type(resolved_signs) == 'table' and resolved_signs.text) or default_status_signs
     result_str = vim
       .iter(pairs(counts))
       :map(function(level, value)
         return ('%%#%s#%s:%s'):format(status_hl_map[level], signs[level], value)
       end)
       :join(' ')
-  else
-    result_str = format(counts)
   end
 
   if result_str:len() > 0 then
@@ -1142,14 +1141,12 @@ function M.status(buf)
   return result_str
 end
 
-api.nvim_create_autocmd('DiagnosticChanged', {
-  group = api.nvim_create_augroup('nvim.diagnostic.status', {}),
-  callback = function(ev)
-    if api.nvim_buf_is_loaded(ev.buf) then
-      api.nvim__redraw({ buf = ev.buf, statusline = true })
-    end
-  end,
+nvim_on('DiagnosticChanged', api.nvim_create_augroup('nvim.diagnostic.status', {}), {
   desc = 'diagnostics component for the statusline',
-})
+}, function(ev)
+  if vim.fn.win_gettype(vim.fn.bufwinid(ev.buf)) == '' then
+    api.nvim__redraw({ buf = ev.buf, statusline = true })
+  end
+end)
 
 return M

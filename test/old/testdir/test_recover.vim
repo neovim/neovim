@@ -349,7 +349,21 @@ func Test_recover_corrupted_swap_file()
   call assert_fails('recover Xfile1', 'E312:')
   call assert_equal('Xfile1', @%)
   call assert_equal(['???MANY LINES MISSING'], getline(1, '$'))
+  bw!
 
+  " use an out-of-bounds db_txt_start in the data block (would cause OOB
+  " read past dp->db_index[] in ml_recover() without the bounds check)
+  let b = copy(save_b)
+  let b[8200:8203] = s:little_endian ? 0zFEFFFFFF : 0zFFFFFFFE
+  if s:system_64bit
+    let b[8208:8215] = 0z00FFFFFF.FFFFFF00
+  else
+    let b[8208:8211] = 0z00FFFF00
+  endif
+  call writefile(b, sn)
+  call assert_fails('recover Xfile1', 'E312:')
+  call assert_equal('Xfile1', @%)
+  call assert_match('??? block header corrupted', getline(1))
   bw!
   call delete(sn)
 endfunc

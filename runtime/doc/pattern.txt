@@ -128,10 +128,6 @@ gD			Goto global Declaration.  When the cursor is on a
 1gD			Like "gD", but ignore matches inside a {} block that
 			ends before the cursor position.
 
-							*CTRL-C*
-CTRL-C			Interrupt current (search) command.
-			In Normal mode, any pending command is aborted.
-
 							*:noh* *:nohlsearch*
 :noh[lsearch]		Stop the highlighting for the 'hlsearch' option.  It
 			is automatically turned back on when using a search

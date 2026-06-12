@@ -1169,27 +1169,37 @@ void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 /// @param reg_width The width, only used if "reg_type" is kMTBlockWise.
 /// @param[out] buf Buffer to store formatted string. The allocated size should
 ///                 be at least NUMBUFLEN+2 to always fit the value.
-/// @param buf_len The allocated size of the buffer.
-void format_reg_type(MotionType reg_type, colnr_T reg_width, char *buf, size_t buf_len)
+/// @param bufsize The allocated size of the buffer.
+///
+/// @return The length of the register type string.
+size_t format_reg_type(MotionType reg_type, colnr_T reg_width, char *buf, size_t bufsize)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(buf_len > 1);
+  assert(bufsize > 1);
   switch (reg_type) {
   case kMTLineWise:
     buf[0] = 'V';
     buf[1] = NUL;
-    break;
+    return 1;
   case kMTCharWise:
     buf[0] = 'v';
     buf[1] = NUL;
-    break;
+    return 1;
   case kMTBlockWise:
-    snprintf(buf, buf_len, CTRL_V_STR "%" PRIdCOLNR, reg_width + 1);
-    break;
+    return vim_snprintf_safelen(buf, bufsize, CTRL_V_STR "%" PRIdCOLNR, reg_width + 1);
   case kMTUnknown:
     buf[0] = NUL;
-    break;
+    return 0;
   }
+  abort();
+}
+
+static void add_regtype_to_dict(yankreg_T *reg, dict_T *dict, char *buf, size_t bufsize)
+{
+  // "reg" is NULL when pasting a special register, which is charwise.
+  size_t len = format_reg_type(reg != NULL ? reg->y_type : kMTCharWise,
+                               reg != NULL ? reg->y_width : 0, buf, bufsize);
+  tv_dict_add_str_len(dict, S_LEN("regtype"), buf, (int)len);
 }
 
 /// Execute autocommands for TextYankPost.
@@ -1222,8 +1232,7 @@ void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
 
   // Register type.
   char buf[NUMBUFLEN + 2];
-  format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
-  tv_dict_add_str(dict, S_LEN("regtype"), buf);
+  add_regtype_to_dict(reg, dict, buf, ARRAY_SIZE(buf));
 
   // Name of requested register, or empty string for unnamed operation.
   buf[0] = (char)oap->regname;
@@ -1250,6 +1259,78 @@ void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   restore_v_event(dict, &save_v_event);
 
   recursive = false;
+}
+
+/// Trigger TextPutPre or TextPutPost autocommand.
+///
+/// @param reg     May be NULL, if special register
+/// @param insert  Not NULL if special register, except '.'
+/// @param post    If Post or Pre
+/// @param dir     BACKWARD for 'P', FORWARD for 'p'
+static void put_do_autocmd(int regname, yankreg_T *reg, const String *insert, bool post,
+                           Direction dir)
+{
+  static bool recursive = false;
+
+  if (recursive || (regname == '_' && reg == NULL)) {
+    return;
+  }
+
+  save_v_event_T save_v_event;
+  dict_T *v_event = get_v_event(&save_v_event);
+
+  list_T *list = tv_list_alloc(reg != NULL ? (ptrdiff_t)reg->y_size : 1);
+
+  if (regname == '.') {
+    if (last_insert_ga.ga_data != NULL) {
+      // Get the last inserted text to place in "regcontents"
+      tv_list_append_string(list, last_insert_ga.ga_data, last_insert_ga.ga_len);
+    }
+  } else if (insert != NULL) {
+    tv_list_append_string(list, insert->data, (ssize_t)insert->size);
+  } else {
+    assert(reg != NULL);
+    for (size_t n = 0; n < reg->y_size; n++) {
+      tv_list_append_string(list, reg->y_array[n].data, (ssize_t)reg->y_array[n].size);
+    }
+  }
+
+  tv_list_set_lock(list, VAR_FIXED);
+  tv_dict_add_list(v_event, S_LEN("regcontents"), list);
+
+  char buf[NUMBUFLEN + 2];
+
+  // register name or empty string for unnamed operation
+  buf[0] = (char)regname;
+  buf[1] = NUL;
+  size_t buflen = (buf[0] == NUL) ? 0 : 1;
+  tv_dict_add_str_len(v_event, S_LEN("regname"), buf, (int)buflen);
+
+  // kind of operation (P, p)
+  buf[0] = dir == BACKWARD ? 'P' : 'p';
+  buf[1] = NUL;
+  buflen = 1;
+  tv_dict_add_str_len(v_event, S_LEN("operator"), buf, (int)buflen);
+
+  add_regtype_to_dict(reg, v_event, buf, sizeof(buf));
+
+  tv_dict_add_bool(v_event, S_LEN("visual"), VIsual_active);
+
+  // Lock the dictionary and its keys
+  tv_dict_set_keys_readonly(v_event);
+
+  recursive = true;
+  textlock++;
+  if (post) {
+    apply_autocmds(EVENT_TEXTPUTPOST, NULL, NULL, false, curbuf);
+  } else {
+    apply_autocmds(EVENT_TEXTPUTPRE, NULL, NULL, false, curbuf);
+  }
+  textlock--;
+  recursive = false;
+
+  // Empty the dictionary, v:event is still valid
+  restore_v_event(v_event, &save_v_event);
 }
 
 /// Yanks the text between "oap->start" and "oap->end" into a yank register.
@@ -1320,9 +1401,23 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
                               ? 'c'
                               : (flags & PUT_LINE ? 'i' : (dir == FORWARD ? 'a' : 'i'));
 
+    bool has_textput_events = has_event(EVENT_TEXTPUTPRE) || has_event(EVENT_TEXTPUTPOST);
+    if (has_textput_events) {
+      add_last_insert++;
+    }
+
     // To avoid 'autoindent' on linewise puts, create a new line with `:put _`.
     if (flags & PUT_LINE) {
-      do_put('_', NULL, dir, 1, PUT_LINE);
+      const int save_add_last_insert = add_last_insert;
+      add_last_insert = 0;
+      stuffcharReadbuff(K_COMMAND);
+      if (dir == FORWARD) {
+        stuffReadbuffLen(S_LEN("put _"));
+      } else {
+        stuffReadbuffLen(S_LEN("put! _"));
+      }
+      stuffcharReadbuff(CAR);
+      add_last_insert = save_add_last_insert;
     }
 
     // If given a count when putting linewise, we stuff the readbuf with the
@@ -1337,12 +1432,25 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
           // back to the previous line in the case of 'noautoindent' and
           // 'backspace' includes "eol". So we insert a dummy space for Ctrl_U
           // to consume.
-          stuffReadbuff("\n ");
-          stuffcharReadbuff(Ctrl_U);
+          static const char s[] = { '\n', ' ', Ctrl_U, NUL };
+          stuffReadbuffLen(S_LEN(s));
         }
       }
     } else {
       stuff_inserted(command_start_char, count, false);
+    }
+
+    // Since the text is not inserted into the buffer immediately, just call
+    // TextPutPost after TextPutPre.
+    if (has_event(EVENT_TEXTPUTPRE)) {
+      put_do_autocmd('.', NULL, NULL, false, dir);
+    }
+    if (has_event(EVENT_TEXTPUTPOST)) {
+      put_do_autocmd('.', NULL, NULL, true, dir);
+    }
+
+    if (has_textput_events && --add_last_insert == 0) {
+      ga_clear(&last_insert_ga);
     }
 
     // Putting the text is done later, so can't move the cursor to the next
@@ -1454,7 +1562,20 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       y_size = 1;               // use fake one-line yank register
       y_array = &insert_string;
     }
+    if (has_event(EVENT_TEXTPUTPRE)) {
+      put_do_autocmd(regname, NULL, &insert_string, false, dir);
+    }
   } else {
+    if (has_event(EVENT_TEXTPUTPRE)) {
+      yankreg_T *const save_reg = reg;
+      if (reg == NULL) {
+        // Make sure to call this before we set the variables, as setreg()
+        // may be called and invalidate them.
+        reg = get_yank_register(regname, YREG_PASTE);
+      }
+      put_do_autocmd(regname, reg, NULL, false, dir);
+      reg = save_reg;
+    }
     // in case of replacing visually selected text
     // the yankreg might already have been saved to avoid
     // just restoring the deleted text.
@@ -1470,7 +1591,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
 
   if (curbuf->terminal) {
     terminal_paste(count, y_array, y_size);
-    return;
+    goto end;
   }
 
   colnr_T split_pos = 0;
@@ -2069,6 +2190,15 @@ end:
     curbuf->b_op_start = orig_start;
     curbuf->b_op_end = orig_end;
   }
+
+  if (has_event(EVENT_TEXTPUTPOST)) {
+    if (insert_string.data == NULL) {
+      put_do_autocmd(regname, reg, NULL, true, dir);
+    } else {
+      put_do_autocmd(regname, NULL, &insert_string, true, dir);
+    }
+  }
+
   if (allocated) {
     xfree(insert_string.data);
   }
@@ -2076,7 +2206,9 @@ end:
     xfree(y_array);
   }
 
-  VIsual_active = false;
+  if (!curbuf->terminal) {  // XXX
+    VIsual_active = false;
+  }
 
   // If the cursor is past the end of the line put it at the end.
   adjust_cursor_eol();

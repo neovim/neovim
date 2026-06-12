@@ -1728,14 +1728,15 @@ for the syntax items.  For example, in the Scheme language completion should
 include the "-", call-with-output-file.  Depending on your filetype, this may
 not provide the words you are expecting.  Setting the
 g:omni_syntax_use_iskeyword option to 0 will force the syntax plugin to break
-on word characters.   This can be controlled adding the following to your
+on word characters.  This can be controlled adding the following to your
 vimrc: >
     let g:omni_syntax_use_iskeyword = 0
 
-For plugin developers, the plugin exposes a public function OmniSyntaxList.
-This function can be used to request a List of syntax items.  When editing a
-SQL file (:e syntax.sql) you can use the ":syntax list" command to see the
-various groups and syntax items.  For example: >
+For plugin developers, the plugin exposes a public function
+syntaxcomplete#OmniSyntaxList.  This function can be used to request a List of
+syntax items.  When editing a SQL file (:e syntax.sql) you can use the
+":syntax list" command to see the various groups and syntax items.  For
+example: >
     syntax list
 
 Yields data similar to this: >
@@ -1749,22 +1750,22 @@ Yields data similar to this: >
                        image float integer timestamp real decimal
 
 There are two syntax groups listed here: sqlOperator and sqlType.  To retrieve
-a List of syntax items you can call OmniSyntaxList a number of different
-ways.  To retrieve all syntax items regardless of syntax group:  >
-    echo OmniSyntaxList( [] )
+a List of syntax items you can call syntaxcomplete#OmniSyntaxList a number of
+different ways.  To retrieve all syntax items regardless of syntax group:  >
+    echo syntaxcomplete#OmniSyntaxList( [] )
 
 To retrieve only the syntax items for the sqlOperator syntax group: >
-    echo OmniSyntaxList( ['sqlOperator'] )
+    echo syntaxcomplete#OmniSyntaxList( ['sqlOperator'] )
 
 To retrieve all syntax items for both the sqlOperator and sqlType groups: >
-    echo OmniSyntaxList( ['sqlOperator', 'sqlType'] )
+    echo syntaxcomplete#OmniSyntaxList( ['sqlOperator', 'sqlType'] )
 
 A regular expression can also be used: >
-    echo OmniSyntaxList( ['sql\w\+'] )
+    echo syntaxcomplete#OmniSyntaxList( ['sql\w\+'] )
 
 From within a plugin, you would typically assign the output to a List: >
     let myKeywords = []
-    let myKeywords = OmniSyntaxList( ['sqlKeyword'] )
+    let myKeywords = syntaxcomplete#OmniSyntaxList( ['sqlKeyword'] )
 
 
 SQL							*ft-sql-omni*

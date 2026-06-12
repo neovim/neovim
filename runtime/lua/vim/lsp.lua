@@ -1,5 +1,6 @@
 local api = vim.api
 local validate = vim.validate
+local nvim_on = require('vim._core.util').nvim_on
 
 local lsp = vim._defer_require('vim.lsp', {
   _capability = ..., --- @module 'vim.lsp._capability'
@@ -274,9 +275,9 @@ end
 ---     filetypes = { 'c', 'cpp' },
 ---   }
 ---   ```
---- - Get the resolved configuration for "lua_ls":
+--- - Get the resolved configuration for "emmylua_ls":
 ---   ```lua
----   local cfg = vim.lsp.config.lua_ls
+---   local cfg = vim.lsp.config.emmylua_ls
 ---   ```
 ---
 ---@since 13
@@ -589,14 +590,14 @@ end
 ---
 --- ```lua
 --- vim.lsp.enable('clangd')
---- vim.lsp.enable({'lua_ls', 'pyright'})
+--- vim.lsp.enable({'emmylua_ls', 'pyright'})
 --- ```
 ---
 --- Example: To _dynamically_ decide whether LSP is activated, define a |lsp-root_dir()| function
 --- which calls `on_dir()` only when you want that config to activate:
 ---
 --- ```lua
---- vim.lsp.config('lua_ls', {
+--- vim.lsp.config('emmylua_ls', {
 ---   root_dir = function(bufnr, on_dir)
 ---     if vim.fs.ext(vim.fn.bufname(bufnr)) ~= 'txt' then
 ---       on_dir(vim.fn.getcwd())
@@ -643,12 +644,9 @@ function lsp.enable(name, enable)
   else
     -- Only ever create autocmd once to reuse computation of config merging.
     lsp_enable_autocmd_id = lsp_enable_autocmd_id
-      or api.nvim_create_autocmd('FileType', {
-        group = api.nvim_create_augroup('nvim.lsp.enable', {}),
-        callback = function(ev)
-          lsp_enable_callback(ev.buf)
-        end,
-      })
+      or nvim_on('FileType', api.nvim_create_augroup('nvim.lsp.enable', {}), function(ev)
+        lsp_enable_callback(ev.buf)
+      end)
   end
 
   -- Ensure any pre-existing buffers start/stop their LSP clients.
@@ -909,41 +907,37 @@ local function buf_attach(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local augroup = ('nvim.lsp.b_%d_save'):format(bufnr)
   local group = api.nvim_create_augroup(augroup, { clear = true })
-  api.nvim_create_autocmd('BufWritePre', {
-    group = group,
+  nvim_on('BufWritePre', group, {
     buf = bufnr,
     desc = 'vim.lsp: textDocument/willSave',
-    callback = function(ctx)
-      for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
-        local params = {
-          textDocument = {
-            uri = uri,
-          },
-          reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
-        }
-        if client:supports_method('textDocument/willSave') then
-          client:notify('textDocument/willSave', params)
-        end
-        if client:supports_method('textDocument/willSaveWaitUntil') then
-          local result, err =
-            client:request_sync('textDocument/willSaveWaitUntil', params, 1000, ctx.buf)
-          if result and result.result then
-            util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
-          elseif err then
-            log.error(vim.inspect(err))
-          end
+  }, function(ctx)
+    for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
+      local params = {
+        textDocument = {
+          uri = uri,
+        },
+        reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
+      }
+      if client:supports_method('textDocument/willSave') then
+        client:notify('textDocument/willSave', params)
+      end
+      if client:supports_method('textDocument/willSaveWaitUntil') then
+        local result, err =
+          client:request_sync('textDocument/willSaveWaitUntil', params, 1000, ctx.buf)
+        if result and result.result then
+          util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
+        elseif err then
+          log.error(vim.inspect(err))
         end
       end
-    end,
-  })
-  api.nvim_create_autocmd('BufWritePost', {
-    group = group,
+    end
+  end)
+  nvim_on('BufWritePost', group, {
     buf = bufnr,
     desc = 'vim.lsp: textDocument/didSave handler',
-    callback = function(ctx)
-      text_document_did_save_handler(ctx.buf)
-    end,
-  })
+  }, function(ctx)
+    text_document_did_save_handler(ctx.buf)
+  end)
   -- First time, so attach and set up stuff.
   api.nvim_buf_attach(bufnr, false, {
     on_lines = function(_, _, changedtick, firstline, lastline, new_lastline)
@@ -1166,51 +1160,39 @@ function lsp.get_clients(filter)
   return clients
 end
 
----@deprecated
-function lsp.get_active_clients(filter)
-  vim.deprecate('vim.lsp.get_active_clients()', 'vim.lsp.get_clients()', '0.12')
-  return lsp.get_clients(filter)
-end
-
 -- Minimum time before warning about LSP exit_timeout on Nvim exit.
 local min_warn_exit_timeout = 100
 
-api.nvim_create_autocmd('VimLeavePre', {
-  desc = 'vim.lsp: exit handler',
-  callback = function()
-    local active_clients = lsp.get_clients()
-    log.info('exit_handler', active_clients)
+nvim_on('VimLeavePre', nil, { desc = 'vim.lsp: exit handler' }, function()
+  local active_clients = lsp.get_clients()
+  log.info('exit_handler', active_clients)
 
-    local max_timeout = 0
-    for _, client in pairs(active_clients) do
-      max_timeout = math.max(max_timeout, vim._tointeger(client.exit_timeout) or 0)
-      client:stop(client.exit_timeout)
-    end
+  local max_timeout = 0
+  for _, client in pairs(active_clients) do
+    max_timeout = math.max(max_timeout, vim._tointeger(client.exit_timeout) or 0)
+    client:stop(client.exit_timeout)
+  end
 
-    local exit_warning_timer = max_timeout > min_warn_exit_timeout
-      and vim.defer_fn(function()
-        api.nvim_echo({
-          {
-            string.format(
-              'Waiting %ss for LSP exit (Press Ctrl-C to force exit)',
-              max_timeout / 1e3
-            ),
-            'WarningMsg',
-          },
-        }, true, {})
-      end, min_warn_exit_timeout)
+  local exit_warning_timer = max_timeout > min_warn_exit_timeout
+    and vim.defer_fn(function()
+      api.nvim_echo({
+        {
+          string.format('Waiting %ss for LSP exit (Press Ctrl-C to force exit)', max_timeout / 1e3),
+          'WarningMsg',
+        },
+      }, true, {})
+    end, min_warn_exit_timeout)
 
-    vim.wait(max_timeout, function()
-      return vim.iter(active_clients):all(function(client)
-        return client.rpc.is_closing()
-      end)
+  vim.wait(max_timeout, function()
+    return vim.iter(active_clients):all(function(client)
+      return client.rpc.is_closing()
     end)
+  end)
 
-    if exit_warning_timer and not exit_warning_timer:is_closing() then
-      exit_warning_timer:close()
-    end
-  end,
-})
+  if exit_warning_timer and not exit_warning_timer:is_closing() then
+    exit_warning_timer:close()
+  end
+end)
 
 ---@nodoc
 --- Sends an async request for all active clients attached to the
@@ -1535,21 +1517,6 @@ function lsp.client_is_stopped(client_id)
   return not lsp.get_client_by_id(client_id)
 end
 
---- Gets a map of client_id:client pairs for the given buffer, where each value
---- is a |vim.lsp.Client| object.
----
----@param bufnr integer? Buffer handle, or 0 for current
----@return table result is table of (client_id, client) pairs
----@deprecated Use |vim.lsp.get_clients()| instead.
-function lsp.buf_get_clients(bufnr)
-  vim.deprecate('vim.lsp.buf_get_clients()', 'vim.lsp.get_clients()', '0.12')
-  local result = {} --- @type table<integer,vim.lsp.Client>
-  for _, client in ipairs(lsp.get_clients({ bufnr = vim._resolve_bufnr(bufnr) })) do
-    result[client.id] = client
-  end
-  return result
-end
-
 --- Log level dictionary with reverse lookup as well.
 ---
 --- Can be used to lookup the number from the name or the
@@ -1589,42 +1556,6 @@ function lsp.get_log_path()
   vim.deprecate('vim.lsp.get_log_path()', 'vim.lsp.log.get_filename()', '0.13')
 
   return log.get_filename()
-end
-
----@nodoc
---- Invokes a function for each LSP client attached to a buffer.
----
----@param bufnr integer Buffer number
----@param fn function Function to run on each client attached to buffer
----                   {bufnr}. The function takes the client, client ID, and
----                   buffer number as arguments.
----@deprecated use lsp.get_clients({ bufnr = bufnr }) with regular loop
-function lsp.for_each_buffer_client(bufnr, fn)
-  vim.deprecate(
-    'vim.lsp.for_each_buffer_client()',
-    'lsp.get_clients({ bufnr = bufnr }) with regular loop',
-    '0.12'
-  )
-  bufnr = vim._resolve_bufnr(bufnr)
-
-  for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
-    fn(client, client.id, bufnr)
-  end
-end
-
---- @deprecated
---- Function to manage overriding defaults for LSP handlers.
----@param handler (lsp.Handler) See |lsp-handler|
----@param override_config (table) Table containing the keys to override behavior of the {handler}
-function lsp.with(handler, override_config)
-  vim.deprecate(
-    'vim.lsp.with()',
-    'Pass the configuration to equivalent functions in `vim.lsp.buf`',
-    '0.12'
-  )
-  return function(err, result, ctx, config)
-    return handler(err, result, ctx, vim.tbl_deep_extend('force', config or {}, override_config))
-  end
 end
 
 --- Map of client-defined handlers implementing custom (off-spec) commands which a server may

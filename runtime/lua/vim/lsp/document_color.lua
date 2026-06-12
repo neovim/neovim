@@ -2,6 +2,7 @@
 --- Highlighting is enabled by default.
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
 local util = lsp.util
 local Capability = require('vim.lsp._capability')
@@ -144,19 +145,15 @@ function Provider:new(bufnr)
     end,
   })
 
-  api.nvim_create_autocmd('ColorScheme', {
-    group = self.augroup,
-    desc = 'Refresh document_color',
-    callback = function()
-      color_cache = {}
-      n_color_cache = 0
-      local provider = Provider.active[bufnr]
-      if provider then
-        provider:clear()
-        provider:request()
-      end
-    end,
-  })
+  nvim_on('ColorScheme', self.augroup, { desc = 'Refresh document_color' }, function()
+    color_cache = {}
+    n_color_cache = 0
+    local provider = Provider.active[bufnr]
+    if provider then
+      provider:clear()
+      provider:request()
+    end
+  end)
 
   return self
 end

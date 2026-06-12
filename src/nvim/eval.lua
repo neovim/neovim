@@ -199,8 +199,8 @@ M.funcs = {
       If {winid} is not supplied, the argument list of the current
       window is used.
       If {winid} is -1, the global argument list is used.
-      Otherwise {winid} specifies the window of which the argument
-      list is used: either the window number or the window ID.
+      Otherwise {winid} (a |window-number| or |window-ID|) specifies
+      the window of which the argument list is used.
       Returns -1 if the {winid} argument is invalid.
     ]=],
     name = 'argc',
@@ -227,10 +227,10 @@ M.funcs = {
       Returns -1 if the arguments are invalid.
 
       Without arguments use the current window.
-      With {winnr} only use this window in the current tab page.
+      With {winnr} only use this window in the current tabpage.
       With {winnr} and {tabnr} use the window in the specified tab
       page.
-      {winnr} can be the window number or the |window-ID|.
+      {winnr} is a |window-number| or |window-ID|.
     ]=],
     name = 'arglistid',
     params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
@@ -251,7 +251,7 @@ M.funcs = {
       <Without the {nr} argument, or when {nr} is -1, a |List| with
       the whole |arglist| is returned.
 
-      The {winid} argument specifies the window ID, see |argc()|.
+      The {winid} argument is a |window-ID|, see |argc()|.
       For the Vim command line arguments see |v:argv|.
 
       Returns an empty string if {nr}th argument is not present in
@@ -898,7 +898,7 @@ M.funcs = {
 
       	echo "A window containing buffer 1 is " .. (bufwinid(1))
       <
-      Only deals with the current tab page.  See |win_findbuf()| for
+      Only deals with the current tabpage.  See |win_findbuf()| for
       finding more.
 
     ]=],
@@ -914,7 +914,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Like |bufwinid()| but return the window number instead of the
+      Like |bufwinid()| but returns a |window-number| instead of a
       |window-ID|.
       If buffer {buf} doesn't exist or there is no such window, -1
       is returned.  Example: >vim
@@ -1254,14 +1254,14 @@ M.funcs = {
       changed to the scope of the current directory:
           - If the window local directory (|:lcd|) is set, it
             changes the current working directory for that scope.
-          - Otherwise, if the tab page local directory (|:tcd|) is
+          - Otherwise, if the tabpage local directory (|:tcd|) is
             set, it changes the current directory for that scope.
           - Otherwise, changes the global directory for that scope.
 
       If {scope} is present, changes the current working directory
       for the specified scope:
           "window"	Changes the window local directory.  |:lcd|
-          "tabpage"	Changes the tab page local directory.  |:tcd|
+          "tabpage"	Changes the tabpage local directory.  |:tcd|
           "global"	Changes the global directory.  |:cd|
 
       {dir} must be a String.
@@ -1311,8 +1311,8 @@ M.funcs = {
     desc = [=[
       Clears all matches previously defined for the current window
       by |matchadd()| and the |:match| commands.
-      If {win} is specified, use the window with this number or
-      window ID instead of the current window.
+      If {win} is specified, use this |window-number| or |window-ID|
+      instead of the current window.
 
     ]=],
     name = 'clearmatches',
@@ -3230,9 +3230,16 @@ M.funcs = {
       Returns an empty string if a command doesn't exist or if it's
       ambiguous (for user-defined commands).
 
-      For example `fullcommand('s')`, `fullcommand('sub')`,
-      `fullcommand(':%substitute')` all return "substitute".
-
+      Note: Command validation is not performed.  Results depend on
+      Vim's internal command-specific identification rules.
+      Examples:
+      >vim
+        echo [fullcommand('s')]		|" ['substitute']
+        echo [fullcommand('sub')]		|" ['substitute']
+        echo [fullcommand(': mark word')]	|" ['mark']
+        echo [fullcommand(': markword')]	|" ['']
+        echo [fullcommand('en')]		|" ['endif']
+      <
     ]=],
     name = 'fullcommand',
     params = { { 'name', 'string' } },
@@ -3593,22 +3600,25 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      The result is the value of option or local buffer variable
-      {varname} in buffer {buf}.  Note that the name without "b:"
-      must be used.
-      The {varname} argument is a string.
-      When {varname} is empty returns a |Dictionary| with all the
-      buffer-local variables.
-      When {varname} is equal to "&" returns a |Dictionary| with all
-      the buffer-local options.
-      Otherwise, when {varname} starts with "&" returns the value of
-      a buffer-local option.
-      This also works for a global or buffer-local option, but it
-      doesn't work for a global variable, window-local variable or
-      window-local option.
-      For the use of {buf}, see |bufname()| above.
-      When the buffer or variable doesn't exist {def} or an empty
-      string is returned, there is no error message.
+      Gets the value of a buffer-local variable or option {varname}
+      in buffer {buf}.
+
+      {varname} is a string:
+      - Name of the variable (without "b:").
+      - If empty, gets a |Dictionary| of all buffer-local variables.
+      - If "&", gets a |Dictionary| of all buffer-local options.
+      - If it starts with "&", gets the value of a buffer-local
+        option.
+
+      {buf} has the same form as in |bufname()|.
+
+      Also works for a global or buffer-local option. But not for
+      a global variable, window-local variable or window-local
+      option.
+
+      When the buffer or variable doesn't exist, {def} or an empty
+      string is returned; there is no error.
+
       Examples: >vim
       	let bufmodified = getbufvar(1, "&mod")
       	echo "todo myvar = " .. getbufvar("todo", "myvar")
@@ -3783,12 +3793,11 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Get the position for String {expr}.  Same as |getpos()| but the
-      column number in the returned List is a character index
-      instead of a byte index.
-      If |getpos()| returns a very large column number, equal to
-      |v:maxcol|, then getcharpos() will return the character index
-      of the last character.
+      Same as |getpos()|, except the column-number is
+      character-indexed (UTF-8) instead of byte-indexed.
+
+      If |getpos()| returns |v:maxcol|, then getcharpos() returns
+      the index of the last character.
 
       Example:
       With the cursor on '세' in line 5 with text "여보세요": >vim
@@ -4076,10 +4085,10 @@ M.funcs = {
       the cursor is returned in "col".  To get the character
       position, use |getcursorcharpos()|.
 
-      The optional {winid} argument can specify the window.  It can
-      be the window number or the |window-ID|.  The last known
-      cursor position is returned, this may be invalid for the
-      current value of the buffer if it is not the current window.
+      The optional {winid} (|window-number| or |window-ID|) specifies
+      the window. The last known cursor position is returned, this
+      may be invalid for the current value of the buffer if it is not
+      the current window.
       If {winid} is invalid a list with zeroes is returned.
 
       This can be used to save and restore the cursor position: >vim
@@ -4128,7 +4137,7 @@ M.funcs = {
       	getcwd(0)
       	getcwd(0, 0)
       <If {winnr} is -1 it is ignored, only the tab is resolved.
-      {winnr} can be the window number or the |window-ID|.
+      {winnr} is a |window-number| or |window-ID|.
       If both {winnr} and {tabnr} are -1 the global working
       directory is returned.
       Note: When {tabnr} is -1 Vim returns an empty string to
@@ -4284,8 +4293,8 @@ M.funcs = {
       Returns the |jumplist| for the specified window.
 
       Without arguments use the current window.
-      With {winnr} only use this window in the current tab page.
-      {winnr} can also be a |window-ID|.
+      With {winnr} (|window-number| or |window-ID|) only use this
+      window in the current tabpage.
       With {winnr} and {tabnr} use the window in the specified tab
       page.   If {winnr} or {tabnr} is invalid, an empty list is
       returned.
@@ -4355,12 +4364,12 @@ M.funcs = {
     args = { 1, 2 },
     desc = [=[
       Returns a |List| with all the entries in the location list for
-      window {nr}.  {nr} can be the window number or the |window-ID|.
+      window {nr} (|window-number| or |window-ID|).
       When {nr} is zero the current window is used.
 
       For a location list window, the displayed location list is
-      returned.  For an invalid window number {nr}, an empty list is
-      returned.  Otherwise, same as |getqflist()|.
+      returned.  For an invalid {nr}, an empty list is returned.
+      Otherwise, same as |getqflist()|.
 
       If the optional {what} dictionary argument is supplied, then
       returns the items listed in {what} as a dictionary.  Refer to
@@ -4425,9 +4434,9 @@ M.funcs = {
       |getmatches()| is useful in combination with |setmatches()|,
       as |setmatches()| can restore a list of matches saved by
       |getmatches()|.
-      If {win} is specified, use the window with this number or
-      window ID instead of the current window.  If {win} is invalid,
-      an empty list is returned.
+      If {win} is specified, use this |window-number| or |window-ID|
+      instead of the current window.  If {win} is invalid, an empty
+      list is returned.
       Example: >vim
       	echo getmatches()
       < >
@@ -4967,16 +4976,16 @@ M.funcs = {
     base = 1,
     desc = [=[
       If {tabnr} is not specified, then information about all the
-      tab pages is returned as a |List|.  Each List item is a
-      |Dictionary|.  Otherwise, {tabnr} specifies the tab page
+      tabpages is returned as a |List|.  Each List item is a
+      |Dictionary|.  Otherwise, {tabnr} specifies the tabpage
       number and information about that one is returned.  If the tab
       page does not exist an empty List is returned.
 
       Each List item is a |Dictionary| with the following entries:
-      	tabnr		tab page number.
+      	tabnr		|tabpage-number|
       	variables	a reference to the dictionary with
       			tabpage-local variables
-      	windows		List of |window-ID|s in the tab page.
+      	windows		List of |window-ID|s in the tabpage.
 
     ]=],
     name = 'gettabinfo',
@@ -4987,7 +4996,7 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      Get the value of a tab-local variable {varname} in tab page
+      Get the value of a tab-local variable {varname} in tabpage
       {tabnr}. |t:var|
       Tabs are numbered starting with one.
       The {varname} argument is a string.  When {varname} is empty a
@@ -5006,29 +5015,34 @@ M.funcs = {
     args = { 3, 4 },
     base = 1,
     desc = [=[
-      Get the value of window-local variable {varname} in window
-      {winnr} in tab page {tabnr}.
-      The {varname} argument is a string.  When {varname} is empty a
-      dictionary with all window-local variables is returned.
-      When {varname} is equal to "&" get the values of all
-      window-local options in a |Dictionary|.
-      Otherwise, when {varname} starts with "&" get the value of a
-      window-local option.
-      Note that {varname} must be the name without "w:".
-      Tabs are numbered starting with one.  For the current tabpage
-      use |getwinvar()|.
-      {winnr} can be the window number or the |window-ID|.
+      Gets the value of window-local variable {varname} in {winnr}
+      (|window-number| or |window-ID|) in |tabpage-number| {tabnr}.
+
+      {varname} is a string:
+      - Name of the variable (without "w:").
+      - If empty, gets a dictionary with all window-local variables.
+      - If "&", gets the values of all window-local options in
+        a |Dictionary|.
+      - If it starts with "&", gets the value of a window-local
+        option.
+
+      To get window-local variables in the current tabpage use
+      |getwinvar()|.
+
       When {winnr} is zero the current window is used.
-      This also works for a global option, buffer-local option and
-      window-local option, but it doesn't work for a global variable
-      or buffer-local variable.
-      When the tab, window or variable doesn't exist {def} or an
-      empty string is returned, there is no error message.
+
+      Also works for a global option, buffer-local option,
+      window-local option, and tab-local option ('cmdheight').
+      But not for a global variable or buffer-local variable.
+
+      When the tab, window or variable doesn't exist, {def} or an
+      empty string is returned; there is no error.
+
       Examples: >vim
       	let list_is_on = gettabwinvar(1, 2, '&list')
       	echo "myvar = " .. gettabwinvar(3, 1, 'myvar')
       <
-      To obtain all window-local variables use: >vim
+      To get all window-local variables: >vim
       	gettabwinvar({tabnr}, {winnr}, '&')
       <
     ]=],
@@ -5048,8 +5062,8 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      Returns the tag stack of window {winnr} as a Dict.
-      {winnr} can be the window number or the |window-ID|.
+      Returns the tag stack of window {winnr} (|window-number| or
+      |window-ID|) as a Dict.
       When {winnr} is not specified, the current window is used.
       When window {winnr} doesn't exist, an empty Dict is returned.
 
@@ -5110,7 +5124,7 @@ M.funcs = {
       exist the result is an empty list.
 
       Without {winid} information about all the windows in all the
-      tab pages is returned.
+      tabpages is returned.
 
       Each List item is a |Dictionary| with the following entries:
       	botline		last complete displayed buffer line
@@ -5121,7 +5135,7 @@ M.funcs = {
       	loclist		1 if showing a location list
       	quickfix	1 if quickfix or location list window
       	status_height	status lines height (0 or 1)
-      	tabnr		tab page number
+      	tabnr		|tabpage-number|
       	terminal	1 if a terminal window
       	textoff		number of columns occupied by any
       			'foldcolumn', 'signcolumn' and line
@@ -5135,7 +5149,7 @@ M.funcs = {
       	wincol		leftmost screen column of the window;
       			"col" from |win_screenpos()|
       	winid		|window-ID|
-      	winnr		window number
+      	winnr		|window-number|
       	winrow		topmost screen line of the window;
       			"row" from |win_screenpos()|
 
@@ -5447,7 +5461,7 @@ M.funcs = {
       	echo haslocaldir(0, 0)
       <With {winnr} use that window in the current tabpage.
       With {winnr} and {tabnr} use the window in that tabpage.
-      {winnr} can be the window number or the |window-ID|.
+      {winnr} is a |window-number| or |window-ID|.
       If {winnr} is -1 it is ignored, only the tab is resolved.
       Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
 
@@ -6730,8 +6744,8 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Convert each number in {list} to a character string can
-      concatenate them all.  Examples: >vim
+      Converts each codepoint in {list} to a UTF-8 character and
+      returns the concatenated string.  Examples: >vim
       	echo list2str([32])		" returns " "
       	echo list2str([65, 66, 67])	" returns "ABC"
       <The same can be done (slowly) with: >vim
@@ -7254,8 +7268,8 @@ M.funcs = {
       	conceal	    Special character to show instead of the
       		    match (only for |hl-Conceal| highlighted
       		    matches, see |:syn-cchar|)
-      	window	    Instead of the current window use the
-      		    window with this number or window ID.
+      	window	    Use this |window-number| or |window-ID| instead
+      		    of the current window.
 
       The number of matches is not limited, as it is the case with
       the |:match| commands.
@@ -7424,8 +7438,7 @@ M.funcs = {
       or one of the |:match| commands.  Returns 0 if successful,
       otherwise -1.  See example for |matchadd()|.  All matches can
       be deleted in one operation by |clearmatches()|.
-      If {win} is specified, use the window with this number or
-      window ID instead of the current window.
+      {win} (if given) is a |window-number| or |window-ID|.
 
     ]=],
     name = 'matchdelete',
@@ -7494,15 +7507,15 @@ M.funcs = {
       		use for fuzzy matching.
 
       {str} is treated as a literal string and regular expression
-      matching is NOT supported.  The maximum supported {str} length
-      is 256.
+      matching is NOT supported.  Only the first 1024 characters of
+      {str} and of each item in {list} are used for matching;
+      characters beyond that are ignored.
 
       When {str} has multiple words each separated by white space,
       then the list of strings that have all the words is returned.
 
       If there are no matching strings or there is an error, then an
-      empty list is returned.  If length of {str} is greater than
-      256, then returns an empty list.
+      empty list is returned.
 
       When {limit} is given, matchfuzzy() will find up to this
       number of matches in {list} and return them in sorted order.
@@ -8109,11 +8122,10 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Return a string with a single character, which has the number
-      value {expr}.  Examples: >vim
+      Gets a UTF-8 string for a single codepoint {expr}.
+      Examples: >vim
       	echo nr2char(64)		" returns '@'
       	echo nr2char(32)		" returns ' '
-      <Example for "utf-8": >vim
       	echo nr2char(300)		" returns I with bow character
       <
       UTF-8 encoding is always used, {utf8} option has no effect,
@@ -9971,13 +9983,24 @@ M.funcs = {
                 will also be returned. (default: |FALSE|)
                 Not supported on Windows yet.
 
+        info  : If |TRUE|, return a list of Dicts with detailed info
+                instead of addresses. Implies `peer=true`. Each Dict
+                has the following items:
+                  addr          (string)  Server address.
+                  pid           (number)  PID of the Nvim process.
+                  own           (bool)    Whether this server belongs to
+                                          the current Nvim instance.
+                  active        (number)  |v:useractive| of the server.
+                (default: |FALSE|)
+
       Example: >vim
       	echo serverlist()
+      	echo serverlist(#{info: v:true})
       <
     ]=],
     name = 'serverlist',
     params = { { 'opts', 'table' } },
-    returns = 'string[]',
+    returns = 'string[]|vim.ServerInfo[]',
     signature = 'serverlist([{opts}])',
   },
   serverstart = {
@@ -10340,12 +10363,12 @@ M.funcs = {
     args = { 2, 4 },
     base = 2,
     desc = [=[
-      Create or replace or add to the location list for window {nr}.
-      {nr} can be the window number or the |window-ID|.
+      Create or replace or add to the location list for window {nr}
+      (|window-number| or |window-ID|).
       When {nr} is zero the current window is used.
 
       For a location list window, the displayed location list is
-      modified.  For an invalid window number {nr}, -1 is returned.
+      modified.  For an invalid {nr}, -1 is returned.
       Otherwise, same as |setqflist()|.
       Also see |location-list|.
 
@@ -10373,8 +10396,7 @@ M.funcs = {
       current window.  Returns 0 if successful, otherwise -1.  All
       current matches are cleared before the list is restored.  See
       example for |getmatches()|.
-      If {win} is specified, use the window with this number or
-      window ID instead of the current window.
+      {win} (if given) is a |window-number| or |window-ID|.
 
     ]=],
     name = 'setmatches',
@@ -10643,7 +10665,7 @@ M.funcs = {
     args = 3,
     base = 3,
     desc = [=[
-      Set tab-local variable {varname} to {val} in tab page {tabnr}.
+      Set tab-local variable {varname} to {val} in tabpage {tabnr}.
       |t:var|
       The {varname} argument is a string.
       Note that the variable name without "t:" must be used.
@@ -10664,7 +10686,7 @@ M.funcs = {
       {val}.
       Tabs are numbered starting with one.  For the current tabpage
       use |setwinvar()|.
-      {winnr} can be the window number or the |window-ID|.
+      {winnr} is a |window-number| or |window-ID|.
       When {winnr} is zero the current window is used.
       This also works for a global or local buffer option, but it
       doesn't work for a global or local buffer variable.
@@ -10692,8 +10714,8 @@ M.funcs = {
     args = { 2, 3 },
     base = 2,
     desc = [=[
-      Modify the tag stack of the window {nr} using {dict}.
-      {nr} can be the window number or the |window-ID|.
+      Modify the tag stack of the window {nr} (|window-number| or
+      |window-ID|) using {dict}.
 
       For a list of supported items in {dict}, refer to
       |gettagstack()|.  "curidx" takes effect before changing the tag
@@ -10733,7 +10755,7 @@ M.funcs = {
     args = 3,
     base = 3,
     desc = [=[
-      Like |settabwinvar()| for the current tab page.
+      Like |settabwinvar()| for the current tabpage.
       Examples: >vim
       	call setwinvar(1, "&list", 0)
       	call setwinvar(2, "myvar", "foobar")
@@ -12725,9 +12747,9 @@ M.funcs = {
     base = 1,
     desc = [=[
       Returns a |List| of buffer numbers, one for each window in
-      the specified tab page.
-      {arg} specifies the number of the tab page to be used.  When
-      omitted the current tab page is used.
+      the specified tabpage.
+      {arg} specifies the number of the tabpage to be used.  When
+      omitted the current tabpage is used.
       When {arg} is invalid the number zero is returned.
       To get a list of all buffers in all tabs use this: >vim
       	let buflist = []
@@ -12747,15 +12769,12 @@ M.funcs = {
   tabpagenr = {
     args = { 0, 1 },
     desc = [=[
-      Returns the number of the current tab page.  The first tab
-      page has number 1.
+      Returns the current |tabpage-number|.
 
       The optional argument {arg} supports the following values:
-      	$	the number of the last tab page (the tab page
-      		count).
-      	#	the number of the last accessed tab page
-      		(where |g<Tab>| goes to).  If there is no
-      		previous tab page, 0 is returned.
+        $	the last |tabpage-number| (the tabpage count).
+        #	the last-accessed |tabpage-number| (where |g<Tab>|
+      		goes to), or 0 if there is no previous tabpage.
       The number can be used with the |:tab| command.
 
       Returns zero on error.
@@ -12772,16 +12791,16 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Like |winnr()| but for tab page {tabarg}.
-      {tabarg} specifies the number of tab page to be used.
+      Like |winnr()| but for tabpage {tabarg}.
+      {tabarg} specifies the |tabpage-number| to be used.
       {arg} is used like with |winnr()|:
       - When omitted the current window number is returned.  This is
-        the window which will be used when going to this tab page.
+        the window which will be used when going to this tabpage.
       - When "$" the number of windows is returned.
       - When "#" the previous window nr is returned.
       Useful examples: >vim
-          tabpagewinnr(1)	    " current window of tab page 1
-          tabpagewinnr(4, '$')    " number of windows in tab page 4
+          tabpagewinnr(1)	    " current window of tabpage 1
+          tabpagewinnr(4, '$')    " number of windows in tabpage 4
       <When {tabarg} is invalid zero is returned.
 
     ]=],
@@ -13437,8 +13456,8 @@ M.funcs = {
       For a multi-byte character, the column number of the first
       byte in the character is returned.
 
-      The {winid} argument can be the window number or the
-      |window-ID|.  If this is zero, then the current window is used.
+      {winid} is a |window-number| or |window-ID|.  If zero, the
+      current window is used.
 
       Returns -1 if the window {winid} doesn't exist or the buffer
       line {lnum} or virtual column {col} is invalid.
@@ -13585,10 +13604,9 @@ M.funcs = {
     desc = [=[
       Get the |window-ID| for the specified window.
       When {win} is missing use the current window.
-      With {win} this is the window number.  The top window has
-      number 1.
-      Without {tab} use the current tab, otherwise the tab with
-      number {tab}.  The first tab has number one.
+      With {win} this is the |window-number|.
+      Without {tab} use the current tab, otherwise the
+      |tabpage-number| given by {tab}.
       Return zero if the window cannot be found.
 
     ]=],
@@ -13616,8 +13634,8 @@ M.funcs = {
       	"unknown"	window {nr} not found
 
       When {nr} is omitted return the type of the current window.
-      When {nr} is given return the type of this window by number or
-      |window-ID|.
+      When {nr} is given (|window-number| or |window-ID|) return the
+      type of that window.
 
       Also see the 'buftype' option.
 
@@ -13631,8 +13649,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Go to window with ID {expr}.  This may also change the current
-      tabpage.
+      Go to |window-ID| {expr}.  May change the current tabpage.
       Return TRUE if successful, FALSE if the window cannot be
       found.
 
@@ -13647,8 +13664,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Return a list with the tab number and window number of window
-      with ID {expr}: [tabnr, winnr].
+      Return [tabnr, winnr] for window with |window-ID| {expr}, where
+      tabnr is the |tabpage-number| and winnr is the |window-number|.
       Return [0, 0] if the window cannot be found.
 
     ]=],
@@ -13663,7 +13680,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Return the window number of window with ID {expr}.
+      Return the |window-number| of for the given |window-ID| {expr}.
       Return 0 if the window cannot be found in the current tabpage.
 
     ]=],
@@ -13681,7 +13698,7 @@ M.funcs = {
     desc = [=[
       Move window {nr}'s vertical separator (i.e., the right border)
       by {offset} columns, as if being dragged by the mouse.  {nr}
-      can be a window number or |window-ID|.  A positive {offset}
+      is a |window-number| or |window-ID|.  A positive {offset}
       moves right and a negative {offset} moves left.  Moving a
       window's vertical separator will change the width of the
       window and the width of other windows adjacent to the vertical
@@ -13691,7 +13708,7 @@ M.funcs = {
       FALSE otherwise.
       This will fail for the rightmost window and a full-width
       window, since it has no separator on the right.
-      Only works for the current tab page. *E1308*
+      Only works for the current tabpage. *E1308*
 
     ]=],
     name = 'win_move_separator',
@@ -13703,15 +13720,15 @@ M.funcs = {
     base = 1,
     desc = [=[
       Move window {nr}'s status line (i.e., the bottom border) by
-      {offset} rows, as if being dragged by the mouse.  {nr} can be
-      a window number or |window-ID|.  A positive {offset} moves
+      {offset} rows, as if being dragged by the mouse.  {nr} is a
+      |window-number| or |window-ID|.  A positive {offset} moves
       down and a negative {offset} moves up.  Moving a window's
       status line will change the height of the window and the
       height of other windows adjacent to the status line. The
       magnitude of movement may be smaller than specified (e.g., as
       a consequence of maintaining 'winminheight'). Returns TRUE if
       the window can be found and FALSE otherwise.
-      Only works for the current tab page.
+      Only works for the current tabpage.
 
     ]=],
     name = 'win_move_statusline',
@@ -13725,8 +13742,8 @@ M.funcs = {
       Return the screen position of window {nr} as a list with two
       numbers: [row, col].  The first window always has position
       [1, 1], unless there is a tabline, then it is [2, 1].
-      {nr} can be the window number or the |window-ID|.  Use zero
-      for the current window.
+      {nr} is a |window-number| or |window-ID|.  Use zero for the
+      current window.
       Returns [0, 0] if the window cannot be found.
     ]=],
     name = 'win_screenpos',
@@ -13745,8 +13762,8 @@ M.funcs = {
       Unlike commands such as |:split|, no new windows are created
       (the |window-ID| of window {nr} is unchanged after the move).
 
-      Both {nr} and {target} can be window numbers or |window-ID|s.
-      Both must be in the current tab page.
+      Both {nr} and {target} are a |window-number| or |window-ID|.
+      Both must be in the current tabpage.
 
       Returns zero for success, non-zero for failure.
 
@@ -13768,8 +13785,8 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Returns the buffer number associated with window {nr}.
-      {nr} can be the window number or the |window-ID|.
+      Returns the buffer number associated with window {nr}
+      (|window-number| or |window-ID|).
       When {nr} is zero, the number of the buffer in the current
       window is returned.
       When window {nr} doesn't exist, -1 is returned.
@@ -13847,7 +13864,7 @@ M.funcs = {
       	["row", [{nested list of windows}]]
       <
       Example: >vim
-      	" Only one window in the tab page
+      	" Only one window in the tabpage
       	echo winlayout()
       < >
       	['leaf', 1000]
@@ -13857,7 +13874,7 @@ M.funcs = {
       < >
       	['col', [['leaf', 1000], ['leaf', 1001]]]
       < >vim
-      	" The second tab page, with three horizontally split
+      	" The second tabpage, with three horizontally split
       	" windows, with two vertically split windows in the
       	" middle window
       	echo winlayout(2)
@@ -13897,7 +13914,7 @@ M.funcs = {
       		count).
       	#	the number of the last accessed window (where
       		|CTRL-W_p| goes to).  If there is no previous
-      		window or it is in another tab page 0 is
+      		window or it is in another tabpage, 0 is
       		returned.  May refer to the current window in
       		some cases (e.g. when evaluating 'statusline'
       		expressions).
@@ -13931,7 +13948,7 @@ M.funcs = {
     desc = [=[
       Returns a sequence of |:resize| commands that should restore
       the current window sizes.  Only works properly when no windows
-      are opened or closed and the current window and tab page is
+      are opened or closed and the current window and tabpage is
       unchanged.
       Example: >vim
       	let cmd = winrestcmd()

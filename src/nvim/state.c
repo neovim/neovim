@@ -136,13 +136,6 @@ void state_handle_k_event(void)
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(win_T *wp)
 {
-  // While an operator is being executed we return "virtual_op", because
-  // VIsual_active has already been reset, thus we can't check for "block"
-  // being used.
-  if (virtual_op != kNone) {
-    return virtual_op;
-  }
-
   // In Terminal mode the cursor can be positioned anywhere by the application
   if (State & MODE_TERMINAL) {
     return true;
@@ -150,9 +143,18 @@ bool virtual_active(win_T *wp)
 
   unsigned cur_ve_flags = get_ve_flags(wp);
 
-  return cur_ve_flags == kOptVeFlagAll
-         || ((cur_ve_flags & kOptVeFlagBlock) && VIsual_active && VIsual_mode == Ctrl_V)
-         || ((cur_ve_flags & kOptVeFlagInsert) && (State & MODE_INSERT));
+  if (cur_ve_flags == kOptVeFlagAll
+      || ((cur_ve_flags & kOptVeFlagInsert) && (State & MODE_INSERT))) {
+    return true;
+  }
+
+  // While an operator is being executed we return "virtual_op", because
+  // VIsual_active has already been reset, thus we can't check for "block"
+  // being used.
+  if (virtual_op != kNone) {
+    return virtual_op;
+  }
+  return (cur_ve_flags & kOptVeFlagBlock) && VIsual_active && VIsual_mode == Ctrl_V;
 }
 
 /// MODE_VISUAL, MODE_SELECT and MODE_OP_PENDING State are never set, they are

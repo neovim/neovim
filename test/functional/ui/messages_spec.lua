@@ -95,7 +95,12 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       messages = {
-        { content = { { writemsg } }, history = true, id = 'bufwrite', kind = 'progress' },
+        {
+          content = { { writemsg } },
+          history = true,
+          id = 'nvim.bufwrite "Xtest_functional_ui_messages_spec"',
+          kind = 'progress',
+        },
         {
           content = { { 'W10: Warning: Changing a readonly file', 19, 'WarningMsg' } },
           history = true,
@@ -413,7 +418,7 @@ describe('ui/ext_messages', function()
           for _, chunk in ipairs(msg.content) do
             text = text .. (#chunk >= 2 and chunk[2] or chunk[1])
           end
-          t.matches('^Type number and <Enter> %(q or empty cancels%):\n', text)
+          t.matches('^Select a tag:\n', text)
           t.matches('1: > F%s+help%.txt%s+', text)
         end
         screen.messages = {}
@@ -587,7 +592,12 @@ describe('ui/ext_messages', function()
         {1:~                        }|*2
       ]],
       messages = {
-        { content = { { '3 lines indented ' } }, history = true, id = 'indent', kind = 'progress' },
+        {
+          content = { { '3 lines indented ' } },
+          kind = 'progress',
+          id = 'nvim.indent',
+          history = true,
+        },
       },
     })
   end)
@@ -1398,7 +1408,7 @@ stack traceback:
         {
           content = { { string.format('"%s" [New] 0L, 0B written', fname) } },
           kind = 'progress',
-          id = 'bufwrite',
+          id = 'nvim.bufwrite "Xtest_functional_ui_messages_spec"',
           history = true,
         },
       },
@@ -1645,7 +1655,7 @@ stack traceback:
         {
           content = { { 'Scanning tags.', 6, 'Question' } },
           kind = 'progress',
-          id = 'completion',
+          id = 'nvim.completion',
         },
       },
       showmode = {
@@ -2516,7 +2526,7 @@ end)
 
 describe('ui/msg_puts_printf', function()
   it('output multibyte characters correctly', function()
-    skip(not t.translations_enabled(), 'Nvim not built with ENABLE_TRANSLATIONS')
+    skip(not t.translations_enabled(), 'N/A: Nvim not built with ENABLE_TRANSLATIONS')
     local screen
     local cmd = ''
     local build_dir = t.paths.test_build_dir

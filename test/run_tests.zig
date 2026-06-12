@@ -3,25 +3,22 @@ const LazyPath = std.Build.LazyPath;
 
 pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compile, config_dir: LazyPath, include_path: ?[]const LazyPath) !*std.Build.Step.Run {
     const test_step = b.addRunArtifact(nvim_bin);
-    test_step.addArg("-ll");
+    test_step.addArg("-l");
     test_step.addFileArg(b.path("./test/runner.lua"));
     if (include_path) |paths| {
         for (paths) |path| {
             test_step.addPrefixedDirectoryArg("-I", path);
         }
     }
+    test_step.addArg(b.fmt("-P{s}", .{b.install_path}));
     test_step.addArg("-v");
     test_step.addArg(b.fmt("--helper=./test/{s}/preload.lua", .{kind}));
     test_step.addArg("--lpath=./src/?.lua");
     test_step.addArg("--lpath=./runtime/lua/?.lua");
     test_step.addArg("--lpath=./?.lua");
     test_step.addPrefixedFileArg("--lpath=", config_dir.path(b, "?.lua")); // FULING: not a real file but works anyway?
-    // TODO(bfredl): look into a TEST_ARGS user hook, TEST_TAG, TEST_FILTER.
-    if (b.args) |args| {
-        test_step.addArgs(args); // accept TEST_FILE as a positional argument
-    } else {
-        test_step.addArg(b.fmt("./test/{s}/", .{kind}));
-    }
+    test_step.addArg(b.fmt("--default-path=./test/{s}", .{kind}));
+    if (b.args) |args| test_step.addArgs(args);
 
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
@@ -30,8 +27,6 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
     try env.put("XDG_CONFIG_HOME", "Xtest_xdg/config");
     try env.put("XDG_DATA_HOME", "Xtest_xdg/share");
     try env.put("XDG_STATE_HOME", "Xtest_xdg/state");
-    try env.put("TMPDIR", b.fmt("{s}/Xtest_tmpdir", .{b.install_path}));
-    try env.put("NVIM_LOG_FILE", b.fmt("{s}/Xtest_nvimlog", .{b.install_path}));
 
     _ = env.swapRemove("NVIM");
     _ = env.swapRemove("XDG_DATA_DIRS");
@@ -49,6 +44,19 @@ pub fn test_steps(b: *std.Build, nvim_bin: *std.Build.Step.Compile, depend_on: *
 
     const functionaltest_step = b.step("functionaltest", "run functional tests");
     functionaltest_step.dependOn(&functional_tests.step);
+
+    const old_tests = b.addRunArtifact(nvim_bin);
+    old_tests.addArg("-l");
+    old_tests.addFileArg(b.path("./test/old/runner.lua"));
+    if (b.args) |args| {
+        old_tests.addArgs(args); // accept TEST_FILE as a positional argument
+    }
+    const env = old_tests.getEnvMap();
+    try env.put("BUILD_DIR", b.install_path);
+
+    const oldtest_step = b.step("oldtest", "run old tests");
+    oldtest_step.dependOn(&old_tests.step);
+    oldtest_step.dependOn(depend_on);
 
     if (unit_paths) |paths| {
         const unit_tests = try testStep(b, "unit", nvim_bin, config_dir, paths);

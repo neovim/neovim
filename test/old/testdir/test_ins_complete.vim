@@ -3804,10 +3804,16 @@ func Test_complete_opt_fuzzy()
   call feedkeys("Goa\<C-P>\<C-Y>\<Esc>", 'tx')
   call assert_equal('aaaa', getline('.'))
 
+  %d
+  set autoindent
+  set completeopt=menuone,fuzzy
+  call feedkeys("A\<TAB>hello world\<CR>word is on fire\<CR>w\<C-X>\<C-L>\<C-Y>", 'tx')
+  call assert_equal("\thello world", getline('.'))
+
   " clean up
   set omnifunc=
   bw!
-  set complete& completeopt&
+  set complete& completeopt& autoindent&
   autocmd! AAAAA_Group
   augroup! AAAAA_Group
   delfunc OnPumChange

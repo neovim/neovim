@@ -4,6 +4,7 @@
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
 " Last Change:		2024 Sep 19 (simplify keywordprg #15696)
 " 2024 Jul 22 by Vim project (use :hor term #17822)
+" 2026 May 04 by Vim Project: fix typo
 
 if exists("b:did_ftplugin")
   finish
@@ -26,7 +27,7 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Readline Intialization Files (inputrc, .inputrc)\tinputrc;*.inputrc\n"
+  let b:browsefilter = "Readline Initialization Files (inputrc, .inputrc)\tinputrc;*.inputrc\n"
   if has("win32")
     let b:browsefilter ..= "All Files (*.*)\t*\n"
   else

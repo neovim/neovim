@@ -9,7 +9,7 @@ local api, clear, command, exec_lua, feed = n.api, n.clear, n.command, n.exec_lu
 local msg_timeout = 400
 local function set_msg_target_zero_ch()
   exec_lua(function()
-    require('vim._core.ui2').enable({ msg = { target = 'msg', msg = { timeout = msg_timeout } } })
+    require('vim._core.ui2').enable({ msg = { targets = 'msg', msg = { timeout = msg_timeout } } })
     vim.o.cmdheight = 0
   end)
 end
@@ -180,6 +180,7 @@ describe('messages2', function()
       foo [+9]                                             |
     ]])
     -- Do enter the pager in normal mode.
+    command('nmap <Esc> <Cmd>fclose<CR>')
     feed('<CR>')
     screen:expect([[
       ^foo                                                  |
@@ -379,6 +380,16 @@ describe('messages2', function()
       foo                                                  |
       bar                                                  |*5
       bar [+8]                                             |
+    ]])
+  end)
+
+  it('no prompt and newlines with Visual filter command #38273', function()
+    set_msg_target_zero_ch()
+    feed('V:w !printf foo<CR>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {1:~                                                 }{4:foo}|
     ]])
   end)
 
@@ -690,6 +701,19 @@ describe('messages2', function()
       {1:~                                                    }|*12
       foo                                                  |
     ]])
+    feed('<CR>')
+    -- Fast context is not determined by message kind #39666
+    exec_lua(function()
+      vim.schedule(function()
+        vim.api.nvim_echo({ { 'bar' } }, false, { kind = 'search_cmd' })
+        vim.fn.getchar()
+      end)
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      bar                                                  |
+    ]])
   end)
 
   it('properly formatted carriage return messages', function()
@@ -954,8 +978,8 @@ describe('messages2', function()
 
   it('configured targets per kind', function()
     exec_lua(function()
-      local cfg = { msg = { targets = { echo = 'msg', list_cmd = 'pager' } } }
-      require('vim._core.ui2').enable(cfg)
+      local targets = { echo = 'msg', list_cmd = 'pager', bufwrite = 'cmd', lua_print = 'cmd' }
+      require('vim._core.ui2').enable({ msg = { targets = targets } })
       print('foo') -- "lua_print" kind goes to cmd
       vim.cmd.echo('"bar"') -- "echo" kind goes to msg
       vim.cmd.highlight('VisualNC') -- "list_cmd" kind goes to pager
@@ -976,6 +1000,25 @@ describe('messages2', function()
       ^VisualNC       xxx cleared                        {4:bar}|
       foo                                                  |
     ]])
+    -- Duplicate indicator in msg and cmd target simultaneously
+    command('close | echo "bar" | lua print("foo")')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*11
+      {1:~                                              }{4:bar(1)}|
+      foo(1)                                               |
+    ]])
+    finally(function()
+      os.remove('Xfile')
+    end)
+    -- Route bufwrite as a pattern to the message ID #39341
+    command('edit Xfile | write')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*11
+      {1:~                                              }{4:bar(1)}|
+      "Xfile" [New] 0L, 0B written                         |
+    ]])
   end)
 
   it('message survives after closing tabpage without error #39055', function()
@@ -993,6 +1036,40 @@ describe('messages2', function()
       ^                                                     |
       {1:~                                                    }|*12
       {1:~                                               }{4:hello}|
+    ]])
+  end)
+
+  it('no crash for resized grid during redraw #39075', function()
+    exec_lua(function()
+      vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace(''), {
+        on_win = function()
+          print('\n')
+        end,
+      })
+    end)
+    feed(':')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}^                                                    |
+    ]])
+    feed('f')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+                                                           |*2
+      {16::}{15:f}^                                                   |
+    ]])
+  end)
+
+  it('configured cmd window height prevents expanded message #39375', function()
+    exec_lua('require("vim._core.ui2").enable({ msg = { cmd = { height = 1 } } })')
+    command('echo "foo\nbar"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      foo [+1]                                             |
     ]])
   end)
 end)

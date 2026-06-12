@@ -98,7 +98,7 @@ function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
     api.nvim_win_set_config(ui.wins.cmd, { border = 'none' })
     ui.msg.expand_msg('cmd', 'dialog')
   elseif ui.msg.cmd.msg_row ~= -1 and M.expand == 0 then
-    ui.msg.msg_clear()
+    ui.msg.cmd:clear()
   end
 
   M.level, M.indent, M.prompt = level, indent, #prompt > 0
@@ -126,18 +126,13 @@ end
 ---@param pos integer
 --@param level integer
 function M.cmdline_pos(pos)
-  local curpos = api.nvim_win_get_cursor(ui.wins.cmd)
   pos = #fn.strtrans(cmdbuff:sub(1, pos))
-  if curpos[1] ~= M.erow + 1 or curpos[2] ~= promptlen + pos then
-    -- Add matchparen highlighting to non-prompt part of cmdline.
-    if pos > 0 and fn.exists('#matchparen#CursorMoved') == 1 then
-      api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos - 1 })
-      vim._with({ win = ui.wins.cmd, wo = { eventignorewin = '' } }, function()
-        api.nvim_exec_autocmds('CursorMoved', {})
-      end)
-    end
-    api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos })
+  -- Add matchparen highlighting to non-prompt part of cmdline.
+  if pos > 0 and vim.g.loaded_matchparen == 1 and fn.exists(':DoMatchParen') > 0 then
+    api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos - 1 })
+    require('nvim.matchparen').highlight_matching_pair(ui.wins.cmd)
   end
+  api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos })
 end
 
 --- Leaving the cmdline, restore 'cmdheight' and 'ruler'.

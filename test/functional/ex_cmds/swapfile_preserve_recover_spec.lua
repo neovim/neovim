@@ -172,7 +172,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
               text = text .. (#chunk >= 2 and chunk[2] or chunk[1])
             end
             -- New ui.select-driven prompt; rich info from format_item.
-            eq(true, text:match('Enter number of swap file to use') ~= nil)
+            eq(true, text:match('Select a swapfile:') ~= nil)
             eq(true, text:match('%.swo') ~= nil)
             eq(true, text:match('%.swp') ~= nil)
             eq(true, text:match('host name:') ~= nil)
@@ -183,7 +183,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
       else
         screen:expect({
           any = {
-            vim.pesc('Enter number of swap file to use (q or empty cancels):'),
+            vim.pesc('Select a swapfile:'),
             '\n1:.*%.swo',
             '\n2:.*%.swp',
             'host name:',

@@ -34,9 +34,9 @@
 local M = {}
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
 local protocol = lsp.protocol
-local isnil = require('vim._core.util').isnil
 
 local rtt_ms = 50.0
 local ns_to_ms = 0.000001
@@ -169,6 +169,13 @@ local function apply_snippet(item)
   end
 end
 
+local function fallback_filtertext(item, word, prefix, match)
+  if item.filterText and not match(word, prefix) and match(item.filterText, prefix) then
+    return item.filterText
+  end
+  return word
+end
+
 --- Returns text that should be inserted when a selecting completion item. The
 --- precedence is as follows: textEdit.newText > insertText > label
 ---
@@ -201,20 +208,17 @@ local function get_completion_word(item, prefix, match)
           item.filterText and vim.fn.match(item.label, '^\\k') == -1 and item.filterText
           or item.label
         )
-      if item.filterText and not match(word, prefix) then
-        return item.filterText
-      else
-        return word
-      end
+      return fallback_filtertext(item, word, prefix, match)
     else
       return item.label
     end
   elseif item.textEdit then
     local word = item.textEdit.newText
     word = string.gsub(word, '\r\n?', '\n')
-    return word:match('([^\n]*)') or word
+    word = word:match('([^\n]*)') or word
+    return fallback_filtertext(item, word, prefix, match)
   elseif item.insertText and item.insertText ~= '' then
-    return item.insertText
+    return fallback_filtertext(item, item.insertText, prefix, match)
   end
   return item.label
 end
@@ -260,22 +264,25 @@ local function get_items(result)
   end
 end
 
+---Returns an item's documentation value and its markup kind.
 ---@param item lsp.CompletionItem
 ---@return string
+---@return lsp.MarkupKind
 local function get_doc(item)
   local doc = item.documentation
+  local default_kind = vim.lsp.protocol.MarkupKind.Markdown
   if not doc then
-    return ''
+    return '', default_kind
   end
   if type(doc) == 'string' then
-    return doc
+    return doc, default_kind
   end
   if type(doc) == 'table' and type(doc.value) == 'string' then
-    return doc.value
+    return doc.value, doc.kind
   end
 
   vim.notify('invalid documentation value: ' .. vim.inspect(doc), vim.log.levels.WARN)
-  return ''
+  return '', default_kind
 end
 
 ---@param value string
@@ -348,6 +355,43 @@ local function generate_kind(item)
   return '■', group
 end
 
+---Returns the [complete-items] info for an LSP completion item, its markup kind, and whether the
+---info is complete.
+---The info is complete when all of the fields of the item required to build it are present. If the
+---info is not complete, resolving the item (via completionItem/resolve) may populate the missing
+---fields.
+---@param item lsp.CompletionItem
+---@return string
+---@return lsp.MarkupKind
+---@return boolean complete
+local function complete_item_info(item)
+  local info, kind = get_doc(item)
+
+  if item.detail and item.detail ~= '' then
+    local detail_block = ('```%s\n%s\n```'):format(vim.bo.filetype, item.detail)
+    if info == '' then
+      info = detail_block
+    elseif not info:find(item.detail, 1, true) then
+      info = detail_block .. '\n' .. info
+    end
+  end
+
+  if
+    info == ''
+    and has_completeopt('popup')
+    and item.insertTextFormat == protocol.InsertTextFormat.Snippet
+  then
+    local text = item.insertText or (item.textEdit and item.textEdit.newText)
+    if text then
+      local snippet = parse_snippet(text)
+      info = ('```%s\n%s\n```'):format(vim.bo.filetype, snippet)
+    end
+  end
+
+  local complete = item.detail ~= nil and item.documentation ~= nil
+  return info, kind, complete
+end
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -400,6 +444,8 @@ function M._lsp_to_complete_items(
   local bufnr = api.nvim_get_current_buf()
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
+  local client = client_id and vim.lsp.get_client_by_id(client_id)
+  local server_supports_resolve = client and client:supports_method('completionItem/resolve')
   for _, item in ipairs(items) do
     local match, score = matches(item)
     if match then
@@ -431,12 +477,13 @@ function M._lsp_to_complete_items(
         hl_group = 'DiagnosticDeprecated'
       end
       local kind, kind_hlgroup = generate_kind(item)
+      local info, info_kind, info_complete = complete_item_info(item)
       local completion_item = {
         word = word,
         abbr = ('%s%s'):format(item.label, vim.tbl_get(item, 'labelDetails', 'detail') or ''),
         kind = kind,
-        menu = vim.tbl_get(item, 'labelDetails', 'description') or item.detail or '',
-        info = get_doc(item),
+        menu = vim.tbl_get(item, 'labelDetails', 'description') or '',
+        info = info,
         icase = 1,
         dup = 1,
         empty = 1,
@@ -447,6 +494,8 @@ function M._lsp_to_complete_items(
           nvim = {
             lsp = {
               completion_item = item,
+              info_kind = info_kind,
+              completion_item_needs_resolving = server_supports_resolve and not info_complete,
               client_id = client_id,
             },
           },
@@ -732,6 +781,7 @@ function CompletionResolver:request(bufnr, param, selected_word)
     local start_time = vim.uv.hrtime()
     self.last_request_time = start_time
 
+    ---@param result lsp.CompletionItem
     client:request('completionItem/resolve', param, function(err, result)
       local end_time = vim.uv.hrtime()
       local response_time = (end_time - start_time) * ns_to_ms
@@ -749,92 +799,37 @@ function CompletionResolver:request(bufnr, param, selected_word)
         return
       end
 
-      local value = vim.tbl_get(result, 'documentation', 'value') --[[@as string?]]
-      local kind = vim.tbl_get(result, 'documentation', 'kind')
-      local text_format = vim.tbl_get(result, 'insertTextFormat')
-
-      if result.detail and result.detail ~= '' then
-        if not value then
-          value = ('```%s\n%s\n```'):format(vim.bo.filetype, result.detail)
-          kind = kind or lsp.protocol.MarkupKind.Markdown
-        elseif not value:find(result.detail, 1, true) then
-          local detail_block = ('```%s\n%s\n```'):format(vim.bo.filetype, result.detail)
-          value = detail_block .. '\n' .. value
-          kind = kind or lsp.protocol.MarkupKind.Markdown
-        end
+      local info, kind = complete_item_info(result)
+      if info ~= '' and info ~= cmp_info.completed.info then
+        local windata = vim.api.nvim__complete_set(cmp_info.selected, { info = info })
+        update_popup_window(windata.winid, windata.bufnr, kind)
       end
-
-      if not value then
-        if text_format ~= protocol.InsertTextFormat.Snippet then
-          return
-        end
-        -- generate snippet preview info
-        local insert_text = vim.tbl_get(result, 'insertText')
-        if insert_text then
-          value = ('```%s\n%s\n```'):format(vim.bo.filetype, parse_snippet(insert_text))
-          kind = lsp.protocol.MarkupKind.Markdown
-        end
-      end
-      local windata = vim.api.nvim__complete_set(cmp_info.selected, {
-        info = value,
-      })
-      update_popup_window(windata.winid, windata.bufnr, kind)
     end, bufnr)
   end, debounce_time)
 end
 
---- Defines a CompleteChanged handler to request and display LSP completion item documentation
---- via completionItem/resolve
+--- Defines a CompleteChanged handler to highlight the completion info popup and request/display LSP
+--- completion item documentation via completionItem/resolve
 local function on_completechanged(group, bufnr)
-  api.nvim_create_autocmd('CompleteChanged', {
-    group = group,
+  nvim_on('CompleteChanged', group, {
     buf = bufnr,
-    callback = function(ev)
-      local completed_item = vim.v.event.completed_item or {}
-      local lsp_item = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'completion_item')
+    desc = 'Highlight completion info popup and request/display LSP completion item documentation via completionItem/resolve',
+  }, function(ev)
+    local completed_item = vim.v.event.completed_item or {}
+    local user_data = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp')
+    if not user_data then
+      return
+    end
+    if (completed_item.info or '') ~= '' then
       local data = vim.fn.complete_info({ 'selected' })
-      if (completed_item.info or '') ~= '' then
-        local kind = vim.tbl_get(lsp_item or {}, 'documentation', 'kind')
-        update_popup_window(
-          data.preview_winid,
-          data.preview_bufnr,
-          kind or protocol.MarkupKind.Markdown
-        )
-        return
-      end
+      update_popup_window(data.preview_winid, data.preview_bufnr, user_data.info_kind)
+    end
 
-      if
-        #lsp.get_clients({
-          id = vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp', 'client_id'),
-          method = 'completionItem/resolve',
-          bufnr = ev.buf,
-        }) == 0
-      then
-        if
-          has_completeopt('popup')
-          and lsp_item
-          and lsp_item.insertTextFormat == protocol.InsertTextFormat.Snippet
-        then
-          -- Shows snippet preview in doc popup if completeopt=popup.
-          local text = parse_snippet(lsp_item.insertText or lsp_item.textEdit.newText)
-          local windata = api.nvim__complete_set(
-            data.selected,
-            { info = ('```%s\n%s\n```'):format(vim.bo.filetype, text) }
-          )
-          update_popup_window(windata.winid, windata.bufnr, protocol.MarkupKind.Markdown)
-        end
-        return
-      end
-
-      -- Retrieve the raw LSP completionItem from completed_item as the parameter for
-      -- the completionItem/resolve request
-      if lsp_item then
-        Context.resolve_handler = Context.resolve_handler or CompletionResolver.new()
-        Context.resolve_handler:request(ev.buf, lsp_item, completed_item.word)
-      end
-    end,
-    desc = 'Request and display LSP completion item documentation via completionItem/resolve',
-  })
+    if user_data.completion_item_needs_resolving then
+      Context.resolve_handler = Context.resolve_handler or CompletionResolver.new()
+      Context.resolve_handler:request(ev.buf, user_data.completion_item, completed_item.word)
+    end
+  end)
 end
 
 local function on_complete_done()
@@ -938,16 +933,12 @@ local function register_completedone(bufnr)
     return group
   end
 
-  api.nvim_create_autocmd('CompleteDone', {
-    group = group,
-    buf = bufnr,
-    callback = function()
-      local reason = api.nvim_get_vvar('event').reason ---@type string
-      if reason == 'accept' then
-        on_complete_done()
-      end
-    end,
-  })
+  nvim_on('CompleteDone', group, { buf = bufnr }, function()
+    local reason = api.nvim_get_vvar('event').reason ---@type string
+    if reason == 'accept' then
+      on_complete_done()
+    end
+  end)
 
   return group
 end
@@ -1011,7 +1002,7 @@ local function trigger(bufnr, clients, ctx)
             client and client.name or 'UNKNOWN'
           )
         )
-      elseif not isnil(result) and #(result.items or result) > 0 then
+      elseif not vim.isnil(result) and #(result.items or result) > 0 then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
         local encoding = client and client.offset_encoding or 'utf-16'
         local client_matches, tmp_server_start_boundary
@@ -1164,28 +1155,18 @@ local function enable_completions(client_id, bufnr, opts)
 
     -- Set up autocommands.
     local group = register_completedone(bufnr)
-    api.nvim_create_autocmd('LspDetach', {
-      group = group,
+    nvim_on('LspDetach', group, {
       buf = bufnr,
       desc = 'vim.lsp.completion: clean up client on detach',
-      callback = function(ev)
-        disable_completions(ev.data.client_id, ev.buf)
-      end,
-    })
+    }, function(ev)
+      disable_completions(ev.data.client_id, ev.buf)
+    end)
 
     if opts.autotrigger then
-      api.nvim_create_autocmd('InsertCharPre', {
-        group = group,
-        buf = bufnr,
-        callback = function()
-          on_insert_char_pre(buf_handles[bufnr])
-        end,
-      })
-      api.nvim_create_autocmd('InsertLeave', {
-        group = group,
-        buf = bufnr,
-        callback = on_insert_leave,
-      })
+      nvim_on('InsertCharPre', group, { buf = bufnr }, function()
+        on_insert_char_pre(buf_handles[bufnr])
+      end)
+      nvim_on('InsertLeave', group, { buf = bufnr }, on_insert_leave)
     end
   end
 
@@ -1230,7 +1211,11 @@ end
 ---
 --- Examples: |lsp-attach| |lsp-completion|
 ---
---- Note: the behavior of `autotrigger=true` is controlled by the LSP `triggerCharacters` field. You
+--- @note |vim.lsp.omnifunc()| (|i_CTRL-X_CTRL-O|) queries every client that advertises completion,
+--- including clients that were disabled by `enable(false)`. To suppress completions for a client,
+--- clear its capability on |LspAttach|: `client.server_capabilities.completionProvider = nil`.
+---
+--- @note Behavior of `autotrigger=true` is controlled by the LSP `triggerCharacters` field. You
 --- can override it on LspAttach, see |lsp-autocompletion|.
 ---
 --- @param enable boolean True to enable, false to disable
@@ -1254,9 +1239,7 @@ end
 --- Triggers LSP completion once in the current buffer, if LSP completion is enabled
 --- (see |lsp-attach| |lsp-completion|).
 ---
---- Used by the default LSP |omnicompletion| provider |vim.lsp.omnifunc()|, thus |i_CTRL-X_CTRL-O|
---- invokes this in LSP-enabled buffers. Use CTRL-Y to select an item from the completion menu.
---- |complete_CTRL-Y|
+--- Use CTRL-Y to select an item from the completion menu. |complete_CTRL-Y|
 ---
 --- To invoke manually with CTRL-space, use this mapping:
 --- ```lua

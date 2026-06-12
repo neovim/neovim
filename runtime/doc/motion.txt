@@ -267,11 +267,12 @@ g<End>			Like |g$| but to the last non-blank character
 f{char}			To [count]'th occurrence of {char} to the right.  The
 			cursor is placed on {char} |inclusive|.
 			{char} can be entered as a digraph |digraph-arg|.
-			When 'encoding' is set to Unicode, composing
-			characters may be used, see |utf-8-char-arg|.
+			Composing characters may be used |utf-8-char-arg|.
 			|:lmap| mappings apply to {char}.  The CTRL-^ command
 			in Insert mode can be used to switch this on/off
 			|i_CTRL-^|.
+
+			See |getcharsearch() |setcharsearch()
 
 							*F*
 F{char}			To the [count]'th occurrence of {char} to the left.
@@ -284,6 +285,8 @@ t{char}			Till before [count]'th occurrence of {char} to the
 			{char} |inclusive|.
 			{char} can be entered like with the |f| command.
 
+			See |getcharsearch() |setcharsearch()
+
 							*T*
 T{char}			Till after [count]'th occurrence of {char} to the
 			left.  The cursor is placed on the character right of
@@ -291,11 +294,15 @@ T{char}			Till after [count]'th occurrence of {char} to the
 			{char} can be entered like with the |f| command.
 
 							*;*
-;			Repeat latest f, t, F or T [count] times.  See |cpo-;|
+;			Repeat latest f, t, F or T [count] times.
+
+			See |getcharsearch() |setcharsearch() |cpo-;|
 
 							*,*
 ,			Repeat latest f, t, F or T in opposite direction
-			[count] times.  See also |cpo-;|
+			[count] times.
+
+			See |getcharsearch() |setcharsearch() |cpo-;|
 
 ==============================================================================
 3. Up-down motions					*up-down-motions*
@@ -582,6 +589,17 @@ ip			"inner paragraph", select [count] paragraphs (see
 			is also a paragraph boundary.
 			When used in Visual mode it is made linewise.
 
+							*v_al* *al*
+al			"all lines", select the whole buffer.
+			When used in Visual mode it is made linewise.
+
+							*v_il* *il*
+il			"inner line", select the current line without leading
+			or trailing white space.  Fails on a blank or
+			white-space-only line.
+			When used in Visual mode it selects the line under the
+			cursor and switches to charwise Visual mode.
+
 a]						*v_a]* *v_a[* *a]* *a[*
 a[			"a [] block", select [count] '[' ']' blocks.  This
 			goes backwards to the [count] unclosed '[', and finds
@@ -760,6 +778,43 @@ In HTML it is possible to have a tag like <br> or <meta ...> without a
 matching end tag.  These are ignored.
 
 The text objects are tolerant about mistakes.  Stray end tags are ignored.
+
+------------------------------------------------------------------------------
+Custom text object					  *text-object-define*
+
+The following code example shows how to define your own custom text-object.
+Notice how the Visual-mode (xnoremap) mapping is defined as an <expr> mapping
+which sets the |'[| |']| marks, then the Operator-pending (onoremap) mapping
+is implemented using Visual-mode.
+
+>vim
+    " text-object: entire buffer
+    function! s:line_outer_movement(count) abort
+      if empty(getline(1)) && 1 == line('$')
+        return "\<Esc>"
+      endif
+      let [lopen, copen, lclose, cclose] = [1, 1, line('$'), 1]
+      call setpos("'[", [0, lopen, copen, 0])
+      call setpos("']", [0, lclose, cclose, 0])
+      return "'[o']"
+    endfunction
+    xnoremap <expr>   al <SID>line_outer_movement(v:count1)
+    onoremap <silent> al :normal Val<CR>
+
+    " text-object: line
+    function! s:line_inner_movement(count) abort
+      "TODO: handle count
+      if empty(getline('.'))
+        return "\<Esc>"
+      endif
+      let [lopen, copen, lclose, cclose] = [line('.'), 1, line('.'), col('$')-1]
+      call setpos("'[", [0, lopen, copen, 0])
+      call setpos("']", [0, lclose, cclose, 0])
+      return "`[o`]"
+    endfunction
+    xnoremap <expr>   il <SID>line_inner_movement(v:count1)
+    onoremap <silent> il :normal vil<CR>
+<
 
 ==============================================================================
 7. Marks					*mark-motions* *E20* *E78*

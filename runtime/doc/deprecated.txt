@@ -27,6 +27,21 @@ API
 EVENTS
 • *BufModifiedSet*	Use |OptionSet| with pattern "modified" instead.
 
+HIGHLIGHTS
+
+• vim.hl.on_yank()	Use |vim.hl.hl_op()| instead.
+
+LUA
+
+• vim.F.if_nil()			Renamed to |vim.nonnil()|
+• vim.F.ok_or_nil()
+• vim.F.npcall()			Renamed to |vim.npcall()|
+• vim.F.nil_wrap()			Use |vim.npcall()| instead
+
+LSP
+
+• vim.lsp.util.character_offset()	Use to |vim.str_utfindex()| instead
+
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*
 
@@ -173,7 +188,7 @@ LSP
 LUA
 • *vim.loop*				Use |vim.uv| instead.
 • *vim.tbl_add_reverse_lookup()*
-• *vim.tbl_flatten()*			Use |Iter:flatten()| instead.
+• *vim.tbl_flatten()*			Use |IterArray:flatten()| instead.
 • *vim.tbl_islist()*			Use |vim.islist()| instead.
 
 OPTIONS

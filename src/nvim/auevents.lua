@@ -113,6 +113,7 @@ return {
     TabClosedPre = false, -- before closing a tab page
     TabEnter = false, -- after entering a tab page
     TabLeave = false, -- before leaving a tab page
+    TabMoved = false, -- after a tab was moved
     TabNew = false, -- when creating a new tab
     TabNewEntered = false, -- after entering a new tab
     TermChanged = false, -- after changing 'term'
@@ -126,6 +127,8 @@ return {
     TextChangedI = true, -- text was modified in Insert mode(no popup)
     TextChangedP = true, -- text was modified in Insert mode(popup)
     TextChangedT = true, -- text was modified in Terminal mode
+    TextPutPost = true, -- after some text was put
+    TextPutPre = true, -- before some text was put
     TextYankPost = true, -- after a yank or delete was done (y, d, c)
     UIEnter = false, -- after UI attaches
     UILeave = false, -- after UI detaches
@@ -169,6 +172,7 @@ return {
     RecordingEnter = true,
     RecordingLeave = true,
     Signal = true,
+    TabMoved = true,
     TabNewEntered = true,
     TermClose = true,
     TermOpen = true,

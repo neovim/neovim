@@ -199,12 +199,13 @@ describe('channels', function()
       eq('stdout', msg[2])
       eq(id, msg[3][1])
       accumulated = accumulated .. table.concat(msg[3][2], '\n')
+      -- Windows: strip terminal escapes injected by ConPTY (CSI/OSC).
+      accumulated = accumulated:gsub('\27%[[%d;?]*[%a~]', ''):gsub('\27%][^\7]*\7', '')
     end
     eq(expected, accumulated)
   end
 
   it('can use stdio channel with pty', function()
-    skip(is_os('win'))
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -229,11 +230,20 @@ describe('channels', function()
     local id = eval('g:id')
     ok(id > 0)
 
+    -- Windows ConPTY does not echo input to the master, unlike POSIX ptys.
+    local echo_text = is_os('win') and '' or 'TEXT\r\n'
+    local echo_blobs = is_os('win') and '' or 'Blobs!\r\n'
+
     command("call chansend(id, 'TEXT\n')")
-    expect_stdout(id, "TEXT\r\n[1, ['TEXT', ''], 'stdin']")
+    expect_stdout(id, echo_text .. "[1, ['TEXT', ''], 'stdin']")
 
     command('call chansend(id, 0z426c6f6273210a)')
-    expect_stdout(id, "Blobs!\r\n[1, ['Blobs!', ''], 'stdin']")
+    expect_stdout(id, echo_blobs .. "[1, ['Blobs!', ''], 'stdin']")
+
+    -- Windows: the assertions below depend on POSIX pty canonical-mode behavior (echo, backspace handling, EOT-as-EOF).
+    if is_os('win') then
+      return
+    end
 
     command("call chansend(id, 'neovan')")
     expect_stdout(id, 'neovan')
@@ -255,7 +265,6 @@ describe('channels', function()
   end)
 
   it('stdio channel can use rpc and stderr simultaneously', function()
-    skip(is_os('win'))
     source([[
       let g:job_opts = {
       \ 'on_stderr': function('OnEvent'),
@@ -275,8 +284,10 @@ describe('channels', function()
     command(
       "let id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)"
     )
-    eq({ 'notification', 'message', { 'hi there!', 1 } }, next_msg())
-    eq({ 'notification', 'stderr', { 3, { 'trouble!' } } }, next_msg())
+    -- On Windows the stderr write may be delivered before the RPC notify.
+    local notif1 = { 'notification', 'message', { 'hi there!', 1 } }
+    local notif2 = { 'notification', 'stderr', { 3, { 'trouble!' } } }
+    n.expect_msg_seq({ notif1, notif2 }, { notif2, notif1 })
 
     eq(30, eval("rpcrequest(id, 'nvim_eval', '[chansend(v:stderr, \"math??\"), 5*6][1]')"))
     eq({ 'notification', 'stderr', { 3, { 'math??' } } }, next_msg())

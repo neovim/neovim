@@ -63,6 +63,20 @@ function M.app(path, bufnr)
   end
 end
 
+-- This function checks for Kawasaki robots AS file or atlas file type.
+--- @type vim.filetype.mapfn
+function M.as(_, bufnr)
+  if vim.g.filetype_as then
+    return vim.g.filetype_as
+  end
+  for _, line in ipairs(getlines(bufnr, 1, 30)) do
+    if line:find('^%.NETCONF') then
+      return 'kawasaki_as'
+    end
+  end
+  return 'atlas'
+end
+
 --- @param bufnr integer
 --- @return boolean
 local function is_objectscript_routime(bufnr)
@@ -848,7 +862,7 @@ function M.html(_, bufnr)
     if
       matchregex(
         line,
-        [[@\(if\|for\|defer\|switch\)\|\*\(ngIf\|ngFor\|ngSwitch\|ngTemplateOutlet\)\|ng-template\|ng-content]]
+        [[@\(if\|for\|defer\|switch\)\|\*\(ngIf\|ngFor\|ngSwitch\|ngTemplateOutlet\)\|\<ng-template\|\<ng-content]]
       )
     then
       return 'htmlangular'
@@ -936,10 +950,10 @@ function M.inc(path, bufnr)
     elseif findany(line, { '^%s{', '^%s%(%*' }) or matchregex(line, pascal_keywords) then
       return 'pascal'
     elseif
-      matchregex(line, [[\<\%(require\|inherit\)\>]])
+      matchregex(line, [[^\s*\<\%(require\|inherit\)\>]])
       or matchregex(
         line,
-        [=[[A-Z][A-Za-z0-9_:${}/]*\(\[[A-Za-z0-9_:/]\+\]\)*\s\+\%(??\|[?:+.]\)\?=.\? ]=]
+        [=[^\s*[A-Z][A-Za-z0-9_:${}/]*\%(\[[A-Za-z0-9_:/]\+\]\)*\s\+\%(??=\|[?:+.]=\|=[+.]\?\)\s\+]=]
       )
     then
       return 'bitbake'
@@ -1258,8 +1272,12 @@ end
 
 --- @type vim.filetype.mapfn
 function M.mm(_, bufnr)
+  if vim.g.filetype_mm then
+    return vim.g.filetype_mm
+  end
+
   for _, line in ipairs(getlines(bufnr, 1, 20)) do
-    if matchregex(line, [[\c^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\)]]) then
+    if matchregex(line, [[\c^\s*\(//\|#\s*\(include\|import\)\>\|@import\>\|/\*\)]]) then
       return 'objcpp'
     end
   end
@@ -2139,6 +2157,8 @@ local function match_from_hashbang(contents, path, dispatch_extension)
     name = fn.substitute(first_line, [[^#!.*\<env\>\s\+\(\i\+\).*]], '\\1', '')
   elseif matchregex(first_line, [[^#!\s*[^/\\ ]*\>\([^/\\]\|$\)]]) then
     name = fn.substitute(first_line, [[^#!\s*\([^/\\ ]*\>\).*]], '\\1', '')
+  elseif matchregex(first_line, [[^#!.*\<busybox\>]]) then
+    name = fn.substitute(first_line, [[^#!.*\<busybox\>\s\+\(\i\+\).*]], '\\1', '')
   else
     name = fn.substitute(first_line, [[^#!\s*\S*[/\\]\(\f\+\).*]], '\\1', '')
   end
@@ -2149,7 +2169,7 @@ local function match_from_hashbang(contents, path, dispatch_extension)
     name = 'wish'
   end
 
-  if matchregex(name, [[^\(bash\d*\|dash\|ksh\d*\|sh\)\>]]) then
+  if matchregex(name, [[^\(bash\d*\|d\?ash\|ksh\d*\|sh\)\>]]) then
     -- Bourne-like shell scripts: bash bash2 dash ksh ksh93 sh
     return sh(path, contents, first_line)
   elseif matchregex(name, [[^csh\>]]) then

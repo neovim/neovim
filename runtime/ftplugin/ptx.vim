@@ -1,7 +1,8 @@
 " Vim filetype plugin file
-" Language:	Nvidia PTX (Parellel Thread Execution)
+" Language:	Nvidia PTX (Parallel Thread Execution)
 " Maintainer:	Yinzuo Jiang <jiangyinzuo@foxmail.com>
 " Last Change:	2024-12-05
+" 2026 May 04 by Vim Project: fix typo
 
 if exists("b:did_ftplugin")
   finish

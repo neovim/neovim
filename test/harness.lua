@@ -107,7 +107,7 @@
 --- @field helper? string
 --- @field tags string[]
 --- @field filter? string
---- @field filter_out? string
+--- @field filter_out string[]
 --- @field lpaths string[]
 --- @field cpaths string[]
 --- @field paths string[]
@@ -796,8 +796,10 @@ local function test_selected(test, opts)
     return false
   end
 
-  if opts.filter_out and test.full_name:match(opts.filter_out) then
-    return false
+  for _, filter_out in ipairs(opts.filter_out) do
+    if test.full_name:match(filter_out) then
+      return false
+    end
   end
 
   return true
@@ -1032,6 +1034,8 @@ local function run_test(test, reporter, summary, file_summary)
         end
       end
     end
+    -- check for interrupts
+    vim.wait(0)
   end
 
   test.duration = now_seconds() - start_time
@@ -1166,6 +1170,7 @@ local function parse_args(argv)
     repeat_count = 1,
     summary_file = '-',
     tags = {},
+    filter_out = {},
     lpaths = {},
     cpaths = {},
     paths = {},
@@ -1308,10 +1313,13 @@ local function parse_args(argv)
       opts.filter = pattern
     end),
     ['--filter-out'] = set_pattern_value('--filter-out', function(pattern)
-      opts.filter_out = pattern
+      table.insert(opts.filter_out, pattern)
     end),
     ['--lpath'] = append_value(opts.lpaths),
     ['--cpath'] = append_value(opts.cpaths),
+    ['--default-path'] = set_nonempty_value('--default-path', function(path)
+      opts.default_path = path
+    end),
   }
 
   local i = 1
@@ -1383,7 +1391,11 @@ local function parse_args(argv)
   end
 
   if #opts.paths == 0 then
-    return nil, 'no test paths provided'
+    if opts.default_path then
+      opts.paths[1] = opts.default_path
+    else
+      return nil, 'no test paths provided'
+    end
   end
 
   return opts

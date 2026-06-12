@@ -2474,4 +2474,60 @@ func Test_edit_CAR_with_completion()
   bw!
 endfunc
 
+func Test_autoindent_no_strip_after_cmd_setline()
+  new
+  setlocal autoindent
+  inoremap <buffer> <F2> <Cmd>call setline('.', 'v  v')<CR><Cmd>call cursor(line('.'), 2)<CR>
+  call feedkeys("Go\<F2>\<Esc>", 'tx')
+  call assert_equal('v  v', getline(2))
+  bwipe!
+endfunc
+
+func Test_autoindent_no_strip_after_cursorholdi()
+  CheckFeature timers
+  new
+  setlocal autoindent
+  set updatetime=50
+  au CursorHoldI <buffer> call setline('.', 'v v')
+  call setline(1, ' x')
+  call cursor(1, 2)
+  call timer_start(120, {-> feedkeys("\<Esc>", 't')})
+  call feedkeys("o", 'tx!')
+  call assert_equal('v v', getline(2))
+  set updatetime&
+  bwipe!
+endfunc
+
+" Issue #20130: '[ must mark the start of the paste after CTRL-R CTRL-P + edit.
+func Test_open_square_mark_after_ctrl_r_ctrl_p_paste()
+  new
+  call setline(1, ['a', 'b', 'c', 'd'])
+  call cursor(4, 1)
+
+  call feedkeys("Vggyjo\<C-r>\<C-p>\"\<BS>\<Esc>", 'xt')
+
+  call assert_equal(['a', 'b', 'a', 'b', 'c', 'd', 'c', 'd'],
+        \ getline(1, '$'))
+  call assert_equal([0, 3, 1, 0], getpos("'["))
+  bwipe!
+endfunc
+
+func Test_autoindent_no_strip_cross_line()
+  new
+  setlocal autoindent
+  inoremap <buffer> <F3> {}<Left><CR><Cmd>normal! ==<CR><Up><End><CR>
+
+  call setline(1, '')
+  call feedkeys("i\<F3>\<Esc>", 'tx')
+
+  call assert_equal('{', getline(1))
+  call assert_equal('', getline(2))
+  call assert_equal('}', getline(3))
+  call assert_equal([0, 2, 1, 0], getpos('.'))
+
+  " Overwrite @. register with simple content to avoid affecting later tests.
+  call feedkeys("Go\<Esc>", 'tnix')
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

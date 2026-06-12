@@ -173,7 +173,7 @@ function M.lint(buf, opts)
     local lang = opts.langs[i]
 
     --- @type (table|nil)
-    local parser_info = vim.F.npcall(vim.treesitter.language.inspect, lang)
+    local parser_info = vim.npcall(vim.treesitter.language.inspect, lang)
     local lang_context = {
       lang = lang,
       parser_info = parser_info,

@@ -100,6 +100,10 @@ describe('vim.fs', function()
         test_paths(tests_windows_paths, true)
       end
     end)
+
+    it('trims redundant slashes #37698', function()
+      eq('/name', vim.fs.dirname('/name//////////'))
+    end)
   end)
 
   describe('basename()', function()
@@ -127,6 +131,12 @@ describe('vim.fs', function()
       if is_os('win') then
         test_paths(tests_windows_paths, true)
       end
+    end)
+
+    it('trims redundant slashes #37698', function()
+      -- XXX: for better or worse, this matches python's `os.path.basename`.
+      -- https://github.com/neovim/neovim/issues/37698#issuecomment-3847866806
+      eq('', vim.fs.basename('/name//////////'))
     end)
   end)
 
@@ -241,6 +251,41 @@ describe('vim.fs', function()
           return #vim.iter(vim.fs.dir(cwd, { depth = math.huge, follow = true })):totable()
         end)
       )
+    end)
+
+    describe('fs_scandir_next fallback', function()
+      before_each(function()
+        mkdir('testdir')
+        t.write_file('testdir/test.txt', 'test file')
+      end)
+
+      after_each(function()
+        rmdir('testdir')
+      end)
+
+      it('falls back to fs_lstat when fs_scandir_next returns nil type', function()
+        local result = n.exec_lua([[
+          local orig = vim.uv.fs_scandir_next
+
+          vim.uv.fs_scandir_next = function(fs)
+            local name = orig(fs)
+            if name then
+              return name, nil
+            end
+            return name
+          end
+
+          local out = {}
+          for name, etype in vim.fs.dir('testdir') do
+            out[name] = etype
+          end
+
+          vim.uv.fs_scandir_next = orig
+          return out
+        ]])
+
+        eq('file', result['test.txt'])
+      end)
     end)
   end)
 

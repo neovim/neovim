@@ -998,6 +998,8 @@ describe('LSP', function()
           eq(true, client:supports_method('textDocument/hover'))
           eq(false, client:supports_method('textDocument/definition'))
 
+          eq(false, client:supports_method('workspace/didCreateFiles'))
+
           -- Self-mapped methods do not have a related server capability and should be assumed
           -- to be supported.
           eq(true, client:supports_method('shutdown'))
@@ -2248,6 +2250,20 @@ describe('LSP', function()
       }, buf_lines(1))
     end)
 
+    it('applies newline-terminated text edits at the end of the document', function()
+      apply_text_edits({
+        { 5, 0, 5, 0, 'foobar\n' },
+      })
+      eq({
+        'First line of text',
+        'Second line of text',
+        'Third line of text',
+        'Fourth line of text',
+        'å å ɧ 汉语 ↥ 🤦 🦄',
+        'foobar',
+      }, buf_lines(1))
+    end)
+
     it('it restores marks', function()
       eq(true, api.nvim_buf_set_mark(1, 'a', 2, 1, {}))
       apply_text_edits({
@@ -3046,13 +3062,11 @@ describe('LSP', function()
     end)
 
     --- Starts a TCP server that completes initialization, then sends `null_id_payload` after the
-    --- "initialized" notification. If `notification_method` is given, registers a handler
-    --- that tracks whether it was dispatched as a notification.
+    --- "initialized" notification.
     ---
     --- @param null_id_payload string JSON
-    --- @param notification_method? string
     --- @return { on_error_called: table, notification_received: boolean, messages: boolean }.
-    local function test_null_id_response(null_id_payload, notification_method)
+    local function test_null_id_response(null_id_payload)
       return exec_lua(function()
         local server = assert(vim.uv.new_tcp())
         local accepted
@@ -3100,22 +3114,21 @@ describe('LSP', function()
         local port = server:getsockname().port
         local on_error_called = false
         local notification_received = false
-        local handlers = nil
-        if notification_method then
-          handlers = {
-            [notification_method] = function()
-              notification_received = true
-              return {}
-            end,
-          }
-        end
         local client_id = assert(vim.lsp.start({
           name = 'null-id-test',
-          cmd = vim.lsp.rpc.connect('127.0.0.1', port),
+          cmd = function(dispatchers)
+            local notification = dispatchers.notification
+            dispatchers.notification = function(method, params)
+              notification_received = true
+              if notification then
+                notification(method, params)
+              end
+            end
+            return vim.lsp.rpc.connect('127.0.0.1', port)(dispatchers)
+          end,
           on_error = function(_code, _err)
             on_error_called = true
           end,
-          handlers = handlers,
         }))
         vim.lsp.get_client_by_id(client_id)
         vim.wait(1000, function()
@@ -3145,19 +3158,15 @@ describe('LSP', function()
     it('null-id in response does not misclassify as a notification', function()
       -- Sanity check: a real notification (no id) dispatches the handler.
       local valid = test_null_id_response(
-        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]}}',
-        'workspace/configuration'
+        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]}}'
       )
       eq(true, valid.notification_received)
 
       local result = test_null_id_response(
         -- Error response with null id (parse error per JSON-RPC 2.0 §5)
-        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]},"id":null}',
-        'workspace/configuration'
+        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]},"id":null}'
       )
-      -- Should be dispatched as an error, NOT silently handled as a notification.
-      eq(true, result.on_error_called)
-      -- Null id must NOT be dispatched as a notification.
+      -- Null id must be dispatched as a request, not as a notification.
       eq(false, result.notification_received)
     end)
   end)
@@ -3196,6 +3205,14 @@ describe('LSP', function()
                 dynamicRegistration = true,
               },
               didChangeConfiguration = {
+                dynamicRegistration = true,
+              },
+              fileOperations = {
+                didCreate = {
+                  dynamicRegistration = true,
+                },
+              },
+              textDocumentContent = {
                 dynamicRegistration = true,
               },
             },
@@ -3381,6 +3398,42 @@ describe('LSP', function()
         }, { client_id = client_id })
         check('workspace/didChangeConfiguration', nil, 'section')
 
+        check('workspace/didCreateFiles')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'didCreateFiles-id',
+              method = 'workspace/didCreateFiles',
+              registerOptions = {
+                label = 'did-create-files',
+                filters = {
+                  {
+                    scheme = 'file',
+                    pattern = {
+                      glob = '**/*.foo',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('workspace/didCreateFiles', nil, 'label')
+
+        check('workspace/textDocumentContent')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'textDocumentContent-id',
+              method = 'workspace/textDocumentContent',
+              registerOptions = {
+                schemes = { 'git', 'untitled' },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('workspace/textDocumentContent', nil, 'schemes')
+
         vim.lsp.handlers['client/registerCapability'](nil, {
           registrations = {
             {
@@ -3416,7 +3469,7 @@ describe('LSP', function()
         return result
       end)
 
-      eq(25, #result)
+      eq(29, #result)
       eq({ method = 'textDocument/formatting', supported = false }, result[1])
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
@@ -3451,14 +3504,25 @@ describe('LSP', function()
         { method = 'workspace/didChangeConfiguration', supported = true, cap = { 'dummy-section' } },
         result[21]
       )
+      eq({ method = 'workspace/didCreateFiles', supported = false }, result[22])
+      eq(
+        { method = 'workspace/didCreateFiles', supported = true, cap = { 'did-create-files' } },
+        result[23]
+      )
+      eq({ method = 'workspace/textDocumentContent', supported = false }, result[24])
+      eq({
+        method = 'workspace/textDocumentContent',
+        supported = true,
+        cap = { { 'git', 'untitled' } },
+      }, result[25])
       eq({
         method = 'unknown-method',
         supported = true,
         cap = { 'unknown-dummy-opt' },
-      }, result[22])
-      eq({ method = 'unknown-method-2', supported = true }, result[23])
-      eq({ method = 'unknown-method-2', supported = false }, result[24])
-      eq({ method = 'unknown-method-2', supported = true, fname = tmpfile }, result[25])
+      }, result[26])
+      eq({ method = 'unknown-method-2', supported = true }, result[27])
+      eq({ method = 'unknown-method-2', supported = false }, result[28])
+      eq({ method = 'unknown-method-2', supported = true, fname = tmpfile }, result[29])
     end)
 
     it('identifies client dynamic registration capability', function()
@@ -3523,6 +3587,12 @@ describe('LSP', function()
               identifier = 'diag-ident-static',
               workspaceDiagnostics = true,
             },
+            workspace = {
+              textDocumentContent = {
+                id = 'text-document-content-registration',
+                schemes = { 'git', 'untitled' },
+              },
+            },
           },
         })
 
@@ -3581,6 +3651,35 @@ describe('LSP', function()
           local result = {}
           client:_provider_foreach('textDocument/diagnostic', function(cap)
             table.insert(result, cap.identifier)
+          end)
+          return result
+        end)
+      )
+
+      eq(
+        {
+          {
+            id = 'text-document-content-registration',
+            method = 'workspace/textDocumentContent',
+            registerOptions = {
+              id = 'text-document-content-registration',
+              schemes = { 'git', 'untitled' },
+            },
+          },
+        },
+        sort_method(exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          return client.dynamic_capabilities:get('workspace.textDocumentContent')
+        end))
+      )
+
+      eq(
+        { { 'git', 'untitled' } },
+        exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          local result = {}
+          client:_provider_foreach('workspace/textDocumentContent', function(cap)
+            table.insert(result, cap.schemes)
           end)
           return result
         end)
@@ -4576,9 +4675,12 @@ describe('LSP', function()
 
     it('validates config on attach', function()
       local tmp1 = t.tmpname(true)
+      local logfile = exec_lua(function()
+        return vim.lsp.log.get_filename()
+      end)
+
       exec_lua(function()
-        vim.fn.writefile({ '' }, fake_lsp_logfile)
-        vim.lsp.log._set_filename(fake_lsp_logfile)
+        vim.fn.writefile({ '' }, vim.lsp.log.get_filename())
       end)
 
       local function test_cfg(cfg, err)
@@ -4592,7 +4694,7 @@ describe('LSP', function()
 
         -- Assert NO log for non-applicable 'filetype'. #35737
         if type(cfg.filetypes) == 'table' then
-          t.assert_nolog(err, fake_lsp_logfile)
+          t.assert_nolog(err, logfile)
         end
 
         exec_lua(function()
@@ -4600,7 +4702,7 @@ describe('LSP', function()
         end)
 
         retry(nil, 1000, function()
-          t.assert_log(err, fake_lsp_logfile)
+          t.assert_log(err, logfile)
         end)
       end
 

@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "lua.h"
 #include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
@@ -342,12 +343,10 @@ Boolean nvim_win_is_valid(Window win)
   return ret;
 }
 
-/// Closes the window and hide the buffer it contains (like |:hide| with a
-/// |window-ID|).
+/// Closes the window and hides the buffer it contains (like |:hide| with a |window-ID|; unrelated
+/// to the `hide` flag of |nvim_open_win()|, |nvim_win_get_config()|).
 ///
-/// Like |:hide| the buffer becomes hidden unless another window is editing it,
-/// or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close| or
-/// |nvim_win_close()|, which will close the buffer.
+/// Compare |:close| and |nvim_win_close()|, which close the buffer instead of hiding it.
 ///
 /// @param win   |window-ID|, or 0 for current window
 /// @param[out] err Error details, if any
@@ -395,17 +394,17 @@ void nvim_win_close(Window win, Boolean force, Error *err)
   });
 }
 
-/// Calls a function with window as temporary current window.
+/// Calls function `fn` in the context of window `win` and returns its result (may be multiple
+/// values).
 ///
 /// @see |win_execute()|
 /// @see |nvim_buf_call()|
 ///
-/// @param win     |window-ID|, or 0 for current window
-/// @param fun        Function to call inside the window (currently Lua callable
-///                   only)
-/// @param[out] err   Error details, if any
-/// @return           Return value of function.
-Object nvim_win_call(Window win, LuaRef fun, Error *err)
+/// @param win  |window-ID|, or 0 for current window.
+/// @param fn   Lua function to call inside the window.
+/// @param err  Error details, if any.
+/// @return     Value(s) returned by `fn()`.
+Object nvim_win_call(Window win, LuaRef fn, lua_State *lstate, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY
 {
@@ -415,16 +414,15 @@ Object nvim_win_call(Window win, LuaRef fun, Error *err)
   }
   tabpage_T *tabpage = win_find_tabpage(w);
 
-  Object res = OBJECT_INIT;
   TRY_WRAP(err, {
     win_execute_T win_execute_args;
     if (win_execute_before(&win_execute_args, w, tabpage)) {
       Array args = ARRAY_DICT_INIT;
-      res = nlua_call_ref(fun, NULL, args, kRetLuaref, NULL, err);
+      nlua_call_ref(fn, NULL, args, kRetMultiStack, NULL, err);
     }
     win_execute_after(&win_execute_args);
   });
-  return res;
+  return NIL;  // kRetMultiStack: values are already on the lua stack
 }
 
 /// Set highlight namespace for a window. This will use highlights defined with

@@ -8,6 +8,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
@@ -609,9 +610,10 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
 
   pos_T end_visual = { 0 };
   pos_T start_visual = { 0 };
+  bool mouse_can_visual = ui_mouse_has(MOUSE_VISUAL);
   if ((State & (MODE_NORMAL | MODE_INSERT))
       && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
-    if (which_button == MOUSE_LEFT) {
+    if (which_button == MOUSE_LEFT && mouse_can_visual) {
       if (is_click) {
         // stop Visual mode for a left click in a window, but not when on a status line
         if (VIsual_active) {
@@ -620,7 +622,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       } else {
         jump_flags |= MOUSE_MAY_VIS;
       }
-    } else if (which_button == MOUSE_RIGHT) {
+    } else if (which_button == MOUSE_RIGHT && mouse_can_visual) {
       if (is_click && VIsual_active) {
         // Remember the start and end of visual before moving the cursor.
         if (lt(curwin->w_cursor, VIsual)) {
@@ -631,8 +633,10 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
           end_visual = curwin->w_cursor;
         }
       }
-      jump_flags |= MOUSE_FOCUS;
       jump_flags |= MOUSE_MAY_VIS;
+      jump_flags |= MOUSE_FOCUS;
+    } else if (which_button == MOUSE_RIGHT) {
+      jump_flags |= MOUSE_FOCUS;
     }
   }
 
@@ -650,7 +654,12 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   // JUMP!
   int old_active = VIsual_active;
   pos_T save_cursor = curwin->w_cursor;
-  jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
+
+  // Even though we gate *_VIS flags above, we want to make sure the cursor doesn't move
+  // in visual mode unless it is set as a mouse option
+  if (!VIsual_active || mouse_can_visual) {
+    jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
+  }
 
   bool moved = (jump_flags & CURSOR_MOVED);
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
@@ -891,7 +900,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   } else if (in_status_line || in_sep_line) {
     // Do nothing if on status line or vertical separator
     // Handle double clicks otherwise
-  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))) {
+  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))
+             && mouse_can_visual) {
     if (is_click || !VIsual_active) {
       if (VIsual_active) {
         orig_cursor = VIsual;
@@ -1124,6 +1134,58 @@ void ins_mousescroll(int dir)
     start_arrow(&orig_cursor);
     set_can_cindent(true);
   }
+}
+
+/// Command-line mode implementation for scrolling in direction "dir", which is
+/// one of the MSCR_ values.  Scrolls the completion info popup when the mouse
+/// pointer is on top of it.
+/// Returns true when the info popup was scrolled.
+bool cmdline_mousescroll(int dir)
+{
+  cmdarg_T cap;
+  oparg_T oa;
+  CLEAR_FIELD(cap);
+  clear_oparg(&oa);
+  cap.oap = &oa;
+  cap.arg = dir;
+
+  switch (dir) {
+  case MSCR_UP:
+    cap.cmdchar = K_MOUSEUP; break;
+  case MSCR_DOWN:
+    cap.cmdchar = K_MOUSEDOWN; break;
+  case MSCR_LEFT:
+    cap.cmdchar = K_MOUSELEFT; break;
+  case MSCR_RIGHT:
+    cap.cmdchar = K_MOUSERIGHT; break;
+  }
+
+  if (mouse_row < 0 || mouse_col < 0) {
+    return false;
+  }
+
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+
+  // Only scroll when the mouse is on top of the info popup.
+  win_T *wp = mouse_find_win_inner(&grid, &row, &col);
+  if (wp == NULL || !wp->w_float_is_info) {
+    return false;
+  }
+
+  win_T *old_curwin = curwin;
+
+  curwin = wp;
+  curbuf = wp->w_buffer;
+  // Call the common mouse scroll function shared with other modes.
+  do_mousescroll(&cap);
+  curwin = old_curwin;
+  curbuf = curwin->w_buffer;
+
+  // Cmdline mode doesn't normally call update_screen(), so call it here.
+  update_screen();
+  return true;
 }
 
 /// Return true if "c" is a mouse key.

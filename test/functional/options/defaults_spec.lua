@@ -1282,4 +1282,26 @@ describe('stdpath()', function()
       })
     end)
   end)
+
+  it('avoids DOS 8.3 filenames for "cache" and "run" #25019', function()
+    t.skip(not is_os('win'), 'N/A: 8.3 filenames are only available on Windows')
+    vim.fn.system(('fsutil 8dot3name set %s 0'):format(n.nvim_dir:sub(1, 2)))
+    local dir = 'Xtest_temp_path'
+    mkdir(dir)
+    finally(function()
+      rmdir(dir)
+    end)
+    local short_path =
+      vim.fn.system(('for %%I in ("%s") do @echo %%~sI'):format(dir), ''):gsub('\n', '')
+    eq('XTEST_~1', vim.fs.basename(short_path))
+    clear({
+      env = {
+        TMP = short_path,
+        TEMP = short_path,
+        TMPDIR = short_path,
+      },
+    })
+    t.matches(dir, fn.stdpath('cache'))
+    t.matches(dir, fn.stdpath('run'))
+  end)
 end)

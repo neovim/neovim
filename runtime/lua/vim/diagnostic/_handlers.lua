@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local diagnostic = vim.diagnostic
 local diagnostic_shared = require('vim.diagnostic._shared')
 
@@ -123,13 +124,9 @@ local function once_buf_loaded(bufnr, fn)
   if api.nvim_buf_is_loaded(bufnr) then
     fn()
   else
-    return api.nvim_create_autocmd('BufRead', {
-      buf = bufnr,
-      once = true,
-      callback = function()
-        fn()
-      end,
-    })
+    return nvim_on('BufRead', nil, { buf = bufnr, once = true }, function()
+      fn()
+    end)
   end
 end
 
@@ -283,16 +280,14 @@ function M.underline.show(namespace, bufnr, diagnostics, opts)
       local lines =
         api.nvim_buf_get_lines(diagnostic0.bufnr, diagnostic0.lnum, diagnostic0.lnum + 1, true)
 
-      for _, higroup in ipairs(higroups) do
-        vim.hl.range(
-          bufnr,
-          underline_ns,
-          higroup,
-          { diagnostic0.lnum, math.min(diagnostic0.col, #lines[1] - 1) },
-          { diagnostic0.end_lnum, diagnostic0.end_col },
-          { priority = get_priority(diagnostic0.severity) }
-        )
-      end
+      vim.hl.range(
+        bufnr,
+        underline_ns,
+        higroups,
+        { diagnostic0.lnum, math.min(diagnostic0.col, #lines[1] - 1) },
+        { diagnostic0.end_lnum, diagnostic0.end_col },
+        { priority = get_priority(diagnostic0.severity) }
+      )
     end
 
     save_extmarks(underline_ns, bufnr)
@@ -436,13 +431,9 @@ function M.virtual_text.show(namespace, bufnr, diagnostics, opts)
     local line_diagnostics = diagnostic_shared.diagnostic_lines(diagnostics, true)
 
     if vopts.current_line ~= nil then
-      api.nvim_create_autocmd('CursorMoved', {
-        buf = bufnr,
-        group = ns.user_data.virt_text_augroup,
-        callback = function()
-          render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, vopts)
-        end,
-      })
+      nvim_on('CursorMoved', ns.user_data.virt_text_augroup, { buf = bufnr }, function()
+        render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, vopts)
+      end)
     end
 
     render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, vopts)
@@ -690,17 +681,13 @@ function M.virtual_lines.show(namespace, bufnr, diagnostics, opts)
       -- Create a mapping from line -> diagnostics so that we can quickly get the
       -- diagnostics we need when the cursor line doesn't change.
       local line_diagnostics = diagnostic_shared.diagnostic_lines(diagnostics, true)
-      api.nvim_create_autocmd('CursorMoved', {
-        buf = bufnr,
-        group = ns.user_data.virt_lines_augroup,
-        callback = function()
-          render_virtual_lines(
-            ns.user_data.virt_lines_ns,
-            bufnr,
-            diagnostic_shared.diagnostics_at_cursor(line_diagnostics)
-          )
-        end,
-      })
+      nvim_on('CursorMoved', ns.user_data.virt_lines_augroup, { buf = bufnr }, function()
+        render_virtual_lines(
+          ns.user_data.virt_lines_ns,
+          bufnr,
+          diagnostic_shared.diagnostics_at_cursor(line_diagnostics)
+        )
+      end)
 
       -- Also show diagnostics for the current line before the first CursorMoved event.
       render_virtual_lines(

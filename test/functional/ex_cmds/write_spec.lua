@@ -77,7 +77,7 @@ describe(':write', function()
   it('appends FIFO file', function()
     -- mkfifo creates read-only .lnk files on Windows
     if is_os('win') or eval("executable('mkfifo')") == 0 then
-      pending('missing "mkfifo" command')
+      pending('N/A: missing "mkfifo" command')
     end
 
     local text = 'some fifo text from write_spec'

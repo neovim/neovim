@@ -234,7 +234,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
   uint32_t ns_id = src2ns(&src_id);
   int width;
 
-  VirtText virt_text = parse_virt_text(chunks, err, &width);
+  VirtText virt_text = parse_virt_text(chunks, err, &width, false);
   if (ERROR_SET(err)) {
     return 0;
   }
@@ -924,6 +924,7 @@ static void write_msg(String message, bool to_err, bool writeln)
   static StringBuilder err_line_buf = KV_INITIAL_VALUE;
   StringBuilder *line_buf = to_err ? &err_line_buf : &out_line_buf;
 
+  msg_ext_no_fast();
 #define PUSH_CHAR(c) \
   if (kv_max(*line_buf) == 0) { \
     kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \

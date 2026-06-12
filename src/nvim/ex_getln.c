@@ -592,6 +592,9 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   msg_starthere();
   redrawcmdline();
   s->did_incsearch = true;
+  // Fire WinScrolled/WinResized last, after all state is finalized: the
+  // autocmd may mutate curwin or ccline via arbitrary user code.
+  may_trigger_win_scrolled_resized();
 }
 
 // When CTRL-L typed: add character from the match to the pattern.
@@ -680,6 +683,7 @@ static void finish_incsearch_highlighting(bool gotesc, incsearch_state_T *s,
   redraw_all_later(UPD_SOME_VALID);
   if (call_update_screen) {
     update_screen();
+    may_trigger_win_scrolled_resized();
   }
 }
 
@@ -1454,7 +1458,9 @@ static int command_line_execute(VimState *state, int key)
                        && s->c != Ctrl_L);
   end_wildmenu = end_wildmenu && (!cmdline_pum_active()
                                   || (s->c != K_PAGEDOWN && s->c != K_PAGEUP
-                                      && s->c != K_KPAGEDOWN && s->c != K_KPAGEUP));
+                                      && s->c != K_KPAGEDOWN && s->c != K_KPAGEUP
+                                      && s->c != K_MOUSEDOWN && s->c != K_MOUSEUP
+                                      && s->c != K_MOUSELEFT && s->c != K_MOUSERIGHT));
 
   // free expanded names when finished walking through matches
   if (end_wildmenu) {
@@ -2213,11 +2219,21 @@ static int command_line_handle_key(CommandLineState *s)
     command_line_left_right_mouse(s);
     return command_line_not_changed(s);
 
-  // Mouse scroll wheel: ignored here
+  // Mouse scroll wheel: scroll the completion info popup when the mouse
+  // is on top of it, otherwise ignored here.
   case K_MOUSEDOWN:
   case K_MOUSEUP:
   case K_MOUSELEFT:
   case K_MOUSERIGHT:
+    if (cmdline_pum_active()) {
+      cmdline_mousescroll(s->c == K_MOUSEDOWN
+                          ? MSCR_DOWN
+                          : (s->c == K_MOUSEUP
+                             ? MSCR_UP
+                             : s->c == K_MOUSELEFT ? MSCR_LEFT : MSCR_RIGHT));
+    }
+    return command_line_not_changed(s);
+
   // Alternate buttons ignored here
   case K_X1MOUSE:
   case K_X1DRAG:
@@ -2496,7 +2512,7 @@ static buf_T *cmdpreview_open_buf(void)
   }
 
   // Rename preview buffer.
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   aucmd_prepbuf(&aco, cmdpreview_buf);
   int retv = rename_buffer("[Preview]");
   aucmd_restbuf(&aco);
@@ -2690,7 +2706,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
            uhp != NULL;
            uhp = uhp->uh_next.ptr, ++count) {}
 
-      aco_save_T aco;
+      aco_save_T aco = { 0 };
       aucmd_prepbuf(&aco, buf);
       // Ensure all the entries will be undone
       if (curbuf->b_u_synced == false) {

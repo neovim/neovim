@@ -498,8 +498,8 @@ local function get_paths(name, sect)
   -- - does not work on MacOS 14 and later.
   -- - only returns '/usr/bin/man' on MacOS 13 and earlier.
   --- @type string?
-  local mandirs_raw = vim.F.npcall(system, { 'manpath', '-q' })
-    or vim.F.npcall(system, { 'man', '-w' })
+  local mandirs_raw = vim.npcall(system, { 'manpath', '-q' })
+    or vim.npcall(system, { 'man', '-w' })
     or vim.env.MANPATH
 
   if not mandirs_raw then
@@ -552,7 +552,7 @@ local function parse_cmdline(arg_lead, cmd_line)
 
   if arg_lead:match('^[^()]+%([^()]*$') then
     -- cursor (|) is at ':Man printf(|' or ':Man 1 printf(|'
-    -- The later is is allowed because of ':Man pri<TAB>'.
+    -- The latter is allowed because of ':Man pri<TAB>'.
     -- It will offer 'priclass.d(1m)' even though section is specified as 1.
     local tmp = vim.split(arg_lead, '(', { plain = true })
     local name = tmp[1]

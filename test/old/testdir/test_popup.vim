@@ -725,6 +725,9 @@ func Test_popup_and_preview_autocommand()
     au!
     au BufAdd * nested tab sball
   augroup END
+  " Let pythoncomplete follow the buffer's 'import os' (off by default
+  " since v9.2.0561) so 'os.' can be completed.
+  let g:pythoncomplete_allow_import = 1
   set omnifunc=pythoncomplete#Complete
   call setline(1, 'import os')
   " make the line long
@@ -747,6 +750,7 @@ func Test_popup_and_preview_autocommand()
   augroup END
   augroup! MyBufAdd
   bw!
+  unlet g:pythoncomplete_allow_import
 endfunc
 
 func s:run_popup_and_previewwindow_dump(lines, dumpfile)

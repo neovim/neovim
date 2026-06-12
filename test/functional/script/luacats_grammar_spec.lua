@@ -178,6 +178,32 @@ describe('luacats grammar', function()
     parent = 'vim.diagnostic.GetOpts',
   })
 
+  test('@class vim.Iter<V1, V...>', {
+    kind = 'class',
+    name = 'vim.Iter',
+    generics = { 'V1', 'V...' },
+  })
+
+  test('@class vim.IterArray<T> : vim.Iter<T, never>', {
+    kind = 'class',
+    name = 'vim.IterArray',
+    generics = { 'T' },
+    parent = 'vim.Iter',
+    parent_generics = { 'T', 'never' },
+  })
+
+  test('@class vim.lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>', {
+    kind = 'class',
+    name = 'vim.lsp.Client.Progress',
+    parent = 'vim.Ringbuf',
+    parent_generics = { '{token: integer|string, value: any}' },
+  })
+
+  test('@overload fun<V1, V2, V...>(self: vim.Iter<V1, V2, V...>): [V1, V2, V...][]', {
+    kind = 'overload',
+    type = 'fun<V1, V2, V...>(self: vim.Iter<V1, V2, V...>): [V1, V2, V...][]',
+  })
+
   test('@param opt? { cmd?: string[] } Options', {
     kind = 'param',
     name = 'opt?',

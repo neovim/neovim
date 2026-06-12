@@ -1456,7 +1456,7 @@ describe('vim.lsp.buf', function()
       eq('textDocument/rangeFormatting', result[3].method)
       local expected_range = {
         start = { line = 0, character = 0 },
-        ['end'] = { line = 1, character = 4 },
+        ['end'] = { line = 2, character = 0 },
       }
       eq(expected_range, result[3].params.range)
     end)

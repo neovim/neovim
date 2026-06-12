@@ -94,6 +94,13 @@ describe('nvim_ui_send', function()
     clear()
   end)
 
+  local function close_pipe(pipe)
+    if not pipe:is_closing() then
+      pipe:read_stop()
+      pipe:close()
+    end
+  end
+
   it('works with stdout_tty', function()
     local fds = assert(uv.pipe())
 
@@ -110,6 +117,10 @@ describe('nvim_ui_send', function()
 
     local screen = Screen.new(50, 10, { stdout_tty = true })
     screen:set_stdout(fds.write)
+    finally(function()
+      screen:detach()
+      close_pipe(read_pipe)
+    end)
 
     api.nvim_ui_send('Hello world')
 
@@ -140,6 +151,10 @@ describe('nvim_ui_send', function()
 
     local screen = Screen.new(50, 10)
     screen:set_stdout(fds.write)
+    finally(function()
+      screen:detach()
+      close_pipe(read_pipe)
+    end)
 
     api.nvim_ui_send('Hello world')
 

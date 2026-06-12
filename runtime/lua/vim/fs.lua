@@ -44,9 +44,7 @@ local uv = vim.uv
 
 local M = {}
 
--- Can't use `has('win32')` because the `nvim -ll` test runner doesn't support `vim.fn` yet.
-local sysname = uv.os_uname().sysname:lower()
-local iswin = not not (sysname:find('windows') or sysname:find('mingw'))
+local iswin = vim.fn.has('win32') == 1
 local os_sep = iswin and '\\' or '/'
 
 --- Iterate over all the parents of the given path (not expanded/resolved, the caller must do that).
@@ -90,27 +88,15 @@ end
 ---@since 10
 ---@generic T : string|nil
 ---@param file T Path
----@return T Parent directory of {file}
+---@return T # Parent directory of `file`
 function M.dirname(file)
   if file == nil then
     return nil
   end
   vim.validate('file', file, 'string')
+  local dir = vim.fn.fnamemodify(file, ':h')
   if iswin then
-    file = file:gsub(os_sep, '/') --[[@as string]]
-    if file:match('^%w:/?$') then
-      return file
-    end
-  end
-  if not file:match('/') then
-    return '.'
-  elseif file == '/' or file:match('^/[^/]+$') then
-    return '/'
-  end
-  ---@type string
-  local dir = file:match('/$') and file:sub(1, #file - 1) or file:match('^(/?.+)/')
-  if iswin and dir:match('^%w:$') then
-    return dir .. '/'
+    return (dir:gsub(os_sep, '/'))
   end
   return dir
 end
@@ -120,19 +106,17 @@ end
 ---@since 10
 ---@generic T : string|nil
 ---@param file T Path
----@return T Basename of {file}
+---@return T # Basename of `file`
 function M.basename(file)
   if file == nil then
     return nil
   end
   vim.validate('file', file, 'string')
+  local name = vim.fn.fnamemodify(file, ':t')
   if iswin then
-    file = file:gsub(os_sep, '/') --[[@as string]]
-    if file:match('^%w:/?$') then
-      return ''
-    end
+    return (name:gsub(os_sep, '/'))
   end
-  return file:match('/$') and '' or (file:match('[^/]*$'))
+  return name
 end
 
 --- Concatenates partial paths (one absolute or relative path followed by zero or more relative
@@ -161,6 +145,29 @@ function M.joinpath(...)
   local path = table.concat(segments, '/')
 
   return (path:gsub(iswin and '[/\\][/\\]*' or '//+', '/'))
+end
+
+--- Wrapper around `uv.fs_scandir_next()` that ensures a file type is returned.
+---
+--- @param fs uv.uv_fs_t
+--- @param path string
+--- @return string?
+--- @return string?
+local function fs_scandir_next(fs, path)
+  -- use uv.fs_lstat instead of uv.fs_stat to avoid descending into a symlink entry as a directory/file
+  local name, etype = uv.fs_scandir_next(fs)
+
+  if not name then
+    return
+  end
+
+  if etype == nil then
+    local stat = vim.uv.fs_lstat(M.joinpath(path, name))
+    -- Workaround #39612 https://github.com/luvit/luv/issues/660
+    etype = stat and stat.type or 'unknown'
+  end
+
+  return name, etype
 end
 
 --- @class vim.fs.dir.Opts
@@ -206,7 +213,7 @@ function M.dir(path, opts)
       if not fs then
         return
       end
-      return uv.fs_scandir_next(fs)
+      return fs_scandir_next(fs, path)
     end
   end
 
@@ -219,7 +226,7 @@ function M.dir(path, opts)
       local dir = level == 1 and dir0 or M.joinpath(path, dir0)
       local fs = uv.fs_scandir(dir)
       while fs do
-        local name, t = uv.fs_scandir_next(fs)
+        local name, t = fs_scandir_next(fs, dir)
         if not name then
           break
         end
