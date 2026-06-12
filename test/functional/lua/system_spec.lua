@@ -202,4 +202,54 @@ describe('vim.system', function()
       end)
     )
   end)
+
+  it('job mode eliminates orphan descendants on kill', function()
+    local exit_status = exec_lua(function()
+      local obj = vim.system({ 'bash', '-c', 'sleep 3421 | sleep 3421 | sleep 3421' }, {
+        mode = SystemMode.JOB,
+      })
+
+      vim.cmd('sleep 50m')
+      obj:kill()
+      vim.cmd('sleep 10m')
+      vim.api.nvim_exec_autocmds('VimLeave', {})
+      vim.cmd('sleep 10m')
+
+      os.execute("pgrep -f '[s]leep 3421' > /dev/null")
+    end)
+
+    assert(exit_status ~= 0, 'Orphan process were detected')
+  end)
+
+  it('detached mode eliminates orphan descendants on kill', function()
+    local exit_status = exec_lua(function()
+      local obj = vim.system({ 'bash', '-c', 'sleep 3421 | sleep 3421 | sleep 3421' }, {
+        mode = SystemMode.DETACHED,
+      })
+
+      vim.cmd('sleep 50m')
+      obj:kill()
+      vim.cmd('sleep 10m')
+
+      os.execute("pgrep -f '[s]leep 3421' > /dev/null")
+    end)
+
+    assert(exit_status ~= 0, 'Orphan process were detected')
+  end)
+
+  it('job mode eliminates orphan descendants on VimLeave', function()
+    local exit_status = exec_lua(function()
+      vim.system({ 'bash', '-c', 'sleep 3421 | sleep 3421 | sleep 3421' }, {
+        mode = SystemMode.JOB,
+      })
+
+      vim.cmd('sleep 50m')
+      vim.api.nvim_exec_autocmds('VimLeave', {})
+      vim.cmd('sleep 10m')
+
+      return os.execute("pgrep -f '[s]leep 3421' > /dev/null") -- Added return
+    end)
+
+    assert(exit_status ~= 0, 'Orphan processes were detected!')
+  end)
 end)

@@ -1,6 +1,6 @@
 local uv = vim.uv
 
---- @type table<integer,uv.uv_process_t|nil>
+--- @type table<integer, uv.uv_process_t>
 local active_jobs_registry = {}
 
 --- @type boolean
@@ -502,7 +502,10 @@ local function run(cmd, opts, on_exit)
     hide = true,
   }, function(code, signal)
     if mode == SystemMode.JOB then
-      active_jobs_registry[state.pid] = nil
+      local pid = state.pid
+      if pid then
+        active_jobs_registry[pid] = nil
+      end
     end
 
     _on_exit(state, code, signal, on_exit)
@@ -533,7 +536,7 @@ local function run(cmd, opts, on_exit)
     end)
   end
 
-  if mode == SystemMode.JOB then
+  if mode == SystemMode.JOB and state.pid then
     if not is_jobexit_registered then
       is_jobexit_registered = true
       vim.api.nvim_create_autocmd('VimLeave', {
@@ -548,7 +551,9 @@ local function run(cmd, opts, on_exit)
       })
     end
 
-    active_jobs_registry[state.pid] = state.handle
+    --- @type integer
+    local pid = state.pid
+    active_jobs_registry[pid] = state.handle
   end
 
   return obj
