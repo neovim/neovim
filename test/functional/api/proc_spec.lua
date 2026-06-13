@@ -81,7 +81,7 @@ describe('API', function()
       -- Assume PID 99999 does not exist.
       status, rv = pcall(request, 'nvim_get_proc', 99999)
       eq(true, status)
-      eq(NIL, rv)
+      eq(vim.NIL, rv)
     end)
   end)
 end)
