@@ -1,8 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local assert_log = t.assert_log
-local assert_nolog = t.assert_nolog
+local assert_log = n.assert_log
+local assert_nolog = n.assert_nolog
 local clear = n.clear
 local eq = t.eq
 local exec_lua = n.exec_lua
@@ -120,6 +120,44 @@ describe('vim.log', function()
     assert_log('%[START%]%[.+%] SetLevel logging initiated', logfile, 10)
     assert_log('keep', logfile, 10)
     assert_nolog('skip', logfile, 10)
+  end)
+
+  it('close_file() reopens on next write', function()
+    local info = exec_lua(function()
+      local logger = vim.log.new({ name = 'CloseFile' })
+
+      logger.warn('before-close')
+      ---@diagnostic disable-next-line: invisible
+      local old_fd = logger.fd
+      local close_ok = logger:close_file()
+      local second_close_ok = logger:close_file()
+      ---@diagnostic disable-next-line: invisible
+      local closed_before_reopen = logger.fd == nil
+      ---@diagnostic disable-next-line: param-type-mismatch
+      local old_fd_write_ok = vim.uv.fs_write(old_fd, 'after-close-on-old-fd\n')
+
+      logger.warn('after-reopen')
+
+      return {
+        close_ok = close_ok,
+        second_close_ok = second_close_ok,
+        closed_before_reopen = closed_before_reopen,
+        old_fd_write_ok = old_fd_write_ok,
+        ---@diagnostic disable-next-line: invisible
+        reopened = logger.fd ~= nil,
+      }
+    end)
+
+    eq(true, info.close_ok)
+    eq(true, info.second_close_ok)
+    eq(true, info.closed_before_reopen)
+    eq(nil, info.old_fd_write_ok)
+    eq(true, info.reopened)
+
+    local logfile = get_logfile('CloseFile')
+    assert_log('before%-close', logfile, 10)
+    assert_log('after%-reopen', logfile, 10)
+    assert_nolog('after%-close%-on%-old%-fd', logfile, 10)
   end)
 
   it('set_format_func() replaces the formatter and can skip entries', function()

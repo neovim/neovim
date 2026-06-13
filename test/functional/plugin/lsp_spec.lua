@@ -266,7 +266,7 @@ describe('LSP', function()
         on_exit = function(code, signal)
           eq(101, code, 'exit code') -- See fake-lsp-server.lua
           eq(0, signal, 'exit signal')
-          t.assert_log(
+          n.assert_log(
             pesc([[assert_eq failed: left == "\"shutdown\"", right == "\"test\""]]),
             fake_lsp_logfile
           )
@@ -4694,7 +4694,7 @@ describe('LSP', function()
 
         -- Assert NO log for non-applicable 'filetype'. #35737
         if type(cfg.filetypes) == 'table' then
-          t.assert_nolog(err, logfile)
+          n.assert_nolog(err, logfile)
         end
 
         exec_lua(function()
@@ -4702,7 +4702,7 @@ describe('LSP', function()
         end)
 
         retry(nil, 1000, function()
-          t.assert_log(err, logfile)
+          n.assert_log(err, logfile)
         end)
       end
 

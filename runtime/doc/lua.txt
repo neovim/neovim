@@ -3901,6 +3901,17 @@ format.
                  `vim.log.levels.WARN`.
 
 
+destroy({log})                                           *vim.log.destroy()*
+    Destroys a logger instance.
+
+    Closes any open resources held by the logger.
+
+    Parameters: ~
+      • {log}  (`vim.Log`) See |vim.Log|.
+
+    Return: ~
+        (`boolean`) `true` if the logger was destroyed, `false` on error.
+
 get_level({log})                                         *vim.log.get_level()*
     Gets the current log level.
 
