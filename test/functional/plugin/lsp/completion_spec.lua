@@ -1165,7 +1165,7 @@ describe('vim.lsp.completion: protocol', function()
     local params = exec_lua(function()
       local params
       local server = _G._create_server({
-        capabilities = { completionProvider = true },
+        capabilities = { completionProvider = {} },
         handlers = {
           ['textDocument/completion'] = function(_, params0, callback)
             params = params0
