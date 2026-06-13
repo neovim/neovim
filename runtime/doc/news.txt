@@ -105,7 +105,9 @@ PLUGINS
 
 TREESITTER
 
-• todo
+• Markdown inline: backslash in backslash escapes are concealed.
+• Markdown inline: backslash escapes and hard line breaks no longer use the
+  `@string.escape` capture.
 
 ==============================================================================
 NEW FEATURES                                                    *news-features*
