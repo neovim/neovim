@@ -348,6 +348,9 @@ TREESITTER
   capture.
 • |vim.treesitter.select()| starts or adjusts a visual selection at cursor,
   based on tree nodes.
+• Code inside diff hunks (buffers with 'filetype' set to "diff") is highlighted
+  with the treesitter parser for each hunk's language. Enabled by default;
+  disable with |g:diffhl|.
 
 TUI
 
