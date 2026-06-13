@@ -1167,7 +1167,7 @@ static void f_empty(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         || *argvars[0].vval.v_string == NUL;
     break;
   case VAR_PARTIAL:
-    n = false;
+    n = argvars[0].vval.v_partial == NULL;
     break;
   case VAR_NUMBER:
     n = argvars[0].vval.v_number == 0;
