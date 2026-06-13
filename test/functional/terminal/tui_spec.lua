@@ -535,8 +535,11 @@ describe('TUI :restart', function()
     server_session = n.connect(server_pipe)
     local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
     local has_s = 'index(v:argv, "-s") >= 0 ? v:true : v:false'
+    local has_startreason = 'index(v:argv, "--startreason=restart") >= 0 ? v:true : v:false'
     eq({ true, true }, { server_session:request('nvim_eval', expr) })
     eq({ true, true }, { server_session:request('nvim_eval', has_s) })
+    eq({ true, false }, { server_session:request('nvim_eval', has_startreason) })
+    eq({ true, 'normal' }, { server_session:request('nvim_eval', 'v:startreason') })
 
     tt.feed_data(":restart put='foo'\013")
     screen:expect([[
@@ -552,6 +555,8 @@ describe('TUI :restart', function()
 
     eq({ true, false }, { server_session:request('nvim_eval', expr) })
     eq({ true, false }, { server_session:request('nvim_eval', has_s) })
+    eq({ true, false }, { server_session:request('nvim_eval', has_startreason) })
+    eq({ true, 'restart' }, { server_session:request('nvim_eval', 'v:startreason') })
 
     -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
     -- eq(13, #argv)
