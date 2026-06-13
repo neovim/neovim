@@ -187,12 +187,18 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
 
   PUT_KEY(result, cmd, cmd, cstr_as_string(name));
 
-  if ((ea.argt & EX_RANGE) && ea.addr_count > 0) {
-    Array range = arena_array(arena, 2);
+  if (ea.argt & EX_RANGE && ea.addr_count > 0) {
+    Array range = arena_array(arena, 4);
     if (ea.addr_count > 1) {
       ADD_C(range, INTEGER_OBJ(ea.line1));
     }
     ADD_C(range, INTEGER_OBJ(ea.line2));
+
+    if (ea.addr_type == ADDR_POSITIONS
+        && ea.addr_count >= 2) {
+      ADD_C(range, INTEGER_OBJ(ea.col1));
+      ADD_C(range, INTEGER_OBJ(ea.col2));
+    }
     PUT_KEY(result, cmd, range, range);
   }
 
@@ -237,8 +243,9 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
 
   char *addr;
   switch (ea.addr_type) {
-  case ADDR_LINES:
-    addr = "line";
+  case ADDR_POSITIONS:
+    addr = ea.addr_mode == kOmCharWise ? "char"
+                                       : "line";
     break;
   case ADDR_ARGUMENTS:
     addr = "arg";
@@ -551,9 +558,20 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
   }
 
+  if (ea.addr_type == ADDR_POSITIONS
+      && HAS_KEY(cmd, cmd, addr)) {
+    // TODO(616b2f): what else to validate here
+
+    if (parse_addr_type_arg(cmd->addr.data, (int)cmd->addr.size, &ea.addr_type,
+                            &ea.addr_mode) == FAIL) {
+      goto end;
+    }
+  }
+
   if (HAS_KEY(cmd, cmd, range)) {
     VALIDATE_MOD((ea.argt & EX_RANGE), "range", cmd->cmd.data);
-    VALIDATE_EXP((cmd->range.size <= 2), "range", "<=2 elements", NULL, {
+    VALIDATE_EXP((cmd->range.size <= 4), "range", "<=4 elements", NULL,
+    {
       goto end;
     });
 
@@ -570,7 +588,16 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
     if (range.size > 0) {
       ea.line1 = (linenr_T)range.items[0].data.integer;
-      ea.line2 = (linenr_T)range.items[range.size - 1].data.integer;
+
+      if (range.size <= 2) {
+        ea.line2 = (linenr_T)range.items[range.size - 1].data.integer;
+      }
+
+      if (range.size == 4) {
+        ea.line2 = (linenr_T)range.items[1].data.integer;
+        ea.col1 = (linenr_T)range.items[2].data.integer;
+        ea.col2 = (linenr_T)range.items[3].data.integer;
+      }
     }
 
     VALIDATE_S((invalid_range(&ea) == NULL), "range", "", {
@@ -903,6 +930,9 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   if (eap->argt & EX_RANGE) {
     if (eap->addr_count == 1) {
       kv_printf(cmdline, "%" PRIdLINENR, eap->line2);
+    } else if (eap->addr_count == 4) {
+      kv_printf(cmdline, "%" PRIdLINENR ".%" PRIdCOLNR ",%" PRIdLINENR ".%" PRIdCOLNR,
+          eap->line1, eap->col1, eap->line2, eap->col2);
     } else if (eap->addr_count > 1) {
       kv_printf(cmdline, "%" PRIdLINENR ",%" PRIdLINENR, eap->line1, eap->line2);
       eap->addr_count = 2;  // Make sure address count is not greater than 2
@@ -989,6 +1019,8 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                   allowed), if any. [<f-args>]
 ///                 - line1: (number) Start of the command range. [<line1>]
 ///                 - line2: (number) End of the command range. [<line2>]
+///                 - col1: (number) Start of the command column range. [<col1>]
+///                 - col2: (number) End of the command column range. [<col2>]
 ///                 - mods: (string) Command modifiers (unstructured string), if any. [<mods>]
 ///                 - name: (string) Command name.
 ///                 - nargs: (string) Number of arguments allowed by the command. |:command-nargs|
@@ -1095,6 +1127,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
   uint32_t argt = 0;
   int64_t def = -1;
   cmd_addr_T addr_type_arg = ADDR_NONE;
+  addr_mode_T addr_mode = kOmUnknown;
   int context = EXPAND_NOTHING;
   char *compl_arg = NULL;
   const char *rep = NULL;
@@ -1164,7 +1197,8 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
   if (opts->range.type == kObjectTypeBoolean) {
     if (opts->range.data.boolean) {
       argt |= EX_RANGE;
-      addr_type_arg = ADDR_LINES;
+      addr_type_arg = ADDR_POSITIONS;
+      addr_mode = kOmLineWise;
     }
   } else if (opts->range.type == kObjectTypeString) {
     VALIDATE_S((opts->range.data.string.data[0] == '%' && opts->range.data.string.size == 1),
@@ -1172,11 +1206,11 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
       goto err;
     });
     argt |= EX_RANGE | EX_DFLALL;
-    addr_type_arg = ADDR_LINES;
+    addr_type_arg = ADDR_POSITIONS;
   } else if (opts->range.type == kObjectTypeInteger) {
     argt |= EX_RANGE | EX_ZEROR;
     def = opts->range.data.integer;
-    addr_type_arg = ADDR_LINES;
+    addr_type_arg = ADDR_POSITIONS;
   } else if (HAS_KEY(opts, user_command, range)) {
     VALIDATE_S(false, "range", "", {
       goto err;
@@ -1205,13 +1239,14 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     });
 
     VALIDATE_S(OK == parse_addr_type_arg(opts->addr.data.string.data,
-                                         (int)opts->addr.data.string.size, &addr_type_arg), "addr",
+                                         (int)opts->addr.data.string.size, &addr_type_arg,
+                                         &addr_mode), "addr",
                opts->addr.data.string.data, {
       goto err;
     });
 
     argt |= EX_RANGE;
-    if (addr_type_arg != ADDR_LINES) {
+    if (addr_type_arg != ADDR_POSITIONS) {
       argt |= EX_ZEROR;
     }
   }
@@ -1288,7 +1323,8 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
 
   WITH_SCRIPT_CONTEXT(channel_id, {
     if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
-                       compl_luaref, preview_luaref, addr_type_arg, luaref, desc, force) != OK) {
+                       compl_luaref, preview_luaref, addr_type_arg, addr_mode, luaref,
+                       desc, force) != OK) {
       api_set_error(err, kErrorTypeException, "Failed to create user command");
       // Do not goto err, since uc_add_command now owns luaref, compl_luaref, preview_luaref,
       // and compl_arg

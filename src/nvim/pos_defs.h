@@ -1,6 +1,7 @@
 #pragma once
 
 #include <inttypes.h>
+#include <sys/types.h>
 
 /// Line number type
 typedef int32_t linenr_T;
@@ -21,6 +22,22 @@ enum { MAXCOL = 0x7fffffff, };   ///< Maximal column number
 enum { MINLNUM = 1, };           ///< Minimum line number
 
 enum { MINCOL = 1, };            ///< Minimum column number
+                                 ///
+/// address operation modes
+typedef enum {
+  kOmUnknown = 0,     ///< Unknown or invalid motion type
+  kOmCharWise = 1,     ///< character-wise movement/register
+  kOmLineWise = 2,     ///< line-wise movement/register
+  kOmBlockWise = 3,    ///< block-wise movement/register
+} addr_mode_T;
+
+/// position in file or buffer with operation mode
+typedef struct {
+  linenr_T lnum;        ///< line number
+  colnr_T col;          ///< column number
+  colnr_T coladd;
+  addr_mode_T mode;
+} mpos_T;
 
 /// position in file or buffer
 typedef struct {

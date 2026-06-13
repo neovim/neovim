@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -676,7 +677,12 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
     State = MODE_EXTERNCMD;
 
     if (opts & kShellOptWrite) {
-      read_input(&input);
+      /// To remain compatible with the old implementation (which forked a process
+      /// for writing) the entire text is copied to a temporary buffer before the
+      /// event loop starts. If we don't (by writing in chunks returned by `ml_get`)
+      /// the buffer being modified might get modified by reading from the process
+      /// before we finish writing.
+      read_buffer_into(curbuf, &curbuf->b_op_start, &curbuf->b_op_end, &input);
     }
 
     if (opts & kShellOptRead) {
@@ -695,7 +701,12 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
   kv_destroy(input);
 
   if (output) {
-    write_output(output, nread, true);
+    if (opts & kShellOptWrite) {
+      // TODO(616b2f): look if we can use block_def here
+      ml_replace_range(curbuf->b_op_start, curbuf->b_op_end, output, nread);
+    } else {
+      ml_append_pos(curbuf->b_op_start, output, nread);
+    }
     xfree(output);
   }
 
@@ -1245,7 +1256,7 @@ static size_t word_length(const char *str)
 /// before we finish writing.
 static void read_input(StringBuilder *buf)
 {
-  read_buffer_into(curbuf, curbuf->b_op_start.lnum, curbuf->b_op_end.lnum, buf);
+  read_buffer_into(curbuf, &curbuf->b_op_start, &curbuf->b_op_end, buf);
 }
 
 static size_t write_output(char *output, size_t remaining, bool eof)
