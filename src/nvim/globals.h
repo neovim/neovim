@@ -728,8 +728,10 @@ enum {
 // current directory is stored here (in allocated memory).  If the current
 // directory is not a local directory, globaldir is NULL.
 EXTERN char *globaldir INIT( = NULL);
-
+EXTERN char *initialdir INIT( = NULL);
 EXTERN char *last_chdir_reason INIT( = NULL);
+
+EXTERN bool *argv_is_file INIT( = NULL);
 
 // Whether 'keymodel' contains "stopsel" and "startsel".
 EXTERN bool km_stopsel INIT( = false);

@@ -922,6 +922,8 @@ void free_all_mem(void)
   // Free some global vars.
   xfree(last_cmdline);
   xfree(new_last_cmdline);
+  xfree(initialdir);
+  xfree(argv_is_file);
   set_keep_msg(NULL, 0);
 
   // Clear cmdline history.
