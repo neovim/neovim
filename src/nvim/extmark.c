@@ -197,7 +197,8 @@ void extmark_del(buf_T *buf, MarkTreeIter *itr, MTKey key, bool restore)
 
 /// Free extmarks in a ns between lines
 /// if ns = 0, it means clear all namespaces
-bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_row, colnr_T u_col)
+bool extmark_clear(buf_T *buf, uint32_t ns_id, linenr_T l_row, colnr_T l_col, linenr_T u_row,
+                   colnr_T u_col)
 {
   if (!map_size(buf->b_extmark_ns)) {
     return false;
@@ -258,8 +259,9 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
 /// if upper_lnum or upper_col are negative the buffer
 /// will be searched to the start, or end
 /// amount = amount of marks to find or INT64_MAX for all
-ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_row,
-                             colnr_T u_col, int64_t amount, ExtmarkType type_filter, bool overlap)
+ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, linenr_T l_row, colnr_T l_col,
+                             linenr_T u_row, colnr_T u_col, int64_t amount, ExtmarkType type_filter,
+                             bool overlap)
 {
   ExtmarkInfoArray array = KV_INITIAL_VALUE;
   MarkTreeIter itr[1];
