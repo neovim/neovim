@@ -558,6 +558,7 @@ function Client:initialize()
   require('vim.lsp._folding_range')
   require('vim.lsp.inline_completion')
   require('vim.lsp.document_color')
+  require('vim.lsp.text_document_content')
 
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
@@ -1007,6 +1008,8 @@ function Client:_register(registrations)
     local method = reg.method
     if method == 'workspace/didChangeWatchedFiles' then
       lsp._watchfiles.register(reg, self.id)
+    elseif method == 'workspace/textDocumentContent' then
+      lsp.text_document_content._update_autocmds()
     elseif not self:_supports_registration(method) then
       unsupported[#unsupported + 1] = method
     end
@@ -1042,6 +1045,8 @@ function Client:_unregister(unregistrations)
   for _, unreg in ipairs(unregistrations) do
     if unreg.method == 'workspace/didChangeWatchedFiles' then
       lsp._watchfiles.unregister(unreg, self.id)
+    elseif unreg.method == 'workspace/textDocumentContent' then
+      lsp.text_document_content._update_autocmds()
     end
   end
 end
