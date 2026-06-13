@@ -600,6 +600,10 @@ static int nlua_check_interrupt(lua_State *lstate)
 
 static int nlua_os_exit(lua_State *lstate)
 {
+  if (in_fast_callback > 0) {
+    return luaL_error(lstate, e_fast_api_disabled, "os.exit");
+  }
+
   int status = 0;
   if (lua_gettop(lstate) >= 1 && !lua_isnil(lstate, 1)) {
     status = lua_isboolean(lstate, 1) ? (lua_toboolean(lstate, 1) ? 0 : 1)

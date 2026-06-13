@@ -142,6 +142,15 @@ describe('startup', function()
       end
     end
 
+    local function spawn_l(script)
+      local lua_fname = t.tmpname(false)
+      finally(function()
+        os.remove(lua_fname)
+      end)
+      write_file(lua_fname, script)
+      return n.spawn_wait('-l', lua_fname)
+    end
+
     it('outputs the EOF as LF (not CRLF) #36853', function()
       local args = { nvim_prog, '-l', '-' }
       local input = 'print("foo")'
@@ -201,6 +210,34 @@ describe('startup', function()
 
       eq(73, eval('v:shell_error'))
       eq('73\n', read_file(exit_file))
+    end)
+
+    it('os.exit() fails from libuv process callback #39783', function()
+      local marker = t.tmpname(false)
+      finally(function()
+        os.remove(marker)
+      end)
+
+      local proc = spawn_l(([[
+        local marker = %s
+        local handle
+        handle = assert(vim.uv.spawn(%s, { args = { 'EXIT', '0' } }, function()
+          handle:close()
+          local f = assert(io.open(marker, 'w'))
+          f:write('callback\n')
+          f:close()
+          os.exit(73)
+          error('os.exit() returned')
+        end))
+        assert(vim.wait(1000, function()
+          return vim.uv.fs_stat(marker) ~= nil
+        end))
+        vim.wait(0)
+      ]]):format(vim.inspect(marker), vim.inspect(n.testprg('shell-test'))))
+
+      eq(0, proc.signal)
+      eq(0, proc.status)
+      matches('E5560: os%.exit must not be called in a fast event context', (proc:output()))
     end)
 
     it('Lua-error sets Nvim exitcode', function()
