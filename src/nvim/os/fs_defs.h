@@ -2,9 +2,22 @@
 
 #include <uv.h>
 
-/// Struct which encapsulates stat information.
+/// Currently supports Windows and is extensible.
+/// @see https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats
+typedef enum {
+  kPathUnknown = 0,
+  kPathDOS,         ///< C:/foo/bar
+  kPathUNC,         ///< //server/share/foo/bar
+  kPathDevice,      ///< //?/C:/foo/bar or //?/Volume{xxx}/foo/bar
+  kPathDeviceUNC,   ///< //?/UNC/server/share/foo/bar
+} PathType;
+
+/// Struct which encapsulates file stat and path information.
 typedef struct {
   uv_stat_t stat;  ///< @private
+
+  size_t root_off;  ///< Offset past the path type prefix, if any.
+  PathType type;
 } FileInfo;
 
 /// Struct which encapsulates inode/dev_id information.
