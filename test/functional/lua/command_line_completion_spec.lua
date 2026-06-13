@@ -114,6 +114,23 @@ describe('nlua_expand_pat', function()
     )
   end)
 
+  it('does not return deprecated symbols', function()
+    eq({}, get_completions('vim.api.nvim_buf_add')[1])
+    eq({}, get_completions('vim.lsp.client_is')[1])
+    eq({}, get_completions('vim.regi')[1])
+    eq({}, get_completions('vim.lsp.codelens.cl')[1])
+
+    local completions = get_completions('vim.api.nvim_buf_set_l')[1]
+    eq(true, vim.tbl_contains(completions, 'nvim_buf_set_lines'))
+    local lsp_completions = get_completions('vim.lsp.buf.h')[1]
+    eq(true, vim.tbl_contains(lsp_completions, 'hover'))
+
+    -- invalid VIMRUNTIME deprecated.gen.lua not found, no filtering
+    clear { env = { VIMRUNTIME = '/invalid' } }
+    local fallback = get_completions('vim.api.nvim_buf_add')[1]
+    eq(true, vim.tbl_contains(fallback, 'nvim_buf_add_highlight'))
+  end)
+
   it('with lazy submodules of "vim" global', function()
     eq({ { 'inspect', 'inspect_pos' }, 4 }, get_completions('vim.inspec'))
     eq({ { 'treesitter' }, 4 }, get_completions('vim.treesi'))
