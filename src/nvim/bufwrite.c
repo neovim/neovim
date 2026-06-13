@@ -1740,6 +1740,14 @@ restore_backup:
     }
   }
 
+  // The new undo data retrieval mechanism requires the backup file to be
+  // immediately overwritten with a copy of the live file after a write.
+  if (p_bk && backup != NULL) {
+    if (os_copy(fname, backup, UV_FS_COPYFILE_FICLONE) != 0) {
+      semsg(_("E509: Cannot create backup file (add ! to override)"));
+    }
+  }
+
   // If we kept a backup until now, and we are in patch mode, then we make
   // the backup file our 'original' file.
   if (*p_pm && dobackup) {
