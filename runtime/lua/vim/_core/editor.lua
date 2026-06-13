@@ -29,6 +29,12 @@ for k, v in pairs({
   vim._submodules[k] = v
 end
 
+-- `vim.json` is created by the C core. Attach lazy-loading for Lua submodules
+-- without requiring the runtime module during early startup.
+vim._defer_require_into(vim.json, 'vim.json', {
+  rpc = true,
+})
+
 -- There are things which have special rules in vim._init_packages
 -- for legacy reasons (uri) or for performance (_inspector).
 -- most new things should go into a submodule namespace ( vim.foobar.do_thing() )

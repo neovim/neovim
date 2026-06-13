@@ -224,6 +224,8 @@ LUA
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
+the same range instances now compare equal.
+• Generic JSON-RPC client/server implementation: |json-rpc|.
 
 OPTIONS
 
