@@ -98,8 +98,12 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
     }
     tabpage_T *tp = win_tp == curtab ? NULL : win_tp;
     int dir;
-    winframe_remove(wp, &dir, tp, NULL);
-    XFREE_CLEAR(wp->w_frame);
+    if (ui_has(kUIWindows)) {
+      // ext_windows: no frame tree, skip frame removal
+    } else {
+      winframe_remove(wp, &dir, tp, NULL);
+      XFREE_CLEAR(wp->w_frame);
+    }
     win_remove(wp, tp);
     if (win_tp == curtab) {
       last_status(false);  // may need to remove last status line
