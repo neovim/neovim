@@ -52,6 +52,61 @@
 
 static const char e_error_while_writing_str[] = N_("E80: Error while writing: %s");
 
+#ifdef MSWIN
+// Windows UNC paths are rooted at the server/share pair:
+//   //server/share/path => //server/share
+// This covers ordinary shares, including administrative shares like C$.
+// Device paths (//?/..., //./...) use different prefix rules.
+// https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths
+static bool path_is_basic_unc_share_root(char *fname, size_t fnamelen, char **sharep, char **rootp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char *p = fname;
+  char *end = fname + fnamelen;
+
+  if (end - p < 2 || !vim_ispathsep_nocolon(p[0]) || !vim_ispathsep_nocolon(p[1])) {
+    return false;
+  }
+
+  p += 2;
+  if (p == end || vim_ispathsep_nocolon(*p)) {
+    return false;
+  }
+  if ((p[0] == '?' || p[0] == '.') && p + 1 < end && vim_ispathsep_nocolon(p[1])) {
+    return false;
+  }
+
+  while (p < end && !vim_ispathsep_nocolon(*p)) {
+    MB_PTR_ADV(p);
+  }
+  if (p == end || !vim_ispathsep_nocolon(*p)) {
+    return false;
+  }
+
+  p++;
+  if (p == end || vim_ispathsep_nocolon(*p)) {
+    return false;
+  }
+
+  char *share = p;
+  while (p < end && !vim_ispathsep_nocolon(*p)) {
+    MB_PTR_ADV(p);
+  }
+
+  char *root = p;
+  while (p < end && vim_ispathsep_nocolon(*p)) {
+    p++;
+  }
+  if (p != end) {
+    return false;
+  }
+
+  *sharep = share;
+  *rootp = root;
+  return true;
+}
+#endif
+
 /// Adjust a filename, according to a string of modifiers.
 /// *fnamep must be NUL terminated when called.  When returning, the length is
 /// determined by *fnamelen.
@@ -231,6 +286,17 @@ repeat:
   while (src[*usedlen] == ':' && src[*usedlen + 1] == 'h') {
     valid |= VALID_HEAD;
     *usedlen += 2;
+
+#ifdef MSWIN
+    char *unc_share = NULL;
+    char *unc_root = NULL;
+    if (path_is_basic_unc_share_root(*fnamep, *fnamelen, &unc_share, &unc_root)) {
+      tail = unc_share;
+      *fnamelen = (size_t)(unc_root - *fnamep);
+      continue;
+    }
+#endif
+
     s = get_past_head(*fnamep);
     while (tail > s && after_pathsep(s, tail)) {
       MB_PTR_BACK(*fnamep, tail);

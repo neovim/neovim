@@ -111,16 +111,30 @@ describe('fnamemodify()', function()
     eq_slashconvert('path/to', fnamemodify('path/to/hello.txt', ':h'))
 
     if is_os('win') then
-      -- Current Windows behavior for slash-style UNC paths, such as "//foo/C$/".
+      -- Windows roots.
       eq('/', fnamemodify('/', ':h'))
       eq('/', fnamemodify('/foo', ':h'))
+
+      -- Windows UNC share roots.
       eq('//', fnamemodify('//', ':h'))
       eq('//', fnamemodify('//foo', ':h'))
-      eq('//foo', fnamemodify('//foo/bar', ':h'))
+      eq('//foo/bar', fnamemodify('//foo/bar', ':h'))
+      eq('//foo/bar', fnamemodify('//foo/bar/', ':h'))
+      eq('//foo/bar', fnamemodify('//foo/bar/baz', ':h'))
+      eq('//foo/bar', fnamemodify('//foo/bar/baz', ':h:h'))
       eq('//foo', fnamemodify('//foo///bar', ':h'))
-      eq('//foo', fnamemodify('//foo/C$', ':h'))
+      eq('//foo/C$', fnamemodify('//foo/C$', ':h'))
       eq('//foo/C$', fnamemodify('//foo/C$/', ':h'))
       eq('//foo/C$', fnamemodify('//foo/C$/bar', ':h'))
+      eq('//foo/C$', fnamemodify('//foo/C$/bar', ':h:h'))
+      eq([[\\foo\C$]], fnamemodify([[\\foo\C$]], ':h'))
+      eq([[\\foo\C$]], fnamemodify([[\\foo\C$\]], ':h'))
+      eq([[\\foo\C$]], fnamemodify([[\\foo\C$\bar]], ':h'))
+      eq([[\\foo\C$]], fnamemodify([[\\foo\C$\bar]], ':h:h'))
+      eq([[//foo\C$]], fnamemodify([[//foo\C$/bar]], ':h'))
+      eq('C$', fnamemodify('//foo/C$/bar', ':h:t'))
+
+      -- Other leading slash runs keep their historical Windows behavior.
       eq('///', fnamemodify('///', ':h'))
       eq('////', fnamemodify('////', ':h'))
       eq('///', fnamemodify('///foo', ':h'))
