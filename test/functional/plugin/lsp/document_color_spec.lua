@@ -176,6 +176,115 @@ body {
     screen:expect({ grid = grid_without_colors })
   end)
 
+  it('debounces refresh requests using flags.debounce_text_changes', function()
+    local result = exec_lua(function()
+      _G.server2 = _G._create_server({
+        capabilities = {
+          colorProvider = true,
+        },
+        handlers = {
+          ['textDocument/documentColor'] = function(_, _, callback)
+            callback(nil, {})
+          end,
+        },
+      })
+
+      local function document_color_request_count()
+        local count = 0
+        for _, message in ipairs(_G.server2.messages) do
+          if message.method == 'textDocument/documentColor' then
+            count = count + 1
+          end
+        end
+        return count
+      end
+
+      assert(vim.lsp.start({
+        name = 'dummy2',
+        cmd = _G.server2.cmd,
+        flags = {
+          debounce_text_changes = 100,
+        },
+      }))
+      assert(
+        vim.wait(1000, function()
+          return document_color_request_count() >= 1
+        end),
+        'timed out waiting for initial documentColor request'
+      )
+
+      local initial = document_color_request_count()
+      vim.api.nvim_buf_set_lines(bufnr, 1, 2, false, { '  color: #000;' })
+      vim.api.nvim_buf_set_lines(bufnr, 2, 3, false, { '  background-color: rgb(1, 2, 3);' })
+      vim.wait(20)
+      local before_debounce = document_color_request_count()
+      assert(
+        vim.wait(1000, function()
+          return document_color_request_count() == initial + 1
+        end),
+        'timed out waiting for debounced documentColor request'
+      )
+
+      return {
+        initial = initial,
+        before_debounce = before_debounce,
+        final = document_color_request_count(),
+      }
+    end)
+
+    eq(result.initial, result.before_debounce)
+    eq(result.initial + 1, result.final)
+  end)
+
+  it('refreshes immediately when debounce_text_changes is zero', function()
+    local result = exec_lua(function()
+      _G.server2 = _G._create_server({
+        capabilities = {
+          colorProvider = true,
+        },
+        handlers = {
+          ['textDocument/documentColor'] = function(_, _, callback)
+            callback(nil, {})
+          end,
+        },
+      })
+
+      local function document_color_request_count()
+        local count = 0
+        for _, message in ipairs(_G.server2.messages) do
+          if message.method == 'textDocument/documentColor' then
+            count = count + 1
+          end
+        end
+        return count
+      end
+
+      assert(vim.lsp.start({
+        name = 'dummy2',
+        cmd = _G.server2.cmd,
+        flags = {
+          debounce_text_changes = 0,
+        },
+      }))
+      assert(
+        vim.wait(1000, function()
+          return document_color_request_count() >= 1
+        end),
+        'timed out waiting for initial documentColor request'
+      )
+
+      local initial = document_color_request_count()
+      vim.api.nvim_buf_set_lines(bufnr, 1, 2, false, { '  color: #000;' })
+
+      return {
+        initial = initial,
+        after_edit = document_color_request_count(),
+      }
+    end)
+
+    eq(result.initial + 1, result.after_edit)
+  end)
+
   describe('is_enabled()', function()
     it('returns true when document colors is enabled', function()
       eq(
