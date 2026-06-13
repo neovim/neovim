@@ -100,7 +100,6 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
 
   *opt_idxp = find_option(name);
   if (*opt_idxp == kOptInvalid) {
-    // unknown option
     api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
     return FAIL;
   }
@@ -305,6 +304,12 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
   void *to = NULL;
   if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &to, NULL,
                                   err)) {
+    return;
+  }
+
+  // Deprecated TTY options (t_Co, ttytype, etc.) are not supported via API.
+  if (is_tty_option(name.data)) {
+    api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name.data);
     return;
   }
 
