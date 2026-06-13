@@ -632,6 +632,8 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
     if (VIsual_active) {
       // should do something when inclusive == false !
       VIsual = start_pos;
+      // Mark that this selection came from a text object
+      VIsual_from_textobject = true;
       redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     } else {
       oap->start = start_pos;
