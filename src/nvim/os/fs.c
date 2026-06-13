@@ -790,9 +790,15 @@ int os_setperm(const char *const name, int perm)
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
+int os_fchmod(int fd, int perm)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_fchmod, fd, perm, NULL);
+  return (r == kLibuvSuccess ? OK : FAIL);
+}
+
 #ifdef HAVE_XATTR
-/// Copy extended attributes from_file to to_file
-void os_copy_xattr(const char *from_file, const char *to_file)
+static void os_copy_xattr_inner(const char *from_file, const char *to_file, int to_fd)
 {
   if (from_file == NULL) {
     return;
@@ -822,9 +828,14 @@ void os_copy_xattr(const char *from_file, const char *to_file)
 
     while (size > 0) {
       ssize_t vallen = getxattr(from_file, key, val, round ? (size_t)max_vallen : 0);
+      bool copied = false;
       // only set the attribute in the second round
-      if (vallen >= 0 && round
-          && setxattr(to_file, key, val, (size_t)vallen, 0) == 0) {
+      if (vallen >= 0 && round) {
+        copied = to_file != NULL
+                 ? setxattr(to_file, key, val, (size_t)vallen, 0) == 0
+                 : fsetxattr(to_fd, key, val, (size_t)vallen, 0) == 0;
+      }
+      if (copied) {
         //
       } else if (errno) {
         switch (errno) {
@@ -866,6 +877,17 @@ error_exit:
   if (errmsg != NULL) {
     emsg(_(errmsg));
   }
+}
+
+/// Copy extended attributes from_file to to_file
+void os_copy_xattr(const char *from_file, const char *to_file)
+{
+  os_copy_xattr_inner(from_file, to_file, -1);
+}
+
+void os_copy_xattr_fd(const char *from_file, int to_fd)
+{
+  os_copy_xattr_inner(from_file, NULL, to_fd);
 }
 #endif
 
@@ -960,6 +982,13 @@ int os_file_settime(const char *path, double atime, double mtime)
 {
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_utime, path, atime, mtime, NULL);
+  return r;
+}
+
+int os_file_settime_fd(int fd, double atime, double mtime)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_futime, fd, atime, mtime, NULL);
   return r;
 }
 
