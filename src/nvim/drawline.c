@@ -1268,7 +1268,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       // Check if the char under the cursor should be inverted (highlighted).
-      if (!highlight_match && in_curline
+      if (!search_state.highlight_match && in_curline
           && cursor_is_block_during_visual(*p_sel == 'e')) {
         noinvcur = true;
       }
@@ -1279,25 +1279,25 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         vi_attr = win_hl_attr(wp, HLF_V);
       }
       // handle 'incsearch' and ":s///c" highlighting
-    } else if (highlight_match
+    } else if (search_state.highlight_match
                && wp == curwin
                && !has_foldtext
                && lnum >= curwin->w_cursor.lnum
-               && lnum <= curwin->w_cursor.lnum + search_match_lines) {
+               && lnum <= curwin->w_cursor.lnum + search_state.search_match_lines) {
       if (lnum == curwin->w_cursor.lnum) {
         getvcol(curwin, &(curwin->w_cursor), &wlv.fromcol, NULL, NULL, 0);
       } else {
         wlv.fromcol = 0;
       }
-      if (lnum == curwin->w_cursor.lnum + search_match_lines) {
+      if (lnum == curwin->w_cursor.lnum + search_state.search_match_lines) {
         pos_T pos = {
           .lnum = lnum,
-          .col = search_match_endcol,
+          .col = search_state.search_match_endcol,
         };
         getvcol(curwin, &pos, &wlv.tocol, NULL, NULL, 0);
       }
       // do at least one character; happens when past end of line
-      if (wlv.fromcol == wlv.tocol && search_match_endcol) {
+      if (wlv.fromcol == wlv.tocol && search_state.search_match_endcol) {
         wlv.tocol = wlv.fromcol + 1;
       }
       area_highlighting = true;
@@ -2003,7 +2003,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       // Decide which of the highlight attributes to use.
       if (area_attr != 0) {
         char_attr_pri = hl_combine_attr(wlv.line_attr, area_attr);
-        if (!highlight_match) {
+        if (!search_state.highlight_match) {
           // let search highlight show in Visual area if possible
           char_attr_pri = hl_combine_attr(search_attr, char_attr_pri);
         }
