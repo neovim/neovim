@@ -149,7 +149,7 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
   if (at_en.cterm_fg_color != 0 || at_en.cterm_bg_color != 0
       || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
       || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
-      || at_en.rgb_ae_attr != 0 || ns_id != 0) {
+      || at_en.rgb_ae_attr != 0 || at_en.font >= 0 || ns_id != 0) {
     return get_attr_entry((HlEntry){ .attr = at_en, .kind = kHlSyntax,
                                      .id1 = idx, .id2 = ns_id });
   }
@@ -697,6 +697,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   if (prim_aep.hl_blend >= 0) {
     new_en.hl_blend = prim_aep.hl_blend;
+  }
+
+  if (prim_aep.font >= 0) {
+    new_en.font = prim_aep.font;
   }
 
   if ((new_en.url == -1) && (prim_aep.url >= 0)) {
