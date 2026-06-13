@@ -132,7 +132,8 @@ describe('nvim_ui_send', function()
                                                         |
     ]])
 
-    eq('Hello world', table.concat(read_data))
+    local bg_request = '\027]11;?\007'
+    eq(bg_request .. 'Hello world', table.concat(read_data))
   end)
 
   it('ignores ui_send event for UIs without stdout_tty', function()
