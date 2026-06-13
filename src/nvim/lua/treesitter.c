@@ -384,7 +384,14 @@ static int tslua_push_parser(lua_State *L)
 #ifdef HAVE_WASMTIME
   if (ts_language_is_wasm(lang)) {
     assert(wasmengine != NULL);
-    ts_parser_set_wasm_store(*parser, ts_wasmstore);
+    TSWasmError werr = { 0 };
+    TSWasmStore *store = ts_wasm_store_new(wasmengine, &werr);
+    if (werr.kind > 0) {
+      ts_parser_delete(*parser);
+      return luaL_error(L, "Failed to create WASM store: (%s) %s",
+                        wasmerr_to_str(werr.kind), werr.message);
+    }
+    ts_parser_set_wasm_store(*parser, store);
   }
 #endif
 
