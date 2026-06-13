@@ -11,6 +11,7 @@
 #include "nvim/cmdexpand.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
+#include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
@@ -1684,13 +1685,8 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
   while (row > 0) {
     // Don't include filler lines in "count"
-    if (win_may_fill(win)) {
-      row -= lnum == win->w_topline ? win->w_topfill
-                                    : win_get_fill(win, lnum);
-      count = plines_win_nofill(win, lnum, false);
-    } else {
-      count = plines_win(win, lnum, false);
-    }
+    row -= lnum == win->w_topline ? win->w_topfill : win_get_fill(win, lnum);
+    count = plines_win_nofill(win, lnum, false);
 
     if (win->w_skipcol > 0 && lnum == win->w_topline) {
       int width1 = win->w_view_width - win_col_off(win);
@@ -1710,7 +1706,12 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       }
     }
 
-    if (count > row) {
+    // Clicking a "below" virtual line should interact with the line above,
+    // rather than the next line to which it is attached in the decor/draw sense.
+    int virt_below = 0;
+    if (count > row
+        || (decor_virt_lines(win, lnum, lnum + 1, &virt_below, NULL, false)
+            && count + virt_below > row)) {
       break;            // Position is in this buffer line.
     }
 
@@ -1722,6 +1723,15 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     }
     row -= count;
     lnum++;
+  }
+
+  // Earlier virt below check avoids advancing lnum, also need to decrement for topline.
+  if (lnum == win->w_topline) {
+    int virt_below = 0;
+    int virt_lines = decor_virt_lines(win, lnum - 1, lnum, &virt_below, NULL, false);
+    int diff_fill = diff_check_fill(win, lnum);
+    int skip_fill = virt_lines + diff_fill - win->w_topfill;
+    lnum -= (*rowp < virt_below - skip_fill);
   }
 
   // Mouse row reached, adjust lnum for concealed lines.
