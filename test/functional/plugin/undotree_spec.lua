@@ -40,7 +40,14 @@ end
 
 describe(':Undotree', function()
   before_each(function()
-    clear({ args = { '--clean' } })
+    clear({
+      args = {
+        '--clean',
+        -- autoread plugin causes flaky tests
+        '--cmd',
+        'let g:loaded_autoread=1',
+      },
+    })
     exec 'packadd nvim.undotree'
   end)
 
