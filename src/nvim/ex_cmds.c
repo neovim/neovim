@@ -1416,20 +1416,10 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
     if (do_in) {
       if ((cmdmod.cmod_flags & CMOD_KEEPMARKS)
           || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
-        // TODO(bfredl): Currently not active for extmarks. What would we
-        // do if columns don't match, assume added/deleted bytes at the
-        // end of each line?
-        if (read_linecount >= linecount) {
-          // move all marks from old lines to new lines
-          mark_adjust(line1, line2, linecount, 0, kExtmarkNOOP);
-        } else {
-          // move marks from old lines to new lines, delete marks
-          // that are in deleted lines
-          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0,
-                      kExtmarkNOOP);
-          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0,
-                      kExtmarkNOOP);
-        }
+        // With in-place replacement, marks already stay where they are.
+      } else {
+        // Delete/unset marks in the replaced range
+        mark_adjust(line1, line2, MAXLNUM, 0, kExtmarkNOOP);
       }
 
       // Put cursor on first filtered line for ":range!cmd".
@@ -1439,7 +1429,7 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
       // curbuf->b_op_start.lnum -= linecount;             // adjust '[
       // curbuf->b_op_end.lnum -= linecount;               // adjust ']
       // write_lnum_adjust(-linecount);                    // adjust last line
-                                                        // for next write
+      // for next write
       foldUpdate(curwin, curbuf->b_op_start.lnum, curbuf->b_op_end.lnum);
     } else {
       // Put cursor on last new line for ":r !cmd".
@@ -4837,7 +4827,7 @@ void global_exe(char *cmd, exarg_T *eap)
   global_busy = 1;
   old_lcount = curbuf->b_ml.ml_line_count;
 
-  if (eap->addr_type == ADDR_POSITIONS) {
+  if (eap->addr_type == ADDR_POSITIONS && eap->addr_mode == kOmCharWise) {
     linenr_T line1 = 0;
     linenr_T line2 = 0;  // we use end of the range to check when the next mark starts in a new range
     colnr_T col1 = 0;

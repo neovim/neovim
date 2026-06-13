@@ -908,8 +908,8 @@ char *uc_validate_name(char *name)
 /// @return  OK if the command is created, FAIL otherwise.
 int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, int64_t def,
                    int flags, int context, char *compl_arg, LuaRef compl_luaref,
-                    LuaRef preview_luaref, cmd_addr_T addr_type, addr_mode_T addr_mode,
-                    LuaRef luaref, const char *desc, bool force)
+                   LuaRef preview_luaref, cmd_addr_T addr_type, addr_mode_T addr_mode,
+                   LuaRef luaref, const char *desc, bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;
@@ -1062,7 +1062,7 @@ void ex_command(exarg_T *eap)
     emsg(_(e_complete_used_without_allowing_arguments));
   } else {
     uc_add_command(name, name_len, p, argt, def, flags, context, compl_arg, LUA_NOREF, LUA_NOREF,
-                    addr_type_arg, addr_mode, LUA_NOREF, NULL, eap->forceit);
+                   addr_type_arg, addr_mode, LUA_NOREF, NULL, eap->forceit);
 
     return;  // success
   }

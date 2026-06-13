@@ -932,7 +932,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
       kv_printf(cmdline, "%" PRIdLINENR, eap->line2);
     } else if (eap->addr_count == 4) {
       kv_printf(cmdline, "%" PRIdLINENR ".%" PRIdCOLNR ",%" PRIdLINENR ".%" PRIdCOLNR,
-          eap->line1, eap->col1, eap->line2, eap->col2);
+                eap->line1, eap->col1, eap->line2, eap->col2);
     } else if (eap->addr_count > 1) {
       kv_printf(cmdline, "%" PRIdLINENR ",%" PRIdLINENR, eap->line1, eap->line2);
       eap->addr_count = 2;  // Make sure address count is not greater than 2

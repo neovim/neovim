@@ -2987,8 +2987,8 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   int ret = FAIL;
 
   // if addr position have columns specified we have already an address
-  if (eap->addr_count == 4 &&
-      eap->addr_type == ADDR_POSITIONS) {
+  if (eap->addr_count == 4
+      && eap->addr_type == ADDR_POSITIONS) {
     need_check_cursor = true;
     ret = OK;
     goto theend;
@@ -3160,7 +3160,6 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 
   // One address given: set start and end lines.
   if (eap->addr_count == 1) {
-
     if (eap->addr_type != ADDR_POSITIONS) {
       eap->line1 = eap->line2;
     }

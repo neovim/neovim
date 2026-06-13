@@ -4327,11 +4327,14 @@ void read_buffer_into(buf_T *buf, pos_T *start_pos, pos_T *end_pos, StringBuilde
 
     if (len == lplen - written) {
       // Finished a line, add a NL, unless this line should not have one.
-      if (lnum != end_pos->lnum
-          || (!buf->b_p_bin && buf->b_p_fixeol && lnum != end_pos->lnum)
+      bool is_end = lnum == end_pos->lnum;
+      size_t actual_line_len = (size_t)ml_get_buf_len(buf, lnum);
+      bool is_charwise = is_end && end_pos->col < (colnr_T)actual_line_len;
+      if (!is_end
+          || (!buf->b_p_bin && buf->b_p_fixeol && !is_charwise)
           || (lnum != buf->b_no_eol_lnum
               && (lnum != buf->b_ml.ml_line_count || buf->b_p_eol)
-              && (lnum != end_pos->lnum))) {
+              && !is_charwise)) {
         kv_push(*sb, NL);
       }
       lnum++;
