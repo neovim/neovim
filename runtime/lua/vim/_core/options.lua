@@ -560,7 +560,7 @@ local to_lua_value = {
 }
 
 --- Converts a vimoption_T style value to a Lua value
-local function convert_value_to_lua(name, option_value)
+function M.convert_value_to_lua(name, option_value)
   local info = get_options_info(name) or error('Not a valid option name: ' .. name)
   return to_lua_value[info.metatype](info, option_value)
 end
@@ -586,7 +586,7 @@ local function create_option_accessor(scope)
 
   option_mt = {
     get = function(self)
-      return convert_value_to_lua(self._name, self._value)
+      return M.convert_value_to_lua(self._name, self._value)
     end,
 
     append = function(self, right)

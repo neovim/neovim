@@ -141,6 +141,7 @@ API
   'nowrap' is set and wrapping when 'wrap' is set.
 • |nvim_set_option_value()| accepts a new `operation` field to modify the
   existing option value.
+• |nvim_set_option_value()| returns the new option value.
 
 BUILD
 

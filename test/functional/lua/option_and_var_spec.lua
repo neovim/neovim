@@ -1000,7 +1000,7 @@ describe('lua stdlib', function()
         end)
 
         it('allows prepending a key:value string to a listchars', function()
-          eq_exec_lua('tab:>~,eol:~,space:.', function()
+          eq_exec_lua('eol:~,space:.,tab:>~', function()
             vim.opt.listchars = { eol = '~', space = '.' }
             -- Operator overloading is cursed.
             vim.opt.listchars = vim.opt.listchars ^ 'tab:>~'

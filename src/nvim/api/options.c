@@ -421,6 +421,10 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     });
   }
 
+  // set_option_value_for can corrupt the name value when setting options like
+  // background. It only does this when nvim_set_option_value takes an arena
+  // parameter, so I think it's freeing/reusing that arena.
+  String safe_name = arena_string(NULL, name);
   if (!dry_run) {
     WITH_SCRIPT_CONTEXT(channel_id, {
       set_option_value_for(name.data, opt_idx, merged_val, opt_flags, scope, to, err);
@@ -428,14 +432,27 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   }
 
   if (merged_val.type == kOptValTypeString) {
-    String arena_val = arena_string(arena, merged_val.data.string);
+    // Convert the return type to lua for string/list/map style option
+    lua_err = ERROR_INIT;
+    MAXSIZE_TEMP_ARRAY(lua_args, 2);
+    ADD_C(lua_args, STRING_OBJ(safe_name));
+    ADD_C(lua_args, STRING_OBJ(merged_val.data.string));
+    Object lua_val =
+      NLUA_EXEC_STATIC("return require('vim._core.options').convert_value_to_lua(...)",
+                       lua_args, kRetObject, arena, &lua_err);
+
     optval_free(merged_val);
-    // Unfortunately, we return the value as a string rather than converting
-    // to lua value. This is because if we convert to a lua value, maps may
-    // not return in the expected order. I'm not sure if the order matters
-    // for any of the map options.
-    return STRING_OBJ(arena_val);
+    xfree(safe_name.data);
+
+    VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, {
+      api_clear_error(&lua_err);
+      return NIL;
+    });
+
+    return lua_val;
   }
+
+  xfree(safe_name.data);
 
   return optval_as_object(merged_val);
 }

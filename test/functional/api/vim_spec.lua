@@ -2298,10 +2298,13 @@ describe('API', function()
     end)
 
     it('returns the new option value', function()
-      eq('eol:~,space:-', api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, {}))
+      eq(
+        { eol = '~', space = '-' },
+        api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, {})
+      )
       eq('eol:~,space:-', api.nvim_get_option_value('listchars', {}))
       eq(
-        'eol:~,space:-,tab:>-',
+        { eol = '~', space = '-', tab = '>-' },
         api.nvim_set_option_value('listchars', { tab = '>-' }, { operation = 'append' })
       )
       eq('eol:~,space:-,tab:>-', api.nvim_get_option_value('listchars', {}))
@@ -2310,7 +2313,7 @@ describe('API', function()
     it("doesn't update option value with dry_run flag", function()
       local listchars = api.nvim_get_option_value('listchars', {})
       eq(
-        'eol:~,space:-',
+        { eol = '~', space = '-' },
         api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, { dry_run = true })
       )
       eq(listchars, api.nvim_get_option_value('listchars', {}))
