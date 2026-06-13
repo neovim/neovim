@@ -216,6 +216,9 @@ describe('vim.filetype', function()
       end)
     )
     rmdir('Xfiletype')
+
+    -- Should still work even if current directory is not on disk
+    eq('zsh', exec_lua('return vim.filetype.match({ filename = ".zshrc" })'))
   end)
 
   it('fallback to conf if any of the first five lines start with a #', function()
