@@ -221,7 +221,7 @@ local M = vim._defer_require('vim.diagnostic', {
 ---
 --- Show or hide diagnostics based on the current cursor line.  If `true`, only diagnostics on the
 --- current cursor line are shown.  If `false`, all diagnostics are shown except on the current
---- cursor line.  If `nil`, all diagnostics are shown.
+--- cursor line.  If `nil`, all diagnostics are shown. Updated on |CursorHold|, see 'updatetime'.
 --- (default `nil`)
 --- @field current_line? boolean
 ---
@@ -276,7 +276,7 @@ local M = vim._defer_require('vim.diagnostic', {
 --- severity |diagnostic-severity|
 --- @field severity? vim.diagnostic.SeverityFilter
 ---
---- Only show diagnostics for the current line.
+--- Only show diagnostics for the current line. Updated on |CursorHold|, see 'updatetime'.
 --- (default: `false`)
 --- @field current_line? boolean
 ---
