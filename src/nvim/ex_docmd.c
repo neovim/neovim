@@ -5099,7 +5099,8 @@ static void ex_restart(exarg_T *eap)
 
   // Prevent new server from self-exiting when the channel closes.
   ArenaMem result_mem = NULL;
-  MAXSIZE_TEMP_ARRAY(detach_args, 1);
+  MAXSIZE_TEMP_ARRAY(detach_args, 2);
+  ADD_C(detach_args, INTEGER_OBJ(0));
   ADD_C(detach_args, BOOLEAN_OBJ(true));
   rpc_send_call(channel->id, "nvim__chan_set_detach", detach_args, &result_mem, &err);
   if (ERROR_SET(&err)) {
@@ -5977,17 +5978,26 @@ static void ex_tabs(exarg_T *eap)
 static void ex_detach(exarg_T *eap)
 {
   // come on pooky let's burn this mf down
+  if (!current_ui) {
+    emsg(_(e_noui));
+    return;
+  }
+
   if (eap && eap->forceit) {
-    emsg("bang (!) not supported yet");
+    typval_T lua_args[] = {
+      { .v_type = VAR_NUMBER, .vval.v_number = (varnumber_T)current_ui },
+      { .v_type = VAR_UNKNOWN },
+    };
+    typval_T rv = TV_INITIAL_VALUE;
+    nlua_call_vimfn("vim._core.server", "detach_others", lua_args, &rv);
+    ILOG("detach! current_ui=%" PRIu64 " detached=%zu", current_ui,
+         (rv.v_type == VAR_NUMBER && rv.vval.v_number > 0)
+         ? (size_t)rv.vval.v_number : (size_t)0);
+    tv_clear(&rv);
   } else {
     // 1. Send "error_exit" UI-event (notification only).
     // 2. Perform server-side UI detach.
     // 3. Close server-side channel without self-exit.
-
-    if (!current_ui) {
-      emsg("UI not attached");
-      return;
-    }
 
     Channel *chan = find_channel(current_ui);
     if (!chan) {
@@ -5996,7 +6006,7 @@ static void ex_detach(exarg_T *eap)
     }
     // Prevent self-exit on channel-close.
     Error detach_err = ERROR_INIT;
-    nvim__chan_set_detach(chan->id, true, &detach_err);
+    nvim__chan_set_detach(chan->id, 0, true, &detach_err);
     api_clear_error(&detach_err);
 
     // Server-side UI detach. Doesn't close the channel.

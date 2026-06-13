@@ -154,4 +154,25 @@ function M.rebind_after_restart(canonical_addr, expected_uis)
   end)
 end
 
+--- Disconnects every UI except `keep_chan`, keeping the server running.
+---
+--- @param keep_chan integer Channel ID of the UI to preserve.
+--- @return integer # Number of UIs detached.
+function M.detach_others(keep_chan)
+  local uicount = #vim.api.nvim_list_uis()
+  for _, ui in ipairs(vim.api.nvim_list_uis()) do
+    if ui.chan and ui.chan ~= keep_chan then
+      vim.api.nvim__chan_set_detach(ui.chan, true)
+      vim.fn.chanclose(ui.chan)
+    end
+  end
+  local n = uicount - #vim.api.nvim_list_uis()
+  if n == 0 then
+    vim.api.nvim_echo({ { 'No other UIs are attached' } }, true, {})
+  else
+    vim.api.nvim_echo({ { ('Detached %d non-current UIs'):format(n) } }, true, {})
+  end
+  return n
+end
+
 return M
