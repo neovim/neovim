@@ -2570,6 +2570,12 @@ size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
     // curbuf->b_no_eol_lnum = 0;
   }
 
+  if (cur_ln_nr > pos.lnum) {
+    changed_lines(curbuf, pos.lnum, 0, pos.lnum + 1, (linenr_T)(cur_ln_nr - pos.lnum), true);
+  } else {
+    changed_bytes(pos.lnum, pos.col);
+  }
+
   ui_flush();
 
   return (size_t)(output - start);
@@ -2645,6 +2651,15 @@ size_t ml_replace_range(pos_T range_start, pos_T range_end, char *output, size_t
       ml_delete(cur_ln_nr);
     }
     deleted_lines_mark(cur_ln_nr, del_count);
+  }
+
+  if (cur_ln_nr - 1 > range_end.lnum) {
+    int added_count = (cur_ln_nr - 1) - range_end.lnum;
+    appended_lines_mark(range_end.lnum, added_count);
+    changed_lines(curbuf, range_start.lnum, 0, range_end.lnum + 1,
+                  (linenr_T)added_count, true);
+  } else if (cur_ln_nr - 1 >= range_start.lnum) {
+    changed_lines(curbuf, range_start.lnum, 0, cur_ln_nr, 0, true);
   }
 
   ui_flush();

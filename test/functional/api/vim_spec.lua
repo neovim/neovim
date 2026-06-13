@@ -5305,7 +5305,7 @@ describe('API', function()
         cmd = 'normal',
         args = { 'x' },
         bang = true,
-        range = { 3, 4, 0, 2 },
+        range = { 3, 4, 0, 2147483647 },
         addr = 'line',
         magic = {
           file = false,

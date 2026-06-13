@@ -1408,28 +1408,52 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
     if (shell_flags & kShellOptRead) {
       curbuf->b_op_start.lnum = line1;
       curbuf->b_op_start.col = col1;
-      curbuf->b_op_end.lnum = line2;
-      curbuf->b_op_end.col = col2;
-      appended_lines_mark(line1, read_linecount);
+      if (otmp != NULL) {
+        curbuf->b_op_end.lnum = line2;
+        curbuf->b_op_end.col = col2;
+        appended_lines_mark(line1, read_linecount);
+      } else {
+        curbuf->b_op_end.lnum = line2 + read_linecount;
+        curbuf->b_op_end.col = col2;
+      }
     }
 
     if (do_in) {
-      if ((cmdmod.cmod_flags & CMOD_KEEPMARKS)
-          || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
-        // With in-place replacement, marks already stay where they are.
+      if (otmp != NULL) {
+        if ((cmdmod.cmod_flags & CMOD_KEEPMARKS)
+            || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
+          if (read_linecount >= linecount) {
+            // move all marks from old lines to new lines
+            mark_adjust(line1, line2, linecount, 0, kExtmarkNOOP);
+          } else {
+            // move marks from old lines to new lines, delete marks
+            // that are in deleted lines
+            mark_adjust(line1, line1 + read_linecount - 1, linecount, 0,
+                        kExtmarkNOOP);
+            mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0,
+                        kExtmarkNOOP);
+          }
+        }
       } else {
-        // Delete/unset marks in the replaced range
-        mark_adjust(line1, line2, MAXLNUM, 0, kExtmarkNOOP);
+        if ((cmdmod.cmod_flags & CMOD_KEEPMARKS)
+            || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
+          // With in-place replacement, marks already stay where they are.
+        } else {
+          // Delete/unset marks in the replaced range
+          mark_adjust(line1, line2, MAXLNUM, 0, kExtmarkNOOP);
+        }
       }
 
       // Put cursor on first filtered line for ":range!cmd".
       // Adjust '[ and '] (set by buf_write()).
       curwin->w_cursor.lnum = line1;
-      // del_lines(linecount, true);
-      // curbuf->b_op_start.lnum -= linecount;             // adjust '[
-      // curbuf->b_op_end.lnum -= linecount;               // adjust ']
-      // write_lnum_adjust(-linecount);                    // adjust last line
-      // for next write
+      if (otmp != NULL) {
+        del_lines(linecount, true);
+        curbuf->b_op_start.lnum -= linecount;             // adjust '[
+        curbuf->b_op_end.lnum -= linecount;               // adjust ']
+        write_lnum_adjust(-linecount);                    // adjust last line
+                                                          // for next write
+      }
       foldUpdate(curwin, curbuf->b_op_start.lnum, curbuf->b_op_end.lnum);
     } else {
       // Put cursor on last new line for ":r !cmd".

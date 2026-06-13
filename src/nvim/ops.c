@@ -1041,11 +1041,7 @@ static void mb_adjust_opend(oparg_T *oap)
   const char *line = ml_get(oap->end.lnum);
   colnr_T len = (colnr_T)strlen(line);
   if (oap->end.col >= len) {
-    if (len > 0) {
-      oap->end.col = len - 1;
-    } else {
-      oap->end.col = 0;
-    }
+    return;
   }
   const char *ptr = line + oap->end.col;
   if (*ptr != NUL) {
