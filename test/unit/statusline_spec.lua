@@ -429,6 +429,40 @@ describe('build_stl_str_hl', function()
     'aaaa~~b~~c~~d~~e~~fg~~hi~~jk~~lmnop~~qrstuv~~~wxyz'
   )
 
+  -- item group testing
+
+  statusline_test_align(
+    'should right align in right aligned groups',
+    30,
+    '%5(%l%), %5.(%l%), %5.5(%l%), %5.10(%l%)',
+    '~~~~0, ~~~~0, ~~~~0, ~~~~0',
+    { expected_cell_count = 26 }
+  )
+
+  statusline_test_align(
+    'should left align in left aligned groups',
+    30,
+    '%-5(%l%), %-5.(%l%), %-5.5(%l%), %-5.10(%l%)',
+    '0~~~~, 0~~~~, 0~~~~, 0~~~~',
+    { expected_cell_count = 26 }
+  )
+
+  statusline_test(
+    'Should truncate groups according to maxwid',
+    30,
+    '%.5(1234567%), %2.5(1234567%), %5.5(1234567%)',
+    '<4567, <4567, <4567',
+    { expected_cell_count = 19 }
+  )
+
+  statusline_test_align(
+    'Should compensate with fillchar after truncating item group at multicell character',
+    20,
+    '%.5(12🙂345%), %5.5(12🙂345%), %50.5(12🙂345%)',
+    '<345, <345~, <345~',
+    { expected_cell_count = 18 }
+  )
+
   -- stl item testing
   local tabline = ''
   for i = 1, 1000 do
