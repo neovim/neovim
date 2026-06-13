@@ -858,8 +858,8 @@ must handle.
 		"lua_error"	Error in |:lua| code
 		"lua_print"	|print()| from |:lua| code
 		"progress"	Progress message emitted by |nvim_echo()|
-		"rpc_error"	Error response from |rpcrequest()|
 		"quickfix"	Quickfix navigation message
+		"rpc_error"	Error response from |rpcrequest()|
 		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
 		"shell_cmd"	|:!cmd| executed command
