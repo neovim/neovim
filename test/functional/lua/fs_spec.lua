@@ -287,6 +287,52 @@ describe('vim.fs', function()
         eq('file', result['test.txt'])
       end)
     end)
+
+    describe('error handling', function()
+      before_each(function()
+        mkdir('testdir')
+        mkdir('testdir/noaccess')
+        mkdir('testdir/a')
+        mkdir('testdir/a/noaccess')
+        vim.uv.fs_chmod('testdir/noaccess', 0)
+        vim.uv.fs_chmod('testdir/a/noaccess', 0)
+      end)
+
+      after_each(function()
+        vim.uv.fs_chmod('testdir/noaccess', 448)
+        vim.uv.fs_chmod('testdir/a/noaccess', 448)
+        rmdir('testdir')
+      end)
+
+      it('returns error for unreadable root directory', function()
+        local result = exec_lua(function()
+          local _, err = vim.fs.dir('does-not-exist')
+          return err
+        end)
+
+        eq("ENOENT: no such file or directory: does-not-exist", result)
+      end)
+
+      it('returns iterator errors for unreadable child directories', function()
+        local result = exec_lua(function()
+          local errors = {}
+
+          local it = vim.fs.dir('testdir', { depth = 2 })
+
+          for f, _, err in it do
+            errors[f] = err
+          end
+
+          return errors
+        end)
+
+        eq('EACCES: permission denied: testdir/noaccess', result['noaccess'])
+
+        -- This should be nil because with a depth of 2 we shouldn't be scanning this
+        -- directory.
+        eq(nil, result['a/noaccess'])
+      end)
+    end)
   end)
 
   describe('find()', function()
