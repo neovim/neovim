@@ -2228,6 +2228,7 @@ vim.go.ei = vim.go.eventignore
 --- 	`SessionLoadPost`,
 --- 	`SessionLoadPre`,
 --- 	`SessionWritePost`,
+--- 	`SessionWritePre`,
 --- 	`ShellCmdPost`,
 --- 	`Signal`,
 --- 	`SourceCmd`,

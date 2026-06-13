@@ -175,6 +175,7 @@ EVENTS
   as |nvim_buf_del_mark()|
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.
+• Added the |SessionWritePre| autocommand event.
 
 HIGHLIGHTS
 
