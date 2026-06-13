@@ -3673,8 +3673,8 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
   char charbuf[2] = { (char)line->cmdfirstc, 0 };
   ui_call_cmdline_show(content, line->cmdpos,
                        cstr_as_string(charbuf),
-                       cstr_as_string((line->cmdprompt)),
-                       line->cmdindent, line->level, line->hl_id);
+                       cstr_as_string(line->cmdprompt),
+                       line->cmdindent, line->level, line->cmdprompt ? line->hl_id : -1);
   if (line->special_char) {
     charbuf[0] = line->special_char;
     ui_call_cmdline_special_char(cstr_as_string(charbuf),
