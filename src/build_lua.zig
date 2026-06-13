@@ -23,6 +23,7 @@ pub fn build_nlua0(
             .optimize = optimize,
             .link_libc = true,
         }),
+        .use_llvm = true,
     });
     const nlua0_mod = nlua0_exe.root_module;
 
