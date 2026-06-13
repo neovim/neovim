@@ -203,6 +203,47 @@ describe('TUI :detach', function()
   end)
 end)
 
+if is_os('win') then
+  describe('TUI Windows', function()
+    -- A child job that writes to CON must not leak onto the TUI screen. The
+    -- embedded server AttachConsole()'s the parent terminal (so server io.stdout
+    -- e.g. SIXEL works), but jobs must get their own (windowless) console so
+    -- writes to CON go nowhere visible, as in Vim / pre-0.12 Nvim. #40009
+    it('jobstart child writing to CON does not leak to screen', function()
+      n.clear()
+      finally(function()
+        n.check_close()
+      end)
+
+      local screen = tt.setup_child_nvim({
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--cmd',
+        'colorscheme vim',
+        '--cmd',
+        nvim_set .. ' laststatus=2 background=dark',
+      }, { env = t.shallowcopy(env_notermguicolors) })
+      tt.override_screen_expect_for_conpty(screen)
+
+      feed_data('iZZZSENTINEL')
+
+      -- Leave insert mode and run a job that writes directly to CON, blocking
+      -- until it finishes. The CON output must not appear anywhere on screen.
+      feed_data("\027\027:call jobwait([jobstart(['cmd', '/c', 'echo LEAKEDXYZ > CON'])])\013")
+
+      screen:expect([[
+        ZZZSENTINE^L                                       |
+        {100:~                                                 }|*3
+        {3:[No Name] [+]                                     }|
+                                                          |
+        {5:-- TERMINAL --}                                    |
+      ]])
+    end)
+  end)
+end
+
 describe('TUI :restart', function()
   before_each(n.clear)
   after_each(n.check_close)
