@@ -674,6 +674,13 @@ int update_screen(void)
                        wp->w_ns_hl_attr);
     }
 
+    // While a command preview is frozen, its buffer's windows show a preview
+    // snapshot even though the buffer text has been reverted. Skip redrawing
+    // them so the preview survives until explicitly cleared.
+    if (cmdpreview_curbuf != NULL && wp->w_buffer == cmdpreview_curbuf && cmdpreview_frozen) {
+      wp->w_redr_type = 0;
+    }
+
     if (wp->w_redr_type != 0) {
       if (!did_one) {
         did_one = true;

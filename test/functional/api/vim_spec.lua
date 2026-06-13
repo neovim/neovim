@@ -6239,4 +6239,184 @@ describe('API', function()
       ^:call getchar()                         |
     ]])
   end)
+
+  describe('nvim__buf_preview_cmd', function()
+    before_each(function()
+      clear()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo', 'bar', 'baz' })
+    end)
+
+    it('shows preview for :s', function()
+      local screen = Screen.new(20, 5)
+
+      api.nvim__buf_preview_cmd(0, 's/foo/fu')
+      screen:expect([[
+        {10:^fu}                  |
+        bar                 |
+        baz                 |
+        {1:~                   }|
+                            |
+      ]])
+    end)
+
+    it('persists across a redraw of the previewed buffer', function()
+      local screen = Screen.new(20, 5)
+
+      api.nvim__buf_preview_cmd(0, 's/foo/fu')
+      screen:expect([[
+        {10:^fu}                  |
+        bar                 |
+        baz                 |
+        {1:~                   }|
+                            |
+      ]])
+
+      -- E.g. async treesitter highlighting
+      api.nvim__redraw({ buf = 0, valid = false, flush = false })
+      api.nvim__redraw({ buf = 0, range = { 0, -1 }, flush = false })
+      screen:expect_unchanged()
+    end)
+
+    it('clears preview on empty command', function()
+      local screen = Screen.new(20, 5)
+
+      api.nvim__buf_preview_cmd(0, 's/foo/fu')
+      screen:expect([[
+        {10:^fu}                  |
+        bar                 |
+        baz                 |
+        {1:~                   }|
+                            |
+      ]])
+
+      api.nvim__buf_preview_cmd(0, '')
+      screen:expect([[
+        ^foo                 |
+        bar                 |
+        baz                 |
+        {1:~                   }|
+                            |
+      ]])
+    end)
+
+    it('clears preview on invalid command', function()
+      local screen = Screen.new(20, 5)
+
+      api.nvim__buf_preview_cmd(0, 's/foo/fu')
+      screen:expect([[
+        {10:^fu}                  |
+        bar                 |
+        baz                 |
+        {1:~                   }|
+                            |
+      ]])
+
+      api.nvim__buf_preview_cmd(0, 'invalid')
+      screen:expect([[
+        ^foo                 |
+        bar                 |
+        baz                 |
+        {1:~                   }|
+                            |
+      ]])
+    end)
+
+    it('shows preview for user command', function()
+      local screen = Screen.new(20, 5)
+      exec_lua(function()
+        vim.api.nvim_create_user_command('UserCommand', function() end, {
+          nargs = 0,
+          preview = function()
+            vim.api.nvim_buf_set_lines(0, 0, -1, true, { 'Hello!' })
+            return 2
+          end,
+        })
+      end)
+
+      api.nvim__buf_preview_cmd(0, 'UserCommand')
+      screen:expect([[
+        ^Hello!              |
+        {1:~                   }|*3
+                            |
+      ]])
+    end)
+
+    -- 'relativenumber' forces an `UPD_NOT_VALID` redraw whenever the
+    -- cursor line changes, which happens with ':s' preview.
+    it('persists across a redraw with relativenumber', function()
+      local screen = Screen.new(20, 5)
+      command('set relativenumber')
+
+      api.nvim__buf_preview_cmd(0, 's/foo/fu')
+      screen:expect([[
+        {8:  0 }{10:^fu}              |
+        {8:  1 }bar             |
+        {8:  2 }baz             |
+        {1:~                   }|
+                            |
+      ]])
+
+      api.nvim__redraw({ buf = 0, valid = false, flush = false })
+      screen:expect_unchanged()
+    end)
+
+    --- Command-line window case
+    it('persists in another window across a redraw', function()
+      local screen = Screen.new(20, 10)
+
+      local other_buf = api.nvim_create_buf(true, true)
+      api.nvim_buf_set_lines(other_buf, 0, -1, true, { 'foo', 'bar', 'baz' })
+      api.nvim_open_win(other_buf, false, { split = 'below' })
+
+      api.nvim__buf_preview_cmd(other_buf, 's/foo/fu')
+      screen:expect([[
+        ^foo                 |
+        bar                 |
+        baz                 |
+        {3:[No Name] [+]       }|
+        {10:fu}                  |
+        bar                 |
+        baz                 |
+        {1:~                   }|
+        {2:[Scratch]           }|
+                            |
+      ]])
+
+      api.nvim__redraw({ buf = other_buf, valid = false, flush = false })
+      screen:expect_unchanged()
+    end)
+
+    it('sends changedtick=v:null to on_lines callback', function()
+      exec_lua(function()
+        _G.changedtick = 'not_called'
+        _G.changedtick_preview = 'not_called'
+        vim.api.nvim_buf_attach(0, false, {
+          on_lines = function(_event, _buf, changedtick)
+            _G.changedtick = changedtick
+          end,
+        })
+        vim.api.nvim_buf_attach(0, false, {
+          on_lines = function(_event, _buf, changedtick)
+            _G.changedtick_preview = changedtick
+          end,
+          preview = true,
+        })
+      end)
+
+      api.nvim__buf_preview_cmd(0, 's/foo/fu')
+
+      eq(
+        true,
+        exec_lua(function()
+          return _G.changedtick == 'not_called'
+        end)
+      )
+      eq(
+        true,
+        exec_lua(function()
+          return _G.changedtick_preview == NIL
+        end)
+      )
+    end)
+  end)
 end)

@@ -36,6 +36,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/getchar_defs.h"
@@ -2559,7 +2560,7 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
   // Redraw pending screen updates when explicitly requested or when determined
   // that it is necessary to properly draw other requested components.
-  if (opts->flush && !cmdpreview) {
+  if (opts->flush && cmdpreview_curbuf == NULL) {
     validate_cursor(curwin);
     update_topline(curwin);
     update_screen();
@@ -2576,6 +2577,44 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
   RedrawingDisabled = save_rd;
   p_lz = save_lz;
+}
+
+/// Shows command preview with `buf` as current buffer.
+/// This does not change buffer content, but will emit `nvim_buf_changedtick_event` with
+/// `changedtick=v:null` if subscribed with `preview=true`.
+/// The preview persists until it is cleared (by calling this with an empty command) or replaced
+/// (by calling this with another command).
+/// A redraw of the previewed buffer (e.g. via an asynchronous treesitter parse finishing) does
+/// not wipe the preview.
+///
+/// @see |command-preview|
+/// @see |redraw|
+///
+/// @param buf Buffer where command preview will run.
+/// @param cmd Command that will be previewed. An empty string, an invalid command, or a command
+/// without a preview callback will clear the preview.
+///
+/// @return Whether a preview has been shown.
+Boolean nvim__buf_preview_cmd(Buffer buf, String cmd, Error *err)
+{
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (ERROR_SET(err)) {
+    return false;
+  }
+
+  buf_T *prev_cmdpreview_curbuf = cmdpreview_curbuf;
+  if (*cmd.data != NUL && cmdpreview_may_show(b, cmd.data)) {
+    return true;
+  } else {
+    cmdpreview_curbuf = NULL;
+    cmdpreview_frozen = false;
+    if (prev_cmdpreview_curbuf != NULL) {
+      // Redraw all buffers
+      redraw_all_later(UPD_SOME_VALID);
+      update_screen();
+    }
+    return false;
+  }
 }
 
 void nvim__set_restart_on_crash(String progpath, Array argv)

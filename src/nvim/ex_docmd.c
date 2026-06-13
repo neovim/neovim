@@ -7090,7 +7090,7 @@ static void ex_redir(exarg_T *eap)
 /// ":redraw": force redraw
 static void ex_redraw(exarg_T *eap)
 {
-  if (cmdpreview) {
+  if (cmdpreview_curbuf != NULL) {
     return;  // Ignore :redraw during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;
@@ -7126,7 +7126,7 @@ static void ex_redraw(exarg_T *eap)
 /// ":redrawstatus": force redraw of status line(s) and window bar(s)
 static void ex_redrawstatus(exarg_T *eap)
 {
-  if (cmdpreview) {
+  if (cmdpreview_curbuf != NULL) {
     return;  // Ignore :redrawstatus during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;

@@ -1378,7 +1378,7 @@ const char *did_set_iconstring(optset_T *args)
 /// The 'inccommand' option is changed.
 const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
 {
-  if (cmdpreview) {
+  if (cmdpreview_curbuf != NULL) {
     return e_invarg;
   }
   return did_set_str_generic(args);
