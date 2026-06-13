@@ -17,6 +17,11 @@ local function is_watching(bufnr)
   end, bufnr)
 end
 
+--- Shortens the 'autoread' debounce window so each test doesn't pay the 100ms time-cost.
+local function shorten_debounce()
+  n.exec_lua([[require('nvim.autoread')._set_debounce(10)]])
+end
+
 --- Edits a fresh tempfile with the given initial content and asserts the watcher attached.
 --- Returns the file path.
 local function open_watched(content)
@@ -30,6 +35,7 @@ end
 describe('autoread file watcher', function()
   before_each(function()
     clear({ args = { '--clean' } })
+    shorten_debounce()
   end)
 
   it('watches file opened on startup (nvim foo.txt)', function()
@@ -40,6 +46,7 @@ describe('autoread file watcher', function()
     -- boot order: plugins must load before the initial file is read so that
     -- the BufReadPost autocmd is registered in time to attach a watcher.
     clear({ args = { '--clean', path } })
+    shorten_debounce()
 
     eq({ 'startup original' }, api.nvim_buf_get_lines(0, 0, -1, true))
     eq(true, is_watching())
@@ -91,7 +98,7 @@ describe('autoread file watcher', function()
 
     -- Give the watcher time to fire; the buffer must NOT be reloaded because
     -- it has unsaved changes (autoread only reloads unmodified buffers).
-    sleep(200)
+    sleep(50)
     -- Also do a manual checktime to be sure
     command('silent! checktime')
     -- Buffer should still have local changes (autoread doesn't override modified buffers)
@@ -106,7 +113,7 @@ describe('autoread file watcher', function()
 
     -- Modify externally while noautoread
     write_file(path, 'while disabled\n')
-    sleep(200)
+    sleep(50)
     eq({ 'original' }, api.nvim_buf_get_lines(0, 0, -1, true))
 
     -- Re-enable autoread
@@ -132,25 +139,32 @@ describe('autoread file watcher', function()
     eq({ 'will be deleted' }, api.nvim_buf_get_lines(0, 0, -1, true))
   end)
 
-  -- TODO: revisit this test
-  it('handles rapid changes with debouncing', function()
-    local path = testdir .. '/test_debounce.txt'
-    write_file(path, 'v1\n')
+  it('coalesces rapid changes via debouncing', function()
+    local path = open_watched('v1\n')
 
-    command('edit ' .. path)
-    eq({ 'v1' }, api.nvim_buf_get_lines(0, 0, -1, true))
-    eq(true, is_watching())
+    -- Count buffer reloads triggered by the watcher.
+    n.exec_lua([[
+      _G.reloads = 0
+      vim.api.nvim_create_autocmd('FileChangedShellPost', {
+        callback = function() _G.reloads = _G.reloads + 1 end,
+      })
+    ]])
 
-    -- Make several rapid changes
+    -- 4 back-to-back writes well inside one debounce window.
     write_file(path, 'v2\n')
     write_file(path, 'v3\n')
     write_file(path, 'v4\n')
     write_file(path, 'final\n')
 
-    -- Should eventually settle on final content
     retry(nil, 3000, function()
       eq({ 'final' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
+
+    -- Let any late-arriving event flush, then assert all 4 writes coalesced.
+    -- Every fs_event restarts the debounce timer, and 4 sub-millisecond
+    -- write_file calls fit well inside one window, so the timer fires once.
+    sleep(50)
+    eq(1, n.exec_lua('return _G.reloads'))
   end)
 
   it('detects changes after atomic rename (external editor save)', function()
