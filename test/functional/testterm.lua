@@ -50,7 +50,7 @@ function M.make_lua_executor(session)
 end
 
 -- some helpers for controlling the terminal. the codes were taken from
--- infocmp xterm-256color which is less what libvterm understands
+-- infocmp xterm-256color.
 -- civis/cnorm
 function M.hide_cursor()
   M.feed_termcode('[?25l')
@@ -134,8 +134,8 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
     [107] = { underline = true },
     [108] = { background = 248, foreground = Screen.colors.Black },
     [109] = { bold = true, background = 121, foreground = Screen.colors.Grey0 },
-    [110] = { fg_indexed = true, foreground = tonumber('0xe0e000') },
-    [111] = { fg_indexed = true, foreground = tonumber('0x4040ff') },
+    [110] = { fg_indexed = true, foreground = tonumber('0xf0c674') },
+    [111] = { fg_indexed = true, foreground = tonumber('0x7aa6da') },
     [112] = { foreground = 4 },
     [113] = { foreground = Screen.colors.SeaGreen4 },
     [114] = { undercurl = true },
@@ -148,6 +148,7 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
     [121] = { foreground = 130 },
     [122] = { background = 46 },
     [123] = { foreground = 2 },
+    [124] = { fg_indexed = true, foreground = tonumber('0x4040ff') },
   })
 
   api.nvim_command('enew')
