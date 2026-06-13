@@ -1830,4 +1830,42 @@ describe('completion', function()
       {5:-- File name completion (^F^N^P) }{9:Pattern not found}          |
     ]])
   end)
+
+  it("'autocompletedelay' does not block insert-mode autocmds #40064", function()
+    source([[
+      call setline(1, ['hello'])
+      set autocomplete
+      set autocompletedelay=2000
+      set complete=.,w,b
+      let g:__ti = 0
+      let g:__ci = 0
+      let g:__tp = 0
+      autocmd! TextChangedI * let g:__ti += 1
+      autocmd! CursorMovedI * let g:__ci += 1
+      autocmd! TextChangedP * let g:__tp += 1
+    ]])
+
+    feed('Gohel ')
+    vim.uv.sleep(600)
+    poke_eventloop()
+
+    local ti_before = eval('g:__ti')
+    local ci_before = eval('g:__ci')
+    local tp_before = eval('g:__tp')
+    --manipulate manual typing.
+    feed('h')
+    vim.uv.sleep(100)
+    poke_eventloop()
+    feed('e')
+    vim.uv.sleep(100)
+    poke_eventloop()
+    feed('l')
+    vim.uv.sleep(100)
+    poke_eventloop()
+
+    eq(3, eval('g:__ti') - ti_before)
+    eq(3, eval('g:__ci') - ci_before)
+    eq(3, eval('g:__tp') - tp_before)
+    command('unlet g:__ti g:__ci g:__tp')
+  end)
 end)
