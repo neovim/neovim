@@ -2386,10 +2386,12 @@ describe('vim.diagnostic', function()
         })
 
         local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
-        return extmarks[1][4].virt_lines
+        return extmarks
       end)
 
-      eq('miss-symbol: Missed symbol `,`', result[1][3][1])
+      eq(1, #result)
+      eq('auto', result[1][4].virt_lines_overflow)
+      eq('miss-symbol: Missed symbol `,`', result[1][4].virt_lines[1][3][1])
     end)
 
     it('adds space to the left of the diagnostic', function()

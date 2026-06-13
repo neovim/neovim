@@ -284,6 +284,10 @@ local M = vim._defer_require('vim.diagnostic', {
 --- If the return value is nil, the diagnostic is not displayed by the handler.
 --- Else the output text is used to display the diagnostic.
 --- @field format? fun(diagnostic:vim.Diagnostic): string?
+---
+--- See `virt_lines_overflow` in |nvim_buf_set_extmark()|.
+--- (default: `auto`)
+--- @field overflow? 'trunc'|'scroll'|'wrap'|'auto'
 
 --- @class vim.diagnostic.Opts.Signs
 ---
