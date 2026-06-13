@@ -548,10 +548,12 @@ into this limit, you have used too many |:highlight| commands with different
 arguments.  A ":highlight link" is not counted.
 
 							*E77*  >
-  Too many file names
+  Too many file names (only one allowed)
 
-When expanding file names, more than one match was found.  Only one match is
-allowed for the command that was used.
+More than one file name was given, either explicitly or by expanding a glob.
+Only one file name is allowed for the command that was used.
+
+Use |:next| if you want to edit all files matching a glob pattern.
 
 							*E303*  >
   Unable to open swap file for "{filename}", recovery impossible
