@@ -14,7 +14,21 @@ local watchers = {}
 --- @type table<integer, uv.uv_timer_t> bufnr -> debounce timer
 local timers = {}
 
-local DEBOUNCE_MS = 100
+local debounce_ms = 100
+
+--- @private
+--- Test-only: override the debounce window so tests can run faster.
+--- @param ms integer
+function M._set_debounce(ms)
+  debounce_ms = ms
+end
+
+--- @private
+--- @param bufnr integer
+--- @return boolean
+function M._is_watching(bufnr)
+  return watchers[bufnr] ~= nil
+end
 
 --- Returns the effective 'autoread' value for a buffer.
 --- 'autoread' is global-local: vim.bo[bufnr].autoread is nil when not set locally,
@@ -84,7 +98,7 @@ local function ensure_watcher(bufnr)
   local cancel = watch.watch(name, {}, function(_, change_type)
     -- Debounce: restart the same timer on each event, so only the last
     -- event in a rapid series (e.g. truncate + write) triggers checktime.
-    timer:start(DEBOUNCE_MS, 0, function()
+    timer:start(debounce_ms, 0, function()
       vim.schedule(function()
         if not vim.api.nvim_buf_is_loaded(bufnr) or not buf_autoread(bufnr) then
           return
@@ -100,13 +114,6 @@ local function ensure_watcher(bufnr)
   end)
 
   watchers[bufnr] = cancel
-end
-
---- @private
---- @param bufnr integer
---- @return boolean
-function M._is_watching(bufnr)
-  return watchers[bufnr] ~= nil
 end
 
 function M.enable()

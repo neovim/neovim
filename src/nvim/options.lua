@@ -301,12 +301,13 @@ local options = {
       abbreviation = 'ar',
       defaults = true,
       desc = [=[
-        When a file has been detected to have been changed outside of Vim and
-        it has not been changed inside of Vim, automatically read it again.
-        When the file has been deleted this is not done, so you have the text
-        from before it was deleted.  When it appears again then it is read.
-        Nvim uses file system watchers to detect changes in real-time for all
-        loaded buffers; see |timestamp| for details.
+        When a file was changed outside of Nvim, automatically read it again.
+        Skipped if the file was deleted, so you have the text from before it
+        was deleted. If the file appears again then it is read. |timestamp|
+
+        This is partially driven by OS filewatcher events |uv_fs_event_t|, so
+        even the current buffer may be updated.
+
         If this option has a local value, use this command to switch back to
         using the global value: >vim
         	set autoread<
