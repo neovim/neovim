@@ -7003,6 +7003,30 @@ local options = {
       type = 'string',
     },
     {
+      defaults = '',
+      desc = [=[
+        The resolved project root directory for the current buffer.
+        Normally set automatically by the LSP client when it attaches to a
+        buffer.  Can also be set by plugins that implement project root
+        detection (e.g., using |vim.fs.root()|).  Plugins can read this
+        option to locate the project root without depending on LSP being
+        active.
+
+        When an LSP client attaches, its root directory is written here if
+        the option is still empty.  Subsequent clients do not overwrite a
+        value that was already set.
+
+        Note: This option has no effect on the current working directory.
+        See |:lcd|, |:tcd|, and |getcwd()| for that.
+      ]=],
+      full_name = 'rootdir',
+      noglob = true,
+      scope = { 'buf' },
+      short_desc = N_('project root directory for the buffer'),
+      type = 'string',
+      varname = 'p_rootdir',
+    },
+    {
       abbreviation = 'ru',
       defaults = true,
       desc = [=[

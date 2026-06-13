@@ -574,6 +574,80 @@ describe('LSP', function()
       }
     end)
 
+    it('sets rootdir on attach when root_dir is provided', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server()
+        local bufnr = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_set_current_buf(bufnr)
+        local client_id = assert(vim.lsp.start({
+          name = 'rootdir-test',
+          cmd = server.cmd,
+          root_dir = '/my/project',
+        }))
+        local ok = vim.wait(1000, function()
+          return vim.bo[bufnr].rootdir ~= ''
+        end)
+        assert(ok, 'rootdir was not set')
+        return vim.bo[bufnr].rootdir
+      end)
+      eq('/my/project', result)
+    end)
+
+    it('does not overwrite rootdir already set before attach', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server()
+        local bufnr = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_set_option_value('rootdir', '/pre/existing', { buf = bufnr })
+        vim.api.nvim_set_current_buf(bufnr)
+        local attached = false
+        vim.api.nvim_create_autocmd('LspAttach', {
+          buffer = bufnr,
+          callback = function()
+            attached = true
+          end,
+        })
+        assert(vim.lsp.start({
+          name = 'rootdir-test',
+          cmd = server.cmd,
+          root_dir = '/my/project',
+        }))
+        local ok = vim.wait(1000, function()
+          return attached
+        end)
+        assert(ok, 'on_attach did not run')
+        return vim.bo[bufnr].rootdir
+      end)
+      eq('/pre/existing', result)
+    end)
+
+    it('leaves rootdir empty when client has no root_dir', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server()
+        local bufnr = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_set_current_buf(bufnr)
+        local attached = false
+        vim.api.nvim_create_autocmd('LspAttach', {
+          buffer = bufnr,
+          callback = function()
+            attached = true
+          end,
+        })
+        assert(vim.lsp.start({
+          name = 'rootdir-test',
+          cmd = server.cmd,
+        }))
+        local ok = vim.wait(1000, function()
+          return attached
+        end)
+        assert(ok, 'on_attach did not run')
+        return vim.bo[bufnr].rootdir
+      end)
+      eq('', result)
+    end)
+
     it('should detach buffer on bufwipe', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
