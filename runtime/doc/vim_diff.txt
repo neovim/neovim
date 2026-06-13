@@ -663,6 +663,8 @@ Mappings:
   existing mapping for its simplified form (e.g. <Tab>).
 - "#" followed by a digit doesn't stand for a function key at the start of the
   lhs of a mapping.
+- During completion started with |complete()| typed keys use mappings.  Vim
+  never maps keys that are valid in CTRL-X mode while completing.
 
 Motion:
 - The |jumplist| avoids useless/phantom jumps.
