@@ -42,6 +42,7 @@ end
 ---@field old_lang string?
 ---@field new_lang string?
 ---@field start integer
+---@field cols integer
 ---@field lines string[]
 ---@field new nvim.diffhl.Side?
 ---@field old nvim.diffhl.Side?
@@ -78,9 +79,18 @@ local function parse(buf)
         old_lang = path_lang(clean_path(oldf))
       elseif line:match('^diff ') then
         old_lang, new_lang = nil, nil
-      elseif (old_lang or new_lang) and line:match('^@@ %-%d') then
-        hunk = { old_lang = old_lang, new_lang = new_lang, start = i, lines = {} }
-        hunks[#hunks + 1] = hunk
+      else
+        local at = line:match('^(@@+) %-%d')
+        if at then
+          hunk = {
+            old_lang = old_lang,
+            new_lang = new_lang,
+            start = i,
+            cols = #at - 1,
+            lines = {},
+          }
+          hunks[#hunks + 1] = hunk
+        end
       end
     end
   end
@@ -274,21 +284,46 @@ api.nvim_set_decoration_provider(ns, {
     local s = ensure_state(buf)
     for i = 1, #s.hunks do
       local hunk = s.hunks[i]
-      if
-        (hunk.old_lang or hunk.new_lang)
-        and hunk.start <= botrow
-        and hunk.start + #hunk.lines - 1 >= toprow
-      then
-        if not hunk.new then
-          hunk.new, hunk.old = build_sides(hunk)
+      if hunk.start <= botrow and hunk.start + #hunk.lines - 1 >= toprow then
+        local jlo = math.max(1, toprow - hunk.start + 1)
+        local jhi = math.min(#hunk.lines, botrow - hunk.start + 1)
+        for j = jlo, jhi do
+          local prefix = hunk.lines[j]:sub(1, hunk.cols)
+          local bg, marker ---@type string?, string?
+          if prefix:find('+', 1, true) then
+            bg, marker = 'DiffhlAdd', 'Added'
+          elseif prefix:find('-', 1, true) then
+            bg, marker = 'DiffhlDelete', 'Removed'
+          end
+          if bg then
+            local row = hunk.start + j - 1
+            pcall(api.nvim_buf_set_extmark, buf, ns, row, 0, {
+              end_col = #hunk.lines[j],
+              hl_group = bg,
+              hl_eol = true,
+              priority = vim.hl.priorities.treesitter - 1,
+              ephemeral = true,
+            })
+            pcall(api.nvim_buf_set_extmark, buf, ns, row, 0, {
+              end_col = hunk.cols,
+              hl_group = marker,
+              priority = vim.hl.priorities.treesitter,
+              ephemeral = true,
+            })
+          end
         end
-        if hunk.new_lang then
-          ensure_side_parsed(buf, s.tick, hunk.new, hunk.new_lang)
-          emit_side(buf, hunk.new, toprow, botrow)
-        end
-        if hunk.old_lang then
-          ensure_side_parsed(buf, s.tick, hunk.old, hunk.old_lang)
-          emit_side(buf, hunk.old, toprow, botrow)
+        if hunk.cols == 1 and (hunk.old_lang or hunk.new_lang) then
+          if not hunk.new then
+            hunk.new, hunk.old = build_sides(hunk)
+          end
+          if hunk.new_lang then
+            ensure_side_parsed(buf, s.tick, hunk.new, hunk.new_lang)
+            emit_side(buf, hunk.new, toprow, botrow)
+          end
+          if hunk.old_lang then
+            ensure_side_parsed(buf, s.tick, hunk.old, hunk.old_lang)
+            emit_side(buf, hunk.old, toprow, botrow)
+          end
         end
       end
     end
