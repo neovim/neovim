@@ -1,6 +1,5 @@
---- Watches buffer files for external changes using vim._watch.
---- When 'autoread' is set, external changes are detected in real-time
---- instead of only on FocusGained/:checktime.
+--- Provides 'autoread' via OS filewatchers: watches 'autoread' buffer files for external changes
+--- using vim._watch. Complements the existing FocusGained/:checktime approach.
 
 local uv = vim.uv
 local watch = vim._watch
@@ -8,13 +7,16 @@ local nvim_on = require('vim._core.util').nvim_on
 
 local M = {}
 
+local debounce_ms = 100
 --- @type table<integer, fun()> bufnr -> cancel function
 local watchers = {}
-
 --- @type table<integer, uv.uv_timer_t> bufnr -> debounce timer
 local timers = {}
-
-local debounce_ms = 100
+--- @type table<integer, true> bufnr -> true. Tracks pending autoreads (debounce window, or :checktime in flight),
+--- so we can surface activity via the 'busy' flag.
+local pending = {}
+--- @type table<integer, true> bufnr -> true. Tracks which `pending` buffers have set 'busy'.
+local pending_busy = {}
 
 --- @private
 --- Test-only: override the debounce window so tests can run faster.
@@ -28,6 +30,35 @@ end
 --- @return boolean
 function M._is_watching(bufnr)
   return watchers[bufnr] ~= nil
+end
+
+--- Sets the 'busy' option on a `pending` buffer. Idempotent: if `pending` and `pending_busy`
+--- already agree, it's a no-op. Must run on main thread.
+---
+--- @param bufnr integer
+local function sync_busy(bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    pending_busy[bufnr] = nil
+    return
+  end
+  local want = pending[bufnr] ~= nil
+  local have = pending_busy[bufnr] ~= nil
+  if want == have then
+    return
+  end
+  vim.bo[bufnr].busy = math.max(0, vim.bo[bufnr].busy + (want and 1 or -1))
+  pending_busy[bufnr] = want or nil
+end
+
+--- Sends `pending` state for `bufnr`.
+---
+--- @param bufnr integer
+--- @param is_pending boolean
+local function set_pending(bufnr, is_pending)
+  pending[bufnr] = is_pending or nil
+  vim.schedule(function()
+    sync_busy(bufnr)
+  end)
 end
 
 --- Returns the effective 'autoread' value for a buffer.
@@ -68,6 +99,7 @@ end
 --- Stops and cleans up the watcher for a buffer.
 --- @param bufnr integer
 local function stop_watcher(bufnr)
+  set_pending(bufnr, false)
   local cancel = watchers[bufnr]
   if cancel then
     cancel()
@@ -96,18 +128,30 @@ local function ensure_watcher(bufnr)
   timers[bufnr] = timer
 
   local cancel = watch.watch(name, {}, function(_, change_type)
+    -- Set the 'busy' buffer option for the duration of the pending cycle. This is a small, "best
+    -- effort" UX hint, not intended to be noticeable except when filewatcher activity is "noisy".
+    set_pending(bufnr, true)
     -- Debounce: restart the same timer on each event, so only the last
     -- event in a rapid series (e.g. truncate + write) triggers checktime.
     timer:start(debounce_ms, 0, function()
       vim.schedule(function()
+        sync_busy(bufnr)
         if not vim.api.nvim_buf_is_loaded(bufnr) or not buf_autoread(bufnr) then
+          set_pending(bufnr, false)
           return
         end
-        vim.cmd.checktime(bufnr)
+        -- Use pcall: autocmds (e.g. ftplugin) may throw during reload for any reason.
+        local ok, err = pcall(vim.cmd.checktime, bufnr) ---@type any, any
+        set_pending(bufnr, false)
         -- On rename events (e.g. atomic save by another editor), the watcher
         -- is now stale (watching the old inode). Re-establish it.
         if change_type ~= watch.FileChangeType.Changed then
           ensure_watcher(bufnr)
+        end
+        if not ok then
+          vim.api.nvim_echo({
+            { ('autoread: :checktime failed for buffer %d: %s'):format(bufnr, err) },
+          }, true, { err = true })
         end
       end)
     end)

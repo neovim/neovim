@@ -99,7 +99,7 @@ describe('autoread file watcher', function()
     -- Give the watcher time to fire; the buffer must NOT be reloaded because
     -- it has unsaved changes (autoread only reloads unmodified buffers).
     sleep(50)
-    -- Also do a manual checktime to be sure
+    -- Also do a manual :checktime to be sure
     command('silent! checktime')
     -- Buffer should still have local changes (autoread doesn't override modified buffers)
     eq({ 'local change' }, api.nvim_buf_get_lines(0, 0, -1, true))
@@ -111,7 +111,7 @@ describe('autoread file watcher', function()
     command('setlocal noautoread')
     eq(false, is_watching())
 
-    -- Modify externally while noautoread
+    -- Modify externally while 'noautoread'.
     write_file(path, 'while disabled\n')
     sleep(50)
     eq({ 'original' }, api.nvim_buf_get_lines(0, 0, -1, true))
@@ -165,6 +165,58 @@ describe('autoread file watcher', function()
     -- write_file calls fit well inside one window, so the timer fires once.
     sleep(50)
     eq(1, n.exec_lua('return _G.reloads'))
+  end)
+
+  it("bumps 'busy' on each watched buffer while a reload is pending", function()
+    -- Use a longer debounce so we can sample 'busy' during pending autoreads.
+    n.exec_lua([[require('nvim.autoread')._set_debounce(100)]])
+
+    local path1 = open_watched('a1\n')
+    local buf1 = api.nvim_get_current_buf()
+    command('enew')
+    local path2 = open_watched('a2\n')
+    local buf2 = api.nvim_get_current_buf()
+
+    eq(0, api.nvim_get_option_value('busy', { buf = buf1 }))
+    eq(0, api.nvim_get_option_value('busy', { buf = buf2 }))
+
+    -- Trigger external changes on both watched files concurrently.
+    write_file(path1, 'b1\n')
+    write_file(path2, 'b2\n')
+
+    -- Confirm busy=1 during the debounce window.
+    retry(nil, 1000, function()
+      eq(1, api.nvim_get_option_value('busy', { buf = buf1 }))
+      eq(1, api.nvim_get_option_value('busy', { buf = buf2 }))
+    end)
+
+    -- Confirm busy=0 after the autoread.
+    retry(nil, 3000, function()
+      eq({ 'b1' }, api.nvim_buf_get_lines(buf1, 0, -1, true))
+      eq({ 'b2' }, api.nvim_buf_get_lines(buf2, 0, -1, true))
+      eq(0, api.nvim_get_option_value('busy', { buf = buf1 }))
+      eq(0, api.nvim_get_option_value('busy', { buf = buf2 }))
+    end)
+  end)
+
+  it('handles autocmd error during reload', function()
+    local path = open_watched('original\n')
+    local bufnr = api.nvim_get_current_buf()
+
+    -- Define a broken autocmd.
+    n.exec_lua([[
+      vim.api.nvim_create_autocmd('FileChangedShellPost', {
+        callback = function() error('boom from test autocmd') end,
+      })
+    ]])
+
+    write_file(path, 'changed\n')
+
+    -- autoread should surface the error, and do its cleanup despite the failed autocmd.
+    retry(nil, 3000, function()
+      t.matches('autoread:.*boom from test autocmd', n.eval('v:errmsg'))
+      eq(0, api.nvim_get_option_value('busy', { buf = bufnr }))
+    end)
   end)
 
   it('detects changes after atomic rename (external editor save)', function()
