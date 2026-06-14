@@ -215,24 +215,6 @@ end
 function STHighlighter:new(bufnr)
   self.debounce = 200
   self = Capability.new(self, bufnr)
-
-  api.nvim_buf_attach(bufnr, false, {
-    on_lines = function(_, buf)
-      local highlighter = STHighlighter.active[buf]
-      if not highlighter then
-        return true
-      end
-      highlighter:on_change()
-    end,
-    on_reload = function(_, buf)
-      local highlighter = STHighlighter.active[buf]
-      if highlighter then
-        highlighter:reset()
-        highlighter:send_request()
-      end
-    end,
-  })
-
   return self
 end
 
@@ -257,6 +239,22 @@ function STHighlighter:on_attach(client_id)
     self.client_state[client_id] = state
   end
 
+  api.nvim_create_autocmd('LspNotify', {
+    buf = self.bufnr,
+    group = self.augroup,
+    callback = function(opts)
+      if opts.data.method == 'textDocument/didClose' then
+        self:reset()
+      end
+
+      if
+        opts.data.method == 'textDocument/didChange' or opts.data.method == 'textDocument/didOpen'
+      then
+        self:send_request()
+      end
+    end,
+  })
+
   api.nvim_create_autocmd({ 'BufWinEnter', 'InsertLeave' }, {
     buf = self.bufnr,
     group = self.augroup,
@@ -270,7 +268,7 @@ function STHighlighter:on_attach(client_id)
       buf = self.bufnr,
       group = self.augroup,
       callback = function()
-        self:on_change()
+        self:debounce_request()
       end,
     })
   end
@@ -774,7 +772,7 @@ function STHighlighter:mark_dirty(client_id)
 end
 
 ---@package
-function STHighlighter:on_change()
+function STHighlighter:debounce_request()
   self:reset_timer()
   if self.debounce > 0 then
     self.timer = vim.defer_fn(function()
@@ -1059,8 +1057,8 @@ function M._refresh(err, _, ctx)
       highlighter:mark_dirty(ctx.client_id)
 
       if not vim.tbl_isempty(vim.fn.win_findbuf(bufnr)) then
-        -- some LSPs send rapid fire refresh notifications, so we'll debounce them with on_change()
-        highlighter:on_change()
+        -- some LSPs send rapid fire refresh notifications, so we'll debounce them with debounce_request()
+        highlighter:debounce_request()
       end
     end
   end

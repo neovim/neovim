@@ -102,6 +102,7 @@ M.create_server_definition = function()
         if method == 'exit' then
           dispatchers.on_exit(0, 15)
         end
+        return true
       end
 
       function srv.is_closing()
