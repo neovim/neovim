@@ -1415,8 +1415,14 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
       // Adjust '[ and '] (set by buf_write()).
       curwin->w_cursor.lnum = line1;
       del_lines(linecount, true);
-      curbuf->b_op_start.lnum -= linecount;             // adjust '[
-      curbuf->b_op_end.lnum -= linecount;               // adjust ']
+      if (read_linecount == 0) {
+        // no filter output: clamp '[ and '] to a valid line
+        curbuf->b_op_start.lnum = curbuf->b_op_end.lnum = MIN(line1, curbuf->b_ml.ml_line_count);
+        curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+      } else {
+        curbuf->b_op_start.lnum -= linecount;   // adjust '[
+        curbuf->b_op_end.lnum -= linecount;     // adjust ']
+      }
       write_lnum_adjust(-linecount);                    // adjust last line
                                                         // for next write
       foldUpdate(curwin, curbuf->b_op_start.lnum, curbuf->b_op_end.lnum);
