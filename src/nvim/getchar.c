@@ -2109,6 +2109,7 @@ static int put_string_in_typebuf(int offset, int slen, uint8_t *string, int new_
 
 /// Check if the bytes at the start of the typeahead buffer are a character used
 /// in Insert mode completion.  This includes the form with a CTRL modifier.
+/// During completion started by complete() keys are mapped as usual.
 static bool at_ins_compl_key(void)
 {
   uint8_t *p = typebuf.tb_buf + typebuf.tb_off;
@@ -2117,8 +2118,9 @@ static bool at_ins_compl_key(void)
   if (typebuf.tb_len > 3 && c == K_SPECIAL && p[1] == KS_MODIFIER && (p[2] & MOD_MASK_CTRL)) {
     c = p[3] & 0x1f;
   }
-  return (ctrl_x_mode_not_default() && vim_is_ctrl_x_key(c))
-         || (compl_status_local() && (c == Ctrl_N || c == Ctrl_P));
+  return !ctrl_x_mode_eval()
+         && ((ctrl_x_mode_not_default() && vim_is_ctrl_x_key(c))
+             || (compl_status_local() && (c == Ctrl_N || c == Ctrl_P)));
 }
 
 /// Check if typebuf.tb_buf[] contains a modifier plus key that can be changed
@@ -2216,6 +2218,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
   // - waiting for "hit return to continue" and CR or SPACE typed
   // - waiting for a char with --more--
   // - in Ctrl-X mode, and we get a valid char for that mode
+  // - in Ctrl-X mode (not started by complete()), and we get a valid char for that mode
   int tb_c1 = typebuf.tb_buf[typebuf.tb_off];
   if (no_mapping == 0
       && (no_zero_mapping == 0 || tb_c1 != '0')
