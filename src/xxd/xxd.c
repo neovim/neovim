@@ -575,7 +575,7 @@ static void xxdline(FILE *fp, char *l, char *colors, int nz)
   static signed char zero_seen = 0;
 
   if (!nz && zero_seen == 1) {
-    strcpy(z, l);
+    snprintf(z, sizeof(z), "%s", l);
     if (colors) {
       memcpy(z_colors, colors, strlen(z));
     }
