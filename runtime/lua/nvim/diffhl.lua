@@ -39,7 +39,8 @@ local function clean_path(path)
 end
 
 ---@class (private) nvim.diffhl.Hunk
----@field lang string
+---@field old_lang string?
+---@field new_lang string?
 ---@field start integer
 ---@field lines string[]
 ---@field new nvim.diffhl.Side?
@@ -50,7 +51,8 @@ end
 local function parse(buf)
   local lines = api.nvim_buf_get_lines(buf, 0, -1, false)
   local hunks = {} ---@type nvim.diffhl.Hunk[]
-  local lang = nil ---@type string?
+  local old_lang = nil ---@type string?
+  local new_lang = nil ---@type string?
   local hunk = nil ---@type nvim.diffhl.Hunk?
 
   for i = 1, #lines do
@@ -71,13 +73,13 @@ local function parse(buf)
       local newf = line:match('^%+%+%+ (.*)$')
       local oldf = line:match('^%-%-%- (.*)$')
       if newf then
-        lang = path_lang(clean_path(newf)) or lang
+        new_lang = path_lang(clean_path(newf))
       elseif oldf then
-        lang = path_lang(clean_path(oldf))
+        old_lang = path_lang(clean_path(oldf))
       elseif line:match('^diff ') then
-        lang = nil
-      elseif lang and line:match('^@@ %-%d') then
-        hunk = { lang = lang, start = i, lines = {} }
+        old_lang, new_lang = nil, nil
+      elseif (old_lang or new_lang) and line:match('^@@ %-%d') then
+        hunk = { old_lang = old_lang, new_lang = new_lang, start = i, lines = {} }
         hunks[#hunks + 1] = hunk
       end
     end
@@ -272,14 +274,22 @@ api.nvim_set_decoration_provider(ns, {
     local s = ensure_state(buf)
     for i = 1, #s.hunks do
       local hunk = s.hunks[i]
-      if hunk.lang and hunk.start <= botrow and hunk.start + #hunk.lines - 1 >= toprow then
+      if
+        (hunk.old_lang or hunk.new_lang)
+        and hunk.start <= botrow
+        and hunk.start + #hunk.lines - 1 >= toprow
+      then
         if not hunk.new then
           hunk.new, hunk.old = build_sides(hunk)
         end
-        ensure_side_parsed(buf, s.tick, hunk.new, hunk.lang)
-        ensure_side_parsed(buf, s.tick, hunk.old, hunk.lang)
-        emit_side(buf, hunk.new, toprow, botrow)
-        emit_side(buf, hunk.old, toprow, botrow)
+        if hunk.new_lang then
+          ensure_side_parsed(buf, s.tick, hunk.new, hunk.new_lang)
+          emit_side(buf, hunk.new, toprow, botrow)
+        end
+        if hunk.old_lang then
+          ensure_side_parsed(buf, s.tick, hunk.old, hunk.old_lang)
+          emit_side(buf, hunk.old, toprow, botrow)
+        end
       end
     end
   end,
