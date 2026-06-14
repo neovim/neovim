@@ -137,18 +137,15 @@ describe('diff hunk highlighting', function()
       +{15:local} {25:y} {15:=} {26:3}                                |
                                                   |
     ]])
-    write_file(
-      path,
-      table.concat({
-        'diff --git a/foo.lua b/foo.lua',
-        '--- a/foo.lua',
-        '+++ b/foo.lua',
-        '@@ -1,2 +1,2 @@',
-        ' local x = 1',
-        '-local y = 2',
-        '+local y = 30',
-      }, '\n') .. '\n'
-    )
+    write_file(path, table.concat({
+      'diff --git a/foo.lua b/foo.lua',
+      '--- a/foo.lua',
+      '+++ b/foo.lua',
+      '@@ -1,2 +1,2 @@',
+      ' local x = 1',
+      '-local y = 2',
+      '+local y = 30',
+    }, '\n') .. '\n')
     command('checktime')
     screen:expect([[
       ^diff --git a/foo.lua b/foo.lua              |
