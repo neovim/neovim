@@ -35,7 +35,7 @@ end
 ---@param path string
 ---@return string
 local function clean_path(path)
-  return (path:gsub('\t.*$', ''):gsub('^[ab]/', ''))
+  return (path:gsub('^"(.*)"$', '%1'):gsub('\t.*$', ''):gsub('^[ab]/', ''))
 end
 
 ---@class (private) nvim.diffhl.Hunk
