@@ -209,4 +209,27 @@ describe('diff hunk highlighting', function()
                                                   |
     ]])
   end)
+
+  it('highlights hunks for paths with spaces', function()
+    local screen = Screen.new(44, 8)
+    api.nvim_buf_set_lines(0, 0, -1, false, {
+      'diff --git a/my file.lua b/my file.lua',
+      '--- a/my file.lua',
+      '+++ b/my file.lua',
+      '@@ -1,1 +1,1 @@',
+      '-local y = 2',
+      '+local y = 3',
+    })
+    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
+    screen:expect([[
+      ^diff --git a/my file.lua b/my file.lua      |
+      --- a/my file.lua                           |
+      +++ b/my file.lua                           |
+      @@ -1,1 +1,1 @@                             |
+      -{15:local} {25:y} {15:=} {26:2}                                |
+      +{15:local} {25:y} {15:=} {26:3}                                |
+      {1:~                                           }|
+                                                  |
+    ]])
+  end)
 end)
