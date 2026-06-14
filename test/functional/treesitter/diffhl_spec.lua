@@ -227,4 +227,31 @@ describe('diff hunk highlighting', function()
                                                   |
     ]])
   end)
+
+  it('highlights each side in its own language for a rename with type change', function()
+    local screen = Screen.new(44, 10)
+    api.nvim_buf_set_lines(0, 0, -1, false, {
+      'diff --git a/foo.lua b/foo.c',
+      'rename from foo.lua',
+      'rename to foo.c',
+      '--- a/foo.lua',
+      '+++ b/foo.c',
+      '@@ -1,1 +1,1 @@',
+      '-local x = 1',
+      '+int x = 1;',
+    })
+    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
+    screen:expect([[
+      ^diff --git a/foo.lua b/foo.c                |
+      rename from foo.lua                         |
+      rename to foo.c                             |
+      --- a/foo.lua                               |
+      +++ b/foo.c                                 |
+      @@ -1,1 +1,1 @@                             |
+      -{15:local} {25:x} {15:=} {26:1}                                |
+      +{16:int} {25:x} {15:=} {26:1}{16:;}                                 |
+      {1:~                                           }|
+                                                  |
+    ]])
+  end)
 end)
