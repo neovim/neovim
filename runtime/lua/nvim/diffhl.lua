@@ -4,7 +4,6 @@
 
 local api = vim.api
 local ts = vim.treesitter
-local bit = require('bit')
 
 local M = {}
 
@@ -165,25 +164,6 @@ local function build_sides(hunk)
   return new, old
 end
 
---- First index into {rows} (stored ascending) whose value is >= {target}, used
---- to clip highlighting to the visible range.
----@param rows table<integer, integer>
----@param n integer
----@param target integer
----@return integer
-local function lower_bound(rows, n, target)
-  local lo, hi = 0, n
-  while lo < hi do
-    local mid = bit.rshift(lo + hi, 1)
-    if rows[mid] < target then
-      lo = mid + 1
-    else
-      hi = mid
-    end
-  end
-  return lo
-end
-
 --- Parse {side}'s reconstructed source with the {lang} parser once and cache the
 --- trees. If the parse completes asynchronously, request a redraw, but only
 --- while {buf} is still unchanged from {tick}.
@@ -238,8 +218,8 @@ local function each_span(side, toprow, botrow, fn)
     return
   end
   local n = #side.lines
-  local first = lower_bound(side.rows, n, toprow)
-  local stop = lower_bound(side.rows, n, botrow + 1)
+  local first = vim.list.bisect(side.rows, toprow, { lo = 0, hi = n })
+  local stop = vim.list.bisect(side.rows, botrow + 1, { lo = 0, hi = n })
   if first >= stop then
     return
   end
