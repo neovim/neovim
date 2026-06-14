@@ -59,15 +59,15 @@ end
 local function with_buftype_optionset(args)
   return vim.list_extend({
     '--cmd',
-    'let g:nvim_directory_events = []',
+    'let g:nvim_dir_events = []',
     '--cmd',
-    [[autocmd OptionSet buftype call add(g:nvim_directory_events, v:option_new)]],
+    [[autocmd OptionSet buftype call add(g:nvim_dir_events, v:option_new)]],
   }, args or {})
 end
 
 local function expect_buftype_optionset(path)
   expect_directory(path)
-  eq({ 'nowrite' }, exec_lua('return vim.g.nvim_directory_events'))
+  eq({ 'nowrite' }, exec_lua('return vim.g.nvim_dir_events'))
 end
 
 describe('nvim.dir', function()
@@ -126,14 +126,14 @@ describe('nvim.dir', function()
       args_rm = { '-u' },
       args = {
         '--cmd',
-        'let g:nvim_directory_wiped = 0',
+        'let g:nvim_dir_wiped = 0',
         '--cmd',
-        [[autocmd OptionSet buftype let g:nvim_directory_wiped = 1 | bwipeout!]],
+        [[autocmd OptionSet buftype let g:nvim_dir_wiped = 1 | bwipeout!]],
         root,
       },
     })
 
-    eq(1, exec_lua('return vim.g.nvim_directory_wiped'))
+    eq(1, exec_lua('return vim.g.nvim_dir_wiped'))
     eq('', exec_capture('messages'))
   end)
 
@@ -263,7 +263,7 @@ describe('nvim.dir', function()
 
     n.clear({
       args_rm = { '-u' },
-      args = { '--cmd', 'let g:loaded_nvim_directory_plugin = 1' },
+      args = { '--cmd', 'let g:loaded_nvim_dir_plugin = 1' },
     })
     edit(root)
     eq('netrw', api.nvim_get_option_value('filetype', { buf = 0 }))

@@ -258,7 +258,7 @@ Extended search patterns.				|pattern|
 	"x\{2,4}" matches "x" 2 to 4 times.
 	"\s" matches a white space character.
 
-Directory, remote and archive browsing.			|nvim-directory|
+Directory, remote and archive browsing.			|dir|
 	Nvim can browse the file system.  Simply edit a directory.  Move
 	around in the list with the usual commands and press <Enter> to go to
 	the directory or file under the cursor.

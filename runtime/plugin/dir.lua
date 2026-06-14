@@ -1,7 +1,7 @@
-if vim.g.loaded_nvim_directory_plugin ~= nil then
+if vim.g.loaded_nvim_dir_plugin ~= nil then
   return
 end
-vim.g.loaded_nvim_directory_plugin = true
+vim.g.loaded_nvim_dir_plugin = true
 
 local api = vim.api
 
@@ -19,7 +19,7 @@ local function should_open(buf, path)
   if path == '' then
     return false
   end
-  if vim.bo[buf].buftype ~= '' and vim.b[buf].nvim_directory == nil then
+  if vim.bo[buf].buftype ~= '' and vim.b[buf].nvim_dir == nil then
     return false
   end
   if vim.bo[buf].filetype == 'netrw' or vim.b[buf].netrw_curdir ~= nil then

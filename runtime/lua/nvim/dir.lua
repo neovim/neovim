@@ -1,7 +1,7 @@
 --- @brief
 --- Directory listing for `:edit <dir>`.
 ---
---- The plugin can be disabled by setting `g:loaded_nvim_directory_plugin = 1`.
+--- The plugin can be disabled by setting `g:loaded_nvim_dir_plugin = 1`.
 
 local api = vim.api
 local fs = vim.fs
@@ -211,14 +211,14 @@ function open(path, opts)
   end
 
   local keep_name = current_entry_name(buf)
-  local is_new_directory_buffer = vim.b[buf].nvim_directory == nil
+  local is_new_directory_buffer = vim.b[buf].nvim_dir == nil
   local entries = read_entries(dir)
   if not set_lines(buf, dir, entries) then
     states[buf] = nil
     return
   end
   states[buf] = { dir = dir, entries = entries }
-  vim.b[buf].nvim_directory = dir
+  vim.b[buf].nvim_dir = dir
   if is_new_directory_buffer then
     set_maps(buf)
   end
@@ -279,7 +279,7 @@ function M.try_open(buf, path)
   if path == '' then
     return
   end
-  if vim.bo[buf].buftype ~= '' and vim.b[buf].nvim_directory == nil then
+  if vim.bo[buf].buftype ~= '' and vim.b[buf].nvim_dir == nil then
     return
   end
   if vim.bo[buf].filetype == 'netrw' or vim.b[buf].netrw_curdir ~= nil then

@@ -18,7 +18,7 @@ loaded by default while others are not loaded until requested by |:packadd|.
 Standard plugins                                        *standard-plugin-list*
 
 Help-link		Loaded	Short description ~
-|nvim-directory|	Yes	Directory listing for |:edit|
+|dir|			Yes	Directory listing for |:edit|
 |difftool|		No	Compares two directories or files side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
 |ft-shada|		Yes	Allows editing binary |shada| files
@@ -43,12 +43,12 @@ Help-link		Loaded	Short description ~
 |pi_zip.txt|		Yes	Zip archive explorer
 
 ==============================================================================
-Builtin plugin: directory                                  *nvim-directory*
+Builtin plugin: dir                                                      *dir*
 
 Nvim opens a directory listing when |:edit| is used with a directory path.  The
 listing is a buffer with 'filetype' set to "directory".
 
-Mappings:						*nvim-directory-mappings*
+Mappings:                                                       *dir-mappings*
 >
 	<CR>	Open the file or directory under the cursor.
 	-	Open the parent directory.
@@ -61,9 +61,9 @@ operations such as rename, delete, copy, or move.  Use |netrw| commands such as
 manager features.
 
 To disable this plugin, set this in your config before startup: >lua
-	vim.g.loaded_nvim_directory_plugin = 1
+	vim.g.loaded_nvim_dir_plugin = 1
 <
-						*g:loaded_nvim_directory_plugin*
+                                                    *g:loaded_nvim_dir_plugin*
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
