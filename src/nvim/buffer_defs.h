@@ -326,6 +326,9 @@ typedef struct {
   linenr_T b_sst_check_lnum;
   disptick_T b_sst_lasttick;    // last display tick
 
+  // Cache for in_id_list(); see idl_cache_T in syntax.c.
+  void *b_idlist_cache;
+
   // for spell checking
   garray_T b_langp;           // list of pointers to slang_T, see spell.c
   bool b_spell_ismw[256];     // flags: is midword char
