@@ -199,6 +199,26 @@ describe('autoread file watcher', function()
     end)
   end)
 
+  it('handles autocmd error during reload', function()
+    local path = open_watched('original\n')
+    local bufnr = api.nvim_get_current_buf()
+
+    -- Define a broken autocmd.
+    n.exec_lua([[
+      vim.api.nvim_create_autocmd('FileChangedShellPost', {
+        callback = function() error('boom from test autocmd') end,
+      })
+    ]])
+
+    write_file(path, 'changed\n')
+
+    -- autoread should surface the error, and do its cleanup despite the failed autocmd.
+    retry(nil, 3000, function()
+      t.matches('autoread:.*boom from test autocmd', n.eval('v:errmsg'))
+      eq(0, api.nvim_get_option_value('busy', { buf = bufnr }))
+    end)
+  end)
+
   it('detects changes after atomic rename (external editor save)', function()
     local path = open_watched('original\n')
 

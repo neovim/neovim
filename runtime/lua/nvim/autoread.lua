@@ -140,12 +140,18 @@ local function ensure_watcher(bufnr)
           set_pending(bufnr, false)
           return
         end
-        vim.cmd.checktime(bufnr)
+        -- Use pcall: autocmds (e.g. ftplugin) may throw during reload for any reason.
+        local ok, err = pcall(vim.cmd.checktime, bufnr) ---@type any, any
         set_pending(bufnr, false)
         -- On rename events (e.g. atomic save by another editor), the watcher
         -- is now stale (watching the old inode). Re-establish it.
         if change_type ~= watch.FileChangeType.Changed then
           ensure_watcher(bufnr)
+        end
+        if not ok then
+          vim.api.nvim_echo({
+            { ('autoread: :checktime failed for buffer %d: %s'):format(bufnr, err) },
+          }, true, { err = true })
         end
       end)
     end)
