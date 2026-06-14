@@ -111,6 +111,8 @@ typedef struct {
   int n_virt_below;          ///< nr of virtual lines belonging to previous line
   int filler_lines;          ///< nr of filler lines to be drawn
   int filler_todo;           ///< nr of filler lines still to do + 1
+  int virt_below_skip;       ///< nr of below filler skipped to satisfy w_topfill
+  int filler_lines_skip;     ///< nr of filler lines skipped to satisfy w_topfill
   SignTextAttrs sattrs[SIGN_SHOW_MAX];  ///< sign attributes for the sign column
   /// do consider wrapping in linebreak mode only after encountering
   /// a non whitespace char
@@ -704,15 +706,37 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv)
 }
 
 /// Build and draw the 'statuscolumn' string for line "lnum" in window "wp".
-static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int virtnum, int col_rows,
-                           statuscol_T *stcp)
+static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int col_rows, statuscol_T *stcp)
 {
-  // Adjust lnum for filler lines belonging to the line above and set lnum v:vars for first
-  // row, first non-filler line, and first filler line belonging to the current line.
+  static int prev_virtnum = 0;
+  static win_T *prev_wp = NULL;
+  static linenr_T prev_lnum = 0;
+  static disptick_T prev_tick = 0;
+
+  // Adjust lnum for filler lines belonging to the line above.
   linenr_T lnum = wlv->lnum - ((wlv->n_virt_lines - wlv->filler_todo) < wlv->n_virt_below);
-  linenr_T relnum = (virtnum == -wlv->filler_lines || virtnum == 0
-                     || virtnum == (wlv->n_virt_below - wlv->filler_lines))
+
+  // Cache v:virtnum for virtual lines and reset/decrement it accordingly. Only when
+  // lnum < wp->w_topline do we need to check for virt_below on the previous line.
+  // Same strategy is used in mouse_comp_pos() to achieve a distinct row/click_def mapping.
+  bool reset = prev_wp != wp || prev_tick != display_tick || lnum != prev_lnum;
+  int reset_virt = lnum == wlv->lnum ? wlv->filler_lines_skip : wlv->virt_below_skip;
+  if (reset && lnum < wp->w_topline) {
+    int virt_below_prev = 0;
+    int virt_lines_prev = decor_virt_lines(wp, lnum - 1, lnum, &virt_below_prev, NULL, true);
+    int diff_fill_prev = diff_check_fill(wp, lnum - 1);
+    reset_virt += virt_lines_prev + diff_fill_prev - virt_below_prev;
+  }
+  prev_virtnum = (reset ? -reset_virt : prev_virtnum) - (wlv->filler_todo > 0);
+  int virtnum = wlv->filler_todo > 0 ? prev_virtnum : wlv->row - wlv->startrow - wlv->filler_lines;
+  // Set lnum v:vars for first row, first non-filler line, and first filler line
+  // belonging to the current line.
+  linenr_T relnum = (virtnum == -reset_virt - 1 || virtnum == 0)
                     ? abs(get_cursor_rel_lnum(wp, lnum)) : -1;
+
+  prev_tick = display_tick;
+  prev_lnum = lnum;
+  prev_wp = wp;
 
   char buf[MAXPATHL];
   // When a buffer's line count has changed, make a best estimate for the full
@@ -720,9 +744,8 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int virtnum, int col_r
   // Add potentially truncated width and rebuild before drawing anything.
   if (wp->w_statuscol_line_count != wp->w_nrwidth_line_count) {
     wp->w_statuscol_line_count = wp->w_nrwidth_line_count;
-    set_vim_var_nr(VV_VIRTNUM, 0);
     int width = build_statuscol_str(wp, wp->w_nrwidth_line_count,
-                                    wp->w_nrwidth_line_count, buf, stcp);
+                                    wp->w_nrwidth_line_count, 0, buf, stcp);
     if (width > stcp->width) {
       int addwidth = MIN(width - stcp->width, MAX_STCWIDTH - stcp->width);
       wp->w_nrwidth += addwidth;
@@ -730,15 +753,15 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int virtnum, int col_r
       if (col_rows > 0) {
         // If only column is being redrawn, we now need to redraw the text as well
         wp->w_redr_statuscol = true;
+        prev_lnum = 0;
         return;
       }
       stcp->width += addwidth;
       wp->w_valid &= ~VALID_WCOL;
     }
   }
-  set_vim_var_nr(VV_VIRTNUM, virtnum);
 
-  int width = build_statuscol_str(wp, lnum, relnum, buf, stcp);
+  int width = build_statuscol_str(wp, lnum, relnum, virtnum, buf, stcp);
   // Force a redraw in case of error or when truncated
   if (*wp->w_p_stc == NUL || (width > stcp->width && stcp->width < MAX_STCWIDTH)) {
     if (*wp->w_p_stc == NUL) {  // 'statuscolumn' reset due to error
@@ -749,6 +772,7 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int virtnum, int col_r
       wp->w_nrwidth_width = wp->w_nrwidth;
     }
     wp->w_redr_statuscol = true;
+    prev_lnum = 0;
     return;
   }
 
@@ -1343,6 +1367,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   int total_virt_rows = wlv.n_virt_lines;
   wlv.filler_lines += wlv.n_virt_lines;
   if (lnum == wp->w_topline) {
+    wlv.virt_below_skip = MIN(wlv.n_virt_below, wlv.n_virt_lines - wp->w_topfill);
+    wlv.n_virt_below -= wlv.virt_below_skip;
+    wlv.filler_lines_skip = wlv.filler_lines - wlv.virt_below_skip - wp->w_topfill;
     wlv.filler_lines = wp->w_topfill;
     wlv.n_virt_lines = MIN(wlv.n_virt_lines, wlv.filler_lines);
   }
@@ -1767,7 +1794,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       } else if (statuscol.draw) {
         // Draw 'statuscolumn' if it is set.
         const int v = (int)(ptr - line);
-        draw_statuscol(wp, &wlv, wlv.row - startrow - wlv.filler_lines, col_rows, &statuscol);
+        draw_statuscol(wp, &wlv, col_rows, &statuscol);
         if (wp->w_redr_statuscol) {
           break;
         }

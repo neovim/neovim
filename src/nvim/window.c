@@ -5633,8 +5633,16 @@ void win_free(win_T *wp, tabpage_T *tp)
   stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
   xfree(wp->w_winbar_click_defs);
 
-  stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
-  xfree(wp->w_statuscol_click_defs);
+  StcClicks lnum_click_defs;
+  map_foreach_value(wp->w_statuscol_click_defs, lnum_click_defs, {
+    for (uint32_t i = 0; i < lnum_click_defs.set.h.n_keys; i++) {
+      StcClick row_click_defs = lnum_click_defs.values[i];
+      stl_clear_click_defs(row_click_defs.def, row_click_defs.size);
+      xfree(row_click_defs.def);
+    }
+    map_destroy(int, &lnum_click_defs);
+  })
+  map_destroy(int, wp->w_statuscol_click_defs);
 
   // Remove the window from the b_wininfo lists, it may happen that the
   // freed memory is re-used for another window.

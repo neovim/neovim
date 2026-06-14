@@ -1392,6 +1392,6 @@ struct window_S {
   size_t w_status_click_defs_size;              // Size of the w_status_click_defs array
   StlClickDefinition *w_winbar_click_defs;      // Window bar click definitions
   size_t w_winbar_click_defs_size;              // Size of the w_winbar_click_defs array
-  StlClickDefinition *w_statuscol_click_defs;   // Status column click definitions
-  size_t w_statuscol_click_defs_size;           // Size of the w_statuscol_click_defs array
+  // Map of statuscolumn click definitions, indexed by v:lnum and v:virtnum.
+  Map(int, StcClicks) w_statuscol_click_defs[1];
 };

@@ -824,28 +824,27 @@ void draw_tabline(void)
 /// the v:lnum and v:relnum variables don't have to be updated.
 ///
 /// @return  The width of the built status column string for line "lnum"
-int build_statuscol_str(win_T *wp, linenr_T lnum, linenr_T relnum, char *buf, statuscol_T *stcp)
+int build_statuscol_str(win_T *wp, linenr_T lnum, int relnum, int virtnum, char *buf,
+                        statuscol_T *stcp)
 {
-  // Only update click definitions once per window per redraw.
-  // Don't update when current width is 0, since it will be redrawn again if not empty.
-  const bool fillclick = relnum >= 0 && stcp->width > 0 && lnum == wp->w_topline;
-
   if (relnum >= 0) {
     set_vim_var_nr(VV_LNUM, lnum);
     set_vim_var_nr(VV_RELNUM, relnum);
   }
+  set_vim_var_nr(VV_VIRTNUM, virtnum);
 
   StlClickRecord *clickrec;
   char *stc = xstrdup(wp->w_p_stc);
   int width = build_stl_str_hl(wp, buf, MAXPATHL, stc, kOptStatuscolumn, OPT_LOCAL, 0,
-                               stcp->width, &stcp->hlrec, NULL, fillclick ? &clickrec : NULL, stcp);
+                               stcp->width, &stcp->hlrec, NULL, &clickrec, stcp);
   xfree(stc);
 
-  if (fillclick) {
-    stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
-    wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, width,
-                                                      &wp->w_statuscol_click_defs_size);
-    stl_fill_click_defs(wp->w_statuscol_click_defs, clickrec, buf, width, false);
+  if (clickrec[0].start != NULL) {
+    StcClicks *clicks = map_put_ref(int, StcClicks)(wp->w_statuscol_click_defs, lnum, NULL, NULL);
+    StcClick *click_defs = map_put_ref(int, StcClick)(clicks, virtnum, NULL, NULL);
+    stl_clear_click_defs(click_defs->def, click_defs->size);
+    click_defs->def = stl_alloc_click_defs(click_defs->def, width, &click_defs->size);
+    stl_fill_click_defs(click_defs->def, clickrec, buf, width, false);
   }
 
   return width;
