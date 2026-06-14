@@ -1,3 +1,7 @@
+--- Tree-sitter highlighting of the code inside diff hunks. When attached, every
+--- added/removed line also gets a background tint and a colored +/- marker.
+--- Lines without an available parser keep the tint but receive no syntax highlighting.
+
 local api = vim.api
 local ts = vim.treesitter
 local bit = require('bit')
@@ -6,8 +10,8 @@ local M = {}
 
 local ns = api.nvim_create_namespace('nvim.diffhl')
 
----@param ft string?
----@return string?
+---@param ft string? the filetype extracted from the hunk header
+---@return string? the treestitter language name, or nil if missing/not installed
 local function resolve_lang(ft)
   if not ft or ft == '' then
     return nil
@@ -23,6 +27,7 @@ local function resolve_lang(ft)
   return nil
 end
 
+-- Derive hunk treesitter language from header path
 ---@param path string
 ---@return string?
 local function path_lang(path)
@@ -32,6 +37,8 @@ local function path_lang(path)
   return resolve_lang(vim.filetype.match({ filename = path }))
 end
 
+--- Normalize a diff header path: strip Git's surrounding quotes (used for
+--- special characters), any trailing "\t<metadata>", and the leading a/ or b/.
 ---@param path string
 ---@return string
 local function clean_path(path)
@@ -47,6 +54,8 @@ end
 ---@field new nvim.diffhl.Side?
 ---@field old nvim.diffhl.Side?
 
+--- Scan {buf} line by line for diff hunks, resolving each hunk's old/new
+--- language from the preceding ---/+++ headers and recording its body lines.
 ---@param buf integer
 ---@return nvim.diffhl.Hunk[]
 local function parse(buf)
@@ -59,6 +68,9 @@ local function parse(buf)
   for i = 1, #lines do
     local line = lines[i]
 
+    -- Inside a hunk: collect body lines until a line that is not part of the
+    -- body ends it. A "\ No newline at end of file" marker (c == '\\') is
+    -- skipped without ending the hunk.
     if hunk then
       local c = line:sub(1, 1)
       if c == ' ' or c == '+' or c == '-' then
@@ -70,6 +82,8 @@ local function parse(buf)
       end
     end
 
+    -- Between hunks: track the per-file languages from the ---/+++ headers
+    -- (reset at each "diff" line) and open a hunk at each @@/@@@ header.
     if not hunk then
       local newf = line:match('^%+%+%+ (.*)$')
       local oldf = line:match('^%-%-%- (.*)$')
@@ -80,6 +94,10 @@ local function parse(buf)
       elseif line:match('^diff ') then
         old_lang, new_lang = nil, nil
       else
+        -- A combined (merge) diff header carries one extra '@' per parent, so
+        -- the number of leading '@' minus one is the count of status columns.
+        -- Hunks are recorded even when the language is unknown so the background
+        -- tint still applies.
         local at = line:match('^(@@+) %-%d')
         if at then
           hunk = {
@@ -107,6 +125,9 @@ end
 ---@field trees table<integer, TSTree>?
 ---@field parsing boolean?
 
+--- Reconstruct the hunk's new and old file contents as separate strings so each
+--- parses as contiguous source. Context lines belong to both sides (so each
+--- parses correctly) but are painted only once, via the new side.
 ---@param hunk nvim.diffhl.Hunk
 ---@return nvim.diffhl.Side new
 ---@return nvim.diffhl.Side old
@@ -144,6 +165,8 @@ local function build_sides(hunk)
   return new, old
 end
 
+--- First index into {rows} (stored ascending) whose value is >= {target}, used
+--- to clip highlighting to the visible range.
 ---@param rows table<integer, integer>
 ---@param n integer
 ---@param target integer
@@ -161,6 +184,9 @@ local function lower_bound(rows, n, target)
   return lo
 end
 
+--- Parse {side}'s reconstructed source with the {lang} parser once and cache the
+--- trees. If the parse completes asynchronously, request a redraw, but only
+--- while {buf} is still unchanged from {tick}.
 ---@param buf integer
 ---@param tick integer
 ---@param side nvim.diffhl.Side
@@ -181,6 +207,9 @@ local function ensure_side_parsed(buf, tick, side, lang)
   end
   side.parser = parser
   side.parsing = true
+  -- parse() may finish synchronously or hand off to a background job. "sync"
+  -- lets the callback tell the two apart: only an asynchronous completion needs
+  -- to request a redraw, and only while the buffer is still unchanged.
   local sync = true
   parser:parse(true, function(_, trees)
     side.parsing = false
@@ -197,6 +226,9 @@ local function ensure_side_parsed(buf, tick, side, lang)
   sync = false
 end
 
+--- Run {fn} for each tree-sitter highlight span on {side} that intersects the
+--- visible rows [{toprow}, {botrow}], passing the buffer row, start/end columns,
+--- and highlight group.
 ---@param side nvim.diffhl.Side
 ---@param toprow integer
 ---@param botrow integer
@@ -228,6 +260,8 @@ local function each_span(side, toprow, botrow, fn)
           if side.paint[r] then
             local col_start = (r == srow) and scol or 0
             local col_end = (r == erow) and ecol or #side.lines[r + 1]
+            -- Columns are relative to the prefix-stripped side text; +1 maps
+            -- them back past the leading +/-/space diff marker in the buffer.
             if col_end > col_start then
               fn(side.rows[r], col_start + 1, col_end + 1, hl)
             end
@@ -238,6 +272,8 @@ local function each_span(side, toprow, botrow, fn)
   end)
 end
 
+--- Apply {side}'s tree-sitter highlights as ephemeral extmarks over the visible
+--- rows [{toprow}, {botrow}].
 ---@param buf integer
 ---@param side nvim.diffhl.Side
 ---@param toprow integer
@@ -263,6 +299,8 @@ local state = {}
 ---@type table<integer, true>
 local attached = {}
 
+--- Return the parsed hunk state for {buf}, re-parsing only when the buffer has
+--- changed since the last call (tracked via changedtick).
 ---@param buf integer
 ---@return nvim.diffhl.State
 local function ensure_state(buf)
@@ -285,9 +323,13 @@ api.nvim_set_decoration_provider(ns, {
     for i = 1, #s.hunks do
       local hunk = s.hunks[i]
       if hunk.start <= botrow and hunk.start + #hunk.lines - 1 >= toprow then
+        -- Background pass: tint every added/removed line and recolor its marker,
+        -- independent of language, so an enabled diff is never left untinted.
         local jlo = math.max(1, toprow - hunk.start + 1)
         local jhi = math.min(#hunk.lines, botrow - hunk.start + 1)
         for j = jlo, jhi do
+          -- Status comes from the leading column(s): cols is 1 for a unified
+          -- diff and >1 for a combined/merge diff.
           local prefix = hunk.lines[j]:sub(1, hunk.cols)
           local bg, marker ---@type string?, string?
           if prefix:find('+', 1, true) then
@@ -297,6 +339,8 @@ api.nvim_set_decoration_provider(ns, {
           end
           if bg then
             local row = hunk.start + j - 1
+            -- Full-width tint, kept just below the tree-sitter priority so the
+            -- syntax foreground composes on top of it.
             pcall(api.nvim_buf_set_extmark, buf, ns, row, 0, {
               end_col = #hunk.lines[j],
               hl_group = bg,
@@ -304,6 +348,7 @@ api.nvim_set_decoration_provider(ns, {
               priority = vim.hl.priorities.treesitter - 1,
               ephemeral = true,
             })
+            -- Re-color only the marker column(s) on top of the tint.
             pcall(api.nvim_buf_set_extmark, buf, ns, row, 0, {
               end_col = hunk.cols,
               hl_group = marker,
@@ -312,6 +357,8 @@ api.nvim_set_decoration_provider(ns, {
             })
           end
         end
+        -- Foreground pass: only unified hunks are reconstructed and tree-sitter
+        -- highlighted; combined/merge hunks keep the tint without syntax.
         if hunk.cols == 1 and (hunk.old_lang or hunk.new_lang) then
           if not hunk.new then
             hunk.new, hunk.old = build_sides(hunk)
@@ -351,6 +398,7 @@ function M.attach(buf)
   end
   attached[buf] = true
   api.nvim_buf_attach(buf, false, {
+    -- Re-parse from scratch after the buffer is reloaded.
     on_reload = function()
       state[buf] = nil
     end,
