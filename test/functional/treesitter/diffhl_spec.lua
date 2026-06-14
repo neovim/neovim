@@ -137,7 +137,6 @@ describe('diff hunk highlighting', function()
       +{15:local} {25:y} {15:=} {26:3}                                |
                                                   |
     ]])
-    -- Change the file on disk (different size so checktime detects it) and reload.
     write_file(
       path,
       table.concat({
