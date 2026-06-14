@@ -2378,7 +2378,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
             || (linuxvt
                 && (xterm_version || (vte_version > 0) || colorterm)))) {
       terminfo_set_str(tui, kTerm_set_cursor_style, "\x1b[%p1%d q");
-      terminfo_set_str(tui, kTerm_reset_cursor_style, "\x1b[ q");
+      terminfo_set_str(tui, kTerm_reset_cursor_style, "\x1b[0 q");
     } else if (linuxvt) {
       // Linux uses an idiosyncratic escape code to set the cursor shape and
       // does not support DECSCUSR.
