@@ -672,7 +672,8 @@ When the popup menu is displayed there are a few more special keys, see
 Note: The keys that are valid in CTRL-X mode are not mapped.  This allows for
 `:map <C-F> <C-X><C-F>` to work.  The key that ends CTRL-X mode (any key that
 is not a valid CTRL-X mode command) is mapped. Also, when doing completion
-with 'complete' mappings apply as usual.
+with 'complete' or when completion was started with |complete()| mappings
+apply as usual.
 
 								*E565*
 Note: While completion is active Insert mode can't be used recursively and

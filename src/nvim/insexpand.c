@@ -463,7 +463,7 @@ bool ctrl_x_mode_spell(void)
   return ctrl_x_mode == CTRL_X_SPELL;
 }
 
-static bool ctrl_x_mode_eval(void)
+bool ctrl_x_mode_eval(void)
   FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_EVAL;

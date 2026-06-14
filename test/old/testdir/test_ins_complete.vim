@@ -6442,4 +6442,30 @@ func Test_completion_with_mapped_ctrl_r()
   bwipe!
 endfunc
 
+" Keys are mapped during completion started by complete(), but not in other
+" CTRL-X modes.
+func Test_mapped_ctrl_n_during_complete_function()
+  new
+  inoremap <buffer> <F2> <Cmd>call complete(1, ['foo', 'foobar'])<CR>
+  inoremap <buffer> <F3> <Cmd>let b:info =
+        \ [getline('.'), complete_info(['selected']).selected]<CR>
+
+  " During completion started by complete() the <C-N> mapping applies:
+  " <Down> moves the selection without inserting it.
+  inoremap <buffer> <expr> <C-N> complete_info().mode ==# 'eval' ? '<Down>' : '<C-N>'
+  call feedkeys("i\<F2>\<*C-N>\<F3>\<C-Y>\<Esc>", 'tx')
+  call assert_equal(['foo', 1], b:info)
+  call assert_equal('foobar', getline(1))
+
+  " In other CTRL-X modes the mapping is ignored: the builtin <C-N> selects
+  " and inserts the next match.
+  %delete _
+  call setline(1, ['foo', 'foobar', ''])
+  inoremap <buffer> <expr> <C-N> pumvisible() ? '<Down>' : '<C-N>'
+  call feedkeys("3GAf\<C-X>\<C-N>\<C-N>\<F3>\<C-Y>\<Esc>", 'tx')
+  call assert_equal(['foobar', 1], b:info)
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

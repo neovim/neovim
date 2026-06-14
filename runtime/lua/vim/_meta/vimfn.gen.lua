@@ -1083,6 +1083,15 @@ function vim.fn.col(expr, winid) end
 --- The match can be selected with CTRL-N and CTRL-P as usual with
 --- Insert mode completion.  The popup menu will appear if
 --- specified, see |ins-completion-menu|.
+--- Unlike with other |ins-completion| modes, the CTRL-N and
+--- CTRL-P keys can be mapped while this completion is active.
+--- For example, to make CTRL-N move the selection without
+--- inserting the match: >vim
+---
+--- inoremap <expr> <C-N> complete_info().mode ==# 'eval'
+---       \ ? '<Down>' : '<C-N>'
+--- <
+---
 --- Example: >vim
 ---
 --- inoremap <F5> <C-R>=ListMonths()<CR>
