@@ -14,8 +14,23 @@ local api = n.api
 local clear_notrace = t_lsp.clear_notrace
 local create_server_definition = t_lsp.create_server_definition
 
+local function create_start_server()
+  function _G._start_server(server)
+    return vim.lsp.start({
+      name = 'dummy',
+      cmd = server.cmd,
+      flags = {
+        allow_incremental_sync = false,
+        debounce_text_changes = 0, -- disable debounce to make tests faster
+      },
+    })
+  end
+end
+
 before_each(function()
   clear_notrace()
+  exec_lua(create_server_definition)
+  exec_lua(create_start_server)
 end)
 
 after_each(function()
@@ -85,10 +100,10 @@ describe('semantic token highlighting', function()
     }]]
 
     before_each(function()
-      exec_lua(create_server_definition)
       exec_lua(function()
         _G.server = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
               full = { delta = true },
               range = false,
@@ -109,11 +124,12 @@ describe('semantic token highlighting', function()
 
     it('buffer is highlighted when attached', function()
       insert(text)
+
       exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         vim.bo[bufnr].filetype = 'some-filetype'
-        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        _G._start_server(_G.server)
       end)
 
       screen:expect {
@@ -138,9 +154,11 @@ describe('semantic token highlighting', function()
 
     it('buffer is highlighted with multiline tokens', function()
       insert(text)
+
       exec_lua(function()
         _G.server2 = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
               full = { delta = false },
               legend = vim.fn.json_decode(legend),
@@ -160,7 +178,7 @@ describe('semantic token highlighting', function()
         local bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         vim.bo[bufnr].filetype = 'some-filetype'
-        vim.lsp.start({ name = 'dummy', cmd = _G.server2.cmd })
+        _G._start_server(_G.server2)
       end)
 
       screen:expect {
@@ -185,6 +203,7 @@ describe('semantic token highlighting', function()
 
     it('calls both range and full when range is supported', function()
       insert(text)
+
       exec_lua(function()
         _G.server_range = _G._create_server({
           capabilities = {
@@ -207,7 +226,7 @@ describe('semantic token highlighting', function()
       exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
-        vim.lsp.start({ name = 'dummy', cmd = _G.server_range.cmd })
+        _G._start_server(_G.server_range)
       end)
 
       screen:expect {
@@ -245,8 +264,8 @@ describe('semantic token highlighting', function()
     end)
 
     it('does not call range when only full is supported', function()
-      exec_lua(create_server_definition)
       insert(text)
+
       exec_lua(function()
         _G.server_full = _G._create_server({
           capabilities = {
@@ -265,7 +284,7 @@ describe('semantic token highlighting', function()
             end,
           },
         })
-        return vim.lsp.start({ name = 'dummy', cmd = _G.server_full.cmd })
+        return _G._start_server(_G.server_full)
       end)
 
       local messages = exec_lua('return _G.server_full.messages')
@@ -284,8 +303,8 @@ describe('semantic token highlighting', function()
     end)
 
     it('does not call range after full request received', function()
-      exec_lua(create_server_definition)
       insert(text)
+
       exec_lua(function()
         _G.server_full = _G._create_server({
           capabilities = {
@@ -304,7 +323,7 @@ describe('semantic token highlighting', function()
             end,
           },
         })
-        return vim.lsp.start({ name = 'dummy', cmd = _G.server_full.cmd })
+        return _G._start_server(_G.server_full)
       end)
 
       -- ensure initial semantic token requests have been sent before feeding input
@@ -338,6 +357,7 @@ describe('semantic token highlighting', function()
         }]]
         _G.server2 = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
               range = true,
               legend = vim.fn.json_decode(legend),
@@ -350,7 +370,7 @@ describe('semantic token highlighting', function()
           },
         })
         local bufnr = vim.api.nvim_get_current_buf()
-        local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server2.cmd }))
+        local client_id = assert(_G._start_server(_G.server2))
         vim.schedule(function()
           vim.lsp.semantic_tokens._start(bufnr, client_id, 0)
         end)
@@ -499,6 +519,7 @@ describe('semantic token highlighting', function()
 
     it('use LspTokenUpdate and highlight_token', function()
       insert(text)
+
       exec_lua(function()
         vim.api.nvim_create_autocmd('LspTokenUpdate', {
           callback = function(ev)
@@ -510,7 +531,7 @@ describe('semantic token highlighting', function()
         })
         local bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
-        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        _G._start_server(_G.server)
       end)
 
       screen:expect {
@@ -538,13 +559,27 @@ describe('semantic token highlighting', function()
 
       local bufnr = n.api.nvim_get_current_buf()
       local client_id = exec_lua(function()
-        vim.api.nvim_win_set_buf(0, bufnr)
-        local client_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
-        vim.wait(1000, function()
-          return #_G.server.messages > 1
-        end)
-        return client_id
+        return _G._start_server(_G.server)
       end)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
 
       exec_lua(function()
         --- @diagnostic disable-next-line:duplicate-set-field
@@ -575,13 +610,30 @@ describe('semantic token highlighting', function()
     it(
       'buffer is highlighted and unhighlighted when semantic token highlighting is enabled and disabled',
       function()
-        local bufnr = n.api.nvim_get_current_buf()
+        insert(text)
+
         exec_lua(function()
-          vim.api.nvim_win_set_buf(0, bufnr)
-          return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+          return _G._start_server(_G.server)
         end)
 
-        insert(text)
+        screen:expect {
+          grid = [[
+          #include <iostream>                     |
+                                                  |
+          int {8:main}()                              |
+          {                                       |
+              int {7:x};                              |
+          #ifdef {5:__cplusplus}                      |
+              {4:std}::{2:cout} << {2:x} << "\n";             |
+          {6:#else}                                   |
+          {6:    printf("%d\n", x);}                  |
+          {6:#endif}                                  |
+          }                                       |
+          ^}                                       |
+          {1:~                                       }|*3
+                                                  |
+        ]],
+        }
 
         exec_lua(function()
           --- @diagnostic disable-next-line:duplicate-set-field
@@ -591,20 +643,20 @@ describe('semantic token highlighting', function()
 
         screen:expect {
           grid = [[
-        #include <iostream>                     |
-                                                |
-        int main()                              |
-        {                                       |
-            int x;                              |
-        #ifdef __cplusplus                      |
-            std::cout << x << "\n";             |
-        #else                                   |
-            printf("%d\n", x);                  |
-        #endif                                  |
-        }                                       |
-        ^}                                       |
-        {1:~                                       }|*3
-                                                |
+          #include <iostream>                     |
+                                                  |
+          int main()                              |
+          {                                       |
+              int x;                              |
+          #ifdef __cplusplus                      |
+              std::cout << x << "\n";             |
+          #else                                   |
+              printf("%d\n", x);                  |
+          #endif                                  |
+          }                                       |
+          ^}                                       |
+          {1:~                                       }|*3
+                                                  |
       ]],
         }
 
@@ -634,11 +686,30 @@ describe('semantic token highlighting', function()
     )
 
     it('highlights start and stop when using "0" for current buffer', function()
+      insert(text)
+
       exec_lua(function()
-        return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        return _G._start_server(_G.server)
       end)
 
-      insert(text)
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
 
       exec_lua(function()
         --- @diagnostic disable-next-line:duplicate-set-field
@@ -691,8 +762,9 @@ describe('semantic token highlighting', function()
 
     it('buffer is re-highlighted when force refreshed', function()
       insert(text)
+
       exec_lua(function()
-        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        return _G._start_server(_G.server)
       end)
 
       screen:expect {
@@ -752,11 +824,11 @@ describe('semantic token highlighting', function()
     end)
 
     it('destroys the highlighter if the buffer is deleted', function()
-      exec_lua(function()
-        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
-      end)
-
       insert(text)
+
+      exec_lua(function()
+        return _G._start_server(_G.server)
+      end)
 
       eq(
         {},
@@ -772,7 +844,7 @@ describe('semantic token highlighting', function()
       insert(text)
 
       exec_lua(function()
-        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        return _G._start_server(_G.server)
       end)
 
       screen:expect {
@@ -876,6 +948,7 @@ describe('semantic token highlighting', function()
       local client_id = exec_lua(function()
         _G.server2 = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
               full = { delta = false },
             },
@@ -891,7 +964,7 @@ describe('semantic token highlighting', function()
             end,
           },
         })
-        return vim.lsp.start({ name = 'dummy', cmd = _G.server2.cmd })
+        return _G._start_server(_G.server2)
       end)
       eq(
         true,
@@ -927,6 +1000,7 @@ describe('semantic token highlighting', function()
       exec_lua(function()
         _G.server2 = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
               full = { delta = false },
             },
@@ -946,7 +1020,7 @@ describe('semantic token highlighting', function()
             end,
           },
         })
-        return vim.lsp.start({ name = 'dummy', cmd = _G.server2.cmd })
+        return _G._start_server(_G.server2)
       end)
       screen:expect([[
         ^                                        |
@@ -960,6 +1034,7 @@ describe('semantic token highlighting', function()
       exec_lua(function()
         _G.server2 = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
               full = { delta = false },
               legend = vim.fn.json_decode(legend),
@@ -974,7 +1049,7 @@ describe('semantic token highlighting', function()
             end,
           },
         })
-        return vim.lsp.start({ name = 'dummy', cmd = _G.server2.cmd })
+        return _G._start_server(_G.server2)
       end)
 
       screen:expect {
@@ -1447,10 +1522,10 @@ b = "as"]],
       },
     }) do
       it(test.it, function()
-        exec_lua(create_server_definition)
         local client_id = exec_lua(function(legend, resp)
           _G.server = _G._create_server({
             capabilities = {
+              textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
               semanticTokensProvider = {
                 full = { delta = false },
                 legend = vim.fn.json_decode(legend),
@@ -1462,7 +1537,7 @@ b = "as"]],
               end,
             },
           })
-          return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+          return _G._start_server(_G.server)
         end, test.legend, test.response)
 
         insert(test.text)
@@ -1852,10 +1927,10 @@ int main()
       it(test.it, function()
         local bufnr = n.api.nvim_get_current_buf()
         insert(test.text1)
-        exec_lua(create_server_definition)
         local client_id = exec_lua(function(legend, resp1, resp2)
           _G.server = _G._create_server({
             capabilities = {
+              textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
               semanticTokensProvider = {
                 full = { delta = true },
                 legend = vim.fn.json_decode(legend),
@@ -1870,13 +1945,7 @@ int main()
               end,
             },
           })
-          local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }))
-
-          -- speed up vim.api.nvim_buf_set_lines calls by changing debounce to 10 for these tests
-          vim.schedule(function()
-            vim.lsp.semantic_tokens._start(bufnr, client_id, 10)
-          end)
-          return client_id
+          return assert(_G._start_server(_G.server))
         end, test.legend, test.response1, test.response2)
 
         test.expected_screen1()
@@ -1893,10 +1962,10 @@ int main()
         else
           exec_lua(function(text)
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.fn.split(text, '\n'))
-            vim.wait(15) -- wait for debounce
           end, test.text2)
         end
 
+        feed('<Ignore>')
         test.expected_screen2()
 
         eq(
