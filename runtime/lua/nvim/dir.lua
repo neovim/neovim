@@ -16,6 +16,8 @@ local open_parent
 ---@type fun(buf: integer)
 local reload
 
+local navigating = false
+
 ---@param buf integer
 ---@param options [string, any][]
 ---@return boolean
@@ -65,7 +67,7 @@ local function render(buf, dir)
   -- traversal errors.
   local handle, err = uv.fs_scandir(dir)
   if not handle then
-    vim.notify('dir: ' .. (err or ('cannot read directory: ' .. dir)), vim.log.levels.WARN)
+    vim.notify('dir: ' .. (err or ('cannot read directory: ' .. dir)), vim.log.levels.ERROR)
     return false
   end
 
@@ -130,7 +132,9 @@ end
 
 ---@param path string
 local function edit(path)
+  navigating = true
   api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } }, {})
+  navigating = false
 end
 
 ---@param buf integer
@@ -156,27 +160,9 @@ local function set_maps(buf)
   end, 'Reload directory')
 end
 
----@param path string
----@param opts? { buf?: integer }
-local function open(path, opts)
-  opts = opts or {}
-  local dir = normalize_dir(path)
-  local stat = uv.fs_stat(dir)
-  if not stat or stat.type ~= 'directory' then
-    local reason = stat and 'not a directory' or 'directory not found'
-    vim.notify(('dir: %s: %s'):format(reason, dir), vim.log.levels.WARN)
-    return
-  end
-
-  local buf = opts.buf or api.nvim_get_current_buf()
-  if not api.nvim_buf_is_valid(buf) then
-    return
-  end
-
-  local is_new = vim.b[buf].nvim_dir == nil
-  local is_current = api.nvim_get_current_buf() == buf
-  local view = (is_current and not is_new) and vim.fn.winsaveview() or nil
-
+---@param buf integer
+---@param dir string
+local function first_open(buf, dir)
   if not render(buf, dir) then
     return
   end
@@ -184,17 +170,24 @@ local function open(path, opts)
     return
   end
   vim.b[buf].nvim_dir = dir
-  if is_new then
-    set_maps(buf)
-  end
-  if is_current then
-    vim.wo.wrap = false
-  end
+  set_maps(buf)
   if api.nvim_get_option_value('filetype', { buf = buf }) ~= 'directory' then
     api.nvim_set_option_value('filetype', 'directory', { buf = buf })
   end
-  if view and api.nvim_get_current_buf() == buf then
-    vim.fn.winrestview(view)
+end
+
+---@param path string
+local function navigate(path)
+  edit(path)
+  local buf = api.nvim_get_current_buf()
+  local dir = normalize_dir(api.nvim_buf_get_name(buf))
+  if not is_dir(dir) then
+    return
+  end
+  if vim.b[buf].nvim_dir == nil then
+    first_open(buf, dir)
+  else
+    reload(buf)
   end
 end
 
@@ -202,27 +195,33 @@ end
 function open_entry(buf)
   local path = entry_path(buf)
   if path then
-    edit(path)
+    navigate(path)
   end
 end
 
 ---@param buf integer
 function open_parent(buf)
-  edit(fs.dirname(api.nvim_buf_get_name(buf)))
+  navigate(fs.dirname(api.nvim_buf_get_name(buf)))
 end
 
 ---@param buf integer
 function reload(buf)
-  open(api.nvim_buf_get_name(buf), { buf = buf })
+  local view = vim.fn.winsaveview()
+  if render(buf, api.nvim_buf_get_name(buf)) then
+    vim.fn.winrestview(view)
+  end
 end
 
 ---@param buf integer
 ---@param path string
 function M.try_open(buf, path)
-  if path == '' then
+  if navigating or path == '' then
     return
   end
-  if vim.bo[buf].buftype ~= '' and vim.b[buf].nvim_dir == nil then
+  if vim.b[buf].nvim_dir ~= nil then
+    return
+  end
+  if vim.bo[buf].buftype ~= '' then
     return
   end
   if vim.bo[buf].filetype == 'netrw' or vim.b[buf].netrw_curdir ~= nil then
@@ -231,7 +230,7 @@ function M.try_open(buf, path)
 
   local dir = normalize_dir(path)
   if is_dir(dir) then
-    open(dir, { buf = buf })
+    first_open(buf, dir)
   end
 end
 

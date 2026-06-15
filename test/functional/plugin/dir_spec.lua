@@ -203,7 +203,7 @@ describe('nvim.dir', function()
     line_of('beta.txt')
   end)
 
-  it('warns and keeps the buffer when reloading a removed directory', function()
+  it('reports an error and keeps the buffer when reloading a removed directory', function()
     make_fixture()
     n.clear({ args_rm = { '-u' } })
 
@@ -214,8 +214,31 @@ describe('nvim.dir', function()
     feed('R')
     poke_eventloop()
 
-    ok(exec_capture('messages'):find('directory not found', 1, true) ~= nil)
+    ok(exec_capture('messages'):find('ENOENT', 1, true) ~= nil)
     expect_directory(subdir)
+  end)
+
+  it('refreshes a directory when navigated into again', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    edit(root)
+    api.nvim_win_set_cursor(0, { line_of('subdir/'), 0 })
+    feed('<CR>')
+    poke_eventloop()
+    expect_directory(subdir)
+    eq({ '' }, lines())
+
+    t.write_file(subdir .. '/new.txt', 'new', true)
+    feed('-')
+    poke_eventloop()
+    expect_directory(root)
+
+    api.nvim_win_set_cursor(0, { line_of('subdir/'), 0 })
+    feed('<CR>')
+    poke_eventloop()
+    expect_directory(subdir)
+    line_of('new.txt')
   end)
 
   it('displays filenames as buffer text and opens them from the buffer', function()
