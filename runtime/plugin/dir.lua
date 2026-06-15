@@ -4,6 +4,7 @@ end
 vim.g.loaded_nvim_dir_plugin = true
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 ---@param path string
 ---@return boolean
@@ -31,33 +32,29 @@ end
 local group = api.nvim_create_augroup('FileExplorer', { clear = true })
 local vimentered = vim.v.vim_did_enter == 1
 
-api.nvim_create_autocmd('BufEnter', {
-  group = group,
+nvim_on('BufEnter', group, {
   pattern = '*',
   desc = 'Open local directories',
   nested = true,
-  callback = function(ev)
-    if vimentered and should_open(ev.buf, ev.file) then
-      require('nvim.dir').try_open(ev.buf, ev.file)
-    end
-  end,
-})
+}, function(ev)
+  if vimentered and should_open(ev.buf, ev.file) then
+    require('nvim.dir').try_open(ev.buf, ev.file)
+  end
+end)
 
-api.nvim_create_autocmd('VimEnter', {
-  group = group,
+nvim_on('VimEnter', group, {
   pattern = '*',
   desc = 'Open startup local directories',
   nested = true,
-  callback = function()
-    vimentered = true
-    for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
-      if api.nvim_win_is_valid(win) then
-        local buf = api.nvim_win_get_buf(win)
-        if should_open(buf, api.nvim_buf_get_name(buf)) then
-          require('nvim.dir').handle_startup_dirs()
-          return
-        end
+}, function()
+  vimentered = true
+  for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
+    if api.nvim_win_is_valid(win) then
+      local buf = api.nvim_win_get_buf(win)
+      if should_open(buf, api.nvim_buf_get_name(buf)) then
+        require('nvim.dir').handle_startup_dirs()
+        return
       end
     end
-  end,
-})
+  end
+end)

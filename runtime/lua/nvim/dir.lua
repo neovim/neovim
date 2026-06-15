@@ -10,12 +10,8 @@ local uv = vim.uv
 
 local M = {}
 
----@type fun(buf: integer)
-local open_entry
----@type fun(buf: integer)
-local open_parent
----@type fun(buf: integer)
-local reload
+---@type fun(buf: integer, dir: string)
+local first_open
 
 local navigating = false
 
@@ -139,6 +135,42 @@ local function edit(path)
 end
 
 ---@param buf integer
+local function reload(buf)
+  local view = vim.fn.winsaveview()
+  if render(buf, api.nvim_buf_get_name(buf)) then
+    vim.fn.winrestview(view)
+  end
+end
+
+---@param path string
+local function navigate(path)
+  edit(path)
+  local buf = api.nvim_get_current_buf()
+  local dir = normalize_dir(api.nvim_buf_get_name(buf))
+  if not is_dir(dir) then
+    return
+  end
+  if vim.b[buf].nvim_dir == nil then
+    first_open(buf, dir)
+  else
+    reload(buf)
+  end
+end
+
+---@param buf integer
+local function open_entry(buf)
+  local path = entry_path(buf)
+  if path then
+    navigate(path)
+  end
+end
+
+---@param buf integer
+local function open_parent(buf)
+  navigate(fs.dirname(api.nvim_buf_get_name(buf)))
+end
+
+---@param buf integer
 local function set_maps(buf)
   ---@param lhs string
   ---@param plug string
@@ -163,7 +195,7 @@ end
 
 ---@param buf integer
 ---@param dir string
-local function first_open(buf, dir)
+function first_open(buf, dir)
   if not render(buf, dir) then
     return
   end
@@ -174,42 +206,6 @@ local function first_open(buf, dir)
   set_maps(buf)
   if api.nvim_get_option_value('filetype', { buf = buf }) ~= 'directory' then
     api.nvim_set_option_value('filetype', 'directory', { buf = buf })
-  end
-end
-
----@param path string
-local function navigate(path)
-  edit(path)
-  local buf = api.nvim_get_current_buf()
-  local dir = normalize_dir(api.nvim_buf_get_name(buf))
-  if not is_dir(dir) then
-    return
-  end
-  if vim.b[buf].nvim_dir == nil then
-    first_open(buf, dir)
-  else
-    reload(buf)
-  end
-end
-
----@param buf integer
-function open_entry(buf)
-  local path = entry_path(buf)
-  if path then
-    navigate(path)
-  end
-end
-
----@param buf integer
-function open_parent(buf)
-  navigate(fs.dirname(api.nvim_buf_get_name(buf)))
-end
-
----@param buf integer
-function reload(buf)
-  local view = vim.fn.winsaveview()
-  if render(buf, api.nvim_buf_get_name(buf)) then
-    vim.fn.winrestview(view)
   end
 end
 

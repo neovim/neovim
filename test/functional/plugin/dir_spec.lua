@@ -44,14 +44,11 @@ local function assert_directory(path)
 end
 
 local function filesystem_root(path)
-  local dir = vim.fs.normalize(vim.fs.abspath(path))
-  while true do
-    local parent = vim.fs.dirname(dir)
-    if parent == dir then
-      return dir
-    end
-    dir = parent
+  local root = vim.fs.normalize(vim.fs.abspath(path))
+  for parent in vim.fs.parents(root) do
+    root = parent
   end
+  return root
 end
 
 ---@param args? string[]
@@ -66,7 +63,7 @@ local function with_buftype_optionset(args)
 end
 
 local function expect_buftype_optionset(path)
-  expect_directory(path)
+  assert_directory(path)
   eq({ 'nowrite' }, exec_lua('return vim.g.nvim_dir_events'))
 end
 
@@ -96,7 +93,7 @@ describe('nvim.dir', function()
     make_fixture()
     n.clear({ args_rm = { '-u' }, args = { root } })
 
-    expect_directory(root)
+    assert_directory(root)
     eq(false, vim.tbl_contains(lines(), '../'))
     eq('subdir/', lines()[1])
     line_of('.hidden')
@@ -144,7 +141,7 @@ describe('nvim.dir', function()
     eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
     edit(root)
     eq(true, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
-    expect_directory(root)
+    assert_directory(root)
   end)
 
   it('uses an absolute buffer name for a relative startup directory argument', function()
@@ -154,7 +151,7 @@ describe('nvim.dir', function()
     n.clear({ args_rm = { '-u' }, args = { '.' } })
     assert(vim.uv.chdir(cwd))
 
-    expect_directory(root)
+    assert_directory(root)
   end)
 
   it('normalizes edited directory names', function()
@@ -163,7 +160,7 @@ describe('nvim.dir', function()
 
     edit(root .. '///')
 
-    expect_directory(root)
+    assert_directory(root)
   end)
 
   it('does not show a parent entry at the filesystem root', function()
@@ -172,7 +169,7 @@ describe('nvim.dir', function()
 
     edit(root_dir)
 
-    expect_directory(root_dir)
+    assert_directory(root_dir)
     eq(false, vim.tbl_contains(lines(), '../'))
   end)
 
@@ -181,7 +178,7 @@ describe('nvim.dir', function()
     n.clear({ args_rm = { '-u' } })
 
     edit(root)
-    expect_directory(root)
+    assert_directory(root)
 
     api.nvim_win_set_cursor(0, { line_of('alpha.txt'), 0 })
     feed('<CR>')
@@ -190,12 +187,12 @@ describe('nvim.dir', function()
     eq({ 'alpha' }, lines())
 
     edit(subdir)
-    expect_directory(subdir)
+    assert_directory(subdir)
     eq({ '' }, lines())
 
     feed('-')
     poke_eventloop()
-    expect_directory(root)
+    assert_directory(root)
 
     t.write_file(root .. '/beta.txt', 'beta', true)
     feed('R')
@@ -208,14 +205,14 @@ describe('nvim.dir', function()
     n.clear({ args_rm = { '-u' } })
 
     edit(subdir)
-    expect_directory(subdir)
+    assert_directory(subdir)
 
     n.rmdir(subdir)
     feed('R')
     poke_eventloop()
 
     ok(exec_capture('messages'):find('ENOENT', 1, true) ~= nil)
-    expect_directory(subdir)
+    assert_directory(subdir)
   end)
 
   it('refreshes a directory when navigated into again', function()
@@ -226,18 +223,18 @@ describe('nvim.dir', function()
     api.nvim_win_set_cursor(0, { line_of('subdir/'), 0 })
     feed('<CR>')
     poke_eventloop()
-    expect_directory(subdir)
+    assert_directory(subdir)
     eq({ '' }, lines())
 
     t.write_file(subdir .. '/new.txt', 'new', true)
     feed('-')
     poke_eventloop()
-    expect_directory(root)
+    assert_directory(root)
 
     api.nvim_win_set_cursor(0, { line_of('subdir/'), 0 })
     feed('<CR>')
     poke_eventloop()
-    expect_directory(subdir)
+    assert_directory(subdir)
     line_of('new.txt')
   end)
 
@@ -316,7 +313,7 @@ describe('nvim.dir', function()
     command('browse edit .')
     cd(cwd)
 
-    expect_directory(root)
+    assert_directory(root)
     line_of('alpha.txt')
   end)
 end)

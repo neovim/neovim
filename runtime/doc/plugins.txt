@@ -55,12 +55,15 @@ Mappings:                                                       *dir-mappings*
 	R	Refresh the directory listing.
 <
 
+These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
+<Plug>(nvim-dir-reload); map those to use different keys.
+
 The listing is read-only and does not modify the filesystem.
 
+                                                    *g:loaded_nvim_dir_plugin*
 To disable this plugin, set this in your config before startup: >lua
 	vim.g.loaded_nvim_dir_plugin = 1
 <
-                                                    *g:loaded_nvim_dir_plugin*
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
