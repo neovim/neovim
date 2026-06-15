@@ -2,9 +2,10 @@
 " Language:	Lua script
 " Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
-" Last Change:	2017 Jun 13
+" Last Change:	2026 Jun 15
 "		2022 Sep 07: b:undo_indent added by Doug Kearns
 "		2024 Jul 27: by Vim project: match '(', ')' in function GetLuaIndentIntern()
+"       2026 Jun 15: by https://github.com/gx089, hardcoded commentstring
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -50,6 +51,7 @@ function! GetLuaIndentIntern()
   " 'function', 'if', 'for', 'while', 'repeat', 'else', 'elseif', '{', '('
   let ind = indent(prevlnum)
   let prevline = getline(prevlnum)
+  let curline= getline(v:lnum)
   let midx = match(prevline, '^\s*\%(if\>\|for\>\|while\>\|repeat\>\|else\>\|elseif\>\|do\>\|then\>\)')
   if midx == -1
     let midx = match(prevline, '\%({\|(\)\s*\%(--\%([^[].*\)\?\)\?$')
@@ -61,7 +63,7 @@ function! GetLuaIndentIntern()
   if midx != -1
     " Add 'shiftwidth' if what we found previously is not in a comment and
     " an "end" or "until" is not present on the same line.
-    if synIDattr(synID(prevlnum, midx + 1, 1), "name") != "luaComment" && prevline !~ '\<end\>\|\<until\>'
+    if prevline !~ '^\s*--' && prevline !~ '\<end\>\|\<until\>'
       let ind = ind + shiftwidth()
     endif
   endif
@@ -69,7 +71,7 @@ function! GetLuaIndentIntern()
   " Subtract a 'shiftwidth' on end, else, elseif, until, '}' and ')'
   " This is the part that requires 'indentkeys'.
   let midx = match(getline(v:lnum), '^\s*\%(end\>\|else\>\|elseif\>\|until\>\|}\|)\)')
-  if midx != -1 && synIDattr(synID(v:lnum, midx + 1, 1), "name") != "luaComment"
+  if midx != -1 && curline !~ '^\s*--'
     let ind = ind - shiftwidth()
   endif
 
