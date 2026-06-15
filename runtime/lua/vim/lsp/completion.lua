@@ -937,6 +937,9 @@ local function register_completedone(bufnr)
     local reason = api.nvim_get_vvar('event').reason ---@type string
     if reason == 'accept' then
       on_complete_done()
+    elseif reason == 'cancel' then
+      -- <C-e> dismissed the pum; stop re-querying an incomplete list.
+      Context:reset()
     end
   end)
 
@@ -1002,23 +1005,27 @@ local function trigger(bufnr, clients, ctx)
             client and client.name or 'UNKNOWN'
           )
         )
-      elseif not vim.isnil(result) and #(result.items or result) > 0 then
+      -- result is CompletionItem[] or CompletionList; result.items may be empty, and
+      -- an empty incomplete list means request again when needed.
+      elseif not vim.isnil(result) then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
-        local encoding = client and client.offset_encoding or 'utf-16'
-        local client_matches, tmp_server_start_boundary
-        client_matches, tmp_server_start_boundary = M._convert_results(
-          line,
-          cursor_row - 1,
-          cursor_col,
-          client_id,
-          word_boundary,
-          nil,
-          result,
-          encoding
-        )
+        if #(result.items or result) > 0 then
+          local encoding = client and client.offset_encoding or 'utf-16'
+          local client_matches, tmp_server_start_boundary
+          client_matches, tmp_server_start_boundary = M._convert_results(
+            line,
+            cursor_row - 1,
+            cursor_col,
+            client_id,
+            word_boundary,
+            nil,
+            result,
+            encoding
+          )
 
-        server_start_boundary = tmp_server_start_boundary or server_start_boundary
-        vim.list_extend(matches, client_matches)
+          server_start_boundary = tmp_server_start_boundary or server_start_boundary
+          vim.list_extend(matches, client_matches)
+        end
       end
     end
 
@@ -1056,28 +1063,30 @@ end
 
 --- @param handle vim.lsp.completion.BufHandle
 local function on_insert_char_pre(handle)
-  if vim.fn.pumvisible() ~= 0 then
-    if Context.isIncomplete then
-      reset_timer()
+  if Context.isIncomplete then
+    reset_timer()
 
-      local debounce_ms = adaptive_debounce(Context.last_request_time, rtt_ms)
-      local ctx = { triggerKind = protocol.CompletionTriggerKind.TriggerForIncompleteCompletions }
-      if debounce_ms == 0 then
-        vim.schedule(function()
+    local debounce_ms = adaptive_debounce(Context.last_request_time, rtt_ms)
+    local ctx = { triggerKind = protocol.CompletionTriggerKind.TriggerForIncompleteCompletions }
+    if debounce_ms == 0 then
+      vim.schedule(function()
+        M.get({ ctx = ctx })
+      end)
+    else
+      completion_timer = new_timer()
+      completion_timer:start(
+        math.floor(debounce_ms),
+        0,
+        vim.schedule_wrap(function()
           M.get({ ctx = ctx })
         end)
-      else
-        completion_timer = new_timer()
-        completion_timer:start(
-          math.floor(debounce_ms),
-          0,
-          vim.schedule_wrap(function()
-            M.get({ ctx = ctx })
-          end)
-        )
-      end
+      )
     end
 
+    return
+  end
+
+  if vim.fn.pumvisible() ~= 0 then
     return
   end
 
