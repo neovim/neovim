@@ -177,6 +177,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.sys`		g:filetype_sys
 	`*.sh`		g:bash_is_sh		|ft-sh-syntax|
 	`*.tex`		g:tex_flavor		|ft-tex-plugin|
+	`*.tf`		g:filetype_tf
 	`*.typ`		g:filetype_typ
 	`*.v`		g:filetype_v
 	`*.w`		g:filetype_w		|ft-cweb-syntax|
