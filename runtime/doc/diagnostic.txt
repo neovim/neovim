@@ -712,7 +712,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 
     Fields: ~
       • {current_line}?  (`boolean`, default: `false`) Only show diagnostics
-                         for the current line.
+                         for the current line. Updated on |CursorHold|, see
+                         'updatetime'.
       • {format}?        (`fun(diagnostic:vim.Diagnostic): string?`) A
                          function that takes a diagnostic as input and returns
                          a string or nil. If the return value is nil, the
@@ -728,12 +729,13 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.Opts.VirtualText*
 
     Fields: ~
-      • {current_line}?       (`boolean`) Show or hide diagnostics based on
-                              the current cursor line. If `true`, only
-                              diagnostics on the current cursor line are
-                              shown. If `false`, all diagnostics are shown
-                              except on the current cursor line. If `nil`, all
-                              diagnostics are shown. (default `nil`)
+      • {current_line}?       (`boolean`, default: `nil`) Show or hide
+                              diagnostics based on the current cursor line. If
+                              `true`, only diagnostics on the current cursor
+                              line are shown. If `false`, all diagnostics are
+                              shown except on the current cursor line. If
+                              `nil`, all diagnostics are shown. Updated on
+                              |CursorHold|, see 'updatetime'.
       • {format}?             (`fun(diagnostic:vim.Diagnostic): string?`) If
                               not nil, the return value is the text used to
                               display the diagnostic. Example: >lua
