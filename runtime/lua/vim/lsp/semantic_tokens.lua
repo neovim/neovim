@@ -48,6 +48,7 @@ local M = {}
 local STHighlighter = {
   name = 'semantic_tokens',
   method = 'textDocument/semanticTokens',
+  debounce = 200,
   active = {},
 }
 STHighlighter.__index = STHighlighter
@@ -206,17 +207,6 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
   end
 
   return ranges
-end
-
---- Construct a new STHighlighter for the buffer
----
----@private
----@param bufnr integer
----@return STHighlighter
-function STHighlighter:new(bufnr)
-  self.debounce = 200
-  self = Capability.new(self, bufnr)
-  return self
 end
 
 ---@package
@@ -786,23 +776,6 @@ function STHighlighter:reset_timer()
   end
 end
 
----@param bufnr (integer) Buffer number, or `0` for current buffer
----@param client_id (integer) The ID of the |vim.lsp.Client|
----@param debounce? (integer) (default: 200): Debounce token requests
----        to the server by the given number in milliseconds
-function M._start(bufnr, client_id, debounce)
-  local highlighter = STHighlighter.active[bufnr]
-
-  if not highlighter then
-    highlighter = STHighlighter:new(bufnr)
-    highlighter.debounce = debounce or 200
-  else
-    highlighter.debounce = debounce or highlighter.debounce
-  end
-
-  highlighter:on_attach(client_id)
-end
-
 --- Start the semantic token highlighting engine for the given buffer with the
 --- given client. The client must already be attached to the buffer.
 ---
@@ -827,66 +800,24 @@ function M.start(bufnr, client_id, opts)
   vim.validate('bufnr', bufnr, 'number')
   vim.validate('client_id', client_id, 'number')
 
-  bufnr = vim._resolve_bufnr(bufnr)
+  M.enable(true, { bufnr = bufnr, client_id = client_id })
 
-  opts = opts or {}
-  assert(
-    (not opts.debounce or type(opts.debounce) == 'number'),
-    'opts.debounce must be a number with the debounce time in milliseconds'
-  )
-
-  local client = vim.lsp.get_client_by_id(client_id)
-  if not client then
-    vim.notify('[LSP] No client with id ' .. client_id, vim.log.levels.ERROR)
-    return
+  if opts and opts.debounce then
+    local highlighter = STHighlighter.active[bufnr]
+    local prev = rawget(highlighter, 'debounce')
+    highlighter.debounce = prev and math.max(prev, opts.debounce) or opts.debounce
   end
-
-  if not vim.lsp.buf_is_attached(bufnr, client_id) then
-    vim.notify(
-      '[LSP] Client with id ' .. client_id .. ' not attached to buffer ' .. bufnr,
-      vim.log.levels.WARN
-    )
-    return
-  end
-
-  if
-    not client:supports_method('textDocument/semanticTokens/full', bufnr)
-    and not client:supports_method('textDocument/semanticTokens/range', bufnr)
-  then
-    vim.notify('[LSP] Server does not support semantic tokens', vim.log.levels.WARN)
-    return
-  end
-
-  M._start(bufnr, client_id, opts.debounce)
 end
 
 --- Stop the semantic token highlighting engine for the given buffer with the
 --- given client.
----
---- NOTE: This is automatically called by a |LspDetach| autocmd that is set up as part
---- of `start()`, so you should only need this function to manually disengage the semantic
---- token engine without fully detaching the LSP client from the buffer.
 ---
 ---@deprecated
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
 function M.stop(bufnr, client_id)
   vim.deprecate('vim.lsp.semantic_tokens.stop', 'vim.lsp.semantic_tokens.enable(false)', '0.13.0')
-  vim.validate('bufnr', bufnr, 'number')
-  vim.validate('client_id', client_id, 'number')
-
-  bufnr = vim._resolve_bufnr(bufnr)
-
-  local highlighter = STHighlighter.active[bufnr]
-  if not highlighter then
-    return
-  end
-
-  highlighter:on_detach(client_id)
-
-  if vim.tbl_isempty(highlighter.client_state) then
-    highlighter:destroy()
-  end
+  M.enable(false, { bufnr = bufnr, client_id = client_id })
 end
 
 --- Query whether semantic tokens is enabled in the {filter}ed scope
@@ -1067,12 +998,12 @@ api.nvim_set_decoration_provider(namespace, {
   end,
 })
 
+-- Semantic tokens is enabled by default
+M.enable(true)
+
 --- for testing only! there is no guarantee of API stability with this!
 ---
 ---@private
 M.__STHighlighter = STHighlighter
-
--- Semantic tokens is enabled by default
-vim.lsp._capability.enable('semantic_tokens', true)
 
 return M
