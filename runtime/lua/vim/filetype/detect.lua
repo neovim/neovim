@@ -1897,12 +1897,23 @@ end
 -- Determine if a *.tf file is TF (TinyFugue) mud client or terraform
 --- @type vim.filetype.mapfn
 function M.tf(_, bufnr)
-  for _, line in ipairs(getlines(bufnr)) do
-    -- Assume terraform file on a non-empty line (not whitespace-only)
-    -- and when the first non-whitespace character is not a ; or /
-    if not line:find('^%s*$') and not line:find('^%s*[;/]') then
-      return 'terraform'
+  if vim.g.filetype_tf then
+    return vim.g.filetype_tf
+  end
+
+  local continuation = false
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    -- TF supports backslash line continuation, so a continued line may begin
+    -- with any character.  Only test the first character of a line that does
+    -- not continue a previous one.
+    if not continuation then
+      -- Assume terraform file on a non-empty line (not whitespace-only)
+      -- and when the first non-whitespace character is not a ; or /
+      if not line:find('^%s*$') and not line:find('^%s*[;/]') then
+        return 'terraform'
+      end
     end
+    continuation = not not line:find('\\$')
   end
   return 'tf'
 end

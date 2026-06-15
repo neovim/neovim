@@ -2532,6 +2532,25 @@ func Test_tf_file_v2()
   call assert_equal('terraform', &filetype)
   bwipe!
 
+  " A backslash continuation line may start with any character
+  let lines =<< trim END
+    /def greet = \
+        plain words that start the continued line
+    ;a comment
+  END
+  call writefile(lines, "Xfile.tf", "D")
+  split Xfile.tf
+  call assert_equal('tf', &filetype)
+  bwipe!
+
+  " The user override wins regardless of content
+  let g:filetype_tf = 'terraform'
+  call writefile([';;; looks like tf'], 'Xfile.tf', 'D')
+  split Xfile.tf
+  call assert_equal('terraform', &filetype)
+  bwipe!
+  unlet g:filetype_tf
+
   filetype off
 endfunc
 
