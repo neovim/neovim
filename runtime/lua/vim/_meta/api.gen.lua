@@ -1420,6 +1420,41 @@ function vim.api.nvim_get_hl_id_by_name(name) end
 --- @return integer # Namespace id, or -1
 function vim.api.nvim_get_hl_ns(opts) end
 
+--- Gets detailed information about a tracked job by channel id.
+---
+--- @param job_id integer Channel id of the job.
+--- @return any # Dict with job information, or nil if not found. Keys:
+--- - id: Channel id (Integer).
+--- - pid: Process id (Integer).
+--- - start_time: Milliseconds since epoch when job started (Integer).
+--- - end_time: Milliseconds since epoch when job exited; 0 if still running (Integer).
+--- - exit_status: Exit code; -1 if still running (Integer).
+--- - cwd: Working directory string, or nil (String).
+--- - exepath: Executed program, or nil (String).
+--- - invoked_by: Caller that started the job (String).
+function vim.api.nvim_get_job_info(job_id) end
+
+--- Gets the list of tracked jobs.
+---
+--- Jobs are tracked from creation until teardown.
+---
+--- @param opts vim.api.keyset.job_filter Optional parameters. Omit or pass `nil` to return all jobs.
+--- - ended_after: (number) Only return finished jobs ended after this timestamp.
+--- - ended_before: (number) Only return finished jobs ended before this timestamp.
+--- - is_running: (boolean) If true, only return running jobs.
+--- - started_after: (number) Only return jobs started after this timestamp.
+--- - started_before: (number) Only return jobs started before this timestamp.
+--- @return table<string,any>[] # Array of job info dicts. Each dict has these keys:
+--- - id: Channel id (Integer).
+--- - pid: Process id (Integer).
+--- - start_time: Milliseconds since epoch when job started (Integer).
+--- - end_time: Milliseconds since epoch when job exited; 0 if still running (Integer).
+--- - exit_status: Exit code; -1 if still running (Integer).
+--- - cwd: Working directory string, or nil (String).
+--- - exepath: Executed program, or nil (String).
+--- - invoked_by: Caller that started the job (String).
+function vim.api.nvim_get_jobs(opts) end
+
 --- Gets a list of global (non-buffer-local) `mapping` definitions.
 ---
 --- @param mode string Mode short-name ("n", "i", "v", ...)

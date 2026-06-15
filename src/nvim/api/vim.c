@@ -46,6 +46,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
+#include "nvim/jobs.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
@@ -1813,6 +1814,109 @@ Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *
     chan = (Integer)channel_id;
   }
   return channel_info((uint64_t)chan, arena);
+}
+
+/// Gets detailed information about a tracked job by channel id.
+///
+/// @param job_id Channel id of the job.
+/// @return Dict with job information, or nil if not found. Keys:
+///   - id: Channel id (Integer).
+///   - pid: Process id (Integer).
+///   - start_time: Milliseconds since epoch when job started (Integer).
+///   - end_time: Milliseconds since epoch when job exited; 0 if still running (Integer).
+///   - exit_status: Exit code; -1 if still running (Integer).
+///   - cwd: Working directory string, or nil (String).
+///   - exepath: Executed program, or nil (String).
+///   - invoked_by: Caller that started the job (String).
+Object nvim_get_job_info(Integer job_id, Arena *arena, Error *err)
+  FUNC_API_SINCE(4) 
+{
+  struct job* job = jobs_get(job_id);
+  if(job == NULL) {
+    return NIL;
+  }
+  Dict result = arena_dict(arena, 7);
+  PUT_C(result,"pid",INTEGER_OBJ((Integer)job->pid));
+  PUT_C(result,"start_time",INTEGER_OBJ((Integer)job->start_time));
+  PUT_C(result,"end_time",INTEGER_OBJ((Integer)job->end_time));
+  PUT_C(result,"exit_status",INTEGER_OBJ((Integer)job->exit_status));
+
+  if(job->cwd) {
+   PUT_C(result, "cwd", CSTR_TO_ARENA_OBJ(arena,job->cwd));
+  }
+  if(job->exepath) {
+   PUT_C(result, "exepath", CSTR_TO_ARENA_OBJ(arena,job->exepath));
+  }
+  if(job->invoked_by) {
+   PUT_C(result, "invoked_by", CSTR_TO_ARENA_OBJ(arena,job->invoked_by));
+  }
+
+  return DICT_OBJ(result);
+}
+
+/// Gets the list of tracked jobs.
+///
+/// Jobs are tracked from creation until teardown.
+///
+/// @param opts    Optional parameters. Omit or pass `nil` to return all jobs.
+///               - ended_after: (number) Only return finished jobs ended after this timestamp.
+///               - ended_before: (number) Only return finished jobs ended before this timestamp.
+///               - is_running: (boolean) If true, only return running jobs.
+///               - started_after: (number) Only return jobs started after this timestamp.
+///               - started_before: (number) Only return jobs started before this timestamp.
+///
+/// @return Array of job info dicts. Each dict has these keys:
+///   - id: Channel id (Integer).
+///   - pid: Process id (Integer).
+///   - start_time: Milliseconds since epoch when job started (Integer).
+///   - end_time: Milliseconds since epoch when job exited; 0 if still running (Integer).
+///   - exit_status: Exit code; -1 if still running (Integer).
+///   - cwd: Working directory string, or nil (String).
+///   - exepath: Executed program, or nil (String).
+///   - invoked_by: Caller that started the job (String).
+ArrayOf(Dict) nvim_get_jobs(Dict(job_filter) *opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(4) 
+{
+    Array result = arena_array(arena, jobs_map.set.h.n_keys);
+    struct job *job;
+    map_foreach_value(&jobs_map, job, {
+    if(opts) {
+      if(HAS_KEY(opts,job_filter, is_running) && opts->is_running && job->exit_status != -1) {
+        continue;
+      }
+      if(HAS_KEY(opts,job_filter, started_after) && job->start_time <= opts->started_before) {
+        continue;
+      }
+      if(HAS_KEY(opts,job_filter, ended_after) && job->exit_status != -1 && job->end_time <= opts->ended_after) {
+        continue;
+      }
+      if(HAS_KEY(opts,job_filter, started_before) && job->start_time >= opts->started_before) {
+        continue;
+      }
+      if(HAS_KEY(opts,job_filter, ended_before) && job->exit_status != -1 && job->end_time >= opts->ended_before) {
+        continue;
+      }
+    }
+    Dict info = arena_dict(arena,8);
+    PUT_C(info,"id",INTEGER_OBJ((Integer)job->id));
+    PUT_C(info,"pid",INTEGER_OBJ((Integer)job->pid));
+    PUT_C(info,"start_time",INTEGER_OBJ((Integer)job->start_time));
+    PUT_C(info,"end_time",INTEGER_OBJ((Integer)job->end_time));
+    PUT_C(info,"exit_status",INTEGER_OBJ((Integer)job->exit_status));
+
+    if(job->cwd) {
+    PUT_C(info, "cwd", CSTR_TO_ARENA_OBJ(arena,job->cwd));
+    }
+    if(job->exepath) {
+    PUT_C(info, "exepath", CSTR_TO_ARENA_OBJ(arena,job->exepath));
+    }
+    if(job->invoked_by) {
+    PUT_C(info, "invoked_by", CSTR_TO_ARENA_OBJ(arena,job->invoked_by));
+    }
+    ADD_C(result, DICT_OBJ(info));
+  })
+
+  return result; 
 }
 
 /// Get information about all open channels.

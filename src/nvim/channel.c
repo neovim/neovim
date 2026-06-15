@@ -28,6 +28,7 @@
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
@@ -41,6 +42,9 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/time.h"
+#include "nvim/jobs.h"
+#include "nvim/runtime.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui_client.h"
@@ -67,6 +71,7 @@ void channel_teardown(void)
   map_foreach_value(&channels, chan, {
     channel_close(chan->id, kChannelPartAll, NULL);
   });
+  jobs_teardown();
 }
 
 #ifdef EXITFREE
@@ -78,6 +83,7 @@ void channel_free_all_mem(void)
   });
   map_destroy(uint64_t, &channels);
 
+  jobs_free_all_mem();
   callback_free(&on_print);
 }
 #endif
@@ -337,6 +343,44 @@ static void close_cb(Stream *stream, void *data)
   channel_decref(data);
 }
 
+/// Gets a string describing what invoked the current job/channel creation.
+///
+/// Returns a statically allocated buffer (IObuff), so the caller should xstrdup
+/// if it needs to store the string.
+static const char *channel_invoked_by(void)
+{
+  // Check if we're inside a vimscript function call.
+  funccall_T *fc = get_current_funccal();
+  const char *func_name = fc != NULL ? fc->fc_func->uf_name : NULL;
+
+
+  // Check script context.
+  if (current_sctx.sc_sid == SID_LUA) {
+    if (HAVE_SOURCING_INFO && SOURCING_LNUM != 0) {
+      snprintf(IObuff, IOSIZE, "Lua (%s)", SOURCING_NAME);
+      return IObuff;
+    }
+    return "Lua";
+  } else if (current_sctx.sc_sid == SID_API_CLIENT) {
+    snprintf(IObuff, IOSIZE, "API client (channel %" PRIu64 ")", current_sctx.sc_chan);
+    return IObuff;
+  } else if (func_name != NULL) {
+    // Called from a vimscript function.
+    const char *script = SCRIPT_ID_VALID(current_sctx.sc_sid)
+      ? get_scriptname(current_sctx, NULL)
+      : "";
+    snprintf(IObuff, IOSIZE, "%s (%s)", func_name, script);
+    return IObuff;
+  } else if (SCRIPT_ID_VALID(current_sctx.sc_sid)) {
+    // Called at script top-level.
+    const char *script = get_scriptname(current_sctx, NULL);
+    snprintf(IObuff, IOSIZE, "%s", script);
+    return IObuff;
+  } else {
+    return "internal";
+  }
+}
+
 /// Starts a job and returns the associated channel
 ///
 /// @param[in]  argv  Arguments vector specifying the command to run,
@@ -439,10 +483,12 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
     *status_out = proc->status;
     return NULL;
   }
-  xfree(cmd);
   if (proc->env) {
     tv_dict_free(proc->env);
   }
+
+  jobs_add(chan->id, proc->pid, proc->cwd, cmd, channel_invoked_by(), os_realtime());
+  xfree(cmd);
 
   if (has_in) {
     wstream_init(&proc->in, 0);
@@ -820,6 +866,10 @@ static void channel_proc_exit_cb(Proc *proc, int status, void *data)
     schedule_channel_event(chan);
   }
   chan->exit_status = exited ? status : chan->exit_status;
+
+  if (exited) {
+    jobs_update_exit(chan->id, status, os_realtime());
+  }
 
   channel_decref(chan);
 }

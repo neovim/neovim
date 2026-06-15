@@ -5173,8 +5173,8 @@ Lua module: vim.system                                        *lua-vim-system*
       • {cmd}         (`string[]`) Command name and args
       • {is_closing}  (`fun(self: vim.SystemObj): boolean`) See
                       |SystemObj:is_closing()|.
-      • {kill}        (`fun(self: vim.SystemObj, signal: integer|string)`) See
-                      |SystemObj:kill()|.
+      • {job_id}      (`integer`) Job ID
+      • {kill}        (`fun(self: vim.SystemObj)`) See |SystemObj:kill()|.
       • {pid}         (`integer`) Process ID
       • {wait}        (`fun(self: vim.SystemObj, timeout: integer?): vim.SystemCompleted`)
                       See |SystemObj:wait()|.
@@ -5192,19 +5192,13 @@ SystemObj:is_closing()                                *SystemObj:is_closing()*
     Return: ~
         (`boolean`)
 
-SystemObj:kill({signal})                                    *SystemObj:kill()*
-    Sends a signal to the process.
-
-    The signal can be specified as an integer or as a string.
+SystemObj:kill()                                            *SystemObj:kill()*
+    kills the job.
 
     Example: >lua
         local obj = vim.system({'sleep', '10'})
-        obj:kill('sigterm') -- sends SIGTERM to the process
+        obj:kill()
 <
-
-    Parameters: ~
-      • {signal}  (`integer|string`) Signal to send to the process. See
-                  |luv-constants|.
 
 SystemObj:wait({timeout})                                   *SystemObj:wait()*
     Waits for the process to complete or until the specified timeout elapses.
@@ -5294,6 +5288,7 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                    • {env}? (`table<string,string|number>`) Set environment
                      variables for the new process. Inherits the current
                      environment with `NVIM` set to |v:servername|.
+                   • {height}? (`integer`)
                    • {stderr}? (`fun(err:string?, data: string?)|boolean`,
                      default: `true`) Handle output from stderr.
                    • {stdin}? (`string|string[]|true`) If `true`, then a pipe
@@ -5302,11 +5297,13 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                      then will be written to stdin and closed.
                    • {stdout}? (`fun(err:string?, data: string?)|boolean`,
                      default: `true`) Handle output from stdout.
+                   • {term}? (`boolean`) Spawn a terminal
                    • {text}? (`boolean`) Handle stdout and stderr as text.
                      Normalizes line endings by replacing `\r\n` with `\n`.
                    • {timeout}? (`integer`) Run the command with a time limit
                      in ms. Upon timeout the process is sent the TERM signal
                      (15) and the exit code is set to 124.
+                   • {width}? (`integer`)
       • {on_exit}  (`fun(out: vim.SystemCompleted)?`) Called when subprocess
                    exits. When provided, the command runs asynchronously. See
                    return of SystemObj:wait().

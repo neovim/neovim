@@ -361,6 +361,13 @@ error('Cannot require a meta file')
 --- @field underdouble? boolean
 --- @field underline? boolean
 
+--- @class vim.api.keyset.job_filter
+--- @field ended_after? integer
+--- @field ended_before? integer
+--- @field is_running? boolean
+--- @field started_after? integer
+--- @field started_before? integer
+
 --- @class vim.api.keyset.keymap
 --- @field callback? function
 --- @field desc? string

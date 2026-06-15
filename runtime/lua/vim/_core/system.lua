@@ -38,26 +38,18 @@ local uv = vim.uv
 --- will still keep the parent's event loop alive unless the parent process calls [uv.unref()] on
 --- the child's process handle.
 --- @field detach? boolean
+---
+--- Spawn a terminal
+--- @field term? boolean
+---
+--- @field width? integer
+--- @field height? integer
 
 --- @class vim.SystemCompleted
 --- @field code integer
 --- @field signal integer
 --- @field stdout? string `nil` if stdout is disabled or has a custom handler.
 --- @field stderr? string `nil` if stderr is disabled or has a custom handler.
-
---- @class (package) vim.SystemState
---- @field cmd string[]
---- @field handle? uv.uv_process_t
---- @field timer?  uv.uv_timer_t
---- @field pid? integer
---- @field timeout? integer
---- @field done? boolean|'timeout'
---- @field stdin? uv.uv_stream_t
---- @field stdout? uv.uv_stream_t
---- @field stderr? uv.uv_stream_t
---- @field stdout_data? string[]
---- @field stderr_data? string[]
---- @field result? vim.SystemCompleted
 
 --- @enum vim.SystemSig
 local SIG = {
@@ -67,6 +59,17 @@ local SIG = {
   TERM = 15, -- Termination signal
   -- STOP = 17,19,23  -- Stop the process
 }
+
+--- @class (package) vim.SystemState
+--- @field cmd string[]
+--- @field timer?  uv.uv_timer_t
+--- @field pid? integer
+--- @field job_id integer
+--- @field timeout? integer
+--- @field done? boolean|'timeout'
+--- @field stdout_data? string[]
+--- @field stderr_data? string[]
+--- @field result? vim.SystemCompleted
 
 ---@param handle uv.uv_handle_t?
 local function close_handle(handle)
@@ -78,6 +81,7 @@ end
 --- @class vim.SystemObj
 --- @field cmd string[] Command name and args
 --- @field pid integer Process ID
+--- @field job_id integer Job ID
 --- @field private _state vim.SystemState
 local SystemObj = {}
 
@@ -86,31 +90,32 @@ local SystemObj = {}
 local function new_systemobj(state)
   return setmetatable({
     cmd = state.cmd,
+    job_id = state.job_id,
     pid = state.pid,
     _state = state,
   }, { __index = SystemObj })
 end
 
---- Sends a signal to the process.
----
---- The signal can be specified as an integer or as a string.
+--- kills the job.
 ---
 --- Example:
 --- ```lua
 --- local obj = vim.system({'sleep', '10'})
---- obj:kill('sigterm') -- sends SIGTERM to the process
+--- obj:kill()
 --- ```
 ---
---- @param signal integer|string Signal to send to the process. See |luv-constants|.
-function SystemObj:kill(signal)
-  self._state.handle:kill(signal)
+function SystemObj:kill()
+  local job_id = self._state.job_id --- @type integer
+
+  if self._state.done ~= true then
+    vim.fn.jobstop(job_id)
+  end
 end
 
 --- @package
---- @param signal? vim.SystemSig
-function SystemObj:_timeout(signal)
+function SystemObj:_timeout()
   self._state.done = 'timeout'
-  self:kill(signal or SIG.TERM)
+  self:kill()
 end
 
 --- Waits for the process to complete or until the specified timeout elapses.
@@ -134,17 +139,13 @@ end
 --- @return vim.SystemCompleted
 function SystemObj:wait(timeout)
   local state = self._state
+  local is_timeout = (
+    vim.fn.jobwait({ state.job_id }, timeout or state.timeout or vim._maxint)[1] == -1
+  ) --- @type boolean
 
-  local done = vim.wait(timeout or state.timeout or vim._maxint, function()
-    return state.result ~= nil
-  end, nil, true)
-
-  if not done then
-    -- Send sigkill since this cannot be caught
-    self:_timeout(SIG.KILL)
-    vim.wait(timeout or state.timeout or vim._maxint, function()
-      return state.result ~= nil
-    end, nil, true)
+  if is_timeout then
+    self:_timeout()
+    vim.fn.jobwait({ state.job_id }, timeout or state.timeout or vim._maxint)
   end
 
   return state.result
@@ -169,29 +170,22 @@ end
 ---
 --- @param data string[]|string|nil
 function SystemObj:write(data)
-  local stdin = self._state.stdin
+  local state = self._state
+  local job_id = state.job_id
+  local stdin = state.stdin
 
-  if not stdin then
+  if stdin == false or stdin == nil then
     error('stdin has not been opened on this object')
   end
 
   if type(data) == 'table' then
     for _, v in ipairs(data) do
-      stdin:write(v)
-      stdin:write('\n')
+      vim.fn.chansend(job_id, v .. '\n')
     end
   elseif type(data) == 'string' then
-    stdin:write(data)
+    vim.fn.chansend(job_id, data)
   elseif data == nil then
-    -- Shutdown the write side of the duplex stream and then close the pipe.
-    -- Note shutdown will wait for all the pending write requests to complete
-    -- TODO(lewis6991): apparently shutdown doesn't behave this way.
-    -- (https://github.com/neovim/neovim/pull/17620#discussion_r820775616)
-    stdin:write('', function()
-      stdin:shutdown(function()
-        close_handle(stdin)
-      end)
-    end)
+    vim.fn.chanclose(job_id, 'stdin')
   end
 end
 
@@ -204,146 +198,10 @@ end
 --- @return boolean
 function SystemObj:is_closing()
   local handle = self._state.handle
-  return handle == nil or handle:is_closing() or false
-end
-
---- @param output? fun(err: string?, data: string?)|false
---- @param text? boolean
---- @return uv.uv_stream_t? pipe
---- @return integer? child_fd
---- @return fun(err: string?, data: string?)? handler
---- @return string[]? data
-local function setup_output(output, text)
-  if output == false then
-    return
-  end
-
-  local bucket --- @type string[]?
-  local handler --- @type fun(err: string?, data: string?)
-
-  if type(output) == 'function' then
-    handler = output
-  else
-    bucket = {}
-    handler = function(err, data)
-      if err then
-        error(err)
-      end
-      if text and data then
-        bucket[#bucket + 1] = data:gsub('\r\n', '\n')
-      else
-        bucket[#bucket + 1] = data
-      end
-    end
-  end
-
-  local pipe_fd = assert(uv.pipe({ nonblock = true }, {}))
-  local pipe = assert(uv.new_pipe(false))
-  pipe:open(pipe_fd.read)
-
-  --- @param err? string
-  --- @param data? string
-  local function handler_with_close(err, data)
-    handler(err, data)
-    if data == nil then
-      pipe:read_stop()
-      pipe:close()
-    end
-  end
-
-  return pipe, pipe_fd.write, handler_with_close, bucket
-end
-
---- @param input? string|string[]|boolean
---- @return uv.uv_stream_t?
---- @return integer? child_fd
---- @return string|string[]?
-local function setup_input(input)
-  if not input then
-    return
-  end
-
-  local towrite --- @type string|string[]?
-  if type(input) == 'string' or type(input) == 'table' then
-    towrite = input
-  end
-
-  local pipe_fd = assert(uv.pipe({}, { nonblock = true }))
-  local pipe = assert(uv.new_pipe(false))
-  pipe:open(pipe_fd.write)
-
-  return pipe, pipe_fd.read, towrite
-end
-
---- @return table<string,string>
-local function base_env()
-  local env = vim.fn.environ() --- @type table<string,string>
-  env['NVIM'] = vim.v.servername
-  env['NVIM_LISTEN_ADDRESS'] = nil
-  return env
-end
-
---- uv.spawn will completely overwrite the environment
---- when we just want to modify the existing one, so
---- make sure to prepopulate it with the current env.
---- @param env? table<string,string|number>
---- @param clear_env? boolean
---- @return string[]?
-local function setup_env(env, clear_env)
-  if not env and clear_env then
-    return
-  end
-
-  env = env or {}
-  if not clear_env then
-    --- @type table<string,string|number>
-    env = vim.tbl_extend('force', base_env(), env)
-  end
-
-  local renv = {} --- @type string[]
-  for k, v in pairs(env) do
-    renv[#renv + 1] = string.format('%s=%s', k, tostring(v))
-  end
-
-  return renv
+  return handle == nil or (vim.fn.jobwait({ self._state.job_id }, 0)[1] ~= -1) or false
 end
 
 local is_win = vim.fn.has('win32') == 1
-
---- @param cmd string
---- @param opts uv.spawn.options
---- @param on_exit fun(code: integer, signal: integer)
---- @param on_error fun()
---- @return uv.uv_process_t?, integer?
-local function spawn(cmd, opts, on_exit, on_error)
-  if is_win then
-    local cmd1 = vim.fn.exepath(cmd)
-    if cmd1 ~= '' then
-      cmd = cmd1
-    end
-  end
-
-  local handle, pid_or_err = uv.spawn(cmd, opts, on_exit)
-  -- close child stdio fd:s regardless of error
-  for i = 1, 3 do
-    if type(opts.stdio[i]) == 'number' then
-      --- @diagnostic disable-next-line:param-type-mismatch
-      uv.fs_close(opts.stdio[i])
-    end
-  end
-
-  if not handle then
-    on_error()
-    if opts.cwd and not uv.fs_stat(opts.cwd) then
-      error(("%s (cwd): '%s'"):format(pid_or_err, opts.cwd))
-    elseif vim.fn.executable(cmd) == 0 then
-      error(("%s (cmd): '%s'"):format(pid_or_err, cmd))
-    else
-      error(pid_or_err)
-    end
-  end
-  return handle, pid_or_err --[[@as integer]]
-end
 
 --- @param timeout integer
 --- @param cb fun()
@@ -353,66 +211,127 @@ local function timer_oneshot(timeout, cb)
   timer:start(timeout, 0, function()
     timer:stop()
     timer:close()
-    cb()
+    vim.schedule(cb)
   end)
+
   return timer
 end
 
---- @param state vim.SystemState
---- @param code integer
---- @param signal integer
---- @param on_exit fun(result: vim.SystemCompleted)?
-local function _on_exit(state, code, signal, on_exit)
-  close_handle(state.handle)
-  close_handle(state.stdin)
-  close_handle(state.timer)
+--- @param data string[] Raw line array from jobstart
+--- @param text boolean Whether to normalize line endings
+--- @return string
+local function sanitize_data(data, text)
+  local sanitized = ''
+  local eof = (data == { '' })
 
-  -- #30846: Do not close stdout/stderr here, as they may still have data to
-  -- read. They will be closed in uv.read_start on EOF.
+  if eof then
+    return ''
+  end
 
-  local check = uv.new_check()
-  check:start(function()
-    for _, pipe in pairs({ state.stdin, state.stdout, state.stderr }) do
-      if not pipe:is_closing() then
-        return
-      end
-    end
-    check:stop()
-    check:close()
-
-    if state.done == nil then
-      state.done = true
+  for i, line in ipairs(data) do
+    if text then
+      --- @type string
+      line = line:gsub('\r$', '')
     end
 
-    if (code == 0 or code == 1) and state.done == 'timeout' then
-      -- Unix: code == 0
-      -- Windows: code == 1
-      code = 124
+    if not (i == #data and line == '') then
+      sanitized = sanitized .. line .. '\n'
     end
 
-    local stdout_data = state.stdout_data
-    local stderr_data = state.stderr_data
-
-    state.result = {
-      code = code,
-      signal = signal,
-      stdout = stdout_data and table.concat(stdout_data) or nil,
-      stderr = stderr_data and table.concat(stderr_data) or nil,
-    }
-
-    if on_exit then
-      on_exit(state.result)
+    if i == #data and line ~= '' then
+      sanitized = string.sub(sanitized, 1, -2)
     end
-  end)
+  end
+
+  return sanitized
+end
+
+--- @param cmd string[]
+--- @param opts vim.SystemOpts
+--- @param on_exit fun(job_id:integer, signal:integer, event_type:string)
+--- @param on_error fun(chan_id: integer, data: string[], name: string)
+--- @param on_output fun(chan_id: integer, data: string[], name: string)
+--- @return  integer
+local function spawn(cmd, opts, on_exit, on_error, on_output)
+  if is_win then
+    local cmd1 = vim.fn.exepath(cmd[1])
+    if cmd1 ~= '' then
+      cmd[1] = cmd1
+    end
+  end
+
+  local stdin = 'pipe'
+
+  if not opts.stdin then -- means its not false | nil
+    stdin = 'pipe'
+  end
+
+  local job_opts = {
+    cwd = opts.cwd,
+    env = opts.env,
+    clear_env = opts.clear_env,
+    stdin = stdin,
+    detach = opts.detach,
+    term = opts.term,
+    width = opts.width,
+    height = opts.height,
+
+    stdout_buffered = (type(opts.stdout) ~= 'function'),
+    stderr_buffered = (type(opts.stderr) ~= 'function'),
+
+    on_stdout = on_output,
+
+    on_stderr = on_error,
+    on_exit = on_exit,
+  }
+
+  if opts.clear_env and job_opts.env == nil then
+    job_opts.clear_env = false
+  end
+
+  if job_opts.env and vim.tbl_isempty(job_opts.env) then
+    job_opts.env = nil
+  end
+
+  if opts.cwd and not uv.fs_stat(opts.cwd) then
+    error(("ENOENT: no such file or directory (cwd): '%s'"):format(opts.cwd))
+  end
+  if vim.fn.executable(cmd[1]) == 0 then
+    error(("ENOENT: no such file or directory (cmd): '%s'"):format(cmd[1]))
+  end
+
+  local job_id = vim.fn.jobstart(cmd, job_opts)
+  if job_id <= 0 then
+    error('job failed to start')
+  end
+
+  return job_id
 end
 
 --- @param state vim.SystemState
-local function _on_error(state)
-  close_handle(state.handle)
-  close_handle(state.stdin)
-  close_handle(state.stdout)
-  close_handle(state.stderr)
+--- @param exit_code integer
+local function _on_exit(state, exit_code)
   close_handle(state.timer)
+
+  local signal = 0 --- @type integer
+
+  if exit_code > 128 and exit_code <= 255 then
+    signal = (exit_code - 128)
+    exit_code = 0
+  end
+
+  if state.done == 'timeout' then
+    exit_code = 124
+    signal = 15 -- SIGTERM
+  end
+
+  state.result = {
+    code = exit_code,
+    signal = signal,
+    stdout = state.stdout_data and table.concat(state.stdout_data) or nil,
+    stderr = state.stderr_data and table.concat(state.stderr_data) or nil,
+  }
+  state.done = true
 end
 
 --- Run a system command
@@ -428,56 +347,62 @@ local function run(cmd, opts, on_exit)
 
   opts = opts or {}
 
-  local stdout, stdout_child_fd, stdout_handler, stdout_data = setup_output(opts.stdout, opts.text)
-  local stderr, stderr_child_fd, stderr_handler, stderr_data = setup_output(opts.stderr, opts.text)
-  local stdin, stdin_child_fd, towrite = setup_input(opts.stdin)
+  local stdout_data = opts.stdout ~= false and {} or nil
+  local stderr_data = opts.stdout ~= false and {} or nil
 
-  --- @type vim.SystemState
   local state = {
     done = false,
     cmd = cmd,
+    stdin = opts.stdin,
     timeout = opts.timeout,
-    stdin = stdin,
-    stdout = stdout,
     stdout_data = stdout_data,
-    stderr = stderr,
     stderr_data = stderr_data,
   }
 
-  --- @diagnostic disable-next-line:missing-fields
-  state.handle, state.pid = spawn(cmd[1], {
-    args = vim.list_slice(cmd, 2),
-    -- local function spawn() will close these
-    stdio = { stdin_child_fd, stdout_child_fd, stderr_child_fd },
-    cwd = opts.cwd,
-    --- @diagnostic disable-next-line:assign-type-mismatch
-    env = setup_env(opts.env, opts.clear_env),
-    detached = opts.detach,
-    hide = true,
-  }, function(code, signal)
-    _on_exit(state, code, signal, on_exit)
-  end, function()
-    _on_error(state)
+  state.job_id = spawn(cmd, opts, function(_, exit_code, _)
+    _on_exit(state, exit_code)
+    if on_exit ~= nil then
+      on_exit(state.result)
+    end
+  end, function(_, data)
+    if stderr_data and data then
+      local processed_lines = sanitize_data(data, opts.text)
+
+      if processed_lines ~= '' then
+        if type(opts.stderr) == 'function' then
+          opts.stderr(nil, processed_lines)
+        else
+          table.insert(stderr_data, processed_lines)
+        end
+      end
+    end
+  end, function(_, data)
+    if stdout_data and data then
+      local processed_lines = sanitize_data(data, opts.text)
+
+      if processed_lines ~= '' then
+        if type(opts.stdout) == 'function' then
+          opts.stdout(nil, processed_lines)
+        else
+          table.insert(stdout_data, processed_lines)
+        end
+      end
+    end
   end)
-
-  if stdout and stdout_handler then
-    stdout:read_start(stdout_handler)
-  end
-
-  if stderr and stderr_handler then
-    stderr:read_start(stderr_handler)
-  end
+  state.pid = vim.fn.jobpid(state.job_id)
 
   local obj = new_systemobj(state)
 
-  if towrite then
-    obj:write(towrite)
-    obj:write(nil) -- close the stream
+  if opts.stdin ~= nil and type(opts.stdin) ~= 'boolean' then
+    local data = opts.stdin
+    ---@cast data string|string[]
+    obj:write(data)
+    obj:write(nil)
   end
 
-  if opts.timeout then
+  if opts.timeout ~= 0 and opts.timeout ~= nil then
     state.timer = timer_oneshot(opts.timeout, function()
-      if state.handle and state.handle:is_active() then
+      if not state.done then
         obj:_timeout()
       end
     end)
@@ -526,5 +451,6 @@ function vim.system(cmd, opts, on_exit)
     on_exit = opts
     opts = nil
   end
+
   return run(cmd, opts, on_exit)
 end

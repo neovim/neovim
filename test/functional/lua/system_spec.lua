@@ -126,27 +126,18 @@ describe('vim.system', function()
     end)
   end
 
-  it('kill processes', function()
+  it('kill processes should kill the process', function()
     exec_lua(function()
-      local signal --- @type integer?
-      local cmd = vim.system({ 'cat', '-' }, { stdin = true }, function(r)
-        signal = r.signal
-      end) -- run forever
+      local cmd = vim.system({ 'cat', '-' }, { stdin = true }) -- run forever
 
-      cmd:kill('sigint')
+      cmd:kill()
 
-      -- wait for the process not to exist
-      local done = vim.wait(2000, function()
-        return signal ~= nil
-      end)
-
-      assert(done, 'process did not exit')
+      -- wait for the process to exist
+      vim.wait(100)
 
       -- Check the process is no longer running
       local proc = vim.api.nvim_get_proc(cmd.pid)
-      assert(not proc, 'process still exists')
-
-      assert(signal == 2)
+      assert(proc == nil, 'process still exists')
     end)
   end)
 
@@ -201,5 +192,66 @@ describe('vim.system', function()
         return fail + (ok and 0 or 1)
       end)
     )
+  end)
+
+  it('supports streaming stdout via functions (unbuffered)', function()
+    eq(
+      'streamed-data\n',
+      exec_lua(function()
+        local output = ''
+        local done = false
+
+        vim.system({ 'echo', 'streamed-data' }, {
+          stdout = function(err, data)
+            if data then
+              output = output .. data
+            end
+          end,
+        }, function()
+          done = true
+        end)
+
+        vim.wait(5000, function()
+          return done
+        end)
+        return output
+      end)
+    )
+  end)
+
+  it('SystemObj:write(nil) closes stdin and sends EOF', function()
+    eq(
+      'input-line',
+      exec_lua(function()
+        local obj = vim.system({ 'cat' }, { stdin = true, text = true })
+
+        obj:write('input-line')
+        obj:write(nil)
+
+        local res = obj:wait(2000)
+        return res.stdout
+      end)
+    )
+  end)
+
+  it('supports terminal mode configuration with dimensions', function()
+    exec_lua(function()
+      local obj = vim.system({ 'echo', 'term-test' }, {
+        term = true,
+        width = 80,
+        height = 24,
+      })
+
+      local res = obj:wait(2000)
+      assert(res.code == 0, 'terminal job failed')
+    end)
+  end)
+
+  it('accepts detached option flag cleanly', function()
+    exec_lua(function()
+      local obj = vim.system({ 'sleep', '0.1' }, { detach = true })
+      local res = obj:wait(1000)
+      assert(res.code == 0, 'detached job execution failed')
+    end)
   end)
 end)

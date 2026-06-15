@@ -95,6 +95,15 @@ typedef struct {
 } Dict(keymap);
 
 typedef struct {
+  OptionalKeys is_set__job_filter_;
+  Integer ended_after;
+  Integer ended_before;
+  Boolean is_running;
+  Integer started_after;
+  Integer started_before;
+} Dict(job_filter);
+
+typedef struct {
   Boolean builtin;
 } Dict(get_commands);
 
