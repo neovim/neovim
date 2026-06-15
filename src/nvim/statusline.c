@@ -1147,8 +1147,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
         out_p = out_p - n + 1;
         // Fill up space left over by half a double-wide char.
-        minwid = MIN(minwid, maxwid);
-        while (++group_len < minwid) {
+        int minwid_fixed = MIN(minwid, maxwid);
+        while (++group_len < minwid_fixed) {
           schar_get_adv(&out_p, fillchar);
         }
         // }
@@ -1187,14 +1187,14 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
           out_p += added_bytes;
           // }
 
-          // Adjust item start positions
-          for (int n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
-            stl_items[n].start += added_bytes;
-          }
-
           // Prepend the fill characters
           for (; added_cells > 0; added_cells--) {
             schar_get_adv(&t, fillchar);
+          }
+
+          // Adjust item start positions
+          for (int n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
+            stl_items[n].start += added_bytes;
           }
         }
       }

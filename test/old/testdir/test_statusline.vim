@@ -124,10 +124,30 @@ func Test_statusline()
   call assert_match('^    Xstatusline\s*$', s:get_statusline())
   set statusline=%.6(%f%)
   call assert_match('^<sline\s*$', s:get_statusline())
+  set statusline=%.5(1234567%),%2.5(1234567%),%5.5(1234567%),%50.5(1234567%)
+  call assert_match('^<4567,<4567,<4567,<4567\s*$', s:get_statusline())
   set statusline=%14f
   call assert_match('^   Xstatusline\s*$', s:get_statusline())
   set statusline=%.4L
   call assert_match('^10>3\s*$', s:get_statusline())
+  for filler in ['-', '∙']
+    exec 'set fillchars+=stl:'..filler
+    set statusline=%-5(x%),%-5.(x%),%-5.5(x%),%-5.10(x%);
+    call assert_match(substitute('^x____,x____,x____,x____;_*$', '_', filler, 'g'), s:get_statusline())
+    set statusline=%5(x%),%5.(x%),%5.5(x%),%5.10(x%);
+    call assert_match(substitute('^____x,____x,____x,____x;_*$', '_', filler, 'g'), s:get_statusline())
+    set statusline=%.5(12🙂345%),%4.5(12🙂345%),%5.5(12🙂345%),%50.5(12🙂345%);
+    call assert_match(substitute('^<345,<345,<345_,<345_;_*$', '_', filler, 'g'), s:get_statusline())
+  endfor
+  if has('linux')
+    " This assumes MAXPATHL is 4096 bytes.
+    set stl=%{%repeat('x',4096-6)%}%10(X%)
+    set fillchars+=stl:-
+    call assert_match('^<x\+----X$', s:get_statusline())
+    set fillchars+=stl:∙
+    call assert_match('^<x\+∙X$', s:get_statusline())
+  endif
+  set fillchars&
 
   " %h: Help buffer flag, text is "[help]".
   " %H: Help buffer flag, text is ",HLP".
