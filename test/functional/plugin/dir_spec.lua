@@ -97,8 +97,8 @@ describe('nvim.dir', function()
     n.clear({ args_rm = { '-u' }, args = { root } })
 
     expect_directory(root)
-    eq('../', lines()[1])
-    line_of('subdir/')
+    eq(false, vim.tbl_contains(lines(), '../'))
+    eq('subdir/', lines()[1])
     line_of('.hidden')
     line_of('alpha.txt')
   end)
@@ -191,7 +191,7 @@ describe('nvim.dir', function()
 
     edit(subdir)
     expect_directory(subdir)
-    eq({ '../' }, lines())
+    eq({ '' }, lines())
 
     feed('-')
     poke_eventloop()
@@ -203,7 +203,7 @@ describe('nvim.dir', function()
     line_of('beta.txt')
   end)
 
-  it('displays filenames as buffer text and opens stored entries', function()
+  it('displays filenames as buffer text and opens them from the buffer', function()
     -- Windows reserves backslash as a separator and disallows control characters in filenames.
     -- https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
     t.skip(t.is_os('win'), 'N/A: Windows filenames cannot contain these characters')

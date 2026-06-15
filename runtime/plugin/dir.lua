@@ -61,14 +61,3 @@ api.nvim_create_autocmd('VimEnter', {
     end
   end,
 })
-
-api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
-  group = group,
-  callback = function(ev)
-    ---@type { clear: fun(buf: integer) }?
-    local directory = package.loaded['nvim.dir']
-    if directory then
-      directory.clear(ev.buf)
-    end
-  end,
-})
