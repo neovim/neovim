@@ -55,10 +55,7 @@ Mappings:                                                       *dir-mappings*
 	R	Refresh the directory listing.
 <
 
-The listing is a viewer, not a file manager.  It does not provide file
-operations such as rename, delete, copy, or move.  Use |netrw| commands such as
-|:Explore| for netrw's browser, remote file operations, and broader file
-manager features.
+The listing is read-only and does not modify the filesystem.
 
 To disable this plugin, set this in your config before startup: >lua
 	vim.g.loaded_nvim_dir_plugin = 1

@@ -258,11 +258,11 @@ Extended search patterns.				|pattern|
 	"x\{2,4}" matches "x" 2 to 4 times.
 	"\s" matches a white space character.
 
-Directory, remote and archive browsing.			|dir|
-	Nvim can browse the file system.  Simply edit a directory.  Move
-	around in the list with the usual commands and press <Enter> to go to
-	the directory or file under the cursor.
-	Netrw is available for remote files over ftp, http, ssh, etc. |netrw|
+Directory, remote and archive browsing.			|netrw|
+	Vim can browse the file system.  Simply edit a directory.  Move around
+	in the list with the usual commands and press <Enter> to go to the
+	directory or file under the cursor.
+	This also works for remote files over ftp, http, ssh, etc.
 	Zip and tar archives can also be browsed. |tar| |zip|
 
 Edit-compile-edit speedup.				|quickfix|
