@@ -36,7 +36,7 @@ local function bufopt(name)
   return api.nvim_get_option_value(name, { buf = 0 })
 end
 
-local function expect_directory(path)
+local function assert_directory(path)
   eq(path, api.nvim_buf_get_name(0))
   eq(path, fn.bufname('%'))
   eq('directory', bufopt('filetype'))
