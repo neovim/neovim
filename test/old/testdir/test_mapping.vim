@@ -30,6 +30,18 @@ func Test_abbreviation()
   iunab abc；
   iunab ；
 
+  " abbreviation with composing chars (end-id)
+  inoreab ..ã a^~
+  inoreab ..β̃ β^~
+  inoreab ..π̃ π^~
+  inoreab ..Λ̃ Λ^~
+  call feedkeys("Go..ã ..β̃ ..π̃ ..Λ̃ \<Esc>", "xt")
+  call assert_equal('a^~ β^~ π^~ Λ^~ ', getline('$'))
+  iunab ..ã
+  iunab ..β̃
+  iunab ..π̃
+  iunab ..Λ̃
+
   bwipe!
 endfunc
 
