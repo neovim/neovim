@@ -160,6 +160,7 @@ error('Cannot require a meta file')
 --- @field default? true
 --- @field fg? integer
 --- @field fg_indexed? boolean
+--- @field font? string
 --- @field link? string
 --- @field sp? integer
 
