@@ -628,17 +628,24 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
         // vi-compatible way.
         int same = -1;
 
-        const int first = vim_iswordp(lhs);
+        const char *p = lhs;
+        const char *p_char = mb_unescape(&p);
+        if (p_char == NULL) {
+          p_char = p++;
+        }
+        const int first = vim_iswordp(p_char);
         int last = first;
-        const char *p = lhs + utfc_ptr2len(lhs);
         int n = 1;
         while (p < lhs + len) {
           n++;                                  // nr of (multi-byte) chars
-          last = vim_iswordp(p);                // type of last char
+          p_char = mb_unescape(&p);
+          if (p_char == NULL) {
+            p_char = p++;
+          }
+          last = vim_iswordp(p_char);           // type of last char
           if (same == -1 && last != first) {
             same = n - 1;                       // count of same char type
           }
-          p += utfc_ptr2len(p);
         }
         if (last && n > 2 && same >= 0 && same < n - 1) {
           retval = 1;
