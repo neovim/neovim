@@ -140,6 +140,9 @@ describe('autoread file watcher', function()
   end)
 
   it('coalesces rapid changes via debouncing', function()
+    -- Use a wide debounce window so all write_file calls reliably land inside it.
+    n.exec_lua([[require('nvim.autoread')._set_debounce(200)]])
+
     local path = open_watched('v1\n')
 
     -- Count buffer reloads triggered by the watcher.
@@ -160,10 +163,9 @@ describe('autoread file watcher', function()
       eq({ 'final' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
 
-    -- Let any late-arriving event flush, then assert all 4 writes coalesced.
-    -- Every fs_event restarts the debounce timer, and 4 sub-millisecond
-    -- write_file calls fit well inside one window, so the timer fires once.
-    sleep(50)
+    -- Let any late-arriving event flush (> debounce window), then assert all 4 writes coalesced.
+    -- Every fs_event restarts the debounce timer, so the timer fires exactly once.
+    sleep(250)
     eq(1, n.exec_lua('return _G.reloads'))
   end)
 
