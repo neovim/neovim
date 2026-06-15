@@ -140,15 +140,18 @@ local function ensure_watcher(bufnr)
           set_pending(bufnr, false)
           return
         end
-        -- Use pcall: autocmds (e.g. ftplugin) may throw during reload for any reason.
+
+        -- :checktime may throw if file was deleted (E211), or if reload triggers a buggy autocmd.
         local ok, err = pcall(vim.cmd.checktime, bufnr) ---@type any, any
+        local file_missing = tostring(err):find('E211:', 1, true)
+
         set_pending(bufnr, false)
-        -- On rename events (e.g. atomic save by another editor), the watcher
-        -- is now stale (watching the old inode). Re-establish it.
-        if change_type ~= watch.FileChangeType.Changed then
+        -- Update the watcher if it's now stale: "rename" events (watcher pointing to old inode), or
+        -- file deleted between event-and-:checktime.
+        if change_type ~= watch.FileChangeType.Changed or file_missing then
           ensure_watcher(bufnr)
         end
-        if not ok then
+        if not ok and not file_missing then
           vim.api.nvim_echo({
             { ('autoread: :checktime failed for buffer %d: %s'):format(bufnr, err) },
           }, true, { err = true })
