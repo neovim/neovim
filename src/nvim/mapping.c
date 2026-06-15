@@ -628,22 +628,28 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
         // vi-compatible way.
         int same = -1;
 
-        const int first = vim_iswordp(lhs);
+        char keys_unescaped[MAXMAPLEN + 1];
+        xmemcpyz(keys_unescaped, lhs, (size_t)len);
+        size_t keys_unescaped_len = vim_unescape_ks(keys_unescaped);
+        const char *p = keys_unescaped;
+
+        const int first = vim_iswordp(p);
         int last = first;
-        const char *p = lhs + utfc_ptr2len(lhs);
+        MB_PTR_ADV(p);
         int n = 1;
-        while (p < lhs + len) {
+        while (p < keys_unescaped + keys_unescaped_len) {
           n++;                                  // nr of (multi-byte) chars
           last = vim_iswordp(p);                // type of last char
           if (same == -1 && last != first) {
             same = n - 1;                       // count of same char type
           }
-          p += utfc_ptr2len(p);
+          MB_PTR_ADV(p);
         }
         if (last && n > 2 && same >= 0 && same < n - 1) {
           retval = 1;
           goto theend;
         }
+
         // An abbreviation cannot contain white space.
         for (n = 0; n < len; n++) {
           if (ascii_iswhite(lhs[n])) {
@@ -1530,8 +1536,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       if (strchr(mp->m_keys, K_SPECIAL) != NULL) {
         // Might have K_SPECIAL escaped mp->m_keys.
         q = xstrdup(mp->m_keys);
-        vim_unescape_ks(q);
-        qlen = (int)strlen(q);
+        qlen = (int)vim_unescape_ks(q);
       }
       // find entries with right mode and keys
       int match = (mp->m_mode & State)
