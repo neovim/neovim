@@ -61,6 +61,14 @@ end
 ---@param dir string
 ---@return boolean
 local function render(buf, dir)
+  -- TODO(#39878): drop this scandir probe once vim.fs.dir() can report
+  -- traversal errors.
+  local handle, err = uv.fs_scandir(dir)
+  if not handle then
+    vim.notify('dir: ' .. (err or ('cannot read directory: ' .. dir)), vim.log.levels.WARN)
+    return false
+  end
+
   ---@type { name: string, dir: boolean }[]
   local items = {}
   for name, type in fs.dir(dir) do
@@ -153,7 +161,10 @@ end
 local function open(path, opts)
   opts = opts or {}
   local dir = normalize_dir(path)
-  if not is_dir(dir) then
+  local stat = uv.fs_stat(dir)
+  if not stat or stat.type ~= 'directory' then
+    local reason = stat and 'not a directory' or 'directory not found'
+    vim.notify(('dir: %s: %s'):format(reason, dir), vim.log.levels.WARN)
     return
   end
 

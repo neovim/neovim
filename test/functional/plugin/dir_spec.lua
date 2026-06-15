@@ -203,6 +203,21 @@ describe('nvim.dir', function()
     line_of('beta.txt')
   end)
 
+  it('warns and keeps the buffer when reloading a removed directory', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    edit(subdir)
+    expect_directory(subdir)
+
+    n.rmdir(subdir)
+    feed('R')
+    poke_eventloop()
+
+    ok(exec_capture('messages'):find('directory not found', 1, true) ~= nil)
+    expect_directory(subdir)
+  end)
+
   it('displays filenames as buffer text and opens them from the buffer', function()
     -- Windows reserves backslash as a separator and disallows control characters in filenames.
     -- https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
