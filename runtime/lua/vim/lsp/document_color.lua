@@ -20,6 +20,7 @@ local M = {}
 --- @field hl_info vim.lsp.document_color.HighlightInfo[] Processed highlight information
 --- @field processed_version? integer Buffer version for which the color ranges correspond to
 --- @field applied_version? integer Last buffer version for which we applied color ranges
+--- @field timer? table uv_timer for debouncing requests
 
 --- @inlinedoc
 --- @class vim.lsp.document_color.Opts
@@ -115,6 +116,18 @@ Provider.__index = Provider
 setmetatable(Provider, Capability)
 Capability.all[Provider.name] = Provider
 
+--- @param state vim.lsp.document_color.ClientState
+local function reset_timer(state)
+  local timer = state.timer
+  if timer then
+    state.timer = nil
+    if not timer:is_closing() then
+      timer:stop()
+      timer:close()
+    end
+  end
+end
+
 --- @package
 --- @param bufnr integer
 --- @return vim.lsp.document_color.Provider
@@ -128,7 +141,7 @@ function Provider:new(bufnr)
       if not provider then
         return true
       end
-      provider:request()
+      provider:on_change()
     end,
     on_reload = function(_, buf)
       local provider = Provider.active[buf]
@@ -173,6 +186,7 @@ end
 function Provider:on_detach(client_id)
   local state = self.client_state[client_id]
   if state then
+    reset_timer(state)
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
     self.client_state[client_id] = nil
   end
@@ -228,9 +242,31 @@ end
 
 --- @package
 --- @param client_id? integer
-function Provider:request(client_id)
-  for id in pairs(self.client_state) do
+function Provider:on_change(client_id)
+  for id, state in pairs(self.client_state) do
     if not client_id or client_id == id then
+      local client = assert(lsp.get_client_by_id(id))
+      local debounce = client.flags.debounce_text_changes or 150
+      reset_timer(state)
+      if debounce > 0 then
+        state.timer = vim.defer_fn(function()
+          if self.client_state[id] then
+            self:request(id)
+          end
+        end, debounce)
+      else
+        self:request(id)
+      end
+    end
+  end
+end
+
+--- @package
+--- @param client_id? integer
+function Provider:request(client_id)
+  for id, state in pairs(self.client_state) do
+    if not client_id or client_id == id then
+      reset_timer(state)
       local client = assert(lsp.get_client_by_id(id))
       ---@type lsp.DocumentColorParams
       local params = { textDocument = util.make_text_document_params(self.bufnr) }
