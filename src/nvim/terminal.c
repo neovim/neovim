@@ -1828,8 +1828,19 @@ static void term_clipboard_set(void **argv)
     break;
   }
 
-  list_T *lines = tv_list_alloc(1);
-  tv_list_append_allocated_string(lines, data);
+  // Split into one list entry per line. A single multi-line element would have its
+  // embedded newlines encoded as NUL bytes when written to a provider's stdin
+  // (e.g. tmux load-buffer, xclip). See :help channel-lines.
+  list_T *lines = tv_list_alloc(kListLenUnknown);
+  const char *line_start = data;
+  for (const char *p = data; *p != NUL; p++) {
+    if (*p == '\n') {
+      tv_list_append_string(lines, line_start, p - line_start);
+      line_start = p + 1;
+    }
+  }
+  tv_list_append_string(lines, line_start, -1);  // final (possibly empty) segment
+  xfree(data);
 
   list_T *args = tv_list_alloc(3);
   tv_list_append_list(args, lines);

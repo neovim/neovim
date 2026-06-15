@@ -5,6 +5,7 @@ local eq = t.eq
 local retry = t.retry
 
 local clear = n.clear
+local command = n.command
 local fn = n.fn
 local testprg = n.testprg
 local exec_lua = n.exec_lua
@@ -60,6 +61,60 @@ describe(':terminal', function()
 
     retry(nil, 1000, function()
       eq(text, exec_lua([[ return vim.g.clipboard_data ]]))
+    end)
+  end)
+
+  it('splits OSC 52 clipboard payload into one list entry per line', function()
+    exec_lua([[
+      local function record(reg, type)
+        if type == 'copy' then
+          return function(lines)
+            vim.g.test_clip_lines = lines
+          end
+        end
+
+        if type == 'paste' then
+          return function()
+            error()
+          end
+        end
+
+        error('invalid type: ' .. type)
+      end
+
+      vim.g.clipboard = {
+        name = 'TestRecord',
+        copy = {
+          ['+'] = record('+', 'copy'),
+          ['*'] = record('*', 'copy'),
+        },
+        paste = {
+          ['+'] = record('+', 'paste'),
+          ['*'] = record('*', 'paste'),
+        },
+      }
+    ]])
+
+    local function osc52(arg)
+      return string.format('\027]52;;%s\027\\', arg)
+    end
+
+    local text = 'line one\nline two\nline three'
+    local encoded = exec_lua('return vim.base64.encode(...)', text)
+    fn.jobstart({ testprg('shell-test'), '-t', osc52(encoded) }, { term = true })
+
+    retry(nil, 1000, function()
+      eq({ 'line one', 'line two', 'line three' }, exec_lua([[ return vim.g.test_clip_lines ]]))
+    end)
+
+    -- A trailing newline yields a final empty segment.
+    command('enew!')
+    local trailing = 'a\n'
+    local encoded_trailing = exec_lua('return vim.base64.encode(...)', trailing)
+    fn.jobstart({ testprg('shell-test'), '-t', osc52(encoded_trailing) }, { term = true })
+
+    retry(nil, 1000, function()
+      eq({ 'a', '' }, exec_lua([[ return vim.g.test_clip_lines ]]))
     end)
   end)
 end)
