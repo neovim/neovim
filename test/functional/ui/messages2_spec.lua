@@ -62,7 +62,7 @@ describe('messages2', function()
       {3:                                                     }|
       ^foo                                                  |
       bar                                                  |
-                                          1,1           All|
+                                         1,1            All|
     ]])
     -- Multiple messages in same event loop iteration are appended and shown in full.
     feed([[q:echo "foo" | echo "bar\nbaz\n"->repeat(&lines)<CR>]])
@@ -86,21 +86,21 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo                                 0,0-1         All|
+      foo                                0,0-1          All|
     ]])
     command('echo "foo"')
     -- Ruler still positioned correctly after dupe message.
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo(1)                              0,0-1         All|
+      foo(1)                             0,0-1          All|
     ]])
     command('echo "foo"')
     -- Dupe counter increases beyond 1
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo(2)                              0,0-1         All|
+      foo(2)                             0,0-1          All|
     ]])
     -- No error for ruler virt_text msg_row exceeding buffer length.
     command([[map Q <cmd>echo "foo\nbar" <bar> ls<CR>]])
@@ -117,7 +117,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-                                          0,0-1         All|
+                                         0,0-1          All|
     ]])
     -- g< shows messages from last command
     feed('g<lt>')
@@ -128,20 +128,20 @@ describe('messages2', function()
       ^foo                                                  |
       bar                                                  |
         1 %a   "[No Name]"                    line 1       |
-                                          1,1           All|
+                                         1,1            All|
     ]])
     -- edit_unputchar() does not clear already updated screen #34515.
     feed('qix<Esc>dwi<C-r>')
     screen:expect([[
       {18:^"}                                                    |
       {1:~                                                    }|*12
-                               ^R         1,1           All|
+                              ^R         1,1            All|
     ]])
     feed('-<Esc>')
     screen:expect([[
       ^x                                                    |
       {1:~                                                    }|*12
-                                          1,1           All|
+                                         1,1            All|
     ]])
     -- Switching tabpage closes expanded cmdline #37659.
     command('tabnew | echo "foo\nbar"')
@@ -158,7 +158,7 @@ describe('messages2', function()
       {5: + [No Name] }{24: [No Name] }{2:                            }{24:X}|
       ^x                                                    |
       {1:~                                                    }|*11
-      foo [+1]                            1,1           All|
+      foo [+1]                           1,1            All|
     ]])
     -- Don't enter the pager in insert mode.
     command('tabonly | call nvim_echo([["foo\n"]]->repeat(&lines), 1, {}) | startinsert')
@@ -174,7 +174,7 @@ describe('messages2', function()
                                                            |
       ^x                                                    |
       {1:~                                                    }|*11
-      foo [+14]                           2,1           All|
+      foo [+14]                          2,1            All|
     ]])
     feed('<BS><Esc>')
     -- First multiline message expands cmdline, additional message updates spill indicator.
@@ -192,7 +192,7 @@ describe('messages2', function()
     screen:expect([[
       ^foo                                                  |
       foo                                                  |*12
-                                          1,1           Top|
+                                         1,1            Top|
     ]])
     -- Changing 'laststatus' reveals the global statusline with a pager height
     -- exceeding the available lines: #38008.
@@ -1098,14 +1098,14 @@ describe('messages2', function()
       {10:^foo}                                                  |
       bar                                                  |
       {1:~                                                    }|*11
-      /foo            W [1/1]             1,1           All|
+      /foo           W [1/1]             1,1            All|
     ]])
     feed('<C-L>j')
     screen:expect([[
       {10:foo}                                                  |
       ^bar                                                  |
       {1:~                                                    }|*11
-                                          2,1           All|
+                                         2,1            All|
     ]])
   end)
 end)

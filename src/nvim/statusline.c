@@ -553,8 +553,8 @@ void redraw_ruler(void)
   char rel_pos[RULER_BUF_LEN];
   int rel_poslen = get_rel_pos(wp, rel_pos, RULER_BUF_LEN);
   int n1 = bufferlen + vim_strsize(rel_pos);
-  if (wp->w_status_height == 0 && !is_stl_global) {  // can't use last char of screen
-    n1++;
+  if (wp->w_status_height == 0 && !is_stl_global && !ui_has(kUIMessages)) {
+    n1++;  // can't use last char of screen
   }
 
   int this_ru_col = ru_col - (Columns - width);

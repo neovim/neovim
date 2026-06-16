@@ -941,7 +941,7 @@ describe('ui/ext_messages', function()
         ^                         |
         {1:~                        }|*4
       ]],
-      ruler = { { '0,0-1   All', 9, 'MsgArea' } },
+      ruler = { { '0,0-1    All', 9, 'MsgArea' } },
     })
     command('hi clear MsgArea')
     feed('i')
@@ -951,7 +951,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*4
       ]],
       showmode = { { '-- INSERT --', 5, 'ModeMsg' } },
-      ruler = { { '0,1     All', 'MsgArea' } },
+      ruler = { { '0,1      All', 'MsgArea' } },
     }
     feed('abcde<cr>12345<esc>')
     screen:expect {
@@ -960,7 +960,7 @@ describe('ui/ext_messages', function()
         1234^5                    |
         {1:~                        }|*3
       ]],
-      ruler = { { '2,5     All', 'MsgArea' } },
+      ruler = { { '2,5      All', 'MsgArea' } },
     }
     feed('d')
     screen:expect {
@@ -970,7 +970,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       showcmd = { { 'd' } },
-      ruler = { { '2,5     All', 'MsgArea' } },
+      ruler = { { '2,5      All', 'MsgArea' } },
     }
     feed('<esc>^')
     screen:expect {
@@ -979,7 +979,7 @@ describe('ui/ext_messages', function()
         ^12345                    |
         {1:~                        }|*3
       ]],
-      ruler = { { '2,1     All', 'MsgArea' } },
+      ruler = { { '2,1      All', 'MsgArea' } },
     }
     feed('<c-v>k2l')
     screen:expect({
@@ -990,7 +990,7 @@ describe('ui/ext_messages', function()
       ]],
       showmode = { { '-- VISUAL BLOCK --', 5, 'ModeMsg' } },
       showcmd = { { '2x3' } },
-      ruler = { { '1,3     All', 'MsgArea' } },
+      ruler = { { '1,3      All', 'MsgArea' } },
     })
     feed('o<esc>d')
     screen:expect {
@@ -1000,7 +1000,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       showcmd = { { 'd' } },
-      ruler = { { '2,1     All', 'MsgArea' } },
+      ruler = { { '2,1      All', 'MsgArea' } },
     }
     feed('i')
     screen:expect {
@@ -1010,7 +1010,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       showcmd = { { 'di' } },
-      ruler = { { '2,1     All', 'MsgArea' } },
+      ruler = { { '2,1      All', 'MsgArea' } },
     }
     feed('w')
     screen:expect {
@@ -1019,7 +1019,7 @@ describe('ui/ext_messages', function()
         ^                         |
         {1:~                        }|*3
       ]],
-      ruler = { { '2,0-1   All', 'MsgArea' } },
+      ruler = { { '2,0-1    All', 'MsgArea' } },
     }
     command('set rulerformat=Foo%#ErrorMsg#Bar')
     screen:expect({
