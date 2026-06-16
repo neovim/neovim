@@ -31,6 +31,9 @@ before_each(function()
   clear_notrace()
   exec_lua(create_server_definition)
   exec_lua(create_start_server)
+  exec_lua(function()
+    vim.lsp.semantic_tokens.__STHighlighter.debounce = 0 -- disable internal debounce to make tests faster
+  end)
 end)
 
 after_each(function()
@@ -371,9 +374,6 @@ describe('semantic token highlighting', function()
         })
         local bufnr = vim.api.nvim_get_current_buf()
         local client_id = assert(_G._start_server(_G.server2))
-        vim.schedule(function()
-          vim.lsp.semantic_tokens._start(bufnr, client_id, 0)
-        end)
         return client_id, bufnr
       end)
 
