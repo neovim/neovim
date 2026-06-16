@@ -52,7 +52,7 @@ Mappings:                                                       *dir-mappings*
 >
 	<CR>	Open the file or directory under the cursor.
 	-	Open the parent directory.
-	R	Refresh the directory listing.
+	R	Reload the directory listing.
 <
 
 These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and

@@ -170,27 +170,30 @@ local function open_parent(buf)
   navigate(fs.dirname(api.nvim_buf_get_name(buf)))
 end
 
+function M._open_entry()
+  open_entry(api.nvim_get_current_buf())
+end
+
+function M._open_parent()
+  open_parent(api.nvim_get_current_buf())
+end
+
+function M._reload()
+  reload(api.nvim_get_current_buf())
+end
+
 ---@param buf integer
 local function set_maps(buf)
   ---@param lhs string
   ---@param plug string
-  ---@param rhs function
-  ---@param desc string
-  local function map(lhs, plug, rhs, desc)
-    vim.keymap.set('n', plug, rhs, { buffer = buf, silent = true, desc = desc })
+  local function map(lhs, plug)
     if vim.fn.hasmapto(plug, 'n') == 0 then
       vim.keymap.set('n', lhs, plug, { buffer = buf, silent = true })
     end
   end
-  map('<CR>', '<Plug>(nvim-dir-open)', function()
-    open_entry(buf)
-  end, 'Open directory entry')
-  map('-', '<Plug>(nvim-dir-up)', function()
-    open_parent(buf)
-  end, 'Open parent directory')
-  map('R', '<Plug>(nvim-dir-reload)', function()
-    reload(buf)
-  end, 'Reload directory')
+  map('<CR>', '<Plug>(nvim-dir-open)')
+  map('-', '<Plug>(nvim-dir-up)')
+  map('R', '<Plug>(nvim-dir-reload)')
 end
 
 ---@param buf integer
