@@ -30,6 +30,8 @@ local function should_open(buf, path)
 end
 
 local group = api.nvim_create_augroup('FileExplorer', { clear = true })
+-- Latch on our own VimEnter, not v:vim_did_enter (set just before VimEnter
+-- autocmds), so an earlier VimEnter autocmd's BufEnter can't preempt startup.
 local vimentered = vim.v.vim_did_enter == 1
 
 nvim_on('BufEnter', group, {
