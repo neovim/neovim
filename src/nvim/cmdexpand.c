@@ -385,8 +385,9 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 }
 
 /// Create completion popup menu with items from "matches".
-static void cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
-                               bool showtail, bool cmdline_unchanged)
+static void cmdline_pum_create(const CmdlineInfo *ccline, expand_T *xp, char **matches,
+                               int numMatches, bool showtail, bool cmdline_unchanged)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   assert(numMatches >= 0);
   // Add all the completion matches
