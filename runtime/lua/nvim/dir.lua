@@ -179,7 +179,7 @@ local function set_maps(buf)
   local function map(lhs, plug, rhs, desc)
     vim.keymap.set('n', plug, rhs, { buffer = buf, silent = true, desc = desc })
     if vim.fn.hasmapto(plug, 'n') == 0 then
-      vim.keymap.set('n', lhs, plug, { buffer = buf, silent = true, remap = true })
+      vim.keymap.set('n', lhs, plug, { buffer = buf, silent = true })
     end
   end
   map('<CR>', '<Plug>(nvim-dir-open)', function()
