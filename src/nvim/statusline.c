@@ -1467,9 +1467,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       }
     }
 
-    // Bound the minimum width at 50.
     // Make the number negative to denote left alignment of the item
-    minwid = (minwid > 50 ? 50 : minwid) * (left_align ? -1 : 1);
+    minwid *= left_align ? -1 : 1;
 
     // Denotes the start of a new group
     if (*fmt_p == '(') {
