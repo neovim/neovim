@@ -701,13 +701,45 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
   kv_destroy(input);
 
   if (output) {
+    char *line_start = output;
     if (opts & kShellOptWrite) {
       // TODO(616b2f): look if we can use block_def here
       ml_replace_range(curbuf->b_op_start, curbuf->b_op_end, output, nread);
     } else {
-      ml_append_pos(curbuf->b_op_start, output, nread);
+      if (curbuf->b_op_start.col == 0 && curbuf->b_op_end.col == MAXCOL) {
+        size_t off = 0;
+        linenr_T insert_lnum = curbuf->b_op_start.lnum;
+        while (off < nread) {
+          bool is_car = output[off] == CAR && !curbuf->b_p_bin;
+          bool is_nl = output[off] == NL;
+          if (is_car || is_nl) {
+            size_t skip = off + 1;
+            if (is_car && output[off + 1] == NL) {
+              skip = off + 2;
+            }
+            output[off] = NUL;
+            ml_append(insert_lnum++, output, (int)strlen(output) + 1, false);
+            output += skip;
+            nread -= skip;
+            off = 0;
+            continue;
+          }
+          if (output[off] == NUL) {
+            output[off] = NL;
+          }
+          off++;
+        }
+        if (nread > 0) {
+          ml_append(insert_lnum++, output, 0, false);
+          curbuf->b_no_eol_lnum = insert_lnum;
+        } else {
+          curbuf->b_no_eol_lnum = 0;
+        }
+      } else {
+        ml_append_pos(curbuf->b_op_start, output, nread);
+      }
     }
-    xfree(output);
+    xfree(line_start);
   }
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {

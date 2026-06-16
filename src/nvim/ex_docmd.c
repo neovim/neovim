@@ -1391,6 +1391,8 @@ void set_cmd_dflall_range(exarg_T *eap)
   switch (eap->addr_type) {
   case ADDR_POSITIONS:
     eap->line2 = curbuf->b_ml.ml_line_count;
+    eap->col1 = 0;
+    eap->col2 = MAXCOL;
     break;
   case ADDR_OTHER:
     eap->line2 = curbuf->b_ml.ml_line_count;
@@ -3172,6 +3174,10 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 
   if (eap->addr_count == 0) {
     eap->line1 = eap->line2;
+    if (eap->addr_type == ADDR_POSITIONS) {
+      eap->col1 = 0;
+      eap->col2 = MAXCOL;
+    }
   }
   ret = OK;
 

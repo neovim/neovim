@@ -1125,7 +1125,7 @@ void do_bang(exarg_T *eap, bool forceit, bool do_in, bool do_out)
     return;
   }
 
-  if (eap->addr_count == 0) {                // :!
+  if (eap->addr_count == 0 && do_in == do_out) {                // :!
     msg_scroll = false;             // don't scroll here
     autowrite_all();
     msg_scroll = scroll_save;
@@ -1215,7 +1215,7 @@ void do_bang(exarg_T *eap, bool forceit, bool do_in, bool do_out)
     strcat(newcmd, p_shq);
     free_newcmd = true;
   }
-  if (eap->addr_count == 0) {                // :!
+  if (eap->addr_count == 0 && do_in == do_out) {                // :!
     // echo the command
     msg_start();
     msg_ext_no_fast();
@@ -1265,6 +1265,10 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
   linenr_T line2 = eap->line2;
   colnr_T col1 = eap->col1;
   colnr_T col2 = eap->col2;
+  if (eap->addr_mode != kOmCharWise) {
+    col1 = 0;
+    col2 = MAXCOL;
+  }
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
   const int stmp = p_stmp;
@@ -3805,8 +3809,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
            || lnum <= curwin->w_botline);
        lnum++) {
     int nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                   lnum == eap->line1 ? eap->col1 : 0,
-                                   lnum == line2 ? eap->col2 : 0,
+                                   (lnum == eap->line1 && eap->addr_mode == kOmCharWise) ? eap->col1 : 0,
+                                   (lnum == line2 && eap->addr_mode == kOmCharWise) ? eap->col2 : 0,
                                    NULL, NULL);
     if (nmatch) {
       colnr_T copycol;

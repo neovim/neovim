@@ -615,6 +615,10 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
         ea.line2 = 1;
       }
     }
+    if (ea.addr_type == ADDR_POSITIONS) {
+      ea.col1 = 0;
+      ea.col2 = MAXCOL;
+    }
   }
 
   if (HAS_KEY(cmd, cmd, count)) {
