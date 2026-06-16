@@ -196,7 +196,8 @@ describe('nvim.dir', function()
 
     t.write_file(root .. '/beta.txt', 'beta', true)
     feed('R')
-    screen:expect{ any = ' *beta%.txt *' }
+    poke_eventloop()
+    line_of('beta.txt')
   end)
 
   it('reports an error and keeps the buffer when reloading a removed directory', function()
