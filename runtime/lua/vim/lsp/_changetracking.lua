@@ -351,6 +351,9 @@ local function send_changes_for_group(bufnr, firstline, lastline, new_lastline, 
     )
   end
   local buf_state = state.buffers[bufnr]
+  if not buf_state then
+    return
+  end
   buf_state.needs_flush = true
   reset_timer(buf_state)
   local debounce = next_debounce(state.debounce, buf_state)
