@@ -6124,7 +6124,7 @@ void may_trigger_win_scrolled_resized(void)
     restore_v_event(v_event, &save_v_event);
   }
 
-  if (trigger_scroll) {
+  if (trigger_scroll && scroll_dict != NULL) {
     save_v_event_T save_v_event;
     dict_T *v_event = get_v_event(&save_v_event);
 
