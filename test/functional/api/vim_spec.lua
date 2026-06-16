@@ -5757,25 +5757,49 @@ describe('API', function()
       ]]
     end)
 
-    -- it('works with charwise range before |read| command reading from file', function()
-    --   insert [[
-    --     line1
-    --     line2
-    --     line3
-    --     line4
-    --     line5
-    --     line6
-    --   ]]
-    --   api.nvim_input([[:3.5read !echo "abc"<CR>]])
-    --   expect [[
-    --     line1
-    --     line2
-    --     line3abc
-    --     line4
-    --     line5
-    --     line6
-    --   ]]
-    -- end)
+    it('works with charwise range before |read| command reading from file', function()
+      local filename = tmpname()
+      local f = io.open(filename, 'w')
+      f:write("abc\ndef\n")
+      f:close()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2read ' .. filename)
+      expect [[
+        line1
+        line2
+        liabc
+        defne3
+        line4
+        line5
+        line6
+      ]]
+      os.remove(filename)
+    end)
+
+    it('works with charwise range before |write| command writing to file', function()
+      local filename = tmpname()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2,5.3write! ' .. filename)
+      local f = assert(io.open(filename, 'r'))
+      local content = f:read('*a')
+      f:close()
+      os.remove(filename)
+      eq("ne3\nline4\nline\n", content)
+    end)
 
     it('works with count', function()
       insert [[
