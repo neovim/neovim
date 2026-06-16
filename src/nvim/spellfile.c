@@ -890,7 +890,7 @@ static void tree_count_words(const uint8_t *byts, int byts_len, idx_T *idxs)
           n++;
           curi[depth]++;
         }
-      } else {
+      } else if (depth < MAXWLEN - 1) {
         // Normal char, go one level deeper to count the words.
         depth++;
         arridx[depth] = idxs[n];
@@ -5006,7 +5006,7 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
           n++;
           curi[depth]++;
         }
-      } else {
+      } else if (depth < MAXWLEN - 1) {
         // Normal char, go one level deeper.
         tword[depth++] = (char)(uint8_t)c;
         arridx[depth] = idxs[n];
