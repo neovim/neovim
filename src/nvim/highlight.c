@@ -779,7 +779,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   if (*through) {
     cattrs = battrs;
     cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color, fattrs.rgb_bg_color);
-    // blend the special color only when the cell below sets one explicitly, else clear it.
+    // Blend the special color only when the cell below sets one explicitly, else clear it.
     if ((cattrs.rgb_ae_attr & HL_UNDERLINE_MASK) && battrs_raw.rgb_sp_color != -1) {
       cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color, fattrs.rgb_bg_color);
     } else {
