@@ -1107,7 +1107,7 @@ static bool ins_compl_equal_sc(compl_T *match, char *str, size_t len)
 
   for (int i = 0; (size_t)i < len; i++) {
     if (i >= typed && i < longest_end
-        ? mb_tolower((uint8_t)match->cp_str.data[i]) != mb_tolower((uint8_t)str[i])
+        ? TOLOWER_LOC((uint8_t)match->cp_str.data[i]) != TOLOWER_LOC((uint8_t)str[i])
         : match->cp_str.data[i] != str[i]) {
       return false;
     }
