@@ -6468,4 +6468,48 @@ func Test_mapped_ctrl_n_during_complete_function()
   bwipe!
 endfunc
 
+func Test_smartcase_longest()
+  func! GetMatches()
+    let info = complete_info(["matches"])
+    return map(copy(info.matches), {_, v -> v.word})
+  endfunc
+
+  func! TestInner(key)
+    let pr = "\<c-r>=string(GetMatches())\<cr>"
+    let words = ["InputEvent", "inputmap", "INPUT_MAP"]
+
+    new
+    set completeopt=menuone,noselect,longest ignorecase smartcase
+
+    " Lowercase 'inp' all three (case-insensitive).
+    call setline(1, words)
+    exe $"normal! ggOinp{a:key}{pr}"
+    let line = getline(1)
+    call assert_match('\c^input', line, 'inp prefix, key=' .. strtrans(a:key))
+    call assert_equal("['InputEvent', 'inputmap', 'INPUT_MAP']",
+          \ substitute(line, '\c^input', '', ''),
+          \ 'inp matches, key=' .. strtrans(a:key))
+
+    " Uppercase 'I' excludes lowercase 'inputmap'
+    %d
+    call setline(1, words)
+    exe $"normal! ggOI{a:key}{pr}"
+    let line = getline(1)
+    call assert_match('\c^input', line, 'I prefix, key=' .. strtrans(a:key))
+    call assert_equal("['InputEvent', 'INPUT_MAP']",
+          \ substitute(line, '\c^input', '', ''),
+          \ 'I matches, key=' .. strtrans(a:key))
+
+    set ignorecase& smartcase& completeopt&
+    bw!
+  endfunc
+
+  call TestInner("\<c-n>")
+  call TestInner("\<c-p>")
+  call TestInner("\<c-x>\<c-n>")
+  call TestInner("\<c-x>\<c-p>")
+  delfunc GetMatches
+  delfunc TestInner
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
