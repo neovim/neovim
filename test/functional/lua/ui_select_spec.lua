@@ -242,6 +242,91 @@ describe('vim.ui.select()', function()
       eq('helo', api.nvim_buf_get_lines(0, 0, -1, false)[1])
     end)
 
+    it('restores invoking window state when the picker keeps focus', function()
+      api.nvim_set_option_value('spell', false, {})
+      api.nvim_set_option_value('spelllang', 'en_us', {})
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three', 'four', 'helo' })
+
+      local got = exec_lua(function()
+        vim.cmd('normal! G0')
+        local orig_win = vim.api.nvim_get_current_win()
+        --- @diagnostic disable-next-line: duplicate-set-field
+        vim.ui.select = function()
+          local buf = vim.api.nvim_create_buf(false, true)
+          _G._picker_win = vim.api.nvim_open_win(buf, true, {
+            relative = 'editor',
+            row = 1,
+            col = 1,
+            width = 30,
+            height = 1,
+          })
+        end
+        vim.cmd('normal! z=')
+
+        return {
+          current_win = vim.api.nvim_get_current_win(),
+          orig_win = orig_win,
+          picker_win = _G._picker_win,
+          orig_spell = vim.wo[orig_win].spell,
+          picker_spell = vim.wo[_G._picker_win].spell,
+          orig_cursor = vim.api.nvim_win_get_cursor(orig_win),
+          picker_cursor = vim.api.nvim_win_get_cursor(_G._picker_win),
+        }
+      end)
+
+      eq(got.picker_win, got.current_win)
+      eq(false, got.orig_spell)
+      eq(false, got.picker_spell)
+      eq(5, got.orig_cursor[1])
+      eq(1, got.picker_cursor[1])
+    end)
+
+    it('does not restore invoking window state after the picker changes its buffer', function()
+      api.nvim_set_option_value('spell', false, {})
+      api.nvim_set_option_value('spelllang', 'en_us', {})
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three', 'four', 'helo' })
+
+      local got = exec_lua(function()
+        vim.cmd('normal! G0')
+        local orig_win = vim.api.nvim_get_current_win()
+        local orig_buf = vim.api.nvim_get_current_buf()
+        --- @diagnostic disable-next-line: duplicate-set-field
+        vim.ui.select = function()
+          local buf = vim.api.nvim_create_buf(false, true)
+          _G._picker_buf = buf
+          vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+            'alpha',
+            'beta',
+            'gamma',
+            'delta',
+            'epsilon',
+          })
+          vim.api.nvim_win_set_buf(orig_win, buf)
+          vim.api.nvim_win_set_cursor(orig_win, { 2, 0 })
+        end
+        vim.cmd('normal! z=')
+
+        local picker_spell = vim.wo[orig_win].spell
+        local picker_cursor = vim.api.nvim_win_get_cursor(orig_win)
+        vim.api.nvim_win_set_buf(orig_win, orig_buf)
+
+        return {
+          orig_buf_valid = vim.api.nvim_buf_is_valid(orig_buf),
+          picker_buf = _G._picker_buf,
+          orig_buf = orig_buf,
+          picker_spell = picker_spell,
+          orig_spell = vim.wo[orig_win].spell,
+          picker_cursor = picker_cursor,
+        }
+      end)
+
+      eq(true, got.orig_buf_valid)
+      neq(got.orig_buf, got.picker_buf)
+      eq(false, got.picker_spell)
+      eq(false, got.orig_spell)
+      eq(2, got.picker_cursor[1])
+    end)
+
     it('+ async picker', function()
       prepare_test()
 
