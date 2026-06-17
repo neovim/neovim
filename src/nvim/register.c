@@ -1276,6 +1276,11 @@ static void put_do_autocmd(int regname, yankreg_T *reg, const String *insert, bo
     return;
   }
 
+  if (regname != '.' && insert == NULL && reg == NULL) {
+    // Can happen when pasting text in normal mode in a terminal buffer
+    return;
+  }
+
   save_v_event_T save_v_event;
   dict_T *v_event = get_v_event(&save_v_event);
 
@@ -1289,7 +1294,6 @@ static void put_do_autocmd(int regname, yankreg_T *reg, const String *insert, bo
   } else if (insert != NULL) {
     tv_list_append_string(list, insert->data, (ssize_t)insert->size);
   } else {
-    assert(reg != NULL);
     for (size_t n = 0; n < reg->y_size; n++) {
       tv_list_append_string(list, reg->y_array[n].data, (ssize_t)reg->y_array[n].size);
     }
