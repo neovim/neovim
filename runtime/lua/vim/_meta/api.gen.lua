@@ -173,13 +173,6 @@ function vim.api.nvim__set_restart_on_crash(progpath, argv) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
---- Set v:startreason variable.
----
---- @param reason string Startup reason ("normal", "restart").
-function vim.api.nvim__set_startreason(reason) end
-
---- WARNING: This feature is experimental/unstable.
----
 --- Gets internal stats.
 ---
 --- @return table<string,any> # Map of various internal stats.

@@ -5071,6 +5071,10 @@ static void ex_restart(exarg_T *eap)
     restart_alloc_console_env = true;
   }
 #endif
+  bool startreason_env = false;
+  if (os_setenv(ENV_STARTREASON, "restart", 1) == 0) {
+    startreason_env = true;
+  }
 
   CallbackReader on_err = CALLBACK_READER_INIT;
 #ifdef MSWIN
@@ -5087,6 +5091,9 @@ static void ex_restart(exarg_T *eap)
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, detach, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
+  if (startreason_env) {
+    os_unsetenv(ENV_STARTREASON);
+  }
 #ifdef MSWIN
   if (restart_alloc_console_env) {
     os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
@@ -5102,16 +5109,6 @@ static void ex_restart(exarg_T *eap)
   MAXSIZE_TEMP_ARRAY(detach_args, 1);
   ADD_C(detach_args, BOOLEAN_OBJ(true));
   rpc_send_call(channel->id, "nvim__chan_set_detach", detach_args, &result_mem, &err);
-  if (ERROR_SET(&err)) {
-    goto fail_2;
-  }
-  arena_mem_free(result_mem);
-  result_mem = NULL;
-
-  // Set v:startreason on new server
-  MAXSIZE_TEMP_ARRAY(startreason_args, 1);
-  ADD_C(startreason_args, CSTR_AS_OBJ("restart"));
-  rpc_send_call(channel->id, "nvim__set_startreason", startreason_args, &result_mem, &err);
   if (ERROR_SET(&err)) {
     goto fail_2;
   }

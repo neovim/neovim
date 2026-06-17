@@ -283,6 +283,14 @@ int main(int argc, char **argv)
 
   early_init(&params);
 
+  const char *startreason = os_getenv_noalloc(ENV_STARTREASON);
+  if (strequal(startreason, "normal") || strequal(startreason, "restart")) {
+    set_vim_var_string(VV_STARTREASON, startreason, -1);
+  }
+  if (os_env_exists(ENV_STARTREASON, false)) {
+    os_unsetenv(ENV_STARTREASON);
+  }
+
   set_argv_var(argv, argc);  // set v:argv
 
   // Check if we have an interactive window.
