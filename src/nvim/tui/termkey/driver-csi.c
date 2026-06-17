@@ -27,6 +27,10 @@ static TermKeyResult handle_csi_ss3_full(TermKey *tk, TermKeyKey *key, int cmd,
 {
   TermKeyResult result = TERMKEY_RES_KEY;
 
+  if (cmd < 0x40 || cmd >= 0x80) {
+    return TERMKEY_RES_NONE;
+  }
+
   if (nparams > 1 && params[1].param != NULL) {
     int arg = 0;
     int subparam = 0;
@@ -750,7 +754,7 @@ static TermKeyResult peekkey_csi_csi(TermKey *tk, TermKeyCsi *csi, size_t introl
 
   TermKeyResult result = TERMKEY_RES_NONE;
 
-  // We know from the logic above that cmd must be >= 0x40 and < 0x80
+  // We know from the logic above that (cmd & 0xff) must be >= 0x40 and < 0x80
   if (csi_handlers[(cmd & 0xff) - 0x40]) {
     result = (*csi_handlers[(cmd & 0xff) - 0x40])(tk, key, (int)cmd, params, (int)nparams);
   }
