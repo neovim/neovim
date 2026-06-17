@@ -2935,11 +2935,14 @@ void ex_function(exarg_T *eap)
     fp = alloc_ufunc(name, namelen);
 
     if (fudi.fd_dict != NULL) {
+      char *func_name = xmemdupz(name, namelen);
+
       if (fudi.fd_di == NULL) {
         // Add new dict entry
         fudi.fd_di = tv_dict_item_alloc(fudi.fd_newkey);
         if (tv_dict_add(fudi.fd_dict, fudi.fd_di) == FAIL) {
           xfree(fudi.fd_di);
+          xfree(func_name);
           XFREE_CLEAR(fp);
           goto erret;
         }
@@ -2948,7 +2951,7 @@ void ex_function(exarg_T *eap)
         tv_clear(&fudi.fd_di->di_tv);
       }
       fudi.fd_di->di_tv.v_type = VAR_FUNC;
-      fudi.fd_di->di_tv.vval.v_string = xmemdupz(name, namelen);
+      fudi.fd_di->di_tv.vval.v_string = func_name;
 
       // behave like "dict" was used
       flags |= FC_DICT;
