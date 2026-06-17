@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 Jun 10
+" Last Change: 2026 Jun 16
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -3083,7 +3083,7 @@ function s:NetrwBrowse(islocal,dirname)
     elseif !a:islocal && dirname !~ '[\/]$' && dirname !~ '^"'
         " s:NetrwBrowse :  remote regular file handler {{{3
         if bufname(dirname) != ""
-            exe "NetrwKeepj b ".bufname(dirname)
+            exe "NetrwKeepj b ".fnameescape(bufname(dirname))
         else
             " attempt transfer of remote regular file
 
@@ -8804,7 +8804,7 @@ function s:NetrwLocalRmFile(path, fname, all)
             call netrw#msg#Notify('ERROR', printf("unable to delete <%s>!", rmfile))
         else
             " Remove file only if there are no pending changes
-            execute printf('silent! bwipeout %s', rmfile)
+            execute printf('silent! bwipeout %s', fnameescape(rmfile))
         endif
 
     elseif dir && (all || empty(ok))

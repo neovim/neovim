@@ -3566,7 +3566,7 @@ static linenr_T dump_prefixes(slang_T *slang, char *word, char *pat, Direction *
               }
             }
           }
-        } else {
+        } else if (depth < MAXWLEN - 1) {
           // Normal char, go one level deeper.
           prefix[depth++] = (char)c;
           arridx[depth] = idxs[n];

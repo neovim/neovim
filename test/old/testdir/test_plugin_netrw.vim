@@ -856,4 +856,24 @@ func Test_netrw_injection()
   endtry
 endfunc
 
+" Deleting a file whose name contains an Ex command separator must not let the
+" name inject commands into the :execute in s:NetrwLocalRmFile().
+func Test_netrw_local_rm_injection()
+  CheckUnix
+  let dir   = getcwd() . '/Xnetrwrm'
+  let fname = "x|let g:injected = 1"
+  call mkdir(dir, 'pR')
+  call writefile([], dir . '/' . fname)
+  try
+    call netrw#Call('NetrwLocalRmFile', dir, fname, 1)
+    call assert_false(exists('g:injected'), 'filename must not inject Ex commands')
+    " The file is removed before the sink, so its absence also confirms the
+    " vulnerable code path was actually exercised (not skipped on an error).
+    call assert_false(filereadable(dir . '/' . fname), 'crafted file must be deleted')
+  finally
+    call delete(dir . '/' . fname)
+    unlet! g:injected
+  endtry
+endfunc
+
 " vim:ts=8 sts=2 sw=2 et
