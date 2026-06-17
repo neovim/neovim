@@ -328,5 +328,26 @@ func Test_jump_mark_autocmd()
   bwipe!
 endfunc
 
+func Test_mark_formatprg_on_empty()
+  new
+  if has('win32')
+    setl formatprg=more
+  else
+    setl formatprg=cat
+  endif
+  call assert_equal([0, 0], [line("'["), col("'[")])
+  call assert_equal([0, 0], [line("']"), col("']")])
+  let v:errmsg = ''
+  try
+    norm! gqG
+  catch
+    call assert_report('gqG on empty buffer should not fail: ' .. v:exception)
+  endtry
+  call assert_true(empty(v:errmsg))
+  " col() is 1-based, so 1 == first column (:marks shows it as 0)
+  call assert_equal([1, 1], [line("'["), col("'[")])
+  call assert_equal([1, 1], [line("']"), col("']")])
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

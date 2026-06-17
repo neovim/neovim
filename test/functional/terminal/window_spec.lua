@@ -173,12 +173,12 @@ describe(':terminal window', function()
       ]])
       feed_data('\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
-        {121:++ 7  }                                            |
-        {121:++ 8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {121:++ 9  }STUVWXYZ                                    |
-        {121:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {121:++11  }STUVWXYZrows: 6, cols: 44                   |
-        {121:++12  }^                                            |
+        {121:++{MATCH: [78]}  }                                            |
+        {121:++{MATCH: [89]}  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {121:++{MATCH:[ 1][09]}  }STUVWXYZ                                    |
+        {121:++{MATCH:1[01]}  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {121:++{MATCH:1[12]}  }STUVWXYZrows: 6, cols: 44                   |
+        {121:++{MATCH:1[23]}  }^                                            |
         {5:-- TERMINAL --}                                    |
       ]])
     end)

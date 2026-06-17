@@ -4500,14 +4500,23 @@ by |vim.Pos| objects.
 cursor({buf}, {pos})                                        *vim.pos.cursor()*
     Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 
+    If {pos} is omitted, the first argument is treated as {win} instead of
+    {buf}, and the current cursor position of {win} is used.
+
     Example: >lua
+        local buf = vim.api.nvim_win_get_buf(0)
         local cursor_pos = vim.api.nvim_win_get_cursor(0)
-        local pos = vim.pos.cursor(0, cursor_pos)
+        local pos = vim.pos.cursor(buf, cursor_pos)
+        -- This is equivalent:
+        local pos = vim.pos.cursor(0)
 <
 
     Parameters: ~
       • {buf}  (`integer`)
       • {pos}  (`[integer, integer]`) (lnum, col) tuple
+
+    Overloads: ~
+      • `fun(win: integer): vim.Pos`
 
     Return: ~
         (`vim.Pos`) See |vim.Pos|.
@@ -4591,16 +4600,15 @@ to_cursor({pos})                                         *vim.pos.to_cursor()*
         local pos = vim.pos(0, 3, 5)
 
         -- Convert to cursor position, you can call it in a method style.
-        local cursor_pos = { pos:to_cursor() }
+        local cursor_pos = pos:to_cursor()
         vim.api.nvim_win_set_cursor(0, cursor_pos)
 <
 
     Parameters: ~
       • {pos}  (`vim.Pos`) See |vim.Pos|.
 
-    Return (multiple): ~
-        (`integer`) lnum
-        (`integer`) col
+    Return: ~
+        (`[integer, integer]`) (lnum, col) tuple
 
 to_extmark({pos})                                       *vim.pos.to_extmark()*
     Converts |vim.Pos| to extmark position (see |api-indexing|).

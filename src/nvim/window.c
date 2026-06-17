@@ -6112,7 +6112,7 @@ void may_trigger_win_scrolled_resized(void)
   }
 
   // If both are to be triggered do WinResized first.
-  if (trigger_resize) {
+  if (trigger_resize && windows_list != NULL) {
     save_v_event_T save_v_event;
     dict_T *v_event = get_v_event(&save_v_event);
 
@@ -6124,7 +6124,7 @@ void may_trigger_win_scrolled_resized(void)
     restore_v_event(v_event, &save_v_event);
   }
 
-  if (trigger_scroll) {
+  if (trigger_scroll && scroll_dict != NULL) {
     save_v_event_T save_v_event;
     dict_T *v_event = get_v_event(&save_v_event);
 

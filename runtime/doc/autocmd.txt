@@ -1057,6 +1057,10 @@ SessionLoadPre			Before loading the session file created using
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
 
+							*SessionWritePre*
+SessionWritePre			Before writing the session file created using
+				the |:mksession| command.
+
 							*SessionWritePost*
 SessionWritePost		After writing a session file by calling
 				the |:mksession| command.

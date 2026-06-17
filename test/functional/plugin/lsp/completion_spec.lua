@@ -1241,6 +1241,44 @@ describe('vim.lsp.completion: protocol', function()
     end)
     t.matches('items=null', err)
   end)
+
+  it('keeps requerying while the completion list is incomplete #40096', function()
+    exec_lua(function()
+      _G.contexts = {}
+      local server = _G._create_server({
+        capabilities = {
+          completionProvider = { triggerCharacters = { 'h' } },
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, params, callback)
+            _G.contexts[#_G.contexts + 1] = params.context
+            callback(nil, { isIncomplete = true, items = { { label = 'hello' } } })
+          end,
+        },
+      })
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        on_attach = function(client, bufnr0)
+          vim.lsp.completion.enable(true, client.id, bufnr0, { autotrigger = true })
+        end,
+      })
+    end)
+    feed('ih')
+    assert_matches(function(matches)
+      eq('hello', matches[1].word)
+    end)
+    eq({ triggerKind = 2, triggerCharacter = 'h' }, exec_lua('return _G.contexts[1]'))
+
+    exec_lua('_G.capture = {}')
+    feed('e')
+    assert_matches(function(matches)
+      eq('hello', matches[1].word)
+    end)
+    eq({ triggerKind = 3 }, exec_lua('return _G.contexts[2]'))
+  end)
 end)
 
 describe('vim.lsp.completion: integration', function()

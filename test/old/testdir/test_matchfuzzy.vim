@@ -342,7 +342,7 @@ func Test_matchfuzzy_long_multiword_no_overflow()
   call assert_equal([[], [], []], matchfuzzypos([word], pat_overflow))
 endfunc
 
-func Test_matchfuzzy_long_candidate()
+func Test_matchfuzzy_oversized_candidate()
   let str = repeat('a', 1024) .. 'z'
   call assert_equal([], matchfuzzy([str], 'az'))
   call assert_equal([[], [], []], matchfuzzypos([str], 'az'))
@@ -357,6 +357,10 @@ func Test_matchfuzzy_long_candidate()
   let e = matchfuzzypos([edge], 'aa')
   call assert_equal([edge], e[0])
   call assert_equal([0, 1023], e[1][0])
+
+  let cand = 'x' .. repeat('a', 1024)
+  call assert_equal([], matchfuzzy([cand], repeat('a', 1024)))
+  call assert_equal([[], [], []], matchfuzzypos([cand], repeat('a', 1024)))
 endfunc
 
 func Test_matchfuzzy_long_candidate_mbyte()

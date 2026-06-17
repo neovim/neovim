@@ -3238,16 +3238,17 @@ function M.match(args)
   if name then
     name = normalize_path(name)
 
-    local path = vim.fs.abspath(name)
-    do -- First check for the simple case where the full path exists as a key
+    local ok_abspath, path = pcall(vim.fs.abspath, name)
+    if ok_abspath then -- First check for the simple case where the full path exists as a key
       local ft, on_detect = dispatch(filename[path], path, bufnr)
       if ft then
         return ft, on_detect
       end
+    else
+      path = name
     end
 
     local tail = vim.fs.basename(name)
-
     do -- Next check against just the file name
       local ft, on_detect = dispatch(filename[tail], path, bufnr)
       if ft then

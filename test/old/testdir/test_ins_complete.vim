@@ -6442,4 +6442,74 @@ func Test_completion_with_mapped_ctrl_r()
   bwipe!
 endfunc
 
+" Keys are mapped during completion started by complete(), but not in other
+" CTRL-X modes.
+func Test_mapped_ctrl_n_during_complete_function()
+  new
+  inoremap <buffer> <F2> <Cmd>call complete(1, ['foo', 'foobar'])<CR>
+  inoremap <buffer> <F3> <Cmd>let b:info =
+        \ [getline('.'), complete_info(['selected']).selected]<CR>
+
+  " During completion started by complete() the <C-N> mapping applies:
+  " <Down> moves the selection without inserting it.
+  inoremap <buffer> <expr> <C-N> complete_info().mode ==# 'eval' ? '<Down>' : '<C-N>'
+  call feedkeys("i\<F2>\<*C-N>\<F3>\<C-Y>\<Esc>", 'tx')
+  call assert_equal(['foo', 1], b:info)
+  call assert_equal('foobar', getline(1))
+
+  " In other CTRL-X modes the mapping is ignored: the builtin <C-N> selects
+  " and inserts the next match.
+  %delete _
+  call setline(1, ['foo', 'foobar', ''])
+  inoremap <buffer> <expr> <C-N> pumvisible() ? '<Down>' : '<C-N>'
+  call feedkeys("3GAf\<C-X>\<C-N>\<C-N>\<F3>\<C-Y>\<Esc>", 'tx')
+  call assert_equal(['foobar', 1], b:info)
+
+  bwipe!
+endfunc
+
+func Test_smartcase_longest()
+  func! GetMatches()
+    let info = complete_info(["matches"])
+    return map(copy(info.matches), {_, v -> v.word})
+  endfunc
+
+  func! TestInner(key)
+    let pr = "\<c-r>=string(GetMatches())\<cr>"
+    let words = ["InputEvent", "inputmap", "INPUT_MAP"]
+
+    new
+    set completeopt=menuone,noselect,longest ignorecase smartcase
+
+    " Lowercase 'inp' all three (case-insensitive).
+    call setline(1, words)
+    exe $"normal! ggOinp{a:key}{pr}"
+    let line = getline(1)
+    call assert_match('\c^input', line, 'inp prefix, key=' .. strtrans(a:key))
+    call assert_equal("['InputEvent', 'inputmap', 'INPUT_MAP']",
+          \ substitute(line, '\c^input', '', ''),
+          \ 'inp matches, key=' .. strtrans(a:key))
+
+    " Uppercase 'I' excludes lowercase 'inputmap'
+    %d
+    call setline(1, words)
+    exe $"normal! ggOI{a:key}{pr}"
+    let line = getline(1)
+    call assert_match('\c^input', line, 'I prefix, key=' .. strtrans(a:key))
+    call assert_equal("['InputEvent', 'INPUT_MAP']",
+          \ substitute(line, '\c^input', '', ''),
+          \ 'I matches, key=' .. strtrans(a:key))
+
+    set ignorecase& smartcase& completeopt&
+    bw!
+  endfunc
+
+  call TestInner("\<c-n>")
+  call TestInner("\<c-p>")
+  call TestInner("\<c-x>\<c-n>")
+  call TestInner("\<c-x>\<c-p>")
+  delfunc GetMatches
+  delfunc TestInner
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

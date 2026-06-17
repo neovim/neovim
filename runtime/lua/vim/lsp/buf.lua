@@ -51,7 +51,7 @@ local function ctx_is_valid(ctx)
     return false
   end
 
-  local cur_pos = vim.pos.cursor(bufnr, api.nvim_win_get_cursor(0))
+  local cur_pos = vim.pos.cursor(0)
   local pos = vim.pos.lsp(bufnr, p, enc)
   return cur_pos == pos
 end
@@ -222,7 +222,7 @@ local function get_locations(method, context, opts)
     )
   end
 
-  local pos = opts.pos or vim.pos.cursor(0, api.nvim_win_get_cursor(0))
+  local pos = opts.pos or vim.pos.cursor(0)
   local buf = pos.buf
 
   local clients = lsp.get_clients({ method = method, bufnr = buf })

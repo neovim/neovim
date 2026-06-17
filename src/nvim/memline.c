@@ -1425,11 +1425,22 @@ char *make_percent_swname(char *dir, char *dir_end, const char *name)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   String fixed_fname;
-  fixed_fname.data = fix_fname(name != NULL ? name : "");
-  if (fixed_fname.data == NULL) {
+  char *fname = fix_fname(name != NULL ? name : "");
+  if (fname == NULL) {
     return NULL;
   }
 
+  FileInfo file_info;
+  if (!os_fileinfo2(fname, &file_info)) {
+    xfree(fname);
+    return NULL;
+  }
+  fixed_fname.data = fname + file_info.root_off;
+  if (file_info.type == kPathDeviceUNC) {
+    assert(file_info.root_off >= 2);
+    fixed_fname.data -= 2;
+    fixed_fname.data[0] = '/';  // Fixup //?/UNC/server/ path: "C/server/..." -> "//server/..."
+  }
   char *p;
   for (p = fixed_fname.data; *p != NUL; MB_PTR_ADV(p)) {
     if (vim_ispathsep(*p)) {
@@ -1442,7 +1453,7 @@ char *make_percent_swname(char *dir, char *dir_end, const char *name)
   p = &dir_end[-1];
   *p = NUL;
   String d = concat_fnames(cbuf_as_string(dir, (size_t)(p - dir)), fixed_fname, true);
-  xfree(fixed_fname.data);
+  xfree(fname);
 
   return d.data;
 }

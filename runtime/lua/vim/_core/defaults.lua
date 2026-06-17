@@ -921,7 +921,8 @@ do
           if rr and gg and bb then
             local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
             local bg = luminance < 0.5 and 'dark' or 'light'
-            vim.api.nvim_set_option_value('background', bg, {})
+            -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
+            vim.cmd('noautocmd set background=' .. bg)
           end
         end
       end)

@@ -35,6 +35,8 @@ LUA
 • vim.pos, vim.range always require the `buf` parameter.
 • range.cursor() and range.to_cursor() are removed.
   Use range.mark() and range.to_mark() instead.
+• pos.to_cursor() returns a (`row,` `col)` tuple
+  instead of returning them as separate values.
 
 DIAGNOSTICS
 
@@ -74,6 +76,9 @@ DIAGNOSTICS
 
 • `vim.diagnostic.Opts.Status.format` no longer accepts the table mapping
   from severity to text. Use `vim.diagnostic.Opts.Signs.text` instead.
+• `current_line` property of |vim.diagnostic.Opts.VirtualLines| and
+  |vim.diagnostic.Opts.VirtualText| is now applied on |CursorHold| event.
+  Make sure your 'updatetime' is reasonable.
 
 EDITOR
 
@@ -152,6 +157,8 @@ DIAGNOSTICS
 
 • |vim.diagnostic.status()| uses the severity names defined by the `signs`
   field of |vim.diagnostic.config()|, if any.
+• `virtual_lines.overflow` in |vim.diagnostic.config()| controls
+  how virtual lines wider than the window are displayed.
 
 EDITOR
 
@@ -166,6 +173,15 @@ EDITOR
   number of history lines kept above the prompt.
 • |v_al| and |v_il| text objects select the whole buffer and the current line
   without leading or trailing white space.
+• 'autoread' uses file system watchers to detect external changes in
+  real-time, instead of only on |FocusGained|/|:checktime|.
+• During |complete()|-triggered completion, CTRL-N and CTRL-P are now subject
+  to insert-mode mappings.
+• Multi-byte characters, translated by 'langmap', now invoke correct
+  mappings.
+  Example: >vim
+    set langmap=õ]
+<    Typing õõ in |Normal-mode| now invokes a mapping bound to ]].
 
 EVENTS
 
@@ -173,6 +189,7 @@ EVENTS
   as |nvim_buf_del_mark()|
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.
+• Added the |SessionWritePre| autocommand event.
 
 HIGHLIGHTS
 

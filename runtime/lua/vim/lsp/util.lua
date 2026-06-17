@@ -1811,10 +1811,9 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 function M.make_position_params(win, position_encoding)
   win = win or 0
-  local buf = api.nvim_win_get_buf(win)
   return {
-    textDocument = M.make_text_document_params(buf),
-    position = vim.pos.cursor(buf, api.nvim_win_get_cursor(win)):to_lsp(position_encoding),
+    textDocument = M.make_text_document_params(api.nvim_win_get_buf(win)),
+    position = vim.pos.cursor(win):to_lsp(position_encoding),
   }
 end
 

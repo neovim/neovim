@@ -896,12 +896,23 @@ static score_t match_positions(const char *const needle, const char *const hayst
     // Since this method can only be called with a haystack which
     // matches needle. If the lengths of the strings are equal the
     // strings themselves must also be equal (ignoring case).
-    if (positions) {
-      for (int i = 0; i < n; i++) {
-        positions[i] = (uint32_t)i;
+    // After truncation to MATCH_MAX_LEN n == m can also happen for
+    // unequal strings, so check before taking the shortcut.
+    bool equal = true;
+    for (int i = 0; i < n; i++) {
+      if (match.lower_needle[i] != match.lower_haystack[i]) {
+        equal = false;
+        break;
       }
     }
-    return (score_t)SCORE_MAX;
+    if (equal) {
+      if (positions) {
+        for (int i = 0; i < n; i++) {
+          positions[i] = (uint32_t)i;
+        }
+      }
+      return (score_t)SCORE_MAX;
+    }
   }
 
   // ensure n * MATCH_MAX_LEN * 2 won't overflow

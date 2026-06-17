@@ -179,6 +179,7 @@ error('Cannot require a meta file')
 --- |'SessionLoadPost'
 --- |'SessionLoadPre'
 --- |'SessionWritePost'
+--- |'SessionWritePre'
 --- |'ShellCmdPost'
 --- |'ShellFilterPost'
 --- |'Signal'

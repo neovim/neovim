@@ -181,6 +181,7 @@ describe('input split utf sequences', function()
 
   it('can be mapped', function()
     command('inoremap ► E296BA')
+    command('set ttimeoutlen=100') -- CI test runners may cause timeout otherwise
     local str = '►'
     feed('i' .. str:sub(1, 1))
     vim.uv.sleep(10)
