@@ -346,6 +346,15 @@ void evalvars_init(void)
   set_vim_var_partial(VV_LUA, vvlua_partial);
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
+
+  // Set v:startreason via environment variable
+  const char *startreason = os_getenv_noalloc(ENV_STARTREASON);
+  if (strequal(startreason, "normal") || strequal(startreason, "restart")) {
+    set_vim_var_string(VV_STARTREASON, startreason, -1);
+  }
+  if (os_env_exists(ENV_STARTREASON, false)) {
+    os_unsetenv(ENV_STARTREASON);
+  }
 }
 
 #ifdef EXITFREE
