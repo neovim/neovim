@@ -5801,6 +5801,236 @@ describe('API', function()
       eq("ne3\nline4\nline\n", content)
     end)
 
+    it('works with charwise range before |append| command (inline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2append|foo')
+      expect [[
+        line1
+        line2
+        linfooe3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |append| command (multiline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      feed(':3.2append<CR>foo<CR>bar<CR>.<CR>')
+      expect [[
+        line1
+        line2
+        linfoo
+        bare3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |insert| command (inline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2insert|foo')
+      expect [[
+        line1
+        line2
+        lifoone3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |insert| command (multiline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      feed(':3.2insert<CR>foo<CR>bar<CR>.<CR>')
+      expect [[
+        line1
+        line2
+        lifoo
+        barne3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |change| command (multiline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      feed(':3.2,5.3change<CR>foo<CR>bar<CR>.<CR>')
+      expect [[
+        line1
+        line2
+        lifoo
+        bar5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range at the end of line for |insert| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.5insert|foo')
+      expect [[
+        line1
+        line2
+        line3foo
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range at the end of line for |append| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.4append|foo')
+      expect [[
+        line1
+        line2
+        line3foo
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range beyond the end of line for |append| command (falls back to linewise)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.5append|foo')
+      expect [[
+        line1
+        line2
+        line3
+        foo
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range at the end of line for |read| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      local filename = 'Xtest_charwise_read_eol'
+      local f = io.open(filename, 'w')
+      f:write('foo\nbar\n')
+      f:close()
+      command('3.5read ' .. filename)
+      os.remove(filename)
+      expect [[
+        line1
+        line2
+        line3foo
+        bar
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |copy| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2,5.3copy 1.3')
+      expect [[
+        linne3
+        line4
+        linee1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |move| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2,5.3move 1.3')
+      expect [[
+        linne3
+        line4
+        linee1
+        line2
+        li5
+        line6
+      ]]
+    end)
+
     it('works with count', function()
       insert [[
         line1

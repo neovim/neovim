@@ -2507,11 +2507,10 @@ size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
   }
   char *text_to_prepend = xcalloc(old_chars_indx + 1, sizeof(char));
   memcpy(text_to_prepend, old_line, old_chars_indx * sizeof(char));
+  char *to_free_prepend = text_to_prepend;
 
-  // size_t append_size = ml_get_len(pos.lnum) - old_chars_indx;
-  // char *old_appended_text = xcalloc(append_size, sizeof(char));
-  // memcpy(old_appended_text, old_line + old_chars_indx, append_size * sizeof(char));
-  char *text_to_append = old_line + old_chars_indx;
+  char *text_to_append = xstrdup(old_line + old_chars_indx);
+  char *to_free_append = text_to_append;
 
   while (off < remaining) {
     bool is_car = output[off] == CAR && !curbuf->b_p_bin;
@@ -2575,6 +2574,9 @@ size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
   } else {
     changed_bytes(pos.lnum, pos.col);
   }
+
+  xfree(to_free_prepend);
+  xfree(to_free_append);
 
   ui_flush();
 

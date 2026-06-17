@@ -1910,16 +1910,6 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
     hasFolding(curwin, eap->line2, NULL, &eap->line2);
   }
 
-  if (eap->addr_count == 2
-      && eap->addr_type == ADDR_POSITIONS) {
-    eap->col1 = 0;
-    eap->col2 = ml_get_len(eap->line2);
-    if (eap->col2 > 0) {
-      eap->col2--;
-    }
-    eap->addr_count = 4;
-  }
-
   // Use first argument as count when possible
   if (parse_count(eap, &errormsg, true) == FAIL) {
     goto end;
@@ -2982,14 +2972,14 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 {
   int address_count = 1;
   linenr_T lnum;
-  colnr_T cnum;
+  colnr_T cnum = MAXCOL;
   mpos_T addr;
   addr_mode_T addr_mode = kOmLineWise;
   bool need_check_cursor = false;
   int ret = FAIL;
 
   // if addr position have columns specified we have already an address
-  if (eap->addr_count == 4
+  if (eap->addr_count == 2
       && eap->addr_type == ADDR_POSITIONS) {
     need_check_cursor = true;
     ret = OK;
@@ -3106,10 +3096,9 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           assert(fm != NULL);
           eap->line2 = fm->mark.lnum;
           eap->col2 = fm->mark.col;
-          eap->addr_count = 4;
+          eap->addr_count = 2;
         }
       }
-      address_count++;
     } else {
       eap->line2 = lnum;
       eap->addr_mode = addr_mode;
@@ -3127,8 +3116,8 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           eap->col2 = cnum;
         }
       }
+      eap->addr_count++;
     }
-    eap->addr_count++;
 
     if (eap->addr_type == ADDR_POSITIONS
         && eap->addr_count == 2
@@ -3136,7 +3125,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
         && eap->cmdidx != CMD_SIZE) {
       eap->col1 = 0;
       eap->col2 = MAXCOL;
-      eap->addr_count = 4;
+      eap->addr_count = 2;
     }
 
     if (*eap->cmd == ';') {
@@ -3164,6 +3153,9 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   if (eap->addr_count == 1) {
     if (eap->addr_type != ADDR_POSITIONS) {
       eap->line1 = eap->line2;
+    } else if (cnum == MAXCOL) {
+      eap->col1 = 0;
+      eap->col2 = MAXCOL;
     }
 
     // ... but only implicit: really no address given
@@ -6553,7 +6545,7 @@ static void ex_read(exarg_T *eap)
   if (do_split) {
     char *line = ml_get(split_lnum);
     colnr_T len = (colnr_T)strlen(line);
-    if (split_col < len) {
+    if (split_col <= len) {
       split_line = xstrdup(line + split_col);
       char *new_line = xstrnsave(line, split_col);
       ml_replace(split_lnum, new_line, false);
@@ -7030,6 +7022,53 @@ static void ex_iput(exarg_T *eap)
          PUT_LINE|PUT_CURSLINE|PUT_FIXINDENT);
 }
 
+char *get_text_in_range(pos_T start, pos_T end)
+{
+  garray_T ga;
+  ga_init(&ga, sizeof(char), 100);
+  for (linenr_T l = start.lnum; l <= end.lnum; l++) {
+    char *line = ml_get(l);
+    colnr_T len = (colnr_T)strlen(line);
+    colnr_T s_col = (l == start.lnum ? start.col : 0);
+    if (s_col > len) {
+      s_col = len;
+    }
+    colnr_T e_col = (l == end.lnum ? end.col : MAXCOL);
+    if (e_col != MAXCOL && e_col >= len) {
+      e_col = MAXCOL;
+    }
+
+    if (e_col == MAXCOL) {
+      ga_concat(&ga, line + s_col);
+    } else {
+      char *slice = xstrnsave(line + s_col, (size_t)(e_col - s_col + 1));
+      ga_concat(&ga, slice);
+      xfree(slice);
+    }
+    if (l < end.lnum) {
+      ga_append(&ga, '\n');
+    }
+  }
+  ga_append(&ga, NUL);
+  return (char *)ga.ga_data;
+}
+
+void insert_text_as_lines(linenr_T dest_lnum, const char *text)
+{
+  char *copy = xstrdup(text);
+  char *line = copy;
+  linenr_T cur_lnum = dest_lnum;
+  char *next;
+  while ((next = strchr(line, '\n')) != NULL) {
+    *next = NUL;
+    ml_append(cur_lnum++, line, 0, false);
+    line = next + 1;
+  }
+  ml_append(cur_lnum++, line, 0, false);
+  appended_lines_mark(dest_lnum, cur_lnum - dest_lnum);
+  xfree(copy);
+}
+
 /// Handle ":copy" and ":move".
 static void ex_copymove(exarg_T *eap)
 {
@@ -7052,11 +7091,11 @@ static void ex_copymove(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_move) {
-    if (do_move(eap->line1, eap->line2, n) == FAIL) {
+    if (do_move(eap->line1, eap->col1, eap->line2, eap->col2, n, addr.col) == FAIL) {
       return;
     }
   } else {
-    ex_copy(eap->line1, eap->line2, n);
+    ex_copy(eap->line1, eap->col1, eap->line2, eap->col2, n, addr.col);
   }
   u_clearline(curbuf);
   beginline(BL_SOL | BL_FIX);
