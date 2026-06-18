@@ -613,16 +613,15 @@ pub fn build(b: *std.Build) !void {
             "-sALLOW_MEMORY_GROWTH=1",
             "--profiling-funcs",
             "-sEXPORTED_FUNCTIONS=_main,_malloc,_free",
-            "-sEXPORTED_RUNTIME_METHODS=stringToUTF8,lengthBytesUTF8,setValue,getValue,UTF8ToString,callMain,ENV,FS",
-            "-sSTACK_SIZE=134217728", // 64MB — emscripten's own flag, overrides its 65536
-            "-sINITIAL_MEMORY=536870912", // 256MB — stack(64MB) + data(12MB) + heap room
+            "-sEXPORTED_RUNTIME_METHODS=stringToUTF8,lengthBytesUTF8,setValue,getValue,UTF8ToString,callMain,ENV,FS,HEAPU8",
+            "-sSTACK_SIZE=8388608",
+            "-sINITIAL_MEMORY=268435456",
             "-sMAXIMUM_MEMORY=2147483648",
             "-sFORCE_FILESYSTEM=1",
             "-sNODERAWFS=0",
-            "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+            "-sERROR_ON_UNDEFINED_SYMBOLS=1",
             "-sEXIT_RUNTIME=0",
             "-sINVOKE_RUN=0",
-            "-sGLOBAL_BASE=134217728",
             "-sMODULARIZE=1",
             "-sEXPORT_NAME=createNvim",
             "-Wl,--unresolved-symbols=ignore-all",
@@ -631,6 +630,8 @@ pub fn build(b: *std.Build) !void {
             "-flto",
             "-sSTACK_OVERFLOW_CHECK=2",
             "-sASSERTIONS=1",
+            "-sASYNCIFY=1",
+            "-sASYNCIFY_STACK_SIZE=65536",
         });
 
         emcc.addArg("-o");
