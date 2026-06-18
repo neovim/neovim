@@ -33,6 +33,9 @@ TriState os_dyn_conpty_init(void)
   if (!uv_dlopen("conpty.dll", &conpty_lib)) {
     ILOG("Loaded new ConPTY from conpty.dll");
   } else {
+    // uv_dlopen() allocates an error message even on failure, so close the
+    // handle before reusing conpty_lib for the system ConPTY fallback.
+    uv_dlclose(&conpty_lib);
     if (uv_dlopen("kernel32.dll", &conpty_lib)) {
       uv_dlclose(&conpty_lib);
       return kFalse;
