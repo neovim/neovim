@@ -265,6 +265,11 @@ int main(int argc, char **argv)
   mparm_T params;         // various parameters passed between
                           // main() and other functions.
 
+  initialdir = xmalloc(MAXPATHL);
+  if (os_dirname(initialdir, MAXPATHL) != OK) {
+    XFREE_CLEAR(initialdir);
+  }
+  argv_is_file = xcalloc((size_t)argc, sizeof(bool));
   // Many variables are in `params` so that we can pass them around easily.
   // `argc` and `argv` are also copied, so that they can be changed.
   init_params(&params, argc, argv);
@@ -1479,6 +1484,7 @@ scripterror:
       }
     } else {  // File name argument.
       argv_idx = -1;  // skip to next argument
+      argv_is_file[parmp->argc - argc] = true;
 
       // Check for only one type of editing.
       if (parmp->edit_type > EDIT_STDIN) {

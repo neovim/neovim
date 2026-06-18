@@ -4997,18 +4997,23 @@ static void ex_restart(exarg_T *eap)
 
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
+  size_t argv_idx = 0;
   const char *listen_arg = NULL;  // --listen arg given by user, if any.
-
   // Build args to start the new Nvim, based on the current v:argv.
-  for (const listitem_T *li = l->lv_first; li != NULL; li = li->li_next) {
+  for (const listitem_T *li = l->lv_first; li != NULL; li = li->li_next, argv_idx++) {
     const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
     // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
     if (i > 0 && strequal(arg, "--")) {
       break;
     }
+    // Drop "[file]".
+    if (argv_idx > 0 && argv_is_file[argv_idx]) {
+      continue;
+    }
     // Drop "-s <scriptfile>": skip the scriptfile arg too.
     if (i > 0 && strequal(arg, "-s")) {
       li = li->li_next;
+      argv_idx++;
       continue;
     }
     // The address after --listen may be in use by the current server.
@@ -5022,11 +5027,13 @@ static void ex_restart(exarg_T *eap)
           // On Windows, don't pass --listen to new server (named pipe can't be reused immediately).
           // Instead pass the address via RPC; new server rebinds after startup.
           li = next_li;
+          argv_idx++;
           continue;
 #endif
         }
       }
     }
+
     // Replace `--embed` OR `--headless` with `--embed` or `--embed --headless` once.
     // Drop stdin ("-") argument.
     if (i == 0
@@ -5086,7 +5093,7 @@ static void ex_restart(exarg_T *eap)
   Channel *channel = channel_job_start(argv, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, detach, kChannelStdinPipe,
-                                       NULL, 0, 0, NULL, &exit_status);
+                                       initialdir, 0, 0, NULL, &exit_status);
 #ifdef MSWIN
   if (restart_alloc_console_env) {
     os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
