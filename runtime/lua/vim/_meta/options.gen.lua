@@ -6881,6 +6881,8 @@ vim.wo.stc = vim.wo.statuscolumn
 ---       be separated by an equal number of spaces.  With one %= what
 ---       comes after it will be right-aligned.  With two %= there is a
 ---       middle part, with white space left and right of it.
+---       Alignment sections within item groups will be separated until
+---       minwid of the group is reached.
 ---       No width fields allowed.
 --- # -   Set highlight group.  The name must follow and then a # again.
 ---       Thus use %#HLname# for highlight group HLname.  The same

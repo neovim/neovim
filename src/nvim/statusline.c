@@ -53,6 +53,13 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 
+// Specifies whether/where to add padding to reach target width.
+typedef enum {
+  kPaddingNone,
+  kPaddingLeft,
+  kPaddingRight,
+} StlPadding;
+
 #include "statusline.c.generated.h"
 
 // Determines how deeply nested %{} blocks will be evaluated in statusline.
@@ -851,6 +858,91 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, int relnum, int virtnum, char 
   return width;
 }
 
+/// Expands the statusline at separation markers (%=) if present,
+/// or otherwise according to padding choice.
+///
+/// @param width  Current width in cells (will be adjusted if expansion took place)
+/// @param target_width  Target width in cells
+/// @param padding  Padding to add until target width is reached, if there are no separation markers
+/// @param remaining_capacity  Remaining output buffer capacity in bytes
+/// @param fillchar  Fillchar
+/// @param stl_items  Items
+/// @param startitem  Start item index (inclusive)
+/// @param curitem  End item index (exclusive)
+/// @param start_p  Start position in the output buffer
+/// @param out_p  Current output buffer position (will be adjusted if expansion took place)
+static void stl_expand(int *width, int target_width, StlPadding padding, int remaining_capacity,
+                       schar_T fillchar, stl_item_t *stl_items, int startitem, int curitem,
+                       char *start_p, char **out_p)
+{
+  int fillchar_bytes = (int)schar_len(fillchar);
+  int added_cells = target_width - *width;
+  int added_bytes = added_cells * fillchar_bytes;
+  if (added_bytes > remaining_capacity) {
+    added_cells = remaining_capacity / fillchar_bytes;
+    added_bytes = added_cells * fillchar_bytes;
+  }
+
+  // First, try to expand at separation markers %=.
+  int num_separators = 0;
+  for (int i = startitem; i < curitem; i++) {
+    if (stl_items[i].type == Separate) {
+      num_separators += 1;
+    }
+  }
+  if (num_separators > 0) {
+    int standard_spaces = added_cells / num_separators;
+    int final_spaces = added_cells - standard_spaces * (num_separators - 1);
+    int cumulated_dislocation = 0;
+
+    for (int i = startitem; i < curitem; i++) {
+      stl_items[i].start += cumulated_dislocation;
+
+      if (stl_items[i].type == Separate) {
+        int dislocation = --num_separators > 0 ? standard_spaces : final_spaces;
+        dislocation *= fillchar_bytes;
+        cumulated_dislocation += dislocation;
+
+        char *start = stl_items[i].start;
+        char *seploc = start + dislocation;
+        STRMOVE(seploc, start);
+        for (char *s = start; s < seploc;) {
+          schar_get_adv(&s, fillchar);
+        }
+      }
+    }
+
+    *width += added_cells;
+    *out_p += added_bytes;
+
+    // Add filler characters to the right.
+  } else if (padding == kPaddingRight) {
+    for (; added_cells > 0; added_cells--) {
+      schar_get_adv(out_p, fillchar);
+    }
+
+    *width += added_cells;
+
+    // Shift everything to the right and prepend with filler characters.
+  } else if (padding == kPaddingLeft) {
+    // Move the group to the right
+    memmove(start_p + added_bytes, start_p, (size_t)(*out_p - start_p));
+
+    // Prepend the fill characters
+    for (; added_cells > 0; added_cells--) {
+      schar_get_adv(&start_p, fillchar);
+    }
+
+    // Adjust item start positions
+    for (int n = startitem; n < curitem; n++) {
+      stl_items[n].start += added_bytes;
+    }
+
+    *width += added_cells;
+    *out_p += added_bytes;
+  }
+}
+
 /// Build a string from the status line items in "fmt".
 /// Return length of string in screen cells.
 ///
@@ -887,7 +979,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   static int *stl_groupitems = NULL;
   static stl_hlrec_t *stl_hltab = NULL;
   static StlClickRecord *stl_tabtab = NULL;
-  static int *stl_separator_locations = NULL;
   static int curitem = 0;
 
 #define TMPLEN 70
@@ -915,8 +1006,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     // end of the list.
     stl_hltab = xmalloc(sizeof(stl_hlrec_t) * (stl_items_len + 1));
     stl_tabtab = xmalloc(sizeof(StlClickRecord) * (stl_items_len + 1));
-
-    stl_separator_locations = xmalloc(sizeof(int) * stl_items_len);
   }
 
   // If "fmt" was set insecurely it needs to be evaluated in the sandbox.
@@ -1000,8 +1089,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       stl_groupitems = xrealloc(stl_groupitems, sizeof(int) * new_len);
       stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * (new_len + 1));
       stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * (new_len + 1));
-      stl_separator_locations =
-        xrealloc(stl_separator_locations, sizeof(int) * new_len);
 
       stl_items_len = new_len;
     }
@@ -1041,13 +1128,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       continue;
     }
 
-    // STL_SEPARATE: Separation between items, filled with white space.
+    // STL_SEPARATE: Separation between items, filled with fillchars.
     if (*fmt_p == STL_SEPARATE) {
       fmt_p++;
-      // Ignored when we are inside of a grouping
-      if (groupdepth > 0) {
-        continue;
-      }
       stl_items[curitem].type = Separate;
       stl_items[curitem++].start = out_p;
       continue;
@@ -1075,7 +1158,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       //       so `vim_strsize` will work.
       char *t = stl_items[stl_groupitems[groupdepth]].start;
       *out_p = NUL;
-      ptrdiff_t group_len = vim_strsize(t);
+      int group_len = vim_strsize(t);
 
       // If the group contained internal items
       // and the group did not have a minimum width,
@@ -1163,43 +1246,24 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
           // start to the start of the group
           stl_items[idx].start = MAX(stl_items[idx].start, t);
         }
+
         // If the group is shorter than the minimum width, add padding characters.
       } else if (abs(minwid) > group_len) {
-        ptrdiff_t fillchar_bytes = (ptrdiff_t)schar_len(fillchar);
-        // If the group is left-aligned, add characters to the right.
-        if (minwid < 0) {
-          minwid = 0 - minwid;
-          while (group_len++ < minwid && out_p + fillchar_bytes <= out_end_p) {
-            schar_get_adv(&out_p, fillchar);
-          }
-          // If the group is right-aligned, shift everything to the right and
-          // prepend with filler characters.
-        } else {
-          ptrdiff_t added_cells = minwid - group_len;
-          ptrdiff_t added_bytes = added_cells * fillchar_bytes;
-          if (out_p + added_bytes > out_end_p) {
-            added_cells = (out_end_p - out_p) / fillchar_bytes;
-            added_bytes = added_cells * fillchar_bytes;
-          }
+        StlPadding padding = minwid < 0 ? kPaddingRight : kPaddingLeft;
+        stl_expand(&group_len, abs(minwid), padding, (int)(out_end_p - out_p), fillchar, stl_items,
+                   stl_groupitems[groupdepth] + 1, curitem, t, &out_p);
+      }
 
-          // { Move the group to the right
-          memmove(t + added_bytes, t, (size_t)(out_p - t));
-          out_p += added_bytes;
-          // }
-
-          // Prepend the fill characters
-          for (; added_cells > 0; added_cells--) {
-            schar_get_adv(&t, fillchar);
-          }
-
-          // Adjust item start positions
-          for (int n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
-            stl_items[n].start += added_bytes;
-          }
+      // Deactivate separation markers for wrapping item groups and top-level.
+      for (int n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
+        if (stl_items[n].type == Separate) {
+          stl_items[n].type = Empty;
         }
       }
+
       continue;
     }
+
     int minwid = 0;
     int maxwid = 9999;
     int foldsignitem = -1;        // Start of fold or sign item
@@ -1917,9 +1981,8 @@ stcsign:
   *out_p = NUL;
   // Length of out[] used (excluding the NUL)
   size_t outputlen = (size_t)(out_p - out);
-  // Subtract offset from `itemcnt` and restore `curitem` to previous recursion level.
+  // Number of items at current recursion level.
   int itemcnt = curitem - evalstart;
-  curitem = evalstart;
 
   // Free the format buffer if we allocated it internally
   if (usefmt != fmt) {
@@ -2046,47 +2109,14 @@ stcsign:
     width = maxwidth;
 
     // If there is room left in our statusline, and room left in our buffer,
-    // add characters at the separate marker (if there is one) to
-    // fill up the available space.
-  } else if (width < maxwidth
-             && outputlen + (size_t)(maxwidth - width) * schar_len(fillchar) + 1 < outlen) {
-    // Find how many separators there are, which we will use when
-    // figuring out how many groups there are.
-    int num_separators = 0;
-    for (int i = evalstart; i < itemcnt + evalstart; i++) {
-      if (stl_items[i].type == Separate) {
-        // Create an array of the start location for each separator mark.
-        stl_separator_locations[num_separators] = i;
-        num_separators++;
-      }
-    }
-
-    // If we have separated groups, then we deal with it now
-    if (num_separators) {
-      int standard_spaces = (maxwidth - width) / num_separators;
-      int final_spaces = (maxwidth - width) -
-                         standard_spaces * (num_separators - 1);
-
-      for (int l = 0; l < num_separators; l++) {
-        int dislocation = (l == (num_separators - 1)) ? final_spaces : standard_spaces;
-        dislocation *= (int)schar_len(fillchar);
-        char *start = stl_items[stl_separator_locations[l]].start;
-        char *seploc = start + dislocation;
-        STRMOVE(seploc, start);
-        for (char *s = start; s < seploc;) {
-          schar_get_adv(&s, fillchar);
-        }
-
-        for (int item_idx = stl_separator_locations[l] + 1;
-             item_idx < itemcnt + evalstart;
-             item_idx++) {
-          stl_items[item_idx].start += dislocation;
-        }
-      }
-
-      width = maxwidth;
-    }
+    // add characters at the separation markers (if there are any) to fill up the available space.
+  } else if (width < maxwidth) {
+    stl_expand(&width, maxwidth, kPaddingNone, (int)(out_end_p - out_p), fillchar, stl_items,
+               evalstart, curitem, out, &out_p);
   }
+
+  // Restore `curitem` to previous recursion level.
+  curitem = evalstart;
 
   // Store the info about highlighting.
   if (hltab != NULL) {

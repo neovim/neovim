@@ -447,6 +447,53 @@ describe('build_stl_str_hl', function()
     { expected_cell_count = 26 }
   )
 
+  statusline_test_align(
+    'expands at %= in item groups according to minwid',
+    60,
+    '%10(neo%=vim%), %10.(neo%=vim%), %10.10(neo%=vim%), %10.20(neo%=vim%)',
+    'neo~~~~vim, neo~~~~vim, neo~~~~vim, neo~~~~vim',
+    { expected_cell_count = 46 }
+  )
+
+  statusline_test_align(
+    'expands at %= in item groups with normal items',
+    60,
+    '%10(%L%=%l,%c%), %10(%=%L%=%l,%c%=%), %10(x%=%L%=%l,%c%=y%)',
+    '1~~~~~~0,0, ~~1~~0,0~~, x~1~0,0~~y',
+    { expected_cell_count = 34 }
+  )
+
+  statusline_test_align(
+    'expands at %= in nested item groups and top-level',
+    29,
+    '%21(foo%=%7(x%=y%=z%)%=bar%)%=%5(a%=b%=c%)',
+    'foo~~~~x~~y~~z~~~~bar~~~a~b~c'
+  )
+
+  statusline_test(
+    'ignores unexpanded %= in item groups when expanding at top-level',
+    20,
+    '%4(%L%=neo%)vim',
+    '1neovim',
+    { expected_cell_count = 7 }
+  )
+
+  statusline_test(
+    'ignores truncated %= in item groups when expanding at top-level',
+    20,
+    '%10.10(hidden%=%f%)TEST',
+    '<_spec.luaTEST',
+    { file_name = 'test/unit/buffer_spec.lua', expected_cell_count = 14 }
+  )
+
+  statusline_test(
+    'ignores %= in hidden item groups when expanding at top-level',
+    20,
+    '%(hidden%=%h%)TEST',
+    'TEST',
+    { expected_cell_count = 4 }
+  )
+
   statusline_test(
     'Should truncate groups according to maxwid',
     30,
