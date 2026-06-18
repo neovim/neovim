@@ -3376,8 +3376,11 @@ static const char *required_env_vars[] = {
   NULL
 };
 
+/// Builds an environment dict for a child process (job).
+///
+/// @param set_nvim_addr  Set the $NVIM env var.
 dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, const bool pty,
-                           const char * const pty_term_name)
+                           const bool set_nvim_addr, const char * const pty_term_name)
 {
   dict_T *env = tv_dict_alloc();
 
@@ -3431,13 +3434,15 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
   }
 
   // Set $NVIM (in the child process) to v:servername. #3118
-  char *nvim_addr = get_vim_var_str(VV_SEND_SERVER);
-  if (nvim_addr[0] != NUL) {
-    dictitem_T *dv = tv_dict_find(env, S_LEN("NVIM"));
-    if (dv) {
-      tv_dict_item_remove(env, dv);
+  if (set_nvim_addr) {
+    char *nvim_addr = get_vim_var_str(VV_SEND_SERVER);
+    if (nvim_addr[0] != NUL) {
+      dictitem_T *dv = tv_dict_find(env, S_LEN("NVIM"));
+      if (dv) {
+        tv_dict_item_remove(env, dv);
+      }
+      tv_dict_add_str(env, S_LEN("NVIM"), nvim_addr);
     }
-    tv_dict_add_str(env, S_LEN("NVIM"), nvim_addr);
   }
 
   if (job_env) {
@@ -3626,7 +3631,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     term_name = term_name ? term_name : "ansi";
   }
 
-  dict_T *env = create_environment(job_env, clear_env, pty, term_name);
+  dict_T *env = create_environment(job_env, clear_env, pty, true, term_name);
   Channel *chan = channel_job_start(argv, NULL, on_stdout, on_stderr, on_exit, pty,
                                     rpc, overlapped, detach, stdin_mode, cwd,
                                     width, height, env, &rettv->vval.v_number);

@@ -38,6 +38,7 @@
 #include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval/fs.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
@@ -5065,16 +5066,11 @@ static void ex_restart(exarg_T *eap)
   bool server_stopped = listen_arg ? server_stop(listen_arg, true) : false;
 #endif
 
+  dict_T *env = create_environment(NULL, false, false, false, NULL);
+  tv_dict_add_str(env, S_LEN(ENV_STARTREASON), "restart");
 #ifdef MSWIN
-  bool restart_alloc_console_env = false;
-  if (os_setenv("__NVIM_RESTART_ALLOC_CONSOLE", "1", 1) == 0) {
-    restart_alloc_console_env = true;
-  }
+  tv_dict_add_str(env, S_LEN(ENV_RESTART_ALLOC_CONSOLE), "1");
 #endif
-  bool startreason_env = false;
-  if (os_setenv(ENV_STARTREASON, "restart", 1) == 0) {
-    startreason_env = true;
-  }
 
   CallbackReader on_err = CALLBACK_READER_INIT;
 #ifdef MSWIN
@@ -5090,15 +5086,7 @@ static void ex_restart(exarg_T *eap)
   Channel *channel = channel_job_start(argv, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, detach, kChannelStdinPipe,
-                                       NULL, 0, 0, NULL, &exit_status);
-  if (startreason_env) {
-    os_unsetenv(ENV_STARTREASON);
-  }
-#ifdef MSWIN
-  if (restart_alloc_console_env) {
-    os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
-  }
-#endif
+                                       NULL, 0, 0, env, &exit_status);
   if (!channel) {
     emsg("cannot create a channel job");
     goto fail_1;
