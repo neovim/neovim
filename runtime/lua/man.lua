@@ -669,8 +669,8 @@ function M.init_pager()
   -- know the correct casing, cf. `man glDrawArraysInstanced`).
   --- @type string
   local ref = (fn.getline(1):match('^[^)]+%)') or ''):gsub(' ', '_')
-  local _, sect, err = pcall(parse_ref, ref)
-  vim.b.man_sect = err ~= nil and sect or ''
+  local ok, _, sect = pcall(parse_ref, ref)
+  vim.b.man_sect = ok and (sect or '') or ''
 
   local man_bufname = 'man://' .. fn.fnameescape(ref):lower()
 
