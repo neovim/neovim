@@ -414,7 +414,15 @@ it(':restart works in headless server (no UI)', function()
     n.set_session(nil)
   end)
 
-  fn.jobstart({ n.nvim_prog, '--clean', '--headless', '--listen', server_pipe })
+  fn.jobstart({
+    n.nvim_prog,
+    '--clean',
+    '--headless',
+    '--listen',
+    server_pipe,
+    '--cmd',
+    'let g:early_startreason = v:startreason',
+  })
   t.retry(nil, nil, function()
     neq(nil, vim.uv.fs_stat(server_pipe))
   end)
@@ -423,6 +431,8 @@ it(':restart works in headless server (no UI)', function()
   n.expect_exit(n.command, 'restart')
   n.set_session(n.connect(server_pipe))
   eq(1, api.nvim_get_vvar('vim_did_enter'))
+  eq('restart', api.nvim_get_vvar('startreason'))
+  eq('restart', n.eval('g:early_startreason'))
 
   -- TODO: [command] is currently not executed without UI
   -- n.expect_exit(n.command, 'restart lua _G.new_server = 1')

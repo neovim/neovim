@@ -5071,6 +5071,10 @@ static void ex_restart(exarg_T *eap)
     restart_alloc_console_env = true;
   }
 #endif
+  bool startreason_env = false;
+  if (os_setenv(ENV_STARTREASON, "restart", 1) == 0) {
+    startreason_env = true;
+  }
 
   CallbackReader on_err = CALLBACK_READER_INIT;
 #ifdef MSWIN
@@ -5087,6 +5091,9 @@ static void ex_restart(exarg_T *eap)
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, detach, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
+  if (startreason_env) {
+    os_unsetenv(ENV_STARTREASON);
+  }
 #ifdef MSWIN
   if (restart_alloc_console_env) {
     os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
