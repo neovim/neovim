@@ -558,9 +558,9 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
     os_set_cloexec(stdout_dup_fd);
     // :restart spawns a replacement server that must not borrow the parent
     // Nvim process console, because that parent process will soon exit.
-    const bool restart_alloc_console = os_env_exists("__NVIM_RESTART_ALLOC_CONSOLE", true);
+    const bool restart_alloc_console = os_env_exists(ENV_RESTART_ALLOC_CONSOLE, true);
     if (restart_alloc_console) {
-      os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
+      os_unsetenv(ENV_RESTART_ALLOC_CONSOLE);
     }
     if (!GetConsoleWindow()) {
       // Borrow the parent's console so CONOUT$ resolves to the real terminal,

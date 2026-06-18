@@ -159,7 +159,7 @@ void ui_client_run(void)
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   // TODO(justinmk): this is for log_spec. Can remove this after nvim_log #7062 is merged.
-  if (os_env_exists("__NVIM_TEST_LOG", true)) {
+  if (os_env_exists(ENV_TEST_LOG, true)) {
     ELOG("test log message");
   }
 
