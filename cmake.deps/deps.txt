@@ -46,8 +46,8 @@ TREESITTER_MARKDOWN_SHA256 df845b1ab7c7c163ec57d7fa17170c92b04be199bddab02523636
 TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/d861eab22b8c10e4e0c238ceecad8b9efcb88156.tar.gz
 TREESITTER_SHA256 26e5835bd2331ec1e084ca81b9cf7f50bc85c12395b78346d6780fdce7b14a84
 
-WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.9.tar.gz
-WASMTIME_SHA256 f875fe3772a24c945624ebe127aecaff97384c2179336bbad97634c7cf6393f2
+WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.10.tar.gz
+WASMTIME_SHA256 d47bfa58b41b39f343896ea5ad0fddf21cb1464057c9ba53a200c69780663c8f
 
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.83.0.tar.gz
 UNCRUSTIFY_SHA256 1d4d3ab3a991c66eb24cb0a3e690573b4882fd98bc6ec64a01c283998c20dc87
