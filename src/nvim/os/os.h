@@ -26,3 +26,4 @@ extern char *default_lib_dir;
 
 #define ENV_LOGFILE "NVIM_LOG_FILE"
 #define ENV_NVIM "NVIM"
+#define ENV_STARTREASON "__NVIM_STARTREASON"

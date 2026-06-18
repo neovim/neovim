@@ -217,6 +217,7 @@ static struct vimvar {
   VV(VV_VIRTNUM,          "virtnum",          VAR_NUMBER, VV_RO),
   VV(VV_STARTTIME,        "starttime",        VAR_NUMBER, VV_RO),
   VV(VV_EXITREASON,       "exitreason",       VAR_STRING, VV_RO),
+  VV(VV_STARTREASON,      "startreason",      VAR_STRING, VV_RO),
 };
 #undef VV
 
@@ -316,6 +317,7 @@ void evalvars_init(void)
   set_vim_var_nr(VV_SEARCHFORWARD, 1);
   set_vim_var_nr(VV_HLSEARCH, 1);
   set_vim_var_nr(VV_COUNT1, 1);
+  set_vim_var_string(VV_STARTREASON, S_LEN("normal"));
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
   set_vim_var_nr(VV_TYPE_NUMBER, VAR_TYPE_NUMBER);
@@ -345,6 +347,15 @@ void evalvars_init(void)
   set_vim_var_partial(VV_LUA, vvlua_partial);
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
+
+  // Set v:startreason via environment variable
+  const char *startreason = os_getenv_noalloc(ENV_STARTREASON);
+  if (strequal(startreason, "normal") || strequal(startreason, "restart")) {
+    set_vim_var_string(VV_STARTREASON, startreason, -1);
+  }
+  if (os_env_exists(ENV_STARTREASON, false)) {
+    os_unsetenv(ENV_STARTREASON);
+  }
 }
 
 #if defined(EXITFREE)
