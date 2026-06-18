@@ -450,59 +450,55 @@ setting: >
 BEANCOUNT						*ft-beancount-plugin*
 
 Beancount omni-completion |compl-omni| is provided by beancountcomplete.vim,
-if enabled with |g:beancount_completion_enable|.
+if enabled with g:beancount_completion_enable.
 
 To enable completion of account names, set: >
 	let g:beancount_completion_enable = 1
-
-< Note enabling this may cause beancount to load additional plugin files.
-Only enable for code you trust.
+<
+Note: Enabling this may cause beancount to load additional plugin files.  Only
+enable for code you trust.
 
 Variables:
-*g:beancount_account_completion*
-			Can be either "default" or "chunks".
-
+g:beancount_account_completion
+			Specify the completion pattern format for the account
+			name.  Can be either "default" or "chunks".
 			Default value: "default"
 
-*g:beancount_completion_enable*
+g:beancount_completion_enable
 			Enable omni-completion |compl-omni| for accounts.
-
 			Default value: 0
 
-*g:beancount_detailed_first*
-			If non-zero, accounts higher down the hierarchy will be
-			listed first as completions.
-
+g:beancount_detailed_first
+			If non-zero, accounts higher down the hierarchy will
+			be listed first as completions.
 			Default value: 0
 
-*g:beancount_separator_col*
+g:beancount_separator_col
 			The column that the decimal separator is aligned to.
-
 			Default value: 50
 
-*b:beancount_root*
-			Set the root Beancount file. This is used to gather
+b:beancount_root
+			Set the root Beancount file.  This is used to gather
 			values for the completion.
-			If not set, the current file will be used.
-
-			Default value: not set
+			If not set (default), the current file will be used.
 
 
 Commands:
-:AlignCommodity		Adds spaces between an account and commodity so that the
-			decimal points of the commodities all occur in the column
-			given by |g:beancount_separator_col|.  If an amount has no
-			decimal point, the imaginary decimal point to the right
-			of the least significant digit will align.
+:AlignCommodity		Adds spaces between an account and commodity so that
+			the decimal points of the commodities all occur in the
+			column given by g:beancount_separator_col.  If an
+			amount has no decimal point, the imaginary decimal
+			point to the right of the least significant digit will
+			align.
 
-			The command acts on a range, with the default being the
-			current line. If the cursor happens to be inside that
-			range and to the right of the account name, the cursor
-			will be pushed to the right the appropriate amount, so
-			that it remains on the same character.
+			The command acts on a range, with the default being
+			the current line.  If the cursor happens to be inside
+			that range and to the right of the account name, the
+			cursor will be pushed to the right the appropriate
+			amount, so that it remains on the same character.
 
-			The script assumes the use of spaces for alignment. It
-			does not understand tabs.
+			The script assumes the use of spaces for alignment.
+			It does not understand tabs.
 
 :GetContext		Uses bean-doctor context to display the context of the
 			current line.
