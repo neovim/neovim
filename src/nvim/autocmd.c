@@ -1346,6 +1346,9 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   curbuf = buf;
   aco->new_curwin_handle = curwin->handle;
   set_bufref(&aco->new_curbuf, curbuf);
+  if (aco->new_curwin_handle != aco->save_curwin_handle) {
+    aucmd_prepbuf_depth++;
+  }
 
   aco->save_VIsual_active = VIsual_active;
   if (!same_buffer) {
@@ -1480,6 +1483,10 @@ win_found:
   check_cursor(curwin);  // just in case lines got deleted
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
+  }
+  if (aco->new_curwin_handle != aco->save_curwin_handle) {
+    assert(aucmd_prepbuf_depth > 0);
+    aucmd_prepbuf_depth--;
   }
 }
 

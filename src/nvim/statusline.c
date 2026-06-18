@@ -9,6 +9,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -62,6 +63,19 @@ typedef enum {
   kNumBaseHexadecimal = 16,
 } NumberBase;
 
+static bool defer_stl_redraw(win_T *wp)
+{
+  if (aucmd_prepbuf_depth == 0) {
+    return false;
+  }
+
+  // aucmd_prepbuf() temporarily changes curwin/curbuf, which statusline
+  // and winbar expressions can observe. Evaluate them after aucmd_restbuf().
+  // #40153
+  wp->w_redr_status = true;
+  return true;
+}
+
 /// Redraw the status line of window `wp`.
 ///
 /// If inversion is possible we use it. Else '=' characters are used.
@@ -75,6 +89,9 @@ void win_redr_status(win_T *wp)
   if (busy
       // Also ignore if wildmenu is showing.
       || (wild_menu_showing != 0 && !ui_has(kUIWildmenu))) {
+    return;
+  }
+  if (defer_stl_redraw(wp)) {
     return;
   }
   busy = true;
@@ -430,6 +447,9 @@ void win_redr_winbar(win_T *wp)
   // Return when called recursively. This can happen when the winbar contains an expression
   // that triggers a redraw.
   if (entered) {
+    return;
+  }
+  if (defer_stl_redraw(wp)) {
     return;
   }
   entered = true;
