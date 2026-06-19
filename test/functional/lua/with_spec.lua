@@ -1073,14 +1073,10 @@ describe('vim._with', function()
       eq('', exec_capture('messages'))
 
       local screen = Screen.new(20, 5)
-      screen:set_default_attr_ids {
-        [1] = { bold = true, reverse = true },
-        [2] = { bold = true, foreground = Screen.colors.Blue },
-      }
       exec_lua [[ vim._with({ silent = true }, function() vim.cmd.echo('"ccc"') end) ]]
       screen:expect [[
         ^                    |
-        {2:~                   }|*3
+        {1:~                   }|*3
                             |
       ]]
     end)
@@ -1229,10 +1225,6 @@ describe('vim._with', function()
 
     it('updates ruler if cursor moved', function()
       local screen = Screen.new(30, 5)
-      screen:set_default_attr_ids {
-        [1] = { reverse = true },
-        [2] = { bold = true, reverse = true },
-      }
       exec_lua [[
         vim.opt.ruler = true
         local lines = {}
@@ -1245,9 +1237,9 @@ describe('vim._with', function()
       ]]
       screen:expect [[
         19                            |
-        {1:< Name] [+] 20,1            3%}|
-        ^19                            |
         {2:< Name] [+] 20,1            3%}|
+        ^19                            |
+        {3:< Name] [+] 20,1            3%}|
                                       |
       ]]
       exec_lua [[
@@ -1256,9 +1248,9 @@ describe('vim._with', function()
       ]]
       screen:expect [[
         99                            |
-        {1:< Name] [+] 100,1          19%}|
+        {2:< Name] [+] 100,1          19%}|
         ^19                            |
-        {2:< Name] [+] 20,1            3%}|
+        {3:< Name] [+] 20,1            3%}|
                                       |
       ]]
     end)
