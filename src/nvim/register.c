@@ -2739,6 +2739,11 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
   }
 
   if (name == '#') {
+    if (len == 0) {
+      curwin->w_alt_fnum = 0;  // clear altfile
+      return;
+    }
+
     buf_T *buf;
 
     if (ascii_isdigit(*str)) {

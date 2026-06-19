@@ -406,6 +406,11 @@ func Test_set_register()
   call assert_equal('Xfile_alt_1', getreg('#'))
   call setreg('#', b2)
   call assert_equal('Xfile_alt_2', getreg('#'))
+  call setreg('#', '')
+  call assert_equal('', getreg('#'))
+  call setreg('#', 'alt_1')
+  let @# = ''
+  call assert_equal('', getreg('#'))
 
   let ab = 'regwrite'
   call setreg('=', '')
