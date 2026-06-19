@@ -558,6 +558,7 @@ function Client:initialize()
   require('vim.lsp._folding_range')
   require('vim.lsp.inline_completion')
   require('vim.lsp.document_color')
+  require('vim.lsp.linked_editing_range')
 
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
@@ -1193,9 +1194,9 @@ function Client:on_attach(bufnr)
   })
 
   self:_run_callbacks(self._on_attach_cbs, lsp.client_errors.ON_ATTACH_ERROR, self, bufnr)
-  -- schedule the initialization of capabilities to give the above
-  -- on_attach and LspAttach callbacks the ability to schedule wrap the
-  -- opt-out (such as deleting the semanticTokensProvider from capabilities)
+
+  -- schedule the initialization of capabilities to give the above on_attach and LspAttach callbacks
+  -- the ability to enable or disable them
   vim.schedule(function()
     if not vim.api.nvim_buf_is_valid(bufnr) then
       return
