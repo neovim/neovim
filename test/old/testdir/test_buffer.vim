@@ -937,4 +937,19 @@ func Test_split_window_in_BufLeave_from_switching_buffer()
   bwipe! Xb
 endfunc
 
+" Switch to a buffer whose name contains '%' via completion (#20529).
+func Test_buffer_switch_to_name_with_percent()
+  CheckMSWindows
+
+  let bufnr = bufadd('Xpercent%name')
+  call setbufvar(bufnr, '&buflisted', 1)
+  call bufload(bufnr)
+  enew
+
+  call feedkeys(":b Xpercent\<Tab>\<CR>", 'xt')
+  call assert_equal(bufnr, bufnr('%'))
+
+  exe 'bwipe! ' .. bufnr
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
