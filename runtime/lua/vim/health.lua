@@ -427,7 +427,7 @@ function M._check(eap)
     elseif emptybuf then
       vim.cmd.buffer(bufnr)
     else
-      vim.cmd.sbuffer { bufnr, mods = { tab = 1 } }
+      vim.cmd.sbuffer { bufnr, mods = { tab = vim.api.nvim_tabpage_get_number(0) } }
     end
   end
 
