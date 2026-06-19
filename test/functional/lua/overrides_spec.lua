@@ -159,20 +159,15 @@ describe('print', function()
 
   it('blank line in message works', function()
     local screen = Screen.new(40, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { bold = true, foreground = Screen.colors.SeaGreen },
-      [2] = { bold = true, reverse = true },
-    })
     feed([[:lua print('\na')<CR>]])
     screen:expect {
       grid = [[
                                               |
-      {0:~                                       }|*3
-      {2:                                        }|
+      {1:~                                       }|*3
+      {3:                                        }|
                                               |
       a                                       |
-      {1:Press ENTER or type command to continue}^ |
+      {6:Press ENTER or type command to continue}^ |
     ]],
     }
     feed('<CR>')
@@ -180,12 +175,12 @@ describe('print', function()
     screen:expect {
       grid = [[
                                               |
-      {0:~                                       }|*2
-      {2:                                        }|
+      {1:~                                       }|*2
+      {3:                                        }|
       b                                       |
                                               |
       c                                       |
-      {1:Press ENTER or type command to continue}^ |
+      {6:Press ENTER or type command to continue}^ |
     ]],
     }
   end)
@@ -196,12 +191,6 @@ describe('debug.debug', function()
 
   before_each(function()
     screen = Screen.new()
-    screen:set_default_attr_ids {
-      [0] = { bold = true, foreground = 255 },
-      [1] = { bold = true, reverse = true },
-      E = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      cr = { bold = true, foreground = Screen.colors.SeaGreen4 },
-    }
   end)
 
   it('works', function()
@@ -216,8 +205,8 @@ describe('debug.debug', function()
     screen:expect {
       grid = [[
                                                            |
-      {0:~                                                    }|*10
-      {1:                                                     }|
+      {1:~                                                    }|*10
+      {3:                                                     }|
       nil                                                  |
       lua_debug> ^                                          |
     ]],
@@ -225,8 +214,8 @@ describe('debug.debug', function()
     feed('print("TEST")\n')
     screen:expect([[
                                                            |
-      {0:~                                                    }|*8
-      {1:                                                     }|
+      {1:~                                                    }|*8
+      {3:                                                     }|
       nil                                                  |
       lua_debug> print("TEST")                             |
       TEST                                                 |
@@ -235,40 +224,40 @@ describe('debug.debug', function()
     feed('<C-c>')
     screen:expect([[
                                                            |
-      {0:~                                                    }|*2
-      {1:                                                     }|
+      {1:~                                                    }|*2
+      {3:                                                     }|
       nil                                                  |
       lua_debug> print("TEST")                             |
       TEST                                                 |
                                                            |
-      {E:E5108: Lua: [string ":lua"]:5: attempt to perform ari}|
-      {E:thmetic on local 'a' (a nil value)}                   |
-      {E:stack traceback:}                                     |
-      {E:        [string ":lua"]:5: in function 'Test'}        |
-      {E:        [string ":lua"]:1: in main chunk}             |
-      Interrupt: {cr:Press ENTER or type command to continue}^   |
+      {9:E5108: Lua: [string ":lua"]:5: attempt to perform ari}|
+      {9:thmetic on local 'a' (a nil value)}                   |
+      {9:stack traceback:}                                     |
+      {9:        [string ":lua"]:5: in function 'Test'}        |
+      {9:        [string ":lua"]:1: in main chunk}             |
+      Interrupt: {6:Press ENTER or type command to continue}^   |
     ]])
     feed('<C-l>:lua Test()\n')
     screen:expect([[
                                                            |
-      {0:~                                                    }|*10
-      {1:                                                     }|
+      {1:~                                                    }|*10
+      {3:                                                     }|
       nil                                                  |
       lua_debug> ^                                          |
     ]])
     feed('\n')
     screen:expect([[
                                                            |
-      {0:~                                                    }|*4
-      {1:                                                     }|
+      {1:~                                                    }|*4
+      {3:                                                     }|
       nil                                                  |
       lua_debug>                                           |
-      {E:E5108: Lua: [string ":lua"]:5: attempt to perform ari}|
-      {E:thmetic on local 'a' (a nil value)}                   |
-      {E:stack traceback:}                                     |
-      {E:        [string ":lua"]:5: in function 'Test'}        |
-      {E:        [string ":lua"]:1: in main chunk}             |
-      {cr:Press ENTER or type command to continue}^              |
+      {9:E5108: Lua: [string ":lua"]:5: attempt to perform ari}|
+      {9:thmetic on local 'a' (a nil value)}                   |
+      {9:stack traceback:}                                     |
+      {9:        [string ":lua"]:5: in function 'Test'}        |
+      {9:        [string ":lua"]:1: in main chunk}             |
+      {6:Press ENTER or type command to continue}^              |
     ]])
   end)
 
@@ -278,7 +267,7 @@ describe('debug.debug', function()
     screen:expect {
       grid = [[
                                                            |
-      {0:~                                                    }|*12
+      {1:~                                                    }|*12
       lua_debug> ^                                          |
     ]],
     }
@@ -286,32 +275,32 @@ describe('debug.debug', function()
     feed('conttt<cr>') -- misspelled cont; invalid syntax
     screen:expect([[
                                                            |
-      {0:~                                                    }|*8
-      {1:                                                     }|
+      {1:~                                                    }|*8
+      {3:                                                     }|
       lua_debug> conttt                                    |
-      {E:E5115: Loading Lua debug string: (debug command):1: '}|
-      {E:=' expected near '<eof>'}                             |
+      {9:E5115: Loading Lua debug string: (debug command):1: '}|
+      {9:=' expected near '<eof>'}                             |
       lua_debug> ^                                          |
     ]])
 
     feed('cont<cr>') -- exactly "cont", exit now
     screen:expect([[
                                                            |
-      {0:~                                                    }|*6
-      {1:                                                     }|
+      {1:~                                                    }|*6
+      {3:                                                     }|
       lua_debug> conttt                                    |
-      {E:E5115: Loading Lua debug string: (debug command):1: '}|
-      {E:=' expected near '<eof>'}                             |
+      {9:E5115: Loading Lua debug string: (debug command):1: '}|
+      {9:=' expected near '<eof>'}                             |
       lua_debug> cont                                      |
       x                                                    |
-      {cr:Press ENTER or type command to continue}^              |
+      {6:Press ENTER or type command to continue}^              |
     ]])
 
     feed('<cr>')
     screen:expect {
       grid = [[
       ^                                                     |
-      {0:~                                                    }|*12
+      {1:~                                                    }|*12
                                                            |
     ]],
     }

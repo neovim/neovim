@@ -51,13 +51,6 @@ describe('vim.secure', function()
     end)
 
     it('regular file', function()
-      screen:set_default_attr_ids({
-        [1] = { bold = true, foreground = Screen.colors.Blue1 },
-        [2] = { bold = true, reverse = true },
-        [3] = { bold = true, foreground = Screen.colors.SeaGreen },
-        [4] = { reverse = true },
-      })
-
       local cwd = fn.getcwd()
       local msg = 'exrc: Found untrusted code. To enable it, choose (v)iew then run `:trust`:'
       local path = vim.fs.joinpath(cwd, 'Xfile')
@@ -67,11 +60,11 @@ describe('vim.secure', function()
       screen:expect([[
         {MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:{MATCH: +}}|
+        {3:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: *}|
-        {3:]] .. path .. [[}{MATCH: *}|
-        {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
+        {6:]] .. msg .. [[}{MATCH: *}|
+        {6:]] .. path .. [[}{MATCH: *}|
+        {6:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('d')
       screen:expect([[
@@ -89,21 +82,21 @@ describe('vim.secure', function()
       screen:expect([[
         {MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:{MATCH: +}}|
+        {3:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: *}|
-        {3:]] .. path .. [[}{MATCH: *}|
-        {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
+        {6:]] .. msg .. [[}{MATCH: *}|
+        {6:]] .. path .. [[}{MATCH: *}|
+        {6:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('v')
       feed(':trust<CR>')
       screen:expect([[
         ^let g:foobar = 42{MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:]] .. vim.fs.joinpath(fn.fnamemodify(cwd, ':~'), 'Xfile') .. [[ [RO]{MATCH: +}}|
+        {3:]] .. vim.fs.joinpath(fn.fnamemodify(cwd, ':~'), 'Xfile') .. [[ [RO]{MATCH: +}}|
         {MATCH: +}|
         {1:~{MATCH: +}}|
-        {4:[No Name]{MATCH: +}}|
+        {2:[No Name]{MATCH: +}}|
         Allowed in trust database: "]] .. vim.fs.joinpath(cwd, 'Xfile') .. [["{MATCH: +}|
       ]])
       -- close the split for the next test below.
@@ -119,11 +112,11 @@ describe('vim.secure', function()
       screen:expect([[
         {MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:{MATCH: +}}|
+        {3:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: *}|
-        {3:]] .. path .. [[}{MATCH: *}|
-        {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
+        {6:]] .. msg .. [[}{MATCH: *}|
+        {6:]] .. path .. [[}{MATCH: *}|
+        {6:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('i')
       screen:expect([[
@@ -139,20 +132,20 @@ describe('vim.secure', function()
       screen:expect([[
         {MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:{MATCH: +}}|
+        {3:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: +}|
-        {3:]] .. path .. [[}{MATCH: *}|
-        {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
+        {6:]] .. msg .. [[}{MATCH: +}|
+        {6:]] .. path .. [[}{MATCH: *}|
+        {6:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('v')
       screen:expect([[
         ^let g:foobar = 42{MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:]] .. vim.fs.joinpath(fn.fnamemodify(cwd, ':~'), 'Xfile') .. [[ [RO]{MATCH: +}}|
+        {3:]] .. vim.fs.joinpath(fn.fnamemodify(cwd, ':~'), 'Xfile') .. [[ [RO]{MATCH: +}}|
         {MATCH: +}|
         {1:~{MATCH: +}}|
-        {4:[No Name]{MATCH: +}}|
+        {2:[No Name]{MATCH: +}}|
         {MATCH: +}|
       ]])
 
@@ -165,13 +158,6 @@ describe('vim.secure', function()
     end)
 
     it('directory', function()
-      screen:set_default_attr_ids({
-        [1] = { bold = true, foreground = Screen.colors.Blue1 },
-        [2] = { bold = true, reverse = true },
-        [3] = { bold = true, foreground = Screen.colors.SeaGreen },
-        [4] = { reverse = true },
-      })
-
       local cwd = fn.getcwd()
       local msg =
         'exrc: Found untrusted code. DIRECTORY trust is decided only by name, not contents:'
@@ -182,11 +168,11 @@ describe('vim.secure', function()
       screen:expect([[
         {MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:{MATCH: +}}|
+        {3:{MATCH: +}}|
         :lua vim.secure.read('Xdir'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: +}|
-        {3:]] .. path .. [[}{MATCH: +}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+        {6:]] .. msg .. [[}{MATCH: +}|
+        {6:]] .. path .. [[}{MATCH: +}|
+        {6:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('d')
       screen:expect([[
@@ -204,11 +190,11 @@ describe('vim.secure', function()
       screen:expect([[
         {MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:{MATCH: +}}|
+        {3:{MATCH: +}}|
         :lua vim.secure.read('Xdir'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: +}|
-        {3:]] .. path .. [[}{MATCH: +}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+        {6:]] .. msg .. [[}{MATCH: +}|
+        {6:]] .. path .. [[}{MATCH: +}|
+        {6:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('a')
       screen:expect([[
@@ -228,11 +214,11 @@ describe('vim.secure', function()
       screen:expect([[
         {MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:{MATCH: +}}|
+        {3:{MATCH: +}}|
         :lua vim.secure.read('Xdir'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: +}|
-        {3:]] .. path .. [[}{MATCH: +}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+        {6:]] .. msg .. [[}{MATCH: +}|
+        {6:]] .. path .. [[}{MATCH: +}|
+        {6:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('i')
       screen:expect([[
@@ -248,20 +234,20 @@ describe('vim.secure', function()
       screen:expect([[
         {MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:{MATCH: +}}|
+        {3:{MATCH: +}}|
         :lua vim.secure.read('Xdir'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: +}|
-        {3:]] .. path .. [[}{MATCH: +}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+        {6:]] .. msg .. [[}{MATCH: +}|
+        {6:]] .. path .. [[}{MATCH: +}|
+        {6:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('v')
       screen:expect([[
         ^{MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:]] .. vim.fs.joinpath(fn.fnamemodify(cwd, ':~'), 'Xdir') .. [[ [RO]{MATCH: +}}|
+        {3:]] .. vim.fs.joinpath(fn.fnamemodify(cwd, ':~'), 'Xdir') .. [[ [RO]{MATCH: +}}|
         {MATCH: +}|
         {1:~{MATCH: +}}|
-        {4:[No Name]{MATCH: +}}|
+        {2:[No Name]{MATCH: +}}|
         {MATCH: +}|
       ]])
 
