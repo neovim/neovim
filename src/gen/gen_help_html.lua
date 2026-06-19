@@ -885,8 +885,13 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
   if root:named_child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
     trimmed = typ_esc(trim(text))
-    -- TODO ARGH this also escapes the / in URLs (see usr_toc.txt)
-    text = typ_esc(text)
+
+    -- A URL is a "word" directly under a "url"
+    -- We don't want any typ escaping there, as typ won't try to parse the
+    -- value as a command
+    if parent ~= 'url' then
+      text = typ_esc(text)
+    end
   else
     -- Process children and join them with whitespace.
     for node, _ in root:iter_children() do
@@ -1326,6 +1331,11 @@ local function gen_one_typ(fname, text, to_fname, old, commit)
         )
       )
   end
+
+  -- Add page break at the bottom, so that merging .typ files before conversion
+  -- results in page breaks in the right places
+  local page_break = '#pagebreak()'
+  typ = ('%s\n%s'):format(typ, page_break)
 
   vim.cmd('q!')
   lang_tree:destroy()
