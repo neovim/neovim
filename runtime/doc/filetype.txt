@@ -839,6 +839,12 @@ For example, to use Lua 5.1, set the variables like this: >
 	let g:lua_version = 5
 	let g:lua_subversion = 1
 <
+LUAU					*ft-luau-plugin* *g:luau_folding*
+
+You can enable folding of Luau block constructs using |fold-expr| by: >
+
+	let g:luau_folding = 1
+<
 MAIL							*ft-mail-plugin*
 
 Options:
