@@ -1,0 +1,53 @@
+name: wasm
+on:
+  push:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
+  BIN_DIR: ${{ github.workspace }}/bin
+  BUILD_DIR: ${{ github.workspace }}/build
+  INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
+  LOG_DIR: ${{ github.workspace }}/build/log
+  NVIM_LOG_FILE: ${{ github.workspace }}/build/nvim.log
+  TSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/tsan
+  VALGRIND_LOG: ${{ github.workspace }}/build/log/valgrind-%p.log
+  # TEST_FILE: test/functional/core/startup_spec.lua
+  # TEST_FILTER: foo
+
+jobs:
+  wasmtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          install_flags: "--test"
+      - name: Build
+        run: |
+          cmake -S cmake.deps --preset ci -D ENABLE_WASMTIME=ON -D USE_BUNDLED_TS_PARSERS=ON
+          cmake --build .deps
+          cmake --preset ci -D ENABLE_WASMTIME=ON
+          cmake --build build
+      - name: functionaltest
+        timeout-minutes: 10
+        env:
+          TEST_FILE: test/functional/treesitter/wasm_spec.lua
+        run: cmake --build build --target functionaltest

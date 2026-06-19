@@ -78,8 +78,9 @@ local function get_archive_info(repo, ref)
   local temp_dir = os.getenv('TMPDIR') or os.getenv('TEMP') or '/tmp'
 
   local archive_name = ref .. '.tar.gz'
-  local archive_path = temp_dir .. '/' .. archive_name
-  local archive_url = 'https://github.com/' .. repo .. '/archive/' .. archive_name
+  local archive_path = vim.fs.joinpath(temp_dir, archive_name)
+  local archive_url = ('https://github.com/%s/archive/%s'):format(repo, archive_name)
+  print(vim.inspect(archive_path), vim.inspect(archive_url))
 
   run_die(
     { 'curl', '-sfL', archive_url, '-o', archive_path },
@@ -90,8 +91,30 @@ local function get_archive_info(repo, ref)
     vim.fn.executable('sha256sum') == 1 and { 'sha256sum', archive_path }
     or { 'shasum', '-a', '256', archive_path }
   )
-  local archive_sha = run(shacmd):gmatch('%w+')()
+  local archive_sha = run_die(shacmd):gmatch('%w+')()
   return { url = archive_url, sha = archive_sha }
+end
+
+--- @param repo string
+--- @param ref string
+--- @param filename string
+local function get_release_artifact_info(repo, ref, filename)
+  local temp_dir = os.getenv('TMPDIR') or os.getenv('TEMP') or '/tmp'
+
+  local artifact_path = vim.fs.joinpath(temp_dir, filename)
+  local artifact_url = ('https://github.com/%s/releases/download/%s/%s'):format(repo, ref, filename)
+
+  run_die(
+    { 'curl', '-sfL', artifact_url, '-o', artifact_path },
+    'Failed to download release artifact from GitHub'
+  )
+
+  local shacmd = (
+    vim.fn.executable('sha256sum') == 1 and { 'sha256sum', artifact_path }
+    or { 'shasum', '-a', '256', artifact_path }
+  )
+  local artifact_sha = run_die(shacmd):gmatch('%w+')()
+  return { url = artifact_url, sha = artifact_sha }
 end
 
 local function get_gh_commit_sha(repo, ref)
@@ -151,6 +174,15 @@ local function ref(name, _ref)
   print('Updating ' .. name .. ' to ' .. archive.url .. '\n')
   update_deps_file(symbol_upper, 'URL', archive.url:gsub('/', '\\/'))
   update_deps_file(symbol_upper, 'SHA256', archive.sha)
+
+  -- Keep wasm version in sync with native version
+  if name == 'tree-sitter-lua' then
+    local wasm = get_release_artifact_info(repo, _ref, 'tree-sitter-lua.wasm')
+    print('Updating ' .. name .. ' WASM to ' .. wasm.url .. '\n')
+    update_deps_file(symbol_upper .. '_WASM', 'URL', wasm.url:gsub('/', '\\/'))
+    update_deps_file(symbol_upper .. '_WASM', 'SHA256', wasm.sha)
+  end
+
   run_die({ 'git', 'add', deps_file })
 
   local zig = zig_mode[symbol]
