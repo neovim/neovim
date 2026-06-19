@@ -76,8 +76,8 @@ end
 --- - For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 --- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
 ---
---- Directory to launch the `cmd` process. Not related to `root_dir`.
---- (default: cwd)
+--- Directory where the `cmd` process is launched when `cmd` is a string array. Defaults to
+--- `root_dir` when available, then the current working directory.
 --- @field cmd_cwd? string
 ---
 --- Environment variables passed to the LSP process on spawn. Non-string values are coerced to
@@ -505,7 +505,7 @@ function Client.create(config)
     self.rpc = config_cmd(dispatchers, config)
   else
     self.rpc = lsp.rpc.start(config_cmd, dispatchers, {
-      cwd = config.cmd_cwd,
+      cwd = config.cmd_cwd or config.root_dir,
       env = config.cmd_env,
       detached = config.detached,
     })

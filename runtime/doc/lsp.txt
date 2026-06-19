@@ -1884,8 +1884,10 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                  |vim.lsp.rpc.notify()|
                                • For TCP there is a builtin RPC client
                                  factory: |vim.lsp.rpc.connect()|
-      • {cmd_cwd}?             (`string`, default: cwd) Directory to launch
-                               the `cmd` process. Not related to `root_dir`.
+      • {cmd_cwd}?             (`string`) Directory where the `cmd` process is
+                               launched when `cmd` is a string array. Defaults
+                               to `root_dir` when available, then the current
+                               working directory.
       • {cmd_env}?             (`table`) Environment variables passed to the
                                LSP process on spawn. Non-string values are
                                coerced to string. Example: >lua
