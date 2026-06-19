@@ -311,6 +311,7 @@ describe('semantic token highlighting', function()
       exec_lua(function()
         _G.server_full = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
               full = { delta = false },
               range = true,

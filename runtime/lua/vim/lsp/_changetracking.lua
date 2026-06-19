@@ -193,7 +193,7 @@ function M._send_did_save(bufnr)
           textDocument = {
             uri = vim.uri_from_fname(old_name),
           },
-        })
+        }, bufnr)
         client:notify('textDocument/didOpen', {
           textDocument = {
             version = 0,
@@ -201,7 +201,7 @@ function M._send_did_save(bufnr)
             languageId = client.get_language_id(bufnr, vim.bo[bufnr].filetype),
             text = vim.lsp._buf_get_full_text(bufnr),
           },
-        })
+        }, bufnr)
         util.buf_versions[bufnr] = 0
       end
       local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
@@ -215,7 +215,7 @@ function M._send_did_save(bufnr)
             uri = uri,
           },
           text = included_text,
-        })
+        }, bufnr)
       else
         M.flush(client, bufnr)
       end
@@ -329,7 +329,7 @@ local function send_changes(bufnr, sync_kind, state, buf_state)
           version = util.buf_versions[bufnr],
         },
         contentChanges = changes,
-      })
+      }, bufnr)
     end
   end
 end

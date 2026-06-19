@@ -242,10 +242,6 @@ function STHighlighter:on_attach(client_id)
     end
   end)
 
-  nvim_on({ 'BufWinEnter', 'InsertLeave' }, self.augroup, { buf = self.bufnr }, function()
-    self:send_request()
-  end)
-
   if state.supports_range then
     nvim_on('WinScrolled', self.augroup, { buf = self.bufnr }, function()
       self:debounce_request()
@@ -802,7 +798,7 @@ function M.start(bufnr, client_id, opts)
 
   M.enable(true, { bufnr = bufnr, client_id = client_id })
 
-  if opts and opts.debounce then
+  if opts and opts.debounce and STHighlighter.active[bufnr] then
     local highlighter = STHighlighter.active[bufnr]
     local prev = rawget(highlighter, 'debounce')
     highlighter.debounce = prev and math.max(prev, opts.debounce) or opts.debounce
