@@ -323,7 +323,7 @@ err:
 ///                  - dry_run: (`boolean?`, default: false) If true, then the
 ///                    option value won't be set.
 ///                  - operation: One of "set", "append", "prepend", or "remove".
-///                    Analogous to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+///                    Corresponds to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
 ///                    Default is "set".
 ///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
@@ -415,16 +415,11 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   if (optval_right.type == kOptValTypeNumber || optval_right.type == kOptValTypeString) {
     merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
                                    option->flags, varp, NULL, 0, &errmsg);
-    arena_mem_free(arena_finish(arena));
     VALIDATE(errmsg == NULL, "%s", errmsg, {
       return NIL;
     });
   }
 
-  // set_option_value_for can corrupt the name value when setting options like
-  // background. It only does this when nvim_set_option_value takes an arena
-  // parameter, so I think it's freeing/reusing that arena.
-  String safe_name = arena_string(NULL, name);
   if (!dry_run) {
     WITH_SCRIPT_CONTEXT(channel_id, {
       set_option_value_for(name.data, opt_idx, merged_val, opt_flags, scope, to, err);
@@ -435,14 +430,13 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     // Convert the return type to lua for string/list/map style option
     lua_err = ERROR_INIT;
     MAXSIZE_TEMP_ARRAY(lua_args, 2);
-    ADD_C(lua_args, STRING_OBJ(safe_name));
+    ADD_C(lua_args, STRING_OBJ(name));
     ADD_C(lua_args, STRING_OBJ(merged_val.data.string));
     Object lua_val =
       NLUA_EXEC_STATIC("return require('vim._core.options').convert_value_to_lua(...)",
                        lua_args, kRetObject, arena, &lua_err);
 
     optval_free(merged_val);
-    xfree(safe_name.data);
 
     VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, {
       api_clear_error(&lua_err);
@@ -451,8 +445,6 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
 
     return lua_val;
   }
-
-  xfree(safe_name.data);
 
   return optval_as_object(merged_val);
 }

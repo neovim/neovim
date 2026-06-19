@@ -2302,7 +2302,7 @@ function vim.api.nvim_set_option(name, value) end
 --- - dry_run: (`boolean?`, default: false) If true, then the
 ---   option value won't be set.
 --- - operation: One of "set", "append", "prepend", or "remove".
----   Analogous to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
+---   Corresponds to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
 ---   Default is "set".
 --- - scope: One of "global" or "local". Analogous to
 --- `:setglobal` and `:setlocal`, respectively.
