@@ -960,6 +960,7 @@ describe('statusline', function()
     command('set ruler laststatus=2')
     api.nvim_create_autocmd('BufDelete', { command = 'redrawstatus' })
     api.nvim_exec_autocmds('BufDelete', { buf = api.nvim_create_buf(true, true) })
+    -- Wait for the deferred redraw to run after the autocmd window is restored.
     screen:sleep(10)
     screen:expect({
       grid = [[
@@ -1004,6 +1005,7 @@ describe('statusline', function()
         end,
       })
     end, target)
+    -- Ignore statusline evaluations from setup; only the autocmd redraw matters.
     exec_lua('_G.statusline_contexts = {}')
     api.nvim_exec_autocmds('User', { buf = target })
     screen:expect([[
@@ -1015,6 +1017,7 @@ describe('statusline', function()
       {3:CUR                                     }|
                                               |
     ]])
+    -- `%!` may evaluate during the callback, but must not see the target as focused.
     eq(
       {},
       exec_lua(function(win)
@@ -1047,6 +1050,7 @@ describe('statusline', function()
         return vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and 'CUR'
           or 'nc'
       end
+      -- `%{%...%}` sets g:actual_curwin while evaluating the statusline.
       vim.o.statusline = '%{%v:lua.Status()%}'
       vim.api.nvim_create_autocmd('User', {
         buffer = buf,
@@ -1066,8 +1070,10 @@ describe('statusline', function()
       {3:CUR                                     }|
                                               |
     ]])
+    -- Ignore statusline evaluations from setup; only the autocmd redraw matters.
     exec_lua('_G.statusline_contexts = {}')
     api.nvim_exec_autocmds('User', { buf = target })
+    -- No different frame should be flushed while the deferred redraw settles.
     screen:expect({
       grid = [[
                                               |
@@ -1085,6 +1091,7 @@ describe('statusline', function()
     end)
     eq(true, #contexts > 0)
     eq(caller_win, contexts[#contexts].actual)
+    -- The statusline must be evaluated only after the autocmd context is restored.
     eq(
       {},
       exec_lua(function()
