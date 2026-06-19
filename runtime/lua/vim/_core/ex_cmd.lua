@@ -400,4 +400,34 @@ function M.packdel_complete(pattern, line)
   return vim.pack._get_names(not cmd.bang)
 end
 
+-- Restart that preserves session and window layout
+function M.ex_session_restart()
+  -- Compute session to write and restore
+  local this_session = vim.fs.normalize(vim.v.this_session)
+  local del_session = nil
+
+  if this_session == '' then
+    local _, filename = vim.loop.fs_mkstemp('restart_session_XXXXXX')
+    this_session = vim.fs.abspath(filename)
+    del_session = this_session
+    vim.cmd('%argdelete')
+  end
+
+  -- Write session
+  local session_arg = vim.fn.fnameescape(this_session)
+  vim.cmd('mksession! ' .. session_arg)
+
+  -- Restart Neovim and execute Lua commands to restore necessary session
+  local after = { 'vim.cmd("source ' .. session_arg:gsub('\\', '\\\\') .. '")' }
+  if del_session ~= nil then
+    table.insert(after, 'pcall(vim.fs.rm, ' .. vim.inspect(del_session) .. ')')
+    table.insert(after, 'vim.v.this_session = ""')
+  end
+
+  local ok, msg = pcall(vim.cmd, 'restart! lua ' .. table.concat(after, ';'))
+  if not ok then
+    error(msg)
+  end
+end
+
 return M

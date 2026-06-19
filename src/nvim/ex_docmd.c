@@ -4969,6 +4969,11 @@ static void ex_quitall(exarg_T *eap)
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
+  if (eap->forceit == false) {
+    nlua_call_excmd("vim._core.ex_cmd", "ex_session_restart", eap, &cmdmod, NULL);
+    return;
+  }
+
   Error err = ERROR_INIT;
   const bool no_ui = !ui_active();
   const char *exepath = get_vim_var_str(VV_PROGPATH);
