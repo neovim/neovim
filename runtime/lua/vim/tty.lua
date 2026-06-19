@@ -33,6 +33,9 @@ function M.request(payload, opts, on_response)
     opts.group,
     { nested = true },
     function(ev)
+      if opts.chan and ev.data.chan ~= opts.chan then
+        return
+      end
       local stop = on_response(ev.data.sequence)
       -- If on_response is done, cancel the timeout so on_timeout doesn't fire spuriously.
       if stop and timer and not timer:is_closing() then

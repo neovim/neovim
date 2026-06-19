@@ -7,6 +7,7 @@ local command = n.command
 local eq = t.eq
 local eval = n.eval
 local exec = n.exec
+local exec_lua = n.exec_lua
 local feed = n.feed
 local api = n.api
 local request = n.request
@@ -238,6 +239,48 @@ it('autocmds UIEnter/UILeave', function()
   n.check_close() -- Wait for process exit.
   -- UILeave should have been triggered for both remaining UIs.
   eq('…\nVimLeave\nUILeave\nUILeave\n', t.read_file('Xevents.log'))
+end)
+
+it('includes the source channel in TermResponse and tty requests can filter it', function()
+  clear()
+  local main_chan = api.nvim_get_chan_info(0).id
+  local session2 = n.connect(api.nvim_get_vvar('servername'))
+  local status2, chan2 = session2:request('nvim_get_chan_info', 0)
+  t.ok(status2)
+
+  exec_lua([[
+    _G.responses = {}
+    vim.api.nvim_create_autocmd('TermResponse', {
+      callback = function(ev)
+        table.insert(_G.responses, ev.data)
+      end,
+    })
+  ]])
+
+  request('nvim_ui_term_event', 'termresponse', 'main')
+  session2:request('nvim_ui_term_event', 'termresponse', 'other')
+
+  eq({
+    { sequence = 'main', chan = main_chan },
+    { sequence = 'other', chan = chan2.id },
+  }, exec_lua('return _G.responses'))
+
+  exec_lua(
+    [[
+      _G.filtered = {}
+      vim.tty.request('', { timeout = 0, chan = ... }, function(resp)
+        table.insert(_G.filtered, resp)
+        return true
+      end)
+    ]],
+    chan2.id
+  )
+
+  request('nvim_ui_term_event', 'termresponse', 'ignored')
+  session2:request('nvim_ui_term_event', 'termresponse', 'accepted')
+  eq({ 'accepted' }, exec_lua('return _G.filtered'))
+
+  session2:close()
 end)
 
 it('autocmds VimSuspend/VimResume #22041', function()

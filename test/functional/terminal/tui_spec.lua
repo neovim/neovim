@@ -2974,13 +2974,14 @@ describe('TUI', function()
         end,
       })
     ]])
+    local chan = child_exec_lua('return vim.api.nvim_list_uis()[1].chan')
     feed_data('\027P0$r\027\\')
     retry(nil, 4000, function()
       eq('\027P0$r', child_exec_lua('return vim.v.termresponse'))
     end)
     eq(vim.NIL, child_exec_lua('return _G.data'))
     child_exec_lua('require("ffi").C.unblock_autocmds()')
-    eq({ sequence = '\027P0$r' }, child_exec_lua('return _G.data'))
+    eq({ sequence = '\027P0$r', chan = chan }, child_exec_lua('return _G.data'))
 
     -- If TermResponse during TermResponse changes v:termresponse, data.sequence contains the actual
     -- response that triggered the autocommand.
