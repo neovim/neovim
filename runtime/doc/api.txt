@@ -609,9 +609,6 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
     Return: ~
         (`integer`) Buffer id, or 0 on error
 
-    See also: ~
-      • buf_open_scratch
-
 nvim_del_current_line()                              *nvim_del_current_line()*
     Deletes the current line.
 
@@ -1489,7 +1486,7 @@ nvim_set_current_buf({buf})                           *nvim_set_current_buf()*
     Sets the current window's buffer to `buf`.
 
     Attributes: ~
-        not allowed when |textlock| is active or in the |cmdwin|
+        not allowed when |textlock| is active
         Since: 0.1.0
 
     Parameters: ~
@@ -1518,7 +1515,7 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
     Sets the current tabpage.
 
     Attributes: ~
-        not allowed when |textlock| is active or in the |cmdwin|
+        not allowed when |textlock| is active
         Since: 0.1.0
 
     Parameters: ~
@@ -1528,7 +1525,7 @@ nvim_set_current_win({win})                           *nvim_set_current_win()*
     Navigates to the given window (and tabpage, implicitly).
 
     Attributes: ~
-        not allowed when |textlock| is active or in the |cmdwin|
+        not allowed when |textlock| is active
         Since: 0.1.0
 
     Parameters: ~
@@ -1710,6 +1707,19 @@ nvim__chan_set_detach({detach})                      *nvim__chan_set_detach()*
 
     Parameters: ~
       • {detach}  (`boolean`) New detach value for the channel.
+
+nvim__cmdwin_set({type}, {buf})                           *nvim__cmdwin_set()*
+    WARNING: This feature is experimental/unstable.
+
+    Records the cmdwin scratchbuf and type, or clears both when type="" /
+    buf=0. Internal use only.
+
+    Attributes: ~
+        Since: 0.12.0
+
+    Parameters: ~
+      • {type}  (`string`) ':', '/', '?' (first char only); empty to clear.
+      • {buf}   (`integer`) cmdwin buffer id, or 0 to clear.
 
 nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
     WARNING: This feature is experimental/unstable.
@@ -2493,7 +2503,7 @@ nvim_buf_delete({buf}, {opts})                             *nvim_buf_delete()*
 <
 
     Attributes: ~
-        not allowed when |textlock| is active or in the |cmdwin|
+        not allowed when |textlock| is active
         Since: 0.5.0
 
     Parameters: ~

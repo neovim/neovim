@@ -54,12 +54,12 @@
 #define EX_BUFUNL        0x10000U  // accepts unlisted buffer too
 #define EX_ARGOPT        0x20000U  // allow "++opt=val" argument
 #define EX_SBOXOK        0x40000U  // allowed in the sandbox
-#define EX_CMDWIN        0x80000U  // allowed in cmdline window
+#define EX_BUFLOCK_OK    0x80000U  // Command is allowed when curbuf is `b_ro_locked` (e.g. during
+                                   // a quickfix or diff critical section). Legacy name: EX_CMDWIN.
+                                   // Implies EX_LOCK_OK.
 #define EX_MODIFY       0x100000U  // forbidden in non-'modifiable' buffer
 #define EX_FLAGS        0x200000U  // allow flags after count in argument
-#define EX_LOCK_OK     0x1000000U  // command can be executed when textlock is
-                                   // set; when missing disallows editing another
-                                   // buffer when curbuf->b_ro_locked is set
+#define EX_LOCK_OK     0x1000000U  // Command allowed when |textlock| is set. EX_BUFLOCK_OK is per-buffer.
 #define EX_KEEPSCRIPT  0x4000000U  // keep sctx of where command was invoked
 #define EX_PREVIEW     0x8000000U  // allow incremental command preview
 #define EX_ARGSPACE   0x40000000U  // completion: keep spaces in arg lead

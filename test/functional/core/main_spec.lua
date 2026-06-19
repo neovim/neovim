@@ -220,6 +220,7 @@ describe('vim._core', function()
     )
     local expected = {
       'vim.F',
+      'vim._core.cmdwin',
       'vim._core.defaults',
       'vim._core.editor',
       'vim._core.ex_cmd',

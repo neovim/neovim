@@ -776,7 +776,7 @@ void f_win_gettype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rettv->vval.v_string = xstrdup("preview");
   } else if (wp->w_floating) {
     rettv->vval.v_string = xstrdup("popup");
-  } else if (wp == cmdwin_win) {
+  } else if (bt_cmdwin(wp->w_buffer)) {
     rettv->vval.v_string = xstrdup("command");
   } else if (bt_quickfix(wp->w_buffer)) {
     rettv->vval.v_string = xstrdup((wp->w_llist_ref != NULL ? "loclist" : "quickfix"));

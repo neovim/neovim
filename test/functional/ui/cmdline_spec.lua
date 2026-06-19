@@ -240,7 +240,7 @@ local function test_cmdline(linegrid)
     ]])
   end)
 
-  it('works with cmdline window', function()
+  it('with cmdwin', function()
     feed(':make')
     screen:expect {
       grid = [[
@@ -255,25 +255,22 @@ local function test_cmdline(linegrid)
     screen:expect([[
                                |
       {2:[No Name]                }|
-      {1::}mak^e                    |
+      {1:: }mak^e                   |
       {3:[Command Line]           }|
                                |
     ]])
 
-    -- nested cmdline
+    -- cmdwin is a plain window so `:yank` opens a top-level cmdline. No nesting allowed. #40312
     feed(':yank')
     screen:expect {
       grid = [[
                                  |
         {2:[No Name]                }|
-        {1::}mak^e                    |
+        {1:: }mak^e                   |
         {3:[Command Line]           }|
                                  |
       ]],
-      cmdline = {
-        nil,
-        { firstc = ':', content = { { 'yank' } }, pos = 4 },
-      },
+      cmdline = { { firstc = ':', content = { { 'yank' } }, pos = 4 } },
     }
 
     command('mode')
@@ -281,14 +278,11 @@ local function test_cmdline(linegrid)
       grid = [[
                                  |
         {2:[No Name]                }|
-        {1::}mak^e                    |
+        {1:: }mak^e                   |
         {3:[Command Line]           }|
                                  |
       ]],
-      cmdline = {
-        nil,
-        { firstc = ':', content = { { 'yank' } }, pos = 4 },
-      },
+      cmdline = { { firstc = ':', content = { { 'yank' } }, pos = 4 } },
       reset = true,
     }
 
@@ -297,26 +291,14 @@ local function test_cmdline(linegrid)
       grid = [[
                                  |
         {2:[No Name]                }|
-        {1::}mak^e                    |
+        {1:: }mak^e                   |
         {3:[Command Line]           }|
                                  |
       ]],
-      cmdline = { [2] = { abort = true } },
+      cmdline = { { abort = true } },
     }
 
     feed('<c-c>')
-    screen:expect {
-      grid = [[
-        ^                         |
-        {2:[No Name]                }|
-        {1::}make                    |
-        {3:[Command Line]           }|
-                                 |
-      ]],
-      cmdline = { { firstc = ':', content = { { 'make' } }, pos = 4 } },
-    }
-
-    command('redraw!')
     screen:expect {
       grid = [[
         ^                         |
@@ -918,20 +900,18 @@ describe('cmdline redraw', function()
                                               |
       {1:~                                       }|*3
       {2:[No Name]                               }|
-      {1::}^a{17:bc}                                    |
-      {1:~                                       }|*2
+      {1:: }                                      |
+      {1:: }^a{17:bc}                                   |
+      {1:~                                       }|
       {3:[Command Line]                          }|
       {5:-- VISUAL --}                            |
     ]])
+    -- Ctrl-C closes cmdwin and drops back into pre-filled cmdline. #40312
     feed('<C-C>')
     screen:expect([[
                                               |
-      {1:~                                       }|*3
-      {2:[No Name]                               }|
-      {1::}a{17:bc}                                    |
-      {1:~                                       }|*2
-      {3:[Command Line]                          }|
-      :^abc                                    |
+      {1:~                                       }|*8
+      :abc^                                    |
     ]])
   end)
 

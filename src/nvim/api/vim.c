@@ -720,7 +720,7 @@ String nvim_get_current_line(Arena *arena, Error *err)
 /// @param[out] err Error details, if any
 void nvim_set_current_line(String line, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, arena, err);
 }
@@ -730,7 +730,7 @@ void nvim_set_current_line(String line, Arena *arena, Error *err)
 /// @param[out] err Error details, if any
 void nvim_del_current_line(Arena *arena, Error *err)
   FUNC_API_SINCE(1)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, arena, err);
 }
@@ -1042,8 +1042,6 @@ void nvim_set_current_win(Window win, Error *err)
 ///                (always 'nomodified'). Also sets 'nomodeline' on the buffer.
 /// @param[out] err Error details, if any
 /// @return Buffer id, or 0 on error
-///
-/// @see buf_open_scratch
 Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   FUNC_API_SINCE(6)
 {
@@ -1153,15 +1151,16 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// @return Channel id, or 0 on error
 Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
   FUNC_API_SINCE(7)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   buf_T *b = api_buf_ensure_loaded(buf, err);
   if (!b) {
     return 0;
   }
 
-  if (b == cmdwin_buf) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+  // Refuse to repurpose the cmdwin buffer.
+  if (bt_cmdwin(b)) {
+    api_set_error(err, kErrorTypeException, "%s", _(e_cmdwin));
     return 0;
   }
 
@@ -1376,7 +1375,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 Boolean nvim_paste(uint64_t channel_id, String data, Boolean crlf, Integer phase, Arena *arena,
                    Error *err)
   FUNC_API_SINCE(6)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   static bool cancelled = false;
 
@@ -1438,7 +1437,7 @@ theend:
 void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow, Arena *arena,
               Error *err)
   FUNC_API_SINCE(6)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   yankreg_T reg[1] = { 0 };
   VALIDATE_S((prepare_yankreg_from_object(reg, type, lines.size)), "type", type.data, {
@@ -1773,6 +1772,27 @@ void nvim__chan_set_detach(uint64_t channel_id, Boolean detach, Error *err)
   });
 
   chan->detach = (bool)detach;
+}
+
+/// Records the cmdwin scratchbuf and type, or clears both when type="" / buf=0. Internal use only.
+///
+/// @param type  ':', '/', '?' (first char only); empty to clear.
+/// @param buf   cmdwin buffer id, or 0 to clear.
+/// @param[out] err Error details, if any.
+void nvim__cmdwin_set(String type, Buffer buf, Error *err)
+  FUNC_API_SINCE(14)
+{
+  if (type.size == 0 || buf == 0) {
+    cmdwin_type = 0;
+    cmdwin_buf = NULL;
+    return;
+  }
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (ERROR_SET(err)) {
+    return;
+  }
+  cmdwin_type = (uint8_t)type.data[0];
+  cmdwin_buf = b;
 }
 
 /// Gets information about a channel.

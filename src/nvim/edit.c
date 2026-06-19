@@ -740,13 +740,6 @@ static int insert_handle_key(InsertState *s)
     FALLTHROUGH;
 
   case Ctrl_C:        // End input mode
-    if (s->c == Ctrl_C && cmdwin_type != 0) {
-      // Close the cmdline window.
-      cmdwin_result = K_IGNORE;
-      got_int = false;         // don't stop executing autocommands et al
-      s->nomove = true;
-      return 0;  // exit insert mode
-    }
     if (s->c == Ctrl_C && bt_prompt(curbuf)) {
       if (invoke_prompt_interrupt()) {
         if (!bt_prompt(curbuf)) {
@@ -1106,11 +1099,6 @@ static int insert_handle_key(InsertState *s)
         do_cmdline_cmd(".ll");
       }
       break;
-    }
-    if (cmdwin_type != 0) {
-      // Execute the command in the cmdline window.
-      cmdwin_result = CAR;
-      return 0;
     }
     if ((mod_mask & MOD_MASK_SHIFT) == 0 && bt_prompt(curbuf)) {
       prompt_invoke_callback();

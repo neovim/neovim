@@ -32,6 +32,9 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
+#include "nvim/event/defs.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -46,7 +49,9 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
+#include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
@@ -225,9 +230,6 @@ static int cedit_key = -1;  ///< key value of 'cedit' option
 
 static handle_T cmdpreview_bufnr = 0;
 static int cmdpreview_ns = 0;
-
-static const char e_active_window_or_buffer_changed_or_deleted[]
-  = N_("E199: Active window or buffer changed or deleted");
 
 static void trigger_cmd_autocmd(int typechar, event_T evt)
 {
@@ -1480,11 +1482,10 @@ static int command_line_execute(VimState *state, int key)
     }
   }
 
-  if (s->c == cedit_key || s->c == K_CMDWIN) {
-    // TODO(vim): why is ex_normal_busy checked here?
-    if ((s->c == K_CMDWIN || ex_normal_busy == 0)
-        && got_int == false) {
-      // Open a window to edit the command line (and history).
+  if (s->c == cedit_key) {
+    // c_CTRL-F: Open cmdwin. Return Ctrl_C so the current cmdline cancels; when the user
+    // confirms/cancels cmdwin, it will reopen cmdline with the command pre-filled.
+    if (ex_normal_busy == 0 && got_int == false) {
       s->c = open_cmdwin();
       s->some_key_typed = true;
     }
@@ -3116,9 +3117,6 @@ int check_opt_wim(void)
 /// another window or buffer.  True when editing the command line etc.
 bool text_locked(void)
 {
-  if (cmdwin_type != 0) {
-    return true;
-  }
   if (expr_map_locked()) {
     return true;
   }
@@ -3134,11 +3132,7 @@ void text_locked_msg(void)
 
 const char *get_text_locked_msg(void)
 {
-  if (cmdwin_type != 0) {
-    return e_cmdwin;
-  } else {
-    return e_textlock;
-  }
+  return e_textlock;
 }
 
 /// Check for text, window or buffer locked.
@@ -3726,10 +3720,8 @@ void cmdline_screen_cleared(void)
   CmdlineInfo *line = ccline.prev_ccline;
   while (prev_level > 0 && line) {
     if (line->level == prev_level) {
-      // don't redraw a cmdline already shown in the cmdline window
-      if (prev_level != cmdwin_level) {
-        line->redraw_state = kCmdRedrawAll;
-      }
+      // Always redraw (cmdwin is not special since #40312).
+      line->redraw_state = kCmdRedrawAll;
       prev_level--;
     }
     line = line->prev_ccline;
@@ -4579,292 +4571,64 @@ const char *did_set_cedit(optset_T *args)
   return NULL;
 }
 
-/// Open a window on the current command line and history.  Allow editing in
-/// the window.  Returns when the window is closed.
-/// Returns:
-///     CR       if the command is to be executed
-///     Ctrl_C   if it is to be abandoned
-///     K_IGNORE if editing continues
-static int open_cmdwin(void)
+typedef struct {
+  int firstc;
+  char *content;  // owned
+  int pos;
+} CmdwinOpenArgs;
+
+/// Deferred event: opens cmdwin after the current cmdline-reader exits. (Can't use vim.schedule,
+/// where the event could fire _during typeahead_; revisit after #40380).
+static void open_cmdwin_event(void **argv)
 {
-  bufref_T old_curbuf;
-  bufref_T bufref;
-  win_T *old_curwin = curwin;
-  int i;
-  garray_T winsizes;
-  int save_restart_edit = restart_edit;
-  int save_State = State;
-  bool save_exmode = exmode_active;
-  bool save_cmdmsg_rl = cmdmsg_rl;
-
-  // Can't do this when text or buffer is locked.
-  // Can't do this recursively.  Can't do it when typing a password.
-  if (text_or_buf_locked() || cmdwin_type != 0 || cmdline_star > 0) {
-    beep_flush();
-    return K_IGNORE;
-  }
-
-  set_bufref(&old_curbuf, curbuf);
-
-  // Save current window sizes.
-  win_size_save(&winsizes);
-
-  // When using completion in Insert mode with <C-R>=<C-F> one can open the
-  // command line window, but we don't want the popup menu then.
-  pum_undisplay(true);
-
-  // don't use a new tab page
-  cmdmod.cmod_tab = 0;
-  cmdmod.cmod_flags |= CMOD_NOSWAPFILE;
-
-  // Create a window for the command-line buffer.
-  if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
-    beep_flush();
-    ga_clear(&winsizes);
-    return K_IGNORE;
-  }
-  // win_split() autocommands may have messed with the old window or buffer.
-  // Treat it as abandoning this command-line.
-  if (!win_valid(old_curwin) || curwin == old_curwin || !bufref_valid(&old_curbuf)
-      || old_curwin->w_buffer != old_curbuf.br_buf) {
-    beep_flush();
-    ga_clear(&winsizes);
-    return Ctrl_C;
-  }
-  // Don't let quitting the More prompt make this fail.
-  got_int = false;
-
-  // Set "cmdwin_..." variables before any autocommands may mess things up.
-  cmdwin_type = get_cmdline_type();
-  cmdwin_level = ccline.level;
-  cmdwin_win = curwin;
-  cmdwin_old_curwin = old_curwin;
-
-  // Create empty command-line buffer.  Be especially cautious of BufLeave
-  // autocommands from do_ecmd(), as cmdwin restrictions do not apply to them!
-  const int newbuf_status = buf_open_scratch(0, NULL);
-  const bool cmdwin_valid = win_valid(cmdwin_win);
-  if (newbuf_status == FAIL || !cmdwin_valid || curwin != cmdwin_win || !win_valid(old_curwin)
-      || !bufref_valid(&old_curbuf) || old_curwin->w_buffer != old_curbuf.br_buf) {
-    if (newbuf_status == OK) {
-      set_bufref(&bufref, curbuf);
-    }
-    if (cmdwin_valid && !last_window(cmdwin_win)) {
-      win_close(cmdwin_win, true, false);
-    }
-    // win_close() autocommands may have already deleted the buffer.
-    if (newbuf_status == OK && bufref_valid(&bufref) && bufref.br_buf != curbuf) {
-      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false, false, false);
-    }
-
-    cmdwin_type = 0;
-    cmdwin_level = 0;
-    cmdwin_win = NULL;
-    cmdwin_old_curwin = NULL;
-    beep_flush();
-    ga_clear(&winsizes);
-    return Ctrl_C;
-  }
-  cmdwin_buf = curbuf;
-
-  // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
-  set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
-  curbuf->b_p_ma = true;
-  curwin->w_p_fen = false;
-  curwin->w_p_rl = cmdmsg_rl;
-  cmdmsg_rl = false;
-
-  // Don't allow switching to another buffer.
-  curbuf->b_ro_locked++;
-
-  // Showing the prompt may have set need_wait_return, reset it.
-  need_wait_return = false;
-
-  const int histtype = hist_char2type(cmdwin_type);
-  if (histtype == HIST_CMD || histtype == HIST_DEBUG) {
-    if (p_wc == TAB) {
-      add_map("<Tab>", "<C-X><C-V>", MODE_INSERT, true);
-      add_map("<Tab>", "a<C-X><C-V>", MODE_NORMAL, true);
-    }
-    set_option_value_give_err(kOptFiletype, STATIC_CSTR_AS_OPTVAL("vim"), OPT_LOCAL);
-  }
-  curbuf->b_ro_locked--;
-
-  // Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin
-  // sets 'textwidth' to 78).
-  curbuf->b_p_tw = 0;
-
-  // Fill the buffer with the history.
-  init_history();
-  if (get_hislen() > 0 && histtype != HIST_INVALID) {
-    i = *get_hisidx(histtype);
-    if (i >= 0) {
-      linenr_T lnum = 0;
-      do {
-        if (++i == get_hislen()) {
-          i = 0;
-        }
-        if (get_histentry(histtype)[i].hisstr != NULL) {
-          ml_append(lnum++, get_histentry(histtype)[i].hisstr, 0, false);
-        }
-      } while (i != *get_hisidx(histtype));
-    }
-  }
-
-  // Replace the empty last line with the current command-line and put the
-  // cursor there.
-  ml_replace(curbuf->b_ml.ml_line_count, ccline.cmdbuff, true);
-  curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-  curwin->w_cursor.col = ccline.cmdpos;
-  changed_line_abv_curs();
-  invalidate_botline_win(curwin);
-  ui_ext_cmdline_hide(false);
-  redraw_later(curwin, UPD_SOME_VALID);
-
-  // No Ex mode here!
-  exmode_active = false;
-
-  State = MODE_NORMAL;
-  check_cursor(curwin);
-  setmouse();
-  clear_showcmd();
-
-  // Reset here so it can be set by a CmdwinEnter autocommand.
-  cmdwin_result = 0;
-
-  // Trigger CmdwinEnter autocommands.
-  trigger_cmd_autocmd(cmdwin_type, EVENT_CMDWINENTER);
-  if (restart_edit != 0) {  // autocmd with ":startinsert"
-    stuffcharReadbuff(K_NOP);
-  }
-
-  i = RedrawingDisabled;
-  RedrawingDisabled = 0;
-  int save_count = save_batch_count();
-
-  // Call the main loop until <CR> or CTRL-C is typed.
-  normal_enter(true, false);
-
-  RedrawingDisabled = i;
-  restore_batch_count(save_count);
-
-  const bool save_KeyTyped = KeyTyped;
-
-  // Trigger CmdwinLeave autocommands.
-  trigger_cmd_autocmd(cmdwin_type, EVENT_CMDWINLEAVE);
-
-  // Restore KeyTyped in case it is modified by autocommands
-  KeyTyped = save_KeyTyped;
-
-  cmdwin_type = 0;
-  cmdwin_level = 0;
-  cmdwin_buf = NULL;
-  cmdwin_win = NULL;
-  cmdwin_old_curwin = NULL;
-
-  exmode_active = save_exmode;
-
-  // Safety check: The old window or buffer was changed or deleted: It's a bug
-  // when this happens!
-  if (!win_valid(old_curwin) || !bufref_valid(&old_curbuf)
-      || old_curwin->w_buffer != old_curbuf.br_buf) {
-    cmdwin_result = Ctrl_C;
-    emsg(_(e_active_window_or_buffer_changed_or_deleted));
-  } else {
-    win_T *wp;
-    // autocmds may abort script processing
-    if (aborting() && cmdwin_result != K_IGNORE) {
-      cmdwin_result = Ctrl_C;
-    }
-    // Set the new command line from the cmdline buffer.
-    dealloc_cmdbuff();
-
-    if (cmdwin_result == K_XF1 || cmdwin_result == K_XF2) {  // :qa[!] typed
-      const char *p = (cmdwin_result == K_XF2) ? "qa" : "qa!";
-      size_t plen = (cmdwin_result == K_XF2) ? 2 : 3;
-
-      if (histtype == HIST_CMD) {
-        // Execute the command directly.
-        ccline.cmdbuff = xmemdupz(p, plen);
-        ccline.cmdlen = (int)plen;
-        ccline.cmdbufflen = (int)plen + 1;
-        cmdwin_result = CAR;
-      } else {
-        // First need to cancel what we were doing.
-        stuffcharReadbuff(':');
-        stuffReadbuff(p);
-        stuffcharReadbuff(CAR);
-      }
-    } else if (cmdwin_result == Ctrl_C) {
-      // :q or :close, don't execute any command
-      // and don't modify the cmd window.
-      ccline.cmdbuff = NULL;
-    } else {
-      ccline.cmdlen = get_cursor_line_len();
-      ccline.cmdbufflen = ccline.cmdlen + 1;
-      ccline.cmdbuff = xstrnsave(get_cursor_line_ptr(), (size_t)ccline.cmdlen);
-    }
-
-    if (ccline.cmdbuff == NULL) {
-      ccline.cmdbuff = xmemdupz("", 0);
-      ccline.cmdlen = 0;
-      ccline.cmdbufflen = 1;
-      ccline.cmdpos = 0;
-      cmdwin_result = Ctrl_C;
-    } else {
-      ccline.cmdpos = curwin->w_cursor.col;
-      // If the cursor is on the last character, it probably should be after it.
-      if (ccline.cmdpos == ccline.cmdlen - 1 || ccline.cmdpos > ccline.cmdlen) {
-        ccline.cmdpos = ccline.cmdlen;
-      }
-      if (cmdwin_result == K_IGNORE) {
-        ccline.cmdspos = cmd_screencol(ccline.cmdpos);
-        redrawcmd();
-      }
-    }
-
-    // Avoid command-line window first character being concealed.
-    curwin->w_p_cole = 0;
-    // First go back to the original window.
-    wp = curwin;
-    set_bufref(&bufref, curbuf);
-    skip_win_fix_cursor = true;
-    win_goto(old_curwin);
-
-    // win_goto() may trigger an autocommand that already closes the
-    // cmdline window.
-    if (win_valid(wp) && wp != curwin) {
-      win_close(wp, true, false);
-    }
-
-    // win_close() may have already wiped the buffer when 'bh' is
-    // set to 'wipe', autocommands may have closed other windows
-    if (bufref_valid(&bufref) && bufref.br_buf != curbuf) {
-      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false, false, false);
-    }
-
-    // Restore window sizes.
-    win_size_restore(&winsizes);
-    skip_win_fix_cursor = false;
-  }
-
-  ga_clear(&winsizes);
-  restart_edit = save_restart_edit;
-  cmdmsg_rl = save_cmdmsg_rl;
-
-  State = save_State;
-  may_trigger_modechanged();
-  setmouse();
-  setcursor();
-
-  return cmdwin_result;
+  CmdwinOpenArgs *a = argv[0];
+  char fc[2] = { (char)a->firstc, 0 };
+  typval_T tv_args[] = {
+    { .v_type = VAR_STRING, .vval.v_string = fc },
+    { .v_type = VAR_STRING, .vval.v_string = a->content ? a->content : "" },
+    { .v_type = VAR_NUMBER, .vval.v_number = a->pos + 1 },
+    { .v_type = VAR_UNKNOWN },
+  };
+  nlua_call_vimfn("vim._core.cmdwin", "open", tv_args, NULL);
+  xfree(a->content);
+  xfree(a);
 }
 
-/// @return true if in the cmdwin, not editing the command line.
+/// Schedules cmdwin to open after the current cmdline-reader returns. Returns Ctrl_C so the cmdline
+/// input loop unwinds, then `vim._core.cmdwin` does its work after typeahead. #40312
+static int open_cmdwin(void)
+{
+  // Disallow during textlock or when typing a password.
+  if (text_locked() || cmdline_star > 0) {
+    beep_flush();
+    return K_IGNORE;
+  }
+  // Already open (also guarded in `vim._core.cmdwin`, but check here to avoid scheduling).
+  if (cmdwin_buf != NULL) {
+    beep_flush();
+    return K_IGNORE;
+  }
+  // Disallow for expr-register and input()/inputlist(): no reentrant return path. #40407
+  int ft = get_cmdline_type();
+  if (ft != ':' && ft != '/' && ft != '?') {
+    beep_flush();
+    return K_IGNORE;
+  }
+
+  CmdwinOpenArgs *a = xmalloc(sizeof(*a));
+  a->firstc = ft;
+  a->content = ccline.cmdbuff ? xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen) : NULL;
+  a->pos = ccline.cmdpos;
+  // Intentionally not using vim.scheduled, see note on `open_cmdwin_event`.
+  loop_schedule_deferred(&main_loop, event_create(open_cmdwin_event, a));
+  return Ctrl_C;
+}
+
+/// @return true if curbuf is the cmdwin and we're not editing the command line.
 bool is_in_cmdwin(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return cmdwin_type != 0 && get_cmdline_type() == NUL;
+  return bt_cmdwin(curbuf) && get_cmdline_type() == NUL;
 }
 
 /// Get script string

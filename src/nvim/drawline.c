@@ -1401,7 +1401,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     statuscol.sattrs = wlv.sattrs;
     statuscol.lnum = lnum;
     statuscol.foldinfo = foldinfo;
-    statuscol.width = win_col_off(wp) - (wp == cmdwin_win);
+    statuscol.width = win_col_off(wp);
     statuscol.sign_cul_id = use_cursor_line_highlight(wp, lnum) ? wlv.sign_cul_attr : 0;
   } else if (wlv.sign_cul_attr > 0) {
     wlv.sign_cul_attr = use_cursor_line_highlight(wp, lnum) ? syn_id2attr(wlv.sign_cul_attr) : 0;
@@ -1757,14 +1757,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       assert(wlv.off == 0);
-
-      if (wp == cmdwin_win) {
-        // Draw the cmdline character.
-        draw_col_fill(&wlv,
-                      schar_from_ascii(wlv.row == wlv.startrow ? cmdwin_type : ' '),
-                      1,
-                      wlv.row == wlv.startrow ? win_hl_attr(wp, HLF_AT) : 0);
-      }
 
       if (wlv.filler_todo > 0) {
         // nvim_buf_set_extmark: virt_lines_overflow

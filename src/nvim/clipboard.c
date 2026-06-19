@@ -262,25 +262,3 @@ void end_batch_changes(void)
     set_clipboard(NUL, get_y_previous());
   }
 }
-
-int save_batch_count(void)
-{
-  int save_count = batch_change_count;
-  batch_change_count = 0;
-  clipboard_delay_update = false;
-  if (clipboard_needs_update) {
-    clipboard_needs_update = false;
-    // unnamed ("implicit" clipboard)
-    set_clipboard(NUL, get_y_previous());
-  }
-  return save_count;
-}
-
-void restore_batch_count(int save_count)
-{
-  assert(batch_change_count == 0);
-  batch_change_count = save_count;
-  if (batch_change_count > 0) {
-    clipboard_delay_update = true;
-  }
-}

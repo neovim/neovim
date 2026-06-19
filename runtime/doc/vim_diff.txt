@@ -304,6 +304,9 @@ Command-line:
 - (Experimental) *g:Nvim_color_cmdline* Command-line (|:|) is colored by
   callback defined in `g:Nvim_color_cmdline` (this callback is for testing
   only, and will be removed in the future).
+- |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|) is a "normal" buffer+window, instead
+  of a nested modal loop. API and Lua callbacks can run without |E11| while it
+  is open. The |cmdwin-char| is shown via 'statuscolumn'.
 
 Commands:
 - |:checkhealth|
@@ -761,6 +764,7 @@ Compile-time features:
 - X11 integration (see |x11-selection|)
 
 Editor:
+- |c_CTRL-F| cannot enter |cmdwin| from the |expr-register| prompt.
 - *cscope* support was removed in favour of plugin-based solutions such as:
   https://github.com/dhananjaylatkar/cscope_maps.nvim
 - *popup-window* : Use |floating-windows| instead.

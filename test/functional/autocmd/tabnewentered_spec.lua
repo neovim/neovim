@@ -618,7 +618,7 @@ describe('tabpage/previous', function()
   -- it('does not switch to previous via :tabn #<CR> after entering operator pending',
   --   does_not_switch_to_previous_after_entering_operator_pending(':tabn #<CR>'))
 
-  local function cmdline_win_prevents_tab_switch(characters, completion_visible)
+  local function cmdwin_prevents_tab_switch(characters, completion_visible)
     return function()
       -- Add three tabs for a total of four
       command('tabnew')
@@ -647,16 +647,11 @@ describe('tabpage/previous', function()
       eq(3, eval("tabpagenr('#')"))
     end
   end
-  it('cmdline-win prevents tab switch via g<Tab>', cmdline_win_prevents_tab_switch('g<Tab>', 0))
-  it(
-    'cmdline-win prevents tab switch via <C-W>g<Tab>',
-    cmdline_win_prevents_tab_switch('<C-W>g<Tab>', 1)
-  )
-  it('cmdline-win prevents tab switch via <C-Tab>', cmdline_win_prevents_tab_switch('<C-Tab>', 0))
-  it(
-    'cmdline-win prevents tab switch via :tabn #<CR>',
-    cmdline_win_prevents_tab_switch(':tabn #<CR>', 0)
-  )
+
+  it('cmdwin prevents tab switch via g<Tab>', cmdwin_prevents_tab_switch('g<Tab>', 0))
+  it('cmdwin prevents tab switch via <C-W>g<Tab>', cmdwin_prevents_tab_switch('<C-W>g<Tab>', 0))
+  it('cmdwin prevents tab switch via <C-Tab>', cmdwin_prevents_tab_switch('<C-Tab>', 0))
+  it('cmdwin prevents tab switch via :tabn #<CR>', cmdwin_prevents_tab_switch(':tabn #<CR>', 0))
 
   it(':tabs indicates correct prevtab curwin', function()
     -- Add three tabs for a total of four

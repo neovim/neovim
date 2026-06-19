@@ -2753,7 +2753,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   compl_num_bests = 0;
   compl_ins_end_col = 0;
 
-  if (c == Ctrl_C && cmdwin_type != 0) {
+  if (c == Ctrl_C && bt_cmdwin(curbuf)) {
     // Avoid the popup menu remains displayed when leaving the
     // command line window.
     update_screen();
