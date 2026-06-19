@@ -1061,6 +1061,27 @@ describe('cmdline redraw', function()
       1 substitution on 1 line                                                   |
     ]])
   end)
+
+  it('no empty cmdline after empty echo #18274', function()
+    feed(':foo')
+    api.nvim_echo({ { '' } }, false, {})
+    screen:expect([[
+                               |
+      {1:~                        }|*3
+      :foo^                     |
+    ]])
+    feed(('o'):rep(screen._width - 4))
+    -- No repeated cmdline redraws at screen width
+    screen:expect([[
+                               |
+      {1:~                        }|
+      {3:                         }|
+      :fooooooooooooooooooooooo|
+      ^                         |
+    ]])
+    command('call timer_start(0, {-> 1})')
+    screen:expect_unchanged()
+  end)
 end)
 
 describe('statusline is redrawn on entering cmdline', function()

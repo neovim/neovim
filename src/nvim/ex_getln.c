@@ -4069,7 +4069,7 @@ void redrawcmd(void)
   // Typing ':' at the more prompt may set skip_redraw.  We don't want this
   // in cmdline mode.
   skip_redraw = false;
-
+  cmdline_was_last_drawn = true;
   redrawing_cmdline = false;
 }
 
