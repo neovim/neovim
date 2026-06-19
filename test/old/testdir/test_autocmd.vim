@@ -5457,7 +5457,35 @@ func Test_TextPutX()
   unlet g:post_event
   unlet g:pre_event
   bwipe!
+endfunc
 
+" Test that attempting to put text in normal mode terminal buffer does not
+" result in a crash. This only happens when terminal is only window in tabpage
+" it seems.
+func Test_TextPutPost_term_norm()
+  CheckFeature terminal
+
+  tabnew
+  term ++curwin
+
+  let bnr = bufnr('$')
+  call WaitForAssert({-> assert_equal('running', term_getstatus(bnr))})
+
+  call feedkeys("\<C-\>\<C-N>", 'xt')
+  call WaitForAssert({-> assert_equal('running,normal', term_getstatus(bnr))})
+
+  let err = 0
+
+  try
+    call feedkeys("p", 'xt')
+  catch /^Vim\%((\S\+)\)\=:E21:/
+    let err = 1
+  endtry
+
+  call assert_true(err)
+
+  unlet err
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
