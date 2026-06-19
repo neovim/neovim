@@ -624,13 +624,16 @@ local function win_row_height_border(tgt, min)
   local cfgmin = ui.cfg.msg[tgt].height --[[@as number]]
   min = math.min(min, cfgmin < 1 and math.ceil(o.lines * cfgmin) or cfgmin)
   if tgt ~= 'pager' then
-    return (tgt == 'msg' and 0 or 1) - ui.cmd.wmnumode, min, min < o.lines - ui.cmdheight
+    return (tgt == 'msg' and 0 or 1) - ui.cmd.wmnumode,
+      math.max(1, min),
+      min < o.lines - ui.cmdheight
   end
   local cmdwin = fn.getcmdwintype() ~= was_cmdwin and api.nvim_win_get_height(0) or 0
   local global_stl = (cmdwin > 0 or o.laststatus == 3) and 1 or 0
   local row = 1 - cmdwin - global_stl
   local top = min < o.lines - ui.cmdheight - global_stl - cmdwin
-  return row, math.min(min, o.lines - (top and 1 or 0) - ui.cmdheight - global_stl - cmdwin), top
+  local height = math.min(min, o.lines - (top and 1 or 0) - ui.cmdheight - global_stl - cmdwin)
+  return row, math.max(1, height), top
 end
 
 local function enter_pager()

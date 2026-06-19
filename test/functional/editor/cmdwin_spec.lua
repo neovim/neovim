@@ -43,6 +43,13 @@ describe('cmdwin', function()
     eq('echo "hi"', api.nvim_get_current_line())
   end)
 
+  it('history entry with literal newline char', function()
+    fn.histadd(':', 'echo \n x')
+    feed('q:')
+    eq(':', fn.getcmdwintype())
+    eq('echo \0 x', api.nvim_buf_get_lines(0, 0, 1, false)[1])
+  end)
+
   it('<C-C> in normal mode cancels without executing', function()
     feed('q:')
     feed('iecho "nope"<Esc>')
