@@ -978,7 +978,7 @@ describe('lua stdlib', function()
           )
         end)
 
-        it('does not allow subtracting dict style multiple times', function()
+        it('does not allow subtracting dict style multiple times with the same key', function()
           matches(
             'Multiple vim.opt infix operations unsupported',
             pcall_err(
