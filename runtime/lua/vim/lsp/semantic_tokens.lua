@@ -142,7 +142,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
       ---@type integer LuaLS bug, type must be marked explicitly here
       local new_end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
       -- While end_char goes past the given line, extend the token range to the next line
-      while new_end_char > 0 do
+      while new_end_char > 0 and end_line < #lines - 1 do
         end_char = new_end_char
         end_line = end_line + 1
         buf_line = lines[end_line + 1] or ''
