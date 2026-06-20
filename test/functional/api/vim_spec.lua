@@ -2318,6 +2318,86 @@ describe('API', function()
       )
       eq(listchars, api.nvim_get_option_value('listchars', {}))
     end)
+
+    it('merges options against non-current window', function()
+      api.nvim_set_option_value('listchars', {}, { operation = 'set' })
+
+      local oldwin = fn.win_getid()
+      command('split')
+      local curwin = fn.win_getid()
+      neq(oldwin, curwin)
+
+      eq(
+        { eol = '~' },
+        api.nvim_set_option_value(
+          'listchars',
+          { eol = '~' },
+          { operation = 'append', win = oldwin }
+        )
+      )
+      eq(
+        { tab = '>-' },
+        api.nvim_set_option_value(
+          'listchars',
+          { tab = '>-' },
+          { operation = 'append', win = curwin }
+        )
+      )
+      eq(
+        { eol = '~', space = '-' },
+        api.nvim_set_option_value(
+          'listchars',
+          { space = '-' },
+          { operation = 'append', win = oldwin }
+        )
+      )
+      eq(
+        { lead = '.', tab = '>-' },
+        api.nvim_set_option_value(
+          'listchars',
+          { lead = '.' },
+          { operation = 'append', win = curwin }
+        )
+      )
+    end)
+
+    it('merges options against non-current buffer', function()
+      eq({}, api.nvim_set_option_value('completeopt', {}, { operation = 'set' }))
+
+      local oldbuf = fn.bufnr()
+      command('new')
+      local curbuf = fn.bufnr()
+      neq(oldbuf, curbuf)
+
+      eq(
+        { 'fuzzy' },
+        api.nvim_set_option_value(
+          'completeopt',
+          { 'fuzzy' },
+          { operation = 'append', buf = oldbuf }
+        )
+      )
+      eq(
+        { 'longest' },
+        api.nvim_set_option_value(
+          'completeopt',
+          { 'longest' },
+          { operation = 'append', buf = curbuf }
+        )
+      )
+      eq(
+        { 'fuzzy', 'menu' },
+        api.nvim_set_option_value('completeopt', { 'menu' }, { operation = 'append', buf = oldbuf })
+      )
+      eq(
+        { 'longest', 'noinsert' },
+        api.nvim_set_option_value(
+          'completeopt',
+          { 'noinsert' },
+          { operation = 'append', buf = curbuf }
+        )
+      )
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()

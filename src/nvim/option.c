@@ -1321,17 +1321,28 @@ const char *find_option_end(const char *arg, OptIndex *opt_idxp)
 /// Get new option value from argp. Allocated OptVal must be freed by caller.
 /// Can unset local value of an option when ":set {option}<" is used.
 OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
-                         int nextchar, set_op_T op, uint32_t flags, void *varp, char *errbuf,
-                         const size_t errbuflen, const char **errmsg)
+                         int nextchar, set_op_T op, uint32_t flags, void *varp,
+                         OptVal *oldval_override, char *errbuf, const size_t errbuflen,
+                         const char **errmsg)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(varp != NULL);
 
   vimoption_T *opt = &options[opt_idx];
   char *arg = *argp;
-  // When setting the local value of a global option, the old value may be the global value.
-  const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
-  OptVal oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
+
+  OptVal oldval;
+  if (oldval_override != NULL) {
+    // Allow overriding the oldval. This is needed to handle the case where
+    // options for buffers/windows other than curbuf/curwin are updated. It can
+    // also support merging arbitrary values if necessary down the road.
+    oldval = *oldval_override;
+  } else {
+    // When setting the local value of a global option, the old value may be the global value.
+    const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
+    oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
+  }
+
   OptVal newval = NIL_OPTVAL;
 
   if (nextchar == '&') {
@@ -1548,7 +1559,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
   }
 
   OptVal newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, flags, varp,
-                                    errbuf, errbuflen, errmsg);
+                                    NULL, errbuf, errbuflen, errmsg);
 
   if (newval.type == kOptValTypeNil || *errmsg != NULL) {
     return;

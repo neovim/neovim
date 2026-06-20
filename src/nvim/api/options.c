@@ -388,9 +388,14 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   OptVal merged_val = NIL_OPTVAL;
   const char *errmsg = NULL;
   vimoption_T *option = get_option(opt_idx);
-  // Not sure if we need get_varp_scope_from
-  void *varp = get_varp_scope(option, opt_flags);
+
+  // Need to use varp specific to buf/win to ensure that merges are handled
+  // correctly when the supplied buf/win are different than curbuf/curwin.
+  buf_T *buf = scope == kOptScopeBuf ? to : curbuf;
+  win_T *win = scope == kOptScopeWin ? to : curwin;
+  void *varp = get_varp_from(option, buf, win);
   char *argp = NULL;
+
   switch (optval_right.type) {
   case kOptValTypeNil:
     break;
@@ -413,8 +418,9 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   optval_free(optval_right);
 
   if (optval_right.type == kOptValTypeNumber || optval_right.type == kOptValTypeString) {
+    OptVal oldval = optval_from_varp(opt_idx, varp);
     merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
-                                   option->flags, varp, NULL, 0, &errmsg);
+                                   option->flags, varp, &oldval, NULL, 0, &errmsg);
     VALIDATE(errmsg == NULL, "%s", errmsg, {
       return NIL;
     });
