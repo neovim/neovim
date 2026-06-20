@@ -226,9 +226,9 @@ function M.expand_msg(src, tgt)
     end
 
     api.nvim_buf_set_lines(ui.bufs[tgt], srow, -1, false, lines)
-    for _, mark in ipairs(marks) do
-      hlopts.end_col, hlopts.hl_group = mark[4].end_col, mark[4].hl_group
-      api.nvim_buf_set_extmark(ui.bufs[tgt], ui.ns, srow + mark[2], mark[3], hlopts)
+    for _, m in ipairs(marks) do
+      hlopts.hl_group, hlopts.end_col, hlopts.end_row = m[4].hl_group, m[4].end_col, m[4].end_row
+      api.nvim_buf_set_extmark(ui.bufs[tgt], ui.ns, srow + m[2], m[3], hlopts)
     end
   else
     if M[src] then
@@ -280,20 +280,19 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     return
   end
 
-  local line_count = api.nvim_buf_line_count(buf)
   ---@type integer Start row after last line in the target buffer, unless
   ---this is the first message, or in case of a repeated or replaced message.
   local row = mark[1]
     or (M[tgt] and not next(M[tgt].ids) and ui.cmd.srow == 0 and 0)
-    or (line_count - ((replace_last or cr or append) and 1 or 0))
+    or (api.nvim_buf_line_count(buf) - ((replace_last or cr or append) and 1 or 0))
   local curline = (cr or append) and api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
-  local start_row, width = row, M.msg.width
   col = mark[2] or (append and not cr and math.min(col, #curline) or 0)
-  local start_col, insert = col, false
-  local stime, lines, code = vim.uv.hrtime(), o.lines, nil
+  local start_row, start_col, lines = row, col, o.lines
 
   local function set_target_pos()
     if tgt == 'msg' then
+      local width_cmd = [[echo max(map(range(1, line('$')), 'virtcol([v:val, "$"])'))]]
+      local width = tonumber(fn.win_execute(ui.wins.msg, width_cmd)) - 1
       api.nvim_win_set_width(ui.wins.msg, width)
       local texth = api.nvim_win_text_height(ui.wins.msg, { start_row = start_row, end_row = row })
       if texth.all > math.ceil(lines * 0.5) then
@@ -310,7 +309,6 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
         -- regardless of height. Put cmdline below message.
         ui.cmd.srow = row + 1
       else
-        api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 }) -- ensure first line is visible
         -- Place [+x] indicator for lines that spill over 'cmdheight'.
         local texth = api.nvim_win_text_height(ui.wins.cmd, { max_height = lines })
         texth.all = math.max(texth.all, api.nvim_buf_line_count(ui.bufs.cmd))
@@ -330,31 +328,37 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     end
   end
 
-  for i, chunk in ipairs(content) do
-    -- Split at newline and write to start of line after carriage return.
+  local repl, did_cr, code, stime = { '' }, false, nil, vim.uv.hrtime()
+  for _, chunk in ipairs(content) do
     for str in (chunk[2] .. '\0'):gmatch('.-[\n\r%z]') do
-      local repl, pat = str:sub(1, -2), str:sub(-1)
-      local end_col = col + #repl ---@type integer
+      local pat, time = str:sub(-1), vim.uv.hrtime()
+      repl[#repl] = str:sub(1, -2)
+      repl[#repl + 1] = (pat == '\n' and not did_cr) and '' or nil
 
-      -- Insert new line at end of buffer or when inserting lines for a replaced message.
-      if line_count < row + 1 or insert then
-        api.nvim_buf_set_lines(buf, row, row > start_row and row or -1, false, { repl })
-        insert, line_count = false, line_count + 1
-      else
-        local erow = mark[3] and mark[3].end_row or row
-        local ecol = mark[3] and mark[3].end_col or curline and math.min(end_col, #curline) or -1
-        api.nvim_buf_set_text(buf, row, col, erow, ecol, { repl })
-      end
-      curline = api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
-      mark[3] = nil
+      -- Cannot accumulate newlines after a carriage return.
+      if pat ~= '\n' or did_cr or time - stime > 100000000 then
+        local end_col = #repl[#repl] + (#repl == 1 and col or 0)
+        if row >= api.nvim_buf_line_count(buf) then
+          api.nvim_buf_set_lines(buf, row, -1, false, repl)
+        else
+          local erow = mark[3] and mark[3].end_row or row
+          local ecol = mark[3] and mark[3].end_col or curline and math.min(col + #repl[1], #curline)
+          api.nvim_buf_set_text(buf, row, col, erow, ecol or -1, repl)
+        end
 
-      if chunk[3] > 0 then
-        hlopts.end_col, hlopts.hl_group = end_col, chunk[3]
-        api.nvim_buf_set_extmark(buf, ui.ns, row, col, hlopts)
+        if chunk[3] > 0 then
+          hlopts.hl_group, hlopts.end_col, hlopts.end_row = chunk[3], end_col, row + #repl - 1
+          api.nvim_buf_set_extmark(buf, ui.ns, row, col, hlopts)
+        end
+
+        row = row + #repl - (did_cr and pat == '\n' and 0 or 1)
+        col = pat == '\0' and end_col or 0
+        curline = #repl > 1 and repl[#repl] or api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
+        repl, mark[3] = { '' }, nil
+        did_cr = pat == '\r'
       end
 
       -- Show progress and check for CTRL-C when taking a while.
-      local time = vim.uv.hrtime()
       if time - stime > 100000000 then
         stime, _, code = time, vim.wait(0, nil, 0)
         if code == -2 then
@@ -362,16 +366,6 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
         end
         set_target_pos()
         api.nvim__redraw({ flush = true })
-      elseif tgt == 'msg' and (pat == '\n' or (i == #content and pat == '\0')) then
-        width = api.nvim_win_call(ui.wins.msg, function()
-          return math.max(width, fn.strdisplaywidth(curline))
-        end)
-      end
-
-      if pat == '\n' then
-        row, col, insert = row + 1, 0, mark[1] ~= nil
-      else
-        col = pat == '\r' and 0 or end_col
       end
     end
     if code == -2 then
@@ -552,7 +546,6 @@ function M.msg_history_show(entries, prev_cmd)
   for i, entry in ipairs(entries) do
     M.show_msg('pager', entry[1], entry[2], i == 1, entry[3], 0)
   end
-  api.nvim_win_set_cursor(ui.wins.pager, { 1, 0 })
 
   M.set_pos('pager')
 end
@@ -573,19 +566,19 @@ local function cmd_on_key(key, typed)
 
   -- Check if window was entered and reopen with original config.
   local mode = not api.nvim_get_mode().mode:match('[it]')
-  local entered = mode and (typed == '<CR>' or typed_g and (typed == '<lt>' or key == '<'))
+  local enter = mode and (typed == '<CR>' or typed_g and (typed == '<lt>' or key == '<'))
     or (typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd)
-  if entered then
+  if enter then
     M.expand_msg('cmd', 'pager')
-    api.nvim_win_set_cursor(ui.wins.pager, { 1, 0 })
   end
   pcall(api.nvim_win_close, ui.wins.cmd, true)
   ui.check_targets()
+  api.nvim_win_set_cursor(ui.wins[enter and 'pager' or 'cmd'], { 1, 0 })
   set_virttext('cmd', 'cmd')
   api.nvim__redraw({ flush = true })
 
   typed_g, M.cmd_on_key, M.cmd.ids = false, nil, {}
-  return entered and '' or nil
+  return enter and '' or nil
 end
 
 --- Add virtual [+x] text to indicate scrolling is possible.
@@ -697,6 +690,7 @@ function M.set_pos(tgt)
       cfg.border = cfg.border and t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
       cfg.mouse = tgt == 'cmd' or t == 'msg' or nil
       api.nvim_win_set_config(win, cfg)
+      api.nvim_win_set_cursor(win, { 1, 0 })
 
       if tgt == 'cmd' then
         -- Dismiss temporarily expanded cmdline on next keypress and update spill indicator.
