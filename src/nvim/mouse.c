@@ -16,6 +16,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -662,6 +663,22 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
   }
 
+  if (mod_mask == 0
+      && !is_drag
+      && (jump_flags & (MOUSE_FOLD_CLOSE | MOUSE_FOLD_OPEN))
+      && which_button == MOUSE_LEFT) {
+    // open or close a fold at this line
+    if (jump_flags & MOUSE_FOLD_OPEN) {
+      openFold(curwin->w_cursor, 1);
+    } else {
+      closeFold(curwin->w_cursor, 1);
+    }
+    // don't move the cursor if still in the same window
+    if (curwin == old_curwin) {
+      curwin->w_cursor = save_cursor;
+    }
+  }
+
   bool moved = (jump_flags & CURSOR_MOVED);
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
   bool in_statuscol = (jump_flags & MOUSE_STATUSCOL);
@@ -680,8 +697,21 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
 
     StlClickDefinition *click_defs = in_status_line ? wp->w_status_click_defs
-                                                    : in_winbar ? wp->w_winbar_click_defs
-                                                                : wp->w_statuscol_click_defs;
+                                                    : in_winbar ? wp->w_winbar_click_defs : NULL;
+    if (in_statuscol && wp->w_p_rl) {
+      click_col = wp->w_view_width - click_col - 1;
+    }
+
+    if (in_statuscol) {
+      int lnum = (int)get_vim_var_nr(VV_LNUM);
+      int virtnum = (int)get_vim_var_nr(VV_VIRTNUM);
+      StcClicks lnum_click_defs = map_get(int, StcClicks)(wp->w_statuscol_click_defs, lnum);
+      StcClick row_click_defs = map_get(int, StcClick)(&lnum_click_defs, virtnum);
+      if (click_col >= (int)row_click_defs.size) {
+        return false;
+      }
+      click_defs = row_click_defs.def;
+    }
 
     if (in_global_statusline) {
       // global statusline is displayed for the current window,
@@ -690,14 +720,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       click_col = mouse_col;
     }
 
-    if (in_statuscol && wp->w_p_rl) {
-      click_col = wp->w_view_width - click_col - 1;
-    }
-
-    if ((in_statuscol && click_col >= (int)wp->w_statuscol_click_defs_size)
-        || (in_status_line
-            && click_col >=
-            (int)(in_global_statusline ? curwin : wp)->w_status_click_defs_size)) {
+    if (in_status_line && click_col >=
+        (int)(in_global_statusline ? curwin : wp)->w_status_click_defs_size) {
       return false;
     }
 
@@ -719,10 +743,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
         break;
       }
     }
-
-    if (!(in_statuscol && (jump_flags & (MOUSE_FOLD_CLOSE|MOUSE_FOLD_OPEN)))) {
-      return false;
-    }
+    return false;
   } else if (in_winbar || in_statuscol) {
     // A drag or release event in the window bar and status column has no side effects.
     return false;
@@ -732,22 +753,6 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   // friendlier than beeping and not jumping to that window.
   if (curwin != old_curwin && oap != NULL && oap->op_type != OP_NOP) {
     clearop(oap);
-  }
-
-  if (mod_mask == 0
-      && !is_drag
-      && (jump_flags & (MOUSE_FOLD_CLOSE | MOUSE_FOLD_OPEN))
-      && which_button == MOUSE_LEFT) {
-    // open or close a fold at this line
-    if (jump_flags & MOUSE_FOLD_OPEN) {
-      openFold(curwin->w_cursor, 1);
-    } else {
-      closeFold(curwin->w_cursor, 1);
-    }
-    // don't move the cursor if still in the same window
-    if (curwin == old_curwin) {
-      curwin->w_cursor = save_cursor;
-    }
   }
 
   // Set global flag that we are extending the Visual area with mouse dragging;
@@ -1685,7 +1690,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
   while (row > 0) {
     // Don't include filler lines in "count"
-    row -= lnum == win->w_topline ? win->w_topfill : win_get_fill(win, lnum);
+    int filler_lines = lnum == win->w_topline ? win->w_topfill : win_get_fill(win, lnum);
     count = plines_win_nofill(win, lnum, false);
 
     if (win->w_skipcol > 0 && lnum == win->w_topline) {
@@ -1706,12 +1711,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       }
     }
 
-    // Clicking a "below" virtual line should interact with the line above,
-    // rather than the next line to which it is attached in the decor/draw sense.
-    int virt_below = 0;
-    if (count > row
-        || (decor_virt_lines(win, lnum, lnum + 1, &virt_below, NULL, false)
-            && count + virt_below > row)) {
+    if (count + filler_lines > row) {
       break;            // Position is in this buffer line.
     }
 
@@ -1721,18 +1721,34 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       retval = true;
       break;                    // past end of file
     }
-    row -= count;
+    row -= count + filler_lines;
     lnum++;
   }
 
-  // Earlier virt below check avoids advancing lnum, also need to decrement for topline.
-  if (lnum == win->w_topline) {
-    int virt_below = 0;
-    int virt_lines = decor_virt_lines(win, lnum - 1, lnum, &virt_below, NULL, false);
-    int diff_fill = diff_check_fill(win, lnum);
-    int skip_fill = virt_lines + diff_fill - win->w_topfill;
-    lnum -= (*rowp < virt_below - skip_fill);
+  int virt_below = 0;
+  int virt_lines = decor_virt_lines(win, lnum - 1, lnum, &virt_below, NULL, true);
+  int diff_fill = diff_check_fill(win, lnum);
+  int skip_fill = lnum == win->w_topline ? virt_lines + diff_fill - win->w_topfill : 0;
+
+  // Compute v:virt/lnum as it was when the statuscolmn was drawn. Used to fetch
+  // the click definition for this row from w_statuscol_click_defs, and so that
+  // it is available in 'statuscolumn' click handlers.
+  int virtnum = row - (virt_lines + diff_fill - skip_fill);
+  if (row < virt_below - skip_fill) {
+    // Clicking a "below" virtual line should interact with the line above,
+    // rather than the next line to which it is attached in the decor/draw sense.
+    lnum--;
+    int virt_below_prev = 0;
+    int virt_lines_prev = decor_virt_lines(win, lnum - 1, lnum, &virt_below_prev, NULL, true);
+    int diff_fill_prev = diff_check_fill(win, lnum - 1);
+    virtnum = -row - 1 - virt_lines_prev - diff_fill_prev + virt_below_prev;
+  } else if (row < virt_lines + diff_fill - skip_fill) {
+    virtnum = -row;
   }
+  set_vim_var_nr(VV_LNUM, lnum);
+  set_vim_var_nr(VV_VIRTNUM, virtnum);
+
+  row -= virt_lines + diff_fill - skip_fill;
 
   // Mouse row reached, adjust lnum for concealed lines.
   while (lnum < win->w_buffer->b_ml.ml_line_count

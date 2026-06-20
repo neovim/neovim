@@ -320,6 +320,8 @@ These existing features changed their behavior.
   • |nvim_exec_autocmds()|
   • |nvim_get_autocmds()|
 • |vim.keymap.set()| and |vim.keymap.del()| accept a list of strings for `lhs`.
+• 'statuscolumn' click function labels can be different across rows.
+  |v:virtnum| and |v:lnum| are available during the click function callback.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
