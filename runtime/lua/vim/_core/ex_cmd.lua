@@ -401,7 +401,19 @@ function M.packdel_complete(pattern, line)
 end
 
 -- Restart that preserves session and window layout
+-- TODO: https://github.com/neovim/neovim/issues/34204
 function M.ex_session_restart()
+  -- Return early if `:restart +qall` will fail
+  for _, buf_id in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.bo[buf_id].modified then
+      vim.notify(
+        'Restart cancelled. No write since last change in buffer ' .. buf_id,
+        vim.log.levels.WARN
+      )
+      return
+    end
+  end
+
   -- Compute session to write and restore
   local this_session = vim.fs.normalize(vim.v.this_session)
   local del_session = nil
@@ -420,7 +432,7 @@ function M.ex_session_restart()
   -- Restart Neovim and execute Lua commands to restore necessary session
   local after = { 'vim.cmd("source ' .. session_arg:gsub('\\', '\\\\') .. '")' }
   if del_session ~= nil then
-    table.insert(after, 'pcall(vim.fs.rm, ' .. vim.inspect(del_session) .. ')')
+    table.insert(after, ('pcall(vim.fs.rm, %s)'):format(vim.inspect(del_session)))
     table.insert(after, 'vim.v.this_session = ""')
   end
 
