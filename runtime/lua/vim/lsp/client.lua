@@ -847,9 +847,10 @@ end
 ---
 --- @param method vim.lsp.protocol.Method.ClientToServer.Notification LSP method name.
 --- @param params table? LSP request params.
+--- @param bufnr integer? Buffer associated with notification.
 --- @return boolean status indicating if the notification was successful.
 ---                        If it is false, then the client has shutdown.
-function Client:notify(method, params)
+function Client:notify(method, params, bufnr)
   if method ~= 'textDocument/didChange' then
     changetracking.flush(self)
   end
@@ -857,16 +858,15 @@ function Client:notify(method, params)
   local client_active = self.rpc.notify(method, params)
 
   if client_active then
-    vim.schedule(function()
-      api.nvim_exec_autocmds('LspNotify', {
-        modeline = false,
-        data = {
-          client_id = self.id,
-          method = method,
-          params = params,
-        },
-      })
-    end)
+    api.nvim_exec_autocmds('LspNotify', {
+      buf = bufnr,
+      modeline = false,
+      data = {
+        client_id = self.id,
+        method = method,
+        params = params,
+      },
+    })
   end
 
   return client_active
@@ -1137,14 +1137,14 @@ end
 
 --- Default handler for the 'textDocument/didClose' LSP notification.
 ---
---- @param buf integer Number of the buffer, or 0 for current
-function Client:_text_document_did_close_handler(buf)
+--- @param bufnr integer Number of the buffer, or 0 for current
+function Client:_text_document_did_close_handler(bufnr)
   if not self:supports_method('textDocument/didClose') then
     return
   end
-  local uri = vim.uri_from_bufnr(buf)
+  local uri = vim.uri_from_bufnr(bufnr)
   local params = { textDocument = { uri = uri } }
-  self:notify('textDocument/didClose', params)
+  self:notify('textDocument/didClose', params, bufnr)
 end
 
 --- Default handler for the 'textDocument/didOpen' LSP notification.
@@ -1166,7 +1166,7 @@ function Client:_text_document_did_open_handler(bufnr)
       languageId = self:_get_language_id(bufnr),
       text = lsp._buf_get_full_text(bufnr),
     },
-  })
+  }, bufnr)
 
   -- Next chance we get, we should re-do the diagnostics
   vim.schedule(function()

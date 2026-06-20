@@ -1780,7 +1780,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
                                 |Client:is_stopped()|.
       • {name}                  (`string`) See |vim.lsp.ClientConfig|.
-      • {notify}                (`fun(self: vim.lsp.Client, method: string, params: table?): boolean`)
+      • {notify}                (`fun(self: vim.lsp.Client, method: string, params: table?, bufnr: integer?): boolean`)
                                 See |Client:notify()|.
       • {offset_encoding}       (`'utf-8'|'utf-16'|'utf-32'`) See
                                 |vim.lsp.ClientConfig|.
@@ -2015,12 +2015,13 @@ Client:is_stopped()                                      *Client:is_stopped()*
         (`boolean`) true if client is stopped or in the process of being
         stopped; false otherwise
 
-Client:notify({method}, {params})                            *Client:notify()*
+Client:notify({method}, {params}, {bufnr})                   *Client:notify()*
     Sends a notification to an LSP server.
 
     Parameters: ~
       • {method}  (`string`) LSP method name.
       • {params}  (`table?`) LSP request params.
+      • {bufnr}   (`integer?`) Buffer associated with notification.
 
     Return: ~
         (`boolean`) status indicating if the notification was successful. If
