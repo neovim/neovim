@@ -63,7 +63,7 @@ typedef enum {
   kNumBaseHexadecimal = 16,
 } NumberBase;
 
-static bool defer_stl_redraw(win_T *wp)
+static bool stl_defer_redraw(win_T *wp)
 {
   if (aucmd_prepbuf_depth == 0) {
     return false;
