@@ -22,7 +22,7 @@ EXTERN win_T *last_cursormoved_win INIT( = NULL);
 EXTERN pos_T last_cursormoved INIT( = { 0, 0, 0 });
 
 EXTERN bool autocmd_busy INIT( = false);     ///< Is apply_autocmds() busy?
-EXTERN int aucmd_prepbuf_depth INIT( = 0);     ///< Inside aucmd_prepbuf() window switch
+EXTERN int aucmd_prepbuf_depth INIT( = 0);   ///< Inside aucmd_prepbuf() window switch
 EXTERN int autocmd_no_enter INIT( = false);  ///< Buf/WinEnter autocmds disabled
 EXTERN int autocmd_no_leave INIT( = false);  ///< Buf/WinLeave autocmds disabled
 
