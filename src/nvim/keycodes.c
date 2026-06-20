@@ -28,12 +28,7 @@
 #include "keycodes.c.generated.h"
 
 // Some useful tables.
-
-static const struct modmasktable {
-  uint16_t mod_mask;  ///< Bit-mask for particular key modifier.
-  uint16_t mod_flag;  ///< Bit(s) for particular key modifier.
-  char name;  ///< Single letter name of modifier.
-} mod_mask_table[] = {
+const struct modmasktable mod_mask_table[] = {
   { MOD_MASK_ALT,              MOD_MASK_ALT,           'M' },
   { MOD_MASK_META,             MOD_MASK_META,          'T' },
   { MOD_MASK_CTRL,             MOD_MASK_CTRL,          'C' },
@@ -260,9 +255,10 @@ int handle_x_keys(const int key)
 }
 
 /// @return  a string which contains the name of the given key when the given modifiers are down.
-char *get_special_key_name(int c, int modifiers)
+char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
 {
   static char string[MAX_KEY_NAME_LEN + 1];
+  bool is_ascii_ctrl = false;
 
   string[0] = '<';
   int idx = 1;
@@ -293,18 +289,16 @@ char *get_special_key_name(int c, int modifiers)
   // extract modifiers.
   if (c > 0
       && utf_char2len(c) == 1) {
-    if (table_idx < 0
-        && (!vim_isprintc(c) || (c & 0x7f) == ' ')
-        && (c & 0x80)) {
-      c &= 0x7f;
-      modifiers |= MOD_MASK_ALT;
-      // try again, to find the un-alted key in the special key table
-      table_idx = find_special_key_in_table(c);
-    }
     if (table_idx < 0 && !vim_isprintc(c) && c < ' ') {
       c += '@';
       modifiers |= MOD_MASK_CTRL;
+
+      is_ascii_ctrl = true;
     }
+  }
+
+  if (data) {
+    data->modifiers = 0;
   }
 
   // translate the modifier into a string
@@ -313,11 +307,20 @@ char *get_special_key_name(int c, int modifiers)
         == mod_mask_table[i].mod_flag) {
       string[idx++] = mod_mask_table[i].name;
       string[idx++] = '-';
+
+      if (data) {
+        data->modifiers |= mod_mask_table[i].mod_flag;
+      }
     }
   }
 
   if (table_idx < 0) {          // unknown special key, may output t_xx
     if (IS_SPECIAL(c)) {
+      if (data) {
+        data->key_orig = (String){ NULL, 0 };
+        data->key = (String){ &string[idx], 4 };
+      }
+
       string[idx++] = 't';
       string[idx++] = '_';
       string[idx++] = (char)(uint8_t)KEY2TERMCAP0(c);
@@ -326,11 +329,37 @@ char *get_special_key_name(int c, int modifiers)
       // Not a special key, only modifiers, output directly.
       int len = utf_char2len(c);
       if (len == 1 && vim_isprintc(c)) {
+        if (data) {
+          if ('A' <= c && c <= 'Z') {
+            data->_key_mem = (char)c + 32;
+            data->key = (String){ &data->_key_mem, 1 };
+            if (!is_ascii_ctrl) {
+              data->modifiers |= MOD_MASK_SHIFT;
+            }
+            data->key_orig = (String){ &string[idx], (size_t)len };
+          } else {
+            data->key_orig = (String){ NULL, 0 };
+            data->key = (String){ &string[idx], (size_t)len };
+          }
+        }
+
         string[idx++] = (char)(uint8_t)c;
       } else if (len > 1) {
+        if (data) {
+          data->key = (String){ &string[idx], (size_t)len };
+          data->key_orig = (String){ NULL, 0 };
+        }
+
         idx += utf_char2bytes(c, string + idx);
       } else {
         char *s = transchar(c);
+
+        if (data) {
+          data->_key_mem = (char)c;
+          data->key = (String){ &data->_key_mem, 1 };
+          data->key_orig = (String){ &string[idx], strlen(s) };
+        }
+
         while (*s) {
           string[idx++] = *s++;
         }
@@ -338,6 +367,18 @@ char *get_special_key_name(int c, int modifiers)
     }
   } else {            // use name of special key
     const String *s = &key_names_table[table_idx].name;
+
+    if (data) {
+      if (0 <= c && c <= 0x7f) {
+        data->_key_mem = (char)c;
+        data->key = (String){ &data->_key_mem, 1 };
+        data->key_orig = *s;
+      } else {
+        data->key = *s;
+        data->key_orig = (String){ NULL, 0 };
+      }
+    }
+
     if ((int)s->size + idx + 2 <= MAX_KEY_NAME_LEN) {
       STRCPY(string + idx, s->data);
       idx += (int)s->size;

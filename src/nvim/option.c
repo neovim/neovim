@@ -4699,7 +4699,7 @@ static int put_set(FILE *fd, char *cmd, OptIndex opt_idx, void *varp)
     OptInt wc;
     if (wc_use_keyname(varp, &wc)) {
       // print 'wildchar' and 'wildcharm' as a key name
-      if (fputs(get_special_key_name((int)wc, 0), fd) < 0) {
+      if (fputs(get_special_key_name((int)wc, 0, NULL), fd) < 0) {
         return FAIL;
       }
     } else if (fprintf(fd, "%" PRId64, value_num) < 0) {
@@ -6276,7 +6276,7 @@ static void option_value2string(vimoption_T *opt, int opt_flags)
     OptInt wc = 0;
 
     if (wc_use_keyname(varp, &wc)) {
-      xstrlcpy(NameBuff, get_special_key_name((int)wc, 0), sizeof(NameBuff));
+      xstrlcpy(NameBuff, get_special_key_name((int)wc, 0, NULL), sizeof(NameBuff));
     } else if (wc != 0) {
       xstrlcpy(NameBuff, transchar((int)wc), sizeof(NameBuff));
     } else {

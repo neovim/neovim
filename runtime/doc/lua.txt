@@ -1265,7 +1265,7 @@ vim.inspect()                                                  *vim.inspect()*
       • https://github.com/kikito/inspect.lua
       • https://github.com/mpeterv/vinspect
 
-vim.keycode({str})                                             *vim.keycode()*
+vim.keycode({str}, {info})                                     *vim.keycode()*
     Translates keycodes.
 
     Example: >lua
@@ -1274,10 +1274,20 @@ vim.keycode({str})                                             *vim.keycode()*
 <
 
     Parameters: ~
-      • {str}  (`string`) String to be converted.
+      • {str}   (`string`) String to be converted.
+      • {info}  (`boolean?`) Also returns a normalized detailed info about the
+                key as a second return value.
 
-    Return: ~
+    Return (multiple): ~
         (`string`)
+        (`table?`) List of dicts where each dict represents a key chord, and
+        has fields:
+        • {key} (`string`) The key chord normalized without modifiers.
+        • {key_orig} (`string?`) Non-normalized version of key chord, only
+          present when it differs from {key}. Example: `lt` and `<`.
+        • {key_raw} (`string`) The original key chord with modifiers.
+        • {mod} (`('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]`) A list of single
+          character modifiers of the key.
 
     See also: ~
       • |nvim_replace_termcodes()|
