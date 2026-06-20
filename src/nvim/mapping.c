@@ -2093,7 +2093,7 @@ static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt
   FUNC_ATTR_NONNULL_ARG(1)
 {
   Dict dict = arena_dict(arena, 20);
-  char *const lhs = str2special_arena(mp->m_keys, compatible, !compatible, arena);
+  char *const lhs = str2special_arena(mp->m_keys, compatible, compatible ? kFalse : kNone, arena);
   char *mapmode = arena_alloc(arena, 7, false);
   map_mode_to_chars(mp->m_mode, mapmode);
   int noremap_value;
@@ -2113,7 +2113,7 @@ static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt
   } else {
     String rhs = cstr_as_string(compatible
                                 ? mp->m_orig_str
-                                : str2special_arena(mp->m_str, false, true, arena));
+                                : str2special_arena(mp->m_str, false, kNone, arena));
     PUT_C(dict, "rhs", STRING_OBJ(rhs));
   }
   if (mp->m_desc != NULL) {
