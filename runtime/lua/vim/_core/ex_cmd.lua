@@ -424,7 +424,8 @@ function M.ex_session_restart()
     table.insert(after, 'vim.v.this_session = ""')
   end
 
-  local ok, msg = pcall(vim.cmd, 'restart! lua ' .. table.concat(after, ';'))
+  -- "+:::" special argument sets v:startreason to "session_restart" on the new server
+  local ok, msg = pcall(vim.cmd, 'restart! +:::qall lua ' .. table.concat(after, ';'))
   if not ok then
     error(msg)
   end

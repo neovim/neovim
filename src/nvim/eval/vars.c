@@ -349,7 +349,9 @@ void evalvars_init(void)
 
   // Set v:startreason via environment variable
   const char *startreason = os_getenv_noalloc(ENV_STARTREASON);
-  if (strequal(startreason, "normal") || strequal(startreason, "restart")) {
+  if (strequal(startreason, "normal") 
+      || strequal(startreason, "restart") 
+      || strequal(startreason, "restart_session")) {
     set_vim_var_string(VV_STARTREASON, startreason, -1);
   }
   if (os_env_exists(ENV_STARTREASON, false)) {

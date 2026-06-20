@@ -4974,6 +4974,12 @@ static void ex_restart(exarg_T *eap)
     return;
   }
 
+  const char *startreason = "restart";
+  // If we see our special flag "+:::", set startreason
+  if(eap->do_ecmd_cmd && strncmp(eap->do_ecmd_cmd, "+:::", 4) != 0) {
+    startreason = "restart_session";
+  }
+
   Error err = ERROR_INIT;
   const bool no_ui = !ui_active();
   const char *exepath = get_vim_var_str(VV_PROGPATH);
@@ -5051,7 +5057,7 @@ static void ex_restart(exarg_T *eap)
 #endif
 
   dict_T *env = create_environment(NULL, false, false, false, NULL);
-  tv_dict_add_str(env, S_LEN(ENV_STARTREASON), "restart");
+  tv_dict_add_str(env, S_LEN(ENV_STARTREASON), startreason);
 #ifdef MSWIN
   tv_dict_add_str(env, S_LEN(ENV_RESTART_ALLOC_CONSOLE), "1");
 #endif
