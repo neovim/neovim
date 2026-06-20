@@ -115,8 +115,6 @@ end)
 
 describe('TUI :detach', function()
   it('does not stop server', function()
-    local job_opts = { env = t.shallowcopy(env_notermguicolors) }
-
     n.clear()
     finally(function()
       n.check_close()
@@ -134,7 +132,7 @@ describe('TUI :detach', function()
       'colorscheme vim',
       '--cmd',
       nvim_set .. ' laststatus=2 background=dark',
-    }, job_opts)
+    }, { env = env_notermguicolors })
     tt.override_screen_expect_for_conpty(screen)
 
     tt.feed_data('iHello, World')
@@ -191,7 +189,7 @@ describe('TUI :detach', function()
       '--remote-ui',
       '--server',
       child_server,
-    }, job_opts)
+    }, { env = env_notermguicolors })
 
     screen_reattached:expect([[
       We did it, pooky^.                                 |

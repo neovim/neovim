@@ -203,7 +203,7 @@ function M.setup_child_nvim(args, opts)
   opts = opts or {}
   local argv = { nvim_prog, unpack(args or {}) }
 
-  local env = opts.env or {}
+  local env = t.shallowcopy(opts.env) or {}
   env.VIMRUNTIME = env.VIMRUNTIME or os.getenv('VIMRUNTIME')
   env.NVIM_TEST = env.NVIM_TEST or os.getenv('NVIM_TEST')
 
