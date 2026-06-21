@@ -41,7 +41,6 @@ describe('v:argf', function()
       },
     }
 
-    command('set shellslash')
     local abs1 = n.fn.fnamemodify(file1, ':p')
     local abs2 = n.fn.fnamemodify(file2, ':p')
     local abs3 = n.fn.fnamemodify(file3, ':p')

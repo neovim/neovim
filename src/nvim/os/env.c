@@ -619,9 +619,9 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
 #endif
         *var = NUL;
         var = vim_getenv(dst);
-        // Backslashes in srcp might just be used for escaping.
-        // Only normalizing slash in env vars is safer,
-        // especially this is required for autocmd file pattern.
+        // Backslashes in `srcp` might just be used for escaping. Expanded env
+        // vars represent paths, so their backslashes can be safely normalized.
+        // Autocmd file patterns require this normalization.
         TO_SLASH(var);
         mustfree = true;
 #ifdef UNIX

@@ -25,7 +25,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles the root path', function()
-    local root = t.fix_slashes(n.pathroot())
+    local root = assert(t.fix_slashes(n.pathroot()))
     eq(root, fnamemodify([[/]], ':p:h'))
     eq(root, fnamemodify([[/]], ':p'))
     if is_os('win') then
@@ -38,7 +38,7 @@ describe('fnamemodify()', function()
       eq(root, fnamemodify([[/]], ':p'))
 
       local letter_colon = root:sub(1, 2)
-      local old_dir = getcwd() .. '/'
+      local old_dir = ('%s/'):format(getcwd())
       local foo_dir = old_dir .. 'foo/'
       eq(old_dir, fnamemodify(letter_colon, ':p'))
       eq(old_dir, fnamemodify(letter_colon .. '.', ':p'))
@@ -61,17 +61,17 @@ describe('fnamemodify()', function()
     n.api.nvim_set_current_dir(t.paths.test_source_path)
 
     local filename = 'src/version.c'
-    local cwd = t.fix_slashes(getcwd())
+    local cwd = vim.fs.normalize(getcwd())
 
-    eq(cwd .. '/src/version.c', fnamemodify(filename, ':p'))
+    eq(('%s/src/version.c'):format(cwd), fnamemodify(filename, ':p'))
 
     eq('src/version.c', fnamemodify(filename, ':p:.'))
-    eq(cwd .. '/src', fnamemodify(filename, ':p:h'))
-    eq(cwd .. '', fnamemodify(filename, ':p:h:h'))
+    eq(('%s/src'):format(cwd), fnamemodify(filename, ':p:h'))
+    eq(cwd, fnamemodify(filename, ':p:h:h'))
     eq('version.c', fnamemodify(filename, ':p:t'))
-    eq(cwd .. '/src/version', fnamemodify(filename, ':p:r'))
+    eq(('%s/src/version'):format(cwd), fnamemodify(filename, ':p:r'))
 
-    eq(cwd .. '/src/main.c', fnamemodify(filename, ':s?version?main?:p'))
+    eq(('%s/src/main.c'):format(cwd), fnamemodify(filename, ':s?version?main?:p'))
 
     local converted_cwd = cwd:gsub('/', '\\')
     eq(converted_cwd .. '\\src\\version.c', fnamemodify(filename, ':p:gs?/?\\\\?'))

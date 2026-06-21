@@ -2,8 +2,8 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq, clear, call, write_file, command = t.eq, n.clear, n.call, t.write_file, n.command
-local eval = n.eval
-local is_os, skip = t.is_os, t.skip
+local eval, fn = n.eval, n.fn
+local is_os = t.is_os
 local pcall_err = t.pcall_err
 
 describe('executable()', function()
@@ -19,27 +19,24 @@ describe('executable()', function()
   end)
 
   it('exepath respects shellslash #13787', function()
-    skip(not is_os('win'), 'N/A for non-Windows')
+    t.skip(not is_os('win'), 'N/A for non-Windows')
     -- test/ cannot be a symlink in this test.
     n.api.nvim_set_current_dir(t.paths.test_source_path)
 
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
-    eq(call('getcwd') .. [[\test\functional\fixtures\bin\null.CMD]], call('exepath', 'null'))
+    eq(([[%s\test\functional\fixtures\bin\null.CMD]]):format(fn.getcwd()), fn.exepath('null'))
     command('set shellslash')
-    eq(call('getcwd') .. '/test/functional/fixtures/bin/null.CMD', call('exepath', 'null'))
+    eq(('%s/test/functional/fixtures/bin/null.CMD'):format(fn.getcwd()), fn.exepath('null'))
   end)
 
   it('stdpath returns consistent slashes #13787', function()
-    skip(not is_os('win'), 'N/A for non-Windows')
+    t.skip(not is_os('win'), 'N/A for non-Windows')
     -- Needs to check paths relative to repo root dir.
     n.api.nvim_set_current_dir(t.paths.test_source_path)
 
-    t.matches([[build/Xtest_xdg[%w_]*/share/nvim%-data]], call('stdpath', 'data'))
+    t.matches('build/Xtest_xdg[%w_]*/share/nvim%-data', fn.stdpath('data'))
     command('set shellslash')
-    t.matches(
-      'build/Xtest_xdg[%w_]*/share/nvim%-data',
-      call('fnamemodify', call('stdpath', 'data'), ':.')
-    )
+    t.matches('build/Xtest_xdg[%w_]*/share/nvim%-data', fn.stdpath('data'))
   end)
 
   it('fails for invalid values', function()

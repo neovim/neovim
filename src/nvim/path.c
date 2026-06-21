@@ -1536,9 +1536,11 @@ void slash_adjust(char *p)
     }
   }
 
+  char from = p_ssl ? '\\' : PATHSEP;
+  char to = p_ssl ? PATHSEP : '\\';
   while (*p) {
-    if (*p == psepcN) {
-      *p = psepc;
+    if (*p == from) {
+      *p = to;
     }
     MB_PTR_ADV(p);
   }
@@ -1555,9 +1557,8 @@ char *path_to_backslash(char *p)
 }
 
 /// Convert all backslashes to forward slashes in-place,
-/// unless when it looks like a URL.
-/// autocmd pattern might contain backslashes?
-/// e.g. `term://xxxC:\cmd.exe` :/
+/// unless when it looks like a URL (e.g. `term://xxxC:\cmd.exe`).
+/// TODO(ntdiary): Could autocmd patterns contain backslashes? :/
 char *path_to_slash(char *p)
 {
   if (p != NULL && !path_with_url(p)) {

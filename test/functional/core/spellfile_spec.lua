@@ -127,7 +127,7 @@ describe('spellfile', function()
       n.insert('abc')
       n.feed('zg')
       eq(
-        fn.stdpath('data') .. '/site/spell/en.utf-8.add',
+        ('%s/site/spell/en.utf-8.add'):format(fn.stdpath('data')),
         api.nvim_get_option_value('spellfile', {})
       )
     end)

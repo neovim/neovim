@@ -14,7 +14,7 @@ local rmdir = n.rmdir
 local write_file = t.write_file
 
 local function join_path(...)
-  return table.concat({ ... }, n.get_pathsep())
+  return table.concat({ ... }, '/')
 end
 
 describe('path', function()
@@ -82,9 +82,9 @@ describe('expand wildcard', function()
     }
     for _, folder in ipairs(folders) do
       mkdir(folder)
-      local file = join_path(folder, 'file.txt')
+      local file = ('%s%sfile.txt'):format(folder, n.get_pathsep())
       write_file(file, '')
-      eq(file, eval('expand("' .. folder .. '/*")'))
+      eq(file, fn.expand(('%s/*'):format(folder)))
       rmdir(folder)
     end
   end)
@@ -178,12 +178,10 @@ describe('file search', function()
   end)
 
   ---@param funcname 'finddir' | 'findfile'
-  ---@param folder string
-  ---@param item string
   local function test_find_func(funcname, folder, item)
-    local d = testdir .. '/' .. folder
+    local d = join_path(testdir, folder)
     mkdir(d)
-    local expected = d .. '/' .. item
+    local expected = join_path(d, item)
     if funcname == 'finddir' then
       mkdir(expected)
     else

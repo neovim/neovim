@@ -2680,23 +2680,6 @@ static const char *did_set_scrollbind(optset_T *args)
   return NULL;
 }
 
-#ifdef BACKSLASH_IN_FILENAME
-/// Process the updated 'shellslash' option value.
-static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
-{
-  if (p_ssl) {
-    psepc = '/';
-    psepcN = '\\';
-    pseps[0] = '/';
-  } else {
-    psepc = '\\';
-    psepcN = '/';
-    pseps[0] = '\\';
-  }
-  return NULL;
-}
-#endif
-
 /// Process the new 'shiftwidth' or the 'tabstop' option value.
 static const char *did_set_shiftwidth_tabstop(optset_T *args)
 {

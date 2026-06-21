@@ -29,7 +29,6 @@ local set_session = n.set_session
 local write_file = t.write_file
 local eval = n.eval
 local assert_log = t.assert_log
-local skip = t.skip
 
 local testlog = 'Xtest-tui-log'
 
@@ -752,8 +751,8 @@ describe('TUI :connect', function()
     screen2:detach()
   end)
 
-  it('named pipe with backslashes still works well #39382', function()
-    skip(not is_os('win'), 'N/A: Named pipe is Windows feature')
+  it('normalizes named pipe #39382', function()
+    t.skip(not is_os('win'), 'N/A: Named pipe is Windows feature')
     local server1 = [[\\.\pipe\Xtest]]
     local screen1 = tt.setup_child_nvim({ '--listen', server1, '--clean' })
     screen1:expect({ any = vim.pesc('[No Name]') })
@@ -770,7 +769,7 @@ describe('TUI :connect', function()
     local screen2 = tt.setup_child_nvim({ '--listen', server2, '--clean' })
     screen2:expect({ any = vim.pesc('[No Name]') })
 
-    tt.feed_data(':connect ' .. server1 .. '\013')
+    tt.feed_data((':connect %s\013'):format(server1))
     screen2:expect({ any = vim.pesc('This is server 1^.') })
 
     local server1_session = n.connect(server1)

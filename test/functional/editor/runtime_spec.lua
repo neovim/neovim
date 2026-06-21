@@ -45,13 +45,13 @@ describe('runtime:', function()
   end)
 
   describe('colors', function()
-    local colorscheme_folder = plug_dir .. '/colors'
+    local colorscheme_folder = ('%s/colors'):format(plug_dir)
     before_each(function()
       mkdir_p(colorscheme_folder)
     end)
 
     it('Lua colorschemes work and are included in cmdline completion', function()
-      local colorscheme_file = colorscheme_folder .. '/new_colorscheme.lua'
+      local colorscheme_file = ('%s/new_colorscheme.lua'):format(colorscheme_folder)
       write_file(colorscheme_file, [[vim.g.lua_colorscheme = 1]])
 
       eq({ 'new_colorscheme' }, fn.getcompletion('new_c', 'color'))
@@ -70,54 +70,66 @@ describe('runtime:', function()
       end)
       exec('set pp+=' .. pack_dir)
 
-      local pack_opt_dir = pack_dir .. '/pack/some_name/opt'
-      local colors_opt_dir = pack_opt_dir .. '/some_pack/colors'
+      local pack_opt_dir = ('%s/pack/some_name/opt'):format(pack_dir)
+      local colors_opt_dir = ('%s/some_pack/colors'):format(pack_opt_dir)
       mkdir_p(colors_opt_dir)
 
-      local after_colorscheme_folder = plug_dir .. '/after/colors'
+      local after_colorscheme_folder = ('%s/after/colors'):format(plug_dir)
       mkdir_p(after_colorscheme_folder)
       exec('set rtp+=' .. plug_dir .. '/after')
 
-      write_file(colors_opt_dir .. '/new_colorscheme.lua', [[vim.g.colorscheme = 'lua_pp']])
+      write_file(
+        ('%s/new_colorscheme.lua'):format(colors_opt_dir),
+        [[vim.g.colorscheme = 'lua_pp']]
+      )
       exec('colorscheme new_colorscheme')
       eq('lua_pp', eval('g:colorscheme'))
 
-      write_file(colors_opt_dir .. '/new_colorscheme.vim', [[let g:colorscheme = 'vim_pp']])
+      write_file(
+        ('%s/new_colorscheme.vim'):format(colors_opt_dir),
+        [[let g:colorscheme = 'vim_pp']]
+      )
       exec('colorscheme new_colorscheme')
       eq('vim_pp', eval('g:colorscheme'))
 
       write_file(
-        after_colorscheme_folder .. '/new_colorscheme.lua',
+        ('%s/new_colorscheme.lua'):format(after_colorscheme_folder),
         [[vim.g.colorscheme = 'lua_rtp_after']]
       )
       exec('colorscheme new_colorscheme')
       eq('lua_rtp_after', eval('g:colorscheme'))
 
       write_file(
-        after_colorscheme_folder .. '/new_colorscheme.vim',
+        ('%s/new_colorscheme.vim'):format(after_colorscheme_folder),
         [[let g:colorscheme = 'vim_rtp_after']]
       )
       exec('colorscheme new_colorscheme')
       eq('vim_rtp_after', eval('g:colorscheme'))
 
-      write_file(colorscheme_folder .. '/new_colorscheme.lua', [[vim.g.colorscheme = 'lua_rtp']])
+      write_file(
+        ('%s/new_colorscheme.lua'):format(colorscheme_folder),
+        [[vim.g.colorscheme = 'lua_rtp']]
+      )
       exec('colorscheme new_colorscheme')
       eq('lua_rtp', eval('g:colorscheme'))
 
-      write_file(colorscheme_folder .. '/new_colorscheme.vim', [[let g:colorscheme = 'vim_rtp']])
+      write_file(
+        ('%s/new_colorscheme.vim'):format(colorscheme_folder),
+        [[let g:colorscheme = 'vim_rtp']]
+      )
       exec('colorscheme new_colorscheme')
       eq('vim_rtp', eval('g:colorscheme'))
     end)
   end)
 
   describe('compiler', function()
-    local compiler_folder = plug_dir .. '/compiler'
+    local compiler_folder = ('%s/compiler'):format(plug_dir)
     before_each(function()
       mkdir_p(compiler_folder)
     end)
 
     it('Lua compilers work and are included in cmdline completion', function()
-      local compiler_file = compiler_folder .. '/new_compiler.lua'
+      local compiler_file = ('%s/new_compiler.lua'):format(compiler_folder)
       write_file(compiler_file, [[vim.b.lua_compiler = 1]])
 
       eq({ 'new_compiler' }, fn.getcompletion('new_c', 'compiler'))
@@ -129,28 +141,31 @@ describe('runtime:', function()
     end)
 
     it("'rtp' order is respected", function()
-      local after_compiler_folder = plug_dir .. '/after/compiler'
-      mkdir_p(compiler_folder .. '/new_compiler')
-      mkdir_p(after_compiler_folder .. '/new_compiler')
+      local after_compiler_folder = ('%s/after/compiler'):format(plug_dir)
+      mkdir_p(('%s/new_compiler'):format(compiler_folder))
+      mkdir_p(('%s/new_compiler'):format(after_compiler_folder))
       exec('set rtp+=' .. plug_dir .. '/after')
       exec('let g:seq = ""')
       -- A .lua file is loaded after a .vim file if they only differ in extension.
       -- All files in after/compiler/ are loaded after all files in compiler/.
-      write_file(compiler_folder .. '/new_compiler.vim', [[let g:seq ..= 'A']])
-      write_file(compiler_folder .. '/new_compiler.lua', [[vim.g.seq = vim.g.seq .. 'B']])
-      write_file(after_compiler_folder .. '/new_compiler.vim', [[let g:seq ..= 'a']])
-      write_file(after_compiler_folder .. '/new_compiler.lua', [[vim.g.seq = vim.g.seq .. 'b']])
+      write_file(('%s/new_compiler.vim'):format(compiler_folder), [[let g:seq ..= 'A']])
+      write_file(('%s/new_compiler.lua'):format(compiler_folder), [[vim.g.seq = vim.g.seq .. 'B']])
+      write_file(('%s/new_compiler.vim'):format(after_compiler_folder), [[let g:seq ..= 'a']])
+      write_file(
+        ('%s/new_compiler.lua'):format(after_compiler_folder),
+        [[vim.g.seq = vim.g.seq .. 'b']]
+      )
       exec('compiler new_compiler')
       eq('ABab', eval('g:seq'))
     end)
   end)
 
   describe('ftplugin', function()
-    local ftplugin_folder = plug_dir .. '/ftplugin'
+    local ftplugin_folder = ('%s/ftplugin'):format(plug_dir)
 
     it('Lua ftplugins work and are included in cmdline completion', function()
       mkdir_p(ftplugin_folder)
-      local ftplugin_file = ftplugin_folder .. '/new-ft.lua'
+      local ftplugin_file = ('%s/new-ft.lua'):format(ftplugin_folder)
       write_file(ftplugin_file, [[vim.b.lua_ftplugin = 1]])
 
       eq({ 'new-ft' }, fn.getcompletion('new-f', 'filetype'))
@@ -161,61 +176,73 @@ describe('runtime:', function()
     end)
 
     it("'rtp' order is respected", function()
-      local after_ftplugin_folder = plug_dir .. '/after/ftplugin'
-      mkdir_p(ftplugin_folder .. '/new-ft')
-      mkdir_p(after_ftplugin_folder .. '/new-ft')
+      local after_ftplugin_folder = ('%s/after/ftplugin'):format(plug_dir)
+      mkdir_p(('%s/new-ft'):format(ftplugin_folder))
+      mkdir_p(('%s/new-ft'):format(after_ftplugin_folder))
       exec('set rtp+=' .. plug_dir .. '/after')
       exec('let g:seq = ""')
       -- A .lua file is loaded after a .vim file if they only differ in extension.
       -- All files in after/ftplugin/ are loaded after all files in ftplugin/.
-      write_file(ftplugin_folder .. '/new-ft.vim', [[let g:seq ..= 'A']])
-      write_file(ftplugin_folder .. '/new-ft.lua', [[vim.g.seq = vim.g.seq .. 'B']])
-      write_file(ftplugin_folder .. '/new-ft_a.vim', [[let g:seq ..= 'C']])
-      write_file(ftplugin_folder .. '/new-ft_a.lua', [[vim.g.seq = vim.g.seq .. 'D']])
-      write_file(ftplugin_folder .. '/new-ft/a.vim', [[let g:seq ..= 'E']])
-      write_file(ftplugin_folder .. '/new-ft/a.lua', [[vim.g.seq = vim.g.seq .. 'F']])
-      write_file(after_ftplugin_folder .. '/new-ft.vim', [[let g:seq ..= 'a']])
-      write_file(after_ftplugin_folder .. '/new-ft.lua', [[vim.g.seq = vim.g.seq .. 'b']])
-      write_file(after_ftplugin_folder .. '/new-ft_a.vim', [[let g:seq ..= 'c']])
-      write_file(after_ftplugin_folder .. '/new-ft_a.lua', [[vim.g.seq = vim.g.seq .. 'd']])
-      write_file(after_ftplugin_folder .. '/new-ft/a.vim', [[let g:seq ..= 'e']])
-      write_file(after_ftplugin_folder .. '/new-ft/a.lua', [[vim.g.seq = vim.g.seq .. 'f']])
+      write_file(('%s/new-ft.vim'):format(ftplugin_folder), [[let g:seq ..= 'A']])
+      write_file(('%s/new-ft.lua'):format(ftplugin_folder), [[vim.g.seq = vim.g.seq .. 'B']])
+      write_file(('%s/new-ft_a.vim'):format(ftplugin_folder), [[let g:seq ..= 'C']])
+      write_file(('%s/new-ft_a.lua'):format(ftplugin_folder), [[vim.g.seq = vim.g.seq .. 'D']])
+      write_file(('%s/new-ft/a.vim'):format(ftplugin_folder), [[let g:seq ..= 'E']])
+      write_file(('%s/new-ft/a.lua'):format(ftplugin_folder), [[vim.g.seq = vim.g.seq .. 'F']])
+      write_file(('%s/new-ft.vim'):format(after_ftplugin_folder), [[let g:seq ..= 'a']])
+      write_file(('%s/new-ft.lua'):format(after_ftplugin_folder), [[vim.g.seq = vim.g.seq .. 'b']])
+      write_file(('%s/new-ft_a.vim'):format(after_ftplugin_folder), [[let g:seq ..= 'c']])
+      write_file(
+        ('%s/new-ft_a.lua'):format(after_ftplugin_folder),
+        [[vim.g.seq = vim.g.seq .. 'd']]
+      )
+      write_file(('%s/new-ft/a.vim'):format(after_ftplugin_folder), [[let g:seq ..= 'e']])
+      write_file(
+        ('%s/new-ft/a.lua'):format(after_ftplugin_folder),
+        [[vim.g.seq = vim.g.seq .. 'f']]
+      )
       exec('setfiletype new-ft')
       eq('ABCDEFabcdef', eval('g:seq'))
     end)
 
     it("'rtp' order is respected with 'fileignorecase'", function()
       exec('set fileignorecase')
-      local after_ftplugin_folder = plug_dir .. '/after/ftplugin'
-      mkdir_p(ftplugin_folder .. '/new-ft')
-      mkdir_p(after_ftplugin_folder .. '/new-ft')
+      local after_ftplugin_folder = ('%s/after/ftplugin'):format(plug_dir)
+      mkdir_p(('%s/new-ft'):format(ftplugin_folder))
+      mkdir_p(('%s/new-ft'):format(after_ftplugin_folder))
       exec('set rtp+=' .. plug_dir .. '/after')
       exec('let g:seq = ""')
       -- A .lua file is loaded after a .vim file if they only differ in extension.
       -- All files in after/ftplugin/ are loaded after all files in ftplugin/.
-      write_file(ftplugin_folder .. '/new-ft.VIM', [[let g:seq ..= 'A']])
-      write_file(ftplugin_folder .. '/new-ft.LUA', [[vim.g.seq = vim.g.seq .. 'B']])
-      write_file(ftplugin_folder .. '/new-ft_a.vim', [[let g:seq ..= 'C']])
-      write_file(ftplugin_folder .. '/new-ft_a.lua', [[vim.g.seq = vim.g.seq .. 'D']])
-      write_file(ftplugin_folder .. '/new-ft/a.VIM', [[let g:seq ..= 'E']])
-      write_file(ftplugin_folder .. '/new-ft/a.LUA', [[vim.g.seq = vim.g.seq .. 'F']])
-      write_file(after_ftplugin_folder .. '/new-ft.vim', [[let g:seq ..= 'a']])
-      write_file(after_ftplugin_folder .. '/new-ft.lua', [[vim.g.seq = vim.g.seq .. 'b']])
-      write_file(after_ftplugin_folder .. '/new-ft_a.VIM', [[let g:seq ..= 'c']])
-      write_file(after_ftplugin_folder .. '/new-ft_a.LUA', [[vim.g.seq = vim.g.seq .. 'd']])
-      write_file(after_ftplugin_folder .. '/new-ft/a.vim', [[let g:seq ..= 'e']])
-      write_file(after_ftplugin_folder .. '/new-ft/a.lua', [[vim.g.seq = vim.g.seq .. 'f']])
+      write_file(('%s/new-ft.VIM'):format(ftplugin_folder), [[let g:seq ..= 'A']])
+      write_file(('%s/new-ft.LUA'):format(ftplugin_folder), [[vim.g.seq = vim.g.seq .. 'B']])
+      write_file(('%s/new-ft_a.vim'):format(ftplugin_folder), [[let g:seq ..= 'C']])
+      write_file(('%s/new-ft_a.lua'):format(ftplugin_folder), [[vim.g.seq = vim.g.seq .. 'D']])
+      write_file(('%s/new-ft/a.VIM'):format(ftplugin_folder), [[let g:seq ..= 'E']])
+      write_file(('%s/new-ft/a.LUA'):format(ftplugin_folder), [[vim.g.seq = vim.g.seq .. 'F']])
+      write_file(('%s/new-ft.vim'):format(after_ftplugin_folder), [[let g:seq ..= 'a']])
+      write_file(('%s/new-ft.lua'):format(after_ftplugin_folder), [[vim.g.seq = vim.g.seq .. 'b']])
+      write_file(('%s/new-ft_a.VIM'):format(after_ftplugin_folder), [[let g:seq ..= 'c']])
+      write_file(
+        ('%s/new-ft_a.LUA'):format(after_ftplugin_folder),
+        [[vim.g.seq = vim.g.seq .. 'd']]
+      )
+      write_file(('%s/new-ft/a.vim'):format(after_ftplugin_folder), [[let g:seq ..= 'e']])
+      write_file(
+        ('%s/new-ft/a.lua'):format(after_ftplugin_folder),
+        [[vim.g.seq = vim.g.seq .. 'f']]
+      )
       exec('setfiletype new-ft')
       eq('ABCDEFabcdef', eval('g:seq'))
     end)
   end)
 
   describe('indent', function()
-    local indent_folder = plug_dir .. '/indent'
+    local indent_folder = ('%s/indent'):format(plug_dir)
 
     it('Lua indents work and are included in cmdline completion', function()
       mkdir_p(indent_folder)
-      local indent_file = indent_folder .. '/new-ft.lua'
+      local indent_file = ('%s/new-ft.lua'):format(indent_folder)
       write_file(indent_file, [[vim.b.lua_indent = 1]])
 
       eq({ 'new-ft' }, fn.getcompletion('new-f', 'filetype'))
@@ -226,28 +253,28 @@ describe('runtime:', function()
     end)
 
     it("'rtp' order is respected", function()
-      local after_indent_folder = plug_dir .. '/after/indent'
-      mkdir_p(indent_folder .. '/new-ft')
-      mkdir_p(after_indent_folder .. '/new-ft')
+      local after_indent_folder = ('%s/after/indent'):format(plug_dir)
+      mkdir_p(('%s/new-ft'):format(indent_folder))
+      mkdir_p(('%s/new-ft'):format(after_indent_folder))
       exec('set rtp+=' .. plug_dir .. '/after')
       exec('let g:seq = ""')
       -- A .lua file is loaded after a .vim file if they only differ in extension.
       -- All files in after/indent/ are loaded after all files in indent/.
-      write_file(indent_folder .. '/new-ft.vim', [[let g:seq ..= 'A']])
-      write_file(indent_folder .. '/new-ft.lua', [[vim.g.seq = vim.g.seq .. 'B']])
-      write_file(after_indent_folder .. '/new-ft.vim', [[let g:seq ..= 'a']])
-      write_file(after_indent_folder .. '/new-ft.lua', [[vim.g.seq = vim.g.seq .. 'b']])
+      write_file(('%s/new-ft.vim'):format(indent_folder), [[let g:seq ..= 'A']])
+      write_file(('%s/new-ft.lua'):format(indent_folder), [[vim.g.seq = vim.g.seq .. 'B']])
+      write_file(('%s/new-ft.vim'):format(after_indent_folder), [[let g:seq ..= 'a']])
+      write_file(('%s/new-ft.lua'):format(after_indent_folder), [[vim.g.seq = vim.g.seq .. 'b']])
       exec('setfiletype new-ft')
       eq('ABab', eval('g:seq'))
     end)
   end)
 
   describe('syntax', function()
-    local syntax_folder = plug_dir .. '/syntax'
+    local syntax_folder = ('%s/syntax'):format(plug_dir)
 
     before_each(function()
       mkdir_p(syntax_folder)
-      local syntax_file = syntax_folder .. '/my-lang.lua'
+      local syntax_file = ('%s/my-lang.lua'):format(syntax_folder)
       write_file(syntax_file, [[vim.b.current_syntax = 'my-lang']])
       exec([[let b:current_syntax = '']])
     end)
@@ -275,21 +302,21 @@ describe('runtime:', function()
     end)
 
     it("'rtp' order is respected", function()
-      local after_syntax_folder = plug_dir .. '/after/syntax'
-      mkdir_p(syntax_folder .. '/my-lang')
-      mkdir_p(after_syntax_folder .. '/my-lang')
+      local after_syntax_folder = ('%s/after/syntax'):format(plug_dir)
+      mkdir_p(('%s/my-lang'):format(syntax_folder))
+      mkdir_p(('%s/my-lang'):format(after_syntax_folder))
       exec('set rtp+=' .. plug_dir .. '/after')
       exec('let g:seq = ""')
       -- A .lua file is loaded after a .vim file if they only differ in extension.
       -- All files in after/syntax/ are loaded after all files in syntax/.
-      write_file(syntax_folder .. '/my-lang.vim', [[let g:seq ..= 'A']])
-      write_file(syntax_folder .. '/my-lang.lua', [[vim.g.seq = vim.g.seq .. 'B']])
-      write_file(syntax_folder .. '/my-lang/a.vim', [[let g:seq ..= 'C']])
-      write_file(syntax_folder .. '/my-lang/a.lua', [[vim.g.seq = vim.g.seq .. 'D']])
-      write_file(after_syntax_folder .. '/my-lang.vim', [[let g:seq ..= 'a']])
-      write_file(after_syntax_folder .. '/my-lang.lua', [[vim.g.seq = vim.g.seq .. 'b']])
-      write_file(after_syntax_folder .. '/my-lang/a.vim', [[let g:seq ..= 'c']])
-      write_file(after_syntax_folder .. '/my-lang/a.lua', [[vim.g.seq = vim.g.seq .. 'd']])
+      write_file(('%s/my-lang.vim'):format(syntax_folder), [[let g:seq ..= 'A']])
+      write_file(('%s/my-lang.lua'):format(syntax_folder), [[vim.g.seq = vim.g.seq .. 'B']])
+      write_file(('%s/my-lang/a.vim'):format(syntax_folder), [[let g:seq ..= 'C']])
+      write_file(('%s/my-lang/a.lua'):format(syntax_folder), [[vim.g.seq = vim.g.seq .. 'D']])
+      write_file(('%s/my-lang.vim'):format(after_syntax_folder), [[let g:seq ..= 'a']])
+      write_file(('%s/my-lang.lua'):format(after_syntax_folder), [[vim.g.seq = vim.g.seq .. 'b']])
+      write_file(('%s/my-lang/a.vim'):format(after_syntax_folder), [[let g:seq ..= 'c']])
+      write_file(('%s/my-lang/a.lua'):format(after_syntax_folder), [[vim.g.seq = vim.g.seq .. 'd']])
       exec('setfiletype my-lang')
       eq('ABCDabcd', eval('g:seq'))
     end)
@@ -297,18 +324,18 @@ describe('runtime:', function()
 
   describe('spell', function()
     it("loads spell/LANG.{vim,lua} respecting 'rtp' order", function()
-      local spell_folder = plug_dir .. '/spell'
-      local after_spell_folder = plug_dir .. '/after/spell'
-      mkdir_p(spell_folder .. '/Xtest')
-      mkdir_p(after_spell_folder .. '/Xtest')
+      local spell_folder = ('%s/spell'):format(plug_dir)
+      local after_spell_folder = ('%s/after/spell'):format(plug_dir)
+      mkdir_p(('%s/Xtest'):format(spell_folder))
+      mkdir_p(('%s/Xtest'):format(after_spell_folder))
       exec('set rtp+=' .. plug_dir .. '/after')
       exec('let g:seq = ""')
       -- A .lua file is loaded after a .vim file if they only differ in extension.
       -- All files in after/spell/ are loaded after all files in spell/.
-      write_file(spell_folder .. '/Xtest.vim', [[let g:seq ..= 'A']])
-      write_file(spell_folder .. '/Xtest.lua', [[vim.g.seq = vim.g.seq .. 'B']])
-      write_file(after_spell_folder .. '/Xtest.vim', [[let g:seq ..= 'a']])
-      write_file(after_spell_folder .. '/Xtest.lua', [[vim.g.seq = vim.g.seq .. 'b']])
+      write_file(('%s/Xtest.vim'):format(spell_folder), [[let g:seq ..= 'A']])
+      write_file(('%s/Xtest.lua'):format(spell_folder), [[vim.g.seq = vim.g.seq .. 'B']])
+      write_file(('%s/Xtest.vim'):format(after_spell_folder), [[let g:seq ..= 'a']])
+      write_file(('%s/Xtest.lua'):format(after_spell_folder), [[vim.g.seq = vim.g.seq .. 'b']])
       exec('set spelllang=Xtest')
       eq('ABab', eval('g:seq'))
     end)
@@ -317,7 +344,7 @@ describe('runtime:', function()
   it('Lua file loaded by :runtime has proper script ID #32598', function()
     local test_file = 'Xtest_runtime_cmd.lua'
     write_file(
-      plug_dir .. '/' .. test_file,
+      ('%s/%s'):format(plug_dir, test_file),
       [[
       vim.g.script_id = tonumber(vim.fn.expand('<SID>'):match('<SNR>(%d+)_'))
       vim.o.mouse = 'nv'

@@ -21,7 +21,6 @@ local exec_lua = n.exec_lua
 local retry = t.retry
 local source = n.source
 local request = n.request
-local is_os, skip = t.is_os, t.skip
 
 describe('autocmd', function()
   before_each(clear)
@@ -857,8 +856,8 @@ describe('autocmd', function()
     )
   end)
 
-  it('normalize slashes for all env vars #39382', function()
-    skip(not is_os('win'), 'N/A for non-Windows')
+  it('normalizes separators in pattern environment variables #39382', function()
+    t.skip(not t.is_os('win'), 'N/A for non-Windows')
     exec [[
       let $FOOBAR="C:\\foo\\bar"
       autocmd User ~,$FOOBAR "
@@ -866,7 +865,7 @@ describe('autocmd', function()
     local cmds = exec_lua(function()
       return vim.api.nvim_get_autocmds({ event = 'User' })
     end)
-    eq(fn.eval('$HOME'), cmds[1].pattern)
+    eq(vim.fs.normalize('~'), cmds[1].pattern)
     eq('C:\\foo\\bar', fn.eval('$FOOBAR'))
     eq('C:/foo/bar', cmds[2].pattern)
   end)

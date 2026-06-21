@@ -402,39 +402,38 @@ describe('startup --listen', function()
   end)
 end)
 
-describe('slash handling', function()
+describe('path separator handling #39382', function()
   local name, named_pipe = 'Xtest-server', [[\\.\pipe\Xtest-server]]
   before_each(function()
     t.skip(not is_os('win'), 'N/A for non-Windows')
   end)
 
-  it('default server name returns slashes #39382', function()
+  it('normalizes default server name', function()
     clear { args_rm = { '--listen' } }
     matches('//./pipe/', fn.eval('v:servername'), true)
   end)
 
-  it('--listen arg with name returns slashes #39382', function()
+  it('normalizes --listen name', function()
     clear({ args_rm = { '--listen' }, args = { '--listen', name } })
     matches(vim.fs.normalize(named_pipe), fn.eval('v:servername'), true)
   end)
 
-  it('--listen arg with full path returns slashes #39382', function()
+  it('normalizes --listen named pipe', function()
     clear({ args_rm = { '--listen' }, args = { '--listen', named_pipe } })
     eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
   end)
 
-  it('normalize $NVIM_LISTEN_ADDRESS to slashes #39382', function()
+  it('normalizes $NVIM_LISTEN_ADDRESS', function()
     clear({ args_rm = { '--listen' }, env = { NVIM_LISTEN_ADDRESS = named_pipe } })
     eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
   end)
 
-  it('--server arg with backslashes works correctly #39382', function()
+  it('normalizes --server named pipe', function()
     local server = clear({ args_rm = { '--listen' }, args = { '--listen', named_pipe } })
-    local prog = n.nvim_prog
     local client = n.new_session(true)
     n.set_session(client)
     local res = fn.system({
-      prog,
+      n.nvim_prog,
       '--clean',
       '-es',
       '--server',

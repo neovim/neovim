@@ -7846,7 +7846,6 @@ local options = {
     },
     {
       abbreviation = 'ssl',
-      cb = 'did_set_shellslash',
       defaults = {
         condition = 'MSWIN',
         if_true = false,

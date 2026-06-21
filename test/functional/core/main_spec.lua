@@ -10,9 +10,7 @@ local clear = n.clear
 local fn = n.fn
 local write_file = t.write_file
 local is_os = t.is_os
-local mkdir, ok = t.mkdir, t.ok
-local api, rmdir = n.api, n.rmdir
-local pathsep = n.get_pathsep()
+local api = n.api
 
 describe('command-line option', function()
   describe('-s', function()
@@ -184,35 +182,35 @@ describe('command-line option', function()
 end)
 
 describe('path handling', function()
-  local foo, bar = 'Xtest-foo.lua', 'Xtest-bar.lua'
-  local home = is_os('win') and os.getenv('USERPROFILE') or os.getenv('HOME')
+  local home, foo, bar = vim.fs.normalize('~'), 'Xtest-foo.lua', 'Xtest-bar.lua'
 
   setup(function()
-    write_file(home .. pathsep .. foo, '')
-    write_file(home .. pathsep .. bar, '')
+    write_file(('%s/%s'):format(home, foo), 'local foo = 1;')
+    write_file(('%s/%s'):format(home, bar), '')
   end)
+
   teardown(function()
-    os.remove(home .. pathsep .. foo)
-    os.remove(home .. pathsep .. bar)
+    os.remove(('%s/%s'):format(home, foo))
+    os.remove(('%s/%s'):format(home, bar))
   end)
 
   before_each(function()
     t.skip(not is_os('win'), 'N/A for non-Windows')
   end)
 
-  it('expands tidle prefix to profile directory #29380', function()
+  it('expands tilde-prefixed paths #29380', function()
     clear {
-      args = { '~/' .. foo, '~\\' .. bar },
+      args = { ('~/%s'):format(foo), ('~\\%s'):format(bar) },
     }
     local expected = {
-      vim.fs.normalize(home .. pathsep .. foo),
-      vim.fs.normalize(home .. pathsep .. bar),
+      ('%s/%s'):format(home, foo),
+      ('%s/%s'):format(home, bar),
     }
     eq(expected, vim.tbl_map(fn.bufname, api.nvim_list_bufs()))
     eq(expected, fn.argv())
   end)
 
-  it('v:progpath returns slashes #39382', function()
+  it('normalizes v:progpath #39382', function()
     clear()
     eq(
       n.nvim_prog,
@@ -226,17 +224,20 @@ describe('path handling', function()
     )
   end)
 
-  it('normalizes -u arg and triggers SourceCmd normally #39382', function()
+  it('normalizes -u arguments and triggers autocmd events #39382', function()
     clear {
-      args_rm = { '-u' },
+      args_rm = { '--cmd', '-u' },
       args = {
         '--cmd',
-        'autocmd SourceCmd */' .. foo .. ' let g:matched = 1',
+        ('autocmd SourcePre */%s let g:matched = 1'):format(foo),
         '-u',
-        home .. '\\' .. foo,
+        ('%s/%s'):format(home, foo):gsub('/', '\\'),
       },
     }
-    ok(fn.eval('g:matched'))
+    local scripts = fn.getscriptinfo({ name = foo })
+    eq(1, #scripts)
+    eq(('%s/%s'):format(home, foo), scripts[1].name)
+    t.ok(fn.eval('g:matched'))
   end)
 end)
 

@@ -699,8 +699,8 @@ void nvim_set_current_dir(String dir, Error *err)
   char string[MAXPATHL];
   memcpy(string, dir.data, dir.size);
   string[dir.size] = NUL;
-
   TO_SLASH(string);
+
   TRY_WRAP(err, {
     changedir_func(string, kCdScopeGlobal);
   });
