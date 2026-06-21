@@ -1957,12 +1957,12 @@ static const char *set_context_in_filetype_cmd(expand_T *xp, const char *arg)
   int val = 0;
 
   while (true) {
-    if (strncmp(p, "plugin", 6) == 0) {
+    if (strncmp(p, "plugin", 6) == 0 && ascii_iswhite(p[6])) {
       val |= EXPAND_FILETYPECMD_PLUGIN;
       p = skipwhite(p + 6);
       continue;
     }
-    if (strncmp(p, "indent", 6) == 0) {
+    if (strncmp(p, "indent", 6) == 0 && ascii_iswhite(p[6])) {
       val |= EXPAND_FILETYPECMD_INDENT;
       p = skipwhite(p + 6);
       continue;
