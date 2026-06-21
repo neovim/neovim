@@ -173,9 +173,10 @@ describe('nvim_ui_send', function()
   end)
 end)
 
-it('autocmds UIEnter/UILeave', function()
-  clear { args_rm = { '--headless' } }
-  exec([[
+describe('UI event channels', function()
+  it('sets chan for UIEnter/UILeave', function()
+    clear { args_rm = { '--headless' } }
+    exec([[
     let g:evs = []
     autocmd UIEnter * call add(g:evs, "UIEnter") | let g:uienter_ev = deepcopy(v:event)
     autocmd UILeave * call add(g:evs, "UILeave") | let g:uileave_ev = deepcopy(v:event)
@@ -183,72 +184,72 @@ it('autocmds UIEnter/UILeave', function()
     autocmd VimLeave * call add(g:evs, "VimLeave")
   ]])
 
-  local screen = Screen.new()
-  eq({ chan = 1 }, eval('g:uienter_ev'))
-  eq({ 'VimEnter', 'UIEnter' }, eval('g:evs'))
+    local screen = Screen.new()
+    eq({ chan = 1 }, eval('g:uienter_ev'))
+    eq({ 'VimEnter', 'UIEnter' }, eval('g:evs'))
 
-  screen:detach()
-  eq({ chan = 1 }, eval('g:uileave_ev'))
-  eq({ 'VimEnter', 'UIEnter', 'UILeave' }, eval('g:evs'))
+    screen:detach()
+    eq({ chan = 1 }, eval('g:uileave_ev'))
+    eq({ 'VimEnter', 'UIEnter', 'UILeave' }, eval('g:evs'))
 
-  local servername = api.nvim_get_vvar('servername')
+    local servername = api.nvim_get_vvar('servername')
 
-  local session2 = n.connect(servername)
-  local status2, chan2 = session2:request('nvim_get_chan_info', 0)
-  t.ok(status2)
+    local session2 = n.connect(servername)
+    local status2, chan2 = session2:request('nvim_get_chan_info', 0)
+    t.ok(status2)
 
-  local session3 = n.connect(servername)
-  local status3, chan3 = session3:request('nvim_get_chan_info', 0)
-  t.ok(status3)
+    local session3 = n.connect(servername)
+    local status3, chan3 = session3:request('nvim_get_chan_info', 0)
+    t.ok(status3)
 
-  local screen2 = Screen.new(nil, nil, nil, session2)
-  eq({ chan = chan2.id }, eval('g:uienter_ev'))
-  eq({ 'VimEnter', 'UIEnter', 'UILeave', 'UIEnter' }, eval('g:evs'))
+    local screen2 = Screen.new(nil, nil, nil, session2)
+    eq({ chan = chan2.id }, eval('g:uienter_ev'))
+    eq({ 'VimEnter', 'UIEnter', 'UILeave', 'UIEnter' }, eval('g:evs'))
 
-  screen2:detach()
-  eq({ chan = chan2.id }, eval('g:uileave_ev'))
-  eq({ 'VimEnter', 'UIEnter', 'UILeave', 'UIEnter', 'UILeave' }, eval('g:evs'))
+    screen2:detach()
+    eq({ chan = chan2.id }, eval('g:uileave_ev'))
+    eq({ 'VimEnter', 'UIEnter', 'UILeave', 'UIEnter', 'UILeave' }, eval('g:evs'))
 
-  command('let g:evs = ["…"]')
+    command('let g:evs = ["…"]')
 
-  screen2:attach(session2)
-  eq({ chan = chan2.id }, eval('g:uienter_ev'))
-  eq({ '…', 'UIEnter' }, eval('g:evs'))
+    screen2:attach(session2)
+    eq({ chan = chan2.id }, eval('g:uienter_ev'))
+    eq({ '…', 'UIEnter' }, eval('g:evs'))
 
-  Screen.new(nil, nil, nil, session3)
-  eq({ chan = chan3.id }, eval('g:uienter_ev'))
-  eq({ '…', 'UIEnter', 'UIEnter' }, eval('g:evs'))
+    Screen.new(nil, nil, nil, session3)
+    eq({ chan = chan3.id }, eval('g:uienter_ev'))
+    eq({ '…', 'UIEnter', 'UIEnter' }, eval('g:evs'))
 
-  screen:attach(n.get_session())
-  eq({ chan = 1 }, eval('g:uienter_ev'))
-  eq({ '…', 'UIEnter', 'UIEnter', 'UIEnter' }, eval('g:evs'))
+    screen:attach(n.get_session())
+    eq({ chan = 1 }, eval('g:uienter_ev'))
+    eq({ '…', 'UIEnter', 'UIEnter', 'UIEnter' }, eval('g:evs'))
 
-  session3:close()
-  t.retry(nil, 1000, function()
-    eq({}, api.nvim_get_chan_info(chan3.id))
+    session3:close()
+    t.retry(nil, 1000, function()
+      eq({}, api.nvim_get_chan_info(chan3.id))
+    end)
+    eq({ chan = chan3.id }, eval('g:uileave_ev'))
+    eq({ '…', 'UIEnter', 'UIEnter', 'UIEnter', 'UILeave' }, eval('g:evs'))
+
+    command('let g:evs = ["…"]')
+    command('autocmd UILeave * call writefile(g:evs, "Xevents.log")')
+    finally(function()
+      os.remove('Xevents.log')
+    end)
+    n.expect_exit(command, 'qall!')
+    n.check_close() -- Wait for process exit.
+    -- UILeave should have been triggered for both remaining UIs.
+    eq('…\nVimLeave\nUILeave\nUILeave\n', t.read_file('Xevents.log'))
   end)
-  eq({ chan = chan3.id }, eval('g:uileave_ev'))
-  eq({ '…', 'UIEnter', 'UIEnter', 'UIEnter', 'UILeave' }, eval('g:evs'))
 
-  command('let g:evs = ["…"]')
-  command('autocmd UILeave * call writefile(g:evs, "Xevents.log")')
-  finally(function()
-    os.remove('Xevents.log')
-  end)
-  n.expect_exit(command, 'qall!')
-  n.check_close() -- Wait for process exit.
-  -- UILeave should have been triggered for both remaining UIs.
-  eq('…\nVimLeave\nUILeave\nUILeave\n', t.read_file('Xevents.log'))
-end)
+  it('sets chan for TermResponse and filters tty requests', function()
+    clear()
+    local main_chan = api.nvim_get_chan_info(0).id
+    local session2 = n.connect(api.nvim_get_vvar('servername'))
+    local status2, chan2 = session2:request('nvim_get_chan_info', 0)
+    t.ok(status2)
 
-it('includes the source channel in TermResponse and tty requests can filter it', function()
-  clear()
-  local main_chan = api.nvim_get_chan_info(0).id
-  local session2 = n.connect(api.nvim_get_vvar('servername'))
-  local status2, chan2 = session2:request('nvim_get_chan_info', 0)
-  t.ok(status2)
-
-  exec_lua([[
+    exec_lua([[
     _G.responses = {}
     vim.api.nvim_create_autocmd('TermResponse', {
       callback = function(ev)
@@ -257,30 +258,31 @@ it('includes the source channel in TermResponse and tty requests can filter it',
     })
   ]])
 
-  request('nvim_ui_term_event', 'termresponse', 'main')
-  session2:request('nvim_ui_term_event', 'termresponse', 'other')
+    request('nvim_ui_term_event', 'termresponse', 'main')
+    session2:request('nvim_ui_term_event', 'termresponse', 'other')
 
-  eq({
-    { sequence = 'main', chan = main_chan },
-    { sequence = 'other', chan = chan2.id },
-  }, exec_lua('return _G.responses'))
+    eq({
+      { sequence = 'main', chan = main_chan },
+      { sequence = 'other', chan = chan2.id },
+    }, exec_lua('return _G.responses'))
 
-  exec_lua(
-    [[
+    exec_lua(
+      [[
       _G.filtered = {}
       vim.tty.request('', { timeout = 0, chan = ... }, function(resp)
         table.insert(_G.filtered, resp)
         return true
       end)
     ]],
-    chan2.id
-  )
+      chan2.id
+    )
 
-  request('nvim_ui_term_event', 'termresponse', 'ignored')
-  session2:request('nvim_ui_term_event', 'termresponse', 'accepted')
-  eq({ 'accepted' }, exec_lua('return _G.filtered'))
+    request('nvim_ui_term_event', 'termresponse', 'ignored')
+    session2:request('nvim_ui_term_event', 'termresponse', 'accepted')
+    eq({ 'accepted' }, exec_lua('return _G.filtered'))
 
-  session2:close()
+    session2:close()
+  end)
 end)
 
 it('autocmds VimSuspend/VimResume #22041', function()
