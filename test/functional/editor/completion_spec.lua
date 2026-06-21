@@ -12,8 +12,6 @@ local command = n.command
 local api = n.api
 local poke_eventloop = n.poke_eventloop
 local exec_lua = n.exec_lua
-local is_os, skip, write_file = t.is_os, t.skip, t.write_file
-local mkdir_p, rmdir = n.mkdir_p, n.rmdir
 
 describe('completion', function()
   local screen
@@ -1854,18 +1852,18 @@ describe('completion', function()
     ]])
   end)
 
-  it(':find returns all elements in the directory #25791', function()
-    skip(not is_os('win'), 'N/A for non-Windows')
-    mkdir_p('Xtest/sub1')
-    mkdir_p('Xtest/sub2')
-    write_file('Xtest/A', '')
-    write_file('Xtest/sub1/B', '')
-    write_file('Xtest/sub2/C', '')
+  it('returns all entries in the directory #25791', function()
+    t.skip(not t.is_os('win'), 'N/A for non-Windows')
+    n.mkdir_p('Xtest/sub1')
+    n.mkdir_p('Xtest/sub2')
+    t.write_file('Xtest/A', '')
+    t.write_file('Xtest/sub1/B', '')
+    t.write_file('Xtest/sub2/C', '')
     finally(function()
-      rmdir('Xtest')
+      n.rmdir('Xtest')
     end)
-    local path = vim.fs.normalize(fn.fnamemodify('.', ':p')) .. '/Xtest/**'
-    command('set path=' .. path)
+    local path = ('%s/Xtest/**'):format(vim.fs.normalize(vim.uv.cwd()))
+    command(('set path=%s'):format(path))
     eq({ 'A', 'B', 'C', 'sub1/', 'sub2/' }, fn.getcompletion('find ', 'cmdline'))
   end)
 end)

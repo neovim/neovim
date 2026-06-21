@@ -16,8 +16,6 @@ local command = n.command
 local feed = n.feed
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
-local is_os, skip, mkdir, write_file = t.is_os, t.skip, t.mkdir, t.write_file
-local rmdir = n.rmdir
 
 describe('api/buf', function()
   before_each(clear)
@@ -2752,72 +2750,75 @@ describe('api/buf', function()
   end)
 end)
 
-describe('ffname and sfname of buf always use slashes unless uri #23639:', function()
+describe('path separator handling in ffname and sfname #39382,', function()
   local cwd, files = vim.uv.cwd(), {}
   local expected_cwd = vim.fs.normalize(cwd)
   for i = 1, 3 do
-    files[i] = cwd .. [[\Xtest\file]] .. i
+    files[i] = ([[%s\Xtest\file%s]]):format(cwd, i)
   end
 
   local sfname_eq = function(expected, nr)
-    command('buffer ' .. (nr or ''))
+    command(('buffer %s'):format(nr or ''))
     eq(expected, api.nvim_eval_statusline('%f', {}).str)
   end
 
   setup(function()
-    mkdir('Xtest')
+    t.mkdir('Xtest')
   end)
 
   teardown(function()
-    rmdir('Xtest')
+    n.rmdir('Xtest')
   end)
 
   before_each(function()
-    skip(not is_os('win'), 'N/A for non-Windows')
+    t.skip(not t.is_os('win'), 'N/A for non-Windows')
     clear()
   end)
 
-  it('uses cmd with the FILES flag', function()
-    command('next ' .. table.concat(files, ' '))
-    for i = 1, 3 do
-      eq(expected_cwd .. '/Xtest/file' .. i, api.nvim_buf_get_name(i))
-      sfname_eq(expected_cwd .. '/Xtest/file' .. i, i)
-    end
-  end)
-
-  it('starts with multiple files', function()
+  it('normalizes startup file arguments', function()
     clear { args = files }
     for i = 1, 3 do
-      eq(expected_cwd .. '/Xtest/file' .. i, api.nvim_buf_get_name(i))
-      sfname_eq('Xtest/file' .. i, i)
+      eq(('%s/Xtest/file%s'):format(expected_cwd, i), api.nvim_buf_get_name(i))
+      sfname_eq(('Xtest/file%s'):format(i), i)
     end
   end)
 
-  it('starts with ~ or absolute path files', function()
-    command([[e ~\foo\bar]])
-    eq(fn.getenv('HOME') .. '/foo/bar', api.nvim_buf_get_name(0))
+  it('normalizes :next arguments (FILES flag)', function()
+    command(('next %s'):format(table.concat(files, ' ')))
+    for i = 1, 3 do
+      eq(('%s/Xtest/file%s'):format(expected_cwd, i), api.nvim_buf_get_name(i))
+      sfname_eq(('%s/Xtest/file%s'):format(expected_cwd, i), i)
+    end
+  end)
+
+  it('normalizes :edit arguments (FILE1 flag)', function()
+    -- tilde prefix
+    command([[edit ~\foo\bar]])
+    eq(('%s/foo/bar'):format(fn.getenv('HOME')), api.nvim_buf_get_name(0))
     sfname_eq('~/foo/bar')
-    command('e ' .. files[1])
-    eq(expected_cwd .. '/Xtest/file1', api.nvim_buf_get_name(0))
-    sfname_eq(expected_cwd .. '/Xtest/file1')
+
+    -- absolute path
+    command(('edit %s'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
   end)
 
-  it('creates a buf with bufadd()', function()
+  it('normalizes bufadd() arguments', function()
     local n = fn.bufadd(files[1])
-    eq(expected_cwd .. '/Xtest/file1', api.nvim_buf_get_name(n))
-    sfname_eq(expected_cwd .. '/Xtest/file1', n)
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(n))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd), n)
   end)
 
-  it('creates a buf with bufnr()', function()
+  it('normalizes bufnr() arguments', function()
     local n = fn.bufnr(files[1], 1)
-    eq(expected_cwd .. '/Xtest/file1', api.nvim_buf_get_name(n))
-    sfname_eq(expected_cwd .. '/Xtest/file1', n)
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(n))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd), n)
   end)
 
-  it('creates a buf with :diffpatch', function()
-    write_file('Xtest/patch', [[diff file]])
-    write_file('Xtest/test.txt', [[input file]])
-    command('e Xtest/test.txt')
+  it('normalizes temp paths, <afile> and <amatch> for :diffpatch', function()
+    t.write_file('Xtest/patch', [[diff file]])
+    t.write_file('Xtest/test.txt', [[input file]])
+    command('edit Xtest/test.txt')
     exec([[
       fun MyPatch()
         call writefile(['output file'], v:fname_out)
@@ -2834,58 +2835,62 @@ describe('ffname and sfname of buf always use slashes unless uri #23639:', funct
       })
     ]])
     command('diffpatch Xtest/patch')
-    eq(expected_cwd .. '/Xtest/test.txt.new', api.nvim_buf_get_name(0))
+    eq(('%s/Xtest/test.txt.new'):format(expected_cwd), api.nvim_buf_get_name(0))
     sfname_eq('Xtest/test.txt.new')
     local tmp = fn.getenv('TMPDIR')
-    local file = fn.eval('g:test_file') ---@type string
-    local match = fn.eval('g:test_match') ---@type string
-    ok(file:find(tmp, 1, true) == 1 and file:find([[\]], 1, true) == nil)
-    ok(match:find(tmp, 1, true) == 1 and match:find([[\]], 1, true) == nil)
+    local afile = fn.eval('g:test_file') ---@type string
+    local amatch = fn.eval('g:test_match') ---@type string
+    t.matches(tmp, afile, true)
+    t.not_matches('\\', afile, true)
+    t.matches(tmp, amatch, true)
+    t.not_matches('\\', amatch, true)
   end)
 
-  it("creates a buf with :find and 'findfunc'", function()
-    write_file('Xtest/file1', '')
+  it('normalizes :find results', function()
+    t.write_file('Xtest/file1', '')
     command([[find Xtest\file1]])
-    eq(expected_cwd .. '/Xtest/file1', api.nvim_buf_get_name(0))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
     sfname_eq('Xtest/file1')
-    exec([[
+
+    -- 'findfunc'
+    exec(([[
       func FindFile(cmdarg, cmdcomplete)
-        return  [']] .. files[2] .. [[']
+        return  ['%s']
       endfunc
       set findfunc=FindFile
-    ]])
+    ]]):format(files[2]))
     command([[find file2]])
-    eq(expected_cwd .. '/Xtest/file2', api.nvim_buf_get_name(0))
-    sfname_eq(expected_cwd .. '/Xtest/file2')
+    eq(('%s/Xtest/file2'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file2'):format(expected_cwd))
   end)
 
-  it('creates a buf with :scriptnames', function()
-    command('scriptnames ' .. files[1])
-    eq(expected_cwd .. '/Xtest/file1', api.nvim_buf_get_name(0))
-    sfname_eq(expected_cwd .. '/Xtest/file1')
+  it('normalizes :scriptnames arguments', function()
+    command(('scriptnames %s'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
   end)
 
-  it('gf navigation', function()
-    write_file('Xtest/file1', '')
-    feed('i' .. files[1] .. '<Esc>0gf')
-    eq(expected_cwd .. '/Xtest/file1', api.nvim_buf_get_name(0))
-    sfname_eq(expected_cwd .. '/Xtest/file1')
+  it('normalizes gf targets', function()
+    t.write_file('Xtest/file1', '')
+    feed(('i%s<Esc>0gf'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
     command('bw')
     feed('<C-W>f')
-    eq(expected_cwd .. '/Xtest/file1', api.nvim_buf_get_name(0))
-    sfname_eq(expected_cwd .. '/Xtest/file1')
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
   end)
 
-  it('macro definition navigation and completion', function()
-    mkdir('Xtest/sub')
-    write_file(
+  it('normalizes macro definition targets and completions', function()
+    t.mkdir('Xtest/sub')
+    t.write_file(
       'Xtest/sub/bar.h',
       [[
       #define MIN 0;
       #define MAX 10;
     ]]
     )
-    write_file(
+    t.write_file(
       'Xtest/foo.c',
       [[
       #include "sub\bar.h";
@@ -2899,7 +2904,7 @@ describe('ffname and sfname of buf always use slashes unless uri #23639:', funct
     command([[set define=^\\s*#\\s*define]])
     command('e Xtest/foo.c')
     command('djump MIN')
-    eq(expected_cwd .. '/Xtest/sub/bar.h', api.nvim_buf_get_name(0))
+    eq(('%s/Xtest/sub/bar.h'):format(expected_cwd), api.nvim_buf_get_name(0))
     sfname_eq('Xtest/sub/bar.h')
     command('bw')
     feed('/MIN<CR>lxxi<C-x><C-d>')
@@ -2911,8 +2916,8 @@ describe('ffname and sfname of buf always use slashes unless uri #23639:', funct
     })
   end)
 
-  it('tag navigation', function()
-    write_file(
+  it('normalizes tag targets', function()
+    t.write_file(
       'Xtest/tags',
       [[
       main	.\\foo.c	/^void main() /;"	f	typeref:typename:void
@@ -2920,7 +2925,7 @@ describe('ffname and sfname of buf always use slashes unless uri #23639:', funct
       main3	./foo.c	/^void main3() /;"	f	typeref:typename:void
     ]]
     )
-    write_file(
+    t.write_file(
       'Xtest/foo.c',
       [[
       void main() {}
@@ -2931,23 +2936,23 @@ describe('ffname and sfname of buf always use slashes unless uri #23639:', funct
 
     command('cd Xtest')
     command('tjump main')
-    eq(expected_cwd .. '/Xtest/foo.c', api.nvim_buf_get_name(0))
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
     sfname_eq('.//foo.c')
 
     command('bw')
-    fn.setenv('DIR', cwd .. [[\Xtest]])
+    fn.setenv('DIR', ([[%s\Xtest]]):format(cwd))
     command('tjump main2')
-    eq(expected_cwd .. '/Xtest/foo.c', api.nvim_buf_get_name(0))
-    sfname_eq(expected_cwd .. '/Xtest/foo.c')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/foo.c'):format(expected_cwd))
 
     command('bw')
     command('tjump main3')
-    eq(expected_cwd .. '/Xtest/foo.c', api.nvim_buf_get_name(0))
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
     sfname_eq('./foo.c')
   end)
 
-  it('quickfix navigation', function()
-    write_file(
+  it('normalizes quickfix targets', function()
+    t.write_file(
       'Xtest/error',
       [[
       foo.c
@@ -2961,14 +2966,15 @@ describe('ffname and sfname of buf always use slashes unless uri #23639:', funct
       any = './Xtest/foo.c',
     })
     feed('<CR>')
-    eq(expected_cwd .. '/Xtest/foo.c', api.nvim_buf_get_name(0))
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
     sfname_eq('./Xtest/foo.c')
   end)
 
-  it('uri contains backslashes', function()
-    local exe = fn.exepath('cmd')
-    command('e term://' .. exe)
-    ok(api.nvim_buf_get_name(0):find(exe) > 1)
-    ok(api.nvim_eval_statusline('%f', {}).str:find(exe) > 1)
+  it('preserves backslashes in URIs', function()
+    local exe_path = fn.exepath('cmd')
+    t.not_matches('/', exe_path, true)
+    command(('e term://%s'):format(exe_path))
+    t.matches(exe_path, api.nvim_buf_get_name(0), true)
+    t.matches(exe_path, api.nvim_eval_statusline('%f', {}).str, true)
   end)
 end)

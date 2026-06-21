@@ -2768,17 +2768,14 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
     xfree(pat);
   }
 #ifdef BACKSLASH_IN_FILENAME
-  int use_shellslash = options & WILD_USE_SHELLSLASH;
-  bool use_completeslash = (options & WILD_USE_COMPLETESLASH)
-                           && ((p_csl[0] == NUL && !p_ssl) || p_csl[0] == 'b');
-  if (use_shellslash || use_completeslash) {
-    char s = use_shellslash ? psepcN : '/';
-    char t = use_shellslash ? psepc : '\\';
+  if (((options & WILD_USE_SHELLSLASH) && !p_ssl)
+      || ((options & WILD_USE_COMPLETESLASH)
+          && ((p_csl[0] == NUL && !p_ssl) || p_csl[0] == 'b'))) {
     for (int j = 0; j < *numMatches; j++) {
       char *ptr = (*matches)[j];
       for (; *ptr; ptr++) {
-        if (*ptr == s) {
-          *ptr = t;
+        if (*ptr == PATHSEP) {
+          *ptr = '\\';
         }
       }
     }

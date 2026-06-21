@@ -1777,10 +1777,10 @@ describe('API', function()
 
       -- Check if autoload works properly
       local xhome = 'Xhome_api'
-      local xconfig = xhome .. '/Xconfig'
-      local xdata = xhome .. '/Xdata'
-      local autoload_folder = xconfig .. '/nvim/autoload'
-      local autoload_file = autoload_folder .. '/testload.vim'
+      local xconfig = ('%s/Xconfig'):format(xhome)
+      local xdata = ('%s/Xdata'):format(xhome)
+      local autoload_folder = ('%s/nvim/autoload'):format(xconfig)
+      local autoload_file = ('%s/testload.vim'):format(autoload_folder)
       mkdir_p(autoload_folder)
       write_file(autoload_file, [[let testload#value = 2]])
 
@@ -3392,8 +3392,8 @@ describe('API', function()
     local test_dir = 'Xtest_list_runtime_paths'
 
     setup(function()
-      mkdir_p(test_dir .. '/a')
-      mkdir_p(test_dir .. '/b')
+      mkdir_p(('%s/a'):format(test_dir))
+      mkdir_p(('%s/b'):format(test_dir))
     end)
     teardown(function()
       rmdir(test_dir)
@@ -3969,8 +3969,8 @@ describe('API', function()
 
       local val = api.nvim_get_runtime_file('vim.vim', true)
       eq(2, #val)
-      eq(val[1], vimruntime .. '/syntax/vim.vim')
-      eq(val[2], vimruntime .. '/ftplugin/vim.vim')
+      eq(val[1], ('%s/syntax/vim.vim'):format(vimruntime))
+      eq(val[2], ('%s/ftplugin/vim.vim'):format(vimruntime))
     end)
 
     it('finds files via an 8.3 filename path #25019', function()
@@ -3982,8 +3982,8 @@ describe('API', function()
       finally(function()
         rmdir(path)
       end)
-      local path_with_shortname =
-        p(fn.system(('for %%I in ("%s") do @echo %%~sI'):format(path), ''):gsub('\n', ''))
+      local path_with_shortname = fn.system(('for %%I in ("%s") do @echo %%~sI'):format(path), '')
+      path_with_shortname = vim.fs.normalize(vim.trim(path_with_shortname))
       eq('XTEST_~1', vim.fs.basename(path_with_shortname))
       exec_lua(('vim.opt.rtp:prepend("%s/*")'):format(path_with_shortname))
       local val = api.nvim_get_runtime_file('lua/foo.lua', true)

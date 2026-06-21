@@ -2023,6 +2023,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   if (ffname != NULL) {
     buf->b_ffname = ffname;
     buf->b_sfname = xstrdup(sfname);
+    TO_SLASH(buf->b_sfname);
   }
 
   clear_wininfo(buf);
@@ -3441,11 +3442,17 @@ void maketitle(void)
       }
     } else {
       // Format: "fname + (path) (1 of 2) - Nvim".
-      char *default_titlestring =
-        "%t%( %M%)%( (%{expand('%:p:~:h:gs?\\?/?')})%)%a - Nvim";
+#ifdef MSWIN
+      int p_ssl_save = p_ssl;
+      p_ssl = true;
+#endif
+      char *default_titlestring = "%t%( %M%)%( (%{expand('%:p:~:h')})%)%a - Nvim";
       build_stl_str_hl(curwin, buf, sizeof(buf), default_titlestring,
                        kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL, NULL);
       title_str = buf;
+#ifdef MSWIN
+      p_ssl = p_ssl_save;
+#endif
     }
   }
   bool mustset = value_change(title_str, &lasttitle);

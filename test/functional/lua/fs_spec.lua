@@ -95,7 +95,7 @@ describe('vim.fs', function()
         end
       end
 
-      test_paths(test_basename_dirname_eq, is_os('win'))
+      test_paths(test_basename_dirname_eq)
       if is_os('win') then
         test_paths(tests_windows_paths, true)
       end

@@ -64,9 +64,9 @@ static const char e_error_while_writing_str[] = N_("E80: Error while writing: %s
 /// @param fnamep  file name so far
 /// @param bufp  buffer for allocated file name or NULL
 /// @param fnamelen  length of fnamep
-/// @param normalize adjust separators in `*fnamep` according to 'shellslash'
+/// @param use_shellslash adjust separators in `*fnamep` according to 'shellslash'
 int modify_fname(char *src, bool tilde_file, size_t *usedlen, char **fnamep, char **bufp,
-                 size_t *fnamelen, bool normalize)
+                 size_t *fnamelen, bool use_shellslash)
 {
   int valid = 0;
   char *s, *p, *pbuf;
@@ -306,7 +306,7 @@ repeat:
   }
 
 #ifdef BACKSLASH_IN_FILENAME
-  if (!didit && normalize && *fnamep != NULL) {
+  if (!didit && use_shellslash && *fnamep != NULL) {
     *fnamep = xstrdup(*fnamep);
     slash_adjust(*fnamep);
     xfree(*bufp);
@@ -387,20 +387,21 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if (argvars[0].v_type != VAR_STRING || argvars[0].vval.v_string == NULL) {
+  if (argvars[0].v_type != VAR_STRING) {
     // Returning an empty string means it failed.
     // No error message, for historic reasons.
     return;
   }
 
   // Return the current directory
-  char cwd[MAXPATHL];
+  char *cwd = xmalloc(MAXPATHL);
   if (os_dirname(cwd, MAXPATHL) != FAIL) {
 #ifdef BACKSLASH_IN_FILENAME
     slash_adjust(cwd);
 #endif
     rettv->vval.v_string = xstrdup(cwd);
   }
+  xfree(cwd);
 
   CdScope scope = kCdScopeGlobal;
   if (argvars[1].v_type != VAR_UNKNOWN) {
@@ -421,9 +422,7 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     scope = kCdScopeTabpage;
   }
 
-  STRCPY(cwd, argvars[0].vval.v_string);
-  TO_SLASH(cwd);
-  if (!changedir_func(cwd, scope)) {
+  if (!changedir_func(argvars[0].vval.v_string, scope)) {
     // Directory change failed
     XFREE_CLEAR(rettv->vval.v_string);
   }

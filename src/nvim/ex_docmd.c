@@ -5703,7 +5703,6 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
   findarg[findarg_len] = cc;
 
   TO_SLASH(ret_fname);
-
   return ret_fname;
 }
 
@@ -6502,15 +6501,19 @@ bool changedir_func(char *new_dir, CdScope scope)
     new_dir = NameBuff;
   }
 
+  new_dir = TO_SLASH_SAVE(new_dir);
+
   bool dir_differs = pdir == NULL || pathcmp(pdir, new_dir, -1) != 0;
   if (dir_differs) {
     do_autocmd_dirchanged(new_dir, scope, kCdCauseManual, true);
     if (vim_chdir(new_dir) != 0) {
       emsg(_(e_failed));
+      xfree(new_dir);
       xfree(pdir);
       return false;
     }
   }
+  xfree(new_dir);
 
   char **pp;
   switch (scope) {
@@ -7724,7 +7727,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
   bool tilde_file = false;
   bool skip_mod = false;
   char strbuf[30];
-  bool normalize = false;
+  bool use_shellslash = false;
 
   *errormsg = NULL;
   if (escaped != NULL) {
@@ -7777,7 +7780,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
         result = curbuf->b_fname;
         tilde_file = strcmp(result, "~") == 0;
       }
-      normalize = true;
+      use_shellslash = true;
       break;
 
     case SPEC_HASH:             // '#' or "#99": alternate file
@@ -7791,7 +7794,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
         skip_mod = true;
         break;
       }
-      normalize = true;
+      use_shellslash = true;
       char *s = src + 1;
       if (*s == '<') {                  // "#<99" uses v:oldfiles.
         s++;
@@ -7846,7 +7849,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_AFILE:  // file name for autocommand
-      normalize = !autocmd_fname_full;
+      use_shellslash = !autocmd_fname_full;
       if (autocmd_fname != NULL && !autocmd_fname_full) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
@@ -7882,7 +7885,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_SFILE:            // file name for ":so" command
-      normalize = true;
+      use_shellslash = true;
       result = estack_sfile(ESTACK_SFILE);
       if (result == NULL) {
         *errormsg = _(e_no_source_file_name_to_substitute_for_sfile);
@@ -7891,7 +7894,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       resultbuf = result;  // remember allocated string
       break;
     case SPEC_STACK:            // call stack
-      normalize = true;
+      use_shellslash = true;
       result = estack_sfile(ESTACK_STACK);
       if (result == NULL) {
         *errormsg = _(e_no_call_stack_to_substitute_for_stack);
@@ -7900,7 +7903,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       resultbuf = result;  // remember allocated string
       break;
     case SPEC_SCRIPT:           // script file name
-      normalize = true;
+      use_shellslash = true;
       result = estack_sfile(ESTACK_SCRIPT);
       if (result == NULL) {
         *errormsg = _(e_no_script_file_name_to_substitute_for_script);
@@ -7955,7 +7958,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       }
     } else if (!skip_mod) {
       valid |= modify_fname(src, tilde_file, usedlen, &result,
-                            &resultbuf, &resultlen, normalize);
+                            &resultbuf, &resultlen, use_shellslash);
       if (result == NULL) {
         *errormsg = "";
         return NULL;

@@ -365,9 +365,7 @@ void f_bufadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char *name = (char *)tv_get_string(&argvars[0]);
 
-  name = name == NULL ? NULL : TO_SLASH_SAVE(name);
   rettv->vval.v_number = buflist_add(*name == NUL ? NULL : name, 0);
-  XFREE_CLEAR(name);
 }
 
 /// "bufexists(expr)" function
