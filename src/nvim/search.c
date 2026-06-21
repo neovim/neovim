@@ -3270,9 +3270,9 @@ search_line:
           // compare the first "len" chars from "ptr"
           startp = skipwhite(p);
           if (p_ic) {
-            matched = !mb_strnicmp(startp, ptr, len);
+            matched = mb_strnicmp(startp, ptr, len) == 0;
           } else {
-            matched = !strncmp(startp, ptr, len);
+            matched = strncmp(startp, ptr, len) == 0;
           }
           if (matched && define_matched && whole
               && vim_iswordc((uint8_t)startp[len])) {

@@ -436,7 +436,7 @@ static bool cin_is_compound_init(const char *s)
   while (*p) {
     if (*p == '=') {
       p = r = cin_skipcomment(p + 1);
-    } else if (!strncmp(p, "return", 6) && !vim_isIDc(p[6])
+    } else if (strncmp(p, "return", 6) == 0 && !vim_isIDc(p[6])
                && (p == s || (p > s && !vim_isIDc(p[-1])))) {
       p = r = cin_skipcomment(p + 6);
     } else {
@@ -1104,19 +1104,19 @@ static int cin_is_if_for_while_before_offset(const char *line, int *poffset)
   }
 
   offset -= 1;
-  if (!strncmp(line + offset, "if", 2)) {
+  if (strncmp(line + offset, "if", 2) == 0) {
     goto probablyFound;
   }
 
   if (offset >= 1) {
     offset -= 1;
-    if (!strncmp(line + offset, "for", 3)) {
+    if (strncmp(line + offset, "for", 3) == 0) {
       goto probablyFound;
     }
 
     if (offset >= 2) {
       offset -= 2;
-      if (!strncmp(line + offset, "while", 5)) {
+      if (strncmp(line + offset, "while", 5) == 0) {
         goto probablyFound;
       }
     }

@@ -1541,7 +1541,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       // find entries with right mode and keys
       int match = (mp->m_mode & State)
                   && qlen == len
-                  && !strncmp(q, ptr, (size_t)len);
+                  && strncmp(q, ptr, (size_t)len) == 0;
       if (q != mp->m_keys) {
         xfree(q);
       }
