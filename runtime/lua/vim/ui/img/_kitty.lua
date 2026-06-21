@@ -160,11 +160,12 @@ end
 --- Query whether this terminal supports the kitty graphics protocol.
 --- Blocks until the terminal responds or times out.
 ---
----@param opts? {timeout?: integer} timeout in milliseconds (default: 1000)
+---@param opts? {timeout?: integer, chan?: integer} timeout in milliseconds (default: 1000)
 ---@return boolean supported
 ---@return string? msg error detail if terminal responded but not with OK
 function M.supported(opts)
-  local timeout = opts and opts.timeout or 1000
+  opts = opts or {}
+  local timeout = opts.timeout or 1000
 
   -- Do not use APC on terminals that echo unknown sequences
   if vim.env.TERM_PROGRAM == 'Apple_Terminal' then
@@ -180,7 +181,7 @@ function M.supported(opts)
 
   vim.tty.query_apc(
     seq({ a = 'q', i = query_id, s = 1, v = 1 }),
-    { timeout = timeout },
+    { timeout = timeout, chan = opts.chan },
     function(resp)
       -- kitty APC response: \027_G[<fields>,]i=<id>[,<fields>];<status>
       -- status is "OK" or an error code+message like "ENODATA:Missing image data"

@@ -80,12 +80,22 @@ end
 --- emulator supports the XTGETTCAP sequence.
 ---
 --- @param caps string|table A terminal capability or list of capabilities to query
+--- @param opts? { timeout?: integer, on_timeout?: fun(), group?: integer|string, chan?: integer }
 --- @param on_response fun(cap:string, found:boolean, seq:string?) Called for each capability in
 ---        `caps`. `found` is true if the capability was found, else false. `seq` is the control
 ---        sequence if found, or nil for boolean capabilities.
-function M.query(caps, on_response)
+---@overload fun(caps:string|table, on_response:fun(cap:string, found:boolean, seq:string?))
+function M.query(caps, opts, on_response)
+  if type(opts) == 'function' then
+    on_response = opts
+    opts = {}
+  end
+
   vim.validate('caps', caps, { 'string', 'table' })
+  vim.validate('opts', opts, 'table', true)
   vim.validate('on_response', on_response, 'function')
+
+  opts = opts or {}
 
   if type(caps) ~= 'table' then
     caps = { caps }
@@ -103,10 +113,16 @@ function M.query(caps, on_response)
   local payload = ('\027P+q%s\027\\'):format(table.concat(encoded, ';'))
 
   M.request(payload, {
+    timeout = opts.timeout,
+    group = opts.group,
+    chan = opts.chan,
     on_timeout = function()
       -- Call the callback for all capabilities that were not found.
       for k in pairs(pending) do
         on_response(k, false, nil)
+      end
+      if opts.on_timeout then
+        opts.on_timeout()
       end
     end,
   }, function(resp)
@@ -144,7 +160,7 @@ end
 --- Return `true` from `on_response` to stop listening.
 ---
 ---@param payload string APC sequence to send (full escape sequence including prefix/suffix)
----@param opts {timeout?:integer} Options table (timeout in milliseconds, default 1000)
+---@param opts {timeout?:integer, chan?:integer} Options table (timeout in milliseconds, default 1000)
 ---@param on_response fun(resp:string):boolean? Callback invoked for each APC TermResponse
 ---@overload fun(payload:string, on_response:fun(resp:string):boolean?)
 function M.query_apc(payload, opts, on_response)

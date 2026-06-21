@@ -1011,16 +1011,20 @@ do
       -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
       -- terminal
       local caps = {} ---@type table<string, boolean>
-      vim.tty.query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
-        if not found then
-          return
-        end
+      vim.tty.query(
+        { 'Tc', 'RGB', 'setrgbf', 'setrgbb' },
+        { group = group, chan = ui.chan },
+        function(cap, found)
+          if not found then
+            return
+          end
 
-        caps[cap] = true
-        if caps.Tc or caps.RGB or (caps.setrgbf and caps.setrgbb) then
-          setoption('termguicolors', true)
+          caps[cap] = true
+          if caps.Tc or caps.RGB or (caps.setrgbf and caps.setrgbb) then
+            setoption('termguicolors', true)
+          end
         end
-      end)
+      )
 
       -- Arbitrary colors to set in the SGR sequence
       local r = 1
@@ -1035,7 +1039,7 @@ do
       -- Reset attributes first, as other code may have set attributes.
       local payload = ('\027[0m\027[48;2;%d;%d;%dm%s'):format(r, g, b, '\027P$qm\027\\')
 
-      vim.tty.request(payload, { group = group }, function(resp)
+      vim.tty.request(payload, { group = group, chan = ui.chan }, function(resp)
         local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
         if not decrqss then
           return
@@ -1083,7 +1087,7 @@ do
     -- startup TTY (including runtime reactivity), so the UIEnter path below is
     -- not registered for it (avoids double-detection).
     if vim.o.ttyfast then
-      detect_background(true)
+      detect_background(true, tty.chan)
     end
 
     detect_termguicolors(tty)
