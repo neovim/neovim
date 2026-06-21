@@ -106,7 +106,7 @@ static bool autocmd_nested = false;
 static bool autocmd_include_groups = false;
 
 static bool termresponse_changed = false;
-static uint64_t termresponse_channel_id = 0;
+static uint64_t termresponse_chan_id = 0;
 
 // Map of autocmd group names and ids.
 //  name -> ID
