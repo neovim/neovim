@@ -2995,7 +2995,7 @@ describe('builtin popupmenu', function()
               occaecat cupidatat non proident, sunt in culpa            |
               qui officia deserunt mollit anim id est                   |
           ## grid 3
-            {5:-- Keyword Local completion (^N^P) }{6:match 1 of 9}             |
+            {5:-- INSERT --}                                                |
           ## grid 4
             Est eu^                                                      |
               Lorem ipsum dolor sit amet, consectetur                   |
@@ -3031,7 +3031,7 @@ describe('builtin popupmenu', function()
             occaecat cupidatat non proident, sunt in culpa            |
             qui officia deserunt mollit anim id est                   |
           {2:[No Name] [+]                                               }|
-          {5:-- Keyword Local completion (^N^P) }{6:match 1 of 9}             |
+          {5:-- INSERT --}                                                |
         ]])
       end
 

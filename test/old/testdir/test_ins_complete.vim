@@ -6512,4 +6512,20 @@ func Test_smartcase_longest()
   delfunc TestInner
 endfunc
 
+" Check that calling complete() while filtering Ctrl-N completion doesn't
+" break dot-repeat.
+func Test_call_complete_while_filtering()
+  new
+  setlocal complete=. completeopt=menuone,noselect
+  inoremap <buffer> <F2> <Cmd>call complete(3, ['obar', 'obaz'])<CR>
+  call setline(1, ['foobar', 'foobaz'])
+
+  call feedkeys("Gofo\<C-N>ob\<F2>cd\<Esc>", 'tx')
+  call assert_equal(['foobar', 'foobaz', 'foobcd'], getline(1, '$'))
+  normal! .
+  call assert_equal(['foobar', 'foobaz', 'foobcd', 'foobcd'], getline(1, '$'))
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
