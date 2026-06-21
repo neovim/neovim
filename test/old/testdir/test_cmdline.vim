@@ -3585,6 +3585,10 @@ func Test_completion_filetypecmd()
   call assert_equal('"filetype off on', @:)
   call feedkeys(":filetype indent of\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"filetype indent off', @:)
+  call feedkeys(":filetype plugin\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype plugin', @:)
+  call feedkeys(":filetype plugin indent\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype plugin indent', @:)
   set wildoptions&
 endfunc
 
