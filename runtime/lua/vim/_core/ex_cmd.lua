@@ -403,42 +403,51 @@ end
 -- Restart that preserves session and window layout
 -- TODO: https://github.com/neovim/neovim/issues/34204
 function M.ex_session_restart()
-  -- Return early if `:restart +qall` will fail
-  for _, buf_id in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.bo[buf_id].modified then
+  -- Create or reuse a directory in the temp directory where we will write the session
+  -- It is one level up from the per-instance directory to prevent being cleared prematurely
+  local temp_root = fs.normalize(api.nvim_get_temp_dir() .. '..')
+  local sessions_path = fs.joinpath(temp_root, 'sessions')
+  local ok, err, err_name = uv.fs_mkdir(sessions_path, 448)
+  if not ok then
+    local stat = uv.fs_stat(sessions_path)
+    if err_name ~= 'EEXIST' or not stat or stat.type ~= 'directory' then
       vim.notify(
-        'Restart cancelled. No write since last change in buffer ' .. buf_id,
-        vim.log.levels.WARN
+        'Failed to make temporary sessions directory: ' .. (err or err_name or sessions_path),
+        vim.log.levels.ERROR
       )
       return
     end
   end
 
-  -- Compute session to write and restore
-  local this_session = vim.fs.normalize(vim.v.this_session)
-  local del_session = nil
-
-  if this_session == '' then
-    local _, filename = vim.loop.fs_mkstemp('restart_session_XXXXXX')
-    this_session = vim.fs.abspath(filename)
-    del_session = this_session
-    vim.cmd('%argdelete')
+  -- Get temporary file name
+  local fd, filename = uv.fs_mkstemp(fs.joinpath(sessions_path, 'restart_session_XXXXXX'))
+  if not fd then
+    vim.notify(
+      'Failed to make temporary restart session: ' .. (filename or sessions_path),
+      vim.log.levels.ERROR
+    )
+    return
   end
+  uv.fs_close(fd)
+
+  -- Session to write
+  local session = fs.abspath(filename)
+  vim.cmd('%argdelete')
 
   -- Write session
-  local session_arg = vim.fn.fnameescape(this_session)
+  local session_arg = vim.fn.fnameescape(session)
   vim.cmd('mksession! ' .. session_arg)
 
   -- Restart Neovim and execute Lua commands to restore necessary session
   local after = { 'vim.cmd("source ' .. session_arg:gsub('\\', '\\\\') .. '")' }
-  if del_session ~= nil then
-    table.insert(after, ('pcall(vim.fs.rm, %s)'):format(vim.inspect(del_session)))
-    table.insert(after, 'vim.v.this_session = ""')
-  end
+  table.insert(after, ('pcall(vim.fs.rm, %s)'):format(vim.inspect(session)))
 
-  -- "+:::" special argument sets v:startreason to "session_restart" on the new server
-  local ok, msg = pcall(vim.cmd, 'restart! +:::qall lua ' .. table.concat(after, ';'))
-  if not ok then
+  local success, msg = pcall(function()
+    -- "+:::" special argument tells the C handler that this is actually a non-bang restart
+    -- That way, v:startreason can be set correctly
+    vim.cmd('restart! +:::qall lua ' .. table.concat(after, ';'))
+  end)
+  if not success then
     error(msg)
   end
 end

@@ -4974,10 +4974,10 @@ static void ex_restart(exarg_T *eap)
     return;
   }
 
-  const char *startreason = "restart";
-  // If we see our special flag "+:::", set startreason
+  const char *startreason = "restart!";
+  // The special flag "+:::" indicates a non-bang restart
   if(eap->do_ecmd_cmd && strncmp(eap->do_ecmd_cmd, "+:::", 4) != 0) {
-    startreason = "restart_session";
+    startreason = "restart";
   }
 
   Error err = ERROR_INIT;
