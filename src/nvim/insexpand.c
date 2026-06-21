@@ -3448,7 +3448,7 @@ static void set_completion(colnr_T startcol, list_T *list)
   bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0;
 
   // If already doing completions stop it.
-  if (ctrl_x_mode_not_default()) {
+  if (compl_started || ctrl_x_mode_not_default()) {
     ins_compl_prep(' ');
   }
   ins_compl_clear();
