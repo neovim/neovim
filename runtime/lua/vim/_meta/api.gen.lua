@@ -1552,12 +1552,6 @@ function vim.api.nvim_get_proc_children(pid) end
 --- @return string[] # list of absolute paths to the found files
 function vim.api.nvim_get_runtime_file(name, all) end
 
---- Gets path to Nvim's temp directory (ending with slash).
---- Creates the directory on the first call.
----
---- @return string # path to Nvim's temp directory
-function vim.api.nvim_get_temp_dir() end
-
 --- Gets a global (g:) variable.
 ---
 --- @param name string Variable name

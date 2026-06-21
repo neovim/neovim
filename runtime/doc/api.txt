@@ -1086,16 +1086,6 @@ nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
     Return: ~
         (`string[]`) list of absolute paths to the found files
 
-nvim_get_temp_dir()                                      *nvim_get_temp_dir()*
-    Gets path to Nvim's temp directory (ending with slash). Creates the
-    directory on the first call.
-
-    Attributes: ~
-        Since: 0.12.0
-
-    Return: ~
-        (`string`) path to Nvim's temp directory
-
 nvim_get_var({name})                                          *nvim_get_var()*
     Gets a global (g:) variable.
 

@@ -36,7 +36,6 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
-#include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/getchar_defs.h"
@@ -2602,20 +2601,4 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 void nvim__set_restart_on_crash(String progpath, Array argv)
 {
   ui_call__set_restart_on_crash_exit(progpath, argv);
-}
-
-/// Gets path to Nvim's temp directory (ending with slash).
-/// Creates the directory on the first call.
-///
-/// @return path to Nvim's temp directory
-String nvim_get_temp_dir(Error *err)
-  FUNC_API_SINCE(14)
-{
-  char *tempdir = vim_gettempdir();
-  if (tempdir == NULL) {
-    api_set_error(err, kErrorTypeException, "Failed to create temp directory");
-    return (String)STRING_INIT;
-  }
-
-  return cstr_as_string(tempdir);
 }

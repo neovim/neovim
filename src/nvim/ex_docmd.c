@@ -4970,7 +4970,12 @@ static void ex_quitall(exarg_T *eap)
 static void ex_restart(exarg_T *eap)
 {
   if (eap->forceit == false) {
-    nlua_call_excmd("vim._core.ex_cmd", "ex_session_restart", eap, &cmdmod, NULL);
+    // Pass +cmd via the `extra` slot of nlua_call_excmd
+    dict_T *extra_d = tv_dict_alloc();
+    tv_dict_add_str(extra_d, S_LEN("quit_cmd"), eap->do_ecmd_cmd ? eap->do_ecmd_cmd : "");
+    typval_T extra_tv = { .v_type = VAR_DICT, .vval.v_dict = extra_d };
+    nlua_call_excmd("vim._core.ex_cmd", "ex_session_restart", eap, &cmdmod, &extra_tv);
+    tv_clear(&extra_tv);
     return;
   }
 
