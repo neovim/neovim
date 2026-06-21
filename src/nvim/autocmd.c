@@ -2087,7 +2087,7 @@ void do_termresponse_autocmd(const String sequence, uint64_t channel_id)
   apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, NULL,
                        &DICT_OBJ(data), false);
   termresponse_changed = true;
-  termresponse_channel_id = channel_id;
+  termresponse_chan_id = channel_id;
 }
 
 // Block triggering autocommands until unblock_autocmd() is called.
@@ -2097,7 +2097,7 @@ void block_autocmds(void)
   // Detect if v:termresponse is set while blocked.
   if (!is_autocmd_blocked()) {
     termresponse_changed = false;
-    termresponse_channel_id = 0;
+    termresponse_chan_id = 0;
   }
   autocmd_blocked++;
 }
@@ -2112,7 +2112,7 @@ void unblock_autocmds(void)
   if (!is_autocmd_blocked() && termresponse_changed && has_event(EVENT_TERMRESPONSE)) {
     // Copied to a new allocation, as termresponse may be freed during the event.
     const String sequence = cstr_to_string(get_vim_var_str(VV_TERMRESPONSE));
-    do_termresponse_autocmd(sequence, termresponse_channel_id);
+    do_termresponse_autocmd(sequence, termresponse_chan_id);
     api_free_string(sequence);
   }
 }
