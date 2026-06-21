@@ -781,267 +781,309 @@ do
     end
   end
 
-  if tty then
-    local group = vim.api.nvim_create_augroup('nvim.tty', {})
+  -- Shared TTY option detection used by two paths: the startup path (a TTY is
+  -- present when Nvim starts) and the UIEnter path (a TTY attaches to a
+  -- previously |--headless| server, e.g. behind |--remote-ui|). The helpers are
+  -- hoisted here so both paths share one implementation instead of duplicating
+  -- it.
+  --
+  -- Precedence: never override an explicit user setting. For 'background',
+  -- bg_user_set() treats only our own sets (SID_LUA, -8) as re-applicable; a
+  -- user set (real script SID, ":set", or API client) is preserved.
+  -- 'termguicolors' is guarded by `was_set` and is only ever enabled here.
+  --
+  -- Limitation: 'background' is global, the OSC 11 query is broadcast to every
+  -- attached terminal, and a |TermResponse| is not attributable to a UI, so the
+  -- value reflects whichever terminal answers last (decided by response speed),
+  -- not necessarily the most recently attached one.
+  local group = vim.api.nvim_create_augroup('nvim.tty', {})
 
-    --- Set an option after startup (so that OptionSet is fired), but only if not
-    --- already set by the user.
-    ---
-    --- @param option string Option name
-    --- @param value any Option value
-    --- @param force boolean? Always set the value, even if already set
-    local function setoption(option, value, force)
-      if not force and vim.api.nvim_get_option_info2(option, {}).was_set then
-        -- Don't do anything if option is already set
+  --- Set an option after startup (so that OptionSet is fired), but only if not
+  --- already set by the user.
+  ---
+  --- @param option string Option name
+  --- @param value any Option value
+  --- @param force boolean? Always set the value, even if already set
+  local function setoption(option, value, force)
+    if not force and vim.api.nvim_get_option_info2(option, {}).was_set then
+      -- Don't do anything if option is already set
+      return
+    end
+
+    -- Wait until Nvim is finished starting to set the option to ensure the
+    -- OptionSet event fires.
+    if vim.v.vim_did_enter == 1 then
+      --- @diagnostic disable-next-line:no-unknown
+      vim.o[option] = value
+    else
+      nvim_on('VimEnter', group, {
+        once = true,
+        nested = true,
+      }, function()
+        setoption(option, value, force)
+      end)
+    end
+  end
+
+  --- Script ID (SID) used for our own automatic 'background' sets. Lets
+  --- bg_user_set() distinguish a user set from our detection.
+  local sid_lua = -8
+
+  --- True if 'background' was set by the user, not by our detection (sid_lua).
+  local function bg_user_set()
+    local info = vim.api.nvim_get_option_info2('background', {})
+    return info.was_set and info.last_set_sid ~= sid_lua
+  end
+
+  --- Parse a string of hex characters as a color.
+  ---
+  --- The string can contain 1 to 4 hex characters. The returned value is
+  --- between 0.0 and 1.0 (inclusive) representing the intensity of the color.
+  ---
+  --- For instance, if only a single hex char "a" is used, then this function
+  --- returns 0.625 (10 / 16), while a value of "aa" would return 0.664 (170 /
+  --- 256).
+  ---
+  --- @param c string Color as a string of hex chars
+  --- @return number? Intensity of the color
+  local function parsecolor(c)
+    if #c == 0 or #c > 4 then
+      return nil
+    end
+
+    local val = vim._tointeger(c, 16)
+    if not val then
+      return nil
+    end
+
+    local max = vim._assert_integer(string.rep('f', #c), 16)
+    return val / max
+  end
+
+  --- Parse an OSC 11 response
+  ---
+  --- Either of the two formats below are accepted:
+  ---
+  ---   OSC 11 ; rgb:<red>/<green>/<blue>
+  ---
+  --- or
+  ---
+  ---   OSC 11 ; rgba:<red>/<green>/<blue>/<alpha>
+  ---
+  --- where
+  ---
+  ---   <red>, <green>, <blue>, <alpha> := h | hh | hhh | hhhh
+  ---
+  --- The alpha component is ignored, if present.
+  ---
+  --- @param resp string OSC 11 response
+  --- @return string? Red component
+  --- @return string? Green component
+  --- @return string? Blue component
+  local function parseosc11(resp)
+    local r, g, b
+    r, g, b = resp:match('^\027%]11;rgb:(%x+)/(%x+)/(%x+)$')
+    if not r and not g and not b then
+      local a
+      r, g, b, a = resp:match('^\027%]11;rgba:(%x+)/(%x+)/(%x+)/(%x+)$')
+      if not a or #a > 4 then
+        return nil, nil, nil
+      end
+    end
+
+    if r and g and b and #r <= 4 and #g <= 4 and #b <= 4 then
+      return r, g, b
+    end
+
+    return nil, nil, nil
+  end
+
+  --- Guess value of 'background' based on terminal color.
+  ---
+  --- We write Operating System Command (OSC) 11 to the terminal to request the
+  --- terminal's background color. We then wait for a response. If the response
+  --- matches `rgba:RRRR/GGGG/BBBB/AAAA` where R, G, B, and A are hex digits, then
+  --- compute the luminance[1] of the RGB color and classify it as light/dark
+  --- accordingly. Note that the color components may have anywhere from one to
+  --- four hex digits, and require scaling accordingly as values out of 4, 8, 12,
+  --- or 16 bits. Also note the A(lpha) component is optional, and is parsed but
+  --- ignored in the calculations.
+  ---
+  --- [1] https://en.wikipedia.org/wiki/Luma_%28video%29
+  ---
+  --- In slow environments (e.g. SSH with high latency), this will increase
+  --- startup time and produce a warning, so users may want to disable it.
+  ---
+  --- The OSC 11 handler is PERSISTENT (timeout=0) so it also reacts to runtime
+  --- theme changes (a terminal in mode 2031 re-queries and forwards a fresh
+  --- |TermResponse|). Its augroup is cleared on each call so only the
+  --- most-recently-attached TUI's handler remains.
+  ---
+  --- @param sync boolean When true (a TTY is present at startup), also send a
+  --- DSR probe and synchronously wait so 'background' is set before user config,
+  --- warning (E1568) if the terminal never answers the DSR.
+  local function detect_background(sync)
+    -- Re-create (clear) the handler's augroup on each call so only the
+    -- most-recently-attached TUI's handler remains.
+    local bg_group = vim.api.nvim_create_augroup('nvim.tty.background', {})
+
+    -- Send OSC 11 query. In the startup (sync) path also send a DSR probe: if
+    -- the DSR response comes first, the terminal most likely doesn't support the
+    -- bg color query, and we don't have to keep waiting for a bg response. #32109
+    local osc11 = '\027]11;?\007'
+    local dsr = '\027[5n'
+
+    -- This handler updates 'background' anytime we receive an OSC 11 response
+    -- from the terminal emulator. It is persistent (no built-in timeout) so it
+    -- also reacts to runtime theme changes; the per-response bg_user_set() guard
+    -- stops it once the user pins 'background'.
+    local did_dsr_response = false
+    vim.tty.request(osc11 .. (sync and dsr or ''), { group = bg_group, timeout = 0 }, function(resp)
+      -- DSR response that should come after the OSC 11 response if the terminal
+      -- supports it.
+      if sync and string.match(resp, '^\027%[0n$') then
+        did_dsr_response = true
+        -- Don't stop listening: the bg response may come after the DSR response
+        -- if the terminal handles requests out of sequence. In that case, the bg
+        -- will simply be set later in the startup sequence.
         return
       end
 
-      -- Wait until Nvim is finished starting to set the option to ensure the
-      -- OptionSet event fires.
-      if vim.v.vim_did_enter == 1 then
-        --- @diagnostic disable-next-line:no-unknown
-        vim.o[option] = value
-      else
-        nvim_on('VimEnter', group, {
-          once = true,
-          nested = true,
-        }, function()
-          setoption(option, value, force)
-        end)
+      -- Never override an explicit user value: stop once the user pins it.
+      if bg_user_set() then
+        return true
       end
+
+      local r, g, b = parseosc11(resp)
+      if r and g and b then
+        local rr = parsecolor(r)
+        local gg = parsecolor(g)
+        local bb = parsecolor(b)
+
+        if rr and gg and bb then
+          local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
+          local bg = luminance < 0.5 and 'dark' or 'light'
+          -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
+          vim.cmd('noautocmd set background=' .. bg)
+        end
+      end
+    end)
+
+    if not sync then
+      return
     end
 
-    --- Guess value of 'background' based on terminal color.
-    ---
-    --- We write Operating System Command (OSC) 11 to the terminal to request the
-    --- terminal's background color. We then wait for a response. If the response
-    --- matches `rgba:RRRR/GGGG/BBBB/AAAA` where R, G, B, and A are hex digits, then
-    --- compute the luminance[1] of the RGB color and classify it as light/dark
-    --- accordingly. Note that the color components may have anywhere from one to
-    --- four hex digits, and require scaling accordingly as values out of 4, 8, 12,
-    --- or 16 bits. Also note the A(lpha) component is optional, and is parsed but
-    --- ignored in the calculations.
-    ---
-    --- [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-    ---
-    --- In slow environments (e.g. SSH with high latency), this will increase
-    --- startup time and produce a warning, so users may want to disable it.
-    if vim.o.ttyfast then
-      --- Parse a string of hex characters as a color.
-      ---
-      --- The string can contain 1 to 4 hex characters. The returned value is
-      --- between 0.0 and 1.0 (inclusive) representing the intensity of the color.
-      ---
-      --- For instance, if only a single hex char "a" is used, then this function
-      --- returns 0.625 (10 / 16), while a value of "aa" would return 0.664 (170 /
-      --- 256).
-      ---
-      --- @param c string Color as a string of hex chars
-      --- @return number? Intensity of the color
-      local function parsecolor(c)
-        if #c == 0 or #c > 4 then
-          return nil
-        end
+    -- Wait until detection of OSC 11 capabilities is complete to ensure
+    -- background is automatically set before user config.
+    if
+      not vim.wait(100, function()
+        return did_dsr_response
+      end, 1)
+      -- Don't show the warning when running tests to avoid flakiness.
+      and os.getenv('NVIM_TEST') == nil
+    then
+      vim.notify(
+        "E1568: Terminal did not respond to DSR request for 'background' color. Startup may be slower. :help 'ttyfast'",
+        vim.log.levels.WARN,
+        { _truncate = true }
+      )
+    end
+  end
 
-        local val = vim._tointeger(c, 16)
-        if not val then
-          return nil
-        end
-
-        local max = vim._assert_integer(string.rep('f', #c), 16)
-        return val / max
-      end
-
-      --- Parse an OSC 11 response
-      ---
-      --- Either of the two formats below are accepted:
-      ---
-      ---   OSC 11 ; rgb:<red>/<green>/<blue>
-      ---
-      --- or
-      ---
-      ---   OSC 11 ; rgba:<red>/<green>/<blue>/<alpha>
-      ---
-      --- where
-      ---
-      ---   <red>, <green>, <blue>, <alpha> := h | hh | hhh | hhhh
-      ---
-      --- The alpha component is ignored, if present.
-      ---
-      --- @param resp string OSC 11 response
-      --- @return string? Red component
-      --- @return string? Green component
-      --- @return string? Blue component
-      local function parseosc11(resp)
-        local r, g, b
-        r, g, b = resp:match('^\027%]11;rgb:(%x+)/(%x+)/(%x+)$')
-        if not r and not g and not b then
-          local a
-          r, g, b, a = resp:match('^\027%]11;rgba:(%x+)/(%x+)/(%x+)/(%x+)$')
-          if not a or #a > 4 then
-            return nil, nil, nil
-          end
-        end
-
-        if r and g and b and #r <= 4 and #g <= 4 and #b <= 4 then
-          return r, g, b
-        end
-
-        return nil, nil, nil
-      end
-
-      -- Send OSC 11 query along with DSR sequence to determine whether terminal supports the query.
-      -- If the DSR response comes first, the terminal most likely doesn't support the bg color
-      -- query, and we don't have to keep waiting for a bg color response. #32109
-      local osc11 = '\027]11;?\007'
-      local dsr = '\027[5n'
-
-      -- This handler updates the value of 'background' anytime we receive an OSC 11 response from
-      -- the terminal emulator. If the user has set 'background' explicitly then we will delete the
-      -- autocommand below, effectively disabling automatic background setting.
-      local did_dsr_response = false
-      -- VimEnter handles cleanup; no built-in timeout.
-      local id = vim.tty.request(osc11 .. dsr, { group = group, timeout = 0 }, function(resp)
-        -- DSR response that should come after the OSC 11 response if the
-        -- terminal supports it.
-        if string.match(resp, '^\027%[0n$') then
-          did_dsr_response = true
-          -- Don't stop listening: the bg response may come after the DSR response if the terminal
-          -- handles requests out of sequence. In that case, the bg will simply be set later in the
-          -- startup sequence.
+  --- If the TUI (term_has_truecolor) was able to determine that the host
+  --- terminal supports truecolor, enable 'termguicolors'. Otherwise, query the
+  --- terminal (using both XTGETTCAP and SGR + DECRQSS). If the terminal's
+  --- response indicates that it does support truecolor enable 'termguicolors',
+  --- but only if the user has not already disabled it.
+  ---
+  --- @param ui table<string,any> The attached TTY UI (see |nvim_list_uis()|).
+  local function detect_termguicolors(ui)
+    local colorterm = os.getenv('COLORTERM')
+    if ui.rgb or colorterm == 'truecolor' or colorterm == '24bit' then
+      -- The TUI was able to determine truecolor support or $COLORTERM explicitly indicates
+      -- truecolor support
+      setoption('termguicolors', true)
+    elseif (colorterm == nil or colorterm == '') and vim.o.ttyfast then
+      -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
+      -- terminal
+      local caps = {} ---@type table<string, boolean>
+      vim.tty.query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
+        if not found then
           return
         end
 
-        local r, g, b = parseosc11(resp)
-        if r and g and b then
-          local rr = parsecolor(r)
-          local gg = parsecolor(g)
-          local bb = parsecolor(b)
-
-          if rr and gg and bb then
-            local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
-            local bg = luminance < 0.5 and 'dark' or 'light'
-            -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
-            vim.cmd('noautocmd set background=' .. bg)
-          end
+        caps[cap] = true
+        if caps.Tc or caps.RGB or (caps.setrgbf and caps.setrgbb) then
+          setoption('termguicolors', true)
         end
       end)
 
-      nvim_on('VimEnter', group, {
-        nested = true,
-        once = true,
-      }, function()
-        local optinfo = vim.api.nvim_get_option_info2('background', {})
-        local sid_lua = -8
-        if
-          optinfo.was_set
-          and optinfo.last_set_sid ~= sid_lua
-          and next(vim.api.nvim_get_autocmds({ id = id })) ~= nil
-        then
-          vim.api.nvim_del_autocmd(id)
+      -- Arbitrary colors to set in the SGR sequence
+      local r = 1
+      local g = 2
+      local b = 3
+
+      -- Write SGR followed by DECRQSS. This sets the background color then
+      -- immediately asks the terminal what the background color is. If the
+      -- terminal responds to the DECRQSS with the same SGR sequence that we
+      -- sent then the terminal supports truecolor.
+      --
+      -- Reset attributes first, as other code may have set attributes.
+      local payload = ('\027[0m\027[48;2;%d;%d;%dm%s'):format(r, g, b, '\027P$qm\027\\')
+
+      vim.tty.request(payload, { group = group }, function(resp)
+        local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
+        if not decrqss then
+          return
         end
-      end)
 
-      -- Wait until detection of OSC 11 capabilities is complete to
-      -- ensure background is automatically set before user config.
-      if
-        not vim.wait(100, function()
-          return did_dsr_response
-        end, 1)
-        -- Don't show the warning when running tests to avoid flakiness.
-        and os.getenv('NVIM_TEST') == nil
-      then
-        vim.notify(
-          "E1568: Terminal did not respond to DSR request for 'background' color. Startup may be slower. :help 'ttyfast'",
-          vim.log.levels.WARN,
-          { _truncate = true }
-        )
-      end
-    end
+        -- The DECRQSS SGR response first contains attributes separated by semicolons, followed by
+        -- the SGR itself with parameters separated by colons. Some terminals include "0" in the
+        -- attribute list unconditionally; others do not. Our SGR sequence did not set any
+        -- attributes, so there should be no attributes in the list.
+        local attrs = vim.split(decrqss, ';')
+        if #attrs ~= 1 and (#attrs ~= 2 or attrs[1] ~= '0') then
+          return
+        end
 
-    --- If the TUI (term_has_truecolor) was able to determine that the host
-    --- terminal supports truecolor, enable 'termguicolors'. Otherwise, query the
-    --- terminal (using both XTGETTCAP and SGR + DECRQSS). If the terminal's
-    --- response indicates that it does support truecolor enable 'termguicolors',
-    --- but only if the user has not already disabled it.
-    do
-      local colorterm = os.getenv('COLORTERM')
-      if tty.rgb or colorterm == 'truecolor' or colorterm == '24bit' then
-        -- The TUI was able to determine truecolor support or $COLORTERM explicitly indicates
-        -- truecolor support
-        setoption('termguicolors', true)
-      elseif (colorterm == nil or colorterm == '') and vim.o.ttyfast then
-        -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
-        -- terminal
-        local caps = {} ---@type table<string, boolean>
-        vim.tty.query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
-          if not found then
-            return
-          end
+        -- The returned SGR sequence should begin with 48:2
+        local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
+        if not sgr then
+          return
+        end
 
-          caps[cap] = true
-          if caps.Tc or caps.RGB or (caps.setrgbf and caps.setrgbb) then
-            setoption('termguicolors', true)
-          end
-        end)
-
-        -- Arbitrary colors to set in the SGR sequence
-        local r = 1
-        local g = 2
-        local b = 3
-
-        -- Write SGR followed by DECRQSS. This sets the background color then
-        -- immediately asks the terminal what the background color is. If the
-        -- terminal responds to the DECRQSS with the same SGR sequence that we
-        -- sent then the terminal supports truecolor.
-        --
-        -- Reset attributes first, as other code may have set attributes.
-        local payload = ('\027[0m\027[48;2;%d;%d;%dm%s'):format(r, g, b, '\027P$qm\027\\')
-
-        vim.tty.request(payload, { group = group }, function(resp)
-          local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
-          if not decrqss then
-            return
-          end
-
-          -- The DECRQSS SGR response first contains attributes separated by semicolons, followed by
-          -- the SGR itself with parameters separated by colons. Some terminals include "0" in the
-          -- attribute list unconditionally; others do not. Our SGR sequence did not set any
-          -- attributes, so there should be no attributes in the list.
-          local attrs = vim.split(decrqss, ';')
-          if #attrs ~= 1 and (#attrs ~= 2 or attrs[1] ~= '0') then
-            return
-          end
-
-          -- The returned SGR sequence should begin with 48:2
-          local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
-          if not sgr then
-            return
-          end
-
-          -- The remaining elements of the SGR sequence should be the 3 colors we set. Some
-          -- terminals also include an additional parameter (which can even be empty!), so handle
-          -- those cases as well
-          local params = vim.split(sgr, ':')
-          if #params ~= 3 and (#params ~= 4 or (params[1] ~= '' and params[1] ~= '1')) then
-            return true
-          end
-
-          if
-            vim._tointeger(params[#params - 2]) == r
-            and vim._tointeger(params[#params - 1]) == g
-            and vim._tointeger(params[#params]) == b
-          then
-            setoption('termguicolors', true)
-          end
-
+        -- The remaining elements of the SGR sequence should be the 3 colors we set. Some
+        -- terminals also include an additional parameter (which can even be empty!), so handle
+        -- those cases as well
+        local params = vim.split(sgr, ':')
+        if #params ~= 3 and (#params ~= 4 or (params[1] ~= '' and params[1] ~= '1')) then
           return true
-        end)
-      end
+        end
+
+        if
+          vim._tointeger(params[#params - 2]) == r
+          and vim._tointeger(params[#params - 1]) == g
+          and vim._tointeger(params[#params]) == b
+        then
+          setoption('termguicolors', true)
+        end
+
+        return true
+      end)
     end
   end
 
   if tty then
+    -- A TTY is present at startup. Detect synchronously so 'background' is set
+    -- before user config runs, and detect 'termguicolors'. This path owns the
+    -- startup TTY (including runtime reactivity), so the UIEnter path below is
+    -- not registered for it (avoids double-detection).
+    if vim.o.ttyfast then
+      detect_background(true)
+    end
+
+    detect_termguicolors(tty)
+
     -- Show progress bars in supporting terminals
     nvim_on('Progress', vim.api.nvim_create_augroup('nvim.progress', {}), {
       desc = 'Display native progress bars',
@@ -1055,6 +1097,43 @@ do
         end
       else
         vim.api.nvim_ui_send('\027]9;4;0;0\027\\')
+      end
+    end)
+  end
+
+  -- Re-detect terminal options when a UI attaches, not only at startup: a
+  -- |--headless| server (e.g. behind |--remote-ui|) has no UI when the block
+  -- above runs, and swapping a TUI between servers should pick up the current
+  -- terminal. Only handle TTYs that attach AFTER startup: if a TTY was present
+  -- at startup the block above already owns detection (incl. runtime
+  -- reactivity), so registering here too would double-detect.
+  if not tty then
+    --- The terminal UI that just attached (per |v:event| `chan`), or nil.
+    local function attaching_tty()
+      local chan = (vim.v.event or {}).chan
+      for _, ui in ipairs(vim.api.nvim_list_uis()) do
+        if ui.chan == chan then
+          return ui.stdout_tty and ui or nil
+        end
+      end
+      return nil
+    end
+
+    nvim_on('UIEnter', vim.api.nvim_create_augroup('nvim.tty.attach', {}), {}, function()
+      local ui = attaching_tty()
+      if not ui then
+        return
+      end
+
+      -- 'termguicolors': enable when the attaching UI reports truecolor (or the
+      -- terminal query confirms it), unless the user set it. Never disabled here.
+      detect_termguicolors(ui)
+
+      -- 'background': (re)query OSC 11. The persistent handler also reacts to
+      -- runtime theme changes (mode 2031 -> TUI re-queries -> |TermResponse|);
+      -- the per-response bg_user_set() guard preserves an explicit user value.
+      if vim.o.ttyfast then
+        detect_background(false)
       end
     end)
   end
