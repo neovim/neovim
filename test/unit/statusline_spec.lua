@@ -483,7 +483,7 @@ describe('build_stl_str_hl', function()
   statusline_test(
     'ignores truncated %= in item groups when expanding at top-level',
     20,
-    '%10.10(hidden%=%f%)TEST',
+    '%10.10(%<hidden%=%f%)TEST',
     '<_spec.luaTEST',
     { file_name = 'test/unit/buffer_spec.lua', expected_cell_count = 14 }
   )
@@ -497,11 +497,59 @@ describe('build_stl_str_hl', function()
   )
 
   statusline_test(
-    'Should truncate groups according to maxwid',
+    'truncates item groups according to maxwid',
     30,
     '%.5(1234567%), %2.5(1234567%), %5.5(1234567%)',
     '<4567, <4567, <4567',
     { expected_cell_count = 19 }
+  )
+
+  statusline_test(
+    'truncates at first normal item in item groups',
+    30,
+    '%.15(path: %f%)',
+    'path: <spec.lua',
+    { file_name = 'test/unit/buffer_spec.lua', expected_cell_count = 15 }
+  )
+
+  statusline_test(
+    'truncates at %< in item groups',
+    60,
+    '%.15(%<path: %f%), %.15(path: %<%f%), %.15(path: %f%<%)',
+    '<uffer_spec.lua, path: <spec.lua, path: test/uni>',
+    { file_name = 'test/unit/buffer_spec.lua', expected_cell_count = 49 }
+  )
+
+  statusline_test(
+    'truncates at %< in nested item groups and top-level',
+    40,
+    '%.24(trim both ends: %<%.17(%f%<%)%), path: %<%f',
+    'trim both ends: <buffer>, path: <pec.lua',
+    { file_name = 'test/unit/buffer_spec.lua' }
+  )
+
+  statusline_test(
+    'ignores unused %< in item groups when truncating at top-level',
+    25,
+    '%.6(%L%< test%) file: %<%f',
+    '1 test file: <er_spec.lua',
+    { file_name = 'test/unit/buffer_spec.lua' }
+  )
+
+  statusline_test(
+    'ignores second %< in item groups when truncating at top-level',
+    32,
+    '%.15(file: %<%f%<%), file: %<%f',
+    'file: <spec.lua, file: <spec.lua',
+    { file_name = 'test/unit/buffer_spec.lua' }
+  )
+
+  statusline_test(
+    'ignores %< in hidden item groups when truncating at top-level',
+    15,
+    '%.15(hidden%<%)%f%<',
+    'test/unit/buff>',
+    { file_name = 'test/unit/buffer_spec.lua' }
   )
 
   -- stl item testing
@@ -546,10 +594,10 @@ describe('build_stl_str_hl', function()
   )
   statusline_test_align(
     'compensates with fillchar to reach minwid after truncating item group at multicell character',
-    40,
-    '%.5(12🙂345%), %4.5(12🙂345%), %5.5(12🙂345%), %-5.5(12🙂345%), %50.5(12🙂345%)',
-    '<345, <345, <345~, <345~, <345~',
-    { expected_cell_count = 31 }
+    100,
+    '%.5(12🙂345%), %4.5(12🙂345%), %5.5(12🙂345%), %-5.5(12🙂345%), %50.5(12🙂345%), %.5(123🙂%L%<%), %4.5(123🙂%L%<%), %5.5(123🙂%L%<%), %-5.5(123🙂%L%<%), %50.5(123🙂%L%<%)',
+    '<345, <345, <345~, <345~, <345~, 123>, 123>, 123>~, 123>~, 123>~',
+    { expected_cell_count = 64 }
   )
 
   -- multi-byte testing

@@ -8932,7 +8932,9 @@ local options = {
                  this label.
               Use |getmousepos()|.winid in the specified function to get the
               corresponding |window-ID| of the clicked item.
-        \< -   Where to truncate line if too long.  Default is at the start.
+        \< -   Where to truncate line if too long.  Default is at the first
+              item.  Truncation markers within item groups apply to the
+              truncation of that group until its maxwid is reached.
               No width fields allowed.
         = -   Separation point between alignment sections.  Each section will
               be separated by an equal number of spaces.  With one %= what

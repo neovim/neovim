@@ -858,6 +858,130 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, int relnum, int virtnum, char 
   return width;
 }
 
+/// Truncates the statusline at the first truncation marker (%<) if present,
+/// or alternatively at the first item, or otherwise at the beginning.
+///
+/// @param width  Current width in cells (will be adjusted if truncation took place)
+/// @param minwid  Minimum width in cells
+/// @param maxwid  Maximum width in cells
+/// @param fillchar  Fillchar
+/// @param stl_items  Items
+/// @param startitem  Start item index (inclusive)
+/// @param curitem  End item index (exclusive)
+/// @param start_p  Start position in the output buffer
+/// @param out_p  Current output buffer position (will be adjusted if truncation took place)
+static void stl_truncate(int *width, int minwid, int maxwid, schar_T fillchar,
+                         stl_item_t *stl_items, int startitem, int *curitem, char *start_p,
+                         char **out_p)
+{
+  minwid = MIN(minwid, maxwid);
+
+  int item_idx = startitem;
+  char *trunc_p;
+
+  // If there are no items, truncate from beginning
+  if (startitem == *curitem) {
+    trunc_p = start_p;
+
+    // Otherwise, look for the truncation item
+  } else {
+    // Default to truncating at the first item
+    trunc_p = stl_items[item_idx].start;
+
+    for (int i = startitem; i < *curitem; i++) {
+      if (stl_items[i].type == Trunc) {
+        // Truncate at %< stl_items.
+        trunc_p = stl_items[i].start;
+        item_idx = i;
+        break;
+      }
+    }
+  }
+
+  // If the truncation point we found is beyond the maximum
+  // length of the string, truncate the end of the string.
+  if (*width - vim_strsize(trunc_p) >= maxwid) {
+    // Walk from the beginning of the
+    // string to find the last character that will fit.
+    trunc_p = start_p;
+    *width = 0;
+    while (true) {
+      int char_cells = ptr2cells(trunc_p);
+      if (*width + char_cells >= maxwid) {
+        break;
+      }
+
+      // Note: Only advance the pointer if the next
+      //       character will fit in the available output space
+      *width += char_cells;
+      trunc_p += utfc_ptr2len(trunc_p);
+    }
+
+    // Ignore any items in the statusline that occur after
+    // the truncation point
+    for (int i = startitem; i < *curitem; i++) {
+      if (stl_items[i].start > trunc_p) {
+        for (int j = i; j < *curitem; j++) {
+          if (stl_items[j].type == ClickFunc) {
+            XFREE_CLEAR(stl_items[j].cmd);
+          }
+        }
+        *curitem = i;
+        break;
+      }
+    }
+
+    // Truncate the output
+    *trunc_p++ = '>';
+    *out_p = trunc_p;
+
+    // Truncate at the truncation point we found
+  } else {
+    // { Determine how many bytes to remove
+    int trunc_len = 0;
+    while (*width >= maxwid) {
+      *width -= ptr2cells(trunc_p + trunc_len);
+      trunc_len += utfc_ptr2len(trunc_p + trunc_len);
+    }
+    // }
+
+    // { Truncate the string
+    char *trunc_end_p = trunc_p + trunc_len;
+    memmove(trunc_p + 1, trunc_end_p, (size_t)(*out_p - trunc_end_p) + 1);  // +1 for NUL
+    *out_p -= (size_t)(trunc_end_p - (trunc_p + 1));
+
+    // Put a `<` to mark where we truncated at
+    *trunc_p = '<';
+    // }
+
+    // { Change the start point for items based on
+    //  their position relative to our truncation point
+
+    // Note: The offset is one less than the truncation length because
+    //       the truncation marker `<` is not counted.
+    int item_offset = trunc_len - 1;
+
+    for (int i = item_idx; i < *curitem; i++) {
+      // Items starting at or after the end of the truncated section need
+      // to be moved backwards.
+      if (stl_items[i].start >= trunc_end_p) {
+        stl_items[i].start -= item_offset;
+      } else {
+        // Anything inside the truncated area is set to start
+        // at the `<` truncation character.
+        stl_items[i].start = trunc_p;
+      }
+    }
+    // }
+  }
+
+  // Fill up for half a double-wide character.
+  while (++*width < minwid) {
+    schar_get_adv(out_p, fillchar);
+  }
+  **out_p = NUL;
+}
+
 /// Expands the statusline at separation markers (%=) if present,
 /// or otherwise according to padding choice.
 ///
@@ -1205,58 +1329,27 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         }
       }
 
+      int maxwid = stl_items[stl_groupitems[groupdepth]].maxwid;
       int minwid = stl_items[stl_groupitems[groupdepth]].minwid;
+      StlPadding padding = minwid < 0 ? kPaddingRight : kPaddingLeft;
+      minwid = abs(minwid);
 
       // If the group is longer than it is allowed to be truncate by removing
       // bytes from the start of the group text. Don't truncate when item is a
       // 'statuscolumn' fold item to ensure correctness of the mouse clicks.
-      if (group_len > stl_items[stl_groupitems[groupdepth]].maxwid
-          && stl_items[stl_groupitems[groupdepth]].type != HighlightFold) {
-        // { Determine the number of bytes to remove
-        int maxwid = stl_items[stl_groupitems[groupdepth]].maxwid;
-
-        // Find the first character that should be included.
-        int n = 0;
-        while (group_len >= maxwid) {
-          group_len -= ptr2cells(t + n);
-          n += utfc_ptr2len(t + n);
-        }
-        // }
-
-        // Prepend the `<` to indicate that the output was truncated.
-        *t = '<';
-
-        // { Move the truncated output
-        memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
-        out_p = out_p - n + 1;
-        // Fill up space left over by half a double-wide char.
-        int minwid_fixed = MIN(abs(minwid), maxwid);
-        while (++group_len < minwid_fixed) {
-          schar_get_adv(&out_p, fillchar);
-        }
-        // }
-
-        // correct the start of the items for the truncation
-        for (int idx = stl_groupitems[groupdepth] + 1; idx < curitem; idx++) {
-          // Shift everything back by the number of removed bytes
-          // Minus one for the leading '<' added above.
-          stl_items[idx].start -= n - 1;
-
-          // If the item was partially or completely truncated, set its
-          // start to the start of the group
-          stl_items[idx].start = MAX(stl_items[idx].start, t);
-        }
+      if (group_len > maxwid && stl_items[stl_groupitems[groupdepth]].type != HighlightFold) {
+        stl_truncate(&group_len, minwid, maxwid, fillchar, stl_items,
+                     stl_groupitems[groupdepth] + 1, &curitem, t, &out_p);
 
         // If the group is shorter than the minimum width, add padding characters.
-      } else if (abs(minwid) > group_len) {
-        StlPadding padding = minwid < 0 ? kPaddingRight : kPaddingLeft;
-        stl_expand(&group_len, abs(minwid), padding, (int)(out_end_p - out_p), fillchar, stl_items,
+      } else if (minwid > group_len) {
+        stl_expand(&group_len, minwid, padding, (int)(out_end_p - out_p), fillchar, stl_items,
                    stl_groupitems[groupdepth] + 1, curitem, t, &out_p);
       }
 
-      // Deactivate separation markers for wrapping item groups and top-level.
+      // Deactivate separation/truncation markers for wrapping item groups and top-level.
       for (int n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
-        if (stl_items[n].type == Separate) {
+        if (stl_items[n].type == Separate || stl_items[n].type == Trunc) {
           stl_items[n].type = Empty;
         }
       }
@@ -1979,8 +2072,6 @@ stcsign:
   }
 
   *out_p = NUL;
-  // Number of items at current recursion level.
-  int itemcnt = curitem - evalstart;
 
   // Free the format buffer if we allocated it internally
   if (usefmt != fmt) {
@@ -1993,105 +2084,7 @@ stcsign:
   int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth && (!stcp || width > MAX_STCWIDTH)) {
     // Result is too long, must truncate somewhere.
-    int item_idx = evalstart;
-    char *trunc_p;
-
-    // If there are no items, truncate from beginning
-    if (itemcnt == 0) {
-      trunc_p = out;
-
-      // Otherwise, look for the truncation item
-    } else {
-      // Default to truncating at the first item
-      trunc_p = stl_items[item_idx].start;
-
-      for (int i = evalstart; i < itemcnt + evalstart; i++) {
-        if (stl_items[i].type == Trunc) {
-          // Truncate at %< stl_items.
-          trunc_p = stl_items[i].start;
-          item_idx = i;
-          break;
-        }
-      }
-    }
-
-    // If the truncation point we found is beyond the maximum
-    // length of the string, truncate the end of the string.
-    if (width - vim_strsize(trunc_p) >= maxwidth) {
-      // Walk from the beginning of the
-      // string to find the last character that will fit.
-      trunc_p = out;
-      width = 0;
-      while (true) {
-        int char_cells = ptr2cells(trunc_p);
-        if (width + char_cells >= maxwidth) {
-          break;
-        }
-
-        // Note: Only advance the pointer if the next
-        //       character will fit in the available output space
-        width += char_cells;
-        trunc_p += utfc_ptr2len(trunc_p);
-      }
-
-      // Ignore any items in the statusline that occur after
-      // the truncation point
-      for (int i = evalstart; i < itemcnt + evalstart; i++) {
-        if (stl_items[i].start > trunc_p) {
-          for (int j = i; j < itemcnt + evalstart; j++) {
-            if (stl_items[j].type == ClickFunc) {
-              XFREE_CLEAR(stl_items[j].cmd);
-            }
-          }
-          itemcnt = i - evalstart;
-          break;
-        }
-      }
-
-      // Truncate the output
-      *trunc_p++ = '>';
-      *trunc_p = NUL;
-      width += 1;
-
-      // Truncate at the truncation point we found
-    } else {
-      // { Determine how many bytes to remove
-      int trunc_len = 0;
-      while (width >= maxwidth) {
-        width -= ptr2cells(trunc_p + trunc_len);
-        trunc_len += utfc_ptr2len(trunc_p + trunc_len);
-      }
-      // }
-
-      // { Truncate the string
-      char *trunc_end_p = trunc_p + trunc_len;
-      memmove(trunc_p + 1, trunc_end_p, (size_t)(out_p - trunc_end_p) + 1);  // +1 for NUL
-
-      // Put a `<` to mark where we truncated at
-      *trunc_p = '<';
-      width += 1;
-      // }
-
-      // { Change the start point for items based on
-      //  their position relative to our truncation point
-
-      // Note: The offset is one less than the truncation length because
-      //       the truncation marker `<` is not counted.
-      int item_offset = trunc_len - 1;
-
-      for (int i = item_idx; i < itemcnt + evalstart; i++) {
-        // Items starting at or after the end of the truncated section need
-        // to be moved backwards.
-        if (stl_items[i].start >= trunc_end_p) {
-          stl_items[i].start -= item_offset;
-        } else {
-          // Anything inside the truncated area is set to start
-          // at the `<` truncation character.
-          stl_items[i].start = trunc_p;
-        }
-      }
-      // }
-    }
+    stl_truncate(&width, 0, maxwidth, fillchar, stl_items, evalstart, &curitem, out, &out_p);
 
     // If there is room left in our statusline, and room left in our buffer,
     // add characters at the separation markers (if there are any) to fill up the available space.
@@ -2100,14 +2093,11 @@ stcsign:
                evalstart, curitem, out, &out_p);
   }
 
-  // Restore `curitem` to previous recursion level.
-  curitem = evalstart;
-
   // Store the info about highlighting.
   if (hltab != NULL) {
     *hltab = stl_hltab;
     stl_hlrec_t *sp = stl_hltab;
-    for (int l = evalstart; l < itemcnt + evalstart; l++) {
+    for (int l = evalstart; l < curitem; l++) {
       if (stl_items[l].type == Highlight || stl_items[l].type == HighlightCombining
           || stl_items[l].type == HighlightFold || stl_items[l].type == HighlightSign) {
         sp->start = stl_items[l].start;
@@ -2123,14 +2113,14 @@ stcsign:
     sp->userhl = 0;
   }
   if (hltab_len) {
-    *hltab_len = (size_t)itemcnt;
+    *hltab_len = (size_t)(curitem - evalstart);
   }
 
   // Store the info about tab pages labels.
   if (tabtab != NULL) {
     *tabtab = stl_tabtab;
     StlClickRecord *cur_tab_rec = stl_tabtab;
-    for (int l = evalstart; l < itemcnt + evalstart; l++) {
+    for (int l = evalstart; l < curitem; l++) {
       if (stl_items[l].type == TabPage) {
         cur_tab_rec->start = stl_items[l].start;
         if (stl_items[l].minwid == 0) {
@@ -2161,6 +2151,9 @@ stcsign:
     cur_tab_rec->def.tabnr = 0;
     cur_tab_rec->def.func = NULL;
   }
+
+  // Restore `curitem` to previous recursion level.
+  curitem = evalstart;
 
   redraw_not_allowed = save_redraw_not_allowed;
 
