@@ -414,7 +414,7 @@ function M.ex_session_restart(eap, extra)
 
   -- Create or reuse a directory in the temp directory where we will write the session
   -- It is one level up from the per-instance directory to prevent being cleared prematurely
-  local temp_root = fs.normalize(fs.dirname(vim.fn.tempname()) .. '/..')
+  local temp_root = fs.normalize(fs.dirname(fs.dirname(vim.fn.tempname())))
   local sessions_dir_path = fs.joinpath(temp_root, 'sessions')
   local ok, err, err_name = uv.fs_mkdir(sessions_dir_path, 448)
   if not ok then
