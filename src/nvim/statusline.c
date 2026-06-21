@@ -69,9 +69,8 @@ static bool stl_defer_redraw(win_T *wp)
     return false;
   }
 
-  // aucmd_prepbuf() temporarily changes curwin/curbuf, which statusline
-  // and winbar expressions can observe. Evaluate them after aucmd_restbuf().
-  // #40153
+  // aucmd_prepbuf() temporarily changes curwin/curbuf. Statusline and winbar
+  // expressions can observe that context, so evaluate them after aucmd_restbuf().
   wp->w_redr_status = true;
   return true;
 }
@@ -91,7 +90,7 @@ void win_redr_status(win_T *wp)
       || (wild_menu_showing != 0 && !ui_has(kUIWildmenu))) {
     return;
   }
-  if (defer_stl_redraw(wp)) {
+  if (stl_defer_redraw(wp)) {
     return;
   }
   busy = true;
@@ -449,7 +448,7 @@ void win_redr_winbar(win_T *wp)
   if (entered) {
     return;
   }
-  if (defer_stl_redraw(wp)) {
+  if (stl_defer_redraw(wp)) {
     return;
   }
   entered = true;

@@ -960,7 +960,7 @@ describe('statusline', function()
     command('set ruler laststatus=2')
     api.nvim_create_autocmd('BufDelete', { command = 'redrawstatus' })
     api.nvim_exec_autocmds('BufDelete', { buf = api.nvim_create_buf(true, true) })
-    -- Wait for the deferred redraw to run after the autocmd window is restored.
+    -- The first matching frame can arrive before the deferred redraw settles.
     screen:sleep(10)
     screen:expect({
       grid = [[
