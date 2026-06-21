@@ -1485,9 +1485,6 @@ static void terminal_focus(const Terminal *term, bool focus)
 ///
 /// The destination, overwrite, and parent directory handling are decided by the
 /// Lua `vim._core.terminal.save`.
-/// The save path policy: if `fname` is
-///   - a bare filename, then it is stored under stdpath('state')/term/,
-///   - a path containing a path separator, then it's written directly to that location.
 ///
 /// @param term     Terminal to export.
 /// @param fname    Destination name/path (must end in ".mpack", checked by the caller).
@@ -1505,7 +1502,11 @@ bool terminal_save_state(Terminal *term, char *fname, bool force, bool mkdir_p)
   refresh_terminal(term);
 
   Channel *chan = (Channel *)term->opts.data;
-  const char *cwd = chan->stream.proc.cwd;
+  const char *cwd = NULL;
+  if (chan->streamtype == kChannelStreamProc) {
+    // Internal streams have no associated process cwd; Lua receives an empty string in that case.
+    cwd = chan->stream.proc.cwd;
+  }
 
   String content = te_encode_export_ansi(term);
 
