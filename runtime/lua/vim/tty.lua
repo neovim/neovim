@@ -32,6 +32,7 @@ function M.request(payload, opts, on_response)
     'TermResponse',
     opts.group,
     { nested = true },
+    ---@param ev {data: vim.event.termresponse.data}
     function(ev)
       if opts.chan and ev.data.chan ~= opts.chan then
         return
