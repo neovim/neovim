@@ -290,10 +290,7 @@ In a terminal buffer, `:write` with a ".mpack" extension exports the rendered
 terminal state (scrollback + visible screen) as a msgpack file, including
 metadata such as cwd, argv, and timestamp.
 
-`:w {name}.mpack`           Save rendered terminal state as a msgpack file to
-                          `stdpath('state')/term/`.
-`:w {path/}name.mpack`      If the name contains a path separator, write to
-                          that exact location.
+`:w {name}.mpack`           Save rendered terminal state as a msgpack file.
 `:w! {name}.mpack`          Overwrite an existing file.
 
 Plain `:write` without ".mpack" (e.g. `:w foo.txt`) writes the buffer text

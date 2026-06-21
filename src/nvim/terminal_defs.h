@@ -7,8 +7,6 @@
 #include "nvim/terminal.h"
 #include "nvim/vterm/vterm.h"
 
-#define TEXTBUF_SIZE      0x1fff
-
 typedef struct {
   size_t cols;
   VTermScreenCell cells[];
@@ -21,7 +19,7 @@ struct terminal {
   // buffer used to:
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
-  char textbuf[TEXTBUF_SIZE];
+  char textbuf[0x1fff];
 
   ScrollbackLine **sb_buffer;  ///< Scrollback storage.
   size_t sb_current;           ///< Lines stored in sb_buffer.

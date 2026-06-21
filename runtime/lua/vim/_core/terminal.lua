@@ -2,10 +2,6 @@ local M = {}
 
 --- Saves a terminal buffer's rendered state and metadata as a msgpack file.
 ---
---- The destination is based on `fname`:
----   - a bare name is stored under stdpath('state')/term/<name>.mpack;
----   - a name containing a path separator is written to that path.
----
 ---@param buf_handle integer terminal buffer handle (source of argv).
 ---@param ansi       string ANSI escape sequences of the terminal state/scrollback content.
 ---@param cwd        string current working directory of the shell.
@@ -18,19 +14,7 @@ function M.save(buf_handle, ansi, cwd, fname, force, mkdir_p)
     fname = fname .. '.mpack' --[[@as string]]
   end
 
-  -- Classify the user-specified name:
-  --   - contains a path separator:
-  --     treat as a real path and write there directly.
-  --     (e.g. `:write ./foo.mpack`, `:write /tmp/foo.mpack`).
-  --   - is a bare name:
-  --     store under stdpath('state')/term/<name>.mpack.
-  local des ---@type string
-  local explicit_path = fname:find('[/\\]') ~= nil
-  if explicit_path then
-    des = vim.fn.fnamemodify(vim.fs.normalize(fname), ':p')
-  else
-    des = vim.fs.joinpath(vim.fn.stdpath('state'), 'term', fname)
-  end
+  local des = vim.fn.fnamemodify(vim.fs.normalize(fname), ':p')
 
   local stat = vim.uv.fs_stat(des)
   if stat and stat.type == 'directory' then
@@ -46,13 +30,13 @@ function M.save(buf_handle, ansi, cwd, fname, force, mkdir_p)
   local info = vim.api.nvim_get_chan_info(chan)
 
   local packed = vim.mpack.encode({
-    cwd = cwd,
+    cwd = cwd or '',
     argv = info.argv,
     timestamp = vim.fn.localtime(),
     content = ansi,
   })
 
-  if not explicit_path or mkdir_p then
+  if mkdir_p then
     vim.fn.mkdir(vim.fs.dirname(des), 'p')
   end
 

@@ -1864,8 +1864,7 @@ int do_write(exarg_T *eap)
       emsg(_(e_noname));
       goto theend;
     }
-    size_t arglen = strlen(eap->arg);
-    if (arglen >= 6 && strcmp(eap->arg + arglen - 6, ".mpack") == 0) {
+    if (path_with_extension(eap->arg, "mpack")) {
       if (eap->line1 != 1 || eap->line2 != curbuf->b_ml.ml_line_count) {
         // TODO(Willaaaaaaa): we can support this, mainly in `te_encode_export_ansi`.
         emsg(_(e_norange));
