@@ -1230,7 +1230,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
         out_p = out_p - n + 1;
         // Fill up space left over by half a double-wide char.
-        int minwid_fixed = MIN(minwid, maxwid);
+        int minwid_fixed = MIN(abs(minwid), maxwid);
         while (++group_len < minwid_fixed) {
           schar_get_adv(&out_p, fillchar);
         }
@@ -1979,8 +1979,6 @@ stcsign:
   }
 
   *out_p = NUL;
-  // Length of out[] used (excluding the NUL)
-  size_t outputlen = (size_t)(out_p - out);
   // Number of items at current recursion level.
   int itemcnt = curitem - evalstart;
 
@@ -2025,13 +2023,14 @@ stcsign:
       trunc_p = out;
       width = 0;
       while (true) {
-        width += ptr2cells(trunc_p);
-        if (width >= maxwidth) {
+        int char_cells = ptr2cells(trunc_p);
+        if (width + char_cells >= maxwidth) {
           break;
         }
 
         // Note: Only advance the pointer if the next
         //       character will fit in the available output space
+        width += char_cells;
         trunc_p += utfc_ptr2len(trunc_p);
       }
 
@@ -2052,11 +2051,10 @@ stcsign:
       // Truncate the output
       *trunc_p++ = '>';
       *trunc_p = NUL;
+      width += 1;
 
       // Truncate at the truncation point we found
     } else {
-      char *end = out + outputlen;
-
       // { Determine how many bytes to remove
       int trunc_len = 0;
       while (width >= maxwidth) {
@@ -2067,11 +2065,11 @@ stcsign:
 
       // { Truncate the string
       char *trunc_end_p = trunc_p + trunc_len;
-      memmove(trunc_p + 1, trunc_end_p, (size_t)(end - trunc_end_p) + 1);  // +1 for NUL
-      end -= (size_t)(trunc_end_p - (trunc_p + 1));
+      memmove(trunc_p + 1, trunc_end_p, (size_t)(out_p - trunc_end_p) + 1);  // +1 for NUL
 
       // Put a `<` to mark where we truncated at
       *trunc_p = '<';
+      width += 1;
       // }
 
       // { Change the start point for items based on
@@ -2093,20 +2091,7 @@ stcsign:
         }
       }
       // }
-
-      if (width + 1 < maxwidth) {
-        // Advance the pointer to the end of the string
-        trunc_p = end;
-      }
-
-      // Fill up for half a double-wide character.
-      while (++width < maxwidth) {
-        schar_get_adv(&trunc_p, fillchar);
-        end = trunc_p;
-      }
-      (void)end;
     }
-    width = maxwidth;
 
     // If there is room left in our statusline, and room left in our buffer,
     // add characters at the separation markers (if there are any) to fill up the available space.

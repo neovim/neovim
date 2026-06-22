@@ -83,7 +83,9 @@ describe('build_stl_str_hl', function()
         fillchar = fillchar,
       }
 
-      eq(expected_stl, get_str(output_buffer, expected_byte_length))
+      local output_str = get_str(output_buffer, expected_byte_length + 1)
+      eq(expected_stl, output_str:sub(1, -2))
+      eq('\0', output_str:sub(-1), 'output string must be NUL-terminated')
       eq(expected_cell_count, result_cell_count)
     end)
   end
@@ -502,14 +504,6 @@ describe('build_stl_str_hl', function()
     { expected_cell_count = 19 }
   )
 
-  statusline_test_align(
-    'Should compensate with fillchar after truncating item group at multicell character',
-    20,
-    '%.5(12🙂345%), %5.5(12🙂345%), %50.5(12🙂345%)',
-    '<345, <345~, <345~',
-    { expected_cell_count = 18 }
-  )
-
   -- stl item testing
   local tabline = ''
   for i = 1, 1000 do
@@ -534,6 +528,29 @@ describe('build_stl_str_hl', function()
     'a' .. ('%=a'):rep(STL_INITIAL_ITEMS * 2),
     'a<aaaaaaaaaaaaaaaaaa'
   ) -- Should not show any error
+
+  -- multi-cell character testing
+  statusline_test(
+    'returns reduced width after truncating top-level from the left at multicell character',
+    5,
+    '12🙂345',
+    '<345',
+    { expected_cell_count = 4 }
+  )
+  statusline_test(
+    'returns reduced width after truncating top-level from the right at multicell character',
+    5,
+    '123🙂45%<',
+    '123>',
+    { expected_cell_count = 4 }
+  )
+  statusline_test_align(
+    'compensates with fillchar to reach minwid after truncating item group at multicell character',
+    40,
+    '%.5(12🙂345%), %4.5(12🙂345%), %5.5(12🙂345%), %-5.5(12🙂345%), %50.5(12🙂345%)',
+    '<345, <345, <345~, <345~, <345~',
+    { expected_cell_count = 31 }
+  )
 
   -- multi-byte testing
   statusline_test('should handle multibyte characters', 10, 'Ĉ%=x', 'Ĉ        x')
