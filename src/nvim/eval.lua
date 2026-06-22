@@ -671,18 +671,18 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Add a buffer to the buffer list with name {name} (must be a
-      String).
-      If a buffer for file {name} already exists, return that buffer
-      number.  Otherwise return the buffer number of the newly
-      created buffer.  When {name} is an empty string then a new
-      buffer is always created.
-      The buffer will not have 'buflisted' set and not be loaded
-      yet.  To add some text to the buffer use this: >vim
-      	let bufnr = bufadd('someName')
-      	call bufload(bufnr)
-      	call setbufline(bufnr, 1, ['some', 'text'])
-      <Returns 0 on error.
+      Adds buffer {name} to the buffer list literally: no special
+      chars or expansion are applied (including "~"). Returns the
+      new (or existing matching) buffer number, or 0 on error.
+
+      The buffer is not loaded and 'buflisted' is not set. When
+      {name} is an empty string, a new buffer is always created.
+
+      Example (Lua): >lua
+      	local b = vim.fn.bufadd(vim.fs.normalize('someName'))
+      	vim.bo[b].buflisted = true
+      	vim.fn.bufload(b)
+      <
     ]=],
     name = 'bufadd',
     params = { { 'name', 'string' } },
@@ -3028,10 +3028,14 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Escape {string} for use as file name command argument.  All
-      characters that have a special meaning, such as `'%'` and `'|'`
-      are escaped with a backslash. For most systems the characters
-      escaped are: >
+      Escapes {filepath} for use as a command argument.
+
+      (Note: To open a literal filepath programmatically use
+      `bufadd(vim.fs.normalize(…))`, see |open-file|.)
+
+      All characters that have a special meaning, such as `'%'` and
+      `'|'` are escaped with a backslash. For most systems the
+      characters escaped are: >
       	\t\n *?[{`$\\%#'\"|!<
       <For systems where a backslash appears in a filename, it
       depends on the value of 'isfname'. A leading '+' and '>' is
@@ -3047,12 +3051,9 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'fnameescape',
-    params = { { 'string', 'string' } },
+    params = { { 'filepath', 'string' } },
     returns = 'string',
-    signature = 'fnameescape({string})',
-    see_lua = {
-      '|nvim_cmd()| or |vim.cmd()| with structured arguments to avoid Ex filename escaping',
-    },
+    signature = 'fnameescape({filepath})',
   },
   fnamemodify = {
     args = 2,

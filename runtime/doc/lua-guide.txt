@@ -19,11 +19,11 @@ This is not a comprehensive encyclopedia of all available features. Think of
 it as a survival kit: the bare minimum needed to comfortably get started on
 using Lua in Nvim.
 
-See |lua-plugin| for guidance on developing Lua plugins.
-See |luaref| and |lua-concepts| for details on the Lua programming language.
+- See |lua-plugin| for guidance on developing Lua plugins.
+- See |luaref| and |lua-concepts| for details on the Lua programming language.
 
 ------------------------------------------------------------------------------
-Some words on the API                                            *lua-guide-api*
+About the API                                                  *lua-guide-api*
 
 The purpose of this guide is to introduce the different ways of interacting
 with Nvim through Lua (the "API"). This API consists of three different
