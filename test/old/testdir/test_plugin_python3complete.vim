@@ -221,4 +221,19 @@ func Test_python3complete_allow_import_on_runs_imports()
         \ 'g:pythoncomplete_allow_import=1 did not run the buffer import')
 endfunc
 
+func Test_python3complete_no_exec_via_class_docstring()
+  " A class-body docstring is emitted verbatim between triple quotes by
+  " get_code() and runs at class-definition time during exec().  A single-
+  " quoted source docstring lets an embedded """ survive doc()'s leading/
+  " trailing quote strip and break out of the generated literal.
+  let marker = tempname()
+  call s:CompleteAndExpectNoMarker([
+        \ 'class Foo:',
+        \ '    ''x"""+open("' . marker . '", "w").close()+"""y''',
+        \ '    pass',
+        \ 'Foo.',
+        \ ], marker,
+        \ 'class docstring expression was evaluated during omni-completion')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
