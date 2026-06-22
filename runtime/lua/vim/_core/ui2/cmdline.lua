@@ -27,7 +27,12 @@ local function win_config(win, hide, height)
   if vim.o.cmdheight ~= height then
     -- Avoid moving the cursor with 'splitkeep' = "screen", and altering the user
     -- configured value with noautocmd.
-    vim._with({ noautocmd = true, o = { splitkeep = 'screen' } }, function()
+    local opts = { noautocmd = true }
+    -- Override 'splitkeep' only outside cmdwin to preserve its cursor/topline.
+    if fn.getcmdwintype() == '' then
+      opts.o = { splitkeep = 'screen' }
+    end
+    vim._with(opts, function()
       vim.o.cmdheight = height
     end)
     ui.msg.set_pos()

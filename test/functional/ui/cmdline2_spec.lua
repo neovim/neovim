@@ -298,6 +298,21 @@ describe('cmdline2', function()
       {16::}{15:call} {25:foo}{16:(}{25:bar}{16:(}^                                       |
     ]])
   end)
+
+  it('keeps cmdwin cursor at end of history with cmdheight=0', function()
+    screen:try_resize(40, 10)
+    exec('set cmdheight=0')
+    exec_lua(function()
+      for i = 1, 12 do
+        vim.fn.histadd(':', ('cmd%d'):format(i))
+      end
+    end)
+    feed(':<C-F>')
+    local last = n.fn.line('$')
+    t.eq(':', n.fn.getcmdwintype())
+    t.eq({ last, 0 }, n.api.nvim_win_get_cursor(0))
+    t.eq(last, n.fn.line('w$'))
+  end)
 end)
 
 describe('cmdline2', function()
