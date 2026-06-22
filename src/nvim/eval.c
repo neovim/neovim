@@ -5148,6 +5148,15 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl, bool crl
     return NULL;
   }
 
+  if (tv->v_type == VAR_BLOB) {  // Write the bytes verbatim.
+    const blob_T *const b = tv->vval.v_blob;
+    *len = tv_blob_len(b);
+    if (*len == 0) {
+      return NULL;
+    }
+    return xmemdupz(b->bv_ga.ga_data, (size_t)(*len));
+  }
+
   // For other types, let tv_get_string_buf_chk() get the value or
   // print an error.
   if (tv->v_type != VAR_LIST && tv->v_type != VAR_NUMBER) {
