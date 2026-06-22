@@ -959,18 +959,16 @@ describe('statusline', function()
   it('no cmdline ruler for autocmd window #39938', function()
     command('set ruler laststatus=2')
     api.nvim_create_autocmd('BufDelete', { command = 'redrawstatus' })
-    api.nvim_exec_autocmds('BufDelete', { buf = api.nvim_create_buf(true, true) })
-    -- The first matching frame can arrive before the deferred redraw settles.
-    screen:sleep(10)
-    screen:expect({
-      grid = [[
+    local expected = [[
       ^                                        |
       {1:~                                       }|*5
       {3:[No Name]             0,0-1          All}|
                                               |
-      ]],
-      unchanged = true,
-    })
+    ]]
+    screen:expect(expected)
+    api.nvim_exec_autocmds('BufDelete', { buf = api.nvim_create_buf(true, true) })
+    -- The first matching frame can arrive before the deferred redraw settles.
+    screen:expect_unchanged(true)
   end)
 
   it('active window is correct after nvim_exec_autocmds({buf}) #40153', function()
