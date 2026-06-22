@@ -714,15 +714,19 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, bool retl
 ///                 false: "getbufoneline()" function
 static void getbufline(typval_T *argvars, typval_T *rettv, bool retlist)
 {
+  linenr_T lnum = 1;
+  linenr_T end = 1;
   const int did_emsg_before = did_emsg;
   buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
-  const linenr_T lnum = tv_get_lnum_buf(&argvars[1], buf);
-  if (did_emsg > did_emsg_before) {
-    return;
+  if (buf != NULL) {
+    lnum = tv_get_lnum_buf(&argvars[1], buf);
+    if (did_emsg > did_emsg_before) {
+      return;
+    }
+    end = (argvars[2].v_type == VAR_UNKNOWN
+           ? lnum
+           : tv_get_lnum_buf(&argvars[2], buf));
   }
-  const linenr_T end = (argvars[2].v_type == VAR_UNKNOWN
-                        ? lnum
-                        : tv_get_lnum_buf(&argvars[2], buf));
 
   get_buffer_lines(buf, lnum, end, retlist, rettv);
 }
