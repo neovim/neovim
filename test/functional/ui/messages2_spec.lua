@@ -95,6 +95,13 @@ describe('messages2', function()
       {1:~                                                    }|*12
       foo(1)                              0,0-1         All|
     ]])
+    command('echo "foo"')
+    -- Dupe counter increases beyond 1
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      foo(2)                              0,0-1         All|
+    ]])
     -- No error for ruler virt_text msg_row exceeding buffer length.
     command([[map Q <cmd>echo "foo\nbar" <bar> ls<CR>]])
     feed('Q')
@@ -1070,6 +1077,24 @@ describe('messages2', function()
       ^                                                     |
       {1:~                                                    }|*12
       foo [+1]                                             |
+    ]])
+  end)
+
+  it('search count is cleared', function()
+    command('set ruler shortmess-=S | call setline(1, ["foo", "bar"])')
+    feed('/foo<CR>')
+    screen:expect([[
+      {10:^foo}                                                  |
+      bar                                                  |
+      {1:~                                                    }|*11
+      /foo            W [1/1]             1,1           All|
+    ]])
+    feed('<C-L>j')
+    screen:expect([[
+      {10:foo}                                                  |
+      ^bar                                                  |
+      {1:~                                                    }|*11
+                                          2,1           All|
     ]])
   end)
 end)
