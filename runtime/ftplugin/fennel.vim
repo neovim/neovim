@@ -10,7 +10,7 @@ endif
 let b:did_ftplugin = 1
 
 setlocal commentstring=;\ %s
-setlocal comments=:;;,:;
+setlocal comments=:;;;;,:;;;,:;;,:;
 setlocal formatoptions-=t
 setlocal suffixesadd=.fnl
 setlocal lisp
