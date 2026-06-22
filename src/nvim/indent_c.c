@@ -37,6 +37,68 @@ typedef struct {
 } cpp_baseclass_cache_T;
 
 #include "indent_c.c.generated.h"
+
+/// Check if line[] contains a "//" comment, ignoring matches inside strings.
+/// Return MAXCOL if not, otherwise return the column.
+/// The line is scanned once (skipping strings), so this stays linear even on
+/// lines with many slashes (e.g. base64 data).
+int check_linecomment(const char *line)
+{
+  const char *p = line;  // scan from start
+  // skip Lispish one-line comments
+  if (curbuf->b_p_lisp) {
+    if (vim_strchr(p, ';') != NULL) {   // there may be comments
+      bool in_str = false;       // inside of string
+
+      while ((p = strpbrk(p, "\";")) != NULL) {
+        if (*p == '"') {
+          if (in_str) {
+            if (*(p - 1) != '\\') {             // skip escaped quote
+              in_str = false;
+            }
+          } else if (p == line || ((p - line) >= 2
+                                   // skip #\" form
+                                   && *(p - 1) != '\\' && *(p - 2) != '#')) {
+            in_str = true;
+          }
+        } else if (!in_str && ((p - line) < 2
+                               || (*(p - 1) != '\\' && *(p - 2) != '#'))
+                   && !is_pos_in_string(line, (colnr_T)(p - line))) {
+          break;                // found!
+        }
+        p++;
+      }
+    } else {
+      p = NULL;
+    }
+  } else {
+    // Scan the line once, skipping over strings, char constants and raw
+    // strings, instead of testing each '/' with is_pos_in_string() (which
+    // rescans from the start, making this quadratic on lines with many
+    // slashes).
+    for (; *p != NUL; p++) {
+      p = skip_string(p);
+      if (*p == NUL) {
+        break;
+      }
+      // Accept a double /, unless it's preceded with * and followed by
+      // *, because * / / * is an end and start of a C comment.
+      if (p[0] == '/' && p[1] == '/'
+          && (p == line || p[-1] != '*' || p[2] != '*')) {
+        break;
+      }
+    }
+    if (*p == NUL) {
+      p = NULL;
+    }
+  }
+
+  if (p == NULL) {
+    return MAXCOL;
+  }
+  return (int)(p - line);
+}
+
 // Find the start of a comment, not knowing if we are in a comment right now.
 // Search starts at w_cursor.lnum and goes backwards.
 // Return NULL when not inside a comment.
