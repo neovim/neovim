@@ -1279,4 +1279,26 @@ func Test_spell_sug_tree_count_words_overflow()
   bwipe!
 endfunc
 
+" A word longer than MAXWLEN must not overflow the soundfold result buffer in
+" the single-byte SOFO branch of spell_soundfold_sofo().
+func Test_soundfold_overflow()
+  throw 'Skipped: Nvim does not support setting encoding=latin1'
+  let _enc=&enc
+  set enc=latin1
+  call writefile(['SOFOFROM ab', 'SOFOTO xy'], 'Xtest.aff', 'D')
+  call writefile(['1', 'foo'], 'Xtest.dic', 'D')
+  mkspell! Xtest Xtest
+  defer delete('Xtest.latin1.spl')
+  defer delete('Xtest.latin1.sug')
+  setl spelllang=Xtest.latin1.spl spell
+
+  " Before the fix the copy loop wrote one byte per input byte into a
+  " MAXWLEN (254) stack buffer with no upper bound, smashing the stack.
+  let sound = soundfold(repeat('ab', 300))
+  call assert_true(strlen(sound) < 254, 'soundfold result exceeds MAXWLEN')
+
+  set spell& spelllang&
+  let &enc = _enc
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
