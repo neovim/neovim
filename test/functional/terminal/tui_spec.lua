@@ -237,6 +237,42 @@ describe('TUI :restart!', function()
     eq('Vim(restart):E481: No range allowed: :1restart!', t.pcall_err(n.command, ':1restart!'))
   end)
 
+  it(':restart preserves screen state unlike :restart!', function()
+    local file = 'Xtest-restart-file'
+    write_file(file, 'foobar')
+    finally(function()
+      os.remove(file)
+    end)
+    local screen = tt.setup_child_nvim({
+      '--clean',
+      '--cmd',
+      'set notermguicolors laststatus=0 noruler noshowcmd',
+    }, { env = env_notermguicolors })
+    feed_data(':edit ' .. file .. '\r')
+    screen:expect([[
+      ^foobar                                            |
+      ~                                                 |*4
+      :edit Xtest-restart-file                          |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed_data(':restart\r')
+    screen:expect([[
+      ^foobar                                            |
+      ~                                                 |*4
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed_data(':restart!\r')
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*4
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
+
   it('ZR', function()
     -- Just exercise ZR, don't need to test all :restart! functionality here.
     local server_pipe = new_pipename()
