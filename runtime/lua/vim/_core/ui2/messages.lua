@@ -376,8 +376,9 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   if M[tgt] then
     -- Keep track of message span to replace by ID.
     local opts = { end_row = row, end_col = col, invalidate = true, undo_restore = false }
-    M[tgt].prev_id, M[tgt].prev_msg, M[tgt].ids[id] = id, msg, M[tgt].ids[id] or {}
+    M[tgt].ids[id] = M[tgt].ids[id] or {}
     M[tgt].ids[id].extid = api.nvim_buf_set_extmark(buf, ui.ns, start_row, start_col, opts)
+    M[tgt].prev_id, M[tgt].prev_msg, M[tgt].dupe = id, msg, dupe
   end
 
   set_target_pos()
@@ -484,7 +485,8 @@ end
 --Clear message state in the cmdline.
 function M.cmd:clear()
   api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
-  M.virt.cmd, self.ids, self.prev_msg, self.dupe, self.msg_row = { {}, {} }, {}, '', 0, -1
+  self.ids, self.prev_msg, self.dupe, self.msg_row = {}, '', 0, -1
+  M.virt.cmd, M.virt.last = { {}, {} }, { {}, {}, {}, {} }
 end
 
 --Clear message state in msg window.
