@@ -283,6 +283,9 @@ function! s:clipboard.get(reg) abort
   return clipboard_data
 endfunction
 
+" {lines} is a list of lines, or a string ("blob") forwarded verbatim (e.g. an OSC 52
+" payload from :terminal). A blob preserves embedded newlines, which a list item would
+" encode as NUL bytes on the job's stdin (:help channel-lines).
 function! s:clipboard.set(lines, regtype, reg) abort
   if a:reg == '"'
     call s:clipboard.set(a:lines,a:regtype,'+')

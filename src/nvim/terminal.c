@@ -1828,11 +1828,12 @@ static void term_clipboard_set(void **argv)
     break;
   }
 
-  list_T *lines = tv_list_alloc(1);
-  tv_list_append_allocated_string(lines, data);
-
   list_T *args = tv_list_alloc(3);
-  tv_list_append_list(args, lines);
+
+  // Pass the payload as a string ("blob"), forwarded to the provider verbatim.
+  // Newlines embedded in a list item would be encoded as NUL bytes when written
+  // to the job's stdin (:help channel-lines).
+  tv_list_append_allocated_string(args, data);
 
   const char regtype = 'v';
   tv_list_append_string(args, &regtype, 1);

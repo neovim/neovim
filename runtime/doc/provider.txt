@@ -209,9 +209,11 @@ If "cache_enabled" is |TRUE| then when a selection is copied Nvim will cache
 the selection until the copy command process dies. When pasting, if the copy
 process has not died the cached selection is applied.
 
-The "copy" function stores a list of lines and the register type. The "paste"
-function returns the clipboard as a `[lines, regtype]` list, where `lines` is
-a list of lines and `regtype` is a register type conforming to |setreg()|.
+The "copy" function stores a list of lines and the register type. For binary
+payloads (e.g. an OSC 52 sequence from a |:terminal|) `lines` may instead be a
+single string, which is forwarded verbatim. The "paste" function returns the
+clipboard as a `[lines, regtype]` list, where `lines` is a list of lines and
+`regtype` is a register type conforming to |setreg()|.
 
 Example: set to "osc52" to force OSC52, skipping auto-detection of terminal
 support: >vim

@@ -11,8 +11,9 @@ end
 
 function M.copy(reg)
   local clipboard = reg == '+' and 'c' or 'p'
+  --- @param lines string[]|string A list of lines, or a string ("blob").
   return function(lines)
-    local s = table.concat(lines, '\n')
+    local s = type(lines) == 'table' and table.concat(lines, '\n') or lines --[[@as string]]
     -- The data to be written here can be quite long.
     vim.api.nvim_ui_send(osc52(clipboard, vim.base64.encode(s)))
   end
