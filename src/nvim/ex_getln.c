@@ -4483,43 +4483,16 @@ const char *did_set_cedit(optset_T *args)
   return NULL;
 }
 
-typedef struct {
-  int firstc;     ///< ':'/'/'/'?'.
-  char *content;  ///< Initial cmdline (owned).
-  int pos;        ///< Cursor column.
-} CmdwinOpenArgs;
-
-/// Synchronously calls `vim._core.cmdwin.<action>(...)`.
-static void cmdwin_invoke(const char *action, int firstc, char *content, int pos)
-{
-  char fc[2] = { (char)firstc, 0 };
-  typval_T tv_args[] = {
-    { .v_type = VAR_STRING, .vval.v_string = fc },
-    { .v_type = VAR_STRING, .vval.v_string = content ? content : "" },
-    { .v_type = VAR_NUMBER, .vval.v_number = pos + 1 },
-    { .v_type = VAR_UNKNOWN },
-  };
-  nlua_call_typval("vim._core.cmdwin", action, firstc ? tv_args : tv_args + 3, NULL);
-  xfree(content);
-}
-
-/// Calls `vim._core.cmdwin.<action>()`, synchronously.
+/// Calls `vim._core.cmdwin.<action>()` synchronously. Used by the builtin Enter/Ctrl-C mappings.
 void cmdwin_do_action(const char *action)
 {
-  cmdwin_invoke(action, 0, NULL, 0);
+  typval_T tv_args[] = { { .v_type = VAR_UNKNOWN } };
+  nlua_call_typval("vim._core.cmdwin", action, tv_args, NULL);
 }
 
-/// Deferred event: opens cmdwin after the cmdline-reader unwinds. Can't run synchronously (cmdline
-/// is still being read), nor via vim.schedule (could fire _during typeahead_; revisit after #40380).
-static void open_cmdwin_event(void **argv)
-{
-  CmdwinOpenArgs *a = argv[0];
-  cmdwin_invoke("open", a->firstc, a->content, a->pos);  // frees a->content
-  xfree(a);
-}
-
-/// Schedules cmdwin to open after the current cmdline-reader returns. Returns Ctrl_C so the cmdline
-/// input loop unwinds, then `vim._core.cmdwin` does its work after typeahead. #40312
+/// Schedules cmdwin (via vim.schedule_dispatch()) to open after the current cmdline-reader returns.
+/// Returns Ctrl_C so the cmdline input loop unwinds, then `vim._core.cmdwin` does its work after
+/// typeahead. #40312
 static int open_cmdwin(void)
 {
   // Disallow during textlock or when typing a password.
@@ -4539,18 +4512,20 @@ static int open_cmdwin(void)
     return K_IGNORE;
   }
 
-  CmdwinOpenArgs *a = xmalloc(sizeof(*a));
-  a->firstc = ft;
-  a->pos = ccline.cmdpos;
+  // Synchronously pass the snapshot to Lua. nlua_call_typval marshalls args into Lua-owned copies,
+  // so ccline lifetime stops mattering after this.
+  char fc[2] = { (char)ft, 0 };
+  typval_T tv_args[] = {
+    { .v_type = VAR_STRING, .vval.v_string = fc },
+    { .v_type = VAR_STRING, .vval.v_string = ccline.cmdbuff ? ccline.cmdbuff : "" },
+    { .v_type = VAR_NUMBER, .vval.v_number = ccline.cmdpos + 1 },
+    { .v_type = VAR_UNKNOWN },
+  };
+  nlua_call_typval("vim._core.cmdwin", "_schedule_open", tv_args, NULL);
 
-  // Capture the cmdline; will append to end of cmdwin.
-  a->content = ccline.cmdbuff ? xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen) : NULL;
   // Clear cmdline so that unwinding it (via Ctrl_C below) does not add it to history.
   ccline.cmdlen = 0;
   ccline.cmdpos = 0;
-
-  // Intentionally not using vim.scheduled, see note on `open_cmdwin_event`.
-  loop_schedule_deferred(&main_loop, event_create(open_cmdwin_event, a));
   return Ctrl_C;
 }
 
