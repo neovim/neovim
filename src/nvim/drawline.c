@@ -2756,6 +2756,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         && in_curline && conceal_cursor_line(wp)
         && (wlv.vcol + wlv.skip_cells >= wp->w_virtcol || mb_schar == NUL)) {
       wp->w_wcol = wlv.col - wlv.boguscols;
+      // Screen cells concealed before the cursor on this screen line, so
+      // pum_display() can line the menu up with the visible text;
+      // "skip_cells" is the concealed cell at the cursor not yet counted.
+      wp->w_wcol_conceal_off = wlv.vcol_off_co + wlv.skip_cells;
       if (wlv.vcol + wlv.skip_cells < wp->w_virtcol) {
         // Cursor beyond end of the line with 'virtualedit'.
         wp->w_wcol += wp->w_virtcol - wlv.vcol - wlv.skip_cells;
