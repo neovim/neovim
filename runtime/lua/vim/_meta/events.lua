@@ -60,4 +60,5 @@ error('Cannot require a meta file')
 --- @field cursor integer[]
 
 --- @class vim.event.termresponse.data
+--- @field chan integer
 --- @field sequence string
