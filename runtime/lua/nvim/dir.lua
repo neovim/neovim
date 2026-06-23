@@ -34,13 +34,6 @@ local function normalize_dir(path)
   return fs.normalize(fs.abspath(path))
 end
 
----@param path string
----@return boolean
-local function is_dir(path)
-  local stat = uv.fs_stat(path)
-  return stat ~= nil and stat.type == 'directory'
-end
-
 ---@param name string
 ---@return string
 local function encode_name(name)
@@ -71,7 +64,7 @@ local function render(buf, dir)
   ---@type { name: string, dir: boolean }[]
   local items = {}
   for name, type in fs.dir(dir) do
-    if type == 'link' and is_dir(fs.joinpath(dir, name)) then
+    if type == 'link' and vim.fn.isdirectory(fs.joinpath(dir, name)) == 1 then
       type = 'directory'
     end
     items[#items + 1] = { name = name, dir = type == 'directory' }
@@ -147,7 +140,7 @@ local function navigate(path)
   edit(path)
   local buf = api.nvim_get_current_buf()
   local dir = normalize_dir(api.nvim_buf_get_name(buf))
-  if not is_dir(dir) then
+  if vim.fn.isdirectory(dir) == 0 then
     return
   end
   if vim.b[buf].nvim_dir == nil then
@@ -228,10 +221,10 @@ function M.try_open(buf, path)
     return
   end
 
-  local dir = normalize_dir(path)
-  if is_dir(dir) then
-    first_open(buf, dir)
+  if vim.fn.isdirectory(path) == 0 then
+    return
   end
+  first_open(buf, normalize_dir(path))
 end
 
 function M.handle_startup_dirs()

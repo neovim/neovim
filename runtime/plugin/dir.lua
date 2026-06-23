@@ -18,13 +18,6 @@ vim.keymap.set('n', '<Plug>(nvim-dir-reload)', function()
   require('nvim.dir')._reload()
 end, { silent = true, desc = 'Reload directory' })
 
----@param path string
----@return boolean
-local function is_dir(path)
-  local stat = vim.uv.fs_stat(vim.fs.normalize(vim.fs.abspath(path)))
-  return stat ~= nil and stat.type == 'directory'
-end
-
 ---@param buf integer
 ---@param path string
 ---@return boolean
@@ -38,7 +31,7 @@ local function should_open(buf, path)
   if vim.bo[buf].filetype == 'netrw' or vim.b[buf].netrw_curdir ~= nil then
     return false
   end
-  return is_dir(path)
+  return vim.fn.isdirectory(path) == 1
 end
 
 local group = api.nvim_create_augroup('FileExplorer', { clear = true })
