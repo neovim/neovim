@@ -9,9 +9,10 @@
 
 #include "auevents_enum.generated.h"
 
+typedef struct aco_save_S aco_save_T;
 /// Struct to save values in before executing autocommands for a buffer that is
 /// not the current buffer.
-typedef struct {
+struct aco_save_S {
   int use_aucmd_win_idx;          ///< index in aucmd_win[] if >= 0
   handle_T save_curwin_handle;    ///< ID of saved curwin
   handle_T new_curwin_handle;     ///< ID of new curwin
@@ -21,7 +22,8 @@ typedef struct {
   char *globaldir;                ///< saved value of globaldir
   bool save_VIsual_active;        ///< saved VIsual_active
   int save_prompt_insert;         ///< saved b_prompt_insert
-} aco_save_T;
+  aco_save_T *save_aucmd;
+};
 
 typedef struct {
   size_t refcount;          ///< Reference count (freed when reaches zero)

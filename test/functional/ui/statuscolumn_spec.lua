@@ -1207,4 +1207,21 @@ describe('statuscolumn', function()
                                                            |
     ]])
   end)
+
+  it('redrawn during nvim_exec_autocmds({buf})', function()
+    command([[let &statuscolumn='%{g:actual_curwin == win_getid() ? "CUR" : "NC"}']])
+    local buf = api.nvim_create_buf(true, false)
+    api.nvim_open_win(buf, false, { split = 'right' })
+    api.nvim_create_autocmd('User', { command = 'redraw!' })
+    screen:expect([[
+      {8:CUR}aaaaa                  │{8:NC}                        |
+      {8:CUR}aaaaa                  │{1:~                         }|*3
+      {8:CUR}^aaaaa                  │{1:~                         }|
+      {8:CUR}aaaaa                  │{1:~                         }|*7
+      {3:[No Name] [+]              }{2:[No Name]                 }|
+                                                           |
+    ]])
+    api.nvim_exec_autocmds('User', { buf = buf })
+    screen:expect_unchanged()
+  end)
 end)

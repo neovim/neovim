@@ -63,18 +63,6 @@ typedef enum {
   kNumBaseHexadecimal = 16,
 } NumberBase;
 
-static bool stl_defer_redraw(win_T *wp)
-{
-  if (aucmd_prepbuf_depth == 0) {
-    return false;
-  }
-
-  // aucmd_prepbuf() temporarily changes curwin/curbuf. Statusline and winbar
-  // expressions can observe that context, so evaluate them after aucmd_restbuf().
-  wp->w_redr_status = true;
-  return true;
-}
-
 /// Redraw the status line of window `wp`.
 ///
 /// If inversion is possible we use it. Else '=' characters are used.
@@ -90,9 +78,7 @@ void win_redr_status(win_T *wp)
       || (wild_menu_showing != 0 && !ui_has(kUIWildmenu))) {
     return;
   }
-  if (stl_defer_redraw(wp)) {
-    return;
-  }
+
   busy = true;
   wp->w_redr_status = false;
   if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
@@ -259,6 +245,11 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     return;
   }
   entered = true;
+
+  // Restore actual curwin before redrawing.
+  if (autocmd_save.save_aucmd != NULL && curwin->handle != autocmd_save.save_curwin_handle) {
+    aucmd_restbuf(&autocmd_save);
+  }
 
   // setup environment for the task at hand
   if (wp == NULL) {
@@ -437,6 +428,11 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
 
 theend:
   entered = false;
+
+  // Restore temporary autocmd curwin.
+  if (autocmd_save.save_aucmd != NULL && curwin->handle == autocmd_save.new_curwin_handle) {
+    aucmd_prepbuf(&autocmd_save, autocmd_save.new_curbuf.br_buf);
+  }
 }
 
 void win_redr_winbar(win_T *wp)
@@ -446,9 +442,6 @@ void win_redr_winbar(win_T *wp)
   // Return when called recursively. This can happen when the winbar contains an expression
   // that triggers a redraw.
   if (entered) {
-    return;
-  }
-  if (stl_defer_redraw(wp)) {
     return;
   }
   entered = true;
