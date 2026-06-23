@@ -243,11 +243,13 @@ describe('TUI :restart!', function()
     finally(function()
       os.remove(file)
     end)
+
     local screen = tt.setup_child_nvim({
       '--clean',
       '--cmd',
       'set notermguicolors laststatus=0 noruler noshowcmd',
     }, { env = env_notermguicolors })
+
     feed_data(':edit ' .. file .. '\r')
     screen:expect([[
       ^foobar                                            |
@@ -255,6 +257,8 @@ describe('TUI :restart!', function()
       :edit Xtest-restart-file                          |
       {5:-- TERMINAL --}                                    |
     ]])
+
+    -- :restart
     feed_data(':restart\r')
     screen:expect([[
       ^foobar                                            |
@@ -262,6 +266,8 @@ describe('TUI :restart!', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
+
+    -- :restart!
     feed_data(':restart!\r')
     screen:expect([[
       ^                                                  |
@@ -269,6 +275,7 @@ describe('TUI :restart!', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
+
     feed_data(':qall!\r')
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)

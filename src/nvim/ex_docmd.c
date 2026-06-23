@@ -4969,7 +4969,7 @@ static void ex_quitall(exarg_T *eap)
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
-  if (eap->forceit == false) {
+  if (!eap->forceit) {
     // Pass +cmd via the `extra` slot of nlua_call_excmd
     dict_T *extra_d = tv_dict_alloc();
     tv_dict_add_str(extra_d, S_LEN("quit_cmd"), eap->do_ecmd_cmd ? eap->do_ecmd_cmd : "");

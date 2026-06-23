@@ -89,6 +89,8 @@ Restart Nvim
 
                 Example: discard changes and stop with `:qall!`, then restart: >
                     :restart +qall!
+<                Example: restart and restore the current session: >
+                    :mksession! Session.vim | restart! source Session.vim
 <                Example: restart and update plugins: >
                     :restart lua vim.pack.update()
 <
