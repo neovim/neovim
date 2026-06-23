@@ -2988,6 +2988,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 
   // Repeat for all ',' or ';' separated addresses.
   while (true) {
+    bool address_omitted = false;
     eap->line1 = eap->line2;
     eap->line2 = get_cmd_default_range(eap);
     eap->cmd = skipwhite(eap->cmd);
@@ -3098,6 +3099,8 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           eap->col2 = fm->mark.col;
           eap->addr_count = 2;
         }
+      } else {
+        address_omitted = true;
       }
     } else {
       eap->line2 = lnum;
@@ -3146,6 +3149,12 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
     } else if (*eap->cmd != ',') {
       break;
     }
+
+    if (address_omitted) {
+      eap->addr_count++;
+      eap->addr_mode = kOmLineWise;
+    }
+
     eap->cmd++;
   }
 
@@ -6540,14 +6549,15 @@ static void ex_read(exarg_T *eap)
   char *split_line = NULL;
   colnr_T split_col = eap->col2;
   linenr_T split_lnum = eap->line2;
-  bool do_split = (split_col != MAXCOL && split_lnum > 0 && split_lnum <= curbuf->b_ml.ml_line_count);
+  bool do_split = (split_col != MAXCOL && split_lnum > 0
+                   && split_lnum <= curbuf->b_ml.ml_line_count);
 
   if (do_split) {
     char *line = ml_get(split_lnum);
     colnr_T len = (colnr_T)strlen(line);
     if (split_col <= len) {
       split_line = xstrdup(line + split_col);
-      char *new_line = xstrnsave(line, split_col);
+      char *new_line = xstrnsave(line, (size_t)split_col);
       ml_replace(split_lnum, new_line, false);
       changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
     } else {
@@ -6612,12 +6622,13 @@ static void ex_read(exarg_T *eap)
     if (do_split && split_line != NULL) {
       linenr_T lines_inserted = curbuf->b_ml.ml_line_count - lines_before;
       if (lines_inserted > 0) {
-        char *prefix = ml_get(split_lnum);
+        char *prefix = xstrdup(ml_get(split_lnum));
         char *first_read = ml_get(split_lnum + 1);
         char *merged_first = xmalloc(strlen(prefix) + strlen(first_read) + 1);
         sprintf(merged_first, "%s%s", prefix, first_read);
         ml_replace(split_lnum, merged_first, false);
         changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
+        xfree(prefix);
 
         if (u_savedel(split_lnum + 1, 1) == OK) {
           ml_delete(split_lnum + 1);

@@ -90,6 +90,7 @@
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/search.h"
+#include "nvim/sign_defs.h"
 #include "nvim/spell.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -893,8 +894,8 @@ uniqend:
 ///// :move command - move range (line1, col1) to (line2, col2) to below line dest and dest_col
 ///
 /// @return  FAIL for failure, OK otherwise
-int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2,
-            linenr_T dest_lnum, colnr_T dest_col)
+int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T dest_lnum,
+            colnr_T dest_col)
 {
   if (dest_lnum >= line1 && dest_lnum < line2) {
     emsg(_("E134: Cannot move a range of lines into itself"));
@@ -1051,7 +1052,7 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2,
   char *l1_text = ml_get(line1);
   colnr_T l1_len = (colnr_T)strlen(l1_text);
   colnr_T col1_clip = (col1 > l1_len) ? l1_len : col1;
-  char *prefix = xstrnsave(l1_text, col1_clip);
+  char *prefix = xstrnsave(l1_text, (size_t)col1_clip);
 
   char *l2_text = ml_get(line2);
   colnr_T l2_len = (colnr_T)strlen(l2_text);
@@ -1090,7 +1091,8 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2,
     curwin->w_cursor.lnum = adj_dest_lnum + (line2 - line1 + 1);
   } else {
     linenr_T lines_before_ins = curbuf->b_ml.ml_line_count;
-    ml_append_pos((pos_T){ .lnum = adj_dest_lnum, .col = dest_col, .coladd = 0 }, text, strlen(text));
+    ml_append_pos((pos_T){ .lnum = adj_dest_lnum, .col = dest_col, .coladd = 0 }, text,
+                  strlen(text));
     linenr_T lines_inserted = curbuf->b_ml.ml_line_count - lines_before_ins;
     if (lines_inserted > 0) {
       appended_lines_mark(adj_dest_lnum, lines_inserted);
@@ -1105,8 +1107,8 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2,
 }
 
 /// ":copy"
-void ex_copy(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2,
-             linenr_T dest_lnum, colnr_T dest_col)
+void ex_copy(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T dest_lnum,
+             colnr_T dest_col)
 {
   if (col2 == MAXCOL) {
     // Linewise copy
@@ -3149,13 +3151,14 @@ void ex_append(exarg_T *eap)
     split_col++;
   }
 
-  bool do_split = (split_col != MAXCOL && split_lnum > 0 && split_lnum <= curbuf->b_ml.ml_line_count);
+  bool do_split = (split_col != MAXCOL && split_lnum > 0
+                   && split_lnum <= curbuf->b_ml.ml_line_count);
   if (do_split) {
     char *line = ml_get(split_lnum);
     colnr_T len = (colnr_T)strlen(line);
     if (split_col <= len) {
       split_line = xstrdup(line + split_col);
-      char *new_line = xstrnsave(line, split_col);
+      char *new_line = xstrnsave(line, (size_t)split_col);
       ml_replace(split_lnum, new_line, false);
       changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
     } else {
@@ -3275,12 +3278,13 @@ void ex_append(exarg_T *eap)
   if (do_split && split_line != NULL) {
     linenr_T lines_inserted = curbuf->b_ml.ml_line_count - lines_before;
     if (lines_inserted > 0) {
-      char *prefix = ml_get(split_lnum);
+      char *prefix = xstrdup(ml_get(split_lnum));
       char *first_read = ml_get(split_lnum + 1);
       char *merged_first = xmalloc(strlen(prefix) + strlen(first_read) + 1);
       sprintf(merged_first, "%s%s", prefix, first_read);
       ml_replace(split_lnum, merged_first, false);
       changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
+      xfree(prefix);
 
       if (u_savedel(split_lnum + 1, 1) == OK) {
         ml_delete(split_lnum + 1);
@@ -3294,8 +3298,6 @@ void ex_append(exarg_T *eap)
     sprintf(merged_last, "%s%s", last_line, split_line);
     ml_replace(target_lnum, merged_last, false);
     changed_lines(curbuf, target_lnum, 0, target_lnum + 1, 0, true);
-
-    xfree(split_line);
   }
 
   // "start" is set to eap->line2+1 unless that position is invalid (when
@@ -3309,7 +3311,9 @@ void ex_append(exarg_T *eap)
       curbuf->b_op_end.lnum = split_lnum + (curbuf->b_ml.ml_line_count - lines_before);
       char *last_line = ml_get(curbuf->b_op_end.lnum);
       colnr_T last_len = (colnr_T)strlen(last_line);
-      curbuf->b_op_end.col = (last_len > (colnr_T)strlen(split_line)) ? (last_len - (colnr_T)strlen(split_line)) : 0;
+      curbuf->b_op_end.col = (last_len >
+                              (colnr_T)strlen(split_line)) ? (last_len -
+                                                              (colnr_T)strlen(split_line)) : 0;
     } else {
       curbuf->b_op_start.lnum
         = (eap->line2 < curbuf->b_ml.ml_line_count) ? eap->line2 + 1 : curbuf->b_ml.ml_line_count;
@@ -3319,6 +3323,9 @@ void ex_append(exarg_T *eap)
       curbuf->b_op_end.lnum = (eap->line2 < lnum) ? lnum : curbuf->b_op_start.lnum;
       curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
     }
+  }
+  if (do_split && split_line != NULL) {
+    xfree(split_line);
   }
   curwin->w_cursor.lnum = lnum;
   check_cursor_lnum(curwin);
@@ -3343,11 +3350,12 @@ void ex_change(exarg_T *eap)
     append_indent = get_indent_lnum(eap->line1);
   }
 
-  if (eap->col2 != MAXCOL && eap->line1 <= curbuf->b_ml.ml_line_count && eap->line2 <= curbuf->b_ml.ml_line_count) {
+  if (eap->col2 != MAXCOL && eap->line1 <= curbuf->b_ml.ml_line_count
+      && eap->line2 <= curbuf->b_ml.ml_line_count) {
     char *l1_text = ml_get(eap->line1);
     colnr_T l1_len = (colnr_T)strlen(l1_text);
     colnr_T col1_clip = (eap->col1 > l1_len) ? l1_len : eap->col1;
-    char *prefix = xstrnsave(l1_text, col1_clip);
+    char *prefix = xstrnsave(l1_text, (size_t)col1_clip);
 
     char *l2_text = ml_get(eap->line2);
     colnr_T l2_len = (colnr_T)strlen(l2_text);
@@ -3982,7 +3990,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
            || lnum <= curwin->w_botline);
        lnum++) {
     int nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                   (lnum == eap->line1 && eap->addr_mode == kOmCharWise) ? eap->col1 : 0,
+                                   (lnum == eap->line1
+                                    && eap->addr_mode == kOmCharWise) ? eap->col1 : 0,
                                    (lnum == line2 && eap->addr_mode == kOmCharWise) ? eap->col2 : 0,
                                    NULL, NULL);
     if (nmatch) {
@@ -4977,7 +4986,7 @@ void ex_global(exarg_T *eap)
     // pass 1: set marks for each (not) matching line
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
-      colnr_T col1 = (lnum == eap->line1) ? eap->col1 : col1;
+      colnr_T col1 = (lnum == eap->line1) ? eap->col1 : 0;
       colnr_T col2 = (lnum == eap->line2) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
       int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
       if (regmatch.regprog == NULL) {

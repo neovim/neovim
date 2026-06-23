@@ -5760,7 +5760,7 @@ describe('API', function()
     it('works with charwise range before |read| command reading from file', function()
       local filename = tmpname()
       local f = io.open(filename, 'w')
-      f:write("abc\ndef\n")
+      f:write('abc\ndef\n')
       f:close()
       insert [[
         line1
@@ -5798,7 +5798,7 @@ describe('API', function()
       local content = f:read('*a')
       f:close()
       os.remove(filename)
-      eq("ne3\nline4\nline\n", content)
+      eq('ne3\nline4\nline\n', content)
     end)
 
     it('works with charwise range before |append| command (inline)', function()
@@ -5942,8 +5942,10 @@ describe('API', function()
       ]]
     end)
 
-    it('works with charwise range beyond the end of line for |append| command (falls back to linewise)', function()
-      insert [[
+    it(
+      'works with charwise range beyond the end of line for |append| command (falls back to linewise)',
+      function()
+        insert [[
         line1
         line2
         line3
@@ -5951,8 +5953,8 @@ describe('API', function()
         line5
         line6
       ]]
-      command('3.5append|foo')
-      expect [[
+        command('3.5append|foo')
+        expect [[
         line1
         line2
         line3
@@ -5961,7 +5963,8 @@ describe('API', function()
         line5
         line6
       ]]
-    end)
+      end
+    )
 
     it('works with charwise range at the end of line for |read| command', function()
       insert [[

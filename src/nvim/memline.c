@@ -2471,7 +2471,7 @@ int ml_replace_range_in_line(linenr_T lnum, pos_T range_start, pos_T range_end, 
       suffix = old_line + range_end.col + 1;
     }
     char *new_line = concat_str(concat_str(old_txt, text), suffix);
-    ml_replace_buf_len(curbuf, lnum, new_line, (int)strlen(new_line), false, true);
+    ml_replace_buf_len(curbuf, lnum, new_line, (size_t)strlen(new_line), false, true);
   } else if (range_start.lnum == lnum) {  // we are at the start of the range
     char *old_line = ml_get(lnum);
     size_t old_chars_indx = (size_t)range_start.col;
@@ -2482,18 +2482,18 @@ int ml_replace_range_in_line(linenr_T lnum, pos_T range_start, pos_T range_end, 
     char *old_txt = xcalloc(old_chars_indx + 1, sizeof(char));
     memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
     char *new_line = concat_str(old_txt, text);
-    ml_replace_buf_len(curbuf, lnum, new_line, (int)strlen(new_line), false, true);
+    ml_replace_buf_len(curbuf, lnum, new_line, (size_t)strlen(new_line), false, true);
   } else if (range_end.lnum == lnum) {  // we are at the end of the range
     char *old_line = ml_get(lnum);
     if ((int)strlen(old_line) > range_end.col) {
       char *old_text_append = old_line + range_end.col + 1;
       char *new_line = concat_str(text, old_text_append);
-      ml_replace_buf_len(curbuf, lnum, new_line, (int)strlen(new_line), false, true);
+      ml_replace_buf_len(curbuf, lnum, new_line, (size_t)strlen(new_line), false, true);
     } else {
-      ml_replace_buf_len(curbuf, lnum, text, (int)strlen(text), false, true);
+      ml_replace_buf_len(curbuf, lnum, text, (size_t)strlen(text), false, true);
     }
   } else {
-    ml_replace_buf_len(curbuf, lnum, text, (int)strlen(text), false, true);
+    ml_replace_buf_len(curbuf, lnum, text, (size_t)strlen(text), false, true);
   }
 
   return OK;
@@ -2539,7 +2539,7 @@ size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
       if (pos.lnum == cur_ln_nr) {  // we are at the first line of operation
         char *new_line = concat_str(text_to_prepend, output);
         ml_replace(cur_ln_nr, new_line, false);
-        text_to_prepend = NUL;  // reset what to prepent
+        text_to_prepend = NULL;  // reset what to prepent
       } else {
         ml_append(cur_ln_nr - 1, output, (int)strlen(output) + 1, false);
       }
@@ -2561,16 +2561,16 @@ size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
   // TODO(616b2f): figure out a better way to handle
   // - text that is only one line not ending with NL
 
-  // remaining can be also output that
   if (remaining) {
-    // append unfinished line
-    char *new_line = concat_str(output, text_to_append);
-    // char *new_line = concat_str(concat_str(text_to_prepend, output), text_to_append);
     if (pos.lnum == cur_ln_nr) {  // we are at the first line of operation
-      new_line = concat_str(concat_str(text_to_prepend, output), text_to_append);
+      char *temp = concat_str(text_to_prepend, output);
+      char *new_line = concat_str(temp, text_to_append);
+      xfree(temp);
       ml_replace(cur_ln_nr, new_line, false);
     } else {
+      char *new_line = concat_str(output, text_to_append);
       ml_append(cur_ln_nr - 1, new_line, (int)strlen(new_line) + 1, false);
+      xfree(new_line);
     }
     // remember that the line ending was missing
     // curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
