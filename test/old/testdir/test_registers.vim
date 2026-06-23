@@ -433,6 +433,7 @@ func Test_set_register()
   call assert_equal('', @=)
   call assert_fails("call setreg('/', ['a', 'b'])", 'E883:')
   call assert_fails("call setreg('=', ['a', 'b'])", 'E883:')
+  call assert_fails("call setreg('#', ['a', 'b'])", 'E883:')
   call assert_equal(0, setreg('_', ['a', 'b']))
 
   " Test for recording to a invalid register

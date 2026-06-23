@@ -56,8 +56,8 @@ static yankreg_T y_regs[NUM_REGISTERS] = { 0 };
 
 static yankreg_T *y_previous = NULL;  // ptr to last written yankreg
 
-static const char e_search_pattern_and_expression_register_may_not_contain_two_or_more_lines[]
-  = N_("E883: Search pattern and expression register may not contain two or more lines");
+static const char e_register_char_cannot_contain_multiple_lines[]
+  = N_("E883: Register '%c' cannot contain multiple lines");
 
 /// @return the index of the register "" points to.
 int get_unname_register(void)
@@ -148,8 +148,7 @@ char *get_expr_line_src(void)
 bool valid_yank_reg(int regname, bool writing)
 {
   if ((regname > 0 && ASCII_ISALNUM(regname))
-      || (!writing && vim_strchr("/.%:=", regname) != NULL)
-      || regname == '#'
+      || (!writing && vim_strchr("/#.%:=", regname) != NULL)
       || regname == '"'
       || regname == '-'
       || regname == '_'
@@ -2680,12 +2679,12 @@ void write_reg_contents(int name, const char *str, ssize_t len, int must_append)
 void write_reg_contents_lst(int name, char **strings, bool must_append, MotionType yank_type,
                             colnr_T block_len)
 {
-  if (name == '/' || name == '=') {
+  if (name == '/' || name == '=' || name == '#') {
     char *s = strings[0];
     if (strings[0] == NULL) {
       s = "";
     } else if (strings[1] != NULL) {
-      emsg(_(e_search_pattern_and_expression_register_may_not_contain_two_or_more_lines));
+      semsg(_(e_register_char_cannot_contain_multiple_lines), name);
       return;
     }
     write_reg_contents_ex(name, s, -1, must_append, yank_type, block_len);

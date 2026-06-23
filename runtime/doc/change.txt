@@ -1307,10 +1307,11 @@ and ":put" commands and with CTRL-R.
 	completely from a mapping.
 
 -----------------------------------------------------------------------------
-6. Alternate file register "#                               *quote_#* *quote#*
+6. Alternate file register "#                          *quote_#* *quote#* *@#*
 
 Contains the |alternate-file| name for current window
-This register is writeable and changes which buffer CTRL-^ enters.
+This register is writable with `:let` and |setreg()|.  This changes which buffer
+CTRL-^ enters.  You can't yank or delete into this register.
 A String is matched against existing buffer names, like |:buffer|: >
     let @# = 'buffer_name'
 Also supports using buffer number and |file-pattern|.
@@ -1365,10 +1366,12 @@ register, nothing is returned.
 10. Last search pattern register "/			    *quote_/* *quote/*
 
 Contains the most recent search-pattern.  This is used for "n" and 'hlsearch'.
-It is writable with `:let`, you can change it to have 'hlsearch' highlight
-other matches without actually searching.  You can't yank or delete into this
-register.  The search direction is available in |v:searchforward|. Note that
-the value is restored when returning from a function |function-search-undo|.
+This register is writable with `:let` and |setreg()|.  You can change it to have
+'hlsearch' highlight other matches without actually searching.  You can't yank
+or delete into this register.  The search direction is available in
+|v:searchforward|.
+Note that the value is restored when returning from a function
+|function-search-undo|.
 
 							*@/*
 You can write to a register with a `:let` command |:let-@|.  Example: >
