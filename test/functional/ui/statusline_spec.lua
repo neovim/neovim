@@ -959,15 +959,13 @@ describe('statusline', function()
   it('no cmdline ruler for autocmd window #39938', function()
     command('set ruler laststatus=2')
     api.nvim_create_autocmd('BufDelete', { command = 'redrawstatus' })
-    local expected = [[
+    screen:expect([[
       ^                                        |
       {1:~                                       }|*5
       {3:[No Name]             0,0-1          All}|
                                               |
-    ]]
-    screen:expect(expected)
+    ]])
     api.nvim_exec_autocmds('BufDelete', { buf = api.nvim_create_buf(true, true) })
-    -- The first matching frame can arrive before the deferred redraw settles.
     screen:expect_unchanged(true)
   end)
 
@@ -1029,7 +1027,7 @@ describe('statusline', function()
     )
   end)
 
-  it('defers statusline evaluation during nvim_exec_autocmds({buf}) #40153', function()
+  it('statusline evaluation during nvim_exec_autocmds({buf}) #40153', function()
     command('set laststatus=2')
     local caller_win = api.nvim_get_current_win()
     command('split')
@@ -1071,25 +1069,12 @@ describe('statusline', function()
     -- Ignore statusline evaluations from setup; only the autocmd redraw matters.
     exec_lua('_G.statusline_contexts = {}')
     api.nvim_exec_autocmds('User', { buf = target })
-    -- No different frame should be flushed while the deferred redraw settles.
     screen:expect({ unchanged = true })
     local contexts = exec_lua(function()
       return _G.statusline_contexts
     end)
     eq(true, #contexts > 0)
     eq(caller_win, contexts[#contexts].actual)
-    -- The statusline must be evaluated only after the autocmd context is restored.
-    eq(
-      {},
-      exec_lua(function()
-        return vim
-          .iter(_G.statusline_contexts)
-          :filter(function(context)
-            return context.in_aucmd
-          end)
-          :totable()
-      end)
-    )
   end)
 end)
 
