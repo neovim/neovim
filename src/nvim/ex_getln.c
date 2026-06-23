@@ -3680,8 +3680,8 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
   char charbuf[2] = { (char)line->cmdfirstc, 0 };
   ui_call_cmdline_show(content, line->cmdpos,
                        cstr_as_string(charbuf),
-                       cstr_as_string((line->cmdprompt)),
-                       line->cmdindent, line->level, line->hl_id);
+                       cstr_as_string(line->cmdprompt),
+                       line->cmdindent, line->level, line->cmdprompt ? line->hl_id : -1);
   if (line->special_char) {
     charbuf[0] = line->special_char;
     ui_call_cmdline_special_char(cstr_as_string(charbuf),
@@ -4110,7 +4110,7 @@ void redrawcmd(void)
   // Typing ':' at the more prompt may set skip_redraw.  We don't want this
   // in cmdline mode.
   skip_redraw = false;
-
+  cmdline_was_last_drawn = true;
   redrawing_cmdline = false;
 }
 
@@ -4199,7 +4199,10 @@ char *vim_strsave_fnameescape(const char *const fname, const int what)
 {
 #ifdef BACKSLASH_IN_FILENAME
 # define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
-# define BUFFER_ESC_CHARS (" \t\n*?[`%#'\"|!<")
+// '%' and '#' are not escaped for ":buffer": it has no EX_XFILE, so they are
+// not expanded, and escaping them as "\%"/"\#" breaks buffer name matching
+// when '%'/'#' is in 'isfname' (backslash treated as a path separator).
+# define BUFFER_ESC_CHARS (" \t\n*?[`'\"|!<")
   char buf[sizeof(PATH_ESC_CHARS)];
   int j = 0;
 

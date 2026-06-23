@@ -7,6 +7,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/assert_defs.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/statusline_defs.h"
 #include "nvim/types_defs.h"
 
 #ifdef __NetBSD__
@@ -49,6 +50,7 @@ static const int64_t value_init_int64_t = 0;
 static const String value_init_String = STRING_INIT;
 static const ColorItem value_init_ColorItem = COLOR_ITEM_INITIALIZER;
 static const MTDamagePair value_init_MTDamagePair = MTDAMAGE_PAIR_INIT;
+static const StcClick value_init_StcClick = { 0 };
 
 // layer 0: type non-specific code
 
@@ -167,6 +169,10 @@ MAP_DECLS(String, int)
 MAP_DECLS(int, String)
 MAP_DECLS(ColorKey, ColorItem)
 MAP_DECLS(uint64_t, MTDamagePair)
+MAP_DECLS(int, StcClick)
+typedef Map(int, StcClick) StcClicks;
+static const StcClicks value_init_StcClicks = { 0 };
+MAP_DECLS(int, StcClicks)
 
 #define set_has(T, set, key) set_has_##T(set, key)
 #define set_put(T, set, key) set_put_##T(set, key, NULL)

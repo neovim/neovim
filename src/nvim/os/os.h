@@ -25,4 +25,8 @@ extern char *default_lib_dir;
 // IWYU pragma: end_exports
 
 #define ENV_LOGFILE "NVIM_LOG_FILE"
+#define ENV_LOGFILE_WANT "__NVIM_LOG_FILE_WANT"
 #define ENV_NVIM "NVIM"
+#define ENV_RESTART_ALLOC_CONSOLE "__NVIM_RESTART_ALLOC_CONSOLE"
+#define ENV_STARTREASON "__NVIM_STARTREASON"
+#define ENV_TEST_LOG "__NVIM_TEST_LOG"

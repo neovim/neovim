@@ -48,16 +48,6 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
    If this variable exists and is true, the file window will not be
    automatically maximized when opened.
 
-							*g:zip_shq*
-   Different operating systems may use one or more shells to execute
-   commands.  Zip will try to guess the correct quoting mechanism to
-   allow spaces and whatnot in filenames; however, if it is incorrectly
-   guessing the quote to use for your setup, you may use >
-	g:zip_shq
-<   which by default is a single quote under Unix (') and a double quote
-   under Windows (").  If you'd rather have no quotes, simply set
-   g:zip_shq to the empty string (let g:zip_shq= "") in your <.vimrc>.
-
 							*g:zip_unzipcmd*
    Use this option to specify the program which does the duty of "unzip".
    It's used during browsing. By default: >

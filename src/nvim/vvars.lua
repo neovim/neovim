@@ -776,6 +776,16 @@ M.vars = {
       Read-only.
     ]=],
   },
+  startreason = {
+    type = 'string',
+    desc = [=[
+      The reason Nvim started. Possible values:
+        - "normal"    normal startup.
+        - "restart"   started by |:restart| or |ZR|.
+
+      Read-only.
+    ]=],
+  },
   statusmsg = {
     type = 'string',
     desc = [=[

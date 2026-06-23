@@ -1307,26 +1307,22 @@ and ":put" commands and with CTRL-R.
 	completely from a mapping.
 
 -----------------------------------------------------------------------------
-6. Alternate file register "#                               *quote_#* *quote#*
+6. Alternate file register "#                          *quote_#* *quote#* *@#*
 
-Contains the name of the alternate file for the current window.  It will
-change how the |CTRL-^| command works. This register is writable, mainly to
-allow for restoring it after a plugin has
-changed it.
+Contains the |alternate-file| name for current window
+This register is writable with `:let` and |setreg()|.  This changes which buffer
+CTRL-^ enters.  You can't yank or delete into this register.
+A String is matched against existing buffer names, like |:buffer|: >
+    let @# = 'buffer_name'
+Also supports using buffer number and |file-pattern|.
 
-It accepts buffer number: >
-     let altbuf = bufnr(@#)
-     ...
-     let @# = altbuf
+Throws
+  |E86| when the buffer number does not exist
+  |E93| when more than one buffer matches
+  |E94| when none match
 
-It will give error |E86| if you pass buffer number and this buffer does not
-exist.
-
-It can also accept a match with an existing buffer name: >
-     let @# = 'buffer_name'
-
-Error |E93| if there is more than one buffer matching the given name or
-|E94| if none of buffers matches the given name.
+Clear the register with empty String: >
+    let @# = ''
 
 -----------------------------------------------------------------------------
 7. Expression register "=                              *quote_=* *quote=* *@=*
@@ -1370,10 +1366,12 @@ register, nothing is returned.
 10. Last search pattern register "/			    *quote_/* *quote/*
 
 Contains the most recent search-pattern.  This is used for "n" and 'hlsearch'.
-It is writable with `:let`, you can change it to have 'hlsearch' highlight
-other matches without actually searching.  You can't yank or delete into this
-register.  The search direction is available in |v:searchforward|. Note that
-the value is restored when returning from a function |function-search-undo|.
+This register is writable with `:let` and |setreg()|.  You can change it to have
+'hlsearch' highlight other matches without actually searching.  You can't yank
+or delete into this register.  The search direction is available in
+|v:searchforward|.
+Note that the value is restored when returning from a function
+|function-search-undo|.
 
 							*@/*
 You can write to a register with a `:let` command |:let-@|.  Example: >

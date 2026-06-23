@@ -588,9 +588,6 @@ describe('jobs', function()
 
   it('can redefine callbacks being used by a job', function()
     local screen = Screen.new()
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-    })
     source([[
       function! g:JobHandler(job_id, data, event)
       endfunction
@@ -613,11 +610,6 @@ describe('jobs', function()
 
   it('requires funcrefs for script-local (s:) functions', function()
     local screen = Screen.new(60, 5)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-    })
 
     -- Pass job callback names _without_ `function(...)`.
     source([[
@@ -631,7 +623,7 @@ describe('jobs', function()
         \ })
     ]])
 
-    screen:expect { any = '{2:E120: Using <SID> not in a script context: s:OnEvent}' }
+    screen:expect { any = '{9:E120: Using <SID> not in a script context: s:OnEvent}' }
   end)
 
   it('does not repeat output with slow output handlers', function()

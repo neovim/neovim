@@ -368,7 +368,11 @@ local options = {
       desc = [=[
         When set to "dark" or "light", adjusts the default color groups for
         that background type.  The |TUI| or other UI sets this on startup
-        if it can detect the background color.
+        if it can detect the background color, and re-detects it whenever a UI
+        attaches later, unless 'background' was set explicitly.  When multiple
+        terminal UIs are attached they share one value, taken from whichever
+        terminal reports its background last (which may not be the most
+        recently attached one, since it depends on response speed).
 
         This option does NOT change the background color, it tells Nvim what
         the "inherited" (terminal/GUI) background looks like.
@@ -8742,11 +8746,6 @@ local options = {
 
         When using |v:relnum|, keep in mind that cursor movement by itself will
         not cause the 'statuscolumn' to update unless 'relativenumber' is set.
-
-        NOTE: The %@ click execute function item is supported as well but the
-        specified function will be the same for each row in the same column.
-        It cannot be switched out through a dynamic 'statuscolumn' format, the
-        handler should be written with this in mind.
 
         Examples: >vim
         	" Line number with bar separator and click handlers:

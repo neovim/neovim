@@ -10,10 +10,11 @@ local M = {}
 ---
 ---@param payload string Sequence to send via nvim_ui_send(). Use empty string ('') to just register
 ---                      a listener (no sending).
----@param opts? { timeout?: integer, on_timeout?: fun(), group?: integer|string }
+---@param opts? { timeout?: integer, on_timeout?: fun(), group?: integer|string, chan?: integer }
 ---       - `timeout` (default: 1000) ms to wait before giving up, or 0 for never (caller must remove the autocmd).
 ---       - `on_timeout` optional fn called when the timeout fires.
 ---       - `group`: augroup for the TermResponse autocmd.
+---       - `chan`: only handle responses from this channel.
 ---@param on_response fun(resp:string):boolean? Called for each TermResponse. Return `true` to stop listening.
 ---@return integer # autocmd id of the TermResponse handler.
 function M.request(payload, opts, on_response)
@@ -32,7 +33,11 @@ function M.request(payload, opts, on_response)
     'TermResponse',
     opts.group,
     { nested = true },
+    ---@param ev {data: vim.event.termresponse.data}
     function(ev)
+      if opts.chan and ev.data.chan ~= opts.chan then
+        return
+      end
       local stop = on_response(ev.data.sequence)
       -- If on_response is done, cancel the timeout so on_timeout doesn't fire spuriously.
       if stop and timer and not timer:is_closing() then

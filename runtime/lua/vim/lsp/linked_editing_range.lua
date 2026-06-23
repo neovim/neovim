@@ -11,6 +11,7 @@ local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
+local Capability = require('vim.lsp._capability')
 local method = 'textDocument/linkedEditingRange'
 local Range = require('vim.treesitter._range')
 local api = vim.api
@@ -22,24 +23,17 @@ local M = {}
 ---@field range_index? integer The index of the range that the cursor is on.
 ---@field namespace integer namespace for range extmarks
 
----@class (private) vim.lsp.linked_editing_range.LinkedEditor
+---@class (private) vim.lsp.linked_editing_range.LinkedEditor : vim.lsp.Capability
 ---@field active table<integer, vim.lsp.linked_editing_range.LinkedEditor>
----@field bufnr integer
----@field augroup integer augroup for buffer events
----@field client_states table<integer, vim.lsp.linked_editing_range.state>
-local LinkedEditor = { active = {} }
-
----@package
----@param client_id integer
-function LinkedEditor:attach(client_id)
-  if self.client_states[client_id] then
-    return
-  end
-  self.client_states[client_id] = {
-    namespace = api.nvim_create_namespace('nvim.lsp.linked_editing_range:' .. client_id),
-    word_pattern = '^[%w%-_]*$',
-  }
-end
+---@field client_state? table<integer, vim.lsp.linked_editing_range.state>
+local LinkedEditor = {
+  name = 'linked_editing_range',
+  method = method,
+  active = {},
+}
+LinkedEditor.__index = LinkedEditor
+setmetatable(LinkedEditor, Capability)
+Capability.all[LinkedEditor.name] = LinkedEditor
 
 ---@package
 ---@param bufnr integer
@@ -47,25 +41,6 @@ end
 local function clear_ranges(bufnr, client_state)
   api.nvim_buf_clear_namespace(bufnr, client_state.namespace, 0, -1)
   client_state.range_index = nil
-end
-
----@package
----@param client_id integer
-function LinkedEditor:detach(client_id)
-  local client_state = self.client_states[client_id]
-  if not client_state then
-    return
-  end
-
-  --TODO: delete namespace if/when that becomes possible
-  clear_ranges(self.bufnr, client_state)
-  self.client_states[client_id] = nil
-
-  -- Destroy the LinkedEditor instance if we are detaching the last client
-  if vim.tbl_isempty(self.client_states) then
-    api.nvim_del_augroup_by_id(self.augroup)
-    LinkedEditor.active[self.bufnr] = nil
-  end
 end
 
 ---Syncs the text of each linked editing range after a range has been edited.
@@ -126,7 +101,7 @@ function LinkedEditor:handler(err, result, ctx)
   end
 
   local client_id = ctx.client_id
-  local client_state = self.client_states[client_id]
+  local client_state = self.client_state[client_id]
   if not client_state then
     return
   end
@@ -189,124 +164,43 @@ function LinkedEditor:refresh()
   end)
 end
 
----Construct a new LinkedEditor for the buffer.
----
----@private
----@param buf integer
----@return vim.lsp.linked_editing_range.LinkedEditor
-function LinkedEditor.new(buf)
-  local self = setmetatable({}, { __index = LinkedEditor })
+---@package
+---@param client_id integer
+function LinkedEditor:on_attach(client_id)
+  local state = self.client_state[client_id]
+  if not state then
+    state = {
+      namespace = api.nvim_create_namespace('nvim.lsp.linked_editing_range:' .. client_id),
+      word_pattern = '^[%w%-_]*$',
+    }
+    self.client_state[client_id] = state
+  end
 
-  self.bufnr = buf
-  local augroup = api.nvim_create_augroup('nvim.lsp.linked_editing_range:' .. buf, { clear = true })
-  self.augroup = augroup
-  self.client_states = {}
-
-  nvim_on({ 'TextChanged', 'TextChangedI' }, augroup, { buf = buf }, function()
-    for _, client_state in pairs(self.client_states) do
-      update_ranges(buf, client_state)
-    end
+  nvim_on({ 'TextChanged', 'TextChangedI' }, self.augroup, { buf = self.bufnr }, function()
+    update_ranges(self.bufnr, state)
     self:refresh()
   end)
-  nvim_on('CursorMoved', augroup, { buf = buf }, function()
+
+  nvim_on('CursorMoved', self.augroup, { buf = self.bufnr }, function()
     self:refresh()
   end)
-  nvim_on('LspDetach', augroup, { buf = buf }, function(ev)
-    self:detach(ev.data.client_id)
-  end)
 
-  LinkedEditor.active[buf] = self
-  return self
+  self:refresh()
 end
 
----@param bufnr integer
----@param client vim.lsp.Client
-local function attach_linked_editor(bufnr, client)
-  local client_id = client.id
-  if not lsp.buf_is_attached(bufnr, client_id) then
-    vim.notify(
-      '[LSP] Client with id ' .. client_id .. ' not attached to buffer ' .. bufnr,
-      vim.log.levels.WARN
-    )
-    return
-  end
-
-  if not vim.tbl_get(client.server_capabilities, 'linkedEditingRangeProvider') then
-    vim.notify('[LSP] Server does not support linked editing ranges', vim.log.levels.WARN)
-    return
-  end
-
-  local linked_editor = LinkedEditor.active[bufnr] or LinkedEditor.new(bufnr)
-  linked_editor:attach(client_id)
-  linked_editor:refresh()
-end
-
----@param bufnr integer
----@param client vim.lsp.Client
-local function detach_linked_editor(bufnr, client)
-  local linked_editor = LinkedEditor.active[bufnr]
-  if not linked_editor then
-    return
-  end
-
-  linked_editor:detach(client.id)
-end
-
-nvim_on('LspAttach', nil, {
-  desc = 'Enable linked editing ranges for all buffers this client attaches to, if enabled',
-}, function(ev)
-  local client = assert(lsp.get_client_by_id(ev.data.client_id))
-  if
-    not client._enabled_capabilities['linked_editing_range']
-    or not client:supports_method(method, ev.buf)
-  then
-    return
-  end
-
-  attach_linked_editor(ev.buf, client)
-end)
-
----@param enable boolean
----@param client vim.lsp.Client
-local function toggle_linked_editing_for_client(enable, client)
-  local handler = enable and attach_linked_editor or detach_linked_editor
-
-  -- Toggle for buffers already attached.
-  for bufnr, _ in pairs(client.attached_buffers) do
-    handler(bufnr, client)
-  end
-
-  client._enabled_capabilities['linked_editing_range'] = enable
-end
-
----@param enable boolean
-local function toggle_linked_editing_globally(enable)
-  -- Toggle for clients that have already attached.
-  local clients = lsp.get_clients({ method = method })
-  for _, client in ipairs(clients) do
-    toggle_linked_editing_for_client(enable, client)
-  end
-
-  -- If disabling, only clear the attachment autocmd. If enabling, create it.
-  local group = api.nvim_create_augroup('nvim.lsp.linked_editing_range', { clear = true })
-  if enable then
-    nvim_on('LspAttach', group, {
-      desc = 'Enable linked editing ranges for all clients',
-    }, function(ev)
-      local client = assert(lsp.get_client_by_id(ev.data.client_id))
-      if client:supports_method(method, ev.buf) then
-        attach_linked_editor(ev.buf, client)
-      end
-    end)
+---@package
+---@param client_id integer
+function LinkedEditor:on_detach(client_id)
+  local client_state = self.client_state[client_id]
+  if client_state then
+    --TODO: delete namespace if/when that becomes possible
+    clear_ranges(self.bufnr, client_state)
+    api.nvim_clear_autocmds({ group = self.augroup })
+    self.client_state[client_id] = nil
   end
 end
 
---- Optional filters |kwargs|:
---- @inlinedoc
---- @class vim.lsp.linked_editing_range.enable.Filter
---- @field client_id integer? Client ID, or `nil` for all.
-
---- Enable or disable a linked editing session globally or for a specific client. The following is a
+--- Enable or disable a linked editing session for the {filter}ed scope. The following is a
 --- practical usage example:
 ---
 --- ```lua
@@ -320,21 +214,9 @@ end
 --- ```
 ---
 ---@param enable boolean? `true` or `nil` to enable, `false` to disable.
----@param filter vim.lsp.linked_editing_range.enable.Filter?
+---@param filter vim.lsp.capability.enable.Filter?
 function M.enable(enable, filter)
-  vim.validate('enable', enable, 'boolean', true)
-  vim.validate('filter', filter, 'table', true)
-
-  enable = enable ~= false
-  filter = filter or {}
-
-  if filter.client_id then
-    local client =
-      assert(lsp.get_client_by_id(filter.client_id), 'Client not found for id ' .. filter.client_id)
-    toggle_linked_editing_for_client(enable, client)
-  else
-    toggle_linked_editing_globally(enable)
-  end
+  vim.lsp._capability.enable('linked_editing_range', enable, filter)
 end
 
 return M

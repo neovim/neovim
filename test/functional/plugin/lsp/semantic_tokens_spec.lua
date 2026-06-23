@@ -311,6 +311,7 @@ describe('semantic token highlighting', function()
       exec_lua(function()
         _G.server_full = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
               full = { delta = false },
               range = true,
@@ -1136,6 +1137,39 @@ describe('semantic token highlighting', function()
           screen:expect {
             grid = [[
             char* {7:foo} = "\n"^;                       |
+            {1:~                                       }|*14
+                                                    |
+          ]],
+          }
+        end,
+      },
+      {
+        it = 'clangd-15 on C (bad response data)',
+        text = [[char* foo = "\n";]],
+        response = [[{"data": [0, 6, 4294967295, 0, 8193], "resultId": "1"}]],
+        legend = [[{
+          "tokenTypes": [
+            "variable", "variable", "parameter", "function", "method", "function", "property", "variable", "class", "interface", "enum", "enumMember", "type", "type", "unknown", "namespace", "typeParameter", "concept", "type", "macro", "comment"
+          ],
+          "tokenModifiers": [
+            "declaration", "deprecated", "deduced", "readonly", "static", "abstract", "virtual", "dependentName", "defaultLibrary", "usedAsMutableReference", "functionScope", "classScope", "fileScope", "globalScope"
+          ]
+        }]],
+        expected = {
+          {
+            line = 0,
+            end_line = 0,
+            modifiers = { declaration = true, globalScope = true },
+            start_col = 6,
+            end_col = 17,
+            type = 'variable',
+            marked = true,
+          },
+        },
+        expected_screen = function()
+          screen:expect {
+            grid = [[
+            char* {7:foo = "\n"^;}                       |
             {1:~                                       }|*14
                                                     |
           ]],

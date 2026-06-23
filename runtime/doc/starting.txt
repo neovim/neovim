@@ -426,7 +426,7 @@ Initialization                                  *initialization* *startup*
 At startup, Nvim checks environment variables and files and sets values
 accordingly, proceeding as follows:
 
-1. Set |v:starttime|.
+1. Set |v:starttime| and |v:startreason|.
 
 2. Set the 'shell' option.                      *SHELL* *COMSPEC*
    The environment variable SHELL, if it exists, is used to set the 'shell'

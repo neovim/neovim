@@ -65,13 +65,6 @@ describe('vim.uv', function()
 
   it('is API safe', function()
     local screen = Screen.new(50, 10)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { bold = true, reverse = true },
-      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-      [5] = { bold = true },
-    })
 
     -- deferred API functions are disabled, as their safety can't be guaranteed
     exec_lua([[
@@ -86,15 +79,15 @@ describe('vim.uv', function()
 
     screen:expect([[
                                                         |
-      {2:                                                  }|
-      {3:Lua callback:}                                     |
-      {3:[string "<nvim>"]:5: E5560: nvim_set_var must not }|
-      {3:be called in a fast event context}                 |
-      {3:stack traceback:}                                  |
-      {3:        [C]: in function 'nvim_set_var'}           |
-      {3:        [string "<nvim>"]:5: in function <[string }|
-      {3:"<nvim>"]:2>}                                      |
-      {4:Press ENTER or type command to continue}^           |
+      {3:                                                  }|
+      {9:Lua callback:}                                     |
+      {9:[string "<nvim>"]:5: E5560: nvim_set_var must not }|
+      {9:be called in a fast event context}                 |
+      {9:stack traceback:}                                  |
+      {9:        [C]: in function 'nvim_set_var'}           |
+      {9:        [string "<nvim>"]:5: in function <[string }|
+      {9:"<nvim>"]:2>}                                      |
+      {6:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')
     eq(false, eval("get(g:, 'valid', v:false)"))
@@ -151,7 +144,7 @@ describe('vim.uv', function()
       end)
     end)
 
-    screen:expect({ any = [[{3:Vim:E5560: Vimscript function must not be called i}]] })
+    screen:expect({ any = [[{9:Vim:E5560: Vimscript function must not be called i}]] })
     feed('<cr>')
     eq({ 1, nil }, exec_lua('return {_G.value, _G.unvalue}'))
   end)

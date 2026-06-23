@@ -4,6 +4,7 @@
 "           http://docs.sun.com/app/docs/doc/817-6223
 " Version: 1.5
 " Last Change: 2008/04/05
+" 2026 Jun 22 by Vim project: handle DTrace probe descriptions that are followed immediately by an action block
 " Maintainer: Nicolas Weber <nicolasweber@gmx.de>
 
 " dtrace lexer and parser are at
@@ -35,8 +36,8 @@ syn match dtraceComment "\%^#!.*-s.*"
 " XXX: This allows a probe description to end with ',', even if it's not
 " followed by another probe.
 " XXX: This doesn't work if followed by a comment.
-let s:oneProbe = '\%(BEGIN\|END\|ERROR\|\S\{-}:\S\{-}:\S\{-}:\S\{-}\)\_s*'
-exec 'syn match dtraceProbe "'.s:oneProbe.'\%(,\_s*'.s:oneProbe.'\)*\ze\_s\%({\|\/[^*]\|\%$\)"'
+let s:oneProbe = '\%(BEGIN\|END\|ERROR\|\S\{-}:\S\{-}:\S\{-}:\S*\)\_s*'
+exec 'syn match dtraceProbe "'.s:oneProbe.'\%(,\_s*'.s:oneProbe.'\)*\ze\_s*\%({\|\/[^*]\|\_s*\S\|\%$\)"'
 
 " Note: We have to be careful to not make this match /* */ comments.
 " Also be careful not to eat `c = a / b; b = a / 2;`. We use the same

@@ -143,7 +143,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
       ---@type integer LuaLS bug, type must be marked explicitly here
       local new_end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
       -- While end_char goes past the given line, extend the token range to the next line
-      while new_end_char > 0 do
+      while new_end_char > 0 and end_line < #lines - 1 do
         end_char = new_end_char
         end_line = end_line + 1
         buf_line = lines[end_line + 1] or ''
@@ -240,10 +240,6 @@ function STHighlighter:on_attach(client_id)
     then
       self:send_request()
     end
-  end)
-
-  nvim_on({ 'BufWinEnter', 'InsertLeave' }, self.augroup, { buf = self.bufnr }, function()
-    self:send_request()
   end)
 
   if state.supports_range then
@@ -802,7 +798,7 @@ function M.start(bufnr, client_id, opts)
 
   M.enable(true, { bufnr = bufnr, client_id = client_id })
 
-  if opts and opts.debounce then
+  if opts and opts.debounce and STHighlighter.active[bufnr] then
     local highlighter = STHighlighter.active[bufnr]
     local prev = rawget(highlighter, 'debounce')
     highlighter.debounce = prev and math.max(prev, opts.debounce) or opts.debounce

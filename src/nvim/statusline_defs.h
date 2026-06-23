@@ -63,6 +63,11 @@ typedef struct {
   char *func;  ///< Function to run.
 } StlClickDefinition;
 
+typedef struct {
+  StlClickDefinition *def;  ///< Click definition.
+  size_t size;              ///< Click definition size.
+} StcClick;
+
 /// Used for tabline clicks
 typedef struct {
   StlClickDefinition def;  ///< Click definition.

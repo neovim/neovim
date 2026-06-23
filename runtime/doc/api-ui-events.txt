@@ -767,27 +767,32 @@ This UI extension delegates presentation of the |cmdline| (except 'wildmenu').
 For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
 ["cmdline_show", content, pos, firstc, prompt, indent, level, hl_id] ~
-        content: List of [attrs, string, hl_id]
-	         [[{}, "t", hl_id], [attrs, "est", hl_id], ...]
-
 	Triggered when the cmdline is displayed or changed.
-	The `content` is the full content that should be displayed in the
-	cmdline, and the `pos` is the position of the cursor that in the
-	cmdline. The content is divided into chunks with different highlight
-	attributes represented as a dict (see |ui-event-highlight_set|).
 
-	`firstc` and `prompt` are text, that if non-empty should be
-	displayed in front of the command line. `firstc` always indicates
-	built-in command lines such as `:` (ex command) and `/` `?` (search),
-	while `prompt` is an |input()| prompt, highlighted with `hl_id`.
-	`indent` tells how many spaces the content should be indented.
+	content
+	    Array of `[attr_id, text_chunk, hl_id]` tuples, building up the
+	    cmdline text of chunks with different highlights.
 
-	The Nvim command line can be invoked recursively, for instance by
-	typing `<c-r>=` at the command line prompt. The `level` field is used
-	to distinguish different command lines active at the same time. The
-	first invoked command line has level 1, the next recursively-invoked
-	prompt has level 2. A command line invoked from the |cmdline-window|
-	has a higher level than the edited command line.
+	pos
+	    Position of the cursor in the cmdline (byte offset).
+
+	firstc
+	    Character preceding the cmdline content (|getcmdtype()|).
+
+	prompt
+	    String preceding the cmdline content when an |input()| prompt is
+	    active, false otherwise. Highlighted with `hl_id`.
+
+	indent
+	    Number of spaces the content should be indented.
+
+	level
+	    Number indicating the cmdline recursion level. Incremented by
+	    e.g |c_CTRL-R_=|, prompts or a commandline invoked from the
+	    |cmdline-window|.
+
+	hl_id
+	    Highlight group ID of the prompt, -1 with no active prompt.
 
 ["cmdline_pos", pos, level] ~
 	Change the cursor position in the cmdline.
@@ -878,7 +883,7 @@ must handle.
 
 	content
 	    Array of `[attr_id, text_chunk, hl_id]` tuples, building up the
-	    message text of chunks of different highlights. No extra spacing
+	    message text of chunks with different highlights. No extra spacing
 	    should be added between chunks, the `text_chunk` by itself
 	    contains any necessary whitespace. Messages can contain line
 	    breaks "\n".

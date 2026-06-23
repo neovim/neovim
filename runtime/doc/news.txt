@@ -69,8 +69,6 @@ API
 • |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
   no longer treat an empty non-nil pattern as nil.
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
-• |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
-  `msg_show.progress` events.
 
 DIAGNOSTICS
 
@@ -90,6 +88,8 @@ EVENTS
 
 • |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
   "modified" instead.
+• |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
+  `msg_show.progress` events.
 
 LSP
 
@@ -187,9 +187,9 @@ EVENTS
 
 • |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
   as |nvim_buf_del_mark()|
+• |SessionWritePre| event emits just before |:mksession|.
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.
-• Added the |SessionWritePre| autocommand event.
 
 HIGHLIGHTS
 
@@ -299,6 +299,7 @@ UI
 VIMSCRIPT
 
 • |v:exitreason| is set before |QuitPre|.
+• |v:startreason| differentiates between restart and normal start.
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
 • |v:useractive| indicates user activity.
 • |serverlist()| with `info=true` returns details for each server (own + peers).
@@ -319,6 +320,8 @@ These existing features changed their behavior.
   • |nvim_exec_autocmds()|
   • |nvim_get_autocmds()|
 • |vim.keymap.set()| and |vim.keymap.del()| accept a list of strings for `lhs`.
+• 'statuscolumn' click function labels can be different across rows.
+  |v:virtnum| and |v:lnum| are available during the click function callback.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

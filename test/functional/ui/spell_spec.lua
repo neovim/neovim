@@ -17,19 +17,14 @@ describe("'spell'", function()
   before_each(function()
     clear()
     screen = Screen.new(80, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { special = Screen.colors.Red, undercurl = true },
-      [2] = { special = Screen.colors.Blue, undercurl = true },
-      [3] = { foreground = tonumber('0x6a0dad') },
-      [4] = { foreground = Screen.colors.Magenta },
-      [5] = { bold = true, foreground = Screen.colors.SeaGreen },
-      [6] = { foreground = Screen.colors.Red },
-      [7] = { foreground = Screen.colors.Blue },
-      [8] = { foreground = Screen.colors.Blue, special = Screen.colors.Red, undercurl = true },
-      [9] = { bold = true },
-      [10] = { background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue },
-    })
+    screen:add_extra_attr_ids {
+      [100] = { special = Screen.colors.Red, undercurl = true },
+      [101] = { special = Screen.colors.Blue, undercurl = true },
+      [102] = { foreground = Screen.colors.Blue, special = Screen.colors.Red, undercurl = true },
+      [103] = { foreground = tonumber('0x6a0dad') },
+      [104] = { foreground = Screen.colors.Red, underline = true },
+      [105] = { foreground = Screen.colors.Blue, underline = true },
+    }
   end)
 
   it('joins long lines #7937', function()
@@ -48,13 +43,13 @@ describe("'spell'", function()
     ]])
     feed('ggJJJJJJ0')
     screen:expect([[
-    {1:^Lorem} {1:ipsum} dolor sit {1:amet}, {1:consectetur} {1:adipiscing} {1:elit}, {1:sed} do {1:eiusmod} {1:tempor} {1:i}|
-    {1:ncididunt} {1:ut} {1:labore} et {1:dolore} {1:magna} {1:aliqua}. {1:Ut} {1:enim} ad minim {1:veniam}, {1:quis} {1:nostru}|
-    {1:d} {1:exercitation} {1:ullamco} {1:laboris} {1:nisi} {1:ut} {1:aliquip} ex ea {1:commodo} {1:consequat}. {1:Duis} {1:aut}|
-    {1:e} {1:irure} dolor in {1:reprehenderit} in {1:voluptate} {1:velit} {1:esse} {1:cillum} {1:dolore} {1:eu} {1:fugiat} {1:n}|
-    {1:ulla} {1:pariatur}. {1:Excepteur} {1:sint} {1:occaecat} {1:cupidatat} non {1:proident}, {1:sunt} in culpa {1:qui}|
-     {1:officia} {1:deserunt} {1:mollit} {1:anim} id est {1:laborum}.                                   |
-    {0:~                                                                               }|
+    {100:^Lorem} {100:ipsum} dolor sit {100:amet}, {100:consectetur} {100:adipiscing} {100:elit}, {100:sed} do {100:eiusmod} {100:tempor} {100:i}|
+    {100:ncididunt} {100:ut} {100:labore} et {100:dolore} {100:magna} {100:aliqua}. {100:Ut} {100:enim} ad minim {100:veniam}, {100:quis} {100:nostru}|
+    {100:d} {100:exercitation} {100:ullamco} {100:laboris} {100:nisi} {100:ut} {100:aliquip} ex ea {100:commodo} {100:consequat}. {100:Duis} {100:aut}|
+    {100:e} {100:irure} dolor in {100:reprehenderit} in {100:voluptate} {100:velit} {100:esse} {100:cillum} {100:dolore} {100:eu} {100:fugiat} {100:n}|
+    {100:ulla} {100:pariatur}. {100:Excepteur} {100:sint} {100:occaecat} {100:cupidatat} non {100:proident}, {100:sunt} in culpa {100:qui}|
+     {100:officia} {100:deserunt} {100:mollit} {100:anim} id est {100:laborum}.                                   |
+    {1:~                                                                               }|
                                                                                     |
     ]])
   end)
@@ -76,10 +71,10 @@ describe("'spell'", function()
       ^This is some text without any spell errors.  Everything                         |
       should just be black, nothing wrong here.                                       |
                                                                                       |
-      This line has a {1:sepll} error. {2:and} missing caps.                                  |
-      {1:And and} this is {1:the the} duplication.                                            |
-      {2:with} missing caps here.                                                         |
-      {0:~                                                                               }|
+      This line has a {100:sepll} error. {101:and} missing caps.                                  |
+      {100:And and} this is {100:the the} duplication.                                            |
+      {101:with} missing caps here.                                                         |
+      {1:~                                                                               }|
                                                                                       |
     ]])
   end)
@@ -98,101 +93,101 @@ describe("'spell'", function()
       set spell spelllang=en
     ]=])
     screen:expect([[
-      ^   This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
-      {2:another} missing cap here.                                                       |
+      ^   This line has a {100:sepll} error. {101:and} missing caps and trailing spaces.           |
+      {101:another} missing cap here.                                                       |
                                                                                       |
-      {2:and} here.                                                                       |
+      {101:and} here.                                                                       |
                                                                                       |
-      {2:and} here.                                                                       |
-      {0:~                                                                               }|
+      {101:and} here.                                                                       |
+      {1:~                                                                               }|
                                                                                       |
     ]])
     -- After adding word missing Cap in next line is updated
     feed('3GANot<Esc>')
     screen:expect([[
-         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
-      {2:another} missing cap here.                                                       |
+         This line has a {100:sepll} error. {101:and} missing caps and trailing spaces.           |
+      {101:another} missing cap here.                                                       |
       No^t                                                                             |
       and here.                                                                       |
                                                                                       |
-      {2:and} here.                                                                       |
-      {0:~                                                                               }|
+      {101:and} here.                                                                       |
+      {1:~                                                                               }|
                                                                                       |
     ]])
     -- Deleting a full stop removes missing Cap in next line
     feed('5Gdd<C-L>k$x')
     screen:expect([[
-         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
-      {2:another} missing cap here.                                                       |
+         This line has a {100:sepll} error. {101:and} missing caps and trailing spaces.           |
+      {101:another} missing cap here.                                                       |
       Not                                                                             |
       and her^e                                                                        |
       and here.                                                                       |
-      {0:~                                                                               }|*2
+      {1:~                                                                               }|*2
                                                                                       |
     ]])
     -- Undo also updates the next line (go to command line to remove message)
     feed('u:<Esc>')
     screen:expect([[
-         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
-      {2:another} missing cap here.                                                       |
+         This line has a {100:sepll} error. {101:and} missing caps and trailing spaces.           |
+      {101:another} missing cap here.                                                       |
       Not                                                                             |
       and here^.                                                                       |
-      {2:and} here.                                                                       |
-      {0:~                                                                               }|*2
+      {101:and} here.                                                                       |
+      {1:~                                                                               }|*2
                                                                                       |
     ]])
     -- Folding an empty line does not remove Cap in next line
     feed('uzfk:<Esc>')
     screen:expect([[
-         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
-      {2:another} missing cap here.                                                       |
+         This line has a {100:sepll} error. {101:and} missing caps and trailing spaces.           |
+      {101:another} missing cap here.                                                       |
       Not                                                                             |
-      {10:^+--  2 lines: and here.·························································}|
-      {2:and} here.                                                                       |
-      {0:~                                                                               }|*2
+      {13:^+--  2 lines: and here.·························································}|
+      {101:and} here.                                                                       |
+      {1:~                                                                               }|*2
                                                                                       |
     ]])
     -- Folding the end of a sentence does not remove Cap in next line
     -- and editing a line does not remove Cap in current line
     feed('Jzfkk$x')
     screen:expect([[
-         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
-      {2:another} missing cap her^e                                                        |
-      {10:+--  2 lines: Not·······························································}|
-      {2:and} here.                                                                       |
-      {0:~                                                                               }|*3
+         This line has a {100:sepll} error. {101:and} missing caps and trailing spaces.           |
+      {101:another} missing cap her^e                                                        |
+      {13:+--  2 lines: Not·······························································}|
+      {101:and} here.                                                                       |
+      {1:~                                                                               }|*3
                                                                                       |
     ]])
     -- Cap is correctly applied in the first row of a window
     feed('<C-E><C-L>')
     screen:expect([[
-      {2:another} missing cap her^e                                                        |
-      {10:+--  2 lines: Not·······························································}|
-      {2:and} here.                                                                       |
-      {0:~                                                                               }|*4
+      {101:another} missing cap her^e                                                        |
+      {13:+--  2 lines: Not·······························································}|
+      {101:and} here.                                                                       |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     -- Adding an empty line does not remove Cap in "mod_bot" area
     feed('zbO<Esc>')
     screen:expect([[
-         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+         This line has a {100:sepll} error. {101:and} missing caps and trailing spaces.           |
       ^                                                                                |
-      {2:another} missing cap here                                                        |
-      {10:+--  2 lines: Not·······························································}|
-      {2:and} here.                                                                       |
-      {0:~                                                                               }|*2
+      {101:another} missing cap here                                                        |
+      {13:+--  2 lines: Not·······························································}|
+      {101:and} here.                                                                       |
+      {1:~                                                                               }|*2
                                                                                       |
     ]])
     -- Multiple empty lines does not remove Cap in the line after
     feed('O<Esc><C-L>')
     screen:expect([[
-         This line has a {1:sepll} error. {2:and} missing caps and trailing spaces.           |
+         This line has a {100:sepll} error. {101:and} missing caps and trailing spaces.           |
       ^                                                                                |
                                                                                       |
-      {2:another} missing cap here                                                        |
-      {10:+--  2 lines: Not·······························································}|
-      {2:and} here.                                                                       |
-      {0:~                                                                               }|
+      {101:another} missing cap here                                                        |
+      {13:+--  2 lines: Not·······························································}|
+      {101:and} here.                                                                       |
+      {1:~                                                                               }|
                                                                                       |
     ]])
   end)
@@ -209,21 +204,21 @@ describe("'spell'", function()
     ]=])
     feed('51|C')
     screen:expect([[
-      {2:test} test test test test test test test test test ^test test test test test test |
+      {101:test} test test test test test test test test test ^test test test test test test |
       test test test test$                                                            |
                                                                                       |
-      {2:end}                                                                             |
-      {0:~                                                                               }|*3
-      {9:-- INSERT --}                                                                    |
+      {101:end}                                                                             |
+      {1:~                                                                               }|*3
+      {5:-- INSERT --}                                                                    |
     ]])
     feed('x')
     screen:expect([[
-      {2:test} test test test test test test test test test x^est test test test test test |
+      {101:test} test test test test test test test test test x^est test test test test test |
       test test test test$                                                            |
                                                                                       |
-      {2:end}                                                                             |
-      {0:~                                                                               }|*3
-      {9:-- INSERT --}                                                                    |
+      {101:end}                                                                             |
+      {1:~                                                                               }|*3
+      {5:-- INSERT --}                                                                    |
     ]])
   end)
 
@@ -237,80 +232,80 @@ describe("'spell'", function()
       // I am a speling mistakke]])
     feed('ge')
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void});                                                                |
-      {7:// I am a }{8:spelin^g}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|*4
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} func({6:void});                                                                |
+      {18:// I am a }{102:spelin^g}{18: }{102:mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     feed(']s')
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void});                                                                |
-      {7:// I am a }{8:speling}{7: }{8:^mistakke}                                                      |
-      {0:~                                                                               }|*4
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} func({6:void});                                                                |
+      {18:// I am a }{102:speling}{18: }{102:^mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     feed(']s')
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void});                                                                |
-      {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|*4
-      {6:search hit BOTTOM, continuing at TOP}                                            |
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} func({6:void});                                                                |
+      {18:// I am a }{102:^speling}{18: }{102:mistakke}                                                      |
+      {1:~                                                                               }|*4
+      {19:search hit BOTTOM, continuing at TOP}                                            |
     ]])
     exec('echo ""')
     local ns = api.nvim_create_namespace('spell')
     -- extmark with spell=true enables spell
     local id = api.nvim_buf_set_extmark(0, ns, 1, 4, { end_row = 1, end_col = 10, spell = true })
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} {1:func}({5:void});                                                                |
-      {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|*4
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} {100:func}({6:void});                                                                |
+      {18:// I am a }{102:^speling}{18: }{102:mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     feed('[s')
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} {1:^func}({5:void});                                                                |
-      {7:// I am a }{8:speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|*4
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} {100:^func}({6:void});                                                                |
+      {18:// I am a }{102:speling}{18: }{102:mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     api.nvim_buf_del_extmark(0, ns, id)
     -- extmark with spell=false disables spell
     id = api.nvim_buf_set_extmark(0, ns, 2, 18, { end_row = 2, end_col = 26, spell = false })
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} ^func({5:void});                                                                |
-      {7:// I am a }{8:speling}{7: mistakke}                                                      |
-      {0:~                                                                               }|*4
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} ^func({6:void});                                                                |
+      {18:// I am a }{102:speling}{18: mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     feed('[s')
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void});                                                                |
-      {7:// I am a }{8:^speling}{7: mistakke}                                                      |
-      {0:~                                                                               }|*4
-      {6:search hit TOP, continuing at BOTTOM}                                            |
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} func({6:void});                                                                |
+      {18:// I am a }{102:^speling}{18: mistakke}                                                      |
+      {1:~                                                                               }|*4
+      {19:search hit TOP, continuing at BOTTOM}                                            |
     ]])
     exec('echo ""')
     api.nvim_buf_del_extmark(0, ns, id)
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void});                                                                |
-      {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|*4
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} func({6:void});                                                                |
+      {18:// I am a }{102:^speling}{18: }{102:mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     feed(']s')
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void});                                                                |
-      {7:// I am a }{8:speling}{7: }{8:^mistakke}                                                      |
-      {0:~                                                                               }|*4
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} func({6:void});                                                                |
+      {18:// I am a }{102:speling}{18: }{102:^mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     -- "noplainbuffer" shouldn't change spellchecking behavior with syntax enabled
@@ -318,10 +313,10 @@ describe("'spell'", function()
     screen:expect_unchanged()
     feed('[s')
     screen:expect([[
-      {3:#include }{4:<stdbool.h>}                                                            |
-      {5:bool} func({5:void});                                                                |
-      {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|*4
+      {103:#include }{26:<stdbool.h>}                                                            |
+      {6:bool} func({6:void});                                                                |
+      {18:// I am a }{102:^speling}{18: }{102:mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     -- no spellchecking with "noplainbuffer" and syntax disabled
@@ -330,7 +325,7 @@ describe("'spell'", function()
       #include <stdbool.h>                                                            |
       bool func(void);                                                                |
       // I am a ^speling mistakke                                                      |
-      {0:~                                                                               }|*4
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     feed(']s')
@@ -338,25 +333,25 @@ describe("'spell'", function()
       #include <stdbool.h>                                                            |
       bool func(void);                                                                |
       // I am a ^speling mistakke                                                      |
-      {0:~                                                                               }|*4
-      {6:search hit BOTTOM, continuing at TOP}                                            |
+      {1:~                                                                               }|*4
+      {19:search hit BOTTOM, continuing at TOP}                                            |
     ]])
     exec('echo ""')
     -- everything is spellchecked without "noplainbuffer" with syntax disabled
     exec('set spelloptions&')
     screen:expect([[
-      #include <{1:stdbool}.h>                                                            |
-      {1:bool} {1:func}(void);                                                                |
-      // I am a {1:^speling} {1:mistakke}                                                      |
-      {0:~                                                                               }|*4
+      #include <{100:stdbool}.h>                                                            |
+      {100:bool} {100:func}(void);                                                                |
+      // I am a {100:^speling} {100:mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
     feed('[s')
     screen:expect([[
-      #include <{1:stdbool}.h>                                                            |
-      {1:bool} {1:^func}(void);                                                                |
-      // I am a {1:speling} {1:mistakke}                                                      |
-      {0:~                                                                               }|*4
+      #include <{100:stdbool}.h>                                                            |
+      {100:bool} {100:^func}(void);                                                                |
+      // I am a {100:speling} {100:mistakke}                                                      |
+      {1:~                                                                               }|*4
                                                                                       |
     ]])
   end)
@@ -371,22 +366,14 @@ describe("'spell'", function()
     local ns = api.nvim_create_namespace('spell')
     api.nvim_buf_set_extmark(0, ns, 0, 0, { hl_group = 'WarningMsg', end_col = 43 })
     screen:expect([[
-      {6:^This is some text without any spell errors.}|
-      {0:~                                          }|
+      {19:^This is some text without any spell errors.}|
+      {1:~                                          }|
                                                  |
     ]])
   end)
 
   it('overrides syntax when Visual selection is active', function()
     screen:try_resize(43, 3)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { foreground = Screen.colors.Blue },
-      [2] = { foreground = Screen.colors.Red },
-      [3] = { foreground = Screen.colors.Blue, underline = true },
-      [4] = { foreground = Screen.colors.Red, underline = true },
-      [5] = { bold = true },
-    })
     exec([[
       hi! Comment guibg=NONE guifg=Blue gui=NONE guisp=NONE
       hi! SpellBad guibg=NONE guifg=Red gui=NONE guisp=NONE
@@ -396,14 +383,14 @@ describe("'spell'", function()
       set spell
     ]])
     screen:expect([[
-      {1:^// Here is a }{2:misspeld}{1: word.}                |
-      {0:~                                          }|
+      {18:^// Here is a }{19:misspeld}{18: word.}                |
+      {1:~                                          }|
                                                  |
     ]])
     feed('V')
     screen:expect([[
-      {1:^/}{3:/ Here is a }{4:misspeld}{3: word.}                |
-      {0:~                                          }|
+      {18:^/}{105:/ Here is a }{104:misspeld}{105: word.}                |
+      {1:~                                          }|
       {5:-- VISUAL LINE --}                          |
     ]])
   end)
@@ -415,43 +402,43 @@ describe("'spell'", function()
     exec('setglobal spelloptions=camel')
     insert('Here is TheCamelWord being spellchecked')
     screen:expect([[
-      Here is {1:TheCamelWord} being spellchecke^d    |
-      {0:~                                          }|
+      Here is {100:TheCamelWord} being spellchecke^d    |
+      {1:~                                          }|
                                                  |
     ]])
     exec('enew')
     insert('There is TheCamelWord being spellchecked')
     screen:expect([[
       There is TheCamelWord being spellchecke^d   |
-      {0:~                                          }|
+      {1:~                                          }|
                                                  |
     ]])
     -- :setlocal applies to current buffer but not future buffers
     exec('setlocal spelloptions=')
     screen:expect([[
-      There is {1:TheCamelWord} being spellchecke^d   |
-      {0:~                                          }|
+      There is {100:TheCamelWord} being spellchecke^d   |
+      {1:~                                          }|
                                                  |
     ]])
     exec('enew')
     insert('What is TheCamelWord being spellchecked')
     screen:expect([[
       What is TheCamelWord being spellchecke^d    |
-      {0:~                                          }|
+      {1:~                                          }|
                                                  |
     ]])
     -- :set applies to both current buffer and future buffers
     exec('set spelloptions=')
     screen:expect([[
-      What is {1:TheCamelWord} being spellchecke^d    |
-      {0:~                                          }|
+      What is {100:TheCamelWord} being spellchecke^d    |
+      {1:~                                          }|
                                                  |
     ]])
     exec('enew')
     insert('Where is TheCamelWord being spellchecked')
     screen:expect([[
-      Where is {1:TheCamelWord} being spellchecke^d   |
-      {0:~                                          }|
+      Where is {100:TheCamelWord} being spellchecke^d   |
+      {1:~                                          }|
                                                  |
     ]])
   end)
@@ -504,12 +491,12 @@ describe("'spell'", function()
       })
     end)
     screen:expect([[
-      {1:^Splel}                                             |
-      {1:Splle}                                             |
+      {100:^Splel}                                             |
+      {100:Splle}                                             |
       Sepll                                             |
-      {1:Spele}                                             |
-      {1:Speel}                                             |
-      {0:~                                                 }|*2
+      {100:Spele}                                             |
+      {100:Speel}                                             |
+      {1:~                                                 }|*2
                                                         |
     ]])
 
@@ -539,12 +526,12 @@ describe("'spell'", function()
       })
     end)
     screen:expect([[
-      {1:^Splel}                                             |
-      {1:Splle}                                             |
-      {1:Sepll}                                             |
-      {1:Spele}                                             |
+      {100:^Splel}                                             |
+      {100:Splle}                                             |
+      {100:Sepll}                                             |
+      {100:Spele}                                             |
       Speel                                             |
-      {0:~                                                 }|*2
+      {1:~                                                 }|*2
                                                         |
     ]])
 

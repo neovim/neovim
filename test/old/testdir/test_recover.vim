@@ -508,7 +508,9 @@ func Test_recover_corrupted_swap_file1()
   new
   let sample = 'samples/recover-crash1.swp'
   let target = '.Xpoc1.swp'  " Xpoc1.swp (non-hidden) doesn't work in Nvim
-  call filecopy(sample, target)
+  " In an out-of-source-tree build the sample may be a symlink, this copies the
+  " data into a real file.
+  call writefile(readblob(sample), target, 'D')
   try
     sil recover! Xpoc1
   catch /^Vim\%((\S\+)\)\=:E1364:/
@@ -522,7 +524,9 @@ func Test_recover_corrupted_swap_file1()
   new
   let sample = 'samples/recover-crash2.swp'
   let target = '.Xpoc2.swp'  " Xpoc1.swp (non-hidden) doesn't work in Nvim
-  call filecopy(sample, target)
+  " In an out-of-source-tree build the sample may be a symlink, this copies the
+  " data into a real file.
+  call writefile(readblob(sample), target, 'D')
   try
     sil recover! Xpoc2
   catch /^Vim\%((\S\+)\)\=:E1364:/

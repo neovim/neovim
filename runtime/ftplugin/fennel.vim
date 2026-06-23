@@ -3,6 +3,7 @@
 " Maintainer:   Gregory Anders <greg[NOSPAM]@gpanders.com>
 " Last Update:  2023 Jun 9
 "               2024 May 24 by Riley Bruins <ribru17@gmail.com> ('commentstring')
+"               2026 Jun 22 by yilisharcs, add all more lisp 'comments' #20579
 
 if exists('b:did_ftplugin')
   finish
@@ -10,7 +11,7 @@ endif
 let b:did_ftplugin = 1
 
 setlocal commentstring=;\ %s
-setlocal comments=:;;,:;
+setlocal comments=:;;;;,:;;;,:;;,:;
 setlocal formatoptions-=t
 setlocal suffixesadd=.fnl
 setlocal lisp

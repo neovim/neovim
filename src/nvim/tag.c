@@ -1164,20 +1164,20 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
       }
 
       len += strlen(tv->vval.v_string) + 1;   // Space for "\tVALUE"
-      if (!strcmp(dict_key, "name")) {
+      if (strcmp(dict_key, "name") == 0) {
         res_name = tv->vval.v_string;
         continue;
       }
-      if (!strcmp(dict_key, "filename")) {
+      if (strcmp(dict_key, "filename") == 0) {
         res_fname = tv->vval.v_string;
         continue;
       }
-      if (!strcmp(dict_key, "cmd")) {
+      if (strcmp(dict_key, "cmd") == 0) {
         res_cmd = tv->vval.v_string;
         continue;
       }
       has_extra = true;
-      if (!strcmp(dict_key, "kind")) {
+      if (strcmp(dict_key, "kind") == 0) {
         res_kind = tv->vval.v_string;
         continue;
       }
@@ -1231,16 +1231,16 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
             continue;
           }
 
-          if (!strcmp(dict_key, "name")) {
+          if (strcmp(dict_key, "name") == 0) {
             continue;
           }
-          if (!strcmp(dict_key, "filename")) {
+          if (strcmp(dict_key, "filename") == 0) {
             continue;
           }
-          if (!strcmp(dict_key, "cmd")) {
+          if (strcmp(dict_key, "cmd") == 0) {
             continue;
           }
-          if (!strcmp(dict_key, "kind")) {
+          if (strcmp(dict_key, "kind") == 0) {
             continue;
           }
 
