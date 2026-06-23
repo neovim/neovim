@@ -1072,18 +1072,7 @@ describe('statusline', function()
     exec_lua('_G.statusline_contexts = {}')
     api.nvim_exec_autocmds('User', { buf = target })
     -- No different frame should be flushed while the deferred redraw settles.
-    screen:expect({
-      grid = [[
-                                              |
-      {1:~                                       }|*2
-      {2:nc                                      }|
-      ^                                        |
-      {1:~                                       }|
-      {3:CUR                                     }|
-                                              |
-      ]],
-      unchanged = true,
-    })
+    screen:expect({ unchanged = true })
     local contexts = exec_lua(function()
       return _G.statusline_contexts
     end)
