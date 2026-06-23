@@ -182,14 +182,10 @@ describe('build_stl_str_hl', function()
   statusline_test('respects the `<` marker', 10, 'abc%<defghijkl', 'abc<ghijkl')
   statusline_test('truncates at `<` with one `=`, test 1', 10, 'abc%<def%=ghijklmno', 'abc<jklmno')
   statusline_test('truncates at `<` with one `=`, test 2', 10, 'abcdef%=ghijkl%<mno', 'abcdefghi>')
-  statusline_test('truncates at `<` with one `=`, test 3', 10, 'abc%<def%=ghijklmno', 'abc<jklmno')
-  statusline_test('truncates at `<` with one `=`, test 4', 10, 'abc%<def%=ghij', 'abcdefghij')
+  statusline_test('truncates at `<` with one `=`, test 3', 10, 'abc%<def%=ghij', 'abcdefghij')
   statusline_test('truncates at `<` with one `=`, test 4', 10, 'abc%<def%=ghijk', 'abc<fghijk')
-
-  statusline_test('truncates at `<` with many `=`, test 4', 10, 'ab%<cdef%=g%=h%=ijk', 'ab<efghijk')
-
+  statusline_test('truncates at `<` with many `=`, test 5', 10, 'ab%<cdef%=g%=h%=ijk', 'ab<efghijk')
   statusline_test('truncates at the first `<`', 10, 'abc%<def%<ghijklm', 'abc<hijklm')
-
   statusline_test('ignores trailing %', 3, 'abc%', 'abc')
 
   -- alignment testing with fillchar
