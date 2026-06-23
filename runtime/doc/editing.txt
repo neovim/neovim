@@ -330,13 +330,11 @@ current file name.
 Besides the things mentioned here, more special items for where a filename is
 expected are mentioned at |cmdline-special|.
 
-Note for systems other than Unix: When using a command that accepts a single
-file name (like ":edit file") spaces in the file name are allowed, but
-trailing spaces are ignored.  This is useful on systems that regularly embed
-spaces in file names (like MS-Windows).  Example: The command ":e   Long File
-Name " will edit the file "Long File Name".  When using a command that accepts
-more than one file name (like ":next file1 file2") embedded spaces must be
-escaped with a backslash.
+When using a command that accepts a single file name (like ":edit file")
+spaces in the file name are allowed, but trailing spaces are ignored.
+Example: The command ":e   Long File Name " will edit the file "Long File
+Name".  When using a command that accepts more than one file name (like ":next
+file1 file2") embedded spaces must be escaped with a backslash.
 
 						*wildcard* *wildcards*
 Wildcards in {file} are expanded, but as with file completion, 'wildignore'
@@ -361,18 +359,18 @@ Note there are some commands where this works slightly differently, see
 |file-searching|.
 Example: >
 	:n **/*.txt
-Finds files:
-	aaa.txt ~
-	subdir/bbb.txt ~
-	a/b/c/d/ccc.txt ~
+Finds files: >
+	aaa.txt
+	subdir/bbb.txt
+	a/b/c/d/ccc.txt
 When non-wildcard characters are used right before or after "**" these are
 only matched in the top directory.  They are not used for directories further
 down in the tree.  For example: >
 	:n /usr/inc**/types.h
-Finds files:
-	/usr/include/types.h ~
-	/usr/include/sys/types.h ~
-	/usr/inc/old/types.h ~
+Finds files: >
+	/usr/include/types.h
+	/usr/include/sys/types.h
+	/usr/inc/old/types.h
 Note that the path with "/sys" is included because it does not need to match
 "/inc".  Thus it's like matching "/usr/inc*/*/*...", not
 "/usr/inc*/inc*/inc*".
@@ -558,7 +556,7 @@ Before editing binary, executable or Vim script files you should set the
 option.  This will avoid the use of 'fileformat'.  Without this you risk that
 single <NL> characters are unexpectedly replaced with <CR><NL>.
 
-END OF LINE AND END OF FILE				*eol-and-eof*
+END-OF-LINE AND END-OF-FILE				*eol-and-eof*
 
 Vim has several options to control the file format:
 	'fileformat'	the <EOL> style: Unix, DOS, Mac
@@ -595,6 +593,28 @@ system like CP/M): >
 If you want to preserve the fileformat exactly as-is, including any final
 <EOL> and final CTRL-Z: >
 	setl nofixeol
+
+OPENING FILES PROGRAMMATICALLY			      *buffer-open* *open-file*
+
+When a plugin already has a literal filepath (e.g. from a picker, LSP result,
+or filesystem scan) and just wants to open it, |:edit| is the wrong tool: its
+argument is subject to |cmdline-special| expansion, |wildcard| expansion, etc.
+|fnameescape()| escapes only some of these, and may depend on 'isfname'.
+
+Instead, to open a filepath literally, use `bufadd(vim.fs.normalize(…))`: >lua
+	local buf = vim.fn.bufadd(vim.fs.normalize(path))
+	vim.fn.bufload(buf) -- Trigger BufReadPre/BufReadPost/FileType.
+	vim.bo[buf].buflisted = true  -- Show in ":ls".
+	vim.api.nvim_win_set_buf(0, buf) -- Show in current window.
+
+Alternatively, |nvim_cmd()| and |vim.cmd()| accept a structured form whose
+`args` are tokenized verbatim. But the argument still goes through |:edit|'s
+filename-expansion phase, so some parts of `path` are still expanded: >lua
+	vim.cmd{ cmd = 'edit',
+	  args = { path },
+	  magic = { file = false, bar = false },
+	}
+<
 
 ==============================================================================
 3. The argument list				*argument-list* *arglist*
@@ -1347,15 +1367,16 @@ use has("browsefilter"): >
 ==============================================================================
 7. The current directory				*current-directory*
 
-You can use |:cd|, |:tcd| and |:lcd| to change to another directory, so you
-will not have to type that directory name in front of the file names.  It also
-makes a difference for executing external commands, e.g. ":!ls" or ":te ls".
+There are three current-directory "scopes": global, tab and window. You can
+use |:cd|, |:tcd| and |:lcd| to change to another directory.  This affects
+anything that operates on relative paths, e.g. ":edit ./foo.txt" or shell
+commands like ":!ls" or ":te ls".
 
-There are three current-directory "scopes": global, tab and window.  The
-window-local working directory takes precedence over the tab-local
-working directory, which in turn takes precedence over the global
-working directory.  If a local working directory (tab or window) does not
-exist, the next-higher scope in the hierarchy applies.
+Use |getcwd()| to get the effective directory from the current scope.  The
+window-local working directory takes precedence over the tab-local working
+directory, which in turn takes precedence over the global working directory.
+If a local working directory (tab or window) does not exist, the next-higher
+scope in the hierarchy applies.
 
 							*:cd* *E747* *E472*
 :cd[!]			On non-Unix systems when 'cdhome' is off: Print the

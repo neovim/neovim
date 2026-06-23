@@ -324,7 +324,7 @@ end:
 /// Executes an Ex command `cmd`, specified as a Dict with the same structure as returned by
 /// |nvim_parse_cmd()|.
 ///
-/// Use `magic={…=false}` to disable special chars:
+/// Use `magic={…=false}` to disable special chars (see also |open-file|):
 /// ```lua
 /// vim.api.nvim_cmd({
 ///     cmd = 'edit',

@@ -12,8 +12,8 @@ Introduction                                                       *lua-plugin*
 
 This document provides guidance for developing Nvim Lua plugins.
 
-See |lua-guide| for guidance on using Lua to configure and operate Nvim.
-See |luaref| and |lua-concepts| for details on the Lua programming language.
+- See |lua-guide| for guidance on using Lua to configure and operate Nvim.
+- See |luaref| and |lua-concepts| for details on the Lua programming language.
 
 ==============================================================================
 Creating your first plugin                                    *lua-plugin-new*
@@ -243,6 +243,11 @@ A plugin tailored to Rust development might have initialization in
         print('Hello')
     end, { buf = bufnr })
 <
+==============================================================================
+Opening files                                           *lua-plugin-open-file*
+
+To robustly open a file, see |open-file|.
+
 ==============================================================================
 Configuration                                              *lua-plugin-config*
 
