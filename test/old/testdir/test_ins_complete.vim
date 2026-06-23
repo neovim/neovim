@@ -960,7 +960,7 @@ func Test_pum_stopped_by_timer()
     endfunc
   END
 
-  call writefile(lines, 'Xpumscript')
+  call writefile(lines, 'Xpumscript', 'D')
   let buf = RunVimInTerminal('-S Xpumscript', #{rows: 12})
   call term_sendkeys(buf, ":call StartCompl()\<CR>")
   call TermWait(buf, 200)
@@ -968,7 +968,104 @@ func Test_pum_stopped_by_timer()
   call VerifyScreenDump(buf, 'Test_pum_stopped_by_timer', {})
 
   call StopVimInTerminal(buf)
-  call delete('Xpumscript')
+endfunc
+
+" The completion popup menu must line up with the start of the completed text
+" on screen, also when there is concealed text before it on the line.
+func Test_pum_position_with_concealed_text()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['CONCEALED foobar', 'CONCEALED foo'])
+    syntax match Hidden /CONCEALED / conceal
+    setlocal conceallevel=3 concealcursor=nvic
+    set completeopt=menu,menuone
+  END
+
+  call writefile(lines, 'Xpumconceal', 'D')
+  let buf = RunVimInTerminal('-S Xpumconceal', #{rows: 10})
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "2GA")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_position_with_concealed_text', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" Same alignment when the concealed text comes from a match and is shown as a
+" replacement character with 'conceallevel' 2.
+func Test_pum_position_with_concealed_match()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['XXX foobar', 'XXX foo'])
+    call matchadd('Conceal', 'XXX ', 10, -1, {'conceal': '+'})
+    setlocal conceallevel=2 concealcursor=nvic
+    set completeopt=menu,menuone
+  END
+
+  call writefile(lines, 'Xpumconcealmatch', 'D')
+  let buf = RunVimInTerminal('-S Xpumconcealmatch', #{rows: 10})
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "2GA")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_position_with_concealed_match', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" The menu lines up with the visible text in a 'rightleft' window too, where
+" the cursor screen column is mirrored.
+func Test_pum_position_with_concealed_rl()
+  CheckScreendump
+  CheckFeature rightleft
+
+  let lines =<< trim END
+    set rightleft
+    call setline(1, ['CONCEALED foobar', 'CONCEALED foo'])
+    syntax match Hidden /CONCEALED / conceal
+    setlocal conceallevel=3 concealcursor=nvic
+    set completeopt=menu,menuone
+  END
+
+  call writefile(lines, 'Xpumconcealrl', 'D')
+  let buf = RunVimInTerminal('-S Xpumconcealrl', #{rows: 10})
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "2GA")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_position_with_concealed_rl', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" The recorded offset is per screen line, so the menu also lines up when the
+" concealed text and the completion are on a wrapped continuation line.
+func Test_pum_position_with_concealed_wrap()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['foobar', 'aaaaaaaaaaaaaaaaaaaa CONCEALED foo'])
+    syntax match Hidden /CONCEALED / conceal
+    setlocal conceallevel=3 concealcursor=nvic
+    set completeopt=menu,menuone
+  END
+
+  call writefile(lines, 'Xpumconcealwrap', 'D')
+  let buf = RunVimInTerminal('-S Xpumconcealwrap', #{rows: 10, cols: 20})
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "2GA")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_position_with_concealed_wrap', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_complete_stopinsert_startinsert()

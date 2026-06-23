@@ -331,10 +331,20 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     } else {
       // anchor position: the start of the completed word
       pum_win_row = curwin->w_wrow;
+      int wcol = curwin->w_wcol;
+      // w_wcol does not account for text concealed before the cursor;
+      // shift by the offset win_line() recorded for the cursor line so the
+      // menu lines up with the visible text.
+      if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
+        wcol -= curwin->w_wcol_conceal_off;
+        if (wcol < 0) {
+          wcol = 0;
+        }
+      }
       if (pum_rl) {
-        cursor_col = curwin->w_view_width - curwin->w_wcol - 1;
+        cursor_col = curwin->w_view_width - wcol - 1;
       } else {
-        cursor_col = curwin->w_wcol;
+        cursor_col = wcol;
       }
     }
 

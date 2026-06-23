@@ -1102,6 +1102,116 @@ describe('builtin popupmenu', function()
       })
     end)
 
+    -- oldtest: Test_pum_position_with_concealed_text()
+    it('position with fully concealed text', function()
+      screen:try_resize(55, 10)
+      exec([[
+        call setline(1, ['CONCEALED foobar', 'CONCEALED foo'])
+        syntax match Hidden /CONCEALED / conceal
+        setlocal conceallevel=3 concealcursor=nvic
+        set completeopt=menu,menuone
+      ]])
+      feed('2GA')
+      poke_eventloop()
+      feed('<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+        })
+      else
+        screen:expect([[
+          foobar                                                 |
+          foobar^                                                 |
+          {12:foobar         }{1:                                        }|
+          {1:~                                                      }|*6
+          {5:-- Keyword Local completion (^N^P) The only match}      |
+        ]])
+      end
+    end)
+
+    -- oldtest: Test_pum_position_with_concealed_match()
+    it('position with concealed text replacement char', function()
+      screen:try_resize(55, 10)
+      exec([[
+        call setline(1, ['XXX foobar', 'XXX foo'])
+        call matchadd('Conceal', 'XXX ', 10, -1, {'conceal': '+'})
+        setlocal conceallevel=2 concealcursor=nvic
+        set completeopt=menu,menuone
+      ]])
+      feed('2GA')
+      poke_eventloop()
+      feed('<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+        })
+      else
+        screen:expect([[
+          {14:+}foobar                                                |
+          {14:+}foobar^                                                |
+          {12: foobar         }{1:                                       }|
+          {1:~                                                      }|*6
+          {5:-- Keyword Local completion (^N^P) The only match}      |
+        ]])
+      end
+    end)
+
+    -- oldtest: Test_pum_position_with_concealed_rl()
+    it('position with concealed text and rightleft', function()
+      screen:try_resize(55, 10)
+      exec([[
+        set rightleft
+        call setline(1, ['CONCEALED foobar', 'CONCEALED foo'])
+        syntax match Hidden /CONCEALED / conceal
+        setlocal conceallevel=3 concealcursor=nvic
+        set completeopt=menu,menuone
+      ]])
+      feed('2GA')
+      poke_eventloop()
+      feed('<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 2, 40, false, 100, 1, 2, 40 } },
+        })
+      else
+        screen:expect([[
+                                                           raboof|
+                                                          ^ raboof|
+          {1:                                        }{12:         raboof}|
+          {1:                                                      ~}|*6
+          {5:-- Keyword Local completion (^N^P) The only match}      |
+        ]])
+      end
+    end)
+
+    -- oldtest: Test_pum_position_with_concealed_wrap()
+    it('position with wrapped concealed text', function()
+      screen:try_resize(20, 10)
+      exec([[
+        call setline(1, ['foobar', 'aaaaaaaaaaaaaaaaaaaa CONCEALED foo'])
+        syntax match Hidden /CONCEALED / conceal
+        setlocal conceallevel=3 concealcursor=nvic
+        set completeopt=menu,menuone
+      ]])
+      feed('2GA')
+      poke_eventloop()
+      feed('<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 3, 0, false, 100, 1, 3, 0 } },
+        })
+      else
+        screen:expect([[
+          foobar              |
+          aaaaaaaaaaaaaaaaaaaa|
+           foobar^             |
+          {12: foobar         }{1:    }|
+          {1:~                   }|*5
+          {5:-- The only match}   |
+        ]])
+      end
+    end)
+
     it('with preview-window above', function()
       feed(':ped<CR><c-w>4+')
       feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
