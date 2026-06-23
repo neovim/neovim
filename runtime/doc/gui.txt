@@ -78,7 +78,8 @@ Restart Nvim
                                                 *:restart*
 :restart[!] [+cmd] [command]
                 Restarts Nvim. Sets |v:exitreason|. See also |ZR|.
-                When [!] is included, the session and window layout are cleared.
+                When [!] is included, the session and window layout are not
+                restored.
 
                 1. Stops Nvim using `:qall` (or |+cmd|, if given).
                 2. Starts a new Nvim server using the same |v:argv| (except
@@ -92,7 +93,7 @@ Restart Nvim
 <                Example: restart and restore the current session: >
                     :mksession! Session.vim | restart! source Session.vim
 <                Example: restart and update plugins: >
-                    :restart lua vim.pack.update()
+                    :restart packupdate
 <
                 Note:
                 • Only works if the UI and server are on the same system.

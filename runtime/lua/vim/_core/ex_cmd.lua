@@ -412,20 +412,9 @@ function M.ex_session_restart(eap, extra)
     quit_cmd = extra.quit_cmd
   end
 
-  -- Create or reuse a directory in the temp directory where we will write the session
-  -- It is one level up from the per-instance directory to prevent being cleared prematurely
-  local temp_root = fs.normalize(fs.dirname(fs.dirname(vim.fn.tempname())))
-  local sessions_dir_path = fs.joinpath(temp_root, 'sessions')
-  local ok, err, err_name = uv.fs_mkdir(sessions_dir_path, 448)
-  if not ok then
-    local stat = uv.fs_stat(sessions_dir_path)
-    if err_name ~= 'EEXIST' or not stat or stat.type ~= 'directory' then
-      error(err or err_name or 'Failed to create temporary sessions directory')
-    end
-  end
-
-  -- Get temporary file name
-  local fd, filename = uv.fs_mkstemp(fs.joinpath(sessions_dir_path, 'restart_session_XXXXXX'))
+  -- Prepare to write the session to the temp directory
+  local temp_dir = fs.normalize(fs.dirname(fs.dirname(vim.fn.tempname())))
+  local fd, filename = uv.fs_mkstemp(fs.joinpath(temp_dir, 'restart_session_XXXXXX'))
   if not fd then
     error('Failed to get temporary filename for restart session')
   end
@@ -439,7 +428,8 @@ function M.ex_session_restart(eap, extra)
   vim.cmd('mksession! ' .. session_arg)
 
   -- Lua commands to restore the session and remove the session file
-  local after_list = { 'vim.cmd("source ' .. session_arg:gsub('\\', '\\\\') .. '")' }
+  local after_list = {}
+  table.insert(after_list, ('vim.cmd("source %s")'):format(session_arg:gsub('\\', '\\\\')))
   table.insert(after_list, ('pcall(vim.fs.rm, %s)'):format(vim.inspect(session)))
   table.insert(after_list, ('vim.v.this_session = "%s"'):format(this_session))
   -- User provided command
@@ -457,7 +447,7 @@ function M.ex_session_restart(eap, extra)
   end)
 
   if not success then
-    pcall(vim.fs.rm, session)
+    fs.rm(session, { force = true })
     error(msg)
   end
 end
