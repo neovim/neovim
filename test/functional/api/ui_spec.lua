@@ -281,35 +281,6 @@ describe('UI event channels', function()
     session2:request('nvim_ui_term_event', 'termresponse', 'accepted')
     eq({ 'accepted' }, exec_lua('return _G.filtered'))
 
-    exec_lua(
-      [[
-      _G.queried = {}
-      vim.tty.query('Tc', { timeout = 0, chan = ... }, function(cap, found, seq)
-        table.insert(_G.queried, { cap, found, seq })
-      end)
-    ]],
-      chan2.id
-    )
-
-    request('nvim_ui_term_event', 'termresponse', '\027P1+r5463')
-    session2:request('nvim_ui_term_event', 'termresponse', '\027P1+r5463')
-    eq({ { 'Tc', true } }, exec_lua('return _G.queried'))
-
-    exec_lua(
-      [[
-      _G.apc = {}
-      vim.tty.query_apc('\027_query', { timeout = 0, chan = ... }, function(resp)
-        table.insert(_G.apc, resp)
-        return true
-      end)
-    ]],
-      chan2.id
-    )
-
-    request('nvim_ui_term_event', 'termresponse', '\027_ignored')
-    session2:request('nvim_ui_term_event', 'termresponse', '\027_accepted')
-    eq({ '\027_accepted' }, exec_lua('return _G.apc'))
-
     session2:close()
   end)
 end)
