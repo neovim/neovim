@@ -763,7 +763,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
   char *arg = arg_in;
   char *envpat = NULL;
   char *cmd;
-  bool need_free = false;
+  bool cmd_need_free = false;
   bool nested = false;
   bool once = false;
   int group;
@@ -832,7 +832,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     }
 
     if (invalid_flags) {
-      return;
+      goto err_exit;
     }
 
     // Find the start of the commands.
@@ -840,9 +840,9 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     if (*cmd != NUL) {
       cmd = expand_sfile(cmd);
       if (cmd == NULL) {  // some error
-        return;
+        goto err_exit;
       }
-      need_free = true;
+      cmd_need_free = true;
     }
   }
 
@@ -879,7 +879,8 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     }
   }
 
-  if (need_free) {
+err_exit:
+  if (cmd_need_free) {
     xfree(cmd);
   }
   xfree(envpat);
