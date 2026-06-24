@@ -408,6 +408,31 @@ func Test_spellfile_format_error()
   let &rtp = save_rtp
 endfunc
 
+" An over-length soundfold() argument must not overflow the MAXWLEN result
+" buffer in the single-byte branch of spell_soundfold_sal().
+func Test_spellfile_soundfold_sal_overflow()
+  throw 'Skipped: Nvim does not support enc=latin1'
+  let save_enc = &encoding
+  set encoding=latin1
+  " A SAL map that appends without collapsing, so the result is not shorter
+  " than the input.
+  call writefile(['SET ISO8859-1', 'SAL collapse_result false',
+	\ 'SAL a aaaa', 'SAL b bbbb'], 'Xsal.aff')
+  call writefile(['2', 'hello', 'world'], 'Xsal.dic')
+  mkspell! Xsal Xsal
+  set spl=Xsal.latin1.spl spell
+
+  " 253 input characters hit the buffer boundary; the result must not exceed
+  " MAXWLEN - 1.
+  call assert_true(strlen(soundfold(repeat('a', 253))) <= 253)
+
+  set nospell spl& spelllang&
+  call delete('Xsal.aff')
+  call delete('Xsal.dic')
+  call delete('Xsal.latin1.spl')
+  let &encoding = save_enc
+endfunc
+
 " Test for format errors in suggest file
 func Test_sugfile_format_error()
   let save_rtp = &rtp
