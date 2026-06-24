@@ -317,12 +317,19 @@ describe('UI event channels', function()
       eq(true, seen[chan3.id])
     end)
 
-    session2:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:ffff/ffff/ffff')
-    session3:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:0000/0000/0000')
+    session3:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:ffff/ffff/ffff')
 
     t.retry(nil, 1000, function()
-      eq('light', api.nvim__ui_get_detected_background(chan2.id))
-      eq('dark', api.nvim__ui_get_detected_background(chan3.id))
+      eq('light', api.nvim__ui_get_detected_background(chan3.id))
+      eq('light', eval('&background'))
+    end)
+
+    session2:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:0000/0000/0000')
+
+    t.retry(nil, 1000, function()
+      eq('dark', api.nvim__ui_get_detected_background(chan2.id))
+      eq('light', api.nvim__ui_get_detected_background(chan3.id))
+      eq('light', eval('&background'))
     end)
   end)
 end)

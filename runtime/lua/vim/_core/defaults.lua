@@ -792,10 +792,8 @@ do
   -- user set (real script SID, ":set", or API client) is preserved.
   -- 'termguicolors' is guarded by `was_set` and is only ever enabled here.
   --
-  -- Limitation: 'background' is global, the OSC 11 query is broadcast to every
-  -- attached terminal, and a |TermResponse| is not attributable to a UI, so the
-  -- value reflects whichever terminal answers last (decided by response speed),
-  -- not necessarily the most recently attached one.
+  -- 'background' is still global: per-UI metadata only selects the automatic
+  -- value. Rendering and user-visible option state are not UI-local.
   local group = vim.api.nvim_create_augroup('nvim.tty', {})
 
   --- Set an option after startup (so that OptionSet is fired), but only if not
@@ -920,6 +918,19 @@ do
 
   --- @type table<integer, integer>
   local bg_metadata_handlers = {}
+  local active_bg_chan = nil
+
+  --- @param chan integer
+  local function apply_bg_metadata(chan)
+    if bg_user_set() then
+      return
+    end
+
+    local ok, bg = pcall(vim.api.nvim__ui_get_detected_background, chan)
+    if ok and bg ~= '' then
+      vim.cmd('noautocmd set background=' .. bg)
+    end
+  end
 
   --- @param chan integer
   local function clear_bg_metadata_handler(chan)
@@ -939,8 +950,12 @@ do
     clear_bg_metadata_handler(chan)
     bg_metadata_handlers[chan] = vim.tty.request('', { timeout = 0, chan = chan }, function(resp)
       local bg = detect_bg(resp)
-      if bg then
-        pcall(vim.api.nvim__ui_set_detected_background, chan, bg)
+      if
+        bg
+        and pcall(vim.api.nvim__ui_set_detected_background, chan, bg)
+        and active_bg_chan == chan
+      then
+        apply_bg_metadata(chan)
       end
     end)
   end
@@ -965,62 +980,33 @@ do
   --- In slow environments (e.g. SSH with high latency), this will increase
   --- startup time and produce a warning, so users may want to disable it.
   ---
-  --- The OSC 11 handler is PERSISTENT (timeout=0) so it also reacts to runtime
-  --- theme changes (a terminal in mode 2031 re-queries and forwards a fresh
-  --- |TermResponse|). Its augroup is cleared on each call so only the
-  --- most-recently-attached TUI's handler remains.
+  --- The OSC 11 metadata handler is PERSISTENT (timeout=0) so it also reacts to
+  --- runtime theme changes (a terminal in mode 2031 re-queries and forwards a
+  --- fresh |TermResponse|). The active channel owns automatic 'background'.
   ---
   --- @param sync boolean When true (a TTY is present at startup), also send a
   --- DSR probe and synchronously wait so 'background' is set before user config,
   --- warning (E1568) if the terminal never answers the DSR.
   local function detect_background(sync, chan)
-    -- Re-create (clear) the handler's augroup on each call so only the
-    -- most-recently-attached TUI's handler remains.
     local bg_group = vim.api.nvim_create_augroup('nvim.tty.background', {})
+    active_bg_chan = chan
     track_bg_metadata(chan)
 
-    -- Send OSC 11 query. In the startup (sync) path also send a DSR probe: if
-    -- the DSR response comes first, the terminal most likely doesn't support the
-    -- bg color query, and we don't have to keep waiting for a bg response. #32109
     local osc11 = '\027]11;?\007'
     local dsr = '\027[5n'
 
-    -- This handler updates 'background' anytime we receive an OSC 11 response
-    -- from the terminal emulator. It is persistent (no built-in timeout) so it
-    -- also reacts to runtime theme changes; the per-response bg_user_set() guard
-    -- stops it once the user pins 'background'.
-    local did_dsr_response = false
-    vim.tty.request(
-      osc11 .. (sync and dsr or ''),
-      { group = bg_group, timeout = 0, chan = chan },
-      function(resp)
-        -- DSR response that should come after the OSC 11 response if the terminal
-        -- supports it.
-        if sync and string.match(resp, '^\027%[0n$') then
-          did_dsr_response = true
-          -- Don't stop listening: the bg response may come after the DSR response
-          -- if the terminal handles requests out of sequence. In that case, the bg
-          -- will simply be set later in the startup sequence.
-          return
-        end
-
-        local bg = detect_bg(resp)
-
-        -- Never override an explicit user value: stop once the user pins it.
-        if bg_user_set() then
-          return true
-        end
-
-        if bg then
-          -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
-          vim.cmd('noautocmd set background=' .. bg)
-        end
-      end
-    )
-
     if not sync then
+      vim.api.nvim_ui_send(osc11)
       return
     end
+
+    local did_dsr_response = false
+    vim.tty.request(osc11 .. dsr, { group = bg_group, timeout = 100, chan = chan }, function(resp)
+      if string.match(resp, '^\027%[0n$') then
+        did_dsr_response = true
+        return true
+      end
+    end)
 
     -- Wait until detection of OSC 11 capabilities is complete to ensure
     -- background is automatically set before user config.
