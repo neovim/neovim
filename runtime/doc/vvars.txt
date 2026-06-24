@@ -25,6 +25,15 @@ v:argf
 		  " ['/path/to/cwd/file1.txt', '/path/to/cwd/file2.txt']
 <
 
+						*v:args* *args-variable*
+v:args
+		Arguments passed to Vimscript from Nvim API. Only valid during
+		the execution of |nvim_exec2()|.
+
+		See |v:result| for the corresponding return values.
+
+		Read-only.
+
 						*v:argv* *argv-variable*
 v:argv
 		Command line arguments (`-u`, `--cmd`, `+cmd`, …) Nvim was
@@ -567,6 +576,13 @@ v:register
 v:relnum
 		Relative line number for the 'statuscolumn' expression.
 		Read-only.
+
+					*v:result* *result-variable*
+v:result
+		Values returned to Nvim API from Vimscript. Only valid during
+		the execution of |nvim_exec2()|.
+
+		See |v:args| for the corresponding arguments.
 
 				*v:scrollstart* *scrollstart-variable*
 v:scrollstart

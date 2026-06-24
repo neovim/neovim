@@ -101,6 +101,7 @@ describe('timers', function()
         let g:val = 0
         let g:n = inputlist(['input0', 'input1'])
       ]],
+      {},
       {}
     )
     retry(nil, nil, function()
@@ -120,6 +121,7 @@ describe('timers', function()
         let g:val = 0
         let g:n = confirm('Are you sure?', "&Yes\n&No\n&Cancel")
       ]],
+      {},
       {}
     )
     retry(nil, nil, function()
@@ -138,6 +140,7 @@ describe('timers', function()
         let g:val = 0
         let g:c = getchar()
       ]],
+      {},
       {}
     )
     retry(nil, nil, function()

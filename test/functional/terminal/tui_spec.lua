@@ -965,6 +965,7 @@ describe('TUI', function()
         endfor
       endfunc
     ]],
+      {},
       {}
     )
     feed_data(':call ManyErr()\r')
@@ -1131,6 +1132,7 @@ describe('TUI', function()
       nnoremap <D-Esc> ASuperEsc<Esc>
       nnoremap ; Asemicolon<Esc>
     ]],
+      {},
       {}
     )
     -- Works with no modifier
@@ -1277,6 +1279,7 @@ describe('TUI', function()
       call setline(1, repeat([join(range(10), '----')], 10))
       vsplit
     ]],
+      {},
       {}
     )
     screen:expect([[
@@ -1556,6 +1559,7 @@ describe('TUI', function()
       highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
       highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
     ]],
+      {},
       {}
     )
     if esc then
@@ -1821,6 +1825,7 @@ describe('TUI', function()
       tabnew
       highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline
     ]],
+      {},
       {}
     )
     screen:expect([[
@@ -2901,6 +2906,7 @@ describe('TUI', function()
       hi Cursor guifg=Red guibg=Green
       set guicursor=n:block-Cursor/lCursor
     ]],
+      {},
       {}
     )
     screen:expect([[
@@ -3475,7 +3481,7 @@ describe('TUI', function()
       if not is_os('win') then -- ConPTY provides DSR response on Windows?
         eq(
           { true, { output = expected_msg } },
-          { child_session:request('nvim_exec2', 'messages', { output = true }) }
+          { child_session:request('nvim_exec2', 'messages', { output = true }, {}) }
         )
       end
     end)
@@ -3552,6 +3558,7 @@ describe('TUI FocusGained/FocusLost', function()
       autocmd FocusGained * echo 'gained'
       autocmd FocusLost * echo 'lost'
     ]],
+      {},
       {}
     )
     feed_data('\034\016') -- CTRL-\ CTRL-N
@@ -3636,6 +3643,7 @@ describe('TUI FocusGained/FocusLost', function()
       autocmd FocusLost * call append(line('$'), 'lost')
       autocmd FocusGained * call append(line('$'), 'gained')
     ]],
+      {},
       {}
     )
     retry(2, 3 * screen.timeout, function()

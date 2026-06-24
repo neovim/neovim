@@ -22,6 +22,15 @@ vim.v = ...
 --- @type string[]
 vim.v.argf = ...
 
+--- Arguments passed to Vimscript from Nvim API. Only valid during
+--- the execution of `nvim_exec2()`.
+---
+--- See `v:result` for the corresponding return values.
+---
+--- Read-only.
+--- @type any[]
+vim.v.args = ...
+
 --- Command line arguments (`-u`, `--cmd`, `+cmd`, …) Nvim was
 --- invoked with.  The first item is the Nvim command.
 ---
@@ -597,6 +606,13 @@ vim.v.register = ...
 --- Read-only.
 --- @type integer
 vim.v.relnum = ...
+
+--- Values returned to Nvim API from Vimscript. Only valid during
+--- the execution of `nvim_exec2()`.
+---
+--- See `v:args` for the corresponding arguments.
+--- @type any[]
+vim.v.result = ...
 
 --- String describing the script or function that caused the
 --- screen to scroll up.  It's only set when it is empty, thus the

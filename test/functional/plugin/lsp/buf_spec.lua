@@ -29,7 +29,7 @@ end
 describe('vim.lsp.buf', function()
   local function exec_capture(cmd)
     return exec_lua(function(cmd0)
-      return vim.api.nvim_exec2(cmd0, { output = true }).output
+      return vim.api.nvim_exec2(cmd0, { output = true }, {}).output
     end, cmd)
   end
 

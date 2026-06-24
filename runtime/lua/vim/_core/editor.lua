@@ -487,7 +487,7 @@ vim.cmd = setmetatable({}, {
     if type(cmd) == 'table' then
       return vim.api.nvim_cmd(cmd, {})
     else
-      vim.api.nvim_exec2(cmd, {})
+      vim.api.nvim_exec2(cmd, {}, {})
       return ''
     end
   end,

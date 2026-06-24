@@ -899,13 +899,13 @@ function M.rmdir(path)
 end
 
 function M.exec(code)
-  M.api.nvim_exec2(code, {})
+  M.api.nvim_exec2(code, {}, {})
 end
 
 --- @param code string
 --- @return string
 function M.exec_capture(code)
-  return M.api.nvim_exec2(code, { output = true }).output
+  return M.api.nvim_exec2(code, { output = true }, {}).output
 end
 
 --- Execute Lua code in the wrapped Nvim session.

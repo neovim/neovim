@@ -328,6 +328,7 @@ describe('--embed --listen UI', function()
       autocmd UIEnter * call add(g:evs, $"UIEnter:{v:event.chan}")
       autocmd VimEnter * call add(g:evs, "VimEnter")
     ]],
+      {},
       {}
     )
 

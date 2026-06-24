@@ -285,20 +285,20 @@ describe('luaeval(vim.api.…)', function()
   end)
 
   it('converts booleans in optional args', function()
-    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=false}) ]])
-    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {}) ]]) -- same as {output=nil}
+    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=false}, {}) ]])
+    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {}, {}) ]]) -- same as {output=nil}
 
     -- API conventions (not lua conventions): zero is falsy
-    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=0}) ]])
+    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=0}, {}) ]])
 
     eq(
       { output = 'foobar' },
-      exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=true}) ]]
+      exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=true}, {}) ]]
     )
-    eq({ output = 'foobar' }, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=1}) ]])
+    eq({ output = 'foobar' }, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=1}, {}) ]])
     eq(
       [[Invalid 'output': not a boolean]],
-      pcall_err(exec_lua, [[ return vim.api.nvim_exec2("echo 'foobar'", {output={}}) ]])
+      pcall_err(exec_lua, [[ return vim.api.nvim_exec2("echo 'foobar'", {output={}}, {}) ]])
     )
   end)
 

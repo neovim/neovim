@@ -1039,7 +1039,7 @@ local function extend_head(out, state)
   if state.title ~= false then
     table.insert(out, ('<title>%s</title>'):format(state.title))
   end
-  local colorscheme = vim.api.nvim_exec2('colorscheme', { output = true }).output
+  local colorscheme = vim.api.nvim_exec2('colorscheme', { output = true }, {}).output
   table.insert(
     out,
     ('<meta name="colorscheme" content="%s"></meta>'):format(html_escape(colorscheme))

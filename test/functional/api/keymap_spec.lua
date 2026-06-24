@@ -1017,7 +1017,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     ]]
     matches(
       '^\nn  asdf          <Lua %d+>',
-      exec_lua [[return vim.api.nvim_exec2(':nmap asdf', { output = true }).output]]
+      exec_lua [[return vim.api.nvim_exec2(':nmap asdf', { output = true }, {}).output]]
     )
   end)
 
