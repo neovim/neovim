@@ -201,7 +201,7 @@ describe('TUI :detach', function()
   end)
 end)
 
-describe('TUI :restart!', function()
+describe('TUI :restart', function()
   before_each(n.clear)
   after_each(n.check_close)
 
@@ -237,35 +237,63 @@ describe('TUI :restart!', function()
     eq('Vim(restart):E481: No range allowed: :1restart!', t.pcall_err(n.command, ':1restart!'))
   end)
 
-  it(':restart preserves screen state unlike :restart!', function()
+  it(':restart (no bang) restores session, window layout', function()
     local file = 'Xtest-restart-file'
     write_file(file, 'foobar')
     finally(function()
       os.remove(file)
     end)
 
+    local server_pipe = new_pipename()
+    local server_session
+    finally(function()
+      if server_session then
+        server_session:close()
+      end
+    end)
     local screen = tt.setup_child_nvim({
       '--clean',
+      '--listen',
+      server_pipe,
       '--cmd',
       'set notermguicolors laststatus=0 noruler noshowcmd',
-    }, { env = env_notermguicolors })
+    }, {
+      env = vim.tbl_extend('force', env_notermguicolors, {
+        -- Ignore logs, because assert_restarted may log "connection refused" while it retries.
+        NVIM_LOG_FILE = testlog,
+      }),
+    })
+    finally(function()
+      os.remove(testlog)
+    end)
 
     feed_data(':edit ' .. file .. '\r')
+    feed_data(':wincmd v\r')
     screen:expect([[
-      ^foobar                                            |
-      ~                                                 |*4
-      :edit Xtest-restart-file                          |
+      ^foobar                   │foobar                  |
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+      :wincmd v                                         |
       {5:-- TERMINAL --}                                    |
     ]])
+    server_session = n.connect(server_pipe)
+    local _, starttime = server_session:request('nvim_eval', 'v:starttime')
 
     -- :restart
     feed_data(':restart\r')
     screen:expect([[
-      ^foobar                                            |
-      ~                                                 |*4
+      ^foobar                   │foobar                  |
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
+    eq({ true, 'restart' }, { server_session:request('nvim_get_vvar', 'startreason') })
 
     -- :restart!
     feed_data(':restart!\r')
@@ -275,6 +303,8 @@ describe('TUI :restart!', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
+    eq({ true, 'restart!' }, { server_session:request('nvim_get_vvar', 'startreason') })
 
     feed_data(':qall!\r')
     screen:expect({ any = vim.pesc('[Process exited 0]') })

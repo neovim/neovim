@@ -4974,14 +4974,14 @@ static void ex_restart(exarg_T *eap)
     dict_T *extra_d = tv_dict_alloc();
     tv_dict_add_str(extra_d, S_LEN("quit_cmd"), eap->do_ecmd_cmd ? eap->do_ecmd_cmd : "");
     typval_T extra_tv = { .v_type = VAR_DICT, .vval.v_dict = extra_d };
-    nlua_call_excmd("vim._core.ex_cmd", "ex_session_restart", eap, &cmdmod, &extra_tv);
+    nlua_call_excmd("vim._core.server", "ex_session_restart", eap, &cmdmod, &extra_tv);
     tv_clear(&extra_tv);
     return;
   }
 
   const char *startreason = "restart!";
-  // The special flag "+:::" indicates a non-bang restart
-  if(eap->do_ecmd_cmd && strncmp(eap->do_ecmd_cmd, "+:::", 4) != 0) {
+  // "+:::" is how ex_session_restart() signals that it (recursively) called into :restart.
+  if (eap->do_ecmd_cmd && strncmp(eap->do_ecmd_cmd, ":::", 3) == 0) {
     startreason = "restart";
   }
 
