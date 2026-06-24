@@ -101,6 +101,7 @@ static int current_augroup = AUGROUP_DEFAULT;
 static bool au_need_clean = false;
 
 static int autocmd_blocked = 0;  // block all autocmds
+static int aucmd_prepbuf_depth = 0;
 
 static bool autocmd_nested = false;
 static bool autocmd_include_groups = false;
@@ -1354,9 +1355,9 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     // disable the Visual area, position may be invalid in another buffer
     VIsual_active = false;
   }
-  if (autocmd_save.save_aucmd == NULL) {
-    autocmd_save = *aco;
-    autocmd_save.save_aucmd = aco;
+  if (aco->new_curwin_handle != aco->save_curwin_handle) {
+    autocmd_save_curwin = aucmd_prepbuf_depth == 0 ? aco->save_curwin_handle : autocmd_save_curwin;
+    aucmd_prepbuf_depth++;
   }
 }
 
@@ -1379,9 +1380,6 @@ void aucmd_restbuf(aco_save_T *aco)
   // NULL br_buf means `aucmd_prepbuf` was never called on this `aco`.
   if (aco->new_curbuf.br_buf == NULL) {
     return;
-  }
-  if (autocmd_save.save_aucmd == aco) {
-    autocmd_save.save_aucmd = NULL;
   }
 
   if (aco->use_aucmd_win_idx >= 0) {
@@ -1488,6 +1486,11 @@ win_found:
   check_cursor(curwin);  // just in case lines got deleted
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
+  }
+  if (aco->new_curwin_handle != aco->save_curwin_handle) {
+    assert(aucmd_prepbuf_depth > 0);
+    aucmd_prepbuf_depth--;
+    autocmd_save_curwin = aucmd_prepbuf_depth == 0 ? 0 : autocmd_save_curwin;
   }
 }
 

@@ -42,7 +42,7 @@ EXTERN int autocmd_bufnr INIT( = 0);            ///< fnum for <abuf> on cmdline
 EXTERN char *autocmd_match INIT( = NULL);       ///< name for <amatch> on cmdline
 EXTERN bool did_cursorhold INIT( = true);       ///< set when CursorHold t'gerd
 // Used to restore the actual current buffer/window when redrawing.
-EXTERN aco_save_T autocmd_save INIT( = { 0 });
+EXTERN handle_T autocmd_save_curwin INIT( = 0);
 
 typedef struct {
   win_T *auc_win;     ///< Window used in aucmd_prepbuf().  When not NULL the
