@@ -1229,9 +1229,8 @@ ZZ			Write current file, if modified, and close the current
 ZQ			Quit without checking for changes (same as ":q!").
 
 							*ZR*
-[count]ZR		Restart Vim (same as ":restart!"). If a [count] is given,
-			restarts without checking for changes (":restart! +qall!").
-			See |:restart|.
+[count]ZR		Performs |:restart!|. If a [count] is given, restarts
+			without checking for changes (":restart! +qall!").
 
 MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 

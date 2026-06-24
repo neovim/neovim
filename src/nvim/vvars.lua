@@ -782,7 +782,7 @@ M.vars = {
       The reason Nvim started. Possible values:
         - "normal"    normal startup.
         - "restart"   started by |:restart|.
-        - "restart!"  started by ":restart!" or |ZR|.
+        - "restart!"  started by |:restart!| or |ZR|.
 
       Read-only.
     ]=],

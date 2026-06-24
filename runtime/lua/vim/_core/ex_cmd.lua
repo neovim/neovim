@@ -400,7 +400,8 @@ function M.packdel_complete(pattern, line)
   return vim.pack._get_names(not cmd.bang)
 end
 
--- Restart that preserves session and window layout
+-- Saves the current session and calls `:restart!` with the necessary arguments
+-- to restore the session.
 -- TODO: https://github.com/neovim/neovim/issues/34204
 --- @param eap vim._core.ExCmdArgs
 --- @param extra { quit_cmd: string }
@@ -413,25 +414,24 @@ function M.ex_session_restart(eap, extra)
   end
 
   -- Prepare to write the session to the temp directory
-  local temp_dir = fs.normalize(fs.dirname(fs.dirname(vim.fn.tempname())))
-  local fd, filename = uv.fs_mkstemp(fs.joinpath(temp_dir, 'restart_session_XXXXXX'))
+  local temp_dir = fs.abspath(fs.dirname(fs.dirname(vim.fn.tempname())))
+  local fd, session = uv.fs_mkstemp(fs.joinpath(temp_dir, 'restart_session_XXXXXX'))
   if not fd then
     error('Failed to get temporary filename for restart session')
   end
   uv.fs_close(fd)
 
   -- Write session (making sure to preserve v:this_session)
-  local this_session = fs.normalize(vim.v.this_session)
-  local session = fs.abspath(filename)
-  vim.cmd('%argdelete')
+  local this_session = vim.v.this_session
   local session_arg = vim.fn.fnameescape(session)
+  vim.cmd('%argdelete')
   vim.cmd('mksession! ' .. session_arg)
 
   -- Lua commands to restore the session and remove the session file
   local after_list = {}
-  table.insert(after_list, ('vim.cmd("source %s")'):format(session_arg:gsub('\\', '\\\\')))
+  table.insert(after_list, ('vim.cmd("source %s")'):format(session_arg))
   table.insert(after_list, ('pcall(vim.fs.rm, %s)'):format(vim.inspect(session)))
-  table.insert(after_list, ('vim.v.this_session = "%s"'):format(this_session))
+  table.insert(after_list, ('vim.v.this_session = [==[%s]==]'):format(this_session))
   -- User provided command
   if after_cmd ~= '' then
     table.insert(after_list, ('vim.cmd(%s)'):format(vim.inspect(after_cmd)))

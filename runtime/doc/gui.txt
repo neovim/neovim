@@ -75,11 +75,10 @@ Stop or detach the current UI
 ------------------------------------------------------------------------------
 Restart Nvim
 
-                                                *:restart*
+                                                *:restart* *:restart!*
 :restart[!] [+cmd] [command]
                 Restarts Nvim. Sets |v:exitreason|. See also |ZR|.
-                When [!] is included, the session and window layout are not
-                restored.
+                When [!] is included, the session is not restored.
 
                 1. Stops Nvim using `:qall` (or |+cmd|, if given).
                 2. Starts a new Nvim server using the same |v:argv| (except
