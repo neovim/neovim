@@ -1117,7 +1117,7 @@ do
   --- @param validator vim.validate.Validator
   --- @param message? string "Expected" message
   --- @param allow_alias? boolean Allow short type names: 'n', 's', 't', 'b', 'f', 'c'
-  --- @param optional? boolean Flag for optional argument 
+  --- @param optional? boolean Flag for optional argument
   --- @return string?
   local function is_valid(param_name, val, validator, message, allow_alias, optional)
     local type_mismatch_msg = '%s: expected %s, got %s'
@@ -1139,11 +1139,7 @@ do
       -- Check user-provided validation function
       local valid, opt_msg = validator(val)
       if not valid then
-        local err_msg = (type_mismatch_msg):format(
-          param_name,
-          message or '?',
-          tostring(val)
-        )
+        local err_msg = (type_mismatch_msg):format(param_name, message or '?', tostring(val))
         err_msg = opt_msg and ('%s. Info: %s'):format(err_msg, opt_msg) or err_msg
 
         return err_msg
@@ -1167,12 +1163,7 @@ do
         end
       end
 
-      return string.format(
-        type_mismatch_msg,
-        param_name,
-        table.concat(validator, '|'),
-        type(val)
-      )
+      return string.format(type_mismatch_msg, param_name, table.concat(validator, '|'), type(val))
     else
       return string.format('invalid validator: %s', tostring(validator))
     end
