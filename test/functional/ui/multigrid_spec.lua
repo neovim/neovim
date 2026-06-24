@@ -675,6 +675,25 @@ describe('ext_multigrid', function()
       }
     end)
 
+    it('clears a longer message when ext_cmdline draws the next command', function()
+      screen:set_option('ext_cmdline', true)
+      command('echomsg "abcdefghijklmnopqrstuvwxyz"')
+      feed(':set filetype?<cr>')
+      screen:expect {
+        grid = [[
+      ## grid 1
+        [2:-----------------------------------------------------]|*12
+        {11:[No Name]                                            }|
+        [3:-----------------------------------------------------]|
+      ## grid 2
+        ^                                                            |
+        {1:~                                                           }|*19
+      ## grid 3
+          filetype=                                          |
+      ]],
+      }
+    end)
+
     it('creates folds with grid width', function()
       insert('this is a fold\nthis is inside fold\nthis is outside fold')
       feed('kzfgg')

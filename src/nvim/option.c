@@ -1519,6 +1519,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
       *did_show = true;                 // remember that we did a line
     }
     showoneopt(&options[opt_idx], opt_flags);
+    msg_clr_eos();
 
     if (p_verbose > 0) {
       // Mention where the option was last set.
@@ -1529,6 +1530,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
       } else if (option_has_scope(opt_idx, kOptScopeBuf)) {
         last_set_msg(curbuf->b_p_script_ctx[option_scope_idx(opt_idx, kOptScopeBuf)]);
       }
+      msg_clr_eos();
     }
 
     if (nextchar != '?' && nextchar != NUL && !ascii_iswhite(afterchar)) {
