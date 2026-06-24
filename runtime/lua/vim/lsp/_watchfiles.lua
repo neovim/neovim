@@ -1,10 +1,37 @@
 local bit = require('bit')
 local glob = vim.glob
 local watch = vim._watch
+local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local lpeg = vim.lpeg
 
 local M = {}
+
+---@type table<string, true>
+local logged_invalid_patterns = {}
+
+--- Parses a glob pattern and logs invalid patterns once.
+---@param pattern string
+---@param client vim.lsp.Client
+---@return vim.lpeg.Pattern?
+local function parse_glob_pattern(pattern, client)
+  local ok, pattern_or_err = pcall(glob.to_lpeg, pattern)
+  if ok then
+    return pattern_or_err
+  end
+  local key = string.format('%d:%s', client.id, pattern)
+  if not logged_invalid_patterns[key] then
+    log.warn(
+      string.format(
+        'LSP[%s] skipping invalid workspace/didChangeWatchedFiles globPattern',
+        client.name
+      ),
+      pattern,
+      pattern_or_err
+    )
+    logged_invalid_patterns[key] = true
+  end
+end
 
 if vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1 then
   M._watchfunc = watch.watch
@@ -62,24 +89,22 @@ function M.register(reg, client_id)
     local glob_pattern = w.globPattern
 
     if type(glob_pattern) == 'string' then
-      local pattern = glob.to_lpeg(glob_pattern)
-      if not pattern then
-        error('Cannot parse pattern: ' .. glob_pattern)
-      end
-      for _, folder in ipairs(client.workspace_folders) do
-        local base_dir = vim.uri_to_fname(folder.uri)
-        table.insert(watch_regs[base_dir], { pattern = pattern, kind = kind })
+      local pattern = parse_glob_pattern(glob_pattern, client)
+      if pattern then
+        for _, folder in ipairs(client.workspace_folders) do
+          local base_dir = vim.uri_to_fname(folder.uri)
+          table.insert(watch_regs[base_dir], { pattern = pattern, kind = kind })
+        end
       end
     else
       local base_uri = glob_pattern.baseUri
       local uri = type(base_uri) == 'string' and base_uri or base_uri.uri
       local base_dir = vim.uri_to_fname(uri)
-      local pattern = glob.to_lpeg(glob_pattern.pattern)
-      if not pattern then
-        error('Cannot parse pattern: ' .. glob_pattern.pattern)
+      local pattern = parse_glob_pattern(glob_pattern.pattern, client)
+      if pattern then
+        local relative_pattern = lpeg.P(base_dir .. '/') * pattern --[[@as vim.lpeg.Pattern]]
+        table.insert(watch_regs[base_dir], { pattern = relative_pattern, kind = kind })
       end
-      pattern = lpeg.P(base_dir .. '/') * pattern
-      table.insert(watch_regs[base_dir], { pattern = pattern, kind = kind })
     end
   end
 

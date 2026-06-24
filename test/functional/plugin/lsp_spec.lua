@@ -3835,6 +3835,72 @@ describe('LSP', function()
     test_filechanges('watchdirs')
     test_filechanges('inotify')
 
+    it('skips invalid glob patterns during registration', function()
+      local root_dir = '/some_dir'
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server()
+        local client_id = assert(vim.lsp.start({
+          name = 'watchfiles-test',
+          cmd = server.cmd,
+          root_dir = root_dir,
+          capabilities = {
+            workspace = {
+              didChangeWatchedFiles = {
+                dynamicRegistration = true,
+              },
+            },
+          },
+        }))
+
+        local expected_messages = 2
+        local function wait_for_messages()
+          assert(
+            vim.wait(200, function()
+              return #server.messages == expected_messages
+            end),
+            'Timed out waiting for expected number of messages. Current messages seen so far: '
+              .. vim.inspect(server.messages)
+          )
+        end
+
+        wait_for_messages()
+
+        local watched = {}
+        require('vim.lsp._watchfiles')._watchfunc = function(base_dir, opts, _)
+          table.insert(
+            watched,
+            { base_dir = base_dir, include_pattern = opts.include_pattern ~= nil }
+          )
+          return function() end
+        end
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'watchfiles-test-invalid',
+              method = 'workspace/didChangeWatchedFiles',
+              registerOptions = {
+                watchers = {
+                  {
+                    globPattern = 'bundled:///libs/**/*',
+                  },
+                  {
+                    globPattern = '**/*.watch',
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+
+        vim.lsp.get_client_by_id(client_id):stop(true)
+        return watched
+      end)
+
+      eq({ { base_dir = root_dir, include_pattern = true } }, result)
+    end)
+
     it('correctly registers and unregisters', function()
       local root_dir = '/some_dir'
       exec_lua(create_server_definition)
