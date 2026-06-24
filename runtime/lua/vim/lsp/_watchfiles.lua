@@ -7,21 +7,36 @@ local lpeg = vim.lpeg
 
 local M = {}
 
+-- Use a bounded set to suppress repeat warnings without unbounded growth.
 ---@type table<string, true>
 local logged_invalid_patterns = {}
+---@type string[]
+local logged_invalid_pattern_keys = {}
+local logged_invalid_pattern_key_index = 1
+
+---@param key string
+local function remember_invalid_pattern(key)
+  local old_key = logged_invalid_pattern_keys[logged_invalid_pattern_key_index]
+  if old_key then
+    logged_invalid_patterns[old_key] = nil
+  end
+  logged_invalid_patterns[key] = true
+  logged_invalid_pattern_keys[logged_invalid_pattern_key_index] = key
+  logged_invalid_pattern_key_index = logged_invalid_pattern_key_index % 20 + 1
+end
 
 --- Parses a glob pattern and logs invalid patterns once.
 ---@param pattern string
 ---@param client vim.lsp.Client
 ---@return vim.lpeg.Pattern?
-local function parse_glob_pattern(pattern, client)
+local function glob_to_lpeg(pattern, client)
   local ok, pattern_or_err = pcall(glob.to_lpeg, pattern)
   if ok then
     return pattern_or_err
   end
   local key = string.format('%d:%s', client.id, pattern)
   if not logged_invalid_patterns[key] then
-    log.warn(
+    log.error(
       string.format(
         'LSP[%s] skipping invalid workspace/didChangeWatchedFiles globPattern',
         client.name
@@ -29,7 +44,7 @@ local function parse_glob_pattern(pattern, client)
       pattern,
       pattern_or_err
     )
-    logged_invalid_patterns[key] = true
+    remember_invalid_pattern(key)
   end
 end
 
@@ -89,7 +104,7 @@ function M.register(reg, client_id)
     local glob_pattern = w.globPattern
 
     if type(glob_pattern) == 'string' then
-      local pattern = parse_glob_pattern(glob_pattern, client)
+      local pattern = glob_to_lpeg(glob_pattern, client)
       if pattern then
         for _, folder in ipairs(client.workspace_folders) do
           local base_dir = vim.uri_to_fname(folder.uri)
@@ -100,7 +115,7 @@ function M.register(reg, client_id)
       local base_uri = glob_pattern.baseUri
       local uri = type(base_uri) == 'string' and base_uri or base_uri.uri
       local base_dir = vim.uri_to_fname(uri)
-      local pattern = parse_glob_pattern(glob_pattern.pattern, client)
+      local pattern = glob_to_lpeg(glob_pattern.pattern, client)
       if pattern then
         local relative_pattern = lpeg.P(base_dir .. '/') * pattern --[[@as vim.lpeg.Pattern]]
         table.insert(watch_regs[base_dir], { pattern = relative_pattern, kind = kind })
