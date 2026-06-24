@@ -466,8 +466,11 @@ int update_screen(void)
   }
 
   // Restore actual curwin before redrawing.
-  if (autocmd_save.save_aucmd != NULL && curwin->handle != autocmd_save.save_curwin_handle) {
-    aucmd_restbuf(&autocmd_save);
+  win_T *save_curwin = autocmd_save_curwin ? win_find_by_handle(autocmd_save_curwin) : NULL;
+  win_T *restore_curwin = save_curwin != NULL ? curwin : NULL;
+  if (save_curwin != NULL) {
+    curwin = save_curwin;
+    curbuf = curwin->w_buffer;
   }
 
   int type = must_redraw;
@@ -747,8 +750,9 @@ int update_screen(void)
   }
 
   // Restore temporary autocmd curwin.
-  if (autocmd_save.save_aucmd != NULL && curwin->handle != autocmd_save.new_curwin_handle) {
-    aucmd_prepbuf(&autocmd_save, autocmd_save.new_curbuf.br_buf);
+  if (restore_curwin != NULL) {
+    curwin = restore_curwin;
+    curbuf = curwin->w_buffer;
   }
 
   return OK;
