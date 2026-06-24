@@ -343,21 +343,21 @@ describe('api: optional parameters', function()
 
   it('validation', function()
     matches(
-      'Wrong number of arguments: expecting 1 to 2 but got 3',
-      pcall_err(api.nvim_exec2, 'echo 1', {}, 'surplus')
+      'Wrong number of arguments: expecting 1 to 3 but got 4',
+      pcall_err(api.nvim_exec2, 'echo 1', {}, {}, 'surplus')
     )
     matches(
       'Wrong number of arguments: expecting at most 1 but got 2',
       pcall_err(api.nvim_get_context, {}, 'surplus')
     )
-    matches('Wrong number of arguments: expecting 1 to 2 but got 0', pcall_err(api.nvim_exec2))
+    matches('Wrong number of arguments: expecting 1 to 3 but got 0', pcall_err(api.nvim_exec2))
 
     -- Lua bridge: vim.api
     matches(
-      'Expected 1 to 2 arguments',
-      pcall_err(n.exec_lua, [[vim.api.nvim_exec2('echo 1', {}, 'surplus')]])
+      'Expected 1 to 3 arguments',
+      pcall_err(n.exec_lua, [[vim.api.nvim_exec2('echo 1', {}, {}, 'surplus')]])
     )
-    matches('Expected 1 to 2 arguments', pcall_err(n.exec_lua, [[vim.api.nvim_exec2()]]))
+    matches('Expected 1 to 3 arguments', pcall_err(n.exec_lua, [[vim.api.nvim_exec2()]]))
     matches(
       'Expected at most 1 argument',
       pcall_err(n.exec_lua, [[vim.api.nvim_get_context({}, 'surplus')]])

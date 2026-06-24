@@ -1972,9 +1972,10 @@ nvim_eval({expr})                                                *nvim_eval()*
     Return: ~
         (`any`) Evaluation result or expanded object
 
-nvim_exec2({src}, {opts})                                       *nvim_exec2()*
+nvim_exec2({src}, {opts}, {args})                               *nvim_exec2()*
     Executes Vimscript (multiline block of Ex commands), like anonymous
-    |:source|.
+    |:source|. Arguments are available through v:sarg inside the script.
+    Values inserted into v:sresult inside the script will be returned.
 
     Unlike |nvim_command()| this function supports heredocs, script-scope
     (s:), etc.
@@ -1989,11 +1990,14 @@ nvim_exec2({src}, {opts})                                       *nvim_exec2()*
       • {opts}  (`vim.api.keyset.exec_opts?`) Optional parameters.
                 • output: (boolean, default false) Whether to capture and
                   return all (non-error, non-shell |:!|) output.
+      • {args}  (`any[]?`) Optional arguments to pass to Vimscript via v:sarg.
 
     Return: ~
         (`table<string,any>`) Dict containing information about execution,
-        with these keys:
-        • output: (string|nil) Output if `opts.output` is true.
+        with these possible keys:
+        • output: (string) Captured output if `opts.output` is true.
+        • result: (any[]) Values returned from the script via v:sresult, if
+          any.
 
     See also: ~
       • |execute()|

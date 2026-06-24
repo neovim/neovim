@@ -220,6 +220,8 @@ static struct vimvar {
   VV(VV_EXITREASON,       "exitreason",       VAR_STRING, VV_RO),
   VV(VV_USERACTIVE,       "useractive",       VAR_NUMBER, VV_RO),
   VV(VV_STARTREASON,      "startreason",      VAR_STRING, VV_RO),
+  VV(VV_SARG,             "sarg",             VAR_LIST, VV_RO),
+  VV(VV_SRESULT,          "sresult",          VAR_LIST, 0),
 };
 #undef VV
 
