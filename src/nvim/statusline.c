@@ -53,6 +53,8 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 
+#include "statusline.c.generated.h"
+
 // Determines how deeply nested %{} blocks will be evaluated in statusline.
 #define MAX_STL_EVAL_DEPTH 100
 
@@ -89,8 +91,7 @@ void win_redr_status(win_T *wp)
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
   } else if (*wp->w_p_stl != NUL || !wp->w_floating || (is_stl_global && wp == curwin)) {
-    // redraw custom status line
-    redraw_custom_statusline(wp);
+    win_redr_stl_expr(wp, false, false, false);
   }
 
   hlf_T group = HLF_C;
@@ -211,12 +212,13 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
 }
 
 static bool did_show_ext_ruler = false;
-/// Redraw the status line, window bar, ruler or tabline.
+/// Redraws the statusline, winbar, ruler or tabline.
+///
 /// @param wp  target window, NULL for 'tabline'
 /// @param draw_winbar  redraw 'winbar'
 /// @param draw_ruler  redraw 'rulerformat'
 /// @param ui_event  emit UI-event instead of drawing
-static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool ui_event)
+static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool ui_event)
 {
   static bool entered = false;
   int col = 0;
@@ -453,7 +455,7 @@ void win_redr_winbar(win_T *wp)
   if (wp->w_winbar_height == 0 || !redrawing()) {
     // Do nothing.
   } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
-    win_redr_custom(wp, true, false, false);
+    win_redr_stl_expr(wp, true, false, false);
   }
   entered = false;
 }
@@ -493,7 +495,7 @@ void redraw_ruler(void)
 
   bool part_of_status = wp->w_status_height || is_stl_global;
   if (*p_ruf && (p_ch > 0 || (ui_has(kUIMessages) && !part_of_status))) {
-    win_redr_custom(wp, false, true, ui_has(kUIMessages));
+    win_redr_stl_expr(wp, false, true, ui_has(kUIMessages));
     return;
   }
 
@@ -602,23 +604,6 @@ schar_T fillchar_status(hlf_T *group, win_T *wp)
   }
 }
 
-/// Redraw the status line according to 'statusline' and take care of any
-/// errors encountered.
-void redraw_custom_statusline(win_T *wp)
-{
-  static bool entered = false;
-
-  // When called recursively return.  This can happen when the statusline
-  // contains an expression that triggers a redraw.
-  if (entered) {
-    return;
-  }
-  entered = true;
-
-  win_redr_custom(wp, false, false, false);
-  entered = false;
-}
-
 static void ui_ext_tabline_update(void)
 {
   Arena arena = ARENA_EMPTY;
@@ -693,7 +678,7 @@ void draw_tabline(void)
 
   // Use the 'tabline' option if it's set.
   if (*p_tal != NUL) {
-    win_redr_custom(NULL, false, false, false);
+    win_redr_stl_expr(NULL, false, false, false);
   } else {
     int tabcount = 0;
     int col = 0;
